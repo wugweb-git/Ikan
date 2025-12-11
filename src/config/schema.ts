@@ -1,0 +1,351 @@
+export const schemaConfig = {
+  "name": "iKan - schema",
+  "version": "2.0.0", 
+  "description": "Complete data schema for iKan PWA with KV store implementation",
+  "implementation": "supabase_kv_store",
+  "entities": {
+    "users": {
+      "description": "User accounts and profiles",
+      "storage": "kv_store",
+      "key_pattern": "user:{user_id}",
+      "fields": {
+        "user_id": "string (uuid)",
+        "email": "string (unique, required)",
+        "name": "string (required)",
+        "phone": "string (optional)",
+        "avatar_url": "string (optional)",
+        "corporate_user": "boolean (default: false)",
+        "created_at": "string (ISO timestamp)",
+        "updated_at": "string (ISO timestamp)"
+      },
+      "indexes": [
+        "user:{user_id}",
+        "user_by_email:{email}"
+      ]
+    },
+    "assessments": {
+      "description": "Assessment definitions and templates",
+      "storage": "kv_store", 
+      "key_pattern": "assessment:{assessment_id}",
+      "fields": {
+        "assessment_id": "string (uuid)",
+        "title": "string (required)",
+        "description": "string",
+        "version": "string",
+        "questions": "array of objects",
+        "scoring_rules": "object",
+        "created_at": "string (ISO timestamp)"
+      },
+      "sample_data": [
+        "anxiety-gad7",
+        "depression-phq9"
+      ]
+    },
+    "assessment_responses": {
+      "description": "User responses to assessments",
+      "storage": "kv_store",
+      "key_pattern": "assessment_response:{response_id}",
+      "fields": {
+        "response_id": "string (uuid)",
+        "user_id": "string (references users)",
+        "assessment_id": "string (references assessments)",
+        "responses": "object (question_id -> answer)",
+        "status": "string (in_progress, completed, abandoned)",
+        "score": "number (optional)",
+        "result_metadata": "object",
+        "started_at": "string (ISO timestamp)",
+        "completed_at": "string (ISO timestamp, optional)"
+      },
+      "indexes": [
+        "assessment_response:{response_id}",
+        "assessment_response_by_user:{user_id}:{assessment_id}:latest"
+      ]
+    },
+    "equip_programs": {
+      "description": "Mental health programs and courses",
+      "storage": "kv_store",
+      "key_pattern": "equip:{equip_id}",
+      "fields": {
+        "equip_id": "string (uuid)",
+        "title": "string (required)",
+        "description": "string",
+        "price": "number (in cents)",
+        "currency": "string (default: USD)",
+        "duration_days": "number",
+        "expires_in_days_after_payment": "number (default: 180)",
+        "modules": "array of objects",
+        "tags": "array of strings",
+        "created_at": "string (ISO timestamp)"
+      },
+      "sample_data": [
+        "mindfulness-8week",
+        "cbt-10week"
+      ]
+    },
+    "equip_purchases": {
+      "description": "User program purchases and access",
+      "storage": "kv_store",
+      "key_pattern": "equip_purchase:{purchase_id}",
+      "fields": {
+        "purchase_id": "string (uuid)",
+        "user_id": "string (references users)",
+        "equip_id": "string (references equip_programs)",
+        "transaction_id": "string (optional)",
+        "price_paid": "number (in cents)",
+        "currency": "string",
+        "payment_method": "string",
+        "onboarding_data": "object",
+        "purchased_at": "string (ISO timestamp)",
+        "expires_at": "string (ISO timestamp)",
+        "status": "string (active, expired, cancelled)"
+      },
+      "indexes": [
+        "equip_purchase:{purchase_id}",
+        "equip_purchase_by_user:{user_id}:{equip_id}"
+      ]
+    },
+    "equip_progress": {
+      "description": "User progress in programs",
+      "storage": "kv_store",
+      "key_pattern": "equip_progress:{user_id}:{equip_id}",
+      "fields": {
+        "user_id": "string (references users)",
+        "equip_id": "string (references equip_programs)",
+        "purchase_id": "string (references equip_purchases)",
+        "current_day": "number (default: 1)",
+        "completed_days": "array of numbers",
+        "total_days": "number",
+        "progress_percentage": "number (0-100)",
+        "started_at": "string (ISO timestamp)",
+        "updated_at": "string (ISO timestamp)"
+      }
+    },
+    "journal_entries": {
+      "description": "Daily mood journal entries",
+      "storage": "kv_store",
+      "key_pattern": "journal:{user_id}-{date}",
+      "fields": {
+        "journal_entry_id": "string (user_id-date)",
+        "user_id": "string (references users)",
+        "timestamp": "string (ISO timestamp)",
+        "date": "string (YYYY-MM-DD)",
+        "mood_rating": "number (1-10, optional)",
+        "freehand_text_content": "string (optional)",
+        "associated_tracker_entry_id": "string (optional)",
+        "status": "string (present, absent)"
+      },
+      "indexes": [
+        "journal:{journal_entry_id}",
+        "journal_by_user:{user_id}:{date}"
+      ]
+    },
+    "transactions": {
+      "description": "Payment transactions (Razorpay integration)",
+      "storage": "kv_store",
+      "key_pattern": "transaction:{transaction_id}",
+      "fields": {
+        "id": "string (transaction_id)",
+        "user_id": "string (references users)",
+        "provider": "string (razorpay)",
+        "provider_payment_id": "string (razorpay payment ID)",
+        "provider_order_id": "string (razorpay order ID)",
+        "amount": "number (in cents)",
+        "currency": "string",
+        "status": "string (pending, success, failed, refunded)",
+        "created_at": "string (ISO timestamp)",
+        "updated_at": "string (ISO timestamp)",
+        "metadata": "object (program_id, signature, etc)"
+      },
+      "indexes": [
+        "transaction:{transaction_id}",
+        "transaction_by_user:{user_id}:{transaction_id}"
+      ]
+    },
+    "payment_orders": {
+      "description": "Razorpay payment orders",
+      "storage": "kv_store",
+      "key_pattern": "payment_order:{order_id}",
+      "fields": {
+        "id": "string (order_id)",
+        "entity": "string (order)",
+        "amount": "number (in cents)",
+        "currency": "string",
+        "status": "string (created, attempted, paid)",
+        "created_at": "number (unix timestamp)",
+        "payment_id": "string (optional)",
+        "notes": "object (program_id, user_id, receipt_email)"
+      }
+    },
+    "resources": {
+      "description": "Mental health resources and articles",
+      "storage": "kv_store",
+      "key_pattern": "resource:{resource_id}",
+      "fields": {
+        "resource_id": "string (uuid)",
+        "title": "string (required)",
+        "description": "string",
+        "category": "string (wellness, therapy, etc)",
+        "content_type": "string (article, video, audio)",
+        "content_url": "string (optional)",
+        "read_time_minutes": "number",
+        "tags": "array of strings",
+        "created_at": "string (ISO timestamp)",
+        "updated_at": "string (ISO timestamp)"
+      },
+      "sample_data": [
+        "stress-management-guide",
+        "sleep-hygiene-tips"
+      ]
+    },
+    "professionals": {
+      "description": "Mental health professionals directory",
+      "storage": "kv_store",
+      "key_pattern": "professional:{professional_id}",
+      "fields": {
+        "professional_id": "string (uuid)",
+        "name": "string (required)",
+        "title": "string (Licensed Clinical Psychologist, etc)",
+        "specialties": "array of strings (anxiety, depression, trauma)",
+        "location": "string (Virtual & In-Person, etc)",
+        "phone": "string",
+        "email": "string",
+        "bio": "string (optional)",
+        "available": "boolean (default: true)",
+        "created_at": "string (ISO timestamp)"
+      },
+      "sample_data": [
+        "dr-sarah-johnson",
+        "dr-michael-chen"
+      ]
+    },
+    "notifications": {
+      "description": "System and push notifications",
+      "storage": "in_memory",
+      "context": "NotificationContext",
+      "fields": {
+        "id": "string (uuid)",
+        "type": "string (success, error, warning, info)",
+        "title": "string (required)",
+        "message": "string (required)",
+        "timestamp": "string (ISO timestamp)",
+        "read": "boolean (default: false)",
+        "persistent": "boolean (default: false)",
+        "action": "object (optional - label, onClick)",
+        "dismissible": "boolean (default: true)"
+      }
+    },
+    "journey_state": {
+      "description": "User journey progress and state",
+      "storage": "localStorage",
+      "context": "JourneyContext",
+      "key_pattern": "ikan-journey-{user_id}",
+      "fields": {
+        "currentFlow": "string (new_user, returning_user, equip_purchase)",
+        "currentStep": "string (OnboardingIntro, Payment, etc)",
+        "completedSteps": "array of strings",
+        "flowData": "object (step-specific data)",
+        "lastUpdated": "string (ISO timestamp)"
+      }
+    },
+    "app_settings": {
+      "description": "Application configuration and settings",
+      "storage": "localStorage",
+      "fields": {
+        "offline_mode": "boolean",
+        "push_permissions": "string (granted, denied, default)",
+        "theme": "string (light, dark, auto)",
+        "notifications_enabled": "boolean",
+        "demo_data_initialized": "boolean"
+      }
+    }
+  },
+  "relationships": {
+    "user_assessments": "users -> assessment_responses (one-to-many)",
+    "user_programs": "users -> equip_purchases (one-to-many)",
+    "program_progress": "equip_purchases -> equip_progress (one-to-one)",
+    "user_journal": "users -> journal_entries (one-to-many)",
+    "user_transactions": "users -> transactions (one-to-many)",
+    "purchase_transactions": "equip_purchases -> transactions (many-to-one)"
+  },
+  "api_endpoints": {
+    "base_url": "https://{projectId}.supabase.co/functions/v1/make-server-cc205da9",
+    "auth": {
+      "signup": "POST /auth/signup",
+      "profile": "GET /users/profile",
+      "update_profile": "PUT /users/profile"
+    },
+    "assessments": {
+      "list": "GET /assessments",
+      "get": "GET /assessments/{assessmentId}",
+      "submit_response": "POST /assessments/{assessmentId}/responses",
+      "user_responses": "GET /assessments/responses/user"
+    },
+    "equip": {
+      "list_programs": "GET /equip/programs",
+      "get_program": "GET /equip/programs/{equipId}",
+      "purchase": "POST /equip/purchase/{equipId}",
+      "get_progress": "GET /equip/progress/{equipId}",
+      "complete_day": "POST /equip/progress/{equipId}/day/{day}"
+    },
+    "journal": {
+      "create_entry": "POST /journal/entries",
+      "get_entries": "GET /journal/entries",
+      "get_entry": "GET /journal/entries/{date}"
+    },
+    "payments": {
+      "create_order": "POST /payments/orders",
+      "verify_payment": "POST /payments/verify",
+      "get_transactions": "GET /payments/transactions",
+      "webhook": "POST /webhooks/razorpay"
+    },
+    "library": {
+      "get_resources": "GET /library/resources",
+      "get_resource": "GET /library/resources/{resourceId}"
+    },
+    "consultation": {
+      "get_professionals": "GET /consultation/professionals"
+    },
+    "system": {
+      "health_check": "GET /health",
+      "init_demo_user": "POST /init/demo-user",
+      "init_sample_data": "POST /init/sample-data"
+    }
+  },
+  "data_flow": {
+    "user_onboarding": [
+      "Create user account (users)",
+      "Complete initial assessment (assessment_responses)",
+      "Set up notifications (app_settings)",
+      "Initialize journey state (journey_state)"
+    ],
+    "program_purchase": [
+      "Browse programs (equip_programs)",
+      "Create payment order (payment_orders)",
+      "Process payment (transactions)",
+      "Create purchase record (equip_purchases)",
+      "Initialize progress tracking (equip_progress)"
+    ],
+    "daily_usage": [
+      "Log mood entry (journal_entries)",
+      "Update program progress (equip_progress)",
+      "View resources (resources)",
+      "Receive notifications (notifications)"
+    ]
+  },
+  "offline_support": {
+    "cached_entities": [
+      "equip_programs",
+      "assessments", 
+      "resources",
+      "professionals"
+    ],
+    "sync_strategy": "on_connection_restore",
+    "fallback_data": "lib/offline-fallbacks.ts"
+  },
+  "security": {
+    "authentication": "supabase_auth",
+    "authorization": "row_level_security",
+    "data_encryption": "at_rest_and_in_transit",
+    "pii_handling": "gdpr_compliant"
+  }
+} as const;

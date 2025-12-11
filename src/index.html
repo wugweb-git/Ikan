@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-ZD4D5LZBQG"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+
+      gtag('config', 'G-ZD4D5LZBQG');
+    </script>
+    
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" type="image/png" href="/pwa-64x64.png" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    
+    <!-- PWA Meta Tags -->
+    <meta name="theme-color" content="#2A2A2A" />
+    <meta name="background-color" content="#F5F5F5" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="iKan" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    
+    <!-- SEO Meta Tags -->
+    <meta name="description" content="iKan Mental Health - Your comprehensive mental wellness companion. Track your mood, access professional resources, and take control of your mental health journey." />
+    <meta name="keywords" content="mental health, wellness, mood tracking, therapy, meditation, mental wellness, self-care" />
+    <meta name="author" content="iKan Team" />
+    
+    <!-- Open Graph Meta Tags -->
+    <meta property="og:title" content="iKan Mental Health PWA" />
+    <meta property="og:description" content="Your comprehensive mental wellness companion" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://your-domain.com" />
+    <meta property="og:image" content="/pwa-512x512.png" />
+    
+    <!-- Twitter Card Meta Tags -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="iKan Mental Health PWA" />
+    <meta name="twitter:description" content="Your comprehensive mental wellness companion" />
+    <meta name="twitter:image" content="/pwa-512x512.png" />
+    
+    <!-- Apple Touch Icons -->
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    
+    <!-- Splash Screen Images - Removed: Generate actual images if needed for iOS -->
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Ubuntu:wght@400;500&display=swap" rel="stylesheet" />
+    
+    <title>iKan Mental Health</title>
+    
+    <!-- Safety and Crisis Resources Notice -->
+    <script>
+      // Global crisis hotline information - always available
+      window.CRISIS_RESOURCES = {
+        us: {
+          hotline: '988',
+          text: 'Text HOME to 741741',
+          url: 'https://suicidepreventionlifeline.org'
+        },
+        international: {
+          url: 'https://findahelpline.com'
+        }
+      };
+      
+      // Service worker registration with error handling
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js')
+            .then((registration) => {
+              console.log('SW registered: ', registration);
+            })
+            .catch((registrationError) => {
+              console.log('SW registration failed: ', registrationError);
+            });
+        });
+      }
+    </script>
+    
+    <!-- Performance optimizations -->
+    <link rel="dns-prefetch" href="https://jpfvoevxegnknxoqmwye.supabase.co" />
+    <link rel="preconnect" href="https://jpfvoevxegnknxoqmwye.supabase.co" />
+  </head>
+  <body>
+    <div id="root"></div>
+    
+    <!-- Loading fallback for users with JavaScript disabled -->
+    <noscript>
+      <div style="
+        display: flex; 
+        flex-direction: column; 
+        align-items: center; 
+        justify-content: center; 
+        height: 100vh; 
+        font-family: Ubuntu, system-ui, sans-serif;
+        background-color: #F5F5F5;
+        color: #151515;
+        text-align: center;
+        padding: 20px;
+      ">
+        <h1 style="color: #2A2A2A; margin-bottom: 16px;">iKan Mental Health</h1>
+        <p style="color: #717182; margin-bottom: 24px;">
+          Please enable JavaScript to use this application.
+        </p>
+        <div style="
+          padding: 16px; 
+          background: white; 
+          border-radius: 12px; 
+          border: 1px solid rgba(0,0,0,0.1);
+          max-width: 400px;
+        ">
+          <h2 style="color: #2A2A2A; font-size: 18px; margin-bottom: 12px;">Crisis Resources</h2>
+          <p style="color: #717182; margin-bottom: 8px;">
+            <strong>US:</strong> Call or text 988 for immediate help
+          </p>
+          <p style="color: #717182;">
+            <strong>International:</strong> Visit findahelpline.com
+          </p>
+        </div>
+      </div>
+    </noscript>
+    
+    <script type="module" src="/App.tsx"></script>
+  </body>
+</html>

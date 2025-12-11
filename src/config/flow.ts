@@ -1,0 +1,252 @@
+export const flowConfig = {
+  "name": "iKan - flow",
+  "version": "2.0.0",
+  "description": "Complete user flows and component mapping for iKan PWA",
+  "flow": {
+    "authentication": {
+      "login": "AuthForm",
+      "signup": "AuthForm",
+      "profile": "AccountDetailsSection"
+    },
+    "onboarding": {
+      "steps": [
+        "AuthForm",
+        "PushPermissionPrompt", 
+        "TopSectionUserPersonalized",
+        "Dashboard"
+      ],
+      "contexts": ["AuthContext", "NotificationContext"]
+    },
+    "dashboard": {
+      "main": "Dashboard",
+      "components": [
+        "TopSectionUserPersonalized",
+        "MoodTracker",
+        "QuickActions",
+        "ResourceGridBlock"
+      ],
+      "navigation": {
+        "mobile": "BottomNavBarMobile",
+        "desktop": "TopNavBar"
+      }
+    },
+    "assessment": {
+      "landing": "Assessments",
+      "flow": "AssessmentFlow",
+      "components": [
+        "AssessmentIntroModal",
+        "AssessmentQuestion", 
+        "AssessmentProgressBar",
+        "AssessmentSubmit",
+        "AssessmentResults"
+      ],
+      "navigation": "Breadcrumbs"
+    },
+    "equip": {
+      "landing": "EquipPrograms", 
+      "flow": "EquipFlow",
+      "purchase": {
+        "preview": "PaymentFlow",
+        "payment": "RazorpayPayment",
+        "journey": "JourneyManager"
+      },
+      "program": [
+        "EquipCard",
+        "PurchaseModal",
+        "ProgramViewModal",
+        "EquipDayTile",
+        "EquipProgressSummary"
+      ],
+      "contexts": ["PaymentContext", "JourneyContext"]
+    },
+    "journal": {
+      "entry": "MoodTracker",
+      "components": [
+        "TrackerJournalTile",
+        "EmojiWidget", 
+        "TextArea",
+        "RatingStars"
+      ],
+      "calendar": "MoodJournalMonthBlock",
+      "view": "JournalViewModal"
+    },
+    "consultation": {
+      "directory": "Consultation",
+      "components": [
+        "ProfessionalCard",
+        "CrisisSupport",
+        "ContactButtons"
+      ],
+      "crisis": "AlertBanner"
+    },
+    "library": {
+      "main": "Library",
+      "grid": "ResourceGridBlock",
+      "components": [
+        "ResourceCard",
+        "ResourceFilters",
+        "ResourceSearch"
+      ]
+    },
+    "notifications": {
+      "center": "NotificationCenter",
+      "components": [
+        "NotificationItem",
+        "NotificationBadge", 
+        "BannerNotification",
+        "PushPermissionPrompt"
+      ],
+      "toast": "Toaster",
+      "context": "NotificationContext"
+    },
+    "account": {
+      "main": "Account",
+      "profile": "AccountDetailsSection",
+      "settings": [
+        "SideNavAccount",
+        "SwitchToggle", 
+        "ProfileSettings"
+      ],
+      "navigation": "AccountNavigation"
+    },
+    "navigation": {
+      "mobile": {
+        "bottom": "BottomNavBarMobile",
+        "search": "SearchBar"
+      },
+      "desktop": {
+        "top": "TopNavBar",
+        "sidebar": "SideNavAccount"
+      },
+      "components": [
+        "Breadcrumbs",
+        "Pagination",
+        "MenuItems"
+      ]
+    },
+    "payments": {
+      "flow": "PaymentFlow",
+      "provider": "RazorpayPayment", 
+      "components": [
+        "PaymentPreview",
+        "PaymentForm",
+        "PaymentSuccess",
+        "TransactionHistory"
+      ],
+      "context": "PaymentContext"
+    },
+    "journeys": {
+      "manager": "JourneyManager",
+      "flows": [
+        "new_user",
+        "returning_user", 
+        "equip_purchase"
+      ],
+      "components": [
+        "JourneySteps",
+        "ProgressIndicator",
+        "QuickJourneyStart"
+      ],
+      "context": "JourneyContext"
+    }
+  },
+  "screens": {
+    "Dashboard": {
+      "route": "/dashboard", 
+      "component": "Dashboard",
+      "blocks": ["TopSectionUserPersonalized", "MoodTracker", "ResourceGridBlock"],
+      "auth_required": true
+    },
+    "Assessments": {
+      "route": "/assessments",
+      "component": "Assessments", 
+      "flow": "AssessmentFlow",
+      "auth_required": true
+    },
+    "EquipPrograms": {
+      "route": "/equip-programs",
+      "component": "EquipPrograms",
+      "flow": "EquipFlow", 
+      "auth_required": true
+    },
+    "Consultation": {
+      "route": "/consultation",
+      "component": "Consultation",
+      "features": ["crisis_support", "professional_directory"],
+      "auth_required": true
+    },
+    "Library": {
+      "route": "/library", 
+      "component": "Library",
+      "blocks": ["ResourceGridBlock"],
+      "auth_required": true
+    },
+    "Account": {
+      "route": "/account",
+      "component": "Account",
+      "blocks": ["AccountDetailsSection"],
+      "auth_required": true
+    }
+  },
+  "components": {
+    "ui_blocks": [
+      "TopSectionUserPersonalized",
+      "ResourceGridBlock", 
+      "UserLoginBlock",
+      "MoodJournalMonthBlock",
+      "AccountDetailsSection",
+      "NotificationListBlock"
+    ],
+    "navigation": [
+      "TopNavBar",
+      "BottomNavBarMobile",
+      "SearchBar",
+      "SideNavAccount", 
+      "Breadcrumbs",
+      "Pagination"
+    ],
+    "inputs": [
+      "TextInput",
+      "TextArea", 
+      "RatingStars"
+    ],
+    "buttons": [
+      "ButtonPrimary",
+      "ButtonSecondary",
+      "ButtonDestructive",
+      "ButtonGhost",
+      "ButtonIcon", 
+      "ButtonLink"
+    ],
+    "notifications": [
+      "NotificationItem",
+      "NotificationBadge",
+      "BannerNotification", 
+      "NotificationCenter",
+      "PushPermissionPrompt"
+    ],
+    "payments": [
+      "PaymentFlow",
+      "RazorpayPayment"
+    ],
+    "journeys": [
+      "JourneyManager", 
+      "QuickJourneyStart"
+    ]
+  },
+  "contexts": [
+    "AuthContext",
+    "NotificationContext",
+    "PaymentContext",
+    "JourneyContext"
+  ],
+  "features": {
+    "offline_support": true,
+    "pwa_capabilities": true,
+    "push_notifications": true,
+    "biometric_auth": false,
+    "multi_language": false,
+    "accessibility": true,
+    "responsive_design": true
+  }
+} as const;

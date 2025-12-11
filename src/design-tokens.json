@@ -1,0 +1,3 @@
+{
+  "note": "Design tokens have been moved to /lib/design-tokens.ts for proper TypeScript support"
+}

@@ -1,0 +1,86 @@
+{
+  "name": "iKan Mental Health",
+  "short_name": "iKan",
+  "description": "Your comprehensive mental wellness companion",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#F5F5F5",
+  "theme_color": "#2A2A2A",
+  "orientation": "portrait-primary",
+  "scope": "/",
+  "lang": "en",
+  "categories": ["health", "medical", "wellness", "lifestyle"],
+  "icons": [
+    {
+      "src": "/pwa-64x64.png",
+      "sizes": "64x64",
+      "type": "image/png"
+    },
+    {
+      "src": "/pwa-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/pwa-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    },
+    {
+      "src": "/maskable-icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Daily Check-in",
+      "short_name": "Check-in",
+      "description": "Track your daily mood",
+      "url": "/dashboard?tab=mood",
+      "icons": [{ "src": "/pwa-192x192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Assessment",
+      "short_name": "Assessment",
+      "description": "Take a mental health assessment",
+      "url": "/assessments",
+      "icons": [{ "src": "/pwa-192x192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Programs",
+      "short_name": "Programs",
+      "description": "Browse wellness programs",
+      "url": "/equip-programs",
+      "icons": [{ "src": "/pwa-192x192.png", "sizes": "192x192" }]
+    }
+  ],
+  "prefer_related_applications": false,
+  "edge_side_panel": {
+    "preferred_width": 400
+  },
+  "screenshots": [
+    {
+      "src": "/screenshot1.png",
+      "sizes": "540x720",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Dashboard view showing mood tracking and daily check-in"
+    },
+    {
+      "src": "/screenshot2.png", 
+      "sizes": "540x720",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Assessment flow with questionnaire interface"
+    },
+    {
+      "src": "/screenshot3.png",
+      "sizes": "1024x768",
+      "type": "image/png", 
+      "form_factor": "wide",
+      "label": "Desktop view showing comprehensive dashboard"
+    }
+  ]
+}
