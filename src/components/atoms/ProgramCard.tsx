@@ -133,7 +133,7 @@ export function ProgramCard({
             <h2 
               style={{ 
                 fontSize: 'var(--text-lg)', 
-                fontWeight: 'var(--font-weight-semibold)',
+                fontWeight: 'var(--font-weight-medium)',
                 color: 'var(--color-text-primary)',
                 lineHeight: 'var(--line-height-sm)'
               }}

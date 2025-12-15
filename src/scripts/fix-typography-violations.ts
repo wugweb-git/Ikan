@@ -18,7 +18,6 @@ const filesToFix = [
   '/components/screens/homepage/AssessmentProgramsSection.tsx',
   '/components/screens/homepage/BenefitsSection.tsx',
   '/components/screens/homepage/TestimonialSection.tsx',
-  '/components/screens/homepage/BlogSection.tsx',
   '/components/screens/homepage/EquipProgramsSection.tsx',
   '/components/screens/homepage/MissionSection.tsx',
   '/components/screens/homepage/HeroSection.tsx',

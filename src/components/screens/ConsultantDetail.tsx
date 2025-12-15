@@ -26,7 +26,8 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Textarea } from '../ui/textarea';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
-import { consultantsData, type Consultant, type ConsultantAvailability } from '../../lib/sample-data/consultants';
+import { apiClient } from '../../lib/api-client';
+import { type Consultant, type ConsultantAvailability } from '../../lib/sample-data/consultants';
 import { useIsMobile } from '../../hooks/useIsMobile';
 import { toast } from 'sonner';
 
@@ -50,22 +51,32 @@ export function ConsultantDetail({ consultantId, onNavigate, className }: Consul
 
   useEffect(() => {
     // Find consultant by ID
-    const found = consultantsData.find(c => c.id === consultantId);
-    if (found) {
-      setConsultant(found);
-      // Set first available date
-      if (found.availability.length > 0) {
-        setSelectedDate(found.availability[0].date);
+    const loadConsultant = async () => {
+      if (!consultantId) return;
+      
+      try {
+        const response = await apiClient.getProfessional(consultantId);
+        const found = response.professional || response;
+        
+        if (found) {
+          setConsultant(found);
+          // Set first available date
+          if (found.availability && found.availability.length > 0) {
+            setSelectedDate(found.availability[0].date);
+          }
+        }
+      } catch (error) {
+        console.error('Failed to load consultant:', error);
       }
-    }
+    };
+    
+    loadConsultant();
   }, [consultantId]);
 
   if (!consultant) {
     return (
       <div className="flex items-center justify-center min-h-screen" style={{ backgroundColor: 'var(--color-bg-page)' }}>
-        <p style={{ fontSize: 'var(--text-base)', fontWeight: 'var(--font-weight-regular)', color: 'var(--color-text-muted)' }}>
-          Consultant not found
-        </p>
+        <div className="animate-spin rounded-full border-4 w-12 h-12 border-primary border-t-transparent mb-4" />
       </div>
     );
   }
@@ -135,38 +146,13 @@ export function ConsultantDetail({ consultantId, onNavigate, className }: Consul
   return (
     <div className={cn("flex flex-col min-h-screen", className)} style={{ backgroundColor: 'var(--color-bg-page)' }}>
       {/* Header - Always Visible */}
-      <div style={{ backgroundColor: 'var(--color-bg-card)', borderBottom: '1px solid var(--color-border-default)' }}>
-        <div style={{ padding: 'var(--spacing-4)', maxWidth: '1200px', margin: '0 auto' }}>
-          <div className="flex items-center justify-between">
-            <Button
-              variant="ghost"
-              onClick={handleBack}
-              style={{
-                height: '48px',
-                padding: '0 var(--spacing-3)',
-                fontWeight: 'var(--font-weight-medium)',
-                fontSize: 'var(--text-sm)'
-              }}
-            >
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              Back
-            </Button>
-            <Button
-              variant="outline"
-              onClick={handleShare}
-              style={{
-                height: '48px',
-                padding: '0 var(--spacing-3)',
-                fontWeight: 'var(--font-weight-medium)',
-                fontSize: 'var(--text-sm)'
-              }}
-            >
-              <Share2 className="mr-2 h-4 w-4" />
-              Share
-            </Button>
-          </div>
-        </div>
-      </div>
+      {!isMobile && (
+        <div style={{ 
+          height: '128px', 
+          backgroundColor: 'var(--color-bg-card)', 
+          borderBottom: '1px solid var(--color-border-default)'
+        }} />
+      )}
 
       <div className="flex flex-1" style={{ maxWidth: '1200px', margin: '0 auto', width: '100%' }}>
         {/* Main Content */}

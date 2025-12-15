@@ -3,6 +3,7 @@ import { cors } from "npm:hono/cors";
 import { logger } from "npm:hono/logger";
 import { createClient } from "jsr:@supabase/supabase-js@2";
 import * as kv from "./kv_store.tsx";
+import { handleSeedData, handleSeedUsers } from "./seed-endpoint.tsx";
 import { createHash, createHmac } from "node:crypto";
 
 const app = new Hono();
@@ -81,7 +82,22 @@ app.post("/make-server-cc205da9/auth/signup", async (c) => {
       phone: phone || null,
       avatar_url: null,
       corporate_user: corporate_user || false,
-      created_at: new Date().toISOString()
+      bio: null,
+      dateOfBirth: null,
+      gender: null,
+      location: null,
+      emergencyContactName: null,
+      emergencyContactPhone: null,
+      emergencyContactRelationship: null,
+      googleConnected: false,
+      googleEmail: null,
+      googleConnectedAt: null,
+      linkedinConnected: false,
+      linkedinEmail: null,
+      linkedinConnectedAt: null,
+      is_admin: false,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
     });
 
     return c.json({ user: data.user });
@@ -119,17 +135,117 @@ app.put("/make-server-cc205da9/users/profile", requireAuth, async (c) => {
       return c.json({ error: 'Profile not found' }, 404);
     }
     
-    const updatedProfile = {
+    // Handle emergency contact nested object
+    const updatedProfile: any = {
       ...currentProfile,
-      ...updates,
       updated_at: new Date().toISOString()
     };
+
+    // Update basic fields
+    if (updates.name !== undefined) updatedProfile.name = updates.name;
+    if (updates.phone !== undefined) updatedProfile.phone = updates.phone;
+    if (updates.bio !== undefined) updatedProfile.bio = updates.bio;
+    if (updates.dateOfBirth !== undefined) updatedProfile.dateOfBirth = updates.dateOfBirth;
+    if (updates.gender !== undefined) updatedProfile.gender = updates.gender;
+    if (updates.location !== undefined) updatedProfile.location = updates.location;
+    if (updates.avatar_url !== undefined) updatedProfile.avatar_url = updates.avatar_url;
+    
+    // Update emergency contact fields
+    if (updates.emergencyContact) {
+      updatedProfile.emergencyContactName = updates.emergencyContact.name;
+      updatedProfile.emergencyContactPhone = updates.emergencyContact.phone;
+      updatedProfile.emergencyContactRelationship = updates.emergencyContact.relationship;
+    }
+    
+    // Update preferences
+    if (updates.preferences !== undefined) {
+      updatedProfile.preferences = updates.preferences;
+    }
     
     await kv.set(`user:${userId}`, updatedProfile);
     return c.json({ profile: updatedProfile });
   } catch (error) {
     console.log('Update profile error:', error);
     return c.json({ error: 'Failed to update profile' }, 500);
+  }
+});
+
+// Social Account Connection Endpoints
+app.post("/make-server-cc205da9/user/connect-social/:provider", requireAuth, async (c) => {
+  try {
+    const userId = c.get('userId');
+    const provider = c.req.param('provider') as 'google' | 'linkedin';
+    
+    if (!['google', 'linkedin'].includes(provider)) {
+      return c.json({ error: 'Invalid provider. Must be google or linkedin' }, 400);
+    }
+
+    const currentProfile = await kv.get(`user:${userId}`);
+    if (!currentProfile) {
+      return c.json({ error: 'Profile not found' }, 404);
+    }
+
+    // In a real implementation, this would initiate OAuth flow
+    // For now, we'll simulate a successful connection
+    const providerField = provider === 'google' ? 'googleConnected' : 'linkedinConnected';
+    const emailField = provider === 'google' ? 'googleEmail' : 'linkedinEmail';
+    const connectedAtField = provider === 'google' ? 'googleConnectedAt' : 'linkedinConnectedAt';
+
+    const updatedProfile = {
+      ...currentProfile,
+      [providerField]: true,
+      [emailField]: currentProfile.email, // Use user's primary email as demo
+      [connectedAtField]: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    };
+
+    await kv.set(`user:${userId}`, updatedProfile);
+    return c.json({ 
+      success: true, 
+      message: `Successfully connected to ${provider}`,
+      profile: updatedProfile 
+    });
+  } catch (error) {
+    console.log('Social connect error:', error);
+    return c.json({ error: 'Failed to connect social account' }, 500);
+  }
+});
+
+app.post("/make-server-cc205da9/user/disconnect-social/:provider", requireAuth, async (c) => {
+  try {
+    const userId = c.get('userId');
+    const provider = c.req.param('provider') as 'google' | 'linkedin';
+    
+    if (!['google', 'linkedin'].includes(provider)) {
+      return c.json({ error: 'Invalid provider. Must be google or linkedin' }, 400);
+    }
+
+    const currentProfile = await kv.get(`user:${userId}`);
+    if (!currentProfile) {
+      return c.json({ error: 'Profile not found' }, 404);
+    }
+
+    const providerField = provider === 'google' ? 'googleConnected' : 'linkedinConnected';
+    const emailField = provider === 'google' ? 'googleEmail' : 'linkedinEmail';
+    const connectedAtField = provider === 'google' ? 'googleConnectedAt' : 'linkedinConnectedAt';
+
+    const updatedProfile = {
+      ...currentProfile,
+      [providerField]: false,
+      [emailField]: null,
+      [connectedAtField]: null,
+      updated_at: new Date().toISOString()
+    };
+
+    await kv.set(`user:${userId}`, updatedProfile);
+    return c.json({ 
+      success: true, 
+      message: `Successfully disconnected from ${provider}`,
+      profile: updatedProfile 
+    });
+  } catch (error) {
+    console.log('Social disconnect error:', error);
+    return c.json({ error: 'Failed to disconnect social account' }, 500);
   }
 });
 
@@ -214,7 +330,10 @@ app.get("/make-server-cc205da9/assessments", async (c) => {
   try {
     // Get all available assessments
     const assessments = await kv.getByPrefix('assessment:');
-    return c.json({ assessments });
+    // Filter duplicates (since we store by ID and Slug)
+    const uniqueAssessments = Array.from(new Map(assessments.map((a: any) => [a.id, a])).values());
+    
+    return c.json({ assessments: uniqueAssessments });
   } catch (error) {
     console.log('Get assessments error:', error);
     return c.json({ error: 'Failed to retrieve assessments' }, 500);
@@ -373,7 +492,10 @@ app.get("/make-server-cc205da9/assessments/responses/user", requireAuth, async (
 app.get("/make-server-cc205da9/equip/programs", async (c) => {
   try {
     const programs = await kv.getByPrefix('equip_program:');
-    return c.json({ programs });
+    // Filter duplicates (since we store by ID and Slug)
+    const uniquePrograms = Array.from(new Map(programs.map((p: any) => [p.id, p])).values());
+    
+    return c.json({ programs: uniquePrograms });
   } catch (error) {
     console.log('Get equip programs error:', error);
     return c.json({ error: 'Failed to retrieve programs' }, 500);
@@ -550,8 +672,8 @@ app.get("/make-server-cc205da9/library/resources/:resourceId", async (c) => {
   }
 });
 
-// Admin Blog Management Endpoints
-app.get("/make-server-cc205da9/admin/blogs", requireAuth, async (c) => {
+// Admin Resource Management Endpoints
+app.get("/make-server-cc205da9/admin/resources", requireAuth, async (c) => {
   try {
     const user = c.get('user');
     
@@ -561,22 +683,22 @@ app.get("/make-server-cc205da9/admin/blogs", requireAuth, async (c) => {
       return c.json({ error: 'Admin access required' }, 403);
     }
     
-    // Get all blog resources
-    const blogs = await kv.getByPrefix('resource:');
+    // Get all resource resources
+    const resources = await kv.getByPrefix('resource:');
     
     // Sort by created_at descending
-    const sortedBlogs = blogs.sort((a, b) => 
+    const sortedResources = resources.sort((a, b) => 
       new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime()
     );
     
-    return c.json({ blogs: sortedBlogs });
+    return c.json({ resources: sortedResources });
   } catch (error) {
-    console.log('Get admin blogs error:', error);
-    return c.json({ error: 'Failed to retrieve blogs' }, 500);
+    console.log('Get admin resources error:', error);
+    return c.json({ error: 'Failed to retrieve resources' }, 500);
   }
 });
 
-app.post("/make-server-cc205da9/admin/blogs", requireAuth, async (c) => {
+app.post("/make-server-cc205da9/admin/resources", requireAuth, async (c) => {
   try {
     const user = c.get('user');
     
@@ -586,31 +708,31 @@ app.post("/make-server-cc205da9/admin/blogs", requireAuth, async (c) => {
       return c.json({ error: 'Admin access required' }, 403);
     }
     
-    const blogData = await c.req.json();
-    const blogId = `blog-${Date.now()}`;
+    const resourceData = await c.req.json();
+    const resourceId = `resource-${Date.now()}`;
     
-    const newBlog = {
-      id: blogId,
-      ...blogData,
+    const newResource = {
+      id: resourceId,
+      ...resourceData,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
       created_by: user.id
     };
     
-    await kv.set(`resource:${blogId}`, newBlog);
+    await kv.set(`resource:${resourceId}`, newResource);
     
-    console.log(`✅ Blog created: ${blogId}`);
-    return c.json({ blog: newBlog });
+    console.log(`✅ Resource created: ${resourceId}`);
+    return c.json({ resource: newResource });
   } catch (error) {
-    console.log('Create blog error:', error);
-    return c.json({ error: 'Failed to create blog' }, 500);
+    console.log('Create resource error:', error);
+    return c.json({ error: 'Failed to create resource' }, 500);
   }
 });
 
-app.put("/make-server-cc205da9/admin/blogs/:blogId", requireAuth, async (c) => {
+app.put("/make-server-cc205da9/admin/resources/:resourceId", requireAuth, async (c) => {
   try {
     const user = c.get('user');
-    const blogId = c.req.param('blogId');
+    const resourceId = c.req.param('resourceId');
     
     // Check if user is admin
     const userProfile = await kv.get(`user:${user.id}`);
@@ -619,34 +741,34 @@ app.put("/make-server-cc205da9/admin/blogs/:blogId", requireAuth, async (c) => {
     }
     
     const updates = await c.req.json();
-    const existingBlog = await kv.get(`resource:${blogId}`);
+    const existingResource = await kv.get(`resource:${resourceId}`);
     
-    if (!existingBlog) {
-      return c.json({ error: 'Blog not found' }, 404);
+    if (!existingResource) {
+      return c.json({ error: 'Resource not found' }, 404);
     }
     
-    const updatedBlog = {
-      ...existingBlog,
+    const updatedResource = {
+      ...existingResource,
       ...updates,
-      id: blogId, // Preserve ID
+      id: resourceId, // Preserve ID
       updated_at: new Date().toISOString(),
       updated_by: user.id
     };
     
-    await kv.set(`resource:${blogId}`, updatedBlog);
+    await kv.set(`resource:${resourceId}`, updatedResource);
     
-    console.log(`✅ Blog updated: ${blogId}`);
-    return c.json({ blog: updatedBlog });
+    console.log(`✅ Resource updated: ${resourceId}`);
+    return c.json({ resource: updatedResource });
   } catch (error) {
-    console.log('Update blog error:', error);
-    return c.json({ error: 'Failed to update blog' }, 500);
+    console.log('Update resource error:', error);
+    return c.json({ error: 'Failed to update resource' }, 500);
   }
 });
 
-app.delete("/make-server-cc205da9/admin/blogs/:blogId", requireAuth, async (c) => {
+app.delete("/make-server-cc205da9/admin/resources/:resourceId", requireAuth, async (c) => {
   try {
     const user = c.get('user');
-    const blogId = c.req.param('blogId');
+    const resourceId = c.req.param('resourceId');
     
     // Check if user is admin
     const userProfile = await kv.get(`user:${user.id}`);
@@ -654,19 +776,24 @@ app.delete("/make-server-cc205da9/admin/blogs/:blogId", requireAuth, async (c) =
       return c.json({ error: 'Admin access required' }, 403);
     }
     
-    const existingBlog = await kv.get(`resource:${blogId}`);
-    if (!existingBlog) {
-      return c.json({ error: 'Blog not found' }, 404);
+    const existingResource = await kv.get(`resource:${resourceId}`);
+    if (!existingResource) {
+      return c.json({ error: 'Resource not found' }, 404);
     }
     
-    await kv.del(`resource:${blogId}`);
+    await kv.del(`resource:${resourceId}`);
     
-    console.log(`✅ Blog deleted: ${blogId}`);
-    return c.json({ success: true, message: 'Blog deleted successfully' });
+    console.log(`✅ Resource deleted: ${resourceId}`);
+    return c.json({ success: true, message: 'Resource deleted successfully' });
   } catch (error) {
-    console.log('Delete blog error:', error);
-    return c.json({ error: 'Failed to delete blog' }, 500);
+    console.log('Delete resource error:', error);
+    return c.json({ error: 'Failed to delete resource' }, 500);
   }
+});
+
+// Seed Data Endpoint
+app.post("/make-server-cc205da9/seed/data", async (c) => {
+  return c.json(await handleSeedData());
 });
 
 // Seed Demo Users Endpoint
@@ -752,6 +879,103 @@ app.post("/make-server-cc205da9/admin/set-admin/:userId", requireAuth, async (c)
   }
 });
 
+// Admin User Management Endpoints
+app.get("/make-server-cc205da9/admin/users", requireAuth, async (c) => {
+  try {
+    const user = c.get('user');
+    
+    // Check if user is admin
+    const userProfile = await kv.get(`user:${user.id}`);
+    if (!userProfile?.is_admin) {
+      return c.json({ error: 'Admin access required' }, 403);
+    }
+    
+    // Get all users
+    const users = await kv.getByPrefix('user:');
+    
+    // Sort by created_at descending
+    const sortedUsers = users.sort((a, b) => 
+      new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime()
+    );
+    
+    return c.json({ users: sortedUsers });
+  } catch (error) {
+    console.log('Get admin users error:', error);
+    return c.json({ error: 'Failed to retrieve users' }, 500);
+  }
+});
+
+// Admin - Update User
+app.put("/make-server-cc205da9/admin/users/:userId", requireAuth, async (c) => {
+  try {
+    const adminUser = c.get('user');
+    const userId = c.req.param('userId');
+    const updates = await c.req.json();
+    
+    // Check if requesting user is admin
+    const adminProfile = await kv.get(`user:${adminUser.id}`);
+    if (!adminProfile?.is_admin) {
+      return c.json({ error: 'Admin access required' }, 403);
+    }
+    
+    const currentProfile = await kv.get(`user:${userId}`);
+    if (!currentProfile) {
+      return c.json({ error: 'User not found' }, 404);
+    }
+    
+    const updatedProfile = {
+      ...currentProfile,
+      ...updates,
+      user_id: userId, // Prevent changing user ID
+      updated_at: new Date().toISOString()
+    };
+    
+    await kv.set(`user:${userId}`, updatedProfile);
+    return c.json({ profile: updatedProfile });
+  } catch (error) {
+    console.log('Admin update user error:', error);
+    return c.json({ error: 'Failed to update user' }, 500);
+  }
+});
+
+// Admin - Delete User
+app.delete("/make-server-cc205da9/admin/users/:userId", requireAuth, async (c) => {
+  try {
+    const adminUser = c.get('user');
+    const userId = c.req.param('userId');
+    
+    // Check if requesting user is admin
+    const adminProfile = await kv.get(`user:${adminUser.id}`);
+    if (!adminProfile?.is_admin) {
+      return c.json({ error: 'Admin access required' }, 403);
+    }
+    
+    // Prevent deleting self
+    if (userId === adminUser.id) {
+      return c.json({ error: 'Cannot delete your own account' }, 400);
+    }
+    
+    const userProfile = await kv.get(`user:${userId}`);
+    if (!userProfile) {
+      return c.json({ error: 'User not found' }, 404);
+    }
+    
+    // Delete user and related data
+    await kv.del(`user:${userId}`);
+    
+    // Optionally delete related data (journal entries, etc.)
+    const journalEntries = await kv.getByPrefix(`journal:${userId}:`);
+    for (const entry of journalEntries) {
+      await kv.del(`journal:${userId}:${entry.date}`);
+    }
+    
+    return c.json({ success: true, message: 'User deleted successfully' });
+  } catch (error) {
+    console.log('Admin delete user error:', error);
+    return c.json({ error: 'Failed to delete user' }, 500);
+  }
+});
+
 // Consultation/Professional Endpoints
 app.get("/make-server-cc205da9/consultation/professionals", async (c) => {
   try {
@@ -796,6 +1020,98 @@ app.get("/make-server-cc205da9/consultation/professionals/:professionalId", asyn
   } catch (error) {
     console.log('Get professional error:', error);
     return c.json({ error: 'Failed to retrieve professional' }, 500);
+  }
+});
+
+// Admin Professional Endpoints
+app.post("/make-server-cc205da9/admin/professionals", requireAuth, async (c) => {
+  try {
+    const user = c.get('user');
+    
+    // Check if user is admin
+    const userProfile = await kv.get(`user:${user.id}`);
+    if (!userProfile?.is_admin) {
+      return c.json({ error: 'Admin access required' }, 403);
+    }
+    
+    const professionalData = await c.req.json();
+    const professionalId = professionalData.id || `prof-${Date.now()}`;
+    
+    const newProfessional = {
+      ...professionalData,
+      id: professionalId,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    };
+    
+    await kv.set(`professional:${professionalId}`, newProfessional);
+    
+    console.log(`✅ Professional created: ${professionalId}`);
+    return c.json({ professional: newProfessional });
+  } catch (error) {
+    console.log('Create professional error:', error);
+    return c.json({ error: 'Failed to create professional' }, 500);
+  }
+});
+
+app.put("/make-server-cc205da9/admin/professionals/:professionalId", requireAuth, async (c) => {
+  try {
+    const user = c.get('user');
+    const professionalId = c.req.param('professionalId');
+    
+    // Check if user is admin
+    const userProfile = await kv.get(`user:${user.id}`);
+    if (!userProfile?.is_admin) {
+      return c.json({ error: 'Admin access required' }, 403);
+    }
+    
+    const updates = await c.req.json();
+    const existingProfessional = await kv.get(`professional:${professionalId}`);
+    
+    if (!existingProfessional) {
+      return c.json({ error: 'Professional not found' }, 404);
+    }
+    
+    const updatedProfessional = {
+      ...existingProfessional,
+      ...updates,
+      id: professionalId,
+      updated_at: new Date().toISOString()
+    };
+    
+    await kv.set(`professional:${professionalId}`, updatedProfessional);
+    
+    console.log(`✅ Professional updated: ${professionalId}`);
+    return c.json({ professional: updatedProfessional });
+  } catch (error) {
+    console.log('Update professional error:', error);
+    return c.json({ error: 'Failed to update professional' }, 500);
+  }
+});
+
+app.delete("/make-server-cc205da9/admin/professionals/:professionalId", requireAuth, async (c) => {
+  try {
+    const user = c.get('user');
+    const professionalId = c.req.param('professionalId');
+    
+    // Check if user is admin
+    const userProfile = await kv.get(`user:${user.id}`);
+    if (!userProfile?.is_admin) {
+      return c.json({ error: 'Admin access required' }, 403);
+    }
+    
+    const existingProfessional = await kv.get(`professional:${professionalId}`);
+    if (!existingProfessional) {
+      return c.json({ error: 'Professional not found' }, 404);
+    }
+    
+    await kv.del(`professional:${professionalId}`);
+    
+    console.log(`✅ Professional deleted: ${professionalId}`);
+    return c.json({ success: true, message: 'Professional deleted successfully' });
+  } catch (error) {
+    console.log('Delete professional error:', error);
+    return c.json({ error: 'Failed to delete professional' }, 500);
   }
 });
 
@@ -1253,152 +1569,10 @@ function createDefaultCMSContent(pageId: string): any {
       lastUpdated: new Date().toISOString()
     },
     'contact': {
-      title: 'Contact Us',
+      title: "We're Here to Help",
       content: `
-        <div class="space-y-8">
-          <div class="bg-gradient-to-r from-cyan-50 to-blue-50 p-6 rounded-lg border border-cyan-100">
-            <h2 class="text-xl font-semibold text-gray-900 mb-3">💬 Get in Touch</h2>
-            <p class="text-gray-700 leading-relaxed">We're here to support you on your mental health journey. Reach out to us for any questions, concerns, or feedback. Your wellbeing is our priority.</p>
-          </div>
-
-          <div class="grid lg:grid-cols-2 gap-8">
-            <div class="space-y-6">
-              <section class="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
-                <h3 class="text-lg font-medium text-gray-900 mb-4 flex items-center">
-                  <span class="mr-2">🎧</span> Support Team
-                </h3>
-                <div class="space-y-4">
-                  <p class="text-gray-700">Our dedicated support team is available to help with technical issues, account questions, and general inquiries.</p>
-                  <div class="bg-blue-50 p-4 rounded-lg border border-blue-200">
-                    <div class="grid gap-3">
-                      <div class="flex items-center">
-                        <span class="text-blue-600 mr-3">📧</span>
-                        <div>
-                          <p class="font-medium text-blue-900">Email Support</p>
-                          <a href="mailto:support@ikan.health" class="text-blue-600 hover:underline">support@ikan.health</a>
-                        </div>
-                      </div>
-                      <div class="flex items-center">
-                        <span class="text-green-600 mr-3">⏰</span>
-                        <div>
-                          <p class="font-medium text-green-900">Response Time</p>
-                          <p class="text-green-700 text-sm">Within 24 hours</p>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </section>
-
-              <section class="bg-red-50 p-6 rounded-lg border border-red-200">
-                <h3 class="text-lg font-medium text-red-900 mb-4 flex items-center">
-                  <span class="mr-2">🚨</span> Crisis Support
-                </h3>
-                <div class="space-y-4">
-                  <p class="text-red-800 font-medium">If you're experiencing a mental health crisis, please reach out for immediate help:</p>
-                  <div class="grid gap-3">
-                    <div class="bg-white p-3 rounded-lg border border-red-200">
-                      <p class="font-medium text-red-900">National Suicide Prevention Lifeline</p>
-                      <a href="tel:988" class="text-red-600 font-mono text-lg hover:underline">988</a>
-                    </div>
-                    <div class="bg-white p-3 rounded-lg border border-red-200">
-                      <p class="font-medium text-red-900">Crisis Text Line</p>
-                      <p class="text-red-600">Text <strong>HOME</strong> to <strong>741741</strong></p>
-                    </div>
-                    <div class="bg-white p-3 rounded-lg border border-red-200">
-                      <p class="font-medium text-red-900">Emergency Services</p>
-                      <a href="tel:911" class="text-red-600 font-mono text-lg hover:underline">911</a>
-                    </div>
-                    <div class="bg-white p-3 rounded-lg border border-red-200">
-                      <p class="font-medium text-red-900">International Support</p>
-                      <a href="https://befrienders.org" target="_blank" class="text-red-600 hover:underline">befrienders.org</a>
-                    </div>
-                  </div>
-                </div>
-              </section>
-            </div>
-
-            <div class="space-y-6">
-              <section class="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
-                <h3 class="text-lg font-medium text-gray-900 mb-4 flex items-center">
-                  <span class="mr-2">🤝</span> Business Inquiries
-                </h3>
-                <div class="space-y-4">
-                  <div class="border-l-4 border-purple-400 pl-4">
-                    <h4 class="font-medium text-gray-900 mb-2">Partnerships</h4>
-                    <p class="text-gray-700 text-sm mb-2">For partnership opportunities and collaborations:</p>
-                    <a href="mailto:partnerships@ikan.health" class="text-purple-600 hover:underline">partnerships@ikan.health</a>
-                  </div>
-                  <div class="border-l-4 border-green-400 pl-4">
-                    <h4 class="font-medium text-gray-900 mb-2">Media Inquiries</h4>
-                    <p class="text-gray-700 text-sm mb-2">For press and media inquiries:</p>
-                    <a href="mailto:press@ikan.health" class="text-green-600 hover:underline">press@ikan.health</a>
-                  </div>
-                  <div class="border-l-4 border-blue-400 pl-4">
-                    <h4 class="font-medium text-gray-900 mb-2">Legal & Compliance</h4>
-                    <p class="text-gray-700 text-sm mb-2">For legal matters and compliance questions:</p>
-                    <a href="mailto:legal@ikan.health" class="text-blue-600 hover:underline">legal@ikan.health</a>
-                  </div>
-                </div>
-              </section>
-
-              <section class="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
-                <h3 class="text-lg font-medium text-gray-900 mb-4 flex items-center">
-                  <span class="mr-2">📍</span> Office Address
-                </h3>
-                <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                  <address class="not-italic text-gray-700 leading-relaxed">
-                    <strong class="text-gray-900">iKan Health Inc.</strong><br>
-                    123 Mental Health Boulevard<br>
-                    Wellness City, CA 90210<br>
-                    United States
-                  </address>
-                </div>
-                <div class="mt-4 text-sm text-gray-600">
-                  <p>📞 Phone consultations available through our platform</p>
-                  <p>🌐 Remote-first mental health support</p>
-                </div>
-              </section>
-
-              <section class="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
-                <h3 class="text-lg font-medium text-gray-900 mb-4 flex items-center">
-                  <span class="mr-2">🌐</span> Connect With Us
-                </h3>
-                <div class="grid grid-cols-2 gap-4">
-                  <a href="https://twitter.com/ikan_health" target="_blank" class="bg-blue-50 p-3 rounded-lg border border-blue-200 hover:bg-blue-100 transition-colors text-center">
-                    <div class="text-blue-600 text-2xl mb-1">🐦</div>
-                    <p class="text-blue-900 font-medium text-sm">Twitter</p>
-                  </a>
-                  <a href="https://linkedin.com/company/ikan-health" target="_blank" class="bg-blue-50 p-3 rounded-lg border border-blue-200 hover:bg-blue-100 transition-colors text-center">
-                    <div class="text-blue-600 text-2xl mb-1">💼</div>
-                    <p class="text-blue-900 font-medium text-sm">LinkedIn</p>
-                  </a>
-                  <a href="https://instagram.com/ikan.health" target="_blank" class="bg-pink-50 p-3 rounded-lg border border-pink-200 hover:bg-pink-100 transition-colors text-center">
-                    <div class="text-pink-600 text-2xl mb-1">📸</div>
-                    <p class="text-pink-900 font-medium text-sm">Instagram</p>
-                  </a>
-                  <a href="https://youtube.com/@ikan.health" target="_blank" class="bg-red-50 p-3 rounded-lg border border-red-200 hover:bg-red-100 transition-colors text-center">
-                    <div class="text-red-600 text-2xl mb-1">📺</div>
-                    <p class="text-red-900 font-medium text-sm">YouTube</p>
-                  </a>
-                </div>
-              </section>
-            </div>
-          </div>
-
-          <div class="bg-gray-900 text-white p-6 rounded-lg">
-            <h3 class="text-lg font-medium mb-3">We Value Your Feedback</h3>
-            <p class="text-gray-300 mb-4">Your experience matters to us. Share your thoughts, suggestions, or concerns to help us improve our mental health platform.</p>
-            <div class="flex flex-col sm:flex-row gap-4">
-              <a href="mailto:feedback@ikan.health" class="bg-white text-gray-900 px-4 py-2 rounded-lg font-medium hover:bg-gray-100 transition-colors text-center">
-                Send Feedback
-              </a>
-              <a href="/faq" class="border border-gray-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-gray-800 transition-colors text-center">
-                Check FAQ First
-              </a>
-            </div>
-          </div>
-        </div>
+        <p>Your mental health journey matters to us. Reach out for support, questions, or just to connect.</p>
+        <p><strong>Note:</strong> If you are in immediate danger, please call emergency services.</p>
       `,
       lastUpdated: new Date().toISOString()
     },
@@ -2539,6 +2713,54 @@ app.post("/make-server-cc205da9/seed/users", async (c) => {
       success: false,
       error: 'Failed to seed users: ' + error.message
     }, 500);
+  }
+});
+
+// Newsletter Signup Endpoint
+app.post("/make-server-cc205da9/newsletter/signup", async (c) => {
+  try {
+    const { name, email } = await c.req.json();
+    
+    if (!email) {
+      return c.json({ error: 'Email is required' }, 400);
+    }
+
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return c.json({ error: 'Invalid email format' }, 400);
+    }
+
+    const subscriberId = `newsletter:${email}`;
+    
+    // Check if already subscribed
+    const existingSubscriber = await kv.get(subscriberId);
+    if (existingSubscriber) {
+      return c.json({ 
+        message: 'You are already subscribed to our newsletter',
+        alreadySubscribed: true 
+      }, 200);
+    }
+
+    // Create newsletter subscription
+    const subscription = {
+      email,
+      name: name || '',
+      subscribed_at: new Date().toISOString(),
+      status: 'active',
+      source: 'website'
+    };
+
+    await kv.set(subscriberId, subscription);
+    
+    console.log(`✅ Newsletter subscription: ${email}`);
+    return c.json({ 
+      message: 'Successfully subscribed to newsletter!',
+      success: true 
+    });
+  } catch (error) {
+    console.log('Newsletter signup error:', error);
+    return c.json({ error: 'Failed to process newsletter signup' }, 500);
   }
 });
 

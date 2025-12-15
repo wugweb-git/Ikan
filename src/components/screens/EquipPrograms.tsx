@@ -95,17 +95,9 @@ export function EquipPrograms({ className, onNavigate }: EquipProgramsProps) {
             console.warn('Failed to fetch API programs', error);
         }
 
-        // 3. Merge: API takes precedence
-        const mergedMap = new Map<string, EquipProgram>();
-        localPrograms.forEach(p => mergedMap.set(p.id, p as EquipProgram));
-        apiPrograms.forEach(p => mergedMap.set(p.id, p)); // Assuming ID matches or is consistent
-
-        // Note: Admin panel might create programs with IDs like 'equip-timestamp'.
-        // Local programs have UUIDs.
-        // We might want to key by 'equip_id' if available, or just append new ones.
-        
-        // Let's just combine them and de-duplicate by ID.
-        const allPrograms = [...localPrograms as EquipProgram[], ...apiPrograms];
+        // 3. Merge: Local takes precedence (to ensure copy matches design)
+        // We put API programs first, then Local programs, so Local overrides API in the Map
+        const allPrograms = [...apiPrograms, ...localPrograms as EquipProgram[]];
         const uniquePrograms = Array.from(new Map(allPrograms.map(p => [p.id || p.equip_id, p])).values());
 
         setPrograms(uniquePrograms);
@@ -308,7 +300,7 @@ export function EquipPrograms({ className, onNavigate }: EquipProgramsProps) {
           <h1 
             style={{ 
               fontSize: 'var(--text-2xl)', 
-              fontWeight: 'var(--font-weight-semibold)',
+              fontWeight: 'var(--font-weight-medium)',
               color: 'var(--color-text-primary)',
               fontFamily: 'var(--font-family-base)'
             }}
@@ -327,7 +319,7 @@ export function EquipPrograms({ className, onNavigate }: EquipProgramsProps) {
 
         {/* What makes Equip special? Section */}
         <div className="space-y-6">
-          <h2 style={{ fontSize: 'var(--text-xl)', fontWeight: 'var(--font-weight-semibold)', color: 'var(--color-text-primary)' }}>
+          <h2 style={{ fontSize: 'var(--text-xl)', fontWeight: 'var(--font-weight-medium)', color: 'var(--color-text-primary)' }}>
             What makes Equip special?
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -427,7 +419,7 @@ export function EquipPrograms({ className, onNavigate }: EquipProgramsProps) {
                       {/* Top Section: Tags & Title */}
                       <div className="space-y-2">
                         <p 
-                          className="text-xs uppercase tracking-widest font-semibold"
+                          className="text-xs uppercase tracking-widest font-medium"
                           style={{ 
                             color: isProgramPurchased ? 'var(--color-status-success)' : 'var(--color-text-primary)',
                             fontFamily: 'var(--font-family-base)'
@@ -436,7 +428,7 @@ export function EquipPrograms({ className, onNavigate }: EquipProgramsProps) {
                           {isProgramPurchased ? 'PURCHASED' : (program.tags && program.tags.length > 0 ? program.tags[0] : 'PROGRAM')}
                         </p>
                         <h3 
-                          className="text-3xl font-semibold text-primary"
+                          className="text-3xl font-medium text-primary"
                           style={{ fontFamily: 'var(--font-family-base)' }}
                         >
                           {program.title}
@@ -515,7 +507,7 @@ export function EquipPrograms({ className, onNavigate }: EquipProgramsProps) {
                         )}
                       </div>
                       <div className="flex flex-wrap gap-2 mt-2">
-                        {program.tags.map((tag, i) => (
+                        {(program.tags || []).map((tag, i) => (
                           <Badge key={i} variant="secondary" className="text-xs">
                             {tag}
                           </Badge>
@@ -539,7 +531,7 @@ export function EquipPrograms({ className, onNavigate }: EquipProgramsProps) {
                           <Icon name="calendar" variant="default" size={16} className="mr-1" />
                           {program.duration_days} days
                         </div>
-                        <div className="font-semibold text-primary">
+                        <div className="font-medium text-primary">
                           {getDisplayPrice(program)}
                         </div>
                       </div>

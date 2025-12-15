@@ -5,6 +5,7 @@ import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Textarea } from '../ui/textarea';
 import { Card, CardContent } from '../ui/card';
+import { usePageContent } from '../../hooks/usePageContent';
 
 interface ContactUsProps {
   className?: string;
@@ -13,6 +14,8 @@ interface ContactUsProps {
 
 export function ContactUs({ className, onBack }: ContactUsProps) {
   const isMobile = useIsMobile();
+  const { content } = usePageContent('contact');
+  
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -24,6 +27,7 @@ export function ContactUs({ className, onBack }: ContactUsProps) {
     e.preventDefault();
     // Handle form submission
     console.log('Contact form submitted:', formData);
+    // You would typically send this to an API endpoint here
   };
 
   const contactMethods = [
@@ -37,9 +41,9 @@ export function ContactUs({ className, onBack }: ContactUsProps) {
     {
       icon: 'phone',
       title: 'Crisis Support',
-      description: '24/7 immediate mental health assistance',
-      value: '988 Suicide & Crisis Lifeline',
-      action: 'tel:988'
+      description: 'iCALL Suicide Prevention Helpline',
+      value: '915298721',
+      action: 'tel:915298721'
     },
     {
       icon: 'message-circle',
@@ -72,28 +76,14 @@ export function ContactUs({ className, onBack }: ContactUsProps) {
             maxWidth: 'var(--constraint-content-max)'
           }}
         >
-          {/* Back Navigation */}
-          {onBack && (
-            <button
-              onClick={onBack}
-              className="flex items-center gap-2 mb-6 touch-target hover:opacity-80 transition-all duration-200"
-              style={{
-                fontSize: 'var(--text-sm)',
-                fontWeight: 'var(--font-weight-regular)',
-                color: 'rgba(255, 255, 255, 0.8)',
-                background: 'none',
-                border: 'none',
-                padding: '0',
-                cursor: 'pointer',
-                marginBottom: 'var(--ikan-component-spacing-large)'
-              }}
-            >
-              <Icon name="arrow-left" size={16} />
-              Back
-            </button>
-          )}
 
-          <div className="text-center space-y-4">
+
+          <div 
+            className="text-center space-y-4"
+            style={{
+              paddingTop: isMobile ? 'var(--ikan-nav-height-mobile)' : 'var(--ikan-nav-height-desktop)'
+            }}
+          >
             <div className="inline-flex items-center justify-center mb-6">
               <div
                 style={{
@@ -116,21 +106,32 @@ export function ContactUs({ className, onBack }: ContactUsProps) {
                 marginBottom: 'var(--ikan-component-spacing-default)'
               }}
             >
-              We're Here to Help
+              {content?.title || "We're Here to Help"}
             </h1>
             
-            <p 
-              style={{
-                fontSize: 'var(--text-lg)',
-                fontWeight: 'var(--font-weight-regular)',
-                lineHeight: 'var(--line-height-md)',
-                opacity: 0.9,
-                maxWidth: '600px',
-                margin: '0 auto'
-              }}
-            >
-              Your mental health journey matters to us. Reach out for support, questions, or just to connect.
-            </p>
+            {/* Dynamic Intro Content */}
+            {content?.content ? (
+               <div 
+                 dangerouslySetInnerHTML={{ __html: content.content }}
+                 className="prose prose-invert max-w-2xl mx-auto text-lg opacity-90"
+                 style={{
+                   color: 'var(--color-text-inverse)'
+                 }}
+               />
+            ) : (
+              <p 
+                style={{
+                  fontSize: 'var(--text-lg)',
+                  fontWeight: 'var(--font-weight-regular)',
+                  lineHeight: 'var(--line-height-md)',
+                  opacity: 0.9,
+                  maxWidth: '600px',
+                  margin: '0 auto'
+                }}
+              >
+                Your mental health journey matters to us. Reach out for support, questions, or just to connect.
+              </p>
+            )}
           </div>
         </div>
       </div>
@@ -442,7 +443,7 @@ export function ContactUs({ className, onBack }: ContactUsProps) {
 
                 <div className="space-y-3">
                   <Button
-                    onClick={() => window.open('tel:988', '_blank')}
+                    onClick={() => window.open('tel:915298721', '_blank')}
                     variant="outline"
                     className="w-full"
                     style={{
@@ -455,7 +456,7 @@ export function ContactUs({ className, onBack }: ContactUsProps) {
                       fontWeight: 'var(--font-weight-medium)'
                     }}
                   >
-                    Call 988 - Crisis Lifeline
+                    Call iCALL - 915298721
                   </Button>
                   
                   <Button

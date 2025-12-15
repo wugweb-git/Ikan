@@ -5,6 +5,7 @@ import { useIsMobile } from '../hooks/useIsMobile';
 import { Icon } from './Icon';
 import { Logo } from './Logo';
 import { cn } from './ui/utils';
+import { authContent } from '../lib/content/auth';
 import svgPaths from "../imports/svg-850apu7kjy";
 
 interface LoginScreenProps {
@@ -37,12 +38,12 @@ function HeroSection() {
           className="mb-6"
           style={{
             fontSize: 'var(--text-3xl)',
-            fontWeight: 'var(--font-weight-bold)',
+            fontWeight: 'var(--font-weight-medium)',
             lineHeight: 'var(--line-height-sm)',
             color: 'white'
           }}
         >
-          Your Mental Health Journey Starts Here
+          {authContent.hero.title}
         </h1>
         <p 
           className="mb-8"
@@ -53,22 +54,22 @@ function HeroSection() {
             color: 'rgba(255, 255, 255, 0.9)'
           }}
         >
-          Access evidence-based assessments, personalized insights, and professional support to enhance your wellbeing and resilience.
+          {authContent.hero.subtitle}
         </p>
         
         {/* Feature highlights */}
         <div className="hidden md:grid md:grid-cols-3 gap-6 text-sm">
           <div className="flex items-center gap-3">
             <Icon name="shield" size={20} style={{ color: 'white' }} />
-            <span style={{ color: 'rgba(255, 255, 255, 0.9)' }}>Private & Secure</span>
+            <span style={{ color: 'rgba(255, 255, 255, 0.9)' }}>{authContent.hero.features.private}</span>
           </div>
           <div className="flex items-center gap-3">
             <Icon name="heart" size={20} style={{ color: 'white' }} />
-            <span style={{ color: 'rgba(255, 255, 255, 0.9)' }}>Evidence-Based</span>
+            <span style={{ color: 'rgba(255, 255, 255, 0.9)' }}>{authContent.hero.features.evidence}</span>
           </div>
           <div className="flex items-center gap-3">
             <Icon name="users" size={20} style={{ color: 'white' }} />
-            <span style={{ color: 'rgba(255, 255, 255, 0.9)' }}>Professional Support</span>
+            <span style={{ color: 'rgba(255, 255, 255, 0.9)' }}>{authContent.hero.features.support}</span>
           </div>
         </div>
       </div>
@@ -80,24 +81,24 @@ function AuthHeader({ mode, onModeChange, onBack }: { mode: AuthMode; onModeChan
   const getTitle = () => {
     switch (mode) {
       case 'login':
-        return 'Welcome Back';
+        return authContent.header.welcomeBack;
       case 'signup':
-        return 'Create Account';
+        return authContent.header.createAccount;
       case 'forgot':
-        return 'Reset Password';
+        return authContent.header.resetPassword;
       default:
-        return 'Welcome';
+        return authContent.header.defaultWelcome;
     }
   };
 
   const getSubtitle = () => {
     switch (mode) {
       case 'login':
-        return 'Sign in to continue your mental health journey';
+        return authContent.header.signInSubtitle;
       case 'signup':
-        return 'Join thousands improving their mental wellbeing';
+        return authContent.header.signUpSubtitle;
       case 'forgot':
-        return 'Enter your email to receive reset instructions';
+        return authContent.header.forgotSubtitle;
       default:
         return '';
     }
@@ -117,7 +118,7 @@ function AuthHeader({ mode, onModeChange, onBack }: { mode: AuthMode; onModeChan
             }}
           >
             <Icon name="arrowLeft" size={16} />
-            Back
+            {authContent.header.back}
           </button>
         )}
         
@@ -135,7 +136,7 @@ function AuthHeader({ mode, onModeChange, onBack }: { mode: AuthMode; onModeChan
         <h1 
           style={{
             fontSize: 'var(--text-2xl)',
-            fontWeight: 'var(--font-weight-semibold)',
+            fontWeight: 'var(--font-weight-medium)',
             color: 'var(--color-text-primary)',
             lineHeight: 'var(--line-height-sm)'
           }}
@@ -157,7 +158,7 @@ function AuthHeader({ mode, onModeChange, onBack }: { mode: AuthMode; onModeChan
         {mode !== 'forgot' && (
           <div className="flex items-center justify-center gap-1 text-sm mt-4">
             <span style={{ color: 'var(--color-text-muted)' }}>
-              {mode === 'login' ? "Don't have an account?" : "Already have an account?"}
+              {mode === 'login' ? authContent.messages.switch.toSignup : authContent.messages.switch.toLogin}
             </span>
             <button
               type="button"
@@ -165,7 +166,7 @@ function AuthHeader({ mode, onModeChange, onBack }: { mode: AuthMode; onModeChan
               className="font-medium hover:underline"
               style={{ color: 'var(--color-primary-default)' }}
             >
-              {mode === 'login' ? 'Sign up' : 'Sign in'}
+              {mode === 'login' ? authContent.messages.switch.toSignupAction : authContent.messages.switch.toLoginAction}
             </button>
           </div>
         )}
@@ -193,57 +194,57 @@ function AuthForm({ mode, onSuccess, onModeChange }: {
     e.preventDefault();
     
     if (!formData.email) {
-      showToast('error', 'Missing email', 'Please enter your email address');
+      showToast('error', authContent.messages.error.missingEmail.title, authContent.messages.error.missingEmail.description);
       return;
     }
 
     if (mode === 'forgot') {
       try {
         await resetPassword(formData.email);
-        showToast('success', 'Reset email sent', 'Check your email for password reset instructions.');
+        showToast('success', authContent.messages.success.resetSent.title, authContent.messages.success.resetSent.description);
         onModeChange('login');
       } catch (error) {
         console.error('Password reset error:', error);
-        showToast('error', 'Reset failed', error instanceof Error ? error.message : 'Failed to send reset email. Please try again.');
+        showToast('error', authContent.messages.error.resetFailed.title, error instanceof Error ? error.message : authContent.messages.error.resetFailed.description);
       }
       return;
     }
 
     if (!formData.password) {
-      showToast('error', 'Missing password', 'Please enter your password');
+      showToast('error', authContent.messages.error.missingPassword.title, authContent.messages.error.missingPassword.description);
       return;
     }
 
     if (mode === 'signup') {
       if (!formData.fullName) {
-        showToast('error', 'Missing name', 'Please enter your full name');
+        showToast('error', authContent.messages.error.missingName.title, authContent.messages.error.missingName.description);
         return;
       }
       if (formData.password !== formData.confirmPassword) {
-        showToast('error', 'Passwords do not match', 'Please ensure both passwords are identical');
+        showToast('error', authContent.messages.error.passwordMismatch.title, authContent.messages.error.passwordMismatch.description);
         return;
       }
       if (formData.password.length < 8) {
-        showToast('error', 'Password too short', 'Password must be at least 8 characters long');
+        showToast('error', authContent.messages.error.passwordShort.title, authContent.messages.error.passwordShort.description);
         return;
       }
 
       try {
         await signUp(formData.email, formData.password, formData.fullName);
-        showToast('success', 'Account created!', 'Welcome to iKan. Your mental health journey begins now.');
+        showToast('success', authContent.messages.success.accountCreated.title, authContent.messages.success.accountCreated.description);
         onSuccess?.();
       } catch (error) {
         console.error('Sign up error:', error);
-        showToast('error', 'Sign up failed', error instanceof Error ? error.message : 'Failed to create account. Please try again.');
+        showToast('error', authContent.messages.error.signUpFailed.title, error instanceof Error ? error.message : authContent.messages.error.signUpFailed.description);
       }
     } else {
       try {
         await signIn(formData.email, formData.password);
-        showToast('success', 'Welcome back!', 'You have successfully signed in.');
+        showToast('success', authContent.messages.success.welcomeBack.title, authContent.messages.success.welcomeBack.description);
         onSuccess?.();
       } catch (error) {
         console.error('Sign in error:', error);
-        showToast('error', 'Sign in failed', error instanceof Error ? error.message : 'Please check your credentials and try again.');
+        showToast('error', authContent.messages.error.signInFailed.title, error instanceof Error ? error.message : authContent.messages.error.signInFailed.description);
       }
     }
   };
@@ -251,11 +252,11 @@ function AuthForm({ mode, onSuccess, onModeChange }: {
   const handleSocialSignIn = async (provider: 'google' | 'linkedin_oidc' | 'apple') => {
     try {
       await signInWithProvider(provider);
-      showToast('success', `Welcome!`, `Signing in with ${provider === 'google' ? 'Google' : provider === 'linkedin_oidc' ? 'LinkedIn' : 'Apple'}...`);
+      showToast('success', authContent.messages.success.socialWelcome.title, `Signing in with ${provider === 'google' ? 'Google' : provider === 'linkedin_oidc' ? 'LinkedIn' : 'Apple'}...`);
       onSuccess?.();
     } catch (error) {
       console.error(`${provider} sign in error:`, error);
-      showToast('error', 'Social sign-in failed', error instanceof Error ? error.message : `Failed to sign in with ${provider}. Please try again.`);
+      showToast('error', authContent.messages.error.socialFailed.title, error instanceof Error ? error.message : `Failed to sign in with ${provider}. Please try again.`);
     }
   };
 
@@ -272,14 +273,14 @@ function AuthForm({ mode, onSuccess, onModeChange }: {
               color: 'var(--color-text-primary)'
             }}
           >
-            Full Name
+            {authContent.form.labels.fullName}
           </label>
           <input
             id="fullName"
             type="text"
             value={formData.fullName}
             onChange={(e) => setFormData(prev => ({ ...prev, fullName: e.target.value }))}
-            placeholder="Enter your full name"
+            placeholder={authContent.form.placeholders.fullName}
             disabled={loading}
             className="ikan-input w-full transition-colors focus:border-primary-default focus:ring-2 focus:ring-primary-default/20"
             style={{
@@ -309,14 +310,14 @@ function AuthForm({ mode, onSuccess, onModeChange }: {
             color: 'var(--color-text-primary)'
           }}
         >
-          Email Address
+          {authContent.form.labels.email}
         </label>
         <input
           id="email"
           type="email"
           value={formData.email}
           onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
-          placeholder="Enter your email"
+          placeholder={authContent.form.placeholders.email}
           disabled={loading}
           className="ikan-input w-full transition-colors focus:border-primary-default focus:ring-2 focus:ring-primary-default/20"
           style={{
@@ -346,14 +347,14 @@ function AuthForm({ mode, onSuccess, onModeChange }: {
               color: 'var(--color-text-primary)'
             }}
           >
-            Password
+            {authContent.form.labels.password}
           </label>
           <input
             id="password"
             type="password"
             value={formData.password}
             onChange={(e) => setFormData(prev => ({ ...prev, password: e.target.value }))}
-            placeholder={mode === 'signup' ? 'Create a secure password (min 8 characters)' : 'Enter your password'}
+            placeholder={mode === 'signup' ? authContent.form.placeholders.passwordSignup : authContent.form.placeholders.password}
             disabled={loading}
             className="ikan-input w-full transition-colors focus:border-primary-default focus:ring-2 focus:ring-primary-default/20"
             style={{
@@ -384,14 +385,14 @@ function AuthForm({ mode, onSuccess, onModeChange }: {
               color: 'var(--color-text-primary)'
             }}
           >
-            Confirm Password
+            {authContent.form.labels.confirmPassword}
           </label>
           <input
             id="confirmPassword"
             type="password"
             value={formData.confirmPassword}
             onChange={(e) => setFormData(prev => ({ ...prev, confirmPassword: e.target.value }))}
-            placeholder="Confirm your password"
+            placeholder={authContent.form.placeholders.confirmPassword}
             disabled={loading}
             className="ikan-input w-full transition-colors focus:border-primary-default focus:ring-2 focus:ring-primary-default/20"
             style={{
@@ -427,7 +428,7 @@ function AuthForm({ mode, onSuccess, onModeChange }: {
                 color: 'var(--color-text-muted)'
               }}
             >
-              Remember me
+              {authContent.form.labels.rememberMe}
             </span>
           </label>
           
@@ -437,7 +438,7 @@ function AuthForm({ mode, onSuccess, onModeChange }: {
             className="text-sm hover:underline"
             style={{ color: 'var(--color-primary-default)' }}
           >
-            Forgot password?
+            {authContent.form.buttons.forgotPassword}
           </button>
         </div>
       )}
@@ -462,13 +463,13 @@ function AuthForm({ mode, onSuccess, onModeChange }: {
         {loading ? (
           <div className="flex items-center justify-center gap-2">
             <Icon name="loader2" size={16} className="animate-spin" />
-            Processing...
+            {authContent.form.buttons.processing}
           </div>
         ) : (
           <>
-            {mode === 'login' && 'Sign In'}
-            {mode === 'signup' && 'Create Account'}
-            {mode === 'forgot' && 'Send Reset Email'}
+            {mode === 'login' && authContent.form.buttons.signIn}
+            {mode === 'signup' && authContent.form.buttons.signUp}
+            {mode === 'forgot' && authContent.form.buttons.reset}
           </>
         )}
       </button>
@@ -481,7 +482,7 @@ function AuthForm({ mode, onSuccess, onModeChange }: {
           className="w-full text-center text-sm hover:underline"
           style={{ color: 'var(--color-text-muted)' }}
         >
-          Back to sign in
+          {authContent.form.buttons.backToSignIn}
         </button>
       )}
 
@@ -497,7 +498,7 @@ function AuthForm({ mode, onSuccess, onModeChange }: {
                 className="px-2 bg-white"
                 style={{ color: 'var(--color-text-muted)' }}
               >
-                Or continue with
+                {authContent.form.social.continuePrefix}
               </span>
             </div>
           </div>
@@ -565,11 +566,11 @@ export default function LoginScreen({ onSuccess, onBack, reason, redirectRoute }
   useEffect(() => {
     if (reason === 'session-expired') {
       setTimeout(() => {
-        showToast('info', 'Session Expired', 'Please sign in again to continue using iKan.');
+        showToast('info', authContent.messages.info.sessionExpired.title, authContent.messages.info.sessionExpired.description);
       }, 500);
     } else if (reason === 'auth-required') {
       setTimeout(() => {
-        showToast('info', 'Sign In Required', 'Please sign in to access this feature.');
+        showToast('info', authContent.messages.info.authRequired.title, authContent.messages.info.authRequired.description);
       }, 500);
     }
   }, [reason, showToast]);
@@ -623,7 +624,7 @@ export default function LoginScreen({ onSuccess, onBack, reason, redirectRoute }
                   fontFamily: 'var(--font-family-base)'
                 }}
               >
-                By continuing, you agree to our Terms of Service and Privacy Policy
+                {authContent.form.footer}
               </p>
             </div>
           </div>

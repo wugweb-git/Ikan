@@ -8,6 +8,7 @@ import { Checkbox } from './ui/checkbox';
 import { useAuth } from '../contexts/AuthContext';
 import { User, Mail, Lock, Phone, Heart, Eye, EyeOff } from 'lucide-react';
 import { toast } from 'sonner@2.0.3';
+import { authContent } from '../lib/content/auth';
 
 interface AuthFormProps {
   onSuccess?: () => void;
@@ -45,13 +46,13 @@ export function AuthForm({ onSuccess, defaultTab = 'signin' }: AuthFormProps) {
     const newErrors: Record<string, string> = {};
 
     if (!signInData.email) {
-      newErrors.email = 'Email is required';
+      newErrors.email = authContent.validation.required.email;
     } else if (!/\S+@\S+\.\S+/.test(signInData.email)) {
-      newErrors.email = 'Please enter a valid email address';
+      newErrors.email = authContent.validation.format.email;
     }
 
     if (!signInData.password) {
-      newErrors.password = 'Password is required';
+      newErrors.password = authContent.validation.required.password;
     }
 
     setErrors(newErrors);
@@ -62,27 +63,27 @@ export function AuthForm({ onSuccess, defaultTab = 'signin' }: AuthFormProps) {
     const newErrors: Record<string, string> = {};
 
     if (!signUpData.name.trim()) {
-      newErrors.name = 'Name is required';
+      newErrors.name = authContent.validation.required.name;
     }
 
     if (!signUpData.email) {
-      newErrors.email = 'Email is required';
+      newErrors.email = authContent.validation.required.email;
     } else if (!/\S+@\S+\.\S+/.test(signUpData.email)) {
-      newErrors.email = 'Please enter a valid email address';
+      newErrors.email = authContent.validation.format.email;
     }
 
     if (!signUpData.password) {
-      newErrors.password = 'Password is required';
+      newErrors.password = authContent.validation.required.password;
     } else if (signUpData.password.length < 6) {
-      newErrors.password = 'Password must be at least 6 characters';
+      newErrors.password = authContent.validation.format.passwordLengthShort;
     }
 
     if (signUpData.password !== signUpData.confirmPassword) {
-      newErrors.confirmPassword = 'Passwords do not match';
+      newErrors.confirmPassword = authContent.validation.format.passwordMismatch;
     }
 
     if (signUpData.phone && !/^\+?[\d\s\-\(\)]+$/.test(signUpData.phone)) {
-      newErrors.phone = 'Please enter a valid phone number';
+      newErrors.phone = authContent.validation.format.phone;
     }
 
     setErrors(newErrors);
@@ -95,14 +96,14 @@ export function AuthForm({ onSuccess, defaultTab = 'signin' }: AuthFormProps) {
 
     try {
       await signIn(signInData.email, signInData.password);
-      toast.success('Welcome back!', {
-        description: 'You have successfully signed in.'
+      toast.success(authContent.messages.success.welcomeBack.title, {
+        description: authContent.messages.success.welcomeBack.description
       });
       onSuccess?.();
     } catch (error) {
       console.error('Sign in error:', error);
-      toast.error('Sign in failed', {
-        description: error instanceof Error ? error.message : 'Please check your credentials and try again.'
+      toast.error(authContent.messages.error.signInFailed.title, {
+        description: error instanceof Error ? error.message : authContent.messages.error.signInFailed.description
       });
     }
   };
@@ -118,13 +119,13 @@ export function AuthForm({ onSuccess, defaultTab = 'signin' }: AuthFormProps) {
         signUpData.name,
         signUpData.phone || undefined
       );
-      toast.success('Welcome to iKan!', {
-        description: 'Your account has been created successfully.'
+      toast.success(authContent.messages.success.accountCreated.titleAlt, {
+        description: authContent.messages.success.accountCreated.descriptionAlt
       });
       onSuccess?.();
     } catch (error) {
       console.error('Sign up error:', error);
-      toast.error('Sign up failed', {
+      toast.error(authContent.messages.error.signUpFailed.title, {
         description: error instanceof Error ? error.message : 'Please try again.'
       });
     }
@@ -133,13 +134,13 @@ export function AuthForm({ onSuccess, defaultTab = 'signin' }: AuthFormProps) {
   const handleSocialSignIn = async (provider: 'google' | 'linkedin_oidc' | 'apple') => {
     try {
       await signInWithProvider(provider);
-      toast.success(`Welcome!`, {
+      toast.success(authContent.messages.success.socialWelcome.title, {
         description: `Signing in with ${provider === 'google' ? 'Google' : provider === 'linkedin_oidc' ? 'LinkedIn' : 'Apple'}...`
       });
       onSuccess?.();
     } catch (error) {
       console.error(`${provider} sign in error:`, error);
-      toast.error('Social sign-in failed', {
+      toast.error(authContent.messages.error.socialFailed.title, {
         description: error instanceof Error ? error.message : `Failed to sign in with ${provider}. Please try again.`
       });
     }
@@ -190,11 +191,11 @@ export function AuthForm({ onSuccess, defaultTab = 'signin' }: AuthFormProps) {
           <CardTitle 
             style={{ 
               fontSize: 'var(--text-xl)', 
-              fontWeight: 'var(--font-weight-semibold)',
+              fontWeight: 'var(--font-weight-medium)',
               color: 'var(--color-primary-default)'
             }}
           >
-            iKan
+            {authContent.header.brandName}
           </CardTitle>
         </div>
         <p style={{ 
@@ -202,15 +203,15 @@ export function AuthForm({ onSuccess, defaultTab = 'signin' }: AuthFormProps) {
           color: 'var(--color-text-muted)',
           lineHeight: 'var(--line-height-md)'
         }}>
-          Your mental health companion
+          {authContent.header.brandSubtitle}
         </p>
       </CardHeader>
 
       <CardContent>
         <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as 'signin' | 'signup')}>
           <TabsList className="grid w-full grid-cols-2 mb-6">
-            <TabsTrigger value="signin">Sign In</TabsTrigger>
-            <TabsTrigger value="signup">Sign Up</TabsTrigger>
+            <TabsTrigger value="signin">{authContent.tabs.signIn}</TabsTrigger>
+            <TabsTrigger value="signup">{authContent.tabs.signUp}</TabsTrigger>
           </TabsList>
 
           <TabsContent value="signin" className="space-y-4">
@@ -218,14 +219,14 @@ export function AuthForm({ onSuccess, defaultTab = 'signin' }: AuthFormProps) {
               <div className="space-y-2">
                 <Label htmlFor="signin-email" className="flex items-center gap-2">
                   <Mail size={14} />
-                  Email
+                  {authContent.form.labels.email}
                 </Label>
                 <Input
                   id="signin-email"
                   type="email"
                   value={signInData.email}
                   onChange={(e) => setSignInData(prev => ({ ...prev, email: e.target.value }))}
-                  placeholder="Enter your email"
+                  placeholder={authContent.form.placeholders.email}
                   disabled={loading}
                   className={errors.email ? 'border-destructive' : ''}
                   style={{
@@ -246,7 +247,7 @@ export function AuthForm({ onSuccess, defaultTab = 'signin' }: AuthFormProps) {
               <div className="space-y-2">
                 <Label htmlFor="signin-password" className="flex items-center gap-2">
                   <Lock size={14} />
-                  Password
+                  {authContent.form.labels.password}
                 </Label>
                 <div className="relative">
                   <Input
@@ -254,7 +255,7 @@ export function AuthForm({ onSuccess, defaultTab = 'signin' }: AuthFormProps) {
                     type={showSignInPassword ? "text" : "password"}
                     value={signInData.password}
                     onChange={(e) => setSignInData(prev => ({ ...prev, password: e.target.value }))}
-                    placeholder="Enter your password"
+                    placeholder={authContent.form.placeholders.password}
                     disabled={loading}
                     className={errors.password ? 'border-destructive pr-10' : 'pr-10'}
                     style={{
@@ -301,7 +302,7 @@ export function AuthForm({ onSuccess, defaultTab = 'signin' }: AuthFormProps) {
                     fontWeight: 'var(--font-weight-regular)'
                   }}
                 >
-                  Remember me
+                  {authContent.form.labels.rememberMe}
                 </Label>
               </div>
 
@@ -318,12 +319,12 @@ export function AuthForm({ onSuccess, defaultTab = 'signin' }: AuthFormProps) {
                 {loading ? (
                   <>
                     <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                    Signing In...
+                    {authContent.form.buttons.signingIn}
                   </>
                 ) : (
                   <>
                     <User size={16} />
-                    Sign In
+                    {authContent.form.buttons.signIn}
                   </>
                 )}
               </Button>
@@ -340,7 +341,7 @@ export function AuthForm({ onSuccess, defaultTab = 'signin' }: AuthFormProps) {
                 className="w-full text-xs text-center hover:underline opacity-70 mt-2"
                 style={{ color: 'var(--color-text-muted)' }}
               >
-                Use Demo Account (demo@ikan.health / password123)
+                {authContent.form.buttons.demoAccount}
               </button>
             </form>
 
@@ -359,7 +360,7 @@ export function AuthForm({ onSuccess, defaultTab = 'signin' }: AuthFormProps) {
                       fontSize: 'var(--text-xs)'
                     }}
                   >
-                    Or continue with
+                    {authContent.form.social.continuePrefix}
                   </span>
                 </div>
               </div>
@@ -375,7 +376,7 @@ export function AuthForm({ onSuccess, defaultTab = 'signin' }: AuthFormProps) {
                       <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
                     </svg>
                   }
-                  label="Continue with Google"
+                  label={authContent.form.social.google}
                   color="#4285F4"
                 />
 
@@ -386,7 +387,7 @@ export function AuthForm({ onSuccess, defaultTab = 'signin' }: AuthFormProps) {
                       <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z" fill="#0A66C2"/>
                     </svg>
                   }
-                  label="Continue with LinkedIn"
+                  label={authContent.form.social.linkedin}
                   color="#0A66C2"
                 />
 
@@ -397,7 +398,7 @@ export function AuthForm({ onSuccess, defaultTab = 'signin' }: AuthFormProps) {
                       <path d="M12.152 6.896c-.948 0-2.415-1.078-3.96-1.04-2.04.027-3.91 1.183-4.961 3.014-2.117 3.675-.546 9.103 1.519 12.09 1.013 1.454 2.208 3.09 3.792 3.039 1.52-.065 2.09-.987 3.935-.987 1.831 0 2.35.987 3.96.948 1.637-.026 2.676-1.48 3.676-2.948 1.156-1.688 1.636-3.325 1.662-3.415-.039-.013-3.182-1.221-3.22-4.857-.026-3.04 2.48-4.494 2.597-4.559-1.429-2.09-3.623-2.324-4.39-2.376-2-.156-3.675 1.09-4.61 1.09zM15.53 3.83c.843-1.012 1.4-2.427 1.245-3.83-1.207.052-2.662.805-3.532 1.818-.78.896-1.454 2.338-1.273 3.714 1.338.104 2.715-.688 3.559-1.701" fill="#000"/>
                     </svg>
                   }
-                  label="Continue with Apple"
+                  label={authContent.form.social.apple}
                   color="#000"
                 />
               </div>
@@ -413,7 +414,7 @@ export function AuthForm({ onSuccess, defaultTab = 'signin' }: AuthFormProps) {
                 }}
                 className="hover:underline"
               >
-                Don't have an account? Sign up
+                {authContent.messages.switch.toSignup}
               </button>
             </div>
           </TabsContent>
@@ -423,14 +424,14 @@ export function AuthForm({ onSuccess, defaultTab = 'signin' }: AuthFormProps) {
               <div className="space-y-2">
                 <Label htmlFor="signup-name" className="flex items-center gap-2">
                   <User size={14} />
-                  Full Name
+                  {authContent.form.labels.fullName}
                 </Label>
                 <Input
                   id="signup-name"
                   type="text"
                   value={signUpData.name}
                   onChange={(e) => setSignUpData(prev => ({ ...prev, name: e.target.value }))}
-                  placeholder="Enter your full name"
+                  placeholder={authContent.form.placeholders.fullName}
                   disabled={loading}
                   className={errors.name ? 'border-destructive' : ''}
                   style={{
@@ -451,14 +452,14 @@ export function AuthForm({ onSuccess, defaultTab = 'signin' }: AuthFormProps) {
               <div className="space-y-2">
                 <Label htmlFor="signup-email" className="flex items-center gap-2">
                   <Mail size={14} />
-                  Email
+                  {authContent.form.labels.email}
                 </Label>
                 <Input
                   id="signup-email"
                   type="email"
                   value={signUpData.email}
                   onChange={(e) => setSignUpData(prev => ({ ...prev, email: e.target.value }))}
-                  placeholder="Enter your email"
+                  placeholder={authContent.form.placeholders.email}
                   disabled={loading}
                   className={errors.email ? 'border-destructive' : ''}
                   style={{
@@ -479,14 +480,14 @@ export function AuthForm({ onSuccess, defaultTab = 'signin' }: AuthFormProps) {
               <div className="space-y-2">
                 <Label htmlFor="signup-phone" className="flex items-center gap-2">
                   <Phone size={14} />
-                  Phone (Optional)
+                  {authContent.form.labels.phone}
                 </Label>
                 <Input
                   id="signup-phone"
                   type="tel"
                   value={signUpData.phone}
                   onChange={(e) => setSignUpData(prev => ({ ...prev, phone: e.target.value }))}
-                  placeholder="Enter your phone number"
+                  placeholder={authContent.form.placeholders.phone}
                   disabled={loading}
                   className={errors.phone ? 'border-destructive' : ''}
                   style={{
@@ -507,7 +508,7 @@ export function AuthForm({ onSuccess, defaultTab = 'signin' }: AuthFormProps) {
               <div className="space-y-2">
                 <Label htmlFor="signup-password" className="flex items-center gap-2">
                   <Lock size={14} />
-                  Password
+                  {authContent.form.labels.password}
                 </Label>
                 <div className="relative">
                   <Input
@@ -515,7 +516,7 @@ export function AuthForm({ onSuccess, defaultTab = 'signin' }: AuthFormProps) {
                     type={showSignUpPassword ? "text" : "password"}
                     value={signUpData.password}
                     onChange={(e) => setSignUpData(prev => ({ ...prev, password: e.target.value }))}
-                    placeholder="Create a password"
+                    placeholder={authContent.form.placeholders.passwordCreate}
                     disabled={loading}
                     className={errors.password ? 'border-destructive pr-10' : 'pr-10'}
                     style={{
@@ -548,7 +549,7 @@ export function AuthForm({ onSuccess, defaultTab = 'signin' }: AuthFormProps) {
               <div className="space-y-2">
                 <Label htmlFor="signup-confirm-password" className="flex items-center gap-2">
                   <Lock size={14} />
-                  Confirm Password
+                  {authContent.form.labels.confirmPassword}
                 </Label>
                 <div className="relative">
                   <Input
@@ -556,7 +557,7 @@ export function AuthForm({ onSuccess, defaultTab = 'signin' }: AuthFormProps) {
                     type={showConfirmPassword ? "text" : "password"}
                     value={signUpData.confirmPassword}
                     onChange={(e) => setSignUpData(prev => ({ ...prev, confirmPassword: e.target.value }))}
-                    placeholder="Confirm your password"
+                    placeholder={authContent.form.placeholders.confirmPassword}
                     disabled={loading}
                     className={errors.confirmPassword ? 'border-destructive pr-10' : 'pr-10'}
                     style={{
@@ -599,12 +600,12 @@ export function AuthForm({ onSuccess, defaultTab = 'signin' }: AuthFormProps) {
                 {loading ? (
                   <>
                     <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                    Creating Account...
+                    {authContent.form.buttons.creatingAccount}
                   </>
                 ) : (
                   <>
                     <Heart size={16} />
-                    Create Account
+                    {authContent.form.buttons.signUp}
                   </>
                 )}
               </Button>
@@ -625,7 +626,7 @@ export function AuthForm({ onSuccess, defaultTab = 'signin' }: AuthFormProps) {
                       fontSize: 'var(--text-xs)'
                     }}
                   >
-                    Or sign up with
+                    {authContent.form.social.signUpPrefix}
                   </span>
                 </div>
               </div>
@@ -641,7 +642,7 @@ export function AuthForm({ onSuccess, defaultTab = 'signin' }: AuthFormProps) {
                       <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
                     </svg>
                   }
-                  label="Sign up with Google"
+                  label={authContent.form.social.signupGoogle}
                   color="#4285F4"
                 />
 
@@ -652,7 +653,7 @@ export function AuthForm({ onSuccess, defaultTab = 'signin' }: AuthFormProps) {
                       <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z" fill="#0A66C2"/>
                     </svg>
                   }
-                  label="Sign up with LinkedIn"
+                  label={authContent.form.social.signupLinkedin}
                   color="#0A66C2"
                 />
 
@@ -663,7 +664,7 @@ export function AuthForm({ onSuccess, defaultTab = 'signin' }: AuthFormProps) {
                       <path d="M12.152 6.896c-.948 0-2.415-1.078-3.96-1.04-2.04.027-3.91 1.183-4.961 3.014-2.117 3.675-.546 9.103 1.519 12.09 1.013 1.454 2.208 3.09 3.792 3.039 1.52-.065 2.09-.987 3.935-.987 1.831 0 2.35.987 3.96.948 1.637-.026 2.676-1.48 3.676-2.948 1.156-1.688 1.636-3.325 1.662-3.415-.039-.013-3.182-1.221-3.22-4.857-.026-3.04 2.48-4.494 2.597-4.559-1.429-2.09-3.623-2.324-4.39-2.376-2-.156-3.675 1.09-4.61 1.09zM15.53 3.83c.843-1.012 1.4-2.427 1.245-3.83-1.207.052-2.662.805-3.532 1.818-.78.896-1.454 2.338-1.273 3.714 1.338.104 2.715-.688 3.559-1.701" fill="#000"/>
                     </svg>
                   }
-                  label="Sign up with Apple"
+                  label={authContent.form.social.signupApple}
                   color="#000"
                 />
               </div>
@@ -679,7 +680,7 @@ export function AuthForm({ onSuccess, defaultTab = 'signin' }: AuthFormProps) {
                 }}
                 className="hover:underline"
               >
-                Already have an account? Sign in
+                {authContent.messages.switch.toLogin}
               </button>
             </div>
           </TabsContent>

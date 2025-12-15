@@ -54,9 +54,9 @@ function Container() {
   );
 }
 
-export default function BlogCard() {
+export default function ResourceCard() {
   return (
-    <div className="bg-white relative rounded-lg size-full" data-name="Blog Card">
+    <div className="bg-white relative rounded-lg size-full" data-name="Resource Card">
       <div className="size-full">
         <div className="box-border content-stretch flex flex-col items-start p-3 relative size-full">
           <Container />

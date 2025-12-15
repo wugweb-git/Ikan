@@ -154,7 +154,7 @@ export function Logo({
       <motion.span 
         style={{
           fontSize: iconSize >= 32 ? 'var(--text-xl)' : 'var(--text-lg)',
-          fontWeight: 'var(--font-weight-bold)',
+          fontWeight: 'var(--font-weight-medium)',
           color: 'var(--color-text-primary)',
           fontFamily: 'var(--font-family-base)'
         }}

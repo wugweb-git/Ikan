@@ -21,9 +21,9 @@ export function PublicNavBar({ currentRoute, onNavigate, onSignIn, className }: 
   // Fixed navigation items as specified
   const publicNavItems = [
     { path: '/', label: 'Home', icon: 'home' },
-    { path: '/assessments', label: 'Assessments', icon: 'assignment' },
-    { path: '/equip-programs', label: 'Programs', icon: 'tools' },
-    { path: '/library', label: 'Library', icon: 'library' },
+    { path: '/assessment', label: 'Assessment', icon: 'assignment' },
+    { path: '/equip', label: 'Equip', icon: 'tools' },
+    { path: '/resource', label: 'Resource', icon: 'library' },
     { path: '/consultation', label: 'Consultation', icon: 'chat' },
     { path: '/about', label: 'About Us', icon: 'info' }
   ];
@@ -69,7 +69,7 @@ export function PublicNavBar({ currentRoute, onNavigate, onSignIn, className }: 
         {/* Logo/Brand */}
         <div className="flex items-center gap-3 animate-fadeIn">
           <button
-            className="flex items-center gap-2 font-semibold transition-all duration-200"
+            className="flex items-center gap-2 font-medium transition-all duration-200"
             onClick={() => onNavigate('/')}
             style={{ 
               fontSize: 'var(--text-xl)',

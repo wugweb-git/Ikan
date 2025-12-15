@@ -112,7 +112,7 @@ export function UserLoginBlock({
             <span 
               style={{ 
                 fontSize: 'var(--text-xl)', 
-                fontWeight: 'var(--font-weight-semibold)',
+                fontWeight: 'var(--font-weight-medium)',
                 color: 'var(--color-primary-default)'
               }}
             >
@@ -122,7 +122,7 @@ export function UserLoginBlock({
           <h1 
             style={{ 
               fontSize: 'var(--text-2xl)', 
-              fontWeight: 'var(--font-weight-semibold)',
+              fontWeight: 'var(--font-weight-medium)',
               color: 'var(--color-text-primary)',
               marginBottom: 'var(--spacing-2)'
             }}

@@ -1489,9 +1489,9 @@ function Container28() {
   );
 }
 
-function BlogCard() {
+function ResourceCard() {
   return (
-    <div className="bg-white box-border content-stretch flex flex-col items-start p-[16px] relative rounded-[8px] shrink-0 w-[350px]" data-name="Blog Card">
+    <div className="bg-white box-border content-stretch flex flex-col items-start p-[16px] relative rounded-[8px] shrink-0 w-[350px]" data-name="Resource Card">
       <Container28 />
     </div>
   );
@@ -1501,7 +1501,7 @@ function Container32() {
   return (
     <div className="content-stretch flex flex-col gap-[16px] items-start relative shrink-0 w-full" data-name="Container">
       {[...Array(4).keys()].map((_, i) => (
-        <BlogCard key={i} />
+        <ResourceCard key={i} />
       ))}
     </div>
   );

@@ -121,12 +121,12 @@ export function PWAIconGenerator() {
   return (
     <div className="p-8 bg-gray-50 min-h-screen">
       <div className="max-w-6xl mx-auto">
-        <h1 className="text-3xl font-bold text-center mb-8 text-gray-900">
+        <h1 className="text-3xl font-medium text-center mb-8 text-gray-900">
           iKan PWA Icon Generator
         </h1>
         
         <div className="bg-white rounded-lg p-6 mb-8 shadow-sm">
-          <h2 className="text-xl font-semibold mb-4">Instructions</h2>
+          <h2 className="text-xl font-medium mb-4">Instructions</h2>
           <ol className="list-decimal list-inside space-y-2 text-gray-700">
             <li>Preview the generated icons below</li>
             <li>Click "Download PNG" for each icon you need</li>
@@ -136,7 +136,7 @@ export function PWAIconGenerator() {
         </div>
 
         <div className="bg-white rounded-lg p-6 shadow-sm">
-          <h2 className="text-xl font-semibold mb-6">Generated Icons</h2>
+          <h2 className="text-xl font-medium mb-6">Generated Icons</h2>
           <div className="flex flex-wrap justify-center gap-4">
             {icons.map((icon, index) => (
               <PWAIcon
@@ -151,7 +151,7 @@ export function PWAIconGenerator() {
         </div>
 
         <div className="bg-white rounded-lg p-6 mt-8 shadow-sm">
-          <h2 className="text-xl font-semibold mb-4">Technical Details</h2>
+          <h2 className="text-xl font-medium mb-4">Technical Details</h2>
           <ul className="list-disc list-inside space-y-2 text-gray-700">
             <li><strong>Background:</strong> iKan brand color (#2A2A2A)</li>
             <li><strong>Icon:</strong> White radial design from Figma import</li>

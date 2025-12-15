@@ -8,6 +8,10 @@ import { AccountDetailsSection } from '../blocks/AccountDetailsSection';
 import { SideNavAccount } from '../navigation/SideNavAccount';
 import { DatabaseSyncPanel } from '../DatabaseSyncPanel';
 import { PaymentHistory } from './PaymentHistory';
+import { Preferences } from './account/Preferences';
+import { Privacy } from './account/Privacy';
+import { Notifications } from './account/Notifications';
+import { Security } from './account/Security';
 import { cn } from '../ui/utils';
 import { LogOut } from 'lucide-react';
 import { useNotifications } from '../../contexts/NotificationContext';
@@ -58,6 +62,11 @@ export function Account({ className }: AccountProps) {
       await apiClient.updateProfile({
         name: userData.name,
         phone: userData.phone,
+        bio: userData.bio,
+        dateOfBirth: userData.dateOfBirth,
+        gender: userData.gender,
+        location: userData.location,
+        emergencyContact: userData.emergencyContact,
         preferences: userData.preferences
       });
       
@@ -68,6 +77,25 @@ export function Account({ className }: AccountProps) {
       showToast('error', 'Save Failed', 'Failed to save your profile. Please try again.');
     } finally {
       setIsSavingProfile(false);
+    }
+  };
+
+  const handleSocialSync = async (provider: 'google' | 'linkedin', action: 'connect' | 'disconnect') => {
+    try {
+      if (action === 'connect') {
+        showToast('info', 'Connecting...', `Connecting to ${provider === 'google' ? 'Google' : 'LinkedIn'}...`);
+        // TODO: Implement OAuth flow for social login
+        // This would typically redirect to provider's OAuth page
+        await apiClient.connectSocialAccount(provider);
+        showToast('success', 'Connected', `Successfully connected to ${provider === 'google' ? 'Google' : 'LinkedIn'}`);
+      } else {
+        await apiClient.disconnectSocialAccount(provider);
+        showToast('success', 'Disconnected', `Successfully disconnected from ${provider === 'google' ? 'Google' : 'LinkedIn'}`);
+      }
+    } catch (error) {
+      console.error(`Failed to ${action} ${provider}:`, error);
+      showToast('error', `${action === 'connect' ? 'Connection' : 'Disconnection'} Failed`, 
+        `Failed to ${action} ${provider === 'google' ? 'Google' : 'LinkedIn'}. Please try again.`);
     }
   };
 
@@ -140,49 +168,11 @@ export function Account({ className }: AccountProps) {
           </div>
         );
       case '/account/privacy':
-        return (
-          <div className="space-y-6">
-            <div className="space-y-2">
-              <h1 style={{ 
-                fontSize: 'var(--text-2xl)', 
-                fontWeight: 'var(--font-weight-medium)',
-                color: 'var(--color-text-primary)'
-              }}>
-                Privacy Settings
-              </h1>
-              <p style={{ color: 'var(--color-text-muted)' }}>
-                Manage your data and privacy controls.
-              </p>
-            </div>
-            <Card>
-              <CardContent className="p-6">
-                <p>Privacy settings content coming soon...</p>
-              </CardContent>
-            </Card>
-          </div>
-        );
+        return <Privacy />;
+      case '/account/preferences':
+        return <Preferences />;
       case '/account/notifications':
-        return (
-          <div className="space-y-6">
-            <div className="space-y-2">
-              <h1 style={{ 
-                fontSize: 'var(--text-2xl)', 
-                fontWeight: 'var(--font-weight-medium)',
-                color: 'var(--color-text-primary)'
-              }}>
-                Notification Preferences
-              </h1>
-              <p style={{ color: 'var(--color-text-muted)' }}>
-                Manage your notification settings and preferences.
-              </p>
-            </div>
-            <Card>
-              <CardContent className="p-6">
-                <p>Notification preferences content coming soon...</p>
-              </CardContent>
-            </Card>
-          </div>
-        );
+        return <Notifications />;
       case '/account/payments':
         return (
           <div className="space-y-6">
@@ -202,27 +192,7 @@ export function Account({ className }: AccountProps) {
           </div>
         );
       case '/account/security':
-        return (
-          <div className="space-y-6">
-            <div className="space-y-2">
-              <h1 style={{ 
-                fontSize: 'var(--text-2xl)', 
-                fontWeight: 'var(--font-weight-medium)',
-                color: 'var(--color-text-primary)'
-              }}>
-                Security Settings
-              </h1>
-              <p style={{ color: 'var(--color-text-muted)' }}>
-                Manage your security settings and account protection.
-              </p>
-            </div>
-            <Card>
-              <CardContent className="p-6">
-                <p>Security settings content coming soon...</p>
-              </CardContent>
-            </Card>
-          </div>
-        );
+        return <Security />;
       default: // '/account/profile'
         return (
           <div className="space-y-6">
@@ -245,6 +215,27 @@ export function Account({ className }: AccountProps) {
                 name: user.name,
                 email: user.email,
                 phone: user.phone,
+                bio: user.bio || '',
+                dateOfBirth: user.dateOfBirth || '',
+                gender: user.gender || '',
+                location: user.location || '',
+                emergencyContact: {
+                  name: user.emergencyContactName || '',
+                  phone: user.emergencyContactPhone || '',
+                  relationship: user.emergencyContactRelationship || ''
+                },
+                connectedAccounts: {
+                  google: {
+                    connected: user.googleConnected || false,
+                    email: user.googleEmail || '',
+                    connectedAt: user.googleConnectedAt || ''
+                  },
+                  linkedin: {
+                    connected: user.linkedinConnected || false,
+                    email: user.linkedinEmail || '',
+                    connectedAt: user.linkedinConnectedAt || ''
+                  }
+                },
                 preferences: {
                   emailNotifications: true,
                   pushNotifications: true,
@@ -256,42 +247,10 @@ export function Account({ className }: AccountProps) {
               loading={isSavingProfile}
               onSave={handleSaveProfile}
               onEdit={handleEditProfile}
+              onSocialSync={handleSocialSync}
             />
 
-            {/* Sign Out Card */}
-            <Card>
-              <CardHeader>
-                <CardTitle style={{ color: 'var(--color-status-danger)' }}>Account Actions</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-4">
-                  <Button 
-                    variant="outline"
-                    onClick={handleSignOut}
-                    disabled={isSigningOut}
-                    className="w-full gap-2"
-                    style={{
-                      height: 'var(--ikan-component-button-height)',
-                      borderRadius: 'var(--ikan-component-border-radius)',
-                      fontSize: 'var(--text-base)',
-                      fontWeight: 'var(--font-weight-medium)'
-                    }}
-                  >
-                    {isSigningOut ? (
-                      <>
-                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-600"></div>
-                        Signing Out...
-                      </>
-                    ) : (
-                      <>
-                        <LogOut size={16} />
-                        Sign Out
-                      </>
-                    )}
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
+            {/* Sign Out functionality moved to /account page navigation */}
           </div>
         );
     }
@@ -378,6 +337,7 @@ export function Account({ className }: AccountProps) {
         <SideNavAccount
           currentRoute={currentAccountRoute}
           onNavigate={handleAccountNavigate}
+          onLogout={handleSignOut}
           className="sticky top-20"
         />
       </div>
@@ -389,4 +349,3 @@ export function Account({ className }: AccountProps) {
     </div>
   );
 }
-

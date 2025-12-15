@@ -75,7 +75,7 @@ export const uiBlocks: { [key: string]: UIBlock } = {
       { component: 'ResourceCard' },
       { component: 'ResourceCard' }
     ],
-    interactions: ['filter', 'sort']
+    interactions: ['filter', 'bookmark']
   },
 
   AccountDetailsSection: {
@@ -135,8 +135,8 @@ export const uiBlocks: { [key: string]: UIBlock } = {
     interactions: ['onSelectDate', 'onTabChange']
   },
 
-  ConsultationDirectoryBlock: {
-    name: 'ConsultationDirectoryBlock',
+  ConsultationBlock: {
+    name: 'ConsultationBlock',
     constraints: {
       minWidth: 'var(--constraint-content-min)',
       maxWidth: 'var(--constraint-content-max)'
@@ -152,9 +152,9 @@ export const uiBlocks: { [key: string]: UIBlock } = {
       }
     },
     items: [
-      { component: 'ConsultationDirectoryCard' },
-      { component: 'ConsultationDirectoryCard' },
-      { component: 'ConsultationDirectoryCard' }
+      { component: 'ConsultantCard' },
+      { component: 'ConsultantCard' },
+      { component: 'ConsultantCard' }
     ],
     interactions: ['filter', 'book']
   },
@@ -222,9 +222,9 @@ export const uiBlocks: { [key: string]: UIBlock } = {
       gap: 'var(--spacing-2)'
     },
     items: [
-      { component: 'BlogCard' },
-      { component: 'BlogCard' },
-      { component: 'BlogCard' }
+      { component: 'ResourceCard' },
+      { component: 'ResourceCard' },
+      { component: 'ResourceCard' }
     ],
     interactions: ['filter', 'bookmark']
   }
@@ -315,5 +315,14 @@ export function generateConstraintStyles(constraints: BlockConstraints): React.C
     width: '100%'
   };
 }
+
+// Type exports for block configuration
+export type BlockConfig = UIBlock;
+export type BlockName = keyof typeof uiBlocks;
+
+// Main configuration export with blocks property (for compatibility with BlockRenderer)
+export const uiBlocksConfig = {
+  blocks: uiBlocks
+};
 
 export default uiBlocks;

@@ -150,12 +150,12 @@ export function AdminAssessmentManager({ onNavigate, onBack }: AdminAssessmentMa
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
           {onBack && (
-            <Button variant="ghost" size="icon" onClick={onBack}>
+            <Button variant="ghost" size="icon" onClick={onBack} aria-label="Go back to admin dashboard">
               <ArrowLeft className="w-5 h-5" />
             </Button>
           )}
           <div>
-            <h2 className="text-2xl font-bold">Assessment Manager</h2>
+            <h2 className="text-2xl font-medium">Assessment Manager</h2>
             <p className="text-muted-foreground">Create and manage health assessments</p>
           </div>
         </div>
@@ -182,7 +182,7 @@ export function AdminAssessmentManager({ onNavigate, onBack }: AdminAssessmentMa
               <CardContent className="p-6 flex items-center justify-between">
                 <div>
                   <div className="flex items-center gap-3 mb-1">
-                    <h3 className="font-semibold text-lg">{assessment.title}</h3>
+                    <h3 className="font-medium text-lg">{assessment.title}</h3>
                     <Badge variant="secondary">{assessment.category}</Badge>
                     {assessment.questions?.length > 0 && (
                       <Badge variant="outline">{assessment.questions.length} Questions</Badge>
@@ -246,14 +246,14 @@ export function AdminAssessmentManager({ onNavigate, onBack }: AdminAssessmentMa
                 <Label>Description</Label>
                 <TextArea 
                   value={editingAssessment.description} 
-                  onChange={(val) => setEditingAssessment({...editingAssessment, description: val})}
+                  onChange={(e) => setEditingAssessment({...editingAssessment, description: e.target.value})}
                   placeholder="Brief description of the assessment..."
                 />
               </div>
 
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
-                  <h3 className="font-semibold text-lg">Questions</h3>
+                  <h3 className="font-medium text-lg">Questions</h3>
                   <Button size="sm" onClick={handleAddQuestion} variant="secondary">
                     <Plus className="w-4 h-4 mr-1" /> Add Question
                   </Button>
@@ -271,7 +271,7 @@ export function AdminAssessmentManager({ onNavigate, onBack }: AdminAssessmentMa
                             placeholder="Enter question..."
                           />
                         </div>
-                        <Button variant="ghost" size="icon" onClick={() => removeQuestion(idx)} className="text-destructive">
+                        <Button variant="ghost" size="icon" onClick={() => removeQuestion(idx)} className="text-destructive" aria-label="Remove question">
                           <X className="w-4 h-4" />
                         </Button>
                       </div>

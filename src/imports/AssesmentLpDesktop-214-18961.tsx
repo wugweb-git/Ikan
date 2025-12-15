@@ -20,17 +20,17 @@ import imgFireflyABeautifulKitchenCounterShotFromTheSideTheBacksplashIsLightGree
 import imgDtsPleaseDoNotDisturbFanetteGuilloudPhotosId8854Webp from "figma:asset/69630877b2f0ea1979fedcdee430b8d92c705a78.png";
 import img653406093Ca73A37601Cc150PeersBloguCc88BersichtNewsletterP800Avif from "figma:asset/d520368580246229986afc39addcd14047393642.png";
 import { imgGroup } from "./svg-8x5kh";
-import { BlogSectionBlock } from "../components/blocks/BlogSectionBlock";
+import { ResourceBlock } from "../components/blocks/ResourceBlock";
 import { NewsletterBlock } from "../components/blocks/NewsletterBlock";
 import { HeroLPBlock } from "../components/blocks/HeroLPBlock";
 import { AssessmentBlock } from "../components/blocks/AssessmentBlock";
 import { ContextBlock } from "../components/blocks/ContextBlock";
-import { getLatestBlogPosts } from "../lib/sample-data/blog-posts";
+import { getLatestResourcePosts } from "../lib/sample-data/resource-posts";
 
 function Frame1000007577() {
   return (
     <div className="content-stretch flex flex-col gap-[16px] items-start leading-[0] not-italic relative shrink-0 w-full">
-      <div className="flex flex-col font-['Ubuntu:Bold',_sans-serif] justify-center relative shrink-0 text-[58px] text-black w-full">
+      <div className="flex flex-col font-['Ubuntu:Medium',_sans-serif] justify-center relative shrink-0 text-[58px] text-black w-full">
         <p className="leading-[72px]">{`Anxiety and depression test (K10) `}</p>
       </div>
       <div className="flex flex-col font-['Ubuntu:Regular',_sans-serif] justify-center relative shrink-0 text-[#2e2a2f] text-[16px] w-full">
@@ -140,7 +140,7 @@ function Container3() {
 function Container4() {
   return (
     <div className="absolute box-border content-stretch flex flex-col items-start left-[61.57px] pb-[0.605px] pl-0 pr-[152.1px] pt-0 translate-y-[-50%]" data-name="Container" style={{ top: "calc(50% - 0.561px)" }}>
-      <div className="flex flex-col font-['Inter:Semi_Bold',_sans-serif] font-semibold justify-center leading-[21.74px] not-italic relative shrink-0 text-[18.1px] text-nowrap text-white tracking-[-0.16px] whitespace-pre">
+      <div className="flex flex-col font-['Ubuntu:Medium',_sans-serif] font-medium justify-center leading-[21.74px] not-italic relative shrink-0 text-[18.1px] text-nowrap text-white tracking-[-0.16px] whitespace-pre">
         <p className="mb-0">Jetzt das vollständige</p>
         <p>Interview anschauen</p>
       </div>
@@ -169,7 +169,7 @@ function Container6() {
 function Heading2() {
   return (
     <div className="content-stretch flex flex-col items-start relative shrink-0 w-full" data-name="Heading 2">
-      <div className="flex flex-col font-['Ubuntu:Bold',_sans-serif] justify-center leading-[0] not-italic relative shrink-0 text-[#151515] text-[48px] text-nowrap">
+      <div className="flex flex-col font-['Ubuntu:Medium',_sans-serif] justify-center leading-[0] not-italic relative shrink-0 text-[#151515] text-[48px] text-nowrap">
         <p className="leading-[60px] whitespace-pre">About</p>
       </div>
     </div>
@@ -257,7 +257,7 @@ function Container9() {
 function Heading6() {
   return (
     <div className="box-border content-stretch flex flex-col items-center pb-[0.81px] pt-0 px-0 relative shrink-0 w-full" data-name="Heading 2">
-      <div className="flex flex-col font-['Ubuntu:Bold',_sans-serif] justify-center leading-[0] not-italic relative shrink-0 text-[#0a0a0f] text-[48px] text-center w-full">
+      <div className="flex flex-col font-['Ubuntu:Medium',_sans-serif] justify-center leading-[0] not-italic relative shrink-0 text-[#0a0a0f] text-[48px] text-center w-full">
         <p className="leading-[60px]">Features and things to note</p>
       </div>
     </div>
@@ -286,7 +286,7 @@ function Component65311A1293B6F8535F54F4DdPeersHomePsychologenP500Avif() {
 function Heading3() {
   return (
     <div className="content-stretch flex flex-col items-start relative shrink-0 w-full" data-name="Heading 3">
-      <div className="flex flex-col font-['Ubuntu:Bold',_sans-serif] justify-center leading-[30px] not-italic relative shrink-0 text-[24px] text-nowrap text-white whitespace-pre">
+      <div className="flex flex-col font-['Ubuntu:Medium',_sans-serif] justify-center leading-[30px] not-italic relative shrink-0 text-[24px] text-nowrap text-white whitespace-pre">
         <p className="mb-0">Professionell ausgebildete</p>
         <p className="mb-0">{`Psycholog:innen & wissenschaftlich`}</p>
         <p>fundierte Forschung.</p>
@@ -331,7 +331,7 @@ function Background1() {
 function Heading4() {
   return (
     <div className="absolute content-stretch flex flex-col items-start left-[34.42px] right-[293.8px] top-[54.4px]" data-name="Heading 4">
-      <div className="flex flex-col font-['Ubuntu:Bold',_sans-serif] justify-center leading-[30px] not-italic relative shrink-0 text-[#0a0a0f] text-[24px] text-nowrap whitespace-pre">
+      <div className="flex flex-col font-['Ubuntu:Medium',_sans-serif] justify-center leading-[30px] not-italic relative shrink-0 text-[#0a0a0f] text-[24px] text-nowrap whitespace-pre">
         <p className="mb-0">Egal, wo du bist,</p>
         <p className="mb-0">peers. ist 100%</p>
         <p className="mb-0">digital und immer</p>
@@ -363,7 +363,7 @@ function Background2() {
 function Heading7() {
   return (
     <div className="absolute content-stretch flex flex-col items-start left-[34.94px] right-[36.47px] top-[97.91px]" data-name="Heading 4">
-      <div className="flex flex-col font-['Ubuntu:Bold',_sans-serif] justify-center leading-[0] not-italic relative shrink-0 text-[#0a0a0f] text-[24px] text-nowrap">
+      <div className="flex flex-col font-['Ubuntu:Medium',_sans-serif] justify-center leading-[0] not-italic relative shrink-0 text-[#0a0a0f] text-[24px] text-nowrap">
         <p className="leading-[30px] whitespace-pre">Safety First</p>
       </div>
     </div>
@@ -443,7 +443,7 @@ function ParagraphBackground() {
   return (
     <div className="basis-0 bg-[#2e2a2f] grow h-full min-h-px min-w-px relative rounded-[14.49px] shrink-0" data-name="Paragraph+Background">
       <div className="size-full">
-        <div className="box-border content-stretch flex flex-col font-['Ubuntu:Bold',_sans-serif] items-start justify-between leading-[0] not-italic pb-[33.91px] pl-[34.423px] pr-[10.87px] pt-[27.98px] relative size-full text-nowrap text-white">
+        <div className="box-border content-stretch flex flex-col font-['Ubuntu:Medium',_sans-serif] items-start justify-between leading-[0] not-italic pb-[33.91px] pl-[34.423px] pr-[10.87px] pt-[27.98px] relative size-full text-nowrap text-white">
           <div className="flex flex-col justify-center relative shrink-0 text-[48px]">
             <p className="leading-[60px] text-nowrap whitespace-pre">Ab 89€</p>
           </div>
@@ -646,7 +646,7 @@ function Section1() {
 function Container19() {
   return (
     <div className="content-stretch flex flex-col items-start relative shrink-0 w-full" data-name="Container">
-      <div className="flex flex-col font-['Ubuntu:Bold',_sans-serif] justify-center leading-[0] not-italic relative shrink-0 text-[48px] text-neutral-900 w-full">
+      <div className="flex flex-col font-['Ubuntu:Medium',_sans-serif] justify-center leading-[0] not-italic relative shrink-0 text-[48px] text-neutral-900 w-full">
         <p className="leading-[60px]">Highlights of your plan</p>
       </div>
     </div>
@@ -1404,19 +1404,22 @@ function Section3() {
       title: "Adult Therapy",
       description: "Talk to a trained therapist who helps you make sense of things and feel more in control, one session at a time.",
       image: imgRectangle9,
-      info: "5 min Quiz"
+      info: "5 min Quiz",
+      link: "/assessment"
     },
     {
       title: "Adult Psychiatry",
       description: "Meet with a psychiatrist who helps with sleep, focus, energy, or mood and finds the right medication, if needed.",
       image: imgRectangle10,
-      info: "5 min Quiz"
+      info: "5 min Quiz",
+      link: "/assessment"
     },
     {
       title: "Hospital Care",
       description: "Designed for acute mental health needs, with 24/7 support and a multi-disciplinary team that supports you.",
       image: imgRectangle11,
-      info: "5 min Quiz"
+      info: "5 min Quiz",
+      link: "/assessment"
     }
   ];
 
@@ -1427,7 +1430,7 @@ function Section3() {
           <AssessmentBlock
             title="Mental Health Assessment"
             seeMoreText="SEE MORE"
-            assessments={assessments}
+            programs={assessments}
             onNavigate={(path) => console.log('Navigate to:', path)}
           />
         </div>
@@ -1789,25 +1792,28 @@ function Container43() {
   );
 }
 
-function Section4({ onBlogClick, onViewAll }: { 
-  onBlogClick?: (blogId: string) => void;
+function Section4({ onResourceClick, onViewAll }: { 
+  onResourceClick?: (resourceId: string) => void;
   onViewAll?: () => void;
 } = {}) {
-  const blogPosts = getLatestBlogPosts(3);
+  const resourcePosts = getLatestResourcePosts(3);
   
   const handlePostClick = (post: any) => {
-    if (onBlogClick) {
-      onBlogClick(post.id);
+    if (onResourceClick) {
+      onResourceClick(post.id);
     }
   };
 
   return (
     <div className="bg-[#e9ebef] relative shrink-0 w-full" data-name="Section">
       <div className="flex flex-col items-center size-full">
-        <BlogSectionBlock 
-          posts={blogPosts}
+        <ResourceBlock 
+          title="Latest Updates"
+          description="Insights and resources for your mental wellness journey"
+          posts={resourcePosts}
           onPostClick={handlePostClick}
           onViewAll={onViewAll}
+          viewAllText="View All"
         />
       </div>
     </div>

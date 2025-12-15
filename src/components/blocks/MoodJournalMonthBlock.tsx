@@ -99,7 +99,7 @@ function MoodJournalCalendar({ selectedDate, moodEntries = [], onSelectDate }: M
                   "p-2 h-12 rounded-md transition-all duration-200 relative",
                   "hover:bg-opacity-80 focus:outline-none focus:ring-2",
                   isSelected && "ring-2",
-                  isTodayDate && "font-semibold"
+                  isTodayDate && "font-medium"
                 )}
                 style={{
                   backgroundColor: isSelected ? 'var(--color-primary-default)' : 

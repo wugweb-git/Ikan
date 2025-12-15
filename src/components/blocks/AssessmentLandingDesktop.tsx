@@ -63,7 +63,7 @@ export function AssessmentLandingDesktop({
             <h1 
               style={{
                 fontSize: 'var(--text-4xl)',
-                fontWeight: 'var(--font-weight-semibold)',
+                fontWeight: 'var(--font-weight-medium)',
                 lineHeight: 'var(--line-height-sm)',
                 marginBottom: 'var(--ikan-component-spacing-default)',
                 color: 'var(--color-text-inverse)'
@@ -140,7 +140,7 @@ export function AssessmentLandingDesktop({
                   <div 
                     style={{
                       fontSize: 'var(--text-lg)',
-                      fontWeight: 'var(--font-weight-semibold)',
+                      fontWeight: 'var(--font-weight-medium)',
                       color: 'var(--color-text-inverse)'
                     }}
                   >
@@ -173,7 +173,7 @@ export function AssessmentLandingDesktop({
           <h2 
             style={{
               fontSize: 'var(--text-3xl)',
-              fontWeight: 'var(--font-weight-semibold)',
+              fontWeight: 'var(--font-weight-medium)',
               color: 'var(--color-text-primary)',
               marginBottom: 'var(--ikan-component-spacing-large)'
             }}
@@ -204,7 +204,7 @@ export function AssessmentLandingDesktop({
           <h2 
             style={{
               fontSize: 'var(--text-3xl)',
-              fontWeight: 'var(--font-weight-semibold)',
+              fontWeight: 'var(--font-weight-medium)',
               color: 'var(--color-text-primary)',
               marginBottom: 'var(--ikan-component-spacing-large)',
               textAlign: 'center'
@@ -277,7 +277,7 @@ export function AssessmentLandingDesktop({
                   <h3 
                     style={{
                       fontSize: 'var(--text-base)',
-                      fontWeight: 'var(--font-weight-semibold)',
+                      fontWeight: 'var(--font-weight-medium)',
                       color: 'var(--color-text-primary)',
                       margin: 0
                     }}
@@ -312,7 +312,7 @@ export function AssessmentLandingDesktop({
           <h2 
             style={{
               fontSize: 'var(--text-3xl)',
-              fontWeight: 'var(--font-weight-semibold)',
+              fontWeight: 'var(--font-weight-medium)',
               color: 'var(--color-text-primary)',
               marginBottom: 'var(--ikan-component-spacing-large)',
               textAlign: 'center'
@@ -384,7 +384,7 @@ export function AssessmentLandingDesktop({
                 <h3 
                   style={{
                     fontSize: 'var(--text-xl)',
-                    fontWeight: 'var(--font-weight-semibold)',
+                    fontWeight: 'var(--font-weight-medium)',
                     color: 'var(--color-text-primary)',
                     marginBottom: 'var(--ikan-component-spacing-small)'
                   }}
@@ -444,7 +444,7 @@ export function AssessmentLandingDesktop({
               <h2 
                 style={{
                   fontSize: 'var(--text-3xl)',
-                  fontWeight: 'var(--font-weight-semibold)',
+                  fontWeight: 'var(--font-weight-medium)',
                   color: 'var(--color-text-primary)',
                   marginBottom: 'var(--ikan-component-spacing-default)'
                 }}

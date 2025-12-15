@@ -37,7 +37,7 @@ function WellbeingSnapshotWidget({ user }: WellbeingSnapshotWidgetProps) {
           <h2 
             style={{ 
               fontSize: 'var(--text-xl)', 
-              fontWeight: 'var(--font-weight-semibold)',
+              fontWeight: 'var(--font-weight-medium)',
               color: 'var(--color-text-primary)',
               marginBottom: 'var(--spacing-1)'
             }}
@@ -57,7 +57,7 @@ function WellbeingSnapshotWidget({ user }: WellbeingSnapshotWidgetProps) {
             <div 
               style={{ 
                 fontSize: 'var(--text-2xl)', 
-                fontWeight: 'var(--font-weight-semibold)',
+                fontWeight: 'var(--font-weight-medium)',
                 color: 'var(--color-primary-default)'
               }}
             >
@@ -72,7 +72,7 @@ function WellbeingSnapshotWidget({ user }: WellbeingSnapshotWidgetProps) {
             <div 
               style={{ 
                 fontSize: 'var(--text-2xl)', 
-                fontWeight: 'var(--font-weight-semibold)',
+                fontWeight: 'var(--font-weight-medium)',
                 color: 'var(--color-primary-default)'
               }}
             >

@@ -139,7 +139,7 @@ function PaymentDemoContent() {
             <h2 
               style={{ 
                 fontSize: 'var(--text-2xl)', 
-                fontWeight: 'var(--font-weight-semibold)',
+                fontWeight: 'var(--font-weight-medium)',
                 color: 'var(--color-text-primary)'
               }}
             >
@@ -201,7 +201,7 @@ function PaymentDemoContent() {
                         <div 
                           style={{ 
                             fontSize: 'var(--text-lg)', 
-                            fontWeight: 'var(--font-weight-semibold)',
+                            fontWeight: 'var(--font-weight-medium)',
                             color: 'var(--color-text-primary)'
                           }}
                         >
@@ -483,7 +483,7 @@ export function MonetizationJourneysShowcase() {
           <h1 
             style={{ 
               fontSize: 'var(--text-3xl)', 
-              fontWeight: 'var(--font-weight-semibold)',
+              fontWeight: 'var(--font-weight-medium)',
               color: 'var(--color-text-primary)'
             }}
           >

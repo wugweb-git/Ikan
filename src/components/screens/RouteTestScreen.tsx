@@ -112,7 +112,7 @@ export function RouteTestScreen({ onNavigate, currentRoute, isAuthenticated }: R
       className="min-h-screen p-6"
       style={{
         backgroundColor: 'var(--color-bg-page)',
-        paddingTop: 'calc(88px + 40px + var(--spacing-6))'
+        paddingTop: 'var(--spacing-6)'
       }}
     >
       <div 

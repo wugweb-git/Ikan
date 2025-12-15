@@ -22,8 +22,10 @@ export async function handleSeedData() {
         assessment_id: "assess-anxiety-gad7",
         id: "00000000-0000-0000-0000-000000000002",
         slug: "anxiety",
-        title: "Generalized Anxiety Disorder Scale (GAD-7)",
-        description: "7-item scale widely used to measure severity of anxiety symptoms",
+        title: "Anxiety Assessment",
+        description: "Talk to a trained therapist who helps you make sense of things and feel more in control, one session at a time.",
+        image_url: "https://images.unsplash.com/photo-1527137342181-19aab11a8ee8?auto=format&fit=crop&q=80&w=1000",
+        info: "5 min Quiz",
         version: "1.0",
         metadata: {
           estimated_minutes: 2,
@@ -52,8 +54,10 @@ export async function handleSeedData() {
         assessment_id: "assess-depression-phq9",
         id: "00000000-0000-0000-0000-000000000003",
         slug: "depression",
-        title: "Patient Health Questionnaire (PHQ-9)",
-        description: "9-item depression screening tool",
+        title: "Depression Screening",
+        description: "Meet with a psychiatrist who helps with sleep, focus, energy, or mood and finds the right medication, if needed.",
+        image_url: "https://images.unsplash.com/photo-1474418397713-7ede21d49118?auto=format&fit=crop&q=80&w=1000",
+        info: "5 min Quiz",
         version: "1.0",
         metadata: {
           estimated_minutes: 3,
@@ -82,8 +86,10 @@ export async function handleSeedData() {
         assessment_id: "assess-burnout-risk",
         id: "00000000-0000-0000-0000-000000000004",
         slug: "burnout",
-        title: "Burnout Risk Assessment",
-        description: "Comprehensive assessment to identify signs of burnout",
+        title: "Burnout Assessment",
+        description: "Designed for acute mental health needs, with 24/7 support and a multi-disciplinary team that supports you.",
+        image_url: "https://images.unsplash.com/photo-1499209974431-2771e86d0be3?auto=format&fit=crop&q=80&w=1000",
+        info: "5 min Quiz",
         version: "1.0",
         metadata: {
           estimated_minutes: 4,
@@ -251,6 +257,58 @@ export async function handleSeedData() {
     await kv.set(`equip_program:equip-productivity-challenge-7`, productivityProgram);
     console.log('✅ Seeded: Productivity Challenge Program');
 
+    // Seed Library Resources (Blogs)
+    const resourcesToSeed = [
+      {
+        id: "resource-article-001",
+        title: "Understanding Anxiety: Triggers and Coping Mechanisms",
+        excerpt: "Learn how to identify your anxiety triggers and apply effective coping strategies in your daily life.",
+        content: "Anxiety is a natural response to stress...",
+        image_url: "https://images.unsplash.com/photo-1474418397713-7ede21d49118?auto=format&fit=crop&q=80&w=1000",
+        category: "Anxiety",
+        author: {
+            name: "Dr. Sarah Chen",
+            avatar: "https://images.unsplash.com/photo-1559839734-2b71ea197ec2?auto=format&fit=crop&q=80&w=100"
+        },
+        read_time_minutes: 5,
+        created_at: "2024-03-10T10:00:00Z"
+      },
+      {
+        id: "resource-article-002",
+        title: "The Science of Sleep: Why It Matters for Mental Health",
+        excerpt: "Discover the deep connection between sleep quality and emotional well-being, and how to improve both.",
+        content: "Sleep plays a crucial role in...",
+        image_url: "https://images.unsplash.com/photo-1511295742362-92c96b53b035?auto=format&fit=crop&q=80&w=1000",
+        category: "Sleep",
+        author: {
+            name: "Dr. James Wilson",
+            avatar: "https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?auto=format&fit=crop&q=80&w=100"
+        },
+        read_time_minutes: 7,
+        created_at: "2024-03-12T14:30:00Z"
+      },
+      {
+        id: "resource-article-003",
+        title: "Mindfulness at Work: Staying Grounded in a Busy Office",
+        excerpt: "Simple mindfulness exercises you can do at your desk to reduce stress and increase focus.",
+        content: "In today's fast-paced work environment...",
+        image_url: "https://images.unsplash.com/photo-1506126613408-eca07ce68773?auto=format&fit=crop&q=80&w=1000",
+        category: "Mindfulness",
+        author: {
+            name: "Emma Thompson",
+            avatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?auto=format&fit=crop&q=80&w=100"
+        },
+        read_time_minutes: 4,
+        created_at: "2024-03-15T09:15:00Z"
+      }
+    ];
+
+    console.log('📚 Seeding library resources...');
+    for (const resource of resourcesToSeed) {
+        await kv.set(`resource:${resource.id}`, resource);
+        console.log(`✅ Seeded resource: ${resource.title}`);
+    }
+
     console.log('🎉 Essential data seeded successfully');
     
     return {
@@ -266,7 +324,8 @@ export async function handleSeedData() {
         { id: 'stress-management-30', title: 'Stress Management (30-day)' },
         { id: 'better-sleep-21', title: 'Better Sleep (21-day)' },
         { id: 'productivity-challenge-7', title: 'Productivity Challenge (7-day)' }
-      ]
+      ],
+      resources_seeded: resourcesToSeed.length
     };
 
   } catch (error) {

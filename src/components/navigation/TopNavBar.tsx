@@ -3,14 +3,8 @@ import { Button } from '../ui/button';
 import { Icon } from '../Icon';
 import { LogoFull } from '../Logo';
 import { useAuth } from '../../contexts/AuthContext';
-import { getPrivateNavigationRoutes, corporateRoutes } from '../../lib/route-config';
-import { NotificationCenterTrigger } from '../notifications/NotificationCenter';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from '../ui/dropdown-menu';
-import { Heart, User, LogOut, ChevronDown } from 'lucide-react';
 import { cn } from '../ui/utils';
-import svgPaths from "../../imports/svg-53vrzosjep";
-import sideNavSvgPaths from "../../imports/svg-9hgv5sa7uo";
-import imgAvatar from "figma:asset/f8bfdc3dfe2a754ded4c44d82d1518e16a087140.png";
+const imgAvatar = "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop"; // Default avatar
 
 interface TopNavBarProps {
   currentRoute: string;
@@ -20,7 +14,7 @@ interface TopNavBarProps {
 }
 
 export function TopNavBar({ currentRoute, onNavigate, className, showAuthButtons = true }: TopNavBarProps) {
-  const { user, signOut } = useAuth();
+  const { user } = useAuth();
   const [isScrolled, setIsScrolled] = useState(false);
 
   // Define specific navigation items for top nav as requested by user
@@ -28,9 +22,9 @@ export function TopNavBar({ currentRoute, onNavigate, className, showAuthButtons
   const topNavItems = [
     { label: 'Dashboard', route: '/dashboard', icon: 'home' },
     { label: 'Mood Journal', route: '/mood-journal', icon: 'heart' },
-    { label: 'Assessments', route: '/assessments', icon: 'assignment' },
-    { label: 'Program', route: '/equip-programs', icon: 'tools' },
-    { label: 'Library', route: '/library', icon: 'library' },
+    { label: 'Assessment', route: '/assessment', icon: 'assignment' },
+    { label: 'Equip', route: '/equip', icon: 'tools' },
+    { label: 'Resource', route: '/resource', icon: 'library' },
     { label: 'Consultation', route: '/consultation', icon: 'chat' }
   ];
   
@@ -50,14 +44,6 @@ export function TopNavBar({ currentRoute, onNavigate, className, showAuthButtons
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
-
-  const handleSignOut = async () => {
-    try {
-      await signOut();
-    } catch (error) {
-      console.error('Sign out error:', error);
-    }
-  };
 
   const navbarState = isScrolled ? 'scrolled' : 'default';
 
@@ -89,7 +75,7 @@ export function TopNavBar({ currentRoute, onNavigate, className, showAuthButtons
       {/* Logo/Brand */}
       <div className="flex items-center gap-3 animate-fadeIn">
         <button
-          className="flex items-center gap-2 font-semibold transition-all duration-200"
+          className="flex items-center gap-2 font-medium transition-all duration-200"
           onClick={() => onNavigate('/dashboard')}
           style={{ 
             fontSize: 'var(--text-xl)',
@@ -176,102 +162,14 @@ export function TopNavBar({ currentRoute, onNavigate, className, showAuthButtons
             Let's Talk
           </Button>
 
-          {/* Profile Dropdown Menu */}
+          {/* Profile Button - Direct Navigation to Account */}
           {user ? (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <button className="relative shrink-0 size-[48px] hover:scale-105 transition-transform duration-200 rounded-full overflow-hidden border border-transparent hover:border-gray-200">
-                <img alt="User Avatar" className="block max-w-none size-full object-cover" src={imgAvatar} />
-              </button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent 
-              align="end" 
-              className="w-[280px] p-2"
-              style={{
-                backgroundColor: 'var(--color-bg-card)',
-                borderRadius: 'var(--radius-lg)',
-                border: '1px solid var(--color-border-light)',
-                boxShadow: 'var(--shadow-lg)'
-              }}
-            >
-              {/* Profile Header */}
-              <div className="mb-2 p-2 rounded-lg" style={{ backgroundColor: 'var(--color-primary-default)' }}>
-                <div className="flex items-center gap-3 text-white">
-                  <div className="p-1.5 bg-white/10 rounded-full">
-                    <User size={16} className="text-white" />
-                  </div>
-                  <span className="font-medium" style={{ fontFamily: 'var(--font-family-base)' }}>Profile</span>
-                </div>
-              </div>
-
-              {/* Menu Items */}
-              <div className="space-y-1">
-                {[
-                  { label: 'Settings', route: '/account', icon: sideNavSvgPaths.p3535ba00 },
-                  { label: 'Notifications', route: '/account/notifications', icon: sideNavSvgPaths.p2ac53bf0 }, // Note: using first path for icon
-                  { label: 'Security', route: '/account/privacy', icon: sideNavSvgPaths.p3879200 },
-                  { label: 'Preferences', route: '/account', icon: sideNavSvgPaths.p6656b80 },
-                  { label: 'Corporate', route: '/about', icon: sideNavSvgPaths.p6656b80 },
-                  { label: 'Help & Support', route: '/contact', icon: sideNavSvgPaths.p19332900 },
-                  { label: 'FAQs', route: '/faq', icon: sideNavSvgPaths.p132bc00 },
-                ].map((item) => (
-                  <DropdownMenuItem
-                    key={item.label}
-                    onClick={() => onNavigate(item.route)}
-                    className="flex items-center gap-3 p-3 cursor-pointer rounded-md transition-colors hover:bg-neutral-100 focus:bg-neutral-100"
-                  >
-                    <div className="w-[18px] h-[18px] shrink-0">
-                      <svg className="w-full h-full" viewBox="0 0 18 18" fill="none">
-                        <path d={item.icon} fill="var(--color-text-primary)" />
-                      </svg>
-                    </div>
-                    <span style={{ 
-                      fontFamily: 'var(--font-family-base)', 
-                      fontSize: 'var(--text-sm)',
-                      color: 'var(--color-text-primary)'
-                    }}>
-                      {item.label}
-                    </span>
-                  </DropdownMenuItem>
-                ))}
-
-                <DropdownMenuSeparator className="my-2 bg-neutral-100" />
-                
-                {/* Corporate Sub-routes */}
-                {corporateRoutes.map((page) => (
-                  <DropdownMenuItem
-                    key={page.path}
-                    onClick={() => onNavigate(page.path)}
-                    className="flex items-center gap-3 p-2 pl-9 cursor-pointer rounded-md hover:bg-neutral-100 focus:bg-neutral-100"
-                  >
-                    <span style={{ 
-                      fontFamily: 'var(--font-family-base)', 
-                      fontSize: 'var(--text-xs)',
-                      color: 'var(--color-text-muted)'
-                    }}>
-                      {page.label}
-                    </span>
-                  </DropdownMenuItem>
-                ))}
-
-                <DropdownMenuSeparator className="my-2 bg-neutral-100" />
-
-                <DropdownMenuItem
-                  onClick={handleSignOut}
-                  className="flex items-center gap-3 p-3 cursor-pointer rounded-md hover:bg-red-50 focus:bg-red-50 group"
-                >
-                  <LogOut size={18} className="text-neutral-900 group-hover:text-red-600" />
-                  <span style={{ 
-                    fontFamily: 'var(--font-family-base)', 
-                    fontSize: 'var(--text-sm)',
-                    color: 'var(--color-text-primary)'
-                  }} className="group-hover:text-red-600">
-                    Log out
-                  </span>
-                </DropdownMenuItem>
-              </div>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <button 
+            onClick={() => onNavigate('/account')}
+            className="relative shrink-0 size-[48px] hover:scale-105 transition-transform duration-200 rounded-full overflow-hidden border border-transparent hover:border-gray-200"
+          >
+            <img alt="User Avatar" className="block max-w-none size-full object-cover" src={imgAvatar} />
+          </button>
         ) : (
           <Button 
             variant="ghost" 

@@ -1,21 +1,25 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
+import { ArrowLeft, Share2 } from 'lucide-react';
+import { Button } from '../ui/button';
 import { useIsMobile } from '../../hooks/useIsMobile';
-import { ArrowLeft } from 'lucide-react';
-import { cn } from '../ui/utils';
 import { useNotifications } from '../../contexts/NotificationContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { apiClient } from '../../lib/api-client';
-import { DUMMY_BLOGS, getBlogById, getRelatedBlogs, formatBlogsForSection } from '../../lib/dummy-blogs';
+import { getResourceById, getRelatedResources, formatResourcesForSection } from '../../lib/dummy-resources';
 
 // Import dynamic UI blocks
-import { BlogHero } from '../blocks/BlogHero';
-import { BlogContent } from '../blocks/BlogContent';
-import { BlogAuthor } from '../blocks/BlogAuthor';
-import { BlogSectionBlock } from '../blocks/BlogSectionBlock';
+import { ResourceHero } from '../blocks/ResourceHero';
+import { ResourceContent } from '../blocks/ResourceContent';
+import { ResourceBlock } from '../blocks/ResourceBlock';
+import { ResourceAuthor } from '../blocks/ResourceAuthor';
+import { ResourceCategory } from '../blocks/ResourceCategory';
+import { ResourceTypeLabel } from '../blocks/ResourceTypeLabel';
+import { ResourceTags } from '../blocks/ResourceTags';
 
 interface ResourceDetailProps {
   resourceId: string;
   onBack?: () => void;
+  onResourceSelect?: (id: string) => void;
   className?: string;
 }
 
@@ -47,7 +51,7 @@ interface ResourceContent {
   authorImage?: string;
 }
 
-export function ResourceDetail({ resourceId, onBack, className }: ResourceDetailProps) {
+export function ResourceDetail({ resourceId, onBack, onResourceSelect, className }: ResourceDetailProps) {
   const isMobile = useIsMobile();
   const { showToast } = useNotifications();
   const { user } = useAuth();
@@ -166,7 +170,7 @@ export function ResourceDetail({ resourceId, onBack, className }: ResourceDetail
           timerCleanup = startReadingTimer();
         }
       } catch (error) {
-        console.error('❌ Failed to initialize resource:', error);
+        console.error(' Failed to initialize resource:', error);
         if (isComponentMounted) {
           showToast('error', 'Initialization Failed', 'Please refresh the page');
         }
@@ -343,30 +347,30 @@ export function ResourceDetail({ resourceId, onBack, className }: ResourceDetail
       setLoading(true);
       console.log('📚 Loading resource:', resourceId);
       
-      // First, check if this is a dummy blog
-      const dummyBlog = getBlogById(resourceId);
-      if (dummyBlog) {
-        console.log('📚 Loading dummy blog data');
+      // First, check if this is a dummy resource
+      const dummyResource = getResourceById(resourceId);
+      if (dummyResource) {
+        console.log('📚 Loading dummy resource data');
         
         const formattedResource: ResourceContent = {
-          id: dummyBlog.id,
-          title: dummyBlog.title,
-          description: dummyBlog.description,
-          category: dummyBlog.category,
-          contentType: dummyBlog.contentType,
-          readTimeMinutes: dummyBlog.readTimeMinutes,
-          author: dummyBlog.author,
-          publishedDate: dummyBlog.publishedDate,
-          content: dummyBlog.content,
-          tags: dummyBlog.tags,
-          heroImage: dummyBlog.image,
-          relatedResources: getRelatedBlogs(dummyBlog.id).map(blog => ({
-            id: blog.id,
-            title: blog.title,
-            category: blog.category,
-            readTimeMinutes: blog.readTimeMinutes,
-            description: blog.description,
-            publishedDate: blog.publishedDate
+          id: dummyResource.id,
+          title: dummyResource.title,
+          description: dummyResource.description,
+          category: dummyResource.category,
+          contentType: dummyResource.contentType,
+          readTimeMinutes: dummyResource.readTimeMinutes,
+          author: dummyResource.author,
+          publishedDate: dummyResource.publishedDate,
+          content: dummyResource.content,
+          tags: dummyResource.tags,
+          heroImage: dummyResource.image,
+          relatedResources: getRelatedResources(dummyResource.id).map(resource => ({
+            id: resource.id,
+            title: resource.title,
+            category: resource.category,
+            readTimeMinutes: resource.readTimeMinutes,
+            description: resource.description,
+            publishedDate: resource.publishedDate
           }))
         };
         
@@ -911,29 +915,16 @@ export function ResourceDetail({ resourceId, onBack, className }: ResourceDetail
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div 
-          className="animate-pulse ikan-stack-md w-full max-w-4xl mx-auto ikan-card-spacing"
-          style={{ padding: 'var(--ikan-component-spacing-large)' }}
+          className="animate-pulse w-full max-w-4xl mx-auto p-8"
         >
           <div 
-            className="h-8 w-3/4"
-            style={{ 
-              backgroundColor: 'var(--color-neutral-200)',
-              borderRadius: 'var(--ikan-component-border-radius)'
-            }}
+            className="h-8 w-3/4 mb-4 bg-gray-200 rounded"
           ></div>
           <div 
-            className="h-4 w-1/2"
-            style={{ 
-              backgroundColor: 'var(--color-neutral-200)',
-              borderRadius: 'var(--ikan-component-border-radius)'
-            }}
+            className="h-4 w-1/2 mb-8 bg-gray-200 rounded"
           ></div>
           <div 
-            className="h-64"
-            style={{ 
-              backgroundColor: 'var(--color-neutral-200)',
-              borderRadius: 'var(--ikan-component-border-radius)'
-            }}
+            className="h-64 w-full bg-gray-200 rounded-xl"
           ></div>
         </div>
       </div>
@@ -943,42 +934,27 @@ export function ResourceDetail({ resourceId, onBack, className }: ResourceDetail
   if (!resource) {
     return (
       <div 
-        className="min-h-screen flex items-center justify-center"
-        style={{ padding: 'var(--ikan-component-spacing-default)' }}
+        className="min-h-screen flex items-center justify-center p-4"
       >
-        <div className="text-center ikan-stack-md">
+        <div className="text-center space-y-4">
           <h2 
-            className="font-semibold"
-            style={{ 
-              fontSize: 'var(--text-xl)',
-              color: 'var(--color-text-primary)'
-            }}
+            className="font-medium text-xl text-primary"
           >
             Resource not found
           </h2>
           <p 
-            style={{ 
-              fontSize: 'var(--text-base)',
-              color: 'var(--color-text-muted)'
-            }}
+            className="text-muted-foreground"
           >
             The resource you're looking for doesn't exist or has been moved.
           </p>
-          <button 
+          <Button 
             onClick={handleBackClick} 
-            className="ikan-button mobile-button touch-target ikan-stack-sm"
-            style={{
-              backgroundColor: 'var(--semantic-button-primary-bg)',
-              color: 'var(--semantic-button-primary-fg)',
-              height: 'var(--ikan-component-button-height)',
-              borderRadius: 'var(--ikan-component-border-radius)',
-              marginTop: 'var(--ikan-component-spacing-default)',
-              transition: 'all var(--ikan-animation-fast) ease'
-            }}
+            variant="default"
+            className="mt-4"
           >
-            <ArrowLeft size={16} />
+            <ArrowLeft size={16} className="mr-2" />
             Back to Library
-          </button>
+          </Button>
         </div>
       </div>
     );
@@ -986,90 +962,84 @@ export function ResourceDetail({ resourceId, onBack, className }: ResourceDetail
 
   if (isMobile) {
     return (
-      <div 
-        className="relative min-h-screen w-full mobile-nav-space"
-        style={{ backgroundColor: 'var(--color-accent-default)' }}
-      >
-        {/* Back button for mobile */}
-        <div 
-          className="absolute z-50"
-          style={{
-            top: 'var(--ikan-component-spacing-default)',
-            left: 'var(--ikan-component-spacing-default)'
-          }}
-        >
-          <button
-            onClick={handleBackClick}
-            className={cn(
-              "mobile-button touch-target flex items-center justify-center",
-              "backdrop-blur-sm"
-            )}
-            style={{
-              width: 'var(--ikan-touch-target-min)',
-              height: 'var(--ikan-touch-target-min)',
-              borderRadius: 'var(--radius-pill)',
-              backgroundColor: 'rgba(255, 255, 255, 0.8)',
-              boxShadow: 'var(--shadow-sm)',
-              transition: 'all var(--ikan-animation-fast) ease'
-            }}
-          >
-            <ArrowLeft 
-              className="w-5 h-5" 
-              style={{ color: 'var(--color-text-primary)' }}
-            />
-          </button>
-        </div>
-
+      <div className="relative min-h-screen w-full bg-accent">
         {/* Reading Progress */}
-        <div 
-          className="fixed top-0 left-0 right-0 z-40 h-1"
-          style={{ backgroundColor: 'var(--color-primary-default)' }}
-        >
+        <div className="fixed top-0 left-0 right-0 z-40 h-1 bg-gray-100">
           <div 
-            className="h-full transition-all"
-            style={{ 
-              width: `${readProgress}%`,
-              backgroundColor: 'var(--color-primary-on)',
-              transitionDuration: 'var(--ikan-animation-normal)'
-            }}
+            className="h-full bg-primary transition-all duration-300 ease-out"
+            style={{ width: `${readProgress}%` }}
           />
         </div>
 
         {/* Mobile responsive layout */}
         <div className="w-full">
           {/* Hero Section - Full Width */}
-          <BlogHero
+          <ResourceHero
             title={resource.title}
             description={resource.description}
-            image={resource.heroImage}
-            imageAlt="AI Search Technology"
+            image={resource.heroImage || 'https://images.unsplash.com/photo-1544367563-12123d8965cd?w=800&q=80'}
+            imageAlt={resource.title}
           />
 
-          {/* Blog Content with Author */}
-          <div className="px-4" style={{ marginTop: 'var(--spacing-6)' }}>
-            <BlogContent
+          <div className="px-4 mt-6 max-w-3xl mx-auto space-y-8">
+            {/* Meta Info */}
+            <div className="flex items-center gap-4 flex-wrap">
+              <ResourceCategory category={resource.category} />
+              <ResourceTypeLabel type={resource.contentType} />
+            </div>
+
+            {/* Resource Content */}
+            <ResourceContent
               content={renderContentBlocks(resource.content)}
-              author={{
-                name: resource.author || 'Reza Moaiandin',
-                avatar: resource.authorImage,
-                date: resource.publishedDate || '2024-09-30',
-                readTime: `${resource.readTimeMinutes} min read`
-              }}
-              tags={resource.tags}
-              onShare={handleShare}
             />
+
+            {/* Author Info */}
+            <div className="border-t border-gray-200 pt-8">
+              <ResourceAuthor
+                name={resource.author || 'Reza Moaiandin'}
+                avatar={resource.authorImage}
+                date={resource.publishedDate || '2024-09-30'}
+                readTime={`${resource.readTimeMinutes} min read`}
+              />
+            </div>
+
+            {/* Tags */}
+            <ResourceTags tags={resource.tags} />
+            
+            {/* Share Button (Optional but useful) */}
+            <div className="pt-4">
+              <Button
+                variant="outline"
+                onClick={handleShare}
+                className="w-full gap-2"
+              >
+                <Share2 size={16} />
+                Share Resource
+              </Button>
+            </div>
           </div>
 
           {/* Related Resources */}
           {resource.relatedResources && resource.relatedResources.length > 0 && (
-            <div style={{ marginTop: 'var(--spacing-8)', marginBottom: 'var(--spacing-8)' }}>
-              <BlogSectionBlock
+            <div className="my-8">
+              <ResourceBlock
                 title="You might also like:"
-                posts={formatBlogsForSection(getRelatedBlogs(resourceId))}
+                posts={resource.relatedResources.map(r => ({
+                  id: r.id,
+                  title: r.title,
+                  description: r.description || '',
+                  image: r.image || 'https://images.unsplash.com/photo-1499750310107-5fef28a66643?w=800',
+                  category: r.category,
+                  readTime: `${r.readTimeMinutes} min read`,
+                  date: r.publishedDate || '',
+                  slug: r.id
+                }))}
                 onPostClick={(post) => {
-                  // Navigate to the related blog
+                  // Navigate to the related resource
                   window.scrollTo(0, 0);
-                  window.location.hash = `/resource-detail/${post.id}`;
+                  if (onResourceSelect) {
+                     onResourceSelect(post.id);
+                  }
                 }}
               />
             </div>
@@ -1080,107 +1050,108 @@ export function ResourceDetail({ resourceId, onBack, className }: ResourceDetail
   }
 
   return (
-    <div 
-      className="relative min-h-screen w-full"
-      style={{ backgroundColor: 'var(--color-accent-default)' }}
-    >
-      {/* Back button - responsive positioning */}
-      <div 
-        className="absolute z-50"
-        style={{
-          top: isMobile ? 'var(--spacing-4)' : 'var(--spacing-8)',
-          left: isMobile ? 'var(--spacing-4)' : 'var(--spacing-8)'
-        }}
-      >
-        <button
-          onClick={handleBackClick}
-          className={cn(
-            "touch-target flex items-center justify-center",
-            "backdrop-blur-sm"
-          )}
-          style={{
-            width: 'var(--ikan-component-button-height)',
-            height: 'var(--ikan-component-button-height)',
-            borderRadius: 'var(--radius-pill)',
-            backgroundColor: 'rgba(255, 255, 255, 0.8)',
-            boxShadow: 'var(--shadow-sm)',
-            transition: 'all var(--ikan-animation-fast) ease'
-          }}
-        >
-          <ArrowLeft 
-            className="w-6 h-6" 
-            style={{ color: 'var(--color-text-primary)' }}
-          />
-        </button>
-      </div>
-
+    <div className="relative min-h-screen w-full bg-accent">
       {/* Reading Progress */}
-      <div 
-        className="fixed top-0 left-0 right-0 z-40 h-1"
-        style={{ backgroundColor: 'var(--color-primary-default)' }}
-      >
+      <div className="fixed top-0 left-0 right-0 z-40 h-1 bg-gray-100">
         <div 
-          className="h-full transition-all"
-          style={{ 
-            width: `${readProgress}%`,
-            backgroundColor: 'var(--color-primary-on)',
-            transitionDuration: 'var(--ikan-animation-normal)'
-          }}
+          className="h-full bg-primary transition-all duration-300 ease-out"
+          style={{ width: `${readProgress}%` }}
         />
       </div>
 
       {/* Responsive layout container */}
-      <div className="w-full" style={{
-        paddingTop: isMobile ? 'var(--spacing-16)' : 'var(--spacing-20)',
-        paddingBottom: 'var(--spacing-10)'
-      }}>
+      <div className="w-full pb-10">
         {/* Hero Section - Full Width */}
-        <div className="w-full mx-auto" style={{
-          maxWidth: isMobile ? '100%' : 'min(90vw, 1200px)',
-          paddingLeft: isMobile ? '0' : 'var(--spacing-8)',
-          paddingRight: isMobile ? '0' : 'var(--spacing-8)'
-        }}>
-          <BlogHero
-            title={resource.title}
-            description={resource.description}
-            image={resource.heroImage}
-            imageAlt="AI Search Technology"
-          />
-        </div>
+        <ResourceHero
+          title={resource.title}
+          description={resource.description}
+          image={resource.heroImage || 'https://images.unsplash.com/photo-1544367563-12123d8965cd?w=800&q=80'}
+          imageAlt={resource.title}
+          className="w-full shadow-xl"
+        />
+        
+        <div className="w-full max-w-[1200px] mx-auto px-8">
+          <div className="max-w-3xl mx-auto mt-12 space-y-10">
+            {/* Meta Info */}
+            <div className="flex items-center gap-4">
+              <div 
+                className="cursor-pointer hover:opacity-80 transition-opacity"
+                onClick={() => showToast('info', 'Category', `Browse ${resource.category}`)}
+              >
+                <ResourceCategory category={resource.category} />
+              </div>
+              <div className="h-4 w-px bg-gray-300" />
+              <div 
+                className="cursor-pointer hover:opacity-80 transition-opacity"
+                onClick={() => showToast('info', 'Type', `View all ${resource.contentType}s`)}
+              >
+                <ResourceTypeLabel type={resource.contentType} />
+              </div>
+            </div>
 
-        {/* Blog Content with Author - Constrained Width */}
-        <div className="w-full mx-auto" style={{
-          maxWidth: isMobile ? '100%' : 'min(90vw, 896px)',
-          paddingLeft: isMobile ? 'var(--spacing-4)' : 'var(--spacing-8)',
-          paddingRight: isMobile ? 'var(--spacing-4)' : 'var(--spacing-8)',
-          marginTop: isMobile ? 'var(--spacing-4)' : 'var(--spacing-6)'
-        }}>
-          <BlogContent
-            content={renderContentBlocks(resource.content)}
-            author={{
-              name: resource.author || 'Reza Moaiandin',
-              avatar: resource.authorImage,
-              date: resource.publishedDate || '2024-09-30',
-              readTime: `${resource.readTimeMinutes} min read`
-            }}
-            tags={resource.tags}
-            onShare={handleShare}
-          />
+            {/* Content */}
+            <ResourceContent
+              content={renderContentBlocks(resource.content)}
+            />
+
+            <div className="border-t border-gray-200 pt-10 space-y-10">
+              <div className="flex justify-between items-start">
+                 {/* Author */}
+                 <div 
+                   className="cursor-pointer hover:bg-gray-50 rounded-lg p-2 -ml-2 transition-colors"
+                   onClick={() => showToast('info', 'Author', `View profile of ${resource.author || 'Reza Moaiandin'}`)}
+                 >
+                  <ResourceAuthor
+                    name={resource.author || 'Reza Moaiandin'}
+                    avatar={resource.authorImage}
+                    date={resource.publishedDate || '2024-09-30'}
+                    readTime={`${resource.readTimeMinutes} min read`}
+                  />
+                </div>
+                
+                {/* Share Button */}
+                <Button
+                  variant="ghost"
+                  onClick={handleShare}
+                  className="gap-2 text-muted-foreground hover:text-primary hover:bg-gray-100 transition-colors"
+                >
+                  <Share2 size={18} />
+                  Share
+                </Button>
+              </div>
+
+              {/* Tags */}
+              <div 
+                className="cursor-pointer hover:opacity-90 transition-opacity"
+                onClick={() => showToast('info', 'Tags', 'Tag filtering active')}
+              >
+                <ResourceTags tags={resource.tags} />
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* Related Resources */}
         {resource.relatedResources && resource.relatedResources.length > 0 && (
-          <div style={{ 
-            marginTop: isMobile ? 'var(--spacing-8)' : 'var(--spacing-10)', 
-            marginBottom: isMobile ? 'var(--spacing-8)' : 'var(--spacing-10)' 
-          }}>
-            <BlogSectionBlock
+          <div className="w-full max-w-[1200px] mx-auto px-8 mt-16 mb-10">
+            <ResourceBlock
               title="You might also like:"
-              posts={formatBlogsForSection(getRelatedBlogs(resourceId))}
+              posts={resource.relatedResources.map(r => ({
+                id: r.id,
+                title: r.title,
+                description: r.description || '',
+                image: r.image || 'https://images.unsplash.com/photo-1499750310107-5fef28a66643?w=800',
+                category: r.category,
+                readTime: `${r.readTimeMinutes} min read`,
+                date: r.publishedDate || '',
+                slug: r.id
+              }))}
               onPostClick={(post) => {
-                // Navigate to the related blog
+                // Navigate to the related resource
                 window.scrollTo(0, 0);
-                window.location.hash = `/resource-detail/${post.id}`;
+                if (onResourceSelect) {
+                   onResourceSelect(post.id);
+                }
               }}
             />
           </div>

@@ -168,8 +168,8 @@ export function BottomNavBarMobile({
   // Bottom nav should have: Dashboard, Assessments, Equips, Tracker (mood journal), Accounts
   const bottomNavItems = [
     { label: 'Dashboard', route: '/dashboard', icon: HomeIcon },
-    { label: 'Assessments', route: '/assessments', icon: ExploreIcon },
-    { label: 'Equips', route: '/equip-programs', icon: ExploreIcon },
+    { label: 'Assessment', route: '/assessment', icon: ExploreIcon },
+    { label: 'Equip', route: '/equip', icon: ExploreIcon },
     { label: 'Tracker', route: '/mood-journal', icon: MoodIcon },
     { label: 'Accounts', route: '/account', icon: AccountIcon }
   ];

@@ -147,10 +147,10 @@
   --constraint-nav-desktop-max: 100vw;
   --constraint-sidebar-min: 64px;
 
-  /* iKan Component Standards (48px height, 6px radius per guidelines) */
+  /* iKan Component Standards (48px height, 12px radius per guidelines) */
   --ikan-component-button-height: 48px;
   --ikan-component-input-height: 48px;
-  --ikan-component-border-radius: var(--radius-sm); /* 6px */
+  --ikan-component-border-radius: var(--radius-md); /* 12px */
   --ikan-component-spacing-default: var(--spacing-4); /* 16px */
   --ikan-component-spacing-large: var(--spacing-6); /* 24px */
   --ikan-animation-normal: var(--motion-duration-normal); /* 300ms */
@@ -176,7 +176,7 @@
   /* Component-specific semantic tokens */
   --ikan-component-button-height: 48px;
   --ikan-component-input-height: 48px;
-  --ikan-component-border-radius: var(--radius-sm);
+  --ikan-component-border-radius: var(--radius-md);
   --ikan-component-spacing-default: var(--spacing-4);
   --ikan-component-spacing-large: var(--spacing-6);
   --ikan-component-spacing-small: var(--spacing-2);
@@ -319,10 +319,10 @@
   --color-chart-3: var(--chart-3);
   --color-chart-4: var(--chart-4);
   --color-chart-5: var(--chart-5);
-  --radius-sm: calc(var(--radius) - 4px);
-  --radius-md: calc(var(--radius) - 2px);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) + 4px);
+  --radius-sm: var(--radius-sm);
+  --radius-md: var(--radius-md);
+  --radius-lg: var(--radius-lg);
+  --radius-xl: calc(var(--radius-lg) + 4px);
   --color-sidebar: var(--sidebar);
   --color-sidebar-foreground: var(--sidebar-foreground);
   --color-sidebar-primary: var(--sidebar-primary);

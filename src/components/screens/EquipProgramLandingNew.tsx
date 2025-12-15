@@ -444,33 +444,7 @@ export function EquipProgramLandingNew({
       className="relative min-h-screen w-full"
       style={{ backgroundColor: 'var(--color-accent-default)' }}
     >
-      {/* Back button for desktop */}
-      <div 
-        className="absolute z-50"
-        style={{
-          top: 'var(--spacing-8)',
-          left: 'var(--spacing-8)'
-        }}
-      >
-        <Button
-          onClick={handleBackClick}
-          variant="ghost"
-          size="icon"
-          className="touch-target backdrop-blur-sm"
-          style={{
-            width: 'var(--ikan-component-button-height)',
-            height: 'var(--ikan-component-button-height)',
-            borderRadius: 'var(--radius-pill)',
-            backgroundColor: 'rgba(255, 255, 255, 0.8)',
-            boxShadow: 'var(--shadow-sm)',
-          }}
-        >
-          <ArrowLeft 
-            className="w-6 h-6" 
-            style={{ color: 'var(--color-text-primary)' }}
-          />
-        </Button>
-      </div>
+
 
       {/* Desktop Figma layout */}
       <div className="w-full">

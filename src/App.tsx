@@ -42,14 +42,12 @@ import { MoodJournal } from './components/screens/MoodJournal';
 import { ResourceDetail } from './components/screens/ResourceDetail';
 import { PaymentHistory } from './components/screens/PaymentHistory';
 import { AssessmentLandingNew } from './components/screens/AssessmentLandingNew';
-import { AdminBlogManager } from './components/screens/AdminBlogManager';
+import { AdminResourceManager } from './components/screens/AdminResourceManager';
 import { AdminDashboard } from './components/screens/AdminDashboard';
 import { AdminWidget } from './components/admin/AdminWidget';
 
 import { AssessmentFlow } from './components/screens/AssessmentFlow';
 import { AssessmentResults } from './components/screens/AssessmentResults';
-import { EquipProgramsLanding } from './components/screens/EquipProgramsLanding';
-import { EquipProgramLandingFigma } from './components/screens/EquipProgramLandingFigma';
 import { EquipProgramLandingNew } from './components/screens/EquipProgramLandingNew';
 import { EquipProgramOnboarding } from './components/screens/EquipProgramOnboarding';
 import { EquipProgramFlow } from './components/screens/EquipProgramFlow';
@@ -194,9 +192,9 @@ function AppContent() {
   const getTransitionDirection = useCallback((newRoute: string, oldRoute: string) => {
     const routeOrder = [
       '/', '/about', '/login', '/dashboard', '/mood-journal', 
-      '/assessments', '/assessment-landing', '/assessment-flow', '/assessment-results',
-      '/equip-programs', '/equip-programs-landing', '/equip-program-onboarding', '/equip-program-flow', '/equip-program-completion',
-      '/consultation', '/consultation-detail', '/library', '/resource-detail', '/account'
+      '/assessment', '/assessment-landing', '/assessment-flow', '/assessment-results',
+      '/equip', '/equip-programs-landing', '/equip-program-onboarding', '/equip-program-flow', '/equip-program-completion',
+      '/consultation', '/consultation-detail', '/resource', '/resource-detail', '/account'
     ];
     
     const newIndex = routeOrder.indexOf(newRoute);
@@ -221,10 +219,10 @@ function AppContent() {
       }
       
       const validRoutes = [
-        '/', '/dashboard', '/mood-journal', '/assessments', '/assessment-landing', '/assessment-flow', '/assessment-results',
-        '/equip-programs', '/equip-programs-landing', '/equip-program-onboarding', '/equip-program-flow', '/equip-program-completion',
-        '/consultation', '/consultation-detail', '/library', '/resource-detail', '/account', 
-        '/about', '/faq', '/privacy', '/terms', '/contact', '/return-policy', '/cancellation-policy', '/sitemap', '/login', '/route-test', '/private-route-test', '/admin/blogs', '/admin'
+        '/', '/dashboard', '/mood-journal', '/assessment', '/assessment-landing', '/assessment-flow', '/assessment-results',
+        '/equip', '/equip-programs-landing', '/equip-program-onboarding', '/equip-program-flow', '/equip-program-completion',
+        '/consultation', '/consultation-detail', '/resource', '/resource-detail', '/account', 
+        '/about', '/faq', '/privacy', '/privacy-policy', '/terms', '/contact', '/return-policy', '/cancellation-policy', '/sitemap', '/login', '/route-test', '/private-route-test', '/admin/resources', '/admin'
       ];
       
       // Handle consultant detail route pattern
@@ -570,7 +568,7 @@ function AppContent() {
           
           // Background seeding of essential data
           try {
-            console.log('🌱 Background seeding essential data...');
+            console.log(' Background seeding essential data...');
             const controller = new AbortController();
             const timeoutId = setTimeout(() => {
               console.log('⏰ Background seeding timeout - this is normal');
@@ -678,7 +676,7 @@ function AppContent() {
               <MoodJournal />
             </ErrorBoundary>
           );
-        case '/assessments':
+        case '/assessment':
           return (
             <ErrorBoundary>
               <Assessments onNavigate={handleNavigate} />
@@ -697,7 +695,7 @@ function AppContent() {
                     handleSignIn();
                   }
                 }}
-                onBack={() => handleNavigate('/assessments')}
+                onBack={() => handleNavigate('/assessment')}
               />
             </ErrorBoundary>
           );
@@ -718,12 +716,12 @@ function AppContent() {
           return (
             <ErrorBoundary>
               <AssessmentResults 
-                onBackToAssessments={() => handleNavigate('/assessments')}
+                onBackToAssessments={() => handleNavigate('/assessment')}
                 onRetakeAssessment={() => handleNavigate('/assessment-flow')}
               />
             </ErrorBoundary>
           );
-        case '/equip-programs':
+        case '/equip':
           return (
             <ErrorBoundary>
               <EquipPrograms onNavigate={handleNavigate} />
@@ -742,7 +740,7 @@ function AppContent() {
                     handleSignIn();
                   }
                 }}
-                onBack={() => handleNavigate('/equip-programs')}
+                onBack={() => handleNavigate('/equip')}
               />
             </ErrorBoundary>
           );
@@ -776,7 +774,7 @@ function AppContent() {
               <EquipProgramCompletion 
                 onContinue={() => {
                   console.log('Continue to more programs');
-                  handleNavigate('/equip-programs');
+                  handleNavigate('/equip');
                 }}
                 onBackToDashboard={() => handleNavigate('/dashboard')}
               />
@@ -801,7 +799,7 @@ function AppContent() {
               <Consultation onNavigate={handleNavigate} />
             </ErrorBoundary>
           );
-        case '/library':
+        case '/resource':
           return (
             <ErrorBoundary>
               <Library onResourceSelect={(id) => handleNavigate('/resource-detail', id)} />
@@ -812,7 +810,8 @@ function AppContent() {
             <ErrorBoundary>
               <ResourceDetail 
                 resourceId={resourceDetailId} 
-                onBack={() => handleNavigate('/library')} 
+                onBack={() => handleNavigate('/resource')}
+                onResourceSelect={(id) => handleNavigate('/resource-detail', id)}
               />
             </ErrorBoundary>
           ) : (
@@ -842,6 +841,12 @@ function AppContent() {
             </ErrorBoundary>
           );
         case '/privacy':
+          return (
+            <ErrorBoundary>
+              <PrivacyPolicy onBack={() => handleNavigate('/')} />
+            </ErrorBoundary>
+          );
+        case '/privacy-policy':
           return (
             <ErrorBoundary>
               <PrivacyPolicy onBack={() => handleNavigate('/')} />
@@ -905,10 +910,10 @@ function AppContent() {
               />
             </ErrorBoundary>
           );
-        case '/admin/blogs':
+        case '/admin/resources':
           return (
             <ErrorBoundary>
-              <AdminBlogManager onNavigate={handleNavigate} />
+              <AdminResourceManager onNavigate={handleNavigate} />
             </ErrorBoundary>
           );
         case '/admin':
@@ -1145,7 +1150,7 @@ function AppContent() {
             padding: '0',
             boxSizing: 'border-box',
             // Only handle navigation clearance - let pages control their own content layout
-            paddingTop: currentRoute === '/' 
+            paddingTop: (currentRoute === '/' || currentRoute === '/login' || currentRoute === '/contact' || currentRoute === '/consultation' || currentRoute === '/consultation-detail' || currentRoute === '/assessment-landing' || currentRoute === '/equip-programs-landing' || currentRoute === '/resource-detail')
               ? '0' // Landing pages start from top (navigation overlays)
               : (showPublicNav || showPrivateNav) 
                 ? isMobile 
@@ -1285,7 +1290,7 @@ function AppContent() {
             className="relative"
             notificationBadges={{
               '/mood-journal': 2,
-              '/assessments': 1
+              '/assessment': 1
             }}
           />
         </div>

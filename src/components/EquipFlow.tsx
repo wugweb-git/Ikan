@@ -243,8 +243,8 @@ function PurchaseModal({ program, isOpen, onClose, onConfirm }: PurchaseModalPro
                     <span>{program.expires_in_days_after_payment} days</span>
                   </div>
                   <div className="flex justify-between border-t pt-3" style={{ borderColor: 'var(--color-border-default)' }}>
-                    <span style={{ fontWeight: 'var(--font-weight-semibold)', fontSize: 'var(--text-lg)' }}>Total</span>
-                    <span style={{ fontWeight: 'var(--font-weight-semibold)', fontSize: 'var(--text-lg)' }}>
+                    <span style={{ fontWeight: 'var(--font-weight-medium)', fontSize: 'var(--text-lg)' }}>Total</span>
+                    <span style={{ fontWeight: 'var(--font-weight-medium)', fontSize: 'var(--text-lg)' }}>
                       {program.currency} {program.price}
                     </span>
                   </div>

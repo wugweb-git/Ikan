@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { cn } from '../ui/utils';
 import { Filter, Search, ChevronDown, X } from 'lucide-react';
-import ConsultantCard from '../../imports/ConsultantCard';
-import { consultantsData, expertiseCategories, type Consultant } from '../../lib/sample-data/consultants';
+import { apiClient } from '../../lib/api-client';
+import { expertiseCategories, type Consultant } from '../../lib/sample-data/consultants';
+import { ConsultantCard } from '../blocks/ConsultantCard';
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '../ui/sheet';
@@ -23,8 +24,32 @@ type SortOption = 'recommended' | 'rating' | 'price-low' | 'price-high' | 'exper
 
 export function Consultation({ className, onNavigate }: ConsultationProps) {
   const isMobile = useIsMobile();
-  const [consultants, setConsultants] = useState<Consultant[]>(consultantsData);
-  const [filteredConsultants, setFilteredConsultants] = useState<Consultant[]>(consultantsData);
+  const [consultants, setConsultants] = useState<Consultant[]>([]);
+  const [filteredConsultants, setFilteredConsultants] = useState<Consultant[]>([]);
+  const [loading, setLoading] = useState(true);
+  
+  // Load consultants from API
+  useEffect(() => {
+    const loadConsultants = async () => {
+      try {
+        setLoading(true);
+        const response = await apiClient.getProfessionals();
+        if (response && Array.isArray(response)) {
+          setConsultants(response);
+          setFilteredConsultants(response);
+        } else if (response && response.professionals) {
+           setConsultants(response.professionals);
+           setFilteredConsultants(response.professionals);
+        }
+      } catch (error) {
+        console.error('Failed to load consultants:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    loadConsultants();
+  }, []);
   
   // Filter states
   const [selectedCategory, setSelectedCategory] = useState<CategoryType>('all');
@@ -83,7 +108,13 @@ export function Consultation({ className, onNavigate }: ConsultationProps) {
 
     // Price filter
     filtered = filtered.filter(c => {
-      const minPrice = Math.min(c.pricing.video, c.pricing.call, c.pricing.chat || Infinity);
+      // Check if pricing exists and has valid values
+      if (!c.pricing) return false;
+      const minPrice = Math.min(
+        c.pricing.video || Infinity, 
+        c.pricing.call || Infinity, 
+        c.pricing.chat || Infinity
+      );
       return minPrice >= priceRange[0] && minPrice <= priceRange[1];
     });
 
@@ -94,15 +125,31 @@ export function Consultation({ className, onNavigate }: ConsultationProps) {
         break;
       case 'price-low':
         filtered.sort((a, b) => {
-          const aMin = Math.min(a.pricing.video, a.pricing.call, a.pricing.chat || Infinity);
-          const bMin = Math.min(b.pricing.video, b.pricing.call, b.pricing.chat || Infinity);
+          const aMin = a.pricing ? Math.min(
+            a.pricing.video || Infinity, 
+            a.pricing.call || Infinity, 
+            a.pricing.chat || Infinity
+          ) : Infinity;
+          const bMin = b.pricing ? Math.min(
+            b.pricing.video || Infinity, 
+            b.pricing.call || Infinity, 
+            b.pricing.chat || Infinity
+          ) : Infinity;
           return aMin - bMin;
         });
         break;
       case 'price-high':
         filtered.sort((a, b) => {
-          const aMax = Math.max(a.pricing.video, a.pricing.call, a.pricing.chat || 0);
-          const bMax = Math.max(b.pricing.video, b.pricing.call, b.pricing.chat || 0);
+          const aMax = a.pricing ? Math.max(
+            a.pricing.video || 0, 
+            a.pricing.call || 0, 
+            a.pricing.chat || 0
+          ) : 0;
+          const bMax = b.pricing ? Math.max(
+            b.pricing.video || 0, 
+            b.pricing.call || 0, 
+            b.pricing.chat || 0
+          ) : 0;
           return bMax - aMax;
         });
         break;
@@ -277,7 +324,11 @@ export function Consultation({ className, onNavigate }: ConsultationProps) {
   return (
     <div className={cn("flex flex-col", className)} style={{ minHeight: '100vh', backgroundColor: 'var(--color-bg-page)' }}>
       {/* Header */}
-      <div style={{ backgroundColor: 'var(--color-bg-card)', padding: 'var(--spacing-6) var(--spacing-4)' }}>
+      <div style={{ 
+        backgroundColor: 'var(--color-bg-card)', 
+        padding: 'var(--spacing-6) var(--spacing-4)',
+        paddingTop: isMobile ? 'var(--spacing-6)' : '128px'
+      }}>
         <h1 style={{ 
           fontSize: 'var(--text-2xl)', 
           fontWeight: 'var(--font-weight-medium)',
@@ -419,37 +470,32 @@ export function Consultation({ className, onNavigate }: ConsultationProps) {
 
         {/* Consultant List */}
         <div className="flex-1" style={{ padding: 'var(--spacing-4)' }}>
+          {/* Loading State */}
+          {loading && (
+             <div className="flex items-center justify-center py-12">
+               <div className="animate-spin rounded-full border-4 w-12 h-12 border-primary border-t-transparent" />
+             </div>
+          )}
+
           {/* Results Count */}
-          <div style={{ marginBottom: 'var(--spacing-4)' }}>
-            <p style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--font-weight-regular)', color: 'var(--color-text-muted)' }}>
-              {filteredConsultants.length} consultant{filteredConsultants.length !== 1 ? 's' : ''} found
-            </p>
-          </div>
+          {!loading && (
+            <div style={{ marginBottom: 'var(--spacing-4)' }}>
+              <p style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--font-weight-regular)', color: 'var(--color-text-muted)' }}>
+                {filteredConsultants.length} consultant{filteredConsultants.length !== 1 ? 's' : ''} found
+              </p>
+            </div>
+          )}
 
           {/* Consultant Cards */}
-          <div className="flex flex-col gap-4">
-            {filteredConsultants.map(consultant => {
-              // Convert to old professional format for existing card
-              const professional = {
-                professional_id: consultant.id,
-                name: consultant.name,
-                title: consultant.credentials,
-                specialties: consultant.topExpertises,
-                location: consultant.location,
-                phone: `Book ${consultant.category}`,
-                available: consultant.available
-              };
-
-              return (
-                <div 
+          {!loading && (
+            <div className="flex flex-col gap-4">
+              {filteredConsultants.map(consultant => (
+                <ConsultantCard
                   key={consultant.id}
+                  consultant={consultant}
                   onClick={() => handleConsultantClick(consultant.id)}
-                  className="cursor-pointer transition-transform hover:scale-[1.01]"
-                >
-                  <ConsultantCard professional={professional} />
-                </div>
-              );
-            })}
+                />
+              ))}
 
             {filteredConsultants.length === 0 && (
               <div style={{ 
@@ -467,6 +513,7 @@ export function Consultation({ className, onNavigate }: ConsultationProps) {
               </div>
             )}
           </div>
+          )}
         </div>
       </div>
     </div>

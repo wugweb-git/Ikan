@@ -4,9 +4,12 @@ import { Input } from '../../ui/input';
 import { ImageWithFallback } from '../../figma/ImageWithFallback';
 import { ErrorBoundary } from '../../ErrorBoundary';
 import { logger } from '../../../lib/logger';
+import { toast } from 'sonner@2.0.3';
+import { projectId, publicAnonKey } from '../../../utils/supabase/info';
 
 export function NewsletterSection() {
   const [formData, setFormData] = React.useState({ name: '', email: '' });
+  const [isSubmitting, setIsSubmitting] = React.useState(false);
 
   const title = "Newsletter Signup";
   const benefits = [
@@ -19,9 +22,56 @@ export function NewsletterSection() {
   const privacyText = "Privacy: We store and process your personal data based on our privacy policy. You can unsubscribe at any time.";
   const ctaText = "Sign up now!";
 
-  const handleSubmit = () => {
-    logger.log('Newsletter signup:', formData);
-    // Add your newsletter signup logic here
+  const handleSubmit = async () => {
+    if (!formData.email) {
+      toast.error('Please enter your email address');
+      return;
+    }
+
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(formData.email)) {
+      toast.error('Please enter a valid email address');
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      const response = await fetch(
+        `https://${projectId}.supabase.co/functions/v1/make-server-cc205da9/newsletter/signup`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${publicAnonKey}`
+          },
+          body: JSON.stringify({
+            name: formData.name,
+            email: formData.email
+          })
+        }
+      );
+
+      const data = await response.json();
+
+      if (response.ok) {
+        if (data.alreadySubscribed) {
+          toast.info(data.message);
+        } else {
+          toast.success('Thank you for subscribing to our newsletter!');
+          setFormData({ name: '', email: '' }); // Clear form
+        }
+      } else {
+        toast.error(data.error || 'Failed to subscribe. Please try again.');
+        logger.error('Newsletter signup error:', data);
+      }
+    } catch (error) {
+      toast.error('Network error. Please check your connection and try again.');
+      logger.error('Newsletter signup exception:', error);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -90,6 +140,7 @@ export function NewsletterSection() {
                 </div>
                 <Button 
                   onClick={handleSubmit}
+                  disabled={isSubmitting}
                   className="ikan-button w-full"
                   style={{
                     backgroundColor: 'var(--color-primary-default)',
@@ -98,7 +149,7 @@ export function NewsletterSection() {
                     borderRadius: 'var(--radius-sm)'
                   }}
                 >
-                  {ctaText}
+                  {isSubmitting ? 'Subscribing...' : ctaText}
                 </Button>
               </div>
 
@@ -182,6 +233,7 @@ export function NewsletterSection() {
                 </div>
                 <Button 
                   onClick={handleSubmit}
+                  disabled={isSubmitting}
                   className="ikan-button"
                   style={{
                     backgroundColor: 'var(--color-primary-default)',
@@ -192,7 +244,7 @@ export function NewsletterSection() {
                     paddingRight: 'var(--spacing-6)'
                   }}
                 >
-                  {ctaText}
+                  {isSubmitting ? 'Subscribing...' : ctaText}
                 </Button>
               </div>
 

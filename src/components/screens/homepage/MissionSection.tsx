@@ -1,16 +1,16 @@
 import React from 'react';
-import { Button } from '../../ui/button';
 import { ErrorBoundary } from '../../ErrorBoundary';
+import { cn } from '../../ui/utils';
 import { ImageWithFallback } from '../../figma/ImageWithFallback';
 import { Play } from 'lucide-react';
-import img66292B188D01B0Eb2Ae89AdcCmInterviewThumbnailP500Webp from "figma:asset/7bc6aa20bd99b5e785a9f8afbbacaa7bb10acabd.png";
+import { Button } from '../../ui/button';
+const img66292B188D01B0Eb2Ae89AdcCmInterviewThumbnailP500Webp = "https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?w=600&h=400&fit=crop";
+import { MISSION_DATA } from '../../../lib/homepage-data';
 
 export function MissionSection() {
-  const title = "Our Mission";
-  const content = "We believe mental health is for everyone. Our mission is to fix the broken system and democratize mental healthcare by creating an accessible, secure, and people-centric and science-backed platform empowering every individual to achieve lasting well-being.";
+  const { title, content, videoCaption } = MISSION_DATA;
   const image = img66292B188D01B0Eb2Ae89AdcCmInterviewThumbnailP500Webp;
   const imageAlt = "Mission interview";
-  const videoCaption = "Watch the full\ninterview";
   const onVideoClick = () => console.log('Play video');
 
   return (

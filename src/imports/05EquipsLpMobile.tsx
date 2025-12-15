@@ -18,7 +18,7 @@ import { imgGroup, imgGroup1 } from "./svg-it0ly";
 function Frame1000007577() {
   return (
     <div className="content-stretch flex flex-col gap-[8px] items-start leading-[0] not-italic relative shrink-0 w-full">
-      <div className="flex flex-col font-['Ubuntu:Bold',_sans-serif] justify-center relative shrink-0 text-[40px] text-black w-full">
+      <div className="flex flex-col font-['Ubuntu:Medium',_sans-serif] justify-center relative shrink-0 text-[40px] text-black w-full">
         <p className="leading-[50px]">{`Anxiety and depression test (K10) `}</p>
       </div>
       <div className="flex flex-col font-['Ubuntu:Regular',_sans-serif] justify-center relative shrink-0 text-[#2e2a2f] text-[14px] w-full">
@@ -137,7 +137,7 @@ function Container3() {
 function Container4() {
   return (
     <div className="absolute box-border content-stretch flex flex-col items-start left-[61.57px] pb-[0.605px] pl-0 pr-[152.1px] pt-0 translate-y-[-50%]" data-name="Container" style={{ top: "calc(50% - 0.561px)" }}>
-      <div className="flex flex-col font-['Inter:Semi_Bold',_sans-serif] font-semibold justify-center leading-[21.74px] not-italic relative shrink-0 text-[18.1px] text-nowrap text-white tracking-[-0.16px] whitespace-pre">
+      <div className="flex flex-col font-medium justify-center leading-[21.74px] not-italic relative shrink-0 text-[18.1px] text-nowrap text-white tracking-[-0.16px] whitespace-pre">
         <p className="mb-0">Jetzt das vollständige</p>
         <p>Interview anschauen</p>
       </div>
@@ -170,7 +170,7 @@ function Container6() {
 function Heading2() {
   return (
     <div className="content-stretch flex flex-col items-start relative shrink-0 w-full" data-name="Heading 2">
-      <div className="flex flex-col font-['Ubuntu:Bold',_sans-serif] justify-center leading-[0] not-italic relative shrink-0 text-[#151515] text-[34px] text-nowrap">
+      <div className="flex flex-col font-['Ubuntu:Medium',_sans-serif] justify-center leading-[0] not-italic relative shrink-0 text-[#151515] text-[34px] text-nowrap">
         <p className="leading-[42px] whitespace-pre">About</p>
       </div>
     </div>
@@ -232,7 +232,7 @@ function Section() {
 function Heading5() {
   return (
     <div className="content-stretch flex flex-col items-start relative shrink-0 w-full" data-name="Heading 2">
-      <div className="flex flex-col font-['Ubuntu:Bold',_sans-serif] justify-center leading-[0] not-italic relative shrink-0 text-[#151515] text-[28px] w-full">
+      <div className="flex flex-col font-['Ubuntu:Medium',_sans-serif] justify-center leading-[0] not-italic relative shrink-0 text-[#151515] text-[28px] w-full">
         <p className="leading-[35px]">What is the anxiety and depression test (K10)?</p>
       </div>
     </div>
@@ -272,7 +272,7 @@ function Frame41() {
 function Heading6() {
   return (
     <div className="content-stretch flex flex-col items-start relative shrink-0 w-full" data-name="Heading 2">
-      <div className="flex flex-col font-['Ubuntu:Bold',_sans-serif] justify-center leading-[0] not-italic relative shrink-0 text-[#151515] text-[28px] w-full">
+      <div className="flex flex-col font-['Ubuntu:Medium',_sans-serif] justify-center leading-[0] not-italic relative shrink-0 text-[#151515] text-[28px] w-full">
         <p className="leading-[35px]">What will happen after the check-in?</p>
       </div>
     </div>
@@ -324,7 +324,7 @@ function Frame1000007589() {
 function Heading7() {
   return (
     <div className="content-stretch flex flex-col items-start relative shrink-0 w-full" data-name="Heading 2">
-      <div className="flex flex-col font-['Ubuntu:Bold',_sans-serif] justify-center leading-[0] not-italic relative shrink-0 text-[#151515] text-[28px] w-full">
+      <div className="flex flex-col font-['Ubuntu:Medium',_sans-serif] justify-center leading-[0] not-italic relative shrink-0 text-[#151515] text-[28px] w-full">
         <p className="leading-[35px]">Weekly Program Strcutre (in accordion</p>
       </div>
     </div>
@@ -521,7 +521,7 @@ function Container8() {
 function Heading8() {
   return (
     <div className="box-border content-stretch flex flex-col items-center pb-[0.81px] pt-0 px-0 relative shrink-0 w-full" data-name="Heading 2">
-      <div className="flex flex-col font-['Ubuntu:Bold',_sans-serif] justify-center leading-[0] not-italic relative shrink-0 text-[#0a0a0f] text-[34px] text-center w-full">
+      <div className="flex flex-col font-['Ubuntu:Medium',_sans-serif] justify-center leading-[0] not-italic relative shrink-0 text-[#0a0a0f] text-[34px] text-center w-full">
         <p className="leading-[42px]">Features and things to note</p>
       </div>
     </div>
@@ -1229,7 +1229,7 @@ function Container14() {
 
 function Frame28() {
   return (
-    <div className="content-stretch flex flex-col font-['Inter:Semi_Bold',_sans-serif] font-semibold gap-[8px] h-[61px] items-start leading-[0] not-italic relative shrink-0 w-[296px]">
+    <div className="content-stretch flex flex-col font-['Ubuntu:Medium',_sans-serif] font-medium gap-[8px] h-[61px] items-start leading-[0] not-italic relative shrink-0 w-[296px]">
       <div className="flex flex-col justify-center relative shrink-0 text-[14.648px] text-black tracking-[1.5px] uppercase w-full">
         <p className="leading-[15px]">Title</p>
       </div>
@@ -1373,7 +1373,7 @@ function EqupCard() {
 
 function Frame30() {
   return (
-    <div className="content-stretch flex flex-col font-['Inter:Semi_Bold',_sans-serif] font-semibold gap-[8px] h-[61px] items-start leading-[0] not-italic relative shrink-0 w-[296px]">
+    <div className="content-stretch flex flex-col font-['Ubuntu:Medium',_sans-serif] font-medium gap-[8px] h-[61px] items-start leading-[0] not-italic relative shrink-0 w-[296px]">
       <div className="flex flex-col justify-center relative shrink-0 text-[14.648px] text-black tracking-[1.5px] uppercase w-full">
         <p className="leading-[15px]">Title</p>
       </div>
@@ -1625,9 +1625,9 @@ function Container19() {
   );
 }
 
-function BlogCard() {
+function ResourceCard() {
   return (
-    <div className="bg-[#e9ebef] box-border content-stretch flex flex-col items-start p-[16px] relative rounded-[8px] shrink-0 w-[350px]" data-name="Blog Card">
+    <div className="bg-[#e9ebef] box-border content-stretch flex flex-col items-start p-[16px] relative rounded-[8px] shrink-0 w-[350px]" data-name="Resource Card">
       <Container19 />
     </div>
   );
@@ -1637,7 +1637,7 @@ function Container23() {
   return (
     <div className="content-stretch flex flex-col gap-[16px] items-start relative shrink-0 w-full" data-name="Container">
       {[...Array(4).keys()].map((_, i) => (
-        <BlogCard key={i} />
+        <ResourceCard key={i} />
       ))}
     </div>
   );

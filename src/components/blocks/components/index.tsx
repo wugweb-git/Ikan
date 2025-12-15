@@ -23,7 +23,7 @@ import { cn } from '../../ui/utils';
 // Resource Card Component
 interface ResourceCardProps {
   title?: string;
-  description?: string;
+  excerpt?: string;
   category?: string;
   readTime?: string;
   isBookmarked?: boolean;
@@ -32,8 +32,8 @@ interface ResourceCardProps {
 }
 
 export function ResourceCard({ 
-  title = "Mental Health Resource",
-  description = "Learn effective techniques for managing stress and anxiety in daily life.",
+  title = "Understanding Anxiety: A Comprehensive Guide",
+  excerpt = "Learn about the symptoms, causes, and effective treatment options for anxiety disorders.",
   category = "Wellness",
   readTime = "5 min read",
   isBookmarked = false,
@@ -64,7 +64,7 @@ export function ResourceCard({
         <CardTitle className="text-lg leading-tight">{title}</CardTitle>
       </CardHeader>
       <CardContent>
-        <p className="text-muted-foreground text-sm leading-relaxed">{description}</p>
+        <p className="text-muted-foreground text-sm leading-relaxed">{excerpt}</p>
       </CardContent>
       <CardFooter className="pt-0">
         <div className="flex items-center justify-between w-full">
@@ -287,8 +287,8 @@ export function ProgressBar({
   );
 }
 
-// Consultation Directory Card
-interface ConsultationDirectoryCardProps {
+// Consultant Card
+interface ConsultantCardBlockProps {
   name?: string;
   specialty?: string;
   rating?: number;
@@ -297,14 +297,14 @@ interface ConsultationDirectoryCardProps {
   interactions?: string[];
 }
 
-export function ConsultationDirectoryCard({ 
+export function ConsultantCard({ 
   name = "Dr. Sarah Johnson",
   specialty = "Clinical Psychologist",
   rating = 4.8,
   nextAvailable = "Tomorrow, 2:00 PM",
   className,
   interactions
-}: ConsultationDirectoryCardProps) {
+}: ConsultantCardBlockProps) {
   return (
     <Card className={cn("hover:shadow-md transition-shadow", className)}>
       <CardHeader className="pb-3">
@@ -528,45 +528,6 @@ export function ModalSupportChat({ className, interactions }: { className?: stri
   );
 }
 
-// Blog Card
-interface BlogCardProps {
-  title?: string;
-  excerpt?: string;
-  author?: string;
-  publishDate?: string;
-  readTime?: string;
-  className?: string;
-  interactions?: string[];
-}
-
-export function BlogCard({ 
-  title = "Understanding Anxiety: A Comprehensive Guide",
-  excerpt = "Learn about the symptoms, causes, and effective treatment options for anxiety disorders.",
-  author = "Dr. Emily Wilson",
-  publishDate = "March 15, 2024",
-  readTime = "8 min read",
-  className,
-  interactions
-}: BlogCardProps) {
-  return (
-    <Card className={cn("hover:shadow-md transition-shadow", className)}>
-      <CardContent className="p-6">
-        <div className="space-y-3">
-          <h3 className="font-medium leading-tight">{title}</h3>
-          <p className="text-sm text-muted-foreground leading-relaxed">{excerpt}</p>
-          <div className="flex items-center justify-between text-xs text-muted-foreground">
-            <div className="flex items-center gap-4">
-              <span>By {author}</span>
-              <span>{publishDate}</span>
-            </div>
-            <span>{readTime}</span>
-          </div>
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
-
 export {
   ResourceCard,
   UserAvatar,
@@ -575,12 +536,11 @@ export {
   ButtonPrimary,
   ButtonLink,
   ProgressBar,
-  ConsultationDirectoryCard,
+  ConsultantCard,
   MoodJournalEmojiSet,
   AssessmentCard,
   Stepper,
   ModalAssessmentIntro,
   ChatPreviewCard,
-  ModalSupportChat,
-  BlogCard
+  ModalSupportChat
 };

@@ -60,7 +60,7 @@ export function AssessmentLandingMobile({
             <h1 
               style={{
                 fontSize: 'var(--text-2xl)',
-                fontWeight: 'var(--font-weight-semibold)',
+                fontWeight: 'var(--font-weight-medium)',
                 lineHeight: 'var(--line-height-sm)',
                 marginBottom: 'var(--ikan-component-spacing-small)',
                 color: 'var(--color-text-inverse)'
@@ -157,7 +157,7 @@ export function AssessmentLandingMobile({
         <h2 
           style={{
             fontSize: 'var(--text-xl)',
-            fontWeight: 'var(--font-weight-semibold)',
+            fontWeight: 'var(--font-weight-medium)',
             color: 'var(--color-text-primary)',
             marginBottom: 'var(--ikan-component-spacing-default)'
           }}
@@ -185,7 +185,7 @@ export function AssessmentLandingMobile({
         <h2 
           style={{
             fontSize: 'var(--text-xl)',
-            fontWeight: 'var(--font-weight-semibold)',
+            fontWeight: 'var(--font-weight-medium)',
             color: 'var(--color-text-primary)',
             marginBottom: 'var(--ikan-component-spacing-large)',
             textAlign: 'center'
@@ -248,7 +248,7 @@ export function AssessmentLandingMobile({
                   <h3 
                     style={{
                       fontSize: 'var(--text-base)',
-                      fontWeight: 'var(--font-weight-semibold)',
+                      fontWeight: 'var(--font-weight-medium)',
                       color: 'var(--color-text-primary)',
                       marginBottom: 'var(--ikan-component-spacing-small)'
                     }}
@@ -282,7 +282,7 @@ export function AssessmentLandingMobile({
         <h2 
           style={{
             fontSize: 'var(--text-xl)',
-            fontWeight: 'var(--font-weight-semibold)',
+            fontWeight: 'var(--font-weight-medium)',
             color: 'var(--color-text-primary)',
             marginBottom: 'var(--ikan-component-spacing-large)',
             textAlign: 'center'
@@ -353,7 +353,7 @@ export function AssessmentLandingMobile({
               <h3 
                 style={{
                   fontSize: 'var(--text-lg)',
-                  fontWeight: 'var(--font-weight-semibold)',
+                  fontWeight: 'var(--font-weight-medium)',
                   color: 'var(--color-text-primary)',
                   marginBottom: 'var(--ikan-component-spacing-small)'
                 }}
@@ -409,7 +409,7 @@ export function AssessmentLandingMobile({
         <h2 
           style={{
             fontSize: 'var(--text-xl)',
-            fontWeight: 'var(--font-weight-semibold)',
+            fontWeight: 'var(--font-weight-medium)',
             color: 'var(--color-text-primary)',
             marginBottom: 'var(--ikan-component-spacing-large)',
             textAlign: 'center'

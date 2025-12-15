@@ -1,9 +1,9 @@
-import React from 'react';
-import { Button } from '../../ui/button';
-import { ImageWithFallback } from '../../figma/ImageWithFallback';
 import { ErrorBoundary } from '../../ErrorBoundary';
+import { cn } from '../../ui/utils';
+import { ButtonPrimary } from '../../buttons';
+import { ImageWithFallback } from '../../figma/ImageWithFallback';
 import { Play } from 'lucide-react';
-import img653408Bca4874Eff3Ad5722DPeersPatientenMichelleP500Webp from "figma:asset/3150a36f5ab673da19d41ec0df2d8f982fbb9904.png";
+const img653408Bca4874Eff3Ad5722DPeersPatientenMichelleP500Webp = "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&h=100&fit=crop";
 
 export function TestimonialSection() {
   const testimonial = {
@@ -55,7 +55,7 @@ export function TestimonialSection() {
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
               <div className="absolute inset-0 flex items-center justify-center">
-                <Button 
+                <ButtonPrimary 
                   size="lg" 
                   className="rounded-full w-16 h-16 p-0"
                   onClick={handleVideoPlay}
@@ -68,7 +68,7 @@ export function TestimonialSection() {
                   }}
                 >
                   <Play className="w-6 h-6 ml-1" />
-                </Button>
+                </ButtonPrimary>
               </div>
               {testimonial.videoCaption && (
                 <div className="absolute bottom-4 left-4 right-4">
@@ -195,7 +195,7 @@ export function TestimonialSection() {
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
                     <div className="absolute inset-0 flex items-center justify-center">
-                      <Button 
+                      <ButtonPrimary 
                         size="lg" 
                         className="rounded-full w-16 h-16 p-0"
                         onClick={handleVideoPlay}
@@ -208,7 +208,7 @@ export function TestimonialSection() {
                         }}
                       >
                         <Play className="w-6 h-6 ml-1" />
-                      </Button>
+                      </ButtonPrimary>
                     </div>
                     {testimonial.videoCaption && (
                       <div className="absolute bottom-6 left-6 right-6">

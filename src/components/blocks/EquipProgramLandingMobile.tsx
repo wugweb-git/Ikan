@@ -86,7 +86,7 @@ export function EquipProgramLandingMobile({
             <h1 
               style={{
                 fontSize: 'var(--text-2xl)',
-                fontWeight: 'var(--font-weight-semibold)',
+                fontWeight: 'var(--font-weight-medium)',
                 lineHeight: 'var(--line-height-sm)',
                 marginBottom: 'var(--ikan-component-spacing-small)',
                 color: 'var(--color-text-inverse)'
@@ -184,7 +184,7 @@ export function EquipProgramLandingMobile({
         <h2 
           style={{
             fontSize: 'var(--text-xl)',
-            fontWeight: 'var(--font-weight-semibold)',
+            fontWeight: 'var(--font-weight-medium)',
             color: 'var(--color-text-primary)',
             marginBottom: 'var(--ikan-component-spacing-default)'
           }}
@@ -216,7 +216,7 @@ export function EquipProgramLandingMobile({
         <h2 
           style={{
             fontSize: 'var(--text-xl)',
-            fontWeight: 'var(--font-weight-semibold)',
+            fontWeight: 'var(--font-weight-medium)',
             color: 'var(--color-text-primary)',
             marginBottom: 'var(--ikan-component-spacing-large)',
             textAlign: 'center'
@@ -294,7 +294,7 @@ export function EquipProgramLandingMobile({
               <h3 
                 style={{
                   fontSize: 'var(--text-lg)',
-                  fontWeight: 'var(--font-weight-semibold)',
+                  fontWeight: 'var(--font-weight-medium)',
                   color: 'var(--color-text-primary)',
                   marginBottom: 'var(--ikan-component-spacing-small)'
                 }}
@@ -357,7 +357,7 @@ export function EquipProgramLandingMobile({
         <h2 
           style={{
             fontSize: 'var(--text-xl)',
-            fontWeight: 'var(--font-weight-semibold)',
+            fontWeight: 'var(--font-weight-medium)',
             color: 'var(--color-text-primary)',
             marginBottom: 'var(--ikan-component-spacing-large)',
             textAlign: 'center'
@@ -432,7 +432,7 @@ export function EquipProgramLandingMobile({
         <h2 
           style={{
             fontSize: 'var(--text-xl)',
-            fontWeight: 'var(--font-weight-semibold)',
+            fontWeight: 'var(--font-weight-medium)',
             color: 'var(--color-text-primary)',
             marginBottom: 'var(--ikan-component-spacing-large)',
             textAlign: 'center'

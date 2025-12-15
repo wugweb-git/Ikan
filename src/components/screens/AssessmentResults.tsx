@@ -7,7 +7,6 @@ import { BannerNotification } from '../notifications/BannerNotification';
 import { useNotifications } from '../../contexts/NotificationContext';
 import { cn } from '../ui/utils';
 import { AssessmentSection } from './homepage/AssessmentSection';
-import { BlogSection } from './homepage/BlogSection';
 import { ErrorBoundary } from '../ErrorBoundary';
 import ConsultantCard from '../../imports/ConsultantCard';
 
@@ -541,101 +540,6 @@ export function AssessmentResults({
                     >
                       <Icon name="clipboard" size={16} />
                       Take Assessment
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
-
-        {/* Blog Showcase */}
-        <div className="space-y-6">
-          <h4 style={{ 
-            fontSize: 'var(--text-lg)', 
-            fontWeight: 'var(--font-weight-medium)', 
-            color: 'var(--color-text-primary)'
-          }}>
-            Recommended Reading
-          </h4>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {[
-              {
-                title: 'Managing Anxiety: Daily Techniques',
-                description: 'Practical strategies to help manage anxiety symptoms and improve daily functioning.',
-                date: 'March 15, 2024',
-                readTime: '8 min read'
-              },
-              {
-                title: 'Understanding Your Assessment Results',
-                description: 'Learn how to interpret mental health assessments and next steps for your journey.',
-                date: 'March 10, 2024', 
-                readTime: '6 min read'
-              },
-              {
-                title: 'Building Healthy Coping Strategies',
-                description: 'Develop effective coping mechanisms for stress, anxiety, and challenging emotions.',
-                date: 'March 5, 2024',
-                readTime: '10 min read'
-              }
-            ].map((article, index) => (
-              <Card 
-                key={index}
-                className="cursor-pointer hover:shadow-md transition-shadow"
-                style={{
-                  backgroundColor: 'var(--color-bg-card)',
-                  border: '1px solid var(--color-border-default)',
-                  borderRadius: 'var(--radius-lg)'
-                }}
-                onClick={() => onNavigate && onNavigate('/library')}
-              >
-                <CardContent style={{ padding: 'var(--spacing-4)' }}>
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <span style={{ 
-                        fontSize: 'var(--text-xs)', 
-                        color: 'var(--color-text-muted)'
-                      }}>
-                        {article.date}
-                      </span>
-                      <span style={{ 
-                        fontSize: 'var(--text-xs)', 
-                        color: 'var(--color-status-info)'
-                      }}>
-                        {article.readTime}
-                      </span>
-                    </div>
-                    <h5 style={{ 
-                      fontSize: 'var(--text-base)', 
-                      fontWeight: 'var(--font-weight-medium)', 
-                      color: 'var(--color-text-primary)'
-                    }}>
-                      {article.title}
-                    </h5>
-                    <p style={{ 
-                      fontSize: 'var(--text-sm)', 
-                      color: 'var(--color-text-muted)',
-                      lineHeight: 'var(--line-height-md)'
-                    }}>
-                      {article.description}
-                    </p>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="w-full gap-2"
-                      style={{
-                        height: 'var(--ikan-component-button-height)',
-                        borderRadius: 'var(--ikan-component-border-radius)',
-                        fontSize: 'var(--text-sm)',
-                        fontWeight: 'var(--font-weight-medium)'
-                      }}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onNavigate && onNavigate('/library');
-                      }}
-                    >
-                      <Icon name="book" size={16} />
-                      Read Article
                     </Button>
                   </div>
                 </CardContent>

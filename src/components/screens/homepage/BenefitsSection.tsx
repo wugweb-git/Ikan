@@ -2,34 +2,15 @@ import React from 'react';
 import { ErrorBoundary } from '../../ErrorBoundary';
 import { User, Building2, Stethoscope, ArrowRight } from 'lucide-react';
 import { Button } from '../../ui/button';
+import { BENEFITS_TITLE, BENEFITS_DATA } from '../../../lib/homepage-data';
 
 export function BenefitsSection() {
-  const targets = [
-    {
-      icon: <User className="w-8 h-8" />,
-      title: "Individuals",
-      subtitle: "Prioritize your mental well-being.",
-      description: "iKan offers tailored resources, expert guidance, and tracking tools to help you achieve a healthier, happier self.",
-      color: "var(--color-status-info-light)",
-      iconColor: "var(--color-status-info)"
-    },
-    {
-      icon: <Building2 className="w-8 h-8" />,
-      title: "Employers",
-      subtitle: "Maximize your team's potential.",
-      description: "iKan provides personalized mental wellness solutions for employees and equips employers with actionable insights for measurable impact.",
-      color: "var(--color-status-success-light)",
-      iconColor: "var(--color-status-success)"
-    },
-    {
-      icon: <Stethoscope className="w-8 h-8" />,
-      title: "Therapists",
-      subtitle: "Enhance client outcomes.",
-      description: "Track progress with data-driven insights, accelerating recovery through more targeted and effective care.",
-      color: "var(--color-status-warning-light)",
-      iconColor: "var(--color-status-warning)"
-    }
-  ];
+  const targets = BENEFITS_DATA.map(target => ({
+    ...target,
+    icon: target.targetType === 'individuals' ? <User className="w-8 h-8" /> : 
+          target.targetType === 'employers' ? <Building2 className="w-8 h-8" /> : 
+          <Stethoscope className="w-8 h-8" />
+  }));
 
   return (
     <ErrorBoundary>
@@ -60,7 +41,7 @@ export function BenefitsSection() {
                 fontFamily: 'var(--font-family-base)'
               }}
             >
-              Who is it for?
+              {BENEFITS_TITLE}
             </h2>
           </div>
 

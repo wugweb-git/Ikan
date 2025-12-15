@@ -1,16 +1,17 @@
-import React from 'react';
+import { Icon } from './Icon';
 import { cn } from './ui/utils';
+import { Mail, Phone } from 'lucide-react';
 import { LogoFull } from './Logo';
-import { Facebook, Instagram, Linkedin, Youtube, Phone, Mail } from 'lucide-react';
 import { ImageWithFallback } from './figma/ImageWithFallback';
+import { useState } from 'react';
 
-// Import certification/compliance images
-import imgIso from "figma:asset/3c5f7f35307815808c84833da9c1795edf357a47.png";
-import imgAsset31 from "figma:asset/f661bf5da4f0c5ec77c6be347d350308d337dfab.png"; // TUV?
-import imgLayer1 from "figma:asset/436430d49fbbe491caa6eb875d6b834c2dce763c.png";
-import imgLayer4 from "figma:asset/190e2222d6d55ffd0cd01e3b6107e8cc1982c2c5.png";
-import imgLayer2 from "figma:asset/83b3c587fb49c69a18aca2847bb88e4100c73d20.png";
-import imgLayer3 from "figma:asset/11ab4e5249d8291c26bb01aba0bc0c19fe98f2f0.png";
+// Certification/compliance images - Using public URLs
+const imgIso = "https://images.unsplash.com/photo-1633265486064-086b219458ec?w=150&h=150&fit=crop"; // ISO certification
+const imgAsset31 = "https://images.unsplash.com/photo-1551135049-8a33b5883817?w=150&h=150&fit=crop"; // TUV
+const imgLayer1 = "https://images.unsplash.com/photo-1587440871875-191322ee64b0?w=150&h=150&fit=crop"; // Cert 1
+const imgLayer4 = "https://images.unsplash.com/photo-1450101499163-c8848c66ca85?w=150&h=150&fit=crop"; // Cert 2
+const imgLayer2 = "https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?w=150&h=150&fit=crop"; // Cert 3
+const imgLayer3 = "https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=150&h=150&fit=crop"; // Cert 4
 
 import svgPaths from "../imports/svg-ul0k820b9n";
 
@@ -77,10 +78,10 @@ export function Footer({ onNavigate, className }: FooterProps) {
   };
 
   const socialLinks = [
-    { name: 'Facebook', icon: Facebook, url: 'https://facebook.com/ikan.health' },
-    { name: 'Instagram', icon: Instagram, url: 'https://instagram.com/ikan.health' },
-    { name: 'LinkedIn', icon: Linkedin, url: 'https://linkedin.com/company/ikan-health' },
-    { name: 'YouTube', icon: Youtube, url: 'https://youtube.com/@ikan.health' },
+    { name: 'Facebook', icon: Icon, url: 'https://facebook.com/ikan.health' },
+    { name: 'Instagram', icon: Icon, url: 'https://instagram.com/ikan.health' },
+    { name: 'LinkedIn', icon: Icon, url: 'https://linkedin.com/company/ikan-health' },
+    { name: 'YouTube', icon: Icon, url: 'https://youtube.com/@ikan.health' },
     { name: 'X', icon: XIcon, url: 'https://twitter.com/ikan_health' },
   ];
 

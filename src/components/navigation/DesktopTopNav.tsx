@@ -6,8 +6,7 @@ import {
   DropdownMenu, 
   DropdownMenuContent, 
   DropdownMenuItem, 
-  DropdownMenuTrigger,
-  DropdownMenuSeparator
+  DropdownMenuTrigger
 } from '../ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { cn } from '../ui/utils';
@@ -19,9 +18,8 @@ interface DesktopTopNavProps {
   className?: string;
 }
 
-export function DesktopTopNav({ currentRoute, onNavigate, onLogout, className }: DesktopTopNavProps) {
+export function DesktopTopNav({ currentRoute, onNavigate, className }: DesktopTopNavProps) {
   const topNavItems = navigationConfig.desktop.top_nav;
-  const profileItems = navigationConfig.desktop.profile_dropdown;
 
   const getIconVariant = (iconPath: string): { name: string; variant?: string } => {
     const match = iconPath.match(/\{icon\.(\w+)\.(\w+)\}/);
@@ -29,14 +27,6 @@ export function DesktopTopNav({ currentRoute, onNavigate, onLogout, className }:
       return { name: match[1], variant: match[2] };
     }
     return { name: 'home' };
-  };
-
-  const handleItemClick = (item: any) => {
-    if (item.action === 'logout') {
-      onLogout?.();
-    } else if (item.route) {
-      onNavigate(item.route);
-    }
   };
 
   return (
@@ -54,7 +44,7 @@ export function DesktopTopNav({ currentRoute, onNavigate, onLogout, className }:
       <div className="mx-auto flex h-16 items-center justify-between px-6 max-w-7xl">
         {/* Logo */}
         <div className="flex items-center gap-3">
-          <div className="text-xl font-semibold text-primary">iKan</div>
+          <div className="text-xl font-medium text-primary">iKan</div>
         </div>
 
         {/* Main Navigation */}
@@ -115,40 +105,20 @@ export function DesktopTopNav({ currentRoute, onNavigate, onLogout, className }:
           })}
         </nav>
 
-        {/* Profile Dropdown */}
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="gap-2 px-2 py-2 h-auto">
-              <Avatar className="w-8 h-8">
-                <AvatarImage src="/placeholder-avatar.jpg" alt="User" />
-                <AvatarFallback>
-                  <AccountIcon variant="roundedOutline" size={16} />
-                </AvatarFallback>
-              </Avatar>
-              <span className="hidden lg:inline">Profile</span>
-              <MoreIcon variant="outline" size={14} className="rotate-180" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent 
-            align="end"
-            className="w-48 animate-slide-down"
-          >
-            {profileItems.map((item, index) => (
-              <React.Fragment key={item.route || item.action}>
-                {index === profileItems.length - 1 && <DropdownMenuSeparator />}
-                <DropdownMenuItem 
-                  onClick={() => handleItemClick(item)}
-                  className={cn(
-                    "cursor-pointer",
-                    item.action === 'logout' && "text-destructive focus:text-destructive"
-                  )}
-                >
-                  {item.label}
-                </DropdownMenuItem>
-              </React.Fragment>
-            ))}
-          </DropdownMenuContent>
-        </DropdownMenu>
+        {/* Profile Button - Direct Navigation to Account */}
+        <Button 
+          variant="ghost" 
+          className="gap-2 px-2 py-2 h-auto hover:bg-muted transition-colors"
+          onClick={() => onNavigate('/account')}
+        >
+          <Avatar className="w-8 h-8 cursor-pointer">
+            <AvatarImage src="/placeholder-avatar.jpg" alt="User" />
+            <AvatarFallback>
+              <AccountIcon variant="roundedOutline" size={16} />
+            </AvatarFallback>
+          </Avatar>
+          <span className="hidden lg:inline">Profile</span>
+        </Button>
       </div>
     </header>
   );

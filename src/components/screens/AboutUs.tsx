@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import { useIsMobile } from '../../hooks/useIsMobile';
 import { useNotifications } from '../../contexts/NotificationContext';
-import { BlogSectionBlock } from '../blocks/BlogSectionBlock';
+import { ResourceBlock } from '../blocks/ResourceBlock';
 import { NewsletterBlock } from '../blocks/NewsletterBlock';
 import { ContextBlock } from '../blocks/ContextBlock';
-import { getLatestBlogPosts } from '../../lib/sample-data/blog-posts';
+import { getLatestResourcePosts } from '../../lib/sample-data/resource-posts';
 // Desktop imports
 import svgPaths from "../../imports/svg-qo9pds304d";
 import { imgGroup as imgGroupDesktop } from "../../imports/svg-3566o";
@@ -12,35 +12,42 @@ import { imgGroup as imgGroupDesktop } from "../../imports/svg-3566o";
 import svgPathsMobile from "../../imports/svg-rbsc8v77kz";
 import { imgGroup as imgGroupMobile, imgGroup1 as imgGroup1Mobile } from "../../imports/svg-k6678";
 
-// Shared image assets
-import imgContainer from "figma:asset/891c1d35acdd7f845f165c0b84077c00b15eeece.png";
-import img66292B188D01B0Eb2Ae89AdcCmInterviewThumbnailP500Webp from "figma:asset/7bc6aa20bd99b5e785a9f8afbbacaa7bb10acabd.png";
-import imgReasons1S4Foms from "figma:asset/6aa620a8599fd868854983e1982b68c1d1e6059a.png";
-import imgReasons2Souf7K from "figma:asset/1f05521b40f2dbe596ffd245c389ddb2f3770c42.png";
-import imgReasons2Zmn7Mt from "figma:asset/408c7f1d95184cde6f72c8e3a041eb6bd73c904d.png";
-import img65311A1293B6F8535F54F4DdPeersHomePsychologenP500Avif from "figma:asset/e4693070aefbfc64b931814df0ba3ff4c468dd6a.png";
-import img65311A7Ca1Ba6B4628668B29PeersHomeIphoneScreenMockupP500Avif from "figma:asset/a0e10c2ec6afa0612d5e7c6d81330157a9c1d5e7.png";
-import imgRectangle240648987 from "figma:asset/7f12ea1300756f144a0fb5daaf68dbfc01103a46.png";
-import imgDtsFitnessAllieLehmanPhotosId1797CopyWebp from "figma:asset/091bde3ca3df1576f3a7dde8590aee20d6858d69.png";
-import imgFireflyABeautifulKitchenCounterShotFromTheSideTheBacksplashIsLightGreenTileThereI1Jpg from "figma:asset/7ee423e6dc20937088d7d916d0f5ff333a101e26.png";
-import imgDtsPleaseDoNotDisturbFanetteGuilloudPhotosId8854Webp from "figma:asset/69630877b2f0ea1979fedcdee430b8d92c705a78.png";
-import img653406093Ca73A37601Cc150PeersBloguCc88BersichtNewsletterP800Avif from "figma:asset/d520368580246229986afc39addcd14047393642.png";
+// Shared image assets - Using Unsplash URLs
+const imgContainer = "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=600&h=600&fit=crop";
+const img66292B188D01B0Eb2Ae89AdcCmInterviewThumbnailP500Webp = "https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?w=600&h=400&fit=crop";
+const imgReasons1S4Foms = "https://images.unsplash.com/photo-1551135049-8a33b5883817?w=400&h=300&fit=crop";
+const imgReasons2Souf7K = "https://images.unsplash.com/photo-1587440871875-191322ee64b0?w=400&h=300&fit=crop";
+const imgReasons2Zmn7Mt = "https://images.unsplash.com/photo-1450101499163-c8848c66ca85?w=400&h=300&fit=crop";
+const img65311A1293B6F8535F54F4DdPeersHomePsychologenP500Avif = "https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=600&h=600&fit=crop";
+const img65311A7Ca1Ba6B4628668B29PeersHomeIphoneScreenMockupP500Avif = "https://images.unsplash.com/photo-1512941937669-90a1b58e7e9c?w=400&h=600&fit=crop";
+const imgRectangle240648987 = "https://images.unsplash.com/photo-1573497161161-c3e73707e25c?w=600&h=400&fit=crop";
+const imgDtsFitnessAllieLehmanPhotosId1797CopyWebp = "https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=600&h=400&fit=crop";
+const imgFireflyABeautifulKitchenCounterShotFromTheSideTheBacksplashIsLightGreenTileThereI1Jpg = "https://images.unsplash.com/photo-1556910103-1c02745aae4d?w=800&h=600&fit=crop";
+const imgDtsPleaseDoNotDisturbFanetteGuilloudPhotosId8854Webp = "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=600&h=400&fit=crop";
+const imgNewsletterCommunity = "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=800&h=600&fit=crop";
 // Mobile-specific assets
-import imgAsset31 from "figma:asset/f661bf5da4f0c5ec77c6be347d350308d337dfab.png";
-import imgIso27001InformationSecurityLogoPngSvgVector from "figma:asset/3c5f7f35307815808c84833da9c1795edf357a47.png";
-import imgLayer1 from "figma:asset/436430d49fbbe491caa6eb875d6b834c2dce763c.png";
-import imgLayer4 from "figma:asset/190e2222d6d55ffd0cd01e3b6107e8cc1982c2c5.png";
-import imgLayer2 from "figma:asset/83b3c587fb49c69a18aca2847bb88e4100c73d20.png";
-import imgLayer3 from "figma:asset/11ab4e5249d8291c26bb01aba0bc0c19fe98f2f0.png";
+const imgAsset31 = "https://images.unsplash.com/photo-1551135049-8a33b5883817?w=150&h=150&fit=crop";
+const imgIso27001InformationSecurityLogoPngSvgVector = "https://images.unsplash.com/photo-1633265486064-086b219458ec?w=150&h=150&fit=crop";
+const imgLayer1 = "https://images.unsplash.com/photo-1587440871875-191322ee64b0?w=150&h=150&fit=crop";
+const imgLayer4 = "https://images.unsplash.com/photo-1450101499163-c8848c66ca85?w=150&h=150&fit=crop";
+const imgLayer2 = "https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?w=150&h=150&fit=crop";
+const imgLayer3 = "https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=150&h=150&fit=crop";
 
 // Desktop Header Components
 function DesktopHeader({ onGetStarted }: { onGetStarted?: () => void }) {
   return (
-    <div className="hidden lg:block bg-white box-border content-stretch flex flex-col gap-[20px] items-start px-0 py-[100px] relative shrink-0 w-full">
+    <div className="hidden lg:block bg-white box-border content-stretch flex flex-col gap-[20px] items-start px-0 pt-0 pb-[100px] relative shrink-0 w-full">
       <div className="content-stretch flex flex-col items-center relative shrink-0 w-full">
         <div className="relative shrink-0 w-full">
           <div className="size-full">
-            <div className="box-border content-stretch flex flex-col items-start pl-[100px] pr-0 py-0 relative w-full">
+            <div 
+              className="box-border content-stretch flex flex-col items-start pl-[100px] pr-0 py-0 relative w-full"
+              style={{
+                marginTop: 'calc(-1 * var(--ikan-nav-clearance-desktop, 128px))',
+                paddingTop: 'var(--ikan-nav-clearance-desktop, 128px)',
+                backgroundColor: 'white'
+              }}
+            >
               <div className="content-stretch flex gap-[32px] h-[550px] items-center relative shrink-0 w-full">
                 {/* Text Content */}
                 <div className="basis-0 content-stretch flex flex-col gap-[24px] grow items-start min-h-px min-w-px relative shrink-0">
@@ -133,7 +140,7 @@ function DesktopHeader({ onGetStarted }: { onGetStarted?: () => void }) {
 // Mobile Header Components
 function MobileHeader({ onGetStarted }: { onGetStarted?: () => void }) {
   return (
-    <div className="lg:hidden bg-white box-border content-stretch flex flex-col gap-[20px] items-start pb-[40px] pt-[80px] px-0 relative shrink-0 w-full">
+    <div className="lg:hidden bg-white box-border content-stretch flex flex-col gap-[20px] items-start pb-[40px] pt-0 px-0 relative shrink-0 w-full">
       <div className="content-stretch flex flex-col items-center relative shrink-0 w-full">
         <div className="relative shrink-0 w-full">
           <div className="size-full">
@@ -276,7 +283,7 @@ function MobileMissionSection({ onVideoPlay }: { onVideoPlay?: () => void }) {
                   </div>
                 </div>
                 <div className="absolute box-border content-stretch flex flex-col items-start left-[61.57px] pb-[0.605px] pl-0 pr-[152.1px] pt-0 translate-y-[-50%]" style={{ top: "calc(50% - 0.561px)" }}>
-                  <div className="flex flex-col font-semibold justify-center leading-[21.74px] not-italic relative shrink-0 text-nowrap text-white tracking-[-0.16px] whitespace-pre" style={{
+                  <div className="flex flex-col font-medium justify-center leading-[21.74px] not-italic relative shrink-0 text-nowrap text-white tracking-[-0.16px] whitespace-pre" style={{
                     fontFamily: 'var(--font-family-base)',
                     fontSize: 'var(--text-lg)',
                     fontWeight: 'var(--font-weight-semibold)'
@@ -985,49 +992,55 @@ function MobileTeamSection({ onTeamMemberClick }: { onTeamMemberClick?: (member:
   );
 }
 
-// Desktop Blog Section - Using reusable BlogSectionBlock
-function DesktopBlogSection({ onBlogClick, onReadMore }: { 
-  onBlogClick?: (blogId: string) => void;
+// Desktop Resource Section - Using reusable ResourceBlock
+function DesktopResourceSection({ onResourceClick, onReadMore }: { 
+  onResourceClick?: (resourceId: string) => void;
   onReadMore?: () => void;
 }) {
-  const blogPosts = getLatestBlogPosts(3);
+  const resourcePosts = getLatestResourcePosts(3);
   
   const handlePostClick = (post: any) => {
-    if (onBlogClick) {
-      onBlogClick(post.id);
+    if (onResourceClick) {
+      onResourceClick(post.id);
     }
   };
 
   return (
     <div className="hidden lg:block">
-      <BlogSectionBlock 
-        posts={blogPosts}
+      <ResourceBlock 
+        title="Latest Updates"
+        description="Insights and resources for your mental wellness journey"
+        posts={resourcePosts}
         onPostClick={handlePostClick}
         onViewAll={onReadMore}
+        viewAllText="View All"
       />
     </div>
   );
 }
 
-// Mobile Blog Section - Using reusable BlogSectionBlock
-function MobileBlogSection({ onBlogClick, onReadMore }: { 
-  onBlogClick?: (blogId: string) => void;
+// Mobile Resource Section - Using reusable ResourceBlock
+function MobileResourceSection({ onResourceClick, onReadMore }: { 
+  onResourceClick?: (resourceId: string) => void;
   onReadMore?: () => void;
 }) {
-  const blogPosts = getLatestBlogPosts(3);
+  const resourcePosts = getLatestResourcePosts(3);
   
   const handlePostClick = (post: any) => {
-    if (onBlogClick) {
-      onBlogClick(post.id);
+    if (onResourceClick) {
+      onResourceClick(post.id);
     }
   };
 
   return (
     <div className="lg:hidden">
-      <BlogSectionBlock 
-        posts={blogPosts}
+      <ResourceBlock 
+        title="Latest Updates"
+        description="Insights and resources for your mental wellness journey"
+        posts={resourcePosts}
         onPostClick={handlePostClick}
         onViewAll={onReadMore}
+        viewAllText="View All Articles"
       />
     </div>
   );
@@ -1056,7 +1069,7 @@ function DesktopNewsletterSection({
         benefits={[
           "Get weekly mental health tips, wellness resources, and stay updated with the latest news from iKan."
         ]}
-        imageUrl={img653406093Ca73A37601Cc150PeersBloguCc88BersichtNewsletterP800Avif}
+        imageUrl={imgNewsletterCommunity}
         imageAlt="Mental health newsletter community"
         privacyText="Privacy: We store and process your personal data based on our privacy policy. You can unsubscribe at any time."
         ctaText={loading ? 'Signing up...' : 'Sign up now!'}
@@ -1179,7 +1192,7 @@ function MobileNewsletterSection({
           </div>
           
           <div className="h-[350px] relative rounded-[16px] shrink-0 w-full">
-            <img alt="Mental health newsletter community" className="absolute inset-0 max-w-none object-50%-50% object-cover pointer-events-none rounded-[16px] size-full" src={img653406093Ca73A37601Cc150PeersBloguCc88BersichtNewsletterP800Avif} />
+            <img alt="Mental health newsletter community" className="absolute inset-0 max-w-none object-50%-50% object-cover pointer-events-none rounded-[16px] size-full" src={imgNewsletterCommunity} />
             <div className="flex flex-row items-center justify-center size-full">
               <div className="h-[350px] w-full" />
             </div>
@@ -1245,11 +1258,11 @@ const ABOUT_CONTENT = {
     role: ['Chief Clinical Officer', 'Senior Psychologist', 'Mental Health Counselor', 'Research Director', 'Therapy Specialist', 'Wellness Coach', 'Program Manager', 'Clinical Supervisor'][index],
     image: imgRectangle240648987
   })),
-  blog: [
+  resource: [
     {
       id: 'building-resilience',
       title: 'Building Resilience',
-      excerpt: 'Practical strategies to strengthen your mental wellness foundation and develop lasting coping skills.',
+      description: 'Practical strategies to strengthen your mental wellness foundation and develop lasting coping skills.',
       date: 'February 26 2025',
       image: imgDtsFitnessAllieLehmanPhotosId1797CopyWebp,
       category: 'Mental Health'
@@ -1257,7 +1270,7 @@ const ABOUT_CONTENT = {
     {
       id: 'mind-body-connection',
       title: 'The Mind-Body Connection',
-      excerpt: 'How nutrition and lifestyle choices impact your mental wellness and overall wellbeing.',
+      description: 'How nutrition and lifestyle choices impact your mental wellness and overall wellbeing.',
       date: 'February 06 2025', 
       image: imgFireflyABeautifulKitchenCounterShotFromTheSideTheBacksplashIsLightGreenTileThereI1Jpg,
       category: 'Wellness'
@@ -1265,7 +1278,7 @@ const ABOUT_CONTENT = {
     {
       id: 'importance-of-rest',
       title: 'The Importance of Rest',
-      excerpt: 'Understanding why quality sleep and recovery are essential for mental health and emotional balance.',
+      description: 'Understanding why quality sleep and recovery are essential for mental health and emotional balance.',
       date: 'February 02 2025',
       image: imgDtsPleaseDoNotDisturbFanetteGuilloudPhotosId8854Webp,
       category: 'Sleep & Recovery'
@@ -1306,9 +1319,9 @@ export function AboutUs({ onNavigate, onGetStarted, className }: AboutUsProps) {
     }, 1000);
   };
 
-  const handleBlogNavigation = (blogId: string) => {
-    // Blog detail pages aren't implemented yet, so navigate to Library instead
-    // In the future, this could navigate to a dedicated blog detail page
+  const handleResourceNavigation = (resourceId: string) => {
+    // Resource detail pages aren't implemented yet, so navigate to Library instead
+    // In the future, this could navigate to a dedicated resource detail page
     if (onNavigate) {
       showToast('info', 'Mental Health Resources', 'View more articles and resources in our Library');
       onNavigate('/library');
@@ -1378,9 +1391,9 @@ export function AboutUs({ onNavigate, onGetStarted, className }: AboutUsProps) {
       <DesktopTeamSection onTeamMemberClick={handleTeamMemberClick} />
       <MobileTeamSection onTeamMemberClick={handleTeamMemberClick} />
       
-      {/* Blog - Responsive */}
-      <DesktopBlogSection onBlogClick={handleBlogNavigation} onReadMore={() => onNavigate?.('/library')} />
-      <MobileBlogSection onBlogClick={handleBlogNavigation} onReadMore={() => onNavigate?.('/library')} />
+      {/* Resources - Responsive */}
+      <DesktopResourceSection onResourceClick={handleResourceNavigation} onReadMore={() => onNavigate?.('/library')} />
+      <MobileResourceSection onResourceClick={handleResourceNavigation} onReadMore={() => onNavigate?.('/library')} />
       
       {/* Newsletter - Responsive */}
       <DesktopNewsletterSection 

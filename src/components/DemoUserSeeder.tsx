@@ -50,7 +50,7 @@ export function DemoUserSeeder() {
         <CardTitle 
           style={{ 
             fontSize: 'var(--text-xl)',
-            fontWeight: 'var(--font-weight-semibold)',
+            fontWeight: 'var(--font-weight-medium)',
             color: 'var(--color-text-primary)',
             marginBottom: 'var(--spacing-2)'
           }}

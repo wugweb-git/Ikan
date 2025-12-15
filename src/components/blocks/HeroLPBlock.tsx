@@ -18,7 +18,9 @@ export function HeroLPBlock({
   backgroundAlt = "Hero background",
 }: HeroLPBlockProps) {
   return (
-    <div className="h-[900px] relative rounded-bl-[80px] rounded-br-[80px] shrink-0 w-full">
+    <div 
+      className="h-[900px] relative rounded-bl-[80px] rounded-br-[80px] shrink-0 w-full"
+    >
       {backgroundImage && (
         <img
           alt={backgroundAlt}

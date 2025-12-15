@@ -11,10 +11,10 @@ import imgFireflyABeautifulKitchenCounterShotFromTheSideTheBacksplashIsLightGree
 import imgDtsPleaseDoNotDisturbFanetteGuilloudPhotosId8854Webp from "figma:asset/69630877b2f0ea1979fedcdee430b8d92c705a78.png";
 import img653406093Ca73A37601Cc150PeersBloguCc88BersichtNewsletterP800Avif from "figma:asset/d520368580246229986afc39addcd14047393642.png";
 import { imgGroup } from "./svg-5gbbm";
-import { BlogSectionBlock } from "../components/blocks/BlogSectionBlock";
+import { ResourceBlock } from "../components/blocks/ResourceBlock";
 import { NewsletterBlock } from "../components/blocks/NewsletterBlock";
 import { ContextBlock } from "../components/blocks/ContextBlock";
-import { getLatestBlogPosts } from "../lib/sample-data/blog-posts";
+import { getLatestResourcePosts } from "../lib/sample-data/resource-posts";
 
 function Frame1000007577() {
   return (
@@ -130,7 +130,7 @@ function Container3() {
 function Container4() {
   return (
     <div className="absolute box-border content-stretch flex flex-col items-start left-[61.57px] pb-[0.605px] pl-0 pr-[152.1px] pt-0 translate-y-[-50%]" data-name="Container" style={{ top: "calc(50% - 0.561px)" }}>
-      <div className="flex flex-col font-['Inter:Semi_Bold',_sans-serif] font-semibold justify-center leading-[21.74px] not-italic relative shrink-0 text-[18.1px] text-nowrap text-white tracking-[-0.16px] whitespace-pre">
+      <div className="flex flex-col font-medium justify-center leading-[21.74px] not-italic relative shrink-0 text-[18.1px] text-nowrap text-white tracking-[-0.16px] whitespace-pre">
         <p className="mb-0">Jetzt das vollständige</p>
         <p>Interview anschauen</p>
       </div>
@@ -1166,7 +1166,7 @@ function Container19() {
 
 function Frame28() {
   return (
-    <div className="content-stretch flex flex-col font-['Inter:Semi_Bold',_sans-serif] font-semibold gap-[8px] h-[61px] items-start leading-[0] not-italic relative shrink-0 w-[296px]">
+    <div className="content-stretch flex flex-col font-medium gap-[8px] h-[61px] items-start leading-[0] not-italic relative shrink-0 w-[296px]">
       <div className="flex flex-col justify-center relative shrink-0 text-[14.648px] text-black tracking-[1.5px] uppercase w-full">
         <p className="leading-[15px]">Title</p>
       </div>
@@ -1314,7 +1314,7 @@ function EqupCard() {
 
 function Frame30() {
   return (
-    <div className="content-stretch flex flex-col font-['Inter:Semi_Bold',_sans-serif] font-semibold gap-[8px] h-[61px] items-start leading-[0] not-italic relative shrink-0 w-[296px]">
+    <div className="content-stretch flex flex-col font-medium gap-[8px] h-[61px] items-start leading-[0] not-italic relative shrink-0 w-[296px]">
       <div className="flex flex-col justify-center relative shrink-0 text-[14.648px] text-black tracking-[1.5px] uppercase w-full">
         <p className="leading-[15px]">Title</p>
       </div>
@@ -1843,24 +1843,27 @@ function Container34() {
   );
 }
 
-function Section3({ onBlogClick, onViewAll }: { 
-  onBlogClick?: (blogId: string) => void;
+function Section3({ onResourceClick, onViewAll }: { 
+  onResourceClick?: (resourceId: string) => void;
   onViewAll?: () => void;
 } = {}) {
-  const blogPosts = getLatestBlogPosts(3);
+  const resourcePosts = getLatestResourcePosts(3);
   
   const handlePostClick = (post: any) => {
-    if (onBlogClick) {
-      onBlogClick(post.id);
+    if (onResourceClick) {
+      onResourceClick(post.id);
     }
   };
 
   return (
     <div className="bg-[#e9ebef] box-border content-stretch flex flex-col items-center p-[100px] relative shrink-0 w-[1440px]" data-name="Section">
-      <BlogSectionBlock 
-        posts={blogPosts}
+      <ResourceBlock 
+        title="Latest Updates"
+        description="Insights and resources for your mental wellness journey"
+        posts={resourcePosts}
         onPostClick={handlePostClick}
         onViewAll={onViewAll}
+        viewAllText="View All"
       />
     </div>
   );

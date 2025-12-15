@@ -38,7 +38,7 @@ export function ComponentShowcase() {
           <h1 
             style={{ 
               fontSize: 'var(--text-3xl)', 
-              fontWeight: 'var(--font-weight-semibold)',
+              fontWeight: 'var(--font-weight-medium)',
               color: 'var(--color-text-primary)'
             }}
           >

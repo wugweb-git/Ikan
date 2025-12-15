@@ -40,7 +40,19 @@ function createIconKey(name: IconName, variant?: string): string {
     chat: 'default',
     widget: 'default',
     bookmark: 'outline',
-    star: 'outline'
+    star: 'outline',
+    user: 'outline',
+    bell: 'outline',
+    shield: 'outline',
+    helpCircle: 'outline',
+    messageCircle: 'outline',
+    fileText: 'outline',
+    layoutDashboard: 'outline',
+    logOut: 'outline',
+    chevronLeft: 'outline',
+    chevronRight: 'outline',
+    creditCard: 'outline',
+    lock: 'outline'
   };
 
   const resolvedVariant = variant || defaultVariants[name] || 'outline';
@@ -173,6 +185,54 @@ export function WidgetIcon(props: Omit<IconProps, 'name' | 'variant'>) {
 
 export function StarIcon({ variant = 'outline', ...props }: Omit<IconProps, 'name'>) {
   return <Icon name="star" variant={variant} {...props} />;
+}
+
+export function UserIcon({ variant = 'outline', ...props }: Omit<IconProps, 'name'>) {
+  return <Icon name="user" variant={variant} {...props} />;
+}
+
+export function BellIcon({ variant = 'outline', ...props }: Omit<IconProps, 'name'>) {
+  return <Icon name="bell" variant={variant} {...props} />;
+}
+
+export function ShieldIcon({ variant = 'outline', ...props }: Omit<IconProps, 'name'>) {
+  return <Icon name="shield" variant={variant} {...props} />;
+}
+
+export function HelpCircleIcon({ variant = 'outline', ...props }: Omit<IconProps, 'name'>) {
+  return <Icon name="helpCircle" variant={variant} {...props} />;
+}
+
+export function MessageCircleIcon({ variant = 'outline', ...props }: Omit<IconProps, 'name'>) {
+  return <Icon name="messageCircle" variant={variant} {...props} />;
+}
+
+export function FileTextIcon({ variant = 'outline', ...props }: Omit<IconProps, 'name'>) {
+  return <Icon name="fileText" variant={variant} {...props} />;
+}
+
+export function LayoutDashboardIcon({ variant = 'outline', ...props }: Omit<IconProps, 'name'>) {
+  return <Icon name="layoutDashboard" variant={variant} {...props} />;
+}
+
+export function LogOutIcon({ variant = 'outline', ...props }: Omit<IconProps, 'name'>) {
+  return <Icon name="logOut" variant={variant} {...props} />;
+}
+
+export function ChevronLeftIcon({ variant = 'outline', ...props }: Omit<IconProps, 'name'>) {
+  return <Icon name="chevronLeft" variant={variant} {...props} />;
+}
+
+export function ChevronRightIcon({ variant = 'outline', ...props }: Omit<IconProps, 'name'>) {
+  return <Icon name="chevronRight" variant={variant} {...props} />;
+}
+
+export function CreditCardIcon({ variant = 'outline', ...props }: Omit<IconProps, 'name'>) {
+  return <Icon name="creditCard" variant={variant} {...props} />;
+}
+
+export function LockIcon({ variant = 'outline', ...props }: Omit<IconProps, 'name'>) {
+  return <Icon name="lock" variant={variant} {...props} />;
 }
 
 // Export all icon names for external use

@@ -13,14 +13,13 @@ import {
   ButtonPrimary, 
   ButtonLink,
   ProgressBar,
-  ConsultationDirectoryCard,
+  ConsultantCard,
   MoodJournalEmojiSet,
   AssessmentCard,
   Stepper,
   ModalAssessmentIntro,
   ChatPreviewCard,
-  ModalSupportChat,
-  BlogCard 
+  ModalSupportChat
 } from './components';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
 
@@ -39,14 +38,13 @@ const componentRegistry = {
   ButtonPrimary,
   ButtonLink,
   ProgressBar,
-  ConsultationDirectoryCard,
+  ConsultantCard,
   MoodJournalEmojiSet,
   AssessmentCard,
   Stepper,
   ModalAssessmentIntro,
   ChatPreviewCard,
   ModalSupportChat,
-  BlogCard,
   Tabs: ({ tabs, ...props }: { tabs: string[] }) => (
     <Tabs defaultValue={tabs[0]?.toLowerCase()} {...props}>
       <TabsList>
@@ -205,8 +203,8 @@ export function EquipCalendarBlock(props: Omit<BlockRendererProps, 'blockName'>)
   return <BlockRenderer blockName="EquipCalendarBlock" {...props} />;
 }
 
-export function ConsultationDirectoryBlock(props: Omit<BlockRendererProps, 'blockName'>) {
-  return <BlockRenderer blockName="ConsultationDirectoryBlock" {...props} />;
+export function ConsultationBlock(props: Omit<BlockRendererProps, 'blockName'>) {
+  return <BlockRenderer blockName="ConsultationBlock" {...props} />;
 }
 
 export function MoodJournalMonthBlock(props: Omit<BlockRendererProps, 'blockName'>) {

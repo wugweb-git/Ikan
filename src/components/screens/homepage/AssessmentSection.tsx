@@ -2,12 +2,15 @@ import React from 'react';
 import { Button } from '../../ui/button';
 import { ErrorBoundary } from '../../ErrorBoundary';
 import { ImageWithFallback } from '../../figma/ImageWithFallback';
+import { ASSESSMENT_INTRO_DATA } from '../../../lib/homepage-data';
 
 interface AssessmentSectionProps {
   onGetStarted: () => void;
 }
 
 export function AssessmentSection({ onGetStarted }: AssessmentSectionProps) {
+  const { title, description, ctaText, image } = ASSESSMENT_INTRO_DATA;
+
   return (
     <ErrorBoundary>
       <section 
@@ -35,7 +38,7 @@ export function AssessmentSection({ onGetStarted }: AssessmentSectionProps) {
                   fontFamily: 'var(--font-family-base)'
                 }}
               >
-                iKan is the mental health platform for the modern era.
+                {title}
               </h2>
               
               <p 
@@ -47,7 +50,7 @@ export function AssessmentSection({ onGetStarted }: AssessmentSectionProps) {
                   fontFamily: 'var(--font-family-base)'
                 }}
               >
-                Get actionable and quantified insights about your mental health. Screen for issues prevent them from turning chronic with the help of our experts and evidence backed tools.
+                {description}
               </p>
               
               <div className="pt-2">
@@ -61,7 +64,7 @@ export function AssessmentSection({ onGetStarted }: AssessmentSectionProps) {
                     borderRadius: 'var(--radius-sm)'
                   }}
                 >
-                  Get Started
+                  {ctaText}
                 </Button>
               </div>
             </div>
@@ -76,7 +79,7 @@ export function AssessmentSection({ onGetStarted }: AssessmentSectionProps) {
                 }}
               >
                  <ImageWithFallback 
-                    src="https://images.unsplash.com/photo-1724176636904-394580bfedf5?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxtZW50YWwlMjBoZWFsdGglMjB0ZWNobm9sb2d5JTIwYW5hbHl0aWNzJTIwaW5zaWdodHN8ZW58MXx8fHwxNzY1NDQ3NTMyfDA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral"
+                    src={image}
                     alt="Mental health analytics and insights"
                     className="w-full h-full object-cover"
                     loading="lazy"

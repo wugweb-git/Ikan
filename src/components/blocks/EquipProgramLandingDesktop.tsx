@@ -93,7 +93,7 @@ export function EquipProgramLandingDesktop({
             <h1 
               style={{
                 fontSize: 'var(--text-4xl)',
-                fontWeight: 'var(--font-weight-semibold)',
+                fontWeight: 'var(--font-weight-medium)',
                 lineHeight: 'var(--line-height-sm)',
                 marginBottom: 'var(--ikan-component-spacing-default)',
                 color: 'var(--color-text-inverse)'
@@ -170,7 +170,7 @@ export function EquipProgramLandingDesktop({
                   <div 
                     style={{
                       fontSize: 'var(--text-lg)',
-                      fontWeight: 'var(--font-weight-semibold)',
+                      fontWeight: 'var(--font-weight-medium)',
                       color: 'var(--color-text-inverse)'
                     }}
                   >
@@ -203,7 +203,7 @@ export function EquipProgramLandingDesktop({
           <h2 
             style={{
               fontSize: 'var(--text-3xl)',
-              fontWeight: 'var(--font-weight-semibold)',
+              fontWeight: 'var(--font-weight-medium)',
               color: 'var(--color-text-primary)',
               marginBottom: 'var(--ikan-component-spacing-large)'
             }}
@@ -237,7 +237,7 @@ export function EquipProgramLandingDesktop({
           <h2 
             style={{
               fontSize: 'var(--text-3xl)',
-              fontWeight: 'var(--font-weight-semibold)',
+              fontWeight: 'var(--font-weight-medium)',
               color: 'var(--color-text-primary)',
               marginBottom: 'var(--ikan-component-spacing-large)',
               textAlign: 'center'
@@ -314,7 +314,7 @@ export function EquipProgramLandingDesktop({
                 <h3 
                   style={{
                     fontSize: 'var(--text-xl)',
-                    fontWeight: 'var(--font-weight-semibold)',
+                    fontWeight: 'var(--font-weight-medium)',
                     color: 'var(--color-text-primary)',
                     marginBottom: 'var(--ikan-component-spacing-default)'
                   }}
@@ -379,7 +379,7 @@ export function EquipProgramLandingDesktop({
           <h2 
             style={{
               fontSize: 'var(--text-3xl)',
-              fontWeight: 'var(--font-weight-semibold)',
+              fontWeight: 'var(--font-weight-medium)',
               color: 'var(--color-text-primary)',
               marginBottom: 'var(--ikan-component-spacing-large)',
               textAlign: 'center'
@@ -458,7 +458,7 @@ export function EquipProgramLandingDesktop({
               <h2 
                 style={{
                   fontSize: 'var(--text-3xl)',
-                  fontWeight: 'var(--font-weight-semibold)',
+                  fontWeight: 'var(--font-weight-medium)',
                   color: 'var(--color-text-primary)',
                   marginBottom: 'var(--ikan-component-spacing-default)'
                 }}

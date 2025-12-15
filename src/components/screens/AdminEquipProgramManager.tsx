@@ -149,12 +149,12 @@ export function AdminEquipProgramManager({ onNavigate, onBack }: AdminEquipProgr
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
           {onBack && (
-            <Button variant="ghost" size="icon" onClick={onBack}>
+            <Button variant="ghost" size="icon" onClick={onBack} aria-label="Go back to admin dashboard">
               <ArrowLeft className="w-5 h-5" />
             </Button>
           )}
           <div>
-            <h2 className="text-2xl font-bold">Equip Program Manager</h2>
+            <h2 className="text-2xl font-medium">Equip Program Manager</h2>
             <p className="text-muted-foreground">Create and manage digital programs</p>
           </div>
         </div>
@@ -181,7 +181,7 @@ export function AdminEquipProgramManager({ onNavigate, onBack }: AdminEquipProgr
               <CardContent className="p-6 flex items-center justify-between">
                 <div>
                   <div className="flex items-center gap-3 mb-1">
-                    <h3 className="font-semibold text-lg">{program.title}</h3>
+                    <h3 className="font-medium text-lg">{program.title}</h3>
                     <Badge variant="secondary">{program.duration_days} Days</Badge>
                   </div>
                   <p className="text-muted-foreground text-sm line-clamp-1">
@@ -234,7 +234,7 @@ export function AdminEquipProgramManager({ onNavigate, onBack }: AdminEquipProgr
                 <Label>Summary (Short Description)</Label>
                 <TextArea 
                   value={editingProgram.summary} 
-                  onChange={(val) => setEditingProgram({...editingProgram, summary: val})}
+                  onChange={(e) => setEditingProgram({...editingProgram, summary: e.target.value})}
                   placeholder="Short summary for cards..."
                   rows={2}
                 />
@@ -244,7 +244,7 @@ export function AdminEquipProgramManager({ onNavigate, onBack }: AdminEquipProgr
                 <Label>Full Description</Label>
                 <TextArea 
                   value={editingProgram.description} 
-                  onChange={(val) => setEditingProgram({...editingProgram, description: val})}
+                  onChange={(e) => setEditingProgram({...editingProgram, description: e.target.value})}
                   placeholder="Detailed program description..."
                   rows={4}
                 />
@@ -252,7 +252,7 @@ export function AdminEquipProgramManager({ onNavigate, onBack }: AdminEquipProgr
 
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
-                  <h3 className="font-semibold text-lg">Daily Content</h3>
+                  <h3 className="font-medium text-lg">Daily Content</h3>
                   <Button size="sm" onClick={handleAddDay} variant="secondary">
                     <Plus className="w-4 h-4 mr-1" /> Add Day
                   </Button>
@@ -270,7 +270,7 @@ export function AdminEquipProgramManager({ onNavigate, onBack }: AdminEquipProgr
                             placeholder="e.g. Introduction to Sleep"
                           />
                         </div>
-                        <Button variant="ghost" size="icon" onClick={() => removeDay(idx)} className="text-destructive">
+                        <Button variant="ghost" size="icon" onClick={() => removeDay(idx)} className="text-destructive" aria-label="Remove day">
                           <X className="w-4 h-4" />
                         </Button>
                       </div>

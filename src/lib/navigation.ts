@@ -36,10 +36,10 @@ export const screensConfig = {
       "components": ["EquipCard", "EquipCalendarBlock", "ProgressBar", "Tabs"]
     },
     "Consultation": {
-      "components": ["ConsultationDirectoryBlock", "ConsultationSessionDetails", "SupportChatBlock"]
+      "components": ["ConsultationBlock", "ConsultationSessionDetails", "SupportChatBlock"]
     },
     "Library": {
-      "components": ["ResourceGridBlock", "ResourceListBlock", "BlogCard"]
+      "components": ["ResourceGridBlock", "ResourceListBlock", "ResourceCard"]
     },
     "Account": {
       "components": ["AccountDetailsSection", "UserAvatar", "TextInput", "SwitchToggle", "SideNavAccount"]

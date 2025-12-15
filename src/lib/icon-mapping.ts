@@ -63,7 +63,27 @@ export const iconMapping = {
   "heart-outline": "Heart",
   "heart-default": "Heart",
   "message-outline": "MessageCircle",
-  "message-default": "MessageCircle"
+  "message-default": "MessageCircle",
+  "user-outline": "User",
+  "user-default": "User",
+  "bell-outline": "Bell",
+  "bell-default": "Bell",
+  "shield-outline": "Shield",
+  "shield-default": "Shield",
+  "helpCircle-outline": "HelpCircle",
+  "helpCircle-default": "HelpCircle",
+  "messageCircle-outline": "MessageCircle",
+  "messageCircle-default": "MessageCircle",
+  "fileText-outline": "FileText",
+  "fileText-default": "FileText",
+  "layoutDashboard-outline": "LayoutDashboard",
+  "layoutDashboard-default": "LayoutDashboard",
+  "logOut-outline": "LogOut",
+  "logOut-default": "LogOut",
+  "chevronLeft-outline": "ChevronLeft",
+  "chevronLeft-default": "ChevronLeft",
+  "chevronRight-outline": "ChevronRight",
+  "chevronRight-default": "ChevronRight"
 } as const;
 
 // Iconify mapping - using Material Symbols as specified
@@ -128,7 +148,27 @@ export const iconifyMapping = {
   "heart.outline": "material-symbols:favorite-outline-rounded",
   "heart.default": "material-symbols:favorite",
   "message.outline": "material-symbols:chat-outline-rounded",
-  "message.default": "material-symbols:chat"
+  "message.default": "material-symbols:chat",
+  "user.outline": "material-symbols:person-outline-rounded",
+  "user.default": "material-symbols:person-rounded",
+  "bell.outline": "material-symbols:notifications-outline-rounded",
+  "bell.default": "material-symbols:notifications-rounded",
+  "shield.outline": "material-symbols:shield-outline-rounded",
+  "shield.default": "material-symbols:shield-rounded",
+  "helpCircle.outline": "material-symbols:help-outline-rounded",
+  "helpCircle.default": "material-symbols:help-rounded",
+  "messageCircle.outline": "material-symbols:chat-outline-rounded",
+  "messageCircle.default": "material-symbols:chat",
+  "fileText.outline": "material-symbols:article-outline-rounded",
+  "fileText.default": "material-symbols:article-rounded",
+  "layoutDashboard.outline": "material-symbols:dashboard-outline-rounded",
+  "layoutDashboard.default": "material-symbols:dashboard-rounded",
+  "logOut.outline": "material-symbols:logout-outline-rounded",
+  "logOut.default": "material-symbols:logout-rounded",
+  "chevronLeft.outline": "material-symbols:chevron-left-outline-rounded",
+  "chevronLeft.default": "material-symbols:chevron-left-rounded",
+  "chevronRight.outline": "material-symbols:chevron-right-outline-rounded",
+  "chevronRight.default": "material-symbols:chevron-right-rounded"
 } as const;
 
 export type IconMappingKey = keyof typeof iconMapping;

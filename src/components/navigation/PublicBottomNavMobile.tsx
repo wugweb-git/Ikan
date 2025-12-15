@@ -15,9 +15,9 @@ export function PublicBottomNavMobile({ currentRoute, onNavigate, onSignIn, clas
   // Fixed navigation items for mobile (showing 4 most important)
   const publicNavItems = [
     { path: '/', label: 'Home', icon: 'home' },
-    { path: '/assessments', label: 'Assessments', icon: 'assignment' },
-    { path: '/equip-programs', label: 'Programs', icon: 'tools' },
-    { path: '/library', label: 'Library', icon: 'library' }
+    { path: '/assessment', label: 'Assessment', icon: 'assignment' },
+    { path: '/equip', label: 'Equip', icon: 'tools' },
+    { path: '/resource', label: 'Resource', icon: 'library' }
   ];
 
   // Additional navigation items for dropdown menu

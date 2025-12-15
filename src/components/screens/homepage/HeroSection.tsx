@@ -1,25 +1,22 @@
-import React from 'react';
-import { Button } from '../../ui/button';
 import { ImageWithFallback } from '../../figma/ImageWithFallback';
 import { ErrorBoundary } from '../../ErrorBoundary';
+import { ButtonPrimary, ButtonSecondary } from '../../buttons';
+import { HERO_DATA } from '../../../lib/homepage-data';
 import { cn } from '../../ui/utils';
 
-// Import SVG assets
-import svgPaths from "../../../imports/svg-rdg85uq8eg";
-
-// Desktop images
-import imgBackground from "figma:asset/48e11de40959fcd87b5cb4a36ae60fedcaf97caf.png";
-import imgBackground1 from "figma:asset/3772e90563daca3ef206a824f43457199d087a9c.png";
-import imgContainer from "figma:asset/1481db4e9380fb931a22b6513abff50802b2a49b.png";
-import imgContainer1 from "figma:asset/a9781d0017d72468a9abd686b2bedd2a0030389e.png";
-import imgContainer2 from "figma:asset/f73ff6b993a79e7afa25172e841a3b997424ffd3.png";
-import imgContainer3 from "figma:asset/d003be95957c379a921874e4bda664014db0f9f1.png";
-import imgBackground2 from "figma:asset/79f4819c58ba4b17081db7c51042e65ae3c80b63.png";
-import imgBackground3 from "figma:asset/feac3db04deeeeeb57c0093c3c5f73704543a5ce.png";
-import imgBackground4 from "figma:asset/3065945fcbf34255b3d9dd3f6a9d74bef33067aa.png";
-import imgBackground5 from "figma:asset/533267b6ad03b6203bf651e6d6b242eeed7f4136.png";
-import imgContainer4 from "figma:asset/9e350c1839007716e1f55e4a0242b288a034c6aa.png";
-import imgContainer5 from "figma:asset/c9864a003bcad8a0740991d9dc9f0b5fa774146f.png";
+// Desktop images - Using fallback URLs
+const imgBackground = "https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=1200&h=600&fit=crop";
+const imgBackground1 = "https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?w=800&h=800&fit=crop";
+const imgContainer = "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=600&h=600&fit=crop";
+const imgContainer1 = "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=600&h=600&fit=crop";
+const imgContainer2 = "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=600&h=600&fit=crop";
+const imgContainer3 = "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=600&h=600&fit=crop";
+const imgBackground2 = "https://images.unsplash.com/photo-1573497019236-17f8177b81e8?w=400&h=400&fit=crop";
+const imgBackground3 = "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=400&h=400&fit=crop";
+const imgBackground4 = "https://images.unsplash.com/photo-1573497161161-c3e73707e25c?w=400&h=400&fit=crop";
+const imgBackground5 = "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=400&h=400&fit=crop";
+const imgContainer4 = "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=600&h=600&fit=crop";
+const imgContainer5 = "https://images.unsplash.com/photo-1580489944761-15a19d654956?w=600&h=600&fit=crop";
 
 interface HeroSectionProps {
   onGetStarted: () => void;
@@ -172,6 +169,8 @@ function StatisticCard({ stat, index }: { stat: typeof statistics[0], index: num
 }
 
 export function HeroSection({ onGetStarted }: HeroSectionProps) {
+  const { title, description, ctaText } = HERO_DATA;
+  
   return (
     <ErrorBoundary>
       <section 
@@ -199,7 +198,7 @@ export function HeroSection({ onGetStarted }: HeroSectionProps) {
                   fontFamily: 'var(--font-family-base)'
                 }}
               >
-                Reimagining mental health care.
+                {title}
               </h1>
               <p 
                 className="leading-relaxed"
@@ -210,9 +209,9 @@ export function HeroSection({ onGetStarted }: HeroSectionProps) {
                   fontFamily: 'var(--font-family-base)'
                 }}
               >
-                Stay on top of your mental health with real time monitoring and insights, expert therapists, science backed tools and programs.
+                {description}
               </p>
-              <Button 
+              <ButtonPrimary 
                 onClick={onGetStarted}
                 className="ikan-button w-full mobile-button touch-target"
                 style={{
@@ -222,8 +221,8 @@ export function HeroSection({ onGetStarted }: HeroSectionProps) {
                   borderRadius: 'var(--radius-sm)'
                 }}
               >
-                Get Started
-              </Button>
+                {ctaText}
+              </ButtonPrimary>
             </div>
 
             {/* Mobile Statistics Grid - 2 columns */}
@@ -265,7 +264,7 @@ export function HeroSection({ onGetStarted }: HeroSectionProps) {
                   fontFamily: 'var(--font-family-base)'
                 }}
               >
-                Reimagining mental health care.
+                {title}
               </h1>
               <p 
                 className="max-w-2xl mx-auto leading-relaxed"
@@ -276,9 +275,9 @@ export function HeroSection({ onGetStarted }: HeroSectionProps) {
                   fontFamily: 'var(--font-family-base)'
                 }}
               >
-                Stay on top of your mental health with real time monitoring and insights, expert therapists, science backed tools and programs.
+                {description}
               </p>
-              <Button 
+              <ButtonPrimary 
                 onClick={onGetStarted}
                 className="ikan-button"
                 style={{
@@ -288,8 +287,8 @@ export function HeroSection({ onGetStarted }: HeroSectionProps) {
                   borderRadius: 'var(--radius-sm)'
                 }}
               >
-                Get Started
-              </Button>
+                {ctaText}
+              </ButtonPrimary>
             </div>
 
             {/* Desktop Statistics Grid - 6 columns */}

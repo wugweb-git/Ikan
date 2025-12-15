@@ -236,7 +236,7 @@ class APIClient {
         throw new Error('Network unavailable - using offline mode');
       } else {
         // Don't log errors for resource requests - they fallback to sample data silently
-        if (!endpoint.includes('/library/resources')) {
+        if (!endpoint.includes('/library/resources') && !endpoint.includes('/admin/resources')) {
           console.error(`❌ API request failed for ${endpoint}:`, error);
         }
         throw error;
@@ -521,19 +521,46 @@ class APIClient {
     }, true, 0);
   }
 
-  // Library methods
-  async getResources(category?: string, limit?: number, offset?: number) {
-    const params = new URLSearchParams();
-    if (category) params.append('category', category);
-    if (limit) params.append('limit', limit.toString());
-    if (offset) params.append('offset', offset.toString());
-    
-    const query = params.toString() ? `?${params.toString()}` : '';
-    return this.requestWithFallback(`/library/resources${query}`, 'resources');
+  // Resource methods
+  async getResources() {
+    return this.requestWithFallback('/admin/resources', 'resources', {}, false); // Changed to false to allow public access logic (even if endpoint requires auth, fallback handles it)
   }
 
-  async getResource(resourceId: string) {
-    return this.requestWithFallback(`/library/resources/${resourceId}`, 'resources');
+  async createResource(data: any) {
+    return this.request('/admin/resources', {
+      method: 'POST',
+      body: JSON.stringify(data)
+    }, true, 0);
+  }
+
+  async updateResource(id: string, data: any) {
+    return this.request(`/admin/resources/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data)
+    }, true, 0);
+  }
+
+  async deleteResource(id: string) {
+    return this.request(`/admin/resources/${id}`, {
+      method: 'DELETE'
+    }, true, 0);
+  }
+
+  // Legacy Resource methods (kept for backward compatibility)
+  async getBlogs() {
+    return this.getResources();
+  }
+
+  async createBlog(data: any) {
+    return this.createResource(data);
+  }
+
+  async updateBlog(id: string, data: any) {
+    return this.updateResource(id, data);
+  }
+
+  async deleteBlog(id: string) {
+    return this.deleteResource(id);
   }
 
   // Consultation methods
@@ -545,6 +572,30 @@ class APIClient {
     
     const query = params.toString() ? `?${params.toString()}` : '';
     return this.requestWithFallback(`/consultation/professionals${query}`, 'professionals');
+  }
+
+  async getProfessional(id: string) {
+    return this.requestWithFallback(`/consultation/professionals/${id}`, 'professionals');
+  }
+
+  async createProfessional(data: any) {
+    return this.request('/admin/professionals', {
+      method: 'POST',
+      body: JSON.stringify(data)
+    }, true, 0);
+  }
+
+  async updateProfessional(id: string, data: any) {
+    return this.request(`/admin/professionals/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data)
+    }, true, 0);
+  }
+
+  async deleteProfessional(id: string) {
+    return this.request(`/admin/professionals/${id}`, {
+      method: 'DELETE'
+    }, true, 0);
   }
 
   // Utility methods
@@ -677,6 +728,19 @@ class APIClient {
     }, true, 0);
   }
 
+  // Admin methods
+  async getUsers() {
+    try {
+      return await this.request('/admin/users', {
+        method: 'GET'
+      }, true, 0);
+    } catch (error) {
+      console.log('Failed to fetch users:', error);
+      // Fallback for offline mode or error
+      return { users: [] };
+    }
+  }
+
   // Additional profile methods
   async updateUserProfile(data: {
     name?: string;
@@ -732,7 +796,7 @@ class APIClient {
       const errorMessage = error instanceof Error ? error.message : String(error);
       
       // Silently fallback for resource requests (expected to use sample data in demo mode)
-      if (endpoint.includes('/library/resources')) {
+      if (endpoint.includes('/library/resources') || endpoint.includes('/admin/resources')) {
         // Don't log errors for resource requests - they're expected to fallback to sample data
         return getOfflineData(fallbackType, id) as T;
       }
@@ -876,6 +940,33 @@ class APIClient {
       // Return a success response so analytics failures don't break the app
       return { success: false, error: errorMessage, message: 'Request failed gracefully' };
     }
+  }
+
+  // Social account connection methods
+  async connectSocialAccount(provider: 'google' | 'linkedin') {
+    return this.request(`/user/connect-social/${provider}`, {
+      method: 'POST',
+    }, true, 0);
+  }
+
+  async disconnectSocialAccount(provider: 'google' | 'linkedin') {
+    return this.request(`/user/disconnect-social/${provider}`, {
+      method: 'POST',
+    }, true, 0);
+  }
+
+  // Admin user management methods
+  async updateUserAdmin(userId: string, updates: any) {
+    return this.request(`/admin/users/${userId}`, {
+      method: 'PUT',
+      body: JSON.stringify(updates),
+    }, true, 0);
+  }
+
+  async deleteUser(userId: string) {
+    return this.request(`/admin/users/${userId}`, {
+      method: 'DELETE',
+    }, true, 0);
   }
 }
 

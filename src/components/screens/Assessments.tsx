@@ -67,8 +67,8 @@ type ViewState = 'list' | 'landing' | 'flow' | 'results';
 type TabState = 'catalogue' | 'history';
 
 // Helper to get Unsplash images
-const getAssessmentImage = (category: string) => {
-  const normalizedCategory = category.toLowerCase();
+const getAssessmentImage = (category?: string) => {
+  const normalizedCategory = (category || 'wellness').toLowerCase();
   if (normalizedCategory.includes('anxiety')) return "https://images.unsplash.com/photo-1702032773321-afc433d91ce8?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxjYWxtJTIwcGVhY2VmdWwlMjBtaW5kJTIwc2VyZW5lJTIwd2F0ZXJ8ZW58MXx8fHwxNzY1NDU5MTU1fDA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral";
   if (normalizedCategory.includes('depression')) return "https://images.unsplash.com/photo-1600262912301-d288169c6cda?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxob3BlJTIwc3Vuc2hpbmUlMjBjbG91ZHN8ZW58MXx8fHwxNzY1NDU5MTU5fDA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral";
   if (normalizedCategory.includes('stress')) return "https://images.unsplash.com/photo-1676386749756-1987d8a0e32a?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxjYWxtJTIwcGVhY2VmdWwlMjBuYXR1cmUlMjBzdHJlc3MlMjByZWxpZWZ8ZW58MXx8fHwxNzY1NDU4MzIzfDA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral";
@@ -131,7 +131,11 @@ export function Assessments({ className, onNavigate }: AssessmentsProps) {
         try {
           const response = await apiClient.getAssessments();
           if (response && response.assessments) {
-            apiAssessments = response.assessments;
+            // Ensure proper data shape and fallbacks
+            apiAssessments = response.assessments.map((a: any) => ({
+                ...a,
+                category: a.category || a.metadata?.category || 'wellness'
+            }));
           }
         } catch (error) {
           console.warn('Failed to fetch API assessments, falling back to local only', error);
@@ -153,7 +157,7 @@ export function Assessments({ className, onNavigate }: AssessmentsProps) {
         // Actually, let's just show all available assessments for now, or filter by category if needed.
         // For now, let's just keep the filter if it exists in the clinical list, BUT allow new ones if they don't match the list but are valid.
         
-        // Simpler logic: If it's from API, show it. If it's local, show it if it matches the list.
+        // Simpler logic: If it's from the API (we can check if it exists in apiAssessments), show it
         finalAssessments = finalAssessments.filter(assessment => {
            // If it came from the API (we can check if it exists in apiAssessments), show it
            const isFromApi = apiAssessments.some(apiA => apiA.id === assessment.id);
@@ -316,7 +320,7 @@ export function Assessments({ className, onNavigate }: AssessmentsProps) {
   if (currentView === 'landing' && selectedAssessment) {
     return (
       <>
-        <div className={cn("space-y-6 pb-20 md:pb-6 pt-24 lg:pt-36", className)}>
+        <div className={cn("space-y-6 pb-20 md:pb-6", className)}>
           <Button
             variant="ghost"
             onClick={handleReturnToList}
@@ -419,48 +423,97 @@ export function Assessments({ className, onNavigate }: AssessmentsProps) {
   // Assessment List View
   if (currentView === 'list') {
     return (
-      <div className={cn("w-full pt-24 lg:pt-36", className)}>
+      <div className={cn("w-full", className)}>
         <div className="space-y-8">
           
-          {/* Header */}
-          <div className="space-y-2">
-            <h1 className="text-3xl font-semibold text-primary font-base">
-              Health Assessments
-            </h1>
-            <p className="text-muted-foreground font-base">
-              Assessment Programs
-            </p>
-          </div>
+          {/* New Hero Content */}
+          <div className="space-y-12 pb-8">
+            <div className="space-y-4 max-w-3xl">
+              <h1 className="text-4xl font-medium text-primary">Health Assessments</h1>
+              <h2 className="text-2xl font-medium text-primary">Quick and easy mental health screenings.</h2>
+              <p className="text-lg text-muted-foreground">
+                Check your mental health anytime, anywhere with iKan’s effortless assessments.
+              </p>
+            </div>
 
-          {/* Hero Section */}
-          <div className="relative rounded-2xl overflow-hidden bg-slate-100 min-h-[300px] flex items-center">
-             <div className="absolute inset-0 z-0">
-               <img 
-                 src="https://images.unsplash.com/photo-1758274539447-a675587a2b6c?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxoZWFsdGh5JTIwbGlmZXN0eWxlJTIwYmFsYW5jZSUyMG5hdHVyZXxlbnwxfHx8fDE3NjU0NTkxNjJ8MA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral" 
-                 alt="Wellness"
-                 className="w-full h-full object-cover opacity-80"
-               />
-               <div className="absolute inset-0 bg-gradient-to-r from-white/90 to-transparent"></div>
-             </div>
-             
-             <div className="relative z-10 p-8 md:p-12 max-w-xl space-y-4">
-                <h2 className="text-3xl md:text-4xl font-bold text-primary leading-tight">
-                  Quick and easy mental health screenings.
-                </h2>
-                <p className="text-lg text-gray-700">
-                  Check your mental health anytime, anywhere with iKan’s effortless assessments.
-                </p>
-                <Button 
-                  className="mt-4 gap-2"
-                  onClick={() => {
-                    const el = document.getElementById('assessments-grid');
-                    if (el) el.scrollIntoView({ behavior: 'smooth' });
-                  }}
-                >
-                  Start Assessment
-                  <Icon name="arrowDown" size={16} />
-                </Button>
-             </div>
+            <div className="space-y-6">
+               <h3 className="text-xl font-medium text-primary">What you’ll get.</h3>
+               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <Card className="p-6 border-none shadow-sm bg-white h-full">
+                    <CardContent className="p-0 space-y-4">
+                      <div className="w-12 h-12 rounded-full bg-accent flex items-center justify-center">
+                        <Icon name="clipboard" size={24} className="text-primary" />
+                      </div>
+                      <div className="space-y-2">
+                        <h4 className="font-medium text-lg text-primary">Mental Health Screenings</h4>
+                        <p className="text-sm text-muted-foreground leading-relaxed">
+                          Including depression, anxiety, insomnia among others
+                        </p>
+                      </div>
+                    </CardContent>
+                  </Card>
+                  
+                  <Card className="p-6 border-none shadow-sm bg-white h-full">
+                    <CardContent className="p-0 space-y-4">
+                      <div className="w-12 h-12 rounded-full bg-accent flex items-center justify-center">
+                        <Icon name="lock" size={24} className="text-primary" />
+                      </div>
+                      <div className="space-y-2">
+                        <h4 className="font-medium text-lg text-primary">Confidential and anonymous</h4>
+                        <p className="text-sm text-muted-foreground leading-relaxed">
+                          Only you and those you opt to share it with can access your data. For corporate employees, individual level data is not shared with your employer
+                        </p>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  <Card className="p-6 border-none shadow-sm bg-white h-full">
+                    <CardContent className="p-0 space-y-4">
+                      <div className="w-12 h-12 rounded-full bg-accent flex items-center justify-center">
+                        <Icon name="dashboard" size={24} className="text-primary" />
+                      </div>
+                      <div className="space-y-2">
+                        <h4 className="font-medium text-lg text-primary">Analytics Dashboard</h4>
+                        <p className="text-sm text-muted-foreground leading-relaxed">
+                          See results, trends and utilization in real time
+                        </p>
+                      </div>
+                    </CardContent>
+                  </Card>
+               </div>
+            </div>
+
+            <div className="space-y-8">
+               <div className="space-y-2">
+                 <h3 className="text-xl font-medium text-primary">How does it work?</h3>
+                 <p className="text-muted-foreground">Check your mental health in three simple steps.</p>
+               </div>
+
+               <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                  <div className="flex flex-col space-y-4">
+                     <div className="flex items-center gap-4">
+                        <div className="w-10 h-10 rounded-full bg-primary text-white flex items-center justify-center font-medium text-lg shrink-0">1</div>
+                        <div className="h-px bg-border flex-grow hidden md:block"></div>
+                     </div>
+                     <h4 className="font-medium text-lg text-primary">Tell us how you’re feeling</h4>
+                  </div>
+                  
+                  <div className="flex flex-col space-y-4">
+                     <div className="flex items-center gap-4">
+                        <div className="w-10 h-10 rounded-full bg-primary text-white flex items-center justify-center font-medium text-lg shrink-0">2</div>
+                        <div className="h-px bg-border flex-grow hidden md:block"></div>
+                     </div>
+                     <h4 className="font-medium text-lg text-primary">Answer a few simple questions</h4>
+                  </div>
+
+                  <div className="flex flex-col space-y-4">
+                     <div className="flex items-center gap-4">
+                        <div className="w-10 h-10 rounded-full bg-primary text-white flex items-center justify-center font-medium text-lg shrink-0">3</div>
+                     </div>
+                     <h4 className="font-medium text-lg text-primary">See results</h4>
+                  </div>
+               </div>
+            </div>
           </div>
 
           <div id="assessments-grid" className="scroll-mt-32" />
@@ -490,7 +543,7 @@ export function Assessments({ className, onNavigate }: AssessmentsProps) {
                 const imageUrl = getAssessmentImage(assessment.category);
 
                 return (
-                  <div key={assessment.id} className="group h-full">
+                  <div key={assessment.id || index} className="group h-full">
                     {/* Desktop Card Layout (using EquipPrograms style) */}
                     <div className="hidden md:block h-full">
                       <Card 
@@ -529,7 +582,7 @@ export function Assessments({ className, onNavigate }: AssessmentsProps) {
                           {/* Top: Category */}
                           <div className="space-y-2">
                              <p 
-                               className="text-xs uppercase tracking-widest font-semibold"
+                               className="text-xs uppercase tracking-widest font-medium"
                                style={{ 
                                  color: isCompleted ? 'var(--color-status-success)' : 'var(--color-text-primary)',
                                  fontFamily: 'var(--font-family-base)'
@@ -538,7 +591,7 @@ export function Assessments({ className, onNavigate }: AssessmentsProps) {
                                {isCompleted ? 'COMPLETED' : assessment.category}
                              </p>
                              <h3 
-                               className="text-3xl font-semibold text-primary"
+                               className="text-3xl font-medium text-primary"
                                style={{ fontFamily: 'var(--font-family-base)' }}
                              >
                                {assessment.title}
@@ -646,7 +699,7 @@ export function Assessments({ className, onNavigate }: AssessmentsProps) {
   // Assessment Flow View
   if (currentView === 'flow' && selectedAssessment) {
     return (
-      <div className="space-y-4 pt-24 lg:pt-36">
+      <div className="space-y-4">
         <Button
           variant="ghost"
           onClick={handleReturnToList}
@@ -699,7 +752,7 @@ export function Assessments({ className, onNavigate }: AssessmentsProps) {
   // Assessment Results View
   if (currentView === 'results' && assessmentResults) {
     return (
-      <div className="space-y-4 pt-24 lg:pt-36">
+      <div className="space-y-4">
         <Button
           variant="ghost"
           onClick={handleReturnToList}

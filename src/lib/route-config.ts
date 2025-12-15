@@ -27,8 +27,8 @@ export const routes: RouteConfig[] = [
     description: 'Welcome to iKan mental health platform'
   },
   {
-    path: '/assessments',
-    label: 'Assessments',
+    path: '/assessment',
+    label: 'Assessment',
     isPublic: true,
     requiresAuth: false,
     showInNavigation: true,
@@ -38,8 +38,8 @@ export const routes: RouteConfig[] = [
     description: 'Browse all mental health assessments'
   },
   {
-    path: '/equip-programs',
-    label: 'Programs',
+    path: '/equip',
+    label: 'Equip',
     isPublic: true,
     requiresAuth: false,
     showInNavigation: true,
@@ -49,8 +49,8 @@ export const routes: RouteConfig[] = [
     description: 'Browse all mental health programs'
   },
   {
-    path: '/library',
-    label: 'Library',
+    path: '/resource',
+    label: 'Resource',
     isPublic: true,
     requiresAuth: false,
     showInNavigation: true,
