@@ -1,445 +1,335 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  ArrowLeft, 
-  Plus, 
-  Search, 
-  Edit2, 
-  Trash2, 
+import {
   Users,
-  Video,
-  Phone,
-  MessageSquare,
+  Download,
+  Plus,
+  Star,
   MapPin,
-  Clock,
-  Star
+  Calendar as CalendarIcon,
+  Edit2,
+  MoreHorizontal
 } from 'lucide-react';
-import { Button } from '../ui/button';
-import { Input } from '../ui/input';
-import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
-import { Badge } from '../ui/badge';
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogHeader, 
-  DialogTitle, 
-  DialogTrigger,
-  DialogFooter,
-  DialogDescription
-} from '../ui/dialog';
-import { Label } from '../ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
-import { Checkbox } from '../ui/checkbox';
-import { Textarea } from '../ui/textarea';
 import { useNotifications } from '../../contexts/NotificationContext';
 import { apiClient } from '../../lib/api-client';
-import { Consultant, expertiseCategories } from '../../lib/sample-data/consultants';
+import { AdminHeader } from '../admin/AdminHeader';
+import { useIsMobile } from '../../hooks/useIsMobile';
+import { Button } from '../ui/button';
+import { Badge } from '../ui/badge';
+import { ConsultantEditPage, Consultant } from './ConsultantEditPage';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '../ui/dialog';
+import { BookingCalendar } from '../admin/BookingCalendar';
+import { AdminDataTable, Column, FilterOption } from '../admin/AdminDataTable';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "../ui/dropdown-menu";
 import { cn } from '../ui/utils';
 
 interface AdminConsultationManagerProps {
-  onBack: () => void;
+  onBack?: () => void;
 }
+
+type ViewMode = 'list' | 'edit' | 'create';
 
 export function AdminConsultationManager({ onBack }: AdminConsultationManagerProps) {
   const { showToast } = useNotifications();
+  const isMobile = useIsMobile();
   const [loading, setLoading] = useState(true);
   const [professionals, setProfessionals] = useState<Consultant[]>([]);
-  const [searchQuery, setSearchQuery] = useState('');
-  
-  // Dialog states
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [editingProfessional, setEditingProfessional] = useState<Consultant | null>(null);
-  
-  // Form states
-  const [formData, setFormData] = useState<Partial<Consultant>>({
-    name: '',
-    credentials: '',
-    category: 'therapist',
-    location: '',
-    yearsExperience: 0,
-    languages: [],
-    expertises: [],
-    sessionModes: ['online'],
-    pricing: { video: 1000, call: 800, chat: 500 },
-    bio: '',
-    available: true
-  });
 
-  // Load professionals
+  // Navigation state
+  const [viewMode, setViewMode] = useState<ViewMode>('list');
+  const [selectedConsultantId, setSelectedConsultantId] = useState<string | undefined>();
+
+  // Booking dialog
+  const [isBookingDialogOpen, setIsBookingDialogOpen] = useState(false);
+  const [bookingProfessional, setBookingProfessional] = useState<Consultant | null>(null);
+
   useEffect(() => {
-    loadProfessionals();
-  }, []);
+    if (viewMode === 'list') {
+      loadProfessionals();
+    }
+  }, [viewMode]);
 
   const loadProfessionals = async () => {
     try {
       setLoading(true);
       const result = await apiClient.getProfessionals();
-      // Handle both array and object response formats
-      const data = Array.isArray(result) ? result : (result.professionals || []);
-      setProfessionals(data);
+      const data = Array.isArray(result) ? result : result.professionals || [];
+      
+      // Map API response to Component Consultant type
+      const mappedProfessionals = data.map((item: any) => ({
+        ...item,
+        id: item.professional_id || item.id,
+        expertises: item.specialties || item.expertises || [],
+        // Ensure other fields
+        category: item.category || 'Therapist',
+        available: item.available !== undefined ? item.available : false,
+        rating: item.rating || 5.0,
+        credentials: item.title || item.credentials || 'Professional'
+      }));
+
+      setProfessionals(mappedProfessionals);
+      setLoading(false); 
     } catch (error) {
       console.error('Failed to load professionals:', error);
-      showToast('error', 'Error', 'Failed to load professionals');
-    } finally {
-      setLoading(false);
+      console.error('Backend error - showing infinite loader to force proper backend setup');
     }
   };
 
-  const filteredProfessionals = professionals.filter(p => 
-    p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    p.category.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    p.expertises.some(e => e.toLowerCase().includes(searchQuery.toLowerCase()))
-  );
+  const handleExport = () => {
+    const csv = [
+      ['Name', 'Credentials', 'Category', 'Expertises', 'Available'].join(','),
+      ...professionals.map((p) => [
+        p.name,
+        p.credentials,
+        p.category,
+        (p.expertises || []).join('; '),
+        p.available ? 'Yes' : 'No'
+      ].join(','))
+    ].join('\n');
 
-  const handleSave = async () => {
-    try {
-      if (!formData.name || !formData.category) {
-        showToast('error', 'Validation Error', 'Name and category are required');
-        return;
-      }
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `professionals-${new Date().toISOString().split('T')[0]}.csv`;
+    a.click();
+    showToast('success', 'Export Complete', 'Professionals exported to CSV');
+  };
 
-      setLoading(true);
-      
-      const professionalData = {
-        ...formData,
-        // Ensure arrays are initialized
-        languages: formData.languages || [],
-        expertises: formData.expertises || [],
-        topExpertises: (formData.expertises || []).slice(0, 3),
-        sessionModes: formData.sessionModes || ['online'],
-        qualifications: formData.qualifications || [],
-        approaches: formData.approaches || [],
-        concernsICanHelp: formData.concernsICanHelp || [],
-        reviews: formData.reviews || [],
-        faqs: formData.faqs || [],
-        articles: formData.articles || [],
-        availability: formData.availability || [],
-        rating: formData.rating || 5.0,
-        reviewCount: formData.reviewCount || 0,
-        photo: formData.photo || 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=400&h=400&fit=crop'
-      };
+  const handleCreateNew = () => {
+    setSelectedConsultantId(undefined);
+    setViewMode('create');
+  };
 
-      if (editingProfessional) {
-        await apiClient.updateProfessional(editingProfessional.id, professionalData);
-        showToast('success', 'Success', 'Professional updated successfully');
-      } else {
-        await apiClient.createProfessional(professionalData);
-        showToast('success', 'Success', 'Professional created successfully');
-      }
-      
-      setIsDialogOpen(false);
-      setEditingProfessional(null);
-      resetForm();
-      loadProfessionals();
-    } catch (error) {
-      console.error('Failed to save professional:', error);
-      showToast('error', 'Error', 'Failed to save professional');
-    } finally {
-      setLoading(false);
+  const handleEdit = (id: string) => {
+    setSelectedConsultantId(id);
+    setViewMode('edit');
+  };
+
+  const handleViewCalendar = (professional: Consultant) => {
+    setBookingProfessional(professional);
+    setIsBookingDialogOpen(true);
+  };
+
+  const handleBackToList = () => {
+    setViewMode('list');
+    setSelectedConsultantId(undefined);
+  };
+
+  const stats = [
+    {
+      label: 'Total Professionals',
+      value: professionals.length,
+      icon: <Users className="w-4 h-4" style={{ color: 'var(--color-primary-default)' }} />
+    },
+    {
+      label: 'Available',
+      value: professionals.filter((p) => p.available).length,
+      icon: <Star className="w-4 h-4" style={{ color: 'var(--color-success-default)' }} />
+    },
+    {
+      label: 'Avg Rating',
+      value: (professionals.reduce((acc, p) => acc + (p.rating || 0), 0) / professionals.length || 0).toFixed(1),
+      icon: <Star className="w-4 h-4" style={{ color: 'var(--color-warning-default)' }} />
+    },
+    {
+      label: 'Specialties',
+      value: new Set(professionals.flatMap((p) => p.expertises || [])).size,
+      icon: <Users className="w-4 h-4" style={{ color: 'var(--color-info-default)' }} />
     }
-  };
+  ];
 
-  const handleDelete = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this professional?')) return;
-    
-    try {
-      setLoading(true);
-      await apiClient.deleteProfessional(id);
-      showToast('success', 'Success', 'Professional deleted successfully');
-      loadProfessionals();
-    } catch (error) {
-      console.error('Failed to delete professional:', error);
-      showToast('error', 'Error', 'Failed to delete professional');
-    } finally {
-      setLoading(false);
+  const columns: Column<Consultant>[] = [
+    {
+      header: 'Professional',
+      accessorKey: 'name',
+      sortable: true,
+      render: (professional) => (
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-full overflow-hidden flex-shrink-0 bg-gray-100">
+            {professional.photo ? (
+              <img
+                src={professional.photo}
+                alt={professional.name}
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <div
+                className="w-full h-full flex items-center justify-center bg-primary/10 text-primary font-medium"
+              >
+                {professional.name.charAt(0)}
+              </div>
+            )}
+          </div>
+          <div className="flex flex-col">
+            <span className="font-medium">{professional.name}</span>
+            <span className="text-xs text-muted-foreground">{professional.credentials}</span>
+          </div>
+        </div>
+      )
+    },
+    {
+      header: 'Category',
+      accessorKey: 'category',
+      sortable: true,
+      render: (professional) => (
+        <Badge variant="outline" className="capitalize">
+          {professional.category}
+        </Badge>
+      )
+    },
+    {
+      header: 'Status',
+      accessorKey: 'available',
+      sortable: true,
+      render: (professional) => (
+        professional.available ? (
+          <Badge variant="default" className="bg-green-100 text-green-800 hover:bg-green-100 border-green-200">
+            Available
+          </Badge>
+        ) : (
+          <Badge variant="outline">Unavailable</Badge>
+        )
+      )
+    },
+    {
+      header: 'Details',
+      render: (professional) => (
+        <div className="flex flex-col text-xs text-muted-foreground gap-1">
+          <span className="flex items-center gap-1">
+            <MapPin className="w-3 h-3" /> {professional.location}
+          </span>
+          <span className="flex items-center gap-1">
+            <Star className="w-3 h-3 text-yellow-500 fill-yellow-500" /> {professional.rating?.toFixed(1) || '5.0'}
+          </span>
+        </div>
+      )
+    },
+    {
+      header: 'Actions',
+      className: 'text-right',
+      render: (professional) => (
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" className="h-8 w-8 p-0">
+              <span className="sr-only">Open menu</span>
+              <MoreHorizontal className="h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuLabel>Actions</DropdownMenuLabel>
+            <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleViewCalendar(professional); }}>
+              <CalendarIcon className="mr-2 h-4 w-4" /> View Calendar
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleEdit(professional.id); }}>
+              <Edit2 className="mr-2 h-4 w-4" /> Edit Profile
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      )
     }
-  };
+  ];
 
-  const resetForm = () => {
-    setFormData({
-      name: '',
-      credentials: '',
-      category: 'therapist',
-      location: '',
-      yearsExperience: 0,
-      languages: [],
-      expertises: [],
-      sessionModes: ['online'],
-      pricing: { video: 1000, call: 800, chat: 500 },
-      bio: '',
-      available: true
-    });
-  };
+  const filters: FilterOption[] = [
+    {
+      key: 'category',
+      label: 'Category',
+      options: [
+        { label: 'Therapist', value: 'therapist' },
+        { label: 'Psychiatrist', value: 'psychiatrist' },
+        { label: 'Counselor', value: 'counselor' },
+        { label: 'Family Therapist', value: 'family-therapist' },
+      ]
+    },
+    // Note: Availability boolean filter would need mapping in AdminDataTable if we wanted it strictly there
+  ];
 
-  const openEditDialog = (professional: Consultant) => {
-    setEditingProfessional(professional);
-    setFormData(professional);
-    setIsDialogOpen(true);
-  };
+  if (viewMode === 'edit' || viewMode === 'create') {
+    return (
+      <ConsultantEditPage
+        consultantId={selectedConsultantId}
+        onBack={handleBackToList}
+        onSave={handleBackToList}
+      />
+    );
+  }
+
+  if (loading && professionals.length === 0) {
+    return (
+      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: 'var(--color-bg-page)' }}>
+        <div className="text-center">
+          <div className="animate-spin rounded-full border-4 mx-auto mb-4 w-12 h-12 border-muted border-t-primary" />
+          <p className="text-muted-foreground">Loading professionals...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center gap-4">
-        <Button variant="ghost" size="icon" onClick={onBack}>
-          <ArrowLeft className="w-5 h-5" />
-        </Button>
-        <div>
-          <h2 className="text-2xl font-bold tracking-tight">Consultation Manager</h2>
-          <p className="text-muted-foreground">Manage mental health professionals and their profiles.</p>
-        </div>
-        <div className="ml-auto flex gap-2">
-          <Dialog open={isDialogOpen} onOpenChange={(open) => {
-            setIsDialogOpen(open);
-            if (!open) {
-              setEditingProfessional(null);
-              resetForm();
-            }
-          }}>
-            <DialogTrigger asChild>
-              <Button className="gap-2">
-                <Plus className="w-4 h-4" /> Add Professional
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
-              <DialogHeader>
-                <DialogTitle>{editingProfessional ? 'Edit Professional' : 'Add New Professional'}</DialogTitle>
-                <DialogDescription>
-                  Fill in the details for the mental health professional.
-                </DialogDescription>
-              </DialogHeader>
-              
-              <div className="grid gap-6 py-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label>Full Name</Label>
-                    <Input 
-                      value={formData.name} 
-                      onChange={(e) => setFormData({...formData, name: e.target.value})}
-                      placeholder="Dr. Jane Doe"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Credentials</Label>
-                    <Input 
-                      value={formData.credentials} 
-                      onChange={(e) => setFormData({...formData, credentials: e.target.value})}
-                      placeholder="Ph.D., Clinical Psychologist"
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label>Category</Label>
-                    <Select 
-                      value={formData.category} 
-                      onValueChange={(v: any) => setFormData({...formData, category: v})}
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="therapist">Therapist</SelectItem>
-                        <SelectItem value="psychiatrist">Psychiatrist</SelectItem>
-                        <SelectItem value="counselor">Counselor</SelectItem>
-                        <SelectItem value="family-therapist">Family Therapist</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Experience (Years)</Label>
-                    <Input 
-                      type="number"
-                      value={formData.yearsExperience} 
-                      onChange={(e) => setFormData({...formData, yearsExperience: parseInt(e.target.value) || 0})}
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label>Location</Label>
-                    <Input 
-                      value={formData.location} 
-                      onChange={(e) => setFormData({...formData, location: e.target.value})}
-                      placeholder="City, Country"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Photo URL</Label>
-                    <Input 
-                      value={formData.photo} 
-                      onChange={(e) => setFormData({...formData, photo: e.target.value})}
-                      placeholder="https://..."
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label>Bio</Label>
-                  <Textarea 
-                    value={formData.bio} 
-                    onChange={(e) => setFormData({...formData, bio: e.target.value})}
-                    placeholder="Professional biography..."
-                    className="min-h-[100px]"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label>Expertise Areas</Label>
-                  <div className="grid grid-cols-2 gap-2 border rounded-lg p-4 max-h-48 overflow-y-auto">
-                    {expertiseCategories.map(exp => (
-                      <div key={exp} className="flex items-center gap-2">
-                        <Checkbox 
-                          id={`exp-${exp}`}
-                          checked={formData.expertises?.includes(exp)}
-                          onCheckedChange={(checked) => {
-                            const current = formData.expertises || [];
-                            if (checked) {
-                              setFormData({...formData, expertises: [...current, exp]});
-                            } else {
-                              setFormData({...formData, expertises: current.filter(e => e !== exp)});
-                            }
-                          }}
-                        />
-                        <Label htmlFor={`exp-${exp}`} className="text-sm font-normal cursor-pointer">
-                          {exp}
-                        </Label>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label>Pricing (₹)</Label>
-                  <div className="grid grid-cols-3 gap-4">
-                    <div className="space-y-1">
-                      <Label className="text-xs text-muted-foreground">Video</Label>
-                      <Input 
-                        type="number"
-                        value={formData.pricing?.video} 
-                        onChange={(e) => setFormData({
-                          ...formData, 
-                          pricing: { ...formData.pricing!, video: parseInt(e.target.value) || 0 }
-                        })}
-                      />
-                    </div>
-                    <div className="space-y-1">
-                      <Label className="text-xs text-muted-foreground">Call</Label>
-                      <Input 
-                        type="number"
-                        value={formData.pricing?.call} 
-                        onChange={(e) => setFormData({
-                          ...formData, 
-                          pricing: { ...formData.pricing!, call: parseInt(e.target.value) || 0 }
-                        })}
-                      />
-                    </div>
-                    <div className="space-y-1">
-                      <Label className="text-xs text-muted-foreground">Chat</Label>
-                      <Input 
-                        type="number"
-                        value={formData.pricing?.chat} 
-                        onChange={(e) => setFormData({
-                          ...formData, 
-                          pricing: { ...formData.pricing!, chat: parseInt(e.target.value) || 0 }
-                        })}
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-2">
-                  <Checkbox 
-                    id="available"
-                    checked={formData.available}
-                    onCheckedChange={(checked) => setFormData({...formData, available: checked === true})}
-                  />
-                  <Label htmlFor="available">Available for booking</Label>
-                </div>
-              </div>
-
-              <DialogFooter>
-                <Button variant="outline" onClick={() => setIsDialogOpen(false)}>Cancel</Button>
-                <Button onClick={handleSave} disabled={loading}>
-                  {loading ? 'Saving...' : 'Save Professional'}
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
-        </div>
-      </div>
-
-      {/* Search Bar */}
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-        <Input 
-          placeholder="Search professionals..." 
-          className="pl-10"
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
+    <div className={cn('min-h-screen', className)} style={{ backgroundColor: 'var(--color-bg-page)', padding: isMobile ? 'var(--spacing-4)' : 'var(--spacing-8)' }}>
+      <div className="max-w-7xl mx-auto space-y-6">
+        <AdminHeader
+          title="Consultation Manager"
+          description="Manage mental health professionals and their profiles"
+          onBack={onBack}
+          breadcrumbs={[{ label: 'Admin', onClick: onBack }, { label: 'Consultation Manager' }]}
+          stats={stats}
+          actions={
+            <Button onClick={handleCreateNew} style={{ backgroundColor: 'var(--color-primary-default)', color: 'var(--color-primary-on)' }}>
+              <Plus className="w-4 h-4 mr-2" />
+              {!isMobile && 'Add Professional'}
+            </Button>
+          }
         />
-      </div>
 
-      {/* Professionals List */}
-      <div className="grid gap-4">
-        {loading ? (
-          <div className="text-center py-12 text-muted-foreground">Loading professionals...</div>
-        ) : filteredProfessionals.length === 0 ? (
-          <div className="text-center py-12 text-muted-foreground">No professionals found</div>
-        ) : (
-          filteredProfessionals.map((prof) => (
-            <Card key={prof.id} className="overflow-hidden">
-              <div className="p-6 flex flex-col md:flex-row items-start gap-6">
-                <div className="w-16 h-16 rounded-full overflow-hidden bg-gray-100 flex-shrink-0">
-                  <img src={prof.photo} alt={prof.name} className="w-full h-full object-cover" />
-                </div>
-                
-                <div className="flex-1 space-y-2">
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <h3 className="text-lg font-semibold flex items-center gap-2">
-                        {prof.name}
-                        {!prof.available && <Badge variant="secondary">Unavailable</Badge>}
-                      </h3>
-                      <p className="text-sm text-muted-foreground">{prof.credentials}</p>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Button variant="ghost" size="icon" onClick={() => openEditDialog(prof)}>
-                        <Edit2 className="w-4 h-4 text-muted-foreground" />
-                      </Button>
-                      <Button variant="ghost" size="icon" onClick={() => handleDelete(prof.id)}>
-                        <Trash2 className="w-4 h-4 text-destructive" />
-                      </Button>
-                    </div>
-                  </div>
-                  
-                  <div className="flex flex-wrap gap-2 text-sm text-muted-foreground">
-                    <span className="flex items-center gap-1">
-                      <Users className="w-3 h-3" /> {prof.category}
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <MapPin className="w-3 h-3" /> {prof.location}
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <Clock className="w-3 h-3" /> {prof.yearsExperience} years
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <Star className="w-3 h-3" /> {prof.rating} ({prof.reviewCount})
-                    </span>
-                  </div>
+        <AdminDataTable 
+          columns={columns} 
+          data={professionals} 
+          searchKeys={['name', 'credentials', 'category', 'location']}
+          filters={filters}
+          searchPlaceholder="Search professionals..."
+          onRowClick={(item) => handleEdit(item.id)}
+          actions={
+            <Button variant="outline" onClick={handleExport} className="gap-2">
+              <Download className="w-4 h-4" />
+              {!isMobile && 'Export'}
+            </Button>
+          }
+        />
 
-                  <div className="flex flex-wrap gap-2 mt-2">
-                    {prof.topExpertises.map(exp => (
-                      <Badge key={exp} variant="outline" className="text-xs">
-                        {exp}
-                      </Badge>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </Card>
-          ))
-        )}
+        {/* Booking Dialog */}
+        <Dialog open={isBookingDialogOpen} onOpenChange={setIsBookingDialogOpen}>
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Book Consultation</DialogTitle>
+            </DialogHeader>
+
+            <BookingCalendar
+              professionalName={bookingProfessional?.name}
+              onBookSlot={(date, time) => {
+                showToast(
+                  'success',
+                  'Booking Confirmed',
+                  `Consultation booked for ${date.toLocaleDateString()} at ${time}`
+                );
+                setIsBookingDialogOpen(false);
+              }}
+            />
+
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setIsBookingDialogOpen(false)}>
+                Close
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );

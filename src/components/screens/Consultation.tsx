@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { cn } from '../ui/utils';
 import { Filter, Search, ChevronDown, X } from 'lucide-react';
 import { apiClient } from '../../lib/api-client';
-import { expertiseCategories, type Consultant } from '../../lib/sample-data/consultants';
 import { ConsultantCard } from '../blocks/ConsultantCard';
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
@@ -12,6 +11,75 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Checkbox } from '../ui/checkbox';
 import { Label } from '../ui/label';
 import { useIsMobile } from '../../hooks/useIsMobile';
+
+// Define Consultant type locally
+export interface Consultant {
+  id: string;
+  name: string;
+  credentials: string;
+  category: 'therapist' | 'psychiatrist' | 'counselor' | 'family-therapist';
+  photo: string;
+  yearsExperience: number;
+  languages: string[];
+  location: string;
+  sessionModes: ('online' | 'offline' | 'call' | 'chat')[];
+  expertises: string[];
+  topExpertises: string[];
+  approaches: string[];
+  concernsICanHelp: string[];
+  pricing: {
+    video: number;
+    call: number;
+    chat: number;
+    offline?: number;
+  };
+  nextAvailableSlot: string;
+  rating: number;
+  reviewCount: number;
+  bio: string;
+  qualifications: string[];
+  available: boolean;
+}
+
+// Expertise categories
+export const expertiseCategories = [
+  "Anxiety Disorders",
+  "Depressive Disorders",
+  "Relationship Skills",
+  "Stress Management",
+  "Anger Management",
+  "Grief and Loss",
+  "Loneliness",
+  "Lack of Motivation",
+  "Negative Thinking",
+  "Overthinking",
+  "Self-Improvement",
+  "Sleep Disorder",
+  "Bipolar Disorder",
+  "Obsessive-Compulsive Disorder (OCD)",
+  "Schizophrenia",
+  "Sexual Dysfunction",
+  "General Well-Being",
+  "LGBTQIA+ Concerns",
+  "Adult ADHD",
+  "Personality Disorder",
+  "Trauma",
+  "Child Specialist / Child Therapy",
+  "Eating Disorders",
+  "Trauma-Related Disorders",
+  "Adult Autism / Neurodiversity",
+  "Geriatric Mental Health",
+  "Fertility and Pregnancy Concerns",
+  "Work-Related Concerns",
+  "Parenting Concerns",
+  "Life Transitions",
+  "Academic Concerns",
+  "Communication Skills",
+  "PTSD",
+  "Addiction Recovery",
+  "Body Image",
+  "Self-Esteem"
+];
 
 interface ConsultationProps {
   className?: string;
@@ -35,11 +103,13 @@ export function Consultation({ className, onNavigate }: ConsultationProps) {
         setLoading(true);
         const response = await apiClient.getProfessionals();
         if (response && Array.isArray(response)) {
-          setConsultants(response);
-          setFilteredConsultants(response);
+          const mapped = response.map((p: any) => ({ ...p, id: p.id || p.professional_id }));
+          setConsultants(mapped);
+          setFilteredConsultants(mapped);
         } else if (response && response.professionals) {
-           setConsultants(response.professionals);
-           setFilteredConsultants(response.professionals);
+           const mapped = response.professionals.map((p: any) => ({ ...p, id: p.id || p.professional_id }));
+           setConsultants(mapped);
+           setFilteredConsultants(mapped);
         }
       } catch (error) {
         console.error('Failed to load consultants:', error);

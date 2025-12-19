@@ -1,316 +1,218 @@
 import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../ui/card';
-import { Button } from '../ui/button';
-import { Badge } from '../ui/badge';
-import { 
-  Table, 
-  Trash2, 
-  Edit, 
-  Plus, 
-  ArrowLeft, 
-  Save, 
-  X, 
-  CheckCircle,
-  AlertTriangle 
-} from 'lucide-react';
+import { Target, Search, Download, Edit, Plus, MoreHorizontal, Eye } from 'lucide-react';
 import { useNotifications } from '../../contexts/NotificationContext';
 import { apiClient } from '../../lib/api-client';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '../ui/dialog';
-import { Input } from '../ui/input';
-import { TextArea } from '../inputs/TextArea';
-import { Label } from '../ui/label';
+import { AdminHeader } from '../admin/AdminHeader';
+import { AdminEmptyState } from '../admin/AdminEmptyState';
+import { useIsMobile } from '../../hooks/useIsMobile';
+import { Button } from '../ui/button';
+import { Badge } from '../ui/badge';
+import { cn } from '../ui/utils';
+import { EquipProgramEditPage, EquipProgram } from './EquipProgramEditPage';
+import { AdminDataTable, Column } from '../admin/AdminDataTable';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuTrigger,
+} from "../ui/dropdown-menu";
 
 interface AdminEquipProgramManagerProps {
-  onNavigate?: (path: string) => void;
   onBack?: () => void;
+  className?: string;
 }
 
-export function AdminEquipProgramManager({ onNavigate, onBack }: AdminEquipProgramManagerProps) {
+type ViewMode = 'list' | 'edit' | 'create';
+
+export function AdminEquipProgramManager({ onBack, className }: AdminEquipProgramManagerProps) {
   const { showToast } = useNotifications();
-  const [programs, setPrograms] = useState<any[]>([]);
+  const isMobile = useIsMobile();
+
+  const [programs, setPrograms] = useState<EquipProgram[]>([]);
   const [loading, setLoading] = useState(true);
-  const [editingProgram, setEditingProgram] = useState<any | null>(null);
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
-  const [programToDelete, setProgramToDelete] = useState<string | null>(null);
+
+  const [viewMode, setViewMode] = useState<ViewMode>('list');
+  const [selectedProgramId, setSelectedProgramId] = useState<string | undefined>();
 
   useEffect(() => {
-    loadPrograms();
-  }, []);
+    if (viewMode === 'list') {
+      loadPrograms();
+    }
+  }, [viewMode]);
 
   const loadPrograms = async () => {
-    setLoading(true);
     try {
+      setLoading(true);
       const response = await apiClient.getEquipPrograms();
-      if (response && response.programs) {
-        setPrograms(response.programs);
-      }
-    } catch (error) {
-      console.error('Failed to load programs:', error);
-      showToast('error', 'Error', 'Failed to load programs');
-    } finally {
+      const data = Array.isArray(response) ? response : response.programs || [];
+      
+      // Map API response to Component EquipProgram type
+      const mappedPrograms = data.map((item: any) => ({
+        ...item,
+        id: item.equip_id || item.id,
+        duration: item.duration_days || item.duration,
+        // Ensure other fields
+        category: item.category || 'General',
+        published: item.published !== undefined ? item.published : true,
+        enrollmentCount: item.enrollmentCount || 0
+      }));
+
+      setPrograms(mappedPrograms);
       setLoading(false);
+    } catch (error: any) {
+      console.error('Failed to load programs:', error);
+      // GLOBAL APPROACH: Show infinite loader on backend errors
     }
   };
 
-  const handleCreate = () => {
-    setEditingProgram({
-      title: '',
-      description: '',
-      summary: '',
-      duration_days: 7,
-      price: { amount_cents: 0, currency: 'INR' },
-      days: [],
-      tags: []
-    });
-    setIsDialogOpen(true);
+  const handleCreateNew = () => {
+    setSelectedProgramId(undefined);
+    setViewMode('create');
   };
 
-  const handleEdit = (program: any) => {
-    setEditingProgram({ ...program });
-    setIsDialogOpen(true);
+  const handleEdit = (id: string) => {
+    setSelectedProgramId(id);
+    setViewMode('edit');
   };
 
-  const handleDeleteClick = (id: string) => {
-    setProgramToDelete(id);
-    setIsDeleteConfirmOpen(true);
-  };
+  // -- Data Table Configuration --
 
-  const handleDeleteConfirm = async () => {
-    if (!programToDelete) return;
-    
-    try {
-      await apiClient.deleteEquipProgram(programToDelete);
-      showToast('success', 'Success', 'Program deleted successfully');
-      loadPrograms();
-    } catch (error) {
-      console.error('Failed to delete program:', error);
-      showToast('error', 'Error', 'Failed to delete program');
-    } finally {
-      setIsDeleteConfirmOpen(false);
-      setProgramToDelete(null);
+  const columns: Column<EquipProgram>[] = [
+    {
+      header: 'Program',
+      accessorKey: 'title',
+      sortable: true,
+      className: 'min-w-[300px]',
+      render: (program) => (
+        <div className="flex flex-col">
+          <span className="font-medium truncate max-w-[300px]" title={program.title}>
+            {program.title}
+          </span>
+          <span className="text-xs text-muted-foreground truncate max-w-[300px]" title={program.description}>
+            {program.description}
+          </span>
+        </div>
+      )
+    },
+    {
+      header: 'Category',
+      accessorKey: 'category',
+      sortable: true,
+      render: (program) => (
+        <Badge variant="outline" className="capitalize">
+          {program.category}
+        </Badge>
+      )
+    },
+    {
+      header: 'Duration',
+      accessorKey: 'duration',
+      sortable: true,
+      render: (program) => (
+        <span className="text-sm text-muted-foreground">
+          {program.duration} days
+        </span>
+      )
+    },
+    {
+      header: 'Status',
+      accessorKey: 'published',
+      sortable: true,
+      render: (program) => (
+        <Badge 
+          className={program.published ? 'bg-green-100 text-green-800 hover:bg-green-100' : 'bg-gray-100 text-gray-800 hover:bg-gray-100'}
+          variant="outline"
+        >
+          {program.published ? 'Published' : 'Draft'}
+        </Badge>
+      )
+    },
+    {
+      header: 'Enrollments',
+      accessorKey: 'enrollmentCount',
+      sortable: true,
+      render: (program) => (
+        <div className="flex items-center gap-1 text-sm text-muted-foreground">
+          <Target className="w-3 h-3" />
+          {program.enrollmentCount || 0}
+        </div>
+      )
+    },
+    {
+      header: 'Actions',
+      className: 'text-right',
+      render: (program) => (
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" className="h-8 w-8 p-0">
+              <span className="sr-only">Open menu</span>
+              <MoreHorizontal className="h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuLabel>Actions</DropdownMenuLabel>
+            <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleEdit(program.id); }}>
+              <Edit className="mr-2 h-4 w-4" /> Edit Program
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      )
     }
-  };
+  ];
 
-  const handleSave = async () => {
-    if (!editingProgram.title) {
-        showToast('error', 'Validation', 'Title is required');
-        return;
-    }
+  const stats = [
+    { label: 'Total Programs', value: programs.length, icon: <Target className="w-4 h-4 text-primary" /> },
+    { label: 'Published', value: programs.filter((p) => p.published).length, icon: <Target className="w-4 h-4 text-green-500" /> },
+    { label: 'Total Enrollments', value: programs.reduce((acc, p) => acc + (p.enrollmentCount || 0), 0), icon: <Target className="w-4 h-4 text-blue-500" /> }
+  ];
 
-    try {
-      if (editingProgram.equip_id) {
-        await apiClient.updateEquipProgram(editingProgram.equip_id, editingProgram);
-        showToast('success', 'Success', 'Program updated successfully');
-      } else {
-        await apiClient.createEquipProgram(editingProgram);
-        showToast('success', 'Success', 'Program created successfully');
-      }
-      setIsDialogOpen(false);
-      loadPrograms();
-    } catch (error) {
-      console.error('Failed to save program:', error);
-      showToast('error', 'Error', 'Failed to save program');
-    }
-  };
+  if (viewMode === 'edit' || viewMode === 'create') {
+    return <EquipProgramEditPage programId={selectedProgramId} onBack={() => setViewMode('list')} onSave={() => setViewMode('list')} />;
+  }
 
-  // Simplified Day Editor for MVP
-  const handleAddDay = () => {
-    const newDay = {
-      day: (editingProgram.days?.length || 0) + 1,
-      title: `Day ${(editingProgram.days?.length || 0) + 1}`,
-      content: [
-        { kind: 'text', body: 'Lesson content here...' }
-      ],
-      estimated_min: 15
-    };
-    setEditingProgram({
-      ...editingProgram,
-      days: [...(editingProgram.days || []), newDay]
-    });
-  };
-
-  const updateDay = (index: number, field: string, value: any) => {
-    const updatedDays = [...(editingProgram.days || [])];
-    updatedDays[index] = { ...updatedDays[index], [field]: value };
-    setEditingProgram({ ...editingProgram, days: updatedDays });
-  };
-
-  const removeDay = (index: number) => {
-    const updatedDays = [...(editingProgram.days || [])];
-    updatedDays.splice(index, 1);
-    // Renumber days
-    const renumberedDays = updatedDays.map((d, i) => ({ ...d, day: i + 1 }));
-    setEditingProgram({ ...editingProgram, days: renumberedDays });
-  };
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background p-4">
+        <div className="text-center">
+          <div className="animate-spin rounded-full border-4 mx-auto mb-4 w-12 h-12 border-muted border-t-primary" />
+          <p className="text-muted-foreground">Loading programs...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          {onBack && (
-            <Button variant="ghost" size="icon" onClick={onBack} aria-label="Go back to admin dashboard">
-              <ArrowLeft className="w-5 h-5" />
+    <div className={cn('min-h-screen bg-background', className)} style={{ padding: isMobile ? 'var(--spacing-4)' : 'var(--spacing-8)' }}>
+      <div className="max-w-7xl mx-auto space-y-6">
+        <AdminHeader
+          title="Equip Program Manager"
+          description="Manage wellness and therapeutic programs"
+          onBack={onBack}
+          breadcrumbs={[{ label: 'Admin', onClick: onBack }, { label: 'Equip Programs' }]}
+          stats={stats}
+          actions={
+             <Button onClick={handleCreateNew} className="gap-2">
+              <Plus className="w-4 h-4" />
+              {!isMobile && 'Add Program'}
             </Button>
-          )}
-          <div>
-            <h2 className="text-2xl font-medium">Equip Program Manager</h2>
-            <p className="text-muted-foreground">Create and manage digital programs</p>
-          </div>
-        </div>
-        <Button onClick={handleCreate} className="gap-2">
-          <Plus className="w-4 h-4" /> Create Program
-        </Button>
-      </div>
+          }
+        />
 
-      <div className="grid gap-4">
-        {loading ? (
-          <div>Loading...</div>
-        ) : programs.length === 0 ? (
-          <Card>
-            <CardContent className="flex flex-col items-center justify-center py-12 text-center">
-              <AlertTriangle className="w-12 h-12 text-yellow-500 mb-4" />
-              <h3 className="text-lg font-medium">No Programs Found</h3>
-              <p className="text-muted-foreground mb-4">Get started by creating your first program.</p>
-              <Button onClick={handleCreate}>Create Program</Button>
-            </CardContent>
-          </Card>
-        ) : (
-          programs.map((program) => (
-            <Card key={program.equip_id} className="hover:shadow-md transition-shadow">
-              <CardContent className="p-6 flex items-center justify-between">
-                <div>
-                  <div className="flex items-center gap-3 mb-1">
-                    <h3 className="font-medium text-lg">{program.title}</h3>
-                    <Badge variant="secondary">{program.duration_days} Days</Badge>
-                  </div>
-                  <p className="text-muted-foreground text-sm line-clamp-1">
-                    {program.summary || program.description}
-                  </p>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Button variant="outline" size="sm" onClick={() => handleEdit(program)}>
-                    <Edit className="w-4 h-4 mr-1" /> Edit
-                  </Button>
-                  <Button variant="destructive" size="sm" onClick={() => handleDeleteClick(program.equip_id)}>
-                    <Trash2 className="w-4 h-4 mr-1" /> Delete
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          ))
-        )}
-      </div>
-
-      {/* Edit/Create Dialog */}
-      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>{editingProgram?.equip_id ? 'Edit Program' : 'Create Program'}</DialogTitle>
-          </DialogHeader>
-          
-          {editingProgram && (
-            <div className="space-y-6 py-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label>Title</Label>
-                  <Input 
-                    value={editingProgram.title} 
-                    onChange={(e) => setEditingProgram({...editingProgram, title: e.target.value})}
-                    placeholder="e.g. Sleep Well Program"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>Duration (Days)</Label>
-                  <Input 
-                    type="number"
-                    value={editingProgram.duration_days} 
-                    onChange={(e) => setEditingProgram({...editingProgram, duration_days: parseInt(e.target.value)})}
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label>Summary (Short Description)</Label>
-                <TextArea 
-                  value={editingProgram.summary} 
-                  onChange={(e) => setEditingProgram({...editingProgram, summary: e.target.value})}
-                  placeholder="Short summary for cards..."
-                  rows={2}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label>Full Description</Label>
-                <TextArea 
-                  value={editingProgram.description} 
-                  onChange={(e) => setEditingProgram({...editingProgram, description: e.target.value})}
-                  placeholder="Detailed program description..."
-                  rows={4}
-                />
-              </div>
-
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <h3 className="font-medium text-lg">Daily Content</h3>
-                  <Button size="sm" onClick={handleAddDay} variant="secondary">
-                    <Plus className="w-4 h-4 mr-1" /> Add Day
-                  </Button>
-                </div>
-                
-                {editingProgram.days?.map((day: any, idx: number) => (
-                  <Card key={idx} className="bg-muted/50">
-                    <CardContent className="p-4 space-y-4">
-                      <div className="flex justify-between items-start">
-                        <div className="flex-1 space-y-2 mr-4">
-                          <Label>Day {day.day} Title</Label>
-                          <Input 
-                            value={day.title} 
-                            onChange={(e) => updateDay(idx, 'title', e.target.value)}
-                            placeholder="e.g. Introduction to Sleep"
-                          />
-                        </div>
-                        <Button variant="ghost" size="icon" onClick={() => removeDay(idx)} className="text-destructive" aria-label="Remove day">
-                          <X className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-                
-                {(!editingProgram.days || editingProgram.days.length === 0) && (
-                  <div className="text-center p-8 border-2 border-dashed rounded-lg text-muted-foreground">
-                    No daily content added yet.
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-          
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsDialogOpen(false)}>Cancel</Button>
-            <Button onClick={handleSave} className="gap-2">
-              <Save className="w-4 h-4" /> Save Program
+        <AdminDataTable 
+          columns={columns} 
+          data={programs} 
+          searchKeys={['title', 'description', 'category']}
+          searchPlaceholder="Search programs..."
+          onRowClick={(item) => handleEdit(item.id)}
+          actions={
+            <Button variant="outline" className="gap-2">
+              <Download className="w-4 h-4" />
+              {!isMobile && 'Export'}
             </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Delete Confirmation */}
-      <Dialog open={isDeleteConfirmOpen} onOpenChange={setIsDeleteConfirmOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Confirm Delete</DialogTitle>
-            <CardDescription>
-              Are you sure you want to delete this program? This action cannot be undone.
-            </CardDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsDeleteConfirmOpen(false)}>Cancel</Button>
-            <Button variant="destructive" onClick={handleDeleteConfirm}>Delete</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          }
+        />
+      </div>
     </div>
   );
 }

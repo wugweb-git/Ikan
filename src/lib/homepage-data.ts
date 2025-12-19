@@ -1,6 +1,7 @@
-import imgRectangle9 from "figma:asset/e14b378ba443955238f6e52a608bb6cfa341e5d8.png";
-import imgRectangle10 from "figma:asset/33be9701c78a44f54392cf1bfcc20d8f8f00cd9d.png";
-import imgRectangle11 from "figma:asset/2576c36c768010586aefac2ca3b21e8a5e123bd0.png";
+// Assessment Program Images - Using Unsplash URLs (production-ready)
+const imgRectangle9 = "https://images.unsplash.com/photo-1758273240373-370993d0275d?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHx0aGVyYXBpc3QlMjBjb25zdWx0YXRpb24lMjBtZW50YWwlMjBoZWFsdGh8ZW58MXx8fHwxNzY1ODgwMTIyfDA&ixlib=rb-4.1.0&q=80&w=1080"; // Adult Therapy
+const imgRectangle10 = "https://images.unsplash.com/photo-1758273240403-052b3c99f636?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxwc3ljaGlhdHJpc3QlMjBkb2N0b3IlMjBtZW50YWwlMjBoZWFsdGglMjBwcm9mZXNzaW9uYWx8ZW58MXx8fHwxNzY1ODgwMTIyfDA&ixlib=rb-4.1.0&q=80&w=1080"; // Adult Psychiatry
+const imgRectangle11 = "https://images.unsplash.com/photo-1711343777918-6d395c16e37f?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxob3NwaXRhbCUyMGNsaW5pY2FsJTIwbWVudGFsJTIwaGVhbHRoJTIwY2FyZXxlbnwxfHx8fDE3NjU4ODAxMjN8MA&ixlib=rb-4.1.0&q=80&w=1080"; // Hospital Care
 
 // Hero Section Data
 export const HERO_DATA = {

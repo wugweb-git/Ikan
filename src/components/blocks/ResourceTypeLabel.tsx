@@ -8,6 +8,16 @@ interface ResourceTypeLabelProps {
 }
 
 export function ResourceTypeLabel({ type, className }: ResourceTypeLabelProps) {
+  // Handle undefined or null type gracefully
+  if (!type) {
+    return (
+      <div className={cn("flex items-center gap-2 text-gray-500 text-sm font-medium", className)}>
+        <BookOpen size={16} />
+        <span className="capitalize">Article</span>
+      </div>
+    );
+  }
+
   const normalizedType = type.toLowerCase();
   let Icon = BookOpen;
   

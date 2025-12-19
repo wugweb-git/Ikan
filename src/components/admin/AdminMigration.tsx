@@ -30,10 +30,10 @@ export function AdminMigration() {
 
   const handleSeed = async () => {
     setLoading(true);
-    addLog('Initiating data seed...');
+    addLog('Initiating comprehensive data seed...');
     try {
-        // Seed Programs
-        const programsResponse = await fetch(`https://${projectId}.supabase.co/functions/v1/make-server-cc205da9/seed/force-programs`, {
+        // Seed ALL data (consultants, equip programs, resources)
+        const comprehensiveResponse = await fetch(`https://${projectId}.supabase.co/functions/v1/make-server-cc205da9/seed/comprehensive`, {
             method: 'POST',
             headers: {
               'Authorization': `Bearer ${publicAnonKey}`,
@@ -41,7 +41,26 @@ export function AdminMigration() {
             }
         });
 
-        // Seed Users
+        if (comprehensiveResponse.ok) {
+            const data = await comprehensiveResponse.json();
+            addLog('✅ Comprehensive seed completed successfully');
+            
+            if (data.results) {
+                addLog(`   Consultants: ${data.results.consultants.seeded} seeded, ${data.results.consultants.skipped} skipped`);
+                addLog(`   Equip Programs: ${data.results.equipPrograms.seeded} seeded, ${data.results.equipPrograms.skipped} skipped`);
+                addLog(`   Resources: ${data.results.resources.seeded} seeded, ${data.results.resources.skipped} skipped`);
+            }
+            
+            showToast('success', 'Seeding Complete', 'All data seeded successfully');
+        } else {
+            const errorData = await comprehensiveResponse.json();
+            addLog(`❌ Comprehensive seed failed: ${comprehensiveResponse.status}`);
+            addLog(`   Error: ${errorData.error || 'Unknown error'}`);
+            showToast('error', 'Seeding Failed', errorData.error || 'Seed request failed');
+        }
+        
+        // Also seed users
+        addLog('Seeding demo users...');
         const usersResponse = await fetch(`https://${projectId}.supabase.co/functions/v1/make-server-cc205da9/seed/users`, {
             method: 'POST',
             headers: {
@@ -50,19 +69,15 @@ export function AdminMigration() {
             }
         });
         
-        if (programsResponse.ok && usersResponse.ok) {
-            addLog('Seed command sent successfully.');
-            const data = await programsResponse.json();
-            addLog(`Programs: ${data.programs?.length || 0} seeded`);
-            addLog(`Users: Demo user ensured`);
-            showToast('success', 'Seeding', 'Seed process completed');
+        if (usersResponse.ok) {
+            addLog('✅ Demo users seeded successfully');
         } else {
-             addLog(`Seed failed. Programs: ${programsResponse.status}, Users: ${usersResponse.status}`);
-             showToast('error', 'Seeding', 'Seed request failed');
+            addLog(`⚠️  User seeding failed: ${usersResponse.status}`);
         }
+        
     } catch (err: any) {
-        addLog(`Seed error: ${err.message}`);
-        showToast('error', 'Seeding', 'Seed request error');
+        addLog(`❌ Seed error: ${err.message}`);
+        showToast('error', 'Seeding Error', err.message);
     } finally {
         setLoading(false);
     }

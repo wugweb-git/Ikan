@@ -18,6 +18,8 @@ import { useNotifications } from '../../contexts/NotificationContext';
 import { apiClient } from '../../lib/api-client';
 import { useIsMobile } from '../../hooks/useIsMobile';
 import { Icon } from '../Icon';
+import { validateProfile } from '../../lib/validation';
+import { useUnsavedChanges } from '../../hooks/useUnsavedChanges';
 
 interface AccountProps {
   className?: string;
@@ -58,8 +60,27 @@ export function Account({ className }: AccountProps) {
     try {
       setIsSavingProfile(true);
       
+      // Validate profile data
+      const validation = validateProfile({
+        name: userData.name,
+        email: userData.email,
+        phone: userData.phone,
+        bio: userData.bio,
+        dateOfBirth: userData.dateOfBirth,
+        gender: userData.gender,
+        location: userData.location,
+        emergencyContact: userData.emergencyContact
+      });
+      
+      if (!validation.isValid) {
+        // Show first error
+        const firstError = validation.errors[0];
+        showToast('error', 'Validation Error', firstError.message);
+        return;
+      }
+      
       // Call API to update profile
-      await apiClient.updateProfile({
+      const response = await apiClient.updateProfile({
         name: userData.name,
         phone: userData.phone,
         bio: userData.bio,
@@ -70,11 +91,16 @@ export function Account({ className }: AccountProps) {
         preferences: userData.preferences
       });
       
+      if (response.error) {
+        throw new Error(response.error);
+      }
+      
       showToast('success', 'Profile Updated', 'Your profile has been saved successfully.');
       setIsEditingProfile(false);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to save profile:', error);
-      showToast('error', 'Save Failed', 'Failed to save your profile. Please try again.');
+      const errorMessage = error.response?.data?.error || error.message || 'Failed to save your profile. Please try again.';
+      showToast('error', 'Save Failed', errorMessage);
     } finally {
       setIsSavingProfile(false);
     }

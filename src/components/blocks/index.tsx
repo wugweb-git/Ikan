@@ -6,7 +6,7 @@ export { ResourceCard, type ResourcePost } from './ResourceCard';
 export { ResourceAuthor } from './ResourceAuthor';
 export { ResourceContent } from './ResourceContent';
 export { ResourceHero } from './ResourceHero';
-export { HeroLPBlock } from './HeroLPBlock';
+export { AssessmentHero } from './AssessmentHero';
 export { AssessmentBlock } from './AssessmentBlock';
 
 // Export types

@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useIsMobile } from '../../hooks/useIsMobile';
 import { useNotifications } from '../../contexts/NotificationContext';
 import { ResourceBlock } from '../blocks/ResourceBlock';
 import { NewsletterBlock } from '../blocks/NewsletterBlock';
 import { ContextBlock } from '../blocks/ContextBlock';
-import { getLatestResourcePosts } from '../../lib/sample-data/resource-posts';
+import { ResourcePost } from '../blocks/ResourceCard';
+import { projectId, publicAnonKey } from '../../utils/supabase/info';
 // Desktop imports
 import svgPaths from "../../imports/svg-qo9pds304d";
 import { imgGroup as imgGroupDesktop } from "../../imports/svg-3566o";
@@ -992,60 +993,6 @@ function MobileTeamSection({ onTeamMemberClick }: { onTeamMemberClick?: (member:
   );
 }
 
-// Desktop Resource Section - Using reusable ResourceBlock
-function DesktopResourceSection({ onResourceClick, onReadMore }: { 
-  onResourceClick?: (resourceId: string) => void;
-  onReadMore?: () => void;
-}) {
-  const resourcePosts = getLatestResourcePosts(3);
-  
-  const handlePostClick = (post: any) => {
-    if (onResourceClick) {
-      onResourceClick(post.id);
-    }
-  };
-
-  return (
-    <div className="hidden lg:block">
-      <ResourceBlock 
-        title="Latest Updates"
-        description="Insights and resources for your mental wellness journey"
-        posts={resourcePosts}
-        onPostClick={handlePostClick}
-        onViewAll={onReadMore}
-        viewAllText="View All"
-      />
-    </div>
-  );
-}
-
-// Mobile Resource Section - Using reusable ResourceBlock
-function MobileResourceSection({ onResourceClick, onReadMore }: { 
-  onResourceClick?: (resourceId: string) => void;
-  onReadMore?: () => void;
-}) {
-  const resourcePosts = getLatestResourcePosts(3);
-  
-  const handlePostClick = (post: any) => {
-    if (onResourceClick) {
-      onResourceClick(post.id);
-    }
-  };
-
-  return (
-    <div className="lg:hidden">
-      <ResourceBlock 
-        title="Latest Updates"
-        description="Insights and resources for your mental wellness journey"
-        posts={resourcePosts}
-        onPostClick={handlePostClick}
-        onViewAll={onReadMore}
-        viewAllText="View All Articles"
-      />
-    </div>
-  );
-}
-
 // Desktop Newsletter Section
 function DesktopNewsletterSection({ 
   email, 
@@ -1299,6 +1246,38 @@ export function AboutUs({ onNavigate, onGetStarted, className }: AboutUsProps) {
   const [newsletterName, setNewsletterName] = useState('');
   const [newsletterLoading, setNewsletterLoading] = useState(false);
   const [showVideoModal, setShowVideoModal] = useState(false);
+  const [resources, setResources] = useState<ResourcePost[]>([]);
+
+  // Fetch resources from API
+  useEffect(() => {
+    const fetchResources = async () => {
+      try {
+        const baseUrl = `https://${projectId}.supabase.co/functions/v1/make-server-cc205da9`;
+        const response = await fetch(`${baseUrl}/library/resources?limit=3`, {
+          headers: { 'Authorization': `Bearer ${publicAnonKey}` }
+        });
+        const data = await response.json();
+        
+        if (data.resources && data.resources.length > 0) {
+          const mappedResources = data.resources.map((r: any) => ({
+            id: r.id,
+            title: r.title,
+            description: r.excerpt,
+            image: r.image_url,
+            category: r.category,
+            author: r.author?.name || r.author,
+            readTime: `${r.read_time_minutes} min read`,
+            date: new Date(r.created_at).toLocaleDateString()
+          }));
+          setResources(mappedResources);
+        }
+      } catch (error) {
+        console.error('Failed to fetch resources for AboutUs:', error);
+      }
+    };
+    
+    fetchResources();
+  }, []);
 
   // Navigation handlers
   const handleGetStarted = () => {
@@ -1392,8 +1371,14 @@ export function AboutUs({ onNavigate, onGetStarted, className }: AboutUsProps) {
       <MobileTeamSection onTeamMemberClick={handleTeamMemberClick} />
       
       {/* Resources - Responsive */}
-      <DesktopResourceSection onResourceClick={handleResourceNavigation} onReadMore={() => onNavigate?.('/library')} />
-      <MobileResourceSection onResourceClick={handleResourceNavigation} onReadMore={() => onNavigate?.('/library')} />
+      <ResourceBlock 
+        title="Latest Updates"
+        description="Insights and resources for your mental wellness journey"
+        posts={resources}
+        onPostClick={(post) => handleResourceNavigation(post.id)}
+        onViewAll={() => onNavigate?.('/library')}
+        viewAllText="View All"
+      />
       
       {/* Newsletter - Responsive */}
       <DesktopNewsletterSection 

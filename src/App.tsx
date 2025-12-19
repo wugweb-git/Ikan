@@ -48,7 +48,8 @@ import { AdminWidget } from './components/admin/AdminWidget';
 
 import { AssessmentFlow } from './components/screens/AssessmentFlow';
 import { AssessmentResults } from './components/screens/AssessmentResults';
-import { EquipProgramLandingNew } from './components/screens/EquipProgramLandingNew';
+import { AssessmentDetail } from './components/screens/AssessmentDetail';
+import { EquipDetail } from './components/screens/EquipDetail';
 import { EquipProgramOnboarding } from './components/screens/EquipProgramOnboarding';
 import { EquipProgramFlow } from './components/screens/EquipProgramFlow';
 import { EquipProgramCompletion } from './components/screens/EquipProgramCompletion';
@@ -192,8 +193,8 @@ function AppContent() {
   const getTransitionDirection = useCallback((newRoute: string, oldRoute: string) => {
     const routeOrder = [
       '/', '/about', '/login', '/dashboard', '/mood-journal', 
-      '/assessment', '/assessment-landing', '/assessment-flow', '/assessment-results',
-      '/equip', '/equip-programs-landing', '/equip-program-onboarding', '/equip-program-flow', '/equip-program-completion',
+      '/assessment', '/assessment-landing', '/assessment-detail', '/assessment-flow', '/assessment-results',
+      '/equip', '/equip-programs-landing', '/equip-detail', '/equip-program-onboarding', '/equip-program-flow', '/equip-program-completion',
       '/consultation', '/consultation-detail', '/resource', '/resource-detail', '/account'
     ];
     
@@ -219,8 +220,8 @@ function AppContent() {
       }
       
       const validRoutes = [
-        '/', '/dashboard', '/mood-journal', '/assessment', '/assessment-landing', '/assessment-flow', '/assessment-results',
-        '/equip', '/equip-programs-landing', '/equip-program-onboarding', '/equip-program-flow', '/equip-program-completion',
+        '/', '/dashboard', '/mood-journal', '/assessment', '/assessment-landing', '/assessment-detail', '/assessment-flow', '/assessment-results',
+        '/equip', '/equip-programs-landing', '/equip-detail', '/equip-program-onboarding', '/equip-program-flow', '/equip-program-completion',
         '/consultation', '/consultation-detail', '/resource', '/resource-detail', '/account', 
         '/about', '/faq', '/privacy', '/privacy-policy', '/terms', '/contact', '/return-policy', '/cancellation-policy', '/sitemap', '/login', '/route-test', '/private-route-test', '/admin/resources', '/admin'
       ];
@@ -685,18 +686,13 @@ function AppContent() {
         case '/assessment-landing':
           return (
             <ErrorBoundary>
-              <AssessmentLandingNew 
-                onStartAssessment={() => {
-                  if (user) {
-                    // User is logged in, proceed to assessment flow
-                    handleNavigate('/assessment-flow');
-                  } else {
-                    // User needs to sign in first
-                    handleSignIn();
-                  }
-                }}
-                onBack={() => handleNavigate('/assessment')}
-              />
+              <AssessmentDetail onNavigate={handleNavigate} />
+            </ErrorBoundary>
+          );
+        case '/assessment-detail':
+          return (
+            <ErrorBoundary>
+              <AssessmentDetail onNavigate={handleNavigate} />
             </ErrorBoundary>
           );
         case '/assessment-flow':
@@ -730,18 +726,13 @@ function AppContent() {
         case '/equip-programs-landing':
           return (
             <ErrorBoundary>
-              <EquipProgramLandingNew 
-                onStartProgram={() => {
-                  if (user) {
-                    // User is logged in, proceed to program onboarding
-                    handleNavigate('/equip-program-onboarding');
-                  } else {
-                    // User needs to sign in first
-                    handleSignIn();
-                  }
-                }}
-                onBack={() => handleNavigate('/equip')}
-              />
+              <EquipDetail onNavigate={handleNavigate} />
+            </ErrorBoundary>
+          );
+        case '/equip-detail':
+          return (
+            <ErrorBoundary>
+              <EquipDetail onNavigate={handleNavigate} />
             </ErrorBoundary>
           );
         case '/equip-program-onboarding':

@@ -45,36 +45,50 @@ export function Homepage({ onNavigate, onGetStarted }: HomepageProps) {
         const baseUrl = `https://${projectId}.supabase.co/functions/v1/make-server-cc205da9`;
         
         // 1. Trigger Seed (Idempotent) to ensure data exists
-        await fetch(`${baseUrl}/seed/data`, {
+        try {
+          await fetch(`${baseUrl}/seed/data`, {
             method: 'POST',
             headers: { 'Authorization': `Bearer ${publicAnonKey}` }
-        }).catch(err => console.log('Seed trigger failed/skipped', err));
-
-        // 2. Fetch Assessments
-        const assessmentsRes = await fetch(`${baseUrl}/assessments`, {
-          headers: { 'Authorization': `Bearer ${publicAnonKey}` }
-        });
-        const assessmentsData = await assessmentsRes.json();
-        
-        if (assessmentsData.assessments && assessmentsData.assessments.length > 0) {
-          const mappedAssessments = assessmentsData.assessments.map((a: any) => ({
-             title: a.title,
-             description: a.description,
-             image: a.image_url || "https://images.unsplash.com/photo-1527137342181-19aab11a8ee8?auto=format&fit=crop&q=80&w=1000",
-             info: a.info || (a.metadata?.estimated_minutes ? `${a.metadata.estimated_minutes} min Quiz` : "5 min Quiz"),
-             link: `/assessment-landing`
-          }));
-          setAssessments(mappedAssessments.slice(0, 3));
+          });
+        } catch (err) {
+          console.log('Seed trigger skipped (expected in production):', err);
         }
 
-        // 3. Fetch Resources
-        const resourcesRes = await fetch(`${baseUrl}/library/resources?limit=3`, {
+        // 2. Fetch Assessments with error handling
+        try {
+          const assessmentsRes = await fetch(`${baseUrl}/assessments`, {
             headers: { 'Authorization': `Bearer ${publicAnonKey}` }
-        });
-        const resourcesData = await resourcesRes.json();
+          });
+          
+          if (assessmentsRes.ok) {
+            const assessmentsData = await assessmentsRes.json();
+            
+            if (assessmentsData.assessments && assessmentsData.assessments.length > 0) {
+              const mappedAssessments = assessmentsData.assessments.map((a: any) => ({
+                 title: a.title,
+                 description: a.description,
+                 image: a.image_url || "https://images.unsplash.com/photo-1527137342181-19aab11a8ee8?auto=format&fit=crop&q=80&w=1000",
+                 info: a.info || (a.metadata?.estimated_minutes ? `${a.metadata.estimated_minutes} min Quiz` : "5 min Quiz"),
+                 link: `/assessment-landing`
+              }));
+              setAssessments(mappedAssessments.slice(0, 3));
+            }
+          }
+        } catch (err) {
+          console.log('Assessments fetch failed, using static data:', err);
+        }
 
-        if (resourcesData.resources && resourcesData.resources.length > 0) {
-            const mappedResources = resourcesData.resources.map((r: any) => ({
+        // 3. Fetch Resources with error handling
+        try {
+          const resourcesRes = await fetch(`${baseUrl}/library/resources?limit=3`, {
+            headers: { 'Authorization': `Bearer ${publicAnonKey}` }
+          });
+          
+          if (resourcesRes.ok) {
+            const resourcesData = await resourcesRes.json();
+
+            if (resourcesData.resources && resourcesData.resources.length > 0) {
+              const mappedResources = resourcesData.resources.map((r: any) => ({
                 id: r.id,
                 title: r.title,
                 description: r.excerpt,
@@ -83,12 +97,16 @@ export function Homepage({ onNavigate, onGetStarted }: HomepageProps) {
                 author: r.author,
                 readTime: `${r.read_time_minutes} min read`,
                 date: new Date(r.created_at).toLocaleDateString()
-            }));
-            setResources(mappedResources);
+              }));
+              setResources(mappedResources);
+            }
+          }
+        } catch (err) {
+          console.log('Resources fetch failed, using empty state:', err);
         }
 
       } catch (error) {
-        console.error("Failed to fetch homepage data:", error);
+        console.log("Homepage data fetch encountered an issue:", error);
         // Fallback to static data is automatic since initial state is set
       } finally {
         setLoading(false);

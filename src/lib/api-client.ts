@@ -340,6 +340,40 @@ class APIClient {
     }, true, 0);
   }
 
+  async changePassword(currentPassword: string, newPassword: string) {
+    return this.request('/users/password', {
+      method: 'PUT',
+      body: JSON.stringify({ currentPassword, newPassword }),
+    }, true, 0);
+  }
+
+  async requestEmailChange(newEmail: string) {
+    return this.request('/users/email/request-change', {
+      method: 'POST',
+      body: JSON.stringify({ newEmail }),
+    }, true, 0);
+  }
+
+  async verifyEmailChange(token: string) {
+    return this.request('/users/email/verify-change', {
+      method: 'POST',
+      body: JSON.stringify({ token }),
+    }, false, 0);
+  }
+
+  async exportUserData() {
+    return this.request('/users/export-data', {
+      method: 'POST',
+    }, true, 0);
+  }
+
+  async uploadAvatar(avatarUrl: string) {
+    return this.request('/users/avatar', {
+      method: 'POST',
+      body: JSON.stringify({ avatarUrl }),
+    }, true, 0);
+  }
+
   // Journal methods
   async createJournalEntry(date: string, mood_rating?: number, freehand_text_content?: string) {
     return this.request('/journal/entries', {
@@ -375,7 +409,9 @@ class APIClient {
 
   // Assessment methods
   async getAssessments() {
-    return this.requestWithFallback('/assessments', 'assessments');
+    const result = await this.requestWithFallback('/assessments', 'assessments');
+    // Always return an array - handle both { assessments: [...] } and [...] formats
+    return Array.isArray(result) ? result : (result.assessments || []);
   }
 
   async createAssessment(data: any) {
@@ -420,7 +456,9 @@ class APIClient {
 
   // Equip program methods
   async getEquipPrograms() {
-    return this.requestWithFallback('/equip/programs', 'programs');
+    const result = await this.requestWithFallback('/equip/programs', 'programs');
+    // Always return an array - handle both { programs: [...] } and [...] formats
+    return Array.isArray(result) ? result : (result.programs || []);
   }
 
   async createEquipProgram(data: any) {
@@ -521,9 +559,84 @@ class APIClient {
     }, true, 0);
   }
 
+  // Enrollment methods
+  async enrollInProgram(programId: string, onboardingData: any) {
+    try {
+      return await this.request('/equip/enrollments', {
+        method: 'POST',
+        body: JSON.stringify({ programId, onboardingData })
+      }, true, 0);
+    } catch (error) {
+      console.error('Enrollment failed:', error);
+      throw error;
+    }
+  }
+
+  async getUserEnrollments() {
+    try {
+      const result = await this.request('/equip/enrollments', {
+        method: 'GET'
+      }, true, 0);
+      return result.enrollments || [];
+    } catch (error) {
+      console.log('Failed to fetch enrollments:', error);
+      return [];
+    }
+  }
+
+  async getEnrollment(enrollmentId: string) {
+    try {
+      const result = await this.request(`/equip/enrollments/${enrollmentId}`, {
+        method: 'GET'
+      }, true, 0);
+      return result.enrollment || null;
+    } catch (error) {
+      console.log('Failed to fetch enrollment:', error);
+      return null;
+    }
+  }
+
+  async updateEnrollmentProgress(enrollmentId: string, dayNumber: number, completed: boolean, notes?: string) {
+    try {
+      return await this.request(`/equip/enrollments/${enrollmentId}/progress`, {
+        method: 'PUT',
+        body: JSON.stringify({
+          dayNumber,
+          completed,
+          completedAt: new Date().toISOString(),
+          notes: notes || ''
+        })
+      }, true, 0);
+    } catch (error) {
+      console.error('Progress update failed:', error);
+      throw error;
+    }
+  }
+
+  async updateEnrollmentStatus(enrollmentId: string, status: 'active' | 'completed' | 'paused' | 'cancelled') {
+    try {
+      return await this.request(`/equip/enrollments/${enrollmentId}/status`, {
+        method: 'PUT',
+        body: JSON.stringify({ status })
+      }, true, 0);
+    } catch (error) {
+      console.error('Status update failed:', error);
+      throw error;
+    }
+  }
+
   // Resource methods
   async getResources() {
-    return this.requestWithFallback('/admin/resources', 'resources', {}, false); // Changed to false to allow public access logic (even if endpoint requires auth, fallback handles it)
+    // Use public endpoint that doesn't require admin authentication
+    const result = await this.requestWithFallback('/library/resources', 'resources', {}, false);
+    // Always return an array - handle both { resources: [...] } and [...] formats
+    return Array.isArray(result) ? result : (result.resources || []);
+  }
+
+  async getResource(id: string) {
+    // Get individual resource by ID
+    const result = await this.requestWithFallback(`/library/resources/${id}`, 'resources', {}, false, id);
+    return result;
   }
 
   async createResource(data: any) {
@@ -571,7 +684,9 @@ class APIClient {
     if (limit) params.append('limit', limit.toString());
     
     const query = params.toString() ? `?${params.toString()}` : '';
-    return this.requestWithFallback(`/consultation/professionals${query}`, 'professionals');
+    const result = await this.requestWithFallback(`/consultation/professionals${query}`, 'professionals');
+    // Always return an array - handle both { professionals: [...] } and [...] formats
+    return Array.isArray(result) ? result : (result.professionals || []);
   }
 
   async getProfessional(id: string) {
@@ -902,6 +1017,33 @@ class APIClient {
     }
   }
 
+  async getPages() {
+    // Get list of all CMS pages for admin management
+    const result = await this.requestWithFallback('/cms/pages', 'pages', {}, true);
+    // Always return an array - handle both { pages: [...] } and [...] formats
+    return Array.isArray(result) ? result : (result.pages || []);
+  }
+
+  async createPage(data: any) {
+    return this.request('/cms/pages', {
+      method: 'POST',
+      body: JSON.stringify(data)
+    }, true, 0);
+  }
+
+  async updatePage(id: string, data: any) {
+    return this.request(`/cms/pages/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data)
+    }, true, 0);
+  }
+
+  async deletePage(id: string) {
+    return this.request(`/cms/pages/${id}`, {
+      method: 'DELETE'
+    }, true, 0);
+  }
+
   async updateCMSPage(pageId: string, content: any) {
     return this.request(`/cms/pages/${pageId}`, {
       method: 'PUT',
@@ -956,6 +1098,20 @@ class APIClient {
   }
 
   // Admin user management methods
+  async createUserAdmin(data: {
+    email: string;
+    password: string;
+    name: string;
+    phone?: string;
+    is_admin?: boolean;
+    corporate_user?: boolean;
+  }) {
+    return this.request('/admin/users', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }, true, 0);
+  }
+
   async updateUserAdmin(userId: string, updates: any) {
     return this.request(`/admin/users/${userId}`, {
       method: 'PUT',
@@ -967,6 +1123,61 @@ class APIClient {
     return this.request(`/admin/users/${userId}`, {
       method: 'DELETE',
     }, true, 0);
+  }
+
+  async getUser(userId: string) {
+    return this.request(`/admin/users/${userId}`, {
+      method: 'GET'
+    }, true, 0);
+  }
+
+  async getPage(pageId: string) {
+    return this.getCMSPage(pageId);
+  }
+
+  // ============================================================================
+  // MEDIA LIBRARY / FILE UPLOAD
+  // ============================================================================
+
+  async uploadFile(file: File, bucket: string = 'make-cc205da9-media'): Promise<{ url: string; metadata: any }> {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('bucket', bucket);
+
+    const response = await fetch(`${this.baseUrl}/upload`, {
+      method: 'POST',
+      body: formData
+    });
+
+    if (!response.ok) {
+      throw new Error('File upload failed');
+    }
+
+    return response.json();
+  }
+
+  async getMediaFiles() {
+    return this.request('/media', { method: 'GET' }, false, 0);
+  }
+
+  async deleteMediaFile(fileId: string) {
+    return this.request(`/media/${fileId}`, { method: 'DELETE' }, false, 0);
+  }
+
+  // ============================================================================
+  // SETTINGS
+  // ============================================================================
+
+  async getSettings() {
+    return this.request('/settings', { method: 'GET' }, false, 0);
+  }
+
+  async updateSettings(settings: any) {
+    return this.request('/settings', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(settings)
+    }, false, 0);
   }
 }
 
@@ -995,7 +1206,7 @@ export const ensureAuthenticated = async (): Promise<boolean> => {
         console.warn('Token refresh failed:', error);
         return false;
       }
-      console.log('✅ Token refreshed successfully');
+      console.log(' Token refreshed successfully');
     }
     
     return true;

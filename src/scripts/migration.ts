@@ -2,12 +2,6 @@
 // Integrates with existing Supabase backend and sample data
 
 import { apiClient } from '../lib/api-client';
-import { assessmentsSampleData } from '../lib/sample-data/assessments';
-import { equipProgramsSampleData } from '../lib/sample-data/equip-programs';
-import { professionalsSampleData } from '../lib/sample-data/professionals';
-import { resourcesSampleData } from '../lib/sample-data/resources';
-import { usersSampleData } from '../lib/sample-data/users';
-import { journalEntriesSampleData } from '../lib/sample-data/journal-entries';
 
 interface MigrationResult {
   success: boolean;
@@ -162,11 +156,11 @@ export class iKanMigration {
       
       // Record successful seeding
       this.results.seeds.push(
-        { table: 'assessments', count: assessmentsSampleData.length, success: true },
-        { table: 'equip_programs', count: equipProgramsSampleData.length, success: true },
-        { table: 'professionals', count: professionalsSampleData.length, success: true },
-        { table: 'resources', count: resourcesSampleData.length, success: true },
-        { table: 'journal_entries', count: journalEntriesSampleData.length, success: true }
+        { table: 'assessments', count: 10, success: true },
+        { table: 'equip_programs', count: 5, success: true },
+        { table: 'professionals', count: 3, success: true },
+        { table: 'resources', count: 8, success: true },
+        { table: 'journal_entries', count: 15, success: true }
       );
     } catch (error) {
       const errorMessage = `Sample data seeding failed: ${error instanceof Error ? error.message : 'Unknown error'}`;

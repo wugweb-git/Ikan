@@ -1,16 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
-import { Badge } from '../ui/badge';
 import { Button } from '../ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '../ui/dialog';
-import { AssessmentFlow } from './AssessmentFlow';
-import { AssessmentResults } from './AssessmentResults';
+import { Badge } from '../ui/badge';
 import { Icon } from '../Icon';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '../ui/dialog';
+import { ChevronRight, Clock, FileText, TrendingUp, Calendar } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNotifications } from '../../contexts/NotificationContext';
 import { cn } from '../ui/utils';
-import { assessmentsData } from '../../lib/sample-data/assessments';
 import { apiClient } from '../../lib/api-client';
+import { AssessmentFlow } from './AssessmentFlow';
+import { AssessmentResults } from './AssessmentResults';
 
 interface Assessment {
   id: string;
@@ -28,8 +28,8 @@ interface Assessment {
 
 // Function to transform assessment data from the new format
 const transformAssessmentData = (data: any, userHistory?: Record<string, any>): Assessment => {
-  const assessmentId = data.slug || data.id;
-  const userResponse = userHistory?.[assessmentId] || userHistory?.[data.assessment_id];
+  const assessmentId = data.id || data.assessment_id || data.slug;
+  const userResponse = userHistory?.[assessmentId] || (data.assessment_id ? userHistory?.[data.assessment_id] : undefined);
   
   let status: 'available' | 'in-progress' | 'completed' = 'available';
   let lastCompletedDate: string | undefined;
@@ -123,51 +123,38 @@ export function Assessments({ className, onNavigate }: AssessmentsProps) {
   useEffect(() => {
     const loadAssessments = async () => {
       try {
-        // 1. Initial load from hardcoded data
-        const initialAssessments = assessmentsData.assessments.map(data => transformAssessmentData(data, {}));
-        
-        // 2. Fetch assessments from API (KV store)
+        // Fetch assessments from API (KV store)
         let apiAssessments: Assessment[] = [];
         try {
           const response = await apiClient.getAssessments();
-          if (response && response.assessments) {
-            // Ensure proper data shape and fallbacks
-            apiAssessments = response.assessments.map((a: any) => ({
-                ...a,
-                category: a.category || a.metadata?.category || 'wellness'
-            }));
+          // getAssessments() already returns the array directly
+          if (response && Array.isArray(response)) {
+            // Remove duplicates based on assessment_id or slug
+            const uniqueAssessments = response.reduce((acc: any[], current: any) => {
+              const id = current.slug || current.assessment_id || current.id;
+              const exists = acc.find(item => {
+                const itemId = item.slug || item.assessment_id || item.id;
+                return itemId === id;
+              });
+              
+              if (!exists) {
+                acc.push(current);
+              }
+              return acc;
+            }, []);
+            
+            console.log(`📋 Loaded ${uniqueAssessments.length} unique assessments (removed ${response.length - uniqueAssessments.length} duplicates)`);
+            
+            apiAssessments = uniqueAssessments.map((a: any) => 
+              transformAssessmentData(a, {})
+            );
           }
         } catch (error) {
-          console.warn('Failed to fetch API assessments, falling back to local only', error);
+          console.warn('Failed to fetch API assessments:', error);
+          showToast('error', 'Failed to load assessments', 'Please try again later.');
         }
 
-        // 3. Merge: API assessments take precedence if they share the same ID/Slug
-        const mergedAssessmentsMap = new Map<string, Assessment>();
-        
-        // Add hardcoded first
-        initialAssessments.forEach(a => mergedAssessmentsMap.set(a.id, a));
-        
-        // Add/Overwrite with API assessments
-        apiAssessments.forEach(a => mergedAssessmentsMap.set(a.id, a));
-        
-        let finalAssessments = Array.from(mergedAssessmentsMap.values());
-        
-        // Filter to show the main clinical assessments or custom ones
-        // We include anything that is in the "clinical" list OR any custom ones (that might not be in that list)
-        // Actually, let's just show all available assessments for now, or filter by category if needed.
-        // For now, let's just keep the filter if it exists in the clinical list, BUT allow new ones if they don't match the list but are valid.
-        
-        // Simpler logic: If it's from the API (we can check if it exists in apiAssessments), show it
-        finalAssessments = finalAssessments.filter(assessment => {
-           // If it came from the API (we can check if it exists in apiAssessments), show it
-           const isFromApi = apiAssessments.some(apiA => apiA.id === assessment.id);
-           if (isFromApi) return true;
-           
-           // Otherwise apply the hardcoded filter
-           return ['general-health', 'anxiety', 'depression', 'stress', 'burnout', 'sleep', 'work-life'].includes(assessment.slug);
-        });
-        
-        setAssessments(finalAssessments);
+        setAssessments(apiAssessments);
         setLoading(false);
 
         // Background: Load user assessment history if authenticated

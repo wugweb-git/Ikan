@@ -1,5 +1,7 @@
 import svgPaths from "./svg-9uz5q7h5jm";
-import imgRectangle13 from "figma:asset/f3776a338dad59604b202772ce848acf009b5d2e.png";
+
+// Professional portrait - Using Unsplash URL (production-ready)
+const imgRectangle13 = "https://images.unsplash.com/photo-1733685318562-c726472bc1db?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxwcm9mZXNzaW9uYWwlMjB0aGVyYXBpc3QlMjBwb3J0cmFpdHxlbnwxfHx8fDE3NjU4NzYzMTN8MA&ixlib=rb-4.1.0&q=80&w=1080";
 
 interface Professional {
   professional_id: string;

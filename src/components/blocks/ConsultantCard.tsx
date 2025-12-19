@@ -1,10 +1,39 @@
 import React from 'react';
 import { cn } from '../ui/utils';
-import { Star, MapPin, Video, Phone, MessageCircle, Home, Clock } from 'lucide-react';
-import { Badge } from '../ui/badge';
+import { MapPin, Star, Video, Phone, MessageCircle, Clock, Home } from 'lucide-react';
+import { Button } from '../ui/button';
 import { Card, CardContent } from '../ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
-import { type Consultant } from '../../lib/sample-data/consultants';
+import { Badge } from '../ui/badge';
+
+// Define Consultant type locally
+export interface Consultant {
+  id: string;
+  name: string;
+  credentials: string;
+  category: 'therapist' | 'psychiatrist' | 'counselor' | 'family-therapist';
+  photo: string;
+  yearsExperience: number;
+  languages: string[];
+  location: string;
+  sessionModes: ('online' | 'offline' | 'call' | 'chat')[];
+  expertises: string[];
+  topExpertises: string[];
+  approaches: string[];
+  concernsICanHelp: string[];
+  pricing: {
+    video: number;
+    call: number;
+    chat: number;
+    offline?: number;
+  };
+  nextAvailableSlot: string;
+  rating: number;
+  reviewCount: number;
+  bio: string;
+  qualifications: string[];
+  available: boolean;
+}
 
 interface ConsultantCardProps {
   consultant: Consultant;
@@ -13,13 +42,13 @@ interface ConsultantCardProps {
 }
 
 export function ConsultantCard({ consultant, onClick, className }: ConsultantCardProps) {
-  // Get minimum price for display
-  const minPrice = Math.min(
-    consultant.pricing.video,
-    consultant.pricing.call,
-    consultant.pricing.chat,
+  // Get minimum price for display - handle missing pricing data
+  const minPrice = consultant.pricing ? Math.min(
+    consultant.pricing.video || Infinity,
+    consultant.pricing.call || Infinity,
+    consultant.pricing.chat || Infinity,
     consultant.pricing.offline || Infinity
-  );
+  ) : 0;
 
   // Get session mode icons
   const sessionIcons = {
@@ -99,7 +128,7 @@ export function ConsultantCard({ consultant, onClick, className }: ConsultantCar
                   fontWeight: 'var(--font-weight-regular)',
                 }}
               >
-                {consultant.category.replace('-', ' ')}
+                {consultant.category ? consultant.category.replace('-', ' ') : 'General'}
               </Badge>
 
               {/* Rating and Experience */}
@@ -110,10 +139,10 @@ export function ConsultantCard({ consultant, onClick, className }: ConsultantCar
                     className="w-4 h-4 fill-yellow-400 text-yellow-400" 
                   />
                   <span style={{ fontWeight: 'var(--font-weight-medium)' }}>
-                    {consultant.rating.toFixed(1)}
+                    {consultant.rating ? consultant.rating.toFixed(1) : '0.0'}
                   </span>
                   <span style={{ color: 'var(--color-text-muted)' }}>
-                    ({consultant.reviewCount})
+                    ({consultant.reviewCount || 0})
                   </span>
                 </div>
 
@@ -123,7 +152,7 @@ export function ConsultantCard({ consultant, onClick, className }: ConsultantCar
                   style={{ color: 'var(--color-text-muted)' }}
                 >
                   <Clock className="w-4 h-4" />
-                  <span>{consultant.yearsExperience}+ yrs</span>
+                  <span>{consultant.yearsExperience || 0}+ yrs</span>
                 </div>
               </div>
             </div>
@@ -149,9 +178,9 @@ export function ConsultantCard({ consultant, onClick, className }: ConsultantCar
                 Specializes in
               </p>
               <div className="flex flex-wrap gap-1.5">
-                {consultant.topExpertises.slice(0, 3).map((expertise, idx) => (
+                {(consultant.topExpertises || []).slice(0, 3).map((expertise) => (
                   <Badge
-                    key={idx}
+                    key={expertise}
                     variant="outline"
                     className="text-xs"
                     style={{
@@ -183,9 +212,9 @@ export function ConsultantCard({ consultant, onClick, className }: ConsultantCar
 
             {/* Languages */}
             <div className="flex flex-wrap gap-1.5">
-              {consultant.languages.slice(0, 3).map((lang, idx) => (
+              {(consultant.languages || []).slice(0, 3).map((lang) => (
                 <span
-                  key={idx}
+                  key={lang}
                   className="text-xs px-2 py-0.5 rounded"
                   style={{
                     backgroundColor: 'var(--color-bg-muted)',
@@ -201,9 +230,9 @@ export function ConsultantCard({ consultant, onClick, className }: ConsultantCar
             <div className="flex items-center justify-between pt-2">
               {/* Session Modes */}
               <div className="flex gap-2">
-                {consultant.sessionModes.slice(0, 4).map((mode, idx) => (
+                {(consultant.sessionModes || []).slice(0, 4).map((mode) => (
                   <div
-                    key={idx}
+                    key={mode}
                     className="p-1.5 rounded"
                     style={{
                       backgroundColor: 'var(--color-bg-muted)',

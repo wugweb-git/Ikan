@@ -10,6 +10,8 @@ import { Checkbox } from '../ui/checkbox';
 import { ArrowLeft, ArrowRight, User, Heart, Shield, CheckCircle } from 'lucide-react';
 import { cn } from '../ui/utils';
 import { getEquipProgramContent, getStoredProgram, EquipProgramDetails } from '../../lib/equip-program-content';
+import { apiClient } from '../../lib/api-client';
+import { useNotifications } from '../../contexts/NotificationContext';
 
 interface EquipProgramOnboardingProps {
   onComplete?: () => void;
@@ -104,6 +106,8 @@ export function EquipProgramOnboarding({ onComplete, onBack }: EquipProgramOnboa
   const [content, setContent] = useState<EquipProgramDetails | null>(null);
   const [currentStep, setCurrentStep] = useState(0);
   const [data, setData] = useState<OnboardingData>(initialData);
+  const { addNotification } = useNotifications();
+  const [isEnrolling, setIsEnrolling] = useState(false);
 
   // Mobile-optimized viewport setup (removed body overflow restrictions for mobile scrolling)
   useEffect(() => {
@@ -201,13 +205,52 @@ export function EquipProgramOnboarding({ onComplete, onBack }: EquipProgramOnboa
     }
   }, []);
 
-  const handleNext = () => {
+  const handleNext = async () => {
     if (currentStep < steps.length - 1) {
       setCurrentStep(prev => prev + 1);
     } else {
-      // Save onboarding data and complete
-      localStorage.setItem('ikan-equip-onboarding-data', JSON.stringify(data));
-      onComplete?.();
+      // Final step - enroll user in program
+      setIsEnrolling(true);
+      try {
+        const storedProgram = getStoredProgram();
+        if (!storedProgram || !storedProgram.slug) {
+          throw new Error('No program selected');
+        }
+
+        // Enroll in program via API
+        const response = await apiClient.enrollInProgram(storedProgram.slug, data);
+        
+        if (response && response.enrollment) {
+          // Save enrollment ID to localStorage
+          localStorage.setItem('ikan-current-enrollment', response.enrollment.enrollmentId);
+          localStorage.setItem('ikan-equip-onboarding-data', JSON.stringify(data));
+          
+          // Show success message
+          addNotification({
+            id: `enrollment-${Date.now()}`,
+            type: 'success',
+            title: 'Enrollment Successful!',
+            message: `You've successfully enrolled in ${storedProgram.title}`,
+            duration: 5000
+          });
+          
+          // Complete onboarding
+          onComplete?.();
+        } else {
+          throw new Error('Enrollment failed - no response');
+        }
+      } catch (error) {
+        console.error('Enrollment error:', error);
+        addNotification({
+          id: `enrollment-error-${Date.now()}`,
+          type: 'error',
+          title: 'Enrollment Failed',
+          message: 'Could not enroll in program. Please try again.',
+          duration: 5000
+        });
+      } finally {
+        setIsEnrolling(false);
+      }
     }
   };
 
@@ -1038,7 +1081,7 @@ export function EquipProgramOnboarding({ onComplete, onBack }: EquipProgramOnboa
 
               <Button
                 onClick={handleNext}
-                disabled={!isStepValid()}
+                disabled={!isStepValid() || isEnrolling}
                 className={isMobile ? "w-full gap-2 justify-center" : "gap-2"}
                 style={{
                   backgroundColor: 'var(--semantic-button-primary-bg)',
@@ -1048,11 +1091,11 @@ export function EquipProgramOnboarding({ onComplete, onBack }: EquipProgramOnboa
                   fontSize: 'var(--text-base)',
                   fontWeight: 'var(--font-weight-medium)',
                   border: 'none',
-                  opacity: !isStepValid() ? 0.5 : 1
+                  opacity: (!isStepValid() || isEnrolling) ? 0.5 : 1
                 }}
               >
-                {currentStep === steps.length - 1 ? 'Start Program' : 'Continue'}
-                <ArrowRight size={16} />
+                {isEnrolling ? 'Enrolling...' : (currentStep === steps.length - 1 ? 'Start Program' : 'Continue')}
+                {!isEnrolling && <ArrowRight size={16} />}
               </Button>
             </div>
           </CardContent>

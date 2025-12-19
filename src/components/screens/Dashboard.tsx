@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
+import { apiClient as client } from '../../lib/api-client';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Badge } from '../ui/badge';
 import { Progress } from '../ui/progress';
@@ -551,18 +552,147 @@ export function Dashboard({ className, onNavigate }: DashboardProps) {
   const { showToast } = useNotifications();
   const isMobile = useIsMobile();
   
-  // Sample KPI data - in real app, this would come from API
-  const [kpiData] = useState({
-    moodScore: { current: 7.2, trend: 'up', change: '+0.8' },
-    streakDays: { current: 12, trend: 'up', change: '+3' },
-    assessments: { current: 4, trend: 'stable', change: '2 pending' },
-    resources: { current: 23, trend: 'up', change: '+5' },
-    sessions: { current: 8, trend: 'up', change: '+2' },
-    goals: { current: 3, trend: 'up', change: '75%' }
-  });
+  const [loading, setLoading] = useState(true);
+  const [moodData, setMoodData] = useState<any[]>([]);
+  const [assessmentData, setAssessmentData] = useState<any[]>([]);
+  const [programData, setProgramData] = useState<any[]>([]);
+  const [readResourceCount, setReadResourceCount] = useState(0);
 
-  const [weeklyMoods] = useState([6, 7, 5, 8, 7, 6, 8, 7]);
-  const currentMood = weeklyMoods[weeklyMoods.length - 1];
+  // Load dashboard data
+  useEffect(() => {
+    const loadDashboardData = async () => {
+      // Use user_id from our custom User type, falling back to id if it exists (Supabase type)
+      const userId = user?.user_id || (user as any)?.id;
+
+      if (!userId) {
+        setLoading(false);
+        return;
+      }
+
+      try {
+        setLoading(true);
+
+        // 1. Fetch Mood Data (Journal Entries)
+        const journalResponse = await client.getJournalEntries(undefined, undefined, 30); // Last 30 entries
+        const entries = journalResponse?.entries || [];
+        setMoodData(entries);
+
+        // 2. Fetch Assessment History
+        const assessmentResponse = await client.getUserAssessmentResponses();
+        const assessments = assessmentResponse?.responses || [];
+        setAssessmentData(assessments);
+
+        // 3. Fetch Programs
+        // Get purchased programs
+        const purchasedPrograms = await client.getUserPurchasedPrograms(userId);
+        // Get progress for each (or assuming the endpoint returns some progress)
+        // For now, we'll use the purchased list. If we need detailed progress, we'd need to fetch per program
+        // but that might be too many requests. We'll verify what purchasedPrograms returns.
+        setProgramData(purchasedPrograms || []);
+
+        // 4. Fetch Resources Read Count (from LocalStorage as fallback for now)
+        try {
+          const readResources = JSON.parse(localStorage.getItem(`ikan-read-resources-${userId}`) || '[]');
+          setReadResourceCount(readResources.length);
+        } catch (e) {
+          console.warn('Failed to read local resource history');
+        }
+
+      } catch (error) {
+        console.error('Failed to load dashboard data:', error);
+        // Don't show toast on dashboard load error to avoid annoyance, just log it
+        // showToast('error', 'Dashboard Error', 'Failed to load some data');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadDashboardData();
+  }, [user]);
+
+  if (loading) {
+    return (
+      <div className={cn("w-full h-screen flex items-center justify-center", className)} style={{ backgroundColor: 'var(--color-bg-page)' }}>
+        <div className="flex flex-col items-center gap-4">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+          <p className="text-muted-foreground">Loading dashboard...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Calculate KPIs based on real data
+  const currentMoodEntry = moodData.length > 0 ? moodData[0] : null;
+  const currentMoodValue = currentMoodEntry?.mood_rating || 0;
+  
+  // Calculate average mood for this week vs last week for trend
+  const calculateMoodTrend = () => {
+    if (moodData.length < 2) return { trend: 'stable', change: '0.0' };
+    
+    // Sort by date descending
+    const sortedMoods = [...moodData].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    const recent = sortedMoods.slice(0, 7);
+    const previous = sortedMoods.slice(7, 14);
+    
+    const recentAvg = recent.reduce((sum, item) => sum + (item.mood_rating || 0), 0) / (recent.length || 1);
+    const prevAvg = previous.reduce((sum, item) => sum + (item.mood_rating || 0), 0) / (previous.length || 1);
+    
+    const diff = recentAvg - prevAvg;
+    const trend = diff > 0 ? 'up' : diff < 0 ? 'down' : 'stable';
+    const change = diff !== 0 ? (diff > 0 ? '+' : '') + diff.toFixed(1) : 'stable';
+    
+    return { trend, change };
+  };
+
+  const moodTrend = calculateMoodTrend();
+
+  // Calculate streak (mock for now, or derive from consecutive days in moodData)
+  const calculateStreak = () => {
+    if (moodData.length === 0) return 0;
+    
+    let streak = 0;
+    const sortedDates = [...new Set(moodData.map(e => new Date(e.date).toDateString()))];
+    const today = new Date().toDateString();
+    const yesterday = new Date(Date.now() - 86400000).toDateString();
+    
+    if (sortedDates.includes(today)) {
+      streak = 1;
+      let checkDate = new Date(Date.now() - 86400000);
+      while (sortedDates.includes(checkDate.toDateString())) {
+        streak++;
+        checkDate.setDate(checkDate.getDate() - 1);
+      }
+    } else if (sortedDates.includes(yesterday)) {
+       let checkDate = new Date(Date.now() - 86400000);
+       while (sortedDates.includes(checkDate.toDateString())) {
+         streak++;
+         checkDate.setDate(checkDate.getDate() - 1);
+       }
+    }
+    
+    return streak;
+  };
+
+  const streakDays = calculateStreak();
+
+  // Prepare chart data
+  const weeklyMoods = moodData
+    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+    .slice(-7)
+    .map(e => e.mood_rating || 0);
+  
+  // Fill with 0s if less than 7
+  const filledWeeklyMoods = [...Array(Math.max(0, 7 - weeklyMoods.length)).fill(0), ...weeklyMoods];
+
+  const kpiData = {
+    moodScore: { current: currentMoodValue || '-', trend: moodTrend.trend as any, change: moodTrend.change },
+    streakDays: { current: streakDays, trend: 'up', change: 'Keep it up!' },
+    assessments: { current: assessmentData.length, trend: 'stable', change: 'Total' },
+    resources: { current: readResourceCount, trend: 'up', change: 'Read' },
+    sessions: { current: 0, trend: 'stable', change: 'Coming Soon' }, // Placeholder for sessions
+    goals: { current: 0, trend: 'stable', change: 'Coming Soon' }
+  };
+
 
   return (
     <div 
@@ -674,7 +804,7 @@ export function Dashboard({ className, onNavigate }: DashboardProps) {
           />
         </motion.div>
 
-        {/* Main Content Grid */}
+          {/* Main Content Grid */}
         <div className={isMobile ? "space-y-6" : "grid grid-cols-1 lg:grid-cols-3 gap-6"}>
           {/* Mood Overview - Takes full width on mobile, 2 cols on desktop */}
           <motion.div
@@ -683,7 +813,7 @@ export function Dashboard({ className, onNavigate }: DashboardProps) {
             transition={{ duration: 0.6, delay: 0.4 }}
             className={isMobile ? "" : "lg:col-span-2"}
           >
-            <MoodRing currentMood={currentMood} weeklyMoods={weeklyMoods} />
+            <MoodRing currentMood={currentMoodValue} weeklyMoods={filledWeeklyMoods} />
           </motion.div>
 
           {/* Activity Streak - Right column on desktop */}
@@ -901,8 +1031,8 @@ export function Dashboard({ className, onNavigate }: DashboardProps) {
           </h2>
           
           <div className={isMobile ? "space-y-6" : "grid grid-cols-1 lg:grid-cols-2 gap-6"}>
-            <EquipProgramsProgress onNavigate={onNavigate} />
-            <AssessmentProgramsProgress onNavigate={onNavigate} />
+            <EquipProgramsProgress onNavigate={onNavigate} programs={programData} />
+            <AssessmentProgramsProgress onNavigate={onNavigate} assessments={assessmentData} />
           </div>
         </motion.div>
 
@@ -929,48 +1059,54 @@ export function Dashboard({ className, onNavigate }: DashboardProps) {
 }
 
 // Equip Programs Progress Section
-function EquipProgramsProgress({ onNavigate }: { onNavigate?: (route: string) => void }) {
+function EquipProgramsProgress({ onNavigate, programs = [] }: { onNavigate?: (route: string) => void, programs?: any[] }) {
   const isMobile = useIsMobile();
   
-  // Sample program progress data
-  const programs = [
-    {
-      id: 'anxiety-management',
-      title: 'Anxiety Management',
-      progress: 75,
-      currentModule: 'Week 3: Coping Strategies',
-      totalModules: 6,
-      completedModules: 4,
-      nextActivity: 'Breathing Exercise',
-      dueDate: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000),
-      badge: 'Advanced',
-      color: 'var(--color-status-info)'
-    },
-    {
-      id: 'stress-relief',
-      title: 'Stress Relief Program',
-      progress: 45,
-      currentModule: 'Week 2: Mindfulness',
-      totalModules: 4,
-      completedModules: 2,
-      nextActivity: 'Daily Reflection',
-      dueDate: new Date(Date.now() + 1 * 24 * 60 * 60 * 1000),
-      badge: 'In Progress',
-      color: 'var(--color-status-warning)'
-    },
-    {
-      id: 'sleep-improvement',
-      title: 'Sleep Improvement',
-      progress: 100,
-      currentModule: 'Program Completed',
-      totalModules: 3,
-      completedModules: 3,
-      nextActivity: null,
-      dueDate: null,
-      badge: 'Completed',
-      color: 'var(--color-status-success)'
-    }
-  ];
+  // Transform API programs to display format or use empty state
+  const displayPrograms = programs.slice(0, 3).map(p => ({
+    id: p.id || p.program_id,
+    title: p.title || 'Untitled Program',
+    progress: p.progress || 0, // Assuming progress is in the object, otherwise need to fetch
+    currentModule: p.current_module || 'Not started',
+    totalModules: p.total_modules || 10,
+    completedModules: p.completed_modules || 0,
+    nextActivity: p.next_activity || 'Start Program',
+    dueDate: p.due_date ? new Date(p.due_date) : null,
+    badge: (p.progress || 0) >= 100 ? 'Completed' : (p.progress || 0) > 0 ? 'In Progress' : 'Not Started',
+    color: (p.progress || 0) >= 100 ? 'var(--color-status-success)' : 'var(--color-status-info)'
+  }));
+
+  if (displayPrograms.length === 0) {
+    return (
+      <Card 
+      style={{
+        background: 'linear-gradient(135deg, var(--color-bg-card) 0%, rgba(255,255,255,0.9) 100%)',
+        backdropFilter: 'blur(10px)',
+        border: '1px solid var(--color-border-light)',
+        borderRadius: 'var(--radius-lg)'
+      }}
+    >
+      <CardHeader>
+        <CardTitle className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Trophy size={20} style={{ color: 'var(--color-status-warning)' }} />
+            <span style={{ 
+              fontSize: 'var(--text-base)', 
+              fontWeight: 'var(--font-weight-medium)',
+              color: 'var(--color-text-primary)'
+            }}>
+              Equip Programs
+            </span>
+          </div>
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="text-center py-8">
+        <p className="text-muted-foreground mb-4">You haven't started any programs yet.</p>
+        <Button onClick={() => onNavigate?.('/equip-programs')}>Browse Programs</Button>
+      </CardContent>
+    </Card>
+    );
+  }
 
   return (
     <Card 
@@ -1006,13 +1142,13 @@ function EquipProgramsProgress({ onNavigate }: { onNavigate?: (route: string) =>
       
       <CardContent>
         <div className="space-y-4">
-          {programs.map((program) => (
+          {displayPrograms.map((program) => (
             <motion.div
               key={program.id}
               whileHover={{ scale: 1.02, y: -2 }}
               transition={{ duration: 0.2 }}
               className="cursor-pointer"
-              onClick={() => onNavigate?.('/equip-program-flow')}
+              onClick={() => onNavigate?.('/equip-program-onboarding')} 
             >
               <div 
                 className="p-4 rounded-lg border"
@@ -1109,48 +1245,79 @@ function EquipProgramsProgress({ onNavigate }: { onNavigate?: (route: string) =>
 }
 
 // Assessment Programs Progress Section
-function AssessmentProgramsProgress({ onNavigate }: { onNavigate?: (route: string) => void }) {
+function AssessmentProgramsProgress({ onNavigate, assessments = [] }: { onNavigate?: (route: string) => void, assessments?: any[] }) {
   const isMobile = useIsMobile();
   
-  // Sample assessment data
-  const assessments = [
-    {
-      id: 'phq9',
-      name: 'Depression (PHQ-9)',
-      lastScore: 8,
-      previousScore: 12,
-      trend: 'improved',
-      lastTaken: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
-      frequency: 'Weekly',
-      nextDue: new Date(Date.now() + 0 * 24 * 60 * 60 * 1000),
-      category: 'Mild',
-      color: 'var(--color-status-success)'
-    },
-    {
-      id: 'gad7',
-      name: 'Anxiety (GAD-7)',
-      lastScore: 14,
-      previousScore: 11,
-      trend: 'increased',
-      lastTaken: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000),
-      frequency: 'Bi-weekly',
-      nextDue: new Date(Date.now() + 4 * 24 * 60 * 60 * 1000),
-      category: 'Moderate',
-      color: 'var(--color-status-warning)'
-    },
-    {
-      id: 'stress',
-      name: 'Stress Level',
-      lastScore: 6,
-      previousScore: 8,
-      trend: 'improved',
-      lastTaken: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000),
-      frequency: 'Weekly',
-      nextDue: new Date(Date.now() + 4 * 24 * 60 * 60 * 1000),
-      category: 'Low',
-      color: 'var(--color-status-info)'
-    }
-  ];
+  // Transform API assessments to display format
+  // We need to group by assessment ID to find "last score" and "previous score"
+  const assessmentsById: Record<string, any[]> = {};
+  assessments.forEach(a => {
+    const id = a.assessment_id || a.id;
+    if (!assessmentsById[id]) assessmentsById[id] = [];
+    assessmentsById[id].push(a);
+  });
+
+  const displayAssessments = Object.keys(assessmentsById).map(id => {
+    const history = assessmentsById[id].sort((a, b) => new Date(b.completed_at).getTime() - new Date(a.completed_at).getTime());
+    const latest = history[0];
+    const previous = history[1];
+    
+    const lastScore = latest.score || 0;
+    const previousScore = previous?.score || 0;
+    const trend = lastScore < previousScore ? 'improved' : lastScore > previousScore ? 'increased' : 'stable';
+    
+    // Determine category based on score (simplified logic)
+    let category = 'Normal';
+    let color = 'var(--color-status-success)';
+    if (lastScore > 15) { category = 'High'; color = 'var(--color-status-danger)'; }
+    else if (lastScore > 10) { category = 'Moderate'; color = 'var(--color-status-warning)'; }
+    else if (lastScore > 5) { category = 'Mild'; color = 'var(--color-status-info)'; }
+
+    return {
+      id: id,
+      name: latest.title || latest.assessment_title || 'Assessment',
+      lastScore,
+      previousScore,
+      trend,
+      lastTaken: new Date(latest.completed_at),
+      frequency: 'Weekly', // Placeholder
+      nextDue: new Date(new Date(latest.completed_at).getTime() + 7 * 24 * 60 * 60 * 1000), // Next due in 7 days
+      category,
+      color
+    };
+  }).slice(0, 3);
+
+  if (displayAssessments.length === 0) {
+    return (
+      <Card 
+      style={{
+        background: 'linear-gradient(135deg, var(--color-bg-card) 0%, rgba(255,255,255,0.9) 100%)',
+        backdropFilter: 'blur(10px)',
+        border: '1px solid var(--color-border-light)',
+        borderRadius: 'var(--radius-lg)'
+      }}
+    >
+      <CardHeader>
+        <CardTitle className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Brain size={20} style={{ color: 'var(--color-status-info)' }} />
+            <span style={{ 
+              fontSize: 'var(--text-base)', 
+              fontWeight: 'var(--font-weight-medium)',
+              color: 'var(--color-text-primary)'
+            }}>
+              Assessment Progress
+            </span>
+          </div>
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="text-center py-8">
+        <p className="text-muted-foreground mb-4">No assessment history found.</p>
+        <Button onClick={() => onNavigate?.('/assessment-landing')}>Take an Assessment</Button>
+      </CardContent>
+    </Card>
+    );
+  }
 
   return (
     <Card 
@@ -1186,13 +1353,13 @@ function AssessmentProgramsProgress({ onNavigate }: { onNavigate?: (route: strin
       
       <CardContent>
         <div className="space-y-4">
-          {assessments.map((assessment) => (
+          {displayAssessments.map((assessment) => (
             <motion.div
               key={assessment.id}
               whileHover={{ scale: 1.02, y: -2 }}
               transition={{ duration: 0.2 }}
               className="cursor-pointer"
-              onClick={() => onNavigate?.('/assessment-flow')}
+              onClick={() => onNavigate?.('/assessment-flow')} // Ideally navigate to specific assessment results
             >
               <div 
                 className="p-4 rounded-lg border"

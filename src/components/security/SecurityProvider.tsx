@@ -57,12 +57,12 @@ export function SecurityProvider({ children }: SecurityProviderProps) {
     };
 
     // Log to console in development
-    if (import.meta.env.DEV) {
+    if (typeof window !== 'undefined' && window.location.hostname === 'localhost') {
       console.log('🔒 Security Event:', securityLog);
     }
 
     // In production, send to monitoring service
-    if (import.meta.env.PROD) {
+    if (typeof window !== 'undefined' && window.location.hostname !== 'localhost') {
       // Send to your monitoring service (e.g., Sentry, LogRocket)
       try {
         // Example: Analytics or monitoring service
@@ -85,7 +85,7 @@ export function SecurityProvider({ children }: SecurityProviderProps) {
     
     setIsSecureConnection(isSecure);
     
-    if (!isSecure && import.meta.env.PROD) {
+    if (!isSecure && typeof window !== 'undefined' && window.location.hostname !== 'localhost') {
       logSecurityEvent('insecure_connection', { 
         protocol: window.location.protocol,
         hostname: window.location.hostname 

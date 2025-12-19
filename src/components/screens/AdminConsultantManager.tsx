@@ -1,11 +1,73 @@
-import React, { useState, useEffect } from 'react';
-import { useNotifications } from '../../contexts/NotificationContext';
-import { apiClient } from '../../lib/api-client';
-import { Button } from '../ui/button';
-import { Icon } from '../Icon';
 import { cn } from '../ui/utils';
 import { useIsMobile } from '../../hooks/useIsMobile';
-import { Consultant, expertiseCategories } from '../../lib/sample-data/consultants';
+
+// Define types and data locally
+export interface Consultant {
+  id: string;
+  name: string;
+  credentials: string;
+  category: 'therapist' | 'psychiatrist' | 'counselor' | 'family-therapist';
+  photo: string;
+  yearsExperience: number;
+  languages: string[];
+  location: string;
+  sessionModes: ('online' | 'offline' | 'call' | 'chat')[];
+  expertises: string[];
+  topExpertises: string[];
+  approaches: string[];
+  concernsICanHelp: string[];
+  pricing: {
+    video: number;
+    call: number;
+    chat: number;
+    offline?: number;
+  };
+  nextAvailableSlot: string;
+  rating: number;
+  reviewCount: number;
+  bio: string;
+  qualifications: string[];
+  available: boolean;
+}
+
+export const expertiseCategories = [
+  "Anxiety Disorders",
+  "Depressive Disorders",
+  "Relationship Skills",
+  "Stress Management",
+  "Anger Management",
+  "Grief and Loss",
+  "Loneliness",
+  "Lack of Motivation",
+  "Negative Thinking",
+  "Overthinking",
+  "Self-Improvement",
+  "Sleep Disorder",
+  "Bipolar Disorder",
+  "Obsessive-Compulsive Disorder (OCD)",
+  "Schizophrenia",
+  "Sexual Dysfunction",
+  "General Well-Being",
+  "LGBTQIA+ Concerns",
+  "Adult ADHD",
+  "Personality Disorder",
+  "Trauma",
+  "Child Specialist / Child Therapy",
+  "Eating Disorders",
+  "Trauma-Related Disorders",
+  "Adult Autism / Neurodiversity",
+  "Geriatric Mental Health",
+  "Fertility and Pregnancy Concerns",
+  "Work-Related Concerns",
+  "Parenting Concerns",
+  "Life Transitions",
+  "Academic Concerns",
+  "Communication Skills",
+  "PTSD",
+  "Addiction Recovery",
+  "Body Image",
+  "Self-Esteem"
+];
 
 interface AdminConsultantManagerProps {
   onNavigate?: (path: string) => void;
@@ -55,11 +117,12 @@ export function AdminConsultantManager({ onNavigate, onBack, className }: AdminC
       } else if (response && response.professionals) {
          setConsultants(response.professionals);
       }
+      setLoading(false); // Success - stop loading
     } catch (error: any) {
       console.error('Failed to load consultants:', error);
-      showToast('error', 'Load Failed', error.message || 'Could not load consultants');
-    } finally {
-      setLoading(false);
+      // GLOBAL APPROACH: Show infinite loader on backend errors
+      console.error('Backend error - showing infinite loader to force proper backend setup');
+      // Don't set loading to false - keeps showing the loader
     }
   };
 

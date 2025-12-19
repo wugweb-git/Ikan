@@ -1,0 +1,300 @@
+/**
+ * Backend validation utilities for iKan server
+ * Mirrors frontend validation but runs server-side for security
+ */
+
+export interface ValidationError {
+  field: string;
+  message: string;
+}
+
+export interface ValidationResult {
+  isValid: boolean;
+  errors: ValidationError[];
+}
+
+/**
+ * Sanitize string to prevent XSS
+ */
+export const sanitizeString = (input: string): string => {
+  if (!input) return '';
+  
+  return String(input)
+    .trim()
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#x27;')
+    .replace(/\//g, '&#x2F;');
+};
+
+/**
+ * Validate name
+ */
+export const validateName = (name: string): ValidationError | null => {
+  if (!name || typeof name !== 'string' || name.trim().length === 0) {
+    return { field: 'name', message: 'Name is required' };
+  }
+  
+  if (name.trim().length < 2) {
+    return { field: 'name', message: 'Name must be at least 2 characters' };
+  }
+  
+  if (name.trim().length > 100) {
+    return { field: 'name', message: 'Name must be less than 100 characters' };
+  }
+  
+  const nameRegex = /^[a-zA-Z\s\-']+$/;
+  if (!nameRegex.test(name.trim())) {
+    return { field: 'name', message: 'Name contains invalid characters' };
+  }
+  
+  return null;
+};
+
+/**
+ * Validate email
+ */
+export const validateEmail = (email: string): ValidationError | null => {
+  if (!email || typeof email !== 'string' || email.trim().length === 0) {
+    return { field: 'email', message: 'Email is required' };
+  }
+  
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(email.trim())) {
+    return { field: 'email', message: 'Invalid email format' };
+  }
+  
+  if (email.length > 254) {
+    return { field: 'email', message: 'Email is too long' };
+  }
+  
+  return null;
+};
+
+/**
+ * Validate phone
+ */
+export const validatePhone = (phone: string): ValidationError | null => {
+  if (!phone || typeof phone !== 'string') {
+    return null; // Phone is optional
+  }
+  
+  const digitsOnly = phone.replace(/\D/g, '');
+  
+  if (digitsOnly.length < 10 || digitsOnly.length > 15) {
+    return { field: 'phone', message: 'Invalid phone number length' };
+  }
+  
+  return null;
+};
+
+/**
+ * Validate bio
+ */
+export const validateBio = (bio: string): ValidationError | null => {
+  if (!bio || typeof bio !== 'string') {
+    return null; // Bio is optional
+  }
+  
+  if (bio.trim().length > 500) {
+    return { field: 'bio', message: 'Bio must be less than 500 characters' };
+  }
+  
+  return null;
+};
+
+/**
+ * Validate date of birth
+ */
+export const validateDateOfBirth = (dateOfBirth: string): ValidationError | null => {
+  if (!dateOfBirth || typeof dateOfBirth !== 'string') {
+    return null; // Optional
+  }
+  
+  const date = new Date(dateOfBirth);
+  
+  if (isNaN(date.getTime())) {
+    return { field: 'dateOfBirth', message: 'Invalid date format' };
+  }
+  
+  if (date > new Date()) {
+    return { field: 'dateOfBirth', message: 'Date cannot be in the future' };
+  }
+  
+  const minDate = new Date();
+  minDate.setFullYear(minDate.getFullYear() - 13);
+  if (date > minDate) {
+    return { field: 'dateOfBirth', message: 'Must be at least 13 years old' };
+  }
+  
+  return null;
+};
+
+/**
+ * Validate password
+ */
+export const validatePassword = (password: string): ValidationError | null => {
+  if (!password || typeof password !== 'string') {
+    return { field: 'password', message: 'Password is required' };
+  }
+  
+  if (password.length < 8) {
+    return { field: 'password', message: 'Password must be at least 8 characters' };
+  }
+  
+  if (password.length > 128) {
+    return { field: 'password', message: 'Password is too long' };
+  }
+  
+  if (!/[A-Z]/.test(password)) {
+    return { field: 'password', message: 'Password must contain uppercase letter' };
+  }
+  
+  if (!/[a-z]/.test(password)) {
+    return { field: 'password', message: 'Password must contain lowercase letter' };
+  }
+  
+  if (!/\d/.test(password)) {
+    return { field: 'password', message: 'Password must contain a number' };
+  }
+  
+  if (!/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)) {
+    return { field: 'password', message: 'Password must contain special character' };
+  }
+  
+  return null;
+};
+
+/**
+ * Validate profile update data
+ */
+export const validateProfileUpdate = (updates: any): ValidationResult => {
+  const errors: ValidationError[] = [];
+  
+  // Validate name if present
+  if (updates.name !== undefined) {
+    const nameError = validateName(updates.name);
+    if (nameError) errors.push(nameError);
+  }
+  
+  // Validate email if present
+  if (updates.email !== undefined) {
+    const emailError = validateEmail(updates.email);
+    if (emailError) errors.push(emailError);
+  }
+  
+  // Validate phone if present
+  if (updates.phone !== undefined && updates.phone !== null && updates.phone !== '') {
+    const phoneError = validatePhone(updates.phone);
+    if (phoneError) errors.push(phoneError);
+  }
+  
+  // Validate bio if present
+  if (updates.bio !== undefined && updates.bio !== null && updates.bio !== '') {
+    const bioError = validateBio(updates.bio);
+    if (bioError) errors.push(bioError);
+  }
+  
+  // Validate date of birth if present
+  if (updates.dateOfBirth !== undefined && updates.dateOfBirth !== null && updates.dateOfBirth !== '') {
+    const dobError = validateDateOfBirth(updates.dateOfBirth);
+    if (dobError) errors.push(dobError);
+  }
+  
+  // Validate emergency contact if present
+  if (updates.emergencyContact) {
+    const contact = updates.emergencyContact;
+    
+    // If any field is present, all should be present
+    const hasAny = contact.name || contact.phone || contact.relationship;
+    
+    if (hasAny) {
+      if (!contact.name || !contact.phone || !contact.relationship) {
+        errors.push({ 
+          field: 'emergencyContact', 
+          message: 'All emergency contact fields are required' 
+        });
+      } else {
+        const nameError = validateName(contact.name);
+        if (nameError) errors.push({ field: 'emergencyContactName', message: nameError.message });
+        
+        const phoneError = validatePhone(contact.phone);
+        if (phoneError) errors.push({ field: 'emergencyContactPhone', message: phoneError.message });
+      }
+    }
+  }
+  
+  return {
+    isValid: errors.length === 0,
+    errors
+  };
+};
+
+/**
+ * Sanitize profile update data
+ */
+export const sanitizeProfileUpdate = (updates: any): any => {
+  const sanitized: any = {};
+  
+  if (updates.name !== undefined) {
+    sanitized.name = sanitizeString(updates.name);
+  }
+  
+  if (updates.phone !== undefined) {
+    sanitized.phone = updates.phone ? sanitizeString(updates.phone) : null;
+  }
+  
+  if (updates.bio !== undefined) {
+    sanitized.bio = updates.bio ? sanitizeString(updates.bio) : null;
+  }
+  
+  if (updates.dateOfBirth !== undefined) {
+    sanitized.dateOfBirth = updates.dateOfBirth || null;
+  }
+  
+  if (updates.gender !== undefined) {
+    sanitized.gender = updates.gender ? sanitizeString(updates.gender) : null;
+  }
+  
+  if (updates.location !== undefined) {
+    sanitized.location = updates.location ? sanitizeString(updates.location) : null;
+  }
+  
+  if (updates.emergencyContact) {
+    sanitized.emergencyContactName = updates.emergencyContact.name ? sanitizeString(updates.emergencyContact.name) : null;
+    sanitized.emergencyContactPhone = updates.emergencyContact.phone ? sanitizeString(updates.emergencyContact.phone) : null;
+    sanitized.emergencyContactRelationship = updates.emergencyContact.relationship ? sanitizeString(updates.emergencyContact.relationship) : null;
+  }
+  
+  if (updates.preferences !== undefined) {
+    sanitized.preferences = updates.preferences;
+  }
+  
+  if (updates.avatar_url !== undefined) {
+    sanitized.avatar_url = updates.avatar_url;
+  }
+  
+  return sanitized;
+};
+
+/**
+ * Hash password using SHA-256 (simple hashing for demo)
+ * In production, use bcrypt or argon2
+ */
+export const hashPassword = async (password: string): Promise<string> => {
+  const encoder = new TextEncoder();
+  const data = encoder.encode(password);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+  return hashHex;
+};
+
+/**
+ * Verify password against hash
+ */
+export const verifyPassword = async (password: string, hash: string): Promise<boolean> => {
+  const passwordHash = await hashPassword(password);
+  return passwordHash === hash;
+};

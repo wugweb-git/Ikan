@@ -3,7 +3,6 @@
 // Import sample data from TypeScript files
 import { professionalsData } from './sample-data/professionals';
 import { usersData } from './sample-data/users';
-import { DUMMY_RESOURCES } from './dummy-resources';
 
 export const offlineDemoUser = usersData.users[0]; // Use the first user as demo user
 
@@ -19,16 +18,8 @@ export const offlineProfessionals = professionalsData.professionals.map(professi
   available: professional.available
 }));
 
-// Use resources directly (transform to match API format)
-export const offlineResources = DUMMY_RESOURCES.map(resource => ({
-  resource_id: resource.id,
-  title: resource.title,
-  description: resource.description,
-  category: resource.category,
-  content_type: resource.contentType,
-  read_time_minutes: resource.readTimeMinutes,
-  created_at: resource.publishedDate
-}));
+// Offline resources fallback (empty for now - will be populated from API cache)
+export const offlineResources = [];
 
 // Helper function to check if we're in offline mode
 export const isOfflineMode = () => {
@@ -65,6 +56,13 @@ export const getOfflineData = (type: string, id?: string) => {
         return resource ? { resource } : { resource: null };
       }
       return { resources: offlineResources };
+    case 'programs':
+      // Return empty array for equip programs when offline
+      // Tests can create programs dynamically
+      return { programs: [] };
+    case 'assessments':
+      // Return empty array for assessments when offline
+      return { assessments: [] };
     case 'profile':
       return { 
         profile: {
@@ -85,6 +83,7 @@ export const getOfflineData = (type: string, id?: string) => {
       };
     default:
       console.warn(`Unknown offline data type: ${type}`);
-      return {};
+      // Return empty array structure to prevent .filter errors
+      return { [type]: [] };
   }
 };

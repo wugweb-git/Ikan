@@ -51,11 +51,11 @@ export function AssessmentBlock({
   return (
     <ErrorBoundary>
       <section 
-        className={className}
+        className={`w-full ${className || ''}`}
         style={{
           backgroundColor: 'var(--color-bg-card)',
-          paddingTop: 'var(--spacing-8)',
-          paddingBottom: 'var(--spacing-8)'
+          paddingTop: 'clamp(var(--spacing-8), 6vw, var(--spacing-12))',
+          paddingBottom: 'clamp(var(--spacing-8), 6vw, var(--spacing-12))'
         }}
       >
         <div 

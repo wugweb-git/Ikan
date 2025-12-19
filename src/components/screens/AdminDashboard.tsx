@@ -21,16 +21,23 @@ import {
 } from 'lucide-react';
 import { Button } from '../ui/button';
 import { cn } from '../ui/utils';
+import { AdminUserManager } from './AdminUserManager';
+import { AdminConsultationManager } from './AdminConsultationManager';
+import { AdminResourceManager } from './AdminResourceManager';
 import { AdminAssessmentManager } from './AdminAssessmentManager';
 import { AdminEquipProgramManager } from './AdminEquipProgramManager';
 import { AdminPageManager } from './AdminPageManager';
-import { AdminUserManager } from './AdminUserManager';
+import { AdminMediaManager } from './AdminMediaManager';
+import { AdminSettingsManager } from './AdminSettingsManager';
+import { AdminDashboardAnalytics } from './AdminDashboardAnalytics';
 import { AdminCRUDTesting } from '../admin/AdminCRUDTesting';
 import { AdminDatabaseBrowser } from '../admin/AdminDatabaseBrowser';
 import { AdminAPILogs } from '../admin/AdminAPILogs';
 import { AdminSystemLogs } from '../admin/AdminSystemLogs';
 import { AdminPerformance } from '../admin/AdminPerformance';
 import { AdminCommunication } from '../admin/AdminCommunication';
+import { AdminCommunicationAPI } from '../admin/AdminCommunicationAPI';
+import { AdminPaymentGateway } from '../admin/AdminPaymentGateway';
 import { AdminSecurity } from '../admin/AdminSecurity';
 import { AdminPrototypeDemo } from '../admin/AdminPrototypeDemo';
 import { AdminSystemSitemap } from '../admin/AdminSystemSitemap';
@@ -38,9 +45,7 @@ import { AdminNavigationGuide } from '../admin/AdminNavigationGuide';
 import { AdminComponentSpecs } from '../admin/AdminComponentSpecs';
 import { AdminUIKitShowcase } from '../admin/AdminUIKitShowcase';
 import { AdminMigration } from '../admin/AdminMigration';
-
-import { AdminConsultationManager } from './AdminConsultationManager';
-import { AdminResourceManager } from './AdminResourceManager';
+import { AdminDebugPanel } from '../admin/AdminDebugPanel';
 
 interface AdminDashboardProps {
   onNavigate: (path: string) => void;
@@ -48,12 +53,15 @@ interface AdminDashboardProps {
 
 type ViewType = 
   | 'dashboard'
+  | 'analytics'
   | 'users'
   | 'consultants'
   | 'resources'
   | 'assessments'
   | 'equip'
   | 'pages'
+  | 'media'
+  | 'settings'
   | 'crud'
   | 'migration'
   | 'db-browser'
@@ -61,6 +69,8 @@ type ViewType =
   | 'system-logs'
   | 'performance'
   | 'communication'
+  | 'communication-api'
+  | 'payment-gateway'
   | 'security'
   | 'prototype'
   | 'sitemap'
@@ -76,12 +86,15 @@ export function AdminDashboard({ onNavigate }: AdminDashboardProps) {
       section: 'Main',
       items: [
         { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
+        { id: 'analytics', label: 'Analytics', icon: BarChart },
         { id: 'users', label: 'User Manager', icon: Settings },
         { id: 'consultants', label: 'Consultant Manager', icon: ClipboardList },
         { id: 'resources', label: 'Resource Manager', icon: Table },
         { id: 'assessments', label: 'Assessments', icon: ClipboardList },
         { id: 'equip', label: 'Equip Programs', icon: BookOpen },
         { id: 'pages', label: 'Pages', icon: FileJson },
+        { id: 'media', label: 'Media', icon: FileJson },
+        { id: 'settings', label: 'Settings Manager', icon: Settings },
       ]
     },
     {
@@ -100,6 +113,13 @@ export function AdminDashboard({ onNavigate }: AdminDashboardProps) {
       items: [
         { id: 'communication', label: 'Communication', icon: MessageSquare },
         { id: 'security', label: 'Security', icon: Shield },
+      ]
+    },
+    {
+      section: 'API Integration',
+      items: [
+        { id: 'communication-api', label: 'Communication API', icon: MessageSquare },
+        { id: 'payment-gateway', label: 'Payment Gateway', icon: Settings },
       ]
     },
     {
@@ -123,6 +143,10 @@ export function AdminDashboard({ onNavigate }: AdminDashboardProps) {
               <h2 className="text-3xl font-bold tracking-tight">Admin Dashboard</h2>
               <p className="text-muted-foreground">Welcome to the iKan system administration panel.</p>
             </div>
+            
+            {/* Debug Panel */}
+            <AdminDebugPanel />
+            
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
               <div 
                 className="p-6 bg-white border rounded-xl hover:shadow-md transition-shadow cursor-pointer"
@@ -171,12 +195,15 @@ export function AdminDashboard({ onNavigate }: AdminDashboardProps) {
             </div>
           </div>
         );
+      case 'analytics': return <AdminDashboardAnalytics onBack={() => setCurrentView('dashboard')} />;
       case 'users': return <AdminUserManager onBack={() => setCurrentView('dashboard')} />;
       case 'consultants': return <AdminConsultationManager onBack={() => setCurrentView('dashboard')} />;
       case 'resources': return <AdminResourceManager onBack={() => setCurrentView('dashboard')} />;
       case 'assessments': return <AdminAssessmentManager onBack={() => setCurrentView('dashboard')} />;
       case 'equip': return <AdminEquipProgramManager onBack={() => setCurrentView('dashboard')} />;
       case 'pages': return <AdminPageManager onBack={() => setCurrentView('dashboard')} />;
+      case 'media': return <AdminMediaManager onBack={() => setCurrentView('dashboard')} />;
+      case 'settings': return <AdminSettingsManager onBack={() => setCurrentView('dashboard')} />;
       case 'crud': return <AdminCRUDTesting />;
       case 'migration': return <AdminMigration />;
       case 'db-browser': return <AdminDatabaseBrowser />;
@@ -184,6 +211,8 @@ export function AdminDashboard({ onNavigate }: AdminDashboardProps) {
       case 'system-logs': return <AdminSystemLogs />;
       case 'performance': return <AdminPerformance />;
       case 'communication': return <AdminCommunication />;
+      case 'communication-api': return <AdminCommunicationAPI />;
+      case 'payment-gateway': return <AdminPaymentGateway />;
       case 'security': return <AdminSecurity />;
       case 'prototype': return <AdminPrototypeDemo />;
       case 'sitemap': return <AdminSystemSitemap />;

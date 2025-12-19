@@ -1,16 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
-import { Badge } from '../ui/badge';
 import { Button } from '../ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '../ui/dialog';
-import { EquipFlow } from '../EquipFlow';
+import { Badge } from '../ui/badge';
 import { Icon } from '../Icon';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNotifications } from '../../contexts/NotificationContext';
 import { usePayment } from '../../contexts/PaymentContext';
 import { cn } from '../ui/utils';
 import { apiClient } from '../../lib/api-client';
-import { equipProgramsData } from '../../lib/sample-data/equip-programs';
 import { projectId, publicAnonKey } from '../../utils/supabase/info';
 import svgPaths from "../../imports/svg-ta5wpcle0i";
 import figmaCardSvgPaths from "../../imports/svg-1uue509bxb";
@@ -81,26 +78,30 @@ export function EquipPrograms({ className, onNavigate }: EquipProgramsProps) {
     const loadPrograms = async () => {
       try {
         setIsLoading(true);
-        // 1. Initial load from local data
-        const localPrograms = equipProgramsData.equip_programs;
-
-        // 2. Fetch from API
+        
+        // Fetch from API
         let apiPrograms: EquipProgram[] = [];
         try {
             const response = await apiClient.getEquipPrograms();
-            if (response && response.programs) {
-                apiPrograms = response.programs;
+            // getEquipPrograms() already returns the array directly
+            if (response && Array.isArray(response)) {
+                apiPrograms = response;
             }
         } catch (error) {
             console.warn('Failed to fetch API programs', error);
         }
 
-        // 3. Merge: Local takes precedence (to ensure copy matches design)
-        // We put API programs first, then Local programs, so Local overrides API in the Map
-        const allPrograms = [...apiPrograms, ...localPrograms as EquipProgram[]];
-        const uniquePrograms = Array.from(new Map(allPrograms.map(p => [p.id || p.equip_id, p])).values());
+        // Remove duplicates
+        const uniquePrograms = Array.from(new Map(apiPrograms.map(p => {
+            // Ensure ID is set
+            const programWithId = { 
+                ...p, 
+                id: p.id || p.equip_id 
+            };
+            return [programWithId.id, programWithId];
+        })).values());
 
-        setPrograms(uniquePrograms);
+        setPrograms(uniquePrograms as EquipProgram[]);
 
         // Load purchased programs
         if (user?.id) {
@@ -113,8 +114,8 @@ export function EquipPrograms({ className, onNavigate }: EquipProgramsProps) {
         }
       } catch (error) {
         console.error('Error loading programs:', error);
-        showToast('error', 'Failed to load programs', 'Using offline data');
-        setPrograms(equipProgramsData.equip_programs);
+        showToast('error', 'Failed to load programs', 'Please try again later');
+        setPrograms([]);
       } finally {
         setIsLoading(false);
       }

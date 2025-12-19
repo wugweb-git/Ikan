@@ -5,8 +5,9 @@ import { Button } from '../ui/button';
 import { Calendar } from '../ui/calendar';
 import { Icon } from '../Icon';
 import { TextArea } from '../inputs/TextArea';
-import { useNotifications } from '../../contexts/NotificationContext';
+import { apiClient } from '../../lib/api-client';
 import { useAuth } from '../../contexts/AuthContext';
+import { useNotifications } from '../../contexts/NotificationContext';
 import { useIsMobile } from '../../hooks/useIsMobile';
 import { cn } from '../ui/utils';
 
@@ -48,45 +49,59 @@ export function MoodJournal() {
   const [showCelebration, setShowCelebration] = useState(false);
   const [selectedMoodAnimation, setSelectedMoodAnimation] = useState<number | null>(null);
   const [selectedTime, setSelectedTime] = useState<string>('9:30 PM');
+  const [loading, setLoading] = useState(true);
 
-  // Load sample entries for demo - generate entries for the past 30 days
+  // Helper to parse API entry to local format
+  const parseEntry = (apiEntry: any): MoodEntry => {
+    let note = apiEntry.freehand_text_content || '';
+    let emotions: string[] = [];
+    let energy = 3;
+
+    // Try to parse metadata stored in note
+    const separator = '\n\n:::METADATA:::';
+    if (note.includes(separator)) {
+      const parts = note.split(separator);
+      note = parts[0];
+      try {
+        const metadata = JSON.parse(parts[1]);
+        if (metadata.emotions) emotions = metadata.emotions;
+        if (metadata.energy) energy = metadata.energy;
+      } catch (e) {
+        console.warn('Failed to parse mood metadata', e);
+      }
+    }
+
+    return {
+      id: apiEntry.journal_entry_id || apiEntry.id,
+      date: apiEntry.date,
+      mood: apiEntry.mood_rating || 3,
+      note: note,
+      emotions: emotions,
+      energy: energy
+    };
+  };
+
+  // Load entries from API
   useEffect(() => {
-    const sampleEntries: MoodEntry[] = [];
-    const today = new Date();
-    
-    // Generate sample entries for the past 30 days (not every day)
-    const sampleDates = [
-      { daysAgo: 0, mood: 4, note: 'Had a great therapy session today. Feeling more hopeful about things.', emotions: ['Happy', 'Grateful', 'Calm'], energy: 4 },
-      { daysAgo: 1, mood: 3, note: 'Work was challenging but manageable. Taking it one day at a time.', emotions: ['Calm', 'Focused'], energy: 3 },
-      { daysAgo: 3, mood: 2, note: 'Struggling with work stress. Need to practice more self-care.', emotions: ['Stressed', 'Tired', 'Frustrated'], energy: 2 },
-      { daysAgo: 5, mood: 5, note: 'Amazing weekend with friends! Feeling so grateful for the people in my life.', emotions: ['Happy', 'Grateful', 'Excited'], energy: 5 },
-      { daysAgo: 7, mood: 3, note: 'Average day. Did some meditation which helped center me.', emotions: ['Calm', 'Peaceful'], energy: 3 },
-      { daysAgo: 10, mood: 1, note: 'Really tough day. Everything felt overwhelming. Reached out to my therapist.', emotions: ['Sad', 'Anxious', 'Lonely'], energy: 1 },
-      { daysAgo: 12, mood: 4, note: 'Went for a long walk in nature. Fresh air always helps my mood.', emotions: ['Peaceful', 'Grateful', 'Calm'], energy: 4 },
-      { daysAgo: 15, mood: 3, note: 'Routine day at work. Practiced some breathing exercises during breaks.', emotions: ['Calm', 'Focused'], energy: 3 },
-      { daysAgo: 18, mood: 2, note: 'Feeling a bit down today. Weather is gloomy and it\'s affecting my energy.', emotions: ['Sad', 'Tired'], energy: 2 },
-      { daysAgo: 20, mood: 4, note: 'Good progress in therapy today. Learning new coping strategies.', emotions: ['Hopeful', 'Grateful', 'Confident'], energy: 4 },
-      { daysAgo: 22, mood: 5, note: 'Celebrated a small win at work today! Feeling proud of my progress.', emotions: ['Happy', 'Proud', 'Confident'], energy: 5 },
-      { daysAgo: 25, mood: 3, note: 'Steady day. Practiced mindfulness and it helped keep me grounded.', emotions: ['Calm', 'Peaceful'], energy: 3 },
-      { daysAgo: 28, mood: 2, note: 'Had an argument with a friend. Feeling upset but trying to process it healthily.', emotions: ['Frustrated', 'Sad'], energy: 2 },
-    ];
-
-    sampleDates.forEach((sample, index) => {
-      const entryDate = new Date(today);
-      entryDate.setDate(today.getDate() - sample.daysAgo);
+    const fetchEntries = async () => {
+      if (!user) return;
       
-      sampleEntries.push({
-        id: (index + 1).toString(),
-        date: entryDate.toISOString().split('T')[0],
-        mood: sample.mood,
-        note: sample.note,
-        emotions: sample.emotions,
-        energy: sample.energy
-      });
-    });
+      try {
+        setLoading(true);
+        const response = await apiClient.getJournalEntries(undefined, undefined, 50);
+        const apiEntries = response?.entries || [];
+        const formattedEntries = apiEntries.map(parseEntry);
+        setEntries(formattedEntries);
+      } catch (error) {
+        console.error('Failed to load journal entries:', error);
+        showToast('error', 'Failed to load entries', 'Could not fetch your mood history.');
+      } finally {
+        setLoading(false);
+      }
+    };
 
-    setEntries(sampleEntries);
-  }, []);
+    fetchEntries();
+  }, [user]);
 
   // When switching to add mode, set selected date to today
   useEffect(() => {
@@ -103,20 +118,56 @@ export function MoodJournal() {
     );
   };
 
-  // Calculate streak count
+  // Calculate streak count based on real data
   const calculateStreak = (entries: MoodEntry[]) => {
-    const sortedEntries = entries.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    if (entries.length === 0) return 0;
+
+    // Sort entries by date descending
+    const sortedEntries = [...entries].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    
+    // Get unique dates
+    const uniqueDates = Array.from(new Set(sortedEntries.map(e => e.date)));
+    
     let streak = 0;
     const today = new Date();
+    const todayStr = today.toISOString().split('T')[0];
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+    const yesterdayStr = yesterday.toISOString().split('T')[0];
     
-    for (let i = 0; i < sortedEntries.length; i++) {
-      const entryDate = new Date(sortedEntries[i].date);
-      const daysDiff = Math.floor((today.getTime() - entryDate.getTime()) / (1000 * 60 * 60 * 24));
+    // Check if streak is active (has entry today or yesterday)
+    if (!uniqueDates.includes(todayStr) && !uniqueDates.includes(yesterdayStr)) {
+      return 0;
+    }
+
+    // Calculate streak
+    let currentDate = new Date(uniqueDates[0]); // Start with most recent entry
+    // If most recent is today, start counting. If it's yesterday, start counting.
+    // If it's older, streak is broken (which we covered above, but let's be safe)
+    
+    // Normalize to midnight for comparison
+    const normalizeDate = (d: Date) => new Date(d.toISOString().split('T')[0]);
+    
+    // Iterate and check continuity
+    for (let i = 0; i < uniqueDates.length; i++) {
+      const entryDate = new Date(uniqueDates[i]);
+      const expectedDate = new Date(currentDate);
+      if (i > 0) expectedDate.setDate(expectedDate.getDate() - 1); // Expect previous day
       
-      if (daysDiff === streak) {
+      const diff = Math.abs(normalizeDate(currentDate).getTime() - normalizeDate(entryDate).getTime());
+      
+      // Allow for today/yesterday start, then strict consecutive days
+      if (i === 0) {
         streak++;
+        currentDate = entryDate;
       } else {
-        break;
+         const oneDay = 24 * 60 * 60 * 1000;
+         if (diff <= oneDay) {
+           streak++;
+           currentDate = entryDate;
+         } else {
+           break;
+         }
       }
     }
     
@@ -126,7 +177,8 @@ export function MoodJournal() {
   // Update streak count when entries change
   useEffect(() => {
     const currentStreak = calculateStreak(entries);
-    if (currentStreak > streakCount && currentStreak >= 3) {
+    // Only show celebration if streak increased and is substantial
+    if (currentStreak > streakCount && currentStreak >= 3 && streakCount !== 0) {
       setShowCelebration(true);
       setTimeout(() => setShowCelebration(false), 3000);
     }
@@ -134,6 +186,8 @@ export function MoodJournal() {
   }, [entries]);
 
   const handleSubmitEntry = async () => {
+    if (!user) return;
+
     const noteText = currentNote || '';
     if (!noteText.trim()) {
       showToast('warning', 'Please add a note', 'A brief note helps track your mood patterns.');
@@ -143,34 +197,40 @@ export function MoodJournal() {
     setIsSubmitting(true);
     
     try {
+      const dateStr = selectedDate.toISOString().split('T')[0];
+      
+      // Pack metadata into content
+      const metadata = { emotions: selectedEmotions, energy: currentEnergy };
+      const contentWithMetadata = `${noteText.trim()}\n\n:::METADATA:::${JSON.stringify(metadata)}`;
+
+      await apiClient.createJournalEntry(dateStr, currentMood, contentWithMetadata);
+
+      // Construct local entry to update state immediately
       const newEntry: MoodEntry = {
-        id: Date.now().toString(),
-        date: selectedDate.toISOString().split('T')[0],
+        id: `${user.id}-${dateStr}`,
+        date: dateStr,
         mood: currentMood,
         note: noteText.trim(),
         emotions: selectedEmotions,
         energy: currentEnergy
       };
 
-      // In demo mode, just add to local state
-      setEntries(prev => [newEntry, ...prev]);
+      // Update local state: remove existing entry for this date if any, then add new one
+      setEntries(prev => {
+        const filtered = prev.filter(e => e.date !== dateStr);
+        return [newEntry, ...filtered];
+      });
       
-      // Reset form
+      // Reset form defaults
       setCurrentMood(3);
       setCurrentNote('');
       setSelectedEmotions([]);
       setCurrentEnergy(3);
 
-      const newStreak = calculateStreak([newEntry, ...entries]);
-      if (newStreak > streakCount && newStreak >= 3) {
-        showToast('success', `${newStreak} day streak! 🎉`, 'Great job staying consistent with your mood tracking!');
-      } else {
-        showToast('success', 'Mood logged!', 'Your daily mood entry has been saved.');
-      }
+      showToast('success', 'Mood logged!', 'Your daily mood entry has been saved.');
       
-      // Switch back to calendar view and select today
+      // Switch back to calendar view
       setViewMode('calendar');
-      setSelectedDate(new Date());
     } catch (error) {
       console.error('Error saving mood entry:', error);
       showToast('error', 'Failed to save', 'Please try again.');
@@ -262,6 +322,17 @@ export function MoodJournal() {
   const isSelectedDate = (date: Date) => {
     return date.toDateString() === selectedDate.toDateString();
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen w-full flex items-center justify-center bg-[var(--color-bg-page)]">
+        <div className="flex flex-col items-center gap-4">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+          <p className="text-muted-foreground">Loading journal...</p>
+        </div>
+      </div>
+    );
+  }
 
   if (viewMode === 'add') {
     return (
@@ -615,11 +686,10 @@ export function MoodJournal() {
     <div 
       className="space-y-6 w-full relative"
       style={{
-        maxWidth: 'var(--constraint-content-max)',
+        maxWidth: '1000px', // Reduced from constraint-content-max for tighter layout
         margin: '0 auto',
         // Mobile-first spacing
         padding: 'var(--spacing-4)',
-        gap: 'var(--spacing-6)'
       }}
     >
       {/* Celebration Animation */}
@@ -659,7 +729,7 @@ export function MoodJournal() {
           className="flex items-center justify-center gap-3"
           style={{ 
             fontSize: 'var(--text-2xl)', 
-            fontWeight: 'var(--font-weight-semibold)',
+            fontWeight: 'var(--font-weight-medium)',
             color: 'var(--color-text-primary)'
           }}
           whileHover={{ scale: 1.02 }}
@@ -787,212 +857,235 @@ export function MoodJournal() {
       </motion.div>
 
       {viewMode === 'calendar' ? (
-        <>
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-start">
           {/* Calendar View */}
-          <Card 
-            className="motion-safe:animate-fade-in motion-reduce:animate-none"
-            style={{
-              borderRadius: 'var(--radius-lg)',
-              backgroundColor: 'var(--color-bg-card)',
-              border: '1px solid var(--color-border-default)',
-            }}
-          >
-            <CardHeader>
-              <CardTitle 
-                className="flex items-center gap-2"
-                style={{ 
-                  fontSize: 'var(--text-lg)',
-                  color: 'var(--color-text-primary)'
-                }}
-              >
-                <Icon name="calendar" size={20} />
-                Select a Date
-              </CardTitle>
-            </CardHeader>
-            <CardContent 
+          <div className="md:col-span-5 lg:col-span-4">
+            <Card 
+              className="motion-safe:animate-fade-in motion-reduce:animate-none h-full"
               style={{
-                padding: 'var(--spacing-4)',
+                borderRadius: 'var(--radius-lg)',
+                backgroundColor: 'var(--color-bg-card)',
+                border: '1px solid var(--color-border-default)',
               }}
             >
-              <div className="flex justify-center">
-                <Calendar
-                  mode="single"
-                  selected={selectedDate}
-                  onSelect={(date) => date && setSelectedDate(date)}
-                  modifiers={{
-                    hasEntry: getDatesWithEntries()
+              <CardHeader className="pb-2">
+                <CardTitle 
+                  className="flex items-center gap-2"
+                  style={{ 
+                    fontSize: 'var(--text-lg)',
+                    color: 'var(--color-text-primary)'
                   }}
-                  modifiersStyles={{
-                    hasEntry: {
-                      backgroundColor: 'var(--color-primary-default)',
-                      color: 'var(--color-primary-on)',
-                      borderRadius: 'var(--radius-sm)'
-                    }
-                  }}
-                  className="rounded-md border-0"
-                />
-              </div>
-            </CardContent>
-          </Card>
+                >
+                  <Icon name="calendar" size={20} />
+                  Select Date
+                </CardTitle>
+              </CardHeader>
+              <CardContent 
+                style={{
+                  padding: 'var(--spacing-4)',
+                }}
+              >
+                <div className="flex justify-center">
+                  <Calendar
+                    mode="single"
+                    selected={selectedDate}
+                    onSelect={(date) => date && setSelectedDate(date)}
+                    modifiers={{
+                      hasEntry: getDatesWithEntries()
+                    }}
+                    modifiersStyles={{
+                      hasEntry: {
+                        backgroundColor: 'var(--color-primary-default)',
+                        color: 'var(--color-primary-on)',
+                        borderRadius: 'var(--radius-sm)'
+                      }
+                    }}
+                    className="rounded-md border-0 p-0"
+                  />
+                </div>
+              </CardContent>
+            </Card>
+          </div>
 
           {/* Selected Date Entries */}
-          <Card 
-            className="motion-safe:animate-fade-in motion-reduce:animate-none"
-            style={{
-              borderRadius: 'var(--radius-lg)',
-              backgroundColor: 'var(--color-bg-card)',
-              border: '1px solid var(--color-border-default)',
-            }}
-          >
-            <CardHeader>
-              <CardTitle 
-                className="flex items-center justify-between"
-                style={{ 
-                  fontSize: 'var(--text-lg)',
-                  color: 'var(--color-text-primary)'
-                }}
-              >
-                <span>{formatDateForDisplay(selectedDate)}</span>
-                {isToday(selectedDate) && (
-                  <Button
-                    onClick={() => setViewMode('add')}
-                    size="sm"
-                    className="gap-2"
-                    style={{
-                      backgroundColor: 'var(--color-primary-default)',
-                      color: 'var(--color-primary-on)',
-                      height: 'var(--ikan-component-button-height)',
-                      borderRadius: 'var(--ikan-component-border-radius)'
-                    }}
-                  >
-                    <Icon name="plus" size={14} />
-                    Add Entry
-                  </Button>
-                )}
-              </CardTitle>
-            </CardHeader>
-            <CardContent 
+          <div className="md:col-span-7 lg:col-span-8">
+            <Card 
+              className="motion-safe:animate-fade-in motion-reduce:animate-none min-h-[400px]"
               style={{
-                padding: 'var(--spacing-4)',
+                borderRadius: 'var(--radius-lg)',
+                backgroundColor: 'var(--color-bg-card)',
+                border: '1px solid var(--color-border-default)',
               }}
             >
-              {(() => {
-                const dayEntries = getEntriesForDate(selectedDate);
-                
-                if (dayEntries.length === 0) {
-                  return (
-                    <div className="text-center py-8 space-y-3">
-                      <Icon 
-                        name="calendar-x" 
-                        size={48} 
-                        style={{ color: 'var(--color-text-muted)', margin: '0 auto' }} 
-                      />
-                      <p style={{ color: 'var(--color-text-muted)' }}>
-                        No entries for this date
-                      </p>
-                      {isToday(selectedDate) && (
-                        <Button
-                          onClick={() => setViewMode('add')}
-                          className="gap-2"
-                          style={{
-                            backgroundColor: 'var(--color-primary-default)',
-                            color: 'var(--color-primary-on)',
-                            borderRadius: 'var(--ikan-component-border-radius)'
-                          }}
-                        >
-                          <Icon name="plus" size={16} />
-                          Add Today's Entry
-                        </Button>
-                      )}
-                    </div>
-                  );
-                }
-
-                return (
-                  <div className="space-y-4">
-                    {dayEntries.map((entry, index) => (
-                      <motion.div 
-                        key={entry.id}
-                        className="p-4 rounded-lg border"
-                        style={{ 
-                          backgroundColor: 'var(--color-bg-muted)',
-                          borderColor: 'var(--color-border-default)'
-                        }}
-                        initial={{ opacity: 0, y: 20, scale: 0.95 }}
-                        animate={{ opacity: 1, y: 0, scale: 1 }}
-                        transition={{ 
-                          duration: 0.3, 
-                          delay: index * 0.1,
-                          type: "spring",
-                          stiffness: 300,
-                          damping: 25
-                        }}
-                        whileHover={{ 
-                          scale: 1.02,
-                          boxShadow: 'var(--shadow-md)',
-                          transition: { duration: 0.2 }
-                        }}
-                      >
-                        <div className="space-y-3">
-                          <div className="flex items-center gap-4 flex-wrap">
-                            <div 
-                              className="flex items-center gap-2 px-3 py-1 rounded-full"
-                              style={{ 
-                                backgroundColor: getMoodColor(entry.mood) + '20',
-                                color: getMoodColor(entry.mood)
-                              }}
-                            >
-                              <span style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--font-weight-medium)' }}>
-                                {getMoodLabel(entry.mood)}
-                              </span>
-                            </div>
-                            <div 
-                              className="flex items-center gap-1"
-                              style={{ color: 'var(--color-text-muted)' }}
-                            >
-                              <Icon name="zap" size={14} />
-                              <span style={{ fontSize: 'var(--text-sm)' }}>
-                                Energy: {entry.energy}/5
-                              </span>
-                            </div>
-                          </div>
-                          
-                          {entry.emotions.length > 0 && (
-                            <div className="flex flex-wrap gap-1">
-                              {entry.emotions.map((emotion) => (
-                                <span
-                                  key={emotion}
-                                  className="px-2 py-1 rounded-full"
-                                  style={{
-                                    backgroundColor: 'var(--color-bg-card)',
-                                    color: 'var(--color-text-muted)',
-                                    fontSize: 'var(--text-xs)'
-                                  }}
-                                >
-                                  {emotion}
-                                </span>
-                              ))}
-                            </div>
-                          )}
-                          
-                          <p 
-                            style={{ 
-                              fontSize: 'var(--text-sm)',
-                              color: 'var(--color-text-primary)',
-                              lineHeight: 'var(--line-height-md)'
-                            }}
-                          >
-                            {entry.note}
+              <CardHeader>
+                <CardTitle 
+                  className="flex items-center justify-between"
+                  style={{ 
+                    fontSize: 'var(--text-lg)',
+                    color: 'var(--color-text-primary)'
+                  }}
+                >
+                  <span>{formatDateForDisplay(selectedDate)}</span>
+                  {isToday(selectedDate) && (
+                    <Button
+                      onClick={() => setViewMode('add')}
+                      size="sm"
+                      className="gap-2"
+                      style={{
+                        backgroundColor: 'var(--color-primary-default)',
+                        color: 'var(--color-primary-on)',
+                        height: 'var(--ikan-component-button-height)',
+                        borderRadius: 'var(--ikan-component-border-radius)'
+                      }}
+                    >
+                      <Icon name="plus" size={14} />
+                      Add Entry
+                    </Button>
+                  )}
+                </CardTitle>
+              </CardHeader>
+              <CardContent 
+                style={{
+                  padding: 'var(--spacing-4)',
+                }}
+              >
+                {(() => {
+                  const dayEntries = getEntriesForDate(selectedDate);
+                  
+                  if (dayEntries.length === 0) {
+                    return (
+                      <div className="text-center py-12 space-y-4">
+                        <div className="w-16 h-16 rounded-full bg-gray-50 flex items-center justify-center mx-auto">
+                          <Icon 
+                            name="calendar-x" 
+                            size={32} 
+                            style={{ color: 'var(--color-text-muted)' }} 
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <p style={{ color: 'var(--color-text-primary)', fontWeight: 'var(--font-weight-medium)' }}>
+                            No entries for this date
+                          </p>
+                          <p style={{ color: 'var(--color-text-muted)', fontSize: 'var(--text-sm)' }}>
+                            Your mood history for this day will appear here
                           </p>
                         </div>
-                      </motion.div>
-                    ))}
-                  </div>
-                );
-              })()}
-            </CardContent>
-          </Card>
-        </>
+                        {isToday(selectedDate) && (
+                          <div className="pt-2">
+                            <Button
+                              onClick={() => setViewMode('add')}
+                              className="gap-2"
+                              style={{
+                                backgroundColor: 'var(--color-primary-default)',
+                                color: 'var(--color-primary-on)',
+                                borderRadius: 'var(--ikan-component-border-radius)'
+                              }}
+                            >
+                              <Icon name="plus" size={16} />
+                              Log Mood
+                            </Button>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  }
+
+                  return (
+                    <div className="space-y-4">
+                      {dayEntries.map((entry, index) => (
+                        <motion.div 
+                          key={entry.id}
+                          className="p-4 rounded-lg border"
+                          style={{ 
+                            backgroundColor: 'var(--color-bg-muted)',
+                            borderColor: 'var(--color-border-default)'
+                          }}
+                          initial={{ opacity: 0, y: 20, scale: 0.95 }}
+                          animate={{ opacity: 1, y: 0, scale: 1 }}
+                          transition={{ 
+                            duration: 0.3, 
+                            delay: index * 0.1,
+                            type: "spring",
+                            stiffness: 300,
+                            damping: 25
+                          }}
+                          whileHover={{ 
+                            scale: 1.01,
+                            transition: { duration: 0.2 }
+                          }}
+                        >
+                          <div className="space-y-3">
+                            <div className="flex items-center justify-between flex-wrap gap-2">
+                              <div className="flex items-center gap-3">
+                                <div 
+                                  className="flex items-center gap-2 px-3 py-1.5 rounded-full"
+                                  style={{ 
+                                    backgroundColor: getMoodColor(entry.mood) + '20',
+                                    color: getMoodColor(entry.mood)
+                                  }}
+                                >
+                                  <span className="text-xl leading-none">{moodLabels.find(m => m.value === entry.mood)?.emoji}</span>
+                                  <span style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--font-weight-medium)' }}>
+                                    {moodLabels.find(m => m.value === entry.mood)?.label}
+                                  </span>
+                                </div>
+                                <div 
+                                  className="flex items-center gap-1.5 px-2 py-1 rounded-md"
+                                  style={{ backgroundColor: 'var(--color-bg-card)', border: '1px solid var(--color-border-light)' }}
+                                >
+                                  <Icon name="zap" size={12} className="text-yellow-500" />
+                                  <span style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}>
+                                    Energy: {entry.energy}/5
+                                  </span>
+                                </div>
+                              </div>
+                              <span style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}>
+                                {new Date(entry.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                              </span>
+                            </div>
+                            
+                            {entry.emotions.length > 0 && (
+                              <div className="flex flex-wrap gap-1.5">
+                                {entry.emotions.map((emotion) => (
+                                  <span
+                                    key={emotion}
+                                    className="px-2 py-0.5 rounded-full border"
+                                    style={{
+                                      backgroundColor: 'var(--color-bg-card)',
+                                      borderColor: 'var(--color-border-light)',
+                                      color: 'var(--color-text-secondary)',
+                                      fontSize: 'var(--text-xs)'
+                                    }}
+                                  >
+                                    {emotion}
+                                  </span>
+                                ))}
+                              </div>
+                            )}
+                            
+                            {entry.note && (
+                              <div className="pt-1">
+                                <p 
+                                  style={{ 
+                                    fontSize: 'var(--text-sm)',
+                                    color: 'var(--color-text-primary)',
+                                    lineHeight: '1.5'
+                                  }}
+                                >
+                                  {entry.note}
+                                </p>
+                              </div>
+                            )}
+                          </div>
+                        </motion.div>
+                      ))}
+                    </div>
+                  );
+                })()}
+              </CardContent>
+            </Card>
+          </div>
+        </div>
       ) : (
         /* Add Entry Form */
         <Card 

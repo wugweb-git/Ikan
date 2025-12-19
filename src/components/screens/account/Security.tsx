@@ -8,6 +8,10 @@ import { useNotifications } from '../../../contexts/NotificationContext';
 import { useAuth } from '../../../contexts/AuthContext';
 import { useIsMobile } from '../../../hooks/useIsMobile';
 import { cn } from '../../ui/utils';
+import { apiClient } from '../../../lib/api-client';
+import { validatePassword, isCommonPassword } from '../../../lib/validation';
+import { PasswordStrength } from '../../ui/password-strength';
+import { ToggleSwitch } from '../../ui/toggle-switch';
 
 interface LoginSession {
   id: string;
@@ -84,15 +88,27 @@ export function Security() {
       return;
     }
     
-    if (passwordForm.newPassword.length < 8) {
-      showToast('error', 'Error', 'Password must be at least 8 characters');
+    if (!validatePassword(passwordForm.newPassword)) {
+      showToast('error', 'Error', 'Password must be at least 8 characters and include a mix of letters, numbers, and symbols');
+      return;
+    }
+    
+    if (isCommonPassword(passwordForm.newPassword)) {
+      showToast('error', 'Error', 'Password is too common. Please choose a stronger password');
       return;
     }
     
     // In real app, this would call an API
-    showToast('success', 'Password Changed', 'Your password has been updated successfully');
-    setShowPasswordChange(false);
-    setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
+    apiClient.post('/account/change-password', {
+      currentPassword: passwordForm.currentPassword,
+      newPassword: passwordForm.newPassword
+    }).then(() => {
+      showToast('success', 'Password Changed', 'Your password has been updated successfully');
+      setShowPasswordChange(false);
+      setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
+    }).catch((error) => {
+      showToast('error', 'Error', error.response?.data?.message || 'Failed to change password');
+    });
   };
 
   const handleEnable2FA = () => {
@@ -122,36 +138,6 @@ export function Security() {
     if (diffMins < 1440) return `${Math.floor(diffMins / 60)} hours ago`;
     return `${Math.floor(diffMins / 1440)} days ago`;
   };
-
-  const ToggleSwitch = ({ enabled, onChange }: { enabled: boolean; onChange: () => void }) => (
-    <button
-      onClick={onChange}
-      className="relative inline-flex items-center cursor-pointer"
-      style={{
-        width: '44px',
-        height: '24px',
-        borderRadius: '12px',
-        backgroundColor: enabled ? 'var(--color-primary-default)' : 'var(--color-bg-muted)',
-        transition: 'background-color 0.2s ease',
-        border: 'none',
-        padding: '0'
-      }}
-      aria-label={enabled ? 'Enabled' : 'Disabled'}
-    >
-      <span
-        style={{
-          position: 'absolute',
-          left: enabled ? '22px' : '2px',
-          width: '20px',
-          height: '20px',
-          borderRadius: '50%',
-          backgroundColor: 'white',
-          transition: 'left 0.2s ease',
-          boxShadow: '0 1px 3px rgba(0, 0, 0, 0.2)'
-        }}
-      />
-    </button>
-  );
 
   return (
     <div className="space-y-6">
@@ -281,6 +267,7 @@ export function Security() {
                     color: 'var(--color-text-primary)'
                   }}
                 />
+                <PasswordStrength password={passwordForm.newPassword} />
               </div>
 
               <div>

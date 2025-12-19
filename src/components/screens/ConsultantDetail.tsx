@@ -27,9 +27,50 @@ import { Textarea } from '../ui/textarea';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { apiClient } from '../../lib/api-client';
-import { type Consultant, type ConsultantAvailability } from '../../lib/sample-data/consultants';
 import { useIsMobile } from '../../hooks/useIsMobile';
 import { toast } from 'sonner';
+
+// Define types locally
+export interface ConsultantAvailability {
+  date: string;
+  slots: {
+    time: string;
+    available: boolean;
+  }[];
+}
+
+export interface Consultant {
+  id: string;
+  name: string;
+  credentials: string;
+  category: 'therapist' | 'psychiatrist' | 'counselor' | 'family-therapist';
+  photo: string;
+  yearsExperience: number;
+  languages: string[];
+  location: string;
+  sessionModes: ('online' | 'offline' | 'call' | 'chat')[];
+  expertises: string[];
+  topExpertises: string[];
+  approaches: string[];
+  concernsICanHelp: string[];
+  pricing: {
+    video: number;
+    call: number;
+    chat: number;
+    offline?: number;
+  };
+  nextAvailableSlot: string;
+  availability: ConsultantAvailability[];
+  rating: number;
+  reviewCount: number;
+  bio: string;
+  qualifications: string[];
+  available: boolean;
+  reviews?: any[];
+  faqs?: any[];
+  qas?: any[];
+  articles?: any[];
+}
 
 interface ConsultantDetailProps {
   consultantId?: string;

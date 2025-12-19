@@ -118,9 +118,9 @@ export function AdminHeader({
       {/* Stats Row */}
       {stats && stats.length > 0 && (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {stats.map((stat, index) => (
+          {stats.map((stat) => (
             <div
-              key={index}
+              key={stat.label}
               className="p-4 rounded-lg"
               style={{
                 backgroundColor: 'var(--color-bg-card)',

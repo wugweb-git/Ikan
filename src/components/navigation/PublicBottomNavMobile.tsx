@@ -81,8 +81,8 @@ export function PublicBottomNavMobile({ currentRoute, onNavigate, onSignIn, clas
     <nav 
       className={cn("w-full", className)}
       style={{
-        backgroundColor: 'var(--color-bg-page)',
-        padding: 'var(--ikan-component-spacing-default)',
+        backgroundColor: 'transparent',
+        padding: 'var(--spacing-2)',
         position: 'fixed',
         top: '0',
         left: '0',

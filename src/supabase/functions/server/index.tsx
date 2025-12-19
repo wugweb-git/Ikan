@@ -4,7 +4,29 @@ import { logger } from "npm:hono/logger";
 import { createClient } from "jsr:@supabase/supabase-js@2";
 import * as kv from "./kv_store.tsx";
 import { handleSeedData, handleSeedUsers } from "./seed-endpoint.tsx";
+import { handleComprehensiveSeed } from "./comprehensive-seed.tsx";
 import { createHash, createHmac } from "node:crypto";
+
+// Import monitoring utilities
+import { getAPILogs } from "./logging.tsx";
+import { getPerformanceMetrics, getMetricsHistory } from "./performance.tsx";
+import { getSystemLogs } from "./system-logger.tsx";
+import { 
+  getActiveSessions, 
+  terminateSession, 
+  getAuditLogs, 
+  getSecurityAlerts,
+  resolveAlert 
+} from "./security.tsx";
+
+// Import validation utilities
+import { 
+  validateProfileUpdate, 
+  sanitizeProfileUpdate, 
+  validatePassword,
+  hashPassword,
+  verifyPassword
+} from "./validation.tsx";
 
 const app = new Hono();
 
@@ -44,6 +66,32 @@ async function requireAuth(c: any, next: any) {
 
   c.set('userId', user.id);
   c.set('user', user);
+  await next();
+}
+
+// Admin middleware for admin-only routes
+async function requireAdmin(c: any, next: any) {
+  const accessToken = c.req.header('Authorization')?.split(' ')[1];
+  if (!accessToken) {
+    return c.json({ error: 'Authorization token required' }, 401);
+  }
+
+  const { data: { user }, error } = await supabase.auth.getUser(accessToken);
+  if (error || !user?.id) {
+    console.log('Authorization error:', error);
+    return c.json({ error: 'Unauthorized' }, 401);
+  }
+
+  // Check if user is admin
+  const userProfile = await kv.get(`user:${user.id}`);
+  if (!userProfile?.is_admin) {
+    console.log(`🚫 Non-admin user ${user.id} attempted to access admin endpoint`);
+    return c.json({ error: 'Admin access required' }, 403);
+  }
+
+  c.set('userId', user.id);
+  c.set('user', user);
+  c.set('isAdmin', true);
   await next();
 }
 
@@ -130,39 +178,60 @@ app.put("/make-server-cc205da9/users/profile", requireAuth, async (c) => {
     const userId = c.get('userId');
     const updates = await c.req.json();
     
+    // Validate input
+    const validation = validateProfileUpdate(updates);
+    if (!validation.isValid) {
+      return c.json({ 
+        error: 'Validation failed', 
+        errors: validation.errors 
+      }, 400);
+    }
+    
     const currentProfile = await kv.get(`user:${userId}`);
     if (!currentProfile) {
       return c.json({ error: 'Profile not found' }, 404);
     }
     
-    // Handle emergency contact nested object
+    // Sanitize input
+    const sanitizedUpdates = sanitizeProfileUpdate(updates);
+    
+    // Build updated profile
     const updatedProfile: any = {
       ...currentProfile,
       updated_at: new Date().toISOString()
     };
 
-    // Update basic fields
-    if (updates.name !== undefined) updatedProfile.name = updates.name;
-    if (updates.phone !== undefined) updatedProfile.phone = updates.phone;
-    if (updates.bio !== undefined) updatedProfile.bio = updates.bio;
-    if (updates.dateOfBirth !== undefined) updatedProfile.dateOfBirth = updates.dateOfBirth;
-    if (updates.gender !== undefined) updatedProfile.gender = updates.gender;
-    if (updates.location !== undefined) updatedProfile.location = updates.location;
-    if (updates.avatar_url !== undefined) updatedProfile.avatar_url = updates.avatar_url;
+    // Update basic fields from sanitized data
+    if (sanitizedUpdates.name !== undefined) updatedProfile.name = sanitizedUpdates.name;
+    if (sanitizedUpdates.phone !== undefined) updatedProfile.phone = sanitizedUpdates.phone;
+    if (sanitizedUpdates.bio !== undefined) updatedProfile.bio = sanitizedUpdates.bio;
+    if (sanitizedUpdates.dateOfBirth !== undefined) updatedProfile.dateOfBirth = sanitizedUpdates.dateOfBirth;
+    if (sanitizedUpdates.gender !== undefined) updatedProfile.gender = sanitizedUpdates.gender;
+    if (sanitizedUpdates.location !== undefined) updatedProfile.location = sanitizedUpdates.location;
+    if (sanitizedUpdates.avatar_url !== undefined) updatedProfile.avatar_url = sanitizedUpdates.avatar_url;
     
     // Update emergency contact fields
-    if (updates.emergencyContact) {
-      updatedProfile.emergencyContactName = updates.emergencyContact.name;
-      updatedProfile.emergencyContactPhone = updates.emergencyContact.phone;
-      updatedProfile.emergencyContactRelationship = updates.emergencyContact.relationship;
+    if (sanitizedUpdates.emergencyContactName !== undefined) {
+      updatedProfile.emergencyContactName = sanitizedUpdates.emergencyContactName;
+      updatedProfile.emergencyContactPhone = sanitizedUpdates.emergencyContactPhone;
+      updatedProfile.emergencyContactRelationship = sanitizedUpdates.emergencyContactRelationship;
     }
     
     // Update preferences
-    if (updates.preferences !== undefined) {
-      updatedProfile.preferences = updates.preferences;
+    if (sanitizedUpdates.preferences !== undefined) {
+      updatedProfile.preferences = sanitizedUpdates.preferences;
     }
     
     await kv.set(`user:${userId}`, updatedProfile);
+    
+    // Create audit log
+    await kv.set(`audit:profile:${userId}:${Date.now()}`, {
+      action: 'update_profile',
+      userId,
+      timestamp: new Date().toISOString(),
+      changes: Object.keys(sanitizedUpdates)
+    });
+    
     return c.json({ profile: updatedProfile });
   } catch (error) {
     console.log('Update profile error:', error);
@@ -249,6 +318,309 @@ app.post("/make-server-cc205da9/user/disconnect-social/:provider", requireAuth, 
   }
 });
 
+// Password Change Endpoint
+app.put("/make-server-cc205da9/users/password", requireAuth, async (c) => {
+  try {
+    const userId = c.get('userId');
+    const { currentPassword, newPassword } = await c.req.json();
+    
+    if (!currentPassword || !newPassword) {
+      return c.json({ error: 'Current and new password are required' }, 400);
+    }
+    
+    // Validate new password
+    const passwordError = validatePassword(newPassword);
+    if (passwordError) {
+      return c.json({ error: passwordError.message }, 400);
+    }
+    
+    // Get current profile
+    const currentProfile = await kv.get(`user:${userId}`);
+    if (!currentProfile) {
+      return c.json({ error: 'Profile not found' }, 404);
+    }
+    
+    // Verify current password (if stored)
+    if (currentProfile.password_hash) {
+      const isValid = await verifyPassword(currentPassword, currentProfile.password_hash);
+      if (!isValid) {
+        return c.json({ error: 'Current password is incorrect' }, 401);
+      }
+    }
+    
+    // Hash new password
+    const newPasswordHash = await hashPassword(newPassword);
+    
+    // Update profile with new password
+    const updatedProfile = {
+      ...currentProfile,
+      password_hash: newPasswordHash,
+      password_changed_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    };
+    
+    await kv.set(`user:${userId}`, updatedProfile);
+    
+    // Create audit log
+    await kv.set(`audit:password:${userId}:${Date.now()}`, {
+      action: 'change_password',
+      userId,
+      timestamp: new Date().toISOString()
+    });
+    
+    console.log(`✅ User ${userId} changed password successfully`);
+    
+    return c.json({ success: true, message: 'Password changed successfully' });
+  } catch (error) {
+    console.error('Password change error:', error);
+    return c.json({ error: 'Failed to change password' }, 500);
+  }
+});
+
+// Email Change Request Endpoint
+app.post("/make-server-cc205da9/users/email/request-change", requireAuth, async (c) => {
+  try {
+    const userId = c.get('userId');
+    const { newEmail } = await c.req.json();
+    
+    if (!newEmail) {
+      return c.json({ error: 'New email is required' }, 400);
+    }
+    
+    // Validate email
+    const emailError = validateEmail(newEmail);
+    if (emailError) {
+      return c.json({ error: emailError.message }, 400);
+    }
+    
+    // Check if email already exists
+    const users = await kv.getByPrefix('user:');
+    const emailExists = users.some((u: any) => u.email === newEmail);
+    if (emailExists) {
+      return c.json({ error: 'Email already in use' }, 409);
+    }
+    
+    // Generate verification token
+    const verificationToken = crypto.randomUUID();
+    const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+    
+    // Store email change request
+    await kv.set(`email-change:${userId}`, {
+      userId,
+      newEmail,
+      verificationToken,
+      expiresAt: expiresAt.toISOString(),
+      createdAt: new Date().toISOString()
+    });
+    
+    // In production, send verification email here
+    console.log(`📧 Email change requested for user ${userId}`);
+    console.log(`Verification token: ${verificationToken}`);
+    
+    return c.json({ 
+      success: true, 
+      message: 'Verification email sent. Please check your inbox.',
+      // For demo purposes, return the token (remove in production!)
+      verificationToken 
+    });
+  } catch (error) {
+    console.error('Email change request error:', error);
+    return c.json({ error: 'Failed to request email change' }, 500);
+  }
+});
+
+// Email Change Verification Endpoint
+app.post("/make-server-cc205da9/users/email/verify-change", async (c) => {
+  try {
+    const { token } = await c.req.json();
+    
+    if (!token) {
+      return c.json({ error: 'Verification token is required' }, 400);
+    }
+    
+    // Find email change request with this token
+    const requests = await kv.getByPrefix('email-change:');
+    const request = requests.find((r: any) => r.verificationToken === token);
+    
+    if (!request) {
+      return c.json({ error: 'Invalid verification token' }, 404);
+    }
+    
+    // Check if expired
+    if (new Date(request.expiresAt) < new Date()) {
+      await kv.del(`email-change:${request.userId}`);
+      return c.json({ error: 'Verification token expired' }, 410);
+    }
+    
+    // Update user email
+    const currentProfile = await kv.get(`user:${request.userId}`);
+    if (!currentProfile) {
+      return c.json({ error: 'User not found' }, 404);
+    }
+    
+    const updatedProfile = {
+      ...currentProfile,
+      email: request.newEmail,
+      email_verified: true,
+      email_changed_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    };
+    
+    await kv.set(`user:${request.userId}`, updatedProfile);
+    await kv.del(`email-change:${request.userId}`);
+    
+    // Create audit log
+    await kv.set(`audit:email:${request.userId}:${Date.now()}`, {
+      action: 'change_email',
+      userId: request.userId,
+      oldEmail: currentProfile.email,
+      newEmail: request.newEmail,
+      timestamp: new Date().toISOString()
+    });
+    
+    console.log(`✅ User ${request.userId} changed email to ${request.newEmail}`);
+    
+    return c.json({ success: true, message: 'Email changed successfully' });
+  } catch (error) {
+    console.error('Email verification error:', error);
+    return c.json({ error: 'Failed to verify email change' }, 500);
+  }
+});
+
+// Data Export Endpoint
+app.post("/make-server-cc205da9/users/export-data", requireAuth, async (c) => {
+  try {
+    const userId = c.get('userId');
+    
+    // Get user profile
+    const profile = await kv.get(`user:${userId}`);
+    if (!profile) {
+      return c.json({ error: 'Profile not found' }, 404);
+    }
+    
+    // Get journal entries
+    const journalEntries = await kv.getByPrefix(`journal:${userId}:`);
+    
+    // Get tracker entries
+    const trackerEntries = await kv.getByPrefix(`tracker:${userId}:`);
+    
+    // Get assessment results
+    const assessmentResults = await kv.getByPrefix(`assessment-result:${userId}:`);
+    
+    // Get program progress
+    const programProgress = await kv.getByPrefix(`program-progress:${userId}:`);
+    
+    // Build export data
+    const exportData = {
+      profile: {
+        name: profile.name,
+        email: profile.email,
+        phone: profile.phone,
+        bio: profile.bio,
+        dateOfBirth: profile.dateOfBirth,
+        gender: profile.gender,
+        location: profile.location,
+        createdAt: profile.created_at
+      },
+      journalEntries: journalEntries.map((entry: any) => ({
+        date: entry.date,
+        mood: entry.mood_rating,
+        content: entry.freehand_text_content,
+        createdAt: entry.created_at
+      })),
+      trackerEntries: trackerEntries.map((entry: any) => ({
+        date: entry.date,
+        moodRating: entry.mood_rating,
+        stressLevel: entry.stress_level,
+        sleepHours: entry.sleep_hours,
+        exerciseMinutes: entry.exercise_minutes,
+        createdAt: entry.created_at
+      })),
+      assessmentResults: assessmentResults.map((result: any) => ({
+        assessmentId: result.assessment_id,
+        completedAt: result.completed_at,
+        score: result.score,
+        severity: result.severity
+      })),
+      programProgress: programProgress.map((progress: any) => ({
+        programId: progress.program_id,
+        currentDay: progress.current_day,
+        completedDays: progress.completed_days,
+        startedAt: progress.started_at
+      })),
+      exportedAt: new Date().toISOString()
+    };
+    
+    // Create audit log
+    await kv.set(`audit:export:${userId}:${Date.now()}`, {
+      action: 'export_data',
+      userId,
+      timestamp: new Date().toISOString()
+    });
+    
+    console.log(`✅ User ${userId} exported their data`);
+    
+    // Return JSON data (in production, send via email or generate downloadable file)
+    return c.json({ 
+      success: true, 
+      data: exportData,
+      message: 'Data exported successfully. In production, this would be sent to your email.'
+    });
+  } catch (error) {
+    console.error('Data export error:', error);
+    return c.json({ error: 'Failed to export data' }, 500);
+  }
+});
+
+// Avatar Upload Endpoint (placeholder for Supabase Storage integration)
+app.post("/make-server-cc205da9/users/avatar", requireAuth, async (c) => {
+  try {
+    const userId = c.get('userId');
+    
+    // In production, this would:
+    // 1. Accept multipart/form-data file upload
+    // 2. Validate file type and size
+    // 3. Resize/crop image
+    // 4. Upload to Supabase Storage
+    // 5. Generate signed URL
+    // 6. Update user profile with avatar_url
+    
+    // For now, accept a URL
+    const { avatarUrl } = await c.req.json();
+    
+    if (!avatarUrl) {
+      return c.json({ error: 'Avatar URL is required' }, 400);
+    }
+    
+    const currentProfile = await kv.get(`user:${userId}`);
+    if (!currentProfile) {
+      return c.json({ error: 'Profile not found' }, 404);
+    }
+    
+    const updatedProfile = {
+      ...currentProfile,
+      avatar_url: avatarUrl,
+      updated_at: new Date().toISOString()
+    };
+    
+    await kv.set(`user:${userId}`, updatedProfile);
+    
+    // Create audit log
+    await kv.set(`audit:avatar:${userId}:${Date.now()}`, {
+      action: 'update_avatar',
+      userId,
+      timestamp: new Date().toISOString()
+    });
+    
+    console.log(`✅ User ${userId} updated avatar`);
+    
+    return c.json({ success: true, avatarUrl, profile: updatedProfile });
+  } catch (error) {
+    console.error('Avatar upload error:', error);
+    return c.json({ error: 'Failed to upload avatar' }, 500);
+  }
+});
+
 // Journal Entry Endpoints
 app.post("/make-server-cc205da9/journal/entries", requireAuth, async (c) => {
   try {
@@ -330,13 +702,15 @@ app.get("/make-server-cc205da9/assessments", async (c) => {
   try {
     // Get all available assessments
     const assessments = await kv.getByPrefix('assessment:');
-    // Filter duplicates (since we store by ID and Slug)
-    const uniqueAssessments = Array.from(new Map(assessments.map((a: any) => [a.id, a])).values());
+    // Filter out null/undefined entries and duplicates (since we store by ID and Slug)
+    const validAssessments = assessments.filter((a: any) => a && a.id);
+    const uniqueAssessments = Array.from(new Map(validAssessments.map((a: any) => [a.id, a])).values());
     
+    console.log(`✅ Returning ${uniqueAssessments.length} assessments`);
     return c.json({ assessments: uniqueAssessments });
   } catch (error) {
-    console.log('Get assessments error:', error);
-    return c.json({ error: 'Failed to retrieve assessments' }, 500);
+    console.error('❌ Get assessments error:', error);
+    return c.json({ error: 'Failed to retrieve assessments', assessments: [] }, 500);
   }
 });
 
@@ -367,12 +741,14 @@ app.post("/make-server-cc205da9/assessments", requireAuth, async (c) => {
     }
     
     const assessmentData = await c.req.json();
-    const assessmentId = assessmentData.id || `assessment-${Date.now()}`;
+    // Use assessment_id if provided, otherwise use id, otherwise generate new
+    const assessmentId = assessmentData.assessment_id || assessmentData.id || `assessment-${Date.now()}`;
     
-    // Ensure ID is set
+    // Ensure both ID fields are set for compatibility
     const newAssessment = {
       ...assessmentData,
       id: assessmentId,
+      assessment_id: assessmentId,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
     };
@@ -409,6 +785,7 @@ app.put("/make-server-cc205da9/assessments/:assessmentId", requireAuth, async (c
       ...existingAssessment,
       ...updates,
       id: assessmentId,
+      assessment_id: assessmentId,
       updated_at: new Date().toISOString()
     };
     
@@ -492,13 +869,15 @@ app.get("/make-server-cc205da9/assessments/responses/user", requireAuth, async (
 app.get("/make-server-cc205da9/equip/programs", async (c) => {
   try {
     const programs = await kv.getByPrefix('equip_program:');
-    // Filter duplicates (since we store by ID and Slug)
-    const uniquePrograms = Array.from(new Map(programs.map((p: any) => [p.id, p])).values());
+    // Filter out null/undefined entries and duplicates (since we store by ID and Slug)
+    const validPrograms = programs.filter((p: any) => p && (p.id || p.equip_id));
+    const uniquePrograms = Array.from(new Map(validPrograms.map((p: any) => [p.id || p.equip_id, p])).values());
     
+    console.log(`✅ Returning ${uniquePrograms.length} equip programs`);
     return c.json({ programs: uniquePrograms });
   } catch (error) {
-    console.log('Get equip programs error:', error);
-    return c.json({ error: 'Failed to retrieve programs' }, 500);
+    console.error('❌ Get equip programs error:', error);
+    return c.json({ error: 'Failed to retrieve programs', programs: [] }, 500);
   }
 });
 
@@ -632,6 +1011,242 @@ app.delete("/make-server-cc205da9/equip/programs/:equipId", requireAuth, async (
   }
 });
 
+// Get user's purchased programs (enrollments with progress) - specific endpoint for dashboard
+app.get("/make-server-cc205da9/equip/purchased/:userId", requireAuth, async (c) => {
+  try {
+    const userId = c.req.param('userId');
+    const authUser = c.get('user');
+    
+    // Security check
+    if (userId !== authUser.id) {
+        // Check if admin
+        const userProfile = await kv.get(`user:${authUser.id}`);
+        if (!userProfile?.is_admin) {
+             return c.json({ error: 'Unauthorized' }, 403);
+        }
+    }
+    
+    // Get enrollments which represent purchased/active programs
+    const enrollments = await kv.getByPrefix(`user_enrollment:${userId}:`);
+    
+    // Map to the format expected by the dashboard
+    const programs = enrollments.map((e: any) => {
+        // Calculate progress percentage
+        const completedCount = e.completedDays?.length || 0;
+        // Default to 30 days if we don't look up the program details
+        const total = 30; 
+        const progress = Math.min(100, Math.round((completedCount / total) * 100));
+        
+        return {
+            id: e.enrollmentId,
+            program_id: e.programId,
+            title: e.programTitle,
+            progress: progress,
+            current_module: `Day ${e.currentDay || 1}`,
+            total_modules: total,
+            completed_modules: completedCount,
+            started_at: e.startDate,
+            status: e.status,
+            next_activity: `Day ${e.currentDay || 1} Activity`,
+            due_date: null
+        };
+    });
+    
+    // Sort by most recent
+    programs.sort((a: any, b: any) => new Date(b.started_at).getTime() - new Date(a.started_at).getTime());
+    
+    return c.json(programs);
+  } catch (error) {
+    console.log('Get purchased programs error:', error);
+    return c.json({ error: 'Failed to retrieve purchased programs' }, 500);
+  }
+});
+
+// ============================================================================
+// EQUIP ENROLLMENT ENDPOINTS
+// ============================================================================
+
+// Enroll user in a program
+app.post("/make-server-cc205da9/equip/enrollments", requireAuth, async (c) => {
+  try {
+    const user = c.get('user');
+    const { programId, onboardingData } = await c.req.json();
+    
+    // Verify program exists
+    const program = await kv.get(`equip_program:${programId}`);
+    if (!program) {
+      return c.json({ error: 'Program not found' }, 404);
+    }
+    
+    const enrollmentId = `enrollment-${user.id}-${programId}-${Date.now()}`;
+    const enrollment = {
+      enrollmentId,
+      userId: user.id,
+      programId,
+      programTitle: program.title,
+      onboardingData,
+      startDate: new Date().toISOString(),
+      progress: [],
+      completedDays: [],
+      currentDay: 1,
+      status: 'active',
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    };
+    
+    // Store enrollment
+    await kv.set(`enrollment:${enrollmentId}`, enrollment);
+    await kv.set(`user_enrollment:${user.id}:${programId}`, enrollment);
+    
+    console.log(`✅ User enrolled: ${user.id} in program ${programId}`);
+    return c.json({ enrollment });
+  } catch (error) {
+    console.log('Enrollment error:', error);
+    return c.json({ error: 'Failed to enroll in program' }, 500);
+  }
+});
+
+// Get user's enrollments
+app.get("/make-server-cc205da9/equip/enrollments", requireAuth, async (c) => {
+  try {
+    const user = c.get('user');
+    
+    // Get all enrollments for this user
+    const allEnrollments = await kv.getByPrefix(`user_enrollment:${user.id}:`);
+    
+    // Sort by most recent first
+    const sortedEnrollments = allEnrollments.sort((a: any, b: any) => 
+      new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+    );
+    
+    console.log(`✅ Retrieved ${sortedEnrollments.length} enrollments for user ${user.id}`);
+    return c.json({ enrollments: sortedEnrollments });
+  } catch (error) {
+    console.log('Get enrollments error:', error);
+    return c.json({ error: 'Failed to retrieve enrollments' }, 500);
+  }
+});
+
+// Get specific enrollment
+app.get("/make-server-cc205da9/equip/enrollments/:enrollmentId", requireAuth, async (c) => {
+  try {
+    const user = c.get('user');
+    const enrollmentId = c.req.param('enrollmentId');
+    
+    const enrollment = await kv.get(`enrollment:${enrollmentId}`);
+    
+    if (!enrollment) {
+      return c.json({ error: 'Enrollment not found' }, 404);
+    }
+    
+    // Verify ownership
+    if (enrollment.userId !== user.id) {
+      return c.json({ error: 'Unauthorized' }, 403);
+    }
+    
+    return c.json({ enrollment });
+  } catch (error) {
+    console.log('Get enrollment error:', error);
+    return c.json({ error: 'Failed to retrieve enrollment' }, 500);
+  }
+});
+
+// Update enrollment progress
+app.put("/make-server-cc205da9/equip/enrollments/:enrollmentId/progress", requireAuth, async (c) => {
+  try {
+    const user = c.get('user');
+    const enrollmentId = c.req.param('enrollmentId');
+    const { dayNumber, completed, completedAt, notes } = await c.req.json();
+    
+    const enrollment = await kv.get(`enrollment:${enrollmentId}`);
+    
+    if (!enrollment) {
+      return c.json({ error: 'Enrollment not found' }, 404);
+    }
+    
+    // Verify ownership
+    if (enrollment.userId !== user.id) {
+      return c.json({ error: 'Unauthorized' }, 403);
+    }
+    
+    // Update progress
+    const progressEntry = {
+      dayNumber,
+      completed,
+      completedAt: completedAt || new Date().toISOString(),
+      notes: notes || ''
+    };
+    
+    // Add to progress array
+    const existingProgress = enrollment.progress || [];
+    const updatedProgress = [...existingProgress, progressEntry];
+    
+    // Add to completed days if completed
+    const completedDays = enrollment.completedDays || [];
+    if (completed && !completedDays.includes(dayNumber)) {
+      completedDays.push(dayNumber);
+    }
+    
+    // Update current day
+    const currentDay = Math.max(dayNumber, enrollment.currentDay || 1);
+    
+    const updatedEnrollment = {
+      ...enrollment,
+      progress: updatedProgress,
+      completedDays,
+      currentDay,
+      updated_at: new Date().toISOString()
+    };
+    
+    // Save updates
+    await kv.set(`enrollment:${enrollmentId}`, updatedEnrollment);
+    await kv.set(`user_enrollment:${user.id}:${enrollment.programId}`, updatedEnrollment);
+    
+    console.log(`✅ Progress updated for enrollment ${enrollmentId}: Day ${dayNumber}`);
+    return c.json({ enrollment: updatedEnrollment });
+  } catch (error) {
+    console.log('Update progress error:', error);
+    return c.json({ error: 'Failed to update progress' }, 500);
+  }
+});
+
+// Complete/cancel enrollment
+app.put("/make-server-cc205da9/equip/enrollments/:enrollmentId/status", requireAuth, async (c) => {
+  try {
+    const user = c.get('user');
+    const enrollmentId = c.req.param('enrollmentId');
+    const { status } = await c.req.json(); // 'active', 'completed', 'paused', 'cancelled'
+    
+    const enrollment = await kv.get(`enrollment:${enrollmentId}`);
+    
+    if (!enrollment) {
+      return c.json({ error: 'Enrollment not found' }, 404);
+    }
+    
+    // Verify ownership
+    if (enrollment.userId !== user.id) {
+      return c.json({ error: 'Unauthorized' }, 403);
+    }
+    
+    const updatedEnrollment = {
+      ...enrollment,
+      status,
+      updated_at: new Date().toISOString(),
+      ...(status === 'completed' && { completedAt: new Date().toISOString() })
+    };
+    
+    // Save updates
+    await kv.set(`enrollment:${enrollmentId}`, updatedEnrollment);
+    await kv.set(`user_enrollment:${user.id}:${enrollment.programId}`, updatedEnrollment);
+    
+    console.log(`✅ Enrollment status updated: ${enrollmentId} -> ${status}`);
+    return c.json({ enrollment: updatedEnrollment });
+  } catch (error) {
+    console.log('Update enrollment status error:', error);
+    return c.json({ error: 'Failed to update enrollment status' }, 500);
+  }
+});
+
 // Library Resource Endpoints
 app.get("/make-server-cc205da9/library/resources", async (c) => {
   try {
@@ -639,20 +1254,24 @@ app.get("/make-server-cc205da9/library/resources", async (c) => {
     
     let resources = await kv.getByPrefix('resource:');
     
+    // Filter out null/undefined entries
+    resources = resources.filter((r: any) => r && r.id);
+    
     // Filter by category if provided
     if (category) {
-      resources = resources.filter(resource => resource.category === category);
+      resources = resources.filter((resource: any) => resource.category === category);
     }
     
     // Sort by created_at descending and apply pagination
     resources = resources
-      .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+      .sort((a: any, b: any) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime())
       .slice(parseInt(offset), parseInt(offset) + parseInt(limit));
     
+    console.log(`✅ Returning ${resources.length} resources`);
     return c.json({ resources });
   } catch (error) {
-    console.log('Get library resources error:', error);
-    return c.json({ error: 'Failed to retrieve resources' }, 500);
+    console.error('❌ Get library resources error:', error);
+    return c.json({ error: 'Failed to retrieve resources', resources: [] }, 500);
   }
 });
 
@@ -672,48 +1291,163 @@ app.get("/make-server-cc205da9/library/resources/:resourceId", async (c) => {
   }
 });
 
-// Admin Resource Management Endpoints
-app.get("/make-server-cc205da9/admin/resources", requireAuth, async (c) => {
+// ============================================================================
+// CONSULTANTS ENDPOINTS
+// ============================================================================
+
+// Get all consultants
+app.get("/make-server-cc205da9/consultants", async (c) => {
   try {
-    const user = c.get('user');
+    let consultants = await kv.getByPrefix('consultant:');
     
-    // Check if user is admin
-    const userProfile = await kv.get(`user:${user.id}`);
-    if (!userProfile?.is_admin) {
-      return c.json({ error: 'Admin access required' }, 403);
+    // Filter out null/undefined entries
+    consultants = consultants.filter((c: any) => c && c.id);
+    
+    // Apply filters if provided
+    const category = c.req.query('category');
+    const expertise = c.req.query('expertise');
+    const sessionMode = c.req.query('sessionMode');
+    
+    let filtered = consultants;
+    
+    if (category) {
+      filtered = filtered.filter(c => c.category === category);
     }
     
-    // Get all resource resources
-    const resources = await kv.getByPrefix('resource:');
+    if (expertise) {
+      filtered = filtered.filter(c => 
+        c.expertises?.some((e: string) => e.toLowerCase().includes(expertise.toLowerCase()))
+      );
+    }
+    
+    if (sessionMode) {
+      filtered = filtered.filter(c => 
+        c.sessionModes?.includes(sessionMode)
+      );
+    }
+    
+    // Sort by rating
+    const sorted = filtered.sort((a: any, b: any) => (b.rating || 0) - (a.rating || 0));
+    
+    console.log(`✅ Returning ${sorted.length} consultants`);
+    return c.json({ consultants: sorted });
+  } catch (error) {
+    console.error('❌ Get consultants error:', error);
+    return c.json({ error: 'Failed to retrieve consultants', consultants: [] }, 500);
+  }
+});
+
+// Get consultant by ID
+app.get("/make-server-cc205da9/consultants/:id", async (c) => {
+  try {
+    const id = c.req.param('id');
+    const consultant = await kv.get(`consultant:${id}`);
+    
+    if (!consultant) {
+      return c.json({ error: 'Consultant not found' }, 404);
+    }
+    
+    console.log(`👨‍⚕️ Fetched consultant: ${consultant.name}`);
+    return c.json({ consultant });
+  } catch (error) {
+    console.error('Get consultant error:', error);
+    return c.json({ error: 'Failed to retrieve consultant' }, 500);
+  }
+});
+
+// ============================================================================
+// EQUIP PROGRAMS ENDPOINTS
+// ============================================================================
+
+// Get all equip programs
+app.get("/make-server-cc205da9/equip/programs", async (c) => {
+  try {
+    let programs = await kv.getByPrefix('equip_program:');
+    
+    // Filter out null/undefined entries
+    programs = programs.filter((p: any) => p && (p.id || p.equip_id));
+    
+    // Apply filters if provided
+    const category = c.req.query('category');
+    const tag = c.req.query('tag');
+    
+    let filtered = programs;
+    
+    if (category) {
+      filtered = filtered.filter((p: any) => p.meta?.category === category);
+    }
+    
+    if (tag) {
+      filtered = filtered.filter((p: any) => 
+        p.tags?.some((t: string) => t.toLowerCase().includes(tag.toLowerCase()))
+      );
+    }
     
     // Sort by created_at descending
-    const sortedResources = resources.sort((a, b) => 
+    const sorted = filtered.sort((a: any, b: any) => 
+      new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime()
+    );
+    
+    console.log(`✅ Returning ${sorted.length} equip programs`);
+    return c.json({ programs: sorted });
+  } catch (error) {
+    console.error('❌ Get equip programs error:', error);
+    return c.json({ error: 'Failed to retrieve equip programs', programs: [] }, 500);
+  }
+});
+
+// Get equip program by slug
+app.get("/make-server-cc205da9/equip/programs/:slug", async (c) => {
+  try {
+    const slug = c.req.param('slug');
+    const program = await kv.get(`equip_program:${slug}`);
+    
+    if (!program) {
+      return c.json({ error: 'Program not found' }, 404);
+    }
+    
+    console.log(`💪 Fetched program: ${program.title}`);
+    return c.json({ program });
+  } catch (error) {
+    console.error('Get equip program error:', error);
+    return c.json({ error: 'Failed to retrieve program' }, 500);
+  }
+});
+
+// Admin Resource Management Endpoints
+app.get("/make-server-cc205da9/admin/resources", requireAdmin, async (c) => {
+  try {
+    // Get all resource resources
+    let resources = await kv.getByPrefix('resource:');
+    
+    // Filter out null/undefined entries
+    resources = resources.filter((r: any) => r && r.id);
+    
+    console.log(`✅ Admin fetched ${resources.length} resources`);
+    
+    // Sort by created_at descending
+    const sortedResources = resources.sort((a: any, b: any) => 
       new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime()
     );
     
     return c.json({ resources: sortedResources });
   } catch (error) {
-    console.log('Get admin resources error:', error);
-    return c.json({ error: 'Failed to retrieve resources' }, 500);
+    console.error('❌ Get admin resources error:', error);
+    return c.json({ error: 'Failed to retrieve resources', resources: [] }, 500);
   }
 });
 
-app.post("/make-server-cc205da9/admin/resources", requireAuth, async (c) => {
+app.post("/make-server-cc205da9/admin/resources", requireAdmin, async (c) => {
   try {
     const user = c.get('user');
     
-    // Check if user is admin
-    const userProfile = await kv.get(`user:${user.id}`);
-    if (!userProfile?.is_admin) {
-      return c.json({ error: 'Admin access required' }, 403);
-    }
-    
     const resourceData = await c.req.json();
-    const resourceId = `resource-${Date.now()}`;
+    // Use provided id if available, otherwise generate new
+    const resourceId = resourceData.id || `resource-${Date.now()}`;
     
     const newResource = {
-      id: resourceId,
       ...resourceData,
+      id: resourceId,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
       created_by: user.id
@@ -791,56 +1525,6 @@ app.delete("/make-server-cc205da9/admin/resources/:resourceId", requireAuth, asy
   }
 });
 
-// Seed Data Endpoint
-app.post("/make-server-cc205da9/seed/data", async (c) => {
-  return c.json(await handleSeedData());
-});
-
-// Seed Demo Users Endpoint
-app.post("/make-server-cc205da9/seed/users", async (c) => {
-  try {
-    const demoUser = {
-      email: 'demo@ikan.health',
-      password: 'password123',
-      user_metadata: { name: 'Demo User', corporate_user: false },
-      email_confirm: true
-    };
-
-    // Try to create the user
-    const { data, error } = await supabase.auth.admin.createUser(demoUser);
-
-    if (error) {
-      // If user already exists, just return success (idempotent)
-      if (error.message?.includes('already registered')) {
-        console.log('Demo user already exists');
-        return c.json({ message: 'Demo user already exists' });
-      }
-      console.log('Error creating demo user:', error);
-      return c.json({ error: error.message }, 400);
-    }
-
-    // Also create profile in KV
-    if (data.user) {
-      await kv.set(`user:${data.user.id}`, {
-        user_id: data.user.id,
-        email: demoUser.email,
-        name: demoUser.user_metadata.name,
-        phone: null,
-        avatar_url: null,
-        corporate_user: false,
-        created_at: new Date().toISOString(),
-        is_admin: true // Make demo user an admin for convenience
-      });
-    }
-
-    console.log('✅ Demo user created');
-    return c.json({ user: data.user, message: 'Demo user created successfully' });
-  } catch (error) {
-    console.log('Seed users error:', error);
-    return c.json({ error: 'Failed to seed users' }, 500);
-  }
-});
-
 // Set user as admin endpoint (for initial admin setup)
 app.post("/make-server-cc205da9/admin/set-admin/:userId", requireAuth, async (c) => {
   try {
@@ -879,29 +1563,134 @@ app.post("/make-server-cc205da9/admin/set-admin/:userId", requireAuth, async (c)
   }
 });
 
-// Admin User Management Endpoints
-app.get("/make-server-cc205da9/admin/users", requireAuth, async (c) => {
+// Debug Endpoint - Check and Fix Admin Status
+app.get("/make-server-cc205da9/admin/debug/check-status", requireAuth, async (c) => {
   try {
     const user = c.get('user');
-    
-    // Check if user is admin
     const userProfile = await kv.get(`user:${user.id}`);
-    if (!userProfile?.is_admin) {
-      return c.json({ error: 'Admin access required' }, 403);
+    
+    console.log('🔍 Debug check for user:', user.id);
+    console.log('User profile:', userProfile);
+    
+    return c.json({ 
+      userId: user.id,
+      email: user.email,
+      profile: userProfile,
+      isAdmin: userProfile?.is_admin || false,
+      message: userProfile?.is_admin ? 'User is admin' : 'User is NOT admin'
+    });
+  } catch (error) {
+    console.error('Debug check error:', error);
+    return c.json({ error: 'Failed to check status' }, 500);
+  }
+});
+
+app.post("/make-server-cc205da9/admin/debug/make-admin", requireAuth, async (c) => {
+  try {
+    const user = c.get('user');
+    let userProfile = await kv.get(`user:${user.id}`);
+    
+    if (!userProfile) {
+      // Create profile if it doesn't exist
+      userProfile = {
+        user_id: user.id,
+        email: user.email,
+        name: user.email.split('@')[0],
+        is_admin: true,
+        corporate_user: false,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      };
+    } else {
+      // Update existing profile
+      userProfile.is_admin = true;
+      userProfile.updated_at = new Date().toISOString();
     }
     
+    await kv.set(`user:${user.id}`, userProfile);
+    
+    console.log(`✅ User ${user.id} promoted to admin`);
+    
+    return c.json({ 
+      success: true,
+      message: 'User promoted to admin successfully',
+      profile: userProfile
+    });
+  } catch (error) {
+    console.error('Make admin error:', error);
+    return c.json({ error: 'Failed to promote user to admin' }, 500);
+  }
+});
+
+// Admin User Management Endpoints
+app.get("/make-server-cc205da9/admin/users", requireAdmin, async (c) => {
+  try {
     // Get all users
-    const users = await kv.getByPrefix('user:');
+    let users = await kv.getByPrefix('user:');
+    
+    // Filter out null/undefined entries
+    users = users.filter((u: any) => u && u.user_id && u.email);
+    
+    console.log(`✅ Admin fetched ${users.length} users`);
     
     // Sort by created_at descending
-    const sortedUsers = users.sort((a, b) => 
+    const sortedUsers = users.sort((a: any, b: any) => 
       new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime()
     );
     
     return c.json({ users: sortedUsers });
   } catch (error) {
-    console.log('Get admin users error:', error);
-    return c.json({ error: 'Failed to retrieve users' }, 500);
+    console.error('❌ Get admin users error:', error);
+    return c.json({ error: 'Failed to retrieve users', users: [] }, 500);
+  }
+});
+
+// Admin - Create User Manually
+app.post("/make-server-cc205da9/admin/users", requireAdmin, async (c) => {
+  try {
+    const { email, password, name, phone, is_admin, corporate_user } = await c.req.json();
+    
+    if (!email || !password || !name) {
+      return c.json({ error: 'Email, password, and name are required' }, 400);
+    }
+    
+    // Create user via Supabase Auth
+    const { data, error } = await supabase.auth.admin.createUser({
+      email,
+      password,
+      email_confirm: true, // Auto-confirm since email server not configured
+      user_metadata: { name }
+    });
+    
+    if (error) {
+      console.error('Failed to create user in Supabase:', error);
+      return c.json({ error: error.message || 'Failed to create user' }, 400);
+    }
+    
+    if (!data.user) {
+      return c.json({ error: 'User creation failed' }, 500);
+    }
+    
+    // Create user profile in KV store
+    const userProfile = {
+      user_id: data.user.id,
+      email,
+      name,
+      phone: phone || null,
+      is_admin: is_admin || false,
+      corporate_user: corporate_user || false,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    };
+    
+    await kv.set(`user:${data.user.id}`, userProfile);
+    
+    console.log(`✅ Admin manually created user: ${email} (${data.user.id})`);
+    
+    return c.json({ user: userProfile, message: 'User created successfully' });
+  } catch (error) {
+    console.error('Admin create user error:', error);
+    return c.json({ error: 'Failed to create user' }, 500);
   }
 });
 
@@ -981,18 +1770,25 @@ app.get("/make-server-cc205da9/consultation/professionals", async (c) => {
   try {
     const { specialty, location, limit = 50 } = c.req.query();
     
+    // Get from both professional: and consultant: prefixes for compatibility
     let professionals = await kv.getByPrefix('professional:');
+    const consultants = await kv.getByPrefix('consultant:');
+    professionals = [...professionals, ...consultants];
+    
+    // Filter out null/undefined entries
+    professionals = professionals.filter((p: any) => p && p.id);
     
     // Filter by specialty if provided
     if (specialty) {
-      professionals = professionals.filter(professional => 
-        professional.specialties && professional.specialties.includes(specialty)
+      professionals = professionals.filter((professional: any) => 
+        (professional.specialties && professional.specialties.includes(specialty)) ||
+        (professional.expertises && professional.expertises.includes(specialty))
       );
     }
     
     // Filter by location if provided
     if (location) {
-      professionals = professionals.filter(professional => 
+      professionals = professionals.filter((professional: any) => 
         professional.location && professional.location.toLowerCase().includes(location.toLowerCase())
       );
     }
@@ -1000,22 +1796,29 @@ app.get("/make-server-cc205da9/consultation/professionals", async (c) => {
     // Limit results
     professionals = professionals.slice(0, parseInt(limit));
     
+    console.log(`✅ Returning ${professionals.length} professionals/consultants`);
     return c.json({ professionals });
   } catch (error) {
-    console.log('Get professionals error:', error);
-    return c.json({ error: 'Failed to retrieve professionals' }, 500);
+    console.error('❌ Get professionals error:', error);
+    return c.json({ error: 'Failed to retrieve professionals', professionals: [] }, 500);
   }
 });
 
 app.get("/make-server-cc205da9/consultation/professionals/:professionalId", async (c) => {
   try {
     const professionalId = c.req.param('professionalId');
-    const professional = await kv.get(`professional:${professionalId}`);
+    
+    // Try both prefixes
+    let professional = await kv.get(`professional:${professionalId}`);
+    if (!professional) {
+      professional = await kv.get(`consultant:${professionalId}`);
+    }
     
     if (!professional) {
       return c.json({ error: 'Professional not found' }, 404);
     }
     
+    console.log(`👨‍⚕️ Fetched professional: ${professional.name || professional.id}`);
     return c.json({ professional });
   } catch (error) {
     console.log('Get professional error:', error);
@@ -1024,22 +1827,40 @@ app.get("/make-server-cc205da9/consultation/professionals/:professionalId", asyn
 });
 
 // Admin Professional Endpoints
-app.post("/make-server-cc205da9/admin/professionals", requireAuth, async (c) => {
+app.get("/make-server-cc205da9/admin/professionals", requireAdmin, async (c) => {
+  try {
+    // Get all professionals
+    let professionals = await kv.getByPrefix('professional:');
+    
+    // Filter out null/undefined entries
+    professionals = professionals.filter((p: any) => p && p.id);
+    
+    console.log(`✅ Admin fetched ${professionals.length} professionals`);
+    
+    // Sort by created_at descending
+    const sortedProfessionals = professionals.sort((a: any, b: any) => 
+      new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime()
+    );
+    
+    return c.json({ professionals: sortedProfessionals });
+  } catch (error) {
+    console.error('❌ Get admin professionals error:', error);
+    return c.json({ error: 'Failed to retrieve professionals', professionals: [] }, 500);
+  }
+});
+
+app.post("/make-server-cc205da9/admin/professionals", requireAdmin, async (c) => {
   try {
     const user = c.get('user');
     
-    // Check if user is admin
-    const userProfile = await kv.get(`user:${user.id}`);
-    if (!userProfile?.is_admin) {
-      return c.json({ error: 'Admin access required' }, 403);
-    }
-    
     const professionalData = await c.req.json();
-    const professionalId = professionalData.id || `prof-${Date.now()}`;
+    // Use professional_id if provided, otherwise use id, otherwise generate new
+    const professionalId = professionalData.professional_id || professionalData.id || `prof-${Date.now()}`;
     
     const newProfessional = {
       ...professionalData,
       id: professionalId,
+      professional_id: professionalId,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
     };
@@ -1054,16 +1875,10 @@ app.post("/make-server-cc205da9/admin/professionals", requireAuth, async (c) => 
   }
 });
 
-app.put("/make-server-cc205da9/admin/professionals/:professionalId", requireAuth, async (c) => {
+app.put("/make-server-cc205da9/admin/professionals/:professionalId", requireAdmin, async (c) => {
   try {
     const user = c.get('user');
     const professionalId = c.req.param('professionalId');
-    
-    // Check if user is admin
-    const userProfile = await kv.get(`user:${user.id}`);
-    if (!userProfile?.is_admin) {
-      return c.json({ error: 'Admin access required' }, 403);
-    }
     
     const updates = await c.req.json();
     const existingProfessional = await kv.get(`professional:${professionalId}`);
@@ -1076,6 +1891,7 @@ app.put("/make-server-cc205da9/admin/professionals/:professionalId", requireAuth
       ...existingProfessional,
       ...updates,
       id: professionalId,
+      professional_id: professionalId,
       updated_at: new Date().toISOString()
     };
     
@@ -1089,16 +1905,9 @@ app.put("/make-server-cc205da9/admin/professionals/:professionalId", requireAuth
   }
 });
 
-app.delete("/make-server-cc205da9/admin/professionals/:professionalId", requireAuth, async (c) => {
+app.delete("/make-server-cc205da9/admin/professionals/:professionalId", requireAdmin, async (c) => {
   try {
-    const user = c.get('user');
     const professionalId = c.req.param('professionalId');
-    
-    // Check if user is admin
-    const userProfile = await kv.get(`user:${user.id}`);
-    if (!userProfile?.is_admin) {
-      return c.json({ error: 'Admin access required' }, 403);
-    }
     
     const existingProfessional = await kv.get(`professional:${professionalId}`);
     if (!existingProfessional) {
@@ -1116,6 +1925,63 @@ app.delete("/make-server-cc205da9/admin/professionals/:professionalId", requireA
 });
 
 // CMS Page Endpoints
+// Get all pages (for admin manager)
+app.get("/make-server-cc205da9/cms/pages", requireAuth, async (c) => {
+  try {
+    console.log('📄 CMS request for all pages');
+    
+    // Get all pages from KV store
+    const pagesData = await kv.getByPrefix('cms_page:');
+    
+    // Filter out null/invalid entries and get valid pages
+    const validPages = (pagesData || [])
+      .map(item => item?.value)
+      .filter(page => page && page.id && page.name && page.title && page.slug);
+
+    // List of required standard pages
+    const requiredPageIds = ['about', 'privacy', 'terms', 'faq', 'contact', 'return-policy', 'cancellation-policy', 'sitemap'];
+    const missingPages = [];
+
+    // Check for missing standard pages
+    for (const pageId of requiredPageIds) {
+       const exists = validPages.some(p => p.id === pageId || p.slug === pageId);
+       if (!exists) {
+         missingPages.push(pageId);
+       }
+    }
+
+    // Create any missing standard pages
+    if (missingPages.length > 0) {
+      console.log(`📄 Creating ${missingPages.length} missing CMS pages: ${missingPages.join(', ')}`);
+      
+      for (const pageId of missingPages) {
+        const defaultContent = createDefaultCMSContent(pageId);
+        const page = {
+          id: pageId,
+          name: defaultContent.title,
+          title: defaultContent.title,
+          slug: pageId,
+          published: true,
+          content: defaultContent.content,
+          lastUpdated: defaultContent.lastUpdated,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        };
+        
+        await kv.set(`cms_page:${page.id}`, page);
+        validPages.push(page);
+      }
+    }
+    
+    console.log(`✅ Returning ${validPages.length} CMS pages`);
+    return c.json({ pages: validPages });
+  } catch (error) {
+    console.log('Get CMS pages error:', error);
+    return c.json({ error: 'Failed to retrieve pages' }, 500);
+  }
+});
+
+// Get single page by ID
 app.get("/make-server-cc205da9/cms/pages/:pageId", async (c) => {
   try {
     const pageId = c.req.param('pageId');
@@ -1140,18 +2006,77 @@ app.get("/make-server-cc205da9/cms/pages/:pageId", async (c) => {
   }
 });
 
+// Create new page
+app.post("/make-server-cc205da9/cms/pages", requireAuth, async (c) => {
+  try {
+    const data = await c.req.json();
+    console.log('📄 Create page request received:', { slug: data.slug, name: data.name, title: data.title });
+    
+    // Validate required fields
+    if (!data.slug || !data.name || !data.title) {
+      console.log('❌ Validation failed - missing required fields:', { 
+        hasSlug: !!data.slug, 
+        hasName: !!data.name, 
+        hasTitle: !!data.title 
+      });
+      return c.json({ error: 'Missing required fields: slug, name, and title are required' }, 400);
+    }
+    
+    // Check if page with this slug already exists
+    const existing = await kv.get(`cms_page:${data.slug}`);
+    if (existing) {
+      console.log(`❌ Page with slug '${data.slug}' already exists`);
+      return c.json({ error: `Page with slug '${data.slug}' already exists` }, 409);
+    }
+    
+    const newPage = {
+      id: data.slug, // Use slug as ID for consistency
+      name: data.name,
+      title: data.title,
+      slug: data.slug,
+      published: data.published || false,
+      content: data.content || '',
+      // Include all optional fields from the form
+      featuredImage: data.featuredImage || '',
+      heroImage: data.heroImage || '',
+      heroVideoUrl: data.heroVideoUrl || '',
+      ogImage: data.ogImage || '',
+      metaDescription: data.metaDescription || '',
+      metaKeywords: data.metaKeywords || '',
+      ogTitle: data.ogTitle || '',
+      ogDescription: data.ogDescription || '',
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    };
+    
+    // Store using slug as key for consistency
+    await kv.set(`cms_page:${newPage.slug}`, newPage);
+    console.log(`✅ Created CMS page: ${newPage.slug}`);
+    return c.json(newPage);
+  } catch (error) {
+    console.log('Create CMS page error:', error);
+    return c.json({ error: 'Failed to create page' }, 500);
+  }
+});
+
+// Update existing page
 app.put("/make-server-cc205da9/cms/pages/:pageId", requireAuth, async (c) => {
   try {
     const pageId = c.req.param('pageId');
-    const content = await c.req.json();
+    const updates = await c.req.json();
+    
+    // Get existing page
+    const existingPage = await kv.get(`cms_page:${pageId}`);
     
     const updatedPage = {
-      ...content,
-      pageId,
-      lastUpdated: new Date().toISOString()
+      ...(existingPage || {}),
+      ...updates,
+      id: pageId,
+      updated_at: new Date().toISOString()
     };
     
     await kv.set(`cms_page:${pageId}`, updatedPage);
+    console.log(`✅ Updated CMS page: ${pageId}`);
     return c.json(updatedPage);
   } catch (error) {
     console.log('Update CMS page error:', error);
@@ -1159,9 +2084,93 @@ app.put("/make-server-cc205da9/cms/pages/:pageId", requireAuth, async (c) => {
   }
 });
 
+// Delete page
+app.delete("/make-server-cc205da9/cms/pages/:pageId", requireAuth, async (c) => {
+  try {
+    const pageId = c.req.param('pageId');
+    await kv.del(`cms_page:${pageId}`);
+    console.log(`✅ Deleted CMS page: ${pageId}`);
+    return c.json({ success: true, message: 'Page deleted successfully' });
+  } catch (error) {
+    console.log('Delete CMS page error:', error);
+    return c.json({ error: 'Failed to delete page' }, 500);
+  }
+});
+
 // Helper function to create default CMS content
 function createDefaultCMSContent(pageId: string): any {
   const defaults: { [key: string]: any } = {
+    'about': {
+      title: 'About iKan',
+      content: `
+        <div class="space-y-8">
+          <div class="bg-gradient-to-r from-indigo-50 to-purple-50 p-6 rounded-lg border border-indigo-100">
+            <h2 class="text-xl font-semibold text-gray-900 mb-3">🌟 Our Mission</h2>
+            <p class="text-gray-700 leading-relaxed">At iKan, we believe that everyone deserves access to quality mental health support. We're on a mission to make mental wellness accessible, affordable, and stigma-free.</p>
+          </div>
+
+          <div class="grid gap-6">
+            <section class="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
+              <h3 class="text-lg font-medium text-gray-900 mb-4 flex items-center">
+                <span class="mr-2">💙</span> What We Do
+              </h3>
+              <p class="text-gray-700 leading-relaxed mb-4">
+                iKan is a comprehensive mental health platform that connects you with licensed professionals, evidence-based self-help programs, and a supportive community. Whether you're dealing with stress, anxiety, depression, or just looking to improve your overall well-being, we're here to help.
+              </p>
+              <ul class="space-y-2 text-gray-700 ml-4">
+                <li>• One-on-one consultations with qualified therapists and counselors</li>
+                <li>• Self-paced programs based on cognitive behavioral therapy (CBT)</li>
+                <li>• Mood tracking and personalized insights</li>
+                <li>• Resource library with articles, guides, and tools</li>
+                <li>• 24/7 crisis support and emergency resources</li>
+              </ul>
+            </section>
+
+            <section class="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
+              <h3 class="text-lg font-medium text-gray-900 mb-4 flex items-center">
+                <span class="mr-2">🎯</span> Our Values
+              </h3>
+              <div class="grid md:grid-cols-2 gap-4">
+                <div class="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                  <h4 class="font-medium text-gray-900 mb-2">Accessibility</h4>
+                  <p class="text-sm text-gray-700">Mental health support should be available to everyone, regardless of location or financial situation.</p>
+                </div>
+                <div class="bg-green-50 p-4 rounded-lg border border-green-200">
+                  <h4 class="font-medium text-gray-900 mb-2">Privacy</h4>
+                  <p class="text-sm text-gray-700">Your data and conversations are completely confidential and protected with industry-leading security.</p>
+                </div>
+                <div class="bg-purple-50 p-4 rounded-lg border border-purple-200">
+                  <h4 class="font-medium text-gray-900 mb-2">Evidence-Based</h4>
+                  <p class="text-sm text-gray-700">All our programs and approaches are grounded in scientific research and proven therapeutic methods.</p>
+                </div>
+                <div class="bg-orange-50 p-4 rounded-lg border border-orange-200">
+                  <h4 class="font-medium text-gray-900 mb-2">Stigma-Free</h4>
+                  <p class="text-sm text-gray-700">We're working to normalize conversations about mental health and create a judgment-free space for healing.</p>
+                </div>
+              </div>
+            </section>
+
+            <section class="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
+              <h3 class="text-lg font-medium text-gray-900 mb-4 flex items-center">
+                <span class="mr-2">👥</span> Our Team
+              </h3>
+              <p class="text-gray-700 leading-relaxed">
+                iKan is built by a diverse team of mental health professionals, technologists, and individuals with lived experience. Our licensed therapists, psychiatrists, and counselors bring decades of combined expertise in various therapeutic modalities and specializations.
+              </p>
+            </section>
+          </div>
+
+          <div class="bg-indigo-900 text-white p-6 rounded-lg">
+            <h3 class="text-lg font-medium mb-3">Ready to Start Your Journey?</h3>
+            <p class="mb-4">Take the first step towards better mental health today. Our team is here to support you every step of the way.</p>
+            <a href="/consultation" class="inline-block bg-white text-indigo-900 px-6 py-3 rounded-lg font-medium hover:bg-indigo-50 transition-colors">
+              Book a Consultation
+            </a>
+          </div>
+        </div>
+      `,
+      lastUpdated: new Date().toISOString()
+    },
     'privacy': {
       title: 'Privacy Policy',
       content: `
@@ -1835,6 +2844,23 @@ function createDefaultCMSContent(pageId: string): any {
   };
 }
 
+// Comprehensive seeding endpoint - seeds ALL data (consultants, equip, resources)
+app.post("/make-server-cc205da9/seed/comprehensive", async (c) => {
+  try {
+    console.log('🌱 Seeding ALL iKan data (comprehensive)...');
+    
+    const result = await handleComprehensiveSeed();
+    
+    return c.json(result);
+  } catch (error) {
+    console.error('❌ Comprehensive seeding error:', error);
+    return c.json({
+      success: false,
+      error: 'Failed to seed comprehensive data: ' + error.message
+    }, 500);
+  }
+});
+
 // Optimized seeding endpoint - lightweight and fast
 app.post("/make-server-cc205da9/seed/data", async (c) => {
   try {
@@ -2379,25 +3405,33 @@ app.post("/make-server-cc205da9/seed/users", async (c) => {
         email: 'demo1@ikan.com',
         password: 'demo123',
         name: 'Alex Johnson',
-        phone: '+1 (555) 100-0001'
+        phone: '+1 (555) 100-0001',
+        is_admin: true,  // Make demo1 an admin
+        corporate_user: false
       },
       {
         email: 'demo2@ikan.com', 
         password: 'demo123',
         name: 'Sam Rivera',
-        phone: '+1 (555) 200-0002'
+        phone: '+1 (555) 200-0002',
+        is_admin: false,
+        corporate_user: true  // Make demo2 a corporate user
       },
       {
         email: 'demo3@ikan.com',
         password: 'demo123', 
         name: 'Jordan Chen',
-        phone: '+1 (555) 300-0003'
+        phone: '+1 (555) 300-0003',
+        is_admin: false,
+        corporate_user: false
       },
       {
         email: 'test@ikan.com',
         password: 'demo123',
         name: 'Test User',
-        phone: '+1 (555) 000-0000'
+        phone: '+1 (555) 000-0000',
+        is_admin: false,
+        corporate_user: false
       }
     ];
 
@@ -2412,7 +3446,7 @@ app.post("/make-server-cc205da9/seed/users", async (c) => {
           user_metadata: { 
             name: demoUser.name, 
             phone: demoUser.phone,
-            corporate_user: false 
+            corporate_user: demoUser.corporate_user 
           },
           // Automatically confirm the user's email since an email server hasn't been configured
           email_confirm: true
@@ -2420,19 +3454,49 @@ app.post("/make-server-cc205da9/seed/users", async (c) => {
 
         if (error) {
           console.log(`Demo user ${demoUser.email} might already exist:`, error.message);
-        } else {
-          console.log(`✅ Created demo user: ${demoUser.name} (${demoUser.email})`);
-          createdUsers.push({ email: demoUser.email, name: demoUser.name, id: data.user.id });
           
-          // Store user profile in KV store
+          // Try to update existing user's profile in KV store
+          try {
+            // Find user by email in Supabase
+            const { data: { users } } = await supabase.auth.admin.listUsers();
+            const existingUser = users.find(u => u.email === demoUser.email);
+            
+            if (existingUser) {
+              // Update KV store profile with admin flag
+              const existingProfile = await kv.get(`user:${existingUser.id}`) || {};
+              await kv.set(`user:${existingUser.id}`, {
+                ...existingProfile,
+                user_id: existingUser.id,
+                email: demoUser.email,
+                name: demoUser.name,
+                phone: demoUser.phone,
+                avatar_url: existingProfile.avatar_url || null,
+                is_admin: demoUser.is_admin,
+                corporate_user: demoUser.corporate_user,
+                created_at: existingProfile.created_at || new Date().toISOString(),
+                updated_at: new Date().toISOString()
+              });
+              console.log(`✅ Updated existing user profile: ${demoUser.name} (admin: ${demoUser.is_admin})`);
+              createdUsers.push({ email: demoUser.email, name: demoUser.name, id: existingUser.id, status: 'updated' });
+            }
+          } catch (updateError) {
+            console.log(`Could not update existing user ${demoUser.email}:`, updateError);
+          }
+        } else if (data?.user) {
+          console.log(`✅ Created demo user: ${demoUser.name} (${demoUser.email}) - Admin: ${demoUser.is_admin}`);
+          createdUsers.push({ email: demoUser.email, name: demoUser.name, id: data.user.id, status: 'created' });
+          
+          // Store user profile in KV store with proper flags
           await kv.set(`user:${data.user.id}`, {
             user_id: data.user.id,
             email: demoUser.email,
             name: demoUser.name,
             phone: demoUser.phone,
             avatar_url: null,
-            corporate_user: false,
-            created_at: new Date().toISOString()
+            is_admin: demoUser.is_admin,
+            corporate_user: demoUser.corporate_user,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
           });
         }
       } catch (userError) {
@@ -2696,15 +3760,14 @@ app.post("/make-server-cc205da9/seed/users", async (c) => {
     }
 
     console.log('✅ Demo users seeded successfully');
+    console.log(`   Created/Updated: ${createdUsers.length} users`);
     
     return c.json({
       success: true,
       message: 'Demo users seeded successfully',
-      users: [
-        { email: 'demo1@ikan.com', name: 'Alex Johnson', status: 'new user' },
-        { email: 'demo2@ikan.com', name: 'Sam Rivera', status: 'active user' },
-        { email: 'demo3@ikan.com', name: 'Jordan Chen', status: 'power user' }
-      ]
+      created: createdUsers.filter(u => u.status === 'created').length,
+      updated: createdUsers.filter(u => u.status === 'updated').length,
+      users: createdUsers
     });
 
   } catch (error) {
@@ -2761,6 +3824,532 @@ app.post("/make-server-cc205da9/newsletter/signup", async (c) => {
   } catch (error) {
     console.log('Newsletter signup error:', error);
     return c.json({ error: 'Failed to process newsletter signup' }, 500);
+  }
+});
+
+// ============================================================================
+// ANALYTICS ENDPOINTS
+// ============================================================================
+
+/**
+ * Track user engagement analytics
+ * Stores analytics data for resource interactions (views, reads, shares, etc.)
+ */
+app.post("/make-server-cc205da9/analytics/engagement", async (c) => {
+  try {
+    const analyticsData = await c.req.json();
+    
+    // Validate required fields
+    if (!analyticsData.resource_id || !analyticsData.action) {
+      return c.json({ error: 'resource_id and action are required' }, 400);
+    }
+
+    // Generate unique analytics ID
+    const analyticsId = `analytics:${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    
+    // Store analytics data with timestamp
+    const analyticsRecord = {
+      ...analyticsData,
+      tracked_at: new Date().toISOString(),
+      id: analyticsId
+    };
+
+    await kv.set(analyticsId, analyticsRecord);
+    
+    // Also store by resource ID for easy querying
+    const resourceAnalyticsKey = `analytics:resource:${analyticsData.resource_id}`;
+    const existingAnalytics = await kv.get(resourceAnalyticsKey) || [];
+    existingAnalytics.push(analyticsId);
+    await kv.set(resourceAnalyticsKey, existingAnalytics);
+    
+    console.log(`📊 Analytics tracked: ${analyticsData.action} on resource ${analyticsData.resource_id}`);
+    
+    return c.json({ 
+      success: true,
+      message: 'Analytics tracked successfully',
+      id: analyticsId
+    });
+  } catch (error) {
+    console.error('Analytics tracking error:', error);
+    // Don't fail the request if analytics fails - it's not critical
+    return c.json({ 
+      success: false,
+      message: 'Analytics tracking failed but request continued' 
+    }, 200);
+  }
+});
+
+/**
+ * Mark resource as read by user
+ * Tracks user reading activity for personalization and progress
+ */
+app.post("/make-server-cc205da9/user-activity/mark-read", async (c) => {
+  try {
+    const readData = await c.req.json();
+    
+    // Validate required fields
+    if (!readData.resource_id) {
+      return c.json({ error: 'resource_id is required' }, 400);
+    }
+
+    // Generate unique activity ID
+    const activityId = `activity:read:${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    
+    // Store read activity with timestamp
+    const activityRecord = {
+      ...readData,
+      activity_type: 'read',
+      tracked_at: new Date().toISOString(),
+      id: activityId
+    };
+
+    await kv.set(activityId, activityRecord);
+    
+    // Also store by user ID if available for easy querying
+    if (readData.user_id) {
+      const userActivityKey = `activity:user:${readData.user_id}:reads`;
+      const existingReads = await kv.get(userActivityKey) || [];
+      existingReads.push(activityId);
+      await kv.set(userActivityKey, existingReads);
+    }
+    
+    console.log(`📖 Read activity tracked: resource ${readData.resource_id}`);
+    
+    return c.json({ 
+      success: true,
+      message: 'Read activity tracked successfully',
+      id: activityId
+    });
+  } catch (error) {
+    console.error('Read activity tracking error:', error);
+    // Don't fail the request if tracking fails - it's not critical
+    return c.json({ 
+      success: false,
+      message: 'Read activity tracking failed but request continued' 
+    }, 200);
+  }
+});
+
+// ============================================================================
+// ADMIN MONITORING ENDPOINTS
+// ============================================================================
+
+/**
+ * Get API logs for admin panel
+ */
+app.get("/make-server-cc205da9/admin/api-logs", requireAdmin, async (c) => {
+  try {
+    const limit = parseInt(c.req.query('limit') || '100');
+    const logs = await getAPILogs(limit);
+    return c.json({ logs });
+  } catch (error) {
+    console.error('Error fetching API logs:', error);
+    return c.json({ error: 'Failed to fetch API logs' }, 500);
+  }
+});
+
+/**
+ * Get system logs for admin panel
+ */
+app.get("/make-server-cc205da9/admin/system-logs", requireAdmin, async (c) => {
+  try {
+    const level = c.req.query('level') as any;
+    const source = c.req.query('source');
+    const limit = parseInt(c.req.query('limit') || '200');
+    
+    const logs = await getSystemLogs(level, source, limit);
+    return c.json({ logs });
+  } catch (error) {
+    console.error('Error fetching system logs:', error);
+    return c.json({ error: 'Failed to fetch system logs' }, 500);
+  }
+});
+
+/**
+ * Get current performance metrics
+ */
+app.get("/make-server-cc205da9/admin/performance/current", requireAdmin, async (c) => {
+  try {
+    const metrics = await getPerformanceMetrics();
+    return c.json({ metrics });
+  } catch (error) {
+    console.error('Error fetching performance metrics:', error);
+    return c.json({ error: 'Failed to fetch performance metrics' }, 500);
+  }
+});
+
+/**
+ * Get performance metrics history
+ */
+app.get("/make-server-cc205da9/admin/performance/history", requireAdmin, async (c) => {
+  try {
+    const hours = parseInt(c.req.query('hours') || '1');
+    const history = await getMetricsHistory(hours);
+    return c.json({ history });
+  } catch (error) {
+    console.error('Error fetching metrics history:', error);
+    return c.json({ error: 'Failed to fetch metrics history' }, 500);
+  }
+});
+
+/**
+ * Get active sessions
+ */
+app.get("/make-server-cc205da9/admin/security/sessions", requireAdmin, async (c) => {
+  try {
+    const sessions = await getActiveSessions();
+    return c.json({ sessions });
+  } catch (error) {
+    console.error('Error fetching sessions:', error);
+    return c.json({ error: 'Failed to fetch sessions' }, 500);
+  }
+});
+
+/**
+ * Terminate a user session
+ */
+app.delete("/make-server-cc205da9/admin/security/sessions/:userId", requireAdmin, async (c) => {
+  try {
+    const userId = c.req.param('userId');
+    await terminateSession(userId);
+    return c.json({ success: true, message: 'Session terminated' });
+  } catch (error) {
+    console.error('Error terminating session:', error);
+    return c.json({ error: 'Failed to terminate session' }, 500);
+  }
+});
+
+/**
+ * Get audit logs
+ */
+app.get("/make-server-cc205da9/admin/security/audit", requireAdmin, async (c) => {
+  try {
+    const limit = parseInt(c.req.query('limit') || '200');
+    const logs = await getAuditLogs(limit);
+    return c.json({ logs });
+  } catch (error) {
+    console.error('Error fetching audit logs:', error);
+    return c.json({ error: 'Failed to fetch audit logs' }, 500);
+  }
+});
+
+/**
+ * Get security alerts
+ */
+app.get("/make-server-cc205da9/admin/security/alerts", requireAdmin, async (c) => {
+  try {
+    const includeResolved = c.req.query('resolved') === 'true';
+    const alerts = await getSecurityAlerts(includeResolved);
+    return c.json({ alerts });
+  } catch (error) {
+    console.error('Error fetching security alerts:', error);
+    return c.json({ error: 'Failed to fetch security alerts' }, 500);
+  }
+});
+
+/**
+ * Resolve a security alert
+ */
+app.post("/make-server-cc205da9/admin/security/alerts/:alertId/resolve", requireAdmin, async (c) => {
+  try {
+    const alertId = c.req.param('alertId');
+    const { resolved_by } = await c.req.json();
+    await resolveAlert(alertId, resolved_by);
+    return c.json({ success: true, message: 'Alert resolved' });
+  } catch (error) {
+    console.error('Error resolving alert:', error);
+    return c.json({ error: 'Failed to resolve alert' }, 500);
+  }
+});
+
+// ============================================================================
+// COMMUNICATION API CONFIGURATION ENDPOINTS
+// ============================================================================
+
+/**
+ * Get communication API configurations (Admin Only)
+ */
+app.get("/make-server-cc205da9/admin/communication/config", requireAdmin, async (c) => {
+  try {
+    const configs = await kv.getByPrefix('comm-config:');
+    return c.json({ configs });
+  } catch (error) {
+    console.error('Error fetching communication configs:', error);
+    return c.json({ error: 'Failed to fetch configs' }, 500);
+  }
+});
+
+/**
+ * Save communication API configuration (Admin Only)
+ */
+app.post("/make-server-cc205da9/admin/communication/config", requireAdmin, async (c) => {
+  try {
+    const { provider, config } = await c.req.json();
+    const key = `comm-config:${provider}`;
+    await kv.set(key, { ...config, updated_at: new Date().toISOString() });
+    return c.json({ success: true, message: 'Configuration saved' });
+  } catch (error) {
+    console.error('Error saving communication config:', error);
+    return c.json({ error: 'Failed to save configuration' }, 500);
+  }
+});
+
+/**
+ * Test communication API (Admin Only)
+ */
+app.post("/make-server-cc205da9/admin/communication/test", requireAdmin, async (c) => {
+  try {
+    const { provider, recipient, message } = await c.req.json();
+    // Placeholder for actual API testing
+    // Implementation depends on which provider (email, SMS, WhatsApp)
+    return c.json({ 
+      success: true, 
+      message: `Test ${provider} message queued for ${recipient}` 
+    });
+  } catch (error) {
+    console.error('Error testing communication API:', error);
+    return c.json({ error: 'Failed to test API' }, 500);
+  }
+});
+
+// ============================================================================
+// PAYMENT GATEWAY CONFIGURATION ENDPOINTS
+// ============================================================================
+
+/**
+ * Get payment gateway configurations (Admin Only)
+ */
+app.get("/make-server-cc205da9/admin/payment/config", requireAdmin, async (c) => {
+  try {
+    const configs = await kv.getByPrefix('payment-config:');
+    // Mask sensitive keys
+    const masked = configs.map((cfg: any) => ({
+      ...cfg,
+      api_key: cfg.api_key ? '***' + cfg.api_key.slice(-4) : null,
+      secret_key: cfg.secret_key ? '***' + cfg.secret_key.slice(-4) : null
+    }));
+    return c.json({ configs: masked });
+  } catch (error) {
+    console.error('Error fetching payment configs:', error);
+    return c.json({ error: 'Failed to fetch configs' }, 500);
+  }
+});
+
+/**
+ * Save payment gateway configuration (Admin Only)
+ */
+app.post("/make-server-cc205da9/admin/payment/config", requireAdmin, async (c) => {
+  try {
+    const { gateway, config } = await c.req.json();
+    const key = `payment-config:${gateway}`;
+    await kv.set(key, { ...config, updated_at: new Date().toISOString() });
+    return c.json({ success: true, message: 'Payment gateway configured' });
+  } catch (error) {
+    console.error('Error saving payment config:', error);
+    return c.json({ error: 'Failed to save configuration' }, 500);
+  }
+});
+
+/**
+ * Test payment gateway (Admin Only)
+ */
+app.post("/make-server-cc205da9/admin/payment/test", requireAdmin, async (c) => {
+  try {
+    const { gateway, amount } = await c.req.json();
+    // Placeholder for actual gateway testing
+    return c.json({ 
+      success: true, 
+      message: `Test transaction of ₹${amount} initiated with ${gateway}` 
+    });
+  } catch (error) {
+    console.error('Error testing payment gateway:', error);
+    return c.json({ error: 'Failed to test gateway' }, 500);
+  }
+});
+
+/**
+ * Get payment transactions (Admin Only)
+ */
+app.get("/make-server-cc205da9/admin/payment/transactions", requireAdmin, async (c) => {
+  try {
+    const transactions = await kv.getByPrefix('transaction:');
+    const sorted = transactions.sort((a: any, b: any) => 
+      new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+    );
+    return c.json({ transactions: sorted });
+  } catch (error) {
+    console.error('Error fetching transactions:', error);
+    return c.json({ error: 'Failed to fetch transactions' }, 500);
+  }
+});
+
+// ============================================================================
+// FILE UPLOAD ENDPOINT (Media Library)
+// ============================================================================
+
+// Upload file to Supabase Storage
+app.post("/make-server-cc205da9/upload", async (c) => {
+  try {
+    const formData = await c.req.formData();
+    const file = formData.get('file') as File;
+    const bucket = formData.get('bucket') as string || 'make-cc205da9-media';
+
+    if (!file) {
+      return c.json({ error: 'No file provided' }, 400);
+    }
+
+    // Ensure bucket exists
+    const { data: buckets } = await supabase.storage.listBuckets();
+    const bucketExists = buckets?.some(b => b.name === bucket);
+    
+    if (!bucketExists) {
+      console.log(`📦 Creating bucket: ${bucket}`);
+      const { error: bucketError } = await supabase.storage.createBucket(bucket, {
+        public: false,
+        fileSizeLimit: 52428800 // 50MB
+      });
+      
+      if (bucketError) {
+        console.error('Bucket creation error:', bucketError);
+        return c.json({ error: 'Failed to create storage bucket' }, 500);
+      }
+    }
+
+    // Generate unique filename
+    const timestamp = Date.now();
+    const randomStr = Math.random().toString(36).substring(2, 9);
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${timestamp}-${randomStr}.${fileExt}`;
+    const filePath = `uploads/${fileName}`;
+
+    // Convert File to ArrayBuffer
+    const arrayBuffer = await file.arrayBuffer();
+    const uint8Array = new Uint8Array(arrayBuffer);
+
+    // Upload to Supabase Storage
+    const { data, error } = await supabase.storage
+      .from(bucket)
+      .upload(filePath, uint8Array, {
+        contentType: file.type,
+        upsert: false
+      });
+
+    if (error) {
+      console.error('Upload error:', error);
+      return c.json({ error: 'Failed to upload file' }, 500);
+    }
+
+    // Generate signed URL (valid for 1 year)
+    const { data: signedUrlData } = await supabase.storage
+      .from(bucket)
+      .createSignedUrl(filePath, 31536000); // 1 year in seconds
+
+    if (!signedUrlData) {
+      console.error('Failed to generate signed URL');
+      return c.json({ error: 'Failed to generate file URL' }, 500);
+    }
+
+    // Store file metadata in KV for media library
+    const fileMetadata = {
+      id: `${timestamp}-${randomStr}`,
+      fileName: file.name,
+      fileSize: file.size,
+      fileType: file.type,
+      filePath,
+      bucket,
+      url: signedUrlData.signedUrl,
+      uploadedAt: new Date().toISOString()
+    };
+
+    await kv.set(`media:${fileMetadata.id}`, fileMetadata);
+
+    console.log(`📤 File uploaded: ${file.name} (${(file.size / 1024).toFixed(2)} KB)`);
+    
+    return c.json({
+      success: true,
+      url: signedUrlData.signedUrl,
+      metadata: fileMetadata
+    });
+  } catch (error) {
+    console.error('Upload endpoint error:', error);
+    return c.json({ error: 'Upload failed' }, 500);
+  }
+});
+
+// Get all media files (for media library)
+app.get("/make-server-cc205da9/media", async (c) => {
+  try {
+    const files = await kv.getByPrefix('media:');
+    
+    // Sort by upload date (newest first)
+    const sorted = files.sort((a, b) => 
+      new Date(b.uploadedAt || 0).getTime() - new Date(a.uploadedAt || 0).getTime()
+    );
+    
+    console.log(`📁 Fetched ${sorted.length} media files`);
+    return c.json({ files: sorted });
+  } catch (error) {
+    console.error('Get media error:', error);
+    return c.json({ error: 'Failed to retrieve media files' }, 500);
+  }
+});
+
+// Delete media file
+app.delete("/make-server-cc205da9/media/:id", async (c) => {
+  try {
+    const id = c.req.param('id');
+    const fileMetadata = await kv.get(`media:${id}`);
+    
+    if (!fileMetadata) {
+      return c.json({ error: 'File not found' }, 404);
+    }
+
+    // Delete from Supabase Storage
+    const { error } = await supabase.storage
+      .from(fileMetadata.bucket)
+      .remove([fileMetadata.filePath]);
+
+    if (error) {
+      console.error('Storage deletion error:', error);
+    }
+
+    // Delete metadata from KV
+    await kv.del(`media:${id}`);
+
+    console.log(`🗑️ Deleted media file: ${fileMetadata.fileName}`);
+    return c.json({ success: true });
+  } catch (error) {
+    console.error('Delete media error:', error);
+    return c.json({ error: 'Failed to delete file' }, 500);
+  }
+});
+
+// ============================================================================
+// SETTINGS ENDPOINTS
+// ============================================================================
+
+// Get site settings
+app.get("/make-server-cc205da9/settings", async (c) => {
+  try {
+    const settings = await kv.get('settings:site');
+    console.log('⚙️ Fetched site settings');
+    return c.json({ settings: settings || {} });
+  } catch (error) {
+    console.error('Get settings error:', error);
+    return c.json({ error: 'Failed to retrieve settings' }, 500);
+  }
+});
+
+// Update site settings
+app.put("/make-server-cc205da9/settings", async (c) => {
+  try {
+    const body = await c.req.json();
+    await kv.set('settings:site', body);
+    console.log('⚙️ Updated site settings');
+    return c.json({ success: true, settings: body });
+  } catch (error) {
+    console.error('Update settings error:', error);
+    return c.json({ error: 'Failed to update settings' }, 500);
   }
 });
 

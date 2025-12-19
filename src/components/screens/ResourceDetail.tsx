@@ -5,7 +5,6 @@ import { useIsMobile } from '../../hooks/useIsMobile';
 import { useNotifications } from '../../contexts/NotificationContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { apiClient } from '../../lib/api-client';
-import { getResourceById, getRelatedResources, formatResourcesForSection } from '../../lib/dummy-resources';
 
 // Import dynamic UI blocks
 import { ResourceHero } from '../blocks/ResourceHero';
@@ -347,38 +346,6 @@ export function ResourceDetail({ resourceId, onBack, onResourceSelect, className
       setLoading(true);
       console.log('📚 Loading resource:', resourceId);
       
-      // First, check if this is a dummy resource
-      const dummyResource = getResourceById(resourceId);
-      if (dummyResource) {
-        console.log('📚 Loading dummy resource data');
-        
-        const formattedResource: ResourceContent = {
-          id: dummyResource.id,
-          title: dummyResource.title,
-          description: dummyResource.description,
-          category: dummyResource.category,
-          contentType: dummyResource.contentType,
-          readTimeMinutes: dummyResource.readTimeMinutes,
-          author: dummyResource.author,
-          publishedDate: dummyResource.publishedDate,
-          content: dummyResource.content,
-          tags: dummyResource.tags,
-          heroImage: dummyResource.image,
-          relatedResources: getRelatedResources(dummyResource.id).map(resource => ({
-            id: resource.id,
-            title: resource.title,
-            category: resource.category,
-            readTimeMinutes: resource.readTimeMinutes,
-            description: resource.description,
-            publishedDate: resource.publishedDate
-          }))
-        };
-        
-        setResource(formattedResource);
-        setLoading(false);
-        return;
-      }
-      
       // Check if we're offline
       if (!navigator.onLine) {
         console.log('📱 Offline mode - loading from cache');
@@ -544,15 +511,16 @@ export function ResourceDetail({ resourceId, onBack, onResourceSelect, className
     try {
       if (!user) return; // Only track for authenticated users
       
+      // Format data with snake_case for backend compatibility
       const engagementData = {
-        userId: user.id,
-        resourceId,
+        user_id: user.id,
+        resource_id: resourceId,
         action,
         timestamp: new Date().toISOString(),
-        sessionData: {
-          userAgent: navigator.userAgent,
-          isMobile,
-          connectionType: (navigator as any).connection?.effectiveType || 'unknown',
+        session_data: {
+          user_agent: navigator.userAgent,
+          is_mobile: isMobile,
+          connection_type: (navigator as any).connection?.effectiveType || 'unknown',
           ...data
         }
       };
@@ -567,15 +535,15 @@ export function ResourceDetail({ resourceId, onBack, onResourceSelect, className
     } catch (error) {
       console.warn('Analytics tracking failed (non-critical):', error);
       
-      // Store analytics offline for later sync
+      // Store analytics offline for later sync with correct format
       try {
         const offlineAnalytics = JSON.parse(localStorage.getItem('ikan-offline-analytics') || '[]');
         offlineAnalytics.push({
+          resource_id: resourceId,
+          user_id: user?.id,
           action,
-          data,
           timestamp: new Date().toISOString(),
-          resourceId,
-          userId: user?.id
+          session_data: data
         });
         
         // Keep only last 50 analytics events

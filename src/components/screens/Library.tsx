@@ -12,7 +12,6 @@ import { ResourceType } from '../blocks/ResourceType';
 import { ResourceCard, ResourcePost } from '../blocks/ResourceCard';
 import { apiClient } from '../../lib/api-client';
 import { logger } from '../../lib/logger';
-import { DUMMY_RESOURCES, formatResourcesForSection } from '../../lib/dummy-resources';
 
 interface LibraryProps {
   onResourceSelect?: (resourceId: string) => void;
@@ -41,55 +40,46 @@ export function Library({ onResourceSelect, className }: LibraryProps) {
     try {
       setLoading(true);
       
-      let loadedResources: Resource[] = [];
+      const response = await apiClient.getResources();
       
-      try {
-        const response = await apiClient.getResources();
+      // getResources() already returns the array directly
+      if (response && Array.isArray(response)) {
+        // Map the response to match ResourcePost interface
+        const mappedResources: Resource[] = response.map((resource: any) => ({
+          id: resource.id || resource.resource_id || `resource-${Math.random().toString(36).substr(2, 9)}`,
+          title: resource.title || 'Untitled Resource',
+          description: resource.description || resource.excerpt || '',
+          category: resource.category || 'General',
+          // Add type for filtering
+          type: (resource.type?.toLowerCase() === 'video' ? 'video' : 
+                 resource.type?.toLowerCase() === 'tool' ? 'tool' : 'article'),
+          readTime: resource.readTime || (resource.read_time_minutes ? `${resource.read_time_minutes} min read` : '5 min read'),
+          date: resource.date || (resource.created_at ? new Date(resource.created_at).toLocaleDateString() : new Date().toLocaleDateString()),
+          image: resource.image || resource.image_url || 'https://images.unsplash.com/photo-1499750310107-5fef28a66643?w=800',
+          slug: resource.id
+        }));
+
+        // Deduplicate resources by ID
+        const loadedResources = mappedResources.reduce((acc: Resource[], current) => {
+          const x = acc.find(item => item.id === current.id);
+          if (!x) {
+            return acc.concat([current]);
+          } else {
+            return acc;
+          }
+        }, []);
         
-        if (response && response.resources && Array.isArray(response.resources) && response.resources.length > 0) {
-          // Map the response to match ResourcePost interface
-          loadedResources = response.resources.map((resource: any) => ({
-            id: resource.id || `resource-${Math.random().toString(36).substr(2, 9)}`,
-            title: resource.title || 'Untitled Resource',
-            description: resource.description || '',
-            category: resource.category || 'General',
-            // Add type for filtering
-            type: (resource.contentType?.toLowerCase() === 'video' ? 'video' : 
-                   resource.contentType?.toLowerCase() === 'tool' ? 'tool' : 'article'),
-            readTime: resource.readTime || (resource.readTimeMinutes ? `${resource.readTimeMinutes} min read` : '5 min read'),
-            date: resource.date || (resource.publishedDate ? new Date(resource.publishedDate).toLocaleDateString() : new Date().toLocaleDateString()),
-            image: resource.image || resource.heroImage || 'https://images.unsplash.com/photo-1499750310107-5fef28a66643?w=800',
-            slug: resource.id
-          }));
-          
-          logger.info('Resources loaded successfully from API', { count: loadedResources.length });
-        } else {
-          throw new Error('No resources returned from API');
-        }
-      } catch (apiError) {
-        logger.warn('Failed to load from API, falling back to dummy data', apiError);
-        
-        // Fallback to dummy data
-        const formattedDummy = formatResourcesForSection(DUMMY_RESOURCES);
-        loadedResources = formattedDummy.map(r => {
-           // Find original dummy to get contentType
-           const original = DUMMY_RESOURCES.find(d => d.id === r.id);
-           const contentType = original?.contentType || 'Article';
-           
-           return {
-            ...r,
-            type: (contentType.toLowerCase() === 'video' ? 'video' : 
-                   contentType.toLowerCase() === 'tool' ? 'tool' : 'article') as any
-           };
-        });
+        setResources(loadedResources);
+        logger.info('Resources loaded successfully from API', { count: loadedResources.length });
+      } else {
+        logger.warn('No resources returned from API');
+        setResources([]);
       }
       
-      setResources(loadedResources);
       hasLoadedResources.current = true;
       
     } catch (error) {
       logger.error('Failed to load resources', error);
-      // Even in total failure, try to show something if possible or leave empty
       setResources([]); 
     } finally {
       setLoading(false);
