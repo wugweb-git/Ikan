@@ -6,9 +6,10 @@ import { Label } from './ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 import { Checkbox } from './ui/checkbox';
 import { useAuth } from '../contexts/AuthContext';
-import { User, Mail, Lock, Phone, Heart, Eye, EyeOff } from 'lucide-react';
+import { User, Mail, Lock, Phone, Heart, Eye, EyeOff, Database } from 'lucide-react';
 import { toast } from 'sonner@2.0.3';
 import { authContent } from '../lib/content/auth';
+import { projectId, publicAnonKey } from '../utils/supabase/info';
 
 interface AuthFormProps {
   onSuccess?: () => void;
@@ -18,6 +19,7 @@ interface AuthFormProps {
 export function AuthForm({ onSuccess, defaultTab = 'signin' }: AuthFormProps) {
   const { signIn, signUp, signInWithProvider, loading } = useAuth();
   const [activeTab, setActiveTab] = useState(defaultTab);
+  const [seedingUsers, setSeedingUsers] = useState(false);
   
   // Sign In Form State
   const [signInData, setSignInData] = useState({
@@ -92,7 +94,10 @@ export function AuthForm({ onSuccess, defaultTab = 'signin' }: AuthFormProps) {
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!validateSignIn()) return;
+    
+    if (!validateSignIn()) {
+      return;
+    }
 
     try {
       await signIn(signInData.email, signInData.password);
@@ -101,9 +106,9 @@ export function AuthForm({ onSuccess, defaultTab = 'signin' }: AuthFormProps) {
       });
       onSuccess?.();
     } catch (error) {
-      console.error('Sign in error:', error);
+      const errorMessage = error instanceof Error ? error.message : '';
       toast.error(authContent.messages.error.signInFailed.title, {
-        description: error instanceof Error ? error.message : authContent.messages.error.signInFailed.description
+        description: errorMessage || authContent.messages.error.signInFailed.description
       });
     }
   };
@@ -143,6 +148,64 @@ export function AuthForm({ onSuccess, defaultTab = 'signin' }: AuthFormProps) {
       toast.error(authContent.messages.error.socialFailed.title, {
         description: error instanceof Error ? error.message : `Failed to sign in with ${provider}. Please try again.`
       });
+    }
+  };
+
+  // Seed demo users function
+  const handleSeedDemoUsers = async () => {
+    setSeedingUsers(true);
+    toast.info('Seeding Database', {
+      description: 'Creating demo users and sample data...'
+    });
+
+    try {
+      // Call the seed users endpoint
+      const response = await fetch(
+        `https://${projectId}.supabase.co/functions/v1/make-server-cc205da9/seed/users`,
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${publicAnonKey}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to seed users');
+      }
+
+      const data = await response.json();
+      
+      toast.success('Database Seeded Successfully! 🎉', {
+        description: (
+          <div>
+            <p className="mb-2">Demo users created. You can now sign in with:</p>
+            <p className="text-sm">
+              <strong>demo1@ikan.com</strong> (Admin)<br />
+              <strong>demo2@ikan.com</strong> (Corporate)<br />
+              <strong>demo3@ikan.com</strong> (Regular)<br />
+              Password: <strong>demo123</strong>
+            </p>
+          </div>
+        ) as any,
+        duration: 10000
+      });
+
+      // Auto-fill demo1 credentials
+      setSignInData({
+        email: 'demo1@ikan.com',
+        password: 'demo123'
+      });
+
+    } catch (error) {
+      console.error('Seed error:', error);
+      toast.error('Seeding Failed', {
+        description: error instanceof Error ? error.message : 'Failed to create demo users. Please try again.'
+      });
+    } finally {
+      setSeedingUsers(false);
     }
   };
 
@@ -687,6 +750,44 @@ export function AuthForm({ onSuccess, defaultTab = 'signin' }: AuthFormProps) {
         </Tabs>
 
         {/* Demo Credentials Helper */}
+        <div 
+          className="mt-6 pt-6 border-t text-center"
+          style={{ borderColor: 'var(--color-border-default)' }}
+        >
+          <p 
+            className="mb-3"
+            style={{ 
+              fontSize: 'var(--text-xs)', 
+              color: 'var(--color-text-muted)' 
+            }}
+          >
+            First time here? Create demo accounts automatically
+          </p>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={handleSeedDemoUsers}
+            disabled={seedingUsers || loading}
+            className="w-full gap-2"
+            style={{
+              borderColor: 'var(--color-primary-default)',
+              color: 'var(--color-primary-default)',
+              fontWeight: 'var(--font-weight-medium)'
+            }}
+          >
+            {seedingUsers ? (
+              <>
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current"></div>
+                Seeding Database...
+              </>
+            ) : (
+              <>
+                <Database size={16} />
+                Seed Demo Users
+              </>
+            )}
+          </Button>
+        </div>
 
 
       </CardContent>

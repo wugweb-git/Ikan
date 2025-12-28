@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { motion } from 'motion/react';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
@@ -9,8 +10,10 @@ import { usePayment } from '../../contexts/PaymentContext';
 import { cn } from '../ui/utils';
 import { apiClient } from '../../lib/api-client';
 import { projectId, publicAnonKey } from '../../utils/supabase/info';
-import svgPaths from "../../imports/svg-ta5wpcle0i";
-import figmaCardSvgPaths from "../../imports/svg-1uue509bxb";
+import { Skeleton } from '../ui/skeleton-loader';
+import { EmptyState } from '../ui/empty-state';
+import { TouchFeedback } from '../ui/touch-feedback';
+import { Library, Clock, CheckCircle, PenTool, LayoutDashboard, Calendar, Tag, ArrowRight } from 'lucide-react';
 
 // Razorpay global declaration
 declare global {
@@ -43,6 +46,12 @@ interface EquipProgram {
   equip_id?: string;
   onboarding?: any;
   structure?: any;
+  hero_image?: string;
+  thumbnail?: string;
+  cover_image?: string;
+  thumbnail_url?: string;
+  image_url?: string;
+  category?: string;
 }
 
 interface EquipProgramsProps {
@@ -194,9 +203,9 @@ export function EquipPrograms({ className, onNavigate }: EquipProgramsProps) {
                 tags: program.tags
               }));
               
-              // Navigate to program landing
+              // Navigate to program detail
               if (onNavigate) {
-                onNavigate('/equip-programs-landing');
+                onNavigate(`/equip-detail?id=${program.id}`);
               }
             } else {
               throw new Error('Payment verification failed');
@@ -247,9 +256,9 @@ export function EquipPrograms({ className, onNavigate }: EquipProgramsProps) {
       price: program.price
     }));
     
-    // Navigate to the Figma landing page
+    // Navigate to the detail page
     if (onNavigate) {
-      onNavigate('/equip-programs-landing');
+      onNavigate(`/equip-detail?id=${program.id}`);
     }
   };
 
@@ -281,112 +290,136 @@ export function EquipPrograms({ className, onNavigate }: EquipProgramsProps) {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center space-y-4">
-          <div 
-            className="animate-spin rounded-full h-8 w-8 border-2 border-t-0 mx-auto"
-            style={{ borderColor: 'var(--color-primary-default)' }}
-          ></div>
-          <p style={{ color: 'var(--color-text-muted)' }}>Loading programs...</p>
+      <div className="w-full min-h-screen" style={{ backgroundColor: 'var(--color-bg-page)', padding: '24px' }}>
+        <div className="max-w-7xl mx-auto space-y-8">
+          {/* Hero Section Skeleton */}
+          <div className="space-y-4">
+            <Skeleton variant="text" height="48px" width="400px" />
+            <Skeleton variant="text" height="24px" width="600px" />
+          </div>
+
+          {/* Program Cards Skeleton - 3 column grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[1, 2, 3, 4, 5, 6].map((i) => (
+              <div key={i} className="rounded-xl overflow-hidden" style={{ backgroundColor: 'var(--color-bg-card)', border: '1px solid var(--color-border-default)' }}>
+                {/* Image skeleton */}
+                <Skeleton variant="rectangular" height="200px" width="100%" />
+                
+                {/* Content skeleton */}
+                <div className="p-6 space-y-4">
+                  <div className="flex items-center justify-between">
+                    <Skeleton variant="text" width="100px" height="20px" />
+                    <Skeleton variant="text" width="60px" height="24px" />
+                  </div>
+                  <Skeleton variant="text" height="28px" width="80%" />
+                  <Skeleton variant="text" height="16px" width="100%" />
+                  <Skeleton variant="text" height="16px" width="90%" />
+                  
+                  <div className="flex gap-2 pt-2">
+                    <Skeleton variant="rectangular" width="60px" height="24px" className="rounded-full" />
+                    <Skeleton variant="rectangular" width="80px" height="24px" className="rounded-full" />
+                  </div>
+                  
+                  <Skeleton variant="button" height="40px" width="100%" />
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <>
-      <div className={cn("space-y-8 pb-12", className)}>
-        {/* Header Section */}
-        <div className="space-y-2">
-          <h1 
-            style={{ 
-              fontSize: 'var(--text-2xl)', 
-              fontWeight: 'var(--font-weight-medium)',
-              color: 'var(--color-text-primary)',
-              fontFamily: 'var(--font-family-base)'
-            }}
-          >
-            Equip Programs
-          </h1>
-          <p 
-            style={{ 
-              color: 'var(--color-text-muted)',
-              fontFamily: 'var(--font-family-base)'
-            }}
-          >
-            Structured programs to help you build mental wellness skills
-          </p>
+    <div className={cn("w-full max-w-7xl mx-auto p-4 md:p-8 space-y-8", className)}>
+      {/* Header Section */}
+      <motion.div 
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="space-y-4 text-center md:text-left"
+      >
+        <h1 style={{ 
+          fontSize: 'var(--text-3xl)', 
+          fontWeight: 'var(--font-weight-medium)',
+          color: 'var(--color-text-primary)'
+        }}>
+          Equip Programs
+        </h1>
+        <p className="text-lg text-[var(--ikan-color-text-muted)] max-w-2xl">
+          Structured, psychology-based programs to help you build lasting mental wellness skills.
+        </p>
+      </motion.div>
+
+      {/* What makes Equip special? Section */}
+      <motion.div 
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.1 }}
+        className="space-y-6"
+      >
+        <h2 className="text-xl font-medium text-[var(--ikan-color-text-primary)]">
+          Why choose Equip?
+        </h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {[
+            {
+              title: "Rooted in Psychology",
+              desc: "Based on CBT and proven methodologies for effective support.",
+              icon: Library,
+              color: "text-blue-600",
+              bg: "bg-blue-50"
+            },
+            {
+              title: "Fits Your Life",
+              desc: "Bite-sized 10-minute activities you can do anywhere.",
+              icon: Clock,
+              color: "text-green-600",
+              bg: "bg-green-50"
+            },
+            {
+              title: "Simple & Clear",
+              desc: "Carefully structured modules that are easy to follow.",
+              icon: CheckCircle,
+              color: "text-purple-600",
+              bg: "bg-purple-50"
+            },
+            {
+              title: "Practical Tools",
+              desc: "Learn techniques to ease symptoms and enhance daily life.",
+              icon: PenTool,
+              color: "text-orange-600",
+              bg: "bg-orange-50"
+            },
+            {
+              title: "Transparent Progress",
+              desc: "Track your journey with clear insights and dashboards.",
+              icon: LayoutDashboard,
+              color: "text-teal-600",
+              bg: "bg-teal-50"
+            }
+          ].map((item, i) => (
+            <Card key={i} className="border-none shadow-sm bg-white rounded-[16px] overflow-hidden">
+              <CardContent className="p-4 flex gap-4 items-start">
+                <div className={`p-3 rounded-xl shrink-0 ${item.bg}`}>
+                  <item.icon size={20} className={item.color} />
+                </div>
+                <div className="space-y-1">
+                  <h3 className="font-medium text-[var(--ikan-color-text-primary)]">{item.title}</h3>
+                  <p className="text-sm text-[var(--ikan-color-text-muted)] leading-relaxed">
+                    {item.desc}
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
         </div>
+      </motion.div>
 
-        {/* What makes Equip special? Section */}
-        <div className="space-y-6">
-          <h2 style={{ fontSize: 'var(--text-xl)', fontWeight: 'var(--font-weight-medium)', color: 'var(--color-text-primary)' }}>
-            What makes Equip special?
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <div className="flex gap-4 items-start p-4 rounded-xl bg-white border border-gray-100 shadow-sm">
-              <div className="p-2 rounded-full bg-blue-50 shrink-0">
-                <Icon name="library" variant="roundedFilled" size={20} className="text-blue-600" />
-              </div>
-              <div className="space-y-1">
-                <h3 className="font-medium text-gray-900">Rooted in psychology</h3>
-                <p className="text-sm text-gray-500 leading-relaxed">
-                  Our programmes draw from Cognitive Behavioural Therapy and other proven methodologies give you the best support possible.
-                </p>
-              </div>
-            </div>
-
-            <div className="flex gap-4 items-start p-4 rounded-xl bg-white border border-gray-100 shadow-sm">
-              <div className="p-2 rounded-full bg-green-50 shrink-0">
-                <Icon name="clock" variant="default" size={20} className="text-green-600" />
-              </div>
-              <div className="space-y-1">
-                <h3 className="font-medium text-gray-900">Fits in your life</h3>
-                <p className="text-sm text-gray-500 leading-relaxed">
-                  With bite size activities which don’t require more than 10 minutes and can be done at your convenience and on the go.
-                </p>
-              </div>
-            </div>
-
-            <div className="flex gap-4 items-start p-4 rounded-xl bg-white border border-gray-100 shadow-sm">
-              <div className="p-2 rounded-full bg-purple-50 shrink-0">
-                <Icon name="checkCircle" variant="filled" size={20} className="text-purple-600" />
-              </div>
-              <div className="space-y-1">
-                <h3 className="font-medium text-gray-900">Simple</h3>
-                <p className="text-sm text-gray-500 leading-relaxed">
-                  Our modules are simple and carefully structured.
-                </p>
-              </div>
-            </div>
-
-            <div className="flex gap-4 items-start p-4 rounded-xl bg-white border border-gray-100 shadow-sm">
-              <div className="p-2 rounded-full bg-orange-50 shrink-0">
-                <Icon name="tools" variant="roundedFilled" size={20} className="text-orange-600" />
-              </div>
-              <div className="space-y-1">
-                <h3 className="font-medium text-gray-900">Practical</h3>
-                <p className="text-sm text-gray-500 leading-relaxed">
-                  Take away practical techniques to ease your symptoms and enhance your daily life.
-                </p>
-              </div>
-            </div>
-
-            <div className="flex gap-4 items-start p-4 rounded-xl bg-white border border-gray-100 shadow-sm">
-              <div className="p-2 rounded-full bg-teal-50 shrink-0">
-                <Icon name="dashboard" variant="filled" size={20} className="text-teal-600" />
-              </div>
-              <div className="space-y-1">
-                <h3 className="font-medium text-gray-900">Transparent</h3>
-                <p className="text-sm text-gray-500 leading-relaxed">
-                  With our dashboard and insights, you will always know where you are in your journey.
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Programs Grid - 3 Columns Layout */}
+      {/* Programs Grid */}
+      <div className="space-y-6">
+        <h2 className="text-xl font-medium text-[var(--ikan-color-text-primary)]">
+          Available Programs
+        </h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {programs
             .filter(program => program && program.id)
@@ -396,169 +429,102 @@ export function EquipPrograms({ className, onNavigate }: EquipProgramsProps) {
             .map((program, index) => {
             const isProgramPurchased = isPurchased(program.id);
             
-            // Image mapping
-            let imageUrl = "https://images.unsplash.com/photo-1544367563-12123d8965cd?w=800&q=80";
-            if (program.slug.includes('sleep')) imageUrl = "https://images.unsplash.com/photo-1743748978909-169017ab0720?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxwZWFjZWZ1bCUyMHNsZWVwJTIwYmVkfGVufDF8fHx8MTc2NTQ1ODMxOHww&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral";
-            else if (program.slug.includes('stress')) imageUrl = "https://images.unsplash.com/photo-1676386749756-1987d8a0e32a?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxjYWxtJTIwcGVhY2VmdWwlMjBuYXR1cmUlMjBzdHJlc3MlMjByZWxpZWZ8ZW58MXx8fHwxNzY1NDU4MzIzfDA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral";
-            else if (program.slug.includes('unburn')) imageUrl = "https://images.unsplash.com/photo-1564341505027-b410c159e1b6?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxzdW5yaXNlJTIwZW5lcmd5fGVufDF8fHx8MTc2NTQ1ODM0Mnww&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral";
+            // 🎯 Use backend thumbnail with smart fallbacks
+            const imageUrl = program.hero_image || program.thumbnail || program.cover_image || program.thumbnail_url || program.image_url ||
+              // Fallback to slug-based images if no backend image
+              (program.slug.includes('sleep') ? "https://images.unsplash.com/photo-1743748978909-169017ab0720?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxwZWFjZWZ1bCUyMHNsZWVwJTIwYmVkfGVufDF8fHx8MTc2NTQ1ODMxOHww&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral" :
+               program.slug.includes('stress') ? "https://images.unsplash.com/photo-1676386749756-1987d8a0e32a?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxjYWxtJTIwcGVhY2VmdWwlMjBuYXR1cmUlMjBzdHJlc3MlMjByZWxpZWZ8ZW58MXx8fHwxNzY1NDU4MzIzfDA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral" :
+               program.slug.includes('unburn') ? "https://images.unsplash.com/photo-1564341505027-b410c159e1b6?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxzdW5yaXNlJTIwZW5lcmd5fGVufDF8fHx8MTc2NTQ1ODM0Mnww&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral" :
+               "https://images.unsplash.com/photo-1544367563-12123d8965cd?w=800&q=80"); // default fallback
 
             return (
-              <div key={`program-${program.id}-${index}`} className="group h-full">
-                {/* Desktop Card Layout */}
-                <div className="hidden md:block h-full">
-                  <Card 
-                    className="relative overflow-hidden transition-all duration-200 hover:shadow-md cursor-pointer h-full flex flex-col"
-                    style={{
-                      backgroundColor: 'var(--color-bg-card)',
-                      borderRadius: 'var(--radius-lg)',
-                      border: '1px solid var(--color-border-default)'
-                    }}
-                    onClick={() => handlePreview(program)}
-                  >
-                    <div className="flex flex-col p-6 h-full gap-6">
-                      
-                      {/* Top Section: Tags & Title */}
-                      <div className="space-y-2">
-                        <p 
-                          className="text-xs uppercase tracking-widest font-medium"
-                          style={{ 
-                            color: isProgramPurchased ? 'var(--color-status-success)' : 'var(--color-text-primary)',
-                            fontFamily: 'var(--font-family-base)'
-                          }}
-                        >
-                          {isProgramPurchased ? 'PURCHASED' : (program.tags && program.tags.length > 0 ? program.tags[0] : 'PROGRAM')}
-                        </p>
-                        <h3 
-                          className="text-3xl font-medium text-primary"
-                          style={{ fontFamily: 'var(--font-family-base)' }}
-                        >
-                          {program.title}
-                        </h3>
-                      </div>
-
-                      {/* Summary */}
-                      <p className="text-muted-foreground text-sm leading-relaxed flex-grow">
-                        {program.summary}
-                      </p>
-
-                      {/* Bottom Section: Image & Meta */}
-                      <div className="flex gap-4 items-end mt-auto">
-                        {/* Image */}
-                        <div className="w-32 h-32 shrink-0 rounded-lg overflow-hidden bg-muted">
-                          <img 
-                            src={imageUrl} 
-                            alt={program.title}
-                            className="w-full h-full object-cover"
-                          />
-                        </div>
-
-                        {/* Info & CTA */}
-                        <div className="flex flex-col gap-3 flex-grow">
-                          
-                          {/* Duration */}
-                          <div className="flex items-center gap-2 text-sm font-medium">
-                            <Icon name="calendar" variant="default" size={16} />
-                            <span>{program.duration_days} DAYS</span>
-                          </div>
-
-                          {/* Price */}
-                          <div className="flex items-center gap-2 text-sm font-medium">
-                            <Icon name="tag" variant="default" size={16} />
-                            <span>{getDisplayPrice(program)}</span>
-                          </div>
-
-                          {/* CTA Button */}
-                          <Button
-                            className="w-full mt-2 gap-2"
-                            style={{
-                              backgroundColor: isProgramPurchased ? 'var(--color-status-success)' : '#2A2A2A',
-                              color: 'white'
-                            }}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              if (isProgramPurchased) {
-                                handleStartProgram(program);
-                              } else {
-                                handlePreview(program);
-                              }
-                            }}
-                          >
-                            <Icon name="arrowRight" variant="outline" size={16} className="text-white" />
-                            {isProgramPurchased ? 'CONTINUE' : 'KNOW MORE'}
-                          </Button>
-                        </div>
-                      </div>
-                    </div>
-                  </Card>
-                </div>
-
-                {/* Mobile Layout (Standard Card) */}
-                <div className="block md:hidden">
-                  <Card 
-                    className="cursor-pointer hover:shadow-md transition-shadow"
-                    onClick={() => handlePreview(program)}
-                  >
-                    <CardHeader>
-                      <div className="flex justify-between items-start">
-                        <CardTitle className="text-xl">
-                          {program.title}
-                        </CardTitle>
-                        {isProgramPurchased && (
-                          <Badge className="bg-green-500">Purchased</Badge>
-                        )}
-                      </div>
-                      <div className="flex flex-wrap gap-2 mt-2">
-                        {(program.tags || []).map((tag, i) => (
-                          <Badge key={i} variant="secondary" className="text-xs">
-                            {tag}
-                          </Badge>
-                        ))}
-                      </div>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                      <div className="w-full h-40 rounded-lg overflow-hidden mb-4">
-                         <img 
-                            src={imageUrl} 
-                            alt={program.title}
-                            className="w-full h-full object-cover"
-                          />
-                      </div>
-                      <p className="text-sm text-muted-foreground line-clamp-3">
-                        {program.summary}
-                      </p>
-                      
-                      <div className="flex items-center justify-between pt-2">
-                        <div className="flex items-center text-sm text-muted-foreground">
-                          <Icon name="calendar" variant="default" size={16} className="mr-1" />
-                          {program.duration_days} days
-                        </div>
-                        <div className="font-medium text-primary">
-                          {getDisplayPrice(program)}
-                        </div>
-                      </div>
-
-                      <Button 
-                        className="w-full mt-4" 
-                        variant={isProgramPurchased ? "default" : "outline"}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          if (isProgramPurchased) {
-                            handleStartProgram(program);
-                          } else {
-                            handlePreview(program);
-                          }
+              <motion.div
+                key={`program-${program.id}-${index}`}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.1 }}
+                whileHover={{ y: -4 }}
+                className="h-full"
+              >
+                <Card 
+                  className="relative overflow-hidden transition-all duration-300 shadow-sm hover:shadow-lg cursor-pointer h-full flex flex-col bg-white rounded-[16px] border-none group"
+                  onClick={() => handlePreview(program)}
+                >
+                  <div className="flex flex-col p-6 h-full gap-6">
+                    
+                    {/* Top Section: Tags & Title */}
+                    <div className="space-y-2">
+                      <p 
+                        className="text-xs uppercase tracking-widest font-medium"
+                        style={{ 
+                          color: isProgramPurchased ? 'var(--color-status-success)' : 'var(--color-text-primary)',
                         }}
                       >
-                        {isProgramPurchased ? 'Continue Program' : 'Know More'}
-                      </Button>
-                    </CardContent>
-                  </Card>
-                </div>
-              </div>
+                        {isProgramPurchased ? 'PURCHASED' : (program.category || (program.tags && program.tags.length > 0 ? program.tags[0] : 'PROGRAM'))}
+                      </p>
+                      <h3 
+                        className="text-2xl font-medium text-[var(--ikan-color-text-primary)] group-hover:text-[var(--ikan-color-primary-default)] transition-colors"
+                      >
+                        {program.title}
+                      </h3>
+                    </div>
+
+                    {/* Summary */}
+                    <p className="text-[var(--ikan-color-text-muted)] text-sm leading-relaxed flex-grow line-clamp-3">
+                      {program.summary || program.description}
+                    </p>
+
+                    {/* Bottom Section: Image & Meta */}
+                    <div className="flex gap-4 items-end mt-auto pt-4 border-t border-gray-50">
+                      {/* Image */}
+                      <div className="w-24 h-24 shrink-0 rounded-lg overflow-hidden bg-gray-100 shadow-inner">
+                        <img 
+                          src={imageUrl} 
+                          alt={program.title}
+                          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                        />
+                      </div>
+
+                      {/* Info & CTA */}
+                      <div className="flex flex-col gap-2 flex-grow">
+                        
+                        <div className="flex items-center gap-2 text-xs font-medium text-[var(--ikan-color-text-muted)]">
+                          <Calendar size={14} />
+                          <span>{program.duration_days} DAYS</span>
+                        </div>
+
+                        <div className="flex items-center gap-2 text-xs font-medium text-[var(--ikan-color-text-muted)]">
+                          <Tag size={14} />
+                          <span>{getDisplayPrice(program)}</span>
+                        </div>
+
+                        <Button
+                          className="w-full mt-1 gap-2 h-9 text-xs"
+                          style={{
+                            backgroundColor: isProgramPurchased ? 'var(--color-status-success)' : 'var(--color-primary-default)',
+                            color: 'white'
+                          }}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (isProgramPurchased) {
+                              handleStartProgram(program);
+                            } else {
+                              handlePreview(program);
+                            }
+                          }}
+                        >
+                          {isProgramPurchased ? 'CONTINUE' : 'KNOW MORE'}
+                          <ArrowRight size={14} />
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                </Card>
+              </motion.div>
             );
           })}
         </div>
       </div>
-    </>
+    </div>
   );
 }

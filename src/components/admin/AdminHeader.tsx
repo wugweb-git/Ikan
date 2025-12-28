@@ -3,16 +3,9 @@ import { Button } from '../ui/button';
 import { Icon } from '../Icon';
 import { ChevronRight } from 'lucide-react';
 
-interface BreadcrumbItem {
-  label: string;
-  onClick?: () => void;
-}
-
 interface AdminHeaderProps {
   title: string;
   description?: string;
-  onBack?: () => void;
-  breadcrumbs?: BreadcrumbItem[];
   actions?: React.ReactNode;
   stats?: {
     label: string;
@@ -25,70 +18,18 @@ interface AdminHeaderProps {
 export function AdminHeader({ 
   title, 
   description, 
-  onBack, 
-  breadcrumbs,
   actions,
   stats
 }: AdminHeaderProps) {
   return (
-    <div className="space-y-4">
-      {/* Breadcrumbs */}
-      {breadcrumbs && breadcrumbs.length > 0 && (
-        <div className="flex items-center gap-2 text-sm">
-          {breadcrumbs.map((crumb, index) => (
-            <React.Fragment key={index}>
-              {crumb.onClick ? (
-                <button
-                  onClick={crumb.onClick}
-                  className="hover:underline"
-                  style={{ 
-                    color: 'var(--color-text-muted)',
-                    fontFamily: 'var(--font-family-base)',
-                    fontSize: 'var(--text-sm)'
-                  }}
-                >
-                  {crumb.label}
-                </button>
-              ) : (
-                <span style={{ 
-                  color: 'var(--color-text-primary)',
-                  fontFamily: 'var(--font-family-base)',
-                  fontSize: 'var(--text-sm)',
-                  fontWeight: 'var(--font-weight-medium)'
-                }}>
-                  {crumb.label}
-                </span>
-              )}
-              {index < breadcrumbs.length - 1 && (
-                <ChevronRight className="w-4 h-4" style={{ color: 'var(--color-text-muted)' }} />
-              )}
-            </React.Fragment>
-          ))}
-        </div>
-      )}
-
+    <div className="space-y-6">
       {/* Header Section */}
       <div className="flex items-start justify-between gap-4">
         <div className="flex items-start gap-3 flex-1">
-          {onBack && (
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              onClick={onBack}
-              aria-label="Go back"
-              style={{
-                height: 'var(--ikan-component-button-height)',
-                width: 'var(--ikan-component-button-height)',
-                borderRadius: 'var(--ikan-component-border-radius)'
-              }}
-            >
-              <Icon name="arrowLeft" size={20} />
-            </Button>
-          )}
           <div className="flex-1">
             <h1 style={{
               fontFamily: 'var(--font-family-base)',
-              fontSize: 'var(--text-2xl)',
+              fontSize: 'var(--text-3xl)',
               fontWeight: 'var(--font-weight-medium)',
               color: 'var(--color-text-primary)',
               marginBottom: description ? 'var(--spacing-2)' : '0'

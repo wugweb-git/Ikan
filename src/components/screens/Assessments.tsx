@@ -1,16 +1,20 @@
 import React, { useState, useEffect } from 'react';
+import { motion } from 'motion/react';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
 import { Icon } from '../Icon';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '../ui/dialog';
-import { ChevronRight, Clock, FileText, TrendingUp, Calendar } from 'lucide-react';
+import { ChevronRight, Clock, FileText, TrendingUp, Calendar, Brain, Shield, Activity, ArrowRight, Play, Info, Lock } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNotifications } from '../../contexts/NotificationContext';
 import { cn } from '../ui/utils';
 import { apiClient } from '../../lib/api-client';
 import { AssessmentFlow } from './AssessmentFlow';
 import { AssessmentResults } from './AssessmentResults';
+import { Skeleton } from '../ui/skeleton-loader';
+import { EmptyState } from '../ui/empty-state';
+import { TouchFeedback } from '../ui/touch-feedback';
 
 interface Assessment {
   id: string;
@@ -151,7 +155,79 @@ export function Assessments({ className, onNavigate }: AssessmentsProps) {
           }
         } catch (error) {
           console.warn('Failed to fetch API assessments:', error);
-          showToast('error', 'Failed to load assessments', 'Please try again later.');
+          // Fallback to mock data for demo purposes
+          const mockAssessments: Assessment[] = [
+            {
+              id: 'anxiety-screen',
+              slug: 'anxiety-screen',
+              title: 'Anxiety Screening',
+              description: 'A brief assessment to check for signs of anxiety.',
+              estimatedTime: '5 minutes',
+              questionCount: 7,
+              status: 'available',
+              category: 'anxiety',
+              questions: [
+                { id: 'q1', text: 'I feel nervous', type: 'scale' }
+              ]
+            },
+            {
+              id: 'depression-screen',
+              slug: 'depression-screen',
+              title: 'Depression Screening',
+              description: 'Check your mood and signs of depression.',
+              estimatedTime: '5 minutes',
+              questionCount: 9,
+              status: 'available',
+              category: 'depression',
+              questions: []
+            },
+            {
+              id: 'stress-test',
+              slug: 'stress-test',
+              title: 'Stress Level Test',
+              description: 'Evaluate your current stress levels and coping mechanisms.',
+              estimatedTime: '3 minutes',
+              questionCount: 5,
+              status: 'available',
+              category: 'stress',
+              questions: []
+            },
+            {
+              id: 'wellness-check',
+              slug: 'wellness-check',
+              title: 'General Wellness Check',
+              description: 'A comprehensive check of your overall mental well-being.',
+              estimatedTime: '10 minutes',
+              questionCount: 15,
+              status: 'available',
+              category: 'wellness',
+              questions: []
+            },
+             {
+              id: 'burnout-assess',
+              slug: 'burnout-assess',
+              title: 'Burnout Assessment',
+              description: 'Are you experiencing signs of professional burnout?',
+              estimatedTime: '7 minutes',
+              questionCount: 10,
+              status: 'available',
+              category: 'burnout',
+              questions: []
+            },
+             {
+              id: 'sleep-quality',
+              slug: 'sleep-quality',
+              title: 'Sleep Quality Quiz',
+              description: 'Assess the quality of your sleep and identify potential issues.',
+              estimatedTime: '4 minutes',
+              questionCount: 6,
+              status: 'available',
+              category: 'sleep',
+              questions: []
+            }
+          ];
+          apiAssessments = mockAssessments;
+          showToast('info', 'Demo Mode', 'Loaded sample assessments due to connection issue.');
         }
 
         setAssessments(apiAssessments);
@@ -219,7 +295,7 @@ export function Assessments({ className, onNavigate }: AssessmentsProps) {
     }
     
     if (onNavigate) {
-      onNavigate('/assessment-landing');
+      onNavigate(`/assessment-detail?id=${assessment.id || assessment.slug}`);
     } else {
       setCurrentView('landing');
     }
@@ -235,7 +311,7 @@ export function Assessments({ className, onNavigate }: AssessmentsProps) {
     }
     
     if (onNavigate) {
-      onNavigate('/assessment-landing');
+      onNavigate(`/assessment-detail?id=${selectedAssessment?.id || selectedAssessment?.slug}`);
     } else {
       setShowDisclaimerModal(true);
     }
@@ -410,113 +486,125 @@ export function Assessments({ className, onNavigate }: AssessmentsProps) {
   // Assessment List View
   if (currentView === 'list') {
     return (
-      <div className={cn("w-full", className)}>
-        <div className="space-y-8">
-          
-          {/* New Hero Content */}
-          <div className="space-y-12 pb-8">
-            <div className="space-y-4 max-w-3xl">
-              <h1 className="text-4xl font-medium text-primary">Health Assessments</h1>
-              <h2 className="text-2xl font-medium text-primary">Quick and easy mental health screenings.</h2>
-              <p className="text-lg text-muted-foreground">
-                Check your mental health anytime, anywhere with iKan’s effortless assessments.
-              </p>
-            </div>
+      <div className={cn("w-full max-w-7xl mx-auto p-4 md:p-8 space-y-8", className)}>
+        
+        {/* Header Section */}
+        <motion.div 
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="space-y-4 text-center md:text-left"
+        >
+          <h1 style={{ 
+            fontSize: 'var(--text-3xl)', 
+            fontWeight: 'var(--font-weight-medium)',
+            color: 'var(--color-text-primary)'
+          }}>
+            Health Assessments
+          </h1>
+          <p className="text-lg text-[var(--ikan-color-text-muted)] max-w-2xl">
+            Quick, evidence-based screenings to help you understand your mental well-being.
+          </p>
+        </motion.div>
 
-            <div className="space-y-6">
-               <h3 className="text-xl font-medium text-primary">What you’ll get.</h3>
-               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  <Card className="p-6 border-none shadow-sm bg-white h-full">
-                    <CardContent className="p-0 space-y-4">
-                      <div className="w-12 h-12 rounded-full bg-accent flex items-center justify-center">
-                        <Icon name="clipboard" size={24} className="text-primary" />
-                      </div>
-                      <div className="space-y-2">
-                        <h4 className="font-medium text-lg text-primary">Mental Health Screenings</h4>
-                        <p className="text-sm text-muted-foreground leading-relaxed">
-                          Including depression, anxiety, insomnia among others
-                        </p>
-                      </div>
-                    </CardContent>
-                  </Card>
-                  
-                  <Card className="p-6 border-none shadow-sm bg-white h-full">
-                    <CardContent className="p-0 space-y-4">
-                      <div className="w-12 h-12 rounded-full bg-accent flex items-center justify-center">
-                        <Icon name="lock" size={24} className="text-primary" />
-                      </div>
-                      <div className="space-y-2">
-                        <h4 className="font-medium text-lg text-primary">Confidential and anonymous</h4>
-                        <p className="text-sm text-muted-foreground leading-relaxed">
-                          Only you and those you opt to share it with can access your data. For corporate employees, individual level data is not shared with your employer
-                        </p>
-                      </div>
-                    </CardContent>
-                  </Card>
+        {/* Feature Cards */}
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+          className="grid grid-cols-1 md:grid-cols-3 gap-6"
+        >
+           {[
+             {
+               title: "Clinical Screenings",
+               desc: "Evidence-based tools for anxiety, depression, and more.",
+               icon: Brain,
+               color: "var(--color-primary-default)",
+               bg: "bg-purple-50"
+             },
+             {
+               title: "Private & Secure",
+               desc: "Your results are encrypted and strictly confidential.",
+               icon: Shield,
+               color: "var(--color-status-success)",
+               bg: "bg-emerald-50"
+             },
+             {
+               title: "Instant Insights",
+               desc: "Get immediate feedback and personalized recommendations.",
+               icon: Activity,
+               color: "var(--color-status-warning)",
+               bg: "bg-orange-50"
+             }
+           ].map((item, i) => (
+             <Card key={i} className="border-none shadow-sm bg-white rounded-[16px] h-full">
+               <CardContent className="p-6 flex flex-col gap-4 h-full">
+                 <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${item.bg}`}>
+                   <item.icon size={24} style={{ color: item.color }} />
+                 </div>
+                 <div>
+                   <h3 className="font-medium text-lg text-[var(--ikan-color-text-primary)] mb-1">{item.title}</h3>
+                   <p className="text-sm text-[var(--ikan-color-text-muted)] leading-relaxed">
+                     {item.desc}
+                   </p>
+                 </div>
+               </CardContent>
+             </Card>
+           ))}
+        </motion.div>
 
-                  <Card className="p-6 border-none shadow-sm bg-white h-full">
-                    <CardContent className="p-0 space-y-4">
-                      <div className="w-12 h-12 rounded-full bg-accent flex items-center justify-center">
-                        <Icon name="dashboard" size={24} className="text-primary" />
-                      </div>
-                      <div className="space-y-2">
-                        <h4 className="font-medium text-lg text-primary">Analytics Dashboard</h4>
-                        <p className="text-sm text-muted-foreground leading-relaxed">
-                          See results, trends and utilization in real time
-                        </p>
-                      </div>
-                    </CardContent>
-                  </Card>
-               </div>
-            </div>
+        {/* How it works (Simplified) */}
+        <motion.div
+           initial={{ opacity: 0 }}
+           animate={{ opacity: 1 }}
+           transition={{ delay: 0.2 }}
+           className="py-6"
+        >
+           <h3 className="text-lg font-medium text-[var(--ikan-color-text-primary)] mb-6">How it works</h3>
+           <div className="flex flex-col md:flex-row gap-8 relative">
+              {/* Connector Line (Desktop) */}
+              <div className="hidden md:block absolute top-5 left-8 right-8 h-0.5 bg-gray-100 -z-10" />
+              
+              {[
+                { step: 1, title: "Check In", desc: "Select an assessment based on how you feel." },
+                { step: 2, title: "Answer", desc: "Complete a few simple questions honestly." },
+                { step: 3, title: "Understand", desc: "Receive immediate insights and next steps." }
+              ].map((step, i) => (
+                <div key={i} className="flex-1 flex flex-col items-center text-center gap-3 bg-white/50 backdrop-blur-sm p-4 rounded-xl md:bg-transparent md:p-0">
+                   <div className="w-10 h-10 rounded-full bg-[var(--ikan-color-primary-default)] text-white flex items-center justify-center font-bold shadow-md">
+                     {step.step}
+                   </div>
+                   <div>
+                     <h4 className="font-medium text-[var(--ikan-color-text-primary)]">{step.title}</h4>
+                     <p className="text-sm text-[var(--ikan-color-text-muted)]">{step.desc}</p>
+                   </div>
+                </div>
+              ))}
+           </div>
+        </motion.div>
 
-            <div className="space-y-8">
-               <div className="space-y-2">
-                 <h3 className="text-xl font-medium text-primary">How does it work?</h3>
-                 <p className="text-muted-foreground">Check your mental health in three simple steps.</p>
-               </div>
-
-               <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                  <div className="flex flex-col space-y-4">
-                     <div className="flex items-center gap-4">
-                        <div className="w-10 h-10 rounded-full bg-primary text-white flex items-center justify-center font-medium text-lg shrink-0">1</div>
-                        <div className="h-px bg-border flex-grow hidden md:block"></div>
-                     </div>
-                     <h4 className="font-medium text-lg text-primary">Tell us how you’re feeling</h4>
-                  </div>
-                  
-                  <div className="flex flex-col space-y-4">
-                     <div className="flex items-center gap-4">
-                        <div className="w-10 h-10 rounded-full bg-primary text-white flex items-center justify-center font-medium text-lg shrink-0">2</div>
-                        <div className="h-px bg-border flex-grow hidden md:block"></div>
-                     </div>
-                     <h4 className="font-medium text-lg text-primary">Answer a few simple questions</h4>
-                  </div>
-
-                  <div className="flex flex-col space-y-4">
-                     <div className="flex items-center gap-4">
-                        <div className="w-10 h-10 rounded-full bg-primary text-white flex items-center justify-center font-medium text-lg shrink-0">3</div>
-                     </div>
-                     <h4 className="font-medium text-lg text-primary">See results</h4>
-                  </div>
-               </div>
-            </div>
+        <div id="assessments-grid" className="scroll-mt-32" />
+        
+        {/* Assessment Grid */}
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <h3 className="text-xl font-medium text-[var(--ikan-color-text-primary)]">Available Assessments</h3>
           </div>
 
-          <div id="assessments-grid" className="scroll-mt-32" />
-          
-          {/* Content */}
           {!user && currentTab === 'history' ? (
-            <Card>
-              <CardContent className="text-center p-6">
-                <Icon name="lock" size={24} className="mx-auto text-muted-foreground mb-4" />
-                <p className="text-muted-foreground">Please sign in to view your assessment history</p>
+            <Card className="border-none shadow-sm bg-white rounded-[16px]">
+              <CardContent className="text-center p-12">
+                <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Lock size={24} className="text-[var(--ikan-color-text-muted)]" />
+                </div>
+                <h3 className="text-lg font-medium text-[var(--ikan-color-text-primary)] mb-2">Sign in required</h3>
+                <p className="text-[var(--ikan-color-text-muted)] mb-6">Please sign in to view your assessment history</p>
+                <Button className="bg-[var(--ikan-color-primary-default)] text-white">Sign In</Button>
               </CardContent>
             </Card>
           ) : loading ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {[1, 2, 3].map((i) => (
-                <div key={i} className="h-[400px] bg-muted animate-pulse rounded-xl"></div>
+              {[1, 2, 3, 4, 5, 6].map((i) => (
+                <Skeleton key={i} variant="rectangular" height="320px" className="rounded-[16px]" />
               ))}
             </div>
           ) : (
@@ -530,160 +618,79 @@ export function Assessments({ className, onNavigate }: AssessmentsProps) {
                 const imageUrl = getAssessmentImage(assessment.category);
 
                 return (
-                  <div key={assessment.id || index} className="group h-full">
-                    {/* Desktop Card Layout (using EquipPrograms style) */}
-                    <div className="hidden md:block h-full">
-                      <Card 
-                        className="relative overflow-hidden transition-all duration-200 hover:shadow-md cursor-pointer h-full flex flex-col"
-                        style={{
-                          backgroundColor: 'var(--color-bg-card)',
-                          borderRadius: 'var(--radius-lg)',
-                          border: '1px solid var(--color-border-default)'
-                        }}
-                        onClick={() => {
-                           if (isCompleted) {
-                             // Show previous results logic
-                             const userResponse = userAssessmentHistory[assessment.id];
-                             const mockResults = {
-                               assessmentId: assessment.id,
-                               assessmentTitle: assessment.title,
-                               score: userResponse.score || 0,
-                               maxScore: 21,
-                               interpretation: userResponse.interpretation || {
-                                 label: 'Previous Result',
-                                 description: 'Your previous assessment results.',
-                                 icon: 'info',
-                                 recommendations: ['Continue practicing healthy coping strategies']
-                               },
-                               completedAt: userResponse.completed_at,
-                               equipProgramSuggestion: { title: 'Recommended Program', route: '/equip-programs' }
-                             };
-                             setAssessmentResults(mockResults);
-                             setCurrentView('results');
-                           } else {
-                             handleStartAssessment(assessment);
-                           }
-                        }}
-                      >
-                        <div className="flex flex-col p-6 h-full gap-6">
-                          {/* Top: Category */}
-                          <div className="space-y-2">
-                             <p 
-                               className="text-xs uppercase tracking-widest font-medium"
-                               style={{ 
-                                 color: isCompleted ? 'var(--color-status-success)' : 'var(--color-text-primary)',
-                                 fontFamily: 'var(--font-family-base)'
-                               }}
-                             >
-                               {isCompleted ? 'COMPLETED' : assessment.category}
-                             </p>
-                             <h3 
-                               className="text-3xl font-medium text-primary"
-                               style={{ fontFamily: 'var(--font-family-base)' }}
-                             >
-                               {assessment.title}
-                             </h3>
-                          </div>
-
-                          {/* Summary */}
-                          <p className="text-muted-foreground text-sm leading-relaxed flex-grow">
-                            {assessment.description}
+                  <motion.div
+                    key={assessment.id || index}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: index * 0.05 }}
+                    whileHover={{ y: -4 }}
+                    className="h-full"
+                  >
+                    <Card 
+                      className="h-full border-none shadow-sm hover:shadow-lg transition-all duration-300 bg-white rounded-[16px] overflow-hidden cursor-pointer group flex flex-col"
+                      onClick={() => handleStartAssessment(assessment)}
+                    >
+                      {/* Image Header */}
+                      <div className="relative h-48 overflow-hidden">
+                        <img 
+                          src={imageUrl} 
+                          alt={assessment.title}
+                          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-60" />
+                        
+                        {/* Status Badge */}
+                        {isCompleted && (
+                           <div className="absolute top-4 right-4 bg-emerald-500 text-white text-xs font-bold px-2 py-1 rounded-full shadow-sm flex items-center gap-1">
+                             <Activity size={12} /> Completed
+                           </div>
+                        )}
+                        
+                        {/* Title Overlay */}
+                        <div className="absolute bottom-4 left-4 right-4">
+                          <p className="text-white/90 text-xs font-medium uppercase tracking-wider mb-1">
+                            {assessment.category}
                           </p>
+                          <h3 className="text-white text-xl font-medium leading-tight">
+                            {assessment.title}
+                          </h3>
+                        </div>
+                      </div>
 
-                          {/* Bottom Section */}
-                          <div className="flex gap-4 items-end mt-auto">
-                            {/* Image */}
-                            <div className="w-32 h-32 shrink-0 rounded-lg overflow-hidden bg-muted">
-                              <img 
-                                src={imageUrl} 
-                                alt={assessment.title}
-                                className="w-full h-full object-cover"
-                              />
-                            </div>
+                      <CardContent className="p-5 flex flex-col flex-grow gap-4">
+                        <p className="text-sm text-[var(--ikan-color-text-muted)] line-clamp-2 flex-grow">
+                          {assessment.description}
+                        </p>
 
-                            {/* Info & CTA */}
-                            <div className="flex flex-col gap-3 flex-grow">
-                               <div className="flex items-center gap-2 text-sm font-medium">
-                                  <Icon name="clock" size={16} />
-                                  <span>{assessment.estimatedTime}</span>
-                               </div>
-                               <div className="flex items-center gap-2 text-sm font-medium">
-                                  <Icon name="list" size={16} />
-                                  <span>{assessment.questionCount} Questions</span>
-                               </div>
-
-                               <Button
-                                 className="w-full mt-2 gap-2"
-                                 style={{
-                                   backgroundColor: isCompleted ? 'var(--color-status-success)' : '#2A2A2A',
-                                   color: 'white'
-                                 }}
-                               >
-                                 <Icon name="arrowRight" size={16} className="text-white" />
-                                 {isCompleted ? 'VIEW RESULTS' : 'TAKE TEST'}
-                               </Button>
-                            </div>
+                        <div className="flex items-center gap-4 text-xs text-[var(--ikan-color-text-muted)] font-medium">
+                          <div className="flex items-center gap-1.5 bg-gray-50 px-2 py-1 rounded-md">
+                            <Clock size={14} className="text-[var(--ikan-color-primary-default)]" />
+                            {assessment.estimatedTime}
+                          </div>
+                          <div className="flex items-center gap-1.5 bg-gray-50 px-2 py-1 rounded-md">
+                            <FileText size={14} className="text-[var(--ikan-color-primary-default)]" />
+                            {assessment.questionCount} Questions
                           </div>
                         </div>
-                      </Card>
-                    </div>
 
-                    {/* Mobile Layout */}
-                    <div className="block md:hidden">
-                       <Card 
-                         className="cursor-pointer hover:shadow-md transition-shadow"
-                         onClick={() => isCompleted ? null : handleStartAssessment(assessment)}
-                       >
-                         <CardHeader>
-                           <div className="flex justify-between items-start">
-                             <CardTitle className="text-xl">{assessment.title}</CardTitle>
-                             {isCompleted && <Badge className="bg-green-500">Completed</Badge>}
-                           </div>
-                           <Badge variant="secondary" className="text-xs">{assessment.category}</Badge>
-                         </CardHeader>
-                         <CardContent className="space-y-4">
-                           <div className="w-full h-40 rounded-lg overflow-hidden mb-4">
-                             <img src={imageUrl} alt={assessment.title} className="w-full h-full object-cover" />
-                           </div>
-                           <p className="text-sm text-muted-foreground line-clamp-3">{assessment.description}</p>
-                           <div className="flex items-center justify-between pt-2">
-                              <div className="flex items-center text-sm text-muted-foreground">
-                                <Icon name="clock" size={16} className="mr-1" />
-                                {assessment.estimatedTime}
-                              </div>
-                              <div className="flex items-center text-sm text-muted-foreground">
-                                <Icon name="list" size={16} className="mr-1" />
-                                {assessment.questionCount} Qs
-                              </div>
-                           </div>
-                           <Button 
-                             className="w-full mt-4" 
-                             variant={isCompleted ? "default" : "outline"}
-                             style={{ backgroundColor: isCompleted ? 'var(--color-status-success)' : undefined }}
-                           >
-                             {isCompleted ? 'View Results' : 'Take Test'}
-                           </Button>
-                         </CardContent>
-                       </Card>
-                    </div>
-                  </div>
+                        <Button 
+                          className="w-full mt-2 bg-gray-50 text-[var(--ikan-color-text-primary)] hover:bg-[var(--ikan-color-primary-default)] hover:text-white border-none group-hover:bg-[var(--ikan-color-primary-default)] group-hover:text-white transition-colors"
+                          variant="outline"
+                        >
+                          {isCompleted ? 'Retake Assessment' : 'Start Assessment'}
+                          <ArrowRight size={16} className="ml-2" />
+                        </Button>
+                      </CardContent>
+                    </Card>
+                  </motion.div>
                 );
               })}
             </div>
           )}
-
-          {assessments.length === 0 && !loading && (
-             <div className="text-center py-12">
-               <Icon name="clipboard" size={48} className="mx-auto text-muted-foreground mb-4" />
-               <h3 className="text-lg font-medium text-primary">No Assessments Available</h3>
-             </div>
-          )}
         </div>
       </div>
     );
-  }
-
-  // Assessment Flow View
+  }  // Assessment Flow View
   if (currentView === 'flow' && selectedAssessment) {
     return (
       <div className="space-y-4">

@@ -76,7 +76,10 @@ class APIClient {
       const { data: { session }, error } = await supabase.auth.getSession();
       
       if (error) {
-        console.log('Session error during auth check:', error);
+        // Suppress invalid refresh token errors as they just mean "not authenticated"
+        if (!error.message?.includes('Invalid Refresh Token') && !error.message?.includes('Refresh Token Not Found')) {
+          console.log('Session error during auth check:', error);
+        }
         return false;
       }
       
@@ -235,8 +238,18 @@ class APIClient {
         setOfflineMode(true);
         throw new Error('Network unavailable - using offline mode');
       } else {
-        // Don't log errors for resource requests - they fallback to sample data silently
-        if (!endpoint.includes('/library/resources') && !endpoint.includes('/admin/resources')) {
+        // Don't log errors for expected cases:
+        // 1. Resource requests - they fallback to sample data silently
+        // 2. Auth errors when user is not signed in - expected behavior
+        const errorMsg = error instanceof Error ? error.message : String(error);
+        const isAuthError = errorMsg.includes('Unauthorized') || 
+                           errorMsg.includes('Authentication required') ||
+                           errorMsg.includes('please sign in');
+        
+        if (!endpoint.includes('/library/resources') && 
+            !endpoint.includes('/admin/resources') &&
+            !endpoint.includes('/equip-enrollments') &&
+            !isAuthError) {
           console.error(`❌ API request failed for ${endpoint}:`, error);
         }
         throw error;
@@ -374,6 +387,23 @@ class APIClient {
     }, true, 0);
   }
 
+  async deleteAccount() {
+    return this.request('/users/me', {
+      method: 'DELETE'
+    }, true, 0);
+  }
+
+  // Payment methods
+  async getPaymentHistory() {
+    try {
+      const result = await this.requestWithFallback('/users/payments', 'payments', {}, true);
+      return Array.isArray(result) ? result : (result.payments || []);
+    } catch (error) {
+      console.log('Payment history request failed, using empty fallback:', error);
+      return [];
+    }
+  }
+
   // Journal methods
   async createJournalEntry(date: string, mood_rating?: number, freehand_text_content?: string) {
     return this.request('/journal/entries', {
@@ -384,6 +414,13 @@ class APIClient {
 
   async getJournalEntries(startDate?: string, endDate?: string, limit?: number) {
     try {
+      // Check if user is authenticated first
+      const isAuth = await this.isAuthenticated();
+      if (!isAuth) {
+        console.log('📦 Not authenticated - using empty journal entries');
+        return { entries: [] };
+      }
+      
       const params = new URLSearchParams();
       if (startDate) params.append('startDate', startDate);
       if (endDate) params.append('endDate', endDate);
@@ -447,9 +484,20 @@ class APIClient {
 
   async getUserAssessmentResponses() {
     try {
+      // Check if user is authenticated first
+      const isAuth = await this.isAuthenticated();
+      if (!isAuth) {
+        console.log('📦 Not authenticated - using empty assessment responses');
+        return { responses: [] };
+      }
+      
       return await this.request('/assessments/responses/user', { method: 'GET' }, true, 0);
     } catch (error) {
-      console.log('Assessment history request failed, using empty fallback:', error);
+      const errorMsg = error instanceof Error ? error.message : String(error);
+      // Don't log auth errors - they're expected when not signed in
+      if (!errorMsg.includes('Unauthorized') && !errorMsg.includes('Authentication required')) {
+        console.log('Assessment history request failed, using empty fallback:', error);
+      }
       return { responses: [] }; // Return empty responses on any error
     }
   }
@@ -482,7 +530,8 @@ class APIClient {
   }
 
   async getEquipProgram(equipId: string) {
-    return this.requestWithFallback(`/equip/programs/${equipId}`, 'programs');
+    const result: any = await this.requestWithFallback(`/equip/programs/${equipId}`, 'programs');
+    return result.program || result;
   }
 
   async purchaseEquipProgram(equipId: string, onboarding_data: any, payment_method: string) {
@@ -526,9 +575,20 @@ class APIClient {
 
   async getUserPurchasedPrograms(userId: string) {
     try {
+      // Check if user is authenticated first
+      const isAuth = await this.isAuthenticated();
+      if (!isAuth) {
+        console.log('📦 Not authenticated - using empty purchased programs list');
+        return [];
+      }
+      
       return await this.request(`/equip/purchased/${userId}`, { method: 'GET' }, true, 0);
     } catch (error) {
-      console.log('Failed to fetch purchased programs, using empty fallback:', error);
+      const errorMsg = error instanceof Error ? error.message : String(error);
+      // Don't log auth errors - they're expected when not signed in
+      if (!errorMsg.includes('Unauthorized') && !errorMsg.includes('Authentication required')) {
+        console.log('Failed to fetch purchased programs, using empty fallback:', error);
+      }
       return []; // Return empty array on any error
     }
   }
@@ -559,70 +619,42 @@ class APIClient {
     }, true, 0);
   }
 
-  // Enrollment methods
-  async enrollInProgram(programId: string, onboardingData: any) {
-    try {
-      return await this.request('/equip/enrollments', {
-        method: 'POST',
-        body: JSON.stringify({ programId, onboardingData })
-      }, true, 0);
-    } catch (error) {
-      console.error('Enrollment failed:', error);
-      throw error;
-    }
+  // Equip Enrollment methods
+  async getEquipEnrollments() {
+    const result = await this.requestWithFallback('/equip/enrollments', 'enrollments');
+    return Array.isArray(result) ? result : (result.enrollments || []);
   }
 
-  async getUserEnrollments() {
-    try {
-      const result = await this.request('/equip/enrollments', {
-        method: 'GET'
-      }, true, 0);
-      return result.enrollments || [];
-    } catch (error) {
-      console.log('Failed to fetch enrollments:', error);
-      return [];
-    }
+  async createEquipEnrollment(data: any) {
+    return this.request('/equip/enrollments', {
+      method: 'POST',
+      body: JSON.stringify(data)
+    }, true, 0);
   }
 
-  async getEnrollment(enrollmentId: string) {
-    try {
-      const result = await this.request(`/equip/enrollments/${enrollmentId}`, {
-        method: 'GET'
-      }, true, 0);
-      return result.enrollment || null;
-    } catch (error) {
-      console.log('Failed to fetch enrollment:', error);
-      return null;
-    }
+  async updateEquipEnrollment(id: string, data: any) {
+    return this.request(`/equip/enrollments/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data)
+    }, true, 0);
   }
 
-  async updateEnrollmentProgress(enrollmentId: string, dayNumber: number, completed: boolean, notes?: string) {
-    try {
-      return await this.request(`/equip/enrollments/${enrollmentId}/progress`, {
-        method: 'PUT',
-        body: JSON.stringify({
-          dayNumber,
-          completed,
-          completedAt: new Date().toISOString(),
-          notes: notes || ''
-        })
-      }, true, 0);
-    } catch (error) {
-      console.error('Progress update failed:', error);
-      throw error;
-    }
+  async getUserEnrollments(userId: string) {
+    const result = await this.requestWithFallback(`/equip/enrollments/user/${userId}`, 'enrollments');
+    return Array.isArray(result) ? result : (result.enrollments || []);
   }
 
-  async updateEnrollmentStatus(enrollmentId: string, status: 'active' | 'completed' | 'paused' | 'cancelled') {
-    try {
-      return await this.request(`/equip/enrollments/${enrollmentId}/status`, {
-        method: 'PUT',
-        body: JSON.stringify({ status })
-      }, true, 0);
-    } catch (error) {
-      console.error('Status update failed:', error);
-      throw error;
-    }
+  async getEnrollmentProgress(enrollmentId: string) {
+    return this.request(`/equip/enrollments/${enrollmentId}/progress`, {
+      method: 'GET'
+    }, true, 0);
+  }
+
+  async updateEnrollmentProgress(enrollmentId: string, data: any) {
+    return this.request(`/equip/enrollments/${enrollmentId}/progress`, {
+      method: 'PUT',
+      body: JSON.stringify(data)
+    }, true, 0);
   }
 
   // Resource methods
@@ -636,7 +668,8 @@ class APIClient {
   async getResource(id: string) {
     // Get individual resource by ID
     const result = await this.requestWithFallback(`/library/resources/${id}`, 'resources', {}, false, id);
-    return result;
+    // Unwrap nested response if needed
+    return result.resource || result;
   }
 
   async createResource(data: any) {
@@ -711,6 +744,15 @@ class APIClient {
     return this.request(`/admin/professionals/${id}`, {
       method: 'DELETE'
     }, true, 0);
+  }
+
+  async getUserConsultations(userId: string) {
+    try {
+      return await this.request(`/consultation/appointments/user/${userId}`, { method: 'GET' }, true, 0);
+    } catch (error) {
+      console.log('Failed to fetch user consultations, using empty fallback:', error);
+      return []; // Return empty array on any error
+    }
   }
 
   // Utility methods
@@ -911,7 +953,8 @@ class APIClient {
       const errorMessage = error instanceof Error ? error.message : String(error);
       
       // Silently fallback for resource requests (expected to use sample data in demo mode)
-      if (endpoint.includes('/library/resources') || endpoint.includes('/admin/resources')) {
+      // Modified: Disable fallback for admin routes to ensure real data management
+      if (endpoint.includes('/library/resources') && !endpoint.includes('/admin/')) {
         // Don't log errors for resource requests - they're expected to fallback to sample data
         return getOfflineData(fallbackType, id) as T;
       }
@@ -1178,6 +1221,86 @@ class APIClient {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(settings)
     }, false, 0);
+  }
+
+  // =====================================================
+  // CATEGORY MANAGEMENT
+  // =====================================================
+
+  async listCategories(filters?: { type?: string; active?: boolean }): Promise<any[]> {
+    const params = new URLSearchParams(filters as any);
+    const queryString = params.toString() ? `?${params}` : '';
+    return this.makeRequest(`/make-server-cc205da9/categories${queryString}`, {
+      method: 'GET'
+    }, false, 0);
+  }
+
+  async getCategory(id: string): Promise<any> {
+    return this.makeRequest(`/make-server-cc205da9/categories/${id}`, {
+      method: 'GET'
+    }, false, 0);
+  }
+
+  async createCategory(data: any): Promise<any> {
+    return this.makeRequest(`/make-server-cc205da9/categories`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    }, true, 0);
+  }
+
+  async updateCategory(id: string, data: any): Promise<any> {
+    return this.makeRequest(`/make-server-cc205da9/categories/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    }, true, 0);
+  }
+
+  async deleteCategory(id: string): Promise<void> {
+    return this.makeRequest(`/make-server-cc205da9/categories/${id}`, {
+      method: 'DELETE'
+    }, true, 0);
+  }
+
+  // =====================================================
+  // MOOD MANAGEMENT
+  // =====================================================
+
+  async listMoods(filters?: { category?: string; active?: boolean }): Promise<any[]> {
+    const params = new URLSearchParams(filters as any);
+    const queryString = params.toString() ? `?${params}` : '';
+    return this.makeRequest(`/make-server-cc205da9/moods${queryString}`, {
+      method: 'GET'
+    }, false, 0);
+  }
+
+  async getMood(id: string): Promise<any> {
+    return this.makeRequest(`/make-server-cc205da9/moods/${id}`, {
+      method: 'GET'
+    }, false, 0);
+  }
+
+  async createMood(data: any): Promise<any> {
+    return this.makeRequest(`/make-server-cc205da9/moods`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    }, true, 0);
+  }
+
+  async updateMood(id: string, data: any): Promise<any> {
+    return this.makeRequest(`/make-server-cc205da9/moods/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    }, true, 0);
+  }
+
+  async deleteMood(id: string): Promise<void> {
+    return this.makeRequest(`/make-server-cc205da9/moods/${id}`, {
+      method: 'DELETE'
+    }, true, 0);
   }
 }
 

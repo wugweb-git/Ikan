@@ -141,6 +141,16 @@ export const routes: RouteConfig[] = [
     description: 'Individual assessment landing page'
   },
   {
+    path: '/equip-detail',
+    label: 'Program Detail',
+    isPublic: true,
+    requiresAuth: false,
+    showInNavigation: false,
+    showInPublicNav: false,
+    showInPrivateNav: false,
+    description: 'Individual program detail page'
+  },
+  {
     path: '/equip-programs-landing',
     label: 'Program Landing',
     isPublic: true,

@@ -25,7 +25,8 @@ import {
   sanitizeProfileUpdate, 
   validatePassword,
   hashPassword,
-  verifyPassword
+  verifyPassword,
+  validateEquipProgram
 } from "./validation.tsx";
 
 const app = new Hono();
@@ -621,7 +622,221 @@ app.post("/make-server-cc205da9/users/avatar", requireAuth, async (c) => {
   }
 });
 
-// Journal Entry Endpoints
+// Delete User Account Endpoint
+app.delete("/make-server-cc205da9/users/me", requireAuth, async (c) => {
+  try {
+    const userId = c.get('userId');
+    
+    // 1. Get user profile to check if exists
+    const profile = await kv.get(`user:${userId}`);
+    if (!profile) {
+      return c.json({ error: 'User not found' }, 404);
+    }
+    
+    // 2. Delete user data from KV store
+    
+    // Delete profile
+    await kv.del(`user:${userId}`);
+    
+    // Delete journal entries
+    const journalEntries = await kv.getByPrefix(`journal_by_user:${userId}`);
+    for (const entry of journalEntries) {
+      if (entry.journal_entry_id) {
+        await kv.del(`journal:${entry.journal_entry_id}`);
+      }
+      await kv.del(`journal_by_user:${userId}:${entry.date}`);
+    }
+    
+    // Delete enrollments
+    const enrollments = await kv.getByPrefix(`user_enrollment:${userId}`);
+    for (const enrollment of enrollments) {
+      if (enrollment.enrollmentId) {
+        await kv.del(`enrollment:${enrollment.enrollmentId}`);
+      }
+      await kv.del(`user_enrollment:${userId}:${enrollment.programId}`);
+    }
+    
+    // Delete assessment responses
+    const assessmentResponses = await kv.getByPrefix(`assessment_response_by_user:${userId}`);
+    // Note: We might want to keep these for research, but anonymized. For now, we delete.
+    for (const response of assessmentResponses) {
+      if (response.response_id) {
+         await kv.del(`assessment_response:${response.response_id}`);
+      }
+    }
+    // Also delete the "latest" keys which are not in the list returned by getByPrefix on the user prefix if strict
+    // But our structure is `assessment_response_by_user:${userId}:${assessmentId}:latest` so they should be included
+    
+    // Delete payments/transactions
+    const payments = await kv.getByPrefix(`payment:${userId}`);
+    for (const payment of payments) {
+      if (payment.id) {
+         await kv.del(`payment:${userId}:${payment.id}`);
+      }
+    }
+
+    // 3. Delete from Supabase Auth (Admin only can do this usually, but we have service role key)
+    const { error: authDeleteError } = await supabase.auth.admin.deleteUser(userId);
+    
+    if (authDeleteError) {
+      console.error('Failed to delete user from Auth:', authDeleteError);
+      // Continue anyway as we deleted data
+    }
+    
+    // Create audit log
+    await kv.set(`audit:delete_account:${userId}:${Date.now()}`, {
+      action: 'delete_account',
+      userId,
+      timestamp: new Date().toISOString()
+    });
+    
+    console.log(`✅ User account deleted: ${userId}`);
+    
+    return c.json({ success: true, message: 'Account deleted successfully' });
+  } catch (error) {
+    console.error('Delete account error:', error);
+    return c.json({ error: 'Failed to delete account' }, 500);
+  }
+});
+
+// Get User Payments Endpoint
+app.get("/make-server-cc205da9/users/payments", requireAuth, async (c) => {
+  try {
+    const userId = c.get('userId');
+    
+    const payments = await kv.getByPrefix(`payment:${userId}`);
+    
+    // Sort by date descending
+    const sortedPayments = payments.sort((a: any, b: any) => 
+      new Date(b.date).getTime() - new Date(a.date).getTime()
+    );
+    
+    return c.json({ payments: sortedPayments });
+  } catch (error) {
+    console.error('Get payments error:', error);
+    return c.json({ error: 'Failed to retrieve payments' }, 500);
+  }
+});
+
+// Record Payment Endpoint (Internal use or admin)
+app.post("/make-server-cc205da9/users/payments", requireAuth, async (c) => {
+  try {
+    const userId = c.get('userId');
+    const { 
+      programId, 
+      programTitle, 
+      amount, 
+      currency = 'INR', 
+      paymentMethod, 
+      transactionId, 
+      status = 'completed',
+      description 
+    } = await c.req.json();
+    
+    if (!amount || !programId) {
+      return c.json({ error: 'Amount and Program ID are required' }, 400);
+    }
+    
+    const id = `pay_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    const payment = {
+      id,
+      userId,
+      type: 'purchase',
+      programId,
+      programTitle,
+      amount,
+      currency,
+      status,
+      paymentMethod,
+      transactionId: transactionId || `txn_${Date.now()}`,
+      date: new Date().toISOString(),
+      description,
+      created_at: new Date().toISOString()
+    };
+    
+    await kv.set(`payment:${userId}:${id}`, payment);
+    
+    return c.json({ payment });
+  } catch (error) {
+    console.error('Record payment error:', error);
+    return c.json({ error: 'Failed to record payment' }, 500);
+  }
+});
+
+// Purchase Equip Program Endpoint
+app.post("/make-server-cc205da9/equip/purchase/:equipId", requireAuth, async (c) => {
+  try {
+    const userId = c.get('userId');
+    const equipId = c.req.param('equipId');
+    const { onboarding_data, payment_method } = await c.req.json();
+    
+    // 1. Verify program exists
+    let program = await kv.get(`equip_program:${equipId}`);
+    if (!program) {
+       // Try by slug
+       program = await kv.get(`equip_program_by_slug:${equipId}`);
+    }
+    
+    if (!program) {
+      return c.json({ error: 'Program not found' }, 404);
+    }
+    
+    const programId = program.id || program.equip_id;
+    
+    // 2. Create Enrollment
+    const enrollmentId = `enrollment-${userId}-${programId}-${Date.now()}`;
+    const enrollment = {
+      enrollmentId,
+      userId,
+      programId,
+      programTitle: program.title,
+      onboardingData: onboarding_data,
+      startDate: new Date().toISOString(),
+      progress: [],
+      completedDays: [],
+      currentDay: 1,
+      status: 'active',
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    };
+    
+    await kv.set(`enrollment:${enrollmentId}`, enrollment);
+    await kv.set(`user_enrollment:${userId}:${programId}`, enrollment);
+    
+    // 3. Record Payment
+    const paymentId = `pay_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    const payment = {
+      id: paymentId,
+      userId,
+      type: 'purchase',
+      programId,
+      programTitle: program.title,
+      amount: program.price || 49900, // Default to 499.00 if no price
+      currency: program.currency || 'INR',
+      status: 'completed',
+      paymentMethod: payment_method || 'Credit Card',
+      transactionId: `txn_${Date.now()}`,
+      date: new Date().toISOString(),
+      description: `Purchase of ${program.title}`,
+      created_at: new Date().toISOString()
+    };
+    
+    await kv.set(`payment:${userId}:${paymentId}`, payment);
+    
+    console.log(`✅ Program purchased: ${program.title} by ${userId}`);
+    
+    return c.json({ 
+      success: true, 
+      enrollment,
+      payment,
+      message: 'Program purchased successfully' 
+    });
+    
+  } catch (error) {
+    console.error('Purchase program error:', error);
+    return c.json({ error: 'Failed to purchase program' }, 500);
+  }
+});
 app.post("/make-server-cc205da9/journal/entries", requireAuth, async (c) => {
   try {
     const userId = c.get('userId');
@@ -701,7 +916,17 @@ app.get("/make-server-cc205da9/journal/entries/:date", requireAuth, async (c) =>
 app.get("/make-server-cc205da9/assessments", async (c) => {
   try {
     // Get all available assessments
-    const assessments = await kv.getByPrefix('assessment:');
+    let assessments = await kv.getByPrefix('assessment:');
+    
+    /* 
+    // Auto-seed disabled to allow admin full control
+    if (assessments.length === 0) {
+      console.log('⚠️ No assessments found. Triggering auto-seed...');
+      await handleSeedData();
+      assessments = await kv.getByPrefix('assessment:');
+    }
+    */
+
     // Filter out null/undefined entries and duplicates (since we store by ID and Slug)
     const validAssessments = assessments.filter((a: any) => a && a.id);
     const uniqueAssessments = Array.from(new Map(validAssessments.map((a: any) => [a.id, a])).values());
@@ -717,12 +942,52 @@ app.get("/make-server-cc205da9/assessments", async (c) => {
 app.get("/make-server-cc205da9/assessments/:assessmentId", async (c) => {
   try {
     const assessmentId = c.req.param('assessmentId');
-    const assessment = await kv.get(`assessment:${assessmentId}`);
+    console.log(`🔍 Looking up assessment: ${assessmentId}`);
     
+    // Try direct lookup first
+    let assessment = await kv.get(`assessment:${assessmentId}`);
+    
+    // If not found, search through all assessments by ID or slug
     if (!assessment) {
-      return c.json({ error: 'Assessment not found' }, 404);
+      console.log(`⚠️ Assessment not found by key, searching by ID/slug...`);
+      const allAssessments = await kv.getByPrefix('assessment:');
+      assessment = allAssessments.find((a: any) => 
+        a && (a.id === assessmentId || a.slug === assessmentId || a.assessment_id === assessmentId)
+      );
     }
     
+    if (!assessment) {
+      // Auto-seed if default assessment is missing
+      const defaultIds = [
+        'anxiety', 'depression', 'burnout', 'sleep-quality',
+        'resilience', 'work-engagement', 'wellbeing-index', 'mindfulness',
+        'assess-anxiety-gad7', 'assess-depression-phq9', 'assess-burnout-risk',
+        'assess-sleep-quality-psqi-adapted'
+      ];
+      
+      if (defaultIds.some(id => assessmentId.includes(id) || id.includes(assessmentId))) {
+        console.log(`⚠️ Default assessment '${assessmentId}' not found. Triggering auto-seed...`);
+        await handleSeedData();
+        
+        // Try fetching again after seeding
+        assessment = await kv.get(`assessment:${assessmentId}`);
+        
+        // Still not found? Search again through all
+        if (!assessment) {
+          const allAssessments = await kv.getByPrefix('assessment:');
+          assessment = allAssessments.find((a: any) => 
+            a && (a.id === assessmentId || a.slug === assessmentId || a.assessment_id === assessmentId)
+          );
+        }
+      }
+      
+      if (!assessment) {
+        console.log(`❌ Assessment not found: ${assessmentId}`);
+        return c.json({ error: 'Assessment not found' }, 404);
+      }
+    }
+    
+    console.log(`✅ Found assessment: ${assessment.title || assessment.slug}`);
     return c.json({ assessment });
   } catch (error) {
     console.log('Get assessment error:', error);
@@ -767,6 +1032,7 @@ app.put("/make-server-cc205da9/assessments/:assessmentId", requireAuth, async (c
   try {
     const user = c.get('user');
     const assessmentId = c.req.param('assessmentId');
+    console.log(`📝 Updating assessment: ${assessmentId}`);
     
     // Check if user is admin
     const userProfile = await kv.get(`user:${user.id}`);
@@ -775,23 +1041,42 @@ app.put("/make-server-cc205da9/assessments/:assessmentId", requireAuth, async (c
     }
     
     const updates = await c.req.json();
-    const existingAssessment = await kv.get(`assessment:${assessmentId}`);
+    
+    // Try direct lookup first
+    let existingAssessment = await kv.get(`assessment:${assessmentId}`);
+    let storageKey = `assessment:${assessmentId}`;
+    
+    // If not found, search by ID/slug
+    if (!existingAssessment) {
+      const allAssessments = await kv.getByPrefix('assessment:');
+      const found = allAssessments.find((a: any) => 
+        a && (a.id === assessmentId || a.slug === assessmentId || a.assessment_id === assessmentId)
+      );
+      
+      if (found) {
+        existingAssessment = found;
+        // Use the actual storage key (slug or id)
+        storageKey = `assessment:${found.slug || found.id}`;
+      }
+    }
     
     if (!existingAssessment) {
+      console.log(`❌ Assessment not found for update: ${assessmentId}`);
       return c.json({ error: 'Assessment not found' }, 404);
     }
     
     const updatedAssessment = {
       ...existingAssessment,
       ...updates,
-      id: assessmentId,
-      assessment_id: assessmentId,
+      id: existingAssessment.id,
+      assessment_id: existingAssessment.assessment_id || existingAssessment.id,
+      slug: existingAssessment.slug,
       updated_at: new Date().toISOString()
     };
     
-    await kv.set(`assessment:${assessmentId}`, updatedAssessment);
+    await kv.set(storageKey, updatedAssessment);
     
-    console.log(`✅ Assessment updated: ${assessmentId}`);
+    console.log(`✅ Assessment updated: ${storageKey}`);
     return c.json({ assessment: updatedAssessment });
   } catch (error) {
     console.log('Update assessment error:', error);
@@ -803,6 +1088,7 @@ app.delete("/make-server-cc205da9/assessments/:assessmentId", requireAuth, async
   try {
     const user = c.get('user');
     const assessmentId = c.req.param('assessmentId');
+    console.log(`🗑️ Deleting assessment: ${assessmentId}`);
     
     // Check if user is admin
     const userProfile = await kv.get(`user:${user.id}`);
@@ -810,14 +1096,32 @@ app.delete("/make-server-cc205da9/assessments/:assessmentId", requireAuth, async
       return c.json({ error: 'Admin access required' }, 403);
     }
     
-    const existingAssessment = await kv.get(`assessment:${assessmentId}`);
+    // Try direct lookup first
+    let existingAssessment = await kv.get(`assessment:${assessmentId}`);
+    let storageKey = `assessment:${assessmentId}`;
+    
+    // If not found, search by ID/slug
     if (!existingAssessment) {
+      const allAssessments = await kv.getByPrefix('assessment:');
+      const found = allAssessments.find((a: any) => 
+        a && (a.id === assessmentId || a.slug === assessmentId || a.assessment_id === assessmentId)
+      );
+      
+      if (found) {
+        existingAssessment = found;
+        // Use the actual storage key (slug or id)
+        storageKey = `assessment:${found.slug || found.id}`;
+      }
+    }
+    
+    if (!existingAssessment) {
+      console.log(`❌ Assessment not found for deletion: ${assessmentId}`);
       return c.json({ error: 'Assessment not found' }, 404);
     }
     
-    await kv.del(`assessment:${assessmentId}`);
+    await kv.del(storageKey);
     
-    console.log(`✅ Assessment deleted: ${assessmentId}`);
+    console.log(`✅ Assessment deleted: ${storageKey}`);
     return c.json({ success: true, message: 'Assessment deleted successfully' });
   } catch (error) {
     console.log('Delete assessment error:', error);
@@ -865,42 +1169,7 @@ app.get("/make-server-cc205da9/assessments/responses/user", requireAuth, async (
   }
 });
 
-// Equip Program Endpoints
-app.get("/make-server-cc205da9/equip/programs", async (c) => {
-  try {
-    const programs = await kv.getByPrefix('equip_program:');
-    // Filter out null/undefined entries and duplicates (since we store by ID and Slug)
-    const validPrograms = programs.filter((p: any) => p && (p.id || p.equip_id));
-    const uniquePrograms = Array.from(new Map(validPrograms.map((p: any) => [p.id || p.equip_id, p])).values());
-    
-    console.log(`✅ Returning ${uniquePrograms.length} equip programs`);
-    return c.json({ programs: uniquePrograms });
-  } catch (error) {
-    console.error('❌ Get equip programs error:', error);
-    return c.json({ error: 'Failed to retrieve programs', programs: [] }, 500);
-  }
-});
-
-app.get("/make-server-cc205da9/equip/programs/:equipId", async (c) => {
-  try {
-    const equipId = c.req.param('equipId');
-    let program = await kv.get(`equip_program:${equipId}`);
-    
-    if (!program) {
-      program = await kv.get(`equip_program_by_slug:${equipId}`);
-    }
-    
-    if (!program) {
-      return c.json({ error: 'Program not found' }, 404);
-    }
-    
-    return c.json({ program });
-  } catch (error) {
-    console.log('Get equip program error:', error);
-    return c.json({ error: 'Failed to retrieve program' }, 500);
-  }
-});
-
+// Equip Program Admin Endpoints (GET routes are defined later with filtering)
 app.post("/make-server-cc205da9/equip/programs", requireAuth, async (c) => {
   try {
     const user = c.get('user');
@@ -912,6 +1181,18 @@ app.post("/make-server-cc205da9/equip/programs", requireAuth, async (c) => {
     }
     
     const programData = await c.req.json();
+    
+    // Validate CMS constraints
+    const validation = validateEquipProgram(programData);
+    if (!validation.isValid) {
+      console.log('❌ CMS Validation Failed:', validation.errors);
+      // Return 400 but also include the specific errors so Admin UI can show them
+      return c.json({ 
+        error: 'Content validation failed. Please check field limits.', 
+        details: validation.errors 
+      }, 400);
+    }
+
     const equipId = programData.equip_id || `equip-${Date.now()}`;
     
     const newProgram = {
@@ -940,6 +1221,7 @@ app.put("/make-server-cc205da9/equip/programs/:equipId", requireAuth, async (c) 
   try {
     const user = c.get('user');
     const equipId = c.req.param('equipId');
+    console.log(`📝 Updating equip program: ${equipId}`);
     
     // Check if user is admin
     const userProfile = await kv.get(`user:${user.id}`);
@@ -948,32 +1230,86 @@ app.put("/make-server-cc205da9/equip/programs/:equipId", requireAuth, async (c) 
     }
     
     const updates = await c.req.json();
-    const existingProgram = await kv.get(`equip_program:${equipId}`);
+    
+    // Validate CMS constraints (only for fields present in updates)
+    const validation = validateEquipProgram(updates);
+    if (!validation.isValid) {
+      console.log('❌ CMS Validation Failed (Update):', validation.errors);
+      return c.json({ 
+        error: 'Content validation failed. Please check field limits.', 
+        details: validation.errors 
+      }, 400);
+    }
+    
+    // 🐛 DEBUG: Log what we received
+    console.log('📥 [SERVER] Received updates:', JSON.stringify(updates, null, 2));
+    console.log('📥 [SERVER] Title:', updates.title);
+    console.log('📥 [SERVER] Thumbnail:', updates.thumbnail);
+    console.log('📥 [SERVER] Description:', updates.description);
+    
+    // Try direct lookup first
+    let existingProgram = await kv.get(`equip_program:${equipId}`);
+    let storageKey = `equip_program:${equipId}`;
+    
+    // If not found, try by slug
+    if (!existingProgram) {
+      existingProgram = await kv.get(`equip_program_by_slug:${equipId}`);
+      if (existingProgram) {
+        storageKey = `equip_program:${existingProgram.equip_id || existingProgram.id}`;
+      }
+    }
+    
+    // If still not found, search all programs
+    if (!existingProgram) {
+      const allPrograms = await kv.getByPrefix('equip_program:');
+      const found = allPrograms.find((p: any) => 
+        p && (p.equip_id === equipId || p.id === equipId || p.slug === equipId)
+      );
+      
+      if (found) {
+        existingProgram = found;
+        storageKey = `equip_program:${found.equip_id || found.id}`;
+      }
+    }
     
     if (!existingProgram) {
+      console.log(`❌ Equip program not found for update: ${equipId}`);
       return c.json({ error: 'Program not found' }, 404);
     }
     
     const updatedProgram = {
       ...existingProgram,
       ...updates,
-      equip_id: equipId,
+      equip_id: existingProgram.equip_id || existingProgram.id,
+      id: existingProgram.id,
+      slug: updates.slug || existingProgram.slug,
       updated_at: new Date().toISOString()
     };
     
-    await kv.set(`equip_program:${equipId}`, updatedProgram);
+    // 🐛 DEBUG: Log what we're saving
+    console.log('💾 [SERVER] Saving to key:', storageKey);
+    console.log('💾 [SERVER] Updated program title:', updatedProgram.title);
+    console.log('💾 [SERVER] Updated program thumbnail:', updatedProgram.thumbnail);
     
-    // Update slug mapping if it changed
-    if (updatedProgram.slug && updatedProgram.slug !== existingProgram.slug) {
-        if (existingProgram.slug) {
+    // SAVE TO ALL RELEVANT KEYS to ensure consistency
+    // 1. Primary ID Key
+    await kv.set(storageKey, updatedProgram);
+    
+    // 2. Slug Key (if slug exists)
+    if (updatedProgram.slug) {
+        const slugKey = `equip_program:${updatedProgram.slug}`;
+        await kv.set(slugKey, updatedProgram);
+        // Also update legacy slug mapping
+        await kv.set(`equip_program_by_slug:${updatedProgram.slug}`, updatedProgram);
+        
+        // Cleanup old slug if it changed
+        if (existingProgram.slug && existingProgram.slug !== updatedProgram.slug) {
+            await kv.del(`equip_program:${existingProgram.slug}`);
             await kv.del(`equip_program_by_slug:${existingProgram.slug}`);
         }
-        await kv.set(`equip_program_by_slug:${updatedProgram.slug}`, updatedProgram);
-    } else if (updatedProgram.slug) {
-         await kv.set(`equip_program_by_slug:${updatedProgram.slug}`, updatedProgram);
     }
     
-    console.log(`✅ Equip program updated: ${equipId}`);
+    console.log(`✅ Equip program updated: ${storageKey}`);
     return c.json({ program: updatedProgram });
   } catch (error) {
     console.log('Update equip program error:', error);
@@ -985,6 +1321,7 @@ app.delete("/make-server-cc205da9/equip/programs/:equipId", requireAuth, async (
   try {
     const user = c.get('user');
     const equipId = c.req.param('equipId');
+    console.log(`🗑️ Deleting equip program: ${equipId}`);
     
     // Check if user is admin
     const userProfile = await kv.get(`user:${user.id}`);
@@ -992,18 +1329,67 @@ app.delete("/make-server-cc205da9/equip/programs/:equipId", requireAuth, async (
       return c.json({ error: 'Admin access required' }, 403);
     }
     
-    const existingProgram = await kv.get(`equip_program:${equipId}`);
+    // Try direct lookup first
+    let existingProgram = await kv.get(`equip_program:${equipId}`);
+    let storageKey = `equip_program:${equipId}`;
+    
+    // If not found, try by slug
     if (!existingProgram) {
+      existingProgram = await kv.get(`equip_program_by_slug:${equipId}`);
+      if (existingProgram) {
+        storageKey = `equip_program:${existingProgram.equip_id || existingProgram.id}`;
+      }
+    }
+    
+    // If still not found, search all programs
+    if (!existingProgram) {
+      const allPrograms = await kv.getByPrefix('equip_program:');
+      const found = allPrograms.find((p: any) => 
+        p && (p.equip_id === equipId || p.id === equipId || p.slug === equipId)
+      );
+      
+      if (found) {
+        existingProgram = found;
+        storageKey = `equip_program:${found.equip_id || found.id}`;
+      }
+    }
+    
+    if (!existingProgram) {
+      console.log(`❌ Equip program not found for deletion: ${equipId}`);
       return c.json({ error: 'Program not found' }, 404);
     }
     
-    await kv.del(`equip_program:${equipId}`);
+    // Deleting ALL potential keys to ensure it's gone
+    const keysToDelete = [];
     
+    // 1. The ID key
+    if (existingProgram.equip_id) keysToDelete.push(`equip_program:${existingProgram.equip_id}`);
+    if (existingProgram.id) keysToDelete.push(`equip_program:${existingProgram.id}`);
+    
+    // 2. The Slug key (used by force seed)
     if (existingProgram.slug) {
-        await kv.del(`equip_program_by_slug:${existingProgram.slug}`);
+        keysToDelete.push(`equip_program:${existingProgram.slug}`);
+        // 3. The Legacy slug lookup key
+        keysToDelete.push(`equip_program_by_slug:${existingProgram.slug}`);
     }
     
-    console.log(`✅ Equip program deleted: ${equipId}`);
+    // 4. Any other potential aliases found during search
+    if (storageKey) keysToDelete.push(storageKey);
+
+    // Dedup keys
+    const uniqueKeys = [...new Set(keysToDelete)];
+    
+    console.log(`🗑️ Deleting keys: ${uniqueKeys.join(', ')}`);
+    
+    for (const key of uniqueKeys) {
+        try {
+            await kv.del(key);
+        } catch (e) {
+            console.warn(`Failed to delete key ${key}:`, e);
+        }
+    }
+    
+    console.log(`✅ Equip program deleted successfully`);
     return c.json({ success: true, message: 'Program deleted successfully' });
   } catch (error) {
     console.log('Delete equip program error:', error);
@@ -1252,10 +1638,34 @@ app.get("/make-server-cc205da9/library/resources", async (c) => {
   try {
     const { category, limit = 50, offset = 0 } = c.req.query();
     
-    let resources = await kv.getByPrefix('resource:');
+    // Check both possible prefixes for resources
+    let resources = await kv.getByPrefix('library:resource:');
+    
+    // If no resources found with new prefix, try legacy prefix
+    if (resources.length === 0) {
+      resources = await kv.getByPrefix('resource:');
+    }
     
     // Filter out null/undefined entries
     resources = resources.filter((r: any) => r && r.id);
+    
+    /*
+    // Auto-seed disabled to allow admin full control
+    if (resources.length === 0) {
+      console.log('⚠️ No resources found. Triggering auto-seed...');
+      try {
+        await handleComprehensiveSeed();
+        // Try fetching again after seeding
+        resources = await kv.getByPrefix('library:resource:');
+        if (resources.length === 0) {
+          resources = await kv.getByPrefix('resource:');
+        }
+        resources = resources.filter((r: any) => r && r.id);
+      } catch (seedError) {
+        console.error('Auto-seed failed:', seedError);
+      }
+    }
+    */
     
     // Filter by category if provided
     if (category) {
@@ -1278,12 +1688,31 @@ app.get("/make-server-cc205da9/library/resources", async (c) => {
 app.get("/make-server-cc205da9/library/resources/:resourceId", async (c) => {
   try {
     const resourceId = c.req.param('resourceId');
-    const resource = await kv.get(`resource:${resourceId}`);
+    console.log(`🔍 Looking up resource: ${resourceId}`);
+    
+    // Try direct lookup with both prefixes
+    let resource = await kv.get(`library:resource:${resourceId}`);
+    if (!resource) {
+      resource = await kv.get(`resource:${resourceId}`);
+    }
+    
+    // If not found, search by ID/slug in both prefixes
+    if (!resource) {
+      let allResources = await kv.getByPrefix('library:resource:');
+      if (allResources.length === 0) {
+        allResources = await kv.getByPrefix('resource:');
+      }
+      resource = allResources.find((r: any) => 
+        r && (r.id === resourceId || r.slug === resourceId)
+      );
+    }
     
     if (!resource) {
+      console.log(`❌ Resource not found: ${resourceId}`);
       return c.json({ error: 'Resource not found' }, 404);
     }
     
+    console.log(`✅ Found resource: ${resource.title || resource.slug}`);
     return c.json({ resource });
   } catch (error) {
     console.log('Get library resource error:', error);
@@ -1400,9 +1829,15 @@ app.get("/make-server-cc205da9/equip/programs", async (c) => {
 app.get("/make-server-cc205da9/equip/programs/:slug", async (c) => {
   try {
     const slug = c.req.param('slug');
-    const program = await kv.get(`equip_program:${slug}`);
+    let program = await kv.get(`equip_program:${slug}`);
+    
+    // Try alternate lookup by slug mapping
+    if (!program) {
+      program = await kv.get(`equip_program_by_slug:${slug}`);
+    }
     
     if (!program) {
+      console.log(`❌ Program not found for slug: ${slug}`);
       return c.json({ error: 'Program not found' }, 404);
     }
     
@@ -1417,8 +1852,11 @@ app.get("/make-server-cc205da9/equip/programs/:slug", async (c) => {
 // Admin Resource Management Endpoints
 app.get("/make-server-cc205da9/admin/resources", requireAdmin, async (c) => {
   try {
-    // Get all resource resources
-    let resources = await kv.getByPrefix('resource:');
+    // Get all resources - check both prefixes
+    let resources = await kv.getByPrefix('library:resource:');
+    if (resources.length === 0) {
+      resources = await kv.getByPrefix('resource:');
+    }
     
     // Filter out null/undefined entries
     resources = resources.filter((r: any) => r && r.id);
@@ -1453,7 +1891,8 @@ app.post("/make-server-cc205da9/admin/resources", requireAdmin, async (c) => {
       created_by: user.id
     };
     
-    await kv.set(`resource:${resourceId}`, newResource);
+    // Use the new prefix for consistency with seeded data
+    await kv.set(`library:resource:${resourceId}`, newResource);
     
     console.log(`✅ Resource created: ${resourceId}`);
     return c.json({ resource: newResource });
@@ -1467,6 +1906,7 @@ app.put("/make-server-cc205da9/admin/resources/:resourceId", requireAuth, async 
   try {
     const user = c.get('user');
     const resourceId = c.req.param('resourceId');
+    console.log(`📝 Updating resource: ${resourceId}`);
     
     // Check if user is admin
     const userProfile = await kv.get(`user:${user.id}`);
@@ -1475,23 +1915,51 @@ app.put("/make-server-cc205da9/admin/resources/:resourceId", requireAuth, async 
     }
     
     const updates = await c.req.json();
-    const existingResource = await kv.get(`resource:${resourceId}`);
+    
+    // Try direct lookup with both prefixes
+    let existingResource = await kv.get(`library:resource:${resourceId}`);
+    let storageKey = `library:resource:${resourceId}`;
     
     if (!existingResource) {
+      existingResource = await kv.get(`resource:${resourceId}`);
+      storageKey = `resource:${resourceId}`;
+    }
+    
+    // If not found, search by ID/slug
+    if (!existingResource) {
+      let allResources = await kv.getByPrefix('library:resource:');
+      if (allResources.length === 0) {
+        allResources = await kv.getByPrefix('resource:');
+      }
+      const found = allResources.find((r: any) => 
+        r && (r.id === resourceId || r.slug === resourceId)
+      );
+      
+      if (found) {
+        existingResource = found;
+        // Determine which prefix was used
+        const isNewPrefix = (await kv.get(`library:resource:${found.slug || found.id}`)) !== null;
+        storageKey = isNewPrefix ? `library:resource:${found.slug || found.id}` : `resource:${found.slug || found.id}`;
+      }
+    }
+    
+    if (!existingResource) {
+      console.log(`❌ Resource not found for update: ${resourceId}`);
       return c.json({ error: 'Resource not found' }, 404);
     }
     
     const updatedResource = {
       ...existingResource,
       ...updates,
-      id: resourceId, // Preserve ID
+      id: existingResource.id,
+      slug: existingResource.slug,
       updated_at: new Date().toISOString(),
       updated_by: user.id
     };
     
-    await kv.set(`resource:${resourceId}`, updatedResource);
+    await kv.set(storageKey, updatedResource);
     
-    console.log(`✅ Resource updated: ${resourceId}`);
+    console.log(`✅ Resource updated: ${storageKey}`);
     return c.json({ resource: updatedResource });
   } catch (error) {
     console.log('Update resource error:', error);
@@ -1503,6 +1971,7 @@ app.delete("/make-server-cc205da9/admin/resources/:resourceId", requireAuth, asy
   try {
     const user = c.get('user');
     const resourceId = c.req.param('resourceId');
+    console.log(`🗑️ Deleting resource: ${resourceId}`);
     
     // Check if user is admin
     const userProfile = await kv.get(`user:${user.id}`);
@@ -1510,14 +1979,40 @@ app.delete("/make-server-cc205da9/admin/resources/:resourceId", requireAuth, asy
       return c.json({ error: 'Admin access required' }, 403);
     }
     
-    const existingResource = await kv.get(`resource:${resourceId}`);
+    // Try direct lookup with both prefixes
+    let existingResource = await kv.get(`library:resource:${resourceId}`);
+    let storageKey = `library:resource:${resourceId}`;
+    
     if (!existingResource) {
+      existingResource = await kv.get(`resource:${resourceId}`);
+      storageKey = `resource:${resourceId}`;
+    }
+    
+    // If not found, search by ID/slug
+    if (!existingResource) {
+      let allResources = await kv.getByPrefix('library:resource:');
+      if (allResources.length === 0) {
+        allResources = await kv.getByPrefix('resource:');
+      }
+      const found = allResources.find((r: any) => 
+        r && (r.id === resourceId || r.slug === resourceId)
+      );
+      
+      if (found) {
+        existingResource = found;
+        const isNewPrefix = (await kv.get(`library:resource:${found.slug || found.id}`)) !== null;
+        storageKey = isNewPrefix ? `library:resource:${found.slug || found.id}` : `resource:${found.slug || found.id}`;
+      }
+    }
+    
+    if (!existingResource) {
+      console.log(`❌ Resource not found for deletion: ${resourceId}`);
       return c.json({ error: 'Resource not found' }, 404);
     }
     
-    await kv.del(`resource:${resourceId}`);
+    await kv.del(storageKey);
     
-    console.log(`✅ Resource deleted: ${resourceId}`);
+    console.log(`✅ Resource deleted: ${storageKey}`);
     return c.json({ success: true, message: 'Resource deleted successfully' });
   } catch (error) {
     console.log('Delete resource error:', error);
@@ -4276,6 +4771,88 @@ app.post("/make-server-cc205da9/upload", async (c) => {
   }
 });
 
+// Upload image - Alias for /upload endpoint (specifically for image uploads)
+app.post("/make-server-cc205da9/upload-image", async (c) => {
+  try {
+    const formData = await c.req.formData();
+    const file = formData.get('file') as File;
+    const bucket = formData.get('bucket') as string || 'make-cc205da9-images';
+
+    if (!file) {
+      return c.json({ error: 'No file provided' }, 400);
+    }
+
+    // Validate image type
+    if (!file.type.startsWith('image/')) {
+      return c.json({ error: 'File must be an image' }, 400);
+    }
+
+    // Ensure bucket exists
+    const { data: buckets } = await supabase.storage.listBuckets();
+    const bucketExists = buckets?.some(b => b.name === bucket);
+    
+    if (!bucketExists) {
+      console.log(`📦 Creating image bucket: ${bucket}`);
+      const { error: bucketError } = await supabase.storage.createBucket(bucket, {
+        public: false,
+        fileSizeLimit: 10485760 // 10MB for images
+      });
+      
+      if (bucketError) {
+        console.error('Bucket creation error:', bucketError);
+        return c.json({ error: 'Failed to create storage bucket' }, 500);
+      }
+    }
+
+    // Generate unique filename
+    const timestamp = Date.now();
+    const randomStr = Math.random().toString(36).substring(2, 9);
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${timestamp}-${randomStr}.${fileExt}`;
+    const filePath = `assessments/${fileName}`;
+
+    // Convert File to ArrayBuffer
+    const arrayBuffer = await file.arrayBuffer();
+    const uint8Array = new Uint8Array(arrayBuffer);
+
+    // Upload to Supabase Storage
+    const { data, error } = await supabase.storage
+      .from(bucket)
+      .upload(filePath, uint8Array, {
+        contentType: file.type,
+        upsert: false
+      });
+
+    if (error) {
+      console.error('Upload error:', error);
+      return c.json({ error: 'Failed to upload file' }, 500);
+    }
+
+    // Generate signed URL (valid for 1 year)
+    const { data: signedUrlData } = await supabase.storage
+      .from(bucket)
+      .createSignedUrl(filePath, 31536000); // 1 year in seconds
+
+    if (!signedUrlData) {
+      console.error('Failed to generate signed URL');
+      return c.json({ error: 'Failed to generate file URL' }, 500);
+    }
+
+    console.log(`🖼️  Image uploaded: ${file.name} (${(file.size / 1024).toFixed(2)} KB)`);
+    
+    return c.json({
+      success: true,
+      url: signedUrlData.signedUrl,
+      fileName: file.name,
+      fileSize: file.size,
+      filePath
+    });
+  } catch (error) {
+    console.error('Image upload endpoint error:', error);
+    return c.json({ error: 'Image upload failed' }, 500);
+  }
+});
+
 // Get all media files (for media library)
 app.get("/make-server-cc205da9/media", async (c) => {
   try {
@@ -4350,6 +4927,611 @@ app.put("/make-server-cc205da9/settings", async (c) => {
   } catch (error) {
     console.error('Update settings error:', error);
     return c.json({ error: 'Failed to update settings' }, 500);
+  }
+});
+
+// ========================================
+// CATEGORY MANAGEMENT ENDPOINTS
+// ========================================
+
+app.get("/make-server-cc205da9/categories", async (c) => {
+  try {
+    const categories = await kv.getByPrefix('category:');
+    const validCategories = categories.filter((cat: any) => cat && cat.id);
+    console.log(`✅ Returning ${validCategories.length} categories`);
+    return c.json({ categories: validCategories });
+  } catch (error) {
+    console.error('❌ Get categories error:', error);
+    return c.json({ error: 'Failed to retrieve categories', categories: [] }, 500);
+  }
+});
+
+app.post("/make-server-cc205da9/categories", requireAuth, async (c) => {
+  try {
+    const user = c.get('user');
+    const userProfile = await kv.get(`user:${user.id}`);
+    if (!userProfile?.is_admin) {
+      return c.json({ error: 'Admin access required' }, 403);
+    }
+    
+    const categoryData = await c.req.json();
+    const categoryId = categoryData.id || `cat-${Date.now()}`;
+    
+    const newCategory = {
+      ...categoryData,
+      id: categoryId,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    };
+    
+    await kv.set(`category:${categoryId}`, newCategory);
+    console.log(`✅ Category created: ${categoryId}`);
+    return c.json({ category: newCategory });
+  } catch (error) {
+    console.error('Create category error:', error);
+    return c.json({ error: 'Failed to create category' }, 500);
+  }
+});
+
+app.put("/make-server-cc205da9/categories/:categoryId", requireAuth, async (c) => {
+  try {
+    const user = c.get('user');
+    const categoryId = c.req.param('categoryId');
+    
+    const userProfile = await kv.get(`user:${user.id}`);
+    if (!userProfile?.is_admin) {
+      return c.json({ error: 'Admin access required' }, 403);
+    }
+    
+    const updates = await c.req.json();
+    const existingCategory = await kv.get(`category:${categoryId}`);
+    
+    if (!existingCategory) {
+      return c.json({ error: 'Category not found' }, 404);
+    }
+    
+    const updatedCategory = {
+      ...existingCategory,
+      ...updates,
+      id: categoryId,
+      updated_at: new Date().toISOString()
+    };
+    
+    await kv.set(`category:${categoryId}`, updatedCategory);
+    console.log(`✅ Category updated: ${categoryId}`);
+    return c.json({ category: updatedCategory });
+  } catch (error) {
+    console.error('Update category error:', error);
+    return c.json({ error: 'Failed to update category' }, 500);
+  }
+});
+
+app.delete("/make-server-cc205da9/categories/:categoryId", requireAuth, async (c) => {
+  try {
+    const user = c.get('user');
+    const categoryId = c.req.param('categoryId');
+    
+    const userProfile = await kv.get(`user:${user.id}`);
+    if (!userProfile?.is_admin) {
+      return c.json({ error: 'Admin access required' }, 403);
+    }
+    
+    const existingCategory = await kv.get(`category:${categoryId}`);
+    if (!existingCategory) {
+      return c.json({ error: 'Category not found' }, 404);
+    }
+    
+    await kv.del(`category:${categoryId}`);
+    console.log(`✅ Category deleted: ${categoryId}`);
+    return c.json({ success: true });
+  } catch (error) {
+    console.error('Delete category error:', error);
+    return c.json({ error: 'Failed to delete category' }, 500);
+  }
+});
+
+// ========================================
+// MOOD TYPE MANAGEMENT ENDPOINTS
+// ========================================
+
+app.get("/make-server-cc205da9/moods", async (c) => {
+  try {
+    const moods = await kv.getByPrefix('mood:');
+    const validMoods = moods.filter((mood: any) => mood && mood.id);
+    console.log(`✅ Returning ${validMoods.length} mood types`);
+    return c.json({ moods: validMoods });
+  } catch (error) {
+    console.error('❌ Get moods error:', error);
+    return c.json({ error: 'Failed to retrieve mood types', moods: [] }, 500);
+  }
+});
+
+app.post("/make-server-cc205da9/moods", requireAuth, async (c) => {
+  try {
+    const user = c.get('user');
+    const userProfile = await kv.get(`user:${user.id}`);
+    if (!userProfile?.is_admin) {
+      return c.json({ error: 'Admin access required' }, 403);
+    }
+    
+    const moodData = await c.req.json();
+    const moodId = moodData.id || `mood-${Date.now()}`;
+    
+    const newMood = {
+      ...moodData,
+      id: moodId,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    };
+    
+    await kv.set(`mood:${moodId}`, newMood);
+    console.log(`✅ Mood type created: ${moodId}`);
+    return c.json({ mood: newMood });
+  } catch (error) {
+    console.error('Create mood error:', error);
+    return c.json({ error: 'Failed to create mood type' }, 500);
+  }
+});
+
+app.put("/make-server-cc205da9/moods/:moodId", requireAuth, async (c) => {
+  try {
+    const user = c.get('user');
+    const moodId = c.req.param('moodId');
+    
+    const userProfile = await kv.get(`user:${user.id}`);
+    if (!userProfile?.is_admin) {
+      return c.json({ error: 'Admin access required' }, 403);
+    }
+    
+    const updates = await c.req.json();
+    const existingMood = await kv.get(`mood:${moodId}`);
+    
+    if (!existingMood) {
+      return c.json({ error: 'Mood type not found' }, 404);
+    }
+    
+    const updatedMood = {
+      ...existingMood,
+      ...updates,
+      id: moodId,
+      updated_at: new Date().toISOString()
+    };
+    
+    await kv.set(`mood:${moodId}`, updatedMood);
+    console.log(`✅ Mood type updated: ${moodId}`);
+    return c.json({ mood: updatedMood });
+  } catch (error) {
+    console.error('Update mood error:', error);
+    return c.json({ error: 'Failed to update mood type' }, 500);
+  }
+});
+
+app.delete("/make-server-cc205da9/moods/:moodId", requireAuth, async (c) => {
+  try {
+    const user = c.get('user');
+    const moodId = c.req.param('moodId');
+    
+    const userProfile = await kv.get(`user:${user.id}`);
+    if (!userProfile?.is_admin) {
+      return c.json({ error: 'Admin access required' }, 403);
+    }
+    
+    const existingMood = await kv.get(`mood:${moodId}`);
+    if (!existingMood) {
+      return c.json({ error: 'Mood type not found' }, 404);
+    }
+    
+    await kv.del(`mood:${moodId}`);
+    console.log(`✅ Mood type deleted: ${moodId}`);
+    return c.json({ success: true });
+  } catch (error) {
+    console.error('Delete mood error:', error);
+    return c.json({ error: 'Failed to delete mood type' }, 500);
+  }
+});
+
+// ========================================
+// WEEK/DAILY STRUCTURE MANAGEMENT ENDPOINTS
+// ========================================
+
+app.get("/make-server-cc205da9/equip-programs/:programId/weeks", async (c) => {
+  try {
+    const programId = c.req.param('programId');
+    const weeks = await kv.getByPrefix(`week:${programId}:`);
+    const validWeeks = weeks.filter((week: any) => week && week.id);
+    
+    for (const week of validWeeks) {
+      const dailyContent = await kv.getByPrefix(`day:${week.id}:`);
+      week.daily_content = dailyContent.filter((day: any) => day && day.id);
+    }
+    
+    console.log(`✅ Returning ${validWeeks.length} weeks for program ${programId}`);
+    return c.json({ weeks: validWeeks });
+  } catch (error) {
+    console.error('❌ Get weeks error:', error);
+    return c.json({ error: 'Failed to retrieve weeks', weeks: [] }, 500);
+  }
+});
+
+app.post("/make-server-cc205da9/equip-programs/:programId/weeks", requireAuth, async (c) => {
+  try {
+    const user = c.get('user');
+    const programId = c.req.param('programId');
+    
+    const userProfile = await kv.get(`user:${user.id}`);
+    if (!userProfile?.is_admin) {
+      return c.json({ error: 'Admin access required' }, 403);
+    }
+    
+    const weekData = await c.req.json();
+    const weekId = `week-${Date.now()}`;
+    
+    const newWeek = {
+      ...weekData,
+      id: weekId,
+      program_id: programId,
+      daily_content: [],
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    };
+    
+    await kv.set(`week:${programId}:${weekId}`, newWeek);
+    console.log(`✅ Week created: ${weekId} for program ${programId}`);
+    return c.json({ week: newWeek });
+  } catch (error) {
+    console.error('Create week error:', error);
+    return c.json({ error: 'Failed to create week' }, 500);
+  }
+});
+
+app.put("/make-server-cc205da9/weeks/:weekId", requireAuth, async (c) => {
+  try {
+    const user = c.get('user');
+    const weekId = c.req.param('weekId');
+    
+    const userProfile = await kv.get(`user:${user.id}`);
+    if (!userProfile?.is_admin) {
+      return c.json({ error: 'Admin access required' }, 403);
+    }
+    
+    const updates = await c.req.json();
+    const allWeeks = await kv.getByPrefix('week:');
+    const existingWeek = allWeeks.find((w: any) => w && w.id === weekId);
+    
+    if (!existingWeek) {
+      return c.json({ error: 'Week not found' }, 404);
+    }
+    
+    const updatedWeek = {
+      ...existingWeek,
+      ...updates,
+      id: weekId,
+      program_id: existingWeek.program_id,
+      updated_at: new Date().toISOString()
+    };
+    
+    await kv.set(`week:${existingWeek.program_id}:${weekId}`, updatedWeek);
+    console.log(`✅ Week updated: ${weekId}`);
+    return c.json({ week: updatedWeek });
+  } catch (error) {
+    console.error('Update week error:', error);
+    return c.json({ error: 'Failed to update week' }, 500);
+  }
+});
+
+app.delete("/make-server-cc205da9/weeks/:weekId", requireAuth, async (c) => {
+  try {
+    const user = c.get('user');
+    const weekId = c.req.param('weekId');
+    
+    const userProfile = await kv.get(`user:${user.id}`);
+    if (!userProfile?.is_admin) {
+      return c.json({ error: 'Admin access required' }, 403);
+    }
+    
+    const allWeeks = await kv.getByPrefix('week:');
+    const existingWeek = allWeeks.find((w: any) => w && w.id === weekId);
+    
+    if (!existingWeek) {
+      return c.json({ error: 'Week not found' }, 404);
+    }
+    
+    const dailyContent = await kv.getByPrefix(`day:${weekId}:`);
+    for (const day of dailyContent) {
+      if (day && day.id) {
+        await kv.del(`day:${weekId}:${day.id}`);
+      }
+    }
+    
+    await kv.del(`week:${existingWeek.program_id}:${weekId}`);
+    console.log(`✅ Week and its daily content deleted: ${weekId}`);
+    return c.json({ success: true });
+  } catch (error) {
+    console.error('Delete week error:', error);
+    return c.json({ error: 'Failed to delete week' }, 500);
+  }
+});
+
+app.post("/make-server-cc205da9/weeks/:weekId/days", requireAuth, async (c) => {
+  try {
+    const user = c.get('user');
+    const weekId = c.req.param('weekId');
+    
+    const userProfile = await kv.get(`user:${user.id}`);
+    if (!userProfile?.is_admin) {
+      return c.json({ error: 'Admin access required' }, 403);
+    }
+    
+    const dayData = await c.req.json();
+    const dayId = `day-${Date.now()}`;
+    
+    const newDay = {
+      ...dayData,
+      id: dayId,
+      week_id: weekId,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    };
+    
+    await kv.set(`day:${weekId}:${dayId}`, newDay);
+    console.log(`✅ Daily content created: ${dayId} for week ${weekId}`);
+    return c.json({ day: newDay });
+  } catch (error) {
+    console.error('Create daily content error:', error);
+    return c.json({ error: 'Failed to create daily content' }, 500);
+  }
+});
+
+app.put("/make-server-cc205da9/days/:dayId", requireAuth, async (c) => {
+  try {
+    const user = c.get('user');
+    const dayId = c.req.param('dayId');
+    
+    const userProfile = await kv.get(`user:${user.id}`);
+    if (!userProfile?.is_admin) {
+      return c.json({ error: 'Admin access required' }, 403);
+    }
+    
+    const updates = await c.req.json();
+    const allDays = await kv.getByPrefix('day:');
+    const existingDay = allDays.find((d: any) => d && d.id === dayId);
+    
+    if (!existingDay) {
+      return c.json({ error: 'Daily content not found' }, 404);
+    }
+    
+    const updatedDay = {
+      ...existingDay,
+      ...updates,
+      id: dayId,
+      week_id: existingDay.week_id,
+      updated_at: new Date().toISOString()
+    };
+    
+    await kv.set(`day:${existingDay.week_id}:${dayId}`, updatedDay);
+    console.log(`✅ Daily content updated: ${dayId}`);
+    return c.json({ day: updatedDay });
+  } catch (error) {
+    console.error('Update daily content error:', error);
+    return c.json({ error: 'Failed to update daily content' }, 500);
+  }
+});
+
+app.delete("/make-server-cc205da9/days/:dayId", requireAuth, async (c) => {
+  try {
+    const user = c.get('user');
+    const dayId = c.req.param('dayId');
+    
+    const userProfile = await kv.get(`user:${user.id}`);
+    if (!userProfile?.is_admin) {
+      return c.json({ error: 'Admin access required' }, 403);
+    }
+    
+    const allDays = await kv.getByPrefix('day:');
+    const existingDay = allDays.find((d: any) => d && d.id === dayId);
+    
+    if (!existingDay) {
+      return c.json({ error: 'Daily content not found' }, 404);
+    }
+    
+    await kv.del(`day:${existingDay.week_id}:${dayId}`);
+    console.log(`✅ Daily content deleted: ${dayId}`);
+    return c.json({ success: true });
+  } catch (error) {
+    console.error('Delete daily content error:', error);
+    return c.json({ error: 'Failed to delete daily content' }, 500);
+  }
+});
+
+// =====================================================
+// CATEGORY MANAGEMENT ENDPOINTS
+// =====================================================
+
+// Get all categories
+app.get('/make-server-cc205da9/categories', async (c) => {
+  try {
+    const categories = await kv.getByPrefix('category:');
+    const validCategories = categories.filter((cat: any) => cat && cat.id);
+    console.log(`✅ Returning ${validCategories.length} categories`);
+    return c.json(validCategories);
+  } catch (error) {
+    console.error('Get categories error:', error);
+    return c.json({ error: 'Failed to fetch categories' }, 500);
+  }
+});
+
+// Get single category
+app.get('/make-server-cc205da9/categories/:id', async (c) => {
+  try {
+    const id = c.req.param('id');
+    const category = await kv.get(`category:${id}`);
+    
+    if (!category) {
+      return c.json({ error: 'Category not found' }, 404);
+    }
+    
+    return c.json(category);
+  } catch (error) {
+    console.error('Get category error:', error);
+    return c.json({ error: 'Failed to fetch category' }, 500);
+  }
+});
+
+// Create category (admin only)
+app.post('/make-server-cc205da9/categories', requireAdmin, async (c) => {
+  try {
+    const data = await c.req.json();
+    const id = data.id || `cat-${Date.now()}`;
+    
+    const category = {
+      ...data,
+      id,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    };
+    
+    await kv.set(`category:${id}`, category);
+    console.log(`✅ Category created: ${id}`);
+    return c.json(category, 201);
+  } catch (error) {
+    console.error('Create category error:', error);
+    return c.json({ error: 'Failed to create category' }, 500);
+  }
+});
+
+// Update category (admin only)
+app.put('/make-server-cc205da9/categories/:id', requireAdmin, async (c) => {
+  try {
+    const id = c.req.param('id');
+    const updates = await c.req.json();
+    const existing = await kv.get(`category:${id}`);
+    
+    if (!existing) {
+      return c.json({ error: 'Category not found' }, 404);
+    }
+    
+    const category = {
+      ...existing,
+      ...updates,
+      id,
+      updated_at: new Date().toISOString()
+    };
+    
+    await kv.set(`category:${id}`, category);
+    console.log(`✅ Category updated: ${id}`);
+    return c.json(category);
+  } catch (error) {
+    console.error('Update category error:', error);
+    return c.json({ error: 'Failed to update category' }, 500);
+  }
+});
+
+// Delete category (admin only)
+app.delete('/make-server-cc205da9/categories/:id', requireAdmin, async (c) => {
+  try {
+    const id = c.req.param('id');
+    await kv.del(`category:${id}`);
+    console.log(`✅ Category deleted: ${id}`);
+    return c.json({ success: true });
+  } catch (error) {
+    console.error('Delete category error:', error);
+    return c.json({ error: 'Failed to delete category' }, 500);
+  }
+});
+
+// =====================================================
+// MOOD MANAGEMENT ENDPOINTS
+// =====================================================
+
+// Get all moods
+app.get('/make-server-cc205da9/moods', async (c) => {
+  try {
+    const moods = await kv.getByPrefix('mood:');
+    const validMoods = moods.filter((mood: any) => mood && mood.id);
+    console.log(`✅ Returning ${validMoods.length} moods`);
+    return c.json(validMoods);
+  } catch (error) {
+    console.error('Get moods error:', error);
+    return c.json({ error: 'Failed to fetch moods' }, 500);
+  }
+});
+
+// Get single mood
+app.get('/make-server-cc205da9/moods/:id', async (c) => {
+  try {
+    const id = c.req.param('id');
+    const mood = await kv.get(`mood:${id}`);
+    
+    if (!mood) {
+      return c.json({ error: 'Mood not found' }, 404);
+    }
+    
+    return c.json(mood);
+  } catch (error) {
+    console.error('Get mood error:', error);
+    return c.json({ error: 'Failed to fetch mood' }, 500);
+  }
+});
+
+// Create mood (admin only)
+app.post('/make-server-cc205da9/moods', requireAdmin, async (c) => {
+  try {
+    const data = await c.req.json();
+    const id = data.id || `mood-${Date.now()}`;
+    
+    const mood = {
+      ...data,
+      id,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    };
+    
+    await kv.set(`mood:${id}`, mood);
+    console.log(`✅ Mood created: ${id}`);
+    return c.json(mood, 201);
+  } catch (error) {
+    console.error('Create mood error:', error);
+    return c.json({ error: 'Failed to create mood' }, 500);
+  }
+});
+
+// Update mood (admin only)
+app.put('/make-server-cc205da9/moods/:id', requireAdmin, async (c) => {
+  try {
+    const id = c.req.param('id');
+    const updates = await c.req.json();
+    const existing = await kv.get(`mood:${id}`);
+    
+    if (!existing) {
+      return c.json({ error: 'Mood not found' }, 404);
+    }
+    
+    const mood = {
+      ...existing,
+      ...updates,
+      id,
+      updated_at: new Date().toISOString()
+    };
+    
+    await kv.set(`mood:${id}`, mood);
+    console.log(`✅ Mood updated: ${id}`);
+    return c.json(mood);
+  } catch (error) {
+    console.error('Update mood error:', error);
+    return c.json({ error: 'Failed to update mood' }, 500);
+  }
+});
+
+// Delete mood (admin only)
+app.delete('/make-server-cc205da9/moods/:id', requireAdmin, async (c) => {
+  try {
+    const id = c.req.param('id');
+    await kv.del(`mood:${id}`);
+    console.log(`✅ Mood deleted: ${id}`);
+    return c.json({ success: true });
+  } catch (error) {
+    console.error('Delete mood error:', error);
+    return c.json({ error: 'Failed to delete mood' }, 500);
   }
 });
 

@@ -1,0 +1,472 @@
+                <div className="space-y-6">
+                  {/* SECTION 1: IS THIS FOR YOU? */}
+                  <div className="space-y-4"
+                    style={{
+                      padding: 'var(--spacing-6)',
+                      borderRadius: 'var(--radius-lg)',
+                      border: '2px solid #E5E7EB',
+                      backgroundColor: '#F0F9FF'
+                    }}
+                  >
+                    <div className="flex items-center gap-2">
+                      <div style={{
+                        width: '32px',
+                        height: '32px',
+                        borderRadius: '8px',
+                        backgroundColor: '#3B82F6',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center'
+                      }}>
+                        <span style={{ fontSize: '18px' }}>👤</span>
+                      </div>
+                      <h3
+                        style={{
+                          fontSize: '18px',
+                          fontWeight: 'var(--font-weight-medium)',
+                          fontFamily: 'var(--font-family-base)',
+                          color: 'var(--color-text-primary)'
+                        }}
+                      >
+                        Section 1: Is This For You?
+                      </h3>
+                    </div>
+                    
+                    <AdminFormField label="Section Title" description="Main title for this section">
+                      <Input
+                        value={formData.section1_title || ''}
+                        onChange={(e) => setFormData({ ...formData, section1_title: e.target.value })}
+                        placeholder="Is This For You?"
+                        style={{
+                          height: '48px',
+                          borderRadius: 'var(--radius-md)',
+                          fontSize: '15px'
+                        }}
+                      />
+                    </AdminFormField>
+
+                    <AdminFormField label="Eligibility Title" description="Title for eligibility criteria">
+                      <Input
+                        value={formData.section1_eligibility_title || ''}
+                        onChange={(e) => setFormData({ ...formData, section1_eligibility_title: e.target.value })}
+                        placeholder="Sleep Tight may be right for you if:"
+                        style={{
+                          height: '48px',
+                          borderRadius: 'var(--radius-md)',
+                          fontSize: '15px'
+                        }}
+                      />
+                    </AdminFormField>
+
+                    <AdminFormField label="Eligibility Points" description="Criteria points (one per line)">
+                      <Textarea
+                        value={getArrayFieldString('section1_eligibility_points')}
+                        onChange={(e) => handleArrayFieldChange('section1_eligibility_points', e.target.value)}
+                        placeholder="You have trouble falling asleep or staying asleep&#10;You wake up too early and struggle to fall back asleep&#10;You find yourself constantly worrying about your sleep&#10;Your sleep difficulties are starting to affect your day-to-day life"
+                        rows={6}
+                        style={{
+                          borderRadius: 'var(--radius-md)',
+                          fontSize: '15px',
+                          lineHeight: '1.5'
+                        }}
+                      />
+                    </AdminFormField>
+
+                    <AdminFormField label="Who Can Participate - Title" description="Title for participation section">
+                      <Input
+                        value={formData.section1_who_title || ''}
+                        onChange={(e) => setFormData({ ...formData, section1_who_title: e.target.value })}
+                        placeholder="Who can participate"
+                        style={{
+                          height: '48px',
+                          borderRadius: 'var(--radius-md)',
+                          fontSize: '15px'
+                        }}
+                      />
+                    </AdminFormField>
+
+                    <AdminFormField label="Who Can Participate - Content" description="Description of who can participate">
+                      <Textarea
+                        value={formData.section1_who_content || ''}
+                        onChange={(e) => setFormData({ ...formData, section1_who_content: e.target.value })}
+                        placeholder="This program is designed for adults who want to improve their sleep. If you're managing other mental health concerns, we recommend checking in with a qualified healthcare professional before starting."
+                        rows={3}
+                        style={{
+                          borderRadius: 'var(--radius-md)',
+                          fontSize: '15px',
+                          lineHeight: '1.5'
+                        }}
+                      />
+                    </AdminFormField>
+                  </div>
+
+                  {/* SECTION 2: WHAT IS SLEEP TIGHT? */}
+                  <div className="space-y-4"
+                    style={{
+                      padding: 'var(--spacing-6)',
+                      borderRadius: 'var(--radius-lg)',
+                      border: '2px solid #E5E7EB',
+                      backgroundColor: '#F0FDF4'
+                    }}
+                  >
+                    <div className="flex items-center gap-2">
+                      <div style={{
+                        width: '32px',
+                        height: '32px',
+                        borderRadius: '8px',
+                        backgroundColor: '#10B981',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center'
+                      }}>
+                        <span style={{ fontSize: '18px' }}>❓</span>
+                      </div>
+                      <h3
+                        style={{
+                          fontSize: '18px',
+                          fontWeight: 'var(--font-weight-medium)',
+                          fontFamily: 'var(--font-family-base)',
+                          color: 'var(--color-text-primary)'
+                        }}
+                      >
+                        Section 2: What Is This Program?
+                      </h3>
+                    </div>
+                    
+                    <AdminFormField label="Section Title" description="Title for this section">
+                      <Input
+                        value={formData.section2_title || ''}
+                        onChange={(e) => setFormData({ ...formData, section2_title: e.target.value })}
+                        placeholder="Sleep Tight: The road to restful sleep"
+                        style={{
+                          height: '48px',
+                          borderRadius: 'var(--radius-md)',
+                          fontSize: '15px'
+                        }}
+                      />
+                    </AdminFormField>
+
+                    <AdminFormField label="Content" description="Multi-paragraph description (use line breaks for new paragraphs)">
+                      <Textarea
+                        value={formData.section2_content || ''}
+                        onChange={(e) => setFormData({ ...formData, section2_content: e.target.value })}
+                        placeholder="Having trouble sleeping? Sleep Tight by I-Kan Equip is a guided, self-help program designed to help you understand and improve your sleep.&#10;&#10;Over the next 18 days, you'll work on identifying what's disrupting your sleep and gradually build healthier sleep patterns — supporting your health, focus, and mood."
+                        rows={6}
+                        style={{
+                          borderRadius: 'var(--radius-md)',
+                          fontSize: '15px',
+                          lineHeight: '1.5'
+                        }}
+                      />
+                    </AdminFormField>
+
+                    <AdminFormField label="Program Includes (Bullets)" description="Feature list (one per line)">
+                      <Textarea
+                        value={getArrayFieldString('section2_bullets')}
+                        onChange={(e) => handleArrayFieldChange('section2_bullets', e.target.value)}
+                        placeholder="A structured 18-day journey that fits into your daily routine&#10;Sleep, mood, and habit trackers to help you notice patterns and triggers&#10;Science-backed approaches, including CBT (Cognitive Behavioral Therapy) and other clinically proven techniques"
+                        rows={5}
+                        style={{
+                          borderRadius: 'var(--radius-md)',
+                          fontSize: '15px',
+                          lineHeight: '1.5'
+                        }}
+                      />
+                    </AdminFormField>
+
+                    <AdminFormField label="Section Image" description="Image for this section (upload or URL)">
+                      <ImageUpload
+                        value={formData.section2_image || ''}
+                        onChange={(value) => setFormData({ ...formData, section2_image: value })}
+                        placeholder="Upload section image"
+                      />
+                      <div className="mt-2">
+                        <Input
+                          value={formData.section2_image || ''}
+                          onChange={(e) => setFormData({ ...formData, section2_image: e.target.value })}
+                          placeholder="Or enter image URL"
+                          style={{
+                            height: '48px',
+                            borderRadius: 'var(--radius-md)',
+                            fontSize: '15px'
+                          }}
+                        />
+                      </div>
+                    </AdminFormField>
+                  </div>
+
+                  {/* SECTION 3: HOW IT WORKS */}
+                  <div className="space-y-4"
+                    style={{
+                      padding: 'var(--spacing-6)',
+                      borderRadius: 'var(--radius-lg)',
+                      border: '2px solid #E5E7EB',
+                      backgroundColor: '#FEF3C7'
+                    }}
+                  >
+                    <div className="flex items-center gap-2">
+                      <div style={{
+                        width: '32px',
+                        height: '32px',
+                        borderRadius: '8px',
+                        backgroundColor: '#F59E0B',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center'
+                      }}>
+                        <span style={{ fontSize: '18px' }}>⚙️</span>
+                      </div>
+                      <h3
+                        style={{
+                          fontSize: '18px',
+                          fontWeight: 'var(--font-weight-medium)',
+                          fontFamily: 'var(--font-family-base)',
+                          color: 'var(--color-text-primary)'
+                        }}
+                      >
+                        Section 3: How It Works
+                      </h3>
+                    </div>
+                    
+                    <AdminFormField label="Section Title" description="Main title for this section">
+                      <Input
+                        value={formData.section3_title || ''}
+                        onChange={(e) => setFormData({ ...formData, section3_title: e.target.value })}
+                        placeholder="How It Works"
+                        style={{
+                          height: '48px',
+                          borderRadius: 'var(--radius-md)',
+                          fontSize: '15px'
+                        }}
+                      />
+                    </AdminFormField>
+
+                    <AdminFormField label="Subtitle" description="Subheading (e.g., 'What to expect')">
+                      <Input
+                        value={formData.section3_subtitle || ''}
+                        onChange={(e) => setFormData({ ...formData, section3_subtitle: e.target.value })}
+                        placeholder="What to expect"
+                        style={{
+                          height: '48px',
+                          borderRadius: 'var(--radius-md)',
+                          fontSize: '15px'
+                        }}
+                      />
+                    </AdminFormField>
+
+                    <AdminFormField label="Content Paragraphs" description="Explanation (one paragraph per line)">
+                      <Textarea
+                        value={getArrayFieldString('section3_content')}
+                        onChange={(e) => handleArrayFieldChange('section3_content', e.target.value)}
+                        placeholder="We'll work on sleep in two simple stages.&#10;First, you'll learn practical techniques to calm your mind and improve sleep hygiene. Then, you'll build a personalized bedtime routine and practice these skills consistently.&#10;Think of it as training your brain for sleep — naturally. No pills. No pressure. Just habits that support better rest over time."
+                        rows={6}
+                        style={{
+                          borderRadius: 'var(--radius-md)',
+                          fontSize: '15px',
+                          lineHeight: '1.5'
+                        }}
+                      />
+                    </AdminFormField>
+                  </div>
+
+                  {/* SECTION 4: WHAT YOU'LL GAIN & IMPORTANT NOTES */}
+                  <div className="space-y-4"
+                    style={{
+                      padding: 'var(--spacing-6)',
+                      borderRadius: 'var(--radius-lg)',
+                      border: '2px solid #E5E7EB',
+                      backgroundColor: '#EDE9FE'
+                    }}
+                  >
+                    <div className="flex items-center gap-2">
+                      <div style={{
+                        width: '32px',
+                        height: '32px',
+                        borderRadius: '8px',
+                        backgroundColor: '#8B5CF6',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center'
+                      }}>
+                        <span style={{ fontSize: '18px' }}>✨</span>
+                      </div>
+                      <h3
+                        style={{
+                          fontSize: '18px',
+                          fontWeight: 'var(--font-weight-medium)',
+                          fontFamily: 'var(--font-family-base)',
+                          color: 'var(--color-text-primary)'
+                        }}
+                      >
+                        Section 4: Benefits & Important Notes
+                      </h3>
+                    </div>
+                    
+                    <AdminFormField label="Benefits Title" description="Title for benefits section">
+                      <Input
+                        value={formData.section4_benefits_title || ''}
+                        onChange={(e) => setFormData({ ...formData, section4_benefits_title: e.target.value })}
+                        placeholder="What You'll Gain"
+                        style={{
+                          height: '48px',
+                          borderRadius: 'var(--radius-md)',
+                          fontSize: '15px'
+                        }}
+                      />
+                    </AdminFormField>
+
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between">
+                        <Label style={{ fontSize: '14px', fontWeight: 'var(--font-weight-medium)' }}>
+                          Benefits (Cards with Descriptions)
+                        </Label>
+                        <Button
+                          onClick={() => {
+                            const newBenefits = [...(formData.section4_benefits || []), { title: '', description: '' }];
+                            setFormData({ ...formData, section4_benefits: newBenefits });
+                          }}
+                          variant="outline"
+                          size="sm"
+                          className="gap-2"
+                        >
+                          <Plus size={14} />
+                          Add Benefit
+                        </Button>
+                      </div>
+                      
+                      {(formData.section4_benefits || []).map((benefit, index) => (
+                        <Card key={index}>
+                          <CardContent className="pt-6 space-y-3">
+                            <div className="flex items-start justify-between">
+                              <h4 style={{ fontSize: '14px', fontWeight: 'var(--font-weight-medium)' }}>
+                                Benefit #{index + 1}
+                              </h4>
+                              <Button
+                                onClick={() => {
+                                  const newBenefits = (formData.section4_benefits || []).filter((_, i) => i !== index);
+                                  setFormData({ ...formData, section4_benefits: newBenefits });
+                                }}
+                                variant="ghost"
+                                size="sm"
+                              >
+                                <X size={16} />
+                              </Button>
+                            </div>
+                            <Input
+                              value={benefit.title}
+                              onChange={(e) => {
+                                const newBenefits = [...(formData.section4_benefits || [])];
+                                newBenefits[index] = { ...newBenefits[index], title: e.target.value };
+                                setFormData({ ...formData, section4_benefits: newBenefits });
+                              }}
+                              placeholder="Benefit title"
+                              style={{
+                                height: '48px',
+                                borderRadius: 'var(--radius-md)',
+                                fontSize: '15px'
+                              }}
+                            />
+                            <Textarea
+                              value={benefit.description}
+                              onChange={(e) => {
+                                const newBenefits = [...(formData.section4_benefits || [])];
+                                newBenefits[index] = { ...newBenefits[index], description: e.target.value };
+                                setFormData({ ...formData, section4_benefits: newBenefits });
+                              }}
+                              placeholder="Benefit description"
+                              rows={2}
+                              style={{
+                                borderRadius: 'var(--radius-md)',
+                                fontSize: '15px'
+                              }}
+                            />
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </div>
+
+                    <AdminFormField label="Important Notes Title" description="Title for notes section">
+                      <Input
+                        value={formData.section4_notes_title || ''}
+                        onChange={(e) => setFormData({ ...formData, section4_notes_title: e.target.value })}
+                        placeholder="Important Notes"
+                        style={{
+                          height: '48px',
+                          borderRadius: 'var(--radius-md)',
+                          fontSize: '15px'
+                        }}
+                      />
+                    </AdminFormField>
+
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between">
+                        <Label style={{ fontSize: '14px', fontWeight: 'var(--font-weight-medium)' }}>
+                          Important Notes (Cards with Descriptions)
+                        </Label>
+                        <Button
+                          onClick={() => {
+                            const newNotes = [...(formData.section4_notes || []), { title: '', description: '' }];
+                            setFormData({ ...formData, section4_notes: newNotes });
+                          }}
+                          variant="outline"
+                          size="sm"
+                          className="gap-2"
+                        >
+                          <Plus size={14} />
+                          Add Note
+                        </Button>
+                      </div>
+                      
+                      {(formData.section4_notes || []).map((note, index) => (
+                        <Card key={index}>
+                          <CardContent className="pt-6 space-y-3">
+                            <div className="flex items-start justify-between">
+                              <h4 style={{ fontSize: '14px', fontWeight: 'var(--font-weight-medium)' }}>
+                                Note #{index + 1}
+                              </h4>
+                              <Button
+                                onClick={() => {
+                                  const newNotes = (formData.section4_notes || []).filter((_, i) => i !== index);
+                                  setFormData({ ...formData, section4_notes: newNotes });
+                                }}
+                                variant="ghost"
+                                size="sm"
+                              >
+                                <X size={16} />
+                              </Button>
+                            </div>
+                            <Input
+                              value={note.title}
+                              onChange={(e) => {
+                                const newNotes = [...(formData.section4_notes || [])];
+                                newNotes[index] = { ...newNotes[index], title: e.target.value };
+                                setFormData({ ...formData, section4_notes: newNotes });
+                              }}
+                              placeholder="Note title"
+                              style={{
+                                height: '48px',
+                                borderRadius: 'var(--radius-md)',
+                                fontSize: '15px'
+                              }}
+                            />
+                            <Textarea
+                              value={note.description}
+                              onChange={(e) => {
+                                const newNotes = [...(formData.section4_notes || [])];
+                                newNotes[index] = { ...newNotes[index], description: e.target.value };
+                                setFormData({ ...formData, section4_notes: newNotes });
+                              }}
+                              placeholder="Note description"
+                              rows={2}
+                              style={{
+                                borderRadius: 'var(--radius-md)',
+                                fontSize: '15px'
+                              }}
+                            />
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </div>
+                  </div>
+
+                </div>

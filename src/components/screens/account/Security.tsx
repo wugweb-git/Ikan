@@ -99,16 +99,14 @@ export function Security() {
     }
     
     // In real app, this would call an API
-    apiClient.post('/account/change-password', {
-      currentPassword: passwordForm.currentPassword,
-      newPassword: passwordForm.newPassword
-    }).then(() => {
-      showToast('success', 'Password Changed', 'Your password has been updated successfully');
-      setShowPasswordChange(false);
-      setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
-    }).catch((error) => {
-      showToast('error', 'Error', error.response?.data?.message || 'Failed to change password');
-    });
+    apiClient.changePassword(passwordForm.currentPassword, passwordForm.newPassword)
+      .then(() => {
+        showToast('success', 'Password Changed', 'Your password has been updated successfully');
+        setShowPasswordChange(false);
+        setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
+      }).catch((error) => {
+        showToast('error', 'Error', error.message || 'Failed to change password');
+      });
   };
 
   const handleEnable2FA = () => {

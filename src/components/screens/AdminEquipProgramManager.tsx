@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Target, Search, Download, Edit, Plus, MoreHorizontal, Eye } from 'lucide-react';
+import { BookOpen, Download, Plus, MoreHorizontal, Eye, EyeOff, Edit, Trash2 } from 'lucide-react';
 import { useNotifications } from '../../contexts/NotificationContext';
 import { apiClient } from '../../lib/api-client';
 import { AdminHeader } from '../admin/AdminHeader';
@@ -8,8 +8,12 @@ import { useIsMobile } from '../../hooks/useIsMobile';
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
 import { cn } from '../ui/utils';
-import { EquipProgramEditPage, EquipProgram } from './EquipProgramEditPage';
+import { EquipProgramEditPageWizard, EquipProgram } from './EquipProgramEditPageWizard';
 import { AdminDataTable, Column } from '../admin/AdminDataTable';
+import { ErrorState } from '../ui/error-state';
+import { EmptyState } from '../ui/empty-state';
+import { Skeleton } from '../ui/skeleton-loader';
+import { ImageWithFallback } from '../figma/ImageWithFallback';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -48,17 +52,26 @@ export function AdminEquipProgramManager({ onBack, className }: AdminEquipProgra
       const data = Array.isArray(response) ? response : response.programs || [];
       
       // Map API response to Component EquipProgram type
-      const mappedPrograms = data.map((item: any) => ({
+      const mappedPrograms = data.map((item: any, index: number) => ({
         ...item,
-        id: item.equip_id || item.id,
+        id: item.equip_id || item.id || `equip-program-${index}-${Date.now()}`,
         duration: item.duration_days || item.duration,
         // Ensure other fields
         category: item.category || 'General',
         published: item.published !== undefined ? item.published : true,
-        enrollmentCount: item.enrollmentCount || 0
+        enrollmentCount: item.enrollmentCount || 0,
+        thumbnail: item.hero_image || item.thumbnail || item.image_url || item.thumbnail_url || ''
       }));
 
-      setPrograms(mappedPrograms);
+      // Remove duplicates by ID - keep the first occurrence
+      const uniquePrograms = mappedPrograms.reduce((acc: EquipProgram[], curr: EquipProgram) => {
+        if (!acc.find(p => p.id === curr.id)) {
+          acc.push(curr);
+        }
+        return acc;
+      }, []);
+
+      setPrograms(uniquePrograms);
       setLoading(false);
     } catch (error: any) {
       console.error('Failed to load programs:', error);
@@ -76,6 +89,31 @@ export function AdminEquipProgramManager({ onBack, className }: AdminEquipProgra
     setViewMode('edit');
   };
 
+  const handleTogglePublish = async (id: string, published: boolean) => {
+    try {
+      await apiClient.updateEquipProgram(id, { published });
+      setPrograms((prev) => prev.map((p) => (p.id === id ? { ...p, published } : p)));
+      showToast('success', 'Program Updated', `Program ${published ? 'published' : 'unpublished'}`);
+      loadPrograms(); // Reload to get fresh data
+    } catch (error: any) {
+      console.error('Failed to update program:', error);
+      showToast('error', 'API Error', 'Failed to update program');
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!confirm('Are you sure you want to delete this program?')) return;
+    
+    try {
+      await apiClient.deleteEquipProgram(id);
+      showToast('success', 'Program Deleted', 'Program deleted successfully');
+      loadPrograms(); // ✅ FIX: Reload from backend to confirm deletion
+    } catch (error: any) {
+      console.error('Failed to delete program:', error);
+      showToast('error', 'API Error', 'Failed to delete program');
+    }
+  };
+
   // -- Data Table Configuration --
 
   const columns: Column<EquipProgram>[] = [
@@ -85,13 +123,22 @@ export function AdminEquipProgramManager({ onBack, className }: AdminEquipProgra
       sortable: true,
       className: 'min-w-[300px]',
       render: (program) => (
-        <div className="flex flex-col">
-          <span className="font-medium truncate max-w-[300px]" title={program.title}>
-            {program.title}
-          </span>
-          <span className="text-xs text-muted-foreground truncate max-w-[300px]" title={program.description}>
-            {program.description}
-          </span>
+        <div className="flex items-start gap-3">
+          <div className="w-12 h-12 rounded-md overflow-hidden flex-shrink-0 bg-gray-100 border border-gray-200">
+             <ImageWithFallback 
+               src={program.thumbnail} 
+               alt={program.title}
+               className="w-full h-full object-cover"
+             />
+          </div>
+          <div className="flex-1">
+            <span className="font-medium truncate max-w-[300px]" title={program.title}>
+              {program.title}
+            </span>
+            <span className="text-xs text-muted-foreground truncate max-w-[300px] block" title={program.description}>
+              {program.description}
+            </span>
+          </div>
         </div>
       )
     },
@@ -116,6 +163,16 @@ export function AdminEquipProgramManager({ onBack, className }: AdminEquipProgra
       )
     },
     {
+      header: 'Created',
+      accessorKey: 'created_at',
+      sortable: true,
+      render: (program) => (
+        <span className="text-sm text-muted-foreground">
+          {program.created_at ? new Date(program.created_at).toLocaleDateString() : '-'}
+        </span>
+      )
+    },
+    {
       header: 'Status',
       accessorKey: 'published',
       sortable: true,
@@ -134,7 +191,7 @@ export function AdminEquipProgramManager({ onBack, className }: AdminEquipProgra
       sortable: true,
       render: (program) => (
         <div className="flex items-center gap-1 text-sm text-muted-foreground">
-          <Target className="w-3 h-3" />
+          <BookOpen className="w-3 h-3" />
           {program.enrollmentCount || 0}
         </div>
       )
@@ -155,6 +212,23 @@ export function AdminEquipProgramManager({ onBack, className }: AdminEquipProgra
             <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleEdit(program.id); }}>
               <Edit className="mr-2 h-4 w-4" /> Edit Program
             </DropdownMenuItem>
+            <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleTogglePublish(program.id, !program.published); }}>
+              {program.published ? (
+                <>
+                  <EyeOff className="mr-2 h-4 w-4" /> Unpublish
+                </>
+              ) : (
+                <>
+                  <Eye className="mr-2 h-4 w-4" /> Publish
+                </>
+              )}
+            </DropdownMenuItem>
+            <DropdownMenuItem 
+              onClick={(e) => { e.stopPropagation(); handleDelete(program.id); }}
+              className="text-red-600"
+            >
+              <Trash2 className="mr-2 h-4 w-4" /> Delete
+            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       )
@@ -162,57 +236,86 @@ export function AdminEquipProgramManager({ onBack, className }: AdminEquipProgra
   ];
 
   const stats = [
-    { label: 'Total Programs', value: programs.length, icon: <Target className="w-4 h-4 text-primary" /> },
-    { label: 'Published', value: programs.filter((p) => p.published).length, icon: <Target className="w-4 h-4 text-green-500" /> },
-    { label: 'Total Enrollments', value: programs.reduce((acc, p) => acc + (p.enrollmentCount || 0), 0), icon: <Target className="w-4 h-4 text-blue-500" /> }
+    { label: 'Total Programs', value: programs.length, icon: <BookOpen className="w-4 h-4 text-primary" /> },
+    { label: 'Published', value: programs.filter((p) => p.published).length, icon: <BookOpen className="w-4 h-4 text-green-500" /> },
+    { label: 'Total Enrollments', value: programs.reduce((acc, p) => acc + (p.enrollmentCount || 0), 0), icon: <BookOpen className="w-4 h-4 text-blue-500" /> }
   ];
 
   if (viewMode === 'edit' || viewMode === 'create') {
-    return <EquipProgramEditPage programId={selectedProgramId} onBack={() => setViewMode('list')} onSave={() => setViewMode('list')} />;
+    return (
+      <EquipProgramEditPageWizard 
+        programId={selectedProgramId} 
+        onBack={() => setViewMode('list')} 
+        onSave={() => {
+          // Force refresh programs list after save
+          setViewMode('list');
+          loadPrograms();
+        }} 
+      />
+    );
   }
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background p-4">
-        <div className="text-center">
-          <div className="animate-spin rounded-full border-4 mx-auto mb-4 w-12 h-12 border-muted border-t-primary" />
-          <p className="text-muted-foreground">Loading programs...</p>
+      <div className="max-w-7xl mx-auto space-y-6">
+        {/* Header skeleton */}
+        <div className="space-y-4">
+          <Skeleton height="32px" width="350px" />
+          <Skeleton height="20px" width="450px" />
+          
+          {/* Stats skeleton */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="p-4 rounded-lg" style={{ backgroundColor: 'var(--color-bg-card)' }}>
+                <Skeleton height="16px" width="120px" className="mb-2" />
+                <Skeleton height="24px" width="50px" />
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Table skeleton */}
+        <div className="rounded-lg p-4" style={{ backgroundColor: 'var(--color-bg-card)' }}>
+          <Skeleton height="40px" width="100%" className="mb-4" />
+          {[1, 2, 3, 4, 5].map((i) => (
+            <div key={i} className="mb-3">
+              <Skeleton height="70px" width="100%" />
+            </div>
+          ))}
         </div>
       </div>
     );
   }
 
   return (
-    <div className={cn('min-h-screen bg-background', className)} style={{ padding: isMobile ? 'var(--spacing-4)' : 'var(--spacing-8)' }}>
-      <div className="max-w-7xl mx-auto space-y-6">
-        <AdminHeader
-          title="Equip Program Manager"
-          description="Manage wellness and therapeutic programs"
-          onBack={onBack}
-          breadcrumbs={[{ label: 'Admin', onClick: onBack }, { label: 'Equip Programs' }]}
-          stats={stats}
-          actions={
-             <Button onClick={handleCreateNew} className="gap-2">
-              <Plus className="w-4 h-4" />
-              {!isMobile && 'Add Program'}
-            </Button>
-          }
-        />
+    <div className="max-w-7xl mx-auto space-y-6">
+      <AdminHeader
+        title="Equip Program Manager"
+        description="Manage wellness and therapeutic programs"
+        onBack={onBack}
+        breadcrumbs={[{ label: 'Admin', onClick: onBack }, { label: 'Equip Programs' }]}
+        stats={stats}
+        actions={
+            <Button onClick={handleCreateNew} className="gap-2">
+            <Plus className="w-4 h-4" />
+            {!isMobile && 'Add Program'}
+          </Button>
+        }
+      />
 
-        <AdminDataTable 
-          columns={columns} 
-          data={programs} 
-          searchKeys={['title', 'description', 'category']}
-          searchPlaceholder="Search programs..."
-          onRowClick={(item) => handleEdit(item.id)}
-          actions={
-            <Button variant="outline" className="gap-2">
-              <Download className="w-4 h-4" />
-              {!isMobile && 'Export'}
-            </Button>
-          }
-        />
-      </div>
+      <AdminDataTable 
+        columns={columns} 
+        data={programs} 
+        searchKeys={['title', 'description', 'category']}
+        searchPlaceholder="Search programs..."
+        onRowClick={(item) => handleEdit(item.id)}
+        actions={
+          <Button variant="outline" className="gap-2">
+            <Download className="w-4 h-4" />
+            {!isMobile && 'Export'}
+          </Button>
+        }
+      />
     </div>
   );
 }

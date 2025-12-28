@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, ReactNode } from 'react';
 import { 
   Table, 
   TableBody, 
@@ -24,9 +24,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 export interface Column<T> {
   header: string;
   accessorKey?: keyof T;
-  render?: (item: T) => React.ReactNode;
+  render?: (item: T) => ReactNode;
   className?: string;
   sortable?: boolean;
+  type?: 'text' | 'image' | 'badge' | 'date' | 'custom'; // NEW: column type
+  imageKey?: keyof T; // NEW: key for image URL
+  imageFallback?: string; // NEW: fallback image
 }
 
 export interface FilterOption {
@@ -41,7 +44,7 @@ interface AdminDataTableProps<T> {
   searchKeys?: (keyof T)[]; // Keys to search in
   filters?: FilterOption[]; // Filter configurations
   searchPlaceholder?: string;
-  actions?: React.ReactNode; // Extra actions (e.g. Export button) next to search
+  actions?: ReactNode; // Extra actions (e.g. Export button) next to search
   onRowClick?: (item: T) => void;
   pageSize?: number;
   idField?: keyof T;
@@ -61,6 +64,7 @@ export function AdminDataTable<T extends { [key: string]: any }>({
   
   // -- State --
   const [currentPage, setCurrentPage] = useState(1);
+  const [currentPageSize, setCurrentPageSize] = useState(pageSize);
   const [searchTerm, setSearchTerm] = useState('');
   const [sortConfig, setSortConfig] = useState<{ key: keyof T | null; direction: 'asc' | 'desc' }>({ 
     key: null, 
@@ -140,8 +144,8 @@ export function AdminDataTable<T extends { [key: string]: any }>({
   }, [data, searchTerm, searchKeys, activeFilters, sortConfig]);
 
   // -- Pagination --
-  const totalPages = Math.ceil(processedData.length / pageSize);
-  const paginatedData = processedData.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+  const totalPages = Math.ceil(processedData.length / currentPageSize);
+  const paginatedData = processedData.slice((currentPage - 1) * currentPageSize, currentPage * currentPageSize);
 
   const getSortIcon = (key: keyof T) => {
     if (sortConfig.key !== key) return <ArrowUpDown className="w-3 h-3 ml-1 opacity-50" />;
@@ -234,7 +238,23 @@ export function AdminDataTable<T extends { [key: string]: any }>({
                 >
                   {columns.map((col, colIdx) => (
                     <TableCell key={colIdx} className={col.className}>
-                      {col.render ? col.render(item) : (col.accessorKey ? (item[col.accessorKey] as React.ReactNode) : null)}
+                      {col.type === 'image' && col.imageKey ? (
+                        <div className="flex items-center gap-3">
+                          <img 
+                            src={item[col.imageKey] as string || col.imageFallback || '/placeholder.png'} 
+                            alt=""
+                            className="w-12 h-12 object-cover rounded-lg border border-gray-200"
+                            onError={(e) => {
+                              if (col.imageFallback) {
+                                (e.target as HTMLImageElement).src = col.imageFallback;
+                              }
+                            }}
+                          />
+                          {col.render ? col.render(item) : (col.accessorKey ? (item[col.accessorKey] as ReactNode) : null)}
+                        </div>
+                      ) : (
+                        col.render ? col.render(item) : (col.accessorKey ? (item[col.accessorKey] as ReactNode) : null)
+                      )}
                     </TableCell>
                   ))}
                 </TableRow>
@@ -250,30 +270,12 @@ export function AdminDataTable<T extends { [key: string]: any }>({
         </Table>
       </div>
 
-      {/* Pagination */}
-      {totalPages > 1 && (
-        <div className="flex items-center justify-end space-x-2 py-4">
-          <div className="text-sm text-muted-foreground mr-4">
-            Page {currentPage} of {totalPages}
-          </div>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-            disabled={currentPage === 1}
-          >
-            <ChevronLeft className="h-4 w-4" />
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-            disabled={currentPage === totalPages}
-          >
-            <ChevronRight className="h-4 w-4" />
-          </Button>
-        </div>
-      )}
+      {/* Pagination removed as requested */}
+      {/* 
+      <div className="flex flex-col md:flex-row items-center justify-between gap-4 py-4">
+        ...
+      </div> 
+      */}
     </div>
   );
 }

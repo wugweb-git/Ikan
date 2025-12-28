@@ -60,6 +60,9 @@ export const getOfflineData = (type: string, id?: string) => {
       // Return empty array for equip programs when offline
       // Tests can create programs dynamically
       return { programs: [] };
+    case 'enrollments':
+      // Return empty array for equip enrollments when offline
+      return { enrollments: [] };
     case 'assessments':
       // Return empty array for assessments when offline
       return { assessments: [] };
@@ -81,6 +84,10 @@ export const getOfflineData = (type: string, id?: string) => {
           }
         }
       };
+    case 'journalEntries':
+      return { entries: [] };
+    case 'journalEntry':
+      return { entry: null };
     default:
       console.warn(`Unknown offline data type: ${type}`);
       // Return empty array structure to prevent .filter errors

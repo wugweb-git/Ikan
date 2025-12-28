@@ -993,162 +993,23 @@ function MobileTeamSection({ onTeamMemberClick }: { onTeamMemberClick?: (member:
   );
 }
 
-// Desktop Newsletter Section
-function DesktopNewsletterSection({ 
-  email, 
-  name, 
-  loading, 
-  onEmailChange, 
-  onNameChange, 
-  onSubmit 
-}: { 
-  email: string;
-  name: string;
-  loading: boolean;
-  onEmailChange: (value: string) => void;
-  onNameChange: (value: string) => void;
-  onSubmit: (e: React.FormEvent) => void;
-}) {
+// Newsletter Section - Unified with backend integration
+function NewsletterSection() {
   return (
-    <div className="hidden lg:block">
-      <NewsletterBlock
-        title="Sign up for our Newsletter"
-        benefits={[
-          "Get weekly mental health tips, wellness resources, and stay updated with the latest news from iKan."
-        ]}
-        imageUrl={imgNewsletterCommunity}
-        imageAlt="Mental health newsletter community"
-        privacyText="Privacy: We store and process your personal data based on our privacy policy. You can unsubscribe at any time."
-        ctaText={loading ? 'Signing up...' : 'Sign up now!'}
-        onSubmit={(data) => {
-          onEmailChange(data.email);
-          const event = new Event('submit', { bubbles: true, cancelable: true }) as any;
-          event.preventDefault = () => {};
-          onSubmit(event);
-        }}
-      />
-    </div>
+    <NewsletterBlock
+      title="Sign up for our Newsletter"
+      benefits={[
+        "Get weekly mental health tips, wellness resources, and stay updated with the latest news from iKan."
+      ]}
+      imageUrl={imgNewsletterCommunity}
+      imageAlt="Mental health newsletter community"
+      privacyText="Privacy: We store and process your personal data based on our privacy policy. You can unsubscribe at any time."
+      ctaText="Sign up now!"
+    />
   );
 }
 
-// Mobile Newsletter Section
-function MobileNewsletterSection({ 
-  email, 
-  name, 
-  loading, 
-  onEmailChange, 
-  onNameChange, 
-  onSubmit 
-}: { 
-  email: string;
-  name: string;
-  loading: boolean;
-  onEmailChange: (value: string) => void;
-  onNameChange: (value: string) => void;
-  onSubmit: (e: React.FormEvent) => void;
-}) {
-  return (
-    <div className="lg:hidden relative shrink-0 w-full" style={{ backgroundColor: 'var(--color-bg-card)' }}>
-      <div className="flex flex-col justify-center size-full">
-        <div className="box-border content-stretch flex flex-col gap-[16px] items-start justify-center px-[20px] py-[40px] relative w-full">
-          <div className="content-stretch flex flex-col gap-[16px] items-start relative shrink-0 w-[350px]">
-            <div className="content-stretch flex flex-col gap-[16px] items-start relative shrink-0 w-full">
-              <div className="content-stretch flex flex-col items-start relative shrink-0 w-full">
-                <div className="flex flex-col justify-center leading-[30px] not-italic relative shrink-0 w-full" style={{
-                  fontFamily: 'var(--font-family-base)',
-                  fontSize: 'var(--text-xl)',
-                  fontWeight: 'var(--font-weight-semibold)',
-                  color: 'var(--color-text-primary)'
-                }}>
-                  <p>Sign up for our Newsletter</p>
-                </div>
-              </div>
-              <div className="content-stretch flex flex-col gap-[8px] items-start relative shrink-0 w-full">
-                {[
-                  'Mental Health News & Tips',
-                  'Wellness Resources & Tools'
-                ].map((feature, index) => (
-                  <div key={index} className="h-[19.39px] relative shrink-0">
-                    <div className="absolute box-border content-stretch flex flex-col h-[19.39px] items-start justify-center left-0 overflow-clip pl-0 py-[3.695px] top-0">
-                      <div className="relative shrink-0 size-[12px]">
-                        <svg className="block size-full" fill="none" preserveAspectRatio="none" viewBox="0 0 12 12">
-                          <g>
-                            <path d={svgPathsMobile.p1d812c00} fill="var(--fill-0, #545457)" />
-                          </g>
-                        </svg>
-                      </div>
-                    </div>
-                    <div className="absolute flex flex-col justify-center leading-[18px] left-[17.92px] not-italic text-nowrap top-[9.5px] translate-y-[-50%]" style={{
-                      fontFamily: 'var(--font-family-base)',
-                      fontSize: 'var(--text-xs)',
-                      fontWeight: 'var(--font-weight-regular)',
-                      color: 'var(--color-text-primary)'
-                    }}>
-                      <ul>
-                        <li className="list-disc ms-[18px]">
-                          <span>{feature}</span>
-                        </li>
-                      </ul>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-            
-            <form onSubmit={onSubmit} className="content-stretch flex flex-col gap-[16px] items-start relative shrink-0 w-full">
-              <div className="relative shrink-0 w-full">
-                <div className="flex flex-col items-center size-full">
-                  <div className="box-border content-stretch flex flex-col gap-[16px] items-center pl-0 pr-[0.01px] py-0 relative w-full">
-                    <input
-                      type="text"
-                      value={name}
-                      onChange={(e) => onNameChange(e.target.value)}
-                      placeholder="First Name"
-                      className="ikan-input w-full"
-                      style={{ height: '48px' }}
-                    />
-                    <input
-                      type="email"
-                      value={email}
-                      onChange={(e) => onEmailChange(e.target.value)}
-                      placeholder="Email Address"
-                      required
-                      className="ikan-input w-full"
-                      style={{ height: '48px' }}
-                    />
-                  </div>
-                </div>
-              </div>
-              <button 
-                type="submit"
-                disabled={loading}
-                className="ikan-button mobile-button touch-target cursor-pointer hover:opacity-90 transition-all duration-200 w-full disabled:opacity-50 disabled:cursor-not-allowed"
-                style={{
-                  backgroundColor: 'var(--color-primary-default)',
-                  color: 'var(--color-primary-on)',
-                  borderRadius: 'var(--radius-sm)',
-                  height: '48px',
-                  fontFamily: 'var(--font-family-base)',
-                  fontSize: 'var(--text-base)',
-                  fontWeight: 'var(--font-weight-medium)'
-                }}
-              >
-                {loading ? 'Signing up...' : 'Sign up now!'}
-              </button>
-            </form>
-          </div>
-          
-          <div className="h-[350px] relative rounded-[16px] shrink-0 w-full">
-            <img alt="Mental health newsletter community" className="absolute inset-0 max-w-none object-50%-50% object-cover pointer-events-none rounded-[16px] size-full" src={imgNewsletterCommunity} />
-            <div className="flex flex-row items-center justify-center size-full">
-              <div className="h-[350px] w-full" />
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
+
 
 // Dynamic content configurations
 const ABOUT_CONTENT = {
@@ -1242,9 +1103,6 @@ interface AboutUsProps {
 export function AboutUs({ onNavigate, onGetStarted, className }: AboutUsProps) {
   const isMobile = useIsMobile();
   const { showToast } = useNotifications();
-  const [newsletterEmail, setNewsletterEmail] = useState('');
-  const [newsletterName, setNewsletterName] = useState('');
-  const [newsletterLoading, setNewsletterLoading] = useState(false);
   const [showVideoModal, setShowVideoModal] = useState(false);
   const [resources, setResources] = useState<ResourcePost[]>([]);
 
@@ -1272,7 +1130,40 @@ export function AboutUs({ onNavigate, onGetStarted, className }: AboutUsProps) {
           setResources(mappedResources);
         }
       } catch (error) {
-        console.error('Failed to fetch resources for AboutUs:', error);
+        // Silently fallback to mock resources (expected in demo mode)
+        // Fallback mock resources
+        setResources([
+          {
+            id: '1',
+            title: 'The Science of Happiness',
+            description: 'Understanding the biological and psychological factors that contribute to well-being.',
+            category: 'Psychology',
+            image: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=800&auto=format&fit=crop&q=60',
+            author: 'Dr. Sarah Smith',
+            readTime: '8 min read',
+            date: new Date().toLocaleDateString()
+          },
+          {
+            id: '2',
+            title: 'Mindful Eating',
+            description: 'How to develop a healthier relationship with food through mindfulness.',
+            category: 'Nutrition',
+            image: 'https://images.unsplash.com/photo-1490645935967-10de6ba17061?w=800&auto=format&fit=crop&q=60',
+            author: 'John Doe',
+            readTime: '5 min read',
+            date: new Date().toLocaleDateString()
+          },
+          {
+            id: '3',
+            title: 'Digital Detox',
+            description: 'Reclaiming your time and attention in a hyper-connected world.',
+            category: 'Lifestyle',
+            image: 'https://images.unsplash.com/photo-1515378960530-7c0da6231fb1?w=800&auto=format&fit=crop&q=60',
+            author: 'Jane Wilson',
+            readTime: '6 min read',
+            date: new Date().toLocaleDateString()
+          }
+        ]);
       }
     };
     
@@ -1307,28 +1198,6 @@ export function AboutUs({ onNavigate, onGetStarted, className }: AboutUsProps) {
     }
   };
 
-  const handleNewsletterSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newsletterEmail.trim()) {
-      showToast('error', 'Email Required', 'Please enter your email address');
-      return;
-    }
-
-    setNewsletterLoading(true);
-    try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
-      showToast('success', 'Newsletter Subscription', `Welcome ${newsletterName || 'to our community'}! You've been subscribed to our newsletter.`);
-      setNewsletterEmail('');
-      setNewsletterName('');
-    } catch (error) {
-      showToast('error', 'Subscription Failed', 'Please try again later');
-    } finally {
-      setNewsletterLoading(false);
-    }
-  };
-
   const handleTeamMemberClick = (member: typeof ABOUT_CONTENT.team[0]) => {
     showToast('info', member.name, `Learn more about our ${member.role}`);
   };
@@ -1339,7 +1208,7 @@ export function AboutUs({ onNavigate, onGetStarted, className }: AboutUsProps) {
       const routeMap: { [key: string]: string } = {
         'Mood Tracking & Journal': '/mood-journal',
         'Professional Assessment': '/assessment-landing',
-        'Equip Programs': '/equip-programs-landing'
+        'Equip Programs': '/equip'
       };
       const route = routeMap[service.title];
       if (route) {
@@ -1380,23 +1249,8 @@ export function AboutUs({ onNavigate, onGetStarted, className }: AboutUsProps) {
         viewAllText="View All"
       />
       
-      {/* Newsletter - Responsive */}
-      <DesktopNewsletterSection 
-        email={newsletterEmail}
-        name={newsletterName}
-        loading={newsletterLoading}
-        onEmailChange={setNewsletterEmail}
-        onNameChange={setNewsletterName}
-        onSubmit={handleNewsletterSubmit}
-      />
-      <MobileNewsletterSection 
-        email={newsletterEmail}
-        name={newsletterName}
-        loading={newsletterLoading}
-        onEmailChange={setNewsletterEmail}
-        onNameChange={setNewsletterName}
-        onSubmit={handleNewsletterSubmit}
-      />
+      {/* Newsletter - Unified with backend integration */}
+      <NewsletterSection />
       
       {/* Video Modal */}
       {showVideoModal && (

@@ -62,25 +62,88 @@
   },
   "screenshots": [
     {
-      "src": "/screenshot1.png",
-      "sizes": "540x720",
+      "src": "/screenshots/screenshot-mobile-1-home.png",
+      "sizes": "1080x1920",
       "type": "image/png",
       "form_factor": "narrow",
-      "label": "Dashboard view showing mood tracking and daily check-in"
+      "label": "iKan Homepage - Your partner in mental wellness"
     },
     {
-      "src": "/screenshot2.png", 
-      "sizes": "540x720",
+      "src": "/screenshots/screenshot-mobile-2-dashboard.png",
+      "sizes": "1080x1920",
       "type": "image/png",
       "form_factor": "narrow",
-      "label": "Assessment flow with questionnaire interface"
+      "label": "Dashboard - Track your mental health journey"
     },
     {
-      "src": "/screenshot3.png",
-      "sizes": "1024x768",
-      "type": "image/png", 
+      "src": "/screenshots/screenshot-mobile-3-mood-journal.png",
+      "sizes": "1080x1920",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Mood Journal - Log your daily emotions"
+    },
+    {
+      "src": "/screenshots/screenshot-mobile-4-assessments.png",
+      "sizes": "1080x1920",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Mental Health Assessments - Anxiety, Depression, Stress"
+    },
+    {
+      "src": "/screenshots/screenshot-mobile-5-equip-programs.png",
+      "sizes": "1080x1920",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Equip Programs - Structured mental health programs"
+    },
+    {
+      "src": "/screenshots/screenshot-mobile-6-consultation.png",
+      "sizes": "1080x1920",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Professional Consultation - Connect with experts"
+    },
+    {
+      "src": "/screenshots/screenshot-mobile-7-resources.png",
+      "sizes": "1080x1920",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Resource Library - Articles, videos, and tools"
+    },
+    {
+      "src": "/screenshots/screenshot-mobile-8-account.png",
+      "sizes": "1080x1920",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Account Settings - Manage your profile and preferences"
+    },
+    {
+      "src": "/screenshots/screenshot-desktop-1-home.png",
+      "sizes": "2560x1600",
+      "type": "image/png",
       "form_factor": "wide",
-      "label": "Desktop view showing comprehensive dashboard"
+      "label": "iKan Desktop - Homepage"
+    },
+    {
+      "src": "/screenshots/screenshot-desktop-2-dashboard.png",
+      "sizes": "2560x1600",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "Desktop Dashboard"
+    },
+    {
+      "src": "/screenshots/screenshot-desktop-3-assessments.png",
+      "sizes": "2560x1600",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "Desktop Assessments"
+    },
+    {
+      "src": "/screenshots/screenshot-desktop-4-equip.png",
+      "sizes": "2560x1600",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "Desktop Equip Programs"
     }
   ]
 }

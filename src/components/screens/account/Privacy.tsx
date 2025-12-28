@@ -5,6 +5,7 @@ import { Icon } from '../../Icon';
 import { Separator } from '../../ui/separator';
 import { useNotifications } from '../../../contexts/NotificationContext';
 import { useAuth } from '../../../contexts/AuthContext';
+import { apiClient } from '../../../lib/api-client';
 import { useIsMobile } from '../../../hooks/useIsMobile';
 import { cn } from '../../ui/utils';
 
@@ -54,18 +55,29 @@ export function Privacy() {
   const handleExportData = async () => {
     setExportStatus({ ...exportStatus, isExporting: true });
     
-    // Simulate export process
-    setTimeout(() => {
+    try {
+      await apiClient.exportUserData();
       const now = new Date().toISOString();
       setExportStatus({ isExporting: false, lastExport: now });
       showToast('success', 'Export Complete', 'Your data has been exported and sent to your email');
-    }, 2000);
+    } catch (error: any) {
+      setExportStatus({ ...exportStatus, isExporting: false });
+      showToast('error', 'Export Failed', error.message || 'Failed to export data');
+    }
   };
 
   const handleDeleteData = async () => {
-    // In real app, this would call an API to delete user data
-    showToast('success', 'Request Submitted', 'Your data deletion request has been submitted. You will receive a confirmation email within 24 hours.');
-    setShowDeleteConfirm(false);
+    try {
+      await apiClient.deleteAccount();
+      showToast('success', 'Account Deleted', 'Your account and data have been permanently deleted.');
+      setShowDeleteConfirm(false);
+      
+      // Force reload to trigger sign out and redirect
+      window.location.href = '/';
+    } catch (error: any) {
+      console.error('Delete account error:', error);
+      showToast('error', 'Delete Failed', error.message || 'Failed to delete account. Please try again.');
+    }
   };
 
   const ToggleSwitch = ({ enabled, onChange }: { enabled: boolean; onChange: () => void }) => (

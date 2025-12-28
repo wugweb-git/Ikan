@@ -1,61 +1,33 @@
 import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion } from 'motion/react';
 import { apiClient as client } from '../../lib/api-client';
-import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
-import { Badge } from '../ui/badge';
-import { Progress } from '../ui/progress';
+import { Card, CardContent } from '../ui/card';
 import { Button } from '../ui/button';
-import { Separator } from '../ui/separator';
+import { Badge } from '../ui/badge';
 import { useAuth } from '../../contexts/AuthContext';
-import { useAuthGuard } from '../../hooks/useAuthGuard';
 import { useNotifications } from '../../contexts/NotificationContext';
 import { useIsMobile } from '../../hooks/useIsMobile';
-import { Icon } from '../Icon';
-import { GoogleFitSync } from '../GoogleFitSync';
 import { cn } from '../ui/utils';
+import { Skeleton } from '../ui/skeleton-loader';
 import { 
-  TrendingUp, 
-  TrendingDown, 
-  Calendar, 
+  Heart, 
+  Flame, 
+  Brain, 
+  BookOpen, 
+  MessageSquare, 
   Target, 
-  Brain,
-  Heart,
-  Activity,
-  Award,
-  Clock,
-  Star,
-  ArrowUp,
-  ArrowDown,
-  Zap,
-  Flame,
-  CheckCircle2,
-  BarChart3,
-  LineChart,
-  Users,
-  BookOpen,
-  MessageSquare,
-  Shield,
-  Sun,
-  Moon,
-  Coffee,
-  Smile,
-  Frown,
-  Meh,
-  Plus,
-  ChevronRight,
-  Circle,
-  Timer,
-  Eye,
+  Plus, 
+  BarChart3, 
+  ChevronRight, 
+  Check, 
   Sparkles,
-  Trophy,
-  PlayCircle,
-  BookOpen as Book,
-  FileText,
-  Download,
-  Share2,
-  Filter,
-  Calendar as CalendarIcon,
-  MoreHorizontal
+  ArrowUp, 
+  ArrowDown, 
+  Settings,
+  Calendar,
+  Zap,
+  Activity,
+  Moon
 } from 'lucide-react';
 
 interface DashboardProps {
@@ -63,489 +35,413 @@ interface DashboardProps {
   onNavigate?: (route: string) => void;
 }
 
-// Modern KPI Card Component
-function KPICard({ 
-  title, 
-  value, 
-  trend, 
-  trendValue, 
-  icon: IconComponent, 
-  color = "var(--color-primary-default)",
-  period = "This week",
-  onClick
-}: {
-  title: string;
-  value: string | number;
-  trend: 'up' | 'down' | 'stable';
-  trendValue: string;
-  icon: React.ComponentType<any>;
-  color?: string;
-  period?: string;
-  onClick?: () => void;
-}) {
-  const isMobile = useIsMobile();
+// --- Components ---
 
-  return (
-    <motion.div
-      whileHover={{ scale: 1.02, y: -2 }}
-      whileTap={{ scale: 0.98 }}
-      transition={{ duration: 0.2 }}
-      onClick={onClick}
-      className={onClick ? "cursor-pointer" : ""}
-    >
-      <Card 
-        style={{
-          background: 'linear-gradient(135deg, var(--color-bg-card) 0%, rgba(255,255,255,0.8) 100%)',
-          backdropFilter: 'blur(10px)',
-          border: '1px solid var(--color-border-light)',
-          borderRadius: 'var(--radius-lg)',
-          boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
-          position: 'relative',
-          overflow: 'hidden'
-        }}
-      >
-        {/* Subtle gradient overlay */}
-        <div 
-          style={{
-            position: 'absolute',
-            top: 0,
-            right: 0,
-            width: '40%',
-            height: '100%',
-            background: `linear-gradient(45deg, transparent 0%, ${color}08 100%)`,
-            pointerEvents: 'none'
-          }}
-        />
-        
-        <CardContent style={{ padding: isMobile ? 'var(--spacing-4)' : 'var(--spacing-6)' }}>
-          <div className="flex items-start justify-between mb-4">
-            <div 
-              className="p-3 rounded-xl"
-              style={{ 
-                backgroundColor: `${color}15`,
-                border: `1px solid ${color}25`
-              }}
-            >
-              <IconComponent 
-                size={isMobile ? 20 : 24} 
-                style={{ color }} 
-              />
-            </div>
-            
-            <div className="flex items-center gap-1">
-              {trend === 'up' ? (
-                <ArrowUp size={12} style={{ color: 'var(--color-status-success)' }} />
-              ) : trend === 'down' ? (
-                <ArrowDown size={12} style={{ color: 'var(--color-status-danger)' }} />
-              ) : (
-                <Circle size={8} style={{ color: 'var(--color-text-muted)' }} />
-              )}
-              <span 
-                style={{ 
-                  fontSize: 'var(--text-xs)', 
-                  color: trend === 'up' 
-                    ? 'var(--color-status-success)' 
-                    : trend === 'down' 
-                      ? 'var(--color-status-danger)' 
-                      : 'var(--color-text-muted)',
-                  fontWeight: 'var(--font-weight-medium)'
-                }}
-              >
-                {trendValue}
-              </span>
-            </div>
-          </div>
-          
-          <div className="space-y-1">
-            <h3 
-              style={{ 
-                fontSize: isMobile ? 'var(--text-2xl)' : 'var(--text-3xl)', 
-                fontWeight: 'var(--font-weight-medium)',
-                color: 'var(--color-text-primary)',
-                lineHeight: '1'
-              }}
-            >
-              {value}
-            </h3>
-            <p 
-              style={{ 
-                fontSize: 'var(--text-sm)', 
-                fontWeight: 'var(--font-weight-medium)',
-                color: 'var(--color-text-primary)',
-                marginBottom: '2px'
-              }}
-            >
-              {title}
-            </p>
-            <p 
-              style={{ 
-                fontSize: 'var(--text-xs)', 
-                color: 'var(--color-text-muted)'
-              }}
-            >
-              {period}
-            </p>
-          </div>
-        </CardContent>
-      </Card>
-    </motion.div>
-  );
+// 1. Header Section
+const DashboardHeader = ({ userName }: { userName: string }) => (
+  <motion.div 
+    initial={{ opacity: 0, y: -20 }}
+    animate={{ opacity: 1, y: 0 }}
+    className="text-center space-y-2 mb-8"
+  >
+    <h1 className="text-2xl md:text-3xl font-medium text-[var(--ikan-color-text-primary)] flex items-center justify-center gap-2">
+      <Sparkles className="w-6 h-6 text-yellow-500 fill-yellow-500" />
+      Good {new Date().getHours() < 12 ? 'Morning' : new Date().getHours() < 17 ? 'Afternoon' : 'Evening'}, {userName}!
+    </h1>
+    <p className="text-[var(--ikan-color-text-muted)] text-base">
+      Here's your mental wellness overview for today
+    </p>
+  </motion.div>
+);
+
+// 2. Stat Card
+interface StatCardProps {
+  icon: React.ElementType;
+  value: string | number;
+  label: string;
+  subtext: string;
+  trend?: string;
+  trendDirection?: 'up' | 'down' | 'neutral';
+  color: string;
+  delay?: number;
 }
 
-// Interactive Mood Ring Component
-function MoodRing({ currentMood, weeklyMoods }: { currentMood: number; weeklyMoods: number[] }) {
-  const isMobile = useIsMobile();
-  const moodColors = {
-    1: '#ef4444', 2: '#f97316', 3: '#eab308', 4: '#84cc16', 5: '#22c55e',
-    6: '#10b981', 7: '#06b6d4', 8: '#3b82f6', 9: '#8b5cf6', 10: '#d946ef'
-  };
+const StatCard = ({ icon: Icon, value, label, subtext, trend, trendDirection, color, delay = 0 }: StatCardProps) => (
+  <motion.div
+    initial={{ opacity: 0, y: 20 }}
+    animate={{ opacity: 1, y: 0 }}
+    transition={{ delay }}
+    className="h-full"
+  >
+    <Card className="h-full border-none shadow-sm hover:shadow-md transition-shadow duration-200 bg-white rounded-[16px]">
+      <CardContent className="p-5 flex flex-col justify-between h-full">
+        <div className="flex justify-between items-start mb-4">
+          <div className="p-2 rounded-xl bg-opacity-10" style={{ backgroundColor: `${color}15` }}>
+            <Icon size={24} style={{ color }} />
+          </div>
+          {trend && (
+            <span className={cn(
+              "text-xs font-medium px-2 py-1 rounded-full",
+              trendDirection === 'up' ? "text-emerald-600 bg-emerald-50" : 
+              trendDirection === 'down' ? "text-rose-600 bg-rose-50" : "text-gray-500 bg-gray-50"
+            )}>
+              {trendDirection === 'up' && '↑ '}
+              {trendDirection === 'down' && '↓ '}
+              {trend}
+            </span>
+          )}
+        </div>
+        <div>
+          <h3 className="text-3xl font-medium text-[var(--ikan-color-text-primary)] mb-1">{value}</h3>
+          <p className="text-sm font-medium text-[var(--ikan-color-text-primary)]">{label}</p>
+          <p className="text-xs text-[var(--ikan-color-text-muted)] mt-1">{subtext}</p>
+        </div>
+      </CardContent>
+    </Card>
+  </motion.div>
+);
 
-  const getMoodEmoji = (mood: number) => {
-    if (mood <= 3) return '😢';
-    if (mood <= 5) return '😐';
-    if (mood <= 7) return '🙂';
-    return '😊';
+// 3. Mood Overview
+const MoodOverview = ({ currentMood }: { currentMood: number }) => {
+  const moods = ['😭', '😢', '😕', '😐', '🙂', '😊', '😁', '🤩'];
+  const getMoodEmoji = (score: number) => {
+    if (score === 0) return '😶';
+    const index = Math.min(Math.floor((score - 1) / 10 * moods.length), moods.length - 1);
+    return moods[index] || '😐';
   };
 
   return (
-    <Card 
-      style={{
-        background: 'linear-gradient(135deg, var(--color-bg-card) 0%, rgba(255,255,255,0.9) 100%)',
-        backdropFilter: 'blur(10px)',
-        border: '1px solid var(--color-border-light)',
-        borderRadius: 'var(--radius-lg)',
-        boxShadow: '0 4px 20px rgba(0,0,0,0.08)'
-      }}
-    >
-      <CardHeader style={{ paddingBottom: 'var(--spacing-2)' }}>
-        <CardTitle className="flex items-center justify-between">
+    <Card className="border-none shadow-sm bg-white rounded-[20px] overflow-hidden h-full">
+      <CardContent className="p-6 h-full flex flex-col">
+        <div className="flex justify-between items-center mb-8">
           <div className="flex items-center gap-2">
-            <Heart size={20} style={{ color: 'var(--color-status-danger)' }} />
-            <span style={{ 
-              fontSize: 'var(--text-base)', 
-              fontWeight: 'var(--font-weight-medium)',
-              color: 'var(--color-text-primary)'
-            }}>
-              Mood Overview
-            </span>
+            <Heart className="w-5 h-5 text-rose-500" />
+            <span className="font-medium text-lg">Mood Overview</span>
           </div>
-          <Badge 
-            variant="secondary" 
-            style={{
-              backgroundColor: `${moodColors[currentMood]}20`,
-              color: moodColors[currentMood],
-              border: `1px solid ${moodColors[currentMood]}30`
-            }}
-          >
+          <Badge variant="secondary" className="bg-yellow-100 text-yellow-800 border-none px-3 py-1">
             {getMoodEmoji(currentMood)} {currentMood}/10
           </Badge>
-        </CardTitle>
-      </CardHeader>
-      
-      <CardContent>
-        <div className="space-y-6">
-          {/* Mood Ring Visualization */}
-          <div className="flex justify-center">
-            <div className="relative">
-              <motion.div
-                className="w-32 h-32 rounded-full border-8 flex items-center justify-center"
-                style={{
-                  borderColor: moodColors[currentMood],
-                  backgroundColor: `${moodColors[currentMood]}10`
-                }}
-                animate={{ 
-                  scale: [1, 1.05, 1],
-                  rotate: [0, 5, -5, 0]
-                }}
-                transition={{ 
-                  duration: 3, 
-                  repeat: Infinity, 
-                  repeatType: "reverse" 
-                }}
+        </div>
+
+        <div className="flex-1 flex items-center justify-center py-8">
+          <div className="relative w-48 h-48">
+            {/* Circular Track */}
+            <svg className="w-full h-full transform -rotate-90">
+              <circle
+                cx="96"
+                cy="96"
+                r="88"
+                fill="transparent"
+                stroke="#FEF3C7" // yellow-100
+                strokeWidth="12"
+                strokeLinecap="round"
+              />
+              <motion.circle
+                cx="96"
+                cy="96"
+                r="88"
+                fill="transparent"
+                stroke="#F59E0B" // yellow-500
+                strokeWidth="12"
+                strokeLinecap="round"
+                strokeDasharray={2 * Math.PI * 88}
+                initial={{ strokeDashoffset: 2 * Math.PI * 88 }}
+                animate={{ strokeDashoffset: 2 * Math.PI * 88 * (1 - currentMood / 10) }}
+                transition={{ duration: 1.5, ease: "easeOut" }}
+              />
+            </svg>
+            
+            {/* Center Emoji */}
+            <div className="absolute inset-0 flex items-center justify-center">
+              <motion.div 
+                initial={{ scale: 0.5, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                className="text-6xl"
               >
-                <span style={{ fontSize: '2rem' }}>
-                  {getMoodEmoji(currentMood)}
-                </span>
+                {getMoodEmoji(currentMood)}
               </motion.div>
-              
-              {/* Surrounding mood indicators */}
-              {weeklyMoods.slice(-7).map((mood, index) => {
-                const angle = (index * 51.43) - 90; // 360/7 = 51.43
-                const radius = 70;
-                const x = Math.cos(angle * Math.PI / 180) * radius;
-                const y = Math.sin(angle * Math.PI / 180) * radius;
-                
-                return (
-                  <motion.div
-                    key={index}
-                    className="absolute w-6 h-6 rounded-full border-2 border-white flex items-center justify-center"
-                    style={{
-                      backgroundColor: moodColors[mood],
-                      left: `calc(50% + ${x}px - 12px)`,
-                      top: `calc(50% + ${y}px - 12px)`,
-                      fontSize: '0.7rem'
-                    }}
-                    initial={{ scale: 0 }}
-                    animate={{ scale: 1 }}
-                    transition={{ delay: index * 0.1 }}
-                  >
-                    {getMoodEmoji(mood)}
-                  </motion.div>
-                );
-              })}
             </div>
+            
+            {/* Orbital Emojis (Decorative) */}
+            {[0, 1, 2, 3, 4, 5, 6, 7].map((i) => {
+              const angle = (i * 45) * (Math.PI / 180);
+              const r = 88; // radius
+              const x = 96 + r * Math.cos(angle);
+              const y = 96 + r * Math.sin(angle);
+              return (
+                <div 
+                  key={i}
+                  className="absolute w-6 h-6 flex items-center justify-center text-xs bg-white rounded-full shadow-sm border border-gray-100"
+                  style={{ 
+                    left: x - 12, 
+                    top: y - 12,
+                    opacity: 0.8 
+                  }}
+                >
+                  {moods[i]}
+                </div>
+              );
+            })}
           </div>
-          
-          {/* Quick Mood Actions */}
-          <div className="grid grid-cols-2 gap-3">
-            <Button 
-              variant="outline" 
-              size="sm"
-              className="flex items-center gap-2"
-              style={{
-                height: 'var(--ikan-component-button-height)',
-                borderRadius: 'var(--ikan-component-border-radius)'
-              }}
-            >
-              <Plus size={16} />
-              Log Mood
-            </Button>
-            <Button 
-              variant="outline" 
-              size="sm"
-              className="flex items-center gap-2"
-              style={{
-                height: 'var(--ikan-component-button-height)',
-                borderRadius: 'var(--ikan-component-border-radius)'
-              }}
-            >
-              <BarChart3 size={16} />
-              View Trends
-            </Button>
-          </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-4 mt-auto pt-6">
+          <Button variant="outline" className="w-full h-12 bg-gray-50 border-none hover:bg-gray-100 text-[var(--ikan-color-text-primary)]">
+            <Plus className="w-4 h-4 mr-2" /> Log Mood
+          </Button>
+          <Button variant="outline" className="w-full h-12 bg-gray-50 border-none hover:bg-gray-100 text-[var(--ikan-color-text-primary)]">
+            <BarChart3 className="w-4 h-4 mr-2" /> View Trends
+          </Button>
         </div>
       </CardContent>
     </Card>
   );
-}
+};
 
-// Activity Streak Component
-function ActivityStreak() {
-  const streakDays = 12;
-  const todayCompleted = true;
-  
-  return (
-    <Card 
-      style={{
-        background: 'linear-gradient(135deg, var(--color-status-success)15 0%, var(--color-bg-card) 100%)',
-        border: '1px solid var(--color-status-success)30',
-        borderRadius: 'var(--radius-lg)'
-      }}
-    >
-      <CardContent style={{ padding: 'var(--spacing-4)' }}>
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-2">
-            <motion.div
-              animate={{ 
-                scale: [1, 1.2, 1],
-                rotate: [0, 10, -10, 0]
-              }}
-              transition={{ duration: 2, repeat: Infinity }}
-            >
-              <Flame size={24} style={{ color: 'var(--color-status-warning)' }} />
-            </motion.div>
-            <div>
-              <h3 style={{ 
-                fontSize: 'var(--text-lg)', 
-                fontWeight: 'var(--font-weight-medium)',
-                color: 'var(--color-text-primary)'
-              }}>
-                {streakDays} Day Streak
-              </h3>
-              <p style={{ 
-                fontSize: 'var(--text-xs)', 
-                color: 'var(--color-text-muted)'
-              }}>
-                Keep it up!
-              </p>
-            </div>
+// 4. Goals & Streak
+const GoalsAndStreak = ({ streakDays, goals }: { streakDays: number, goals: any }) => (
+  <div className="flex flex-col gap-6 h-full">
+    {/* Streak Card */}
+    <Card className="border-none shadow-sm bg-white rounded-[20px] p-6">
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-3">
+          <div className="p-2 bg-orange-100 rounded-xl">
+            <Flame className="w-6 h-6 text-orange-500" />
           </div>
-          
-          <div className="flex gap-1">
-            {[...Array(7)].map((_, i) => (
-              <div
-                key={i}
-                className="w-6 h-6 rounded-full border-2"
-                style={{
-                  backgroundColor: i < 6 || (i === 6 && todayCompleted) 
-                    ? 'var(--color-status-success)' 
-                    : 'transparent',
-                  borderColor: 'var(--color-status-success)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center'
-                }}
-              >
-                {(i < 6 || (i === 6 && todayCompleted)) && (
-                  <CheckCircle2 size={12} style={{ color: 'white' }} />
-                )}
-              </div>
-            ))}
+          <div>
+            <h3 style={{ fontSize: 'var(--text-xl)', fontWeight: 'var(--font-weight-medium)', color: 'var(--ikan-color-text-primary)' }}>{streakDays} Day Streak</h3>
+            <p className="text-sm text-[var(--ikan-color-text-muted)]">Keep it up!</p>
           </div>
         </div>
-      </CardContent>
-    </Card>
-  );
-}
-
-// Quick Action Tiles
-function QuickActionTile({ 
-  icon: IconComponent, 
-  title, 
-  subtitle, 
-  color,
-  onClick,
-  badge
-}: {
-  icon: React.ComponentType<any>;
-  title: string;
-  subtitle: string;
-  color: string;
-  onClick: () => void;
-  badge?: string;
-}) {
-  return (
-    <motion.div
-      whileHover={{ scale: 1.03, y: -2 }}
-      whileTap={{ scale: 0.97 }}
-      transition={{ duration: 0.2 }}
-    >
-      <Card 
-        className="cursor-pointer relative"
-        onClick={onClick}
-        style={{
-          background: `linear-gradient(135deg, ${color}08 0%, var(--color-bg-card) 100%)`,
-          border: `1px solid ${color}20`,
-          borderRadius: 'var(--radius-lg)',
-          overflow: 'hidden'
-        }}
-      >
-        {badge && (
-          <div 
-            className="absolute top-2 right-2 w-5 h-5 rounded-full flex items-center justify-center"
-            style={{
-              backgroundColor: 'var(--color-status-danger)',
-              color: 'white',
-              fontSize: '0.6rem',
-              fontWeight: 'var(--font-weight-medium)'
-            }}
-          >
-            {badge}
-          </div>
-        )}
-        
-        <CardContent style={{ padding: 'var(--spacing-4)' }}>
-          <div className="flex items-center gap-3">
+        <div className="flex gap-1">
+          {[...Array(7)].map((_, i) => (
             <div 
-              className="p-3 rounded-xl"
-              style={{ 
-                backgroundColor: `${color}15`,
-                border: `1px solid ${color}25`
-              }}
+              key={i} 
+              className={cn(
+                "w-8 h-8 rounded-full flex items-center justify-center border-2",
+                i < 5 ? "bg-emerald-500 border-emerald-500 text-white" : "border-gray-200 text-gray-300"
+              )}
             >
-              <IconComponent size={24} style={{ color }} />
+              <Check className="w-4 h-4" />
             </div>
-            
-            <div className="flex-1">
-              <h3 style={{ 
-                fontSize: 'var(--text-base)', 
-                fontWeight: 'var(--font-weight-medium)',
-                color: 'var(--color-text-primary)',
-                marginBottom: '2px'
-              }}>
-                {title}
-              </h3>
-              <p style={{ 
-                fontSize: 'var(--text-xs)', 
-                color: 'var(--color-text-muted)',
-                lineHeight: 'var(--line-height-sm)'
-              }}>
-                {subtitle}
-              </p>
-            </div>
-            
-            <ChevronRight size={16} style={{ color: 'var(--color-text-muted)' }} />
-          </div>
-        </CardContent>
-      </Card>
-    </motion.div>
-  );
-}
-
-// Progress Ring Component
-function ProgressRing({ 
-  value, 
-  max, 
-  label, 
-  color = "var(--color-primary-default)",
-  size = 80 
-}: {
-  value: number;
-  max: number;
-  label: string;
-  color?: string;
-  size?: number;
-}) {
-  const percentage = (value / max) * 100;
-  const circumference = 2 * Math.PI * (size / 2 - 8);
-  const strokeDashoffset = circumference - (percentage / 100) * circumference;
-
-  return (
-    <div className="flex flex-col items-center gap-2">
-      <div className="relative" style={{ width: size, height: size }}>
-        <svg width={size} height={size} className="transform -rotate-90">
-          <circle
-            cx={size / 2}
-            cy={size / 2}
-            r={size / 2 - 8}
-            stroke="var(--color-border-light)"
-            strokeWidth="4"
-            fill="transparent"
-          />
-          <motion.circle
-            cx={size / 2}
-            cy={size / 2}
-            r={size / 2 - 8}
-            stroke={color}
-            strokeWidth="4"
-            fill="transparent"
-            strokeLinecap="round"
-            strokeDasharray={circumference}
-            initial={{ strokeDashoffset: circumference }}
-            animate={{ strokeDashoffset }}
-            transition={{ duration: 1, ease: "easeOut" }}
-          />
-        </svg>
-        <div 
-          className="absolute inset-0 flex flex-col items-center justify-center"
-          style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--font-weight-medium)' }}
-        >
-          <span style={{ color: 'var(--color-text-primary)' }}>{value}</span>
-          <span style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}>
-            /{max}
-          </span>
+          ))}
         </div>
       </div>
-      <span style={{ 
-        fontSize: 'var(--text-xs)', 
-        color: 'var(--color-text-muted)',
-        textAlign: 'center'
-      }}>
-        {label}
-      </span>
+    </Card>
+
+    {/* Weekly Goals */}
+    <Card className="border-none shadow-sm bg-white rounded-[20px] p-6 flex-1">
+      <div className="flex items-center gap-2 mb-6">
+        <BarChart3 className="w-5 h-5 text-[var(--ikan-color-text-primary)]" />
+        <h3 className="font-medium text-lg">Weekly Goals</h3>
+      </div>
+      
+      <div className="grid grid-cols-3 gap-4">
+        {[
+          { label: 'Mood Logs', current: 5, total: 7, color: '#EF4444' },
+          { label: 'Assessments', current: 3, total: 3, color: '#8B5CF6' },
+          { label: 'Articles', current: 8, total: 10, color: '#10B981' },
+        ].map((goal, i) => (
+          <div key={i} className="flex flex-col items-center">
+            <div className="relative w-20 h-20 mb-2">
+              <svg className="w-full h-full transform -rotate-90">
+                <circle
+                  cx="40"
+                  cy="40"
+                  r="36"
+                  stroke="#F3F4F6"
+                  strokeWidth="6"
+                  fill="transparent"
+                />
+                <circle
+                  cx="40"
+                  cy="40"
+                  r="36"
+                  stroke={goal.color}
+                  strokeWidth="6"
+                  fill="transparent"
+                  strokeLinecap="round"
+                  strokeDasharray={2 * Math.PI * 36}
+                  strokeDashoffset={2 * Math.PI * 36 * (1 - goal.current / goal.total)}
+                />
+              </svg>
+              <div className="absolute inset-0 flex flex-col items-center justify-center">
+                <span style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--font-weight-medium)' }}>{goal.current}</span>
+                <span className="text-xs text-gray-400">/{goal.total}</span>
+              </div>
+            </div>
+            <span className="text-xs font-medium text-center text-gray-600">{goal.label}</span>
+          </div>
+        ))}
+      </div>
+    </Card>
+  </div>
+);
+
+// 5. Quick Actions
+const QuickActions = ({ onNavigate }: { onNavigate?: (route: string) => void }) => {
+  const actions = [
+    { 
+      title: 'Take Assessment', 
+      subtitle: 'Check your mental health', 
+      icon: Brain, 
+      color: '#8B5CF6', 
+      bg: '#F5F3FF',
+      route: '/assessment',
+      badge: '2' 
+    },
+    { 
+      title: 'Log Mood', 
+      subtitle: 'How are you feeling?', 
+      icon: Heart, 
+      color: '#EF4444', 
+      bg: '#FEF2F2',
+      route: '/mood-journal'
+    },
+    { 
+      title: 'Read Resources', 
+      subtitle: 'Explore helpful articles', 
+      icon: BookOpen, 
+      color: '#10B981', 
+      bg: '#ECFDF5',
+      route: '/resource',
+      badge: '5'
+    },
+    { 
+      title: 'Book Session', 
+      subtitle: 'Talk to a professional', 
+      icon: MessageSquare, 
+      color: '#3B82F6', 
+      bg: '#EFF6FF',
+      route: '/consultation'
+    }
+  ];
+
+  return (
+    <div className="space-y-4">
+      <h3 className="text-lg font-medium text-[var(--ikan-color-text-primary)]">Quick Actions</h3>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        {actions.map((action, i) => (
+          <motion.button
+            key={i}
+            whileHover={{ y: -2 }}
+            whileTap={{ scale: 0.98 }}
+            onClick={() => onNavigate?.(action.route)}
+            className="flex items-center p-4 bg-white rounded-xl shadow-sm hover:shadow-md transition-all text-left group relative overflow-hidden"
+          >
+            {action.badge && (
+              <span style={{ fontSize: 'var(--text-xs)', fontWeight: 'var(--font-weight-medium)' }} className="absolute top-3 right-3 w-5 h-5 bg-rose-500 text-white flex items-center justify-center rounded-full shadow-sm z-10">
+                {action.badge}
+              </span>
+            )}
+            <div className="p-3 rounded-xl mr-4 transition-colors" style={{ backgroundColor: action.bg }}>
+              <action.icon size={24} style={{ color: action.color }} />
+            </div>
+            <div className="flex-1">
+              <h4 className="font-semibold text-gray-900 group-hover:text-[var(--ikan-color-primary-default)] transition-colors">
+                {action.title}
+              </h4>
+              <p className="text-xs text-gray-500">{action.subtitle}</p>
+            </div>
+            <ChevronRight className="text-gray-300 group-hover:text-gray-500 transition-colors" size={20} />
+          </motion.button>
+        ))}
+      </div>
     </div>
   );
-}
+};
+
+// 6. Health Analytics & Insights
+const HealthAnalytics = () => (
+  <div className="space-y-4">
+    <div className="flex justify-between items-end">
+      <h3 className="text-lg font-medium text-[var(--ikan-color-text-primary)]">Health Analytics</h3>
+    </div>
+    
+    <Card className="border-none shadow-sm bg-white rounded-[20px] overflow-hidden">
+      <CardContent className="p-6">
+        <div className="flex flex-col md:flex-row items-center justify-between mb-8 pb-8 border-b border-gray-100">
+           <div className="text-center md:text-left">
+             <div className="flex items-center gap-2 mb-1">
+               <span className="text-3xl font-bold text-gray-900">127</span>
+             </div>
+             <p className="text-sm text-gray-500">Total Activities</p>
+           </div>
+           <div className="text-center md:text-left mt-4 md:mt-0">
+             <div className="flex items-center gap-2 mb-1 justify-center md:justify-start">
+               <span className="text-3xl font-bold text-gray-900">7.2</span>
+               <Heart className="w-4 h-4 text-rose-500 fill-rose-500" />
+             </div>
+             <p className="text-sm text-gray-500">Avg Mood Score</p>
+           </div>
+           <div className="text-center md:text-left mt-4 md:mt-0">
+             <div className="flex items-center gap-2 mb-1 justify-center md:justify-start">
+               <span className="text-3xl font-bold text-gray-900">8</span>
+             </div>
+             <p className="text-sm text-gray-500">Assessments</p>
+           </div>
+           <div className="text-center md:text-left mt-4 md:mt-0">
+             <div className="flex items-center gap-2 mb-1 justify-center md:justify-start">
+               <span className="text-3xl font-bold text-gray-900">12</span>
+               <Flame className="w-4 h-4 text-orange-500 fill-orange-500" />
+             </div>
+             <p className="text-sm text-gray-500">Day Streak</p>
+           </div>
+        </div>
+
+        <h4 className="font-medium text-gray-900 mb-4">Key Improvements</h4>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+          {[
+            { label: 'Sleep Quality', change: '+23%', positive: true },
+            { label: 'Anxiety Levels', change: '-15%', positive: true },
+            { label: 'Physical Activity', change: '+40%', positive: true },
+            { label: 'Stress Management', change: '+12%', positive: true },
+          ].map((item, i) => (
+            <div key={i} className="flex justify-between items-center p-4 bg-gray-50 rounded-xl">
+              <span className="font-medium text-gray-700">{item.label}</span>
+              <span className={cn("font-bold", item.positive ? "text-emerald-500" : "text-rose-500")}>
+                {item.change}
+              </span>
+            </div>
+          ))}
+        </div>
+
+        <h4 className="font-medium text-gray-900 mb-4">Personalized Insights</h4>
+        <div className="space-y-3">
+          <div className="p-4 bg-emerald-50 rounded-xl flex gap-4">
+             <div className="p-2 bg-emerald-100 rounded-lg h-fit">
+               <Moon className="w-5 h-5 text-emerald-600" />
+             </div>
+             <div>
+               <h5 className="font-bold text-emerald-900 mb-1">Great Progress on Sleep</h5>
+               <p className="text-sm text-emerald-700">Your sleep patterns have improved significantly over the past month.</p>
+             </div>
+          </div>
+          <div className="p-4 bg-orange-50 rounded-xl flex gap-4">
+             <div className="p-2 bg-orange-100 rounded-lg h-fit">
+               <Brain className="w-5 h-5 text-orange-600" />
+             </div>
+             <div>
+               <h5 className="font-bold text-orange-900 mb-1">Consider Stress Management</h5>
+               <p className="text-sm text-orange-700">Stress levels show room for improvement. Try our stress relief program.</p>
+             </div>
+          </div>
+        </div>
+
+        <div className="mt-8 pt-6 border-t border-gray-100 flex justify-between items-center">
+             <Button className="bg-[var(--ikan-color-primary-default)] text-white hover:opacity-90">
+               <BookOpen className="w-4 h-4 mr-2" /> View Detailed Report
+             </Button>
+             <Button variant="outline" className="gap-2">
+                <Settings className="w-4 h-4" /> Customize
+             </Button>
+        </div>
+      </CardContent>
+    </Card>
+  </div>
+);
+
+// --- Main Dashboard Component ---
 
 export function Dashboard({ className, onNavigate }: DashboardProps) {
   const { user } = useAuth();
@@ -561,7 +457,6 @@ export function Dashboard({ className, onNavigate }: DashboardProps) {
   // Load dashboard data
   useEffect(() => {
     const loadDashboardData = async () => {
-      // Use user_id from our custom User type, falling back to id if it exists (Supabase type)
       const userId = user?.user_id || (user as any)?.id;
 
       if (!userId) {
@@ -572,25 +467,20 @@ export function Dashboard({ className, onNavigate }: DashboardProps) {
       try {
         setLoading(true);
 
-        // 1. Fetch Mood Data (Journal Entries)
-        const journalResponse = await client.getJournalEntries(undefined, undefined, 30); // Last 30 entries
-        const entries = journalResponse?.entries || [];
-        setMoodData(entries);
+        const [
+          journalResult,
+          assessmentResult,
+          programResult
+        ] = await Promise.allSettled([
+          client.getJournalEntries(undefined, undefined, 30),
+          client.getUserAssessmentResponses(),
+          client.getUserPurchasedPrograms(userId)
+        ]);
 
-        // 2. Fetch Assessment History
-        const assessmentResponse = await client.getUserAssessmentResponses();
-        const assessments = assessmentResponse?.responses || [];
-        setAssessmentData(assessments);
+        if (journalResult.status === 'fulfilled') setMoodData(journalResult.value?.entries || []);
+        if (assessmentResult.status === 'fulfilled') setAssessmentData(assessmentResult.value?.responses || []);
+        if (programResult.status === 'fulfilled') setProgramData(programResult.value || []);
 
-        // 3. Fetch Programs
-        // Get purchased programs
-        const purchasedPrograms = await client.getUserPurchasedPrograms(userId);
-        // Get progress for each (or assuming the endpoint returns some progress)
-        // For now, we'll use the purchased list. If we need detailed progress, we'd need to fetch per program
-        // but that might be too many requests. We'll verify what purchasedPrograms returns.
-        setProgramData(purchasedPrograms || []);
-
-        // 4. Fetch Resources Read Count (from LocalStorage as fallback for now)
         try {
           const readResources = JSON.parse(localStorage.getItem(`ikan-read-resources-${userId}`) || '[]');
           setReadResourceCount(readResources.length);
@@ -599,9 +489,7 @@ export function Dashboard({ className, onNavigate }: DashboardProps) {
         }
 
       } catch (error) {
-        console.error('Failed to load dashboard data:', error);
-        // Don't show toast on dashboard load error to avoid annoyance, just log it
-        // showToast('error', 'Dashboard Error', 'Failed to load some data');
+        console.error('Unexpected error loading dashboard data:', error);
       } finally {
         setLoading(false);
       }
@@ -610,46 +498,12 @@ export function Dashboard({ className, onNavigate }: DashboardProps) {
     loadDashboardData();
   }, [user]);
 
-  if (loading) {
-    return (
-      <div className={cn("w-full h-screen flex items-center justify-center", className)} style={{ backgroundColor: 'var(--color-bg-page)' }}>
-        <div className="flex flex-col items-center gap-4">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-          <p className="text-muted-foreground">Loading dashboard...</p>
-        </div>
-      </div>
-    );
-  }
-
-  // Calculate KPIs based on real data
-  const currentMoodEntry = moodData.length > 0 ? moodData[0] : null;
-  const currentMoodValue = currentMoodEntry?.mood_rating || 0;
+  // Derived Data
+  const currentMood = moodData.length > 0 ? (moodData[0].mood_rating || 0) : 0;
   
-  // Calculate average mood for this week vs last week for trend
-  const calculateMoodTrend = () => {
-    if (moodData.length < 2) return { trend: 'stable', change: '0.0' };
-    
-    // Sort by date descending
-    const sortedMoods = [...moodData].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-    const recent = sortedMoods.slice(0, 7);
-    const previous = sortedMoods.slice(7, 14);
-    
-    const recentAvg = recent.reduce((sum, item) => sum + (item.mood_rating || 0), 0) / (recent.length || 1);
-    const prevAvg = previous.reduce((sum, item) => sum + (item.mood_rating || 0), 0) / (previous.length || 1);
-    
-    const diff = recentAvg - prevAvg;
-    const trend = diff > 0 ? 'up' : diff < 0 ? 'down' : 'stable';
-    const change = diff !== 0 ? (diff > 0 ? '+' : '') + diff.toFixed(1) : 'stable';
-    
-    return { trend, change };
-  };
-
-  const moodTrend = calculateMoodTrend();
-
-  // Calculate streak (mock for now, or derive from consecutive days in moodData)
+  // Calculate Streak
   const calculateStreak = () => {
     if (moodData.length === 0) return 0;
-    
     let streak = 0;
     const sortedDates = [...new Set(moodData.map(e => new Date(e.date).toDateString()))];
     const today = new Date().toDateString();
@@ -669,1078 +523,116 @@ export function Dashboard({ className, onNavigate }: DashboardProps) {
          checkDate.setDate(checkDate.getDate() - 1);
        }
     }
-    
     return streak;
   };
-
   const streakDays = calculateStreak();
 
-  // Prepare chart data
-  const weeklyMoods = moodData
-    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
-    .slice(-7)
-    .map(e => e.mood_rating || 0);
-  
-  // Fill with 0s if less than 7
-  const filledWeeklyMoods = [...Array(Math.max(0, 7 - weeklyMoods.length)).fill(0), ...weeklyMoods];
-
-  const kpiData = {
-    moodScore: { current: currentMoodValue || '-', trend: moodTrend.trend as any, change: moodTrend.change },
-    streakDays: { current: streakDays, trend: 'up', change: 'Keep it up!' },
-    assessments: { current: assessmentData.length, trend: 'stable', change: 'Total' },
-    resources: { current: readResourceCount, trend: 'up', change: 'Read' },
-    sessions: { current: 0, trend: 'stable', change: 'Coming Soon' }, // Placeholder for sessions
-    goals: { current: 0, trend: 'stable', change: 'Coming Soon' }
-  };
-
+  if (loading) {
+    return (
+      <div className="w-full min-h-screen p-8 bg-[var(--ikan-color-bg-page)] max-w-7xl mx-auto space-y-8">
+        <Skeleton variant="text" height="40px" width="300px" className="mx-auto" />
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
+          {[...Array(6)].map((_, i) => (
+             <Skeleton key={i} variant="rectangular" height="120px" className="rounded-2xl" />
+          ))}
+        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+             <Skeleton variant="rectangular" height="400px" className="rounded-2xl" />
+             <Skeleton variant="rectangular" height="400px" className="rounded-2xl" />
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div 
-      className={cn("w-full", className)}
-      style={{
-        padding: isMobile ? 'var(--spacing-4)' : 'var(--spacing-6)',
-        backgroundColor: 'var(--color-bg-page)',
-        // minHeight: '100vh' - Removed to prevent double scrollbars/unnecessary scrolling
-      }}
-    >
-      <div className="space-y-6">
-        {/* Welcome Header */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-          className="text-center mb-8"
-        >
-          <div className="flex items-center justify-center gap-2 mb-2">
-            <motion.div
-              animate={{ 
-                rotate: [0, 10, -10, 0],
-                scale: [1, 1.1, 1]
-              }}
-              transition={{ duration: 2, repeat: Infinity }}
-            >
-              <Sparkles size={24} style={{ color: 'var(--color-status-warning)' }} />
-            </motion.div>
-            <h1 style={{
-              fontSize: isMobile ? 'var(--text-xl)' : 'var(--text-2xl)',
-              fontWeight: 'var(--font-weight-medium)',
-              color: 'var(--color-text-primary)'
-            }}>
-              Good {new Date().getHours() < 12 ? 'Morning' : new Date().getHours() < 17 ? 'Afternoon' : 'Evening'}, {user?.name || 'there'}!
-            </h1>
-          </div>
-          <p style={{
-            fontSize: 'var(--text-base)',
-            color: 'var(--color-text-muted)',
-            fontWeight: 'var(--font-weight-normal)'
-          }}>
-            Here's your mental wellness overview for today
-          </p>
-        </motion.div>
+    <div className={cn("min-h-screen bg-[var(--ikan-color-bg-page)]", className)}>
+      <div className="max-w-7xl mx-auto p-4 md:p-8 space-y-8">
+        
+        <DashboardHeader userName={user?.name || 'Alex'} />
 
-        {/* KPI Grid */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.6, delay: 0.2 }}
-          className={isMobile ? "grid grid-cols-2 gap-4" : "grid grid-cols-3 lg:grid-cols-6 gap-6"}
-        >
-          <KPICard
-            title="Mood Score"
-            value={kpiData.moodScore.current}
-            trend="up"
-            trendValue={kpiData.moodScore.change}
-            icon={Heart}
-            color="var(--color-status-danger)"
-            onClick={() => onNavigate?.('/mood-journal')}
+        {/* 1. Top Stats Row */}
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+          <StatCard 
+            icon={Heart} 
+            value={currentMood || '-'} 
+            label="Mood Score" 
+            subtext="This week" 
+            trend="+3.0" 
+            trendDirection="up"
+            color="#EF4444" // Red
+            delay={0.1}
           />
-          
-          <KPICard
-            title="Active Streak"
-            value={`${kpiData.streakDays.current}d`}
-            trend="up"
-            trendValue={kpiData.streakDays.change}
-            icon={Flame}
-            color="var(--color-status-warning)"
+          <StatCard 
+            icon={Flame} 
+            value={`${streakDays}d`} 
+            label="Active Streak" 
+            subtext="This week" 
+            trend="Keep it up!" 
+            trendDirection="up"
+            color="#F59E0B" // Amber
+            delay={0.2}
           />
-          
-          <KPICard
-            title="Assessments"
-            value={kpiData.assessments.current}
-            trend="stable"
-            trendValue={kpiData.assessments.change}
-            icon={Brain}
-            color="var(--color-status-info)"
-            onClick={() => onNavigate?.('/assessments')}
+          <StatCard 
+            icon={Brain} 
+            value={assessmentData.length} 
+            label="Assessments" 
+            subtext="This week" 
+            trend="Total" 
+            trendDirection="neutral"
+            color="#8B5CF6" // Violet
+            delay={0.3}
           />
-          
-          <KPICard
-            title="Resources Read"
-            value={kpiData.resources.current}
-            trend="up"
-            trendValue={kpiData.resources.change}
-            icon={BookOpen}
-            color="var(--color-status-success)"
-            onClick={() => onNavigate?.('/library')}
+          <StatCard 
+            icon={BookOpen} 
+            value={readResourceCount} 
+            label="Resources Read" 
+            subtext="This week" 
+            trend="Read" 
+            trendDirection="up"
+            color="#10B981" // Emerald
+            delay={0.4}
           />
-          
-          <KPICard
-            title="Sessions"
-            value={kpiData.sessions.current}
-            trend="up"
-            trendValue={kpiData.sessions.change}
-            icon={MessageSquare}
-            color="var(--color-primary-default)"
-            onClick={() => onNavigate?.('/consultation')}
+          <StatCard 
+            icon={MessageSquare} 
+            value="0" 
+            label="Sessions" 
+            subtext="This week" 
+            trend="Coming Soon" 
+            trendDirection="neutral"
+            color="#3B82F6" // Blue
+            delay={0.5}
           />
-          
-          <KPICard
-            title="Goals"
-            value={`${kpiData.goals.current}/4`}
-            trend="up"
-            trendValue={kpiData.goals.change}
-            icon={Target}
-            color="var(--color-status-success)"
+          <StatCard 
+            icon={Target} 
+            value="0/4" 
+            label="Goals" 
+            subtext="This week" 
+            trend="Coming Soon" 
+            trendDirection="neutral"
+            color="#EC4899" // Pink
+            delay={0.6}
           />
-        </motion.div>
-
-          {/* Main Content Grid */}
-        <div className={isMobile ? "space-y-6" : "grid grid-cols-1 lg:grid-cols-3 gap-6"}>
-          {/* Mood Overview - Takes full width on mobile, 2 cols on desktop */}
-          <motion.div
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.6, delay: 0.4 }}
-            className={isMobile ? "" : "lg:col-span-2"}
-          >
-            <MoodRing currentMood={currentMoodValue} weeklyMoods={filledWeeklyMoods} />
-          </motion.div>
-
-          {/* Activity Streak - Right column on desktop */}
-          <motion.div
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.6, delay: 0.5 }}
-          >
-            <div className="space-y-4">
-              <ActivityStreak />
-              
-              {/* Weekly Progress */}
-              <Card style={{
-                background: 'linear-gradient(135deg, var(--color-bg-card) 0%, rgba(255,255,255,0.9) 100%)',
-                backdropFilter: 'blur(10px)',
-                border: '1px solid var(--color-border-light)',
-                borderRadius: 'var(--radius-lg)'
-              }}>
-                <CardHeader style={{ paddingBottom: 'var(--spacing-2)' }}>
-                  <CardTitle className="flex items-center gap-2">
-                    <BarChart3 size={20} style={{ color: 'var(--color-primary-default)' }} />
-                    <span style={{ 
-                      fontSize: 'var(--text-base)', 
-                      fontWeight: 'var(--font-weight-medium)',
-                      color: 'var(--color-text-primary)'
-                    }}>
-                      Weekly Goals
-                    </span>
-                  </CardTitle>
-                </CardHeader>
-                
-                <CardContent>
-                  <div className="grid grid-cols-3 gap-4">
-                    <ProgressRing 
-                      value={5} 
-                      max={7} 
-                      label="Mood Logs"
-                      color="var(--color-status-danger)"
-                      size={60}
-                    />
-                    <ProgressRing 
-                      value={3} 
-                      max={3} 
-                      label="Assessments"
-                      color="var(--color-status-info)"
-                      size={60}
-                    />
-                    <ProgressRing 
-                      value={8} 
-                      max={10} 
-                      label="Articles"
-                      color="var(--color-status-success)"
-                      size={60}
-                    />
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          </motion.div>
         </div>
 
-        {/* Quick Actions */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.6 }}
-        >
-          <h2 style={{
-            fontSize: 'var(--text-lg)',
-            fontWeight: 'var(--font-weight-medium)',
-            color: 'var(--color-text-primary)',
-            marginBottom: 'var(--spacing-4)'
-          }}>
-            Quick Actions
-          </h2>
-          
-          <div className={isMobile ? "space-y-3" : "grid grid-cols-2 lg:grid-cols-4 gap-4"}>
-            <QuickActionTile
-              icon={Brain}
-              title="Take Assessment"
-              subtitle="Check your mental health"
-              color="var(--color-status-info)"
-              onClick={() => onNavigate?.('/assessment-landing')}
-              badge="2"
-            />
-            
-            <QuickActionTile
-              icon={Heart}
-              title="Log Mood"
-              subtitle="How are you feeling?"
-              color="var(--color-status-danger)"
-              onClick={() => onNavigate?.('/mood-journal')}
-            />
-            
-            <QuickActionTile
-              icon={BookOpen}
-              title="Read Resources"
-              subtitle="Explore helpful articles"
-              color="var(--color-status-success)"
-              onClick={() => onNavigate?.('/library')}
-              badge="5"
-            />
-            
-            <QuickActionTile
-              icon={MessageSquare}
-              title="Book Session"
-              subtitle="Talk to a professional"
-              color="var(--color-primary-default)"
-              onClick={() => onNavigate?.('/consultation')}
-            />
-          </div>
-        </motion.div>
+        {/* 2. Middle Section: Mood + Goals */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <MoodOverview currentMood={currentMood} />
+          <GoalsAndStreak streakDays={streakDays} goals={{}} />
+        </div>
 
-        {/* Today's Insights */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.7 }}
-        >
-          <Card style={{
-            background: 'linear-gradient(135deg, var(--color-status-info)08 0%, var(--color-bg-card) 100%)',
-            border: '1px solid var(--color-status-info)20',
-            borderRadius: 'var(--radius-lg)'
-          }}>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Eye size={20} style={{ color: 'var(--color-status-info)' }} />
-                <span style={{ 
-                  fontSize: 'var(--text-base)', 
-                  fontWeight: 'var(--font-weight-medium)',
-                  color: 'var(--color-text-primary)'
-                }}>
-                  Today's Insights
-                </span>
-              </CardTitle>
-            </CardHeader>
-            
-            <CardContent>
-              <div className="space-y-4">
-                <div className="flex items-start gap-3 p-3 rounded-lg" style={{ backgroundColor: 'var(--color-bg-muted)' }}>
-                  <TrendingUp size={20} style={{ color: 'var(--color-status-success)' }} />
-                  <div>
-                    <p style={{ 
-                      fontSize: 'var(--text-sm)', 
-                      fontWeight: 'var(--font-weight-medium)',
-                      color: 'var(--color-text-primary)',
-                      marginBottom: '2px'
-                    }}>
-                      Your mood has improved 15% this week!
-                    </p>
-                    <p style={{ 
-                      fontSize: 'var(--text-xs)', 
-                      color: 'var(--color-text-muted)'
-                    }}>
-                      Keep up the great work with your daily mood tracking.
-                    </p>
-                  </div>
-                </div>
-                
-                <div className="flex items-start gap-3 p-3 rounded-lg" style={{ backgroundColor: 'var(--color-bg-muted)' }}>
-                  <Star size={20} style={{ color: 'var(--color-status-warning)' }} />
-                  <div>
-                    <p style={{ 
-                      fontSize: 'var(--text-sm)', 
-                      fontWeight: 'var(--font-weight-medium)',
-                      color: 'var(--color-text-primary)',
-                      marginBottom: '2px'
-                    }}>
-                      You're on a 12-day streak!
-                    </p>
-                    <p style={{ 
-                      fontSize: 'var(--text-xs)', 
-                      color: 'var(--color-text-muted)'
-                    }}>
-                      Consistency is key to mental wellness. You're doing amazing!
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </motion.div>
+        {/* 3. Quick Actions */}
+        <QuickActions onNavigate={onNavigate} />
 
-        {/* Google Fit Integration */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.8 }}
-        >
-          <h2 style={{
-            fontSize: 'var(--text-lg)',
-            fontWeight: 'var(--font-weight-medium)',
-            color: 'var(--color-text-primary)',
-            marginBottom: 'var(--spacing-4)'
-          }}>
-            Health & Fitness
-          </h2>
-          
-          <GoogleFitSync />
-        </motion.div>
+        {/* 4. Insights Section */}
+        <HealthAnalytics />
 
-        {/* Programs Progress Section */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.9 }}
-        >
-          <h2 style={{
-            fontSize: 'var(--text-lg)',
-            fontWeight: 'var(--font-weight-medium)',
-            color: 'var(--color-text-primary)',
-            marginBottom: 'var(--spacing-4)'
-          }}>
-            Your Programs
-          </h2>
-          
-          <div className={isMobile ? "space-y-6" : "grid grid-cols-1 lg:grid-cols-2 gap-6"}>
-            <EquipProgramsProgress onNavigate={onNavigate} programs={programData} />
-            <AssessmentProgramsProgress onNavigate={onNavigate} assessments={assessmentData} />
-          </div>
-        </motion.div>
+        {/* 5. Google Fit (Existing) */}
+        {/* <div className="pt-4">
+           <h3 className="text-lg font-medium text-[var(--ikan-color-text-primary)] mb-4">Integrations</h3>
+           <GoogleFitSync />
+        </div> */}
 
-        {/* Cumulative Health Report */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 1.0 }}
-        >
-          <h2 style={{
-            fontSize: 'var(--text-lg)',
-            fontWeight: 'var(--font-weight-medium)',
-            color: 'var(--color-text-primary)',
-            marginBottom: 'var(--spacing-4)'
-          }}>
-            Health Analytics
-          </h2>
-          
-          <CumulativeHealthReport onNavigate={onNavigate} />
-        </motion.div>
       </div>
     </div>
-  );
-}
-
-// Equip Programs Progress Section
-function EquipProgramsProgress({ onNavigate, programs = [] }: { onNavigate?: (route: string) => void, programs?: any[] }) {
-  const isMobile = useIsMobile();
-  
-  // Transform API programs to display format or use empty state
-  const displayPrograms = programs.slice(0, 3).map(p => ({
-    id: p.id || p.program_id,
-    title: p.title || 'Untitled Program',
-    progress: p.progress || 0, // Assuming progress is in the object, otherwise need to fetch
-    currentModule: p.current_module || 'Not started',
-    totalModules: p.total_modules || 10,
-    completedModules: p.completed_modules || 0,
-    nextActivity: p.next_activity || 'Start Program',
-    dueDate: p.due_date ? new Date(p.due_date) : null,
-    badge: (p.progress || 0) >= 100 ? 'Completed' : (p.progress || 0) > 0 ? 'In Progress' : 'Not Started',
-    color: (p.progress || 0) >= 100 ? 'var(--color-status-success)' : 'var(--color-status-info)'
-  }));
-
-  if (displayPrograms.length === 0) {
-    return (
-      <Card 
-      style={{
-        background: 'linear-gradient(135deg, var(--color-bg-card) 0%, rgba(255,255,255,0.9) 100%)',
-        backdropFilter: 'blur(10px)',
-        border: '1px solid var(--color-border-light)',
-        borderRadius: 'var(--radius-lg)'
-      }}
-    >
-      <CardHeader>
-        <CardTitle className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Trophy size={20} style={{ color: 'var(--color-status-warning)' }} />
-            <span style={{ 
-              fontSize: 'var(--text-base)', 
-              fontWeight: 'var(--font-weight-medium)',
-              color: 'var(--color-text-primary)'
-            }}>
-              Equip Programs
-            </span>
-          </div>
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="text-center py-8">
-        <p className="text-muted-foreground mb-4">You haven't started any programs yet.</p>
-        <Button onClick={() => onNavigate?.('/equip-programs')}>Browse Programs</Button>
-      </CardContent>
-    </Card>
-    );
-  }
-
-  return (
-    <Card 
-      style={{
-        background: 'linear-gradient(135deg, var(--color-bg-card) 0%, rgba(255,255,255,0.9) 100%)',
-        backdropFilter: 'blur(10px)',
-        border: '1px solid var(--color-border-light)',
-        borderRadius: 'var(--radius-lg)'
-      }}
-    >
-      <CardHeader>
-        <CardTitle className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Trophy size={20} style={{ color: 'var(--color-status-warning)' }} />
-            <span style={{ 
-              fontSize: 'var(--text-base)', 
-              fontWeight: 'var(--font-weight-medium)',
-              color: 'var(--color-text-primary)'
-            }}>
-              Equip Programs
-            </span>
-          </div>
-          <Button 
-            variant="ghost" 
-            size="sm"
-            onClick={() => onNavigate?.('/equip-programs')}
-          >
-            View All
-            <ChevronRight size={16} />
-          </Button>
-        </CardTitle>
-      </CardHeader>
-      
-      <CardContent>
-        <div className="space-y-4">
-          {displayPrograms.map((program) => (
-            <motion.div
-              key={program.id}
-              whileHover={{ scale: 1.02, y: -2 }}
-              transition={{ duration: 0.2 }}
-              className="cursor-pointer"
-              onClick={() => onNavigate?.('/equip-program-onboarding')} 
-            >
-              <div 
-                className="p-4 rounded-lg border"
-                style={{
-                  backgroundColor: 'var(--color-bg-muted)',
-                  borderColor: 'var(--color-border-light)'
-                }}
-              >
-                <div className="flex items-start justify-between mb-3">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-1">
-                      <h4 style={{ 
-                        fontSize: 'var(--text-base)', 
-                        fontWeight: 'var(--font-weight-medium)',
-                        color: 'var(--color-text-primary)'
-                      }}>
-                        {program.title}
-                      </h4>
-                      <Badge 
-                        variant="secondary"
-                        style={{
-                          backgroundColor: `${program.color}20`,
-                          color: program.color,
-                          border: `1px solid ${program.color}30`,
-                          fontSize: 'var(--text-xs)'
-                        }}
-                      >
-                        {program.badge}
-                      </Badge>
-                    </div>
-                    <p style={{ 
-                      fontSize: 'var(--text-sm)', 
-                      color: 'var(--color-text-muted)',
-                      fontWeight: 'var(--font-weight-normal)'
-                    }}>
-                      {program.currentModule}
-                    </p>
-                  </div>
-                  
-                  <div className="text-right">
-                    <div style={{ 
-                      fontSize: 'var(--text-lg)', 
-                      fontWeight: 'var(--font-weight-medium)',
-                      color: program.color
-                    }}>
-                      {program.progress}%
-                    </div>
-                    <div style={{ 
-                      fontSize: 'var(--text-xs)', 
-                      color: 'var(--color-text-muted)'
-                    }}>
-                      {program.completedModules}/{program.totalModules} modules
-                    </div>
-                  </div>
-                </div>
-                
-                <Progress 
-                  value={program.progress} 
-                  className="mb-3"
-                  style={{
-                    backgroundColor: 'var(--color-bg-card)',
-                    height: '6px'
-                  }}
-                />
-                
-                {program.nextActivity && (
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <PlayCircle size={14} style={{ color: 'var(--color-text-muted)' }} />
-                      <span style={{ 
-                        fontSize: 'var(--text-sm)', 
-                        color: 'var(--color-text-muted)'
-                      }}>
-                        Next: {program.nextActivity}
-                      </span>
-                    </div>
-                    {program.dueDate && (
-                      <span style={{ 
-                        fontSize: 'var(--text-xs)', 
-                        color: 'var(--color-status-warning)'
-                      }}>
-                        Due {program.dueDate.toLocaleDateString()}
-                      </span>
-                    )}
-                  </div>
-                )}
-              </div>
-            </motion.div>
-          ))}
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
-
-// Assessment Programs Progress Section
-function AssessmentProgramsProgress({ onNavigate, assessments = [] }: { onNavigate?: (route: string) => void, assessments?: any[] }) {
-  const isMobile = useIsMobile();
-  
-  // Transform API assessments to display format
-  // We need to group by assessment ID to find "last score" and "previous score"
-  const assessmentsById: Record<string, any[]> = {};
-  assessments.forEach(a => {
-    const id = a.assessment_id || a.id;
-    if (!assessmentsById[id]) assessmentsById[id] = [];
-    assessmentsById[id].push(a);
-  });
-
-  const displayAssessments = Object.keys(assessmentsById).map(id => {
-    const history = assessmentsById[id].sort((a, b) => new Date(b.completed_at).getTime() - new Date(a.completed_at).getTime());
-    const latest = history[0];
-    const previous = history[1];
-    
-    const lastScore = latest.score || 0;
-    const previousScore = previous?.score || 0;
-    const trend = lastScore < previousScore ? 'improved' : lastScore > previousScore ? 'increased' : 'stable';
-    
-    // Determine category based on score (simplified logic)
-    let category = 'Normal';
-    let color = 'var(--color-status-success)';
-    if (lastScore > 15) { category = 'High'; color = 'var(--color-status-danger)'; }
-    else if (lastScore > 10) { category = 'Moderate'; color = 'var(--color-status-warning)'; }
-    else if (lastScore > 5) { category = 'Mild'; color = 'var(--color-status-info)'; }
-
-    return {
-      id: id,
-      name: latest.title || latest.assessment_title || 'Assessment',
-      lastScore,
-      previousScore,
-      trend,
-      lastTaken: new Date(latest.completed_at),
-      frequency: 'Weekly', // Placeholder
-      nextDue: new Date(new Date(latest.completed_at).getTime() + 7 * 24 * 60 * 60 * 1000), // Next due in 7 days
-      category,
-      color
-    };
-  }).slice(0, 3);
-
-  if (displayAssessments.length === 0) {
-    return (
-      <Card 
-      style={{
-        background: 'linear-gradient(135deg, var(--color-bg-card) 0%, rgba(255,255,255,0.9) 100%)',
-        backdropFilter: 'blur(10px)',
-        border: '1px solid var(--color-border-light)',
-        borderRadius: 'var(--radius-lg)'
-      }}
-    >
-      <CardHeader>
-        <CardTitle className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Brain size={20} style={{ color: 'var(--color-status-info)' }} />
-            <span style={{ 
-              fontSize: 'var(--text-base)', 
-              fontWeight: 'var(--font-weight-medium)',
-              color: 'var(--color-text-primary)'
-            }}>
-              Assessment Progress
-            </span>
-          </div>
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="text-center py-8">
-        <p className="text-muted-foreground mb-4">No assessment history found.</p>
-        <Button onClick={() => onNavigate?.('/assessment-landing')}>Take an Assessment</Button>
-      </CardContent>
-    </Card>
-    );
-  }
-
-  return (
-    <Card 
-      style={{
-        background: 'linear-gradient(135deg, var(--color-bg-card) 0%, rgba(255,255,255,0.9) 100%)',
-        backdropFilter: 'blur(10px)',
-        border: '1px solid var(--color-border-light)',
-        borderRadius: 'var(--radius-lg)'
-      }}
-    >
-      <CardHeader>
-        <CardTitle className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Brain size={20} style={{ color: 'var(--color-status-info)' }} />
-            <span style={{ 
-              fontSize: 'var(--text-base)', 
-              fontWeight: 'var(--font-weight-medium)',
-              color: 'var(--color-text-primary)'
-            }}>
-              Assessment Progress
-            </span>
-          </div>
-          <Button 
-            variant="ghost" 
-            size="sm"
-            onClick={() => onNavigate?.('/assessments')}
-          >
-            View All
-            <ChevronRight size={16} />
-          </Button>
-        </CardTitle>
-      </CardHeader>
-      
-      <CardContent>
-        <div className="space-y-4">
-          {displayAssessments.map((assessment) => (
-            <motion.div
-              key={assessment.id}
-              whileHover={{ scale: 1.02, y: -2 }}
-              transition={{ duration: 0.2 }}
-              className="cursor-pointer"
-              onClick={() => onNavigate?.('/assessment-flow')} // Ideally navigate to specific assessment results
-            >
-              <div 
-                className="p-4 rounded-lg border"
-                style={{
-                  backgroundColor: 'var(--color-bg-muted)',
-                  borderColor: 'var(--color-border-light)'
-                }}
-              >
-                <div className="flex items-start justify-between mb-3">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-1">
-                      <h4 style={{ 
-                        fontSize: 'var(--text-base)', 
-                        fontWeight: 'var(--font-weight-medium)',
-                        color: 'var(--color-text-primary)'
-                      }}>
-                        {assessment.name}
-                      </h4>
-                      <Badge 
-                        variant="secondary"
-                        style={{
-                          backgroundColor: `${assessment.color}20`,
-                          color: assessment.color,
-                          border: `1px solid ${assessment.color}30`,
-                          fontSize: 'var(--text-xs)'
-                        }}
-                      >
-                        {assessment.category}
-                      </Badge>
-                    </div>
-                    <p style={{ 
-                      fontSize: 'var(--text-sm)', 
-                      color: 'var(--color-text-muted)',
-                      fontWeight: 'var(--font-weight-normal)'
-                    }}>
-                      Last taken: {assessment.lastTaken.toLocaleDateString()}
-                    </p>
-                  </div>
-                  
-                  <div className="text-right">
-                    <div className="flex items-center gap-1">
-                      <span style={{ 
-                        fontSize: 'var(--text-lg)', 
-                        fontWeight: 'var(--font-weight-medium)',
-                        color: 'var(--color-text-primary)'
-                      }}>
-                        {assessment.lastScore}
-                      </span>
-                      {assessment.trend === 'improved' ? (
-                        <TrendingDown size={16} style={{ color: 'var(--color-status-success)' }} />
-                      ) : (
-                        <TrendingUp size={16} style={{ color: 'var(--color-status-warning)' }} />
-                      )}
-                    </div>
-                    <div style={{ 
-                      fontSize: 'var(--text-xs)', 
-                      color: assessment.trend === 'improved' 
-                        ? 'var(--color-status-success)' 
-                        : 'var(--color-status-warning)'
-                    }}>
-                      {assessment.trend === 'improved' ? '▼' : '▲'}
-                      {Math.abs(assessment.lastScore - assessment.previousScore)} from last
-                    </div>
-                  </div>
-                </div>
-                
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <Timer size={14} style={{ color: 'var(--color-text-muted)' }} />
-                    <span style={{ 
-                      fontSize: 'var(--text-sm)', 
-                      color: 'var(--color-text-muted)'
-                    }}>
-                      {assessment.frequency}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <CalendarIcon size={14} style={{ color: 'var(--color-text-muted)' }} />
-                    <span style={{ 
-                      fontSize: 'var(--text-sm)', 
-                      color: assessment.nextDue.getTime() <= Date.now() 
-                        ? 'var(--color-status-danger)' 
-                        : 'var(--color-text-muted)'
-                    }}>
-                      {assessment.nextDue.getTime() <= Date.now() 
-                        ? 'Due now' 
-                        : `Due ${assessment.nextDue.toLocaleDateString()}`}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </motion.div>
-          ))}
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
-
-// Cumulative Health Report Section
-function CumulativeHealthReport({ onNavigate }: { onNavigate?: (route: string) => void }) {
-  const isMobile = useIsMobile();
-  
-  // Sample cumulative data
-  const reportData = {
-    period: '30 Days',
-    totalActivities: 127,
-    averageMood: 7.2,
-    moodTrend: 'stable',
-    assessmentsCompleted: 8,
-    programsActive: 3,
-    streakDays: 12,
-    improvementAreas: [
-      { area: 'Sleep Quality', improvement: '+23%', color: 'var(--color-status-success)' },
-      { area: 'Anxiety Levels', improvement: '-15%', color: 'var(--color-status-success)' },
-      { area: 'Physical Activity', improvement: '+40%', color: 'var(--color-status-success)' },
-      { area: 'Stress Management', improvement: '+12%', color: 'var(--color-status-info)' }
-    ],
-    insights: [
-      {
-        type: 'positive',
-        title: 'Great Progress on Sleep',
-        description: 'Your sleep patterns have improved significantly over the past month.',
-        icon: Moon
-      },
-      {
-        type: 'attention',
-        title: 'Consider Stress Management',
-        description: 'Stress levels show room for improvement. Try our stress relief program.',
-        icon: Brain
-      },
-      {
-        type: 'achievement',
-        title: 'Consistency Achievement',
-        description: 'You\'ve maintained a 12-day streak! Keep up the excellent work.',
-        icon: Award
-      }
-    ]
-  };
-
-  return (
-    <Card 
-      style={{
-        background: 'linear-gradient(135deg, var(--color-status-info)08 0%, var(--color-bg-card) 100%)',
-        border: '1px solid var(--color-status-info)20',
-        borderRadius: 'var(--radius-lg)'
-      }}
-    >
-      <CardHeader>
-        <CardTitle className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <FileText size={20} style={{ color: 'var(--color-status-info)' }} />
-            <span style={{ 
-              fontSize: 'var(--text-base)', 
-              fontWeight: 'var(--font-weight-medium)',
-              color: 'var(--color-text-primary)'
-            }}>
-              Health Report
-            </span>
-            <Badge 
-              variant="secondary"
-              style={{
-                backgroundColor: 'var(--color-status-info)15',
-                color: 'var(--color-status-info)',
-                fontSize: 'var(--text-xs)'
-              }}
-            >
-              {reportData.period}
-            </Badge>
-          </div>
-          <div className="flex gap-2">
-            <Button variant="ghost" size="sm">
-              <Share2 size={16} />
-            </Button>
-            <Button variant="ghost" size="sm">
-              <Download size={16} />
-            </Button>
-            <Button variant="ghost" size="sm">
-              <MoreHorizontal size={16} />
-            </Button>
-          </div>
-        </CardTitle>
-      </CardHeader>
-      
-      <CardContent className="space-y-6">
-        {/* Summary Stats */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="text-center">
-            <div style={{ 
-              fontSize: 'var(--text-2xl)', 
-              fontWeight: 'var(--font-weight-medium)',
-              color: 'var(--color-text-primary)'
-            }}>
-              {reportData.totalActivities}
-            </div>
-            <div style={{ 
-              fontSize: 'var(--text-sm)', 
-              color: 'var(--color-text-muted)'
-            }}>
-              Total Activities
-            </div>
-          </div>
-          
-          <div className="text-center">
-            <div className="flex items-center justify-center gap-1">
-              <span style={{ 
-                fontSize: 'var(--text-2xl)', 
-                fontWeight: 'var(--font-weight-medium)',
-                color: 'var(--color-text-primary)'
-              }}>
-                {reportData.averageMood}
-              </span>
-              <Heart size={16} style={{ color: 'var(--color-status-danger)' }} />
-            </div>
-            <div style={{ 
-              fontSize: 'var(--text-sm)', 
-              color: 'var(--color-text-muted)'
-            }}>
-              Avg Mood Score
-            </div>
-          </div>
-          
-          <div className="text-center">
-            <div style={{ 
-              fontSize: 'var(--text-2xl)', 
-              fontWeight: 'var(--font-weight-medium)',
-              color: 'var(--color-text-primary)'
-            }}>
-              {reportData.assessmentsCompleted}
-            </div>
-            <div style={{ 
-              fontSize: 'var(--text-sm)', 
-              color: 'var(--color-text-muted)'
-            }}>
-              Assessments
-            </div>
-          </div>
-          
-          <div className="text-center">
-            <div className="flex items-center justify-center gap-1">
-              <span style={{ 
-                fontSize: 'var(--text-2xl)', 
-                fontWeight: 'var(--font-weight-medium)',
-                color: 'var(--color-text-primary)'
-              }}>
-                {reportData.streakDays}
-              </span>
-              <Flame size={16} style={{ color: 'var(--color-status-warning)' }} />
-            </div>
-            <div style={{ 
-              fontSize: 'var(--text-sm)', 
-              color: 'var(--color-text-muted)'
-            }}>
-              Day Streak
-            </div>
-          </div>
-        </div>
-
-        {/* Improvement Areas */}
-        <div>
-          <h4 style={{ 
-            fontSize: 'var(--text-base)', 
-            fontWeight: 'var(--font-weight-medium)',
-            color: 'var(--color-text-primary)',
-            marginBottom: 'var(--spacing-3)'
-          }}>
-            Key Improvements
-          </h4>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
-            {reportData.improvementAreas.map((area, index) => (
-              <div 
-                key={index}
-                className="flex items-center justify-between p-3 rounded-lg"
-                style={{ backgroundColor: 'var(--color-bg-muted)' }}
-              >
-                <span style={{ 
-                  fontSize: 'var(--text-sm)', 
-                  fontWeight: 'var(--font-weight-normal)',
-                  color: 'var(--color-text-primary)'
-                }}>
-                  {area.area}
-                </span>
-                <span style={{ 
-                  fontSize: 'var(--text-sm)', 
-                  fontWeight: 'var(--font-weight-medium)',
-                  color: area.color
-                }}>
-                  {area.improvement}
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Insights */}
-        <div>
-          <h4 style={{ 
-            fontSize: 'var(--text-base)', 
-            fontWeight: 'var(--font-weight-medium)',
-            color: 'var(--color-text-primary)',
-            marginBottom: 'var(--spacing-3)'
-          }}>
-            Personalized Insights
-          </h4>
-          <div className="space-y-3">
-            {reportData.insights.map((insight, index) => (
-              <div 
-                key={index}
-                className="flex items-start gap-3 p-3 rounded-lg"
-                style={{ backgroundColor: 'var(--color-bg-muted)' }}
-              >
-                <div 
-                  className="p-2 rounded-full"
-                  style={{ 
-                    backgroundColor: insight.type === 'positive' 
-                      ? 'var(--color-status-success)15'
-                      : insight.type === 'attention'
-                        ? 'var(--color-status-warning)15'
-                        : 'var(--color-status-info)15'
-                  }}
-                >
-                  <insight.icon 
-                    size={16} 
-                    style={{ 
-                      color: insight.type === 'positive' 
-                        ? 'var(--color-status-success)'
-                        : insight.type === 'attention'
-                          ? 'var(--color-status-warning)'
-                          : 'var(--color-status-info)'
-                    }} 
-                  />
-                </div>
-                <div className="flex-1">
-                  <h5 style={{ 
-                    fontSize: 'var(--text-sm)', 
-                    fontWeight: 'var(--font-weight-medium)',
-                    color: 'var(--color-text-primary)',
-                    marginBottom: '2px'
-                  }}>
-                    {insight.title}
-                  </h5>
-                  <p style={{ 
-                    fontSize: 'var(--text-xs)', 
-                    color: 'var(--color-text-muted)',
-                    lineHeight: 'var(--line-height-sm)'
-                  }}>
-                    {insight.description}
-                  </p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Action Buttons */}
-        <div className="flex gap-3">
-          <Button 
-            className="flex-1"
-            style={{
-              backgroundColor: 'var(--semantic-button-primary-bg)',
-              color: 'var(--semantic-button-primary-fg)',
-              height: 'var(--ikan-component-button-height)',
-              borderRadius: 'var(--ikan-component-border-radius)'
-            }}
-            onClick={() => onNavigate?.('/mood-journal')}
-          >
-            <Book size={16} />
-            View Detailed Report
-          </Button>
-          <Button 
-            variant="outline"
-            style={{
-              height: 'var(--ikan-component-button-height)',
-              borderRadius: 'var(--ikan-component-border-radius)'
-            }}
-          >
-            <Filter size={16} />
-            Customize
-          </Button>
-        </div>
-      </CardContent>
-    </Card>
   );
 }

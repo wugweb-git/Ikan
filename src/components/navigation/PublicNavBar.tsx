@@ -20,12 +20,12 @@ export function PublicNavBar({ currentRoute, onNavigate, onSignIn, className }: 
   
   // Fixed navigation items as specified
   const publicNavItems = [
-    { path: '/', label: 'Home', icon: 'home' },
-    { path: '/assessment', label: 'Assessment', icon: 'assignment' },
-    { path: '/equip', label: 'Equip', icon: 'tools' },
-    { path: '/resource', label: 'Resource', icon: 'library' },
-    { path: '/consultation', label: 'Consultation', icon: 'chat' },
-    { path: '/about', label: 'About Us', icon: 'info' }
+    { path: '/', label: 'Home' },
+    { path: '/assessment', label: 'Assessment' },
+    { path: '/equip', label: 'Equip' },
+    { path: '/resource', label: 'Resource' },
+    { path: '/consultation', label: 'Consultation' },
+    { path: '/about', label: 'About Us' }
   ];
 
   // Handle scroll state for animations
@@ -43,7 +43,7 @@ export function PublicNavBar({ currentRoute, onNavigate, onSignIn, className }: 
   return (
     <header 
       className={cn(
-        "fixed backdrop-blur transition-all duration-300",
+        "fixed backdrop-blur transition-all duration-300 flex items-center justify-between px-6",
         isScrolled && "shadow-sm animate-slideDown",
         className
       )}
@@ -63,113 +63,96 @@ export function PublicNavBar({ currentRoute, onNavigate, onSignIn, className }: 
       }}
       data-state={navbarState}
     >
-      <div 
-        className="mx-auto flex items-center justify-between max-w-7xl h-full"
-      >
-        {/* Logo/Brand */}
-        <div className="flex items-center gap-3 animate-fadeIn">
-          <button
-            className="flex items-center gap-2 font-medium transition-all duration-200"
-            onClick={() => onNavigate('/')}
-            style={{ 
-              fontSize: 'var(--text-xl)',
-              fontWeight: 'var(--font-weight-medium)',
-              color: 'var(--color-primary-default)'
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.transform = 'scale(1.05)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.transform = 'scale(1)';
-            }}
-          >
-            <LogoFull height={50} />
-          </button>
-        </div>
+      {/* Logo/Brand */}
+      <div className="flex items-center gap-3 animate-fadeIn">
+        <button
+          className="flex items-center gap-2 font-medium transition-all duration-200"
+          onClick={() => onNavigate('/')}
+          style={{ 
+            fontSize: 'var(--text-xl)',
+            fontWeight: 'var(--font-weight-medium)',
+            color: 'var(--color-primary-default)'
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.transform = 'scale(1.05)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.transform = 'scale(1)';
+          }}
+        >
+          <LogoFull height={50} />
+        </button>
+      </div>
 
-        {/* Public Navigation Items */}
-        <nav className="hidden md:flex items-center gap-1">
-          {publicNavItems.map((item) => {
-            const isActive = currentRoute === item.path;
-            
-            return (
-              <Button
-                key={item.path}
-                variant="ghost"
-                onClick={() => onNavigate(item.path)}
-                className={cn(
-                  "gap-2 px-3 py-2 h-auto transition-all duration-200 relative overflow-hidden",
-                  "hover:animate-fadeIn"
-                )}
-                style={{
-                  backgroundColor: isActive ? 'var(--color-bg-muted)' : 'transparent',
-                  color: isActive ? 'var(--color-primary-default)' : 'var(--color-text-primary)',
-                  fontWeight: 'var(--font-weight-medium)',
-                  borderRadius: 'var(--radius-sm)'
-                }}
-                onMouseEnter={(e) => {
-                  if (!isActive) {
-                    e.currentTarget.style.backgroundColor = 'var(--color-bg-muted)';
-                    e.currentTarget.style.transform = 'translateY(-1px)';
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  if (!isActive) {
-                    e.currentTarget.style.backgroundColor = 'transparent';
-                    e.currentTarget.style.transform = 'translateY(0)';
-                  }
-                }}
-              >
-                {item.label}
-                {isActive && (
-                  <div 
-                    className="absolute bottom-0 left-0 right-0 h-0.5 animate-slideRight"
-                    style={{ backgroundColor: 'var(--color-primary-default)' }}
-                  />
-                )}
-              </Button>
-            );
-          })}
-        </nav>
+      {/* Public Navigation Items */}
+      <nav className="hidden md:flex items-center gap-1 flex-1 justify-center">
+        {publicNavItems.map((item) => {
+          const isActive = currentRoute === item.path;
+          
+          return (
+            <Button
+              key={item.path}
+              variant="ghost"
+              onClick={() => onNavigate(item.path)}
+              className={cn(
+                "px-4 py-2 h-auto transition-all duration-200 relative",
+                "hover:animate-fadeIn"
+              )}
+              style={{
+                backgroundColor: isActive ? 'var(--color-primary-default)' : 'transparent',
+                color: isActive ? 'var(--color-primary-on)' : 'var(--color-text-primary)',
+                fontWeight: 'var(--font-weight-medium)',
+                borderRadius: 'var(--radius-md)'
+              }}
+              onMouseEnter={(e) => {
+                if (!isActive) {
+                  e.currentTarget.style.backgroundColor = 'var(--color-bg-muted)';
+                }
+                e.currentTarget.style.transform = 'translateY(-1px)';
+              }}
+              onMouseLeave={(e) => {
+                if (!isActive) {
+                  e.currentTarget.style.backgroundColor = 'transparent';
+                }
+                e.currentTarget.style.transform = 'translateY(0)';
+              }}
+            >
+              {item.label}
+            </Button>
+          );
+        })}
+      </nav>
 
-        {/* Let's Talk and Sign In Buttons */}
-        <div className="hidden md:flex items-center gap-4">
-          <Button 
-            onClick={() => onNavigate('/contact')}
-            className="gap-2 px-4 py-2 h-auto transition-all duration-200 hover:scale-105" 
-            style={{
-              backgroundColor: 'var(--color-neutral-300)',
-              color: 'var(--color-neutral-600)',
-              borderRadius: 'var(--radius-sm)',
-              fontSize: 'var(--text-base)',
-              fontWeight: 'var(--font-weight-medium)',
-              height: '48px'
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = 'var(--color-neutral-400)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = 'var(--color-neutral-300)';
-            }}
-          >
-            Let's Talk
-          </Button>
-          <Button 
-            onClick={onSignIn}
-            className="gap-2 px-4 py-2 h-auto transition-all duration-200 hover:scale-105" 
-            style={{
-              backgroundColor: 'var(--color-primary-default)',
-              color: 'var(--color-primary-on)',
-              borderRadius: 'var(--radius-sm)',
-              fontSize: 'var(--text-base)',
-              fontWeight: 'var(--font-weight-medium)',
-              height: '48px'
-            }}
-          >
-            <Icon name="account" size={16} variant="roundedOutline" />
-            Sign In
-          </Button>
-        </div>
+      {/* Let's Talk and Sign In Buttons */}
+      <div className="hidden md:flex items-center gap-4">
+        <Button 
+          onClick={() => onNavigate('/contact')}
+          className="gap-2 px-5 py-2.5 h-auto transition-all duration-200 hover:opacity-90"
+          style={{
+            backgroundColor: 'var(--color-bg-muted)',
+            color: 'var(--color-text-primary)',
+            borderRadius: 'var(--radius-md)',
+            fontWeight: 'var(--font-weight-medium)',
+            fontFamily: 'var(--font-family-base)'
+          }}
+        >
+          Let's Talk
+        </Button>
+        <Button 
+          onClick={onSignIn}
+          className="gap-2 px-5 py-2.5 h-auto transition-all duration-200 hover:scale-105" 
+          style={{
+            backgroundColor: 'var(--color-primary-default)',
+            color: 'var(--color-primary-on)',
+            borderRadius: 'var(--radius-md)',
+            fontWeight: 'var(--font-weight-medium)',
+            fontFamily: 'var(--font-family-base)'
+          }}
+        >
+          <Icon name="account" size={16} variant="roundedOutline" />
+          Sign In
+        </Button>
+      </div>
 
         {/* Mobile Menu */}
         <div className="md:hidden">
@@ -195,7 +178,6 @@ export function PublicNavBar({ currentRoute, onNavigate, onSignIn, className }: 
                       setIsSheetOpen(false);
                     }}
                   >
-                    <Icon name={item.icon} className="mr-3 h-5 w-5" />
                     {item.label}
                   </Button>
                 ))}
@@ -208,8 +190,8 @@ export function PublicNavBar({ currentRoute, onNavigate, onSignIn, className }: 
                   }}
                   className="w-full justify-start h-12 text-base font-medium"
                   style={{
-                    backgroundColor: 'var(--color-neutral-300)',
-                    color: 'var(--color-neutral-600)',
+                    backgroundColor: 'var(--color-bg-muted)',
+                    color: 'var(--color-text-primary)',
                   }}
                 >
                   Let's Talk
@@ -231,9 +213,7 @@ export function PublicNavBar({ currentRoute, onNavigate, onSignIn, className }: 
               </div>
             </SheetContent>
           </Sheet>
-
         </div>
-      </div>
-    </header>
+      </header>
   );
 }

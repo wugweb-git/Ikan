@@ -160,8 +160,7 @@ export function AdminDashboardAnalytics({ onBack, className }: AdminDashboardAna
   if (loading) {
     return (
       <div
-        className="min-h-screen flex items-center justify-center"
-        style={{ backgroundColor: 'var(--color-bg-page)', padding: 'var(--spacing-4)' }}
+        className="flex items-center justify-center min-h-[400px]"
       >
         <div className="text-center">
           <div
@@ -182,22 +181,15 @@ export function AdminDashboardAnalytics({ onBack, className }: AdminDashboardAna
   }
 
   return (
-    <div
-      className={cn('min-h-screen', className)}
-      style={{
-        backgroundColor: 'var(--color-bg-page)',
-        padding: isMobile ? 'var(--spacing-4)' : 'var(--spacing-8)'
-      }}
-    >
-      <div className="max-w-7xl mx-auto space-y-6">
-        <AdminHeader
-          title="Dashboard Analytics"
-          description="Track your platform's performance and growth"
-          onBack={onBack}
-          breadcrumbs={[{ label: 'Admin', onClick: onBack }, { label: 'Analytics' }]}
-        />
+    <div className="max-w-7xl mx-auto space-y-6">
+      <AdminHeader
+        title="Dashboard Analytics"
+        description="Track your platform's performance and growth"
+        onBack={onBack}
+        breadcrumbs={[{ label: 'Admin', onClick: onBack }, { label: 'Analytics' }]}
+      />
 
-        {/* Stats Grid */}
+      {/* Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           {stats.map((stat, index) => (
             <Card
@@ -413,6 +405,5 @@ export function AdminDashboardAnalytics({ onBack, className }: AdminDashboardAna
           </CardContent>
         </Card>
       </div>
-    </div>
   );
 }

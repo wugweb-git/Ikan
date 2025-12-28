@@ -134,13 +134,7 @@ export function AdminMediaManager({ onBack, className }: AdminMediaManagerProps)
 
   if (loading) {
     return (
-      <div
-        className="min-h-screen flex items-center justify-center"
-        style={{
-          backgroundColor: 'var(--color-bg-page)',
-          padding: 'var(--spacing-4)'
-        }}
-      >
+      <div className="flex items-center justify-center min-h-[400px]">
         <div className="text-center">
           <div
             className="animate-spin rounded-full border-4 mx-auto mb-4"
@@ -167,195 +161,187 @@ export function AdminMediaManager({ onBack, className }: AdminMediaManagerProps)
 
   return (
     <>
-      <div
-        className={cn('min-h-screen', className)}
-        style={{
-          backgroundColor: 'var(--color-bg-page)',
-          padding: isMobile ? 'var(--spacing-4)' : 'var(--spacing-8)'
-        }}
-      >
-        <div className="max-w-7xl mx-auto space-y-6">
-          <AdminHeader
-            title="Media Library"
-            description="Manage uploaded images, videos, and documents"
-            onBack={onBack}
-            breadcrumbs={[{ label: 'Admin', onClick: onBack }, { label: 'Media Library' }]}
-            stats={stats}
-            actions={
-              <Button
-                onClick={() => setShowUploadDialog(true)}
-                style={{
-                  height: 'var(--ikan-component-button-height)',
-                  borderRadius: 'var(--ikan-component-border-radius)',
-                  fontWeight: 'var(--font-weight-medium)',
-                  gap: 'var(--spacing-2)',
-                  backgroundColor: 'var(--color-primary-default)',
-                  color: 'var(--color-primary-on)'
-                }}
-              >
-                <Upload className="w-4 h-4" />
-                {!isMobile && 'Upload File'}
-              </Button>
+      <div className="max-w-7xl mx-auto space-y-6">
+        <AdminHeader
+          title="Media Library"
+          description="Manage uploaded images, videos, and documents"
+          onBack={onBack}
+          breadcrumbs={[{ label: 'Admin', onClick: onBack }, { label: 'Media Library' }]}
+          stats={stats}
+          actions={
+            <Button
+              onClick={() => setShowUploadDialog(true)}
+              style={{
+                height: 'var(--ikan-component-button-height)',
+                borderRadius: 'var(--ikan-component-border-radius)',
+                fontWeight: 'var(--font-weight-medium)',
+                gap: 'var(--spacing-2)',
+                backgroundColor: 'var(--color-primary-default)',
+                color: 'var(--color-primary-on)'
+              }}
+            >
+              <Upload className="w-4 h-4" />
+              {!isMobile && 'Upload File'}
+            </Button>
+          }
+        />
+
+        {/* Filters */}
+        <Card style={{ backgroundColor: 'var(--color-bg-card)', borderRadius: 'var(--radius-lg)' }}>
+          <CardContent className="p-4">
+            <div className="flex flex-col md:flex-row gap-4">
+              <div className="flex-1 relative">
+                <Search
+                  className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4"
+                  style={{ color: 'var(--color-text-muted)' }}
+                />
+                <Input
+                  placeholder="Search files..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  style={{
+                    paddingLeft: 'var(--spacing-10)',
+                    height: 'var(--ikan-component-button-height)',
+                    borderRadius: 'var(--ikan-component-border-radius)'
+                  }}
+                />
+              </div>
+              <div className="flex gap-2 overflow-x-auto">
+                {(['all', 'images', 'videos', 'documents'] as const).map((type) => (
+                  <Button
+                    key={type}
+                    variant={filterType === type ? 'default' : 'outline'}
+                    onClick={() => setFilterType(type)}
+                    size="sm"
+                    style={{
+                      height: 'var(--ikan-component-button-height)',
+                      borderRadius: 'var(--ikan-component-border-radius)',
+                      fontWeight: 'var(--font-weight-medium)',
+                      textTransform: 'capitalize',
+                      whiteSpace: 'nowrap'
+                    }}
+                  >
+                    {type}
+                  </Button>
+                ))}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Files Grid */}
+        {filteredFiles.length === 0 ? (
+          <AdminEmptyState
+            icon={ImageIcon}
+            title={searchQuery || filterType !== 'all' ? 'No files found' : 'No files uploaded yet'}
+            description={
+              searchQuery || filterType !== 'all'
+                ? 'Try adjusting your search or filter criteria'
+                : 'Upload your first file to get started.'
+            }
+            actionLabel={searchQuery || filterType !== 'all' ? 'Clear Filters' : 'Upload File'}
+            onAction={
+              searchQuery || filterType !== 'all'
+                ? () => {
+                    setSearchQuery('');
+                    setFilterType('all');
+                  }
+                : () => setShowUploadDialog(true)
             }
           />
-
-          {/* Filters */}
-          <Card style={{ backgroundColor: 'var(--color-bg-card)', borderRadius: 'var(--radius-lg)' }}>
-            <CardContent className="p-4">
-              <div className="flex flex-col md:flex-row gap-4">
-                <div className="flex-1 relative">
-                  <Search
-                    className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4"
-                    style={{ color: 'var(--color-text-muted)' }}
-                  />
-                  <Input
-                    placeholder="Search files..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    style={{
-                      paddingLeft: 'var(--spacing-10)',
-                      height: 'var(--ikan-component-button-height)',
-                      borderRadius: 'var(--ikan-component-border-radius)'
-                    }}
-                  />
-                </div>
-                <div className="flex gap-2 overflow-x-auto">
-                  {(['all', 'images', 'videos', 'documents'] as const).map((type) => (
-                    <Button
-                      key={type}
-                      variant={filterType === type ? 'default' : 'outline'}
-                      onClick={() => setFilterType(type)}
-                      size="sm"
-                      style={{
-                        height: 'var(--ikan-component-button-height)',
-                        borderRadius: 'var(--ikan-component-border-radius)',
-                        fontWeight: 'var(--font-weight-medium)',
-                        textTransform: 'capitalize',
-                        whiteSpace: 'nowrap'
-                      }}
+        ) : (
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            {filteredFiles.map((file) => (
+              <Card
+                key={file.id}
+                style={{
+                  backgroundColor: 'var(--color-bg-card)',
+                  borderRadius: 'var(--radius-lg)',
+                  boxShadow: 'var(--shadow-sm)',
+                  transition: 'all 0.2s',
+                  cursor: 'pointer'
+                }}
+                className="hover:shadow-md overflow-hidden"
+              >
+                <div className="aspect-square relative">
+                  {file.fileType.startsWith('image/') ? (
+                    <img
+                      src={file.url}
+                      alt={file.fileName}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div
+                      className="w-full h-full flex items-center justify-center"
+                      style={{ backgroundColor: 'var(--color-bg-muted)' }}
                     >
-                      {type}
-                    </Button>
-                  ))}
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Files Grid */}
-          {filteredFiles.length === 0 ? (
-            <AdminEmptyState
-              icon={ImageIcon}
-              title={searchQuery || filterType !== 'all' ? 'No files found' : 'No files uploaded yet'}
-              description={
-                searchQuery || filterType !== 'all'
-                  ? 'Try adjusting your search or filter criteria'
-                  : 'Upload your first file to get started.'
-              }
-              actionLabel={searchQuery || filterType !== 'all' ? 'Clear Filters' : 'Upload File'}
-              onAction={
-                searchQuery || filterType !== 'all'
-                  ? () => {
-                      setSearchQuery('');
-                      setFilterType('all');
-                    }
-                  : () => setShowUploadDialog(true)
-              }
-            />
-          ) : (
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-              {filteredFiles.map((file) => (
-                <Card
-                  key={file.id}
-                  style={{
-                    backgroundColor: 'var(--color-bg-card)',
-                    borderRadius: 'var(--radius-lg)',
-                    boxShadow: 'var(--shadow-sm)',
-                    transition: 'all 0.2s',
-                    cursor: 'pointer'
-                  }}
-                  className="hover:shadow-md overflow-hidden"
-                >
-                  <div className="aspect-square relative">
-                    {file.fileType.startsWith('image/') ? (
-                      <img
-                        src={file.url}
-                        alt={file.fileName}
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <div
-                        className="w-full h-full flex items-center justify-center"
-                        style={{ backgroundColor: 'var(--color-bg-muted)' }}
-                      >
-                        <div style={{ color: 'var(--color-primary-default)' }}>
-                          {getFileIcon(file.fileType)}
-                        </div>
+                      <div style={{ color: 'var(--color-primary-default)' }}>
+                        {getFileIcon(file.fileType)}
                       </div>
-                    )}
-                  </div>
-
-                  <CardContent className="p-3">
-                    <p
-                      style={{
-                        fontSize: 'var(--text-sm)',
-                        fontWeight: 'var(--font-weight-medium)',
-                        color: 'var(--color-text-primary)',
-                        marginBottom: 'var(--spacing-1)'
-                      }}
-                      className="truncate"
-                      title={file.fileName}
-                    >
-                      {file.fileName}
-                    </p>
-                    <p
-                      style={{
-                        fontSize: 'var(--text-xs)',
-                        color: 'var(--color-text-muted)',
-                        marginBottom: 'var(--spacing-2)'
-                      }}
-                    >
-                      {formatFileSize(file.fileSize)}
-                    </p>
-
-                    <div className="flex gap-1">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleCopyUrl(file.url)}
-                        style={{ flex: 1, padding: 'var(--spacing-1)' }}
-                        title="Copy URL"
-                      >
-                        <ExternalLink className="w-3 h-3" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => window.open(file.url, '_blank')}
-                        style={{ flex: 1, padding: 'var(--spacing-1)' }}
-                        title="Preview"
-                      >
-                        <Download className="w-3 h-3" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => {
-                          setSelectedFile(file);
-                          setIsDeleteDialogOpen(true);
-                        }}
-                        style={{ flex: 1, padding: 'var(--spacing-1)', color: 'var(--color-danger-default)' }}
-                        title="Delete"
-                      >
-                        <Trash2 className="w-3 h-3" />
-                      </Button>
                     </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          )}
-        </div>
+                  )}
+                </div>
+
+                <CardContent className="p-3">
+                  <p
+                    style={{
+                      fontSize: 'var(--text-sm)',
+                      fontWeight: 'var(--font-weight-medium)',
+                      color: 'var(--color-text-primary)',
+                      marginBottom: 'var(--spacing-1)'
+                    }}
+                    className="truncate"
+                    title={file.fileName}
+                  >
+                    {file.fileName}
+                  </p>
+                  <p
+                    style={{
+                      fontSize: 'var(--text-xs)',
+                      color: 'var(--color-text-muted)',
+                      marginBottom: 'var(--spacing-2)'
+                    }}
+                  >
+                    {formatFileSize(file.fileSize)} • {new Date(file.uploadedAt).toLocaleDateString()}
+                  </p>
+
+                  <div className="flex gap-1">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleCopyUrl(file.url)}
+                      style={{ flex: 1, padding: 'var(--spacing-1)' }}
+                      title="Copy URL"
+                    >
+                      <ExternalLink className="w-3 h-3" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => window.open(file.url, '_blank')}
+                      style={{ flex: 1, padding: 'var(--spacing-1)' }}
+                      title="Preview"
+                    >
+                      <Download className="w-3 h-3" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        setSelectedFile(file);
+                        setIsDeleteDialogOpen(true);
+                      }}
+                      style={{ flex: 1, padding: 'var(--spacing-1)', color: 'var(--color-danger-default)' }}
+                      title="Delete"
+                    >
+                      <Trash2 className="w-3 h-3" />
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Upload Dialog */}

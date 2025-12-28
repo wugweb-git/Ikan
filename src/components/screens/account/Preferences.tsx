@@ -1,9 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../../ui/card';
 import { Button } from '../../ui/button';
 import { Icon } from '../../Icon';
 import { Separator } from '../../ui/separator';
 import { useNotifications } from '../../../contexts/NotificationContext';
+import { useAuth } from '../../../contexts/AuthContext';
+import { apiClient } from '../../../lib/api-client';
 import { useIsMobile } from '../../../hooks/useIsMobile';
 import { cn } from '../../ui/utils';
 
@@ -24,6 +26,7 @@ interface UserPreferences {
 
 export function Preferences() {
   const { showToast } = useNotifications();
+  const { user } = useAuth();
   const isMobile = useIsMobile();
   
   const [preferences, setPreferences] = useState<UserPreferences>({
@@ -40,6 +43,15 @@ export function Preferences() {
     fontSize: 'medium',
     measurementSystem: 'metric'
   });
+
+  useEffect(() => {
+    if (user?.user_metadata?.preferences) {
+      setPreferences(prev => ({
+        ...prev,
+        ...user.user_metadata.preferences
+      }));
+    }
+  }, [user]);
 
   const [hasChanges, setHasChanges] = useState(false);
 
@@ -61,10 +73,15 @@ export function Preferences() {
     }
   };
 
-  const handleSavePreferences = () => {
-    // In real app, this would save to backend
-    showToast('success', 'Preferences Saved', 'Your preferences have been updated');
-    setHasChanges(false);
+  const handleSavePreferences = async () => {
+    try {
+      await apiClient.updateProfile({ preferences });
+      showToast('success', 'Preferences Saved', 'Your preferences have been updated');
+      setHasChanges(false);
+    } catch (error: any) {
+      console.error('Failed to save preferences:', error);
+      showToast('error', 'Save Failed', error.message || 'Failed to save preferences');
+    }
   };
 
   const handleResetPreferences = () => {

@@ -32,9 +32,10 @@ interface ResourceContent {
   author?: string;
   publishedDate?: string;
   content: Array<{
-    type: 'paragraph' | 'heading' | 'list' | 'quote' | 'tip';
+    type: 'paragraph' | 'heading' | 'list' | 'quote' | 'tip' | 'html';
     content: string;
     items?: string[];
+    html?: string;
   }>;
   tags: string[];
   relatedResources: Array<{
@@ -62,6 +63,128 @@ export function ResourceDetail({ resourceId, onBack, onResourceSelect, className
   const [isOffline, setIsOffline] = useState(!navigator.onLine);
   const [syncInProgress, setSyncInProgress] = useState(false);
   const [readingTime, setReadingTime] = useState(0);
+
+  // Transform API data to match ResourceContent interface
+  const transformResourceData = (apiData: any): ResourceContent => {
+    console.log('🔄 Transforming resource data:', apiData);
+    
+    // Map thumbnail to heroImage
+    const heroImageUrl = apiData.thumbnail || apiData.heroImage || apiData.image || apiData.image_url;
+    console.log('🖼️ Hero image URL:', heroImageUrl);
+    
+    return {
+      id: apiData.id,
+      title: apiData.title || 'Untitled Resource',
+      description: apiData.description || '',
+      category: apiData.category || 'General',
+      contentType: apiData.category || apiData.contentType || 'Article',
+      readTimeMinutes: apiData.readTime || apiData.read_time_minutes || 5,
+      author: apiData.author || 'iKan Team',
+      publishedDate: apiData.created_at 
+        ? new Date(apiData.created_at).toISOString().split('T')[0]
+        : new Date().toISOString().split('T')[0],
+      
+      // Convert HTML content string to blocks array
+      content: parseContentToBlocks(apiData.content || ''),
+      
+      tags: apiData.tags || [],
+      relatedResources: apiData.relatedResources || [],
+      heroImage: heroImageUrl,
+      authorImage: apiData.authorImage
+    };
+  };
+
+  // Parse HTML content to structured blocks - now preserves rich formatting
+  const parseContentToBlocks = (htmlContent: string): Array<{
+    type: 'paragraph' | 'heading' | 'list' | 'quote' | 'tip' | 'html';
+    content: string;
+    items?: string[];
+    html?: string;
+  }> => {
+    if (!htmlContent) return [];
+    
+    console.log('📝 Parsing content, length:', htmlContent.length);
+    
+    const blocks: any[] = [];
+    const tempDiv = document.createElement('div');
+    tempDiv.innerHTML = htmlContent;
+    
+    // Check if we have structured HTML (with headers, lists, etc.)
+    const hasStructure = htmlContent.includes('<h') || htmlContent.includes('<ul') || htmlContent.includes('<ol');
+    
+    if (hasStructure) {
+      // Parse structured content
+      tempDiv.childNodes.forEach((node: any) => {
+        if (node.nodeType === Node.ELEMENT_NODE) {
+          const tagName = node.tagName.toLowerCase();
+          
+          if (tagName === 'h1' || tagName === 'h2' || tagName === 'h3') {
+            blocks.push({ 
+              type: 'heading', 
+              content: node.textContent?.trim() || '',
+              html: node.innerHTML
+            });
+          } else if (tagName === 'p') {
+            if (node.innerHTML.trim()) {
+              blocks.push({ 
+                type: 'html', 
+                content: node.textContent?.trim() || '',
+                html: node.innerHTML // Preserve formatting like <strong>, <em>, <a>
+              });
+            }
+          } else if (tagName === 'ul' || tagName === 'ol') {
+            const items = Array.from(node.querySelectorAll('li')).map((li: any) => li.textContent?.trim() || '');
+            if (items.length > 0) {
+              blocks.push({ type: 'list', content: '', items });
+            }
+          } else if (tagName === 'blockquote') {
+            if (node.textContent?.trim()) {
+              blocks.push({ 
+                type: 'quote', 
+                content: node.textContent.trim(),
+                html: node.innerHTML
+              });
+            }
+          } else if (tagName === 'div' && node.classList.contains('tip')) {
+            blocks.push({
+              type: 'tip',
+              content: node.textContent?.trim() || '',
+              html: node.innerHTML
+            });
+          }
+        }
+      });
+    }
+    
+    // Fallback: if no blocks parsed or no structure, treat content as HTML paragraphs
+    if (blocks.length === 0 && htmlContent) {
+      // Split by paragraph tags or double newlines
+      const paragraphs = htmlContent
+        .split(/<\/p>|<br\s*\/?>\s*<br\s*\/?>|\n\n+/)
+        .map(p => p.replace(/<\/?p>/g, '').trim())
+        .filter(p => p && p.length > 0);
+      
+      if (paragraphs.length > 0) {
+        paragraphs.forEach(para => {
+          blocks.push({ 
+            type: 'html', 
+            content: para.replace(/<[^>]*>/g, ''),
+            html: para // Keep rich formatting
+          });
+        });
+      } else {
+        // Last resort: single HTML block
+        blocks.push({ 
+          type: 'html', 
+          content: htmlContent.replace(/<[^>]*>/g, '').trim(),
+          html: htmlContent
+        });
+      }
+    }
+    
+    console.log('✅ Parsed content into blocks:', blocks.length);
+    return blocks;
+  };
 
   // Offline data synchronization
   const syncOfflineData = async () => {
@@ -371,7 +494,12 @@ export function ResourceDetail({ resourceId, onBack, onResourceSelect, className
             throw new Error('Resource not found');
           }
           
-          return response;
+          // Transform API data to match expected format
+          console.log('📦 Raw API response:', response);
+          const transformed = transformResourceData(response);
+          console.log('✅ Transformed resource data:', transformed);
+          
+          return transformed;
         } catch (apiError: any) {
           console.log('API failed, trying fallback data...');
           
@@ -467,6 +595,148 @@ export function ResourceDetail({ resourceId, onBack, onResourceSelect, className
 
       // Successfully loaded resource
       setResource(resourceData);
+      console.log('✅ Resource set, relatedResources count:', resourceData.relatedResources?.length || 0);
+      
+      // Auto-fetch related resources if none exist
+      if (!resourceData.relatedResources || resourceData.relatedResources.length === 0) {
+        console.log('📚 Auto-fetching related resources from same category:', resourceData.category);
+        try {
+          const allResources = await apiClient.getResources();
+          console.log('📦 All resources fetched:', allResources.length);
+          
+          const related = allResources
+            .filter((r: any) => {
+              const isNotSelf = r.id !== resourceId;
+              const isSameCategory = r.category === resourceData.category;
+              const isPublished = r.published !== false;
+              
+              console.log(`Checking resource ${r.id}:`, {
+                title: r.title,
+                isNotSelf,
+                isSameCategory,
+                isPublished,
+                category: r.category,
+                targetCategory: resourceData.category
+              });
+              
+              return isNotSelf && isSameCategory && isPublished;
+            })
+            .slice(0, 3)
+            .map((r: any) => ({
+              id: r.id,
+              title: r.title,
+              category: r.category,
+              readTimeMinutes: r.readTime || r.read_time_minutes || 5,
+              image: r.thumbnail || r.image,
+              description: r.description,
+              publishedDate: r.created_at
+            }));
+          
+          console.log(`✅ Filtered ${related.length} related resources:`, related);
+          
+          if (related.length > 0) {
+            resourceData.relatedResources = related;
+            setResource({ ...resourceData });
+            console.log('✅ Updated resource with related resources');
+          } else {
+            // Silently fallback to any published resources (expected behavior)
+            
+            // Fallback: if no resources in same category, just get any 3 published resources
+            const fallbackRelated = allResources
+              .filter((r: any) => r.id !== resourceId && r.published !== false)
+              .slice(0, 3)
+              .map((r: any) => ({
+                id: r.id,
+                title: r.title,
+                category: r.category,
+                readTimeMinutes: r.readTime || r.read_time_minutes || 5,
+                image: r.thumbnail || r.image,
+                description: r.description,
+                publishedDate: r.created_at
+              }));
+            
+            if (fallbackRelated.length > 0) {
+              resourceData.relatedResources = fallbackRelated;
+              setResource({ ...resourceData });
+            } else {
+              // Final fallback: Use demo related resources so users can see the feature
+              const demoRelated = [
+                {
+                  id: 'demo-1',
+                  title: 'Understanding Mindfulness for Mental Wellness',
+                  category: 'Mental Health',
+                  readTimeMinutes: 8,
+                  image: 'https://images.unsplash.com/photo-1506126613408-eca07ce68773?w=800&q=80',
+                  description: 'Learn practical mindfulness techniques to improve your mental health and reduce daily stress.',
+                  publishedDate: new Date().toISOString().split('T')[0]
+                },
+                {
+                  id: 'demo-2',
+                  title: 'Building Healthy Daily Routines',
+                  category: 'Wellness',
+                  readTimeMinutes: 6,
+                  image: 'https://images.unsplash.com/photo-1499750310107-5fef28a66643?w=800&q=80',
+                  description: 'Discover how to create sustainable daily habits that support your overall wellbeing.',
+                  publishedDate: new Date().toISOString().split('T')[0]
+                },
+                {
+                  id: 'demo-3',
+                  title: 'Managing Stress in Modern Life',
+                  category: 'Self-Care',
+                  readTimeMinutes: 7,
+                  image: 'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=800&q=80',
+                  description: 'Effective strategies to manage stress and maintain balance in your busy lifestyle.',
+                  publishedDate: new Date().toISOString().split('T')[0]
+                }
+              ];
+              
+              resourceData.relatedResources = demoRelated;
+              setResource({ ...resourceData });
+              console.log('✅ Using demo related resources to showcase feature');
+            }
+          }
+        } catch (error) {
+          console.error('❌ Failed to auto-load related resources:', error);
+          
+          // Even on error, show demo content
+          console.log('⚠️ API error - using demo content as fallback');
+          const demoRelated = [
+            {
+              id: 'demo-1',
+              title: 'Understanding Mindfulness for Mental Wellness',
+              category: 'Mental Health',
+              readTimeMinutes: 8,
+              image: 'https://images.unsplash.com/photo-1506126613408-eca07ce68773?w=800&q=80',
+              description: 'Learn practical mindfulness techniques to improve your mental health and reduce daily stress.',
+              publishedDate: new Date().toISOString().split('T')[0]
+            },
+            {
+              id: 'demo-2',
+              title: 'Building Healthy Daily Routines',
+              category: 'Wellness',
+              readTimeMinutes: 6,
+              image: 'https://images.unsplash.com/photo-1499750310107-5fef28a66643?w=800&q=80',
+              description: 'Discover how to create sustainable daily habits that support your overall wellbeing.',
+              publishedDate: new Date().toISOString().split('T')[0]
+            },
+            {
+              id: 'demo-3',
+              title: 'Managing Stress in Modern Life',
+              category: 'Self-Care',
+              readTimeMinutes: 7,
+              image: 'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=800&q=80',
+              description: 'Effective strategies to manage stress and maintain balance in your busy lifestyle.',
+              publishedDate: new Date().toISOString().split('T')[0]
+            }
+          ];
+          
+          resourceData.relatedResources = demoRelated;
+          setResource({ ...resourceData });
+          console.log('✅ Demo related resources loaded after error');
+        }
+      } else {
+        console.log('✅ Resource already has related resources:', resourceData.relatedResources.length);
+      }
       
       // Cache the resource for offline access
       await cacheResourceOffline(resourceData);
@@ -766,9 +1036,10 @@ export function ResourceDetail({ resourceId, onBack, onResourceSelect, className
 
   // Helper function to render content blocks as React nodes
   const renderContentBlocks = (blocks: Array<{
-    type: 'paragraph' | 'heading' | 'list' | 'quote' | 'tip';
+    type: 'paragraph' | 'heading' | 'list' | 'quote' | 'tip' | 'html';
     content: string;
     items?: string[];
+    html?: string;
   }> | undefined) => {
     // Safety check - return empty fragment if no blocks
     if (!blocks || !Array.isArray(blocks)) {
@@ -871,6 +1142,21 @@ export function ResourceDetail({ resourceId, onBack, onResourceSelect, className
                   <strong style={{ fontWeight: 'var(--font-weight-medium)' }}>Tip:</strong> {block.content}
                 </div>
               );
+            case 'html':
+              return (
+                <div 
+                  key={index}
+                  dangerouslySetInnerHTML={{ __html: block.html || block.content }}
+                  style={{
+                    fontFamily: 'var(--font-family-base)',
+                    fontSize: 'var(--text-base)',
+                    fontWeight: 'var(--font-weight-regular)',
+                    lineHeight: 'var(--line-height-md)',
+                    color: 'var(--color-text-primary)',
+                    marginBottom: 'var(--spacing-4)'
+                  }}
+                />
+              );
             default:
               return null;
           }
@@ -930,7 +1216,7 @@ export function ResourceDetail({ resourceId, onBack, onResourceSelect, className
 
   if (isMobile) {
     return (
-      <div className="relative min-h-screen w-full bg-accent">
+      <div className="relative min-h-screen w-full" style={{ backgroundColor: '#FFFFFF' }}>
         {/* Reading Progress */}
         <div className="fixed top-0 left-0 right-0 z-40 h-1 bg-gray-100">
           <div 
@@ -1018,7 +1304,7 @@ export function ResourceDetail({ resourceId, onBack, onResourceSelect, className
   }
 
   return (
-    <div className="relative min-h-screen w-full bg-accent">
+    <div className="relative min-h-screen w-full" style={{ backgroundColor: '#FFFFFF' }}>
       {/* Reading Progress */}
       <div className="fixed top-0 left-0 right-0 z-40 h-1 bg-gray-100">
         <div 

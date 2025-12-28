@@ -52,15 +52,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         
         // Continue with session check in background
         try {
-          // Background session check (non-blocking) with timeout
+          // Background session check (non-blocking) with longer timeout
           const sessionPromise = supabase.auth.getSession();
           const timeoutPromise = new Promise((_, reject) => 
-            setTimeout(() => reject(new Error('Session check timeout')), 3000)
+            setTimeout(() => reject(new Error('Session check timeout')), 10000) // Increased to 10 seconds
           );
           
           const { data: { session }, error } = await Promise.race([sessionPromise, timeoutPromise]) as any;
           
           if (error) {
+            // specific handling for invalid refresh token
+            if (error.message && (
+              error.message.includes('Invalid Refresh Token') || 
+              error.message.includes('Refresh Token Not Found') ||
+              error.message.includes('not found')
+            )) {
+              console.log('🔄 Detected invalid refresh token, clearing session...');
+              await supabase.auth.signOut().catch(() => {});
+              setSession(null);
+              setUser(null);
+              return;
+            }
+            
             console.warn('Session error during background check:', error);
             return; // Don't block, just skip session setup
           }
@@ -108,7 +121,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             console.log('🔐 No valid session found during background check');
           }
         } catch (innerError) {
-          console.warn('Background session check error (non-blocking):', innerError);
+          // Silent handling - only log if it's not a timeout
+          const errorMessage = innerError instanceof Error ? innerError.message : String(innerError);
+          if (!errorMessage.includes('Session check timeout')) {
+            console.warn('Background session check error (non-blocking):', innerError);
+          }
+          // Timeout errors are completely ignored - this is expected on slow networks
         }
       } catch (outerError) {
         const errorMessage = outerError instanceof Error ? outerError.message : String(outerError);
@@ -241,7 +259,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           throw new Error('Demo password is "demo123". Please use the correct demo credentials.');
         }
         
-        console.error('Supabase sign in error:', error);
         throw new Error(error.message || 'Invalid email or password');
       }
       
@@ -355,6 +372,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const { data: { session: currentSession }, error: sessionError } = await supabase.auth.getSession();
       
       if (sessionError) {
+        // Handle invalid refresh token explicitly
+        if (sessionError.message && (
+          sessionError.message.includes('Invalid Refresh Token') || 
+          sessionError.message.includes('Refresh Token Not Found')
+        )) {
+          console.log('🔄 Invalid refresh token during recovery, forcing signout');
+          await supabase.auth.signOut().catch(() => {});
+          setSession(null);
+          setUser(null);
+          return false;
+        }
+
         console.log('❌ Session check error during recovery:', sessionError);
         await supabase.auth.signOut();
         setSession(null);

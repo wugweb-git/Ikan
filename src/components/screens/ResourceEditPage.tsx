@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Save, Trash2, FileText, BookOpen, Download, Globe, Eye, Tag, Link as LinkIcon } from 'lucide-react';
+import { Save, Trash2, FileText, BookOpen, Download, Globe, Eye, Tag, Link as LinkIcon, Upload, EyeOff } from 'lucide-react';
 import { useNotifications } from '../../contexts/NotificationContext';
 import { apiClient } from '../../lib/api-client';
 import { AdminPageLayout } from '../admin/AdminPageLayout';
@@ -20,6 +20,7 @@ import { useKeyboardShortcuts } from '../../hooks/useKeyboardShortcuts';
 import { UnsavedChangesDialog } from '../ui/unsaved-changes-dialog';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '../ui/dialog';
 import { Button } from '../ui/button';
+import { AdminActionBar } from '../ui/admin-action-bar';
 
 export interface Resource {
   id: string;
@@ -36,6 +37,7 @@ export interface Resource {
   videoUrl?: string;
   externalLink?: string;
   published: boolean;
+  published_at?: string;
   featured?: boolean;
   viewCount?: number;
   likes?: number;
@@ -148,7 +150,7 @@ export function ResourceEditPage({ resourceId, onBack, onSave }: ResourceEditPag
     }
   };
 
-  const handleSave = async () => {
+  const handleSave = async (shouldPublish?: boolean) => {
     const isValid = validateForm(formData);
     if (!isValid) {
       showToast('error', 'Validation Error', 'Please fix the errors before saving');
@@ -158,29 +160,52 @@ export function ResourceEditPage({ resourceId, onBack, onSave }: ResourceEditPag
     try {
       setSaving(true);
 
+      const dataToSave = { ...formData };
+      
+      // 🐛 DEBUG: Log what we're saving
+      console.log('📤 [RESOURCE SAVE] Starting save operation...');
+      console.log('📤 [RESOURCE SAVE] Resource ID:', resourceId);
+      console.log('📤 [RESOURCE SAVE] Should Publish:', shouldPublish);
+      console.log('📤 [RESOURCE SAVE] Title:', dataToSave.title);
+      console.log('📤 [RESOURCE SAVE] Thumbnail:', dataToSave.thumbnail);
+      console.log('📤 [RESOURCE SAVE] Full Data:', JSON.stringify(dataToSave, null, 2));
+      
+      // Handle publish/unpublish
+      if (shouldPublish !== undefined) {
+        dataToSave.published = shouldPublish;
+        if (shouldPublish) {
+          dataToSave.published_at = new Date().toISOString();
+        }
+      }
+
       if (resourceId) {
         try {
-          await apiClient.updateResource(resourceId, formData);
-          showToast('success', 'Success', 'Resource updated successfully');
+          console.log('📤 [RESOURCE SAVE] Calling updateResource...');
+          await apiClient.updateResource(resourceId, dataToSave);
+          console.log('✅ [RESOURCE SAVE] Update successful!');
+          showToast('success', 'Success', dataToSave.published ? 'Resource published successfully' : 'Resource saved as draft');
         } catch (error: any) {
           // If resource is not found on server (404), try to recreate it (upsert)
           if (error.message && error.message.includes('Resource not found')) {
-            console.warn('Resource not found during update, attempting to recreate/upsert...');
-            await apiClient.createResource({ ...formData, id: resourceId });
+            console.warn('⚠️ [RESOURCE SAVE] Resource not found during update, attempting to recreate/upsert...');
+            await apiClient.createResource({ ...dataToSave, id: resourceId });
+            console.log('✅ [RESOURCE SAVE] Resource restored and updated');
             showToast('success', 'Success', 'Resource restored and updated');
           } else {
             throw error;
           }
         }
       } else {
-        await apiClient.createResource(formData);
-        showToast('success', 'Success', 'Resource created successfully');
+        console.log('📤 [RESOURCE SAVE] Calling createResource...');
+        await apiClient.createResource(dataToSave);
+        console.log('✅ [RESOURCE SAVE] Create successful!');
+        showToast('success', 'Success', dataToSave.published ? 'Resource published successfully' : 'Resource created as draft');
       }
 
       markAsSaved();
       onSave();
     } catch (error: any) {
-      console.error('Failed to save resource:', error);
+      console.error('❌ [RESOURCE SAVE] Failed to save resource:', error);
       showToast('error', 'Error', error.message || 'Failed to save resource');
     } finally {
       setSaving(false);
@@ -251,23 +276,32 @@ export function ResourceEditPage({ resourceId, onBack, onSave }: ResourceEditPag
       <AdminPageLayout
         title={resourceId ? formData.title || 'Edit Resource' : 'New Resource'}
         subtitle={resourceId ? 'Update resource information' : 'Create a new educational resource'}
-        breadcrumbs={[
-          { label: 'Admin', onClick: onBack },
-          { label: 'Resources', onClick: onBack },
-          { label: resourceId ? formData.title || 'Edit' : 'New Resource' }
-        ]}
         status={
           formData.published
             ? { label: 'Published', variant: 'success' }
             : { label: 'Draft', variant: 'warning' }
         }
         primaryAction={{
-          label: resourceId ? 'Save Changes' : 'Create Resource',
-          icon: <Save className="w-4 h-4" />,
-          onClick: handleSave,
+          label: formData.published ? 'Unpublish' : 'Publish',
+          icon: formData.published ? <EyeOff className="w-4 h-4" /> : <Upload className="w-4 h-4" />,
+          onClick: () => handleSave(!formData.published),
           loading: saving
         }}
         secondaryActions={[
+          // Button 1: Cancel
+          {
+            label: 'Cancel',
+            icon: <X className="w-4 h-4" />,
+            onClick: () => {
+              if (hasUnsavedChanges) {
+                setShowWarning(true);
+              } else {
+                onBack();
+              }
+            },
+            variant: 'outline' as const
+          },
+          // Button 2: Delete (only show if editing existing resource)
           ...(resourceId
             ? [
                 {
@@ -277,15 +311,30 @@ export function ResourceEditPage({ resourceId, onBack, onSave }: ResourceEditPag
                   variant: 'destructive' as const
                 }
               ]
-            : [])
-        ]}
-        onBack={() => {
-          if (hasUnsavedChanges) {
-            setShowWarning(true);
-          } else {
-            onBack();
+            : [
+                {
+                  label: 'Delete',
+                  icon: <Trash2 className="w-4 h-4" />,
+                  onClick: () => {},
+                  variant: 'ghost' as const,
+                  disabled: true
+                }
+              ]),
+          // Button 3: Save Draft
+          {
+            label: 'Save Draft',
+            icon: <Save className="w-4 h-4" />,
+            onClick: () => handleSave(false),
+            variant: 'outline' as const
           }
-        }}
+        ]}
+        toggleActions={[
+          {
+            label: 'Featured',
+            checked: formData.featured || false,
+            onChange: (checked) => setFormData({ ...formData, featured: checked })
+          }
+        ]}
         maxWidth="xl"
       >
         {/* Basic Information */}
@@ -479,62 +528,14 @@ export function ResourceEditPage({ resourceId, onBack, onSave }: ResourceEditPag
           </div>
         </AdminSection>
 
-        {/* Publishing Options */}
-        <AdminSection
-          title="Publishing Options"
-          description="Control visibility and featured status"
-          icon={<Globe className="w-5 h-5" />}
-        >
-          <div className="space-y-4">
-            <div className="flex items-center gap-3 p-4 rounded-lg hover:bg-[var(--color-bg-muted)] transition-colors">
-              <Checkbox
-                id="published"
-                checked={formData.published || false}
-                onCheckedChange={(checked) => setFormData({ ...formData, published: checked as boolean })}
-              />
-              <div className="flex-1">
-                <Label htmlFor="published" className="cursor-pointer flex items-center gap-2">
-                  <Eye className="w-4 h-4" style={{ color: 'var(--color-success-default)' }} />
-                  Published
-                </Label>
-                <p
-                  style={{
-                    fontSize: 'var(--text-sm)',
-                    color: 'var(--color-text-muted)',
-                    marginTop: 'var(--spacing-1)'
-                  }}
-                >
-                  Make this resource visible to all users
-                </p>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-3 p-4 rounded-lg hover:bg-[var(--color-bg-muted)] transition-colors">
-              <Checkbox
-                id="featured"
-                checked={formData.featured || false}
-                onCheckedChange={(checked) => setFormData({ ...formData, featured: checked as boolean })}
-              />
-              <div className="flex-1">
-                <Label htmlFor="featured" className="cursor-pointer flex items-center gap-2">
-                  <Tag className="w-4 h-4" style={{ color: 'var(--color-warning-default)' }} />
-                  Featured
-                </Label>
-                <p
-                  style={{
-                    fontSize: 'var(--text-sm)',
-                    color: 'var(--color-text-muted)',
-                    marginTop: 'var(--spacing-1)'
-                  }}
-                >
-                  Show in featured resources section
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {resourceId && (
-            <div className="grid md:grid-cols-2 gap-4 mt-6">
+        {/* Analytics */}
+        {resourceId && (
+          <AdminSection
+            title="Analytics"
+            description="Resource performance metrics"
+            icon={<Globe className="w-5 h-5" />}
+          >
+            <div className="grid md:grid-cols-2 gap-4">
               <div className="p-4 rounded-lg" style={{ backgroundColor: 'var(--color-bg-muted)' }}>
                 <p
                   style={{
@@ -565,8 +566,20 @@ export function ResourceEditPage({ resourceId, onBack, onSave }: ResourceEditPag
                 </p>
               </div>
             </div>
-          )}
-        </AdminSection>
+          </AdminSection>
+        )}
+        
+        {/* WordPress-Style Action Bar */}
+        <AdminActionBar
+          onDelete={resourceId ? () => setIsDeleteDialogOpen(true) : undefined}
+          onCancel={onBack}
+          onSaveDraft={() => handleSave(false)}
+          onPublish={() => handleSave(true)}
+          isPublished={formData.published || false}
+          isSaving={saving}
+          showDelete={!!resourceId}
+          publishLabel={formData.published ? 'Update' : 'Save and Publish'}
+        />
       </AdminPageLayout>
 
       <UnsavedChangesDialog

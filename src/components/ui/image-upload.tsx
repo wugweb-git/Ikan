@@ -2,12 +2,14 @@ import React, { useRef, useState } from 'react';
 import { Upload, X, Image as ImageIcon } from 'lucide-react';
 import { Button } from './button';
 import { cn } from './utils';
+import { projectId, publicAnonKey } from '../../utils/supabase/info';
+import { toast } from 'sonner@2.0.3';
 
 interface ImageUploadProps {
   value?: string;
   /** 
    * Called when image is uploaded or changed
-   * @param url - The image URL (data URL or remote URL)
+   * @param url - The image URL (Supabase Storage URL or remote URL)
    */
   onChange: (url: string) => void;
   onRemove?: () => void;
@@ -15,7 +17,8 @@ interface ImageUploadProps {
   className?: string;
   aspectRatio?: 'square' | 'video' | 'wide' | 'portrait';
   maxSizeMB?: number;
-  placeholder?: string; // Not used in component but accepted for compatibility
+  placeholder?: string;
+  bucket?: string; // Supabase storage bucket name
 }
 
 export function ImageUpload({
@@ -25,11 +28,13 @@ export function ImageUpload({
   disabled = false,
   className,
   aspectRatio = 'video',
-  maxSizeMB = 5
+  maxSizeMB = 5,
+  bucket = 'make-cc205da9-images'
 }: ImageUploadProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
 
   const aspectRatioClasses = {
     square: 'aspect-square',
@@ -39,37 +44,106 @@ export function ImageUpload({
   };
 
   const handleFileSelect = async (file: File) => {
+    // Enhanced validation
     if (!file.type.startsWith('image/')) {
-      alert('Please select an image file');
+      toast.error('Invalid File Type', {
+        description: 'Please select an image file (JPG, PNG, WebP)'
+      });
       return;
     }
 
     if (file.size > maxSizeMB * 1024 * 1024) {
-      alert(`File size must be less than ${maxSizeMB}MB`);
+      toast.error('File Too Large', {
+        description: `Image must be smaller than ${maxSizeMB}MB. Current size: ${(file.size / (1024 * 1024)).toFixed(2)}MB`
+      });
+      return;
+    }
+
+    // Check file dimensions
+    try {
+      const img = new Image();
+      const objectUrl = URL.createObjectURL(file);
+      
+      await new Promise((resolve, reject) => {
+        img.onload = resolve;
+        img.onerror = reject;
+        img.src = objectUrl;
+      });
+      
+      URL.revokeObjectURL(objectUrl);
+      
+      // Warn if image is very large
+      if (img.width > 4000 || img.height > 4000) {
+        toast.warning('Large Image', {
+          description: 'This image is very large and may take longer to upload'
+        });
+      }
+    } catch (error) {
+      toast.error('Invalid Image', {
+        description: 'The selected file appears to be corrupted'
+      });
       return;
     }
 
     setIsLoading(true);
+    setUploadProgress(0);
 
     try {
-      // Convert to base64 for preview (in production, upload to server/Supabase)
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        onChange(reader.result as string);
-        setIsLoading(false);
-      };
-      reader.readAsDataURL(file);
+      // Upload to Supabase Storage via server endpoint
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('bucket', bucket);
       
-      // TODO: In production, upload to Supabase Storage and get URL
-      // const { data, error } = await supabase.storage
-      //   .from('images')
-      //   .upload(`${Date.now()}_${file.name}`, file);
-      // if (data) onChange(publicURL);
+      const response = await fetch(
+        `https://${projectId}.supabase.co/functions/v1/make-server-cc205da9/upload-image`,
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${publicAnonKey}`
+          },
+          body: formData
+        }
+      );
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Upload failed:', errorText);
+        
+        // Provide specific error messages
+        if (response.status === 413) {
+          throw new Error('File is too large for server');
+        } else if (response.status === 415) {
+          throw new Error('Unsupported file format');
+        } else if (response.status === 401) {
+          throw new Error('Authentication failed');
+        } else {
+          throw new Error(`Upload failed: ${response.status}`);
+        }
+      }
+
+      const data = await response.json();
+      
+      if (data.url) {
+        onChange(data.url);
+        setUploadProgress(100);
+        toast.success('Image Uploaded', {
+          description: 'Your image has been uploaded successfully'
+        });
+      } else {
+        throw new Error('No URL returned from server');
+      }
       
     } catch (error) {
       console.error('Upload error:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      
+      toast.error('Upload Failed', {
+        description: errorMessage + '. Please try again or paste a URL instead.',
+        duration: 5000
+      });
+    } finally {
       setIsLoading(false);
-      alert('Failed to upload image');
+      setUploadProgress(0);
     }
   };
 

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FileText, Search, Download, Edit, Plus, MoreHorizontal } from 'lucide-react';
+import { FileText, Download, Edit, Plus, MoreHorizontal, Eye, EyeOff, Trash2, ExternalLink } from 'lucide-react';
 import { useNotifications } from '../../contexts/NotificationContext';
 import { apiClient } from '../../lib/api-client';
 import { AdminHeader } from '../admin/AdminHeader';
@@ -10,11 +10,15 @@ import { Badge } from '../ui/badge';
 import { cn } from '../ui/utils';
 import { PageEditPage, Page } from './PageEditPage';
 import { AdminDataTable, Column } from '../admin/AdminDataTable';
+import { SkeletonTable } from '../ui/skeleton-loader';
+import { ErrorState } from '../ui/error-state';
+import { EmptyState } from '../ui/empty-state';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuLabel,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "../ui/dropdown-menu";
 
@@ -31,6 +35,7 @@ export function AdminPageManager({ onBack, className }: AdminPageManagerProps) {
 
   const [pages, setPages] = useState<Page[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
 
   const [viewMode, setViewMode] = useState<ViewMode>('list');
   const [selectedPageId, setSelectedPageId] = useState<string | undefined>();
@@ -54,6 +59,7 @@ export function AdminPageManager({ onBack, className }: AdminPageManagerProps) {
       setLoading(false);
     } catch (error: any) {
       console.error('Failed to load pages:', error);
+      setError(true);
       // GLOBAL APPROACH: Show infinite loader on error (don't stop loading)
       // This forces proper backend setup before deployment
       // User should see loader, not error state
@@ -78,6 +84,35 @@ export function AdminPageManager({ onBack, className }: AdminPageManagerProps) {
   const handleBackToList = () => {
     setViewMode('list');
     setSelectedPageId(undefined);
+  };
+
+  const handlePreview = (slug: string) => {
+    window.open(`/${slug}`, '_blank');
+  };
+
+  const handleTogglePublish = async (id: string, published: boolean) => {
+    try {
+      await apiClient.updatePage(id, { published });
+      setPages((prev) => prev.map((p) => (p.id === id ? { ...p, published } : p)));
+      showToast('success', 'Page Updated', `Page ${published ? 'published' : 'unpublished'}`);
+      loadPages(); // Reload to get fresh data
+    } catch (error: any) {
+      console.error('Failed to update page:', error);
+      showToast('error', 'API Error', 'Failed to update page');
+    }
+  };
+
+  const handleDelete = async (id: string, pageName: string) => {
+    if (!confirm(`Are you sure you want to delete page "${pageName}"? This action cannot be undone.`)) return;
+    
+    try {
+      await apiClient.deletePage(id);
+      setPages((prev) => prev.filter((p) => p.id !== id));
+      showToast('success', 'Page Deleted', 'Page has been permanently deleted');
+    } catch (error: any) {
+      console.error('Failed to delete page:', error);
+      showToast('error', 'API Error', 'Failed to delete page');
+    }
   };
 
   // -- Data Table Configuration --
@@ -124,6 +159,17 @@ export function AdminPageManager({ onBack, className }: AdminPageManagerProps) {
       )
     },
     {
+      header: 'Created',
+      accessorKey: 'created_at',
+      sortable: true,
+      className: 'hidden md:table-cell',
+      render: (page) => (
+        <span className="text-sm text-muted-foreground">
+          {page.created_at ? new Date(page.created_at).toLocaleDateString() : '-'}
+        </span>
+      )
+    },
+    {
       header: 'Actions',
       className: 'text-right',
       render: (page) => (
@@ -139,6 +185,19 @@ export function AdminPageManager({ onBack, className }: AdminPageManagerProps) {
             <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleEdit(page.id); }}>
               <Edit className="mr-2 h-4 w-4" /> Edit Page
             </DropdownMenuItem>
+            <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleTogglePublish(page.id, !page.published); }}>
+              {page.published ? <EyeOff className="mr-2 h-4 w-4" /> : <Eye className="mr-2 h-4 w-4" />} {page.published ? 'Unpublish' : 'Publish'}
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handlePreview(page.slug); }}>
+              <ExternalLink className="mr-2 h-4 w-4" /> Preview
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem 
+              onClick={(e) => { e.stopPropagation(); handleDelete(page.id, page.name); }}
+              className="text-red-600"
+            >
+              <Trash2 className="mr-2 h-4 w-4" /> Delete
+            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       )
@@ -151,37 +210,81 @@ export function AdminPageManager({ onBack, className }: AdminPageManagerProps) {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: 'var(--color-bg-page)' }}>
-        <div className="animate-spin rounded-full border-4" style={{ width: '48px', height: '48px', borderColor: 'var(--color-accent-default)', borderTopColor: 'var(--color-primary-default)' }} />
+      <div className="max-w-7xl mx-auto space-y-6">
+        <AdminHeader
+          title="Page Manager (CMS)"
+          description="Loading pages..."
+          onBack={onBack}
+          breadcrumbs={[{ label: 'Admin', onClick: onBack }, { label: 'Pages' }]}
+        />
+        <SkeletonTable rows={8} columns={5} />
       </div>
     );
   }
 
-  return (
-    <div className={cn('min-h-screen', className)} style={{ backgroundColor: 'var(--color-bg-page)', padding: isMobile ? 'var(--spacing-4)' : 'var(--spacing-8)' }}>
+  if (error) {
+    return (
       <div className="max-w-7xl mx-auto space-y-6">
         <AdminHeader
           title="Page Manager (CMS)"
           description="Manage website content pages"
           onBack={onBack}
           breadcrumbs={[{ label: 'Admin', onClick: onBack }, { label: 'Pages' }]}
-          stats={stats}
-          actions={
-            <>
-              <Button variant="outline" onClick={() => {}}><Download className="w-4 h-4" />{!isMobile && 'Export'}</Button>
-              <Button onClick={handleCreateNew} style={{ backgroundColor: 'var(--color-primary-default)', color: 'var(--color-primary-on)' }}><Plus className="w-4 h-4" />{!isMobile && 'Add Page'}</Button>
-            </>
-          }
         />
-
-        <AdminDataTable
-          columns={columns}
-          data={pages}
-          searchKeys={['name', 'title', 'slug']}
-          searchPlaceholder="Search pages..."
-          onRowClick={(item) => handleEdit(item.id)}
+        <ErrorState
+          variant="error"
+          title="Failed to Load Pages"
+          message="There was an error loading the pages. Please try again."
+          onRetry={loadPages}
+          onGoBack={onBack}
         />
       </div>
+    );
+  }
+
+  if (pages.length === 0) {
+    return (
+      <div className="max-w-7xl mx-auto space-y-6">
+        <AdminHeader
+          title="Page Manager (CMS)"
+          description="Manage website content pages"
+          onBack={onBack}
+          breadcrumbs={[{ label: 'Admin', onClick: onBack }, { label: 'Pages' }]}
+        />
+        <EmptyState
+          variant="folder"
+          title="No Pages Found"
+          description="Get started by creating your first content page."
+          actionLabel="Create First Page"
+          onAction={handleCreateNew}
+        />
+      </div>
+    );
+  }
+
+  return (
+    <div className="max-w-7xl mx-auto space-y-6">
+      <AdminHeader
+        title="Page Manager (CMS)"
+        description="Manage website content pages"
+        onBack={onBack}
+        breadcrumbs={[{ label: 'Admin', onClick: onBack }, { label: 'Pages' }]}
+        stats={stats}
+        actions={
+          <>
+            <Button variant="outline" onClick={() => {}}><Download className="w-4 h-4" />{!isMobile && 'Export'}</Button>
+            <Button onClick={handleCreateNew} style={{ backgroundColor: 'var(--color-primary-default)', color: 'var(--color-primary-on)' }}><Plus className="w-4 h-4" />{!isMobile && 'Add Page'}</Button>
+          </>
+        }
+      />
+
+      <AdminDataTable
+        columns={columns}
+        data={pages}
+        searchKeys={['name', 'title', 'slug']}
+        searchPlaceholder="Search pages..."
+        onRowClick={(item) => handleEdit(item.id)}
+      />
     </div>
   );
 }

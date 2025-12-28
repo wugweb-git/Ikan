@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Settings, Save, Globe, Mail, Share2, Bell, Shield, Palette, Code } from 'lucide-react';
+import { Settings, Save, Globe, Mail, Share2, Bell, Shield, Palette, Code, Search } from 'lucide-react';
 import { useNotifications } from '../../contexts/NotificationContext';
 import { apiClient } from '../../lib/api-client';
 import { AdminHeader } from '../admin/AdminHeader';
@@ -38,6 +38,24 @@ interface SiteSettings {
   smtpPassword: string;
   smtpFromEmail: string;
   smtpFromName: string;
+  
+  // Newsletter
+  newsletterEnabled: boolean;
+  newsletterTitle: string;
+  newsletterDescription: string;
+  newsletterImageUrl: string;
+  
+  // SEO
+  seoTitle: string;
+  seoDescription: string;
+  seoKeywords: string;
+  ogImage: string;
+  twitterCard: string;
+  
+  // Theme Customization
+  primaryColor: string;
+  accentColor: string;
+  brandLogoUrl: string;
   
   // Feature Toggles
   enableUserRegistration: boolean;
@@ -84,6 +102,18 @@ export function AdminSettingsManager({ onBack, className }: AdminSettingsManager
     smtpPassword: '',
     smtpFromEmail: '',
     smtpFromName: 'iKan Health',
+    newsletterEnabled: false,
+    newsletterTitle: 'Stay Updated',
+    newsletterDescription: 'Get the latest news and updates from iKan Health',
+    newsletterImageUrl: '',
+    seoTitle: 'iKan Mental Health',
+    seoDescription: 'Your companion for mental wellness',
+    seoKeywords: 'mental health, wellness, support, iKan Health',
+    ogImage: '',
+    twitterCard: 'summary_large_image',
+    primaryColor: '#007bff',
+    accentColor: '#ff6347',
+    brandLogoUrl: '',
     enableUserRegistration: true,
     enableComments: false,
     enableNotifications: true,
@@ -132,13 +162,7 @@ export function AdminSettingsManager({ onBack, className }: AdminSettingsManager
 
   if (loading) {
     return (
-      <div
-        className="min-h-screen flex items-center justify-center"
-        style={{
-          backgroundColor: 'var(--color-bg-page)',
-          padding: 'var(--spacing-4)'
-        }}
-      >
+      <div className="flex items-center justify-center min-h-[400px]">
         <div className="text-center">
           <div
             className="animate-spin rounded-full border-4 mx-auto mb-4"
@@ -158,49 +182,42 @@ export function AdminSettingsManager({ onBack, className }: AdminSettingsManager
   }
 
   return (
-    <div
-      className={cn('min-h-screen', className)}
-      style={{
-        backgroundColor: 'var(--color-bg-page)',
-        padding: isMobile ? 'var(--spacing-4)' : 'var(--spacing-8)'
-      }}
-    >
-      <div className="max-w-4xl mx-auto space-y-6">
-        <AdminHeader
-          title="Settings"
-          description="Configure your site settings and preferences"
-          onBack={onBack}
-          breadcrumbs={[{ label: 'Admin', onClick: onBack }, { label: 'Settings' }]}
-          actions={
-            <Button
-              onClick={handleSave}
-              disabled={saving}
-              style={{
-                height: 'var(--ikan-component-button-height)',
-                borderRadius: 'var(--ikan-component-border-radius)',
-                fontWeight: 'var(--font-weight-medium)',
-                gap: 'var(--spacing-2)',
-                backgroundColor: 'var(--color-primary-default)',
-                color: 'var(--color-primary-on)'
-              }}
-            >
-              {saving ? (
-                <>
-                  <div className="animate-spin rounded-full border-2 w-4 h-4" style={{ borderColor: 'white', borderTopColor: 'transparent' }} />
-                  Saving...
-                </>
-              ) : (
-                <>
-                  <Save className="w-4 h-4" />
-                  {!isMobile && 'Save Settings'}
-                </>
-              )}
-            </Button>
-          }
-        />
+    <div className="max-w-4xl mx-auto space-y-6">
+      <AdminHeader
+        title="Settings"
+        description="Configure your site settings and preferences"
+        onBack={onBack}
+        breadcrumbs={[{ label: 'Admin', onClick: onBack }, { label: 'Settings' }]}
+        actions={
+          <Button
+            onClick={handleSave}
+            disabled={saving}
+            style={{
+              height: 'var(--ikan-component-button-height)',
+              borderRadius: 'var(--ikan-component-border-radius)',
+              fontWeight: 'var(--font-weight-medium)',
+              gap: 'var(--spacing-2)',
+              backgroundColor: 'var(--color-primary-default)',
+              color: 'var(--color-primary-on)'
+            }}
+          >
+            {saving ? (
+              <>
+                <div className="animate-spin rounded-full border-2 w-4 h-4" style={{ borderColor: 'white', borderTopColor: 'transparent' }} />
+                Saving...
+              </>
+            ) : (
+              <>
+                <Save className="w-4 h-4" />
+                {!isMobile && 'Save Settings'}
+              </>
+            )}
+          </Button>
+        }
+      />
 
-        {/* General Settings */}
-        <AdminSection title="General Settings" description="Basic site information" icon={<Globe className="w-5 h-5" />}>
+      {/* General Settings */}
+      <AdminSection title="General Settings" description="Basic site information" icon={<Globe className="w-5 h-5" />}>
           <div className="grid md:grid-cols-2 gap-6">
             <AdminFormField label="Site Name" required>
               <Input value={settings.siteName} onChange={(e) => updateSetting('siteName', e.target.value)} placeholder="iKan Mental Health" />
@@ -288,6 +305,96 @@ export function AdminSettingsManager({ onBack, className }: AdminSettingsManager
 
             <AdminFormField label="From Name">
               <Input value={settings.smtpFromName} onChange={(e) => updateSetting('smtpFromName', e.target.value)} placeholder="iKan Health" />
+            </AdminFormField>
+          </div>
+        </AdminSection>
+
+        {/* Newsletter Settings */}
+        <AdminSection title="Newsletter Settings" description="Configure your newsletter" icon={<Bell className="w-5 h-5" />}>
+          <div className="space-y-4">
+            <div
+              className="flex items-center gap-3 p-4 rounded-lg hover:bg-[var(--color-bg-muted)] transition-colors"
+              style={{ border: '1px solid var(--color-accent-default)' }}
+            >
+              <Checkbox
+                id="newsletterEnabled"
+                checked={settings.newsletterEnabled}
+                onCheckedChange={(checked) => updateSetting('newsletterEnabled', checked as any)}
+              />
+              <div className="flex-1">
+                <Label htmlFor="newsletterEnabled" className="cursor-pointer" style={{ color: 'var(--color-accent-default)' }}>
+                  Enable Newsletter
+                </Label>
+                <p style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-muted)', marginTop: 'var(--spacing-1)' }}>
+                  Send regular updates to your subscribers
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="grid md:grid-cols-2 gap-6">
+            <AdminFormField label="Newsletter Title">
+              <Input value={settings.newsletterTitle} onChange={(e) => updateSetting('newsletterTitle', e.target.value)} placeholder="Stay Updated" />
+            </AdminFormField>
+
+            <AdminFormField label="Newsletter Description">
+              <Textarea
+                value={settings.newsletterDescription}
+                onChange={(e) => updateSetting('newsletterDescription', e.target.value)}
+                placeholder="Get the latest news and updates from iKan Health"
+                className="min-h-[80px]"
+              />
+            </AdminFormField>
+
+            <AdminFormField label="Newsletter Image URL">
+              <Input value={settings.newsletterImageUrl} onChange={(e) => updateSetting('newsletterImageUrl', e.target.value)} placeholder="https://..." />
+            </AdminFormField>
+          </div>
+        </AdminSection>
+
+        {/* SEO Settings */}
+        <AdminSection title="SEO Settings" description="Optimize your site for search engines" icon={<Code className="w-5 h-5" />}>
+          <div className="grid md:grid-cols-2 gap-6">
+            <AdminFormField label="SEO Title">
+              <Input value={settings.seoTitle} onChange={(e) => updateSetting('seoTitle', e.target.value)} placeholder="iKan Mental Health" />
+            </AdminFormField>
+
+            <AdminFormField label="SEO Description">
+              <Textarea
+                value={settings.seoDescription}
+                onChange={(e) => updateSetting('seoDescription', e.target.value)}
+                placeholder="Your companion for mental wellness"
+                className="min-h-[80px]"
+              />
+            </AdminFormField>
+
+            <AdminFormField label="SEO Keywords">
+              <Input value={settings.seoKeywords} onChange={(e) => updateSetting('seoKeywords', e.target.value)} placeholder="mental health, wellness, support, iKan Health" />
+            </AdminFormField>
+
+            <AdminFormField label="Open Graph Image URL">
+              <Input value={settings.ogImage} onChange={(e) => updateSetting('ogImage', e.target.value)} placeholder="https://..." />
+            </AdminFormField>
+
+            <AdminFormField label="Twitter Card Type">
+              <Input value={settings.twitterCard} onChange={(e) => updateSetting('twitterCard', e.target.value)} placeholder="summary_large_image" />
+            </AdminFormField>
+          </div>
+        </AdminSection>
+
+        {/* Theme Customization */}
+        <AdminSection title="Theme Customization" description="Customize your site's appearance" icon={<Palette className="w-5 h-5" />}>
+          <div className="grid md:grid-cols-2 gap-6">
+            <AdminFormField label="Primary Color">
+              <Input value={settings.primaryColor} onChange={(e) => updateSetting('primaryColor', e.target.value)} placeholder="#007bff" />
+            </AdminFormField>
+
+            <AdminFormField label="Accent Color">
+              <Input value={settings.accentColor} onChange={(e) => updateSetting('accentColor', e.target.value)} placeholder="#ff6347" />
+            </AdminFormField>
+
+            <AdminFormField label="Brand Logo URL">
+              <Input value={settings.brandLogoUrl} onChange={(e) => updateSetting('brandLogoUrl', e.target.value)} placeholder="https://..." />
             </AdminFormField>
           </div>
         </AdminSection>
@@ -389,7 +496,6 @@ export function AdminSettingsManager({ onBack, className }: AdminSettingsManager
             )}
           </Button>
         </div>
-      </div>
     </div>
   );
 }

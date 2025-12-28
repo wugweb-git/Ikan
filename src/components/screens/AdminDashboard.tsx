@@ -17,17 +17,25 @@ import {
   Server,
   FileText,
   BarChart,
-  ClipboardList
+  ClipboardList,
+  Users,
+  Tag,
+  Smile
 } from 'lucide-react';
 import { Button } from '../ui/button';
 import { cn } from '../ui/utils';
+import { SideNav, SideNavGroup } from '../navigation/SideNav';
+import { Logo } from '../Logo';
 import { AdminUserManager } from './AdminUserManager';
 import { AdminConsultationManager } from './AdminConsultationManager';
 import { AdminResourceManager } from './AdminResourceManager';
 import { AdminAssessmentManager } from './AdminAssessmentManager';
 import { AdminEquipProgramManager } from './AdminEquipProgramManager';
+import { AdminEquipAnalytics } from './AdminEquipAnalytics';
 import { AdminPageManager } from './AdminPageManager';
 import { AdminMediaManager } from './AdminMediaManager';
+import { AdminUserDataManager } from './AdminUserDataManager';
+import { AdminNewsletterManager } from './AdminNewsletterManager';
 import { AdminSettingsManager } from './AdminSettingsManager';
 import { AdminDashboardAnalytics } from './AdminDashboardAnalytics';
 import { AdminCRUDTesting } from '../admin/AdminCRUDTesting';
@@ -46,9 +54,12 @@ import { AdminComponentSpecs } from '../admin/AdminComponentSpecs';
 import { AdminUIKitShowcase } from '../admin/AdminUIKitShowcase';
 import { AdminMigration } from '../admin/AdminMigration';
 import { AdminDebugPanel } from '../admin/AdminDebugPanel';
+import { AdminCategoryManager } from '../admin/AdminCategoryManager';
+import { AdminMoodManager } from '../admin/AdminMoodManager';
 
 interface AdminDashboardProps {
   onNavigate: (path: string) => void;
+  initialView?: string;
 }
 
 type ViewType = 
@@ -59,8 +70,12 @@ type ViewType =
   | 'resources'
   | 'assessments'
   | 'equip'
+  | 'equip-analytics'
   | 'pages'
   | 'media'
+  | 'categories'
+  | 'moods'
+  | 'user-data'
   | 'settings'
   | 'crud'
   | 'migration'
@@ -75,30 +90,42 @@ type ViewType =
   | 'prototype'
   | 'sitemap'
   | 'navigation'
-  | 'specs'
-  | 'uikit';
+  | 'specs';
 
-export function AdminDashboard({ onNavigate }: AdminDashboardProps) {
-  const [currentView, setCurrentView] = useState<ViewType>('dashboard');
+export function AdminDashboard({ onNavigate, initialView }: AdminDashboardProps) {
+  const [currentView, setCurrentView] = useState<ViewType>((initialView as ViewType) || 'dashboard');
 
-  const sidebarItems = [
+  // Update view when initialView prop changes
+  React.useEffect(() => {
+    if (initialView) {
+      setCurrentView(initialView as ViewType);
+    }
+  }, [initialView]);
+
+  const navGroups: SideNavGroup[] = [
     {
-      section: 'Main',
+      id: 'main',
+      title: 'Main',
       items: [
         { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
         { id: 'analytics', label: 'Analytics', icon: BarChart },
-        { id: 'users', label: 'User Manager', icon: Settings },
+        { id: 'users', label: 'Account Management', icon: Settings },
         { id: 'consultants', label: 'Consultant Manager', icon: ClipboardList },
         { id: 'resources', label: 'Resource Manager', icon: Table },
         { id: 'assessments', label: 'Assessments', icon: ClipboardList },
         { id: 'equip', label: 'Equip Programs', icon: BookOpen },
+        { id: 'equip-analytics', label: 'Equip Analytics', icon: BarChart },
         { id: 'pages', label: 'Pages', icon: FileJson },
         { id: 'media', label: 'Media', icon: FileJson },
+        { id: 'categories', label: 'Categories', icon: Tag },
+        { id: 'moods', label: 'Mood Types', icon: Smile },
+        { id: 'user-data', label: 'Care Seeker Activity', icon: Users },
         { id: 'settings', label: 'Settings Manager', icon: Settings },
       ]
     },
     {
-      section: 'Backend',
+      id: 'backend',
+      title: 'Backend',
       items: [
         { id: 'crud', label: 'CRUD Testing', icon: Activity },
         { id: 'migration', label: 'Migration', icon: Database },
@@ -109,21 +136,24 @@ export function AdminDashboard({ onNavigate }: AdminDashboardProps) {
       ]
     },
     {
-      section: 'System',
+      id: 'system',
+      title: 'System',
       items: [
         { id: 'communication', label: 'Communication', icon: MessageSquare },
         { id: 'security', label: 'Security', icon: Shield },
       ]
     },
     {
-      section: 'API Integration',
+      id: 'api-integration',
+      title: 'API Integration',
       items: [
         { id: 'communication-api', label: 'Communication API', icon: MessageSquare },
         { id: 'payment-gateway', label: 'Payment Gateway', icon: Settings },
       ]
     },
     {
-      section: 'Support & Demos',
+      id: 'support-demos',
+      title: 'Support & Demos',
       items: [
         { id: 'prototype', label: 'Prototype Demo', icon: Layers },
         { id: 'sitemap', label: 'System Sitemap', icon: Map },
@@ -132,7 +162,19 @@ export function AdminDashboard({ onNavigate }: AdminDashboardProps) {
         { id: 'uikit', label: 'UI Kit Showcase', icon: Palette },
       ]
     }
-  ];
+  ].map(group => ({
+    ...group,
+    collapsible: true,
+    defaultExpanded: true,
+    items: group.items.map(item => ({
+      ...item,
+      isActive: currentView === item.id,
+      onClick: () => {
+        setCurrentView(item.id as ViewType);
+        window.scrollTo(0,0);
+      }
+    }))
+  }));
 
   const renderContent = () => {
     switch (currentView) {
@@ -157,8 +199,8 @@ export function AdminDashboard({ onNavigate }: AdminDashboardProps) {
                     <Settings className="w-6 h-6" />
                   </div>
                   <div>
-                    <h3 className="font-semibold text-lg">User Manager</h3>
-                    <p className="text-sm text-muted-foreground">Manage system users</p>
+                    <h3 className="font-semibold text-lg">Account Management</h3>
+                    <p className="text-sm text-muted-foreground">Manage user access & roles</p>
                   </div>
                 </div>
               </div>
@@ -201,8 +243,12 @@ export function AdminDashboard({ onNavigate }: AdminDashboardProps) {
       case 'resources': return <AdminResourceManager onBack={() => setCurrentView('dashboard')} />;
       case 'assessments': return <AdminAssessmentManager onBack={() => setCurrentView('dashboard')} />;
       case 'equip': return <AdminEquipProgramManager onBack={() => setCurrentView('dashboard')} />;
+      case 'equip-analytics': return <AdminEquipAnalytics onBack={() => setCurrentView('dashboard')} />;
       case 'pages': return <AdminPageManager onBack={() => setCurrentView('dashboard')} />;
       case 'media': return <AdminMediaManager onBack={() => setCurrentView('dashboard')} />;
+      case 'categories': return <AdminCategoryManager onBack={() => setCurrentView('dashboard')} />;
+      case 'moods': return <AdminMoodManager onBack={() => setCurrentView('dashboard')} />;
+      case 'user-data': return <AdminUserDataManager onBack={() => setCurrentView('dashboard')} />;
       case 'settings': return <AdminSettingsManager onBack={() => setCurrentView('dashboard')} />;
       case 'crud': return <AdminCRUDTesting />;
       case 'migration': return <AdminMigration />;
@@ -218,60 +264,43 @@ export function AdminDashboard({ onNavigate }: AdminDashboardProps) {
       case 'sitemap': return <AdminSystemSitemap />;
       case 'navigation': return <AdminNavigationGuide />;
       case 'specs': return <AdminComponentSpecs />;
-      case 'uikit': return <AdminUIKitShowcase />;
       default: return <div>Not implemented yet</div>;
     }
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex">
-      {/* Sidebar */}
-      <div className="w-64 bg-white border-r h-screen overflow-y-auto fixed left-0 top-0">
-        <div className="p-6 border-b">
-          <h1 className="text-xl font-bold flex items-center gap-2">
-            <LayoutDashboard className="w-6 h-6 text-primary" />
-            Admin Panel
-          </h1>
-        </div>
-        <div className="p-4 space-y-6">
-          {sidebarItems.map((section) => (
-            <div key={section.section}>
-              <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2 px-2">
-                {section.section}
-              </h4>
-              <div className="space-y-1">
-                {section.items.map((item) => (
-                  <Button
-                    key={item.id}
-                    variant={currentView === item.id ? "secondary" : "ghost"}
-                    className={cn(
-                      "w-full justify-start",
-                      currentView === item.id && "bg-secondary"
-                    )}
-                    onClick={() => {
-                      if (item.action) {
-                        item.action();
-                      } else {
-                        setCurrentView(item.id as ViewType);
-                        window.scrollTo(0,0);
-                      }
-                    }}
-                  >
-                    <item.icon className="mr-2 h-4 w-4" />
-                    {item.label}
-                  </Button>
-                ))}
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
+    <div className="min-h-screen bg-gray-50 flex flex-col">
+      {/* Top Header */}
+      <header className="bg-white border-b h-[var(--ikan-nav-height-mobile)] md:h-[var(--ikan-nav-height-desktop)] px-6 flex items-center justify-between sticky top-0 z-20 shadow-sm w-full">
+         <div className="flex items-center gap-3">
+            <Logo showText={true} iconSize={32} />
+            <div className="h-6 w-px bg-gray-200 mx-2 hidden md:block"></div>
+            <span className="text-muted-foreground font-medium hidden md:block">Admin Console</span>
+         </div>
+         <div className="flex items-center gap-4">
+            <Button variant="ghost" size="sm" onClick={() => onNavigate('/')}>Exit Admin</Button>
+         </div>
+      </header>
 
-      {/* Main Content */}
-      <div className="flex-1 ml-64 p-8">
-        <div className="max-w-6xl mx-auto">
-          {renderContent()}
-        </div>
+      <div className="flex flex-1 relative">
+        {/* Sidebar */}
+        <aside className="w-64 fixed left-0 top-[var(--ikan-nav-height-mobile)] md:top-[var(--ikan-nav-height-desktop)] bottom-0 overflow-y-auto bg-gray-50 border-r hidden md:block z-10 custom-scrollbar">
+          <div className="p-4">
+            <SideNav 
+              groups={navGroups} 
+              className="bg-transparent shadow-none p-0 w-full"
+              logoutLabel="Exit Admin"
+              onLogout={() => onNavigate('/')}
+            />
+          </div>
+        </aside>
+
+        {/* Main Content */}
+        <main className="flex-1 md:ml-64 p-4 md:p-8 w-full max-w-[100vw] overflow-x-hidden">
+          <div className="max-w-6xl mx-auto">
+            {renderContent()}
+          </div>
+        </main>
       </div>
     </div>
   );

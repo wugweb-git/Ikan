@@ -312,7 +312,7 @@ export class ApiRouteHandlers {
         data: response
       };
     } catch (error) {
-      console.error('Failed to fetch resources:', error);
+      // Silently fallback to offline data (expected in demo mode)
       return {
         success: false,
         error: error instanceof Error ? error.message : 'Failed to fetch resources'

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Save, Trash2, FileText, Edit, Search, Image, Video, Upload } from 'lucide-react';
+import { Save, Trash2, FileText, Edit, Search, Image, Video, Upload, EyeOff } from 'lucide-react';
 import { useNotifications } from '../../contexts/NotificationContext';
 import { apiClient } from '../../lib/api-client';
 import { AdminPageLayout } from '../admin/AdminPageLayout';
@@ -16,6 +16,7 @@ import { useKeyboardShortcuts } from '../../hooks/useKeyboardShortcuts';
 import { UnsavedChangesDialog } from '../ui/unsaved-changes-dialog';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '../ui/dialog';
 import { RichTextEditor } from '../ui/rich-text-editor';
+import { AdminActionBar } from '../ui/admin-action-bar';
 
 export interface Page {
   id: string;
@@ -34,6 +35,7 @@ export interface Page {
   ogTitle?: string;
   ogDescription?: string;
   published: boolean;
+  published_at?: string;
   created_at?: string;
   updated_at?: string;
 }
@@ -97,7 +99,7 @@ export function PageEditPage({ pageId, onBack, onSave }: PageEditPageProps) {
     }
   };
 
-  const handleSave = async () => {
+  const handleSave = async (shouldPublish?: boolean) => {
     if (!validateForm(formData)) {
       showToast('error', 'Validation Error', 'Please fix the errors');
       return;
@@ -105,17 +107,40 @@ export function PageEditPage({ pageId, onBack, onSave }: PageEditPageProps) {
 
     try {
       setSaving(true);
+
+      const dataToSave = { ...formData };
+      
+      // 🐛 DEBUG: Log what we're saving
+      console.log('📤 [PAGE SAVE] Starting save operation...');
+      console.log('📤 [PAGE SAVE] Page ID:', pageId);
+      console.log('📤 [PAGE SAVE] Should Publish:', shouldPublish);
+      console.log('📤 [PAGE SAVE] Name:', dataToSave.name);
+      console.log('📤 [PAGE SAVE] Title:', dataToSave.title);
+      console.log('📤 [PAGE SAVE] Full Data:', JSON.stringify(dataToSave, null, 2));
+      
+      // Handle publish/unpublish
+      if (shouldPublish !== undefined) {
+        dataToSave.published = shouldPublish;
+        if (shouldPublish) {
+          dataToSave.published_at = new Date().toISOString();
+        }
+      }
+
       if (pageId) {
-        await apiClient.updatePage(pageId, formData);
-        showToast('success', 'Success', 'Page updated');
+        console.log('📤 [PAGE SAVE] Calling updatePage...');
+        await apiClient.updatePage(pageId, dataToSave);
+        console.log('✅ [PAGE SAVE] Update successful!');
+        showToast('success', 'Success', dataToSave.published ? 'Page published successfully' : 'Page saved as draft');
       } else {
-        await apiClient.createPage(formData);
-        showToast('success', 'Success', 'Page created');
+        console.log('📤 [PAGE SAVE] Calling createPage...');
+        await apiClient.createPage(dataToSave);
+        console.log('✅ [PAGE SAVE] Create successful!');
+        showToast('success', 'Success', dataToSave.published ? 'Page published successfully' : 'Page created as draft');
       }
       markAsSaved();
       onSave();
     } catch (error: any) {
-      console.error('Failed to save page:', error);
+      console.error('❌ [PAGE SAVE] Failed to save page:', error);
       showToast('error', 'Error', error.message || 'Failed to save');
     } finally {
       setSaving(false);
@@ -160,11 +185,55 @@ export function PageEditPage({ pageId, onBack, onSave }: PageEditPageProps) {
       <AdminPageLayout
         title={pageId ? formData.name || 'Edit Page' : 'New Page'}
         subtitle={pageId ? 'Update page information' : 'Create a new content page'}
-        breadcrumbs={[{ label: 'Admin', onClick: onBack }, { label: 'Pages', onClick: onBack }, { label: pageId ? formData.name || 'Edit' : 'New Page' }]}
         status={formData.published ? { label: 'Published', variant: 'success' } : { label: 'Draft', variant: 'warning' }}
-        primaryAction={{ label: pageId ? 'Save Changes' : 'Create Page', icon: <Save className="w-4 h-4" />, onClick: handleSave, loading: saving }}
-        secondaryActions={pageId ? [{ label: 'Delete', icon: <Trash2 className="w-4 h-4" />, onClick: () => setIsDeleteDialogOpen(true), variant: 'destructive' as const }] : []}
-        onBack={() => { hasUnsavedChanges ? setShowWarning(true) : onBack(); }}
+        primaryAction={{
+          label: formData.published ? 'Unpublish' : 'Publish',
+          icon: formData.published ? <EyeOff className="w-4 h-4" /> : <Upload className="w-4 h-4" />,
+          onClick: () => handleSave(!formData.published),
+          loading: saving
+        }}
+        secondaryActions={[
+          // Button 1: Cancel
+          {
+            label: 'Cancel',
+            icon: <X className="w-4 h-4" />,
+            onClick: () => {
+              if (hasUnsavedChanges) {
+                setShowWarning(true);
+              } else {
+                onBack();
+              }
+            },
+            variant: 'outline' as const
+          },
+          // Button 2: Delete
+          ...(pageId
+            ? [
+                {
+                  label: 'Delete',
+                  icon: <Trash2 className="w-4 h-4" />,
+                  onClick: () => setIsDeleteDialogOpen(true),
+                  variant: 'destructive' as const
+                }
+              ]
+            : [
+                {
+                  label: 'Delete',
+                  icon: <Trash2 className="w-4 h-4" />,
+                  onClick: () => {},
+                  variant: 'ghost' as const,
+                  disabled: true
+                }
+              ]),
+          // Button 3: Save Draft
+          {
+            label: 'Save Draft',
+            icon: <Save className="w-4 h-4" />,
+            onClick: () => handleSave(false),
+            variant: 'outline' as const
+          }
+        ]}
+        toggleActions={[]}
         maxWidth="xl"
       >
         <AdminSection title="Page Information" description="Basic page settings" icon={<FileText className="w-5 h-5" />}>
@@ -290,6 +359,18 @@ export function PageEditPage({ pageId, onBack, onSave }: PageEditPageProps) {
             <Label htmlFor="published" className="cursor-pointer">Published - Make this page visible to all users</Label>
           </div>
         </AdminSection>
+        
+        {/* WordPress-Style Action Bar */}
+        <AdminActionBar
+          onDelete={pageId ? () => setIsDeleteDialogOpen(true) : undefined}
+          onCancel={onBack}
+          onSaveDraft={() => handleSave(false)}
+          onPublish={() => handleSave(true)}
+          isPublished={formData.published}
+          isSaving={saving}
+          showDelete={!!pageId}
+          publishLabel={formData.published ? 'Update' : 'Save and Publish'}
+        />
       </AdminPageLayout>
 
       <UnsavedChangesDialog open={showWarning} onOpenChange={setShowWarning} onConfirm={() => { markAsSaved(); onBack(); }} />

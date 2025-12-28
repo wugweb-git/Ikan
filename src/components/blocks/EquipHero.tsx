@@ -34,85 +34,91 @@ export function EquipHero({
     <section 
       className={`relative w-full ${className}`}
       style={{
-        minHeight: 'clamp(500px, 60vh, 900px)',
-        paddingTop: 'var(--ikan-nav-clearance-mobile)',
-        backgroundColor: 'var(--color-bg-page)'
+        minHeight: 'clamp(500px, 60vh, 700px)',
+        margin: 0,
+        padding: 0,
+        position: 'relative',
+        zIndex: 0, // Behind navbar (navbar should have higher z-index)
       }}
     >
-      <div className="relative h-full w-full max-w-7xl mx-auto">
-        {/* Background Image */}
-        {backgroundImage && (
-          <div 
-            className="absolute inset-0"
-            style={{ 
-              borderRadius: 'clamp(var(--radius-lg), 2vw, 80px)',
-              overflow: 'hidden'
-            }}
-          >
-            <img
-              alt={backgroundAlt}
-              className="absolute inset-0 w-full h-full object-cover pointer-events-none"
-              src={backgroundImage}
-            />
-          </div>
-        )}
-
-        {/* Content */}
+      {/* Full-bleed Background Image - Edge to Edge */}
+      {backgroundImage && (
         <div 
-          className="relative h-full flex items-center"
+          className="absolute inset-0"
           style={{ 
-            padding: 'clamp(var(--spacing-4), 4vw, var(--spacing-12))',
-            minHeight: 'clamp(500px, 60vh, 900px)'
+            width: '100vw',
+            height: '100%',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            overflow: 'hidden',
           }}
         >
-          <div 
-            className="max-w-2xl"
-            style={{ gap: 'var(--spacing-6)' }}
+          <img
+            alt={backgroundAlt}
+            className="absolute inset-0 w-full h-full object-cover pointer-events-none"
+            src={backgroundImage}
+          />
+        </div>
+      )}
+
+      {/* Content Container - Constrained with Padding */}
+      <div 
+        className="relative h-full flex items-center"
+        style={{ 
+          minHeight: 'clamp(500px, 60vh, 700px)',
+          maxWidth: '1280px',
+          margin: '0 auto',
+          padding: 'clamp(var(--spacing-6), 5vw, var(--spacing-12)) var(--spacing-4)',
+          zIndex: 1,
+        }}
+      >
+        <div 
+          className="max-w-2xl"
+          style={{ gap: 'var(--spacing-6)' }}
+        >
+          {/* Title */}
+          <h1 
+            className="mb-4"
+            style={{
+              fontSize: 'clamp(2rem, 5vw, 3.625rem)',
+              fontWeight: 'var(--font-weight-medium)',
+              color: 'var(--color-text-primary)',
+              fontFamily: 'var(--font-family-base)',
+              lineHeight: 'var(--line-height-sm)'
+            }}
           >
-            {/* Title */}
-            <h1 
-              className="mb-4"
-              style={{
-                fontSize: 'clamp(2rem, 5vw, 3.625rem)',
-                fontWeight: 'var(--font-weight-medium)',
-                color: 'var(--color-text-primary)',
-                fontFamily: 'var(--font-family-base)',
-                lineHeight: 'var(--line-height-sm)'
-              }}
-            >
-              {title}
-            </h1>
+            {title}
+          </h1>
 
-            {/* Description */}
-            <p 
-              className="mb-6 md:mb-8"
-              style={{
-                fontSize: 'var(--text-base)',
-                color: 'var(--color-text-primary)',
-                fontFamily: 'var(--font-family-base)',
-                lineHeight: 'var(--line-height-md)',
-                maxWidth: '600px'
-              }}
-            >
-              {description}
-            </p>
+          {/* Description */}
+          <p 
+            className="mb-6 md:mb-8"
+            style={{
+              fontSize: 'var(--text-base)',
+              color: 'var(--color-text-primary)',
+              fontFamily: 'var(--font-family-base)',
+              lineHeight: 'var(--line-height-md)',
+              maxWidth: '600px'
+            }}
+          >
+            {description}
+          </p>
 
-            {/* CTA Button */}
-            <Button
-              onClick={handleClick}
-              className="ikan-button touch-target"
-              style={{
-                backgroundColor: 'var(--color-primary-default)',
-                color: 'var(--color-primary-on)',
-                height: '48px',
-                borderRadius: 'var(--radius-sm)',
-                paddingLeft: 'var(--spacing-5)',
-                paddingRight: 'var(--spacing-5)'
-              }}
-            >
-              {buttonText}
-            </Button>
-          </div>
+          {/* CTA Button */}
+          <Button
+            onClick={handleClick}
+            className="ikan-button touch-target"
+            style={{
+              backgroundColor: 'var(--color-primary-default)',
+              color: 'var(--color-primary-on)',
+              height: '48px',
+              borderRadius: 'var(--radius-sm)',
+              paddingLeft: 'var(--spacing-5)',
+              paddingRight: 'var(--spacing-5)'
+            }}
+          >
+            {buttonText}
+          </Button>
         </div>
       </div>
     </section>

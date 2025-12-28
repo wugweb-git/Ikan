@@ -24,7 +24,11 @@
     "audit:accessibility": "npx tsx scripts/accessibility-audit.ts",
     "audit:imports": "npx tsx scripts/cleanup-unused-imports.ts",
     "organize:docs": "npx tsx scripts/move-docs-to-docs-dir.ts",
-    "type-check": "npx tsc --noEmit"
+    "type-check": "npx tsc --noEmit",
+    "screenshots:generate": "node screenshot-generator.js",
+    "screenshots:verify": "echo 'Open Chrome DevTools > Application > Manifest to verify screenshots'",
+    "pwa:audit": "npm run build && npx lighthouse http://localhost:4173 --only-categories=pwa --view",
+    "performance:audit": "npm run build && npx lighthouse http://localhost:4173 --view"
   },
   "dependencies": {
     "@radix-ui/react-accordion": "^1.2.3",

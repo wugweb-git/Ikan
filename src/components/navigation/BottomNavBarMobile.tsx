@@ -195,18 +195,20 @@ export function BottomNavBarMobile({
   return (
     <div 
       className={cn(
-        "bg-white relative rounded-[12px] size-full",
+        "fixed bg-white rounded-[12px]",
         className
       )}
       style={{
-        height: 'var(--ikan-nav-height-mobile)'
+        bottom: '12px',
+        left: '12px',
+        right: '12px',
+        height: '80px', // Increased from default
+        zIndex: 'var(--z-nav)',
+        border: '1px solid #D1D5DB', // Grey outline like top nav
+        boxShadow: '0 -2px 8px rgba(0, 0, 0, 0.05)' // Subtle floating shadow
       }}
     >
-      {/* Border from Figma design */}
-      <div 
-        aria-hidden="true" 
-        className="absolute border border-[#d6d6d6] border-solid inset-0 pointer-events-none rounded-[12px]" 
-      />
+      {/* Border from Figma design - removed since we're using inline border */}
       
       <div className="flex flex-row items-center justify-center size-full">
         <div className="box-border content-stretch flex items-center justify-center p-[10px] relative size-full">

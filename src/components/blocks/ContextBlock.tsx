@@ -1,129 +1,114 @@
 import React from 'react';
-import { Button } from '../ui/button';
 import { ImageWithFallback } from '../figma/ImageWithFallback';
-import { Play } from 'lucide-react';
 
 interface ContextBlockProps {
   title?: string;
   content?: string;
+  contentHtml?: string;
   image?: string;
   imageAlt?: string;
+  bullets?: string[];
+  bulletsTitle?: string; // NEW: Configurable title for bullets
+  // Legacy props ignored in strict mode but kept for interface compatibility
   videoCaption?: string;
   onVideoClick?: () => void;
   showPlayButton?: boolean;
 }
 
 export function ContextBlock({
-  title = "Our Mission",
-  content = "",
+  title = "What is Sleep Tight?",
+  content,
+  contentHtml,
   image,
   imageAlt = "Context image",
-  videoCaption = "Watch the full interview",
-  onVideoClick,
-  showPlayButton = true,
+  bullets = [],
+  bulletsTitle = "The program includes:" // Default
 }: ContextBlockProps) {
+  
+  // Enforce "Exactly 2 paragraphs" logic if using raw content string
+  // If contentHtml is provided, we assume the backend/transformer handled it,
+  // but for the raw string, we'll split and take max 2.
+  const paragraphs = content 
+    ? content.split('\n').filter(p => p.trim().length > 0).slice(0, 2)
+    : [];
+
   return (
     <section 
-      className="w-full"
-      style={{
-        backgroundColor: 'var(--color-bg-card)',
-        paddingTop: 'clamp(var(--spacing-8), 6vw, var(--spacing-12))',
-        paddingBottom: 'clamp(var(--spacing-8), 6vw, var(--spacing-12))'
-      }}
+      className="w-full py-12 md:py-16"
+      style={{ backgroundColor: 'var(--color-bg-page)' }}
     >
-      <div 
-        className="max-w-7xl mx-auto"
-        style={{ padding: '0 var(--spacing-4)' }}
-      >
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 md:gap-8 lg:gap-12 items-center">
-          {/* Video/Image Section */}
-          {image && (
-            <div className="flex-shrink-0 w-96">
-              <div 
-                className="relative rounded-xl overflow-hidden h-80"
-                style={{ borderRadius: 'var(--radius-lg)' }}
-              >
+      <div className="max-w-7xl mx-auto px-4">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-16 items-start">
+          
+          {/* Left Column: Image (4:3 or 1:1) */}
+          <div className="w-full order-2 lg:order-1">
+            <div 
+              className="relative rounded-2xl overflow-hidden bg-[var(--color-neutral-100)]"
+              style={{ aspectRatio: '4/3' }}
+            >
+              {image ? (
                 <ImageWithFallback 
                   src={image}
                   alt={imageAlt}
                   className="w-full h-full object-cover"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
-                {showPlayButton && (
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <Button 
-                      onClick={onVideoClick}
-                      size="lg" 
-                      className="rounded-full w-16 h-16 p-0"
-                      style={{
-                        backgroundColor: 'rgba(255, 255, 255, 0.9)',
-                        color: 'var(--color-text-primary)',
-                        borderRadius: 'var(--radius-pill)'
-                      }}
-                    >
-                      <Play className="w-6 h-6 ml-1" />
-                    </Button>
-                  </div>
-                )}
-                {videoCaption && (
-                  <div className="absolute bottom-6 left-6 right-6">
-                    <p 
-                      className="text-center"
-                      style={{
-                        color: 'var(--color-text-inverse)',
-                        fontSize: 'var(--text-sm)',
-                        fontWeight: 'var(--font-weight-medium)',
-                        fontFamily: 'var(--font-family-base)'
-                      }}
-                    >
-                      {videoCaption.split('\n').map((line, i) => (
-                        <React.Fragment key={i}>
-                          {line}
-                          {i < videoCaption.split('\n').length - 1 && <br />}
-                        </React.Fragment>
-                      ))}
+              ) : (
+                <div className="flex items-center justify-center h-full text-[var(--color-text-muted)]">
+                  Image Placeholder
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Right Column: Content Card */}
+          <div className="flex flex-col justify-center order-1 lg:order-2 h-full">
+            <div className="bg-[var(--color-bg-card)] rounded-2xl border border-[var(--color-border-default)] p-8 lg:p-10 shadow-sm h-full">
+              
+              {/* Section Title */}
+              {title && (
+                <h2 className="mb-6 text-3xl font-medium text-[var(--color-text-primary)]">
+                  {title}
+                </h2>
+              )}
+
+              {/* Body Paragraphs (Max 2) */}
+              <div className="space-y-4 mb-8">
+                {contentHtml ? (
+                  <div 
+                    className="rich-text-content space-y-4 text-base text-[var(--color-text-muted)] leading-relaxed"
+                    dangerouslySetInnerHTML={{ __html: contentHtml }}
+                  />
+                ) : (
+                  paragraphs.map((para, idx) => (
+                    <p key={idx} className="text-base text-[var(--color-text-muted)] leading-relaxed">
+                      {para}
                     </p>
-                  </div>
+                  ))
                 )}
               </div>
-            </div>
-          )}
 
-          {/* Content Section */}
-          <div 
-            className="flex-1 p-12 rounded-xl flex flex-col justify-center"
-            style={{
-              backgroundColor: 'var(--color-accent-default)',
-              borderRadius: 'var(--radius-lg)'
-            }}
-          >
-            {title && (
-              <h2 
-                className="mb-6"
-                style={{
-                  fontSize: 'var(--text-3xl)',
-                  fontWeight: 'var(--font-weight-medium)',
-                  color: 'var(--color-text-primary)',
-                  fontFamily: 'var(--font-family-base)'
-                }}
-              >
-                {title}
-              </h2>
-            )}
-            {content && (
-              <p 
-                className="leading-relaxed"
-                style={{
-                  fontSize: 'var(--text-base)',
-                  color: 'var(--color-text-muted)',
-                  lineHeight: 'var(--line-height-md)',
-                  fontFamily: 'var(--font-family-base)'
-                }}
-              >
-                {content}
-              </p>
-            )}
+              {/* "The program includes" List */}
+              {bullets.length > 0 && (
+                <div className="pt-6 border-t border-[var(--color-border-default)]">
+                  {/* Render title only if provided and not empty */}
+                  {bulletsTitle && (
+                    <h3 className="mb-4 text-xs font-semibold uppercase tracking-wider text-[var(--color-text-muted)]">
+                      {bulletsTitle}
+                    </h3>
+                  )}
+                  <ul className="space-y-3">
+                    {bullets.slice(0, 3).map((bullet, idx) => (
+                      <li key={idx} className="flex items-start gap-3 text-[var(--color-text-primary)] text-base">
+                        <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-[var(--color-primary-default)] shrink-0" />
+                        <span className="leading-relaxed">{bullet}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
           </div>
+
         </div>
       </div>
     </section>

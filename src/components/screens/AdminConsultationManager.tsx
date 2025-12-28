@@ -12,6 +12,7 @@ import {
 import { useNotifications } from '../../contexts/NotificationContext';
 import { apiClient } from '../../lib/api-client';
 import { AdminHeader } from '../admin/AdminHeader';
+import { AdminEmptyState } from '../admin/AdminEmptyState';
 import { useIsMobile } from '../../hooks/useIsMobile';
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
@@ -19,6 +20,10 @@ import { ConsultantEditPage, Consultant } from './ConsultantEditPage';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '../ui/dialog';
 import { BookingCalendar } from '../admin/BookingCalendar';
 import { AdminDataTable, Column, FilterOption } from '../admin/AdminDataTable';
+import { ErrorState } from '../ui/error-state';
+import { EmptyState } from '../ui/empty-state';
+import { Skeleton } from '../ui/skeleton-loader';
+import { TouchFeedback } from '../ui/touch-feedback';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -185,6 +190,16 @@ export function AdminConsultationManager({ onBack }: AdminConsultationManagerPro
       )
     },
     {
+      header: 'Created',
+      accessorKey: 'created_at',
+      sortable: true,
+      render: (professional) => (
+        <span className="text-sm text-muted-foreground">
+          {professional.created_at ? new Date(professional.created_at).toLocaleDateString() : '-'}
+        </span>
+      )
+    },
+    {
       header: 'Status',
       accessorKey: 'available',
       sortable: true,
@@ -263,7 +278,7 @@ export function AdminConsultationManager({ onBack }: AdminConsultationManagerPro
 
   if (loading && professionals.length === 0) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: 'var(--color-bg-page)' }}>
+      <div className="flex items-center justify-center min-h-[400px]">
         <div className="text-center">
           <div className="animate-spin rounded-full border-4 mx-auto mb-4 w-12 h-12 border-muted border-t-primary" />
           <p className="text-muted-foreground">Loading professionals...</p>
@@ -273,64 +288,62 @@ export function AdminConsultationManager({ onBack }: AdminConsultationManagerPro
   }
 
   return (
-    <div className={cn('min-h-screen', className)} style={{ backgroundColor: 'var(--color-bg-page)', padding: isMobile ? 'var(--spacing-4)' : 'var(--spacing-8)' }}>
-      <div className="max-w-7xl mx-auto space-y-6">
-        <AdminHeader
-          title="Consultation Manager"
-          description="Manage mental health professionals and their profiles"
-          onBack={onBack}
-          breadcrumbs={[{ label: 'Admin', onClick: onBack }, { label: 'Consultation Manager' }]}
-          stats={stats}
-          actions={
-            <Button onClick={handleCreateNew} style={{ backgroundColor: 'var(--color-primary-default)', color: 'var(--color-primary-on)' }}>
-              <Plus className="w-4 h-4 mr-2" />
-              {!isMobile && 'Add Professional'}
+    <div className="max-w-7xl mx-auto space-y-6">
+      <AdminHeader
+        title="Consultation Manager"
+        description="Manage mental health professionals and their profiles"
+        onBack={onBack}
+        breadcrumbs={[{ label: 'Admin', onClick: onBack }, { label: 'Consultation Manager' }]}
+        stats={stats}
+        actions={
+          <Button onClick={handleCreateNew} style={{ backgroundColor: 'var(--color-primary-default)', color: 'var(--color-primary-on)' }}>
+            <Plus className="w-4 h-4 mr-2" />
+            {!isMobile && 'Add Professional'}
+          </Button>
+        }
+      />
+
+      <AdminDataTable 
+        columns={columns} 
+        data={professionals} 
+        searchKeys={['name', 'credentials', 'category', 'location']}
+        filters={filters}
+        searchPlaceholder="Search professionals..."
+        onRowClick={(item) => handleEdit(item.id)}
+        actions={
+          <Button variant="outline" onClick={handleExport} className="gap-2">
+            <Download className="w-4 h-4" />
+            {!isMobile && 'Export'}
+          </Button>
+        }
+      />
+
+      {/* Booking Dialog */}
+      <Dialog open={isBookingDialogOpen} onOpenChange={setIsBookingDialogOpen}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Book Consultation</DialogTitle>
+          </DialogHeader>
+
+          <BookingCalendar
+            professionalName={bookingProfessional?.name}
+            onBookSlot={(date, time) => {
+              showToast(
+                'success',
+                'Booking Confirmed',
+                `Consultation booked for ${date.toLocaleDateString()} at ${time}`
+              );
+              setIsBookingDialogOpen(false);
+            }}
+          />
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsBookingDialogOpen(false)}>
+              Close
             </Button>
-          }
-        />
-
-        <AdminDataTable 
-          columns={columns} 
-          data={professionals} 
-          searchKeys={['name', 'credentials', 'category', 'location']}
-          filters={filters}
-          searchPlaceholder="Search professionals..."
-          onRowClick={(item) => handleEdit(item.id)}
-          actions={
-            <Button variant="outline" onClick={handleExport} className="gap-2">
-              <Download className="w-4 h-4" />
-              {!isMobile && 'Export'}
-            </Button>
-          }
-        />
-
-        {/* Booking Dialog */}
-        <Dialog open={isBookingDialogOpen} onOpenChange={setIsBookingDialogOpen}>
-          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>Book Consultation</DialogTitle>
-            </DialogHeader>
-
-            <BookingCalendar
-              professionalName={bookingProfessional?.name}
-              onBookSlot={(date, time) => {
-                showToast(
-                  'success',
-                  'Booking Confirmed',
-                  `Consultation booked for ${date.toLocaleDateString()} at ${time}`
-                );
-                setIsBookingDialogOpen(false);
-              }}
-            />
-
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setIsBookingDialogOpen(false)}>
-                Close
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-      </div>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

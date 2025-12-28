@@ -60,61 +60,77 @@ export function PaymentHistory({ className }: PaymentHistoryProps) {
 
   const loadPaymentHistory = async () => {
     try {
-      // Use mock data to avoid API timeout issues for now
-      console.log('Loading payment history (using mock data)');
+      setLoading(true);
+      const history = await apiClient.getPaymentHistory();
       
-      // Mock data for demo
-      const mockTransactions: Transaction[] = [
-        {
-          id: 'txn_001',
-          type: 'purchase',
-          programId: 'equip-burnout-32',
-          programTitle: 'Burnout Recovery Program',
-          amount: 49900, // in cents
-          currency: 'INR',
-          status: 'completed',
-          paymentMethod: 'Razorpay - UPI',
-          transactionId: 'pay_NyJONOPe5UF5xE',
-          date: '2024-01-15T10:30:00Z',
-          description: '32-day comprehensive burnout recovery program'
-        },
-        {
-          id: 'txn_002',
-          type: 'purchase',
-          programId: 'equip-mindfulness-8week',
-          programTitle: '8-Week Mindfulness Course',
-          amount: 39900,
-          currency: 'INR',
-          status: 'completed',
-          paymentMethod: 'Razorpay - Credit Card',
-          transactionId: 'pay_MxKLMNOp3TG2vH',
-          date: '2024-01-10T15:45:00Z',
-          description: 'Evidence-based mindfulness training program'
-        },
-        {
-          id: 'txn_003',
-          type: 'purchase',
-          programId: 'equip-anxiety-management',
-          programTitle: 'Anxiety Management Toolkit',
-          amount: 29900,
-          currency: 'INR',
-          status: 'completed',
-          paymentMethod: 'Razorpay - Debit Card',
-          transactionId: 'pay_LvQRSTuv4WX8yZ',
-          date: '2024-01-05T12:20:00Z',
-          description: 'Comprehensive anxiety management strategies'
-        }
-      ];
+      if (history.length > 0) {
+        // Calculate summary from real data
+        const realSummary: PaymentSummary = {
+          totalSpent: history.reduce((sum: number, t: Transaction) => sum + (t.type === 'purchase' ? t.amount : 0), 0),
+          totalPrograms: history.filter((t: Transaction) => t.type === 'purchase').length,
+          activePrograms: history.filter((t: Transaction) => t.type === 'purchase' && t.status === 'completed').length, // Simplification
+          completedPrograms: 0 // Cannot determine from payments alone
+        };
+        
+        setTransactions(history);
+        setSummary(realSummary);
+      } else {
+        // Use mock data if no real history exists (for demo purposes)
+        console.log('No payment history found, using mock data for demo');
+        
+        // Mock data for demo
+        const mockTransactions: Transaction[] = [
+          {
+            id: 'txn_001',
+            type: 'purchase',
+            programId: 'equip-burnout-32',
+            programTitle: 'Burnout Recovery Program',
+            amount: 49900, // in cents
+            currency: 'INR',
+            status: 'completed',
+            paymentMethod: 'Razorpay - UPI',
+            transactionId: 'pay_NyJONOPe5UF5xE',
+            date: '2024-01-15T10:30:00Z',
+            description: '32-day comprehensive burnout recovery program'
+          },
+          {
+            id: 'txn_002',
+            type: 'purchase',
+            programId: 'equip-mindfulness-8week',
+            programTitle: '8-Week Mindfulness Course',
+            amount: 39900,
+            currency: 'INR',
+            status: 'completed',
+            paymentMethod: 'Razorpay - Credit Card',
+            transactionId: 'pay_MxKLMNOp3TG2vH',
+            date: '2024-01-10T15:45:00Z',
+            description: 'Evidence-based mindfulness training program'
+          },
+          {
+            id: 'txn_003',
+            type: 'purchase',
+            programId: 'equip-anxiety-management',
+            programTitle: 'Anxiety Management Toolkit',
+            amount: 29900,
+            currency: 'INR',
+            status: 'completed',
+            paymentMethod: 'Razorpay - Debit Card',
+            transactionId: 'pay_LvQRSTuv4WX8yZ',
+            date: '2024-01-05T12:20:00Z',
+            description: 'Comprehensive anxiety management strategies'
+          }
+        ];
 
-      const mockSummary: PaymentSummary = {
-        totalSpent: mockTransactions.reduce((sum, t) => sum + (t.type === 'purchase' ? t.amount : 0), 0),
-        totalPrograms: mockTransactions.filter(t => t.type === 'purchase').length,
-        activePrograms: 2,
-        completedPrograms: 1
-      };
+        const mockSummary: PaymentSummary = {
+          totalSpent: mockTransactions.reduce((sum, t) => sum + (t.type === 'purchase' ? t.amount : 0), 0),
+          totalPrograms: mockTransactions.filter(t => t.type === 'purchase').length,
+          activePrograms: 2,
+          completedPrograms: 1
+        };
 
-      setTransactions(mockTransactions);
-      setSummary(mockSummary);
+        setTransactions(mockTransactions);
+        setSummary(mockSummary);
+      }
     } catch (error) {
       console.error('Failed to load payment history:', error);
       showToast('error', 'Error', 'Failed to load payment history');

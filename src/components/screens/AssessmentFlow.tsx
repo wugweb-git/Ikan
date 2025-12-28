@@ -10,6 +10,8 @@ import { useNotifications } from '../../contexts/NotificationContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { cn } from '../ui/utils';
 import { apiClient } from '../../lib/api-client';
+import { projectId, publicAnonKey } from '../../utils/supabase/info';
+import { ProgressIndicator } from '../ui/progress-indicator';
 
 interface Question {
   id: string;
@@ -43,103 +45,119 @@ interface Assessment {
   };
 }
 
-// Sample assessment data
-const sampleAssessment: Assessment = {
-  id: 'anxiety-assessment',
-  title: 'Anxiety Assessment',
-  description: 'Evaluate your anxiety levels with this clinically-validated questionnaire',
-  questions: [
-    {
-      id: 'q1',
-      text: 'Over the last 2 weeks, how often have you been bothered by feeling nervous, anxious, or on edge?',
-      type: 'single-choice',
-      required: true,
-      options: [
-        { id: 'a1', text: 'Not at all', value: 0 },
-        { id: 'a2', text: 'Several days', value: 1 },
-        { id: 'a3', text: 'More than half the days', value: 2 },
-        { id: 'a4', text: 'Nearly every day', value: 3 }
-      ]
-    },
-    {
-      id: 'q2',
-      text: 'Over the last 2 weeks, how often have you been bothered by not being able to stop or control worrying?',
-      type: 'single-choice',
-      required: true,
-      options: [
-        { id: 'b1', text: 'Not at all', value: 0 },
-        { id: 'b2', text: 'Several days', value: 1 },
-        { id: 'b3', text: 'More than half the days', value: 2 },
-        { id: 'b4', text: 'Nearly every day', value: 3 }
-      ]
-    },
-    {
-      id: 'q3',
-      text: 'Rate your overall stress level on a scale from 1 to 10',
-      type: 'scale',
-      required: true,
-      scaleMin: 1,
-      scaleMax: 10,
-      scaleLabels: { min: 'Very Low', max: 'Very High' }
-    },
-    {
-      id: 'q4',
-      text: 'If you selected a high stress level, what are your main stress triggers?',
-      type: 'text',
-      required: false,
-      dependsOn: {
-        questionId: 'q3',
-        value: 7 // Show only if stress level is 7 or higher
-      }
-    }
-  ],
-  scoring: {
-    type: 'sum',
-    ranges: [
-      {
-        min: 0,
-        max: 4,
-        label: 'Minimal Anxiety',
-        interpretation: 'Your responses suggest minimal anxiety symptoms. Continue practicing healthy coping strategies.',
-        icon: 'success'
-      },
-      {
-        min: 5,
-        max: 9,
-        label: 'Mild Anxiety',
-        interpretation: 'Your responses suggest mild anxiety symptoms. Consider incorporating stress-reduction techniques into your daily routine.',
-        icon: 'warning'
-      },
-      {
-        min: 10,
-        max: 21,
-        label: 'Moderate to Severe Anxiety',
-        interpretation: 'Your responses suggest significant anxiety symptoms. We recommend speaking with a mental health professional.',
-        icon: 'error'
-      }
-    ]
-  }
-};
-
 interface AssessmentFlowProps {
+  assessmentId?: string;
   assessment?: Assessment;
   onComplete?: (results: any) => void;
+  onBack?: () => void;
   className?: string;
 }
 
 export function AssessmentFlow({ 
-  assessment = sampleAssessment, 
+  assessmentId,
+  assessment: initialAssessment, 
   onComplete,
+  onBack,
   className 
 }: AssessmentFlowProps) {
   const { showToast } = useNotifications();
   const { user } = useAuth();
+  
+  const [assessment, setAssessment] = useState<Assessment | null>(initialAssessment || null);
+  const [loading, setLoading] = useState(!initialAssessment);
+  const [error, setError] = useState<string | null>(null);
+
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [responses, setResponses] = useState<Record<string, any>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [questionDirection, setQuestionDirection] = useState<'forward' | 'backward'>('forward');
   const [showMilestone, setShowMilestone] = useState(false);
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
+
+  // Fetch assessment data if not provided
+  useEffect(() => {
+    if (initialAssessment) {
+      setAssessment(initialAssessment);
+      setLoading(false);
+      return;
+    }
+
+    if (!assessmentId) {
+      setLoading(false);
+      return;
+    }
+
+    const fetchAssessment = async () => {
+      try {
+        setLoading(true);
+        const response = await fetch(
+          `https://${projectId}.supabase.co/functions/v1/make-server-cc205da9/assessments/${assessmentId}`,
+          {
+            headers: {
+              'Authorization': `Bearer ${publicAnonKey}`,
+            },
+          }
+        );
+
+        if (!response.ok) {
+          throw new Error('Failed to load assessment');
+        }
+
+        const data = await response.json();
+        const fetchedAssessment = data.assessment;
+
+        // Map backend response to frontend Assessment interface if needed
+        // Assuming backend returns a compatible structure for now, but adding safety checks
+        const mappedAssessment: Assessment = {
+          id: fetchedAssessment.id,
+          title: fetchedAssessment.title,
+          description: fetchedAssessment.description || '',
+          questions: fetchedAssessment.questions || [],
+          scoring: fetchedAssessment.scoring || {
+            type: 'sum',
+            ranges: [
+              { min: 0, max: 100, label: 'Completed', interpretation: 'Assessment completed.', icon: 'success' }
+            ]
+          }
+        };
+
+        setAssessment(mappedAssessment);
+      } catch (err) {
+        console.error('Error fetching assessment:', err);
+        setError('Failed to load assessment. Please try again.');
+        // Fallback for demo purposes if fetch fails
+        // setAssessment(sampleAssessment); 
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchAssessment();
+  }, [assessmentId, initialAssessment]);
+
+  // Loading State
+  if (loading) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[400px] space-y-4">
+        <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+        <p className="text-muted-foreground">Loading assessment...</p>
+      </div>
+    );
+  }
+
+  // Error State
+  if (error || !assessment) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[400px] space-y-4 text-center p-6">
+        <Icon name="alertCircle" size={48} className="text-destructive mb-2" />
+        <h3 className="text-xl font-semibold">Unable to Load Assessment</h3>
+        <p className="text-muted-foreground max-w-md">{error || "Assessment not found or unavailable."}</p>
+        <Button onClick={onBack} variant="outline" className="mt-4">
+          Go Back
+        </Button>
+      </div>
+    );
+  }
 
   // Filter questions based on dependencies
   const visibleQuestions = assessment.questions.filter(question => {
@@ -405,13 +423,24 @@ export function AssessmentFlow({
         )}
       </AnimatePresence>
       {/* Header Section */}
-      <motion.div 
-        className="space-y-2"
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4, ease: "easeOut" }}
-      >
-        <motion.h1 
+      <div className="relative">
+        {onBack && (
+          <Button
+            variant="ghost"
+            onClick={onBack}
+            className="absolute -top-2 -left-2 md:-left-8 p-2 h-auto text-muted-foreground hover:text-foreground"
+            aria-label="Exit assessment"
+          >
+            <Icon name="x" size={24} />
+          </Button>
+        )}
+        <motion.div 
+          className="space-y-2 pt-8 md:pt-0"
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, ease: "easeOut" }}
+        >
+          <motion.h1 
           style={{ 
             fontSize: 'var(--text-2xl)',
             fontWeight: 'var(--font-weight-semibold)', 
@@ -445,7 +474,8 @@ export function AssessmentFlow({
           animate={{ scaleX: 1 }}
           transition={{ duration: 0.5, delay: 0.3 }}
         />
-      </motion.div>
+        </motion.div>
+      </div>
 
       {/* Progress Bar */}
       <motion.div 
@@ -594,126 +624,126 @@ export function AssessmentFlow({
               <div className="space-y-4">
                 <h2 
                   style={{
-                    fontSize: 'var(--text-xl)',
-                    fontWeight: 'var(--font-weight-semibold)',
-                    color: 'var(--color-text-primary)',
-                    lineHeight: 'var(--line-height-md)'
-                  }}
-                  id={`question-${currentQuestion.id}`}
-                >
-                  {currentQuestion.text}
-                  {currentQuestion.required && (
-                    <span style={{ color: 'var(--color-status-danger)' }} aria-label="Required">
-                      {' '}*
-                    </span>
-                  )}
-                </h2>
-                
-                <TextArea
-                  value={responses[currentQuestion.id] || ''}
-                  onChange={(value) => handleAnswer(currentQuestion.id, value)}
-                  placeholder="Please share your thoughts..."
-                  rows={4}
-                  maxLength={500}
-                  style={{
-                    borderRadius: 'var(--ikan-component-border-radius)',
-                    borderColor: 'var(--color-border-default)',
-                    backgroundColor: 'var(--color-bg-input)',
-                    fontSize: 'var(--text-base)',
-                    fontFamily: 'var(--font-family-base)',
-                    lineHeight: 'var(--line-height-md)'
-                  }}
-                  aria-labelledby={`question-${currentQuestion.id}`}
-                />
-              </div>
-            </CardContent>
-          </Card>
-        )}
-        </motion.div>
-      </AnimatePresence>
+                  fontSize: 'var(--text-xl)',
+                  fontWeight: 'var(--font-weight-semibold)',
+                  color: 'var(--color-text-primary)',
+                  lineHeight: 'var(--line-height-md)'
+                }}
+                id={`question-${currentQuestion.id}`}
+              >
+                {currentQuestion.text}
+                {currentQuestion.required && (
+                  <span style={{ color: 'var(--color-status-danger)' }} aria-label="Required">
+                    {' '}*
+                  </span>
+                )}
+              </h2>
+              
+              <TextArea
+                value={responses[currentQuestion.id] || ''}
+                onChange={(value) => handleAnswer(currentQuestion.id, value)}
+                placeholder="Please share your thoughts..."
+                rows={4}
+                maxLength={500}
+                style={{
+                  borderRadius: 'var(--ikan-component-border-radius)',
+                  borderColor: 'var(--color-border-default)',
+                  backgroundColor: 'var(--color-bg-input)',
+                  fontSize: 'var(--text-base)',
+                  fontFamily: 'var(--font-family-base)',
+                  lineHeight: 'var(--line-height-md)'
+                }}
+                aria-labelledby={`question-${currentQuestion.id}`}
+              />
+            </div>
+          </CardContent>
+        </Card>
+      )}
+      </motion.div>
+    </AnimatePresence>
 
-      {/* Navigation Footer */}
-      <div 
-        className="flex justify-between items-center"
+    {/* Navigation Footer */}
+    <div 
+      className="flex justify-between items-center"
+      style={{
+        display: 'flex',
+        justifyContent: 'space-between',
+        gap: 'var(--spacing-4)'
+      }}
+    >
+      <Button
+        variant="outline"
+        onClick={handlePrevious}
+        disabled={currentQuestionIndex === 0}
+        className="gap-2"
         style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          gap: 'var(--spacing-4)'
+          backgroundColor: 'var(--color-accent-default)',
+          color: 'var(--color-accent-on)',
+          borderColor: 'var(--color-border-default)',
+          borderRadius: 'var(--ikan-component-border-radius)',
+          fontSize: 'var(--text-base)',
+          fontWeight: 'var(--font-weight-medium)',
+          fontFamily: 'var(--font-family-base)',
+          height: 'var(--ikan-component-button-height)'
         }}
       >
+        <Icon name="arrowLeft" variant="outline" size={16} />
+        Back
+      </Button>
+
+      {currentQuestionIndex === totalQuestions - 1 ? (
         <Button
-          variant="outline"
-          onClick={handlePrevious}
-          disabled={currentQuestionIndex === 0}
+          onClick={handleSubmit}
+          disabled={!canProceed || isSubmitting}
           className="gap-2"
           style={{
-            backgroundColor: 'var(--color-accent-default)',
-            color: 'var(--color-accent-on)',
-            borderColor: 'var(--color-border-default)',
-            borderRadius: 'var(--ikan-component-border-radius)',
+            backgroundColor: 'var(--color-primary-default)',
+            color: 'var(--color-primary-on)',
+            borderRadius: 'var(--radius-md)',
             fontSize: 'var(--text-base)',
             fontWeight: 'var(--font-weight-medium)',
             fontFamily: 'var(--font-family-base)',
             height: 'var(--ikan-component-button-height)'
           }}
         >
-          <Icon name="arrowLeft" variant="outline" size={16} />
-          Back
+          {isSubmitting ? (
+            <>
+              <div 
+                className={cn(
+                  "motion-safe:animate-spin motion-reduce:animate-pulse",
+                  "rounded-full h-4 w-4 border-b-2"
+                )}
+                style={{ borderColor: 'var(--color-primary-on)' }}
+              />
+              Submitting...
+            </>
+          ) : (
+            <>
+              <Icon name="checkCircle" variant="roundedOutline" size={16} />
+              Submit Assessment
+            </>
+          )}
         </Button>
-
-        {currentQuestionIndex === totalQuestions - 1 ? (
-          <Button
-            onClick={handleSubmit}
-            disabled={!canProceed || isSubmitting}
-            className="gap-2"
-            style={{
-              backgroundColor: 'var(--color-primary-default)',
-              color: 'var(--color-primary-on)',
-              borderRadius: 'var(--radius-md)',
-              fontSize: 'var(--text-base)',
-              fontWeight: 'var(--font-weight-medium)',
-              fontFamily: 'var(--font-family-base)',
-              height: 'var(--ikan-component-button-height)'
-            }}
-          >
-            {isSubmitting ? (
-              <>
-                <div 
-                  className={cn(
-                    "motion-safe:animate-spin motion-reduce:animate-pulse",
-                    "rounded-full h-4 w-4 border-b-2"
-                  )}
-                  style={{ borderColor: 'var(--color-primary-on)' }}
-                />
-                Submitting...
-              </>
-            ) : (
-              <>
-                <Icon name="checkCircle" variant="roundedOutline" size={16} />
-                Submit Assessment
-              </>
-            )}
-          </Button>
-        ) : (
-          <Button
-            onClick={handleNext}
-            disabled={!canProceed}
-            className="gap-2"
-            style={{
-              backgroundColor: 'var(--color-primary-default)',
-              color: 'var(--color-primary-on)',
-              borderRadius: 'var(--radius-md)',
-              fontSize: 'var(--text-base)',
-              fontWeight: 'var(--font-weight-medium)',
-              fontFamily: 'var(--font-family-base)',
-              height: 'var(--ikan-component-button-height)'
-            }}
-          >
-            Next
-            <Icon name="arrowRight" variant="outline" size={16} />
-          </Button>
-        )}
-      </div>
+      ) : (
+        <Button
+          onClick={handleNext}
+          disabled={!canProceed}
+          className="gap-2"
+          style={{
+            backgroundColor: 'var(--color-primary-default)',
+            color: 'var(--color-primary-on)',
+            borderRadius: 'var(--radius-md)',
+            fontSize: 'var(--text-base)',
+            fontWeight: 'var(--font-weight-medium)',
+            fontFamily: 'var(--font-family-base)',
+            height: 'var(--ikan-component-button-height)'
+          }}
+        >
+          Next
+          <Icon name="arrowRight" variant="outline" size={16} />
+        </Button>
+      )}
     </div>
-  );
+  </div>
+);
 }

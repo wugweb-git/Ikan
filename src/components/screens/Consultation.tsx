@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { motion } from 'motion/react';
 import { cn } from '../ui/utils';
 import { Filter, Search, ChevronDown, X } from 'lucide-react';
 import { apiClient } from '../../lib/api-client';
@@ -11,6 +12,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Checkbox } from '../ui/checkbox';
 import { Label } from '../ui/label';
 import { useIsMobile } from '../../hooks/useIsMobile';
+import { Skeleton } from '../ui/skeleton-loader';
+import { EmptyState } from '../ui/empty-state';
+import { TouchFeedback } from '../ui/touch-feedback';
 
 // Define Consultant type locally
 export interface Consultant {
@@ -379,8 +383,8 @@ export function Consultation({ className, onNavigate }: ConsultationProps) {
           variant="outline"
           onClick={clearFilters}
           style={{
-            height: '48px',
-            borderRadius: 'var(--radius-sm)',
+            height: 'var(--ikan-component-button-height)',
+            borderRadius: 'var(--radius-md)',
             fontWeight: 'var(--font-weight-medium)'
           }}
         >
@@ -394,26 +398,31 @@ export function Consultation({ className, onNavigate }: ConsultationProps) {
   return (
     <div className={cn("flex flex-col", className)} style={{ minHeight: '100vh', backgroundColor: 'var(--color-bg-page)' }}>
       {/* Header */}
-      <div style={{ 
-        backgroundColor: 'var(--color-bg-card)', 
-        padding: 'var(--spacing-6) var(--spacing-4)',
-        paddingTop: isMobile ? 'var(--spacing-6)' : '128px'
-      }}>
+      <motion.div 
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        style={{ 
+          backgroundColor: 'var(--color-bg-card)', 
+          padding: 'var(--spacing-6) var(--spacing-4)',
+          paddingTop: isMobile ? 'var(--spacing-6)' : '128px'
+        }}
+      >
         <h1 style={{ 
-          fontSize: 'var(--text-2xl)', 
+          fontSize: 'var(--text-3xl)', 
           fontWeight: 'var(--font-weight-medium)',
-          marginBottom: 'var(--spacing-2)'
+          marginBottom: 'var(--spacing-2)',
+          color: 'var(--color-text-primary)'
         }}>
           Find Your Consultant
         </h1>
         <p style={{ 
-          fontSize: 'var(--text-sm)', 
+          fontSize: 'var(--text-lg)', 
           fontWeight: 'var(--font-weight-regular)',
           color: 'var(--color-text-muted)'
         }}>
           Connect with experienced mental health professionals
         </p>
-      </div>
+      </motion.div>
 
       {/* Category Tabs */}
       <div style={{ backgroundColor: 'var(--color-bg-card)', borderBottom: '1px solid var(--color-border-default)' }}>
@@ -539,12 +548,47 @@ export function Consultation({ className, onNavigate }: ConsultationProps) {
         )}
 
         {/* Consultant List */}
-        <div className="flex-1" style={{ padding: 'var(--spacing-4)' }}>
+        <div className="flex-1 mobile-content-clearance" style={{ padding: 'var(--spacing-4)' }}>
           {/* Loading State */}
           {loading && (
-             <div className="flex items-center justify-center py-12">
-               <div className="animate-spin rounded-full border-4 w-12 h-12 border-primary border-t-transparent" />
-             </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {[1, 2, 3, 4, 5, 6].map((i) => (
+                <div key={i} className="rounded-xl overflow-hidden" style={{ backgroundColor: 'var(--color-bg-card)', border: '1px solid var(--color-border-default)' }}>
+                  {/* Profile Header */}
+                  <div className="p-6 space-y-4">
+                    <div className="flex items-start gap-4">
+                      <Skeleton variant="circular" width="80px" height="80px" />
+                      <div className="flex-1 space-y-2">
+                        <Skeleton variant="text" height="24px" width="70%" />
+                        <Skeleton variant="text" height="16px" width="50%" />
+                        <div className="flex gap-1">
+                          {[1, 2, 3, 4, 5].map((star) => (
+                            <Skeleton key={star} variant="circular" width="16px" height="16px" />
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                    
+                    {/* Bio */}
+                    <Skeleton variant="text" height="16px" width="100%" />
+                    <Skeleton variant="text" height="16px" width="90%" />
+                    
+                    {/* Badges */}
+                    <div className="flex flex-wrap gap-2 pt-2">
+                      <Skeleton variant="rectangular" width="80px" height="24px" className="rounded-full" />
+                      <Skeleton variant="rectangular" width="100px" height="24px" className="rounded-full" />
+                      <Skeleton variant="rectangular" width="70px" height="24px" className="rounded-full" />
+                    </div>
+                    
+                    {/* Pricing */}
+                    <div className="pt-4 space-y-2">
+                      <Skeleton variant="text" height="20px" width="150px" />
+                      <Skeleton variant="button" height="40px" width="100%" />
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
           )}
 
           {/* Results Count */}

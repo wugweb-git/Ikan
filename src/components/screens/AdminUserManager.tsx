@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Users, Search, Download, Edit, Shield, Building, UserPlus, MoreHorizontal } from 'lucide-react';
+import { Users, Search, Download, Edit, Shield, Building, UserPlus, MoreHorizontal, Trash2, UserX, UserCheck } from 'lucide-react';
 import { useNotifications } from '../../contexts/NotificationContext';
 import { apiClient } from '../../lib/api-client';
 import { AdminHeader } from '../admin/AdminHeader';
@@ -10,11 +10,15 @@ import { Badge } from '../ui/badge';
 import { cn } from '../ui/utils';
 import { UserEditPage } from './UserEditPage';
 import { AdminDataTable, Column, FilterOption } from '../admin/AdminDataTable';
+import { SkeletonTable } from '../ui/skeleton-loader';
+import { ErrorState, InlineError } from '../ui/error-state';
+import { EmptyState } from '../ui/empty-state';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuLabel,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "../ui/dropdown-menu";
 
@@ -49,6 +53,7 @@ export function AdminUserManager({ onBack, className }: AdminUserManagerProps) {
 
   const [users, setUsers] = useState<UserProfile[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   // Navigation state
   const [viewMode, setViewMode] = useState<ViewMode>('list');
@@ -88,6 +93,7 @@ export function AdminUserManager({ onBack, className }: AdminUserManagerProps) {
       } else {
         // GLOBAL APPROACH: Show infinite loader on backend errors
         console.error('Backend error - showing infinite loader to force proper backend setup');
+        setError('Failed to load users. Please try again later.');
       }
     }
   };
@@ -128,6 +134,31 @@ export function AdminUserManager({ onBack, className }: AdminUserManagerProps) {
   const handleBackToList = () => {
     setViewMode('list');
     setSelectedUserId(undefined);
+  };
+
+  const handleToggleAdmin = async (userId: string, currentIsAdmin: boolean) => {
+    try {
+      await apiClient.updateUser(userId, { is_admin: !currentIsAdmin });
+      setUsers((prev) => prev.map((u) => (u.user_id === userId ? { ...u, is_admin: !currentIsAdmin } : u)));
+      showToast('success', 'User Updated', `Admin privileges ${!currentIsAdmin ? 'granted' : 'removed'}`);
+      loadUsers(); // Reload to get fresh data
+    } catch (error: any) {
+      console.error('Failed to update user:', error);
+      showToast('error', 'API Error', 'Failed to update user');
+    }
+  };
+
+  const handleDelete = async (userId: string, userName: string) => {
+    if (!confirm(`Are you sure you want to delete user "${userName}"? This action cannot be undone.`)) return;
+    
+    try {
+      await apiClient.deleteUser(userId);
+      setUsers((prev) => prev.filter((u) => u.user_id !== userId));
+      showToast('success', 'User Deleted', 'User has been permanently deleted');
+    } catch (error: any) {
+      console.error('Failed to delete user:', error);
+      showToast('error', 'API Error', 'Failed to delete user');
+    }
   };
 
   const formatDate = (dateString: string) => {
@@ -220,6 +251,16 @@ export function AdminUserManager({ onBack, className }: AdminUserManagerProps) {
             <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleEdit(user.user_id); }}>
               <Edit className="mr-2 h-4 w-4" /> Edit User
             </DropdownMenuItem>
+            <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleToggleAdmin(user.user_id, user.is_admin || false); }}>
+              <Shield className="mr-2 h-4 w-4" /> {user.is_admin ? 'Remove Admin' : 'Grant Admin'}
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem 
+              onClick={(e) => { e.stopPropagation(); handleDelete(user.user_id, user.name || 'Unknown'); }}
+              className="text-red-600"
+            >
+              <Trash2 className="mr-2 h-4 w-4" /> Delete User
+            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       )
@@ -263,47 +304,88 @@ export function AdminUserManager({ onBack, className }: AdminUserManagerProps) {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background p-4">
-        <div className="text-center">
-          <div className="animate-spin rounded-full border-4 mx-auto mb-4 w-12 h-12 border-muted border-t-primary" />
-          <p className="text-muted-foreground">Loading users...</p>
-        </div>
+      <div className="max-w-7xl mx-auto space-y-6">
+        <AdminHeader
+          title="Account Management"
+          description="Loading users..."
+          onBack={onBack}
+          breadcrumbs={[{ label: 'Admin', onClick: onBack }, { label: 'Account Management' }]}
+        />
+        <SkeletonTable rows={10} columns={5} />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="max-w-7xl mx-auto space-y-6">
+        <AdminHeader
+          title="Account Management"
+          description="Manage platform access, roles, and user profiles"
+          onBack={onBack}
+          breadcrumbs={[{ label: 'Admin', onClick: onBack }, { label: 'Account Management' }]}
+        />
+        <ErrorState
+          variant="error"
+          title="Failed to Load Users"
+          message={error}
+          onRetry={loadUsers}
+          onGoBack={onBack}
+        />
+      </div>
+    );
+  }
+
+  if (users.length === 0) {
+    return (
+      <div className="max-w-7xl mx-auto space-y-6">
+        <AdminHeader
+          title="Account Management"
+          description="Manage platform access, roles, and user profiles"
+          onBack={onBack}
+          breadcrumbs={[{ label: 'Admin', onClick: onBack }, { label: 'Account Management' }]}
+        />
+        <EmptyState
+          variant="default"
+          title="No Users Found"
+          description="There are no users registered in the system yet."
+          actionLabel="Add First User"
+          onAction={handleCreateNew}
+        />
       </div>
     );
   }
 
   return (
-    <div className={cn('min-h-screen bg-background', className)} style={{ padding: isMobile ? 'var(--spacing-4)' : 'var(--spacing-8)' }}>
-      <div className="max-w-7xl mx-auto space-y-6">
-        <AdminHeader
-          title="User Manager"
-          description="Manage all registered users, permissions, and profiles"
-          onBack={onBack}
-          breadcrumbs={[{ label: 'Admin', onClick: onBack }, { label: 'User Manager' }]}
-          stats={stats}
-          actions={
-            <Button onClick={handleCreateNew} className="gap-2">
-              <UserPlus className="w-4 h-4" />
-              {!isMobile && 'Add User'}
-            </Button>
-          }
-        />
+    <div className="max-w-7xl mx-auto space-y-6">
+      <AdminHeader
+        title="Account Management"
+        description="Manage platform access, roles, and user profiles"
+        onBack={onBack}
+        breadcrumbs={[{ label: 'Admin', onClick: onBack }, { label: 'Account Management' }]}
+        stats={stats}
+        actions={
+          <Button onClick={handleCreateNew} className="gap-2">
+            <UserPlus className="w-4 h-4" />
+            {!isMobile && 'Add User'}
+          </Button>
+        }
+      />
 
-        <AdminDataTable 
-          columns={columns} 
-          data={users} 
-          searchKeys={['name', 'email', 'phone']}
-          searchPlaceholder="Search users..."
-          onRowClick={(item) => handleEdit(item.user_id)}
-          idField="user_id"
-          actions={
-             <Button variant="outline" onClick={handleExport} className="gap-2">
-              <Download className="w-4 h-4" />
-              {!isMobile && 'Export'}
-            </Button>
-          }
-        />
-      </div>
+      <AdminDataTable 
+        columns={columns} 
+        data={users} 
+        searchKeys={['name', 'email', 'phone']}
+        searchPlaceholder="Search users..."
+        onRowClick={(item) => handleEdit(item.user_id)}
+        idField="user_id"
+        actions={
+            <Button variant="outline" onClick={handleExport} className="gap-2">
+            <Download className="w-4 h-4" />
+            {!isMobile && 'Export'}
+          </Button>
+        }
+      />
     </div>
   );
 }

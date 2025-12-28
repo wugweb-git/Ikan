@@ -6,13 +6,21 @@ export async function handleSeedData() {
     console.log('🌱 Seeding iKan sample data (optimized)...');
     
     // Quick status check to prevent duplicate work
-    const existingAssessments = await kv.getByPrefix('assessment:');
-    if (existingAssessments.length >= 2) {
-      console.log('✅ Assessments already seeded - skipping full seed');
+    // Check if canonical assessments exist by slug
+    const anxiety = await kv.get('assessment:anxiety');
+    const depression = await kv.get('assessment:depression');
+    const burnout = await kv.get('assessment:burnout');
+    
+    if (anxiety && depression && burnout) {
+      console.log('✅ Canonical assessments already seeded - skipping full seed');
       return {
         success: true,
         message: 'Data already seeded',
-        assessments: existingAssessments.map(a => ({ id: a.slug, title: a.title }))
+        assessments: [
+            { id: 'anxiety', title: anxiety.title },
+            { id: 'depression', title: depression.title },
+            { id: 'burnout', title: burnout.title }
+        ]
       };
     }
 

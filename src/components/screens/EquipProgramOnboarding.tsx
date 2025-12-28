@@ -7,59 +7,41 @@ import { Label } from '../ui/label';
 import { Textarea } from '../ui/textarea';
 import { RadioGroup, RadioGroupItem } from '../ui/radio-group';
 import { Checkbox } from '../ui/checkbox';
-import { ArrowLeft, ArrowRight, User, Heart, Shield, CheckCircle } from 'lucide-react';
+import { ArrowLeft, ArrowRight, User, Heart, Shield, CheckCircle, Target, Calendar, Lightbulb } from 'lucide-react';
 import { cn } from '../ui/utils';
 import { getEquipProgramContent, getStoredProgram, EquipProgramDetails } from '../../lib/equip-program-content';
 import { apiClient } from '../../lib/api-client';
 import { useNotifications } from '../../contexts/NotificationContext';
+import { OnboardingData } from '../../lib/equip-types';
 
-interface EquipProgramOnboardingProps {
+interface EquipOnboardingProps {
   onComplete?: () => void;
   onBack?: () => void;
-}
-
-interface OnboardingData {
-  personalInfo: {
-    name: string;
-    age: string;
-    pronouns: string;
-  };
-  currentState: {
-    primaryConcern: string;
-    severityLevel: string;
-    previousExperience: string;
-    currentSupport: string[];
-    goals: string;
-  };
-  preferences: {
-    communicationStyle: string;
-    reminderFrequency: string;
-    privacyLevel: string;
-  };
-  consent: {
-    dataProcessing: boolean;
-    communications: boolean;
-    research: boolean;
-  };
 }
 
 const initialData: OnboardingData = {
   personalInfo: {
     name: '',
+    preferredName: '',
     age: '',
     pronouns: ''
   },
+  programGoals: {
+    what: '', // What they want to achieve
+    why: '',  // Why this is important
+    when: '', // When they want to complete
+    expectations: '' // What they expect from the program
+  },
   currentState: {
     primaryConcern: '',
-    severityLevel: '',
+    severityLevel: 5,
     previousExperience: '',
-    currentSupport: [],
-    goals: ''
+    currentSupport: []
   },
   preferences: {
-    communicationStyle: '',
-    reminderFrequency: '',
-    privacyLevel: ''
+    reminderTime: '',
+    communicationStyle: 'balanced',
+    privacyLevel: 'medium'
   },
   consent: {
     dataProcessing: false,
@@ -72,26 +54,26 @@ const steps = [
   {
     id: 'welcome',
     title: 'Welcome to Your Journey',
-    description: 'Let\'s get to know you better to personalize your experience',
+    description: 'Let\'s personalize your experience to help you succeed',
     icon: <Heart size={24} />
   },
   {
     id: 'personal',
-    title: 'Personal Information',
-    description: 'Help us understand who you are',
+    title: 'About You',
+    description: 'Tell us a bit about yourself',
     icon: <User size={24} />
   },
   {
-    id: 'assessment',
-    title: 'Current State Assessment',
-    description: 'Tell us about your current situation and goals',
-    icon: <CheckCircle size={24} />
+    id: 'goals',
+    title: 'Your Goals',
+    description: 'What do you want to achieve?',
+    icon: <Target size={24} />
   },
   {
-    id: 'preferences',
-    title: 'Your Preferences',
-    description: 'Customize how you\'d like to engage with the program',
-    icon: <Shield size={24} />
+    id: 'expectations',
+    title: 'Your Expectations',
+    description: 'Help us understand your timeline and preferences',
+    icon: <Calendar size={24} />
   },
   {
     id: 'consent',
@@ -101,7 +83,7 @@ const steps = [
   }
 ];
 
-export function EquipProgramOnboarding({ onComplete, onBack }: EquipProgramOnboardingProps) {
+export function EquipOnboarding({ onComplete, onBack }: EquipOnboardingProps) {
   const isMobile = useIsMobile();
   const [content, setContent] = useState<EquipProgramDetails | null>(null);
   const [currentStep, setCurrentStep] = useState(0);
@@ -289,13 +271,12 @@ export function EquipProgramOnboarding({ onComplete, onBack }: EquipProgramOnboa
       case 0: return true; // Welcome step
       case 1: // Personal info
         return data.personalInfo.name.length > 0 && data.personalInfo.age.length > 0;
-      case 2: // Assessment
-        return data.currentState.primaryConcern.length > 0 && 
-               data.currentState.severityLevel.length > 0 &&
-               data.currentState.goals.length > 0;
-      case 3: // Preferences
-        return data.preferences.communicationStyle.length > 0 &&
-               data.preferences.reminderFrequency.length > 0;
+      case 2: // Goals
+        return data.programGoals.what.length > 0 && 
+               data.programGoals.why.length > 0 &&
+               data.programGoals.when.length > 0;
+      case 3: // Expectations
+        return data.programGoals.expectations.length > 0;
       case 4: // Consent
         return data.consent.dataProcessing && data.consent.communications;
       default: return true;
@@ -589,7 +570,7 @@ export function EquipProgramOnboarding({ onComplete, onBack }: EquipProgramOnboa
               </div>
             )}
 
-            {/* Assessment Step */}
+            {/* Goals Step */}
             {currentStep === 2 && (
               <div className="space-y-6">
                 <div>
@@ -600,221 +581,12 @@ export function EquipProgramOnboarding({ onComplete, onBack }: EquipProgramOnboa
                     marginBottom: 'var(--spacing-4)',
                     display: 'block'
                   }}>
-                    What's your primary concern right now?
+                    What do you want to achieve?
                   </Label>
-                  <RadioGroup 
-                    value={data.currentState.primaryConcern}
-                    onValueChange={(value) => updateData('currentState', 'primaryConcern', value)}
-                    className="space-y-0"
-                  >
-                    {[
-                      { value: "work-stress", label: "Work-related stress", description: "Feeling overwhelmed by workplace demands and pressure" },
-                      { value: "anxiety", label: "Anxiety and worry", description: "Persistent feelings of nervousness or excessive concern" },
-                      { value: "low-mood", label: "Low mood or depression", description: "Feeling down, hopeless, or losing interest in activities" },
-                      { value: "relationships", label: "Relationship issues", description: "Challenges with family, friends, or romantic relationships" },
-                      { value: "life-changes", label: "Major life changes", description: "Adjusting to significant transitions or life events" }
-                    ].map((option, index) => (
-                      <div 
-                        key={option.value}
-                        className="flex items-start justify-between py-4 cursor-pointer transition-all duration-200 hover:bg-gray-50"
-                        style={{
-                          borderBottom: index < 4 ? '1px solid var(--color-border-light)' : 'none',
-                          paddingLeft: 'var(--spacing-4)',
-                          paddingRight: 'var(--spacing-4)',
-                          marginLeft: 'calc(-1 * var(--spacing-4))',
-                          marginRight: 'calc(-1 * var(--spacing-4))',
-                          borderRadius: 'var(--radius-sm)'
-                        }}
-                        onClick={() => updateData('currentState', 'primaryConcern', option.value)}
-                      >
-                        <div className="flex-1 pr-4">
-                          <Label 
-                            htmlFor={option.value}
-                            className="cursor-pointer block"
-                            style={{ 
-                              fontSize: 'var(--text-base)', 
-                              fontWeight: 'var(--font-weight-medium)',
-                              color: 'var(--color-text-primary)',
-                              marginBottom: 'var(--spacing-1)',
-                              lineHeight: 'var(--line-height-md)'
-                            }}
-                          >
-                            {option.label}
-                          </Label>
-                          <p style={{ 
-                            fontSize: 'var(--text-sm)', 
-                            fontWeight: 'var(--font-weight-normal)',
-                            color: 'var(--color-text-muted)',
-                            lineHeight: 'var(--line-height-md)',
-                            margin: 0
-                          }}>
-                            {option.description}
-                          </p>
-                        </div>
-                        <div className="flex-shrink-0 flex items-center">
-                          <RadioGroupItem 
-                            value={option.value} 
-                            id={option.value}
-                            style={{
-                              width: '20px',
-                              height: '20px',
-                              borderRadius: '50%',
-                              border: '2px solid var(--color-border-default)',
-                              backgroundColor: data.currentState.primaryConcern === option.value 
-                                ? 'var(--color-primary-default)' 
-                                : 'transparent'
-                            }}
-                          />
-                        </div>
-                      </div>
-                    ))}
-                  </RadioGroup>
-                </div>
-
-                <div>
-                  <Label style={{ 
-                    fontSize: 'var(--text-base)', 
-                    fontWeight: 'var(--font-weight-medium)',
-                    color: 'var(--color-text-primary)',
-                    marginBottom: 'var(--spacing-4)',
-                    display: 'block'
-                  }}>
-                    How would you rate the severity? (1-10)
-                  </Label>
-                  <RadioGroup 
-                    value={data.currentState.severityLevel}
-                    onValueChange={(value) => updateData('currentState', 'severityLevel', value)}
-                    className="grid grid-cols-5 gap-2"
-                  >
-                    {[1,2,3,4,5,6,7,8,9,10].map(num => (
-                      <div 
-                        key={num} 
-                        className="flex flex-col items-center space-y-2 cursor-pointer p-3 rounded-lg transition-all duration-200 hover:bg-gray-50"
-                        style={{
-                          border: data.currentState.severityLevel === num.toString() 
-                            ? '2px solid var(--color-primary-default)' 
-                            : '1px solid var(--color-border-light)',
-                          backgroundColor: data.currentState.severityLevel === num.toString() 
-                            ? 'var(--color-primary-default)10' 
-                            : 'transparent'
-                        }}
-                        onClick={() => updateData('currentState', 'severityLevel', num.toString())}
-                      >
-                        <RadioGroupItem 
-                          value={num.toString()} 
-                          id={`severity-${num}`}
-                          style={{
-                            width: '16px',
-                            height: '16px',
-                            borderRadius: '50%',
-                            border: '2px solid var(--color-border-default)',
-                            backgroundColor: data.currentState.severityLevel === num.toString() 
-                              ? 'var(--color-primary-default)' 
-                              : 'transparent'
-                          }}
-                        />
-                        <Label 
-                          htmlFor={`severity-${num}`}
-                          className="cursor-pointer"
-                          style={{ 
-                            fontSize: 'var(--text-sm)', 
-                            fontWeight: 'var(--font-weight-medium)',
-                            color: data.currentState.severityLevel === num.toString() 
-                              ? 'var(--color-primary-default)' 
-                              : 'var(--color-text-primary)'
-                          }}
-                        >
-                          {num}
-                        </Label>
-                      </div>
-                    ))}
-                  </RadioGroup>
-                </div>
-
-                <div>
-                  <Label style={{ 
-                    fontSize: 'var(--text-base)', 
-                    fontWeight: 'var(--font-weight-medium)',
-                    color: 'var(--color-text-primary)',
-                    marginBottom: 'var(--spacing-4)',
-                    display: 'block'
-                  }}>
-                    What current support do you have? (Check all that apply)
-                  </Label>
-                  <div className="space-y-0">
-                    {[
-                      { value: 'Family support', description: 'Support from family members or relatives' },
-                      { value: 'Friends support', description: 'Close friends who provide emotional support' },
-                      { value: 'Professional therapy', description: 'Working with a licensed therapist or counselor' },
-                      { value: 'Support groups', description: 'Participating in peer support or group therapy' },
-                      { value: 'Medication', description: 'Prescribed medication for mental health' },
-                      { value: 'Self-help resources', description: 'Books, apps, or online resources for self-care' },
-                      { value: 'None currently', description: 'No formal support system in place right now' }
-                    ].map((option, index) => (
-                      <div 
-                        key={option.value}
-                        className="flex items-start justify-between py-4 cursor-pointer transition-all duration-200 hover:bg-gray-50"
-                        style={{
-                          borderBottom: index < 6 ? '1px solid var(--color-border-light)' : 'none',
-                          paddingLeft: 'var(--spacing-4)',
-                          paddingRight: 'var(--spacing-4)',
-                          marginLeft: 'calc(-1 * var(--spacing-4))',
-                          marginRight: 'calc(-1 * var(--spacing-4))',
-                          borderRadius: 'var(--radius-sm)'
-                        }}
-                        onClick={() => updateSupportArray(option.value, !data.currentState.currentSupport.includes(option.value))}
-                      >
-                        <div className="flex-1 pr-4">
-                          <Label 
-                            htmlFor={option.value}
-                            className="cursor-pointer block"
-                            style={{ 
-                              fontSize: 'var(--text-base)', 
-                              fontWeight: 'var(--font-weight-medium)',
-                              color: 'var(--color-text-primary)',
-                              marginBottom: 'var(--spacing-1)',
-                              lineHeight: 'var(--line-height-md)'
-                            }}
-                          >
-                            {option.value}
-                          </Label>
-                          <p style={{ 
-                            fontSize: 'var(--text-sm)', 
-                            fontWeight: 'var(--font-weight-normal)',
-                            color: 'var(--color-text-muted)',
-                            lineHeight: 'var(--line-height-md)',
-                            margin: 0
-                          }}>
-                            {option.description}
-                          </p>
-                        </div>
-                        <div className="flex-shrink-0 flex items-center">
-                          <Checkbox
-                            id={option.value}
-                            checked={data.currentState.currentSupport.includes(option.value)}
-                            onCheckedChange={(checked) => updateSupportArray(option.value, !!checked)}
-                            style={{
-                              width: '20px',
-                              height: '20px',
-                              borderRadius: 'var(--radius-sm)',
-                              border: '2px solid var(--color-border-default)',
-                              backgroundColor: data.currentState.currentSupport.includes(option.value) 
-                                ? 'var(--color-primary-default)' 
-                                : 'transparent'
-                            }}
-                          />
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                <div>
-                  <Label htmlFor="goals">What are your goals for this program?</Label>
                   <Textarea
-                    id="goals"
-                    value={data.currentState.goals}
-                    onChange={(e) => updateData('currentState', 'goals', e.target.value)}
+                    id="goals-what"
+                    value={data.programGoals.what}
+                    onChange={(e) => updateData('programGoals', 'what', e.target.value)}
                     placeholder="Tell us what you hope to achieve..."
                     rows={3}
                     style={{
@@ -825,12 +597,7 @@ export function EquipProgramOnboarding({ onComplete, onBack }: EquipProgramOnboa
                     }}
                   />
                 </div>
-              </div>
-            )}
 
-            {/* Preferences Step */}
-            {currentStep === 3 && (
-              <div className="space-y-6">
                 <div>
                   <Label style={{ 
                     fontSize: 'var(--text-base)', 
@@ -839,73 +606,21 @@ export function EquipProgramOnboarding({ onComplete, onBack }: EquipProgramOnboa
                     marginBottom: 'var(--spacing-4)',
                     display: 'block'
                   }}>
-                    Communication style preference
+                    Why is this important to you?
                   </Label>
-                  <RadioGroup 
-                    value={data.preferences.communicationStyle}
-                    onValueChange={(value) => updateData('preferences', 'communicationStyle', value)}
-                    className="space-y-0"
-                  >
-                    {[
-                      { value: "gentle", label: "Gentle and supportive", description: "Soft, encouraging guidance with empathy and understanding" },
-                      { value: "direct", label: "Direct and practical", description: "Clear, straightforward advice with actionable steps" },
-                      { value: "motivational", label: "Motivational and encouraging", description: "Uplifting, energizing approach to build confidence" }
-                    ].map((option, index) => (
-                      <div 
-                        key={option.value}
-                        className="flex items-start justify-between py-4 cursor-pointer transition-all duration-200 hover:bg-gray-50"
-                        style={{
-                          borderBottom: index < 2 ? '1px solid var(--color-border-light)' : 'none',
-                          paddingLeft: 'var(--spacing-4)',
-                          paddingRight: 'var(--spacing-4)',
-                          marginLeft: 'calc(-1 * var(--spacing-4))',
-                          marginRight: 'calc(-1 * var(--spacing-4))',
-                          borderRadius: 'var(--radius-sm)'
-                        }}
-                        onClick={() => updateData('preferences', 'communicationStyle', option.value)}
-                      >
-                        <div className="flex-1 pr-4">
-                          <Label 
-                            htmlFor={option.value}
-                            className="cursor-pointer block"
-                            style={{ 
-                              fontSize: 'var(--text-base)', 
-                              fontWeight: 'var(--font-weight-medium)',
-                              color: 'var(--color-text-primary)',
-                              marginBottom: 'var(--spacing-1)',
-                              lineHeight: 'var(--line-height-md)'
-                            }}
-                          >
-                            {option.label}
-                          </Label>
-                          <p style={{ 
-                            fontSize: 'var(--text-sm)', 
-                            fontWeight: 'var(--font-weight-normal)',
-                            color: 'var(--color-text-muted)',
-                            lineHeight: 'var(--line-height-md)',
-                            margin: 0
-                          }}>
-                            {option.description}
-                          </p>
-                        </div>
-                        <div className="flex-shrink-0 flex items-center">
-                          <RadioGroupItem 
-                            value={option.value} 
-                            id={option.value}
-                            style={{
-                              width: '20px',
-                              height: '20px',
-                              borderRadius: '50%',
-                              border: '2px solid var(--color-border-default)',
-                              backgroundColor: data.preferences.communicationStyle === option.value 
-                                ? 'var(--color-primary-default)' 
-                                : 'transparent'
-                            }}
-                          />
-                        </div>
-                      </div>
-                    ))}
-                  </RadioGroup>
+                  <Textarea
+                    id="goals-why"
+                    value={data.programGoals.why}
+                    onChange={(e) => updateData('programGoals', 'why', e.target.value)}
+                    placeholder="Explain the significance of your goal..."
+                    rows={3}
+                    style={{
+                      borderRadius: 'var(--ikan-component-border-radius)',
+                      fontSize: '16px', // Prevents iOS zoom
+                      fontWeight: 'var(--font-weight-regular)',
+                      minHeight: 'calc(var(--ikan-component-input-height) * 1.5)'
+                    }}
+                  />
                 </div>
 
                 <div>
@@ -916,74 +631,50 @@ export function EquipProgramOnboarding({ onComplete, onBack }: EquipProgramOnboa
                     marginBottom: 'var(--spacing-4)',
                     display: 'block'
                   }}>
-                    How often would you like reminders?
+                    When do you want to complete this?
                   </Label>
-                  <RadioGroup 
-                    value={data.preferences.reminderFrequency}
-                    onValueChange={(value) => updateData('preferences', 'reminderFrequency', value)}
-                    className="space-y-0"
-                  >
-                    {[
-                      { value: "daily", label: "Daily", description: "Get gentle daily reminders to check in with yourself" },
-                      { value: "every-few-days", label: "Every few days", description: "Receive reminders 2-3 times per week" },
-                      { value: "weekly", label: "Weekly", description: "Weekly check-ins to maintain your progress" },
-                      { value: "minimal", label: "Minimal reminders", description: "Only occasional reminders when needed" }
-                    ].map((option, index) => (
-                      <div 
-                        key={option.value}
-                        className="flex items-start justify-between py-4 cursor-pointer transition-all duration-200 hover:bg-gray-50"
-                        style={{
-                          borderBottom: index < 3 ? '1px solid var(--color-border-light)' : 'none',
-                          paddingLeft: 'var(--spacing-4)',
-                          paddingRight: 'var(--spacing-4)',
-                          marginLeft: 'calc(-1 * var(--spacing-4))',
-                          marginRight: 'calc(-1 * var(--spacing-4))',
-                          borderRadius: 'var(--radius-sm)'
-                        }}
-                        onClick={() => updateData('preferences', 'reminderFrequency', option.value)}
-                      >
-                        <div className="flex-1 pr-4">
-                          <Label 
-                            htmlFor={option.value}
-                            className="cursor-pointer block"
-                            style={{ 
-                              fontSize: 'var(--text-base)', 
-                              fontWeight: 'var(--font-weight-medium)',
-                              color: 'var(--color-text-primary)',
-                              marginBottom: 'var(--spacing-1)',
-                              lineHeight: 'var(--line-height-md)'
-                            }}
-                          >
-                            {option.label}
-                          </Label>
-                          <p style={{ 
-                            fontSize: 'var(--text-sm)', 
-                            fontWeight: 'var(--font-weight-normal)',
-                            color: 'var(--color-text-muted)',
-                            lineHeight: 'var(--line-height-md)',
-                            margin: 0
-                          }}>
-                            {option.description}
-                          </p>
-                        </div>
-                        <div className="flex-shrink-0 flex items-center">
-                          <RadioGroupItem 
-                            value={option.value} 
-                            id={option.value}
-                            style={{
-                              width: '20px',
-                              height: '20px',
-                              borderRadius: '50%',
-                              border: '2px solid var(--color-border-default)',
-                              backgroundColor: data.preferences.reminderFrequency === option.value 
-                                ? 'var(--color-primary-default)' 
-                                : 'transparent'
-                            }}
-                          />
-                        </div>
-                      </div>
-                    ))}
-                  </RadioGroup>
+                  <Input
+                    id="goals-when"
+                    value={data.programGoals.when}
+                    onChange={(e) => updateData('programGoals', 'when', e.target.value)}
+                    placeholder="Enter a date or timeframe..."
+                    style={{
+                      height: 'var(--ikan-component-input-height)',
+                      borderRadius: 'var(--ikan-component-border-radius)',
+                      fontSize: '16px', // Prevents iOS zoom
+                      fontWeight: 'var(--font-weight-regular)'
+                    }}
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* Expectations Step */}
+            {currentStep === 3 && (
+              <div className="space-y-6">
+                <div>
+                  <Label style={{ 
+                    fontSize: 'var(--text-base)', 
+                    fontWeight: 'var(--font-weight-medium)',
+                    color: 'var(--color-text-primary)',
+                    marginBottom: 'var(--spacing-4)',
+                    display: 'block'
+                  }}>
+                    What do you expect from this program?
+                  </Label>
+                  <Textarea
+                    id="expectations"
+                    value={data.programGoals.expectations}
+                    onChange={(e) => updateData('programGoals', 'expectations', e.target.value)}
+                    placeholder="Describe your expectations..."
+                    rows={3}
+                    style={{
+                      borderRadius: 'var(--ikan-component-border-radius)',
+                      fontSize: '16px', // Prevents iOS zoom
+                      fontWeight: 'var(--font-weight-regular)',
+                      minHeight: 'calc(var(--ikan-component-input-height) * 1.5)'
+                    }}
+                  />
                 </div>
               </div>
             )}

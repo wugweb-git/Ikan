@@ -5,13 +5,18 @@ import { Card, CardContent } from '../ui/card';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { cn } from '../ui/utils';
-import { Search, BookOpen, Play, Video, Wrench, FileText } from 'lucide-react';
+import { Search, BookOpen, Play, Video, Wrench, FileText, RefreshCw } from 'lucide-react';
 import { CardSkeleton, LibraryEmptyState, StaggeredReveal } from '../utils/LoadingStates';
 import { ResourceBlock } from '../blocks/ResourceBlock';
 import { ResourceType } from '../blocks/ResourceType';
 import { ResourceCard, ResourcePost } from '../blocks/ResourceCard';
 import { apiClient } from '../../lib/api-client';
 import { logger } from '../../lib/logger';
+import { SkeletonCard } from '../ui/skeleton-loader';
+import { ErrorState } from '../ui/error-state';
+import { EmptyState } from '../ui/empty-state';
+import { OptimizedImage } from '../ui/optimized-image';
+import { PullToRefresh } from '../ui/touch-feedback';
 
 interface LibraryProps {
   onResourceSelect?: (resourceId: string) => void;
@@ -33,6 +38,13 @@ export function Library({ onResourceSelect, className }: LibraryProps) {
   // Ref to track if resources have been loaded
   const hasLoadedResources = useRef(false);
 
+  // Manual refresh function
+  const handleRefresh = () => {
+    console.log('🔄 Manual refresh triggered');
+    hasLoadedResources.current = false;
+    loadResources();
+  };
+
   // Load resources from API
   const loadResources = async () => {
     if (hasLoadedResources.current) return;
@@ -40,24 +52,73 @@ export function Library({ onResourceSelect, className }: LibraryProps) {
     try {
       setLoading(true);
       
+      console.log('📚 Loading resources from API...');
+      
       const response = await apiClient.getResources();
+      
+      console.log('📚 API Response:', {
+        isArray: Array.isArray(response),
+        count: response?.length,
+        firstResource: response?.[0]
+      });
       
       // getResources() already returns the array directly
       if (response && Array.isArray(response)) {
         // Map the response to match ResourcePost interface
-        const mappedResources: Resource[] = response.map((resource: any) => ({
-          id: resource.id || resource.resource_id || `resource-${Math.random().toString(36).substr(2, 9)}`,
-          title: resource.title || 'Untitled Resource',
-          description: resource.description || resource.excerpt || '',
-          category: resource.category || 'General',
-          // Add type for filtering
-          type: (resource.type?.toLowerCase() === 'video' ? 'video' : 
-                 resource.type?.toLowerCase() === 'tool' ? 'tool' : 'article'),
-          readTime: resource.readTime || (resource.read_time_minutes ? `${resource.read_time_minutes} min read` : '5 min read'),
-          date: resource.date || (resource.created_at ? new Date(resource.created_at).toLocaleDateString() : new Date().toLocaleDateString()),
-          image: resource.image || resource.image_url || 'https://images.unsplash.com/photo-1499750310107-5fef28a66643?w=800',
-          slug: resource.id
-        }));
+        const mappedResources: Resource[] = response
+          .map((resource: any) => {
+            // Log each resource for debugging
+            console.log('📄 Mapping resource:', {
+              id: resource.id,
+              title: resource.title,
+              category: resource.category,
+              contentType: resource.contentType,
+              published: resource.published
+            });
+
+            // Helper to determine resource type from category or contentType
+            const getResourceType = (contentType: string | undefined, category: string | undefined): 'article' | 'video' | 'tool' => {
+              const typeStr = (contentType || category || '').toLowerCase();
+              if (typeStr.includes('video')) return 'video';
+              if (typeStr.includes('tool') || typeStr.includes('workbook')) return 'tool';
+              return 'article';
+            };
+
+            return {
+              id: resource.id || resource.resource_id || `resource-${Math.random().toString(36).substr(2, 9)}`,
+              title: resource.title || 'Untitled Resource',
+              description: resource.description || resource.excerpt || '',
+              category: resource.category || 'General',
+              
+              // Map contentType/category to type for filtering
+              type: getResourceType(resource.contentType, resource.category),
+              
+              // Format read time
+              readTime: resource.read_time_minutes 
+                ? `${resource.read_time_minutes} min read` 
+                : (resource.readTime || '5 min read'),
+              
+              // Format date
+              date: resource.created_at 
+                ? new Date(resource.created_at).toLocaleDateString('en-US', { 
+                    year: 'numeric', 
+                    month: 'short', 
+                    day: 'numeric' 
+                  })
+                : (resource.date || resource.publishedDate || 'Recently'),
+              
+              // Use thumbnail or fallback
+              image: resource.thumbnail || resource.image || resource.image_url || 
+                     'https://images.unsplash.com/photo-1499750310107-5fef28a66643?w=800',
+              
+              slug: resource.id,
+              
+              // Store published status for filtering
+              published: resource.published !== false
+            };
+          })
+          // Filter out unpublished resources (drafts)
+          .filter((resource: any) => resource.published !== false);
 
         // Deduplicate resources by ID
         const loadedResources = mappedResources.reduce((acc: Resource[], current) => {
@@ -70,9 +131,18 @@ export function Library({ onResourceSelect, className }: LibraryProps) {
         }, []);
         
         setResources(loadedResources);
+        
+        console.log('✅ Resources loaded and mapped:', {
+          total: response.length,
+          published: loadedResources.length,
+          categories: [...new Set(loadedResources.map(r => r.category))],
+          types: [...new Set(loadedResources.map(r => r.type))]
+        });
+        
         logger.info('Resources loaded successfully from API', { count: loadedResources.length });
       } else {
         logger.warn('No resources returned from API');
+        console.warn('❌ API returned non-array response:', response);
         setResources([]);
       }
       
@@ -80,6 +150,7 @@ export function Library({ onResourceSelect, className }: LibraryProps) {
       
     } catch (error) {
       logger.error('Failed to load resources', error);
+      console.error('❌ Resource load error:', error);
       setResources([]); 
     } finally {
       setLoading(false);
@@ -137,32 +208,31 @@ export function Library({ onResourceSelect, className }: LibraryProps) {
     return filters;
   }, [resources]);
 
-  return (
+  // Pull to refresh handler for mobile
+  const handlePullToRefresh = async () => {
+    hasLoadedResources.current = false;
+    await loadResources();
+  };
+
+  const content = (
     <div className={cn("w-full max-w-7xl mx-auto px-4 py-8 space-y-8", className)}>
       {/* Header Section */}
-      <div className="w-full max-w-4xl">
-        <div style={{ gap: 'var(--spacing-2)' }} className="flex flex-col">
-          <h1 
-            style={{
-              fontSize: isMobile ? 'var(--text-2xl)' : 'var(--text-3xl)',
-              fontWeight: 'var(--font-weight-medium)',
-              color: 'var(--color-text-primary)',
-              lineHeight: 'var(--line-height-sm)'
-            }}
-          >
-            Resources
-          </h1>
-          <p 
-            style={{
-              fontSize: 'var(--text-base)',
-              color: 'var(--color-text-primary)',
-              lineHeight: 'var(--line-height-md)'
-            }}
-          >
-            Gain insight into your mental and emotional health and find ways to support yourself
-          </p>
-        </div>
-      </div>
+      <motion.div 
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="w-full max-w-4xl space-y-4"
+      >
+        <h1 style={{ 
+          fontSize: 'var(--text-3xl)', 
+          fontWeight: 'var(--font-weight-medium)',
+          color: 'var(--color-text-primary)'
+        }}>
+          Resources
+        </h1>
+        <p className="text-lg text-[var(--ikan-color-text-muted)] max-w-2xl">
+          Gain insight into your mental and emotional health and find ways to support yourself.
+        </p>
+      </motion.div>
 
       <div className="flex flex-col md:flex-row gap-6 items-start md:items-center justify-between">
         {/* Search Bar */}
@@ -313,5 +383,13 @@ export function Library({ onResourceSelect, className }: LibraryProps) {
         {/* Removed duplicate More Resources Section */}
       </div>
     </div>
+  );
+
+  return isMobile ? (
+    <PullToRefresh onRefresh={handlePullToRefresh}>
+      {content}
+    </PullToRefresh>
+  ) : (
+    content
   );
 }

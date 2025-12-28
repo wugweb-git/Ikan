@@ -72,6 +72,9 @@
   --color-chart-3: #6A6A6A;
   --color-chart-4: #8A8A8A;
   --color-chart-5: #AAAAAA;
+  
+  /* Colors - Special */
+  --color-rating-star: #FFA500;
 
   /* Spacing */
   --spacing-unit: 4px;
@@ -602,6 +605,17 @@ html {
 
 /* Mobile-first responsive utilities for iKan PWA */
 @layer utilities {
+  /* Mobile content clearance for bottom navigation */
+  .mobile-content-clearance {
+    padding-bottom: 72px;
+  }
+
+  @media (min-width: 768px) {
+    .mobile-content-clearance {
+      padding-bottom: var(--spacing-6);
+    }
+  }
+
   /* Enhanced touch targets using semantic tokens */
   .touch-target {
     min-height: var(--ikan-touch-target-min);
@@ -894,11 +908,71 @@ html {
     padding: var(--semantic-card-padding);
     gap: var(--ikan-component-spacing-default);
   }
-  
-  @media (min-width: 768px) {
-    .ikan-card-spacing {
-      padding: var(--ikan-component-spacing-large);
-      gap: var(--ikan-component-spacing-large);
+
+  /* ========================================
+     ACCESSIBILITY: Focus Indicators
+     ======================================== */
+
+  /* Remove default outline to use custom one */
+  *:focus {
+    outline: none;
+  }
+
+  /* Custom focus indicator for keyboard navigation */
+  *:focus-visible {
+    outline: 2px solid var(--color-primary-default);
+    outline-offset: 2px;
+    border-radius: var(--radius-sm);
+  }
+
+  /* Specific focus styles for interactive elements */
+  button:focus-visible,
+  a:focus-visible,
+  input:focus-visible,
+  textarea:focus-visible,
+  select:focus-visible,
+  [role="button"]:focus-visible,
+  [role="link"]:focus-visible {
+    outline: 2px solid var(--color-primary-default);
+    outline-offset: 2px;
+  }
+
+  /* Skip to content link */
+  .skip-to-content {
+    position: absolute !important;
+    left: -9999px !important;
+    z-index: 999999;
+    padding: 1rem;
+    background-color: var(--color-primary-default);
+    color: white;
+    text-decoration: none;
+    border-radius: var(--radius-md);
+    font-weight: var(--font-weight-medium);
+  }
+
+  .skip-to-content:focus {
+    position: fixed !important;
+    left: 1rem !important;
+    top: 1rem !important;
+    z-index: 999999;
+  }
+
+  /* High contrast mode support */
+  @media (prefers-contrast: high) {
+    *:focus-visible {
+      outline-width: 3px;
+      outline-offset: 3px;
+    }
+  }
+
+  /* Reduced motion support */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
     }
   }
   

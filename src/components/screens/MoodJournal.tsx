@@ -10,6 +10,9 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useNotifications } from '../../contexts/NotificationContext';
 import { useIsMobile } from '../../hooks/useIsMobile';
 import { cn } from '../ui/utils';
+import { Skeleton } from '../ui/skeleton-loader';
+import { EmptyState } from '../ui/empty-state';
+import { TouchFeedback } from '../ui/touch-feedback';
 
 interface MoodEntry {
   id: string;
@@ -678,6 +681,73 @@ export function MoodJournal() {
             </Button>
           </motion.div>
         )}
+      </div>
+    );
+  }
+
+  if (loading) {
+    return (
+      <div 
+        className="space-y-6 w-full"
+        style={{
+          maxWidth: '1000px',
+          margin: '0 auto',
+          padding: 'var(--spacing-4)',
+        }}
+      >
+        {/* Header Skeleton */}
+        <div className="space-y-4">
+          <Skeleton variant="text" height="32px" width="250px" />
+          <Skeleton variant="text" height="20px" width="400px" />
+        </div>
+
+        {/* Mood Selector Skeleton */}
+        <Card>
+          <CardHeader>
+            <Skeleton variant="text" height="24px" width="200px" />
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex justify-between gap-2">
+              {[1, 2, 3, 4, 5].map((i) => (
+                <Skeleton key={i} variant="circular" width="64px" height="64px" />
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Journal Entry Skeleton */}
+        <Card>
+          <CardContent className="pt-6 space-y-4">
+            <Skeleton variant="rectangular" height="120px" width="100%" />
+            <div className="grid grid-cols-3 gap-2">
+              {[1, 2, 3, 4, 5, 6].map((i) => (
+                <Skeleton key={i} variant="rectangular" height="32px" width="100%" className="rounded-full" />
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Recent Entries Skeleton */}
+        <Card>
+          <CardHeader>
+            <Skeleton variant="text" height="24px" width="180px" />
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="flex items-start gap-4 p-4 rounded-lg" style={{ backgroundColor: 'var(--color-bg-muted)' }}>
+                <Skeleton variant="circular" width="48px" height="48px" />
+                <div className="flex-1 space-y-2">
+                  <Skeleton variant="text" height="20px" width="150px" />
+                  <Skeleton variant="text" height="16px" width="100%" />
+                  <div className="flex gap-2 pt-2">
+                    <Skeleton variant="rectangular" width="60px" height="20px" className="rounded-full" />
+                    <Skeleton variant="rectangular" width="60px" height="20px" className="rounded-full" />
+                  </div>
+                </div>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
       </div>
     );
   }

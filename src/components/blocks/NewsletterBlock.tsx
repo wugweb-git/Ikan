@@ -3,6 +3,9 @@ import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { ImageWithFallback } from '../figma/ImageWithFallback';
 import { ErrorBoundary } from '../ErrorBoundary';
+import { toast } from 'sonner@2.0.3';
+import { logger } from '../../lib/logger';
+import { projectId, publicAnonKey } from '../../utils/supabase/info';
 
 interface NewsletterBlockProps {
   title?: string;
@@ -30,10 +33,64 @@ export function NewsletterBlock({
   className
 }: NewsletterBlockProps) {
   const [formData, setFormData] = React.useState({ name: '', email: '' });
+  const [isSubmitting, setIsSubmitting] = React.useState(false);
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
+    if (!formData.email) {
+      toast.error('Please enter your email address');
+      return;
+    }
+
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(formData.email)) {
+      toast.error('Please enter a valid email address');
+      return;
+    }
+
+    // If custom onSubmit handler is provided, use it (for custom implementations)
     if (onSubmit) {
       onSubmit(formData);
+      return;
+    }
+
+    // Default backend integration
+    setIsSubmitting(true);
+
+    try {
+      const response = await fetch(
+        `https://${projectId}.supabase.co/functions/v1/make-server-cc205da9/newsletter/signup`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${publicAnonKey}`
+          },
+          body: JSON.stringify({
+            name: formData.name,
+            email: formData.email
+          })
+        }
+      );
+
+      const data = await response.json();
+
+      if (response.ok) {
+        if (data.alreadySubscribed) {
+          toast.info(data.message);
+        } else {
+          toast.success('Thank you for subscribing to our newsletter!');
+          setFormData({ name: '', email: '' }); // Clear form
+        }
+      } else {
+        toast.error(data.error || 'Failed to subscribe. Please try again.');
+        logger.error('Newsletter signup error:', data);
+      }
+    } catch (error) {
+      toast.error('Network error. Please check your connection and try again.');
+      logger.error('Newsletter signup exception:', error);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -91,6 +148,11 @@ export function NewsletterBlock({
                     placeholder="Your email address..."
                     value={formData.email}
                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        handleSubmit();
+                      }
+                    }}
                     className="ikan-input w-full"
                     aria-label="Email address for newsletter subscription"
                     style={{
@@ -103,6 +165,7 @@ export function NewsletterBlock({
                 </div>
                 <Button 
                   onClick={handleSubmit}
+                  disabled={isSubmitting}
                   className="ikan-button"
                   style={{
                     backgroundColor: 'var(--color-primary-default)',
@@ -113,7 +176,7 @@ export function NewsletterBlock({
                     paddingRight: 'var(--spacing-6)'
                   }}
                 >
-                  {ctaText}
+                  {isSubmitting ? 'Subscribing...' : ctaText}
                 </Button>
               </div>
 

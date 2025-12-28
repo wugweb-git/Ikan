@@ -73,14 +73,14 @@ export const EQUIP_PROGRAMS = [
     description: "A highly-curated selection of evidence-based techniques, mindfulness practices, and proven strategies for managing stress effectively.",
     duration: "14 days",
     activities: "23 Activities",
-    link: "/equip-programs-landing"
+    link: "/equip"
   },
   {
     title: "Anxiety Relief",
     description: "Comprehensive program combining cognitive behavioral techniques with practical exercises to help you overcome anxiety and build confidence.",
     duration: "21 days", 
     activities: "31 Activities",
-    link: "/equip-programs-landing"
+    link: "/equip"
   }
 ];
 

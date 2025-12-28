@@ -4,6 +4,8 @@ import { Button } from '../../ui/button';
 import { Icon } from '../../Icon';
 import { Separator } from '../../ui/separator';
 import { useNotifications } from '../../../contexts/NotificationContext';
+import { useAuth } from '../../../contexts/AuthContext';
+import { apiClient } from '../../../lib/api-client';
 import { useIsMobile } from '../../../hooks/useIsMobile';
 import { cn } from '../../ui/utils';
 
@@ -34,6 +36,7 @@ interface NotificationSettings {
 
 export function Notifications() {
   const { showToast } = useNotifications();
+  const { user } = useAuth();
   const isMobile = useIsMobile();
   
   const [settings, setSettings] = useState<NotificationSettings>({
@@ -61,38 +64,58 @@ export function Notifications() {
     quietEnd: '08:00'
   });
 
-  const handleToggleSetting = (key: keyof NotificationSettings) => {
-    setSettings(prev => {
-      const newSettings = {
+  // Load settings from user profile
+  useEffect(() => {
+    if (user?.user_metadata?.notification_settings) {
+      setSettings(prev => ({
         ...prev,
-        [key]: !prev[key]
-      };
-      
-      // If disabling push notifications, disable all push-related settings
-      if (key === 'pushEnabled' && prev.pushEnabled) {
-        newSettings.moodReminders = false;
-        newSettings.assessmentReminders = false;
-        newSettings.programUpdates = false;
-        newSettings.achievementAlerts = false;
-      }
-      
-      // If disabling email, disable all email-related settings
-      if (key === 'emailEnabled' && prev.emailEnabled) {
-        newSettings.weeklyProgress = false;
-        newSettings.newResources = false;
-        newSettings.consultantMessages = false;
-      }
-      
-      return newSettings;
-    });
-    showToast('success', 'Updated', 'Notification preference updated');
+        ...user.user_metadata.notification_settings
+      }));
+    }
+  }, [user]);
+
+  const handleToggleSetting = async (key: keyof NotificationSettings) => {
+    // Optimistic update
+    const newSettings = { ...settings, [key]: !settings[key] };
+    
+    // Logic for dependent settings
+    if (key === 'pushEnabled' && settings.pushEnabled) { // turning off
+      newSettings.moodReminders = false;
+      newSettings.assessmentReminders = false;
+      newSettings.programUpdates = false;
+      newSettings.achievementAlerts = false;
+    }
+    
+    if (key === 'emailEnabled' && settings.emailEnabled) { // turning off
+      newSettings.weeklyProgress = false;
+      newSettings.newResources = false;
+      newSettings.consultantMessages = false;
+    }
+
+    setSettings(newSettings);
+    
+    try {
+      // Save to backend
+      await apiClient.updateProfile({ notification_settings: newSettings });
+      showToast('success', 'Updated', 'Notification preference updated');
+    } catch (error) {
+      // Revert on failure
+      setSettings(settings);
+      console.error('Failed to update notifications:', error);
+      showToast('error', 'Update Failed', 'Could not save notification settings');
+    }
   };
 
-  const handleTimeChange = (key: 'quietStart' | 'quietEnd', value: string) => {
-    setSettings(prev => ({
-      ...prev,
-      [key]: value
-    }));
+  const handleTimeChange = async (key: 'quietStart' | 'quietEnd', value: string) => {
+    const newSettings = { ...settings, [key]: value };
+    setSettings(newSettings);
+    
+    // Debounce this in a real app, but for now just save
+    try {
+      await apiClient.updateProfile({ notification_settings: newSettings });
+    } catch (error) {
+      console.error('Failed to update quiet hours:', error);
+    }
   };
 
   const handleTestNotification = () => {

@@ -20,19 +20,17 @@ export function TopNavBar({ currentRoute, onNavigate, className, showAuthButtons
   // Define specific navigation items for top nav as requested by user
   // Top nav should have: Dashboard, Mood journal, Assessments, Program, Library, Let's Talk
   const topNavItems = [
-    { label: 'Dashboard', route: '/dashboard', icon: 'home' },
-    { label: 'Mood Journal', route: '/mood-journal', icon: 'heart' },
-    { label: 'Assessment', route: '/assessment', icon: 'assignment' },
-    { label: 'Equip', route: '/equip', icon: 'tools' },
-    { label: 'Resource', route: '/resource', icon: 'library' },
-    { label: 'Consultation', route: '/consultation', icon: 'chat' }
+    { label: 'Dashboard', route: '/dashboard' },
+    { label: 'Mood Journal', route: '/mood-journal' },
+    { label: 'Assessment', route: '/assessment' },
+    { label: 'Equip', route: '/equip' },
+    { label: 'Resource', route: '/resource' },
+    { label: 'Consultation', route: '/consultation' }
   ];
   
   const navItems = topNavItems.map(item => ({
     label: item.label,
     route: item.route,
-    icon: { default: item.icon, active: item.icon },
-    variant: { default: 'roundedOutline', active: 'roundedFilled' }
   }));
 
   // Handle scroll state for animations - JSON spec: states: ["default", "scrolled"]
@@ -104,41 +102,29 @@ export function TopNavBar({ currentRoute, onNavigate, className, showAuthButtons
               variant="ghost"
               onClick={() => onNavigate(item.route)}
               className={cn(
-                "gap-2 px-3 py-2 h-auto transition-all duration-200 relative overflow-hidden",
-                // JSON spec interactions: ["hover"] 
+                "px-4 py-2 h-auto transition-all duration-200 relative",
                 "hover:animate-fadeIn"
               )}
               style={{
-                backgroundColor: isActive ? 'var(--color-bg-muted)' : 'transparent',
-                color: isActive ? 'var(--color-primary-default)' : 'var(--color-text-primary)',
+                backgroundColor: isActive ? 'var(--color-primary-default)' : 'transparent',
+                color: isActive ? 'var(--color-primary-on)' : 'var(--color-text-primary)',
                 fontWeight: 'var(--font-weight-medium)',
-                borderRadius: 'var(--radius-sm)'
+                borderRadius: 'var(--radius-md)' // Updated to match SideNav rounded look
               }}
               onMouseEnter={(e) => {
-                if (!isActive) {
-                  e.currentTarget.style.backgroundColor = 'var(--color-bg-muted)';
-                  e.currentTarget.style.transform = 'translateY(-1px)';
-                }
+                 if (!isActive) {
+                   e.currentTarget.style.backgroundColor = 'var(--color-bg-muted)'; // "turn grye"
+                 }
+                 e.currentTarget.style.transform = 'translateY(-1px)';
               }}
               onMouseLeave={(e) => {
-                if (!isActive) {
-                  e.currentTarget.style.backgroundColor = 'transparent';
-                  e.currentTarget.style.transform = 'translateY(0)';
-                }
+                 if (!isActive) {
+                   e.currentTarget.style.backgroundColor = 'transparent';
+                 }
+                 e.currentTarget.style.transform = 'translateY(0)';
               }}
             >
-              <Icon 
-                name={isActive ? item.icon.active : item.icon.default} 
-                size={16}
-                variant={isActive ? item.variant.active : item.variant.default}
-              />
               {item.label}
-              {isActive && (
-                <div 
-                  className="absolute bottom-0 left-0 right-0 h-0.5 animate-slideRight"
-                  style={{ backgroundColor: 'var(--color-primary-default)' }}
-                />
-              )}
             </Button>
           );
         })}

@@ -1,0 +1,114 @@
+{
+  "onboarding_questions": [
+    {
+      "id": "sleep_q1",
+      "order": 0,
+      "question": "What do you do for a living?",
+      "helper_text": "This helps us tailor sleep strategies to your schedule",
+      "type": "single_select",
+      "options": [
+        "Office worker (9-5)",
+        "Shift worker (nights/rotating)",
+        "Student",
+        "Self-employed",
+        "Retired",
+        "Unemployed",
+        "Prefer not to answer"
+      ],
+      "allow_skip": true,
+      "allow_prefer_not_to_answer": true,
+      "required": false,
+      "privacy_level": "general",
+      "storage_scope": "equip-only",
+      "editable_later": true,
+      "placeholder": ""
+    },
+    {
+      "id": "sleep_q2",
+      "order": 1,
+      "question": "Have you ever taken therapy before?",
+      "helper_text": "No judgment—this just helps us understand your familiarity with CBT techniques",
+      "type": "single_select",
+      "options": [
+        "Yes",
+        "No",
+        "Prefer not to answer"
+      ],
+      "allow_skip": true,
+      "allow_prefer_not_to_answer": true,
+      "required": false,
+      "privacy_level": "sensitive",
+      "storage_scope": "equip-only",
+      "editable_later": true,
+      "placeholder": ""
+    },
+    {
+      "id": "sleep_q3",
+      "order": 2,
+      "question": "If yes, what for?",
+      "helper_text": "Select all that apply. This helps us understand what approaches might already be familiar to you.",
+      "type": "multi_select",
+      "options": [
+        "Anxiety",
+        "Depression",
+        "Sleep issues",
+        "Trauma or PTSD",
+        "Stress management",
+        "Relationship issues",
+        "Other"
+      ],
+      "allow_skip": true,
+      "allow_prefer_not_to_answer": false,
+      "required": false,
+      "max_selections": null,
+      "conditional": {
+        "show_if_question_id": "sleep_q2",
+        "show_if_answer": "Yes"
+      },
+      "privacy_level": "sensitive",
+      "storage_scope": "equip-only",
+      "editable_later": true,
+      "placeholder": ""
+    },
+    {
+      "id": "sleep_q4",
+      "order": 3,
+      "question": "Do you have any pre-existing conditions you'd like us to be aware of?",
+      "helper_text": "This is completely optional. We only ask so we can provide appropriate support and avoid suggesting anything that might not be suitable for your situation.",
+      "type": "single_select",
+      "options": [
+        "Yes",
+        "No",
+        "Prefer not to answer"
+      ],
+      "allow_skip": true,
+      "allow_prefer_not_to_answer": true,
+      "required": false,
+      "privacy_level": "health",
+      "storage_scope": "equip-only",
+      "editable_later": true,
+      "placeholder": ""
+    },
+    {
+      "id": "sleep_q5",
+      "order": 4,
+      "question": "If yes, what?",
+      "helper_text": "You can share as much or as little as you're comfortable with. This information stays private and helps us support you better.",
+      "type": "textarea",
+      "options": [],
+      "allow_skip": true,
+      "allow_prefer_not_to_answer": false,
+      "required": false,
+      "character_limit": 500,
+      "conditional": {
+        "show_if_question_id": "sleep_q4",
+        "show_if_answer": "Yes"
+      },
+      "privacy_level": "health",
+      "storage_scope": "equip-only",
+      "editable_later": true,
+      "placeholder": "e.g., Diagnosed insomnia, chronic pain, sleep apnea, medication side effects, etc."
+    }
+  ],
+  "onboarding_estimated_duration": 5
+}

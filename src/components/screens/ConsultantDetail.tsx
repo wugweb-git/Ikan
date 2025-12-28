@@ -29,6 +29,7 @@ import { Label } from '../ui/label';
 import { apiClient } from '../../lib/api-client';
 import { useIsMobile } from '../../hooks/useIsMobile';
 import { toast } from 'sonner';
+import { MobileHeader } from '../navigation/MobileHeader';
 
 // Define types locally
 export interface ConsultantAvailability {
@@ -186,10 +187,18 @@ export function ConsultantDetail({ consultantId, onNavigate, className }: Consul
 
   return (
     <div className={cn("flex flex-col min-h-screen", className)} style={{ backgroundColor: 'var(--color-bg-page)' }}>
-      {/* Header - Always Visible */}
+      {/* Mobile Header */}
+      <MobileHeader 
+        title={consultant.name}
+        onBack={handleBack}
+        onShare={handleShare}
+        showShare={true}
+      />
+      
+      {/* Header - Desktop Only - Empty placeholder space */}
       {!isMobile && (
         <div style={{ 
-          height: '128px', 
+          height: '88px', 
           backgroundColor: 'var(--color-bg-card)', 
           borderBottom: '1px solid var(--color-border-default)'
         }} />
@@ -240,7 +249,7 @@ export function ConsultantDetail({ consultantId, onNavigate, className }: Consul
                   {/* Stats Row */}
                   <div className="flex flex-wrap gap-4 mb-4">
                     <div className="flex items-center gap-2">
-                      <Star className="h-4 w-4" style={{ color: '#FFA500' }} />
+                      <Star className="h-4 w-4" style={{ color: 'var(--color-rating-star)' }} />
                       <span style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--font-weight-medium)' }}>
                         {consultant.rating}
                       </span>
@@ -460,8 +469,8 @@ export function ConsultantDetail({ consultantId, onNavigate, className }: Consul
                             <Star
                               key={i}
                               className="h-3 w-3"
-                              style={{ color: i < review.rating ? '#FFA500' : '#E0E0E0' }}
-                              fill={i < review.rating ? '#FFA500' : 'none'}
+                              style={{ color: i < review.rating ? 'var(--color-rating-star)' : '#E0E0E0' }}
+                              fill={i < review.rating ? 'var(--color-rating-star)' : 'none'}
                             />
                           ))}
                         </div>

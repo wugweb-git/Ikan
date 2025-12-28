@@ -6,8 +6,8 @@ import { useAuth } from '../../contexts/AuthContext';
 import { AuthForm } from '../AuthForm';
 import { AccountDetailsSection } from '../blocks/AccountDetailsSection';
 import { SideNavAccount } from '../navigation/SideNavAccount';
-import { DatabaseSyncPanel } from '../DatabaseSyncPanel';
 import { PaymentHistory } from './PaymentHistory';
+import { AppSettings } from './account/AppSettings';
 import { Preferences } from './account/Preferences';
 import { Privacy } from './account/Privacy';
 import { Notifications } from './account/Notifications';
@@ -23,11 +23,12 @@ import { useUnsavedChanges } from '../../hooks/useUnsavedChanges';
 
 interface AccountProps {
   className?: string;
+  onNavigate?: (route: string) => void;
 }
 
 
 
-export function Account({ className }: AccountProps) {
+export function Account({ className, onNavigate }: AccountProps) {
   const { user, signOut } = useAuth();
   const { showToast } = useNotifications();
   const isMobile = useIsMobile();
@@ -40,6 +41,7 @@ export function Account({ className }: AccountProps) {
     try {
       setIsSigningOut(true);
       await signOut();
+      onNavigate?.('/');
     } catch (error) {
       console.error('Sign out error:', error);
     } finally {
@@ -48,8 +50,12 @@ export function Account({ className }: AccountProps) {
   };
 
   const handleAccountNavigate = (route: string) => {
-    setCurrentAccountRoute(route);
-    setIsEditingProfile(false); // Reset edit mode when changing routes
+    if (route.startsWith('/account')) {
+      setCurrentAccountRoute(route);
+      setIsEditingProfile(false); // Reset edit mode when changing routes
+    } else {
+      onNavigate?.(route);
+    }
   };
 
   const handleEditProfile = () => {
@@ -160,39 +166,7 @@ export function Account({ className }: AccountProps) {
           </div>
         );
       case '/account/settings':
-        return (
-          <div className="space-y-6">
-            <div className="space-y-2">
-              <h1 style={{ 
-                fontSize: 'var(--text-2xl)', 
-                fontWeight: 'var(--font-weight-medium)',
-                color: 'var(--color-text-primary)'
-              }}>
-                App Settings
-              </h1>
-              <p style={{ color: 'var(--color-text-muted)' }}>
-                Configure your app preferences and database synchronization.
-              </p>
-            </div>
-            
-            {/* Database Sync Panel */}
-            <DatabaseSyncPanel
-              onSyncComplete={(result) => {
-                if (result.success) {
-                  showToast('success', 'Database Synced', 'All assessments and programs are now complete!');
-                } else {
-                  showToast('error', 'Sync Failed', result.message);
-                }
-              }}
-            />
-            
-            <Card>
-              <CardContent className="p-6">
-                <p>Additional app settings coming soon...</p>
-              </CardContent>
-            </Card>
-          </div>
-        );
+        return <AppSettings />;
       case '/account/privacy':
         return <Privacy />;
       case '/account/preferences':
@@ -219,7 +193,7 @@ export function Account({ className }: AccountProps) {
         );
       case '/account/security':
         return <Security />;
-      default: // '/account/profile'
+      case '/account/corporate':
         return (
           <div className="space-y-6">
             <div className="space-y-2">
@@ -228,10 +202,35 @@ export function Account({ className }: AccountProps) {
                 fontWeight: 'var(--font-weight-medium)',
                 color: 'var(--color-text-primary)'
               }}>
-                Profile Settings
+                Corporate
               </h1>
               <p style={{ color: 'var(--color-text-muted)' }}>
-                Manage your personal information and preferences.
+                Manage your corporate account settings.
+              </p>
+            </div>
+            <Card>
+              <CardContent className="p-6">
+                <p>Corporate settings coming soon...</p>
+              </CardContent>
+            </Card>
+          </div>
+        );
+      default: // '/account/profile'
+        return (
+          <div className="space-y-6">
+            <div className="space-y-2">
+              <h1 style={{ 
+                fontSize: 'var(--text-4xl)', 
+                fontWeight: 'var(--font-weight-medium)',
+                color: 'var(--color-text-primary)'
+              }}>
+                My Profile
+              </h1>
+              <p style={{ 
+                fontSize: 'var(--text-lg)',
+                color: 'var(--color-text-primary)' 
+              }}>
+                Track your journey and see how far have you come.
               </p>
             </div>
 
@@ -286,10 +285,10 @@ export function Account({ className }: AccountProps) {
   const mobileTabItems = [
     { id: 'profile', label: 'Profile', icon: 'user', route: '/account/profile' },
     { id: 'payments', label: 'Payments', icon: 'creditCard', route: '/account/payments' },
-    { id: 'settings', label: 'Settings', icon: 'settings', route: '/account/settings' },
-    { id: 'privacy', label: 'Privacy', icon: 'shield', route: '/account/privacy' },
     { id: 'notifications', label: 'Notifications', icon: 'bell', route: '/account/notifications' },
-    { id: 'security', label: 'Security', icon: 'lock', route: '/account/security' }
+    { id: 'security', label: 'Security', icon: 'lock', route: '/account/security' },
+    { id: 'preferences', label: 'Preferences', icon: 'sliders', route: '/account/preferences' },
+    { id: 'corporate', label: 'Corporate', icon: 'briefcase', route: '/account/corporate' }
   ];
 
   const getCurrentTabId = () => {
@@ -351,11 +350,12 @@ export function Account({ className }: AccountProps) {
   // Desktop layout
   return (
     <div 
-      className={cn("flex ikan-stack-md", className)}
+      className={cn("flex ikan-stack-md mx-5", className)}
       style={{ 
         gap: 'var(--spacing-6)', 
         flexDirection: 'row',
-        alignItems: 'flex-start'
+        alignItems: 'flex-start',
+        marginTop: '20px' 
       }}
     >
       {/* Left Column: SideNavAccount */}
@@ -364,7 +364,8 @@ export function Account({ className }: AccountProps) {
           currentRoute={currentAccountRoute}
           onNavigate={handleAccountNavigate}
           onLogout={handleSignOut}
-          className="sticky top-20"
+          className="sticky"
+          style={{ top: '128px' }} // 20px (nav top) + 88px (nav height) + 20px (gap)
         />
       </div>
 

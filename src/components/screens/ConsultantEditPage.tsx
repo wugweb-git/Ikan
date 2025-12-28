@@ -18,6 +18,7 @@ import { UnsavedChangesDialog } from '../ui/unsaved-changes-dialog';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '../ui/dialog';
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
+import { AdminActionBar } from '../ui/admin-action-bar';
 
 export interface Consultant {
   id: string;
@@ -210,11 +211,6 @@ export function ConsultantEditPage({ consultantId, onBack, onSave }: ConsultantE
     return (
       <AdminPageLayout
         title="Loading..."
-        breadcrumbs={[
-          { label: 'Admin', onClick: onBack },
-          { label: 'Consultants', onClick: onBack },
-          { label: 'Loading...' }
-        ]}
       >
         <div className="flex items-center justify-center py-12">
           <div
@@ -236,11 +232,6 @@ export function ConsultantEditPage({ consultantId, onBack, onSave }: ConsultantE
       <AdminPageLayout
         title={consultantId ? formData.name || 'Edit Professional' : 'New Professional'}
         subtitle={consultantId ? 'Update professional information' : 'Add a new mental health professional'}
-        breadcrumbs={[
-          { label: 'Admin', onClick: onBack },
-          { label: 'Consultants', onClick: onBack },
-          { label: consultantId ? formData.name || 'Edit' : 'New Professional' }
-        ]}
         status={
           formData.available
             ? { label: 'Available', variant: 'success' }
@@ -264,13 +255,6 @@ export function ConsultantEditPage({ consultantId, onBack, onSave }: ConsultantE
               ]
             : [])
         ]}
-        onBack={() => {
-          if (hasUnsavedChanges) {
-            setShowWarning(true);
-          } else {
-            onBack();
-          }
-        }}
         maxWidth="xl"
       >
         {/* Basic Information */}
@@ -566,6 +550,18 @@ export function ConsultantEditPage({ consultantId, onBack, onSave }: ConsultantE
             </Label>
           </div>
         </AdminSection>
+        
+        {/* WordPress-Style Action Bar */}
+        <AdminActionBar
+          onDelete={consultantId ? () => setIsDeleteDialogOpen(true) : undefined}
+          onCancel={onBack}
+          onSaveDraft={() => handleSave(false)}
+          onPublish={() => handleSave(true)}
+          isPublished={formData.published || false}
+          isSaving={saving}
+          showDelete={!!consultantId}
+          publishLabel={formData.published ? 'Update' : 'Save and Publish'}
+        />
       </AdminPageLayout>
 
       {/* Unsaved Changes Dialog */}

@@ -128,6 +128,9 @@ export const iconConfig = {
     "message": {
       "outline": "Icon/Message/Outline",
       "default": "Icon/Message/Default"
+    },
+    "x": {
+      "outline": "Icon/X/Outline"
     }
   }
 } as const;

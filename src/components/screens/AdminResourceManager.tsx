@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FileText, Download, Edit, Plus, Eye, Tag, MoreHorizontal } from 'lucide-react';
+import { FileText, Download, Edit, Plus, Eye, Tag, MoreHorizontal, EyeOff, Trash2, ExternalLink } from 'lucide-react';
 import { useNotifications } from '../../contexts/NotificationContext';
 import { apiClient } from '../../lib/api-client';
 import { AdminHeader } from '../admin/AdminHeader';
@@ -10,6 +10,9 @@ import { Badge } from '../ui/badge';
 import { cn } from '../ui/utils';
 import { ResourceEditPage, Resource } from './ResourceEditPage';
 import { AdminDataTable, Column, FilterOption } from '../admin/AdminDataTable';
+import { ImageWithFallback } from '../figma/ImageWithFallback';
+import { ErrorState } from '../ui/error-state';
+import { EmptyState } from '../ui/empty-state';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -32,6 +35,7 @@ export function AdminResourceManager({ onBack, className }: AdminResourceManager
 
   const [resources, setResources] = useState<Resource[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
 
   // Navigation state
   const [viewMode, setViewMode] = useState<ViewMode>('list');
@@ -76,6 +80,7 @@ export function AdminResourceManager({ onBack, className }: AdminResourceManager
       setLoading(false);
     } catch (error: any) {
       console.error('Failed to load resources:', error);
+      setError(true);
       // Don't set loading to false to show infinite loader as per global policy for backend errors
     }
   };
@@ -119,6 +124,31 @@ export function AdminResourceManager({ onBack, className }: AdminResourceManager
     setSelectedResourceId(undefined);
   };
 
+  const handleTogglePublish = async (id: string, published: boolean) => {
+    try {
+      await apiClient.updateResource(id, { published });
+      setResources((prev) => prev.map((r) => (r.id === id ? { ...r, published } : r)));
+      showToast('success', 'Resource Updated', `Resource ${published ? 'published' : 'unpublished'}`);
+      loadResources(); // Reload to get fresh data
+    } catch (error: any) {
+      console.error('Failed to update resource:', error);
+      showToast('error', 'API Error', 'Failed to update resource');
+    }
+  };
+
+  const handleDelete = async (id: string, resourceTitle: string) => {
+    if (!confirm(`Are you sure you want to delete resource "${resourceTitle}"? This action cannot be undone.`)) return;
+    
+    try {
+      await apiClient.deleteResource(id);
+      setResources((prev) => prev.filter((r) => r.id !== id));
+      showToast('success', 'Resource Deleted', 'Resource has been permanently deleted');
+    } catch (error: any) {
+      console.error('Failed to delete resource:', error);
+      showToast('error', 'API Error', 'Failed to delete resource');
+    }
+  };
+
   // -- Data Table Configuration --
 
   const columns: Column<Resource>[] = [
@@ -129,15 +159,14 @@ export function AdminResourceManager({ onBack, className }: AdminResourceManager
       className: 'min-w-[300px]',
       render: (resource) => (
         <div className="flex items-center gap-3">
-           {resource.thumbnail ? (
-            <div className="w-10 h-10 rounded bg-muted overflow-hidden shrink-0">
-              <img src={resource.thumbnail} alt="" className="w-full h-full object-cover" />
-            </div>
-          ) : (
-            <div className="w-10 h-10 rounded bg-primary/10 flex items-center justify-center shrink-0">
-              <FileText className="w-5 h-5 text-primary" />
-            </div>
-          )}
+           <div className="w-10 h-10 rounded bg-muted overflow-hidden shrink-0 border border-gray-200">
+              <ImageWithFallback 
+                src={resource.thumbnail || ''} 
+                alt={resource.title} 
+                className="w-full h-full object-cover"
+                fallbackText="📄"
+              />
+           </div>
           <div className="flex flex-col">
             <span className="font-medium truncate max-w-[250px]" title={resource.title}>
               {resource.title}
@@ -182,6 +211,16 @@ export function AdminResourceManager({ onBack, className }: AdminResourceManager
       )
     },
     {
+      header: 'Created',
+      accessorKey: 'created_at',
+      sortable: true,
+      render: (resource) => (
+        <span className="text-sm text-muted-foreground">
+          {resource.created_at ? new Date(resource.created_at).toLocaleDateString() : '-'}
+        </span>
+      )
+    },
+    {
       header: 'Stats',
       render: (resource) => (
         <div className="flex items-center gap-3 text-xs text-muted-foreground">
@@ -206,7 +245,21 @@ export function AdminResourceManager({ onBack, className }: AdminResourceManager
             <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleEdit(resource.id); }}>
               <Edit className="mr-2 h-4 w-4" /> Edit
             </DropdownMenuItem>
-            {/* Add more actions here if needed like Delete */}
+            <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleTogglePublish(resource.id, !resource.published); }}>
+              {resource.published ? (
+                <EyeOff className="mr-2 h-4 w-4" />
+              ) : (
+                <Eye className="mr-2 h-4 w-4" />
+              )}
+              {resource.published ? 'Unpublish' : 'Publish'}
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem 
+              onClick={(e) => { e.stopPropagation(); handleDelete(resource.id, resource.title); }}
+              className="text-red-600"
+            >
+              <Trash2 className="mr-2 h-4 w-4" /> Delete
+            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       )
@@ -262,47 +315,88 @@ export function AdminResourceManager({ onBack, className }: AdminResourceManager
   // Show list view
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background p-4">
-        <div className="text-center">
-          <div className="animate-spin rounded-full border-4 mx-auto mb-4 w-12 h-12 border-muted border-t-primary" />
-          <p className="text-muted-foreground">Loading resources...</p>
-        </div>
+      <div className="max-w-7xl mx-auto space-y-6">
+        <AdminHeader
+          title="Resource Manager"
+          description="Loading resources..."
+          onBack={onBack}
+          breadcrumbs={[{ label: 'Admin', onClick: onBack }, { label: 'Resource Manager' }]}
+        />
+        <SkeletonTable rows={8} columns={6} />
       </div>
     );
   }
 
-  return (
-    <div className={cn('min-h-screen bg-background', className)} style={{ padding: isMobile ? 'var(--spacing-4)' : 'var(--spacing-8)' }}>
+  if (error) {
+    return (
       <div className="max-w-7xl mx-auto space-y-6">
         <AdminHeader
           title="Resource Manager"
           description="Manage educational content, articles, and guides"
           onBack={onBack}
           breadcrumbs={[{ label: 'Admin', onClick: onBack }, { label: 'Resource Manager' }]}
-          stats={stats}
-          actions={
-            <Button onClick={handleCreateNew} className="gap-2">
-              <Plus className="w-4 h-4" />
-              {!isMobile && 'Add Resource'}
-            </Button>
-          }
         />
-
-        <AdminDataTable 
-          columns={columns} 
-          data={resources} 
-          searchKeys={['title', 'description', 'category']}
-          filters={filters}
-          searchPlaceholder="Search resources by title, category..."
-          onRowClick={(item) => handleEdit(item.id)}
-          actions={
-            <Button variant="outline" onClick={handleExport} className="gap-2">
-              <Download className="w-4 h-4" />
-              {!isMobile && 'Export CSV'}
-            </Button>
-          }
+        <ErrorState
+          variant="error"
+          title="Failed to Load Resources"
+          message="An error occurred while loading resources. Please try again."
+          onRetry={loadResources}
+          onGoBack={onBack}
         />
       </div>
+    );
+  }
+
+  if (resources.length === 0) {
+    return (
+      <div className="max-w-7xl mx-auto space-y-6">
+        <AdminHeader
+          title="Resource Manager"
+          description="Manage educational content, articles, and guides"
+          onBack={onBack}
+          breadcrumbs={[{ label: 'Admin', onClick: onBack }, { label: 'Resource Manager' }]}
+        />
+        <EmptyState
+          variant="folder"
+          title="No Resources Found"
+          description="Get started by creating your first educational resource."
+          actionLabel="Create First Resource"
+          onAction={handleCreateNew}
+        />
+      </div>
+    );
+  }
+
+  return (
+    <div className="max-w-7xl mx-auto space-y-6">
+      <AdminHeader
+        title="Resource Manager"
+        description="Manage educational content, articles, and guides"
+        onBack={onBack}
+        breadcrumbs={[{ label: 'Admin', onClick: onBack }, { label: 'Resource Manager' }]}
+        stats={stats}
+        actions={
+          <Button onClick={handleCreateNew} className="gap-2">
+            <Plus className="w-4 h-4" />
+            {!isMobile && 'Add Resource'}
+          </Button>
+        }
+      />
+
+      <AdminDataTable 
+        columns={columns} 
+        data={resources} 
+        searchKeys={['title', 'description', 'category']}
+        filters={filters}
+        searchPlaceholder="Search resources by title, category..."
+        onRowClick={(item) => handleEdit(item.id)}
+        actions={
+          <Button variant="outline" onClick={handleExport} className="gap-2">
+            <Download className="w-4 h-4" />
+            {!isMobile && 'Export CSV'}
+          </Button>
+        }
+      />
     </div>
   );
 }

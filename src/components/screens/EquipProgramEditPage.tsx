@@ -127,7 +127,7 @@ export function EquipProgramEditPage({ programId, onBack, onSave }: EquipProgram
   const loadProgram = async () => {
     try {
       setLoading(true);
-      const data = await apiClient.getEquipProgramById(programId!);
+      const data = await apiClient.getEquipProgram(programId!);
       setFormData(data);
     } catch (error) {
       console.error('Failed to load program:', error);
@@ -309,6 +309,18 @@ export function EquipProgramEditPage({ programId, onBack, onSave }: EquipProgram
               ]
             : [])
         ]}
+        toggleActions={[
+          {
+            label: 'Featured',
+            checked: formData.featured || false,
+            onChange: (checked) => setFormData({ ...formData, featured: checked })
+          },
+          {
+            label: 'Can Repeat',
+            checked: formData.can_repeat || false,
+            onChange: (checked) => setFormData({ ...formData, can_repeat: checked })
+          }
+        ]}
         onBack={() => {
           if (hasUnsavedChanges) {
             setShowWarning(true);
@@ -477,48 +489,14 @@ export function EquipProgramEditPage({ programId, onBack, onSave }: EquipProgram
           </div>
         </AdminSection>
 
-        {/* Publishing Options */}
-        <AdminSection
-          title="Publishing Options"
-          description="Control visibility and enrollment"
-          icon={<Rocket className="w-5 h-5" />}
-        >
-          <div className="space-y-4">
-            <div className="flex items-center gap-3 p-4 rounded-lg hover:bg-[var(--color-bg-muted)] transition-colors">
-              <Checkbox
-                id="published"
-                checked={formData.published}
-                onCheckedChange={(checked) => setFormData({ ...formData, published: checked as boolean })}
-              />
-              <div className="flex-1">
-                <Label htmlFor="published" className="cursor-pointer">
-                  Published
-                </Label>
-                <p style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-muted)' }}>
-                  Make this program available for enrollment
-                </p>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-3 p-4 rounded-lg hover:bg-[var(--color-bg-muted)] transition-colors">
-              <Checkbox
-                id="featured"
-                checked={formData.featured}
-                onCheckedChange={(checked) => setFormData({ ...formData, featured: checked as boolean })}
-              />
-              <div className="flex-1">
-                <Label htmlFor="featured" className="cursor-pointer">
-                  Featured
-                </Label>
-                <p style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-muted)' }}>
-                  Show in featured programs section
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {programId && (
-            <div className="grid md:grid-cols-3 gap-4 mt-6">
+        {/* Program Analytics */}
+        {programId && (
+          <AdminSection
+            title="Program Analytics"
+            description="Enrollment and completion metrics"
+            icon={<Rocket className="w-5 h-5" />}
+          >
+            <div className="grid md:grid-cols-3 gap-4">
               <div className="p-4 rounded-lg" style={{ backgroundColor: 'var(--color-bg-muted)' }}>
                 <p style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}>
                   Enrollments
@@ -546,8 +524,8 @@ export function EquipProgramEditPage({ programId, onBack, onSave }: EquipProgram
                 </p>
               </div>
             </div>
-          )}
-        </AdminSection>
+          </AdminSection>
+        )}
       </AdminPageLayout>
 
       <UnsavedChangesDialog

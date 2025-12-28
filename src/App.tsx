@@ -45,12 +45,15 @@ import { AssessmentLandingNew } from './components/screens/AssessmentLandingNew'
 import { AdminResourceManager } from './components/screens/AdminResourceManager';
 import { AdminDashboard } from './components/screens/AdminDashboard';
 import { AdminWidget } from './components/admin/AdminWidget';
+import { UIKitShowcase } from './components/screens/UIKitShowcase';
+import { UIKitShowcasePage } from './components/screens/UIKitShowcasePage';
+import { EquipOnboardingDemo } from './components/screens/EquipOnboardingDemo';
 
 import { AssessmentFlow } from './components/screens/AssessmentFlow';
 import { AssessmentResults } from './components/screens/AssessmentResults';
 import { AssessmentDetail } from './components/screens/AssessmentDetail';
 import { EquipDetail } from './components/screens/EquipDetail';
-import { EquipProgramOnboarding } from './components/screens/EquipProgramOnboarding';
+import { EquipOnboarding } from './components/screens/EquipProgramOnboarding';
 import { EquipProgramFlow } from './components/screens/EquipProgramFlow';
 import { EquipProgramCompletion } from './components/screens/EquipProgramCompletion';
 import { Homepage } from './components/screens/Homepage';
@@ -219,38 +222,62 @@ function AppContent() {
         window.scrollTo({ top: 0, behavior: 'smooth' });
       }
       
+      // Parse the route to separate path and query params
+      // This is critical for routes with params like /equip-detail?id=123
+      const [path, search] = route.split('?');
+      
       const validRoutes = [
         '/', '/dashboard', '/mood-journal', '/assessment', '/assessment-landing', '/assessment-detail', '/assessment-flow', '/assessment-results',
         '/equip', '/equip-programs-landing', '/equip-detail', '/equip-program-onboarding', '/equip-program-flow', '/equip-program-completion',
         '/consultation', '/consultation-detail', '/resource', '/resource-detail', '/account', 
-        '/about', '/faq', '/privacy', '/privacy-policy', '/terms', '/contact', '/return-policy', '/cancellation-policy', '/sitemap', '/login', '/route-test', '/private-route-test', '/admin/resources', '/admin'
+        '/about', '/faq', '/privacy', '/privacy-policy', '/terms', '/contact', '/return-policy', '/cancellation-policy', '/sitemap', '/login', '/route-test', '/private-route-test',
+        '/admin', '/admin/resources', '/admin/equip', '/admin/users', '/admin/consultants', '/admin/assessments', '/admin/analytics', '/admin/settings', '/admin/pages', '/admin/media', '/admin/crud'
       ];
       
       // Handle consultant detail route pattern
-      if (route.startsWith('/consultation/')) {
-        const id = route.split('/consultation/')[1];
+      if (path.startsWith('/consultation/')) {
+        const id = path.split('/consultation/')[1];
         setConsultantId(id);
         setCurrentRoute('/consultation-detail');
         setRouteHistory(prev => [...prev, '/consultation-detail']);
+        
+        // Update URL
+        if (typeof window !== 'undefined') {
+          window.history.pushState({}, '', route);
+        }
         return;
       }
       
-      if (!validRoutes.includes(route)) {
-        logger.warn('Invalid route:', route, 'redirecting to appropriate default');
+      if (!validRoutes.includes(path)) {
+        logger.warn('Invalid route:', path, 'redirecting to appropriate default');
         const defaultRoute = user ? DEFAULT_PRIVATE_ROUTE : DEFAULT_PUBLIC_ROUTE;
         setCurrentRoute(defaultRoute);
         setResourceDetailId(null);
+        if (typeof window !== 'undefined') {
+          window.history.pushState({}, '', defaultRoute);
+        }
         return;
       }
       
       setRouteHistory(prev => {
-        const newHistory = [...prev, route];
+        const newHistory = [...prev, path];
         return newHistory.slice(-10);
       });
       
-      setCurrentRoute(route);
-      if (route === '/resource-detail' && resourceId) {
+      setCurrentRoute(path);
+      
+      // Update Browser URL so getQueryParams works
+      if (typeof window !== 'undefined') {
+        window.history.pushState({}, '', route);
+      }
+
+      if (path === '/resource-detail' && resourceId) {
         setResourceDetailId(resourceId);
+        // Ensure URL reflects the ID if not already there
+        if (!search && typeof window !== 'undefined') {
+           const newUrl = `/resource-detail?id=${resourceId}`;
+           window.history.pushState({}, '', newUrl);
+        }
       } else {
         setResourceDetailId(null);
       }
@@ -568,6 +595,9 @@ function AppContent() {
           setOfflineMode(false);
           
           // Background seeding of essential data
+          // DISABLED: Auto-seeding was causing deleted programs to reappear. 
+          // Admins should manage programs via the Admin Panel.
+          /*
           try {
             console.log(' Background seeding essential data...');
             const controller = new AbortController();
@@ -604,6 +634,7 @@ function AppContent() {
               console.log('📦 Background seeding failed, will retry per component:', errorMessage);
             }
           }
+          */
         })
         .catch((error) => {
           const errorMessage = error instanceof Error ? error.message : String(error);
@@ -655,6 +686,16 @@ function AppContent() {
         setCurrentRoute(user ? DEFAULT_PRIVATE_ROUTE : DEFAULT_PUBLIC_ROUTE);
         return null;
       }
+
+      // Helper to extract query parameters
+      const getQueryParams = () => {
+        if (typeof window === 'undefined') return {};
+        const search = window.location.search;
+        return Object.fromEntries(new URLSearchParams(search));
+      };
+      
+      const queryParams = getQueryParams();
+
       switch (currentRoute) {
         case '/':
           return (
@@ -686,19 +727,26 @@ function AppContent() {
         case '/assessment-landing':
           return (
             <ErrorBoundary>
-              <AssessmentDetail onNavigate={handleNavigate} />
+              <AssessmentDetail 
+                assessmentId={queryParams.id || 'anxiety'}
+                onNavigate={handleNavigate} 
+              />
             </ErrorBoundary>
           );
         case '/assessment-detail':
           return (
             <ErrorBoundary>
-              <AssessmentDetail onNavigate={handleNavigate} />
+              <AssessmentDetail 
+                assessmentId={queryParams.id || 'anxiety'}
+                onNavigate={handleNavigate} 
+              />
             </ErrorBoundary>
           );
         case '/assessment-flow':
           return (
             <ErrorBoundary>
               <AssessmentFlow 
+                assessmentId={queryParams.type || queryParams.id || 'anxiety'}
                 onComplete={(results) => {
                   // Store results and navigate to results screen
                   localStorage.setItem('ikan-assessment-results', JSON.stringify(results));
@@ -732,18 +780,21 @@ function AppContent() {
         case '/equip-detail':
           return (
             <ErrorBoundary>
-              <EquipDetail onNavigate={handleNavigate} />
+              <EquipDetail 
+                equipId={queryParams.id}
+                onNavigate={handleNavigate} 
+              />
             </ErrorBoundary>
           );
         case '/equip-program-onboarding':
           return (
             <ErrorBoundary>
-              <EquipProgramOnboarding 
+              <EquipOnboarding 
                 onComplete={() => {
                   console.log('Onboarding completed');
                   handleNavigate('/equip-program-flow');
                 }}
-                onBack={() => handleNavigate('/equip-programs-landing')}
+                onBack={() => handleNavigate(queryParams.id ? `/equip-detail?id=${queryParams.id}` : '/equip')}
               />
             </ErrorBoundary>
           );
@@ -813,7 +864,7 @@ function AppContent() {
         case '/account':
           return (
             <ErrorBoundary>
-              <Account />
+              <Account onNavigate={handleNavigate} />
             </ErrorBoundary>
           );
         case '/about':
@@ -904,13 +955,79 @@ function AppContent() {
         case '/admin/resources':
           return (
             <ErrorBoundary>
-              <AdminResourceManager onNavigate={handleNavigate} />
+              <AdminDashboard onNavigate={handleNavigate} initialView="resources" />
+            </ErrorBoundary>
+          );
+        case '/admin/equip':
+          return (
+            <ErrorBoundary>
+              <AdminDashboard onNavigate={handleNavigate} initialView="equip" />
+            </ErrorBoundary>
+          );
+        case '/admin/users':
+          return (
+            <ErrorBoundary>
+              <AdminDashboard onNavigate={handleNavigate} initialView="users" />
+            </ErrorBoundary>
+          );
+        case '/admin/consultants':
+          return (
+            <ErrorBoundary>
+              <AdminDashboard onNavigate={handleNavigate} initialView="consultants" />
+            </ErrorBoundary>
+          );
+        case '/admin/assessments':
+          return (
+            <ErrorBoundary>
+              <AdminDashboard onNavigate={handleNavigate} initialView="assessments" />
+            </ErrorBoundary>
+          );
+        case '/admin/analytics':
+          return (
+            <ErrorBoundary>
+              <AdminDashboard onNavigate={handleNavigate} initialView="analytics" />
+            </ErrorBoundary>
+          );
+        case '/admin/settings':
+          return (
+            <ErrorBoundary>
+              <AdminDashboard onNavigate={handleNavigate} initialView="settings" />
+            </ErrorBoundary>
+          );
+        case '/admin/pages':
+          return (
+            <ErrorBoundary>
+              <AdminDashboard onNavigate={handleNavigate} initialView="pages" />
+            </ErrorBoundary>
+          );
+        case '/admin/media':
+          return (
+            <ErrorBoundary>
+              <AdminDashboard onNavigate={handleNavigate} initialView="media" />
+            </ErrorBoundary>
+          );
+        case '/admin/crud':
+          return (
+            <ErrorBoundary>
+              <AdminDashboard onNavigate={handleNavigate} initialView="crud" />
             </ErrorBoundary>
           );
         case '/admin':
           return (
             <ErrorBoundary>
-              <AdminDashboard onNavigate={handleNavigate} />
+              <AdminDashboard onNavigate={handleNavigate} initialView="dashboard" />
+            </ErrorBoundary>
+          );
+        case '/ui-kit':
+          return (
+            <ErrorBoundary>
+              <UIKitShowcasePage onBack={() => handleNavigate('/admin')} />
+            </ErrorBoundary>
+          );
+        case '/equip-onboarding-demo':
+          return (
+            <ErrorBoundary>
+              <EquipOnboardingDemo />
             </ErrorBoundary>
           );
         default:
@@ -1052,6 +1169,14 @@ function AppContent() {
         })
       }}
     >
+      {/* Skip to main content link for accessibility */}
+      <a
+        href="#main-content"
+        className="skip-to-content"
+      >
+        Skip to main content
+      </a>
+
       {/* Mobile pull-to-refresh indicator */}
       {isMobile && pullDistance > 0 && (
         <div 
@@ -1122,6 +1247,7 @@ function AppContent() {
 
       {/* Main Content - Full width, no constraints */}
       <main 
+        id="main-content"
         className="ikan-main-content flex-1 w-full"
         style={{
           // Base layout - full width, no artificial constraints
@@ -1141,7 +1267,7 @@ function AppContent() {
             padding: '0',
             boxSizing: 'border-box',
             // Only handle navigation clearance - let pages control their own content layout
-            paddingTop: (currentRoute === '/' || currentRoute === '/login' || currentRoute === '/contact' || currentRoute === '/consultation' || currentRoute === '/consultation-detail' || currentRoute === '/assessment-landing' || currentRoute === '/equip-programs-landing' || currentRoute === '/resource-detail')
+            paddingTop: (currentRoute === '/' || currentRoute === '/login' || currentRoute === '/contact' || currentRoute === '/consultation' || currentRoute === '/consultation-detail' || currentRoute === '/assessment-landing' || currentRoute === '/equip-programs-landing' || currentRoute === '/equip-detail' || currentRoute === '/resource-detail')
               ? '0' // Landing pages start from top (navigation overlays)
               : (showPublicNav || showPrivateNav) 
                 ? isMobile 
@@ -1152,7 +1278,7 @@ function AppContent() {
                 : '0', // No navigation = no clearance needed
             // Add bottom padding for private mobile nav only
             paddingBottom: (isMobile && showPrivateNav) 
-              ? 'calc(var(--ikan-nav-height-mobile) + env(safe-area-inset-bottom, 0px))' 
+              ? 'calc(80px + 24px + env(safe-area-inset-bottom, 0px))' // 80px nav height + 24px spacing (12px top + 12px bottom)
               : '0',
             // Mobile-specific optimizations
             ...(isMobile && {

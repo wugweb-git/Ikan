@@ -83,7 +83,8 @@ export const iconMapping = {
   "chevronLeft-outline": "ChevronLeft",
   "chevronLeft-default": "ChevronLeft",
   "chevronRight-outline": "ChevronRight",
-  "chevronRight-default": "ChevronRight"
+  "chevronRight-default": "ChevronRight",
+  "x-outline": "X"
 } as const;
 
 // Iconify mapping - using Material Symbols as specified

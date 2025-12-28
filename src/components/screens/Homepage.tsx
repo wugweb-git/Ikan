@@ -69,7 +69,7 @@ export function Homepage({ onNavigate, onGetStarted }: HomepageProps) {
                  description: a.description,
                  image: a.image_url || "https://images.unsplash.com/photo-1527137342181-19aab11a8ee8?auto=format&fit=crop&q=80&w=1000",
                  info: a.info || (a.metadata?.estimated_minutes ? `${a.metadata.estimated_minutes} min Quiz` : "5 min Quiz"),
-                 link: `/assessment-landing`
+                 link: `/assessment-detail?id=${a.slug || a.id}`
               }));
               setAssessments(mappedAssessments.slice(0, 3));
             }
