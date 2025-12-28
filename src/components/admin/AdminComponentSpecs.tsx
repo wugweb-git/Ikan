@@ -28,6 +28,24 @@ export function AdminComponentSpecs() {
         { name: 'onBack', type: 'function', required: true }
       ],
       status: 'Beta'
+    },
+    {
+      name: 'Modal',
+      props: [
+        { name: 'isOpen', type: 'boolean', required: true },
+        { name: 'onClose', type: 'function', required: true },
+        { name: 'title', type: 'string', default: '""' }
+      ],
+      status: 'Stable'
+    },
+    {
+      name: 'Input',
+      props: [
+        { name: 'value', type: 'string', required: true },
+        { name: 'onChange', type: 'function', required: true },
+        { name: 'placeholder', type: 'string', default: '""' }
+      ],
+      status: 'Stable'
     }
   ];
 
@@ -35,7 +53,7 @@ export function AdminComponentSpecs() {
     <div className="space-y-6">
       <div>
          <h2 className="text-2xl font-bold tracking-tight">Component Specifications</h2>
-         <p className="text-muted-foreground">Technical documentation for UI components.</p>
+         <p className="text-muted-foreground">Technical documentation, prop definitions, and status for UI components.</p>
       </div>
 
       <div className="grid gap-6">

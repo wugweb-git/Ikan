@@ -529,6 +529,12 @@ class APIClient {
     }, true, 0);
   }
 
+  async cleanupEquipPrograms() {
+    return this.request('/admin/equip/cleanup', {
+      method: 'POST'
+    }, true, 0);
+  }
+
   async getEquipProgram(equipId: string) {
     const result: any = await this.requestWithFallback(`/equip/programs/${equipId}`, 'programs');
     return result.program || result;
@@ -653,6 +659,13 @@ class APIClient {
   async updateEnrollmentProgress(enrollmentId: string, data: any) {
     return this.request(`/equip/enrollments/${enrollmentId}/progress`, {
       method: 'PUT',
+      body: JSON.stringify(data)
+    }, true, 0);
+  }
+
+  async syncEquipProgress(enrollmentId: string, data: any) {
+    return this.request(`/equip/enrollments/${enrollmentId}/sync`, {
+      method: 'POST',
       body: JSON.stringify(data)
     }, true, 0);
   }

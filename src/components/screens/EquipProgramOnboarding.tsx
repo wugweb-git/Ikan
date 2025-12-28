@@ -1,798 +1,371 @@
 import React, { useState, useEffect } from 'react';
 import { useIsMobile } from '../../hooks/useIsMobile';
 import { Button } from '../ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { Textarea } from '../ui/textarea';
 import { RadioGroup, RadioGroupItem } from '../ui/radio-group';
 import { Checkbox } from '../ui/checkbox';
-import { ArrowLeft, ArrowRight, User, Heart, Shield, CheckCircle, Target, Calendar, Lightbulb } from 'lucide-react';
+import { ArrowLeft, CheckCircle, Info, Lock, ChevronRight, X } from 'lucide-react';
 import { cn } from '../ui/utils';
 import { getEquipProgramContent, getStoredProgram, EquipProgramDetails } from '../../lib/equip-program-content';
 import { apiClient } from '../../lib/api-client';
 import { useNotifications } from '../../contexts/NotificationContext';
 import { OnboardingData } from '../../lib/equip-types';
+import { SLEEP_TIGHT_ONBOARDING } from '../../lib/equip-content/sleep-tight-onboarding';
+import { OnboardingQuestionSet, OnboardingQuestion } from '../../lib/equip-onboarding-types';
 
 interface EquipOnboardingProps {
-  onComplete?: () => void;
+  programId?: string;
+  onComplete?: (data?: any) => void;
   onBack?: () => void;
 }
 
-const initialData: OnboardingData = {
-  personalInfo: {
-    name: '',
-    preferredName: '',
-    age: '',
-    pronouns: ''
-  },
-  programGoals: {
-    what: '', // What they want to achieve
-    why: '',  // Why this is important
-    when: '', // When they want to complete
-    expectations: '' // What they expect from the program
-  },
-  currentState: {
-    primaryConcern: '',
-    severityLevel: 5,
-    previousExperience: '',
-    currentSupport: []
-  },
-  preferences: {
-    reminderTime: '',
-    communicationStyle: 'balanced',
-    privacyLevel: 'medium'
-  },
-  consent: {
-    dataProcessing: false,
-    communications: false,
-    research: false
-  }
-};
-
-const steps = [
-  {
-    id: 'welcome',
-    title: 'Welcome to Your Journey',
-    description: 'Let\'s personalize your experience to help you succeed',
-    icon: <Heart size={24} />
-  },
-  {
-    id: 'personal',
-    title: 'About You',
-    description: 'Tell us a bit about yourself',
-    icon: <User size={24} />
-  },
-  {
-    id: 'goals',
-    title: 'Your Goals',
-    description: 'What do you want to achieve?',
-    icon: <Target size={24} />
-  },
-  {
-    id: 'expectations',
-    title: 'Your Expectations',
-    description: 'Help us understand your timeline and preferences',
-    icon: <Calendar size={24} />
-  },
-  {
-    id: 'consent',
-    title: 'Privacy & Consent',
-    description: 'Review and agree to our data practices',
-    icon: <Shield size={24} />
-  }
-];
-
-export function EquipOnboarding({ onComplete, onBack }: EquipOnboardingProps) {
+export function EquipOnboarding({ programId: propProgramId, onComplete, onBack }: EquipOnboardingProps) {
   const isMobile = useIsMobile();
-  const [content, setContent] = useState<EquipProgramDetails | null>(null);
-  const [currentStep, setCurrentStep] = useState(0);
-  const [data, setData] = useState<OnboardingData>(initialData);
-  const { addNotification } = useNotifications();
+  const [programContent, setProgramContent] = useState<EquipProgramDetails | null>(null);
+  const [programId, setProgramId] = useState<string>(propProgramId || 'sleep-tight-9');
+  
+  // State
+  const [questionSet, setQuestionSet] = useState<OnboardingQuestionSet>(SLEEP_TIGHT_ONBOARDING);
+  const [answers, setAnswers] = useState<Record<string, any>>({});
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(-1); // -1 = Intro Screen
+  const [showValidationHint, setShowValidationHint] = useState(false);
   const [isEnrolling, setIsEnrolling] = useState(false);
+  const { addNotification, showToast } = useNotifications();
 
-  // Mobile-optimized viewport setup (removed body overflow restrictions for mobile scrolling)
+  // Load Program
   useEffect(() => {
-    // Only apply minimal viewport optimizations, allow normal scrolling
-    if (isMobile) {
-      // Ensure proper mobile viewport meta tag
-      const viewport = document.querySelector('meta[name="viewport"]');
-      if (viewport) {
-        viewport.setAttribute('content', 
-          'width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes, viewport-fit=cover'
-        );
-      }
-      
-      // Add mobile-specific CSS class for optimizations
-      document.documentElement.classList.add('mobile-onboarding');
+    let id = propProgramId;
+    
+    if (!id) {
+      const params = new URLSearchParams(window.location.search);
+      const urlId = params.get('id');
+      const storedProgram = getStoredProgram();
+      id = urlId || storedProgram?.slug || 'sleep-tight-9';
     }
     
-    return () => {
-      if (isMobile) {
-        document.documentElement.classList.remove('mobile-onboarding');
-      }
-    };
-  }, [isMobile]);
+    setProgramId(id);
 
-  // Load program content
-  useEffect(() => {
-    const storedProgram = getStoredProgram();
-    
-    if (storedProgram && storedProgram.slug) {
-      const programContent = getEquipProgramContent(storedProgram.slug);
-      
-      if (programContent) {
-        setContent(programContent);
-      } else {
-        // Use a default program content if specific content not found
-        setContent({
-          id: storedProgram.slug || 'default',
-          title: 'Program Onboarding',
-          slug: storedProgram.slug || 'default',
-          overview: {
-            title: 'Program Overview',
-            description: 'Complete your onboarding to start this program.'
-          },
-          whatYoullGet: {
-            title: 'What You\'ll Get',
-            description: 'A structured program to support your mental health journey.'
-          },
-          programDetails: {
-            duration: '6 weeks',
-            accessPeriod: '6 months',
-            modules: '5 modules'
-          },
-          structure: {
-            title: 'Program Structure',
-            weeks: [],
-            moreCount: 0
-          },
-          pricing: {
-            amount: 'Free',
-            currency: 'USD',
-            description: 'No cost'
-          }
-        });
-      }
-    } else {
-      // Set a fallback content
-      setContent({
-        id: 'default',
-        title: 'Program Onboarding',
-        slug: 'default',
-        overview: {
-          title: 'Program Overview',
-          description: 'Complete your onboarding to start this program.'
-        },
-        whatYoullGet: {
-          title: 'What You\'ll Get',
-          description: 'A structured program to support your mental health journey.'
-        },
-        programDetails: {
-          duration: '6 weeks',
-          accessPeriod: '6 months',
-          modules: '5 modules'
-        },
-        structure: {
-          title: 'Program Structure',
-          weeks: [],
-          moreCount: 0
-        },
-        pricing: {
-          amount: 'Free',
-          currency: 'USD',
-          description: 'No cost'
-        }
-      });
+    if (id) {
+      const content = getEquipProgramContent(id);
+      if (content) setProgramContent(content);
     }
-  }, []);
+  }, [propProgramId]);
+
+  // Filter Visible Questions
+  const visibleQuestions = questionSet.questions
+    .sort((a, b) => a.order - b.order)
+    .filter(q => {
+      if (!q.conditional_logic) return true;
+      const { trigger_question_id, condition, value } = q.conditional_logic;
+      const triggerValue = answers[trigger_question_id];
+      switch (condition) {
+        case 'equals': return triggerValue === value;
+        case 'contains': return Array.isArray(triggerValue) && triggerValue.includes(value);
+        case 'not_equals': return triggerValue !== value;
+        default: return true;
+      }
+    });
+
+  const currentQuestion = currentQuestionIndex >= 0 ? visibleQuestions[currentQuestionIndex] : null;
+  const totalQuestions = visibleQuestions.length;
+
+  const handleAnswerChange = (questionId: string, value: any) => {
+    setAnswers(prev => ({ ...prev, [questionId]: value }));
+    setShowValidationHint(false); // Clear hint on interaction
+  };
+
+  const handleMultiSelectChange = (questionId: string, value: string, checked: boolean) => {
+    setAnswers(prev => {
+      const current = prev[questionId] || [];
+      const newValues = checked 
+        ? [...current, value]
+        : current.filter((v: string) => v !== value);
+      return { ...prev, [questionId]: newValues };
+    });
+    setShowValidationHint(false);
+  };
+
+  const validateCurrent = () => {
+    if (!currentQuestion) return true;
+    if (!currentQuestion.required) return true;
+    
+    const val = answers[currentQuestion.id];
+    if (val === undefined || val === '' || val === null) return false;
+    if (Array.isArray(val) && val.length === 0) return false;
+    return true;
+  };
 
   const handleNext = async () => {
-    if (currentStep < steps.length - 1) {
-      setCurrentStep(prev => prev + 1);
-    } else {
-      // Final step - enroll user in program
-      setIsEnrolling(true);
-      try {
-        const storedProgram = getStoredProgram();
-        if (!storedProgram || !storedProgram.slug) {
-          throw new Error('No program selected');
-        }
+    if (currentQuestionIndex === -1) {
+      // Move from Intro to Q1
+      setCurrentQuestionIndex(0);
+      return;
+    }
 
-        // Enroll in program via API
-        const response = await apiClient.enrollInProgram(storedProgram.slug, data);
-        
-        if (response && response.enrollment) {
-          // Save enrollment ID to localStorage
-          localStorage.setItem('ikan-current-enrollment', response.enrollment.enrollmentId);
-          localStorage.setItem('ikan-equip-onboarding-data', JSON.stringify(data));
-          
-          // Show success message
-          addNotification({
-            id: `enrollment-${Date.now()}`,
-            type: 'success',
-            title: 'Enrollment Successful!',
-            message: `You've successfully enrolled in ${storedProgram.title}`,
-            duration: 5000
-          });
-          
-          // Complete onboarding
-          onComplete?.();
-        } else {
-          throw new Error('Enrollment failed - no response');
-        }
-      } catch (error) {
-        console.error('Enrollment error:', error);
-        addNotification({
-          id: `enrollment-error-${Date.now()}`,
-          type: 'error',
-          title: 'Enrollment Failed',
-          message: 'Could not enroll in program. Please try again.',
-          duration: 5000
-        });
-      } finally {
-        setIsEnrolling(false);
-      }
+    if (!validateCurrent()) {
+      setShowValidationHint(true);
+      return;
+    }
+
+    if (currentQuestionIndex < totalQuestions - 1) {
+      setCurrentQuestionIndex(prev => prev + 1);
+      setShowValidationHint(false);
+      window.scrollTo(0, 0);
+    } else {
+      await submitOnboarding();
+    }
+  };
+
+  const handleSkip = () => {
+    handleAnswerChange(currentQuestion!.id, null);
+    if (currentQuestionIndex < totalQuestions - 1) {
+      setCurrentQuestionIndex(prev => prev + 1);
+      window.scrollTo(0, 0);
+    } else {
+      submitOnboarding();
     }
   };
 
   const handlePrevious = () => {
-    if (currentStep > 0) {
-      setCurrentStep(prev => prev - 1);
+    if (currentQuestionIndex > 0) {
+      setCurrentQuestionIndex(prev => prev - 1);
+      window.scrollTo(0, 0);
+    } else if (currentQuestionIndex === 0) {
+      setCurrentQuestionIndex(-1); // Back to Intro
     } else {
       onBack?.();
     }
   };
 
-  const updateData = (section: keyof OnboardingData, field: string, value: any) => {
-    setData(prev => ({
-      ...prev,
-      [section]: {
-        ...prev[section],
-        [field]: value
-      }
-    }));
-  };
+  const submitOnboarding = async () => {
+    setIsEnrolling(true);
+    try {
+      const storedProgram = getStoredProgram();
+      const slug = programId || storedProgram?.slug || 'sleep-tight-9';
+      
+      // Legacy mapping
+      const legacyData: OnboardingData = {
+        personalInfo: { name: 'Equip User', preferredName: '', age: '', pronouns: '' },
+        programGoals: { what: 'Not specified', why: '', when: '', expectations: '' },
+        currentState: { primaryConcern: 'Sleep', severityLevel: 5, previousExperience: answers['q-therapy-history'] || '', currentSupport: [] },
+        preferences: { reminderTime: '09:00', communicationStyle: 'balanced', privacyLevel: 'medium' },
+        consent: { dataProcessing: true, communications: true, research: false }
+      };
 
-  const updateSupportArray = (value: string, checked: boolean) => {
-    setData(prev => ({
-      ...prev,
-      currentState: {
-        ...prev.currentState,
-        currentSupport: checked 
-          ? [...prev.currentState.currentSupport, value]
-          : prev.currentState.currentSupport.filter(item => item !== value)
+      // Use correct API method
+      const enrollmentData = {
+        programId: slug,
+        onboardingData: {
+            answers,
+            legacyMapping: legacyData
+        }
+      };
+      
+      const response = await apiClient.createEquipEnrollment(enrollmentData);
+      
+      if (response?.enrollment) {
+        localStorage.setItem('ikan-current-enrollment', response.enrollment.enrollmentId);
+        localStorage.setItem('ikan-equip-onboarding-answers', JSON.stringify(answers));
+        
+        onComplete?.(answers);
       }
-    }));
-  };
-
-  const isStepValid = () => {
-    switch (currentStep) {
-      case 0: return true; // Welcome step
-      case 1: // Personal info
-        return data.personalInfo.name.length > 0 && data.personalInfo.age.length > 0;
-      case 2: // Goals
-        return data.programGoals.what.length > 0 && 
-               data.programGoals.why.length > 0 &&
-               data.programGoals.when.length > 0;
-      case 3: // Expectations
-        return data.programGoals.expectations.length > 0;
-      case 4: // Consent
-        return data.consent.dataProcessing && data.consent.communications;
-      default: return true;
+    } catch (error) {
+      console.error(error);
+      showToast('error', 'Enrollment Failed', 'Please try again.');
+    } finally {
+      setIsEnrolling(false);
     }
   };
 
-  if (!content) {
-    return (
-      <div className="h-screen flex items-center justify-center overflow-hidden" style={{ backgroundColor: 'var(--color-bg-page)' }}>
-        <div className="text-center space-y-4">
-          <div className="animate-pulse">
-            <div className="w-12 h-12 bg-gray-300 rounded-lg mx-auto mb-4"></div>
-            <div className="h-4 bg-gray-300 rounded w-48 mx-auto mb-2"></div>
-            <div className="h-3 bg-gray-300 rounded w-32 mx-auto"></div>
+  const renderInput = (q: OnboardingQuestion) => {
+    switch (q.input_type) {
+      case 'text':
+      case 'email':
+      case 'phone':
+        return (
+          <Input
+            value={answers[q.id] || ''}
+            onChange={(e) => handleAnswerChange(q.id, e.target.value)}
+            className="h-14 text-lg"
+            placeholder="Type your answer..."
+          />
+        );
+      case 'single_select':
+        return (
+          <RadioGroup value={answers[q.id] || ''} onValueChange={(v) => handleAnswerChange(q.id, v)} className="space-y-3">
+            {q.options?.map((opt) => (
+              <div key={opt.id} className="relative">
+                <RadioGroupItem value={opt.value} id={`${q.id}-${opt.id}`} className="peer sr-only" />
+                <Label
+                  htmlFor={`${q.id}-${opt.id}`}
+                  className="flex items-center p-4 rounded-xl border border-gray-200 cursor-pointer transition-all hover:bg-gray-50 peer-data-[state=checked]:border-[var(--color-primary-default)] peer-data-[state=checked]:bg-[var(--color-primary-light)] peer-data-[state=checked]:text-[var(--color-primary-dark)]"
+                >
+                  <span className="text-base font-medium">{opt.label}</span>
+                </Label>
+              </div>
+            ))}
+            {q.allow_prefer_not_to_say && (
+              <div className="relative mt-4">
+                <RadioGroupItem value="prefer_not_to_say" id="pnts" className="peer sr-only" />
+                <Label htmlFor="pnts" className="block text-center text-sm text-gray-500 cursor-pointer hover:text-gray-800 peer-data-[state=checked]:font-medium peer-data-[state=checked]:text-[var(--color-primary-default)]">
+                  Prefer not to answer
+                </Label>
+              </div>
+            )}
+          </RadioGroup>
+        );
+      case 'multi_select':
+        const vals = answers[q.id] || [];
+        return (
+          <div className="space-y-3">
+            {q.options?.map((opt) => (
+              <div key={opt.id} className="relative">
+                <Checkbox
+                  id={`${q.id}-${opt.id}`}
+                  checked={vals.includes(opt.value)}
+                  onCheckedChange={(c) => handleMultiSelectChange(q.id, opt.value, !!c)}
+                  className="peer sr-only"
+                />
+                <Label
+                  htmlFor={`${q.id}-${opt.id}`}
+                  className={cn(
+                    "flex items-center p-4 rounded-xl border border-gray-200 cursor-pointer transition-all hover:bg-gray-50",
+                    vals.includes(opt.value) ? "border-[var(--color-primary-default)] bg-[var(--color-primary-light)]" : ""
+                  )}
+                >
+                  <span className={cn("text-base font-medium", vals.includes(opt.value) ? "text-[var(--color-primary-dark)]" : "")}>
+                    {opt.label}
+                  </span>
+                  {vals.includes(opt.value) && <CheckCircle size={18} className="ml-auto text-[var(--color-primary-default)]" />}
+                </Label>
+              </div>
+            ))}
           </div>
-        </div>
+        );
+      case 'textarea':
+        return <Textarea value={answers[q.id] || ''} onChange={e => handleAnswerChange(q.id, e.target.value)} rows={5} className="text-lg p-4" />;
+      default: return null;
+    }
+  };
+
+  // 1. INTRO VIEW
+  if (currentQuestionIndex === -1) {
+    return (
+      <div className="min-h-screen bg-[var(--color-bg-page)] flex flex-col">
+        <header className="px-6 py-4 flex justify-between items-center">
+          <span className="font-medium text-gray-900">{programContent?.title || 'Program Setup'}</span>
+          <Button variant="ghost" size="sm" onClick={onBack} className="text-gray-500"><X size={20} /></Button>
+        </header>
+        
+        <main className="flex-1 flex flex-col items-center justify-center p-6 text-center max-w-md mx-auto">
+          <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mb-6 text-blue-600">
+            <Info size={32} />
+          </div>
+          <h1 className="text-2xl font-semibold mb-4 text-gray-900">Before we begin...</h1>
+          <p className="text-gray-600 mb-8 leading-relaxed">
+            We'd like to know a little about you. This helps us personalize your experience and ensure this program is the right fit.
+          </p>
+          <div className="flex items-center justify-center gap-2 text-xs text-gray-500 mb-12 bg-gray-50 py-2 px-4 rounded-full">
+            <Lock size={12} />
+            Your responses are private and secure.
+          </div>
+          <Button onClick={handleNext} className="w-full h-14 text-lg bg-[var(--color-primary-default)] text-white rounded-xl shadow-lg shadow-blue-500/20">
+            Get Started
+          </Button>
+        </main>
       </div>
     );
   }
 
+  // 2. QUESTION VIEW
   return (
-    <div 
-      className="min-h-screen flex flex-col" 
-      style={{ 
-        backgroundColor: 'var(--color-bg-page)',
-        paddingTop: isMobile ? 'var(--spacing-4)' : 'var(--spacing-8)',
-        paddingRight: isMobile ? 'var(--spacing-4)' : 'var(--spacing-8)',
-        paddingBottom: isMobile ? 'var(--spacing-4)' : 'var(--spacing-8)',
-        paddingLeft: isMobile ? 'var(--spacing-4)' : 'var(--spacing-8)',
-        maxWidth: isMobile ? '100%' : 'var(--constraint-content-max)',
-        margin: isMobile ? '0' : '0 auto',
-        // Mobile-friendly scrolling
-        ...(isMobile && {
-          minHeight: '100vh',
-          overflow: 'auto',
-          WebkitOverflowScrolling: 'touch'
-        })
-      }}
-    >
+    <div className="min-h-screen bg-[var(--color-bg-page)] flex flex-col transition-colors duration-500">
       {/* Header */}
-      <div className="flex-shrink-0 mb-6" style={{ 
-        backgroundColor: isMobile ? 'transparent' : 'var(--color-bg-card)', 
-        borderColor: isMobile ? 'transparent' : 'var(--color-border-default)',
-        borderBottom: isMobile ? 'none' : '1px solid var(--color-border-default)'
-      }}>
-        <div className={isMobile ? '' : 'max-w-4xl mx-auto px-4 py-4'}>
-          <div className="flex items-center justify-between">
-            <Button
-              variant="ghost"
-              onClick={handlePrevious}
-              className="gap-2"
-              style={{
-                color: 'var(--color-text-primary)',
-                fontSize: 'var(--text-sm)',
-                fontWeight: 'var(--font-weight-normal)',
-                height: 'var(--ikan-component-button-height)',
-                borderRadius: 'var(--ikan-component-border-radius)'
-              }}
-            >
-              <ArrowLeft size={16} />
-              {currentStep === 0 ? 'Back' : 'Previous'}
-            </Button>
-            
-            <div className="text-center">
-              <h1 style={{ 
-                fontSize: isMobile ? 'var(--text-lg)' : 'var(--text-xl)', 
-                fontWeight: 'var(--font-weight-medium)',
-                color: 'var(--color-text-primary)'
-              }}>
-                {content.title}
-              </h1>
-              <p style={{ 
-                fontSize: 'var(--text-sm)', 
-                color: 'var(--color-text-muted)'
-              }}>
-                Step {currentStep + 1} of {steps.length}
-              </p>
-            </div>
+      <header className="px-6 py-4 flex items-center justify-between">
+        <Button variant="ghost" size="sm" onClick={handlePrevious} className="p-0 hover:bg-transparent text-gray-400 hover:text-gray-900">
+          <ArrowLeft size={20} />
+        </Button>
+        <span className="text-xs font-medium text-gray-400 uppercase tracking-widest">
+          Step {currentQuestionIndex + 1} of {totalQuestions}
+        </span>
+        <div className="w-5" /> {/* Spacer */}
+      </header>
 
-            <div className="w-16"></div> {/* Spacer for alignment */}
-          </div>
-
-          {/* Progress Steps */}
-          <div className="flex justify-center mt-6">
-            <div className="flex items-center space-x-2">
-              {steps.map((step, index) => (
-                <React.Fragment key={step.id}>
-                  <div className={cn(
-                    "flex items-center justify-center rounded-full transition-colors",
-                    isMobile ? "w-6 h-6" : "w-8 h-8",
-                    index <= currentStep 
-                      ? "text-white" 
-                      : "bg-gray-200 text-gray-400"
-                  )}
-                  style={{
-                    backgroundColor: index <= currentStep ? 'var(--color-primary-default)' : 'var(--color-bg-muted)'
-                  }}>
-                    {index < currentStep ? (
-                      <CheckCircle size={isMobile ? 12 : 16} />
-                    ) : (
-                      <span style={{ fontSize: 'var(--text-xs)' }}>{index + 1}</span>
-                    )}
-                  </div>
-                  {index < steps.length - 1 && (
-                    <div className={cn(
-                      "h-0.5 transition-colors",
-                      isMobile ? "w-4" : "w-8",
-                      index < currentStep ? "" : "bg-gray-200"
-                    )} 
-                    style={{
-                      backgroundColor: index < currentStep ? 'var(--color-primary-default)' : 'var(--color-bg-muted)'
-                    }} />
-                  )}
-                </React.Fragment>
-              ))}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Main Content - Mobile-optimized scrolling */}
-      <div 
-        className="flex-1"
-        style={{
-          // Enable proper mobile scrolling
-          overflow: 'auto',
-          WebkitOverflowScrolling: 'touch',
-          // Ensure content is accessible
-          minHeight: isMobile ? '60vh' : 'auto'
-        }}
-      >
+      {/* Progress Line */}
+      <div className="h-1 bg-gray-100 w-full">
         <div 
-          style={{
-            maxWidth: isMobile ? '100%' : '600px',
-            margin: '0 auto',
-            padding: isMobile ? '0' : 'var(--spacing-4)'
-          }}
-        >
-        <Card style={{
-          backgroundColor: 'var(--color-bg-card)',
-          border: isMobile ? 'none' : '1px solid var(--color-border-default)',
-          borderRadius: isMobile ? 'var(--radius-lg)' : 'var(--radius-lg)',
-          boxShadow: isMobile ? 'none' : 'var(--shadow-sm)'
-        }}>
-          <CardHeader className="text-center" style={{
-            padding: isMobile ? 'var(--spacing-6) var(--spacing-4)' : 'var(--spacing-6)'
-          }}>
-            <div 
-              className="mx-auto mb-4 rounded-full flex items-center justify-center" 
-              style={{ 
-                backgroundColor: 'var(--color-primary-default)',
-                width: isMobile ? '48px' : '56px',
-                height: isMobile ? '48px' : '56px'
-              }}
-            >
-              <div style={{ color: 'var(--color-primary-on)' }}>
-                {steps[currentStep].icon}
-              </div>
-            </div>
-            <CardTitle style={{ 
-              fontSize: isMobile ? 'var(--text-lg)' : 'var(--text-xl)',
-              fontWeight: 'var(--font-weight-medium)',
-              color: 'var(--color-text-primary)'
-            }}>
-              {steps[currentStep].title}
-            </CardTitle>
-            <p style={{ 
-              fontSize: 'var(--text-sm)', 
-              fontWeight: 'var(--font-weight-normal)',
-              color: 'var(--color-text-muted)',
-              lineHeight: 'var(--line-height-md)'
-            }}>
-              {steps[currentStep].description}
-            </p>
-          </CardHeader>
-          <CardContent 
-            className="space-y-6"
-            style={{
-              padding: isMobile ? 'var(--spacing-4)' : 'var(--spacing-6)'
-            }}
-          >
-            {/* Welcome Step */}
-            {currentStep === 0 && (
-              <div className="text-center space-y-4">
-                <div 
-                  className="p-6 rounded-lg"
-                  style={{ backgroundColor: 'var(--color-bg-muted)' }}
-                >
-                  <h3 style={{ 
-                    fontSize: 'var(--text-lg)', 
-                    fontWeight: 'var(--font-weight-medium)',
-                    color: 'var(--color-text-primary)',
-                    marginBottom: 'var(--spacing-4)'
-                  }}>
-                    Welcome to {content.title}
-                  </h3>
-                  <p style={{ 
-                    fontSize: 'var(--text-base)', 
-                    color: 'var(--color-text-muted)',
-                    lineHeight: 'var(--line-height-lg)'
-                  }}>
-                    {content.overview.description}
-                  </p>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-center">
-                  <div className="p-4">
-                    <div style={{ color: 'var(--color-status-info)', marginBottom: 'var(--spacing-2)' }}>
-                      <CheckCircle size={32} className="mx-auto" />
-                    </div>
-                    <h4 style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--font-weight-medium)' }}>
-                      Evidence-Based
-                    </h4>
-                    <p style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}>
-                      Clinically proven techniques
-                    </p>
-                  </div>
-                  <div className="p-4">
-                    <div style={{ color: 'var(--color-status-success)', marginBottom: 'var(--spacing-2)' }}>
-                      <Shield size={32} className="mx-auto" />
-                    </div>
-                    <h4 style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--font-weight-medium)' }}>
-                      Secure & Private
-                    </h4>
-                    <p style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}>
-                      Your data is protected
-                    </p>
-                  </div>
-                  <div className="p-4">
-                    <div style={{ color: 'var(--color-status-warning)', marginBottom: 'var(--spacing-2)' }}>
-                      <Heart size={32} className="mx-auto" />
-                    </div>
-                    <h4 style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--font-weight-medium)' }}>
-                      Personalized
-                    </h4>
-                    <p style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}>
-                      Tailored to your needs
-                    </p>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Personal Information Step */}
-            {currentStep === 1 && (
-              <div className="space-y-4">
-                <div>
-                  <Label htmlFor="name">What should we call you?</Label>
-                  <Input
-                    id="name"
-                    value={data.personalInfo.name}
-                    onChange={(e) => updateData('personalInfo', 'name', e.target.value)}
-                    placeholder="Your preferred name"
-                    style={{
-                      height: 'var(--ikan-component-input-height)',
-                      borderRadius: 'var(--ikan-component-border-radius)',
-                      fontSize: '16px', // Prevents iOS zoom
-                      fontWeight: 'var(--font-weight-regular)'
-                    }}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="age">Age (optional)</Label>
-                  <Input
-                    id="age"
-                    value={data.personalInfo.age}
-                    onChange={(e) => updateData('personalInfo', 'age', e.target.value)}
-                    placeholder="Your age"
-                    style={{
-                      height: 'var(--ikan-component-input-height)',
-                      borderRadius: 'var(--ikan-component-border-radius)',
-                      fontSize: '16px', // Prevents iOS zoom
-                      fontWeight: 'var(--font-weight-regular)'
-                    }}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="pronouns">Pronouns (optional)</Label>
-                  <Input
-                    id="pronouns"
-                    value={data.personalInfo.pronouns}
-                    onChange={(e) => updateData('personalInfo', 'pronouns', e.target.value)}
-                    placeholder="e.g., they/them, she/her, he/him"
-                    style={{
-                      height: 'var(--ikan-component-input-height)',
-                      borderRadius: 'var(--ikan-component-border-radius)',
-                      fontSize: '16px', // Prevents iOS zoom
-                      fontWeight: 'var(--font-weight-regular)'
-                    }}
-                  />
-                </div>
-              </div>
-            )}
-
-            {/* Goals Step */}
-            {currentStep === 2 && (
-              <div className="space-y-6">
-                <div>
-                  <Label style={{ 
-                    fontSize: 'var(--text-base)', 
-                    fontWeight: 'var(--font-weight-medium)',
-                    color: 'var(--color-text-primary)',
-                    marginBottom: 'var(--spacing-4)',
-                    display: 'block'
-                  }}>
-                    What do you want to achieve?
-                  </Label>
-                  <Textarea
-                    id="goals-what"
-                    value={data.programGoals.what}
-                    onChange={(e) => updateData('programGoals', 'what', e.target.value)}
-                    placeholder="Tell us what you hope to achieve..."
-                    rows={3}
-                    style={{
-                      borderRadius: 'var(--ikan-component-border-radius)',
-                      fontSize: '16px', // Prevents iOS zoom
-                      fontWeight: 'var(--font-weight-regular)',
-                      minHeight: 'calc(var(--ikan-component-input-height) * 1.5)'
-                    }}
-                  />
-                </div>
-
-                <div>
-                  <Label style={{ 
-                    fontSize: 'var(--text-base)', 
-                    fontWeight: 'var(--font-weight-medium)',
-                    color: 'var(--color-text-primary)',
-                    marginBottom: 'var(--spacing-4)',
-                    display: 'block'
-                  }}>
-                    Why is this important to you?
-                  </Label>
-                  <Textarea
-                    id="goals-why"
-                    value={data.programGoals.why}
-                    onChange={(e) => updateData('programGoals', 'why', e.target.value)}
-                    placeholder="Explain the significance of your goal..."
-                    rows={3}
-                    style={{
-                      borderRadius: 'var(--ikan-component-border-radius)',
-                      fontSize: '16px', // Prevents iOS zoom
-                      fontWeight: 'var(--font-weight-regular)',
-                      minHeight: 'calc(var(--ikan-component-input-height) * 1.5)'
-                    }}
-                  />
-                </div>
-
-                <div>
-                  <Label style={{ 
-                    fontSize: 'var(--text-base)', 
-                    fontWeight: 'var(--font-weight-medium)',
-                    color: 'var(--color-text-primary)',
-                    marginBottom: 'var(--spacing-4)',
-                    display: 'block'
-                  }}>
-                    When do you want to complete this?
-                  </Label>
-                  <Input
-                    id="goals-when"
-                    value={data.programGoals.when}
-                    onChange={(e) => updateData('programGoals', 'when', e.target.value)}
-                    placeholder="Enter a date or timeframe..."
-                    style={{
-                      height: 'var(--ikan-component-input-height)',
-                      borderRadius: 'var(--ikan-component-border-radius)',
-                      fontSize: '16px', // Prevents iOS zoom
-                      fontWeight: 'var(--font-weight-regular)'
-                    }}
-                  />
-                </div>
-              </div>
-            )}
-
-            {/* Expectations Step */}
-            {currentStep === 3 && (
-              <div className="space-y-6">
-                <div>
-                  <Label style={{ 
-                    fontSize: 'var(--text-base)', 
-                    fontWeight: 'var(--font-weight-medium)',
-                    color: 'var(--color-text-primary)',
-                    marginBottom: 'var(--spacing-4)',
-                    display: 'block'
-                  }}>
-                    What do you expect from this program?
-                  </Label>
-                  <Textarea
-                    id="expectations"
-                    value={data.programGoals.expectations}
-                    onChange={(e) => updateData('programGoals', 'expectations', e.target.value)}
-                    placeholder="Describe your expectations..."
-                    rows={3}
-                    style={{
-                      borderRadius: 'var(--ikan-component-border-radius)',
-                      fontSize: '16px', // Prevents iOS zoom
-                      fontWeight: 'var(--font-weight-regular)',
-                      minHeight: 'calc(var(--ikan-component-input-height) * 1.5)'
-                    }}
-                  />
-                </div>
-              </div>
-            )}
-
-            {/* Consent Step */}
-            {currentStep === 4 && (
-              <div className="space-y-6">
-                <div 
-                  className="p-4 rounded-lg"
-                  style={{ backgroundColor: 'var(--color-bg-muted)' }}
-                >
-                  <h3 style={{ 
-                    fontSize: 'var(--text-base)', 
-                    fontWeight: 'var(--font-weight-medium)',
-                    marginBottom: 'var(--spacing-2)'
-                  }}>
-                    Your Privacy Matters
-                  </h3>
-                  <p style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-muted)' }}>
-                    We take your privacy seriously. Please review and agree to our data practices.
-                  </p>
-                </div>
-
-                <div className="space-y-4">
-                  <div className="flex items-start space-x-3">
-                    <Checkbox
-                      id="data-processing"
-                      checked={data.consent.dataProcessing}
-                      onCheckedChange={(checked) => updateData('consent', 'dataProcessing', !!checked)}
-                    />
-                    <div className="space-y-1">
-                      <Label htmlFor="data-processing" className="font-medium">
-                        Data Processing (Required)
-                      </Label>
-                      <p style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}>
-                        I consent to the processing of my personal data to provide personalized program content and track my progress.
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="flex items-start space-x-3">
-                    <Checkbox
-                      id="communications"
-                      checked={data.consent.communications}
-                      onCheckedChange={(checked) => updateData('consent', 'communications', !!checked)}
-                    />
-                    <div className="space-y-1">
-                      <Label htmlFor="communications" className="font-medium">
-                        Communications (Required)
-                      </Label>
-                      <p style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}>
-                        I agree to receive program-related communications, reminders, and updates via the app and email.
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="flex items-start space-x-3">
-                    <Checkbox
-                      id="research"
-                      checked={data.consent.research}
-                      onCheckedChange={(checked) => updateData('consent', 'research', !!checked)}
-                    />
-                    <div className="space-y-1">
-                      <Label htmlFor="research" className="font-medium">
-                        Research Participation (Optional)
-                      </Label>
-                      <p style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}>
-                        I consent to anonymized data being used for research to improve mental health programs.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Navigation */}
-            <div className={isMobile ? "space-y-3 pt-6" : "flex justify-between pt-6"}>
-              <Button
-                variant="outline"
-                onClick={handlePrevious}
-                className={isMobile ? "w-full gap-2 justify-center" : "gap-2"}
-                style={{
-                  height: 'var(--ikan-component-button-height)',
-                  borderRadius: 'var(--ikan-component-border-radius)',
-                  fontSize: 'var(--text-base)',
-                  fontWeight: 'var(--font-weight-medium)',
-                  border: '1px solid var(--color-border-default)',
-                  backgroundColor: 'transparent',
-                  color: 'var(--color-text-primary)'
-                }}
-              >
-                <ArrowLeft size={16} />
-                {currentStep === 0 ? 'Back' : 'Previous'}
-              </Button>
-
-              <Button
-                onClick={handleNext}
-                disabled={!isStepValid() || isEnrolling}
-                className={isMobile ? "w-full gap-2 justify-center" : "gap-2"}
-                style={{
-                  backgroundColor: 'var(--semantic-button-primary-bg)',
-                  color: 'var(--semantic-button-primary-fg)',
-                  height: 'var(--ikan-component-button-height)',
-                  borderRadius: 'var(--ikan-component-border-radius)',
-                  fontSize: 'var(--text-base)',
-                  fontWeight: 'var(--font-weight-medium)',
-                  border: 'none',
-                  opacity: (!isStepValid() || isEnrolling) ? 0.5 : 1
-                }}
-              >
-                {isEnrolling ? 'Enrolling...' : (currentStep === steps.length - 1 ? 'Start Program' : 'Continue')}
-                {!isEnrolling && <ArrowRight size={16} />}
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-        </div>
+          className="h-full bg-[var(--color-primary-default)] transition-all duration-500 ease-out"
+          style={{ width: `${((currentQuestionIndex + 1) / totalQuestions) * 100}%` }}
+        />
       </div>
+
+      {/* Content */}
+      <main className="flex-1 flex flex-col p-6 max-w-lg mx-auto w-full">
+        <div className="flex-1 flex flex-col justify-center">
+          {currentQuestion && (
+            <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+              <h2 className="text-2xl md:text-3xl font-semibold text-gray-900 mb-3 leading-tight">
+                {currentQuestion.question_text}
+              </h2>
+              
+              {currentQuestion.helper_text && (
+                <p className="text-gray-500 mb-8 text-base">
+                  {currentQuestion.helper_text}
+                </p>
+              )}
+
+              <div className="space-y-6">
+                {renderInput(currentQuestion)}
+              </div>
+
+              {/* Validation Hint (The "Gentle Nudge") */}
+              {showValidationHint && (
+                <div className="mt-4 p-3 bg-amber-50 text-amber-800 text-sm rounded-lg flex items-center gap-2 animate-pulse">
+                  <Info size={16} />
+                  Please answer this question to continue.
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Footer Actions */}
+        <div className="mt-8 space-y-3">
+          <Button 
+            onClick={handleNext}
+            disabled={isEnrolling}
+            className="w-full h-14 text-lg rounded-xl flex items-center justify-center gap-2 bg-[var(--color-primary-default)] text-white shadow-md hover:shadow-lg transition-all"
+          >
+            {isEnrolling ? (
+              'Setting up...'
+            ) : (
+              <>
+                {currentQuestionIndex === totalQuestions - 1 ? 'Finish' : 'Continue'}
+                <ChevronRight size={20} />
+              </>
+            )}
+          </Button>
+
+          {!currentQuestion?.required && !isEnrolling && (
+            <Button 
+              variant="ghost" 
+              onClick={handleSkip}
+              className="w-full text-gray-400 hover:text-gray-600 hover:bg-transparent h-auto py-2 text-sm font-normal"
+            >
+              Skip for now
+            </Button>
+          )}
+          
+          <div className="flex justify-center mt-4">
+            <div className="flex items-center gap-1.5 text-[10px] text-gray-400">
+              <Lock size={10} />
+              Private & Secure
+            </div>
+          </div>
+        </div>
+      </main>
     </div>
   );
 }

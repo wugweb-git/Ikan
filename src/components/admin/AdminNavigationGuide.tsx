@@ -15,6 +15,14 @@ export function AdminNavigationGuide() {
     {
       name: 'Daily Check-in',
       steps: ['Dashboard', 'Mood Journal', 'Log Entry', 'Reflection', 'Summary']
+    },
+    {
+      name: 'Consultant Booking',
+      steps: ['Consultants List', 'Profile View', 'Select Slot', 'Payment', 'Confirmation']
+    },
+    {
+      name: 'Equip Program',
+      steps: ['Program Library', 'Course Detail', 'Enrollment', 'Daily Content', 'Completion']
     }
   ];
 
@@ -22,7 +30,7 @@ export function AdminNavigationGuide() {
     <div className="space-y-6">
       <div>
          <h2 className="text-2xl font-bold tracking-tight">Navigation Guide</h2>
-         <p className="text-muted-foreground">User flows and navigation patterns.</p>
+         <p className="text-muted-foreground">Detailed user flows, navigation paths, and interaction patterns.</p>
       </div>
 
       <div className="space-y-6">

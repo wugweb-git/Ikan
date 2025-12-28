@@ -30,7 +30,7 @@ import { AdminUserManager } from './AdminUserManager';
 import { AdminConsultationManager } from './AdminConsultationManager';
 import { AdminResourceManager } from './AdminResourceManager';
 import { AdminAssessmentManager } from './AdminAssessmentManager';
-import { AdminEquipProgramManager } from './AdminEquipProgramManager';
+import { EquipAdminDashboard } from './EquipAdminDashboard';
 import { AdminEquipAnalytics } from './AdminEquipAnalytics';
 import { AdminPageManager } from './AdminPageManager';
 import { AdminMediaManager } from './AdminMediaManager';
@@ -242,7 +242,7 @@ export function AdminDashboard({ onNavigate, initialView }: AdminDashboardProps)
       case 'consultants': return <AdminConsultationManager onBack={() => setCurrentView('dashboard')} />;
       case 'resources': return <AdminResourceManager onBack={() => setCurrentView('dashboard')} />;
       case 'assessments': return <AdminAssessmentManager onBack={() => setCurrentView('dashboard')} />;
-      case 'equip': return <AdminEquipProgramManager onBack={() => setCurrentView('dashboard')} />;
+      case 'equip': return <EquipAdminDashboard />;
       case 'equip-analytics': return <AdminEquipAnalytics onBack={() => setCurrentView('dashboard')} />;
       case 'pages': return <AdminPageManager onBack={() => setCurrentView('dashboard')} />;
       case 'media': return <AdminMediaManager onBack={() => setCurrentView('dashboard')} />;
@@ -271,14 +271,16 @@ export function AdminDashboard({ onNavigate, initialView }: AdminDashboardProps)
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
       {/* Top Header */}
-      <header className="bg-white border-b h-[var(--ikan-nav-height-mobile)] md:h-[var(--ikan-nav-height-desktop)] px-6 flex items-center justify-between sticky top-0 z-20 shadow-sm w-full">
+      <header className="bg-gray-900 border-b border-gray-800 h-[var(--ikan-nav-height-mobile)] md:h-[var(--ikan-nav-height-desktop)] px-6 flex items-center justify-between sticky top-0 z-20 shadow-md w-full text-white">
          <div className="flex items-center gap-3">
-            <Logo showText={true} iconSize={32} />
-            <div className="h-6 w-px bg-gray-200 mx-2 hidden md:block"></div>
-            <span className="text-muted-foreground font-medium hidden md:block">Admin Console</span>
+            <div className="bg-white rounded-full p-1">
+              <Logo showText={false} iconSize={24} />
+            </div>
+            <div className="h-6 w-px bg-gray-700 mx-2 hidden md:block"></div>
+            <span className="text-gray-200 font-medium hidden md:block">Admin Console</span>
          </div>
          <div className="flex items-center gap-4">
-            <Button variant="ghost" size="sm" onClick={() => onNavigate('/')}>Exit Admin</Button>
+            <Button variant="ghost" size="sm" onClick={() => onNavigate('/')} className="text-gray-300 hover:text-white hover:bg-gray-800">Exit Admin</Button>
          </div>
       </header>
 

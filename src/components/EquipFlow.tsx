@@ -12,8 +12,11 @@ import { apiClient, EquipProgram, EquipProgress } from '../lib/api-client';
 import { useAuth } from '../contexts/AuthContext';
 import { useJourney } from '../contexts/JourneyContext';
 import { PaymentFlow } from './payments/PaymentFlow';
+import { EquipProgramFlow } from './screens/EquipProgramFlow';
 import { Wrench, Clock, DollarSign, Calendar, CheckCircle, Lock, Play, Star, Award, CreditCard } from 'lucide-react';
 import { toast } from 'sonner@2.0.3';
+import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence } from 'motion/react';
 
 interface EquipCardProps {
   program: EquipProgram;
@@ -470,6 +473,7 @@ export function EquipFlow({ className }: EquipFlowProps) {
   const [isPurchaseModalOpen, setIsPurchaseModalOpen] = useState(false);
   const [isProgramModalOpen, setIsProgramModalOpen] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [activeRuntime, setActiveRuntime] = useState<{ programId: string; enrollmentId?: string } | null>(null);
 
   useEffect(() => {
     loadPrograms();
@@ -520,9 +524,13 @@ export function EquipFlow({ className }: EquipFlowProps) {
   };
 
   const handleContinue = (program: EquipProgram, progress: EquipProgress) => {
-    setSelectedProgram(program);
-    setSelectedProgress(progress);
-    setIsProgramModalOpen(true);
+    // Instead of opening the old modal, we launch the EquipProgramFlow runtime
+    // Try to find enrollment ID or purchase ID from progress
+    const enrollmentId = (progress as any).enrollment_id || (progress as any).purchase_id;
+    setActiveRuntime({
+      programId: program.equip_id,
+      enrollmentId: enrollmentId
+    });
   };
 
   const handleConfirmPurchase = async (program: EquipProgram, onboardingData: any) => {
@@ -543,90 +551,94 @@ export function EquipFlow({ className }: EquipFlowProps) {
       });
 
       setIsPurchaseModalOpen(false);
+      
+      // Auto-start the program after purchase
+      handleContinue(program, progress);
+      
     } catch (error) {
       throw error; // Let the modal handle the error
     }
   };
 
-  const handleCompleteDay = async (day: number) => {
-    if (!selectedProgram) return;
-
-    try {
-      const { progress } = await apiClient.completeEquipDay(selectedProgram.equip_id, day);
-      
-      setUserProgresses(prev => ({
-        ...prev,
-        [selectedProgram.equip_id]: progress
-      }));
-      
-      setSelectedProgress(progress);
-
-      toast.success(`Day ${day} completed!`, {
-        description: progress.progress_percentage === 100 ? 
-          'Congratulations! You\'ve completed the entire program!' : 
-          `Great progress! ${progress.completed_days.length} of ${progress.total_days} days complete.`
-      });
-    } catch (error) {
-      console.error('Failed to complete day:', error);
-      toast.error('Failed to mark day as complete');
-    }
-  };
-
-  if (loading) {
-    return (
-      <div className={`space-y-4 ${className}`}>
-        {[1, 2].map((i) => (
-          <Card key={i}>
-            <CardContent className="p-6">
-              <div className="animate-pulse space-y-4">
-                <div className="h-6 bg-gray-200 rounded w-3/4"></div>
-                <div className="h-4 bg-gray-200 rounded w-full"></div>
-                <div className="h-4 bg-gray-200 rounded w-2/3"></div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-    );
-  }
-
   return (
-    <div className={`space-y-6 ${className}`}>
-      {programs.length === 0 ? (
-        <Card>
-          <CardContent className="p-6 text-center">
-            <Wrench size={24} className="mx-auto mb-4" style={{ color: 'var(--color-text-muted)' }} />
-            <p style={{ color: 'var(--color-text-muted)' }}>
-              No programs available at this time
-            </p>
-          </CardContent>
-        </Card>
-      ) : (
-        programs.map((program) => (
-          <EquipCard
-            key={program.equip_id}
-            program={program}
-            userProgress={userProgresses[program.equip_id] || null}
-            onPurchase={handlePurchase}
-            onContinue={handleContinue}
+    <AnimatePresence mode="wait">
+      {activeRuntime ? (
+        <motion.div
+          key="runtime"
+          initial={{ opacity: 0, scale: 0.98 }}
+          animate={{ opacity: 1, scale: 1 }}
+          exit={{ opacity: 0, scale: 0.98 }}
+          transition={{ duration: 0.3 }}
+          className="h-full"
+        >
+          <EquipProgramFlow 
+            programId={activeRuntime.programId}
+            enrollmentId={activeRuntime.enrollmentId}
+            onBack={() => {
+              setActiveRuntime(null);
+              // Refresh progress when returning
+              loadUserProgresses();
+            }}
           />
-        ))
+        </motion.div>
+      ) : loading ? (
+        <motion.div
+          key="loading"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className={`space-y-4 ${className}`}
+        >
+          {[1, 2].map((i) => (
+            <Card key={i}>
+              <CardContent className="p-6">
+                <div className="animate-pulse space-y-4">
+                  <div className="h-6 bg-gray-200 rounded w-3/4"></div>
+                  <div className="h-4 bg-gray-200 rounded w-full"></div>
+                  <div className="h-4 bg-gray-200 rounded w-2/3"></div>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </motion.div>
+      ) : (
+        <motion.div
+          key="list"
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -10 }}
+          transition={{ duration: 0.3 }}
+          className={`space-y-6 ${className}`}
+        >
+          {programs.length === 0 ? (
+            <Card>
+              <CardContent className="p-6 text-center">
+                <Wrench size={24} className="mx-auto mb-4" style={{ color: 'var(--color-text-muted)' }} />
+                <p style={{ color: 'var(--color-text-muted)' }}>
+                  No programs available at this time
+                </p>
+              </CardContent>
+            </Card>
+          ) : (
+            programs.map((program) => (
+              <EquipCard
+                key={program.equip_id}
+                program={program}
+                userProgress={userProgresses[program.equip_id] || null}
+                onPurchase={handlePurchase}
+                onContinue={handleContinue}
+              />
+            ))
+          )}
+
+          <PurchaseModal
+            program={selectedProgram}
+            isOpen={isPurchaseModalOpen}
+            onClose={() => setIsPurchaseModalOpen(false)}
+            onConfirm={handleConfirmPurchase}
+          />
+        </motion.div>
       )}
-
-      <PurchaseModal
-        program={selectedProgram}
-        isOpen={isPurchaseModalOpen}
-        onClose={() => setIsPurchaseModalOpen(false)}
-        onConfirm={handleConfirmPurchase}
-      />
-
-      <ProgramViewModal
-        program={selectedProgram}
-        progress={selectedProgress}
-        isOpen={isProgramModalOpen}
-        onClose={() => setIsProgramModalOpen(false)}
-        onCompleteDay={handleCompleteDay}
-      />
-    </div>
+    </AnimatePresence>
   );
 }

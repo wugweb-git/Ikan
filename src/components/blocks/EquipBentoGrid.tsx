@@ -6,6 +6,7 @@ import { cn } from '../ui/utils';
 // Interfaces for the data we need
 interface BentoSection1 {
   title?: string;
+  eligibilityTitle?: string;
   eligibilityPoints?: string[];
   whoTitle?: string;
   whoContent?: string;
@@ -13,9 +14,11 @@ interface BentoSection1 {
 
 interface BentoSection2 {
   title?: string;
+  subtitle?: string;
   content?: string;
   contentHtml?: string;
   image?: string;
+  secondaryImage?: string; // Tile 6
   bullets?: string[];
 }
 
@@ -52,6 +55,12 @@ const AbstractImageTile = ({ children, className }: { children?: React.ReactNode
     <div className="relative z-10 w-full h-full">
       {children}
     </div>
+  </div>
+);
+
+const TileLabel = ({ number }: { number: number }) => (
+  <div className="absolute top-3 right-3 px-2 py-0.5 bg-neutral-100/80 border border-neutral-200 rounded text-[10px] font-mono text-neutral-500 z-20 pointer-events-none select-none">
+    TILE {number}
   </div>
 );
 
@@ -94,12 +103,18 @@ export function EquipBentoGrid({
         {/* Mobile View: Stacked Column */}
         <div className="flex flex-col gap-6 md:hidden">
           
-          {/* Tile A: What is Sleep Tight? */}
-          <div className="bg-[var(--color-bg-card)] rounded-2xl p-6 border border-[var(--color-border-default)]">
-            <h2 className="text-2xl font-medium text-[var(--color-text-primary)] mb-4">
-              {section2.title || "What is Sleep Tight?"}
+          {/* TILE 2: What is Sleep Tight? (Primary Content) */}
+          <div className="relative bg-[var(--color-bg-card)] rounded-2xl p-6 border border-[var(--color-border-default)]">
+            <TileLabel number={2} />
+            <h2 className="text-2xl font-medium text-[var(--color-text-primary)] mb-2">
+              {section2.title || "Sleep Tight"}
             </h2>
-            <div className="mb-6">
+            {section2.subtitle && (
+                <p className="text-sm text-[var(--color-text-muted)] mb-4 italic">
+                    {section2.subtitle}
+                </p>
+             )}
+            <div className="mb-6 mt-4">
               {renderContent(section2.contentHtml, section2.content ? section2.content.split('\n') : [])}
             </div>
             {section2.bullets && section2.bullets.length > 0 && (
@@ -114,11 +129,17 @@ export function EquipBentoGrid({
             )}
           </div>
 
-          {/* Tile C: Is this for you? */}
-          <div className="bg-[var(--color-bg-card)] rounded-2xl p-6 border border-[var(--color-border-default)]">
+          {/* TILE 1: Is this for you? (Checklist) */}
+          <div className="relative bg-[var(--color-bg-card)] rounded-2xl p-6 border border-[var(--color-border-default)]">
+             <TileLabel number={1} />
              <h3 className="text-xl font-medium text-[var(--color-text-primary)] mb-4">
                {section1.title || "Is this for you?"}
              </h3>
+             {section1.eligibilityTitle && (
+                <p className="text-sm font-medium text-[var(--color-text-muted)] mb-3">
+                    {section1.eligibilityTitle}
+                </p>
+             )}
              <div className="space-y-3">
                 {(section1.eligibilityPoints || []).slice(0, 4).map((item, idx) => (
                   <div key={idx} className="flex items-start gap-3">
@@ -143,8 +164,9 @@ export function EquipBentoGrid({
              )}
           </div>
 
-          {/* Tile D: How it works */}
-          <div className="bg-[var(--color-bg-card)] rounded-2xl p-6 border border-[var(--color-border-default)]">
+          {/* TILE 3: How it works (Process) */}
+          <div className="relative bg-[var(--color-bg-card)] rounded-2xl p-6 border border-[var(--color-border-default)]">
+             <TileLabel number={3} />
              <h3 className="text-xl font-medium text-[var(--color-text-primary)] mb-4">
                {section3.title || "How it works"}
              </h3>
@@ -158,8 +180,9 @@ export function EquipBentoGrid({
              </div>
           </div>
 
-          {/* Tile E: Benefits & Notes */}
-          <div className="bg-[var(--color-bg-card)] rounded-2xl p-6 border border-[var(--color-border-default)]">
+          {/* TILE 4: Benefits & Notes */}
+          <div className="relative bg-[var(--color-bg-card)] rounded-2xl p-6 border border-[var(--color-border-default)]">
+              <TileLabel number={4} />
               <h3 className="text-xl font-medium text-[var(--color-text-primary)] mb-6">
                 {section4.benefitsTitle || "What you'll gain"}
               </h3>
@@ -193,28 +216,56 @@ export function EquipBentoGrid({
               )}
           </div>
 
-           {/* Mobile Image (Tile B/B2) */}
+           {/* TILE 5: Primary Image (Decorative) */}
            {section2.image && (
-             <div className="rounded-2xl overflow-hidden h-48">
+             <div className="relative rounded-2xl overflow-hidden h-48">
+               <TileLabel number={5} />
                <ImageWithFallback 
                  src={section2.image} 
-                 alt="Program atmosphere" 
+                 alt="" 
+                 aria-hidden="true"
                  className="w-full h-full object-cover"
                />
              </div>
            )}
+           
+           {/* TILE 6: Secondary Image (Optional) */}
+           <div className="relative rounded-2xl overflow-hidden h-40 bg-neutral-100">
+             <TileLabel number={6} />
+             <AbstractImageTile className="w-full h-full">
+                {section2.secondaryImage ? (
+                    <ImageWithFallback 
+                        src={section2.secondaryImage} 
+                        alt="" 
+                        aria-hidden="true"
+                        className="w-full h-full object-cover"
+                    />
+                ) : (
+                    /* Abstract Fallback if no image */
+                    <div className="w-full h-full flex items-center justify-center">
+                        <span className="sr-only">Abstract calm background</span>
+                    </div>
+                )}
+             </AbstractImageTile>
+           </div>
         </div>
 
         {/* Tablet & Desktop View: Bento Grid */}
         <div className="hidden md:grid md:grid-cols-2 lg:grid-cols-12 gap-6 auto-rows-fr">
           
-          {/* Tile A: What is Sleep Tight */}
+          {/* TILE 2: What is Sleep Tight */}
           {/* Tablet: Full width (2 cols) | Desktop: 8 cols, 2 rows */}
-          <div className="md:col-span-2 lg:col-span-8 lg:row-span-2 bg-[var(--color-bg-card)] rounded-2xl p-8 border border-[var(--color-border-default)] flex flex-col justify-between">
+          <div className="relative md:col-span-2 lg:col-span-8 lg:row-span-2 bg-[var(--color-bg-card)] rounded-2xl p-8 border border-[var(--color-border-default)] flex flex-col justify-between">
+            <TileLabel number={2} />
             <div>
-                <h2 className="text-3xl font-medium text-[var(--color-text-primary)] mb-6 tracking-tight">
-                    {section2.title || "What is Sleep Tight?"}
+                <h2 className="text-3xl font-medium text-[var(--color-text-primary)] mb-4 tracking-tight">
+                    {section2.title || "Sleep Tight"}
                 </h2>
+                {section2.subtitle && (
+                    <p className="text-lg text-[var(--color-text-muted)] mb-6 italic">
+                        {section2.subtitle}
+                    </p>
+                )}
                 <div className="mb-8">
                      {renderContent(section2.contentHtml, section2.content ? section2.content.split('\n') : [], 2)}
                 </div>
@@ -236,14 +287,16 @@ export function EquipBentoGrid({
             )}
           </div>
 
-          {/* Tile B: Image */}
+          {/* TILE 5: Primary Image (Abstract/Decorative) */}
           {/* Tablet: 1 col (Shared row with C) | Desktop: 4 cols, 2 rows */}
-          <div className="md:col-span-1 lg:col-span-4 lg:row-span-2 rounded-2xl overflow-hidden relative">
+          <div className="relative md:col-span-1 lg:col-span-4 lg:row-span-2 rounded-2xl overflow-hidden relative">
+             <TileLabel number={5} />
              <AbstractImageTile className="h-full">
                 {section2.image ? (
                     <ImageWithFallback 
                         src={section2.image} 
-                        alt="Calm atmosphere" 
+                        alt="" 
+                        aria-hidden="true"
                         className="w-full h-full object-cover"
                     />
                 ) : (
@@ -255,17 +308,18 @@ export function EquipBentoGrid({
              </AbstractImageTile>
           </div>
 
-          {/* Tile C: Is this for you? */}
+          {/* TILE 1: Is this for you? */}
           {/* Tablet: 1 col (Shared row with B) | Desktop: 4 cols, 1 row */}
-          {/* NOTE: In tablet 2-col, logic requires order A -> C, B -> D. 
-              But HTML order is fixed. We use order-first/last or just rely on auto-flow.
-              Auto flow: A(2), B(1), C(1), D(2)...
-              So B and C will share a row on tablet. Perfect.
-          */}
-          <div className="md:col-span-1 lg:col-span-4 lg:row-span-1 bg-[var(--color-bg-card)] rounded-2xl p-8 border border-[var(--color-border-default)] flex flex-col justify-center">
-             <h3 className="text-xl font-medium text-[var(--color-text-primary)] mb-6">
+          <div className="relative md:col-span-1 lg:col-span-4 lg:row-span-1 bg-[var(--color-bg-card)] rounded-2xl p-8 border border-[var(--color-border-default)] flex flex-col justify-center">
+             <TileLabel number={1} />
+             <h3 className="text-xl font-medium text-[var(--color-text-primary)] mb-4">
                {section1.title || "Is this for you?"}
              </h3>
+             {section1.eligibilityTitle && (
+                <p className="text-sm font-medium text-[var(--color-text-muted)] mb-3">
+                    {section1.eligibilityTitle}
+                </p>
+             )}
              <div className="space-y-4">
                 {(section1.eligibilityPoints || []).slice(0, 3).map((item, idx) => (
                   <div key={idx} className="flex items-start gap-3">
@@ -280,23 +334,10 @@ export function EquipBentoGrid({
              </div>
           </div>
 
-          {/* Tile D: How it works */}
+          {/* TILE 3: How it works */}
           {/* Tablet: Full width (2 cols) | Desktop: 8 cols, 1 row */}
-          {/* Desktop Placement: Row 3. 
-              HTML Order so far: A, B, C. 
-              Desktop Grid Auto Placement needs specific col/row starts if order doesn't match.
-              Desktop Map: 
-              Row 1: A(8), B(4)
-              Row 2: A(cont), B(cont)
-              Row 3: C(4), D(8)
-              
-              Current HTML Order: A, B, C, D.
-              Row 1 fills with A(8). Next is B(4). Perfect.
-              Row 2 is filled by A and B spans.
-              Row 3 starts. Next item is C. C is col-span-4. Fits in cols 1-4.
-              Next is D. D is col-span-8. Fits in cols 5-12. Perfect.
-          */}
-          <div className="md:col-span-2 lg:col-span-8 lg:row-span-1 bg-[var(--color-bg-card)] rounded-2xl p-8 border border-[var(--color-border-default)] flex flex-col justify-center">
+          <div className="relative md:col-span-2 lg:col-span-8 lg:row-span-1 bg-[var(--color-bg-card)] rounded-2xl p-8 border border-[var(--color-border-default)] flex flex-col justify-center">
+             <TileLabel number={3} />
              <div className="flex flex-col h-full justify-center">
                 <h3 className="text-2xl font-medium text-[var(--color-text-primary)] mb-3">
                     {section3.title || "How it works"}
@@ -312,15 +353,10 @@ export function EquipBentoGrid({
              </div>
           </div>
 
-          {/* Tile E: Benefits & Notes */}
+          {/* TILE 4: Benefits & Notes */}
           {/* Tablet: Full width (2 cols) | Desktop: 8 cols, 2 rows */}
-          {/* Desktop Map: Row 4: E(8), B2(4).
-              HTML Order: A, B, C, D, E, B2.
-              Row 4 starts. E fits cols 1-8.
-              B2 fits cols 9-12.
-              Perfect.
-          */}
-          <div className="md:col-span-2 lg:col-span-8 lg:row-span-2 bg-[var(--color-bg-card)] rounded-2xl p-8 border border-[var(--color-border-default)]">
+          <div className="relative md:col-span-2 lg:col-span-8 lg:row-span-2 bg-[var(--color-bg-card)] rounded-2xl p-8 border border-[var(--color-border-default)]">
+             <TileLabel number={4} />
              <div className="grid grid-cols-1 sm:grid-cols-2 gap-8 h-full">
                 {/* Benefits Col */}
                 <div className="flex flex-col h-full">
@@ -367,14 +403,24 @@ export function EquipBentoGrid({
              </div>
           </div>
 
-          {/* Tile B2: Image/Spacer */}
-          {/* Tablet: Full width (2 cols) - as per logic to fill row | Desktop: 4 cols, 2 rows */}
-          <div className="md:col-span-2 lg:col-span-4 lg:row-span-2 rounded-2xl overflow-hidden relative">
+          {/* TILE 6: Secondary Image/Spacer (Optional) */}
+          {/* Tablet: Full width (2 cols) | Desktop: 4 cols, 2 rows */}
+          <div className="relative md:col-span-2 lg:col-span-4 lg:row-span-2 rounded-2xl overflow-hidden relative">
+             <TileLabel number={6} />
              <AbstractImageTile className="h-full min-h-[200px]">
-                {/* No content here for now, just the abstract background */}
-                <div className="flex items-center justify-center h-full">
-                    {/* Optional: Add a subtle graphic or just leave it atmospheric */}
-                </div>
+                {section2.secondaryImage ? (
+                    <ImageWithFallback 
+                        src={section2.secondaryImage} 
+                        alt="" 
+                        aria-hidden="true"
+                        className="w-full h-full object-cover"
+                    />
+                ) : (
+                    /* Abstract Fallback if no image */
+                    <div className="w-full h-full flex items-center justify-center">
+                        <span className="sr-only">Abstract calm background</span>
+                    </div>
+                )}
              </AbstractImageTile>
           </div>
 

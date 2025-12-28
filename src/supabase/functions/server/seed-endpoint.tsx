@@ -33,6 +33,42 @@ export async function handleSeedData() {
         title: "Anxiety Assessment",
         description: "Talk to a trained therapist who helps you make sense of things and feel more in control, one session at a time.",
         image_url: "https://images.unsplash.com/photo-1527137342181-19aab11a8ee8?auto=format&fit=crop&q=80&w=1000",
+        
+        // Bento Grid Data
+        section2_title: "About this test",
+        section2_content: "Our anxiety assessment uses the GAD-7 (Generalized Anxiety Disorder-7) scale, a clinically validated tool widely used by healthcare professionals.",
+        section2_image: "https://images.unsplash.com/photo-1544027993-37dbfe43562a?q=80&w=2000&auto=format&fit=crop",
+        section2_bullets: [
+            "Takes 3-5 minutes",
+            "Clinically validated",
+            "Immediate results"
+        ],
+        
+        section1_title: "Who is this test for?",
+        section1_eligibility_title: "This assessment may be helpful if you:",
+        section1_eligibility_points: [
+            "Often feel nervous, anxious, or on edge",
+            "Have trouble relaxing",
+            "Experience physical symptoms of stress"
+        ],
+        section1_who_title: "Who can take this?",
+        section1_who_content: "This assessment is designed for adults 18+.",
+        
+        section3_title: "What you'll see",
+        section3_subtitle: "Understanding your anxiety is the first step toward managing it.",
+        section3_content: [
+            "Answer 7 questions about your recent feelings",
+            "Get a severity score based on GAD-7",
+            "Receive personalized recommendations"
+        ],
+        
+        section4_notes_title: "Things to remember",
+        section4_notes: [
+            "This is a screening tool, not a diagnosis",
+            "Your responses are confidential",
+            "Seek professional help for severe symptoms"
+        ],
+        
         info: "5 min Quiz",
         version: "1.0",
         metadata: {
@@ -65,6 +101,42 @@ export async function handleSeedData() {
         title: "Depression Screening",
         description: "Meet with a psychiatrist who helps with sleep, focus, energy, or mood and finds the right medication, if needed.",
         image_url: "https://images.unsplash.com/photo-1474418397713-7ede21d49118?auto=format&fit=crop&q=80&w=1000",
+        
+        // Bento Grid Data
+        section2_title: "About this screening",
+        section2_content: "The PHQ-9 (Patient Health Questionnaire-9) is a multipurpose instrument for screening, diagnosing, monitoring and measuring the severity of depression.",
+        section2_image: "https://images.unsplash.com/photo-1527137342181-19aab11a8ee8?auto=format&fit=crop&q=80&w=1000",
+        section2_bullets: [
+            "Takes about 5 minutes",
+            "Clinically validated tool",
+            " Confidential results"
+        ],
+        
+        section1_title: "Who is this for?",
+        section1_eligibility_title: "You might consider this if you:",
+        section1_eligibility_points: [
+            "Feel down, depressed, or hopeless",
+            "Have little interest or pleasure in doing things",
+            "Experience changes in sleep or appetite"
+        ],
+        section1_who_title: "Who can take this?",
+        section1_who_content: "Designed for adults 18+ to screen for depression symptoms.",
+        
+        section3_title: "What you'll see",
+        section3_subtitle: "Gain insights into your mood patterns.",
+        section3_content: [
+            "9 questions about frequency of symptoms",
+            "Score indicating depression severity",
+            "Guidance on next steps"
+        ],
+        
+        section4_notes_title: "Important notes",
+        section4_notes: [
+            "Not a substitute for professional diagnosis",
+            "If you have thoughts of self-harm, seek immediate help",
+            "Results are for your information only"
+        ],
+        
         info: "5 min Quiz",
         version: "1.0",
         metadata: {

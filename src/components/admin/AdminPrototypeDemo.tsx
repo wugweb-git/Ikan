@@ -18,6 +18,10 @@ export function AdminPrototypeDemo() {
           { title: 'Program Journey', desc: 'Day-by-day program progression tracking.' },
           { title: 'Crisis Support', desc: 'Emergency resource access flow.' },
           { title: 'Payment Gateway', desc: 'Subscription and checkout process.' },
+          { title: 'Telehealth Video', desc: 'Real-time video consultation interface.' },
+          { title: 'Mood Journal V2', desc: 'Enhanced emotion tracking with AI insights.' },
+          { title: 'Group Support', desc: 'Anonymous peer support chat rooms.' },
+          { title: 'Gamification Engine', desc: 'Rewards and achievements system.' },
         ].map((demo, i) => (
           <Card key={i} className="overflow-hidden group">
             <div className="h-32 bg-muted flex items-center justify-center group-hover:bg-muted/80 transition-colors">

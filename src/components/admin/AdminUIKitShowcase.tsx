@@ -49,7 +49,7 @@ export function AdminUIKitShowcase() {
               color: 'var(--color-text-muted)'
             }}
           >
-            Interactive catalog of all available question types for assessments
+            Interactive catalog of all available question types for assessments. Test interactions live.
           </p>
         </div>
         

@@ -32,24 +32,21 @@ export function EquipHero({
 
   return (
     <section 
-      className={`relative w-full ${className}`}
+      className={`relative w-full pt-[var(--ikan-nav-clearance-mobile)] md:pt-[var(--ikan-nav-clearance-desktop)] ${className}`}
       style={{
         minHeight: 'clamp(500px, 60vh, 700px)',
         margin: 0,
         padding: 0,
         position: 'relative',
-        zIndex: 0, // Behind navbar (navbar should have higher z-index)
+        zIndex: 0, 
+        backgroundColor: 'var(--color-bg-page)'
       }}
     >
       {/* Full-bleed Background Image - Edge to Edge */}
       {backgroundImage && (
         <div 
-          className="absolute inset-0"
+          className="absolute inset-0 w-full h-full"
           style={{ 
-            width: '100vw',
-            height: '100%',
-            left: '50%',
-            transform: 'translateX(-50%)',
             overflow: 'hidden',
           }}
         >
@@ -58,16 +55,16 @@ export function EquipHero({
             className="absolute inset-0 w-full h-full object-cover pointer-events-none"
             src={backgroundImage}
           />
+          {/* Subtle overlay for text readability */}
+          <div className="absolute inset-0 bg-gradient-to-r from-black/40 via-black/20 to-transparent" />
         </div>
       )}
 
       {/* Content Container - Constrained with Padding */}
       <div 
-        className="relative h-full flex items-center"
+        className="relative h-full flex items-center max-w-7xl mx-auto"
         style={{ 
           minHeight: 'clamp(500px, 60vh, 700px)',
-          maxWidth: '1280px',
-          margin: '0 auto',
           padding: 'clamp(var(--spacing-6), 5vw, var(--spacing-12)) var(--spacing-4)',
           zIndex: 1,
         }}
@@ -82,7 +79,11 @@ export function EquipHero({
             style={{
               fontSize: 'clamp(2rem, 5vw, 3.625rem)',
               fontWeight: 'var(--font-weight-medium)',
-              color: 'var(--color-text-primary)',
+              color: 'var(--color-text-primary)', // Usually white on dark bg? Let's check logic.
+              // AssessmentHero uses primary text color, but usually hero text on image needs to be readable.
+              // I added an overlay, so text should probably be light or primary depending on design.
+              // AssessmentHero used primary. I will stick to primary but maybe text-inverse if image is dark.
+              // For now, consistent with AssessmentHero.
               fontFamily: 'var(--font-family-base)',
               lineHeight: 'var(--line-height-sm)'
             }}

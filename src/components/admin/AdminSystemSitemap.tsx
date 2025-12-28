@@ -13,11 +13,15 @@ export function AdminSystemSitemap() {
     },
     {
       section: 'App',
-      pages: ['/dashboard', '/mood-journal', '/assessment', '/equip', '/consultation', '/resource']
+      pages: ['/dashboard', '/mood-journal', '/assessment', '/equip', '/equip/:programId', '/consultation', '/resource', '/resource/:id']
+    },
+    {
+      section: 'Settings',
+      pages: ['/settings', '/settings/profile', '/settings/notifications', '/settings/privacy', '/settings/billing']
     },
     {
       section: 'Admin',
-      pages: ['/admin', '/admin/resources', '/admin/users', '/admin/assessments']
+      pages: ['/admin', '/admin/dashboard', '/admin/resources', '/admin/users', '/admin/assessments', '/admin/equip', '/admin/analytics']
     }
   ];
 
@@ -25,10 +29,10 @@ export function AdminSystemSitemap() {
     <div className="space-y-6">
       <div>
          <h2 className="text-2xl font-bold tracking-tight">System Sitemap</h2>
-         <p className="text-muted-foreground">Overview of all application routes and hierarchy.</p>
+         <p className="text-muted-foreground">Comprehensive map of all application routes, hierarchies, and access levels.</p>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2">
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         {sitemap.map((section) => (
           <Card key={section.section}>
             <CardHeader>

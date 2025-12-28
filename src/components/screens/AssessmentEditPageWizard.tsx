@@ -13,6 +13,7 @@ import { Badge } from '../ui/badge';
 import { Button } from '../ui/button';
 import { Card, CardContent } from '../ui/card';
 import { ImageUpload } from '../ui/image-upload';
+import { RichTextEditor } from '../ui/rich-text-editor';
 import { WizardLayout } from '../ui/wizard-layout';
 import { WizardStep } from '../ui/wizard-stepper';
 import { QuestionCard } from '../ui/question-card';
@@ -95,6 +96,26 @@ export interface Assessment {
   highlights?: string[];
   notes_title?: string;
   notes?: string[];
+  
+  // Bento Grid Specifics
+  section1_title?: string;
+  section1_eligibility_title?: string;
+  section1_eligibility_points?: string[];
+  section1_who_title?: string;
+  section1_who_content?: string;
+  
+  section2_title?: string;
+  section2_content?: string;
+  section2_content_html?: string;
+  section2_image?: string;
+  section2_bullets?: string[];
+  
+  section3_title?: string;
+  section3_subtitle?: string;
+  section3_content?: string[];
+  
+  section4_notes_title?: string;
+  section4_notes?: string[];
 }
 
 interface AssessmentEditPageWizardProps {
@@ -147,7 +168,26 @@ export function AssessmentEditPageWizard({ assessmentId, onBack, onSave }: Asses
     highlights_title: 'Assessment Highlights',
     highlights: [],
     notes_title: 'Things to keep in mind',
-    notes: []
+    notes: [],
+    
+    // Initial Bento Grid Defaults
+    section1_title: 'Who is this test for?',
+    section1_eligibility_title: 'This assessment may be helpful if you:',
+    section1_eligibility_points: [],
+    section1_who_title: 'Who can take this?',
+    section1_who_content: 'This assessment is designed for adults 18+.',
+    
+    section2_title: 'About this test',
+    section2_content: '',
+    section2_image: '',
+    section2_bullets: [],
+    
+    section3_title: 'What you\'ll see',
+    section3_subtitle: 'Understanding your mental health is the first step.',
+    section3_content: [],
+    
+    section4_notes_title: 'Things to remember',
+    section4_notes: []
   });
 
   const validationSchema: ValidationSchema = {
@@ -707,7 +747,7 @@ export function AssessmentEditPageWizard({ assessmentId, onBack, onSave }: Asses
             </div>
           )}
 
-          {/* Step 2: Landing Page */}
+          {/* Step 2: Landing Page (Bento Grid Configuration) */}
           {currentStep === 1 && (
             <div className="space-y-8">
               <div>
@@ -720,32 +760,19 @@ export function AssessmentEditPageWizard({ assessmentId, onBack, onSave }: Asses
                     marginBottom: 'var(--spacing-2)'
                   }}
                 >
-                  Landing Page Content
+                  Landing Page Content (Bento Grid)
                 </h2>
-                <p
-                  style={{
-                    fontSize: 'var(--text-sm)',
-                    fontFamily: 'var(--font-family-base)',
-                    color: 'var(--color-text-muted)'
-                  }}
-                >
-                  Customize how your assessment appears to users
+                <p className="text-sm text-gray-500 mb-4">
+                  Configure the 5-tile layout. The grid automatically adapts for mobile/desktop.
                 </p>
               </div>
 
               {/* Hero Section */}
               <div className="space-y-4">
-                <h3
-                  style={{
-                    fontSize: 'var(--text-lg)',
-                    fontWeight: 'var(--font-weight-medium)',
-                    fontFamily: 'var(--font-family-base)',
-                    borderBottom: '1px solid var(--color-border-default)',
-                    paddingBottom: 'var(--spacing-2)'
-                  }}
-                >
-                  Hero Section
-                </h3>
+                <div className="flex items-center gap-2 border-b pb-2">
+                    <span className="bg-gray-100 text-gray-700 px-2 py-0.5 rounded text-xs font-mono">HERO</span>
+                    <h3 className="text-lg font-medium text-gray-900">Hero Section</h3>
+                </div>
                 <div className="grid md:grid-cols-2 gap-6">
                   <AdminFormField label="Hero Image" helpText="Banner image for the assessment landing page">
                     <ImageUpload
@@ -773,106 +800,171 @@ export function AssessmentEditPageWizard({ assessmentId, onBack, onSave }: Asses
                 </div>
               </div>
 
-              {/* About Section */}
+              {/* ROW 1: Tile 1 & Tile 2 */}
               <div className="space-y-4">
-                <h3
-                  style={{
-                    fontSize: 'var(--text-lg)',
-                    fontWeight: 'var(--font-weight-medium)',
-                    fontFamily: 'var(--font-family-base)',
-                    borderBottom: '1px solid var(--color-border-default)',
-                    paddingBottom: 'var(--spacing-2)'
-                  }}
-                >
-                  Why Take This Assessment
-                </h3>
-                <div className="grid md:grid-cols-2 gap-6">
-                  <div className="space-y-4">
-                    <AdminFormField label="Section Title">
+                <div className="flex items-center gap-2 border-b pb-2">
+                    <span className="bg-blue-100 text-blue-700 px-2 py-0.5 rounded text-xs font-mono">ROW 1</span>
+                    <h3 className="text-lg font-medium text-gray-900">Main Content & Visual</h3>
+                </div>
+                
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                  {/* TILE 1: About (2/3 width) */}
+                  <div className="lg:col-span-2 space-y-4 p-5 rounded-xl border border-gray-200 bg-white shadow-sm">
+                    <div className="flex items-center gap-2 mb-2">
+                        <span className="bg-gray-100 text-gray-600 px-2 py-0.5 rounded text-xs font-bold">TILE 1</span>
+                        <h4 className="font-medium text-gray-900">About This Test</h4>
+                    </div>
+                    
+                    <AdminFormField label="Title">
                       <Input
-                        value={formData.about_title || ''}
-                        onChange={(e) => setFormData({ ...formData, about_title: e.target.value })}
-                        placeholder="Why take this assessment?"
+                        value={formData.section2_title || formData.about_title || ''}
+                        onChange={(e) => setFormData({ ...formData, section2_title: e.target.value })}
+                        placeholder="About this test"
                       />
                     </AdminFormField>
-                    <AdminFormField label="Content">
+                    <AdminFormField label="Content (Rich Text)">
+                      <RichTextEditor
+                        value={formData.section2_content_html || formData.section2_content || ''}
+                        onChange={(value) => setFormData({ 
+                          ...formData, 
+                          section2_content_html: value,
+                          section2_content: value.replace(/<[^>]*>/g, '') 
+                        })}
+                        placeholder="Description of the assessment..."
+                        minHeight="150px"
+                      />
+                    </AdminFormField>
+                    <AdminFormField label="Key Details (Bullets)">
                       <Textarea
-                        value={formData.about_content || ''}
-                        onChange={(e) => setFormData({ ...formData, about_content: e.target.value })}
-                        className="min-h-[120px]"
-                        placeholder="Description of the assessment's purpose..."
+                        value={getArrayFieldString('section2_bullets')}
+                        onChange={(e) => handleArrayFieldChange('section2_bullets', e.target.value)}
+                        placeholder="Takes 5 minutes&#10;Clinically validated"
+                        className="min-h-[80px]"
                       />
                     </AdminFormField>
                   </div>
-                  <div className="space-y-4">
-                    <AdminFormField label="Image">
+
+                  {/* TILE 2: Visual (1/3 width) */}
+                  <div className="space-y-4 p-5 rounded-xl border border-gray-200 bg-white shadow-sm h-fit">
+                    <div className="flex items-center gap-2 mb-2">
+                        <span className="bg-gray-100 text-gray-600 px-2 py-0.5 rounded text-xs font-bold">TILE 2</span>
+                        <h4 className="font-medium text-gray-900">Visual Tile</h4>
+                    </div>
+                    
+                    <AdminFormField label="Image (Decorative)">
                       <ImageUpload
-                        value={formData.about_image || ''}
-                        onChange={(url) => setFormData({ ...formData, about_image: url })}
+                        value={formData.section2_image || formData.about_image || ''}
+                        onChange={(url) => setFormData({ ...formData, section2_image: url })}
                         aspectRatio="video"
-                      />
-                    </AdminFormField>
-                    <AdminFormField label="Video Caption (Optional)">
-                      <Input
-                        value={formData.video_caption || ''}
-                        onChange={(e) => setFormData({ ...formData, video_caption: e.target.value })}
-                        placeholder="Watch the introduction"
                       />
                     </AdminFormField>
                   </div>
                 </div>
               </div>
 
-              {/* Additional Content */}
+              {/* ROW 2: Tile 3, 5, 4 */}
               <div className="space-y-4">
-                <h3
-                  style={{
-                    fontSize: 'var(--text-lg)',
-                    fontWeight: 'var(--font-weight-medium)',
-                    fontFamily: 'var(--font-family-base)',
-                    borderBottom: '1px solid var(--color-border-default)',
-                    paddingBottom: 'var(--spacing-2)'
-                  }}
-                >
-                  Additional Information
-                </h3>
-                <div className="grid md:grid-cols-2 gap-6">
-                  <div className="space-y-4">
-                    <AdminFormField label="Highlights Title">
+                <div className="flex items-center gap-2 border-b pb-2">
+                    <span className="bg-blue-100 text-blue-700 px-2 py-0.5 rounded text-xs font-mono">ROW 2</span>
+                    <h3 className="text-lg font-medium text-gray-900">Details & Notes</h3>
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                  {/* TILE 3: Who is this for */}
+                  <div className="space-y-4 p-5 rounded-xl border border-gray-200 bg-white shadow-sm">
+                    <div className="flex items-center gap-2 mb-2">
+                        <span className="bg-gray-100 text-gray-600 px-2 py-0.5 rounded text-xs font-bold">TILE 3</span>
+                        <h4 className="font-medium text-gray-900">Eligibility</h4>
+                    </div>
+
+                    <AdminFormField label="Title">
                       <Input
-                        value={formData.highlights_title || ''}
-                        onChange={(e) => setFormData({ ...formData, highlights_title: e.target.value })}
-                        placeholder="Key Benefits"
+                        value={formData.section1_title || ''}
+                        onChange={(e) => setFormData({ ...formData, section1_title: e.target.value })}
+                        placeholder="Who is this test for?"
                       />
                     </AdminFormField>
-                    <AdminFormField label="Highlights (One item per line)">
+                    <AdminFormField label="Subtitle">
+                      <Input
+                        value={formData.section1_eligibility_title || ''}
+                        onChange={(e) => setFormData({ ...formData, section1_eligibility_title: e.target.value })}
+                        placeholder="This may be helpful if you:"
+                      />
+                    </AdminFormField>
+                    <AdminFormField label="Points (One per line)">
                       <Textarea
-                        value={getArrayFieldString('highlights')}
-                        onChange={(e) => handleArrayFieldChange('highlights', e.target.value)}
+                        value={getArrayFieldString('section1_eligibility_points')}
+                        onChange={(e) => handleArrayFieldChange('section1_eligibility_points', e.target.value)}
                         className="min-h-[100px]"
-                        placeholder="Benefit 1&#10;Benefit 2"
+                        placeholder="Feel anxious often&#10;Have trouble sleeping"
+                      />
+                    </AdminFormField>
+                    <AdminFormField label="Bottom Text (Optional)">
+                      <Input
+                        value={formData.section1_who_content || ''}
+                        onChange={(e) => setFormData({ ...formData, section1_who_content: e.target.value })}
+                        placeholder="Designed for adults 18+"
                       />
                     </AdminFormField>
                   </div>
-                  <div className="space-y-4">
-                    <AdminFormField label="Notes Title">
+
+                  {/* TILE 5: Things to Remember */}
+                  <div className="space-y-4 p-5 rounded-xl border border-gray-200 bg-white shadow-sm">
+                    <div className="flex items-center gap-2 mb-2">
+                        <span className="bg-gray-100 text-gray-600 px-2 py-0.5 rounded text-xs font-bold">TILE 5</span>
+                        <h4 className="font-medium text-gray-900">Important Notes</h4>
+                    </div>
+
+                    <AdminFormField label="Title">
                       <Input
-                        value={formData.notes_title || ''}
-                        onChange={(e) => setFormData({ ...formData, notes_title: e.target.value })}
-                        placeholder="Important Notes"
+                        value={formData.section4_notes_title || formData.notes_title || ''}
+                        onChange={(e) => setFormData({ ...formData, section4_notes_title: e.target.value })}
+                        placeholder="Things to remember"
                       />
                     </AdminFormField>
-                    <AdminFormField label="Notes (One item per line)">
+                    <AdminFormField label="Notes (One per line)">
                       <Textarea
-                        value={getArrayFieldString('notes')}
-                        onChange={(e) => handleArrayFieldChange('notes', e.target.value)}
+                        value={getArrayFieldString('section4_notes')}
+                        onChange={(e) => handleArrayFieldChange('section4_notes', e.target.value)}
+                        className="min-h-[150px]"
+                        placeholder="Not a diagnosis&#10;Confidential&#10;Free"
+                      />
+                    </AdminFormField>
+                  </div>
+
+                  {/* TILE 4: What You'll See */}
+                  <div className="space-y-4 p-5 rounded-xl border border-gray-200 bg-white shadow-sm">
+                    <div className="flex items-center gap-2 mb-2">
+                        <span className="bg-gray-100 text-gray-600 px-2 py-0.5 rounded text-xs font-bold">TILE 4</span>
+                        <h4 className="font-medium text-gray-900">Process</h4>
+                    </div>
+
+                    <AdminFormField label="Title">
+                      <Input
+                        value={formData.section3_title || formData.highlights_title || ''}
+                        onChange={(e) => setFormData({ ...formData, section3_title: e.target.value })}
+                        placeholder="What you'll see"
+                      />
+                    </AdminFormField>
+                    <AdminFormField label="Subtitle">
+                      <Input
+                        value={formData.section3_subtitle || ''}
+                        onChange={(e) => setFormData({ ...formData, section3_subtitle: e.target.value })}
+                        placeholder="Understanding is step 1"
+                      />
+                    </AdminFormField>
+                    <AdminFormField label="Steps/Points (One per line)">
+                      <Textarea
+                        value={getArrayFieldString('section3_content')}
+                        onChange={(e) => handleArrayFieldChange('section3_content', e.target.value)}
                         className="min-h-[100px]"
-                        placeholder="Note 1&#10;Note 2"
+                        placeholder="Answer 7 questions&#10;Get instant results"
                       />
                     </AdminFormField>
                   </div>
                 </div>
               </div>
+
             </div>
           )}
 

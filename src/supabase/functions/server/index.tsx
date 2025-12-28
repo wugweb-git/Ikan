@@ -5,6 +5,7 @@ import { createClient } from "jsr:@supabase/supabase-js@2";
 import * as kv from "./kv_store.tsx";
 import { handleSeedData, handleSeedUsers } from "./seed-endpoint.tsx";
 import { handleComprehensiveSeed } from "./comprehensive-seed.tsx";
+import { handleEquipCleanupAndSeed } from "./equip-cleanup.tsx";
 import { createHash, createHmac } from "node:crypto";
 
 // Import monitoring utilities
@@ -1170,6 +1171,16 @@ app.get("/make-server-cc205da9/assessments/responses/user", requireAuth, async (
 });
 
 // Equip Program Admin Endpoints (GET routes are defined later with filtering)
+app.post("/make-server-cc205da9/admin/equip/cleanup", requireAdmin, async (c) => {
+  try {
+    const result = await handleEquipCleanupAndSeed();
+    return c.json(result);
+  } catch (error) {
+    console.error('Equip cleanup error:', error);
+    return c.json({ error: 'Failed to cleanup equip programs' }, 500);
+  }
+});
+
 app.post("/make-server-cc205da9/equip/programs", requireAuth, async (c) => {
   try {
     const user = c.get('user');
@@ -1633,6 +1644,45 @@ app.put("/make-server-cc205da9/equip/enrollments/:enrollmentId/status", requireA
   }
 });
 
+// Sync detailed progress (blocks, responses)
+app.post("/make-server-cc205da9/equip/enrollments/:enrollmentId/sync", requireAuth, async (c) => {
+  try {
+    const user = c.get('user');
+    const enrollmentId = c.req.param('enrollmentId');
+    const { currentDay, completedBlockIds, responses } = await c.req.json();
+    
+    const enrollment = await kv.get(`enrollment:${enrollmentId}`);
+    
+    if (!enrollment) {
+      return c.json({ error: 'Enrollment not found' }, 404);
+    }
+    
+    // Verify ownership
+    if (enrollment.userId !== user.id) {
+      return c.json({ error: 'Unauthorized' }, 403);
+    }
+    
+    const updatedEnrollment = {
+      ...enrollment,
+      currentDay: currentDay || enrollment.currentDay,
+      // Store granular state in a new field "state"
+      state: {
+        completedBlockIds: completedBlockIds || enrollment.state?.completedBlockIds || [],
+        responses: { ...(enrollment.state?.responses || {}), ...(responses || {}) }
+      },
+      updated_at: new Date().toISOString()
+    };
+    
+    await kv.set(`enrollment:${enrollmentId}`, updatedEnrollment);
+    await kv.set(`user_enrollment:${user.id}:${enrollment.programId}`, updatedEnrollment);
+    
+    return c.json({ enrollment: updatedEnrollment });
+  } catch (error) {
+    console.log('Sync progress error:', error);
+    return c.json({ error: 'Failed to sync progress' }, 500);
+  }
+});
+
 // Library Resource Endpoints
 app.get("/make-server-cc205da9/library/resources", async (c) => {
   try {
@@ -1795,6 +1845,20 @@ app.get("/make-server-cc205da9/equip/programs", async (c) => {
     
     // Filter out null/undefined entries
     programs = programs.filter((p: any) => p && (p.id || p.equip_id));
+    
+    // Deduplicate by ID to handle multiple keys pointing to same program (e.g. ID vs Slug keys)
+    const uniqueMap = new Map();
+    programs.forEach((p: any) => {
+      const id = p.equip_id || p.id;
+      if (id) {
+        // If duplicate exists, keep the one with newer updated_at, or default to current
+        const existing = uniqueMap.get(id);
+        if (!existing || (p.updated_at && existing.updated_at && new Date(p.updated_at) > new Date(existing.updated_at))) {
+          uniqueMap.set(id, p);
+        }
+      }
+    });
+    programs = Array.from(uniqueMap.values());
     
     // Apply filters if provided
     const category = c.req.query('category');

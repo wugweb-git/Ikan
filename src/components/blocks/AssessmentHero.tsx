@@ -32,31 +32,31 @@ export function AssessmentHero({
 
   return (
     <section 
-      className={`relative w-full ${className}`}
+      className={`relative w-full pt-[var(--ikan-nav-clearance-mobile)] md:pt-[var(--ikan-nav-clearance-desktop)] ${className}`}
       style={{
         minHeight: 'clamp(500px, 60vh, 650px)',
-        paddingTop: 'var(--ikan-nav-clearance-mobile)',
         backgroundColor: 'var(--color-bg-page)'
       }}
     >
-      <div className="relative h-full w-full max-w-7xl mx-auto">
-        {/* Background Image */}
-        {backgroundImage && (
-          <div 
-            className="absolute inset-0"
-            style={{ 
-              borderRadius: 'clamp(var(--radius-lg), 2vw, var(--radius-2xl))',
-              overflow: 'hidden'
-            }}
-          >
-            <img
-              alt={backgroundAlt}
-              className="absolute inset-0 w-full h-full object-cover pointer-events-none"
-              src={backgroundImage}
-            />
-          </div>
-        )}
+      {/* Background Image */}
+      {backgroundImage && (
+        <div 
+          className="absolute inset-0 w-full h-full"
+          style={{ 
+            overflow: 'hidden'
+          }}
+        >
+          <img
+            alt={backgroundAlt}
+            className="absolute inset-0 w-full h-full object-cover pointer-events-none"
+            src={backgroundImage}
+          />
+          {/* Subtle overlay for text readability */}
+          <div className="absolute inset-0 bg-gradient-to-r from-black/40 via-black/20 to-transparent" />
+        </div>
+      )}
 
+      <div className="relative h-full w-full max-w-7xl mx-auto">
         {/* Content */}
         <div 
           className="relative h-full flex items-center"
