@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { apiClient } from '../lib/api-client';
 import { projectId, publicAnonKey } from '../utils/supabase/info';
+import { DEFAULT_CMS_CONTENT } from '../utils/cms-defaults';
 
 export interface PageContent {
   title: string;
@@ -24,14 +24,22 @@ export function usePageContent(pageId: string) {
         });
         
         if (!response.ok) {
-          throw new Error('Failed to fetch page content');
+          throw new Error(`Failed to fetch page content: ${response.status}`);
         }
         
         const data = await response.json();
-        setContent(data);
+        setContent(data.page || data);
       } catch (err: any) {
-        console.error(`Error fetching content for ${pageId}:`, err);
-        setError(err.message);
+        console.warn(`Error fetching content for ${pageId}, falling back to default:`, err);
+        
+        // Fallback to default content if available
+        if (DEFAULT_CMS_CONTENT[pageId]) {
+          setContent(DEFAULT_CMS_CONTENT[pageId]);
+          // We don't set error here because we successfully fell back
+          setError(null);
+        } else {
+          setError(err.message);
+        }
       } finally {
         setLoading(false);
       }

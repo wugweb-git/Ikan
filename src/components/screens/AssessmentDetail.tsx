@@ -11,6 +11,7 @@ import { TopNavBar } from '../navigation/TopNavBar';
 import { useIsMobile } from '../../hooks/useIsMobile';
 import { Skeleton } from '../ui/skeleton-loader';
 import { Button } from '../ui/button';
+import defaultBentoImage from "figma:asset/8ce2a19aab5abaf51a83cb99ea2d61447f96d8b2.png";
 
 interface AssessmentDetailProps {
   assessmentId?: string;
@@ -113,21 +114,21 @@ export function AssessmentDetail({ assessmentId = 'anxiety', onNavigate }: Asses
           cta_button_text: rawAssessment.cta_button_text || "Start Assessment",
           cta_button_link: rawAssessment.cta_button_link || `/assessment-flow?type=${assessmentId}`,
           
-          // Section 1: Who is this for?
-          section1_title: rawAssessment.section1_title || "Who is this test for?",
-          section1_eligibility_title: rawAssessment.section1_eligibility_title || "This assessment may be helpful if you:",
+          // Section 1: How it works (Tile 3)
+          section1_title: rawAssessment.section1_title || "How it works",
+          section1_eligibility_title: rawAssessment.section1_eligibility_title || "Simple process:",
           section1_eligibility_points: rawAssessment.section1_eligibility_points || [
-            "Want to understand your mental health better",
-            "Are experiencing emotional or psychological distress",
-            "Seek personalized insights and recommendations"
+            "Answer a few questions",
+            "Your progress is saved automatically",
+            "Get immediate results and insights"
           ],
           section1_who_title: rawAssessment.section1_who_title || "Who can take this?",
           section1_who_content: rawAssessment.section1_who_content || "This assessment is designed for adults 18+.",
           
-          // Section 2: About (Tile 1 & 2)
-          section2_title: rawAssessment.section2_title || rawAssessment.about_title || "About this test",
+          // Section 2: What is this assessment? (Tile 1 & 2)
+          section2_title: rawAssessment.section2_title || rawAssessment.about_title || "What is this assessment?",
           section2_content: rawAssessment.section2_content || rawAssessment.about_content || "A clinically validated tool to help you understand your mental health.",
-          section2_image: rawAssessment.section2_image || rawAssessment.about_image || rawAssessment.image_url || "https://images.unsplash.com/photo-1544027993-37dbfe43562a?q=80&w=2000&auto=format&fit=crop",
+          section2_image: rawAssessment.section2_image || rawAssessment.about_image || rawAssessment.image_url || defaultBentoImage,
           section2_bullets: rawAssessment.section2_bullets || [
             `Takes ${rawAssessment.metadata?.estimated_minutes || 5} minutes`,
             "Based on validated clinical research",

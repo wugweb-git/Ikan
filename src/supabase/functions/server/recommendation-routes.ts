@@ -8,7 +8,7 @@ export function registerRecommendationRoutes(app: Hono, requireAuth: any) {
 // RECOMMENDATION RULES ENDPOINTS
 // ========================================
 
-app.get("/make-server-cc205da9/admin/recommendations/rules", requireAuth, async (c) => {
+app.get("/admin/recommendations/rules", requireAuth, async (c) => {
   try {
     const user = c.get('user');
     const userProfile = await kv.get(`user:${user.id}`);
@@ -21,7 +21,7 @@ app.get("/make-server-cc205da9/admin/recommendations/rules", requireAuth, async 
   }
 });
 
-app.post("/make-server-cc205da9/admin/recommendations/rules", requireAuth, async (c) => {
+app.post("/admin/recommendations/rules", requireAuth, async (c) => {
   try {
     const user = c.get('user');
     const userProfile = await kv.get(`user:${user.id}`);
@@ -35,7 +35,7 @@ app.post("/make-server-cc205da9/admin/recommendations/rules", requireAuth, async
   }
 });
 
-app.put("/make-server-cc205da9/admin/recommendations/rules/:id", requireAuth, async (c) => {
+app.put("/admin/recommendations/rules/:id", requireAuth, async (c) => {
   try {
     const user = c.get('user');
     const userProfile = await kv.get(`user:${user.id}`);
@@ -50,7 +50,7 @@ app.put("/make-server-cc205da9/admin/recommendations/rules/:id", requireAuth, as
   }
 });
 
-app.delete("/make-server-cc205da9/admin/recommendations/rules/:id", requireAuth, async (c) => {
+app.delete("/admin/recommendations/rules/:id", requireAuth, async (c) => {
   try {
     const user = c.get('user');
     const userProfile = await kv.get(`user:${user.id}`);

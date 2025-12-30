@@ -2,6 +2,7 @@ import React, { useState, useRef, useCallback } from 'react';
 import { Upload, X, File, Image as ImageIcon, FileText, Film, Music, Loader2, CheckCircle, AlertCircle } from 'lucide-react';
 import { Button } from './button';
 import { cn } from './utils';
+import { apiClient } from '../../lib/api-client';
 
 export interface FileUploadProps {
   value?: string;
@@ -70,17 +71,8 @@ export function FileUpload({
       formData.append('file', file);
       formData.append('bucket', bucket);
 
-      // Upload to server
-      const response = await fetch('/api/upload', {
-        method: 'POST',
-        body: formData
-      });
-
-      if (!response.ok) {
-        throw new Error('Upload failed');
-      }
-
-      const data = await response.json();
+      // Upload via API Client
+      const data = await apiClient.uploadMediaFile(file, bucket);
       
       setUploadProgress({ status: 'success', progress: 100, message: 'Upload complete!' });
       onChange(data.url);

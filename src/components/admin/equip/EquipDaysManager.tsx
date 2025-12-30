@@ -91,10 +91,10 @@ export function EquipDaysManager({ programId, durationDays }: { programId: strin
   }
 
   return (
-    <div className="flex h-full">
+    <div className="flex h-[600px] border rounded-lg overflow-hidden bg-white shadow-sm">
        {/* Sidebar list of days */}
-       <div className="w-80 border-r border-neutral-200 bg-white flex flex-col">
-          <div className="p-4 border-b border-neutral-100 flex justify-between items-center">
+       <div className="w-80 border-r border-neutral-200 bg-gray-50 flex flex-col">
+          <div className="p-4 border-b border-neutral-100 flex justify-between items-center bg-white">
              <h3 className="font-medium">Days ({days.length})</h3>
              <Button size="sm" variant="ghost" onClick={handleCreateDay}><Plus className="w-4 h-4" /></Button>
           </div>

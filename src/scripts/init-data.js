@@ -9,18 +9,27 @@
 const https = require('https');
 
 // Read from environment variables
+const SUPABASE_URL = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
+const SUPABASE_SERVICE_ROLE_KEY = process.env.VITE_SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY;
 const SUPABASE_PROJECT_ID = process.env.VITE_SUPABASE_PROJECT_ID || process.env.SUPABASE_PROJECT_ID;
-const SUPABASE_ANON_KEY = process.env.VITE_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY;
 
-if (!SUPABASE_PROJECT_ID || !SUPABASE_ANON_KEY) {
+if ((!SUPABASE_PROJECT_ID && !SUPABASE_URL) || !SUPABASE_SERVICE_ROLE_KEY) {
   console.error('❌ Error: Missing required environment variables');
-  console.error('   Please set VITE_SUPABASE_PROJECT_ID and VITE_SUPABASE_ANON_KEY');
-  console.error('   You can set them in a .env file or pass them directly:');
-  console.error('   VITE_SUPABASE_PROJECT_ID=xxx VITE_SUPABASE_ANON_KEY=xxx node scripts/init-data.js');
+  console.error('   Please set SUPABASE_URL (or SUPABASE_PROJECT_ID) and SUPABASE_SERVICE_ROLE_KEY');
   process.exit(1);
 }
 
-const url = `https://${SUPABASE_PROJECT_ID}.supabase.co/functions/v1/make-server-cc205da9/init/sample-data`;
+let baseUrl = SUPABASE_URL;
+if (!baseUrl && SUPABASE_PROJECT_ID) {
+  baseUrl = `https://${SUPABASE_PROJECT_ID}.supabase.co`;
+}
+
+// Remove trailing slash if present
+if (baseUrl.endsWith('/')) {
+  baseUrl = baseUrl.slice(0, -1);
+}
+
+const url = `${baseUrl}/functions/v1/make-server-cc205da9/init/sample-data`;
 
 console.log('🚀 Initializing sample data...');
 console.log(`📡 Target: ${url}`);
@@ -28,7 +37,7 @@ console.log(`📡 Target: ${url}`);
 const options = {
   method: 'POST',
   headers: {
-    'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+    'Authorization': `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
     'Content-Type': 'application/json'
   }
 };

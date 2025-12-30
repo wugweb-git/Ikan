@@ -40,8 +40,10 @@ import { MigrationRunner } from "./migration-runner.ts";
 import { registerEquipRoutes } from './equip-routes.ts';
 import { registerProgressRoutes } from './progress-routes.ts';
 import { registerRecommendationRoutes } from './recommendation-routes.ts';
+import { registerAdminRoutes } from './admin-routes.ts';
+import { registerAssessmentRoutes } from './assessment-routes.ts';
 
-const app = new Hono();
+const app = new Hono().basePath('/make-server-cc205da9');
 
 // Initialize Supabase client
 const supabase = createClient(
@@ -112,14 +114,105 @@ async function requireAdmin(c: any, next: any) {
 registerEquipRoutes(app, requireAuth);
 registerProgressRoutes(app, requireAuth);
 registerRecommendationRoutes(app, requireAuth);
+registerAdminRoutes(app, requireAdmin);
+registerAssessmentRoutes(app, requireAuth);
+
+  // CMS Public Routes
+  app.get("/cms/pages/:slug", async (c) => {
+    try {
+      const slug = c.req.param("slug");
+      
+      // Attempt 1: Check if there is a direct mapping (if we implemented it)
+      const pageId = await kv.get(`page_slug:${slug}`);
+      
+      let page;
+      if (pageId) {
+         page = await kv.get(`page:${pageId}`);
+      } else {
+         // Fallback: Scan all pages (slow, but works for MVP)
+         const pages = await kv.getByPrefix("page:");
+         page = pages.find((p: any) => p.slug === slug);
+      }
+      
+      // Fallback: Check if it's one of our hardcoded CMS pages (homepage content blocks)
+      // This is crucial for the homepage components which expect specific hardcoded data structures
+      if (!page) {
+        // Try getting from cms_page: prefix which is used for the hardcoded content blocks
+        // These are distinct from the "page:" prefix used by the Admin Page Manager
+        page = await kv.get(`cms_page:${slug}`);
+        
+        // If still not found, check if we should generate default content for it
+        if (!page) {
+           const requiredPageIds = [
+             'about', 'privacy', 'terms', 'faq', 'contact', 'return-policy', 'cancellation-policy', 'sitemap',
+             'homepage-hero', 'homepage-assessment', 'homepage-mission', 'homepage-benefits', 'homepage-faq', 'homepage-newsletter', 'homepage-equip-intro'
+           ];
+           
+           if (requiredPageIds.includes(slug)) {
+              console.log(`Generating default content for ${slug}`);
+              const defaultContent = createDefaultCMSContent(slug);
+              page = {
+                id: slug,
+                name: defaultContent.title,
+                title: defaultContent.title,
+                slug: slug,
+                published: true,
+                content: defaultContent.content,
+                lastUpdated: defaultContent.lastUpdated,
+                created_at: new Date().toISOString(),
+                updated_at: new Date().toISOString()
+              };
+              // Persist it so next time we find it
+              await kv.set(`cms_page:${slug}`, page);
+           }
+        }
+      }
+
+      if (!page) {
+        return c.json({ error: "Page not found" }, 404);
+      }
+      
+      // Only return published pages for public API
+      // Legacy CMS pages might not have the published flag, treat them as published
+      if (page.published === false) {
+        return c.json({ error: "Page not found" }, 404);
+      }
+
+      return c.json({ page });
+    } catch (error) {
+      console.error("CMS Error:", error);
+      return c.json({ error: "Failed to fetch page" }, 500);
+    }
+  });
 
 // Health check endpoint
-app.get("/make-server-cc205da9/health", (c) => {
+app.get("/health", (c) => {
   return c.json({ status: "ok", timestamp: new Date().toISOString() });
 });
 
+// Initialization endpoint
+app.post("/init/sample-data", async (c) => {
+  const authHeader = c.req.header('Authorization');
+  const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+  
+  // Allow if using service role key
+  if (authHeader !== `Bearer ${serviceRoleKey}`) {
+    // Also allow if it's a dev environment or if explicit anon key is allowed (unlikely)
+    // For now, strict check
+    return c.json({ error: 'Unauthorized: Service Role Key required' }, 401);
+  }
+
+  try {
+    const result = await MigrationRunner.run();
+    return c.json(result);
+  } catch (error: any) {
+    console.error("Initialization failed:", error);
+    return c.json({ error: error.message }, 500);
+  }
+});
+
 // User signup endpoint
-app.post("/make-server-cc205da9/auth/signup", async (c) => {
+app.post("/auth/signup", async (c) => {
   try {
     const { email, password, name, phone, corporate_user } = await c.req.json();
     
@@ -174,7 +267,7 @@ app.post("/make-server-cc205da9/auth/signup", async (c) => {
 });
 
 // Get user profile
-app.get("/make-server-cc205da9/users/profile", requireAuth, async (c) => {
+app.get("/users/profile", requireAuth, async (c) => {
   try {
     const userId = c.get('userId');
     const profile = await kv.get(`user:${userId}`);
@@ -190,8 +283,22 @@ app.get("/make-server-cc205da9/users/profile", requireAuth, async (c) => {
   }
 });
 
+// Admin Get All Users
+app.get("/admin/users", requireAuth, async (c) => {
+  try {
+    const user = c.get('user');
+    const userProfile = await kv.get(`user:${user.id}`);
+    if (!userProfile?.is_admin) return c.json({ error: 'Admin access required' }, 403);
+    
+    const users = await kv.getByPrefix('user:');
+    return c.json({ users });
+  } catch (error) {
+    return c.json({ error: 'Failed to list users' }, 500);
+  }
+});
+
 // Update user profile
-app.put("/make-server-cc205da9/users/profile", requireAuth, async (c) => {
+app.put("/users/profile", requireAuth, async (c) => {
   try {
     const userId = c.get('userId');
     const updates = await c.req.json();
@@ -258,7 +365,7 @@ app.put("/make-server-cc205da9/users/profile", requireAuth, async (c) => {
 });
 
 // Social Account Connection Endpoints
-app.post("/make-server-cc205da9/user/connect-social/:provider", requireAuth, async (c) => {
+app.post("/user/connect-social/:provider", requireAuth, async (c) => {
   try {
     const userId = c.get('userId');
     const provider = c.req.param('provider') as 'google' | 'linkedin';
@@ -298,7 +405,7 @@ app.post("/make-server-cc205da9/user/connect-social/:provider", requireAuth, asy
   }
 });
 
-app.post("/make-server-cc205da9/user/disconnect-social/:provider", requireAuth, async (c) => {
+app.post("/user/disconnect-social/:provider", requireAuth, async (c) => {
   try {
     const userId = c.get('userId');
     const provider = c.req.param('provider') as 'google' | 'linkedin';
@@ -337,7 +444,7 @@ app.post("/make-server-cc205da9/user/disconnect-social/:provider", requireAuth, 
 });
 
 // Password Change Endpoint
-app.put("/make-server-cc205da9/users/password", requireAuth, async (c) => {
+app.put("/users/password", requireAuth, async (c) => {
   try {
     const userId = c.get('userId');
     const { currentPassword, newPassword } = await c.req.json();
@@ -396,7 +503,7 @@ app.put("/make-server-cc205da9/users/password", requireAuth, async (c) => {
 });
 
 // Email Change Request Endpoint
-app.post("/make-server-cc205da9/users/email/request-change", requireAuth, async (c) => {
+app.post("/users/email/request-change", requireAuth, async (c) => {
   try {
     const userId = c.get('userId');
     const { newEmail } = await c.req.json();
@@ -448,7 +555,7 @@ app.post("/make-server-cc205da9/users/email/request-change", requireAuth, async 
 });
 
 // Email Change Verification Endpoint
-app.post("/make-server-cc205da9/users/email/verify-change", async (c) => {
+app.post("/users/email/verify-change", async (c) => {
   try {
     const { token } = await c.req.json();
     
@@ -506,7 +613,7 @@ app.post("/make-server-cc205da9/users/email/verify-change", async (c) => {
 });
 
 // Data Export Endpoint
-app.post("/make-server-cc205da9/users/export-data", requireAuth, async (c) => {
+app.post("/users/export-data", requireAuth, async (c) => {
   try {
     const userId = c.get('userId');
     
@@ -591,7 +698,7 @@ app.post("/make-server-cc205da9/users/export-data", requireAuth, async (c) => {
 });
 
 // Avatar Upload Endpoint (placeholder for Supabase Storage integration)
-app.post("/make-server-cc205da9/users/avatar", requireAuth, async (c) => {
+app.post("/users/avatar", requireAuth, async (c) => {
   try {
     const userId = c.get('userId');
     
@@ -640,7 +747,7 @@ app.post("/make-server-cc205da9/users/avatar", requireAuth, async (c) => {
 });
 
 // Delete User Account Endpoint
-app.delete("/make-server-cc205da9/users/me", requireAuth, async (c) => {
+app.delete("/users/me", requireAuth, async (c) => {
   try {
     const userId = c.get('userId');
     
@@ -717,7 +824,7 @@ app.delete("/make-server-cc205da9/users/me", requireAuth, async (c) => {
 });
 
 // Get User Payments Endpoint
-app.get("/make-server-cc205da9/users/payments", requireAuth, async (c) => {
+app.get("/users/payments", requireAuth, async (c) => {
   try {
     const userId = c.get('userId');
     
@@ -736,7 +843,7 @@ app.get("/make-server-cc205da9/users/payments", requireAuth, async (c) => {
 });
 
 // Record Payment Endpoint (Internal use or admin)
-app.post("/make-server-cc205da9/users/payments", requireAuth, async (c) => {
+app.post("/users/payments", requireAuth, async (c) => {
   try {
     const userId = c.get('userId');
     const { 
@@ -781,7 +888,7 @@ app.post("/make-server-cc205da9/users/payments", requireAuth, async (c) => {
 });
 
 // Purchase Equip Program Endpoint
-app.post("/make-server-cc205da9/equip/purchase/:equipId", requireAuth, async (c) => {
+app.post("/equip/purchase/:equipId", requireAuth, async (c) => {
   try {
     const userId = c.get('userId');
     const equipId = c.req.param('equipId');
@@ -854,7 +961,7 @@ app.post("/make-server-cc205da9/equip/purchase/:equipId", requireAuth, async (c)
     return c.json({ error: 'Failed to purchase program' }, 500);
   }
 });
-app.post("/make-server-cc205da9/journal/entries", requireAuth, async (c) => {
+app.post("/journal/entries", requireAuth, async (c) => {
   try {
     const userId = c.get('userId');
     const { date, mood_rating, freehand_text_content, associated_tracker_entry_id, emotions, energy } = await c.req.json();
@@ -887,7 +994,7 @@ app.post("/make-server-cc205da9/journal/entries", requireAuth, async (c) => {
   }
 });
 
-app.get("/make-server-cc205da9/journal/entries", requireAuth, async (c) => {
+app.get("/journal/entries", requireAuth, async (c) => {
   try {
     const userId = c.get('userId');
     const { startDate, endDate, limit = 50 } = c.req.query();
@@ -913,7 +1020,7 @@ app.get("/make-server-cc205da9/journal/entries", requireAuth, async (c) => {
   }
 });
 
-app.get("/make-server-cc205da9/journal/entries/:date", requireAuth, async (c) => {
+app.get("/journal/entries/:date", requireAuth, async (c) => {
   try {
     const userId = c.get('userId');
     const date = c.req.param('date');
@@ -932,7 +1039,7 @@ app.get("/make-server-cc205da9/journal/entries/:date", requireAuth, async (c) =>
 });
 
 // Assessment Endpoints
-app.get("/make-server-cc205da9/assessments", async (c) => {
+app.get("/assessments", async (c) => {
   try {
     // Get all available assessments
     let assessments = await kv.getByPrefix('assessment:');
@@ -949,7 +1056,7 @@ app.get("/make-server-cc205da9/assessments", async (c) => {
   }
 });
 
-app.get("/make-server-cc205da9/assessments/:assessmentId", async (c) => {
+app.get("/assessments/:assessmentId", async (c) => {
   try {
     const assessmentId = c.req.param('assessmentId');
     console.log(`🔍 Looking up assessment: ${assessmentId}`);
@@ -980,7 +1087,7 @@ app.get("/make-server-cc205da9/assessments/:assessmentId", async (c) => {
   }
 });
 
-app.post("/make-server-cc205da9/assessments", requireAuth, async (c) => {
+app.post("/assessments", requireAuth, async (c) => {
   try {
     const user = c.get('user');
     
@@ -1013,7 +1120,7 @@ app.post("/make-server-cc205da9/assessments", requireAuth, async (c) => {
   }
 });
 
-app.put("/make-server-cc205da9/assessments/:assessmentId", requireAuth, async (c) => {
+app.put("/assessments/:assessmentId", requireAuth, async (c) => {
   try {
     const user = c.get('user');
     const assessmentId = c.req.param('assessmentId');
@@ -1069,7 +1176,7 @@ app.put("/make-server-cc205da9/assessments/:assessmentId", requireAuth, async (c
   }
 });
 
-app.delete("/make-server-cc205da9/assessments/:assessmentId", requireAuth, async (c) => {
+app.delete("/assessments/:assessmentId", requireAuth, async (c) => {
   try {
     const user = c.get('user');
     const assessmentId = c.req.param('assessmentId');
@@ -1114,7 +1221,7 @@ app.delete("/make-server-cc205da9/assessments/:assessmentId", requireAuth, async
   }
 });
 
-app.post("/make-server-cc205da9/assessments/:assessmentId/responses", requireAuth, async (c) => {
+app.post("/assessments/:assessmentId/responses", requireAuth, async (c) => {
   try {
     const userId = c.get('userId');
     const assessmentId = c.req.param('assessmentId');
@@ -1144,7 +1251,7 @@ app.post("/make-server-cc205da9/assessments/:assessmentId/responses", requireAut
   }
 });
 
-app.get("/make-server-cc205da9/assessments/responses/user", requireAuth, async (c) => {
+app.get("/assessments/responses/user", requireAuth, async (c) => {
   try {
     const userId = c.get('userId');
     const responses = await kv.getByPrefix(`assessment_response_by_user:${userId}`);
@@ -1160,7 +1267,7 @@ app.get("/make-server-cc205da9/assessments/responses/user", requireAuth, async (
 // RECOMMENDATION ENDPOINTS
 // ========================================
 
-app.get("/make-server-cc205da9/recommendations", requireAuth, async (c) => {
+app.get("/recommendations", requireAuth, async (c) => {
   try {
     const userId = c.get('userId');
     const recommendations = await RecommendationService.getRecommendations(userId);
@@ -1178,7 +1285,7 @@ app.get("/make-server-cc205da9/recommendations", requireAuth, async (c) => {
 
 
 // Library Resource Endpoints
-app.get("/make-server-cc205da9/library/resources", async (c) => {
+app.get("/library/resources", async (c) => {
   try {
     const { category, limit = 50, offset = 0 } = c.req.query();
     
@@ -1211,7 +1318,7 @@ app.get("/make-server-cc205da9/library/resources", async (c) => {
   }
 });
 
-app.get("/make-server-cc205da9/library/resources/:resourceId", async (c) => {
+app.get("/library/resources/:resourceId", async (c) => {
   try {
     const resourceId = c.req.param('resourceId');
     console.log(`🔍 Looking up resource: ${resourceId}`);
@@ -1251,7 +1358,7 @@ app.get("/make-server-cc205da9/library/resources/:resourceId", async (c) => {
 // ============================================================================
 
 // Get all consultants
-app.get("/make-server-cc205da9/consultants", async (c) => {
+app.get("/consultants", async (c) => {
   try {
     let consultants = await kv.getByPrefix('consultant:');
     
@@ -1293,7 +1400,7 @@ app.get("/make-server-cc205da9/consultants", async (c) => {
 });
 
 // Get consultant by ID
-app.get("/make-server-cc205da9/consultants/:id", async (c) => {
+app.get("/consultants/:id", async (c) => {
   try {
     const id = c.req.param('id');
     const consultant = await kv.get(`consultant:${id}`);
@@ -1313,7 +1420,7 @@ app.get("/make-server-cc205da9/consultants/:id", async (c) => {
 
 
 // Admin Resource Management Endpoints
-app.get("/make-server-cc205da9/admin/resources", requireAdmin, async (c) => {
+app.get("/admin/resources", requireAdmin, async (c) => {
   try {
     // Get all resources - check both prefixes
     let resources = await kv.getByPrefix('library:resource:');
@@ -1338,7 +1445,7 @@ app.get("/make-server-cc205da9/admin/resources", requireAdmin, async (c) => {
   }
 });
 
-app.post("/make-server-cc205da9/admin/resources", requireAdmin, async (c) => {
+app.post("/admin/resources", requireAdmin, async (c) => {
   try {
     const user = c.get('user');
     
@@ -1365,7 +1472,7 @@ app.post("/make-server-cc205da9/admin/resources", requireAdmin, async (c) => {
   }
 });
 
-app.put("/make-server-cc205da9/admin/resources/:resourceId", requireAuth, async (c) => {
+app.put("/admin/resources/:resourceId", requireAuth, async (c) => {
   try {
     const user = c.get('user');
     const resourceId = c.req.param('resourceId');
@@ -1430,7 +1537,7 @@ app.put("/make-server-cc205da9/admin/resources/:resourceId", requireAuth, async 
   }
 });
 
-app.delete("/make-server-cc205da9/admin/resources/:resourceId", requireAuth, async (c) => {
+app.delete("/admin/resources/:resourceId", requireAuth, async (c) => {
   try {
     const user = c.get('user');
     const resourceId = c.req.param('resourceId');
@@ -1479,7 +1586,7 @@ app.delete("/make-server-cc205da9/admin/resources/:resourceId", requireAuth, asy
 });
 
 // Set user as admin endpoint (for initial admin setup)
-app.post("/make-server-cc205da9/admin/set-admin/:userId", requireAuth, async (c) => {
+app.post("/admin/set-admin/:userId", requireAuth, async (c) => {
   try {
     const requestingUser = c.get('user');
     const targetUserId = c.req.param('userId');
@@ -1517,7 +1624,7 @@ app.post("/make-server-cc205da9/admin/set-admin/:userId", requireAuth, async (c)
 });
 
 // Debug Endpoint - Check and Fix Admin Status
-app.get("/make-server-cc205da9/admin/debug/check-status", requireAuth, async (c) => {
+app.get("/admin/debug/check-status", requireAuth, async (c) => {
   try {
     const user = c.get('user');
     const userProfile = await kv.get(`user:${user.id}`);
@@ -1538,7 +1645,7 @@ app.get("/make-server-cc205da9/admin/debug/check-status", requireAuth, async (c)
   }
 });
 
-app.post("/make-server-cc205da9/admin/debug/make-admin", requireAuth, async (c) => {
+app.post("/admin/debug/make-admin", requireAuth, async (c) => {
   try {
     const user = c.get('user');
     let userProfile = await kv.get(`user:${user.id}`);
@@ -1576,7 +1683,7 @@ app.post("/make-server-cc205da9/admin/debug/make-admin", requireAuth, async (c) 
 });
 
 // Admin User Management Endpoints
-app.get("/make-server-cc205da9/admin/users", requireAdmin, async (c) => {
+app.get("/admin/users", requireAdmin, async (c) => {
   try {
     // Get all users
     let users = await kv.getByPrefix('user:');
@@ -1599,7 +1706,7 @@ app.get("/make-server-cc205da9/admin/users", requireAdmin, async (c) => {
 });
 
 // Admin - Create User Manually
-app.post("/make-server-cc205da9/admin/users", requireAdmin, async (c) => {
+app.post("/admin/users", requireAdmin, async (c) => {
   try {
     const { email, password, name, phone, is_admin, corporate_user } = await c.req.json();
     
@@ -1647,8 +1754,32 @@ app.post("/make-server-cc205da9/admin/users", requireAdmin, async (c) => {
   }
 });
 
+// Admin - Get Single User
+app.get("/admin/users/:userId", requireAuth, async (c) => {
+  try {
+    const adminUser = c.get('user');
+    const userId = c.req.param('userId');
+    
+    // Check if requesting user is admin
+    const adminProfile = await kv.get(`user:${adminUser.id}`);
+    if (!adminProfile?.is_admin) {
+      return c.json({ error: 'Admin access required' }, 403);
+    }
+    
+    const userProfile = await kv.get(`user:${userId}`);
+    if (!userProfile) {
+      return c.json({ error: 'User not found' }, 404);
+    }
+    
+    return c.json(userProfile);
+  } catch (error) {
+    console.log('Admin get user error:', error);
+    return c.json({ error: 'Failed to get user' }, 500);
+  }
+});
+
 // Admin - Update User
-app.put("/make-server-cc205da9/admin/users/:userId", requireAuth, async (c) => {
+app.put("/admin/users/:userId", requireAuth, async (c) => {
   try {
     const adminUser = c.get('user');
     const userId = c.req.param('userId');
@@ -1681,7 +1812,7 @@ app.put("/make-server-cc205da9/admin/users/:userId", requireAuth, async (c) => {
 });
 
 // Admin - Delete User
-app.delete("/make-server-cc205da9/admin/users/:userId", requireAuth, async (c) => {
+app.delete("/admin/users/:userId", requireAuth, async (c) => {
   try {
     const adminUser = c.get('user');
     const userId = c.req.param('userId');
@@ -1722,7 +1853,7 @@ app.delete("/make-server-cc205da9/admin/users/:userId", requireAuth, async (c) =
 // MIGRATION ENDPOINT (PHASE 4)
 // ========================================
 
-app.post("/make-server-cc205da9/admin/migrate/v1", requireAdmin, async (c) => {
+app.post("/admin/migrate/v1", requireAdmin, async (c) => {
   try {
     const result = await MigrationRunner.run();
     return c.json(result);
@@ -1732,7 +1863,7 @@ app.post("/make-server-cc205da9/admin/migrate/v1", requireAdmin, async (c) => {
 });
 
 // Consultation/Professional Endpoints
-app.get("/make-server-cc205da9/consultation/professionals", async (c) => {
+app.get("/consultation/professionals", async (c) => {
   try {
     const { specialty, location, limit = 50 } = c.req.query();
     
@@ -1770,7 +1901,7 @@ app.get("/make-server-cc205da9/consultation/professionals", async (c) => {
   }
 });
 
-app.get("/make-server-cc205da9/consultation/professionals/:professionalId", async (c) => {
+app.get("/consultation/professionals/:professionalId", async (c) => {
   try {
     const professionalId = c.req.param('professionalId');
     
@@ -1793,7 +1924,7 @@ app.get("/make-server-cc205da9/consultation/professionals/:professionalId", asyn
 });
 
 // Admin Professional Endpoints
-app.get("/make-server-cc205da9/admin/professionals", requireAdmin, async (c) => {
+app.get("/admin/professionals", requireAdmin, async (c) => {
   try {
     // Get all professionals
     let professionals = await kv.getByPrefix('professional:');
@@ -1815,7 +1946,7 @@ app.get("/make-server-cc205da9/admin/professionals", requireAdmin, async (c) => 
   }
 });
 
-app.post("/make-server-cc205da9/admin/professionals", requireAdmin, async (c) => {
+app.post("/admin/professionals", requireAdmin, async (c) => {
   try {
     const user = c.get('user');
     
@@ -1841,7 +1972,7 @@ app.post("/make-server-cc205da9/admin/professionals", requireAdmin, async (c) =>
   }
 });
 
-app.put("/make-server-cc205da9/admin/professionals/:professionalId", requireAdmin, async (c) => {
+app.put("/admin/professionals/:professionalId", requireAdmin, async (c) => {
   try {
     const user = c.get('user');
     const professionalId = c.req.param('professionalId');
@@ -1871,7 +2002,7 @@ app.put("/make-server-cc205da9/admin/professionals/:professionalId", requireAdmi
   }
 });
 
-app.delete("/make-server-cc205da9/admin/professionals/:professionalId", requireAdmin, async (c) => {
+app.delete("/admin/professionals/:professionalId", requireAdmin, async (c) => {
   try {
     const professionalId = c.req.param('professionalId');
     
@@ -1892,7 +2023,7 @@ app.delete("/make-server-cc205da9/admin/professionals/:professionalId", requireA
 
 // CMS Page Endpoints
 // Get all pages (for admin manager)
-app.get("/make-server-cc205da9/cms/pages", requireAuth, async (c) => {
+app.get("/cms/pages", requireAuth, async (c) => {
   try {
     console.log('📄 CMS request for all pages');
     
@@ -1950,33 +2081,10 @@ app.get("/make-server-cc205da9/cms/pages", requireAuth, async (c) => {
   }
 });
 
-// Get single page by ID
-app.get("/make-server-cc205da9/cms/pages/:pageId", async (c) => {
-  try {
-    const pageId = c.req.param('pageId');
-    console.log(`📄 CMS request for page: ${pageId}`);
-    
-    // Try to get page content from KV store first
-    let page = await kv.get(`cms_page:${pageId}`);
-    
-    if (!page) {
-      // Create default content if page doesn't exist
-      console.log(`📄 Creating default content for CMS page: ${pageId}`);
-      page = createDefaultCMSContent(pageId);
-      
-      // Store the default content for future requests
-      await kv.set(`cms_page:${pageId}`, page);
-    }
-    
-    return c.json(page);
-  } catch (error) {
-    console.log('Get CMS page error:', error);
-    return c.json({ error: 'Failed to retrieve page content' }, 500);
-  }
-});
+
 
 // Create new page
-app.post("/make-server-cc205da9/cms/pages", requireAuth, async (c) => {
+app.post("/cms/pages", requireAuth, async (c) => {
   try {
     const data = await c.req.json();
     console.log('📄 Create page request received:', { slug: data.slug, name: data.name, title: data.title });
@@ -2029,7 +2137,7 @@ app.post("/make-server-cc205da9/cms/pages", requireAuth, async (c) => {
 });
 
 // Update existing page
-app.put("/make-server-cc205da9/cms/pages/:pageId", requireAuth, async (c) => {
+app.put("/cms/pages/:pageId", requireAuth, async (c) => {
   try {
     const pageId = c.req.param('pageId');
     const updates = await c.req.json();
@@ -2054,7 +2162,7 @@ app.put("/make-server-cc205da9/cms/pages/:pageId", requireAuth, async (c) => {
 });
 
 // Delete page
-app.delete("/make-server-cc205da9/cms/pages/:pageId", requireAuth, async (c) => {
+app.delete("/cms/pages/:pageId", requireAuth, async (c) => {
   try {
     const pageId = c.req.param('pageId');
     await kv.del(`cms_page:${pageId}`);
@@ -2884,6 +2992,16 @@ function createDefaultCMSContent(pageId: string): any {
       }),
       lastUpdated: new Date().toISOString()
     },
+    'homepage-testimonial': {
+      title: 'Homepage Testimonial',
+      content: JSON.stringify({
+        quote: "This platform has transformed how I manage my mental health. The tools are easy to use and the professionals are incredibly supportive.",
+        author: "Sarah J.",
+        role: "Member since 2023",
+        avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&h=150&fit=crop"
+      }),
+      lastUpdated: new Date().toISOString()
+    },
     'homepage-benefits': {
       title: 'Homepage Benefits',
       content: JSON.stringify({
@@ -2992,7 +3110,7 @@ function createDefaultCMSContent(pageId: string): any {
 
 
 // Newsletter Signup Endpoint
-app.post("/make-server-cc205da9/newsletter/signup", async (c) => {
+app.post("/newsletter/signup", async (c) => {
   try {
     const { name, email } = await c.req.json();
     
@@ -3047,7 +3165,7 @@ app.post("/make-server-cc205da9/newsletter/signup", async (c) => {
  * Track user engagement analytics
  * Stores analytics data for resource interactions (views, reads, shares, etc.)
  */
-app.post("/make-server-cc205da9/analytics/engagement", async (c) => {
+app.post("/analytics/engagement", async (c) => {
   try {
     const analyticsData = await c.req.json();
     
@@ -3095,7 +3213,7 @@ app.post("/make-server-cc205da9/analytics/engagement", async (c) => {
  * Mark resource as read by user
  * Tracks user reading activity for personalization and progress
  */
-app.post("/make-server-cc205da9/user-activity/mark-read", async (c) => {
+app.post("/user-activity/mark-read", async (c) => {
   try {
     const readData = await c.req.json();
     
@@ -3149,7 +3267,7 @@ app.post("/make-server-cc205da9/user-activity/mark-read", async (c) => {
 /**
  * Get API logs for admin panel
  */
-app.get("/make-server-cc205da9/admin/api-logs", requireAdmin, async (c) => {
+app.get("/admin/api-logs", requireAdmin, async (c) => {
   try {
     const limit = parseInt(c.req.query('limit') || '100');
     const logs = await getAPILogs(limit);
@@ -3163,7 +3281,7 @@ app.get("/make-server-cc205da9/admin/api-logs", requireAdmin, async (c) => {
 /**
  * Get system logs for admin panel
  */
-app.get("/make-server-cc205da9/admin/system-logs", requireAdmin, async (c) => {
+app.get("/admin/system-logs", requireAdmin, async (c) => {
   try {
     const level = c.req.query('level') as any;
     const source = c.req.query('source');
@@ -3180,7 +3298,7 @@ app.get("/make-server-cc205da9/admin/system-logs", requireAdmin, async (c) => {
 /**
  * Get current performance metrics
  */
-app.get("/make-server-cc205da9/admin/performance/current", requireAdmin, async (c) => {
+app.get("/admin/performance/current", requireAdmin, async (c) => {
   try {
     const metrics = await getPerformanceMetrics();
     return c.json({ metrics });
@@ -3193,7 +3311,7 @@ app.get("/make-server-cc205da9/admin/performance/current", requireAdmin, async (
 /**
  * Get performance metrics history
  */
-app.get("/make-server-cc205da9/admin/performance/history", requireAdmin, async (c) => {
+app.get("/admin/performance/history", requireAdmin, async (c) => {
   try {
     const hours = parseInt(c.req.query('hours') || '1');
     const history = await getMetricsHistory(hours);
@@ -3207,7 +3325,7 @@ app.get("/make-server-cc205da9/admin/performance/history", requireAdmin, async (
 /**
  * Get active sessions
  */
-app.get("/make-server-cc205da9/admin/security/sessions", requireAdmin, async (c) => {
+app.get("/admin/security/sessions", requireAdmin, async (c) => {
   try {
     const sessions = await getActiveSessions();
     return c.json({ sessions });
@@ -3220,7 +3338,7 @@ app.get("/make-server-cc205da9/admin/security/sessions", requireAdmin, async (c)
 /**
  * Terminate a user session
  */
-app.delete("/make-server-cc205da9/admin/security/sessions/:userId", requireAdmin, async (c) => {
+app.delete("/admin/security/sessions/:userId", requireAdmin, async (c) => {
   try {
     const userId = c.req.param('userId');
     await terminateSession(userId);
@@ -3234,7 +3352,7 @@ app.delete("/make-server-cc205da9/admin/security/sessions/:userId", requireAdmin
 /**
  * Get audit logs
  */
-app.get("/make-server-cc205da9/admin/security/audit", requireAdmin, async (c) => {
+app.get("/admin/security/audit", requireAdmin, async (c) => {
   try {
     const limit = parseInt(c.req.query('limit') || '200');
     const logs = await getAuditLogs(limit);
@@ -3248,7 +3366,7 @@ app.get("/make-server-cc205da9/admin/security/audit", requireAdmin, async (c) =>
 /**
  * Get security alerts
  */
-app.get("/make-server-cc205da9/admin/security/alerts", requireAdmin, async (c) => {
+app.get("/admin/security/alerts", requireAdmin, async (c) => {
   try {
     const includeResolved = c.req.query('resolved') === 'true';
     const alerts = await getSecurityAlerts(includeResolved);
@@ -3262,7 +3380,7 @@ app.get("/make-server-cc205da9/admin/security/alerts", requireAdmin, async (c) =
 /**
  * Resolve a security alert
  */
-app.post("/make-server-cc205da9/admin/security/alerts/:alertId/resolve", requireAdmin, async (c) => {
+app.post("/admin/security/alerts/:alertId/resolve", requireAdmin, async (c) => {
   try {
     const alertId = c.req.param('alertId');
     const { resolved_by } = await c.req.json();
@@ -3281,7 +3399,7 @@ app.post("/make-server-cc205da9/admin/security/alerts/:alertId/resolve", require
 /**
  * Get communication API configurations (Admin Only)
  */
-app.get("/make-server-cc205da9/admin/communication/config", requireAdmin, async (c) => {
+app.get("/admin/communication/config", requireAdmin, async (c) => {
   try {
     const configs = await kv.getByPrefix('comm-config:');
     return c.json({ configs });
@@ -3294,7 +3412,7 @@ app.get("/make-server-cc205da9/admin/communication/config", requireAdmin, async 
 /**
  * Save communication API configuration (Admin Only)
  */
-app.post("/make-server-cc205da9/admin/communication/config", requireAdmin, async (c) => {
+app.post("/admin/communication/config", requireAdmin, async (c) => {
   try {
     const { provider, config } = await c.req.json();
     const key = `comm-config:${provider}`;
@@ -3309,7 +3427,7 @@ app.post("/make-server-cc205da9/admin/communication/config", requireAdmin, async
 /**
  * Test communication API (Admin Only)
  */
-app.post("/make-server-cc205da9/admin/communication/test", requireAdmin, async (c) => {
+app.post("/admin/communication/test", requireAdmin, async (c) => {
   try {
     const { provider, recipient, message } = await c.req.json();
     // Placeholder for actual API testing
@@ -3331,7 +3449,7 @@ app.post("/make-server-cc205da9/admin/communication/test", requireAdmin, async (
 /**
  * Get payment gateway configurations (Admin Only)
  */
-app.get("/make-server-cc205da9/admin/payment/config", requireAdmin, async (c) => {
+app.get("/admin/payment/config", requireAdmin, async (c) => {
   try {
     const configs = await kv.getByPrefix('payment-config:');
     // Mask sensitive keys
@@ -3350,7 +3468,7 @@ app.get("/make-server-cc205da9/admin/payment/config", requireAdmin, async (c) =>
 /**
  * Save payment gateway configuration (Admin Only)
  */
-app.post("/make-server-cc205da9/admin/payment/config", requireAdmin, async (c) => {
+app.post("/admin/payment/config", requireAdmin, async (c) => {
   try {
     const { gateway, config } = await c.req.json();
     const key = `payment-config:${gateway}`;
@@ -3365,7 +3483,7 @@ app.post("/make-server-cc205da9/admin/payment/config", requireAdmin, async (c) =
 /**
  * Test payment gateway (Admin Only)
  */
-app.post("/make-server-cc205da9/admin/payment/test", requireAdmin, async (c) => {
+app.post("/admin/payment/test", requireAdmin, async (c) => {
   try {
     const { gateway, amount } = await c.req.json();
     // Placeholder for actual gateway testing
@@ -3382,7 +3500,7 @@ app.post("/make-server-cc205da9/admin/payment/test", requireAdmin, async (c) => 
 /**
  * Get payment transactions (Admin Only)
  */
-app.get("/make-server-cc205da9/admin/payment/transactions", requireAdmin, async (c) => {
+app.get("/admin/payment/transactions", requireAdmin, async (c) => {
   try {
     const transactions = await kv.getByPrefix('transaction:');
     const sorted = transactions.sort((a: any, b: any) => 
@@ -3400,7 +3518,7 @@ app.get("/make-server-cc205da9/admin/payment/transactions", requireAdmin, async 
 // ============================================================================
 
 // Upload file to Supabase Storage
-app.post("/make-server-cc205da9/upload", async (c) => {
+app.post("/upload", async (c) => {
   try {
     const formData = await c.req.formData();
     const file = formData.get('file') as File;
@@ -3489,7 +3607,7 @@ app.post("/make-server-cc205da9/upload", async (c) => {
 });
 
 // Upload image - Alias for /upload endpoint (specifically for image uploads)
-app.post("/make-server-cc205da9/upload-image", async (c) => {
+app.post("/upload-image", async (c) => {
   try {
     const formData = await c.req.formData();
     const file = formData.get('file') as File;
@@ -3571,7 +3689,7 @@ app.post("/make-server-cc205da9/upload-image", async (c) => {
 });
 
 // Get all media files (for media library)
-app.get("/make-server-cc205da9/media", async (c) => {
+app.get("/media", async (c) => {
   try {
     const files = await kv.getByPrefix('media:');
     
@@ -3589,7 +3707,7 @@ app.get("/make-server-cc205da9/media", async (c) => {
 });
 
 // Delete media file
-app.delete("/make-server-cc205da9/media/:id", async (c) => {
+app.delete("/media/:id", async (c) => {
   try {
     const id = c.req.param('id');
     const fileMetadata = await kv.get(`media:${id}`);
@@ -3623,7 +3741,7 @@ app.delete("/make-server-cc205da9/media/:id", async (c) => {
 // ============================================================================
 
 // Get site settings
-app.get("/make-server-cc205da9/settings", async (c) => {
+app.get("/settings", async (c) => {
   try {
     const settings = await kv.get('settings:site');
     console.log('⚙️ Fetched site settings');
@@ -3635,7 +3753,7 @@ app.get("/make-server-cc205da9/settings", async (c) => {
 });
 
 // Update site settings
-app.put("/make-server-cc205da9/settings", async (c) => {
+app.put("/settings", async (c) => {
   try {
     const body = await c.req.json();
     await kv.set('settings:site', body);
@@ -3651,7 +3769,7 @@ app.put("/make-server-cc205da9/settings", async (c) => {
 // CATEGORY MANAGEMENT ENDPOINTS
 // ========================================
 
-app.get("/make-server-cc205da9/categories", async (c) => {
+app.get("/categories", async (c) => {
   try {
     const categories = await kv.getByPrefix('category:');
     const validCategories = categories.filter((cat: any) => cat && cat.id);
@@ -3663,7 +3781,7 @@ app.get("/make-server-cc205da9/categories", async (c) => {
   }
 });
 
-app.post("/make-server-cc205da9/categories", requireAuth, async (c) => {
+app.post("/categories", requireAuth, async (c) => {
   try {
     const user = c.get('user');
     const userProfile = await kv.get(`user:${user.id}`);
@@ -3690,7 +3808,7 @@ app.post("/make-server-cc205da9/categories", requireAuth, async (c) => {
   }
 });
 
-app.put("/make-server-cc205da9/categories/:categoryId", requireAuth, async (c) => {
+app.put("/categories/:categoryId", requireAuth, async (c) => {
   try {
     const user = c.get('user');
     const categoryId = c.req.param('categoryId');
@@ -3723,7 +3841,7 @@ app.put("/make-server-cc205da9/categories/:categoryId", requireAuth, async (c) =
   }
 });
 
-app.delete("/make-server-cc205da9/categories/:categoryId", requireAuth, async (c) => {
+app.delete("/categories/:categoryId", requireAuth, async (c) => {
   try {
     const user = c.get('user');
     const categoryId = c.req.param('categoryId');
@@ -3752,7 +3870,7 @@ app.delete("/make-server-cc205da9/categories/:categoryId", requireAuth, async (c
 // ========================================
 
 // Log activity (login, resource view, etc.)
-app.post("/make-server-cc205da9/analytics/activity", requireAuth, async (c) => {
+app.post("/analytics/activity", requireAuth, async (c) => {
   try {
     const user = c.get('user');
     const { type, resourceId, metadata } = await c.req.json();
@@ -3786,7 +3904,7 @@ app.post("/make-server-cc205da9/analytics/activity", requireAuth, async (c) => {
 });
 
 // Get aggregated activity analytics
-app.get("/make-server-cc205da9/analytics/aggregated", requireAdmin, async (c) => {
+app.get("/analytics/aggregated", requireAdmin, async (c) => {
   try {
     // Fetch all activities
     // Note: In a real production system with millions of rows, you'd use a dedicated analytics DB
@@ -3869,7 +3987,7 @@ app.get("/make-server-cc205da9/analytics/aggregated", requireAdmin, async (c) =>
 // ========================================
 
 // Get weekly goals progress
-app.get("/make-server-cc205da9/user-activity/goals", requireAuth, async (c) => {
+app.get("/user-activity/goals", requireAuth, async (c) => {
   try {
     const user = c.get('user');
     const userId = user.id;
@@ -3943,7 +4061,7 @@ app.get("/make-server-cc205da9/user-activity/goals", requireAuth, async (c) => {
 });
 
 // Get recently viewed resources
-app.get("/make-server-cc205da9/user-activity/history", requireAuth, async (c) => {
+app.get("/user-activity/history", requireAuth, async (c) => {
   try {
     const user = c.get('user');
     const limit = parseInt(c.req.query('limit') || '5');
@@ -4000,7 +4118,7 @@ app.get("/make-server-cc205da9/user-activity/history", requireAuth, async (c) =>
 // ========================================
 
 // Store health data
-app.post("/make-server-cc205da9/health-data", requireAuth, async (c) => {
+app.post("/health-data", requireAuth, async (c) => {
   try {
     const user = c.get('user');
     const data = await c.req.json();
@@ -4034,7 +4152,7 @@ app.post("/make-server-cc205da9/health-data", requireAuth, async (c) => {
 });
 
 // Get health data
-app.get("/make-server-cc205da9/health-data", requireAuth, async (c) => {
+app.get("/health-data", requireAuth, async (c) => {
   try {
     const user = c.get('user');
     const date = c.req.query('date');
@@ -4058,7 +4176,7 @@ app.get("/make-server-cc205da9/health-data", requireAuth, async (c) => {
 // MOOD TYPE MANAGEMENT ENDPOINTS
 // ========================================
 
-app.get("/make-server-cc205da9/moods", async (c) => {
+app.get("/moods", async (c) => {
   try {
     const moods = await kv.getByPrefix('mood:');
     const validMoods = moods.filter((mood: any) => mood && mood.id);
@@ -4070,7 +4188,7 @@ app.get("/make-server-cc205da9/moods", async (c) => {
   }
 });
 
-app.post("/make-server-cc205da9/moods", requireAuth, async (c) => {
+app.post("/moods", requireAuth, async (c) => {
   try {
     const user = c.get('user');
     const userProfile = await kv.get(`user:${user.id}`);
@@ -4097,7 +4215,7 @@ app.post("/make-server-cc205da9/moods", requireAuth, async (c) => {
   }
 });
 
-app.put("/make-server-cc205da9/moods/:moodId", requireAuth, async (c) => {
+app.put("/moods/:moodId", requireAuth, async (c) => {
   try {
     const user = c.get('user');
     const moodId = c.req.param('moodId');
@@ -4130,7 +4248,7 @@ app.put("/make-server-cc205da9/moods/:moodId", requireAuth, async (c) => {
   }
 });
 
-app.delete("/make-server-cc205da9/moods/:moodId", requireAuth, async (c) => {
+app.delete("/moods/:moodId", requireAuth, async (c) => {
   try {
     const user = c.get('user');
     const moodId = c.req.param('moodId');
@@ -4158,7 +4276,7 @@ app.delete("/make-server-cc205da9/moods/:moodId", requireAuth, async (c) => {
 // WEEK/DAILY STRUCTURE MANAGEMENT ENDPOINTS
 // ========================================
 
-app.get("/make-server-cc205da9/equip-programs/:programId/weeks", async (c) => {
+app.get("/equip-programs/:programId/weeks", async (c) => {
   try {
     const programId = c.req.param('programId');
     const weeks = await kv.getByPrefix(`week:${programId}:`);
@@ -4177,7 +4295,7 @@ app.get("/make-server-cc205da9/equip-programs/:programId/weeks", async (c) => {
   }
 });
 
-app.post("/make-server-cc205da9/equip-programs/:programId/weeks", requireAuth, async (c) => {
+app.post("/equip-programs/:programId/weeks", requireAuth, async (c) => {
   try {
     const user = c.get('user');
     const programId = c.req.param('programId');
@@ -4208,7 +4326,7 @@ app.post("/make-server-cc205da9/equip-programs/:programId/weeks", requireAuth, a
   }
 });
 
-app.put("/make-server-cc205da9/weeks/:weekId", requireAuth, async (c) => {
+app.put("/weeks/:weekId", requireAuth, async (c) => {
   try {
     const user = c.get('user');
     const weekId = c.req.param('weekId');
@@ -4243,7 +4361,7 @@ app.put("/make-server-cc205da9/weeks/:weekId", requireAuth, async (c) => {
   }
 });
 
-app.delete("/make-server-cc205da9/weeks/:weekId", requireAuth, async (c) => {
+app.delete("/weeks/:weekId", requireAuth, async (c) => {
   try {
     const user = c.get('user');
     const weekId = c.req.param('weekId');
@@ -4276,7 +4394,7 @@ app.delete("/make-server-cc205da9/weeks/:weekId", requireAuth, async (c) => {
   }
 });
 
-app.post("/make-server-cc205da9/weeks/:weekId/days", requireAuth, async (c) => {
+app.post("/weeks/:weekId/days", requireAuth, async (c) => {
   try {
     const user = c.get('user');
     const weekId = c.req.param('weekId');
@@ -4306,7 +4424,7 @@ app.post("/make-server-cc205da9/weeks/:weekId/days", requireAuth, async (c) => {
   }
 });
 
-app.put("/make-server-cc205da9/days/:dayId", requireAuth, async (c) => {
+app.put("/days/:dayId", requireAuth, async (c) => {
   try {
     const user = c.get('user');
     const dayId = c.req.param('dayId');
@@ -4341,7 +4459,7 @@ app.put("/make-server-cc205da9/days/:dayId", requireAuth, async (c) => {
   }
 });
 
-app.delete("/make-server-cc205da9/days/:dayId", requireAuth, async (c) => {
+app.delete("/days/:dayId", requireAuth, async (c) => {
   try {
     const user = c.get('user');
     const dayId = c.req.param('dayId');
@@ -4372,7 +4490,7 @@ app.delete("/make-server-cc205da9/days/:dayId", requireAuth, async (c) => {
 // =====================================================
 
 // Get all categories
-app.get('/make-server-cc205da9/categories', async (c) => {
+app.get('/categories', async (c) => {
   try {
     const categories = await kv.getByPrefix('category:');
     const validCategories = categories.filter((cat: any) => cat && cat.id);
@@ -4385,7 +4503,7 @@ app.get('/make-server-cc205da9/categories', async (c) => {
 });
 
 // Get single category
-app.get('/make-server-cc205da9/categories/:id', async (c) => {
+app.get('/categories/:id', async (c) => {
   try {
     const id = c.req.param('id');
     const category = await kv.get(`category:${id}`);
@@ -4402,7 +4520,7 @@ app.get('/make-server-cc205da9/categories/:id', async (c) => {
 });
 
 // Create category (admin only)
-app.post('/make-server-cc205da9/categories', requireAdmin, async (c) => {
+app.post('/categories', requireAdmin, async (c) => {
   try {
     const data = await c.req.json();
     const id = data.id || `cat-${Date.now()}`;
@@ -4424,7 +4542,7 @@ app.post('/make-server-cc205da9/categories', requireAdmin, async (c) => {
 });
 
 // Update category (admin only)
-app.put('/make-server-cc205da9/categories/:id', requireAdmin, async (c) => {
+app.put('/categories/:id', requireAdmin, async (c) => {
   try {
     const id = c.req.param('id');
     const updates = await c.req.json();
@@ -4451,7 +4569,7 @@ app.put('/make-server-cc205da9/categories/:id', requireAdmin, async (c) => {
 });
 
 // Delete category (admin only)
-app.delete('/make-server-cc205da9/categories/:id', requireAdmin, async (c) => {
+app.delete('/categories/:id', requireAdmin, async (c) => {
   try {
     const id = c.req.param('id');
     await kv.del(`category:${id}`);
@@ -4468,7 +4586,7 @@ app.delete('/make-server-cc205da9/categories/:id', requireAdmin, async (c) => {
 // =====================================================
 
 // Get all moods
-app.get('/make-server-cc205da9/moods', async (c) => {
+app.get('/moods', async (c) => {
   try {
     const moods = await kv.getByPrefix('mood:');
     const validMoods = moods.filter((mood: any) => mood && mood.id);
@@ -4481,7 +4599,7 @@ app.get('/make-server-cc205da9/moods', async (c) => {
 });
 
 // Get single mood
-app.get('/make-server-cc205da9/moods/:id', async (c) => {
+app.get('/moods/:id', async (c) => {
   try {
     const id = c.req.param('id');
     const mood = await kv.get(`mood:${id}`);
@@ -4498,7 +4616,7 @@ app.get('/make-server-cc205da9/moods/:id', async (c) => {
 });
 
 // Create mood (admin only)
-app.post('/make-server-cc205da9/moods', requireAdmin, async (c) => {
+app.post('/moods', requireAdmin, async (c) => {
   try {
     const data = await c.req.json();
     const id = data.id || `mood-${Date.now()}`;
@@ -4520,7 +4638,7 @@ app.post('/make-server-cc205da9/moods', requireAdmin, async (c) => {
 });
 
 // Update mood (admin only)
-app.put('/make-server-cc205da9/moods/:id', requireAdmin, async (c) => {
+app.put('/moods/:id', requireAdmin, async (c) => {
   try {
     const id = c.req.param('id');
     const updates = await c.req.json();
@@ -4547,7 +4665,7 @@ app.put('/make-server-cc205da9/moods/:id', requireAdmin, async (c) => {
 });
 
 // Delete mood (admin only)
-app.delete('/make-server-cc205da9/moods/:id', requireAdmin, async (c) => {
+app.delete('/moods/:id', requireAdmin, async (c) => {
   try {
     const id = c.req.param('id');
     await kv.del(`mood:${id}`);
@@ -4564,7 +4682,7 @@ app.delete('/make-server-cc205da9/moods/:id', requireAdmin, async (c) => {
 // ============================================================================
 
 // Public Content API
-app.get("/make-server-cc205da9/content", async (c) => {
+app.get("/content", async (c) => {
   try {
     const { status = 'published', category, type, limit = 50, offset = 0 } = c.req.query();
     
@@ -4611,7 +4729,7 @@ app.get("/make-server-cc205da9/content", async (c) => {
 });
 
 // Get Content by Slug or ID
-app.get("/make-server-cc205da9/content/:idOrSlug", async (c) => {
+app.get("/content/:idOrSlug", async (c) => {
   try {
     const idOrSlug = c.req.param('idOrSlug');
     
@@ -4636,7 +4754,7 @@ app.get("/make-server-cc205da9/content/:idOrSlug", async (c) => {
 });
 
 // Admin Content Management
-app.post("/make-server-cc205da9/admin/content", requireAdmin, async (c) => {
+app.post("/admin/content", requireAdmin, async (c) => {
   try {
     const content = await c.req.json();
     const id = content.id || crypto.randomUUID();
@@ -4661,7 +4779,7 @@ app.post("/make-server-cc205da9/admin/content", requireAdmin, async (c) => {
   }
 });
 
-app.put("/make-server-cc205da9/admin/content/:id", requireAdmin, async (c) => {
+app.put("/admin/content/:id", requireAdmin, async (c) => {
   try {
     const id = c.req.param('id');
     const updates = await c.req.json();
@@ -4688,7 +4806,7 @@ app.put("/make-server-cc205da9/admin/content/:id", requireAdmin, async (c) => {
   }
 });
 
-app.delete("/make-server-cc205da9/admin/content/:id", requireAdmin, async (c) => {
+app.delete("/admin/content/:id", requireAdmin, async (c) => {
   try {
     const id = c.req.param('id');
     await kv.del(`content:${id}`);

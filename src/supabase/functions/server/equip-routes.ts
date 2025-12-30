@@ -8,7 +8,7 @@ export function registerEquipRoutes(app: Hono, requireAuth: any) {
 // EQUIP PROGRAM ENDPOINTS (NEW SCHEMA)
 // ========================================
 
-app.get("/make-server-cc205da9/admin/equip/enrollments", requireAuth, async (c) => {
+app.get("/admin/equip/enrollments", requireAuth, async (c) => {
     try {
         const user = c.get('user');
         const userProfile = await kv.get(`user:${user.id}`);
@@ -21,7 +21,7 @@ app.get("/make-server-cc205da9/admin/equip/enrollments", requireAuth, async (c) 
     }
 });
 
-app.get("/make-server-cc205da9/equip/programs", requireAuth, async (c) => {
+app.get("/equip/programs", requireAuth, async (c) => {
   try {
     const programs = await EquipService.listEquips();
     return c.json({ programs });
@@ -31,7 +31,7 @@ app.get("/make-server-cc205da9/equip/programs", requireAuth, async (c) => {
   }
 });
 
-app.get("/make-server-cc205da9/equip/programs/:equipId", requireAuth, async (c) => {
+app.get("/equip/programs/:equipId", requireAuth, async (c) => {
   try {
     const equipId = c.req.param('equipId');
     // Try by ID first, then slug
@@ -55,7 +55,7 @@ app.get("/make-server-cc205da9/equip/programs/:equipId", requireAuth, async (c) 
   }
 });
 
-app.post("/make-server-cc205da9/equip/programs", requireAuth, async (c) => {
+app.post("/equip/programs", requireAuth, async (c) => {
   try {
     const user = c.get('user');
     const userProfile = await kv.get(`user:${user.id}`);
@@ -70,7 +70,7 @@ app.post("/make-server-cc205da9/equip/programs", requireAuth, async (c) => {
   }
 });
 
-app.put("/make-server-cc205da9/equip/programs/:equipId", requireAuth, async (c) => {
+app.put("/equip/programs/:equipId", requireAuth, async (c) => {
   try {
     const user = c.get('user');
     const userProfile = await kv.get(`user:${user.id}`);
@@ -96,7 +96,7 @@ app.put("/make-server-cc205da9/equip/programs/:equipId", requireAuth, async (c) 
   }
 });
 
-app.delete("/make-server-cc205da9/equip/programs/:equipId", requireAuth, async (c) => {
+app.delete("/equip/programs/:equipId", requireAuth, async (c) => {
   try {
     const user = c.get('user');
     const userProfile = await kv.get(`user:${user.id}`);
@@ -121,7 +121,7 @@ app.delete("/make-server-cc205da9/equip/programs/:equipId", requireAuth, async (
 });
 
 // DAYS
-app.get("/make-server-cc205da9/equip/programs/:equipId/days", requireAuth, async (c) => {
+app.get("/equip/programs/:equipId/days", requireAuth, async (c) => {
     try {
         const equipId = c.req.param('equipId');
         let targetId = equipId;
@@ -139,7 +139,7 @@ app.get("/make-server-cc205da9/equip/programs/:equipId/days", requireAuth, async
     }
 });
 
-app.post("/make-server-cc205da9/equip/programs/:equipId/days", requireAuth, async (c) => {
+app.post("/equip/programs/:equipId/days", requireAuth, async (c) => {
     try {
         const equipId = c.req.param('equipId');
         const data = await c.req.json();
@@ -159,7 +159,7 @@ app.post("/make-server-cc205da9/equip/programs/:equipId/days", requireAuth, asyn
     }
 });
 
-app.put("/make-server-cc205da9/equip/days/:dayId", requireAuth, async (c) => {
+app.put("/equip/days/:dayId", requireAuth, async (c) => {
     try {
         const dayId = c.req.param('dayId');
         const updates = await c.req.json();
@@ -171,7 +171,7 @@ app.put("/make-server-cc205da9/equip/days/:dayId", requireAuth, async (c) => {
 });
 
 // BLOCKS
-app.get("/make-server-cc205da9/equip/days/:dayId/blocks", requireAuth, async (c) => {
+app.get("/equip/days/:dayId/blocks", requireAuth, async (c) => {
     try {
         const dayId = c.req.param('dayId');
         const blocks = await EquipBlockService.listBlocksForDay(dayId);
@@ -181,7 +181,7 @@ app.get("/make-server-cc205da9/equip/days/:dayId/blocks", requireAuth, async (c)
     }
 });
 
-app.post("/make-server-cc205da9/equip/days/:dayId/blocks", requireAuth, async (c) => {
+app.post("/equip/days/:dayId/blocks", requireAuth, async (c) => {
     try {
         const dayId = c.req.param('dayId');
         const data = await c.req.json();
@@ -192,7 +192,7 @@ app.post("/make-server-cc205da9/equip/days/:dayId/blocks", requireAuth, async (c
     }
 });
 
-app.put("/make-server-cc205da9/equip/blocks/:blockId", requireAuth, async (c) => {
+app.put("/equip/blocks/:blockId", requireAuth, async (c) => {
     try {
         const blockId = c.req.param('blockId');
         const updates = await c.req.json();
@@ -203,7 +203,7 @@ app.put("/make-server-cc205da9/equip/blocks/:blockId", requireAuth, async (c) =>
     }
 });
 
-app.delete("/make-server-cc205da9/equip/blocks/:blockId", requireAuth, async (c) => {
+app.delete("/equip/blocks/:blockId", requireAuth, async (c) => {
     try {
         const blockId = c.req.param('blockId');
         await EquipBlockService.deleteBlock(blockId);
@@ -213,7 +213,7 @@ app.delete("/make-server-cc205da9/equip/blocks/:blockId", requireAuth, async (c)
     }
 });
 
-app.post("/make-server-cc205da9/equip/days/:dayId/blocks/reorder", requireAuth, async (c) => {
+app.post("/equip/days/:dayId/blocks/reorder", requireAuth, async (c) => {
     try {
         const { orderedIds } = await c.req.json();
         await EquipBlockService.reorderBlocks(orderedIds);

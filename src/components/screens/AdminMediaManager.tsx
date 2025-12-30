@@ -50,12 +50,11 @@ export function AdminMediaManager({ onBack, className }: AdminMediaManagerProps)
       const response = await apiClient.getMediaFiles();
       const data = Array.isArray(response) ? response : response.files || [];
       setFiles(data);
-      setLoading(false); // Success - stop loading
     } catch (error: any) {
       console.error('Failed to load media files:', error);
-      // GLOBAL APPROACH: Show infinite loader on backend errors
-      console.error('Backend error - showing infinite loader to force proper backend setup');
-      // Don't set loading to false - keeps showing the loader
+      showToast('error', 'Error', 'Failed to load media files');
+    } finally {
+      setLoading(false);
     }
   };
 

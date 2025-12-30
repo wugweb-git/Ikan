@@ -13,19 +13,57 @@ interface AdminHeaderProps {
     icon?: React.ReactNode;
     trend?: 'up' | 'down' | 'neutral';
   }[];
+  onBack?: () => void;
+  breadcrumbs?: {
+    label: string;
+    onClick?: () => void;
+  }[];
 }
 
 export function AdminHeader({ 
   title, 
   description, 
   actions,
-  stats
+  stats,
+  onBack,
+  breadcrumbs
 }: AdminHeaderProps) {
   return (
     <div className="space-y-6">
+      {/* Breadcrumbs */}
+      {breadcrumbs && breadcrumbs.length > 0 && (
+        <nav className="flex items-center text-sm text-muted-foreground mb-2">
+          {breadcrumbs.map((crumb, index) => (
+            <React.Fragment key={crumb.label}>
+              {index > 0 && <ChevronRight className="w-4 h-4 mx-2" />}
+              {crumb.onClick ? (
+                <button 
+                  onClick={crumb.onClick}
+                  className="hover:text-foreground transition-colors"
+                >
+                  {crumb.label}
+                </button>
+              ) : (
+                <span className="text-foreground font-medium">{crumb.label}</span>
+              )}
+            </React.Fragment>
+          ))}
+        </nav>
+      )}
+
       {/* Header Section */}
       <div className="flex items-start justify-between gap-4">
         <div className="flex items-start gap-3 flex-1">
+          {onBack && (
+             <Button
+               variant="ghost"
+               size="sm"
+               onClick={onBack}
+               className="mt-1"
+             >
+               <ChevronRight className="w-6 h-6 rotate-180" />
+             </Button>
+          )}
           <div className="flex-1">
             <h1 style={{
               fontFamily: 'var(--font-family-base)',

@@ -4,20 +4,21 @@ import { Input } from '../../ui/input';
 import { Label } from '../../ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../ui/select';
 import { Textarea } from '../../ui/textarea';
+import { FileUpload } from '../../ui/file-upload';
 
 export function EquipMetaEditor({ program, onChange }: { program: any, onChange: (u: any) => void }) {
   return (
-    <div className="p-8 max-w-4xl mx-auto overflow-y-auto h-full">
+    <div className="space-y-6">
       <Card>
         <CardHeader>
           <CardTitle>Program Settings</CardTitle>
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="grid gap-2">
-            <Label>Program Name</Label>
+            <Label>Program Title</Label>
             <Input 
-              value={program.name} 
-              onChange={(e) => onChange({ name: e.target.value })}
+              value={program.title || program.name || ''} 
+              onChange={(e) => onChange({ title: e.target.value, name: e.target.value })}
             />
           </div>
 
@@ -34,6 +35,8 @@ export function EquipMetaEditor({ program, onChange }: { program: any, onChange:
                    <SelectItem value="depression">Depression</SelectItem>
                    <SelectItem value="sleep">Sleep</SelectItem>
                    <SelectItem value="mindfulness">Mindfulness</SelectItem>
+                   <SelectItem value="wellness">Wellness</SelectItem>
+                   <SelectItem value="relationships">Relationships</SelectItem>
                    <SelectItem value="general">General</SelectItem>
                  </SelectContent>
                </Select>
@@ -75,7 +78,7 @@ export function EquipMetaEditor({ program, onChange }: { program: any, onChange:
           </div>
 
           <div className="grid gap-2">
-             <Label>Description</Label>
+             <Label>Short Description</Label>
              <Textarea 
                value={program.description} 
                onChange={(e) => onChange({ description: e.target.value })}
@@ -84,10 +87,10 @@ export function EquipMetaEditor({ program, onChange }: { program: any, onChange:
           </div>
           
           <div className="grid gap-2">
-             <Label>Thumbnail URL</Label>
-             <Input 
-               value={program.cover_image_url || ''} 
-               onChange={(e) => onChange({ cover_image_url: e.target.value })}
+             <Label>Thumbnail Image</Label>
+             <FileUpload 
+               value={program.thumbnail || program.cover_image_url || ''} 
+               onChange={(url) => onChange({ thumbnail: url, cover_image_url: url })}
              />
           </div>
         </CardContent>

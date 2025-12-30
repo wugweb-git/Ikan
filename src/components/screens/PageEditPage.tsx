@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Save, Trash2, FileText, Edit, Search, Image, Video, Upload, EyeOff } from 'lucide-react';
+import { Save, Trash2, FileText, Edit, Search, Image, Video, Upload, EyeOff, X } from 'lucide-react';
 import { useNotifications } from '../../contexts/NotificationContext';
 import { apiClient } from '../../lib/api-client';
 import { AdminPageLayout } from '../admin/AdminPageLayout';
@@ -89,7 +89,7 @@ export function PageEditPage({ pageId, onBack, onSave }: PageEditPageProps) {
   const loadPage = async () => {
     try {
       setLoading(true);
-      const data = await apiClient.getPage(pageId!);
+      const data = await apiClient.getAdminPage(pageId!);
       setFormData(data);
     } catch (error) {
       console.error('Failed to load page:', error);

@@ -8,7 +8,7 @@ export function registerProgressRoutes(app: Hono, requireAuth: any) {
 // PROGRESS & USER ENDPOINTS
 // ========================================
 
-app.get("/make-server-cc205da9/user/enrollments", requireAuth, async (c) => {
+app.get("/user/enrollments", requireAuth, async (c) => {
   try {
     const userId = c.get('userId');
     const enrollments = await ProgressService.getUserEnrollments(userId);
@@ -18,7 +18,7 @@ app.get("/make-server-cc205da9/user/enrollments", requireAuth, async (c) => {
   }
 });
 
-app.post("/make-server-cc205da9/user/enroll/:equipId", requireAuth, async (c) => {
+app.post("/user/enroll/:equipId", requireAuth, async (c) => {
   try {
     const userId = c.get('userId');
     const equipId = c.req.param('equipId');
@@ -29,7 +29,7 @@ app.post("/make-server-cc205da9/user/enroll/:equipId", requireAuth, async (c) =>
   }
 });
 
-app.get("/make-server-cc205da9/user/equip/:equipId/today", requireAuth, async (c) => {
+app.get("/user/equip/:equipId/today", requireAuth, async (c) => {
   try {
     const userId = c.get('userId');
     const equipId = c.req.param('equipId');
@@ -58,7 +58,7 @@ app.get("/make-server-cc205da9/user/equip/:equipId/today", requireAuth, async (c
   }
 });
 
-app.post("/make-server-cc205da9/user/equip/:equipId/day/:dayNum/block/:blockId", requireAuth, async (c) => {
+app.post("/user/equip/:equipId/day/:dayNum/block/:blockId", requireAuth, async (c) => {
   try {
     const userId = c.get('userId');
     const { equipId, dayNum, blockId } = c.req.param();
@@ -71,7 +71,7 @@ app.post("/make-server-cc205da9/user/equip/:equipId/day/:dayNum/block/:blockId",
   }
 });
 
-app.post("/make-server-cc205da9/user/equip/:equipId/day/:dayNum/complete", requireAuth, async (c) => {
+app.post("/user/equip/:equipId/day/:dayNum/complete", requireAuth, async (c) => {
   try {
     const userId = c.get('userId');
     const { equipId, dayNum } = c.req.param();
@@ -83,7 +83,7 @@ app.post("/make-server-cc205da9/user/equip/:equipId/day/:dayNum/complete", requi
   }
 });
 
-app.get("/make-server-cc205da9/user/equip/:equipId/progress", requireAuth, async (c) => {
+app.get("/user/equip/:equipId/progress", requireAuth, async (c) => {
   try {
     const userId = c.get('userId');
     const equipId = c.req.param('equipId');
@@ -94,7 +94,7 @@ app.get("/make-server-cc205da9/user/equip/:equipId/progress", requireAuth, async
   }
 });
 
-app.post("/make-server-cc205da9/user/equip/:equipId/sync", requireAuth, async (c) => {
+app.post("/user/equip/:equipId/sync", requireAuth, async (c) => {
   try {
     const userId = c.get('userId');
     const equipId = c.req.param('equipId');

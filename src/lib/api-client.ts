@@ -20,7 +20,7 @@ export interface User {
 
 import { projectId } from '../utils/supabase/info';
 
-const API_BASE = `https://${projectId}.supabase.co/functions/v1/server/make-server-cc205da9`;
+const API_BASE = `https://${projectId}.supabase.co/functions/v1/make-server-cc205da9`;
 
 class ApiClient {
   private token: string | null = null;
@@ -47,7 +47,9 @@ class ApiClient {
       }
     }
 
-    const url = path.startsWith('http') ? path : `${API_BASE}${path}`;
+    // Ensure path starts with /
+    const normalizedPath = path.startsWith('/') ? path : `/${path}`;
+    const url = path.startsWith('http') ? path : `${API_BASE}${normalizedPath}`;
 
     try {
       const response = await fetch(url, {
@@ -94,6 +96,46 @@ class ApiClient {
     // No-op for now as backend endpoint is not yet available
     console.log(`[Activity] ${action}`, metadata);
     return Promise.resolve({ success: true });
+  }
+
+  // CMS
+  async getPage(slug: string) {
+    return this.request(`/cms/pages/${slug}`, { method: 'GET' }, false);
+  }
+
+  async getAdminPage(id: string) {
+    const res = await this.request(`/admin/pages/${id}`, { method: 'GET' }, true);
+    return res.page;
+  }
+
+  async getPages() {
+    try {
+      const res = await this.request('/admin/pages', { method: 'GET' }, true);
+      return res.pages || [];
+    } catch (e) {
+      console.warn('Failed to fetch pages', e);
+      return [];
+    }
+  }
+
+  async createPage(data: any) {
+    const res = await this.request('/admin/pages', { 
+      method: 'POST', 
+      body: JSON.stringify(data)
+    }, true);
+    return res.page;
+  }
+
+  async updatePage(id: string, data: any) {
+    const res = await this.request(`/admin/pages/${id}`, { 
+      method: 'PUT', 
+      body: JSON.stringify(data)
+    }, true);
+    return res.page;
+  }
+
+  async deletePage(id: string) {
+    return this.request(`/admin/pages/${id}`, { method: 'DELETE' }, true);
   }
 
   // Auth
@@ -157,7 +199,10 @@ class ApiClient {
   // Equip Programs
   async getEquipPrograms() {
     const res = await this.request('/equip/programs', { method: 'GET' }, true);
-    return res.programs || [];
+    return (res.programs || []).map((p: any) => ({
+      ...p,
+      title: p.title || p.name || 'Untitled Program'
+    }));
   }
 
   async getEquipProgram(id: string) {
@@ -328,10 +373,76 @@ class ApiClient {
   }
 
   async getCategories() {
-    // Return empty array for now to trigger fallback to constants in UI
-    // Or we could implement an endpoint for dynamic categories
-    return { categories: [] };
+    try {
+      const res = await this.request('/admin/categories', { method: 'GET' }, true);
+      return res.categories || [];
+    } catch (e) {
+      console.warn('Failed to fetch categories, returning empty list');
+      return [];
+    }
   }
+
+  async createCategory(data: any) {
+    const res = await this.request('/admin/categories', {
+      method: 'POST',
+      body: JSON.stringify(data)
+    }, true);
+    return res.category;
+  }
+
+  async updateCategory(id: string, data: any) {
+    const res = await this.request(`/admin/categories/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data)
+    }, true);
+    return res.category;
+  }
+
+  async deleteCategory(id: string) {
+    return this.request(`/admin/categories/${id}`, { method: 'DELETE' }, true);
+  }
+
+  // Media Management
+  async getMediaFiles() {
+    try {
+      const res = await this.request('/admin/media/files', { method: 'GET' }, true);
+      return res.files || [];
+    } catch (e) {
+      console.error('Failed to get media files', e);
+      // Return empty array to prevent UI crashes, but log error
+      return []; 
+    }
+  }
+
+  async deleteMediaFile(id: string) {
+    return this.request(`/admin/media/files/${id}`, { method: 'DELETE' }, true);
+  }
+
+  async uploadMediaFile(file: File, bucket: string = 'make-cc205da9-media') {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('bucket', bucket);
+
+    const token = await this.getToken();
+    const headers: any = {};
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+
+    const response = await fetch(`${API_BASE}/admin/media/upload`, {
+      method: 'POST',
+      headers,
+      body: formData
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Upload failed: ${errorText}`);
+    }
+
+    return await response.json();
+  }
+
 
 
   // Legacy shims
@@ -385,6 +496,31 @@ class ApiClient {
      return res.assessments || [];
   }
 
+  async getAssessment(id: string) {
+    const res = await this.request(`/assessments/${id}`, { method: 'GET' }, true);
+    return res.assessment;
+  }
+
+  async createAssessment(data: any) {
+    const res = await this.request('/admin/assessments', { 
+      method: 'POST', 
+      body: JSON.stringify(data)
+    }, true);
+    return res.assessment;
+  }
+
+  async updateAssessment(id: string, data: any) {
+    const res = await this.request(`/admin/assessments/${id}`, { 
+      method: 'PUT', 
+      body: JSON.stringify(data)
+    }, true);
+    return res.assessment;
+  }
+
+  async deleteAssessment(id: string) {
+    return this.request(`/admin/assessments/${id}`, { method: 'DELETE' }, true);
+  }
+
   // Mood Journal
   async listMoods() {
     try {
@@ -418,6 +554,34 @@ class ApiClient {
         energy
       })
     }, true);
+  }
+
+  // Admin Users
+  async getUsers() {
+    return this.request('/admin/users', { method: 'GET' }, true);
+  }
+
+  async getUser(userId: string) {
+    return this.request(`/admin/users/${userId}`, { method: 'GET' }, true);
+  }
+
+  async createUserAdmin(data: any) {
+    return this.request('/admin/users', { 
+      method: 'POST',
+      body: JSON.stringify(data)
+    }, true);
+  }
+
+  async updateUserAdmin(userId: string, data: any) {
+    const res = await this.request(`/admin/users/${userId}`, { 
+      method: 'PUT',
+      body: JSON.stringify(data)
+    }, true);
+    return res.profile;
+  }
+
+  async deleteUser(userId: string) {
+    return this.request(`/admin/users/${userId}`, { method: 'DELETE' }, true);
   }
 }
 

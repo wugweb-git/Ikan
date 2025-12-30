@@ -1,10 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from '../../ui/button';
-import { ArrowLeft, Save } from 'lucide-react';
+import { ArrowLeft, Save, Trash2 } from 'lucide-react';
 import { EquipMetaEditor } from './EquipMetaEditor';
+import { EquipLandingPageEditor } from './EquipLandingPageEditor';
+import { EquipOnboardingEditor } from './EquipOnboardingEditor';
 import { EquipDaysManager } from './EquipDaysManager';
 import { useNotifications } from '../../../contexts/NotificationContext';
 import { apiClient } from '../../../lib/api-client';
+import { WizardLayout } from '../../ui/wizard-layout';
+import { WizardStep } from '../../ui/wizard-stepper';
 
 interface EquipEditorProps {
   programId?: string | null;
@@ -12,9 +16,10 @@ interface EquipEditorProps {
 }
 
 export function EquipEditor({ programId, onBack }: EquipEditorProps) {
-  const [activeTab, setActiveTab] = useState<'meta' | 'days'>('meta');
+  const [currentStep, setCurrentStep] = useState(0);
   const [program, setProgram] = useState<any>(null);
   const [loading, setLoading] = useState(!!programId);
+  const [saving, setSaving] = useState(false);
   const { showToast } = useNotifications();
 
   useEffect(() => {
@@ -23,22 +28,29 @@ export function EquipEditor({ programId, onBack }: EquipEditorProps) {
     } else {
       // New program shell
       setProgram({
+        title: 'New Program',
         name: 'New Program',
         description: '',
         category: 'general',
         duration_days: 7,
         price_cents: 0,
         status: 'draft',
-        slug: `program-${Date.now()}`
+        slug: `program-${Date.now()}`,
+        onboarding_questions: [],
+        section1_eligibility_points: [],
+        section2_bullets: [],
+        section3_content: [],
+        section4_benefits: [],
+        section4_notes: []
       });
     }
   }, [programId]);
 
   const loadProgram = async () => {
     try {
-      // We need to use the new route. 
-      // `apiClient.getEquipProgram` maps to `/equip/programs/:id`
       const data = await apiClient.getEquipProgram(programId!);
+      if (!data.name && data.title) data.name = data.title;
+      if (!data.title && data.name) data.title = data.name;
       setProgram(data);
     } catch (error) {
       showToast('error', 'Failed to load program');
@@ -47,65 +59,126 @@ export function EquipEditor({ programId, onBack }: EquipEditorProps) {
     }
   };
 
-  const handleSave = async () => {
+  const handleSave = async (shouldExit = false) => {
     try {
-      if (programId) {
-        await apiClient.updateEquipProgram(programId, program);
+      setSaving(true);
+      const payload = { ...program };
+      if (payload.name && !payload.title) payload.title = payload.name;
+      
+      let savedProgram;
+      if (programId || (program.id && program.id.length > 10)) {
+        const id = programId || program.id;
+        savedProgram = await apiClient.updateEquipProgram(id, payload);
         showToast('success', 'Changes saved');
       } else {
-        const newProg = await apiClient.createEquipProgram(program);
+        savedProgram = await apiClient.createEquipProgram(payload);
         showToast('success', 'Program created');
-        // If we want to switch to edit mode, we'd need to pass the ID back up or replace URL.
-        // For now, just go back to list.
+        // Update local state with new ID so subsequent saves work
+        setProgram(savedProgram);
+      }
+
+      if (shouldExit) {
         onBack();
       }
+      return savedProgram;
     } catch (error) {
+      console.error(error);
       showToast('error', 'Failed to save');
+      throw error;
+    } finally {
+      setSaving(false);
     }
   };
 
-  if (loading) return <div>Loading...</div>;
+  const steps: WizardStep[] = [
+    {
+      id: 'meta',
+      title: 'Program Basics',
+      subtitle: 'Set up the core details of your program',
+      status: currentStep === 0 ? 'current' : currentStep > 0 ? 'completed' : 'upcoming'
+    },
+    {
+      id: 'landing',
+      title: 'Landing Page',
+      subtitle: 'Design the marketing page for this program',
+      status: currentStep === 1 ? 'current' : currentStep > 1 ? 'completed' : 'upcoming'
+    },
+    {
+      id: 'onboarding',
+      title: 'Onboarding Flow',
+      subtitle: 'Configure questions for new enrollees',
+      status: currentStep === 2 ? 'current' : currentStep > 2 ? 'completed' : 'upcoming'
+    },
+    {
+      id: 'curriculum',
+      title: 'Curriculum',
+      subtitle: 'Manage daily content and exercises',
+      status: currentStep === 3 ? 'current' : currentStep > 3 ? 'completed' : 'upcoming'
+    }
+  ];
+
+  if (loading) return <div className="flex items-center justify-center h-screen">Loading...</div>;
   if (!program) return <div>Error loading program.</div>;
 
   return (
-    <div className="flex flex-col h-full bg-neutral-50">
-      {/* Header */}
-      <div className="h-16 bg-white border-b border-neutral-200 flex items-center justify-between px-6 flex-shrink-0">
-        <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" onClick={onBack}>
-            <ArrowLeft className="w-5 h-5" />
-          </Button>
-          <div>
-             <h1 className="text-lg font-medium">{program.name}</h1>
-             <div className="flex gap-2 text-sm text-neutral-500">
-               <span className={`cursor-pointer hover:text-neutral-900 ${activeTab === 'meta' ? 'text-neutral-900 font-medium' : ''}`} onClick={() => setActiveTab('meta')}>Settings</span>
-               <span>/</span>
-               <span className={`cursor-pointer hover:text-neutral-900 ${activeTab === 'days' ? 'text-neutral-900 font-medium' : ''}`} onClick={() => setActiveTab('days')}>Curriculum</span>
-             </div>
-          </div>
-        </div>
-        <div className="flex items-center gap-2">
-           <Button onClick={handleSave} className="gap-2">
-             <Save className="w-4 h-4" /> Save
-           </Button>
-        </div>
-      </div>
-
-      {/* Main Content */}
-      <div className="flex-1 overflow-hidden">
-        {activeTab === 'meta' && (
-          <EquipMetaEditor 
-            program={program} 
-            onChange={(updates: any) => setProgram({ ...program, ...updates })} 
-          />
-        )}
-        {activeTab === 'days' && (
-          <EquipDaysManager 
-            programId={program.id || program.equip_id || programId} // Handle legacy ID confusion
-            durationDays={program.duration_days}
-          />
-        )}
-      </div>
-    </div>
+    <WizardLayout
+      title={program.title || program.name}
+      status={program.status === 'published' ? 'published' : 'draft'}
+      steps={steps}
+      currentStep={currentStep}
+      onStepChange={setCurrentStep}
+      onExit={onBack}
+      onSaveDraft={() => handleSave(false)}
+      isLoading={saving}
+      finishButtonText="Save & Finish"
+      footerLeftContent={
+        <Button 
+          variant="ghost" 
+          onClick={() => handleSave(true)}
+          disabled={saving}
+          className="text-gray-500 hover:text-gray-900 gap-2"
+        >
+          <Save size={16} />
+          Save Draft
+        </Button>
+      }
+      onNext={async () => {
+        // Auto-save between steps if it's a new program to ensure ID exists
+        if (!program.id && currentStep === 0) {
+           await handleSave(false);
+        } else {
+           // Optional: Auto-save on every step change
+           // await handleSave(false);
+        }
+        setCurrentStep(Math.min(currentStep + 1, steps.length - 1));
+      }}
+      onPrevious={() => setCurrentStep(Math.max(currentStep - 1, 0))}
+      onFinish={() => handleSave(true)}
+    >
+      {currentStep === 0 && (
+        <EquipMetaEditor 
+          program={program} 
+          onChange={(updates: any) => setProgram({ ...program, ...updates })} 
+        />
+      )}
+      {currentStep === 1 && (
+        <EquipLandingPageEditor 
+          program={program} 
+          onChange={(updates: any) => setProgram({ ...program, ...updates })} 
+        />
+      )}
+      {currentStep === 2 && (
+        <EquipOnboardingEditor 
+          program={program} 
+          onChange={(updates: any) => setProgram({ ...program, ...updates })} 
+        />
+      )}
+      {currentStep === 3 && (
+        <EquipDaysManager 
+          programId={program.id || programId} 
+          durationDays={program.duration_days}
+        />
+      )}
+    </WizardLayout>
   );
 }

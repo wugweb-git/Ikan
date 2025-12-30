@@ -100,8 +100,7 @@ export function AdminUserManager({ onBack, className }: AdminUserManagerProps) {
         );
         setLoading(false);
       } else {
-        // GLOBAL APPROACH: Show infinite loader on backend errors
-        console.error('Backend error - showing infinite loader to force proper backend setup');
+        console.error('Backend error:', error);
         setError('Failed to load users. Please try again later.');
       }
     }
@@ -154,7 +153,7 @@ export function AdminUserManager({ onBack, className }: AdminUserManagerProps) {
 
   const handleToggleAdmin = async (userId: string, currentIsAdmin: boolean) => {
     try {
-      await apiClient.updateUser(userId, { is_admin: !currentIsAdmin });
+      await apiClient.updateUserAdmin(userId, { is_admin: !currentIsAdmin });
       setUsers((prev) => prev.map((u) => (u.user_id === userId ? { ...u, is_admin: !currentIsAdmin } : u)));
       showToast('success', 'User Updated', `Admin privileges ${!currentIsAdmin ? 'granted' : 'removed'}`);
       loadData(); // Reload to get fresh data

@@ -83,7 +83,7 @@ export function EquipAdminDashboard() {
 
   // Render List
   const filteredPrograms = programs.filter(p => 
-    p.title.toLowerCase().includes(searchQuery.toLowerCase())
+    (p.title || '').toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   return (

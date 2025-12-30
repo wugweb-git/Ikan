@@ -176,12 +176,12 @@ export function AssessmentEditPageWizard({ assessmentId, onBack, onSave }: Asses
     highlights: [],
     notes_title: 'Things to keep in mind',
     notes: [],
-    section1_title: 'Who is this test for?',
-    section1_eligibility_title: 'This assessment may be helpful if you:',
+    section1_title: 'How it works',
+    section1_eligibility_title: 'What to expect:',
     section1_eligibility_points: [],
     section1_who_title: 'Who can take this?',
     section1_who_content: 'This assessment is designed for adults 18+.',
-    section2_title: 'About this test',
+    section2_title: 'What is this assessment?',
     section2_content: '',
     section2_image: '',
     section2_bullets: [],
@@ -278,8 +278,11 @@ export function AssessmentEditPageWizard({ assessmentId, onBack, onSave }: Asses
       return;
     }
 
-    if ((formData.questions || []).length === 0) {
-      showToast('error', 'Validation Error', 'Please add at least one question');
+    // Only enforce question requirement when publishing
+    const willBePublished = shouldPublish === true || (shouldPublish === undefined && formData.published);
+
+    if (willBePublished && (formData.questions || []).length === 0) {
+      showToast('error', 'Validation Error', 'Please add at least one question to publish');
       return;
     }
 
@@ -537,6 +540,14 @@ export function AssessmentEditPageWizard({ assessmentId, onBack, onSave }: Asses
                   className="min-h-[120px]"
                 />
               </AdminFormField>
+
+              <AdminFormField label="Assessment Image (Thumbnail)">
+                <ImageUpload
+                  value={formData.thumbnail || ''}
+                  onChange={(url) => setFormData({ ...formData, thumbnail: url })}
+                  aspectRatio="square"
+                />
+              </AdminFormField>
             </div>
 
             <div className="p-6 bg-white rounded-xl border border-gray-200 space-y-4">
@@ -620,26 +631,27 @@ export function AssessmentEditPageWizard({ assessmentId, onBack, onSave }: Asses
             <div className="space-y-6">
               <h3 className="text-lg font-medium border-b pb-2">Content Sections (Bento Grid)</h3>
               <div className="grid md:grid-cols-2 gap-6">
-                <AdminFormField label="Section 1 Title (Eligibility)">
+                <AdminFormField label="Section 1 Title (Process / How it works)">
                   <Input
                     value={formData.section1_title || ''}
                     onChange={(e) => setFormData({ ...formData, section1_title: e.target.value })}
                   />
                 </AdminFormField>
-                <AdminFormField label="Eligibility Points (One per line)">
+                <AdminFormField label="Process Steps (One per line)">
                   <Textarea
                     value={getArrayFieldString('section1_eligibility_points')}
                     onChange={(e) => handleArrayFieldChange('section1_eligibility_points', e.target.value)}
                     className="min-h-[100px]"
+                    placeholder="e.g. Answer 10 questions"
                   />
                 </AdminFormField>
-                <AdminFormField label="Section 2 Title (About)">
+                <AdminFormField label="Section 2 Title (What is this?)">
                   <Input
                     value={formData.section2_title || formData.about_title || ''}
                     onChange={(e) => setFormData({ ...formData, section2_title: e.target.value })}
                   />
                 </AdminFormField>
-                <AdminFormField label="About Content">
+                <AdminFormField label="Content (What is this?)">
                   <Textarea
                     value={formData.section2_content || formData.about_content || ''}
                     onChange={(e) => setFormData({ ...formData, section2_content: e.target.value })}

@@ -106,7 +106,7 @@ export function AssessmentBentoGrid({
           <div className="relative bg-[var(--color-bg-card)] rounded-2xl p-6 border border-[var(--color-border-default)]">
             <TileLabel number={1} />
             <h2 className="text-2xl font-medium text-[var(--color-text-primary)] mb-4">
-              {section2.title || "About this test"}
+              {section2.title || "What is this assessment?"}
             </h2>
             <div className="mb-6">
               {renderContent(section2.contentHtml, section2.content ? section2.content.split('\n') : [])}
@@ -214,10 +214,10 @@ export function AssessmentBentoGrid({
             <TileLabel number={1} />
             <div>
                 <h2 className="text-2xl font-medium text-[var(--color-text-primary)] mb-4">
-                    {section2.title || "About this test"}
+                    {section2.title || "What is this assessment?"}
                 </h2>
                 <div className="mb-6">
-                     {renderContent(section2.contentHtml, section2.content ? section2.content.split('\n') : [], 2)}
+                     {renderContent(section2.contentHtml, section2.content ? section2.content.split('\n') : [])}
                 </div>
             </div>
             {section2.bullets && section2.bullets.length > 0 && (

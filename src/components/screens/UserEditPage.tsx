@@ -68,6 +68,8 @@ export function UserEditPage({ userId, onBack, onSave }: UserEditPageProps) {
     emergencyContactPhone: '',
     emergencyContactRelationship: ''
   });
+  
+  const [password, setPassword] = useState('');
 
   // Form validation
   const validationSchema: ValidationSchema = {
@@ -131,7 +133,11 @@ export function UserEditPage({ userId, onBack, onSave }: UserEditPageProps) {
         await apiClient.updateUserAdmin(userId, formData);
         showToast('success', 'Success', 'User updated successfully');
       } else {
-        await apiClient.createUserAdmin(formData);
+        if (!password || password.length < 8) {
+          showToast('error', 'Validation Error', 'Password is required and must be at least 8 characters');
+          return;
+        }
+        await apiClient.createUserAdmin({ ...formData, password });
         showToast('success', 'Success', 'User created successfully');
       }
 
@@ -276,6 +282,21 @@ export function UserEditPage({ userId, onBack, onSave }: UserEditPageProps) {
                 }}
               />
             </AdminFormField>
+
+            {!userId && (
+              <AdminFormField label="Password" required helpText="Min 8 characters">
+                <Input
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="••••••••"
+                  style={{
+                    height: 'var(--ikan-component-button-height)',
+                    borderRadius: 'var(--ikan-component-border-radius)'
+                  }}
+                />
+              </AdminFormField>
+            )}
 
             <AdminFormField label="Phone Number" helpText="Optional contact number">
               <Input

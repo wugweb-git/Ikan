@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FileText, Download, Edit, Plus, MoreHorizontal, Eye, EyeOff, Trash2, ExternalLink } from 'lucide-react';
+import { FileText, Download, Edit, Plus, MoreHorizontal, Eye, EyeOff, Trash2, ExternalLink, RefreshCw } from 'lucide-react';
 import { useNotifications } from '../../contexts/NotificationContext';
 import { apiClient } from '../../lib/api-client';
 import { AdminHeader } from '../admin/AdminHeader';
@@ -22,6 +22,8 @@ import {
   DropdownMenuTrigger,
 } from "../ui/dropdown-menu";
 
+import { DEFAULT_CMS_CONTENT } from '../../utils/cms-defaults';
+
 interface AdminPageManagerProps {
   onBack?: () => void;
   className?: string;
@@ -39,10 +41,66 @@ export function AdminPageManager({ onBack, className }: AdminPageManagerProps) {
 
   const [viewMode, setViewMode] = useState<ViewMode>('list');
   const [selectedPageId, setSelectedPageId] = useState<string | undefined>();
+  const [syncing, setSyncing] = useState(false);
+
+  const systemPages = [
+    { title: 'Privacy Policy', slug: 'privacy', name: 'Privacy Policy' },
+    { title: 'Terms of Service', slug: 'terms', name: 'Terms of Service' },
+    { title: 'Frequently Asked Questions', slug: 'faq', name: 'FAQ' },
+    { title: 'Contact Us', slug: 'contact', name: 'Let\'s Talk' },
+    { title: 'Return Policy', slug: 'return-policy', name: 'Return Policy' },
+    { title: 'Cancellation Policy', slug: 'cancellation-policy', name: 'Cancellation Policy' },
+    { title: 'Sitemap', slug: 'sitemap', name: 'Sitemap' }
+  ];
 
   useEffect(() => {
     if (viewMode === 'list') loadPages();
   }, [viewMode]);
+
+  const handleSyncSystemPages = async () => {
+    try {
+      setSyncing(true);
+      const existingSlugs = pages.map(p => p.slug);
+      const missingPages = systemPages.filter(p => !existingSlugs.includes(p.slug));
+
+      if (missingPages.length === 0) {
+        showToast('info', 'System Pages', 'All system pages already exist.');
+        setSyncing(false);
+        return;
+      }
+
+      let createdCount = 0;
+      for (const page of missingPages) {
+        try {
+          const defaultData = DEFAULT_CMS_CONTENT[page.slug];
+          const content = defaultData ? defaultData.content : `<h1>${page.title}</h1><p>Content for ${page.title} goes here.</p>`;
+          
+          await apiClient.createPage({
+            title: page.title,
+            name: page.name,
+            slug: page.slug,
+            content: content,
+            published: true
+          });
+          createdCount++;
+        } catch (err) {
+          console.error(`Failed to create page ${page.slug}`, err);
+        }
+      }
+
+      if (createdCount > 0) {
+        showToast('success', 'Sync Complete', `Created ${createdCount} system pages.`);
+        loadPages();
+      } else {
+        showToast('error', 'Sync Failed', 'Could not create missing pages.');
+      }
+    } catch (error) {
+      console.error('Sync error:', error);
+      showToast('error', 'Sync Error', 'An error occurred while syncing pages.');
+    } finally {
+      setSyncing(false);
+    }
+  };
 
   const loadPages = async () => {
     try {
@@ -203,6 +261,22 @@ export function AdminPageManager({ onBack, className }: AdminPageManagerProps) {
     }
   ];
 
+  const headerActions = (
+    <>
+      <Button 
+        variant="outline" 
+        onClick={handleSyncSystemPages} 
+        disabled={syncing}
+        title="Create missing system pages (FAQ, Privacy, etc.)"
+      >
+        <RefreshCw className={`w-4 h-4 mr-2 ${syncing ? 'animate-spin' : ''}`} />
+        {!isMobile && 'Sync System Pages'}
+      </Button>
+      <Button variant="outline" onClick={() => {}}><Download className="w-4 h-4" />{!isMobile && 'Export'}</Button>
+      <Button onClick={handleCreateNew} style={{ backgroundColor: 'var(--color-primary-default)', color: 'var(--color-primary-on)' }}><Plus className="w-4 h-4" />{!isMobile && 'Add Page'}</Button>
+    </>
+  );
+
   if (viewMode === 'edit' || viewMode === 'create') {
     return <PageEditPage pageId={selectedPageId} onBack={handleBackToList} onSave={handleBackToList} />;
   }
@@ -215,6 +289,7 @@ export function AdminPageManager({ onBack, className }: AdminPageManagerProps) {
           description="Loading pages..."
           onBack={onBack}
           breadcrumbs={[{ label: 'Admin', onClick: onBack }, { label: 'Pages' }]}
+          actions={headerActions}
         />
         <SkeletonTable rows={8} columns={5} />
       </div>
@@ -229,6 +304,7 @@ export function AdminPageManager({ onBack, className }: AdminPageManagerProps) {
           description="Manage website content pages"
           onBack={onBack}
           breadcrumbs={[{ label: 'Admin', onClick: onBack }, { label: 'Pages' }]}
+          actions={headerActions}
         />
         <ErrorState
           variant="error"
@@ -249,6 +325,7 @@ export function AdminPageManager({ onBack, className }: AdminPageManagerProps) {
           description="Manage website content pages"
           onBack={onBack}
           breadcrumbs={[{ label: 'Admin', onClick: onBack }, { label: 'Pages' }]}
+          actions={headerActions}
         />
         <EmptyState
           variant="folder"
@@ -269,12 +346,7 @@ export function AdminPageManager({ onBack, className }: AdminPageManagerProps) {
         onBack={onBack}
         breadcrumbs={[{ label: 'Admin', onClick: onBack }, { label: 'Pages' }]}
         stats={stats}
-        actions={
-          <>
-            <Button variant="outline" onClick={() => {}}><Download className="w-4 h-4" />{!isMobile && 'Export'}</Button>
-            <Button onClick={handleCreateNew} style={{ backgroundColor: 'var(--color-primary-default)', color: 'var(--color-primary-on)' }}><Plus className="w-4 h-4" />{!isMobile && 'Add Page'}</Button>
-          </>
-        }
+        actions={headerActions}
       />
 
       <AdminDataTable
