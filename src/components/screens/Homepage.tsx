@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { ErrorBoundary } from '../ErrorBoundary';
 
 // Import modular sections
@@ -12,21 +12,9 @@ import { NewsletterSection } from './homepage/NewsletterSection';
 
 // Import new Blocks
 import { AssessmentBlock, AssessmentProgram } from '../blocks/AssessmentBlock';
-import { ResourceBlock } from '../blocks/ResourceBlock';
-import { ResourcePost } from '../blocks/ResourceCard';
-
-// Import data dependencies
-import { 
-  ASSESSMENT_PROGRAMS as STATIC_ASSESSMENT_PROGRAMS, 
-  ASSESSMENT_PROGRAMS_TITLE,
-  ASSESSMENT_PROGRAMS_SUBTITLE,
-  ASSESSMENT_BUTTON_TEXT,
-  ASSESSMENT_SEE_MORE_TEXT,
-  RESOURCE_BLOCK_TITLE,
-  RESOURCE_VIEW_ALL_TEXT
-} from '../../lib/homepage-data';
 
 import { projectId, publicAnonKey } from '../../utils/supabase/info';
+import { usePageContent } from '../../hooks/usePageContent';
 
 interface HomepageProps {
   onNavigate: (route: string, resourceId?: string) => void;
@@ -34,9 +22,25 @@ interface HomepageProps {
 }
 
 export function Homepage({ onNavigate, onGetStarted }: HomepageProps) {
-  const [assessments, setAssessments] = useState<AssessmentProgram[]>(STATIC_ASSESSMENT_PROGRAMS);
-  const [resources, setResources] = useState<ResourcePost[]>([]);
+  const [assessments, setAssessments] = useState<AssessmentProgram[]>([]);
   const [loading, setLoading] = useState(true);
+  const { content: equipContent } = usePageContent('homepage-equip-intro');
+
+  const equipIntroData = useMemo(() => {
+    if (!equipContent?.content) return null;
+    try {
+      return JSON.parse(equipContent.content);
+    } catch (e) {
+      console.error('Failed to parse equip intro content', e);
+      return null;
+    }
+  }, [equipContent]);
+
+  // Default values if CMS fails
+  const ASSESSMENT_PROGRAMS_TITLE = equipIntroData?.title || "Equip Programs";
+  const ASSESSMENT_PROGRAMS_SUBTITLE = equipIntroData?.subtitle || "PROGRAM";
+  const ASSESSMENT_BUTTON_TEXT = equipIntroData?.ctaText || "LEARN MORE";
+  const ASSESSMENT_SEE_MORE_TEXT = "SEE MORE";
 
   // Fetch real-time data
   useEffect(() => {
@@ -44,17 +48,7 @@ export function Homepage({ onNavigate, onGetStarted }: HomepageProps) {
       try {
         const baseUrl = `https://${projectId}.supabase.co/functions/v1/make-server-cc205da9`;
         
-        // 1. Trigger Seed (Idempotent) to ensure data exists
-        try {
-          await fetch(`${baseUrl}/seed/data`, {
-            method: 'POST',
-            headers: { 'Authorization': `Bearer ${publicAnonKey}` }
-          });
-        } catch (err) {
-          console.log('Seed trigger skipped (expected in production):', err);
-        }
-
-        // 2. Fetch Assessments with error handling
+        // 1. Fetch Assessments with error handling
         try {
           const assessmentsRes = await fetch(`${baseUrl}/assessments`, {
             headers: { 'Authorization': `Bearer ${publicAnonKey}` }
@@ -72,42 +66,17 @@ export function Homepage({ onNavigate, onGetStarted }: HomepageProps) {
                  link: `/assessment-detail?id=${a.slug || a.id}`
               }));
               setAssessments(mappedAssessments.slice(0, 3));
+            } else {
+              setAssessments([]); // Ensure empty if no data
             }
           }
         } catch (err) {
-          console.log('Assessments fetch failed, using static data:', err);
-        }
-
-        // 3. Fetch Resources with error handling
-        try {
-          const resourcesRes = await fetch(`${baseUrl}/library/resources?limit=3`, {
-            headers: { 'Authorization': `Bearer ${publicAnonKey}` }
-          });
-          
-          if (resourcesRes.ok) {
-            const resourcesData = await resourcesRes.json();
-
-            if (resourcesData.resources && resourcesData.resources.length > 0) {
-              const mappedResources = resourcesData.resources.map((r: any) => ({
-                id: r.id,
-                title: r.title,
-                description: r.excerpt,
-                image: r.image_url,
-                category: r.category,
-                author: r.author,
-                readTime: `${r.read_time_minutes} min read`,
-                date: new Date(r.created_at).toLocaleDateString()
-              }));
-              setResources(mappedResources);
-            }
-          }
-        } catch (err) {
-          console.log('Resources fetch failed, using empty state:', err);
+          console.log('Assessments fetch failed:', err);
+          setAssessments([]);
         }
 
       } catch (error) {
         console.log("Homepage data fetch encountered an issue:", error);
-        // Fallback to static data is automatic since initial state is set
       } finally {
         setLoading(false);
       }
@@ -148,6 +117,7 @@ export function Homepage({ onNavigate, onGetStarted }: HomepageProps) {
             buttonText={ASSESSMENT_BUTTON_TEXT}
             seeMoreText={ASSESSMENT_SEE_MORE_TEXT}
             programs={assessments} 
+            loading={loading}
             onNavigate={onNavigate} 
           />
         </ErrorBoundary>
@@ -160,17 +130,6 @@ export function Homepage({ onNavigate, onGetStarted }: HomepageProps) {
         {/* Testimonial Section */}
         <ErrorBoundary>
           <TestimonialSection />
-        </ErrorBoundary>
-        
-        {/* Resource Block */}
-        <ErrorBoundary>
-          <ResourceBlock 
-            title={RESOURCE_BLOCK_TITLE}
-            viewAllText={RESOURCE_VIEW_ALL_TEXT}
-            posts={resources}
-            onPostClick={(post) => onNavigate('/resource-detail', post.id)}
-            onViewAll={() => onNavigate('/resource')}
-          />
         </ErrorBoundary>
         
         {/* FAQ Section */}

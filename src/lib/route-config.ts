@@ -53,9 +53,9 @@ export const routes: RouteConfig[] = [
     label: 'Resource',
     isPublic: true,
     requiresAuth: false,
-    showInNavigation: true,
-    showInPublicNav: true,
-    showInPrivateNav: true,
+    showInNavigation: false,
+    showInPublicNav: false,
+    showInPrivateNav: false,
     icon: 'library',
     description: 'Mental health resources and articles'
   },
@@ -276,6 +276,118 @@ export const routes: RouteConfig[] = [
     showInPublicNav: false,
     showInPrivateNav: true,
     description: 'Account settings and preferences'
+  },
+
+  // Admin Routes
+  {
+    path: '/admin',
+    label: 'Admin Dashboard',
+    isPublic: false,
+    requiresAuth: true,
+    showInNavigation: false,
+    showInPublicNav: false,
+    showInPrivateNav: false,
+    description: 'Administrative dashboard'
+  },
+  {
+    path: '/admin/resources',
+    label: 'Resource Manager',
+    isPublic: false,
+    requiresAuth: true,
+    showInNavigation: false,
+    showInPublicNav: false,
+    showInPrivateNav: false,
+    description: 'Manage library resources'
+  },
+  {
+    path: '/admin/equip',
+    label: 'Equip Manager',
+    isPublic: false,
+    requiresAuth: true,
+    showInNavigation: false,
+    showInPublicNav: false,
+    showInPrivateNav: false,
+    description: 'Manage Equip programs'
+  },
+  {
+    path: '/admin/users',
+    label: 'User Manager',
+    isPublic: false,
+    requiresAuth: true,
+    showInNavigation: false,
+    showInPublicNav: false,
+    showInPrivateNav: false,
+    description: 'Manage users'
+  },
+  {
+    path: '/admin/consultants',
+    label: 'Consultant Manager',
+    isPublic: false,
+    requiresAuth: true,
+    showInNavigation: false,
+    showInPublicNav: false,
+    showInPrivateNav: false,
+    description: 'Manage consultants'
+  },
+  {
+    path: '/admin/assessments',
+    label: 'Assessment Manager',
+    isPublic: false,
+    requiresAuth: true,
+    showInNavigation: false,
+    showInPublicNav: false,
+    showInPrivateNav: false,
+    description: 'Manage assessments'
+  },
+  {
+    path: '/admin/analytics',
+    label: 'Analytics',
+    isPublic: false,
+    requiresAuth: true,
+    showInNavigation: false,
+    showInPublicNav: false,
+    showInPrivateNav: false,
+    description: 'System analytics'
+  },
+  {
+    path: '/admin/settings',
+    label: 'Settings',
+    isPublic: false,
+    requiresAuth: true,
+    showInNavigation: false,
+    showInPublicNav: false,
+    showInPrivateNav: false,
+    description: 'System settings'
+  },
+  {
+    path: '/admin/pages',
+    label: 'Page Manager',
+    isPublic: false,
+    requiresAuth: true,
+    showInNavigation: false,
+    showInPublicNav: false,
+    showInPrivateNav: false,
+    description: 'Manage CMS pages'
+  },
+  {
+    path: '/admin/media',
+    label: 'Media Manager',
+    isPublic: false,
+    requiresAuth: true,
+    showInNavigation: false,
+    showInPublicNav: false,
+    showInPrivateNav: false,
+    description: 'Manage media assets'
+  },
+  {
+    path: '/admin/crud',
+    label: 'CRUD Testing',
+    isPublic: false,
+    requiresAuth: true,
+    showInNavigation: false,
+    showInPublicNav: false,
+    showInPrivateNav: false,
+    description: 'Database testing tool'
   }
 ];
 

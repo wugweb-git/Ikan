@@ -163,68 +163,7 @@ export function ResourceGridBlock({
   const [sortBy, setSortBy] = useState('latest');
 
   // Sample resources if none provided
-  const defaultResources = [
-    {
-      id: '1',
-      title: 'Understanding Anxiety: A Comprehensive Guide',
-      description: 'Learn about the science behind anxiety and discover practical strategies for managing anxious thoughts and feelings.',
-      category: 'Mental Health',
-      readTimeMinutes: 8,
-      contentType: 'Article',
-      author: 'Dr. Sarah Johnson',
-      publishedDate: '2024-01-15'
-    },
-    {
-      id: '2',
-      title: 'Mindfulness Meditation for Beginners',
-      description: 'Start your mindfulness journey with simple techniques that can be practiced anywhere, anytime.',
-      category: 'Mindfulness',
-      readTimeMinutes: 5,
-      contentType: 'Guide',
-      author: 'Mark Thompson',
-      publishedDate: '2024-01-10'
-    },
-    {
-      id: '3',
-      title: 'Building Healthy Sleep Habits',
-      description: 'Discover evidence-based strategies for improving sleep quality and establishing consistent sleep routines.',
-      category: 'Wellness',
-      readTimeMinutes: 12,
-      contentType: 'Article',
-      author: 'Dr. Emily Chen',
-      publishedDate: '2024-01-08'
-    },
-    {
-      id: '4',
-      title: 'Coping with Stress at Work',
-      description: 'Professional strategies for managing workplace stress and maintaining work-life balance.',
-      category: 'Workplace',
-      readTimeMinutes: 10,
-      contentType: 'Guide',
-      author: 'Alex Rodriguez',
-      publishedDate: '2024-01-05'
-    },
-    {
-      id: '5',
-      title: 'The Science of Happiness',
-      description: 'Explore research-backed methods for increasing life satisfaction and emotional wellbeing.',
-      category: 'Psychology',
-      readTimeMinutes: 15,
-      contentType: 'Research',
-      author: 'Dr. Michael Brown',
-      publishedDate: '2024-01-03'
-    },
-    {
-      id: '6',
-      title: 'Communication Skills for Better Relationships',
-      description: 'Improve your relationships through effective communication techniques and active listening.',
-      category: 'Relationships',
-      readTimeMinutes: 7,
-      contentType: 'Guide',
-      author: 'Lisa Williams',
-      publishedDate: '2024-01-01'
-    }
-  ];
+  const defaultResources: ResourceCardProps['resource'][] = [];
 
   const displayResources = resources.length > 0 ? resources : defaultResources;
   

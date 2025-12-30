@@ -1,16 +1,29 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { ErrorBoundary } from '../../ErrorBoundary';
 import { cn } from '../../ui/utils';
 import { ImageWithFallback } from '../../figma/ImageWithFallback';
 import { Play } from 'lucide-react';
 import { Button } from '../../ui/button';
-const img66292B188D01B0Eb2Ae89AdcCmInterviewThumbnailP500Webp = "https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?w=600&h=400&fit=crop";
-import { MISSION_DATA } from '../../../lib/homepage-data';
+import { usePageContent } from '../../../hooks/usePageContent';
 
 export function MissionSection() {
-  const { title, content, videoCaption } = MISSION_DATA;
-  const image = img66292B188D01B0Eb2Ae89AdcCmInterviewThumbnailP500Webp;
-  const imageAlt = "Mission interview";
+  const { content, loading } = usePageContent('homepage-mission');
+
+  const missionData = useMemo(() => {
+    if (!content?.content) return null;
+    try {
+      return JSON.parse(content.content);
+    } catch (e) {
+      console.error('Failed to parse mission content', e);
+      return null;
+    }
+  }, [content]);
+
+  if (loading || !missionData) {
+     return null; // Or a skeleton
+  }
+
+  const { title, content: missionContent, videoCaption, image, imageAlt } = missionData;
   const onVideoClick = () => console.log('Play video');
 
   return (
@@ -95,7 +108,7 @@ export function MissionSection() {
                   fontFamily: 'var(--font-family-base)'
                 }}
               >
-                {content}
+                {missionContent}
               </p>
             </div>
           </div>
@@ -181,7 +194,7 @@ export function MissionSection() {
                     fontFamily: 'var(--font-family-base)'
                   }}
                 >
-                  {content}
+                  {missionContent}
                 </p>
               </div>
             </div>

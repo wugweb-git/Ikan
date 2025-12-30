@@ -82,7 +82,9 @@ export function AdminConsultationManager({ onBack }: AdminConsultationManagerPro
       setLoading(false); 
     } catch (error) {
       console.error('Failed to load professionals:', error);
-      console.error('Backend error - showing infinite loader to force proper backend setup');
+      showToast('error', 'API Error', 'Failed to load professionals');
+      setProfessionals([]);
+      setLoading(false);
     }
   };
 

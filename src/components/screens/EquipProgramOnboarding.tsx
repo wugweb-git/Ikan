@@ -12,8 +12,19 @@ import { getEquipProgramContent, getStoredProgram, EquipProgramDetails } from '.
 import { apiClient } from '../../lib/api-client';
 import { useNotifications } from '../../contexts/NotificationContext';
 import { OnboardingData } from '../../lib/equip-types';
-import { SLEEP_TIGHT_ONBOARDING } from '../../lib/equip-content/sleep-tight-onboarding';
 import { OnboardingQuestionSet, OnboardingQuestion } from '../../lib/equip-onboarding-types';
+
+// Fallback empty question set to avoid hardcoded file dependency
+const EMPTY_ONBOARDING: OnboardingQuestionSet = {
+  id: 'fallback',
+  equip_id: 'default',
+  title: 'Program Setup',
+  description: 'Setup your program',
+  is_required_before_start: true,
+  version: '1.0.0',
+  sections: [],
+  questions: []
+};
 
 interface EquipOnboardingProps {
   programId?: string;
@@ -27,7 +38,7 @@ export function EquipOnboarding({ programId: propProgramId, onComplete, onBack }
   const [programId, setProgramId] = useState<string>(propProgramId || 'sleep-tight-9');
   
   // State
-  const [questionSet, setQuestionSet] = useState<OnboardingQuestionSet>(SLEEP_TIGHT_ONBOARDING);
+  const [questionSet, setQuestionSet] = useState<OnboardingQuestionSet>(EMPTY_ONBOARDING);
   const [answers, setAnswers] = useState<Record<string, any>>({});
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(-1); // -1 = Intro Screen
   const [showValidationHint, setShowValidationHint] = useState(false);

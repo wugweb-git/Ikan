@@ -59,10 +59,9 @@ export function AdminPageManager({ onBack, className }: AdminPageManagerProps) {
       setLoading(false);
     } catch (error: any) {
       console.error('Failed to load pages:', error);
-      setError(true);
-      // GLOBAL APPROACH: Show infinite loader on error (don't stop loading)
-      // This forces proper backend setup before deployment
-      // User should see loader, not error state
+      showToast('error', 'API Error', 'Failed to load pages');
+      setPages([]);
+      setLoading(false);
     }
   };
 

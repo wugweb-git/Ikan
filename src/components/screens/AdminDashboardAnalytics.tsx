@@ -52,11 +52,12 @@ export function AdminDashboardAnalytics({ onBack, className }: AdminDashboardAna
       setLoading(true);
       
       // Fetch all data in parallel
-      const [users, resources, consultants, programs] = await Promise.all([
+      const [users, resources, consultants, programs, realAnalytics] = await Promise.all([
         apiClient.getUsers().catch(() => ({ users: [] })),
         apiClient.getResources().catch(() => []),
         apiClient.get('/consultants').catch(() => ({ consultants: [] })),
-        apiClient.getEquipPrograms().catch(() => [])
+        apiClient.getEquipPrograms().catch(() => []),
+        apiClient.getAggregatedAnalytics().catch(() => null)
       ]);
 
       const usersArray = Array.isArray(users) ? users : users.users || [];
@@ -64,17 +65,48 @@ export function AdminDashboardAnalytics({ onBack, className }: AdminDashboardAna
       const consultantsArray = Array.isArray(consultants) ? consultants : consultants.consultants || [];
       const programsArray = Array.isArray(programs) ? programs : [];
 
-      // Generate mock user growth data (last 30 days)
-      const userGrowth = Array.from({ length: 30 }, (_, i) => ({
-        date: new Date(Date.now() - (29 - i) * 24 * 60 * 60 * 1000).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-        count: Math.floor(Math.random() * 50) + (i * 2) + 10
-      }));
+      // Use real analytics if available, otherwise fallback to mock
+      let userGrowth, resourceViews, activeUsersCount;
 
-      // Top resources by views (mock data)
-      const resourceViews = resourcesArray.slice(0, 5).map((r: any, i) => ({
-        name: r.title?.substring(0, 20) || `Resource ${i + 1}`,
-        views: Math.floor(Math.random() * 1000) + 100
-      }));
+      if (realAnalytics) {
+        // Map real activity chart
+        userGrowth = realAnalytics.activityChart?.map((item: any) => ({
+          date: new Date(item.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+          count: item.count
+        })) || [];
+
+        // If no activity yet, show empty or placeholder
+        if (userGrowth.length === 0) {
+           userGrowth = Array.from({ length: 7 }, (_, i) => ({
+            date: new Date(Date.now() - (6 - i) * 24 * 60 * 60 * 1000).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+            count: 0
+          }));
+        }
+
+        // Map top resources (join with resource titles)
+        resourceViews = realAnalytics.topResources?.map((item: any) => {
+          const resource = resourcesArray.find((r: any) => r.id === item.id);
+          return {
+            name: resource?.title?.substring(0, 20) || item.id.substring(0, 8),
+            views: item.views
+          };
+        }) || [];
+
+        activeUsersCount = realAnalytics.summary?.activeUsers7d || 0;
+      } else {
+        // Fallback to mock data
+        userGrowth = Array.from({ length: 30 }, (_, i) => ({
+          date: new Date(Date.now() - (29 - i) * 24 * 60 * 60 * 1000).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+          count: Math.floor(Math.random() * 50) + (i * 2) + 10
+        }));
+
+        resourceViews = resourcesArray.slice(0, 5).map((r: any, i) => ({
+          name: r.title?.substring(0, 20) || `Resource ${i + 1}`,
+          views: Math.floor(Math.random() * 1000) + 100
+        }));
+
+        activeUsersCount = Math.floor(usersArray.length * 0.6);
+      }
 
       // Category distribution
       const categories = resourcesArray.reduce((acc: any, r: any) => {
@@ -88,7 +120,7 @@ export function AdminDashboardAnalytics({ onBack, className }: AdminDashboardAna
         value: value as number
       }));
 
-      // Revenue over time (last 6 months)
+      // Revenue over time (last 6 months) - Keep mock for now as we don't have real revenue aggregation yet
       const revenueOverTime = Array.from({ length: 6 }, (_, i) => ({
         month: new Date(Date.now() - (5 - i) * 30 * 24 * 60 * 60 * 1000).toLocaleDateString('en-US', { month: 'short' }),
         revenue: Math.floor(Math.random() * 5000) + 2000
@@ -100,7 +132,7 @@ export function AdminDashboardAnalytics({ onBack, className }: AdminDashboardAna
         totalConsultants: consultantsArray.length,
         totalPrograms: programsArray.length,
         totalRevenue: revenueOverTime.reduce((sum, r) => sum + r.revenue, 0),
-        activeUsers: Math.floor(usersArray.length * 0.6),
+        activeUsers: activeUsersCount,
         userGrowth,
         resourceViews,
         categoryDistribution,

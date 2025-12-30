@@ -37,6 +37,14 @@ export function AdminAssessmentManager({ onBack, className }: AdminAssessmentMan
   const isMobile = useIsMobile();
 
   const [assessments, setAssessments] = useState<Assessment[]>([]);
+  const [categories, setCategories] = useState<{label: string, value: string}[]>([]);
+  const [filterTypes, setFilterTypes] = useState<{label: string, value: string}[]>([
+    { label: 'All', value: 'all' },
+    { label: 'Assessment', value: 'assessment' },
+    { label: 'Quiz', value: 'quiz' },
+    { label: 'Survey', value: 'survey' },
+    { label: 'Checklist', value: 'checklist' }
+  ]);
   const [loading, setLoading] = useState(true);
 
   const [viewMode, setViewMode] = useState<ViewMode>('list');
@@ -44,13 +52,50 @@ export function AdminAssessmentManager({ onBack, className }: AdminAssessmentMan
 
   useEffect(() => {
     if (viewMode === 'list') {
-      loadAssessments();
+      loadData();
     }
   }, [viewMode]);
 
+  const loadData = async () => {
+    setLoading(true);
+    await Promise.all([loadAssessments(), loadCategories()]);
+    setLoading(false);
+  };
+
+  const loadCategories = async () => {
+    try {
+      const data = await apiClient.getCategories();
+      if (Array.isArray(data) && data.length > 0) {
+        setCategories(data.map((c: any) => ({
+          label: c.name,
+          value: c.slug
+        })));
+      } else {
+        setCategories([
+          { label: 'Anxiety', value: 'anxiety' },
+          { label: 'Depression', value: 'depression' },
+          { label: 'Stress', value: 'stress' },
+          { label: 'Sleep', value: 'sleep' },
+          { label: 'Wellness', value: 'wellness' },
+          { label: 'Other', value: 'other' },
+        ]);
+      }
+    } catch (error) {
+      console.warn('Failed to load categories', error);
+      setCategories([
+        { label: 'Anxiety', value: 'anxiety' },
+        { label: 'Depression', value: 'depression' },
+        { label: 'Stress', value: 'stress' },
+        { label: 'Sleep', value: 'sleep' },
+        { label: 'Wellness', value: 'wellness' },
+        { label: 'Other', value: 'other' },
+      ]);
+    }
+  };
+
   const loadAssessments = async () => {
     try {
-      setLoading(true);
+      // setLoading(true); // Handled in loadData
       const response = await apiClient.getAssessments();
       const data = Array.isArray(response) ? response : response.assessments || [];
       
@@ -85,36 +130,8 @@ export function AdminAssessmentManager({ onBack, className }: AdminAssessmentMan
       setLoading(false); 
     } catch (error: any) {
       console.error('Failed to load assessments:', error);
-      showToast('error', 'API Error', 'Failed to load assessments - Using demo data');
-      
-      // Fallback mock data
-      const mockAssessments: Assessment[] = [
-        {
-          id: 'demo-1',
-          title: 'Anxiety Screening (Demo)',
-          description: 'A brief assessment to check for signs of anxiety.',
-          category: 'anxiety',
-          duration: 5,
-          difficulty: 'beginner',
-          questions: [
-            { id: 'q1', text: 'I feel nervous', type: 'scale', required: true }
-          ] as any,
-          published: true,
-          completionCount: 120
-        },
-        {
-          id: 'demo-2',
-          title: 'Depression Check (Demo)',
-          description: 'Check your mood and signs of depression.',
-          category: 'depression',
-          duration: 10,
-          difficulty: 'intermediate',
-          questions: [] as any,
-          published: true,
-          completionCount: 85
-        }
-      ];
-      setAssessments(mockAssessments);
+      showToast('error', 'API Error', 'Failed to load assessments');
+      setAssessments([]);
       setLoading(false);
     }
   };
@@ -284,10 +301,22 @@ export function AdminAssessmentManager({ onBack, className }: AdminAssessmentMan
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuLabel>Actions</DropdownMenuLabel>
-            <DropdownMenuItem onClick={() => handleEdit(assessment.id)}>
+            <DropdownMenuItem 
+              onClick={(e) => { 
+                e.preventDefault();
+                e.stopPropagation(); 
+                handleEdit(assessment.id); 
+              }}
+            >
               <Edit className="mr-2 h-4 w-4" /> Edit
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => handleTogglePublish(assessment.id, !assessment.published)}>
+            <DropdownMenuItem 
+              onClick={(e) => { 
+                e.preventDefault();
+                e.stopPropagation(); 
+                handleTogglePublish(assessment.id, !assessment.published); 
+              }}
+            >
               {assessment.published ? (
                 <>
                   <EyeOff className="mr-2 h-4 w-4" /> Unpublish
@@ -299,8 +328,12 @@ export function AdminAssessmentManager({ onBack, className }: AdminAssessmentMan
               )}
             </DropdownMenuItem>
             <DropdownMenuItem 
-              onClick={() => handleDelete(assessment.id)}
-              className="text-red-600"
+              onClick={(e) => { 
+                e.preventDefault();
+                e.stopPropagation(); 
+                handleDelete(assessment.id); 
+              }}
+              className="text-red-600 focus:bg-red-50 focus:text-red-700"
             >
               <Trash2 className="mr-2 h-4 w-4" /> Delete
             </DropdownMenuItem>
@@ -314,13 +347,19 @@ export function AdminAssessmentManager({ onBack, className }: AdminAssessmentMan
     {
       key: 'category',
       label: 'Category',
-      options: [
+      options: categories.length > 0 ? categories : [
         { label: 'Anxiety', value: 'anxiety' },
         { label: 'Depression', value: 'depression' },
         { label: 'Stress', value: 'stress' },
+        { label: 'Sleep', value: 'sleep' },
         { label: 'Wellness', value: 'wellness' },
         { label: 'Other', value: 'other' },
       ]
+    },
+    {
+      key: 'filter_type',
+      label: 'Type',
+      options: filterTypes
     }
   ];
 

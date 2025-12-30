@@ -1,15 +1,35 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Button } from '../../ui/button';
 import { ErrorBoundary } from '../../ErrorBoundary';
 import { ImageWithFallback } from '../../figma/ImageWithFallback';
-import { ASSESSMENT_INTRO_DATA } from '../../../lib/homepage-data';
+import { usePageContent } from '../../../hooks/usePageContent';
 
 interface AssessmentSectionProps {
   onGetStarted: () => void;
 }
 
 export function AssessmentSection({ onGetStarted }: AssessmentSectionProps) {
-  const { title, description, ctaText, image } = ASSESSMENT_INTRO_DATA;
+  const { content, loading } = usePageContent('homepage-assessment');
+
+  const assessmentData = useMemo(() => {
+    if (!content?.content) return null;
+    try {
+      return JSON.parse(content.content);
+    } catch (e) {
+      console.error('Failed to parse assessment content', e);
+      return null;
+    }
+  }, [content]);
+
+  if (loading || !assessmentData) {
+     return (
+       <div className="w-full h-96 flex items-center justify-center">
+         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+       </div>
+     );
+  }
+
+  const { title, description, ctaText, image } = assessmentData;
 
   return (
     <ErrorBoundary>

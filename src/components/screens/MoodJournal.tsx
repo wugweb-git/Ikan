@@ -23,7 +23,18 @@ interface MoodEntry {
   energy: number;
 }
 
-const moodLabels = [
+interface MoodType {
+  id: string;
+  emoji: string;
+  label: string;
+  value: number;
+  color: string;
+  description: string;
+  is_active: boolean;
+  order: number;
+}
+
+const defaultMoodLabels = [
   { value: 1, label: 'Angry', emoji: '😡', color: '#F97316' },
   { value: 2, label: 'Upset', emoji: '😢', color: '#3B82F6' },
   { value: 3, label: 'Sad', emoji: '😔', color: '#6B7280' },
@@ -45,6 +56,7 @@ export function MoodJournal() {
   const [selectedEmotions, setSelectedEmotions] = useState<string[]>([]);
   const [currentEnergy, setCurrentEnergy] = useState<number>(3);
   const [entries, setEntries] = useState<MoodEntry[]>([]);
+  const [moodTypes, setMoodTypes] = useState<MoodType[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [viewMode, setViewMode] = useState<'calendar' | 'add'>('add');
@@ -54,23 +66,53 @@ export function MoodJournal() {
   const [selectedTime, setSelectedTime] = useState<string>('9:30 PM');
   const [loading, setLoading] = useState(true);
 
+  // Load mood types
+  useEffect(() => {
+    const fetchMoodTypes = async () => {
+      try {
+        const response: any = await apiClient.listMoods();
+        const moods = response.moods || response || [];
+        
+        if (Array.isArray(moods) && moods.length > 0) {
+          // Sort by order or value
+          const sortedMoods = moods
+            .filter((m: any) => m.is_active !== false)
+            .sort((a: any, b: any) => (a.order || 0) - (b.order || 0));
+            
+          setMoodTypes(sortedMoods);
+        }
+      } catch (error) {
+        console.warn('Failed to load mood types, using defaults', error);
+      }
+    };
+    fetchMoodTypes();
+  }, []);
+
   // Helper to parse API entry to local format
   const parseEntry = (apiEntry: any): MoodEntry => {
     let note = apiEntry.freehand_text_content || '';
-    let emotions: string[] = [];
-    let energy = 3;
+    let emotions: string[] = apiEntry.emotions || [];
+    let energy = apiEntry.energy !== undefined && apiEntry.energy !== null ? apiEntry.energy : 3;
 
-    // Try to parse metadata stored in note
-    const separator = '\n\n:::METADATA:::';
-    if (note.includes(separator)) {
-      const parts = note.split(separator);
-      note = parts[0];
-      try {
-        const metadata = JSON.parse(parts[1]);
-        if (metadata.emotions) emotions = metadata.emotions;
-        if (metadata.energy) energy = metadata.energy;
-      } catch (e) {
-        console.warn('Failed to parse mood metadata', e);
+    // Backward compatibility: Try to parse metadata stored in note if fields are missing
+    if (emotions.length === 0 && energy === 3) {
+      const separator = '\n\n:::METADATA:::';
+      if (note.includes(separator)) {
+        const parts = note.split(separator);
+        note = parts[0]; // Use the content part as the note
+        try {
+          const metadata = JSON.parse(parts[1]);
+          if (metadata.emotions) emotions = metadata.emotions;
+          if (metadata.energy) energy = metadata.energy;
+        } catch (e) {
+          console.warn('Failed to parse mood metadata', e);
+        }
+      }
+    } else {
+      // If we have new fields, just clean the note if it has the separator (just in case)
+      const separator = '\n\n:::METADATA:::';
+      if (note.includes(separator)) {
+        note = note.split(separator)[0];
       }
     }
 
@@ -145,8 +187,6 @@ export function MoodJournal() {
 
     // Calculate streak
     let currentDate = new Date(uniqueDates[0]); // Start with most recent entry
-    // If most recent is today, start counting. If it's yesterday, start counting.
-    // If it's older, streak is broken (which we covered above, but let's be safe)
     
     // Normalize to midnight for comparison
     const normalizeDate = (d: Date) => new Date(d.toISOString().split('T')[0]);
@@ -202,11 +242,15 @@ export function MoodJournal() {
     try {
       const dateStr = selectedDate.toISOString().split('T')[0];
       
-      // Pack metadata into content
-      const metadata = { emotions: selectedEmotions, energy: currentEnergy };
-      const contentWithMetadata = `${noteText.trim()}\n\n:::METADATA:::${JSON.stringify(metadata)}`;
-
-      await apiClient.createJournalEntry(dateStr, currentMood, contentWithMetadata);
+      // Send data as structured fields
+      // Note: We no longer pack metadata into content, but backend supports it for legacy reasons
+      await apiClient.createJournalEntry(
+        dateStr, 
+        currentMood, 
+        noteText.trim(),
+        selectedEmotions,
+        currentEnergy
+      );
 
       // Construct local entry to update state immediately
       const newEntry: MoodEntry = {
@@ -242,41 +286,17 @@ export function MoodJournal() {
     }
   };
 
+  // Get active mood list - prefer fetched types, fallback to defaults
+  const activeMoods = moodTypes.length > 0 ? moodTypes : defaultMoodLabels;
+
   const getMoodColor = (mood: number) => {
-    const moodData = moodLabels.find(m => m.value === mood);
+    const moodData = activeMoods.find(m => m.value === mood);
     return moodData?.color || '#8B8B8B';
   };
 
   const getMoodLabel = (mood: number) => {
-    const moodData = moodLabels.find(m => m.value === mood);
+    const moodData = activeMoods.find(m => m.value === mood);
     return moodData ? `${moodData.emoji} ${moodData.label}` : '😐 Okay';
-  };
-
-  // Get entries for a specific date
-  const getEntriesForDate = (date: Date) => {
-    const dateString = date.toISOString().split('T')[0];
-    return entries.filter(entry => entry.date === dateString);
-  };
-
-  // Get dates that have entries for calendar highlighting
-  const getDatesWithEntries = () => {
-    return entries.map(entry => new Date(entry.date));
-  };
-
-  // Format date for display
-  const formatDateForDisplay = (date: Date) => {
-    return date.toLocaleDateString('en-US', {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    });
-  };
-
-  // Check if selected date is today
-  const isToday = (date: Date) => {
-    const today = new Date();
-    return date.toDateString() === today.toDateString();
   };
 
   // Get current date and greeting
@@ -326,7 +346,7 @@ export function MoodJournal() {
     return date.toDateString() === selectedDate.toDateString();
   };
 
-  if (loading) {
+  if (loading && entries.length === 0) {
     return (
       <div className="min-h-screen w-full flex items-center justify-center bg-[var(--color-bg-page)]">
         <div className="flex flex-col items-center gap-4">
@@ -516,19 +536,22 @@ export function MoodJournal() {
           
           <div 
             className={isMobile 
-              ? "flex justify-between items-center gap-3 px-2" 
-              : "flex justify-center items-center gap-6"
+              ? "flex justify-between items-center gap-3 px-2 overflow-x-auto" 
+              : "flex justify-center items-center gap-6 flex-wrap"
             }
+            style={{
+              paddingBottom: isMobile ? '10px' : '0'
+            }}
           >
-            {moodLabels.map((mood) => (
+            {activeMoods.map((mood) => (
               <motion.button
-                key={mood.value}
+                key={mood.id || mood.value}
                 onClick={() => {
                   setCurrentMood(mood.value);
                   setSelectedMoodAnimation(mood.value);
                   setTimeout(() => setSelectedMoodAnimation(null), 500);
                 }}
-                className="flex flex-col items-center gap-2 p-3 rounded-xl transition-all duration-200"
+                className="flex flex-col items-center gap-2 p-3 rounded-xl transition-all duration-200 flex-shrink-0"
                 style={{
                   backgroundColor: currentMood === mood.value 
                     ? mood.color + '20' 
@@ -563,7 +586,8 @@ export function MoodJournal() {
                   style={{
                     fontSize: isMobile ? 'var(--text-xs)' : 'var(--text-sm)',
                     fontWeight: 'var(--font-weight-normal)',
-                    color: currentMood === mood.value ? mood.color : 'var(--color-text-muted)'
+                    color: currentMood === mood.value ? mood.color : 'var(--color-text-muted)',
+                    whiteSpace: 'nowrap'
                   }}
                 >
                   {mood.label}
@@ -685,73 +709,6 @@ export function MoodJournal() {
     );
   }
 
-  if (loading) {
-    return (
-      <div 
-        className="space-y-6 w-full"
-        style={{
-          maxWidth: '1000px',
-          margin: '0 auto',
-          padding: 'var(--spacing-4)',
-        }}
-      >
-        {/* Header Skeleton */}
-        <div className="space-y-4">
-          <Skeleton variant="text" height="32px" width="250px" />
-          <Skeleton variant="text" height="20px" width="400px" />
-        </div>
-
-        {/* Mood Selector Skeleton */}
-        <Card>
-          <CardHeader>
-            <Skeleton variant="text" height="24px" width="200px" />
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex justify-between gap-2">
-              {[1, 2, 3, 4, 5].map((i) => (
-                <Skeleton key={i} variant="circular" width="64px" height="64px" />
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Journal Entry Skeleton */}
-        <Card>
-          <CardContent className="pt-6 space-y-4">
-            <Skeleton variant="rectangular" height="120px" width="100%" />
-            <div className="grid grid-cols-3 gap-2">
-              {[1, 2, 3, 4, 5, 6].map((i) => (
-                <Skeleton key={i} variant="rectangular" height="32px" width="100%" className="rounded-full" />
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Recent Entries Skeleton */}
-        <Card>
-          <CardHeader>
-            <Skeleton variant="text" height="24px" width="180px" />
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="flex items-start gap-4 p-4 rounded-lg" style={{ backgroundColor: 'var(--color-bg-muted)' }}>
-                <Skeleton variant="circular" width="48px" height="48px" />
-                <div className="flex-1 space-y-2">
-                  <Skeleton variant="text" height="20px" width="150px" />
-                  <Skeleton variant="text" height="16px" width="100%" />
-                  <div className="flex gap-2 pt-2">
-                    <Skeleton variant="rectangular" width="60px" height="20px" className="rounded-full" />
-                    <Skeleton variant="rectangular" width="60px" height="20px" className="rounded-full" />
-                  </div>
-                </div>
-              </div>
-            ))}
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
   return (
     <div 
       className="space-y-6 w-full relative"
@@ -773,690 +730,96 @@ export function MoodJournal() {
           >
             <motion.div
               animate={{
-                rotate: [0, 10, -10, 10, 0],
-                scale: [1, 1.1, 1, 1.1, 1]
+                rotate: [0, -10, 10, -10, 10, 0],
+                scale: [1, 1.2, 1]
               }}
-              transition={{
-                duration: 2,
-                repeat: 1,
-                ease: "easeInOut"
-              }}
-              className="text-6xl"
+              transition={{ duration: 0.5 }}
+              className="bg-white p-6 rounded-2xl shadow-xl border border-yellow-200 flex flex-col items-center"
             >
-              🎉
+              <span className="text-4xl mb-2">🔥</span>
+              <h3 className="text-xl font-bold text-yellow-600">Streak Updated!</h3>
+              <p className="text-gray-600">{streakCount} Days in a row!</p>
             </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
-      {/* Header */}
-      <motion.div 
-        className="text-center space-y-2"
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, ease: "easeOut" }}
-      >
-        <motion.h1 
-          className="flex items-center justify-center gap-3"
-          style={{ 
-            fontSize: 'var(--text-2xl)', 
-            fontWeight: 'var(--font-weight-medium)',
-            color: 'var(--color-text-primary)'
-          }}
-          whileHover={{ scale: 1.02 }}
-          transition={{ duration: 0.2 }}
-        >
-          <motion.div
-            animate={{ 
-              scale: [1, 1.1, 1],
-              rotate: [0, 5, -5, 0]
-            }}
-            transition={{ 
-              duration: 2,
-              repeat: Infinity,
-              repeatDelay: 3,
-              ease: "easeInOut"
-            }}
-          >
-            <Icon name="heart" size={28} variant="roundedFilled" />
-          </motion.div>
-          Mood Journal
-        </motion.h1>
-        <motion.p 
-          style={{ color: 'var(--color-text-muted)' }}
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.5, delay: 0.2 }}
-        >
-          Track your daily mood and emotional well-being
-        </motion.p>
-        
-        {/* Streak Indicator */}
-        <AnimatePresence>
-          {streakCount > 0 && (
-            <motion.div
-              initial={{ opacity: 0, scale: 0.8, y: 10 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.8, y: -10 }}
-              className="inline-flex items-center gap-2 px-3 py-1 rounded-full"
-              style={{
-                backgroundColor: 'var(--color-status-success-light)',
-                color: 'var(--color-status-success)',
-                fontSize: 'var(--text-sm)',
-                fontWeight: 'var(--font-weight-medium)'
-              }}
-            >
-              <motion.span
-                animate={{ rotate: 360 }}
-                transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-              >
-                🔥
-              </motion.span>
-              {streakCount} day streak
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </motion.div>
 
-      {/* View Toggle */}
-      <motion.div 
-        className="flex justify-center"
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4, delay: 0.3 }}
-      >
-        <div 
-          className="flex rounded-lg p-1 relative"
-          style={{
-            backgroundColor: 'var(--color-bg-muted)',
-            gap: 'var(--spacing-1)'
-          }}
-        >
-          <motion.div
-            className="absolute top-1 bottom-1 rounded-sm"
-            style={{
-              backgroundColor: 'var(--color-primary-default)',
-              left: viewMode === 'calendar' ? '4px' : 'calc(50% + 2px)',
-              right: viewMode === 'calendar' ? 'calc(50% + 2px)' : '4px'
-            }}
-            layout
-            transition={{ type: "spring", stiffness: 300, damping: 30 }}
-          />
-          <Button
-            onClick={() => setViewMode('calendar')}
-            variant="ghost"
-            size="sm"
-            className="gap-2 relative z-10"
-            style={{
-              color: viewMode === 'calendar' ? 'var(--color-primary-on)' : 'var(--color-text-primary)',
-              height: '36px',
-              borderRadius: 'var(--radius-sm)',
-              backgroundColor: 'transparent'
-            }}
-          >
-            <motion.div
-              animate={{ scale: viewMode === 'calendar' ? 1.1 : 1 }}
-              transition={{ duration: 0.2 }}
-            >
-              <Icon name="calendar" size={16} />
-            </motion.div>
-            Calendar View
-          </Button>
-          <Button
-            onClick={() => setViewMode('add')}
-            variant="ghost"
-            size="sm"
-            className="gap-2 relative z-10"
-            style={{
-              color: viewMode === 'add' ? 'var(--color-primary-on)' : 'var(--color-text-primary)',
-              height: '36px',
-              borderRadius: 'var(--radius-sm)',
-              backgroundColor: 'transparent'
-            }}
-          >
-            <motion.div
-              animate={{ 
-                scale: viewMode === 'add' ? 1.1 : 1
-              }}
-              transition={{ duration: 0.2 }}
-            >
-              <Icon name="heart" size={16} />
-            </motion.div>
-            Mood Journal
-          </Button>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold">Mood Journal</h1>
+          <p className="text-muted-foreground">Track your emotional well-being over time</p>
         </div>
-      </motion.div>
+        <Button onClick={() => setViewMode('add')}>
+          <Icon name="plus" size={16} className="mr-2" />
+          New Entry
+        </Button>
+      </div>
 
-      {viewMode === 'calendar' ? (
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-start">
-          {/* Calendar View */}
-          <div className="md:col-span-5 lg:col-span-4">
-            <Card 
-              className="motion-safe:animate-fade-in motion-reduce:animate-none h-full"
-              style={{
-                borderRadius: 'var(--radius-lg)',
-                backgroundColor: 'var(--color-bg-card)',
-                border: '1px solid var(--color-border-default)',
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <Card className="md:col-span-2">
+          <CardHeader>
+            <CardTitle>Calendar</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Calendar
+              mode="single"
+              selected={selectedDate}
+              onSelect={(date) => date && setSelectedDate(date)}
+              className="rounded-md border"
+              modifiers={{
+                booked: (date) => entries.some(e => e.date === date.toISOString().split('T')[0])
               }}
-            >
-              <CardHeader className="pb-2">
-                <CardTitle 
-                  className="flex items-center gap-2"
-                  style={{ 
-                    fontSize: 'var(--text-lg)',
-                    color: 'var(--color-text-primary)'
-                  }}
-                >
-                  <Icon name="calendar" size={20} />
-                  Select Date
-                </CardTitle>
-              </CardHeader>
-              <CardContent 
-                style={{
-                  padding: 'var(--spacing-4)',
-                }}
-              >
-                <div className="flex justify-center">
-                  <Calendar
-                    mode="single"
-                    selected={selectedDate}
-                    onSelect={(date) => date && setSelectedDate(date)}
-                    modifiers={{
-                      hasEntry: getDatesWithEntries()
-                    }}
-                    modifiersStyles={{
-                      hasEntry: {
-                        backgroundColor: 'var(--color-primary-default)',
-                        color: 'var(--color-primary-on)',
-                        borderRadius: 'var(--radius-sm)'
-                      }
-                    }}
-                    className="rounded-md border-0 p-0"
-                  />
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Selected Date Entries */}
-          <div className="md:col-span-7 lg:col-span-8">
-            <Card 
-              className="motion-safe:animate-fade-in motion-reduce:animate-none min-h-[400px]"
-              style={{
-                borderRadius: 'var(--radius-lg)',
-                backgroundColor: 'var(--color-bg-card)',
-                border: '1px solid var(--color-border-default)',
+              modifiersStyles={{
+                booked: {
+                  fontWeight: 'bold',
+                  textDecoration: 'underline',
+                  color: 'var(--color-primary-default)'
+                }
               }}
-            >
-              <CardHeader>
-                <CardTitle 
-                  className="flex items-center justify-between"
-                  style={{ 
-                    fontSize: 'var(--text-lg)',
-                    color: 'var(--color-text-primary)'
-                  }}
-                >
-                  <span>{formatDateForDisplay(selectedDate)}</span>
-                  {isToday(selectedDate) && (
-                    <Button
-                      onClick={() => setViewMode('add')}
-                      size="sm"
-                      className="gap-2"
-                      style={{
-                        backgroundColor: 'var(--color-primary-default)',
-                        color: 'var(--color-primary-on)',
-                        height: 'var(--ikan-component-button-height)',
-                        borderRadius: 'var(--ikan-component-border-radius)'
-                      }}
-                    >
-                      <Icon name="plus" size={14} />
-                      Add Entry
-                    </Button>
-                  )}
-                </CardTitle>
-              </CardHeader>
-              <CardContent 
-                style={{
-                  padding: 'var(--spacing-4)',
-                }}
-              >
-                {(() => {
-                  const dayEntries = getEntriesForDate(selectedDate);
-                  
-                  if (dayEntries.length === 0) {
-                    return (
-                      <div className="text-center py-12 space-y-4">
-                        <div className="w-16 h-16 rounded-full bg-gray-50 flex items-center justify-center mx-auto">
-                          <Icon 
-                            name="calendar-x" 
-                            size={32} 
-                            style={{ color: 'var(--color-text-muted)' }} 
-                          />
-                        </div>
-                        <div className="space-y-1">
-                          <p style={{ color: 'var(--color-text-primary)', fontWeight: 'var(--font-weight-medium)' }}>
-                            No entries for this date
-                          </p>
-                          <p style={{ color: 'var(--color-text-muted)', fontSize: 'var(--text-sm)' }}>
-                            Your mood history for this day will appear here
-                          </p>
-                        </div>
-                        {isToday(selectedDate) && (
-                          <div className="pt-2">
-                            <Button
-                              onClick={() => setViewMode('add')}
-                              className="gap-2"
-                              style={{
-                                backgroundColor: 'var(--color-primary-default)',
-                                color: 'var(--color-primary-on)',
-                                borderRadius: 'var(--ikan-component-border-radius)'
-                              }}
-                            >
-                              <Icon name="plus" size={16} />
-                              Log Mood
-                            </Button>
-                          </div>
-                        )}
-                      </div>
-                    );
-                  }
-
-                  return (
-                    <div className="space-y-4">
-                      {dayEntries.map((entry, index) => (
-                        <motion.div 
-                          key={entry.id}
-                          className="p-4 rounded-lg border"
-                          style={{ 
-                            backgroundColor: 'var(--color-bg-muted)',
-                            borderColor: 'var(--color-border-default)'
-                          }}
-                          initial={{ opacity: 0, y: 20, scale: 0.95 }}
-                          animate={{ opacity: 1, y: 0, scale: 1 }}
-                          transition={{ 
-                            duration: 0.3, 
-                            delay: index * 0.1,
-                            type: "spring",
-                            stiffness: 300,
-                            damping: 25
-                          }}
-                          whileHover={{ 
-                            scale: 1.01,
-                            transition: { duration: 0.2 }
-                          }}
-                        >
-                          <div className="space-y-3">
-                            <div className="flex items-center justify-between flex-wrap gap-2">
-                              <div className="flex items-center gap-3">
-                                <div 
-                                  className="flex items-center gap-2 px-3 py-1.5 rounded-full"
-                                  style={{ 
-                                    backgroundColor: getMoodColor(entry.mood) + '20',
-                                    color: getMoodColor(entry.mood)
-                                  }}
-                                >
-                                  <span className="text-xl leading-none">{moodLabels.find(m => m.value === entry.mood)?.emoji}</span>
-                                  <span style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--font-weight-medium)' }}>
-                                    {moodLabels.find(m => m.value === entry.mood)?.label}
-                                  </span>
-                                </div>
-                                <div 
-                                  className="flex items-center gap-1.5 px-2 py-1 rounded-md"
-                                  style={{ backgroundColor: 'var(--color-bg-card)', border: '1px solid var(--color-border-light)' }}
-                                >
-                                  <Icon name="zap" size={12} className="text-yellow-500" />
-                                  <span style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}>
-                                    Energy: {entry.energy}/5
-                                  </span>
-                                </div>
-                              </div>
-                              <span style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}>
-                                {new Date(entry.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                              </span>
-                            </div>
-                            
-                            {entry.emotions.length > 0 && (
-                              <div className="flex flex-wrap gap-1.5">
-                                {entry.emotions.map((emotion) => (
-                                  <span
-                                    key={emotion}
-                                    className="px-2 py-0.5 rounded-full border"
-                                    style={{
-                                      backgroundColor: 'var(--color-bg-card)',
-                                      borderColor: 'var(--color-border-light)',
-                                      color: 'var(--color-text-secondary)',
-                                      fontSize: 'var(--text-xs)'
-                                    }}
-                                  >
-                                    {emotion}
-                                  </span>
-                                ))}
-                              </div>
-                            )}
-                            
-                            {entry.note && (
-                              <div className="pt-1">
-                                <p 
-                                  style={{ 
-                                    fontSize: 'var(--text-sm)',
-                                    color: 'var(--color-text-primary)',
-                                    lineHeight: '1.5'
-                                  }}
-                                >
-                                  {entry.note}
-                                </p>
-                              </div>
-                            )}
-                          </div>
-                        </motion.div>
-                      ))}
-                    </div>
-                  );
-                })()}
-              </CardContent>
-            </Card>
-          </div>
-        </div>
-      ) : (
-        /* Add Entry Form */
-        <Card 
-          className="motion-safe:animate-fade-in motion-reduce:animate-none"
-          style={{
-            borderRadius: 'var(--radius-lg)',
-            backgroundColor: 'var(--color-bg-card)',
-            border: '1px solid var(--color-border-default)',
-            // Mobile-responsive spacing
-            padding: 0
-          }}
-        >
-        <CardHeader>
-          <CardTitle 
-            className="flex items-center gap-2"
-            style={{ 
-              fontSize: 'var(--text-lg)',
-              color: 'var(--color-text-primary)'
-            }}
-          >
-            <Icon name="plus" size={20} />
-            {isToday(selectedDate) ? 'How are you feeling today?' : `Add entry for ${formatDateForDisplay(selectedDate)}`}
-          </CardTitle>
-        </CardHeader>
-        <CardContent 
-          style={{
-            padding: 'var(--spacing-4)',
-            gap: 'var(--spacing-6)'
-          }}
-          className="space-y-6"
-        >
-          {/* Mood Scale */}
-          <div className="space-y-4">
-            <label 
-              className="block"
-              style={{ 
-                fontSize: 'var(--text-base)',
-                fontWeight: 'var(--font-weight-medium)',
-                color: 'var(--color-text-primary)'
-              }}
-            >
-              Overall Mood
-            </label>
-            <div 
-              className="grid grid-cols-5 gap-2 sm:flex sm:items-center sm:justify-between"
-              style={{
-                gap: 'var(--spacing-2)'
-              }}
-            >
-              {moodLabels.map((mood, index) => (
-                <motion.button
-                  key={mood.value}
-                  onClick={() => {
-                    setCurrentMood(mood.value);
-                    setSelectedMoodAnimation(mood.value);
-                    setTimeout(() => setSelectedMoodAnimation(null), 500);
-                  }}
-                  className={cn(
-                    // Mobile-responsive layout
-                    "flex flex-col items-center justify-center gap-1 rounded-xl transition-all duration-200 touch-manipulation",
-                    // Better focus states for accessibility
-                    "focus:outline-none focus:ring-2 focus:ring-offset-2"
-                  )}
-                  style={{
-                    backgroundColor: currentMood === mood.value 
-                      ? mood.color + '20' 
-                      : 'var(--color-bg-muted)',
-                    borderColor: currentMood === mood.value 
-                      ? mood.color 
-                      : 'transparent',
-                    borderWidth: '2px',
-                    borderStyle: 'solid',
-                    borderRadius: 'var(--radius-lg)',
-                    // Mobile-first sizing with proper touch targets
-                    minHeight: '60px',
-                    minWidth: '60px',
-                    padding: 'var(--spacing-2)',
-                    // Focus ring color
-                    ringColor: mood.color,
-                    ringOpacity: 0.3
-                  }}
-                  aria-label={`Select mood: ${mood.label}`}
-                  aria-pressed={currentMood === mood.value}
-                  initial={{ opacity: 0, scale: 0.8, y: 20 }}
-                  animate={{ opacity: 1, scale: 1, y: 0 }}
-                  transition={{ 
-                    duration: 0.3, 
-                    delay: index * 0.1,
-                    type: "spring",
-                    stiffness: 300,
-                    damping: 25
-                  }}
-                  whileHover={{ 
-                    scale: 1.05,
-                    y: -2,
-                    transition: { duration: 0.2 }
-                  }}
-                  whileTap={{ 
-                    scale: 0.95,
-                    transition: { duration: 0.1 }
-                  }}
-                >
-                  <motion.span 
-                    style={{ 
-                      fontSize: '20px',
-                      lineHeight: '1',
-                      display: 'block'
-                    }}
-                    animate={{
-                      scale: selectedMoodAnimation === mood.value ? [1, 1.5, 1] : 1,
-                      rotate: selectedMoodAnimation === mood.value ? [0, 15, -15, 0] : 0
-                    }}
-                    transition={{
-                      duration: 0.5,
-                      ease: "easeInOut"
-                    }}
-                  >
-                    {mood.emoji}
-                  </motion.span>
-                  <span 
-                    className="text-center leading-none"
-                    style={{ 
-                      fontSize: 'var(--text-xs)',
-                      color: currentMood === mood.value 
-                        ? mood.color 
-                        : 'var(--color-text-muted)',
-                      fontWeight: currentMood === mood.value 
-                        ? 'var(--font-weight-medium)' 
-                        : 'var(--font-weight-regular)',
-                      fontFamily: 'var(--font-family-base)',
-                      lineHeight: 'var(--line-height-xs)'
-                    }}
-                  >
-                    {mood.label}
-                  </span>
-                </motion.button>
-              ))}
-            </div>
-          </div>
-
-          {/* Emotions */}
-          <div className="space-y-4">
-            <label 
-              style={{ 
-                fontSize: 'var(--text-base)',
-                fontWeight: 'var(--font-weight-medium)',
-                color: 'var(--color-text-primary)'
-              }}
-            >
-              What emotions are you experiencing? (Select all that apply)
-            </label>
-            <div 
-              className="flex flex-wrap gap-2"
-              style={{
-                gap: 'var(--spacing-2)'
-              }}
-            >
-              {emotionOptions.map((emotion, index) => (
-                <motion.button
-                  key={emotion}
-                  onClick={() => handleEmotionToggle(emotion)}
-                  className={cn(
-                    // Mobile-friendly button styling
-                    "rounded-full touch-manipulation",
-                    // Focus states for accessibility
-                    "focus:outline-none focus:ring-2 focus:ring-offset-2"
-                  )}
-                  style={{
-                    backgroundColor: selectedEmotions.includes(emotion)
-                      ? 'var(--color-primary-default)'
-                      : 'var(--color-bg-muted)',
-                    color: selectedEmotions.includes(emotion)
-                      ? 'var(--color-primary-on)'
-                      : 'var(--color-text-primary)',
-                    fontSize: 'var(--text-sm)',
-                    fontWeight: selectedEmotions.includes(emotion)
-                      ? 'var(--font-weight-medium)'
-                      : 'var(--font-weight-regular)',
-                    fontFamily: 'var(--font-family-base)',
-                    // Mobile-first padding with proper touch targets
-                    padding: 'var(--spacing-2) var(--spacing-3)',
-                    minHeight: '36px', // Adequate touch target
-                    borderRadius: 'var(--radius-pill)',
-                    // Focus ring
-                    ringColor: 'var(--color-primary-default)',
-                    ringOpacity: 0.3
-                  }}
-                  initial={{ opacity: 0, scale: 0.8 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ 
-                    duration: 0.2, 
-                    delay: index * 0.05,
-                    type: "spring",
-                    stiffness: 400,
-                    damping: 25
-                  }}
-                  whileHover={{ 
-                    scale: 1.05,
-                    transition: { duration: 0.15 }
-                  }}
-                  whileTap={{ 
-                    scale: 0.95,
-                    transition: { duration: 0.1 }
-                  }}
-                  layout
-                >
-                  {emotion}
-                </motion.button>
-              ))}
-            </div>
-          </div>
-
-          {/* Energy Level */}
-          <div className="space-y-4">
-            <label 
-              style={{ 
-                fontSize: 'var(--text-base)',
-                fontWeight: 'var(--font-weight-medium)',
-                color: 'var(--color-text-primary)'
-              }}
-            >
-              Energy Level: {currentEnergy}/5
-            </label>
-            <div className="flex items-center gap-2">
-              <span style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-muted)' }}>
-                Low
-              </span>
-              <input
-                type="range"
-                min="1"
-                max="5"
-                value={currentEnergy}
-                onChange={(e) => setCurrentEnergy(parseInt(e.target.value))}
-                className="flex-1 h-2 rounded-lg appearance-none cursor-pointer"
-                style={{ 
-                  background: `linear-gradient(to right, var(--color-primary-default) 0%, var(--color-primary-default) ${(currentEnergy - 1) * 25}%, var(--color-bg-muted) ${(currentEnergy - 1) * 25}%, var(--color-bg-muted) 100%)`
-                }}
-              />
-              <span style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-muted)' }}>
-                High
-              </span>
-            </div>
-          </div>
-
-          {/* Journal Note */}
-          <div className="space-y-4">
-            <label 
-              style={{ 
-                fontSize: 'var(--text-base)',
-                fontWeight: 'var(--font-weight-medium)',
-                color: 'var(--color-text-primary)'
-              }}
-            >
-              Journal Entry
-            </label>
-            <TextArea
-              value={currentNote || ''}
-              onChange={(e) => setCurrentNote(e.target.value || '')}
-              placeholder="Write about your day, thoughts, or feelings..."
-              rows={4}
-              maxLength={500}
             />
-            <div className="text-right">
-              <span style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}>
-                {(currentNote || '').length}/500 characters
-              </span>
-            </div>
-          </div>
+          </CardContent>
+        </Card>
 
-          {/* Submit Button */}
-          <Button
-            onClick={handleSubmitEntry}
-            disabled={isSubmitting || !(currentNote || '').trim()}
-            className="w-full gap-2"
-            style={{
-              backgroundColor: 'var(--color-primary-default)',
-              color: 'var(--color-primary-on)',
-              borderRadius: 'var(--radius-md)',
-              fontSize: 'var(--text-base)',
-              fontWeight: 'var(--font-weight-medium)',
-              fontFamily: 'var(--font-family-base)',
-              // Proper mobile touch target
-              minHeight: '48px',
-              padding: 'var(--spacing-3) var(--spacing-4)'
-            }}
-          >
-            {isSubmitting ? (
-              <>
-                <Icon name="loader" size={16} className="animate-spin" />
-                Saving...
-              </>
-            ) : (
-              <>
-                <Icon name="check" size={16} />
-                {isToday(selectedDate) ? 'Log Today\'s Mood' : 'Save Entry'}
-              </>
-            )}
-          </Button>
-        </CardContent>
-      </Card>
-      )}
+        <div className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Streak</CardTitle>
+            </CardHeader>
+            <CardContent className="flex flex-col items-center justify-center py-6">
+              <div className="text-4xl font-bold text-orange-500 flex items-center gap-2">
+                <Icon name="flame" size={32} />
+                {streakCount}
+              </div>
+              <p className="text-sm text-muted-foreground mt-2">Days in a row</p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Recent Moods</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {entries.slice(0, 5).map(entry => (
+                <div key={entry.id} className="flex items-center gap-3 p-2 rounded hover:bg-slate-50">
+                  <div 
+                    className="w-8 h-8 rounded-full flex items-center justify-center text-sm"
+                    style={{ backgroundColor: getMoodColor(entry.mood) + '20', color: getMoodColor(entry.mood) }}
+                  >
+                    {activeMoods.find(m => m.value === entry.mood)?.emoji || '😐'}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium truncate">{entry.note || 'No note'}</p>
+                    <p className="text-xs text-muted-foreground">{entry.date}</p>
+                  </div>
+                </div>
+              ))}
+              {entries.length === 0 && (
+                <p className="text-sm text-muted-foreground text-center py-4">No entries yet</p>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+      </div>
     </div>
   );
 }

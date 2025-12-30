@@ -1,72 +1,15 @@
 import { ImageWithFallback } from '../../figma/ImageWithFallback';
 import { ErrorBoundary } from '../../ErrorBoundary';
-import { ButtonPrimary, ButtonSecondary } from '../../buttons';
-import { HERO_DATA } from '../../../lib/homepage-data';
+import { ButtonPrimary } from '../../buttons';
 import { cn } from '../../ui/utils';
-
-// Desktop images - Using fallback URLs
-const imgBackground = "https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=1200&h=600&fit=crop";
-const imgBackground1 = "https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?w=800&h=800&fit=crop";
-const imgContainer = "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=600&h=600&fit=crop";
-const imgContainer1 = "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=600&h=600&fit=crop";
-const imgContainer2 = "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=600&h=600&fit=crop";
-const imgContainer3 = "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=600&h=600&fit=crop";
-const imgBackground2 = "https://images.unsplash.com/photo-1573497019236-17f8177b81e8?w=400&h=400&fit=crop";
-const imgBackground3 = "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=400&h=400&fit=crop";
-const imgBackground4 = "https://images.unsplash.com/photo-1573497161161-c3e73707e25c?w=400&h=400&fit=crop";
-const imgBackground5 = "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=400&h=400&fit=crop";
-const imgContainer4 = "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=600&h=600&fit=crop";
-const imgContainer5 = "https://images.unsplash.com/photo-1580489944761-15a19d654956?w=600&h=600&fit=crop";
+import { usePageContent } from '../../../hooks/usePageContent';
+import { useMemo } from 'react';
 
 interface HeroSectionProps {
   onGetStarted: () => void;
 }
 
-// Statistics data with English content
-const statistics = [
-  {
-    type: 'label',
-    title: 'Acceptance',
-    bgImage: imgBackground,
-    videoImage: imgBackground1
-  },
-  {
-    type: 'stat',
-    number: '2500+',
-    description: 'People who have gained more wellbeing through our platform',
-    bgImage: imgContainer,
-    videoImage: imgContainer1
-  },
-  {
-    type: 'label',
-    title: 'Understanding',
-    bgImage: imgContainer2,
-    videoImage: imgContainer3
-  },
-  {
-    type: 'stat',
-    number: '52+',
-    description: 'Qualified Psychologists',
-    bgImage: imgBackground2,
-    videoImage: imgBackground3
-  },
-  {
-    type: 'label',
-    title: 'Compassion',
-    bgImage: imgBackground4,
-    videoImage: imgBackground5
-  },
-  {
-    type: 'stat',
-    number: '96%',
-    description: 'Recommend our courses',
-    bgImage: null,
-    videoImage: imgContainer4,
-    videoImage2: imgContainer5
-  }
-];
-
-function StatisticCard({ stat, index }: { stat: typeof statistics[0], index: number }) {
+function StatisticCard({ stat, index }: { stat: any, index: number }) {
   return (
     <ErrorBoundary>
       <div 
@@ -169,7 +112,27 @@ function StatisticCard({ stat, index }: { stat: typeof statistics[0], index: num
 }
 
 export function HeroSection({ onGetStarted }: HeroSectionProps) {
-  const { title, description, ctaText } = HERO_DATA;
+  const { content, loading } = usePageContent('homepage-hero');
+
+  const heroData = useMemo(() => {
+    if (!content?.content) return null;
+    try {
+      return JSON.parse(content.content);
+    } catch (e) {
+      console.error('Failed to parse hero content', e);
+      return null;
+    }
+  }, [content]);
+
+  if (loading || !heroData) {
+    return (
+      <div className="w-full h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900"></div>
+      </div>
+    );
+  }
+
+  const { title, description, ctaText, statistics } = heroData;
   
   return (
     <ErrorBoundary>

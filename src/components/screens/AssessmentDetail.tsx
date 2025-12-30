@@ -9,6 +9,8 @@ import { ResourcePost } from '../blocks/ResourceCard';
 import { MobileHeader } from '../navigation/MobileHeader';
 import { TopNavBar } from '../navigation/TopNavBar';
 import { useIsMobile } from '../../hooks/useIsMobile';
+import { Skeleton } from '../ui/skeleton-loader';
+import { Button } from '../ui/button';
 
 interface AssessmentDetailProps {
   assessmentId?: string;
@@ -60,42 +62,8 @@ function ResourceSection({ onNavigate }: ResourceSectionProps) {
         setPosts(transformedPosts);
         setLoading(false);
       } catch (err) {
-        // Fallback mock resources
-        setPosts([
-          {
-            id: '1',
-            title: 'Understanding Anxiety Triggers',
-            description: 'Learn how to identify and manage the triggers that cause your anxiety spikes.',
-            date: 'Mar 10, 2024',
-            category: 'Anxiety',
-            image: 'https://images.unsplash.com/photo-1474418397713-7ede21d49118?w=800&auto=format&fit=crop&q=60',
-            readTime: '5 min read',
-            type: 'article',
-            link: '#'
-          },
-          {
-            id: '2',
-            title: 'The Benefits of Mindfulness',
-            description: 'Discover how daily mindfulness practice can improve your mental well-being.',
-            date: 'Mar 12, 2024',
-            category: 'Wellness',
-            image: 'https://images.unsplash.com/photo-1506126613408-eca07ce68773?w=800&auto=format&fit=crop&q=60',
-            readTime: '3 min read',
-            type: 'article',
-            link: '#'
-          },
-          {
-            id: '3',
-            title: 'Better Sleep Habits',
-            description: 'Simple changes to your routine that can drastically improve sleep quality.',
-            date: 'Mar 15, 2024',
-            category: 'Sleep',
-            image: 'https://images.unsplash.com/photo-1541781777621-3914296d36e3?w=800&auto=format&fit=crop&q=60',
-            readTime: '7 min read',
-            type: 'article',
-            link: '#'
-          }
-        ]);
+        console.error('Failed to fetch resources:', err);
+        setPosts([]);
         setLoading(false);
       }
     };
@@ -196,48 +164,7 @@ export function AssessmentDetail({ assessmentId = 'anxiety', onNavigate }: Asses
         }
         
       } catch (err) {
-        // Fallback data
-        setAssessmentData({
-            title: "Anxiety Assessment",
-            description: "Understand your anxiety levels and get personalized insights with our clinically validated assessment.",
-            hero_image: "https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?q=80&w=2000&auto=format&fit=crop",
-            cta_button_text: "Start Assessment",
-            cta_button_link: `/assessment-flow?type=${assessmentId}`,
-            
-            section1_title: "Who is this test for?",
-            section1_eligibility_title: "This assessment may be helpful if you:",
-            section1_eligibility_points: [
-              "Often feel worried, nervous, or on edge",
-              "Have trouble relaxing or calming down",
-              "Experience physical symptoms like rapid heartbeat",
-              "Find anxiety interfering with daily activities"
-            ],
-            
-            section2_title: "About this test",
-            section2_content: "Our anxiety assessment uses the GAD-7 (Generalized Anxiety Disorder-7) scale, a clinically validated tool widely used by healthcare professionals. It helps measure the severity of anxiety symptoms you may be experiencing.",
-            section2_image: "https://images.unsplash.com/photo-1544027993-37dbfe43562a?q=80&w=2000&auto=format&fit=crop",
-            section2_bullets: [
-              "Takes 3-5 minutes to complete",
-              "Based on validated clinical research",
-              "Provides immediate, personalized results"
-            ],
-            
-            section3_title: "What you'll see",
-            section3_subtitle: "Understanding your anxiety is the first step toward managing it effectively.",
-            section3_content: [
-              "You'll answer 7 questions about how you've been feeling over the past two weeks.",
-              "Each question asks about the frequency of specific anxiety symptoms.",
-              "Your responses generate a score that indicates your anxiety severity level.",
-              "You'll receive personalized insights and recommendations."
-            ],
-            
-            section4_notes_title: "Things to remember",
-            section4_notes: [
-              { title: "This is not a diagnosis", description: "This assessment is a screening tool. Only a qualified mental health professional can provide a formal diagnosis." },
-              { title: "Your privacy matters", description: "Your responses are confidential and used only to generate your personalized results." },
-              { title: "Seek help if needed", description: "If you're experiencing severe anxiety or crisis, please contact a mental health professional immediately." }
-            ]
-          });
+        console.error('Failed to fetch assessment data:', err);
       } finally {
         setIsLoading(false);
       }
@@ -246,10 +173,36 @@ export function AssessmentDetail({ assessmentId = 'anxiety', onNavigate }: Asses
     fetchAssessmentData();
   }, [assessmentId]);
 
-  if (isLoading || !assessmentData) {
+  if (isLoading) {
     return (
-      <div className="w-full min-h-screen flex items-center justify-center" style={{ backgroundColor: 'var(--color-bg-page)' }}>
-        <p style={{ color: 'var(--color-text-muted)', fontSize: 'var(--text-base)' }}>Loading assessment...</p>
+      <div className="w-full min-h-screen p-6 space-y-8" style={{ backgroundColor: 'var(--color-bg-page)' }}>
+        <div className="space-y-4">
+          <Skeleton variant="text" width="60%" height="40px" />
+          <Skeleton variant="text" width="80%" height="24px" />
+        </div>
+        <Skeleton variant="rectangular" height="300px" className="rounded-2xl" />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <Skeleton variant="card" height="200px" />
+          <Skeleton variant="card" height="200px" />
+        </div>
+      </div>
+    );
+  }
+
+  if (!assessmentData) {
+    return (
+      <div className="w-full min-h-screen flex items-center justify-center p-6" style={{ backgroundColor: 'var(--color-bg-page)' }}>
+        <div className="text-center space-y-4">
+          <h2 style={{ fontSize: 'var(--text-xl)', color: 'var(--color-text-primary)' }}>
+            Assessment Not Found
+          </h2>
+          <p style={{ color: 'var(--color-text-muted)' }}>
+            We couldn't load the assessment details. Please try again later.
+          </p>
+          <Button onClick={() => handleNavigate('/assessment')}>
+            Back to Assessments
+          </Button>
+        </div>
       </div>
     );
   }

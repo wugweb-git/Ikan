@@ -69,11 +69,11 @@ export function AdminEquipAnalytics({ onBack, className }: AdminEquipAnalyticsPr
       
       // Fetch enrollments and programs
       const [enrollmentsData, programsData] = await Promise.all([
-        apiClient.get('/equip-enrollments').catch(() => ({ enrollments: [] })),
+        apiClient.getEquipEnrollments(),
         apiClient.getEquipPrograms().catch(() => [])
       ]);
 
-      const enrollmentsArray = Array.isArray(enrollmentsData) ? enrollmentsData : enrollmentsData.enrollments || [];
+      const enrollmentsArray = Array.isArray(enrollmentsData) ? enrollmentsData : [];
       const programsArray = Array.isArray(programsData) ? programsData : [];
 
       // Calculate analytics per program
@@ -128,7 +128,11 @@ export function AdminEquipAnalytics({ onBack, className }: AdminEquipAnalyticsPr
       setLoading(false);
     } catch (error: any) {
       console.error('Failed to load Equip analytics:', error);
-      // GLOBAL APPROACH: Show infinite loader on backend errors
+      // Fallback to empty data to avoid infinite loading
+      setEnrollments([]);
+      setProgramAnalytics([]);
+      setLoading(false);
+      showToast('error', 'Analytics Error', 'Failed to load analytics data');
     }
   };
 

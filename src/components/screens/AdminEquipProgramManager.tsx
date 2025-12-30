@@ -75,7 +75,9 @@ export function AdminEquipProgramManager({ onBack, className }: AdminEquipProgra
       setLoading(false);
     } catch (error: any) {
       console.error('Failed to load programs:', error);
-      // GLOBAL APPROACH: Show infinite loader on backend errors
+      showToast('error', 'API Error', 'Failed to load programs');
+      setPrograms([]);
+      setLoading(false);
     }
   };
 

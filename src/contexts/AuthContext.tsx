@@ -155,6 +155,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setSession(session);
 
       if (session?.user) {
+        // Log login activity if this is a fresh sign in
+        if (event === 'SIGNED_IN') {
+          apiClient.logActivity('login').catch(e => console.log('Login logging failed', e));
+        }
+
         // Validate session before using it
         const now = Math.floor(Date.now() / 1000);
         if (session.expires_at && session.expires_at <= now) {

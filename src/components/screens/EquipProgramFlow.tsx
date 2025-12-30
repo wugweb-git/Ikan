@@ -702,20 +702,37 @@ export function EquipProgramFlow(props: EquipProgramFlowProps) {
         
         if (props.enrollmentId) {
             try {
-                const enrollment = await apiClient.getEnrollmentProgress(props.enrollmentId);
+                const data = await apiClient.getEnrollmentProgress(props.enrollmentId);
                 // Map enrollment to UserProgress
-                if (enrollment && enrollment.enrollment) { // Check structure
-                    const e = enrollment.enrollment;
+                // data structure: { enrollment: UserEnrollment, days: UserDayProgress[] }
+                if (data && data.enrollment) {
+                    const e = data.enrollment;
+                    const days = data.days || [];
+                    
                     const mappedProgress: UserProgress = {
-                        currentDay: e.currentDay || 1,
+                        currentDay: e.current_day_number || e.currentDay || 1,
                         completedDays: {},
-                        currentDayState: e.state || { completedBlockIds: [], responses: {} }
+                        currentDayState: { completedBlockIds: [], responses: {} }
                     };
-                    if (e.completedDays) {
-                        e.completedDays.forEach((d: number) => {
-                            mappedProgress.completedDays[d] = { status: 'completed', date: new Date().toISOString() };
-                        });
-                    }
+
+                    // Map completed days history
+                    days.forEach((day: any) => {
+                        if (day.completed) {
+                            mappedProgress.completedDays[day.day_number] = { 
+                                status: 'completed', 
+                                date: day.completed_at || new Date().toISOString() 
+                            };
+                        }
+                        
+                        // Map current day state if it matches
+                        if (day.day_number === mappedProgress.currentDay) {
+                            mappedProgress.currentDayState = {
+                                completedBlockIds: day.completed_blocks || Object.keys(day.block_responses || {}),
+                                responses: day.block_responses || {}
+                            };
+                        }
+                    });
+
                     setProgress(mappedProgress);
                     setActiveDay(mappedProgress.currentDay);
                     loaded = true;

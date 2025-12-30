@@ -11,7 +11,7 @@ import {
   ChevronUp,
   Image as ImageIcon,
   Table as TableIcon,
-  List
+  Video
 } from 'lucide-react';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
@@ -23,6 +23,7 @@ import { Card, CardContent } from '../ui/card';
 import { ImageUpload } from '../ui/image-upload';
 import { RichTextEditor } from '../ui/rich-text-editor';
 import { Activity } from '../../lib/equip-admin-types';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
 
 interface EquipBlockEditorProps {
   block: Activity;
@@ -59,6 +60,12 @@ export function EquipBlockEditor({
       default: return <BookOpen className="w-4 h-4" />;
     }
   };
+
+  // Determine active media tab based on current data
+  // Note: We use image_url for both, but might differentiate if we add a type field later.
+  // For now, if image_url contains 'youtube' or 'vimeo' or ends in .mp4, it's video.
+  const isVideo = block.image_url && (block.image_url.includes('youtube') || block.image_url.includes('vimeo') || block.image_url.endsWith('.mp4'));
+  const mediaType = isVideo ? 'video' : 'image';
 
   return (
     <Card className="border border-gray-200 shadow-sm mb-3">
@@ -266,6 +273,50 @@ export function EquipBlockEditor({
             </div>
           )}
 
+          {/* MEDIA SECTION */}
+          <div className="pt-2 border-t">
+            <Label className="text-xs mb-2 block font-medium text-gray-700">Block Media</Label>
+            
+            <Tabs defaultValue={mediaType} className="w-full">
+              <TabsList className="grid w-full grid-cols-2 h-8 mb-2">
+                <TabsTrigger value="image" className="text-xs">
+                  <ImageIcon size={12} className="mr-2" /> Image
+                </TabsTrigger>
+                <TabsTrigger value="video" className="text-xs">
+                  <Video size={12} className="mr-2" /> Video URL
+                </TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="image">
+                <ImageUpload
+                   value={!isVideo ? (block.image_url || '') : ''}
+                   onChange={(url) => onChange({ image_url: url })}
+                   bucket="equip-program-images"
+                   placeholder="Upload block image (max 100px width)"
+                   className="w-[100px] h-auto" // Constraint: Max 100px width
+                   aspectRatio="square"
+                />
+                <p className="text-[10px] text-gray-400 mt-1">
+                  Preview restricted to 100px width.
+                </p>
+              </TabsContent>
+              
+              <TabsContent value="video">
+                <div className="space-y-2">
+                  <Input 
+                    value={isVideo ? (block.image_url || '') : ''}
+                    onChange={(e) => onChange({ image_url: e.target.value })}
+                    placeholder="https://youtube.com/..."
+                    className="text-xs"
+                  />
+                  <p className="text-[10px] text-gray-400">
+                    Paste a YouTube, Vimeo, or MP4 URL. This will replace any uploaded image.
+                  </p>
+                </div>
+              </TabsContent>
+            </Tabs>
+          </div>
+
           {/* SHARED SETTINGS */}
           <div className="flex items-center gap-4 pt-2 border-t">
             <div className="flex items-center gap-2">
@@ -277,28 +328,16 @@ export function EquipBlockEditor({
             </div>
             
             <div className="flex-1">
-               <div className="flex items-center gap-2">
-                  <Label className="text-xs w-20">Duration (m)</Label>
+               <div className="flex items-center gap-2 justify-end">
+                  <Label className="text-xs">Duration (m)</Label>
                   <Input 
                     type="number" 
-                    className="w-20 h-8"
+                    className="w-16 h-7 text-xs"
                     value={block.duration}
                     onChange={(e) => onChange({ duration: parseInt(e.target.value) || 0 })}
                   />
                </div>
             </div>
-          </div>
-
-          {/* Image */}
-          <div>
-            <Label className="text-xs mb-1 block">Block Image (Optional)</Label>
-            <ImageUpload
-               value={block.image_url || ''}
-               onChange={(url) => onChange({ image_url: url })}
-               bucket="equip-program-images"
-               placeholder="Add image"
-               className="h-32"
-            />
           </div>
 
         </CardContent>

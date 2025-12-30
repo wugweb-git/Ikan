@@ -13,6 +13,8 @@ import { AdminDataTable, Column, FilterOption } from '../admin/AdminDataTable';
 import { ImageWithFallback } from '../figma/ImageWithFallback';
 import { ErrorState } from '../ui/error-state';
 import { EmptyState } from '../ui/empty-state';
+import { SkeletonTable } from '../ui/skeleton-loader';
+import { RESOURCE_CATEGORIES, RESOURCE_TYPES } from '../../lib/constants';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -34,6 +36,8 @@ export function AdminResourceManager({ onBack, className }: AdminResourceManager
   const isMobile = useIsMobile();
 
   const [resources, setResources] = useState<Resource[]>([]);
+  const [categories, setCategories] = useState<{label: string, value: string}[]>([]);
+  const [filterTypes, setFilterTypes] = useState<{label: string, value: string}[]>(RESOURCE_TYPES);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
 
@@ -43,15 +47,40 @@ export function AdminResourceManager({ onBack, className }: AdminResourceManager
 
   useEffect(() => {
     if (viewMode === 'list') {
-      loadResources();
+      loadData();
     }
   }, [viewMode]);
 
+  const loadData = async () => {
+    setLoading(true);
+    await Promise.all([loadResources(), loadCategories()]);
+    setLoading(false);
+  };
+
+  const loadCategories = async () => {
+    try {
+      const data = await apiClient.getCategories();
+      const loadedCategories = Array.isArray(data) ? data : data.categories || [];
+      
+      if (loadedCategories.length > 0) {
+        setCategories(loadedCategories.map((c: any) => ({
+          label: c.name || c.label,
+          value: c.slug || c.value || c.name.toLowerCase()
+        })));
+      } else {
+        // Fallback defaults
+        setCategories(RESOURCE_CATEGORIES);
+      }
+    } catch (error) {
+      console.warn('Failed to load categories, using defaults', error);
+      setCategories(RESOURCE_CATEGORIES);
+    }
+  };
+
   const loadResources = async () => {
     try {
-      setLoading(true);
-      const response = await apiClient.getResources();
-      const data = Array.isArray(response) ? response : response.resources || [];
+      let data = await apiClient.getResources();
+      data = Array.isArray(data) ? data : data.resources || [];
       
       // Map API response to Component Resource type
       const mappedResources = data.map((item: any) => ({
@@ -77,11 +106,12 @@ export function AdminResourceManager({ onBack, className }: AdminResourceManager
       }, []);
       
       setResources(uniqueResources);
-      setLoading(false);
+      // Loading state handled in loadData
     } catch (error: any) {
       console.error('Failed to load resources:', error);
-      setError(true);
-      // Don't set loading to false to show infinite loader as per global policy for backend errors
+      showToast('error', 'API Error', 'Failed to load resources');
+      setResources([]);
+      // Loading state handled in loadData
     }
   };
 
@@ -179,6 +209,16 @@ export function AdminResourceManager({ onBack, className }: AdminResourceManager
       )
     },
     {
+      header: 'Format',
+      accessorKey: 'filter_type',
+      sortable: true,
+      render: (resource: any) => (
+        <Badge variant="secondary" className="capitalize">
+          {resource.filter_type || 'Article'}
+        </Badge>
+      )
+    },
+    {
       header: 'Category',
       accessorKey: 'category',
       sortable: true,
@@ -242,10 +282,22 @@ export function AdminResourceManager({ onBack, className }: AdminResourceManager
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuLabel>Actions</DropdownMenuLabel>
-            <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleEdit(resource.id); }}>
+            <DropdownMenuItem 
+              onClick={(e) => { 
+                e.preventDefault();
+                e.stopPropagation(); 
+                handleEdit(resource.id); 
+              }}
+            >
               <Edit className="mr-2 h-4 w-4" /> Edit
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleTogglePublish(resource.id, !resource.published); }}>
+            <DropdownMenuItem 
+              onClick={(e) => { 
+                e.preventDefault();
+                e.stopPropagation(); 
+                handleTogglePublish(resource.id, !resource.published); 
+              }}
+            >
               {resource.published ? (
                 <EyeOff className="mr-2 h-4 w-4" />
               ) : (
@@ -255,8 +307,12 @@ export function AdminResourceManager({ onBack, className }: AdminResourceManager
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem 
-              onClick={(e) => { e.stopPropagation(); handleDelete(resource.id, resource.title); }}
-              className="text-red-600"
+              onClick={(e) => { 
+                e.preventDefault();
+                e.stopPropagation(); 
+                handleDelete(resource.id, resource.title); 
+              }}
+              className="text-red-600 focus:bg-red-50 focus:text-red-700"
             >
               <Trash2 className="mr-2 h-4 w-4" /> Delete
             </DropdownMenuItem>
@@ -270,16 +326,13 @@ export function AdminResourceManager({ onBack, className }: AdminResourceManager
     {
       key: 'category',
       label: 'Category',
-      options: [
-        { label: 'Article', value: 'article' },
-        { label: 'Video', value: 'video' },
-        { label: 'Podcast', value: 'podcast' },
-        { label: 'Workbook', value: 'workbook' },
-        { label: 'Guide', value: 'guide' },
-      ]
+      options: categories.length > 0 ? categories : RESOURCE_CATEGORIES
     },
-    // We can add a 'published' filter if we map boolean to string in the data or handle it in the table
-    // For simplicity, let's just stick to category for now as it matches the mockup
+    {
+      key: 'filter_type',
+      label: 'Format',
+      options: filterTypes
+    }
   ];
 
   const stats = [
@@ -386,9 +439,9 @@ export function AdminResourceManager({ onBack, className }: AdminResourceManager
       <AdminDataTable 
         columns={columns} 
         data={resources} 
-        searchKeys={['title', 'description', 'category']}
+        searchKeys={['title', 'description', 'category', 'tags']}
         filters={filters}
-        searchPlaceholder="Search resources by title, category..."
+        searchPlaceholder="Search resources by title, category, tags..."
         onRowClick={(item) => handleEdit(item.id)}
         actions={
           <Button variant="outline" onClick={handleExport} className="gap-2">

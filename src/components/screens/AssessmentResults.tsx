@@ -29,35 +29,9 @@ interface AssessmentResults {
   };
 }
 
-// Sample results data
-const sampleResults: AssessmentResults = {
-  assessmentId: 'anxiety-assessment',
-  assessmentTitle: 'Anxiety Assessment (GAD-7)',
-  score: 8,
-  maxScore: 21,
-  interpretation: {
-    label: 'Mild Anxiety',
-    description: 'Your responses suggest mild anxiety symptoms. While this level of anxiety is manageable, incorporating stress-reduction techniques and healthy coping strategies can help improve your overall well-being.',
-    icon: 'warning',
-    recommendations: [
-      'Practice deep breathing exercises for 5-10 minutes daily',
-      'Maintain a regular sleep schedule of 7-9 hours per night',
-      'Engage in regular physical activity or exercise',
-      'Consider mindfulness meditation or relaxation techniques',
-      'Limit caffeine intake, especially in the afternoon and evening',
-      'Connect with supportive friends, family, or community groups'
-    ]
-  },
-  completedAt: new Date().toISOString(),
-  equipProgramSuggestion: {
-    title: 'Anxiety Management Program',
-    description: 'A comprehensive 8-week program designed to help you develop effective coping strategies for managing anxiety.',
-    route: '/equip-programs/anxiety-management'
-  }
-};
 
 interface AssessmentResultsProps {
-  results?: AssessmentResults;
+  results: AssessmentResults;
   onNavigate?: (route: string) => void;
   onReturnToDashboard?: () => void;
   onBackToAssessments?: () => void;
@@ -66,7 +40,7 @@ interface AssessmentResultsProps {
 }
 
 export function AssessmentResults({ 
-  results = sampleResults,
+  results,
   onNavigate,
   onReturnToDashboard,
   onBackToAssessments,
@@ -112,6 +86,19 @@ export function AssessmentResults({
   };
 
   const scorePercentage = (results.score / results.maxScore) * 100;
+
+  if (!results) {
+    return (
+      <div className={cn("text-center py-12", className)}>
+        <h2 style={{ fontSize: 'var(--text-xl)', color: 'var(--color-text-primary)' }}>
+          No Results Found
+        </h2>
+        <Button onClick={onBackToAssessments} className="mt-4">
+          Back to Assessments
+        </Button>
+      </div>
+    );
+  }
 
   if (isLoading) {
     return (
@@ -439,170 +426,6 @@ export function AssessmentResults({
             Explore Program
           </Button>
         )}
-      </div>
-
-      {/* Additional Assessment Showcase */}
-      <div className="space-y-8 pt-8 border-t" style={{ borderColor: 'var(--color-border-default)' }}>
-        <h3 style={{ 
-          fontSize: 'var(--text-xl)', 
-          fontWeight: 'var(--font-weight-medium)', 
-          color: 'var(--color-text-primary)',
-          textAlign: 'center'
-        }}>
-          Explore More Resources
-        </h3>
-        
-        {/* Assessment Showcase */}
-        <div className="space-y-6">
-          <h4 style={{ 
-            fontSize: 'var(--text-lg)', 
-            fontWeight: 'var(--font-weight-medium)', 
-            color: 'var(--color-text-primary)'
-          }}>
-            Additional Assessments
-          </h4>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {[
-              {
-                title: 'Depression Assessment',
-                description: 'Evaluate symptoms of depression with our scientifically validated PHQ-9 assessment.',
-                duration: '5 min',
-                type: 'PHQ-9'
-              },
-              {
-                title: 'Stress Assessment', 
-                description: 'Measure your stress levels and identify triggers affecting your wellbeing.',
-                duration: '7 min',
-                type: 'PSS-10'
-              },
-              {
-                title: 'Sleep Quality Assessment',
-                description: 'Assess your sleep patterns and quality for better mental health.',
-                duration: '4 min',
-                type: 'PSQI'
-              }
-            ].map((assessment, index) => (
-              <Card 
-                key={index}
-                className="cursor-pointer hover:shadow-md transition-shadow"
-                style={{
-                  backgroundColor: 'var(--color-bg-card)',
-                  border: '1px solid var(--color-border-default)',
-                  borderRadius: 'var(--radius-lg)'
-                }}
-                onClick={() => onNavigate && onNavigate('/assessments')}
-              >
-                <CardContent style={{ padding: 'var(--spacing-4)' }}>
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <span style={{ 
-                        fontSize: 'var(--text-sm)', 
-                        color: 'var(--color-status-info)',
-                        fontWeight: 'var(--font-weight-medium)'
-                      }}>
-                        {assessment.type}
-                      </span>
-                      <span style={{ 
-                        fontSize: 'var(--text-xs)', 
-                        color: 'var(--color-text-muted)'
-                      }}>
-                        {assessment.duration}
-                      </span>
-                    </div>
-                    <h5 style={{ 
-                      fontSize: 'var(--text-base)', 
-                      fontWeight: 'var(--font-weight-medium)', 
-                      color: 'var(--color-text-primary)'
-                    }}>
-                      {assessment.title}
-                    </h5>
-                    <p style={{ 
-                      fontSize: 'var(--text-sm)', 
-                      color: 'var(--color-text-muted)',
-                      lineHeight: 'var(--line-height-md)'
-                    }}>
-                      {assessment.description}
-                    </p>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="w-full gap-2"
-                      style={{
-                        height: 'var(--ikan-component-button-height)',
-                        borderRadius: 'var(--ikan-component-border-radius)',
-                        fontSize: 'var(--text-sm)',
-                        fontWeight: 'var(--font-weight-medium)'
-                      }}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onNavigate && onNavigate('/assessment-landing');
-                      }}
-                    >
-                      <Icon name="clipboard" size={16} />
-                      Take Assessment
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
-
-        {/* Consultant Showcase */}
-        <div className="space-y-6">
-          <h4 style={{ 
-            fontSize: 'var(--text-lg)', 
-            fontWeight: 'var(--font-weight-medium)', 
-            color: 'var(--color-text-primary)'
-          }}>
-            Professional Support
-          </h4>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            {[
-              {
-                professional_id: '1',
-                name: 'Dr. Sarah Johnson',
-                title: 'Clinical Psychologist',
-                specialties: ['Anxiety', 'Depression'],
-                location: 'Mumbai',
-                phone: '+91-9876543210',
-                available: true
-              },
-              {
-                professional_id: '2',
-                name: 'Dr. Raj Patel',
-                title: 'Counseling Psychologist',
-                specialties: ['Stress Management', 'CBT'],
-                location: 'Delhi',
-                phone: '+91-9876543211',
-                available: true
-              }
-            ].map((professional) => (
-              <div key={professional.professional_id} className="w-full">
-                <ErrorBoundary>
-                  <ConsultantCard professional={professional} />
-                </ErrorBoundary>
-              </div>
-            ))}
-          </div>
-          <div className="text-center">
-            <Button
-              onClick={() => onNavigate && onNavigate('/consultation')}
-              className="gap-2"
-              style={{
-                height: 'var(--ikan-component-button-height)',
-                borderRadius: 'var(--ikan-component-border-radius)',
-                backgroundColor: 'var(--semantic-button-primary-bg)',
-                color: 'var(--semantic-button-primary-fg)',
-                fontSize: 'var(--text-base)',
-                fontWeight: 'var(--font-weight-medium)'
-              }}
-            >
-              <Icon name="users" size={16} />
-              View All Consultants
-            </Button>
-          </div>
-        </div>
       </div>
 
       {/* Completion timestamp */}

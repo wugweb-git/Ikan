@@ -1,3 +1,8 @@
+import React, { useState, useEffect } from 'react';
+import { useNotifications } from '../../contexts/NotificationContext';
+import { Button } from '../ui/button';
+import { Icon } from '../Icon';
+import { apiClient } from '../../lib/api-client';
 import { cn } from '../ui/utils';
 import { useIsMobile } from '../../hooks/useIsMobile';
 

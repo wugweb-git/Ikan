@@ -270,12 +270,40 @@ export function AdminDataTable<T extends { [key: string]: any }>({
         </Table>
       </div>
 
-      {/* Pagination removed as requested */}
-      {/* 
-      <div className="flex flex-col md:flex-row items-center justify-between gap-4 py-4">
-        ...
-      </div> 
-      */}
+      {/* Pagination */}
+      <div className="flex items-center justify-between px-2">
+        <div className="flex items-center space-x-2">
+          <p className="text-sm text-muted-foreground">
+            {processedData.length > 0 ? (
+               <>
+                 Showing {(currentPage - 1) * currentPageSize + 1} to {Math.min(currentPage * currentPageSize, processedData.length)} of {processedData.length} entries
+               </>
+            ) : (
+               'No entries'
+            )}
+          </p>
+        </div>
+        <div className="flex items-center space-x-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+            disabled={currentPage === 1}
+          >
+            <ChevronLeft className="h-4 w-4" />
+            Previous
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+            disabled={currentPage === totalPages || totalPages === 0}
+          >
+            Next
+            <ChevronRight className="h-4 w-4" />
+          </Button>
+        </div>
+      </div>
     </div>
   );
 }

@@ -52,6 +52,8 @@ export function AdminUserManager({ onBack, className }: AdminUserManagerProps) {
   const isMobile = useIsMobile();
 
   const [users, setUsers] = useState<UserProfile[]>([]);
+  const [enrollments, setEnrollments] = useState<any[]>([]);
+  const [programs, setPrograms] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -61,24 +63,31 @@ export function AdminUserManager({ onBack, className }: AdminUserManagerProps) {
 
   useEffect(() => {
     if (viewMode === 'list') {
-      loadUsers();
+      loadData();
     }
   }, [viewMode]);
 
-  const loadUsers = async () => {
+  const loadData = async () => {
     try {
       setLoading(true);
-      const response = await apiClient.getUsers();
+      const [usersData, enrollmentsData, programsData] = await Promise.all([
+        apiClient.getUsers(),
+        apiClient.getEquipEnrollments(),
+        apiClient.getEquipPrograms()
+      ]);
 
-      if (response.users) {
-        setUsers(response.users);
+      if (usersData.users) {
+        setUsers(usersData.users);
       } else {
-        console.warn('No users array in response:', response);
         setUsers([]);
       }
+
+      setEnrollments(enrollmentsData || []);
+      setPrograms(programsData || []);
+      
       setLoading(false);
     } catch (error: any) {
-      console.error('Failed to load users:', error);
+      console.error('Failed to load data:', error);
 
       if (
         error.message?.includes('insufficient permissions') ||
@@ -101,15 +110,22 @@ export function AdminUserManager({ onBack, className }: AdminUserManagerProps) {
   const handleExport = () => {
     // Export all loaded users
     const csv = [
-      ['Name', 'Email', 'Phone', 'Role', 'Location', 'Created At'].join(','),
-      ...users.map((u) => [
-        `"${(u.name || '').replace(/"/g, '""')}"`,
-        u.email,
-        u.phone || '',
-        u.is_admin ? 'Admin' : u.corporate_user ? 'Corporate' : 'User',
-        `"${(u.location || '').replace(/"/g, '""')}"`,
-        new Date(u.created_at).toLocaleDateString()
-      ].join(','))
+      ['Name', 'Email', 'Phone', 'Role', 'Active Program', 'Day', 'Location', 'Created At'].join(','),
+      ...users.map((u) => {
+        const enrollment = enrollments.find(e => e.user_id === u.user_id && e.status === 'active');
+        const program = enrollment ? programs.find(p => p.id === enrollment.equip_id) : null;
+        
+        return [
+          `"${(u.name || '').replace(/"/g, '""')}"`,
+          u.email,
+          u.phone || '',
+          u.is_admin ? 'Admin' : u.corporate_user ? 'Corporate' : 'User',
+          program ? `"${(program.title || program.name).replace(/"/g, '""')}"` : '',
+          enrollment ? enrollment.current_day_number : '',
+          `"${(u.location || '').replace(/"/g, '""')}"`,
+          new Date(u.created_at).toLocaleDateString()
+        ].join(',');
+      })
     ].join('\n');
 
     const blob = new Blob([csv], { type: 'text/csv' });
@@ -141,7 +157,7 @@ export function AdminUserManager({ onBack, className }: AdminUserManagerProps) {
       await apiClient.updateUser(userId, { is_admin: !currentIsAdmin });
       setUsers((prev) => prev.map((u) => (u.user_id === userId ? { ...u, is_admin: !currentIsAdmin } : u)));
       showToast('success', 'User Updated', `Admin privileges ${!currentIsAdmin ? 'granted' : 'removed'}`);
-      loadUsers(); // Reload to get fresh data
+      loadData(); // Reload to get fresh data
     } catch (error: any) {
       console.error('Failed to update user:', error);
       showToast('error', 'API Error', 'Failed to update user');
@@ -213,6 +229,32 @@ export function AdminUserManager({ onBack, className }: AdminUserManagerProps) {
           )}
         </div>
       )
+    },
+    {
+      header: 'Active Program',
+      accessorKey: 'program_progress', // Virtual key
+      render: (user) => {
+        const userEnrollment = enrollments.find(e => e.user_id === user.user_id && e.status === 'active');
+        if (!userEnrollment) return <span className="text-muted-foreground text-xs">-</span>;
+        
+        const program = programs.find(p => p.id === userEnrollment.equip_id);
+        const programName = program?.title || program?.name || 'Unknown Program';
+        
+        return (
+          <div className="flex flex-col">
+            <span className="text-sm font-medium text-indigo-700">{programName}</span>
+            <div className="flex items-center gap-2">
+              <div className="h-1.5 w-16 bg-gray-100 rounded-full overflow-hidden">
+                <div 
+                   className="h-full bg-indigo-500 rounded-full" 
+                   style={{ width: `${Math.min(100, (userEnrollment.current_day_number / (program?.days?.length || 30)) * 100)}%` }} 
+                />
+              </div>
+              <span className="text-xs text-muted-foreground">Day {userEnrollment.current_day_number}</span>
+            </div>
+          </div>
+        );
+      }
     },
     {
       header: 'Contact',
@@ -329,7 +371,7 @@ export function AdminUserManager({ onBack, className }: AdminUserManagerProps) {
           variant="error"
           title="Failed to Load Users"
           message={error}
-          onRetry={loadUsers}
+          onRetry={loadData}
           onGoBack={onBack}
         />
       </div>

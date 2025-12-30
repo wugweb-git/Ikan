@@ -10,6 +10,12 @@ import { User, Mail, Lock, Phone, Heart, Eye, EyeOff, Database } from 'lucide-re
 import { toast } from 'sonner@2.0.3';
 import { authContent } from '../lib/content/auth';
 import { projectId, publicAnonKey } from '../utils/supabase/info';
+import { 
+  validateEmail, 
+  validatePassword, 
+  validateName, 
+  validatePhone 
+} from '../lib/validation';
 
 interface AuthFormProps {
   onSuccess?: () => void;
@@ -47,12 +53,12 @@ export function AuthForm({ onSuccess, defaultTab = 'signin' }: AuthFormProps) {
   const validateSignIn = () => {
     const newErrors: Record<string, string> = {};
 
-    if (!signInData.email) {
-      newErrors.email = authContent.validation.required.email;
-    } else if (!/\S+@\S+\.\S+/.test(signInData.email)) {
-      newErrors.email = authContent.validation.format.email;
+    const emailError = validateEmail(signInData.email);
+    if (emailError) {
+      newErrors.email = emailError.message;
     }
 
+    // Basic required check for password during sign in (don't validate strength)
     if (!signInData.password) {
       newErrors.password = authContent.validation.required.password;
     }
@@ -64,28 +70,30 @@ export function AuthForm({ onSuccess, defaultTab = 'signin' }: AuthFormProps) {
   const validateSignUp = () => {
     const newErrors: Record<string, string> = {};
 
-    if (!signUpData.name.trim()) {
-      newErrors.name = authContent.validation.required.name;
+    const nameError = validateName(signUpData.name);
+    if (nameError) {
+      newErrors.name = nameError.message;
     }
 
-    if (!signUpData.email) {
-      newErrors.email = authContent.validation.required.email;
-    } else if (!/\S+@\S+\.\S+/.test(signUpData.email)) {
-      newErrors.email = authContent.validation.format.email;
+    const emailError = validateEmail(signUpData.email);
+    if (emailError) {
+      newErrors.email = emailError.message;
     }
 
-    if (!signUpData.password) {
-      newErrors.password = authContent.validation.required.password;
-    } else if (signUpData.password.length < 6) {
-      newErrors.password = authContent.validation.format.passwordLengthShort;
+    const passwordError = validatePassword(signUpData.password);
+    if (passwordError) {
+      newErrors.password = passwordError.message;
     }
 
     if (signUpData.password !== signUpData.confirmPassword) {
       newErrors.confirmPassword = authContent.validation.format.passwordMismatch;
     }
 
-    if (signUpData.phone && !/^\+?[\d\s\-\(\)]+$/.test(signUpData.phone)) {
-      newErrors.phone = authContent.validation.format.phone;
+    if (signUpData.phone) {
+      const phoneError = validatePhone(signUpData.phone);
+      if (phoneError) {
+        newErrors.phone = phoneError.message;
+      }
     }
 
     setErrors(newErrors);
@@ -153,60 +161,7 @@ export function AuthForm({ onSuccess, defaultTab = 'signin' }: AuthFormProps) {
 
   // Seed demo users function
   const handleSeedDemoUsers = async () => {
-    setSeedingUsers(true);
-    toast.info('Seeding Database', {
-      description: 'Creating demo users and sample data...'
-    });
-
-    try {
-      // Call the seed users endpoint
-      const response = await fetch(
-        `https://${projectId}.supabase.co/functions/v1/make-server-cc205da9/seed/users`,
-        {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${publicAnonKey}`,
-            'Content-Type': 'application/json'
-          }
-        }
-      );
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to seed users');
-      }
-
-      const data = await response.json();
-      
-      toast.success('Database Seeded Successfully! 🎉', {
-        description: (
-          <div>
-            <p className="mb-2">Demo users created. You can now sign in with:</p>
-            <p className="text-sm">
-              <strong>demo1@ikan.com</strong> (Admin)<br />
-              <strong>demo2@ikan.com</strong> (Corporate)<br />
-              <strong>demo3@ikan.com</strong> (Regular)<br />
-              Password: <strong>demo123</strong>
-            </p>
-          </div>
-        ) as any,
-        duration: 10000
-      });
-
-      // Auto-fill demo1 credentials
-      setSignInData({
-        email: 'demo1@ikan.com',
-        password: 'demo123'
-      });
-
-    } catch (error) {
-      console.error('Seed error:', error);
-      toast.error('Seeding Failed', {
-        description: error instanceof Error ? error.message : 'Failed to create demo users. Please try again.'
-      });
-    } finally {
-      setSeedingUsers(false);
-    }
+    toast.info('Seeding is disabled in production.');
   };
 
   const SocialButton = ({ 

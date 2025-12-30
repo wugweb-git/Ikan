@@ -155,82 +155,10 @@ export function Assessments({ className, onNavigate }: AssessmentsProps) {
           }
         } catch (error) {
           console.warn('Failed to fetch API assessments:', error);
-          // Fallback to mock data for demo purposes
-          const mockAssessments: Assessment[] = [
-            {
-              id: 'anxiety-screen',
-              slug: 'anxiety-screen',
-              title: 'Anxiety Screening',
-              description: 'A brief assessment to check for signs of anxiety.',
-              estimatedTime: '5 minutes',
-              questionCount: 7,
-              status: 'available',
-              category: 'anxiety',
-              questions: [
-                { id: 'q1', text: 'I feel nervous', type: 'scale' }
-              ]
-            },
-            {
-              id: 'depression-screen',
-              slug: 'depression-screen',
-              title: 'Depression Screening',
-              description: 'Check your mood and signs of depression.',
-              estimatedTime: '5 minutes',
-              questionCount: 9,
-              status: 'available',
-              category: 'depression',
-              questions: []
-            },
-            {
-              id: 'stress-test',
-              slug: 'stress-test',
-              title: 'Stress Level Test',
-              description: 'Evaluate your current stress levels and coping mechanisms.',
-              estimatedTime: '3 minutes',
-              questionCount: 5,
-              status: 'available',
-              category: 'stress',
-              questions: []
-            },
-            {
-              id: 'wellness-check',
-              slug: 'wellness-check',
-              title: 'General Wellness Check',
-              description: 'A comprehensive check of your overall mental well-being.',
-              estimatedTime: '10 minutes',
-              questionCount: 15,
-              status: 'available',
-              category: 'wellness',
-              questions: []
-            },
-             {
-              id: 'burnout-assess',
-              slug: 'burnout-assess',
-              title: 'Burnout Assessment',
-              description: 'Are you experiencing signs of professional burnout?',
-              estimatedTime: '7 minutes',
-              questionCount: 10,
-              status: 'available',
-              category: 'burnout',
-              questions: []
-            },
-             {
-              id: 'sleep-quality',
-              slug: 'sleep-quality',
-              title: 'Sleep Quality Quiz',
-              description: 'Assess the quality of your sleep and identify potential issues.',
-              estimatedTime: '4 minutes',
-              questionCount: 6,
-              status: 'available',
-              category: 'sleep',
-              questions: []
-            }
-          ];
-          apiAssessments = mockAssessments;
-          showToast('info', 'Demo Mode', 'Loaded sample assessments due to connection issue.');
+          showToast('error', 'Connection Error', 'Failed to load assessments. Please try again later.');
+          setAssessments([]);
         }
 
-        setAssessments(apiAssessments);
         setLoading(false);
 
         // Background: Load user assessment history if authenticated

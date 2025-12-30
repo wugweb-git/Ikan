@@ -19,7 +19,6 @@ import { Toaster } from './components/ui/sonner';
 import { cn } from './components/ui/utils';
 import { apiClient } from './lib/api-client';
 import { projectId, publicAnonKey } from './utils/supabase/info';
-import { seedAssessments, forceSeedAssessments, checkAssessmentsSeeded } from './lib/assessment-seeder';
 import { logger } from './lib/logger';
 import { Heart } from 'lucide-react';
 import { LogoIcon } from './components/Logo';
@@ -56,6 +55,7 @@ import { EquipDetail } from './components/screens/EquipDetail';
 import { EquipOnboarding } from './components/screens/EquipProgramOnboarding';
 import { EquipProgramFlow } from './components/screens/EquipProgramFlow';
 import { EquipProgramCompletion } from './components/screens/EquipProgramCompletion';
+import { ProgramView } from './components/screens/ProgramView';
 import { Homepage } from './components/screens/Homepage';
 import { RouteTestScreen } from './components/screens/RouteTestScreen';
 import { PrivateRouteTest } from './components/screens/PrivateRouteTest';
@@ -597,44 +597,7 @@ function AppContent() {
           // Background seeding of essential data
           // DISABLED: Auto-seeding was causing deleted programs to reappear. 
           // Admins should manage programs via the Admin Panel.
-          /*
-          try {
-            console.log(' Background seeding essential data...');
-            const controller = new AbortController();
-            const timeoutId = setTimeout(() => {
-              console.log('⏰ Background seeding timeout - this is normal');
-              controller.abort();
-            }, 10000); // 10 second timeout for background seeding
-            
-            const seedResponse = await fetch(`https://${projectId}.supabase.co/functions/v1/make-server-cc205da9/seed/force-programs`, {
-              method: 'POST',
-              headers: {
-                'Authorization': `Bearer ${publicAnonKey}`,
-                'Content-Type': 'application/json'
-              },
-              signal: controller.signal
-            });
-            
-            clearTimeout(timeoutId);
-            
-            if (seedResponse.ok) {
-              const result = await seedResponse.json();
-              console.log('✅ Background seeding completed:', result.programs?.length || 0, 'programs');
-            } else {
-              console.log('📦 Background seeding returned non-OK status - continuing normally');
-            }
-          } catch (seedError) {
-            const errorMessage = seedError instanceof Error ? seedError.message : String(seedError);
-            if (errorMessage.includes('aborted') || seedError.name === 'AbortError') {
-              console.log('📦 Background seeding timeout - app continues normally');
-            } else if (errorMessage.toLowerCase().includes('failed to fetch')) {
-              console.log('📦 Background seeding network error - continuing in offline mode');
-              setOfflineMode(true);
-            } else {
-              console.log('📦 Background seeding failed, will retry per component:', errorMessage);
-            }
-          }
-          */
+          
         })
         .catch((error) => {
           const errorMessage = error instanceof Error ? error.message : String(error);
@@ -696,6 +659,21 @@ function AppContent() {
       
       const queryParams = getQueryParams();
 
+      // Check for Admin Routes first
+      if (currentRoute.startsWith('/admin')) {
+        // Find the specific admin view based on the path
+        // e.g. /admin/resources -> view="resources"
+        const adminPath = currentRoute.replace('/admin/', '');
+        // Handle root /admin case
+        const view = currentRoute === '/admin' ? 'dashboard' : adminPath;
+        
+        return (
+          <ErrorBoundary>
+            <AdminDashboard onNavigate={handleNavigate} initialView={view} />
+          </ErrorBoundary>
+        );
+      }
+
       switch (currentRoute) {
         case '/':
           return (
@@ -748,11 +726,15 @@ function AppContent() {
               <AssessmentFlow 
                 assessmentId={queryParams.type || queryParams.id || 'anxiety'}
                 onComplete={(results) => {
-                  // Store results and navigate to results screen
-                  localStorage.setItem('ikan-assessment-results', JSON.stringify(results));
-                  handleNavigate('/assessment-results');
+                  // Store results locally just in case
+                  try {
+                    localStorage.setItem('ikan-assessment-results', JSON.stringify(results));
+                  } catch (e) {
+                    console.error('Failed to save results', e);
+                  }
                 }}
                 onBack={() => handleNavigate('/assessment-landing')}
+                onNavigate={handleNavigate}
               />
             </ErrorBoundary>
           );
@@ -798,15 +780,26 @@ function AppContent() {
               />
             </ErrorBoundary>
           );
+        case '/program':
+          return (
+             <ErrorBoundary>
+               <ProgramView 
+                 equipId={queryParams.id} 
+                 onBack={() => handleNavigate('/dashboard')}
+               />
+             </ErrorBoundary>
+          );
         case '/equip-program-flow':
           return (
             <ErrorBoundary>
               <EquipProgramFlow 
+                programId={queryParams.id || queryParams.programId || "sleep-tight-9"}
+                enrollmentId={queryParams.enrollmentId}
                 onComplete={() => {
                   console.log('Program completed');
                   handleNavigate('/equip-program-completion');
                 }}
-                onBack={() => handleNavigate('/equip-program-onboarding')}
+                onBack={() => handleNavigate('/dashboard')}
               />
             </ErrorBoundary>
           );
@@ -952,72 +945,7 @@ function AppContent() {
               />
             </ErrorBoundary>
           );
-        case '/admin/resources':
-          return (
-            <ErrorBoundary>
-              <AdminDashboard onNavigate={handleNavigate} initialView="resources" />
-            </ErrorBoundary>
-          );
-        case '/admin/equip':
-          return (
-            <ErrorBoundary>
-              <AdminDashboard onNavigate={handleNavigate} initialView="equip" />
-            </ErrorBoundary>
-          );
-        case '/admin/users':
-          return (
-            <ErrorBoundary>
-              <AdminDashboard onNavigate={handleNavigate} initialView="users" />
-            </ErrorBoundary>
-          );
-        case '/admin/consultants':
-          return (
-            <ErrorBoundary>
-              <AdminDashboard onNavigate={handleNavigate} initialView="consultants" />
-            </ErrorBoundary>
-          );
-        case '/admin/assessments':
-          return (
-            <ErrorBoundary>
-              <AdminDashboard onNavigate={handleNavigate} initialView="assessments" />
-            </ErrorBoundary>
-          );
-        case '/admin/analytics':
-          return (
-            <ErrorBoundary>
-              <AdminDashboard onNavigate={handleNavigate} initialView="analytics" />
-            </ErrorBoundary>
-          );
-        case '/admin/settings':
-          return (
-            <ErrorBoundary>
-              <AdminDashboard onNavigate={handleNavigate} initialView="settings" />
-            </ErrorBoundary>
-          );
-        case '/admin/pages':
-          return (
-            <ErrorBoundary>
-              <AdminDashboard onNavigate={handleNavigate} initialView="pages" />
-            </ErrorBoundary>
-          );
-        case '/admin/media':
-          return (
-            <ErrorBoundary>
-              <AdminDashboard onNavigate={handleNavigate} initialView="media" />
-            </ErrorBoundary>
-          );
-        case '/admin/crud':
-          return (
-            <ErrorBoundary>
-              <AdminDashboard onNavigate={handleNavigate} initialView="crud" />
-            </ErrorBoundary>
-          );
-        case '/admin':
-          return (
-            <ErrorBoundary>
-              <AdminDashboard onNavigate={handleNavigate} initialView="dashboard" />
-            </ErrorBoundary>
-          );
+        // Admin routes are now handled by the dynamic check above
         case '/ui-kit':
           return (
             <ErrorBoundary>

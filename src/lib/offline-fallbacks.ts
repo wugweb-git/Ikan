@@ -1,25 +1,42 @@
 // Offline fallback data for when the backend is not available
 
-// Import sample data from TypeScript files
-import { professionalsData } from './sample-data/professionals';
-import { usersData } from './sample-data/users';
+const offlineDemoUser = {
+  user_id: 'offline-demo-user',
+  email: 'offline@ikan.health',
+  name: 'Offline User',
+  phone: '+1234567890',
+  avatar_url: '',
+  corporate_user: false,
+  created_at: new Date().toISOString()
+};
 
-export const offlineDemoUser = usersData.users[0]; // Use the first user as demo user
+const offlineProfessionals = [
+  {
+    professional_id: 'prof-1',
+    name: 'Dr. Sarah Smith',
+    title: 'Clinical Psychologist',
+    specialties: ['Anxiety', 'Depression'],
+    location: 'New York, NY',
+    phone: '555-0123',
+    email: 'sarah.smith@example.com',
+    available: true
+  },
+  {
+    professional_id: 'prof-2',
+    name: 'Dr. Michael Chen',
+    title: 'Psychiatrist',
+    specialties: ['ADHD', 'Mood Disorders'],
+    location: 'San Francisco, CA',
+    phone: '555-0124',
+    email: 'michael.chen@example.com',
+    available: true
+  }
+];
 
-// Transform professionals to match expected format
-export const offlineProfessionals = professionalsData.professionals.map(professional => ({
-  professional_id: professional.professional_id,
-  name: professional.name,
-  title: professional.title,
-  specialties: professional.specialties,
-  location: professional.location,
-  phone: professional.phone,
-  email: professional.email,
-  available: professional.available
-}));
+export { offlineDemoUser, offlineProfessionals };
 
-// Offline resources fallback (empty for now - will be populated from API cache)
-export const offlineResources = [];
+// Offline resources fallback (empty for clean slate)
+export const offlineResources: any[] = [];
 
 // Helper function to check if we're in offline mode
 export const isOfflineMode = () => {
@@ -52,13 +69,13 @@ export const getOfflineData = (type: string, id?: string) => {
       return { professionals: offlineProfessionals };
     case 'resources':
       if (id) {
-        const resource = offlineResources.find(r => r.resource_id === id);
-        return resource ? { resource } : { resource: null };
+        return { resource: null };
       }
-      return { resources: offlineResources };
+      return { resources: [] };
     case 'programs':
-      // Return empty array for equip programs when offline
-      // Tests can create programs dynamically
+      if (id) {
+        return { program: null };
+      }
       return { programs: [] };
     case 'enrollments':
       // Return empty array for equip enrollments when offline
@@ -88,6 +105,23 @@ export const getOfflineData = (type: string, id?: string) => {
       return { entries: [] };
     case 'journalEntry':
       return { entry: null };
+    case 'categories':
+      return {
+        categories: [
+          { id: '1', name: 'Article', slug: 'article', icon: 'book', color: '#3B82F6', type: 'resource' },
+          { id: '2', name: 'Audio', slug: 'audio', icon: 'headphones', color: '#10B981', type: 'resource' },
+          { id: '3', name: 'Video', slug: 'video', icon: 'video', color: '#EF4444', type: 'resource' },
+          { id: '4', name: 'Podcast', slug: 'podcast', icon: 'mic', color: '#8B5CF6', type: 'resource' },
+          { id: '5', name: 'Workbook', slug: 'workbook', icon: 'file-text', color: '#F59E0B', type: 'resource' },
+          { id: '6', name: 'Guide', slug: 'guide', icon: 'map', color: '#6B7280', type: 'resource' }
+        ]
+      };
+    case 'health':
+      return { health: [] };
+    case 'goals':
+      return { goals: [] };
+    case 'history':
+      return { history: [] };
     default:
       console.warn(`Unknown offline data type: ${type}`);
       // Return empty array structure to prevent .filter errors

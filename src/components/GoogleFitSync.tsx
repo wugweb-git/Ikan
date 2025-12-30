@@ -42,7 +42,25 @@ export function GoogleFitSync({ className }: GoogleFitSyncProps) {
     try {
       setIsLoading(true);
       
-      // Check if user has Google Fit connected
+      // Check backend for health data first
+      try {
+        const remoteData = await apiClient.getHealthData();
+        if (remoteData) {
+          setIsConnected(true);
+          setFitData({
+            ...remoteData,
+            lastSyncDate: new Date(remoteData.lastSyncDate || remoteData.updated_at)
+          });
+          setLastSyncTime(new Date(remoteData.updated_at));
+          // Sync local storage to match
+          localStorage.setItem(`ikan-googlefit-${user?.id}`, 'connected');
+          return;
+        }
+      } catch (e) {
+        console.log('Failed to fetch remote health data, falling back to local');
+      }
+
+      // Check if user has Google Fit connected locally
       const storedConnectionStatus = localStorage.getItem(`ikan-googlefit-${user?.id}`);
       const storedData = localStorage.getItem(`ikan-googlefit-data-${user?.id}`);
       
@@ -86,10 +104,13 @@ export function GoogleFitSync({ className }: GoogleFitSyncProps) {
         lastSyncDate: new Date()
       };
 
-      // Store connection status and data
+      // Store connection status and data locally
       localStorage.setItem(`ikan-googlefit-${user?.id}`, 'connected');
       localStorage.setItem(`ikan-googlefit-data-${user?.id}`, JSON.stringify(mockData));
       
+      // Sync to backend
+      await apiClient.syncHealthData(mockData);
+
       setIsConnected(true);
       setFitData(mockData);
       setLastSyncTime(new Date());
@@ -141,7 +162,12 @@ export function GoogleFitSync({ className }: GoogleFitSyncProps) {
         lastSyncDate: new Date()
       };
 
+      // Store locally
       localStorage.setItem(`ikan-googlefit-data-${user?.id}`, JSON.stringify(updatedData));
+      
+      // Sync to backend
+      await apiClient.syncHealthData(updatedData);
+
       setFitData(updatedData);
       setLastSyncTime(new Date());
       

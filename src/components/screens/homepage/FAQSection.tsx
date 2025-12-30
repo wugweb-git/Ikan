@@ -1,29 +1,31 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Button } from '../../ui/button';
 import { ErrorBoundary } from '../../ErrorBoundary';
 import { ChevronDown } from 'lucide-react';
+import { usePageContent } from '../../../hooks/usePageContent';
 
 // Import assets
 import svgPaths from "../../../imports/svg-rdg85uq8eg";
 
 export function FAQSection() {
   const [openModules, setOpenModules] = useState<Set<number>>(new Set());
+  const { content, loading } = usePageContent('homepage-faq');
 
-  const modules = [
-    "MODULE 1: Start your journey!",
-    "MODULE 2: My symptoms and goals",
-    "MODULE 3: Psychological stress model",
-    "MODULE 4: Resources and resilience",
-    "MODULE 5: Self-worth and personal beliefs",
-    "MODULE 6: Open discussion session",
-    "MODULE 7: Reflection and review"
-  ];
+  const faqData = useMemo(() => {
+    if (!content?.content) return null;
+    try {
+      return JSON.parse(content.content);
+    } catch (e) {
+      console.error('Failed to parse FAQ content', e);
+      return null;
+    }
+  }, [content]);
 
-  const features = [
-    "1 month risk-free trial",
-    "Self-paced learning modules",
-    "Community support included"
-  ];
+  if (loading || !faqData) {
+     return null;
+  }
+
+  const { eyebrow, headline, description, courseTitle, modules, cardTitle, features, ctaText } = faqData;
 
   const toggleModule = (index: number) => {
     const newOpenModules = new Set(openModules);
@@ -64,7 +66,7 @@ export function FAQSection() {
                 letterSpacing: 'var(--letter-spacing-wide)'
               }}
             >
-              Your Course
+              {eyebrow}
             </div>
             <h2 
               className="max-w-4xl mx-auto"
@@ -76,8 +78,12 @@ export function FAQSection() {
                 fontFamily: 'var(--font-family-base)'
               }}
             >
-              Psychological Help for Stress.<br />
-              What this course offers you:
+              {headline.split('\\n').map((line: string, i: number) => (
+                <React.Fragment key={i}>
+                  {line}
+                  {i < headline.split('\\n').length - 1 && <br />}
+                </React.Fragment>
+              ))}
             </h2>
             <p 
               className="max-w-3xl mx-auto leading-relaxed"
@@ -88,7 +94,7 @@ export function FAQSection() {
                 fontFamily: 'var(--font-family-base)'
               }}
             >
-              Change takes time. Similar to sports or meditation, you won't feel immediate improvement - a clear plan and persistence are the keys to success. That's why our courses are designed for sustainability.
+              {description}
             </p>
           </div>
 
@@ -110,7 +116,7 @@ export function FAQSection() {
                   fontFamily: 'var(--font-family-base)'
                 }}
               >
-                6 Month Group Course
+                {courseTitle}
               </h3>
             </div>
 
@@ -119,7 +125,7 @@ export function FAQSection() {
               className="space-y-2 mobile-optimized"
               style={{ gap: 'var(--spacing-2)' }}
             >
-              {modules.map((module, index) => (
+              {modules.map((module: string, index: number) => (
                 <Button
                   key={index}
                   onClick={() => toggleModule(index)}
@@ -167,14 +173,14 @@ export function FAQSection() {
                   fontFamily: 'var(--font-family-base)'
                 }}
               >
-                Begin your journey
+                {cardTitle}
               </h3>
               
               <div 
                 className="space-y-4 mb-6"
                 style={{ gap: 'var(--spacing-4)' }}
               >
-                {features.map((feature, index) => (
+                {features.map((feature: string, index: number) => (
                   <div key={index} className="flex items-start gap-3">
                     <div className="w-5 h-5 mt-0.5 flex-shrink-0">
                       <svg viewBox="0 0 15 11" className="w-full h-full">
@@ -205,7 +211,7 @@ export function FAQSection() {
                   borderRadius: 'var(--radius-sm)'
                 }}
               >
-                Get Started
+                {ctaText}
               </Button>
             </div>
           </div>
@@ -238,12 +244,12 @@ export function FAQSection() {
                       fontFamily: 'var(--font-family-base)'
                     }}
                   >
-                    6 Month Group Course
+                    {courseTitle}
                   </h3>
                 </div>
 
                 {/* Modules List */}
-                {modules.map((module, index) => (
+                {modules.map((module: string, index: number) => (
                   <Button
                     key={index}
                     onClick={() => toggleModule(index)}
@@ -291,14 +297,14 @@ export function FAQSection() {
                     fontFamily: 'var(--font-family-base)'
                   }}
                 >
-                  Begin your journey
+                  {cardTitle}
                 </h3>
                 
                 <div 
                   className="space-y-4 mb-8"
                   style={{ gap: 'var(--spacing-4)' }}
                 >
-                  {features.map((feature, index) => (
+                  {features.map((feature: string, index: number) => (
                     <div key={index} className="flex items-start gap-3">
                       <div className="w-5 h-5 mt-0.5 flex-shrink-0">
                         <svg viewBox="0 0 15 11" className="w-full h-full">
@@ -329,7 +335,7 @@ export function FAQSection() {
                     borderRadius: 'var(--radius-sm)'
                   }}
                 >
-                  Get Started
+                  {ctaText}
                 </Button>
               </div>
             </div>

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Button } from '../../ui/button';
 import { Input } from '../../ui/input';
 import { ImageWithFallback } from '../../figma/ImageWithFallback';
@@ -6,21 +6,28 @@ import { ErrorBoundary } from '../../ErrorBoundary';
 import { logger } from '../../../lib/logger';
 import { toast } from 'sonner@2.0.3';
 import { projectId, publicAnonKey } from '../../../utils/supabase/info';
+import { usePageContent } from '../../../hooks/usePageContent';
 
 export function NewsletterSection() {
   const [formData, setFormData] = React.useState({ name: '', email: '' });
   const [isSubmitting, setIsSubmitting] = React.useState(false);
+  const { content, loading } = usePageContent('homepage-newsletter');
 
-  const title = "Newsletter Signup";
-  const benefits = [
-    "Get weekly mental health tips and insights",
-    "Early access to new features and programs",
-    "Exclusive resources and guided exercises"
-  ];
-  const imageUrl = "https://images.unsplash.com/photo-1758273240360-76b908e7582a?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxtZW50YWwlMjBoZWFsdGglMjB3ZWxsbmVzcyUyMHN1cHBvcnR8ZW58MXx8fHwxNzY0OTUxMDY1fDA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral";
-  const imageAlt = "Mental health and wellness support";
-  const privacyText = "Privacy: We store and process your personal data based on our privacy policy. You can unsubscribe at any time.";
-  const ctaText = "Sign up now!";
+  const newsletterData = useMemo(() => {
+    if (!content?.content) return null;
+    try {
+      return JSON.parse(content.content);
+    } catch (e) {
+      console.error('Failed to parse newsletter content', e);
+      return null;
+    }
+  }, [content]);
+
+  if (loading || !newsletterData) {
+     return null; // or skeleton
+  }
+
+  const { title, benefits, imageUrl, imageAlt, privacyText, ctaText } = newsletterData;
 
   const handleSubmit = async () => {
     if (!formData.email) {

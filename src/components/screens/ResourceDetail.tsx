@@ -283,6 +283,11 @@ export function ResourceDetail({ resourceId, onBack, onResourceSelect, className
           resourceId,
           timestamp: new Date().toISOString()
         });
+        
+        // Log simple activity for admin dashboard
+        apiClient.logActivity('resource_view', resourceId, {
+          title: resource?.title || 'Unknown Resource'
+        }).catch(err => console.log('Simple activity log failed', err));
 
         // Load the resource
         await loadResource();
@@ -501,95 +506,8 @@ export function ResourceDetail({ resourceId, onBack, onResourceSelect, className
           
           return transformed;
         } catch (apiError: any) {
-          console.log('API failed, trying fallback data...');
-          
-          // Fallback to mock data for demo purposes
-          const mockResource: ResourceContent = {
-            id: resourceId,
-            title: "What OpenAI's Research Reveals About The Future Of AI Search",
-            description: "New OpenAI research shows AI search has become ChatGPT's primary use case, with mass adoption projected for mid-2026.",
-            category: "AI & Technology", 
-            contentType: "Article",
-            readTimeMinutes: 10,
-            author: "Reza Moaiandin",
-            publishedDate: "2024-09-30",
-            content: [
-              {
-                type: 'paragraph',
-                content: 'The launch of ChatGPT in 2022 didn\'t so much cause a shift in the search landscape as trigger a series of seismic events. And, like seismologists, the SEO industry needs data if it\'s to predict future tremors and aftershocks – let alone prepare itself for what the landscape might reshape itself into once the ground has finally settled.'
-              },
-              {
-                type: 'paragraph',
-                content: 'So, when OpenAI released a 65-page research paper on Sept. 15, 2025, titled "How People Use ChatGPT," some of us were understandably excited to finally have some authoritative usage data from inside a major large language model (LLM).'
-              },
-              {
-                type: 'paragraph',
-                content: 'Two key findings leap out:'
-              },
-              {
-                type: 'list',
-                content: '',
-                items: [
-                  'We\'re closer to mass adoption of AI than most probably realize.',
-                  'How users interact with ChatGPT has fundamentally shifted in the past year.'
-                ]
-              },
-              {
-                type: 'paragraph',
-                content: 'For SEOs, this isn\'t just another adoption study: It\'s strategic intelligence about where AI search is heading.'
-              },
-          {
-            type: 'heading',
-            content: 'Mass Adoption Is Closer Than You Think'
-          },
-          {
-            type: 'paragraph',
-            content: 'How close is ChatGPT to the tipping point where it will accelerate into mass adoption?'
-          },
-          {
-            type: 'paragraph',
-            content: 'Developed by sociologist Everett Rogers, the diffusion of innovation theory provides us with a useful framework to explain how new technologies spread through society in predictable stages. First, there are the innovators, accounting for 2.5% of the market. Then, the early adopters come along (13.5%), to be followed by the early majority (34%). At this point, ~50% of the potential market has adopted the technology. Anyone jumping on board after this point can safely be described as either the late majority (34%), or laggards (16%).'
-          },
-          {
-            type: 'heading',
-            content: 'The Behavioral Revolution Hiding In Plain Sight'
-          },
-          {
-            type: 'paragraph',
-            content: 'Buried within OpenAI\'s usage data is perhaps the most significant finding for search marketers: a fundamental shift in how people are using AI tools.'
-          }
-        ],
-        tags: ['UI Design', 'Marketing', 'Ai Driven', 'Strategy'],
-        relatedResources: [
-          {
-            id: '2',
-            title: 'Do I Need to Supplement with B12?',
-            category: 'Health',
-            readTimeMinutes: 5,
-            description: 'It\'s one of those nutrients that gets a lot of hype, and for good reason',
-            publishedDate: '2025-02-26'
-          },
-          {
-            id: '3',
-            title: 'Recipe: Mint Chip Smoothie',
-            category: 'Nutrition',
-            readTimeMinutes: 7,
-            description: 'This Mint Chip Smoothie was a limited edition menu item that still lives on in our dreams, and now you can enjoy it any time at home.',
-            publishedDate: '2025-02-06'
-          },
-          {
-            id: '4',
-            title: 'The Wellness Edit',
-            category: 'Lifestyle',
-            readTimeMinutes: 6,
-            description: 'Welcome to the Wellness Edit, the newest editorial project from Earthbar.',
-            publishedDate: '2025-02-02'
-          }
-        ]
-      };
-      
-      console.log('📚 Using fallback demo content');
-      return mockResource;
+          console.error('API failed:', apiError);
+          throw apiError;
         }
       });
 
@@ -658,81 +576,10 @@ export function ResourceDetail({ resourceId, onBack, onResourceSelect, className
             if (fallbackRelated.length > 0) {
               resourceData.relatedResources = fallbackRelated;
               setResource({ ...resourceData });
-            } else {
-              // Final fallback: Use demo related resources so users can see the feature
-              const demoRelated = [
-                {
-                  id: 'demo-1',
-                  title: 'Understanding Mindfulness for Mental Wellness',
-                  category: 'Mental Health',
-                  readTimeMinutes: 8,
-                  image: 'https://images.unsplash.com/photo-1506126613408-eca07ce68773?w=800&q=80',
-                  description: 'Learn practical mindfulness techniques to improve your mental health and reduce daily stress.',
-                  publishedDate: new Date().toISOString().split('T')[0]
-                },
-                {
-                  id: 'demo-2',
-                  title: 'Building Healthy Daily Routines',
-                  category: 'Wellness',
-                  readTimeMinutes: 6,
-                  image: 'https://images.unsplash.com/photo-1499750310107-5fef28a66643?w=800&q=80',
-                  description: 'Discover how to create sustainable daily habits that support your overall wellbeing.',
-                  publishedDate: new Date().toISOString().split('T')[0]
-                },
-                {
-                  id: 'demo-3',
-                  title: 'Managing Stress in Modern Life',
-                  category: 'Self-Care',
-                  readTimeMinutes: 7,
-                  image: 'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=800&q=80',
-                  description: 'Effective strategies to manage stress and maintain balance in your busy lifestyle.',
-                  publishedDate: new Date().toISOString().split('T')[0]
-                }
-              ];
-              
-              resourceData.relatedResources = demoRelated;
-              setResource({ ...resourceData });
-              console.log('✅ Using demo related resources to showcase feature');
             }
           }
         } catch (error) {
           console.error('❌ Failed to auto-load related resources:', error);
-          
-          // Even on error, show demo content
-          console.log('⚠️ API error - using demo content as fallback');
-          const demoRelated = [
-            {
-              id: 'demo-1',
-              title: 'Understanding Mindfulness for Mental Wellness',
-              category: 'Mental Health',
-              readTimeMinutes: 8,
-              image: 'https://images.unsplash.com/photo-1506126613408-eca07ce68773?w=800&q=80',
-              description: 'Learn practical mindfulness techniques to improve your mental health and reduce daily stress.',
-              publishedDate: new Date().toISOString().split('T')[0]
-            },
-            {
-              id: 'demo-2',
-              title: 'Building Healthy Daily Routines',
-              category: 'Wellness',
-              readTimeMinutes: 6,
-              image: 'https://images.unsplash.com/photo-1499750310107-5fef28a66643?w=800&q=80',
-              description: 'Discover how to create sustainable daily habits that support your overall wellbeing.',
-              publishedDate: new Date().toISOString().split('T')[0]
-            },
-            {
-              id: 'demo-3',
-              title: 'Managing Stress in Modern Life',
-              category: 'Self-Care',
-              readTimeMinutes: 7,
-              image: 'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=800&q=80',
-              description: 'Effective strategies to manage stress and maintain balance in your busy lifestyle.',
-              publishedDate: new Date().toISOString().split('T')[0]
-            }
-          ];
-          
-          resourceData.relatedResources = demoRelated;
-          setResource({ ...resourceData });
-          console.log('✅ Demo related resources loaded after error');
         }
       } else {
         console.log('✅ Resource already has related resources:', resourceData.relatedResources.length);

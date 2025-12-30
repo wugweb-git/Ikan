@@ -58,8 +58,11 @@ export function AdminPageLayout({
 
   return (
     <div className={`${maxWidthClass} mx-auto px-4 md:px-6`} style={{ paddingTop: isMobile ? 'var(--spacing-6)' : 'var(--spacing-8)', paddingBottom: 'var(--spacing-8)' }}>
-      {/* Header */}
-      <div className="flex items-start justify-between mb-8">
+      {/* Header - Sticky */}
+      <div 
+        className="flex items-start justify-between mb-8 sticky z-10 bg-gray-50 pb-4 pt-2 -mt-2"
+        style={{ top: isMobile ? '64px' : '72px' }}
+      >
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-3 mb-1">
             <h1

@@ -18,13 +18,15 @@ import { EmptyState } from '../ui/empty-state';
 import { OptimizedImage } from '../ui/optimized-image';
 import { PullToRefresh } from '../ui/touch-feedback';
 
+import { RESOURCE_TYPES } from '../../lib/constants';
+
 interface LibraryProps {
   onResourceSelect?: (resourceId: string) => void;
   className?: string;
 }
 
 interface Resource extends ResourcePost {
-  type: 'article' | 'video' | 'tool';
+  type: string;
 }
 
 export function Library({ onResourceSelect, className }: LibraryProps) {
@@ -77,11 +79,10 @@ export function Library({ onResourceSelect, className }: LibraryProps) {
             });
 
             // Helper to determine resource type from category or contentType
-            const getResourceType = (contentType: string | undefined, category: string | undefined): 'article' | 'video' | 'tool' => {
+            const getResourceType = (contentType: string | undefined, category: string | undefined): string => {
               const typeStr = (contentType || category || '').toLowerCase();
-              if (typeStr.includes('video')) return 'video';
-              if (typeStr.includes('tool') || typeStr.includes('workbook')) return 'tool';
-              return 'article';
+              const match = RESOURCE_TYPES.find(t => typeStr.includes(t.value));
+              return match ? match.value : 'article';
             };
 
             return {
@@ -183,14 +184,6 @@ export function Library({ onResourceSelect, className }: LibraryProps) {
       });
     }
   };
-
-  // Type filter buttons
-  const typeFilters = [
-    { id: 'all', label: 'All', icon: BookOpen },
-    { id: 'article', label: 'Articles', icon: BookOpen },
-    { id: 'video', label: 'Videos', icon: Video },
-    { id: 'tool', label: 'Tools', icon: Wrench }
-  ];
 
   // Derive unique categories from resources
   const categoryFilters = useMemo(() => {

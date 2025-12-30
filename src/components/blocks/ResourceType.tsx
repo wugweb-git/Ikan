@@ -1,6 +1,7 @@
 import React from 'react';
 import { Button } from '../ui/button';
-import { BookOpen, Video, Wrench } from 'lucide-react';
+import { BookOpen, Video, Wrench, FileText, Activity, Mic, GraduationCap } from 'lucide-react';
+import { RESOURCE_TYPES } from '../../lib/constants';
 
 interface ResourceTypeProps {
   activeType: string;
@@ -8,12 +9,24 @@ interface ResourceTypeProps {
   className?: string;
 }
 
+const ICON_MAP: Record<string, any> = {
+  'file-text': FileText,
+  'tool': Wrench,
+  'activity': Activity,
+  'video': Video,
+  'mic': Mic,
+  'book': BookOpen,
+  'graduation-cap': GraduationCap
+};
+
 export function ResourceType({ activeType, onTypeChange, className }: ResourceTypeProps) {
   const typeFilters = [
     { id: 'all', label: 'All', icon: BookOpen },
-    { id: 'article', label: 'Articles', icon: BookOpen },
-    { id: 'video', label: 'Videos', icon: Video },
-    { id: 'tool', label: 'Tools', icon: Wrench }
+    ...RESOURCE_TYPES.map(t => ({
+      id: t.value,
+      label: t.label,
+      icon: ICON_MAP[t.icon] || BookOpen
+    }))
   ];
 
   return (

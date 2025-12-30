@@ -3,9 +3,6 @@ import { cors } from "npm:hono/cors";
 import { logger } from "npm:hono/logger";
 import { createClient } from "jsr:@supabase/supabase-js@2";
 import * as kv from "./kv_store.tsx";
-import { handleSeedData, handleSeedUsers } from "./seed-endpoint.tsx";
-import { handleComprehensiveSeed } from "./comprehensive-seed.tsx";
-import { handleEquipCleanupAndSeed } from "./equip-cleanup.tsx";
 import { createHash, createHmac } from "node:crypto";
 
 // Import monitoring utilities
@@ -29,6 +26,20 @@ import {
   verifyPassword,
   validateEquipProgram
 } from "./validation.tsx";
+
+import { 
+  EquipService, 
+  EquipDayService, 
+  EquipBlockService, 
+  DatasetService 
+} from "./program-service.ts";
+import { ProgressService } from "./progress-service.ts";
+import { RecommendationService } from "./recommendation-service.ts";
+import { MigrationRunner } from "./migration-runner.ts";
+
+import { registerEquipRoutes } from './equip-routes.ts';
+import { registerProgressRoutes } from './progress-routes.ts';
+import { registerRecommendationRoutes } from './recommendation-routes.ts';
 
 const app = new Hono();
 
@@ -96,6 +107,11 @@ async function requireAdmin(c: any, next: any) {
   c.set('isAdmin', true);
   await next();
 }
+
+// Register modules
+registerEquipRoutes(app, requireAuth);
+registerProgressRoutes(app, requireAuth);
+registerRecommendationRoutes(app, requireAuth);
 
 // Health check endpoint
 app.get("/make-server-cc205da9/health", (c) => {
@@ -841,7 +857,7 @@ app.post("/make-server-cc205da9/equip/purchase/:equipId", requireAuth, async (c)
 app.post("/make-server-cc205da9/journal/entries", requireAuth, async (c) => {
   try {
     const userId = c.get('userId');
-    const { date, mood_rating, freehand_text_content, associated_tracker_entry_id } = await c.req.json();
+    const { date, mood_rating, freehand_text_content, associated_tracker_entry_id, emotions, energy } = await c.req.json();
     
     if (!date) {
       return c.json({ error: 'Date is required' }, 400);
@@ -856,6 +872,8 @@ app.post("/make-server-cc205da9/journal/entries", requireAuth, async (c) => {
       mood_rating: mood_rating || null,
       freehand_text_content: freehand_text_content || null,
       associated_tracker_entry_id: associated_tracker_entry_id || null,
+      emotions: emotions || [],
+      energy: energy || null,
       status: 'present'
     };
 
@@ -918,15 +936,6 @@ app.get("/make-server-cc205da9/assessments", async (c) => {
   try {
     // Get all available assessments
     let assessments = await kv.getByPrefix('assessment:');
-    
-    /* 
-    // Auto-seed disabled to allow admin full control
-    if (assessments.length === 0) {
-      console.log('⚠️ No assessments found. Triggering auto-seed...');
-      await handleSeedData();
-      assessments = await kv.getByPrefix('assessment:');
-    }
-    */
 
     // Filter out null/undefined entries and duplicates (since we store by ID and Slug)
     const validAssessments = assessments.filter((a: any) => a && a.id);
@@ -958,34 +967,9 @@ app.get("/make-server-cc205da9/assessments/:assessmentId", async (c) => {
     }
     
     if (!assessment) {
-      // Auto-seed if default assessment is missing
-      const defaultIds = [
-        'anxiety', 'depression', 'burnout', 'sleep-quality',
-        'resilience', 'work-engagement', 'wellbeing-index', 'mindfulness',
-        'assess-anxiety-gad7', 'assess-depression-phq9', 'assess-burnout-risk',
-        'assess-sleep-quality-psqi-adapted'
-      ];
-      
-      if (defaultIds.some(id => assessmentId.includes(id) || id.includes(assessmentId))) {
-        console.log(`⚠️ Default assessment '${assessmentId}' not found. Triggering auto-seed...`);
-        await handleSeedData();
-        
-        // Try fetching again after seeding
-        assessment = await kv.get(`assessment:${assessmentId}`);
-        
-        // Still not found? Search again through all
-        if (!assessment) {
-          const allAssessments = await kv.getByPrefix('assessment:');
-          assessment = allAssessments.find((a: any) => 
-            a && (a.id === assessmentId || a.slug === assessmentId || a.assessment_id === assessmentId)
-          );
-        }
-      }
-      
-      if (!assessment) {
-        console.log(`❌ Assessment not found: ${assessmentId}`);
-        return c.json({ error: 'Assessment not found' }, 404);
-      }
+      // Return 404 if not found
+      console.log(`❌ Assessment not found: ${assessmentId}`);
+      return c.json({ error: 'Assessment not found' }, 404);
     }
     
     console.log(`✅ Found assessment: ${assessment.title || assessment.slug}`);
@@ -1134,7 +1118,7 @@ app.post("/make-server-cc205da9/assessments/:assessmentId/responses", requireAut
   try {
     const userId = c.get('userId');
     const assessmentId = c.req.param('assessmentId');
-    const { responses, status, score } = await c.req.json();
+    const { responses, status, score, interpretation, severity } = await c.req.json();
     
     const responseId = `${userId}-${assessmentId}-${Date.now()}`;
     const assessmentResponse = {
@@ -1144,6 +1128,8 @@ app.post("/make-server-cc205da9/assessments/:assessmentId/responses", requireAut
       responses,
       status: status || 'in_progress',
       score: score || null,
+      interpretation: interpretation || null, // Store full interpretation object/string
+      severity: severity || null, // Explicit severity: low, mild, moderate, high
       started_at: new Date().toISOString(),
       completed_at: status === 'completed' ? new Date().toISOString() : null
     };
@@ -1170,518 +1156,26 @@ app.get("/make-server-cc205da9/assessments/responses/user", requireAuth, async (
   }
 });
 
-// Equip Program Admin Endpoints (GET routes are defined later with filtering)
-app.post("/make-server-cc205da9/admin/equip/cleanup", requireAdmin, async (c) => {
+// ========================================
+// RECOMMENDATION ENDPOINTS
+// ========================================
+
+app.get("/make-server-cc205da9/recommendations", requireAuth, async (c) => {
   try {
-    const result = await handleEquipCleanupAndSeed();
-    return c.json(result);
-  } catch (error) {
-    console.error('Equip cleanup error:', error);
-    return c.json({ error: 'Failed to cleanup equip programs' }, 500);
+    const userId = c.get('userId');
+    const recommendations = await RecommendationService.getRecommendations(userId);
+    return c.json({ recommendations });
+  } catch (error: any) {
+    console.log('Get recommendations error:', error);
+    return c.json({ error: 'Failed to generate recommendations', details: error.message }, 500);
   }
 });
 
-app.post("/make-server-cc205da9/equip/programs", requireAuth, async (c) => {
-  try {
-    const user = c.get('user');
-    
-    // Check if user is admin
-    const userProfile = await kv.get(`user:${user.id}`);
-    if (!userProfile?.is_admin) {
-      return c.json({ error: 'Admin access required' }, 403);
-    }
-    
-    const programData = await c.req.json();
-    
-    // Validate CMS constraints
-    const validation = validateEquipProgram(programData);
-    if (!validation.isValid) {
-      console.log('❌ CMS Validation Failed:', validation.errors);
-      // Return 400 but also include the specific errors so Admin UI can show them
-      return c.json({ 
-        error: 'Content validation failed. Please check field limits.', 
-        details: validation.errors 
-      }, 400);
-    }
 
-    const equipId = programData.equip_id || `equip-${Date.now()}`;
-    
-    const newProgram = {
-      ...programData,
-      equip_id: equipId,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
-    };
-    
-    await kv.set(`equip_program:${equipId}`, newProgram);
-    
-    // Also store by slug if available for lookup flexibility
-    if (newProgram.slug) {
-      await kv.set(`equip_program_by_slug:${newProgram.slug}`, newProgram);
-    }
-    
-    console.log(`✅ Equip program created: ${equipId}`);
-    return c.json({ program: newProgram });
-  } catch (error) {
-    console.log('Create equip program error:', error);
-    return c.json({ error: 'Failed to create equip program' }, 500);
-  }
-});
 
-app.put("/make-server-cc205da9/equip/programs/:equipId", requireAuth, async (c) => {
-  try {
-    const user = c.get('user');
-    const equipId = c.req.param('equipId');
-    console.log(`📝 Updating equip program: ${equipId}`);
-    
-    // Check if user is admin
-    const userProfile = await kv.get(`user:${user.id}`);
-    if (!userProfile?.is_admin) {
-      return c.json({ error: 'Admin access required' }, 403);
-    }
-    
-    const updates = await c.req.json();
-    
-    // Validate CMS constraints (only for fields present in updates)
-    const validation = validateEquipProgram(updates);
-    if (!validation.isValid) {
-      console.log('❌ CMS Validation Failed (Update):', validation.errors);
-      return c.json({ 
-        error: 'Content validation failed. Please check field limits.', 
-        details: validation.errors 
-      }, 400);
-    }
-    
-    // 🐛 DEBUG: Log what we received
-    console.log('📥 [SERVER] Received updates:', JSON.stringify(updates, null, 2));
-    console.log('📥 [SERVER] Title:', updates.title);
-    console.log('📥 [SERVER] Thumbnail:', updates.thumbnail);
-    console.log('📥 [SERVER] Description:', updates.description);
-    
-    // Try direct lookup first
-    let existingProgram = await kv.get(`equip_program:${equipId}`);
-    let storageKey = `equip_program:${equipId}`;
-    
-    // If not found, try by slug
-    if (!existingProgram) {
-      existingProgram = await kv.get(`equip_program_by_slug:${equipId}`);
-      if (existingProgram) {
-        storageKey = `equip_program:${existingProgram.equip_id || existingProgram.id}`;
-      }
-    }
-    
-    // If still not found, search all programs
-    if (!existingProgram) {
-      const allPrograms = await kv.getByPrefix('equip_program:');
-      const found = allPrograms.find((p: any) => 
-        p && (p.equip_id === equipId || p.id === equipId || p.slug === equipId)
-      );
-      
-      if (found) {
-        existingProgram = found;
-        storageKey = `equip_program:${found.equip_id || found.id}`;
-      }
-    }
-    
-    if (!existingProgram) {
-      console.log(`❌ Equip program not found for update: ${equipId}`);
-      return c.json({ error: 'Program not found' }, 404);
-    }
-    
-    const updatedProgram = {
-      ...existingProgram,
-      ...updates,
-      equip_id: existingProgram.equip_id || existingProgram.id,
-      id: existingProgram.id,
-      slug: updates.slug || existingProgram.slug,
-      updated_at: new Date().toISOString()
-    };
-    
-    // 🐛 DEBUG: Log what we're saving
-    console.log('💾 [SERVER] Saving to key:', storageKey);
-    console.log('💾 [SERVER] Updated program title:', updatedProgram.title);
-    console.log('💾 [SERVER] Updated program thumbnail:', updatedProgram.thumbnail);
-    
-    // SAVE TO ALL RELEVANT KEYS to ensure consistency
-    // 1. Primary ID Key
-    await kv.set(storageKey, updatedProgram);
-    
-    // 2. Slug Key (if slug exists)
-    if (updatedProgram.slug) {
-        const slugKey = `equip_program:${updatedProgram.slug}`;
-        await kv.set(slugKey, updatedProgram);
-        // Also update legacy slug mapping
-        await kv.set(`equip_program_by_slug:${updatedProgram.slug}`, updatedProgram);
-        
-        // Cleanup old slug if it changed
-        if (existingProgram.slug && existingProgram.slug !== updatedProgram.slug) {
-            await kv.del(`equip_program:${existingProgram.slug}`);
-            await kv.del(`equip_program_by_slug:${existingProgram.slug}`);
-        }
-    }
-    
-    console.log(`✅ Equip program updated: ${storageKey}`);
-    return c.json({ program: updatedProgram });
-  } catch (error) {
-    console.log('Update equip program error:', error);
-    return c.json({ error: 'Failed to update equip program' }, 500);
-  }
-});
 
-app.delete("/make-server-cc205da9/equip/programs/:equipId", requireAuth, async (c) => {
-  try {
-    const user = c.get('user');
-    const equipId = c.req.param('equipId');
-    console.log(`🗑️ Deleting equip program: ${equipId}`);
-    
-    // Check if user is admin
-    const userProfile = await kv.get(`user:${user.id}`);
-    if (!userProfile?.is_admin) {
-      return c.json({ error: 'Admin access required' }, 403);
-    }
-    
-    // Try direct lookup first
-    let existingProgram = await kv.get(`equip_program:${equipId}`);
-    let storageKey = `equip_program:${equipId}`;
-    
-    // If not found, try by slug
-    if (!existingProgram) {
-      existingProgram = await kv.get(`equip_program_by_slug:${equipId}`);
-      if (existingProgram) {
-        storageKey = `equip_program:${existingProgram.equip_id || existingProgram.id}`;
-      }
-    }
-    
-    // If still not found, search all programs
-    if (!existingProgram) {
-      const allPrograms = await kv.getByPrefix('equip_program:');
-      const found = allPrograms.find((p: any) => 
-        p && (p.equip_id === equipId || p.id === equipId || p.slug === equipId)
-      );
-      
-      if (found) {
-        existingProgram = found;
-        storageKey = `equip_program:${found.equip_id || found.id}`;
-      }
-    }
-    
-    if (!existingProgram) {
-      console.log(`❌ Equip program not found for deletion: ${equipId}`);
-      return c.json({ error: 'Program not found' }, 404);
-    }
-    
-    // Deleting ALL potential keys to ensure it's gone
-    const keysToDelete = [];
-    
-    // 1. The ID key
-    if (existingProgram.equip_id) keysToDelete.push(`equip_program:${existingProgram.equip_id}`);
-    if (existingProgram.id) keysToDelete.push(`equip_program:${existingProgram.id}`);
-    
-    // 2. The Slug key (used by force seed)
-    if (existingProgram.slug) {
-        keysToDelete.push(`equip_program:${existingProgram.slug}`);
-        // 3. The Legacy slug lookup key
-        keysToDelete.push(`equip_program_by_slug:${existingProgram.slug}`);
-    }
-    
-    // 4. Any other potential aliases found during search
-    if (storageKey) keysToDelete.push(storageKey);
 
-    // Dedup keys
-    const uniqueKeys = [...new Set(keysToDelete)];
-    
-    console.log(`🗑️ Deleting keys: ${uniqueKeys.join(', ')}`);
-    
-    for (const key of uniqueKeys) {
-        try {
-            await kv.del(key);
-        } catch (e) {
-            console.warn(`Failed to delete key ${key}:`, e);
-        }
-    }
-    
-    console.log(`✅ Equip program deleted successfully`);
-    return c.json({ success: true, message: 'Program deleted successfully' });
-  } catch (error) {
-    console.log('Delete equip program error:', error);
-    return c.json({ error: 'Failed to delete equip program' }, 500);
-  }
-});
 
-// Get user's purchased programs (enrollments with progress) - specific endpoint for dashboard
-app.get("/make-server-cc205da9/equip/purchased/:userId", requireAuth, async (c) => {
-  try {
-    const userId = c.req.param('userId');
-    const authUser = c.get('user');
-    
-    // Security check
-    if (userId !== authUser.id) {
-        // Check if admin
-        const userProfile = await kv.get(`user:${authUser.id}`);
-        if (!userProfile?.is_admin) {
-             return c.json({ error: 'Unauthorized' }, 403);
-        }
-    }
-    
-    // Get enrollments which represent purchased/active programs
-    const enrollments = await kv.getByPrefix(`user_enrollment:${userId}:`);
-    
-    // Map to the format expected by the dashboard
-    const programs = enrollments.map((e: any) => {
-        // Calculate progress percentage
-        const completedCount = e.completedDays?.length || 0;
-        // Default to 30 days if we don't look up the program details
-        const total = 30; 
-        const progress = Math.min(100, Math.round((completedCount / total) * 100));
-        
-        return {
-            id: e.enrollmentId,
-            program_id: e.programId,
-            title: e.programTitle,
-            progress: progress,
-            current_module: `Day ${e.currentDay || 1}`,
-            total_modules: total,
-            completed_modules: completedCount,
-            started_at: e.startDate,
-            status: e.status,
-            next_activity: `Day ${e.currentDay || 1} Activity`,
-            due_date: null
-        };
-    });
-    
-    // Sort by most recent
-    programs.sort((a: any, b: any) => new Date(b.started_at).getTime() - new Date(a.started_at).getTime());
-    
-    return c.json(programs);
-  } catch (error) {
-    console.log('Get purchased programs error:', error);
-    return c.json({ error: 'Failed to retrieve purchased programs' }, 500);
-  }
-});
-
-// ============================================================================
-// EQUIP ENROLLMENT ENDPOINTS
-// ============================================================================
-
-// Enroll user in a program
-app.post("/make-server-cc205da9/equip/enrollments", requireAuth, async (c) => {
-  try {
-    const user = c.get('user');
-    const { programId, onboardingData } = await c.req.json();
-    
-    // Verify program exists
-    const program = await kv.get(`equip_program:${programId}`);
-    if (!program) {
-      return c.json({ error: 'Program not found' }, 404);
-    }
-    
-    const enrollmentId = `enrollment-${user.id}-${programId}-${Date.now()}`;
-    const enrollment = {
-      enrollmentId,
-      userId: user.id,
-      programId,
-      programTitle: program.title,
-      onboardingData,
-      startDate: new Date().toISOString(),
-      progress: [],
-      completedDays: [],
-      currentDay: 1,
-      status: 'active',
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
-    };
-    
-    // Store enrollment
-    await kv.set(`enrollment:${enrollmentId}`, enrollment);
-    await kv.set(`user_enrollment:${user.id}:${programId}`, enrollment);
-    
-    console.log(`✅ User enrolled: ${user.id} in program ${programId}`);
-    return c.json({ enrollment });
-  } catch (error) {
-    console.log('Enrollment error:', error);
-    return c.json({ error: 'Failed to enroll in program' }, 500);
-  }
-});
-
-// Get user's enrollments
-app.get("/make-server-cc205da9/equip/enrollments", requireAuth, async (c) => {
-  try {
-    const user = c.get('user');
-    
-    // Get all enrollments for this user
-    const allEnrollments = await kv.getByPrefix(`user_enrollment:${user.id}:`);
-    
-    // Sort by most recent first
-    const sortedEnrollments = allEnrollments.sort((a: any, b: any) => 
-      new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-    );
-    
-    console.log(`✅ Retrieved ${sortedEnrollments.length} enrollments for user ${user.id}`);
-    return c.json({ enrollments: sortedEnrollments });
-  } catch (error) {
-    console.log('Get enrollments error:', error);
-    return c.json({ error: 'Failed to retrieve enrollments' }, 500);
-  }
-});
-
-// Get specific enrollment
-app.get("/make-server-cc205da9/equip/enrollments/:enrollmentId", requireAuth, async (c) => {
-  try {
-    const user = c.get('user');
-    const enrollmentId = c.req.param('enrollmentId');
-    
-    const enrollment = await kv.get(`enrollment:${enrollmentId}`);
-    
-    if (!enrollment) {
-      return c.json({ error: 'Enrollment not found' }, 404);
-    }
-    
-    // Verify ownership
-    if (enrollment.userId !== user.id) {
-      return c.json({ error: 'Unauthorized' }, 403);
-    }
-    
-    return c.json({ enrollment });
-  } catch (error) {
-    console.log('Get enrollment error:', error);
-    return c.json({ error: 'Failed to retrieve enrollment' }, 500);
-  }
-});
-
-// Update enrollment progress
-app.put("/make-server-cc205da9/equip/enrollments/:enrollmentId/progress", requireAuth, async (c) => {
-  try {
-    const user = c.get('user');
-    const enrollmentId = c.req.param('enrollmentId');
-    const { dayNumber, completed, completedAt, notes } = await c.req.json();
-    
-    const enrollment = await kv.get(`enrollment:${enrollmentId}`);
-    
-    if (!enrollment) {
-      return c.json({ error: 'Enrollment not found' }, 404);
-    }
-    
-    // Verify ownership
-    if (enrollment.userId !== user.id) {
-      return c.json({ error: 'Unauthorized' }, 403);
-    }
-    
-    // Update progress
-    const progressEntry = {
-      dayNumber,
-      completed,
-      completedAt: completedAt || new Date().toISOString(),
-      notes: notes || ''
-    };
-    
-    // Add to progress array
-    const existingProgress = enrollment.progress || [];
-    const updatedProgress = [...existingProgress, progressEntry];
-    
-    // Add to completed days if completed
-    const completedDays = enrollment.completedDays || [];
-    if (completed && !completedDays.includes(dayNumber)) {
-      completedDays.push(dayNumber);
-    }
-    
-    // Update current day
-    const currentDay = Math.max(dayNumber, enrollment.currentDay || 1);
-    
-    const updatedEnrollment = {
-      ...enrollment,
-      progress: updatedProgress,
-      completedDays,
-      currentDay,
-      updated_at: new Date().toISOString()
-    };
-    
-    // Save updates
-    await kv.set(`enrollment:${enrollmentId}`, updatedEnrollment);
-    await kv.set(`user_enrollment:${user.id}:${enrollment.programId}`, updatedEnrollment);
-    
-    console.log(`✅ Progress updated for enrollment ${enrollmentId}: Day ${dayNumber}`);
-    return c.json({ enrollment: updatedEnrollment });
-  } catch (error) {
-    console.log('Update progress error:', error);
-    return c.json({ error: 'Failed to update progress' }, 500);
-  }
-});
-
-// Complete/cancel enrollment
-app.put("/make-server-cc205da9/equip/enrollments/:enrollmentId/status", requireAuth, async (c) => {
-  try {
-    const user = c.get('user');
-    const enrollmentId = c.req.param('enrollmentId');
-    const { status } = await c.req.json(); // 'active', 'completed', 'paused', 'cancelled'
-    
-    const enrollment = await kv.get(`enrollment:${enrollmentId}`);
-    
-    if (!enrollment) {
-      return c.json({ error: 'Enrollment not found' }, 404);
-    }
-    
-    // Verify ownership
-    if (enrollment.userId !== user.id) {
-      return c.json({ error: 'Unauthorized' }, 403);
-    }
-    
-    const updatedEnrollment = {
-      ...enrollment,
-      status,
-      updated_at: new Date().toISOString(),
-      ...(status === 'completed' && { completedAt: new Date().toISOString() })
-    };
-    
-    // Save updates
-    await kv.set(`enrollment:${enrollmentId}`, updatedEnrollment);
-    await kv.set(`user_enrollment:${user.id}:${enrollment.programId}`, updatedEnrollment);
-    
-    console.log(`✅ Enrollment status updated: ${enrollmentId} -> ${status}`);
-    return c.json({ enrollment: updatedEnrollment });
-  } catch (error) {
-    console.log('Update enrollment status error:', error);
-    return c.json({ error: 'Failed to update enrollment status' }, 500);
-  }
-});
-
-// Sync detailed progress (blocks, responses)
-app.post("/make-server-cc205da9/equip/enrollments/:enrollmentId/sync", requireAuth, async (c) => {
-  try {
-    const user = c.get('user');
-    const enrollmentId = c.req.param('enrollmentId');
-    const { currentDay, completedBlockIds, responses } = await c.req.json();
-    
-    const enrollment = await kv.get(`enrollment:${enrollmentId}`);
-    
-    if (!enrollment) {
-      return c.json({ error: 'Enrollment not found' }, 404);
-    }
-    
-    // Verify ownership
-    if (enrollment.userId !== user.id) {
-      return c.json({ error: 'Unauthorized' }, 403);
-    }
-    
-    const updatedEnrollment = {
-      ...enrollment,
-      currentDay: currentDay || enrollment.currentDay,
-      // Store granular state in a new field "state"
-      state: {
-        completedBlockIds: completedBlockIds || enrollment.state?.completedBlockIds || [],
-        responses: { ...(enrollment.state?.responses || {}), ...(responses || {}) }
-      },
-      updated_at: new Date().toISOString()
-    };
-    
-    await kv.set(`enrollment:${enrollmentId}`, updatedEnrollment);
-    await kv.set(`user_enrollment:${user.id}:${enrollment.programId}`, updatedEnrollment);
-    
-    return c.json({ enrollment: updatedEnrollment });
-  } catch (error) {
-    console.log('Sync progress error:', error);
-    return c.json({ error: 'Failed to sync progress' }, 500);
-  }
-});
 
 // Library Resource Endpoints
 app.get("/make-server-cc205da9/library/resources", async (c) => {
@@ -1698,24 +1192,6 @@ app.get("/make-server-cc205da9/library/resources", async (c) => {
     
     // Filter out null/undefined entries
     resources = resources.filter((r: any) => r && r.id);
-    
-    /*
-    // Auto-seed disabled to allow admin full control
-    if (resources.length === 0) {
-      console.log('⚠️ No resources found. Triggering auto-seed...');
-      try {
-        await handleComprehensiveSeed();
-        // Try fetching again after seeding
-        resources = await kv.getByPrefix('library:resource:');
-        if (resources.length === 0) {
-          resources = await kv.getByPrefix('resource:');
-        }
-        resources = resources.filter((r: any) => r && r.id);
-      } catch (seedError) {
-        console.error('Auto-seed failed:', seedError);
-      }
-    }
-    */
     
     // Filter by category if provided
     if (category) {
@@ -1834,84 +1310,7 @@ app.get("/make-server-cc205da9/consultants/:id", async (c) => {
   }
 });
 
-// ============================================================================
-// EQUIP PROGRAMS ENDPOINTS
-// ============================================================================
 
-// Get all equip programs
-app.get("/make-server-cc205da9/equip/programs", async (c) => {
-  try {
-    let programs = await kv.getByPrefix('equip_program:');
-    
-    // Filter out null/undefined entries
-    programs = programs.filter((p: any) => p && (p.id || p.equip_id));
-    
-    // Deduplicate by ID to handle multiple keys pointing to same program (e.g. ID vs Slug keys)
-    const uniqueMap = new Map();
-    programs.forEach((p: any) => {
-      const id = p.equip_id || p.id;
-      if (id) {
-        // If duplicate exists, keep the one with newer updated_at, or default to current
-        const existing = uniqueMap.get(id);
-        if (!existing || (p.updated_at && existing.updated_at && new Date(p.updated_at) > new Date(existing.updated_at))) {
-          uniqueMap.set(id, p);
-        }
-      }
-    });
-    programs = Array.from(uniqueMap.values());
-    
-    // Apply filters if provided
-    const category = c.req.query('category');
-    const tag = c.req.query('tag');
-    
-    let filtered = programs;
-    
-    if (category) {
-      filtered = filtered.filter((p: any) => p.meta?.category === category);
-    }
-    
-    if (tag) {
-      filtered = filtered.filter((p: any) => 
-        p.tags?.some((t: string) => t.toLowerCase().includes(tag.toLowerCase()))
-      );
-    }
-    
-    // Sort by created_at descending
-    const sorted = filtered.sort((a: any, b: any) => 
-      new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime()
-    );
-    
-    console.log(`✅ Returning ${sorted.length} equip programs`);
-    return c.json({ programs: sorted });
-  } catch (error) {
-    console.error('❌ Get equip programs error:', error);
-    return c.json({ error: 'Failed to retrieve equip programs', programs: [] }, 500);
-  }
-});
-
-// Get equip program by slug
-app.get("/make-server-cc205da9/equip/programs/:slug", async (c) => {
-  try {
-    const slug = c.req.param('slug');
-    let program = await kv.get(`equip_program:${slug}`);
-    
-    // Try alternate lookup by slug mapping
-    if (!program) {
-      program = await kv.get(`equip_program_by_slug:${slug}`);
-    }
-    
-    if (!program) {
-      console.log(`❌ Program not found for slug: ${slug}`);
-      return c.json({ error: 'Program not found' }, 404);
-    }
-    
-    console.log(`💪 Fetched program: ${program.title}`);
-    return c.json({ program });
-  } catch (error) {
-    console.error('Get equip program error:', error);
-    return c.json({ error: 'Failed to retrieve program' }, 500);
-  }
-});
 
 // Admin Resource Management Endpoints
 app.get("/make-server-cc205da9/admin/resources", requireAdmin, async (c) => {
@@ -2043,40 +1442,35 @@ app.delete("/make-server-cc205da9/admin/resources/:resourceId", requireAuth, asy
       return c.json({ error: 'Admin access required' }, 403);
     }
     
-    // Try direct lookup with both prefixes
-    let existingResource = await kv.get(`library:resource:${resourceId}`);
-    let storageKey = `library:resource:${resourceId}`;
+    // FETCH resource first to identify all keys (ID and Slug)
+    let resource = await kv.get(`library:resource:${resourceId}`);
+    if (!resource) resource = await kv.get(`resource:${resourceId}`);
     
-    if (!existingResource) {
-      existingResource = await kv.get(`resource:${resourceId}`);
-      storageKey = `resource:${resourceId}`;
+    // If not found by ID, try finding by slug/ID in all resources
+    if (!resource) {
+       const all1 = await kv.getByPrefix('library:resource:');
+       const all2 = await kv.getByPrefix('resource:');
+       resource = [...all1, ...all2].find((r: any) => r && (r.id === resourceId || r.slug === resourceId));
     }
-    
-    // If not found, search by ID/slug
-    if (!existingResource) {
-      let allResources = await kv.getByPrefix('library:resource:');
-      if (allResources.length === 0) {
-        allResources = await kv.getByPrefix('resource:');
-      }
-      const found = allResources.find((r: any) => 
-        r && (r.id === resourceId || r.slug === resourceId)
-      );
-      
-      if (found) {
-        existingResource = found;
-        const isNewPrefix = (await kv.get(`library:resource:${found.slug || found.id}`)) !== null;
-        storageKey = isNewPrefix ? `library:resource:${found.slug || found.id}` : `resource:${found.slug || found.id}`;
-      }
-    }
-    
-    if (!existingResource) {
-      console.log(`❌ Resource not found for deletion: ${resourceId}`);
+
+    if (!resource) {
       return c.json({ error: 'Resource not found' }, 404);
     }
+
+    // Construct all possible keys to ensure cleanup
+    const keysToDelete = [
+      `library:resource:${resource.id}`,
+      `resource:${resource.id}`
+    ];
     
-    await kv.del(storageKey);
+    if (resource.slug) {
+      keysToDelete.push(`library:resource:${resource.slug}`);
+      keysToDelete.push(`resource:${resource.slug}`);
+    }
+
+    await kv.mdel(keysToDelete);
     
-    console.log(`✅ Resource deleted: ${storageKey}`);
+    console.log(`✅ Resource deleted (keys: ${keysToDelete.join(', ')})`);
     return c.json({ success: true, message: 'Resource deleted successfully' });
   } catch (error) {
     console.log('Delete resource error:', error);
@@ -2324,6 +1718,19 @@ app.delete("/make-server-cc205da9/admin/users/:userId", requireAuth, async (c) =
   }
 });
 
+// ========================================
+// MIGRATION ENDPOINT (PHASE 4)
+// ========================================
+
+app.post("/make-server-cc205da9/admin/migrate/v1", requireAdmin, async (c) => {
+  try {
+    const result = await MigrationRunner.run();
+    return c.json(result);
+  } catch (error: any) {
+    return c.json({ success: false, error: error.message }, 500);
+  }
+});
+
 // Consultation/Professional Endpoints
 app.get("/make-server-cc205da9/consultation/professionals", async (c) => {
   try {
@@ -2498,7 +1905,10 @@ app.get("/make-server-cc205da9/cms/pages", requireAuth, async (c) => {
       .filter(page => page && page.id && page.name && page.title && page.slug);
 
     // List of required standard pages
-    const requiredPageIds = ['about', 'privacy', 'terms', 'faq', 'contact', 'return-policy', 'cancellation-policy', 'sitemap'];
+    const requiredPageIds = [
+      'about', 'privacy', 'terms', 'faq', 'contact', 'return-policy', 'cancellation-policy', 'sitemap',
+      'homepage-hero', 'homepage-assessment', 'homepage-mission', 'homepage-benefits', 'homepage-faq', 'homepage-newsletter', 'homepage-equip-intro'
+    ];
     const missingPages = [];
 
     // Check for missing standard pages
@@ -3393,6 +2803,178 @@ function createDefaultCMSContent(pageId: string): any {
         <p>Access iKan on mobile devices through our progressive web app (PWA) for a seamless experience across all platforms.</p>
       `,
       lastUpdated: new Date().toISOString()
+    },
+    'homepage-hero': {
+      title: 'Homepage Hero',
+      content: JSON.stringify({
+        title: "Reimagining mental health care.",
+        description: "Stay on top of your mental health with real time monitoring and insights, expert therapists, science backed tools and programs.",
+        ctaText: "Get Started",
+        statistics: [
+          {
+            type: 'label',
+            title: 'Acceptance',
+            bgImage: "https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=1200&h=600&fit=crop",
+            videoImage: "https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?w=800&h=800&fit=crop"
+          },
+          {
+            type: 'stat',
+            number: '2500+',
+            description: 'People who have gained more wellbeing through our platform',
+            bgImage: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=600&h=600&fit=crop",
+            videoImage: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=600&h=600&fit=crop"
+          },
+          {
+            type: 'label',
+            title: 'Understanding',
+            bgImage: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=600&h=600&fit=crop",
+            videoImage: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=600&h=600&fit=crop"
+          },
+          {
+            type: 'stat',
+            number: '52+',
+            description: 'Qualified Psychologists',
+            bgImage: "https://images.unsplash.com/photo-1573497019236-17f8177b81e8?w=400&h=400&fit=crop",
+            videoImage: "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=400&h=400&fit=crop"
+          },
+          {
+            type: 'label',
+            title: 'Compassion',
+            bgImage: "https://images.unsplash.com/photo-1573497161161-c3e73707e25c?w=400&h=400&fit=crop",
+            videoImage: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=400&h=400&fit=crop"
+          },
+          {
+            type: 'stat',
+            number: '96%',
+            description: 'Recommend our courses',
+            bgImage: null,
+            videoImage: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=600&h=600&fit=crop",
+            videoImage2: "https://images.unsplash.com/photo-1580489944761-15a19d654956?w=600&h=600&fit=crop"
+          }
+        ]
+      }),
+      lastUpdated: new Date().toISOString()
+    },
+    'homepage-assessment': {
+      title: 'Homepage Assessment Intro',
+      content: JSON.stringify({
+        title: "iKan is the mental health platform for the modern era.",
+        description: "Get actionable and quantified insights about your mental health. Screen for issues prevent them from turning chronic with the help of our experts and evidence backed tools.",
+        ctaText: "Get Started",
+        image: "https://images.unsplash.com/photo-1724176636904-394580bfedf5?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxtZW50YWwlMjBoZWFsdGglMjB0ZWNobm9sb2d5JTIwYW5hbHl0aWNzJTIwaW5zaWdodHN8ZW58MXx8fHwxNzY1NDQ3NTMyfDA&ixlib=rb-4.1.0&q=80&w=1080",
+        programsTitle: "Assessment Programs",
+        programsSubtitle: "PROGRAM",
+        buttonText: "Take Assessment",
+        programs: [
+          { title: "Adult Therapy", image: "https://images.unsplash.com/photo-1758273240373-370993d0275d?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080" },
+          { title: "Adult Psychiatry", image: "https://images.unsplash.com/photo-1758273240403-052b3c99f636?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080" },
+          { title: "Hospital Care", image: "https://images.unsplash.com/photo-1711343777918-6d395c16e37f?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080" }
+        ]
+      }),
+      lastUpdated: new Date().toISOString()
+    },
+    'homepage-mission': {
+      title: 'Homepage Mission',
+      content: JSON.stringify({
+        title: "Our Mission",
+        content: "We believe mental health is for everyone. Our mission is to fix the broken system and democratize mental healthcare by creating an accessible, secure, and people-centric and science-backed platform empowering every individual to achieve lasting well-being.",
+        videoCaption: "Watch the full\\ninterview",
+        image: "https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?w=600&h=400&fit=crop",
+        imageAlt: "Mission interview"
+      }),
+      lastUpdated: new Date().toISOString()
+    },
+    'homepage-benefits': {
+      title: 'Homepage Benefits',
+      content: JSON.stringify({
+        title: "Who is it for?",
+        benefits: [
+          {
+            targetType: 'individuals',
+            title: 'For Individuals',
+            subtitle: 'Find Balance',
+            description: 'Personalized mental health support tailored to your unique journey. Access therapy, tools, and a supportive community.',
+            color: '#E0F2FE',
+            iconColor: '#0284C7'
+          },
+          {
+            targetType: 'employers',
+            title: 'For Employers',
+            subtitle: 'Support Your Team',
+            description: 'Empower your workforce with comprehensive mental wellness programs. Boost productivity and improve team morale.',
+            color: '#F0FDF4',
+            iconColor: '#16A34A'
+          },
+          {
+            targetType: 'professionals',
+            title: 'For Professionals',
+            subtitle: 'Expand Your Reach',
+            description: 'Join our network of certified mental health professionals. Connect with clients and manage your practice efficiently.',
+            color: '#FAF5FF',
+            iconColor: '#9333EA'
+          }
+        ]
+      }),
+      lastUpdated: new Date().toISOString()
+    },
+    'homepage-faq': {
+      title: 'Homepage FAQ',
+      content: JSON.stringify({
+        eyebrow: "Your Course",
+        headline: "Psychological Help for Stress.\\nWhat this course offers you:",
+        description: "Change takes time. Similar to sports or meditation, you won't feel immediate improvement - a clear plan and persistence are the keys to success. That's why our courses are designed for sustainability.",
+        courseTitle: "6 Month Group Course",
+        modules: [
+          "MODULE 1: Start your journey!",
+          "MODULE 2: My symptoms and goals",
+          "MODULE 3: Psychological stress model",
+          "MODULE 4: Resources and resilience",
+          "MODULE 5: Self-worth and personal beliefs",
+          "MODULE 6: Open discussion session",
+          "MODULE 7: Reflection and review"
+        ],
+        cardTitle: "Begin your journey",
+        features: [
+          "1 month risk-free trial",
+          "Self-paced learning modules",
+          "Community support included"
+        ],
+        ctaText: "Get Started"
+      }),
+      lastUpdated: new Date().toISOString()
+    },
+    'homepage-newsletter': {
+      title: 'Homepage Newsletter',
+      content: JSON.stringify({
+        title: "Newsletter Signup",
+        benefits: [
+          "Get weekly mental health tips and insights",
+          "Early access to new features and programs",
+          "Exclusive resources and guided exercises"
+        ],
+        imageUrl: "https://images.unsplash.com/photo-1758273240360-76b908e7582a?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxtZW50YWwlMjBoZWFsdGglMjB3ZWxsbmVzcyUyMHN1cHBvcnR8ZW58MXx8fHwxNzY0OTUxMDY1fDA&ixlib=rb-4.1.0&q=80&w=1080",
+        imageAlt: "Mental health and wellness support",
+        privacyText: "Privacy: We store and process your personal data based on our privacy policy. You can unsubscribe at any time.",
+        ctaText: "Sign up now!"
+      }),
+      lastUpdated: new Date().toISOString()
+    },
+    'homepage-equip-intro': {
+      title: 'Homepage Equip Intro',
+      content: JSON.stringify({
+        title: "Equip Programs",
+        subtitle: "PROGRAM",
+        features: [
+          "Flexible — whenever and wherever you want",
+          "Self-paced learning modules",
+          "Expert-designed curriculum",
+          "Community support included",
+          "Progress tracking tools"
+        ],
+        ctaText: "LEARN MORE",
+        footerText: "Supported by leading healthcare providers"
+      }),
+      lastUpdated: new Date().toISOString()
     }
   };
 
@@ -3403,940 +2985,11 @@ function createDefaultCMSContent(pageId: string): any {
   };
 }
 
-// Comprehensive seeding endpoint - seeds ALL data (consultants, equip, resources)
-app.post("/make-server-cc205da9/seed/comprehensive", async (c) => {
-  try {
-    console.log('🌱 Seeding ALL iKan data (comprehensive)...');
-    
-    const result = await handleComprehensiveSeed();
-    
-    return c.json(result);
-  } catch (error) {
-    console.error('❌ Comprehensive seeding error:', error);
-    return c.json({
-      success: false,
-      error: 'Failed to seed comprehensive data: ' + error.message
-    }, 500);
-  }
-});
 
-// Optimized seeding endpoint - lightweight and fast
-app.post("/make-server-cc205da9/seed/data", async (c) => {
-  try {
-    console.log('🌱 Seeding iKan sample data (optimized)...');
-    
-    // Import seed function from dedicated file
-    const { handleSeedData } = await import('./seed-endpoint.tsx');
-    const result = await handleSeedData();
-    
-    return c.json(result);
-  } catch (error) {
-    console.error('❌ Seeding error:', error);
-    return c.json({
-      success: false,
-      error: 'Failed to seed data: ' + error.message
-    }, 500);
-  }
-});
 
-// Force seed all canonical programs - this ensures all 4 programs are available
-app.post("/make-server-cc205da9/seed/force-programs", async (c) => {
-  try {
-    console.log('🚀 Force seeding all canonical equip programs...');
-    
-    // Clear existing programs first
-    const existingPrograms = await kv.getByPrefix('equip_program:');
-    for (const program of existingPrograms) {
-      const keys = [`equip_program:${program.slug}`, `equip_program:${program.equip_id}`];
-      for (const key of keys) {
-        try {
-          await kv.del(key);
-        } catch (e) {
-          console.warn('Could not delete key:', key);
-        }
-      }
-    }
-    console.log(`🧹 Cleared ${existingPrograms.length} existing programs`);
 
-    // All 4 canonical programs with consistent data structure
-    const canonicalPrograms = [
-      {
-        equip_id: "equip-burnout-recovery-32",
-        id: "00000000-0000-0000-0000-000000000010",
-        slug: "burnout-recovery-32",
-        title: "Burnout Recovery (32-day)",
-        description: "A comprehensive 32-day guided program to recover from burnout",
-        price: {
-          currency: "INR",
-          amount_cents: 49900,
-          payment_provider: "razorpay",
-          one_time: true
-        },
-        duration_days: 32,
-        expiry_days_after_purchase: 180,
-        category: "burnout",
-        difficulty_level: "intermediate",
-        image_url: null,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-        days: [
-          {
-            day: 1,
-            title: "Introduction to Burnout",
-            type: "lesson",
-            content: [
-              {kind: "text", body: "Learn what burnout is, its signs, and how this program will guide recovery."}
-            ],
-            required: true,
-            estimated_min: 10
-          }
-        ]
-      },
-      {
-        equip_id: "equip-stress-management-30",
-        id: "00000000-0000-0000-0000-000000000011",
-        slug: "stress-management-30",
-        title: "Stress Management (30-day)",
-        description: "A 30-day comprehensive program to develop effective stress management techniques",
-        price: {
-          currency: "INR",
-          amount_cents: 39900,
-          payment_provider: "razorpay",
-          one_time: true
-        },
-        duration_days: 30,
-        expiry_days_after_purchase: 180,
-        category: "stress",
-        difficulty_level: "beginner",
-        image_url: null,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-        days: [
-          {
-            day: 1,
-            title: "Understanding Your Stress",
-            type: "lesson",
-            content: [
-              {kind: "text", body: "Identify your unique stress patterns and triggers."}
-            ],
-            required: true,
-            estimated_min: 15
-          }
-        ]
-      },
-      {
-        equip_id: "equip-better-sleep-21",
-        id: "00000000-0000-0000-0000-000000000013",
-        slug: "better-sleep-21",
-        title: "Better Sleep (21-day)",
-        description: "A focused 21-day program to improve sleep quality through evidence-based practices",
-        price: {
-          currency: "INR",
-          amount_cents: 29900,
-          payment_provider: "razorpay",
-          one_time: true
-        },
-        duration_days: 21,
-        expiry_days_after_purchase: 120,
-        category: "sleep",
-        difficulty_level: "beginner", 
-        image_url: null,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-        days: [
-          {
-            day: 1,
-            title: "Sleep Science Basics",
-            type: "lesson",
-            content: [
-              {kind: "text", body: "Learn about sleep cycles, circadian rhythms, and sleep's role in mental health."}
-            ],
-            required: true,
-            estimated_min: 15
-          }
-        ]
-      },
-      {
-        equip_id: "equip-productivity-challenge-7",
-        id: "00000000-0000-0000-0000-000000000014",
-        slug: "productivity-challenge-7",
-        title: "Productivity Challenge (7-day)",
-        description: "A quick 7-day intensive challenge to boost productivity and improve focus",
-        price: {
-          currency: "INR",
-          amount_cents: 19900,
-          payment_provider: "razorpay",
-          one_time: true
-        },
-        duration_days: 7,
-        expiry_days_after_purchase: 90,
-        category: "productivity",
-        difficulty_level: "beginner",
-        image_url: null,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-        days: [
-          {
-            day: 1,
-            title: "Productivity Assessment",
-            type: "lesson",
-            content: [
-              {kind: "text", body: "Assess your current productivity patterns and identify improvement areas."}
-            ],
-            required: true,
-            estimated_min: 20
-          }
-        ]
-      }
-    ];
 
-    // Store all canonical equip programs with multiple keys for lookup flexibility
-    for (const program of canonicalPrograms) {
-      await kv.set(`equip_program:${program.slug}`, program);
-      await kv.set(`equip_program:${program.equip_id}`, program);
-      console.log(`✅ Force seeded: ${program.title}`);
-    }
 
-    console.log('🎉 All 4 canonical equip programs force seeded successfully');
-    
-    return c.json({
-      success: true,
-      message: 'All 4 canonical equip programs force seeded successfully',
-      programs: canonicalPrograms.map(p => ({ id: p.slug, title: p.title, duration_days: p.duration_days }))
-    });
-
-  } catch (error) {
-    console.error('❌ Force seeding programs error:', error);
-    return c.json({
-      success: false,
-      error: 'Failed to force seed programs: ' + error.message
-    }, 500);
-  }
-});
-
-// Legacy endpoint maintained for compatibility
-app.post("/make-server-cc205da9/seed/data-legacy", async (c) => {
-  try {
-    console.log('🌱 Seeding iKan sample data (optimized)...');
-    
-    // Quick status check to prevent duplicate work
-    const existingAssessments = await kv.getByPrefix('assessment:');
-    if (existingAssessments.length >= 2) {
-      console.log('✅ Assessments already seeded - skipping full seed');
-      return c.json({
-        success: true,
-        message: 'Data already seeded',
-        assessments: existingAssessments.map(a => ({ id: a.slug, title: a.title }))
-      });
-    }
-
-    // Seed just the essential assessments to prevent timeout
-    const phq9Assessment = {
-      assessment_id: "assess-depression-phq9",
-      id: "00000000-0000-0000-0000-000000000003",
-      slug: "phq9",
-      title: "PHQ-9 Depression Screening",
-      description: "9-item depression screening tool",
-      version: "1.0",
-      metadata: {
-        estimated_minutes: 3,
-        category: "depression",
-        allow_repeat_days: 30,
-        created_at: "2025-09-18T00:00:00Z"
-      },
-      questions: [
-        {
-          question_id: "q1",
-          id: "q1",
-          order: 1,
-          text: "Little interest or pleasure in doing things",
-          type: "scale",
-          required: true,
-          options: [
-            { id: "0", label: "Not at all", value: 0, score: 0 },
-            { id: "1", label: "Several days", value: 1, score: 1 },
-            { id: "2", label: "More than half the days", value: 2, score: 2 },
-            { id: "3", label: "Nearly every day", value: 3, score: 3 }
-          ]
-        },
-        {
-          question_id: "q2",
-          id: "q2",
-          order: 2,
-          text: "Feeling down, depressed, or hopeless",
-          type: "scale",
-          required: true,
-          options: [
-            { id: "0", label: "Not at all", value: 0, score: 0 },
-            { id: "1", label: "Several days", value: 1, score: 1 },
-            { id: "2", label: "More than half the days", value: 2, score: 2 },
-            { id: "3", label: "Nearly every day", value: 3, score: 3 }
-          ]
-        }
-      ]
-    };
-
-    const gad7Assessment = {
-      assessment_id: "assess-anxiety-gad7",
-      id: "00000000-0000-0000-0000-000000000004",
-      slug: "gad7",
-      title: "GAD-7 Anxiety Screening",
-      description: "7-item anxiety screening tool",
-      version: "1.0",
-      metadata: {
-        estimated_minutes: 2,
-        category: "anxiety",
-        allow_repeat_days: 30,
-        created_at: "2025-09-18T00:00:00Z"
-      },
-      questions: [
-        {
-          question_id: "q1",
-          id: "q1",
-          order: 1,
-          text: "Feeling nervous, anxious, or on edge",
-          type: "scale",
-          required: true,
-          options: [
-            { id: "0", label: "Not at all", value: 0, score: 0 },
-            { id: "1", label: "Several days", value: 1, score: 1 },
-            { id: "2", label: "More than half the days", value: 2, score: 2 },
-            { id: "3", label: "Nearly every day", value: 3, score: 3 }
-          ]
-        },
-        {
-          question_id: "q2",
-          id: "q2",
-          order: 2,
-          text: "Not being able to stop or control worrying",
-          type: "scale",
-          required: true,
-          options: [
-            { id: "0", label: "Not at all", value: 0, score: 0 },
-            { id: "1", label: "Several days", value: 1, score: 1 },
-            { id: "2", label: "More than half the days", value: 2, score: 2 },
-            { id: "3", label: "Nearly every day", value: 3, score: 3 }
-          ]
-        }
-      ]
-    };
-
-    console.log('📊 Seeding essential assessments...');
-    
-    // Seed assessments quickly
-    await kv.set(`assessment:assess-depression-phq9`, phq9Assessment);
-    await kv.set(`assessment:phq9`, phq9Assessment);
-    console.log('✅ Seeded: PHQ-9 Depression Screening');
-
-    await kv.set(`assessment:assess-anxiety-gad7`, gad7Assessment);
-    await kv.set(`assessment:gad7`, gad7Assessment);
-    console.log('✅ Seeded: GAD-7 Anxiety Screening');
-
-    // Add a simple burnout program
-    const burnoutProgram = {
-      equip_id: "equip-burnout-32",
-      id: "00000000-0000-0000-0000-000000000010",
-      slug: "burnout-recovery-32",
-      title: "Burnout Recovery Program",
-      description: "32-day guided program to recover from burnout",
-      price: {
-        currency: "INR",
-        amount_cents: 49900,
-        payment_provider: "razorpay",
-        one_time: true
-      },
-      duration_days: 32,
-      expiry_days_after_purchase: 180,
-      days: [
-        {
-          day: 1,
-          title: "Introduction to Burnout",
-          type: "lesson",
-          content: [
-            {kind: "text", body: "Learn what burnout is and how to recover."}
-          ],
-          required: true,
-          estimated_min: 10
-        }
-      ]
-    };
-
-    await kv.set(`equip_program:burnout-recovery-32`, burnoutProgram);
-    await kv.set(`equip_program:equip-burnout-32`, burnoutProgram);
-    console.log('✅ Seeded: Burnout Recovery Program');
-
-    // Add a few essential resources
-    const sampleResources = [
-      {
-        resource_id: "00000000-0000-0000-0000-000000000200",
-        title: "Understanding Anxiety: A Complete Guide",
-        description: "Learn about different types of anxiety disorders, their symptoms, and evidence-based treatment approaches.",
-        category: "anxiety",
-        content_type: "article",
-        content_url: "https://example.com/anxiety-guide",
-        read_time_minutes: 12,
-        tags: ["anxiety", "mental health", "coping strategies"],
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      },
-      {
-        resource_id: "00000000-0000-0000-0000-000000000201",
-        title: "The Science of Sleep and Mental Health",
-        description: "Explore the crucial connection between quality sleep and mental wellbeing.",
-        category: "wellness",
-        content_type: "article",
-        content_url: "https://example.com/sleep-mental-health",
-        read_time_minutes: 8,
-        tags: ["sleep", "wellness", "mental health"],
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      },
-      {
-        resource_id: "00000000-0000-0000-0000-000000000202",
-        title: "Mindfulness for Beginners",
-        description: "A gentle introduction to mindfulness practice with simple exercises you can try today.",
-        category: "mindfulness",
-        content_type: "article",
-        content_url: "https://example.com/mindfulness-beginners",
-        read_time_minutes: 6,
-        tags: ["mindfulness", "meditation", "stress relief"],
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      }
-    ];
-
-    // Seed resources
-    for (const resource of sampleResources) {
-      await kv.set(`resource:${resource.resource_id}`, resource);
-    }
-    console.log('✅ Seeded: 3 sample resources');
-
-    // Add sample professionals
-    const sampleProfessionals = [
-      {
-        professional_id: "00000000-0000-0000-0000-000000000300",
-        name: "Dr. Sarah Johnson",
-        title: "Clinical Psychologist",
-        specialties: ["Anxiety", "Depression", "Trauma"],
-        location: "New York, NY",
-        phone: "+1 (555) 123-4567",
-        email: "s.johnson@therapy.com",
-        available: true,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      },
-      {
-        professional_id: "00000000-0000-0000-0000-000000000301",
-        name: "Dr. Michael Chen",
-        title: "Licensed Therapist",
-        specialties: ["CBT", "Mindfulness", "Stress Management"],
-        location: "Los Angeles, CA",
-        phone: "+1 (555) 987-6543",
-        email: "m.chen@therapy.com",
-        available: true,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      },
-      {
-        professional_id: "00000000-0000-0000-0000-000000000302",
-        name: "Dr. Emily Rodriguez",
-        title: "Psychiatrist",
-        specialties: ["Medication Management", "Bipolar Disorder", "ADHD"],
-        location: "Chicago, IL",
-        phone: "+1 (555) 456-7890",
-        email: "e.rodriguez@therapy.com",
-        available: false,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      }
-    ];
-
-    // Seed professionals
-    for (const professional of sampleProfessionals) {
-      await kv.set(`professional:${professional.professional_id}`, professional);
-    }
-    console.log('✅ Seeded: 3 sample professionals');
-
-    console.log('🎉 Essential data seeded successfully');
-    
-    return c.json({
-      success: true,
-      message: 'Essential data seeded successfully',
-      assessments: [
-        { id: 'phq9', title: 'PHQ-9 Depression Screening' },
-        { id: 'gad7', title: 'GAD-7 Anxiety Screening' }
-      ],
-      equip_programs: [
-        { id: 'burnout-recovery-32', title: 'Burnout Recovery Program' }
-      ],
-      resources: sampleResources.map(r => ({ id: r.resource_id, title: r.title })),
-      professionals: sampleProfessionals.map(p => ({ id: p.professional_id, name: p.name }))
-    });
-
-  } catch (error) {
-    console.error('❌ Seeding error:', error);
-    return c.json({
-      success: false,
-      error: 'Failed to seed data: ' + error.message
-    }, 500);
-  }
-});
-
-// Complete database sync endpoint for full data seeding
-app.post("/make-server-cc205da9/seed/complete-data", async (c) => {
-  try {
-    console.log('🔄 Starting complete database sync...');
-    
-    const { assessments, equip_programs, force_update } = await c.req.json();
-    
-    if (!assessments || !equip_programs) {
-      return c.json({ error: 'Missing required data: assessments and equip_programs' }, 400);
-    }
-    
-    const results = {
-      assessments_seeded: 0,
-      programs_seeded: 0,
-      errors: []
-    };
-    
-    // Seed assessments with complete data
-    for (const assessment of assessments) {
-      try {
-        // Store with multiple keys for lookup flexibility
-        await kv.set(`assessment:${assessment.assessment_id}`, assessment);
-        await kv.set(`assessment:${assessment.slug}`, assessment);
-        
-        results.assessments_seeded++;
-        console.log(`✅ Seeded complete ${assessment.title} (${assessment.questions?.length || 0} questions)`);
-      } catch (error) {
-        console.error(`❌ Failed to seed ${assessment.title}:`, error);
-        results.errors.push(`Failed to seed ${assessment.title}: ${error.message}`);
-      }
-    }
-    
-    // Seed equip programs with complete data
-    for (const program of equip_programs) {
-      try {
-        // Store with multiple keys for lookup flexibility
-        await kv.set(`equip_program:${program.equip_id}`, program);
-        await kv.set(`equip_program:${program.slug}`, program);
-        await kv.set(`equip_program_by_slug:${program.slug}`, program);
-        
-        results.programs_seeded++;
-        console.log(`✅ Seeded complete ${program.title} (${program.days?.length || 0} days)`);
-      } catch (error) {
-        console.error(`❌ Failed to seed ${program.title}:`, error);
-        results.errors.push(`Failed to seed ${program.title}: ${error.message}`);
-      }
-    }
-    
-    const success = results.errors.length === 0;
-    const message = success 
-      ? `Complete sync successful: ${results.assessments_seeded} assessments, ${results.programs_seeded} programs`
-      : `Partial sync: ${results.errors.length} errors encountered`;
-    
-    console.log(success ? '🎉 Complete database sync finished successfully' : '⚠️ Database sync completed with errors');
-    
-    return c.json({
-      success,
-      message,
-      results,
-      timestamp: new Date().toISOString()
-    });
-
-  } catch (error) {
-    console.error('❌ Complete sync error:', error);
-    return c.json({
-      success: false,
-      error: 'Failed to complete database sync: ' + error.message
-    }, 500);
-  }
-});
-
-// Demo users seeding endpoint
-app.post("/make-server-cc205da9/seed/users", async (c) => {
-  try {
-    console.log('👥 Seeding demo users...');
-    
-    // First, create demo users in Supabase Auth if they don't exist
-    const demoUsers = [
-      {
-        email: 'demo1@ikan.com',
-        password: 'demo123',
-        name: 'Alex Johnson',
-        phone: '+1 (555) 100-0001',
-        is_admin: true,  // Make demo1 an admin
-        corporate_user: false
-      },
-      {
-        email: 'demo2@ikan.com', 
-        password: 'demo123',
-        name: 'Sam Rivera',
-        phone: '+1 (555) 200-0002',
-        is_admin: false,
-        corporate_user: true  // Make demo2 a corporate user
-      },
-      {
-        email: 'demo3@ikan.com',
-        password: 'demo123', 
-        name: 'Jordan Chen',
-        phone: '+1 (555) 300-0003',
-        is_admin: false,
-        corporate_user: false
-      },
-      {
-        email: 'test@ikan.com',
-        password: 'demo123',
-        name: 'Test User',
-        phone: '+1 (555) 000-0000',
-        is_admin: false,
-        corporate_user: false
-      }
-    ];
-
-    const createdUsers = [];
-    
-    for (const demoUser of demoUsers) {
-      try {
-        // Try to create the user
-        const { data, error } = await supabase.auth.admin.createUser({
-          email: demoUser.email,
-          password: demoUser.password,
-          user_metadata: { 
-            name: demoUser.name, 
-            phone: demoUser.phone,
-            corporate_user: demoUser.corporate_user 
-          },
-          // Automatically confirm the user's email since an email server hasn't been configured
-          email_confirm: true
-        });
-
-        if (error) {
-          console.log(`Demo user ${demoUser.email} might already exist:`, error.message);
-          
-          // Try to update existing user's profile in KV store
-          try {
-            // Find user by email in Supabase
-            const { data: { users } } = await supabase.auth.admin.listUsers();
-            const existingUser = users.find(u => u.email === demoUser.email);
-            
-            if (existingUser) {
-              // Update KV store profile with admin flag
-              const existingProfile = await kv.get(`user:${existingUser.id}`) || {};
-              await kv.set(`user:${existingUser.id}`, {
-                ...existingProfile,
-                user_id: existingUser.id,
-                email: demoUser.email,
-                name: demoUser.name,
-                phone: demoUser.phone,
-                avatar_url: existingProfile.avatar_url || null,
-                is_admin: demoUser.is_admin,
-                corporate_user: demoUser.corporate_user,
-                created_at: existingProfile.created_at || new Date().toISOString(),
-                updated_at: new Date().toISOString()
-              });
-              console.log(`✅ Updated existing user profile: ${demoUser.name} (admin: ${demoUser.is_admin})`);
-              createdUsers.push({ email: demoUser.email, name: demoUser.name, id: existingUser.id, status: 'updated' });
-            }
-          } catch (updateError) {
-            console.log(`Could not update existing user ${demoUser.email}:`, updateError);
-          }
-        } else if (data?.user) {
-          console.log(`✅ Created demo user: ${demoUser.name} (${demoUser.email}) - Admin: ${demoUser.is_admin}`);
-          createdUsers.push({ email: demoUser.email, name: demoUser.name, id: data.user.id, status: 'created' });
-          
-          // Store user profile in KV store with proper flags
-          await kv.set(`user:${data.user.id}`, {
-            user_id: data.user.id,
-            email: demoUser.email,
-            name: demoUser.name,
-            phone: demoUser.phone,
-            avatar_url: null,
-            is_admin: demoUser.is_admin,
-            corporate_user: demoUser.corporate_user,
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString()
-          });
-        }
-      } catch (userError) {
-        console.log(`Error creating demo user ${demoUser.email}:`, userError);
-      }
-    }
-    
-    // Helper function to generate dates
-    const getDaysAgo = (days: number) => {
-      const date = new Date();
-      date.setDate(date.getDate() - days);
-      return date.toISOString();
-    };
-
-    // Helper function to generate journal entries
-    const generateJournalEntries = (userId: string, startDays: number, count: number) => {
-      const moods = ['happy', 'content', 'calm', 'motivated', 'grateful', 'excited', 'hopeful', 'creative', 'accomplished', 'determined', 'neutral', 'tired', 'stressed', 'anxious', 'frustrated', 'overwhelmed', 'sad', 'lonely'];
-      const entries = [];
-      
-      for (let i = 0; i < count; i++) {
-        const dayOffset = startDays - i;
-        const mood = moods[Math.floor(Math.random() * moods.length)];
-        const moodScore = mood === 'happy' || mood === 'excited' || mood === 'grateful' ? Math.floor(Math.random() * 3) + 8 :
-                         mood === 'content' || mood === 'calm' || mood === 'motivated' ? Math.floor(Math.random() * 2) + 7 :
-                         mood === 'neutral' || mood === 'tired' ? Math.floor(Math.random() * 3) + 5 :
-                         Math.floor(Math.random() * 3) + 3;
-        
-        entries.push({
-          id: `journal-${userId}-${i}`,
-          user_id: userId,
-          entry_date: getDaysAgo(dayOffset).split('T')[0],
-          mood,
-          mood_score: moodScore,
-          content: `Day ${count - i} journal entry for ${mood} mood.`,
-          timestamp: getDaysAgo(dayOffset),
-          status: 'present'
-        });
-      }
-      return entries;
-    };
-
-    // User 1: demo1@ikan.com - New user
-    const user1 = {
-      user_id: "demo-user-001",
-      email: "demo1@ikan.com",
-      name: "Alex Johnson",
-      phone: "+1 (555) 100-0001",
-      avatar_url: null,
-      corporate_user: false,
-      created_at: getDaysAgo(3),
-      updated_at: getDaysAgo(3),
-      preferences: {
-        emailNotifications: true,
-        pushNotifications: true,
-        weeklyReports: false,
-        moodReminders: true,
-        reminderTime: "19:00",
-        timezone: "America/New_York"
-      },
-      profile: {
-        age_range: "25-34",
-        occupation: "Software Engineer",
-        goals: ["stress management", "better work-life balance"],
-        onboarding_completed: true
-      }
-    };
-
-    // User 2: demo2@ikan.com - Active user with moderate engagement
-    const user2 = {
-      user_id: "demo-user-002",
-      email: "demo2@ikan.com",
-      name: "Sam Rivera",
-      phone: "+1 (555) 200-0002",
-      avatar_url: null,
-      corporate_user: false,
-      created_at: getDaysAgo(45),
-      updated_at: getDaysAgo(1),
-      preferences: {
-        emailNotifications: true,
-        pushNotifications: true,
-        weeklyReports: true,
-        moodReminders: true,
-        reminderTime: "20:00",
-        timezone: "America/Los_Angeles"
-      },
-      profile: {
-        age_range: "30-39",
-        occupation: "Marketing Manager",
-        goals: ["anxiety management", "burnout prevention", "better sleep"],
-        onboarding_completed: true
-      }
-    };
-
-    // User 3: demo3@ikan.com - Power user with extensive engagement
-    const user3 = {
-      user_id: "demo-user-003",
-      email: "demo3@ikan.com",
-      name: "Jordan Chen",
-      phone: "+1 (555) 300-0003",
-      avatar_url: null,
-      corporate_user: false,
-      created_at: getDaysAgo(120),
-      updated_at: getDaysAgo(0),
-      preferences: {
-        emailNotifications: true,
-        pushNotifications: true,
-        weeklyReports: true,
-        moodReminders: true,
-        reminderTime: "18:30",
-        timezone: "America/Chicago"
-      },
-      profile: {
-        age_range: "28-35",
-        occupation: "Clinical Psychologist",
-        goals: ["personal development", "stress management", "mindfulness", "work-life balance"],
-        onboarding_completed: true
-      }
-    };
-
-    // Store users
-    await kv.set(`user:demo1@ikan.com`, user1);
-    await kv.set(`user:demo2@ikan.com`, user2);
-    await kv.set(`user:demo3@ikan.com`, user3);
-
-    // Generate journal entries
-    const user1Journals = generateJournalEntries(user1.user_id, 3, 3); // 3 days worth
-    const user2Journals = generateJournalEntries(user2.user_id, 45, 25); // 25 entries over 45 days
-    const user3Journals = generateJournalEntries(user3.user_id, 100, 100); // 100 days of entries
-
-    // Store journal entries
-    for (const entry of [...user1Journals, ...user2Journals, ...user3Journals]) {
-      await kv.set(`journal_entry:${entry.id}`, entry);
-    }
-
-    // Assessment responses for User 2 (2 completed, 1 in progress)
-    const user2Assessments = [
-      {
-        id: "response-u2-phq9-1",
-        user_id: user2.user_id,
-        assessment_id: "assess-depression-phq9",
-        started_at: getDaysAgo(30),
-        completed_at: getDaysAgo(30),
-        responses: [
-          { question_id: "q1", value: 1, score: 1 },
-          { question_id: "q2", value: 2, score: 2 },
-          { question_id: "q3", value: 1, score: 1 },
-          { question_id: "q4", value: 2, score: 2 },
-          { question_id: "q5", value: 1, score: 1 },
-          { question_id: "q6", value: 0, score: 0 },
-          { question_id: "q7", value: 1, score: 1 },
-          { question_id: "q8", value: 0, score: 0 },
-          { question_id: "q9", value: 0, score: 0 }
-        ],
-        total_score: 8,
-        interpretation: "Mild",
-        status: "completed"
-      },
-      {
-        id: "response-u2-gad7-1",
-        user_id: user2.user_id,
-        assessment_id: "assess-anxiety-gad7",
-        started_at: getDaysAgo(20),
-        completed_at: getDaysAgo(20),
-        responses: [
-          { question_id: "q1", value: 2, score: 2 },
-          { question_id: "q2", value: 1, score: 1 },
-          { question_id: "q3", value: 2, score: 2 },
-          { question_id: "q4", value: 1, score: 1 },
-          { question_id: "q5", value: 0, score: 0 },
-          { question_id: "q6", value: 1, score: 1 },
-          { question_id: "q7", value: 1, score: 1 }
-        ],
-        total_score: 8,
-        interpretation: "Mild",
-        status: "completed"
-      },
-      {
-        id: "response-u2-burnout-1",
-        user_id: user2.user_id,
-        assessment_id: "assess-burnout-risk-1",
-        started_at: getDaysAgo(1),
-        completed_at: null,
-        responses: [
-          { question_id: "bq1", value: 3, score: 3 },
-          { question_id: "bq2", value: 2, score: 2 }
-        ],
-        total_score: null,
-        interpretation: null,
-        status: "in_progress"
-      }
-    ];
-
-    // Store assessment responses
-    for (const response of user2Assessments) {
-      await kv.set(`assessment_response:${response.id}`, response);
-    }
-
-    // Resource read tracking
-    const resourceIds = [
-      "00000000-0000-0000-0000-000000000200",
-      "00000000-0000-0000-0000-000000000201",
-      "00000000-0000-0000-0000-000000000202",
-      "00000000-0000-0000-0000-000000000203",
-      "00000000-0000-0000-0000-000000000204",
-      "00000000-0000-0000-0000-000000000205"
-    ];
-
-    // User 2 has read some resources
-    for (let i = 0; i < 6; i++) {
-      const readRecord = {
-        id: `read-u2-${i}`,
-        user_id: user2.user_id,
-        resource_id: resourceIds[i],
-        read_at: getDaysAgo(Math.floor(Math.random() * 30) + 10),
-        completed: true
-      };
-      await kv.set(`resource_read:${readRecord.id}`, readRecord);
-    }
-
-    // User 3 has read most resources (12 total)
-    for (let i = 0; i < 12; i++) {
-      const readRecord = {
-        id: `read-u3-${i}`,
-        user_id: user3.user_id,
-        resource_id: resourceIds[i % resourceIds.length],
-        read_at: getDaysAgo(Math.floor(Math.random() * 80) + 20),
-        completed: true
-      };
-      await kv.set(`resource_read:${readRecord.id}`, readRecord);
-    }
-
-    // Consultations for User 3
-    const user3Consultations = [
-      {
-        id: "consult-u3-1",
-        user_id: user3.user_id,
-        professional_id: "00000000-0000-0000-0000-000000000300",
-        scheduled_at: getDaysAgo(60),
-        completed_at: getDaysAgo(60),
-        type: "initial_consultation",
-        duration_minutes: 50,
-        status: "completed",
-        notes: "Initial assessment and treatment planning"
-      },
-      {
-        id: "consult-u3-2",
-        user_id: user3.user_id,
-        professional_id: "00000000-0000-0000-0000-000000000301",
-        scheduled_at: getDaysAgo(30),
-        completed_at: getDaysAgo(30),
-        type: "follow_up",
-        duration_minutes: 45,
-        status: "completed",
-        notes: "Progress review and strategy adjustment"
-      }
-    ];
-
-    // Store consultations
-    for (const consultation of user3Consultations) {
-      await kv.set(`consultation:${consultation.id}`, consultation);
-    }
-
-    console.log('✅ Demo users seeded successfully');
-    console.log(`   Created/Updated: ${createdUsers.length} users`);
-    
-    return c.json({
-      success: true,
-      message: 'Demo users seeded successfully',
-      created: createdUsers.filter(u => u.status === 'created').length,
-      updated: createdUsers.filter(u => u.status === 'updated').length,
-      users: createdUsers
-    });
-
-  } catch (error) {
-    console.error('❌ User seeding error:', error);
-    return c.json({
-      success: false,
-      error: 'Failed to seed users: ' + error.message
-    }, 500);
-  }
-});
 
 // Newsletter Signup Endpoint
 app.post("/make-server-cc205da9/newsletter/signup", async (c) => {
@@ -5095,6 +3748,313 @@ app.delete("/make-server-cc205da9/categories/:categoryId", requireAuth, async (c
 });
 
 // ========================================
+// ACTIVITY LOG & ANALYTICS ENDPOINTS
+// ========================================
+
+// Log activity (login, resource view, etc.)
+app.post("/make-server-cc205da9/analytics/activity", requireAuth, async (c) => {
+  try {
+    const user = c.get('user');
+    const { type, resourceId, metadata } = await c.req.json();
+    
+    if (!type) {
+      return c.json({ error: 'Activity type is required' }, 400);
+    }
+
+    const activityId = `activity:${Date.now()}:${user.id}`;
+    const activity = {
+      id: activityId,
+      userId: user.id,
+      type, // 'login', 'resource_view', 'program_start', etc.
+      resourceId: resourceId || null,
+      metadata: metadata || {},
+      timestamp: new Date().toISOString()
+    };
+
+    // Store in main activity log
+    await kv.set(activityId, activity);
+    
+    // Also store in user-specific log for easier user history
+    await kv.set(`user_activity:${user.id}:${Date.now()}`, activity);
+
+    console.log(`📊 Activity logged: ${type} for user ${user.id}`);
+    return c.json({ success: true, activity });
+  } catch (error) {
+    console.error('Log activity error:', error);
+    return c.json({ error: 'Failed to log activity' }, 500);
+  }
+});
+
+// Get aggregated activity analytics
+app.get("/make-server-cc205da9/analytics/aggregated", requireAdmin, async (c) => {
+  try {
+    // Fetch all activities
+    // Note: In a real production system with millions of rows, you'd use a dedicated analytics DB
+    // or pre-aggregated counters. For this KV store, we'll scan.
+    const activities = await kv.getByPrefix('activity:');
+    
+    // Initialize counters
+    const stats = {
+      totalLogins: 0,
+      totalResourceViews: 0,
+      activeUsers24h: new Set(),
+      activeUsers7d: new Set(),
+      resourceViews: {} as Record<string, number>,
+      dailyActivity: {} as Record<string, number>
+    };
+
+    const now = new Date();
+    const oneDayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+    const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+
+    for (const item of activities) {
+      const act = item; // kv.getByPrefix returns values directly in this setup if configured, or { key, value }
+      // Based on previous code, getByPrefix returns array of values? 
+      // Checking `kv.getByPrefix` usage: `const categories = await kv.getByPrefix('category:');`
+      // It seems it returns values. Let's assume it returns values.
+      
+      if (!act || !act.timestamp) continue;
+      
+      const date = new Date(act.timestamp);
+      const dateStr = date.toISOString().split('T')[0];
+
+      // Daily Activity Count
+      stats.dailyActivity[dateStr] = (stats.dailyActivity[dateStr] || 0) + 1;
+
+      // Active Users
+      if (date > oneDayAgo) stats.activeUsers24h.add(act.userId);
+      if (date > sevenDaysAgo) stats.activeUsers7d.add(act.userId);
+
+      // Type-specific stats
+      if (act.type === 'login') {
+        stats.totalLogins++;
+      } else if (act.type === 'resource_view') {
+        stats.totalResourceViews++;
+        if (act.resourceId) {
+          stats.resourceViews[act.resourceId] = (stats.resourceViews[act.resourceId] || 0) + 1;
+        }
+      }
+    }
+
+    // Sort resource views
+    const topResources = Object.entries(stats.resourceViews)
+      .sort(([, a], [, b]) => b - a)
+      .slice(0, 10)
+      .map(([id, views]) => ({ id, views }));
+
+    // Sort user growth/activity chart
+    const activityChart = Object.entries(stats.dailyActivity)
+      .sort(([dateA], [dateB]) => new Date(dateA).getTime() - new Date(dateB).getTime())
+      .map(([date, count]) => ({ date, count }));
+
+    return c.json({
+      summary: {
+        activeUsers24h: stats.activeUsers24h.size,
+        activeUsers7d: stats.activeUsers7d.size,
+        totalLogins: stats.totalLogins,
+        totalResourceViews: stats.totalResourceViews
+      },
+      topResources,
+      activityChart
+    });
+
+  } catch (error) {
+    console.error('Get analytics error:', error);
+    return c.json({ error: 'Failed to retrieve analytics' }, 500);
+  }
+});
+
+// ========================================
+// USER ACTIVITY & GOALS ENDPOINTS
+// ========================================
+
+// Get weekly goals progress
+app.get("/make-server-cc205da9/user-activity/goals", requireAuth, async (c) => {
+  try {
+    const user = c.get('user');
+    const userId = user.id;
+    
+    // Calculate start of week (Sunday)
+    const now = new Date();
+    const startOfWeek = new Date(now);
+    startOfWeek.setDate(now.getDate() - now.getDay());
+    startOfWeek.setHours(0, 0, 0, 0);
+    const startOfWeekStr = startOfWeek.toISOString();
+
+    // 1. Mood Logs Progress
+    // We can query journal entries for this week
+    const journalEntries = await kv.getByPrefix(`journal_by_user:${userId}`);
+    const weeklyMoodLogs = journalEntries.filter((entry: any) => 
+      entry.date && new Date(entry.date) >= startOfWeek
+    ).length;
+
+    // 2. Assessments Progress
+    // Query assessment responses for this week
+    const assessmentResponses = await kv.getByPrefix(`assessment_response_by_user:${userId}`);
+    const weeklyAssessments = assessmentResponses.filter((resp: any) => 
+      resp.started_at && new Date(resp.started_at) >= startOfWeek
+    ).length;
+
+    // 3. Articles/Resources Read Progress
+    // Query activity logs for 'resource_view' or 'read' type in this week
+    // Note: This might be heavy if we scan all activities. 
+    // Optimization: We stored user specific activity in `user_activity:${userId}:${timestamp}`
+    // But getByPrefix might return a lot. Let's try to get recent ones.
+    // Ideally, we should index this better, but for KV store, we'll scan recent keys or 
+    // use the specific `activity:user:${userId}:reads` list if we implemented it (we did in mark-read endpoint).
+    
+    let weeklyResourcesRead = 0;
+    
+    // Try to get from the dedicated read tracking list first (from mark-read endpoint)
+    const readActivityIds = await kv.get(`activity:user:${userId}:reads`) || [];
+    if (readActivityIds.length > 0) {
+      // We have IDs, we would need to check timestamps. 
+      // Since we don't want to fetch all individually, we can rely on the fact that IDs usually contain timestamps 
+      // or we just trust the client for now? No, let's look at the implementation of mark-read.
+      // It stores full objects in `activity:read:...` but only IDs in the user list.
+      // For simplicity/performance in this MVP, let's check the user_activity log instead.
+      
+      const recentActivities = await kv.getByPrefix(`user_activity:${userId}:`);
+      weeklyResourcesRead = recentActivities.filter((act: any) => 
+        (act.type === 'resource_view' || act.type === 'read') && 
+        new Date(act.timestamp) >= startOfWeek
+      ).length;
+    } else {
+        // Fallback to scanning user_activity prefix
+        const recentActivities = await kv.getByPrefix(`user_activity:${userId}:`);
+        weeklyResourcesRead = recentActivities.filter((act: any) => 
+            (act.type === 'resource_view' || act.type === 'read') && 
+            new Date(act.timestamp) >= startOfWeek
+        ).length;
+    }
+
+    return c.json({
+      goals: [
+        { label: 'Mood Logs', current: weeklyMoodLogs, total: 7, color: '#EF4444' },     // Daily
+        { label: 'Assessments', current: weeklyAssessments, total: 1, color: '#8B5CF6' }, // Weekly check-in
+        { label: 'Articles', current: weeklyResourcesRead, total: 5, color: '#10B981' }   // Learning goal
+      ],
+      weekStart: startOfWeekStr
+    });
+  } catch (error) {
+    console.error('Get weekly goals error:', error);
+    return c.json({ error: 'Failed to retrieve goals' }, 500);
+  }
+});
+
+// Get recently viewed resources
+app.get("/make-server-cc205da9/user-activity/history", requireAuth, async (c) => {
+  try {
+    const user = c.get('user');
+    const limit = parseInt(c.req.query('limit') || '5');
+    
+    // Get user activity
+    const activities = await kv.getByPrefix(`user_activity:${user.id}:`);
+    
+    // Filter for resource views and sort by timestamp descending
+    const resourceViews = activities
+      .filter((act: any) => act.type === 'resource_view' && act.resourceId)
+      .sort((a: any, b: any) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+
+    // Deduplicate by resourceId
+    const seenResources = new Set();
+    const uniqueViews = [];
+    
+    for (const view of resourceViews) {
+      if (!seenResources.has(view.resourceId)) {
+        seenResources.add(view.resourceId);
+        uniqueViews.push(view);
+        if (uniqueViews.length >= limit) break;
+      }
+    }
+
+    // Hydrate with resource details
+    // We need to fetch the actual resource titles/images
+    const hydratedHistory = [];
+    for (const view of uniqueViews) {
+      // Try library prefix first, then legacy
+      let resource = await kv.get(`library:resource:${view.resourceId}`);
+      if (!resource) resource = await kv.get(`resource:${view.resourceId}`);
+      
+      // If found, add to list
+      if (resource) {
+        hydratedHistory.push({
+          id: resource.id,
+          title: resource.title,
+          category: resource.category,
+          image: resource.thumbnail || resource.image || resource.heroImage,
+          viewedAt: view.timestamp
+        });
+      }
+    }
+
+    return c.json({ history: hydratedHistory });
+  } catch (error) {
+    console.error('Get activity history error:', error);
+    return c.json({ error: 'Failed to retrieve history' }, 500);
+  }
+});
+
+// ========================================
+// HEALTH DATA (Google Fit) ENDPOINTS
+// ========================================
+
+// Store health data
+app.post("/make-server-cc205da9/health-data", requireAuth, async (c) => {
+  try {
+    const user = c.get('user');
+    const data = await c.req.json();
+    
+    // Validate basic structure
+    if (!data || typeof data !== 'object') {
+      return c.json({ error: 'Invalid data format' }, 400);
+    }
+
+    const timestamp = new Date().toISOString();
+    const dateKey = timestamp.split('T')[0]; // YYYY-MM-DD
+
+    // Store daily snapshot
+    await kv.set(`health:${user.id}:${dateKey}`, {
+      ...data,
+      updated_at: timestamp
+    });
+
+    // Store latest snapshot for quick access
+    await kv.set(`health:${user.id}:latest`, {
+      ...data,
+      updated_at: timestamp
+    });
+
+    console.log(`💪 Health data updated for user ${user.id}`);
+    return c.json({ success: true, message: 'Health data synced' });
+  } catch (error) {
+    console.error('Save health data error:', error);
+    return c.json({ error: 'Failed to save health data' }, 500);
+  }
+});
+
+// Get health data
+app.get("/make-server-cc205da9/health-data", requireAuth, async (c) => {
+  try {
+    const user = c.get('user');
+    const date = c.req.query('date');
+    
+    if (date) {
+        // Get specific date
+        const data = await kv.get(`health:${user.id}:${date}`);
+        return c.json({ data: data || null });
+    } else {
+        // Get latest
+        const data = await kv.get(`health:${user.id}:latest`);
+        return c.json({ data: data || null });
+    }
+  } catch (error) {
+    console.error('Get health data error:', error);
+    return c.json({ error: 'Failed to retrieve health data' }, 500);
+  }
+});
+
+// ========================================
 // MOOD TYPE MANAGEMENT ENDPOINTS
 // ========================================
 
@@ -5596,6 +4556,147 @@ app.delete('/make-server-cc205da9/moods/:id', requireAdmin, async (c) => {
   } catch (error) {
     console.error('Delete mood error:', error);
     return c.json({ error: 'Failed to delete mood' }, 500);
+  }
+});
+
+// ============================================================================
+// CONTENT API (PHASE 1)
+// ============================================================================
+
+// Public Content API
+app.get("/make-server-cc205da9/content", async (c) => {
+  try {
+    const { status = 'published', category, type, limit = 50, offset = 0 } = c.req.query();
+    
+    // 1. Fetch all content items
+    let items = await kv.getByPrefix('content:');
+    
+    // 2. Filter by Status (default: published)
+    if (status !== 'all') { // 'all' is internal/admin use usually, but if exposed be careful
+        items = items.filter((item: any) => item.status === status);
+    }
+
+    // 3. Filter by Category
+    if (category) {
+      items = items.filter((item: any) => item.category === category);
+    }
+
+    // 4. Filter by Type (blog, resource, guide, article)
+    if (type) {
+      items = items.filter((item: any) => item.content_type === type);
+    }
+
+    // 5. Sort by Published Date (descending)
+    items.sort((a: any, b: any) => {
+      const dateA = new Date(a.published_at || a.created_at).getTime();
+      const dateB = new Date(b.published_at || b.created_at).getTime();
+      return dateB - dateA;
+    });
+
+    // 6. Pagination
+    const start = parseInt(offset);
+    const end = start + parseInt(limit);
+    const paginatedItems = items.slice(start, end);
+
+    return c.json({ 
+      items: paginatedItems,
+      total: items.length,
+      page: Math.floor(start / parseInt(limit)) + 1,
+      limit: parseInt(limit)
+    });
+  } catch (error) {
+    console.error('Content API error:', error);
+    return c.json({ error: 'Failed to fetch content' }, 500);
+  }
+});
+
+// Get Content by Slug or ID
+app.get("/make-server-cc205da9/content/:idOrSlug", async (c) => {
+  try {
+    const idOrSlug = c.req.param('idOrSlug');
+    
+    // Try direct lookup by ID
+    let item = await kv.get(`content:${idOrSlug}`);
+    
+    // If not found, it might be a slug. Scan all (KV limitation)
+    if (!item) {
+      const allItems = await kv.getByPrefix('content:');
+      item = allItems.find((i: any) => i.slug === idOrSlug);
+    }
+
+    if (!item) {
+      return c.json({ error: 'Content not found' }, 404);
+    }
+
+    return c.json({ item });
+  } catch (error) {
+    console.error('Get content item error:', error);
+    return c.json({ error: 'Failed to fetch content item' }, 500);
+  }
+});
+
+// Admin Content Management
+app.post("/make-server-cc205da9/admin/content", requireAdmin, async (c) => {
+  try {
+    const content = await c.req.json();
+    const id = content.id || crypto.randomUUID();
+    const now = new Date().toISOString();
+
+    // Enforce Schema (Minimal)
+    const newItem = {
+      ...content,
+      id,
+      slug: content.slug || id, // Fallback slug
+      created_at: now,
+      updated_at: now
+    };
+
+    await kv.set(`content:${id}`, newItem);
+    console.log(`✅ Content created: ${newItem.title} (${id})`);
+    
+    return c.json({ item: newItem });
+  } catch (error) {
+    console.error('Create content error:', error);
+    return c.json({ error: 'Failed to create content' }, 500);
+  }
+});
+
+app.put("/make-server-cc205da9/admin/content/:id", requireAdmin, async (c) => {
+  try {
+    const id = c.req.param('id');
+    const updates = await c.req.json();
+    
+    const existing = await kv.get(`content:${id}`);
+    if (!existing) {
+      return c.json({ error: 'Content not found' }, 404);
+    }
+
+    const updatedItem = {
+      ...existing,
+      ...updates,
+      id, // Immutable
+      updated_at: new Date().toISOString()
+    };
+
+    await kv.set(`content:${id}`, updatedItem);
+    console.log(`✅ Content updated: ${id}`);
+    
+    return c.json({ item: updatedItem });
+  } catch (error) {
+    console.error('Update content error:', error);
+    return c.json({ error: 'Failed to update content' }, 500);
+  }
+});
+
+app.delete("/make-server-cc205da9/admin/content/:id", requireAdmin, async (c) => {
+  try {
+    const id = c.req.param('id');
+    await kv.del(`content:${id}`);
+    console.log(`✅ Content deleted: ${id}`);
+    return c.json({ success: true });
+  } catch (error) {
+    console.error('Delete content error:', error);
+    return c.json({ error: 'Failed to delete content' }, 500);
   }
 });
 

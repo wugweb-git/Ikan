@@ -15,6 +15,7 @@ import { ImageUpload } from '../ui/image-upload';
 import { TagInput } from '../ui/tag-input';
 import { RichTextEditor } from '../ui/rich-text-editor';
 import { useFormValidation, ValidationSchema } from '../../hooks/useFormValidation';
+import { validateUrl } from '../../lib/validation';
 import { useUnsavedChanges } from '../../hooks/useUnsavedChanges';
 import { useKeyboardShortcuts } from '../../hooks/useKeyboardShortcuts';
 import { UnsavedChangesDialog } from '../ui/unsaved-changes-dialog';
@@ -25,7 +26,8 @@ import { AdminActionBar } from '../ui/admin-action-bar';
 export interface Resource {
   id: string;
   title: string;
-  category: 'article' | 'video' | 'podcast' | 'workbook' | 'guide';
+  category: string; // Dynamic type
+  filter_type?: string; // Format type
   description: string;
   content?: string;
   author: string;
@@ -51,14 +53,6 @@ interface ResourceEditPageProps {
   onSave: () => void;
 }
 
-const categoryOptions = [
-  { value: 'article', label: 'Article' },
-  { value: 'video', label: 'Video' },
-  { value: 'podcast', label: 'Podcast' },
-  { value: 'workbook', label: 'Workbook' },
-  { value: 'guide', label: 'Guide' }
-];
-
 const difficultyOptions = [
   { value: 'beginner', label: 'Beginner' },
   { value: 'intermediate', label: 'Intermediate' },
@@ -67,13 +61,15 @@ const difficultyOptions = [
 
 export function ResourceEditPage({ resourceId, onBack, onSave }: ResourceEditPageProps) {
   const { showToast } = useNotifications();
-  const [loading, setLoading] = useState(!!resourceId);
+  const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [categoryOptions, setCategoryOptions] = useState<any[]>([]);
 
   const [formData, setFormData] = useState<Partial<Resource>>({
     title: '',
-    category: 'article',
+    category: 'general',
+    filter_type: 'article',
     description: '',
     content: '',
     author: '',
@@ -111,6 +107,22 @@ export function ResourceEditPage({ resourceId, onBack, onSave }: ResourceEditPag
         return num > 0 && num <= 120;
       },
       message: 'Read time must be between 1 and 120 minutes'
+    },
+    thumbnail: {
+      validate: (value: any) => !value || !validateUrl(value),
+      message: 'Thumbnail must be a valid URL'
+    },
+    pdfUrl: {
+      validate: (value: any) => !value || !validateUrl(value),
+      message: 'PDF URL must be a valid URL'
+    },
+    videoUrl: {
+      validate: (value: any) => !value || !validateUrl(value),
+      message: 'Video URL must be a valid URL'
+    },
+    externalLink: {
+      validate: (value: any) => !value || !validateUrl(value),
+      message: 'External Link must be a valid URL'
     }
   };
 
@@ -124,10 +136,36 @@ export function ResourceEditPage({ resourceId, onBack, onSave }: ResourceEditPag
   }, [formData]);
 
   useEffect(() => {
+    loadCategories();
     if (resourceId) {
       loadResource();
+    } else {
+      setLoading(false);
     }
   }, [resourceId]);
+
+  const loadCategories = async () => {
+    try {
+      const data = await apiClient.getCategories();
+      const loadedCategories = Array.isArray(data) ? data : data.categories || [];
+      
+      if (loadedCategories.length > 0) {
+        setCategoryOptions(loadedCategories.map((c: any) => ({
+          label: c.name || c.label,
+          value: c.slug || c.value || c.name.toLowerCase()
+        })));
+      }
+    } catch (error) {
+      console.warn('Failed to load categories, using defaults', error);
+      setCategoryOptions([
+        { label: 'Anxiety', value: 'anxiety' },
+        { label: 'Depression', value: 'depression' },
+        { label: 'Stress', value: 'stress' },
+        { label: 'Sleep', value: 'sleep' },
+        { label: 'Wellness', value: 'wellness' }
+      ]);
+    }
+  };
 
   const loadResource = async () => {
     try {
@@ -368,9 +406,9 @@ export function ResourceEditPage({ resourceId, onBack, onSave }: ResourceEditPag
               />
             </AdminFormField>
 
-            <AdminFormField label="Category" required>
+            <AdminFormField label="Topic Category" required>
               <Select
-                value={formData.category || 'article'}
+                value={formData.category || 'general'}
                 onValueChange={(v: any) => setFormData({ ...formData, category: v })}
               >
                 <SelectTrigger
@@ -387,6 +425,33 @@ export function ResourceEditPage({ resourceId, onBack, onSave }: ResourceEditPag
                       {opt.label}
                     </SelectItem>
                   ))}
+                </SelectContent>
+              </Select>
+            </AdminFormField>
+
+            <AdminFormField label="Content Format" required>
+              <Select
+                value={formData.filter_type || 'article'}
+                onValueChange={(v: any) => setFormData({ ...formData, filter_type: v })}
+              >
+                <SelectTrigger
+                  style={{
+                    height: 'var(--ikan-component-button-height)',
+                    borderRadius: 'var(--ikan-component-border-radius)'
+                  }}
+                >
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="article">Article</SelectItem>
+                  <SelectItem value="tool">Tool</SelectItem>
+                  <SelectItem value="exercise">Exercise</SelectItem>
+                  <SelectItem value="video">Video</SelectItem>
+                  <SelectItem value="audio">Audio</SelectItem>
+                  <SelectItem value="podcast">Podcast</SelectItem>
+                  <SelectItem value="workbook">Workbook</SelectItem>
+                  <SelectItem value="guide">Guide</SelectItem>
+                  <SelectItem value="course">Course</SelectItem>
                 </SelectContent>
               </Select>
             </AdminFormField>

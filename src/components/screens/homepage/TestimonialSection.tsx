@@ -1,25 +1,29 @@
+import { useMemo } from 'react';
 import { ErrorBoundary } from '../../ErrorBoundary';
 import { cn } from '../../ui/utils';
 import { ButtonPrimary } from '../../buttons';
 import { ImageWithFallback } from '../../figma/ImageWithFallback';
 import { Play } from 'lucide-react';
-const img653408Bca4874Eff3Ad5722DPeersPatientenMichelleP500Webp = "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&h=100&fit=crop";
+import { usePageContent } from '../../../hooks/usePageContent';
 
 export function TestimonialSection() {
-  const testimonial = {
-    id: 'michelle-testimonial',
-    name: 'Michelle M.',
-    quote: '"I was constantly tired, lonely and exhausted and could barely manage my daily life. This platform became the biggest constant in my daily routine and I feel like it\'s the only place where I\'m not judged and I completely thrive in my community."',
-    image: img653408Bca4874Eff3Ad5722DPeersPatientenMichelleP500Webp,
-    imageAlt: 'Michelle\'s testimonial',
-    course: 'Stress',
-    stats: {
-      value: '20+',
-      label: 'Group Sessions'
-    },
-    videoCaption: 'Michelle shares her\nexperience with us',
-    videoUrl: ''
-  };
+  const { content, loading } = usePageContent('homepage-testimonial');
+
+  const testimonialData = useMemo(() => {
+    if (!content?.content) return null;
+    try {
+      return JSON.parse(content.content);
+    } catch (e) {
+      console.error('Failed to parse testimonial content', e);
+      return null;
+    }
+  }, [content]);
+
+  if (loading || !testimonialData) {
+     return null;
+  }
+
+  const { testimonial } = testimonialData;
 
   const handleVideoPlay = () => {
     if (testimonial.videoUrl) {

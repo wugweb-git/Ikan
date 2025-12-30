@@ -7,6 +7,7 @@ import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../ui/card';
 import { Badge } from '../ui/badge';
+import { Skeleton } from '../ui/skeleton-loader';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -16,7 +17,7 @@ import {
 import { apiClient } from '../../lib/api-client';
 import { EquipProgram } from '../../lib/equip-admin-types';
 import { useNotifications } from '../../contexts/NotificationContext';
-import { EquipProgramEditPageWizard } from './EquipProgramEditPageWizard';
+import { EquipEditor } from '../admin/equip/EquipEditor';
 
 export function EquipAdminDashboard() {
   const [programs, setPrograms] = useState<EquipProgram[]>([]);
@@ -34,19 +35,10 @@ export function EquipAdminDashboard() {
   const loadPrograms = async () => {
     setLoading(true);
     try {
-      // In a real app, this would be apiClient.getEquipPrograms()
-      // For now, we'll simulate it or use the single get if available
-      // Since the API client might only have single get, we might need to mock list
-      // or check if there's a list function. 
-      // Assuming we can list or just fetching the known one for demo.
-      
-      const demoId = 'sleep-tight-9';
-      try {
-        const p = await apiClient.getEquipProgram(demoId);
-        if (p) setPrograms([p]);
-      } catch (e) {
-        setPrograms([]); // No programs found
-      }
+      // Fetch list of programs
+      const data = await apiClient.getEquipPrograms();
+      const loadedPrograms = Array.isArray(data) ? data : (data as any).programs || [];
+      setPrograms(loadedPrograms);
     } catch (error) {
       console.error('Failed to load programs:', error);
       showToast('error', 'Error', 'Failed to load programs');
@@ -76,24 +68,15 @@ export function EquipAdminDashboard() {
     }
   };
 
-  const handleSaveProgram = async (program: EquipProgram) => {
-    try {
-      await apiClient.saveEquipProgram(program);
-      showToast('success', 'Saved', 'Program saved successfully');
-      setView('list');
-      loadPrograms();
-    } catch (error) {
-      showToast('error', 'Error', 'Failed to save program');
-    }
-  };
-
   // Render Editor
   if (view === 'editor') {
     return (
-      <EquipProgramEditPageWizard
-        programId={selectedProgramId || undefined}
-        onSave={handleSaveProgram}
-        onCancel={() => setView('list')}
+      <EquipEditor
+        programId={selectedProgramId}
+        onBack={() => {
+            setView('list');
+            loadPrograms();
+        }}
       />
     );
   }
@@ -165,7 +148,40 @@ export function EquipAdminDashboard() {
         {/* Program List */}
         <div className="grid grid-cols-1 gap-6">
           {loading ? (
-            <div className="text-center py-12 text-gray-500">Loading programs...</div>
+             <div className="space-y-6">
+              {[1, 2, 3].map((i) => (
+                <Card key={i} className="hover:shadow-md transition-shadow">
+                  <div className="flex flex-col md:flex-row p-6 gap-6">
+                    {/* Thumbnail Skeleton */}
+                    <div className="w-full md:w-48 h-32 bg-gray-100 rounded-lg flex-shrink-0 overflow-hidden">
+                      <Skeleton className="w-full h-full" />
+                    </div>
+
+                    {/* Content Skeleton */}
+                    <div className="flex-1 space-y-3">
+                      <div className="flex items-start justify-between">
+                        <div className="w-full mr-4">
+                          <div className="flex items-center gap-2 mb-2">
+                             <Skeleton className="w-20 h-5 rounded-full" />
+                             <Skeleton className="w-20 h-5 rounded-full" />
+                          </div>
+                          <Skeleton className="w-1/2 h-7 mb-2" />
+                          <Skeleton className="w-3/4 h-5" />
+                        </div>
+                        <Skeleton className="w-8 h-8 rounded-md" />
+                      </div>
+
+                      <div className="flex items-center gap-6 pt-2">
+                        <Skeleton className="w-24 h-5" />
+                        <Skeleton className="w-24 h-5" />
+                        <div className="flex-1" />
+                        <Skeleton className="w-32 h-9 rounded-md" />
+                      </div>
+                    </div>
+                  </div>
+                </Card>
+              ))}
+            </div>
           ) : filteredPrograms.length === 0 ? (
             <div className="text-center py-24 bg-white rounded-xl border border-dashed">
               <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4 text-gray-400">
@@ -220,7 +236,7 @@ export function EquipAdminDashboard() {
                           <DropdownMenuItem onClick={() => handleEdit(program.id)}>
                             <Edit3 size={14} className="mr-2" /> Edit
                           </DropdownMenuItem>
-                          <DropdownMenuItem className="text-red-600" onClick={() => handleDelete(program.id)}>
+                          <DropdownMenuItem className="text-red-600" onClick={(e) => { e.stopPropagation(); handleDelete(program.id); }}>
                             <Trash2 size={14} className="mr-2" /> Delete
                           </DropdownMenuItem>
                         </DropdownMenuContent>

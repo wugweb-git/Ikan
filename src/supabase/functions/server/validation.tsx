@@ -233,54 +233,61 @@ export const validateProfileUpdate = (updates: any): ValidationResult => {
 
 /**
  * Validate equip program content constraints
- * Enforces strict CMS limits for layout safety
+ * RELAXED LIMITS to prevent saving errors
  */
 export const validateEquipProgram = (program: any): ValidationResult => {
   const errors: ValidationError[] = [];
 
   // SECTION 1 Constraints
   if (program.section1_title) {
-    if (program.section1_title.length < 10) errors.push({ field: 'section1_title', message: 'Section 1 Title must be at least 10 chars' });
-    if (program.section1_title.length > 40) errors.push({ field: 'section1_title', message: 'Section 1 Title must be under 40 chars' });
+    if (program.section1_title.length < 2) errors.push({ field: 'section1_title', message: 'Section 1 Title must be at least 2 chars' });
+    if (program.section1_title.length > 200) errors.push({ field: 'section1_title', message: 'Section 1 Title must be under 200 chars' });
   }
 
   if (program.section1_eligibility_points) {
-    if (program.section1_eligibility_points.length > 4) {
-      errors.push({ field: 'section1_eligibility_points', message: 'Section 1 Checklist limited to 4 items' });
+    // Relaxed from 4 to 10
+    if (program.section1_eligibility_points.length > 10) {
+      errors.push({ field: 'section1_eligibility_points', message: 'Section 1 Checklist limited to 10 items' });
     }
     program.section1_eligibility_points.forEach((point: string, idx: number) => {
-      if (point.length < 30) errors.push({ field: `section1_eligibility_points[${idx}]`, message: 'Checklist item too short (min 30 chars)' });
-      if (point.length > 90) errors.push({ field: `section1_eligibility_points[${idx}]`, message: 'Checklist item too long (max 90 chars)' });
+      // Relaxed from 30 to 2, 90 to 500
+      if (point.length < 2) errors.push({ field: `section1_eligibility_points[${idx}]`, message: 'Checklist item too short (min 2 chars)' });
+      if (point.length > 500) errors.push({ field: `section1_eligibility_points[${idx}]`, message: 'Checklist item too long (max 500 chars)' });
     });
   }
 
   if (program.section1_who_content) {
-    if (program.section1_who_content.length < 120) errors.push({ field: 'section1_who_content', message: 'Participation text too short (min 120 chars)' });
-    if (program.section1_who_content.length > 260) errors.push({ field: 'section1_who_content', message: 'Participation text too long (max 260 chars)' });
+    // Relaxed from 120 to 2, 260 to 5000
+    if (program.section1_who_content.length < 2) errors.push({ field: 'section1_who_content', message: 'Participation text too short (min 2 chars)' });
+    if (program.section1_who_content.length > 5000) errors.push({ field: 'section1_who_content', message: 'Participation text too long (max 5000 chars)' });
   }
 
   // SECTION 2 Constraints
   if (program.section2_title) {
-    if (program.section2_title.length < 20) errors.push({ field: 'section2_title', message: 'Section 2 Title too short (min 20 chars)' });
-    if (program.section2_title.length > 60) errors.push({ field: 'section2_title', message: 'Section 2 Title too long (max 60 chars)' });
+    // Relaxed from 20 to 2, 60 to 200
+    if (program.section2_title.length < 2) errors.push({ field: 'section2_title', message: 'Section 2 Title too short (min 2 chars)' });
+    if (program.section2_title.length > 200) errors.push({ field: 'section2_title', message: 'Section 2 Title too long (max 200 chars)' });
   }
 
   // SECTION 3 Constraints
   if (program.section3_title) {
-    if (program.section3_title.length < 15) errors.push({ field: 'section3_title', message: 'Section 3 Title too short (min 15 chars)' });
-    if (program.section3_title.length > 40) errors.push({ field: 'section3_title', message: 'Section 3 Title too long (max 40 chars)' });
+    // Relaxed from 15 to 2, 40 to 200
+    if (program.section3_title.length < 2) errors.push({ field: 'section3_title', message: 'Section 3 Title too short (min 2 chars)' });
+    if (program.section3_title.length > 200) errors.push({ field: 'section3_title', message: 'Section 3 Title too long (max 200 chars)' });
   }
 
   // SECTION 4 Constraints
   if (program.section4_benefits) {
-    if (program.section4_benefits.length > 4) errors.push({ field: 'section4_benefits', message: 'Benefits limited to 4 items' });
+    // Relaxed from 4 to 20
+    if (program.section4_benefits.length > 20) errors.push({ field: 'section4_benefits', message: 'Benefits limited to 20 items' });
     program.section4_benefits.forEach((b: any, idx: number) => {
       const title = typeof b === 'string' ? b : b.title || '';
       const desc = typeof b === 'string' ? '' : b.description || '';
-      if (title.length < 15) errors.push({ field: `section4_benefits[${idx}].title`, message: 'Benefit title too short (min 15 chars)' });
-      if (title.length > 45) errors.push({ field: `section4_benefits[${idx}].title`, message: 'Benefit title too long (max 45 chars)' });
-      if (desc.length < 60) errors.push({ field: `section4_benefits[${idx}].description`, message: 'Benefit description too short (min 60 chars)' });
-      if (desc.length > 140) errors.push({ field: `section4_benefits[${idx}].description`, message: 'Benefit description too long (max 140 chars)' });
+      // Relaxed min/max constraints significantly
+      if (title.length < 2) errors.push({ field: `section4_benefits[${idx}].title`, message: 'Benefit title too short (min 2 chars)' });
+      if (title.length > 200) errors.push({ field: `section4_benefits[${idx}].title`, message: 'Benefit title too long (max 200 chars)' });
+      if (desc.length < 2) errors.push({ field: `section4_benefits[${idx}].description`, message: 'Benefit description too short (min 2 chars)' });
+      if (desc.length > 1000) errors.push({ field: `section4_benefits[${idx}].description`, message: 'Benefit description too long (max 1000 chars)' });
     });
   }
 

@@ -3,6 +3,7 @@ import { Button } from '../ui/button';
 import { ErrorBoundary } from '../ErrorBoundary';
 import { ImageWithFallback } from '../figma/ImageWithFallback';
 import { Clock } from 'lucide-react';
+import { Skeleton } from '../ui/skeleton-loader';
 
 export interface AssessmentProgram {
   title: string;
@@ -18,6 +19,7 @@ export interface AssessmentBlockProps {
   buttonText?: string;
   seeMoreText?: string;
   programs: AssessmentProgram[];
+  loading?: boolean;
   onProgramClick?: (program: AssessmentProgram) => void;
   onNavigate?: (route: string) => void;
   className?: string;
@@ -29,6 +31,7 @@ export function AssessmentBlock({
   buttonText = "Take Assessment",
   seeMoreText = "SEE MORE",
   programs = [],
+  loading = false,
   onProgramClick,
   onNavigate,
   className
@@ -47,6 +50,50 @@ export function AssessmentBlock({
       onNavigate('/assessment');
     }
   };
+
+  const renderSkeletons = () => (
+    <>
+      <div className="hidden lg:grid grid-cols-3 gap-6">
+        {[1, 2, 3].map((i) => (
+          <div key={i} className="p-6 rounded-xl border border-[var(--color-border-default)] bg-[var(--color-bg-card)]">
+            <div className="space-y-6 h-full flex flex-col">
+              <div className="space-y-4 flex-1">
+                <Skeleton height="20px" width="30%" className="mb-2" />
+                <Skeleton height="28px" width="80%" />
+                <Skeleton height="20px" width="100%" />
+                <Skeleton height="20px" width="90%" />
+              </div>
+              <div className="flex items-end justify-between">
+                <Skeleton height="128px" width="128px" className="rounded-md" />
+                <div className="flex flex-col items-end space-y-4">
+                  <Skeleton height="20px" width="80px" />
+                  <Skeleton height="48px" width="140px" className="rounded-md" />
+                </div>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+      <div className="block lg:hidden space-y-6">
+        {[1, 2, 3].map((i) => (
+          <div key={i} className="p-6 rounded-xl border border-[var(--color-border-default)] bg-[var(--color-bg-card)]">
+            <div className="space-y-4">
+              <Skeleton height="20px" width="30%" className="mb-2" />
+              <Skeleton height="28px" width="80%" />
+              <Skeleton height="60px" width="100%" />
+              <div className="flex items-center justify-between mt-4">
+                <Skeleton height="96px" width="96px" className="rounded-md" />
+                <div className="flex flex-col items-end space-y-4">
+                  <Skeleton height="20px" width="80px" />
+                  <Skeleton height="48px" width="140px" className="rounded-md" />
+                </div>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </>
+  );
 
   return (
     <ErrorBoundary>
@@ -80,236 +127,250 @@ export function AssessmentBlock({
             >
               {title}
             </h2>
-            <Button 
-              onClick={handleSeeMore}
-              variant="secondary"
-              className="ikan-button self-start lg:self-auto mobile-button touch-target"
-              style={{
-                backgroundColor: 'var(--color-neutral-200)',
-                color: 'var(--color-text-muted)',
-                height: '48px',
-                borderRadius: 'var(--radius-sm)'
-              }}
-            >
-              {seeMoreText}
-            </Button>
-          </div>
-
-          {/* Mobile Layout */}
-          <div className="block lg:hidden space-y-6">
-            {programs.map((program, index) => (
-              <div 
-                key={index}
-                className="p-6 rounded-xl border"
+            {programs.length > 0 && !loading && (
+              <Button 
+                onClick={handleSeeMore}
+                variant="secondary"
+                className="ikan-button self-start lg:self-auto mobile-button touch-target"
                 style={{
-                  backgroundColor: 'var(--color-bg-card)',
-                  borderRadius: 'var(--radius-lg)',
-                  border: '1px solid var(--color-border-default)'
+                  backgroundColor: 'var(--color-neutral-200)',
+                  color: 'var(--color-text-muted)',
+                  height: '48px',
+                  borderRadius: 'var(--radius-sm)'
                 }}
               >
-                <div 
-                  className="space-y-4"
-                  style={{ gap: 'var(--spacing-4)' }}
-                >
-                  <div>
-                    <div 
-                      className="text-sm font-normal uppercase tracking-wide mb-2"
-                      style={{
-                        fontSize: 'var(--text-sm)',
-                        fontWeight: 'var(--font-weight-normal)',
-                        color: 'var(--color-primary-default)',
-                        fontFamily: 'var(--font-family-base)',
-                        letterSpacing: 'var(--letter-spacing-wide)'
-                      }}
-                    >
-                      {subtitle}
-                    </div>
-                    <h3 
-                      style={{
-                        fontSize: 'var(--text-xl)',
-                        fontWeight: 'var(--font-weight-medium)',
-                        color: 'var(--color-text-primary)',
-                        fontFamily: 'var(--font-family-base)'
-                      }}
-                    >
-                      {program.title}
-                    </h3>
-                  </div>
-                  
-                  <p 
-                    className="leading-relaxed"
-                    style={{
-                      fontSize: 'var(--text-base)',
-                      color: 'var(--color-text-muted)',
-                      lineHeight: 'var(--line-height-md)',
-                      fontFamily: 'var(--font-family-base)'
-                    }}
-                  >
-                    {program.description}
-                  </p>
-
-                  <div className="flex items-center justify-between">
-                    <div 
-                      className="w-24 h-24 rounded-lg overflow-hidden"
-                      style={{ borderRadius: 'var(--radius-md)' }}
-                    >
-                      <ImageWithFallback 
-                        src={program.image}
-                        alt={program.title}
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
-                    
-                    <div 
-                      className="flex flex-col items-end space-y-4"
-                      style={{ gap: 'var(--spacing-4)' }}
-                    >
-                      <div className="flex items-center gap-2">
-                        <Clock className="w-4 h-4" />
-                        <span 
-                          className="text-sm"
-                          style={{
-                            fontSize: 'var(--text-sm)',
-                            color: 'var(--color-text-primary)',
-                            fontFamily: 'var(--font-family-base)'
-                          }}
-                        >
-                          {program.info}
-                        </span>
-                      </div>
-                      <Button
-                        onClick={() => handleProgramClick(program)}
-                        className="ikan-button"
-                        style={{
-                          backgroundColor: 'var(--color-accent-default)',
-                          color: 'var(--color-accent-on)',
-                          height: '48px',
-                          borderRadius: 'var(--radius-sm)'
-                        }}
-                      >
-                        {buttonText}
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            ))}
+                {seeMoreText}
+              </Button>
+            )}
           </div>
 
-          {/* Desktop Layout */}
-          <div className="hidden lg:block">
-            <div 
-              className="grid grid-cols-3 gap-6"
-              style={{ gap: 'var(--spacing-6)' }}
-            >
-              {programs.map((program, index) => (
-                <div 
-                  key={index}
-                  className="p-6 rounded-xl border"
-                  style={{
-                    backgroundColor: 'var(--color-bg-card)',
-                    borderRadius: 'var(--radius-lg)',
-                    border: '1px solid var(--color-border-default)'
-                  }}
-                >
-                  <div 
-                    className="space-y-6 h-full flex flex-col"
-                    style={{ gap: 'var(--spacing-6)' }}
-                  >
-                    {/* Content */}
-                    <div 
-                      className="space-y-4 flex-1"
-                      style={{ gap: 'var(--spacing-4)' }}
-                    >
-                      <div>
-                        <div 
-                          className="text-sm font-normal uppercase tracking-wide mb-2"
-                          style={{
-                            fontSize: 'var(--text-sm)',
-                            fontWeight: 'var(--font-weight-normal)',
-                            color: 'var(--color-primary-default)',
-                            fontFamily: 'var(--font-family-base)',
-                            letterSpacing: 'var(--letter-spacing-wide)'
-                          }}
-                        >
-                          {subtitle}
-                        </div>
-                        <h3 
-                          style={{
-                            fontSize: 'var(--text-xl)',
-                            fontWeight: 'var(--font-weight-medium)',
-                            color: 'var(--color-text-primary)',
-                            fontFamily: 'var(--font-family-base)',
-                            lineHeight: 'var(--line-height-md)',
-                            whiteSpace: 'pre-line' // Allow natural wrapping or explicit newlines from data
-                          }}
-                        >
-                          {program.title}
-                        </h3>
-                      </div>
-                      
-                      <p 
-                        className="leading-relaxed"
+          {loading ? renderSkeletons() : (
+            <>
+               {programs.length === 0 ? (
+                 <div className="text-center py-12 text-[var(--color-text-muted)]">
+                   No assessments available at the moment.
+                 </div>
+               ) : (
+                 <>
+                  {/* Mobile Layout */}
+                  <div className="block lg:hidden space-y-6">
+                    {programs.map((program, index) => (
+                      <div 
+                        key={index}
+                        className="p-6 rounded-xl border"
                         style={{
-                          fontSize: 'var(--text-base)',
-                          color: 'var(--color-text-muted)',
-                          lineHeight: 'var(--line-height-md)',
-                          fontFamily: 'var(--font-family-base)'
+                          backgroundColor: 'var(--color-bg-card)',
+                          borderRadius: 'var(--radius-lg)',
+                          border: '1px solid var(--color-border-default)'
                         }}
                       >
-                        {program.description}
-                      </p>
-                    </div>
-
-                    {/* Bottom Section */}
-                    <div className="flex items-end justify-between">
-                      <div 
-                        className="w-32 h-32 rounded-lg overflow-hidden"
-                        style={{ borderRadius: 'var(--radius-md)' }}
-                      >
-                        <ImageWithFallback 
-                          src={program.image}
-                          alt={program.title}
-                          className="w-full h-full object-cover"
-                        />
-                      </div>
-                      
-                      <div 
-                        className="flex flex-col items-end space-y-6"
-                        style={{ gap: 'var(--spacing-6)' }}
-                      >
-                        <div className="flex items-center gap-2">
-                          <Clock className="w-4 h-4" />
-                          <span 
-                            className="text-sm"
+                        <div 
+                          className="space-y-4"
+                          style={{ gap: 'var(--spacing-4)' }}
+                        >
+                          <div>
+                            <div 
+                              className="text-sm font-normal uppercase tracking-wide mb-2"
+                              style={{
+                                fontSize: 'var(--text-sm)',
+                                fontWeight: 'var(--font-weight-normal)',
+                                color: 'var(--color-primary-default)',
+                                fontFamily: 'var(--font-family-base)',
+                                letterSpacing: 'var(--letter-spacing-wide)'
+                              }}
+                            >
+                              {subtitle}
+                            </div>
+                            <h3 
+                              style={{
+                                fontSize: 'var(--text-xl)',
+                                fontWeight: 'var(--font-weight-medium)',
+                                color: 'var(--color-text-primary)',
+                                fontFamily: 'var(--font-family-base)'
+                              }}
+                            >
+                              {program.title}
+                            </h3>
+                          </div>
+                          
+                          <p 
+                            className="leading-relaxed"
                             style={{
-                              fontSize: 'var(--text-sm)',
-                              color: 'var(--color-text-primary)',
+                              fontSize: 'var(--text-base)',
+                              color: 'var(--color-text-muted)',
+                              lineHeight: 'var(--line-height-md)',
                               fontFamily: 'var(--font-family-base)'
                             }}
                           >
-                            {program.info}
-                          </span>
+                            {program.description}
+                          </p>
+
+                          <div className="flex items-center justify-between">
+                            <div 
+                              className="w-24 h-24 rounded-lg overflow-hidden"
+                              style={{ borderRadius: 'var(--radius-md)' }}
+                            >
+                              <ImageWithFallback 
+                                src={program.image}
+                                alt={program.title}
+                                className="w-full h-full object-cover"
+                              />
+                            </div>
+                            
+                            <div 
+                              className="flex flex-col items-end space-y-4"
+                              style={{ gap: 'var(--spacing-4)' }}
+                            >
+                              <div className="flex items-center gap-2">
+                                <Clock className="w-4 h-4" />
+                                <span 
+                                  className="text-sm"
+                                  style={{
+                                    fontSize: 'var(--text-sm)',
+                                    color: 'var(--color-text-primary)',
+                                    fontFamily: 'var(--font-family-base)'
+                                  }}
+                                >
+                                  {program.info}
+                                </span>
+                              </div>
+                              <Button
+                                onClick={() => handleProgramClick(program)}
+                                className="ikan-button"
+                                style={{
+                                  backgroundColor: 'var(--color-accent-default)',
+                                  color: 'var(--color-accent-on)',
+                                  height: '48px',
+                                  borderRadius: 'var(--radius-sm)'
+                                }}
+                              >
+                                {buttonText}
+                              </Button>
+                            </div>
+                          </div>
                         </div>
-                        <Button
-                          onClick={() => handleProgramClick(program)}
-                          className="ikan-button"
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Desktop Layout */}
+                  <div className="hidden lg:block">
+                    <div 
+                      className="grid grid-cols-3 gap-6"
+                      style={{ gap: 'var(--spacing-6)' }}
+                    >
+                      {programs.map((program, index) => (
+                        <div 
+                          key={index}
+                          className="p-6 rounded-xl border"
                           style={{
-                            backgroundColor: 'var(--color-accent-default)',
-                            color: 'var(--color-accent-on)',
-                            height: '48px',
-                            borderRadius: 'var(--radius-sm)'
+                            backgroundColor: 'var(--color-bg-card)',
+                            borderRadius: 'var(--radius-lg)',
+                            border: '1px solid var(--color-border-default)'
                           }}
                         >
-                          {buttonText}
-                        </Button>
-                      </div>
+                          <div 
+                            className="space-y-6 h-full flex flex-col"
+                            style={{ gap: 'var(--spacing-6)' }}
+                          >
+                            {/* Content */}
+                            <div 
+                              className="space-y-4 flex-1"
+                              style={{ gap: 'var(--spacing-4)' }}
+                            >
+                              <div>
+                                <div 
+                                  className="text-sm font-normal uppercase tracking-wide mb-2"
+                                  style={{
+                                    fontSize: 'var(--text-sm)',
+                                    fontWeight: 'var(--font-weight-normal)',
+                                    color: 'var(--color-primary-default)',
+                                    fontFamily: 'var(--font-family-base)',
+                                    letterSpacing: 'var(--letter-spacing-wide)'
+                                  }}
+                                >
+                                  {subtitle}
+                                </div>
+                                <h3 
+                                  style={{
+                                    fontSize: 'var(--text-xl)',
+                                    fontWeight: 'var(--font-weight-medium)',
+                                    color: 'var(--color-text-primary)',
+                                    fontFamily: 'var(--font-family-base)',
+                                    lineHeight: 'var(--line-height-md)',
+                                    whiteSpace: 'pre-line' // Allow natural wrapping or explicit newlines from data
+                                  }}
+                                >
+                                  {program.title}
+                                </h3>
+                              </div>
+                              
+                              <p 
+                                className="leading-relaxed"
+                                style={{
+                                  fontSize: 'var(--text-base)',
+                                  color: 'var(--color-text-muted)',
+                                  lineHeight: 'var(--line-height-md)',
+                                  fontFamily: 'var(--font-family-base)'
+                                }}
+                              >
+                                {program.description}
+                              </p>
+                            </div>
+
+                            {/* Bottom Section */}
+                            <div className="flex items-end justify-between">
+                              <div 
+                                className="w-32 h-32 rounded-lg overflow-hidden"
+                                style={{ borderRadius: 'var(--radius-md)' }}
+                              >
+                                <ImageWithFallback 
+                                  src={program.image}
+                                  alt={program.title}
+                                  className="w-full h-full object-cover"
+                                />
+                              </div>
+                              
+                              <div 
+                                className="flex flex-col items-end space-y-6"
+                                style={{ gap: 'var(--spacing-6)' }}
+                              >
+                                <div className="flex items-center gap-2">
+                                  <Clock className="w-4 h-4" />
+                                  <span 
+                                    className="text-sm"
+                                    style={{
+                                      fontSize: 'var(--text-sm)',
+                                      color: 'var(--color-text-primary)',
+                                      fontFamily: 'var(--font-family-base)'
+                                    }}
+                                  >
+                                    {program.info}
+                                  </span>
+                                </div>
+                                <Button
+                                  onClick={() => handleProgramClick(program)}
+                                  className="ikan-button"
+                                  style={{
+                                    backgroundColor: 'var(--color-accent-default)',
+                                    color: 'var(--color-accent-on)',
+                                    height: '48px',
+                                    borderRadius: 'var(--radius-sm)'
+                                  }}
+                                >
+                                  {buttonText}
+                                </Button>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
                     </div>
                   </div>
-                </div>
-              ))}
-            </div>
-          </div>
+                 </>
+               )}
+            </>
+          )}
         </div>
       </section>
     </ErrorBoundary>

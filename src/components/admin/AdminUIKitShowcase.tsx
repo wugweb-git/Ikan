@@ -39,7 +39,7 @@ export function AdminUIKitShowcase() {
               marginBottom: 'var(--spacing-2)'
             }}
           >
-            Assessment Question Types Showcase
+            UI Kit Showcase
           </h2>
           <p 
             style={{
@@ -49,7 +49,7 @@ export function AdminUIKitShowcase() {
               color: 'var(--color-text-muted)'
             }}
           >
-            Interactive catalog of all available question types for assessments. Test interactions live.
+            Interactive catalog of UI components and assessment question types.
           </p>
         </div>
         
@@ -67,7 +67,51 @@ export function AdminUIKitShowcase() {
         </Button>
       </div>
 
+      {/* Core Components Preview */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Buttons</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+             <div className="flex flex-wrap gap-2">
+                <Button>Default</Button>
+                <Button variant="secondary">Secondary</Button>
+                <Button variant="outline">Outline</Button>
+                <Button variant="ghost">Ghost</Button>
+                <Button variant="destructive">Destructive</Button>
+             </div>
+             <div className="flex flex-wrap gap-2 items-center">
+                <Button size="sm">Small</Button>
+                <Button size="default">Default</Button>
+                <Button size="lg">Large</Button>
+                <Button size="icon" variant="outline"><Star className="w-4 h-4" /></Button>
+             </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Badges & Status</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+             <div className="flex flex-wrap gap-2">
+                <Badge>Default</Badge>
+                <Badge variant="secondary">Secondary</Badge>
+                <Badge variant="outline">Outline</Badge>
+                <Badge variant="destructive">Destructive</Badge>
+             </div>
+             <div className="flex flex-wrap gap-2">
+                <Badge className="bg-blue-100 text-blue-800 hover:bg-blue-100">Info</Badge>
+                <Badge className="bg-green-100 text-green-800 hover:bg-green-100">Success</Badge>
+                <Badge className="bg-yellow-100 text-yellow-800 hover:bg-yellow-100">Warning</Badge>
+             </div>
+          </CardContent>
+        </Card>
+      </div>
+
       <div className="space-y-8">
+        <h3 className="text-xl font-semibold mt-8 border-b pb-2">Assessment Question Types</h3>
         {/* 1. Multiple Choice Question */}
         <Card style={{ borderRadius: 'var(--radius-lg)', border: '1.5px solid #E5E7EB' }}>
           <CardHeader style={{ paddingBottom: '12px' }}>

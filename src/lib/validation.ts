@@ -400,6 +400,22 @@ export const sanitizeProfile = (profile: any): any => {
 };
 
 /**
+ * URL validation
+ */
+export const validateUrl = (url: string): ValidationError | null => {
+  if (!url || url.trim().length === 0) {
+    return null; // URL is optional usually
+  }
+  
+  try {
+    new URL(url);
+    return null;
+  } catch (e) {
+    return { field: 'url', message: 'Please enter a valid URL (e.g. https://example.com)' };
+  }
+};
+
+/**
  * Common weak passwords to check against
  */
 const COMMON_PASSWORDS = [

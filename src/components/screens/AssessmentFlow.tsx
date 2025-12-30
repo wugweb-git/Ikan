@@ -50,14 +50,18 @@ interface AssessmentFlowProps {
   assessment?: Assessment;
   onComplete?: (results: any) => void;
   onBack?: () => void;
+  onNavigate?: (route: string) => void;
   className?: string;
 }
+
+import { AssessmentResults } from './AssessmentResults';
 
 export function AssessmentFlow({ 
   assessmentId,
   assessment: initialAssessment, 
   onComplete,
   onBack,
+  onNavigate,
   className 
 }: AssessmentFlowProps) {
   const { showToast } = useNotifications();
@@ -73,6 +77,10 @@ export function AssessmentFlow({
   const [questionDirection, setQuestionDirection] = useState<'forward' | 'backward'>('forward');
   const [showMilestone, setShowMilestone] = useState(false);
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
+  
+  // New state for handling local results display
+  const [showResults, setShowResults] = useState(false);
+  const [calculatedResults, setCalculatedResults] = useState<any>(null);
 
   // Fetch assessment data if not provided
   useEffect(() => {
@@ -125,8 +133,6 @@ export function AssessmentFlow({
       } catch (err) {
         console.error('Error fetching assessment:', err);
         setError('Failed to load assessment. Please try again.');
-        // Fallback for demo purposes if fetch fails
-        // setAssessment(sampleAssessment); 
       } finally {
         setLoading(false);
       }
@@ -156,6 +162,20 @@ export function AssessmentFlow({
           Go Back
         </Button>
       </div>
+    );
+  }
+
+  // Results State
+  if (showResults && calculatedResults) {
+    return (
+      <AssessmentResults 
+        results={calculatedResults}
+        onRetakeAssessment={handleRetake}
+        onBackToAssessments={onBack}
+        onReturnToDashboard={onBack}
+        onNavigate={onNavigate}
+        className={className}
+      />
     );
   }
 
@@ -276,24 +296,47 @@ export function AssessmentFlow({
         try {
           console.log('💾 Saving assessment results to database...');
           
-          const saveResponse = await apiClient.saveAssessmentResponse(
+          await apiClient.saveAssessmentResponse(
             assessment.id,
             responses,
             'completed',
-            score
+            score,
+            interpretation,
+            interpretation.label // Pass label as severity hint
           );
 
           console.log('✅ Assessment results saved successfully');
-          showToast('success', 'Assessment Complete!', 'Your results have been saved successfully.');
+          
+          // Fetch personalized recommendations
+          try {
+            console.log('🔍 Fetching recommendations...');
+            const recommendations = await apiClient.getRecommendations();
+            console.log('✨ Recommendations received:', recommendations);
+            
+            if (recommendations && recommendations.length > 0) {
+              const topRec = recommendations[0];
+              // Update results with real recommendation
+              results.equipProgramSuggestion = {
+                title: topRec.equip_name || topRec.programTitle || 'Recommended Program',
+                description: topRec.reason || topRec.rationale || 'Based on your assessment results, we recommend this program.',
+                route: `/equip-detail?id=${topRec.equip_id || topRec.programId}`
+              };
+            }
+          } catch (recError) {
+             console.error('Failed to fetch recommendations:', recError);
+          }
+          
         } catch (saveError) {
           console.error('❌ Error saving assessment results:', saveError);
           showToast('warning', 'Assessment Complete!', 'Results processed but not saved to your account.');
         }
-      } else {
-        showToast('info', 'Assessment Complete!', 'Sign in to save your results permanently.');
-      }
+      } 
+      
+      // Set local results state to show the results screen
+      setCalculatedResults(results);
+      setShowResults(true);
 
-      // Call onComplete callback if provided
+      // Call onComplete callback if provided (optional, for parent tracking)
       if (onComplete) {
         onComplete(results);
       }
@@ -304,6 +347,13 @@ export function AssessmentFlow({
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const handleRetake = () => {
+    setResponses({});
+    setCurrentQuestionIndex(0);
+    setShowResults(false);
+    setCalculatedResults(null);
   };
 
   const isCurrentQuestionAnswered = () => {
@@ -603,8 +653,6 @@ export function AssessmentFlow({
               handleAnswer(questionId, value);
             }
           }}
-          questionNumber={currentQuestionIndex + 1}
-          totalQuestions={totalQuestions}
           showNext={false} // We'll handle navigation separately
           className="w-full"
         />

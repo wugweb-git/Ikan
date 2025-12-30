@@ -12,6 +12,7 @@ import { Checkbox } from '../ui/checkbox';
 import { Label } from '../ui/label';
 import { ImageUpload } from '../ui/image-upload';
 import { useFormValidation, ValidationSchema } from '../../hooks/useFormValidation';
+import { validateUrl } from '../../lib/validation';
 import { useUnsavedChanges } from '../../hooks/useUnsavedChanges';
 import { useKeyboardShortcuts } from '../../hooks/useKeyboardShortcuts';
 import { UnsavedChangesDialog } from '../ui/unsaved-changes-dialog';
@@ -106,6 +107,10 @@ export function ConsultantEditPage({ consultantId, onBack, onSave }: ConsultantE
       required: true,
       minLength: 20,
       message: 'Bio must be at least 20 characters'
+    },
+    photo: {
+      validate: (value: any) => !value || !validateUrl(value),
+      message: 'Photo must be a valid URL'
     }
   };
 

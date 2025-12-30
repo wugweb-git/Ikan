@@ -56,6 +56,7 @@ import { AdminMigration } from '../admin/AdminMigration';
 import { AdminDebugPanel } from '../admin/AdminDebugPanel';
 import { AdminCategoryManager } from '../admin/AdminCategoryManager';
 import { AdminMoodManager } from '../admin/AdminMoodManager';
+import { RecommendationRulesManager } from '../admin/recommendations/RecommendationRulesManager';
 
 interface AdminDashboardProps {
   onNavigate: (path: string) => void;
@@ -75,6 +76,7 @@ type ViewType =
   | 'media'
   | 'categories'
   | 'moods'
+  | 'recommendations'
   | 'user-data'
   | 'settings'
   | 'crud'
@@ -90,12 +92,12 @@ type ViewType =
   | 'prototype'
   | 'sitemap'
   | 'navigation'
-  | 'specs';
+  | 'specs'
+  | 'uikit';
 
 export function AdminDashboard({ onNavigate, initialView }: AdminDashboardProps) {
   const [currentView, setCurrentView] = useState<ViewType>((initialView as ViewType) || 'dashboard');
 
-  // Update view when initialView prop changes
   React.useEffect(() => {
     if (initialView) {
       setCurrentView(initialView as ViewType);
@@ -113,6 +115,7 @@ export function AdminDashboard({ onNavigate, initialView }: AdminDashboardProps)
         { id: 'consultants', label: 'Consultant Manager', icon: ClipboardList },
         { id: 'resources', label: 'Resource Manager', icon: Table },
         { id: 'assessments', label: 'Assessments', icon: ClipboardList },
+        { id: 'recommendations', label: 'Recommendations', icon: Activity },
         { id: 'equip', label: 'Equip Programs', icon: BookOpen },
         { id: 'equip-analytics', label: 'Equip Analytics', icon: BarChart },
         { id: 'pages', label: 'Pages', icon: FileJson },
@@ -186,7 +189,6 @@ export function AdminDashboard({ onNavigate, initialView }: AdminDashboardProps)
               <p className="text-muted-foreground">Welcome to the iKan system administration panel.</p>
             </div>
             
-            {/* Debug Panel */}
             <AdminDebugPanel />
             
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -196,11 +198,26 @@ export function AdminDashboard({ onNavigate, initialView }: AdminDashboardProps)
               >
                 <div className="flex items-center gap-4">
                   <div className="p-3 bg-blue-100 rounded-lg text-blue-600">
-                    <Settings className="w-6 h-6" />
+                    <Users className="w-6 h-6" />
                   </div>
                   <div>
                     <h3 className="font-semibold text-lg">Account Management</h3>
                     <p className="text-sm text-muted-foreground">Manage user access & roles</p>
+                  </div>
+                </div>
+              </div>
+
+              <div 
+                className="p-6 bg-white border rounded-xl hover:shadow-md transition-shadow cursor-pointer"
+                onClick={() => setCurrentView('equip')}
+              >
+                <div className="flex items-center gap-4">
+                  <div className="p-3 bg-purple-100 rounded-lg text-purple-600">
+                    <BookOpen className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-lg">Equip Programs</h3>
+                    <p className="text-sm text-muted-foreground">Manage courses</p>
                   </div>
                 </div>
               </div>
@@ -248,6 +265,7 @@ export function AdminDashboard({ onNavigate, initialView }: AdminDashboardProps)
       case 'media': return <AdminMediaManager onBack={() => setCurrentView('dashboard')} />;
       case 'categories': return <AdminCategoryManager onBack={() => setCurrentView('dashboard')} />;
       case 'moods': return <AdminMoodManager onBack={() => setCurrentView('dashboard')} />;
+      case 'recommendations': return <RecommendationRulesManager onBack={() => setCurrentView('dashboard')} />;
       case 'user-data': return <AdminUserDataManager onBack={() => setCurrentView('dashboard')} />;
       case 'settings': return <AdminSettingsManager onBack={() => setCurrentView('dashboard')} />;
       case 'crud': return <AdminCRUDTesting />;
@@ -260,17 +278,17 @@ export function AdminDashboard({ onNavigate, initialView }: AdminDashboardProps)
       case 'communication-api': return <AdminCommunicationAPI />;
       case 'payment-gateway': return <AdminPaymentGateway />;
       case 'security': return <AdminSecurity />;
-      case 'prototype': return <AdminPrototypeDemo />;
-      case 'sitemap': return <AdminSystemSitemap />;
+      case 'prototype': return <AdminPrototypeDemo onNavigate={(route) => onNavigate(route)} />;
+      case 'sitemap': return <AdminSystemSitemap onNavigate={(route) => onNavigate(route)} />;
       case 'navigation': return <AdminNavigationGuide />;
       case 'specs': return <AdminComponentSpecs />;
+      case 'uikit': return <AdminUIKitShowcase />;
       default: return <div>Not implemented yet</div>;
     }
   };
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
-      {/* Top Header */}
       <header className="bg-gray-900 border-b border-gray-800 h-[var(--ikan-nav-height-mobile)] md:h-[var(--ikan-nav-height-desktop)] px-6 flex items-center justify-between sticky top-0 z-20 shadow-md w-full text-white">
          <div className="flex items-center gap-3">
             <div className="bg-white rounded-full p-1">
@@ -285,7 +303,6 @@ export function AdminDashboard({ onNavigate, initialView }: AdminDashboardProps)
       </header>
 
       <div className="flex flex-1 relative">
-        {/* Sidebar */}
         <aside className="w-64 fixed left-0 top-[var(--ikan-nav-height-mobile)] md:top-[var(--ikan-nav-height-desktop)] bottom-0 overflow-y-auto bg-gray-50 border-r hidden md:block z-10 custom-scrollbar">
           <div className="p-4">
             <SideNav 
@@ -297,7 +314,6 @@ export function AdminDashboard({ onNavigate, initialView }: AdminDashboardProps)
           </div>
         </aside>
 
-        {/* Main Content */}
         <main className="flex-1 md:ml-64 p-4 md:p-8 w-full max-w-[100vw] overflow-x-hidden">
           <div className="max-w-6xl mx-auto">
             {renderContent()}

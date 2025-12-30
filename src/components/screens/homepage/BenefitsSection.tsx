@@ -1,11 +1,33 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { ErrorBoundary } from '../../ErrorBoundary';
 import { User, Building2, Stethoscope, ArrowRight } from 'lucide-react';
 import { Button } from '../../ui/button';
-import { BENEFITS_TITLE, BENEFITS_DATA } from '../../../lib/homepage-data';
+import { usePageContent } from '../../../hooks/usePageContent';
 
 export function BenefitsSection() {
-  const targets = BENEFITS_DATA.map(target => ({
+  const { content, loading } = usePageContent('homepage-benefits');
+
+  const benefitsData = useMemo(() => {
+    if (!content?.content) return null;
+    try {
+      return JSON.parse(content.content);
+    } catch (e) {
+      console.error('Failed to parse benefits content', e);
+      return null;
+    }
+  }, [content]);
+
+  if (loading || !benefitsData) {
+     return (
+       <div className="w-full h-96 flex items-center justify-center">
+         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+       </div>
+     );
+  }
+
+  const { title: sectionTitle, benefits } = benefitsData;
+
+  const targets = benefits.map((target: any) => ({
     ...target,
     icon: target.targetType === 'individuals' ? <User className="w-8 h-8" /> : 
           target.targetType === 'employers' ? <Building2 className="w-8 h-8" /> : 
@@ -41,7 +63,7 @@ export function BenefitsSection() {
                 fontFamily: 'var(--font-family-base)'
               }}
             >
-              {BENEFITS_TITLE}
+              {sectionTitle}
             </h2>
           </div>
 
@@ -50,7 +72,7 @@ export function BenefitsSection() {
             className="grid grid-cols-1 lg:grid-cols-3 gap-6"
             style={{ gap: 'var(--spacing-6)' }}
           >
-            {targets.map((target, index) => (
+            {targets.map((target: any, index: number) => (
               <div 
                 key={index}
                 className="p-8 rounded-xl flex flex-col h-full animate-slide-up"

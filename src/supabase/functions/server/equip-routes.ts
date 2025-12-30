@@ -1,0 +1,226 @@
+import { Hono } from 'npm:hono';
+import * as kv from './kv_store.tsx';
+import { EquipService, EquipDayService, EquipBlockService } from './program-service.ts';
+
+export function registerEquipRoutes(app: Hono, requireAuth: any) {
+
+// ========================================
+// EQUIP PROGRAM ENDPOINTS (NEW SCHEMA)
+// ========================================
+
+app.get("/make-server-cc205da9/admin/equip/enrollments", requireAuth, async (c) => {
+    try {
+        const user = c.get('user');
+        const userProfile = await kv.get(`user:${user.id}`);
+        if (!userProfile?.is_admin) return c.json({ error: 'Admin access required' }, 403);
+        
+        const enrollments = await kv.getByPrefix('enrollment:');
+        return c.json({ enrollments });
+    } catch (error) {
+        return c.json({ error: 'Failed to list enrollments' }, 500);
+    }
+});
+
+app.get("/make-server-cc205da9/equip/programs", requireAuth, async (c) => {
+  try {
+    const programs = await EquipService.listEquips();
+    return c.json({ programs });
+  } catch (error) {
+    console.log('List equip programs error:', error);
+    return c.json({ error: 'Failed to list programs' }, 500);
+  }
+});
+
+app.get("/make-server-cc205da9/equip/programs/:equipId", requireAuth, async (c) => {
+  try {
+    const equipId = c.req.param('equipId');
+    // Try by ID first, then slug
+    let program = await EquipService.getFullEquip(equipId);
+    if (!program) {
+        program = await EquipService.getFullEquip(equipId); // Wait, getFullEquip takes ID.
+        // We need getFullEquipBySlug? No, let's resolve slug first.
+        const bySlug = await EquipService.getEquipBySlug(equipId);
+        if (bySlug) {
+            program = await EquipService.getFullEquip(bySlug.id);
+        }
+    }
+    
+    if (!program) {
+      return c.json({ error: 'Program not found' }, 404);
+    }
+    return c.json({ program });
+  } catch (error) {
+    console.log('Get equip program error:', error);
+    return c.json({ error: 'Failed to get program' }, 500);
+  }
+});
+
+app.post("/make-server-cc205da9/equip/programs", requireAuth, async (c) => {
+  try {
+    const user = c.get('user');
+    const userProfile = await kv.get(`user:${user.id}`);
+    if (!userProfile?.is_admin) return c.json({ error: 'Admin access required' }, 403);
+
+    const data = await c.req.json();
+    const program = await EquipService.createEquip(data);
+    return c.json({ program });
+  } catch (error) {
+    console.log('Create equip error:', error);
+    return c.json({ error: 'Failed to create program' }, 500);
+  }
+});
+
+app.put("/make-server-cc205da9/equip/programs/:equipId", requireAuth, async (c) => {
+  try {
+    const user = c.get('user');
+    const userProfile = await kv.get(`user:${user.id}`);
+    if (!userProfile?.is_admin) return c.json({ error: 'Admin access required' }, 403);
+
+    const equipId = c.req.param('equipId');
+    const updates = await c.req.json();
+    
+    // Resolve ID if slug passed
+    let targetId = equipId;
+    const existing = await EquipService.getEquip(equipId);
+    if (!existing) {
+        const bySlug = await EquipService.getEquipBySlug(equipId);
+        if (bySlug) targetId = bySlug.id;
+        else return c.json({ error: 'Program not found' }, 404);
+    }
+
+    const program = await EquipService.updateEquip(targetId, updates);
+    return c.json({ program });
+  } catch (error) {
+    console.log('Update equip error:', error);
+    return c.json({ error: 'Failed to update program' }, 500);
+  }
+});
+
+app.delete("/make-server-cc205da9/equip/programs/:equipId", requireAuth, async (c) => {
+  try {
+    const user = c.get('user');
+    const userProfile = await kv.get(`user:${user.id}`);
+    if (!userProfile?.is_admin) return c.json({ error: 'Admin access required' }, 403);
+
+    const equipId = c.req.param('equipId');
+    // Resolve ID
+    let targetId = equipId;
+    const existing = await EquipService.getEquip(equipId);
+    if (!existing) {
+        const bySlug = await EquipService.getEquipBySlug(equipId);
+        if (bySlug) targetId = bySlug.id;
+        else return c.json({ error: 'Program not found' }, 404);
+    }
+
+    await EquipService.deleteEquip(targetId);
+    return c.json({ success: true });
+  } catch (error) {
+    console.log('Delete equip error:', error);
+    return c.json({ error: 'Failed to delete program' }, 500);
+  }
+});
+
+// DAYS
+app.get("/make-server-cc205da9/equip/programs/:equipId/days", requireAuth, async (c) => {
+    try {
+        const equipId = c.req.param('equipId');
+        let targetId = equipId;
+        // Resolve slug
+        const existing = await EquipService.getEquip(equipId);
+        if (!existing) {
+             const bySlug = await EquipService.getEquipBySlug(equipId);
+             if (bySlug) targetId = bySlug.id;
+        }
+
+        const days = await EquipDayService.listDaysForEquip(targetId);
+        return c.json({ days });
+    } catch (error) {
+        return c.json({ error: 'Failed to list days' }, 500);
+    }
+});
+
+app.post("/make-server-cc205da9/equip/programs/:equipId/days", requireAuth, async (c) => {
+    try {
+        const equipId = c.req.param('equipId');
+        const data = await c.req.json();
+        
+        // Resolve slug
+        let targetId = equipId;
+        const existing = await EquipService.getEquip(equipId);
+        if (!existing) {
+             const bySlug = await EquipService.getEquipBySlug(equipId);
+             if (bySlug) targetId = bySlug.id;
+        }
+
+        const day = await EquipDayService.createDay({ ...data, equip_id: targetId });
+        return c.json({ day });
+    } catch (error) {
+        return c.json({ error: 'Failed to create day' }, 500);
+    }
+});
+
+app.put("/make-server-cc205da9/equip/days/:dayId", requireAuth, async (c) => {
+    try {
+        const dayId = c.req.param('dayId');
+        const updates = await c.req.json();
+        const day = await EquipDayService.updateDay(dayId, updates);
+        return c.json({ day });
+    } catch (error) {
+        return c.json({ error: 'Failed to update day' }, 500);
+    }
+});
+
+// BLOCKS
+app.get("/make-server-cc205da9/equip/days/:dayId/blocks", requireAuth, async (c) => {
+    try {
+        const dayId = c.req.param('dayId');
+        const blocks = await EquipBlockService.listBlocksForDay(dayId);
+        return c.json({ blocks });
+    } catch (error) {
+        return c.json({ error: 'Failed to list blocks' }, 500);
+    }
+});
+
+app.post("/make-server-cc205da9/equip/days/:dayId/blocks", requireAuth, async (c) => {
+    try {
+        const dayId = c.req.param('dayId');
+        const data = await c.req.json();
+        const block = await EquipBlockService.createBlock({ ...data, day_id: dayId });
+        return c.json({ block });
+    } catch (error) {
+        return c.json({ error: 'Failed to create block' }, 500);
+    }
+});
+
+app.put("/make-server-cc205da9/equip/blocks/:blockId", requireAuth, async (c) => {
+    try {
+        const blockId = c.req.param('blockId');
+        const updates = await c.req.json();
+        const block = await EquipBlockService.updateBlock(blockId, updates);
+        return c.json({ block });
+    } catch (error) {
+        return c.json({ error: 'Failed to update block' }, 500);
+    }
+});
+
+app.delete("/make-server-cc205da9/equip/blocks/:blockId", requireAuth, async (c) => {
+    try {
+        const blockId = c.req.param('blockId');
+        await EquipBlockService.deleteBlock(blockId);
+        return c.json({ success: true });
+    } catch (error) {
+        return c.json({ error: 'Failed to delete block' }, 500);
+    }
+});
+
+app.post("/make-server-cc205da9/equip/days/:dayId/blocks/reorder", requireAuth, async (c) => {
+    try {
+        const { orderedIds } = await c.req.json();
+        await EquipBlockService.reorderBlocks(orderedIds);
+        return c.json({ success: true });
+    } catch (error) {
+        return c.json({ error: 'Failed to reorder blocks' }, 500);
+    }
+});
+
+} // End registerEquipRoutes
