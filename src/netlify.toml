@@ -1,9 +1,10 @@
 [build]
   command = "npm run build"
   publish = "dist"
+  ignore = "supabase/**/*"
   
 [build.environment]
-  NODE_VERSION = "18"
+  NODE_VERSION = "22"
   NPM_FLAGS = "--legacy-peer-deps"
 
 [[redirects]]
@@ -13,11 +14,8 @@
 
 [context.production]
   command = "npm ci --legacy-peer-deps && npm run build"
+  ignore = "supabase/**/*"
 
 [context.deploy-preview]
   command = "npm ci --legacy-peer-deps && npm run build"
-
-# Ignore backend code
-[build.ignore]
-  supabase = true
-  scripts = true
+  ignore = "supabase/**/*"
