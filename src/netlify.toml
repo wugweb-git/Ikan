@@ -1,7 +1,6 @@
 [build]
-  command = "npm run build"
+  command = "mv supabase /tmp/supabase-backup 2>/dev/null || true && npm install --legacy-peer-deps && npm run build && mv /tmp/supabase-backup supabase 2>/dev/null || true"
   publish = "dist"
-  ignore = "supabase/**/*"
   
 [build.environment]
   NODE_VERSION = "22"
@@ -13,9 +12,7 @@
   status = 200
 
 [context.production]
-  command = "npm ci --legacy-peer-deps && npm run build"
-  ignore = "supabase/**/*"
+  command = "mv supabase /tmp/supabase-backup 2>/dev/null || true && npm install --legacy-peer-deps && npm run build && mv /tmp/supabase-backup supabase 2>/dev/null || true"
 
 [context.deploy-preview]
-  command = "npm ci --legacy-peer-deps && npm run build"
-  ignore = "supabase/**/*"
+  command = "mv supabase /tmp/supabase-backup 2>/dev/null || true && npm install --legacy-peer-deps && npm run build && mv /tmp/supabase-backup supabase 2>/dev/null || true"
