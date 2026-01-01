@@ -92,6 +92,24 @@ export interface Equip {
   price_cents: number;
   status: EquipStatus;
   intro_content_id?: string;
+  onboarding?: {
+    id?: string;
+    title?: string;
+    description?: string;
+    is_required_before_start?: boolean;
+    version?: string;
+    sections?: any[];
+    questions: Array<{
+      id: string;
+      text: string;
+      type: string;
+      options?: any[];
+      required?: boolean;
+      scaleMin?: number;
+      scaleMax?: number;
+      scaleLabels?: { min?: string; max?: string };
+    }>;
+  };
   created_at: string;
   updated_at: string;
 }

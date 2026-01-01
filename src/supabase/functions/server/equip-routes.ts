@@ -21,8 +21,11 @@ app.get("/admin/equip/enrollments", requireAuth, async (c) => {
     }
 });
 
-app.get("/equip/programs", requireAuth, async (c) => {
+app.get("/equip/programs", async (c) => {
   try {
+    // Ensure defaults exist (seed if empty)
+    await EquipService.ensureDefaults();
+
     const programs = await EquipService.listEquips();
     return c.json({ programs });
   } catch (error) {
@@ -31,13 +34,12 @@ app.get("/equip/programs", requireAuth, async (c) => {
   }
 });
 
-app.get("/equip/programs/:equipId", requireAuth, async (c) => {
+app.get("/equip/programs/:equipId", async (c) => {
   try {
     const equipId = c.req.param('equipId');
     // Try by ID first, then slug
     let program = await EquipService.getFullEquip(equipId);
     if (!program) {
-        program = await EquipService.getFullEquip(equipId); // Wait, getFullEquip takes ID.
         // We need getFullEquipBySlug? No, let's resolve slug first.
         const bySlug = await EquipService.getEquipBySlug(equipId);
         if (bySlug) {
@@ -121,7 +123,7 @@ app.delete("/equip/programs/:equipId", requireAuth, async (c) => {
 });
 
 // DAYS
-app.get("/equip/programs/:equipId/days", requireAuth, async (c) => {
+app.get("/equip/programs/:equipId/days", async (c) => {
     try {
         const equipId = c.req.param('equipId');
         let targetId = equipId;
@@ -171,7 +173,7 @@ app.put("/equip/days/:dayId", requireAuth, async (c) => {
 });
 
 // BLOCKS
-app.get("/equip/days/:dayId/blocks", requireAuth, async (c) => {
+app.get("/equip/days/:dayId/blocks", async (c) => {
     try {
         const dayId = c.req.param('dayId');
         const blocks = await EquipBlockService.listBlocksForDay(dayId);

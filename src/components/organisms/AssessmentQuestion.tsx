@@ -5,6 +5,7 @@ import { RadioGroup, RadioGroupItem } from '../ui/radio-group';
 import { Label } from '../ui/label';
 import { Slider } from '../ui/slider';
 import { cn } from '../ui/utils';
+import { Icon } from '../Icon';
 
 interface AssessmentQuestionProps {
   question: {
@@ -136,25 +137,28 @@ export function AssessmentQuestion({
       className="space-y-3"
     >
       {question.options?.map((option) => (
-        <div key={option.id} className="flex items-center space-x-3">
+        <div key={option.id} className="relative">
           <RadioGroupItem 
             value={option.id} 
             id={option.id}
-            style={{
-              borderColor: 'var(--color-border-default)',
-              color: 'var(--color-primary-default)'
-            }}
+            className="peer sr-only"
           />
           <Label 
             htmlFor={option.id}
-            className="flex-1 cursor-pointer"
+            className="flex items-center p-4 rounded-xl border-2 border-transparent bg-[var(--ikan-color-bg-input)] cursor-pointer transition-all hover:bg-[var(--ikan-color-bg-muted)] peer-data-[state=checked]:border-[var(--ikan-color-primary-default)] peer-data-[state=checked]:bg-[var(--ikan-color-accent-default)] peer-data-[state=checked]:text-[var(--ikan-color-primary-default)]"
             style={{
-              fontSize: 'var(--text-sm)',
-              color: 'var(--color-text-primary)',
+              fontSize: 'var(--text-base)',
               lineHeight: 'var(--line-height-md)'
             }}
           >
-            {option.text}
+            <div className="flex-1 font-medium text-[var(--ikan-color-text-primary)]">
+              {option.text}
+            </div>
+            <div className="w-5 h-5 rounded-full border border-[var(--ikan-color-border-default)] peer-data-[state=checked]:border-[var(--ikan-color-primary-default)] peer-data-[state=checked]:bg-[var(--ikan-color-primary-default)] flex items-center justify-center">
+              {question.options?.find(opt => opt.value === currentValue)?.id === option.id && (
+                <div className="w-2.5 h-2.5 rounded-full bg-white" />
+              )}
+            </div>
           </Label>
         </div>
       ))}
@@ -168,28 +172,28 @@ export function AssessmentQuestion({
           currentValue.includes(option.value);
         
         return (
-          <div key={option.id} className="flex items-center space-x-3">
-            <input
+          <div key={option.id} className="relative">
+             <input
               type="checkbox"
               id={option.id}
               checked={isChecked}
               onChange={(e) => handleMultipleChoice(option.id, e.target.checked)}
-              className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-              style={{
-                borderColor: 'var(--color-border-default)',
-                accentColor: 'var(--color-primary-default)'
-              }}
+              className="peer sr-only"
             />
             <Label 
               htmlFor={option.id}
-              className="flex-1 cursor-pointer"
+              className="flex items-center p-4 rounded-xl border-2 border-transparent bg-[var(--ikan-color-bg-input)] cursor-pointer transition-all hover:bg-[var(--ikan-color-bg-muted)] peer-checked:border-[var(--ikan-color-primary-default)] peer-checked:bg-[var(--ikan-color-accent-default)]"
               style={{
-                fontSize: 'var(--text-sm)',
-                color: 'var(--color-text-primary)',
+                fontSize: 'var(--text-base)',
                 lineHeight: 'var(--line-height-md)'
               }}
             >
-              {option.text}
+              <div className="flex-1 font-medium text-[var(--ikan-color-text-primary)]">
+                {option.text}
+              </div>
+               <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${isChecked ? 'bg-[var(--ikan-color-primary-default)] border-[var(--ikan-color-primary-default)]' : 'border-[var(--ikan-color-border-default)] bg-white'}`}>
+                  {isChecked && <Icon name="check" size={12} className="text-white" />}
+               </div>
             </Label>
           </div>
         );

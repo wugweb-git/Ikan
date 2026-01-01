@@ -18,7 +18,7 @@ export interface User {
   [key: string]: any;
 }
 
-import { projectId } from '../utils/supabase/info';
+import { projectId, publicAnonKey } from '../utils/supabase/info';
 
 const API_BASE = `https://${projectId}.supabase.co/functions/v1/make-server-cc205da9`;
 
@@ -44,6 +44,9 @@ class ApiClient {
       const token = await this.getToken();
       if (token) {
         headers['Authorization'] = `Bearer ${token}`;
+      } else {
+        // Fallback to Anon Key for public authenticated endpoints
+        headers['Authorization'] = `Bearer ${publicAnonKey}`;
       }
     }
 
@@ -68,6 +71,11 @@ class ApiClient {
       const data = await response.json();
       return data;
     } catch (error) {
+      if (retryCount < 2) {
+        // Simple retry logic with linear backoff
+        await new Promise(resolve => setTimeout(resolve, 1000 * (retryCount + 1)));
+        return this.request(path, options, auth, retryCount + 1);
+      }
       console.error('API Request failed', error);
       throw error;
     }
@@ -469,7 +477,31 @@ class ApiClient {
     }
   }
 
+  async createEquipEnrollment(data: { programId: string, onboardingData: any }) {
+    // Determine the user's auth status
+    const isAuthenticated = await this.isAuthenticated();
+    
+    // If not authenticated, we might need to store this locally or create a guest enrollment
+    // For now, we assume the backend handles guest enrollments or the frontend forces login before this step
+    // But based on the error "createEquipEnrollment is not a function", we just need this method to exist.
+    
+    // We'll use the /equip/purchase endpoint which effectively enrolls the user
+    // Backend expects "onboarding_data" (snake_case) not "onboardingData" (camelCase)
+    return this.request(`/equip/purchase/${data.programId}`, {
+      method: 'POST',
+      body: JSON.stringify({ onboarding_data: data.onboardingData })
+    }, true);
+  }
+
   // Assessments
+  async getUserAssessmentResponses(userId?: string) {
+    // If userId is provided, we use the admin endpoint (if it exists) or fallback to user endpoint if self
+    // But typically this is for the current user
+    const path = userId ? `/admin/users/${userId}/assessments` : '/user/assessments/history';
+    // If checking for another user, ensure we have admin privileges on backend
+    return this.request(path, { method: 'GET' }, true);
+  }
+
   async saveAssessmentResponse(
     assessmentId: string, 
     responses: any, 
@@ -582,6 +614,10 @@ class ApiClient {
 
   async deleteUser(userId: string) {
     return this.request(`/admin/users/${userId}`, { method: 'DELETE' }, true);
+  }
+
+  async addDefaultOnboarding() {
+    return this.request(`/admin/equip/add-default-onboarding`, { method: 'POST' }, true);
   }
 }
 

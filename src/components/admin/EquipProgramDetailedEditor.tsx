@@ -14,6 +14,8 @@ interface Lesson {
   content: string;
   duration_minutes?: number;
   required?: boolean;
+  stepGroup?: string; // For grouping multiple lessons/activities into one step
+  autoAdvance?: boolean; // For automatic advancement after completion
 }
 
 interface Day {
@@ -466,6 +468,37 @@ export function EquipProgramDetailedEditor({
                                     placeholder="Lesson content, instructions, or video URL..."
                                     className="min-h-[60px]"
                                   />
+                                  
+                                  {/* Step Group ID and Auto-advance Controls */}
+                                  <div className="grid grid-cols-2 gap-2">
+                                    <div className="space-y-1">
+                                      <Label className="text-xs">Step Group ID (optional)</Label>
+                                      <Input
+                                        value={lesson.stepGroup || ''}
+                                        onChange={(e) => updateLesson(dayIndex, lessonIndex, { stepGroup: e.target.value || undefined })}
+                                        placeholder="e.g., intro-section"
+                                        className="text-xs"
+                                      />
+                                      <p style={{ fontSize: '10px', color: 'var(--color-text-muted)' }}>
+                                        Group lessons together in one step
+                                      </p>
+                                    </div>
+                                    <div className="space-y-1">
+                                      <Label className="text-xs">Auto-advance</Label>
+                                      <div className="flex items-center gap-2 pt-1">
+                                        <input
+                                          type="checkbox"
+                                          checked={lesson.autoAdvance || false}
+                                          onChange={(e) => updateLesson(dayIndex, lessonIndex, { autoAdvance: e.target.checked })}
+                                          className="w-3 h-3"
+                                        />
+                                        <span style={{ fontSize: '10px', color: 'var(--color-text-muted)' }}>
+                                          Advance automatically
+                                        </span>
+                                      </div>
+                                    </div>
+                                  </div>
+
                                   <div className="flex items-center gap-3">
                                     <div className="flex items-center gap-2">
                                       <Label className="text-xs">Duration (min)</Label>

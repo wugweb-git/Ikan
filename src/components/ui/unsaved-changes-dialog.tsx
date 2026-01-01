@@ -13,7 +13,8 @@ import { AlertTriangle } from 'lucide-react';
 interface UnsavedChangesDialogProps {
   open: boolean;
   onConfirm: () => void;
-  onCancel: () => void;
+  onCancel?: () => void;
+  onOpenChange?: (open: boolean) => void;
   title?: string;
   description?: string;
 }
@@ -22,11 +23,21 @@ export function UnsavedChangesDialog({
   open,
   onConfirm,
   onCancel,
+  onOpenChange,
   title = 'Unsaved Changes',
   description = 'You have unsaved changes. Are you sure you want to leave? Your changes will be lost.'
 }: UnsavedChangesDialogProps) {
+  
+  const handleCancel = () => {
+    if (onCancel) {
+      onCancel();
+    } else if (onOpenChange) {
+      onOpenChange(false);
+    }
+  };
+  
   return (
-    <Dialog open={open} onOpenChange={(open) => !open && onCancel()}>
+    <Dialog open={open} onOpenChange={(isOpen) => !isOpen && handleCancel()}>
       <DialogContent>
         <DialogHeader>
           <div className="flex items-center gap-3">
@@ -60,7 +71,7 @@ export function UnsavedChangesDialog({
         <DialogFooter>
           <Button
             variant="outline"
-            onClick={onCancel}
+            onClick={handleCancel}
             style={{
               fontWeight: 'var(--font-weight-medium)',
               fontFamily: 'var(--font-family-base)'

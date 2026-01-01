@@ -478,10 +478,18 @@ export const DEFAULT_CMS_CONTENT: { [key: string]: any } = {
   'homepage-testimonial': {
     title: 'Homepage Testimonial',
     content: JSON.stringify({
-      quote: "This platform has transformed how I manage my mental health. The tools are easy to use and the professionals are incredibly supportive.",
-      author: "Sarah J.",
-      role: "Member since 2023",
-      avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&h=150&fit=crop"
+      testimonial: {
+        name: "Sarah J.",
+        quote: "This platform has transformed how I manage my mental health. The tools are easy to use and the professionals are incredibly supportive.",
+        image: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=800&h=800&fit=crop",
+        imageAlt: "Sarah J. testimonial",
+        course: "Anxiety Management",
+        videoCaption: "Watch Sarah's Story",
+        stats: {
+          value: "94%",
+          label: "Satisfaction Rate"
+        }
+      }
     }),
     lastUpdated: new Date().toISOString()
   },

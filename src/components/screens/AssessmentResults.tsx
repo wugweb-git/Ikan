@@ -9,6 +9,9 @@ import { cn } from '../ui/utils';
 import { AssessmentSection } from './homepage/AssessmentSection';
 import { ErrorBoundary } from '../ErrorBoundary';
 import ConsultantCard from '../../imports/ConsultantCard';
+import { EquipBlock } from '../blocks/EquipBlock';
+import { ResourceBlock } from '../blocks/ResourceBlock';
+import { apiClient } from '../../lib/api-client';
 
 interface AssessmentResults {
   assessmentId: string;
@@ -50,14 +53,28 @@ export function AssessmentResults({
   const { showToast } = useNotifications();
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
+  const [consultants, setConsultants] = useState<any[]>([]);
+  const [resources, setResources] = useState<any[]>([]);
 
-  // Simulate loading state
+  // Simulate loading state and fetch consultants/resources
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-    }, 1500);
-
-    return () => clearTimeout(timer);
+    const loadData = async () => {
+      try {
+        // Fetch consultants
+        const profData = await apiClient.getProfessionals();
+        setConsultants((profData.professionals || []).slice(0, 3)); // Top 3
+        
+        // Fetch resources
+        const resData = await apiClient.getResources();
+        setResources((resData || []).slice(0, 4)); // Top 4
+      } catch (error) {
+        console.error('Failed to load additional data:', error);
+      } finally {
+        setTimeout(() => setIsLoading(false), 1500);
+      }
+    };
+    
+    loadData();
   }, []);
 
   const getScoreColor = (score: number, maxScore: number) => {
@@ -367,6 +384,42 @@ export function AssessmentResults({
             </div>
           </CardContent>
         </Card>
+      )}
+
+      {/* Consultant Block - Talk to a Professional */}
+      {consultants.length > 0 && (
+        <div className="space-y-4">
+          <h3 style={{ fontSize: 'var(--text-lg)', fontWeight: 'var(--font-weight-medium)', color: 'var(--color-text-primary)' }}>
+            Talk to a Professional
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {consultants.map((consultant) => (
+              <ConsultantCard
+                key={consultant.id}
+                consultant={consultant}
+                onBook={() => onNavigate && onNavigate(`/consultants/${consultant.id}`)}
+              />
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Resource Block - Recommended Reading */}
+      {resources.length > 0 && (
+        <div className="space-y-4">
+          <h3 style={{ fontSize: 'var(--text-lg)', fontWeight: 'var(--font-weight-medium)', color: 'var(--color-text-primary)' }}>
+            Recommended Resources
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {resources.map((resource) => (
+              <ResourceBlock
+                key={resource.id}
+                resource={resource}
+                onClick={() => onNavigate && onNavigate(`/resources/${resource.id}`)}
+              />
+            ))}
+          </div>
+        </div>
       )}
 
       {/* Call to Action Row */}

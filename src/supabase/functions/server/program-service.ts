@@ -140,6 +140,60 @@ export const EquipService = {
     }
     
     return { ...equip, days: daysWithBlocks };
+  },
+
+  async ensureDefaults(): Promise<void> {
+    const all = await this.listEquips();
+    if (all.length > 0) return;
+
+    // Create default program
+    const program = await this.createEquip({
+        title: "Anxiety Basics",
+        slug: "anxiety-basics",
+        description: "A 7-day journey to understand and manage anxiety.",
+        category: "anxiety",
+        image_url: "https://images.unsplash.com/photo-1499209974431-9dddcece7f88?q=80&w=2500&auto=format&fit=crop",
+        duration_days: 7,
+        published: true,
+        tags: ["anxiety", "beginner", "foundations"]
+    });
+
+    // Day 1
+    const day1 = await EquipDayService.createDay({
+        equip_id: program.id,
+        day_number: 1,
+        title: "Understanding Anxiety",
+        description: "Learn what anxiety is and why we experience it.",
+        image_url: "https://images.unsplash.com/photo-1506126613408-eca07ce68773?q=80&w=2500&auto=format&fit=crop"
+    });
+
+    // Day 1 Blocks
+    await EquipBlockService.createBlock({
+        equip_day_id: day1.id,
+        order_index: 0,
+        block_type: "text",
+        title: "Welcome",
+        content: "Welcome to Anxiety Basics. Over the next 7 days, we will explore the roots of anxiety and learn practical tools to manage it. You are not alone in this journey.",
+        estimated_time_minutes: 2,
+        is_required: true
+    });
+    
+    await EquipBlockService.createBlock({
+        equip_day_id: day1.id,
+        order_index: 1,
+        block_type: "quiz",
+        title: "Reflection",
+        content: "How are you feeling right now about starting this program?",
+        estimated_time_minutes: 3,
+        is_required: true,
+        exercise_config: {
+          questions: [
+            { id: "q1", text: "How anxious do you feel today?", type: "scale", min: 1, max: 10, minLabel: "Calm", maxLabel: "Very Anxious" }
+          ]
+        }
+    });
+
+    console.log("Seeded default Equip program: Anxiety Basics");
   }
 };
 

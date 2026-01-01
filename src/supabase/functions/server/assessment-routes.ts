@@ -1,36 +1,20 @@
 import { Hono } from 'npm:hono';
 import * as kv from './kv_store.tsx';
+import { DEFAULT_ASSESSMENTS } from './default-assessments.ts';
 
 export function registerAssessmentRoutes(app: Hono, requireAuth: any) {
 
     // Get available assessments
-    app.get("/assessments", requireAuth, async (c) => {
+    app.get("/assessments", async (c) => {
         try {
-            const defaults = [
-                {
-                    id: 'phq-9',
-                    title: 'PHQ-9 Depression Scale',
-                    description: 'A brief assessment to help monitor severity of depression.',
-                    questions: [], 
-                    type: 'depression'
-                },
-                {
-                    id: 'gad-7',
-                    title: 'GAD-7 Anxiety Scale',
-                    description: 'A screening tool for Generalized Anxiety Disorder.',
-                    questions: [],
-                    type: 'anxiety'
-                }
-            ];
-            
             const dynamic = await kv.getByPrefix('assessment_def:');
             
             // Deduplicate by ID
             const map = new Map();
-            defaults.forEach(a => map.set(a.id, a));
+            DEFAULT_ASSESSMENTS.forEach(a => map.set(a.id, a));
             dynamic.forEach(a => map.set(a.id, a));
             
-            const assessments = Array.from(map.values());
+            const assessments = Array.from(map.values()).filter((a: any) => !a.deleted);
             
             return c.json({ assessments });
         } catch (error) {
@@ -39,7 +23,7 @@ export function registerAssessmentRoutes(app: Hono, requireAuth: any) {
     });
 
     // Get single assessment
-    app.get("/assessments/:id", requireAuth, async (c) => {
+    app.get("/assessments/:id", async (c) => {
         try {
             const id = c.req.param("id");
             
@@ -48,33 +32,10 @@ export function registerAssessmentRoutes(app: Hono, requireAuth: any) {
             
             // Fallback to defaults
             if (!assessment) {
-                 const defaults = [
-                    {
-                        id: 'phq-9',
-                        title: 'PHQ-9 Depression Scale',
-                        description: 'A brief assessment to help monitor severity of depression.',
-                        type: 'depression',
-                        questions: [
-                            { id: 'q1', text: 'Little interest or pleasure in doing things', type: 'scale', min: 0, max: 3 },
-                            { id: 'q2', text: 'Feeling down, depressed, or hopeless', type: 'scale', min: 0, max: 3 },
-                            // ... truncated for brevity, ideally would have full list
-                        ]
-                    },
-                    {
-                        id: 'gad-7',
-                        title: 'GAD-7 Anxiety Scale',
-                        description: 'A screening tool for Generalized Anxiety Disorder.',
-                        type: 'anxiety',
-                        questions: [
-                             { id: 'q1', text: 'Feeling nervous, anxious, or on edge', type: 'scale', min: 0, max: 3 },
-                             { id: 'q2', text: 'Not being able to stop or control worrying', type: 'scale', min: 0, max: 3 }
-                        ]
-                    }
-                ];
-                assessment = defaults.find(a => a.id === id);
+                assessment = DEFAULT_ASSESSMENTS.find(a => a.id === id);
             }
 
-            if (!assessment) {
+            if (!assessment || assessment.deleted) {
                 return c.json({ error: "Assessment not found" }, 404);
             }
 

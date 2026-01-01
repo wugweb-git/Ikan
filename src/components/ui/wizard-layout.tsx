@@ -93,154 +93,171 @@ export function WizardLayout({
   };
 
   return (
-    <div className="flex flex-col min-h-screen bg-white font-sans">
-      {/* 1. TYPEFORM-STYLE HEADER */}
+    <div className="flex flex-col h-screen bg-white font-sans overflow-hidden">
+      {/* REDESIGNED STICKY HEADER - Multi-row layout */}
       <header 
-        className="flex items-center justify-between px-6 h-[64px] bg-white border-b border-gray-100 sticky top-0 z-20"
+        className="sticky top-0 bg-white border-b border-gray-200 z-20 shadow-sm flex-shrink-0"
+        style={{ backgroundColor: 'var(--color-bg-card)' }}
       >
-        {/* Left: Program Name */}
-        <div className="flex items-center gap-3 w-[250px]">
-          <h1 className="text-sm font-semibold text-gray-900 truncate">
-            {title}
-          </h1>
-          <Badge 
-            variant={status === 'published' ? 'default' : 'secondary'}
-            className={cn(
-              "text-[10px] px-1.5 py-0.5 h-auto font-medium rounded-md", 
-              status === 'published' ? "bg-emerald-100 text-emerald-700" : "bg-gray-100 text-gray-500"
+        {/* Row 1: Title + Action Buttons */}
+        <div className="flex items-center justify-between px-6 h-14 border-b border-gray-100">
+          {/* Left: Title + Badge + Back Button */}
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-3">
+              <h1 
+                className="truncate max-w-[300px]" 
+                style={{ 
+                  fontSize: 'var(--text-lg)', 
+                  fontWeight: 500,
+                  color: 'var(--color-text-primary)'
+                }}
+              >
+                {title}
+              </h1>
+              <Badge 
+                variant={status === 'published' ? 'default' : 'secondary'}
+                className={cn(
+                  "text-[10px] px-2 py-0.5 h-auto rounded-md", 
+                  status === 'published' ? "bg-emerald-100 text-emerald-700" : "bg-gray-100 text-gray-600"
+                )}
+                style={{ fontWeight: 500 }}
+              >
+                {status === 'published' ? 'Published' : 'Draft'}
+              </Badge>
+            </div>
+            
+            {!isFirstStep && (
+              <button
+                onClick={handlePrevious}
+                disabled={isPreviousDisabled || isLoading}
+                className="flex items-center gap-1.5 text-gray-600 hover:text-gray-900 transition-colors px-2.5 py-1.5 rounded-lg hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed ml-2"
+                style={{ fontSize: 'var(--text-sm)', fontWeight: 500 }}
+              >
+                <ChevronLeft size={14} />
+                <span className="text-xs">{previousButtonText}</span>
+              </button>
             )}
-          >
-            {status === 'published' ? 'Published' : 'Draft'}
-          </Badge>
+          </div>
+
+          {/* Right: Action Buttons */}
+          <div className="flex items-center gap-2">
+            {/* Custom Footer Left Content (e.g., Delete) */}
+            {footerLeftContent}
+            
+            {/* Custom Footer Right Content (e.g., Save Draft, Publish) */}
+            {footerRightContent}
+            
+            {/* Continue/Finish Button */}
+            <Button
+              onClick={handleNext}
+              disabled={isNextDisabled || isLoading}
+              className={cn(
+                "gap-1.5 transition-all duration-200 h-8 px-4 rounded-lg text-xs",
+                isLoading ? "opacity-80" : ""
+              )}
+              style={{
+                backgroundColor: 'var(--color-primary-default)',
+                color: 'var(--color-text-inverse)',
+                fontWeight: 500
+              }}
+            >
+              {isLoading ? (
+                <>
+                  <div className="animate-spin rounded-full border-2 border-white/30 border-t-white w-3.5 h-3.5" />
+                  <span>Processing...</span>
+                </>
+              ) : (
+                <>
+                  <span>{isLastStep ? finishButtonText : nextButtonText}</span>
+                  {!isLastStep && <ArrowRight size={14} />}
+                  {isLastStep && <Check size={14} />}
+                </>
+              )}
+            </Button>
+            
+            {onExit && (
+              <button 
+                onClick={onExit} 
+                className="text-gray-400 hover:text-gray-900 transition-colors p-1 rounded-lg hover:bg-gray-100 ml-1"
+              >
+                <X size={16} />
+              </button>
+            )}
+          </div>
         </div>
 
-        {/* Center: Stepper */}
-        <div className="flex-1 flex justify-center">
-          <WizardStepper
-            steps={steps}
-            currentStep={currentStep}
-            onStepClick={onStepChange}
-            allowSkip={allowSkip}
-          />
-        </div>
-
-        {/* Right: Actions */}
-        <div className="flex items-center justify-end gap-4 w-[250px]">
-          {onSaveDraft && (
-            <button 
-              onClick={onSaveDraft} 
-              disabled={isLoading}
-              className="flex items-center gap-2 text-sm font-medium text-gray-500 hover:text-gray-900 transition-colors"
-            >
-              <Save size={16} />
-              <span className="hidden sm:inline">Save Draft</span>
-            </button>
-          )}
-          
-          <div className="h-4 w-px bg-gray-200 mx-1" />
-          
-          {onExit && (
-            <button 
-              onClick={onExit} 
-              className="text-gray-400 hover:text-gray-900 transition-colors p-1"
-            >
-              <X size={20} />
-            </button>
-          )}
+        {/* Row 2: Stepper */}
+        <div className="px-6 py-3 bg-gray-50/50">
+          <div className="max-w-3xl mx-auto">
+            <WizardStepper
+              steps={steps}
+              currentStep={currentStep}
+              onStepClick={onStepChange}
+              allowSkip={allowSkip}
+            />
+          </div>
         </div>
       </header>
 
-      {/* Main Container */}
-      <div className="flex flex-1 overflow-hidden bg-gray-50/30">
+      {/* Main Container - Fixed height with overflow */}
+      <div className="flex flex-1 overflow-hidden" style={{ backgroundColor: 'var(--color-bg-page)' }}>
         
-        {/* 3. PRIMARY WORK AREA */}
+        {/* PRIMARY WORK AREA */}
         <main className="flex-1 overflow-y-auto relative scroll-smooth">
-          <div className="max-w-5xl mx-auto px-8 py-12 pb-32">
+          <div className="max-w-4xl px-6 py-8">
             
             {/* Step Header */}
-            <div className="mb-10 animate-in fade-in slide-in-from-bottom-2 duration-500">
-              <h2 className="text-3xl font-bold text-gray-900 mb-3 tracking-tight">
-                {stepTitle || steps[currentStep]?.title}
-              </h2>
-              <p className="text-gray-500 text-lg font-light leading-relaxed">
-                {stepDescription || steps[currentStep]?.subtitle}
-              </p>
-            </div>
+            {(stepTitle || stepDescription) && (
+              <div className="mb-8">
+                <h2 
+                  className="mb-2"
+                  style={{ 
+                    fontSize: 'var(--text-2xl)', 
+                    fontWeight: 500,
+                    color: 'var(--color-text-primary)'
+                  }}
+                >
+                  {stepTitle || steps[currentStep]?.title}
+                </h2>
+                {stepDescription && (
+                  <p style={{ 
+                    fontSize: 'var(--text-sm)', 
+                    color: 'var(--color-text-muted)'
+                  }}>
+                    {stepDescription}
+                  </p>
+                )}
+              </div>
+            )}
 
             {/* Content */}
-            <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-75">
+            <div className="space-y-6">
               {children}
             </div>
           </div>
         </main>
 
-        {/* 4. SECONDARY PANEL (Right Sidebar) */}
+        {/* SECONDARY PANEL (Right Sidebar) */}
         {secondaryContent && (
-          <aside className="hidden xl:block w-[360px] border-l border-gray-100 bg-white overflow-y-auto shadow-[rgba(0,0,0,0.03)_0px_0px_10px_0px_inset]">
+          <aside className="hidden xl:block w-[360px] border-l border-gray-200 bg-white overflow-y-auto shadow-sm">
             <div className="p-8 sticky top-0">
-              <h3 className="text-xs font-bold uppercase tracking-widest text-gray-400 mb-6 flex items-center gap-2">
+              <h3 
+                className="uppercase tracking-wider mb-6 flex items-center gap-2"
+                style={{ 
+                  fontSize: 'var(--text-xs)', 
+                  fontWeight: 500,
+                  color: 'var(--color-text-muted)'
+                }}
+              >
                 <Eye size={12} /> Guide & Preview
               </h3>
-              <div className="prose prose-sm max-w-none text-gray-600 prose-headings:text-gray-800 prose-strong:text-gray-900">
+              <div className="prose prose-sm max-w-none" style={{ color: 'var(--color-text-muted)' }}>
                 {secondaryContent}
               </div>
             </div>
           </aside>
         )}
       </div>
-
-      {/* 5. FOOTER ACTION BAR */}
-      <footer className="h-[80px] bg-white border-t border-gray-100 px-8 flex items-center justify-between shrink-0 z-30 shadow-[0_-4px_20px_rgba(0,0,0,0.02)] sticky bottom-0">
-        <div className="flex items-center gap-4">
-          {/* Custom Left Content (e.g. Delete) */}
-          {footerLeftContent}
-          
-          {!isFirstStep && (
-            <button
-              onClick={handlePrevious}
-              disabled={isPreviousDisabled || isLoading}
-              className="flex items-center gap-2 text-sm font-medium text-gray-500 hover:text-gray-900 transition-colors px-3 py-2 rounded-lg hover:bg-gray-50"
-            >
-              <ChevronLeft size={16} />
-              {previousButtonText}
-            </button>
-          )}
-        </div>
-
-        <div className="flex items-center gap-4">
-          {validationHint && isNextDisabled && (
-            <span className="text-sm text-amber-600 hidden md:inline-block animate-pulse font-medium bg-amber-50 px-3 py-1 rounded-full">
-              {validationHint}
-            </span>
-          )}
-          
-          {/* Custom Right Content (e.g. Publish) */}
-          {footerRightContent}
-
-          <Button
-            onClick={handleNext}
-            disabled={isNextDisabled || isLoading}
-            className={cn(
-              "min-w-[120px] gap-2 shadow-lg hover:shadow-xl transition-all duration-300 transform active:scale-95",
-              isLoading ? "opacity-80" : "",
-              "bg-gray-900 hover:bg-black text-white rounded-lg h-12 px-6"
-            )}
-          >
-            {isLoading ? (
-              <>
-                <div className="animate-spin rounded-full border-2 border-white/30 border-t-white w-4 h-4" />
-                <span>Processing...</span>
-              </>
-            ) : (
-              <>
-                <span className="font-medium text-[15px]">{isLastStep ? finishButtonText : nextButtonText}</span>
-                {!isLastStep && <ArrowRight size={16} />}
-                {isLastStep && <Check size={16} />}
-              </>
-            )}
-          </Button>
-        </div>
-      </footer>
     </div>
   );
 }

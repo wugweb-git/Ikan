@@ -29,17 +29,12 @@ export function EquipPrograms({ className, onNavigate }: { className?: string, o
     }
   };
 
-  const handleEnroll = async (equipId: string) => {
-    if (!user) {
-        showToast('warning', 'Please sign in to enroll');
-        return;
-    }
-    try {
-        await apiClient.enrollUser(equipId);
-        showToast('success', 'Enrolled successfully!');
-        if (onNavigate) onNavigate('/'); // Go to dashboard to see active programs
-    } catch (error) {
-        showToast('error', 'Enrollment failed');
+  const handleViewProgram = async (equipId: string) => {
+    // Navigate to detail page instead of immediate enrollment
+    if (onNavigate) {
+      onNavigate(`/equip-detail?id=${equipId}`);
+    } else {
+      window.location.href = `/equip-detail?id=${equipId}`;
     }
   };
 
@@ -54,7 +49,11 @@ export function EquipPrograms({ className, onNavigate }: { className?: string, o
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {programs.map((program) => (
-          <Card key={program.id} className="overflow-hidden flex flex-col h-full border-neutral-200 shadow-sm hover:shadow-md transition-shadow">
+            <Card 
+              key={program.id} 
+              className="overflow-hidden flex flex-col h-full border-neutral-200 shadow-sm hover:shadow-md transition-shadow cursor-pointer"
+              onClick={() => handleViewProgram(program.id)}
+            >
             <div className="relative h-48 bg-neutral-100">
                <ImageWithFallback
                  src={program.cover_image || program.thumbnail || `https://source.unsplash.com/random/800x600?${program.category}`}
@@ -80,9 +79,12 @@ export function EquipPrograms({ className, onNavigate }: { className?: string, o
             <CardFooter className="pt-4 border-t border-neutral-100">
               <Button 
                 className="w-full bg-[#2A2A2A] hover:bg-[#1a1a1a] text-white"
-                onClick={() => handleEnroll(program.id)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleViewProgram(program.id);
+                }}
               >
-                Start Program
+                View Program
               </Button>
             </CardFooter>
           </Card>

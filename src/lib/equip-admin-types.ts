@@ -63,6 +63,8 @@ export interface Activity {
   order: number;
   exerciseConfig?: ExerciseConfig;
   image_url?: string;
+  stepGroup?: string;
+  autoAdvance?: boolean;
 }
 
 export interface DayContent {
@@ -91,6 +93,8 @@ export interface EquipProgram {
   cover_image: string;
   category: string;
   duration_days: number;
+  difficulty?: 'beginner' | 'intermediate' | 'advanced';
+  is_paid?: boolean;
   published: boolean;
   price: number;
   currency: string;
@@ -114,6 +118,8 @@ export interface EquipProgram {
   onboarding_questions: OnboardingQuestion[];
   daily_content: DayContent[];
   
+  metadata?: Record<string, any>;
+
   created_at: string;
   updated_at: string;
 }

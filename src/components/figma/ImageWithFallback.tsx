@@ -21,6 +21,9 @@ export function ImageWithFallback(props: ImageWithFallbackProps) {
 
   // Filter out custom props that shouldn't be passed to DOM elements
   const { src, alt, style, className, fallbackSrc, loading, ...rest } = props
+  
+  // Extract fallbackText if it exists in rest (to prevent React warning)
+  const { fallbackText, ...domProps } = rest as any;
 
   // Determine which image source to use
   let imageSrc = src
@@ -37,7 +40,7 @@ export function ImageWithFallback(props: ImageWithFallbackProps) {
       className={className} 
       style={style}
       loading={loading || "lazy"} // Default to lazy loading for performance
-      {...rest} 
+      {...domProps} 
       onError={handleError}
     />
   )

@@ -1,30 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { useIsMobile } from '../../hooks/useIsMobile';
 import { Button } from '../ui/button';
-import { Input } from '../ui/input';
-import { Label } from '../ui/label';
-import { Textarea } from '../ui/textarea';
-import { RadioGroup, RadioGroupItem } from '../ui/radio-group';
-import { Checkbox } from '../ui/checkbox';
-import { ArrowLeft, CheckCircle, Info, Lock, ChevronRight, X } from 'lucide-react';
 import { cn } from '../ui/utils';
-import { getEquipProgramContent, getStoredProgram, EquipProgramDetails } from '../../lib/equip-program-content';
 import { apiClient } from '../../lib/api-client';
+import { useAuth } from '../../contexts/AuthContext';
 import { useNotifications } from '../../contexts/NotificationContext';
 import { OnboardingData } from '../../lib/equip-types';
-import { OnboardingQuestionSet, OnboardingQuestion } from '../../lib/equip-onboarding-types';
-
-// Fallback empty question set to avoid hardcoded file dependency
-const EMPTY_ONBOARDING: OnboardingQuestionSet = {
-  id: 'fallback',
-  equip_id: 'default',
-  title: 'Program Setup',
-  description: 'Setup your program',
-  is_required_before_start: true,
-  version: '1.0.0',
-  sections: [],
-  questions: []
-};
+import { OnboardingQuestionSet } from '../../lib/equip-onboarding-types';
+import { Wizard } from '../wizard/Wizard';
+import { TypeformWizard } from '../wizard/TypeformWizard';
+import { mapOnboardingToWizard } from '../wizard/migration-utils';
+import { projectId, publicAnonKey } from '../../utils/supabase/info';
+import { Icon } from '../Icon';
 
 interface EquipOnboardingProps {
   programId?: string;
@@ -34,138 +21,137 @@ interface EquipOnboardingProps {
 
 export function EquipOnboarding({ programId: propProgramId, onComplete, onBack }: EquipOnboardingProps) {
   const isMobile = useIsMobile();
-  const [programContent, setProgramContent] = useState<EquipProgramDetails | null>(null);
-  const [programId, setProgramId] = useState<string>(propProgramId || 'sleep-tight-9');
-  
-  // State
-  const [questionSet, setQuestionSet] = useState<OnboardingQuestionSet>(EMPTY_ONBOARDING);
-  const [answers, setAnswers] = useState<Record<string, any>>({});
-  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(-1); // -1 = Intro Screen
-  const [showValidationHint, setShowValidationHint] = useState(false);
-  const [isEnrolling, setIsEnrolling] = useState(false);
+  const [programId, setProgramId] = useState<string>(propProgramId || '');
+  const [questionSet, setQuestionSet] = useState<OnboardingQuestionSet | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const { addNotification, showToast } = useNotifications();
 
-  // Load Program
+  // ✅ Fetch Onboarding Questions from Database
   useEffect(() => {
     let id = propProgramId;
     
     if (!id) {
       const params = new URLSearchParams(window.location.search);
       const urlId = params.get('id');
-      const storedProgram = getStoredProgram();
-      id = urlId || storedProgram?.slug || 'sleep-tight-9';
+      const storedProgramStr = localStorage.getItem('ikan-selected-program');
+      let storedProgram = null;
+      try {
+        storedProgram = storedProgramStr ? JSON.parse(storedProgramStr) : null;
+      } catch (e) {
+        storedProgram = { slug: storedProgramStr };
+      }
+      id = urlId || storedProgram?.slug || storedProgram?.id;
+    }
+    
+    if (!id) {
+      setError('No program ID provided');
+      setLoading(false);
+      return;
     }
     
     setProgramId(id);
 
-    if (id) {
-      const content = getEquipProgramContent(id);
-      if (content) setProgramContent(content);
-    }
+    const fetchOnboardingQuestions = async () => {
+      try {
+        setLoading(true);
+        
+        console.log('📥 Fetching onboarding questions for program:', id);
+        
+        // Fetch the equip program to get its onboarding configuration
+        const response = await fetch(
+          `https://${projectId}.supabase.co/functions/v1/make-server-cc205da9/equip/programs/${id}`,
+          {
+            headers: {
+              'Authorization': `Bearer ${publicAnonKey}`,
+            },
+          }
+        );
+
+        if (!response.ok) {
+          throw new Error('Failed to load program');
+        }
+
+        const data = await response.json();
+        const program = data.program;
+        
+        console.log('🔍 DEBUG: Fetched Program Data:', {
+          programId: program?.id || program?.equip_id,
+          title: program?.title,
+          hasOnboarding: !!program?.onboarding,
+          onboardingQuestionsCount: program?.onboarding?.questions?.length || 0,
+          onboardingRaw: program?.onboarding
+        });
+
+        // Extract onboarding questions from program
+        const onboarding = program?.onboarding;
+        
+        if (!onboarding || !onboarding.questions || onboarding.questions.length === 0) {
+          console.error('❌ Program has no onboarding questions!', {
+            programId: id,
+            program
+          });
+          setError('This program has no onboarding questions configured.');
+          setLoading(false);
+          return;
+        }
+
+        // Map to OnboardingQuestionSet format
+        const questionSet: OnboardingQuestionSet = {
+          id: onboarding.id || `${program.id}-onboarding`,
+          equip_id: program.id || program.equip_id,
+          title: onboarding.title || 'Program Setup',
+          description: onboarding.description || 'Please answer a few questions to personalize your experience.',
+          is_required_before_start: onboarding.is_required_before_start !== false,
+          version: onboarding.version || '1.0.0',
+          sections: onboarding.sections || [],
+          questions: onboarding.questions
+        };
+
+        console.log('✅ Onboarding questions loaded:', {
+          id: questionSet.id,
+          questionsCount: questionSet.questions.length
+        });
+
+        setQuestionSet(questionSet);
+        setLoading(false);
+      } catch (err) {
+        console.error('❌ Error fetching onboarding questions:', err);
+        setError('Failed to load program onboarding. Please try again.');
+        setLoading(false);
+      }
+    };
+
+    fetchOnboardingQuestions();
   }, [propProgramId]);
 
-  // Filter Visible Questions
-  const visibleQuestions = questionSet.questions
-    .sort((a, b) => a.order - b.order)
-    .filter(q => {
-      if (!q.conditional_logic) return true;
-      const { trigger_question_id, condition, value } = q.conditional_logic;
-      const triggerValue = answers[trigger_question_id];
-      switch (condition) {
-        case 'equals': return triggerValue === value;
-        case 'contains': return Array.isArray(triggerValue) && triggerValue.includes(value);
-        case 'not_equals': return triggerValue !== value;
-        default: return true;
-      }
-    });
-
-  const currentQuestion = currentQuestionIndex >= 0 ? visibleQuestions[currentQuestionIndex] : null;
-  const totalQuestions = visibleQuestions.length;
-
-  const handleAnswerChange = (questionId: string, value: any) => {
-    setAnswers(prev => ({ ...prev, [questionId]: value }));
-    setShowValidationHint(false); // Clear hint on interaction
-  };
-
-  const handleMultiSelectChange = (questionId: string, value: string, checked: boolean) => {
-    setAnswers(prev => {
-      const current = prev[questionId] || [];
-      const newValues = checked 
-        ? [...current, value]
-        : current.filter((v: string) => v !== value);
-      return { ...prev, [questionId]: newValues };
-    });
-    setShowValidationHint(false);
-  };
-
-  const validateCurrent = () => {
-    if (!currentQuestion) return true;
-    if (!currentQuestion.required) return true;
-    
-    const val = answers[currentQuestion.id];
-    if (val === undefined || val === '' || val === null) return false;
-    if (Array.isArray(val) && val.length === 0) return false;
-    return true;
-  };
-
-  const handleNext = async () => {
-    if (currentQuestionIndex === -1) {
-      // Move from Intro to Q1
-      setCurrentQuestionIndex(0);
-      return;
-    }
-
-    if (!validateCurrent()) {
-      setShowValidationHint(true);
-      return;
-    }
-
-    if (currentQuestionIndex < totalQuestions - 1) {
-      setCurrentQuestionIndex(prev => prev + 1);
-      setShowValidationHint(false);
-      window.scrollTo(0, 0);
-    } else {
-      await submitOnboarding();
-    }
-  };
-
-  const handleSkip = () => {
-    handleAnswerChange(currentQuestion!.id, null);
-    if (currentQuestionIndex < totalQuestions - 1) {
-      setCurrentQuestionIndex(prev => prev + 1);
-      window.scrollTo(0, 0);
-    } else {
-      submitOnboarding();
-    }
-  };
-
-  const handlePrevious = () => {
-    if (currentQuestionIndex > 0) {
-      setCurrentQuestionIndex(prev => prev - 1);
-      window.scrollTo(0, 0);
-    } else if (currentQuestionIndex === 0) {
-      setCurrentQuestionIndex(-1); // Back to Intro
-    } else {
-      onBack?.();
-    }
-  };
-
-  const submitOnboarding = async () => {
-    setIsEnrolling(true);
+  const submitOnboarding = async (answers: Record<string, any>) => {
     try {
-      const storedProgram = getStoredProgram();
-      const slug = programId || storedProgram?.slug || 'sleep-tight-9';
+      // Get program ID from state or localStorage
+      const storedProgramStr = localStorage.getItem('ikan-selected-program');
+      let storedProgram = null;
+      try {
+        storedProgram = storedProgramStr ? JSON.parse(storedProgramStr) : null;
+      } catch (e) {
+        storedProgram = { slug: storedProgramStr };
+      }
       
-      // Legacy mapping
+      const slug = programId || storedProgram?.slug || storedProgram?.id;
+      
+      if (!slug) {
+        throw new Error('No program ID available for enrollment');
+      }
+      
+      // Legacy mapping for backward compatibility
       const legacyData: OnboardingData = {
         personalInfo: { name: 'Equip User', preferredName: '', age: '', pronouns: '' },
         programGoals: { what: 'Not specified', why: '', when: '', expectations: '' },
-        currentState: { primaryConcern: 'Sleep', severityLevel: 5, previousExperience: answers['q-therapy-history'] || '', currentSupport: [] },
+        currentState: { primaryConcern: 'General', severityLevel: 5, previousExperience: answers['q-therapy-history'] || '', currentSupport: [] },
         preferences: { reminderTime: '09:00', communicationStyle: 'balanced', privacyLevel: 'medium' },
         consent: { dataProcessing: true, communications: true, research: false }
       };
 
-      // Use correct API method
+      // Create enrollment with onboarding data
       const enrollmentData = {
         programId: slug,
         onboardingData: {
@@ -174,209 +160,146 @@ export function EquipOnboarding({ programId: propProgramId, onComplete, onBack }
         }
       };
       
+      console.log('📤 Submitting onboarding:', enrollmentData);
+      
       const response = await apiClient.createEquipEnrollment(enrollmentData);
       
       if (response?.enrollment) {
         localStorage.setItem('ikan-current-enrollment', response.enrollment.enrollmentId);
         localStorage.setItem('ikan-equip-onboarding-answers', JSON.stringify(answers));
         
+        showToast('success', 'Enrollment Complete', 'Your program has been set up!');
         onComplete?.(answers);
+      } else {
+        console.error('❌ No enrollment returned from server:', response);
+        showToast('error', 'Enrollment Failed', 'Server did not return enrollment data.');
       }
     } catch (error) {
-      console.error(error);
-      showToast('error', 'Enrollment Failed', 'Please try again.');
-    } finally {
-      setIsEnrolling(false);
+      console.error('❌ Enrollment error:', error);
+      showToast('error', 'Enrollment Failed', error instanceof Error ? error.message : 'Please try again.');
     }
   };
 
-  const renderInput = (q: OnboardingQuestion) => {
-    switch (q.input_type) {
-      case 'text':
-      case 'email':
-      case 'phone':
-        return (
-          <Input
-            value={answers[q.id] || ''}
-            onChange={(e) => handleAnswerChange(q.id, e.target.value)}
-            className="h-14 text-lg"
-            placeholder="Type your answer..."
-          />
-        );
-      case 'single_select':
-        return (
-          <RadioGroup value={answers[q.id] || ''} onValueChange={(v) => handleAnswerChange(q.id, v)} className="space-y-3">
-            {q.options?.map((opt) => (
-              <div key={opt.id} className="relative">
-                <RadioGroupItem value={opt.value} id={`${q.id}-${opt.id}`} className="peer sr-only" />
-                <Label
-                  htmlFor={`${q.id}-${opt.id}`}
-                  className="flex items-center p-4 rounded-xl border border-gray-200 cursor-pointer transition-all hover:bg-gray-50 peer-data-[state=checked]:border-[var(--color-primary-default)] peer-data-[state=checked]:bg-[var(--color-primary-light)] peer-data-[state=checked]:text-[var(--color-primary-dark)]"
-                >
-                  <span className="text-base font-medium">{opt.label}</span>
-                </Label>
-              </div>
-            ))}
-            {q.allow_prefer_not_to_say && (
-              <div className="relative mt-4">
-                <RadioGroupItem value="prefer_not_to_say" id="pnts" className="peer sr-only" />
-                <Label htmlFor="pnts" className="block text-center text-sm text-gray-500 cursor-pointer hover:text-gray-800 peer-data-[state=checked]:font-medium peer-data-[state=checked]:text-[var(--color-primary-default)]">
-                  Prefer not to answer
-                </Label>
-              </div>
-            )}
-          </RadioGroup>
-        );
-      case 'multi_select':
-        const vals = answers[q.id] || [];
-        return (
-          <div className="space-y-3">
-            {q.options?.map((opt) => (
-              <div key={opt.id} className="relative">
-                <Checkbox
-                  id={`${q.id}-${opt.id}`}
-                  checked={vals.includes(opt.value)}
-                  onCheckedChange={(c) => handleMultiSelectChange(q.id, opt.value, !!c)}
-                  className="peer sr-only"
-                />
-                <Label
-                  htmlFor={`${q.id}-${opt.id}`}
-                  className={cn(
-                    "flex items-center p-4 rounded-xl border border-gray-200 cursor-pointer transition-all hover:bg-gray-50",
-                    vals.includes(opt.value) ? "border-[var(--color-primary-default)] bg-[var(--color-primary-light)]" : ""
-                  )}
-                >
-                  <span className={cn("text-base font-medium", vals.includes(opt.value) ? "text-[var(--color-primary-dark)]" : "")}>
-                    {opt.label}
-                  </span>
-                  {vals.includes(opt.value) && <CheckCircle size={18} className="ml-auto text-[var(--color-primary-default)]" />}
-                </Label>
-              </div>
-            ))}
-          </div>
-        );
-      case 'textarea':
-        return <Textarea value={answers[q.id] || ''} onChange={e => handleAnswerChange(q.id, e.target.value)} rows={5} className="text-lg p-4" />;
-      default: return null;
-    }
-  };
-
-  // 1. INTRO VIEW
-  if (currentQuestionIndex === -1) {
+  // Loading State
+  if (loading) {
     return (
-      <div className="min-h-screen bg-[var(--color-bg-page)] flex flex-col">
-        <header className="px-6 py-4 flex justify-between items-center">
-          <span className="font-medium text-gray-900">{programContent?.title || 'Program Setup'}</span>
-          <Button variant="ghost" size="sm" onClick={onBack} className="text-gray-500"><X size={20} /></Button>
-        </header>
-        
-        <main className="flex-1 flex flex-col items-center justify-center p-6 text-center max-w-md mx-auto">
-          <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mb-6 text-blue-600">
-            <Info size={32} />
-          </div>
-          <h1 className="text-2xl font-semibold mb-4 text-gray-900">Before we begin...</h1>
-          <p className="text-gray-600 mb-8 leading-relaxed">
-            We'd like to know a little about you. This helps us personalize your experience and ensure this program is the right fit.
-          </p>
-          <div className="flex items-center justify-center gap-2 text-xs text-gray-500 mb-12 bg-gray-50 py-2 px-4 rounded-full">
-            <Lock size={12} />
-            Your responses are private and secure.
-          </div>
-          <Button onClick={handleNext} className="w-full h-14 text-lg bg-[var(--color-primary-default)] text-white rounded-xl shadow-lg shadow-blue-500/20">
-            Get Started
-          </Button>
-        </main>
+      <div className="min-h-screen bg-[var(--color-bg-page)] flex items-center justify-center">
+        <div className="flex flex-col items-center space-y-4">
+          <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+          <p className="text-muted-foreground">Loading program setup...</p>
+        </div>
       </div>
     );
   }
 
-  // 2. QUESTION VIEW
-  return (
-    <div className="min-h-screen bg-[var(--color-bg-page)] flex flex-col transition-colors duration-500">
-      {/* Header */}
-      <header className="px-6 py-4 flex items-center justify-between">
-        <Button variant="ghost" size="sm" onClick={handlePrevious} className="p-0 hover:bg-transparent text-gray-400 hover:text-gray-900">
-          <ArrowLeft size={20} />
-        </Button>
-        <span className="text-xs font-medium text-gray-400 uppercase tracking-widest">
-          Step {currentQuestionIndex + 1} of {totalQuestions}
-        </span>
-        <div className="w-5" /> {/* Spacer */}
-      </header>
-
-      {/* Progress Line */}
-      <div className="h-1 bg-gray-100 w-full">
-        <div 
-          className="h-full bg-[var(--color-primary-default)] transition-all duration-500 ease-out"
-          style={{ width: `${((currentQuestionIndex + 1) / totalQuestions) * 100}%` }}
-        />
-      </div>
-
-      {/* Content */}
-      <main className="flex-1 flex flex-col p-6 max-w-lg mx-auto w-full">
-        <div className="flex-1 flex flex-col justify-center">
-          {currentQuestion && (
-            <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-              <h2 className="text-2xl md:text-3xl font-semibold text-gray-900 mb-3 leading-tight">
-                {currentQuestion.question_text}
-              </h2>
-              
-              {currentQuestion.helper_text && (
-                <p className="text-gray-500 mb-8 text-base">
-                  {currentQuestion.helper_text}
-                </p>
-              )}
-
-              <div className="space-y-6">
-                {renderInput(currentQuestion)}
-              </div>
-
-              {/* Validation Hint (The "Gentle Nudge") */}
-              {showValidationHint && (
-                <div className="mt-4 p-3 bg-amber-50 text-amber-800 text-sm rounded-lg flex items-center gap-2 animate-pulse">
-                  <Info size={16} />
-                  Please answer this question to continue.
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-
-        {/* Footer Actions */}
-        <div className="mt-8 space-y-3">
-          <Button 
-            onClick={handleNext}
-            disabled={isEnrolling}
-            className="w-full h-14 text-lg rounded-xl flex items-center justify-center gap-2 bg-[var(--color-primary-default)] text-white shadow-md hover:shadow-lg transition-all"
-          >
-            {isEnrolling ? (
-              'Setting up...'
-            ) : (
-              <>
-                {currentQuestionIndex === totalQuestions - 1 ? 'Finish' : 'Continue'}
-                <ChevronRight size={20} />
-              </>
-            )}
+  // Error State
+  if (error || !questionSet) {
+    return (
+      <div className="min-h-screen bg-[var(--color-bg-page)] flex items-center justify-center p-6">
+        <div className="flex flex-col items-center space-y-4 text-center max-w-md">
+          <Icon name="alertCircle" size={48} className="text-destructive" />
+          <h3 className="text-xl font-semibold">Unable to Load Program Setup</h3>
+          <p className="text-muted-foreground">{error || 'Program onboarding not found or unavailable.'}</p>
+          <Button onClick={onBack} variant="outline" className="mt-4">
+            Go Back
           </Button>
-
-          {!currentQuestion?.required && !isEnrolling && (
-            <Button 
-              variant="ghost" 
-              onClick={handleSkip}
-              className="w-full text-gray-400 hover:text-gray-600 hover:bg-transparent h-auto py-2 text-sm font-normal"
-            >
-              Skip for now
-            </Button>
-          )}
-          
-          <div className="flex justify-center mt-4">
-            <div className="flex items-center gap-1.5 text-[10px] text-gray-400">
-              <Lock size={10} />
-              Private & Secure
-            </div>
-          </div>
         </div>
-      </main>
-    </div>
+      </div>
+    );
+  }
+
+  const wizardConfig = mapOnboardingToWizard(questionSet);
+
+  // Convert to Typeform format
+  console.log('📊 Converting onboarding to Typeform format...');
+  
+  const typeformSteps = [
+    // Intro step
+    {
+      id: 'intro',
+      type: 'intro' as const,
+      title: questionSet.title,
+      description: questionSet.description
+    },
+    // Question steps
+    ...questionSet.questions.map((q: any, index: number) => {
+      console.log(`🔍 Onboarding Question ${index + 1}:`, {
+        id: q.id,
+        text: q.text,
+        type: q.type,
+        options: q.options
+      });
+
+      // Map question type
+      let questionType: 'single_select' | 'multi_select' | 'text' | 'long_text' | 'scale' = 'text';
+      let options = undefined;
+
+      if (q.type === 'scale') {
+        questionType = 'scale';
+      } else if (q.type === 'single-choice' || q.type === 'single_select') {
+        questionType = 'single_select';
+        // Convert options - handle both string[] and object[]
+        options = q.options?.map((opt: any, idx: number) => {
+          if (typeof opt === 'string') {
+            return { id: `opt_${idx}`, label: opt, value: opt };
+          }
+          return {
+            id: opt.id || `opt_${idx}`,
+            label: opt.text || opt.label || opt,
+            value: opt.value !== undefined ? opt.value : opt
+          };
+        });
+      } else if (q.type === 'multiple-choice' || q.type === 'multi_select') {
+        questionType = 'multi_select';
+        options = q.options?.map((opt: any, idx: number) => {
+          if (typeof opt === 'string') {
+            return { id: `opt_${idx}`, label: opt, value: opt };
+          }
+          return {
+            id: opt.id || `opt_${idx}`,
+            label: opt.text || opt.label || opt,
+            value: opt.value !== undefined ? opt.value : opt
+          };
+        });
+      } else if (q.type === 'text' || q.type === 'long_text') {
+        questionType = 'long_text';
+      }
+
+      console.log(`✅ Mapped onboarding question ${index + 1}:`, { questionType, optionsCount: options?.length });
+
+      return {
+        id: `q_${index}`,
+        type: 'question' as const,
+        title: '',
+        question: {
+          id: q.id,
+          text: q.text,
+          type: questionType,
+          options,
+          placeholder: q.type === 'text' || q.type === 'long_text' ? 'Type your answer...' : undefined,
+          required: q.required !== false,
+          scaleMin: q.scaleMin,
+          scaleMax: q.scaleMax,
+          scaleLabels: q.scaleLabels
+        }
+      };
+    }),
+    // Outro step
+    {
+      id: 'outro',
+      type: 'outro' as const,
+      title: "You're all set!",
+      description: "Your program is being personalized based on your responses..."
+    }
+  ];
+
+  console.log('🎨 Typeform onboarding steps created:', typeformSteps.length);
+
+  return (
+    <TypeformWizard
+      steps={typeformSteps}
+      onComplete={submitOnboarding}
+      onExit={onBack}
+    />
   );
 }

@@ -59,6 +59,7 @@ import { ProgramView } from './components/screens/ProgramView';
 import { Homepage } from './components/screens/Homepage';
 import { RouteTestScreen } from './components/screens/RouteTestScreen';
 import { PrivateRouteTest } from './components/screens/PrivateRouteTest';
+import { WizardTestScreen } from './components/screens/WizardTestScreen';
 import { Footer } from './components/Footer';
 
 // Import the AuthForm component that was referenced but not imported
@@ -230,7 +231,7 @@ function AppContent() {
         '/', '/dashboard', '/mood-journal', '/assessment', '/assessment-landing', '/assessment-detail', '/assessment-flow', '/assessment-results',
         '/equip', '/equip-programs-landing', '/equip-detail', '/equip-program-onboarding', '/equip-program-flow', '/equip-program-completion',
         '/consultation', '/consultation-detail', '/resource', '/resource-detail', '/account', 
-        '/about', '/faq', '/privacy', '/privacy-policy', '/terms', '/contact', '/return-policy', '/cancellation-policy', '/sitemap', '/login', '/route-test', '/private-route-test',
+        '/about', '/faq', '/privacy', '/privacy-policy', '/terms', '/contact', '/return-policy', '/cancellation-policy', '/sitemap', '/login', '/route-test', '/private-route-test', '/wizard-test',
         '/admin', '/admin/resources', '/admin/equip', '/admin/users', '/admin/consultants', '/admin/assessments', '/admin/analytics', '/admin/settings', '/admin/pages', '/admin/media', '/admin/crud'
       ];
       
@@ -934,6 +935,14 @@ function AppContent() {
                 onNavigate={handleNavigate}
                 currentRoute={currentRoute}
                 isAuthenticated={!!user}
+              />
+            </ErrorBoundary>
+          );
+        case '/wizard-test':
+          return (
+            <ErrorBoundary>
+              <WizardTestScreen 
+                onBack={() => handleNavigate('/dashboard')}
               />
             </ErrorBoundary>
           );

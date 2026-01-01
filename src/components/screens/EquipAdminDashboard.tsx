@@ -17,9 +17,13 @@ import {
 import { apiClient } from '../../lib/api-client';
 import { EquipProgram } from '../../lib/equip-admin-types';
 import { useNotifications } from '../../contexts/NotificationContext';
-import { EquipEditor } from '../admin/equip/EquipEditor';
+import { EquipProgramWizard } from './EquipProgramWizard';
 
-export function EquipAdminDashboard() {
+interface EquipAdminDashboardProps {
+  onBack?: () => void;
+}
+
+export function EquipAdminDashboard({ onBack }: EquipAdminDashboardProps = {}) {
   const [programs, setPrograms] = useState<EquipProgram[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -52,6 +56,18 @@ export function EquipAdminDashboard() {
     setView('editor');
   };
 
+  const handleAddDefaultOnboarding = async () => {
+    try {
+      showToast('info', 'Processing...', 'Adding default onboarding to programs');
+      const response = await apiClient.addDefaultOnboarding();
+      showToast('success', 'Success!', response.message || 'Default onboarding added');
+      loadPrograms(); // Reload to see changes
+    } catch (error) {
+      console.error('Failed to add default onboarding:', error);
+      showToast('error', 'Error', 'Failed to add default onboarding');
+    }
+  };
+
   const handleEdit = (id: string) => {
     setSelectedProgramId(id);
     setView('editor');
@@ -71,9 +87,13 @@ export function EquipAdminDashboard() {
   // Render Editor
   if (view === 'editor') {
     return (
-      <EquipEditor
-        programId={selectedProgramId}
+      <EquipProgramWizard
+        programId={selectedProgramId || undefined}
         onBack={() => {
+            setView('list');
+            loadPrograms();
+        }}
+        onSave={() => {
             setView('list');
             loadPrograms();
         }}
@@ -92,9 +112,21 @@ export function EquipAdminDashboard() {
         
         {/* Header */}
         <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">Equip Programs</h1>
-            <p className="text-gray-500">Manage your mental health programs and courses.</p>
+          <div className="flex items-center gap-4">
+            {onBack && (
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={onBack}
+                className="gap-2"
+              >
+                <ChevronRight className="rotate-180" size={16} /> Back
+              </Button>
+            )}
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900">Equip Programs</h1>
+              <p className="text-gray-500">Manage your mental health programs and courses.</p>
+            </div>
           </div>
           <Button onClick={handleCreateNew} className="gap-2 bg-gray-900 text-white hover:bg-gray-800">
             <Plus size={16} /> Create Program
@@ -143,6 +175,13 @@ export function EquipAdminDashboard() {
               className="pl-9 bg-gray-50 border-gray-200"
             />
           </div>
+          <Button 
+            onClick={handleAddDefaultOnboarding} 
+            variant="outline"
+            className="gap-2"
+          >
+            ✨ Setup Onboarding
+          </Button>
         </div>
 
         {/* Program List */}

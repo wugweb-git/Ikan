@@ -52,6 +52,7 @@ const routes: RouteTest[] = [
   
   // Special Routes
   { path: '/resource-detail', name: 'Resource Detail', description: 'Individual resource page (requires ID)', requiresAuth: false, isPublic: true, category: 'Special' },
+  { path: '/wizard-test', name: 'Wizard Engine Test', description: 'Testing Unified Wizard Engine', requiresAuth: false, isPublic: true, category: 'Special' },
 ];
 
 export function RouteTestScreen({ onNavigate, currentRoute, isAuthenticated }: RouteTestScreenProps) {

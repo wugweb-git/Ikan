@@ -421,9 +421,9 @@ export function AdminEquipAnalytics({ onBack, className }: AdminEquipAnalyticsPr
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              {enrollments.slice(0, 10).map((enrollment) => (
+              {enrollments.slice(0, 10).map((enrollment, index) => (
                 <div
-                  key={enrollment.id}
+                  key={enrollment.id || index}
                   className="flex items-center justify-between p-4 rounded-lg"
                   style={{ backgroundColor: '#F9FAFB', border: '1px solid #E5E7EB' }}
                 >

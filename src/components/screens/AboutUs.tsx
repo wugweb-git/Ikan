@@ -3,12 +3,13 @@ import { useNotifications } from '../../contexts/NotificationContext';
 import { Button } from '../ui/button';
 import { ImageWithFallback } from '../figma/ImageWithFallback';
 import { useIsMobile } from '../../hooks/useIsMobile';
-import { NewsletterSection } from './homepage/NewsletterSection';
 import { ResourceBlock } from '../blocks/ResourceBlock';
+import { NewsletterBlock } from '../blocks/NewsletterBlock';
 import { ResourcePost } from '../blocks/ResourceCard';
 import { apiClient } from '../../lib/api-client';
 import { Play } from 'lucide-react';
 import { cn } from '../ui/utils';
+import { NEWSLETTER_CONTENT } from '../../lib/constants/content';
 
 interface AboutUsProps {
   onNavigate?: (route: string, resourceId?: string) => void;
@@ -156,7 +157,17 @@ export function AboutUs({ onNavigate, onGetStarted, className }: AboutUsProps) {
       />
 
       {/* Newsletter Section */}
-      <NewsletterSection />
+      <NewsletterBlock 
+        title="Stay Informed About Mental Health"
+        benefits={[
+          "Get weekly mental health tips and insights",
+          "Early access to new features and programs",
+          "Exclusive resources and guided exercises"
+        ]}
+        imageAlt="Mental health newsletter"
+        ctaText="Subscribe Now"
+        privacyText={NEWSLETTER_CONTENT.PRIVACY_TEXT}
+      />
 
       {/* Video Modal */}
       {showVideoModal && (

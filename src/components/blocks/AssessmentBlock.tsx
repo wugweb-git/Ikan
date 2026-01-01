@@ -2,20 +2,23 @@ import React from 'react';
 import { Button } from '../ui/button';
 import { ErrorBoundary } from '../ErrorBoundary';
 import { ImageWithFallback } from '../figma/ImageWithFallback';
-import { Clock } from 'lucide-react';
+import { Clock, FileQuestion } from 'lucide-react';
 import { Skeleton } from '../ui/skeleton-loader';
 
 export interface AssessmentProgram {
   title: string;
   description: string;
   image: string;
-  info: string;
+  category?: string; // Dynamic category from database
+  questionCount?: number; // Number of questions
+  duration?: number; // Duration in minutes
+  info: string; // Formatted info string (e.g., "10 Questions • 5 min")
   link: string;
 }
 
 export interface AssessmentBlockProps {
   title?: string;
-  subtitle?: string; // e.g. "PROGRAM"
+  subtitle?: string; // DEPRECATED: Use category from program data instead
   buttonText?: string;
   seeMoreText?: string;
   programs: AssessmentProgram[];
@@ -179,7 +182,7 @@ export function AssessmentBlock({
                                 letterSpacing: 'var(--letter-spacing-wide)'
                               }}
                             >
-                              {subtitle}
+                              {program.category || subtitle}
                             </div>
                             <h3 
                               style={{
@@ -205,9 +208,9 @@ export function AssessmentBlock({
                             {program.description}
                           </p>
 
-                          <div className="flex items-center justify-between">
+                          <div className="flex items-end justify-between">
                             <div 
-                              className="w-24 h-24 rounded-lg overflow-hidden"
+                              className="w-24 h-24 rounded-lg overflow-hidden flex-shrink-0"
                               style={{ borderRadius: 'var(--radius-md)' }}
                             >
                               <ImageWithFallback 
@@ -218,22 +221,42 @@ export function AssessmentBlock({
                             </div>
                             
                             <div 
-                              className="flex flex-col items-end space-y-4"
+                              className="flex flex-col items-end"
                               style={{ gap: 'var(--spacing-4)' }}
                             >
-                              <div className="flex items-center gap-2">
-                                <Clock className="w-4 h-4" />
-                                <span 
-                                  className="text-sm"
-                                  style={{
-                                    fontSize: 'var(--text-sm)',
-                                    color: 'var(--color-text-primary)',
-                                    fontFamily: 'var(--font-family-base)'
-                                  }}
-                                >
-                                  {program.info}
-                                </span>
+                              {/* Stacked Time and Questions with Icons */}
+                              <div 
+                                className="flex flex-col items-end"
+                                style={{ gap: 'var(--spacing-2)' }}
+                              >
+                                <div className="flex items-center gap-2">
+                                  <FileQuestion className="w-4 h-4" style={{ color: 'var(--color-text-primary)' }} />
+                                  <span 
+                                    className="text-sm"
+                                    style={{
+                                      fontSize: 'var(--text-sm)',
+                                      color: 'var(--color-text-primary)',
+                                      fontFamily: 'var(--font-family-base)'
+                                    }}
+                                  >
+                                    {program.questionCount || 10} Questions
+                                  </span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <Clock className="w-4 h-4" style={{ color: 'var(--color-text-primary)' }} />
+                                  <span 
+                                    className="text-sm"
+                                    style={{
+                                      fontSize: 'var(--text-sm)',
+                                      color: 'var(--color-text-primary)',
+                                      fontFamily: 'var(--font-family-base)'
+                                    }}
+                                  >
+                                    {program.duration || 5} min
+                                  </span>
+                                </div>
                               </div>
+                              
                               <Button
                                 onClick={() => handleProgramClick(program)}
                                 className="ikan-button"
@@ -241,7 +264,9 @@ export function AssessmentBlock({
                                   backgroundColor: 'var(--color-accent-default)',
                                   color: 'var(--color-accent-on)',
                                   height: '48px',
-                                  borderRadius: 'var(--radius-sm)'
+                                  borderRadius: 'var(--radius-sm)',
+                                  paddingLeft: 'var(--spacing-6)',
+                                  paddingRight: 'var(--spacing-6)'
                                 }}
                               >
                                 {buttonText}
@@ -270,13 +295,17 @@ export function AssessmentBlock({
                           }}
                         >
                           <div 
-                            className="space-y-6 h-full flex flex-col"
-                            style={{ gap: 'var(--spacing-6)' }}
+                            className="space-y-4 h-full flex flex-col"
+                            style={{ gap: 'var(--spacing-3)' }}
                           >
                             {/* Content */}
                             <div 
-                              className="space-y-4 flex-1"
-                              style={{ gap: 'var(--spacing-4)' }}
+                              className="flex-1"
+                              style={{ 
+                                display: 'flex',
+                                flexDirection: 'column',
+                                gap: 'var(--spacing-3)'
+                              }}
                             >
                               <div>
                                 <div 
@@ -289,7 +318,7 @@ export function AssessmentBlock({
                                     letterSpacing: 'var(--letter-spacing-wide)'
                                   }}
                                 >
-                                  {subtitle}
+                                  {program.category || subtitle}
                                 </div>
                                 <h3 
                                   style={{
@@ -321,7 +350,7 @@ export function AssessmentBlock({
                             {/* Bottom Section */}
                             <div className="flex items-end justify-between">
                               <div 
-                                className="w-32 h-32 rounded-lg overflow-hidden"
+                                className="w-32 h-32 rounded-lg overflow-hidden flex-shrink-0"
                                 style={{ borderRadius: 'var(--radius-md)' }}
                               >
                                 <ImageWithFallback 
@@ -332,22 +361,42 @@ export function AssessmentBlock({
                               </div>
                               
                               <div 
-                                className="flex flex-col items-end space-y-6"
-                                style={{ gap: 'var(--spacing-6)' }}
+                                className="flex flex-col items-end"
+                                style={{ gap: 'var(--spacing-4)' }}
                               >
-                                <div className="flex items-center gap-2">
-                                  <Clock className="w-4 h-4" />
-                                  <span 
-                                    className="text-sm"
-                                    style={{
-                                      fontSize: 'var(--text-sm)',
-                                      color: 'var(--color-text-primary)',
-                                      fontFamily: 'var(--font-family-base)'
-                                    }}
-                                  >
-                                    {program.info}
-                                  </span>
+                                {/* Stacked Time and Questions with Icons */}
+                                <div 
+                                  className="flex flex-col items-end"
+                                  style={{ gap: 'var(--spacing-2)' }}
+                                >
+                                  <div className="flex items-center gap-2">
+                                    <FileQuestion className="w-4 h-4" style={{ color: 'var(--color-text-primary)' }} />
+                                    <span 
+                                      className="text-sm"
+                                      style={{
+                                        fontSize: 'var(--text-sm)',
+                                        color: 'var(--color-text-primary)',
+                                        fontFamily: 'var(--font-family-base)'
+                                      }}
+                                    >
+                                      {program.questionCount || 10} Questions
+                                    </span>
+                                  </div>
+                                  <div className="flex items-center gap-2">
+                                    <Clock className="w-4 h-4" style={{ color: 'var(--color-text-primary)' }} />
+                                    <span 
+                                      className="text-sm"
+                                      style={{
+                                        fontSize: 'var(--text-sm)',
+                                        color: 'var(--color-text-primary)',
+                                        fontFamily: 'var(--font-family-base)'
+                                      }}
+                                    >
+                                      {program.duration || 5} min
+                                    </span>
+                                  </div>
                                 </div>
+                                
                                 <Button
                                   onClick={() => handleProgramClick(program)}
                                   className="ikan-button"
@@ -355,7 +404,9 @@ export function AssessmentBlock({
                                     backgroundColor: 'var(--color-accent-default)',
                                     color: 'var(--color-accent-on)',
                                     height: '48px',
-                                    borderRadius: 'var(--radius-sm)'
+                                    borderRadius: 'var(--radius-sm)',
+                                    paddingLeft: 'var(--spacing-6)',
+                                    paddingRight: 'var(--spacing-6)'
                                   }}
                                 >
                                   {buttonText}

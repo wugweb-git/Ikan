@@ -36,11 +36,12 @@ import { cn } from '../ui/utils';
 
 interface AdminConsultationManagerProps {
   onBack?: () => void;
+  onNavigate?: (path: string) => void;
 }
 
 type ViewMode = 'list' | 'edit' | 'create';
 
-export function AdminConsultationManager({ onBack }: AdminConsultationManagerProps) {
+export function AdminConsultationManager({ onBack, onNavigate }: AdminConsultationManagerProps) {
   const { showToast } = useNotifications();
   const isMobile = useIsMobile();
   const [loading, setLoading] = useState(true);

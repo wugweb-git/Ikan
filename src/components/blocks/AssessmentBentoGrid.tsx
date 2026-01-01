@@ -1,5 +1,5 @@
 import React from 'react';
-import { Check, Info, AlertCircle } from 'lucide-react';
+import { Check, Info, AlertCircle, Clock, FileText, Activity, Save, Eye, CheckCircle2 } from 'lucide-react';
 import { ImageWithFallback } from '../figma/ImageWithFallback';
 import { cn } from '../ui/utils';
 
@@ -40,6 +40,13 @@ interface AssessmentBentoGridProps {
   section2: BentoSection2; // About this test (and Image)
   section3: BentoSection3; // What you'll see
   section4: BentoSection4; // Things to remember
+  // Stats data from Basic Info
+  questionCount?: number;
+  duration?: number;
+  difficulty?: string;
+  // Important notes from metadata
+  importantNote1?: string;
+  importantNote2?: string;
   className?: string;
 }
 
@@ -63,11 +70,18 @@ const TileLabel = ({ number }: { number: number }) => (
   </div>
 );
 
+const richTextClasses = "prose prose-sm md:prose-base max-w-none [&_h1]:text-2xl [&_h2]:text-xl [&_h3]:text-lg [&_p]:mb-3 [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5 [&_li]:mb-1 [&_img]:rounded-lg [&_img]:max-w-full [&_a]:text-blue-600 [&_a]:underline text-[var(--color-text-primary)]";
+
 export function AssessmentBentoGrid({
   section1,
   section2,
   section3,
   section4,
+  questionCount = 10,
+  duration = 5,
+  difficulty = 'Beginner',
+  importantNote1,
+  importantNote2,
   className
 }: AssessmentBentoGridProps) {
   
@@ -76,7 +90,8 @@ export function AssessmentBentoGrid({
     if (html) {
       return (
         <div 
-          className="rich-text-content text-base text-[var(--color-text-muted)] leading-relaxed space-y-4"
+          className="rich-text-content"
+          style={{ fontSize: '16px', lineHeight: '24px' }}
           dangerouslySetInnerHTML={{ __html: html }}
         />
       );
@@ -84,7 +99,7 @@ export function AssessmentBentoGrid({
     if (textArray && textArray.length > 0) {
       const items = limit ? textArray.slice(0, limit) : textArray;
       return items.map((p, i) => (
-        <p key={i} className="text-base text-[var(--color-text-muted)] leading-relaxed mb-4">
+        <p key={i} style={{ fontSize: '16px', lineHeight: '24px' }} className="text-[#151515]">
           {p}
         </p>
       ));
@@ -102,222 +117,224 @@ export function AssessmentBentoGrid({
         {/* Mobile View: Stacked Column */}
         <div className="flex flex-col gap-6 md:hidden">
           
-          {/* TILE 1: About This Test (Section 2) */}
-          <div className="relative bg-[var(--color-bg-card)] rounded-2xl p-6 border border-[var(--color-border-default)]">
-            <TileLabel number={1} />
-            <h2 className="text-2xl font-medium text-[var(--color-text-primary)] mb-4">
-              {section2.title || "What is this assessment?"}
-            </h2>
-            <div className="mb-6">
+          {/* TILE 1: What is this assessment? */}
+          <div className="bg-white rounded-2xl p-8 border border-[rgba(0,0,0,0.1)]">
+            <p style={{ fontSize: '26px', lineHeight: '24px', fontWeight: 400 }} className="text-[#151515] mb-9">
+              What is this assessment?
+            </p>
+            <div className="mb-8 space-y-6">
               {renderContent(section2.contentHtml, section2.content ? section2.content.split('\n') : [])}
             </div>
+            
             {section2.bullets && section2.bullets.length > 0 && (
-              <ul className="space-y-3 pt-4 border-t border-[var(--color-border-default)]">
-                 {section2.bullets.slice(0, 3).map((bullet, idx) => (
-                    <li key={idx} className="flex items-start gap-3 text-[var(--color-text-primary)] text-sm">
-                      <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-[var(--color-primary-default)] shrink-0" />
-                      <span className="leading-relaxed">{bullet}</span>
-                    </li>
+              <div>
+                <p style={{ fontSize: '16px', lineHeight: '24px', fontWeight: 700 }} className="text-[#151515] mb-[17px]">
+                  What it measures
+                </p>
+                <div className="flex flex-col md:flex-row gap-3">
+                  {section2.bullets.slice(0, 3).map((bullet, idx) => (
+                    <div key={idx} className="flex items-start gap-[11.5px]">
+                      <Check className="w-[25px] h-[24px] text-[#2A2A2A] shrink-0" strokeWidth={2} />
+                      <p style={{ fontSize: '16px', lineHeight: '24px', fontWeight: 400 }} className="text-[#151515]">
+                        {bullet}
+                      </p>
+                    </div>
                   ))}
-              </ul>
+                </div>
+              </div>
             )}
           </div>
 
-          {/* TILE 2: Visual / Image Tile */}
-          <div className="relative rounded-2xl overflow-hidden h-48">
-            <TileLabel number={2} />
-            <AbstractImageTile className="w-full h-full">
-               {section2.image ? (
-                   <ImageWithFallback 
-                       src={section2.image} 
-                       alt="" 
-                       aria-hidden="true"
-                       className="w-full h-full object-cover"
-                   />
-               ) : (
-                   <div className="w-full h-full flex items-center justify-center">
-                       <span className="sr-only">Abstract background</span>
-                   </div>
-               )}
-            </AbstractImageTile>
+          {/* TILE 2: Stats */}
+          <div className="bg-white rounded-2xl p-8 border border-[rgba(0,0,0,0.1)]">
+            <div className="space-y-[34px]">
+              <div className="flex items-start gap-[17px]">
+                <FileText className="w-[25px] h-[24px] text-[#2A2A2A] shrink-0 mt-[6px]" strokeWidth={2} />
+                <div>
+                  <p style={{ fontSize: '16px', lineHeight: '24px', fontWeight: 700 }} className="text-[#151515] mb-[6px]">
+                    Number of questions
+                  </p>
+                  <p style={{ fontSize: '16px', lineHeight: '24px', fontWeight: 400 }} className="text-[#151515]">
+                    {questionCount} questions
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-start gap-[17px]">
+                <Clock className="w-[25px] h-[24px] text-[#2A2A2A] shrink-0 mt-[6px]" strokeWidth={2} />
+                <div>
+                  <p style={{ fontSize: '16px', lineHeight: '24px', fontWeight: 700 }} className="text-[#151515] mb-[6px]">
+                    Time
+                  </p>
+                  <p style={{ fontSize: '16px', lineHeight: '24px', fontWeight: 400 }} className="text-[#151515]">
+                    {duration} min
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-start gap-[17px]">
+                <Activity className="w-[25px] h-[24px] text-[#2A2A2A] shrink-0 mt-[6px]" strokeWidth={2} />
+                <div>
+                  <p style={{ fontSize: '16px', lineHeight: '24px', fontWeight: 700 }} className="text-[#151515] mb-[6px]">
+                    Level
+                  </p>
+                  <p style={{ fontSize: '16px', lineHeight: '24px', fontWeight: 400 }} className="text-[#151515]">
+                    {difficulty}
+                  </p>
+                </div>
+              </div>
+            </div>
           </div>
 
-          {/* TILE 3: Who Is This Test For? (Section 1) */}
-          <div className="relative bg-[var(--color-bg-card)] rounded-2xl p-6 border border-[var(--color-border-default)]">
-             <TileLabel number={3} />
-             <h3 className="text-xl font-medium text-[var(--color-text-primary)] mb-4">
-               {section1.title || "Who is this test for?"}
-             </h3>
-             {section1.eligibilityTitle && (
-                <p className="text-sm font-medium text-[var(--color-text-muted)] mb-3">
-                    {section1.eligibilityTitle}
-                </p>
-             )}
-             <div className="space-y-3">
-                {(section1.eligibilityPoints || []).slice(0, 4).map((item, idx) => (
-                  <div key={idx} className="flex items-start gap-3">
-                    <div className="mt-1 shrink-0 text-[var(--color-primary-default)]">
-                      <Check size={18} strokeWidth={2.5} />
-                    </div>
-                    <p className="text-sm text-[var(--color-text-primary)] leading-relaxed">
-                      {item}
-                    </p>
-                  </div>
-                ))}
-             </div>
+          {/* TILE 3: Things to Remember */}
+          <div className="bg-white rounded-2xl p-8 border border-[rgba(0,0,0,0.1)]">
+            <p style={{ fontSize: '24px', lineHeight: '24px', fontWeight: 400 }} className="text-[#151515] mb-3">
+              Things to Remember Before You Start
+            </p>
+            <div className="flex flex-col md:grid md:grid-cols-4 gap-3 pl-5">
+              {(section4.notes || []).slice(0, 4).map((note, idx) => (
+                <div key={idx}>
+                  <p style={{ fontSize: '16px', lineHeight: '24px', fontWeight: 400 }} className="text-[#151515]" dangerouslySetInnerHTML={{ __html: note.title }} />
+                </div>
+              ))}
+            </div>
           </div>
 
-          {/* TILE 5: Things To Remember (Section 4 Notes) */}
-          <div className="relative bg-[var(--color-bg-card)] rounded-2xl p-6 border border-[var(--color-border-default)]">
-             <TileLabel number={5} />
-             <h3 className="text-xl font-medium text-[var(--color-text-primary)] mb-4">
-               {section4.notesTitle || "Things to remember"}
-             </h3>
-             <div className="space-y-4">
-                 {(section4.notes || []).slice(0, 3).map((n, idx) => (
-                     <div key={idx} className="flex gap-3">
-                         <AlertCircle size={18} className="text-[var(--color-text-muted)] mt-0.5 shrink-0" />
-                         <div>
-                             <p className="font-medium text-sm text-[var(--color-text-primary)]">{n.title}</p>
-                             <p className="text-xs text-[var(--color-text-muted)] mt-1">{n.description}</p>
-                         </div>
-                     </div>
-                 ))}
-             </div>
-          </div>
-
-          {/* TILE 4: What You'll See (Section 3) */}
-          <div className="relative bg-[var(--color-bg-card)] rounded-2xl p-6 border border-[var(--color-border-default)]">
-             <TileLabel number={4} />
-             <h3 className="text-xl font-medium text-[var(--color-text-primary)] mb-4">
-               {section3.title || "What you'll see"}
-             </h3>
-             {section3.subtitle && (
-                <p className="text-sm text-[var(--color-text-muted)] mb-4 italic">
-                    {section3.subtitle}
-                </p>
-             )}
-             <div>
-                {renderContent(section3.contentHtml, section3.content)}
-             </div>
+          {/* TILE 4: Important */}
+          <div className="bg-[#ededed] rounded-2xl p-8 border border-[rgba(0,0,0,0.1)]">
+            <div className="flex items-start gap-[13px] mb-3">
+              <AlertCircle className="w-[25px] h-[24px] text-[#2A2A2A] shrink-0 mt-[5px]" strokeWidth={2} />
+              <p style={{ fontSize: '24px', lineHeight: '24px', fontWeight: 400 }} className="text-[#151515]">
+                Important
+              </p>
+            </div>
+            <div className="pl-5">
+              <ul style={{ fontSize: '16px', lineHeight: '0', fontWeight: 400, listStyleType: 'disc' }} className="ml-[24px] text-[#151515]">
+                {importantNote1 && (
+                  <li className="mb-0">
+                    <span style={{ lineHeight: '24px' }}>{importantNote1}</span>
+                  </li>
+                )}
+                {importantNote2 && (
+                  <li>
+                    <span style={{ lineHeight: '24px' }}>{importantNote2}</span>
+                  </li>
+                )}
+              </ul>
+            </div>
           </div>
 
         </div>
 
-        {/* Desktop View: Bento Grid */}
-        <div className="hidden md:grid md:grid-cols-2 lg:grid-cols-12 gap-6 auto-rows-fr">
+        {/* Desktop View: Clean 2x2 Bento Grid */}
+        <div className="hidden md:grid grid-cols-12 gap-6">
           
           {/* ROW 1 */}
           
-          {/* TILE 1: About This Test (Section 2) - 8 cols */}
-          <div className="relative md:col-span-2 lg:col-span-8 bg-[var(--color-bg-card)] rounded-2xl p-8 border border-[var(--color-border-default)] flex flex-col justify-between">
-            <TileLabel number={1} />
-            <div>
-                <h2 className="text-2xl font-medium text-[var(--color-text-primary)] mb-4">
-                    {section2.title || "What is this assessment?"}
-                </h2>
-                <div className="mb-6">
-                     {renderContent(section2.contentHtml, section2.content ? section2.content.split('\n') : [])}
-                </div>
+          {/* TILE 1: What is this assessment? - 8 cols */}
+          <div className="col-span-8 bg-white rounded-2xl p-8 border border-[rgba(0,0,0,0.1)]">
+            <p style={{ fontSize: '26px', lineHeight: '24px', fontWeight: 400 }} className="text-[#151515] mb-9">
+              What is this assessment?
+            </p>
+            <div className="mb-8 space-y-6">
+              {renderContent(section2.contentHtml, section2.content ? section2.content.split('\n') : [])}
             </div>
+            
             {section2.bullets && section2.bullets.length > 0 && (
-                <div className="bg-[var(--color-bg-muted)] p-6 rounded-xl mt-auto">
-                    <h4 className="text-xs font-semibold uppercase tracking-wider text-[var(--color-text-muted)] mb-3">
-                        Key Details:
-                    </h4>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-2">
-                        {section2.bullets.slice(0, 4).map((bullet, idx) => (
-                             <div key={idx} className="flex items-start gap-3 text-[var(--color-text-primary)] text-sm">
-                                <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-[var(--color-primary-default)] shrink-0" />
-                                <span className="leading-relaxed">{bullet}</span>
-                             </div>
-                        ))}
+              <div>
+                <p style={{ fontSize: '16px', lineHeight: '24px', fontWeight: 700 }} className="text-[#151515] mb-[17px]">
+                  What it measures
+                </p>
+                <div className="flex gap-6">
+                  {section2.bullets.slice(0, 3).map((bullet, idx) => (
+                    <div key={idx} className="flex items-start gap-[11.5px] flex-1">
+                      <Check className="w-[25px] h-[24px] text-[#2A2A2A] shrink-0" strokeWidth={2} />
+                      <p style={{ fontSize: '16px', lineHeight: '24px', fontWeight: 400 }} className="text-[#151515]">
+                        {bullet}
+                      </p>
                     </div>
+                  ))}
                 </div>
+              </div>
             )}
           </div>
 
-          {/* TILE 2: Visual / Image Tile - 4 cols */}
-          <div className="relative md:col-span-2 lg:col-span-4 rounded-2xl overflow-hidden relative min-h-[300px]">
-             <TileLabel number={2} />
-             <AbstractImageTile className="h-full">
-                {section2.image ? (
-                    <ImageWithFallback 
-                        src={section2.image} 
-                        alt="" 
-                        aria-hidden="true"
-                        className="w-full h-full object-cover"
-                    />
-                ) : (
-                    <div className="w-full h-full flex items-center justify-center">
-                        <span className="sr-only">Abstract background</span>
-                    </div>
-                )}
-             </AbstractImageTile>
+          {/* TILE 2: Stats - 4 cols */}
+          <div className="col-span-4 bg-white rounded-2xl p-8 border border-[rgba(0,0,0,0.1)]">
+            <div className="space-y-[34px]">
+              <div className="flex items-start gap-[17px]">
+                <FileText className="w-[25px] h-[24px] text-[#2A2A2A] shrink-0 mt-[6px]" strokeWidth={2} />
+                <div>
+                  <p style={{ fontSize: '16px', lineHeight: '24px', fontWeight: 700 }} className="text-[#151515] mb-[6px]">
+                    Number of questions
+                  </p>
+                  <p style={{ fontSize: '16px', lineHeight: '24px', fontWeight: 400 }} className="text-[#151515]">
+                    {questionCount} questions
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-start gap-[17px]">
+                <Clock className="w-[25px] h-[24px] text-[#2A2A2A] shrink-0 mt-[6px]" strokeWidth={2} />
+                <div>
+                  <p style={{ fontSize: '16px', lineHeight: '24px', fontWeight: 700 }} className="text-[#151515] mb-[6px]">
+                    Time
+                  </p>
+                  <p style={{ fontSize: '16px', lineHeight: '24px', fontWeight: 400 }} className="text-[#151515]">
+                    {duration} min
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-start gap-[17px]">
+                <Activity className="w-[25px] h-[24px] text-[#2A2A2A] shrink-0 mt-[6px]" strokeWidth={2} />
+                <div>
+                  <p style={{ fontSize: '16px', lineHeight: '24px', fontWeight: 700 }} className="text-[#151515] mb-[6px]">
+                    Level
+                  </p>
+                  <p style={{ fontSize: '16px', lineHeight: '24px', fontWeight: 400 }} className="text-[#151515]">
+                    {difficulty}
+                  </p>
+                </div>
+              </div>
+            </div>
           </div>
 
           {/* ROW 2 */}
 
-          {/* TILE 3: Who Is This Test For? (Section 1) - 4 cols */}
-          <div className="relative md:col-span-1 lg:col-span-4 bg-[var(--color-bg-card)] rounded-2xl p-8 border border-[var(--color-border-default)]">
-             <TileLabel number={3} />
-             <h3 className="text-xl font-medium text-[var(--color-text-primary)] mb-4">
-               {section1.title || "Who is this test for?"}
-             </h3>
-             {section1.eligibilityTitle && (
-                <p className="text-sm font-medium text-[var(--color-text-muted)] mb-3">
-                    {section1.eligibilityTitle}
-                </p>
-             )}
-             <div className="space-y-4">
-                {(section1.eligibilityPoints || []).slice(0, 4).map((item, idx) => (
-                  <div key={idx} className="flex items-start gap-3">
-                    <div className="mt-1 shrink-0 text-[var(--color-primary-default)]">
-                      <Check size={18} strokeWidth={2.5} />
-                    </div>
-                    <p className="text-sm text-[var(--color-text-primary)] leading-relaxed">
-                      {item}
-                    </p>
-                  </div>
-                ))}
-             </div>
-          </div>
-
-          {/* TILE 5: Things To Remember (Section 4 Notes) - 4 cols */}
-          <div className="relative md:col-span-1 lg:col-span-4 bg-[var(--color-bg-card)] rounded-2xl p-8 border border-[var(--color-border-default)]">
-             <TileLabel number={5} />
-             <h3 className="text-xl font-medium text-[var(--color-text-primary)] mb-4">
-               {section4.notesTitle || "Things to remember"}
-             </h3>
-             <div className="space-y-6">
-                 {(section4.notes || []).slice(0, 3).map((n, idx) => (
-                     <div key={idx} className="flex gap-3">
-                         <AlertCircle size={20} className="text-[var(--color-text-muted)] mt-0.5 shrink-0" />
-                         <div>
-                             <p className="font-medium text-sm text-[var(--color-text-primary)]">{n.title}</p>
-                             <p className="text-xs text-[var(--color-text-muted)] mt-1">{n.description}</p>
-                         </div>
-                     </div>
-                 ))}
-             </div>
-          </div>
-
-          {/* TILE 4: What You'll See (Section 3) - 4 cols */}
-          <div className="relative md:col-span-2 lg:col-span-4 bg-[var(--color-bg-card)] rounded-2xl p-8 border border-[var(--color-border-default)]">
-             <TileLabel number={4} />
-             <div className="flex flex-col h-full">
-                <h3 className="text-xl font-medium text-[var(--color-text-primary)] mb-4">
-                    {section3.title || "What you'll see"}
-                </h3>
-                {section3.subtitle && (
-                    <p className="text-sm text-[var(--color-text-muted)] mb-4 italic">
-                        {section3.subtitle}
-                    </p>
-                )}
-                <div>
-                    {renderContent(section3.contentHtml, section3.content)} 
+          {/* TILE 3: Things to Remember - 8 cols */}
+          <div className="col-span-8 bg-white rounded-2xl p-8 border border-[rgba(0,0,0,0.1)]">
+            <p style={{ fontSize: '24px', lineHeight: '24px', fontWeight: 400 }} className="text-[#151515] mb-6">
+              Things to Remember Before You Start
+            </p>
+            <div className="grid grid-cols-4 gap-6">
+              {(section4.notes || []).slice(0, 4).map((note, idx) => (
+                <div key={idx} className="flex items-start gap-3">
+                  <CheckCircle2 className="w-5 h-5 text-[#717182] shrink-0 mt-0.5" strokeWidth={2} />
+                  <p style={{ fontSize: '16px', lineHeight: '24px', fontWeight: 400 }} className="text-[#717182]" dangerouslySetInnerHTML={{ __html: note.title }} />
                 </div>
-             </div>
+              ))}
+            </div>
+          </div>
+
+          {/* TILE 4: Important - 4 cols */}
+          <div className="col-span-4 bg-[#ededed] rounded-2xl p-8 border border-[rgba(0,0,0,0.1)]">
+            <div className="flex items-start gap-[13px] mb-3">
+              <AlertCircle className="w-[25px] h-[24px] text-[#2A2A2A] shrink-0 mt-[5px]" strokeWidth={2} />
+              <p style={{ fontSize: '24px', lineHeight: '24px', fontWeight: 400 }} className="text-[#151515]">
+                Important
+              </p>
+            </div>
+            <div className="pl-5">
+              <ul style={{ fontSize: '16px', lineHeight: '0', fontWeight: 400, listStyleType: 'disc' }} className="ml-[24px] text-[#151515]">
+                {importantNote1 && (
+                  <li className="mb-0">
+                    <span style={{ lineHeight: '24px' }}>{importantNote1}</span>
+                  </li>
+                )}
+                {importantNote2 && (
+                  <li>
+                    <span style={{ lineHeight: '24px' }}>{importantNote2}</span>
+                  </li>
+                )}
+              </ul>
+            </div>
           </div>
 
         </div>

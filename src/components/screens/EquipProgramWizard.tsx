@@ -28,10 +28,11 @@ import {
 } from '../../lib/equip-admin-types';
 import { EquipBlockEditor } from './EquipBlockEditor';
 import { EquipOnboardingEditor } from './EquipOnboardingEditor';
-import { EquipLandingPageEditor } from './EquipLandingPageEditor';
+import { EquipLandingPageRichTextEditor } from './EquipLandingPageRichTextEditor';
 import { EquipDailyEditor } from './EquipDailyEditor';
+import { UnifiedBasicInfoForm } from '../admin/UnifiedBasicInfoForm';
 
-interface EquipProgramEditPageWizardProps {
+interface EquipProgramWizardProps {
   programId?: string;
   onBack: () => void;
   onSave: () => void;
@@ -46,7 +47,13 @@ const defaultCategoryOptions = [
   { value: 'other', label: 'Other' }
 ];
 
-export function EquipProgramEditPageWizard({ programId, onBack, onSave }: EquipProgramEditPageWizardProps) {
+const difficultyOptions = [
+  { value: 'beginner', label: 'Beginner' },
+  { value: 'intermediate', label: 'Intermediate' },
+  { value: 'advanced', label: 'Advanced' }
+];
+
+export function EquipProgramWizard({ programId, onBack, onSave }: EquipProgramWizardProps) {
   const { showToast } = useNotifications();
   const [loading, setLoading] = useState(!!programId);
   const [saving, setSaving] = useState(false);
@@ -79,6 +86,11 @@ export function EquipProgramEditPageWizard({ programId, onBack, onSave }: EquipP
     subtitle: '',
     description: '',
     category: 'mindfulness',
+    difficulty: 'beginner',
+    duration_days: 28,
+    is_paid: false,
+    price: 0,
+    currency: 'INR',
     tags: [],
     thumbnail: '',
     cover_image: '',
@@ -88,7 +100,8 @@ export function EquipProgramEditPageWizard({ programId, onBack, onSave }: EquipP
     onboarding_questions: [],
     can_repeat: true,
     published: false,
-    featured: false
+    featured: false,
+    metadata: {}
   });
 
   const validationSchema: ValidationSchema = {
@@ -245,70 +258,80 @@ export function EquipProgramEditPageWizard({ programId, onBack, onSave }: EquipP
         }
         footerRightContent={
           <div className="flex items-center gap-2">
-            {currentStep === 3 && (
-              <Button
-                onClick={() => handleSave(!formData.published)}
-                disabled={saving}
-                variant="outline"
-                className={`gap-2 border-emerald-200 text-emerald-700 hover:bg-emerald-50 ${formData.published ? 'bg-emerald-50' : ''}`}
-              >
-                <Upload size={16} /> {formData.published ? 'Unpublish' : 'Publish'}
-              </Button>
-            )}
+            <Button
+              variant="outline"
+              onClick={() => handleSave(false)}
+              disabled={saving}
+              className="gap-2"
+            >
+              <Save size={16} /> Save Draft
+            </Button>
+            <Button
+              onClick={() => handleSave(!formData.published)}
+              disabled={saving}
+              className={`gap-2 ${formData.published ? 'bg-amber-600 hover:bg-amber-700' : 'bg-cyan-600 hover:bg-cyan-700'}`}
+            >
+              <Upload size={16} /> {formData.published ? 'Unpublish' : 'Publish'}
+            </Button>
           </div>
         }
       >
         {/* STEP 0: BASIC INFO */}
         {currentStep === 0 && (
-          <div className="max-w-2xl mx-auto space-y-6">
-            <AdminFormField label="Program Title" required error={errors.title}>
-              <Input 
-                value={formData.title} 
-                onChange={e => setFormData({ ...formData, title: e.target.value })} 
-                placeholder="e.g. Sleep Tight"
-                className="text-lg font-medium"
-              />
-            </AdminFormField>
-            
-            <AdminFormField label="Description" required error={errors.description}>
-              <Textarea 
-                value={formData.description} 
-                onChange={e => setFormData({ ...formData, description: e.target.value })} 
-                placeholder="Brief summary..."
-                maxLength={150}
-                rows={3}
-              />
-            </AdminFormField>
-
-            <div className="grid grid-cols-2 gap-6">
-              <AdminFormField label="Category">
-                <Select 
-                  value={formData.category} 
-                  onValueChange={(v: any) => setFormData({ ...formData, category: v })}
-                >
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    {categoryOptions.map(o => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-              </AdminFormField>
-
-              <AdminFormField label="Cover Image">
-                <ImageUpload 
-                  value={formData.cover_image || formData.thumbnail || ''}
-                  onChange={v => setFormData({ ...formData, cover_image: v, thumbnail: v })}
-                  placeholder="Select Image"
-                  aspectRatio="video"
-                  className="h-40"
-                />
-              </AdminFormField>
-            </div>
+          <div>
+            <UnifiedBasicInfoForm
+              title={formData.title || ''}
+              description={formData.description || ''}
+              category={formData.category || 'mindfulness'}
+              difficulty={formData.difficulty || 'beginner'}
+              duration={formData.duration_days || 28}
+              isPremium={formData.is_paid || false}
+              price={formData.price || 0}
+              onTitleChange={(value) => setFormData({ ...formData, title: value })}
+              onDescriptionChange={(value) => setFormData({ ...formData, description: value })}
+              onCategoryChange={(value) => setFormData({ ...formData, category: value })}
+              onDifficultyChange={(value) => setFormData({ ...formData, difficulty: value })}
+              onDurationChange={(value) => setFormData({ ...formData, duration_days: value })}
+              onIsPremiumChange={(value) => setFormData({ ...formData, is_paid: value })}
+              onPriceChange={(value) => setFormData({ ...formData, price: value })}
+              config={{
+                titleLabel: 'Program Title',
+                descriptionLabel: 'Description',
+                categoryLabel: 'Category',
+                durationLabel: 'Duration',
+                durationUnit: 'days',
+                imageLabel: 'Cover Image',
+                subtitle: 'Configure program details',
+                categories: categoryOptions,
+                showAssessmentType: false,
+                showPaywall: true
+              }}
+              renderImageSection={() => (
+                <div className="flex items-center gap-4">
+                  <div className="w-24 h-24 flex-shrink-0">
+                    <ImageUpload 
+                      value={formData.cover_image || formData.thumbnail || ''}
+                      onChange={v => setFormData({ ...formData, cover_image: v, thumbnail: v })}
+                      placeholder="Select Image"
+                      aspectRatio="square"
+                    />
+                  </div>
+                  {(formData.cover_image || formData.thumbnail) && (
+                    <div className="flex-1">
+                      <p style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}>
+                        Hover thumbnail to change or remove
+                      </p>
+                    </div>
+                  )}
+                </div>
+              )}
+            />
           </div>
         )}
 
         {/* STEP 1: LANDING PAGE (Bento) */}
         {currentStep === 1 && (
-          <EquipLandingPageEditor 
+          <EquipLandingPageRichTextEditor 
             data={formData}
             onChange={(updates) => setFormData({ ...formData, ...updates })}
           />

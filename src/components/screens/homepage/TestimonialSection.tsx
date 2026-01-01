@@ -25,6 +25,8 @@ export function TestimonialSection() {
 
   const { testimonial } = testimonialData;
 
+  if (!testimonial) return null;
+
   const handleVideoPlay = () => {
     if (testimonial.videoUrl) {
       window.open(testimonial.videoUrl, '_blank');

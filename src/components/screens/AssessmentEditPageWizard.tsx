@@ -12,15 +12,19 @@ import { Badge } from '../ui/badge';
 import { Button } from '../ui/button';
 import { Card, CardContent } from '../ui/card';
 import { ImageUpload } from '../ui/image-upload';
-import { RichTextEditor } from '../ui/rich-text-editor';
 import { WizardLayout } from '../ui/wizard-layout';
 import { WizardStep } from '../ui/wizard-stepper';
 import { QuestionCard } from '../ui/question-card';
+import { AssessmentQuestionsManager } from './AssessmentQuestionsManager';
+import { AssessmentResultsManager } from './AssessmentResultsManager';
+import { AssessmentLandingPageRichTextEditor } from './AssessmentLandingPageRichTextEditor';
+import { UnifiedBasicInfoForm } from '../admin/UnifiedBasicInfoForm';
 import { useFormValidation, ValidationSchema } from '../../hooks/useFormValidation';
 import { validateUrl } from '../../lib/validation';
 import { useUnsavedChanges } from '../../hooks/useUnsavedChanges';
 import { UnsavedChangesDialog } from '../ui/unsaved-changes-dialog';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '../ui/dialog';
+import { AssessmentQuestionsPanel } from '../admin/AssessmentQuestionsPanel';
 
 export interface Question {
   id: string;
@@ -40,6 +44,8 @@ export interface Question {
   timeLimit?: number;
   allowMultiple?: boolean;
   description?: string;
+  stepGroup?: string; // For multi-field steps
+  autoAdvance?: boolean; // For auto-navigation
   styling?: {
     textColor?: string;
     backgroundColor?: string;
@@ -103,6 +109,7 @@ export interface Assessment {
   section3_content?: string[];
   section4_notes_title?: string;
   section4_notes?: string[];
+  metadata?: Record<string, any>;
 }
 
 interface AssessmentEditPageWizardProps {
@@ -189,7 +196,8 @@ export function AssessmentEditPageWizard({ assessmentId, onBack, onSave }: Asses
     section3_subtitle: 'Understanding your mental health is the first step.',
     section3_content: [],
     section4_notes_title: 'Things to remember',
-    section4_notes: []
+    section4_notes: [],
+    metadata: {}
   });
 
   const validationSchema: ValidationSchema = {
@@ -240,6 +248,16 @@ export function AssessmentEditPageWizard({ assessmentId, onBack, onSave }: Asses
       return val.join('\n');
     }
     return '';
+  };
+
+  const updateMetadata = (key: string, value: any) => {
+    setFormData(prev => ({
+      ...prev,
+      metadata: {
+        ...(prev.metadata || {}),
+        [key]: value
+      }
+    }));
   };
 
   useEffect(() => {
@@ -465,296 +483,184 @@ export function AssessmentEditPageWizard({ assessmentId, onBack, onSave }: Asses
           </div>
         }
       >
-        {/* Step 1: Basic Info */}
+        {/* Step 0: Basic Info */}
         {currentStep === 0 && (
-          <div className="space-y-8">
-            <div className="p-6 bg-white rounded-xl border border-gray-200 space-y-6">
-              <div className="grid md:grid-cols-2 gap-6">
-                <AdminFormField label="Title" required error={errors.title}>
-                  <Input
-                    value={formData.title}
-                    onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                    placeholder="Anxiety Self-Assessment"
-                  />
-                </AdminFormField>
-
-                <AdminFormField label="Topic Category" required>
-                  <Select
-                    value={formData.category}
-                    onValueChange={(v: any) => setFormData({ ...formData, category: v })}
-                  >
-                    <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      {dynamicCategoryOptions.map((opt) => (
-                        <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </AdminFormField>
-
-                <AdminFormField label="Assessment Type">
-                  <Select
-                    value={formData.filter_type || 'assessment'}
-                    onValueChange={(v: any) => setFormData({ ...formData, filter_type: v })}
-                  >
-                    <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="assessment">Standard Assessment</SelectItem>
-                      <SelectItem value="quiz">Quiz</SelectItem>
-                      <SelectItem value="survey">Survey</SelectItem>
-                      <SelectItem value="checklist">Checklist</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </AdminFormField>
-
-                <AdminFormField label="Duration (minutes)" required error={errors.duration}>
-                  <Input
-                    type="number"
-                    value={formData.duration}
-                    onChange={(e) => setFormData({ ...formData, duration: parseInt(e.target.value) || 0 })}
-                    min="1"
-                    max="180"
-                  />
-                </AdminFormField>
-
-                <AdminFormField label="Difficulty Level">
-                  <Select
-                    value={formData.difficulty}
-                    onValueChange={(v: any) => setFormData({ ...formData, difficulty: v })}
-                  >
-                    <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      {difficultyOptions.map((opt) => (
-                        <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </AdminFormField>
-              </div>
-
-              <AdminFormField label="Description" required error={errors.description}>
-                <Textarea
-                  value={formData.description}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  placeholder="This assessment helps identify..."
-                  className="min-h-[120px]"
-                />
-              </AdminFormField>
-
-              <AdminFormField label="Assessment Image (Thumbnail)">
-                <ImageUpload
-                  value={formData.thumbnail || ''}
-                  onChange={(url) => setFormData({ ...formData, thumbnail: url })}
-                  aspectRatio="square"
-                />
-              </AdminFormField>
-            </div>
-
-            <div className="p-6 bg-white rounded-xl border border-gray-200 space-y-4">
-              <h3 className="text-base font-medium">Pricing & Paywall</h3>
-              <div className="flex items-start gap-3 p-4 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer"
-                   onClick={() => setFormData({ ...formData, is_paid: !formData.is_paid })}>
-                <Checkbox
-                  id="is-paid"
-                  checked={formData.is_paid}
-                  onCheckedChange={(checked) => setFormData({ ...formData, is_paid: checked as boolean })}
-                />
-                <div className="flex-1">
-                  <Label htmlFor="is-paid" className="cursor-pointer font-medium">Enable Paywall</Label>
-                  <p className="text-sm text-gray-500 mt-1">Require payment to access this assessment</p>
-                </div>
-              </div>
-
-              {formData.is_paid && (
-                <div className="grid md:grid-cols-2 gap-4 p-4 bg-gray-50 rounded-lg">
-                  <AdminFormField label="Price Amount" required>
-                    <Input
-                      type="number"
-                      value={formData.price_amount || ''}
-                      onChange={(e) => setFormData({ ...formData, price_amount: parseFloat(e.target.value) })}
-                      placeholder="99.00"
+          <div>
+            <UnifiedBasicInfoForm
+              title={formData.title || ''}
+              description={formData.description || ''}
+              category={formData.category || 'wellness'}
+              difficulty={formData.difficulty || 'beginner'}
+              duration={formData.duration || 5}
+              isPremium={formData.is_premium || false}
+              price={formData.price || 0}
+              onTitleChange={(value) => setFormData({ ...formData, title: value })}
+              onDescriptionChange={(value) => setFormData({ ...formData, description: value })}
+              onCategoryChange={(value: any) => setFormData({ ...formData, category: value })}
+              onDifficultyChange={(value: any) => setFormData({ ...formData, difficulty: value })}
+              onDurationChange={(value) => setFormData({ ...formData, duration: value })}
+              onIsPremiumChange={(value) => setFormData({ ...formData, is_premium: value })}
+              onPriceChange={(value) => setFormData({ ...formData, price: value })}
+              config={{
+                titleLabel: 'Assessment Title',
+                descriptionLabel: 'Description',
+                categoryLabel: 'Topic Category',
+                durationLabel: 'Duration',
+                durationUnit: 'minutes',
+                imageLabel: 'Assessment Image (Thumbnail)',
+                subtitle: 'Configure assessment details',
+                categories: dynamicCategoryOptions,
+                showAssessmentType: true,
+                assessmentType: formData.filter_type || 'assessment',
+                onAssessmentTypeChange: (value) => setFormData({ ...formData, filter_type: value }),
+                showPaywall: true
+              }}
+              renderImageSection={() => (
+                <div className="flex items-center gap-4">
+                  <div className="w-24 h-24 flex-shrink-0">
+                    <ImageUpload
+                      value={formData.thumbnail || ''}
+                      onChange={(url) => setFormData({ ...formData, thumbnail: url })}
+                      aspectRatio="square"
                     />
-                  </AdminFormField>
-                  <AdminFormField label="Currency">
-                    <Select
-                      value={formData.price_currency || 'INR'}
-                      onValueChange={(v: any) => setFormData({ ...formData, price_currency: v })}
-                    >
-                      <SelectTrigger><SelectValue /></SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="INR">INR (₹)</SelectItem>
-                        <SelectItem value="USD">USD ($)</SelectItem>
-                        <SelectItem value="EUR">EUR (€)</SelectItem>
-                        <SelectItem value="GBP">GBP (£)</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </AdminFormField>
+                  </div>
+                  {formData.thumbnail && (
+                    <div className="flex-1">
+                      <p style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}>
+                        Hover thumbnail to change or remove
+                      </p>
+                    </div>
+                  )}
                 </div>
               )}
-            </div>
+            />
           </div>
         )}
 
-        {/* Step 2: Landing Page */}
+        {/* Step 1: Landing Page */}
         {currentStep === 1 && (
           <div className="space-y-8">
-            <div className="space-y-6">
-              <h3 className="text-lg font-medium border-b pb-2">Hero Section</h3>
-              <div className="grid md:grid-cols-2 gap-6">
-                <AdminFormField label="Hero Image">
-                  <ImageUpload
-                    value={formData.hero_image || ''}
-                    onChange={(url) => setFormData({ ...formData, hero_image: url })}
-                    aspectRatio="wide"
-                  />
-                </AdminFormField>
-                <div className="space-y-4">
-                  <AdminFormField label="CTA Button Text">
-                    <Input
-                      value={formData.cta_button_text || ''}
-                      onChange={(e) => setFormData({ ...formData, cta_button_text: e.target.value })}
-                      placeholder="Take Assessment"
-                    />
-                  </AdminFormField>
-                  <AdminFormField label="CTA Link (Optional)">
-                    <Input
-                      value={formData.cta_button_link || ''}
-                      onChange={(e) => setFormData({ ...formData, cta_button_link: e.target.value })}
-                      placeholder="/assessment-flow?type=..."
-                    />
-                  </AdminFormField>
-                </div>
-              </div>
-            </div>
-            
-            {/* Bento Grid Config - Simplified for wizard */}
-            <div className="space-y-6">
-              <h3 className="text-lg font-medium border-b pb-2">Content Sections (Bento Grid)</h3>
-              <div className="grid md:grid-cols-2 gap-6">
-                <AdminFormField label="Section 1 Title (Process / How it works)">
-                  <Input
-                    value={formData.section1_title || ''}
-                    onChange={(e) => setFormData({ ...formData, section1_title: e.target.value })}
-                  />
-                </AdminFormField>
-                <AdminFormField label="Process Steps (One per line)">
-                  <Textarea
-                    value={getArrayFieldString('section1_eligibility_points')}
-                    onChange={(e) => handleArrayFieldChange('section1_eligibility_points', e.target.value)}
-                    className="min-h-[100px]"
-                    placeholder="e.g. Answer 10 questions"
-                  />
-                </AdminFormField>
-                <AdminFormField label="Section 2 Title (What is this?)">
-                  <Input
-                    value={formData.section2_title || formData.about_title || ''}
-                    onChange={(e) => setFormData({ ...formData, section2_title: e.target.value })}
-                  />
-                </AdminFormField>
-                <AdminFormField label="Content (What is this?)">
-                  <Textarea
-                    value={formData.section2_content || formData.about_content || ''}
-                    onChange={(e) => setFormData({ ...formData, section2_content: e.target.value })}
-                    className="min-h-[100px]"
-                  />
-                </AdminFormField>
-              </div>
-            </div>
+            <AssessmentLandingPageRichTextEditor
+              data={formData}
+              onChange={(updates) => setFormData({ ...formData, ...updates })}
+            />
           </div>
         )}
 
-        {/* Step 3: Questions */}
+        {/* Step 2: Questions */}
         {currentStep === 2 && (
-          <div className="space-y-6">
-            <div className="flex justify-between items-center">
-              <h3 className="text-lg font-medium">Questions ({formData.questions?.length || 0})</h3>
-              <Button onClick={addQuestion} className="gap-2">
-                <Plus size={16} /> Add Question
-              </Button>
-            </div>
-            
-            <div className="space-y-4">
-              {(formData.questions || []).map((question, index) => (
-                <QuestionCard
-                  key={question.id}
-                  question={question}
-                  index={index}
-                  onUpdate={updateQuestion}
-                  onDelete={deleteQuestion}
-                />
-              ))}
-              {(formData.questions || []).length === 0 && (
-                <div className="text-center p-12 bg-gray-50 border-2 border-dashed rounded-xl">
-                  <HelpCircle className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-                  <p className="text-gray-500">No questions yet. Add your first question to start.</p>
-                </div>
-              )}
-            </div>
-          </div>
+          <AssessmentQuestionsPanel
+            questions={formData.questions || []}
+            onUpdate={(questions) => setFormData({ ...formData, questions })}
+          />
         )}
 
-        {/* Step 4: Scoring */}
+        {/* Step 3: Scoring & Results */}
         {currentStep === 3 && (
-          <div className="space-y-6">
+          <div className="space-y-8">
             <div className="p-6 bg-white rounded-xl border border-gray-200 space-y-6">
+              <h3 className="text-lg font-medium border-b pb-2">Scoring Configuration</h3>
+              
               <AdminFormField label="Scoring Method">
                 <Select
-                  value={formData.scoringMethod}
+                  value={formData.scoringMethod || 'sum'}
                   onValueChange={(v: any) => setFormData({ ...formData, scoringMethod: v })}
                 >
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="sum">Sum of all answers</SelectItem>
-                    <SelectItem value="average">Average of all answers</SelectItem>
-                    <SelectItem value="custom">Custom scoring</SelectItem>
+                    <SelectItem value="sum">Sum of Values (0-5 scale)</SelectItem>
+                    <SelectItem value="average">Average Score</SelectItem>
+                    <SelectItem value="custom">Custom Logic</SelectItem>
                   </SelectContent>
                 </Select>
               </AdminFormField>
-
+              
               <div className="space-y-4">
-                <div className="flex items-center justify-between">
+                <div className="flex justify-between items-center">
                   <Label>Result Categories</Label>
-                  <Button variant="outline" size="sm" onClick={addResultCategory} className="gap-2">
+                  <Button onClick={addResultCategory} size="sm" variant="outline" className="gap-1">
                     <Plus size={14} /> Add Category
                   </Button>
                 </div>
-                {(formData.resultCategories || []).map((cat, i) => (
-                  <Card key={i}>
-                    <CardContent className="p-4 grid grid-cols-2 gap-4">
-                      <Input
-                        value={cat.label}
-                        onChange={(e) => {
-                          const cats = [...(formData.resultCategories || [])];
-                          cats[i].label = e.target.value;
-                          setFormData({ ...formData, resultCategories: cats });
-                        }}
-                        placeholder="Category Name (e.g. Low Anxiety)"
-                      />
-                      <div className="flex gap-2">
-                        <Input
-                          type="number"
-                          value={cat.min}
-                          onChange={(e) => {
-                            const cats = [...(formData.resultCategories || [])];
-                            cats[i].min = parseInt(e.target.value);
-                            setFormData({ ...formData, resultCategories: cats });
-                          }}
-                          placeholder="Min"
-                        />
-                        <Input
-                          type="number"
-                          value={cat.max}
-                          onChange={(e) => {
-                            const cats = [...(formData.resultCategories || [])];
-                            cats[i].max = parseInt(e.target.value);
-                            setFormData({ ...formData, resultCategories: cats });
-                          }}
-                          placeholder="Max"
-                        />
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
+                
+                <div className="space-y-4">
+                  {(formData.resultCategories || []).map((cat, idx) => (
+                    <Card key={idx}>
+                      <CardContent className="p-4 space-y-4">
+                        <div className="flex justify-between">
+                          <h4 className="font-medium text-sm">Category {idx + 1}</h4>
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            className="h-6 w-6 text-gray-400 hover:text-red-500"
+                            onClick={() => {
+                              const newCats = [...(formData.resultCategories || [])];
+                              newCats.splice(idx, 1);
+                              setFormData({ ...formData, resultCategories: newCats });
+                            }}
+                          >
+                            <X size={14} />
+                          </Button>
+                        </div>
+                        
+                        <div className="grid grid-cols-2 gap-4">
+                          <AdminFormField label="Min Score">
+                            <Input 
+                              type="number" 
+                              value={cat.min} 
+                              onChange={(e) => {
+                                const newCats = [...(formData.resultCategories || [])];
+                                newCats[idx].min = parseInt(e.target.value) || 0;
+                                setFormData({ ...formData, resultCategories: newCats });
+                              }}
+                            />
+                          </AdminFormField>
+                          <AdminFormField label="Max Score">
+                            <Input 
+                              type="number" 
+                              value={cat.max} 
+                              onChange={(e) => {
+                                const newCats = [...(formData.resultCategories || [])];
+                                newCats[idx].max = parseInt(e.target.value) || 0;
+                                setFormData({ ...formData, resultCategories: newCats });
+                              }}
+                            />
+                          </AdminFormField>
+                        </div>
+                        
+                        <AdminFormField label="Label">
+                          <Input 
+                            value={cat.label} 
+                            onChange={(e) => {
+                              const newCats = [...(formData.resultCategories || [])];
+                              newCats[idx].label = e.target.value;
+                              setFormData({ ...formData, resultCategories: newCats });
+                            }}
+                            placeholder="e.g. Mild Anxiety"
+                          />
+                        </AdminFormField>
+                        
+                        <AdminFormField label="Description">
+                          <Textarea 
+                            value={cat.description} 
+                            onChange={(e) => {
+                              const newCats = [...(formData.resultCategories || [])];
+                              newCats[idx].description = e.target.value;
+                              setFormData({ ...formData, resultCategories: newCats });
+                            }}
+                            placeholder="Feedback shown to user..."
+                          />
+                        </AdminFormField>
+                      </CardContent>
+                    </Card>
+                  ))}
+                  
+                  {(formData.resultCategories || []).length === 0 && (
+                    <div className="text-center p-6 border border-dashed rounded-lg text-gray-500 text-sm">
+                      No result categories defined. Users will just see their raw score.
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           </div>
@@ -764,23 +670,27 @@ export function AssessmentEditPageWizard({ assessmentId, onBack, onSave }: Asses
       <UnsavedChangesDialog
         open={showWarning}
         onOpenChange={setShowWarning}
-        onConfirm={() => {
-          markAsSaved();
-          onBack();
-        }}
+        onConfirm={() => { markAsSaved(); onBack(); }}
       />
-
+      
       <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Delete Assessment</DialogTitle>
             <DialogDescription>
-              Are you sure you want to delete this assessment? This action cannot be undone.
+              Are you sure you want to delete "{formData.title}"? This action cannot be undone.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsDeleteDialogOpen(false)}>Cancel</Button>
-            <Button variant="destructive" onClick={handleDelete}>Delete</Button>
+            <Button variant="outline" onClick={() => setIsDeleteDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button 
+              variant="destructive" 
+              onClick={handleDelete}
+            >
+              Delete Assessment
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

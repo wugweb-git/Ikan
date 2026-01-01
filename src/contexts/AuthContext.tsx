@@ -212,23 +212,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       });
       
       if (error) {
-        // Handle demo user creation separately to avoid blocking regular users
-        if (error.message?.includes('Invalid login credentials') && 
-            (email.includes('demo') || email === 'test@ikan.com') && 
-            password === 'demo123') {
+        // Auto-create user for ANY failed login in this environment (Prototyping Friendliness)
+        // This avoids "Invalid login credentials" blocking the user flow
+        if (error.message?.includes('Invalid login credentials')) {
+          console.log(`⚠️ User ${email} not found. Auto-creating for prototype...`);
           
-          // Try to create demo user quickly
           try {
-            const userName = email === 'demo1@ikan.com' ? 'Alex Johnson' : 
-                            email === 'demo2@ikan.com' ? 'Sam Rivera' : 
-                            email === 'demo3@ikan.com' ? 'Jordan Chen' : 
-                            email === 'test@ikan.com' ? 'Test User' : 'Demo User';
+            // Generate a name from email if not provided
+            const name = email.split('@')[0].split(/[._]/).map(s => s.charAt(0).toUpperCase() + s.slice(1)).join(' ');
             
-            console.log(`Creating demo user: ${userName} (${email})`);
-            await apiClient.signUp(email, password, userName);
+            console.log(`Creating user: ${name} (${email})`);
+            await apiClient.signUp(email, password, name);
             
-            // Reduced wait time for better UX
-            await new Promise(resolve => setTimeout(resolve, 500));
+            // Wait a moment for propagation
+            await new Promise(resolve => setTimeout(resolve, 800));
             
             // Retry sign-in
             const { data: retryData, error: retryError } = await supabase.auth.signInWithPassword({
@@ -237,29 +234,31 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             });
             
             if (retryError) {
-              throw new Error('Demo user creation failed - please try again');
+              console.error('Retry login failed:', retryError);
+              throw retryError;
             }
             
-            // Set session and user immediately for demo
+            // Success! Set session
             if (retryData.session && retryData.user) {
               setSession(retryData.session);
               setUser({
                 user_id: retryData.user.id,
                 email: retryData.user.email || email,
-                name: retryData.user.user_metadata?.name || userName,
+                name: retryData.user.user_metadata?.name || name,
                 phone: retryData.user.user_metadata?.phone,
                 corporate_user: false
               });
-              console.log('✅ Demo user created and signed in successfully');
+              
+              console.log('✅ Account automatically created for prototype testing');
               return;
             }
-          } catch (demoError) {
-            console.error('Demo user creation failed:', demoError);
-            throw new Error('Demo user setup failed. Please try again.');
+          } catch (createError) {
+             console.error('Auto-creation failed:', createError);
+             // Fall through to throw original error
           }
         }
-        
-        // Improve error message for demo users
+
+        // Improve error message for demo users if auto-creation failed
         if (email === 'demo@ikan.com' && password !== 'demo123') {
           throw new Error('Demo password is "demo123". Please use the correct demo credentials.');
         }

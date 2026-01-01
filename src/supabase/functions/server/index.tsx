@@ -1048,8 +1048,11 @@ app.get("/assessments", async (c) => {
     const validAssessments = assessments.filter((a: any) => a && a.id);
     const uniqueAssessments = Array.from(new Map(validAssessments.map((a: any) => [a.id, a])).values());
     
-    console.log(`✅ Returning ${uniqueAssessments.length} assessments`);
-    return c.json({ assessments: uniqueAssessments });
+    // ✅ FILTER OUT UNPUBLISHED/DRAFT ASSESSMENTS - Only return published assessments
+    const publishedAssessments = uniqueAssessments.filter((a: any) => a.published !== false);
+    
+    console.log(`✅ Returning ${publishedAssessments.length} published assessments (${uniqueAssessments.length} total)`);
+    return c.json({ assessments: publishedAssessments });
   } catch (error) {
     console.error('❌ Get assessments error:', error);
     return c.json({ error: 'Failed to retrieve assessments', assessments: [] }, 500);
@@ -1264,6 +1267,68 @@ app.get("/assessments/responses/user", requireAuth, async (c) => {
 });
 
 // ========================================
+// EQUIP PROGRAMS LIST ENDPOINT
+// ========================================
+
+// Get all Equip Programs (Public Endpoint)
+app.get("/equip-programs", async (c) => {
+  try {
+    // Get all equip programs
+    let programs = await kv.getByPrefix('equip_program:');
+
+    // Filter out null/undefined entries
+    const validPrograms = programs.filter((p: any) => p && (p.id || p.equip_id));
+    
+    // Deduplicate by ID (equip_id or id)
+    const uniquePrograms = Array.from(
+      new Map(
+        validPrograms.map((p: any) => [p.equip_id || p.id, p])
+      ).values()
+    );
+    
+    // ✅ FILTER OUT UNPUBLISHED/DRAFT PROGRAMS - Only return published programs
+    const publishedPrograms = uniquePrograms.filter((p: any) => p.published !== false);
+    
+    console.log(`✅ Returning ${publishedPrograms.length} published equip programs (${uniquePrograms.length} total)`);
+    return c.json({ programs: publishedPrograms });
+  } catch (error) {
+    console.error('❌ Get equip programs error:', error);
+    return c.json({ error: 'Failed to retrieve equip programs', programs: [] }, 500);
+  }
+});
+
+// Get Single Equip Program by ID (Public Endpoint)
+app.get("/equip/:programId", async (c) => {
+  try {
+    const programId = c.req.param('programId');
+    console.log(`🔍 Looking up equip program: ${programId}`);
+    
+    // Try direct lookup first
+    let program = await kv.get(`equip_program:${programId}`);
+    
+    // If not found, search through all programs by ID or slug
+    if (!program) {
+      console.log(`⚠️ Program not found by key, searching by ID/slug...`);
+      const allPrograms = await kv.getByPrefix('equip_program:');
+      program = allPrograms.find((p: any) => 
+        p && (p.id === programId || p.slug === programId || p.equip_id === programId)
+      );
+    }
+    
+    if (!program) {
+      console.log(`❌ Equip program not found: ${programId}`);
+      return c.json({ error: 'Program not found' }, 404);
+    }
+    
+    console.log(`✅ Equip program found: ${program.id || program.equip_id}`);
+    return c.json({ program });
+  } catch (error) {
+    console.error('❌ Get equip program error:', error);
+    return c.json({ error: 'Failed to retrieve program' }, 500);
+  }
+});
+
+// ========================================
 // RECOMMENDATION ENDPOINTS
 // ========================================
 
@@ -1300,6 +1365,9 @@ app.get("/library/resources", async (c) => {
     // Filter out null/undefined entries
     resources = resources.filter((r: any) => r && r.id);
     
+    // ✅ FILTER OUT UNPUBLISHED/DRAFT RESOURCES - Only return published resources
+    resources = resources.filter((resource: any) => resource.published !== false);
+    
     // Filter by category if provided
     if (category) {
       resources = resources.filter((resource: any) => resource.category === category);
@@ -1310,7 +1378,7 @@ app.get("/library/resources", async (c) => {
       .sort((a: any, b: any) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime())
       .slice(parseInt(offset), parseInt(offset) + parseInt(limit));
     
-    console.log(`✅ Returning ${resources.length} resources`);
+    console.log(`✅ Returning ${resources.length} published resources`);
     return c.json({ resources });
   } catch (error) {
     console.error('❌ Get library resources error:', error);

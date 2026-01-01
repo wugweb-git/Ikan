@@ -318,26 +318,47 @@ export function EquipBlockEditor({
           </div>
 
           {/* SHARED SETTINGS */}
-          <div className="flex items-center gap-4 pt-2 border-t">
-            <div className="flex items-center gap-2">
-              <Checkbox 
-                checked={block.required}
-                onCheckedChange={(c) => onChange({ required: c as boolean })}
-              />
-              <Label className="text-xs">Required to proceed</Label>
+          <div className="pt-2 border-t">
+            <Label className="text-xs mb-2 block font-medium text-gray-700">Display & Behavior</Label>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1">
+                 <Label className="text-xs">Step Group ID (Optional)</Label>
+                 <Input 
+                   value={block.stepGroup || ''}
+                   onChange={(e) => onChange({ stepGroup: e.target.value })}
+                   placeholder="e.g. step-1"
+                   className="h-8 text-xs"
+                 />
+                 <p className="text-[10px] text-gray-400">Combine multiple blocks on one screen</p>
+              </div>
+              <div className="flex items-center gap-4 pt-4">
+                <div className="flex items-center gap-2">
+                   <Checkbox 
+                     checked={block.autoAdvance}
+                     onCheckedChange={(c) => onChange({ autoAdvance: c as boolean })}
+                   />
+                   <Label className="text-xs cursor-pointer">Auto-advance</Label>
+                </div>
+                
+                <div className="flex items-center gap-2">
+                  <Checkbox 
+                    checked={block.required}
+                    onCheckedChange={(c) => onChange({ required: c as boolean })}
+                  />
+                  <Label className="text-xs cursor-pointer">Required</Label>
+                </div>
+              </div>
             </div>
             
-            <div className="flex-1">
-               <div className="flex items-center gap-2 justify-end">
-                  <Label className="text-xs">Duration (m)</Label>
-                  <Input 
-                    type="number" 
-                    className="w-16 h-7 text-xs"
-                    value={block.duration}
-                    onChange={(e) => onChange({ duration: parseInt(e.target.value) || 0 })}
-                  />
-               </div>
-            </div>
+             <div className="flex items-center gap-2 mt-3 justify-end">
+                <Label className="text-xs">Duration (m)</Label>
+                <Input 
+                  type="number" 
+                  className="w-16 h-7 text-xs"
+                  value={block.duration}
+                  onChange={(e) => onChange({ duration: parseInt(e.target.value) || 0 })}
+                />
+             </div>
           </div>
 
         </CardContent>

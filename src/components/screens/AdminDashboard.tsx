@@ -1,31 +1,7 @@
-import React, { useState } from 'react';
-import { 
-  Settings, 
-  Database, 
-  FileJson, 
-  Activity, 
-  Table, 
-  BookOpen, 
-  Shield, 
-  MessageSquare, 
-  Monitor, 
-  Layers, 
-  Map, 
-  Compass, 
-  Palette,
-  LayoutDashboard,
-  Server,
-  FileText,
-  BarChart,
-  ClipboardList,
-  Users,
-  Tag,
-  Smile
-} from 'lucide-react';
-import { Button } from '../ui/button';
 import { cn } from '../ui/utils';
 import { SideNav, SideNavGroup } from '../navigation/SideNav';
 import { Logo } from '../Logo';
+import { ErrorBoundary } from '../ErrorBoundary';
 import { AdminUserManager } from './AdminUserManager';
 import { AdminConsultationManager } from './AdminConsultationManager';
 import { AdminResourceManager } from './AdminResourceManager';
@@ -35,7 +11,7 @@ import { AdminEquipAnalytics } from './AdminEquipAnalytics';
 import { AdminPageManager } from './AdminPageManager';
 import { AdminMediaManager } from './AdminMediaManager';
 import { AdminUserDataManager } from './AdminUserDataManager';
-import { AdminNewsletterManager } from './AdminNewsletterManager';
+// import { AdminNewsletterManager } from './AdminNewsletterManager'; // REMOVED - File doesn't exist
 import { AdminSettingsManager } from './AdminSettingsManager';
 import { AdminDashboardAnalytics } from './AdminDashboardAnalytics';
 import { AdminCRUDTesting } from '../admin/AdminCRUDTesting';
@@ -185,69 +161,172 @@ export function AdminDashboard({ onNavigate, initialView }: AdminDashboardProps)
         return (
           <div className="space-y-6">
             <div>
-              <h2 className="text-3xl font-bold tracking-tight">Admin Dashboard</h2>
-              <p className="text-muted-foreground">Welcome to the iKan system administration panel.</p>
+              <h2 style={{ 
+                fontSize: 'var(--text-3xl)', 
+                fontWeight: 'var(--font-weight-medium)', 
+                color: 'var(--color-text-primary)' 
+              }}>
+                Admin Dashboard
+              </h2>
+              <p style={{ 
+                fontSize: 'var(--text-base)', 
+                color: 'var(--color-text-muted)' 
+              }}>
+                Welcome to the iKan system administration panel.
+              </p>
             </div>
             
             <AdminDebugPanel />
             
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
               <div 
-                className="p-6 bg-white border rounded-xl hover:shadow-md transition-shadow cursor-pointer"
+                className="p-6 border rounded-xl hover:shadow-md transition-shadow cursor-pointer"
+                style={{
+                  backgroundColor: 'var(--color-bg-card)',
+                  borderColor: 'var(--color-border-default)',
+                  borderRadius: 'var(--radius-lg)'
+                }}
                 onClick={() => setCurrentView('users')}
               >
                 <div className="flex items-center gap-4">
-                  <div className="p-3 bg-blue-100 rounded-lg text-blue-600">
+                  <div 
+                    className="p-3 rounded-lg"
+                    style={{
+                      backgroundColor: 'var(--color-primary-light)',
+                      color: 'var(--color-primary-default)',
+                      borderRadius: 'var(--radius-md)'
+                    }}
+                  >
                     <Users className="w-6 h-6" />
                   </div>
                   <div>
-                    <h3 className="font-semibold text-lg">Account Management</h3>
-                    <p className="text-sm text-muted-foreground">Manage user access & roles</p>
+                    <h3 style={{ 
+                      fontSize: 'var(--text-lg)', 
+                      fontWeight: 'var(--font-weight-medium)', 
+                      color: 'var(--color-text-primary)' 
+                    }}>
+                      Account Management
+                    </h3>
+                    <p style={{ 
+                      fontSize: 'var(--text-sm)', 
+                      color: 'var(--color-text-muted)' 
+                    }}>
+                      Manage user access & roles
+                    </p>
                   </div>
                 </div>
               </div>
 
               <div 
-                className="p-6 bg-white border rounded-xl hover:shadow-md transition-shadow cursor-pointer"
+                className="p-6 border rounded-xl hover:shadow-md transition-shadow cursor-pointer"
+                style={{
+                  backgroundColor: 'var(--color-bg-card)',
+                  borderColor: 'var(--color-border-default)',
+                  borderRadius: 'var(--radius-lg)'
+                }}
                 onClick={() => setCurrentView('equip')}
               >
                 <div className="flex items-center gap-4">
-                  <div className="p-3 bg-purple-100 rounded-lg text-purple-600">
+                  <div 
+                    className="p-3 rounded-lg"
+                    style={{
+                      backgroundColor: 'var(--color-accent-light)',
+                      color: 'var(--color-accent-default)',
+                      borderRadius: 'var(--radius-md)'
+                    }}
+                  >
                     <BookOpen className="w-6 h-6" />
                   </div>
                   <div>
-                    <h3 className="font-semibold text-lg">Equip Programs</h3>
-                    <p className="text-sm text-muted-foreground">Manage courses</p>
+                    <h3 style={{ 
+                      fontSize: 'var(--text-lg)', 
+                      fontWeight: 'var(--font-weight-medium)', 
+                      color: 'var(--color-text-primary)' 
+                    }}>
+                      Equip Programs
+                    </h3>
+                    <p style={{ 
+                      fontSize: 'var(--text-sm)', 
+                      color: 'var(--color-text-muted)' 
+                    }}>
+                      Manage courses
+                    </p>
                   </div>
                 </div>
               </div>
 
               <div 
-                className="p-6 bg-white border rounded-xl hover:shadow-md transition-shadow cursor-pointer"
+                className="p-6 border rounded-xl hover:shadow-md transition-shadow cursor-pointer"
+                style={{
+                  backgroundColor: 'var(--color-bg-card)',
+                  borderColor: 'var(--color-border-default)',
+                  borderRadius: 'var(--radius-lg)'
+                }}
                 onClick={() => setCurrentView('resources')}
               >
                 <div className="flex items-center gap-4">
-                  <div className="p-3 bg-purple-100 rounded-lg text-purple-600">
+                  <div 
+                    className="p-3 rounded-lg"
+                    style={{
+                      backgroundColor: 'var(--color-accent-light)',
+                      color: 'var(--color-accent-default)',
+                      borderRadius: 'var(--radius-md)'
+                    }}
+                  >
                     <Table className="w-6 h-6" />
                   </div>
                   <div>
-                    <h3 className="font-semibold text-lg">Resources</h3>
-                    <p className="text-sm text-muted-foreground">Manage content library</p>
+                    <h3 style={{ 
+                      fontSize: 'var(--text-lg)', 
+                      fontWeight: 'var(--font-weight-medium)', 
+                      color: 'var(--color-text-primary)' 
+                    }}>
+                      Resources
+                    </h3>
+                    <p style={{ 
+                      fontSize: 'var(--text-sm)', 
+                      color: 'var(--color-text-muted)' 
+                    }}>
+                      Manage content library
+                    </p>
                   </div>
                 </div>
               </div>
 
               <div 
-                className="p-6 bg-white border rounded-xl hover:shadow-md transition-shadow cursor-pointer"
+                className="p-6 border rounded-xl hover:shadow-md transition-shadow cursor-pointer"
+                style={{
+                  backgroundColor: 'var(--color-bg-card)',
+                  borderColor: 'var(--color-border-default)',
+                  borderRadius: 'var(--radius-lg)'
+                }}
                 onClick={() => setCurrentView('crud')}
               >
                 <div className="flex items-center gap-4">
-                  <div className="p-3 bg-green-100 rounded-lg text-green-600">
+                  <div 
+                    className="p-3 rounded-lg"
+                    style={{
+                      backgroundColor: 'var(--color-status-success-light)',
+                      color: 'var(--color-status-success)',
+                      borderRadius: 'var(--radius-md)'
+                    }}
+                  >
                     <Activity className="w-6 h-6" />
                   </div>
                   <div>
-                    <h3 className="font-semibold text-lg">System Health</h3>
-                    <p className="text-sm text-muted-foreground">Check status</p>
+                    <h3 style={{ 
+                      fontSize: 'var(--text-lg)', 
+                      fontWeight: 'var(--font-weight-medium)', 
+                      color: 'var(--color-text-primary)' 
+                    }}>
+                      System Health
+                    </h3>
+                    <p style={{ 
+                      fontSize: 'var(--text-sm)', 
+                      color: 'var(--color-text-muted)' 
+                    }}>
+                      Check status
+                    </p>
                   </div>
                 </div>
               </div>
@@ -259,7 +338,7 @@ export function AdminDashboard({ onNavigate, initialView }: AdminDashboardProps)
       case 'consultants': return <AdminConsultationManager onBack={() => setCurrentView('dashboard')} />;
       case 'resources': return <AdminResourceManager onBack={() => setCurrentView('dashboard')} />;
       case 'assessments': return <AdminAssessmentManager onBack={() => setCurrentView('dashboard')} />;
-      case 'equip': return <EquipAdminDashboard />;
+      case 'equip': return <EquipAdminDashboard onBack={() => setCurrentView('dashboard')} />;
       case 'equip-analytics': return <AdminEquipAnalytics onBack={() => setCurrentView('dashboard')} />;
       case 'pages': return <AdminPageManager onBack={() => setCurrentView('dashboard')} />;
       case 'media': return <AdminMediaManager onBack={() => setCurrentView('dashboard')} />;
@@ -316,7 +395,9 @@ export function AdminDashboard({ onNavigate, initialView }: AdminDashboardProps)
 
         <main className="flex-1 md:ml-64 p-4 md:p-8 w-full max-w-[100vw] overflow-x-hidden">
           <div className="max-w-6xl mx-auto">
-            {renderContent()}
+            <ErrorBoundary>
+              {renderContent()}
+            </ErrorBoundary>
           </div>
         </main>
       </div>

@@ -1,10 +1,12 @@
 import React from 'react';
-import { Plus, X, ChevronDown, ChevronUp, GripVertical } from 'lucide-react';
+import { Plus, X, ChevronDown, ChevronUp, GripVertical, Menu } from 'lucide-react';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Textarea } from '../ui/textarea';
+import { AssessmentQuestionsPanel } from './AssessmentQuestionsPanel';
+import { UnifiedBasicInfoForm } from './UnifiedBasicInfoForm';
 
 interface Question {
   id: string;
@@ -12,6 +14,8 @@ interface Question {
   type: 'multiple-choice' | 'scale' | 'text';
   options?: string[];
   scoring?: { [key: string]: number };
+  stepGroup?: string; // For grouping multiple questions into one step
+  autoAdvance?: boolean; // For automatic advancement after selection
 }
 
 interface Assessment {
@@ -47,7 +51,8 @@ export function AssessmentDetailedEditor({
   setActiveTab,
   editingAssessment
 }: AssessmentDetailedEditorProps) {
-  
+  const [selectedQuestionIndex, setSelectedQuestionIndex] = React.useState<number | null>(null);
+
   // Question management
   const addQuestion = () => {
     const newQuestion: Question = {
@@ -206,256 +211,40 @@ export function AssessmentDetailedEditor({
 
       {/* Tab Content */}
       {activeTab === 'basic' && (
-        <div className="space-y-6">
-          <div className="space-y-2">
-            <Label>Title</Label>
-            <Input 
-              value={formData.title || ''} 
-              onChange={(e) => setFormData({...formData, title: e.target.value})}
-              placeholder="e.g., Depression Screening (PHQ-9)"
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label>Description</Label>
-            <Textarea 
-              value={formData.description || ''} 
-              onChange={(e) => setFormData({...formData, description: e.target.value})}
-              placeholder="Brief description of what this assessment measures..."
-              className="min-h-[80px]"
-            />
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label>Category</Label>
-              <Select 
-                value={formData.category || 'wellness'} 
-                onValueChange={(v: any) => setFormData({...formData, category: v})}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="wellness">Wellness</SelectItem>
-                  <SelectItem value="mental-health">Mental Health</SelectItem>
-                  <SelectItem value="stress">Stress</SelectItem>
-                  <SelectItem value="anxiety">Anxiety</SelectItem>
-                  <SelectItem value="depression">Depression</SelectItem>
-                  <SelectItem value="sleep">Sleep</SelectItem>
-                  <SelectItem value="relationships">Relationships</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label>Estimated Time (minutes)</Label>
-              <Input 
-                type="number"
-                value={formData.metadata?.estimated_minutes || 5}
-                onChange={(e) => setFormData({
-                  ...formData, 
-                  metadata: {...(formData.metadata || {}), estimated_minutes: parseInt(e.target.value) || 5}
-                })}
-                min="1"
-              />
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <Label>Scoring Type</Label>
-            <Select 
-              value={formData.scoring?.type || 'sum'} 
-              onValueChange={(v: any) => setFormData({
-                ...formData, 
-                scoring: {...(formData.scoring || { ranges: [] }), type: v}
-              })}
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="sum">Sum (Total Score)</SelectItem>
-                <SelectItem value="average">Average</SelectItem>
-                <SelectItem value="custom">Custom</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
+        <UnifiedBasicInfoForm
+          title={formData.title || ''}
+          description={formData.description || ''}
+          category={formData.category || 'wellness'}
+          difficulty="beginner"
+          duration={formData.metadata?.estimated_minutes || 5}
+          onTitleChange={(value) => setFormData({ ...formData, title: value })}
+          onDescriptionChange={(value) => setFormData({ ...formData, description: value })}
+          onCategoryChange={(value) => setFormData({ ...formData, category: value })}
+          onDifficultyChange={() => {}}
+          onDurationChange={(value) => setFormData({ 
+            ...formData, 
+            metadata: { ...(formData.metadata || {}), estimated_minutes: value }
+          })}
+          config={{
+            titleLabel: 'Assessment Title',
+            descriptionLabel: 'Description',
+            categoryLabel: 'Topic Category',
+            durationLabel: 'Duration',
+            durationUnit: 'minutes',
+            imageLabel: 'Assessment Image (Thumbnail)',
+            subtitle: 'Configure assessment details',
+            showAssessmentType: true,
+            assessmentType: 'standard',
+            onAssessmentTypeChange: () => {}
+          }}
+        />
       )}
 
       {activeTab === 'questions' && (
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <p style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-muted)' }}>
-              Add and configure questions for this assessment
-            </p>
-            <Button
-              onClick={addQuestion}
-              size="sm"
-              style={{
-                gap: 'var(--spacing-2)',
-                backgroundColor: 'var(--color-primary-default)',
-                color: 'white'
-              }}
-            >
-              <Plus className="w-4 h-4" />
-              Add Question
-            </Button>
-          </div>
-
-          {(!formData.questions || formData.questions.length === 0) ? (
-            <div 
-              className="p-8 text-center rounded-lg"
-              style={{ backgroundColor: 'var(--color-bg-muted)' }}
-            >
-              <p style={{ fontSize: 'var(--text-base)', color: 'var(--color-text-muted)' }}>
-                No questions added yet. Click "Add Question" to get started.
-              </p>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {formData.questions.map((question, qIndex) => (
-                <div
-                  key={question.id}
-                  className="p-4 rounded-lg border"
-                  style={{
-                    backgroundColor: 'var(--color-bg-card)',
-                    borderColor: 'var(--color-border-default)'
-                  }}
-                >
-                  {/* Question Header */}
-                  <div className="flex items-start gap-3 mb-4">
-                    <div className="flex flex-col gap-1 pt-2">
-                      <button
-                        onClick={() => moveQuestion(qIndex, 'up')}
-                        disabled={qIndex === 0}
-                        className="p-1 rounded hover:bg-gray-100 disabled:opacity-30"
-                      >
-                        <ChevronUp className="w-4 h-4" />
-                      </button>
-                      <GripVertical className="w-4 h-4" style={{ color: 'var(--color-text-muted)' }} />
-                      <button
-                        onClick={() => moveQuestion(qIndex, 'down')}
-                        disabled={qIndex === (formData.questions?.length || 0) - 1}
-                        className="p-1 rounded hover:bg-gray-100 disabled:opacity-30"
-                      >
-                        <ChevronDown className="w-4 h-4" />
-                      </button>
-                    </div>
-
-                    <div className="flex-1 space-y-3">
-                      {/* Question Number and Type */}
-                      <div className="flex items-center gap-3">
-                        <span 
-                          style={{ 
-                            fontWeight: 'var(--font-weight-medium)',
-                            color: 'var(--color-text-primary)'
-                          }}
-                        >
-                          Q{qIndex + 1}
-                        </span>
-                        <Select
-                          value={question.type}
-                          onValueChange={(v: any) => updateQuestion(qIndex, { type: v })}
-                        >
-                          <SelectTrigger className="w-48">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="multiple-choice">Multiple Choice</SelectItem>
-                            <SelectItem value="scale">Scale (1-5)</SelectItem>
-                            <SelectItem value="text">Text Response</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-
-                      {/* Question Text */}
-                      <Textarea
-                        value={question.text}
-                        onChange={(e) => updateQuestion(qIndex, { text: e.target.value })}
-                        placeholder="Enter your question here..."
-                        className="min-h-[60px]"
-                      />
-
-                      {/* Options (for multiple-choice) */}
-                      {question.type === 'multiple-choice' && (
-                        <div className="space-y-2">
-                          <Label>Answer Options & Scores</Label>
-                          {question.options?.map((option, oIndex) => (
-                            <div key={oIndex} className="flex items-center gap-2">
-                              <Input
-                                value={option}
-                                onChange={(e) => updateOption(qIndex, oIndex, e.target.value)}
-                                placeholder={`Option ${oIndex + 1}`}
-                                className="flex-1"
-                              />
-                              <Input
-                                type="number"
-                                value={question.scoring?.[option] ?? 0}
-                                onChange={(e) => updateQuestionScoring(qIndex, option, parseInt(e.target.value) || 0)}
-                                placeholder="Score"
-                                className="w-20"
-                              />
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                onClick={() => deleteOption(qIndex, oIndex)}
-                                disabled={(question.options?.length || 0) <= 2}
-                              >
-                                <X className="w-4 h-4" />
-                              </Button>
-                            </div>
-                          ))}
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => addOptionToQuestion(qIndex)}
-                          >
-                            <Plus className="w-4 h-4 mr-2" />
-                            Add Option
-                          </Button>
-                        </div>
-                      )}
-
-                      {/* Scale type info */}
-                      {question.type === 'scale' && (
-                        <div 
-                          className="p-3 rounded"
-                          style={{ backgroundColor: 'var(--color-bg-muted)' }}
-                        >
-                          <p style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-muted)' }}>
-                            Scale questions will display a 1-5 slider. Scores are automatically assigned (1-5).
-                          </p>
-                        </div>
-                      )}
-
-                      {/* Text type info */}
-                      {question.type === 'text' && (
-                        <div 
-                          className="p-3 rounded"
-                          style={{ backgroundColor: 'var(--color-bg-muted)' }}
-                        >
-                          <p style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-muted)' }}>
-                            Text responses are qualitative and don't contribute to scoring.
-                          </p>
-                        </div>
-                      )}
-                    </div>
-
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => deleteQuestion(qIndex)}
-                    >
-                      <X className="w-5 h-5 text-red-500" />
-                    </Button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
+        <AssessmentQuestionsPanel
+          questions={formData.questions || []}
+          onUpdate={(questions) => setFormData({ ...formData, questions })}
+        />
       )}
 
       {activeTab === 'scoring' && (

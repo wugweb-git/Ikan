@@ -27,6 +27,8 @@ interface Question {
   timeLimit?: number;
   allowMultiple?: boolean;
   description?: string;
+  stepGroup?: string;
+  autoAdvance?: boolean;
   
   // STYLING PROPERTIES
   styling?: {
@@ -242,6 +244,50 @@ export function QuestionCard({ question, index, onUpdate, onDelete }: QuestionCa
                 fontSize: '13px'
               }}
             />
+          </div>
+
+          {/* Advanced Configuration Row */}
+          <div className="grid grid-cols-2 gap-4 pt-2 border-t border-gray-100 mt-2">
+             <div>
+                <label
+                  style={{
+                    fontSize: '13px',
+                    fontFamily: 'var(--font-family-base)',
+                    fontWeight: '500',
+                    color: '#6B7280',
+                    display: 'block',
+                    marginBottom: '6px'
+                  }}
+                >
+                  Step Group ID (Optional)
+                </label>
+                <Input 
+                   value={question.stepGroup || ''} 
+                   onChange={e => onUpdate(question.id, { stepGroup: e.target.value })}
+                   placeholder="e.g. step-1"
+                   style={{ height: '36px', borderRadius: '8px', fontSize: '13px' }}
+                />
+                <p className="text-[10px] text-gray-500 mt-1">Questions with the same ID will appear on the same screen.</p>
+             </div>
+             
+             <div className="flex items-center pt-6">
+                {['multiple-choice', 'true-false', 'mcq-icons', 'scale', 'dropdown'].includes(question.type) && !question.allowMultiple && (
+                   <div className="flex items-center gap-2 cursor-pointer" onClick={() => onUpdate(question.id, { autoAdvance: !question.autoAdvance })}>
+                      <Checkbox 
+                         id={`auto-advance-${question.id}`}
+                         checked={question.autoAdvance}
+                         onCheckedChange={(c) => onUpdate(question.id, { autoAdvance: c as boolean })}
+                      />
+                      <label 
+                        htmlFor={`auto-advance-${question.id}`}
+                        className="cursor-pointer"
+                        style={{ fontSize: '13px', color: '#374151' }}
+                      >
+                        Auto-advance on selection
+                      </label>
+                   </div>
+                )}
+             </div>
           </div>
 
           {/* Rich Text Toggle */}

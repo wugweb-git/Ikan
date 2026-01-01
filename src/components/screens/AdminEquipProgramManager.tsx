@@ -8,7 +8,8 @@ import { useIsMobile } from '../../hooks/useIsMobile';
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
 import { cn } from '../ui/utils';
-import { EquipProgramEditPageWizard, EquipProgram } from './EquipProgramEditPageWizard';
+import { EquipProgramWizard } from './EquipProgramWizard';
+import { EquipProgram } from '../../lib/equip-admin-types';
 import { AdminDataTable, Column } from '../admin/AdminDataTable';
 import { ErrorState } from '../ui/error-state';
 import { EmptyState } from '../ui/empty-state';
@@ -245,7 +246,7 @@ export function AdminEquipProgramManager({ onBack, className }: AdminEquipProgra
 
   if (viewMode === 'edit' || viewMode === 'create') {
     return (
-      <EquipProgramEditPageWizard 
+      <EquipProgramWizard 
         programId={selectedProgramId} 
         onBack={() => setViewMode('list')} 
         onSave={() => {

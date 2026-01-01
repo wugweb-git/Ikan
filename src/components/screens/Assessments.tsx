@@ -5,7 +5,7 @@ import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
 import { Icon } from '../Icon';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '../ui/dialog';
-import { ChevronRight, Clock, FileText, TrendingUp, Calendar, Brain, Shield, Activity, ArrowRight, Play, Info, Lock } from 'lucide-react';
+import { ChevronRight, Clock, FileText, TrendingUp, Calendar, Brain, Shield, Activity, ArrowRight, Play, Info, Lock, HelpCircle } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNotifications } from '../../contexts/NotificationContext';
 import { cn } from '../ui/utils';
@@ -15,6 +15,7 @@ import { AssessmentResults } from './AssessmentResults';
 import { Skeleton } from '../ui/skeleton-loader';
 import { EmptyState } from '../ui/empty-state';
 import { TouchFeedback } from '../ui/touch-feedback';
+import { AssessmentBlock, AssessmentProgram } from '../blocks/AssessmentBlock';
 
 interface Assessment {
   id: string;
@@ -28,6 +29,16 @@ interface Assessment {
   category: 'anxiety' | 'depression' | 'stress' | 'wellness' | 'burnout' | 'sleep' | 'work-life';
   metadata?: any;
   questions?: any[];
+  imageUrl?: string;
+  processSteps?: string[];
+  safetyNote?: string;
+  resultDescription?: string;
+  tile1Content?: string;
+  tile2Content?: string;
+  tile3Content?: string;
+  tile4Content?: string;
+  tile5Content?: string;
+  published?: boolean;
 }
 
 // Function to transform assessment data from the new format
@@ -47,18 +58,72 @@ const transformAssessmentData = (data: any, userHistory?: Record<string, any>): 
     }
   }
 
+  // Extract content for Bento Grid
+  // Tile 3: Process Steps
+  const processSteps = data.section1_eligibility_points || 
+                       data.metadata?.section1_eligibility_points || 
+                       data.process_steps ||
+                       [];
+
+  // Tile 5: Safety Note
+  const safetyNote = data.notes?.[0] || 
+                     data.metadata?.notes?.[0] || 
+                     data.safety_note || 
+                     "This is a screening tool, not a medical diagnosis.";
+
+  // Tile 4: Result Description
+  const resultDescription = data.section3_content?.[0] || 
+                            data.metadata?.section3_content?.[0] ||
+                            "Upon completion, you'll receive a detailed breakdown of your results.";
+
+  // Fallback for missing questions on known assessments (Critical for demo stability)
+  let questions = data.questions || [];
+  if ((!questions || questions.length === 0) && (data.id === 'phq-9' || data.slug === 'phq-9')) {
+    questions = [
+        { id: 'q1', text: 'Little interest or pleasure in doing things', type: 'scale', min: 0, max: 3 },
+        { id: 'q2', text: 'Feeling down, depressed, or hopeless', type: 'scale', min: 0, max: 3 },
+        { id: 'q3', text: 'Trouble falling or staying asleep, or sleeping too much', type: 'scale', min: 0, max: 3 },
+        { id: 'q4', text: 'Feeling tired or having little energy', type: 'scale', min: 0, max: 3 },
+        { id: 'q5', text: 'Poor appetite or overeating', type: 'scale', min: 0, max: 3 },
+        { id: 'q6', text: 'Feeling bad about yourself — or that you are a failure or have let yourself or your family down', type: 'scale', min: 0, max: 3 },
+        { id: 'q7', text: 'Trouble concentrating on things, such as reading the newspaper or watching television', type: 'scale', min: 0, max: 3 },
+        { id: 'q8', text: 'Moving or speaking so slowly that other people could have noticed? Or the opposite — being so fidgety or restless that you have been moving around a lot more than usual', type: 'scale', min: 0, max: 3 },
+        { id: 'q9', text: 'Thoughts that you would be better off dead or of hurting yourself in some way', type: 'scale', min: 0, max: 3 }
+    ];
+  } else if ((!questions || questions.length === 0) && (data.id === 'gad-7' || data.slug === 'gad-7')) {
+    questions = [
+         { id: 'q1', text: 'Feeling nervous, anxious, or on edge', type: 'scale', min: 0, max: 3 },
+         { id: 'q2', text: 'Not being able to stop or control worrying', type: 'scale', min: 0, max: 3 },
+         { id: 'q3', text: 'Worrying too much about different things', type: 'scale', min: 0, max: 3 },
+         { id: 'q4', text: 'Trouble relaxing', type: 'scale', min: 0, max: 3 },
+         { id: 'q5', text: 'Being so restless that it is hard to sit still', type: 'scale', min: 0, max: 3 },
+         { id: 'q6', text: 'Becoming easily annoyed or irritable', type: 'scale', min: 0, max: 3 },
+         { id: 'q7', text: 'Feeling afraid as if something awful might happen', type: 'scale', min: 0, max: 3 }
+    ];
+  }
+
   return {
     id: assessmentId,
     slug: data.slug,
     title: data.title,
     description: data.description,
-    estimatedTime: `${data.metadata?.estimated_minutes || 3} minutes`,
-    questionCount: data.questions?.length || 0,
+    estimatedTime: `${data.duration || data.metadata?.estimated_minutes || 3} minutes`,
+    questionCount: questions.length || data.questions?.length || 0,
     status,
     lastCompletedDate,
-    category: data.metadata?.category || 'wellness',
+    category: data.category || data.metadata?.category || 'wellness',
     metadata: data.metadata,
-    questions: data.questions
+    questions: questions,
+    imageUrl: data.hero_image || data.image_url || data.thumbnail || data.metadata?.hero_image || data.metadata?.thumbnail,
+    processSteps,
+    safetyNote,
+    resultDescription,
+    tile1Content: data.metadata?.tile1_content,
+    tile2Content: data.metadata?.tile2_content,
+    tile3Content: data.metadata?.tile3_content,
+    tile4Content: data.metadata?.tile4_content,
+    tile5Content: data.metadata?.tile5_content,
+    published: data.published !== false
   };
 };
 
@@ -71,7 +136,9 @@ type ViewState = 'list' | 'landing' | 'flow' | 'results';
 type TabState = 'catalogue' | 'history';
 
 // Helper to get Unsplash images
-const getAssessmentImage = (category?: string) => {
+const getAssessmentImage = (category?: string, customImage?: string) => {
+  if (customImage) return customImage;
+
   const normalizedCategory = (category || 'wellness').toLowerCase();
   if (normalizedCategory.includes('anxiety')) return "https://images.unsplash.com/photo-1702032773321-afc433d91ce8?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxjYWxtJTIwcGVhY2VmdWwlMjBtaW5kJTIwc2VyZW5lJTIwd2F0ZXJ8ZW58MXx8fHwxNzY1NDU5MTU1fDA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral";
   if (normalizedCategory.includes('depression')) return "https://images.unsplash.com/photo-1600262912301-d288169c6cda?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxob3BlJTIwc3Vuc2hpbmUlMjBjbG91ZHN8ZW58MXx8fHwxNzY1NDU5MTU5fDA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral";
@@ -131,12 +198,19 @@ export function Assessments({ className, onNavigate }: AssessmentsProps) {
         let apiAssessments: Assessment[] = [];
         try {
           const response = await apiClient.getAssessments();
-          // getAssessments() already returns the array directly
-          if (response && Array.isArray(response)) {
+          // Handle both array and object response formats for robustness
+          const data = Array.isArray(response) ? response : (response?.assessments || []);
+          
+          if (Array.isArray(data)) {
+            console.log(`📋 Fetched ${data.length} assessments raw`);
+            
             // Remove duplicates based on assessment_id or slug
-            const uniqueAssessments = response.reduce((acc: any[], current: any) => {
+            const uniqueAssessments = data.reduce((acc: any[], current: any) => {
               const id = current.slug || current.assessment_id || current.id;
-              const exists = acc.find(item => {
+              
+              if (!id) return acc; // Skip invalid items
+
+              const exists = acc.find((item: any) => {
                 const itemId = item.slug || item.assessment_id || item.id;
                 return itemId === id;
               });
@@ -147,11 +221,15 @@ export function Assessments({ className, onNavigate }: AssessmentsProps) {
               return acc;
             }, []);
             
-            console.log(`📋 Loaded ${uniqueAssessments.length} unique assessments (removed ${response.length - uniqueAssessments.length} duplicates)`);
+            console.log(`📋 Processed ${uniqueAssessments.length} unique assessments`);
             
             apiAssessments = uniqueAssessments.map((a: any) => 
               transformAssessmentData(a, {})
             );
+            
+            setAssessments(apiAssessments);
+          } else {
+            console.warn('Assessments response was not an array:', response);
           }
         } catch (error) {
           console.warn('Failed to fetch API assessments:', error);
@@ -167,8 +245,8 @@ export function Assessments({ className, onNavigate }: AssessmentsProps) {
             try {
               const historyResponse = await apiClient.getUserAssessmentResponses();
               
-              if (historyResponse && historyResponse.responses) {
-                const { responses } = historyResponse;
+              if (historyResponse && (historyResponse.responses || historyResponse.history)) {
+                const responses = historyResponse.responses || historyResponse.history || [];
                 const historyMap: Record<string, any> = {};
                 
                 responses.forEach((response: any) => {
@@ -261,8 +339,8 @@ export function Assessments({ className, onNavigate }: AssessmentsProps) {
     if (user && selectedAssessment) {
       try {
         const historyResponse = await apiClient.getUserAssessmentResponses();
-        if (historyResponse && historyResponse.responses) {
-          const { responses } = historyResponse;
+        if (historyResponse && (historyResponse.responses || historyResponse.history)) {
+          const responses = historyResponse.responses || historyResponse.history || [];
           const historyMap: Record<string, any> = {};
           responses.forEach((response: any) => {
             if (!historyMap[response.assessment_id] || 
@@ -296,86 +374,197 @@ export function Assessments({ className, onNavigate }: AssessmentsProps) {
   };
 
   const getCategoryColor = (category: string) => {
-    switch (category) {
-      case 'Anxiety': return 'var(--color-status-warning)';
-      case 'Depression': return 'var(--color-status-info)';
-      case 'Stress': return 'var(--color-status-danger)';
-      case 'Burnout': return 'var(--color-status-danger)';
-      case 'General': return 'var(--color-primary-default)';
-      case 'Worklife Balance': return 'var(--color-status-success)';
+    switch ((category || '').toLowerCase()) {
+      case 'anxiety': return 'var(--color-status-warning)';
+      case 'depression': return 'var(--color-status-info)';
+      case 'stress': return 'var(--color-status-danger)';
+      case 'burnout': return 'var(--color-status-danger)';
+      case 'general': return 'var(--color-primary-default)';
+      case 'wellness': return 'var(--color-primary-default)';
+      case 'worklife balance': return 'var(--color-status-success)';
       default: return 'var(--color-text-muted)';
     }
   };
 
   // Assessment Landing Page View
   if (currentView === 'landing' && selectedAssessment) {
+    const imageUrl = getAssessmentImage(selectedAssessment.category);
+    
     return (
       <>
-        <div className={cn("space-y-6 pb-20 md:pb-6", className)}>
+        <div className={cn("w-full max-w-7xl mx-auto p-4 md:p-8 space-y-6", className)}>
+        {/* Navigation & Header */}
+        <div className="flex flex-col gap-4">
           <Button
             variant="ghost"
             onClick={handleReturnToList}
-            className="gap-2"
+            className="w-fit gap-2 pl-0 hover:bg-transparent hover:text-[var(--ikan-color-primary-default)]"
           >
-            <Icon name="arrowLeft" size={16} />
-            Back to Assessments
+            <Icon name="arrowLeft" size={20} />
+            <span className="text-lg">Back to Assessments</span>
           </Button>
-
-          <div className="space-y-2">
-            <h1 style={{ fontSize: 'var(--text-2xl)', fontWeight: 'var(--font-weight-semibold)' }}>
+          
+          <div>
+            <Badge variant="outline" className="mb-3 px-3 py-1 text-sm font-medium uppercase tracking-wider">
+              {selectedAssessment.category}
+            </Badge>
+            <h1 className="text-3xl md:text-4xl font-medium text-[var(--ikan-color-text-primary)]">
               {selectedAssessment.title}
             </h1>
-            <p className="text-muted-foreground">
-              Learn more about this assessment before you begin
-            </p>
+          </div>
+        </div>
+
+        {/* Bento Grid Layout */}
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-4 md:gap-6 auto-rows-min">
+          
+          {/* TILE 1: Primary (Large Left) - What is this? */}
+          <div className="md:col-span-7 bg-white rounded-[24px] p-6 md:p-10 flex flex-col justify-between min-h-[320px] shadow-sm relative overflow-hidden group">
+            <div className="relative z-10">
+               {selectedAssessment.tile1Content ? (
+                  <div className="prose prose-lg max-w-none text-[var(--ikan-color-text-muted)] [&_h1]:text-2xl [&_h2]:text-xl [&_h3]:text-lg [&_p]:mb-3 [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5 [&_li]:mb-1 [&_img]:rounded-lg [&_img]:max-w-full [&_a]:text-blue-600 [&_a]:underline" dangerouslySetInnerHTML={{ __html: selectedAssessment.tile1Content }} />
+               ) : (
+                 <div className="space-y-6">
+                   <div>
+                     <h2 className="text-2xl font-medium mb-4 text-[var(--ikan-color-text-primary)]">What is this assessment?</h2>
+                     <p className="text-lg text-[var(--ikan-color-text-muted)] leading-relaxed">
+                       {selectedAssessment.description}
+                     </p>
+                   </div>
+                   
+                   <div className="flex flex-wrap gap-4 pt-2">
+                     <div className="flex items-center gap-2 bg-gray-50 px-4 py-2 rounded-full">
+                       <Clock size={18} className="text-[var(--ikan-color-primary-default)]" />
+                       <span className="font-medium text-[var(--ikan-color-text-primary)]">{selectedAssessment.estimatedTime}</span>
+                     </div>
+                     <div className="flex items-center gap-2 bg-gray-50 px-4 py-2 rounded-full">
+                       <HelpCircle size={18} className="text-[var(--ikan-color-primary-default)]" />
+                       <span className="font-medium text-[var(--ikan-color-text-primary)]">{selectedAssessment.questionCount} Questions</span>
+                     </div>
+                   </div>
+                 </div>
+               )}
+            </div>
+
+            <div className="pt-8 relative z-10">
+              <Button 
+                onClick={() => {
+                  if (onNavigate) {
+                    onNavigate(`/assessment-flow?id=${selectedAssessment?.id || selectedAssessment?.slug}`);
+                  } else {
+                    setShowDisclaimerModal(true);
+                  }
+                }} 
+                className="w-full md:w-auto text-base h-12 px-8 rounded-full gap-2 shadow-lg hover:shadow-xl transition-all"
+                style={{ backgroundColor: 'var(--ikan-color-primary-default)', color: 'white' }}
+              >
+                <Play size={20} fill="currentColor" />
+                Start Assessment
+              </Button>
+            </div>
+            
+            {/* Decoration */}
+            <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-gray-50 to-transparent rounded-bl-[100px] -z-0 opacity-50" />
           </div>
 
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-3 text-xl">
-                <Icon name="clipboard" size={24} style={{ color: getCategoryColor(selectedAssessment.category) }} />
-                {selectedAssessment.title}
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="space-y-2">
-                <h3 className="text-base font-medium">About This Assessment</h3>
-                <p className="text-muted-foreground">{selectedAssessment.description}</p>
-              </div>
+          {/* TILE 2: Visual (Top Right) */}
+          <div className={`md:col-span-5 rounded-[24px] overflow-hidden min-h-[320px] relative shadow-sm group ${selectedAssessment.tile2Content ? 'bg-white p-6 md:p-8' : 'bg-gray-100'}`}>
+             {selectedAssessment.tile2Content ? (
+               <div className="prose prose-lg max-w-none h-full flex flex-col justify-center [&_h1]:text-2xl [&_h2]:text-xl [&_h3]:text-lg [&_p]:mb-3 [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5 [&_li]:mb-1 [&_img]:rounded-lg [&_img]:max-w-full [&_a]:text-blue-600 [&_a]:underline" dangerouslySetInnerHTML={{ __html: selectedAssessment.tile2Content }} />
+             ) : (
+               <>
+                 <img 
+                   src={imageUrl} 
+                   alt={selectedAssessment.title}
+                   className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                 />
+                 <div className="absolute inset-0 bg-black/10 group-hover:bg-transparent transition-colors duration-500" />
+               </>
+             )}
+          </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="flex items-center gap-3 p-3 bg-muted rounded-md">
-                  <Icon name="clock" size={20} className="text-muted-foreground" />
-                  <div>
-                    <p className="text-sm font-medium">Time Required</p>
-                    <p className="text-xs text-muted-foreground">{selectedAssessment.estimatedTime}</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-3 p-3 bg-muted rounded-md">
-                  <Icon name="list" size={20} className="text-muted-foreground" />
-                  <div>
-                    <p className="text-sm font-medium">Questions</p>
-                    <p className="text-xs text-muted-foreground">{selectedAssessment.questionCount} questions</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-3 p-3 bg-muted rounded-md">
-                  <Icon name="tag" size={20} style={{ color: getCategoryColor(selectedAssessment.category) }} />
-                  <div>
-                    <p className="text-sm font-medium">Category</p>
-                    <p className="text-xs" style={{ color: getCategoryColor(selectedAssessment.category) }}>{selectedAssessment.category}</p>
-                  </div>
-                </div>
-              </div>
+          {/* TILE 3: Process (Bottom Left) - How it works */}
+          <div className="md:col-span-5 bg-white rounded-[24px] p-6 md:p-8 shadow-sm flex flex-col justify-center">
+             {selectedAssessment.tile3Content ? (
+                <div className="prose prose-lg max-w-none [&_h1]:text-2xl [&_h2]:text-xl [&_h3]:text-lg [&_p]:mb-3 [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5 [&_li]:mb-1 [&_img]:rounded-lg [&_img]:max-w-full [&_a]:text-blue-600 [&_a]:underline" dangerouslySetInnerHTML={{ __html: selectedAssessment.tile3Content }} />
+             ) : (
+               <>
+                 <h3 className="text-xl font-medium mb-6 flex items-center gap-2">
+                   <Icon name="list" size={24} className="text-[var(--ikan-color-primary-default)]" />
+                   How it works
+                 </h3>
+                 <ul className="space-y-4">
+                   {(selectedAssessment.processSteps && selectedAssessment.processSteps.length > 0 ? selectedAssessment.processSteps : [
+                     `Answer ${selectedAssessment.questionCount} simple questions honestly`,
+                     "Your responses are private & secure",
+                     "Receive immediate insights & guidance"
+                   ]).map((text, i) => (
+                     <li key={i} className="flex items-start gap-3">
+                       <div className="mt-0.5 bg-green-50 p-1 rounded-full text-green-600">
+                         <Icon name="check" size={14} />
+                       </div>
+                       <span className="text-[var(--ikan-color-text-muted)]">{text}</span>
+                     </li>
+                   ))}
+                 </ul>
+               </>
+             )}
+          </div>
 
-              <div className="pt-4">
-                <Button onClick={handleViewLanding} className="w-full gap-2 text-base h-12">
-                  <Icon name="play" size={20} />
-                  Begin Assessment
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+          {/* TILE 5: Safety (Mini Middle) - Important Notes */}
+          <div className="md:col-span-2 bg-amber-50 rounded-[24px] p-6 flex flex-col items-center justify-center text-center shadow-sm border border-amber-100">
+             {selectedAssessment.tile5Content ? (
+                <div className="prose prose-sm max-w-none text-amber-700 [&_h1]:text-lg [&_h2]:text-base [&_h3]:text-sm [&_p]:mb-2 [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5 [&_li]:mb-0.5" dangerouslySetInnerHTML={{ __html: selectedAssessment.tile5Content }} />
+             ) : (
+               <>
+                 <div className="w-12 h-12 bg-amber-100 text-amber-600 rounded-full flex items-center justify-center mb-3">
+                   <Icon name="info" size={24} />
+                 </div>
+                 <p className="text-xs font-bold text-amber-800 uppercase tracking-wide mb-1">Important</p>
+                 <p className="text-sm text-amber-700 leading-snug">
+                   {selectedAssessment.safetyNote}
+                 </p>
+               </>
+             )}
+          </div>
+
+          {/* TILE 4: Results (Bottom Right) - What you'll see */}
+          <div className="md:col-span-5 bg-[#2A2A2A] text-white rounded-[24px] p-6 md:p-8 shadow-sm flex flex-col justify-center relative overflow-hidden">
+             <div className="relative z-10">
+               {selectedAssessment.tile4Content ? (
+                  <div className="prose prose-lg max-w-none text-gray-300 [&_h1]:text-white [&_h2]:text-white [&_h3]:text-white [&_p]:mb-3 [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5 [&_li]:mb-1 [&_img]:rounded-lg [&_img]:max-w-full [&_a]:text-blue-400 [&_a]:underline" dangerouslySetInnerHTML={{ __html: selectedAssessment.tile4Content }} />
+               ) : (
+                 <>
+                   <h3 className="text-xl font-medium mb-4 flex items-center gap-2">
+                     <Icon name="activity" size={24} className="text-emerald-400" />
+                     What you'll see
+                   </h3>
+                   <p className="text-gray-300 mb-6">
+                     {selectedAssessment.resultDescription}
+                   </p>
+                   <div className="grid grid-cols-3 gap-2">
+                      <div className="bg-white/10 rounded-lg p-3 text-center backdrop-blur-sm">
+                        <div className="text-xs text-gray-400 mb-1">Score</div>
+                        <div className="font-bold text-emerald-400">Risk</div>
+                      </div>
+                      <div className="bg-white/10 rounded-lg p-3 text-center backdrop-blur-sm">
+                        <div className="text-xs text-gray-400 mb-1">Insight</div>
+                        <div className="font-bold text-blue-400">Deep</div>
+                      </div>
+                      <div className="bg-white/10 rounded-lg p-3 text-center backdrop-blur-sm">
+                        <div className="text-xs text-gray-400 mb-1">Plan</div>
+                        <div className="font-bold text-purple-400">Action</div>
+                      </div>
+                   </div>
+                 </>
+               )}
+             </div>
+             
+             {/* Abstract background shape */}
+             <div className="absolute -bottom-10 -right-10 w-40 h-40 bg-white/5 rounded-full blur-3xl" />
+          </div>
+
         </div>
+      </div>
 
         <Dialog open={showDisclaimerModal} onOpenChange={setShowDisclaimerModal}>
           <DialogContent className="max-w-[600px]">
@@ -540,6 +729,10 @@ export function Assessments({ className, onNavigate }: AssessmentsProps) {
               {assessments.filter(assessment => {
                 const hasHistory = userAssessmentHistory[assessment.id];
                 if (currentTab === 'history' && !hasHistory) return false;
+                
+                // Only show published assessments in catalogue
+                if (currentTab === 'catalogue' && !assessment.published) return false;
+                
                 return true;
               }).map((assessment, index) => {
                 const isCompleted = assessment.status === 'completed' && userAssessmentHistory[assessment.id];
