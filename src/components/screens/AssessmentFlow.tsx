@@ -12,6 +12,7 @@ import { cn } from '../ui/utils';
 import { apiClient } from '../../lib/api-client';
 import { projectId, publicAnonKey } from '../../utils/supabase/info';
 import { ProgressIndicator } from '../ui/progress-indicator';
+import { AssessmentResults } from './AssessmentResults';
 
 interface Question {
   id: string;

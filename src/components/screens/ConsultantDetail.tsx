@@ -687,6 +687,7 @@ export function ConsultantDetail({ consultantId, onNavigate, className }: Consul
             <Button
               onClick={handleBooking}
               disabled={!consultant.available}
+              aria-label={`Book appointment with ${consultant.name}`}
               style={{
                 height: '48px',
                 padding: '0 var(--spacing-6)',
@@ -953,6 +954,7 @@ function BookingPanel({
         <Button
           onClick={onBook}
           disabled={!consultant.available || !selectedDate || !selectedTime}
+          aria-label={consultant.available ? `Book appointment with ${consultant.name}` : `Booking not available for ${consultant.name}`}
           style={{ 
             width: '100%',
             height: '48px',

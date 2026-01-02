@@ -16,7 +16,7 @@ export function registerResourceRoutes(app: Hono, middleware: any) {
 
   // --- Public/User Routes ---
 
-  app.get("/library/resources", middleware, async (c) => {
+  app.get("/library/resources", async (c) => {
     try {
       const resources = await kv.getByPrefix("resource:");
       return c.json({ resources });
@@ -25,7 +25,7 @@ export function registerResourceRoutes(app: Hono, middleware: any) {
     }
   });
 
-  app.get("/library/resources/:id", middleware, async (c) => {
+  app.get("/library/resources/:id", async (c) => {
     try {
       const id = c.req.param("id");
       const resource = await kv.get(`resource:${id}`);

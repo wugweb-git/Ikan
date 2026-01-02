@@ -211,6 +211,10 @@ export function AdminDashboard({ onNavigate, initialView }: AdminDashboardProps)
               <Card 
                 className="p-6 cursor-pointer hover:shadow-md transition-shadow"
                 onClick={() => setCurrentView('users')}
+                role="button"
+                tabIndex={0}
+                aria-label="Manage accounts"
+                onKeyDown={(e) => e.key === 'Enter' && setCurrentView('users')}
               >
                 <div className="flex items-center gap-4">
                   <div 
@@ -220,6 +224,7 @@ export function AdminDashboard({ onNavigate, initialView }: AdminDashboardProps)
                       color: 'var(--color-primary-default)',
                       borderRadius: 'var(--radius-md)'
                     }}
+                    aria-hidden="true"
                   >
                     <Users className="w-6 h-6" />
                   </div>
@@ -244,6 +249,10 @@ export function AdminDashboard({ onNavigate, initialView }: AdminDashboardProps)
               <Card 
                 className="p-6 cursor-pointer hover:shadow-md transition-shadow"
                 onClick={() => setCurrentView('equip')}
+                role="button"
+                tabIndex={0}
+                aria-label="Manage equip programs"
+                onKeyDown={(e) => e.key === 'Enter' && setCurrentView('equip')}
               >
                 <div className="flex items-center gap-4">
                   <div 
@@ -253,6 +262,7 @@ export function AdminDashboard({ onNavigate, initialView }: AdminDashboardProps)
                       color: 'var(--color-accent-default)',
                       borderRadius: 'var(--radius-md)'
                     }}
+                    aria-hidden="true"
                   >
                     <BookOpen className="w-6 h-6" />
                   </div>
@@ -277,6 +287,10 @@ export function AdminDashboard({ onNavigate, initialView }: AdminDashboardProps)
               <Card 
                 className="p-6 cursor-pointer hover:shadow-md transition-shadow"
                 onClick={() => setCurrentView('resources')}
+                role="button"
+                tabIndex={0}
+                aria-label="Manage resources"
+                onKeyDown={(e) => e.key === 'Enter' && setCurrentView('resources')}
               >
                 <div className="flex items-center gap-4">
                   <div 
@@ -286,6 +300,7 @@ export function AdminDashboard({ onNavigate, initialView }: AdminDashboardProps)
                       color: 'var(--color-accent-default)',
                       borderRadius: 'var(--radius-md)'
                     }}
+                    aria-hidden="true"
                   >
                     <Table className="w-6 h-6" />
                   </div>
@@ -310,6 +325,10 @@ export function AdminDashboard({ onNavigate, initialView }: AdminDashboardProps)
               <Card 
                 className="p-6 cursor-pointer hover:shadow-md transition-shadow"
                 onClick={() => setCurrentView('crud')}
+                role="button"
+                tabIndex={0}
+                aria-label="View system health"
+                onKeyDown={(e) => e.key === 'Enter' && setCurrentView('crud')}
               >
                 <div className="flex items-center gap-4">
                   <div 
@@ -319,6 +338,7 @@ export function AdminDashboard({ onNavigate, initialView }: AdminDashboardProps)
                       color: 'var(--color-status-success)',
                       borderRadius: 'var(--radius-md)'
                     }}
+                    aria-hidden="true"
                   >
                     <Activity className="w-6 h-6" />
                   </div>

@@ -106,7 +106,30 @@ export const iconMapping = {
   "sliders-default": "SlidersHorizontal",
   "briefcase-outline": "Briefcase",
   "briefcase-default": "Briefcase",
-  "x-outline": "X"
+  "x-outline": "X",
+  "chevronUp-outline": "ChevronUp",
+  "chevronDown-outline": "ChevronDown",
+  "receipt-outline": "Receipt",
+  "rotateCcw-outline": "RotateCcw",
+  "rotateLeft-outline": "RotateCcw",
+  "circle-outline": "Circle",
+  "download-outline": "Download",
+  "help-outline": "HelpCircle",
+  "sun-outline": "Sun",
+  "moon-outline": "Moon",
+  "monitor-outline": "Monitor",
+  "layout-outline": "Layout",
+  "grid-outline": "Grid",
+  "globe-outline": "Globe",
+  "database-outline": "Database",
+  "share2-outline": "Share2",
+  "trash-outline": "Trash2",
+  "key-outline": "Key",
+  "logIn-outline": "LogIn",
+  "smartphone-outline": "Smartphone",
+  "alertTriangle-outline": "AlertTriangle",
+  "zap-outline": "Zap",
+  "send-outline": "Send"
 } as const;
 
 // Iconify mapping - using Material Symbols as specified

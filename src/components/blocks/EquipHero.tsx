@@ -32,95 +32,102 @@ export function EquipHero({
 
   return (
     <section 
-      className={`relative w-full pt-[var(--ikan-nav-clearance-mobile)] md:pt-[var(--ikan-nav-clearance-desktop)] ${className}`}
+      className={`relative w-full overflow-hidden ${className}`}
       style={{
-        minHeight: 'clamp(500px, 60vh, 700px)',
-        margin: 0,
-        padding: 0,
+        height: '606px',
+        minHeight: '500px',
+        backgroundColor: '#f5f5f5',
         position: 'relative',
-        zIndex: 0, 
-        backgroundColor: 'var(--color-bg-page)'
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'space-between'
       }}
     >
-      {/* Full-bleed Background Image - Edge to Edge */}
+      {/* Background Container from Figma (using same style as AssessmentHero) */}
+      <div 
+        className="absolute inset-0 w-full h-full"
+        style={{
+          background: 'linear-gradient(180deg, rgba(255,255,255,0) 0%, #f5f5f5 100%)',
+          zIndex: 1
+        }}
+      />
+      
+      {/* Background Image (Underlay) */}
       {backgroundImage && (
         <div 
           className="absolute inset-0 w-full h-full"
           style={{ 
-            overflow: 'hidden',
+            zIndex: 0
           }}
         >
           <img
             alt={backgroundAlt}
-            className="absolute inset-0 w-full h-full object-cover pointer-events-none"
+            className="w-full h-full object-cover object-center"
             src={backgroundImage}
           />
-          {/* Subtle overlay for text readability */}
-          <div className="absolute inset-0 bg-gradient-to-r from-black/40 via-black/20 to-transparent" />
         </div>
       )}
 
-      {/* Content Container - Constrained with Padding */}
+      {/* Content Container positioned absolutely as per Figma */}
       <div 
-        className="relative h-full flex items-center max-w-7xl mx-auto"
+        className="absolute left-0 p-[20px] flex flex-col gap-[20px] items-start justify-center"
         style={{ 
-          minHeight: 'clamp(500px, 60vh, 700px)',
-          padding: 'clamp(var(--spacing-6), 5vw, var(--spacing-12)) var(--spacing-4)',
-          zIndex: 1,
+          top: '319px', // Exact top position from Figma
+          width: '100%',
+          maxWidth: '394px', // From Figma
+          zIndex: 2
         }}
       >
-        <div 
-          className="max-w-2xl"
-          style={{ gap: 'var(--spacing-6)' }}
+        {/* Title */}
+        <h1 
+          style={{
+            fontFamily: 'Ubuntu, sans-serif',
+            fontWeight: 500,
+            fontSize: '32px',
+            lineHeight: '44.8px',
+            color: '#151515',
+            margin: 0
+          }}
         >
-          {/* Title */}
-          <h1 
-            className="mb-4"
-            style={{
-              fontSize: 'clamp(2rem, 5vw, 3.625rem)',
-              fontWeight: 'var(--font-weight-medium)',
-              color: 'var(--color-text-primary)', // Usually white on dark bg? Let's check logic.
-              // AssessmentHero uses primary text color, but usually hero text on image needs to be readable.
-              // I added an overlay, so text should probably be light or primary depending on design.
-              // AssessmentHero used primary. I will stick to primary but maybe text-inverse if image is dark.
-              // For now, consistent with AssessmentHero.
-              fontFamily: 'var(--font-family-base)',
-              lineHeight: 'var(--line-height-sm)'
-            }}
-          >
-            {title}
-          </h1>
+          {title}
+        </h1>
 
-          {/* Description */}
-          <p 
-            className="mb-6 md:mb-8"
-            style={{
-              fontSize: 'var(--text-base)',
-              color: 'var(--color-text-primary)',
-              fontFamily: 'var(--font-family-base)',
-              lineHeight: 'var(--line-height-md)',
-              maxWidth: '600px'
-            }}
-          >
-            {description}
-          </p>
+        {/* Description */}
+        <p 
+          style={{
+            fontFamily: 'Ubuntu, sans-serif',
+            fontWeight: 400,
+            fontSize: '16px',
+            lineHeight: '24px',
+            color: '#151515',
+            margin: 0
+          }}
+        >
+          {description}
+        </p>
 
-          {/* CTA Button */}
-          <Button
-            onClick={handleClick}
-            className="ikan-button touch-target"
-            style={{
-              backgroundColor: 'var(--color-primary-default)',
-              color: 'var(--color-primary-on)',
-              height: '48px',
-              borderRadius: 'var(--radius-sm)',
-              paddingLeft: 'var(--spacing-5)',
-              paddingRight: 'var(--spacing-5)'
-            }}
-          >
-            {buttonText}
-          </Button>
-        </div>
+        {/* CTA Button */}
+        <Button
+          onClick={handleClick}
+          className="touch-target"
+          style={{
+            backgroundColor: '#2a2a2a',
+            color: '#ffffff',
+            height: '48px',
+            width: '169px', // 168.761px from Figma
+            borderRadius: '6px',
+            fontFamily: 'Inter, sans-serif',
+            fontWeight: 500,
+            fontSize: '16px',
+            lineHeight: '24px',
+            padding: 0,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}
+        >
+          {buttonText}
+        </Button>
       </div>
     </section>
   );

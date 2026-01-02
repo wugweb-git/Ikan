@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
+import { Briefcase } from 'lucide-react';
 import { getPrivateNavigationRoutes } from '../../lib/route-config';
 import { cn } from '../ui/utils';
 import { useMobileOptimizations } from '../../hooks/useMobileOptimizations';
@@ -16,7 +17,7 @@ interface BottomNavBarMobileProps {
 function HomeIcon({ isActive }: { isActive: boolean }) {
   const color = isActive ? "#2E2A2F" : "#2E2A2F";
   return (
-    <div className="relative shrink-0 size-[24px]">
+    <div className="relative shrink-0 size-[24px] p-[2px]">
       <svg className="block size-full" fill="none" preserveAspectRatio="none" viewBox="0 0 24 24">
         <g>
           <path 
@@ -81,12 +82,21 @@ function MoodIcon({ isActive }: { isActive: boolean }) {
 function LibraryIcon({ isActive }: { isActive: boolean }) {
   const color = isActive ? "black" : "black";
   return (
-    <div className="relative shrink-0 size-[24px]">
+    <div className="relative shrink-0 size-[24px] p-[2px]">
       <svg className="block size-full" fill="none" preserveAspectRatio="none" viewBox="0 0 24 24">
         <g>
           <path clipRule="evenodd" d={svgPaths.pa3ed680} fill={color} fillRule="evenodd" />
         </g>
       </svg>
+    </div>
+  );
+}
+
+function EquipIcon({ isActive }: { isActive: boolean }) {
+  const color = isActive ? "#2E2A2F" : "#2E2A2F";
+  return (
+    <div className="relative shrink-0 size-[24px] flex items-center justify-center">
+      <Briefcase size={20} color={color} strokeWidth={1.5} />
     </div>
   );
 }
@@ -124,51 +134,13 @@ export function BottomNavBarMobile({
     setActiveTab(currentRoute);
   }, [currentRoute]);
 
-  const bottomNavItems = [
-    { label: 'Home', route: '/dashboard', icon: HomeIcon },
-    { label: 'Explore', route: '/assessment', icon: ExploreIcon }, // Mapped Assessment to Explore icon/label per previous logic
-    { label: 'Mood', route: '/mood-journal', icon: MoodIcon },
-    { label: 'Library', route: '/equip', icon: LibraryIcon }, // Mapped Equip to Library icon/label per previous logic/naming
-    { label: 'Account', route: '/account', icon: AccountIcon }
-  ];
-  
-  // Note: The labels in the array above are updated to match the Figma design (Home, Explore, Mood, Library, Account)
-  // The routes map to the existing application routes.
-  // Explore -> /assessment (or /explore if it exists? Previous code mapped Assessment to ExploreIcon)
-  // Mood -> /mood-journal
-  // Library -> /equip (Previous code mapped Equip to LibraryIcon? No, previous code mapped Equip to ExploreIcon too. Wait.)
-
-  // Let's re-verify the mapping from previous code:
-  // { label: 'Dashboard', route: '/dashboard', icon: HomeIcon },
-  // { label: 'Assessment', route: '/assessment', icon: ExploreIcon },
-  // { label: 'Equip', route: '/equip', icon: ExploreIcon },
-  // { label: 'Tracker', route: '/mood-journal', icon: MoodIcon },
-  // { label: 'Accounts', route: '/account', icon: AccountIcon }
-  
-  // New Design has: Home, Explore, Mood, Library, Account.
-  // I should probably update the labels to match the Design, but keep routes working.
-  // Dashboard -> Home
-  // Assessment -> Explore
-  // Tracker -> Mood
-  // Account -> Account
-  // Equip -> Library? Or Equip -> Explore? 
-  // Let's assume:
-  // Home -> Dashboard
-  // Explore -> Assessment (or /explore)
-  // Mood -> Mood Journal
-  // Library -> Equip (Equip seems like a library of tools)
-  // Account -> Account
-  
-  // However, I must keep all 5 items if I want to match the structure. 
-  // The previous nav had 5 items. The new design has 5 items.
-  // I will map them as best as I can.
-
   const navItems = [
     { label: 'Home', route: '/dashboard', icon: HomeIcon },
-    { label: 'Explore', route: '/assessment', icon: ExploreIcon },
+    { label: 'Equip', route: '/equip', icon: EquipIcon },
+    { label: 'Self Help', route: '/assessment', icon: ExploreIcon },
     { label: 'Mood', route: '/mood-journal', icon: MoodIcon },
-    { label: 'Library', route: '/equip', icon: LibraryIcon },
-    { label: 'Account', route: '/account', icon: AccountIcon }
+    { label: 'Library', route: '/resource', icon: LibraryIcon },
+    { label: 'You', route: '/account', icon: AccountIcon }
   ];
 
   const handleTabPress = (route: string) => {
@@ -183,23 +155,27 @@ export function BottomNavBarMobile({
   return (
     <div 
       className={cn(
-        "fixed bg-white z-[50]",
+        "bg-white z-[9999]",
         className
       )}
       style={{
-        bottom: '16px',
+        position: 'fixed',
+        bottom: 'calc(16px + env(safe-area-inset-bottom, 20px))',
         left: '16px',
         right: '16px',
-        borderRadius: '12px',
-        border: '1px solid #d6d6d6',
-        boxShadow: '0px 2px 8px 0px rgba(0,0,0,0.1)',
-        padding: '10px',
-        position: 'fixed' // Ensure position is fixed
+        borderRadius: '32px',
+        border: '1px solid var(--color-border-default)',
+        padding: '8px 8px',
+        zIndex: 9999,
+        boxShadow: '0 4px 20px rgba(0,0,0,0.06)', // Subtle shadow
+        transform: 'translate3d(0,0,0)', // Force GPU layer
+        backfaceVisibility: 'hidden',
+        isolation: 'isolate'
       }}
     >
       <div className="flex flex-row items-center justify-center size-full">
         {/* Use grid for equal width distribution or flex with basis-0 grow */}
-        <div className="flex w-full items-center justify-between">
+        <div className="flex w-full items-center justify-between gap-1">
           {navItems.map((item, index) => {
             const isActive = currentRoute === item.route;
             const isPressed = pressedTab === item.route;
@@ -211,31 +187,45 @@ export function BottomNavBarMobile({
                 key={item.route}
                 onClick={() => handleTabPress(item.route)}
                 className={cn(
-                  "relative flex flex-col items-center justify-center gap-[4px] shrink-0",
+                  "relative flex flex-col items-center justify-center shrink-0 cursor-pointer pointer-events-auto",
                   "touch-manipulation"
                 )}
                 style={{
                   // Active state styles
-                  backgroundColor: isActive ? '#f5f5f5' : 'transparent',
-                  borderRadius: isActive ? '10px' : '0',
-                  padding: isActive ? '6px 20px' : '6px 0',
-                  width: isActive ? 'auto' : '100%', // Inactive take available space? Or fixed?
-                  // Actually, to match "basis-0 grow" from Figma code:
+                  backgroundColor: isActive ? '#2A2A2A' : 'transparent',
+                  borderRadius: isActive ? '50%' : '0', // Circle shape
+                  width: isActive ? '48px' : 'auto', // Fixed size for circle
+                  height: isActive ? '48px' : 'auto', // Fixed size for circle
+                  padding: isActive ? '0' : '8px 0',
+                  minWidth: isActive ? '48px' : '0',
+                  // Inactive items grow to fill space
                   flexBasis: 0,
-                  flexGrow: 1,
+                  flexGrow: isActive ? 0 : 1, 
                 }}
                 whileTap={{ scale: 0.95 }}
               >
-                <div className={cn("flex flex-col items-center", !isActive && "opacity-40")}>
-                  <IconComponent isActive={isActive} />
-                  <span 
-                    className={cn(
-                      "text-[12px] leading-[18px] text-[#2e2a2f] whitespace-nowrap",
-                      isActive ? "font-['Ubuntu'] font-medium" : "font-['Ubuntu'] font-regular"
-                    )}
-                  >
-                    {item.label}
-                  </span>
+                <div 
+                  className={cn(
+                    "flex flex-col items-center transition-all duration-300 justify-center size-full",
+                    !isActive && "opacity-40",
+                    isActive && "scale-110" // Make icon slightly bigger when active
+                  )}
+                  style={{
+                    // Force icon to white when active using filter
+                    filter: isActive ? 'brightness(0) invert(1)' : 'none'
+                  }}
+                >
+                  <div className={cn(isActive ? "text-white" : "")}>
+                     <IconComponent isActive={isActive} />
+                  </div>
+                  
+                  {!isActive && (
+                    <span 
+                      className="text-[11px] leading-[14px] text-[#2e2a2f] whitespace-nowrap mt-[4px] font-['Ubuntu'] font-medium"
+                    >
+                      {item.label}
+                    </span>
+                  )}
                 </div>
 
                 {/* Badge */}
@@ -247,7 +237,8 @@ export function BottomNavBarMobile({
                         backgroundColor: 'var(--color-status-danger)',
                         fontSize: '10px',
                         color: 'white',
-                        padding: '2px'
+                        padding: '2px',
+                        border: '2px solid white'
                       }}
                       initial={{ scale: 0 }}
                       animate={{ scale: 1 }}

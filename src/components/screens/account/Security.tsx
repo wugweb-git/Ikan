@@ -139,28 +139,6 @@ export function Security() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div>
-        <h1 
-          style={{ 
-            fontSize: 'var(--text-2xl)', 
-            fontWeight: 'var(--font-weight-medium)',
-            lineHeight: 'var(--line-height-lg)',
-            color: 'var(--color-text-primary)',
-            marginBottom: 'var(--spacing-2)'
-          }}
-        >
-          Security Settings
-        </h1>
-        <p style={{ 
-          fontSize: 'var(--text-base)', 
-          color: 'var(--color-text-muted)',
-          lineHeight: 'var(--line-height-md)'
-        }}>
-          Manage your account security and login settings
-        </p>
-      </div>
-
       {/* Password */}
       <Card>
         <CardHeader>
@@ -635,17 +613,17 @@ export function Security() {
         </CardContent>
       </Card>
 
-      {/* Security Tips */}
-      <Card>
+      {/* Security Tips - DARK THEME */}
+      <Card style={{ backgroundColor: '#1A1A1A', border: 'none', borderRadius: '16px' }}>
         <CardContent className="p-6">
           <div className="flex items-start gap-3">
-            <Icon name="alertTriangle" size={20} style={{ color: 'var(--color-status-warning)' }} />
+            <Icon name="alertTriangle" size={20} style={{ color: '#F59E0B' }} /> {/* Warning color kept but brightened/checked */}
             <div>
               <h4 
                 style={{ 
                   fontSize: 'var(--text-base)', 
                   fontWeight: 'var(--font-weight-medium)',
-                  color: 'var(--color-text-primary)',
+                  color: '#FFFFFF',
                   marginBottom: 'var(--spacing-2)'
                 }}
               >
@@ -653,7 +631,7 @@ export function Security() {
               </h4>
               <ul style={{ 
                 fontSize: 'var(--text-sm)', 
-                color: 'var(--color-text-muted)',
+                color: '#A0A0A0',
                 lineHeight: 'var(--line-height-md)',
                 paddingLeft: 'var(--spacing-4)',
                 listStyle: 'disc'

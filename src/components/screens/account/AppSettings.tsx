@@ -8,19 +8,6 @@ export function AppSettings() {
 
   return (
     <div className="space-y-6">
-      <div className="space-y-2">
-        <h1 style={{ 
-          fontSize: 'var(--text-2xl)', 
-          fontWeight: 'var(--font-weight-medium)',
-          color: 'var(--color-text-primary)'
-        }}>
-          App Settings
-        </h1>
-        <p style={{ color: 'var(--color-text-muted)' }}>
-          Configure your app preferences and database synchronization.
-        </p>
-      </div>
-      
       {/* Database Sync Panel */}
       <DatabaseSyncPanel
         onSyncComplete={(result) => {

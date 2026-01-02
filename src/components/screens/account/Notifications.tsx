@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../../ui/card';
 import { Button } from '../../ui/button';
 import { Icon } from '../../Icon';
@@ -157,28 +157,6 @@ export function Notifications() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div>
-        <h1 
-          style={{ 
-            fontSize: 'var(--text-2xl)', 
-            fontWeight: 'var(--font-weight-medium)',
-            lineHeight: 'var(--line-height-lg)',
-            color: 'var(--color-text-primary)',
-            marginBottom: 'var(--spacing-2)'
-          }}
-        >
-          Notification Preferences
-        </h1>
-        <p style={{ 
-          fontSize: 'var(--text-base)', 
-          color: 'var(--color-text-muted)',
-          lineHeight: 'var(--line-height-md)'
-        }}>
-          Manage how and when you receive notifications
-        </p>
-      </div>
-
       {/* Push Notifications */}
       <Card>
         <CardHeader>

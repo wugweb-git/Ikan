@@ -429,7 +429,7 @@ export function AdminResourceManager({ onBack, className }: AdminResourceManager
         breadcrumbs={[{ label: 'Admin', onClick: onBack }, { label: 'Resource Manager' }]}
         stats={stats}
         actions={
-          <Button onClick={handleCreateNew} className="gap-2">
+          <Button onClick={handleCreateNew} className="gap-2" aria-label="Create new resource">
             <Plus className="w-4 h-4" />
             {!isMobile && 'Add Resource'}
           </Button>
@@ -444,7 +444,7 @@ export function AdminResourceManager({ onBack, className }: AdminResourceManager
         searchPlaceholder="Search resources by title, category, tags..."
         onRowClick={(item) => handleEdit(item.id)}
         actions={
-          <Button variant="outline" onClick={handleExport} className="gap-2">
+          <Button variant="outline" onClick={handleExport} className="gap-2" aria-label="Export resources to CSV">
             <Download className="w-4 h-4" />
             {!isMobile && 'Export CSV'}
           </Button>

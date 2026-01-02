@@ -36,7 +36,7 @@ interface PaymentHistoryProps {
 }
 
 export function PaymentHistory({ className }: PaymentHistoryProps) {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const { showToast } = useNotifications();
   const isMobile = useIsMobile();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
@@ -50,13 +50,21 @@ export function PaymentHistory({ className }: PaymentHistoryProps) {
   const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
 
   useEffect(() => {
+    // Wait for auth to initialize
+    if (authLoading) return;
+
+    if (!user) {
+      setLoading(false);
+      return;
+    }
+
     // Add delay to prevent immediate loading issues
     const timer = setTimeout(() => {
       loadPaymentHistory();
     }, 100);
     
     return () => clearTimeout(timer);
-  }, []);
+  }, [user, authLoading]);
 
   const loadPaymentHistory = async () => {
     try {

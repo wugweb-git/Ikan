@@ -725,7 +725,7 @@ function AppContent() {
         case '/sitemap':
           return <Sitemap onNavigate={handleNavigate} />;
         case '/login':
-          return <LoginScreen onNavigate={handleNavigate} />;
+          return <LoginScreen onNavigate={handleNavigate} onSuccess={() => handleNavigate('/dashboard')} />;
         case '/route-test':
           return <RouteTestScreen onNavigate={handleNavigate} />;
         case '/private-route-test':
@@ -766,8 +766,8 @@ function AppContent() {
 
   return (
     <div className={cn(
-      "flex flex-col min-h-screen bg-background font-sans antialiased text-foreground",
-      currentRoute === '/login' ? "h-screen overflow-hidden" : ""
+      "flex flex-col min-h-[100dvh] bg-background font-sans antialiased text-foreground",
+      currentRoute === '/login' ? "h-[100dvh] overflow-hidden" : ""
     )}>
       {/* Top Navigation */}
       {!isMobile && currentRoute !== '/login' && !currentRoute.startsWith('/admin') && (
@@ -862,7 +862,7 @@ function AppContent() {
       <Toaster 
         position="top-center"
         expand={false}
-        richColors
+        // Removed richColors to align with design system (cleaner look)
         closeButton
         toastOptions={{
           style: {
@@ -870,6 +870,9 @@ function AppContent() {
             fontFamily: 'var(--font-family-base)',
             boxShadow: 'var(--shadow-lg)',
             fontSize: 'var(--text-sm)',
+            backgroundColor: 'var(--color-bg-card)',
+            color: 'var(--color-text-primary)',
+            border: '1px solid var(--color-border-default)',
           },
           className: 'ikan-toast'
         }}

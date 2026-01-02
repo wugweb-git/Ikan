@@ -52,7 +52,7 @@ function ResourceSection({ onNavigate }: ResourceSectionProps) {
           title: resource.title,
           description: resource.excerpt || resource.description || resource.content?.substring(0, 100) + '...' || '',
           date: new Date(resource.created_at || Date.now()).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
-          image: resource.image_url || resource.thumbnail_url || resource.featured_image || '',
+          image: resource.image_url || resource.thumbnail_url || resource.featured_image || resource.thumbnail || resource.image || resource.metadata?.image || resource.metadata?.thumbnail || '',
           slug: resource.slug,
           author: resource.author?.name,
           category: resource.category || 'General',
@@ -73,8 +73,8 @@ function ResourceSection({ onNavigate }: ResourceSectionProps) {
     fetchResources();
   }, []);
 
-  // Don't show block if no resources at all
-  if (!loading && posts.length === 0) return null;
+  // Always show block, let ResourceBlock handle empty state
+  // if (!loading && posts.length === 0) return null;
 
   return (
     <ResourceBlock 
@@ -130,9 +130,9 @@ export function AssessmentDetail({ assessmentId = 'anxiety', onNavigate }: Asses
         const rawAssessment = data.assessment;
         
         setAssessmentData({
-          title: rawAssessment.title || "Mental Health Assessment",
-          description: rawAssessment.description || "Take this assessment to better understand your mental health.",
-          hero_image: rawAssessment.hero_image || rawAssessment.image_url || "https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?q=80&w=2000&auto=format&fit=crop",
+          title: rawAssessment.title || "",
+          description: rawAssessment.description || "",
+          hero_image: rawAssessment.hero_image || rawAssessment.image_url || "",
           cta_button_text: rawAssessment.cta_button_text || "Start Assessment",
           cta_button_link: rawAssessment.cta_button_link || `/assessment-flow?type=${assessmentId}`,
           
@@ -145,40 +145,24 @@ export function AssessmentDetail({ assessmentId = 'anxiety', onNavigate }: Asses
           // Section 1: How it works (Tile 3)
           section1_title: rawAssessment.section1_title || "How it works",
           section1_eligibility_title: rawAssessment.section1_eligibility_title || "Simple process:",
-          section1_eligibility_points: rawAssessment.section1_eligibility_points || [
-            "Answer a few questions",
-            "Your progress is saved automatically",
-            "Get immediate results and insights"
-          ],
+          section1_eligibility_points: rawAssessment.section1_eligibility_points || [],
           section1_who_title: rawAssessment.section1_who_title || "Who can take this?",
-          section1_who_content: rawAssessment.section1_who_content || "This assessment is designed for adults 18+.",
+          section1_who_content: rawAssessment.section1_who_content || "",
           
           // Section 2: What is this assessment? (Tile 1 & 2)
           section2_title: rawAssessment.section2_title || rawAssessment.about_title || "What is this assessment?",
-          section2_content: rawAssessment.section2_content || rawAssessment.about_content || "A clinically validated tool to help you understand your mental health.",
+          section2_content: rawAssessment.section2_content || rawAssessment.about_content || "",
           section2_image: rawAssessment.section2_image || rawAssessment.about_image || rawAssessment.image_url || defaultBentoImage,
-          section2_bullets: rawAssessment.section2_bullets || [
-            `Takes ${rawAssessment.metadata?.estimated_minutes || 5} minutes`,
-            "Based on validated clinical research",
-            "Provides immediate results"
-          ],
+          section2_bullets: rawAssessment.section2_bullets || [],
           
           // Section 3: What you'll see (Tile 4)
           section3_title: rawAssessment.section3_title || rawAssessment.highlights_title || "What you'll see",
-          section3_subtitle: rawAssessment.section3_subtitle || "Understanding your mental health is the first step.",
-          section3_content: rawAssessment.section3_content || rawAssessment.highlights || [
-            "Answer a series of questions about your recent experiences.",
-            "Your responses are scored using evidence-based methods.",
-            "Receive personalized insights and recommendations based on your results."
-          ],
+          section3_subtitle: rawAssessment.section3_subtitle || "",
+          section3_content: rawAssessment.section3_content || rawAssessment.highlights || [],
           
           // Section 4: Things to remember (Tile 3)
           section4_notes_title: rawAssessment.section4_notes_title || rawAssessment.notes_title || "Things to remember",
-          section4_notes: (rawAssessment.section4_notes || rawAssessment.notes || [
-            { title: "Not a diagnosis", description: "Only a professional can diagnose." },
-            { title: "Confidential", description: "Your answers are private." },
-            { title: "Free", description: "This assessment is completely free." }
-          ]).map((n: any) => typeof n === 'string' ? { title: n, description: '' } : n),
+          section4_notes: (rawAssessment.section4_notes || rawAssessment.notes || []).map((n: any) => typeof n === 'string' ? { title: n, description: '' } : n),
         });
 
         // Fetch related assessments
@@ -240,7 +224,7 @@ export function AssessmentDetail({ assessmentId = 'anxiety', onNavigate }: Asses
     ? relatedAssessments.slice(0, 3).map((a: any) => ({
         title: a.title || a.name,
         description: a.description || a.short_description || 'Mental health assessment',
-        image: a.image_url || a.thumbnail_url || a.hero_image || 'https://images.unsplash.com/photo-1527137342181-19aab11a8ee8?auto=format&fit=crop&q=80&w=1000',
+        image: a.image_url || a.thumbnail_url || a.hero_image || a.image || a.thumbnail || a.cover_image || a.metadata?.image || a.metadata?.thumbnail || '',
         category: a.category || 'Assessment', // Use actual category from database
         questionCount: a.questions?.length || a.metadata?.question_count || 10, // Get question count
         duration: a.duration || a.metadata?.estimated_minutes || 5, // Get duration
@@ -256,6 +240,7 @@ export function AssessmentDetail({ assessmentId = 'anxiety', onNavigate }: Asses
         title={assessmentData.title}
         onBack={() => handleNavigate('/assessment')}
         showShare={false}
+        transparent={true}
       />
 
       {/* Desktop Navigation */}
@@ -266,7 +251,7 @@ export function AssessmentDetail({ assessmentId = 'anxiety', onNavigate }: Asses
         />
       </div>
       
-      <div className="w-full mobile-content-clearance">
+      <div className="w-full">
         {/* HERO SECTION */}
         <AssessmentHero
           title={assessmentData.title}

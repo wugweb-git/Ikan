@@ -296,7 +296,11 @@ export function ProgramPlayer({
 
           <Button 
             onClick={handleNext}
-            className="min-w-[120px]"
+            className={cn(
+              "min-w-[120px]",
+              // Hide Next button on mobile (except for Finish step) as requested
+              currentStepIndex < steps.length - 1 ? "hidden md:flex" : ""
+            )}
             disabled={!isStepValid}
           >
             {currentStepIndex === steps.length - 1 ? 'Finish' : 'Next'}

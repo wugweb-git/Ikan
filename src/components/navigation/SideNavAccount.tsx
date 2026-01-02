@@ -1,42 +1,50 @@
 import React, { useState } from 'react';
 import { cn } from '../ui/utils';
-import svgPaths from '../../imports/svg-t4fcbtgp25';
-import { ChevronDown, ChevronRight, CreditCard, EyeOff, FileText } from 'lucide-react';
+import { Separator } from '../ui/separator';
+import svgPaths from '../../imports/svg-tfxlcr50sc';
+import { ChevronDown, ChevronUp, ChevronRight } from 'lucide-react';
 
 interface SideNavAccountProps {
   currentRoute: string;
   onNavigate: (route: string) => void;
   onLogout?: () => void;
   className?: string;
-  collapsed?: boolean;
-  onToggleCollapse?: () => void;
   style?: React.CSSProperties;
+  isMobile?: boolean;
 }
 
 // Icon Components from Figma SVGs
+
 const IconProfile = ({ color = "currentColor" }: { color?: string }) => (
-  <svg className="block w-[15px] h-[17px]" fill="none" viewBox="0 0 15.01 17.125">
+  <svg className="block w-[15px] h-[17px]" fill="none" viewBox="0 0 13.9077 16.0073">
     <g>
-      <path d={svgPaths.p2f37c08} fill={color} />
-      <path d={svgPaths.p1e9cd40} fill={color} />
+      <path d={svgPaths.p1366f300} fill={color} />
+      <path d={svgPaths.pab3de00} fill={color} />
     </g>
   </svg>
 );
 
-const IconNotifications = ({ color = "currentColor" }: { color?: string }) => (
-  <svg className="block w-[13px] h-[15px]" fill="none" viewBox="0 0 13.121 14.625">
+const IconPayments = ({ color = "currentColor" }: { color?: string }) => (
+  <svg className="block w-[18px] h-[18px]" fill="none" viewBox="0 0 18 18">
     <g>
-      <path d={svgPaths.p2ac53bf0} fill={color} />
-      <path d={svgPaths.p3fc49280} fill={color} />
+      <path d={svgPaths.p5eca500} stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" />
+      <path d="M1.5 7.5H16.5" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" />
     </g>
   </svg>
 );
 
-const IconSecurity = ({ color = "currentColor" }: { color?: string }) => (
-  <svg className="block w-[15px] h-[18px]" fill="none" viewBox="0 0 15.1249 18.0001">
+const IconOrganization = ({ color = "currentColor" }: { color?: string }) => (
+  <svg className="block w-[18px] h-[18px]" fill="none" viewBox="0 0 18 17.6449">
     <g>
-      <path d={svgPaths.p3879200} fill={color} />
-      <path d={svgPaths.p3932e240} fill={color} />
+      <path d={svgPaths.p6656b80} fill={color} />
+      <path d={svgPaths.p10da980} fill={color} />
+      <path d={svgPaths.p29f7df80} fill={color} />
+      <path d={svgPaths.p2d44f700} fill={color} />
+      <path d={svgPaths.pf7d2800} fill={color} />
+      <path d={svgPaths.p39b09d00} fill={color} />
+      <path d={svgPaths.p22900400} fill={color} />
+      <path d={svgPaths.p3f3f7080} fill={color} />
+      <path d={svgPaths.p39f74900} fill={color} />
     </g>
   </svg>
 );
@@ -57,25 +65,42 @@ const IconPreferences = ({ color = "currentColor" }: { color?: string }) => (
   </svg>
 );
 
-const IconCorporate = ({ color = "currentColor" }: { color?: string }) => (
-  <svg className="block w-[18px] h-[18px]" fill="none" viewBox="0 0 18 17.6449">
+const IconNotifications = ({ color = "currentColor" }: { color?: string }) => (
+  <svg className="block w-[13px] h-[15px]" fill="none" viewBox="0 0 13 14.4901">
     <g>
-      <path d={svgPaths.p6656b80} fill={color} />
-      <path d={svgPaths.p10da980} fill={color} />
-      <path d={svgPaths.p29f7df80} fill={color} />
-      <path d={svgPaths.p2d44f700} fill={color} />
-      <path d={svgPaths.pf7d2800} fill={color} />
-      <path d={svgPaths.p39b09d00} fill={color} />
-      <path d={svgPaths.p22900400} fill={color} />
-      <path d={svgPaths.p3f3f7080} fill={color} />
-      <path d={svgPaths.p39f74900} fill={color} />
+      <path d={svgPaths.p1a326d80} fill={color} />
+      <path d={svgPaths.p3d903400} fill={color} />
     </g>
   </svg>
 );
 
-const IconHelp = ({ color = "currentColor" }: { color?: string }) => (
+const IconPrivacy = ({ color = "currentColor" }: { color?: string }) => (
   <svg className="block w-[18px] h-[18px]" fill="none" viewBox="0 0 18 18">
-    <path clipRule="evenodd" d={svgPaths.p19332900} fill={color} fillRule="evenodd" />
+    <g>
+      <path d={svgPaths.p1e0a7a40} stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" />
+      <path d={svgPaths.p1ba86b40} stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" />
+      <path d={svgPaths.p1ed557a0} stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" />
+      <path d="M1.5 1.5L16.5 16.5" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" />
+    </g>
+  </svg>
+);
+
+const IconSecurity = ({ color = "currentColor" }: { color?: string }) => (
+  <svg className="block w-[15px] h-[18px]" fill="none" viewBox="0 0 15 17.8515">
+    <g>
+      <path d={svgPaths.p3de0e900} fill={color} />
+      <path d={svgPaths.p29a2ee70} fill={color} />
+    </g>
+  </svg>
+);
+
+const IconAbout = ({ color = "currentColor" }: { color?: string }) => (
+  <svg className="block w-[18px] h-[18px]" fill="none" viewBox="0 0 18 18">
+    <g>
+      <path d={svgPaths.p132bc00} fill={color} />
+      <path d={svgPaths.p36b21200} fill={color} />
+      <path d={svgPaths.p26bfc271} fill={color} />
+    </g>
   </svg>
 );
 
@@ -89,26 +114,37 @@ const IconFAQs = ({ color = "currentColor" }: { color?: string }) => (
   </svg>
 );
 
-const IconLogOut = ({ color = "currentColor" }: { color?: string }) => (
+const IconHelp = ({ color = "currentColor" }: { color?: string }) => (
+  <svg className="block w-[18px] h-[18px]" fill="none" viewBox="0 0 18 18">
+    <path clipRule="evenodd" d={svgPaths.p19332900} fill={color} fillRule="evenodd" />
+  </svg>
+);
+
+const IconLegal = ({ color = "currentColor" }: { color?: string }) => (
   <svg className="block w-[18px] h-[18px]" fill="none" viewBox="0 0 18 18">
     <g>
-      <path d={svgPaths.p3317b780} fill={color} />
-      <path d={svgPaths.p29eef400} fill={color} />
+      <path d={svgPaths.p3a382d00} stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" />
+      <path d={svgPaths.p678c080} stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" />
+      <path d="M7.5 6.75H6" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" />
+      <path d="M12 9.75H6" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" />
+      <path d="M12 12.75H6" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" />
     </g>
   </svg>
 );
 
-// Lucide Icon wrappers for consistency
-const IconPayment = ({ color = "currentColor" }: { color?: string }) => (
-  <CreditCard size={18} color={color} />
+const IconLogOut = ({ color = "currentColor" }: { color?: string }) => (
+  <svg className="block w-[18px] h-[18px]" fill="none" viewBox="0 0 12.0199 17.9402">
+    <g>
+      <path d={svgPaths.p3317b780} fill={color} />
+      <path d={svgPaths.ped6b480} fill={color} />
+    </g>
+  </svg>
 );
 
-const IconPrivacy = ({ color = "currentColor" }: { color?: string }) => (
-  <EyeOff size={18} color={color} />
-);
-
-const IconLegal = ({ color = "currentColor" }: { color?: string }) => (
-  <FileText size={18} color={color} />
+const IconChevron = ({ color = "currentColor" }: { color?: string }) => (
+  <svg className="block w-[14px] h-[14px]" fill="none" viewBox="0 0 8.16667 4.66667" style={{ overflow: 'visible' }}>
+    <path d={svgPaths.p1d8d0700} stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.16667" />
+  </svg>
 );
 
 interface NavItem {
@@ -130,14 +166,17 @@ export function SideNavAccount({
   onNavigate, 
   onLogout,
   className,
-  style
+  style,
+  isMobile = false
 }: SideNavAccountProps) {
   
+  // Initialize with only top 2 groups open to satisfy constraint
+  // On mobile, maybe defaults are different? Figma implies ACCOUNT and PREFERENCES are open.
   const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({
-    'account': true,
+    'profile': true,
     'preferences': true,
-    'security': true,
-    'support': true,
+    'settings': false,
+    'support': false,
     'legal': false
   });
 
@@ -150,8 +189,9 @@ export function SideNavAccount({
 
   const navGroups: NavGroup[] = [
     {
-      id: 'account',
-      title: 'Account',
+      id: 'profile',
+      title: 'ACCOUNT',
+      collapsible: true,
       items: [
         { 
           id: 'profile', 
@@ -163,19 +203,20 @@ export function SideNavAccount({
           id: 'payments', 
           label: 'Payments', 
           route: '/account/payments', 
-          icon: IconPayment 
+          icon: IconPayments 
         },
         { 
-          id: 'corporate', 
-          label: 'Corporate', 
+          id: 'organization', 
+          label: 'Organization', 
           route: '/account/corporate', 
-          icon: IconCorporate 
+          icon: IconOrganization 
         }
       ]
     },
     {
       id: 'preferences',
-      title: 'Preferences',
+      title: 'PREFERENCES',
+      collapsible: true,
       items: [
         { 
           id: 'preferences', 
@@ -192,8 +233,9 @@ export function SideNavAccount({
       ]
     },
     {
-      id: 'security', 
-      title: 'Security & Privacy',
+      id: 'settings',
+      title: 'SETTINGS',
+      collapsible: true,
       items: [
         { 
           id: 'privacy', 
@@ -211,8 +253,15 @@ export function SideNavAccount({
     },
     {
       id: 'support',
-      title: 'Support',
+      title: 'SUPPORT',
+      collapsible: true,
       items: [
+        { 
+          id: 'about', 
+          label: 'About', 
+          route: '/about', 
+          icon: IconAbout 
+        },
         { 
           id: 'faqs', 
           label: 'FAQs', 
@@ -221,7 +270,7 @@ export function SideNavAccount({
         },
         { 
           id: 'help', 
-          label: 'Let\'s Talk', 
+          label: "Let's Talk", 
           route: '/contact', 
           icon: IconHelp 
         }
@@ -229,7 +278,7 @@ export function SideNavAccount({
     },
     {
       id: 'legal',
-      title: 'Legal',
+      title: 'LEGAL',
       collapsible: true,
       items: [
         {
@@ -263,63 +312,89 @@ export function SideNavAccount({
   return (
     <div 
       className={cn(
-        "bg-[var(--color-bg-card)] flex flex-col items-start relative rounded-[var(--radius-lg)] w-full p-5 shadow-sm border border-[var(--color-border-default)]",
+        "flex flex-col items-start relative w-full",
+        isMobile ? "bg-transparent p-0 border-none" : "bg-white p-5 border border-[#D1D5DB] rounded-[12px]",
         className
       )} 
-      style={style}
-      data-name="Side Navigation"
+      style={{
+        ...style,
+        boxShadow: 'none'
+      }}
+      data-name="SideNavAccount"
     >
-      <div className="flex flex-col gap-[12px] w-full">
-        {navGroups.map((group) => (
+      <div className={cn("flex flex-col w-full", isMobile ? "gap-[16px]" : "gap-[12px]")}>
+        {navGroups.map((group, index) => (
           <div key={group.id} className="w-full">
+            {/* Separator between groups (desktop only or specific mobile logic if needed) */}
+            {/* Mobile design doesn't explicitly show separators between groups, just spacing. 
+                Desktop has them. Keeping desktop behavior, hiding on mobile if spacing handles it. */}
+            {!isMobile && index > 0 && <Separator className="mb-[12px] bg-[#E5E7EB]" />}
+
             {/* Group Header */}
             <div 
               className={cn(
-                "px-[20px] py-[8px] flex items-center justify-between",
+                "flex items-center justify-between",
+                isMobile ? "px-[16px] mb-[8px]" : "px-[0px] py-[8px] h-[34px]",
                 group.collapsible ? "cursor-pointer" : ""
               )}
               onClick={() => group.collapsible && toggleGroup(group.id)}
             >
-              <h3 className="text-[12px] font-medium text-[var(--color-text-muted)] uppercase tracking-wider">
+              <h3 className={cn(
+                "font-medium text-[#717182] uppercase tracking-[0.6px]",
+                isMobile ? "text-[13px] leading-[18px]" : "text-[12px] leading-[18px]"
+              )}>
                 {group.title}
               </h3>
               {group.collapsible && (
-                <div className="text-[var(--color-text-muted)]">
-                  {expandedGroups[group.id] ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+                <div 
+                  className={cn(
+                    "text-[#717182] transition-transform duration-200",
+                    expandedGroups[group.id] ? "rotate-0" : "rotate-180"
+                  )}
+                >
+                  <IconChevron color="#717182" />
                 </div>
               )}
             </div>
 
             {/* Group Items */}
             {(expandedGroups[group.id] || !group.collapsible) && (
-              <div className="flex flex-col gap-[8px] mt-1">
+              <div className={cn("flex flex-col w-full", isMobile ? "gap-[16px]" : "gap-[8px] mt-1")}>
                 {group.items.map((item) => {
                   const isActive = currentRoute === item.route;
                   const Icon = item.icon;
+                  
+                  // Mobile specific styling vs Desktop
+                  const mobileButtonClasses = "bg-white border border-[rgba(0,0,0,0.05)] rounded-[16px] h-[64px] shadow-[0px_1px_2px_rgba(0,0,0,0.05)]";
+                  const desktopButtonClasses = isActive 
+                    ? "bg-[#2a2a2a] border-[#2a2a2a]" 
+                    : "bg-white border-[#D1D5DB] hover:bg-[#f5f5f5]";
                   
                   return (
                     <button
                       key={item.id}
                       onClick={() => onNavigate(item.route)}
                       className={cn(
-                        "relative rounded-[var(--radius-md)] w-full transition-all duration-200",
-                        isActive 
-                          ? "bg-[var(--color-primary-default)] border border-transparent" 
-                          : "bg-[var(--color-bg-card)] border border-[var(--color-border-light)] hover:bg-[var(--color-bg-muted)]"
+                        "relative w-full transition-all duration-200 overflow-hidden group flex items-center",
+                        isMobile ? mobileButtonClasses : `rounded-[12px] h-[50px] border ${desktopButtonClasses}`
                       )}
                     >
-                      <div className="flex flex-row items-center w-full">
-                        <div className="flex gap-[8px] items-center px-[20px] py-[10px] w-full">
-                          <div className="shrink-0 w-[18px] flex items-center justify-center">
-                            <Icon color={isActive ? "var(--color-primary-on)" : "var(--color-text-primary)"} />
+                      <div className="flex flex-row items-center justify-between w-full h-full px-[20px]">
+                        <div className="flex gap-[12px] items-center">
+                          <div className="shrink-0 w-[24px] flex items-center justify-center">
+                            <Icon color={isActive && !isMobile ? "white" : "#151515"} />
                           </div>
                           <div className={cn(
-                            "flex flex-col justify-center leading-[0] not-italic relative shrink-0 text-[14px] text-nowrap font-medium",
-                            isActive ? "text-[var(--color-primary-on)]" : "text-[var(--color-text-primary)]"
+                            "flex flex-col justify-center leading-[0] not-italic relative shrink-0 text-nowrap font-medium h-[28px]",
+                            isMobile ? "text-[16px] text-[#151515]" : "text-[14px]",
+                            isActive && !isMobile ? "text-white" : "text-[#151515]"
                           )}>
                             <p className="leading-[28px]">{item.label}</p>
                           </div>
                         </div>
+                        {isMobile && (
+                          <ChevronRight className="w-5 h-5 text-[#C7C7CC]" />
+                        )}
                       </div>
                     </button>
                   );
@@ -330,20 +405,35 @@ export function SideNavAccount({
         ))}
 
         {onLogout && (
-          <div className="mt-4 pt-4 border-t border-[var(--color-border-light)]">
+          <div className={cn("w-full", isMobile ? "mt-[24px]" : "mt-[12px]")}>
+             {!isMobile && <Separator className="mb-[17px] bg-[#E5E7EB]" />}
+             
+             {/* Removed duplicate LEGAL header on mobile */}
+             
              <button
               onClick={onLogout}
-              className="relative rounded-[var(--radius-md)] w-full bg-[var(--color-bg-card)] border border-[var(--color-border-light)] transition-all duration-200 hover:bg-red-50 group"
+              className={cn(
+                "relative w-full transition-all duration-200 group flex items-center",
+                isMobile 
+                  ? "bg-white border border-[rgba(0,0,0,0.05)] rounded-[16px] h-[64px] shadow-[0px_1px_2px_rgba(0,0,0,0.05)]"
+                  : "rounded-[12px] h-[50px] bg-white border border-[#D1D5DB] hover:bg-red-50"
+              )}
             >
-              <div className="flex flex-row items-center w-full">
-                <div className="flex gap-[8px] items-center px-[20px] py-[10px] w-full">
-                  <div className="shrink-0 w-[18px] flex items-center justify-center">
-                    <IconLogOut color="var(--color-text-primary)" />
+              <div className="flex flex-row items-center justify-between w-full h-full px-[20px]">
+                <div className="flex gap-[12px] items-center">
+                  <div className="shrink-0 w-[24px] flex items-center justify-center">
+                    <IconLogOut color="#151515" />
                   </div>
-                  <div className="flex flex-col justify-center leading-[0] not-italic relative shrink-0 text-[var(--color-text-primary)] group-hover:text-red-600 text-[14px] text-nowrap font-medium">
+                  <div className={cn(
+                    "flex flex-col justify-center leading-[0] not-italic relative shrink-0 text-[#151515] group-hover:text-red-600 text-nowrap font-medium h-[28px]",
+                    isMobile ? "text-[16px]" : "text-[14px]"
+                  )}>
                     <p className="leading-[28px]">Log out</p>
                   </div>
                 </div>
+                {isMobile && (
+                  <ChevronRight className="w-5 h-5 text-[#C7C7CC]" />
+                )}
               </div>
             </button>
           </div>

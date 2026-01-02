@@ -36,7 +36,7 @@ import {
   WeekStructure 
 } from '../../lib/equip-admin-types';
 import { EquipBlockEditor } from './EquipBlockEditor';
-import { EquipOnboardingEditor } from './EquipOnboardingEditor';
+// import { EquipOnboardingEditor } from './EquipOnboardingEditor'; // REMOVED - Using DailyBuilder
 import { EquipLandingPageRichTextEditor } from './EquipLandingPageRichTextEditor';
 import { EquipDailyEditor as DailyBuilder } from './EquipDailyEditor';
 import { UnifiedBasicInfoForm } from '../admin/UnifiedBasicInfoForm';
@@ -374,6 +374,23 @@ export function EquipProgramWizard({ programId, onBack, onSave }: EquipProgramWi
     }
   };
 
+  // Helper to get or create Day 0 (Onboarding)
+  const getOnboardingDay = (): DayContent => {
+    // Try to find Day 0 in daily_content first
+    const existingDay0 = formData.daily_content?.find(d => d.day === 0);
+    if (existingDay0) return existingDay0;
+
+    // Fallback: Create from onboarding_questions
+    const onboardingBlocks = (formData.onboarding_questions || []).map(mapQuestionToBlock);
+    return {
+      day: 0,
+      title: 'Onboarding',
+      description: 'Initial assessment',
+      dayType: 'lesson',
+      activities: onboardingBlocks
+    };
+  };
+
 
   return (
     <>
@@ -516,13 +533,36 @@ export function EquipProgramWizard({ programId, onBack, onSave }: EquipProgramWi
           />
         )}
 
-        {/* STEP 2: ONBOARDING */}
+        {/* STEP 2: ONBOARDING (Unified Builder) */}
         {currentStep === 2 && (
-          <EquipOnboardingEditor
-            questions={formData.onboarding_questions || []}
-            onChange={(questions) => setFormData({ ...formData, onboarding_questions: questions })}
-            onSelectQuestion={setSelectedQuestion}
-          />
+          <DndProvider backend={HTML5Backend}>
+            <DailyBuilder
+              program={{ 
+                ...formData, 
+                daily_content: [getOnboardingDay()] 
+              }}
+              mode="onboarding"
+              singleDayMode={true}
+              onProgramChange={(updates) => {
+                // updates.daily_content will contain ONLY Day 0 (because singleDayMode)
+                const updatedDay0 = updates.daily_content?.[0];
+                if (updatedDay0) {
+                  // 1. Update daily_content in formData (replace/add Day 0)
+                  const otherDays = formData.daily_content?.filter(d => d.day !== 0) || [];
+                  const newDailyContent = [updatedDay0, ...otherDays];
+                  
+                  // 2. Sync onboarding_questions for legacy compat
+                  const newQuestions = updatedDay0.activities.map(mapBlockToQuestion);
+                  
+                  setFormData({ 
+                    ...formData, 
+                    daily_content: newDailyContent,
+                    onboarding_questions: newQuestions
+                  });
+                }
+              }}
+            />
+          </DndProvider>
         )}
 
         {/* STEP 3: DAILY BUILDER */}

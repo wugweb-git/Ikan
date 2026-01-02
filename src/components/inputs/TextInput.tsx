@@ -140,7 +140,10 @@ export const TextInput = forwardRef<HTMLInputElement, TextInputProps>(({
           borderStyle: 'solid',
           borderColor: getBorderColor(),
           borderRadius: 'var(--ikan-component-border-radius)',
-          backgroundColor: getBackgroundColor()
+          backgroundColor: getBackgroundColor(),
+          boxShadow: isFocused 
+            ? `0 0 0 2px ${hasError ? 'var(--color-status-danger)' : showSuccess ? 'var(--color-status-success)' : 'var(--color-primary-default)'}20`
+            : 'none'
         }}
         transition={{ duration: 0.2, ease: "easeOut" }}
       >
@@ -184,7 +187,7 @@ export const TextInput = forwardRef<HTMLInputElement, TextInputProps>(({
           onFocus={handleFocus}
           onBlur={handleBlur}
           className={cn(
-            "w-full outline-none placeholder:text-muted-foreground",
+            "w-full outline-none placeholder:text-muted-foreground bg-transparent",
             leadingIcon && "pl-10",
             trailingIcon && "pr-10",
             !leadingIcon && !trailingIcon && "px-3",
@@ -192,7 +195,6 @@ export const TextInput = forwardRef<HTMLInputElement, TextInputProps>(({
             readOnly && "cursor-default"
           )}
           style={{
-            backgroundColor: getBackgroundColor(),
             borderRadius: 'var(--ikan-component-border-radius)',
             fontSize: 'var(--text-base)',
             fontWeight: 'var(--font-weight-regular)',
@@ -201,25 +203,8 @@ export const TextInput = forwardRef<HTMLInputElement, TextInputProps>(({
             paddingLeft: leadingIcon ? '40px' : '12px',
             paddingRight: trailingIcon ? '40px' : '12px',
             height: 'var(--ikan-component-input-height)',
-            border: 'none' // Remove default border, use motion border
-          }}
-          initial={false}
-          animate={{
-            borderColor: getBorderColor(),
-            scale: isFocused ? 1.01 : 1,
-            boxShadow: isFocused 
-              ? `0 0 0 2px ${hasError ? 'var(--color-status-danger)' : showSuccess ? 'var(--color-status-success)' : 'var(--color-primary-default)'}20`
-              : 'none'
-          }}
-          whileFocus={{
-            scale: 1.01,
-            transition: { duration: 0.2, ease: "easeOut" }
-          }}
-          transition={{
-            type: "spring",
-            stiffness: 400,
-            damping: 25,
-            duration: 0.2
+            border: 'none',
+            boxShadow: 'none'
           }}
         />
         

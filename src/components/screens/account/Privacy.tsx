@@ -112,28 +112,6 @@ export function Privacy() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div>
-        <h1 
-          style={{ 
-            fontSize: 'var(--text-2xl)', 
-            fontWeight: 'var(--font-weight-medium)',
-            lineHeight: 'var(--line-height-lg)',
-            color: 'var(--color-text-primary)',
-            marginBottom: 'var(--spacing-2)'
-          }}
-        >
-          Privacy Settings
-        </h1>
-        <p style={{ 
-          fontSize: 'var(--text-base)', 
-          color: 'var(--color-text-muted)',
-          lineHeight: 'var(--line-height-md)'
-        }}>
-          Control your data and privacy preferences
-        </p>
-      </div>
-
       {/* Data Collection */}
       <Card>
         <CardHeader>
@@ -468,17 +446,17 @@ export function Privacy() {
         </CardContent>
       </Card>
 
-      {/* Privacy Information */}
-      <Card>
+      {/* Privacy Information - DARK THEME */}
+      <Card style={{ backgroundColor: '#1A1A1A', border: 'none', borderRadius: '16px' }}>
         <CardContent className="p-6">
           <div className="flex items-start gap-3">
-            <Icon name="info" size={20} style={{ color: 'var(--color-primary-default)' }} />
+            <Icon name="info" size={20} style={{ color: '#FFFFFF' }} />
             <div>
               <h4 
                 style={{ 
                   fontSize: 'var(--text-base)', 
                   fontWeight: 'var(--font-weight-medium)',
-                  color: 'var(--color-text-primary)',
+                  color: '#FFFFFF',
                   marginBottom: 'var(--spacing-2)'
                 }}
               >
@@ -486,7 +464,7 @@ export function Privacy() {
               </h4>
               <p style={{ 
                 fontSize: 'var(--text-sm)', 
-                color: 'var(--color-text-muted)',
+                color: '#A0A0A0',
                 lineHeight: 'var(--line-height-md)',
                 marginBottom: 'var(--spacing-3)'
               }}>
@@ -503,21 +481,21 @@ export function Privacy() {
                   style={{
                     fontSize: 'var(--text-sm)',
                     fontWeight: 'var(--font-weight-medium)',
-                    color: 'var(--color-primary-default)',
+                    color: '#FFFFFF',
                     justifyContent: 'flex-start'
                   }}
                 >
                   <Icon name="fileText" size={14} />
                   Read Privacy Policy
                 </Button>
-                <span style={{ color: 'var(--color-text-muted)' }}>•</span>
+                <span style={{ color: '#525252' }}>•</span>
                 <Button 
                   variant="link" 
                   className="gap-2 p-0"
                   style={{
                     fontSize: 'var(--text-sm)',
                     fontWeight: 'var(--font-weight-medium)',
-                    color: 'var(--color-primary-default)',
+                    color: '#FFFFFF',
                     justifyContent: 'flex-start'
                   }}
                 >

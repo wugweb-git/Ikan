@@ -340,6 +340,7 @@ function AuthForm({ mode, onSuccess, onModeChange }: {
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
                 className="focus:outline-none hover:text-primary transition-colors"
+                aria-label={showPassword ? "Hide password" : "Show password"}
               >
                 {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
               </button>
@@ -374,6 +375,7 @@ function AuthForm({ mode, onSuccess, onModeChange }: {
                 type="button"
                 onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                 className="focus:outline-none hover:text-primary transition-colors"
+                aria-label={showConfirmPassword ? "Hide password" : "Show password"}
               >
                 {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
               </button>
@@ -480,6 +482,7 @@ function AuthForm({ mode, onSuccess, onModeChange }: {
               onClick={() => handleSocialSignIn('google')}
               disabled={loading}
               className="flex items-center justify-center px-4 py-2 border border-gray-200 rounded-md hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              aria-label="Sign in with Google"
             >
               <div className="w-5 h-5">
                 <svg className="block size-full" viewBox="0 0 24 24">
@@ -497,6 +500,7 @@ function AuthForm({ mode, onSuccess, onModeChange }: {
               onClick={() => handleSocialSignIn('linkedin_oidc')}
               disabled={loading}
               className="flex items-center justify-center px-4 py-2 border border-gray-200 rounded-md hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              aria-label="Sign in with LinkedIn"
             >
               <div className="w-5 h-5">
                 <svg className="block size-full" viewBox="0 0 24 24">
@@ -511,6 +515,7 @@ function AuthForm({ mode, onSuccess, onModeChange }: {
               onClick={() => handleSocialSignIn('apple')}
               disabled={loading}
               className="flex items-center justify-center px-4 py-2 border border-gray-200 rounded-md hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              aria-label="Sign in with Apple"
             >
               <div className="w-5 h-5">
                 <svg className="block size-full" viewBox="0 0 24 24">

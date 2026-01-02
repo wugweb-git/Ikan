@@ -54,7 +54,7 @@ function ResourceSection({ onNavigate }: ResourceSectionProps) {
           title: resource.title,
           description: resource.excerpt || resource.description || resource.content?.substring(0, 100) + '...' || '',
           date: new Date(resource.created_at || Date.now()).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
-          image: resource.image_url || resource.thumbnail_url || resource.featured_image || '',
+          image: resource.image_url || resource.thumbnail_url || resource.featured_image || resource.thumbnail || resource.image || resource.metadata?.image || resource.metadata?.thumbnail || '',
           slug: resource.slug,
           author: resource.author?.name,
           category: resource.category || 'General',
@@ -75,8 +75,8 @@ function ResourceSection({ onNavigate }: ResourceSectionProps) {
     fetchResources();
   }, []);
 
-  // Don't show block if no resources at all
-  if (!loading && posts.length === 0) return null;
+  // Always show block, let ResourceBlock handle empty state
+  // if (!loading && posts.length === 0) return null;
 
   return (
     <ResourceBlock 
@@ -217,23 +217,18 @@ export function EquipDetail({ equipId = 'sleep-tight-9', onNavigate }: EquipDeta
   }
 
   // Map related programs to EquipBlock format
-  let equipPrograms = relatedPrograms
+  const equipPrograms = relatedPrograms
     .filter(p => p.id !== equipId) // Exclude current program
     .filter(p => !legacyIds.includes(p.id || p.equip_id)) // Exclude legacy programs
     .slice(0, 3)
     .map((p: any) => ({
         title: p.title || p.name,
-        description: p.summary || p.description || 'Mental wellness program',
-        image: p.thumbnail || p.hero_image || '',
-        duration: p.duration_days ? `${p.duration_days} days` : '18 days',
+        description: p.summary || p.description || '',
+        image: p.thumbnail || p.thumbnail_url || p.image_url || p.hero_image || p.image || p.cover_image || p.metadata?.image || p.metadata?.thumbnail || '',
+        duration: p.duration_days ? `${p.duration_days} days` : '',
         activities: 'Self-paced modules',
         link: `/equip-detail?id=${p.equip_id || p.id}`
       }));
-
-  // Fallback if no related programs found (to ensure block is visible for design review)
-  if (equipPrograms.length === 0) {
-     equipPrograms = [FALLBACK_RELATED_PROGRAM];
-  }
 
   // Parse Benefits from Strings if needed (e.g. "Title | Description")
   const parsedBenefits = (equipData.overview_benefits || equipData.section4_benefits || []).map((b: any) => {
@@ -251,6 +246,7 @@ export function EquipDetail({ equipId = 'sleep-tight-9', onNavigate }: EquipDeta
         title={equipData.title}
         onBack={() => handleNavigate('/equip')}
         showShare={false}
+        transparent={true}
       />
 
       {/* Desktop Navigation */}
@@ -261,7 +257,7 @@ export function EquipDetail({ equipId = 'sleep-tight-9', onNavigate }: EquipDeta
         />
       </div>
       
-      <div className="w-full mobile-content-clearance">
+      <div className="w-full">
         {/* HERO SECTION */}
         <EquipHero
           title={equipData.title}

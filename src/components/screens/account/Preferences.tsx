@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '../../ui/card';
 import { Button } from '../../ui/button';
 import { Icon } from '../../Icon';
 import { Separator } from '../../ui/separator';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../ui/select';
 import { useNotifications } from '../../../contexts/NotificationContext';
 import { useAuth } from '../../../contexts/AuthContext';
 import { apiClient } from '../../../lib/api-client';
@@ -105,29 +106,28 @@ export function Preferences() {
 
   const ToggleSwitch = ({ enabled, onChange }: { enabled: boolean; onChange: () => void }) => (
     <button
+      type="button"
+      role="switch"
+      aria-checked={enabled}
       onClick={onChange}
-      className="relative inline-flex items-center cursor-pointer"
+      className="relative inline-flex items-center cursor-pointer touch-none"
       style={{
-        width: '44px',
-        height: '24px',
-        borderRadius: '12px',
+        width: '90px',
+        height: '34px',
+        borderRadius: '9999px',
         backgroundColor: enabled ? 'var(--color-primary-default)' : 'var(--color-bg-muted)',
         transition: 'background-color 0.2s ease',
-        border: 'none',
-        padding: '0'
+        border: '2px solid transparent',
+        padding: 0
       }}
-      aria-label={enabled ? 'Enabled' : 'Disabled'}
     >
       <span
+        className="block bg-white rounded-full shadow-sm"
         style={{
-          position: 'absolute',
-          left: enabled ? '22px' : '2px',
-          width: '20px',
-          height: '20px',
-          borderRadius: '50%',
-          backgroundColor: 'white',
-          transition: 'left 0.2s ease',
-          boxShadow: '0 1px 3px rgba(0, 0, 0, 0.2)'
+          width: '30px',
+          height: '30px',
+          transform: enabled ? 'translateX(56px)' : 'translateX(0)',
+          transition: 'transform 0.2s ease'
         }}
       />
     </button>
@@ -135,28 +135,6 @@ export function Preferences() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div>
-        <h1 
-          style={{ 
-            fontSize: 'var(--text-2xl)', 
-            fontWeight: 'var(--font-weight-medium)',
-            lineHeight: 'var(--line-height-lg)',
-            color: 'var(--color-text-primary)',
-            marginBottom: 'var(--spacing-2)'
-          }}
-        >
-          Preferences
-        </h1>
-        <p style={{ 
-          fontSize: 'var(--text-base)', 
-          color: 'var(--color-text-muted)',
-          lineHeight: 'var(--line-height-md)'
-        }}>
-          Customize your experience and set your preferences
-        </p>
-      </div>
-
       {/* General Settings */}
       <Card>
         <CardHeader>
@@ -170,89 +148,34 @@ export function Preferences() {
             <label 
               htmlFor="language"
               style={{ 
-                fontSize: 'var(--text-sm)', 
+                fontSize: 'var(--text-base)', 
                 fontWeight: 'var(--font-weight-medium)',
                 color: 'var(--color-text-primary)',
                 display: 'block',
-                marginBottom: 'var(--spacing-2)'
+                marginBottom: '8px'
               }}
             >
               Language
             </label>
-            <select
-              id="language"
+            <Select
               value={preferences.language}
-              onChange={(e) => handlePreferenceChange('language', e.target.value)}
-              style={{
-                width: '100%',
-                padding: 'var(--spacing-2) var(--spacing-3)',
-                borderRadius: 'var(--ikan-component-border-radius)',
-                border: '1px solid var(--color-border-default)',
-                backgroundColor: 'var(--color-bg-input)',
-                fontSize: 'var(--text-sm)',
-                fontFamily: 'var(--font-family-base)',
-                fontWeight: 'var(--font-weight-regular)',
-                color: 'var(--color-text-primary)'
-              }}
+              onValueChange={(value) => handlePreferenceChange('language', value)}
             >
-              <option value="en">English</option>
-              <option value="hi">हिन्दी (Hindi)</option>
-              <option value="mr">मराठी (Marathi)</option>
-              <option value="ta">தமிழ் (Tamil)</option>
-              <option value="te">తెలుగు (Telugu)</option>
-              <option value="bn">বাংলা (Bengali)</option>
-            </select>
-          </div>
-
-          <Separator />
-
-          <div>
-            <label 
-              htmlFor="theme"
-              style={{ 
-                fontSize: 'var(--text-sm)', 
-                fontWeight: 'var(--font-weight-medium)',
-                color: 'var(--color-text-primary)',
-                display: 'block',
-                marginBottom: 'var(--spacing-2)'
-              }}
-            >
-              Theme
-            </label>
-            <div className="grid grid-cols-3 gap-2">
-              {(['light', 'dark', 'auto'] as const).map((theme) => (
-                <button
-                  key={theme}
-                  onClick={() => handlePreferenceChange('theme', theme)}
-                  className={cn(
-                    "p-3 rounded-lg border-2 transition-all",
-                    preferences.theme === theme 
-                      ? "border-[var(--color-primary-default)] bg-[var(--color-primary-light)]"
-                      : "border-[var(--color-border-default)] bg-[var(--color-bg-card)]"
-                  )}
-                  style={{
-                    cursor: 'pointer'
-                  }}
-                >
-                  <Icon 
-                    name={theme === 'light' ? 'sun' : theme === 'dark' ? 'moon' : 'monitor'} 
-                    size={20} 
-                    className="mx-auto mb-1"
-                    style={{ 
-                      color: preferences.theme === theme ? 'var(--color-primary-default)' : 'var(--color-text-muted)' 
-                    }}
-                  />
-                  <div style={{ 
-                    fontSize: 'var(--text-xs)', 
-                    fontWeight: 'var(--font-weight-medium)',
-                    color: preferences.theme === theme ? 'var(--color-primary-default)' : 'var(--color-text-muted)',
-                    textTransform: 'capitalize'
-                  }}>
-                    {theme}
-                  </div>
-                </button>
-              ))}
-            </div>
+              <SelectTrigger className="w-full bg-[#f5f5f5] border-[rgba(0,0,0,0.1)] rounded-[12px] h-[56px] text-[#717182]">
+                <div className="flex items-center gap-3">
+                  <Icon name="globe" size={16} className="text-[#717182]" />
+                  <SelectValue placeholder="Select language" />
+                </div>
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="en">English</SelectItem>
+                <SelectItem value="hi">हिन्दी (Hindi)</SelectItem>
+                <SelectItem value="mr">मराठी (Marathi)</SelectItem>
+                <SelectItem value="ta">தமிழ் (Tamil)</SelectItem>
+                <SelectItem value="te">తెలుగు (Telugu)</SelectItem>
+                <SelectItem value="bn">বাংলা (Bengali)</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
           <Separator />
@@ -261,38 +184,34 @@ export function Preferences() {
             <label 
               htmlFor="timezone"
               style={{ 
-                fontSize: 'var(--text-sm)', 
+                fontSize: 'var(--text-base)', 
                 fontWeight: 'var(--font-weight-medium)',
                 color: 'var(--color-text-primary)',
                 display: 'block',
-                marginBottom: 'var(--spacing-2)'
+                marginBottom: '8px'
               }}
             >
               Time Zone
             </label>
-            <select
-              id="timezone"
+            <Select
               value={preferences.timezone}
-              onChange={(e) => handlePreferenceChange('timezone', e.target.value)}
-              style={{
-                width: '100%',
-                padding: 'var(--spacing-2) var(--spacing-3)',
-                borderRadius: 'var(--ikan-component-border-radius)',
-                border: '1px solid var(--color-border-default)',
-                backgroundColor: 'var(--color-bg-input)',
-                fontSize: 'var(--text-sm)',
-                fontFamily: 'var(--font-family-base)',
-                fontWeight: 'var(--font-weight-regular)',
-                color: 'var(--color-text-primary)'
-              }}
+              onValueChange={(value) => handlePreferenceChange('timezone', value)}
             >
-              <option value="Asia/Kolkata">Asia/Kolkata (IST)</option>
-              <option value="America/New_York">America/New York (EST)</option>
-              <option value="Europe/London">Europe/London (GMT)</option>
-              <option value="Asia/Dubai">Asia/Dubai (GST)</option>
-              <option value="Asia/Singapore">Asia/Singapore (SGT)</option>
-              <option value="Australia/Sydney">Australia/Sydney (AEDT)</option>
-            </select>
+              <SelectTrigger className="w-full bg-[#f5f5f5] border-[rgba(0,0,0,0.1)] rounded-[12px] h-[56px] text-[#717182]">
+                <div className="flex items-center gap-3">
+                  <Icon name="clock" size={16} className="text-[#717182]" />
+                  <SelectValue placeholder="Select timezone" />
+                </div>
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="Asia/Kolkata">Asia/Kolkata (IST)</SelectItem>
+                <SelectItem value="America/New_York">America/New York (EST)</SelectItem>
+                <SelectItem value="Europe/London">Europe/London (GMT)</SelectItem>
+                <SelectItem value="Asia/Dubai">Asia/Dubai (GST)</SelectItem>
+                <SelectItem value="Asia/Singapore">Asia/Singapore (SGT)</SelectItem>
+                <SelectItem value="Australia/Sydney">Australia/Sydney (AEDT)</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
           <Separator />
@@ -301,35 +220,31 @@ export function Preferences() {
             <label 
               htmlFor="fontSize"
               style={{ 
-                fontSize: 'var(--text-sm)', 
+                fontSize: 'var(--text-base)', 
                 fontWeight: 'var(--font-weight-medium)',
                 color: 'var(--color-text-primary)',
                 display: 'block',
-                marginBottom: 'var(--spacing-2)'
+                marginBottom: '8px'
               }}
             >
               Font Size
             </label>
-            <select
-              id="fontSize"
+            <Select
               value={preferences.fontSize}
-              onChange={(e) => handlePreferenceChange('fontSize', e.target.value as 'small' | 'medium' | 'large')}
-              style={{
-                width: '100%',
-                padding: 'var(--spacing-2) var(--spacing-3)',
-                borderRadius: 'var(--ikan-component-border-radius)',
-                border: '1px solid var(--color-border-default)',
-                backgroundColor: 'var(--color-bg-input)',
-                fontSize: 'var(--text-sm)',
-                fontFamily: 'var(--font-family-base)',
-                fontWeight: 'var(--font-weight-regular)',
-                color: 'var(--color-text-primary)'
-              }}
+              onValueChange={(value) => handlePreferenceChange('fontSize', value as any)}
             >
-              <option value="small">Small</option>
-              <option value="medium">Medium</option>
-              <option value="large">Large</option>
-            </select>
+              <SelectTrigger className="w-full bg-[#f5f5f5] border-[rgba(0,0,0,0.1)] rounded-[12px] h-[56px] text-[#717182]">
+                <div className="flex items-center gap-3">
+                  <Icon name="fileText" size={16} className="text-[#717182]" />
+                  <SelectValue placeholder="Select font size" />
+                </div>
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="small">Small</SelectItem>
+                <SelectItem value="medium">Medium</SelectItem>
+                <SelectItem value="large">Large</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         </CardContent>
       </Card>
@@ -377,7 +292,7 @@ export function Preferences() {
                 fontWeight: 'var(--font-weight-medium)',
                 color: 'var(--color-text-primary)',
                 display: 'block',
-                marginBottom: 'var(--spacing-2)'
+                marginBottom: '8px'
               }}
             >
               Default View
@@ -572,34 +487,30 @@ export function Preferences() {
             <label 
               htmlFor="measurementSystem"
               style={{ 
-                fontSize: 'var(--text-sm)', 
+                fontSize: 'var(--text-base)', 
                 fontWeight: 'var(--font-weight-medium)',
                 color: 'var(--color-text-primary)',
                 display: 'block',
-                marginBottom: 'var(--spacing-2)'
+                marginBottom: '8px'
               }}
             >
               Measurement System
             </label>
-            <select
-              id="measurementSystem"
+            <Select
               value={preferences.measurementSystem}
-              onChange={(e) => handlePreferenceChange('measurementSystem', e.target.value as 'metric' | 'imperial')}
-              style={{
-                width: '100%',
-                padding: 'var(--spacing-2) var(--spacing-3)',
-                borderRadius: 'var(--ikan-component-border-radius)',
-                border: '1px solid var(--color-border-default)',
-                backgroundColor: 'var(--color-bg-input)',
-                fontSize: 'var(--text-sm)',
-                fontFamily: 'var(--font-family-base)',
-                fontWeight: 'var(--font-weight-regular)',
-                color: 'var(--color-text-primary)'
-              }}
+              onValueChange={(value) => handlePreferenceChange('measurementSystem', value as any)}
             >
-              <option value="metric">Metric (kg, cm)</option>
-              <option value="imperial">Imperial (lb, in)</option>
-            </select>
+              <SelectTrigger className="w-full bg-[#f5f5f5] border-[rgba(0,0,0,0.1)] rounded-[12px] h-[56px] text-[#717182]">
+                <div className="flex items-center gap-3">
+                  <Icon name="sliders" size={16} className="text-[#717182]" />
+                  <SelectValue placeholder="Select system" />
+                </div>
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="metric">Metric (kg, cm)</SelectItem>
+                <SelectItem value="imperial">Imperial (lb, in)</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         </CardContent>
       </Card>

@@ -1,11 +1,10 @@
 import React from 'react';
-import { Button } from '../ui/button';
-import { ResourceCard, ResourcePost } from './ResourceCard';
-import { ErrorBoundary } from '../ErrorBoundary';
-import { useIsMobile } from '../../hooks/useIsMobile';
+import { cn } from '../ui/utils';
+import { ImageWithFallback } from '../figma/ImageWithFallback';
 import { Skeleton } from '../ui/skeleton-loader';
+import { ResourcePost } from './ResourceCard'; // Keep type import
 
-interface ResourceBlockProps {
+export interface ResourceBlockProps {
   title?: string;
   description?: string;
   posts: ResourcePost[];
@@ -14,155 +13,86 @@ interface ResourceBlockProps {
   onViewAll?: () => void;
   viewAllText?: string;
   maxPosts?: number;
-  variant?: 'grid' | 'list';
   className?: string;
 }
 
-export function ResourceBlock({ 
-  title = "Our Recent Thoughts",
-  description,
-  posts,
-  loading = false,
-  onPostClick,
-  onViewAll,
-  viewAllText = "VIEW ALL",
-  maxPosts = 3,
-  variant = 'grid',
-  className
-}: ResourceBlockProps) {
-  const isMobile = useIsMobile();
-  
-  // Safety check - ensure posts is an array
-  const safePosts = Array.isArray(posts) ? posts : [];
-  const displayPosts = safePosts.slice(0, maxPosts);
-  
-  const handlePostClick = (post: ResourcePost) => {
-    if (onPostClick) {
-      onPostClick(post);
-    }
-  };
-
-  const renderSkeletons = () => (
+function ResourceCardItem({ post, onClick }: { post: ResourcePost; onClick: () => void }) {
+  return (
     <div 
-      className={variant === 'grid' ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6' : 'flex flex-col gap-6'}
-      style={{ gap: 'var(--spacing-6)' }}
+      className="bg-white h-[113px] relative rounded-[16px] shrink-0 w-full cursor-pointer transition-transform active:scale-[0.98]"
+      onClick={onClick}
     >
-      {[1, 2, 3].map((i) => (
-        <div 
-          key={i} 
-          className="p-4 rounded-xl border border-[var(--color-border-default)] bg-[var(--color-bg-card)]"
-        >
-          <div className="space-y-4 h-full flex flex-col">
-            <Skeleton height="180px" width="100%" className="rounded-lg" />
-            <div className="flex items-center gap-3">
-               <Skeleton height="16px" width="60px" />
-               <Skeleton height="16px" width="80px" />
-            </div>
-            <Skeleton height="28px" width="90%" />
-            <div className="flex-1 space-y-4">
-               <Skeleton height="16px" width="100%" />
-               <Skeleton height="16px" width="80%" />
-               <div className="pt-4 border-t border-[var(--color-border-default)]">
-                 <Skeleton height="16px" width="100px" />
-               </div>
-            </div>
+      <div aria-hidden="true" className="absolute border border-[rgba(0,0,0,0.1)] border-solid inset-0 pointer-events-none rounded-[16px]" />
+      <div className="flex flex-col justify-center size-full">
+        <div className="flex flex-col items-start justify-center p-[16px] relative size-full">
+          <div className="h-[80px] relative shrink-0 w-full">
+             
+             {/* Text Content (Right) */}
+             <div className="absolute flex flex-col gap-[4px] h-[80px] items-start left-[92px] top-0 w-[calc(100%-92px)]">
+                <div className="h-[16px] opacity-60 relative shrink-0 w-full">
+                  <p className="font-['Ubuntu',sans-serif] font-normal leading-[16px] text-[#151515] text-[12px] tracking-[0.72px] uppercase truncate">
+                    {post.category || "RESOURCE"}
+                  </p>
+                </div>
+                <div className="h-[60px] relative shrink-0 w-full overflow-hidden">
+                  <p className="font-['Ubuntu',sans-serif] font-medium leading-[20px] text-[#151515] text-[16px] line-clamp-3">
+                    {post.title}
+                  </p>
+                </div>
+             </div>
+
+             {/* Image (Left) */}
+             <div className="absolute bg-[#aeaeae] left-0 overflow-hidden rounded-[12px] size-[80px] top-0">
+                <ImageWithFallback src={post.image} alt={post.title} className="w-full h-full object-cover" />
+             </div>
+
           </div>
         </div>
-      ))}
+      </div>
     </div>
   );
+}
+
+export function ResourceBlock({ 
+  title = "Recent Thoughts", 
+  posts = [], 
+  loading = false,
+  onPostClick, 
+  maxPosts = 3,
+  className 
+}: ResourceBlockProps) {
+  
+  const displayPosts = posts.slice(0, maxPosts);
+
+  if (loading) {
+    return (
+      <div className={cn("flex flex-col gap-[16px] items-center justify-center py-[36px] w-full", className)}>
+        <Skeleton height="48px" width="200px" />
+        <div className="w-full max-w-md flex flex-col items-center gap-[16px] px-[20px]">
+          {[1, 2, 3].map(i => (
+            <Skeleton key={i} height="113px" width="100%" className="rounded-[16px]" />
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  if (displayPosts.length === 0) return null;
 
   return (
-    <ErrorBoundary>
-      <section 
-        className={`w-full ${className || ''}`}
-        style={{
-          backgroundColor: 'var(--color-bg-page)',
-          paddingTop: 'clamp(var(--spacing-8), 6vw, var(--spacing-12))',
-          paddingBottom: 'clamp(var(--spacing-8), 6vw, var(--spacing-12))'
-        }}
-      >
-        <div 
-          className="max-w-7xl mx-auto"
-          style={{ padding: '0 var(--spacing-4)' }}
-        >
-          {/* Header */}
-          <div 
-            className="flex flex-col lg:flex-row lg:items-end lg:justify-between mb-8"
-            style={{ 
-              marginBottom: 'var(--spacing-8)',
-              gap: 'var(--spacing-4)'
-            }}
-          >
-            <div>
-              <h2 
-                style={{
-                  fontSize: 'var(--text-3xl)',
-                  fontWeight: 'var(--font-weight-medium)',
-                  color: 'var(--color-text-primary)',
-                  fontFamily: 'var(--font-family-base)',
-                  marginBottom: description ? 'var(--spacing-2)' : 0
-                }}
-              >
-                {title}
-              </h2>
-              {description && (
-                <p 
-                  style={{
-                    fontSize: 'var(--text-base)',
-                    color: 'var(--color-text-muted)',
-                    fontFamily: 'var(--font-family-base)',
-                    maxWidth: '600px'
-                  }}
-                >
-                  {description}
-                </p>
-              )}
-            </div>
-            
-            {onViewAll && displayPosts.length > 0 && !loading && (
-              <Button 
-                onClick={onViewAll}
-                variant="secondary"
-                className="self-start lg:self-auto mt-4 lg:mt-0"
-                style={{
-                  backgroundColor: 'var(--color-neutral-200)',
-                  color: 'var(--color-text-muted)',
-                  height: 'var(--ikan-component-button-height)',
-                  borderRadius: 'var(--ikan-component-border-radius)'
-                }}
-              >
-                {viewAllText}
-              </Button>
-            )}
-          </div>
-
-          {/* Content */}
-          {loading ? renderSkeletons() : (
-             <>
-               {displayPosts.length === 0 ? (
-                 <div className="text-center py-12 text-[var(--color-text-muted)]">
-                   No resources available at the moment.
-                 </div>
-               ) : (
-                 <div 
-                  className={variant === 'grid' ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6' : 'flex flex-col gap-6'}
-                  style={{ gap: 'var(--spacing-6)' }}
-                >
-                  {displayPosts.map((post, index) => (
-                    <ResourceCard
-                      key={`${post.id}-${index}`}
-                      post={post}
-                      onClick={() => handlePostClick(post)}
-                      variant={index === 0 ? 'featured' : 'default'}
-                    />
-                  ))}
-                </div>
-               )}
-             </>
-          )}
-        </div>
-      </section>
-    </ErrorBoundary>
+    <div className={cn("flex flex-col gap-[16px] items-center justify-center py-[36px] w-full", className)}>
+      <p className="font-['Ubuntu',sans-serif] font-medium leading-[48px] text-[32px] text-black text-center w-full">
+        {title}
+      </p>
+      <div className="w-full max-w-md flex flex-col items-center gap-[16px] px-[20px]">
+        {displayPosts.map((post, index) => (
+          <ResourceCardItem
+            key={post.id || index}
+            post={post}
+            onClick={() => onPostClick?.(post)}
+          />
+        ))}
+      </div>
+    </div>
   );
 }
