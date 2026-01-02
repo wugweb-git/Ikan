@@ -35,12 +35,22 @@ export interface TableRow {
   readonly?: boolean;
 }
 
+export interface ScoringConfig {
+  enabled: boolean;
+  maxScore?: number;
+  weights?: number[]; // For MCQs, corresponds to options index
+  correctIndex?: number; // Simplified correct answer tracking
+}
+
 export interface ExerciseConfig {
   subtype?: 'multi-select' | 'single-select' | 'mcq' | 'table' | 'ephemeral-journal' | 'structured-list' | 'clinical_instrument';
   prompt?: string;
   options?: string[];
   questions?: string[]; // For clinical instruments
   scale?: { label: string; value: number }[]; // For clinical instruments
+  columns?: string[]; // Simple config for tables
+  rows?: string[];    // Simple config for tables/matrix
+  allow_add_rows?: boolean;
   correctAnswer?: string | string[];
   allCorrect?: boolean;
   tableColumns?: TableColumn[];
@@ -50,6 +60,7 @@ export interface ExerciseConfig {
   progressive?: boolean;
   listItems?: string[];
   editable?: boolean;
+  scoring?: ScoringConfig;
 }
 
 export interface Activity {

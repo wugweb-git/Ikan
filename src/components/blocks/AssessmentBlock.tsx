@@ -138,8 +138,8 @@ export function AssessmentBlock({
                 style={{
                   backgroundColor: 'var(--color-neutral-200)',
                   color: 'var(--color-text-muted)',
-                  height: '48px',
-                  borderRadius: 'var(--radius-sm)'
+                  height: 'var(--ikan-component-button-height)',
+                  borderRadius: 'var(--ikan-component-border-radius)'
                 }}
               >
                 {seeMoreText}
@@ -263,8 +263,8 @@ export function AssessmentBlock({
                                 style={{
                                   backgroundColor: 'var(--color-accent-default)',
                                   color: 'var(--color-accent-on)',
-                                  height: '48px',
-                                  borderRadius: 'var(--radius-sm)',
+                                  height: 'var(--ikan-component-button-height)',
+                                  borderRadius: 'var(--ikan-component-border-radius)',
                                   paddingLeft: 'var(--spacing-6)',
                                   paddingRight: 'var(--spacing-6)'
                                 }}
@@ -403,8 +403,8 @@ export function AssessmentBlock({
                                   style={{
                                     backgroundColor: 'var(--color-accent-default)',
                                     color: 'var(--color-accent-on)',
-                                    height: '48px',
-                                    borderRadius: 'var(--radius-sm)',
+                                    height: 'var(--ikan-component-button-height)',
+                                    borderRadius: 'var(--ikan-component-border-radius)',
                                     paddingLeft: 'var(--spacing-6)',
                                     paddingRight: 'var(--spacing-6)'
                                   }}

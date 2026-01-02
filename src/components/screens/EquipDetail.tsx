@@ -168,18 +168,6 @@ export function EquipDetail({ equipId = 'sleep-tight-9', onNavigate }: EquipDeta
       } catch (err) {
         console.error('Error fetching equip program data:', err);
         
-        // Fallback for Sleep Tight if API fails (or if program not found in DB yet)
-        if (equipId === 'sleep-tight-9') {
-            const content = getEquipProgramContent('sleep-tight-9');
-            if (content) {
-                setEquipData({
-                    id: content.id,
-                    ...SLEEP_TIGHT_FALLBACK
-                });
-                return;
-            }
-        }
-
         // If specific program not found, show error state rather than fallback "Sleep Tight"
         // This prevents confusion when viewing a deleted or non-existent program
         setEquipData(null); 

@@ -20,7 +20,7 @@ export function AdminWidget({ onNavigate }: AdminWidgetProps) {
       <Button 
         variant="default" 
         size="icon" 
-        className="h-12 w-12 rounded-full shadow-lg bg-gray-900 hover:bg-gray-800 text-white border-2 border-white/20 transition-transform hover:scale-105"
+        className="h-12 w-12 rounded-full shadow-lg bg-gray-900 hover:bg-gray-800 text-white border-2 border-white/20 transition-transform hover:scale-105 max-[850px]:hidden"
         aria-label="Open Admin Console"
         onClick={handleClick}
       >

@@ -12,6 +12,7 @@ export type FieldType =
   | 'text_list' 
   | 'row_list' 
   | 'matrix'
+  | 'scale' // NEW: Explicit scale type
   | 'info'; // For static content within a step
 
 export interface WizardOption {
@@ -35,6 +36,9 @@ export interface FieldValidation {
 
 export type UIHint = 'cards' | 'inline' | 'modal' | 'full-width' | 'compact';
 
+export type QuestionIntent = 'scored' | 'informational';
+export type DisplayStyle = 'inline' | 'cards' | 'one-per-screen';
+
 export interface WizardFieldConfig {
   id: string; // Acts as the stable "key"
   type: FieldType; // Acts as "dataType"
@@ -43,6 +47,9 @@ export interface WizardFieldConfig {
   description?: string; // Rich text description
   placeholder?: string;
   
+  intent?: QuestionIntent; // Read-only intent: 'scored' (Assessment) vs 'informational' (Onboarding)
+  displayStyle?: DisplayStyle; // Visual style override
+
   options?: WizardOption[]; // For select types
   validation?: FieldValidation; // Acts as "constraints"
   
@@ -50,6 +57,10 @@ export interface WizardFieldConfig {
   hidden?: boolean;
   autoAdvance?: boolean;
   uiHints?: UIHint[];
+  
+  // Content Enhancements
+  media?: StepMedia; // Image/Video for this specific field/block
+  duration?: number; // Estimated time in minutes
   
   // For row_list
   rowSchema?: WizardFieldConfig[];
@@ -74,7 +85,7 @@ export interface StepRules {
 }
 
 export interface StepMedia {
-  type: 'image' | 'icon' | 'illustration';
+  type: 'image' | 'video' | 'icon' | 'illustration'; // Added 'video'
   url?: string;
   name?: string; // For icons
   alt?: string;
@@ -112,12 +123,15 @@ export interface WizardStepConfig {
 export type WizardMode = 'assessment' | 'equip_onboarding' | 'equip_daily';
 export type CompletionBehavior = 'score' | 'summary' | 'redirect';
 
+export type WizardLayout = 'standard' | 'centered' | 'split';
+
 export interface WizardConfig {
   id: string;
   title: string;
   description?: string;
   
   mode?: WizardMode;
+  layout?: WizardLayout; // NEW: Layout preference
   completionBehavior?: CompletionBehavior;
   
   steps: WizardStepConfig[];
@@ -130,6 +144,7 @@ export interface WizardConfig {
 export interface WizardProps {
   config: WizardConfig;
   initialData?: Record<string, any>;
+  context?: Record<string, any>; // Read-only context for substitution
   initialStepIndex?: number;
   onComplete?: (results: Record<string, any>) => void;
   onSave?: (state: WizardState) => void;

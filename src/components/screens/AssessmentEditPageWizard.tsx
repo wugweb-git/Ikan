@@ -14,8 +14,6 @@ import { Card, CardContent } from '../ui/card';
 import { ImageUpload } from '../ui/image-upload';
 import { WizardLayout } from '../ui/wizard-layout';
 import { WizardStep } from '../ui/wizard-stepper';
-import { QuestionCard } from '../ui/question-card';
-import { AssessmentQuestionsManager } from './AssessmentQuestionsManager';
 import { AssessmentResultsManager } from './AssessmentResultsManager';
 import { AssessmentLandingPageRichTextEditor } from './AssessmentLandingPageRichTextEditor';
 import { UnifiedBasicInfoForm } from '../admin/UnifiedBasicInfoForm';
@@ -24,49 +22,57 @@ import { validateUrl } from '../../lib/validation';
 import { useUnsavedChanges } from '../../hooks/useUnsavedChanges';
 import { UnsavedChangesDialog } from '../ui/unsaved-changes-dialog';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '../ui/dialog';
-import { AssessmentQuestionsPanel } from '../admin/AssessmentQuestionsPanel';
+import { DndProvider } from 'react-dnd';
+import { HTML5Backend } from 'react-dnd-html5-backend';
+import { EquipDailyEditor as DailyBuilder } from './EquipDailyEditor';
+import { DayContent, Activity } from '../../lib/equip-admin-types';
 
-export interface Question {
-  id: string;
-  text: string;
-  richText?: string;
-  type: 'multiple-choice' | 'scale' | 'text' | 'true-false' | 'dropdown' | 'mcq-icons' | 'rich-text' | 'timed';
-  options?: string[];
-  optionIcons?: string[];
-  optionImages?: string[];
-  scaleMin?: number;
-  scaleMax?: number;
-  scaleLabels?: { min?: string; max?: string; mid?: string };
-  required: boolean;
-  icon?: string;
-  placeholder?: string;
-  maxLength?: number;
-  timeLimit?: number;
-  allowMultiple?: boolean;
-  description?: string;
-  stepGroup?: string; // For multi-field steps
-  autoAdvance?: boolean; // For auto-navigation
-  styling?: {
-    textColor?: string;
-    backgroundColor?: string;
-    fontSize?: 'sm' | 'base' | 'lg' | 'xl';
-    fontWeight?: 'normal' | 'medium';
-    backgroundImage?: string;
-    iconColor?: string;
-    borderColor?: string;
-    borderRadius?: 'sm' | 'md' | 'lg';
+// Adapter to convert legacy Question[] to Block[] (Activity[])
+const convertQuestionsToDay = (questions: any[]): DayContent => {
+  return {
+    day: 1,
+    title: 'Assessment Content',
+    dayType: 'lesson', // Default, doesn't matter much for assessment mode
+    activities: questions.map((q, idx) => ({
+      id: q.id || `block-${idx}`,
+      title: q.text || 'Untitled Question',
+      type: 'exercise', // Assessments are mostly exercises
+      duration: q.timeLimit || 2,
+      required: q.required !== false,
+      autoAdvance: q.autoAdvance,
+      stepGroup: q.stepGroup,
+      image_url: q.icon || q.imageUrl, // Map icon to image_url for now
+      content: '', // Not used for exercise usually
+      exerciseConfig: {
+        subtype: q.type === 'multiple-choice' ? 'mcq' : 
+                 q.type === 'scale' ? 'single-select' : 
+                 q.type === 'text' ? 'text' : 'mcq',
+        prompt: q.text,
+        options: q.options || [],
+        scoring: {
+           enabled: true, // Auto-enable scoring for imported questions
+           weights: [], // Legacy questions might not have weights
+        }
+      }
+    }))
   };
-}
+};
+
+// Adapter to convert Block[] back to legacy Question[] if needed
+// Or ideally we start saving as daily_content if backend allows. 
+// For this refactor, we will maintain the internal state as DayContent[] 
+// but mapped back to 'questions' for the 'formData' state to keep compatible with the rest of the file.
 
 export interface Assessment {
   id: string;
   title: string;
   description: string;
-  category: string; // Dynamic
-  filter_type?: string; // e.g. quiz, survey, assessment
+  category: string; 
+  filter_type?: string; 
   duration: number;
   difficulty: 'beginner' | 'intermediate' | 'advanced';
-  questions: Question[];
+  questions: any[]; // relaxed type
+  daily_content?: DayContent[]; // New unified field
   scoringMethod?: 'sum' | 'average' | 'custom';
   resultCategories?: Array<{ min: number; max: number; label: string; description: string }>;
   published: boolean;
@@ -138,6 +144,7 @@ export function AssessmentEditPageWizard({ assessmentId, onBack, onSave }: Asses
   const [saving, setSaving] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [currentStep, setCurrentStep] = useState(0);
+  const [localAssessmentId, setLocalAssessmentId] = useState(assessmentId);
   const [dynamicCategoryOptions, setDynamicCategoryOptions] = useState(categoryOptions);
 
   useEffect(() => {
@@ -267,16 +274,28 @@ export function AssessmentEditPageWizard({ assessmentId, onBack, onSave }: Asses
   }, [formData]);
 
   useEffect(() => {
-    if (assessmentId) {
+    if (localAssessmentId) {
       loadAssessment();
     }
-  }, [assessmentId]);
+  }, [localAssessmentId]);
 
   const loadAssessment = async () => {
     try {
       setLoading(true);
-      const data = await apiClient.getAssessment(assessmentId!);
+      const data = await apiClient.getAssessment(localAssessmentId!);
       if (data && typeof data === 'object') {
+        // CONVERSION LOGIC: Legacy Questions -> Daily Content
+        if (!data.daily_content && data.questions && data.questions.length > 0) {
+            data.daily_content = [convertQuestionsToDay(data.questions)];
+        } else if (!data.daily_content) {
+            data.daily_content = [{
+                day: 1, 
+                title: 'Assessment', 
+                description: 'Generated Day', 
+                dayType: 'lesson', 
+                activities: []
+            }];
+        }
         setFormData(data);
       } else {
         showToast('error', 'Error', 'Invalid assessment data format');
@@ -289,55 +308,94 @@ export function AssessmentEditPageWizard({ assessmentId, onBack, onSave }: Asses
     }
   };
 
-  const handleSave = async (shouldPublish?: boolean) => {
-    const isValid = validateForm(formData);
-    if (!isValid) {
-      showToast('error', 'Validation Error', 'Please fix the errors before saving');
-      return;
-    }
-
-    // Only enforce question requirement when publishing
-    const willBePublished = shouldPublish === true || (shouldPublish === undefined && formData.published);
-
-    if (willBePublished && (formData.questions || []).length === 0) {
-      showToast('error', 'Validation Error', 'Please add at least one question to publish');
-      return;
-    }
-
+  // Navigation saves progress. Save preserves state. Publish changes lifecycle.
+  const persistWizard = async (currentData: Partial<Assessment>, isAutoSave = false) => {
+    setSaving(true);
     try {
-      setSaving(true);
-      const dataToSave = { ...formData };
-      
-      if (shouldPublish !== undefined) {
-        dataToSave.published = shouldPublish;
-        if (shouldPublish) {
-          dataToSave.published_at = new Date().toISOString();
-        }
+      // SYNC BACK: Ensure questions field is populated for legacy compatibility if needed
+      // Map daily_content[0].activities -> questions
+      // Ideally backend should accept daily_content.
+      // But we'll sync it just in case.
+      if (currentData.daily_content && currentData.daily_content.length > 0) {
+          // This is a rough mapping back to Question format to satisfy TypeScript/Legacy
+          // Note: This might be lossy if Question schema is stricter than Block.
+          // But since we are moving to Blocks, we prioritize preserving Block data (daily_content).
+          currentData.questions = currentData.daily_content[0].activities.map(block => ({
+              id: block.id,
+              text: block.exerciseConfig?.prompt || block.title,
+              type: block.exerciseConfig?.subtype === 'mcq' ? 'multiple-choice' : 'text', // simplified
+              options: block.exerciseConfig?.options || [],
+              required: block.required,
+              timeLimit: block.duration
+          }));
       }
 
-      if (assessmentId) {
-        await apiClient.updateAssessment(assessmentId, dataToSave);
-        showToast('success', 'Success', dataToSave.published ? 'Assessment published successfully' : 'Assessment saved as draft');
+      let result;
+      if (localAssessmentId) {
+        result = await apiClient.updateAssessment(localAssessmentId, currentData);
       } else {
-        await apiClient.createAssessment(dataToSave);
-        showToast('success', 'Success', dataToSave.published ? 'Assessment published successfully' : 'Assessment created as draft');
+        result = await apiClient.createAssessment(currentData);
+        setLocalAssessmentId(result.id);
       }
-
+      
       markAsSaved();
-      onSave();
-    } catch (error: any) {
-      console.error('Failed to save assessment:', error);
-      showToast('error', 'Error', error.message || 'Failed to save assessment');
+      if (!isAutoSave) showToast('success', 'Saved', 'Changes saved successfully');
+      return true;
+    } catch (e: any) {
+      if (!isAutoSave) showToast('error', 'Error', e.message || 'Failed to save progress');
+      return false;
     } finally {
       setSaving(false);
     }
   };
 
+  const handlePublishToggle = async () => {
+    if (!localAssessmentId) {
+       showToast('error', 'Error', 'You must save the assessment before publishing.');
+       return;
+    }
+
+    setSaving(true);
+    try {
+        // 1. Fetch latest server state (Rely on persisted state)
+        const serverData = await apiClient.getAssessment(localAssessmentId);
+        
+        // Validation for Publish (on SERVER data)
+        if (!serverData.published) {
+             if ((serverData.questions || []).length === 0) {
+                 showToast('error', 'Validation Error', 'Please add at least one question to publish');
+                 setSaving(false);
+                 return;
+             }
+        }
+
+        // 2. Determine new status
+        const newStatus = !serverData.published;
+        
+        // 3. Update ONLY the lifecycle status
+        const payload = { 
+            ...serverData, 
+            published: newStatus,
+            published_at: newStatus ? new Date().toISOString() : undefined
+        };
+
+        await apiClient.updateAssessment(localAssessmentId, payload);
+        
+        // 4. Update local state to match lifecycle change only
+        setFormData(prev => ({ ...prev, published: newStatus }));
+        showToast('success', newStatus ? 'Published' : 'Unpublished', 'Assessment status updated based on last saved version.');
+    } catch (e: any) {
+        showToast('error', 'Error', e.message || 'Failed to update status');
+    } finally {
+        setSaving(false);
+    }
+  };
+
   const handleDelete = async () => {
-    if (!assessmentId) return;
+    if (!localAssessmentId) return;
     try {
       setSaving(true);
-      await apiClient.deleteAssessment(assessmentId);
+      await apiClient.deleteAssessment(localAssessmentId);
       showToast('success', 'Success', 'Assessment deleted successfully');
       onSave();
     } catch (error: any) {
@@ -428,6 +486,7 @@ export function AssessmentEditPageWizard({ assessmentId, onBack, onSave }: Asses
         status={formData.published ? 'published' : 'draft'}
         steps={wizardSteps}
         currentStep={currentStep}
+        fullWidth={currentStep === 2} // Full width for Questions editor
         onStepChange={(newStep) => {
           if (newStep > currentStep) {
             if (validateForm(formData)) setCurrentStep(newStep);
@@ -440,26 +499,37 @@ export function AssessmentEditPageWizard({ assessmentId, onBack, onSave }: Asses
           if (hasUnsavedChanges) setShowWarning(true);
           else onBack();
         }}
-        onSaveDraft={() => handleSave(false)}
-        onNext={() => {
-          if (validateForm(formData)) setCurrentStep(s => Math.min(s + 1, 3));
-          else showToast('error', 'Validation Error', 'Please complete required fields');
+        onSaveDraft={() => persistWizard(formData)}
+        onNext={async () => {
+          if (validateForm(formData)) {
+             await persistWizard(formData, true);
+             setCurrentStep(s => Math.min(s + 1, 3));
+          } else {
+             showToast('error', 'Validation Error', 'Please complete required fields');
+          }
         }}
-        onPrevious={() => setCurrentStep(s => Math.max(s - 1, 0))}
-        onFinish={() => handleSave()}
+        onPrevious={async () => {
+           await persistWizard(formData, true);
+           setCurrentStep(s => Math.max(s - 1, 0));
+        }}
+        onFinish={async () => {
+           await persistWizard(formData);
+           onSave();
+        }}
         isLoading={saving}
-        finishButtonText={assessmentId ? 'Save Changes' : 'Create Assessment'}
+        finishButtonText={localAssessmentId ? 'Save & Close' : 'Create Assessment'}
         stepTitle={wizardSteps[currentStep].title}
         stepDescription={wizardSteps[currentStep].subtitle}
         
         footerLeftContent={
-          assessmentId ? (
+          localAssessmentId ? (
             <Button
               variant="destructive"
               onClick={() => setIsDeleteDialogOpen(true)}
-              className="gap-2"
+              className="h-8 w-8 p-0 bg-red-50 text-red-600 hover:bg-red-100 hover:text-red-700 border-none shadow-none"
+              title="Delete Assessment"
             >
-              <Trash2 size={16} /> Delete
+              <Trash2 size={16} />
             </Button>
           ) : null
         }
@@ -467,18 +537,21 @@ export function AssessmentEditPageWizard({ assessmentId, onBack, onSave }: Asses
           <div className="flex items-center gap-2">
             <Button
               variant="outline"
-              onClick={() => handleSave(false)}
+              onClick={() => persistWizard(formData)}
               disabled={saving}
-              className="gap-2"
+              className="h-8 w-8 p-0"
+              title="Save Progress"
             >
-              <Save size={16} /> Save Draft
+              <Save size={16} />
             </Button>
             <Button
-              onClick={() => handleSave(!formData.published)}
-              disabled={saving}
-              className={`gap-2 ${formData.published ? 'bg-amber-600 hover:bg-amber-700' : 'bg-cyan-600 hover:bg-cyan-700'}`}
+              onClick={handlePublishToggle}
+              disabled={saving || !localAssessmentId}
+              className={`h-8 px-3 gap-2 ${formData.published ? 'bg-amber-600 hover:bg-amber-700' : 'bg-cyan-600 hover:bg-cyan-700'}`}
+              title={formData.published ? 'Unpublish' : 'Publish'}
             >
-              <Upload size={16} /> {formData.published ? 'Unpublish' : 'Publish'}
+              <Upload size={16} /> 
+              <span className="text-xs font-medium">{formData.published ? 'Unpublish' : 'Publish'}</span>
             </Button>
           </div>
         }
@@ -547,12 +620,16 @@ export function AssessmentEditPageWizard({ assessmentId, onBack, onSave }: Asses
           </div>
         )}
 
-        {/* Step 2: Questions */}
+        {/* Step 2: Questions (Unified Daily Builder) */}
         {currentStep === 2 && (
-          <AssessmentQuestionsPanel
-            questions={formData.questions || []}
-            onUpdate={(questions) => setFormData({ ...formData, questions })}
-          />
+           <DndProvider backend={HTML5Backend}>
+             <DailyBuilder
+               program={formData}
+               mode="assessment"
+               singleDayMode={true}
+               onProgramChange={(updates) => setFormData({ ...formData, ...updates })}
+             />
+           </DndProvider>
         )}
 
         {/* Step 3: Scoring & Results */}

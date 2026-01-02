@@ -1,5 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Trash2, BookOpen, Calendar, LayoutList, GripVertical, ChevronUp, ChevronDown, X, Info, Lightbulb, Save, Upload } from 'lucide-react';
+import { 
+  Plus, Trash2, BookOpen, Calendar, LayoutList, GripVertical, 
+  ChevronUp, ChevronDown, X, Info, Lightbulb, Save, Upload,
+  Settings, Copy, Search, MoreHorizontal, Clock
+} from 'lucide-react';
+import { DndProvider, useDrag, useDrop } from 'react-dnd';
+import { HTML5Backend } from 'react-dnd-html5-backend';
 import { useNotifications } from '../../contexts/NotificationContext';
 import { apiClient } from '../../lib/api-client';
 import { AdminFormField } from '../admin/AdminFormField';
@@ -19,6 +25,9 @@ import { validateUrl } from '../../lib/validation';
 import { useUnsavedChanges } from '../../hooks/useUnsavedChanges';
 import { UnsavedChangesDialog } from '../ui/unsaved-changes-dialog';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '../ui/dialog';
+import { Badge } from '../ui/badge';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '../ui/dropdown-menu';
+import { cn } from '../ui/utils';
 import { 
   EquipProgram, 
   OnboardingQuestion, 
@@ -29,7 +38,7 @@ import {
 import { EquipBlockEditor } from './EquipBlockEditor';
 import { EquipOnboardingEditor } from './EquipOnboardingEditor';
 import { EquipLandingPageRichTextEditor } from './EquipLandingPageRichTextEditor';
-import { EquipDailyEditor } from './EquipDailyEditor';
+import { EquipDailyEditor as DailyBuilder } from './EquipDailyEditor';
 import { UnifiedBasicInfoForm } from '../admin/UnifiedBasicInfoForm';
 
 interface EquipProgramWizardProps {
@@ -52,6 +61,82 @@ const difficultyOptions = [
   { value: 'intermediate', label: 'Intermediate' },
   { value: 'advanced', label: 'Advanced' }
 ];
+
+// --- MAPPING HELPERS FOR UNIFIED CONTENT SYSTEM ---
+// Converts Legacy Onboarding Questions <-> Unified Block Schema (Day 0)
+
+const mapQuestionToBlock = (q: OnboardingQuestion): Activity => {
+  const isText = q.type === 'text' || q.type === 'textarea';
+  
+  if (isText) {
+    // Map Text/Textarea to Journal Block
+    return {
+      id: q.id,
+      title: q.question, // Use question as title
+      type: 'journal',
+      content: q.helper_text || '', // Helper text as content/description
+      duration: 2,
+      required: q.required,
+      order: q.order,
+      autoAdvance: false,
+      stepGroup: undefined // Default to one per screen
+    };
+  }
+  
+  // Map Selects to Exercise Block
+  return {
+    id: q.id,
+    title: 'Question', 
+    type: 'exercise',
+    content: q.helper_text || '',
+    duration: 1,
+    required: q.required,
+    order: q.order,
+    autoAdvance: false, 
+    stepGroup: undefined,
+    exerciseConfig: {
+      // Map legacy types to exercise subtypes
+      subtype: q.type === 'single_select' ? 'single-select' : 
+               q.type === 'multi_select' ? 'multi-select' : 
+               'single-select', // Fallback
+      prompt: q.question,
+      options: q.options || []
+    }
+  };
+};
+
+const mapBlockToQuestion = (b: Activity): OnboardingQuestion => {
+  // Determine type
+  let type: OnboardingQuestion['type'] = 'single_select';
+  let questionText = b.title;
+  let options = b.exerciseConfig?.options || [];
+
+  if (b.type === 'journal') {
+    type = 'textarea';
+    questionText = b.title; // For journal, title is the question
+  } else if (b.type === 'exercise') {
+     const subtype = b.exerciseConfig?.subtype;
+     if (subtype === 'multi-select') type = 'multi_select';
+     else if (subtype === 'single-select') type = 'single_select';
+     questionText = b.exerciseConfig?.prompt || b.title;
+  }
+
+  return {
+    id: b.id,
+    order: b.order,
+    question: questionText,
+    helper_text: b.content,
+    type,
+    options,
+    allow_skip: !b.required,
+    allow_prefer_not_to_answer: false, // Not preserved in Block schema strictly, defaulting
+    required: b.required,
+    privacy_level: 'general', // Default
+    storage_scope: 'equip-only', // Default
+    editable_later: true
+  };
+};
+
 
 export function EquipProgramWizard({ programId, onBack, onSave }: EquipProgramWizardProps) {
   const { showToast } = useNotifications();
@@ -120,14 +205,16 @@ export function EquipProgramWizard({ programId, onBack, onSave }: EquipProgramWi
   const { errors, validateForm } = useFormValidation(validationSchema);
   const { hasUnsavedChanges, markAsSaved, markAsUnsaved, setShowWarning, showWarning } = useUnsavedChanges();
 
+  const [localProgramId, setLocalProgramId] = useState(programId);
+
   // Load Data
   useEffect(() => {
-    if (programId) {
+    if (localProgramId) {
       loadProgram();
     } else {
       generateDailyContent(1); // Start with 1 day for new programs
     }
-  }, [programId]);
+  }, [localProgramId]);
 
   useEffect(() => {
     if (formData.title) markAsUnsaved();
@@ -136,8 +223,23 @@ export function EquipProgramWizard({ programId, onBack, onSave }: EquipProgramWi
   const loadProgram = async () => {
     try {
       setLoading(true);
-      const data = await apiClient.getEquipProgram(programId!);
-      setFormData(prev => ({ ...prev, ...data }));
+      const data = await apiClient.getEquipProgram(localProgramId!);
+      
+      // UNIFIED SYSTEM ADAPTER:
+      // Check if Day 0 exists (Onboarding Blocks)
+      const onboardingDay = data.daily_content?.find((d: any) => d.day === 0);
+      let onboardingQuestions = data.onboarding_questions || [];
+      
+      if (onboardingDay && onboardingDay.activities && onboardingDay.activities.length > 0) {
+         // Prefer Day 0 blocks as the source of truth for One Content System
+         onboardingQuestions = onboardingDay.activities.map(mapBlockToQuestion);
+      }
+
+      setFormData(prev => ({ 
+        ...prev, 
+        ...data,
+        onboarding_questions: onboardingQuestions
+      }));
     } catch (error) {
       console.error(error);
       showToast('error', 'Failed to load', 'Could not load program data');
@@ -182,34 +284,96 @@ export function EquipProgramWizard({ programId, onBack, onSave }: EquipProgramWi
       id: 'daily',
       title: 'Daily Builder',
       status: currentStep === 3 ? 'current' : currentStep > 3 ? 'completed' : 'upcoming',
-      metadata: `${(formData.daily_content || []).length} Days`
+      metadata: `${(formData.daily_content || []).filter(d => d.day > 0).length} Days`
     }
   ];
 
-  const handleSave = async (shouldPublish?: boolean) => {
+  // Navigation saves progress. Save preserves state. Publish changes lifecycle.
+  const persistWizard = async (currentData: Partial<EquipProgram>, isAutoSave = false) => {
+    setSaving(true);
     try {
-      setSaving(true);
-      const payload = { ...formData };
-      if (shouldPublish !== undefined) {
-        payload.published = shouldPublish;
-        payload.published_at = shouldPublish ? new Date().toISOString() : undefined;
-      }
+      // UNIFIED SYSTEM ADAPTER:
+      // Convert Onboarding Questions to Blocks (Day 0)
+      const onboardingBlocks = (currentData.onboarding_questions || []).map(mapQuestionToBlock);
       
-      if (programId) {
-        await apiClient.updateEquipProgram(programId, payload);
+      const onboardingDay: DayContent = {
+         day: 0,
+         title: 'Onboarding',
+         description: 'Initial assessment',
+         dayType: 'lesson', // or 'assessment'
+         activities: onboardingBlocks
+      };
+      
+      // Merge Day 0 into daily_content
+      const existingDaily = currentData.daily_content?.filter(d => d.day !== 0) || [];
+      const unifiedDailyContent = [onboardingDay, ...existingDaily];
+      
+      const payload = {
+         ...currentData,
+         daily_content: unifiedDailyContent,
+         // We keep onboarding_questions in payload too for legacy safety/Editor compatibility 
+         // but backend should ideally prioritize daily_content
+      };
+
+      let result;
+      if (localProgramId) {
+        result = await apiClient.updateEquipProgram(localProgramId, payload);
       } else {
-        await apiClient.createEquipProgram(payload);
+        result = await apiClient.createEquipProgram(payload);
+        setLocalProgramId(result.id); 
       }
       
-      showToast('success', 'Saved', 'Program saved successfully');
       markAsSaved();
-      onSave();
+      if (!isAutoSave) showToast('success', 'Saved', 'Changes saved successfully');
+      return true;
     } catch (e) {
-      showToast('error', 'Error', 'Failed to save');
+      if (!isAutoSave) showToast('error', 'Error', 'Failed to save progress');
+      return false;
     } finally {
       setSaving(false);
     }
   };
+
+  const handlePublishToggle = async () => {
+    if (!localProgramId) {
+       showToast('error', 'Error', 'You must save the program before publishing.');
+       return;
+    }
+    
+    setSaving(true);
+    try {
+       // 1. Fetch latest server state (Rely on persisted state)
+       const serverData = await apiClient.getEquipProgram(localProgramId);
+       
+       // 2. Determine new status
+       const newStatus = !serverData.published;
+       
+       // 3. Update ONLY the lifecycle status
+       // Note: We send the whole object because the API might require it, 
+       // but we base it on serverData to avoid implicit saving of local changes.
+       const payload = { 
+           ...serverData, 
+           published: newStatus,
+           published_at: newStatus ? new Date().toISOString() : undefined
+       };
+       
+       await apiClient.updateEquipProgram(localProgramId, payload);
+       
+       // 4. Update local state to match lifecycle change only
+       setFormData(prev => ({ ...prev, published: newStatus }));
+       
+       showToast('success', newStatus ? 'Published' : 'Unpublished', 'Program status updated based on last saved version.');
+       
+       // Refresh local data to ensure we have the unified blocks if any server-side logic ran
+       loadProgram();
+       
+    } catch (e) {
+       showToast('error', 'Error', 'Failed to update status');
+    } finally {
+       setSaving(false);
+    }
+  };
+
 
   return (
     <>
@@ -218,6 +382,7 @@ export function EquipProgramWizard({ programId, onBack, onSave }: EquipProgramWi
         status={formData.published ? 'published' : 'draft'}
         steps={wizardSteps}
         currentStep={currentStep}
+        fullWidth={currentStep === 2 || currentStep === 3} // Use full width for builders
         onStepChange={(newStep) => {
           if (newStep > currentStep) {
             if (validateForm(formData)) setCurrentStep(newStep);
@@ -230,15 +395,25 @@ export function EquipProgramWizard({ programId, onBack, onSave }: EquipProgramWi
           if (hasUnsavedChanges) setShowWarning(true);
           else onBack();
         }}
-        onSaveDraft={() => handleSave(false)}
-        onNext={() => {
-          if (validateForm(formData)) setCurrentStep(s => Math.min(s + 1, 3));
-          else showToast('error', 'Validation Error', 'Please correct the errors before proceeding');
+        onSaveDraft={() => persistWizard(formData)}
+        onNext={async () => {
+          if (validateForm(formData)) {
+            await persistWizard(formData, true); // Auto-save on continue
+            setCurrentStep(s => Math.min(s + 1, 3));
+          } else {
+            showToast('error', 'Validation Error', 'Please correct the errors before proceeding');
+          }
         }}
-        onPrevious={() => setCurrentStep(s => Math.max(s - 1, 0))}
-        onFinish={() => handleSave()}
+        onPrevious={async () => {
+           await persistWizard(formData, true); // Auto-save on back
+           setCurrentStep(s => Math.max(s - 1, 0));
+        }}
+        onFinish={async () => {
+           await persistWizard(formData);
+           onSave();
+        }}
         isLoading={saving}
-        finishButtonText={programId ? 'Save Changes' : 'Create Program'}
+        finishButtonText={localProgramId ? 'Save & Close' : 'Create Program'}
         stepTitle={wizardSteps[currentStep].title}
         stepDescription={
           currentStep === 3 
@@ -246,13 +421,14 @@ export function EquipProgramWizard({ programId, onBack, onSave }: EquipProgramWi
             : "Configure program details."
         }
         footerLeftContent={
-          programId ? (
+          localProgramId ? (
             <Button
               variant="destructive"
               onClick={() => setIsDeleteDialogOpen(true)}
-              className="gap-2 bg-red-50 text-red-600 hover:bg-red-100 hover:text-red-700 border-none shadow-none"
+              className="h-8 w-8 p-0 bg-red-50 text-red-600 hover:bg-red-100 hover:text-red-700 border-none shadow-none"
+              title="Delete Program"
             >
-              <Trash2 size={16} /> Delete
+              <Trash2 size={16} />
             </Button>
           ) : null
         }
@@ -260,18 +436,21 @@ export function EquipProgramWizard({ programId, onBack, onSave }: EquipProgramWi
           <div className="flex items-center gap-2">
             <Button
               variant="outline"
-              onClick={() => handleSave(false)}
+              onClick={() => persistWizard(formData)}
               disabled={saving}
-              className="gap-2"
+              className="h-8 w-8 p-0"
+              title="Save Progress"
             >
-              <Save size={16} /> Save Draft
+              <Save size={16} />
             </Button>
             <Button
-              onClick={() => handleSave(!formData.published)}
-              disabled={saving}
-              className={`gap-2 ${formData.published ? 'bg-amber-600 hover:bg-amber-700' : 'bg-cyan-600 hover:bg-cyan-700'}`}
+              onClick={handlePublishToggle}
+              disabled={saving || !localProgramId}
+              className={`h-8 px-3 gap-2 ${formData.published ? 'bg-amber-600 hover:bg-amber-700' : 'bg-cyan-600 hover:bg-cyan-700'}`}
+              title={formData.published ? 'Unpublish' : 'Publish'}
             >
-              <Upload size={16} /> {formData.published ? 'Unpublish' : 'Publish'}
+              <Upload size={16} />
+              <span className="text-xs font-medium">{formData.published ? 'Unpublish' : 'Publish'}</span>
             </Button>
           </div>
         }
@@ -348,10 +527,14 @@ export function EquipProgramWizard({ programId, onBack, onSave }: EquipProgramWi
 
         {/* STEP 3: DAILY BUILDER */}
         {currentStep === 3 && (
-          <EquipDailyEditor
-            days={formData.daily_content || []}
-            onChange={(days) => setFormData({ ...formData, daily_content: days })}
-          />
+          <DndProvider backend={HTML5Backend}>
+            <DailyBuilder
+              program={formData}
+              mode="equip"
+              singleDayMode={false}
+              onProgramChange={(updates) => setFormData({ ...formData, ...updates })}
+            />
+          </DndProvider>
         )}
       </WizardLayout>
 

@@ -80,8 +80,8 @@ export function AssessmentSection({ onGetStarted }: AssessmentSectionProps) {
                   style={{
                     backgroundColor: 'var(--color-primary-default)',
                     color: 'var(--color-primary-on)',
-                    height: '48px',
-                    borderRadius: 'var(--radius-sm)'
+                    height: 'var(--ikan-component-button-height)',
+                    borderRadius: 'var(--ikan-component-border-radius)'
                   }}
                 >
                   {ctaText}

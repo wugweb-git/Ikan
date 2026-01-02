@@ -1,6 +1,17 @@
 import React from 'react';
-import { Check, Info, AlertCircle, Clock, FileText, Activity, Save, Eye, CheckCircle2 } from 'lucide-react';
-import { ImageWithFallback } from '../figma/ImageWithFallback';
+import { 
+  Check, 
+  AlertCircle, 
+  Clock, 
+  FileText, 
+  Activity, 
+  CheckCircle2, 
+  ClipboardList, 
+  Timer, 
+  ListTodo,
+  Brain,
+  Target
+} from 'lucide-react';
 import { cn } from '../ui/utils';
 
 // Reuse interfaces for consistency with backend data structure
@@ -50,28 +61,6 @@ interface AssessmentBentoGridProps {
   className?: string;
 }
 
-const AbstractImageTile = ({ children, className }: { children?: React.ReactNode, className?: string }) => (
-  <div className={cn("relative w-full h-full overflow-hidden bg-neutral-100", className)}>
-    {/* Abstract Background - Calm/Neutral */}
-    <div className="absolute inset-0 z-0">
-      <div className="absolute top-[-20%] left-[-20%] w-[80%] h-[80%] rounded-full bg-teal-50 blur-3xl opacity-60" />
-      <div className="absolute bottom-[-10%] right-[-10%] w-[60%] h-[60%] rounded-full bg-emerald-50 blur-3xl opacity-60" />
-      <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/subtle-white-feathers.png')] opacity-20 mix-blend-overlay" />
-    </div>
-    <div className="relative z-10 w-full h-full">
-      {children}
-    </div>
-  </div>
-);
-
-const TileLabel = ({ number }: { number: number }) => (
-  <div className="absolute top-3 right-3 px-2 py-0.5 bg-neutral-100/80 border border-neutral-200 rounded text-[10px] font-mono text-neutral-500 z-20 pointer-events-none select-none">
-    TILE {number}
-  </div>
-);
-
-const richTextClasses = "prose prose-sm md:prose-base max-w-none [&_h1]:text-2xl [&_h2]:text-xl [&_h3]:text-lg [&_p]:mb-3 [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5 [&_li]:mb-1 [&_img]:rounded-lg [&_img]:max-w-full [&_a]:text-blue-600 [&_a]:underline text-[var(--color-text-primary)]";
-
 export function AssessmentBentoGrid({
   section1,
   section2,
@@ -90,8 +79,7 @@ export function AssessmentBentoGrid({
     if (html) {
       return (
         <div 
-          className="rich-text-content"
-          style={{ fontSize: '16px', lineHeight: '24px' }}
+          className="prose prose-neutral max-w-none text-neutral-600 font-sans leading-relaxed"
           dangerouslySetInnerHTML={{ __html: html }}
         />
       );
@@ -99,7 +87,7 @@ export function AssessmentBentoGrid({
     if (textArray && textArray.length > 0) {
       const items = limit ? textArray.slice(0, limit) : textArray;
       return items.map((p, i) => (
-        <p key={i} style={{ fontSize: '16px', lineHeight: '24px' }} className="text-[#151515]">
+        <p key={i} className="text-base leading-relaxed text-neutral-600 font-sans mb-4 last:mb-0">
           {p}
         </p>
       ));
@@ -107,233 +95,169 @@ export function AssessmentBentoGrid({
     return null;
   };
 
+  // Helper to choose icon based on content keyword
+  const getMeasurementIcon = (text: string) => {
+    const lower = text.toLowerCase();
+    if (lower.includes('stress') || lower.includes('anxiety')) return Brain;
+    if (lower.includes('focus') || lower.includes('attention')) return Target;
+    if (lower.includes('time') || lower.includes('speed')) return Timer;
+    return ClipboardList;
+  };
+
+  // Common hover classes for interactive feel
+  const hoverClasses = "transition-all duration-300 ease-out hover:shadow-[0_8px_30px_rgba(0,0,0,0.12)] hover:-translate-y-1 cursor-default";
+
   return (
     <section 
-      className={cn("w-full py-12 md:py-16", className)}
-      style={{ backgroundColor: 'var(--color-bg-page)' }}
+      className={cn("w-full py-12 md:py-16 bg-[var(--color-bg-page)] font-sans", className)}
     >
       <div className="max-w-7xl mx-auto px-4 md:px-6">
         
-        {/* Mobile View: Stacked Column */}
-        <div className="flex flex-col gap-6 md:hidden">
-          
-          {/* TILE 1: What is this assessment? */}
-          <div className="bg-white rounded-2xl p-8 border border-[rgba(0,0,0,0.1)]">
-            <p style={{ fontSize: '26px', lineHeight: '24px', fontWeight: 400 }} className="text-[#151515] mb-9">
-              What is this assessment?
-            </p>
-            <div className="mb-8 space-y-6">
-              {renderContent(section2.contentHtml, section2.content ? section2.content.split('\n') : [])}
-            </div>
-            
-            {section2.bullets && section2.bullets.length > 0 && (
-              <div>
-                <p style={{ fontSize: '16px', lineHeight: '24px', fontWeight: 700 }} className="text-[#151515] mb-[17px]">
-                  What it measures
-                </p>
-                <div className="flex flex-col md:flex-row gap-3">
-                  {section2.bullets.slice(0, 3).map((bullet, idx) => (
-                    <div key={idx} className="flex items-start gap-[11.5px]">
-                      <Check className="w-[25px] h-[24px] text-[#2A2A2A] shrink-0" strokeWidth={2} />
-                      <p style={{ fontSize: '16px', lineHeight: '24px', fontWeight: 400 }} className="text-[#151515]">
-                        {bullet}
-                      </p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* TILE 2: Stats */}
-          <div className="bg-white rounded-2xl p-8 border border-[rgba(0,0,0,0.1)]">
-            <div className="space-y-[34px]">
-              <div className="flex items-start gap-[17px]">
-                <FileText className="w-[25px] h-[24px] text-[#2A2A2A] shrink-0 mt-[6px]" strokeWidth={2} />
-                <div>
-                  <p style={{ fontSize: '16px', lineHeight: '24px', fontWeight: 700 }} className="text-[#151515] mb-[6px]">
-                    Number of questions
-                  </p>
-                  <p style={{ fontSize: '16px', lineHeight: '24px', fontWeight: 400 }} className="text-[#151515]">
-                    {questionCount} questions
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-start gap-[17px]">
-                <Clock className="w-[25px] h-[24px] text-[#2A2A2A] shrink-0 mt-[6px]" strokeWidth={2} />
-                <div>
-                  <p style={{ fontSize: '16px', lineHeight: '24px', fontWeight: 700 }} className="text-[#151515] mb-[6px]">
-                    Time
-                  </p>
-                  <p style={{ fontSize: '16px', lineHeight: '24px', fontWeight: 400 }} className="text-[#151515]">
-                    {duration} min
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-start gap-[17px]">
-                <Activity className="w-[25px] h-[24px] text-[#2A2A2A] shrink-0 mt-[6px]" strokeWidth={2} />
-                <div>
-                  <p style={{ fontSize: '16px', lineHeight: '24px', fontWeight: 700 }} className="text-[#151515] mb-[6px]">
-                    Level
-                  </p>
-                  <p style={{ fontSize: '16px', lineHeight: '24px', fontWeight: 400 }} className="text-[#151515]">
-                    {difficulty}
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* TILE 3: Things to Remember */}
-          <div className="bg-white rounded-2xl p-8 border border-[rgba(0,0,0,0.1)]">
-            <p style={{ fontSize: '24px', lineHeight: '24px', fontWeight: 400 }} className="text-[#151515] mb-3">
-              Things to Remember Before You Start
-            </p>
-            <div className="flex flex-col md:grid md:grid-cols-4 gap-3 pl-5">
-              {(section4.notes || []).slice(0, 4).map((note, idx) => (
-                <div key={idx}>
-                  <p style={{ fontSize: '16px', lineHeight: '24px', fontWeight: 400 }} className="text-[#151515]" dangerouslySetInnerHTML={{ __html: note.title }} />
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* TILE 4: Important */}
-          <div className="bg-[#ededed] rounded-2xl p-8 border border-[rgba(0,0,0,0.1)]">
-            <div className="flex items-start gap-[13px] mb-3">
-              <AlertCircle className="w-[25px] h-[24px] text-[#2A2A2A] shrink-0 mt-[5px]" strokeWidth={2} />
-              <p style={{ fontSize: '24px', lineHeight: '24px', fontWeight: 400 }} className="text-[#151515]">
-                Important
-              </p>
-            </div>
-            <div className="pl-5">
-              <ul style={{ fontSize: '16px', lineHeight: '0', fontWeight: 400, listStyleType: 'disc' }} className="ml-[24px] text-[#151515]">
-                {importantNote1 && (
-                  <li className="mb-0">
-                    <span style={{ lineHeight: '24px' }}>{importantNote1}</span>
-                  </li>
-                )}
-                {importantNote2 && (
-                  <li>
-                    <span style={{ lineHeight: '24px' }}>{importantNote2}</span>
-                  </li>
-                )}
-              </ul>
-            </div>
-          </div>
-
-        </div>
-
-        {/* Desktop View: Clean 2x2 Bento Grid */}
-        <div className="hidden md:grid grid-cols-12 gap-6">
-          
-          {/* ROW 1 */}
+        {/* Responsive Grid: Reduced gap from 6 to 5 for tighter layout */}
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-5">
           
           {/* TILE 1: What is this assessment? - 8 cols */}
-          <div className="col-span-8 bg-white rounded-2xl p-8 border border-[rgba(0,0,0,0.1)]">
-            <p style={{ fontSize: '26px', lineHeight: '24px', fontWeight: 400 }} className="text-[#151515] mb-9">
-              What is this assessment?
-            </p>
-            <div className="mb-8 space-y-6">
-              {renderContent(section2.contentHtml, section2.content ? section2.content.split('\n') : [])}
+          {/* Padding set to p-8 (32px) as requested */}
+          <div className={cn("col-span-1 md:col-span-8 bg-[var(--color-bg-card)] rounded-[var(--radius-lg)] p-8 border border-[var(--color-border-default)] shadow-sm flex flex-col justify-between", hoverClasses)}>
+            
+            {/* Header & Content */}
+            <div>
+              <h2 className="text-[28px] md:text-[32px] leading-tight font-medium text-[var(--color-text-primary)] tracking-tight mb-6">
+                What is this assessment?
+              </h2>
+              <div className="mb-8 md:mb-10 text-[var(--color-text-muted)]">
+                 {renderContent(section2.contentHtml, section2.content ? section2.content.split('\n') : [])}
+              </div>
             </div>
             
+            {/* What it measures - Gray Cards */}
             {section2.bullets && section2.bullets.length > 0 && (
               <div>
-                <p style={{ fontSize: '16px', lineHeight: '24px', fontWeight: 700 }} className="text-[#151515] mb-[17px]">
+                <h3 className="text-base font-medium text-[var(--color-text-primary)] mb-4 tracking-tight text-[18px] font-bold font-normal">
                   What it measures
-                </p>
-                <div className="flex gap-6">
-                  {section2.bullets.slice(0, 3).map((bullet, idx) => (
-                    <div key={idx} className="flex items-start gap-[11.5px] flex-1">
-                      <Check className="w-[25px] h-[24px] text-[#2A2A2A] shrink-0" strokeWidth={2} />
-                      <p style={{ fontSize: '16px', lineHeight: '24px', fontWeight: 400 }} className="text-[#151515]">
-                        {bullet}
-                      </p>
-                    </div>
-                  ))}
+                </h3>
+                
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {section2.bullets.slice(0, 3).map((bullet, idx) => {
+                    const Icon = getMeasurementIcon(bullet);
+                    return (
+                      <div key={idx} className="bg-[var(--color-bg-muted)] rounded-[var(--radius-lg)] p-4 flex flex-row items-center gap-4 transition-colors hover:bg-[var(--color-neutral-200)]">
+                        <div className="w-10 h-10 rounded-full bg-[var(--color-bg-card)] flex items-center justify-center shrink-0 shadow-sm text-[var(--color-text-primary)]">
+                          <Icon className="w-5 h-5" strokeWidth={2} />
+                        </div>
+                        <p className="text-[14px] leading-snug text-[var(--color-text-primary)] font-medium line-clamp-2">
+                          {bullet}
+                        </p>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             )}
           </div>
 
-          {/* TILE 2: Stats - 4 cols */}
-          <div className="col-span-4 bg-white rounded-2xl p-8 border border-[rgba(0,0,0,0.1)]">
-            <div className="space-y-[34px]">
-              <div className="flex items-start gap-[17px]">
-                <FileText className="w-[25px] h-[24px] text-[#2A2A2A] shrink-0 mt-[6px]" strokeWidth={2} />
-                <div>
-                  <p style={{ fontSize: '16px', lineHeight: '24px', fontWeight: 700 }} className="text-[#151515] mb-[6px]">
-                    Number of questions
-                  </p>
-                  <p style={{ fontSize: '16px', lineHeight: '24px', fontWeight: 400 }} className="text-[#151515]">
-                    {questionCount} questions
-                  </p>
-                </div>
+          {/* RIGHT COLUMN - STATS (3 Separate Tiles) - 4 cols */}
+          {/* Reduced gap between stat cards */}
+          <div className="col-span-1 md:col-span-4 flex flex-col gap-3">
+            
+            {/* Card 1: Questions */}
+            {/* Padding set to p-5 (20px) as requested */}
+            <div className={cn("bg-[var(--color-bg-card)] rounded-[var(--radius-lg)] p-5 border border-[var(--color-border-default)] shadow-sm flex items-center gap-5 h-full", hoverClasses)}>
+              <div className="w-[48px] h-[48px] rounded-full bg-[var(--color-bg-muted)] flex items-center justify-center shrink-0 text-[var(--color-text-primary)] transition-transform group-hover:scale-110">
+                <ListTodo className="w-6 h-6" strokeWidth={1.5} />
               </div>
-              <div className="flex items-start gap-[17px]">
-                <Clock className="w-[25px] h-[24px] text-[#2A2A2A] shrink-0 mt-[6px]" strokeWidth={2} />
-                <div>
-                  <p style={{ fontSize: '16px', lineHeight: '24px', fontWeight: 700 }} className="text-[#151515] mb-[6px]">
-                    Time
-                  </p>
-                  <p style={{ fontSize: '16px', lineHeight: '24px', fontWeight: 400 }} className="text-[#151515]">
-                    {duration} min
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-start gap-[17px]">
-                <Activity className="w-[25px] h-[24px] text-[#2A2A2A] shrink-0 mt-[6px]" strokeWidth={2} />
-                <div>
-                  <p style={{ fontSize: '16px', lineHeight: '24px', fontWeight: 700 }} className="text-[#151515] mb-[6px]">
-                    Level
-                  </p>
-                  <p style={{ fontSize: '16px', lineHeight: '24px', fontWeight: 400 }} className="text-[#151515]">
-                    {difficulty}
-                  </p>
-                </div>
+              <div>
+                <p className="text-[16px] font-medium text-[var(--color-text-primary)] mb-0.5">
+                  Task
+                </p>
+                <p className="text-[16px] text-[var(--color-text-muted)] font-normal">
+                  {questionCount} Questions
+                </p>
               </div>
             </div>
+
+            {/* Card 2: Time */}
+            {/* Padding set to p-5 (20px) as requested */}
+            <div className={cn("bg-[var(--color-bg-card)] rounded-[var(--radius-lg)] p-5 border border-[var(--color-border-default)] shadow-sm flex items-center gap-5 h-full", hoverClasses)}>
+              <div className="w-[48px] h-[48px] rounded-full bg-[var(--color-bg-muted)] flex items-center justify-center shrink-0 text-[var(--color-text-primary)]">
+                <Timer className="w-6 h-6" strokeWidth={1.5} />
+              </div>
+              <div>
+                <p className="text-[16px] font-medium text-[var(--color-text-primary)] mb-0.5">
+                  Time
+                </p>
+                <p className="text-[16px] text-[var(--color-text-muted)] font-normal">
+                  {duration} min
+                </p>
+              </div>
+            </div>
+
+            {/* Card 3: Level */}
+            {/* Padding set to p-5 (20px) as requested */}
+            <div className={cn("bg-[var(--color-bg-card)] rounded-[var(--radius-lg)] p-5 border border-[var(--color-border-default)] shadow-sm flex items-center gap-5 h-full", hoverClasses)}>
+              <div className="w-[48px] h-[48px] rounded-full bg-[var(--color-bg-muted)] flex items-center justify-center shrink-0 text-[var(--color-text-primary)]">
+                <Activity className="w-6 h-6" strokeWidth={1.5} />
+              </div>
+              <div>
+                <p className="text-[16px] font-medium text-[var(--color-text-primary)] mb-0.5">
+                  Level
+                </p>
+                <p className="text-[16px] text-[var(--color-text-muted)] font-normal">
+                  {difficulty}
+                </p>
+              </div>
+            </div>
+            
           </div>
 
-          {/* ROW 2 */}
-
           {/* TILE 3: Things to Remember - 8 cols */}
-          <div className="col-span-8 bg-white rounded-2xl p-8 border border-[rgba(0,0,0,0.1)]">
-            <p style={{ fontSize: '24px', lineHeight: '24px', fontWeight: 400 }} className="text-[#151515] mb-6">
+          {/* Padding set to p-8 (32px) as requested */}
+          <div className={cn("col-span-1 md:col-span-8 bg-[var(--color-bg-card)] rounded-[var(--radius-lg)] p-8 border border-[var(--color-border-default)] shadow-sm", hoverClasses)}>
+            <h3 className="text-[20px] md:text-[24px] font-medium text-[var(--color-text-primary)] mb-8 tracking-tight">
               Things to Remember Before You Start
-            </p>
-            <div className="grid grid-cols-4 gap-6">
+            </h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-x-6 gap-y-6">
               {(section4.notes || []).slice(0, 4).map((note, idx) => (
-                <div key={idx} className="flex items-start gap-3">
-                  <CheckCircle2 className="w-5 h-5 text-[#717182] shrink-0 mt-0.5" strokeWidth={2} />
-                  <p style={{ fontSize: '16px', lineHeight: '24px', fontWeight: 400 }} className="text-[#717182]" dangerouslySetInnerHTML={{ __html: note.title }} />
+                <div key={idx} className="flex flex-row items-start gap-3">
+                  <div className="mt-0.5 text-[var(--color-text-muted)] shrink-0">
+                    <CheckCircle2 className="w-5 h-5" strokeWidth={1.5} />
+                  </div>
+                  <p 
+                    className="text-[15px] leading-relaxed text-[var(--color-text-primary)] font-normal" 
+                    dangerouslySetInnerHTML={{ __html: note.title }} 
+                  />
                 </div>
               ))}
             </div>
           </div>
 
           {/* TILE 4: Important - 4 cols */}
-          <div className="col-span-4 bg-[#ededed] rounded-2xl p-8 border border-[rgba(0,0,0,0.1)]">
-            <div className="flex items-start gap-[13px] mb-3">
-              <AlertCircle className="w-[25px] h-[24px] text-[#2A2A2A] shrink-0 mt-[5px]" strokeWidth={2} />
-              <p style={{ fontSize: '24px', lineHeight: '24px', fontWeight: 400 }} className="text-[#151515]">
+          {/* Padding set to p-5 (20px) as requested for right-side boxes */}
+          <div className={cn("col-span-1 md:col-span-4 bg-[var(--color-primary-default)] rounded-[var(--radius-lg)] p-5 shadow-sm text-[var(--color-primary-on)]", hoverClasses)}>
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center">
+                 <AlertCircle className="w-6 h-6 text-[var(--color-primary-on)]" strokeWidth={2} />
+              </div>
+              <h3 className="text-xl font-medium text-[var(--color-primary-on)] tracking-tight">
                 Important
-              </p>
+              </h3>
             </div>
-            <div className="pl-5">
-              <ul style={{ fontSize: '16px', lineHeight: '0', fontWeight: 400, listStyleType: 'disc' }} className="ml-[24px] text-[#151515]">
-                {importantNote1 && (
-                  <li className="mb-0">
-                    <span style={{ lineHeight: '24px' }}>{importantNote1}</span>
-                  </li>
-                )}
-                {importantNote2 && (
-                  <li>
-                    <span style={{ lineHeight: '24px' }}>{importantNote2}</span>
-                  </li>
-                )}
-              </ul>
+            <div className="space-y-4">
+              {importantNote1 && (
+                <div className="text-[15px] leading-relaxed text-neutral-200">
+                   {importantNote1}
+                </div>
+              )}
+              {importantNote2 && (
+                <div className="text-[15px] leading-relaxed text-neutral-200">
+                   {importantNote2}
+                </div>
+              )}
+              {!importantNote1 && !importantNote2 && (
+                 <p className="text-[15px] leading-relaxed text-neutral-200">
+                   This is a self-help and awareness tool, not a medical diagnosis. Not intended for emergency or crisis situations.
+                 </p>
+              )}
             </div>
           </div>
 

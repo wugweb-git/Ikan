@@ -42,6 +42,9 @@ import { registerProgressRoutes } from './progress-routes.ts';
 import { registerRecommendationRoutes } from './recommendation-routes.ts';
 import { registerAdminRoutes } from './admin-routes.ts';
 import { registerAssessmentRoutes } from './assessment-routes.ts';
+import { registerMoodRoutes } from './mood-routes.ts';
+import { registerNewsletterRoutes } from './newsletter-routes.ts';
+import { registerResourceRoutes } from './resource-routes.ts';
 
 const app = new Hono().basePath('/make-server-cc205da9');
 
@@ -65,6 +68,9 @@ app.use(
     maxAge: 600,
   }),
 );
+
+// Health check endpoint (Public)
+app.get("/health", (c) => c.json({ status: "ok", timestamp: new Date().toISOString() }));
 
 // Auth middleware for protected routes
 async function requireAuth(c: any, next: any) {
@@ -114,8 +120,11 @@ async function requireAdmin(c: any, next: any) {
 registerEquipRoutes(app, requireAuth);
 registerProgressRoutes(app, requireAuth);
 registerRecommendationRoutes(app, requireAuth);
-registerAdminRoutes(app, requireAdmin);
+registerAdminRoutes(app, requireAuth, requireAdmin);
 registerAssessmentRoutes(app, requireAuth);
+registerMoodRoutes(app, requireAuth);
+registerNewsletterRoutes(app);
+registerResourceRoutes(app, requireAuth);
 
   // CMS Public Routes
   app.get("/cms/pages/:slug", async (c) => {

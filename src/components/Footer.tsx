@@ -111,8 +111,8 @@ export function Footer({ onNavigate, className }: FooterProps) {
     <footer 
       className={cn("w-full flex-none", className)}
       style={{
-        backgroundColor: '#2A2A2A', // Dark background as requested
-        color: '#FFFFFF',
+        backgroundColor: 'var(--color-primary-default)', // Replaced hardcoded #2A2A2A
+        color: 'var(--color-primary-on)', // Replaced hardcoded #FFFFFF
         paddingTop: 'var(--spacing-8)',
         paddingBottom: 'var(--spacing-8)'
       }}
@@ -130,7 +130,7 @@ export function Footer({ onNavigate, className }: FooterProps) {
                 className="max-w-xs"
                 style={{
                   fontSize: 'var(--text-sm)',
-                  color: '#FFFFFF',
+                  color: 'var(--color-primary-on)', // Replaced #FFFFFF
                   lineHeight: '1.6',
                   fontFamily: 'var(--font-family-base)',
                   opacity: 0.8

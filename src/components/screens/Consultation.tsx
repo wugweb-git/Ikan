@@ -15,6 +15,7 @@ import { useIsMobile } from '../../hooks/useIsMobile';
 import { Skeleton } from '../ui/skeleton-loader';
 import { EmptyState } from '../ui/empty-state';
 import { TouchFeedback } from '../ui/touch-feedback';
+import { PageHero } from '../ui/PageHero';
 
 // Define Consultant type locally
 export interface Consultant {
@@ -397,32 +398,10 @@ export function Consultation({ className, onNavigate }: ConsultationProps) {
 
   return (
     <div className={cn("flex flex-col", className)} style={{ minHeight: '100vh', backgroundColor: 'var(--color-bg-page)' }}>
-      {/* Header */}
-      <motion.div 
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        style={{ 
-          backgroundColor: 'var(--color-bg-card)', 
-          padding: 'var(--spacing-6) var(--spacing-4)',
-          paddingTop: isMobile ? 'var(--spacing-6)' : '128px'
-        }}
-      >
-        <h1 style={{ 
-          fontSize: 'var(--text-3xl)', 
-          fontWeight: 'var(--font-weight-medium)',
-          marginBottom: 'var(--spacing-2)',
-          color: 'var(--color-text-primary)'
-        }}>
-          Find Your Consultant
-        </h1>
-        <p style={{ 
-          fontSize: 'var(--text-lg)', 
-          fontWeight: 'var(--font-weight-regular)',
-          color: 'var(--color-text-muted)'
-        }}>
-          Connect with experienced mental health professionals
-        </p>
-      </motion.div>
+      <PageHero 
+        title="Find Your Consultant" 
+        subtitle="Connect with experienced mental health professionals" 
+      />
 
       {/* Category Tabs */}
       <div style={{ backgroundColor: 'var(--color-bg-card)', borderBottom: '1px solid var(--color-border-default)' }}>
@@ -457,7 +436,7 @@ export function Consultation({ className, onNavigate }: ConsultationProps) {
       }}>
         {/* Search */}
         <div className="flex-1 relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-[var(--color-text-muted)]" />
           <input
             type="text"
             placeholder="Search by name, expertise..."
@@ -472,7 +451,8 @@ export function Consultation({ className, onNavigate }: ConsultationProps) {
               border: '1px solid var(--color-border-default)',
               fontSize: 'var(--text-sm)',
               fontWeight: 'var(--font-weight-regular)',
-              backgroundColor: 'var(--color-bg-input)'
+              backgroundColor: 'var(--color-bg-input)',
+              color: 'var(--color-text-primary)'
             }}
           />
         </div>

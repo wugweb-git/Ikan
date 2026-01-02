@@ -54,10 +54,8 @@ interface AssessmentFlowProps {
   className?: string;
 }
 
-import { AssessmentResults } from './AssessmentResults';
-import { Wizard } from '../wizard/Wizard';
-import { TypeformWizard } from '../wizard/TypeformWizard';
-import { mapAssessmentToWizard } from '../wizard/migration-utils';
+import { ProgramPlayer, PlayerResults } from '../player/ProgramPlayer';
+import { adaptAssessmentToProgram } from '../../lib/assessment-adapter';
 
 export function AssessmentFlow({ 
   assessmentId,
@@ -71,6 +69,7 @@ export function AssessmentFlow({
   const { user } = useAuth();
   
   const [assessment, setAssessment] = useState<Assessment | null>(initialAssessment || null);
+  const [equipProgram, setEquipProgram] = useState<any>(null); // The unified program object
   const [loading, setLoading] = useState(!initialAssessment);
   const [error, setError] = useState<string | null>(null);
 
@@ -82,6 +81,7 @@ export function AssessmentFlow({
   useEffect(() => {
     if (initialAssessment) {
       setAssessment(initialAssessment);
+      setEquipProgram(adaptAssessmentToProgram(initialAssessment as any));
       setLoading(false);
       return;
     }
@@ -110,30 +110,14 @@ export function AssessmentFlow({
         const data = await response.json();
         const fetchedAssessment = data.assessment;
 
-        console.log('🔍 DEBUG: Fetched Assessment Data:', {
-          id: fetchedAssessment.id,
-          title: fetchedAssessment.title,
-          questionsCount: fetchedAssessment.questions?.length || 0,
-          questionsRaw: fetchedAssessment.questions,
-          firstQuestion: fetchedAssessment.questions?.[0]
-        });
-
-        // ✅ NO FALLBACKS - Use actual data from database
+        // Validations...
         const questions = fetchedAssessment.questions || [];
-        
-        // If no questions, show error instead of fallback
         if (questions.length === 0) {
-          console.error('❌ Assessment has no questions!', {
-            assessmentId,
-            fetchedData: fetchedAssessment
-          });
           setError('This assessment has no questions. Please contact admin.');
           setLoading(false);
           return;
         }
 
-        // Map backend response to frontend Assessment interface if needed
-        // Assuming backend returns a compatible structure for now, but adding safety checks
         const mappedAssessment: Assessment = {
           id: fetchedAssessment.id,
           title: fetchedAssessment.title,
@@ -148,6 +132,9 @@ export function AssessmentFlow({
         };
 
         setAssessment(mappedAssessment);
+        // Convert to Unified Program
+        setEquipProgram(adaptAssessmentToProgram(mappedAssessment as any));
+
       } catch (err) {
         console.error('Error fetching assessment:', err);
         setError('Failed to load assessment. Please try again.');
@@ -170,7 +157,7 @@ export function AssessmentFlow({
   }
 
   // Error State
-  if (error || !assessment) {
+  if (error || !assessment || !equipProgram) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[400px] space-y-4 text-center p-6">
         <Icon name="alertCircle" size={48} className="text-destructive mb-2" />
@@ -197,14 +184,18 @@ export function AssessmentFlow({
     );
   }
 
-  const handleWizardComplete = async (responses: Record<string, any>) => {
+  const handlePlayerComplete = async (playerResults: PlayerResults) => {
     try {
       if (!assessment) return;
+      const responses = playerResults.responses;
 
-      // Calculate Score (Logic copied from original)
-      const numericResponses = Object.values(responses).filter(
-        response => typeof response === 'number'
-      ) as number[];
+      // Calculate Score (Legacy Logic adapted)
+      const numericResponses = Object.values(responses).map(val => {
+        if (typeof val === 'number') return val;
+        // Try parsing string to int if it looks like a number
+        if (typeof val === 'string' && !isNaN(parseInt(val))) return parseInt(val);
+        return 0;
+      });
       
       let score = 0;
       if (assessment.scoring.type === 'sum') {
@@ -219,7 +210,6 @@ export function AssessmentFlow({
         score >= range.min && score <= range.max
       ) || assessment.scoring.ranges[0];
       
-      // Calculate max possible score
       const maxScore = assessment.scoring.ranges[assessment.scoring.ranges.length - 1]?.max || 21;
       
       const results = {
@@ -251,8 +241,6 @@ export function AssessmentFlow({
       // Save to database if user is authenticated
       if (user) {
         try {
-          console.log('💾 Saving assessment results to database...');
-          
           await apiClient.saveAssessmentResponse(
             assessment.id,
             responses,
@@ -261,10 +249,7 @@ export function AssessmentFlow({
             interpretation,
             interpretation.label 
           );
-
-          console.log('✅ Assessment results saved successfully');
           
-          // Fetch personalized recommendations
           try {
             const recommendations = await apiClient.getRecommendations();
             if (recommendations && recommendations.length > 0) {
@@ -302,98 +287,15 @@ export function AssessmentFlow({
     setCalculatedResults(null);
   };
 
-  // Use the NEW Typeform Wizard
-  console.log('📊 Converting assessment to Typeform format...');
-  
-  const typeformSteps = [
-    // Intro step
-    {
-      id: 'intro',
-      type: 'intro' as const,
-      title: assessment.title,
-      description: assessment.description || 'Please answer the following questions honestly.'
-    },
-    // Question steps
-    ...assessment.questions.map((q, index) => {
-      console.log(`🔍 Question ${index + 1}:`, {
-        id: q.id,
-        text: q.text,
-        type: q.type,
-        options: q.options,
-        scaleMin: q.scaleMin,
-        scaleMax: q.scaleMax
-      });
-
-      // Map question type
-      let questionType: 'single_select' | 'multi_select' | 'text' | 'long_text' | 'scale' = 'text';
-      let options = undefined;
-
-      if (q.type === 'scale') {
-        questionType = 'scale';
-      } else if (q.type === 'single-choice') {
-        questionType = 'single_select';
-        // Convert options - handle both string[] and object[]
-        options = q.options?.map((opt: any, idx: number) => {
-          if (typeof opt === 'string') {
-            return { id: `opt_${idx}`, label: opt, value: opt };
-          }
-          return {
-            id: opt.id || `opt_${idx}`,
-            label: opt.text || opt.label || opt,
-            value: opt.value !== undefined ? opt.value : opt
-          };
-        });
-      } else if (q.type === 'multiple-choice') {
-        questionType = 'multi_select';
-        options = q.options?.map((opt: any, idx: number) => {
-          if (typeof opt === 'string') {
-            return { id: `opt_${idx}`, label: opt, value: opt };
-          }
-          return {
-            id: opt.id || `opt_${idx}`,
-            label: opt.text || opt.label || opt,
-            value: opt.value !== undefined ? opt.value : opt
-          };
-        });
-      } else if (q.type === 'text') {
-        questionType = 'long_text';
-      }
-
-      console.log(`✅ Mapped question ${index + 1}:`, { questionType, optionsCount: options?.length });
-
-      return {
-        id: `q_${index}`,
-        type: 'question' as const,
-        title: '', // Not used in question step
-        question: {
-          id: q.id,
-          text: q.text,
-          type: questionType,
-          options,
-          placeholder: q.type === 'text' ? 'Type your answer...' : undefined,
-          required: q.required !== false,
-          scaleMin: q.scaleMin,
-          scaleMax: q.scaleMax,
-          scaleLabels: q.scaleLabels
-        }
-      };
-    }),
-    // Outro step
-    {
-      id: 'outro',
-      type: 'outro' as const,
-      title: 'Thank you!',
-      description: "You've completed the assessment. We're analyzing your responses..."
-    }
-  ];
-
-  console.log('🎨 Typeform steps created:', typeformSteps.length);
-
   return (
-    <TypeformWizard
-      steps={typeformSteps}
-      onComplete={handleWizardComplete}
-      onExit={onBack}
-    />
+    <div className="fixed inset-0 bg-white z-50">
+       <ProgramPlayer
+         program={equipProgram}
+         initialDay={1}
+         onComplete={handlePlayerComplete}
+         onExit={onBack || (() => {})}
+         mode="live"
+       />
+    </div>
   );
 }

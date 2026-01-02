@@ -1,147 +1,212 @@
 import React from 'react';
-import { Card, CardHeader, CardTitle, CardContent } from '../ui/card';
-import { Badge } from '../ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../ui/card';
+import { PageHero } from '../ui/PageHero';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
 
 export function AdminComponentSpecs() {
-  const categories = {
-    'Core UI': [
-      {
-        name: 'Button',
-        props: [
-          { name: 'variant', type: "'default' | 'destructive' | 'outline' | 'secondary' | 'ghost' | 'link'", default: '"default"' },
-          { name: 'size', type: "'default' | 'sm' | 'lg' | 'icon'", default: '"default"' },
-          { name: 'asChild', type: 'boolean', default: 'false' }
-        ],
-        status: 'Stable'
-      },
-      {
-        name: 'Card',
-        props: [
-          { name: 'className', type: 'string', default: '""' },
-          { name: 'children', type: 'ReactNode', required: true }
-        ],
-        status: 'Stable'
-      }
-    ],
-    'Feature Components': [
-      {
-        name: 'AssessmentFlow',
-        description: 'Handles the step-by-step questionnaire logic.',
-        props: [
-          { name: 'assessmentId', type: 'string', required: true },
-          { name: 'onComplete', type: '(results: any) => void', required: true },
-          { name: 'onBack', type: '() => void', required: true },
-          { name: 'onNavigate', type: '(route: string) => void', required: false }
-        ],
-        status: 'Stable'
-      },
-      {
-        name: 'AssessmentResults',
-        description: 'Displays score, interpretation, and recommendations.',
-        props: [
-          { name: 'results', type: 'AssessmentResult', required: true },
-          { name: 'onRetakeAssessment', type: '() => void', required: false },
-          { name: 'onBackToAssessments', type: '() => void', required: false }
-        ],
-        status: 'Stable'
-      },
-      {
-        name: 'EquipCard',
-        description: 'Displays a program summary card.',
-        props: [
-          { name: 'program', type: 'Program', required: true },
-          { name: 'onClick', type: '() => void', required: true }
-        ],
-        status: 'Stable'
-      }
-    ],
-    'Inputs': [
-      {
-        name: 'TextArea',
-        props: [
-          { name: 'value', type: 'string', required: true },
-          { name: 'onChange', type: '(value: string) => void', required: true },
-          { name: 'maxLength', type: 'number', default: 'undefined' }
-        ],
-        status: 'Stable'
-      },
-      {
-        name: 'AssessmentQuestion',
-        props: [
-          { name: 'question', type: 'Question', required: true },
-          { name: 'value', type: 'any', required: true },
-          { name: 'onAnswer', type: '(id: string, val: any) => void', required: true }
-        ],
-        status: 'Stable'
-      }
-    ]
-  };
+  const coreSpecs = [
+    {
+      component: 'Button',
+      height: '48px',
+      radius: '12px (--radius-md)',
+      padding: '16px horizontal, 8px vertical',
+      typography: 'Ubuntu Medium 16px',
+      variants: 'Default, Secondary, Outline, Ghost, Destructive, Link'
+    },
+    {
+      component: 'Input',
+      height: '48px',
+      radius: '12px (--radius-md)',
+      padding: '12px horizontal',
+      typography: 'Ubuntu Regular 16px',
+      border: '1px solid --color-border-default',
+      states: 'Default, Focus, Error, Disabled'
+    },
+    {
+      component: 'Card',
+      radius: '16px (--radius-lg)',
+      padding: '16px (--spacing-4)',
+      shadow: '--shadow-sm (default), --shadow-md (hover)',
+      background: 'White (--color-bg-card)'
+    },
+    {
+      component: 'Toast',
+      radius: '16px (--radius-lg)',
+      shadow: '--shadow-lg',
+      position: 'Top Center',
+      animation: 'Slide In / Fade Out'
+    }
+  ];
+
+  const validationSpecs = [
+    {
+      state: 'Error',
+      visuals: 'Red border (--color-status-danger), Red text label, Error icon',
+      message: 'Explicit error message below input (12px)'
+    },
+    {
+      state: 'Success',
+      visuals: 'Green border (optional), Check icon',
+      message: 'Usually not required for inputs, but used in Alerts'
+    },
+    {
+      state: 'Warning',
+      visuals: 'Yellow border/text',
+      message: 'Non-blocking validation feedback'
+    }
+  ];
+
+  const animationSpecs = [
+    {
+      name: 'Hover',
+      duration: '150ms (--motion-duration-fast)',
+      easing: 'ease-out',
+      properties: 'background-color, border-color, shadow'
+    },
+    {
+      name: 'Focus',
+      duration: '150ms',
+      visuals: 'Ring (3px) with alpha opacity',
+      color: '--color-ring'
+    },
+    {
+      name: 'Page Transition',
+      duration: '300ms (--motion-duration-normal)',
+      type: 'Fade In + Slide Up (4px)'
+    },
+    {
+      name: 'Modal Open',
+      duration: '300ms',
+      type: 'Scale In (95% -> 100%) + Fade In'
+    }
+  ];
 
   return (
-    <div className="space-y-6">
-      <div>
-         <h2 className="text-2xl font-bold tracking-tight">Component Specifications</h2>
-         <p className="text-muted-foreground">Technical documentation, prop definitions, and status for UI components.</p>
-      </div>
+    <div className="space-y-8 pb-10">
+      <PageHero 
+        title="Component Specifications" 
+        subtitle="Technical details, constraints, and tokens for the design system."
+      />
+      
+      {/* Core Primitives */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Core Primitives</CardTitle>
+          <CardDescription>
+            These specifications are enforced via CSS variables in globals.css.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Component</TableHead>
+                <TableHead>Height</TableHead>
+                <TableHead>Radius</TableHead>
+                <TableHead>Typography</TableHead>
+                <TableHead>Notes</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {coreSpecs.map((spec) => (
+                <TableRow key={spec.component}>
+                  <TableCell className="font-medium">{spec.component}</TableCell>
+                  <TableCell>{spec.height || 'N/A'}</TableCell>
+                  <TableCell>{spec.radius}</TableCell>
+                  <TableCell>{spec.typography || 'N/A'}</TableCell>
+                  <TableCell>{spec.padding || spec.shadow || spec.variants}</TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
 
-      <Tabs defaultValue="Core UI" className="w-full">
-        <TabsList className="mb-4">
-          {Object.keys(categories).map(cat => (
-            <TabsTrigger key={cat} value={cat}>{cat}</TabsTrigger>
-          ))}
-        </TabsList>
-        
-        {Object.entries(categories).map(([category, components]) => (
-          <TabsContent key={category} value={category} className="space-y-6">
-            {components.map((comp) => (
-              <Card key={comp.name}>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <div>
-                    <CardTitle className="font-mono text-lg">{comp.name}</CardTitle>
-                    {/* @ts-ignore */}
-                    {comp.description && <p className="text-sm text-muted-foreground mt-1">{comp.description}</p>}
-                  </div>
-                  <Badge variant={comp.status === 'Stable' ? 'default' : 'secondary'}>{comp.status}</Badge>
-                </CardHeader>
-                <CardContent>
-                  <div className="mt-4">
-                    <h4 className="text-sm font-medium mb-2">Props</h4>
-                    <div className="border rounded-md overflow-hidden">
-                      <table className="w-full text-sm">
-                        <thead className="bg-muted">
-                          <tr>
-                            <th className="px-4 py-2 text-left font-medium text-muted-foreground">Name</th>
-                            <th className="px-4 py-2 text-left font-medium text-muted-foreground">Type</th>
-                            <th className="px-4 py-2 text-left font-medium text-muted-foreground">Default</th>
-                            <th className="px-4 py-2 text-left font-medium text-muted-foreground">Required</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {comp.props.map((prop) => (
-                            <tr key={prop.name} className="border-t last:border-0 hover:bg-muted/50 transition-colors">
-                              <td className="px-4 py-2 font-mono text-blue-600">{prop.name}</td>
-                              <td className="px-4 py-2 font-mono text-pink-600 text-xs">{prop.type}</td>
-                              <td className="px-4 py-2 font-mono text-gray-500 text-xs">{prop.default || '-'}</td>
-                              <td className="px-4 py-2">
-                                {prop.required ? (
-                                  <Badge variant="outline" className="text-[10px] border-red-200 text-red-700 bg-red-50">Required</Badge>
-                                ) : (
-                                  <span className="text-muted-foreground text-xs">Optional</span>
-                                )}
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </TabsContent>
-        ))}
-      </Tabs>
+      {/* Validation & States */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Validation & States</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>State</TableHead>
+                <TableHead>Visual Indicators</TableHead>
+                <TableHead>Message Pattern</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {validationSpecs.map((spec) => (
+                <TableRow key={spec.state}>
+                  <TableCell className="font-medium">{spec.state}</TableCell>
+                  <TableCell>{spec.visuals}</TableCell>
+                  <TableCell>{spec.message}</TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
+
+      {/* Animation & Motion */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Animation & Motion</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Interaction</TableHead>
+                <TableHead>Duration</TableHead>
+                <TableHead>Properties / Type</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {animationSpecs.map((spec) => (
+                <TableRow key={spec.name}>
+                  <TableCell className="font-medium">{spec.name}</TableCell>
+                  <TableCell>{spec.duration}</TableCell>
+                  <TableCell>{spec.properties || spec.type || spec.visuals}</TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
+
+      {/* Global Tokens Grid */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Global Tokens</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+            <div className="grid md:grid-cols-2 gap-4">
+                <div className="p-4 bg-[var(--color-bg-muted)] rounded-lg">
+                    <h4 className="font-medium mb-2">Spacing Scale</h4>
+                    <p className="text-sm text-muted-foreground">Base unit: 4px</p>
+                    <ul className="text-sm list-disc list-inside mt-2 space-y-1">
+                        <li>xs: 4px (--spacing-1)</li>
+                        <li>sm: 8px (--spacing-2)</li>
+                        <li>md: 16px (--spacing-4)</li>
+                        <li>lg: 24px (--spacing-6)</li>
+                        <li>xl: 32px (--spacing-8)</li>
+                    </ul>
+                </div>
+                <div className="p-4 bg-[var(--color-bg-muted)] rounded-lg">
+                    <h4 className="font-medium mb-2">Breakpoints</h4>
+                    <p className="text-sm text-muted-foreground">Mobile-first approach</p>
+                    <ul className="text-sm list-disc list-inside mt-2 space-y-1">
+                        <li>xs: 360px (Minimum support)</li>
+                        <li>sm: 640px (Tablet/Large Phone)</li>
+                        <li>md: 768px (Tablet Landscape)</li>
+                        <li>lg: 1024px (Desktop)</li>
+                    </ul>
+                </div>
+            </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }

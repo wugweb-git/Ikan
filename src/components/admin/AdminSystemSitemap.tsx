@@ -1,102 +1,78 @@
 import React from 'react';
-import { Card, CardHeader, CardTitle, CardContent } from '../ui/card';
-import { Badge } from '../ui/badge';
-import { ArrowUpRight } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
+import { PageHero } from '../ui/PageHero';
+import { Button } from '../ui/button';
+import { ExternalLink } from 'lucide-react';
 
 interface AdminSystemSitemapProps {
-  onNavigate: (route: string) => void;
+  onNavigate?: (route: string) => void;
 }
 
 export function AdminSystemSitemap({ onNavigate }: AdminSystemSitemapProps) {
-  const sitemap = [
+  const sections = [
     {
-      section: 'Public',
-      color: 'bg-green-100 text-green-800',
-      pages: [
-        { path: '/', label: 'Home / Landing' },
-        { path: '/about', label: 'About Us' },
-        { path: '/contact', label: 'Contact Support' },
-        { path: '/faq', label: 'FAQ' },
-        { path: '/privacy', label: 'Privacy Policy' },
-        { path: '/terms', label: 'Terms of Use' }
-      ]
-    },
-    {
-      section: 'Authentication',
-      color: 'bg-yellow-100 text-yellow-800',
-      pages: [
+      title: 'Public Pages',
+      routes: [
+        { path: '/', label: 'Homepage' },
         { path: '/login', label: 'Login / Sign Up' },
-        // { path: '/forgot-password', label: 'Forgot Password' }
+        { path: '/about', label: 'About Us' },
+        { path: '/contact', label: 'Contact Us' },
+        { path: '/faq', label: 'FAQ' },
+        { path: '/privacy-policy', label: 'Privacy Policy' },
+        { path: '/terms', label: 'Terms of Use' },
+        { path: '/sitemap', label: 'Sitemap' }
       ]
     },
     {
-      section: 'Core App (Protected)',
-      color: 'bg-blue-100 text-blue-800',
-      pages: [
-        { path: '/dashboard', label: 'User Dashboard' },
+      title: 'User Portal (Private)',
+      routes: [
+        { path: '/dashboard', label: 'Dashboard' },
         { path: '/mood-journal', label: 'Mood Journal' },
-        { path: '/assessment-landing', label: 'Assessments Hub' },
-        { path: '/equip-programs-landing', label: 'Equip Programs' },
-        { path: '/consultation', label: 'Consultant Booking' },
+        { path: '/assessment', label: 'Assessments' },
+        { path: '/equip', label: 'Equip Programs' },
         { path: '/resource', label: 'Resource Library' },
-        { path: '/account', label: 'Account Settings' }
+        { path: '/account', label: 'Account Settings' },
+        { path: '/consultation', label: 'Consultations' }
       ]
     },
     {
-      section: 'Flows & Sub-pages',
-      color: 'bg-purple-100 text-purple-800',
-      pages: [
-        { path: '/assessment-flow', label: 'Assessment Questionaire' },
-        { path: '/assessment-results', label: 'Assessment Results' },
-        { path: '/equip-detail', label: 'Program Details' },
-        { path: '/equip-program-onboarding', label: 'Program Onboarding' },
-        { path: '/equip-program-flow', label: 'Daily Session Flow' },
-        { path: '/consultation-detail', label: 'Consultant Profile' },
-        { path: '/resource-detail', label: 'Resource Viewer' }
-      ]
-    },
-    {
-      section: 'Admin Console',
-      color: 'bg-gray-100 text-gray-800',
-      pages: [
+      title: 'Admin Console',
+      routes: [
         { path: '/admin', label: 'Admin Dashboard' },
+        { path: '/admin/users', label: 'User Management' },
         { path: '/admin/resources', label: 'Resource Manager' },
-        { path: '/admin/users', label: 'User Manager' },
-        { path: '/admin/assessments', label: 'Assessment Builder' },
-        { path: '/admin/equip', label: 'Program Builder' },
-        { path: '/admin/analytics', label: 'System Analytics' }
+        { path: '/admin/equip', label: 'Program Manager' },
+        { path: '/admin/analytics', label: 'Analytics' }
       ]
     }
   ];
 
   return (
-    <div className="space-y-6">
-      <div>
-         <h2 className="text-2xl font-bold tracking-tight">System Sitemap</h2>
-         <p className="text-muted-foreground">Comprehensive map of all application routes, hierarchies, and access levels.</p>
-      </div>
+    <div className="space-y-8 pb-10">
+      <PageHero 
+        title="System Sitemap" 
+        subtitle="Complete map of all accessible routes in the application."
+      />
 
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        {sitemap.map((section) => (
-          <Card key={section.section} className="h-full">
-            <CardHeader className="pb-3">
-              <div className="flex justify-between items-center">
-                <CardTitle className="text-lg">{section.section}</CardTitle>
-                <Badge variant="outline" className={section.color}>{section.pages.length} Pages</Badge>
-              </div>
+      <div className="grid md:grid-cols-3 gap-6">
+        {sections.map((section) => (
+          <Card key={section.title} className="h-full">
+            <CardHeader>
+              <CardTitle>{section.title}</CardTitle>
             </CardHeader>
             <CardContent>
               <ul className="space-y-2">
-                {section.pages.map((page) => (
-                  <li 
-                    key={page.path} 
-                    className="flex items-center gap-2 text-sm group cursor-pointer hover:bg-muted p-1.5 rounded-md -mx-1.5 transition-colors"
-                    onClick={() => onNavigate(page.path)}
-                  >
-                    <div className="w-1.5 h-1.5 rounded-full bg-primary/40 group-hover:bg-primary transition-colors" />
-                    <span className="font-medium text-muted-foreground group-hover:text-foreground transition-colors">{page.label}</span>
-                    <span className="text-xs text-muted-foreground/60 ml-auto font-mono hidden group-hover:inline-block">{page.path}</span>
-                    <ArrowUpRight className="w-3 h-3 text-muted-foreground/0 group-hover:text-muted-foreground/50 transition-all" />
+                {section.routes.map((route) => (
+                  <li key={route.path}>
+                    <Button 
+                      variant="link" 
+                      className="h-auto p-0 text-base font-normal text-foreground hover:text-primary hover:no-underline flex items-center gap-2 justify-start w-full text-left"
+                      onClick={() => onNavigate?.(route.path)}
+                    >
+                      <span className="flex-1 truncate">{route.label}</span>
+                      <span className="text-xs text-muted-foreground font-mono bg-muted px-2 py-1 rounded">{route.path}</span>
+                      <ExternalLink size={14} className="text-muted-foreground" />
+                    </Button>
                   </li>
                 ))}
               </ul>

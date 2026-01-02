@@ -56,7 +56,7 @@ export function TopNavBar({ currentRoute, onNavigate, className, showAuthButtons
         backgroundColor: 'var(--color-bg-card)', 
         border: '1px solid #D1D5DB',
         zIndex: 'var(--z-nav)',
-        minWidth: 'var(--constraint-nav-desktop-min)',
+        // Removed fixed min-width to prevent overflow on smaller desktop screens
         maxWidth: 'var(--constraint-nav-desktop-max)',
         height: '88px',
         // Updated border radius as per design

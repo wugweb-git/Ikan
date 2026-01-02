@@ -17,6 +17,7 @@ import { ErrorState } from '../ui/error-state';
 import { EmptyState } from '../ui/empty-state';
 import { OptimizedImage } from '../ui/optimized-image';
 import { PullToRefresh } from '../ui/touch-feedback';
+import { PageHero } from '../ui/PageHero';
 
 import { RESOURCE_TYPES } from '../../lib/constants';
 
@@ -208,25 +209,12 @@ export function Library({ onResourceSelect, className }: LibraryProps) {
   };
 
   const content = (
-    <div className={cn("w-full max-w-7xl mx-auto px-4 py-8 space-y-8", className)}>
-      {/* Header Section */}
-      <motion.div 
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="w-full max-w-4xl space-y-4"
-      >
-        <h1 style={{ 
-          fontSize: 'var(--text-3xl)', 
-          fontWeight: 'var(--font-weight-medium)',
-          color: 'var(--color-text-primary)'
-        }}>
-          Resources
-        </h1>
-        <p className="text-lg text-[var(--ikan-color-text-muted)] max-w-2xl">
-          Gain insight into your mental and emotional health and find ways to support yourself.
-        </p>
-      </motion.div>
-
+    <div className={cn("w-full", className)}>
+      <PageHero 
+        title="Resources" 
+        subtitle="Gain insight into your mental and emotional health and find ways to support yourself." 
+      />
+      <div className="w-full max-w-7xl mx-auto px-4 py-8 space-y-8">
       <div className="flex flex-col md:flex-row gap-6 items-start md:items-center justify-between">
         {/* Search Bar */}
         <div className="w-full max-w-lg relative">
@@ -375,6 +363,7 @@ export function Library({ onResourceSelect, className }: LibraryProps) {
         {/* More Resources Section */}
         {/* Removed duplicate More Resources Section */}
       </div>
+    </div>
     </div>
   );
 

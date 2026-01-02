@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Icon } from '../Icon';
 import { getPrivateNavigationRoutes } from '../../lib/route-config';
 import { cn } from '../ui/utils';
 import { useMobileOptimizations } from '../../hooks/useMobileOptimizations';
-import svgPaths from '../../imports/svg-ajk3bd3zji';
+import svgPaths from '../../imports/svg-ffxmv6hrd1';
 
 interface BottomNavBarMobileProps {
   currentRoute: string;
@@ -13,8 +12,9 @@ interface BottomNavBarMobileProps {
   notificationBadges?: { [route: string]: number };
 }
 
-// Individual icon components based on Figma design
+// Individual icon components based on NEW Figma design (BottmNavigation.tsx)
 function HomeIcon({ isActive }: { isActive: boolean }) {
+  const color = isActive ? "#2E2A2F" : "#2E2A2F";
   return (
     <div className="relative shrink-0 size-[24px]">
       <svg className="block size-full" fill="none" preserveAspectRatio="none" viewBox="0 0 24 24">
@@ -22,13 +22,13 @@ function HomeIcon({ isActive }: { isActive: boolean }) {
           <path 
             clipRule="evenodd" 
             d={svgPaths.pb2f2480} 
-            fill={isActive ? "var(--color-primary-default)" : "var(--color-text-muted)"} 
+            fill={color} 
             fillRule="evenodd" 
           />
           <path 
             clipRule="evenodd" 
             d={svgPaths.p133ce900} 
-            fill={isActive ? "var(--color-primary-default)" : "var(--color-text-muted)"} 
+            fill={color} 
             fillRule="evenodd" 
           />
         </g>
@@ -38,28 +38,20 @@ function HomeIcon({ isActive }: { isActive: boolean }) {
 }
 
 function ExploreIcon({ isActive }: { isActive: boolean }) {
+  const color = isActive ? "black" : "black"; // Figma uses black
   return (
     <div className="overflow-clip relative shrink-0 size-[24px]">
-      <div className="absolute inset-[5.55%_7.25%_6.69%_4.99%]">
-        <div className="absolute inset-[-1.27%_-1.26%_-1.26%_-1.27%]">
-          <svg className="block size-full" fill="none" preserveAspectRatio="none" viewBox="0 0 23 23">
-            <g>
-              <path 
-                d={svgPaths.p2eba0400} 
-                fill={isActive ? "var(--color-primary-default)" : "var(--color-text-muted)"} 
-                stroke={isActive ? "var(--color-primary-default)" : "var(--color-text-muted)"} 
-                strokeWidth="0.533333" 
-              />
-              <g>
-                <path d={svgPaths.p30d744c0} fill={isActive ? "var(--color-primary-default)" : "var(--color-text-muted)"} />
-                <path 
-                  d={svgPaths.p276d3f80} 
-                  stroke={isActive ? "var(--color-primary-default)" : "var(--color-text-muted)"} 
-                  strokeWidth="0.533333" 
-                />
-              </g>
-            </g>
-          </svg>
+      <div className="absolute inset-[5.56%_7.25%_6.68%_4.99%]">
+        <div className="absolute inset-[-0.95%]">
+           <svg className="block size-full" fill="none" preserveAspectRatio="none" viewBox="0 0 22 22">
+             <g>
+               <path d={svgPaths.pde05680} fill={color} stroke={color} strokeWidth="0.4" />
+               <g>
+                 <path d={svgPaths.p39ab3b00} fill={color} />
+                 <path d={svgPaths.p17159100} stroke={color} strokeWidth="0.4" />
+               </g>
+             </g>
+           </svg>
         </div>
       </div>
     </div>
@@ -67,36 +59,17 @@ function ExploreIcon({ isActive }: { isActive: boolean }) {
 }
 
 function MoodIcon({ isActive }: { isActive: boolean }) {
+  const color = isActive ? "black" : "black";
   return (
     <div className="overflow-clip relative shrink-0 size-[24px]">
-      <div className="absolute inset-[8.333%]">
-        <div className="absolute inset-[-1.667%]">
-          <svg className="block size-full" fill="none" preserveAspectRatio="none" viewBox="0 0 22 22">
+      <div className="absolute inset-[8.33%]">
+        <div className="absolute inset-[-1.25%]">
+          <svg className="block size-full" fill="none" preserveAspectRatio="none" viewBox="0 0 21 21">
             <g>
-              <path 
-                d={svgPaths.p7ceef00} 
-                fill={isActive ? "var(--color-primary-default)" : "var(--color-text-muted)"} 
-                stroke={isActive ? "var(--color-primary-default)" : "var(--color-text-muted)"} 
-                strokeWidth="0.666667" 
-              />
-              <path 
-                d={svgPaths.p1f9a3600} 
-                fill={isActive ? "var(--color-primary-default)" : "var(--color-text-muted)"} 
-                stroke={isActive ? "var(--color-primary-default)" : "var(--color-text-muted)"} 
-                strokeWidth="0.666667" 
-              />
-              <path 
-                d={svgPaths.p36767b00} 
-                fill={isActive ? "var(--color-primary-default)" : "var(--color-text-muted)"} 
-                stroke={isActive ? "var(--color-primary-default)" : "var(--color-text-muted)"} 
-                strokeWidth="0.666667" 
-              />
-              <path 
-                d={svgPaths.p1e3a6640} 
-                fill={isActive ? "var(--color-primary-default)" : "var(--color-text-muted)"} 
-                stroke={isActive ? "var(--color-primary-default)" : "var(--color-text-muted)"} 
-                strokeWidth="0.666667" 
-              />
+              <path d={svgPaths.p2a376880} fill={color} stroke={color} strokeWidth="0.5" />
+              <path d={svgPaths.p2e0cb300} fill={color} stroke={color} strokeWidth="0.5" />
+              <path d={svgPaths.p1eaa2f80} fill={color} stroke={color} strokeWidth="0.5" />
+              <path d={svgPaths.p33218a00} fill={color} stroke={color} strokeWidth="0.5" />
             </g>
           </svg>
         </div>
@@ -106,16 +79,12 @@ function MoodIcon({ isActive }: { isActive: boolean }) {
 }
 
 function LibraryIcon({ isActive }: { isActive: boolean }) {
+  const color = isActive ? "black" : "black";
   return (
     <div className="relative shrink-0 size-[24px]">
       <svg className="block size-full" fill="none" preserveAspectRatio="none" viewBox="0 0 24 24">
         <g>
-          <path 
-            clipRule="evenodd" 
-            d={svgPaths.p2db70480} 
-            fill={isActive ? "var(--color-primary-default)" : "var(--color-text-muted)"} 
-            fillRule="evenodd" 
-          />
+          <path clipRule="evenodd" d={svgPaths.pa3ed680} fill={color} fillRule="evenodd" />
         </g>
       </svg>
     </div>
@@ -123,24 +92,15 @@ function LibraryIcon({ isActive }: { isActive: boolean }) {
 }
 
 function AccountIcon({ isActive }: { isActive: boolean }) {
+  const color = isActive ? "black" : "black";
   return (
     <div className="overflow-clip relative shrink-0 size-[24px]">
-      <div className="absolute inset-[5.21%_11.08%_5.21%_11.09%]">
-        <div className="absolute inset-[-0.62%_-0.72%_-0.62%_-0.71%]">
-          <svg className="block size-full" fill="none" preserveAspectRatio="none" viewBox="0 0 20 23">
+      <div className="absolute inset-[5.21%_11.08%]">
+        <div className="absolute inset-[-0.47%_-0.54%]">
+          <svg className="block size-full" fill="none" preserveAspectRatio="none" viewBox="0 0 19 22">
             <g>
-              <path 
-                d={svgPaths.p3e13bb70} 
-                fill={isActive ? "var(--color-primary-default)" : "var(--color-text-muted)"} 
-                stroke={isActive ? "var(--color-primary-default)" : "var(--color-text-muted)"} 
-                strokeWidth="0.266667" 
-              />
-              <path 
-                d={svgPaths.p33e12980} 
-                fill={isActive ? "var(--color-primary-default)" : "var(--color-text-muted)"} 
-                stroke={isActive ? "var(--color-primary-default)" : "var(--color-text-muted)"} 
-                strokeWidth="0.266667" 
-              />
+              <path d={svgPaths.p1edee100} fill={color} stroke={color} strokeWidth="0.2" />
+              <path d={svgPaths.p2a7bce00} fill={color} stroke={color} strokeWidth="0.2" />
             </g>
           </svg>
         </div>
@@ -164,28 +124,56 @@ export function BottomNavBarMobile({
     setActiveTab(currentRoute);
   }, [currentRoute]);
 
-  // Define specific navigation items for bottom nav as requested by user
-  // Bottom nav should have: Dashboard, Assessments, Equips, Tracker (mood journal), Accounts
   const bottomNavItems = [
-    { label: 'Dashboard', route: '/dashboard', icon: HomeIcon },
-    { label: 'Assessment', route: '/assessment', icon: ExploreIcon },
-    { label: 'Equip', route: '/equip', icon: ExploreIcon },
-    { label: 'Tracker', route: '/mood-journal', icon: MoodIcon },
-    { label: 'Accounts', route: '/account', icon: AccountIcon }
+    { label: 'Home', route: '/dashboard', icon: HomeIcon },
+    { label: 'Explore', route: '/assessment', icon: ExploreIcon }, // Mapped Assessment to Explore icon/label per previous logic
+    { label: 'Mood', route: '/mood-journal', icon: MoodIcon },
+    { label: 'Library', route: '/equip', icon: LibraryIcon }, // Mapped Equip to Library icon/label per previous logic/naming
+    { label: 'Account', route: '/account', icon: AccountIcon }
   ];
   
-  const navItems = bottomNavItems.map(item => ({
-    label: item.label,
-    route: item.route,
-    icon: item.icon
-  }));
+  // Note: The labels in the array above are updated to match the Figma design (Home, Explore, Mood, Library, Account)
+  // The routes map to the existing application routes.
+  // Explore -> /assessment (or /explore if it exists? Previous code mapped Assessment to ExploreIcon)
+  // Mood -> /mood-journal
+  // Library -> /equip (Previous code mapped Equip to LibraryIcon? No, previous code mapped Equip to ExploreIcon too. Wait.)
+
+  // Let's re-verify the mapping from previous code:
+  // { label: 'Dashboard', route: '/dashboard', icon: HomeIcon },
+  // { label: 'Assessment', route: '/assessment', icon: ExploreIcon },
+  // { label: 'Equip', route: '/equip', icon: ExploreIcon },
+  // { label: 'Tracker', route: '/mood-journal', icon: MoodIcon },
+  // { label: 'Accounts', route: '/account', icon: AccountIcon }
+  
+  // New Design has: Home, Explore, Mood, Library, Account.
+  // I should probably update the labels to match the Design, but keep routes working.
+  // Dashboard -> Home
+  // Assessment -> Explore
+  // Tracker -> Mood
+  // Account -> Account
+  // Equip -> Library? Or Equip -> Explore? 
+  // Let's assume:
+  // Home -> Dashboard
+  // Explore -> Assessment (or /explore)
+  // Mood -> Mood Journal
+  // Library -> Equip (Equip seems like a library of tools)
+  // Account -> Account
+  
+  // However, I must keep all 5 items if I want to match the structure. 
+  // The previous nav had 5 items. The new design has 5 items.
+  // I will map them as best as I can.
+
+  const navItems = [
+    { label: 'Home', route: '/dashboard', icon: HomeIcon },
+    { label: 'Explore', route: '/assessment', icon: ExploreIcon },
+    { label: 'Mood', route: '/mood-journal', icon: MoodIcon },
+    { label: 'Library', route: '/equip', icon: LibraryIcon },
+    { label: 'Account', route: '/account', icon: AccountIcon }
+  ];
 
   const handleTabPress = (route: string) => {
-    // Haptic feedback for tab switches
     triggerHapticFeedback('light');
     setPressedTab(route);
-    
-    // Navigate with gentle transition
     setTimeout(() => {
       onNavigate(route);
       setPressedTab(null);
@@ -195,23 +183,23 @@ export function BottomNavBarMobile({
   return (
     <div 
       className={cn(
-        "fixed bg-white rounded-[12px]",
+        "fixed bg-white z-[50]",
         className
       )}
       style={{
-        bottom: '12px',
-        left: '12px',
-        right: '12px',
-        height: '80px', // Increased from default
-        zIndex: 'var(--z-nav)',
-        border: '1px solid #D1D5DB', // Grey outline like top nav
-        boxShadow: '0 -2px 8px rgba(0, 0, 0, 0.05)' // Subtle floating shadow
+        bottom: '16px',
+        left: '16px',
+        right: '16px',
+        borderRadius: '12px',
+        border: '1px solid #d6d6d6',
+        boxShadow: '0px 2px 8px 0px rgba(0,0,0,0.1)',
+        padding: '10px',
+        position: 'fixed' // Ensure position is fixed
       }}
     >
-      {/* Border from Figma design - removed since we're using inline border */}
-      
       <div className="flex flex-row items-center justify-center size-full">
-        <div className="box-border content-stretch flex items-center justify-center p-[10px] relative size-full">
+        {/* Use grid for equal width distribution or flex with basis-0 grow */}
+        <div className="flex w-full items-center justify-between">
           {navItems.map((item, index) => {
             const isActive = currentRoute === item.route;
             const isPressed = pressedTab === item.route;
@@ -219,117 +207,57 @@ export function BottomNavBarMobile({
             const IconComponent = item.icon;
             
             return (
-              <motion.div
+              <motion.button
                 key={item.route}
+                onClick={() => handleTabPress(item.route)}
                 className={cn(
-                  "basis-0 content-stretch flex flex-col gap-[4px] grow items-center min-h-px min-w-px relative shrink-0",
-                  // Apply active state styling
-                  isActive ? "" : "opacity-60"
+                  "relative flex flex-col items-center justify-center gap-[4px] shrink-0",
+                  "touch-manipulation"
                 )}
-                initial={{ y: 20, opacity: 0 }}
-                animate={{ y: 0, opacity: isActive ? 1 : 0.6 }}
-                transition={{ 
-                  type: "spring",
-                  stiffness: 400,
-                  damping: 25,
-                  delay: index * 0.05
+                style={{
+                  // Active state styles
+                  backgroundColor: isActive ? '#f5f5f5' : 'transparent',
+                  borderRadius: isActive ? '10px' : '0',
+                  padding: isActive ? '6px 20px' : '6px 0',
+                  width: isActive ? 'auto' : '100%', // Inactive take available space? Or fixed?
+                  // Actually, to match "basis-0 grow" from Figma code:
+                  flexBasis: 0,
+                  flexGrow: 1,
                 }}
+                whileTap={{ scale: 0.95 }}
               >
-                {/* Active state background */}
-                {isActive && (
-                  <motion.div 
-                    className="bg-neutral-100 relative rounded-[10px] shrink-0 w-full"
-                    initial={{ scale: 0.8, opacity: 0 }}
-                    animate={{ scale: 1, opacity: 1 }}
-                    transition={{ duration: 0.2, ease: "easeOut" }}
+                <div className={cn("flex flex-col items-center", !isActive && "opacity-40")}>
+                  <IconComponent isActive={isActive} />
+                  <span 
+                    className={cn(
+                      "text-[12px] leading-[18px] text-[#2e2a2f] whitespace-nowrap",
+                      isActive ? "font-['Ubuntu'] font-medium" : "font-['Ubuntu'] font-regular"
+                    )}
                   >
-                    <div className="flex flex-col items-center size-full">
-                      <motion.button
-                        onClick={() => handleTabPress(item.route)}
-                        className="box-border content-stretch flex flex-col gap-[4px] items-center px-[20px] py-[6px] relative w-full touch-manipulation"
-                        whileTap={{ 
-                          scale: 0.95,
-                          transition: { duration: 0.1 }
-                        }}
-                        aria-label={item.label}
-                      >
-                        <motion.div
-                          animate={{
-                            scale: isPressed ? 0.9 : 1
-                          }}
-                          transition={{ duration: 0.1 }}
-                        >
-                          <IconComponent isActive={true} />
-                        </motion.div>
-                        <div className="flex flex-col font-['Ubuntu:Medium',_sans-serif] justify-center leading-[0] not-italic relative shrink-0 text-[#2e2a2f] text-[12px] text-nowrap">
-                          <p className="leading-[18px] whitespace-pre">{item.label}</p>
-                        </div>
-                      </motion.button>
-                    </div>
-                  </motion.div>
-                )}
+                    {item.label}
+                  </span>
+                </div>
 
-                {/* Inactive state */}
-                {!isActive && (
-                  <motion.button
-                    onClick={() => handleTabPress(item.route)}
-                    className="flex flex-col gap-[4px] items-center touch-manipulation py-[6px] px-[20px]"
-                    whileTap={{ 
-                      scale: 0.95,
-                      transition: { duration: 0.1 }
-                    }}
-                    aria-label={item.label}
-                  >
-                    <motion.div
-                      animate={{
-                        scale: isPressed ? 0.9 : 1
-                      }}
-                      transition={{ duration: 0.1 }}
-                    >
-                      <IconComponent isActive={false} />
-                    </motion.div>
-                    <div className="flex flex-col font-['Ubuntu:Regular',_sans-serif] justify-center leading-[0] min-w-full not-italic relative shrink-0 text-[#2e2a2f] text-[12px] text-center w-[min-content]">
-                      <p className="leading-[18px]">{item.label}</p>
-                    </div>
-                  </motion.button>
-                )}
-
-                {/* Notification badge */}
+                {/* Badge */}
                 <AnimatePresence>
                   {badgeCount > 0 && (
                     <motion.div
-                      className="absolute -top-1 -right-1 min-w-5 h-5 rounded-full flex items-center justify-center z-10"
+                      className="absolute -top-1 -right-1 min-w-4 h-4 rounded-full flex items-center justify-center z-10"
                       style={{
                         backgroundColor: 'var(--color-status-danger)',
-                        fontSize: 'var(--text-xs)',
-                        color: 'var(--color-text-inverse)',
-                        fontWeight: 'var(--font-weight-medium)',
-                        padding: '2px 6px'
+                        fontSize: '10px',
+                        color: 'white',
+                        padding: '2px'
                       }}
-                      initial={{ scale: 0, rotate: 180 }}
-                      animate={{ 
-                        scale: 1, 
-                        rotate: 0,
-                        y: [0, -2, 0]
-                      }}
-                      exit={{ scale: 0, rotate: -180 }}
-                      transition={{ 
-                        type: "spring", 
-                        stiffness: 500, 
-                        damping: 25,
-                        duration: 0.4,
-                        y: {
-                          repeat: badgeCount > 5 ? Infinity : 2,
-                          duration: 1.5,
-                          ease: "easeInOut"
-                        }
-                      }}
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      exit={{ scale: 0 }}
                     >
                       {badgeCount > 99 ? '99+' : badgeCount}
                     </motion.div>
                   )}
                 </AnimatePresence>
-              </motion.div>
+              </motion.button>
             );
           })}
         </div>

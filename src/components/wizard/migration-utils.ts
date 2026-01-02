@@ -74,19 +74,24 @@ export function mapAssessmentToWizard(assessment: any): WizardConfig {
         let options: WizardOption[] | undefined = undefined;
         let uiHints: string[] = [];
     
-        if (q.type === 'scale' || q.type === 'single-choice') {
+        if (q.type === 'scale') {
+          // Use the new native scale type
+          fieldType = 'scale';
+          
+          // Map range
+          // Note: WizardField expects range in validation.min/max, or explicit options if labels needed.
+          // But our Scale renderer in WizardField uses validation min/max to generate numbers.
+          // Labels are implicit for now or passed via options.
+          // Let's pass validation rules.
+          if (q.scaleMin !== undefined) {
+             // We can attach min/max to validation object which WizardField reads
+             // However, types.ts FieldValidation has min/max.
+          }
+        } else if (q.type === 'single-choice') {
           fieldType = 'single_select';
           uiHints = ['cards'];
           
-          if (q.scaleMin !== undefined && q.scaleMax !== undefined) {
-              options = [];
-              for (let i = q.scaleMin; i <= q.scaleMax; i++) {
-                  let label = `${i}`;
-                  if (i === q.scaleMin && q.scaleLabels?.min) label = q.scaleLabels.min;
-                  if (i === q.scaleMax && q.scaleLabels?.max) label = q.scaleLabels.max;
-                  options.push({ id: `opt_${i}`, label, value: i });
-              }
-          } else if (q.options) {
+          if (q.options) {
               // ✅ FIXED: Handle both string[] and object[] formats
               options = q.options.map((opt: any, idx: number) => {
                   // If option is a string, create structured object
@@ -144,7 +149,11 @@ export function mapAssessmentToWizard(assessment: any): WizardConfig {
           label: isMulti ? q.text : undefined, // If multi, show question text as label. If single, title covers it.
           placeholder: q.placeholder,
           options,
-          validation: { required: q.required },
+          validation: { 
+              required: q.required,
+              min: q.scaleMin,
+              max: q.scaleMax
+          },
           dependsOn: dependsOn as any,
           uiHints: uiHints as any,
           autoAdvance: q.autoAdvance // Pass configured auto-advance preference
@@ -163,6 +172,7 @@ export function mapAssessmentToWizard(assessment: any): WizardConfig {
     id: assessment.id,
     title: assessment.title,
     mode: 'assessment',
+    layout: 'centered', // Use centered layout for assessments
     showProgress: true,
     progressType: 'bar',
     steps
@@ -293,13 +303,20 @@ export function mapEquipDayToWizard(dayContent: any): WizardConfig {
         
         group.blocks.forEach((block: any) => {
              // Map Block to Field(s)
+             // Common props
+             const commonProps = {
+                 media: block.media ? { type: block.media.type, url: block.media.url, name: block.media.name } : undefined,
+                 duration: block.duration // e.g. 5 (minutes)
+             };
+
              if (block.type === 'lesson') {
                  fields.push({
                      id: block.id,
                      type: 'info',
                      label: block.title, // Info field label usually hidden or small header
                      description: block.content,
-                     uiHints: ['markdown']
+                     uiHints: ['markdown'],
+                     ...commonProps
                  });
              } else if (block.type === 'exercise') {
                  const config = block.exerciseConfig || {};
@@ -312,7 +329,8 @@ export function mapEquipDayToWizard(dayContent: any): WizardConfig {
                              label: qText,
                              validation: { required: true },
                              options: config.scale?.map((s: any) => ({ id: s.label, label: s.label, value: s.value })),
-                             uiHints: ['inline']
+                             uiHints: ['inline'],
+                             ...commonProps // Media on first q?
                          });
                      });
                  } else if (config.subtype === 'mcq' || config.subtype === 'single-select') {
@@ -322,19 +340,21 @@ export function mapEquipDayToWizard(dayContent: any): WizardConfig {
                          label: block.content || block.title,
                          options: config.options?.map((opt: string) => ({ id: opt, label: opt, value: opt })),
                          uiHints: ['cards'],
-                         autoAdvance: block.autoAdvance // Respect autoAdvance config
+                         autoAdvance: block.autoAdvance, // Respect autoAdvance config
+                         ...commonProps
                      });
                  } else {
                       fields.push({
                          id: `${block.id}_answer`,
                          type: 'long_text',
                          label: block.content || block.title,
-                         placeholder: "Type your answer here..."
+                         placeholder: "Type your answer here...",
+                         ...commonProps
                      });
                  }
              } else if (block.type === 'sleep_diary') {
                   fields.push(
-                      { id: `${block.id}_bedTime`, type: 'time', label: 'Bed Time', validation: { required: true } },
+                      { id: `${block.id}_bedTime`, type: 'time', label: 'Bed Time', validation: { required: true }, ...commonProps },
                       { id: `${block.id}_wakeTime`, type: 'time', label: 'Wake Time', validation: { required: true } },
                       { id: `${block.id}_quality`, type: 'number', label: 'Quality (1-5)', validation: { min: 1, max: 5 } }
                   );
@@ -345,7 +365,8 @@ export function mapEquipDayToWizard(dayContent: any): WizardConfig {
                       type: 'multi_select',
                       label: block.title,
                       options: items.map((item: string) => ({ id: item, label: item, value: item })),
-                      uiHints: ['cards']
+                      uiHints: ['cards'],
+                      ...commonProps
                   });
              } else if (block.type === 'reflection' || block.type === 'conclude') {
                   // If mixed in a group, treat as info or long text? 
@@ -356,7 +377,8 @@ export function mapEquipDayToWizard(dayContent: any): WizardConfig {
                           type: 'long_text',
                           label: block.title,
                           description: block.content,
-                          placeholder: "Reflect on this..."
+                          placeholder: "Reflect on this...",
+                          ...commonProps
                       });
                   } else {
                       // Conclude is usually just text
@@ -364,7 +386,8 @@ export function mapEquipDayToWizard(dayContent: any): WizardConfig {
                           id: block.id,
                           type: 'info',
                           label: block.title,
-                          description: block.content
+                          description: block.content,
+                          ...commonProps
                       });
                   }
              }

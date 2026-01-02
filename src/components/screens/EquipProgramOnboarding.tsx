@@ -12,17 +12,22 @@ import { TypeformWizard } from '../wizard/TypeformWizard';
 import { mapOnboardingToWizard } from '../wizard/migration-utils';
 import { projectId, publicAnonKey } from '../../utils/supabase/info';
 import { Icon } from '../Icon';
+import { ProgramPlayer } from '../player/ProgramPlayer';
+import { EquipProgram } from '../../lib/equip-admin-types';
 
 interface EquipOnboardingProps {
   programId?: string;
   onComplete?: (data?: any) => void;
   onBack?: () => void;
+  onNavigate?: (path: string) => void;
 }
 
-export function EquipOnboarding({ programId: propProgramId, onComplete, onBack }: EquipOnboardingProps) {
+export function EquipOnboarding({ programId: propProgramId, onComplete, onBack, onNavigate }: EquipOnboardingProps) {
   const isMobile = useIsMobile();
   const [programId, setProgramId] = useState<string>(propProgramId || '');
   const [questionSet, setQuestionSet] = useState<OnboardingQuestionSet | null>(null);
+  const [unifiedProgram, setUnifiedProgram] = useState<EquipProgram | null>(null);
+  const [hasDay0, setHasDay0] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { addNotification, showToast } = useNotifications();
@@ -75,6 +80,16 @@ export function EquipOnboarding({ programId: propProgramId, onComplete, onBack }
         const data = await response.json();
         const program = data.program;
         
+        // UNIFIED SYSTEM CHECK: Does this program have Day 0 (Onboarding Blocks)?
+        const day0 = program?.daily_content?.find((d: any) => d.day === 0);
+        if (day0 && day0.activities && day0.activities.length > 0) {
+           console.log('✅ Unified Onboarding Found (Day 0)');
+           setUnifiedProgram(program);
+           setHasDay0(true);
+           setLoading(false);
+           return;
+        }
+
         console.log('🔍 DEBUG: Fetched Program Data:', {
           programId: program?.id || program?.equip_id,
           title: program?.title,
@@ -169,7 +184,13 @@ export function EquipOnboarding({ programId: propProgramId, onComplete, onBack }
         localStorage.setItem('ikan-equip-onboarding-answers', JSON.stringify(answers));
         
         showToast('success', 'Enrollment Complete', 'Your program has been set up!');
-        onComplete?.(answers);
+        
+        if (onComplete) {
+          onComplete(answers);
+        } else if (onNavigate && slug) {
+          // Default behavior: Navigate to the program flow
+          onNavigate(`/equip-program-flow?id=${slug}`);
+        }
       } else {
         console.error('❌ No enrollment returned from server:', response);
         showToast('error', 'Enrollment Failed', 'Server did not return enrollment data.');
@@ -179,6 +200,26 @@ export function EquipOnboarding({ programId: propProgramId, onComplete, onBack }
       showToast('error', 'Enrollment Failed', error instanceof Error ? error.message : 'Please try again.');
     }
   };
+
+  // UNIFIED PLAYER RENDER
+  if (!loading && hasDay0 && unifiedProgram) {
+    return (
+      <div className="fixed inset-0 bg-white z-50">
+        <ProgramPlayer
+          program={unifiedProgram}
+          initialDay={0}
+          onComplete={(results) => {
+             // Extract simple answers map for enrollment
+             // Note: ProgramPlayer returns responses keyed by Block ID.
+             // We pass this directly.
+             submitOnboarding(results.responses);
+          }}
+          onExit={onBack || (() => {})}
+          mode="live"
+        />
+      </div>
+    );
+  }
 
   // Loading State
   if (loading) {

@@ -10,6 +10,7 @@ import { apiClient } from '../../lib/api-client';
 import { Play } from 'lucide-react';
 import { cn } from '../ui/utils';
 import { NEWSLETTER_CONTENT } from '../../lib/constants/content';
+import { PageHero } from '../ui/PageHero';
 
 interface AboutUsProps {
   onNavigate?: (route: string, resourceId?: string) => void;
@@ -100,32 +101,10 @@ export function AboutUs({ onNavigate, onGetStarted, className }: AboutUsProps) {
   return (
     <div className={`w-full ${className || ''}`} style={{ backgroundColor: 'var(--color-bg-page)' }}>
       {/* Header Section */}
-      <section className="relative w-full h-[400px] lg:h-[500px]">
-        <ImageWithFallback 
-          src={headerImage}
-          alt="About Us Header"
-          className="absolute inset-0 w-full h-full object-cover"
-        />
-        <div className="absolute inset-0 bg-black/50" />
-        <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-4">
-           <h1 
-             className="text-white mb-4 max-w-4xl"
-             style={{ 
-               fontSize: 'var(--text-4xl)', 
-               fontWeight: 'var(--font-weight-medium)',
-               fontFamily: 'var(--font-family-base)'
-             }}
-           >
-             {headerTitle}
-           </h1>
-           <p 
-             className="text-white/90 max-w-2xl text-lg"
-             style={{ fontFamily: 'var(--font-family-base)' }}
-           >
-             {headerSubtitle}
-           </p>
-        </div>
-      </section>
+      <PageHero 
+        title={headerTitle} 
+        subtitle={headerSubtitle} 
+      />
 
       {/* Content Section (CMS Powered) */}
       <section className="py-16 px-4 max-w-7xl mx-auto">

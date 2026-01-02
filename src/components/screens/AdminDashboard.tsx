@@ -1,4 +1,30 @@
+import React, { useState } from 'react';
+import { 
+  LayoutDashboard, 
+  BarChart, 
+  Users, 
+  ClipboardList, 
+  Table, 
+  Activity, 
+  BookOpen, 
+  FileJson, 
+  Tag, 
+  Smile, 
+  Settings, 
+  Database, 
+  Server, 
+  FileText, 
+  Monitor, 
+  MessageSquare, 
+  Shield, 
+  Layers, 
+  Map, 
+  Compass, 
+  Palette 
+} from 'lucide-react';
 import { cn } from '../ui/utils';
+import { Button } from '../ui/button';
+import { Card } from '../ui/card'; // Import Card component
 import { SideNav, SideNavGroup } from '../navigation/SideNav';
 import { Logo } from '../Logo';
 import { ErrorBoundary } from '../ErrorBoundary';
@@ -11,7 +37,6 @@ import { AdminEquipAnalytics } from './AdminEquipAnalytics';
 import { AdminPageManager } from './AdminPageManager';
 import { AdminMediaManager } from './AdminMediaManager';
 import { AdminUserDataManager } from './AdminUserDataManager';
-// import { AdminNewsletterManager } from './AdminNewsletterManager'; // REMOVED - File doesn't exist
 import { AdminSettingsManager } from './AdminSettingsManager';
 import { AdminDashboardAnalytics } from './AdminDashboardAnalytics';
 import { AdminCRUDTesting } from '../admin/AdminCRUDTesting';
@@ -33,6 +58,7 @@ import { AdminDebugPanel } from '../admin/AdminDebugPanel';
 import { AdminCategoryManager } from '../admin/AdminCategoryManager';
 import { AdminMoodManager } from '../admin/AdminMoodManager';
 import { RecommendationRulesManager } from '../admin/recommendations/RecommendationRulesManager';
+import { SeedDailyTracker } from '../admin/SeedDailyTracker';
 
 interface AdminDashboardProps {
   onNavigate: (path: string) => void;
@@ -69,7 +95,8 @@ type ViewType =
   | 'sitemap'
   | 'navigation'
   | 'specs'
-  | 'uikit';
+  | 'uikit'
+  | 'seed-tracker';
 
 export function AdminDashboard({ onNavigate, initialView }: AdminDashboardProps) {
   const [currentView, setCurrentView] = useState<ViewType>((initialView as ViewType) || 'dashboard');
@@ -107,6 +134,7 @@ export function AdminDashboard({ onNavigate, initialView }: AdminDashboardProps)
       title: 'Backend',
       items: [
         { id: 'crud', label: 'CRUD Testing', icon: Activity },
+        { id: 'seed-tracker', label: 'Seed Daily Tracker', icon: Database },
         { id: 'migration', label: 'Migration', icon: Database },
         { id: 'db-browser', label: 'Database Browser', icon: Server },
         { id: 'api-logs', label: 'API Logs', icon: FileText },
@@ -179,13 +207,9 @@ export function AdminDashboard({ onNavigate, initialView }: AdminDashboardProps)
             <AdminDebugPanel />
             
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-              <div 
-                className="p-6 border rounded-xl hover:shadow-md transition-shadow cursor-pointer"
-                style={{
-                  backgroundColor: 'var(--color-bg-card)',
-                  borderColor: 'var(--color-border-default)',
-                  borderRadius: 'var(--radius-lg)'
-                }}
+              {/* Refactored Dashboard Cards to use <Card> component */}
+              <Card 
+                className="p-6 cursor-pointer hover:shadow-md transition-shadow"
                 onClick={() => setCurrentView('users')}
               >
                 <div className="flex items-center gap-4">
@@ -215,15 +239,10 @@ export function AdminDashboard({ onNavigate, initialView }: AdminDashboardProps)
                     </p>
                   </div>
                 </div>
-              </div>
+              </Card>
 
-              <div 
-                className="p-6 border rounded-xl hover:shadow-md transition-shadow cursor-pointer"
-                style={{
-                  backgroundColor: 'var(--color-bg-card)',
-                  borderColor: 'var(--color-border-default)',
-                  borderRadius: 'var(--radius-lg)'
-                }}
+              <Card 
+                className="p-6 cursor-pointer hover:shadow-md transition-shadow"
                 onClick={() => setCurrentView('equip')}
               >
                 <div className="flex items-center gap-4">
@@ -253,15 +272,10 @@ export function AdminDashboard({ onNavigate, initialView }: AdminDashboardProps)
                     </p>
                   </div>
                 </div>
-              </div>
+              </Card>
 
-              <div 
-                className="p-6 border rounded-xl hover:shadow-md transition-shadow cursor-pointer"
-                style={{
-                  backgroundColor: 'var(--color-bg-card)',
-                  borderColor: 'var(--color-border-default)',
-                  borderRadius: 'var(--radius-lg)'
-                }}
+              <Card 
+                className="p-6 cursor-pointer hover:shadow-md transition-shadow"
                 onClick={() => setCurrentView('resources')}
               >
                 <div className="flex items-center gap-4">
@@ -291,15 +305,10 @@ export function AdminDashboard({ onNavigate, initialView }: AdminDashboardProps)
                     </p>
                   </div>
                 </div>
-              </div>
+              </Card>
 
-              <div 
-                className="p-6 border rounded-xl hover:shadow-md transition-shadow cursor-pointer"
-                style={{
-                  backgroundColor: 'var(--color-bg-card)',
-                  borderColor: 'var(--color-border-default)',
-                  borderRadius: 'var(--radius-lg)'
-                }}
+              <Card 
+                className="p-6 cursor-pointer hover:shadow-md transition-shadow"
                 onClick={() => setCurrentView('crud')}
               >
                 <div className="flex items-center gap-4">
@@ -329,7 +338,7 @@ export function AdminDashboard({ onNavigate, initialView }: AdminDashboardProps)
                     </p>
                   </div>
                 </div>
-              </div>
+              </Card>
             </div>
           </div>
         );
@@ -348,6 +357,7 @@ export function AdminDashboard({ onNavigate, initialView }: AdminDashboardProps)
       case 'user-data': return <AdminUserDataManager onBack={() => setCurrentView('dashboard')} />;
       case 'settings': return <AdminSettingsManager onBack={() => setCurrentView('dashboard')} />;
       case 'crud': return <AdminCRUDTesting />;
+      case 'seed-tracker': return <SeedDailyTracker />;
       case 'migration': return <AdminMigration />;
       case 'db-browser': return <AdminDatabaseBrowser />;
       case 'api-logs': return <AdminAPILogs />;
@@ -367,22 +377,22 @@ export function AdminDashboard({ onNavigate, initialView }: AdminDashboardProps)
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
-      <header className="bg-gray-900 border-b border-gray-800 h-[var(--ikan-nav-height-mobile)] md:h-[var(--ikan-nav-height-desktop)] px-6 flex items-center justify-between sticky top-0 z-20 shadow-md w-full text-white">
+    <div className="min-h-screen bg-[var(--color-bg-page)] flex flex-col">
+      <header className="bg-[var(--color-primary-default)] border-b border-[var(--color-border-light)] h-[var(--ikan-nav-height-mobile)] md:h-[var(--ikan-nav-height-desktop)] px-6 flex items-center justify-between sticky top-0 z-[60] shadow-md w-full text-[var(--color-primary-on)]">
          <div className="flex items-center gap-3">
-            <div className="bg-white rounded-full p-1">
+            <div className="bg-[var(--color-bg-card)] rounded-full p-1 text-[var(--color-primary-default)]">
               <Logo showText={false} iconSize={24} />
             </div>
-            <div className="h-6 w-px bg-gray-700 mx-2 hidden md:block"></div>
-            <span className="text-gray-200 font-medium hidden md:block">Admin Console</span>
+            <div className="h-6 w-px bg-[var(--color-border-light)] mx-2 hidden md:block opacity-20"></div>
+            <span className="text-[var(--color-primary-on)] font-medium hidden md:block">Admin Console</span>
          </div>
          <div className="flex items-center gap-4">
-            <Button variant="ghost" size="sm" onClick={() => onNavigate('/')} className="text-gray-300 hover:text-white hover:bg-gray-800">Exit Admin</Button>
+            <Button variant="ghost" size="sm" onClick={() => onNavigate('/')} className="text-[var(--color-primary-on)] hover:text-white hover:bg-white/10">Exit Admin</Button>
          </div>
       </header>
 
       <div className="flex flex-1 relative">
-        <aside className="w-64 fixed left-0 top-[var(--ikan-nav-height-mobile)] md:top-[var(--ikan-nav-height-desktop)] bottom-0 overflow-y-auto bg-gray-50 border-r hidden md:block z-10 custom-scrollbar">
+        <aside className="w-64 fixed left-0 top-[var(--ikan-nav-height-mobile)] md:top-[var(--ikan-nav-height-desktop)] bottom-0 overflow-y-auto bg-[var(--color-bg-page)] border-r border-[var(--color-border-default)] hidden md:block z-[50] custom-scrollbar">
           <div className="p-4">
             <SideNav 
               groups={navGroups} 

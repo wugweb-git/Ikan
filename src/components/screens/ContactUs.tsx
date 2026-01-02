@@ -6,6 +6,7 @@ import { Input } from '../ui/input';
 import { Textarea } from '../ui/textarea';
 import { Card, CardContent } from '../ui/card';
 import { usePageContent } from '../../hooks/usePageContent';
+import { PageHero } from '../ui/PageHero';
 
 interface ContactUsProps {
   className?: string;
@@ -46,7 +47,7 @@ export function ContactUs({ className, onBack }: ContactUsProps) {
       action: 'tel:915298721'
     },
     {
-      icon: 'message-circle',
+      icon: 'messageCircle',
       title: 'Live Chat',
       description: 'Chat with our support team',
       value: 'Available 9 AM - 6 PM EST',
@@ -63,78 +64,20 @@ export function ContactUs({ className, onBack }: ContactUsProps) {
       }}
     >
       {/* Hero Section */}
-      <div
-        style={{
-          background: 'linear-gradient(135deg, var(--color-primary-default) 0%, #1a1a1a 100%)',
-          color: 'var(--color-text-inverse)',
-          padding: isMobile ? 'var(--ikan-component-spacing-large) var(--ikan-component-spacing-default)' : 'var(--spacing-12) var(--ikan-component-spacing-large)'
-        }}
+      <PageHero 
+        title={content?.title || "We're Here to Help"}
       >
-        <div 
-          className="w-full mx-auto"
-          style={{
-            maxWidth: 'var(--constraint-content-max)'
-          }}
-        >
-
-
-          <div 
-            className="text-center space-y-4"
-            style={{
-              paddingTop: isMobile ? 'var(--ikan-nav-height-mobile)' : 'var(--ikan-nav-height-desktop)'
-            }}
-          >
-            <div className="inline-flex items-center justify-center mb-6">
-              <div
-                style={{
-                  backgroundColor: 'rgba(255, 255, 255, 0.1)',
-                  borderRadius: 'var(--radius-lg)',
-                  padding: 'var(--ikan-component-spacing-default)',
-                  backdropFilter: 'blur(8px)'
-                }}
-              >
-                <Icon name="headphones" size={32} style={{ color: 'var(--color-text-inverse)' }} />
-              </div>
-            </div>
-            
-            <h1 
-              style={{
-                fontSize: isMobile ? 'var(--text-3xl)' : 'var(--text-4xl)',
-                fontWeight: 'var(--font-weight-medium)',
-                lineHeight: 'var(--line-height-sm)',
-                margin: '0',
-                marginBottom: 'var(--ikan-component-spacing-default)'
-              }}
-            >
-              {content?.title || "We're Here to Help"}
-            </h1>
-            
-            {/* Dynamic Intro Content */}
-            {content?.content ? (
-               <div 
-                 dangerouslySetInnerHTML={{ __html: content.content }}
-                 className="prose prose-invert max-w-2xl mx-auto text-lg opacity-90"
-                 style={{
-                   color: 'var(--color-text-inverse)'
-                 }}
-               />
-            ) : (
-              <p 
-                style={{
-                  fontSize: 'var(--text-lg)',
-                  fontWeight: 'var(--font-weight-regular)',
-                  lineHeight: 'var(--line-height-md)',
-                  opacity: 0.9,
-                  maxWidth: '600px',
-                  margin: '0 auto'
-                }}
-              >
-                Your mental health journey matters to us. Reach out for support, questions, or just to connect.
-              </p>
-            )}
-          </div>
-        </div>
-      </div>
+        {content?.content ? (
+           <div 
+             dangerouslySetInnerHTML={{ __html: content.content }}
+             className="prose prose-invert max-w-2xl mx-auto text-lg opacity-90 text-white"
+           />
+        ) : (
+          <p className="text-white/90 max-w-2xl text-lg opacity-90">
+            Your mental health journey matters to us. Reach out for support, questions, or just to connect.
+          </p>
+        )}
+      </PageHero>
 
       {/* Main Content */}
       <div 
@@ -142,9 +85,6 @@ export function ContactUs({ className, onBack }: ContactUsProps) {
         style={{
           maxWidth: 'var(--constraint-content-max)',
           padding: isMobile ? 'var(--ikan-component-spacing-large) var(--ikan-component-spacing-default)' : 'var(--spacing-12) var(--ikan-component-spacing-large)',
-          marginTop: '-var(--ikan-component-spacing-large)',
-          position: 'relative',
-          zIndex: 10
         }}
       >
         {/* Contact Methods Grid */}
@@ -289,6 +229,7 @@ export function ContactUs({ className, onBack }: ContactUsProps) {
                         onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                         placeholder="Your name"
                         className="ikan-input"
+                        startIcon={<Icon name="user" size={18} />}
                         style={{
                           height: 'var(--ikan-component-input-height)',
                           borderRadius: 'var(--ikan-component-border-radius)',
@@ -314,6 +255,7 @@ export function ContactUs({ className, onBack }: ContactUsProps) {
                         onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                         placeholder="your@email.com"
                         className="ikan-input"
+                        startIcon={<Icon name="mail" size={18} />}
                         style={{
                           height: 'var(--ikan-component-input-height)',
                           borderRadius: 'var(--ikan-component-border-radius)',
@@ -339,6 +281,7 @@ export function ContactUs({ className, onBack }: ContactUsProps) {
                       onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
                       placeholder="What can we help you with?"
                       className="ikan-input"
+                      startIcon={<Icon name="helpCircle" size={18} />}
                       style={{
                         height: 'var(--ikan-component-input-height)',
                         borderRadius: 'var(--ikan-component-border-radius)',

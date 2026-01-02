@@ -14,7 +14,7 @@ interface SideNavAccountProps {
 }
 
 // Icon Components from Figma SVGs
-const IconProfile = ({ color = "black" }: { color?: string }) => (
+const IconProfile = ({ color = "currentColor" }: { color?: string }) => (
   <svg className="block w-[15px] h-[17px]" fill="none" viewBox="0 0 15.01 17.125">
     <g>
       <path d={svgPaths.p2f37c08} fill={color} />
@@ -23,7 +23,7 @@ const IconProfile = ({ color = "black" }: { color?: string }) => (
   </svg>
 );
 
-const IconNotifications = ({ color = "black" }: { color?: string }) => (
+const IconNotifications = ({ color = "currentColor" }: { color?: string }) => (
   <svg className="block w-[13px] h-[15px]" fill="none" viewBox="0 0 13.121 14.625">
     <g>
       <path d={svgPaths.p2ac53bf0} fill={color} />
@@ -32,7 +32,7 @@ const IconNotifications = ({ color = "black" }: { color?: string }) => (
   </svg>
 );
 
-const IconSecurity = ({ color = "black" }: { color?: string }) => (
+const IconSecurity = ({ color = "currentColor" }: { color?: string }) => (
   <svg className="block w-[15px] h-[18px]" fill="none" viewBox="0 0 15.1249 18.0001">
     <g>
       <path d={svgPaths.p3879200} fill={color} />
@@ -41,7 +41,7 @@ const IconSecurity = ({ color = "black" }: { color?: string }) => (
   </svg>
 );
 
-const IconPreferences = ({ color = "black" }: { color?: string }) => (
+const IconPreferences = ({ color = "currentColor" }: { color?: string }) => (
   <svg className="block w-[18px] h-[18px]" fill="none" viewBox="0 0 18 17.6449">
     <g>
       <path d={svgPaths.p6656b80} fill={color} />
@@ -57,7 +57,7 @@ const IconPreferences = ({ color = "black" }: { color?: string }) => (
   </svg>
 );
 
-const IconCorporate = ({ color = "black" }: { color?: string }) => (
+const IconCorporate = ({ color = "currentColor" }: { color?: string }) => (
   <svg className="block w-[18px] h-[18px]" fill="none" viewBox="0 0 18 17.6449">
     <g>
       <path d={svgPaths.p6656b80} fill={color} />
@@ -73,13 +73,13 @@ const IconCorporate = ({ color = "black" }: { color?: string }) => (
   </svg>
 );
 
-const IconHelp = ({ color = "black" }: { color?: string }) => (
+const IconHelp = ({ color = "currentColor" }: { color?: string }) => (
   <svg className="block w-[18px] h-[18px]" fill="none" viewBox="0 0 18 18">
     <path clipRule="evenodd" d={svgPaths.p19332900} fill={color} fillRule="evenodd" />
   </svg>
 );
 
-const IconFAQs = ({ color = "black" }: { color?: string }) => (
+const IconFAQs = ({ color = "currentColor" }: { color?: string }) => (
   <svg className="block w-[18px] h-[18px]" fill="none" viewBox="0 0 18 18">
     <g>
       <path d={svgPaths.p132bc00} fill={color} />
@@ -89,7 +89,7 @@ const IconFAQs = ({ color = "black" }: { color?: string }) => (
   </svg>
 );
 
-const IconLogOut = ({ color = "black" }: { color?: string }) => (
+const IconLogOut = ({ color = "currentColor" }: { color?: string }) => (
   <svg className="block w-[18px] h-[18px]" fill="none" viewBox="0 0 18 18">
     <g>
       <path d={svgPaths.p3317b780} fill={color} />
@@ -99,15 +99,15 @@ const IconLogOut = ({ color = "black" }: { color?: string }) => (
 );
 
 // Lucide Icon wrappers for consistency
-const IconPayment = ({ color = "black" }: { color?: string }) => (
+const IconPayment = ({ color = "currentColor" }: { color?: string }) => (
   <CreditCard size={18} color={color} />
 );
 
-const IconPrivacy = ({ color = "black" }: { color?: string }) => (
+const IconPrivacy = ({ color = "currentColor" }: { color?: string }) => (
   <EyeOff size={18} color={color} />
 );
 
-const IconLegal = ({ color = "black" }: { color?: string }) => (
+const IconLegal = ({ color = "currentColor" }: { color?: string }) => (
   <FileText size={18} color={color} />
 );
 
@@ -192,7 +192,7 @@ export function SideNavAccount({
       ]
     },
     {
-      id: 'security',
+      id: 'security', 
       title: 'Security & Privacy',
       items: [
         { 
@@ -263,7 +263,7 @@ export function SideNavAccount({
   return (
     <div 
       className={cn(
-        "bg-white flex flex-col items-start relative rounded-[12px] w-full p-5",
+        "bg-[var(--color-bg-card)] flex flex-col items-start relative rounded-[var(--radius-lg)] w-full p-5 shadow-sm border border-[var(--color-border-default)]",
         className
       )} 
       style={style}
@@ -280,11 +280,11 @@ export function SideNavAccount({
               )}
               onClick={() => group.collapsible && toggleGroup(group.id)}
             >
-              <h3 className="text-[12px] font-medium text-[#717182] uppercase tracking-wider font-['Ubuntu']">
+              <h3 className="text-[12px] font-medium text-[var(--color-text-muted)] uppercase tracking-wider">
                 {group.title}
               </h3>
               {group.collapsible && (
-                <div className="text-[#717182]">
+                <div className="text-[var(--color-text-muted)]">
                   {expandedGroups[group.id] ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
                 </div>
               )}
@@ -302,18 +302,20 @@ export function SideNavAccount({
                       key={item.id}
                       onClick={() => onNavigate(item.route)}
                       className={cn(
-                        "relative rounded-[8px] w-full transition-all duration-200",
-                        isActive ? "bg-[#2e2a2f]" : "bg-white border border-[#f5f5f5] hover:bg-gray-50"
+                        "relative rounded-[var(--radius-md)] w-full transition-all duration-200",
+                        isActive 
+                          ? "bg-[var(--color-primary-default)] border border-transparent" 
+                          : "bg-[var(--color-bg-card)] border border-[var(--color-border-light)] hover:bg-[var(--color-bg-muted)]"
                       )}
                     >
                       <div className="flex flex-row items-center w-full">
                         <div className="flex gap-[8px] items-center px-[20px] py-[10px] w-full">
                           <div className="shrink-0 w-[18px] flex items-center justify-center">
-                            <Icon color={isActive ? "white" : "black"} />
+                            <Icon color={isActive ? "var(--color-primary-on)" : "var(--color-text-primary)"} />
                           </div>
                           <div className={cn(
                             "flex flex-col justify-center leading-[0] not-italic relative shrink-0 text-[14px] text-nowrap font-medium",
-                            isActive ? "text-white font-['Ubuntu']" : "text-[#151515] font-['Inter']"
+                            isActive ? "text-[var(--color-primary-on)]" : "text-[var(--color-text-primary)]"
                           )}>
                             <p className="leading-[28px]">{item.label}</p>
                           </div>
@@ -328,17 +330,17 @@ export function SideNavAccount({
         ))}
 
         {onLogout && (
-          <div className="mt-4 pt-4 border-t border-[#f5f5f5]">
+          <div className="mt-4 pt-4 border-t border-[var(--color-border-light)]">
              <button
               onClick={onLogout}
-              className="relative rounded-[8px] w-full bg-white border border-[#f5f5f5] transition-all duration-200 hover:bg-red-50 group"
+              className="relative rounded-[var(--radius-md)] w-full bg-[var(--color-bg-card)] border border-[var(--color-border-light)] transition-all duration-200 hover:bg-red-50 group"
             >
               <div className="flex flex-row items-center w-full">
                 <div className="flex gap-[8px] items-center px-[20px] py-[10px] w-full">
                   <div className="shrink-0 w-[18px] flex items-center justify-center">
-                    <IconLogOut color="black" />
+                    <IconLogOut color="var(--color-text-primary)" />
                   </div>
-                  <div className="flex flex-col justify-center leading-[0] not-italic relative shrink-0 text-[#151515] group-hover:text-red-600 text-[14px] text-nowrap font-medium font-['Inter']">
+                  <div className="flex flex-col justify-center leading-[0] not-italic relative shrink-0 text-[var(--color-text-primary)] group-hover:text-red-600 text-[14px] text-nowrap font-medium">
                     <p className="leading-[28px]">Log out</p>
                   </div>
                 </div>

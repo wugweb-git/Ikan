@@ -7,7 +7,6 @@ import {
   Eye,
   Activity,
   Clock,
-  AlertCircle,
   CheckCircle,
   XCircle
 } from 'lucide-react';
@@ -15,6 +14,14 @@ import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Card, CardContent } from '../ui/card';
 import { Badge } from '../ui/badge';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '../ui/table';
 import {
   Dialog,
   DialogContent,
@@ -355,63 +362,44 @@ export function AdminAPILogs() {
           <Card style={{ backgroundColor: 'var(--color-bg-card)', borderRadius: 'var(--radius-lg)' }}>
             <CardContent className="p-0">
               <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead style={{ backgroundColor: 'var(--color-bg-muted)' }}>
-                    <tr>
-                      <th className="px-4 py-3 text-left" style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--font-weight-medium)' }}>
-                        Timestamp
-                      </th>
-                      <th className="px-4 py-3 text-left" style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--font-weight-medium)' }}>
-                        Method
-                      </th>
-                      <th className="px-4 py-3 text-left" style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--font-weight-medium)' }}>
-                        Endpoint
-                      </th>
-                      <th className="px-4 py-3 text-left" style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--font-weight-medium)' }}>
-                        Status
-                      </th>
-                      <th className="px-4 py-3 text-left" style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--font-weight-medium)' }}>
-                        Duration
-                      </th>
-                      <th className="px-4 py-3 text-left" style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--font-weight-medium)' }}>
-                        User
-                      </th>
-                      <th className="px-4 py-3 text-center" style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--font-weight-medium)' }}>
-                        Actions
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filteredLogs.map((log, idx) => (
-                      <tr 
-                        key={log.id}
-                        style={{
-                          borderBottom: idx < filteredLogs.length - 1 ? '1px solid var(--color-border-default)' : 'none'
-                        }}
-                      >
-                        <td className="px-4 py-3" style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-muted)' }}>
+                <Table>
+                  <TableHeader style={{ backgroundColor: 'var(--color-bg-muted)' }}>
+                    <TableRow>
+                      <TableHead>Timestamp</TableHead>
+                      <TableHead>Method</TableHead>
+                      <TableHead>Endpoint</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Duration</TableHead>
+                      <TableHead>User</TableHead>
+                      <TableHead className="text-center">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredLogs.map((log) => (
+                      <TableRow key={log.id}>
+                        <TableCell className="font-medium text-muted-foreground">
                           {new Date(log.timestamp).toLocaleString()}
-                        </td>
-                        <td className="px-4 py-3">
+                        </TableCell>
+                        <TableCell>
                           <Badge style={{ backgroundColor: getMethodColor(log.method), color: 'white' }}>
                             {log.method}
                           </Badge>
-                        </td>
-                        <td className="px-4 py-3" style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-primary)', fontFamily: 'monospace' }}>
+                        </TableCell>
+                        <TableCell className="font-mono text-sm">
                           {log.endpoint}
-                        </td>
-                        <td className="px-4 py-3">
+                        </TableCell>
+                        <TableCell>
                           <Badge style={{ backgroundColor: getStatusColor(log.status), color: 'white' }}>
                             {log.status}
                           </Badge>
-                        </td>
-                        <td className="px-4 py-3" style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-muted)' }}>
+                        </TableCell>
+                        <TableCell className="text-muted-foreground">
                           {log.duration_ms}ms
-                        </td>
-                        <td className="px-4 py-3" style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-muted)', fontFamily: 'monospace' }}>
+                        </TableCell>
+                        <TableCell className="font-mono text-xs text-muted-foreground">
                           {log.user_id ? log.user_id.substring(0, 8) + '...' : 'Anonymous'}
-                        </td>
-                        <td className="px-4 py-3 text-center">
+                        </TableCell>
+                        <TableCell className="text-center">
                           <Button
                             variant="ghost"
                             size="sm"
@@ -419,11 +407,11 @@ export function AdminAPILogs() {
                           >
                             <Eye className="w-4 h-4" />
                           </Button>
-                        </td>
-                      </tr>
+                        </TableCell>
+                      </TableRow>
                     ))}
-                  </tbody>
-                </table>
+                  </TableBody>
+                </Table>
               </div>
             </CardContent>
           </Card>

@@ -130,10 +130,17 @@ export interface EquipBlock {
   id: string;
   equip_day_id: string;
   block_type: BlockType;
+  title?: string;
   order_index: number;
   content_ref_id?: string;
+  content?: string; // Inline content override
   dataset_id?: string;
+  exercise_config?: Record<string, any>; // Flexible config
   is_required: boolean;
+  step_group_id?: string;
+  auto_advance?: boolean;
+  estimated_time_minutes?: number;
+  image_url?: string;
   created_at: string;
 }
 

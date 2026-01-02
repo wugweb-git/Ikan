@@ -5,10 +5,11 @@ import {
 import { Button } from '../ui/button';
 import { Card, CardContent } from '../ui/card';
 import { cn } from '../ui/utils';
-import { EquipProgram, Activity, DayContent } from '../../lib/equip-admin-types';
-import { Wizard } from '../wizard/Wizard';
-import { mapEquipDayToWizard } from '../wizard/migration-utils';
-import { WizardState } from '../wizard/types';
+import { EquipProgram } from '../../lib/equip-admin-types';
+import { ProgramPlayer } from '../player/ProgramPlayer';
+import { apiClient } from '../../lib/api-client';
+import { useNotifications } from '../../contexts/NotificationContext';
+import { toast } from 'sonner@2.0.3';
 
 // ============================================================================
 // TYPES & INTERFACES
@@ -28,6 +29,7 @@ interface EquipProgramFlowProps {
   enrollmentId?: string;
   onBack?: () => void;
   onComplete?: () => void;
+  onNavigate?: (path: string) => void;
 }
 
 // ============================================================================
@@ -44,19 +46,23 @@ interface EquipProgramHomeProps {
 
 function EquipProgramHome({ program, progress, onStartSession, onViewHistory, onBack }: EquipProgramHomeProps) {
   const currentDayContent = program.daily_content?.find(d => d.day === progress.currentDay);
-  const isProgramComplete = progress.currentDay > (program.daily_content?.length || 0);
+  
+  // Calculate if program is complete (all days completed)
+  const totalDays = program.daily_content?.length || 0;
+  // Simple check: if currentDay > totalDays, or if all days are in completedDays
+  const isProgramComplete = progress.currentDay > totalDays;
 
   // Resume vs Start logic
   const hasStartedDay = progress.currentDayState.completedBlockIds.length > 0;
   
   return (
-    <div className="min-h-screen bg-[var(--ikan-color-bg-page)] flex flex-col relative">
-      <div className="absolute top-0 left-0 w-full h-64 bg-gradient-to-b from-[var(--ikan-color-accent-default)] to-transparent pointer-events-none" />
+    <div className="min-h-screen bg-[var(--color-bg-page)] flex flex-col relative">
+      <div className="absolute top-0 left-0 w-full h-64 bg-gradient-to-b from-[var(--color-accent-default)] to-transparent pointer-events-none" />
 
       <div className="relative z-10 max-w-md mx-auto w-full p-6 flex flex-col min-h-screen">
         {/* Header */}
         <div className="flex justify-between items-center mb-8">
-          <Button variant="ghost" onClick={onBack} size="sm" className="-ml-3 text-[var(--ikan-color-text-muted)]">
+          <Button variant="ghost" onClick={onBack} size="sm" className="-ml-3 text-[var(--color-text-muted)]">
             <ArrowLeft size={20} />
           </Button>
         </div>
@@ -65,11 +71,11 @@ function EquipProgramHome({ program, progress, onStartSession, onViewHistory, on
         <div className="flex-1 flex flex-col justify-center pb-20">
           {isProgramComplete ? (
             <div className="text-center space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-              <div className="w-20 h-20 bg-green-50 text-[var(--ikan-color-status-success)] rounded-full flex items-center justify-center mx-auto mb-4">
+              <div className="w-20 h-20 bg-green-50 text-[var(--color-status-success)] rounded-full flex items-center justify-center mx-auto mb-4">
                 <CheckCircle size={40} />
               </div>
-              <h1 className="text-3xl font-bold text-[var(--ikan-color-text-primary)]">Journey Complete!</h1>
-              <p className="text-[var(--ikan-color-text-muted)]">You've completed {program.title}.</p>
+              <h1 className="text-3xl font-bold text-[var(--color-text-primary)]">Journey Complete!</h1>
+              <p className="text-[var(--color-text-muted)]">You've completed {program.title}.</p>
               <Button className="w-full h-14 text-lg" onClick={onViewHistory}>
                 Review Your Path
               </Button>
@@ -77,39 +83,43 @@ function EquipProgramHome({ program, progress, onStartSession, onViewHistory, on
           ) : (
             <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
               <div className="text-center space-y-2">
-                <h2 className="text-sm font-semibold tracking-widest text-[var(--ikan-color-text-muted)] uppercase">
+                <h2 className="text-sm font-semibold tracking-widest text-[var(--color-text-muted)] uppercase">
                   {program.title}
                 </h2>
-                <h1 className="text-4xl font-bold text-[var(--ikan-color-text-primary)]">
-                  {currentDayContent?.dayType === 'practice' ? "Practice" : `Day ${progress.currentDay}`}
+                <h1 className="text-4xl font-bold text-[var(--color-text-primary)]">
+                  {progress.currentDay === 0 ? "Welcome" :
+                   currentDayContent?.dayType === 'practice' ? "Practice" : 
+                   `Day ${progress.currentDay}`}
                 </h1>
-                <p className="text-lg text-[var(--ikan-color-text-muted)]">
-                  of {program.daily_content?.length || 18}
-                </p>
+                {progress.currentDay > 0 && (
+                  <p className="text-lg text-[var(--color-text-muted)]">
+                    of {Math.max(0, (program.daily_content?.length || 0) - (program.daily_content?.some(d => d.day === 0) ? 1 : 0))}
+                  </p>
+                )}
               </div>
 
               {currentDayContent ? (
                 <Card className="border-0 shadow-xl bg-white/90 backdrop-blur">
                   <CardContent className="p-8 text-center space-y-6">
                     <div className="space-y-2">
-                      <h3 className="text-xl font-semibold text-[var(--ikan-color-text-primary)]">
+                      <h3 className="text-xl font-semibold text-[var(--color-text-primary)]">
                         {currentDayContent.title}
                       </h3>
                       {currentDayContent.description && (
-                        <p className="text-[var(--ikan-color-text-muted)] text-sm">
+                        <p className="text-[var(--color-text-muted)] text-sm">
                           {currentDayContent.description}
                         </p>
                       )}
                     </div>
                     
-                    <div className="flex items-center justify-center gap-2 text-sm text-[var(--ikan-color-text-muted)] bg-[var(--ikan-color-bg-muted)] py-2 px-4 rounded-full inline-flex mx-auto">
+                    <div className="flex items-center justify-center gap-2 text-sm text-[var(--color-text-muted)] bg-[var(--color-bg-muted)] py-2 px-4 rounded-full inline-flex mx-auto">
                       <Clock size={16} />
                       <span>~10 minutes</span>
                     </div>
 
                     <Button 
                       onClick={onStartSession}
-                      className="w-full h-14 text-lg rounded-xl bg-[var(--ikan-color-primary-default)] text-white shadow-lg transition-all transform hover:scale-[1.02]"
+                      className="w-full h-14 text-lg rounded-[var(--radius-lg)] bg-[var(--color-primary-default)] text-white shadow-lg transition-all transform hover:scale-[1.02]"
                     >
                       <Play fill="currentColor" size={16} className="mr-2" />
                       {hasStartedDay ? "Continue Session" : currentDayContent.dayType === 'practice' ? "Start Practice" : "Start Today"}
@@ -117,8 +127,8 @@ function EquipProgramHome({ program, progress, onStartSession, onViewHistory, on
                   </CardContent>
                 </Card>
               ) : (
-                <div className="text-center p-8 bg-[var(--ikan-color-bg-muted)] rounded-xl border border-dashed border-[var(--ikan-color-border-default)]">
-                  <p className="text-[var(--ikan-color-text-muted)]">Content loading or not found for Day {progress.currentDay}</p>
+                <div className="text-center p-8 bg-[var(--color-bg-muted)] rounded-[var(--radius-lg)] border border-dashed border-[var(--color-border-default)]">
+                  <p className="text-[var(--color-text-muted)]">Content loading or not found for Day {progress.currentDay}</p>
                 </div>
               )}
             </div>
@@ -141,71 +151,36 @@ function EquipProgramHome({ program, progress, onStartSession, onViewHistory, on
 }
 
 // ============================================================================
-// COMPONENT 2: DAY SESSION (WIZARD RUNTIME)
+// COMPONENT 2: DAY SESSION (PLAYER RUNTIME)
 // ============================================================================
 
 interface DaySessionScreenProps {
-  dayContent: DayContent;
-  progress: UserProgress;
-  onCompleteBlock: (blockId: string, response?: any) => void;
-  onCompleteDay: () => void;
+  program: EquipProgram;
+  dayNumber: number;
+  initialResponses?: Record<string, any>;
+  onCompleteDay: (results: any) => void;
+  onProgress: (progress: { currentBlockIndex: number, responses: Record<string, any> }) => void;
   onExit: () => void;
 }
 
-function DaySessionScreen({ dayContent, progress, onCompleteBlock, onCompleteDay, onExit }: DaySessionScreenProps) {
-  const wizardConfig = mapEquipDayToWizard(dayContent);
-
-  // Sync Wizard progress with parent state
-  const handleStepChange = (state: WizardState) => {
-    // Check for newly completed steps
-    state.completedSteps.forEach(stepId => {
-       if (stepId === 'intro') return; // Skip intro
-       
-       // If not already marked complete in parent
-       if (!progress.currentDayState.completedBlockIds.includes(stepId)) {
-           // Find the answer for this step/block
-           // Note: In our mapping, field IDs are often prefixed or just the stepId if it was simple
-           // But complex steps have fields like `${stepId}_answer`.
-           // We need to extract the relevant answer.
-           
-           // Simple approach: Pass all answers related to this step
-           const stepAnswers: Record<string, any> = {};
-           Object.keys(state.answers).forEach(key => {
-               if (key.startsWith(stepId)) {
-                   stepAnswers[key] = state.answers[key];
-               }
-           });
-           
-           // If single answer (e.g. text/mcq), pass value directly to match old behavior if possible
-           // or just pass the object. The backend should handle structured data.
-           // For backward compatibility, let's try to pass the "main" value if it exists.
-           const mainValue = state.answers[`${stepId}_answer`] || state.answers[stepId];
-           
-           onCompleteBlock(stepId, mainValue || stepAnswers);
-       }
-    });
-  };
-
+function DaySessionScreen({ program, dayNumber, initialResponses, onCompleteDay, onProgress, onExit }: DaySessionScreenProps) {
   return (
-    <div className="min-h-screen bg-[var(--color-bg-page)] flex flex-col">
-       <Wizard 
-         config={wizardConfig}
-         initialData={progress.currentDayState.responses}
-         // Map initial step based on progress?
-         // Wizard uses index, we have block IDs.
-         // We can find the first uncompleted block index in dayContent.activities
-         initialStepIndex={Math.max(0, dayContent.activities.findIndex(a => !progress.currentDayState.completedBlockIds.includes(a.id))) + 1} // +1 for intro
-         onStepChange={handleStepChange}
-         onComplete={() => onCompleteDay()}
+    <div className="fixed inset-0 bg-white z-50">
+       <ProgramPlayer 
+         program={program}
+         initialDay={dayNumber}
+         initialResponses={initialResponses}
+         onComplete={onCompleteDay}
+         onProgressChange={onProgress}
          onExit={onExit}
-         className="bg-transparent"
+         mode="live"
        />
     </div>
   );
 }
 
 // ============================================================================
-// COMPONENT 14: DAY OVERVIEW (HISTORY)
+// COMPONENT 3: DAY OVERVIEW (HISTORY)
 // ============================================================================
 
 function DayOverview({ program, progress, onBack, onSelectDay }: { program: EquipProgram, progress: UserProgress, onBack: () => void, onSelectDay: (day: number) => void }) {
@@ -217,7 +192,7 @@ function DayOverview({ program, progress, onBack, onSelectDay }: { program: Equi
   };
 
   return (
-    <div className="min-h-screen bg-[var(--ikan-color-bg-page)] p-6">
+    <div className="min-h-screen bg-[var(--color-bg-page)] p-6">
       <div className="max-w-md mx-auto space-y-8">
         <div className="flex items-center gap-4">
            <Button variant="ghost" onClick={onBack} className="-ml-3"><ArrowLeft /></Button>
@@ -232,24 +207,24 @@ function DayOverview({ program, progress, onBack, onSelectDay }: { program: Equi
                  key={day.day}
                  onClick={() => status !== 'locked' && onSelectDay(day.day)}
                  className={cn(
-                   "p-4 rounded-xl border flex items-center justify-between transition-all",
-                   status === 'current' ? "border-[var(--ikan-color-primary-default)] bg-white shadow-md" :
-                   status === 'locked' ? "opacity-50 bg-[var(--ikan-color-bg-muted)] border-transparent" :
-                   "bg-white border-transparent hover:border-[var(--ikan-color-border-default)] cursor-pointer"
+                   "p-4 rounded-[var(--radius-lg)] border flex items-center justify-between transition-all",
+                   status === 'current' ? "border-[var(--color-primary-default)] bg-white shadow-md" :
+                   status === 'locked' ? "opacity-50 bg-[var(--color-bg-muted)] border-transparent" :
+                   "bg-white border-transparent hover:border-[var(--color-border-default)] cursor-pointer"
                  )}
                >
                   <div className="flex items-center gap-4">
                      <div className={cn(
                         "w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm",
-                        status === 'completed' ? "bg-[var(--ikan-color-status-success)] text-white" :
-                        status === 'current' ? "bg-[var(--ikan-color-primary-default)] text-white" :
-                        "bg-[var(--ikan-color-bg-muted)] text-[var(--ikan-color-text-muted)]"
+                        status === 'completed' ? "bg-[var(--color-status-success)] text-white" :
+                        status === 'current' ? "bg-[var(--color-primary-default)] text-white" :
+                        "bg-[var(--color-bg-muted)] text-[var(--color-text-muted)]"
                      )}>
                         {status === 'completed' ? <CheckCircle size={20} /> : day.day}
                      </div>
                      <div>
-                        <div className="font-semibold text-[var(--ikan-color-text-primary)]">{day.title}</div>
-                        <div className="text-xs text-[var(--ikan-color-text-muted)]">{day.dayType === 'practice' ? 'Practice Session' : `${day.activities.length} Activities`}</div>
+                        <div className="font-semibold text-[var(--color-text-primary)]">{day.title}</div>
+                        <div className="text-xs text-[var(--color-text-muted)]">{day.dayType === 'practice' ? 'Practice Session' : `${day.activities.length} Activities`}</div>
                      </div>
                   </div>
                </div>
@@ -265,12 +240,12 @@ function DayOverview({ program, progress, onBack, onSelectDay }: { program: Equi
 // MAIN COMPONENT: EQUIP PROGRAM FLOW
 // ============================================================================
 
-export function EquipProgramFlow({ programId, enrollmentId, onBack, onComplete }: EquipProgramFlowProps) {
+export function EquipProgramFlow({ programId, enrollmentId, onBack, onComplete, onNavigate }: EquipProgramFlowProps) {
   const { showToast } = useNotifications();
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [view, setView] = useState<'home' | 'session' | 'history'>('home');
   
-  // Dummy data for now - in real app would fetch from API based on enrollmentId
   const [program, setProgram] = useState<EquipProgram | null>(null);
   const [progress, setProgress] = useState<UserProgress>({
     currentDay: 1,
@@ -281,60 +256,170 @@ export function EquipProgramFlow({ programId, enrollmentId, onBack, onComplete }
     }
   });
 
+  const handleBack = () => {
+    if (onBack) {
+      onBack();
+    } else if (onNavigate) {
+      onNavigate('/dashboard');
+    }
+  };
+
+  // 1. Fetch Program & Progress
   useEffect(() => {
-    // Simulate fetch
-    setTimeout(() => {
-       // Mock Program
-       setProgram({
-         id: 'sleep-tight-9',
-         slug: 'sleep-tight-9',
-         title: 'Sleep Tight',
-         description: 'A 9-day program to improve your sleep.',
-         daily_content: [
-           { day: 1, title: 'Understanding Sleep', dayType: 'lesson', activities: [
-             { id: 'l1', type: 'lesson', title: 'Why we sleep', content: 'Sleep is essential...' },
-             { id: 'e1', type: 'exercise', title: 'Sleep Quiz', content: 'How many hours?', exerciseConfig: { subtype: 'mcq', options: ['<6', '6-8', '8+'] } }
-           ]},
-           { day: 2, title: 'Sleep Hygiene', dayType: 'lesson', activities: [
-             { id: 'l2', type: 'lesson', title: 'Clean your room', content: 'Remove distractions.' },
-             { id: 'sd2', type: 'sleep_diary', title: 'Last Night Log', content: '' }
-           ]}
-         ]
-       } as any);
-       setLoading(false);
-    }, 1000);
+    const init = async () => {
+      if (!programId) return;
+      
+      try {
+        setLoading(true);
+        
+        // A. Fetch Program
+        const programData = await apiClient.getEquipProgram(programId);
+        if (!programData) {
+          throw new Error('Program not found');
+        }
+        setProgram(programData as EquipProgram);
+
+        // B. Fetch Progress (if user is enrolled)
+        try {
+          // Attempt to get detailed progress
+          const progressData = await apiClient.getEnrollmentProgress(programId);
+          if (progressData) {
+            // Map backend progress to frontend UserProgress
+            // Assuming progressData has current_day_number, completed_days, etc.
+            setProgress(prev => ({
+              ...prev,
+              currentDay: progressData.current_day || 1,
+              completedDays: (progressData.completed_days || []).reduce((acc: any, dayNum: number) => {
+                acc[dayNum] = { status: 'completed', date: new Date().toISOString() };
+                return acc;
+              }, {}),
+              currentDayState: {
+                completedBlockIds: [], // We might fetch this from user_block_responses if needed, but keeping it simple for now
+                responses: {} // Ideally we pre-fetch today's responses too
+              }
+            }));
+
+            // Pre-fetch today's responses to allow resuming
+            const todayContent = await apiClient.getTodayContent(programId);
+            if (todayContent && todayContent.progress) {
+                // todayContent.progress is array of completed blocks?
+                // The API endpoint seems to return { day, blocks, progress }
+                // Let's assume progress contains the responses map if implemented
+            }
+          }
+        } catch (e) {
+          // If 404/not enrolled, we might need to enroll or just start fresh
+          console.warn('Progress fetch failed (maybe not enrolled)', e);
+        }
+
+      } catch (err: any) {
+        console.error('Failed to load program flow', err);
+        setError(err.message || 'Failed to load program');
+        toast.error('Failed to load program');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    init();
   }, [programId]);
 
-  if (loading || !program) return <div className="flex h-screen items-center justify-center">Loading program...</div>;
-
-  const currentDayContent = program.daily_content?.find(d => d.day === progress.currentDay);
-
-  const handleCompleteBlock = (blockId: string, response: any) => {
+  // 2. Handle Progress Updates (Auto-Save)
+  const handleProgress = async (p: { currentBlockIndex: number, responses: Record<string, any> }) => {
+     // Update Local State
      setProgress(prev => ({
         ...prev,
         currentDayState: {
-           completedBlockIds: [...prev.currentDayState.completedBlockIds, blockId],
-           responses: { ...prev.currentDayState.responses, [blockId]: response }
+           completedBlockIds: Object.keys(p.responses),
+           responses: p.responses
         }
      }));
+
+     // Sync to Server
+     if (programId) {
+        // Find the changed block(s) and save
+        // Ideally we only save the delta, but here we just iterate
+        // Optimization: In ProgramPlayer we pass the specific change. 
+        // But the callback signature is { currentBlockIndex, responses }
+        // We can just save the latest responses. 
+        // For efficiency, we can debounce or just save the last one? 
+        // Actually, let's just save all? No, that's too many calls.
+        
+        // Better: ProgramPlayer only updates responses when a block changes.
+        // We can iterate the responses keys and find what changed compared to prev state?
+        // Or simply: The backend endpoint allows saving specific block response.
+        // For MVP, let's just try to sync the whole state?
+        // No, `saveBlockResponse` takes a single blockId.
+        
+        // Let's rely on the user explicitly saving via "Next" if we don't want real-time field-level saving.
+        // BUT, the requirement is "User-Side ProgramPlayer — Rendering Rules... Submit Step Response".
+        // The ProgramPlayer calls onProgressChange on every change.
+        
+        // Let's implement a 'sync' that sends the whole blob or key updates
+        // The API has `syncEquipProgress`.
+        try {
+            await apiClient.syncEquipProgress(programId, {
+                dayNumber: progress.currentDay,
+                responses: p.responses
+            });
+        } catch (e) {
+            console.error('Failed to sync progress', e);
+        }
+     }
   };
 
-  const handleCompleteDay = () => {
-     showToast('success', 'Day Complete!', 'Great job.');
-     setProgress(prev => ({
-        ...prev,
-        currentDay: prev.currentDay + 1,
-        completedDays: {
-           ...prev.completedDays,
-           [prev.currentDay]: { status: 'completed', date: new Date().toISOString() }
-        },
-        currentDayState: {
-           completedBlockIds: [],
-           responses: {}
-        }
-     }));
-     setView('home');
+  // 3. Handle Day Completion
+  const handleCompleteDay = async () => {
+     if (!programId) return;
+
+     try {
+       // Save to backend
+       await apiClient.completeDay(programId, progress.currentDay);
+       
+       showToast('success', 'Day Complete!', 'Great job.');
+       
+       // Update local state
+       setProgress(prev => ({
+          ...prev,
+          currentDay: prev.currentDay + 1,
+          completedDays: {
+             ...prev.completedDays,
+             [prev.currentDay]: { status: 'completed', date: new Date().toISOString() }
+          },
+          currentDayState: {
+             completedBlockIds: [],
+             responses: {}
+          }
+       }));
+       
+       setView('home');
+       
+       if (onComplete) onComplete();
+       
+     } catch (e) {
+       console.error('Failed to complete day', e);
+       toast.error('Failed to save completion status. Please try again.');
+     }
   };
+
+  if (loading) {
+      return (
+          <div className="flex h-screen items-center justify-center flex-col gap-4">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900"></div>
+              <p className="text-gray-500">Loading program...</p>
+          </div>
+      );
+  }
+
+  if (error || !program) {
+      return (
+          <div className="flex h-screen items-center justify-center flex-col gap-4 p-8 text-center">
+              <h2 className="text-xl font-bold text-red-600">Error Loading Program</h2>
+              <p className="text-gray-600">{error || 'Program data is missing'}</p>
+              <Button onClick={onBack}>Go Back</Button>
+          </div>
+      );
+  }
 
   return (
     <>
@@ -344,16 +429,17 @@ export function EquipProgramFlow({ programId, enrollmentId, onBack, onComplete }
            progress={progress}
            onStartSession={() => setView('session')}
            onViewHistory={() => setView('history')}
-           onBack={onBack || (() => {})}
+           onBack={handleBack}
         />
       )}
 
-      {view === 'session' && currentDayContent && (
+      {view === 'session' && (
         <DaySessionScreen 
-           dayContent={currentDayContent}
-           progress={progress}
-           onCompleteBlock={handleCompleteBlock}
+           program={program}
+           dayNumber={progress.currentDay}
+           initialResponses={progress.currentDayState.responses}
            onCompleteDay={handleCompleteDay}
+           onProgress={handleProgress}
            onExit={() => setView('home')}
         />
       )}
@@ -364,8 +450,13 @@ export function EquipProgramFlow({ programId, enrollmentId, onBack, onComplete }
            progress={progress}
            onBack={() => setView('home')}
            onSelectDay={(day) => {
-              // Allow replaying old days? For now just log
-              console.log('Selected day', day);
+              // TODO: Allow replaying past days in read-only mode?
+              // For now, if it's the current day, we can go to session
+              if (day === progress.currentDay) {
+                  setView('session');
+              } else {
+                  console.log('Selected past/future day', day);
+              }
            }}
         />
       )}

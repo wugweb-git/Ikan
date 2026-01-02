@@ -125,3 +125,10 @@ export const DEFAULT_METADATA = {
     duration_days: 18,
   }
 } as const;
+
+// SPECIAL PROGRAM IDS (For linking from Dashboard/Menu)
+// TODO: Replace these with actual UUIDs after seeding data
+export const SPECIAL_PROGRAM_IDS = {
+  DAILY_TRACKER: 'daily-tracker', 
+  ONBOARDING: 'onboarding-flow',
+} as const;

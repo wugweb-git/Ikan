@@ -194,52 +194,6 @@ export function AssessmentDetail({ assessmentId = 'anxiety', onNavigate }: Asses
         
       } catch (err) {
         console.error('Failed to fetch assessment data:', err);
-        // Fallback data for specific IDs to prevent "Assessment Not Found" on demo
-        if (assessmentId === 'anxiety' || assessmentId === 'gad-7') {
-             setAssessmentData({
-                title: "Anxiety Assessment (GAD-7)",
-                description: "A clinical tool to help you understand your anxiety symptoms.",
-                hero_image: "https://images.unsplash.com/photo-1620052087057-bfd8231f584e?q=80&w=2000",
-                cta_button_text: "Start Assessment",
-                cta_button_link: `/assessment-flow?type=gad-7`,
-                section1_title: "How it works",
-                section1_eligibility_title: "Simple process:",
-                section1_eligibility_points: ["7 questions", "Takes ~3 minutes", "Instant results"],
-                section1_who_title: "Who is this for?",
-                section1_who_content: "Anyone experiencing worry or nervousness.",
-                section2_title: "About GAD-7",
-                section2_content: "The Generalized Anxiety Disorder 7-item scale is a validated screening tool.",
-                section2_image: defaultBentoImage,
-                section2_bullets: ["Clinically validated", "Used by doctors", "Private"],
-                section3_title: "What you'll learn",
-                section3_subtitle: "Gain clarity on your symptoms",
-                section3_content: ["Severity of anxiety", "Recommended next steps", "Tracking over time"],
-                section4_notes_title: "Important Notes",
-                section4_notes: [{ title: "Screening only", description: "Not a medical diagnosis." }]
-             });
-        } else if (assessmentId === 'depression' || assessmentId === 'phq-9') {
-             setAssessmentData({
-                title: "Depression Assessment (PHQ-9)",
-                description: "Understand your mood and energy levels with this standard screening tool.",
-                hero_image: "https://images.unsplash.com/photo-1616870633658-5af666991942?q=80&w=2000",
-                cta_button_text: "Start Assessment",
-                cta_button_link: `/assessment-flow?type=phq-9`,
-                section1_title: "How it works",
-                section1_eligibility_title: "Simple process:",
-                section1_eligibility_points: ["9 questions", "Takes ~5 minutes", "Instant results"],
-                section1_who_title: "Who is this for?",
-                section1_who_content: "Anyone feeling down, hopeless, or tired.",
-                section2_title: "About PHQ-9",
-                section2_content: "The Patient Health Questionnaire-9 is the gold standard for depression screening.",
-                section2_image: defaultBentoImage,
-                section2_bullets: ["Clinically validated", "Used by doctors", "Private"],
-                section3_title: "What you'll learn",
-                section3_subtitle: "Understand your mood",
-                section3_content: ["Severity of depression", "Impact on daily life", "Tracking over time"],
-                section4_notes_title: "Important Notes",
-                section4_notes: [{ title: "Screening only", description: "Not a medical diagnosis." }]
-             });
-        }
       } finally {
         setIsLoading(false);
       }

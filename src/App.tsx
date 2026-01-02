@@ -47,6 +47,7 @@ import { AdminWidget } from './components/admin/AdminWidget';
 import { UIKitShowcase } from './components/screens/UIKitShowcase';
 import { UIKitShowcasePage } from './components/screens/UIKitShowcasePage';
 import { EquipOnboardingDemo } from './components/screens/EquipOnboardingDemo';
+import { NotFound } from './components/screens/NotFound';
 
 import { AssessmentFlow } from './components/screens/AssessmentFlow';
 import { AssessmentResults } from './components/screens/AssessmentResults';
@@ -594,11 +595,6 @@ function AppContent() {
         .then(async () => {
           console.log('✅ Server available');
           setOfflineMode(false);
-          
-          // Background seeding of essential data
-          // DISABLED: Auto-seeding was causing deleted programs to reappear. 
-          // Admins should manage programs via the Admin Panel.
-          
         })
         .catch((error) => {
           const errorMessage = error instanceof Error ? error.message : String(error);
@@ -662,10 +658,7 @@ function AppContent() {
 
       // Check for Admin Routes first
       if (currentRoute.startsWith('/admin')) {
-        // Find the specific admin view based on the path
-        // e.g. /admin/resources -> view="resources"
         const adminPath = currentRoute.replace('/admin/', '');
-        // Handle root /admin case
         const view = currentRoute === '/admin' ? 'dashboard' : adminPath;
         
         return (
@@ -677,628 +670,133 @@ function AppContent() {
 
       switch (currentRoute) {
         case '/':
-          return (
-            <ErrorBoundary>
-              <Homepage 
-                onNavigate={handleNavigate}
-                onGetStarted={handleSignIn}
-              />
-            </ErrorBoundary>
-          );
+          return <Homepage onNavigate={handleNavigate} onGetStarted={handleSignIn} />;
         case '/dashboard':
-          return (
-            <ErrorBoundary>
-              <Dashboard onNavigate={handleNavigate} />
-            </ErrorBoundary>
-          );
-        case '/mood-journal':
-          return (
-            <ErrorBoundary>
-              <MoodJournal />
-            </ErrorBoundary>
-          );
+          return <Dashboard onNavigate={handleNavigate} />;
         case '/assessment':
-          return (
-            <ErrorBoundary>
-              <Assessments onNavigate={handleNavigate} />
-            </ErrorBoundary>
-          );
+          return <Assessments onNavigate={handleNavigate} />;
         case '/assessment-landing':
-          return (
-            <ErrorBoundary>
-              <AssessmentDetail 
-                assessmentId={queryParams.id || 'anxiety'}
-                onNavigate={handleNavigate} 
-              />
-            </ErrorBoundary>
-          );
+          return <AssessmentLandingNew onNavigate={handleNavigate} />;
         case '/assessment-detail':
-          return (
-            <ErrorBoundary>
-              <AssessmentDetail 
-                assessmentId={queryParams.id || 'anxiety'}
-                onNavigate={handleNavigate} 
-              />
-            </ErrorBoundary>
-          );
+          return <AssessmentDetail assessmentId={queryParams.id || queryParams.type} onNavigate={handleNavigate} />;
         case '/assessment-flow':
-          return (
-            <ErrorBoundary>
-              <AssessmentFlow 
-                assessmentId={queryParams.type || queryParams.id || 'anxiety'}
-                onComplete={(results) => {
-                  // Store results locally just in case
-                  try {
-                    localStorage.setItem('ikan-assessment-results', JSON.stringify(results));
-                  } catch (e) {
-                    console.error('Failed to save results', e);
-                  }
-                }}
-                onBack={() => handleNavigate('/assessment-landing')}
-                onNavigate={handleNavigate}
-              />
-            </ErrorBoundary>
-          );
+          return <AssessmentFlow assessmentId={queryParams.id || queryParams.type} onNavigate={handleNavigate} />;
         case '/assessment-results':
-          return (
-            <ErrorBoundary>
-              <AssessmentResults 
-                onBackToAssessments={() => handleNavigate('/assessment')}
-                onRetakeAssessment={() => handleNavigate('/assessment-flow')}
-              />
-            </ErrorBoundary>
-          );
+          return <AssessmentResults onNavigate={handleNavigate} />;
         case '/equip':
-          return (
-            <ErrorBoundary>
-              <EquipPrograms onNavigate={handleNavigate} />
-            </ErrorBoundary>
-          );
+          return <EquipPrograms onNavigate={handleNavigate} />;
         case '/equip-programs-landing':
-          return (
-            <ErrorBoundary>
-              <EquipDetail onNavigate={handleNavigate} />
-            </ErrorBoundary>
-          );
+          return <EquipPrograms onNavigate={handleNavigate} />;
         case '/equip-detail':
-          return (
-            <ErrorBoundary>
-              <EquipDetail 
-                equipId={queryParams.id}
-                onNavigate={handleNavigate} 
-              />
-            </ErrorBoundary>
-          );
+          return <EquipDetail equipId={queryParams.id} onNavigate={handleNavigate} />;
         case '/equip-program-onboarding':
-          return (
-            <ErrorBoundary>
-              <EquipOnboarding 
-                onComplete={() => {
-                  console.log('Onboarding completed');
-                  handleNavigate('/equip-program-flow');
-                }}
-                onBack={() => handleNavigate(queryParams.id ? `/equip-detail?id=${queryParams.id}` : '/equip')}
-              />
-            </ErrorBoundary>
-          );
-        case '/program':
-          return (
-             <ErrorBoundary>
-               <ProgramView 
-                 equipId={queryParams.id} 
-                 onBack={() => handleNavigate('/dashboard')}
-               />
-             </ErrorBoundary>
-          );
+          return <EquipOnboarding programId={queryParams.id} onNavigate={handleNavigate} />;
         case '/equip-program-flow':
-          return (
-            <ErrorBoundary>
-              <EquipProgramFlow 
-                programId={queryParams.id || queryParams.programId || "sleep-tight-9"}
-                enrollmentId={queryParams.enrollmentId}
-                onComplete={() => {
-                  console.log('Program completed');
-                  handleNavigate('/equip-program-completion');
-                }}
-                onBack={() => handleNavigate('/dashboard')}
-              />
-            </ErrorBoundary>
-          );
+          return <EquipProgramFlow programId={queryParams.id} onNavigate={handleNavigate} />;
         case '/equip-program-completion':
-          return (
-            <ErrorBoundary>
-              <EquipProgramCompletion 
-                onContinue={() => {
-                  console.log('Continue to more programs');
-                  handleNavigate('/equip');
-                }}
-                onBackToDashboard={() => handleNavigate('/dashboard')}
-              />
-            </ErrorBoundary>
-          );
+          return <EquipProgramCompletion onNavigate={handleNavigate} />;
         case '/consultation':
-          return (
-            <ErrorBoundary>
-              <Consultation onNavigate={handleNavigate} />
-            </ErrorBoundary>
-          );
+          return <Consultation onNavigate={handleNavigate} />;
         case '/consultation-detail':
-          return consultantId ? (
-            <ErrorBoundary>
-              <ConsultantDetail 
-                consultantId={consultantId}
-                onNavigate={handleNavigate}
-              />
-            </ErrorBoundary>
-          ) : (
-            <ErrorBoundary>
-              <Consultation onNavigate={handleNavigate} />
-            </ErrorBoundary>
-          );
+          return <ConsultantDetail onNavigate={handleNavigate} consultantId={consultantId || queryParams.id} />;
         case '/resource':
-          return (
-            <ErrorBoundary>
-              <Library onResourceSelect={(id) => handleNavigate('/resource-detail', id)} />
-            </ErrorBoundary>
-          );
+          return <Library onNavigate={handleNavigate} />;
         case '/resource-detail':
-          return resourceDetailId ? (
-            <ErrorBoundary>
-              <ResourceDetail 
-                resourceId={resourceDetailId} 
-                onBack={() => handleNavigate('/resource')}
-                onResourceSelect={(id) => handleNavigate('/resource-detail', id)}
-              />
-            </ErrorBoundary>
-          ) : (
-            <ErrorBoundary>
-              <Library onResourceSelect={(id) => handleNavigate('/resource-detail', id)} />
-            </ErrorBoundary>
-          );
+          return <ResourceDetail onNavigate={handleNavigate} resourceId={resourceDetailId || queryParams.id} />;
         case '/account':
-          return (
-            <ErrorBoundary>
-              <Account onNavigate={handleNavigate} />
-            </ErrorBoundary>
-          );
+          return <Account onNavigate={handleNavigate} />;
+        case '/mood-journal':
+          return <MoodJournal onNavigate={handleNavigate} />;
         case '/about':
-          return (
-            <ErrorBoundary>
-              <AboutUs 
-                onNavigate={handleNavigate}
-                onGetStarted={handleSignIn}
-              />
-            </ErrorBoundary>
-          );
+          return <AboutUs onNavigate={handleNavigate} />;
         case '/faq':
-          return (
-            <ErrorBoundary>
-              <FAQ onBack={() => handleNavigate('/')} />
-            </ErrorBoundary>
-          );
+          return <FAQ onNavigate={handleNavigate} />;
         case '/privacy':
-          return (
-            <ErrorBoundary>
-              <PrivacyPolicy onBack={() => handleNavigate('/')} />
-            </ErrorBoundary>
-          );
         case '/privacy-policy':
-          return (
-            <ErrorBoundary>
-              <PrivacyPolicy onBack={() => handleNavigate('/')} />
-            </ErrorBoundary>
-          );
+          return <PrivacyPolicy onNavigate={handleNavigate} />;
         case '/terms':
-          return (
-            <ErrorBoundary>
-              <TermsOfUse onBack={() => handleNavigate('/')} />
-            </ErrorBoundary>
-          );
+          return <TermsOfUse onNavigate={handleNavigate} />;
         case '/contact':
-          return (
-            <ErrorBoundary>
-              <ContactUs onBack={() => handleNavigate('/')} />
-            </ErrorBoundary>
-          );
+          return <ContactUs onNavigate={handleNavigate} />;
         case '/return-policy':
-          return (
-            <ErrorBoundary>
-              <ReturnPolicy onBack={() => handleNavigate('/')} />
-            </ErrorBoundary>
-          );
+          return <ReturnPolicy onNavigate={handleNavigate} />;
         case '/cancellation-policy':
-          return (
-            <ErrorBoundary>
-              <CancellationPolicy onBack={() => handleNavigate('/')} />
-            </ErrorBoundary>
-          );
+          return <CancellationPolicy onNavigate={handleNavigate} />;
         case '/sitemap':
-          return (
-            <ErrorBoundary>
-              <Sitemap onBack={() => handleNavigate('/')} />
-            </ErrorBoundary>
-          );
+          return <Sitemap onNavigate={handleNavigate} />;
         case '/login':
-          return (
-            <ErrorBoundary>
-              <LoginScreen 
-                onSuccess={() => handleNavigate('/dashboard')}
-                onBack={() => handleNavigate('/')}
-                reason="user-initiated"
-              />
-            </ErrorBoundary>
-          );
+          return <LoginScreen onNavigate={handleNavigate} />;
         case '/route-test':
-          return (
-            <ErrorBoundary>
-              <RouteTestScreen 
-                onNavigate={handleNavigate}
-                currentRoute={currentRoute}
-                isAuthenticated={!!user}
-              />
-            </ErrorBoundary>
-          );
-        case '/wizard-test':
-          return (
-            <ErrorBoundary>
-              <WizardTestScreen 
-                onBack={() => handleNavigate('/dashboard')}
-              />
-            </ErrorBoundary>
-          );
+          return <RouteTestScreen onNavigate={handleNavigate} />;
         case '/private-route-test':
-          return (
-            <ErrorBoundary>
-              <PrivateRouteTest 
-                onNavigate={handleNavigate}
-              />
-            </ErrorBoundary>
-          );
-        // Admin routes are now handled by the dynamic check above
-        case '/ui-kit':
-          return (
-            <ErrorBoundary>
-              <UIKitShowcasePage onBack={() => handleNavigate('/admin')} />
-            </ErrorBoundary>
-          );
-        case '/equip-onboarding-demo':
-          return (
-            <ErrorBoundary>
-              <EquipOnboardingDemo />
-            </ErrorBoundary>
-          );
+          return <PrivateRouteTest onNavigate={handleNavigate} />;
+        case '/wizard-test':
+          return <WizardTestScreen onNavigate={handleNavigate} />;
+        case '/uikit':
+          return <UIKitShowcase onNavigate={handleNavigate} />;
+        case '/uikit-page':
+          return <UIKitShowcasePage onNavigate={handleNavigate} />;
         default:
-          // Default based on auth state
-          if (!user) {
-            return (
-              <ErrorBoundary>
-                <Homepage 
-                  onNavigate={handleNavigate}
-                  onGetStarted={handleSignIn}
-                />
-              </ErrorBoundary>
-            );
-          }
-          return <Dashboard />;
+          return <NotFound onNavigate={handleNavigate} />;
       }
     } catch (error) {
       console.error('Error rendering screen:', error);
-      setErrorCount(prev => prev + 1);
-      
-      // If too many errors, provide a safe fallback
-      if (errorCount > 3) {
-        return (
-          <div className="min-h-screen flex items-center justify-center p-4">
-            <div className="text-center space-y-4">
-              <h2 style={{ fontSize: 'var(--text-lg)', color: 'var(--color-text-primary)' }}>
-                Multiple errors detected
-              </h2>
-              <p style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-muted)' }}>
-                Please refresh the page to continue safely
-              </p>
-              <button 
-                onClick={() => window.location.reload()}
-                className="ikan-button"
-                style={{
-                  backgroundColor: 'var(--semantic-button-primary-bg)',
-                  color: 'var(--semantic-button-primary-fg)',
-                  height: 'var(--ikan-component-button-height)',
-                  borderRadius: 'var(--ikan-component-border-radius)',
-                  padding: `0 var(--semantic-button-primary-padding-x)`
-                }}
-              >
-                Refresh Page
-              </button>
-            </div>
-          </div>
-        );
-      }
-      
-      // Try fallback to dashboard
-      if (currentRoute !== '/dashboard') {
-        setCurrentRoute('/dashboard');
-        setResourceDetailId(null);
-      }
-      
-      return (
-        <div className="min-h-screen flex items-center justify-center p-4">
-          <div className="text-center space-y-4">
-            <h2 style={{ fontSize: 'var(--text-lg)', color: 'var(--color-text-primary)' }}>
-              Something went wrong
-            </h2>
-            <p style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-muted)' }}>
-              Redirecting to dashboard...
-            </p>
-          </div>
-        </div>
-      );
+      return <Dashboard onNavigate={handleNavigate} />;
     }
   };
 
-  // ✅ ALL HOOKS ARE NOW COMPLETE - SAFE TO DO CALCULATIONS AND EARLY RETURNS
-  
-  // Navigation state calculations
-  const shouldShowNavigation = emergencyRender || isInitialized;
-  const routeConfig = routes.find(r => r.path === currentRoute);
-  const showPublicNav = shouldShowNavigation && !user && isPublicRoute(currentRoute);
-  // Allow private users to access both private routes and public routes
-  const showPrivateNav = shouldShowNavigation && !!user && (routeConfig?.showInPrivateNav === true || isPublicRoute(currentRoute));
-  const shouldShowFooter = shouldShowNavigation && !user && isPublicRoute(currentRoute);
-
-  // Debug logging
-  console.log('App render - appReady:', appReady, 'forceReady:', forceReady, 'loading:', loading, 'isInitialized:', isInitialized);
-  console.log('Navigation state:', { 
-    shouldShowNavigation, 
-    isInitialized, 
-    loading, 
-    emergencyRender, 
-    currentRoute, 
-    user: !!user 
-  });
-
-  // If nothing is ready, show immediate loading screen
-  if (!appReady && !forceReady && !emergencyRender) {
-    console.log('App showing loading screen');
-    return (
-      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: 'var(--color-bg-page)' }}>
-        <div className="text-center space-y-4">
-          <div className="animate-spin">
-            <LogoIcon size={32} style={{ color: 'var(--color-primary-default)' }} />
-          </div>
-          <p style={{ fontSize: 'var(--text-base)', color: 'var(--color-text-muted)' }}>
-            Starting iKan...
-          </p>
-        </div>
-      </div>
-    );
-  }
-
-  // If auth is taking too long, show starting message
-  if (!isInitialized && !emergencyRender && appReady) {
-    console.log('App waiting for auth initialization');
-    return (
-      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: 'var(--color-bg-page)' }}>
-        <div className="text-center space-y-4">
-          <div className="animate-spin">
-            <LogoIcon size={32} style={{ color: 'var(--color-primary-default)' }} />
-          </div>
-          <p style={{ fontSize: 'var(--text-base)', color: 'var(--color-text-muted)' }}>
-            Initializing authentication...
-          </p>
-        </div>
-      </div>
-    );
-  }
-
-
+  const showPublicNav = (!user || currentRoute === '/') && currentRoute !== '/login' && !currentRoute.startsWith('/admin');
+  const showPrivateNav = !!user && 
+    currentRoute !== '/' && 
+    currentRoute !== '/login' && 
+    !currentRoute.startsWith('/admin') &&
+    !currentRoute.startsWith('/assessment-flow') &&
+    !currentRoute.startsWith('/equip-program-flow') &&
+    !currentRoute.startsWith('/equip-program-onboarding');
+  const shouldShowFooter = currentRoute === '/' || 
+                           currentRoute === '/about' || 
+                           currentRoute === '/contact' || 
+                           currentRoute === '/terms' || 
+                           currentRoute === '/privacy' ||
+                           currentRoute === '/privacy-policy' ||
+                           currentRoute === '/return-policy' ||
+                           currentRoute === '/cancellation-policy' ||
+                           currentRoute === '/faq' ||
+                           currentRoute === '/sitemap';
 
   return (
-    <div 
-      className="min-h-screen flex flex-col" 
-      style={{ 
-        backgroundColor: 'var(--color-bg-page)',
-        // Mobile-specific optimizations
-        ...(isMobile && {
-          touchAction: 'pan-x pan-y',
-          WebkitTouchCallout: 'none',
-          WebkitUserSelect: 'none',
-          userSelect: 'none'
-        })
-      }}
-    >
-      {/* Skip to main content link for accessibility */}
-      <a
-        href="#main-content"
-        className="skip-to-content"
-      >
-        Skip to main content
-      </a>
-
-      {/* Mobile pull-to-refresh indicator */}
-      {isMobile && pullDistance > 0 && (
-        <div 
-          className="fixed top-0 left-0 right-0 z-50 flex items-center justify-center"
-          style={{
-            height: `min(${pullDistance}px, var(--ikan-pull-refresh-max-distance))`,
-            backgroundColor: 'var(--color-primary-default)',
-            opacity: `min(${pullDistance / (parseInt(getComputedStyle(document.documentElement).getPropertyValue('--ikan-pull-refresh-trigger-distance')) || 80)}, 1)`,
-            transform: `translateY(-${Math.max(0, (parseInt(getComputedStyle(document.documentElement).getPropertyValue('--ikan-pull-refresh-trigger-distance')) || 80) - pullDistance)}px)`,
-            transition: pullDistance === 0 ? 'all var(--ikan-animation-normal) ease-out' : 'none'
-          }}
-        >
-          <div className="text-white animate-spin">
-            <LogoIcon 
-              size={parseInt(getComputedStyle(document.documentElement).getPropertyValue('--ikan-pull-refresh-indicator-size')) || 24} 
-              style={{ color: 'white' }} 
-            />
-          </div>
+    <div className={cn(
+      "flex flex-col min-h-screen bg-background font-sans antialiased text-foreground",
+      currentRoute === '/login' ? "h-screen overflow-hidden" : ""
+    )}>
+      {/* Top Navigation */}
+      {!isMobile && currentRoute !== '/login' && !currentRoute.startsWith('/admin') && (
+        <div className="sticky top-0 z-40 w-full bg-white border-b border-border-light">
+          {user && currentRoute !== '/' ? (
+            <TopNavBar currentRoute={currentRoute} onNavigate={handleNavigate} />
+          ) : (
+            <PublicNavBar currentRoute={currentRoute} onNavigate={handleNavigate} onSignIn={handleSignIn} />
+          )}
         </div>
       )}
 
-      {/* Refresh loading overlay */}
-      {isRefreshing && (
-        <div className="fixed inset-0 bg-black bg-opacity-20 z-40 flex items-center justify-center">
-          <div 
-            className="flex items-center shadow-lg"
-            style={{
-              backgroundColor: 'var(--semantic-card-bg)',
-              borderRadius: 'var(--semantic-card-radius)',
-              padding: 'var(--semantic-card-padding)',
-              gap: 'var(--ikan-component-spacing-small)'
-            }}
-          >
-            <div className="animate-spin">
-              <LogoIcon 
-                size={parseInt(getComputedStyle(document.documentElement).getPropertyValue('--ikan-pull-refresh-indicator-size')) || 20} 
-                style={{ color: 'var(--color-primary-default)' }} 
-              />
-            </div>
-            <span style={{ 
-              color: 'var(--semantic-card-fg)',
-              fontSize: 'var(--text-base)'
-            }}>
-              Refreshing...
-            </span>
-          </div>
-        </div>
-      )}
-
-      {/* Desktop Navigation - Based on route config and auth state */}
-      {!isMobile && (
-        <>
-          {showPublicNav && (
-            <PublicNavBar 
-              currentRoute={currentRoute}
-              onNavigate={handleNavigate}
-              onSignIn={handleSignIn}
-            />
-          )}
-          {showPrivateNav && (
-            <TopNavBar 
-              currentRoute={currentRoute}
-              onNavigate={handleNavigate}
-            />
-          )}
-        </>
-      )}
-
-      {/* Main Content - Full width, no constraints */}
-      <main 
-        id="main-content"
-        className="ikan-main-content flex-1 w-full"
-        style={{
-          // Base layout - full width, no artificial constraints
-          width: '100%',
-          overflowX: 'hidden',
-          padding: '0',
-          margin: '0'
-        }}
-      >
-        <div 
-          className="ikan-content-container"
-          style={{
-            // Full width for all content
-            width: '100%',
-            maxWidth: '100%',
-            margin: '0',
-            padding: '0',
-            boxSizing: 'border-box',
-            // Only handle navigation clearance - let pages control their own content layout
-            paddingTop: (currentRoute === '/' || currentRoute === '/login' || currentRoute === '/contact' || currentRoute === '/consultation' || currentRoute === '/consultation-detail' || currentRoute === '/assessment-landing' || currentRoute === '/equip-programs-landing' || currentRoute === '/equip-detail' || currentRoute === '/resource-detail')
-              ? '0' // Landing pages start from top (navigation overlays)
-              : (showPublicNav || showPrivateNav) 
-                ? isMobile 
-                  ? showPublicNav 
-                    ? 'calc(88px + var(--ikan-component-spacing-default))' // Mobile header clearance for public routes
-                    : 'var(--ikan-component-spacing-default)' // Bottom nav clearance for private routes
-                  : 'var(--ikan-nav-clearance-desktop)' // Desktop nav clearance
-                : '0', // No navigation = no clearance needed
-            // Add bottom padding for private mobile nav only
-            paddingBottom: (isMobile && showPrivateNav) 
-              ? 'calc(80px + 24px + env(safe-area-inset-bottom, 0px))' // 80px nav height + 24px spacing (12px top + 12px bottom)
-              : '0',
-            // Mobile-specific optimizations
-            ...(isMobile && {
-              // Enhanced mobile touch interactions
-              WebkitTapHighlightColor: 'transparent',
-              // Smooth scrolling for better mobile experience
-              scrollBehavior: 'smooth',
-              // Better mobile rendering
-              WebkitBackfaceVisibility: 'hidden',
-              backfaceVisibility: 'hidden',
-              // Optimize for mobile performance
-              willChange: 'transform',
-              transform: 'translateZ(0)'
-            })
-          }}
-        >
+      {/* Main Content Area */}
+      <main className="flex-1 w-full relative">
+        <div className={cn(
+          "w-full h-full",
+          // Add padding for mobile bottom nav if visible
+          // Using 96px (pb-24) to ensure content clears the floating bottom nav
+          isMobile && showPrivateNav ? "pb-24" : ""
+        )}>
           <RouteGuard currentRoute={currentRoute} onNavigate={handleNavigate}>
             <AnimatePresence mode="wait" initial={false}>
               <motion.div
                 key={currentRoute}
-                initial={(() => {
-                  if (!previousRoute) return { opacity: 1 };
-                  
-                  const direction = getTransitionDirection(currentRoute, previousRoute);
-                  const isModal = ['assessment-flow', 'assessment-results', 'equip-program-onboarding', 'equip-program-flow'].includes(currentRoute.replace('/', ''));
-                  
-                  if (isModal) {
-                    return { 
-                      opacity: 0, 
-                      scale: 0.95, 
-                      y: 20 
-                    };
-                  }
-                  
-                  switch (direction) {
-                    case 'forward':
-                      return { opacity: 0, x: isMobile ? 100 : 50 };
-                    case 'backward':
-                      return { opacity: 0, x: isMobile ? -100 : -50 };
-                    default:
-                      return { opacity: 0, y: 10 };
-                  }
-                })()}
-                animate={{ 
-                  opacity: 1, 
-                  x: 0, 
-                  y: 0, 
-                  scale: 1 
-                }}
-                exit={(() => {
-                  if (!previousRoute) return { opacity: 0 };
-                  
-                  const direction = getTransitionDirection(currentRoute, previousRoute);
-                  const wasModal = ['assessment-flow', 'assessment-results', 'equip-program-onboarding', 'equip-program-flow'].includes(previousRoute.replace('/', ''));
-                  
-                  if (wasModal) {
-                    return { 
-                      opacity: 0, 
-                      scale: 0.95, 
-                      y: -20 
-                    };
-                  }
-                  
-                  switch (direction) {
-                    case 'forward':
-                      return { opacity: 0, x: isMobile ? -100 : -50 };
-                    case 'backward':
-                      return { opacity: 0, x: isMobile ? 100 : 50 };
-                    default:
-                      return { opacity: 0, y: -10 };
-                  }
-                })()}
-                transition={{
-                  type: "spring",
-                  stiffness: 300,
-                  damping: 30,
-                  duration: 0.3,
-                  ease: "easeInOut"
-                }}
-                style={{
-                  width: '100%',
-                  minHeight: '100%'
-                }}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.2, ease: "easeOut" }}
+                className="w-full h-full"
               >
                 {renderScreen()}
               </motion.div>
@@ -1307,12 +805,12 @@ function AppContent() {
         </div>
       </main>
 
-      {/* Footer for Public Pages - Outside main content for full width */}
+      {/* Footer for Public Pages */}
       {shouldShowFooter && (
         <Footer onNavigate={handleNavigate} />
       )}
 
-      {/* Mobile Navigation - PublicBottomNavMobile is now a TOP header, BottomNavBarMobile stays at bottom */}
+      {/* Mobile Navigation - Public Top, Private Bottom */}
       {isMobile && showPublicNav && (
         <PublicBottomNavMobile 
           currentRoute={currentRoute}
@@ -1322,35 +820,17 @@ function AppContent() {
         />
       )}
       
-      {/* Private Mobile Bottom Navigation - stays at bottom */}
+      {/* Private Mobile Bottom Navigation */}
       {isMobile && showPrivateNav && (
-        <div 
-          className="fixed bottom-0 left-0 right-0 z-30"
-          style={{
-            // Enhanced mobile navigation with better safe area support
-            paddingBottom: 'env(safe-area-inset-bottom, 0px)',
-            // Add subtle backdrop blur for modern mobile feel
-            backdropFilter: 'blur(8px)',
-            WebkitBackdropFilter: 'blur(8px)',
-            // Improved mobile navigation styling
-            borderTop: `1px solid var(--color-border-light)`,
-            backgroundColor: 'rgba(255, 255, 255, 0.95)',
-            height: 'var(--ikan-nav-height-mobile)'
+        <BottomNavBarMobile 
+          currentRoute={currentRoute}
+          onNavigate={handleNavigate}
+          notificationBadges={{
+            '/mood-journal': 2,
+            '/assessment': 1
           }}
-        >
-          <BottomNavBarMobile 
-            currentRoute={currentRoute}
-            onNavigate={handleNavigate}
-            className="relative"
-            notificationBadges={{
-              '/mood-journal': 2,
-              '/assessment': 1
-            }}
-          />
-        </div>
+        />
       )}
-
-
 
       {/* Push Permission Prompt */}
       {shouldShowPrompt && (
@@ -1375,15 +855,24 @@ function AppContent() {
         triggerReason={triggerReason}
       />
 
-      {/* Safe Performance Monitoring - No environment variable dependencies */}
+      {/* Safe Performance Monitoring */}
       <SafePerformanceMonitor />
 
       {/* Toast Notifications */}
       <Toaster 
-        position="top-right"
+        position="top-center"
         expand={false}
         richColors
         closeButton
+        toastOptions={{
+          style: {
+            borderRadius: 'var(--radius-lg)',
+            fontFamily: 'var(--font-family-base)',
+            boxShadow: 'var(--shadow-lg)',
+            fontSize: 'var(--text-sm)',
+          },
+          className: 'ikan-toast'
+        }}
       />
       
       {/* Admin Widget */}
@@ -1400,13 +889,13 @@ export default function App() {
     <ErrorBoundary>
       <AuthProvider>
         <NotificationProvider>
-          <SecurityProvider>
-            <PaymentProvider>
-              <JourneyProvider>
+          <PaymentProvider>
+            <JourneyProvider>
+              <SecurityProvider>
                 <AppContent />
-              </JourneyProvider>
-            </PaymentProvider>
-          </SecurityProvider>
+              </SecurityProvider>
+            </JourneyProvider>
+          </PaymentProvider>
         </NotificationProvider>
       </AuthProvider>
     </ErrorBoundary>

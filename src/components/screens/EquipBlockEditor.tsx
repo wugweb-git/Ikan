@@ -11,7 +11,10 @@ import {
   ChevronUp,
   Image as ImageIcon,
   Table as TableIcon,
-  Video
+  Video,
+  Layers,
+  FastForward,
+  AlertCircle
 } from 'lucide-react';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
@@ -35,6 +38,8 @@ interface EquipBlockEditorProps {
   moveDown?: () => void;
   isFirst?: boolean;
   isLast?: boolean;
+  hideHeader?: boolean;
+  isAssessment?: boolean;
 }
 
 export function EquipBlockEditor({ 
@@ -46,7 +51,9 @@ export function EquipBlockEditor({
   moveUp,
   moveDown,
   isFirst,
-  isLast
+  isLast,
+  hideHeader,
+  isAssessment
 }: EquipBlockEditorProps) {
   
   const getIcon = () => {
@@ -62,13 +69,12 @@ export function EquipBlockEditor({
   };
 
   // Determine active media tab based on current data
-  // Note: We use image_url for both, but might differentiate if we add a type field later.
-  // For now, if image_url contains 'youtube' or 'vimeo' or ends in .mp4, it's video.
   const isVideo = block.image_url && (block.image_url.includes('youtube') || block.image_url.includes('vimeo') || block.image_url.endsWith('.mp4'));
   const mediaType = isVideo ? 'video' : 'image';
 
   return (
-    <Card className="border border-gray-200 shadow-sm mb-3">
+    <Card className={hideHeader ? "border-none shadow-none" : "border border-gray-200 shadow-sm mb-3"}>
+      {!hideHeader && (
       <div className="flex items-center gap-2 p-3 bg-gray-50 rounded-t-lg border-b">
         <div className="cursor-grab text-gray-400 hover:text-gray-600">
           <GripVertical className="w-4 h-4" />
@@ -103,9 +109,10 @@ export function EquipBlockEditor({
           </Button>
         </div>
       </div>
+      )}
 
-      {isExpanded && (
-        <CardContent className="p-4 space-y-4">
+      {(isExpanded || hideHeader) && (
+        <CardContent className={hideHeader ? "p-0 space-y-4" : "p-4 space-y-4"}>
           
           {/* COMMON FIELDS */}
           <div className="grid grid-cols-2 gap-4">
@@ -140,15 +147,17 @@ export function EquipBlockEditor({
 
           {/* DYNAMIC FIELDS BASED ON TYPE */}
           
-          {/* 1. LESSON BLOCK */}
-          {block.type === 'lesson' && (
+          {/* 1. CONTENT / PROMPT SECTION (Lesson, Journal, Reflection, Conclude) */}
+          {['lesson', 'journal', 'reflection', 'conclude'].includes(block.type) && (
             <div className="space-y-2">
-              <Label className="text-xs">Content (Markdown / Rich Text)</Label>
+              <Label className="text-xs">
+                {block.type === 'lesson' || block.type === 'conclude' ? 'Content' : 'Prompt / Instructions'}
+              </Label>
               <RichTextEditor
                 value={block.content}
                 onChange={(val) => onChange({ content: val })}
-                placeholder="Write your educational content here..."
-                minHeight="200px"
+                placeholder={block.type === 'lesson' ? "Write educational content..." : "Write the prompt for the user..."}
+                minHeight="150px"
               />
             </div>
           )}
@@ -189,19 +198,30 @@ export function EquipBlockEditor({
                 />
               </div>
 
-              {/* Options Editor for MCQ/Select */}
-              {['mcq', 'single-select', 'multi-select'].includes(block.exerciseConfig?.subtype || '') && (
+              {/* Options Editor for MCQ/Select/Structured List */}
+              {['mcq', 'single-select', 'multi-select', 'structured-list'].includes(block.exerciseConfig?.subtype || '') && (
                 <div className="space-y-1">
-                  <Label className="text-xs">Options (One per line)</Label>
+                  <Label className="text-xs">
+                    {block.exerciseConfig?.subtype === 'structured-list' ? 'List Items' : 'Options'} (One per line)
+                  </Label>
                   <Textarea 
-                    value={(block.exerciseConfig?.options || []).join('\n')}
-                    onChange={(e) => onChange({ 
-                      exerciseConfig: { 
-                        ...block.exerciseConfig, 
-                        options: e.target.value.split('\n').filter(l => l) 
-                      } 
-                    })}
-                    placeholder="Option A&#10;Option B&#10;Option C"
+                    value={(
+                      block.exerciseConfig?.subtype === 'structured-list' 
+                        ? (block.exerciseConfig?.listItems || []) 
+                        : (block.exerciseConfig?.options || [])
+                    ).join('\n')}
+                    onChange={(e) => {
+                      const lines = e.target.value.split('\n').filter(l => l);
+                      const isList = block.exerciseConfig?.subtype === 'structured-list';
+                      onChange({ 
+                        exerciseConfig: { 
+                          ...block.exerciseConfig, 
+                          options: isList ? undefined : lines,
+                          listItems: isList ? lines : undefined
+                        } 
+                      });
+                    }}
+                    placeholder="Item 1&#10;Item 2&#10;Item 3"
                     rows={4}
                   />
                 </div>
@@ -246,9 +266,47 @@ export function EquipBlockEditor({
 
               {/* Table Config */}
               {block.exerciseConfig?.subtype === 'table' && (
-                <div className="p-3 bg-gray-50 rounded text-sm text-gray-500">
-                  <TableIcon className="w-4 h-4 inline mr-2" />
-                  Table configuration is advanced. Define columns in JSON format.
+                <div className="space-y-4 pt-2 border-t border-dashed">
+                  <div className="space-y-1">
+                    <Label className="text-xs">Column Headers (One per line)</Label>
+                    <Textarea 
+                      value={(block.exerciseConfig?.columns || []).join('\n')}
+                      onChange={(e) => onChange({ 
+                        exerciseConfig: { 
+                          ...block.exerciseConfig, 
+                          columns: e.target.value.split('\n').filter(l => l) 
+                        } 
+                      })}
+                      placeholder="Situation&#10;Emotion&#10;Intensity (1-10)"
+                      rows={4}
+                    />
+                  </div>
+                  
+                  <div className="space-y-1">
+                    <Label className="text-xs">Row Headers (Optional - for Fixed Grid)</Label>
+                    <Textarea 
+                      value={(block.exerciseConfig?.rows || []).join('\n')}
+                      onChange={(e) => onChange({ 
+                        exerciseConfig: { 
+                          ...block.exerciseConfig, 
+                          rows: e.target.value.split('\n').filter(l => l) 
+                        } 
+                      })}
+                      placeholder="Row 1&#10;Row 2&#10;Row 3"
+                      rows={4}
+                    />
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                     <Checkbox 
+                       id="allow_add_rows"
+                       checked={block.exerciseConfig?.allow_add_rows}
+                       onCheckedChange={(c) => onChange({
+                          exerciseConfig: { ...block.exerciseConfig, allow_add_rows: !!c }
+                       })}
+                     />
+                     <Label htmlFor="allow_add_rows" className="text-xs font-normal">Allow user to add rows</Label>
+                  </div>
                 </div>
               )}
             </div>
@@ -273,8 +331,150 @@ export function EquipBlockEditor({
             </div>
           )}
 
+          {/* SCORING SECTION (Assessment Only) */}
+          {(isAssessment || block.exerciseConfig?.scoring?.enabled) && block.type === 'exercise' && (
+             <div className="pt-2 border-t border-amber-100 bg-amber-50/50 p-3 rounded-md">
+               <div className="flex items-center justify-between mb-2">
+                 <Label className="text-xs font-bold text-amber-800 flex items-center gap-1">
+                   <Target size={12} /> Scoring Configuration
+                 </Label>
+                 <div className="flex items-center gap-2">
+                    <Checkbox 
+                      checked={block.exerciseConfig?.scoring?.enabled}
+                      onCheckedChange={(c) => onChange({
+                        exerciseConfig: {
+                          ...block.exerciseConfig,
+                          scoring: { ...block.exerciseConfig?.scoring, enabled: !!c }
+                        }
+                      })}
+                    />
+                    <Label className="text-xs text-amber-800">Enable Scoring</Label>
+                 </div>
+               </div>
+
+               {block.exerciseConfig?.scoring?.enabled && (
+                 <div className="space-y-3">
+                    {/* For MCQs: Weights per option */}
+                    {['mcq', 'single-select', 'multi-select'].includes(block.exerciseConfig?.subtype || '') && (
+                      <div className="space-y-1">
+                        <Label className="text-xs text-amber-700">
+                          Option Weights (Comma separated, order matches options)
+                        </Label>
+                        <Input 
+                          value={(block.exerciseConfig?.scoring?.weights || []).join(', ')}
+                          onChange={(e) => {
+                            const weights = e.target.value.split(',').map(w => parseInt(w.trim()) || 0);
+                            onChange({
+                              exerciseConfig: {
+                                ...block.exerciseConfig,
+                                scoring: { ...block.exerciseConfig?.scoring, weights }
+                              }
+                            });
+                          }}
+                          placeholder="e.g. 0, 1, 0, 0 (Correct answer is 2nd option)"
+                          className="h-8 text-xs border-amber-200"
+                        />
+                      </div>
+                    )}
+                    
+                    {/* Default Weight */}
+                    <div className="flex items-center gap-2">
+                      <Label className="text-xs text-amber-700">Max Score</Label>
+                      <Input 
+                        type="number"
+                        value={block.exerciseConfig?.scoring?.maxScore || 1}
+                        onChange={(e) => onChange({
+                          exerciseConfig: {
+                            ...block.exerciseConfig,
+                            scoring: { ...block.exerciseConfig?.scoring, maxScore: parseInt(e.target.value) }
+                          }
+                        })}
+                        className="w-16 h-7 text-xs border-amber-200"
+                      />
+                    </div>
+                 </div>
+               )}
+             </div>
+          )}
+
+          {/* WIZARD FLOW & INTERACTION SECTION (PROMOTED) */}
+          <div className="pt-2 border-t mt-4">
+             <div className="flex items-center gap-2 mb-2">
+                <Layers size={14} className="text-indigo-600" />
+                <Label className="text-xs font-bold text-gray-700 uppercase tracking-wider">Wizard Flow</Label>
+             </div>
+             
+             <div className="bg-indigo-50/50 p-3 rounded-md border border-indigo-100 space-y-4">
+               {/* Step Grouping */}
+               <div className="space-y-1">
+                  <div className="flex items-center justify-between">
+                     <Label className="text-xs font-medium text-indigo-900">Step Group ID</Label>
+                     <span className="text-[10px] text-indigo-400">Optional</span>
+                  </div>
+                  <div className="flex gap-2">
+                     <div className="relative flex-1">
+                        <Input 
+                           value={block.stepGroup || ''}
+                           onChange={(e) => onChange({ stepGroup: e.target.value })}
+                           placeholder="e.g. step-1"
+                           className="h-8 text-xs font-mono bg-white"
+                        />
+                     </div>
+                  </div>
+                  <p className="text-[10px] text-indigo-600/70">
+                     Blocks with the same Step ID appear together on one screen.
+                  </p>
+               </div>
+
+               <div className="grid grid-cols-2 gap-4">
+                  {/* Auto Advance */}
+                  <div className="flex items-start gap-2 p-2 bg-white rounded border border-indigo-100">
+                     <Checkbox 
+                        id="auto-advance"
+                        checked={block.autoAdvance}
+                        onCheckedChange={(c) => onChange({ autoAdvance: c as boolean })}
+                        className="mt-0.5"
+                     />
+                     <div>
+                        <Label htmlFor="auto-advance" className="text-xs font-medium cursor-pointer block">Auto-Advance</Label>
+                        <p className="text-[10px] text-gray-400 leading-tight mt-0.5">
+                           Automatically move to next step when completed.
+                        </p>
+                     </div>
+                  </div>
+                  
+                  {/* Required */}
+                  <div className="flex items-start gap-2 p-2 bg-white rounded border border-indigo-100">
+                     <Checkbox 
+                        id="required"
+                        checked={block.required}
+                        onCheckedChange={(c) => onChange({ required: c as boolean })}
+                        className="mt-0.5"
+                     />
+                     <div>
+                        <Label htmlFor="required" className="text-xs font-medium cursor-pointer block">Required</Label>
+                        <p className="text-[10px] text-gray-400 leading-tight mt-0.5">
+                           User must complete this block to proceed.
+                        </p>
+                     </div>
+                  </div>
+               </div>
+               
+               <div className="flex items-center gap-2 justify-end pt-1">
+                  <Clock size={12} className="text-indigo-400" />
+                  <Label className="text-xs text-indigo-900">Est. Duration (m)</Label>
+                  <Input 
+                    type="number" 
+                    className="w-16 h-7 text-xs bg-white"
+                    value={block.duration}
+                    onChange={(e) => onChange({ duration: parseInt(e.target.value) || 0 })}
+                  />
+               </div>
+             </div>
+          </div>
+
           {/* MEDIA SECTION */}
-          <div className="pt-2 border-t">
+          <div className="pt-2 border-t mt-2">
             <Label className="text-xs mb-2 block font-medium text-gray-700">Block Media</Label>
             
             <Tabs defaultValue={mediaType} className="w-full">
@@ -315,50 +515,6 @@ export function EquipBlockEditor({
                 </div>
               </TabsContent>
             </Tabs>
-          </div>
-
-          {/* SHARED SETTINGS */}
-          <div className="pt-2 border-t">
-            <Label className="text-xs mb-2 block font-medium text-gray-700">Display & Behavior</Label>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-1">
-                 <Label className="text-xs">Step Group ID (Optional)</Label>
-                 <Input 
-                   value={block.stepGroup || ''}
-                   onChange={(e) => onChange({ stepGroup: e.target.value })}
-                   placeholder="e.g. step-1"
-                   className="h-8 text-xs"
-                 />
-                 <p className="text-[10px] text-gray-400">Combine multiple blocks on one screen</p>
-              </div>
-              <div className="flex items-center gap-4 pt-4">
-                <div className="flex items-center gap-2">
-                   <Checkbox 
-                     checked={block.autoAdvance}
-                     onCheckedChange={(c) => onChange({ autoAdvance: c as boolean })}
-                   />
-                   <Label className="text-xs cursor-pointer">Auto-advance</Label>
-                </div>
-                
-                <div className="flex items-center gap-2">
-                  <Checkbox 
-                    checked={block.required}
-                    onCheckedChange={(c) => onChange({ required: c as boolean })}
-                  />
-                  <Label className="text-xs cursor-pointer">Required</Label>
-                </div>
-              </div>
-            </div>
-            
-             <div className="flex items-center gap-2 mt-3 justify-end">
-                <Label className="text-xs">Duration (m)</Label>
-                <Input 
-                  type="number" 
-                  className="w-16 h-7 text-xs"
-                  value={block.duration}
-                  onChange={(e) => onChange({ duration: parseInt(e.target.value) || 0 })}
-                />
-             </div>
           </div>
 
         </CardContent>

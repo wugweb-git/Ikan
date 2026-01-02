@@ -30,6 +30,10 @@ class ApiClient {
     return data.session?.access_token;
   }
 
+  async healthCheck() {
+    return this.request('/health', { method: 'GET' }, false);
+  }
+
   async isAuthenticated() {
     const token = await this.getToken();
     return !!token;
@@ -70,13 +74,18 @@ class ApiClient {
 
       const data = await response.json();
       return data;
-    } catch (error) {
-      if (retryCount < 2) {
-        // Simple retry logic with linear backoff
+    } catch (error: any) {
+      if (retryCount < 2 && (!error.message || !error.message.includes('401'))) {
+        // Simple retry logic with linear backoff (except for auth errors)
         await new Promise(resolve => setTimeout(resolve, 1000 * (retryCount + 1)));
         return this.request(path, options, auth, retryCount + 1);
       }
-      console.error('API Request failed', error);
+      
+      // Suppress 401 error logging to avoid console noise during auth checks
+      if (!error.message || !error.message.includes('401')) {
+        console.error('API Request failed', error);
+      }
+      
       throw error;
     }
   }
@@ -235,7 +244,10 @@ class ApiClient {
                 content: block.content || '',
                 duration: block.estimated_time_minutes || 5,
                 required: block.is_required,
-                exerciseConfig: block.exercise_config || block.exerciseConfig
+                exerciseConfig: block.exercise_config || block.exerciseConfig,
+                stepGroup: block.step_group_id || block.stepGroup,
+                autoAdvance: block.auto_advance || block.autoAdvance,
+                image_url: block.image_url
             }))
         }))
     };
@@ -618,6 +630,35 @@ class ApiClient {
 
   async addDefaultOnboarding() {
     return this.request(`/admin/equip/add-default-onboarding`, { method: 'POST' }, true);
+  }
+
+  // Analytics
+  async getAggregatedAnalytics(period: string = 'week') {
+    try {
+      const res = await this.request(`/admin/analytics?period=${period}`, { method: 'GET' }, true);
+      return res.analytics || {
+        activeUsers: 0,
+        newUsers: 0,
+        retention: 0,
+        engagement: 0,
+        revenue: 0,
+        userGrowth: [],
+        programEngagement: [],
+        moodTrends: []
+      };
+    } catch (e) {
+      console.warn('Failed to fetch analytics', e);
+      return {
+        activeUsers: 0,
+        newUsers: 0,
+        retention: 0,
+        engagement: 0,
+        revenue: 0,
+        userGrowth: [],
+        programEngagement: [],
+        moodTrends: []
+      };
+    }
   }
 }
 

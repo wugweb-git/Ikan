@@ -254,12 +254,12 @@ export function EquipBlock({
                           onClick={() => handleProgramClick(program)}
                           className="w-full flex items-center justify-center gap-2"
                           style={{
-                            backgroundColor: '#2A2A2A', // Dark grey/black from image
-                            color: '#FFFFFF',
-                            height: '40px',
-                            borderRadius: 'var(--radius-md)',
-                            fontSize: '0.75rem',
-                            fontWeight: '500',
+                            backgroundColor: 'var(--color-primary-default)',
+                            color: 'var(--color-primary-on)',
+                            height: 'var(--ikan-component-button-height)',
+                            borderRadius: 'var(--ikan-component-border-radius)',
+                            fontSize: 'var(--text-sm)',
+                            fontWeight: 'var(--font-weight-medium)',
                             letterSpacing: '0.05em'
                           }}
                         >
@@ -461,11 +461,11 @@ export function EquipBlock({
                                 onClick={() => handleProgramClick(program)}
                                 className="w-full flex items-center justify-center gap-2 hover:opacity-90 transition-opacity"
                                 style={{
-                                  backgroundColor: '#2A2A2A',
-                                  color: '#FFFFFF',
-                                  height: '42px',
-                                  borderRadius: 'var(--radius-md)', // Slightly smaller radius for button
-                                  fontSize: '0.75rem',
+                                  backgroundColor: 'var(--color-primary-default)',
+                                  color: 'var(--color-primary-on)',
+                                  height: 'var(--ikan-component-button-height)',
+                                  borderRadius: 'var(--ikan-component-border-radius)',
+                                  fontSize: 'var(--text-sm)',
                                   fontWeight: 'var(--font-weight-medium)',
                                   letterSpacing: '0.05em'
                                 }}

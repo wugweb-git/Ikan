@@ -6,6 +6,8 @@ import { Icon } from './Icon';
 import { Logo } from './Logo';
 import { cn } from './ui/utils';
 import { authContent } from '../lib/content/auth';
+import { Input } from './ui/input';
+import { Mail, Lock, User, Eye, EyeOff, ArrowLeft } from 'lucide-react';
 import svgPaths from "../imports/svg-850apu7kjy";
 
 interface LoginScreenProps {
@@ -117,7 +119,7 @@ function AuthHeader({ mode, onModeChange, onBack }: { mode: AuthMode; onModeChan
               fontWeight: 'var(--font-weight-medium)' 
             }}
           >
-            <Icon name="arrowLeft" size={16} />
+            <ArrowLeft size={16} />
             {authContent.header.back}
           </button>
         )}
@@ -182,6 +184,8 @@ function AuthForm({ mode, onSuccess, onModeChange }: {
 }) {
   const { signIn, signUp, signInWithProvider, resetPassword, loading } = useAuth();
   const { showToast } = useNotifications();
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -275,27 +279,14 @@ function AuthForm({ mode, onSuccess, onModeChange }: {
           >
             {authContent.form.labels.fullName}
           </label>
-          <input
+          <Input
             id="fullName"
             type="text"
             value={formData.fullName}
             onChange={(e) => setFormData(prev => ({ ...prev, fullName: e.target.value }))}
             placeholder={authContent.form.placeholders.fullName}
             disabled={loading}
-            className="ikan-input w-full transition-colors focus:border-primary-default focus:ring-2 focus:ring-primary-default/20"
-            style={{
-              height: '48px',
-              borderRadius: 'var(--radius-sm)',
-              backgroundColor: 'var(--color-bg-input)',
-              borderColor: 'var(--color-border-default)',
-              fontSize: 'var(--text-base)',
-              fontFamily: 'var(--font-family-base)',
-              fontWeight: 'var(--font-weight-regular)',
-              color: 'var(--color-text-primary)',
-              border: '1px solid var(--color-border-default)',
-              padding: '0 var(--spacing-4)',
-              outline: 'none'
-            }}
+            startIcon={<User size={18} />}
           />
         </div>
       )}
@@ -312,27 +303,14 @@ function AuthForm({ mode, onSuccess, onModeChange }: {
         >
           {authContent.form.labels.email}
         </label>
-        <input
+        <Input
           id="email"
           type="email"
           value={formData.email}
           onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
           placeholder={authContent.form.placeholders.email}
           disabled={loading}
-          className="ikan-input w-full transition-colors focus:border-primary-default focus:ring-2 focus:ring-primary-default/20"
-          style={{
-            height: '48px',
-            borderRadius: 'var(--radius-sm)',
-            backgroundColor: 'var(--color-bg-input)',
-            borderColor: 'var(--color-border-default)',
-            fontSize: 'var(--text-base)',
-            fontFamily: 'var(--font-family-base)',
-            fontWeight: 'var(--font-weight-regular)',
-            color: 'var(--color-text-primary)',
-            border: '1px solid var(--color-border-default)',
-            padding: '0 var(--spacing-4)',
-            outline: 'none'
-          }}
+          startIcon={<Mail size={18} />}
         />
       </div>
 
@@ -349,27 +327,23 @@ function AuthForm({ mode, onSuccess, onModeChange }: {
           >
             {authContent.form.labels.password}
           </label>
-          <input
+          <Input
             id="password"
-            type="password"
+            type={showPassword ? "text" : "password"}
             value={formData.password}
             onChange={(e) => setFormData(prev => ({ ...prev, password: e.target.value }))}
             placeholder={mode === 'signup' ? authContent.form.placeholders.passwordSignup : authContent.form.placeholders.password}
             disabled={loading}
-            className="ikan-input w-full transition-colors focus:border-primary-default focus:ring-2 focus:ring-primary-default/20"
-            style={{
-              height: '48px',
-              borderRadius: 'var(--radius-sm)',
-              backgroundColor: 'var(--color-bg-input)',
-              borderColor: 'var(--color-border-default)',
-              fontSize: 'var(--text-base)',
-              fontFamily: 'var(--font-family-base)',
-              fontWeight: 'var(--font-weight-regular)',
-              color: 'var(--color-text-primary)',
-              border: '1px solid var(--color-border-default)',
-              padding: '0 var(--spacing-4)',
-              outline: 'none'
-            }}
+            startIcon={<Lock size={18} />}
+            endIcon={
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="focus:outline-none hover:text-primary transition-colors"
+              >
+                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
+            }
           />
         </div>
       )}
@@ -387,27 +361,23 @@ function AuthForm({ mode, onSuccess, onModeChange }: {
           >
             {authContent.form.labels.confirmPassword}
           </label>
-          <input
+          <Input
             id="confirmPassword"
-            type="password"
+            type={showConfirmPassword ? "text" : "password"}
             value={formData.confirmPassword}
             onChange={(e) => setFormData(prev => ({ ...prev, confirmPassword: e.target.value }))}
             placeholder={authContent.form.placeholders.confirmPassword}
             disabled={loading}
-            className="ikan-input w-full transition-colors focus:border-primary-default focus:ring-2 focus:ring-primary-default/20"
-            style={{
-              height: '48px',
-              borderRadius: 'var(--radius-sm)',
-              backgroundColor: 'var(--color-bg-input)',
-              borderColor: 'var(--color-border-default)',
-              fontSize: 'var(--text-base)',
-              fontFamily: 'var(--font-family-base)',
-              fontWeight: 'var(--font-weight-regular)',
-              color: 'var(--color-text-primary)',
-              border: '1px solid var(--color-border-default)',
-              padding: '0 var(--spacing-4)',
-              outline: 'none'
-            }}
+            startIcon={<Lock size={18} />}
+            endIcon={
+              <button
+                type="button"
+                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                className="focus:outline-none hover:text-primary transition-colors"
+              >
+                {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
+            }
           />
         </div>
       )}
@@ -577,7 +547,7 @@ export default function LoginScreen({ onSuccess, onBack, reason, redirectRoute }
 
   return (
     <div 
-      className="min-h-screen w-full"
+      className="h-full w-full"
       style={{ backgroundColor: 'var(--color-bg-page)' }}
     >
       {/* Main Content - Standard Auth Screen Layout */}
@@ -586,7 +556,7 @@ export default function LoginScreen({ onSuccess, onBack, reason, redirectRoute }
         <div 
           className={cn(
             "relative flex items-center justify-center hidden lg:flex",
-            "w-1/2 h-screen"
+            "w-1/2 h-full"
           )}
         >
           <HeroSection />
@@ -596,7 +566,7 @@ export default function LoginScreen({ onSuccess, onBack, reason, redirectRoute }
         <div 
           className={cn(
             "flex items-center justify-center",
-            isMobile ? "flex-1 w-full p-6 min-h-screen" : "w-1/2 h-screen p-8"
+            isMobile ? "flex-1 w-full p-6 h-full overflow-y-auto" : "w-1/2 h-full p-8 overflow-y-auto"
           )}
           style={{ backgroundColor: 'var(--color-bg-card)' }}
         >

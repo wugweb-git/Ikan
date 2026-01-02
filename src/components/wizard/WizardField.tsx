@@ -1,5 +1,5 @@
 import React from 'react';
-import { WizardFieldConfig } from './types';
+import { WizardFieldConfig, WizardMode } from './types';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { Textarea } from '../ui/textarea';
@@ -7,7 +7,7 @@ import { RadioGroup, RadioGroupItem } from '../ui/radio-group';
 import { Checkbox } from '../ui/checkbox';
 import { cn } from '../ui/utils';
 import { Plus, Trash2, Info } from 'lucide-react';
-import { Button } from '../ui/button';
+import { motion } from 'motion/react';
 
 interface WizardFieldProps {
   field: WizardFieldConfig;
@@ -15,20 +15,79 @@ interface WizardFieldProps {
   onChange: (value: any) => void;
   onAutoAdvance?: () => void;
   error?: string;
+  wizardMode?: WizardMode; // NEW: Context for defaults
 }
 
-export function WizardField({ field, value, onChange, onAutoAdvance, error }: WizardFieldProps) {
-  const { id, type, label, helpText, description, placeholder, options, validation, uiHints } = field;
+export function WizardField({ field, value, onChange, onAutoAdvance, error, wizardMode }: WizardFieldProps) {
+  const { id, type, label, helpText, description, placeholder, options, validation, uiHints, media, duration } = field;
 
   // Helper to handle undefined values
   const safeValue = value ?? '';
   
-  // UI Hints
-  const isCards = uiHints?.includes('cards');
-  const isInline = uiHints?.includes('inline');
+  // Resolve Display Style
+  // 1. Explicit displayStyle config
+  // 2. Legacy uiHints
+  // 3. Defaults: Assessment -> Cards, Onboarding -> Inline
+  const effectiveStyle = field.displayStyle || (
+      uiHints?.includes('cards') ? 'cards' :
+      uiHints?.includes('inline') ? 'inline' :
+      (wizardMode === 'assessment' ? 'cards' : 'inline')
+  );
+
+  const isCards = effectiveStyle === 'cards';
+  const isInline = effectiveStyle === 'inline';
 
   const renderField = () => {
     switch (type) {
+      case 'scale':
+         const min = validation?.min || 0;
+         const max = validation?.max || 10;
+         // Generate numbers range
+         const numbers = Array.from({ length: max - min + 1 }, (_, i) => i + min);
+         
+         return (
+            <div className="space-y-[var(--spacing-6)]">
+              <div className="flex flex-wrap justify-center gap-[var(--spacing-3)]">
+                {numbers.map((num, index) => {
+                  const isSelected = safeValue === num;
+                  
+                  return (
+                    <motion.button
+                      key={num}
+                      onClick={() => {
+                        onChange(num);
+                        if (field.autoAdvance && onAutoAdvance) {
+                          setTimeout(onAutoAdvance, 300);
+                        }
+                      }}
+                      initial={{ opacity: 0, scale: 0 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ delay: index * 0.05, type: 'spring' }}
+                      whileHover={{ scale: 1.1 }}
+                      whileTap={{ scale: 0.95 }}
+                      className={cn(
+                        "w-12 h-12 md:w-14 md:h-14 rounded-full font-medium transition-all flex items-center justify-center",
+                        isSelected
+                          ? "bg-[var(--color-primary-default)] text-white shadow-lg scale-110"
+                          : "bg-[var(--color-bg-muted)] text-[var(--color-text-muted)] hover:bg-[var(--color-accent-default)]"
+                      )}
+                    >
+                      {num}
+                    </motion.button>
+                  );
+                })}
+              </div>
+              
+              {/* Optional Labels if passed via options or logic - relying on implicit or options for now */}
+              {options && options.length >= 2 && (
+                 <div className="flex justify-between text-sm text-[var(--color-text-muted)] px-2">
+                    <span>{options[0].label}</span>
+                    <span>{options[options.length-1].label}</span>
+                 </div>
+              )}
+            </div>
+         );
+
       case 'text':
       case 'number':
       case 'time':
@@ -352,6 +411,28 @@ export function WizardField({ field, value, onChange, onAutoAdvance, error }: Wi
 
   return (
     <div className="space-y-[var(--spacing-2)] py-[var(--spacing-2)]">
+      {/* Field Media */}
+      {media && (
+        <div className="mb-[var(--spacing-4)] flex justify-center">
+            {media.type === 'image' && media.url && (
+                <img src={media.url} alt={media.alt || label || 'Image'} className="max-h-64 rounded-[var(--radius-lg)] object-cover w-full md:w-auto" />
+            )}
+            {media.type === 'video' && media.url && (
+                 <video 
+                   src={media.url} 
+                   controls 
+                   className="max-h-64 w-full md:w-auto rounded-[var(--radius-lg)]"
+                   poster={media.alt ? undefined : undefined} // Could add poster support if needed
+                 />
+            )}
+            {media.type === 'icon' && media.name && (
+                <div className="w-12 h-12 rounded-full bg-[var(--color-primary-default)]/10 flex items-center justify-center text-xl">
+                    ✨
+                </div>
+            )}
+        </div>
+      )}
+
       <div className="flex items-center justify-between">
         {label && (
           <Label htmlFor={id} className="text-[var(--color-text-primary)] flex items-center gap-[var(--spacing-2)]">
@@ -363,6 +444,12 @@ export function WizardField({ field, value, onChange, onAutoAdvance, error }: Wi
               </div>
             )}
           </Label>
+        )}
+        
+        {duration && (
+            <div className="text-xs font-medium text-[var(--color-text-muted)] bg-[var(--color-bg-muted)] px-2 py-1 rounded-full flex items-center gap-1">
+                <span>⏱️</span> {duration} min
+            </div>
         )}
       </div>
       

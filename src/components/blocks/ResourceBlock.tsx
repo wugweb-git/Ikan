@@ -128,8 +128,8 @@ export function ResourceBlock({
                 style={{
                   backgroundColor: 'var(--color-neutral-200)',
                   color: 'var(--color-text-muted)',
-                  height: '48px',
-                  borderRadius: 'var(--radius-sm)'
+                  height: 'var(--ikan-component-button-height)',
+                  borderRadius: 'var(--ikan-component-border-radius)'
                 }}
               >
                 {viewAllText}

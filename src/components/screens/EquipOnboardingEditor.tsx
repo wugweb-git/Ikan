@@ -96,12 +96,13 @@ export function EquipOnboardingEditor({ questions, onChange, onSelectQuestion }:
   const activeQuestion = questions.find(q => q.id === selectedId);
 
   return (
-    <div className="h-[calc(100vh-250px)] flex border rounded-xl overflow-hidden bg-white shadow-sm">
+    <div className="h-[calc(100vh-220px)] flex border rounded-xl overflow-hidden bg-white shadow-sm ring-1 ring-gray-200">
       {/* LEFT SIDEBAR: QUESTION LIST */}
-      <div className="w-[300px] flex flex-col border-r bg-gray-50/50">
-        <div className="p-4 border-b bg-white">
-          <Button onClick={addQuestion} className="w-full gap-2 shadow-sm" size="sm">
-            <Plus size={16} /> Add Question
+      <div className="w-[35%] min-w-[300px] flex flex-col border-r bg-gray-50/50">
+        <div className="p-4 border-b bg-white flex items-center justify-between sticky top-0 z-10">
+           <span className="text-sm font-semibold text-gray-700">Questions ({questions.length})</span>
+           <Button onClick={addQuestion} size="icon" variant="outline" className="h-8 w-8">
+            <Plus size={16} />
           </Button>
         </div>
         

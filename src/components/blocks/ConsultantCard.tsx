@@ -136,7 +136,8 @@ export function ConsultantCard({ consultant, onClick, className }: ConsultantCar
                 {/* Rating */}
                 <div className="flex items-center gap-1">
                   <Star 
-                    className="w-4 h-4 fill-yellow-400 text-yellow-400" 
+                    className="w-4 h-4" 
+                    style={{ fill: 'var(--color-rating-star)', color: 'var(--color-rating-star)' }}
                   />
                   <span style={{ fontWeight: 'var(--font-weight-medium)' }}>
                     {consultant.rating ? consultant.rating.toFixed(1) : '0.0'}
@@ -269,8 +270,8 @@ export function ConsultantCard({ consultant, onClick, className }: ConsultantCar
               <div 
                 className="text-xs px-3 py-1.5 rounded text-center"
                 style={{
-                  backgroundColor: 'var(--color-success-light)',
-                  color: 'var(--color-success-default)',
+                  backgroundColor: 'var(--color-status-success-light)',
+                  color: 'var(--color-status-success)',
                   fontWeight: 'var(--font-weight-medium)',
                 }}
               >

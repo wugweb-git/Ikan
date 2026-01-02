@@ -41,6 +41,7 @@ export interface WizardLayoutProps {
   // Custom Footer Actions (replaces default footer content if provided, or appends)
   footerLeftContent?: React.ReactNode;
   footerRightContent?: React.ReactNode;
+  fullWidth?: boolean; // NEW: Allow full width content
 }
 
 export function WizardLayout({
@@ -69,7 +70,8 @@ export function WizardLayout({
   isLoading = false,
   validationHint,
   footerLeftContent,
-  footerRightContent
+  footerRightContent,
+  fullWidth = false
 }: WizardLayoutProps) {
   const isFirstStep = currentStep === 0;
   const isLastStep = currentStep === steps.length - 1;
@@ -204,7 +206,10 @@ export function WizardLayout({
         
         {/* PRIMARY WORK AREA */}
         <main className="flex-1 overflow-y-auto relative scroll-smooth">
-          <div className="max-w-4xl px-6 py-8">
+          <div className={cn(
+            "px-6 py-8",
+            fullWidth ? "max-w-full" : "max-w-4xl"
+          )}>
             
             {/* Step Header */}
             {(stepTitle || stepDescription) && (

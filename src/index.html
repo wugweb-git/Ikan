@@ -59,6 +59,16 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Ubuntu:wght@400;500&display=swap" rel="stylesheet" />
+    <style>
+      /* Force normal font style globally */
+      * {
+        font-style: normal !important;
+      }
+      /* Allow italic only when explicitly requested */
+      em, i, .italic, [style*="font-style: italic"] {
+        font-style: italic !important;
+      }
+    </style>
     
     <title>iKan Mental Health</title>
     

@@ -1,11 +1,11 @@
 import React from 'react';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
-import { ImageWithFallback } from '../figma/ImageWithFallback';
 import { ErrorBoundary } from '../ErrorBoundary';
 import { toast } from 'sonner@2.0.3';
 import { logger } from '../../lib/logger';
 import { projectId, publicAnonKey } from '../../utils/supabase/info';
+import { Loader2 } from 'lucide-react';
 
 interface NewsletterBlockProps {
   title?: string;
@@ -19,16 +19,9 @@ interface NewsletterBlockProps {
 }
 
 export function NewsletterBlock({
-  title = "Newsletter Signup",
-  benefits = [
-    "Get weekly mental health tips and insights",
-    "Early access to new features and programs",
-    "Exclusive resources and guided exercises"
-  ],
-  imageUrl = "https://images.unsplash.com/photo-1758273240360-76b908e7582a?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxtZW50YWwlMjBoZWFsdGglMjB3ZWxsbmVzcyUyMHN1cHBvcnR8ZW58MXx8fHwxNzY0OTUxMDY1fDA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral",
-  imageAlt = "Mental health and wellness support",
-  privacyText = "Privacy: We store and process your personal data based on our privacy policy. You can unsubscribe at any time.",
-  ctaText = "Sign up now!",
+  title = "Sign up for our newsletter",
+  privacyText = "Stay Informed About Mental Health", // Using privacyText prop for the subtext to maintain interface compatibility
+  ctaText = "Subscribe",
   onSubmit,
   className
 }: NewsletterBlockProps) {
@@ -48,13 +41,12 @@ export function NewsletterBlock({
       return;
     }
 
-    // If custom onSubmit handler is provided, use it (for custom implementations)
+    // If custom onSubmit handler is provided
     if (onSubmit) {
       onSubmit(formData);
       return;
     }
 
-    // Default backend integration
     setIsSubmitting(true);
 
     try {
@@ -67,7 +59,7 @@ export function NewsletterBlock({
             'Authorization': `Bearer ${publicAnonKey}`
           },
           body: JSON.stringify({
-            name: formData.name,
+            name: formData.name, // We send empty name as per design there is no name input
             email: formData.email
           })
         }
@@ -80,7 +72,7 @@ export function NewsletterBlock({
           toast.info(data.message);
         } else {
           toast.success('Thank you for subscribing to our newsletter!');
-          setFormData({ name: '', email: '' }); // Clear form
+          setFormData({ name: '', email: '' });
         }
       } else {
         toast.error(data.error || 'Failed to subscribe. Please try again.');
@@ -96,118 +88,95 @@ export function NewsletterBlock({
 
   return (
     <ErrorBoundary>
-      <section 
-        className={`w-full ${className}`}
-        style={{
-          backgroundColor: 'var(--color-bg-card)',
-          paddingTop: 'clamp(var(--spacing-8), 6vw, var(--spacing-12))',
-          paddingBottom: 'clamp(var(--spacing-8), 6vw, var(--spacing-12))'
-        }}
-      >
+      <section className={`w-full px-4 md:px-6 py-8 md:py-12 ${className || ''}`}>
         <div 
-          className="max-w-7xl mx-auto"
-          style={{ padding: '0 var(--spacing-4)' }}
+          className="max-w-[1014px] mx-auto p-8 md:p-10 relative overflow-hidden"
+          style={{
+            backgroundColor: 'var(--color-primary-default)',
+            borderRadius: 'var(--radius-lg)', // Standardized to 16px
+            border: '1px solid var(--color-border-default)'
+          }}
         >
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-0 lg:gap-8 rounded-2xl overflow-hidden">
-            {/* Content on left - 50% */}
-            <div className="flex-1 max-w-xl">
+          <div className="flex flex-col lg:flex-row items-center justify-between gap-8 lg:gap-12">
+            
+            {/* Left Side: Heading */}
+            <div className="flex flex-col items-start lg:items-start text-left lg:text-left">
               <h2 
-                className="mb-4"
+                className="font-bold leading-tight max-w-[400px]"
                 style={{
-                  fontSize: 'var(--text-3xl)',
-                  fontWeight: 'var(--font-weight-medium)',
-                  color: 'var(--color-text-primary)',
-                  fontFamily: 'var(--font-family-base)'
+                  fontSize: 'var(--text-3xl)', // Standardized font size
+                  color: 'var(--color-primary-on)'
                 }}
               >
-                {title}
+                {/* Check if title contains "Sign up for our newsletter" to apply specific breaking if needed, otherwise just render title */}
+                {title === "Sign up for our newsletter" ? (
+                  <>
+                    <span className="block">Sign up for</span>
+                    <span className="block">our newsletter</span>
+                  </>
+                ) : (
+                  title
+                )}
               </h2>
-              
-              <p 
-                className="mb-6"
-                style={{
-                  fontSize: 'var(--text-base)',
-                  color: 'var(--color-text-muted)',
-                  lineHeight: 'var(--line-height-md)',
-                  fontFamily: 'var(--font-family-base)'
-                }}
-              >
-                {benefits[0]}
-              </p>
+            </div>
 
-              {/* Email input with inline button */}
-              <div 
-                className="flex gap-3 mb-3"
-                style={{ gap: 'var(--spacing-3)' }}
-              >
-                <div className="flex-1">
-                  <label htmlFor="newsletter-email-desktop" className="sr-only">Email Address</label>
-                  <Input
-                    id="newsletter-email-desktop"
-                    type="email"
-                    placeholder="Your email address..."
-                    value={formData.email}
-                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') {
-                        handleSubmit();
-                      }
-                    }}
-                    className="ikan-input w-full"
-                    aria-label="Email address for newsletter subscription"
-                    style={{
-                      backgroundColor: 'white',
-                      border: '1px solid var(--color-border-default)',
-                      height: '48px',
-                      borderRadius: 'var(--radius-sm)'
-                    }}
-                  />
-                </div>
-                <Button 
-                  onClick={handleSubmit}
-                  disabled={isSubmitting}
-                  className="ikan-button"
-                  style={{
-                    backgroundColor: 'var(--color-primary-default)',
-                    color: 'var(--color-primary-on)',
-                    height: '48px',
-                    borderRadius: 'var(--radius-sm)',
-                    paddingLeft: 'var(--spacing-6)',
-                    paddingRight: 'var(--spacing-6)'
-                  }}
-                >
-                  {isSubmitting ? 'Subscribing...' : ctaText}
-                </Button>
-              </div>
-
-              {/* Privacy text */}
+            {/* Right Side: Subtext & Form */}
+            <div className="flex flex-col items-start lg:items-start gap-3 w-full max-w-[482px]">
+              {/* Subtext */}
               <p 
-                className="text-sm"
+                className="text-base font-regular w-full text-left lg:text-left pl-1"
                 style={{
-                  fontSize: 'var(--text-sm)',
-                  color: 'var(--color-text-muted)',
-                  lineHeight: 'var(--line-height-md)',
-                  fontFamily: 'var(--font-family-base)'
+                  color: 'var(--color-primary-on)',
+                  fontSize: 'var(--text-base)'
                 }}
               >
                 {privacyText}
               </p>
+
+              {/* Input Row */}
+              <div className="flex flex-col sm:flex-row gap-[6px] w-full">
+                <div 
+                  className="flex-grow relative"
+                  style={{ height: 'var(--ikan-component-input-height)' }}
+                >
+                  <Input
+                    type="email"
+                    placeholder="jamie@example.com"
+                    value={formData.email}
+                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') handleSubmit();
+                    }}
+                    className="w-full h-full text-base focus-visible:ring-0 focus-visible:ring-offset-0 placeholder:text-gray-500"
+                    style={{
+                      backgroundColor: 'var(--color-bg-input)',
+                      color: 'var(--color-text-primary)',
+                      borderRadius: 'var(--ikan-component-border-radius)',
+                      height: '100%'
+                    }}
+                  />
+                </div>
+                
+                <Button
+                  onClick={handleSubmit}
+                  disabled={isSubmitting}
+                  className="font-medium text-sm px-8 shrink-0"
+                  style={{
+                    backgroundColor: 'var(--color-status-warning)', // Keeping the yellow accent for CTA on dark bg
+                    color: 'var(--color-text-primary)', // Dark text on yellow
+                    height: 'var(--ikan-component-button-height)',
+                    borderRadius: 'var(--ikan-component-border-radius)'
+                  }}
+                >
+                  {isSubmitting ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    ctaText
+                  )}
+                </Button>
+              </div>
             </div>
 
-            {/* Image on right - 50% */}
-            <div 
-              className="flex-1 relative rounded-xl overflow-hidden"
-              style={{ 
-                borderRadius: 'var(--radius-lg)',
-                height: '400px'
-              }}
-            >
-              <ImageWithFallback 
-                src={imageUrl}
-                alt={imageAlt}
-                className="w-full h-full object-cover"
-              />
-            </div>
           </div>
         </div>
       </section>

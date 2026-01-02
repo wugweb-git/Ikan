@@ -196,9 +196,9 @@ export function ImageUpload({
                   backgroundColor: 'var(--color-bg-card)',
                   color: 'var(--color-text-primary)'
                 }}
+                className="h-9 w-9 p-0 rounded-full"
               >
-                <Upload size={16} className="mr-2" />
-                Change
+                <Upload size={16} />
               </Button>
               {onRemove && (
                 <Button
@@ -209,9 +209,9 @@ export function ImageUpload({
                     backgroundColor: 'var(--color-bg-card)',
                     color: 'var(--color-status-danger)'
                   }}
+                  className="h-9 w-9 p-0 rounded-full"
                 >
-                  <X size={16} className="mr-2" />
-                  Remove
+                  <X size={16} />
                 </Button>
               )}
             </div>
@@ -266,22 +266,22 @@ export function ImageUpload({
                     style={{ color: 'var(--color-text-muted)' }}
                   />
                 </div>
-                <div className="text-center">
-                  <p style={{ 
-                    fontSize: 'var(--text-sm)', 
-                    fontWeight: 'var(--font-weight-medium)',
-                    color: 'var(--color-text-primary)',
-                    fontFamily: 'var(--font-family-base)',
-                    marginBottom: 'var(--spacing-1)'
-                  }}>
-                    Click to upload or drag and drop
-                  </p>
+                <div className="text-center p-2">
+                  <div className="flex justify-center mb-2">
+                    <Button 
+                      variant="ghost" 
+                      className="h-12 w-12 rounded-full bg-gray-50 hover:bg-gray-100 p-0"
+                      onClick={() => !disabled && fileInputRef.current?.click()}
+                    >
+                      <Upload size={20} className="text-gray-500" />
+                    </Button>
+                  </div>
                   <p style={{ 
                     fontSize: 'var(--text-xs)', 
                     color: 'var(--color-text-muted)',
                     fontFamily: 'var(--font-family-base)'
                   }}>
-                    PNG, JPG or WebP (max {maxSizeMB}MB)
+                    Max {maxSizeMB}MB
                   </p>
                 </div>
               </>

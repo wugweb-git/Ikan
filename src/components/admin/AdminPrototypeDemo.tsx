@@ -1,87 +1,66 @@
 import React from 'react';
-import { Card, CardHeader, CardTitle, CardContent } from '../ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../ui/card';
+import { PageHero } from '../ui/PageHero';
 import { Button } from '../ui/button';
-import { Play, ExternalLink } from 'lucide-react';
+import { Play, ClipboardList, BookOpen, Activity } from 'lucide-react';
 
 interface AdminPrototypeDemoProps {
-  onNavigate: (route: string) => void;
+  onNavigate?: (route: string) => void;
 }
 
 export function AdminPrototypeDemo({ onNavigate }: AdminPrototypeDemoProps) {
   const demos = [
-    { 
-      title: 'User Onboarding', 
-      desc: 'New user registration and setup experience.',
-      route: '/login'
+    {
+      title: 'Equip Program Onboarding',
+      description: 'Demo the onboarding flow for a new Equip program.',
+      icon: BookOpen,
+      action: 'Start Demo',
+      route: '/equip-program-onboarding?id=demo'
     },
-    { 
-      title: 'Assessment Flow', 
-      desc: 'Complete mental health check-in flow with scoring.',
-      route: '/assessment-landing' 
+    {
+      title: 'Assessment Flow',
+      description: 'Walk through a standard PHQ-9 assessment.',
+      icon: ClipboardList,
+      action: 'Start Assessment',
+      route: '/assessment-flow?id=phq9'
     },
-    { 
-      title: 'Equip Programs', 
-      desc: 'Browse and access 18-day mental health programs.',
-      route: '/equip-programs-landing' 
-    },
-    { 
-      title: 'Program Detail', 
-      desc: 'Detailed view of a specific program (Sleep Tight).',
-      route: '/equip-detail?id=sleep-tight' 
-    },
-    { 
-      title: 'Mood Journal', 
-      desc: 'Daily mood tracking and reflection interface.',
-      route: '/mood-journal' 
-    },
-    { 
-      title: 'Resource Library', 
-      desc: 'Curated articles and exercises.',
-      route: '/resource' 
-    },
-    { 
-      title: 'Consultant Booking', 
-      desc: 'Find and book professional consultants.',
-      route: '/consultation' 
-    },
-    { 
-      title: 'Admin Dashboard', 
-      desc: 'Backend management interface.',
-      route: '/admin' 
-    },
-    { 
-      title: 'UI Kit Showcase', 
-      desc: 'Interactive component library.',
-      route: '/ui-kit' 
-    },
+    {
+      title: 'Daily Check-in',
+      description: 'Simulate the daily mood and sleep tracker experience.',
+      icon: Activity,
+      action: 'Open Tracker',
+      route: '/mood-journal'
+    }
   ];
 
   return (
-    <div className="space-y-6">
-      <div>
-         <h2 className="text-2xl font-bold tracking-tight">Prototype Demo</h2>
-         <p className="text-muted-foreground">Interactive prototypes and live flow demonstrations.</p>
-      </div>
+    <div className="space-y-8 pb-10">
+      <PageHero 
+        title="Prototype Demos" 
+        subtitle="Interactive demos of key user flows for testing and validation."
+      />
 
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        {demos.map((demo, i) => (
-          <Card key={i} className="overflow-hidden group hover:shadow-lg transition-all duration-300">
-            <div className="h-32 bg-muted flex items-center justify-center group-hover:bg-primary/10 transition-colors">
-              <Play className="w-8 h-8 text-muted-foreground group-hover:text-primary transition-colors" />
-            </div>
+      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {demos.map((demo) => (
+          <Card key={demo.title} className="hover:shadow-md transition-shadow">
             <CardHeader>
-              <CardTitle className="text-lg">{demo.title}</CardTitle>
+              <div className="flex items-center gap-3 mb-2">
+                <div className="p-2 bg-[var(--color-primary-light)] text-[var(--color-primary-default)] rounded-lg">
+                  <demo.icon size={24} />
+                </div>
+                <CardTitle className="text-xl">{demo.title}</CardTitle>
+              </div>
+              <CardDescription>
+                {demo.description}
+              </CardDescription>
             </CardHeader>
             <CardContent>
-              <p className="text-sm text-muted-foreground mb-4 min-h-[40px]">{demo.desc}</p>
               <Button 
-                variant="outline" 
-                size="sm" 
-                className="w-full gap-2 group-hover:border-primary group-hover:text-primary transition-colors"
-                onClick={() => onNavigate(demo.route)}
+                className="w-full" 
+                onClick={() => onNavigate?.(demo.route)}
               >
-                <ExternalLink size={14} />
-                Launch Demo
+                <Play size={16} className="mr-2" />
+                {demo.action}
               </Button>
             </CardContent>
           </Card>

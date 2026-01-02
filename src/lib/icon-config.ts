@@ -129,6 +129,50 @@ export const iconConfig = {
       "outline": "Icon/Message/Outline",
       "default": "Icon/Message/Default"
     },
+    "mail": {
+      "outline": "Icon/Mail/Outline",
+      "default": "Icon/Mail/Default"
+    },
+    "phone": {
+      "outline": "Icon/Phone/Outline",
+      "default": "Icon/Phone/Default"
+    },
+    "map": {
+      "outline": "Icon/Map/Outline",
+      "default": "Icon/Map/Default"
+    },
+    "camera": {
+      "outline": "Icon/Camera/Outline",
+      "default": "Icon/Camera/Default"
+    },
+    "userCircle": {
+      "outline": "Icon/UserCircle/Outline",
+      "default": "Icon/UserCircle/Default"
+    },
+    "users": {
+      "outline": "Icon/Users/Outline",
+      "default": "Icon/Users/Default"
+    },
+    "link": {
+      "outline": "Icon/Link/Outline",
+      "default": "Icon/Link/Default"
+    },
+    "edit": {
+      "outline": "Icon/Edit/Outline",
+      "default": "Icon/Edit/Default"
+    },
+    "check": {
+      "outline": "Icon/Check/Outline",
+      "default": "Icon/Check/Default"
+    },
+    "sliders": {
+      "outline": "Icon/Sliders/Outline",
+      "default": "Icon/Sliders/Default"
+    },
+    "briefcase": {
+      "outline": "Icon/Briefcase/Outline",
+      "default": "Icon/Briefcase/Default"
+    },
     "x": {
       "outline": "Icon/X/Outline"
     }

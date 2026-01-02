@@ -60,7 +60,7 @@ function Frame1000007432({ professional }: ConsultantCardProps) {
         <p className="text-[14px] whitespace-pre">
           <span className="leading-[21px]">{`Contact via: `}</span>
           <span 
-            className="leading-[28px] not-italic cursor-pointer hover:underline text-[#2A2A2A] font-medium"
+            className="leading-[28px] not-italic cursor-pointer hover:underline text-[var(--color-primary-default)] font-medium"
             onClick={handlePhoneCall}
             style={{
               userSelect: 'none',
@@ -234,7 +234,7 @@ function Buttons({ professional }: ConsultantCardProps) {
     <div 
       className={`box-border content-stretch flex gap-[8px] items-center px-[32px] py-[10px] relative rounded-[8px] shrink-0 ${
         professional.available 
-          ? 'bg-[#2e2a2f] cursor-pointer hover:bg-[#1a1a1a] transition-colors' 
+          ? 'bg-[var(--color-primary-default)] cursor-pointer hover:bg-black transition-colors' 
           : 'bg-[#9ca3af] cursor-not-allowed'
       }`} 
       data-name="Buttons"

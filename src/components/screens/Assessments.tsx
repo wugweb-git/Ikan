@@ -78,30 +78,7 @@ const transformAssessmentData = (data: any, userHistory?: Record<string, any>): 
 
   // Fallback for missing questions on known assessments (Critical for demo stability)
   let questions = data.questions || [];
-  if ((!questions || questions.length === 0) && (data.id === 'phq-9' || data.slug === 'phq-9')) {
-    questions = [
-        { id: 'q1', text: 'Little interest or pleasure in doing things', type: 'scale', min: 0, max: 3 },
-        { id: 'q2', text: 'Feeling down, depressed, or hopeless', type: 'scale', min: 0, max: 3 },
-        { id: 'q3', text: 'Trouble falling or staying asleep, or sleeping too much', type: 'scale', min: 0, max: 3 },
-        { id: 'q4', text: 'Feeling tired or having little energy', type: 'scale', min: 0, max: 3 },
-        { id: 'q5', text: 'Poor appetite or overeating', type: 'scale', min: 0, max: 3 },
-        { id: 'q6', text: 'Feeling bad about yourself — or that you are a failure or have let yourself or your family down', type: 'scale', min: 0, max: 3 },
-        { id: 'q7', text: 'Trouble concentrating on things, such as reading the newspaper or watching television', type: 'scale', min: 0, max: 3 },
-        { id: 'q8', text: 'Moving or speaking so slowly that other people could have noticed? Or the opposite — being so fidgety or restless that you have been moving around a lot more than usual', type: 'scale', min: 0, max: 3 },
-        { id: 'q9', text: 'Thoughts that you would be better off dead or of hurting yourself in some way', type: 'scale', min: 0, max: 3 }
-    ];
-  } else if ((!questions || questions.length === 0) && (data.id === 'gad-7' || data.slug === 'gad-7')) {
-    questions = [
-         { id: 'q1', text: 'Feeling nervous, anxious, or on edge', type: 'scale', min: 0, max: 3 },
-         { id: 'q2', text: 'Not being able to stop or control worrying', type: 'scale', min: 0, max: 3 },
-         { id: 'q3', text: 'Worrying too much about different things', type: 'scale', min: 0, max: 3 },
-         { id: 'q4', text: 'Trouble relaxing', type: 'scale', min: 0, max: 3 },
-         { id: 'q5', text: 'Being so restless that it is hard to sit still', type: 'scale', min: 0, max: 3 },
-         { id: 'q6', text: 'Becoming easily annoyed or irritable', type: 'scale', min: 0, max: 3 },
-         { id: 'q7', text: 'Feeling afraid as if something awful might happen', type: 'scale', min: 0, max: 3 }
-    ];
-  }
-
+  
   return {
     id: assessmentId,
     slug: data.slug,
@@ -140,16 +117,19 @@ const getAssessmentImage = (category?: string, customImage?: string) => {
   if (customImage) return customImage;
 
   const normalizedCategory = (category || 'wellness').toLowerCase();
-  if (normalizedCategory.includes('anxiety')) return "https://images.unsplash.com/photo-1702032773321-afc433d91ce8?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxjYWxtJTIwcGVhY2VmdWwlMjBtaW5kJTIwc2VyZW5lJTIwd2F0ZXJ8ZW58MXx8fHwxNzY1NDU5MTU1fDA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral";
-  if (normalizedCategory.includes('depression')) return "https://images.unsplash.com/photo-1600262912301-d288169c6cda?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxob3BlJTIwc3Vuc2hpbmUlMjBjbG91ZHN8ZW58MXx8fHwxNzY1NDU5MTU5fDA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral";
-  if (normalizedCategory.includes('stress')) return "https://images.unsplash.com/photo-1676386749756-1987d8a0e32a?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxjYWxtJTIwcGVhY2VmdWwlMjBuYXR1cmUlMjBzdHJlc3MlMjByZWxpZWZ8ZW58MXx8fHwxNzY1NDU4MzIzfDA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral";
-  if (normalizedCategory.includes('burnout')) return "https://images.unsplash.com/photo-1564341505027-b410c159e1b6?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxzdW5yaXNlJTIwZW5lcmd5fGVufDF8fHx8MTc2NTQ1ODM0Mnww&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral";
-  if (normalizedCategory.includes('sleep')) return "https://images.unsplash.com/photo-1743748978909-169017ab0720?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxwZWFjZWZ1bCUyMHNsZWVwJTIwYmVkfGVufDF8fHx8MTc2NTQ1ODMxOHww&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral";
-  if (normalizedCategory.includes('work')) return "https://images.unsplash.com/photo-1698047682320-1ea97303dbd5?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHx3b3JrJTIwbGlmZSUyMGJhbGFuY2UlMjBsYXB0b3AlMjBuYXR1cmV8ZW58MXx8fHwxNzY1NDU5MTY4fDA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral";
+  // Using Unsplash source for placeholders as requested in audit
+  if (normalizedCategory.includes('anxiety')) return "https://images.unsplash.com/photo-1702032773321-afc433d91ce8?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxjYWxtJTIwcGVhY2VmdWwlMjBtaW5kJTIwc2VyZW5lJTIwd2F0ZXJ8ZW58MXx8fHwxNzY1NDU5MTU1fDA&ixlib=rb-4.1.0&q=80&w=1080";
+  if (normalizedCategory.includes('depression')) return "https://images.unsplash.com/photo-1600262912301-d288169c6cda?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxob3BlJTIwc3Vuc2hpbmUlMjBjbG91ZHN8ZW58MXx8fHwxNzY1NDU5MTU5fDA&ixlib=rb-4.1.0&q=80&w=1080";
+  if (normalizedCategory.includes('stress')) return "https://images.unsplash.com/photo-1676386749756-1987d8a0e32a?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxjYWxtJTIwcGVhY2VmdWwlMjBuYXR1cmUlMjBzdHJlc3MlMjByZWxpZWZ8ZW58MXx8fHwxNzY1NDU4MzIzfDA&ixlib=rb-4.1.0&q=80&w=1080";
+  if (normalizedCategory.includes('burnout')) return "https://images.unsplash.com/photo-1564341505027-b410c159e1b6?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxzdW5yaXNlJTIwZW5lcmd5fGVufDF8fHx8MTc2NTQ1ODM0Mnww&ixlib=rb-4.1.0&q=80&w=1080";
+  if (normalizedCategory.includes('sleep')) return "https://images.unsplash.com/photo-1743748978909-169017ab0720?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxwZWFjZWZ1bCUyMHNsZWVwJTIwYmVkfGVufDF8fHx8MTc2NTQ1ODMxOHww&ixlib=rb-4.1.0&q=80&w=1080";
+  if (normalizedCategory.includes('work')) return "https://images.unsplash.com/photo-1698047682320-1ea97303dbd5?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHx3b3JrJTIwbGlmZSUyMGJhbGFuY2UlMjBsYXB0b3AlMjBuYXR1cmV8ZW58MXx8fHwxNzY1NDU5MTY4fDA&ixlib=rb-4.1.0&q=80&w=1080";
   
   // Default/General
-  return "https://images.unsplash.com/photo-1758274539447-a675587a2b6c?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxoZWFsdGh5JTIwbGlmZXN0eWxlJTIwYmFsYW5jZSUyMG5hdHVyZXxlbnwxfHx8fDE3NjU0NTkxNjJ8MA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral";
+  return "https://images.unsplash.com/photo-1758274539447-a675587a2b6c?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxoZWFsdGh5JTIwbGlmZXN0eWxlJTIwYmFsYW5jZSUyMG5hdHVyZXxlbnwxfHx8fDE3NjU0NTkxNjJ8MA&ixlib=rb-4.1.0&q=80&w=1080";
 };
+
+import { PageHero } from '../ui/PageHero';
 
 export function Assessments({ className, onNavigate }: AssessmentsProps) {
   const { user } = useAuth();
@@ -398,7 +378,7 @@ export function Assessments({ className, onNavigate }: AssessmentsProps) {
           <Button
             variant="ghost"
             onClick={handleReturnToList}
-            className="w-fit gap-2 pl-0 hover:bg-transparent hover:text-[var(--ikan-color-primary-default)]"
+            className="w-fit gap-2 pl-0 hover:bg-transparent hover:text-[var(--color-primary-default)]"
           >
             <Icon name="arrowLeft" size={20} />
             <span className="text-lg">Back to Assessments</span>
@@ -408,7 +388,7 @@ export function Assessments({ className, onNavigate }: AssessmentsProps) {
             <Badge variant="outline" className="mb-3 px-3 py-1 text-sm font-medium uppercase tracking-wider">
               {selectedAssessment.category}
             </Badge>
-            <h1 className="text-3xl md:text-4xl font-medium text-[var(--ikan-color-text-primary)]">
+            <h1 className="text-3xl md:text-4xl font-medium text-[var(--color-text-primary)]">
               {selectedAssessment.title}
             </h1>
           </div>
@@ -418,27 +398,27 @@ export function Assessments({ className, onNavigate }: AssessmentsProps) {
         <div className="grid grid-cols-1 md:grid-cols-12 gap-4 md:gap-6 auto-rows-min">
           
           {/* TILE 1: Primary (Large Left) - What is this? */}
-          <div className="md:col-span-7 bg-white rounded-[24px] p-6 md:p-10 flex flex-col justify-between min-h-[320px] shadow-sm relative overflow-hidden group">
+          <div className="md:col-span-7 bg-white rounded-[var(--radius-lg)] p-6 md:p-10 flex flex-col justify-between min-h-[320px] shadow-sm relative overflow-hidden group">
             <div className="relative z-10">
                {selectedAssessment.tile1Content ? (
-                  <div className="prose prose-lg max-w-none text-[var(--ikan-color-text-muted)] [&_h1]:text-2xl [&_h2]:text-xl [&_h3]:text-lg [&_p]:mb-3 [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5 [&_li]:mb-1 [&_img]:rounded-lg [&_img]:max-w-full [&_a]:text-blue-600 [&_a]:underline" dangerouslySetInnerHTML={{ __html: selectedAssessment.tile1Content }} />
+                  <div className="prose prose-lg max-w-none text-[var(--color-text-muted)] [&_h1]:text-2xl [&_h2]:text-xl [&_h3]:text-lg [&_p]:mb-3 [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5 [&_li]:mb-1 [&_img]:rounded-lg [&_img]:max-w-full [&_a]:text-blue-600 [&_a]:underline" dangerouslySetInnerHTML={{ __html: selectedAssessment.tile1Content }} />
                ) : (
                  <div className="space-y-6">
                    <div>
-                     <h2 className="text-2xl font-medium mb-4 text-[var(--ikan-color-text-primary)]">What is this assessment?</h2>
-                     <p className="text-lg text-[var(--ikan-color-text-muted)] leading-relaxed">
+                     <h2 className="text-2xl font-medium mb-4 text-[var(--color-text-primary)]">What is this assessment?</h2>
+                     <p className="text-lg text-[var(--color-text-muted)] leading-relaxed">
                        {selectedAssessment.description}
                      </p>
                    </div>
                    
                    <div className="flex flex-wrap gap-4 pt-2">
                      <div className="flex items-center gap-2 bg-gray-50 px-4 py-2 rounded-full">
-                       <Clock size={18} className="text-[var(--ikan-color-primary-default)]" />
-                       <span className="font-medium text-[var(--ikan-color-text-primary)]">{selectedAssessment.estimatedTime}</span>
+                       <Clock size={18} className="text-[var(--color-primary-default)]" />
+                       <span className="font-medium text-[var(--color-text-primary)]">{selectedAssessment.estimatedTime}</span>
                      </div>
                      <div className="flex items-center gap-2 bg-gray-50 px-4 py-2 rounded-full">
-                       <HelpCircle size={18} className="text-[var(--ikan-color-primary-default)]" />
-                       <span className="font-medium text-[var(--ikan-color-text-primary)]">{selectedAssessment.questionCount} Questions</span>
+                       <HelpCircle size={18} className="text-[var(--color-primary-default)]" />
+                       <span className="font-medium text-[var(--color-text-primary)]">{selectedAssessment.questionCount} Questions</span>
                      </div>
                    </div>
                  </div>
@@ -455,7 +435,7 @@ export function Assessments({ className, onNavigate }: AssessmentsProps) {
                   }
                 }} 
                 className="w-full md:w-auto text-base h-12 px-8 rounded-full gap-2 shadow-lg hover:shadow-xl transition-all"
-                style={{ backgroundColor: 'var(--ikan-color-primary-default)', color: 'white' }}
+                style={{ backgroundColor: 'var(--color-primary-default)', color: 'white' }}
               >
                 <Play size={20} fill="currentColor" />
                 Start Assessment
@@ -467,7 +447,7 @@ export function Assessments({ className, onNavigate }: AssessmentsProps) {
           </div>
 
           {/* TILE 2: Visual (Top Right) */}
-          <div className={`md:col-span-5 rounded-[24px] overflow-hidden min-h-[320px] relative shadow-sm group ${selectedAssessment.tile2Content ? 'bg-white p-6 md:p-8' : 'bg-gray-100'}`}>
+          <div className={`md:col-span-5 rounded-[var(--radius-lg)] overflow-hidden min-h-[320px] relative shadow-sm group ${selectedAssessment.tile2Content ? 'bg-white p-6 md:p-8' : 'bg-gray-100'}`}>
              {selectedAssessment.tile2Content ? (
                <div className="prose prose-lg max-w-none h-full flex flex-col justify-center [&_h1]:text-2xl [&_h2]:text-xl [&_h3]:text-lg [&_p]:mb-3 [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5 [&_li]:mb-1 [&_img]:rounded-lg [&_img]:max-w-full [&_a]:text-blue-600 [&_a]:underline" dangerouslySetInnerHTML={{ __html: selectedAssessment.tile2Content }} />
              ) : (
@@ -483,13 +463,13 @@ export function Assessments({ className, onNavigate }: AssessmentsProps) {
           </div>
 
           {/* TILE 3: Process (Bottom Left) - How it works */}
-          <div className="md:col-span-5 bg-white rounded-[24px] p-6 md:p-8 shadow-sm flex flex-col justify-center">
+          <div className="md:col-span-5 bg-white rounded-[var(--radius-lg)] p-6 md:p-8 shadow-sm flex flex-col justify-center">
              {selectedAssessment.tile3Content ? (
                 <div className="prose prose-lg max-w-none [&_h1]:text-2xl [&_h2]:text-xl [&_h3]:text-lg [&_p]:mb-3 [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5 [&_li]:mb-1 [&_img]:rounded-lg [&_img]:max-w-full [&_a]:text-blue-600 [&_a]:underline" dangerouslySetInnerHTML={{ __html: selectedAssessment.tile3Content }} />
              ) : (
                <>
                  <h3 className="text-xl font-medium mb-6 flex items-center gap-2">
-                   <Icon name="list" size={24} className="text-[var(--ikan-color-primary-default)]" />
+                   <Icon name="list" size={24} className="text-[var(--color-primary-default)]" />
                    How it works
                  </h3>
                  <ul className="space-y-4">
@@ -502,7 +482,7 @@ export function Assessments({ className, onNavigate }: AssessmentsProps) {
                        <div className="mt-0.5 bg-green-50 p-1 rounded-full text-green-600">
                          <Icon name="check" size={14} />
                        </div>
-                       <span className="text-[var(--ikan-color-text-muted)]">{text}</span>
+                       <span className="text-[var(--color-text-muted)]">{text}</span>
                      </li>
                    ))}
                  </ul>
@@ -511,7 +491,7 @@ export function Assessments({ className, onNavigate }: AssessmentsProps) {
           </div>
 
           {/* TILE 5: Safety (Mini Middle) - Important Notes */}
-          <div className="md:col-span-2 bg-amber-50 rounded-[24px] p-6 flex flex-col items-center justify-center text-center shadow-sm border border-amber-100">
+          <div className="md:col-span-2 bg-amber-50 rounded-[var(--radius-lg)] p-6 flex flex-col items-center justify-center text-center shadow-sm border border-amber-100">
              {selectedAssessment.tile5Content ? (
                 <div className="prose prose-sm max-w-none text-amber-700 [&_h1]:text-lg [&_h2]:text-base [&_h3]:text-sm [&_p]:mb-2 [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5 [&_li]:mb-0.5" dangerouslySetInnerHTML={{ __html: selectedAssessment.tile5Content }} />
              ) : (
@@ -528,7 +508,7 @@ export function Assessments({ className, onNavigate }: AssessmentsProps) {
           </div>
 
           {/* TILE 4: Results (Bottom Right) - What you'll see */}
-          <div className="md:col-span-5 bg-[#2A2A2A] text-white rounded-[24px] p-6 md:p-8 shadow-sm flex flex-col justify-center relative overflow-hidden">
+          <div className="md:col-span-5 bg-[var(--color-primary-default)] text-white rounded-[var(--radius-lg)] p-6 md:p-8 shadow-sm flex flex-col justify-center relative overflow-hidden">
              <div className="relative z-10">
                {selectedAssessment.tile4Content ? (
                   <div className="prose prose-lg max-w-none text-gray-300 [&_h1]:text-white [&_h2]:text-white [&_h3]:text-white [&_p]:mb-3 [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5 [&_li]:mb-1 [&_img]:rounded-lg [&_img]:max-w-full [&_a]:text-blue-400 [&_a]:underline" dangerouslySetInnerHTML={{ __html: selectedAssessment.tile4Content }} />
@@ -603,26 +583,13 @@ export function Assessments({ className, onNavigate }: AssessmentsProps) {
   // Assessment List View
   if (currentView === 'list') {
     return (
-      <div className={cn("w-full max-w-7xl mx-auto p-4 md:p-8 space-y-8", className)}>
+      <div className={cn("w-full", className)}>
+        <PageHero 
+          title="Health Assessments" 
+          subtitle="Quick, evidence-based screenings to help you understand your mental well-being."
+        />
+        <div className="max-w-7xl mx-auto p-4 md:p-8 space-y-8">
         
-        {/* Header Section */}
-        <motion.div 
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="space-y-4 text-center md:text-left"
-        >
-          <h1 style={{ 
-            fontSize: 'var(--text-3xl)', 
-            fontWeight: 'var(--font-weight-medium)',
-            color: 'var(--color-text-primary)'
-          }}>
-            Health Assessments
-          </h1>
-          <p className="text-lg text-[var(--ikan-color-text-muted)] max-w-2xl">
-            Quick, evidence-based screenings to help you understand your mental well-being.
-          </p>
-        </motion.div>
-
         {/* Feature Cards */}
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
@@ -653,14 +620,14 @@ export function Assessments({ className, onNavigate }: AssessmentsProps) {
                bg: "bg-orange-50"
              }
            ].map((item, i) => (
-             <Card key={i} className="border-none shadow-sm bg-white rounded-[16px] h-full">
+             <Card key={i} className="border-none shadow-sm bg-white rounded-[var(--radius-lg)] h-full">
                <CardContent className="p-6 flex flex-col gap-4 h-full">
                  <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${item.bg}`}>
                    <item.icon size={24} style={{ color: item.color }} />
                  </div>
                  <div>
-                   <h3 className="font-medium text-lg text-[var(--ikan-color-text-primary)] mb-1">{item.title}</h3>
-                   <p className="text-sm text-[var(--ikan-color-text-muted)] leading-relaxed">
+                   <h3 className="font-medium text-lg text-[var(--color-text-primary)] mb-1">{item.title}</h3>
+                   <p className="text-sm text-[var(--color-text-muted)] leading-relaxed">
                      {item.desc}
                    </p>
                  </div>
@@ -676,7 +643,7 @@ export function Assessments({ className, onNavigate }: AssessmentsProps) {
            transition={{ delay: 0.2 }}
            className="py-6"
         >
-           <h3 className="text-lg font-medium text-[var(--ikan-color-text-primary)] mb-6">How it works</h3>
+           <h3 className="text-lg font-medium text-[var(--color-text-primary)] mb-6">How it works</h3>
            <div className="flex flex-col md:flex-row gap-8 relative">
               {/* Connector Line (Desktop) */}
               <div className="hidden md:block absolute top-5 left-8 right-8 h-0.5 bg-gray-100 -z-10" />
@@ -687,12 +654,12 @@ export function Assessments({ className, onNavigate }: AssessmentsProps) {
                 { step: 3, title: "Understand", desc: "Receive immediate insights and next steps." }
               ].map((step, i) => (
                 <div key={i} className="flex-1 flex flex-col items-center text-center gap-3 bg-white/50 backdrop-blur-sm p-4 rounded-xl md:bg-transparent md:p-0">
-                   <div className="w-10 h-10 rounded-full bg-[var(--ikan-color-primary-default)] text-white flex items-center justify-center font-bold shadow-md">
+                   <div className="w-10 h-10 rounded-full bg-[var(--color-primary-default)] text-white flex items-center justify-center font-bold shadow-md">
                      {step.step}
                    </div>
                    <div>
-                     <h4 className="font-medium text-[var(--ikan-color-text-primary)]">{step.title}</h4>
-                     <p className="text-sm text-[var(--ikan-color-text-muted)]">{step.desc}</p>
+                     <h4 className="font-medium text-[var(--color-text-primary)]">{step.title}</h4>
+                     <p className="text-sm text-[var(--color-text-muted)]">{step.desc}</p>
                    </div>
                 </div>
               ))}
@@ -704,24 +671,24 @@ export function Assessments({ className, onNavigate }: AssessmentsProps) {
         {/* Assessment Grid */}
         <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <h3 className="text-xl font-medium text-[var(--ikan-color-text-primary)]">Available Assessments</h3>
+            <h3 className="text-xl font-medium text-[var(--color-text-primary)]">Available Assessments</h3>
           </div>
 
           {!user && currentTab === 'history' ? (
-            <Card className="border-none shadow-sm bg-white rounded-[16px]">
+            <Card className="border-none shadow-sm bg-white rounded-[var(--radius-lg)]">
               <CardContent className="text-center p-12">
                 <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Lock size={24} className="text-[var(--ikan-color-text-muted)]" />
+                  <Lock size={24} className="text-[var(--color-text-muted)]" />
                 </div>
-                <h3 className="text-lg font-medium text-[var(--ikan-color-text-primary)] mb-2">Sign in required</h3>
-                <p className="text-[var(--ikan-color-text-muted)] mb-6">Please sign in to view your assessment history</p>
-                <Button className="bg-[var(--ikan-color-primary-default)] text-white">Sign In</Button>
+                <h3 className="text-lg font-medium text-[var(--color-text-primary)] mb-2">Sign in required</h3>
+                <p className="text-[var(--color-text-muted)] mb-6">Please sign in to view your assessment history</p>
+                <Button className="bg-[var(--color-primary-default)] text-white">Sign In</Button>
               </CardContent>
             </Card>
           ) : loading ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {[1, 2, 3, 4, 5, 6].map((i) => (
-                <Skeleton key={i} variant="rectangular" height="320px" className="rounded-[16px]" />
+                <Skeleton key={i} variant="rectangular" height="320px" className="rounded-[var(--radius-lg)]" />
               ))}
             </div>
           ) : (
@@ -748,7 +715,7 @@ export function Assessments({ className, onNavigate }: AssessmentsProps) {
                     className="h-full"
                   >
                     <Card 
-                      className="h-full border-none shadow-sm hover:shadow-lg transition-all duration-300 bg-white rounded-[16px] overflow-hidden cursor-pointer group flex flex-col"
+                      className="h-full border-none shadow-sm hover:shadow-lg transition-all duration-300 bg-white rounded-[var(--radius-lg)] overflow-hidden cursor-pointer group flex flex-col"
                       onClick={() => handleStartAssessment(assessment)}
                     >
                       {/* Image Header */}
@@ -779,23 +746,23 @@ export function Assessments({ className, onNavigate }: AssessmentsProps) {
                       </div>
 
                       <CardContent className="p-5 flex flex-col flex-grow gap-4">
-                        <p className="text-sm text-[var(--ikan-color-text-muted)] line-clamp-2 flex-grow">
+                        <p className="text-sm text-[var(--color-text-muted)] line-clamp-2 flex-grow">
                           {assessment.description}
                         </p>
 
-                        <div className="flex items-center gap-4 text-xs text-[var(--ikan-color-text-muted)] font-medium">
+                        <div className="flex items-center gap-4 text-xs text-[var(--color-text-muted)] font-medium">
                           <div className="flex items-center gap-1.5 bg-gray-50 px-2 py-1 rounded-md">
-                            <Clock size={14} className="text-[var(--ikan-color-primary-default)]" />
+                            <Clock size={14} className="text-[var(--color-primary-default)]" />
                             {assessment.estimatedTime}
                           </div>
                           <div className="flex items-center gap-1.5 bg-gray-50 px-2 py-1 rounded-md">
-                            <FileText size={14} className="text-[var(--ikan-color-primary-default)]" />
+                            <FileText size={14} className="text-[var(--color-primary-default)]" />
                             {assessment.questionCount} Questions
                           </div>
                         </div>
 
                         <Button 
-                          className="w-full mt-2 bg-gray-50 text-[var(--ikan-color-text-primary)] hover:bg-[var(--ikan-color-primary-default)] hover:text-white border-none group-hover:bg-[var(--ikan-color-primary-default)] group-hover:text-white transition-colors"
+                          className="w-full mt-2 bg-gray-50 text-[var(--color-text-primary)] hover:bg-[var(--color-primary-default)] hover:text-white border-none group-hover:bg-[var(--color-primary-default)] group-hover:text-white transition-colors"
                           variant="outline"
                         >
                           {isCompleted ? 'Retake Assessment' : 'Start Assessment'}
@@ -809,6 +776,7 @@ export function Assessments({ className, onNavigate }: AssessmentsProps) {
             </div>
           )}
         </div>
+      </div>
       </div>
     );
   }  // Assessment Flow View

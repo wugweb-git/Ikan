@@ -8,7 +8,7 @@ import { useNotifications } from '../../contexts/NotificationContext';
 import { cn } from '../ui/utils';
 import { AssessmentSection } from './homepage/AssessmentSection';
 import { ErrorBoundary } from '../ErrorBoundary';
-import ConsultantCard from '../../imports/ConsultantCard';
+import { ConsultantCard } from '../blocks/ConsultantCard';
 import { EquipBlock } from '../blocks/EquipBlock';
 import { ResourceBlock } from '../blocks/ResourceBlock';
 import { apiClient } from '../../lib/api-client';
@@ -397,7 +397,7 @@ export function AssessmentResults({
               <ConsultantCard
                 key={consultant.id}
                 consultant={consultant}
-                onBook={() => onNavigate && onNavigate(`/consultants/${consultant.id}`)}
+                onClick={() => onNavigate && onNavigate(`/consultant-detail?id=${consultant.id}`)}
               />
             ))}
           </div>

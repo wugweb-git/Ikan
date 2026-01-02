@@ -23,6 +23,7 @@ interface WizardProps {
 export function Wizard({
   config,
   initialData,
+  context = {}, // Default to empty object
   initialStepIndex,
   onStepChange,
   onComplete,
@@ -60,7 +61,10 @@ export function Wizard({
   // Determine if we should show standard chrome
   const isIntro = currentStep.type === 'intro';
   const isOutro = currentStep.type === 'outro';
-  const showChrome = !isIntro && !isOutro;
+  // Chrome (Header/Progress) should be hidden on Intro/Outro in 'centered' mode, 
+  // but maybe visible in 'standard' mode depending on preference.
+  // For unification, let's say 'centered' mode hides chrome on intro/outro.
+  const showChrome = config.layout === 'centered' ? (!isIntro && !isOutro) : true;
 
   const handleSkip = currentStep.skippable || currentStep.rules?.skippable
     ? () => {
@@ -78,76 +82,106 @@ export function Wizard({
       goToNext();
   };
 
+  const layoutClasses = config.layout === 'centered' 
+    ? "items-center justify-center max-w-3xl mx-auto" 
+    : "max-w-2xl mx-auto pt-[var(--spacing-8)]";
+
   return (
-    <div className={cn("min-h-screen bg-[var(--color-bg-page)] flex flex-col", className)}>
+    <div className={cn("min-h-screen bg-[var(--color-bg-page)] flex flex-col transition-colors duration-500", className)}>
       {/* Header */}
-      <header className="px-[var(--spacing-4)] py-[var(--spacing-4)] flex items-center justify-between sticky top-0 bg-[var(--color-bg-page)]/95 backdrop-blur-sm z-10">
-        {showChrome && (
-          <>
-            <div className="flex-1 flex justify-start">
-               {/* Back button logic handled in Controls generally, but sometimes we want a top-left back */}
-            </div>
-            
-            <div className="flex-1 flex justify-center">
-              {config.showProgress && (
-                <WizardProgress 
-                   currentStep={currentStepIndex} 
-                   totalSteps={totalSteps} 
-                   type={config.progressType || 'dots'} 
-                   className={config.progressType === 'dots' ? "" : "w-32"}
-                />
-              )}
-            </div>
-          </>
-        )}
-        
-        <div className="flex-1 flex justify-end">
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            onClick={saveAndExit} 
-            className="text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] p-[var(--spacing-2)]"
-          >
-            <X size={24} />
-          </Button>
-        </div>
-      </header>
+      {showChrome && (
+        <header className={cn(
+          "px-[var(--spacing-4)] py-[var(--spacing-4)] flex items-center justify-between sticky top-0 z-10 transition-all",
+          config.layout === 'centered' ? "fixed top-0 left-0 right-0 bg-transparent" : "bg-[var(--color-bg-page)]/95 backdrop-blur-sm"
+        )}>
+          {/* Progress Bar for Centered Layout */}
+          {config.layout === 'centered' && config.progressType === 'bar' && (
+             <motion.div 
+               className="fixed top-0 left-0 right-0 h-1 bg-[var(--color-primary-default)] z-[60]"
+               initial={{ scaleX: 0 }}
+               animate={{ scaleX: (currentStepIndex + 1) / totalSteps }}
+               transition={{ duration: 0.3, ease: 'easeOut' }}
+               style={{ transformOrigin: 'left' }}
+             />
+          )}
+
+          <div className="flex-1 flex justify-start">
+             {/* Back button logic handled in Controls generally, but sometimes we want a top-left back */}
+          </div>
+          
+          <div className="flex-1 flex justify-center">
+            {config.showProgress && config.layout !== 'centered' && (
+              <WizardProgress 
+                 currentStep={currentStepIndex} 
+                 totalSteps={totalSteps} 
+                 type={config.progressType || 'dots'} 
+                 className={config.progressType === 'dots' ? "" : "w-32"}
+              />
+            )}
+          </div>
+          
+          <div className="flex-1 flex justify-end">
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={saveAndExit} 
+              className="text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] p-[var(--spacing-2)] rounded-full hover:bg-[var(--color-bg-muted)]"
+            >
+              <X size={24} />
+            </Button>
+          </div>
+        </header>
+      )}
       
-      {/* Progress Bar (Line) if configured */}
-      {showChrome && config.progressType === 'bar' && (
+      {/* Progress Bar (Line) for Standard Layout */}
+      {showChrome && config.layout !== 'centered' && config.progressType === 'bar' && (
         <WizardProgress currentStep={currentStepIndex} totalSteps={totalSteps} type="bar" />
       )}
 
       {/* Main Content */}
-      <main className="flex-1 flex flex-col px-[var(--spacing-4)] pb-[var(--spacing-4)] w-full max-w-2xl mx-auto">
-        <div className="flex-1 flex flex-col justify-center min-h-0">
+      <main className={cn(
+        "flex-1 flex flex-col px-[var(--spacing-4)] pb-[var(--spacing-4)] w-full",
+        layoutClasses
+      )}>
+        <div className="flex-1 flex flex-col justify-center min-h-0 w-full">
           <AnimatePresence mode="wait">
              <WizardStep 
                key={currentStep.id}
                step={currentStep}
                answers={answers}
+               context={context} // Pass context for substitution
+               mode={config.mode} // Pass mode for defaults
                onAnswerChange={(id, val) => {
                    setAnswer(id, val);
                }}
                onAutoAdvance={handleAutoAdvance}
+               // Pass layout prop to step for specific styling (like huge intro text)
+               layout={config.layout || 'standard'}
+               onNext={goToNext} // Intro/Outro buttons need this
              />
           </AnimatePresence>
         </div>
 
-        {/* Footer Controls */}
-        <WizardControls 
-          onNext={goToNext}
-          onBack={goToPrevious}
-          onSkip={handleSkip}
-          isFirst={currentStepIndex === 0}
-          isLast={currentStepIndex === totalSteps - 1}
-          isSubmitting={isSubmitting}
-          nextLabel={currentStep.nextLabel}
-          backLabel={currentStep.backLabel}
-        />
+        {/* Footer Controls - Hidden for Centered Layout if Intro/Outro, or handled inside step?
+            Typeform usually puts controls inside the step for Intro/Outro, but floating for inputs.
+            Let's let WizardControls handle visibility logic or pass props.
+        */}
+        {!isIntro && !isOutro && (
+            <WizardControls 
+              onNext={goToNext}
+              onBack={goToPrevious}
+              onSkip={handleSkip}
+              isFirst={currentStepIndex === 0}
+              isLast={currentStepIndex === totalSteps - 1}
+              isSubmitting={isSubmitting}
+              nextLabel={currentStep.nextLabel}
+              backLabel={currentStep.backLabel}
+              className={config.layout === 'centered' ? "mt-8" : ""}
+            />
+        )}
         
         {/* Soft Reset Debug/Feature (only if enabled) */}
-        {currentStep.rules?.resettable && (
+        {currentStep.rules?.resettable && !isIntro && !isOutro && (
             <div className="mt-[var(--spacing-4)] text-center">
                 <Button 
                   variant="ghost" 

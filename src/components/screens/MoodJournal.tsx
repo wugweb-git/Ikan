@@ -360,301 +360,298 @@ export function MoodJournal() {
   if (viewMode === 'add') {
     return (
       <div 
-        className="min-h-screen w-full relative overflow-hidden"
+        className={cn(
+          "w-full relative bg-[var(--color-bg-page)]",
+          isMobile ? "h-full flex flex-col overflow-hidden" : "min-h-screen"
+        )}
         style={{
-          backgroundColor: 'var(--color-bg-page)',
           paddingTop: isMobile ? 'var(--spacing-6)' : 'var(--spacing-8)',
           paddingRight: isMobile ? 'var(--spacing-4)' : 'var(--spacing-8)',
-          paddingBottom: isMobile ? 'var(--spacing-4)' : 'var(--spacing-8)',
+          paddingBottom: isMobile ? '0' : 'var(--spacing-8)', // Removed bottom padding on mobile to handle fixed button
           paddingLeft: isMobile ? 'var(--spacing-4)' : 'var(--spacing-8)',
           maxWidth: isMobile ? '100%' : 'var(--constraint-content-max)',
           margin: isMobile ? '0' : '0 auto'
         }}
       >
-        {/* Header Section */}
-        <motion.div 
-          className="text-center space-y-1 mb-6"
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-        >
-          <div className="flex items-center justify-center gap-2 mb-3">
-            <Icon name="calendar" size={20} style={{ color: 'var(--color-text-muted)' }} />
-            <span 
-              style={{ 
-                fontSize: 'var(--text-base)',
-                fontWeight: 'var(--font-weight-normal)',
-                color: 'var(--color-text-muted)'
+        <div className={cn(
+          "w-full",
+          isMobile ? "flex-1 overflow-y-auto pb-48" : "" // Increased padding to account for fixed button + nav bar
+        )}>
+          {/* Header Section */}
+          <motion.div 
+            className="text-center space-y-1 mb-6"
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+          >
+            <div className="flex items-center justify-center gap-2 mb-3">
+              <Icon name="calendar" size={20} style={{ color: 'var(--color-text-muted)' }} />
+              <span 
+                style={{ 
+                  fontSize: 'var(--text-base)',
+                  fontWeight: 'var(--font-weight-normal)',
+                  color: 'var(--color-text-muted)'
+                }}
+              >
+                {getCurrentDate()} • {selectedTime}
+              </span>
+            </div>
+            <h1 
+              style={{
+                fontSize: 'var(--text-2xl)',
+                fontWeight: 'var(--font-weight-medium)',
+                color: 'var(--color-text-primary)',
+                lineHeight: '1.2'
               }}
             >
-              {getCurrentDate()}
-            </span>
-          </div>
-          <h1 
-            style={{
-              fontSize: 'var(--text-2xl)',
-              fontWeight: 'var(--font-weight-medium)',
-              color: 'var(--color-text-primary)',
-              lineHeight: '1.2'
-            }}
-          >
-            {getGreeting()}, {getUserName()}!
-          </h1>
-        </motion.div>
+              {getGreeting()}, {getUserName()}!
+            </h1>
+          </motion.div>
 
-        {/* Week Calendar Navigation */}
-        <motion.div
-          className="mb-6"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.1 }}
-        >
-          <div 
-            className="flex justify-between items-center gap-1 overflow-x-auto py-2"
-            style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+          {/* Week Calendar Navigation */}
+          <motion.div
+            className="mb-6"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.1 }}
           >
-            {getWeekDates().map((date, index) => {
-              const { dayName, dayNumber } = formatWeekDay(date);
-              const isSelected = isSelectedDate(date);
-              const isToday = date.toDateString() === new Date().toDateString();
-              
-              return (
-                <motion.button
-                  key={index}
-                  onClick={() => setSelectedDate(date)}
-                  className="flex flex-col items-center justify-center min-w-[44px] px-2 py-3 rounded-lg transition-all duration-200"
-                  style={{
-                    backgroundColor: isSelected 
-                      ? 'var(--color-primary-default)' 
-                      : 'transparent',
-                    color: isSelected 
-                      ? 'var(--color-primary-on)' 
-                      : isToday 
-                        ? 'var(--color-primary-default)'
-                        : 'var(--color-text-muted)'
-                  }}
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                >
-                  <span 
-                    style={{ 
-                      fontSize: 'var(--text-xs)',
-                      fontWeight: 'var(--font-weight-normal)'
+            <div 
+              className="flex justify-between items-center gap-1 overflow-x-auto py-2"
+              style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+            >
+              {getWeekDates().map((date, index) => {
+                const { dayName, dayNumber } = formatWeekDay(date);
+                const isSelected = isSelectedDate(date);
+                const isToday = date.toDateString() === new Date().toDateString();
+                
+                return (
+                  <motion.button
+                    key={index}
+                    onClick={() => setSelectedDate(date)}
+                    className="flex flex-col items-center justify-center min-w-[44px] px-2 py-3 rounded-lg transition-all duration-200"
+                    style={{
+                      backgroundColor: isSelected 
+                        ? 'var(--color-primary-default)' 
+                        : 'transparent',
+                      color: isSelected 
+                        ? 'var(--color-primary-on)' 
+                        : isToday 
+                          ? 'var(--color-primary-default)'
+                          : 'var(--color-text-muted)'
                     }}
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
                   >
-                    {dayName}
-                  </span>
-                  <span 
-                    style={{ 
-                      fontSize: 'var(--text-sm)',
-                      fontWeight: 'var(--font-weight-medium)',
-                      marginTop: '2px'
-                    }}
-                  >
-                    {dayNumber.toString().padStart(2, '0')}
-                  </span>
-                </motion.button>
-              );
-            })}
-          </div>
-        </motion.div>
+                    <span 
+                      style={{ 
+                        fontSize: 'var(--text-xs)',
+                        fontWeight: 'var(--font-weight-normal)'
+                      }}
+                    >
+                      {dayName}
+                    </span>
+                    <span 
+                      style={{ 
+                        fontSize: 'var(--text-sm)',
+                        fontWeight: 'var(--font-weight-medium)',
+                        marginTop: '2px'
+                      }}
+                    >
+                      {dayNumber.toString().padStart(2, '0')}
+                    </span>
+                  </motion.button>
+                );
+              })}
+            </div>
+          </motion.div>
 
-        {/* Time Selector */}
-        <motion.div
-          className="mb-8"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.2 }}
-        >
-          <button
-            className="flex items-center justify-between w-full max-w-[120px] mx-auto px-4 py-3 rounded-lg transition-colors"
-            style={{
-              backgroundColor: 'var(--color-bg-muted)',
-              borderRadius: 'var(--radius-lg)'
-            }}
+          {/* Main Character/Mascot */}
+          <motion.div
+            className="flex justify-center mb-8"
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.6, delay: 0.3 }}
           >
-            <span 
+            <motion.div
+              className="rounded-full flex items-center justify-center"
               style={{
-                fontSize: 'var(--text-base)',
+                width: isMobile ? '128px' : '160px',
+                height: isMobile ? '128px' : '160px',
+                fontSize: isMobile ? '60px' : '80px',
+                background: 'linear-gradient(135deg, #FCD34D 0%, #F59E0B 100%)',
+                boxShadow: '0 8px 32px rgba(245, 158, 11, 0.3)'
+              }}
+              animate={{
+                scale: [1, 1.05, 1],
+                rotate: [0, 2, -2, 0]
+              }}
+              transition={{
+                duration: 3,
+                repeat: Infinity,
+                ease: "easeInOut"
+              }}
+            >
+              👋
+            </motion.div>
+          </motion.div>
+
+          {/* Mood Selection */}
+          <motion.div
+            className="mb-8"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.4 }}
+          >
+            <h2 
+              className="text-center mb-6"
+              style={{
+                fontSize: 'var(--text-xl)',
                 fontWeight: 'var(--font-weight-medium)',
                 color: 'var(--color-text-primary)'
               }}
             >
-              {selectedTime}
-            </span>
-            <Icon name="chevron-down" size={16} style={{ color: 'var(--color-text-muted)' }} />
-          </button>
-        </motion.div>
-
-        {/* Main Character/Mascot */}
-        <motion.div
-          className="flex justify-center mb-8"
-          initial={{ opacity: 0, scale: 0.8 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.6, delay: 0.3 }}
-        >
-          <motion.div
-            className="rounded-full flex items-center justify-center"
-            style={{
-              width: isMobile ? '128px' : '160px',
-              height: isMobile ? '128px' : '160px',
-              fontSize: isMobile ? '60px' : '80px',
-              background: 'linear-gradient(135deg, #FCD34D 0%, #F59E0B 100%)',
-              boxShadow: '0 8px 32px rgba(245, 158, 11, 0.3)'
-            }}
-            animate={{
-              scale: [1, 1.05, 1],
-              rotate: [0, 2, -2, 0]
-            }}
-            transition={{
-              duration: 3,
-              repeat: Infinity,
-              ease: "easeInOut"
-            }}
-          >
-            👋
-          </motion.div>
-        </motion.div>
-
-        {/* Mood Selection */}
-        <motion.div
-          className="mb-8"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.4 }}
-        >
-          <h2 
-            className="text-center mb-6"
-            style={{
-              fontSize: 'var(--text-xl)',
-              fontWeight: 'var(--font-weight-medium)',
-              color: 'var(--color-text-primary)'
-            }}
-          >
-            How are you feeling today?
-          </h2>
-          
-          <div 
-            className={isMobile 
-              ? "flex justify-between items-center gap-3 px-2 overflow-x-auto" 
-              : "flex justify-center items-center gap-6 flex-wrap"
-            }
-            style={{
-              paddingBottom: isMobile ? '10px' : '0'
-            }}
-          >
-            {activeMoods.map((mood) => (
-              <motion.button
-                key={mood.id || mood.value}
-                onClick={() => {
-                  setCurrentMood(mood.value);
-                  setSelectedMoodAnimation(mood.value);
-                  setTimeout(() => setSelectedMoodAnimation(null), 500);
-                }}
-                className="flex flex-col items-center gap-2 p-3 rounded-xl transition-all duration-200 flex-shrink-0"
-                style={{
-                  backgroundColor: currentMood === mood.value 
-                    ? mood.color + '20' 
-                    : 'transparent',
-                  borderWidth: currentMood === mood.value ? '2px' : '1px',
-                  borderStyle: 'solid',
-                  borderColor: currentMood === mood.value 
-                    ? mood.color 
-                    : 'var(--color-border-light)',
-                  minWidth: isMobile ? '60px' : '80px',
-                  minHeight: isMobile ? '80px' : '100px'
-                }}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3, delay: 0.5 + (mood.value * 0.1) }}
-              >
-                <motion.span
-                  style={{
-                    fontSize: isMobile ? '24px' : '32px'
-                  }}
-                  animate={{
-                    scale: selectedMoodAnimation === mood.value ? [1, 1.3, 1] : 1,
-                    rotate: selectedMoodAnimation === mood.value ? [0, 10, -10, 0] : 0
-                  }}
-                  transition={{ duration: 0.5 }}
-                >
-                  {mood.emoji}
-                </motion.span>
-                <span 
-                  style={{
-                    fontSize: isMobile ? 'var(--text-xs)' : 'var(--text-sm)',
-                    fontWeight: 'var(--font-weight-normal)',
-                    color: currentMood === mood.value ? mood.color : 'var(--color-text-muted)',
-                    whiteSpace: 'nowrap'
-                  }}
-                >
-                  {mood.label}
-                </span>
-              </motion.button>
-            ))}
-          </div>
-        </motion.div>
-
-        {/* Journal Input */}
-        <motion.div
-          className="mb-8"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.6 }}
-          style={{
-            maxWidth: isMobile ? '100%' : '600px',
-            margin: '0 auto'
-          }}
-        >
-          <div className="relative">
-            <textarea
-              value={currentNote}
-              onChange={(e) => setCurrentNote(e.target.value)}
-              placeholder="What's on your mind?"
-              className="w-full p-4 pr-12 rounded-lg border resize-none transition-all duration-200 focus:outline-none focus:ring-2"
+              How are you feeling today?
+            </h2>
+            
+            <div 
+              className={isMobile 
+                ? "flex justify-between items-center gap-3 px-2 overflow-x-auto" 
+                : "flex justify-center items-center gap-6 flex-wrap"
+              }
               style={{
-                backgroundColor: 'var(--color-bg-card)',
-                borderColor: 'var(--color-border-default)',
-                color: 'var(--color-text-primary)',
-                fontSize: 'var(--text-base)',
-                fontWeight: 'var(--font-weight-normal)',
-                fontFamily: 'var(--font-family-base)',
-                minHeight: isMobile ? '120px' : '140px',
-                borderRadius: 'var(--radius-lg)',
-                focusRingColor: 'var(--color-primary-default)',
-                focusRingOpacity: '0.3'
-              }}
-              rows={isMobile ? 4 : 5}
-            />
-            <button 
-              className="absolute bottom-4 right-4 p-2 rounded-full transition-colors"
-              style={{
-                backgroundColor: 'var(--color-bg-muted)',
-                color: 'var(--color-text-muted)'
+                paddingBottom: isMobile ? '10px' : '0'
               }}
             >
-              <Icon name="mic" size={20} />
-            </button>
-          </div>
-        </motion.div>
+              {activeMoods.map((mood) => (
+                <motion.button
+                  key={mood.id || mood.value}
+                  onClick={() => {
+                    setCurrentMood(mood.value);
+                    setSelectedMoodAnimation(mood.value);
+                    setTimeout(() => setSelectedMoodAnimation(null), 500);
+                  }}
+                  className="flex flex-col items-center gap-2 p-3 rounded-xl transition-all duration-200 flex-shrink-0"
+                  style={{
+                    backgroundColor: currentMood === mood.value 
+                      ? mood.color + '20' 
+                      : 'transparent',
+                    borderWidth: currentMood === mood.value ? '2px' : '1px',
+                    borderStyle: 'solid',
+                    borderColor: currentMood === mood.value 
+                      ? mood.color 
+                      : 'var(--color-border-light)',
+                    minWidth: isMobile ? '60px' : '80px',
+                    minHeight: isMobile ? '80px' : '100px'
+                  }}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3, delay: 0.5 + (mood.value * 0.1) }}
+                >
+                  <motion.span
+                    style={{
+                      fontSize: isMobile ? '24px' : '32px'
+                    }}
+                    animate={{
+                      scale: selectedMoodAnimation === mood.value ? [1, 1.3, 1] : 1,
+                      rotate: selectedMoodAnimation === mood.value ? [0, 10, -10, 0] : 0
+                    }}
+                    transition={{ duration: 0.5 }}
+                  >
+                    {mood.emoji}
+                  </motion.span>
+                  <span 
+                    style={{
+                      fontSize: isMobile ? 'var(--text-xs)' : 'var(--text-sm)',
+                      fontWeight: 'var(--font-weight-normal)',
+                      color: currentMood === mood.value ? mood.color : 'var(--color-text-muted)',
+                      whiteSpace: 'nowrap'
+                    }}
+                  >
+                    {mood.label}
+                  </span>
+                </motion.button>
+              ))}
+            </div>
+          </motion.div>
 
-        {/* Set Mood Button */}
+          {/* Journal Input */}
+          <motion.div
+            className="mb-8"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.6 }}
+            style={{
+              maxWidth: isMobile ? '100%' : '600px',
+              margin: '0 auto'
+            }}
+          >
+            <div className="relative">
+              <textarea
+                value={currentNote}
+                onChange={(e) => setCurrentNote(e.target.value)}
+                placeholder="What's on your mind?"
+                className="w-full p-4 pr-12 rounded-lg border resize-none transition-all duration-200 focus:outline-none focus:ring-2"
+                style={{
+                  backgroundColor: 'var(--color-bg-card)',
+                  borderColor: 'var(--color-border-default)',
+                  color: 'var(--color-text-primary)',
+                  fontSize: 'var(--text-base)',
+                  fontWeight: 'var(--font-weight-normal)',
+                  fontFamily: 'var(--font-family-base)',
+                  minHeight: isMobile ? '120px' : '140px',
+                  borderRadius: 'var(--radius-lg)',
+                  focusRingColor: 'var(--color-primary-default)',
+                  focusRingOpacity: '0.3'
+                }}
+                rows={isMobile ? 4 : 5}
+              />
+              <button 
+                className="absolute bottom-4 right-4 p-2 rounded-full transition-colors"
+                style={{
+                  backgroundColor: 'var(--color-bg-muted)',
+                  color: 'var(--color-text-muted)'
+                }}
+              >
+                <Icon name="mic" size={20} />
+              </button>
+            </div>
+          </motion.div>
+        </div>
+
+        {/* Set Mood Button - Fixed at bottom on mobile */}
         <motion.div
-          className="pb-8"
+          className={cn(
+            isMobile ? "fixed left-0 right-0 p-4 bg-[var(--color-bg-page)] border-t border-[var(--color-border-light)] z-20" : "pb-8"
+          )}
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.7 }}
           style={{
             maxWidth: isMobile ? '100%' : '400px',
-            margin: '0 auto'
+            margin: isMobile ? '0' : '0 auto',
+            // Position above the floating nav bar on mobile (16px bottom + ~62px height + ~12px gap)
+            bottom: isMobile ? '90px' : '0',
+            // Remove background/border on mobile to make it look floating if desired, 
+            // OR keep it as a strip. If strip, it should be full width.
+            // But if it's floating above the nav bar, maybe it should just be the button?
+            // Let's keep the container but make it transparent or detached?
+            // If I make it transparent, the border-t looks weird floating.
+            // Let's make it floating button style (no full width bg) on mobile?
+            // User requested "CTA to submit is missing".
+            // Let's stick to the container style but positioned higher.
+            // Actually, if I position it higher, the background strip looks weird in the middle of the screen.
+            // So on mobile, let's remove the background strip and just float the button.
+            backgroundColor: isMobile ? 'transparent' : undefined,
+            borderTop: isMobile ? 'none' : undefined,
+            padding: isMobile ? '0 16px' : undefined, // Match nav bar side padding
           }}
         >
           <Button
             onClick={handleSubmitEntry}
             disabled={isSubmitting}
-            className="w-full flex items-center justify-center gap-2 transition-all duration-200"
+            className="w-full flex items-center justify-center gap-2 transition-all duration-200 shadow-lg"
             style={{
               backgroundColor: 'var(--semantic-button-primary-bg)',
               color: 'var(--semantic-button-primary-fg)',

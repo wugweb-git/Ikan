@@ -355,22 +355,32 @@ export function Account({ className, onNavigate }: AccountProps) {
         gap: 'var(--spacing-6)', 
         flexDirection: 'row',
         alignItems: 'flex-start',
-        marginTop: '20px' 
+        marginTop: 'var(--spacing-5)' 
       }}
     >
       {/* Left Column: SideNavAccount */}
       <div className="hidden md:block" style={{ minWidth: '240px', flex: '0 0 auto' }}>
-        <SideNavAccount
-          currentRoute={currentAccountRoute}
-          onNavigate={handleAccountNavigate}
-          onLogout={handleSignOut}
-          className="sticky"
-          style={{ top: '128px' }} // 20px (nav top) + 88px (nav height) + 20px (gap)
-        />
+        <div style={{
+          position: 'fixed',
+          top: 'calc(var(--ikan-nav-height-desktop) + var(--spacing-6))', // Nav height + gap
+          width: '240px',
+          zIndex: 'var(--z-sticky)'
+        }}>
+          <SideNavAccount
+            currentRoute={currentAccountRoute}
+            onNavigate={handleAccountNavigate}
+            onLogout={handleSignOut}
+            style={{
+              backgroundColor: 'var(--color-bg-card)',
+              border: '1px solid var(--color-border-default)',
+              boxShadow: 'var(--shadow-sm)'
+            }}
+          />
+        </div>
       </div>
 
       {/* Right Column: AccountDetailsSection and content */}
-      <div className="flex-1 ikan-stack-lg" style={{ display: 'flex', flexDirection: 'column' }}>
+      <div className="flex-1 ikan-stack-lg" style={{ display: 'flex', flexDirection: 'column', marginLeft: 'calc(240px + var(--spacing-6))' }}>
         {renderAccountContent()}
       </div>
     </div>

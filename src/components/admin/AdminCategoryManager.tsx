@@ -1,30 +1,202 @@
 import React, { useState, useEffect } from 'react';
 import { AdminHeader } from './AdminHeader';
+import { Button } from '../ui/button';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
+import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
+import { Input } from '../ui/input';
+import { Label } from '../ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
+import { Database, Plus, X, Save, FolderOpen, Edit2, Trash2, FileText, Tag, Filter, Type } from 'lucide-react';
+import { apiClient } from '../../lib/api-client';
+import { toast } from 'sonner';
 
-// ... other imports
+export interface AdminCategoryManagerProps {
+  onBack: () => void;
+}
 
-// ... CategoryItem and AdminCategoryManagerProps definitions
+export interface CategoryItem {
+  id: string;
+  name: string;
+  slug: string;
+  type: 'category' | 'content_type' | 'filter_type';
+  icon?: string;
+  color?: string;
+  description?: string;
+}
 
 const ICON_OPTIONS = [
-  // ... options
+  { value: 'file-text', label: 'File Text', icon: FileText },
+  { value: 'tag', label: 'Tag', icon: Tag },
+  { value: 'filter', label: 'Filter', icon: Filter },
+  { value: 'type', label: 'Type', icon: Type },
+  { value: 'folder', label: 'Folder', icon: FolderOpen },
 ];
 
 const COLOR_PRESETS = [
-  // ... presets
+  { value: '#2A2A2A', label: 'Primary' },
+  { value: '#E9EBEF', label: 'Accent' },
+  { value: '#22C55E', label: 'Green' },
+  { value: '#D4183D', label: 'Red' },
+  { value: '#EAB308', label: 'Yellow' },
+  { value: '#8B5CF6', label: 'Purple' },
+  { value: '#3B82F6', label: 'Blue' },
 ];
 
 const DEFAULT_SEEDS = {
-  // ... seeds
+  category: [
+    { name: 'Mental Health', slug: 'mental-health', color: '#8B5CF6', description: 'General mental health topics' },
+    { name: 'Anxiety', slug: 'anxiety', color: '#EAB308', description: 'Anxiety and stress management' },
+    { name: 'Depression', slug: 'depression', color: '#3B82F6', description: 'Depression and mood disorders' },
+  ],
+  content_type: [
+    { name: 'Article', slug: 'article', description: 'Written content' },
+    { name: 'Video', slug: 'video', description: 'Video content' },
+    { name: 'Audio', slug: 'audio', description: 'Audio content' },
+  ],
+  filter_type: [
+    { name: 'Duration', slug: 'duration', icon: 'filter', description: 'Filter by duration' },
+    { name: 'Topic', slug: 'topic', icon: 'tag', description: 'Filter by topic' },
+  ]
 };
 
 export function AdminCategoryManager({ onBack }: AdminCategoryManagerProps) {
-  // ... state variables
+  const [activeTab, setActiveTab] = useState<'category' | 'content_type' | 'filter_type'>('category');
+  const [items, setItems] = useState<CategoryItem[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isCreating, setIsCreating] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  
+  const [formData, setFormData] = useState<Partial<CategoryItem>>({
+    name: '',
+    slug: '',
+    type: 'category',
+    icon: 'folder',
+    color: '#2A2A2A',
+    description: ''
+  });
 
-  // ... useEffects
+  useEffect(() => {
+    loadItems();
+  }, [activeTab]);
 
-  // ... loadItems, handleSeedDefaults, handleCreate, handleUpdate, handleDelete, startEdit, resetForm
+  const loadItems = async () => {
+    setIsLoading(true);
+    try {
+      // In a real app, we might filter by type on the server
+      // For now, we fetch all and filter client side if the API returns mixed types
+      // Or assume the API handles it. 
+      // The apiClient.getCategories() returns all.
+      const allCategories = await apiClient.getCategories();
+      const filtered = allCategories.filter((item: CategoryItem) => item.type === activeTab);
+      setItems(filtered);
+    } catch (error) {
+      toast.error('Failed to load items');
+      console.error(error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-  // ... displayedItems, getTabLabel
+  const resetForm = () => {
+    setFormData({
+      name: '',
+      slug: '',
+      type: activeTab,
+      icon: 'folder',
+      color: '#2A2A2A',
+      description: ''
+    });
+    setEditingId(null);
+    setIsCreating(false);
+  };
+
+  const handleCreate = async () => {
+    if (!formData.name || !formData.slug) {
+      toast.error('Name and Slug are required');
+      return;
+    }
+
+    try {
+      await apiClient.createCategory({
+        ...formData,
+        type: activeTab
+      });
+      toast.success('Created successfully');
+      loadItems();
+      resetForm();
+    } catch (error) {
+      toast.error('Failed to create item');
+    }
+  };
+
+  const handleUpdate = async (id: string) => {
+    if (!formData.name || !formData.slug) {
+      toast.error('Name and Slug are required');
+      return;
+    }
+
+    try {
+      await apiClient.updateCategory(id, {
+        ...formData,
+        type: activeTab
+      });
+      toast.success('Updated successfully');
+      loadItems();
+      resetForm();
+    } catch (error) {
+      toast.error('Failed to update item');
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!confirm('Are you sure you want to delete this item?')) return;
+
+    try {
+      await apiClient.deleteCategory(id);
+      toast.success('Deleted successfully');
+      loadItems();
+    } catch (error) {
+      toast.error('Failed to delete item');
+    }
+  };
+
+  const startEdit = (item: CategoryItem) => {
+    setFormData(item);
+    setEditingId(item.id);
+    setIsCreating(false);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleSeedDefaults = async () => {
+    setIsLoading(true);
+    try {
+      const seeds = DEFAULT_SEEDS[activeTab];
+      let count = 0;
+      for (const seed of seeds) {
+        await apiClient.createCategory({
+          ...seed,
+          type: activeTab,
+          icon: 'folder' // default
+        });
+        count++;
+      }
+      toast.success(`Seeded ${count} default items`);
+      loadItems();
+    } catch (error) {
+      toast.error('Failed to seed defaults');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const getTabLabel = (tab: string) => {
+    switch (tab) {
+      case 'category': return 'Category';
+      case 'content_type': return 'Content Type';
+      case 'filter_type': return 'Filter Type';
+      default: return 'Item';
+    }
+  };
 
   return (
     <div className="max-w-7xl mx-auto space-y-6">
@@ -47,7 +219,6 @@ export function AdminCategoryManager({ onBack }: AdminCategoryManagerProps) {
       />
 
       <Tabs value={activeTab} onValueChange={(v: any) => setActiveTab(v)} className="w-full">
-        {/* ... existing TabsList and content ... */}
         <TabsList className="grid w-full grid-cols-3 mb-8">
           <TabsTrigger value="category">Categories</TabsTrigger>
           <TabsTrigger value="content_type">Content Types</TabsTrigger>
@@ -63,7 +234,7 @@ export function AdminCategoryManager({ onBack }: AdminCategoryManagerProps) {
             style={{ gap: 'var(--spacing-2)' }}
           >
             <Plus className="w-4 h-4" />
-            Add {activeTab === 'category' ? 'Category' : activeTab === 'content_type' ? 'Content Type' : 'Filter Type'}
+            Add {getTabLabel(activeTab)}
           </Button>
         </div>
 
@@ -72,7 +243,7 @@ export function AdminCategoryManager({ onBack }: AdminCategoryManagerProps) {
           <Card className="mb-6">
             <CardHeader>
               <CardTitle>
-                {isCreating ? 'Create New' : 'Edit'} {activeTab === 'category' ? 'Category' : activeTab === 'content_type' ? 'Content Type' : 'Filter Type'}
+                {isCreating ? 'Create New' : 'Edit'} {getTabLabel(activeTab)}
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -191,10 +362,10 @@ export function AdminCategoryManager({ onBack }: AdminCategoryManagerProps) {
         <TabsContent value={activeTab} className="mt-0">
           <Card>
             <CardHeader>
-              <CardTitle>{getTabLabel(activeTab)} List ({displayedItems.length})</CardTitle>
+              <CardTitle>{getTabLabel(activeTab)} List ({items.length})</CardTitle>
             </CardHeader>
             <CardContent>
-              {displayedItems.length === 0 ? (
+              {items.length === 0 ? (
                 <div className="text-center py-12">
                   <FolderOpen className="w-12 h-12 mx-auto mb-4" style={{ color: 'var(--color-text-muted)' }} />
                   <p style={{ color: 'var(--color-text-muted)' }}>
@@ -203,8 +374,11 @@ export function AdminCategoryManager({ onBack }: AdminCategoryManagerProps) {
                 </div>
               ) : (
                 <div className="space-y-2">
-                  {displayedItems.map(item => {
-                    const ItemIcon = ICON_OPTIONS.find(i => i.value === item.icon)?.icon || FolderOpen;
+                  {items.map(item => {
+                    // Find icon in options or default to FolderOpen
+                    // If item.icon is a string (value), use that to find the Icon component
+                    const iconOption = ICON_OPTIONS.find(i => i.value === item.icon);
+                    const ItemIcon = iconOption?.icon || FolderOpen;
                     
                     return (
                       <div

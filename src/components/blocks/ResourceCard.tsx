@@ -36,12 +36,11 @@ export function ResourceCard({ post, onClick, variant = 'default', className }: 
       }}
     >
       <div 
-        className="space-y-4 h-full flex flex-col"
-        style={{ gap: 'var(--spacing-4)' }}
+        className="h-full flex flex-row md:flex-col gap-3 md:gap-4"
       >
         {/* Image */}
         <div 
-          className="relative rounded-lg overflow-hidden aspect-video"
+          className="relative rounded-lg overflow-hidden shrink-0 w-[80px] h-[80px] md:w-full md:h-auto md:aspect-video"
           style={{ borderRadius: 'var(--radius-lg)' }}
         >
           <ImageWithFallback 
@@ -53,118 +52,126 @@ export function ResourceCard({ post, onClick, variant = 'default', className }: 
           />
         </div>
 
-        {/* Metadata */}
-        <div className="flex items-center gap-3">
-          {post.type && (
+        <div className="flex flex-col flex-1 gap-1 md:gap-4">
+          {/* Metadata */}
+          <div className="flex items-center gap-3">
+            {/* Type Icon - Hidden on mobile */}
+            {post.type && (
+              <div 
+                className="hidden md:flex items-center justify-center w-6 h-6 rounded-full"
+                style={{ backgroundColor: 'var(--color-bg-page)' }}
+                title={post.type.charAt(0).toUpperCase() + post.type.slice(1)}
+              >
+                {post.type === 'video' && <Video size={12} style={{ color: 'var(--color-text-muted)' }} />}
+                {post.type === 'tool' && <Wrench size={12} style={{ color: 'var(--color-text-muted)' }} />}
+                {post.type === 'article' && <BookOpen size={12} style={{ color: 'var(--color-text-muted)' }} />}
+              </div>
+            )}
+            
+            {/* Date */}
             <div 
-              className="flex items-center justify-center w-6 h-6 rounded-full"
-              style={{ backgroundColor: 'var(--color-bg-page)' }}
-              title={post.type.charAt(0).toUpperCase() + post.type.slice(1)}
+              className="text-xs md:text-sm uppercase tracking-wide opacity-60"
+              style={{
+                fontSize: 'var(--text-xs)',
+                fontWeight: 'var(--font-weight-regular)',
+                color: 'var(--color-text-primary)',
+                fontFamily: 'var(--font-family-base)',
+                letterSpacing: 'var(--letter-spacing-wide)'
+              }}
             >
-              {post.type === 'video' && <Video size={12} style={{ color: 'var(--color-text-muted)' }} />}
-              {post.type === 'tool' && <Wrench size={12} style={{ color: 'var(--color-text-muted)' }} />}
-              {post.type === 'article' && <BookOpen size={12} style={{ color: 'var(--color-text-muted)' }} />}
+              {post.date}
             </div>
-          )}
-          <div 
-            className="text-sm uppercase tracking-wide opacity-60"
+
+            {/* Read Time - Hidden on mobile */}
+            {post.readTime && (
+              <React.Fragment key="readTime">
+                <span className="hidden md:inline" style={{ color: 'var(--color-text-muted)' }}>•</span>
+                <div 
+                  className="hidden md:block text-sm"
+                  style={{
+                    fontSize: 'var(--text-sm)',
+                    fontWeight: 'var(--font-weight-regular)',
+                    color: 'var(--color-text-muted)',
+                    fontFamily: 'var(--font-family-base)'
+                  }}
+                >
+                  {post.readTime}
+                </div>
+              </React.Fragment>
+            )}
+
+            {/* Category - Hidden on mobile */}
+            {post.category && (
+              <React.Fragment key="category">
+                <span className="hidden md:inline" style={{ color: 'var(--color-text-muted)' }}>•</span>
+                <div 
+                  className="hidden md:block text-sm"
+                  style={{
+                    fontSize: 'var(--text-sm)',
+                    fontWeight: 'var(--font-weight-regular)',
+                    color: 'var(--color-primary-default)',
+                    fontFamily: 'var(--font-family-base)'
+                  }}
+                >
+                  {post.category}
+                </div>
+              </React.Fragment>
+            )}
+          </div>
+
+          {/* Title */}
+          <h3 
+            className="text-base md:text-lg leading-tight md:leading-normal"
             style={{
-              fontSize: 'var(--text-sm)',
-              fontWeight: 'var(--font-weight-regular)',
+              fontWeight: 'var(--font-weight-medium)',
               color: 'var(--color-text-primary)',
               fontFamily: 'var(--font-family-base)',
-              letterSpacing: 'var(--letter-spacing-wide)'
             }}
           >
-            {post.date}
-          </div>
-          {post.readTime && (
-            <React.Fragment key="readTime">
-              <span style={{ color: 'var(--color-text-muted)' }}>•</span>
-              <div 
-                className="text-sm"
-                style={{
-                  fontSize: 'var(--text-sm)',
-                  fontWeight: 'var(--font-weight-regular)',
-                  color: 'var(--color-text-muted)',
-                  fontFamily: 'var(--font-family-base)'
-                }}
-              >
-                {post.readTime}
-              </div>
-            </React.Fragment>
-          )}
-          {post.category && (
-            <React.Fragment key="category">
-              <span style={{ color: 'var(--color-text-muted)' }}>•</span>
-              <div 
-                className="text-sm"
-                style={{
-                  fontSize: 'var(--text-sm)',
-                  fontWeight: 'var(--font-weight-regular)',
-                  color: 'var(--color-primary-default)',
-                  fontFamily: 'var(--font-family-base)'
-                }}
-              >
-                {post.category}
-              </div>
-            </React.Fragment>
-          )}
-        </div>
+            {post.title}
+          </h3>
 
-        {/* Title */}
-        <h3 
-          style={{
-            fontSize: variant === 'featured' ? 'var(--text-xl)' : 'var(--text-lg)',
-            fontWeight: 'var(--font-weight-medium)',
-            color: 'var(--color-text-primary)',
-            fontFamily: 'var(--font-family-base)',
-            lineHeight: 'var(--line-height-md)'
-          }}
-        >
-          {post.title}
-        </h3>
-
-        {/* Description and Read More */}
-        <div 
-          className="flex-1 flex flex-col justify-between space-y-4"
-          style={{ gap: 'var(--spacing-4)' }}
-        >
-          <p 
-            className="leading-relaxed"
-            style={{
-              fontSize: 'var(--text-sm)',
-              fontWeight: 'var(--font-weight-regular)',
-              color: 'var(--color-text-primary)',
-              lineHeight: 'var(--line-height-md)',
-              fontFamily: 'var(--font-family-base)'
-            }}
-          >
-            {post.description}
-          </p>
+          {/* Description and Read More - Hidden on mobile */}
           <div 
-            className="pt-4 border-t"
-            style={{ 
-              borderTopColor: 'var(--color-border-default)',
-              paddingTop: 'var(--spacing-4)'
-            }}
+            className="hidden md:flex flex-1 flex-col justify-between space-y-4"
+            style={{ gap: 'var(--spacing-4)' }}
           >
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                onClick?.();
-              }}
-              className="p-0 h-auto bg-transparent border-none cursor-pointer hover:opacity-70 transition-opacity"
+            <p 
+              className="leading-relaxed"
               style={{
                 fontSize: 'var(--text-sm)',
                 fontWeight: 'var(--font-weight-regular)',
                 color: 'var(--color-text-primary)',
-                fontFamily: 'var(--font-family-base)',
-                letterSpacing: 'var(--letter-spacing-normal)'
+                lineHeight: 'var(--line-height-md)',
+                fontFamily: 'var(--font-family-base)'
               }}
             >
-              Read more →
-            </button>
+              {post.description}
+            </p>
+            <div 
+              className="pt-4 border-t"
+              style={{ 
+                borderTopColor: 'var(--color-border-default)',
+                paddingTop: 'var(--spacing-4)'
+              }}
+            >
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onClick?.();
+                }}
+                className="p-0 h-auto bg-transparent border-none cursor-pointer hover:opacity-70 transition-opacity"
+                style={{
+                  fontSize: 'var(--text-sm)',
+                  fontWeight: 'var(--font-weight-regular)',
+                  color: 'var(--color-text-primary)',
+                  fontFamily: 'var(--font-family-base)',
+                  letterSpacing: 'var(--letter-spacing-normal)'
+                }}
+              >
+                Read more →
+              </button>
+            </div>
           </div>
         </div>
       </div>

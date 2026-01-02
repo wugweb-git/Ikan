@@ -180,8 +180,7 @@ export function HeroSection({ onGetStarted }: HeroSectionProps) {
                 style={{
                   backgroundColor: 'var(--color-primary-default)',
                   color: 'var(--color-primary-on)',
-                  height: '48px',
-                  borderRadius: 'var(--radius-sm)'
+                  height: 'var(--ikan-component-button-height)'
                 }}
               >
                 {ctaText}
@@ -246,8 +245,7 @@ export function HeroSection({ onGetStarted }: HeroSectionProps) {
                 style={{
                   backgroundColor: 'var(--color-primary-default)',
                   color: 'var(--color-primary-on)',
-                  height: '48px',
-                  borderRadius: 'var(--radius-sm)'
+                  height: 'var(--ikan-component-button-height)'
                 }}
               >
                 {ctaText}

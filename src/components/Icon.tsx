@@ -52,7 +52,18 @@ function createIconKey(name: IconName, variant?: string): string {
     chevronLeft: 'outline',
     chevronRight: 'outline',
     creditCard: 'outline',
-    lock: 'outline'
+    lock: 'outline',
+    mail: 'outline',
+    phone: 'outline',
+    map: 'outline',
+    camera: 'outline',
+    userCircle: 'outline',
+    users: 'outline',
+    link: 'outline',
+    edit: 'outline',
+    check: 'outline',
+    sliders: 'outline',
+    briefcase: 'outline'
   };
 
   const resolvedVariant = variant || defaultVariants[name] || 'outline';

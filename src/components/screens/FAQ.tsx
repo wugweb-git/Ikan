@@ -4,15 +4,48 @@ import { Icon } from '../Icon';
 import { Button } from '../ui/button';
 import { Card, CardContent } from '../ui/card';
 import { usePageContent } from '../../hooks/usePageContent';
+import { PageHero } from '../ui/PageHero';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '../ui/accordion';
 
 interface FAQProps {
   className?: string;
   onBack?: () => void;
 }
 
+const DEFAULT_FAQS = [
+  {
+    question: "What is iKan?",
+    answer: "iKan is a digital mental health platform designed to help you understand and improve your well-being through assessments, daily tracking, and guided programs."
+  },
+  {
+    question: "Are the assessments clinically valid?",
+    answer: "Yes, our assessments are based on standardized clinical instruments like the PHQ-9 (Depression) and GAD-7 (Anxiety) to provide reliable insights."
+  },
+  {
+    question: "Is my data private?",
+    answer: "Absolutely. We prioritize your privacy and security. Your personal data is encrypted and we strictly adhere to privacy regulations to ensure your information remains confidential."
+  },
+  {
+    question: "How do the programs work?",
+    answer: "Our Equip programs are structured, self-paced courses that guide you through evidence-based techniques (like CBT) to manage specific challenges such as stress, anxiety, or sleep issues."
+  },
+  {
+    question: "Can I talk to a professional?",
+    answer: "Yes, you can book sessions with qualified mental health professionals directly through our platform in the 'Consultation' section."
+  },
+  {
+    question: "Is iKan free to use?",
+    answer: "iKan offers both free and premium tiers. Basic tracking and some assessments are free, while specialized programs and consultations may require a subscription or one-time payment."
+  }
+];
+
 export function FAQ({ className, onBack }: FAQProps) {
   const isMobile = useIsMobile();
   const { content, loading } = usePageContent('faq');
+
+  // If content is just HTML string, we might want to parse it or use default if it's empty/placeholder
+  // For now, if content.content is "Coming Soon" or empty, we use DEFAULT_FAQS
+  const showDefaults = !content?.content || content.content.length < 50;
 
   return (
     <div 
@@ -23,84 +56,10 @@ export function FAQ({ className, onBack }: FAQProps) {
       }}
     >
       {/* Hero Section */}
-      <div
-        style={{
-          background: 'linear-gradient(135deg, var(--color-primary-default) 0%, #1a1a1a 100%)',
-          color: 'var(--color-text-inverse)',
-          marginTop: isMobile ? 0 : 'calc(-1 * var(--ikan-nav-clearance-desktop, 128px))',
-          padding: isMobile 
-            ? 'var(--ikan-component-spacing-large) var(--ikan-component-spacing-default)' 
-            : 'calc(var(--ikan-nav-clearance-desktop, 128px) + var(--spacing-12)) var(--ikan-component-spacing-large) var(--spacing-12)'
-        }}
-      >
-        <div 
-          className="w-full mx-auto"
-          style={{
-            maxWidth: 'var(--constraint-content-max)'
-          }}
-        >
-          {/* Back Navigation */}
-          {onBack && (
-            <button
-              onClick={onBack}
-              className="flex items-center gap-2 mb-6 touch-target hover:opacity-80 transition-all duration-200"
-              style={{
-                fontSize: 'var(--text-sm)',
-                fontWeight: 'var(--font-weight-regular)',
-                color: 'rgba(255, 255, 255, 0.8)',
-                background: 'none',
-                border: 'none',
-                padding: '0',
-                cursor: 'pointer',
-                marginBottom: 'var(--ikan-component-spacing-large)'
-              }}
-            >
-              <Icon name="arrow-left" size={16} />
-              Back
-            </button>
-          )}
-
-          <div className="text-center space-y-4">
-            <div className="inline-flex items-center justify-center mb-6">
-              <div
-                style={{
-                  backgroundColor: 'rgba(255, 255, 255, 0.1)',
-                  borderRadius: 'var(--radius-lg)',
-                  padding: 'var(--ikan-component-spacing-default)',
-                  backdropFilter: 'blur(8px)'
-                }}
-              >
-                <Icon name="help-circle" size={32} style={{ color: 'var(--color-text-inverse)' }} />
-              </div>
-            </div>
-            
-            <h1 
-              style={{
-                fontSize: isMobile ? 'var(--text-3xl)' : 'var(--text-4xl)',
-                fontWeight: 'var(--font-weight-medium)',
-                lineHeight: 'var(--line-height-sm)',
-                margin: '0',
-                marginBottom: 'var(--ikan-component-spacing-default)'
-              }}
-            >
-              {content?.title || 'Frequently Asked Questions'}
-            </h1>
-            
-            <p 
-              style={{
-                fontSize: 'var(--text-lg)',
-                fontWeight: 'var(--font-weight-regular)',
-                lineHeight: 'var(--line-height-md)',
-                opacity: 0.9,
-                maxWidth: '600px',
-                margin: '0 auto'
-              }}
-            >
-              Find quick answers to common questions about iKan's mental health platform, assessments, and programs.
-            </p>
-          </div>
-        </div>
-      </div>
+      <PageHero 
+        title={content?.title || 'Frequently Asked Questions'}
+        subtitle="Find quick answers to common questions about iKan's mental health platform, assessments, and programs."
+      />
 
       {/* Main Content */}
       <div 
@@ -108,9 +67,6 @@ export function FAQ({ className, onBack }: FAQProps) {
         style={{
           maxWidth: 'var(--constraint-content-max)',
           padding: isMobile ? 'var(--ikan-component-spacing-large) var(--ikan-component-spacing-default)' : 'var(--ikan-component-spacing-large) var(--spacing-12)',
-          marginTop: '-var(--ikan-component-spacing-large)',
-          position: 'relative',
-          zIndex: 10
         }}
       >
         {loading ? (
@@ -118,10 +74,27 @@ export function FAQ({ className, onBack }: FAQProps) {
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
           </div>
         ) : (
-          <div 
-            dangerouslySetInnerHTML={{ __html: content?.content || '' }} 
-            className="prose prose-lg max-w-none"
-          />
+          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 md:p-8">
+             {showDefaults ? (
+               <Accordion type="single" collapsible className="w-full">
+                 {DEFAULT_FAQS.map((faq, index) => (
+                   <AccordionItem key={index} value={`item-${index}`}>
+                     <AccordionTrigger className="text-left text-base font-medium text-gray-900">
+                       {faq.question}
+                     </AccordionTrigger>
+                     <AccordionContent className="text-gray-600 leading-relaxed">
+                       {faq.answer}
+                     </AccordionContent>
+                   </AccordionItem>
+                 ))}
+               </Accordion>
+             ) : (
+                <div 
+                  dangerouslySetInnerHTML={{ __html: content?.content || '' }} 
+                  className="prose prose-lg max-w-none"
+                />
+             )}
+          </div>
         )}
       </div>
     </div>

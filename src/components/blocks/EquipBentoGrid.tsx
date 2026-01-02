@@ -1,313 +1,329 @@
 import React from 'react';
 import { cn } from '../ui/utils';
-import { Check, BookOpen, TrendingUp, Calendar, Target, Brain, Heart, Zap, Award } from 'lucide-react';
+import { 
+  Check, 
+  BookOpen, 
+  TrendingUp, 
+  Calendar, 
+  Target, 
+  Brain, 
+  Heart, 
+  Zap, 
+  Award,
+  Timer,
+  PieChart,
+  Lightbulb
+} from 'lucide-react';
+import { ImageWithFallback } from '../figma/ImageWithFallback';
 
-// Simplified interfaces for the 4-tile layout
 interface EquipBentoGridProps {
-  tile1Content?: string; // What is this program about?
-  tile2Content?: string; // The program includes:
-  tile3Content?: string; // How it works
-  tile4Content?: string; // What you'll gain
-  eligibilityIntro?: string; // Is this for you? intro
-  eligibilityPoint1?: string;
-  eligibilityPoint2?: string;
-  eligibilityPoint3?: string;
-  eligibilityPoint4?: string;
+  section1?: {
+    title: string;
+    description: string[];
+    isThisForYou?: {
+      title: string;
+      subtitle: string;
+      points: string[];
+    };
+  };
+  section2?: {
+    title: string;
+    points: string[];
+  };
+  section3?: {
+    title: string;
+    description: string[];
+  };
+  section4?: {
+    title: string;
+    points: Array<{
+      title: string;
+      description?: string;
+    }>;
+  };
   className?: string;
 }
 
-const TileLabel = ({ number }: { number: number }) => (
-  <div className="absolute top-3 right-3 px-2 py-0.5 bg-white/80 border border-gray-200 rounded text-[10px] text-gray-600 z-20 pointer-events-none select-none" style={{ fontFamily: 'Inter, sans-serif' }}>
-    TILE {number}
-  </div>
-);
-
-/**
- * EquipBentoGrid - New 4-Tile Layout (2x2)
- * Matches the Figma design with static headings and dynamic content
- */
 export function EquipBentoGrid({
-  tile1Content = '',
-  tile2Content = '',
-  tile3Content = '',
-  tile4Content = '',
-  eligibilityIntro = '',
-  eligibilityPoint1 = '',
-  eligibilityPoint2 = '',
-  eligibilityPoint3 = '',
-  eligibilityPoint4 = '',
+  section1,
+  section2,
+  section3,
+  section4,
   className
 }: EquipBentoGridProps) {
-  
-  // Helper to parse content with line breaks and format
-  const parseContent = (content: string) => {
-    if (!content) return [];
-    return content.split('\n').filter(line => line.trim());
+
+  // Helper to parse content
+  const parseContent = (content: any) => {
+    if (typeof content === 'string') return [content];
+    if (Array.isArray(content)) return content;
+    return [];
   };
 
-  // Parse tile 2 and 4 for bullet lists
-  const tile2Lines = parseContent(tile2Content);
-  const tile4Lines = parseContent(tile4Content);
-  
-  // Parse tile 4 for items with dash separator (title - description)
-  const tile4Items = tile4Lines.map(line => {
-    const dashIndex = line.indexOf(' - ');
-    if (dashIndex > 0) {
-      return {
-        title: line.substring(0, dashIndex).trim(),
-        description: line.substring(dashIndex + 3).trim()
-      };
-    }
-    return { title: line, description: '' };
-  });
+  // Section 1 Content
+  const tile1Title = section1?.title || "What is this program about?";
+  const tile1Content = section1?.description || [];
+  const eligibilityTitle = section1?.isThisForYou?.title || "IS THIS FOR YOU?";
+  const eligibilityIntro = section1?.isThisForYou?.subtitle || "Sleep Tight may be helpful if:";
+  const eligibilityPoints = section1?.isThisForYou?.points || [];
 
-  // Icon mapping for Tile 2 (The program includes)
-  const tile2Icons = [Calendar, BookOpen, TrendingUp, Brain];
-  
-  // Icon mapping for Tile 4 (What you'll gain)
-  const tile4Icons = [Target, Brain, Heart, Zap];
-  
-  // Collect eligibility points
-  const eligibilityPoints = [
-    eligibilityPoint1,
-    eligibilityPoint2,
-    eligibilityPoint3,
-    eligibilityPoint4
-  ].filter(point => point && point.trim());
-  
+  // Section 2 Content
+  const tile2Title = section2?.title || "The program includes:";
+  const tile2Lines = section2?.points || [];
+  const tile2Icons = [Timer, PieChart, Brain];
+
+  // Section 3 Content
+  const tile3Title = section3?.title || "How it works";
+  const tile3Content = section3?.description || [];
+
+  // Section 4 Content
+  const tile4Title = section4?.title || "What you'll gain";
+  const tile4Items = section4?.points || [];
+  const tile4Icons = [Calendar, Lightbulb, Brain, Award];
+
+  // Common hover classes
+  const hoverClasses = "transition-all duration-300 ease-out hover:shadow-[0_8px_30px_rgba(0,0,0,0.12)] hover:-translate-y-1 cursor-default";
+
   return (
     <section 
-      className={cn("w-full py-12 md:py-16", className)}
-      style={{ backgroundColor: 'var(--color-bg-page)' }}
+      className={cn("w-full py-12 md:py-16 bg-[var(--color-bg-page)]", className)}
     >
       <div className="max-w-7xl mx-auto px-4 md:px-6">
         
-        {/* Mobile: Stacked */}
-        <div className="grid grid-cols-1 gap-6 md:hidden">
-          
-          {/* Tile 1: What is this program about? */}
-          <div className="bg-white border border-gray-200 rounded-2xl p-8">
-            <h2 className="mb-6" style={{ fontSize: 'var(--text-xl)', fontWeight: 500, color: 'var(--color-text-primary)' }}>
-              What is this program about?
-            </h2>
-            <div className="space-y-4 mb-8" style={{ fontSize: 'var(--text-base)', color: 'var(--color-text-primary)', lineHeight: '1.6' }}>
-              {parseContent(tile1Content).map((line, idx) => (
-                <p key={idx}>{line}</p>
-              ))}
-            </div>
+        <div className="flex flex-col md:grid md:grid-cols-12 gap-5">
             
-            {/* Is this for you? - Inside Tile 1 */}
-            {eligibilityPoints.length > 0 && (
-              <div className="mt-8 pt-8 border-t border-gray-200">
-                <h3 className="mb-2" style={{ fontSize: 'var(--text-lg)', fontWeight: 500, color: 'var(--color-text-primary)' }}>
-                  Is this for you?
-                </h3>
-                {eligibilityIntro && (
-                  <p className="mb-4" style={{ fontSize: 'var(--text-base)', color: 'var(--color-text-primary)', lineHeight: '1.6' }}>
-                    {eligibilityIntro}
-                  </p>
-                )}
-                <div className="grid grid-cols-1 gap-3">
-                  {eligibilityPoints.map((point, idx) => (
-                    <div key={idx} className="flex items-start gap-3">
-                      <Check className="w-5 h-5 text-[#2A2A2A] shrink-0 mt-0.5" strokeWidth={2} />
-                      <p style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-primary)', lineHeight: '1.6' }}>
-                        {point}
-                      </p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* Tile 2: The program includes */}
-          <div className="bg-white border border-gray-200 rounded-2xl p-8 overflow-hidden">
-            <h2 className="mb-6" style={{ fontSize: 'var(--text-xl)', fontWeight: 500, color: 'var(--color-text-primary)' }}>
-              The program includes:
-            </h2>
-            <div className="space-y-5">
-              {tile2Lines.map((line, idx) => {
-                const Icon = tile2Icons[idx % tile2Icons.length];
-                return (
-                  <div key={idx} className="flex items-start gap-4">
-                    <Icon className="w-6 h-6 text-[#2A2A2A] shrink-0 mt-1" strokeWidth={2} />
-                    <p style={{ fontSize: 'var(--text-base)', color: 'var(--color-text-primary)', lineHeight: '1.6' }}>
-                      {line}
-                    </p>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Tile 3: How it works */}
-          <div className="bg-white border border-gray-200 rounded-2xl p-8">
-            <h2 className="mb-6" style={{ fontSize: 'var(--text-xl)', fontWeight: 500, color: 'var(--color-text-primary)' }}>
-              How it works
-            </h2>
-            <div className="space-y-4" style={{ fontSize: 'var(--text-base)', color: 'var(--color-text-primary)', lineHeight: '1.6' }}>
-              {parseContent(tile3Content).map((line, idx) => (
-                <p key={idx}>{line}</p>
-              ))}
-            </div>
-          </div>
-
-          {/* Tile 4: What you'll gain */}
-          <div className="bg-white border border-gray-200 rounded-2xl p-8">
-            <h2 className="mb-6" style={{ fontSize: 'var(--text-xl)', fontWeight: 500, color: 'var(--color-text-primary)' }}>
-              What you'll gain
-            </h2>
-            <div className="grid grid-cols-1 gap-6">
-              {tile4Items.map((item, idx) => {
-                const Icon = tile4Icons[idx % tile4Icons.length];
-                return (
-                  <div key={idx} className="flex items-start gap-3">
-                    <Icon className="w-7 h-7 text-[#2A2A2A] shrink-0 mt-1" strokeWidth={2} />
-                    <div className="flex-1">
-                      <h3 className="mb-2" style={{ fontSize: 'var(--text-base)', fontWeight: 500, color: 'var(--color-text-primary)' }}>
-                        {item.title}
-                      </h3>
-                      {item.description && (
-                        <p style={{ fontSize: 'var(--text-base)', color: 'var(--color-text-primary)', lineHeight: '1.6' }}>
-                          {item.description}
+            {/* Left Column - 8 Cols */}
+            <div className="col-span-12 md:col-span-8 flex flex-col gap-5">
+                {/* Tile 1: What is this program about? */}
+                <div className={cn("bg-white rounded-[24px] p-8 border border-neutral-100 shadow-[0_2px_8px_rgba(0,0,0,0.04)] flex flex-col justify-between", hoverClasses)}>
+                  <div className="space-y-8">
+                    <div>
+                      <h2 className="text-[28px] md:text-[32px] leading-tight font-medium text-neutral-900 tracking-tight mb-6">
+                        What is this program about?
+                      </h2>
+                      <div className="space-y-4 text-base leading-relaxed text-neutral-600">
+                        <p>Sleep Tight is a guided, self-help program designed to help you understand and improve your sleep.</p>
+                        <p>
+                           Over the next <strong>18 days</strong>, you’ll identify factors that disrupt your sleep and gradually build healthier sleep patterns that support your well-being.
                         </p>
-                      )}
+                      </div>
+                    </div>
+                    
+                    {/* Is this for you? */}
+                    <div className="pt-8">
+                        <div className="flex flex-col md:flex-row gap-6 md:gap-12">
+                          {/* Left: Intro */}
+                          <div className="w-full md:w-[200px] shrink-0">
+                            <h3 className="text-sm font-bold uppercase tracking-wider text-neutral-900 mb-2">
+                              IS THIS FOR YOU?
+                            </h3>
+                            <p className="text-lg text-neutral-900 leading-snug">
+                                Sleep Tight may be helpful if:
+                            </p>
+                          </div>
+                          
+                          {/* Right: Grid of Points */}
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full">
+                              {/* Point 1 */}
+                              <div className="bg-[#F5F5F5] rounded-[16px] p-4 flex items-center gap-4 hover:bg-neutral-200/80 transition-colors">
+                                <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center shrink-0 shadow-sm text-neutral-900">
+                                  <Calendar className="w-5 h-5" strokeWidth={1.5} />
+                                </div>
+                                <p className="text-sm font-medium text-neutral-800 leading-snug">
+                                  You have trouble falling asleep or staying asleep
+                                </p>
+                              </div>
+                              
+                              {/* Point 2 */}
+                              <div className="bg-[#F5F5F5] rounded-[16px] p-4 flex items-center gap-4 hover:bg-neutral-200/80 transition-colors">
+                                <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center shrink-0 shadow-sm text-neutral-900">
+                                  <Brain className="w-5 h-5" strokeWidth={1.5} />
+                                </div>
+                                <p className="text-sm font-medium text-neutral-800 leading-snug">
+                                  Perceived stress and overwhelm
+                                </p>
+                              </div>
+
+                              {/* Point 3 */}
+                              <div className="bg-[#F5F5F5] rounded-[16px] p-4 flex items-center gap-4 hover:bg-neutral-200/80 transition-colors">
+                                <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center shrink-0 shadow-sm text-neutral-900">
+                                  <Brain className="w-5 h-5" strokeWidth={1.5} />
+                                </div>
+                                <p className="text-sm font-medium text-neutral-800 leading-snug">
+                                  Perceived stress and overwhelm
+                                </p>
+                              </div>
+
+                              {/* Point 4 */}
+                              <div className="bg-[#F5F5F5] rounded-[16px] p-4 flex items-center gap-4 hover:bg-neutral-200/80 transition-colors">
+                                <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center shrink-0 shadow-sm text-neutral-900">
+                                  <Brain className="w-5 h-5" strokeWidth={1.5} />
+                                </div>
+                                <p className="text-sm font-medium text-neutral-800 leading-snug">
+                                  Perceived stress and overwhelm
+                                </p>
+                              </div>
+                          </div>
+                        </div>
                     </div>
                   </div>
-                );
-              })}
-            </div>
-          </div>
-        </div>
-
-        {/* Desktop: Custom Bento Grid matching Figma proportions */}
-        <div className="hidden md:block space-y-6">
-          
-          {/* TOP ROW: 2.2fr (Tile 1) + 1fr (Tile 2) */}
-          <div className="grid gap-6" style={{ gridTemplateColumns: '2.2fr 1fr' }}>
-            
-            {/* Tile 1: What is this program about? + Is this for you? (Wider - 2.2x width) */}
-            <div className="bg-white border border-gray-200 rounded-2xl p-8">
-              <div className="space-y-6">
-                <div>
-                  <h2 className="mb-4" style={{ fontSize: 'var(--text-xl)', fontWeight: 500, color: 'var(--color-text-primary)' }}>
-                    What is this program about?
-                  </h2>
-                  <div className="space-y-4" style={{ fontSize: 'var(--text-base)', color: 'var(--color-text-primary)', lineHeight: '1.6' }}>
-                    {parseContent(tile1Content).map((line, idx) => (
-                      <p key={idx}>{line}</p>
-                    ))}
-                  </div>
                 </div>
-                
-                {/* Is this for you? - Inside Tile 1 */}
-                {eligibilityPoints.length > 0 && (
-                  <div className="pt-6">
-                    <div className="grid gap-6" style={{ gridTemplateColumns: 'auto 1fr 1fr' }}>
-                      {/* Column 1: Title + Intro */}
-                      <div className="pr-6 border-r border-gray-200">
-                        <h3 className="mb-2" style={{ fontSize: 'var(--text-lg)', fontWeight: 500, color: 'var(--color-text-primary)' }}>
-                          Is this for you?
-                        </h3>
-                        {eligibilityIntro && (
-                          <p style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-primary)', lineHeight: '1.6' }}>
-                            {eligibilityIntro}
+
+                {/* Tile 4: What you'll gain - Moved to Left Column */}
+                <div className={cn("bg-white rounded-[24px] p-8 border border-neutral-100 shadow-[0_2px_8px_rgba(0,0,0,0.04)]", hoverClasses)}>
+                   <div className="grid grid-cols-1 md:grid-cols-4 gap-0 md:divide-x divide-neutral-100 h-full">
+                      {tile4Items.map((item, idx) => {
+                         const iconIndex = idx % 4;
+                         return (
+                            <div key={idx} className="flex flex-col items-start text-left md:px-6 md:first:pl-0 md:last:pr-0 p-4 md:p-0 h-full border-b md:border-b-0 border-neutral-100 last:border-b-0">
+                               <div className="w-[72px] h-[72px] rounded-full bg-[#F5F5F5] flex items-center justify-center mb-6 shrink-0 text-neutral-900">
+                                  {/* Icon Rendering based on Index */}
+                                  {iconIndex === 0 && (
+                                    <div className="relative size-[32px]">
+                                      <svg className="block size-full" fill="none" viewBox="0 0 32 32">
+                                        <g>
+                                          <path d="M24.125 14.375C24.8154 14.375 25.375 13.8154 25.375 13.125C25.375 12.4346 24.8154 11.875 24.125 11.875C23.4346 11.875 22.875 12.4346 22.875 13.125C22.875 13.8154 23.4346 14.375 24.125 14.375Z" fill="currentColor" />
+                                          <path d="M27 2.5H25.375V1.25C25.375 0.559625 24.8154 0 24.125 0C23.4346 0 22.875 0.559625 22.875 1.25V2.5H17.1875V1.25C17.1875 0.559625 16.6279 0 15.9375 0C15.2471 0 14.6875 0.559625 14.6875 1.25V2.5H9.0625V1.25C9.0625 0.559625 8.50287 0 7.8125 0C7.12213 0 6.5625 0.559625 6.5625 1.25V2.5H5C2.243 2.5 0 4.743 0 7.5V27C0 29.757 2.243 32 5 32H14.5625C15.2529 32 15.8125 31.4404 15.8125 30.75C15.8125 30.0596 15.2529 29.5 14.5625 29.5H5C3.6215 29.5 2.5 28.3785 2.5 27V7.5C2.5 6.1215 3.6215 5 5 5H6.5625V6.25C6.5625 6.94037 7.12213 7.5 7.8125 7.5C8.50287 7.5 9.0625 6.94037 9.0625 6.25V5H14.6875V6.25C14.6875 6.94037 15.2471 7.5 15.9375 7.5C16.6279 7.5 17.1875 6.94037 17.1875 6.25V5H22.875V6.25C22.875 6.94037 23.4346 7.5 24.125 7.5C24.8154 7.5 25.375 6.94037 25.375 6.25V5H27C28.3785 5 29.5 6.1215 29.5 7.5V14.625C29.5 15.3154 30.0596 15.875 30.75 15.875C31.4404 15.875 32 15.3154 32 14.625V7.5C32 4.743 29.757 2.5 27 2.5Z" fill="currentColor" />
+                                          <path d="M24.4375 16.875C20.2675 16.875 16.875 20.2675 16.875 24.4375C16.875 28.6075 20.2675 32 24.4375 32C28.6075 32 32 28.6075 32 24.4375C32 20.2675 28.6075 16.875 24.4375 16.875ZM24.4375 29.5C21.6461 29.5 19.375 27.229 19.375 24.4375C19.375 21.646 21.6461 19.375 24.4375 19.375C27.2289 19.375 29.5 21.646 29.5 24.4375C29.5 27.229 27.2289 29.5 24.4375 29.5Z" fill="currentColor" />
+                                          <path d="M26.25 23.1875H25.6875V21.875C25.6875 21.1846 25.1279 20.625 24.4375 20.625C23.7471 20.625 23.1875 21.1846 23.1875 21.875V24.4375C23.1875 25.1279 23.7471 25.6875 24.4375 25.6875H26.25C26.9404 25.6875 27.5 25.1279 27.5 24.4375C27.5 23.7471 26.9404 23.1875 26.25 23.1875Z" fill="currentColor" />
+                                          <path d="M18.6875 14.375C19.3779 14.375 19.9375 13.8154 19.9375 13.125C19.9375 12.4346 19.3779 11.875 18.6875 11.875C17.9971 11.875 17.4375 12.4346 17.4375 13.125C17.4375 13.8154 17.9971 14.375 18.6875 14.375Z" fill="currentColor" />
+                                          <path d="M13.25 19.8125C13.9404 19.8125 14.5 19.2529 14.5 18.5625C14.5 17.8721 13.9404 17.3125 13.25 17.3125C12.5596 17.3125 12 17.8721 12 18.5625C12 19.2529 12.5596 19.8125 13.25 19.8125Z" fill="currentColor" />
+                                          <path d="M7.8125 14.375C8.50286 14.375 9.0625 13.8154 9.0625 13.125C9.0625 12.4346 8.50286 11.875 7.8125 11.875C7.12214 11.875 6.5625 12.4346 6.5625 13.125C6.5625 13.8154 7.12214 14.375 7.8125 14.375Z" fill="currentColor" />
+                                          <path d="M7.8125 19.8125C8.50286 19.8125 9.0625 19.2529 9.0625 18.5625C9.0625 17.8721 8.50286 17.3125 7.8125 17.3125C7.12214 17.3125 6.5625 17.8721 6.5625 18.5625C6.5625 19.2529 7.12214 19.8125 7.8125 19.8125Z" fill="currentColor" />
+                                          <path d="M7.8125 25.25C8.50286 25.25 9.0625 24.6904 9.0625 24C9.0625 23.3096 8.50286 22.75 7.8125 22.75C7.12214 22.75 6.5625 23.3096 6.5625 24C6.5625 24.6904 7.12214 25.25 7.8125 25.25Z" fill="currentColor" />
+                                          <path d="M13.25 25.25C13.9404 25.25 14.5 24.6904 14.5 24C14.5 23.3096 13.9404 22.75 13.25 22.75C12.5596 22.75 12 23.3096 12 24C12 24.6904 12.5596 25.25 13.25 25.25Z" fill="currentColor" />
+                                          <path d="M13.25 14.375C13.9404 14.375 14.5 13.8154 14.5 13.125C14.5 12.4346 13.9404 11.875 13.25 11.875C12.5596 11.875 12 12.4346 12 13.125C12 13.8154 12.5596 14.375 13.25 14.375Z" fill="currentColor" />
+                                        </g>
+                                      </svg>
+                                    </div>
+                                  )}
+
+                                  {(iconIndex === 1 || iconIndex === 2) && (
+                                    <div className="relative size-[32px] overflow-hidden">
+                                      <div className="absolute inset-[4.17%]" style={{ width: '91.66%', height: '91.66%' }}>
+                                        <svg className="block size-full" fill="none" viewBox="0 0 29.7366 29.7386">
+                                          <g stroke="currentColor" strokeWidth="0.40458">
+                                            <path d="M14.8683 6.27099C13.3244 6.26955 11.8089 6.68577 10.4823 7.47554C10.3675 7.54451 10.2848 7.65615 10.2523 7.786C10.2198 7.91584 10.24 8.05328 10.3087 8.1682C10.3773 8.28312 10.4887 8.36614 10.6185 8.39905C10.7482 8.43196 10.8857 8.41208 11.0008 8.34377C12.0246 7.74064 13.1766 7.38855 14.3626 7.31633V9.81106C14.3626 9.87749 14.3756 9.94327 14.401 10.0046C14.4264 10.066 14.4637 10.1218 14.5106 10.1687C14.5576 10.2157 14.6134 10.253 14.6748 10.2784C14.7361 10.3038 14.8019 10.3168 14.8683 10.3168H15.8798C16.0139 10.3168 16.1425 10.3701 16.2374 10.4649C16.3322 10.5598 16.3855 10.6884 16.3855 10.8225C16.3855 10.9566 16.3322 11.0853 16.2374 11.1801C16.1425 11.275 16.0139 11.3282 15.8798 11.3282H14.8683C14.8019 11.3282 14.7361 11.3413 14.6748 11.3667C14.6134 11.3921 14.5576 11.4293 14.5106 11.4763C14.4637 11.5232 14.4264 11.579 14.401 11.6404C14.3756 11.7018 14.3626 11.7675 14.3626 11.834V14.3626H12.3397V13.8569C12.3397 13.4545 12.1799 13.0686 11.8953 12.7841C11.6108 12.4995 11.2249 12.3397 10.8225 12.3397C10.4202 12.3397 10.0343 12.4995 9.74973 12.7841C9.4652 13.0686 9.30536 13.4545 9.30536 13.8569V14.3631L7.31629 14.3643C7.38825 13.1777 7.74037 12.025 8.34379 11.0008C8.4121 10.8857 8.43198 10.7482 8.39907 10.6184C8.36616 10.4887 8.28314 10.3773 8.16823 10.3086C8.05331 10.24 7.91586 10.2197 7.78602 10.2523C7.65617 10.2848 7.54453 10.3675 7.47557 10.4822C6.32843 12.4127 5.98344 14.7158 6.51459 16.8976C7.04574 19.0794 8.41072 20.9663 10.3168 22.1534V22.9599C10.3168 23.0263 10.3298 23.0921 10.3552 23.1535C10.3806 23.2149 10.4179 23.2706 10.4648 23.3176C10.5118 23.3646 10.5676 23.4018 10.629 23.4272C10.6903 23.4526 10.7561 23.4657 10.8225 23.4656H11.3283V24.4791H10.8225C10.6884 24.4791 10.5598 24.5324 10.4649 24.6272C10.3701 24.7221 10.3168 24.8507 10.3168 24.9848C10.3168 25.119 10.3701 25.2476 10.4649 25.3424C10.5598 25.4373 10.6884 25.4906 10.8225 25.4906H11.3283V27.0077C11.3282 27.0741 11.3413 27.1399 11.3667 27.2013C11.3921 27.2627 11.4293 27.3184 11.4763 27.3654C11.5233 27.4124 11.579 27.4496 11.6404 27.475C11.7018 27.5004 11.7676 27.5135 11.834 27.5134H12.3909C12.5074 28.0845 12.8177 28.5978 13.2691 28.9664C13.7206 29.335 14.2855 29.5363 14.8683 29.5363C15.4512 29.5363 16.0161 29.335 16.4675 28.9664C16.919 28.5978 17.2292 28.0845 17.3458 27.5134H17.9027C17.9691 27.5135 18.0349 27.5004 18.0963 27.475C18.1576 27.4496 18.2134 27.4124 18.2604 27.3654C18.3073 27.3184 18.3446 27.2627 18.37 27.2013C18.3954 27.1399 18.4084 27.0741 18.4084 27.0077V25.4906H18.9141C19.0483 25.4906 19.1769 25.4373 19.2717 25.3424C19.3666 25.2476 19.4199 25.119 19.4199 24.9848C19.4199 24.8507 19.3666 24.7221 19.2717 24.6272C19.1769 24.5324 19.0483 24.4791 18.9141 24.4791H18.4084V23.4656H18.9141C18.9806 23.4657 19.0463 23.4526 19.1077 23.4272C19.1691 23.4018 19.2248 23.3646 19.2718 23.3176C19.3188 23.2706 19.356 23.2149 19.3814 23.1535C19.4068 23.0921 19.4199 23.0263 19.4199 22.9599V22.1534C21.004 21.1656 22.2233 19.6888 22.8933 17.9463C23.5633 16.2038 23.6475 14.2905 23.1332 12.4959C22.6189 10.7013 21.5341 9.12297 20.0429 7.99983C18.5516 6.87668 16.7352 6.26979 14.8683 6.27099ZM14.8683 28.5249C14.5546 28.5245 14.2487 28.4271 13.9926 28.246C13.7364 28.0649 13.5426 27.8091 13.4376 27.5134H16.2991C16.1941 27.8091 16.0002 28.0649 15.7441 28.246C15.4879 28.4271 15.182 28.5245 14.8683 28.5249ZM17.397 26.502H12.3397V25.4906H17.397V26.502ZM12.3397 24.4791V23.4677H17.397V24.4791H12.3397ZM15.3741 12.3397H15.8798C16.2822 12.3397 16.6681 12.1798 16.9526 11.8953C17.2371 11.6108 17.397 11.2249 17.397 10.8225C17.397 10.4201 17.2371 10.0342 16.9526 9.74971C16.6681 9.46518 16.2822 9.30534 15.8798 9.30534H15.3741V7.30806C17.2045 7.43212 18.9278 8.21541 20.225 9.51281C21.5221 10.8102 22.305 12.5338 22.4286 14.3642L19.9261 14.3626C19.792 14.3626 19.6628 14.4159 19.568 14.5107C19.4732 14.6056 19.4199 14.7342 19.4199 14.8683V15.8798C19.4199 16.0139 19.3666 16.1425 19.2717 16.2374C19.1769 16.3322 19.0483 16.3855 18.9141 16.3855C18.78 16.3855 18.6514 16.3322 18.5565 16.2374C18.4617 16.1425 18.4084 16.0139 18.4084 15.8798V14.8683C18.4084 14.8019 18.3954 14.7361 18.37 14.6747C18.3446 14.6134 18.3073 14.5576 18.2604 14.5106C18.2134 14.4637 18.1576 14.4264 18.0963 14.401C18.0349 14.3756 17.9691 14.3625 17.9027 14.3626H15.3741V12.3397ZM7.31648 15.3756L9.81158 15.374C9.94563 15.3739 10.0741 15.3206 10.1689 15.2258C10.2636 15.1309 10.3168 15.0024 10.3168 14.8683V13.8569C10.3168 13.7227 10.3701 13.5941 10.4649 13.4993C10.5598 13.4044 10.6884 13.3511 10.8225 13.3511C10.9567 13.3511 11.0853 13.4044 11.1801 13.4993C11.275 13.5941 11.3283 13.7227 11.3283 13.8569V14.8683C11.3282 14.9347 11.3413 15.0005 11.3667 15.0619C11.3921 15.1233 11.4293 15.179 11.4763 15.226C11.5233 15.273 11.579 15.3102 11.6404 15.3356C11.7018 15.361 11.7676 15.3741 11.834 15.374H14.3626V17.3969H13.8569C13.4545 17.3969 13.0686 17.5568 12.7841 17.8413C12.4996 18.1258 12.3397 18.5117 12.3397 18.9141C12.3397 19.3165 12.4996 19.7024 12.7841 19.9869C13.0686 20.2714 13.4545 20.4313 13.8569 20.4313H14.3626V22.4542H11.3283V21.8675C11.3283 21.7787 11.3049 21.6914 11.2605 21.6145C11.2162 21.5376 11.1523 21.4738 11.0754 21.4294C10.0013 20.805 9.09681 19.9265 8.44142 18.871C7.78603 17.8155 7.39975 16.6153 7.31648 15.3756ZM18.6613 21.4294C18.5844 21.4738 18.5205 21.5376 18.4761 21.6145C18.4317 21.6914 18.4084 21.7787 18.4084 21.8675V22.4542H15.3741V19.9256C15.3741 19.8591 15.361 19.7934 15.3356 19.732C15.3102 19.6706 15.273 19.6148 15.226 19.5679C15.179 19.5209 15.1233 19.4837 15.0619 19.4582C15.0005 19.4328 14.9348 19.4198 14.8683 19.4198H13.8569C13.7228 19.4198 13.5941 19.3665 13.4993 19.2717C13.4044 19.1769 13.3512 19.0482 13.3512 18.9141C13.3512 18.78 13.4044 18.6513 13.4993 18.5565C13.5941 18.4617 13.7228 18.4084 13.8569 18.4084H14.8683C14.9348 18.4084 15.0005 18.3954 15.0619 18.37C15.1233 18.3446 15.179 18.3073 15.226 18.2603C15.273 18.2134 15.3102 18.1576 15.3356 18.0962C15.361 18.0349 15.3741 17.9691 15.3741 17.9027V15.374H17.397V15.8798C17.397 16.2821 17.5568 16.668 17.8413 16.9526C18.1258 17.2371 18.5117 17.3969 18.9141 17.3969C19.3165 17.3969 19.7024 17.2371 19.9869 16.9526C20.2715 16.668 20.4313 16.2821 20.4313 15.8798V15.3745L22.4202 15.3757C22.3369 16.6153 21.9506 17.8155 21.2952 18.871C20.6398 19.9265 19.7354 20.805 18.6613 21.4294Z" fill="currentColor" />
+                                            <path d="M4.24809 14.8683C4.24813 14.8019 4.23507 14.7361 4.20967 14.6747C4.18427 14.6134 4.14702 14.5576 4.10005 14.5106C4.05308 14.4636 3.99732 14.4264 3.93594 14.401C3.87457 14.3756 3.80879 14.3625 3.74236 14.3626H0.708015C0.573888 14.3626 0.445255 14.4159 0.350413 14.5107C0.255571 14.6055 0.20229 14.7342 0.20229 14.8683C0.20229 15.0024 0.255571 15.1311 0.350413 15.2259C0.445255 15.3207 0.573888 15.374 0.708015 15.374H3.74236C3.80879 15.3741 3.87457 15.361 3.93594 15.3356C3.99732 15.3102 4.05308 15.273 4.10005 15.226C4.14702 15.179 4.18427 15.1233 4.20967 15.0619C4.23507 15.0005 4.24813 14.9347 4.24809 14.8683Z" fill="currentColor" />
+                                            <path d="M5.48532 8.86735L2.85743 7.35018C2.7999 7.31697 2.7364 7.29542 2.67054 7.28676C2.60468 7.27809 2.53777 7.28249 2.47361 7.29968C2.40945 7.31688 2.3493 7.34655 2.29661 7.38699C2.24392 7.42743 2.1997 7.47785 2.1665 7.53538C2.13329 7.59291 2.11174 7.65642 2.10308 7.72227C2.09441 7.78813 2.09881 7.85505 2.11601 7.91921C2.1332 7.98336 2.16287 8.04351 2.20331 8.0962C2.24375 8.1489 2.29418 8.19311 2.3517 8.22631L4.97959 9.74349C5.09577 9.81055 5.23384 9.82871 5.36341 9.79398C5.49299 9.75925 5.60346 9.67446 5.67052 9.55828C5.73759 9.4421 5.75575 9.30403 5.72102 9.17446C5.68628 9.04488 5.6015 8.93441 5.48532 8.86735Z" fill="currentColor" />
+                                            <path d="M8.86735 5.48532C8.90056 5.54284 8.94477 5.59327 8.99746 5.63371C9.05016 5.67415 9.1103 5.70382 9.17446 5.72102C9.23862 5.73821 9.30553 5.74261 9.37139 5.73394C9.43725 5.72528 9.50075 5.70373 9.55828 5.67052C9.61581 5.63732 9.66623 5.5931 9.70668 5.54041C9.74712 5.48772 9.77678 5.42757 9.79398 5.36342C9.81118 5.29926 9.81557 5.23234 9.80691 5.16648C9.79824 5.10063 9.77669 5.03712 9.74349 4.97959L8.22631 2.3517C8.19311 2.29418 8.1489 2.24375 8.0962 2.20331C8.04351 2.16287 7.98336 2.1332 7.91921 2.11601C7.85505 2.09881 7.78813 2.09441 7.72227 2.10308C7.65642 2.11174 7.59291 2.13329 7.53538 2.1665C7.47785 2.1997 7.42743 2.24392 7.38699 2.29661C7.34655 2.3493 7.31688 2.40945 7.29968 2.47361C7.28249 2.53777 7.27809 2.60468 7.28676 2.67054C7.29542 2.7364 7.31697 2.7999 7.35018 2.85743L8.86735 5.48532Z" fill="currentColor" />
+                                            <path d="M14.8683 4.24809C14.9347 4.24813 15.0005 4.23507 15.0619 4.20967C15.1233 4.18427 15.179 4.14702 15.226 4.10005C15.273 4.05308 15.3102 3.99732 15.3356 3.93594C15.361 3.87457 15.3741 3.80879 15.374 3.74236V0.708015C15.374 0.573888 15.3207 0.445255 15.2259 0.350413C15.1311 0.255571 15.0024 0.20229 14.8683 0.20229C14.7342 0.20229 14.6055 0.255571 14.5107 0.350413C14.4159 0.445255 14.3626 0.573888 14.3626 0.708015V3.74236C14.3625 3.80879 14.3756 3.87457 14.401 3.93594C14.4264 3.99732 14.4636 4.05308 14.5106 4.10005C14.5576 4.14702 14.6134 4.18427 14.6747 4.20967C14.7361 4.23507 14.8019 4.24813 14.8683 4.24809Z" fill="currentColor" />
+                                            <path d="M20.1785 5.67052C20.2947 5.73753 20.4328 5.75565 20.5623 5.72093C20.6919 5.6862 20.8024 5.60145 20.8695 5.48532L22.3866 2.85743C22.4537 2.74125 22.4719 2.60318 22.4371 2.47361C22.4024 2.34403 22.3176 2.23356 22.2014 2.1665C22.0852 2.09944 21.9472 2.08127 21.8176 2.11601C21.688 2.15074 21.5776 2.23552 21.5105 2.35171L19.9933 4.97959C19.9601 5.03712 19.9385 5.10062 19.9299 5.16648C19.9212 5.23234 19.9256 5.29926 19.9428 5.36343C19.96 5.42759 19.9897 5.48773 20.0301 5.54043C20.0706 5.59312 20.121 5.63733 20.1785 5.67052Z" fill="currentColor" />
+                                            <path d="M24.5034 9.81114C24.592 9.81122 24.6791 9.78788 24.7558 9.74349L27.3837 8.22632C27.4999 8.15925 27.5846 8.04878 27.6194 7.91921C27.6541 7.78963 27.6359 7.65157 27.5689 7.53538C27.5018 7.4192 27.3913 7.33442 27.2618 7.29968C27.1322 7.26495 26.9941 7.28311 26.878 7.35018L24.2501 8.86735C24.1536 8.92301 24.0781 9.00898 24.0355 9.11191C23.9929 9.21483 23.9854 9.32895 24.0143 9.43654C24.0432 9.54413 24.1068 9.63917 24.1952 9.70691C24.2837 9.77465 24.392 9.81129 24.5034 9.81114Z" fill="currentColor" />
+                                            <path d="M29.0286 14.3626H25.9942C25.8601 14.3626 25.7315 14.4159 25.6366 14.5107C25.5418 14.6055 25.4885 14.7342 25.4885 14.8683C25.4885 15.0024 25.5418 15.1311 25.6366 15.2259C25.7315 15.3207 25.8601 15.374 25.9942 15.374H29.0286C29.1627 15.374 29.2914 15.3207 29.3862 15.2259C29.481 15.1311 29.5343 15.0024 29.5343 14.8683C29.5343 14.7342 29.481 14.6055 29.3862 14.5107C29.2914 14.4159 29.1627 14.3626 29.0286 14.3626Z" fill="currentColor" />
+                                            <path d="M27.3836 21.5105L24.7557 19.9933C24.6982 19.9601 24.6347 19.9385 24.5688 19.9299C24.503 19.9212 24.436 19.9256 24.3719 19.9428C24.2423 19.9775 24.1318 20.0623 24.0648 20.1785C23.9977 20.2947 23.9795 20.4327 24.0143 20.5623C24.049 20.6919 24.1338 20.8024 24.25 20.8694L26.8779 22.3866C26.994 22.4537 27.1321 22.4718 27.2617 22.4371C27.3913 22.4024 27.5017 22.3176 27.5688 22.2014C27.6359 22.0852 27.654 21.9471 27.6193 21.8176C27.5846 21.688 27.4998 21.5775 27.3836 21.5105Z" fill="currentColor" />
+                                            <path d="M4.97959 19.9933L2.35171 21.5105C2.23552 21.5775 2.15074 21.688 2.11601 21.8176C2.08127 21.9471 2.09944 22.0852 2.1665 22.2014C2.23356 22.3176 2.34403 22.4024 2.47361 22.4371C2.60318 22.4718 2.74125 22.4537 2.85743 22.3866L5.48532 20.8694C5.54285 20.8362 5.59327 20.792 5.63371 20.7393C5.67415 20.6866 5.70382 20.6265 5.72102 20.5623C5.73822 20.4982 5.74261 20.4312 5.73394 20.3654C5.72528 20.2995 5.70373 20.236 5.67052 20.1785C5.63732 20.121 5.59311 20.0705 5.54041 20.0301C5.48772 19.9897 5.42758 19.96 5.36342 19.9428C5.29926 19.9256 5.23234 19.9212 5.16648 19.9299C5.10063 19.9385 5.03712 19.9601 4.97959 19.9933Z" fill="currentColor" />
+                                            <path d="M8.78967 8.78972C8.71895 8.86045 8.67079 8.95056 8.65128 9.04866C8.63178 9.14676 8.64179 9.24844 8.68007 9.34084C8.71835 9.43325 8.78317 9.51223 8.86634 9.5678C8.9495 9.62336 9.04728 9.65302 9.14729 9.65302C9.24731 9.65302 9.34509 9.62336 9.42825 9.5678C9.51142 9.51223 9.57624 9.43325 9.61452 9.34084C9.6528 9.24844 9.66282 9.14676 9.64331 9.04866C9.6238 8.95056 9.57564 8.86045 9.50492 8.78972C9.45796 8.74275 9.40221 8.70549 9.34085 8.68007C9.27948 8.65465 9.21371 8.64157 9.14729 8.64157C9.08088 8.64157 9.01511 8.65465 8.95375 8.68007C8.89238 8.70549 8.83663 8.74275 8.78967 8.78972Z" fill="currentColor" />
+                                          </g>
+                                        </svg>
+                                      </div>
+                                    </div>
+                                  )}
+
+                                  {iconIndex === 3 && (
+                                    <div className="relative size-[32px]">
+                                      <div className="absolute inset-[4%_14.49%_3.98%_14.5%]">
+                                        <svg className="block size-full" fill="none" viewBox="0 0 23.125 29.845">
+                                          <path d="M19.2574 29.645C19.0274 29.645 18.8224 29.485 18.7674 29.25C17.7374 24.555 19.0074 21.445 20.2324 18.44C21.3074 15.805 22.3224 13.315 21.7574 9.845C20.8124 4.025 17.5424 1.2 11.7574 1.2C6.50741 1.2 2.23741 5.47 2.23741 10.72C2.23741 11.73 2.39241 12.72 2.70241 13.675C2.73741 13.785 2.73241 13.905 2.69241 14.01L1.21241 17.78C1.16741 17.89 1.20741 17.975 1.23741 18.015C1.26741 18.055 1.32741 18.13 1.44741 18.13L2.98241 18.18C3.21241 18.185 3.40741 18.35 3.45241 18.575L4.36741 22.77C4.56241 23.655 5.38741 24.245 6.28741 24.145L11.6424 23.525C11.8074 23.455 12.8624 22.94 13.5124 20.775C13.5924 20.51 13.8724 20.36 14.1374 20.44C14.4024 20.52 14.5524 20.8 14.4724 21.065C13.5874 23.995 11.9574 24.48 11.8874 24.5C11.8624 24.505 11.8374 24.51 11.8124 24.515L6.40241 25.14C4.98741 25.305 3.69241 24.375 3.39241 22.985L2.56241 19.17L1.41741 19.13C1.00741 19.115 0.632412 18.905 0.407412 18.565C0.182412 18.225 0.137412 17.795 0.287412 17.415L1.70241 13.81C1.39741 12.81 1.24241 11.77 1.24241 10.72C1.24241 4.92 5.96241 0.2 11.7624 0.2C18.0324 0.2 21.7274 3.39 22.7524 9.685C23.3624 13.43 22.2424 16.17 21.1624 18.815C19.9924 21.68 18.7824 24.645 19.7474 29.035C19.8074 29.305 19.6374 29.57 19.3674 29.63C19.3274 29.64 19.2924 29.645 19.2574 29.645Z" fill="currentColor" />
+                                        </svg>
+                                      </div>
+                                      <div className="absolute inset-[77.73%_51.67%_3.98%_41.48%]">
+                                        <svg className="block size-full" fill="none" viewBox="0 0 2.59182 6.2503">
+                                          <path d="M1.54325 6.0503C1.47825 6.0503 1.40825 6.0353 1.34325 6.0103C1.08825 5.9003 0.973255 5.6053 1.08325 5.3503C2.05325 3.1253 0.388255 1.1103 0.318255 1.0253C0.138255 0.815297 0.168255 0.500297 0.378255 0.320297C0.588255 0.140297 0.903255 0.165296 1.08325 0.375296C1.17325 0.480296 3.22825 2.9453 2.00325 5.7453C1.91825 5.9353 1.73325 6.0503 1.54325 6.0503Z" fill="currentColor" />
+                                        </svg>
+                                      </div>
+                                      <div className="absolute inset-[9.53%_20.54%_52.79%_24.33%]">
+                                        <svg className="block size-full" fill="none" viewBox="0 0 17.6413 12.055">
+                                          <path d="M6.87869 12.055C5.81369 12.055 4.66869 11.845 3.59369 11.405C1.59369 10.59 0.413689 9.55 0.0886889 8.315C-0.236311 7.085 0.428689 6.135 0.533689 5.995C0.628689 5.86 1.33869 4.9 2.55869 4.685C2.67369 3.5 3.36369 2.56 4.50869 2.02C5.10369 1.74 5.95369 1.63 6.93869 1.67C6.97369 1.51 7.02369 1.36 7.09369 1.215C7.35869 0.665 7.99869 0.01 9.55369 0H9.57869C10.9987 0 11.7037 0.67 12.0637 1.685C12.2637 1.595 12.4687 1.525 12.6837 1.48C14.1287 1.185 15.3537 1.89 15.9637 3.36C16.2637 4.085 16.3887 4.945 16.3087 5.81C16.8937 6.51 17.2887 7.265 17.4737 8.04C17.9187 9.91 17.3937 10.835 16.8787 11.28C16.2587 11.815 15.3287 11.905 14.3887 11.53C13.8587 11.32 13.2737 10.93 12.7737 10.355C12.0987 10.565 11.4437 10.585 10.8137 10.465C10.7887 10.5 10.7637 10.535 10.7387 10.57C10.0187 11.54 8.54369 12.055 6.87869 12.055ZM1.32869 6.595C1.30869 6.625 0.833689 7.26 1.05369 8.075C1.29869 8.97 2.30369 9.8 3.96869 10.48C6.34369 11.45 8.83369 11.09 9.77869 10.155C9.16869 9.905 8.58869 9.545 8.02869 9.135C7.68369 9.545 7.30869 9.84 6.87869 9.965C6.42869 10.1 5.96369 10.03 5.50369 9.76C3.94869 8.85 2.83369 7.26 2.58369 5.7C1.80869 5.9 1.34869 6.565 1.34369 6.57C1.34369 6.58 1.33869 6.59 1.32869 6.595ZM13.7437 9.93C14.0737 10.25 14.4337 10.47 14.7637 10.605C15.3537 10.84 15.9037 10.81 16.2337 10.525C16.6637 10.15 16.7637 9.355 16.5087 8.275C16.4187 7.89 16.2587 7.505 16.0387 7.135C15.6937 8.15 15.0387 9.095 14.0437 9.75C13.9387 9.81 13.8387 9.875 13.7437 9.93ZM11.1787 9.51C11.5037 9.55 11.8337 9.54 12.1687 9.475C11.8937 8.955 11.6937 8.345 11.6237 7.645C11.5337 6.745 11.5037 5.87 11.4737 5.095C11.4537 4.575 11.4337 4.11 11.4037 3.7C11.3587 3.68 11.3087 3.665 11.2637 3.645C10.6887 4.375 10.1837 5.345 9.70869 6.27C9.87869 6.505 10.0637 6.75 10.2587 6.99C11.0837 8.02 11.2587 8.865 11.1787 9.51ZM8.60869 8.325C9.12869 8.705 9.65369 9.03 10.1937 9.245C10.2037 8.665 9.84869 8.07 9.48369 7.61C9.39869 7.505 9.30869 7.385 9.20869 7.26C9.00369 7.64 8.80869 8 8.60869 8.325ZM12.4387 4.16C12.4537 4.455 12.4637 4.76 12.4737 5.06C12.5037 5.855 12.5287 6.68 12.6187 7.545C12.6787 8.165 12.8637 8.695 13.1187 9.13C13.2387 9.065 13.3587 8.995 13.4837 8.915C14.4887 8.25 15.0587 7.2 15.2537 6.125C14.5537 5.4 13.6087 4.73 12.4387 4.16ZM3.61369 5.725C3.87369 6.935 4.79369 8.18 6.01369 8.895C6.29869 9.065 6.48869 9.04 6.59869 9.005C6.81369 8.945 7.02869 8.77 7.24369 8.52C6.81369 8.16 6.39869 7.79 5.99869 7.435C5.60869 7.085 5.22869 6.745 4.85369 6.435C4.42869 6.08 4.01369 5.84 3.61369 5.725ZM3.55869 4.685C4.19869 4.8 4.84369 5.125 5.49369 5.66C5.87869 5.98 6.26869 6.33 6.66869 6.69C7.04869 7.03 7.42869 7.375 7.81869 7.7C8.06369 7.29 8.30869 6.82 8.55369 6.35C7.83369 5.28 7.06869 3.9 6.90869 2.675C6.05869 2.64 5.36369 2.725 4.93369 2.93C4.13869 3.3 3.66869 3.905 3.55869 4.685ZM7.93369 2.77C8.07369 3.47 8.46869 4.355 9.07369 5.325C9.43869 4.62 9.83369 3.915 10.2787 3.3C9.46369 3.045 8.66369 2.87 7.93369 2.77ZM12.3487 3.01C12.4987 3.075 12.6537 3.145 12.7987 3.22C13.7687 3.69 14.6087 4.22 15.2987 4.805C15.2587 4.425 15.1687 4.065 15.0337 3.74C14.7887 3.145 14.1787 2.19 12.8787 2.455C12.6787 2.495 12.4837 2.575 12.2987 2.68C12.3187 2.79 12.3337 2.9 12.3487 3.01ZM7.94369 1.76C8.90369 1.885 9.94369 2.125 10.9687 2.475C11.0437 2.4 11.1237 2.325 11.2037 2.255C10.9637 1.36 10.5137 1 9.57369 1C9.56869 1 9.55869 1 9.55369 1C8.71869 1.005 8.19369 1.22 7.98869 1.645C7.97369 1.685 7.95869 1.72 7.94369 1.76Z" fill="currentColor" />
+                                        </svg>
+                                      </div>
+                                    </div>
+                                  )}
+
+                               </div>
+                               <h3 className="text-[16px] font-bold text-neutral-900 mb-2 leading-tight">
+                                  {item.title}
+                               </h3>
+                               {item.description && (
+                                  <p className="text-[15px] text-neutral-500 leading-snug">
+                                     {item.description}
+                                  </p>
+                               )}
+                            </div>
+                         );
+                      })}
+                   </div>
+                </div>
+            </div>
+
+            {/* Right Column - 4 Cols */}
+            <div className="col-span-12 md:col-span-4 flex flex-col gap-5">
+                 {/* Tile 2: The program includes (Stack) */}
+                 <div className="flex flex-col gap-5">
+                   {/* Item 1 */}
+                   <div className={cn("bg-white rounded-[24px] p-6 border border-neutral-100 shadow-[0_2px_8px_rgba(0,0,0,0.04)] flex items-center gap-5", hoverClasses)}>
+                      <div className="w-[48px] h-[48px] rounded-full bg-[#F5F5F5] flex items-center justify-center shrink-0 text-neutral-900">
+                         <Timer className="w-6 h-6" strokeWidth={1.5} />
+                      </div>
+                      <p className="text-[16px] text-neutral-900 font-normal leading-snug">
+                         A structured 18-day journey designed to fit into daily life
+                      </p>
+                   </div>
+
+                   {/* Item 2 */}
+                   <div className={cn("bg-white rounded-[24px] p-6 border border-neutral-100 shadow-[0_2px_8px_rgba(0,0,0,0.04)] flex items-center gap-5", hoverClasses)}>
+                      <div className="w-[48px] h-[48px] rounded-full bg-[#F5F5F5] flex items-center justify-center shrink-0 text-neutral-900">
+                         <PieChart className="w-6 h-6" strokeWidth={1.5} />
+                      </div>
+                      <p className="text-[16px] text-neutral-900 font-normal leading-snug">
+                         Sleep, mood, and habit trackers
+                      </p>
+                   </div>
+
+                   {/* Item 3 */}
+                   <div className={cn("bg-white rounded-[24px] p-6 border border-neutral-100 shadow-[0_2px_8px_rgba(0,0,0,0.04)] flex items-center gap-5", hoverClasses)}>
+                      <div className="w-[48px] h-[48px] rounded-full bg-[#F5F5F5] flex items-center justify-center shrink-0 text-neutral-900">
+                         <Brain className="w-6 h-6" strokeWidth={1.5} />
+                      </div>
+                      <p className="text-[16px] text-neutral-900 font-normal leading-snug">
+                         Science-backed techniques, including CBT
+                      </p>
+                   </div>
+                 </div>
+
+                 {/* Tile 3: How it works - Moved to Right Column */}
+                 <div className={cn("bg-white rounded-[24px] p-8 border border-neutral-100 shadow-[0_2px_8px_rgba(0,0,0,0.04)] grow", hoverClasses)}>
+                    <div className="flex items-center gap-3 mb-6">
+                      <div className="w-10 h-10 rounded-full bg-[#F5F5F5] flex items-center justify-center shrink-0 text-neutral-900">
+                         <Calendar className="w-5 h-5" strokeWidth={1.5} />
+                      </div>
+                      <h2 className="text-xl font-medium text-neutral-900 tracking-tight">
+                        How it works
+                      </h2>
+                    </div>
+                    
+                    <div className="space-y-6">
+                       <p className="text-sm text-neutral-500">The program focuses on sleep in two stages.</p>
+                       
+                       <div className="space-y-4">
+                          <p className="text-[15px] leading-relaxed text-neutral-700">
+                            First, you’ll learn practical techniques to calm your mind and improve sleep hygiene.
                           </p>
-                        )}
-                      </div>
-                      
-                      {/* Column 2: Points 1 & 2 */}
-                      <div className="space-y-3">
-                        {eligibilityPoints.slice(0, 2).map((point, idx) => (
-                          <div key={idx} className="flex items-start gap-3">
-                            <Check className="w-5 h-5 text-[#2A2A2A] shrink-0 mt-0.5" strokeWidth={2} />
-                            <p style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-primary)', lineHeight: '1.6' }}>
-                              {point}
-                            </p>
-                          </div>
-                        ))}
-                      </div>
-                      
-                      {/* Column 3: Points 3 & 4 */}
-                      <div className="space-y-3">
-                        {eligibilityPoints.slice(2, 4).map((point, idx) => (
-                          <div key={idx} className="flex items-start gap-3">
-                            <Check className="w-5 h-5 text-[#2A2A2A] shrink-0 mt-0.5" strokeWidth={2} />
-                            <p style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-primary)', lineHeight: '1.6' }}>
-                              {point}
-                            </p>
-                          </div>
-                        ))}
-                      </div>
+                          <p className="text-[15px] leading-relaxed text-neutral-700">
+                            Then, you’ll build a personalized bedtime routine and practice these skills consistently.
+                          </p>
+                       </div>
+
+                       <div className="bg-[#EAEAEA] rounded-[12px] p-4 text-center">
+                          <p className="text-[13px] text-neutral-800 italic leading-snug">
+                            The focus is on habit-building — without medication or pressure — to support better rest over time.
+                          </p>
+                       </div>
                     </div>
-                  </div>
-                )}
-              </div>
+                 </div>
             </div>
 
-            {/* Tile 2: The program includes */}
-            <div className="bg-white border border-gray-200 rounded-2xl p-8 overflow-hidden">
-              <h2 className="mb-6" style={{ fontSize: 'var(--text-xl)', fontWeight: 500, color: 'var(--color-text-primary)' }}>
-                The program includes:
-              </h2>
-              <div className="space-y-5">
-                {tile2Lines.map((line, idx) => {
-                  const Icon = tile2Icons[idx % tile2Icons.length];
-                  return (
-                    <div key={idx} className="flex items-start gap-4">
-                      <Icon className="w-6 h-6 text-[#2A2A2A] shrink-0 mt-1" strokeWidth={2} />
-                      <p style={{ fontSize: 'var(--text-base)', color: 'var(--color-text-primary)', lineHeight: '1.6' }}>
-                        {line}
-                      </p>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          </div>
-
-          {/* BOTTOM ROW: 1fr (Tile 3) + 2.2fr (Tile 4) - REVERSED RATIO */}
-          <div className="grid gap-6" style={{ gridTemplateColumns: '1fr 2.2fr' }}>
-            
-            {/* Tile 3: How it works */}
-            <div className="bg-white border border-gray-200 rounded-2xl p-8">
-              <h2 className="mb-6" style={{ fontSize: 'var(--text-xl)', fontWeight: 500, color: 'var(--color-text-primary)' }}>
-                How it works
-              </h2>
-              <div className="space-y-4" style={{ fontSize: 'var(--text-base)', color: 'var(--color-text-primary)', lineHeight: '1.6' }}>
-                {parseContent(tile3Content).map((line, idx) => (
-                  <p key={idx}>{line}</p>
-                ))}
-              </div>
-            </div>
-
-            {/* Tile 4: What you'll gain (Wider - 2.2x width) */}
-            <div className="bg-white border border-gray-200 rounded-2xl p-8">
-              <h2 className="mb-6" style={{ fontSize: 'var(--text-xl)', fontWeight: 500, color: 'var(--color-text-primary)' }}>
-                What you'll gain
-              </h2>
-              <div className="grid grid-cols-4 gap-6">
-                {tile4Items.map((item, idx) => {
-                  const Icon = tile4Icons[idx % tile4Icons.length];
-                  return (
-                    <div key={idx}>
-                      <Icon className="w-7 h-7 text-[#2A2A2A] shrink-0 mb-3" strokeWidth={2} />
-                      <h3 className="mb-2" style={{ fontSize: 'var(--text-base)', fontWeight: 500, color: 'var(--color-text-primary)', lineHeight: '1.4' }}>
-                        {item.title}
-                      </h3>
-                      {item.description && (
-                        <p style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-primary)', lineHeight: '1.6' }}>
-                          {item.description}
-                        </p>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          </div>
         </div>
+
       </div>
     </section>
   );
