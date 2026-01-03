@@ -5,7 +5,7 @@ import { Card, CardContent } from '../ui/card';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { cn } from '../ui/utils';
-import { Search, BookOpen, Play, Video, Wrench, FileText, RefreshCw } from 'lucide-react';
+import { Search, BookOpen, Play, Video, Wrench, FileText, RefreshCw, Activity, Mic, GraduationCap } from 'lucide-react';
 import { CardSkeleton, LibraryEmptyState, StaggeredReveal } from '../utils/LoadingStates';
 import { ResourceBlock } from '../blocks/ResourceBlock';
 import { ResourceType } from '../blocks/ResourceType';
@@ -19,7 +19,17 @@ import { OptimizedImage } from '../ui/optimized-image';
 import { PullToRefresh } from '../ui/touch-feedback';
 import { PageHero } from '../ui/PageHero';
 
-import { RESOURCE_TYPES } from '../../lib/constants';
+import { RESOURCE_TYPES, RESOURCE_CATEGORIES } from '../../lib/constants';
+
+const ICON_MAP: Record<string, any> = {
+  'file-text': FileText,
+  'tool': Wrench,
+  'activity': Activity,
+  'video': Video,
+  'mic': Mic,
+  'book': BookOpen,
+  'graduation-cap': GraduationCap
+};
 
 interface LibraryProps {
   onResourceSelect?: (resourceId: string) => void;
@@ -168,7 +178,8 @@ export function Library({ onResourceSelect, className }: LibraryProps) {
     const matchesSearch = resource.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
                          resource.description.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesType = activeTypeFilter === 'all' || resource.type === activeTypeFilter;
-    const matchesCategory = activeCategoryFilter === 'all' || resource.category === activeCategoryFilter;
+    const matchesCategory = activeCategoryFilter === 'all' || 
+                           (resource.category || '').toLowerCase() === activeCategoryFilter.toLowerCase();
     
     return matchesSearch && matchesType && matchesCategory;
   });
@@ -188,19 +199,11 @@ export function Library({ onResourceSelect, className }: LibraryProps) {
 
   // Derive unique categories from resources
   const categoryFilters = useMemo(() => {
-    // Get all unique categories from loaded resources
-    const categories = new Set(resources.map(r => r.category).filter(Boolean));
-    
-    // Start with "All Resources"
-    const filters = [{ id: 'all', label: 'All Resources' }];
-    
-    // Add dynamic categories
-    Array.from(categories).sort().forEach(category => {
-      filters.push({ id: category, label: category });
-    });
-    
-    return filters;
-  }, [resources]);
+    return [
+      { id: 'all', label: 'All Resources' },
+      ...RESOURCE_CATEGORIES.map(c => ({ id: c.value, label: c.label }))
+    ];
+  }, []);
 
   // Pull to refresh handler for mobile
   const handlePullToRefresh = async () => {
@@ -209,80 +212,103 @@ export function Library({ onResourceSelect, className }: LibraryProps) {
   };
 
   const content = (
-    <div className={cn("w-full", className)}>
-      <PageHero 
-        title="Resources" 
-        subtitle="Gain insight into your mental and emotional health and find ways to support yourself." 
-      />
-      <div className="w-full max-w-7xl mx-auto px-4 py-8 space-y-8">
-      <div className="flex flex-col md:flex-row gap-6 items-start md:items-center justify-between">
-        {/* Search Bar */}
-        <div className="w-full max-w-lg relative">
-          <div 
-            className="absolute inset-y-0 left-0 flex items-center pointer-events-none"
-            style={{ paddingLeft: 'var(--spacing-5)' }}
-          >
-            <Search size={14} style={{ color: '#D9D9D9' }} />
-          </div>
-          <Input
-            type="text"
-            placeholder="Search resources..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full rounded-2xl border border-gray-200"
-            style={{
-              paddingLeft: 'calc(var(--spacing-3) * 4)',
-              paddingRight: 'var(--spacing-4)',
-              paddingTop: 'var(--spacing-3)',
-              paddingBottom: 'var(--spacing-3)',
-              backgroundColor: 'white',
-              fontSize: 'var(--text-sm)',
-              color: '#757575'
-            }}
-          />
-        </div>
+    <div className={cn("w-full bg-[#f5f5f5]", className)}>
+      {/* Custom Hero Section with Search & Filters */}
+      <div className="w-full bg-black pt-[140px] pb-[60px] md:pt-[160px] md:pb-[80px] px-4 flex flex-col items-center justify-center text-center">
+        <h1 
+          className="font-['Ubuntu',sans-serif] font-medium text-white mb-4"
+          style={{ fontSize: '48px', lineHeight: '1.2' }}
+        >
+          Resources
+        </h1>
+        <p 
+          className="font-['Ubuntu',sans-serif] text-white max-w-2xl mx-auto opacity-80 mb-10"
+          style={{ fontSize: '18px', lineHeight: '28px' }}
+        >
+          Gain insight into your mental and emotional health and find ways to support yourself.
+        </p>
 
-        {/* Type Filter Buttons */}
-        <ResourceType 
-          activeType={activeTypeFilter} 
-          onTypeChange={setActiveTypeFilter} 
-        />
-      </div>
-
-      {/* Category Filter Pills */}
-      <div 
-        className="rounded-2xl inline-flex flex-wrap"
-        style={{ 
-          backgroundColor: '#F5F5F5',
-          padding: 'var(--spacing-2)',
-          gap: 'var(--spacing-2)'
-        }}
-      >
-        {categoryFilters.map((filter) => {
-          const isActive = activeCategoryFilter === filter.id;
+        {/* Search & Filters Container */}
+        <div className="w-full max-w-5xl space-y-8 animate-fadeIn">
           
-          return (
-            <Button
-              key={filter.id}
-              onClick={() => setActiveCategoryFilter(filter.id)}
-              variant="ghost"
-              className="rounded-2xl"
-              style={{
-                paddingLeft: 'var(--spacing-5)',
-                paddingRight: 'var(--spacing-5)',
-                paddingTop: 'var(--spacing-3)',
-                paddingBottom: 'var(--spacing-3)',
-                backgroundColor: isActive ? '#2e2a2f' : 'transparent',
-                color: isActive ? 'white' : '#757575',
-                fontSize: 'var(--text-sm)'
-              }}
-            >
-              {filter.label}
-            </Button>
-          );
-        })}
+          {/* Search Bar */}
+          <div className="w-full max-w-2xl mx-auto relative">
+            <div className="absolute inset-y-0 left-0 flex items-center pointer-events-none pl-5">
+              <Search size={20} className="text-gray-400" />
+            </div>
+            <Input
+              type="text"
+              placeholder="Search resources..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full h-14 pl-12 pr-5 rounded-2xl border-none bg-white text-black placeholder:text-gray-500 focus-visible:ring-2 focus-visible:ring-white/50 shadow-lg"
+              style={{ fontSize: '16px' }}
+            />
+          </div>
+
+          {/* Type Filters */}
+          <div className="flex flex-wrap justify-center gap-3">
+             <Button
+                onClick={() => setActiveTypeFilter('all')}
+                variant="ghost"
+                className={cn(
+                  "rounded-full border transition-all h-10 px-5 gap-2",
+                  activeTypeFilter === 'all' 
+                    ? "bg-white text-black border-white hover:bg-white/90" 
+                    : "bg-transparent text-white border-white/30 hover:bg-white/10 hover:text-white"
+                )}
+              >
+                <BookOpen size={16} />
+                All
+              </Button>
+              {RESOURCE_TYPES.map(t => {
+                const Icon = ICON_MAP[t.icon] || BookOpen;
+                const isActive = activeTypeFilter === t.value;
+                return (
+                  <Button
+                    key={t.value}
+                    onClick={() => setActiveTypeFilter(t.value)}
+                    variant="ghost"
+                    className={cn(
+                      "rounded-full border transition-all h-10 px-5 gap-2",
+                      isActive
+                        ? "bg-white text-black border-white hover:bg-white/90" 
+                        : "bg-transparent text-white border-white/30 hover:bg-white/10 hover:text-white"
+                    )}
+                  >
+                    <Icon size={16} />
+                    {t.label}
+                  </Button>
+                )
+              })}
+          </div>
+
+          {/* Category Filters */}
+          <div className="flex flex-wrap justify-center gap-2 max-w-4xl mx-auto">
+             {categoryFilters.map(c => {
+               const isActive = activeCategoryFilter === c.id;
+               return (
+                  <button
+                    key={c.id}
+                    onClick={() => setActiveCategoryFilter(c.id)}
+                    className={cn(
+                      "rounded-full px-4 py-1.5 text-sm font-medium transition-all duration-200 border",
+                      isActive 
+                        ? "bg-white text-black border-white shadow-sm" 
+                        : "bg-transparent text-white/70 border-transparent hover:bg-white/10 hover:text-white"
+                    )}
+                    style={{ fontFamily: 'Ubuntu, sans-serif' }}
+                  >
+                    {c.label}
+                  </button>
+               )
+             })}
+          </div>
+
+        </div>
       </div>
 
+      <div className="w-full max-w-7xl mx-auto px-4 py-12">
       {/* Resources Grid */}
       <div className="w-full">
         <div 

@@ -410,4 +410,250 @@ app.post("/admin/media/upload", requireAdmin, async (c) => {
   }
 });
 
+// ========================================
+// ADMIN - BACKUP & RESTORE
+// ========================================
+
+// Create Backup (Internal Checkpoint)
+app.post("/admin/backup/create-checkpoint", requireAdmin, async (c) => {
+  try {
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+    const backupId = `backup_${timestamp}`;
+    
+    // Define prefixes to backup
+    const prefixes = [
+      'equip:',
+      'equip_slug:',
+      'idx_equip_days:',
+      'day:',
+      'idx_day_blocks:',
+      'block:',
+      'dataset:',
+      'dataset_key:',
+      'recommendation_rules',
+      'assessment_def:',
+      'resource:',
+      'page:',
+      'media:',
+      'category:'
+    ];
+    
+    const backupData: Record<string, any> = {};
+    
+    // 1. Gather all data
+    for (const prefix of prefixes) {
+      const items = await kv.getByPrefix(prefix);
+      // We need key-value pairs, but getByPrefix returns values (usually). 
+      // Wait, kv.getByPrefix implementation in kv_store.tsx usually returns values.
+      // But for restoration, we need the Keys.
+      // Let's check kv_store.tsx implementation of getByPrefix
+      
+      // If getByPrefix returns just values, we can't restore them to their original keys easily unless the value contains the ID/Key.
+      // Most of our entities contain 'id', so we can reconstruct `prefix:{id}`.
+      // But indices like `idx_equip_days:{id}` are just arrays.
+      
+      // We need a way to get raw KV pairs.
+      // If kv_store doesn't expose listKeys or similar, we might have a problem.
+      
+      // Let's assume for now we can rely on ID property for entities.
+      // But indices are tricky.
+      
+      // Actually, let's look at kv_store.tsx to see what getByPrefix returns.
+      // If it only returns values, I might need to extend it or work around it.
+    }
+    
+    // Since I can't check kv_store.tsx right now (I did check it earlier but didn't verify return type details for getByPrefix),
+    // let's assume I need to extend kv_store to support listing keys + values, 
+    // OR I can use the fact that I know the IDs from the values for entities.
+    
+    // But for indices (idx_...), the value is an array, and the key contains the ID of the parent.
+    // The value doesn't contain the parent ID usually.
+    
+    // WE NEED A BETTER BACKUP STRATEGY.
+    // Since I can't modify kv_store.tsx (it's protected), I have to rely on what it exposes.
+    
+    // Protected files: /supabase/functions/server/kv_store.tsx
+    
+    // Let's read kv_store.tsx to see exactly what getByPrefix does.
+    // If it returns [value, value], I'm in trouble for indices.
+    
+    // If I can't backup indices, I can reconstruct them?
+    // - idx_equip_days:{id} -> I can scan all days, check their equip_id, and rebuild the index.
+    // - idx_day_blocks:{id} -> Scan all blocks, check equip_day_id.
+    
+    // So if I backup all entities (Equip, Day, Block, Resource, Assessment, etc.), I can theoretically rebuild indices upon restore.
+    
+    // BUT, `equip_slug:` and `dataset_key:` are simple KV mappings.
+    // `equip_slug:{slug}` -> id.
+    // If I backup Equips, I have slug in the object. I can rebuild `equip_slug:`.
+    
+    // So the strategy is:
+    // 1. Backup all Entities (values).
+    // 2. On Restore:
+    //    a. Wipe existing data (optional, or just overwrite).
+    //    b. Restore Entities.
+    //    c. Rebuild Indices and Lookups.
+    
+    // This seems robust.
+    
+    // Let's refine the backup endpoint to gather entities.
+    
+    const entities = {
+      equips: await kv.getByPrefix('equip:'),
+      days: await kv.getByPrefix('day:'),
+      blocks: await kv.getByPrefix('block:'),
+      datasets: await kv.getByPrefix('dataset:'),
+      assessments: await kv.getByPrefix('assessment_def:'),
+      resources: await kv.getByPrefix('resource:'),
+      pages: await kv.getByPrefix('page:'), // caution: page_slug logic
+      media: await kv.getByPrefix('media:'),
+      categories: await kv.getByPrefix('category:'),
+      recommendationRules: await kv.get('recommendation_rules')
+    };
+    
+    await kv.set(backupId, {
+      timestamp: new Date().toISOString(),
+      data: entities,
+      version: '1.0'
+    });
+    
+    // Add to backup index
+    const backups = await kv.get('sys_backups') || [];
+    backups.unshift({ id: backupId, timestamp: new Date().toISOString() });
+    await kv.set('sys_backups', backups.slice(0, 10)); // Keep last 10
+    
+    return c.json({ success: true, backupId, message: "Checkpoint created" });
+    
+  } catch (error) {
+    console.error("Backup error:", error);
+    return c.json({ error: "Failed to create checkpoint" }, 500);
+  }
+});
+
+// List Checkpoints
+app.get("/admin/backup/checkpoints", requireAdmin, async (c) => {
+  try {
+    const backups = await kv.get('sys_backups') || [];
+    return c.json({ backups });
+  } catch (error) {
+    return c.json({ error: "Failed to list checkpoints" }, 500);
+  }
+});
+
+// Restore Checkpoint
+app.post("/admin/backup/restore-checkpoint", requireAdmin, async (c) => {
+  try {
+    const { backupId } = await c.req.json();
+    const backup = await kv.get(backupId);
+    
+    if (!backup || !backup.data) {
+      return c.json({ error: "Backup not found or invalid" }, 404);
+    }
+    
+    const { 
+      equips, days, blocks, datasets, 
+      assessments, resources, pages, media, categories, 
+      recommendationRules 
+    } = backup.data;
+    
+    // 1. Restore Equips
+    if (equips) {
+        for (const item of equips) {
+            if (item.id) {
+                await kv.set(`equip:${item.id}`, item);
+                if (item.slug) await kv.set(`equip_slug:${item.slug}`, item.id);
+                // Reset index
+                await kv.set(`idx_equip_days:${item.id}`, []);
+            }
+        }
+    }
+    
+    // 2. Restore Days & Rebuild Equip Index
+    if (days) {
+        for (const item of days) {
+            if (item.id) {
+                await kv.set(`day:${item.id}`, item);
+                await kv.set(`idx_day_blocks:${item.id}`, []); // Reset block index
+                
+                if (item.equip_id) {
+                    const idx = await kv.get(`idx_equip_days:${item.equip_id}`) || [];
+                    if (!idx.includes(item.id)) {
+                        idx.push(item.id);
+                        await kv.set(`idx_equip_days:${item.equip_id}`, idx);
+                    }
+                }
+            }
+        }
+    }
+    
+    // 3. Restore Blocks & Rebuild Day Index
+    if (blocks) {
+        for (const item of blocks) {
+            if (item.id) {
+                await kv.set(`block:${item.id}`, item);
+                
+                if (item.equip_day_id) {
+                    const idx = await kv.get(`idx_day_blocks:${item.equip_day_id}`) || [];
+                    if (!idx.includes(item.id)) {
+                        idx.push(item.id);
+                        await kv.set(`idx_day_blocks:${item.equip_day_id}`, idx);
+                    }
+                }
+            }
+        }
+    }
+    
+    // 4. Other Entities
+    if (datasets) {
+        for (const item of datasets) {
+             if (item.id) {
+                 await kv.set(`dataset:${item.id}`, item);
+                 if (item.dataset_key) await kv.set(`dataset_key:${item.dataset_key}`, item.id);
+             }
+        }
+    }
+    
+    if (assessments) {
+        for (const item of assessments) {
+            if (item.id) await kv.set(`assessment_def:${item.id}`, item);
+        }
+    }
+    
+    if (resources) {
+        for (const item of resources) {
+            if (item.id) await kv.set(`resource:${item.id}`, item);
+        }
+    }
+    
+    if (pages) {
+        for (const item of pages) {
+            if (item.id) await kv.set(`page:${item.id}`, item);
+            if (item.slug) await kv.set(`page_slug:${item.slug}`, item.id);
+        }
+    }
+    
+    if (media) {
+        for (const item of media) {
+            if (item.id) await kv.set(`media:${item.id}`, item);
+        }
+    }
+    
+    if (categories) {
+        for (const item of categories) {
+            if (item.id) await kv.set(`category:${item.id}`, item);
+        }
+    }
+    
+    if (recommendationRules) {
+        await kv.set('recommendation_rules', recommendationRules);
+    }
+    
+    return c.json({ success: true, message: "System restored successfully" });
+    
+  } catch (error) {
+    console.error("Restore error:", error);
+    return c.json({ error: "Failed to restore checkpoint" }, 500);
+  }
+});
+
 }

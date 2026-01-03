@@ -27,7 +27,7 @@ export interface AssessmentBlockProps {
   className?: string;
 }
 
-function AssessmentCard({ program, onClick }: { program: AssessmentProgram; onClick: () => void }) {
+function MobileAssessmentCard({ program, onClick }: { program: AssessmentProgram; onClick: () => void }) {
   return (
     <div 
       className="bg-white relative rounded-[16px] shrink-0 w-full cursor-pointer transition-transform active:scale-[0.98]" 
@@ -66,6 +66,38 @@ function AssessmentCard({ program, onClick }: { program: AssessmentProgram; onCl
   );
 }
 
+function DesktopAssessmentCard({ program, onClick }: { program: AssessmentProgram; onClick: () => void }) {
+  return (
+    <div 
+      className="bg-white rounded-[16px] flex flex-col h-full cursor-pointer transition-all hover:shadow-lg border border-[rgba(0,0,0,0.1)] overflow-hidden" 
+      onClick={onClick}
+    >
+      {/* Image Top */}
+      <div className="h-[200px] w-full relative overflow-hidden">
+        <ImageWithFallback src={program.image} alt={program.title} className="w-full h-full object-cover" />
+      </div>
+
+      {/* Content Bottom */}
+      <div className="flex flex-col p-[24px] gap-[12px] flex-1">
+        <p className="font-['Ubuntu',sans-serif] font-medium text-[#969696] text-[12px] tracking-[0.84px] uppercase">
+          {program.category || "ASSESSMENT"}
+        </p>
+        <h3 className="font-['Ubuntu',sans-serif] font-medium text-[#151515] text-[24px] leading-[30px] line-clamp-2">
+          {program.title}
+        </h3>
+        <p className="font-['Ubuntu',sans-serif] text-[#151515] opacity-80 text-[14px] leading-[20px] line-clamp-3 mt-auto">
+          {program.description}
+        </p>
+        {program.info && (
+          <p className="font-['Ubuntu',sans-serif] text-[#151515] opacity-60 text-[12px] mt-4">
+            {program.info}
+          </p>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export function AssessmentBlock({ 
   title = "More assessments",
   programs = [],
@@ -86,9 +118,9 @@ export function AssessmentBlock({
   if (loading) {
     return (
       <div className={cn("bg-[#414141] py-[24px] px-[20px] relative w-full", className)}>
-        <div className="flex flex-col items-center gap-[32px] w-full">
+        <div className="flex flex-col items-center gap-[32px] w-full max-w-7xl mx-auto">
           <Skeleton height="48px" width="60%" className="bg-white/10" />
-          <div className="flex flex-col gap-[16px] w-full max-w-md">
+          <div className="flex flex-col md:grid md:grid-cols-3 gap-[16px] w-full">
             {[1, 2, 3].map(i => (
               <Skeleton key={i} height="125px" width="100%" className="rounded-[16px]" />
             ))}
@@ -101,15 +133,27 @@ export function AssessmentBlock({
   if (programs.length === 0) return null;
 
   return (
-    <div className={cn("bg-[#414141] py-[24px] px-[20px] relative w-full", className)}>
-      <div className="flex flex-col items-center justify-center size-full gap-[32px]">
+    <div className={cn("bg-[#414141] py-[24px] lg:py-[48px] px-[20px] relative w-full", className)}>
+      <div className="flex flex-col items-center justify-center size-full gap-[32px] max-w-7xl mx-auto">
         <h2 className="font-['Ubuntu',sans-serif] font-medium leading-[48px] text-[32px] text-white text-center w-full">
           {title}
         </h2>
         
-        <div className="flex flex-col gap-[16px] w-full max-w-md mx-auto">
+        {/* Mobile Layout */}
+        <div className="flex flex-col gap-[16px] w-full max-w-md mx-auto md:hidden">
           {programs.map((program, index) => (
-            <AssessmentCard
+            <MobileAssessmentCard
+              key={program.id || index}
+              program={program}
+              onClick={() => handleProgramClick(program)}
+            />
+          ))}
+        </div>
+
+        {/* Desktop Layout */}
+        <div className="hidden md:grid md:grid-cols-3 gap-[24px] w-full">
+          {programs.map((program, index) => (
+            <DesktopAssessmentCard
               key={program.id || index}
               program={program}
               onClick={() => handleProgramClick(program)}

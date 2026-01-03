@@ -19,7 +19,7 @@ export function PageHero({
   return (
     <section 
       className={cn(
-        "relative w-full h-[400px] flex items-center justify-center bg-black overflow-hidden",
+        "relative w-full bg-black flex flex-col items-center justify-center text-center overflow-hidden pt-[140px] pb-[60px] md:pt-[160px] md:pb-[80px]",
         className
       )}
     >
@@ -35,11 +35,10 @@ export function PageHero({
       
       <div className="relative z-10 w-full max-w-7xl mx-auto px-4 md:px-6 flex flex-col items-center justify-center text-center">
         <h1 
-          className="text-white mb-4 max-w-4xl"
+          className="font-['Ubuntu',sans-serif] font-medium text-white mb-4 max-w-4xl"
           style={{ 
-            fontSize: 'var(--text-4xl)', 
-            fontWeight: 'var(--font-weight-medium)',
-            fontFamily: 'var(--font-family-base)'
+            fontSize: '48px',
+            lineHeight: '1.2'
           }}
         >
           {title}
@@ -47,8 +46,11 @@ export function PageHero({
         
         {subtitle && (
           <p 
-            className="text-white/90 max-w-2xl text-lg"
-            style={{ fontFamily: 'var(--font-family-base)' }}
+            className="font-['Ubuntu',sans-serif] text-white max-w-2xl text-lg opacity-80"
+            style={{ 
+              fontSize: '18px',
+              lineHeight: '28px'
+            }}
           >
             {subtitle}
           </p>

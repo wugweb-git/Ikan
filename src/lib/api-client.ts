@@ -660,6 +660,27 @@ class ApiClient {
       };
     }
   }
+
+  // Backup & Restore
+  async createBackupCheckpoint() {
+    return this.request('/admin/backup/create-checkpoint', { method: 'POST' }, true);
+  }
+
+  async listBackupCheckpoints() {
+    try {
+      const res = await this.request('/admin/backup/checkpoints', { method: 'GET' }, true);
+      return res.backups || [];
+    } catch (e) {
+      return [];
+    }
+  }
+
+  async restoreBackupCheckpoint(backupId: string) {
+    return this.request('/admin/backup/restore-checkpoint', { 
+      method: 'POST',
+      body: JSON.stringify({ backupId })
+    }, true);
+  }
 }
 
 export const apiClient = new ApiClient();

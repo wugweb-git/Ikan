@@ -1,20 +1,17 @@
 import React from 'react';
 import { cn } from '../ui/utils';
 import { 
-  Check, 
-  BookOpen, 
-  TrendingUp, 
-  Calendar, 
-  Target, 
-  Brain, 
-  Heart, 
-  Zap, 
-  Award,
   Timer,
-  PieChart,
-  Lightbulb,
   ListTodo,
-  Activity
+  Activity,
+  Calendar as CalendarIcon,
+  Brain,
+  Zap,
+  Wrench,
+  CheckCircle2,
+  Clock,
+  FlaskConical,
+  Smile
 } from 'lucide-react';
 
 interface EquipBentoGridProps {
@@ -42,7 +39,7 @@ interface EquipBentoGridProps {
       description?: string;
     }>;
   };
-  // Add direct props for flexibility if data comes flattened
+  // Add direct props for flexibility
   tile1Content?: string[];
   tile2Content?: string[];
   tile3Content?: string[];
@@ -55,43 +52,6 @@ interface EquipBentoGridProps {
   className?: string;
 }
 
-// Reuse same icons as AssessmentBentoGrid for consistency
-const MeasureIcon1 = () => (
-  <div className="relative shrink-0 size-[20px]">
-    <svg className="block size-full" fill="none" viewBox="0 0 20 20">
-      <path d="M5.00226 4.27063C5.01874 4.67372 5.13253 5.06684 5.33391 5.41641" stroke="#151515" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.67" />
-      <path d="M16.6384 14.5693C16.1382 14.8514 15.5736 14.9996 14.9993 14.9993" stroke="#151515" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.67" />
-      <path d="M9.99952 4.16651C9.99854 3.83322 10.0642 3.50309 10.1927 3.19556C10.3212 2.88802 10.5098 2.60927 10.7476 2.37572C10.9854 2.14216 11.2674 1.95851 11.5772 1.83556C11.887 1.71262 12.2183 1.65286 12.5515 1.65981C12.8847 1.66675 13.2132 1.74026 13.5176 1.87601C13.822 2.01175 14.0961 2.207 14.324 2.45026C14.5518 2.69352 14.7287 2.97989 14.8442 3.29251C14.9598 3.60514 15.0116 3.93771 14.9968 4.27067C15.4866 4.39661 15.9413 4.63236 16.3265 4.96006C16.7117 5.28777 17.0173 5.69883 17.2201 6.16212C17.423 6.62541 17.5177 7.12878 17.4972 7.6341C17.4766 8.13943 17.3414 8.63346 17.1017 9.07878C17.5232 9.4212 17.8546 9.86143 18.0672 10.3612C18.2797 10.8609 18.367 11.405 18.3213 11.9461C18.2756 12.4873 18.0985 13.009 17.8051 13.4661C17.5118 13.9231 17.1113 14.3016 16.6384 14.5685C16.6968 15.0204 16.6619 15.4794 16.536 15.9172C16.41 16.3551 16.1956 16.7624 15.9061 17.1142C15.6165 17.4659 15.2579 17.7546 14.8524 17.9623C14.4469 18.17 14.0032 18.2924 13.5485 18.3219C13.0939 18.3514 12.638 18.2874 12.2091 18.1339C11.7802 17.9803 11.3873 17.7404 11.0547 17.429C10.7221 17.1176 10.4569 16.7414 10.2754 16.3235C10.0939 15.9056 10 15.4549 9.99952 14.9993V4.16651Z" stroke="#151515" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.67" />
-    </svg>
-  </div>
-);
-
-const MeasureIcon2 = () => (
-  <div className="relative shrink-0 size-[20px]">
-    <svg className="block size-full" fill="none" viewBox="0 0 20 20">
-      <path d="M12.4994 1.66659H7.49964C7.03943 1.66659 6.66635 2.03967 6.66635 2.49988V4.16647C6.66635 4.62668 7.03943 4.99976 7.49964 4.99976H12.4994C12.9596 4.99976 13.3327 4.62668 13.3327 4.16647V2.49988C13.3327 2.03967 12.9596 1.66659 12.4994 1.66659Z" stroke="#151515" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.67" />
-      <path d="M13.3327 3.33317H14.9993C15.4413 3.33317 15.8652 3.50876 16.1777 3.82131C16.4903 4.13385 16.6659 4.55775 16.6659 4.99976V16.6659C16.6659 17.1079 16.4903 17.5318 16.1777 17.8443C15.8652 18.1569 15.4413 18.3325 14.9993 18.3325H4.99976C4.55775 18.3325 4.13385 18.1569 3.82131 17.8443C3.50876 17.5318 3.33317 17.1079 3.33317 16.6659V4.99976C3.33317 4.55775 3.50876 4.13385 3.82131 3.82131C4.13385 3.50876 4.55775 3.33317 4.99976 3.33317H6.66635" stroke="#151515" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.67" />
-      <path d="M9.99952 9.16623H13.3327" stroke="#151515" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.67" />
-      <path d="M9.99952 13.3327H13.3327" stroke="#151515" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.67" />
-      <path d="M6.66635 9.16623H6.67468" stroke="#151515" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.67" />
-      <path d="M6.66635 13.3327H6.67468" stroke="#151515" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.67" />
-    </svg>
-  </div>
-);
-
-const MeasureIcon3 = () => (
-  <div className="relative shrink-0 size-[20px]">
-    <svg className="block size-full" fill="none" viewBox="0 0 20 20">
-      <path d="M12.4994 1.66659H7.49964C7.03943 1.66659 6.66635 2.03967 6.66635 2.49988V4.16647C6.66635 4.62668 7.03943 4.99976 7.49964 4.99976H12.4994C12.9596 4.99976 13.3327 4.62668 13.3327 4.16647V2.49988C13.3327 2.03967 12.9596 1.66659 12.4994 1.66659Z" stroke="#151515" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.67" />
-      <path d="M13.3327 3.33317H14.9993C15.4413 3.33317 15.8652 3.50876 16.1777 3.82131C16.4903 4.13385 16.6659 4.55775 16.6659 4.99976V16.6659C16.6659 17.1079 16.4903 17.5318 16.1777 17.8443C15.8652 18.1569 15.4413 18.3325 14.9993 18.3325H4.99976C4.55775 18.3325 4.13385 18.1569 3.82131 17.8443C3.50876 17.5318 3.33317 17.1079 3.33317 16.6659V4.99976C3.33317 4.55775 3.50876 4.13385 3.82131 3.82131C4.13385 3.50876 4.55775 3.33317 4.99976 3.33317H6.66635" stroke="#151515" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.67" />
-      <path d="M9.99952 9.16623H13.3327" stroke="#151515" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.67" />
-      <path d="M9.99952 13.3327H13.3327" stroke="#151515" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.67" />
-      <path d="M6.66635 9.16623H6.67468" stroke="#151515" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.67" />
-      <path d="M6.66635 13.3327H6.67468" stroke="#151515" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.67" />
-    </svg>
-  </div>
-);
-
 const CheckIcon = () => (
   <div className="relative shrink-0 size-[20px]">
     <svg className="block size-full" fill="none" viewBox="0 0 18 18">
@@ -99,14 +59,6 @@ const CheckIcon = () => (
       <path d="M5.62497 8.9583L7.29156 10.6249L12.2916 5.62497" stroke="#717182" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.25" />
     </svg>
   </div>
-);
-
-const ImportantIcon = () => (
-  <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-    <circle cx="12" cy="12" r="10" stroke="white" strokeWidth="2"/>
-    <path d="M12 8V12" stroke="white" strokeWidth="2" strokeLinecap="round"/>
-    <path d="M12 16H12.01" stroke="white" strokeWidth="2" strokeLinecap="round"/>
-  </svg>
 );
 
 export function EquipBentoGrid({
@@ -126,24 +78,90 @@ export function EquipBentoGrid({
   className
 }: EquipBentoGridProps) {
 
-  // Prepare icons
-  const measureIcons = [MeasureIcon1, MeasureIcon2, MeasureIcon1];
-
   // Resolve content
   const whatIsTitle = section1?.title || "What is this program about?";
-  const whatIsDescription = tile1Content || section1?.description || [];
+  let whatIsDescription = tile1Content || section1?.description || [];
+  
+  // Safety check if description comes as string or non-array
+  if (typeof whatIsDescription === 'string') {
+    whatIsDescription = [whatIsDescription];
+  } else if (!Array.isArray(whatIsDescription)) {
+    whatIsDescription = [];
+  }
 
-  // Benefits ("What you'll gain") maps to "What it measures" style
-  const benefitsTitle = section4?.title || "What you'll gain";
-  const benefits = tile4Content || section4?.points || [];
-
-  // Eligibility maps to "Things to Remember" style
+  // Eligibility points
   const eligibilityPoints = [
     eligibilityPoint1 || section1?.isThisForYou?.points?.[0],
     eligibilityPoint2 || section1?.isThisForYou?.points?.[1],
     eligibilityPoint3 || section1?.isThisForYou?.points?.[2],
     eligibilityPoint4 || section1?.isThisForYou?.points?.[3]
   ].filter(Boolean) as string[];
+
+  // 4 Tiles Data (Use section4.points or fallbacks)
+  // Mapping to Figma:
+  // Tile 1: Understand your sleep better
+  // Tile 2: Manage sleep-related thoughts
+  // Tile 3: Build sleep-friendly habits
+  // Tile 4: Develop reusable tools
+  const tilesData = [
+    {
+      title: "Understand your sleep better",
+      subtitle: "Notice patterns and key disruptors",
+      icon: CalendarIcon
+    },
+    {
+      title: "Manage sleep-related thoughts",
+      subtitle: "Respond to worries that keep you awake",
+      icon: Brain
+    },
+    {
+      title: "Build sleep-friendly habits",
+      subtitle: "Create routines that support rest",
+      icon: Zap
+    },
+    {
+      title: "Develop reusable tools",
+      subtitle: "Skills you can return to anytime",
+      icon: Wrench
+    }
+  ];
+
+  // If section4 data exists, use it to override title/subtitle
+  if (section4?.points && Array.isArray(section4.points) && section4.points.length >= 4) {
+    section4.points.slice(0, 4).forEach((p, i) => {
+      tilesData[i].title = p.title;
+      if (p.description) tilesData[i].subtitle = p.description;
+    });
+  }
+
+  // Right Column Items (3 Items)
+  const rightItems = [
+    {
+      icon: Clock,
+      text: "A structured 18-day journey designed to fit into daily life"
+    },
+    {
+      icon: Smile,
+      text: "Sleep, mood, and habit trackers"
+    },
+    {
+      icon: FlaskConical,
+      text: "Science-backed techniques, including CBT"
+    }
+  ];
+
+  // How it works steps
+  let howItWorksSteps = section3?.description || [
+    "First, you’ll learn practical techniques to calm your mind and improve sleep hygiene.",
+    "Then, you’ll build a personalized bedtime routine and practice these skills consistently."
+  ];
+
+  // Safety check for howItWorksSteps
+  if (typeof howItWorksSteps === 'string') {
+    howItWorksSteps = [howItWorksSteps];
+  } else if (!Array.isArray(howItWorksSteps)) {
+    howItWorksSteps = [];
+  }
 
   return (
     <section 
@@ -155,223 +173,206 @@ export function EquipBentoGrid({
     >
       <div className="max-w-7xl mx-auto px-4 md:px-6">
         
-        <div className="flex flex-col gap-[20px]">
+        <div className="flex flex-col lg:grid lg:grid-cols-3 gap-[20px]">
           
-          {/* TOP ROW */}
-          <div 
-            className="bg-white rounded-[16px] p-[16px] relative"
-            style={{
-              border: '0.586px solid rgba(0,0,0,0.1)'
-            }}
-          >
-            <div className="flex flex-col gap-[16px]">
-              
-              {/* What is this program? */}
-              <div className="flex flex-col gap-[24px]">
-                <h2 
-                  style={{
-                    fontFamily: 'Inter, sans-serif',
-                    fontWeight: 500,
-                    fontSize: '24px',
-                    lineHeight: '35px',
-                    letterSpacing: '-0.317px',
-                    color: '#151515',
-                    margin: 0
-                  }}
-                >
-                  {whatIsTitle}
-                </h2>
-                <div className="flex flex-col gap-[16px]">
-                  {whatIsDescription.map((p, i) => (
-                    <p 
-                      key={i} 
-                      style={{
-                        fontFamily: 'Inter, sans-serif',
-                        fontWeight: 400,
-                        fontSize: '16px',
-                        lineHeight: '26px',
-                        letterSpacing: '-0.313px',
-                        color: '#2a2a2a',
-                        margin: 0
-                      }}
+          {/* LEFT COLUMN WRAPPER */}
+          <div className="contents lg:flex lg:flex-col lg:gap-[20px] lg:col-span-2">
+            
+            {/* MAIN CARD - Order 1 */}
+            <div 
+              className="bg-white rounded-[16px] p-[24px] lg:p-[32px] relative order-1"
+              style={{ border: '1px solid rgba(0,0,0,0.1)' }}
+            >
+              <div className="flex flex-col gap-[32px]">
+                
+                {/* Description */}
+                <div className="flex flex-col gap-[24px]">
+                  <h2 
+                    style={{
+                      fontFamily: 'Ubuntu, sans-serif',
+                      fontWeight: 400,
+                      fontSize: '26px',
+                      lineHeight: '24px',
+                      color: '#151515',
+                      margin: 0
+                    }}
+                  >
+                    {whatIsTitle}
+                  </h2>
+                  <div className="flex flex-col gap-[16px]">
+                    {whatIsDescription.map((p, i) => (
+                      <p 
+                        key={i} 
+                        style={{
+                          fontFamily: 'Ubuntu, sans-serif',
+                          fontWeight: 400,
+                          fontSize: '16px',
+                          lineHeight: '24px',
+                          color: '#151515',
+                          margin: 0
+                        }}
+                      >
+                        {p}
+                      </p>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Is This For You Section */}
+                <div className="flex flex-col lg:flex-row gap-[24px] lg:gap-[49px] items-start">
+                  <div className="flex flex-col gap-[14px]">
+                    <p style={{ fontFamily: 'Ubuntu, sans-serif', fontWeight: 500, fontSize: '14px', lineHeight: '24px', color: '#151515', textTransform: 'uppercase' }}>
+                      IS THIS FOR YOU?
+                    </p>
+                    <p style={{ fontFamily: 'Ubuntu, sans-serif', fontWeight: 400, fontSize: '18px', lineHeight: '24px', color: '#151515', maxWidth: '167px' }}>
+                      {eligibilityIntro || "Sleep Tight may be helpful if:"}
+                    </p>
+                  </div>
+                  
+                  {/* Checklist Grid */}
+                  <div className="w-full grid grid-cols-1 lg:grid-cols-2 gap-[18px]">
+                    {eligibilityPoints.map((point, idx) => (
+                      <div key={idx} className="bg-[#f5f5f5] rounded-[12px] p-[12px] flex items-center gap-[12px] w-full">
+                        <div className="bg-white rounded-full size-[40px] flex items-center justify-center shrink-0">
+                          <CheckIcon />
+                        </div>
+                        <p style={{ fontFamily: 'Ubuntu, sans-serif', fontWeight: 400, fontSize: '14px', lineHeight: '21px', color: '#171717' }}>
+                          {point}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+              </div>
+            </div>
+
+            {/* TILES GROUP - Order 2 */}
+            <div className="order-2 flex flex-col lg:flex-row w-full">
+              {/* Mobile: 2x2 Grid, Desktop: 1x4 Row */}
+              <div className="grid grid-cols-2 lg:flex lg:flex-row w-full">
+                {tilesData.map((tile, idx) => {
+                  const Icon = tile.icon;
+                  // Border radius logic
+                  // Mobile (2 cols):
+                  // 0: TL  1: TR
+                  // 2: BL  3: BR
+                  // Desktop (4 cols):
+                  // 0: L   3: R
+                  
+                  const isFirst = idx === 0;
+                  const isLast = idx === tilesData.length - 1;
+                  const isSecond = idx === 1;
+                  const isThird = idx === 2;
+
+                  let roundedClass = "";
+                  // Mobile classes (default)
+                  if (idx === 0) roundedClass = "rounded-tl-[16px]";
+                  else if (idx === 1) roundedClass = "rounded-tr-[16px]";
+                  else if (idx === 2) roundedClass = "rounded-bl-[16px]";
+                  else if (idx === 3) roundedClass = "rounded-br-[16px]";
+
+                  // Desktop overrides
+                  const desktopRounded = isFirst ? "lg:rounded-l-[16px] lg:rounded-r-none" : 
+                                       isLast ? "lg:rounded-r-[16px] lg:rounded-l-none" : 
+                                       "lg:rounded-none";
+
+                  return (
+                    <div 
+                      key={idx}
+                      className={cn(
+                        "bg-white p-[16px] lg:px-[24px] lg:py-[20px] flex flex-col justify-center gap-[20px] lg:gap-[30px] border-[#d9d9d9] border lg:flex-1 relative",
+                        roundedClass,
+                        desktopRounded,
+                        // Fix border overlapping
+                        idx === 1 ? "border-l-0 lg:border-l-0" : "", // 2nd item no left border
+                        idx === 2 ? "border-t-0 lg:border-t-[1px] lg:border-l-0" : "", // 3rd item no top on mobile, no left on desktop
+                        idx === 3 ? "border-t-0 border-l-0 lg:border-t-[1px] lg:border-l-0" : "" // 4th item
+                      )}
+                      style={{ minHeight: '200px' }}
                     >
-                      {p}
+                      <div className="size-[72px] rounded-full bg-[#f5f5f5] flex items-center justify-center">
+                        <div className="size-[32px]">
+                          <Icon className="size-full text-black" strokeWidth={1.5} />
+                        </div>
+                      </div>
+                      <div className="flex flex-col justify-center h-[100px]">
+                        <p style={{ fontFamily: 'Ubuntu, sans-serif', fontWeight: 700, fontSize: '16px', lineHeight: '24px', color: '#757575', marginBottom: 0 }}>
+                          {tile.title}
+                        </p>
+                        <p style={{ fontFamily: 'Ubuntu, sans-serif', fontWeight: 400, fontSize: '16px', lineHeight: '24px', color: '#757575' }}>
+                          {tile.subtitle}
+                        </p>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+          </div>
+
+          {/* RIGHT COLUMN WRAPPER */}
+          <div className="contents lg:flex lg:flex-col lg:gap-[20px] lg:col-span-1">
+            
+            {/* 3 ITEMS GROUP - Order 4 (Mobile), Order 1 (Desktop) */}
+            <div className="order-4 lg:order-1 flex flex-col gap-[20px]">
+              {rightItems.map((item, idx) => {
+                const Icon = item.icon;
+                return (
+                  <div key={idx} className="bg-white rounded-[16px] p-[20px] flex items-start gap-[12px] w-full" style={{ border: '1px solid rgba(0,0,0,0.1)' }}>
+                    <div className="size-[48px] shrink-0 rounded-full bg-[#f5f5f5] flex items-center justify-center">
+                      <Icon className="size-[24px] text-black" strokeWidth={1.5} />
+                    </div>
+                    <div className="flex flex-col justify-center min-h-[48px]">
+                      <p style={{ fontFamily: 'Ubuntu, sans-serif', fontWeight: 400, fontSize: '14px', lineHeight: '21px', color: '#171717' }}>
+                        {item.text}
+                      </p>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* HOW IT WORKS - Order 3 (Mobile), Order 2 (Desktop) */}
+            <div 
+              className="order-3 lg:order-2 bg-white rounded-[16px] p-[24px] w-full"
+              style={{ border: '1px solid rgba(0,0,0,0.1)' }}
+            >
+              <div className="flex flex-col gap-[12px]">
+                {/* Header */}
+                <div className="flex items-center gap-[12px]">
+                  <div className="size-[40px] rounded-full bg-[#f5f5f5] flex items-center justify-center">
+                    <ListTodo className="size-[20px] text-black" strokeWidth={1.5} />
+                  </div>
+                  <p style={{ fontFamily: 'Ubuntu, sans-serif', fontWeight: 500, fontSize: '18px', lineHeight: '25px', color: '#2e2a2f' }}>
+                    How it works
+                  </p>
+                </div>
+                
+                {/* Subtitle */}
+                <p style={{ fontFamily: 'Ubuntu, sans-serif', fontWeight: 400, fontSize: '12px', lineHeight: '14px', color: '#757575' }}>
+                  The program focuses on sleep in two stages.
+                </p>
+
+                {/* Steps */}
+                <div className="flex flex-col gap-[13px] items-center text-center py-2">
+                  {howItWorksSteps.map((step, i) => (
+                    <p key={i} style={{ fontFamily: 'Ubuntu, sans-serif', fontWeight: 400, fontSize: '12px', lineHeight: '18px', color: '#151515', width: '100%' }}>
+                      {step}
                     </p>
                   ))}
                 </div>
-              </div>
 
-              {/* What you'll gain (benefits) */}
-              <div className="flex flex-col gap-[16px] pt-[8px]">
-                <h3 
-                  style={{
-                    fontFamily: 'Inter, sans-serif',
-                    fontWeight: 500,
-                    fontSize: '18px',
-                    lineHeight: '27px',
-                    letterSpacing: '-0.89px',
-                    color: '#151515',
-                    margin: 0
-                  }}
-                >
-                  {benefitsTitle}
-                </h3>
-                <div className="flex flex-col gap-[16px]">
-                  {benefits.slice(0, 3).map((benefit: any, idx: number) => {
-                    const Icon = measureIcons[idx % 3];
-                    const text = typeof benefit === 'string' ? benefit : benefit.title;
-                    return (
-                      <div 
-                        key={idx} 
-                        className="bg-[#f0f0f0] rounded-[16px] flex items-center pl-[16px] gap-[16px]"
-                        style={{ height: '72px' }}
-                      >
-                        <div className="size-[40px] rounded-full bg-white flex items-center justify-center shrink-0">
-                          <Icon />
-                        </div>
-                        <p 
-                          style={{
-                            fontFamily: 'Inter, sans-serif',
-                            fontWeight: 500,
-                            fontSize: '14px',
-                            lineHeight: '19.25px',
-                            letterSpacing: '-0.15px',
-                            color: '#151515',
-                            margin: 0
-                          }}
-                        >
-                          {text}
-                        </p>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-
-            </div>
-          </div>
-
-          {/* STATS ROW */}
-          <div className="flex flex-row gap-[16px]">
-            {/* Task */}
-            <div 
-              className="bg-white rounded-[16px] grow basis-0 flex flex-col items-center justify-center gap-[10px]"
-              style={{
-                border: '0.586px solid rgba(0,0,0,0.1)',
-                padding: '10.6px',
-                height: 'auto',
-                aspectRatio: '1/1.2'
-              }}
-            >
-              <div className="size-[48px] rounded-full bg-[#f0f0f0] flex items-center justify-center">
-                <div className="size-[24px]">
-                  <ListTodo className="size-full text-[#151515]" strokeWidth={1.5} />
-                </div>
-              </div>
-              <div className="flex flex-col items-center">
-                <p style={{ fontFamily: 'Inter, sans-serif', fontWeight: 500, fontSize: '14px', lineHeight: '24px', letterSpacing: '-0.313px', color: '#151515' }}>Task</p>
-                <p style={{ fontFamily: 'Inter, sans-serif', fontWeight: 400, fontSize: '14px', lineHeight: '24px', letterSpacing: '-0.313px', color: '#717182', whiteSpace: 'nowrap' }}>Daily</p>
-              </div>
-            </div>
-
-            {/* Time */}
-            <div 
-              className="bg-white rounded-[16px] grow basis-0 flex flex-col items-center justify-center gap-[10px]"
-              style={{
-                border: '0.586px solid rgba(0,0,0,0.1)',
-                padding: '10.6px',
-                height: 'auto',
-                aspectRatio: '1/1.2'
-              }}
-            >
-              <div className="size-[48px] rounded-full bg-[#f0f0f0] flex items-center justify-center">
-                <div className="size-[24px]">
-                  <Timer className="size-full text-[#151515]" strokeWidth={1.5} />
-                </div>
-              </div>
-              <div className="flex flex-col items-center">
-                <p style={{ fontFamily: 'Inter, sans-serif', fontWeight: 500, fontSize: '14px', lineHeight: '24px', letterSpacing: '-0.313px', color: '#151515' }}>Time</p>
-                <p style={{ fontFamily: 'Inter, sans-serif', fontWeight: 400, fontSize: '14px', lineHeight: '24px', letterSpacing: '-0.313px', color: '#717182', whiteSpace: 'nowrap' }}>15 min</p>
-              </div>
-            </div>
-
-            {/* Level */}
-            <div 
-              className="bg-white rounded-[16px] grow basis-0 flex flex-col items-center justify-center gap-[10px]"
-              style={{
-                border: '0.586px solid rgba(0,0,0,0.1)',
-                padding: '10.6px',
-                height: 'auto',
-                aspectRatio: '1/1.2'
-              }}
-            >
-              <div className="size-[48px] rounded-full bg-[#f0f0f0] flex items-center justify-center">
-                <div className="size-[24px]">
-                   <Activity className="size-full text-[#151515]" strokeWidth={1.5} />
-                </div>
-              </div>
-              <div className="flex flex-col items-center">
-                <p style={{ fontFamily: 'Inter, sans-serif', fontWeight: 500, fontSize: '14px', lineHeight: '24px', letterSpacing: '-0.313px', color: '#151515' }}>Level</p>
-                <p style={{ fontFamily: 'Inter, sans-serif', fontWeight: 400, fontSize: '14px', lineHeight: '24px', letterSpacing: '-0.313px', color: '#717182', whiteSpace: 'nowrap' }}>All</p>
-              </div>
-            </div>
-          </div>
-
-          {/* THINGS TO REMEMBER (IS THIS FOR YOU) */}
-          <div className="bg-white rounded-[16px] p-[16px] border border-[rgba(0,0,0,0.1)]">
-            <h3 
-              style={{
-                fontFamily: 'Inter, sans-serif',
-                fontWeight: 500,
-                fontSize: '20px',
-                lineHeight: '30px',
-                letterSpacing: '-0.95px',
-                color: '#151515',
-                marginBottom: '16px',
-                textAlign: 'center'
-              }}
-            >
-              {eligibilityIntro || "Is this program for you?"}
-            </h3>
-            <div className="flex flex-col gap-[12px]">
-              {eligibilityPoints.map((point, idx) => (
-                <div key={idx} className="flex items-start gap-[12px]">
-                  <div className="shrink-0 mt-[2px]">
-                    <CheckIcon />
-                  </div>
-                  <p 
-                    style={{
-                      fontFamily: 'Inter, sans-serif',
-                      fontWeight: 400,
-                      fontSize: '15px',
-                      lineHeight: '24.4px',
-                      letterSpacing: '-0.23px',
-                      color: '#151515'
-                    }}
-                  >
-                    {point}
+                {/* Footer */}
+                <div className="bg-[#eaeaea] rounded-[12px] px-[6px] py-[10px] flex items-center justify-center">
+                  <p style={{ fontFamily: 'Ubuntu, sans-serif', fontStyle: 'italic', fontWeight: 400, fontSize: '12px', lineHeight: '18px', color: '#151515', textAlign: 'center' }}>
+                    The focus is on habit-building — without medication or pressure — to support better rest over time.
                   </p>
                 </div>
-              ))}
-            </div>
-          </div>
-
-          {/* IMPORTANT FOOTER */}
-          <div className="bg-[#2a2a2a] rounded-[16px] p-[20px] shadow-sm">
-            <div className="flex items-center gap-3 mb-3">
-              <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center shrink-0">
-                <ImportantIcon />
               </div>
-              <span className="text-[20px] font-medium text-white tracking-[-0.9px]">Important</span>
             </div>
-            <div className="space-y-4 pl-1">
-              <p className="text-[15px] leading-[24px] text-[#f5f5f5] tracking-[-0.2px]">
-                This program is for educational purposes only.
-              </p>
-              <p className="text-[15px] leading-[24px] text-[#f5f5f5] tracking-[-0.2px]">
-                Not intended for emergency or crisis situations.
-              </p>
-            </div>
+
           </div>
 
         </div>

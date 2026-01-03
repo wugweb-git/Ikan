@@ -59,6 +59,8 @@ import { AdminCategoryManager } from '../admin/AdminCategoryManager';
 import { AdminMoodManager } from '../admin/AdminMoodManager';
 import { RecommendationRulesManager } from '../admin/recommendations/RecommendationRulesManager';
 import { SeedDailyTracker } from '../admin/SeedDailyTracker';
+import { SeedEquipPrograms } from '../admin/SeedEquipPrograms';
+import { AdminBackupManager } from '../admin/AdminBackupManager';
 
 interface AdminDashboardProps {
   onNavigate: (path: string) => void;
@@ -96,7 +98,9 @@ type ViewType =
   | 'navigation'
   | 'specs'
   | 'uikit'
-  | 'seed-tracker';
+  | 'seed-tracker'
+  | 'seed-equip'
+  | 'backup';
 
 export function AdminDashboard({ onNavigate, initialView }: AdminDashboardProps) {
   const [currentView, setCurrentView] = useState<ViewType>((initialView as ViewType) || 'dashboard');
@@ -135,6 +139,8 @@ export function AdminDashboard({ onNavigate, initialView }: AdminDashboardProps)
       items: [
         { id: 'crud', label: 'CRUD Testing', icon: Activity },
         { id: 'seed-tracker', label: 'Seed Daily Tracker', icon: Database },
+        { id: 'seed-equip', label: 'Seed Equip Programs', icon: Database },
+        { id: 'backup', label: 'System Recovery', icon: Database },
         { id: 'migration', label: 'Migration', icon: Database },
         { id: 'db-browser', label: 'Database Browser', icon: Server },
         { id: 'api-logs', label: 'API Logs', icon: FileText },
@@ -378,6 +384,8 @@ export function AdminDashboard({ onNavigate, initialView }: AdminDashboardProps)
       case 'settings': return <AdminSettingsManager onBack={() => setCurrentView('dashboard')} />;
       case 'crud': return <AdminCRUDTesting />;
       case 'seed-tracker': return <SeedDailyTracker />;
+      case 'seed-equip': return <SeedEquipPrograms />;
+      case 'backup': return <AdminBackupManager />;
       case 'migration': return <AdminMigration />;
       case 'db-browser': return <AdminDatabaseBrowser />;
       case 'api-logs': return <AdminAPILogs />;

@@ -132,7 +132,7 @@ export function AssessmentDetail({ assessmentId = 'anxiety', onNavigate }: Asses
         setAssessmentData({
           title: rawAssessment.title || "",
           description: rawAssessment.description || "",
-          hero_image: rawAssessment.hero_image || rawAssessment.image_url || "",
+          hero_image: rawAssessment.hero_image || rawAssessment.image_url || rawAssessment.thumbnail_url || rawAssessment.thumbnail || "",
           cta_button_text: rawAssessment.cta_button_text || "Start Assessment",
           cta_button_link: rawAssessment.cta_button_link || `/assessment-flow?type=${assessmentId}`,
           
@@ -152,7 +152,7 @@ export function AssessmentDetail({ assessmentId = 'anxiety', onNavigate }: Asses
           // Section 2: What is this assessment? (Tile 1 & 2)
           section2_title: rawAssessment.section2_title || rawAssessment.about_title || "What is this assessment?",
           section2_content: rawAssessment.section2_content || rawAssessment.about_content || "",
-          section2_image: rawAssessment.section2_image || rawAssessment.about_image || rawAssessment.image_url || defaultBentoImage,
+          section2_image: rawAssessment.section2_image || rawAssessment.about_image || rawAssessment.image_url || rawAssessment.thumbnail_url || rawAssessment.thumbnail || defaultBentoImage,
           section2_bullets: rawAssessment.section2_bullets || [],
           
           // Section 3: What you'll see (Tile 4)

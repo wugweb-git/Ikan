@@ -2,7 +2,7 @@ import React from 'react';
 import { cn } from '../ui/utils';
 import { ImageWithFallback } from '../figma/ImageWithFallback';
 import { Skeleton } from '../ui/skeleton-loader';
-import { ResourcePost } from './ResourceCard'; // Keep type import
+import { ResourcePost, ResourceCard } from './ResourceCard';
 
 export interface ResourceBlockProps {
   title?: string;
@@ -16,7 +16,7 @@ export interface ResourceBlockProps {
   className?: string;
 }
 
-function ResourceCardItem({ post, onClick }: { post: ResourcePost; onClick: () => void }) {
+function MobileResourceCard({ post, onClick }: { post: ResourcePost; onClick: () => void }) {
   return (
     <div 
       className="bg-white h-[113px] relative rounded-[16px] shrink-0 w-full cursor-pointer transition-transform active:scale-[0.98]"
@@ -68,9 +68,9 @@ export function ResourceBlock({
     return (
       <div className={cn("flex flex-col gap-[16px] items-center justify-center py-[36px] w-full", className)}>
         <Skeleton height="48px" width="200px" />
-        <div className="w-full max-w-md flex flex-col items-center gap-[16px] px-[20px]">
+        <div className="w-full max-w-7xl px-4 flex flex-col md:flex-row gap-6">
           {[1, 2, 3].map(i => (
-            <Skeleton key={i} height="113px" width="100%" className="rounded-[16px]" />
+            <Skeleton key={i} height="300px" width="100%" className="rounded-[16px]" />
           ))}
         </div>
       </div>
@@ -81,15 +81,29 @@ export function ResourceBlock({
 
   return (
     <div className={cn("flex flex-col gap-[16px] items-center justify-center py-[36px] w-full", className)}>
-      <p className="font-['Ubuntu',sans-serif] font-medium leading-[48px] text-[32px] text-black text-center w-full">
+      <p className="font-['Ubuntu',sans-serif] font-medium leading-[48px] text-[32px] text-black text-center w-full mb-4">
         {title}
       </p>
-      <div className="w-full max-w-md flex flex-col items-center gap-[16px] px-[20px]">
+      
+      {/* Mobile Layout */}
+      <div className="w-full max-w-md flex flex-col items-center gap-[16px] px-[20px] md:hidden">
         {displayPosts.map((post, index) => (
-          <ResourceCardItem
+          <MobileResourceCard
             key={post.id || index}
             post={post}
             onClick={() => onPostClick?.(post)}
+          />
+        ))}
+      </div>
+
+      {/* Desktop Layout */}
+      <div className="hidden md:grid md:grid-cols-3 gap-8 w-full max-w-7xl px-8">
+        {displayPosts.map((post, index) => (
+          <ResourceCard
+            key={post.id || index}
+            post={post}
+            onClick={() => onPostClick?.(post)}
+            className="h-full bg-white border border-[#0000001a] shadow-none hover:shadow-lg transition-all"
           />
         ))}
       </div>

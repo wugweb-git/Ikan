@@ -1,15 +1,8 @@
 import React from 'react';
 import { cn } from '../ui/utils';
 import { 
-  Check, 
-  AlertCircle, 
   Timer, 
-  Activity, 
-  ListTodo,
-  Brain,
-  Target,
-  ClipboardList,
-  CheckCircle2
+  ListTodo
 } from 'lucide-react';
 
 interface BentoSection1 {
@@ -133,227 +126,231 @@ export function AssessmentBentoGrid({
     >
       <div className="max-w-7xl mx-auto px-4 md:px-6">
         
-        <div className="flex flex-col gap-[20px]">
+        <div className="flex flex-col lg:grid lg:grid-cols-12 gap-[20px]">
           
-          {/* TOP ROW (Container10 in Figma) */}
-          <div 
-            className="bg-white rounded-[16px] p-[16px] relative"
-            style={{
-              border: '0.586px solid rgba(0,0,0,0.1)'
-            }}
-          >
-            <div className="flex flex-col gap-[16px]">
-              
-              {/* What is this assessment? (Container1) */}
-              <div className="flex flex-col gap-[24px]">
-                <h2 
-                  style={{
-                    fontFamily: 'Inter, sans-serif',
-                    fontWeight: 500,
-                    fontSize: '24px',
-                    lineHeight: '35px',
-                    letterSpacing: '-0.317px',
-                    color: '#151515',
-                    margin: 0
-                  }}
-                >
-                  {section2.title || "What is this assessment?"}
-                </h2>
-                <div className="flex flex-col gap-[16px]">
-                  {section2.content ? section2.content.split('\n').map((p, i) => (
+          {/* LEFT COLUMN WRAPPER (Desktop) */}
+          <div className="contents lg:flex lg:flex-col lg:gap-[20px] lg:col-span-9">
+            
+            {/* TOP ROW (Container10 in Figma) - Order 1 on Mobile */}
+            <div 
+              className="bg-white rounded-[16px] p-[24px] lg:p-[32px] relative order-1"
+              style={{
+                border: '0.586px solid rgba(0,0,0,0.1)'
+              }}
+            >
+              <div className="flex flex-col gap-[16px]">
+                
+                {/* What is this assessment? (Container1) */}
+                <div className="flex flex-col gap-[24px]">
+                  <h2 
+                    style={{
+                      fontFamily: 'Inter, sans-serif',
+                      fontWeight: 500,
+                      fontSize: '24px',
+                      lineHeight: '35px',
+                      letterSpacing: '-0.317px',
+                      color: '#151515',
+                      margin: 0
+                    }}
+                  >
+                    {section2.title || "What is this assessment?"}
+                  </h2>
+                  <div className="flex flex-col gap-[16px]">
+                    {section2.content ? section2.content.split('\n').map((p, i) => (
+                      <p 
+                        key={i} 
+                        style={{
+                          fontFamily: 'Inter, sans-serif',
+                          fontWeight: 400,
+                          fontSize: '16px',
+                          lineHeight: '26px',
+                          letterSpacing: '-0.313px',
+                          color: '#2a2a2a',
+                          margin: 0
+                        }}
+                      >
+                        {p}
+                      </p>
+                    )) : null}
+                  </div>
+                </div>
+
+                {/* What it measures (Container9) */}
+                <div className="flex flex-col gap-[16px] pt-[8px]">
+                  <h3 
+                    style={{
+                      fontFamily: 'Inter, sans-serif',
+                      fontWeight: 500,
+                      fontSize: '18px',
+                      lineHeight: '27px',
+                      letterSpacing: '-0.89px',
+                      color: '#151515',
+                      margin: 0
+                    }}
+                  >
+                    {section3.title || "What it measures"}
+                  </h3>
+                  <div className="flex flex-col lg:flex-row gap-[16px] lg:gap-[18px]">
+                    {section2.bullets && section2.bullets.slice(0, 3).map((bullet, idx) => {
+                      const Icon = measureIcons[idx % 3];
+                      return (
+                        <div 
+                          key={idx} 
+                          className="bg-[#f5f5f5] rounded-[12px] flex items-center p-[12px] gap-[12px] flex-1"
+                          style={{ minHeight: '72px' }}
+                        >
+                          <div className="size-[40px] rounded-full bg-white flex items-center justify-center shrink-0">
+                            <Icon />
+                          </div>
+                          <p 
+                            style={{
+                              fontFamily: 'Inter, sans-serif',
+                              fontWeight: 500,
+                              fontSize: '14px',
+                              lineHeight: '19.25px',
+                              letterSpacing: '-0.15px',
+                              color: '#151515',
+                              margin: 0
+                            }}
+                          >
+                            {bullet}
+                          </p>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+              </div>
+            </div>
+
+            {/* THINGS TO REMEMBER - Order 3 on Mobile */}
+            <div className="bg-white rounded-[16px] p-[24px] lg:p-[32px] border border-[rgba(0,0,0,0.1)] order-3">
+              <h3 
+                style={{
+                  fontFamily: 'Inter, sans-serif',
+                  fontWeight: 500,
+                  fontSize: '20px',
+                  lineHeight: '30px',
+                  letterSpacing: '-0.95px',
+                  color: '#151515',
+                  marginBottom: '16px'
+                }}
+              >
+                {section4.notesTitle || "Things to Remember Before You Start"}
+              </h3>
+              <div className="flex flex-col lg:flex-row gap-[12px] lg:gap-[9px]">
+                {(section4.notes || []).map((note, idx) => (
+                  <div key={idx} className="flex items-start gap-[12px] flex-1">
+                    <div className="shrink-0 mt-[2px]">
+                      <CheckIcon />
+                    </div>
                     <p 
-                      key={i} 
                       style={{
                         fontFamily: 'Inter, sans-serif',
                         fontWeight: 400,
-                        fontSize: '16px',
-                        lineHeight: '26px',
-                        letterSpacing: '-0.313px',
-                        color: '#2a2a2a',
-                        margin: 0
+                        fontSize: '15px',
+                        lineHeight: '24.4px',
+                        letterSpacing: '-0.23px',
+                        color: '#151515'
                       }}
                     >
-                      {p}
+                      {note.title}
                     </p>
-                  )) : null}
-                </div>
-              </div>
-
-              {/* What it measures (Container9) */}
-              <div className="flex flex-col gap-[16px] pt-[8px]">
-                <h3 
-                  style={{
-                    fontFamily: 'Inter, sans-serif',
-                    fontWeight: 500,
-                    fontSize: '18px',
-                    lineHeight: '27px',
-                    letterSpacing: '-0.89px',
-                    color: '#151515',
-                    margin: 0
-                  }}
-                >
-                  {section3.title || "What it measures"}
-                </h3>
-                <div className="flex flex-col gap-[16px]">
-                  {section2.bullets && section2.bullets.slice(0, 3).map((bullet, idx) => {
-                    const Icon = measureIcons[idx % 3];
-                    return (
-                      <div 
-                        key={idx} 
-                        className="bg-[#f0f0f0] rounded-[16px] flex items-center pl-[16px] gap-[16px]"
-                        style={{ height: '72px' }}
-                      >
-                        <div className="size-[40px] rounded-full bg-white flex items-center justify-center shrink-0">
-                          <Icon />
-                        </div>
-                        <p 
-                          style={{
-                            fontFamily: 'Inter, sans-serif',
-                            fontWeight: 500,
-                            fontSize: '14px',
-                            lineHeight: '19.25px',
-                            letterSpacing: '-0.15px',
-                            color: '#151515',
-                            margin: 0
-                          }}
-                        >
-                          {bullet}
-                        </p>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-
-            </div>
-          </div>
-
-          {/* STATS ROW (Container20) */}
-          <div className="flex flex-row gap-[16px]">
-            {/* Task */}
-            <div 
-              className="bg-white rounded-[16px] grow basis-0 flex flex-col items-center justify-center gap-[10px]"
-              style={{
-                border: '0.586px solid rgba(0,0,0,0.1)',
-                padding: '10.6px',
-                height: 'auto',
-                aspectRatio: '1/1.2' // Approximate based on Figma
-              }}
-            >
-              <div className="size-[48px] rounded-full bg-[#f0f0f0] flex items-center justify-center">
-                <div className="size-[24px]">
-                  <ListTodo className="size-full text-[#151515]" strokeWidth={1.5} />
-                </div>
-              </div>
-              <div className="flex flex-col items-center">
-                <p style={{ fontFamily: 'Inter, sans-serif', fontWeight: 500, fontSize: '14px', lineHeight: '24px', letterSpacing: '-0.313px', color: '#151515' }}>Task</p>
-                <p style={{ fontFamily: 'Inter, sans-serif', fontWeight: 400, fontSize: '14px', lineHeight: '24px', letterSpacing: '-0.313px', color: '#717182', whiteSpace: 'nowrap' }}>{questionCount} Qs</p>
-              </div>
-            </div>
-
-            {/* Time */}
-            <div 
-              className="bg-white rounded-[16px] grow basis-0 flex flex-col items-center justify-center gap-[10px]"
-              style={{
-                border: '0.586px solid rgba(0,0,0,0.1)',
-                padding: '10.6px',
-                height: 'auto',
-                aspectRatio: '1/1.2'
-              }}
-            >
-              <div className="size-[48px] rounded-full bg-[#f0f0f0] flex items-center justify-center">
-                <div className="size-[24px]">
-                  <Timer className="size-full text-[#151515]" strokeWidth={1.5} />
-                </div>
-              </div>
-              <div className="flex flex-col items-center">
-                <p style={{ fontFamily: 'Inter, sans-serif', fontWeight: 500, fontSize: '14px', lineHeight: '24px', letterSpacing: '-0.313px', color: '#151515' }}>Time</p>
-                <p style={{ fontFamily: 'Inter, sans-serif', fontWeight: 400, fontSize: '14px', lineHeight: '24px', letterSpacing: '-0.313px', color: '#717182', whiteSpace: 'nowrap' }}>{duration} min</p>
-              </div>
-            </div>
-
-            {/* Level */}
-            <div 
-              className="bg-white rounded-[16px] grow basis-0 flex flex-col items-center justify-center gap-[10px]"
-              style={{
-                border: '0.586px solid rgba(0,0,0,0.1)',
-                padding: '10.6px',
-                height: 'auto',
-                aspectRatio: '1/1.2'
-              }}
-            >
-              <div className="size-[48px] rounded-full bg-[#f0f0f0] flex items-center justify-center">
-                <div className="size-[24px]">
-                   <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                      <path d="M13 2L3 14H12L11 22L21 10H12L13 2Z" stroke="#151515" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                   </svg>
-                </div>
-              </div>
-              <div className="flex flex-col items-center">
-                <p style={{ fontFamily: 'Inter, sans-serif', fontWeight: 500, fontSize: '14px', lineHeight: '24px', letterSpacing: '-0.313px', color: '#151515' }}>Level</p>
-                <p style={{ fontFamily: 'Inter, sans-serif', fontWeight: 400, fontSize: '14px', lineHeight: '24px', letterSpacing: '-0.313px', color: '#717182', whiteSpace: 'nowrap' }}>{difficulty}</p>
-              </div>
-            </div>
-          </div>
-
-          {/* THINGS TO REMEMBER */}
-          <div className="bg-white rounded-[16px] p-[16px] border border-[rgba(0,0,0,0.1)]">
-            <h3 
-              style={{
-                fontFamily: 'Inter, sans-serif',
-                fontWeight: 500,
-                fontSize: '20px',
-                lineHeight: '30px',
-                letterSpacing: '-0.95px',
-                color: '#151515',
-                marginBottom: '16px',
-                textAlign: 'center'
-              }}
-            >
-              {section4.notesTitle || "Things to Remember Before You Start"}
-            </h3>
-            <div className="flex flex-col gap-[12px]">
-              {(section4.notes || []).map((note, idx) => (
-                <div key={idx} className="flex items-start gap-[12px]">
-                  <div className="shrink-0 mt-[2px]">
-                    <CheckIcon />
                   </div>
-                  <p 
-                    style={{
-                      fontFamily: 'Inter, sans-serif',
-                      fontWeight: 400,
-                      fontSize: '15px',
-                      lineHeight: '24.4px',
-                      letterSpacing: '-0.23px',
-                      color: '#151515'
-                    }}
-                  >
-                    {note.title}
-                  </p>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
+          
           </div>
 
-          {/* IMPORTANT FOOTER */}
-          {(importantNote1 || importantNote2) && (
-            <div className="bg-[#2a2a2a] rounded-[16px] p-[20px] shadow-sm">
-              <div className="flex items-center gap-3 mb-3">
-                <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center shrink-0">
-                  <ImportantIcon />
+          {/* RIGHT COLUMN WRAPPER (Desktop) */}
+          <div className="contents lg:flex lg:flex-col lg:gap-[20px] lg:col-span-3">
+
+            {/* STATS ROW (Container20) - Order 2 on Mobile */}
+            <div className="flex flex-row lg:flex-col gap-[16px] order-2">
+              {/* Task */}
+              <div 
+                className="bg-white rounded-[16px] grow basis-0 flex flex-col lg:flex-row items-center justify-center lg:justify-start gap-[10px] lg:gap-[12px] p-[16px] lg:p-[20px]"
+                style={{
+                  border: '0.586px solid rgba(0,0,0,0.1)',
+                  height: 'auto',
+                  // Remove aspect ratio on desktop to allow natural height
+                }}
+              >
+                <div className="size-[48px] lg:size-[47px] rounded-full bg-[#f0f0f0] lg:bg-[#f5f5f5] flex items-center justify-center shrink-0">
+                  <div className="size-[24px]">
+                    <ListTodo className="size-full text-[#151515]" strokeWidth={1.5} />
+                  </div>
                 </div>
-                <span className="text-[20px] font-medium text-white tracking-[-0.9px]">Important</span>
+                <div className="flex flex-col items-center lg:items-start">
+                  <p style={{ fontFamily: 'Inter, sans-serif', fontWeight: 500, fontSize: '14px', lg: '16px', lineHeight: '24px', letterSpacing: '-0.313px', color: '#151515' }} className="lg:text-[16px]">Task</p>
+                  <p style={{ fontFamily: 'Inter, sans-serif', fontWeight: 400, fontSize: '14px', lg: '16px', lineHeight: '24px', letterSpacing: '-0.313px', color: '#717182', whiteSpace: 'nowrap' }} className="lg:text-[#171717] lg:text-[16px]">{questionCount} Qs</p>
+                </div>
               </div>
-              <div className="space-y-4 pl-1">
-                {importantNote1 && (
-                  <p className="text-[15px] leading-[24px] text-[#f5f5f5] tracking-[-0.2px]">{importantNote1}</p>
-                )}
-                {importantNote2 && (
-                  <p className="text-[15px] leading-[24px] text-[#f5f5f5] tracking-[-0.2px]">{importantNote2}</p>
-                )}
+
+              {/* Time */}
+              <div 
+                className="bg-white rounded-[16px] grow basis-0 flex flex-col lg:flex-row items-center justify-center lg:justify-start gap-[10px] lg:gap-[12px] p-[16px] lg:p-[20px]"
+                style={{
+                  border: '0.586px solid rgba(0,0,0,0.1)',
+                  height: 'auto',
+                }}
+              >
+                <div className="size-[48px] lg:size-[47px] rounded-full bg-[#f0f0f0] lg:bg-[#f5f5f5] flex items-center justify-center shrink-0">
+                  <div className="size-[24px]">
+                    <Timer className="size-full text-[#151515]" strokeWidth={1.5} />
+                  </div>
+                </div>
+                <div className="flex flex-col items-center lg:items-start">
+                  <p style={{ fontFamily: 'Inter, sans-serif', fontWeight: 500, fontSize: '14px', lg: '16px', lineHeight: '24px', letterSpacing: '-0.313px', color: '#151515' }} className="lg:text-[16px]">Time</p>
+                  <p style={{ fontFamily: 'Inter, sans-serif', fontWeight: 400, fontSize: '14px', lg: '16px', lineHeight: '24px', letterSpacing: '-0.313px', color: '#717182', whiteSpace: 'nowrap' }} className="lg:text-[#171717] lg:text-[16px]">{duration} min</p>
+                </div>
+              </div>
+
+              {/* Level */}
+              <div 
+                className="bg-white rounded-[16px] grow basis-0 flex flex-col lg:flex-row items-center justify-center lg:justify-start gap-[10px] lg:gap-[12px] p-[16px] lg:p-[20px]"
+                style={{
+                  border: '0.586px solid rgba(0,0,0,0.1)',
+                  height: 'auto',
+                }}
+              >
+                <div className="size-[48px] lg:size-[47px] rounded-full bg-[#f0f0f0] lg:bg-[#f5f5f5] flex items-center justify-center shrink-0">
+                  <div className="size-[24px]">
+                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                        <path d="M13 2L3 14H12L11 22L21 10H12L13 2Z" stroke="#151515" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                     </svg>
+                  </div>
+                </div>
+                <div className="flex flex-col items-center lg:items-start">
+                  <p style={{ fontFamily: 'Inter, sans-serif', fontWeight: 500, fontSize: '14px', lg: '16px', lineHeight: '24px', letterSpacing: '-0.313px', color: '#151515' }} className="lg:text-[16px]">Level</p>
+                  <p style={{ fontFamily: 'Inter, sans-serif', fontWeight: 400, fontSize: '14px', lg: '16px', lineHeight: '24px', letterSpacing: '-0.313px', color: '#717182', whiteSpace: 'nowrap' }} className="lg:text-[#171717] lg:text-[16px]">{difficulty}</p>
+                </div>
               </div>
             </div>
-          )}
+
+            {/* IMPORTANT FOOTER - Order 4 on Mobile */}
+            {(importantNote1 || importantNote2) && (
+              <div className="bg-[#2a2a2a] rounded-[16px] p-[20px] shadow-sm order-4">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center shrink-0">
+                    <ImportantIcon />
+                  </div>
+                  <span className="text-[20px] font-medium text-white tracking-[-0.9px]">Important</span>
+                </div>
+                <div className="space-y-4 pl-1">
+                  {importantNote1 && (
+                    <p className="text-[15px] leading-[24px] text-[#f5f5f5] tracking-[-0.2px]">{importantNote1}</p>
+                  )}
+                  {importantNote2 && (
+                    <p className="text-[15px] leading-[24px] text-[#f5f5f5] tracking-[-0.2px]">{importantNote2}</p>
+                  )}
+                </div>
+              </div>
+            )}
+          
+          </div>
 
         </div>
       </div>

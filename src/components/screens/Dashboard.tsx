@@ -15,6 +15,49 @@ interface DashboardProps {
   onNavigate?: (route: string) => void;
 }
 
+const PROGRAM_CONTENT: Record<string, any> = {
+  "Sleep Tight": {
+    benefits: [
+      "Establishing healthier sleep routines",
+      "Calming the mind before bedtime",
+      "Improving sleep quality over time"
+    ],
+    time: "10–20 minutes a day"
+  },
+  "Stress Buster": {
+    benefits: [
+      "Understanding your stress triggers",
+      "Grounding and mindfulness techniques",
+      "Managing thoughts and emotional overload"
+    ],
+    time: "10–15 minutes a day"
+  },
+  "Burnout Reset": {
+     benefits: [
+      "Reducing mental and physical exhaustion",
+      "Rebalancing effort and expectations",
+      "Reconnecting with motivation and clarity"
+    ],
+    time: "15–20 minutes a day"
+  },
+   "Burnout Recovery": {
+     benefits: [
+      "Reducing mental and physical exhaustion",
+      "Rebalancing effort and expectations",
+      "Reconnecting with motivation and clarity"
+    ],
+    time: "15–20 minutes a day"
+  },
+  "Anxiety 101": {
+      benefits: [
+          "Understanding anxiety triggers",
+          "Learning grounding techniques",
+          "Managing anxious thoughts"
+      ],
+      time: "10-15 minutes a day"
+  }
+};
+
 export function Dashboard({ className, onNavigate }: DashboardProps) {
   const { user } = useAuth();
   const { showToast } = useNotifications();
@@ -22,6 +65,7 @@ export function Dashboard({ className, onNavigate }: DashboardProps) {
   const [enrollments, setEnrollments] = useState<any[]>([]);
   const [recommendations, setRecommendations] = useState<any[]>([]);
   const [activeProgram, setActiveProgram] = useState<any>(null);
+  const [topRecDetails, setTopRecDetails] = useState<any>(null);
   const [userName, setUserName] = useState('Friend');
 
   useEffect(() => {
@@ -42,7 +86,7 @@ export function Dashboard({ className, onNavigate }: DashboardProps) {
     try {
       const cached = localStorage.getItem(CACHE_KEY);
       if (cached) {
-        const { enrollments, recommendations, activeProgram, timestamp } = JSON.parse(cached);
+        const { enrollments, recommendations, activeProgram, topRecDetails, timestamp } = JSON.parse(cached);
         // Basic freshness check (e.g. 24 hours) - currently disabled to prioritize offline access
         // const isFresh = Date.now() - timestamp < 1000 * 60 * 60 * 24; 
         
@@ -50,6 +94,7 @@ export function Dashboard({ className, onNavigate }: DashboardProps) {
           setEnrollments(enrollments);
           setRecommendations(recommendations || []);
           setActiveProgram(activeProgram || null);
+          setTopRecDetails(topRecDetails || null);
           setLoading(false); // Show cached content immediately
           hasCachedData = true;
         }
@@ -83,6 +128,19 @@ export function Dashboard({ className, onNavigate }: DashboardProps) {
       } else {
         setActiveProgram(null);
       }
+
+      // Fetch details for top recommendation if exists
+      let topRec = null;
+      if (recData && recData.length > 0) {
+         try {
+             topRec = await apiClient.getEquipProgram(recData[0].equip_id);
+             setTopRecDetails(topRec);
+         } catch (e) {
+             console.error("Failed to load top recommendation details", e);
+         }
+      } else {
+         setTopRecDetails(null);
+      }
       
       setEnrollments(enrollData);
       setRecommendations(recData);
@@ -92,6 +150,7 @@ export function Dashboard({ className, onNavigate }: DashboardProps) {
         enrollments: enrollData,
         recommendations: recData,
         activeProgram: programDetails,
+        topRecDetails: topRec,
         timestamp: Date.now()
       }));
 
@@ -170,26 +229,86 @@ export function Dashboard({ className, onNavigate }: DashboardProps) {
           </Card>
         ) : recommendations.length > 0 ? (
           <Card className="border-[var(--color-border-default)] shadow-sm bg-[var(--color-bg-card)] overflow-hidden">
-             <div className="md:flex">
-               <div className="p-6 md:p-8 flex-1 space-y-4">
-                 <div className="flex items-center gap-2 mb-2">
-                   <Sparkles className="w-5 h-5 text-[var(--color-status-warning)]" />
-                   <span className="text-sm font-medium text-[var(--color-status-warning)]">Recommended for you</span>
-                 </div>
+             <div className="md:flex flex-col md:flex-row">
+               <div className="p-6 md:p-8 flex-1 space-y-6">
+                 {/* 1. Header */}
                  <div>
-                   <CardTitle className="text-2xl mb-2">{recommendations[0].equip_name}</CardTitle>
-                   <CardDescription className="text-base">{recommendations[0].reason}</CardDescription>
+                   <div className="text-sm font-medium text-[var(--color-text-muted)] mb-1">
+                     Based on your responses, we recommend starting with:
+                   </div>
+                   <h2 className="text-3xl font-light text-[var(--color-text-primary)]">
+                     {recommendations[0].equip_name}
+                   </h2>
                  </div>
-                 <Button 
-                   onClick={() => onNavigate?.(`/equip-detail?id=${recommendations[0].equip_id}`)}
-                   className="mt-4"
-                 >
-                   View Program <ArrowRight className="w-4 h-4 ml-2" />
-                 </Button>
+
+                 {/* 2. Reason */}
+                 <div className="bg-[var(--color-bg-muted)]/50 p-4 rounded-lg border border-[var(--color-border-default)]">
+                    <p className="text-[var(--color-text-primary)] leading-relaxed">
+                       {recommendations[0].reason || "Your responses suggest this program will help you build the right skills."}
+                    </p>
+                 </div>
+
+                 {/* 3. What You'll Work On */}
+                 {PROGRAM_CONTENT[recommendations[0].equip_name] && (
+                   <div className="space-y-3">
+                      <h3 className="text-sm font-semibold uppercase tracking-wider text-[var(--color-text-muted)]">
+                        What you’ll work on
+                      </h3>
+                      <ul className="space-y-2">
+                        {PROGRAM_CONTENT[recommendations[0].equip_name].benefits.map((benefit: string, idx: number) => (
+                           <li key={idx} className="flex items-start gap-2 text-[var(--color-text-primary)]">
+                             <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-[var(--color-primary-default)] shrink-0" />
+                             <span>{benefit}</span>
+                           </li>
+                        ))}
+                      </ul>
+                   </div>
+                 )}
+
+                 {/* 4. Time Commitment */}
+                 <div className="flex items-center gap-2 text-sm text-[var(--color-text-muted)]">
+                    <Calendar className="w-4 h-4" />
+                    <span>
+                      Time commitment: <span className="text-[var(--color-text-primary)] font-medium">
+                        {PROGRAM_CONTENT[recommendations[0].equip_name]?.time || "10-15 minutes a day"}
+                      </span>
+                    </span>
+                 </div>
+
+                 {/* 5. Actions */}
+                 <div className="flex flex-col sm:flex-row gap-3 pt-2">
+                   <Button 
+                     onClick={() => onNavigate?.(`/equip-program-onboarding?id=${recommendations[0].equip_id}`)}
+                     className="bg-[var(--color-primary-default)] text-[var(--color-primary-on)] hover:opacity-90 min-w-[140px]"
+                   >
+                     Start Program
+                   </Button>
+                   <Button 
+                     variant="outline"
+                     onClick={() => onNavigate?.(`/equip-detail?id=${recommendations[0].equip_id}`)}
+                     className="min-w-[140px]"
+                   >
+                     Learn more
+                   </Button>
+                 </div>
+                 
+                 {/* 7. Gentle Footer */}
+                 <p className="text-xs text-[var(--color-text-muted)] pt-2">
+                   You’re always in control. You can switch programs or explore others anytime.
+                 </p>
                </div>
-               <div className="bg-[var(--color-status-warning-light)] md:w-1/3 flex items-center justify-center p-8">
-                  <BookOpen className="w-16 h-16 text-[var(--color-status-warning)]" />
-               </div>
+               
+               {/* Image Section (Desktop Right, Mobile Top/Hidden) */}
+               {topRecDetails?.image_url && (
+                   <div className="hidden md:block w-1/3 relative min-h-[400px]">
+                      <ImageWithFallback
+                        src={topRecDetails.image_url}
+                        alt={recommendations[0].equip_name}
+                        className="absolute inset-0 w-full h-full object-cover"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-l from-transparent to-[var(--color-bg-card)]/10" />
+                   </div>
+               )}
              </div>
           </Card>
         ) : (
