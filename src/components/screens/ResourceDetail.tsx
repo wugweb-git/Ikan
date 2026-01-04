@@ -5,6 +5,7 @@ import { useIsMobile } from '../../hooks/useIsMobile';
 import { useNotifications } from '../../contexts/NotificationContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { apiClient } from '../../lib/api-client';
+import { resolveImageUrl } from '../../utils/image-utils';
 
 // Import dynamic UI blocks
 import { ResourceHero } from '../blocks/ResourceHero';
@@ -69,7 +70,7 @@ export function ResourceDetail({ resourceId, onBack, onResourceSelect, className
     console.log('🔄 Transforming resource data:', apiData);
     
     // Map thumbnail to heroImage
-    const heroImageUrl = apiData.thumbnail || apiData.heroImage || apiData.image || apiData.image_url;
+    const heroImageUrl = resolveImageUrl(apiData.thumbnail || apiData.heroImage || apiData.image || apiData.image_url);
     console.log('🖼️ Hero image URL:', heroImageUrl);
     
     return {

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Image as ImageIcon, Upload, Trash2, Search, Download, ExternalLink, FileText, Film, Music, File } from 'lucide-react';
+import { Image as ImageIcon, Upload, Trash2, Search, Download, ExternalLink, FileText, Film, Music, File, ShieldCheck } from 'lucide-react';
 import { useNotifications } from '../../contexts/NotificationContext';
 import { apiClient } from '../../lib/api-client';
 import { AdminHeader } from '../admin/AdminHeader';
@@ -55,6 +55,33 @@ export function AdminMediaManager({ onBack, className }: AdminMediaManagerProps)
       showToast('error', 'Error', 'Failed to load media files');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleTestIntegrity = () => {
+    let issues = 0;
+    const report: string[] = [];
+
+    files.forEach(f => {
+        if (!f.url) {
+            issues++;
+            report.push(`File "${f.fileName}": Missing URL`);
+        } else if (!f.url.startsWith('http')) {
+             issues++;
+             report.push(`File "${f.fileName}": Invalid URL format`);
+        }
+
+        if (f.fileSize <= 0) {
+             issues++;
+             report.push(`File "${f.fileName}": Invalid file size (${f.fileSize})`);
+        }
+    });
+
+    if (issues === 0) {
+        showToast('success', 'Integrity Check Passed', 'All media files appear valid.');
+    } else {
+        console.warn('Integrity Issues:', report);
+        showToast('warning', 'Integrity Issues Found', `Found ${issues} files with potential issues. Check console.`);
     }
   };
 
@@ -168,20 +195,26 @@ export function AdminMediaManager({ onBack, className }: AdminMediaManagerProps)
           breadcrumbs={[{ label: 'Admin', onClick: onBack }, { label: 'Media Library' }]}
           stats={stats}
           actions={
-            <Button
-              onClick={() => setShowUploadDialog(true)}
-              style={{
-                height: 'var(--ikan-component-button-height)',
-                borderRadius: 'var(--ikan-component-border-radius)',
-                fontWeight: 'var(--font-weight-medium)',
-                gap: 'var(--spacing-2)',
-                backgroundColor: 'var(--color-primary-default)',
-                color: 'var(--color-primary-on)'
-              }}
-            >
-              <Upload className="w-4 h-4" />
-              {!isMobile && 'Upload File'}
-            </Button>
+            <div className="flex gap-2">
+                <Button variant="outline" onClick={handleTestIntegrity} title="Check file integrity">
+                    <ShieldCheck className="w-4 h-4 mr-2" />
+                    {!isMobile && 'Test Integrity'}
+                </Button>
+                <Button
+                onClick={() => setShowUploadDialog(true)}
+                style={{
+                    height: 'var(--ikan-component-button-height)',
+                    borderRadius: 'var(--ikan-component-border-radius)',
+                    fontWeight: 'var(--font-weight-medium)',
+                    gap: 'var(--spacing-2)',
+                    backgroundColor: 'var(--color-primary-default)',
+                    color: 'var(--color-primary-on)'
+                }}
+                >
+                <Upload className="w-4 h-4" />
+                {!isMobile && 'Upload File'}
+                </Button>
+            </div>
           }
         />
 

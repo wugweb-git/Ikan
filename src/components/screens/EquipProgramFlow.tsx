@@ -10,6 +10,7 @@ import { ProgramPlayer } from '../player/ProgramPlayer';
 import { apiClient } from '../../lib/api-client';
 import { useNotifications } from '../../contexts/NotificationContext';
 import { toast } from 'sonner@2.0.3';
+import { DUMMY_EQUIP_PROGRAM, ALL_DUMMY_PROGRAMS } from '../../lib/demo-data';
 
 // ============================================================================
 // TYPES & INTERFACES
@@ -17,7 +18,11 @@ import { toast } from 'sonner@2.0.3';
 
 interface UserProgress {
   currentDay: number; // 1-based index
-  completedDays: Record<number, { status: 'completed' | 'skipped'; date: string }>;
+  completedDays: Record<number, { 
+    status: 'completed' | 'skipped'; 
+    date: string;
+    responses?: Record<string, any>;
+  }>;
   currentDayState: {
     completedBlockIds: string[];
     responses: Record<string, any>;
@@ -41,10 +46,11 @@ interface EquipProgramHomeProps {
   progress: UserProgress;
   onStartSession: () => void;
   onViewHistory: () => void;
+  onRestart: () => void;
   onBack: () => void;
 }
 
-function EquipProgramHome({ program, progress, onStartSession, onViewHistory, onBack }: EquipProgramHomeProps) {
+function EquipProgramHome({ program, progress, onStartSession, onViewHistory, onRestart, onBack }: EquipProgramHomeProps) {
   const currentDayContent = program.daily_content?.find(d => d.day === progress.currentDay);
   
   // Calculate if program is complete (all days completed)
@@ -78,6 +84,13 @@ function EquipProgramHome({ program, progress, onStartSession, onViewHistory, on
               <p className="text-[var(--color-text-muted)]">You've completed {program.title}.</p>
               <Button className="w-full h-14 text-lg" onClick={onViewHistory}>
                 Review Your Path
+              </Button>
+              <Button 
+                variant="outline" 
+                className="w-full h-14 text-lg text-red-500 hover:text-red-600 hover:bg-red-50 border-red-100" 
+                onClick={onRestart}
+              >
+                Restart Program
               </Button>
             </div>
           ) : (
@@ -161,9 +174,10 @@ interface DaySessionScreenProps {
   onCompleteDay: (results: any) => void;
   onProgress: (progress: { currentBlockIndex: number, responses: Record<string, any> }) => void;
   onExit: () => void;
+  mode?: 'live' | 'preview';
 }
 
-function DaySessionScreen({ program, dayNumber, initialResponses, onCompleteDay, onProgress, onExit }: DaySessionScreenProps) {
+function DaySessionScreen({ program, dayNumber, initialResponses, onCompleteDay, onProgress, onExit, mode = 'live' }: DaySessionScreenProps) {
   return (
     <div className="fixed inset-0 bg-white z-50">
        <ProgramPlayer 
@@ -173,7 +187,7 @@ function DaySessionScreen({ program, dayNumber, initialResponses, onCompleteDay,
          onComplete={onCompleteDay}
          onProgressChange={onProgress}
          onExit={onExit}
-         mode="live"
+         mode={mode}
        />
     </div>
   );
@@ -244,7 +258,8 @@ export function EquipProgramFlow({ programId, enrollmentId, onBack, onComplete, 
   const { showToast } = useNotifications();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [view, setView] = useState<'home' | 'session' | 'history'>('home');
+  const [view, setView] = useState<'home' | 'session' | 'history' | 'review'>('home');
+  const [reviewDay, setReviewDay] = useState<number | null>(null);
   
   const [program, setProgram] = useState<EquipProgram | null>(null);
   const [progress, setProgress] = useState<UserProgress>({
@@ -271,6 +286,33 @@ export function EquipProgramFlow({ programId, enrollmentId, onBack, onComplete, 
       
       try {
         setLoading(true);
+
+        // DEMO MODE CHECK
+        const demoProgram = ALL_DUMMY_PROGRAMS.find(p => p.id === programId);
+        if (programId === 'dummy-equip' || demoProgram) {
+           console.log('⚡ Loading Demo Program Flow (Offline Mode)');
+           setProgram(demoProgram || DUMMY_EQUIP_PROGRAM);
+           
+           // Set active demo program for Dashboard
+           if (programId) localStorage.setItem('ikan-active-dummy-program', programId);
+
+           // Mock Progress
+           const savedProgress = localStorage.getItem(`demo-progress-${programId}`);
+           if (savedProgress) {
+             setProgress(JSON.parse(savedProgress));
+           } else {
+             setProgress({
+                currentDay: 1,
+                completedDays: {},
+                currentDayState: {
+                  completedBlockIds: [],
+                  responses: {}
+                }
+             });
+           }
+           setLoading(false);
+           return;
+        }
         
         // A. Fetch Program
         const programData = await apiClient.getEquipProgram(programId);
@@ -314,8 +356,12 @@ export function EquipProgramFlow({ programId, enrollmentId, onBack, onComplete, 
 
       } catch (err: any) {
         console.error('Failed to load program flow', err);
-        setError(err.message || 'Failed to load program');
-        toast.error('Failed to load program');
+        // FALLBACK: Use Dummy Data
+        console.warn('⚠️ Using DUMMY equip program data due to fetch failure');
+        setProgram(DUMMY_EQUIP_PROGRAM);
+        // setError(err.message || 'Failed to load program');
+        // toast.error('Failed to load program');
+        toast.info('Viewing Demo Program (Data Unavailable)');
       } finally {
         setLoading(false);
       }
@@ -327,6 +373,14 @@ export function EquipProgramFlow({ programId, enrollmentId, onBack, onComplete, 
   // 2. Handle Progress Updates (Auto-Save)
   const handleProgress = async (p: { currentBlockIndex: number, responses: Record<string, any> }) => {
      // Update Local State
+     const newProgress = {
+        ...progress,
+        currentDayState: {
+           completedBlockIds: Object.keys(p.responses),
+           responses: p.responses
+        }
+     };
+     
      setProgress(prev => ({
         ...prev,
         currentDayState: {
@@ -334,6 +388,13 @@ export function EquipProgramFlow({ programId, enrollmentId, onBack, onComplete, 
            responses: p.responses
         }
      }));
+
+     // DEMO MODE: Save to LocalStorage
+     const isDemo = ALL_DUMMY_PROGRAMS.some(p => p.id === programId);
+     if (isDemo) {
+        localStorage.setItem(`demo-progress-${programId}`, JSON.stringify(newProgress));
+        return;
+     }
 
      // Sync to Server
      if (programId) {
@@ -372,34 +433,86 @@ export function EquipProgramFlow({ programId, enrollmentId, onBack, onComplete, 
   const handleCompleteDay = async () => {
      if (!programId) return;
 
+     // 1. Optimistic Update (Immediate Feedback)
+     const nextDay = progress.currentDay + 1;
+     const now = new Date().toISOString();
+     
+     const newProgress = {
+        ...progress,
+        currentDay: nextDay,
+        completedDays: {
+           ...progress.completedDays,
+           [progress.currentDay]: { 
+             status: 'completed' as const, 
+             date: now,
+             responses: progress.currentDayState.responses 
+           }
+        },
+        currentDayState: {
+           completedBlockIds: [],
+           responses: {}
+        }
+     };
+
+     // Update Local State Immediately
+     setProgress(newProgress);
+     
+     // Return to Home view immediately
+     setView('home');
+     showToast('success', 'Day Complete!', 'Great job.');
+
+     // DEMO MODE: Save to LocalStorage & Return
+     const isDemo = ALL_DUMMY_PROGRAMS.some(p => p.id === programId);
+     if (isDemo) {
+        localStorage.setItem(`demo-progress-${programId}`, JSON.stringify(newProgress));
+        if (onComplete) onComplete();
+        return;
+     }
+
+     // 2. Sync to Backend in Background
      try {
-       // Save to backend
        await apiClient.completeDay(programId, progress.currentDay);
-       
-       showToast('success', 'Day Complete!', 'Great job.');
-       
-       // Update local state
-       setProgress(prev => ({
-          ...prev,
-          currentDay: prev.currentDay + 1,
-          completedDays: {
-             ...prev.completedDays,
-             [prev.currentDay]: { status: 'completed', date: new Date().toISOString() }
-          },
-          currentDayState: {
-             completedBlockIds: [],
-             responses: {}
-          }
-       }));
-       
-       setView('home');
        
        if (onComplete) onComplete();
        
      } catch (e) {
-       console.error('Failed to complete day', e);
-       toast.error('Failed to save completion status. Please try again.');
+       console.error('Failed to sync completion status', e);
+       // We don't revert state here because we want to allow progress even if offline
+       // Just warn the user it might not have synced
+       // toast.warning('Progress saved on device (offline)');
      }
+  };
+
+  const handleRestart = async () => {
+    if (confirm('Are you sure you want to restart the program? Current progress will be reset, but your history is preserved locally.')) {
+        // Reset Local State
+        const resetProgress: UserProgress = {
+            currentDay: 1,
+            completedDays: {},
+            currentDayState: {
+                completedBlockIds: [],
+                responses: {}
+            }
+        };
+        setProgress(resetProgress);
+        setView('home');
+
+        if (programId === DUMMY_EQUIP_PROGRAM.id) {
+             localStorage.removeItem(`demo-progress-${programId}`);
+             showToast('success', 'Program restarted');
+        } else {
+             // Attempt backend reset if API supports it
+             try {
+                 if ((apiClient as any).resetEquipProgress) {
+                    await (apiClient as any).resetEquipProgress(programId);
+                 }
+                 showToast('success', 'Program restarted');
+             } catch (e) {
+                 console.error('Restart failed', e);
+                 // Even if backend fails, we reset locally to allow retry
+             }
+        }
+    }
   };
 
   if (loading) {
@@ -429,6 +542,7 @@ export function EquipProgramFlow({ programId, enrollmentId, onBack, onComplete, 
            progress={progress}
            onStartSession={() => setView('session')}
            onViewHistory={() => setView('history')}
+           onRestart={handleRestart}
            onBack={handleBack}
         />
       )}
@@ -450,14 +564,27 @@ export function EquipProgramFlow({ programId, enrollmentId, onBack, onComplete, 
            progress={progress}
            onBack={() => setView('home')}
            onSelectDay={(day) => {
-              // TODO: Allow replaying past days in read-only mode?
-              // For now, if it's the current day, we can go to session
+              // Allow replaying past days in read-only mode
               if (day === progress.currentDay) {
                   setView('session');
-              } else {
-                  console.log('Selected past/future day', day);
+              } else if (progress.completedDays[day]) {
+                  // Review past day
+                  setReviewDay(day);
+                  setView('review');
               }
            }}
+        />
+      )}
+
+      {view === 'review' && reviewDay && (
+        <DaySessionScreen 
+           program={program}
+           dayNumber={reviewDay}
+           initialResponses={progress.completedDays[reviewDay]?.responses || {}}
+           onCompleteDay={() => setView('history')}
+           onProgress={() => {}} // Read-only
+           onExit={() => setView('history')}
+           mode="preview"
         />
       )}
     </>

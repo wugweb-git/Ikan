@@ -2,21 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { ClipboardList, Download, Edit, Plus, Eye, MoreHorizontal, CheckCircle, EyeOff, Trash2 } from 'lucide-react';
 import { useNotifications } from '../../contexts/NotificationContext';
 import { apiClient } from '../../lib/api-client';
+import { cmsUtils } from '../admin/cms-utils';
 import { AdminHeader } from '../admin/AdminHeader';
-import { AdminEmptyState } from '../admin/AdminEmptyState';
 import { useIsMobile } from '../../hooks/useIsMobile';
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
-import { cn } from '../ui/utils';
 import { AssessmentEditPageWizard as AssessmentEditPage, Assessment } from './AssessmentEditPageWizard';
 import { AdminDataTable, Column, FilterOption } from '../admin/AdminDataTable';
-import { ErrorState } from '../ui/error-state';
-import { EmptyState } from '../ui/empty-state';
 import { Skeleton } from '../ui/skeleton-loader';
-import { ProgressIndicator } from '../ui/progress-indicator';
-import { TouchFeedback } from '../ui/touch-feedback';
-import { AccessibilityHelper } from '../ui/accessibility-helpers';
-import { OptimizedImage } from '../ui/optimized-image';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -66,10 +59,13 @@ export function AdminAssessmentManager({ onBack, className }: AdminAssessmentMan
     try {
       const data = await apiClient.getCategories();
       if (Array.isArray(data) && data.length > 0) {
-        setCategories(data.map((c: any) => ({
-          label: c.name,
-          value: c.slug
-        })));
+        // Deduplicate categories based on value (slug)
+        const uniqueCategories = Array.from(
+          new Map(
+            data.map((c: any) => [c.slug, { label: c.name, value: c.slug }])
+          ).values()
+        );
+        setCategories(uniqueCategories);
       } else {
         setCategories([
           { label: 'Anxiety', value: 'anxiety' },
@@ -95,11 +91,9 @@ export function AdminAssessmentManager({ onBack, className }: AdminAssessmentMan
 
   const loadAssessments = async () => {
     try {
-      // setLoading(true); // Handled in loadData
       const response = await apiClient.getAssessments();
       const data = Array.isArray(response) ? response : response.assessments || [];
       
-      // Map API response to Component Assessment type and ensure unique IDs
       const mappedAssessments = data.map((item: any) => {
         const uniqueId = item.assessment_id || item.id || `assessment-${Date.now()}-${Math.random()}`;
         return {
@@ -121,18 +115,35 @@ export function AdminAssessmentManager({ onBack, className }: AdminAssessmentMan
         };
       });
 
-      // Remove duplicates based on ID
       const uniqueAssessments = Array.from(
         new Map(mappedAssessments.map(item => [item.id, item])).values()
       );
 
       setAssessments(uniqueAssessments);
-      setLoading(false); 
     } catch (error: any) {
       console.error('Failed to load assessments:', error);
       showToast('error', 'API Error', 'Failed to load assessments');
       setAssessments([]);
-      setLoading(false);
+    }
+  };
+
+  const handleVerify = async () => {
+    setLoading(true);
+    try {
+        const { logs, results } = await cmsUtils.verifyAssessments();
+        logs.forEach(log => console.log(log));
+        
+        const issues = results.filter(r => r.status !== 'Perfect');
+        if (issues.length > 0) {
+             showToast('warning', 'Integrity Issues', `Found ${issues.length} issues. Check console.`);
+             console.table(results);
+        } else {
+             showToast('success', 'Integrity Verified', 'All assessments match source.');
+        }
+    } catch (e: any) {
+        showToast('error', 'Error', e.message);
+    } finally {
+        setLoading(false);
     }
   };
 
@@ -200,22 +211,22 @@ export function AdminAssessmentManager({ onBack, className }: AdminAssessmentMan
     {
       label: 'Total Assessments',
       value: assessments.length,
-      icon: <ClipboardList className="w-4 h-4" style={{ color: 'var(--color-primary-default)' }} />
+      icon: <ClipboardList className="w-4 h-4 text-[var(--color-primary-default)]" />
     },
     {
       label: 'Published',
       value: assessments.filter((a) => a.published).length,
-      icon: <Eye className="w-4 h-4" style={{ color: 'var(--color-success-default)' }} />
+      icon: <Eye className="w-4 h-4 text-[var(--color-status-success)]" />
     },
     {
       label: 'Total Questions',
       value: assessments.reduce((acc, a) => acc + a.questions.length, 0),
-      icon: <ClipboardList className="w-4 h-4" style={{ color: 'var(--color-info-default)' }} />
+      icon: <ClipboardList className="w-4 h-4 text-[var(--color-status-info)]" />
     },
     {
       label: 'Total Completions',
       value: assessments.reduce((acc, a) => acc + (a.completionCount || 0), 0),
-      icon: <Eye className="w-4 h-4" style={{ color: 'var(--color-warning-default)' }} />
+      icon: <Eye className="w-4 h-4 text-[var(--color-status-warning)]" />
     }
   ];
 
@@ -231,20 +242,14 @@ export function AdminAssessmentManager({ onBack, className }: AdminAssessmentMan
             <img 
               src={assessment.thumbnail} 
               alt={assessment.title}
-              style={{
-                width: '48px',
-                height: '48px',
-                borderRadius: 'var(--radius-md)',
-                objectFit: 'cover',
-                flexShrink: 0
-              }}
+              className="w-12 h-12 rounded-lg object-cover flex-shrink-0 bg-gray-100"
             />
           )}
           <div className="flex-1">
-            <h4 style={{ fontWeight: 'var(--font-weight-medium)', marginBottom: '4px' }}>
+            <h4 className="font-medium mb-1 text-[var(--color-text-primary)]">
               {assessment.title}
             </h4>
-            <p style={{ fontSize: '13px', color: 'var(--color-text-muted)', lineHeight: '1.4' }}>
+            <p className="text-xs text-[var(--color-text-muted)] leading-snug">
               {assessment.description?.substring(0, 80)}...
             </p>
           </div>
@@ -264,7 +269,7 @@ export function AdminAssessmentManager({ onBack, className }: AdminAssessmentMan
     {
       header: 'Questions',
       render: (assessment) => (
-        <span style={{ fontSize: '14px', color: 'var(--color-text-muted)' }}>
+        <span className="text-sm text-[var(--color-text-muted)]">
           {(assessment.questions || []).length}
         </span>
       )
@@ -274,7 +279,7 @@ export function AdminAssessmentManager({ onBack, className }: AdminAssessmentMan
       accessorKey: 'created_at',
       sortable: true,
       render: (assessment) => (
-        <span style={{ fontSize: '14px', color: 'var(--color-text-muted)' }}>
+        <span className="text-sm text-[var(--color-text-muted)]">
           {assessment.created_at ? new Date(assessment.created_at).toLocaleDateString() : '-'}
         </span>
       )
@@ -384,7 +389,7 @@ export function AdminAssessmentManager({ onBack, className }: AdminAssessmentMan
           {/* Stats skeleton */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-6">
             {[1, 2, 3, 4].map((i) => (
-              <div key={i} className="p-4 rounded-lg" style={{ backgroundColor: 'var(--color-bg-card)' }}>
+              <div key={i} className="p-4 rounded-lg bg-[var(--color-bg-card)]">
                 <Skeleton height="16px" width="100px" className="mb-2" />
                 <Skeleton height="24px" width="60px" />
               </div>
@@ -393,7 +398,7 @@ export function AdminAssessmentManager({ onBack, className }: AdminAssessmentMan
         </div>
 
         {/* Table skeleton */}
-        <div className="rounded-lg p-4" style={{ backgroundColor: 'var(--color-bg-card)' }}>
+        <div className="rounded-lg p-4 bg-[var(--color-bg-card)]">
           <Skeleton height="40px" width="100%" className="mb-4" />
           {[1, 2, 3, 4, 5].map((i) => (
             <div key={i} className="mb-3">
@@ -414,7 +419,7 @@ export function AdminAssessmentManager({ onBack, className }: AdminAssessmentMan
         breadcrumbs={[{ label: 'Admin', onClick: onBack }, { label: 'Assessment Manager' }]}
         stats={stats}
         actions={
-          <Button onClick={handleCreateNew} style={{ backgroundColor: 'var(--color-primary-default)', color: 'var(--color-primary-on)' }}>
+          <Button onClick={handleCreateNew} className="bg-[var(--color-primary-default)] text-white hover:bg-[var(--color-primary-dark)]">
             <Plus className="w-4 h-4 mr-2" />
             {!isMobile && 'Add Assessment'}
           </Button>
@@ -429,10 +434,16 @@ export function AdminAssessmentManager({ onBack, className }: AdminAssessmentMan
         searchPlaceholder="Search assessments..."
         onRowClick={(item) => handleEdit(item.id)}
         actions={
-          <Button variant="outline" onClick={handleExport} className="gap-2">
-            <Download className="w-4 h-4" />
-            {!isMobile && 'Export'}
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={handleVerify} className="gap-2" disabled={loading}>
+                <CheckCircle className="w-4 h-4" />
+                {!isMobile && 'Verify'}
+            </Button>
+            <Button variant="outline" onClick={handleExport} className="gap-2">
+                <Download className="w-4 h-4" />
+                {!isMobile && 'Export'}
+            </Button>
+          </div>
         }
       />
     </div>

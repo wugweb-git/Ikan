@@ -72,7 +72,9 @@ export type BlockType =
   | 'table'
   | 'journal'
   | 'checklist'
-  | 'reflection';
+  | 'reflection'
+  | 'quiz'
+  | 'text';
 
 export type DatasetType = 
   | 'mcq'
@@ -86,9 +88,13 @@ export type SeverityLevel = 'low' | 'mild' | 'moderate' | 'high';
 export interface Equip {
   id: string;
   slug: string;
-  name: string;
+  title: string;
+  description?: string;
+  image_url?: string;
   category: ContentCategory;
-  duration_days: number;
+  tags?: string[];
+  duration_days?: number;
+  duration_weeks?: number;
   price_cents: number;
   status: EquipStatus;
   intro_content_id?: string;

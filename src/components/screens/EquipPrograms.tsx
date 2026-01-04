@@ -7,6 +7,7 @@ import { PageHero } from '../ui/PageHero';
 import { ImageWithFallback } from '../figma/ImageWithFallback';
 import { useNotifications } from '../../contexts/NotificationContext';
 import { useAuth } from '../../contexts/AuthContext';
+import { DUMMY_EQUIP_PROGRAM } from '../../lib/demo-data';
 
 export function EquipPrograms({ className, onNavigate }: { className?: string, onNavigate?: (route: string) => void }) {
   const [programs, setPrograms] = useState<any[]>([]);
@@ -20,11 +21,26 @@ export function EquipPrograms({ className, onNavigate }: { className?: string, o
 
   const loadPrograms = async () => {
     try {
-      const data = await apiClient.getEquipPrograms();
+      let data = [];
+      try {
+        data = await apiClient.getEquipPrograms();
+      } catch (err) {
+        console.warn('API load failed, using local fallback only');
+      }
+      
+      // Ensure Demo Program is ALWAYS present
+      const hasDemo = data.some((p: any) => p.id === DUMMY_EQUIP_PROGRAM.id);
+      if (!hasDemo) {
+        // Add to the beginning
+        console.log('➕ Force Adding Demo Equip Program');
+        data.unshift(DUMMY_EQUIP_PROGRAM);
+      }
+      
       setPrograms(data);
     } catch (error) {
       console.error(error);
-      showToast('error', 'Failed to load programs');
+      showToast('error', 'Using offline mode');
+      setPrograms([DUMMY_EQUIP_PROGRAM]);
     } finally {
       setLoading(false);
     }

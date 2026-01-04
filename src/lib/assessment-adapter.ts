@@ -46,10 +46,20 @@ export function adaptAssessmentToProgram(assessment: LegacyAssessment): EquipPro
     }
 
     // Normalize options
-    if (q.options) {
-      options = q.options.map(opt => (typeof opt === 'string' ? opt : opt.label || opt.text || opt.value));
+    if (q.options && Array.isArray(q.options)) {
+      options = q.options.map(opt => {
+        if (typeof opt === 'string') return opt;
+        if (typeof opt === 'number') return String(opt);
+        return opt.label || opt.text || opt.value || opt.name || JSON.stringify(opt);
+      });
     }
     
+    // Fallback: If MCQ but no options, switch to text input to prevent broken UI
+    if ((subtype === 'mcq' || subtype === 'multi-select') && options.length === 0) {
+       console.warn(`Question "${q.text}" has type ${q.type} but no options found. Falling back to text input.`);
+       subtype = 'ephemeral-journal';
+    }
+
     // Map legacy scoring (key -> value) to weights array (index matches options)
     if (q.scoring && options.length > 0) {
       weights = options.map(opt => q.scoring?.[opt] || 0);

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { 
-  Plus, Trash2, Edit2, Save, X, Smile, GripVertical 
+  Plus, Trash2, Edit2, Save, X, Smile, GripVertical, ShieldCheck, Sparkles 
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
@@ -80,7 +80,7 @@ export function AdminMoodManager({ onBack }: AdminMoodManagerProps) {
       const data = await response.json();
       setMoods(data.moods || []);
     } catch (error) {
-      console.error('Error loading moods:', error);
+      console.warn('Moods backend unreachable, using fallback data:', error);
       // Fallback sample data
       setMoods([
         { id: '1', emoji: '😢', label: 'Sad', value: 2, color: '#3B82F6', description: 'Feeling down or upset', is_active: true, order: 0, created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
@@ -93,6 +93,48 @@ export function AdminMoodManager({ onBack }: AdminMoodManagerProps) {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleTestIntegrity = () => {
+    let issues = 0;
+    const report: string[] = [];
+
+    moods.forEach(mood => {
+        const missingFields = [];
+        if (!mood.label) missingFields.push('Label');
+        if (!mood.emoji) missingFields.push('Emoji');
+        if (!mood.value) missingFields.push('Value');
+        
+        if (missingFields.length > 0) {
+            issues++;
+            report.push(`Mood "${mood.label || 'Untitled'}": Missing ${missingFields.join(', ')}`);
+        }
+        
+        if (mood.value < 1 || mood.value > 10) {
+            issues++;
+            report.push(`Mood "${mood.label}": Value out of range (${mood.value})`);
+        }
+    });
+
+    if (issues === 0) {
+        toast.success('Integrity Check Passed: All moods valid.');
+    } else {
+        console.warn('Integrity Issues:', report);
+        toast.warning(`Found ${issues} integrity issues. Check console.`);
+    }
+  };
+
+  const handleAutoFill = () => {
+    setFormData(prev => ({
+        ...prev,
+        label: prev.label || 'New Mood',
+        emoji: prev.emoji || '😊',
+        value: prev.value || 5,
+        color: prev.color || '#22C55E',
+        description: prev.description || 'Auto-generated description.',
+        is_active: true
+    }));
+    toast.success('Auto-Filled with suggestions');
   };
 
   const handleCreate = async () => {
@@ -258,16 +300,26 @@ export function AdminMoodManager({ onBack }: AdminMoodManagerProps) {
             Customize mood tracking options for journal entries
           </p>
         </div>
-        <Button 
-          onClick={() => {
-            resetForm();
-            setIsCreating(true);
-          }}
-          style={{ gap: 'var(--spacing-2)' }}
-        >
-          <Plus className="w-4 h-4" />
-          Add Mood Type
-        </Button>
+        <div className="flex gap-2">
+           <Button 
+              variant="outline" 
+              onClick={handleTestIntegrity}
+              style={{ gap: 'var(--spacing-2)' }}
+           >
+              <ShieldCheck className="w-4 h-4" />
+              Test Integrity
+           </Button>
+           <Button 
+            onClick={() => {
+              resetForm();
+              setIsCreating(true);
+            }}
+            style={{ gap: 'var(--spacing-2)' }}
+          >
+            <Plus className="w-4 h-4" />
+            Add Mood Type
+          </Button>
+        </div>
       </div>
 
       {/* Create/Edit Form */}
@@ -402,6 +454,10 @@ export function AdminMoodManager({ onBack }: AdminMoodManagerProps) {
             </div>
 
             <div className="flex gap-2">
+              <Button variant="outline" onClick={handleAutoFill} title="Auto-fill empty fields">
+                <Sparkles className="w-4 h-4 mr-2" />
+                Auto-Fill
+              </Button>
               {editingId ? (
                 <Button onClick={() => handleUpdate(editingId)}>
                   <Save className="w-4 h-4 mr-2" />

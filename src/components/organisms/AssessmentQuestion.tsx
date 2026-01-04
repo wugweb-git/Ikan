@@ -132,7 +132,7 @@ export function AssessmentQuestion({
 
   const renderSingleChoice = () => (
     <RadioGroup
-      value={question.options?.find(opt => opt.value === currentValue)?.id}
+      value={question.options?.find(opt => opt.value === currentValue)?.id || ""}
       onValueChange={handleSingleChoice}
       className="space-y-3"
     >

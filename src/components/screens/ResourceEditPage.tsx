@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Save, Trash2, FileText, BookOpen, Download, Globe, Eye, Tag, Link as LinkIcon, Upload, EyeOff, X } from 'lucide-react';
+import { Save, Trash2, FileText, BookOpen, Download, Globe, Eye, Tag, Link as LinkIcon, Upload, EyeOff, X, Sparkles } from 'lucide-react';
 import { useNotifications } from '../../contexts/NotificationContext';
 import { apiClient } from '../../lib/api-client';
 import { AdminPageLayout } from '../admin/AdminPageLayout';
@@ -188,6 +188,21 @@ export function ResourceEditPage({ resourceId, onBack, onSave }: ResourceEditPag
     }
   };
 
+  const handleAutoFill = () => {
+    setFormData(prev => ({
+        ...prev,
+        description: prev.description || `Comprehensive guide about ${prev.title || 'this topic'}. Learn practical strategies and expert insights.`,
+        content: prev.content || `<h2>Introduction</h2><p>Start with an engaging introduction about ${prev.title || 'this topic'}.</p><h3>Key Takeaways</h3><ul><li>Point 1</li><li>Point 2</li></ul><h3>Conclusion</h3><p>Summarize the main points.</p>`,
+        readTime: prev.readTime || 5,
+        author: prev.author || 'iKan Editorial Team',
+        tags: (prev.tags?.length || 0) === 0 ? ['wellness', prev.category || 'general'] : prev.tags,
+        difficulty: prev.difficulty || 'beginner',
+        thumbnail: prev.thumbnail || `https://source.unsplash.com/800x600/?${prev.category || 'wellness'},calm`
+    }));
+    showToast('success', 'Auto-Filled', 'Form populated with suggestions.');
+    markAsUnsaved();
+  };
+
   const handleSave = async (shouldPublish?: boolean) => {
     const isValid = validateForm(formData);
     if (!isValid) {
@@ -373,6 +388,12 @@ export function ResourceEditPage({ resourceId, onBack, onSave }: ResourceEditPag
             onChange: (checked) => setFormData({ ...formData, featured: checked })
           }
         ]}
+        actions={
+            <Button variant="outline" onClick={handleAutoFill} title="Auto-fill empty fields">
+                <Sparkles className="w-4 h-4 mr-2" />
+                Auto-Fill
+            </Button>
+        }
         maxWidth="xl"
       >
         {/* Basic Information */}

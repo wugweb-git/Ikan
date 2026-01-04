@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { 
   Plus, Trash2, BookOpen, Calendar, LayoutList, GripVertical, 
   ChevronUp, ChevronDown, X, Info, Lightbulb, Save, Upload,
-  Settings, Copy, Search, MoreHorizontal, Clock
+  Settings, Copy, Search, MoreHorizontal, Clock, Sparkles
 } from 'lucide-react';
 import { DndProvider, useDrag, useDrop } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
@@ -155,10 +155,22 @@ export function EquipProgramWizard({ programId, onBack, onSave }: EquipProgramWi
     try {
       const data = await apiClient.getCategories();
       if (Array.isArray(data) && data.length > 0) {
-        setCategoryOptions(data.map((c: any) => ({
-          label: c.name,
-          value: c.slug
-        })));
+        // Deduplicate categories by slug/value
+        const uniqueMap = new Map();
+        
+        data.forEach((c: any) => {
+             if (c.slug && !uniqueMap.has(c.slug)) {
+                 uniqueMap.set(c.slug, {
+                    label: c.name,
+                    value: c.slug
+                 });
+             }
+        });
+        
+        // If API returns valid data, use it.
+        if (uniqueMap.size > 0) {
+            setCategoryOptions(Array.from(uniqueMap.values()));
+        }
       }
     } catch (error) {
       console.warn('Failed to load categories', error);
@@ -191,7 +203,7 @@ export function EquipProgramWizard({ programId, onBack, onSave }: EquipProgramWi
 
   const validationSchema: ValidationSchema = {
     title: { required: true, minLength: 3, message: 'Title is required' },
-    description: { required: true, minLength: 20, maxLength: 150, message: 'Description must be 20-150 characters' },
+    description: { required: true, minLength: 10, maxLength: 500, message: 'Description must be 10-500 characters' },
     thumbnail: { 
       validate: (value: any) => !value || !validateUrl(value),
       message: 'Thumbnail must be a valid URL'
@@ -246,6 +258,25 @@ export function EquipProgramWizard({ programId, onBack, onSave }: EquipProgramWi
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleAutoFill = () => {
+    setFormData(prev => {
+        return {
+            ...prev,
+            description: prev.description || `A ${prev.duration_days || 28}-day journey to master ${prev.title || 'wellness'}. Includes daily exercises and reflections.`,
+            subtitle: prev.subtitle || 'Transform your life with daily practice.',
+            duration_days: prev.duration_days || 28,
+            price: prev.price || 499,
+            is_paid: prev.is_paid !== undefined ? prev.is_paid : true,
+            tags: (prev.tags?.length || 0) === 0 ? ['wellness', 'self-care', prev.category || 'general'] : prev.tags,
+            difficulty: prev.difficulty || 'beginner',
+            // NOTE: We do NOT auto-fill content (daily_content/structure) or images anymore.
+            // This prevents overwriting user structure and broken image links.
+        };
+    });
+    showToast('success', 'Auto-Filled', 'Program details populated with suggestions.');
+    markAsUnsaved();
   };
 
   const generateDailyContent = (count: number) => {
@@ -451,6 +482,15 @@ export function EquipProgramWizard({ programId, onBack, onSave }: EquipProgramWi
         }
         footerRightContent={
           <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              onClick={handleAutoFill}
+              className="h-8 px-2 gap-2"
+              title="Auto-fill empty fields & syllabus"
+            >
+              <Sparkles size={16} />
+              <span className="text-xs font-medium hidden md:inline">Auto-Fill</span>
+            </Button>
             <Button
               variant="outline"
               onClick={() => persistWizard(formData)}

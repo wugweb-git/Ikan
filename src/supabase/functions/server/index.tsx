@@ -194,11 +194,6 @@ registerResourceRoutes(app, requireAuth);
     }
   });
 
-// Health check endpoint
-app.get("/health", (c) => {
-  return c.json({ status: "ok", timestamp: new Date().toISOString() });
-});
-
 // Initialization endpoint
 app.post("/init/sample-data", async (c) => {
   const authHeader = c.req.header('Authorization');

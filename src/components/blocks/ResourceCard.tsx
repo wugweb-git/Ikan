@@ -3,6 +3,7 @@ import { Button } from '../ui/button';
 import { ImageWithFallback } from '../figma/ImageWithFallback';
 import { cn } from '../ui/utils';
 import { BookOpen, Video, Wrench } from 'lucide-react';
+import { resolveImageUrl } from '../../utils/image-utils';
 
 export interface ResourcePost {
   id: string;
@@ -44,7 +45,7 @@ export function ResourceCard({ post, onClick, variant = 'default', className }: 
           style={{ borderRadius: 'var(--radius-lg)' }}
         >
           <ImageWithFallback 
-            src={post.image}
+            src={resolveImageUrl(post.image)}
             alt={post.title}
             className="w-full h-full object-cover"
             loading="lazy"

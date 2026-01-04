@@ -64,11 +64,41 @@ app.post("/equip/programs", requireAuth, async (c) => {
     if (!userProfile?.is_admin) return c.json({ error: 'Admin access required' }, 403);
 
     const data = await c.req.json();
-    const program = await EquipService.createEquip(data);
-    return c.json({ program });
-  } catch (error) {
+    
+    // Separate nested content from main equip data
+    const { days, ...equipData } = data;
+    
+    // 1. Create Equip
+    const program = await EquipService.createEquip(equipData);
+    
+    // 2. Create Days & Blocks if provided
+    if (days && Array.isArray(days)) {
+        for (const dayData of days) {
+            const { blocks, ...dayInfo } = dayData;
+            const day = await EquipDayService.createDay({
+                ...dayInfo,
+                equip_id: program.id
+            });
+            
+            if (blocks && Array.isArray(blocks)) {
+                let order = 0;
+                for (const blockData of blocks) {
+                    await EquipBlockService.createBlock({
+                        ...blockData,
+                        equip_day_id: day.id,
+                        order_index: blockData.order_index ?? order++
+                    });
+                }
+            }
+        }
+    }
+    
+    // 3. Return full program structure
+    const fullProgram = await EquipService.getFullEquip(program.id);
+    return c.json({ program: fullProgram });
+  } catch (error: any) {
     console.log('Create equip error:', error);
-    return c.json({ error: 'Failed to create program' }, 500);
+    return c.json({ error: `Failed to create program: ${error.message}` }, 500);
   }
 });
 
@@ -187,7 +217,7 @@ app.post("/equip/days/:dayId/blocks", requireAuth, async (c) => {
     try {
         const dayId = c.req.param('dayId');
         const data = await c.req.json();
-        const block = await EquipBlockService.createBlock({ ...data, day_id: dayId });
+        const block = await EquipBlockService.createBlock({ ...data, equip_day_id: dayId });
         return c.json({ block });
     } catch (error) {
         return c.json({ error: 'Failed to create block' }, 500);
@@ -222,6 +252,20 @@ app.post("/equip/days/:dayId/blocks/reorder", requireAuth, async (c) => {
         return c.json({ success: true });
     } catch (error) {
         return c.json({ error: 'Failed to reorder blocks' }, 500);
+    }
+});
+
+// ADMIN UTILS
+app.post("/admin/equip/cleanup-zombies", requireAuth, async (c) => {
+    try {
+        const user = c.get('user');
+        const userProfile = await kv.get(`user:${user.id}`);
+        if (!userProfile?.is_admin) return c.json({ error: 'Admin access required' }, 403);
+
+        const result = await EquipService.cleanupZombieEnrollments();
+        return c.json({ success: true, ...result });
+    } catch (error) {
+        return c.json({ error: 'Failed to cleanup' }, 500);
     }
 });
 

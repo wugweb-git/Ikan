@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { 
   Plus, Trash2, GripVertical, Settings, MoreHorizontal, 
-  Copy, ChevronRight, BookOpen, Clock, Calendar, FastForward
+  Copy, ChevronRight, BookOpen, Clock, Calendar, FastForward,
+  PenTool, MessageCircle, Target
 } from 'lucide-react';
 import { useDrag, useDrop } from 'react-dnd';
 import { Button } from '../ui/button';
@@ -12,6 +13,7 @@ import { Badge } from '../ui/badge';
 import { AdminFormField } from '../admin/AdminFormField';
 import { DayContent, Activity } from '../../lib/equip-admin-types';
 import { EquipBlockEditor } from './EquipBlockEditor';
+import { DAY_TYPE_PRESETS, getPresetForDayType } from '../admin/day-presets';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '../ui/dropdown-menu';
 import { cn } from '../ui/utils';
 import { Textarea } from '../ui/textarea';
@@ -232,6 +234,33 @@ export interface DailyBuilderProps {
   readOnly?: boolean;
 }
 
+// --- HELPER COMPONENTS ---
+function BlockPaletteMenu({ onSelect }: { onSelect: (type: string, subtype?: string) => void }) {
+   return (
+      <DropdownMenu>
+         <DropdownMenuTrigger asChild>
+            <Button size="sm" className="h-8 gap-1.5 bg-blue-600 hover:bg-blue-700 text-white">
+               <Plus size={14} /> Add Block
+            </Button>
+         </DropdownMenuTrigger>
+         <DropdownMenuContent align="end">
+            <DropdownMenuItem onClick={() => onSelect('lesson')}>
+               <BookOpen size={14} className="mr-2" /> Lesson
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => onSelect('exercise')}>
+               <PenTool size={14} className="mr-2" /> Exercise
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => onSelect('journal')}>
+               <MessageCircle size={14} className="mr-2" /> Journal
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => onSelect('conclude')}>
+               <Target size={14} className="mr-2" /> Conclusion
+            </DropdownMenuItem>
+         </DropdownMenuContent>
+      </DropdownMenu>
+   )
+}
+
 // --- MAIN EDITOR COMPONENT ---
 export function EquipDailyEditor({ 
   program, 
@@ -348,26 +377,47 @@ export function EquipDailyEditor({
 
   const handleUpdateDay = (dayNum: number, updates: Partial<DayContent>) => {
     if (readOnly) return;
+
+    // Check if dayType changed and auto-populate if empty
+    const currentDay = days.find(d => d.day === dayNum);
+    if (updates.dayType && currentDay && updates.dayType !== currentDay.dayType) {
+       if (currentDay.activities.length === 0) {
+          const preset = getPresetForDayType(updates.dayType);
+          if (preset && preset.defaultBlocks) {
+             const newBlocks = preset.defaultBlocks.map((b, i) => ({
+                ...b,
+                id: `block-${Date.now()}-${i}`,
+                order: i,
+                required: b.required ?? false,
+                title: b.title || 'Untitled Block'
+             })) as Activity[];
+             updates.activities = newBlocks;
+             
+             // Also update selected block to first one
+             setTimeout(() => {
+                if (newBlocks.length > 0) setSelectedBlockId(newBlocks[0].id);
+             }, 100);
+          }
+       }
+    }
+
     const newDays = days.map(d => 
       d.day === dayNum ? { ...d, ...updates } : d
     );
     handleDaysChange(newDays);
   };
 
-  const addBlock = () => {
+  const addBlock = (type: string = 'lesson', subtype?: string) => {
     if (!activeDay || readOnly) return;
     const newBlock: Activity = {
       id: `block-${Date.now()}`,
-      title: '',
-      type: mode === 'assessment' ? 'exercise' : 'lesson',
+      title: type === 'lesson' ? 'New Lesson' : 'New Activity',
+      type: type as any,
       content: '',
       duration: 5,
       required: true,
       order: activeDay.activities.length,
-      exerciseConfig: mode === 'assessment' ? {
-        subtype: 'mcq',
-        scoring: { enabled: true, maxScore: 1 }
-      } : undefined
+      exerciseConfig: subtype ? { subtype: subtype as any } : undefined
     };
     const newDays = days.map(d => 
       d.day === activeDay.day ? { ...d, activities: [...d.activities, newBlock] } : d
@@ -472,9 +522,7 @@ export function EquipDailyEditor({
                  </p>
               </div>
               {!readOnly && (
-                <Button onClick={addBlock} size="sm" variant="default" className="h-8 gap-1.5 bg-blue-600 hover:bg-blue-700 text-white">
-                  <Plus size={14} /> Block
-                </Button>
+                <BlockPaletteMenu onSelect={addBlock} />
               )}
             </div>
 
@@ -585,21 +633,13 @@ export function EquipDailyEditor({
                             >
                               <SelectTrigger><SelectValue /></SelectTrigger>
                               <SelectContent>
-                                <SelectItem value="lesson">
-                                  <div className="flex items-center gap-2">
-                                    <BookOpen size={14} className="text-blue-500" /> Lesson (Learn)
-                                  </div>
-                                </SelectItem>
-                                <SelectItem value="practice">
-                                  <div className="flex items-center gap-2">
-                                    <Clock size={14} className="text-purple-500" /> Practice (Do)
-                                  </div>
-                                </SelectItem>
-                                <SelectItem value="conclusion">
-                                  <div className="flex items-center gap-2">
-                                    <Trash2 size={14} className="text-red-500" /> Conclusion (End)
-                                  </div>
-                                </SelectItem>
+                                {Object.entries(DAY_TYPE_PRESETS).map(([key, preset]) => (
+                                  <SelectItem key={key} value={key}>
+                                    <div className="flex items-center gap-2">
+                                      <span>{preset.label}</span>
+                                    </div>
+                                  </SelectItem>
+                                ))}
                               </SelectContent>
                             </Select>
                           </AdminFormField>

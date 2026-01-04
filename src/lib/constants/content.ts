@@ -129,6 +129,6 @@ export const DEFAULT_METADATA = {
 // SPECIAL PROGRAM IDS (For linking from Dashboard/Menu)
 // TODO: Replace these with actual UUIDs after seeding data
 export const SPECIAL_PROGRAM_IDS = {
-  DAILY_TRACKER: 'daily-tracker', 
-  ONBOARDING: 'onboarding-flow',
+  DAILY_TRACKER: 'tracker-daily-mood-v1', 
+  ONBOARDING: 'utility-onboarding-v1',
 } as const;

@@ -14,6 +14,7 @@ import { projectId, publicAnonKey } from '../../utils/supabase/info';
 import { Icon } from '../Icon';
 import { ProgramPlayer } from '../player/ProgramPlayer';
 import { EquipProgram } from '../../lib/equip-admin-types';
+import { DUMMY_EQUIP_PROGRAM, ALL_DUMMY_PROGRAMS } from '../../lib/demo-data';
 
 interface EquipOnboardingProps {
   programId?: string;
@@ -31,6 +32,7 @@ export function EquipOnboarding({ programId: propProgramId, onComplete, onBack, 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { addNotification, showToast } = useNotifications();
+  const { user } = useAuth(); // Auth context for checking user status
 
   // ✅ Fetch Onboarding Questions from Database
   useEffect(() => {
@@ -62,6 +64,43 @@ export function EquipOnboarding({ programId: propProgramId, onComplete, onBack, 
         setLoading(true);
         
         console.log('📥 Fetching onboarding questions for program:', id);
+
+        // DEMO MODE CHECK
+        const demoProgram = ALL_DUMMY_PROGRAMS.find(p => p.id === id);
+        if (id === 'dummy-equip' || demoProgram) {
+           console.log('⚡ Loading Demo Onboarding (Offline Mode)');
+           // Create a dummy question set
+           const dummyQuestionSet: OnboardingQuestionSet = {
+             id: 'dummy-onboarding',
+             equip_id: id,
+             title: 'Demo Setup',
+             description: 'Let\'s get your demo environment ready.',
+             is_required_before_start: true,
+             version: '1.0.0',
+             sections: [],
+             questions: [
+               {
+                 id: 'q1',
+                 text: 'What is your primary goal for this demo?',
+                 type: 'single-choice',
+                 options: ['Testing UI', 'Verifying Logic', 'Just Browsing'],
+                 required: true
+               },
+               {
+                 id: 'q2',
+                 text: 'How familiar are you with the platform?',
+                 type: 'scale',
+                 scaleMin: 1,
+                 scaleMax: 5,
+                 scaleLabels: { min: 'New', max: 'Expert' },
+                 required: false
+               }
+             ]
+           };
+           setQuestionSet(dummyQuestionSet);
+           setLoading(false);
+           return;
+        }
         
         // Fetch the equip program to get its onboarding configuration
         const response = await fetch(
@@ -156,6 +195,47 @@ export function EquipOnboarding({ programId: propProgramId, onComplete, onBack, 
       if (!slug) {
         throw new Error('No program ID available for enrollment');
       }
+
+      // 🛑 Auth Check: If not logged in, save progress and redirect to login
+      if (!user) {
+        console.log('🔒 User not logged in, saving progress and redirecting to login');
+        localStorage.setItem('ikan-pending-onboarding-answers', JSON.stringify(answers));
+        localStorage.setItem('ikan-pending-onboarding-program', slug);
+        
+        showToast('info', 'Account Required', 'Please sign in or create an account to save your progress.');
+        
+        // Use onNavigate if available, or force window location
+        if (onNavigate) {
+          onNavigate('/login?returnTo=onboarding');
+        } else {
+          window.location.href = '/login?returnTo=onboarding';
+        }
+        return;
+      }
+
+      // ⚡ DEMO INTERCEPT: If using dummy program, mock successful enrollment
+      const demoProgram = ALL_DUMMY_PROGRAMS.find(p => p.id === slug);
+      if (slug === 'dummy-equip' || demoProgram) {
+          console.log('⚡ Mocking enrollment for dummy program');
+          
+          // Simulate API delay
+          await new Promise(resolve => setTimeout(resolve, 800));
+          
+          const mockEnrollmentId = `enroll_dummy_${Date.now()}`;
+          localStorage.setItem('ikan-current-enrollment', mockEnrollmentId);
+          localStorage.setItem('ikan-active-dummy-program', slug);
+          localStorage.setItem('ikan-equip-onboarding-answers', JSON.stringify(answers));
+          
+          showToast('success', 'Demo Enrollment Complete', 'Starting your demo journey!');
+          
+          if (onComplete) {
+              onComplete(answers);
+          } else if (onNavigate) {
+              // Ensure we navigate to the program flow with the dummy ID
+              onNavigate(`/equip-program-flow?id=${slug}`);
+          }
+          return;
+      }
       
       // Legacy mapping for backward compatibility
       const legacyData: OnboardingData = {
@@ -190,10 +270,26 @@ export function EquipOnboarding({ programId: propProgramId, onComplete, onBack, 
         } else if (onNavigate && slug) {
           // Default behavior: Navigate to the program flow
           onNavigate(`/equip-program-flow?id=${slug}`);
+        } else {
+          // Fallback if onNavigate is missing
+          window.location.href = `/equip-program-flow?id=${slug}`;
         }
       } else {
-        console.error('❌ No enrollment returned from server:', response);
-        showToast('error', 'Enrollment Failed', 'Server did not return enrollment data.');
+        // Fallback: If we got a 200 OK but no explicit enrollment object, assume success?
+        // Some backends might just return { success: true }
+        if (response && !response.error) {
+           console.warn('⚠️ No enrollment object returned, but assuming success based on 200 OK');
+           if (onComplete) {
+             onComplete(answers);
+           } else {
+             const target = `/equip-program-flow?id=${slug}`;
+             if (onNavigate) onNavigate(target);
+             else window.location.href = target;
+           }
+        } else {
+           console.error('❌ No enrollment returned from server:', response);
+           showToast('error', 'Enrollment Failed', 'Server did not return enrollment data.');
+        }
       }
     } catch (error) {
       console.error('❌ Enrollment error:', error);

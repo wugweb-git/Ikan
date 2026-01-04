@@ -100,6 +100,48 @@ export const EquipService = {
     
     // 4. Delete Equip
     await kv.del(`equip:${id}`);
+
+    // 5. Cleanup Enrollments (Scanning all enrollments - expensive but necessary for consistency)
+    // Ideally we should have an index, but for now scan is fine.
+    try {
+        const allEnrollments = await kv.getByPrefix('enrollment:');
+        for (const enroll of allEnrollments) {
+            if (enroll.programId === id || enroll.equip_id === id) {
+                // Delete main enrollment record
+                if (enroll.id) await kv.del(`enrollment:${enroll.id}`);
+                // Delete user lookup record
+                if (enroll.userId && (enroll.programId || enroll.equip_id)) {
+                    await kv.del(`user_enrollment:${enroll.userId}:${enroll.programId || enroll.equip_id}`);
+                }
+            }
+        }
+    } catch (e) {
+        console.error("Failed to cleanup enrollments during deleteEquip", e);
+    }
+  },
+
+  async cleanupZombieEnrollments(): Promise<{ deleted: number, errors: number }> {
+    let deleted = 0;
+    let errors = 0;
+    try {
+        const allEnrollments = await kv.getByPrefix('enrollment:');
+        for (const enroll of allEnrollments) {
+            const progId = enroll.programId || enroll.equip_id;
+            if (!progId) continue;
+
+            const exists = await this.getEquip(progId);
+            if (!exists) {
+                // It's a zombie
+                if (enroll.id) await kv.del(`enrollment:${enroll.id}`);
+                if (enroll.userId) await kv.del(`user_enrollment:${enroll.userId}:${progId}`);
+                deleted++;
+            }
+        }
+    } catch (e) {
+        console.error("Cleanup zombie error", e);
+        errors++;
+    }
+    return { deleted, errors };
   },
   
   async getFullEquip(id: string): Promise<EquipWithDays | null> {

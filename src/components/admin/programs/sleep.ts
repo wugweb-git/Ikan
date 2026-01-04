@@ -119,6 +119,7 @@ const maintenanceDayBlocks = [...ritualActionBlocks, ...sleepReflectionBlocks];
 
 export const sleepProgramData = {
   title: "Sleep Tight",
+  slug: "sleep-tight",
   description: "A gentle, guided program to help you understand and improve your sleep. There’s nothing to “fix” immediately — we’ll start by noticing patterns and building consistency.",
   category: "Sleep",
   image_url: images.moon,

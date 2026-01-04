@@ -61,6 +61,7 @@ import { Homepage } from './components/screens/Homepage';
 import { RouteTestScreen } from './components/screens/RouteTestScreen';
 import { PrivateRouteTest } from './components/screens/PrivateRouteTest';
 import { WizardTestScreen } from './components/screens/WizardTestScreen';
+import { GoogleFitProvider } from './components/integrations/GoogleFitContext';
 import { Footer } from './components/Footer';
 
 // Import the AuthForm component that was referenced but not imported
@@ -71,6 +72,7 @@ import { SecurityProvider } from './components/security/SecurityProvider';
 import { CrisisSupport, useCrisisSupport } from './components/safety/CrisisSupport';
 import { SafePerformanceMonitor } from './components/monitoring/SafePerformanceMonitor';
 import LoginScreen from './components/LoginScreen';
+import { AdminLoginScreen } from './components/admin/AdminLoginScreen';
 
 function AppContent() {
   // ✅ ALL HOOKS MUST BE CALLED FIRST - BEFORE ANY CONDITIONAL LOGIC OR EARLY RETURNS
@@ -233,7 +235,7 @@ function AppContent() {
         '/equip', '/equip-programs-landing', '/equip-detail', '/equip-program-onboarding', '/equip-program-flow', '/equip-program-completion',
         '/consultation', '/consultation-detail', '/resource', '/resource-detail', '/account', 
         '/about', '/faq', '/privacy', '/privacy-policy', '/terms', '/contact', '/return-policy', '/cancellation-policy', '/sitemap', '/login', '/route-test', '/private-route-test', '/wizard-test',
-        '/admin', '/admin/resources', '/admin/equip', '/admin/users', '/admin/consultants', '/admin/assessments', '/admin/analytics', '/admin/settings', '/admin/pages', '/admin/media', '/admin/crud'
+        '/admin', '/admin/login', '/admin/resources', '/admin/equip', '/admin/users', '/admin/consultants', '/admin/assessments', '/admin/analytics', '/admin/settings', '/admin/pages', '/admin/media', '/admin/crud'
       ];
       
       // Handle consultant detail route pattern
@@ -298,9 +300,14 @@ function AppContent() {
       // Only redirect logged-in users away from the home page (/) - allow access to other public routes
       if (user && currentRoute === '/') {
         setCurrentRoute(DEFAULT_PRIVATE_ROUTE);
-      } else if (!user && requiresAuth(currentRoute)) {
+      } 
+      // REMOVED: Aggressive redirect for unauthenticated users. 
+      // RouteGuard handles this by showing the LoginScreen in-place.
+      // This prevents race conditions where a user signs in, navigates to /dashboard, 
+      // but the user state update lags slightly behind, causing a bounce back to /.
+      /* else if (!user && requiresAuth(currentRoute)) {
         setCurrentRoute(DEFAULT_PUBLIC_ROUTE);
-      }
+      } */
     }
   }, [user, isInitialized, currentRoute]);
 
@@ -587,7 +594,7 @@ function AppContent() {
       originalConsoleWarn.apply(console, args);
     };
     
-    // Optional background health check and data seeding - don't block app startup
+    // Optional background health check - don't block app startup
     setTimeout(() => {
       // Wrap all background operations in comprehensive error handling
       Promise.resolve()
@@ -658,6 +665,24 @@ function AppContent() {
 
       // Check for Admin Routes first
       if (currentRoute.startsWith('/admin')) {
+        // Special case for login
+        if (currentRoute === '/admin/login') {
+            return (
+              <ErrorBoundary>
+                <AdminLoginScreen 
+                    onNavigate={handleNavigate} 
+                    onLoginSuccess={() => handleNavigate('/admin')} 
+                />
+              </ErrorBoundary>
+            );
+        }
+
+        // Auth Check for Admin
+        if (!user) {
+            handleNavigate('/admin/login');
+            return null;
+        }
+
         const adminPath = currentRoute.replace('/admin/', '');
         const view = currentRoute === '/admin' ? 'dashboard' : adminPath;
         
@@ -752,7 +777,8 @@ function AppContent() {
     !currentRoute.startsWith('/admin') &&
     !currentRoute.startsWith('/assessment-flow') &&
     !currentRoute.startsWith('/equip-program-flow') &&
-    !currentRoute.startsWith('/equip-program-onboarding');
+    !currentRoute.startsWith('/equip-program-onboarding') &&
+    !currentRoute.startsWith('/uikit');
   const shouldShowFooter = currentRoute === '/' || 
                            currentRoute === '/about' || 
                            currentRoute === '/contact' || 
@@ -894,9 +920,11 @@ export default function App() {
         <NotificationProvider>
           <PaymentProvider>
             <JourneyProvider>
-              <SecurityProvider>
-                <AppContent />
-              </SecurityProvider>
+              <GoogleFitProvider>
+                <SecurityProvider>
+                  <AppContent />
+                </SecurityProvider>
+              </GoogleFitProvider>
             </JourneyProvider>
           </PaymentProvider>
         </NotificationProvider>

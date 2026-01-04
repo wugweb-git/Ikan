@@ -72,6 +72,7 @@ const toolkitBlocks = [...day16Blocks, ...day18Blocks, ...day17Blocks];
 
 export const burnoutProgramData = {
   title: "Burnout Reset",
+  slug: "burnout-reset",
   description: "A comprehensive 30-day program to understand, manage, and recover from burnout.",
   category: "Burnout",
   image_url: images.snapshot,

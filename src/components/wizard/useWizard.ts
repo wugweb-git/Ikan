@@ -23,6 +23,12 @@ export function useWizard({
 }: UseWizardProps) {
   const [currentStepIndex, setCurrentStepIndex] = useState(initialStepIndex);
   const [answers, setAnswers] = useState<Record<string, any>>(initialData);
+  const answersRef = React.useRef(answers);
+  
+  useEffect(() => {
+    answersRef.current = answers;
+  }, [answers]);
+
   const [history, setHistory] = useState<number[]>([initialStepIndex]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [completedSteps, setCompletedSteps] = useState<string[]>([]);
@@ -95,12 +101,13 @@ export function useWizard({
 
   const goToNext = useCallback(async () => {
     // Check required fields in current step
+    const currentAnswers = answersRef.current;
     const requiredFields = currentStep.fields?.filter(f => f.validation?.required && !f.hidden) || [];
     const missingFields = requiredFields.filter(f => {
       // Check visibility if dependsOn is present
       if (f.dependsOn) {
          const { fieldId, value, operator = 'equals' } = f.dependsOn;
-         const dependentValue = answers[fieldId];
+         const dependentValue = currentAnswers[fieldId];
          let isVisible = false;
          
          switch (operator) {
@@ -113,7 +120,7 @@ export function useWizard({
          if (!isVisible) return false; // Don't validate hidden fields
       }
 
-      const val = answers[f.id];
+      const val = currentAnswers[f.id];
       return val === undefined || val === '' || (Array.isArray(val) && val.length === 0);
     });
 
@@ -129,13 +136,13 @@ export function useWizard({
       // Complete
       setIsSubmitting(true);
       if (onComplete) {
-        await onComplete(answers);
+        await onComplete(currentAnswers);
       }
       setIsSubmitting(false);
     } else {
       // Find next valid step (skip logic)
       let targetIndex = nextIndex;
-      while (targetIndex < totalSteps && shouldSkipStep(config.steps[targetIndex], answers)) {
+      while (targetIndex < totalSteps && shouldSkipStep(config.steps[targetIndex], currentAnswers)) {
         targetIndex++;
       }
       
@@ -143,7 +150,7 @@ export function useWizard({
          // If we skipped everything until the end, complete.
          setIsSubmitting(true);
          if (onComplete) {
-           await onComplete(answers);
+           await onComplete(currentAnswers);
          }
          setIsSubmitting(false);
       } else {
@@ -156,7 +163,7 @@ export function useWizard({
       }
     }
     return true;
-  }, [currentStep, currentStepIndex, totalSteps, answers, config.steps, shouldSkipStep, onComplete]);
+  }, [currentStep, currentStepIndex, totalSteps, config.steps, shouldSkipStep, onComplete]);
 
   const goToPrevious = useCallback(() => {
     if (history.length <= 1) {

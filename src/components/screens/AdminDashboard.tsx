@@ -12,19 +12,19 @@ import {
   Smile, 
   Settings, 
   Database, 
-  Server, 
   FileText, 
   Monitor, 
   MessageSquare, 
   Shield, 
-  Layers, 
-  Map, 
-  Compass, 
-  Palette 
+  Search,
+  Bell,
+  User,
+  LogOut
 } from 'lucide-react';
 import { cn } from '../ui/utils';
 import { Button } from '../ui/button';
-import { Card } from '../ui/card'; // Import Card component
+import { Card } from '../ui/card';
+import { Input } from '../ui/input';
 import { SideNav, SideNavGroup } from '../navigation/SideNav';
 import { Logo } from '../Logo';
 import { ErrorBoundary } from '../ErrorBoundary';
@@ -40,27 +40,16 @@ import { AdminUserDataManager } from './AdminUserDataManager';
 import { AdminSettingsManager } from './AdminSettingsManager';
 import { AdminDashboardAnalytics } from './AdminDashboardAnalytics';
 import { AdminCRUDTesting } from '../admin/AdminCRUDTesting';
-import { AdminDatabaseBrowser } from '../admin/AdminDatabaseBrowser';
-import { AdminAPILogs } from '../admin/AdminAPILogs';
 import { AdminSystemLogs } from '../admin/AdminSystemLogs';
-import { AdminPerformance } from '../admin/AdminPerformance';
 import { AdminCommunication } from '../admin/AdminCommunication';
-import { AdminCommunicationAPI } from '../admin/AdminCommunicationAPI';
 import { AdminPaymentGateway } from '../admin/AdminPaymentGateway';
 import { AdminSecurity } from '../admin/AdminSecurity';
-import { AdminPrototypeDemo } from '../admin/AdminPrototypeDemo';
-import { AdminSystemSitemap } from '../admin/AdminSystemSitemap';
-import { AdminNavigationGuide } from '../admin/AdminNavigationGuide';
-import { AdminComponentSpecs } from '../admin/AdminComponentSpecs';
-import { AdminUIKitShowcase } from '../admin/AdminUIKitShowcase';
-import { AdminMigration } from '../admin/AdminMigration';
-import { AdminDebugPanel } from '../admin/AdminDebugPanel';
 import { AdminCategoryManager } from '../admin/AdminCategoryManager';
 import { AdminMoodManager } from '../admin/AdminMoodManager';
 import { RecommendationRulesManager } from '../admin/recommendations/RecommendationRulesManager';
-import { SeedDailyTracker } from '../admin/SeedDailyTracker';
-import { SeedEquipPrograms } from '../admin/SeedEquipPrograms';
 import { AdminBackupManager } from '../admin/AdminBackupManager';
+import { UIKitPatterns } from '../uikit/UIKitPatterns';
+import { Palette } from 'lucide-react';
 
 interface AdminDashboardProps {
   onNavigate: (path: string) => void;
@@ -84,26 +73,16 @@ type ViewType =
   | 'user-data'
   | 'settings'
   | 'crud'
-  | 'migration'
-  | 'db-browser'
-  | 'api-logs'
   | 'system-logs'
-  | 'performance'
   | 'communication'
-  | 'communication-api'
   | 'payment-gateway'
   | 'security'
-  | 'prototype'
-  | 'sitemap'
-  | 'navigation'
-  | 'specs'
-  | 'uikit'
-  | 'seed-tracker'
-  | 'seed-equip'
-  | 'backup';
+  | 'backup'
+  | 'ui-kit';
 
 export function AdminDashboard({ onNavigate, initialView }: AdminDashboardProps) {
   const [currentView, setCurrentView] = useState<ViewType>((initialView as ViewType) || 'dashboard');
+  const [searchQuery, setSearchQuery] = useState('');
 
   React.useEffect(() => {
     if (initialView) {
@@ -114,65 +93,46 @@ export function AdminDashboard({ onNavigate, initialView }: AdminDashboardProps)
   const navGroups: SideNavGroup[] = [
     {
       id: 'main',
-      title: 'Main',
+      title: 'Overview',
       items: [
         { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
         { id: 'analytics', label: 'Analytics', icon: BarChart },
-        { id: 'users', label: 'Account Management', icon: Settings },
-        { id: 'consultants', label: 'Consultant Manager', icon: ClipboardList },
-        { id: 'resources', label: 'Resource Manager', icon: Table },
-        { id: 'assessments', label: 'Assessments', icon: ClipboardList },
-        { id: 'recommendations', label: 'Recommendations', icon: Activity },
-        { id: 'equip', label: 'Equip Programs', icon: BookOpen },
-        { id: 'equip-analytics', label: 'Equip Analytics', icon: BarChart },
-        { id: 'pages', label: 'Pages', icon: FileJson },
-        { id: 'media', label: 'Media', icon: FileJson },
-        { id: 'categories', label: 'Categories', icon: Tag },
-        { id: 'moods', label: 'Mood Types', icon: Smile },
-        { id: 'user-data', label: 'Care Seeker Activity', icon: Users },
-        { id: 'settings', label: 'Settings Manager', icon: Settings },
+        { id: 'users', label: 'Users & Accounts', icon: Users },
       ]
     },
     {
-      id: 'backend',
-      title: 'Backend',
+      id: 'content',
+      title: 'Content Management',
       items: [
-        { id: 'crud', label: 'CRUD Testing', icon: Activity },
-        { id: 'seed-tracker', label: 'Seed Daily Tracker', icon: Database },
-        { id: 'seed-equip', label: 'Seed Equip Programs', icon: Database },
-        { id: 'backup', label: 'System Recovery', icon: Database },
-        { id: 'migration', label: 'Migration', icon: Database },
-        { id: 'db-browser', label: 'Database Browser', icon: Server },
-        { id: 'api-logs', label: 'API Logs', icon: FileText },
-        { id: 'system-logs', label: 'System Logs', icon: Monitor },
-        { id: 'performance', label: 'Performance', icon: BarChart },
+        { id: 'equip', label: 'Equip Programs', icon: BookOpen },
+        { id: 'assessments', label: 'Assessments', icon: ClipboardList },
+        { id: 'resources', label: 'Resources', icon: Table },
+        { id: 'consultants', label: 'Consultants', icon: ClipboardList },
+        { id: 'pages', label: 'Pages', icon: FileJson },
+        { id: 'media', label: 'Media Library', icon: FileJson },
+      ]
+    },
+    {
+      id: 'configuration',
+      title: 'Configuration',
+      items: [
+        { id: 'categories', label: 'Categories', icon: Tag },
+        { id: 'moods', label: 'Mood Types', icon: Smile },
+        { id: 'recommendations', label: 'Rules Engine', icon: Activity },
+        { id: 'settings', label: 'Global Settings', icon: Settings },
       ]
     },
     {
       id: 'system',
-      title: 'System',
+      title: 'System & Logs',
       items: [
+        { id: 'user-data', label: 'User Activity', icon: Activity },
         { id: 'communication', label: 'Communication', icon: MessageSquare },
+        { id: 'payment-gateway', label: 'Payments', icon: Settings },
         { id: 'security', label: 'Security', icon: Shield },
-      ]
-    },
-    {
-      id: 'api-integration',
-      title: 'API Integration',
-      items: [
-        { id: 'communication-api', label: 'Communication API', icon: MessageSquare },
-        { id: 'payment-gateway', label: 'Payment Gateway', icon: Settings },
-      ]
-    },
-    {
-      id: 'support-demos',
-      title: 'Support & Demos',
-      items: [
-        { id: 'prototype', label: 'Prototype Demo', icon: Layers },
-        { id: 'sitemap', label: 'System Sitemap', icon: Map },
-        { id: 'navigation', label: 'Navigation Guide', icon: Compass },
-        { id: 'specs', label: 'Component Specs', icon: FileJson },
-        { id: 'uikit', label: 'UI Kit Showcase', icon: Palette },
+        { id: 'crud', label: 'System Health', icon: Activity },
+        { id: 'backup', label: 'Backups', icon: Database },
+        { id: 'system-logs', label: 'System Logs', icon: Monitor },
       ]
     }
   ].map(group => ({
@@ -206,165 +166,59 @@ export function AdminDashboard({ onNavigate, initialView }: AdminDashboardProps)
                 fontSize: 'var(--text-base)', 
                 color: 'var(--color-text-muted)' 
               }}>
-                Welcome to the iKan system administration panel.
+                Overview of system performance and recent activity.
               </p>
             </div>
             
-            <AdminDebugPanel />
-            
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-              {/* Refactored Dashboard Cards to use <Card> component */}
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
               <Card 
-                className="p-6 cursor-pointer hover:shadow-md transition-shadow"
+                className="p-6 cursor-pointer hover:shadow-md transition-shadow group border-l-4 border-l-[var(--color-primary-default)]"
                 onClick={() => setCurrentView('users')}
-                role="button"
-                tabIndex={0}
-                aria-label="Manage accounts"
-                onKeyDown={(e) => e.key === 'Enter' && setCurrentView('users')}
               >
-                <div className="flex items-center gap-4">
-                  <div 
-                    className="p-3 rounded-lg"
-                    style={{
-                      backgroundColor: 'var(--color-primary-light)',
-                      color: 'var(--color-primary-default)',
-                      borderRadius: 'var(--radius-md)'
-                    }}
-                    aria-hidden="true"
-                  >
-                    <Users className="w-6 h-6" />
-                  </div>
+                <div className="flex items-start justify-between">
                   <div>
-                    <h3 style={{ 
-                      fontSize: 'var(--text-lg)', 
-                      fontWeight: 'var(--font-weight-medium)', 
-                      color: 'var(--color-text-primary)' 
-                    }}>
-                      Account Management
-                    </h3>
-                    <p style={{ 
-                      fontSize: 'var(--text-sm)', 
-                      color: 'var(--color-text-muted)' 
-                    }}>
-                      Manage user access & roles
-                    </p>
+                    <h3 className="text-lg font-medium text-[var(--color-text-primary)]">User Management</h3>
+                    <p className="text-sm text-[var(--color-text-muted)] mt-1">Manage accounts and roles</p>
+                  </div>
+                  <div className="p-2 bg-[var(--color-primary-light)] text-[var(--color-primary-default)] rounded-lg group-hover:scale-110 transition-transform">
+                    <Users className="w-5 h-5" />
                   </div>
                 </div>
               </Card>
 
               <Card 
-                className="p-6 cursor-pointer hover:shadow-md transition-shadow"
+                className="p-6 cursor-pointer hover:shadow-md transition-shadow group border-l-4 border-l-[var(--color-accent-default)]"
                 onClick={() => setCurrentView('equip')}
-                role="button"
-                tabIndex={0}
-                aria-label="Manage equip programs"
-                onKeyDown={(e) => e.key === 'Enter' && setCurrentView('equip')}
               >
-                <div className="flex items-center gap-4">
-                  <div 
-                    className="p-3 rounded-lg"
-                    style={{
-                      backgroundColor: 'var(--color-accent-light)',
-                      color: 'var(--color-accent-default)',
-                      borderRadius: 'var(--radius-md)'
-                    }}
-                    aria-hidden="true"
-                  >
-                    <BookOpen className="w-6 h-6" />
-                  </div>
+                <div className="flex items-start justify-between">
                   <div>
-                    <h3 style={{ 
-                      fontSize: 'var(--text-lg)', 
-                      fontWeight: 'var(--font-weight-medium)', 
-                      color: 'var(--color-text-primary)' 
-                    }}>
-                      Equip Programs
-                    </h3>
-                    <p style={{ 
-                      fontSize: 'var(--text-sm)', 
-                      color: 'var(--color-text-muted)' 
-                    }}>
-                      Manage courses
-                    </p>
+                    <h3 className="text-lg font-medium text-[var(--color-text-primary)]">Equip Programs</h3>
+                    <p className="text-sm text-[var(--color-text-muted)] mt-1">Manage courses and content</p>
+                  </div>
+                  <div className="p-2 bg-[var(--color-accent-light)] text-[var(--color-accent-default)] rounded-lg group-hover:scale-110 transition-transform">
+                    <BookOpen className="w-5 h-5" />
                   </div>
                 </div>
               </Card>
 
               <Card 
-                className="p-6 cursor-pointer hover:shadow-md transition-shadow"
-                onClick={() => setCurrentView('resources')}
-                role="button"
-                tabIndex={0}
-                aria-label="Manage resources"
-                onKeyDown={(e) => e.key === 'Enter' && setCurrentView('resources')}
-              >
-                <div className="flex items-center gap-4">
-                  <div 
-                    className="p-3 rounded-lg"
-                    style={{
-                      backgroundColor: 'var(--color-accent-light)',
-                      color: 'var(--color-accent-default)',
-                      borderRadius: 'var(--radius-md)'
-                    }}
-                    aria-hidden="true"
-                  >
-                    <Table className="w-6 h-6" />
-                  </div>
-                  <div>
-                    <h3 style={{ 
-                      fontSize: 'var(--text-lg)', 
-                      fontWeight: 'var(--font-weight-medium)', 
-                      color: 'var(--color-text-primary)' 
-                    }}>
-                      Resources
-                    </h3>
-                    <p style={{ 
-                      fontSize: 'var(--text-sm)', 
-                      color: 'var(--color-text-muted)' 
-                    }}>
-                      Manage content library
-                    </p>
-                  </div>
-                </div>
-              </Card>
-
-              <Card 
-                className="p-6 cursor-pointer hover:shadow-md transition-shadow"
+                className="p-6 cursor-pointer hover:shadow-md transition-shadow group border-l-4 border-l-[var(--color-status-success)]"
                 onClick={() => setCurrentView('crud')}
-                role="button"
-                tabIndex={0}
-                aria-label="View system health"
-                onKeyDown={(e) => e.key === 'Enter' && setCurrentView('crud')}
               >
-                <div className="flex items-center gap-4">
-                  <div 
-                    className="p-3 rounded-lg"
-                    style={{
-                      backgroundColor: 'var(--color-status-success-light)',
-                      color: 'var(--color-status-success)',
-                      borderRadius: 'var(--radius-md)'
-                    }}
-                    aria-hidden="true"
-                  >
-                    <Activity className="w-6 h-6" />
-                  </div>
+                <div className="flex items-start justify-between">
                   <div>
-                    <h3 style={{ 
-                      fontSize: 'var(--text-lg)', 
-                      fontWeight: 'var(--font-weight-medium)', 
-                      color: 'var(--color-text-primary)' 
-                    }}>
-                      System Health
-                    </h3>
-                    <p style={{ 
-                      fontSize: 'var(--text-sm)', 
-                      color: 'var(--color-text-muted)' 
-                    }}>
-                      Check status
-                    </p>
+                    <h3 className="text-lg font-medium text-[var(--color-text-primary)]">System Health</h3>
+                    <p className="text-sm text-[var(--color-text-muted)] mt-1">Status: Operational</p>
+                  </div>
+                  <div className="p-2 bg-[var(--color-status-success-light)] text-[var(--color-status-success)] rounded-lg group-hover:scale-110 transition-transform">
+                    <Activity className="w-5 h-5" />
                   </div>
                 </div>
               </Card>
+            </div>
+            
+            <div className="grid gap-6 lg:grid-cols-2">
+                 <AdminDashboardAnalytics onBack={() => {}} />
             </div>
           </div>
         );
@@ -383,44 +237,89 @@ export function AdminDashboard({ onNavigate, initialView }: AdminDashboardProps)
       case 'user-data': return <AdminUserDataManager onBack={() => setCurrentView('dashboard')} />;
       case 'settings': return <AdminSettingsManager onBack={() => setCurrentView('dashboard')} />;
       case 'crud': return <AdminCRUDTesting />;
-      case 'seed-tracker': return <SeedDailyTracker />;
-      case 'seed-equip': return <SeedEquipPrograms />;
       case 'backup': return <AdminBackupManager />;
-      case 'migration': return <AdminMigration />;
-      case 'db-browser': return <AdminDatabaseBrowser />;
-      case 'api-logs': return <AdminAPILogs />;
       case 'system-logs': return <AdminSystemLogs />;
-      case 'performance': return <AdminPerformance />;
       case 'communication': return <AdminCommunication />;
-      case 'communication-api': return <AdminCommunicationAPI />;
       case 'payment-gateway': return <AdminPaymentGateway />;
       case 'security': return <AdminSecurity />;
-      case 'prototype': return <AdminPrototypeDemo onNavigate={(route) => onNavigate(route)} />;
-      case 'sitemap': return <AdminSystemSitemap onNavigate={(route) => onNavigate(route)} />;
-      case 'navigation': return <AdminNavigationGuide />;
-      case 'specs': return <AdminComponentSpecs />;
-      case 'uikit': return <AdminUIKitShowcase />;
-      default: return <div>Not implemented yet</div>;
+      case 'ui-kit': return <UIKitPatterns />;
+      default: return <div>View not found</div>;
     }
   };
 
   return (
-    <div className="min-h-screen bg-[var(--color-bg-page)] flex flex-col">
-      <header className="bg-[var(--color-primary-default)] border-b border-[var(--color-border-light)] h-[var(--ikan-nav-height-mobile)] md:h-[var(--ikan-nav-height-desktop)] px-6 flex items-center justify-between sticky top-0 z-[60] shadow-md w-full text-[var(--color-primary-on)]">
-         <div className="flex items-center gap-3">
-            <div className="bg-[var(--color-bg-card)] rounded-full p-1 text-[var(--color-primary-default)]">
-              <Logo showText={false} iconSize={24} />
-            </div>
-            <div className="h-6 w-px bg-[var(--color-border-light)] mx-2 hidden md:block opacity-20"></div>
-            <span className="text-[var(--color-primary-on)] font-medium hidden md:block">Admin Console</span>
-         </div>
+    <div className="min-h-screen bg-[var(--color-bg-page)] flex flex-col font-sans">
+      {/* Top Navbar */}
+      <header className="bg-white border-b border-[var(--color-border-light)] h-[var(--ikan-nav-height-desktop)] px-6 flex items-center justify-between sticky top-0 z-[60] shadow-sm w-full">
          <div className="flex items-center gap-4">
-            <Button variant="ghost" size="sm" onClick={() => onNavigate('/')} className="text-[var(--color-primary-on)] hover:text-white hover:bg-white/10">Exit Admin</Button>
+            <div className="flex items-center gap-3">
+              <div className="bg-[var(--color-primary-default)] rounded-lg p-1.5 text-white">
+                <Logo showText={false} iconSize={20} />
+              </div>
+              <div>
+                <span className="text-[var(--color-text-primary)] font-semibold text-lg tracking-tight block leading-none">iKan</span>
+                <span className="text-[var(--color-text-muted)] text-xs font-medium uppercase tracking-wider">Admin Console</span>
+              </div>
+            </div>
+         </div>
+
+         <div className="flex-1 max-w-xl mx-8 hidden md:block">
+            <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <Input 
+                    placeholder="Search resources, users, or settings..." 
+                    className="pl-9 bg-gray-50 border-gray-200 focus:bg-white transition-colors"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                />
+            </div>
+         </div>
+
+         <div className="flex items-center gap-4">
+            <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={() => setCurrentView('ui-kit')}
+                className={cn(
+                    "gap-2 text-gray-500 hover:text-[var(--color-primary-default)]", 
+                    currentView === 'ui-kit' && "bg-primary/10 text-primary"
+                )}
+            >
+                <Palette className="w-4 h-4" />
+                <span className="hidden md:inline">UI Kit</span>
+            </Button>
+
+            <Button variant="ghost" size="icon" className="text-gray-500 hover:text-[var(--color-primary-default)] relative">
+                <Bell className="w-5 h-5" />
+                <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-white"></span>
+            </Button>
+            
+            <div className="h-8 w-px bg-gray-200 mx-1"></div>
+            
+            <div className="flex items-center gap-3 pl-2">
+                <div className="text-right hidden md:block">
+                    <p className="text-sm font-medium text-[var(--color-text-primary)]">Admin User</p>
+                    <p className="text-xs text-[var(--color-text-muted)]">Super Admin</p>
+                </div>
+                <div className="w-8 h-8 rounded-full bg-[var(--color-primary-light)] text-[var(--color-primary-default)] flex items-center justify-center border border-[var(--color-primary-light)]">
+                    <User className="w-4 h-4" />
+                </div>
+            </div>
+            
+            <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={() => onNavigate('/')} 
+                className="ml-2 text-red-600 hover:text-red-700 hover:bg-red-50 gap-2"
+            >
+                <LogOut className="w-4 h-4" />
+                <span className="hidden md:inline">Exit</span>
+            </Button>
          </div>
       </header>
 
       <div className="flex flex-1 relative">
-        <aside className="w-64 fixed left-0 top-[var(--ikan-nav-height-mobile)] md:top-[var(--ikan-nav-height-desktop)] bottom-0 overflow-y-auto bg-[var(--color-bg-page)] border-r border-[var(--color-border-default)] hidden md:block z-[50] custom-scrollbar">
+        <aside className="w-64 fixed left-0 top-[var(--ikan-nav-height-desktop)] bottom-0 overflow-y-auto bg-white border-r border-[var(--color-border-default)] hidden md:block z-[50] custom-scrollbar">
           <div className="p-4">
             <SideNav 
               groups={navGroups} 
@@ -429,10 +328,15 @@ export function AdminDashboard({ onNavigate, initialView }: AdminDashboardProps)
               onLogout={() => onNavigate('/')}
             />
           </div>
+          <div className="p-4 mt-auto border-t border-gray-100">
+             <div className="text-xs text-center text-gray-400">
+                v1.2.0 • Build 2405
+             </div>
+          </div>
         </aside>
 
-        <main className="flex-1 md:ml-64 p-4 md:p-8 w-full max-w-[100vw] overflow-x-hidden">
-          <div className="max-w-6xl mx-auto">
+        <main className="flex-1 md:ml-64 p-6 w-full max-w-[100vw] overflow-x-hidden bg-gray-50/50">
+          <div className="max-w-7xl mx-auto">
             <ErrorBoundary>
               {renderContent()}
             </ErrorBoundary>

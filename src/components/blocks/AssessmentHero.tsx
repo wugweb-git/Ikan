@@ -1,5 +1,6 @@
 import React from "react";
 import { Button } from "../ui/button";
+import { cn } from "../ui/utils";
 
 interface AssessmentHeroProps {
   title: string;
@@ -32,102 +33,49 @@ export function AssessmentHero({
 
   return (
     <section 
-      className={`relative w-full overflow-hidden ${className}`}
-      style={{
-        height: '606px',
-        minHeight: '500px',
-        backgroundColor: '#f5f5f5',
-        position: 'relative',
-        display: 'flex',
-        flexDirection: 'column',
-        justifyContent: 'space-between'
-      }}
+      className={cn(
+        "relative w-full overflow-hidden flex flex-col justify-center min-h-[500px] lg:min-h-[600px] bg-[#F5F5F5]",
+        className
+      )}
     >
-      {/* Background Container from Figma */}
-      <div 
-        className="absolute inset-0 w-full h-full"
-        style={{
-          background: 'linear-gradient(180deg, rgba(255,255,255,0) 0%, #f5f5f5 100%)',
-          zIndex: 1
-        }}
-      />
-      
-      {/* Background Image (Underlay) */}
+      {/* Background Image */}
       {backgroundImage && (
-        <div 
-          className="absolute inset-0 w-full h-full"
-          style={{ 
-            zIndex: 0
-          }}
-        >
+        <div className="absolute inset-0 w-full h-full z-0">
           <img
             alt={backgroundAlt}
             className="w-full h-full object-cover object-center"
             src={backgroundImage}
           />
+          {/* Subtle gradient overlay to ensure text readability if image is dark */}
+          <div className="absolute inset-0 bg-gradient-to-r from-[#F5F5F5] via-[#F5F5F5]/80 to-transparent z-10 lg:w-2/3" />
         </div>
       )}
 
-      {/* Content Container positioned absolutely as per Figma */}
-      <div 
-        className="absolute left-0 p-[20px] flex flex-col gap-[20px] items-start justify-center"
-        style={{ 
-          top: '319px', // Exact top position from Figma
-          width: '100%',
-          maxWidth: '394px', // From Figma
-          zIndex: 2
-        }}
-      >
-        {/* Title */}
-        <h1 
-          style={{
-            fontFamily: 'Ubuntu, sans-serif',
-            fontWeight: 500,
-            fontSize: '32px',
-            lineHeight: '44.8px',
-            color: '#151515',
-            margin: 0
-          }}
-        >
-          {title}
-        </h1>
+      {/* Content Container */}
+      <div className="relative z-20 w-full max-w-7xl mx-auto px-6 lg:px-8 py-12 lg:py-0">
+        <div className="max-w-[500px] flex flex-col gap-6 items-start">
+          {/* Title */}
+          <h1 
+            className="font-medium text-[32px] md:text-[40px] leading-[1.2] text-[#151515] font-['Ubuntu']"
+          >
+            {title}
+          </h1>
 
-        {/* Description */}
-        <p 
-          style={{
-            fontFamily: 'Ubuntu, sans-serif',
-            fontWeight: 400,
-            fontSize: '16px',
-            lineHeight: '24px',
-            color: '#151515',
-            margin: 0
-          }}
-        >
-          {description}
-        </p>
+          {/* Description */}
+          <p 
+            className="font-normal text-[16px] md:text-[18px] leading-[1.5] text-[#151515] font-['Ubuntu'] opacity-90"
+          >
+            {description}
+          </p>
 
-        {/* CTA Button */}
-        <Button
-          onClick={handleClick}
-          className="touch-target"
-          style={{
-            backgroundColor: '#2a2a2a',
-            color: '#ffffff',
-            height: '48px',
-            width: '169px', // 168.761px from Figma
-            borderRadius: '6px',
-            fontFamily: 'Inter, sans-serif', // Figma used Inter for button
-            fontWeight: 500,
-            fontSize: '16px',
-            lineHeight: '24px',
-            padding: 0,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center'
-          }}
-        >
-          {buttonText}
-        </Button>
+          {/* CTA Button */}
+          <Button
+            onClick={handleClick}
+            className="bg-[#2a2a2a] text-white hover:bg-black h-12 px-8 rounded-md font-medium text-base transition-colors"
+          >
+            {buttonText}
+          </Button>
+        </div>
       </div>
     </section>
   );

@@ -129,7 +129,20 @@ export const iconMapping = {
   "smartphone-outline": "Smartphone",
   "alertTriangle-outline": "AlertTriangle",
   "zap-outline": "Zap",
-  "send-outline": "Send"
+  "send-outline": "Send",
+  "battery-default": "Battery",
+  "battery-outline": "Battery",
+  "batteryLow-default": "BatteryLow",
+  "batteryLow-outline": "BatteryLow",
+  "batteryMedium-default": "BatteryMedium",
+  "batteryMedium-outline": "BatteryMedium",
+  "batteryFull-default": "BatteryFull",
+  "batteryFull-outline": "BatteryFull",
+  "zap-default": "Zap",
+  "activity-default": "Activity",
+  "activity-outline": "Activity",
+  "loader-default": "Loader",
+  "loader-outline": "Loader"
 } as const;
 
 // Iconify mapping - using Material Symbols as specified

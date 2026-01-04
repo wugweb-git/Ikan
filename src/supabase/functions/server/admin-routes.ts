@@ -656,4 +656,58 @@ app.post("/admin/backup/restore-checkpoint", requireAdmin, async (c) => {
   }
 });
 
+// ========================================
+// ADMIN - ANALYTICS
+// ========================================
+
+app.get("/admin/analytics", requireAdmin, async (c) => {
+  try {
+    const period = c.req.query("period") || "week";
+    
+    // In a real application, we would aggregate real data.
+    // For now, we return calculated metrics based on existing entities where possible,
+    // and mock trend data since we don't have historical logs in KV store in a queryable way.
+
+    const users = await kv.getByPrefix("user:");
+    const resources = await kv.getByPrefix("resource:");
+    
+    // Calculate active users (users updated recently)
+    const now = new Date();
+    const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+    
+    const activeUsers7d = users.filter((u: any) => {
+      if (!u.updated_at) return false;
+      return new Date(u.updated_at) > sevenDaysAgo;
+    }).length;
+
+    // Mock trend data
+    const activityChart = Array.from({ length: 30 }, (_, i) => ({
+      date: new Date(now.getTime() - (29 - i) * 24 * 60 * 60 * 1000).toISOString(),
+      count: Math.floor(Math.random() * 20) + 5 // Mock data
+    }));
+
+    const topResources = resources.slice(0, 5).map((r: any) => ({
+      id: r.id,
+      title: r.title,
+      views: Math.floor(Math.random() * 500) + 50 // Mock data
+    }));
+
+    return c.json({
+      analytics: {
+        summary: {
+          activeUsers7d,
+          totalUsers: users.length,
+          totalResources: resources.length
+        },
+        activityChart,
+        topResources
+      }
+    });
+
+  } catch (error) {
+    console.error("Analytics error:", error);
+    return c.json({ error: "Failed to generate analytics" }, 500);
+  }
+});
+
 }

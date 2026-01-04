@@ -14,7 +14,8 @@ import {
   Video,
   Layers,
   FastForward,
-  AlertCircle
+  AlertCircle,
+  Clock
 } from 'lucide-react';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
@@ -180,7 +181,8 @@ export function EquipBlockEditor({
                     <SelectItem value="mcq">Multiple Choice Question</SelectItem>
                     <SelectItem value="single-select">Single Select List</SelectItem>
                     <SelectItem value="multi-select">Multi Select List</SelectItem>
-                    <SelectItem value="table">Data Table</SelectItem>
+                    <SelectItem value="table">Checklist Table (Yes/No)</SelectItem>
+                    <SelectItem value="input-table">Input Table (Data Entry)</SelectItem>
                     <SelectItem value="structured-list">Structured List</SelectItem>
                     <SelectItem value="clinical_instrument">Clinical Instrument (GAD-7, PHQ-9)</SelectItem>
                   </SelectContent>
@@ -265,7 +267,7 @@ export function EquipBlockEditor({
               )}
 
               {/* Table Config */}
-              {block.exerciseConfig?.subtype === 'table' && (
+              {(block.exerciseConfig?.subtype === 'table' || block.exerciseConfig?.subtype === 'input-table') && (
                 <div className="space-y-4 pt-2 border-t border-dashed">
                   <div className="space-y-1">
                     <Label className="text-xs">Column Headers (One per line)</Label>

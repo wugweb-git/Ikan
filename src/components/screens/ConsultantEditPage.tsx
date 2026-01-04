@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Save, Trash2, Eye, User, Briefcase, MapPin, DollarSign, Star, Video, Phone, MessageSquare } from 'lucide-react';
+import { Save, Trash2, Eye, User, Briefcase, MapPin, DollarSign, Star, Video, Phone, MessageSquare, Sparkles } from 'lucide-react';
 import { useNotifications } from '../../contexts/NotificationContext';
 import { apiClient } from '../../lib/api-client';
 import { AdminPageLayout } from '../admin/AdminPageLayout';
@@ -144,6 +144,26 @@ export function ConsultantEditPage({ consultantId, onBack, onSave }: ConsultantE
     }
   };
 
+  const handleAutoFill = () => {
+    setFormData(prev => ({
+        ...prev,
+        bio: prev.bio || `Dr. ${prev.name || 'Smith'} has over ${prev.yearsExperience || 10} years of experience in clinical psychology. Specializing in cognitive behavioral therapy and mindfulness-based interventions.`,
+        pricing: {
+            video: prev.pricing?.video || 1500,
+            call: prev.pricing?.call || 1000,
+            chat: prev.pricing?.chat || 500
+        },
+        sessionModes: (prev.sessionModes?.length || 0) === 0 ? ['online', 'call'] : prev.sessionModes,
+        expertises: (prev.expertises?.length || 0) === 0 ? ['Anxiety Disorders', 'Stress Management'] : prev.expertises,
+        yearsExperience: prev.yearsExperience || 5,
+        rating: prev.rating || 4.9,
+        location: prev.location || 'Mumbai, India',
+        available: true
+    }));
+    showToast('success', 'Auto-Filled', 'Form populated with suggestions.');
+    markAsUnsaved();
+  };
+
   const handleSave = async () => {
     // Validate form
     const isValid = validateForm(formData);
@@ -248,6 +268,12 @@ export function ConsultantEditPage({ consultantId, onBack, onSave }: ConsultantE
           onClick: handleSave,
           loading: saving
         }}
+        actions={
+            <Button variant="outline" onClick={handleAutoFill} title="Auto-fill empty fields">
+                <Sparkles className="w-4 h-4 mr-2" />
+                Auto-Fill
+            </Button>
+        }
         secondaryActions={[
           ...(consultantId
             ? [

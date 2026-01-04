@@ -6,9 +6,16 @@ import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNotifications } from '../../contexts/NotificationContext';
-import { Sparkles, Play, ArrowRight, BookOpen, Activity, Moon, Sun, Calendar } from 'lucide-react';
+import { Sparkles, Play, ArrowRight, BookOpen, Activity, Moon, Sun, Calendar, ClipboardCheck } from 'lucide-react';
 import { ImageWithFallback } from '../figma/ImageWithFallback';
 import { SPECIAL_PROGRAM_IDS } from '../../lib/constants/content';
+import { DUMMY_EQUIP_PROGRAM, ALL_DUMMY_PROGRAMS } from '../../lib/demo-data';
+import { ProgramCheckIn } from '../equip/ProgramCheckIn';
+import { ReassessmentPrompt } from '../assessments/ReassessmentPrompt';
+import { checkReassessmentTriggers, ReassessmentReason } from '../../lib/reassessment-triggers';
+import { ActivityCard } from '../integrations/ActivityCard';
+import { Icon } from '../Icon';
+import { cn } from '../ui/utils';
 
 interface DashboardProps {
   className?: string;
@@ -67,6 +74,14 @@ export function Dashboard({ className, onNavigate }: DashboardProps) {
   const [activeProgram, setActiveProgram] = useState<any>(null);
   const [topRecDetails, setTopRecDetails] = useState<any>(null);
   const [userName, setUserName] = useState('Friend');
+  const [hasLoggedMoodToday, setHasLoggedMoodToday] = useState(false);
+  
+  // Check-in State
+  const [showCheckIn, setShowCheckIn] = useState(false);
+  const [checkInProgram, setCheckInProgram] = useState<{id: string, title: string, day: number} | null>(null);
+
+  // Reassessment State
+  const [reassessment, setReassessment] = useState<{ isOpen: boolean, reason: ReassessmentReason }>({ isOpen: false, reason: 'manual' });
 
   useEffect(() => {
     if (user?.user_metadata?.full_name || user?.email) {
@@ -74,8 +89,45 @@ export function Dashboard({ className, onNavigate }: DashboardProps) {
     }
     if (user) {
       loadDashboardData();
+      runReassessmentChecks();
     }
   }, [user]);
+
+  const runReassessmentChecks = async () => {
+    if (!user) return;
+    
+    // Check cooldown (don't pester user if they dismissed recently)
+    const dismissedAt = localStorage.getItem(`reassessment_dismissed_${user.id}`);
+    if (dismissedAt) {
+      const hoursSince = (Date.now() - parseInt(dismissedAt)) / (1000 * 60 * 60);
+      if (hoursSince < 24) return;
+    }
+
+    const { shouldTrigger, reason } = await checkReassessmentTriggers(user.id);
+    if (shouldTrigger && reason) {
+      // Delay slightly for UX
+      setTimeout(() => {
+        setReassessment({ isOpen: true, reason });
+      }, 2000);
+    }
+  };
+
+  const handleManualReassessment = () => {
+    setReassessment({ isOpen: true, reason: 'manual' });
+  };
+
+  const handleReassessmentConfirm = () => {
+    setReassessment({ ...reassessment, isOpen: false });
+    onNavigate?.(`/assessment-flow?reason=${reassessment.reason}`);
+  };
+
+  const handleReassessmentClose = () => {
+    setReassessment({ ...reassessment, isOpen: false });
+    // Set cooldown
+    if (user) {
+      localStorage.setItem(`reassessment_dismissed_${user.id}`, Date.now().toString());
+    }
+  };
 
   const loadDashboardData = async () => {
     if (!user) return;
@@ -109,21 +161,60 @@ export function Dashboard({ className, onNavigate }: DashboardProps) {
     }
 
     try {
+      // Check for today's mood log
+      const today = new Date().toISOString().split('T')[0];
+      const journalData = await apiClient.getJournalEntries(today, today).catch(() => ({ entries: [] }));
+      const entries = (journalData as any).entries || [];
+      setHasLoggedMoodToday(entries.length > 0);
+
       const [enrollData, recData] = await Promise.all([
         apiClient.getUserEnrollments(),
         apiClient.getRecommendations()
       ]);
+
+      // ⚡ CHECK LOCAL DEMO ENROLLMENT
+      const dummyProgramId = localStorage.getItem('ikan-active-dummy-program');
+      const dummyProgram = dummyProgramId ? ALL_DUMMY_PROGRAMS.find(p => p.id === dummyProgramId) : null;
+      
+      if (dummyProgram && dummyProgramId) {
+          const exists = enrollData.some((e: any) => e.equip_id === dummyProgramId);
+          if (!exists) {
+              const storedProgress = localStorage.getItem(`demo-progress-${dummyProgramId}`);
+              const progress = storedProgress ? JSON.parse(storedProgress) : { currentDay: 1 };
+              
+              const totalDays = dummyProgram.daily_content.length;
+              const isCompleted = progress.currentDay > totalDays;
+              
+              enrollData.unshift({
+                  id: 'dummy-enrollment',
+                  equip_id: dummyProgramId,
+                  status: isCompleted ? 'completed' : 'active',
+                  current_day_number: progress.currentDay || 1,
+                  created_at: new Date().toISOString(),
+                  completed_at: isCompleted ? new Date().toISOString() : null
+              });
+          }
+      }
       
       let programDetails = null;
 
       // If there is an active enrollment, fetch its details to get the title
       const active = enrollData.find((e: any) => e.status === 'active');
       if (active) {
-        try {
-          programDetails = await apiClient.getEquipProgram(active.equip_id);
-          setActiveProgram(programDetails);
-        } catch (e) {
-          console.error("Failed to load active program details", e);
+        if (active.equip_id === DUMMY_EQUIP_PROGRAM.id) {
+            programDetails = DUMMY_EQUIP_PROGRAM;
+            setActiveProgram(DUMMY_EQUIP_PROGRAM);
+        } else {
+            try {
+              programDetails = await apiClient.getEquipProgram(active.equip_id);
+              setActiveProgram(programDetails);
+            } catch (e: any) {
+              if (!e.message?.includes('404')) {
+                console.error("Failed to load active program details", e);
+              }
+              // If the program doesn't exist (404), clear the active state so the user isn't blocked
+              setActiveProgram(null);
+            }
         }
       } else {
         setActiveProgram(null);
@@ -164,6 +255,7 @@ export function Dashboard({ className, onNavigate }: DashboardProps) {
   };
 
   const activeEnrollment = enrollments.find(e => e.status === 'active');
+  const completedEnrollments = enrollments.filter(e => e.status === 'completed');
   const greeting = new Date().getHours() < 12 ? 'Good Morning' : new Date().getHours() < 18 ? 'Good Afternoon' : 'Good Evening';
 
   if (loading) {
@@ -174,6 +266,19 @@ export function Dashboard({ className, onNavigate }: DashboardProps) {
       </div>
     );
   }
+
+  const handleManualCheckIn = () => {
+    if (activeEnrollment && activeProgram) {
+      setCheckInProgram({
+        id: activeEnrollment.equip_id,
+        title: activeProgram.title,
+        day: activeEnrollment.current_day_number
+      });
+      setShowCheckIn(true);
+    } else {
+      showToast('info', 'No Active Program', 'Join a program first to check your progress.');
+    }
+  };
 
   return (
     <div className={`max-w-4xl mx-auto p-4 space-y-8 ${className} pb-24`}>
@@ -212,12 +317,21 @@ export function Dashboard({ className, onNavigate }: DashboardProps) {
                    Ready for your next session? Takes about 10 minutes.
                  </p>
                  
-                 <Button 
-                   className="bg-white text-black hover:bg-neutral-200 mt-4 h-12 px-6 text-base"
-                   onClick={() => onNavigate?.(`/equip-program-flow?id=${activeEnrollment.equip_id}`)}
-                 >
-                   <Play className="w-4 h-4 mr-2" fill="currentColor" /> Start Session
-                 </Button>
+                 <div className="flex flex-wrap gap-3 mt-4">
+                   <Button 
+                     className="bg-white text-black hover:bg-neutral-200 h-12 px-6 text-base"
+                     onClick={() => onNavigate?.(`/equip-program-flow?id=${activeEnrollment.equip_id}`)}
+                   >
+                     <Play className="w-4 h-4 mr-2" fill="currentColor" /> Start Session
+                   </Button>
+                   <Button
+                     className="bg-white/10 text-white hover:bg-white/20 border-white/20 h-12 px-6"
+                     variant="outline"
+                     onClick={handleManualCheckIn}
+                   >
+                     <ClipboardCheck className="w-4 h-4 mr-2" /> Check Progress
+                   </Button>
+                 </div>
                </div>
                
                {/* Progress Ring (Visual) */}
@@ -290,6 +404,13 @@ export function Dashboard({ className, onNavigate }: DashboardProps) {
                    >
                      Learn more
                    </Button>
+                   <Button 
+                     variant="ghost"
+                     onClick={handleManualReassessment}
+                     className="text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]"
+                   >
+                     Re-check progress
+                   </Button>
                  </div>
                  
                  {/* 7. Gentle Footer */}
@@ -348,39 +469,190 @@ export function Dashboard({ className, onNavigate }: DashboardProps) {
         </section>
       )}
 
-      {/* Quick Actions */}
+      {/* COMPLETED PROGRAMS HISTORY */}
+      {(completedEnrollments.length > 0 || true) && ( // Force show for UI audit as requested
+        <section className="space-y-6">
+          <h3 className="font-medium text-[var(--color-text-primary)]">Your History</h3>
+          
+          <div className="grid gap-6 md:grid-cols-2">
+            {/* Completed Programs */}
+            {completedEnrollments.length > 0 ? completedEnrollments.map((enrollment: any) => {
+              const isDummy = enrollment.equip_id === DUMMY_EQUIP_PROGRAM.id;
+              const title = isDummy ? DUMMY_EQUIP_PROGRAM.title : 'Completed Program';
+              const date = enrollment.completed_at ? new Date(enrollment.completed_at).toLocaleDateString() : 'Recently';
+
+              return (
+                <Card 
+                  key={enrollment.id} 
+                  className="cursor-pointer hover:shadow-md transition-shadow border-l-4 border-l-[var(--color-status-success)]"
+                  onClick={() => onNavigate?.(`/equip-program-flow?id=${enrollment.equip_id}`)}
+                >
+                  <CardHeader>
+                    <div className="flex justify-between items-start">
+                       <div>
+                         <CardTitle className="text-lg">{title}</CardTitle>
+                         <CardDescription>Program • Completed {date}</CardDescription>
+                       </div>
+                       <div className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full font-medium">
+                         Done
+                       </div>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <Button variant="link" className="p-0 h-auto text-[var(--color-primary-default)]">
+                      Review Journey <ArrowRight size={14} className="ml-1" />
+                    </Button>
+                  </CardContent>
+                </Card>
+              );
+            }) : (
+               // Placeholder for audit if no programs completed
+               <Card className="border-dashed border-2 border-[var(--color-border-default)] bg-[var(--color-bg-muted)] opacity-60">
+                 <CardContent className="p-6 text-center text-[var(--color-text-muted)] text-sm">
+                   No completed programs yet.
+                 </CardContent>
+               </Card>
+            )}
+
+            {/* Completed Assessments (Mock for Audit) */}
+            <Card 
+               className="cursor-pointer hover:shadow-md transition-shadow border-l-4 border-l-indigo-500"
+               onClick={() => onNavigate?.('/assessment-results')}
+            >
+               <CardHeader>
+                 <div className="flex justify-between items-start">
+                    <div>
+                      <CardTitle className="text-lg">Anxiety Screening</CardTitle>
+                      <CardDescription>Assessment • Completed Jan 2</CardDescription>
+                    </div>
+                    <div className="bg-indigo-100 text-indigo-800 text-xs px-2 py-1 rounded-full font-medium">
+                      Moderate
+                    </div>
+                 </div>
+               </CardHeader>
+               <CardContent>
+                 <Button variant="link" className="p-0 h-auto text-indigo-600">
+                   View Results <ArrowRight size={14} className="ml-1" />
+                 </Button>
+               </CardContent>
+            </Card>
+          </div>
+        </section>
+      )}
+
+      {/* DAILY INSIGHTS GRID */}
       <section>
-        <h3 className="font-medium text-[var(--color-text-primary)] mb-4">Quick Check-in</h3>
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-          <div 
-            onClick={() => onNavigate?.(`/equip-program-flow?id=${SPECIAL_PROGRAM_IDS.DAILY_TRACKER}`)}
-            className="bg-[var(--color-status-info-light)] p-6 rounded-xl flex flex-col items-center justify-center text-center gap-3 cursor-pointer hover:bg-indigo-100 transition-colors border border-transparent hover:border-indigo-200"
-          >
-             <div className="w-10 h-10 bg-white/50 rounded-full flex items-center justify-center text-[var(--color-status-info)]">
-               <Moon className="w-5 h-5" />
-             </div>
-             <div>
-               <span className="block font-medium text-[var(--color-status-info)]">Sleep Log</span>
-               <span className="text-xs text-[var(--color-text-muted)]">Track your rest</span>
-             </div>
-          </div>
+        <h3 className="font-medium text-[var(--color-text-primary)] mb-4">Daily Insights</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+           
+           {/* A. MOOD TRACKER CARD */}
+           <Card className={cn(
+             "border-none shadow-sm transition-all overflow-hidden relative",
+             hasLoggedMoodToday 
+               ? "bg-gradient-to-br from-green-50 to-emerald-50 ring-1 ring-green-100" 
+               : "bg-white ring-1 ring-black/5 hover:ring-indigo-200 hover:shadow-md cursor-pointer"
+           )}
+             onClick={() => !hasLoggedMoodToday && onNavigate?.(`/equip-program-flow?id=${SPECIAL_PROGRAM_IDS.DAILY_TRACKER}`)}
+           >
+             <CardContent className="p-6 flex items-center justify-between">
+               <div className="space-y-1">
+                 <h3 className="font-semibold text-gray-900">How are you feeling today?</h3>
+                 <p className="text-sm text-gray-500">
+                   {hasLoggedMoodToday 
+                     ? "You've checked in today." 
+                     : "Take a moment to reflect."}
+                 </p>
+               </div>
+               
+               <div className={cn(
+                 "w-12 h-12 rounded-full flex items-center justify-center shrink-0 transition-colors",
+                 hasLoggedMoodToday ? "bg-green-500 text-white" : "bg-gray-100 text-gray-400 group-hover:bg-indigo-50 group-hover:text-indigo-500"
+               )}>
+                 {hasLoggedMoodToday ? <ClipboardCheck size={24} /> : <Moon size={24} />}
+               </div>
+               
+               {/* Background decoration */}
+               {hasLoggedMoodToday && (
+                 <div className="absolute right-0 bottom-0 opacity-10 pointer-events-none">
+                    <ClipboardCheck size={80} />
+                 </div>
+               )}
+             </CardContent>
+           </Card>
 
-          <div 
-            onClick={() => onNavigate?.(`/equip-program-flow?id=${SPECIAL_PROGRAM_IDS.DAILY_TRACKER}`)}
-            className="bg-[var(--color-status-danger-light)] p-6 rounded-xl flex flex-col items-center justify-center text-center gap-3 cursor-pointer hover:bg-rose-100 transition-colors border border-transparent hover:border-rose-200"
-          >
-             <div className="w-10 h-10 bg-white/50 rounded-full flex items-center justify-center text-[var(--color-status-danger)]">
-               <Activity className="w-5 h-5" />
-             </div>
-             <div>
-               <span className="block font-medium text-[var(--color-status-danger)]">Mood Check</span>
-               <span className="text-xs text-[var(--color-text-muted)]">How are you feeling?</span>
-             </div>
-          </div>
+           {/* D. GOOGLE FIT ACTIVITY CARD */}
+           <ActivityCard />
 
+           {/* B. PROGRAM PROGRESS CARD (Conditional) */}
+           {activeEnrollment && (activeEnrollment.status === 'completed' || [7, 14, 30].includes(activeEnrollment.current_day_number)) && (
+             <Card className="bg-gradient-to-br from-indigo-900 to-violet-900 text-white border-none shadow-lg cursor-pointer md:col-span-2 relative overflow-hidden group"
+               onClick={handleManualCheckIn}
+             >
+                <div className="absolute top-0 right-0 p-8 opacity-10 group-hover:opacity-20 transition-opacity">
+                   <Activity size={120} />
+                </div>
+                <CardContent className="p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 relative z-10">
+                  <div className="space-y-1">
+                     <div className="flex items-center gap-2 mb-2">
+                       <Badge className="bg-white/20 text-white hover:bg-white/30 border-none">
+                         Check-in Ready
+                       </Badge>
+                     </div>
+                     <h3 className="text-xl font-semibold">How is this program working for you?</h3>
+                     <p className="text-indigo-100 max-w-md">
+                       We're checking in to make sure you're getting the most out of {activeProgram?.title || 'your journey'}.
+                     </p>
+                  </div>
+                  <Button className="bg-white text-indigo-900 hover:bg-indigo-50 shrink-0">
+                    Check Progress
+                  </Button>
+                </CardContent>
+             </Card>
+           )}
+
+           {/* C. RE-CHECK ASSESSMENT CARD (Conditional) */}
+           {reassessment.isOpen && reassessment.reason !== 'manual' && (
+              <Card className="bg-orange-50 border-orange-100 md:col-span-2 cursor-pointer hover:bg-orange-100/80 transition-colors">
+                <CardContent className="p-6 flex flex-col sm:flex-row items-start sm:items-center gap-4">
+                   <div className="flex items-center gap-4 flex-1">
+                     <div className="w-10 h-10 rounded-full bg-orange-100 text-orange-600 flex items-center justify-center shrink-0">
+                       <Activity size={20} />
+                     </div>
+                     <div>
+                        <h3 className="font-semibold text-orange-900">Want to check where you are now?</h3>
+                        <p className="text-sm text-orange-700 mt-1">
+                          You’ve made some changes since your last check. Retaking this assessment can help us understand what’s helping and what to adjust.
+                        </p>
+                     </div>
+                   </div>
+                   <div className="flex items-center gap-2 mt-2 sm:mt-0 w-full sm:w-auto">
+                     <Button 
+                       variant="ghost" 
+                       className="text-orange-700 hover:text-orange-900 hover:bg-orange-200 flex-1 sm:flex-none"
+                       onClick={handleReassessmentClose}
+                     >
+                       Not now
+                     </Button>
+                     <Button 
+                       className="bg-orange-600 hover:bg-orange-700 text-white border-none flex-1 sm:flex-none"
+                       onClick={handleReassessmentConfirm}
+                     >
+                       Retake assessment
+                     </Button>
+                   </div>
+                </CardContent>
+              </Card>
+           )}
+        </div>
+      </section>
+
+      {/* Quick Actions (Legacy/Secondary) */}
+      <section>
+        <h3 className="font-medium text-[var(--color-text-primary)] mb-4">Resources</h3>
+        <div className="grid grid-cols-2 gap-4">
           <div 
             onClick={() => onNavigate?.('/consultation')}
-            className="bg-[var(--color-status-success-light)] p-6 rounded-xl flex flex-col items-center justify-center text-center gap-3 cursor-pointer hover:bg-emerald-100 transition-colors border border-transparent hover:border-emerald-200 col-span-2 md:col-span-1"
+            className="bg-[var(--color-status-success-light)] p-6 rounded-xl flex flex-col items-center justify-center text-center gap-3 cursor-pointer hover:bg-emerald-100 transition-colors border border-transparent hover:border-emerald-200"
           >
              <div className="w-10 h-10 bg-white/50 rounded-full flex items-center justify-center text-[var(--color-status-success)]">
                <Calendar className="w-5 h-5" />
@@ -390,8 +662,39 @@ export function Dashboard({ className, onNavigate }: DashboardProps) {
                <span className="text-xs text-[var(--color-text-muted)]">Talk to a professional</span>
              </div>
           </div>
+          
+          <div 
+             onClick={() => onNavigate?.('/library')}
+             className="bg-gray-100 p-6 rounded-xl flex flex-col items-center justify-center text-center gap-3 cursor-pointer hover:bg-gray-200 transition-colors"
+          >
+             <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center text-gray-600">
+               <BookOpen className="w-5 h-5" />
+             </div>
+             <div>
+               <span className="block font-medium text-gray-900">Library</span>
+               <span className="text-xs text-gray-500">Read articles</span>
+             </div>
+          </div>
         </div>
       </section>
+
+
+      {/* Program Check-in Modal */}
+      {checkInProgram && (
+        <ProgramCheckIn
+          programId={checkInProgram.id}
+          programTitle={checkInProgram.title}
+          currentDay={checkInProgram.day}
+          isOpen={showCheckIn}
+          onClose={() => setShowCheckIn(false)}
+        />
+      )}
+      {/* Reassessment Prompt - Manual Only */}
+      <ReassessmentPrompt 
+        isOpen={reassessment.isOpen && reassessment.reason === 'manual'}
+        onClose={handleReassessmentClose}
+        onConfirm={handleReassessmentConfirm}
+      />
     </div>
   );
 }

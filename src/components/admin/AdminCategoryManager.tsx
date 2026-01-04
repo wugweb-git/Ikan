@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
-import { Database, Plus, X, Save, FolderOpen, Edit2, Trash2, FileText, Tag, Filter, Type } from 'lucide-react';
+import { Plus, X, Save, FolderOpen, Edit2, Trash2, FileText, Tag, Filter, Type, Sparkles, ShieldCheck } from 'lucide-react';
 import { apiClient } from '../../lib/api-client';
 import { toast } from 'sonner';
 
@@ -42,23 +42,6 @@ const COLOR_PRESETS = [
   { value: '#3B82F6', label: 'Blue' },
 ];
 
-const DEFAULT_SEEDS = {
-  category: [
-    { name: 'Mental Health', slug: 'mental-health', color: '#8B5CF6', description: 'General mental health topics' },
-    { name: 'Anxiety', slug: 'anxiety', color: '#EAB308', description: 'Anxiety and stress management' },
-    { name: 'Depression', slug: 'depression', color: '#3B82F6', description: 'Depression and mood disorders' },
-  ],
-  content_type: [
-    { name: 'Article', slug: 'article', description: 'Written content' },
-    { name: 'Video', slug: 'video', description: 'Video content' },
-    { name: 'Audio', slug: 'audio', description: 'Audio content' },
-  ],
-  filter_type: [
-    { name: 'Duration', slug: 'duration', icon: 'filter', description: 'Filter by duration' },
-    { name: 'Topic', slug: 'topic', icon: 'tag', description: 'Filter by topic' },
-  ]
-};
-
 export function AdminCategoryManager({ onBack }: AdminCategoryManagerProps) {
   const [activeTab, setActiveTab] = useState<'category' | 'content_type' | 'filter_type'>('category');
   const [items, setItems] = useState<CategoryItem[]>([]);
@@ -82,10 +65,6 @@ export function AdminCategoryManager({ onBack }: AdminCategoryManagerProps) {
   const loadItems = async () => {
     setIsLoading(true);
     try {
-      // In a real app, we might filter by type on the server
-      // For now, we fetch all and filter client side if the API returns mixed types
-      // Or assume the API handles it. 
-      // The apiClient.getCategories() returns all.
       const allCategories = await apiClient.getCategories();
       const filtered = allCategories.filter((item: CategoryItem) => item.type === activeTab);
       setItems(filtered);
@@ -95,6 +74,49 @@ export function AdminCategoryManager({ onBack }: AdminCategoryManagerProps) {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleTestIntegrity = () => {
+    let issues = 0;
+    const report: string[] = [];
+    const slugs = new Set<string>();
+
+    items.forEach(item => {
+        const missingFields = [];
+        if (!item.name) missingFields.push('Name');
+        if (!item.slug) missingFields.push('Slug');
+        
+        if (missingFields.length > 0) {
+            issues++;
+            report.push(`Item "${item.name || 'Untitled'}": Missing ${missingFields.join(', ')}`);
+        }
+
+        // Check for duplicates
+        if (slugs.has(item.slug)) {
+            issues++;
+            report.push(`Item "${item.name}": Duplicate slug "${item.slug}"`);
+        }
+        slugs.add(item.slug);
+    });
+
+    if (issues === 0) {
+        toast.success('Integrity Check Passed: No issues found.');
+    } else {
+        console.warn('Integrity Issues:', report);
+        toast.warning(`Found ${issues} integrity issues. Check console.`);
+    }
+  };
+
+  const handleAutoFill = () => {
+    setFormData(prev => ({
+        ...prev,
+        name: prev.name || 'New Category',
+        slug: prev.slug || 'new-category',
+        description: prev.description || 'Auto-generated description for this item.',
+        color: prev.color || '#2A2A2A',
+        icon: prev.icon || 'folder'
+    }));
+    toast.success('Auto-Filled with suggestions');
   };
 
   const resetForm = () => {
@@ -167,28 +189,6 @@ export function AdminCategoryManager({ onBack }: AdminCategoryManagerProps) {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const handleSeedDefaults = async () => {
-    setIsLoading(true);
-    try {
-      const seeds = DEFAULT_SEEDS[activeTab];
-      let count = 0;
-      for (const seed of seeds) {
-        await apiClient.createCategory({
-          ...seed,
-          type: activeTab,
-          icon: 'folder' // default
-        });
-        count++;
-      }
-      toast.success(`Seeded ${count} default items`);
-      loadItems();
-    } catch (error) {
-      toast.error('Failed to seed defaults');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   const getTabLabel = (tab: string) => {
     switch (tab) {
       case 'category': return 'Category';
@@ -206,15 +206,16 @@ export function AdminCategoryManager({ onBack }: AdminCategoryManagerProps) {
         onBack={onBack}
         breadcrumbs={[{ label: 'Admin', onClick: onBack }, { label: 'Categories' }]}
         actions={
-          <Button 
-            variant="outline"
-            onClick={handleSeedDefaults}
-            style={{ gap: 'var(--spacing-2)' }}
-            disabled={isLoading}
-          >
-            <Database className="w-4 h-4" />
-            Seed Defaults
-          </Button>
+          <div className="flex gap-2">
+            <Button 
+                variant="outline"
+                onClick={handleTestIntegrity}
+                className="gap-2"
+            >
+                <ShieldCheck className="w-4 h-4" />
+                Test Integrity
+            </Button>
+          </div>
         }
       />
 
@@ -231,7 +232,7 @@ export function AdminCategoryManager({ onBack }: AdminCategoryManagerProps) {
               resetForm();
               setIsCreating(true);
             }}
-            style={{ gap: 'var(--spacing-2)' }}
+            className="gap-2"
           >
             <Plus className="w-4 h-4" />
             Add {getTabLabel(activeTab)}
@@ -254,7 +255,7 @@ export function AdminCategoryManager({ onBack }: AdminCategoryManagerProps) {
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                     placeholder="Name"
-                    style={{ backgroundColor: 'var(--color-bg-input)' }}
+                    className="bg-[var(--color-bg-input)]"
                   />
                 </div>
 
@@ -264,7 +265,7 @@ export function AdminCategoryManager({ onBack }: AdminCategoryManagerProps) {
                     value={formData.slug}
                     onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
                     placeholder="url-friendly-slug"
-                    style={{ backgroundColor: 'var(--color-bg-input)' }}
+                    className="bg-[var(--color-bg-input)]"
                   />
                 </div>
 
@@ -273,7 +274,7 @@ export function AdminCategoryManager({ onBack }: AdminCategoryManagerProps) {
                   <div className="space-y-2">
                     <Label>Icon *</Label>
                     <Select value={formData.icon} onValueChange={(value) => setFormData({ ...formData, icon: value })}>
-                      <SelectTrigger style={{ backgroundColor: 'var(--color-bg-input)' }}>
+                      <SelectTrigger className="bg-[var(--color-bg-input)]">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
@@ -299,7 +300,7 @@ export function AdminCategoryManager({ onBack }: AdminCategoryManagerProps) {
                     <Label>Color</Label>
                     <div className="flex gap-2">
                       <Select value={formData.color} onValueChange={(value) => setFormData({ ...formData, color: value })}>
-                        <SelectTrigger style={{ backgroundColor: 'var(--color-bg-input)' }}>
+                        <SelectTrigger className="bg-[var(--color-bg-input)]">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
@@ -320,8 +321,7 @@ export function AdminCategoryManager({ onBack }: AdminCategoryManagerProps) {
                         type="color"
                         value={formData.color}
                         onChange={(e) => setFormData({ ...formData, color: e.target.value })}
-                        className="w-12 h-10 rounded cursor-pointer"
-                        style={{ border: '1px solid var(--color-border-default)' }}
+                        className="w-12 h-10 rounded cursor-pointer border border-[var(--color-border-default)]"
                       />
                     </div>
                   </div>
@@ -333,12 +333,16 @@ export function AdminCategoryManager({ onBack }: AdminCategoryManagerProps) {
                     value={formData.description}
                     onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                     placeholder="Brief description"
-                    style={{ backgroundColor: 'var(--color-bg-input)' }}
+                    className="bg-[var(--color-bg-input)]"
                   />
                 </div>
               </div>
 
               <div className="flex gap-2 justify-end">
+                <Button variant="outline" onClick={handleAutoFill} title="Auto-fill empty fields">
+                  <Sparkles className="w-4 h-4 mr-2" />
+                  Auto-Fill
+                </Button>
                 <Button variant="outline" onClick={resetForm}>
                   <X className="w-4 h-4 mr-2" />
                   Cancel
@@ -367,8 +371,8 @@ export function AdminCategoryManager({ onBack }: AdminCategoryManagerProps) {
             <CardContent>
               {items.length === 0 ? (
                 <div className="text-center py-12">
-                  <FolderOpen className="w-12 h-12 mx-auto mb-4" style={{ color: 'var(--color-text-muted)' }} />
-                  <p style={{ color: 'var(--color-text-muted)' }}>
+                  <FolderOpen className="w-12 h-12 mx-auto mb-4 text-[var(--color-text-muted)]" />
+                  <p className="text-[var(--color-text-muted)]">
                     No {getTabLabel(activeTab).toLowerCase()} found.
                   </p>
                 </div>
@@ -376,22 +380,18 @@ export function AdminCategoryManager({ onBack }: AdminCategoryManagerProps) {
                 <div className="space-y-2">
                   {items.map(item => {
                     // Find icon in options or default to FolderOpen
-                    // If item.icon is a string (value), use that to find the Icon component
                     const iconOption = ICON_OPTIONS.find(i => i.value === item.icon);
                     const ItemIcon = iconOption?.icon || FolderOpen;
+                    const isEditing = editingId === item.id;
                     
                     return (
                       <div
                         key={item.id}
-                        className="flex items-center justify-between p-4 rounded-lg"
-                        style={{ 
-                          backgroundColor: editingId === item.id 
-                            ? 'var(--color-accent-default)' 
-                            : 'var(--color-bg-muted)',
-                          border: editingId === item.id 
-                            ? '2px solid var(--color-primary-default)' 
-                            : '1px solid var(--color-border-default)'
-                        }}
+                        className={`flex items-center justify-between p-4 rounded-lg transition-colors border ${
+                           isEditing 
+                           ? 'bg-[var(--color-accent-default)] border-[var(--color-primary-default)] ring-1 ring-[var(--color-primary-default)]' 
+                           : 'bg-[var(--color-bg-muted)] border-[var(--color-border-default)] hover:bg-gray-100'
+                        }`}
                       >
                         <div className="flex items-center gap-4 flex-1">
                           {/* Show Icon ONLY for Filter Type */}
@@ -406,14 +406,14 @@ export function AdminCategoryManager({ onBack }: AdminCategoryManagerProps) {
                           {/* Show Color swatch ONLY for Category */}
                           {activeTab === 'category' && (
                             <div
-                              className="w-4 h-10 rounded-lg"
+                              className="w-4 h-10 rounded-lg shadow-sm border border-black/5"
                               style={{ backgroundColor: item.color || '#2A2A2A' }}
                             />
                           )}
 
                           <div className="flex-1">
                             <div className="flex items-center gap-3">
-                              <p style={{ fontWeight: 'var(--font-weight-medium)' }}>{item.name}</p>
+                              <p className="font-medium">{item.name}</p>
                               <span 
                                 className="text-xs text-muted-foreground bg-white px-2 py-0.5 rounded border"
                               >
@@ -421,7 +421,7 @@ export function AdminCategoryManager({ onBack }: AdminCategoryManagerProps) {
                               </span>
                             </div>
                             {item.description && (
-                              <p style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-muted)', marginTop: 'var(--spacing-1)' }}>
+                              <p className="text-sm text-[var(--color-text-muted)] mt-1">
                                 {item.description}
                               </p>
                             )}
@@ -440,7 +440,7 @@ export function AdminCategoryManager({ onBack }: AdminCategoryManagerProps) {
                             size="sm"
                             onClick={() => handleDelete(item.id)}
                           >
-                            <Trash2 className="w-4 h-4" style={{ color: 'var(--color-danger-default)' }} />
+                            <Trash2 className="w-4 h-4 text-[var(--color-danger-default)]" />
                           </Button>
                         </div>
                       </div>

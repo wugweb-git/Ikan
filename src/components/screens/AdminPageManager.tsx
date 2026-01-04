@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FileText, Download, Edit, Plus, MoreHorizontal, Eye, EyeOff, Trash2, ExternalLink, RefreshCw } from 'lucide-react';
+import { FileText, Download, Edit, Plus, MoreHorizontal, Eye, EyeOff, Trash2, ExternalLink, RefreshCw, ShieldCheck } from 'lucide-react';
 import { useNotifications } from '../../contexts/NotificationContext';
 import { apiClient } from '../../lib/api-client';
 import { AdminHeader } from '../admin/AdminHeader';
@@ -56,6 +56,30 @@ export function AdminPageManager({ onBack, className }: AdminPageManagerProps) {
   useEffect(() => {
     if (viewMode === 'list') loadPages();
   }, [viewMode]);
+
+  const handleTestIntegrity = () => {
+    let issues = 0;
+    const report: string[] = [];
+
+    pages.forEach(p => {
+        const missingFields = [];
+        if (!p.title) missingFields.push('Title');
+        if (!p.slug) missingFields.push('Slug');
+        if (!p.content || p.content.length < 10) missingFields.push('Content');
+        
+        if (missingFields.length > 0) {
+            issues++;
+            report.push(`Page "${p.title || p.name || 'Untitled'}": Missing ${missingFields.join(', ')}`);
+        }
+    });
+
+    if (issues === 0) {
+        showToast('success', 'Integrity Check Passed', 'All pages appear to be valid.');
+    } else {
+        console.warn('Integrity Issues:', report);
+        showToast('warning', 'Integrity Issues Found', `Found ${issues} pages with potential issues. Check console.`);
+    }
+  };
 
   const handleSyncSystemPages = async () => {
     try {
@@ -262,7 +286,11 @@ export function AdminPageManager({ onBack, className }: AdminPageManagerProps) {
   ];
 
   const headerActions = (
-    <>
+    <div className="flex gap-2">
+      <Button variant="outline" onClick={handleTestIntegrity} title="Check integrity">
+        <ShieldCheck className="w-4 h-4 mr-2" />
+        {!isMobile && 'Test Integrity'}
+      </Button>
       <Button 
         variant="outline" 
         onClick={handleSyncSystemPages} 
@@ -274,7 +302,7 @@ export function AdminPageManager({ onBack, className }: AdminPageManagerProps) {
       </Button>
       <Button variant="outline" onClick={() => {}}><Download className="w-4 h-4" />{!isMobile && 'Export'}</Button>
       <Button onClick={handleCreateNew} style={{ backgroundColor: 'var(--color-primary-default)', color: 'var(--color-primary-on)' }}><Plus className="w-4 h-4" />{!isMobile && 'Add Page'}</Button>
-    </>
+    </div>
   );
 
   if (viewMode === 'edit' || viewMode === 'create') {

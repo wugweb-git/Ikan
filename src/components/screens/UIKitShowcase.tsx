@@ -15,7 +15,7 @@ import { UIKitFeedback } from '../uikit/UIKitFeedback';
 import { UIKitDataDisplay } from '../uikit/UIKitDataDisplay';
 import { UIKitPatterns } from '../uikit/UIKitPatterns';
 
-export function UIKitShowcase() {
+export function UIKitShowcase({ onNavigate }: { onNavigate?: (route: string) => void }) {
   const [activeTab, setActiveTab] = useState('foundations');
 
   const tabs = [
@@ -31,21 +31,30 @@ export function UIKitShowcase() {
   ];
 
   return (
-    <div className="min-h-screen bg-[var(--color-bg-page)] pb-20">
-      <PageHero 
-        title="iKan UI Kit"
-        subtitle="The single source of truth for our design system."
-      />
+    <div className="min-h-screen bg-[var(--color-bg-page)] flex flex-col">
+      {/* Custom Header for Full Screen Mode */}
+      <div className="bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between sticky top-0 z-50 shadow-sm">
+        <div>
+           <h1 className="text-xl font-bold text-[var(--color-text-primary)]">iKan Design System</h1>
+           <p className="text-sm text-[var(--color-text-muted)]">UI Kit & Component Library</p>
+        </div>
+        <button 
+          onClick={() => onNavigate?.('/dashboard')}
+          className="text-sm font-medium text-[var(--color-primary-default)] hover:underline"
+        >
+          Exit UI Kit
+        </button>
+      </div>
 
-      <div className="max-w-7xl mx-auto px-4 md:px-8 -mt-8 relative z-10">
-        <Tabs defaultValue="foundations" className="space-y-8" onValueChange={setActiveTab}>
-          <div className="overflow-x-auto pb-2">
-            <TabsList className="w-full justify-start bg-transparent p-0 h-auto gap-2 flex-wrap">
+      <div className="flex-1 w-full max-w-[1600px] mx-auto p-6">
+        <Tabs defaultValue="foundations" className="space-y-6" onValueChange={setActiveTab}>
+          <div className="sticky top-[72px] z-40 bg-[var(--color-bg-page)] pb-4 -mx-2 px-2 overflow-x-auto">
+            <TabsList className="w-full justify-start bg-transparent p-0 h-auto gap-2 flex-wrap sm:flex-nowrap">
               {tabs.map((tab) => (
                 <TabsTrigger
                   key={tab.id}
                   value={tab.id}
-                  className="data-[state=active]:bg-[var(--color-primary-default)] data-[state=active]:text-white bg-white border border-gray-200 px-4 py-2 h-auto mb-2"
+                  className="data-[state=active]:bg-[var(--color-primary-default)] data-[state=active]:text-white bg-white border border-gray-200 px-4 py-2.5 h-auto rounded-full shadow-sm whitespace-nowrap"
                 >
                   <tab.icon className="w-4 h-4 mr-2" />
                   {tab.label}
@@ -54,41 +63,43 @@ export function UIKitShowcase() {
             </TabsList>
           </div>
 
-          <TabsContent value="foundations">
-            <UIKitFoundations />
-          </TabsContent>
+          <div className="mt-4">
+            <TabsContent value="foundations" className="m-0 focus-visible:outline-none">
+              <UIKitFoundations />
+            </TabsContent>
 
-          <TabsContent value="elements">
-            <UIKitElements />
-          </TabsContent>
+            <TabsContent value="elements" className="m-0 focus-visible:outline-none">
+              <UIKitElements />
+            </TabsContent>
 
-          <TabsContent value="forms">
-            <UIKitForms />
-          </TabsContent>
+            <TabsContent value="forms" className="m-0 focus-visible:outline-none">
+              <UIKitForms />
+            </TabsContent>
 
-          <TabsContent value="complex-forms">
-            <UIKitComplexForms />
-          </TabsContent>
+            <TabsContent value="complex-forms" className="m-0 focus-visible:outline-none">
+              <UIKitComplexForms />
+            </TabsContent>
 
-          <TabsContent value="navigation">
-            <UIKitNavigation />
-          </TabsContent>
+            <TabsContent value="navigation" className="m-0 focus-visible:outline-none">
+              <UIKitNavigation />
+            </TabsContent>
 
-          <TabsContent value="nav-patterns">
-            <UIKitNavigationPatterns />
-          </TabsContent>
+            <TabsContent value="nav-patterns" className="m-0 focus-visible:outline-none">
+              <UIKitNavigationPatterns />
+            </TabsContent>
 
-          <TabsContent value="feedback">
-            <UIKitFeedback />
-          </TabsContent>
+            <TabsContent value="feedback" className="m-0 focus-visible:outline-none">
+              <UIKitFeedback />
+            </TabsContent>
 
-          <TabsContent value="data">
-            <UIKitDataDisplay />
-          </TabsContent>
+            <TabsContent value="data" className="m-0 focus-visible:outline-none">
+              <UIKitDataDisplay />
+            </TabsContent>
 
-          <TabsContent value="patterns">
-            <UIKitPatterns />
-          </TabsContent>
+            <TabsContent value="patterns" className="m-0 focus-visible:outline-none">
+              <UIKitPatterns />
+            </TabsContent>
+          </div>
         </Tabs>
       </div>
     </div>

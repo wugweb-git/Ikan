@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FileText, Download, Edit, Plus, Eye, Tag, MoreHorizontal, EyeOff, Trash2, ExternalLink } from 'lucide-react';
+import { FileText, Download, Edit, Plus, Eye, Tag, MoreHorizontal, EyeOff, Trash2, ExternalLink, ShieldCheck } from 'lucide-react';
 import { useNotifications } from '../../contexts/NotificationContext';
 import { apiClient } from '../../lib/api-client';
 import { AdminHeader } from '../admin/AdminHeader';
@@ -137,6 +137,30 @@ export function AdminResourceManager({ onBack, className }: AdminResourceManager
     a.download = `resources-${new Date().toISOString().split('T')[0]}.csv`;
     a.click();
     showToast('success', 'Export Complete', 'Resources exported to CSV');
+  };
+
+  const handleTestIntegrity = () => {
+    let issues = 0;
+    const report: string[] = [];
+
+    resources.forEach(r => {
+        const missingFields = [];
+        if (!r.title) missingFields.push('Title');
+        if (!r.category) missingFields.push('Category');
+        if (!r.description) missingFields.push('Description');
+        
+        if (missingFields.length > 0) {
+            issues++;
+            report.push(`Resource "${r.title || 'Untitled'}": Missing ${missingFields.join(', ')}`);
+        }
+    });
+
+    if (issues === 0) {
+        showToast('success', 'Integrity Check Passed', 'All resources appear to be valid.');
+    } else {
+        console.warn('Integrity Issues:', report);
+        showToast('warning', 'Integrity Issues Found', `Found ${issues} resources with missing data. Check console for details.`);
+    }
   };
 
   const handleCreateNew = () => {
@@ -429,10 +453,16 @@ export function AdminResourceManager({ onBack, className }: AdminResourceManager
         breadcrumbs={[{ label: 'Admin', onClick: onBack }, { label: 'Resource Manager' }]}
         stats={stats}
         actions={
-          <Button onClick={handleCreateNew} className="gap-2" aria-label="Create new resource">
-            <Plus className="w-4 h-4" />
-            {!isMobile && 'Add Resource'}
-          </Button>
+          <div className="flex gap-2">
+             <Button variant="outline" onClick={handleTestIntegrity} title="Check data integrity">
+                <ShieldCheck className="w-4 h-4 mr-2" />
+                {!isMobile && 'Test Integrity'}
+             </Button>
+             <Button onClick={handleCreateNew} className="gap-2" aria-label="Create new resource">
+                <Plus className="w-4 h-4" />
+                {!isMobile && 'Add Resource'}
+             </Button>
+          </div>
         }
       />
 

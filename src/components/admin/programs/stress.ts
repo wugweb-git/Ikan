@@ -10,6 +10,7 @@ import {
 
 export const stressProgramData = {
   title: "Stress Buster",
+  slug: "stress-buster",
   description: "A 30-day guided program to understand, manage, and reduce everyday stress.",
   category: "Stress",
   image_url: "https://images.unsplash.com/photo-1758876201548-ade1eff8b169?w=800",

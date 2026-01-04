@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { BookOpen, Download, Plus, MoreHorizontal, Eye, EyeOff, Edit, Trash2 } from 'lucide-react';
+import { BookOpen, Download, Plus, MoreHorizontal, Eye, EyeOff, Edit, Trash2, CheckCircle } from 'lucide-react';
 import { useNotifications } from '../../contexts/NotificationContext';
 import { apiClient } from '../../lib/api-client';
+import { cmsUtils } from '../admin/cms-utils';
 import { AdminHeader } from '../admin/AdminHeader';
 import { AdminEmptyState } from '../admin/AdminEmptyState';
 import { useIsMobile } from '../../hooks/useIsMobile';
@@ -79,6 +80,26 @@ export function AdminEquipProgramManager({ onBack, className }: AdminEquipProgra
       showToast('error', 'API Error', 'Failed to load programs');
       setPrograms([]);
       setLoading(false);
+    }
+  };
+
+  const handleVerify = async () => {
+    setLoading(true);
+    try {
+        const { logs, results } = await cmsUtils.verifyAssessments();
+        logs.forEach(log => console.log(log));
+        
+        const issues = results.filter(r => r.status !== 'Perfect');
+        if (issues.length > 0) {
+             showToast('warning', 'Integrity Issues', `Found ${issues.length} issues. Check console.`);
+             console.table(results);
+        } else {
+             showToast('success', 'Integrity Verified', 'All assessments match source.');
+        }
+        setLoading(false);
+    } catch (e: any) {
+        showToast('error', 'Error', e.message);
+        setLoading(false);
     }
   };
 
@@ -313,10 +334,16 @@ export function AdminEquipProgramManager({ onBack, className }: AdminEquipProgra
         searchPlaceholder="Search programs..."
         onRowClick={(item) => handleEdit(item.id)}
         actions={
-          <Button variant="outline" className="gap-2">
-            <Download className="w-4 h-4" />
-            {!isMobile && 'Export'}
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={handleVerify} className="gap-2" disabled={loading}>
+                <CheckCircle className="w-4 h-4" />
+                {!isMobile && 'Verify'}
+            </Button>
+            <Button variant="outline" className="gap-2">
+                <Download className="w-4 h-4" />
+                {!isMobile && 'Export'}
+            </Button>
+          </div>
         }
       />
     </div>

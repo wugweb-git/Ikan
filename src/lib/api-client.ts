@@ -19,6 +19,7 @@ export interface User {
 }
 
 import { projectId, publicAnonKey } from '../utils/supabase/info';
+import { ALL_DUMMY_PROGRAMS } from './demo-data';
 
 const API_BASE = `https://${projectId}.supabase.co/functions/v1/make-server-cc205da9`;
 
@@ -82,7 +83,8 @@ class ApiClient {
       }
       
       // Suppress 401 error logging to avoid console noise during auth checks
-      if (!error.message || !error.message.includes('401')) {
+      // Also suppress 404 logging as it is often used for "check if exists" logic
+      if (!error.message || (!error.message.includes('401') && !error.message.includes('404'))) {
         console.error('API Request failed', error);
       }
       
@@ -213,17 +215,45 @@ class ApiClient {
     return res.consultant;
   }
 
+  async createProfessional(data: any) {
+    const res = await this.request('/consultants', { 
+      method: 'POST', 
+      body: JSON.stringify(data)
+    }, true);
+    return res.consultant;
+  }
+
+  async updateProfessional(id: string, data: any) {
+    const res = await this.request(`/consultants/${id}`, { 
+      method: 'PUT', 
+      body: JSON.stringify(data)
+    }, true);
+    return res.consultant;
+  }
+
+  async deleteProfessional(id: string) {
+    return this.request(`/consultants/${id}`, { method: 'DELETE' }, true);
+  }
+
   // Equip Programs
   async getEquipPrograms() {
     const res = await this.request('/equip/programs', { method: 'GET' }, true);
-    return (res.programs || []).map((p: any) => ({
+    const realPrograms = (res.programs || []).map((p: any) => ({
       ...p,
       title: p.title || p.name || 'Untitled Program'
     }));
+    return [...ALL_DUMMY_PROGRAMS, ...realPrograms];
   }
 
   async getEquipProgram(id: string) {
-    const res = await this.request(`/equip/programs/${id}`, { method: 'GET' }, true);
+    // ⚡ DEMO INTERCEPT
+    const demoProgram = ALL_DUMMY_PROGRAMS.find(p => p.id === id);
+    if (demoProgram) {
+        console.log('⚡ API Client: Serving Demo Program', id);
+        return demoProgram;
+    }
+
+    const res = await this.request(`/equip/programs/${id}?t=${Date.now()}`, { method: 'GET' }, true);
     const raw = res.program;
     
     if (!raw) return null;
@@ -237,18 +267,44 @@ class ApiClient {
             title: day.title,
             description: day.description || '',
             image_url: day.image_url,
-            activities: (day.blocks || []).map((block: any) => ({
-                id: block.id,
-                title: block.title || 'Untitled Block',
-                type: block.block_type,
-                content: block.content || '',
-                duration: block.estimated_time_minutes || 5,
-                required: block.is_required,
-                exerciseConfig: block.exercise_config || block.exerciseConfig,
-                stepGroup: block.step_group_id || block.stepGroup,
-                autoAdvance: block.auto_advance || block.autoAdvance,
-                image_url: block.image_url
-            }))
+            dayType: day.day_type || day.dayType || 'learning',
+            activities: (day.blocks || []).map((block: any) => {
+                // Fix for legacy 'sleep_diary' type in seeded data
+                if (block.block_type === 'sleep_diary' || block.type === 'sleep_diary') {
+                    return {
+                        id: block.id,
+                        title: block.title || 'Sleep Log',
+                        type: 'exercise',
+                        content: block.content || '',
+                        duration: block.estimated_time_minutes || 5,
+                        required: block.is_required !== false, // Default to true
+                        exerciseConfig: {
+                            subtype: 'input-table',
+                            prompt: block.description || 'Please record your sleep details below.',
+                            columns: ['Bed Time', 'Wake Time', 'Quality (1-5)', 'Notes'],
+                            allow_add_rows: true,
+                            ...(block.exercise_config || block.exerciseConfig || {})
+                        },
+                        stepGroup: block.step_group_id || block.stepGroup,
+                        autoAdvance: block.auto_advance || block.autoAdvance,
+                        image_url: block.image_url
+                    };
+                }
+
+                // Standard mapping
+                return {
+                    id: block.id,
+                    title: block.title || 'Untitled Block',
+                    type: block.block_type || block.type || 'lesson',
+                    content: block.content || '',
+                    duration: block.estimated_time_minutes || 5,
+                    required: block.is_required,
+                    exerciseConfig: block.exercise_config || block.exerciseConfig || {},
+                    stepGroup: block.step_group_id || block.stepGroup,
+                    autoAdvance: block.auto_advance || block.autoAdvance,
+                    image_url: block.image_url
+                };
+            })
         }))
     };
   }
@@ -293,6 +349,16 @@ class ApiClient {
   }
 
   async enrollUser(equipId: string) {
+    const demoProgram = ALL_DUMMY_PROGRAMS.find(p => p.id === equipId);
+    if (demoProgram) {
+        return {
+            id: `mock-enroll-${equipId}`,
+            equip_id: equipId,
+            status: 'active',
+            current_day_number: 1,
+            created_at: new Date().toISOString()
+        };
+    }
     const res = await this.request(`/equip/purchase/${equipId}`, { 
       method: 'POST',
       body: JSON.stringify({}) 
@@ -346,9 +412,30 @@ class ApiClient {
     try {
       if (!(await this.isAuthenticated())) return [];
       const res = await this.request('/recommendations', { method: 'GET' }, true);
-      return res.recommendations || [];
+      
+      // Inject Demo Recommendations
+      const demoRecs = ALL_DUMMY_PROGRAMS.map(p => ({
+          id: p.id,
+          equip_id: p.id,
+          title: p.title,
+          description: p.description,
+          image_url: p.daily_content[0]?.activities[0]?.image_url,
+          match_score: 90,
+          tags: [p.category]
+      }));
+
+      return [...demoRecs, ...(res.recommendations || [])];
     } catch (e) {
-      return [];
+      // Fallback to demos on error
+      return ALL_DUMMY_PROGRAMS.map(p => ({
+          id: p.id,
+          equip_id: p.id,
+          title: p.title,
+          description: p.description,
+          image_url: p.daily_content[0]?.activities[0]?.image_url,
+          match_score: 90,
+          tags: [p.category]
+      }));
     }
   }
 
@@ -493,6 +580,19 @@ class ApiClient {
     // Determine the user's auth status
     const isAuthenticated = await this.isAuthenticated();
     
+    const demoProgram = ALL_DUMMY_PROGRAMS.find(p => p.id === data.programId);
+    if (demoProgram) {
+        return {
+            enrollment: {
+                id: `mock-enroll-${data.programId}`,
+                equip_id: data.programId,
+                status: 'active',
+                current_day_number: 1,
+                created_at: new Date().toISOString()
+            }
+        };
+    }
+    
     // If not authenticated, we might need to store this locally or create a guest enrollment
     // For now, we assume the backend handles guest enrollments or the frontend forces login before this step
     // But based on the error "createEquipEnrollment is not a function", we just need this method to exist.
@@ -502,6 +602,36 @@ class ApiClient {
     return this.request(`/equip/purchase/${data.programId}`, {
       method: 'POST',
       body: JSON.stringify({ onboarding_data: data.onboardingData })
+    }, true);
+  }
+
+  async saveProgramCheckIn(data: {
+    programId: string;
+    day: number;
+    perceivedChange: 'better' | 'same' | 'worse';
+    confidenceLevel: number;
+    continuationIntent: 'continue' | 'pause' | 'stop';
+    feedback: string;
+  }) {
+    // We use the assessments endpoint to store this data structure
+    // ID Format: checkin_{programId}_day_{day}
+    const checkInId = `checkin_${data.programId}_day_${data.day}`;
+    
+    return this.request('/user/assessments', { 
+      method: 'POST',
+      body: JSON.stringify({
+        assessmentId: checkInId,
+        responses: {
+          type: 'program_checkin',
+          ...data
+        },
+        status: 'completed',
+        score: 0, // No scoring
+        interpretation: {
+          label: data.continuationIntent,
+          description: `User feels ${data.perceivedChange} with ${data.confidenceLevel}/5 confidence.`
+        }
+      })
     }, true);
   }
 
@@ -541,7 +671,7 @@ class ApiClient {
   }
 
   async getAssessment(id: string) {
-    const res = await this.request(`/assessments/${id}`, { method: 'GET' }, true);
+    const res = await this.request(`/assessments/${id}?t=${Date.now()}`, { method: 'GET' }, true);
     return res.assessment;
   }
 
@@ -587,15 +717,17 @@ class ApiClient {
     }
   }
 
-  async createJournalEntry(date: string, mood: number, note: string, emotions: string[], energy: number) {
+  async createJournalEntry(date: string, mood: number, note: string, emotions: string[], energy: number, stress?: number, contextTags?: string[]) {
     return this.request('/user/journal', { 
       method: 'POST',
       body: JSON.stringify({
         date,
         mood_rating: mood,
         freehand_text_content: note,
-        emotions,
-        energy
+        emotions, // Legacy: keep sending for backward compatibility or map contextTags here?
+        energy,
+        stress_level: stress,
+        context_tags: contextTags
       })
     }, true);
   }
@@ -628,10 +760,6 @@ class ApiClient {
     return this.request(`/admin/users/${userId}`, { method: 'DELETE' }, true);
   }
 
-  async addDefaultOnboarding() {
-    return this.request(`/admin/equip/add-default-onboarding`, { method: 'POST' }, true);
-  }
-
   // Analytics
   async getAggregatedAnalytics(period: string = 'week') {
     try {
@@ -659,6 +787,10 @@ class ApiClient {
         moodTrends: []
       };
     }
+  }
+
+  async cleanupZombieEnrollments() {
+    return this.request('/admin/equip/cleanup-zombies', { method: 'POST' }, true);
   }
 
   // Backup & Restore

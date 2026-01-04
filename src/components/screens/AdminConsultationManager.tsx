@@ -7,7 +7,8 @@ import {
   MapPin,
   Calendar as CalendarIcon,
   Edit2,
-  MoreHorizontal
+  MoreHorizontal,
+  ShieldCheck
 } from 'lucide-react';
 import { useNotifications } from '../../contexts/NotificationContext';
 import { apiClient } from '../../lib/api-client';
@@ -86,6 +87,30 @@ export function AdminConsultationManager({ onBack, onNavigate }: AdminConsultati
       showToast('error', 'API Error', 'Failed to load professionals');
       setProfessionals([]);
       setLoading(false);
+    }
+  };
+
+  const handleTestIntegrity = () => {
+    let issues = 0;
+    const report: string[] = [];
+
+    professionals.forEach(p => {
+        const missingFields = [];
+        if (!p.name) missingFields.push('Name');
+        if (!p.credentials) missingFields.push('Credentials');
+        if (!p.category) missingFields.push('Category');
+        
+        if (missingFields.length > 0) {
+            issues++;
+            report.push(`Professional "${p.name || 'Unknown'}": Missing ${missingFields.join(', ')}`);
+        }
+    });
+
+    if (issues === 0) {
+        showToast('success', 'Integrity Check Passed', 'All professionals profiles appear valid.');
+    } else {
+        console.warn('Integrity Issues:', report);
+        showToast('warning', 'Integrity Issues Found', `Found ${issues} profiles with missing data. Check console.`);
     }
   };
 
@@ -299,10 +324,16 @@ export function AdminConsultationManager({ onBack, onNavigate }: AdminConsultati
         breadcrumbs={[{ label: 'Admin', onClick: onBack }, { label: 'Consultation Manager' }]}
         stats={stats}
         actions={
-          <Button onClick={handleCreateNew} style={{ backgroundColor: 'var(--color-primary-default)', color: 'var(--color-primary-on)' }}>
-            <Plus className="w-4 h-4 mr-2" />
-            {!isMobile && 'Add Professional'}
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={handleTestIntegrity} title="Check data integrity">
+              <ShieldCheck className="w-4 h-4 mr-2" />
+              {!isMobile && 'Test Integrity'}
+            </Button>
+            <Button onClick={handleCreateNew} style={{ backgroundColor: 'var(--color-primary-default)', color: 'var(--color-primary-on)' }}>
+              <Plus className="w-4 h-4 mr-2" />
+              {!isMobile && 'Add Professional'}
+            </Button>
+          </div>
         }
       />
 

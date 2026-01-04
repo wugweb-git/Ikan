@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Save, Trash2, FileText, Edit, Search, Image, Video, Upload, EyeOff, X } from 'lucide-react';
+import { Save, Trash2, FileText, Edit, Search, Image, Video, Upload, EyeOff, X, Sparkles } from 'lucide-react';
 import { useNotifications } from '../../contexts/NotificationContext';
 import { apiClient } from '../../lib/api-client';
 import { AdminPageLayout } from '../admin/AdminPageLayout';
@@ -99,6 +99,24 @@ export function PageEditPage({ pageId, onBack, onSave }: PageEditPageProps) {
     }
   };
 
+  const handleAutoFill = () => {
+    setFormData(prev => ({
+        ...prev,
+        title: prev.title || 'New Page Title',
+        slug: prev.slug || 'new-page-slug',
+        content: prev.content || `<h1>Welcome to ${prev.title || 'this page'}</h1><p>This is a placeholder content block. You can edit this text.</p><h2>Section 1</h2><p>Add more details here.</p>`,
+        metaDescription: prev.metaDescription || `Learn more about ${prev.title || 'this topic'} on iKan.`,
+        metaKeywords: prev.metaKeywords || 'wellness, mental health, guide',
+        ogTitle: prev.ogTitle || prev.title,
+        ogDescription: prev.ogDescription || prev.metaDescription,
+        featuredImage: prev.featuredImage || 'https://source.unsplash.com/1200x630/?wellness,calm',
+        heroImage: prev.heroImage || 'https://source.unsplash.com/1920x1080/?nature,peace',
+        published: false
+    }));
+    showToast('success', 'Auto-Filled', 'Form populated with suggestions.');
+    markAsUnsaved();
+  };
+
   const handleSave = async (shouldPublish?: boolean) => {
     if (!validateForm(formData)) {
       showToast('error', 'Validation Error', 'Please fix the errors');
@@ -192,6 +210,12 @@ export function PageEditPage({ pageId, onBack, onSave }: PageEditPageProps) {
           onClick: () => handleSave(!formData.published),
           loading: saving
         }}
+        actions={
+            <Button variant="outline" onClick={handleAutoFill} title="Auto-fill empty fields">
+                <Sparkles className="w-4 h-4 mr-2" />
+                Auto-Fill
+            </Button>
+        }
         secondaryActions={[
           // Button 1: Cancel
           {

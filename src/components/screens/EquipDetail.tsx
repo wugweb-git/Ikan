@@ -15,6 +15,7 @@ import { EmptyState } from '../ui/empty-state';
 import { Skeleton } from '../ui/skeleton-loader';
 import { EQUIP_CONTENT, NEWSLETTER_CONTENT, LEGACY_PROGRAM_IDS, FALLBACK_IMAGES } from '../../lib/constants/content';
 import { SLEEP_TIGHT_FALLBACK, FALLBACK_RELATED_PROGRAM, MOCK_RESOURCES } from '../../lib/content/equip';
+import { DUMMY_EQUIP_PROGRAM } from '../../lib/demo-data';
 
 interface EquipDetailProps {
   equipId?: string;
@@ -142,6 +143,30 @@ export function EquipDetail({ equipId = 'sleep-tight-9', onNavigate }: EquipDeta
     const fetchEquipData = async () => {
       try {
         setIsLoading(true);
+
+        // DEMO MODE CHECK
+        if (equipId === DUMMY_EQUIP_PROGRAM.id) {
+           console.log('⚡ Loading Demo Equip Program (Offline Mode)');
+           setEquipData({
+             ...DUMMY_EQUIP_PROGRAM,
+             // Add missing frontend-specific fields that might be expected
+             hero_image: DUMMY_EQUIP_PROGRAM.cover_image || 'https://images.unsplash.com/photo-1506126613408-eca07ce68773?w=800&q=80',
+             cta_button_link: `/equip-program-onboarding?id=${DUMMY_EQUIP_PROGRAM.id}`,
+             metadata: {
+                tile1_content: '<h3>About this Demo</h3><p>This is a demonstration of the Equip Program flow. It functions exactly like a real program but runs entirely in your browser without backend connections.</p>',
+                tile2_content: '<img src="https://images.unsplash.com/photo-1506126613408-eca07ce68773?w=800&q=80" alt="Demo" class="rounded-lg" />',
+                eligibility_intro: 'Perfect for:',
+                eligibility_point_1: 'Testing the UI flow',
+                eligibility_point_2: 'Verifying completion logic',
+                eligibility_point_3: 'Checking mobile responsiveness',
+                eligibility_point_4: 'Demonstrating features'
+             }
+           });
+           setRelatedPrograms([]);
+           setIsLoading(false);
+           return;
+        }
+
         // Fetch main equip program data using apiClient
         const program = await apiClient.getEquipProgram(equipId);
         

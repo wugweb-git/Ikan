@@ -175,6 +175,34 @@ export const iconConfig = {
     },
     "x": {
       "outline": "Icon/X/Outline"
+    },
+    "battery": {
+      "default": "Icon/Battery/Default",
+      "outline": "Icon/Battery/Outline"
+    },
+    "batteryLow": {
+      "default": "Icon/BatteryLow/Default",
+      "outline": "Icon/BatteryLow/Outline"
+    },
+    "batteryMedium": {
+      "default": "Icon/BatteryMedium/Default",
+      "outline": "Icon/BatteryMedium/Outline"
+    },
+    "batteryFull": {
+      "default": "Icon/BatteryFull/Default",
+      "outline": "Icon/BatteryFull/Outline"
+    },
+    "zap": {
+      "default": "Icon/Zap/Default",
+      "outline": "Icon/Zap/Outline"
+    },
+    "activity": {
+      "default": "Icon/Activity/Default",
+      "outline": "Icon/Activity/Outline"
+    },
+    "loader": {
+      "default": "Icon/Loader/Default",
+      "outline": "Icon/Loader/Outline"
     }
   }
 } as const;

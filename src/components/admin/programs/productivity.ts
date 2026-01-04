@@ -1,5 +1,6 @@
 export const productivityProgramData = {
   title: "Productivity Reset",
+  slug: "productivity-reset",
   description: "This 7-day challenge helps you reset focus, reduce procrastination, and rebuild productive momentum — without burnout.",
   category: "Productivity",
   image_url: "https://images.unsplash.com/photo-1705417272217-490f4511abeb?w=800",

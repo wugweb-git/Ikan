@@ -12,6 +12,7 @@ import { cn } from '../ui/utils';
 import { apiClient } from '../../lib/api-client';
 import { AssessmentFlow } from './AssessmentFlow';
 import { AssessmentResults } from './AssessmentResults';
+import { evaluateAssessment } from '../../lib/recommendation-engine';
 import { Skeleton } from '../ui/skeleton-loader';
 import { EmptyState } from '../ui/empty-state';
 import { TouchFeedback } from '../ui/touch-feedback';
@@ -81,7 +82,7 @@ const transformAssessmentData = (data: any, userHistory?: Record<string, any>): 
   
   return {
     id: assessmentId,
-    slug: data.slug,
+    slug: data.slug || assessmentId,
     title: data.title,
     description: data.description,
     estimatedTime: `${data.duration || data.metadata?.estimated_minutes || 3} minutes`,
@@ -130,6 +131,8 @@ const getAssessmentImage = (category?: string, customImage?: string) => {
 };
 
 import { PageHero } from '../ui/PageHero';
+
+import { DUMMY_ASSESSMENT } from '../../lib/demo-data';
 
 export function Assessments({ className, onNavigate }: AssessmentsProps) {
   const { user } = useAuth();
@@ -207,14 +210,25 @@ export function Assessments({ className, onNavigate }: AssessmentsProps) {
               transformAssessmentData(a, {})
             );
             
+            // Ensure Demo Assessment is ALWAYS present for testing
+            const hasDemo = apiAssessments.some(a => a.id === DUMMY_ASSESSMENT.id || a.slug === DUMMY_ASSESSMENT.id);
+            if (!hasDemo) {
+               console.log('➕ Force Adding Demo Assessment to list');
+               // Ensure we transform it correctly
+               apiAssessments.unshift(transformAssessmentData(DUMMY_ASSESSMENT, {}));
+            }
+            
             setAssessments(apiAssessments);
           } else {
             console.warn('Assessments response was not an array:', response);
+            // Fallback to at least showing the demo
+            setAssessments([transformAssessmentData(DUMMY_ASSESSMENT, {})]);
           }
         } catch (error) {
           console.warn('Failed to fetch API assessments:', error);
           showToast('error', 'Connection Error', 'Failed to load assessments. Please try again later.');
-          setAssessments([]);
+          // Fallback to at least showing the demo
+          setAssessments([transformAssessmentData(DUMMY_ASSESSMENT, {})]);
         }
 
         setLoading(false);
@@ -313,7 +327,17 @@ export function Assessments({ className, onNavigate }: AssessmentsProps) {
   };
 
   const handleAssessmentComplete = async (results: any) => {
-    setAssessmentResults(results);
+    // Run Recommendation Engine
+    const score = results.score || 0;
+    const maxScore = results.maxScore || 100;
+    
+    const recommendation = evaluateAssessment(
+       selectedAssessment?.slug || selectedAssessment?.id || '',
+       score,
+       maxScore
+    );
+    
+    setAssessmentResults({ ...results, recommendation });
     setCurrentView('results');
     
     if (user && selectedAssessment) {
@@ -833,7 +857,7 @@ export function Assessments({ className, onNavigate }: AssessmentsProps) {
   }
 
   // Assessment Results View
-  if (currentView === 'results' && assessmentResults) {
+  if (currentView === 'results' && assessmentResults && selectedAssessment) {
     return (
       <div className="space-y-4">
         <Button
@@ -847,8 +871,13 @@ export function Assessments({ className, onNavigate }: AssessmentsProps) {
         </Button>
         
         <AssessmentResults
-          results={assessmentResults}
+          assessmentId={selectedAssessment.id}
+          score={assessmentResults.score}
+          maxScore={assessmentResults.maxScore || 100}
+          recommendation={assessmentResults.recommendation}
+          onNavigate={onNavigate}
           onReturnToDashboard={handleReturnToList}
+          onRetake={() => setCurrentView('flow')}
         />
       </div>
     );

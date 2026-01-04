@@ -84,7 +84,7 @@ export interface DayContent {
   description: string;
   activities: Activity[];
   image_url?: string;
-  dayType?: 'lesson' | 'practice';
+  dayType?: 'assessment' | 'assessment-lite' | 'learning' | 'practice' | 'workshop' | 'tracker' | 'reflection';
 }
 
 export interface WeekStructure {

@@ -5,7 +5,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '.
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../ui/select';
 import { Input } from '../../ui/input';
 import { apiClient } from '../../../lib/api-client';
-import { Trash2, Plus, Save, Sparkles, Loader2 } from 'lucide-react';
+import { Trash2, Plus, Save, Sparkles, Loader2, ShieldCheck } from 'lucide-react';
 import { useNotifications } from '../../../contexts/NotificationContext';
 
 export function RecommendationRulesManager({ onBack }: { onBack: () => void }) {
@@ -39,239 +39,89 @@ export function RecommendationRulesManager({ onBack }: { onBack: () => void }) {
     }
   };
 
-  const seedDefaultRules = async () => {
-      setSeeding(true);
+  const handleTestIntegrity = () => {
+    let issues = 0;
+    const report: string[] = [];
+    
+    // Check if we have rules loaded
+    if (rules.length === 0) {
+        showToast('warning', 'Integrity Check', 'No rules found to check.');
+        return;
+    }
+
+    rules.forEach((rule, index) => {
+        const missingFields = [];
+        const ruleName = `Rule #${index + 1} (${rule.assessment_category || 'Unknown'})`;
+        
+        if (!rule.assessment_category) missingFields.push('Assessment Category');
+        if (!rule.min_severity) missingFields.push('Min Severity');
+        if (!rule.equip_id) missingFields.push('Equip Program');
+        
+        // Validate Equip ID exists in current programs
+        if (rule.equip_id) {
+             const programExists = equips.some(e => e.id === rule.equip_id);
+             if (!programExists) {
+                 issues++;
+                 report.push(`${ruleName}: References non-existent program ID ${rule.equip_id}`);
+             }
+        }
+        
+        if (missingFields.length > 0) {
+            issues++;
+            report.push(`${ruleName}: Missing ${missingFields.join(', ')}`);
+        }
+    });
+
+    if (issues === 0) {
+        showToast('success', 'Integrity Check Passed', 'All rules appear valid and reference existing programs.');
+    } else {
+        console.warn('Integrity Issues:', report);
+        showToast('warning', 'Integrity Issues Found', `Found ${issues} issues. Check console for details.`);
+    }
+  };
+
+  const handleDeduplicate = async () => {
+      setSeeding(true); // Re-using seeding state for loading spinner
       try {
-          // 1. Fetch existing programs to get IDs
-          const programs = await apiClient.getEquipPrograms();
-          const findProgramId = (title: string) => programs.find((p: any) => p.title === title)?.id;
+          const rulesData = await apiClient.request('/admin/recommendations/rules', { method: 'GET' }, true, 0);
+          const allRules = rulesData.rules || [];
+          
+          const uniqueMap = new Map<string, string>(); // Key -> RuleID to KEEP
+          const toDelete: string[] = [];
 
-          const defaultRules = [
-              // --- ANXIETY (GAI) ---
-              {
-                  assessment_category: 'Anxiety',
-                  min_severity: 'mild',
-                  equip_title: 'Stress Buster',
-                  priority: 8,
-                  rationale: 'Early stress regulation helps prevent anxiety escalation'
-              },
-              {
-                  assessment_category: 'Anxiety',
-                  min_severity: 'moderate',
-                  equip_title: 'Sleep Tight',
-                  priority: 10,
-                  rationale: 'Anxiety often disrupts sleep; stabilizing sleep reduces symptoms'
-              },
-              {
-                  assessment_category: 'Anxiety',
-                  min_severity: 'moderate',
-                  equip_title: 'Stress Buster',
-                  priority: 9,
-                  rationale: 'Thought & feeling regulation reduces anxious loops'
-              },
-              {
-                  assessment_category: 'Anxiety',
-                  min_severity: 'high',
-                  equip_title: 'Burnout Reset',
-                  priority: 9,
-                  rationale: 'Prolonged anxiety often coexists with exhaustion & overload'
-              },
-
-              // --- STRESS ---
-              {
-                  assessment_category: 'Stress',
-                  min_severity: 'mild',
-                  equip_title: 'Stress Buster',
-                  priority: 10,
-                  rationale: 'Direct stress coping and grounding techniques'
-              },
-              {
-                  assessment_category: 'Stress',
-                  min_severity: 'moderate',
-                  equip_title: 'Burnout Reset',
-                  priority: 9,
-                  rationale: 'Sustained stress leads to burnout patterns'
-              },
-              {
-                  assessment_category: 'Stress',
-                  min_severity: 'moderate',
-                  equip_title: 'Sleep Tight',
-                  priority: 7,
-                  rationale: 'Sleep improves stress resilience'
-              },
-              {
-                  assessment_category: 'Stress',
-                  min_severity: 'high',
-                  equip_title: 'Burnout Reset',
-                  priority: 10,
-                  rationale: 'High stress requires workload & cognition recalibration'
-              },
-
-              // --- BURNOUT ---
-              {
-                  assessment_category: 'Burnout',
-                  min_severity: 'mild',
-                  equip_title: 'Stress Buster',
-                  priority: 7,
-                  rationale: 'Stress skills help early burnout'
-              },
-              {
-                  assessment_category: 'Burnout',
-                  min_severity: 'moderate',
-                  equip_title: 'Burnout Reset',
-                  priority: 10,
-                  rationale: 'Core burnout intervention'
-              },
-              {
-                  assessment_category: 'Burnout',
-                  min_severity: 'moderate',
-                  equip_title: 'Sleep Tight',
-                  priority: 8,
-                  rationale: 'Sleep restoration accelerates recovery'
-              },
-              {
-                  assessment_category: 'Burnout',
-                  min_severity: 'high',
-                  equip_title: 'Burnout Reset',
-                  priority: 10,
-                  rationale: 'Exhaustion + disengagement need structured recovery'
-              },
-
-              // --- SLEEP ---
-              {
-                  assessment_category: 'Sleep',
-                  min_severity: 'mild',
-                  equip_title: 'Sleep Tight',
-                  priority: 10,
-                  rationale: 'Habit and sleep hygiene correction'
-              },
-              {
-                  assessment_category: 'Sleep',
-                  min_severity: 'moderate',
-                  equip_title: 'Sleep Tight',
-                  priority: 10,
-                  rationale: 'Structured sleep protocol required'
-              },
-              {
-                  assessment_category: 'Sleep',
-                  min_severity: 'moderate',
-                  equip_title: 'Stress Buster',
-                  priority: 8,
-                  rationale: 'Stress is a major sleep disruptor'
-              },
-              {
-                  assessment_category: 'Sleep',
-                  min_severity: 'high',
-                  equip_title: 'Burnout Reset',
-                  priority: 7,
-                  rationale: 'Chronic sleep issues often tie to burnout'
-              },
-
-              // --- GENERAL / UNSURE ---
-              {
-                  assessment_category: 'General',
-                  min_severity: 'mild',
-                  equip_title: 'Stress Buster',
-                  priority: 8,
-                  rationale: 'Broad grounding & awareness'
-              },
-              {
-                  assessment_category: 'General',
-                  min_severity: 'moderate',
-                  equip_title: 'Sleep Tight',
-                  priority: 7,
-                  rationale: 'Sleep improves global wellbeing'
-              },
-              {
-                  assessment_category: 'General',
-                  min_severity: 'moderate',
-                  equip_title: 'Burnout Reset',
-                  priority: 6,
-                  rationale: 'Preventive intervention'
-              },
-
-              // --- DEPRESSION ---
-              {
-                  assessment_category: 'Depression',
-                  min_severity: 'mild',
-                  equip_title: 'Stress Buster',
-                  priority: 6,
-                  rationale: 'Mood regulation & grounding'
-              },
-              {
-                  assessment_category: 'Depression',
-                  min_severity: 'moderate',
-                  equip_title: 'Burnout Reset',
-                  priority: 9,
-                  rationale: 'Emotional exhaustion overlap'
-              },
-              {
-                  assessment_category: 'Depression',
-                  min_severity: 'moderate',
-                  equip_title: 'Sleep Tight',
-                  priority: 7,
-                  rationale: 'Sleep–mood bidirectional link'
-              },
-              {
-                  assessment_category: 'Depression',
-                  min_severity: 'high',
-                  equip_title: 'Burnout Reset',
-                  priority: 10,
-                  rationale: 'High emotional exhaustion'
-              },
-
-               // --- BALANCE ---
-               {
-                  assessment_category: 'Balance',
-                  min_severity: 'mild',
-                  equip_title: 'Stress Buster',
-                  priority: 6,
-                  rationale: 'Awareness of overload'
-              },
-              {
-                  assessment_category: 'Balance',
-                  min_severity: 'moderate',
-                  equip_title: 'Stress Buster',
-                  priority: 8,
-                  rationale: 'Work–life recalibration'
-              },
-              {
-                  assessment_category: 'Balance',
-                  min_severity: 'high',
-                  equip_title: 'Burnout Reset',
-                  priority: 9,
-                  rationale: 'Chronic imbalance indicator'
+          allRules.forEach((rule: any) => {
+              // Create a unique key for the rule logic
+              const key = `${rule.assessment_category}-${rule.min_severity}-${rule.equip_id}`;
+              
+              if (uniqueMap.has(key)) {
+                  // Duplicate found! Mark this one for deletion
+                  toDelete.push(rule.id);
+              } else {
+                  // New unique rule, keep it
+                  uniqueMap.set(key, rule.id);
               }
-          ];
+          });
 
-          let createdCount = 0;
-          for (const rule of defaultRules) {
-              const programId = findProgramId(rule.equip_title);
-              if (!programId) {
-                  console.warn(`Skipping rule for ${rule.equip_title}: Program not found.`);
-                  continue;
-              }
-
-              // Create Rule
-              await apiClient.request('/admin/recommendations/rules', {
-                  method: 'POST',
-                  body: JSON.stringify({
-                      assessment_category: rule.assessment_category,
-                      min_severity: rule.min_severity,
-                      equip_id: programId,
-                      priority: rule.priority,
-                      rationale: rule.rationale
-                  })
-              }, true, 0);
-              createdCount++;
+          if (toDelete.length === 0) {
+              showToast('success', 'No duplicates found.');
+              setSeeding(false);
+              return;
           }
 
-          showToast('success', `Seeded ${createdCount} rules successfully.`);
+          // Delete duplicates
+          // Execute sequentially to avoid overwhelming the server/rate limits
+          let deletedCount = 0;
+          for (const id of toDelete) {
+              await apiClient.request(`/admin/recommendations/rules/${id}`, { method: 'DELETE' }, true, 0);
+              deletedCount++;
+          }
+
+          showToast('success', `Cleaned up ${deletedCount} duplicate rules.`);
           loadData(); // Reload table
 
       } catch (e: any) {
           console.error(e);
-          showToast('error', `Failed to seed rules: ${e.message}`);
+          showToast('error', `Cleanup failed: ${e.message}`);
       } finally {
           setSeeding(false);
       }
@@ -348,11 +198,11 @@ export function RecommendationRulesManager({ onBack }: { onBack: () => void }) {
            <div className="flex gap-2">
                 <Button 
                     variant="outline" 
-                    onClick={seedDefaultRules} 
-                    disabled={seeding || loading}
+                    onClick={handleTestIntegrity} 
+                    className="gap-2"
                 >
-                    {seeding ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Sparkles className="w-4 h-4 mr-2 text-yellow-500" />}
-                    Seed Default Rules
+                    <ShieldCheck className="w-4 h-4" />
+                    Test Integrity
                 </Button>
                 <Button onClick={handleAddRule}><Plus className="w-4 h-4 mr-2" /> Add Rule</Button>
            </div>

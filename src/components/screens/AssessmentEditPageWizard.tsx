@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Save, Trash2, ClipboardList, HelpCircle, Eye, Plus, GripVertical, X, Upload, EyeOff, Lightbulb } from 'lucide-react';
+import { Save, Trash2, ClipboardList, HelpCircle, Eye, Plus, GripVertical, X, Upload, EyeOff, Lightbulb, Sparkles } from 'lucide-react';
 import { useNotifications } from '../../contexts/NotificationContext';
 import { apiClient } from '../../lib/api-client';
 import { AdminFormField } from '../admin/AdminFormField';
@@ -155,10 +155,25 @@ export function AssessmentEditPageWizard({ assessmentId, onBack, onSave }: Asses
     try {
       const data = await apiClient.getCategories();
       if (Array.isArray(data) && data.length > 0) {
-        setDynamicCategoryOptions(data.map((c: any) => ({
-          label: c.name,
-          value: c.slug
-        })));
+        // Deduplicate categories by slug/value
+        const uniqueMap = new Map();
+        // Add defaults first to preserve them if API doesn't return them, 
+        // or add API first? Usually API is source of truth.
+        // Let's assume API is source of truth, but we want to ensure no duplicates.
+        
+        data.forEach((c: any) => {
+             if (c.slug && !uniqueMap.has(c.slug)) {
+                 uniqueMap.set(c.slug, {
+                    label: c.name,
+                    value: c.slug
+                 });
+             }
+        });
+        
+        // If API returns valid data, use it.
+        if (uniqueMap.size > 0) {
+            setDynamicCategoryOptions(Array.from(uniqueMap.values()));
+        }
       }
     } catch (error) {
       console.warn('Failed to load categories', error);
@@ -306,6 +321,102 @@ export function AssessmentEditPageWizard({ assessmentId, onBack, onSave }: Asses
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleAutoFill = () => {
+    // Legacy / Generic Auto-Fill (Text Only)
+    // 1. Determine Context
+    const title = formData.title || 'Wellness';
+    const category = formData.category || 'general';
+    const isSleep = title.toLowerCase().includes('sleep') || category === 'sleep';
+    const isStress = title.toLowerCase().includes('stress') || category === 'stress';
+    
+    // 2. Generate Generic Content based on context
+    setFormData(prev => {
+        // --- Helper for Landing Page Defaults ---
+        const mainTitle = prev.main_title || `Why take this ${category} assessment?`;
+        
+        const mainContent = (prev.main_content?.length || 0) > 0 ? prev.main_content : [
+            `Understand your ${category} symptoms better`,
+            'Get personalized insights based on your answers',
+            'Take the first step towards feeling better'
+        ];
+
+        const section2Content = prev.section2_content || 
+            `This assessment helps you understand how ${isStress ? 'stress' : isSleep ? 'poor sleep' : category} has been affecting your daily life. ` +
+            `It focuses on how you've been feeling over the last 2 weeks.`;
+
+        const section2Bullets = (prev.section2_bullets?.length || 0) > 0 ? prev.section2_bullets : [
+            `${isSleep ? 'Sleep quality' : 'Emotional wellbeing'}`,
+            'Daily functioning',
+            'Physical symptoms'
+        ];
+
+        // --- Helper for Result Categories ---
+        const defaultResults = (prev.resultCategories?.length || 0) > 0 ? prev.resultCategories : [
+            { min: 0, max: 10, label: 'Low', description: 'You are managing well. Keep up your healthy habits.' },
+            { min: 11, max: 20, label: 'Moderate', description: 'You are showing some signs of strain. Consider our recommended programs.' },
+            { min: 21, max: 40, label: 'High', description: 'Your results suggest you are struggling. We recommend seeking professional support.' }
+        ];
+
+        return {
+            ...prev,
+            // Basic Info
+            description: prev.description || `Evaluate your ${category} levels with this standard assessment.`,
+            cta_button_text: prev.cta_button_text || 'Start Assessment',
+            duration: prev.duration || 5,
+            difficulty: prev.difficulty || 'beginner',
+            scoringMethod: prev.scoringMethod || 'sum',
+            
+            // Landing Page - Section 1 (Eligibility/How it works)
+            section1_title: prev.section1_title || 'How it works',
+            section1_eligibility_title: prev.section1_eligibility_title || 'What to expect:',
+            section1_eligibility_points: (prev.section1_eligibility_points?.length || 0) === 0 
+                ? ['Answer simple questions', 'Get instant results', 'Review expert advice'] 
+                : prev.section1_eligibility_points,
+            section1_who_title: prev.section1_who_title || 'Who can take this?',
+            section1_who_content: prev.section1_who_content || 'This assessment is designed for adults 18+ looking to understand their mental wellbeing.',
+
+            // Landing Page - Main Content
+            main_title: mainTitle,
+            main_content: mainContent,
+
+            // Landing Page - Section 2 (Description & Measures)
+            section2_title: prev.section2_title || 'What is this assessment?',
+            section2_content: section2Content,
+            section2_bullets: section2Bullets,
+
+            // Landing Page - Section 3 (What you'll see)
+            section3_title: prev.section3_title || "What you'll see",
+            section3_subtitle: prev.section3_subtitle || "Understanding your mental health is the first step.",
+            section3_content: (prev.section3_content?.length || 0) > 0 ? prev.section3_content : [
+               '10-15 simple questions',
+               'Instant analysis',
+               'Personalized action plan'
+            ],
+
+            // Landing Page - Highlights
+            highlights_title: prev.highlights_title || 'Assessment Highlights',
+            highlights: (prev.highlights?.length || 0) === 0 
+                ? ['Clinically validated approach', 'Takes less than 5 minutes', 'Private & Confidential'] 
+                : prev.highlights,
+
+            // Landing Page - Notes
+            notes_title: prev.notes_title || 'Things to keep in mind',
+            notes: (prev.notes?.length || 0) === 0 
+                ? ['This is not a medical diagnosis', 'Consult a professional for serious concerns'] 
+                : prev.notes,
+
+            // Results Configuration
+            resultCategories: defaultResults,
+
+            // NOTE: We do NOT auto-fill content (questions/daily_content) or images anymore.
+            // This prevents overwriting user structure and broken image links.
+        };
+    });
+
+    showToast('success', 'Auto-Filled', 'Form populated with generated suggestions.');
+    markAsUnsaved();
   };
 
   // Navigation saves progress. Save preserves state. Publish changes lifecycle.
@@ -535,6 +646,15 @@ export function AssessmentEditPageWizard({ assessmentId, onBack, onSave }: Asses
         }
         footerRightContent={
           <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              onClick={handleAutoFill}
+              className="h-8 px-2 gap-2"
+              title="Auto-fill empty fields"
+            >
+              <Sparkles size={16} />
+              <span className="text-xs font-medium hidden md:inline">Auto-Fill</span>
+            </Button>
             <Button
               variant="outline"
               onClick={() => persistWizard(formData)}
