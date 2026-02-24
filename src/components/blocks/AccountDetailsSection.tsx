@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent } from '../ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { TextInput } from '../inputs/TextInput';
@@ -7,36 +7,38 @@ import { cn } from '../ui/utils';
 import { Textarea } from '../ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { AccountPageHeader } from './AccountPageHeader';
-import { Pencil, Save, Trash2 } from 'lucide-react';
+import { Pencil, Save, Trash2, Loader2 } from 'lucide-react';
 import svgPaths from '../../imports/svg-3uwxabhee1';
 import { useIsMobile } from '../../hooks/useIsMobile';
+import { validateName, validatePhone, validateBio, validateDateOfBirth, validateEmergencyContact } from '../../lib/validation';
+import { apiClient } from '../../lib/api-client';
 
 // Icons from Figma Import
 const IconProfile = () => (
   <svg className="block w-5 h-5" fill="none" viewBox="0 0 14 17">
-    <path d={svgPaths.p1648d980} stroke="#2A2A2A" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.66667" />
-    <path d={svgPaths.p10f71ad0} stroke="#2A2A2A" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.66667" />
+    <path d={svgPaths.p1648d980} stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.66667" />
+    <path d={svgPaths.p10f71ad0} stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.66667" />
   </svg>
 );
 
 const IconConnected = () => (
   <svg className="block w-5 h-5" fill="none" viewBox="0 0 19 19">
-    <path d={svgPaths.p153df420} stroke="#2A2A2A" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.66667" />
-    <path d={svgPaths.p2492e780} stroke="#2A2A2A" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.66667" />
+    <path d={svgPaths.p153df420} stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.66667" />
+    <path d={svgPaths.p2492e780} stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.66667" />
   </svg>
 );
 
 const IconPersonal = () => (
   <svg className="block w-5 h-5" fill="none" viewBox="0 0 19 19">
-    <path d={svgPaths.p13f1f900} stroke="#2A2A2A" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.66667" />
-    <path d={svgPaths.p269e4d00} stroke="#2A2A2A" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.66667" />
-    <path d={svgPaths.p1250efa0} stroke="#2A2A2A" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.66667" />
+    <path d={svgPaths.p13f1f900} stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.66667" />
+    <path d={svgPaths.p269e4d00} stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.66667" />
+    <path d={svgPaths.p1250efa0} stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.66667" />
   </svg>
 );
 
 const IconEmergency = () => (
   <svg className="block w-5 h-5" fill="none" viewBox="0 0 19 19">
-    <path d={svgPaths.p3e9de980} stroke="#2A2A2A" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.66667" />
+    <path d={svgPaths.p3e9de980} stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.66667" />
   </svg>
 );
 
@@ -64,9 +66,10 @@ interface UserAvatarProps {
   onAvatarChange?: (file: File) => void;
   onRemoveAvatar?: () => void;
   isEditing?: boolean;
+  uploading?: boolean;
 }
 
-function UserAvatar({ user, onAvatarChange, onRemoveAvatar, isEditing = false }: UserAvatarProps) {
+function UserAvatar({ user, onAvatarChange, onRemoveAvatar, isEditing = false, uploading = false }: UserAvatarProps) {
   const getInitials = (name: string) => {
     return name
       .split(' ')
@@ -88,10 +91,15 @@ function UserAvatar({ user, onAvatarChange, onRemoveAvatar, isEditing = false }:
       <div className="relative shrink-0">
         <Avatar className="w-[89px] h-[89px] border border-[rgba(0,0,0,0.1)]">
           <AvatarImage src={user?.avatar} alt={user?.name} className="object-cover" />
-          <AvatarFallback className="bg-[#2A2A2A] text-white text-[20px] font-medium tracking-[-0.45px]">
+          <AvatarFallback className="text-[20px] font-medium tracking-[-0.45px]" style={{ backgroundColor: 'var(--color-primary-default)', color: 'var(--color-text-inverse)' }}>
             {user?.name ? getInitials(user.name) : 'U'}
           </AvatarFallback>
         </Avatar>
+        {uploading && (
+          <div className="absolute inset-0 bg-black/40 rounded-full flex items-center justify-center">
+            <Loader2 className="w-6 h-6 text-white animate-spin" />
+          </div>
+        )}
       </div>
       
       {isEditing && (
@@ -99,12 +107,17 @@ function UserAvatar({ user, onAvatarChange, onRemoveAvatar, isEditing = false }:
           <div className="relative">
             <input
               type="file"
-              accept="image/*"
+              accept="image/jpeg,image/png,image/webp,image/gif"
               onChange={handleFileChange}
               className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+              disabled={uploading}
             />
-            <button className="flex items-center justify-center px-4 py-[6px] rounded-[40px] border border-[#151515] bg-transparent text-[#151515] text-sm font-medium hover:bg-gray-50 transition-colors">
-              Update
+            <button 
+              className="flex items-center justify-center px-4 py-[6px] rounded-[40px] bg-transparent text-sm font-medium transition-colors disabled:opacity-50"
+              style={{ border: '1px solid var(--color-text-primary)', color: 'var(--color-text-primary)' }}
+              disabled={uploading}
+            >
+              {uploading ? 'Uploading...' : 'Update'}
             </button>
           </div>
         </div>
@@ -173,6 +186,8 @@ export function AccountDetailsSection({
   const isEditing = externalIsEditing !== undefined ? externalIsEditing : internalIsEditing;
   const setIsEditing = externalSetIsEditing || setInternalIsEditing;
   const isMobile = useIsMobile();
+  const [avatarUploading, setAvatarUploading] = useState(false);
+  const [localAvatarUrl, setLocalAvatarUrl] = useState<string | undefined>(user?.avatar);
 
   const [formData, setFormData] = useState({
     name: user?.name || '',
@@ -192,17 +207,94 @@ export function AccountDetailsSection({
     preferences: user?.preferences
   });
 
+  // Inline validation errors keyed by field name
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+
+  // Sync formData when user prop changes (e.g., after background profile fetch)
+  // Only sync when NOT in edit mode to avoid overwriting user's in-progress edits
+  React.useEffect(() => {
+    if (!isEditing && user) {
+      setFormData({
+        name: user.name || '',
+        email: user.email || '',
+        phone: user.phone || '',
+        bio: user.bio || '',
+        dateOfBirth: user.dateOfBirth || '',
+        gender: user.gender || '',
+        location: user.location || '',
+        city: user.location ? user.location.split(',')[0].trim() : '',
+        zipCode: '',
+        emergencyContact: {
+          name: user.emergencyContact?.name || '',
+          phone: user.emergencyContact?.phone || '',
+          relationship: user.emergencyContact?.relationship || ''
+        },
+        preferences: user.preferences
+      });
+      // Clear any stale validation errors when exiting edit mode
+      setFieldErrors({});
+    }
+    // Also keep avatar URL in sync
+    if (user?.avatar) {
+      setLocalAvatarUrl(user.avatar);
+    }
+  }, [user, isEditing]);
+
+  const handleAvatarUpload = async (file: File) => {
+    try {
+      setAvatarUploading(true);
+      const result = await apiClient.uploadAvatar(file);
+      if (result.avatarUrl) {
+        setLocalAvatarUrl(result.avatarUrl);
+        console.log('Avatar uploaded successfully:', result.avatarUrl);
+      }
+    } catch (error: any) {
+      console.error('Avatar upload failed:', error);
+    } finally {
+      setAvatarUploading(false);
+    }
+  };
+
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
+    // Clear error for this field on change
+    if (fieldErrors[field]) {
+      setFieldErrors(prev => { const n = { ...prev }; delete n[field]; return n; });
+    }
+  };
+
+  // Validate all fields and return true if valid
+  const validateForm = (): boolean => {
+    const errors: Record<string, string> = {};
+    
+    const nameErr = validateName(formData.name);
+    if (nameErr) errors.name = nameErr.message;
+    
+    const phoneErr = validatePhone(formData.phone);
+    if (phoneErr) errors.phone = phoneErr.message;
+    
+    const bioErr = validateBio(formData.bio);
+    if (bioErr) errors.bio = bioErr.message;
+    
+    const dobErr = validateDateOfBirth(formData.dateOfBirth);
+    if (dobErr) errors.dateOfBirth = dobErr.message;
+    
+    const ecErrors = validateEmergencyContact(formData.emergencyContact);
+    ecErrors.forEach(e => { errors[e.field] = e.message; });
+    
+    setFieldErrors(errors);
+    return Object.keys(errors).length === 0;
   };
 
   const handleSave = () => {
+    if (!validateForm()) return;
+    
     const updatedData = {
       ...formData,
       location: `${formData.city}${formData.zipCode ? `, ${formData.zipCode}` : ''}`
     };
     onSave?.(updatedData);
-    setIsEditing(false);
+    // Don't setIsEditing(false) here — let the parent handle it after successful save
   };
 
   // Only render headers on Desktop, Mobile has sticky header
@@ -219,7 +311,8 @@ export function AccountDetailsSection({
               <Button
                 onClick={handleSave}
                 disabled={loading}
-                className="bg-[#2e2a2f] text-white hover:bg-[#1a181b] rounded-[8px] px-[20px] py-[10px] text-[14px] font-medium h-auto flex items-center gap-2"
+                className="rounded-[8px] px-[20px] py-[10px] text-[14px] font-medium h-auto flex items-center gap-2"
+                style={{ backgroundColor: 'var(--color-primary-default)', color: 'var(--color-text-inverse)' }}
               >
                 <Save className="w-4 h-4" />
                 {loading ? 'Saving...' : 'Save Profile'}
@@ -228,7 +321,8 @@ export function AccountDetailsSection({
               <Button
                 onClick={() => setIsEditing(true)}
                 disabled={!editable}
-                className="bg-[#2e2a2f] text-white hover:bg-[#1a181b] rounded-[8px] px-[20px] py-[10px] text-[14px] font-medium h-auto flex items-center gap-2"
+                className="rounded-[8px] px-[20px] py-[10px] text-[14px] font-medium h-auto flex items-center gap-2"
+                style={{ backgroundColor: 'var(--color-primary-default)', color: 'var(--color-text-inverse)' }}
               >
                 <Pencil className="w-4 h-4" />
                 Edit Profile
@@ -236,7 +330,8 @@ export function AccountDetailsSection({
             )}
             <Button
               variant="destructive"
-              className="bg-[#2e2a2f] text-white hover:bg-red-600 rounded-[8px] px-[20px] py-[10px] text-[14px] font-medium h-auto flex items-center gap-2"
+              className="rounded-[8px] px-[20px] py-[10px] text-[14px] font-medium h-auto flex items-center gap-2"
+              style={{ backgroundColor: 'var(--color-primary-default)', color: 'var(--color-text-inverse)' }}
             >
               <Trash2 className="w-4 h-4" />
               Delete Profile
@@ -248,18 +343,18 @@ export function AccountDetailsSection({
   };
 
   // Common Input Styles for Mobile consistency
-  const inputContainerClass = "bg-[#f5f5f5] rounded-[12px] h-[56px] w-full relative";
-  const inputClass = "bg-transparent border-none h-full w-full pl-[40px] pr-[12px] py-[12px] text-[16px] text-[#717182] placeholder:text-[#717182] tracking-[-0.31px] focus:ring-0 focus:outline-none";
-  const labelClass = "text-[16px] font-medium text-[#151515] tracking-[-0.3px] mb-[4px]";
-  const cardClass = "rounded-[16px] border border-[rgba(0,0,0,0.1)] shadow-none p-0 overflow-hidden bg-white";
+  const inputContainerClass = "rounded-[12px] h-[56px] w-full relative";
+  const inputClass = "bg-transparent border-none h-full w-full pl-[40px] pr-[12px] py-[12px] text-[16px] tracking-[-0.31px] focus:ring-0 focus:outline-none";
+  const labelClass = "text-[16px] font-medium tracking-[-0.3px] mb-[4px]";
+  const cardClass = "rounded-[16px] border border-[rgba(0,0,0,0.1)] shadow-none p-0 overflow-hidden";
   const cardHeaderClass = "h-[68px] px-[24px] flex items-center gap-[12px]";
-  const cardTitleClass = "text-[16px] text-[#151515] font-normal tracking-[-0.62px]";
+  const cardTitleClass = "text-[16px] font-normal tracking-[-0.62px]";
 
   // Helper for input icons
   const InputIcon = ({ path }: { path: string }) => (
     <div className="absolute left-[12px] top-[50%] -translate-y-1/2 w-[16px] h-[16px] flex items-center justify-center pointer-events-none z-10">
       <svg className="w-full h-full" fill="none" viewBox="0 0 16 16">
-        <path d={path} stroke="#717182" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.33" />
+        <path d={path} stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.33" />
       </svg>
     </div>
   );
@@ -277,9 +372,10 @@ export function AccountDetailsSection({
           </div>
           <CardContent className="px-[16px] pb-[24px] pt-0 flex flex-col gap-[24px]">
             <UserAvatar 
-              user={user}
+              user={{ ...user!, avatar: localAvatarUrl }}
               isEditing={isEditing}
-              onAvatarChange={(file) => console.log('Avatar changed:', file)}
+              uploading={avatarUploading}
+              onAvatarChange={handleAvatarUpload}
               onRemoveAvatar={() => console.log('Remove avatar')}
             />
             
@@ -297,6 +393,7 @@ export function AccountDetailsSection({
                     disabled={!isEditing}
                   />
                 </div>
+                {fieldErrors.name && <p className="text-[12px] mt-[4px] tracking-[-0.2px]" style={{ color: 'var(--color-status-danger)' }}>{fieldErrors.name}</p>}
               </div>
 
               <div>
@@ -306,12 +403,17 @@ export function AccountDetailsSection({
                   <InputIcon path={svgPaths.p1db90b80} /> {/* Mail Icon */}
                   <input
                     value={formData.email}
-                    onChange={(e) => handleInputChange('email', e.target.value)}
                     className={inputClass}
                     placeholder="Email Address"
-                    disabled={!isEditing}
+                    disabled={true}
+                    title="Email cannot be changed here. Contact support if needed."
                   />
                 </div>
+                {isEditing && (
+                  <p className="text-[12px] mt-[4px] tracking-[-0.2px]" style={{ color: 'var(--color-text-muted)' }}>
+                    To change your email, go to Security settings.
+                  </p>
+                )}
               </div>
 
               <div>
@@ -327,6 +429,7 @@ export function AccountDetailsSection({
                     disabled={!isEditing}
                   />
                 </div>
+                {fieldErrors.phone && <p className="text-[12px] mt-[4px] tracking-[-0.2px]" style={{ color: 'var(--color-status-danger)' }}>{fieldErrors.phone}</p>}
               </div>
 
               <div>
@@ -337,10 +440,12 @@ export function AccountDetailsSection({
                     value={formData.bio}
                     onChange={(e) => handleInputChange('bio', e.target.value)}
                     placeholder="Tell us about yourself..."
-                    className="bg-[#ffffff] opacity-50 border-[#d1d5db] rounded-[12px] min-h-[48px] text-[#717182] resize-none tracking-[-0.31px] text-[16px]"
+                    className="bg-transparent border-none rounded-[12px] min-h-[48px] tracking-[-0.31px] text-[16px]"
+                    style={{ backgroundColor: 'var(--color-bg-card)', borderColor: 'var(--color-border-default)' }}
                     disabled={!isEditing}
                   />
                 </div>
+                {fieldErrors.bio && <p className="text-[12px] mt-[4px] tracking-[-0.2px]" style={{ color: 'var(--color-status-danger)' }}>{fieldErrors.bio}</p>}
               </div>
             </div>
           </CardContent>
@@ -356,21 +461,23 @@ export function AccountDetailsSection({
              <div className="flex gap-[16px] w-full">
                 {/* LinkedIn */}
                 <button 
-                  className="flex-1 h-[56px] bg-[#e9ebef] rounded-[12px] flex items-center justify-center gap-[8px]"
+                  className="flex-1 h-[56px] rounded-[12px] flex items-center justify-center gap-[8px]"
+                  style={{ backgroundColor: 'var(--color-accent-default)' }}
                   onClick={() => onSocialSync?.('linkedin', 'connect')}
                   disabled={!isEditing}
                 >
                   <IconLinkedIn />
-                  <span className="text-[16px] font-medium text-[#2a2a2a] tracking-[-0.31px]">Connect</span>
+                  <span className="text-[16px] font-medium tracking-[-0.31px]" style={{ color: 'var(--color-primary-default)' }}>Connect</span>
                 </button>
                 {/* Google */}
                 <button 
-                  className="flex-1 h-[56px] bg-[#e9ebef] rounded-[12px] flex items-center justify-center gap-[8px]"
+                  className="flex-1 h-[56px] rounded-[12px] flex items-center justify-center gap-[8px]"
+                  style={{ backgroundColor: 'var(--color-accent-default)' }}
                   onClick={() => onSocialSync?.('google', 'connect')}
                   disabled={!isEditing}
                 >
                   <IconGoogle />
-                  <span className="text-[16px] font-medium text-[#2a2a2a] tracking-[-0.31px]">Connect</span>
+                  <span className="text-[16px] font-medium tracking-[-0.31px]" style={{ color: 'var(--color-primary-default)' }}>Connect</span>
                 </button>
              </div>
           </CardContent>
@@ -399,6 +506,7 @@ export function AccountDetailsSection({
                     disabled={!isEditing}
                   />
                 </div>
+                {fieldErrors.dateOfBirth && <p className="text-[12px] mt-[4px] tracking-[-0.2px]" style={{ color: 'var(--color-status-danger)' }}>{fieldErrors.dateOfBirth}</p>}
               </div>
               <div className="flex-1">
                 <label className={labelClass}>Gender</label>
@@ -408,7 +516,7 @@ export function AccountDetailsSection({
                     onValueChange={(value) => handleInputChange('gender', value)}
                     disabled={!isEditing}
                   >
-                    <SelectTrigger className="w-full bg-[#f5f5f5] border-[rgba(0,0,0,0.1)] rounded-[12px] h-[56px] text-[#717182] px-[12px]">
+                    <SelectTrigger className="w-full border-[rgba(0,0,0,0.1)] rounded-[12px] h-[56px] px-[12px]" style={{ backgroundColor: 'var(--color-bg-page)', color: 'var(--color-text-muted)' }}>
                       <SelectValue placeholder="Select gender" />
                     </SelectTrigger>
                     <SelectContent>
@@ -468,12 +576,16 @@ export function AccountDetailsSection({
                 <InputIcon path={svgPaths.p30a1bda0} />
                 <input
                   value={formData.emergencyContact.name}
-                  onChange={(e) => setFormData(prev => ({ ...prev, emergencyContact: { ...prev.emergencyContact, name: e.target.value } }))}
+                  onChange={(e) => {
+                    setFormData(prev => ({ ...prev, emergencyContact: { ...prev.emergencyContact, name: e.target.value } }));
+                    if (fieldErrors.emergencyContactName) setFieldErrors(prev => { const n = { ...prev }; delete n.emergencyContactName; return n; });
+                  }}
                   className={inputClass}
                   placeholder="Full name"
                   disabled={!isEditing}
                 />
               </div>
+              {fieldErrors.emergencyContactName && <p className="text-[12px] mt-[4px] tracking-[-0.2px]" style={{ color: 'var(--color-status-danger)' }}>{fieldErrors.emergencyContactName}</p>}
             </div>
 
             <div>
@@ -483,12 +595,16 @@ export function AccountDetailsSection({
                 <InputIcon path={svgPaths.p26187580} />
                 <input
                   value={formData.emergencyContact.phone}
-                  onChange={(e) => setFormData(prev => ({ ...prev, emergencyContact: { ...prev.emergencyContact, phone: e.target.value } }))}
+                  onChange={(e) => {
+                    setFormData(prev => ({ ...prev, emergencyContact: { ...prev.emergencyContact, phone: e.target.value } }));
+                    if (fieldErrors.emergencyContactPhone) setFieldErrors(prev => { const n = { ...prev }; delete n.emergencyContactPhone; return n; });
+                  }}
                   className={inputClass}
                   placeholder="Phone number"
                   disabled={!isEditing}
                 />
               </div>
+              {fieldErrors.emergencyContactPhone && <p className="text-[12px] mt-[4px] tracking-[-0.2px]" style={{ color: 'var(--color-status-danger)' }}>{fieldErrors.emergencyContactPhone}</p>}
             </div>
 
             <div>
@@ -498,12 +614,16 @@ export function AccountDetailsSection({
                 <InputIcon path={svgPaths.p1f890f80} /> {/* Users/Relationship Icon */}
                 <input
                   value={formData.emergencyContact.relationship}
-                  onChange={(e) => setFormData(prev => ({ ...prev, emergencyContact: { ...prev.emergencyContact, relationship: e.target.value } }))}
+                  onChange={(e) => {
+                    setFormData(prev => ({ ...prev, emergencyContact: { ...prev.emergencyContact, relationship: e.target.value } }));
+                    if (fieldErrors.emergencyContactRelationship) setFieldErrors(prev => { const n = { ...prev }; delete n.emergencyContactRelationship; return n; });
+                  }}
                   className={inputClass}
                   placeholder="e.g., Spouse, Parent, Sibling"
                   disabled={!isEditing}
                 />
               </div>
+              {fieldErrors.emergencyContactRelationship && <p className="text-[12px] mt-[4px] tracking-[-0.2px]" style={{ color: 'var(--color-status-danger)' }}>{fieldErrors.emergencyContactRelationship}</p>}
             </div>
           </CardContent>
         </Card>

@@ -8,6 +8,8 @@ import { MissionSection } from './homepage/MissionSection';
 import { BenefitsSection } from './homepage/BenefitsSection';
 import { TestimonialSection } from './homepage/TestimonialSection';
 import { FAQSection } from './homepage/FAQSection';
+import { HowItWorksSection } from './homepage/HowItWorksSection';
+import { ReviewsSection } from './homepage/ReviewsSection';
 
 // Import RECYCLED Blocks
 import { AssessmentBlock, AssessmentProgram } from '../blocks/AssessmentBlock';
@@ -16,7 +18,7 @@ import { ResourceBlock } from '../blocks/ResourceBlock';
 import { NewsletterBlock } from '../blocks/NewsletterBlock';
 import { ResourcePost } from '../blocks/ResourceCard';
 
-import { projectId, publicAnonKey } from '../../utils/supabase/info';
+import { apiClient } from '../../lib/api-client';
 import { usePageContent } from '../../hooks/usePageContent';
 import { NEWSLETTER_CONTENT } from '../../lib/constants/content';
 
@@ -57,113 +59,102 @@ export function Homepage({ onNavigate, onGetStarted }: HomepageProps) {
 
   // Fetch real-time data
   useEffect(() => {
+    const controller = new AbortController();
+    const signal = controller.signal;
+
     const fetchData = async () => {
       try {
-        const baseUrl = `https://${projectId}.supabase.co/functions/v1/make-server-cc205da9`;
-        
         // 1. Fetch Assessments
         try {
-          const assessmentsRes = await fetch(`${baseUrl}/assessments`, {
-            headers: { 'Authorization': `Bearer ${publicAnonKey}` }
-          });
+          const assessmentsData = await apiClient.request('/assessments', { method: 'GET', signal }, false);
           
-          if (assessmentsRes.ok) {
-            const assessmentsData = await assessmentsRes.json();
-            
-            if (assessmentsData.assessments && assessmentsData.assessments.length > 0) {
-              const mappedAssessments = assessmentsData.assessments.map((a: any) => ({
-                 title: a.title,
-                 description: a.description,
-                 image: a.image_url || a.thumbnail_url || a.hero_image || "https://images.unsplash.com/photo-1527137342181-19aab11a8ee8?auto=format&fit=crop&q=80&w=1000",
-                 category: a.category || 'Assessment', // Use actual category from database
-                 questionCount: a.questions?.length || a.metadata?.question_count || 10, // Get question count
-                 duration: a.duration || a.metadata?.estimated_minutes || 5, // Get duration
-                 info: `${a.questions?.length || a.metadata?.question_count || 10} Questions • ${a.duration || a.metadata?.estimated_minutes || 5} min`, // Combine both
-                 link: `/assessment-detail?id=${a.slug || a.id}`
-              }));
-              setAssessments(mappedAssessments.slice(0, 3));
-            } else {
-              setAssessments([]);
-            }
+          if (assessmentsData.assessments && assessmentsData.assessments.length > 0) {
+            const mappedAssessments = assessmentsData.assessments.map((a: any) => ({
+               title: a.title,
+               description: a.description,
+               image: a.thumbnail || a.image || a.hero_image || a.image_url || a.thumbnail_url || "https://images.unsplash.com/photo-1527137342181-19aab11a8ee8?auto=format&fit=crop&q=80&w=1000",
+               category: a.category || 'Assessment',
+               questionCount: a.questions?.length || a.metadata?.question_count || 10,
+               duration: a.duration || a.metadata?.estimated_minutes || 5,
+               info: `${a.questions?.length || a.metadata?.question_count || 10} Questions • ${a.duration || a.metadata?.estimated_minutes || 5} min`,
+               link: `/assessment-detail?id=${a.slug || a.id}`
+            }));
+            if (!signal.aborted) setAssessments(mappedAssessments.slice(0, 3));
+          } else {
+            if (!signal.aborted) setAssessments([]);
           }
-        } catch (err) {
+        } catch (err: any) {
+          if (err?.name === 'AbortError') return;
           console.log('Assessments fetch failed:', err);
-          setAssessments([]);
+          if (!signal.aborted) setAssessments([]);
         } finally {
-          setLoading(false);
+          if (!signal.aborted) setLoading(false);
         }
 
         // 2. Fetch Equip Programs
         try {
-          const equipRes = await fetch(`${baseUrl}/equip-programs`, {
-            headers: { 'Authorization': `Bearer ${publicAnonKey}` }
-          });
+          const equipData = await apiClient.request('/equip-programs', { method: 'GET', signal }, false);
           
-          if (equipRes.ok) {
-            const equipData = await equipRes.json();
-            
-            if (equipData.programs && equipData.programs.length > 0) {
-              const mappedEquip = equipData.programs.map((e: any) => ({
-                title: e.title || e.name,
-                description: e.summary || e.description || 'Mental wellness program',
-                duration: e.duration_days ? `${e.duration_days} days` : '18 days',
-                activities: 'Self-paced modules',
-                link: `/equip-detail?id=${e.equip_id || e.id}`,
-                image: e.thumbnail || e.hero_image || ''
-              }));
-              setEquipPrograms(mappedEquip.slice(0, 3));
-            } else {
-              setEquipPrograms([]);
-            }
+          if (equipData.programs && equipData.programs.length > 0) {
+            const mappedEquip = equipData.programs.map((e: any) => ({
+              title: e.title || e.name,
+              description: e.summary || e.description || 'Mental wellness program',
+              duration: e.duration_days ? `${e.duration_days} days` : '18 days',
+              activities: 'Self-paced modules',
+              link: `/equip-detail?id=${e.equip_id || e.id}`,
+              image: e.thumbnail || e.hero_image || ''
+            }));
+            if (!signal.aborted) setEquipPrograms(mappedEquip.slice(0, 3));
+          } else {
+            if (!signal.aborted) setEquipPrograms([]);
           }
-        } catch (err) {
+        } catch (err: any) {
+          if (err?.name === 'AbortError') return;
           console.log('Equip programs fetch failed:', err);
-          setEquipPrograms([]);
+          if (!signal.aborted) setEquipPrograms([]);
         } finally {
-          setEquipLoading(false);
+          if (!signal.aborted) setEquipLoading(false);
         }
 
         // 3. Fetch Resources
         try {
-          const resourcesRes = await fetch(`${baseUrl}/library/resources?limit=3`, {
-            headers: { 'Authorization': `Bearer ${publicAnonKey}` }
-          });
+          const resourcesData = await apiClient.request('/library/resources?limit=3', { method: 'GET', signal }, false);
           
-          if (resourcesRes.ok) {
-            const resourcesData = await resourcesRes.json();
-            
-            if (resourcesData.resources && resourcesData.resources.length > 0) {
-              const mappedResources = resourcesData.resources.map((r: any) => ({
-                id: r.id,
-                title: r.title,
-                description: r.excerpt || r.description || r.content?.substring(0, 100) + '...' || '',
-                date: new Date(r.created_at || Date.now()).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
-                image: r.image_url || r.thumbnail_url || r.featured_image || '',
-                slug: r.slug,
-                author: r.author?.name,
-                category: r.category || 'General',
-                readTime: r.read_time_minutes ? `${r.read_time_minutes} min read` : (r.metadata?.read_time || '5 min read'),
-                type: 'article',
-                link: r.slug ? `/resources/${r.slug}` : `/resources/${r.id}`,
-              }));
-              setResources(mappedResources);
-            } else {
-              setResources([]);
-            }
+          if (resourcesData.resources && resourcesData.resources.length > 0) {
+            const mappedResources = resourcesData.resources.map((r: any) => ({
+              id: r.id,
+              title: r.title,
+              description: r.excerpt || r.description || r.content?.substring(0, 100) + '...' || '',
+              date: new Date(r.created_at || Date.now()).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+              image: r.thumbnail || r.image || r.image_url || r.thumbnail_url || r.featured_image || '',
+              slug: r.slug,
+              author: r.author?.name,
+              category: r.category || 'General',
+              readTime: r.read_time_minutes ? `${r.read_time_minutes} min read` : (r.metadata?.read_time || '5 min read'),
+              type: 'article',
+              link: r.slug ? `/resources/${r.slug}` : `/resources/${r.id}`,
+            }));
+            if (!signal.aborted) setResources(mappedResources);
+          } else {
+            if (!signal.aborted) setResources([]);
           }
-        } catch (err) {
+        } catch (err: any) {
+          if (err?.name === 'AbortError') return;
           console.log('Resources fetch failed:', err);
-          setResources([]);
+          if (!signal.aborted) setResources([]);
         } finally {
-          setResourcesLoading(false);
+          if (!signal.aborted) setResourcesLoading(false);
         }
 
-      } catch (error) {
+      } catch (error: any) {
+        if (error?.name === 'AbortError') return; // Component unmounted
         console.log("Homepage data fetch encountered an issue:", error);
       }
     };
 
     fetchData();
+
+    return () => { controller.abort(); };
   }, []);
 
   return (
@@ -190,6 +181,11 @@ export function Homepage({ onNavigate, onGetStarted }: HomepageProps) {
         {/* Mission Section */}
         <ErrorBoundary>
           <MissionSection />
+        </ErrorBoundary>
+
+        {/* How It Works Section */}
+        <ErrorBoundary>
+          <HowItWorksSection onNavigate={onNavigate} />
         </ErrorBoundary>
         
         {/* Assessment Programs Block */}
@@ -221,7 +217,7 @@ export function Homepage({ onNavigate, onGetStarted }: HomepageProps) {
         
         {/* Benefits Section */}
         <ErrorBoundary>
-          <BenefitsSection />
+          <BenefitsSection onNavigate={onNavigate} />
         </ErrorBoundary>
         
         {/* Resource Block */}
@@ -243,8 +239,13 @@ export function Homepage({ onNavigate, onGetStarted }: HomepageProps) {
         {/* FAQ Section */}
         <ErrorBoundary>
           <div id="contact">
-            <FAQSection />
+            <FAQSection onNavigate={onNavigate} />
           </div>
+        </ErrorBoundary>
+        
+        {/* Reviews Section */}
+        <ErrorBoundary>
+          <ReviewsSection />
         </ErrorBoundary>
         
         {/* Newsletter Block - RECYCLED */}

@@ -80,6 +80,7 @@ export function PublicBottomNavMobile({ currentRoute, onNavigate, onSignIn, clas
   return (
     <nav 
       className={cn("w-full", className)}
+      aria-label="Public navigation"
       style={{
         backgroundColor: 'transparent',
         padding: 'var(--spacing-2)',

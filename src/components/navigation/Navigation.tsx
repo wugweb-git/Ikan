@@ -12,12 +12,13 @@ interface NavigationProps {
 
 export function Navigation({ user, onNavigate, onGetStarted, currentRoute }: NavigationProps) {
   return (
-    <header className="nav-fixed-wrapper">
-      <div 
+    <header className="nav-fixed-wrapper" role="banner">
+      <nav 
         className="ikan-capsule-nav"
         style={{
           borderRadius: '9999px', // Force pill shape
         }}
+        aria-label="Primary navigation"
       >
         
         {/* Left: Logo */}
@@ -142,7 +143,7 @@ export function Navigation({ user, onNavigate, onGetStarted, currentRoute }: Nav
             </>
           )}
         </div>
-      </div>
+      </nav>
     </header>
   );
 }

@@ -1,14 +1,11 @@
 import React from 'react';
 import { cn } from '../ui/utils';
 import { 
-  Timer,
   ListTodo,
-  Activity,
   Calendar as CalendarIcon,
   Brain,
   Zap,
   Wrench,
-  CheckCircle2,
   Clock,
   FlaskConical,
   Smile
@@ -189,7 +186,7 @@ export function EquipBentoGrid({
                 <div className="flex flex-col gap-[24px]">
                   <h2 
                     style={{
-                      fontFamily: 'Ubuntu, sans-serif',
+                      fontFamily: 'var(--font-family-base)',
                       fontWeight: 400,
                       fontSize: '26px',
                       lineHeight: '24px',
@@ -204,7 +201,7 @@ export function EquipBentoGrid({
                       <p 
                         key={i} 
                         style={{
-                          fontFamily: 'Ubuntu, sans-serif',
+                          fontFamily: 'var(--font-family-base)',
                           fontWeight: 400,
                           fontSize: '16px',
                           lineHeight: '24px',
@@ -221,10 +218,10 @@ export function EquipBentoGrid({
                 {/* Is This For You Section */}
                 <div className="flex flex-col lg:flex-row gap-[24px] lg:gap-[49px] items-start">
                   <div className="flex flex-col gap-[14px]">
-                    <p style={{ fontFamily: 'Ubuntu, sans-serif', fontWeight: 500, fontSize: '14px', lineHeight: '24px', color: '#151515', textTransform: 'uppercase' }}>
+                    <p style={{ fontFamily: 'var(--font-family-base)', fontWeight: 500, fontSize: '14px', lineHeight: '24px', color: '#151515', textTransform: 'uppercase' }}>
                       IS THIS FOR YOU?
                     </p>
-                    <p style={{ fontFamily: 'Ubuntu, sans-serif', fontWeight: 400, fontSize: '18px', lineHeight: '24px', color: '#151515', maxWidth: '167px' }}>
+                    <p style={{ fontFamily: 'var(--font-family-base)', fontWeight: 400, fontSize: '18px', lineHeight: '24px', color: '#151515', maxWidth: '167px' }}>
                       {eligibilityIntro || "Sleep Tight may be helpful if:"}
                     </p>
                   </div>
@@ -236,7 +233,7 @@ export function EquipBentoGrid({
                         <div className="bg-white rounded-full size-[40px] flex items-center justify-center shrink-0">
                           <CheckIcon />
                         </div>
-                        <p style={{ fontFamily: 'Ubuntu, sans-serif', fontWeight: 400, fontSize: '14px', lineHeight: '21px', color: '#171717' }}>
+                        <p style={{ fontFamily: 'var(--font-family-base)', fontWeight: 400, fontSize: '14px', lineHeight: '21px', color: '#171717' }}>
                           {point}
                         </p>
                       </div>
@@ -297,10 +294,10 @@ export function EquipBentoGrid({
                         </div>
                       </div>
                       <div className="flex flex-col justify-center h-[100px]">
-                        <p style={{ fontFamily: 'Ubuntu, sans-serif', fontWeight: 700, fontSize: '16px', lineHeight: '24px', color: '#757575', marginBottom: 0 }}>
+                        <p style={{ fontFamily: 'var(--font-family-base)', fontWeight: 500, fontSize: '16px', lineHeight: '24px', color: '#757575', marginBottom: 0 }}>
                           {tile.title}
                         </p>
-                        <p style={{ fontFamily: 'Ubuntu, sans-serif', fontWeight: 400, fontSize: '16px', lineHeight: '24px', color: '#757575' }}>
+                        <p style={{ fontFamily: 'var(--font-family-base)', fontWeight: 400, fontSize: '16px', lineHeight: '24px', color: '#757575' }}>
                           {tile.subtitle}
                         </p>
                       </div>
@@ -325,7 +322,7 @@ export function EquipBentoGrid({
                       <Icon className="size-[24px] text-black" strokeWidth={1.5} />
                     </div>
                     <div className="flex flex-col justify-center min-h-[48px]">
-                      <p style={{ fontFamily: 'Ubuntu, sans-serif', fontWeight: 400, fontSize: '14px', lineHeight: '21px', color: '#171717' }}>
+                      <p style={{ fontFamily: 'var(--font-family-base)', fontWeight: 400, fontSize: '14px', lineHeight: '21px', color: '#171717' }}>
                         {item.text}
                       </p>
                     </div>
@@ -336,8 +333,8 @@ export function EquipBentoGrid({
 
             {/* HOW IT WORKS - Order 3 (Mobile), Order 2 (Desktop) */}
             <div 
-              className="order-3 lg:order-2 bg-white rounded-[16px] p-[24px] w-full"
-              style={{ border: '1px solid rgba(0,0,0,0.1)' }}
+              className="order-3 lg:order-2 rounded-[16px] p-[24px] w-full"
+              style={{ backgroundColor: 'var(--color-bg-card)' }}
             >
               <div className="flex flex-col gap-[12px]">
                 {/* Header */}
@@ -345,20 +342,20 @@ export function EquipBentoGrid({
                   <div className="size-[40px] rounded-full bg-[#f5f5f5] flex items-center justify-center">
                     <ListTodo className="size-[20px] text-black" strokeWidth={1.5} />
                   </div>
-                  <p style={{ fontFamily: 'Ubuntu, sans-serif', fontWeight: 500, fontSize: '18px', lineHeight: '25px', color: '#2e2a2f' }}>
+                  <p style={{ fontFamily: 'var(--font-family-base)', fontWeight: 500, fontSize: '18px', lineHeight: '25px', color: '#2e2a2f' }}>
                     How it works
                   </p>
                 </div>
                 
                 {/* Subtitle */}
-                <p style={{ fontFamily: 'Ubuntu, sans-serif', fontWeight: 400, fontSize: '12px', lineHeight: '14px', color: '#757575' }}>
+                <p style={{ fontFamily: 'var(--font-family-base)', fontWeight: 400, fontSize: '12px', lineHeight: '14px', color: '#757575' }}>
                   The program focuses on sleep in two stages.
                 </p>
 
                 {/* Steps */}
                 <div className="flex flex-col gap-[13px] items-center text-center py-2">
                   {howItWorksSteps.map((step, i) => (
-                    <p key={i} style={{ fontFamily: 'Ubuntu, sans-serif', fontWeight: 400, fontSize: '12px', lineHeight: '18px', color: '#151515', width: '100%' }}>
+                    <p key={i} style={{ fontFamily: 'var(--font-family-base)', fontWeight: 400, fontSize: '12px', lineHeight: '18px', color: '#151515', width: '100%' }}>
                       {step}
                     </p>
                   ))}
@@ -366,7 +363,7 @@ export function EquipBentoGrid({
 
                 {/* Footer */}
                 <div className="bg-[#eaeaea] rounded-[12px] px-[6px] py-[10px] flex items-center justify-center">
-                  <p style={{ fontFamily: 'Ubuntu, sans-serif', fontStyle: 'italic', fontWeight: 400, fontSize: '12px', lineHeight: '18px', color: '#151515', textAlign: 'center' }}>
+                  <p style={{ fontFamily: 'var(--font-family-base)', fontStyle: 'italic', fontWeight: 400, fontSize: '12px', lineHeight: '18px', color: '#151515', textAlign: 'center' }}>
                     The focus is on habit-building — without medication or pressure — to support better rest over time.
                   </p>
                 </div>

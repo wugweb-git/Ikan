@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
 import { cn } from '../ui/utils';
-import { Filter, Search, ChevronDown, X } from 'lucide-react';
+import { Filter, Search, X } from 'lucide-react';
 import { apiClient } from '../../lib/api-client';
 import { ConsultantCard } from '../blocks/ConsultantCard';
 import { Button } from '../ui/button';
@@ -104,10 +104,12 @@ export function Consultation({ className, onNavigate }: ConsultationProps) {
   
   // Load consultants from API
   useEffect(() => {
+    let isMounted = true;
     const loadConsultants = async () => {
       try {
         setLoading(true);
         const response = await apiClient.getProfessionals();
+        if (!isMounted) return;
         if (response && Array.isArray(response)) {
           const mapped = response.map((p: any) => ({ ...p, id: p.id || p.professional_id }));
           setConsultants(mapped);
@@ -117,14 +119,17 @@ export function Consultation({ className, onNavigate }: ConsultationProps) {
            setConsultants(mapped);
            setFilteredConsultants(mapped);
         }
-      } catch (error) {
+      } catch (error: any) {
+        if (error?.name === 'AbortError') return;
         console.error('Failed to load consultants:', error);
       } finally {
-        setLoading(false);
+        if (isMounted) setLoading(false);
       }
     };
     
     loadConsultants();
+
+    return () => { isMounted = false; };
   }, []);
   
   // Filter states
@@ -404,82 +409,84 @@ export function Consultation({ className, onNavigate }: ConsultationProps) {
         subtitle="Connect with experienced mental health professionals" 
       />
 
-      {/* Category Tabs */}
-      <div style={{ backgroundColor: 'var(--color-bg-card)', borderBottom: '1px solid var(--color-border-default)' }}>
-        <div className="app-container">
-          <Tabs value={selectedCategory} onValueChange={(v) => setSelectedCategory(v as CategoryType)}>
-            <TabsList className={cn("w-full justify-start overflow-x-auto h-14 bg-transparent p-0", isMobile && "rounded-none")}>
-              <TabsTrigger 
-                value="all" 
-                className="data-[state=active]:bg-[#F5F5F5] data-[state=active]:text-[#1A1A1A] data-[state=active]:shadow-none rounded-[12px] px-4 py-2 mr-2"
-                style={{ fontWeight: 'var(--font-weight-medium)', fontSize: 'var(--text-sm)' }}
-              >
-                All
-              </TabsTrigger>
-              <TabsTrigger 
-                value="therapist" 
-                className="data-[state=active]:bg-[#F5F5F5] data-[state=active]:text-[#1A1A1A] data-[state=active]:shadow-none rounded-[12px] px-4 py-2 mr-2"
-                style={{ fontWeight: 'var(--font-weight-medium)', fontSize: 'var(--text-sm)' }}
-              >
-                Therapist
-              </TabsTrigger>
-              <TabsTrigger 
-                value="psychiatrist" 
-                className="data-[state=active]:bg-[#F5F5F5] data-[state=active]:text-[#1A1A1A] data-[state=active]:shadow-none rounded-[12px] px-4 py-2 mr-2"
-                style={{ fontWeight: 'var(--font-weight-medium)', fontSize: 'var(--text-sm)' }}
-              >
-                Psychiatrist
-              </TabsTrigger>
-              <TabsTrigger 
-                value="counselor" 
-                className="data-[state=active]:bg-[#F5F5F5] data-[state=active]:text-[#1A1A1A] data-[state=active]:shadow-none rounded-[12px] px-4 py-2 mr-2"
-                style={{ fontWeight: 'var(--font-weight-medium)', fontSize: 'var(--text-sm)' }}
-              >
-                Counselor
-              </TabsTrigger>
-              <TabsTrigger 
-                value="family-therapist" 
-                className="data-[state=active]:bg-[#F5F5F5] data-[state=active]:text-[#1A1A1A] data-[state=active]:shadow-none rounded-[12px] px-4 py-2 mr-2"
-                style={{ fontWeight: 'var(--font-weight-medium)', fontSize: 'var(--text-sm)' }}
-              >
-                Family Therapist
-              </TabsTrigger>
-            </TabsList>
-          </Tabs>
-        </div>
-      </div>
-
-      {/* Search & Filter Bar */}
-      <div style={{ 
-        backgroundColor: 'var(--color-bg-card)', 
-        borderBottom: '1px solid var(--color-border-default)'
-      }}>
-        <div className="app-container py-4 flex gap-3">
-          {/* Search */}
-          <div className="flex-1 relative">
-            <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-[var(--color-text-muted)]" />
-            <input
-              type="text"
-              placeholder="Search by name, expertise..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              style={{
-                width: '100%',
-                height: '52px',
-                paddingLeft: '48px',
-                paddingRight: 'var(--spacing-3)',
-                borderRadius: '16px',
-                border: '1px solid var(--color-border-default)',
-                fontSize: 'var(--text-sm)',
-                fontWeight: 'var(--font-weight-regular)',
-                backgroundColor: 'var(--color-bg-input)',
-                color: 'var(--color-text-primary)'
-              }}
-            />
+      {/* Mobile-only: Category Tabs */}
+      {isMobile && (
+        <div style={{ backgroundColor: 'var(--color-bg-card)', borderBottom: '1px solid var(--color-border-default)' }}>
+          <div className="app-container">
+            <Tabs value={selectedCategory} onValueChange={(v) => setSelectedCategory(v as CategoryType)}>
+              <TabsList className={cn("w-full justify-start overflow-x-auto h-14 bg-transparent p-0 rounded-none")}>
+                <TabsTrigger 
+                  value="all" 
+                  className="data-[state=active]:bg-[var(--color-bg-page)] data-[state=active]:text-[var(--color-text-primary)] data-[state=active]:shadow-none rounded-[12px] px-4 py-2 mr-2"
+                  style={{ fontWeight: 'var(--font-weight-medium)', fontSize: 'var(--text-sm)' }}
+                >
+                  All
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="therapist" 
+                  className="data-[state=active]:bg-[var(--color-bg-page)] data-[state=active]:text-[var(--color-text-primary)] data-[state=active]:shadow-none rounded-[12px] px-4 py-2 mr-2"
+                  style={{ fontWeight: 'var(--font-weight-medium)', fontSize: 'var(--text-sm)' }}
+                >
+                  Therapist
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="psychiatrist" 
+                  className="data-[state=active]:bg-[var(--color-bg-page)] data-[state=active]:text-[var(--color-text-primary)] data-[state=active]:shadow-none rounded-[12px] px-4 py-2 mr-2"
+                  style={{ fontWeight: 'var(--font-weight-medium)', fontSize: 'var(--text-sm)' }}
+                >
+                  Psychiatrist
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="counselor" 
+                  className="data-[state=active]:bg-[var(--color-bg-page)] data-[state=active]:text-[var(--color-text-primary)] data-[state=active]:shadow-none rounded-[12px] px-4 py-2 mr-2"
+                  style={{ fontWeight: 'var(--font-weight-medium)', fontSize: 'var(--text-sm)' }}
+                >
+                  Counselor
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="family-therapist" 
+                  className="data-[state=active]:bg-[var(--color-bg-page)] data-[state=active]:text-[var(--color-text-primary)] data-[state=active]:shadow-none rounded-[12px] px-4 py-2 mr-2"
+                  style={{ fontWeight: 'var(--font-weight-medium)', fontSize: 'var(--text-sm)' }}
+                >
+                  Family Therapist
+                </TabsTrigger>
+              </TabsList>
+            </Tabs>
           </div>
+        </div>
+      )}
 
-          {/* Filter Button (Mobile) */}
-          {isMobile && (
+      {/* Mobile-only: Search & Filter Bar */}
+      {isMobile && (
+        <div style={{ 
+          backgroundColor: 'var(--color-bg-card)', 
+          borderBottom: '1px solid var(--color-border-default)'
+        }}>
+          <div className="app-container py-4 flex gap-3">
+            {/* Search */}
+            <div className="flex-1 relative">
+              <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-[var(--color-text-muted)]" />
+              <input
+                type="text"
+                placeholder="Search by name, expertise..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                style={{
+                  width: '100%',
+                  height: '52px',
+                  paddingLeft: '48px',
+                  paddingRight: 'var(--spacing-3)',
+                  borderRadius: '16px',
+                  border: '1px solid var(--color-border-default)',
+                  fontSize: 'var(--text-sm)',
+                  fontWeight: 'var(--font-weight-regular)',
+                  backgroundColor: 'var(--color-bg-input)',
+                  color: 'var(--color-text-primary)'
+                }}
+              />
+            </div>
+
+            {/* Filter Button (Mobile) */}
             <Sheet open={showFilters} onOpenChange={setShowFilters}>
               <SheetTrigger asChild>
                 <Button
@@ -517,37 +524,127 @@ export function Consultation({ className, onNavigate }: ConsultationProps) {
                 <FilterPanel className="p-4" />
               </SheetContent>
             </Sheet>
-          )}
 
-          {/* Sort */}
-          <Select value={sortBy} onValueChange={(v) => setSortBy(v as SortOption)}>
-            <SelectTrigger style={{ width: isMobile ? '120px' : '180px', height: '52px', borderRadius: '16px' }}>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="recommended">Recommended</SelectItem>
-              <SelectItem value="rating">Highest Rated</SelectItem>
-              <SelectItem value="price-low">Price: Low to High</SelectItem>
-              <SelectItem value="price-high">Price: High to Low</SelectItem>
-              <SelectItem value="experience">Most Experience</SelectItem>
-            </SelectContent>
-          </Select>
+            {/* Sort */}
+            <Select value={sortBy} onValueChange={(v) => setSortBy(v as SortOption)}>
+              <SelectTrigger style={{ width: '120px', height: '52px', borderRadius: '16px' }}>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="recommended">Recommended</SelectItem>
+                <SelectItem value="rating">Highest Rated</SelectItem>
+                <SelectItem value="price-low">Price: Low to High</SelectItem>
+                <SelectItem value="price-high">Price: High to Low</SelectItem>
+                <SelectItem value="experience">Most Experience</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Main Content */}
-      <div className="flex-1 app-container py-8">
+      <div className="flex-1 app-container px-[0px] py-[48px]">
         <div className="flex gap-8">
           {/* Sidebar Filters (Desktop) */}
           {!isMobile && (
             <div style={{ 
               width: '280px', 
               flexShrink: 0,
-              backgroundColor: '#F5F5F5', // Step 1
-              borderRadius: '24px',
-              padding: '24px' // Add padding inside the container
             }}>
-              <FilterPanel />
+              <div style={{
+                backgroundColor: 'var(--color-bg-page)',
+                borderRadius: '24px',
+                padding: '24px',
+                position: 'sticky',
+                top: '140px',
+              }}>
+                {/* Category Tabs in Sidebar */}
+                <Tabs value={selectedCategory} onValueChange={(v) => setSelectedCategory(v as CategoryType)}>
+                  <TabsList className="w-full justify-start overflow-x-auto h-auto bg-transparent p-0 flex-wrap gap-1">
+                    <TabsTrigger 
+                      value="all" 
+                      className="data-[state=active]:bg-[var(--color-bg-card)] data-[state=active]:text-[var(--color-text-primary)] data-[state=active]:shadow-sm rounded-[12px] px-4 py-2"
+                      style={{ fontWeight: 'var(--font-weight-medium)', fontSize: 'var(--text-sm)' }}
+                    >
+                      All
+                    </TabsTrigger>
+                    <TabsTrigger 
+                      value="therapist" 
+                      className="data-[state=active]:bg-[var(--color-bg-card)] data-[state=active]:text-[var(--color-text-primary)] data-[state=active]:shadow-sm rounded-[12px] px-4 py-2"
+                      style={{ fontWeight: 'var(--font-weight-medium)', fontSize: 'var(--text-sm)' }}
+                    >
+                      Therapist
+                    </TabsTrigger>
+                    <TabsTrigger 
+                      value="psychiatrist" 
+                      className="data-[state=active]:bg-[var(--color-bg-card)] data-[state=active]:text-[var(--color-text-primary)] data-[state=active]:shadow-sm rounded-[12px] px-4 py-2"
+                      style={{ fontWeight: 'var(--font-weight-medium)', fontSize: 'var(--text-sm)' }}
+                    >
+                      Psychiatrist
+                    </TabsTrigger>
+                    <TabsTrigger 
+                      value="counselor" 
+                      className="data-[state=active]:bg-[var(--color-bg-card)] data-[state=active]:text-[var(--color-text-primary)] data-[state=active]:shadow-sm rounded-[12px] px-4 py-2"
+                      style={{ fontWeight: 'var(--font-weight-medium)', fontSize: 'var(--text-sm)' }}
+                    >
+                      Counselor
+                    </TabsTrigger>
+                    <TabsTrigger 
+                      value="family-therapist" 
+                      className="data-[state=active]:bg-[var(--color-bg-card)] data-[state=active]:text-[var(--color-text-primary)] data-[state=active]:shadow-sm rounded-[12px] px-4 py-2"
+                      style={{ fontWeight: 'var(--font-weight-medium)', fontSize: 'var(--text-sm)' }}
+                    >
+                      Family Therapist
+                    </TabsTrigger>
+                  </TabsList>
+                </Tabs>
+
+                {/* Divider */}
+                <div style={{ height: '1px', backgroundColor: 'var(--color-border-default)', margin: '16px 0' }} />
+
+                {/* Search in Sidebar */}
+                <div className="relative mb-3">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-[var(--color-text-muted)]" />
+                  <input
+                    type="text"
+                    placeholder="Search by name, expertise..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    style={{
+                      width: '100%',
+                      height: 'var(--ikan-component-input-height)',
+                      paddingLeft: '36px',
+                      paddingRight: 'var(--spacing-3)',
+                      borderRadius: 'var(--radius-md)',
+                      border: '1px solid var(--color-border-default)',
+                      fontSize: 'var(--text-sm)',
+                      fontWeight: 'var(--font-weight-regular)',
+                      backgroundColor: 'var(--color-bg-card)',
+                      color: 'var(--color-text-primary)'
+                    }}
+                  />
+                </div>
+
+                {/* Sort in Sidebar */}
+                <Select value={sortBy} onValueChange={(v) => setSortBy(v as SortOption)}>
+                  <SelectTrigger style={{ width: '100%', height: 'var(--ikan-component-input-height)', borderRadius: 'var(--radius-md)', backgroundColor: 'var(--color-bg-card)' }}>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="recommended">Recommended</SelectItem>
+                    <SelectItem value="rating">Highest Rated</SelectItem>
+                    <SelectItem value="price-low">Price: Low to High</SelectItem>
+                    <SelectItem value="price-high">Price: High to Low</SelectItem>
+                    <SelectItem value="experience">Most Experience</SelectItem>
+                  </SelectContent>
+                </Select>
+
+                {/* Divider */}
+                <div style={{ height: '1px', backgroundColor: 'var(--color-border-default)', margin: '16px 0' }} />
+
+                {/* Existing Filter Panel */}
+                <FilterPanel />
+              </div>
             </div>
           )}
 

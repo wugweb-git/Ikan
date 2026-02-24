@@ -1,9 +1,7 @@
 import React from 'react';
-import { ArrowLeft, Save, Trash2, Eye, MoreHorizontal, X, FileText } from 'lucide-react';
+import { Save, Trash2, X, FileText } from 'lucide-react';
 import { Button } from '../ui/button';
-import { Badge } from '../ui/badge';
-import { Label } from '../ui/label';
-import { Switch } from '../ui/switch';
+import { AdminStatusBadge } from './AdminStatusBadge';
 import { useIsMobile } from '../../hooks/useIsMobile';
 
 interface Action {
@@ -60,8 +58,8 @@ export function AdminPageLayout({
     <div className={`${maxWidthClass} mx-auto px-4 md:px-6`} style={{ paddingTop: isMobile ? 'var(--spacing-6)' : 'var(--spacing-8)', paddingBottom: 'var(--spacing-8)' }}>
       {/* Header - Sticky */}
       <div 
-        className="flex items-start justify-between mb-8 sticky z-10 bg-gray-50 pb-4 pt-2 -mt-2"
-        style={{ top: isMobile ? '64px' : '72px' }}
+        className="flex items-start justify-between mb-8 sticky z-10 pb-4 pt-2 -mt-2"
+        style={{ top: isMobile ? '64px' : '72px', backgroundColor: 'var(--color-bg-page)' }}
       >
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-3 mb-1">
@@ -77,22 +75,10 @@ export function AdminPageLayout({
               {title}
             </h1>
             {status && (
-              <Badge
-                variant={status.variant === 'success' ? 'default' : 'outline'}
-                style={{
-                  backgroundColor:
-                    status.variant === 'success'
-                      ? 'var(--color-success-default)'
-                      : status.variant === 'warning'
-                      ? 'var(--color-warning-default)'
-                      : status.variant === 'info'
-                      ? 'var(--color-info-default)'
-                      : 'var(--color-bg-muted)',
-                  color: status.variant === 'default' ? 'var(--color-text-muted)' : 'white'
-                }}
-              >
-                {status.label}
-              </Badge>
+              <AdminStatusBadge 
+                status={status.variant === 'success' ? 'success' : status.variant === 'warning' ? 'warning' : status.variant === 'info' ? 'info' : 'neutral'}
+                label={status.label}
+              />
             )}
           </div>
           {subtitle && (
@@ -230,7 +216,7 @@ export function AdminPageLayout({
               {action.loading ? (
                 <div
                   className="animate-spin rounded-full border-2 border-current border-t-transparent"
-                  style={{ width: '16px', height: '16px' }}
+                  style={{ width: 'var(--spacing-4)', height: 'var(--spacing-4)' }}
                 />
               ) : (
                 action.icon
@@ -254,7 +240,7 @@ export function AdminPageLayout({
               {primaryAction.loading ? (
                 <div
                   className="animate-spin rounded-full border-2 border-current border-t-transparent"
-                  style={{ width: '16px', height: '16px' }}
+                  style={{ width: 'var(--spacing-4)', height: 'var(--spacing-4)' }}
                 />
               ) : (
                 primaryAction.icon

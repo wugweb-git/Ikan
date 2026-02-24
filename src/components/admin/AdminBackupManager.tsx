@@ -1,18 +1,23 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from '../ui/button';
-import { Card, CardHeader, CardTitle, CardContent } from '../ui/card';
+import { Card, CardContent } from '../ui/card';
 import { apiClient } from '../../lib/api-client';
-import { AlertCircle, CheckCircle, Loader2, Save, RotateCcw, Clock, Trash2 } from 'lucide-react';
-import { formatDate } from '../../utils/format';
-import { Badge } from '../ui/badge';
-import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
+import { CheckCircle, Loader2, Save, RotateCcw, Clock, Database, AlertCircle } from 'lucide-react';
+import { AdminStatusBadge } from './AdminStatusBadge';
+import { AdminHeader } from './AdminHeader';
+import { AdminEmptyState } from './AdminEmptyState';
+import { AdminLoading } from './AdminLoading';
 
 interface Backup {
   id: string;
   timestamp: string;
 }
 
-export function AdminBackupManager() {
+interface AdminBackupManagerProps {
+  onBack?: () => void;
+}
+
+export function AdminBackupManager({ onBack }: AdminBackupManagerProps) {
   const [backups, setBackups] = useState<Backup[]>([]);
   const [loading, setLoading] = useState(false);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
@@ -67,84 +72,121 @@ export function AdminBackupManager() {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-           <h2 className="text-2xl font-bold tracking-tight">System Recovery</h2>
-           <p className="text-muted-foreground">Manage system checkpoints and disaster recovery.</p>
-        </div>
-        <Button onClick={handleCreateBackup} disabled={!!actionLoading}>
-          {actionLoading === 'create' ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
-          Create Checkpoint
-        </Button>
-      </div>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-6)' }}>
+      <AdminHeader
+        title="System Recovery"
+        description="Manage system checkpoints and disaster recovery."
+        onBack={onBack}
+        actions={
+          <Button
+            onClick={handleCreateBackup}
+            disabled={!!actionLoading}
+            style={{
+              height: 'var(--ikan-component-button-height)',
+              borderRadius: 'var(--ikan-component-border-radius)',
+              fontWeight: 'var(--font-weight-medium)',
+              backgroundColor: 'var(--color-primary-default)',
+              color: 'var(--color-primary-on)',
+              gap: 'var(--spacing-2)',
+            }}
+          >
+            {actionLoading === 'create' ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+            Create Checkpoint
+          </Button>
+        }
+      />
 
+      {/* Error State */}
       {error && (
-        <Alert variant="destructive">
-          <AlertCircle className="h-4 w-4" />
-          <AlertTitle>Error</AlertTitle>
-          <AlertDescription>{error}</AlertDescription>
-        </Alert>
-      )}
-
-      {success && (
-        <Alert variant="default" className="border-green-500 text-green-700 bg-green-50">
-          <CheckCircle className="h-4 w-4" />
-          <AlertTitle>Success</AlertTitle>
-          <AlertDescription>{success}</AlertDescription>
-        </Alert>
-      )}
-
-      <div className="grid grid-cols-1 gap-6">
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Clock className="w-5 h-5" />
-              Available Checkpoints
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {loading ? (
-              <div className="flex justify-center p-8">
-                <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
-              </div>
-            ) : backups.length === 0 ? (
-              <div className="text-center py-8 text-muted-foreground">
-                No checkpoints found. Create one before making major changes.
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {backups.map((backup) => (
-                  <div key={backup.id} className="flex items-center justify-between p-4 border rounded-lg bg-card hover:bg-accent/50 transition-colors">
-                    <div className="flex flex-col gap-1">
-                      <div className="flex items-center gap-2">
-                         <span className="font-mono text-sm">{backup.id}</span>
-                         {/* Highlight most recent */}
-                         {backups.indexOf(backup) === 0 && <Badge variant="secondary" className="text-xs">Latest</Badge>}
-                      </div>
-                      <span className="text-sm text-muted-foreground">
-                        Created on {new Date(backup.timestamp).toLocaleString()}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Button 
-                        variant="outline" 
-                        size="sm"
-                        onClick={() => handleRestore(backup.id)}
-                        disabled={!!actionLoading}
-                        className="text-amber-600 hover:text-amber-700 hover:bg-amber-50 border-amber-200"
-                      >
-                        {actionLoading === backup.id ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <RotateCcw className="w-4 h-4 mr-2" />}
-                        Restore
-                      </Button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
+        <Card style={{ borderRadius: 'var(--radius-lg)', border: '1px solid var(--color-status-danger)', backgroundColor: 'var(--color-status-danger-light)' }}>
+          <CardContent className="p-4 flex items-center gap-3">
+            <AlertCircle className="w-5 h-5 flex-shrink-0" style={{ color: 'var(--color-status-danger)' }} />
+            <span style={{ fontFamily: 'var(--font-family-base)', fontSize: 'var(--text-sm)', color: 'var(--color-status-danger)', fontWeight: 'var(--font-weight-medium)' }}>
+              {error}
+            </span>
           </CardContent>
         </Card>
-      </div>
+      )}
+
+      {/* Success State */}
+      {success && (
+        <Card style={{ borderRadius: 'var(--radius-lg)', border: '1px solid var(--color-status-success)', backgroundColor: 'var(--color-status-success-light)' }}>
+          <CardContent className="p-4 flex items-center gap-3">
+            <CheckCircle className="w-5 h-5 flex-shrink-0" style={{ color: 'var(--color-status-success)' }} />
+            <span style={{ fontFamily: 'var(--font-family-base)', fontSize: 'var(--text-sm)', color: 'var(--color-status-success)', fontWeight: 'var(--font-weight-medium)' }}>
+              {success}
+            </span>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Checkpoints List */}
+      <Card style={{ borderRadius: 'var(--radius-lg)', backgroundColor: 'var(--color-bg-card)' }}>
+        <CardContent className="p-6">
+          <div className="flex items-center gap-2 mb-6">
+            <Clock className="w-5 h-5" style={{ color: 'var(--color-primary-default)' }} />
+            <span style={{ fontFamily: 'var(--font-family-base)', fontSize: 'var(--text-lg)', fontWeight: 'var(--font-weight-medium)', color: 'var(--color-text-primary)' }}>
+              Available Checkpoints
+            </span>
+          </div>
+
+          {loading ? (
+            <AdminLoading />
+          ) : backups.length === 0 ? (
+            <AdminEmptyState
+              icon={Database}
+              title="No Checkpoints"
+              description="No checkpoints found. Create one before making major changes."
+              actionLabel="Create First Checkpoint"
+              onAction={handleCreateBackup}
+            />
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-3)' }}>
+              {backups.map((backup, index) => (
+                <div
+                  key={backup.id}
+                  className="flex items-center justify-between"
+                  style={{
+                    padding: 'var(--spacing-4)',
+                    borderRadius: 'var(--radius-md)',
+                    border: '1px solid var(--color-border-default)',
+                    backgroundColor: 'var(--color-bg-muted)',
+                    transition: 'background-color 0.2s',
+                  }}
+                >
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-1)' }}>
+                    <div className="flex items-center" style={{ gap: 'var(--spacing-2)' }}>
+                      <span style={{ fontFamily: 'monospace', fontSize: 'var(--text-sm)', color: 'var(--color-text-primary)' }}>
+                        {backup.id}
+                      </span>
+                      {index === 0 && (
+                        <AdminStatusBadge status="info" label="Latest" />
+                      )}
+                    </div>
+                    <span style={{ fontFamily: 'var(--font-family-base)', fontSize: 'var(--text-sm)', color: 'var(--color-text-muted)' }}>
+                      Created on {new Date(backup.timestamp).toLocaleString()}
+                    </span>
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleRestore(backup.id)}
+                    disabled={!!actionLoading}
+                    style={{
+                      color: 'var(--color-status-warning)',
+                      borderColor: 'var(--color-status-warning)',
+                      gap: 'var(--spacing-2)',
+                    }}
+                  >
+                    {actionLoading === backup.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <RotateCcw className="w-4 h-4" />}
+                    Restore
+                  </Button>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }

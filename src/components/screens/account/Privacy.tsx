@@ -37,6 +37,16 @@ export function Privacy() {
     researchParticipation: false
   });
 
+  // Load saved privacy settings from user profile
+  React.useEffect(() => {
+    if (user?.privacy_settings) {
+      setSettings(prev => ({
+        ...prev,
+        ...user.privacy_settings
+      }));
+    }
+  }, [user]);
+
   const [exportStatus, setExportStatus] = useState<DataExportStatus>({
     isExporting: false,
     lastExport: undefined
@@ -44,12 +54,21 @@ export function Privacy() {
 
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
-  const handleToggleSetting = (key: keyof PrivacySettings) => {
-    setSettings(prev => ({
-      ...prev,
-      [key]: !prev[key]
-    }));
-    showToast('success', 'Updated', 'Privacy setting updated successfully');
+  const handleToggleSetting = async (key: keyof PrivacySettings) => {
+    const newSettings = { ...settings, [key]: !settings[key] };
+    
+    // Optimistic update
+    setSettings(newSettings);
+    
+    try {
+      await apiClient.updatePrivacySettings(newSettings);
+      showToast('success', 'Updated', 'Privacy setting updated successfully');
+    } catch (error: any) {
+      // Revert on failure
+      setSettings(settings);
+      console.error('Failed to update privacy setting:', error);
+      showToast('error', 'Update Failed', error.message || 'Could not save privacy settings');
+    }
   };
 
   const handleExportData = async () => {

@@ -1,4 +1,3 @@
-
 // 1️⃣ Assessment → Severity → Recommendation Mapping
 // (Backend / Admin-seeded rules)
 
@@ -186,15 +185,15 @@ export function evaluateAssessment(assessmentSlug: string, score: number, maxSco
       result.secondaryActions.push({
         type: 'resources',
         title: 'You may also find this helpful',
-        label: 'Explore Resources',
-        route: '/resources'
+        label: 'Explore Equip',
+        route: '/equip'
       });
     } else if (action === 'trackers') {
       result.secondaryActions.push({
         type: 'trackers',
         title: 'Track your progress',
-        label: 'Open Journal',
-        route: '/mood-journal'
+        label: 'Explore Assessment',
+        route: '/assessment'
       });
     }
   });

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, lazy, Suspense } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useTokens } from './lib/react-tokens';
 import { useIsMobile } from './hooks/useIsMobile';
@@ -11,135 +11,109 @@ import { Navigation } from './components/navigation/Navigation';
 import { BottomNavBarMobile } from './components/navigation/BottomNavBarMobile';
 import { PublicBottomNavMobile } from './components/navigation/PublicBottomNavMobile';
 import { RouteGuard } from './components/RouteGuard';
-import { isPublicRoute, requiresAuth, DEFAULT_PUBLIC_ROUTE, DEFAULT_PRIVATE_ROUTE, routes } from './lib/route-config';
+import { DEFAULT_PUBLIC_ROUTE, DEFAULT_PRIVATE_ROUTE } from './lib/route-config';
 
 import { PushPermissionPrompt, usePushPermissionPrompt } from './components/notifications/PushPermissionPrompt';
 import { Toaster } from './components/ui/sonner';
 import { cn } from './components/ui/utils';
-import { apiClient } from './lib/api-client';
-import { projectId, publicAnonKey } from './utils/supabase/info';
 import { logger } from './lib/logger';
-import { Heart } from 'lucide-react';
-import { LogoIcon } from './components/Logo';
-import { Dashboard } from './components/screens/Dashboard';
-import { Assessments } from './components/screens/Assessments';
-import { EquipPrograms } from './components/screens/EquipPrograms';
-import { Consultation } from './components/screens/Consultation';
-import { ConsultantDetail } from './components/screens/ConsultantDetail';
-import { Library } from './components/screens/Library';
-import { Account } from './components/screens/Account';
-import { AboutUs } from './components/screens/AboutUs';
-import { FAQ } from './components/screens/FAQ';
-import { PrivacyPolicy } from './components/screens/PrivacyPolicy';
-import { TermsOfUse } from './components/screens/TermsOfUse';
-import { ContactUs } from './components/screens/ContactUs';
-import { ReturnPolicy } from './components/screens/ReturnPolicy';
-import { CancellationPolicy } from './components/screens/CancellationPolicy';
-import { Sitemap } from './components/screens/Sitemap';
-import { MoodJournal } from './components/screens/MoodJournal';
-import { ResourceDetail } from './components/screens/ResourceDetail';
-import { PaymentHistory } from './components/screens/PaymentHistory';
-import { AssessmentLandingNew } from './components/screens/AssessmentLandingNew';
-import { AdminResourceManager } from './components/screens/AdminResourceManager';
-import { AdminDashboard } from './components/screens/AdminDashboard';
-import { AdminWidget } from './components/admin/AdminWidget';
-import { UIKitShowcase } from './components/screens/UIKitShowcase';
-import { UIKitShowcasePage } from './components/screens/UIKitShowcasePage';
-import { EquipOnboardingDemo } from './components/screens/EquipOnboardingDemo';
-import { NotFound } from './components/screens/NotFound';
+import { setupGlobalErrorHandlers } from './lib/error-handlers';
+import { LoadingSpinner } from './components/LoadingSpinner';
 
-import { AssessmentFlow } from './components/screens/AssessmentFlow';
-import { AssessmentResults } from './components/screens/AssessmentResults';
-import { AssessmentDetail } from './components/screens/AssessmentDetail';
-import { EquipDetail } from './components/screens/EquipDetail';
-import { EquipOnboarding } from './components/screens/EquipProgramOnboarding';
-import { EquipProgramFlow } from './components/screens/EquipProgramFlow';
-import { EquipProgramCompletion } from './components/screens/EquipProgramCompletion';
-import { ProgramView } from './components/screens/ProgramView';
+// --- Eagerly loaded core screens (always needed) ---
+import { Dashboard } from './components/screens/Dashboard';
 import { Homepage } from './components/screens/Homepage';
-import { RouteTestScreen } from './components/screens/RouteTestScreen';
-import { PrivateRouteTest } from './components/screens/PrivateRouteTest';
-import { WizardTestScreen } from './components/screens/WizardTestScreen';
+import { NotFound } from './components/screens/NotFound';
+import LoginScreen from './components/LoginScreen';
+
+// --- Lazy loaded screens (split by category) ---
+
+// Assessment screens
+const Assessments = lazy(() => import('./components/screens/Assessments').then(m => ({ default: m.Assessments })));
+const AssessmentLandingNew = lazy(() => import('./components/screens/AssessmentLandingNew').then(m => ({ default: m.AssessmentLandingNew })));
+const AssessmentDetail = lazy(() => import('./components/screens/AssessmentDetail').then(m => ({ default: m.AssessmentDetail })));
+const AssessmentFlow = lazy(() => import('./components/screens/AssessmentFlow').then(m => ({ default: m.AssessmentFlow })));
+const AssessmentResults = lazy(() => import('./components/screens/AssessmentResults').then(m => ({ default: m.AssessmentResults })));
+
+// Equip screens
+const EquipPrograms = lazy(() => import('./components/screens/EquipPrograms').then(m => ({ default: m.EquipPrograms })));
+const EquipDetail = lazy(() => import('./components/screens/EquipDetail').then(m => ({ default: m.EquipDetail })));
+const EquipOnboarding = lazy(() => import('./components/screens/EquipProgramOnboarding').then(m => ({ default: m.EquipOnboarding })));
+const EquipProgramFlow = lazy(() => import('./components/screens/EquipProgramFlow').then(m => ({ default: m.EquipProgramFlow })));
+const EquipProgramCompletion = lazy(() => import('./components/screens/EquipProgramCompletion').then(m => ({ default: m.EquipProgramCompletion })));
+
+// User screens
+const Consultation = lazy(() => import('./components/screens/Consultation').then(m => ({ default: m.Consultation })));
+const ConsultantDetail = lazy(() => import('./components/screens/ConsultantDetail').then(m => ({ default: m.ConsultantDetail })));
+const Library = lazy(() => import('./components/screens/Library').then(m => ({ default: m.Library })));
+const Account = lazy(() => import('./components/screens/Account').then(m => ({ default: m.Account })));
+const MoodJournal = lazy(() => import('./components/screens/MoodJournal').then(m => ({ default: m.MoodJournal })));
+const ResourceDetail = lazy(() => import('./components/screens/ResourceDetail').then(m => ({ default: m.ResourceDetail })));
+const ProfessionalApplication = lazy(() => import('./components/screens/ProfessionalApplication').then(m => ({ default: m.ProfessionalApplication })));
+
+// Static/legal pages
+const AboutUs = lazy(() => import('./components/screens/AboutUs').then(m => ({ default: m.AboutUs })));
+const FAQ = lazy(() => import('./components/screens/FAQ').then(m => ({ default: m.FAQ })));
+const PrivacyPolicy = lazy(() => import('./components/screens/PrivacyPolicy').then(m => ({ default: m.PrivacyPolicy })));
+const TermsOfUse = lazy(() => import('./components/screens/TermsOfUse').then(m => ({ default: m.TermsOfUse })));
+const ContactUs = lazy(() => import('./components/screens/ContactUs').then(m => ({ default: m.ContactUs })));
+const ReturnPolicy = lazy(() => import('./components/screens/ReturnPolicy').then(m => ({ default: m.ReturnPolicy })));
+const CancellationPolicy = lazy(() => import('./components/screens/CancellationPolicy').then(m => ({ default: m.CancellationPolicy })));
+const Sitemap = lazy(() => import('./components/screens/Sitemap').then(m => ({ default: m.Sitemap })));
+
+// Admin screens
+const AdminDashboard = lazy(() => import('./components/screens/AdminDashboard').then(m => ({ default: m.AdminDashboard })));
+const AdminLoginScreen = lazy(() => import('./components/admin/AdminLoginScreen').then(m => ({ default: m.AdminLoginScreen })));
+
+// Dev/internal screens
+const UIKitShowcase = lazy(() => import('./components/screens/UIKitShowcase').then(m => ({ default: m.UIKitShowcase })));
+const UIKitShowcasePage = lazy(() => import('./components/screens/UIKitShowcasePage').then(m => ({ default: m.UIKitShowcasePage })));
+const RouteTestScreen = lazy(() => import('./components/screens/RouteTestScreen').then(m => ({ default: m.RouteTestScreen })));
+const PrivateRouteTest = lazy(() => import('./components/screens/PrivateRouteTest').then(m => ({ default: m.PrivateRouteTest })));
+const WizardTestScreen = lazy(() => import('./components/screens/WizardTestScreen').then(m => ({ default: m.WizardTestScreen })));
+
+// --- Eagerly loaded non-screen components ---
+import { AdminWidget } from './components/admin/AdminWidget';
 import { GoogleFitProvider } from './components/integrations/GoogleFitContext';
 import { Footer } from './components/Footer';
-
-// Import the AuthForm component that was referenced but not imported
-import { AuthForm } from './components/AuthForm';
-import { LoadingScreen } from './components/LoadingScreen';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { SecurityProvider } from './components/security/SecurityProvider';
 import { CrisisSupport, useCrisisSupport } from './components/safety/CrisisSupport';
 import { SafePerformanceMonitor } from './components/monitoring/SafePerformanceMonitor';
-import LoginScreen from './components/LoginScreen';
-import { AdminLoginScreen } from './components/admin/AdminLoginScreen';
+import { SkipToMainContent, useReducedMotion } from './components/ui/accessibility-helpers';
+import { OfflineBanner } from './components/OfflineBanner';
+import { useOfflineSync } from './hooks/useOfflineSync';
+
+// --- Suspense fallback ---
+function LazyFallback() {
+  return <LoadingSpinner fullScreen message="Loading..." />;
+}
 
 function AppContent() {
   // ✅ ALL HOOKS MUST BE CALLED FIRST - BEFORE ANY CONDITIONAL LOGIC OR EARLY RETURNS
-  const { user, loading, isInitialized } = useAuth();
+  const { user, isInitialized } = useAuth();
   const { showToast } = useNotifications();
   const { shouldShowPrompt } = usePushPermissionPrompt();
-  const { isVisible: isCrisisVisible, triggerReason, showCrisisSupport, hideCrisisSupport } = useCrisisSupport();
+  const { isVisible: isCrisisVisible, triggerReason, hideCrisisSupport } = useCrisisSupport();
   const isMobile = useIsMobile();
-  const { triggerHapticFeedback, connectionType, useSwipeGestures } = useMobileOptimizations();
-  const { keyboardOpen } = useMobileKeyboard();
-  
-  // Initialize mobile viewport optimization (this is a hook)
+  const { triggerHapticFeedback } = useMobileOptimizations();
+  useMobileKeyboard();
   useMobileViewport();
+  
+  const prefersReducedMotion = useReducedMotion();
+  const { isOnline, pendingCount, isSyncing, syncNow } = useOfflineSync();
   
   // All state hooks
   const [emergencyRender, setEmergencyRender] = useState(false);
   const [currentRoute, setCurrentRoute] = useState(DEFAULT_PUBLIC_ROUTE);
-  const [previousRoute, setPreviousRoute] = useState<string | null>(null);
-  const [appReady, setAppReady] = useState(false);
-  const [forceReady, setForceReady] = useState(false);
+  const [, setAppReady] = useState(false); // Write-only: triggers re-render on init
+  const [, setForceReady] = useState(false); // Write-only: triggers re-render on emergency
   const [resourceDetailId, setResourceDetailId] = useState<string | null>(null);
   const [consultantId, setConsultantId] = useState<string | null>(null);
-  const [errorCount, setErrorCount] = useState(0);
-  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [, setIsRefreshing] = useState(false); // Write-only: pull-to-refresh state
   const [touchStartY, setTouchStartY] = useState<number>(0);
   const [pullDistance, setPullDistance] = useState<number>(0);
-  const [routeHistory, setRouteHistory] = useState<string[]>([DEFAULT_PUBLIC_ROUTE]);
-
-  // All utility functions (non-hook)
-  const getOfflineMode = () => {
-    try {
-      return typeof window !== 'undefined' && localStorage.getItem('ikan-offline-mode') === 'true';
-    } catch {
-      return false;
-    }
-  };
-
-  const setOfflineMode = (value: boolean) => {
-    try {
-      if (typeof window !== 'undefined') {
-        localStorage.setItem('ikan-offline-mode', value.toString());
-      }
-    } catch {
-      // Ignore localStorage errors
-    }
-  };
-
-  const clearAuthState = async () => {
-    try {
-      logger.log('🧹 Clearing corrupted auth state...');
-      await apiClient.signOut();
-      if (typeof window !== 'undefined') {
-        const authKeys = Object.keys(localStorage).filter(key => 
-          key.includes('supabase') || key.includes('auth') || key.includes('session')
-        );
-        authKeys.forEach(key => {
-          try {
-            localStorage.removeItem(key);
-          } catch (error) {
-            logger.warn('Error clearing localStorage key:', key, error);
-          }
-        });
-      }
-      logger.log('✅ Auth state cleared');
-    } catch (error) {
-      logger.warn('Error clearing auth state:', error);
-    }
-  };
+  const [, setRouteHistory] = useState<string[]>([DEFAULT_PUBLIC_ROUTE]); // Write-only: tracks navigation history
 
   const handleSignIn = () => {
     setCurrentRoute('/login');
@@ -196,37 +170,15 @@ function AppContent() {
     }
   }, [isMobile, pullDistance, showToast]);
 
-  const getTransitionDirection = useCallback((newRoute: string, oldRoute: string) => {
-    const routeOrder = [
-      '/', '/about', '/login', '/dashboard', '/mood-journal', 
-      '/assessment', '/assessment-landing', '/assessment-detail', '/assessment-flow', '/assessment-results',
-      '/equip', '/equip-programs-landing', '/equip-detail', '/equip-program-onboarding', '/equip-program-flow', '/equip-program-completion',
-      '/consultation', '/consultation-detail', '/resource', '/resource-detail', '/account'
-    ];
-    
-    const newIndex = routeOrder.indexOf(newRoute);
-    const oldIndex = routeOrder.indexOf(oldRoute);
-    const isBackNavigation = routeHistory.length > 1 && routeHistory[routeHistory.length - 2] === newRoute;
-    
-    if (isBackNavigation) return 'backward';
-    if (newIndex > oldIndex) return 'forward';
-    if (newIndex < oldIndex) return 'backward';
-    return 'none';
-  }, [routeHistory]);
-
   const handleNavigate = useCallback((route: string, resourceId?: string) => {
     try {
       logger.log('Navigating to:', route, resourceId ? `with resource: ${resourceId}` : '');
-      
-      setPreviousRoute(currentRoute);
       
       if (isMobile) {
         triggerHapticFeedback('light');
         window.scrollTo({ top: 0, behavior: 'smooth' });
       }
       
-      // Parse the route to separate path and query params
-      // This is critical for routes with params like /equip-detail?id=123
       const [path, search] = route.split('?');
       
       const validRoutes = [
@@ -234,7 +186,8 @@ function AppContent() {
         '/equip', '/equip-programs-landing', '/equip-detail', '/equip-program-onboarding', '/equip-program-flow', '/equip-program-completion',
         '/consultation', '/consultation-detail', '/resource', '/resource-detail', '/account', 
         '/about', '/faq', '/privacy', '/privacy-policy', '/terms', '/contact', '/return-policy', '/cancellation-policy', '/sitemap', '/login', '/route-test', '/private-route-test', '/wizard-test',
-        '/admin', '/admin/login', '/admin/resources', '/admin/equip', '/admin/users', '/admin/consultants', '/admin/assessments', '/admin/analytics', '/admin/settings', '/admin/pages', '/admin/media', '/admin/crud'
+        '/admin', '/admin/login', '/admin/resources', '/admin/equip', '/admin/users', '/admin/consultants', '/admin/assessments', '/admin/analytics', '/admin/settings', '/admin/pages', '/admin/media', '/admin/crud',
+        '/join/professional'
       ];
       
       // Handle consultant detail route pattern
@@ -243,8 +196,6 @@ function AppContent() {
         setConsultantId(id);
         setCurrentRoute('/consultation-detail');
         setRouteHistory(prev => [...prev, '/consultation-detail']);
-        
-        // Update URL
         if (typeof window !== 'undefined') {
           window.history.pushState({}, '', route);
         }
@@ -269,14 +220,12 @@ function AppContent() {
       
       setCurrentRoute(path);
       
-      // Update Browser URL so getQueryParams works
       if (typeof window !== 'undefined') {
         window.history.pushState({}, '', route);
       }
 
       if (path === '/resource-detail' && resourceId) {
         setResourceDetailId(resourceId);
-        // Ensure URL reflects the ID if not already there
         if (!search && typeof window !== 'undefined') {
            const newUrl = `/resource-detail?id=${resourceId}`;
            window.history.pushState({}, '', newUrl);
@@ -289,24 +238,16 @@ function AppContent() {
       setCurrentRoute('/dashboard');
       setResourceDetailId(null);
     }
-  }, [isMobile, user, triggerHapticFeedback, currentRoute]);
+  }, [isMobile, user, triggerHapticFeedback]);
 
   // ALL useEffect HOOKS - CALLED CONSISTENTLY ON EVERY RENDER
   
   // Auth state changes effect
   useEffect(() => {
     if (isInitialized) {
-      // Only redirect logged-in users away from the home page (/) - allow access to other public routes
       if (user && currentRoute === '/') {
         setCurrentRoute(DEFAULT_PRIVATE_ROUTE);
       } 
-      // REMOVED: Aggressive redirect for unauthenticated users. 
-      // RouteGuard handles this by showing the LoginScreen in-place.
-      // This prevents race conditions where a user signs in, navigates to /dashboard, 
-      // but the user state update lags slightly behind, causing a bounce back to /.
-      /* else if (!user && requiresAuth(currentRoute)) {
-        setCurrentRoute(DEFAULT_PUBLIC_ROUTE);
-      } */
     }
   }, [user, isInitialized, currentRoute]);
 
@@ -345,14 +286,14 @@ function AppContent() {
       if ('serviceWorker' in navigator && 'PushManager' in window) {
         window.addEventListener('beforeinstallprompt', (e) => {
           e.preventDefault();
-          logger.log('💡 PWA install prompt available');
+          logger.log('PWA install prompt available');
         });
       }
 
       if ('connection' in navigator) {
         const connection = (navigator as any).connection;
         if (connection && connection.effectiveType && connection.effectiveType.includes('2g')) {
-          logger.log('📱 Slow connection detected - enabling performance mode');
+          logger.log('Slow connection detected - enabling performance mode');
           document.documentElement.classList.add('slow-connection');
         }
       }
@@ -374,262 +315,22 @@ function AppContent() {
     };
   }, [isMobile, handleTouchStart, handleTouchMove, handleTouchEnd]);
 
-  // App initialization effect
+  // App initialization effect — delegates to extracted error-handlers utility
   useEffect(() => {
-    logger.log('🚀 iKan app starting - immediate mode...');
-    
+    logger.log('iKan app starting - immediate mode...');
     setAppReady(true);
     setForceReady(true);
-    // Don't immediately set offline mode to false - let error handlers manage it
     
-    // Global fetch wrapper to catch all network errors
-    const originalFetch = window.fetch;
-    window.fetch = async (...args) => {
-      try {
-        const response = await originalFetch(...args);
-        return response;
-      } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : String(error);
-        const errorString = errorMessage.toLowerCase();
-        
-        // Check if this is a network-related error
-        if (errorString.includes('failed to fetch') || 
-            errorString.includes('network error') ||
-            errorString.includes('connection refused') ||
-            error.name === 'TypeError') {
-          logger.log('🌐 Global fetch error intercepted - enabling offline mode:', errorMessage);
-          setOfflineMode(true);
-          
-          // Show user-friendly notification
-          if (showToast) {
-            showToast('info', 'Working offline', 'Some features may be limited until connection is restored');
-          }
-        }
-        
-        // Re-throw error for proper handling
-        throw error;
-      }
-    };
+    const cleanup = setupGlobalErrorHandlers({ showToast });
     
-    // Cleanup function to restore original fetch
-    const restoreFetch = () => {
-      window.fetch = originalFetch;
-    };
-    
-    logger.log('✨ App ready immediately!');
-    
-    // Enhanced global error handler - prevent app crashes
-    const handleUnhandledRejection = (event: PromiseRejectionEvent) => {
-      const errorMessage = event.reason?.message || String(event.reason) || 'Unknown error';
-      const errorString = errorMessage.toLowerCase();
-      
-      // Always prevent crashes and handle gracefully
-      event.preventDefault();
-      
-      // Comprehensive list of patterns that should trigger offline mode
-      const networkErrorPatterns = [
-        'failed to fetch',
-        'typeerror: failed to fetch',
-        'network error',
-        'network request failed',
-        'connection refused',
-        'no internet',
-        'cors',
-        'net::err_',
-        'fetch failed',
-        'connection timeout',
-        'request timeout',
-        'server timeout',
-        'load failed'
-      ];
-      
-      // Patterns for CMS/background errors that are normal
-      const backgroundErrorPatterns = [
-        'getpage',
-        'cms content loading failed', 
-        'response timed out',
-        'message getpage',
-        'timed out after',
-        '30000ms',
-        'cms_timeout',
-        'cms page',
-        'page fetch',
-        'content fetch',
-        'id: 3',
-        'page content',
-        'content sync',
-        'cms sync',
-        'background sync',
-        'auto-refresh',
-        'polling failed',
-        'background fetch'
-      ];
-      
-      // Check for network errors and enable offline mode
-      const isNetworkError = networkErrorPatterns.some(pattern => errorString.includes(pattern));
-      const isBackgroundError = backgroundErrorPatterns.some(pattern => errorString.includes(pattern));
-      
-      if (isNetworkError) {
-        console.log('🌐 Network connectivity issue detected - switching to offline mode:', errorMessage);
-        setOfflineMode(true);
-        // Show user-friendly message instead of error
-        if (showToast) {
-          showToast('info', 'Working offline', 'Some features may be limited until connection is restored');
-        }
-        return;
-      }
-      
-      if (isBackgroundError) {
-        console.log('🔧 Background/CMS operation failed gracefully (normal):', errorMessage);
-        return;
-      }
-      
-      // For any other errors, log them but don't crash
-      console.log('🔧 Unhandled promise rejection caught and handled:', errorMessage);
-    };
-    
-    // Enhanced window error handler
-    const handleWindowError = (event: ErrorEvent) => {
-      const errorMessage = event.message || event.error?.message || 'Unknown error';
-      const errorString = errorMessage.toLowerCase();
-      
-      // Always prevent default and handle gracefully
-      event.preventDefault();
-      
-      // Check for network-related window errors
-      const networkErrorPatterns = [
-        'failed to fetch',
-        'network error',
-        'connection refused',
-        'cors',
-        'net::err_'
-      ];
-      
-      const isNetworkError = networkErrorPatterns.some(pattern => errorString.includes(pattern));
-      
-      if (isNetworkError) {
-        console.log('🌐 Network error in window handler - enabling offline mode:', errorMessage);
-        setOfflineMode(true);
-        return false;
-      }
-      
-      // All other errors are handled gracefully
-      console.log('🔧 Window error handled gracefully:', errorMessage);
-      return false;
-    };
-    
-    window.addEventListener('unhandledrejection', handleUnhandledRejection);
-    window.addEventListener('error', handleWindowError);
-    
-    // Additional handler for message-based errors
-    const handleMessage = (event: MessageEvent) => {
-      if (event.data && typeof event.data === 'object') {
-        const message = event.data;
-        if (message.error || message.timeout || (message.type && message.type.includes('timeout'))) {
-          console.log('🔧 Message-based error handled gracefully:', message);
-          event.preventDefault?.();
-          event.stopPropagation?.();
-          return false;
-        }
-      }
-    };
-    
-    window.addEventListener('message', handleMessage);
-    
-    // Console error override to suppress specific error types
-    const originalConsoleError = console.error;
-    const originalConsoleWarn = console.warn;
-    
-    console.error = (...args) => {
-      const errorStr = args.join(' ').toLowerCase();
-      
-      // Comprehensive CMS and timeout error suppression
-      const suppressedPatterns = [
-        'getpage',
-        'message getpage',
-        'id: 3',
-        'timed out after',
-        'response timed out',
-        '30000ms',
-        'cms_timeout',
-        'cms content loading',
-        'page fetch',
-        'content fetch',
-        'background sync',
-        'auto-refresh',
-        'polling failed'
-      ];
-      
-      const shouldSuppress = suppressedPatterns.some(pattern => errorStr.includes(pattern));
-      
-      if (shouldSuppress || (errorStr.includes('message') && errorStr.includes('timeout'))) {
-        console.log('🔧 Console error suppressed (CMS timeout):', ...args);
-        return;
-      }
-      originalConsoleError.apply(console, args);
-    };
-    
-    console.warn = (...args) => {
-      const warnStr = args.join(' ').toLowerCase();
-      
-      // Also suppress warnings for the same patterns
-      const suppressedPatterns = [
-        'getpage',
-        'message getpage',
-        'id: 3',
-        'timed out after',
-        'response timed out',
-        '30000ms',
-        'cms_timeout',
-        'cms content loading'
-      ];
-      
-      const shouldSuppress = suppressedPatterns.some(pattern => warnStr.includes(pattern));
-      
-      if (shouldSuppress) {
-        console.log('🔧 Console warning suppressed (CMS timeout):', ...args);
-        return;
-      }
-      originalConsoleWarn.apply(console, args);
-    };
-    
-    // Optional background health check - don't block app startup
-    setTimeout(() => {
-      // Wrap all background operations in comprehensive error handling
-      Promise.resolve()
-        .then(() => apiClient.healthCheck())
-        .then(async () => {
-          console.log('✅ Server available');
-          setOfflineMode(false);
-        })
-        .catch((error) => {
-          const errorMessage = error instanceof Error ? error.message : String(error);
-          console.log(`📦 Using offline mode due to health check failure: ${errorMessage}`);
-          setOfflineMode(true);
-          
-          // Additional handling for specific fetch failures
-          if (errorMessage.toLowerCase().includes('failed to fetch') || error.name === 'TypeError') {
-            console.log('🌐 Network connectivity issue detected - running in offline mode');
-          }
-        });
-    }, 2000);
-    
-    console.log('✨ App ready!');
-    
-    return () => {
-      window.removeEventListener('unhandledrejection', handleUnhandledRejection);
-      window.removeEventListener('error', handleWindowError);
-      window.removeEventListener('message', handleMessage);
-      console.error = originalConsoleError;
-      console.warn = originalConsoleWarn;
-      restoreFetch(); // Restore original fetch
-    };
+    logger.log('App ready!');
+    return cleanup;
   }, []);
 
   // Emergency fallback effect
   useEffect(() => {
     const emergencyTimeout = setTimeout(() => {
-      console.log('🚨 EMERGENCY: App stuck loading - forcing immediate render');
+      console.log('EMERGENCY: App stuck loading - forcing immediate render');
       setEmergencyRender(true);
       setAppReady(true);
       setForceReady(true);
@@ -642,18 +343,35 @@ function AppContent() {
     return () => clearTimeout(emergencyTimeout);
   }, [isInitialized, emergencyRender]);
 
+  // Popstate handler for browser back/forward button support
+  useEffect(() => {
+    const handlePopState = () => {
+      const path = window.location.pathname;
+      setCurrentRoute(path || DEFAULT_PUBLIC_ROUTE);
+      window.scrollTo({ top: 0 });
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
+
+  // Focus management on route changes (accessibility)
+  useEffect(() => {
+    const mainEl = document.getElementById('main-content');
+    if (mainEl) {
+      mainEl.focus({ preventScroll: true });
+    }
+  }, [currentRoute]);
+
   // Render function
   const renderScreen = () => {
-    // Safe rendering with proper error handling
     try {
-      // Add additional protection against route-related errors
       if (!currentRoute || typeof currentRoute !== 'string') {
-        console.log('🔧 Invalid route detected, falling back to default');
+        console.log('Invalid route detected, falling back to default');
         setCurrentRoute(user ? DEFAULT_PRIVATE_ROUTE : DEFAULT_PUBLIC_ROUTE);
         return null;
       }
 
-      // Helper to extract query parameters
       const getQueryParams = () => {
         if (typeof window === 'undefined') return {};
         const search = window.location.search;
@@ -664,19 +382,19 @@ function AppContent() {
 
       // Check for Admin Routes first
       if (currentRoute.startsWith('/admin')) {
-        // Special case for login
         if (currentRoute === '/admin/login') {
             return (
               <ErrorBoundary>
-                <AdminLoginScreen 
-                    onNavigate={handleNavigate} 
-                    onLoginSuccess={() => handleNavigate('/admin')} 
-                />
+                <Suspense fallback={<LazyFallback />}>
+                  <AdminLoginScreen 
+                      onNavigate={handleNavigate} 
+                      onLoginSuccess={() => handleNavigate('/admin')} 
+                  />
+                </Suspense>
               </ErrorBoundary>
             );
         }
 
-        // Auth Check for Admin
         if (!user) {
             handleNavigate('/admin/login');
             return null;
@@ -687,10 +405,19 @@ function AppContent() {
         
         return (
           <ErrorBoundary>
-            <AdminDashboard onNavigate={handleNavigate} initialView={view} />
+            <Suspense fallback={<LazyFallback />}>
+              <AdminDashboard onNavigate={handleNavigate} initialView={view} />
+            </Suspense>
           </ErrorBoundary>
         );
       }
+
+      // Wrap lazy-loaded components in Suspense
+      const withSuspense = (component: React.ReactNode) => (
+        <ErrorBoundary>
+          <Suspense fallback={<LazyFallback />}>{component}</Suspense>
+        </ErrorBoundary>
+      );
 
       switch (currentRoute) {
         case '/':
@@ -698,68 +425,69 @@ function AppContent() {
         case '/dashboard':
           return <Dashboard onNavigate={handleNavigate} />;
         case '/assessment':
-          return <Assessments onNavigate={handleNavigate} />;
+          return withSuspense(<Assessments onNavigate={handleNavigate} />);
         case '/assessment-landing':
-          return <AssessmentLandingNew onNavigate={handleNavigate} />;
+          return withSuspense(<AssessmentLandingNew onNavigate={handleNavigate} />);
         case '/assessment-detail':
-          return <AssessmentDetail assessmentId={queryParams.id || queryParams.type} onNavigate={handleNavigate} />;
+          return withSuspense(<AssessmentDetail assessmentId={queryParams.id || queryParams.type} onNavigate={handleNavigate} />);
         case '/assessment-flow':
-          return <AssessmentFlow assessmentId={queryParams.id || queryParams.type} onNavigate={handleNavigate} />;
+          return withSuspense(<AssessmentFlow assessmentId={queryParams.id || queryParams.type} onNavigate={handleNavigate} />);
         case '/assessment-results':
-          return <AssessmentResults onNavigate={handleNavigate} />;
+          return withSuspense(<AssessmentResults onNavigate={handleNavigate} />);
         case '/equip':
-          return <EquipPrograms onNavigate={handleNavigate} />;
         case '/equip-programs-landing':
-          return <EquipPrograms onNavigate={handleNavigate} />;
+          return withSuspense(<EquipPrograms onNavigate={handleNavigate} />);
         case '/equip-detail':
-          return <EquipDetail equipId={queryParams.id} onNavigate={handleNavigate} />;
+          return withSuspense(<EquipDetail equipId={queryParams.id} onNavigate={handleNavigate} />);
         case '/equip-program-onboarding':
-          return <EquipOnboarding programId={queryParams.id} onNavigate={handleNavigate} />;
+          return withSuspense(<EquipOnboarding programId={queryParams.id} onNavigate={handleNavigate} />);
         case '/equip-program-flow':
-          return <EquipProgramFlow programId={queryParams.id} onNavigate={handleNavigate} />;
+          return withSuspense(<EquipProgramFlow programId={queryParams.id} onNavigate={handleNavigate} />);
         case '/equip-program-completion':
-          return <EquipProgramCompletion onNavigate={handleNavigate} />;
+          return withSuspense(<EquipProgramCompletion onNavigate={handleNavigate} />);
         case '/consultation':
-          return <Consultation onNavigate={handleNavigate} />;
+          return withSuspense(<Consultation onNavigate={handleNavigate} />);
         case '/consultation-detail':
-          return <ConsultantDetail onNavigate={handleNavigate} consultantId={consultantId || queryParams.id} />;
+          return withSuspense(<ConsultantDetail onNavigate={handleNavigate} consultantId={consultantId || queryParams.id} />);
         case '/resource':
-          return <Library onNavigate={handleNavigate} />;
+          return withSuspense(<Library onNavigate={handleNavigate} />);
         case '/resource-detail':
-          return <ResourceDetail onNavigate={handleNavigate} resourceId={resourceDetailId || queryParams.id} />;
+          return withSuspense(<ResourceDetail onNavigate={handleNavigate} resourceId={resourceDetailId || queryParams.id} />);
         case '/account':
-          return <Account onNavigate={handleNavigate} />;
+          return withSuspense(<Account onNavigate={handleNavigate} />);
         case '/mood-journal':
-          return <MoodJournal onNavigate={handleNavigate} />;
+          return withSuspense(<MoodJournal onNavigate={handleNavigate} />);
         case '/about':
-          return <AboutUs onNavigate={handleNavigate} />;
+          return withSuspense(<AboutUs onNavigate={handleNavigate} />);
         case '/faq':
-          return <FAQ onNavigate={handleNavigate} />;
+          return withSuspense(<FAQ onNavigate={handleNavigate} />);
         case '/privacy':
         case '/privacy-policy':
-          return <PrivacyPolicy onNavigate={handleNavigate} />;
+          return withSuspense(<PrivacyPolicy onNavigate={handleNavigate} />);
         case '/terms':
-          return <TermsOfUse onNavigate={handleNavigate} />;
+          return withSuspense(<TermsOfUse onNavigate={handleNavigate} />);
         case '/contact':
-          return <ContactUs onNavigate={handleNavigate} />;
+          return withSuspense(<ContactUs onNavigate={handleNavigate} />);
         case '/return-policy':
-          return <ReturnPolicy onNavigate={handleNavigate} />;
+          return withSuspense(<ReturnPolicy onNavigate={handleNavigate} />);
         case '/cancellation-policy':
-          return <CancellationPolicy onNavigate={handleNavigate} />;
+          return withSuspense(<CancellationPolicy onNavigate={handleNavigate} />);
         case '/sitemap':
-          return <Sitemap onNavigate={handleNavigate} />;
+          return withSuspense(<Sitemap onNavigate={handleNavigate} />);
         case '/login':
           return <LoginScreen onNavigate={handleNavigate} onSuccess={() => handleNavigate('/dashboard')} />;
         case '/route-test':
-          return <RouteTestScreen onNavigate={handleNavigate} />;
+          return withSuspense(<RouteTestScreen onNavigate={handleNavigate} />);
         case '/private-route-test':
-          return <PrivateRouteTest onNavigate={handleNavigate} />;
+          return withSuspense(<PrivateRouteTest onNavigate={handleNavigate} />);
         case '/wizard-test':
-          return <WizardTestScreen onNavigate={handleNavigate} />;
+          return withSuspense(<WizardTestScreen onNavigate={handleNavigate} />);
         case '/uikit':
-          return <UIKitShowcase onNavigate={handleNavigate} />;
+          return withSuspense(<UIKitShowcase onNavigate={handleNavigate} />);
         case '/uikit-page':
-          return <UIKitShowcasePage onNavigate={handleNavigate} />;
+          return withSuspense(<UIKitShowcasePage onNavigate={handleNavigate} />);
+        case '/join/professional':
+          return withSuspense(<ProfessionalApplication onNavigate={handleNavigate} />);
         default:
           return <NotFound onNavigate={handleNavigate} />;
       }
@@ -789,6 +517,12 @@ function AppContent() {
                            currentRoute === '/faq' ||
                            currentRoute === '/sitemap';
 
+  const isFullScreenFlow = currentRoute.startsWith('/assessment-flow') ||
+                           currentRoute.startsWith('/equip-program-flow') ||
+                           currentRoute.startsWith('/equip-program-onboarding') ||
+                           currentRoute.startsWith('/equip-program-completion') ||
+                           currentRoute.startsWith('/join/');
+
   const isHeroRoute = shouldShowFooter || 
                       currentRoute === '/' || 
                       currentRoute === '/login' ||
@@ -798,18 +532,26 @@ function AppContent() {
                       currentRoute === '/consultation-detail' ||
                       currentRoute === '/equip-programs-landing' ||
                       currentRoute === '/assessment-landing' ||
-                      currentRoute.startsWith('/equip-detail') ||
-                      currentRoute.startsWith('/resource-detail') ||
-                      currentRoute.startsWith('/assessment-detail') ||
-                      currentRoute.startsWith('/consultation/');
+                      isFullScreenFlow;
 
   return (
     <div className={cn(
       "flex flex-col min-h-[100dvh] bg-background font-sans antialiased text-foreground",
       currentRoute === '/login' ? "h-[100dvh] overflow-hidden" : ""
     )}>
-      {/* Top Navigation - Floating Capsule */}
-      {!isMobile && currentRoute !== '/login' && !currentRoute.startsWith('/admin') && (
+      {/* Accessibility: Skip to main content link */}
+      <SkipToMainContent />
+
+      {/* Offline Status Banner */}
+      <OfflineBanner
+        isOnline={isOnline}
+        pendingCount={pendingCount}
+        isSyncing={isSyncing}
+        onSyncNow={syncNow}
+      />
+
+      {/* Top Navigation - Floating Capsule (Desktop only) */}
+      {!isMobile && !isFullScreenFlow && currentRoute !== '/login' && !currentRoute.startsWith('/admin') && (
         <Navigation 
           user={user} 
           onNavigate={handleNavigate} 
@@ -819,25 +561,26 @@ function AppContent() {
       )}
 
       {/* Main Content Area */}
-      <main className={cn(
-        "flex-1 w-full relative",
-        // Add padding-top for routes that DON'T have a hero/full-screen section
-        !isHeroRoute && !currentRoute.startsWith('/admin') && "pt-[100px]"
-      )}>
+      <main
+        id="main-content"
+        tabIndex={-1}
+        className={cn("flex-1 w-full relative outline-none p-[0px]", 
+          !isHeroRoute && !currentRoute.startsWith('/admin') && !isMobile && "pt-[100px]")}
+        role="main"
+        aria-label="Page content"
+      >
         <div className={cn(
           "w-full h-full",
-          // Add padding for mobile bottom nav if visible
-          // Using 96px (pb-24) to ensure content clears the floating bottom nav
           isMobile && showPrivateNav ? "pb-24" : ""
         )}>
           <RouteGuard currentRoute={currentRoute} onNavigate={handleNavigate}>
             <AnimatePresence mode="wait" initial={false}>
               <motion.div
                 key={currentRoute}
-                initial={{ opacity: 0, y: 10 }}
+                initial={prefersReducedMotion ? false : { opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                transition={{ duration: 0.2, ease: "easeOut" }}
+                exit={prefersReducedMotion ? undefined : { opacity: 0, y: -10 }}
+                transition={{ duration: prefersReducedMotion ? 0 : 0.2, ease: "easeOut" }}
                 className="w-full h-full"
               >
                 {renderScreen()}
@@ -904,7 +647,6 @@ function AppContent() {
       <Toaster 
         position="top-center"
         expand={false}
-        // Removed richColors to align with design system (cleaner look)
         closeButton
         toastOptions={{
           style: {
@@ -927,7 +669,6 @@ function AppContent() {
 }
 
 export default function App() {
-  // Initialize iKan design tokens
   useTokens();
   
   return (

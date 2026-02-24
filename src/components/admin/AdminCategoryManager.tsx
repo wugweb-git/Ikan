@@ -390,16 +390,16 @@ export function AdminCategoryManager({ onBack }: AdminCategoryManagerProps) {
                         className={`flex items-center justify-between p-4 rounded-lg transition-colors border ${
                            isEditing 
                            ? 'bg-[var(--color-accent-default)] border-[var(--color-primary-default)] ring-1 ring-[var(--color-primary-default)]' 
-                           : 'bg-[var(--color-bg-muted)] border-[var(--color-border-default)] hover:bg-gray-100'
+                           : 'bg-[var(--color-bg-muted)] border-[var(--color-border-default)]'
                         }`}
                       >
                         <div className="flex items-center gap-4 flex-1">
                           {/* Show Icon ONLY for Filter Type */}
                           {activeTab === 'filter_type' && (
                             <div
-                              className="w-10 h-10 rounded-lg flex items-center justify-center bg-white border border-gray-200"
+                              className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ backgroundColor: 'var(--color-bg-card)', border: '1px solid var(--color-border-default)' }}
                             >
-                              <ItemIcon className="w-5 h-5 text-gray-600" />
+                              <ItemIcon className="w-5 h-5" style={{ color: 'var(--color-text-muted)' }} />
                             </div>
                           )}
                           
@@ -413,15 +413,15 @@ export function AdminCategoryManager({ onBack }: AdminCategoryManagerProps) {
 
                           <div className="flex-1">
                             <div className="flex items-center gap-3">
-                              <p className="font-medium">{item.name}</p>
+                              <p style={{ fontWeight: 'var(--font-weight-medium)', fontFamily: 'var(--font-family-base)' }}>{item.name}</p>
                               <span 
-                                className="text-xs text-muted-foreground bg-white px-2 py-0.5 rounded border"
+                                style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)', backgroundColor: 'var(--color-bg-card)', padding: '2px 8px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--color-border-default)', fontFamily: 'monospace' }}
                               >
                                 /{item.slug}
                               </span>
                             </div>
                             {item.description && (
-                              <p className="text-sm text-[var(--color-text-muted)] mt-1">
+                              <p style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-muted)', marginTop: 'var(--spacing-1)' }}>
                                 {item.description}
                               </p>
                             )}
@@ -440,7 +440,7 @@ export function AdminCategoryManager({ onBack }: AdminCategoryManagerProps) {
                             size="sm"
                             onClick={() => handleDelete(item.id)}
                           >
-                            <Trash2 className="w-4 h-4 text-[var(--color-danger-default)]" />
+                            <Trash2 className="w-4 h-4" style={{ color: 'var(--color-status-danger)' }} />
                           </Button>
                         </div>
                       </div>

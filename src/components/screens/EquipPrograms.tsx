@@ -1,113 +1,230 @@
 import React, { useEffect, useState } from 'react';
 import { apiClient } from '../../lib/api-client';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '../ui/card';
-import { Button } from '../ui/button';
-import { Badge } from '../ui/badge';
 import { PageHero } from '../ui/PageHero';
 import { ImageWithFallback } from '../figma/ImageWithFallback';
 import { useNotifications } from '../../contexts/NotificationContext';
 import { useAuth } from '../../contexts/AuthContext';
+import { useIsMobile } from '../../hooks/useIsMobile';
 import { DUMMY_EQUIP_PROGRAM } from '../../lib/demo-data';
+import { SkeletonCard } from '../ui/skeleton-loader';
+
+const FALLBACK_IMAGE = 'https://images.unsplash.com/photo-1527137342181-19aab11a8ee8?auto=format&fit=crop&q=80&w=1000';
 
 export function EquipPrograms({ className, onNavigate }: { className?: string, onNavigate?: (route: string) => void }) {
   const [programs, setPrograms] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const { showToast } = useNotifications();
   const { user } = useAuth();
+  const isMobile = useIsMobile();
 
   useEffect(() => {
-    loadPrograms();
+    let isMounted = true;
+    loadPrograms(isMounted);
+    return () => { isMounted = false; };
   }, []);
 
-  const loadPrograms = async () => {
+  const loadPrograms = async (isMounted: boolean = true) => {
     try {
       let data = [];
       try {
         data = await apiClient.getEquipPrograms();
-      } catch (err) {
+      } catch (err: any) {
+        if (err?.name === 'AbortError') return;
         console.warn('API load failed, using local fallback only');
       }
       
       // Ensure Demo Program is ALWAYS present
       const hasDemo = data.some((p: any) => p.id === DUMMY_EQUIP_PROGRAM.id);
       if (!hasDemo) {
-        // Add to the beginning
-        console.log('➕ Force Adding Demo Equip Program');
         data.unshift(DUMMY_EQUIP_PROGRAM);
       }
       
-      setPrograms(data);
-    } catch (error) {
+      if (isMounted) setPrograms(data);
+    } catch (error: any) {
+      if (error?.name === 'AbortError') return;
       console.error(error);
-      showToast('error', 'Using offline mode');
-      setPrograms([DUMMY_EQUIP_PROGRAM]);
+      showToast('error', 'Connection Issue', 'Using offline mode. Some data may not be current.');
+      if (isMounted) setPrograms([DUMMY_EQUIP_PROGRAM]);
     } finally {
-      setLoading(false);
+      if (isMounted) setLoading(false);
     }
   };
 
   const handleViewProgram = async (equipId: string) => {
-    // Navigate to detail page instead of immediate enrollment
     if (onNavigate) {
       onNavigate(`/equip-detail?id=${equipId}`);
-    } else {
-      window.location.href = `/equip-detail?id=${equipId}`;
     }
   };
 
-  if (loading) return <div className="p-8 text-center text-[var(--color-text-muted)]">Loading programs...</div>;
-
   return (
-    <div className={`w-full ${className}`}>
+    <div
+      className={`w-full ${className || ''}`}
+      style={{ fontFamily: 'var(--font-family-base)' }}
+    >
       <PageHero 
         title="Equip Programs" 
         subtitle="Structured programs to equip you with mental health tools." 
       />
-      <div className="space-y-6 p-4 max-w-7xl mx-auto">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {programs.map((program) => (
-            <Card 
-              key={program.id} 
-              className="overflow-hidden flex flex-col h-full border-[var(--color-border-default)] shadow-sm hover:shadow-md transition-shadow cursor-pointer bg-[var(--color-bg-card)] rounded-[var(--radius-lg)]"
-              onClick={() => handleViewProgram(program.id)}
-            >
-            <div className="relative h-48 bg-[var(--color-bg-muted)]">
-               <ImageWithFallback
-                 src={program.cover_image || program.thumbnail || `https://source.unsplash.com/random/800x600?${program.category}`}
-                 alt={program.title || program.name}
-                 className="w-full h-full object-cover"
-               />
-               <Badge className="absolute top-3 right-3 bg-[var(--color-bg-card)] text-[var(--color-text-primary)] shadow-sm backdrop-blur-sm border-none">
-                 {program.category}
-               </Badge>
-            </div>
-            
-            <CardHeader className="pb-2">
-              <CardTitle className="text-[var(--text-xl)] text-[var(--color-text-primary)]">{program.title || program.name}</CardTitle>
-              <CardDescription className="text-[var(--color-text-muted)]">{program.duration_days} Days • {(!program.price || program.price === 0) ? 'Free' : 'Premium'}</CardDescription>
-            </CardHeader>
-            
-            <CardContent className="flex-1">
-              <p className="text-sm text-[var(--color-text-muted)] line-clamp-3">
-                 {program.description || `Explore our ${program.title} program designed to help with ${program.category}.`}
-              </p>
-            </CardContent>
-            
-            <CardFooter className="pt-4 border-t border-[var(--color-border-default)]">
-              <Button 
-                className="w-full bg-[var(--color-primary-default)] hover:opacity-90 text-[var(--color-primary-on)]"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleViewProgram(program.id);
+
+      <div
+        style={{
+          maxWidth: 'var(--banner-content-max, 1100px)',
+          margin: '0 auto',
+          padding: isMobile ? '24px 16px' : '40px 24px',
+        }}
+      >
+        {loading ? (
+          /* Skeleton loading state */
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)',
+              gap: '24px',
+            }}
+          >
+            {[1, 2, 3].map((i) => (
+              <SkeletonCard key={i} />
+            ))}
+          </div>
+        ) : (
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: isMobile ? '1fr' : programs.length < 3 ? 'repeat(2, 1fr)' : 'repeat(3, 1fr)',
+              gap: '24px',
+            }}
+          >
+            {programs.map((program) => (
+              <div
+                key={program.id}
+                onClick={() => handleViewProgram(program.id)}
+                style={{
+                  backgroundColor: 'var(--color-bg-card)',
+                  borderRadius: 'var(--radius-lg)',
+                  border: '1px solid var(--color-border-light)',
+                  overflow: 'hidden',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  transition: 'box-shadow 0.2s ease, transform 0.2s ease',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.boxShadow = '0 8px 24px rgba(0,0,0,0.08)';
+                  e.currentTarget.style.transform = 'translateY(-2px)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.boxShadow = 'none';
+                  e.currentTarget.style.transform = 'translateY(0)';
                 }}
               >
-                View Program
-              </Button>
-            </CardFooter>
-          </Card>
-        ))}
+                {/* Image */}
+                <div style={{ position: 'relative', height: '190px', backgroundColor: 'var(--color-bg-muted)' }}>
+                  <ImageWithFallback
+                    src={program.cover_image || program.thumbnail || FALLBACK_IMAGE}
+                    alt={program.title || program.name}
+                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                  />
+                  {program.category && (
+                    <span
+                      style={{
+                        position: 'absolute',
+                        top: '12px',
+                        right: '12px',
+                        fontFamily: 'var(--font-family-base)',
+                        fontSize: 'var(--text-xs)',
+                        fontWeight: 'var(--font-weight-medium)',
+                        color: 'var(--color-text-primary)',
+                        backgroundColor: 'rgba(255,255,255,0.9)',
+                        backdropFilter: 'blur(4px)',
+                        borderRadius: '999px',
+                        padding: '4px 12px',
+                      }}
+                    >
+                      {program.category}
+                    </span>
+                  )}
+                </div>
+
+                {/* Content */}
+                <div style={{ padding: '20px', flex: 1, display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  <h3
+                    style={{
+                      fontFamily: 'var(--font-family-base)',
+                      fontSize: 'var(--text-lg)',
+                      fontWeight: 'var(--font-weight-medium)',
+                      color: 'var(--color-text-primary)',
+                      margin: '0',
+                      lineHeight: '1.3',
+                    }}
+                  >
+                    {program.title || program.name}
+                  </h3>
+                  <p
+                    style={{
+                      fontFamily: 'var(--font-family-base)',
+                      fontSize: 'var(--text-sm)',
+                      fontWeight: 'var(--font-weight-regular)',
+                      color: 'var(--color-text-muted)',
+                      margin: '0',
+                    }}
+                  >
+                    {program.duration_days} Days • {(!program.price || program.price === 0) ? 'Free' : 'Premium'}
+                  </p>
+                  <p
+                    style={{
+                      fontFamily: 'var(--font-family-base)',
+                      fontSize: 'var(--text-sm)',
+                      fontWeight: 'var(--font-weight-regular)',
+                      color: 'var(--color-text-muted)',
+                      lineHeight: '1.6',
+                      margin: '0',
+                      display: '-webkit-box',
+                      WebkitLineClamp: 3,
+                      WebkitBoxOrient: 'vertical',
+                      overflow: 'hidden',
+                      flex: 1,
+                    }}
+                  >
+                    {program.description || `Explore our ${program.title} program designed to help with ${program.category}.`}
+                  </p>
+                </div>
+
+                {/* Footer */}
+                <div
+                  style={{
+                    padding: '16px 20px',
+                    borderTop: '1px solid var(--color-border-light)',
+                  }}
+                >
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleViewProgram(program.id);
+                    }}
+                    style={{
+                      width: '100%',
+                      fontFamily: 'var(--font-family-base)',
+                      fontSize: 'var(--text-base)',
+                      fontWeight: 'var(--font-weight-medium)',
+                      color: 'var(--color-primary-on)',
+                      backgroundColor: 'var(--color-primary-default)',
+                      border: 'none',
+                      borderRadius: 'var(--radius-md)',
+                      padding: '12px 24px',
+                      cursor: 'pointer',
+                      transition: 'opacity 0.15s ease',
+                    }}
+                    onMouseEnter={(e) => { e.currentTarget.style.opacity = '0.9'; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.opacity = '1'; }}
+                  >
+                    View Program
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
-    </div>
     </div>
   );
 }

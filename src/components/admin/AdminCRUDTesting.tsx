@@ -3,8 +3,8 @@ import { Button } from '../ui/button';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '../ui/card';
 import { useNotifications } from '../../contexts/NotificationContext';
 import { apiClient } from '../../lib/api-client';
-import { cn } from '../ui/utils';
 import { Activity, CheckCircle, AlertCircle, Database, Users, BookOpen, FileText, User, Stethoscope } from 'lucide-react';
+import { AdminHeader } from './AdminHeader';
 
 interface TestResult {
   name: string;
@@ -21,7 +21,7 @@ interface CRUDTestDetails {
   delete?: number;
 }
 
-export function AdminCRUDTesting() {
+export function AdminCRUDTesting({ onBack }: { onBack?: () => void }) {
   const { showToast } = useNotifications();
   const [loading, setLoading] = useState(false);
   const [healthData, setHealthData] = useState<any>(null);
@@ -508,56 +508,44 @@ export function AdminCRUDTesting() {
   };
 
   return (
-    <div className="space-y-6 p-6">
-      <div className="flex justify-between items-center">
-        <div>
-           <h2 style={{ 
-             fontFamily: 'var(--font-family-base)',
-             fontSize: 'var(--text-2xl)',
-             fontWeight: 'var(--font-weight-medium)',
-             color: 'var(--color-text-primary)'
-           }}>
-             CRUD Testing
-           </h2>
-           <p style={{ 
-             fontFamily: 'var(--font-family-base)',
-             fontSize: 'var(--text-base)',
-             color: 'var(--color-text-muted)'
-           }}>
-             Comprehensive CRUD validation - 3 instances per entity type (Create, Read, Update, Delete).
-           </p>
-        </div>
-        <div className="flex gap-2">
-          <Button 
-            onClick={checkHealth} 
-            disabled={loading || runningFullTest}
-            variant="outline"
-            style={{
-              height: 'var(--ikan-component-button-height)',
-              borderRadius: 'var(--ikan-component-border-radius)',
-              fontWeight: 'var(--font-weight-medium)',
-              gap: 'var(--spacing-2)'
-            }}
-          >
-            <Activity className="w-4 h-4" /> Health Check
-          </Button>
-          <Button 
-            onClick={runFullCRUDTest} 
-            disabled={loading || runningFullTest}
-            style={{
-              height: 'var(--ikan-component-button-height)',
-              borderRadius: 'var(--ikan-component-border-radius)',
-              fontWeight: 'var(--font-weight-medium)',
-              gap: 'var(--spacing-2)',
-              backgroundColor: 'var(--color-primary-default)',
-              color: 'var(--color-primary-on)'
-            }}
-          >
-            <Database className="w-4 h-4" /> 
-            {runningFullTest ? 'Running Tests...' : 'Run Full CRUD Test Suite'}
-          </Button>
-        </div>
-      </div>
+    <div className="space-y-6">
+      <AdminHeader
+        title="System Health & CRUD Testing"
+        description="Comprehensive CRUD validation - 3 instances per entity type (Create, Read, Update, Delete)."
+        onBack={onBack}
+        actions={
+          <div className="flex gap-2">
+            <Button 
+              onClick={checkHealth} 
+              disabled={loading || runningFullTest}
+              variant="outline"
+              style={{
+                height: 'var(--ikan-component-button-height)',
+                borderRadius: 'var(--ikan-component-border-radius)',
+                fontWeight: 'var(--font-weight-medium)',
+                gap: 'var(--spacing-2)'
+              }}
+            >
+              <Activity className="w-4 h-4" /> Health Check
+            </Button>
+            <Button 
+              onClick={runFullCRUDTest} 
+              disabled={loading || runningFullTest}
+              style={{
+                height: 'var(--ikan-component-button-height)',
+                borderRadius: 'var(--ikan-component-border-radius)',
+                fontWeight: 'var(--font-weight-medium)',
+                gap: 'var(--spacing-2)',
+                backgroundColor: 'var(--color-primary-default)',
+                color: 'var(--color-primary-on)'
+              }}
+            >
+              <Database className="w-4 h-4" /> 
+              {runningFullTest ? 'Running Tests...' : 'Run Full CRUD Test Suite'}
+            </Button>
+          </div>
+        }
+      />
 
       {/* Health Status Cards */}
       {healthData && (
@@ -569,9 +557,9 @@ export function AdminCRUDTesting() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className={cn("flex items-center gap-2", 
-                healthData.status === 'Healthy' ? "text-green-500" : "text-red-500"
-              )}>
+              <div className="flex items-center gap-2"
+                style={{ color: healthData.status === 'Healthy' ? 'var(--color-status-success)' : 'var(--color-status-danger)' }}
+              >
                 {healthData.status === 'Healthy' ? 
                   <CheckCircle className="w-6 h-6" /> : 
                   <AlertCircle className="w-6 h-6" />
@@ -694,15 +682,16 @@ export function AdminCRUDTesting() {
                   key={index}
                   className="flex items-start justify-between p-3 rounded-lg"
                   style={{ 
-                    backgroundColor: result.status === 'success' ? 'rgba(34, 197, 94, 0.1)' : 'rgba(239, 68, 68, 0.1)',
-                    border: `1px solid ${result.status === 'success' ? 'rgba(34, 197, 94, 0.3)' : 'rgba(239, 68, 68, 0.3)'}`
+                    backgroundColor: result.status === 'success' ? 'var(--color-status-success-light)' : 'var(--color-status-danger-light)',
+                    border: `1px solid ${result.status === 'success' ? 'var(--color-status-success)' : 'var(--color-status-danger)'}`,
+                    opacity: result.status === 'success' ? 1 : 0.9,
                   }}
                 >
                   <div className="flex-1">
                     <div className="flex items-center gap-2">
                       {result.status === 'success' ? 
-                        <CheckCircle className="w-4 h-4 text-green-500" /> : 
-                        <AlertCircle className="w-4 h-4 text-red-500" />
+                        <CheckCircle className="w-4 h-4" style={{ color: 'var(--color-status-success)' }} /> : 
+                        <AlertCircle className="w-4 h-4" style={{ color: 'var(--color-status-danger)' }} />
                       }
                       <span style={{ 
                         fontSize: 'var(--text-sm)', 

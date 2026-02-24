@@ -1,8 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { cn } from '../ui/utils';
 import { 
-  ArrowLeft, 
-  Share2, 
   Star, 
   MapPin, 
   Calendar as CalendarIcon,
@@ -13,7 +11,11 @@ import {
   ThumbsUp,
   CheckCircle2,
   Clock,
-  Award
+  Award,
+  Heart,
+  Users,
+  Quote,
+  Play,
 } from 'lucide-react';
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
@@ -30,6 +32,7 @@ import { apiClient } from '../../lib/api-client';
 import { useIsMobile } from '../../hooks/useIsMobile';
 import { toast } from 'sonner';
 import { MobileHeader } from '../navigation/MobileHeader';
+import { LoadingSpinner } from '../LoadingSpinner';
 
 // Define types locally
 export interface ConsultantAvailability {
@@ -71,6 +74,20 @@ export interface Consultant {
   faqs?: any[];
   qas?: any[];
   articles?: any[];
+  // New fields from admin form
+  therapeuticPhilosophy?: string;
+  testimonials?: { text: string; clientName: string }[];
+  demographicSpecialties?: string[];
+  availabilityPreferences?: {
+    workingHours: string;
+    daysAvailable: string[];
+    weekendAvailability: boolean;
+  };
+  videoIntroUrl?: string;
+  certificates?: string[];
+  willingToShareArticles?: boolean;
+  therapeuticApproaches?: string[];
+  clientFAQs?: { question: string; answer: string }[];
 }
 
 interface ConsultantDetailProps {
@@ -90,6 +107,7 @@ export function ConsultantDetail({ consultantId, onNavigate, className }: Consul
   const [showQuestionDialog, setShowQuestionDialog] = useState(false);
   const [questionText, setQuestionText] = useState('');
   const [questionerName, setQuestionerName] = useState('');
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     // Find consultant by ID
@@ -109,16 +127,26 @@ export function ConsultantDetail({ consultantId, onNavigate, className }: Consul
         }
       } catch (error) {
         console.error('Failed to load consultant:', error);
+      } finally {
+        setLoading(false);
       }
     };
     
     loadConsultant();
   }, [consultantId]);
 
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen" style={{ backgroundColor: 'var(--color-bg-page)' }}>
+        <LoadingSpinner message="Loading profile..." />
+      </div>
+    );
+  }
+
   if (!consultant) {
     return (
       <div className="flex items-center justify-center min-h-screen" style={{ backgroundColor: 'var(--color-bg-page)' }}>
-        <div className="animate-spin rounded-full border-4 w-12 h-12 border-primary border-t-transparent mb-4" />
+        <LoadingSpinner message="Loading consultant..." />
       </div>
     );
   }
@@ -390,11 +418,24 @@ export function ConsultantDetail({ consultantId, onNavigate, className }: Consul
                   }}>
                     {consultant.bio}
                   </p>
+
+                  {/* Therapeutic Philosophy */}
+                  {consultant.therapeuticPhilosophy && (
+                    <div style={{ marginTop: 'var(--spacing-6)', padding: 'var(--spacing-4)', backgroundColor: 'var(--color-bg-muted)', borderRadius: 'var(--radius-md)', borderLeft: '4px solid var(--color-primary-default)' }}>
+                      <div className="flex items-center gap-2 mb-2">
+                        <Heart className="h-4 w-4" style={{ color: 'var(--color-primary-default)' }} />
+                        <span style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--font-weight-medium)' }}>My Therapeutic Philosophy</span>
+                      </div>
+                      <p style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--font-weight-regular)', lineHeight: 'var(--line-height-lg)', color: 'var(--color-text-primary)', fontStyle: 'italic' }}>
+                        "{consultant.therapeuticPhilosophy}"
+                      </p>
+                    </div>
+                  )}
                 </TabsContent>
 
                 <TabsContent value="approaches">
                   <div className="space-y-3">
-                    {consultant.approaches.map((approach, index) => (
+                    {(consultant.approaches || consultant.therapeuticApproaches || []).map((approach, index) => (
                       <div
                         key={index}
                         style={{
@@ -408,6 +449,11 @@ export function ConsultantDetail({ consultantId, onNavigate, className }: Consul
                         </p>
                       </div>
                     ))}
+                    {(consultant.approaches || consultant.therapeuticApproaches || []).length === 0 && (
+                      <p style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-muted)' }}>
+                        No therapeutic approaches listed yet.
+                      </p>
+                    )}
                   </div>
                 </TabsContent>
 
@@ -430,6 +476,150 @@ export function ConsultantDetail({ consultantId, onNavigate, className }: Consul
             </CardContent>
           </Card>
 
+          {/* Video Introduction */}
+          {consultant.videoIntroUrl && (
+            <Card style={{ marginBottom: 'var(--spacing-6)', borderRadius: 'var(--radius-lg)', overflow: 'hidden' }}>
+              <CardContent style={{ padding: isMobile ? 'var(--spacing-4)' : 'var(--spacing-6)' }}>
+                <div className="flex items-center gap-2 mb-4">
+                  <Play className="h-5 w-5" style={{ color: 'var(--color-primary-default)' }} />
+                  <h2 style={{ fontSize: 'var(--text-lg)', fontWeight: 'var(--font-weight-medium)' }}>
+                    Video Introduction
+                  </h2>
+                </div>
+                {consultant.videoIntroUrl.includes('youtube.com') || consultant.videoIntroUrl.includes('youtu.be') ? (
+                  <div style={{ position: 'relative', paddingBottom: '56.25%', height: 0, borderRadius: 'var(--radius-md)', overflow: 'hidden' }}>
+                    <iframe
+                      src={consultant.videoIntroUrl.replace('watch?v=', 'embed/').replace('youtu.be/', 'youtube.com/embed/')}
+                      style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', border: 'none' }}
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                      allowFullScreen
+                      title={`Video introduction by ${consultant.name}`}
+                    />
+                  </div>
+                ) : consultant.videoIntroUrl.includes('vimeo.com') ? (
+                  <div style={{ position: 'relative', paddingBottom: '56.25%', height: 0, borderRadius: 'var(--radius-md)', overflow: 'hidden' }}>
+                    <iframe
+                      src={consultant.videoIntroUrl.replace('vimeo.com/', 'player.vimeo.com/video/')}
+                      style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', border: 'none' }}
+                      allow="autoplay; fullscreen; picture-in-picture"
+                      allowFullScreen
+                      title={`Video introduction by ${consultant.name}`}
+                    />
+                  </div>
+                ) : (
+                  <video
+                    src={consultant.videoIntroUrl}
+                    controls
+                    style={{ width: '100%', borderRadius: 'var(--radius-md)' }}
+                  >
+                    Your browser does not support the video tag.
+                  </video>
+                )}
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Demographic Specialties */}
+          {(consultant.demographicSpecialties || []).length > 0 && (
+            <Card style={{ marginBottom: 'var(--spacing-6)', borderRadius: 'var(--radius-lg)' }}>
+              <CardContent style={{ padding: isMobile ? 'var(--spacing-4)' : 'var(--spacing-6)' }}>
+                <div className="flex items-center gap-2 mb-4">
+                  <Users className="h-5 w-5" style={{ color: 'var(--color-primary-default)' }} />
+                  <h2 style={{ fontSize: 'var(--text-lg)', fontWeight: 'var(--font-weight-medium)' }}>
+                    I Work With
+                  </h2>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {consultant.demographicSpecialties!.map((demo, index) => (
+                    <Badge
+                      key={index}
+                      variant="secondary"
+                      style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--font-weight-regular)', padding: 'var(--spacing-2) var(--spacing-3)' }}
+                    >
+                      {demo}
+                    </Badge>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Availability Preferences */}
+          {consultant.availabilityPreferences && (consultant.availabilityPreferences.workingHours || (consultant.availabilityPreferences.daysAvailable || []).length > 0) && (
+            <Card style={{ marginBottom: 'var(--spacing-6)', borderRadius: 'var(--radius-lg)' }}>
+              <CardContent style={{ padding: isMobile ? 'var(--spacing-4)' : 'var(--spacing-6)' }}>
+                <div className="flex items-center gap-2 mb-4">
+                  <Clock className="h-5 w-5" style={{ color: 'var(--color-primary-default)' }} />
+                  <h2 style={{ fontSize: 'var(--text-lg)', fontWeight: 'var(--font-weight-medium)' }}>
+                    Availability
+                  </h2>
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-4)' }}>
+                  {consultant.availabilityPreferences.workingHours && (
+                    <div>
+                      <span style={{ fontSize: 'var(--text-xs)', fontWeight: 'var(--font-weight-medium)', color: 'var(--color-text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Working Hours</span>
+                      <p style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--font-weight-regular)', marginTop: 'var(--spacing-1)' }}>{consultant.availabilityPreferences.workingHours}</p>
+                    </div>
+                  )}
+                  {(consultant.availabilityPreferences.daysAvailable || []).length > 0 && (
+                    <div>
+                      <span style={{ fontSize: 'var(--text-xs)', fontWeight: 'var(--font-weight-medium)', color: 'var(--color-text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Days Available</span>
+                      <div className="flex flex-wrap gap-2" style={{ marginTop: 'var(--spacing-2)' }}>
+                        {consultant.availabilityPreferences.daysAvailable.map(day => (
+                          <span key={day} style={{ padding: 'var(--spacing-1) var(--spacing-3)', borderRadius: 'var(--radius-md)', backgroundColor: 'var(--color-primary-default)', color: 'var(--color-primary-on)', fontSize: 'var(--text-xs)', fontWeight: 'var(--font-weight-medium)' }}>
+                            {day.slice(0, 3)}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  {consultant.availabilityPreferences.weekendAvailability && (
+                    <div className="flex items-center gap-2">
+                      <CheckCircle2 className="h-4 w-4" style={{ color: 'var(--color-status-success)' }} />
+                      <span style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--font-weight-regular)' }}>Available on weekends</span>
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Testimonials */}
+          {(consultant.testimonials || []).length > 0 && (
+            <Card style={{ marginBottom: 'var(--spacing-6)', borderRadius: 'var(--radius-lg)' }}>
+              <CardContent style={{ padding: isMobile ? 'var(--spacing-4)' : 'var(--spacing-6)' }}>
+                <div className="flex items-center gap-2 mb-4">
+                  <Quote className="h-5 w-5" style={{ color: 'var(--color-primary-default)' }} />
+                  <h2 style={{ fontSize: 'var(--text-lg)', fontWeight: 'var(--font-weight-medium)' }}>
+                    Client Testimonials
+                  </h2>
+                </div>
+                <div className="space-y-4">
+                  {consultant.testimonials!.map((testimonial, index) => (
+                    <div
+                      key={index}
+                      style={{
+                        padding: 'var(--spacing-4)',
+                        backgroundColor: 'var(--color-bg-muted)',
+                        borderRadius: 'var(--radius-md)',
+                        borderLeft: '4px solid var(--color-accent-default)',
+                      }}
+                    >
+                      <p style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--font-weight-regular)', fontStyle: 'italic', lineHeight: 'var(--line-height-lg)', marginBottom: 'var(--spacing-2)' }}>
+                        "{testimonial.text}"
+                      </p>
+                      {testimonial.clientName && (
+                        <p style={{ fontSize: 'var(--text-xs)', fontWeight: 'var(--font-weight-medium)', color: 'var(--color-text-muted)' }}>
+                          — {testimonial.clientName}
+                        </p>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
           {/* Reviews */}
           <Card style={{ marginBottom: 'var(--spacing-6)', borderRadius: 'var(--radius-lg)' }}>
             <CardContent style={{ padding: isMobile ? 'var(--spacing-4)' : 'var(--spacing-6)' }}>
@@ -441,7 +631,7 @@ export function ConsultantDetail({ consultantId, onNavigate, className }: Consul
                 Reviews ({consultant.reviewCount})
               </h2>
               <div className="space-y-4">
-                {consultant.reviews.map((review) => (
+                {(consultant.reviews || []).map((review) => (
                   <div
                     key={review.id}
                     style={{
@@ -468,7 +658,7 @@ export function ConsultantDetail({ consultantId, onNavigate, className }: Consul
                             <Star
                               key={i}
                               className="h-3 w-3"
-                              style={{ color: i < review.rating ? 'var(--color-rating-star)' : '#E0E0E0' }}
+                              style={{ color: i < review.rating ? 'var(--color-rating-star)' : 'var(--color-rating-star-inactive)' }}
                               fill={i < review.rating ? 'var(--color-rating-star)' : 'none'}
                             />
                           ))}
@@ -512,13 +702,13 @@ export function ConsultantDetail({ consultantId, onNavigate, className }: Consul
                 Frequently Asked Questions
               </h2>
               <Accordion type="single" collapsible>
-                {consultant.faqs.map((faq, index) => (
+                {(consultant.faqs || consultant.clientFAQs || []).map((faq, index) => (
                   <AccordionItem key={index} value={`item-${index}`}>
                     <AccordionTrigger style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--font-weight-medium)' }}>
-                      {faq.question}
+                      {faq.question || faq.q}
                     </AccordionTrigger>
                     <AccordionContent style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--font-weight-regular)' }}>
-                      {faq.answer}
+                      {faq.answer || faq.a}
                     </AccordionContent>
                   </AccordionItem>
                 ))}
@@ -537,14 +727,14 @@ export function ConsultantDetail({ consultantId, onNavigate, className }: Consul
                   variant="outline"
                   size="sm"
                   onClick={() => setShowQuestionDialog(true)}
-                  style={{ height: '36px', fontWeight: 'var(--font-weight-medium)', fontSize: 'var(--text-sm)' }}
+                  style={{ height: 'var(--ikan-component-button-height)', fontWeight: 'var(--font-weight-medium)', fontSize: 'var(--text-sm)' }}
                 >
                   Ask a Question
                 </Button>
               </div>
               <div className="space-y-4">
-                {consultant.qas.length > 0 ? (
-                  consultant.qas.map((qa) => (
+                {(consultant.qas || []).length > 0 ? (
+                  (consultant.qas || []).map((qa) => (
                     <div
                       key={qa.id}
                       style={{
@@ -588,7 +778,7 @@ export function ConsultantDetail({ consultantId, onNavigate, className }: Consul
           </Card>
 
           {/* Articles */}
-          {consultant.articles.length > 0 && (
+          {(consultant.articles || []).length > 0 && (
             <Card style={{ marginBottom: 'var(--spacing-6)', borderRadius: 'var(--radius-lg)' }}>
               <CardContent style={{ padding: isMobile ? 'var(--spacing-4)' : 'var(--spacing-6)' }}>
                 <h2 style={{ 
@@ -599,7 +789,7 @@ export function ConsultantDetail({ consultantId, onNavigate, className }: Consul
                   Articles & Insights
                 </h2>
                 <div className="space-y-3">
-                  {consultant.articles.map((article) => (
+                  {(consultant.articles || []).map((article) => (
                     <div
                       key={article.id}
                       style={{
@@ -608,7 +798,7 @@ export function ConsultantDetail({ consultantId, onNavigate, className }: Consul
                         borderRadius: 'var(--radius-md)',
                         cursor: 'pointer'
                       }}
-                      className="hover:bg-gray-100 transition-colors"
+                      className="hover:bg-[var(--color-bg-muted)] transition-colors"
                     >
                       <div className="flex items-start justify-between gap-3">
                         <div className="flex-1">
@@ -688,7 +878,7 @@ export function ConsultantDetail({ consultantId, onNavigate, className }: Consul
               disabled={!consultant.available}
               aria-label={`Book appointment with ${consultant.name}`}
               style={{
-                height: '48px',
+                height: 'var(--ikan-component-button-height)',
                 padding: '0 var(--spacing-6)',
                 borderRadius: 'var(--radius-sm)',
                 fontWeight: 'var(--font-weight-medium)',
@@ -735,13 +925,13 @@ export function ConsultantDetail({ consultantId, onNavigate, className }: Consul
               <Button
                 variant="outline"
                 onClick={() => setShowBookingDialog(false)}
-                style={{ flex: 1, height: '48px', fontWeight: 'var(--font-weight-medium)' }}
+                style={{ flex: 1, height: 'var(--ikan-component-button-height)', fontWeight: 'var(--font-weight-medium)' }}
               >
                 Cancel
               </Button>
               <Button
                 onClick={confirmBooking}
-                style={{ flex: 1, height: '48px', fontWeight: 'var(--font-weight-medium)' }}
+                style={{ flex: 1, height: 'var(--ikan-component-button-height)', fontWeight: 'var(--font-weight-medium)' }}
               >
                 Confirm & Pay
               </Button>
@@ -767,7 +957,7 @@ export function ConsultantDetail({ consultantId, onNavigate, className }: Consul
                 value={questionerName}
                 onChange={(e) => setQuestionerName(e.target.value)}
                 placeholder="Enter your name"
-                style={{ height: '48px', marginTop: 'var(--spacing-2)' }}
+                style={{ height: 'var(--ikan-component-input-height)', marginTop: 'var(--spacing-2)' }}
               />
             </div>
             <div>
@@ -785,13 +975,13 @@ export function ConsultantDetail({ consultantId, onNavigate, className }: Consul
               <Button
                 variant="outline"
                 onClick={() => setShowQuestionDialog(false)}
-                style={{ flex: 1, height: '48px', fontWeight: 'var(--font-weight-medium)' }}
+                style={{ flex: 1, height: 'var(--ikan-component-button-height)', fontWeight: 'var(--font-weight-medium)' }}
               >
                 Cancel
               </Button>
               <Button
                 onClick={handleAskQuestion}
-                style={{ flex: 1, height: '48px', fontWeight: 'var(--font-weight-medium)' }}
+                style={{ flex: 1, height: 'var(--ikan-component-button-height)', fontWeight: 'var(--font-weight-medium)' }}
               >
                 Submit Question
               </Button>
@@ -853,7 +1043,7 @@ function BookingPanel({
                   variant={selectedSessionType === mode ? 'default' : 'outline'}
                   onClick={() => setSelectedSessionType(modeKey)}
                   style={{ 
-                    height: '48px', 
+                    height: 'var(--ikan-component-button-height)', 
                     justifyContent: 'flex-start',
                     fontWeight: 'var(--font-weight-regular)',
                     fontSize: 'var(--text-sm)'
@@ -892,7 +1082,7 @@ function BookingPanel({
                   setSelectedTime(''); // Reset time when date changes
                 }}
                 style={{ 
-                  height: '40px',
+                  height: 'var(--ikan-component-button-height)',
                   justifyContent: 'flex-start',
                   fontWeight: 'var(--font-weight-regular)',
                   fontSize: 'var(--text-sm)'
@@ -956,7 +1146,7 @@ function BookingPanel({
           aria-label={consultant.available ? `Book appointment with ${consultant.name}` : `Booking not available for ${consultant.name}`}
           style={{ 
             width: '100%',
-            height: '48px',
+            height: 'var(--ikan-component-button-height)',
             borderRadius: 'var(--radius-sm)',
             fontWeight: 'var(--font-weight-medium)',
             fontSize: 'var(--text-sm)'

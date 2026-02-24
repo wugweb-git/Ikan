@@ -1,0 +1,219 @@
+/**
+ * Centralized error handling setup for iKan PWA.
+ * Extracted from App.tsx to reduce main bundle complexity.
+ */
+
+import { logger } from './logger';
+import { apiClient } from './api-client';
+
+// --- Patterns ---
+
+const NETWORK_ERROR_PATTERNS = [
+  'failed to fetch',
+  'typeerror: failed to fetch',
+  'network error',
+  'network request failed',
+  'connection refused',
+  'no internet',
+  'cors',
+  'net::err_',
+  'fetch failed',
+  'connection timeout',
+  'request timeout',
+  'server timeout',
+  'load failed'
+];
+
+const BACKGROUND_ERROR_PATTERNS = [
+  'getpage',
+  'cms content loading failed',
+  'response timed out',
+  'message getpage',
+  'timed out after',
+  '30000ms',
+  'cms_timeout',
+  'cms page',
+  'page fetch',
+  'content fetch',
+  'id: 3',
+  'page content',
+  'content sync',
+  'cms sync',
+  'background sync',
+  'auto-refresh',
+  'polling failed',
+  'background fetch'
+];
+
+const CONSOLE_SUPPRESS_PATTERNS = [
+  'getpage',
+  'message getpage',
+  'id: 3',
+  'timed out after',
+  'response timed out',
+  '30000ms',
+  'cms_timeout',
+  'cms content loading',
+  'page fetch',
+  'content fetch',
+  'background sync',
+  'auto-refresh',
+  'polling failed'
+];
+
+// --- Helpers ---
+
+function matchesPattern(str: string, patterns: string[]): boolean {
+  return patterns.some(p => str.includes(p));
+}
+
+function setOfflineMode(value: boolean) {
+  try {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('ikan-offline-mode', value.toString());
+    }
+  } catch {
+    // Ignore localStorage errors
+  }
+}
+
+// --- Setup ---
+
+interface ErrorHandlerCallbacks {
+  showToast?: (type: string, title: string, message: string) => void;
+}
+
+/**
+ * Sets up all global error handlers (fetch wrapper, unhandled rejection,
+ * window error, message handler, console overrides) and schedules a
+ * background health check.
+ *
+ * Returns a cleanup function that restores everything.
+ */
+export function setupGlobalErrorHandlers({ showToast }: ErrorHandlerCallbacks): () => void {
+  // --- Fetch wrapper ---
+  const originalFetch = window.fetch;
+  window.fetch = async (...args: Parameters<typeof fetch>) => {
+    try {
+      return await originalFetch(...args);
+    } catch (error: any) {
+      const msg = error instanceof Error ? error.message : String(error);
+      const lower = msg.toLowerCase();
+
+      if (
+        lower.includes('failed to fetch') ||
+        lower.includes('network error') ||
+        lower.includes('connection refused') ||
+        error.name === 'TypeError'
+      ) {
+        logger.log('Global fetch error intercepted - enabling offline mode:', msg);
+        setOfflineMode(true);
+        showToast?.('info', 'Working offline', 'Some features may be limited until connection is restored');
+      }
+      throw error;
+    }
+  };
+
+  // --- Unhandled rejection ---
+  const handleUnhandledRejection = (event: PromiseRejectionEvent) => {
+    const msg = event.reason?.message || String(event.reason) || 'Unknown error';
+    const lower = msg.toLowerCase();
+    event.preventDefault();
+
+    if (matchesPattern(lower, NETWORK_ERROR_PATTERNS)) {
+      console.log('Network connectivity issue - switching to offline mode:', msg);
+      setOfflineMode(true);
+      showToast?.('info', 'Working offline', 'Some features may be limited until connection is restored');
+      return;
+    }
+    if (matchesPattern(lower, BACKGROUND_ERROR_PATTERNS)) {
+      console.log('Background/CMS operation failed gracefully (normal):', msg);
+      return;
+    }
+    console.log('Unhandled promise rejection caught and handled:', msg);
+  };
+
+  // --- Window error ---
+  const handleWindowError = (event: ErrorEvent) => {
+    const msg = event.message || event.error?.message || 'Unknown error';
+    const lower = msg.toLowerCase();
+    event.preventDefault();
+
+    if (matchesPattern(lower, NETWORK_ERROR_PATTERNS.slice(0, 5))) {
+      console.log('Network error in window handler - enabling offline mode:', msg);
+      setOfflineMode(true);
+      return false;
+    }
+    console.log('Window error handled gracefully:', msg);
+    return false;
+  };
+
+  // --- Message handler ---
+  const handleMessage = (event: MessageEvent) => {
+    if (event.data && typeof event.data === 'object') {
+      const data = event.data;
+      if (data.error || data.timeout || (data.type && data.type.includes('timeout'))) {
+        console.log('Message-based error handled gracefully:', data);
+        event.preventDefault?.();
+        event.stopPropagation?.();
+        return false;
+      }
+    }
+  };
+
+  // --- Console overrides ---
+  const originalConsoleError = console.error;
+  const originalConsoleWarn = console.warn;
+
+  console.error = (...args: any[]) => {
+    const str = args.join(' ').toLowerCase();
+    if (
+      matchesPattern(str, CONSOLE_SUPPRESS_PATTERNS) ||
+      (str.includes('message') && str.includes('timeout'))
+    ) {
+      console.log('Console error suppressed (CMS timeout):', ...args);
+      return;
+    }
+    originalConsoleError.apply(console, args);
+  };
+
+  console.warn = (...args: any[]) => {
+    const str = args.join(' ').toLowerCase();
+    if (matchesPattern(str, CONSOLE_SUPPRESS_PATTERNS)) {
+      console.log('Console warning suppressed (CMS timeout):', ...args);
+      return;
+    }
+    originalConsoleWarn.apply(console, args);
+  };
+
+  // --- Register listeners ---
+  window.addEventListener('unhandledrejection', handleUnhandledRejection);
+  window.addEventListener('error', handleWindowError);
+  window.addEventListener('message', handleMessage);
+
+  // --- Background health check ---
+  const healthCheckTimer = setTimeout(() => {
+    Promise.resolve()
+      .then(() => apiClient.healthCheck())
+      .then(() => {
+        console.log('Server available');
+        setOfflineMode(false);
+      })
+      .catch((error: any) => {
+        const msg = error instanceof Error ? error.message : String(error);
+        console.log(`Using offline mode due to health check failure: ${msg}`);
+        setOfflineMode(true);
+      });
+  }, 2000);
+
+  // --- Cleanup ---
+  return () => {
+    clearTimeout(healthCheckTimer);
+    window.removeEventListener('unhandledrejection', handleUnhandledRejection);
+    window.removeEventListener('error', handleWindowError);
+    window.removeEventListener('message', handleMessage);
+    console.error = originalConsoleError;
+    console.warn = originalConsoleWarn;
+    window.fetch = originalFetch;
+  };
+}

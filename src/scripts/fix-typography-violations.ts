@@ -21,7 +21,6 @@ const filesToFix = [
   '/components/screens/homepage/EquipProgramsSection.tsx',
   '/components/screens/homepage/MissionSection.tsx',
   '/components/screens/homepage/HeroSection.tsx',
-  '/components/screens/homepage/NewsletterSection.tsx',
   '/components/screens/ResourceDetail.tsx'
 ];
 

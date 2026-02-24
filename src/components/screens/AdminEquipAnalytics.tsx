@@ -1,13 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { TrendingUp, Users, BookOpen, Activity, CheckCircle, X, Target, Calendar, Clock, Award, BarChart3, PieChart as PieChartIcon } from 'lucide-react';
+import { TrendingUp, Users, BookOpen, Activity, CheckCircle, X, Target, Calendar, Clock, Award } from 'lucide-react';
 import { useNotifications } from '../../contexts/NotificationContext';
 import { apiClient } from '../../lib/api-client';
 import { AdminHeader } from '../admin/AdminHeader';
+import { AdminLoading } from '../admin/AdminLoading';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { useIsMobile } from '../../hooks/useIsMobile';
 import { cn } from '../ui/utils';
 import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import { Badge } from '../ui/badge';
+import { AdminStatusBadge } from '../admin/AdminStatusBadge';
 import { Progress } from '../ui/progress';
 
 interface AdminEquipAnalyticsProps {
@@ -49,7 +50,7 @@ interface ProgramAnalytics {
   most_common_drop_day: number;
 }
 
-const COLORS = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899'];
+const COLORS = ['var(--ikan-chart-1)', 'var(--ikan-chart-2)', 'var(--ikan-chart-3)', 'var(--ikan-chart-4)', 'var(--ikan-chart-5)', 'var(--ikan-chart-6)'];
 
 export function AdminEquipAnalytics({ onBack, className }: AdminEquipAnalyticsProps) {
   const { showToast } = useNotifications();
@@ -173,10 +174,10 @@ export function AdminEquipAnalytics({ onBack, className }: AdminEquipAnalyticsPr
   const getStatusDistribution = () => {
     const stats = getTotalStats();
     return [
-      { name: 'Active', value: stats.totalActive, color: '#3B82F6' },
-      { name: 'Completed', value: stats.totalCompleted, color: '#10B981' },
-      { name: 'Dropped', value: stats.totalDropped, color: '#EF4444' },
-      { name: 'Enrolled', value: stats.totalEnrollments - stats.totalActive - stats.totalCompleted - stats.totalDropped, color: '#6B7280' }
+      { name: 'Active', value: stats.totalActive, color: 'var(--ikan-chart-1)' },
+      { name: 'Completed', value: stats.totalCompleted, color: 'var(--ikan-chart-2)' },
+      { name: 'Dropped', value: stats.totalDropped, color: 'var(--ikan-chart-4)' },
+      { name: 'Enrolled', value: stats.totalEnrollments - stats.totalActive - stats.totalCompleted - stats.totalDropped, color: 'var(--ikan-chart-neutral)' }
     ].filter(item => item.value > 0);
   };
 
@@ -192,7 +193,7 @@ export function AdminEquipAnalytics({ onBack, className }: AdminEquipAnalyticsPr
   if (loading) {
     return (
       <div className={cn('w-full h-screen flex items-center justify-center', className)}>
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2" style={{ borderColor: 'var(--color-primary-default)' }}></div>
+        <AdminLoading />
       </div>
     );
   }
@@ -212,13 +213,13 @@ export function AdminEquipAnalytics({ onBack, className }: AdminEquipAnalyticsPr
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p style={{ fontSize: '14px', color: 'var(--color-text-muted)' }}>Total Enrollments</p>
-                  <h3 style={{ fontSize: '28px', fontWeight: 'var(--font-weight-medium)', marginTop: '4px' }}>
+                  <p style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-muted)' }}>Total Enrollments</p>
+                  <h3 style={{ fontSize: 'var(--text-2xl)', fontWeight: 'var(--font-weight-medium)', marginTop: 'var(--spacing-1)' }}>
                     {stats.totalEnrollments}
                   </h3>
                 </div>
-                <div className="w-12 h-12 rounded-full flex items-center justify-center" style={{ backgroundColor: '#E0F2FE' }}>
-                  <Users size={24} style={{ color: '#0369A1' }} />
+                <div className="w-12 h-12 rounded-full flex items-center justify-center" style={{ backgroundColor: 'var(--ikan-chart-1-light)' }}>
+                  <Users size={24} style={{ color: 'var(--ikan-chart-1-dark)' }} />
                 </div>
               </div>
             </CardContent>
@@ -228,13 +229,13 @@ export function AdminEquipAnalytics({ onBack, className }: AdminEquipAnalyticsPr
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p style={{ fontSize: '14px', color: 'var(--color-text-muted)' }}>Active Users</p>
-                  <h3 style={{ fontSize: '28px', fontWeight: 'var(--font-weight-medium)', marginTop: '4px' }}>
+                  <p style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-muted)' }}>Active Users</p>
+                  <h3 style={{ fontSize: 'var(--text-2xl)', fontWeight: 'var(--font-weight-medium)', marginTop: 'var(--spacing-1)' }}>
                     {stats.totalActive}
                   </h3>
                 </div>
-                <div className="w-12 h-12 rounded-full flex items-center justify-center" style={{ backgroundColor: '#DBEAFE' }}>
-                  <Activity size={24} style={{ color: '#3B82F6' }} />
+                <div className="w-12 h-12 rounded-full flex items-center justify-center" style={{ backgroundColor: 'var(--ikan-chart-1-muted)' }}>
+                  <Activity size={24} style={{ color: 'var(--ikan-chart-1)' }} />
                 </div>
               </div>
             </CardContent>
@@ -244,13 +245,13 @@ export function AdminEquipAnalytics({ onBack, className }: AdminEquipAnalyticsPr
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p style={{ fontSize: '14px', color: 'var(--color-text-muted)' }}>Completed</p>
-                  <h3 style={{ fontSize: '28px', fontWeight: 'var(--font-weight-medium)', marginTop: '4px' }}>
+                  <p style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-muted)' }}>Completed</p>
+                  <h3 style={{ fontSize: 'var(--text-2xl)', fontWeight: 'var(--font-weight-medium)', marginTop: 'var(--spacing-1)' }}>
                     {stats.totalCompleted}
                   </h3>
                 </div>
-                <div className="w-12 h-12 rounded-full flex items-center justify-center" style={{ backgroundColor: '#D1FAE5' }}>
-                  <CheckCircle size={24} style={{ color: '#059669' }} />
+                <div className="w-12 h-12 rounded-full flex items-center justify-center" style={{ backgroundColor: 'var(--ikan-chart-2-light)' }}>
+                  <CheckCircle size={24} style={{ color: 'var(--ikan-chart-2-dark)' }} />
                 </div>
               </div>
             </CardContent>
@@ -260,13 +261,13 @@ export function AdminEquipAnalytics({ onBack, className }: AdminEquipAnalyticsPr
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p style={{ fontSize: '14px', color: 'var(--color-text-muted)' }}>Dropped Off</p>
-                  <h3 style={{ fontSize: '28px', fontWeight: 'var(--font-weight-medium)', marginTop: '4px' }}>
+                  <p style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-muted)' }}>Dropped Off</p>
+                  <h3 style={{ fontSize: 'var(--text-2xl)', fontWeight: 'var(--font-weight-medium)', marginTop: 'var(--spacing-1)' }}>
                     {stats.totalDropped}
                   </h3>
                 </div>
-                <div className="w-12 h-12 rounded-full flex items-center justify-center" style={{ backgroundColor: '#FEE2E2' }}>
-                  <X size={24} style={{ color: '#DC2626' }} />
+                <div className="w-12 h-12 rounded-full flex items-center justify-center" style={{ backgroundColor: 'var(--ikan-chart-4-light)' }}>
+                  <X size={24} style={{ color: 'var(--ikan-chart-4-dark)' }} />
                 </div>
               </div>
             </CardContent>
@@ -276,13 +277,13 @@ export function AdminEquipAnalytics({ onBack, className }: AdminEquipAnalyticsPr
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p style={{ fontSize: '14px', color: 'var(--color-text-muted)' }}>Avg Completion</p>
-                  <h3 style={{ fontSize: '28px', fontWeight: 'var(--font-weight-medium)', marginTop: '4px' }}>
+                  <p style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-muted)' }}>Avg Completion</p>
+                  <h3 style={{ fontSize: 'var(--text-2xl)', fontWeight: 'var(--font-weight-medium)', marginTop: 'var(--spacing-1)' }}>
                     {stats.avgCompletionRate}%
                   </h3>
                 </div>
-                <div className="w-12 h-12 rounded-full flex items-center justify-center" style={{ backgroundColor: '#F3E8FF' }}>
-                  <Target size={24} style={{ color: '#9333EA' }} />
+                <div className="w-12 h-12 rounded-full flex items-center justify-center" style={{ backgroundColor: 'var(--ikan-chart-5-light)' }}>
+                  <Target size={24} style={{ color: 'var(--ikan-chart-5-dark)' }} />
                 </div>
               </div>
             </CardContent>
@@ -300,11 +301,11 @@ export function AdminEquipAnalytics({ onBack, className }: AdminEquipAnalyticsPr
               <ResponsiveContainer width="100%" height={300}>
                 <LineChart data={getEnrollmentTrend()}>
                   <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="month" style={{ fontSize: '12px' }} />
-                  <YAxis style={{ fontSize: '12px' }} />
+                  <XAxis dataKey="month" style={{ fontSize: 'var(--text-xs)' }} />
+                  <YAxis style={{ fontSize: 'var(--text-xs)' }} />
                   <Tooltip />
                   <Legend />
-                  <Line type="monotone" dataKey="enrollments" stroke="#3B82F6" strokeWidth={2} name="Enrollments" />
+                  <Line type="monotone" dataKey="enrollments" stroke="var(--ikan-chart-1)" strokeWidth={2} name="Enrollments" />
                 </LineChart>
               </ResponsiveContainer>
             </CardContent>
@@ -325,7 +326,7 @@ export function AdminEquipAnalytics({ onBack, className }: AdminEquipAnalyticsPr
                     labelLine={false}
                     label={(entry) => `${entry.name}: ${entry.value}`}
                     outerRadius={80}
-                    fill="#8884d8"
+                    fill="var(--ikan-chart-fill-default)"
                     dataKey="value"
                   >
                     {getStatusDistribution().map((entry, index) => (
@@ -348,11 +349,11 @@ export function AdminEquipAnalytics({ onBack, className }: AdminEquipAnalyticsPr
             <ResponsiveContainer width="100%" height={300}>
               <BarChart data={getCompletionRateByProgram()}>
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="name" style={{ fontSize: '12px' }} />
-                <YAxis style={{ fontSize: '12px' }} />
+                <XAxis dataKey="name" style={{ fontSize: 'var(--text-xs)' }} />
+                <YAxis style={{ fontSize: 'var(--text-xs)' }} />
                 <Tooltip />
                 <Legend />
-                <Bar dataKey="rate" fill="#10B981" name="Completion %" />
+                <Bar dataKey="rate" fill="var(--ikan-chart-2)" name="Completion %" />
               </BarChart>
             </ResponsiveContainer>
           </CardContent>
@@ -365,9 +366,9 @@ export function AdminEquipAnalytics({ onBack, className }: AdminEquipAnalyticsPr
           </CardHeader>
           <CardContent>
             <div className="overflow-x-auto">
-              <table className="w-full" style={{ fontSize: '14px' }}>
+              <table className="w-full" style={{ fontSize: 'var(--text-sm)' }}>
                 <thead>
-                  <tr style={{ borderBottom: '1px solid #E5E7EB' }}>
+                  <tr style={{ borderBottom: '1px solid var(--color-border-default)' }}>
                     <th className="text-left p-3" style={{ fontWeight: 'var(--font-weight-medium)' }}>Program</th>
                     <th className="text-center p-3" style={{ fontWeight: 'var(--font-weight-medium)' }}>Enrollments</th>
                     <th className="text-center p-3" style={{ fontWeight: 'var(--font-weight-medium)' }}>Active</th>
@@ -380,23 +381,17 @@ export function AdminEquipAnalytics({ onBack, className }: AdminEquipAnalyticsPr
                 </thead>
                 <tbody>
                   {programAnalytics.map((program, index) => (
-                    <tr key={`program-${program.program_id}-${index}`} style={{ borderBottom: index < programAnalytics.length - 1 ? '1px solid #F3F4F6' : 'none' }}>
+                    <tr key={`program-${program.program_id}-${index}`} style={{ borderBottom: index < programAnalytics.length - 1 ? '1px solid var(--color-border-light)' : 'none' }}>
                       <td className="p-3" style={{ fontWeight: 'var(--font-weight-medium)' }}>{program.program_title}</td>
                       <td className="text-center p-3">{program.total_enrollments}</td>
                       <td className="text-center p-3">
-                        <Badge style={{ backgroundColor: '#DBEAFE', color: '#1E40AF' }}>
-                          {program.active_users}
-                        </Badge>
+                        <AdminStatusBadge status="info" label={String(program.active_users)} />
                       </td>
                       <td className="text-center p-3">
-                        <Badge style={{ backgroundColor: '#D1FAE5', color: '#065F46' }}>
-                          {program.completed_users}
-                        </Badge>
+                        <AdminStatusBadge status="success" label={String(program.completed_users)} />
                       </td>
                       <td className="text-center p-3">
-                        <Badge style={{ backgroundColor: '#FEE2E2', color: '#991B1B' }}>
-                          {program.dropped_users}
-                        </Badge>
+                        <AdminStatusBadge status="danger" label={String(program.dropped_users)} />
                       </td>
                       <td className="text-center p-3">
                         <div className="flex items-center justify-center gap-2">
@@ -425,37 +420,31 @@ export function AdminEquipAnalytics({ onBack, className }: AdminEquipAnalyticsPr
                 <div
                   key={enrollment.id || index}
                   className="flex items-center justify-between p-4 rounded-lg"
-                  style={{ backgroundColor: '#F9FAFB', border: '1px solid #E5E7EB' }}
+                  style={{ backgroundColor: 'var(--color-bg-muted)', border: '1px solid var(--color-border-default)' }}
                 >
                   <div className="flex-1">
-                    <h4 style={{ fontSize: '14px', fontWeight: 'var(--font-weight-medium)' }}>
+                    <h4 style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--font-weight-medium)' }}>
                       {enrollment.program_title}
                     </h4>
-                    <p style={{ fontSize: '13px', color: 'var(--color-text-muted)', marginTop: '2px' }}>
+                    <p style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)', marginTop: 'var(--spacing-0-5)' }}>
                       User: {enrollment.user_id} • Enrolled: {new Date(enrollment.enrolled_at).toLocaleDateString()}
                     </p>
                   </div>
                   <div className="flex items-center gap-4">
                     <div className="text-center">
-                      <p style={{ fontSize: '12px', color: 'var(--color-text-muted)' }}>Progress</p>
-                      <p style={{ fontSize: '14px', fontWeight: 'var(--font-weight-medium)' }}>
+                      <p style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}>Progress</p>
+                      <p style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--font-weight-medium)' }}>
                         {enrollment.current_day}/{enrollment.total_days}
                       </p>
                     </div>
-                    <Badge
-                      style={{
-                        backgroundColor:
-                          enrollment.status === 'completed' ? '#D1FAE5' :
-                          enrollment.status === 'in-progress' ? '#DBEAFE' :
-                          enrollment.status === 'dropped' ? '#FEE2E2' : '#F3F4F6',
-                        color:
-                          enrollment.status === 'completed' ? '#065F46' :
-                          enrollment.status === 'in-progress' ? '#1E40AF' :
-                          enrollment.status === 'dropped' ? '#991B1B' : '#374151'
-                      }}
-                    >
-                      {enrollment.status}
-                    </Badge>
+                    <AdminStatusBadge 
+                      status={
+                        enrollment.status === 'completed' ? 'success' :
+                        enrollment.status === 'in-progress' ? 'info' :
+                        enrollment.status === 'dropped' ? 'danger' : 'neutral'
+                      }
+                      label={enrollment.status}
+                    />
                   </div>
                 </div>
               ))}

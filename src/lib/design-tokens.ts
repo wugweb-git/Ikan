@@ -3,7 +3,7 @@ export default {
     "name": "iKan merged tokens",
     "version": "1.0.0",
     "author": "iKan Product",
-    "primaryFont": "Ubuntu",
+    "primaryFont": "Inter",
     "colorFormat": "hex"
   },
   "colors": {
@@ -47,7 +47,7 @@ export default {
     "charts": ["#2A2A2A","#4A4A4A","#6A6A6A","#8A8A8A","#AAAAAA"]
   },
   "typography": {
-    "fontFamily": { "base": "Ubuntu, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial", "mono": "ui-monospace, SFMono-Regular, Menlo, Monaco, 'Courier New', monospace" },
+    "fontFamily": { "base": "Inter, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif", "mono": "ui-monospace, SFMono-Regular, Menlo, Monaco, 'Courier New', monospace" },
     "size": { "xs": "12px", "sm": "14px", "md": "16px", "lg": "18px", "xl": "20px", "2xl": "24px", "3xl": "32px", "4xl": "48px" },
     "lineHeight": { "xs": 1.2, "sm": 1.4, "md": 1.5, "lg": 1.6 },
     "weight": { "regular": 400, "medium": 500 },
@@ -92,6 +92,33 @@ export default {
     "4": { "id": "good", "label": "Good", "char": "🙂", "twemoji": "1f642.svg" },
     "5": { "id": "great", "label": "Great", "char": "😄", "twemoji": "1f604.svg" }
   },
+
+  "energyScale": {
+    "1": { "id": "exhausted", "label": "Exhausted", "char": "🪫", "severity": "danger" },
+    "2": { "id": "tired", "label": "Tired", "char": "😴", "severity": "warning" },
+    "3": { "id": "moderate", "label": "Moderate", "char": "⚡", "severity": "neutral" },
+    "4": { "id": "energetic", "label": "Energetic", "char": "💪", "severity": "success" },
+    "5": { "id": "charged", "label": "Charged!", "char": "🔥", "severity": "success" }
+  },
+
+  "stressScale": {
+    "1": { "id": "chill", "label": "Chill", "char": "😌", "severity": "success" },
+    "2": { "id": "mild", "label": "Mild", "char": "🤔", "severity": "info" },
+    "3": { "id": "medium", "label": "Medium", "char": "😤", "severity": "warning" },
+    "4": { "id": "high", "label": "High", "char": "😰", "severity": "warning" },
+    "5": { "id": "extreme", "label": "Yikes!", "char": "🤯", "severity": "danger" }
+  },
+
+  "contextTags": [
+    { "id": "work", "label": "Work", "char": "💼" },
+    { "id": "sleep", "label": "Sleep", "char": "😴" },
+    { "id": "health", "label": "Health", "char": "🏃" },
+    { "id": "relationships", "label": "Relationships", "char": "❤️" },
+    { "id": "studies", "label": "Studies", "char": "📚" },
+    { "id": "finances", "label": "Finances", "char": "💰" },
+    { "id": "fun", "label": "Fun", "char": "🎉" },
+    { "id": "other", "label": "Other", "char": "✨" }
+  ],
 
   "aliases": {
     "color": {

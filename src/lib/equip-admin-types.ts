@@ -66,6 +66,7 @@ export interface ExerciseConfig {
 export interface Activity {
   id: string;
   title: string;
+  subtitle?: string;
   type: 'lesson' | 'exercise' | 'journal' | 'checklist' | 'reflection' | 'conclude' | 'sleep_diary';
   content: string;
   duration: number; // in minutes

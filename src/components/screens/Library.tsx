@@ -1,22 +1,11 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useIsMobile } from '../../hooks/useIsMobile';
-import { Card, CardContent } from '../ui/card';
-import { Button } from '../ui/button';
-import { Input } from '../ui/input';
 import { cn } from '../ui/utils';
-import { Search, BookOpen, Play, Video, Wrench, FileText, RefreshCw, Activity, Mic, GraduationCap, ArrowRight } from 'lucide-react';
-import { CardSkeleton, LibraryEmptyState, StaggeredReveal } from '../utils/LoadingStates';
-import { ResourceBlock } from '../blocks/ResourceBlock';
-import { ResourceType } from '../blocks/ResourceType';
-import { ResourceCard, ResourcePost } from '../blocks/ResourceCard';
+import { Search } from 'lucide-react';
+import { ResourcePost } from '../blocks/ResourceCard';
 import { apiClient } from '../../lib/api-client';
 import { logger } from '../../lib/logger';
-import { SkeletonCard } from '../ui/skeleton-loader';
-import { ErrorState } from '../ui/error-state';
-import { EmptyState } from '../ui/empty-state';
-import { OptimizedImage } from '../ui/optimized-image';
 import { PullToRefresh } from '../ui/touch-feedback';
-import { PageHero } from '../ui/PageHero';
 import { ImageWithFallback } from '../figma/ImageWithFallback';
 import { resolveImageUrl } from '../../utils/image-utils';
 
@@ -159,10 +148,10 @@ export function Library({ onResourceSelect, onNavigate, className }: LibraryProp
       <div className="w-full max-w-[1400px] mx-auto px-4 py-8 md:px-12 md:py-16">
         
         {/* Header Section */}
-        <div className="mb-12">
+        <div className="mx-[0px] my-[48px]">
           <h1 
-            className="text-4xl md:text-5xl lg:text-6xl text-[#151515] mb-8"
-            style={{ fontFamily: 'var(--font-family-base)', fontWeight: 'var(--font-weight-medium)' }}
+            className="text-4xl md:text-5xl lg:text-6xl mb-8"
+            style={{ fontFamily: 'var(--font-family-base)', fontWeight: 'var(--font-weight-medium)', color: 'var(--color-text-primary)' }}
           >
             Latest news
           </h1>
@@ -180,7 +169,7 @@ export function Library({ onResourceSelect, onNavigate, className }: LibraryProp
                   onClick={() => handleResourceClick(featuredResource)}
                   style={{ backgroundColor: 'var(--color-bg-card)' }}
                 >
-                  <div className="relative w-full aspect-[16/10] rounded-2xl overflow-hidden mb-8 bg-[#00A991]">
+                  <div className="relative w-full aspect-[16/10] rounded-2xl overflow-hidden mb-8" style={{ backgroundColor: 'var(--ikan-brand-library-accent)' }}>
                     <ImageWithFallback
                       src={resolveImageUrl(featuredResource.image)}
                       alt={featuredResource.title}
@@ -190,32 +179,33 @@ export function Library({ onResourceSelect, onNavigate, className }: LibraryProp
                   
                   <div className="flex-1 flex flex-col items-start">
                     <span 
-                      className="text-[#151515] px-4 py-1.5 rounded-full text-sm font-medium mb-4"
-                      style={{ backgroundColor: 'var(--color-bg-muted)' }}
+                      className="px-4 py-1.5 rounded-full text-sm font-medium mb-4"
+                      style={{ backgroundColor: 'var(--color-bg-muted)', color: 'var(--color-text-primary)' }}
                     >
                       Featured story
                     </span>
                     
                     <h2 
-                      className="text-3xl md:text-4xl text-[#151515] mb-4 leading-tight"
-                      style={{ fontFamily: 'var(--font-family-base)', fontWeight: 'var(--font-weight-medium)' }}
+                      className="text-3xl md:text-4xl mb-4 leading-tight"
+                      style={{ fontFamily: 'var(--font-family-base)', fontWeight: 'var(--font-weight-medium)', color: 'var(--color-text-primary)' }}
                     >
                       {featuredResource.title}
                     </h2>
                     
                     <p 
-                      className="text-[#717182] mb-8 text-sm md:text-base"
-                      style={{ fontFamily: 'var(--font-family-base)' }}
+                      className="mb-8 text-sm md:text-base"
+                      style={{ fontFamily: 'var(--font-family-base)', color: 'var(--color-text-muted)' }}
                     >
                       {featuredResource.date}
                     </p>
                     
                     <button 
-                      className="mt-auto px-8 py-3 rounded-full text-[#151515] font-medium text-sm hover:opacity-90 transition-opacity"
+                      className="mt-auto px-8 py-3 rounded-full font-medium text-sm hover:opacity-90 transition-opacity"
                       style={{ 
-                        background: 'linear-gradient(90deg, #FFA07A 0%, #FFC0CB 100%)',
-                        fontFamily: 'var(--font-family-base)'
-                      }}
+                        background: 'linear-gradient(90deg, var(--ikan-brand-cta-gradient-start) 0%, var(--ikan-brand-cta-gradient-end) 100%)',
+                        fontFamily: 'var(--font-family-base)',
+                        color: 'var(--color-text-primary)'
+                       }}
                     >
                       Read more
                     </button>
@@ -248,14 +238,14 @@ export function Library({ onResourceSelect, onNavigate, className }: LibraryProp
                     />
                   </div>
                   <h3 
-                    className="text-lg leading-snug mb-2 group-hover:text-[#00A991] transition-colors line-clamp-2"
-                    style={{ fontFamily: 'var(--font-family-base)', fontWeight: 'var(--font-weight-medium)' }}
+                    className="text-lg leading-snug mb-2 transition-colors line-clamp-2"
+                    style={{ fontFamily: 'var(--font-family-base)', fontWeight: 'var(--font-weight-medium)', color: 'var(--color-text-primary)' }}
                   >
                     {news.title}
                   </h3>
                   <span 
-                    className="text-[#717182] text-xs"
-                    style={{ fontFamily: 'var(--font-family-base)' }}
+                    className="text-xs"
+                    style={{ fontFamily: 'var(--font-family-base)', color: 'var(--color-text-muted)' }}
                   >
                     {news.date}
                   </span>
@@ -270,8 +260,8 @@ export function Library({ onResourceSelect, onNavigate, className }: LibraryProp
         <div className="mt-20">
           <div className="flex flex-col gap-8 mb-10">
             <h2 
-              className="text-4xl md:text-5xl text-[#151515]"
-              style={{ fontFamily: 'var(--font-family-base)', fontWeight: 'var(--font-weight-medium)' }}
+              className="text-4xl md:text-5xl"
+              style={{ fontFamily: 'var(--font-family-base)', fontWeight: 'var(--font-weight-medium)', color: 'var(--color-text-primary)' }}
             >
               News by topic
             </h2>
@@ -287,11 +277,12 @@ export function Library({ onResourceSelect, onNavigate, className }: LibraryProp
                     className={cn(
                       "px-6 py-2.5 rounded-full text-sm font-medium transition-all duration-200 border",
                       isActive
-                        ? "text-white border-[#2A2A2A]"
-                        : "text-[#151515] border-transparent hover:bg-[#F3F3F5]"
+                        ? "border-[var(--color-primary-default)]"
+                        : "border-transparent"
                     )}
                     style={{
                         backgroundColor: isActive ? 'var(--color-primary-default)' : 'var(--color-bg-card)',
+                        color: isActive ? 'var(--color-text-inverse)' : 'var(--color-text-primary)',
                         fontFamily: 'var(--font-family-base)'
                     }}
                   >
@@ -303,16 +294,17 @@ export function Library({ onResourceSelect, onNavigate, className }: LibraryProp
 
             {/* Optional Search within topics */}
             <div className="relative max-w-md">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: 'var(--color-text-muted)' }} />
                 <input 
                     type="text" 
                     placeholder="Search articles..." 
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2.5 rounded-full border-none text-sm focus:ring-1 focus:ring-black/10 placeholder:text-gray-400"
+                    className="w-full pl-10 pr-4 py-2.5 rounded-full border-none text-sm focus:ring-1 focus:ring-black/10"
                     style={{ 
                         backgroundColor: 'var(--color-bg-card)',
-                        fontFamily: 'var(--font-family-base)' 
+                        fontFamily: 'var(--font-family-base)',
+                        color: 'var(--color-text-primary)'
                     }}
                 />
             </div>
@@ -343,14 +335,14 @@ export function Library({ onResourceSelect, onNavigate, className }: LibraryProp
                         />
                       </div>
                       <h3 
-                        className="text-lg leading-snug mb-2 group-hover:text-[#00A991] transition-colors line-clamp-2"
-                        style={{ fontFamily: 'var(--font-family-base)', fontWeight: 'var(--font-weight-medium)' }}
+                        className="text-lg leading-snug mb-2 transition-colors line-clamp-2"
+                        style={{ fontFamily: 'var(--font-family-base)', fontWeight: 'var(--font-weight-medium)', color: 'var(--color-text-primary)' }}
                       >
                         {resource.title}
                       </h3>
                       <span 
-                        className="text-[#717182] text-xs"
-                        style={{ fontFamily: 'var(--font-family-base)' }}
+                        className="text-xs"
+                        style={{ fontFamily: 'var(--font-family-base)', color: 'var(--color-text-muted)' }}
                       >
                         {resource.date}
                       </span>
@@ -358,7 +350,7 @@ export function Library({ onResourceSelect, onNavigate, className }: LibraryProp
                   ))
             ) : (
                 <div className="col-span-full py-20 text-center">
-                    <p className="text-gray-500" style={{ fontFamily: 'var(--font-family-base)' }}>No articles found matching your criteria.</p>
+                    <p style={{ fontFamily: 'var(--font-family-base)', color: 'var(--color-text-muted)' }}>No articles found matching your criteria.</p>
                 </div>
             )}
           </div>

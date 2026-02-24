@@ -14,10 +14,13 @@ export function usePageContent(pageId: string) {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    const controller = new AbortController();
+
     const fetchContent = async () => {
       try {
         setLoading(true);
         const response = await fetch(`https://${projectId}.supabase.co/functions/v1/make-server-cc205da9/cms/pages/${pageId}`, {
+          signal: controller.signal,
           headers: {
             'Authorization': `Bearer ${publicAnonKey}`
           }
@@ -28,8 +31,11 @@ export function usePageContent(pageId: string) {
         }
         
         const data = await response.json();
-        setContent(data.page || data);
+        if (!controller.signal.aborted) {
+          setContent(data.page || data);
+        }
       } catch (err: any) {
+        if (err?.name === 'AbortError') return; // Component unmounted — ignore
         console.warn(`Error fetching content for ${pageId}, falling back to default:`, err);
         
         // Fallback to default content if available
@@ -41,11 +47,15 @@ export function usePageContent(pageId: string) {
           setError(err.message);
         }
       } finally {
-        setLoading(false);
+        if (!controller.signal.aborted) {
+          setLoading(false);
+        }
       }
     };
 
     fetchContent();
+
+    return () => { controller.abort(); };
   }, [pageId]);
 
   return { content, loading, error };

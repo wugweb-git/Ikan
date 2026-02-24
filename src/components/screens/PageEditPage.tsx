@@ -17,6 +17,7 @@ import { UnsavedChangesDialog } from '../ui/unsaved-changes-dialog';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '../ui/dialog';
 import { RichTextEditor } from '../ui/rich-text-editor';
 import { AdminActionBar } from '../ui/admin-action-bar';
+import { AdminLoading } from '../admin/AdminLoading';
 
 export interface Page {
   id: string;
@@ -192,7 +193,7 @@ export function PageEditPage({ pageId, onBack, onSave }: PageEditPageProps) {
     return (
       <AdminPageLayout title="Loading..." breadcrumbs={[{ label: 'Admin', onClick: onBack }, { label: 'Pages', onClick: onBack }, { label: 'Loading...' }]}>
         <div className="flex items-center justify-center py-12">
-          <div className="animate-spin rounded-full border-4" style={{ width: '48px', height: '48px', borderColor: 'var(--color-accent-default)', borderTopColor: 'var(--color-primary-default)' }} />
+          <AdminLoading message="Loading page..." />
         </div>
       </AdminPageLayout>
     );

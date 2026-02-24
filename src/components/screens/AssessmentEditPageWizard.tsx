@@ -8,7 +8,6 @@ import { Textarea } from '../ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Checkbox } from '../ui/checkbox';
 import { Label } from '../ui/label';
-import { Badge } from '../ui/badge';
 import { Button } from '../ui/button';
 import { Card, CardContent } from '../ui/card';
 import { ImageUpload } from '../ui/image-upload';
@@ -26,6 +25,7 @@ import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import { EquipDailyEditor as DailyBuilder } from './EquipDailyEditor';
 import { DayContent, Activity } from '../../lib/equip-admin-types';
+import { AdminLoading } from '../admin/AdminLoading';
 
 // Adapter to convert legacy Question[] to Block[] (Activity[])
 const convertQuestionsToDay = (questions: any[]): DayContent => {
@@ -584,8 +584,8 @@ export function AssessmentEditPageWizard({ assessmentId, onBack, onSave }: Asses
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-screen bg-[var(--color-bg-page)]">
-        <div className="animate-spin rounded-full border-4 border-primary border-t-transparent h-12 w-12" />
+      <div className="flex items-center justify-center h-screen" style={{ backgroundColor: 'var(--color-bg-page)' }}>
+        <AdminLoading message="Loading assessment..." />
       </div>
     );
   }
@@ -637,7 +637,8 @@ export function AssessmentEditPageWizard({ assessmentId, onBack, onSave }: Asses
             <Button
               variant="destructive"
               onClick={() => setIsDeleteDialogOpen(true)}
-              className="h-8 w-8 p-0 bg-red-50 text-red-600 hover:bg-red-100 hover:text-red-700 border-none shadow-none"
+              className="h-8 w-8 p-0 border-none shadow-none"
+              style={{ backgroundColor: 'var(--color-status-danger-light)', color: 'var(--color-status-danger)' }}
               title="Delete Assessment"
             >
               <Trash2 size={16} />
@@ -755,7 +756,7 @@ export function AssessmentEditPageWizard({ assessmentId, onBack, onSave }: Asses
         {/* Step 3: Scoring & Results */}
         {currentStep === 3 && (
           <div className="space-y-8">
-            <div className="p-6 bg-white rounded-xl border border-gray-200 space-y-6">
+            <div className="p-6 rounded-xl space-y-6" style={{ backgroundColor: 'var(--color-bg-card)', border: '1px solid var(--color-border-default)' }}>
               <h3 className="text-lg font-medium border-b pb-2">Scoring Configuration</h3>
               
               <AdminFormField label="Scoring Method">
@@ -789,7 +790,8 @@ export function AssessmentEditPageWizard({ assessmentId, onBack, onSave }: Asses
                           <Button 
                             variant="ghost" 
                             size="icon" 
-                            className="h-6 w-6 text-gray-400 hover:text-red-500"
+                            className="h-6 w-6"
+                            style={{ color: 'var(--color-text-muted)' }}
                             onClick={() => {
                               const newCats = [...(formData.resultCategories || [])];
                               newCats.splice(idx, 1);
@@ -853,7 +855,7 @@ export function AssessmentEditPageWizard({ assessmentId, onBack, onSave }: Asses
                   ))}
                   
                   {(formData.resultCategories || []).length === 0 && (
-                    <div className="text-center p-6 border border-dashed rounded-lg text-gray-500 text-sm">
+                    <div className="text-center p-6 border border-dashed rounded-lg" style={{ color: 'var(--color-text-muted)', fontSize: 'var(--text-sm)' }}>
                       No result categories defined. Users will just see their raw score.
                     </div>
                   )}

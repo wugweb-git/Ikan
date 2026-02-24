@@ -21,14 +21,28 @@ export function registerMoodRoutes(app: Hono, middleware: any) {
     try {
         const userId = c.get('userId');
         const limit = Number(c.req.query('limit')) || 50;
+        const startDate = c.req.query('start_date');
+        const endDate = c.req.query('end_date');
         
         // Fetch entries
-        const entries = await kv.getByPrefix(`journal_by_user:${userId}:`);
+        let entries = await kv.getByPrefix(`journal_by_user:${userId}:`);
         
-        // Sort by date descending (newest first)
-        const sorted = entries.sort((a: any, b: any) => 
-            new Date(b.date).getTime() - new Date(a.date).getTime()
-        );
+        // Filter by date range if provided
+        if (startDate || endDate) {
+          entries = entries.filter((entry: any) => {
+            const entryDate = entry.date; // stored as YYYY-MM-DD
+            if (startDate && entryDate < startDate) return false;
+            if (endDate && entryDate > endDate) return false;
+            return true;
+          });
+        }
+        
+        // Sort by created_at descending (newest first), falling back to date
+        const sorted = entries.sort((a: any, b: any) => {
+            const timeA = new Date(a.created_at || a.date).getTime();
+            const timeB = new Date(b.created_at || b.date).getTime();
+            return timeB - timeA;
+        });
         
         return c.json({ entries: sorted.slice(0, limit) });
     } catch (error) {
@@ -42,7 +56,7 @@ export function registerMoodRoutes(app: Hono, middleware: any) {
     try {
         const userId = c.get('userId');
         const body = await c.req.json();
-        const { date, mood_rating, freehand_text_content, emotions, energy } = body;
+        const { date, mood_rating, freehand_text_content, emotions, energy, stress_level, context_tags } = body;
         
         if (!date || mood_rating === undefined) {
             return c.json({ error: 'Date and mood rating are required' }, 400);
@@ -58,6 +72,8 @@ export function registerMoodRoutes(app: Hono, middleware: any) {
             freehand_text_content,
             emotions: emotions || [],
             energy: energy || 3,
+            stress_level: stress_level || null,
+            context_tags: context_tags || [],
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString()
         };
@@ -65,10 +81,9 @@ export function registerMoodRoutes(app: Hono, middleware: any) {
         // Store by ID for direct access
         await kv.set(`journal:${id}`, entry);
         
-        // Store by User+Date for list retrieval
-        // This overwrites if multiple entries per day? 
-        // Frontend logic seems to assume one entry per day ("How are you feeling today?")
-        await kv.set(`journal_by_user:${userId}:${date}`, entry);
+        // Store by User+Date+ID to allow multiple entries per day
+        // Previously used `journal_by_user:${userId}:${date}` which overwrote on same date
+        await kv.set(`journal_by_user:${userId}:${date}:${id}`, entry);
         
         return c.json({ entry });
     } catch (error) {

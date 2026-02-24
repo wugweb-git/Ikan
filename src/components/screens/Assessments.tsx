@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
-import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
+import { motion } from 'motion/react';
+import { Card, CardContent } from '../ui/card';
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
 import { Icon } from '../Icon';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '../ui/dialog';
-import { ChevronRight, Clock, FileText, TrendingUp, Calendar, Brain, Shield, Activity, ArrowRight, Play, Info, Lock, HelpCircle } from 'lucide-react';
+import { Clock, FileText, Brain, Shield, Activity, ArrowRight, Play, Lock, HelpCircle } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNotifications } from '../../contexts/NotificationContext';
 import { cn } from '../ui/utils';
@@ -14,9 +14,6 @@ import { AssessmentFlow } from './AssessmentFlow';
 import { AssessmentResults } from './AssessmentResults';
 import { evaluateAssessment } from '../../lib/recommendation-engine';
 import { Skeleton } from '../ui/skeleton-loader';
-import { EmptyState } from '../ui/empty-state';
-import { TouchFeedback } from '../ui/touch-feedback';
-import { AssessmentBlock, AssessmentProgram } from '../blocks/AssessmentBlock';
 
 interface Assessment {
   id: string;
@@ -175,12 +172,15 @@ export function Assessments({ className, onNavigate }: AssessmentsProps) {
 
   // Fast loading of assessments with background history fetch
   useEffect(() => {
+    let isMounted = true;
+
     const loadAssessments = async () => {
       try {
         // Fetch assessments from API (KV store)
         let apiAssessments: Assessment[] = [];
         try {
           const response = await apiClient.getAssessments();
+          if (!isMounted) return;
           // Handle both array and object response formats for robustness
           const data = Array.isArray(response) ? response : (response?.assessments || []);
           
@@ -284,6 +284,10 @@ export function Assessments({ className, onNavigate }: AssessmentsProps) {
     };
 
     loadAssessments();
+
+    return () => {
+      isMounted = false;
+    };
   }, [showToast, user]);
 
   const handleStartAssessment = (assessment: Assessment) => {
@@ -298,22 +302,6 @@ export function Assessments({ className, onNavigate }: AssessmentsProps) {
       onNavigate(`/assessment-detail?id=${assessment.id || assessment.slug}`);
     } else {
       setCurrentView('landing');
-    }
-  };
-
-  const handleViewLanding = () => {
-    if (selectedAssessment) {
-      try {
-        localStorage.setItem('ikan-selected-assessment', JSON.stringify(selectedAssessment));
-      } catch (error) {
-        console.warn('Could not store assessment in localStorage:', error);
-      }
-    }
-    
-    if (onNavigate) {
-      onNavigate(`/assessment-detail?id=${selectedAssessment?.id || selectedAssessment?.slug}`);
-    } else {
-      setShowDisclaimerModal(true);
     }
   };
 
@@ -377,19 +365,6 @@ export function Assessments({ className, onNavigate }: AssessmentsProps) {
     setShowDisclaimerModal(false);
   };
 
-  const getCategoryColor = (category: string) => {
-    switch ((category || '').toLowerCase()) {
-      case 'anxiety': return 'var(--color-status-warning)';
-      case 'depression': return 'var(--color-status-info)';
-      case 'stress': return 'var(--color-status-danger)';
-      case 'burnout': return 'var(--color-status-danger)';
-      case 'general': return 'var(--color-primary-default)';
-      case 'wellness': return 'var(--color-primary-default)';
-      case 'worklife balance': return 'var(--color-status-success)';
-      default: return 'var(--color-text-muted)';
-    }
-  };
-
   // Assessment Landing Page View
   if (currentView === 'landing' && selectedAssessment) {
     const imageUrl = getAssessmentImage(selectedAssessment.category);
@@ -422,10 +397,10 @@ export function Assessments({ className, onNavigate }: AssessmentsProps) {
         <div className="grid grid-cols-1 md:grid-cols-12 gap-4 md:gap-6 auto-rows-min">
           
           {/* TILE 1: Primary (Large Left) - What is this? */}
-          <div className="md:col-span-7 bg-white rounded-[var(--radius-lg)] p-6 md:p-10 flex flex-col justify-between min-h-[320px] shadow-sm relative overflow-hidden group">
+          <div className="md:col-span-7 rounded-[var(--radius-lg)] p-6 md:p-10 flex flex-col justify-between min-h-[320px] shadow-sm relative overflow-hidden group" style={{ backgroundColor: 'var(--color-bg-card)' }}>
             <div className="relative z-10">
                {selectedAssessment.tile1Content ? (
-                  <div className="prose prose-lg max-w-none text-[var(--color-text-muted)] [&_h1]:text-2xl [&_h2]:text-xl [&_h3]:text-lg [&_p]:mb-3 [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5 [&_li]:mb-1 [&_img]:rounded-lg [&_img]:max-w-full [&_a]:text-blue-600 [&_a]:underline" dangerouslySetInnerHTML={{ __html: selectedAssessment.tile1Content }} />
+                  <div className="prose prose-lg max-w-none text-[var(--color-text-muted)] [&_h1]:text-2xl [&_h2]:text-xl [&_h3]:text-lg [&_p]:mb-3 [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5 [&_li]:mb-1 [&_img]:rounded-lg [&_img]:max-w-full [&_a]:text-[var(--color-status-info)] [&_a]:underline" dangerouslySetInnerHTML={{ __html: selectedAssessment.tile1Content }} />
                ) : (
                  <div className="space-y-6">
                    <div>
@@ -436,13 +411,13 @@ export function Assessments({ className, onNavigate }: AssessmentsProps) {
                    </div>
                    
                    <div className="flex flex-wrap gap-4 pt-2">
-                     <div className="flex items-center gap-2 bg-gray-50 px-4 py-2 rounded-full">
-                       <Clock size={18} className="text-[var(--color-primary-default)]" />
-                       <span className="font-medium text-[var(--color-text-primary)]">{selectedAssessment.estimatedTime}</span>
+                     <div className="flex items-center gap-2 px-4 py-2 rounded-full" style={{ backgroundColor: 'var(--color-bg-muted)' }}>
+                       <Clock size={18} style={{ color: 'var(--color-primary-default)' }} />
+                       <span className="font-medium" style={{ color: 'var(--color-text-primary)' }}>{selectedAssessment.estimatedTime}</span>
                      </div>
-                     <div className="flex items-center gap-2 bg-gray-50 px-4 py-2 rounded-full">
-                       <HelpCircle size={18} className="text-[var(--color-primary-default)]" />
-                       <span className="font-medium text-[var(--color-text-primary)]">{selectedAssessment.questionCount} Questions</span>
+                     <div className="flex items-center gap-2 px-4 py-2 rounded-full" style={{ backgroundColor: 'var(--color-bg-muted)' }}>
+                       <HelpCircle size={18} style={{ color: 'var(--color-primary-default)' }} />
+                       <span className="font-medium" style={{ color: 'var(--color-text-primary)' }}>{selectedAssessment.questionCount} Questions</span>
                      </div>
                    </div>
                  </div>
@@ -471,9 +446,9 @@ export function Assessments({ className, onNavigate }: AssessmentsProps) {
           </div>
 
           {/* TILE 2: Visual (Top Right) */}
-          <div className={`md:col-span-5 rounded-[var(--radius-lg)] overflow-hidden min-h-[320px] relative shadow-sm group ${selectedAssessment.tile2Content ? 'bg-white p-6 md:p-8' : 'bg-gray-100'}`}>
+          <div className={`md:col-span-5 rounded-[var(--radius-lg)] overflow-hidden min-h-[320px] relative shadow-sm group ${selectedAssessment.tile2Content ? 'p-6 md:p-8' : ''}`} style={{ backgroundColor: selectedAssessment.tile2Content ? 'var(--color-bg-card)' : 'var(--color-bg-muted)' }}>
              {selectedAssessment.tile2Content ? (
-               <div className="prose prose-lg max-w-none h-full flex flex-col justify-center [&_h1]:text-2xl [&_h2]:text-xl [&_h3]:text-lg [&_p]:mb-3 [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5 [&_li]:mb-1 [&_img]:rounded-lg [&_img]:max-w-full [&_a]:text-blue-600 [&_a]:underline" dangerouslySetInnerHTML={{ __html: selectedAssessment.tile2Content }} />
+               <div className="prose prose-lg max-w-none h-full flex flex-col justify-center [&_h1]:text-2xl [&_h2]:text-xl [&_h3]:text-lg [&_p]:mb-3 [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5 [&_li]:mb-1 [&_img]:rounded-lg [&_img]:max-w-full [&_a]:text-[var(--color-status-info)] [&_a]:underline" dangerouslySetInnerHTML={{ __html: selectedAssessment.tile2Content }} />
              ) : (
                <>
                  <img 
@@ -487,9 +462,9 @@ export function Assessments({ className, onNavigate }: AssessmentsProps) {
           </div>
 
           {/* TILE 3: Process (Bottom Left) - How it works */}
-          <div className="md:col-span-5 bg-white rounded-[var(--radius-lg)] p-6 md:p-8 shadow-sm flex flex-col justify-center">
+          <div className="md:col-span-5 rounded-[var(--radius-lg)] p-6 md:p-8 shadow-sm flex flex-col justify-center" style={{ backgroundColor: 'var(--color-bg-card)' }}>
              {selectedAssessment.tile3Content ? (
-                <div className="prose prose-lg max-w-none [&_h1]:text-2xl [&_h2]:text-xl [&_h3]:text-lg [&_p]:mb-3 [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5 [&_li]:mb-1 [&_img]:rounded-lg [&_img]:max-w-full [&_a]:text-blue-600 [&_a]:underline" dangerouslySetInnerHTML={{ __html: selectedAssessment.tile3Content }} />
+                <div className="prose prose-lg max-w-none [&_h1]:text-2xl [&_h2]:text-xl [&_h3]:text-lg [&_p]:mb-3 [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5 [&_li]:mb-1 [&_img]:rounded-lg [&_img]:max-w-full [&_a]:text-[var(--color-status-info)] [&_a]:underline" dangerouslySetInnerHTML={{ __html: selectedAssessment.tile3Content }} />
              ) : (
                <>
                  <h3 className="text-xl font-medium mb-6 flex items-center gap-2">
@@ -503,7 +478,7 @@ export function Assessments({ className, onNavigate }: AssessmentsProps) {
                      "Receive immediate insights & guidance"
                    ]).map((text, i) => (
                      <li key={i} className="flex items-start gap-3">
-                       <div className="mt-0.5 bg-green-50 p-1 rounded-full text-green-600">
+                       <div className="mt-0.5 p-1 rounded-full" style={{ backgroundColor: 'var(--color-status-success-light)', color: 'var(--color-status-success)' }}>
                          <Icon name="check" size={14} />
                        </div>
                        <span className="text-[var(--color-text-muted)]">{text}</span>
@@ -515,16 +490,16 @@ export function Assessments({ className, onNavigate }: AssessmentsProps) {
           </div>
 
           {/* TILE 5: Safety (Mini Middle) - Important Notes */}
-          <div className="md:col-span-2 bg-amber-50 rounded-[var(--radius-lg)] p-6 flex flex-col items-center justify-center text-center shadow-sm border border-amber-100">
+          <div className="md:col-span-2 rounded-[var(--radius-lg)] p-6 flex flex-col items-center justify-center text-center shadow-sm" style={{ backgroundColor: 'var(--color-status-warning-light)', border: '1px solid var(--color-border-default)' }}>
              {selectedAssessment.tile5Content ? (
-                <div className="prose prose-sm max-w-none text-amber-700 [&_h1]:text-lg [&_h2]:text-base [&_h3]:text-sm [&_p]:mb-2 [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5 [&_li]:mb-0.5" dangerouslySetInnerHTML={{ __html: selectedAssessment.tile5Content }} />
+                <div className="prose prose-sm max-w-none [&_h1]:text-lg [&_h2]:text-base [&_h3]:text-sm [&_p]:mb-2 [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5 [&_li]:mb-0.5" style={{ color: 'var(--color-status-warning)' }} dangerouslySetInnerHTML={{ __html: selectedAssessment.tile5Content }} />
              ) : (
                <>
-                 <div className="w-12 h-12 bg-amber-100 text-amber-600 rounded-full flex items-center justify-center mb-3">
+                 <div className="w-12 h-12 rounded-full flex items-center justify-center mb-3" style={{ backgroundColor: 'var(--color-bg-card)', color: 'var(--color-status-warning)' }}>
                    <Icon name="info" size={24} />
                  </div>
-                 <p className="text-xs font-bold text-amber-800 uppercase tracking-wide mb-1">Important</p>
-                 <p className="text-sm text-amber-700 leading-snug">
+                 <p style={{ fontSize: 'var(--text-xs)', fontWeight: 500, color: 'var(--color-text-primary)', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: 4 }}>Important</p>
+                 <p style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-muted)', lineHeight: 1.5 }}>
                    {selectedAssessment.safetyNote}
                  </p>
                </>
@@ -535,28 +510,28 @@ export function Assessments({ className, onNavigate }: AssessmentsProps) {
           <div className="md:col-span-5 bg-[var(--color-primary-default)] text-white rounded-[var(--radius-lg)] p-6 md:p-8 shadow-sm flex flex-col justify-center relative overflow-hidden">
              <div className="relative z-10">
                {selectedAssessment.tile4Content ? (
-                  <div className="prose prose-lg max-w-none text-gray-300 [&_h1]:text-white [&_h2]:text-white [&_h3]:text-white [&_p]:mb-3 [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5 [&_li]:mb-1 [&_img]:rounded-lg [&_img]:max-w-full [&_a]:text-blue-400 [&_a]:underline" dangerouslySetInnerHTML={{ __html: selectedAssessment.tile4Content }} />
+                  <div className="prose prose-lg max-w-none [&_h1]:text-[var(--color-text-inverse)] [&_h2]:text-[var(--color-text-inverse)] [&_h3]:text-[var(--color-text-inverse)] [&_p]:mb-3 [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5 [&_li]:mb-1 [&_img]:rounded-lg [&_img]:max-w-full [&_a]:underline" style={{ color: 'rgba(255,255,255,0.7)' }} dangerouslySetInnerHTML={{ __html: selectedAssessment.tile4Content }} />
                ) : (
                  <>
                    <h3 className="text-xl font-medium mb-4 flex items-center gap-2">
-                     <Icon name="activity" size={24} className="text-emerald-400" />
+                     <Icon name="activity" size={24} style={{ color: 'var(--color-status-success)' }} />
                      What you'll see
                    </h3>
-                   <p className="text-gray-300 mb-6">
+                   <p className="mb-6" style={{ color: 'rgba(255,255,255,0.7)' }}>
                      {selectedAssessment.resultDescription}
                    </p>
                    <div className="grid grid-cols-3 gap-2">
                       <div className="bg-white/10 rounded-lg p-3 text-center backdrop-blur-sm">
-                        <div className="text-xs text-gray-400 mb-1">Score</div>
-                        <div className="font-bold text-emerald-400">Risk</div>
+                        <div className="text-xs mb-1" style={{ color: 'rgba(255,255,255,0.5)' }}>Score</div>
+                        <div className="font-medium" style={{ color: 'var(--color-status-success)' }}>Risk</div>
                       </div>
                       <div className="bg-white/10 rounded-lg p-3 text-center backdrop-blur-sm">
-                        <div className="text-xs text-gray-400 mb-1">Insight</div>
-                        <div className="font-bold text-blue-400">Deep</div>
+                        <div className="text-xs mb-1" style={{ color: 'rgba(255,255,255,0.5)' }}>Insight</div>
+                        <div className="font-medium" style={{ color: 'var(--color-status-info)' }}>Deep</div>
                       </div>
                       <div className="bg-white/10 rounded-lg p-3 text-center backdrop-blur-sm">
-                        <div className="text-xs text-gray-400 mb-1">Plan</div>
-                        <div className="font-bold text-purple-400">Action</div>
+                        <div className="text-xs mb-1" style={{ color: 'rgba(255,255,255,0.5)' }}>Plan</div>
+                        <div className="font-medium" style={{ color: '#A78BFA' }}>Action</div>
                       </div>
                    </div>
                  </>
@@ -579,17 +554,17 @@ export function Assessments({ className, onNavigate }: AssessmentsProps) {
             <div className="space-y-4 py-2">
               <div className="space-y-3">
                 <div className="flex items-start gap-3">
-                  <Icon name="info" size={20} className="text-blue-500 mt-0.5" />
+                  <Icon name="info" size={20} className="mt-0.5" style={{ color: 'var(--color-status-info)' }} />
                   <div>
                     <h4 className="text-base font-medium">Not a medical diagnosis</h4>
-                    <p className="text-sm text-muted-foreground">For informational purposes only. Consult a professional for diagnosis.</p>
+                    <p className="text-sm" style={{ color: 'var(--color-text-muted)' }}>For informational purposes only. Consult a professional for diagnosis.</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
-                  <Icon name="lock" size={20} className="text-green-500 mt-0.5" />
+                  <Icon name="lock" size={20} className="mt-0.5" style={{ color: 'var(--color-status-success)' }} />
                   <div>
                     <h4 className="text-base font-medium">Privacy Protected</h4>
-                    <p className="text-sm text-muted-foreground">All responses are encrypted and stored securely.</p>
+                    <p className="text-sm" style={{ color: 'var(--color-text-muted)' }}>All responses are encrypted and stored securely.</p>
                   </div>
                 </div>
               </div>
@@ -627,31 +602,31 @@ export function Assessments({ className, onNavigate }: AssessmentsProps) {
                desc: "Evidence-based tools for anxiety, depression, and more.",
                icon: Brain,
                color: "var(--color-primary-default)",
-               bg: "bg-purple-50"
+               bg: "var(--color-bg-muted)"
              },
              {
                title: "Private & Secure",
                desc: "Your results are encrypted and strictly confidential.",
                icon: Shield,
                color: "var(--color-status-success)",
-               bg: "bg-emerald-50"
+               bg: "var(--color-status-success-light)"
              },
              {
                title: "Instant Insights",
                desc: "Get immediate feedback and personalized recommendations.",
                icon: Activity,
                color: "var(--color-status-warning)",
-               bg: "bg-orange-50"
+               bg: "var(--color-status-warning-light)"
              }
            ].map((item, i) => (
-             <Card key={i} className="border-none shadow-sm bg-white rounded-[var(--radius-lg)] h-full">
+             <Card key={i} className="border-none shadow-sm rounded-[var(--radius-lg)] h-full" style={{ backgroundColor: 'var(--color-bg-card)' }}>
                <CardContent className="p-6 flex flex-col gap-4 h-full">
-                 <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${item.bg}`}>
+                 <div className="w-12 h-12 rounded-2xl flex items-center justify-center" style={{ backgroundColor: item.bg }}>
                    <item.icon size={24} style={{ color: item.color }} />
                  </div>
                  <div>
-                   <h3 className="font-medium text-lg text-[var(--color-text-primary)] mb-1">{item.title}</h3>
-                   <p className="text-sm text-[var(--color-text-muted)] leading-relaxed">
+                   <h3 style={{ fontWeight: 500, fontSize: 'var(--text-lg)', color: 'var(--color-text-primary)', fontFamily: 'var(--font-family-base)', marginBottom: 4 }}>{item.title}</h3>
+                   <p style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-muted)', fontFamily: 'var(--font-family-base)', lineHeight: 1.6, fontWeight: 400 }}>
                      {item.desc}
                    </p>
                  </div>
@@ -661,34 +636,7 @@ export function Assessments({ className, onNavigate }: AssessmentsProps) {
         </motion.div>
 
         {/* How it works (Simplified) */}
-        <motion.div
-           initial={{ opacity: 0 }}
-           animate={{ opacity: 1 }}
-           transition={{ delay: 0.2 }}
-           className="py-6"
-        >
-           <h3 className="text-lg font-medium text-[var(--color-text-primary)] mb-6">How it works</h3>
-           <div className="flex flex-col md:flex-row gap-8 relative">
-              {/* Connector Line (Desktop) */}
-              <div className="hidden md:block absolute top-5 left-8 right-8 h-0.5 bg-gray-100 -z-10" />
-              
-              {[
-                { step: 1, title: "Check In", desc: "Select an assessment based on how you feel." },
-                { step: 2, title: "Answer", desc: "Complete a few simple questions honestly." },
-                { step: 3, title: "Understand", desc: "Receive immediate insights and next steps." }
-              ].map((step, i) => (
-                <div key={i} className="flex-1 flex flex-col items-center text-center gap-3 bg-white/50 backdrop-blur-sm p-4 rounded-xl md:bg-transparent md:p-0">
-                   <div className="w-10 h-10 rounded-full bg-[var(--color-primary-default)] text-white flex items-center justify-center font-bold shadow-md">
-                     {step.step}
-                   </div>
-                   <div>
-                     <h4 className="font-medium text-[var(--color-text-primary)]">{step.title}</h4>
-                     <p className="text-sm text-[var(--color-text-muted)]">{step.desc}</p>
-                   </div>
-                </div>
-              ))}
-           </div>
-        </motion.div>
+        
 
         <div id="assessments-grid" className="scroll-mt-32" />
         
@@ -699,9 +647,9 @@ export function Assessments({ className, onNavigate }: AssessmentsProps) {
           </div>
 
           {!user && currentTab === 'history' ? (
-            <Card className="border-none shadow-sm bg-white rounded-[var(--radius-lg)]">
+            <Card className="border-none shadow-sm rounded-[var(--radius-lg)]" style={{ backgroundColor: 'var(--color-bg-card)' }}>
               <CardContent className="text-center p-12">
-                <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4" style={{ backgroundColor: 'var(--color-bg-muted)' }}>
                   <Lock size={24} className="text-[var(--color-text-muted)]" />
                 </div>
                 <h3 className="text-lg font-medium text-[var(--color-text-primary)] mb-2">Sign in required</h3>
@@ -739,7 +687,8 @@ export function Assessments({ className, onNavigate }: AssessmentsProps) {
                     className="h-full"
                   >
                     <Card 
-                      className="h-full border-none shadow-sm hover:shadow-lg transition-all duration-300 bg-white rounded-[var(--radius-lg)] overflow-hidden cursor-pointer group flex flex-col"
+                      className="h-full border-none shadow-sm hover:shadow-lg transition-all duration-300 rounded-[var(--radius-lg)] overflow-hidden cursor-pointer group flex flex-col"
+                      style={{ backgroundColor: 'var(--color-bg-card)' }}
                       onClick={() => handleStartAssessment(assessment)}
                     >
                       {/* Image Header */}
@@ -753,7 +702,7 @@ export function Assessments({ className, onNavigate }: AssessmentsProps) {
                         
                         {/* Status Badge */}
                         {isCompleted && (
-                           <div className="absolute top-4 right-4 bg-emerald-500 text-white text-xs font-bold px-2 py-1 rounded-full shadow-sm flex items-center gap-1">
+                           <div className="absolute top-4 right-4 text-xs font-medium px-2 py-1 rounded-full shadow-sm flex items-center gap-1" style={{ backgroundColor: 'var(--color-status-success)', color: 'var(--color-text-inverse)' }}>
                              <Activity size={12} /> Completed
                            </div>
                         )}
@@ -775,18 +724,19 @@ export function Assessments({ className, onNavigate }: AssessmentsProps) {
                         </p>
 
                         <div className="flex items-center gap-4 text-xs text-[var(--color-text-muted)] font-medium">
-                          <div className="flex items-center gap-1.5 bg-gray-50 px-2 py-1 rounded-md">
+                          <div className="flex items-center gap-1.5 px-2 py-1 rounded-md" style={{ backgroundColor: 'var(--color-bg-muted)' }}>
                             <Clock size={14} className="text-[var(--color-primary-default)]" />
                             {assessment.estimatedTime}
                           </div>
-                          <div className="flex items-center gap-1.5 bg-gray-50 px-2 py-1 rounded-md">
+                          <div className="flex items-center gap-1.5 px-2 py-1 rounded-md" style={{ backgroundColor: 'var(--color-bg-muted)' }}>
                             <FileText size={14} className="text-[var(--color-primary-default)]" />
                             {assessment.questionCount} Questions
                           </div>
                         </div>
 
                         <Button 
-                          className="w-full mt-2 bg-gray-50 text-[var(--color-text-primary)] hover:bg-[var(--color-primary-default)] hover:text-white border-none group-hover:bg-[var(--color-primary-default)] group-hover:text-white transition-colors"
+                          className="w-full mt-2 text-[var(--color-text-primary)] hover:bg-[var(--color-primary-default)] hover:text-[var(--color-text-inverse)] border-none group-hover:bg-[var(--color-primary-default)] group-hover:text-[var(--color-text-inverse)] transition-colors"
+                          style={{ backgroundColor: 'var(--color-bg-muted)' }}
                           variant="outline"
                         >
                           {isCompleted ? 'Retake Assessment' : 'Start Assessment'}

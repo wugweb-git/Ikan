@@ -98,11 +98,11 @@ export function WizardLayout({
     <div className="flex flex-col h-screen bg-white font-sans overflow-hidden">
       {/* REDESIGNED STICKY HEADER - Multi-row layout */}
       <header 
-        className="sticky top-0 bg-white border-b border-gray-200 z-20 shadow-sm flex-shrink-0"
-        style={{ backgroundColor: 'var(--color-bg-card)' }}
+        className="sticky top-0 z-20 shadow-sm flex-shrink-0"
+        style={{ backgroundColor: 'var(--color-bg-card)', borderBottom: '1px solid var(--color-border-default)' }}
       >
         {/* Row 1: Title + Action Buttons */}
-        <div className="flex items-center justify-between px-6 h-14 border-b border-gray-100">
+        <div className="flex items-center justify-between px-6 h-14" style={{ borderBottom: '1px solid var(--color-border-default)' }}>
           {/* Left: Title + Badge + Back Button */}
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-3">
@@ -120,7 +120,7 @@ export function WizardLayout({
                 variant={status === 'published' ? 'default' : 'secondary'}
                 className={cn(
                   "text-[10px] px-2 py-0.5 h-auto rounded-md", 
-                  status === 'published' ? "bg-emerald-100 text-emerald-700" : "bg-gray-100 text-gray-600"
+                  status === 'published' ? "bg-[var(--color-status-success-light)] text-[var(--color-status-success)]" : "bg-[var(--color-bg-muted)] text-[var(--color-text-muted)]"
                 )}
                 style={{ fontWeight: 500 }}
               >
@@ -132,8 +132,8 @@ export function WizardLayout({
               <button
                 onClick={handlePrevious}
                 disabled={isPreviousDisabled || isLoading}
-                className="flex items-center gap-1.5 text-gray-600 hover:text-gray-900 transition-colors px-2.5 py-1.5 rounded-lg hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed ml-2"
-                style={{ fontSize: 'var(--text-sm)', fontWeight: 500 }}
+                className="flex items-center gap-1.5 transition-colors px-2.5 py-1.5 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed ml-2"
+                style={{ fontSize: 'var(--text-sm)', fontWeight: 500, color: 'var(--color-text-muted)' }}
               >
                 <ChevronLeft size={14} />
                 <span className="text-xs">{previousButtonText}</span>
@@ -180,7 +180,8 @@ export function WizardLayout({
             {onExit && (
               <button 
                 onClick={onExit} 
-                className="text-gray-400 hover:text-gray-900 transition-colors p-1 rounded-lg hover:bg-gray-100 ml-1"
+                className="transition-colors p-1 rounded-lg ml-1"
+                style={{ color: 'var(--color-text-muted)' }}
               >
                 <X size={16} />
               </button>
@@ -189,7 +190,7 @@ export function WizardLayout({
         </div>
 
         {/* Row 2: Stepper */}
-        <div className="px-6 py-3 bg-gray-50/50">
+        <div className="px-6 py-3" style={{ backgroundColor: 'color-mix(in srgb, var(--color-bg-muted) 50%, transparent)' }}>
           <div className="max-w-3xl mx-auto">
             <WizardStepper
               steps={steps}
@@ -244,7 +245,7 @@ export function WizardLayout({
 
         {/* SECONDARY PANEL (Right Sidebar) */}
         {secondaryContent && (
-          <aside className="hidden xl:block w-[360px] border-l border-gray-200 bg-white overflow-y-auto shadow-sm">
+          <aside className="hidden xl:block w-[360px] overflow-y-auto shadow-sm" style={{ borderLeft: '1px solid var(--color-border-default)', backgroundColor: 'var(--color-bg-card)' }}>
             <div className="p-8 sticky top-0">
               <h3 
                 className="uppercase tracking-wider mb-6 flex items-center gap-2"

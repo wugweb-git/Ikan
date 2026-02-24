@@ -72,34 +72,42 @@ const DraggableDay = ({ day, index, isSelected, onSelect, moveDay, onDuplicate, 
       className={cn(
         "group flex items-center gap-3 p-3 rounded-[16px] cursor-pointer transition-all border mb-1",
         isSelected 
-          ? "bg-white border-blue-500 border-2 shadow-sm ring-1 ring-blue-500/10" 
-          : "bg-transparent border-transparent hover:bg-white hover:border-[#D9D9D9]",
+          ? "border-2 shadow-sm ring-1" 
+          : "bg-transparent border-transparent",
+        isSelected && "bg-[var(--color-bg-card)] border-[var(--color-primary-default)] ring-[var(--color-primary-default)]/10",
+        !isSelected && "hover:bg-[var(--color-bg-card)] hover:border-[var(--color-border-default)]",
         isDragging && "opacity-50"
       )}
     >
-      <div className="cursor-grab text-gray-400 hover:text-gray-600">
+      <div className="cursor-grab" style={{ color: 'var(--color-text-muted)' }}>
         <GripVertical size={14} />
       </div>
 
-      <div className={cn(
-        "w-6 h-6 rounded-md flex items-center justify-center text-xs font-bold shrink-0",
-        isSelected ? "bg-blue-100 text-blue-700" : "bg-gray-200 text-gray-600"
-      )}>
+      <div 
+        className="w-6 h-6 rounded-md flex items-center justify-center shrink-0"
+        style={{ 
+          fontSize: 'var(--text-xs)', 
+          fontWeight: 'var(--font-weight-medium)',
+          backgroundColor: isSelected ? 'var(--color-info-light)' : 'var(--color-bg-muted)', 
+          color: isSelected ? 'var(--color-info-default)' : 'var(--color-text-muted)' 
+        }}
+      >
         {day.day}
       </div>
       
       <div className="flex-1 min-w-0">
-        <p className={cn(
-          "text-sm font-medium truncate",
-          isSelected ? "text-gray-900" : "text-gray-600"
-        )}>
+        <p className="truncate" style={{ 
+          fontSize: 'var(--text-sm)', 
+          fontWeight: 'var(--font-weight-medium)',
+          color: isSelected ? 'var(--color-text-primary)' : 'var(--color-text-muted)' 
+        }}>
           {day.title || `Day ${day.day}`}
         </p>
         <div className="flex items-center gap-2 mt-0.5">
-          <Badge variant="outline" className="text-[9px] px-1 py-0 h-3.5 uppercase">
+          <Badge variant="outline" className="text-[9px] px-1 py-0 h-3.5 uppercase" style={{ backgroundColor: 'var(--color-bg-muted)', color: 'var(--color-text-muted)', borderColor: 'var(--color-border-default)', fontWeight: 'var(--font-weight-medium)' }}>
             {day.dayType || 'lesson'}
           </Badge>
-          <span className="text-[10px] text-gray-400">
+          <span style={{ fontSize: '10px', color: 'var(--color-text-muted)' }}>
             {day.activities.length} blocks
           </span>
         </div>
@@ -121,7 +129,7 @@ const DraggableDay = ({ day, index, isSelected, onSelect, moveDay, onDuplicate, 
           </DropdownMenuItem>
           <DropdownMenuItem 
             onClick={(e) => { e.stopPropagation(); onDelete(); }}
-            className="text-red-600 focus:text-red-600"
+            style={{ color: 'var(--color-status-danger)' }}
           >
             <Trash2 className="w-4 h-4 mr-2" /> Delete
           </DropdownMenuItem>
@@ -179,44 +187,48 @@ const DraggableBlock = ({ block, index, isSelected, onSelect, moveBlock, onDelet
       className={cn(
         "group p-3 rounded-[16px] border cursor-pointer transition-all hover:shadow-sm flex items-start gap-3",
         isSelected 
-          ? "bg-white border-blue-500 border-2 shadow-sm ring-1 ring-blue-500/10" 
-          : "bg-white border-[#D9D9D9] hover:border-blue-300 border-[1px]",
+          ? "border-2 shadow-sm ring-1" 
+          : "border-[1px]",
+        isSelected && "bg-[var(--color-bg-card)] border-[var(--color-primary-default)] ring-[var(--color-primary-default)]/10",
+        !isSelected && "bg-[var(--color-bg-card)] border-[var(--color-border-default)] hover:border-[var(--color-primary-default)]",
         isDragging && "opacity-50"
       )}
     >
-      <div className="mt-1 text-gray-400 cursor-grab hover:text-gray-600">
+      <div className="mt-1 cursor-grab" style={{ color: 'var(--color-text-muted)' }}>
         <GripVertical size={14} />
       </div>
       <div className="flex-1 min-w-0">
         <div className="flex items-center justify-between mb-1">
           <div className="flex items-center gap-1">
-            <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-4 uppercase tracking-wider">
+            <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-4 uppercase tracking-wider" style={{ backgroundColor: 'var(--color-accent-default)', color: 'var(--color-text-primary)', fontWeight: 'var(--font-weight-medium)' }}>
               {block.type}
             </Badge>
             {block.stepGroup && (
-              <Badge variant="outline" className="text-[9px] px-1 py-0 h-4 bg-gray-50 text-gray-600 ml-1">
+              <Badge variant="outline" className="text-[9px] px-1 py-0 h-4 ml-1" style={{ backgroundColor: 'var(--color-bg-muted)', color: 'var(--color-text-muted)', borderColor: 'var(--color-border-default)', fontWeight: 'var(--font-weight-medium)' }}>
                 Step: {block.stepGroup}
               </Badge>
             )}
             {block.autoAdvance && (
-              <Badge variant="outline" className="text-[9px] px-1 py-0 h-4 bg-indigo-50 text-indigo-600 ml-1 border-indigo-100" title="Auto-advance enabled">
+              <Badge variant="outline" className="text-[9px] px-1 py-0 h-4 ml-1" style={{ backgroundColor: 'var(--color-info-light)', color: 'var(--color-info-default)', borderColor: 'var(--color-info-default)' }} title="Auto-advance enabled">
                 <FastForward size={8} className="mr-0.5" /> Auto
               </Badge>
             )}
           </div>
         </div>
-        <p className={cn(
-          "text-sm font-medium truncate",
-          isSelected ? "text-gray-900" : "text-gray-700"
-        )}>
+        <p className="truncate" style={{ 
+          fontSize: 'var(--text-sm)', 
+          fontWeight: 'var(--font-weight-medium)', 
+          color: isSelected ? 'var(--color-text-primary)' : 'var(--color-text-muted)' 
+        }}>
           {block.title || '(Untitled Block)'}
         </p>
-        <p className="text-xs text-gray-500 mt-0.5 truncate">
+        <p className="mt-0.5 truncate" style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}>
           {block.duration || 5} min • {block.required ? 'Required' : 'Optional'}
         </p>
       </div>
       <Button 
-        variant="ghost" size="icon" className="h-6 w-6 text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
+        variant="ghost" size="icon" className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+        style={{ color: 'var(--color-text-muted)' }}
         onClick={(e) => { e.stopPropagation(); onDelete(); }}
       >
         <Trash2 size={12} />
@@ -239,7 +251,7 @@ function BlockPaletteMenu({ onSelect }: { onSelect: (type: string, subtype?: str
    return (
       <DropdownMenu>
          <DropdownMenuTrigger asChild>
-            <Button size="sm" className="h-[48px] rounded-[16px] gap-1.5 bg-[#1A1A1A] hover:bg-[#333333] text-white px-4 shadow-sm">
+            <Button size="sm" className="h-[48px] rounded-[16px] gap-1.5 px-4 shadow-sm" style={{ backgroundColor: 'var(--color-primary-default)', color: 'var(--color-primary-on)' }}>
                <Plus size={16} /> Add Block
             </Button>
          </DropdownMenuTrigger>
@@ -469,12 +481,12 @@ export function EquipDailyEditor({
   };
 
   return (
-    <div className="h-[calc(100vh-250px)] flex border rounded-[24px] overflow-hidden bg-white shadow-sm ring-1 ring-gray-200">
+    <div className="h-[calc(100vh-250px)] flex border rounded-[24px] overflow-hidden shadow-sm ring-1" style={{ backgroundColor: 'var(--color-bg-card)', borderColor: 'var(--color-border-default)', boxShadow: '0 0 0 1px var(--color-border-default)' }}>
       {/* COLUMN 1: DAY LIST (Timeline) - Hidden in Single Day Mode */}
       {!singleDayMode && (
-      <div className="w-[20%] min-w-[200px] flex flex-col border-r bg-gray-50/50">
-        <div className="p-4 border-b bg-white flex items-center justify-between sticky top-0 z-10 h-14">
-          <span className="text-sm font-semibold text-gray-700">Days ({days.length})</span>
+      <div className="w-[20%] min-w-[200px] flex flex-col border-r" style={{ backgroundColor: 'var(--color-bg-muted)' }}>
+        <div className="p-4 border-b flex items-center justify-between sticky top-0 z-10 h-14" style={{ backgroundColor: 'var(--color-bg-card)' }}>
+          <span style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--font-weight-medium)', color: 'var(--color-text-muted)' }}>Days ({days.length})</span>
           {!readOnly && (
             <Button onClick={handleAddDay} size="sm" variant="outline" className="h-8 gap-1.5">
               <Plus size={14} /> Add
@@ -484,7 +496,7 @@ export function EquipDailyEditor({
         
         <div className="flex-1 overflow-y-auto p-2">
           {days.length === 0 ? (
-            <div className="text-center py-12 px-4 text-gray-400 text-xs">
+            <div className="text-center py-12 px-4" style={{ color: 'var(--color-text-muted)', fontSize: 'var(--text-xs)' }}>
               No days added. Click "Add" to start.
             </div>
           ) : (
@@ -507,17 +519,17 @@ export function EquipDailyEditor({
 
       {/* COLUMN 2: STRUCTURE (Content Blocks) */}
       <div className={cn(
-        "flex flex-col border-r bg-white",
+        "flex flex-col border-r",
         singleDayMode ? "w-[35%] min-w-[300px]" : "w-[30%] min-w-[300px]"
-      )}>
+      )} style={{ backgroundColor: 'var(--color-bg-card)' }}>
         {activeDay ? (
           <>
-            <div className="p-4 border-b bg-white flex items-center justify-between sticky top-0 z-10 h-14">
+            <div className="p-4 border-b flex items-center justify-between sticky top-0 z-10 h-14" style={{ backgroundColor: 'var(--color-bg-card)' }}>
               <div>
-                 <h3 className="text-sm font-semibold text-gray-700 truncate max-w-[150px]">
+                 <h3 className="truncate max-w-[150px]" style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--font-weight-medium)', color: 'var(--color-text-muted)' }}>
                    {getDayLabel()}
                  </h3>
-                 <p className="text-[10px] text-gray-500 uppercase tracking-wide">
+                 <p className="uppercase tracking-wide" style={{ fontSize: '10px', color: 'var(--color-text-muted)' }}>
                    Structure
                  </p>
               </div>
@@ -526,32 +538,33 @@ export function EquipDailyEditor({
               )}
             </div>
 
-            <div className="flex-1 overflow-y-auto p-2 space-y-2 bg-gray-50/30">
+            <div className="flex-1 overflow-y-auto p-2 space-y-2" style={{ backgroundColor: 'var(--color-bg-muted)' }}>
               {/* 1. Day Configuration Item - Only show in Multi-day mode */}
               {!singleDayMode && (
               <div 
                 onClick={() => setSelectedBlockId(null)}
                 className={cn(
-                  "p-3 rounded-lg border cursor-pointer transition-all flex items-center gap-3",
-                  selectedBlockId === null 
-                    ? "bg-blue-50 border-blue-200 ring-1 ring-blue-200" 
-                    : "bg-white border-gray-200 hover:border-blue-300"
+                  "p-3 rounded-lg border cursor-pointer transition-all flex items-center gap-3"
                 )}
+                style={selectedBlockId === null 
+                  ? { backgroundColor: 'var(--color-info-light)', borderColor: 'var(--color-info-default)', boxShadow: '0 0 0 1px var(--color-info-default)' }
+                  : { backgroundColor: 'var(--color-bg-card)', borderColor: 'var(--color-border-default)' }
+                }
               >
-                <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 shrink-0">
+                <div className="w-8 h-8 rounded-full flex items-center justify-center shrink-0" style={{ backgroundColor: 'var(--color-info-light)', color: 'var(--color-info-default)' }}>
                   <Settings size={14} />
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-gray-900">Day Configuration</p>
-                  <p className="text-xs text-gray-500">Metadata & Goals</p>
+                  <p style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--font-weight-medium)', color: 'var(--color-text-primary)' }}>Day Configuration</p>
+                  <p style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}>Metadata & Goals</p>
                 </div>
-                {selectedBlockId === null && <div className="ml-auto text-blue-600"><ChevronRight size={14} /></div>}
+                {selectedBlockId === null && <div className="ml-auto" style={{ color: 'var(--color-info-default)' }}><ChevronRight size={14} /></div>}
               </div>
               )}
 
               {!singleDayMode && (
-              <div className="my-2 border-t border-gray-100 relative">
-                <span className="absolute left-1/2 -translate-x-1/2 -top-2 bg-gray-50 px-2 text-[10px] text-gray-400 font-medium">
+              <div className="my-2 border-t relative" style={{ borderColor: 'var(--color-border-default)' }}>
+                <span className="absolute left-1/2 -translate-x-1/2 -top-2 px-2" style={{ backgroundColor: 'var(--color-bg-muted)', fontSize: '10px', color: 'var(--color-text-muted)', fontWeight: 'var(--font-weight-medium)' }}>
                   BLOCKS
                 </span>
               </div>
@@ -571,9 +584,9 @@ export function EquipDailyEditor({
               ))}
 
               {activeDay.activities.length === 0 && !readOnly && (
-                <div className="text-center py-8 px-4 border-2 border-dashed border-gray-200 rounded-lg bg-gray-50/50">
-                  <p className="text-xs text-gray-400">No content blocks yet.</p>
-                  <Button variant="link" size="sm" onClick={addBlock} className="text-blue-600 text-xs h-auto p-0 mt-1">
+                <div className="text-center py-8 px-4 border-2 border-dashed rounded-lg" style={{ borderColor: 'var(--color-border-default)', backgroundColor: 'var(--color-bg-muted)' }}>
+                  <p style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}>No content blocks yet.</p>
+                  <Button variant="link" size="sm" onClick={addBlock} className="h-auto p-0 mt-1" style={{ fontSize: 'var(--text-xs)', color: 'var(--color-primary-default)' }}>
                     Add your first block
                   </Button>
                 </div>
@@ -581,24 +594,24 @@ export function EquipDailyEditor({
             </div>
           </>
         ) : (
-          <div className="flex-1 flex flex-col items-center justify-center text-gray-400 p-8 text-center">
-            <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mb-3">
-              <Calendar size={20} className="text-gray-400" />
+          <div className="flex-1 flex flex-col items-center justify-center p-8 text-center" style={{ color: 'var(--color-text-muted)' }}>
+            <div className="w-12 h-12 rounded-full flex items-center justify-center mb-3" style={{ backgroundColor: 'var(--color-bg-muted)' }}>
+              <Calendar size={20} style={{ color: 'var(--color-text-muted)' }} />
             </div>
-            <p className="text-sm font-medium text-gray-600">No Day Selected</p>
-            <p className="text-xs text-gray-400 mt-1">Select a day from the timeline to edit its structure.</p>
+            <p style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--font-weight-medium)', color: 'var(--color-text-muted)' }}>No Day Selected</p>
+            <p className="mt-1" style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}>Select a day from the timeline to edit its structure.</p>
           </div>
         )}
       </div>
 
       {/* COLUMN 3: CONTEXTUAL EDITOR (Flex-1) */}
-      <div className="flex-1 flex flex-col overflow-hidden bg-gray-50">
+      <div className="flex-1 flex flex-col overflow-hidden" style={{ backgroundColor: 'var(--color-bg-muted)' }}>
         {activeDay ? (
           <div className="flex-1 overflow-y-auto">
             {/* SCOPE HINT HEADER */}
-            <div className="h-8 border-b bg-white px-4 flex items-center text-[10px] text-gray-500 font-medium uppercase tracking-wider sticky top-0 z-10">
+            <div className="h-8 border-b px-4 flex items-center uppercase tracking-wider sticky top-0 z-10" style={{ backgroundColor: 'var(--color-bg-card)', fontSize: '10px', color: 'var(--color-text-muted)', fontWeight: 'var(--font-weight-medium)' }}>
               {singleDayMode ? `${getModeLabel()} Mode` : `Editing: Day ${activeDay.day}`} 
-              <span className="mx-2 text-gray-300">•</span> 
+              <span className="mx-2" style={{ color: 'var(--color-border-default)' }}>•</span> 
               {selectedBlockId ? 'Block Editor' : 'Configuration'}
             </div>
 
@@ -608,8 +621,8 @@ export function EquipDailyEditor({
                   // --- DAY CONFIGURATION EDITOR (Multi-day only) ---
                   <div className="animate-in fade-in duration-300 space-y-6">
                     <div>
-                      <h2 className="text-xl font-semibold text-gray-900">Day Configuration</h2>
-                      <p className="text-sm text-gray-500">Define the identity and goals for Day {activeDay.day}.</p>
+                      <h2 style={{ fontSize: 'var(--text-xl)', fontWeight: 'var(--font-weight-medium)', color: 'var(--color-text-primary)' }}>Day Configuration</h2>
+                      <p style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-muted)' }}>Define the identity and goals for Day {activeDay.day}.</p>
                     </div>
 
                     <Card>
@@ -619,7 +632,7 @@ export function EquipDailyEditor({
                             value={activeDay.title} 
                             onChange={e => handleUpdateDay(activeDay.day, { title: e.target.value })}
                             placeholder="e.g. Introduction to Mindfulness"
-                            className="font-medium"
+                            style={{ fontWeight: 'var(--font-weight-medium)' }}
                             disabled={readOnly}
                           />
                         </AdminFormField>
@@ -645,7 +658,7 @@ export function EquipDailyEditor({
                           </AdminFormField>
 
                           <AdminFormField label="Order">
-                            <Input value={activeDay.day} disabled className="bg-gray-50" />
+                            <Input value={activeDay.day} disabled style={{ backgroundColor: 'var(--color-bg-muted)' }} />
                           </AdminFormField>
                         </div>
 
@@ -666,11 +679,11 @@ export function EquipDailyEditor({
                   <div className="animate-in fade-in duration-300">
                     <div className="mb-6">
                       <div className="flex items-center gap-2 mb-1">
-                        <Badge variant="secondary" className="uppercase tracking-wider text-[10px]">
+                        <Badge variant="secondary" className="uppercase tracking-wider text-[10px]" style={{ backgroundColor: 'var(--color-accent-default)', color: 'var(--color-text-primary)', fontWeight: 'var(--font-weight-medium)' }}>
                           {activeBlock.type} Block
                         </Badge>
                       </div>
-                      <h2 className="text-xl font-semibold text-gray-900">
+                      <h2 style={{ fontSize: 'var(--text-xl)', fontWeight: 'var(--font-weight-medium)', color: 'var(--color-text-primary)' }}>
                         {activeBlock.title || 'Untitled Block'}
                       </h2>
                     </div>
@@ -689,7 +702,7 @@ export function EquipDailyEditor({
                     />
                   </div>
                 ) : (
-                  <div className="flex flex-col items-center justify-center h-64 text-gray-400">
+                  <div className="flex flex-col items-center justify-center h-64" style={{ color: 'var(--color-text-muted)' }}>
                     <p>
                       {singleDayMode
                         ? "Select a block to edit." 
@@ -701,7 +714,7 @@ export function EquipDailyEditor({
             </div>
           </div>
         ) : (
-          <div className="flex-1 flex items-center justify-center text-gray-400 bg-gray-50/50">
+          <div className="flex-1 flex items-center justify-center" style={{ color: 'var(--color-text-muted)', backgroundColor: 'var(--color-bg-muted)' }}>
             <p>Select a day to view properties</p>
           </div>
         )}

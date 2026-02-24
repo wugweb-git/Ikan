@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { cn } from '../ui/utils';
-import { ChevronDown, ChevronRight, LogOut } from 'lucide-react';
+import { ChevronDown, ChevronRight } from 'lucide-react';
 
 export interface SideNavItem {
   id: string;
@@ -72,7 +72,7 @@ export function SideNav({
                 )}
                 onClick={() => group.collapsible && toggleGroup(group.id)}
               >
-                <h3 className="text-[11px] font-semibold text-[var(--grey-5)] uppercase tracking-wider">
+                <h3 className="text-[11px] font-medium text-[var(--grey-5)] uppercase tracking-wider">
                   {group.title}
                 </h3>
                 {group.collapsible && (

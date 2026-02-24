@@ -149,7 +149,8 @@ export function UIKitForms() {
                   className="focus:outline-none transition-transform hover:scale-110"
                 >
                   <Star 
-                    className={`w-8 h-8 ${star <= rating ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'}`} 
+                    className={`w-8 h-8 ${star <= rating ? 'fill-yellow-400 text-yellow-400' : ''}`}
+                    style={star <= rating ? undefined : { color: 'var(--color-border-default)' }}
                   />
                 </button>
               ))}

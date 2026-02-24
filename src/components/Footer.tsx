@@ -1,6 +1,6 @@
 import { Icon } from './Icon';
 import { cn } from './ui/utils';
-import { Mail, Phone } from 'lucide-react';
+import { Mail, Phone, Facebook, Instagram, Linkedin, Youtube } from 'lucide-react';
 import { LogoFull } from './Logo';
 import { ImageWithFallback } from './figma/ImageWithFallback';
 import { useState } from 'react';
@@ -78,10 +78,10 @@ export function Footer({ onNavigate, className }: FooterProps) {
   };
 
   const socialLinks = [
-    { name: 'Facebook', icon: Icon, url: 'https://facebook.com/ikan.health' },
-    { name: 'Instagram', icon: Icon, url: 'https://instagram.com/ikan.health' },
-    { name: 'LinkedIn', icon: Icon, url: 'https://linkedin.com/company/ikan-health' },
-    { name: 'YouTube', icon: Icon, url: 'https://youtube.com/@ikan.health' },
+    { name: 'Facebook', icon: Facebook, url: 'https://facebook.com/ikan.health' },
+    { name: 'Instagram', icon: Instagram, url: 'https://instagram.com/ikan.health' },
+    { name: 'LinkedIn', icon: Linkedin, url: 'https://linkedin.com/company/ikan-health' },
+    { name: 'YouTube', icon: Youtube, url: 'https://youtube.com/@ikan.health' },
     { name: 'X', icon: XIcon, url: 'https://twitter.com/ikan_health' },
   ];
 

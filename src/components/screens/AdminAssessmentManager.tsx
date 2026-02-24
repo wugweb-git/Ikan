@@ -6,7 +6,7 @@ import { cmsUtils } from '../admin/cms-utils';
 import { AdminHeader } from '../admin/AdminHeader';
 import { useIsMobile } from '../../hooks/useIsMobile';
 import { Button } from '../ui/button';
-import { Badge } from '../ui/badge';
+import { AdminStatusBadge } from '../admin/AdminStatusBadge';
 import { AssessmentEditPageWizard as AssessmentEditPage, Assessment } from './AssessmentEditPageWizard';
 import { AdminDataTable, Column, FilterOption } from '../admin/AdminDataTable';
 import { Skeleton } from '../ui/skeleton-loader';
@@ -242,14 +242,15 @@ export function AdminAssessmentManager({ onBack, className }: AdminAssessmentMan
             <img 
               src={assessment.thumbnail} 
               alt={assessment.title}
-              className="w-12 h-12 rounded-lg object-cover flex-shrink-0 bg-gray-100"
+              className="w-12 h-12 rounded-lg object-cover flex-shrink-0"
+              style={{ backgroundColor: 'var(--color-bg-muted)' }}
             />
           )}
           <div className="flex-1">
-            <h4 className="font-medium mb-1 text-[var(--color-text-primary)]">
+            <h4 style={{ fontWeight: 'var(--font-weight-medium)', fontFamily: 'var(--font-family-base)', color: 'var(--color-text-primary)', marginBottom: 'var(--spacing-1)' }}>
               {assessment.title}
             </h4>
-            <p className="text-xs text-[var(--color-text-muted)] leading-snug">
+            <p style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)', lineHeight: '1.4' }}>
               {assessment.description?.substring(0, 80)}...
             </p>
           </div>
@@ -261,15 +262,13 @@ export function AdminAssessmentManager({ onBack, className }: AdminAssessmentMan
       accessorKey: 'category',
       sortable: true,
       render: (assessment) => (
-        <Badge variant="outline" className="capitalize">
-          {assessment.category}
-        </Badge>
+        <AdminStatusBadge status="neutral" label={assessment.category} />
       )
     },
     {
       header: 'Questions',
       render: (assessment) => (
-        <span className="text-sm text-[var(--color-text-muted)]">
+        <span style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-muted)' }}>
           {(assessment.questions || []).length}
         </span>
       )
@@ -279,7 +278,7 @@ export function AdminAssessmentManager({ onBack, className }: AdminAssessmentMan
       accessorKey: 'created_at',
       sortable: true,
       render: (assessment) => (
-        <span className="text-sm text-[var(--color-text-muted)]">
+        <span style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-muted)' }}>
           {assessment.created_at ? new Date(assessment.created_at).toLocaleDateString() : '-'}
         </span>
       )
@@ -289,9 +288,11 @@ export function AdminAssessmentManager({ onBack, className }: AdminAssessmentMan
       accessorKey: 'published',
       sortable: true,
       render: (assessment) => (
-        <Badge variant={assessment.published ? 'success' : 'secondary'}>
-          {assessment.published ? 'Published' : 'Draft'}
-        </Badge>
+        <AdminStatusBadge 
+          status={assessment.published ? 'published' : 'draft'} 
+          label={assessment.published ? 'Published' : 'Draft'} 
+          dot 
+        />
       )
     },
     {
@@ -338,7 +339,8 @@ export function AdminAssessmentManager({ onBack, className }: AdminAssessmentMan
                 e.stopPropagation(); 
                 handleDelete(assessment.id); 
               }}
-              className="text-red-600 focus:bg-red-50 focus:text-red-700"
+              className=""
+              style={{ color: 'var(--color-status-danger)' }}
             >
               <Trash2 className="mr-2 h-4 w-4" /> Delete
             </DropdownMenuItem>
@@ -419,7 +421,7 @@ export function AdminAssessmentManager({ onBack, className }: AdminAssessmentMan
         breadcrumbs={[{ label: 'Admin', onClick: onBack }, { label: 'Assessment Manager' }]}
         stats={stats}
         actions={
-          <Button onClick={handleCreateNew} className="bg-[var(--color-primary-default)] text-white hover:bg-[var(--color-primary-dark)]">
+          <Button onClick={handleCreateNew} style={{ backgroundColor: 'var(--color-primary-default)', color: 'var(--color-primary-on)' }}>
             <Plus className="w-4 h-4 mr-2" />
             {!isMobile && 'Add Assessment'}
           </Button>

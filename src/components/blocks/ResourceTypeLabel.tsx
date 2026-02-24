@@ -8,10 +8,16 @@ interface ResourceTypeLabelProps {
 }
 
 export function ResourceTypeLabel({ type, className }: ResourceTypeLabelProps) {
-  // Handle undefined or null type gracefully
   if (!type) {
     return (
-      <div className={cn("flex items-center gap-2 text-gray-500 text-sm font-medium", className)}>
+      <div 
+        className={cn("flex items-center gap-2", className)}
+        style={{ 
+          color: 'var(--color-text-muted)',
+          fontSize: 'var(--text-sm)',
+          fontWeight: 'var(--font-weight-medium)'
+        }}
+      >
         <BookOpen size={16} />
         <span className="capitalize">Article</span>
       </div>
@@ -25,7 +31,14 @@ export function ResourceTypeLabel({ type, className }: ResourceTypeLabelProps) {
   else if (normalizedType.includes('tool')) Icon = Wrench;
 
   return (
-    <div className={cn("flex items-center gap-2 text-gray-500 text-sm font-medium", className)}>
+    <div 
+      className={cn("flex items-center gap-2", className)}
+      style={{ 
+        color: 'var(--color-text-muted)',
+        fontSize: 'var(--text-sm)',
+        fontWeight: 'var(--font-weight-medium)'
+      }}
+    >
       <Icon size={16} />
       <span className="capitalize">{type}</span>
     </div>

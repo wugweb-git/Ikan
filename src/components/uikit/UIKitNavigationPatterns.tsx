@@ -40,7 +40,7 @@ export function UIKitNavigationPatterns() {
                 </div>
               ))}
             </nav>
-            <h1 className="text-2xl font-bold tracking-tight">General Settings</h1>
+            <h1 className="text-2xl font-medium tracking-tight">General Settings</h1>
           </div>
         </CardContent>
       </Card>

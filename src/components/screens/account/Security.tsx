@@ -9,7 +9,7 @@ import { useAuth } from '../../../contexts/AuthContext';
 import { useIsMobile } from '../../../hooks/useIsMobile';
 import { cn } from '../../ui/utils';
 import { apiClient } from '../../../lib/api-client';
-import { validatePassword, isCommonPassword } from '../../../lib/validation';
+import { validatePassword, isCommonPassword, validateEmail } from '../../../lib/validation';
 import { PasswordStrength } from '../../ui/password-strength';
 import { ToggleSwitch } from '../../ui/toggle-switch';
 
@@ -69,6 +69,12 @@ export function Security() {
 
   const [show2FASetup, setShow2FASetup] = useState(false);
 
+  // Email change state
+  const [showEmailChange, setShowEmailChange] = useState(false);
+  const [emailChangeStep, setEmailChangeStep] = useState<'request' | 'verify'>('request');
+  const [emailForm, setEmailForm] = useState({ newEmail: '', password: '', verificationToken: '' });
+  const [emailChangeLoading, setEmailChangeLoading] = useState(false);
+
   const handleToggleSetting = (key: keyof SecuritySettings) => {
     if (key === 'twoFactorEnabled' && !settings.twoFactorEnabled) {
       setShow2FASetup(true);
@@ -88,8 +94,14 @@ export function Security() {
       return;
     }
     
-    if (!validatePassword(passwordForm.newPassword)) {
-      showToast('error', 'Error', 'Password must be at least 8 characters and include a mix of letters, numbers, and symbols');
+    if (!passwordForm.currentPassword.trim()) {
+      showToast('error', 'Error', 'Please enter your current password');
+      return;
+    }
+    
+    const passwordError = validatePassword(passwordForm.newPassword);
+    if (passwordError) {
+      showToast('error', 'Error', passwordError.message);
       return;
     }
     
@@ -107,6 +119,55 @@ export function Security() {
       }).catch((error) => {
         showToast('error', 'Error', error.message || 'Failed to change password');
       });
+  };
+
+  const handleRequestEmailChange = async () => {
+    if (!emailForm.newEmail.trim()) {
+      showToast('error', 'Error', 'Please enter a new email address');
+      return;
+    }
+
+    const emailError = validateEmail(emailForm.newEmail);
+    if (emailError) {
+      showToast('error', 'Error', emailError.message || 'Please enter a valid email address');
+      return;
+    }
+
+    if (!emailForm.password.trim()) {
+      showToast('error', 'Error', 'Please enter your current password to confirm');
+      return;
+    }
+
+    try {
+      setEmailChangeLoading(true);
+      await apiClient.requestEmailChange(emailForm.newEmail, emailForm.password);
+      showToast('success', 'Verification Sent', 'A verification token has been generated. In production, this would be sent to your new email.');
+      setEmailChangeStep('verify');
+    } catch (error: any) {
+      showToast('error', 'Error', error.message || 'Failed to request email change');
+    } finally {
+      setEmailChangeLoading(false);
+    }
+  };
+
+  const handleVerifyEmailChange = async () => {
+    if (!emailForm.verificationToken.trim()) {
+      showToast('error', 'Error', 'Please enter the verification token');
+      return;
+    }
+
+    try {
+      setEmailChangeLoading(true);
+      await apiClient.verifyEmailChange(emailForm.verificationToken);
+      showToast('success', 'Email Changed', 'Your email address has been updated successfully');
+      setShowEmailChange(false);
+      setEmailChangeStep('request');
+      setEmailForm({ newEmail: '', password: '', verificationToken: '' });
+    } catch (error: any) {
+      showToast('error', 'Error', error.message || 'Failed to verify email change');
+    } finally {
+      setEmailChangeLoading(false);
+    }
   };
 
   const handleEnable2FA = () => {
@@ -311,6 +372,226 @@ export function Security() {
                   Update Password
                 </Button>
               </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Email */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Icon name="mail" size={20} style={{ color: 'var(--color-primary-default)' }} />
+            Email
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {!showEmailChange ? (
+            <div className="flex items-center justify-between">
+              <div>
+                <div style={{ 
+                  fontSize: 'var(--text-sm)', 
+                  fontWeight: 'var(--font-weight-medium)',
+                  color: 'var(--color-text-primary)',
+                  marginBottom: 'var(--spacing-1)'
+                }}>
+                  Change Email
+                </div>
+                <div style={{ 
+                  fontSize: 'var(--text-xs)', 
+                  color: 'var(--color-text-muted)'
+                }}>
+                  Last changed 30 days ago
+                </div>
+              </div>
+              <Button
+                variant="outline"
+                onClick={() => setShowEmailChange(true)}
+                style={{
+                  height: 'var(--ikan-component-button-height)',
+                  borderRadius: 'var(--ikan-component-border-radius)',
+                  fontSize: 'var(--text-sm)',
+                  fontWeight: 'var(--font-weight-medium)'
+                }}
+              >
+                Change Email
+              </Button>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {emailChangeStep === 'request' && (
+                <>
+                  <div>
+                    <label 
+                      htmlFor="new-email"
+                      style={{ 
+                        fontSize: 'var(--text-sm)', 
+                        fontWeight: 'var(--font-weight-medium)',
+                        color: 'var(--color-text-primary)',
+                        display: 'block',
+                        marginBottom: 'var(--spacing-2)'
+                      }}
+                    >
+                      New Email
+                    </label>
+                    <input
+                      id="new-email"
+                      type="email"
+                      value={emailForm.newEmail}
+                      onChange={(e) => setEmailForm(prev => ({ ...prev, newEmail: e.target.value }))}
+                      style={{
+                        width: '100%',
+                        padding: 'var(--spacing-2) var(--spacing-3)',
+                        borderRadius: 'var(--ikan-component-border-radius)',
+                        border: '1px solid var(--color-border-default)',
+                        backgroundColor: 'var(--color-bg-input)',
+                        fontSize: 'var(--text-sm)',
+                        fontFamily: 'var(--font-family-base)',
+                        fontWeight: 'var(--font-weight-regular)',
+                        color: 'var(--color-text-primary)'
+                      }}
+                    />
+                  </div>
+
+                  <div>
+                    <label 
+                      htmlFor="current-password"
+                      style={{ 
+                        fontSize: 'var(--text-sm)', 
+                        fontWeight: 'var(--font-weight-medium)',
+                        color: 'var(--color-text-primary)',
+                        display: 'block',
+                        marginBottom: 'var(--spacing-2)'
+                      }}
+                    >
+                      Current Password
+                    </label>
+                    <input
+                      id="current-password"
+                      type="password"
+                      value={emailForm.password}
+                      onChange={(e) => setEmailForm(prev => ({ ...prev, password: e.target.value }))}
+                      style={{
+                        width: '100%',
+                        padding: 'var(--spacing-2) var(--spacing-3)',
+                        borderRadius: 'var(--ikan-component-border-radius)',
+                        border: '1px solid var(--color-border-default)',
+                        backgroundColor: 'var(--color-bg-input)',
+                        fontSize: 'var(--text-sm)',
+                        fontFamily: 'var(--font-family-base)',
+                        fontWeight: 'var(--font-weight-regular)',
+                        color: 'var(--color-text-primary)'
+                      }}
+                    />
+                  </div>
+
+                  <div className={cn(
+                    "flex",
+                    isMobile ? "flex-col gap-2" : "gap-2 justify-end"
+                  )}>
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        setShowEmailChange(false);
+                        setEmailForm({ newEmail: '', password: '', verificationToken: '' });
+                      }}
+                      style={{
+                        height: 'var(--ikan-component-button-height)',
+                        borderRadius: 'var(--ikan-component-border-radius)',
+                        fontSize: 'var(--text-sm)',
+                        fontWeight: 'var(--font-weight-medium)'
+                      }}
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      onClick={handleRequestEmailChange}
+                      disabled={emailChangeLoading}
+                      style={{
+                        height: 'var(--ikan-component-button-height)',
+                        borderRadius: 'var(--ikan-component-border-radius)',
+                        fontSize: 'var(--text-sm)',
+                        fontWeight: 'var(--font-weight-medium)',
+                        backgroundColor: 'var(--color-primary-default)',
+                        color: 'white'
+                      }}
+                    >
+                      {emailChangeLoading ? 'Sending...' : 'Request Email Change'}
+                    </Button>
+                  </div>
+                </>
+              )}
+
+              {emailChangeStep === 'verify' && (
+                <>
+                  <div>
+                    <label 
+                      htmlFor="verification-token"
+                      style={{ 
+                        fontSize: 'var(--text-sm)', 
+                        fontWeight: 'var(--font-weight-medium)',
+                        color: 'var(--color-text-primary)',
+                        display: 'block',
+                        marginBottom: 'var(--spacing-2)'
+                      }}
+                    >
+                      Verification Token
+                    </label>
+                    <input
+                      id="verification-token"
+                      type="text"
+                      value={emailForm.verificationToken}
+                      onChange={(e) => setEmailForm(prev => ({ ...prev, verificationToken: e.target.value }))}
+                      style={{
+                        width: '100%',
+                        padding: 'var(--spacing-2) var(--spacing-3)',
+                        borderRadius: 'var(--ikan-component-border-radius)',
+                        border: '1px solid var(--color-border-default)',
+                        backgroundColor: 'var(--color-bg-input)',
+                        fontSize: 'var(--text-sm)',
+                        fontFamily: 'var(--font-family-base)',
+                        fontWeight: 'var(--font-weight-regular)',
+                        color: 'var(--color-text-primary)'
+                      }}
+                    />
+                  </div>
+
+                  <div className={cn(
+                    "flex",
+                    isMobile ? "flex-col gap-2" : "gap-2 justify-end"
+                  )}>
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        setShowEmailChange(false);
+                        setEmailForm({ newEmail: '', password: '', verificationToken: '' });
+                      }}
+                      style={{
+                        height: 'var(--ikan-component-button-height)',
+                        borderRadius: 'var(--ikan-component-border-radius)',
+                        fontSize: 'var(--text-sm)',
+                        fontWeight: 'var(--font-weight-medium)'
+                      }}
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      onClick={handleVerifyEmailChange}
+                      disabled={emailChangeLoading}
+                      style={{
+                        height: 'var(--ikan-component-button-height)',
+                        borderRadius: 'var(--ikan-component-border-radius)',
+                        fontSize: 'var(--text-sm)',
+                        fontWeight: 'var(--font-weight-medium)',
+                        backgroundColor: 'var(--color-primary-default)',
+                        color: 'white'
+                      }}
+                    >
+                      {emailChangeLoading ? 'Verifying...' : 'Verify Email Change'}
+                    </Button>
+                  </div>
+                </>
+              )}
             </div>
           )}
         </CardContent>

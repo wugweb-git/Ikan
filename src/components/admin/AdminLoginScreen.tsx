@@ -47,16 +47,16 @@ export function AdminLoginScreen({ onNavigate, onLoginSuccess }: AdminLoginScree
   };
 
   return (
-    <div className="min-h-screen w-full flex items-center justify-center bg-gray-50 p-4">
+    <div className="min-h-screen w-full flex items-center justify-center p-4" style={{ backgroundColor: 'var(--color-bg-page)' }}>
       <div className="w-full max-w-md space-y-8">
         <div className="flex flex-col items-center justify-center text-center space-y-2">
             <div className="bg-[var(--color-primary-default)] p-3 rounded-xl mb-4 shadow-lg shadow-primary/20">
                 <Logo showText={false} iconSize={32} />
             </div>
-            <h1 className="text-2xl font-semibold tracking-tight text-[var(--color-text-primary)]">
+            <h1 style={{ fontSize: 'var(--text-2xl)', fontWeight: 'var(--font-weight-medium)', color: 'var(--color-text-primary)' }}>
                 Admin Console
             </h1>
-            <p className="text-sm text-[var(--color-text-muted)]">
+            <p style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-muted)' }}>
                 Secure access for administrators only
             </p>
         </div>
@@ -78,7 +78,7 @@ export function AdminLoginScreen({ onNavigate, onLoginSuccess }: AdminLoginScree
                             placeholder="admin@ikan.com" 
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
-                            className="bg-gray-50"
+                            style={{ backgroundColor: 'var(--color-bg-muted)' }}
                             disabled={isLoading}
                         />
                     </div>
@@ -90,7 +90,7 @@ export function AdminLoginScreen({ onNavigate, onLoginSuccess }: AdminLoginScree
                             placeholder="••••••••" 
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
-                            className="bg-gray-50"
+                            style={{ backgroundColor: 'var(--color-bg-muted)' }}
                             disabled={isLoading}
                         />
                     </div>
@@ -98,7 +98,8 @@ export function AdminLoginScreen({ onNavigate, onLoginSuccess }: AdminLoginScree
                 <CardFooter className="flex flex-col gap-4">
                     <Button 
                         type="submit" 
-                        className="w-full h-11 text-base bg-[var(--color-primary-default)] hover:bg-[var(--color-primary-dark)] text-white"
+                        className="w-full"
+                        style={{ height: 'var(--ikan-component-button-height)', backgroundColor: 'var(--color-primary-default)', color: 'var(--color-primary-on)', fontWeight: 'var(--font-weight-medium)' }}
                         disabled={isLoading}
                     >
                         {isLoading ? (
@@ -128,7 +129,7 @@ export function AdminLoginScreen({ onNavigate, onLoginSuccess }: AdminLoginScree
             </Button>
         </div>
 
-        <div className="flex items-center justify-center gap-2 text-xs text-[var(--color-status-warning)] bg-amber-50 p-3 rounded-lg border border-amber-100">
+        <div className="flex items-center justify-center gap-2 text-xs p-3 rounded-lg border" style={{ color: 'var(--color-status-warning)', backgroundColor: 'var(--color-status-warning-light)', borderColor: 'var(--color-status-warning)' }}>
             <AlertCircle className="w-4 h-4" />
             <span>Authorized personnel only. All activities are logged.</span>
         </div>

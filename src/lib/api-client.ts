@@ -1,30 +1,50 @@
 import { supabase } from './supabase-client';
 
-export interface User {
-  user_id: string;
-  email: string;
-  name: string;
-  phone?: string;
-  corporate_user: boolean;
-  avatar_url?: string;
-  bio?: string;
-  dateOfBirth?: string;
-  gender?: string;
-  location?: string;
-  preferences?: any;
-  emergencyContactName?: string;
-  emergencyContactPhone?: string;
-  emergencyContactRelationship?: string;
-  [key: string]: any;
-}
+import type {
+  PageData,
+  UserProfile,
+  ProfileUpdateData,
+  PrivacySettings,
+  AdminUserData,
+  ProfessionalData,
+  EquipProgramRaw,
+  EquipProgramData,
+  EquipProgramBlock,
+  EquipProgramDay,
+  BlockResponse,
+  ProgressSyncData,
+  ResourceData,
+  CategoryData,
+  AssessmentData,
+  AssessmentResponses,
+  AssessmentInterpretation,
+} from './api-types';
+
+export type { UserProfile as User };
 
 import { projectId, publicAnonKey } from '../utils/supabase/info';
 import { ALL_DUMMY_PROGRAMS } from './demo-data';
+import { cacheForOffline, readOfflineCache } from '../hooks/useOfflineSync';
 
 const API_BASE = `https://${projectId}.supabase.co/functions/v1/make-server-cc205da9`;
 
 class ApiClient {
   private token: string | null = null;
+  // Track in-flight AbortControllers so components can cancel on unmount
+  private inflightControllers = new Set<AbortController>();
+
+  /** Create an AbortController tied to this client; auto-cleaned on completion. */
+  createAbortController(): AbortController {
+    const controller = new AbortController();
+    this.inflightControllers.add(controller);
+    return controller;
+  }
+
+  /** Abort all in-flight requests (e.g. on logout or major navigation). */
+  abortAll() {
+    this.inflightControllers.forEach(c => c.abort());
+    this.inflightControllers.clear();
+  }
 
   async getToken() {
     const { data } = await supabase.auth.getSession();
@@ -32,7 +52,7 @@ class ApiClient {
   }
 
   async healthCheck() {
-    return this.request('/health', { method: 'GET' }, false);
+    return this.request('/health', { method: 'GET' }, true);
   }
 
   async isAuthenticated() {
@@ -41,7 +61,9 @@ class ApiClient {
   }
 
   async request(path: string, options: any = {}, auth = true, retryCount = 0): Promise<any> {
-    const headers: any = {
+    // Skip Content-Type for FormData — the browser sets it automatically with the correct boundary
+    const isFormData = typeof FormData !== 'undefined' && options.body instanceof FormData;
+    const headers: any = isFormData ? {} : {
       'Content-Type': 'application/json',
     };
 
@@ -50,18 +72,27 @@ class ApiClient {
       if (token) {
         headers['Authorization'] = `Bearer ${token}`;
       } else {
-        // Fallback to Anon Key for public authenticated endpoints
+        // Fallback to Anon Key for public endpoints
         headers['Authorization'] = `Bearer ${publicAnonKey}`;
       }
+    } else {
+      // Even for non-auth requests, Supabase Edge Functions require the anon key
+      headers['Authorization'] = `Bearer ${publicAnonKey}`;
     }
 
     // Ensure path starts with /
     const normalizedPath = path.startsWith('/') ? path : `/${path}`;
     const url = path.startsWith('http') ? path : `${API_BASE}${normalizedPath}`;
 
+    // Create an AbortController for this request (unless caller already provided a signal)
+    const controller = options.signal ? null : new AbortController();
+    if (controller) this.inflightControllers.add(controller);
+    const signal = options.signal || controller?.signal;
+
     try {
       const response = await fetch(url, {
         ...options,
+        signal,
         headers: {
           ...headers,
           ...options.headers,
@@ -76,6 +107,12 @@ class ApiClient {
       const data = await response.json();
       return data;
     } catch (error: any) {
+      // If the request was aborted (component unmounted / navigation), do NOT retry
+      if (error?.name === 'AbortError') {
+        // Silently swallow — the caller no longer cares about this response
+        throw error;
+      }
+
       if (retryCount < 2 && (!error.message || !error.message.includes('401'))) {
         // Simple retry logic with linear backoff (except for auth errors)
         await new Promise(resolve => setTimeout(resolve, 1000 * (retryCount + 1)));
@@ -89,6 +126,9 @@ class ApiClient {
       }
       
       throw error;
+    } finally {
+      // Clean up controller reference
+      if (controller) this.inflightControllers.delete(controller);
     }
   }
 
@@ -119,7 +159,7 @@ class ApiClient {
 
   // CMS
   async getPage(slug: string) {
-    return this.request(`/cms/pages/${slug}`, { method: 'GET' }, false);
+    return this.request(`/cms/pages/${slug}`, { method: 'GET' }, true);
   }
 
   async getAdminPage(id: string) {
@@ -137,7 +177,7 @@ class ApiClient {
     }
   }
 
-  async createPage(data: any) {
+  async createPage(data: PageData) {
     const res = await this.request('/admin/pages', { 
       method: 'POST', 
       body: JSON.stringify(data)
@@ -145,7 +185,7 @@ class ApiClient {
     return res.page;
   }
 
-  async updatePage(id: string, data: any) {
+  async updatePage(id: string, data: PageData) {
     const res = await this.request(`/admin/pages/${id}`, { 
       method: 'PUT', 
       body: JSON.stringify(data)
@@ -175,7 +215,7 @@ class ApiClient {
     return res.profile;
   }
 
-  async updateProfile(data: any) {
+  async updateProfile(data: ProfileUpdateData) {
     const res = await this.request('/users/profile', { 
       method: 'PUT',
       body: JSON.stringify(data)
@@ -215,7 +255,7 @@ class ApiClient {
     return res.consultant;
   }
 
-  async createProfessional(data: any) {
+  async createProfessional(data: ProfessionalData) {
     const res = await this.request('/consultants', { 
       method: 'POST', 
       body: JSON.stringify(data)
@@ -223,7 +263,7 @@ class ApiClient {
     return res.consultant;
   }
 
-  async updateProfessional(id: string, data: any) {
+  async updateProfessional(id: string, data: ProfessionalData) {
     const res = await this.request(`/consultants/${id}`, { 
       method: 'PUT', 
       body: JSON.stringify(data)
@@ -237,12 +277,23 @@ class ApiClient {
 
   // Equip Programs
   async getEquipPrograms() {
-    const res = await this.request('/equip/programs', { method: 'GET' }, true);
-    const realPrograms = (res.programs || []).map((p: any) => ({
-      ...p,
-      title: p.title || p.name || 'Untitled Program'
-    }));
-    return [...ALL_DUMMY_PROGRAMS, ...realPrograms];
+    try {
+      const res = await this.request('/equip/programs', { method: 'GET' }, true);
+      const realPrograms = (res.programs || []).map((p: EquipProgramRaw) => ({
+        ...p,
+        title: p.title || p.name || 'Untitled Program'
+      }));
+      const allPrograms = [...ALL_DUMMY_PROGRAMS, ...realPrograms];
+      cacheForOffline('equip-programs', allPrograms);
+      return allPrograms;
+    } catch (e: any) {
+      if (e?.name === 'AbortError') throw e;
+      console.warn('Failed to fetch equip programs, attempting offline cache fallback:', e?.message);
+      const cached = readOfflineCache<any[]>('equip-programs');
+      if (cached) return cached;
+      // Minimum viable fallback: always show demo programs
+      return [...ALL_DUMMY_PROGRAMS];
+    }
   }
 
   async getEquipProgram(id: string) {
@@ -262,13 +313,13 @@ class ApiClient {
     return {
         ...raw,
         title: raw.title || raw.name, // Map name to title
-        daily_content: (raw.days || []).map((day: any) => ({
+        daily_content: (raw.days || []).map((day: EquipProgramDay) => ({
             day: day.day_number,
             title: day.title,
             description: day.description || '',
             image_url: day.image_url,
             dayType: day.day_type || day.dayType || 'learning',
-            activities: (day.blocks || []).map((block: any) => {
+            activities: (day.blocks || []).map((block: EquipProgramBlock) => {
                 // Fix for legacy 'sleep_diary' type in seeded data
                 if (block.block_type === 'sleep_diary' || block.type === 'sleep_diary') {
                     return {
@@ -309,7 +360,7 @@ class ApiClient {
     };
   }
 
-  async createEquipProgram(data: any) {
+  async createEquipProgram(data: EquipProgramData) {
     const res = await this.request('/equip/programs', { 
       method: 'POST',
       body: JSON.stringify(data)
@@ -317,7 +368,7 @@ class ApiClient {
     return res.program;
   }
 
-  async updateEquipProgram(id: string, data: any) {
+  async updateEquipProgram(id: string, data: EquipProgramData) {
     const res = await this.request(`/equip/programs/${id}`, { 
       method: 'PUT',
       body: JSON.stringify(data)
@@ -325,7 +376,7 @@ class ApiClient {
     return res.program;
   }
   
-  async saveEquipProgram(program: any) {
+  async saveEquipProgram(program: EquipProgramData & { id?: string }) {
     if (program.id && !program.id.startsWith('temp')) {
       return this.updateEquipProgram(program.id, program);
     } else {
@@ -342,8 +393,12 @@ class ApiClient {
     try {
       if (!(await this.isAuthenticated())) return [];
       const res = await this.request('/user/enrollments', { method: 'GET' }, true);
-      return res.enrollments || [];
+      const enrollments = res.enrollments || [];
+      cacheForOffline('user-enrollments', enrollments);
+      return enrollments;
     } catch (e) {
+      const cached = readOfflineCache<any[]>('user-enrollments');
+      if (cached) return cached;
       return [];
     }
   }
@@ -370,7 +425,7 @@ class ApiClient {
     return this.request(`/user/equip/${equipId}/today`, { method: 'GET' }, true);
   }
 
-  async saveBlockResponse(equipId: string, dayNum: number, blockId: string, response: any) {
+  async saveBlockResponse(equipId: string, dayNum: number, blockId: string, response: BlockResponse) {
     return this.request(`/user/equip/${equipId}/day/${dayNum}/block/${blockId}`, {
       method: 'POST',
       body: JSON.stringify({ response })
@@ -390,7 +445,7 @@ class ApiClient {
     return res.progress;
   }
 
-  async syncEquipProgress(equipId: string, data: any) {
+  async syncEquipProgress(equipId: string, data: ProgressSyncData) {
     // Syncs partial progress (blocks, responses)
     return this.request(`/user/equip/${equipId}/sync`, { 
       method: 'POST',
@@ -398,7 +453,7 @@ class ApiClient {
     }, true);
   }
 
-  async updateEnrollmentProgress(equipId: string, data: any) {
+  async updateEnrollmentProgress(equipId: string, data: ProgressSyncData) {
     // If completed day, call completeDay
     if (data.completed && data.dayNumber) {
         return this.completeDay(equipId, data.dayNumber);
@@ -445,13 +500,25 @@ class ApiClient {
     if (await this.isAuthenticated()) {
       try {
         const res = await this.request('/admin/resources', { method: 'GET' }, true);
-        return res.resources || [];
+        const resources = res.resources || [];
+        cacheForOffline('resources', resources);
+        return resources;
       } catch (e) {
-        // Fallback to library resources
+        // Fallback to library resources below
       }
     }
-    const res = await this.request('/library/resources', { method: 'GET' }, true);
-    return res.resources || [];
+    try {
+      const res = await this.request('/library/resources', { method: 'GET' }, true);
+      const resources = res.resources || [];
+      cacheForOffline('resources', resources);
+      return resources;
+    } catch (e: any) {
+      if (e?.name === 'AbortError') throw e;
+      console.warn('Failed to fetch resources, attempting offline cache fallback:', e?.message);
+      const cached = readOfflineCache<any[]>('resources');
+      if (cached) return cached;
+      return [];
+    }
   }
 
   async getResource(id: string) {
@@ -459,7 +526,7 @@ class ApiClient {
     return res.resource;
   }
 
-  async createResource(data: any) {
+  async createResource(data: ResourceData) {
     const res = await this.request('/admin/resources', { 
       method: 'POST', 
       body: JSON.stringify(data)
@@ -467,7 +534,7 @@ class ApiClient {
     return res.resource;
   }
 
-  async updateResource(id: string, data: any) {
+  async updateResource(id: string, data: ResourceData) {
     const res = await this.request(`/admin/resources/${id}`, { 
       method: 'PUT', 
       body: JSON.stringify(data)
@@ -489,7 +556,7 @@ class ApiClient {
     }
   }
 
-  async createCategory(data: any) {
+  async createCategory(data: CategoryData) {
     const res = await this.request('/admin/categories', {
       method: 'POST',
       body: JSON.stringify(data)
@@ -497,7 +564,7 @@ class ApiClient {
     return res.category;
   }
 
-  async updateCategory(id: string, data: any) {
+  async updateCategory(id: string, data: CategoryData) {
     const res = await this.request(`/admin/categories/${id}`, {
       method: 'PUT',
       body: JSON.stringify(data)
@@ -530,30 +597,14 @@ class ApiClient {
     formData.append('file', file);
     formData.append('bucket', bucket);
 
-    const token = await this.getToken();
-    const headers: any = {};
-    if (token) {
-      headers['Authorization'] = `Bearer ${token}`;
-    }
-
-    const response = await fetch(`${API_BASE}/admin/media/upload`, {
+    return this.request('/admin/media/upload', {
       method: 'POST',
-      headers,
       body: formData
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`Upload failed: ${errorText}`);
-    }
-
-    return await response.json();
+    }, true);
   }
 
-
-
   // Legacy shims
-  async purchaseEquipProgram(equipId: string, onboarding_data: any, payment_method: string) {
+  async purchaseEquipProgram(equipId: string, onboarding_data: Record<string, unknown>, payment_method: string) {
     return this.enrollUser(equipId);
   }
 
@@ -576,10 +627,7 @@ class ApiClient {
     }
   }
 
-  async createEquipEnrollment(data: { programId: string, onboardingData: any }) {
-    // Determine the user's auth status
-    const isAuthenticated = await this.isAuthenticated();
-    
+  async createEquipEnrollment(data: { programId: string, onboardingData: Record<string, unknown> }) {
     const demoProgram = ALL_DUMMY_PROGRAMS.find(p => p.id === data.programId);
     if (demoProgram) {
         return {
@@ -592,10 +640,6 @@ class ApiClient {
             }
         };
     }
-    
-    // If not authenticated, we might need to store this locally or create a guest enrollment
-    // For now, we assume the backend handles guest enrollments or the frontend forces login before this step
-    // But based on the error "createEquipEnrollment is not a function", we just need this method to exist.
     
     // We'll use the /equip/purchase endpoint which effectively enrolls the user
     // Backend expects "onboarding_data" (snake_case) not "onboardingData" (camelCase)
@@ -646,11 +690,12 @@ class ApiClient {
 
   async saveAssessmentResponse(
     assessmentId: string, 
-    responses: any, 
+    responses: AssessmentResponses, 
     status: string, 
     score: number, 
-    interpretation: any, 
-    severityHint?: string
+    interpretation: AssessmentInterpretation, 
+    severityHint?: string,
+    maxScore?: number
   ) {
     return this.request('/user/assessments', { 
       method: 'POST',
@@ -659,6 +704,7 @@ class ApiClient {
         responses,
         status,
         score,
+        maxScore,
         interpretation,
         severityHint
       })
@@ -666,16 +712,34 @@ class ApiClient {
   }
 
   async getAssessments() {
-     const res = await this.request('/assessments', { method: 'GET' }, true);
-     return res.assessments || [];
+    try {
+      const res = await this.request('/assessments', { method: 'GET' }, true);
+      cacheForOffline('assessments-list', res.assessments || []);
+      return res.assessments || [];
+    } catch (e: any) {
+      if (e?.name === 'AbortError') throw e;
+      console.warn('Failed to fetch assessments, attempting offline cache fallback:', e?.message);
+      const cached = readOfflineCache<any[]>('assessments-list');
+      if (cached) return cached;
+      return [];
+    }
   }
 
   async getAssessment(id: string) {
-    const res = await this.request(`/assessments/${id}?t=${Date.now()}`, { method: 'GET' }, true);
-    return res.assessment;
+    try {
+      const res = await this.request(`/assessments/${id}?t=${Date.now()}`, { method: 'GET' }, true);
+      cacheForOffline(`assessment-${id}`, res.assessment);
+      return res.assessment;
+    } catch (e: any) {
+      if (e?.name === 'AbortError') throw e;
+      console.warn(`Failed to fetch assessment ${id}, attempting offline cache fallback:`, e?.message);
+      const cached = readOfflineCache<any>(`assessment-${id}`);
+      if (cached) return cached;
+      throw e; // Re-throw if no cache — caller should show error state
+    }
   }
 
-  async createAssessment(data: any) {
+  async createAssessment(data: AssessmentData) {
     const res = await this.request('/admin/assessments', { 
       method: 'POST', 
       body: JSON.stringify(data)
@@ -683,7 +747,7 @@ class ApiClient {
     return res.assessment;
   }
 
-  async updateAssessment(id: string, data: any) {
+  async updateAssessment(id: string, data: AssessmentData) {
     const res = await this.request(`/admin/assessments/${id}`, { 
       method: 'PUT', 
       body: JSON.stringify(data)
@@ -699,8 +763,11 @@ class ApiClient {
   async listMoods() {
     try {
       const res = await this.request('/moods', { method: 'GET' }, true);
+      cacheForOffline('moods', res.moods || []);
       return res.moods || [];
     } catch (e) {
+      const cached = readOfflineCache<any[]>('moods');
+      if (cached) return cached;
       return [];
     }
   }
@@ -711,8 +778,12 @@ class ApiClient {
     if (endDate) query += `&end_date=${endDate}`;
     
     try {
-      return await this.request(`/user/journal${query}`, { method: 'GET' }, true);
+      const res = await this.request(`/user/journal${query}`, { method: 'GET' }, true);
+      cacheForOffline('journal-entries', res);
+      return res;
     } catch (e) {
+      const cached = readOfflineCache<any>('journal-entries');
+      if (cached) return cached;
       return { entries: [] };
     }
   }
@@ -741,14 +812,14 @@ class ApiClient {
     return this.request(`/admin/users/${userId}`, { method: 'GET' }, true);
   }
 
-  async createUserAdmin(data: any) {
+  async createUserAdmin(data: AdminUserData) {
     return this.request('/admin/users', { 
       method: 'POST',
       body: JSON.stringify(data)
     }, true);
   }
 
-  async updateUserAdmin(userId: string, data: any) {
+  async updateUserAdmin(userId: string, data: AdminUserData) {
     const res = await this.request(`/admin/users/${userId}`, { 
       method: 'PUT',
       body: JSON.stringify(data)
@@ -812,6 +883,105 @@ class ApiClient {
       method: 'POST',
       body: JSON.stringify({ backupId })
     }, true);
+  }
+
+  // Contact Form
+  async submitContactForm(data: { name: string; email: string; subject: string; message: string }) {
+    return this.request('/contact/submit', {
+      method: 'POST',
+      body: JSON.stringify(data)
+    }, false);
+  }
+
+  // Newsletter
+  async subscribeNewsletter(email: string, name?: string) {
+    return this.request('/newsletter/signup', {
+      method: 'POST',
+      body: JSON.stringify({ email, name })
+    }, false);
+  }
+
+  // Password Change
+  async changePassword(currentPassword: string, newPassword: string) {
+    return this.request('/users/password', {
+      method: 'PUT',
+      body: JSON.stringify({ currentPassword, newPassword })
+    }, true);
+  }
+
+  // Data Export
+  async exportUserData() {
+    return this.request('/users/export-data', {
+      method: 'POST'
+    }, true);
+  }
+
+  // Account Deletion
+  async deleteAccount() {
+    return this.request('/users/me', {
+      method: 'DELETE'
+    }, true);
+  }
+
+  // Privacy Settings
+  async updatePrivacySettings(settings: PrivacySettings) {
+    return this.request('/users/profile', {
+      method: 'PUT',
+      body: JSON.stringify({ privacy_settings: settings })
+    }, true);
+  }
+
+  // Avatar Upload — uploads file to Supabase Storage via the backend, returns the new avatar URL
+  async uploadAvatar(file: File): Promise<{ avatarUrl: string; profile: UserProfile }> {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    return this.request('/users/avatar/upload', {
+      method: 'POST',
+      body: formData
+    }, true);
+  }
+
+  // Email Change
+  async requestEmailChange(newEmail: string, password: string) {
+    return this.request('/users/email/request-change', {
+      method: 'POST',
+      body: JSON.stringify({ newEmail, password })
+    }, true);
+  }
+
+  async verifyEmailChange(token: string) {
+    return this.request('/users/email/verify-change', {
+      method: 'POST',
+      body: JSON.stringify({ token })
+    }, true);
+  }
+
+  // Social Account Linking (real OAuth via Supabase)
+  async linkSocialAccount(provider: 'google' | 'linkedin_oidc') {
+    const { data, error } = await supabase.auth.linkIdentity({
+      provider,
+      options: {
+        redirectTo: `${window.location.origin}/account`
+      }
+    });
+    if (error) throw error;
+    return data;
+  }
+
+  async unlinkSocialAccount(identityId: string) {
+    const { data, error } = await supabase.auth.unlinkIdentity({
+      id: identityId
+    } as any);
+    if (error) throw error;
+    return data;
+  }
+
+  // Get linked identities from Supabase auth
+  async getLinkedIdentities() {
+    const { data: { user }, error } = await supabase.auth.getUser();
+    if (error || !user) return [];
+    return user.identities || [];
   }
 }
 

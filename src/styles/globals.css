@@ -4,7 +4,7 @@
   /* iKan Design Tokens */
   
   /* Typography */
-  --font-family-base: Ubuntu, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
+  --font-family-base: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
   --font-family-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, 'Courier New', monospace;
   --font-size: 16px;
   --text-xs: 12px;
@@ -22,14 +22,37 @@
   --font-weight-regular: 400;
   --font-weight-normal: 400;
   --font-weight-medium: 500;
-  --font-weight-semibold: 600;
-  --font-weight-bold: 700;
+  /* semibold & bold kept as tokens for rare admin-only use; public UI must only use 400/500 */
+  --font-weight-semibold: 500;
+  --font-weight-bold: 500;
 
   /* Colors - Primary & Accent */
   --color-primary-default: #2A2A2A;
   --color-primary-on: #FFFFFF;
   --color-accent-default: #E9EBEF;
   --color-accent-on: #2A2A2A;
+
+  /* Colors - Brand Accent Palette (themed sections) */
+  --ikan-brand-teal: #4ABDAC;
+  --ikan-brand-amber: #F0A830;
+  --ikan-brand-coral: #E87B7B;
+  --ikan-brand-slate: #7B93DB;
+  --ikan-brand-teal-dark: #3D7A66;
+  --ikan-brand-teal-bg: #E8F4F0;
+  --ikan-brand-teal-bg-end: #D4EDE5;
+  --ikan-brand-library-accent: #00A991;
+  --ikan-brand-cta-gradient-start: #FFA07A;
+  --ikan-brand-cta-gradient-end: #FFC0CB;
+
+  /* Colors - Special */
+  --color-rating-star: #FFA500;
+  --color-rating-star-inactive: var(--grey-3);
+
+  /* Colors - Gradients (brand explore widgets) */
+  --ikan-gradient-equip-from: #1B4332;
+  --ikan-gradient-equip-to: #2D6A4F;
+  --ikan-gradient-assessment-from: #312E81;
+  --ikan-gradient-assessment-to: #4338CA;
 
   /* Colors - Background */
   --color-bg-page: #F5F5F5;
@@ -84,9 +107,25 @@
   --color-chart-3: #6A6A6A;
   --color-chart-4: #8A8A8A;
   --color-chart-5: #AAAAAA;
-  
-  /* Colors - Special */
-  --color-rating-star: #FFA500;
+
+  /* Colors - Analytics Chart Palette (colorful, for data visualization) */
+  --ikan-chart-1: #3B82F6;
+  --ikan-chart-1-light: #E0F2FE;
+  --ikan-chart-1-muted: #DBEAFE;
+  --ikan-chart-1-dark: #0369A1;
+  --ikan-chart-2: #10B981;
+  --ikan-chart-2-light: #D1FAE5;
+  --ikan-chart-2-dark: #059669;
+  --ikan-chart-3: #F59E0B;
+  --ikan-chart-4: #EF4444;
+  --ikan-chart-4-light: #FEE2E2;
+  --ikan-chart-4-dark: #DC2626;
+  --ikan-chart-5: #8B5CF6;
+  --ikan-chart-5-light: #F3E8FF;
+  --ikan-chart-5-dark: #9333EA;
+  --ikan-chart-6: #EC4899;
+  --ikan-chart-neutral: #6B7280;
+  --ikan-chart-fill-default: #8884d8;
 
   /* Spacing */
   --spacing-unit: 4px;
@@ -187,6 +226,7 @@
 
   /* iKan Component Standards (48px height, 12px radius per guidelines) */
   --ikan-component-button-height: 52px;
+  --ikan-component-button-height-sm: 32px;
   --ikan-component-input-height: 52px;
   --ikan-component-border-radius: var(--radius-sm); /* 16px */
   --ikan-component-spacing-default: var(--spacing-4); /* 16px */
@@ -373,6 +413,10 @@
 }
 
 @theme inline {
+  /* ── Typography: wire Tailwind v4 font utilities to Inter ── */
+  --font-sans: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, 'Courier New', monospace;
+
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -494,6 +538,62 @@
   a,
   [role="button"] {
     touch-action: manipulation;
+  }
+
+  /* ─── Accessibility: Focus-visible styles ─── */
+  :focus-visible {
+    outline: 2px solid var(--color-primary-default);
+    outline-offset: 2px;
+    border-radius: var(--radius-xs);
+  }
+
+  /* Remove focus outline for mouse users */
+  :focus:not(:focus-visible) {
+    outline: none;
+  }
+
+  /* Ensure interactive elements have minimum touch targets on mobile */
+  @media (pointer: coarse) {
+    button,
+    a,
+    [role="button"],
+    input[type="checkbox"],
+    input[type="radio"],
+    select {
+      min-height: var(--ikan-touch-target-min, 44px);
+      min-width: var(--ikan-touch-target-min, 44px);
+    }
+  }
+
+  /* ─── Accessibility: Reduced motion ─── */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+
+  /* ─── Accessibility: High contrast support ─── */
+  @media (prefers-contrast: high) {
+    :root {
+      --color-border-default: #000000;
+      --color-border-light: #333333;
+      --shadow-sm: none;
+      --shadow-md: none;
+      --shadow-lg: none;
+    }
+  }
+
+  /* ─── Skip to main content (visually hidden until focused) ─── */
+  .skip-to-main:focus {
+    position: fixed !important;
+    left: var(--spacing-4) !important;
+    top: var(--spacing-4) !important;
+    z-index: 9999;
   }
 }
 
@@ -684,40 +784,39 @@ html {
   }
 }
 
-/* Consultant Card CSS (The Dr. James Thompson Card) */
+/* Consultant Card CSS */
 .consultant-card {
   display: flex;
-  gap: 24px;
-  padding: 24px;
+  padding: 20px;
   background: var(--color-bg-card);
-  border: 1px solid var(--cbt-border-light); /* Step 2 in Light, Subtle in Dark */
-  border-radius: var(--radius-lg); /* 24px per guidelines */
-  margin-bottom: 20px;
-  transition: transform 0.2s ease, border-color 0.2s ease;
+  border: 1px solid #E8E8E8;
+  border-radius: 16px;
+  margin-bottom: 12px;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
 .consultant-card:hover {
-  border-color: var(--cbt-border); /* Step 3 */
+  border-color: #D0D0D0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
 }
 
 /* Avatar Styling */
 .consultant-avatar {
-  width: 100px;
-  height: 100px;
-  border-radius: 16px; /* Inner Element Radius */
+  width: 64px;
+  height: 64px;
+  border-radius: 10px;
   object-fit: cover;
 }
 
 /* Expertise Badges */
 .expertise-tag {
   display: inline-block;
-  padding: 4px 12px;
-  background: #F5F5F5; /* Step 1 */
-  color: #333333; /* Step 8 */
-  border-radius: 8px; /* Tight radius for small labels */
-  font-size: 12px;
-  margin-right: 8px;
-  margin-top: 8px;
+  padding: 3px 10px;
+  background: #F5F5F5;
+  color: #333333;
+  border-radius: 6px;
+  font-size: 11px;
+  border: 1px solid #EBEBEB;
 }
 
 /* Availability Filter Pills */
@@ -828,10 +927,10 @@ html {
 
 .modal-action-btn {
   height: 52px;
-  border-radius: 16px; /* Interaction Radius */
-  background: #1A1A1A; /* Step 9 */
+  border-radius: 16px;
+  background: #1A1A1A;
   color: #FFFFFF;
-  font-weight: 700;
+  font-weight: 500;
   width: 100%;
   border: none;
   cursor: pointer;
@@ -1016,15 +1115,14 @@ html {
   }
 
   .consultant-card {
-    flex-direction: column; /* Stack image above text */
-    padding: 16px;
-    border-radius: 20px; /* Slightly tighter radius for small screens */
+    padding: 14px;
+    border-radius: 14px;
   }
 
   .consultant-avatar {
-    width: 100%; /* Full width image on mobile */
-    height: 200px;
-    margin-bottom: 16px;
+    width: 64px !important;
+    height: 64px !important;
+    border-radius: 10px;
   }
 }
 
@@ -1431,9 +1529,9 @@ html {
   /* Status Badges */
   .badge {
     padding: 4px 12px;
-    border-radius: 8px; /* R1 Scale */
+    border-radius: 8px;
     font-size: 12px;
-    font-weight: 600;
+    font-weight: 500;
     display: inline-block;
   }
 
@@ -1549,13 +1647,13 @@ html {
 .nav-link.active {
   color: var(--primary-dark);
   background: var(--primary-light);
-  font-weight: 600;
+  font-weight: 500;
 }
 
 .btn-nav-primary {
   background-color: var(--primary);
   color: white;
-  font-weight: 600;
+  font-weight: 500;
   padding: 10px 24px;
   border-radius: var(--radius-pill);
   transition: all 0.2s ease;

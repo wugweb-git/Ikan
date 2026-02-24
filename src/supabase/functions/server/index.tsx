@@ -24,7 +24,8 @@ import {
   validatePassword,
   hashPassword,
   verifyPassword,
-  validateEquipProgram
+  validateEquipProgram,
+  validateEmail
 } from "./validation.tsx";
 
 import { 
@@ -45,8 +46,48 @@ import { registerAssessmentRoutes } from './assessment-routes.ts';
 import { registerMoodRoutes } from './mood-routes.ts';
 import { registerNewsletterRoutes } from './newsletter-routes.ts';
 import { registerResourceRoutes } from './resource-routes.ts';
+import { registerContactRoutes } from './contact-routes.ts';
+import { registerScalesRoutes } from './scales-routes.ts';
+
+// ─────────────────────────────────────────────────────────────────────────────
+// GLOBAL: Suppress Deno's "Http: connection closed" unhandled rejection.
+//
+// This error fires inside Deno's internal `respondWith()` → `mapped()` chain
+// (ext:runtime/http.js) AFTER our handler has already returned a Response.
+// It occurs when a client disconnects mid-response (navigation, hot-reload,
+// AbortController.abort()). It is non-fatal — the server keeps running — but
+// Deno's default unhandled-rejection handler logs it to stderr, which surfaces
+// as a noisy error in the dashboard.
+//
+// Because it fires *below* both Hono's app.onError and Deno.serve's onError,
+// the ONLY way to suppress it is a global unhandledrejection listener.
+// ─────────────────────────────────────────────────────────────────────────────
+globalThis.addEventListener("unhandledrejection", (event: PromiseRejectionEvent) => {
+  const err = event.reason;
+  if (
+    err?.name === "Http" ||
+    String(err).includes("connection closed")
+  ) {
+    // Swallow — prevents Deno from logging the error to stderr.
+    event.preventDefault();
+    return;
+  }
+  // All other unhandled rejections: let Deno's default handler log them.
+});
 
 const app = new Hono().basePath('/make-server-cc205da9');
+
+// Global error handler - catch connection-closed and other transient errors
+app.onError((err, c) => {
+  // "Http: connection closed before message completed" is a transient Deno error
+  // that occurs when the client disconnects mid-response (e.g. during hot reload).
+  if (err?.name === 'Http' || err?.message?.includes('connection closed')) {
+    console.log('Client disconnected before response completed (non-fatal)');
+    return c.json({ error: 'Connection closed' }, 499);
+  }
+  console.error('Unhandled server error:', err);
+  return c.json({ error: 'Internal server error' }, 500);
+});
 
 // Initialize Supabase client
 const supabase = createClient(
@@ -124,7 +165,9 @@ registerAdminRoutes(app, requireAuth, requireAdmin);
 registerAssessmentRoutes(app, requireAuth);
 registerMoodRoutes(app, requireAuth);
 registerNewsletterRoutes(app);
+registerContactRoutes(app);
 registerResourceRoutes(app, requireAuth);
+registerScalesRoutes(app, requireAuth);
 
   // CMS Public Routes
   app.get("/cms/pages/:slug", async (c) => {
@@ -359,6 +402,16 @@ app.put("/users/profile", requireAuth, async (c) => {
     // Update preferences
     if (sanitizedUpdates.preferences !== undefined) {
       updatedProfile.preferences = sanitizedUpdates.preferences;
+    }
+    
+    // Update notification settings
+    if (updates.notification_settings !== undefined) {
+      updatedProfile.notification_settings = updates.notification_settings;
+    }
+    
+    // Update privacy settings
+    if (updates.privacy_settings !== undefined) {
+      updatedProfile.privacy_settings = updates.privacy_settings;
     }
     
     await kv.set(`user:${userId}`, updatedProfile);
@@ -711,20 +764,10 @@ app.post("/users/export-data", requireAuth, async (c) => {
   }
 });
 
-// Avatar Upload Endpoint (placeholder for Supabase Storage integration)
+// Avatar Upload Endpoint — accepts JSON { avatarUrl }
 app.post("/users/avatar", requireAuth, async (c) => {
   try {
     const userId = c.get('userId');
-    
-    // In production, this would:
-    // 1. Accept multipart/form-data file upload
-    // 2. Validate file type and size
-    // 3. Resize/crop image
-    // 4. Upload to Supabase Storage
-    // 5. Generate signed URL
-    // 6. Update user profile with avatar_url
-    
-    // For now, accept a URL
     const { avatarUrl } = await c.req.json();
     
     if (!avatarUrl) {
@@ -744,7 +787,6 @@ app.post("/users/avatar", requireAuth, async (c) => {
     
     await kv.set(`user:${userId}`, updatedProfile);
     
-    // Create audit log
     await kv.set(`audit:avatar:${userId}:${Date.now()}`, {
       action: 'update_avatar',
       userId,
@@ -752,11 +794,102 @@ app.post("/users/avatar", requireAuth, async (c) => {
     });
     
     console.log(`✅ User ${userId} updated avatar`);
-    
     return c.json({ success: true, avatarUrl, profile: updatedProfile });
   } catch (error) {
     console.error('Avatar upload error:', error);
     return c.json({ error: 'Failed to upload avatar' }, 500);
+  }
+});
+
+// Avatar File Upload — accepts multipart/form-data, stores in Supabase Storage
+app.post("/users/avatar/upload", requireAuth, async (c) => {
+  try {
+    const userId = c.get('userId');
+    const bucketName = 'make-cc205da9-avatars';
+
+    const formData = await c.req.formData();
+    const file = formData.get('file') as File | null;
+
+    if (!file) {
+      return c.json({ error: 'No file provided' }, 400);
+    }
+
+    // Validate file type
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+    if (!allowedTypes.includes(file.type)) {
+      return c.json({ error: `Invalid file type: ${file.type}. Allowed: ${allowedTypes.join(', ')}` }, 400);
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      return c.json({ error: 'File too large. Maximum size is 5MB.' }, 400);
+    }
+
+    // Ensure bucket exists
+    const { data: buckets } = await supabase.storage.listBuckets();
+    const bucketExists = buckets?.some((bucket: any) => bucket.name === bucketName);
+    if (!bucketExists) {
+      await supabase.storage.createBucket(bucketName, { public: false });
+      console.log(`Created storage bucket: ${bucketName}`);
+    }
+
+    // Generate unique file path
+    const ext = file.name?.split('.').pop() || 'jpg';
+    const filePath = `${userId}/avatar-${Date.now()}.${ext}`;
+
+    // Read file into buffer
+    const arrayBuffer = await file.arrayBuffer();
+    const fileBuffer = new Uint8Array(arrayBuffer);
+
+    // Upload to Supabase Storage
+    const { data: uploadData, error: uploadError } = await supabase.storage
+      .from(bucketName)
+      .upload(filePath, fileBuffer, {
+        contentType: file.type,
+        upsert: true
+      });
+
+    if (uploadError) {
+      console.error('Storage upload error:', uploadError);
+      return c.json({ error: `Storage upload failed: ${uploadError.message}` }, 500);
+    }
+
+    // Generate a signed URL (valid for 1 year)
+    const { data: signedData, error: signedError } = await supabase.storage
+      .from(bucketName)
+      .createSignedUrl(filePath, 365 * 24 * 60 * 60);
+
+    if (signedError) {
+      console.error('Signed URL error:', signedError);
+      return c.json({ error: 'Failed to generate avatar URL' }, 500);
+    }
+
+    const avatarUrl = signedData.signedUrl;
+
+    // Update user profile
+    const currentProfile = await kv.get(`user:${userId}`);
+    const updatedProfile = {
+      ...(currentProfile || {}),
+      user_id: userId,
+      avatar_url: avatarUrl,
+      updated_at: new Date().toISOString()
+    };
+
+    await kv.set(`user:${userId}`, updatedProfile);
+
+    await kv.set(`audit:avatar:${userId}:${Date.now()}`, {
+      action: 'upload_avatar',
+      userId,
+      filePath,
+      fileSize: file.size,
+      timestamp: new Date().toISOString()
+    });
+
+    console.log(`✅ User ${userId} uploaded avatar: ${filePath} (${file.size} bytes)`);
+    return c.json({ success: true, avatarUrl, profile: updatedProfile });
+  } catch (error) {
+    console.error('Avatar file upload error:', error);
+    return c.json({ error: `Failed to upload avatar: ${error}` }, 500);
   }
 });
 
@@ -2264,7 +2397,7 @@ function createDefaultCMSContent(pageId: string): any {
       content: `
         <div class="space-y-8">
           <div class="bg-gradient-to-r from-indigo-50 to-purple-50 p-6 rounded-lg border border-indigo-100">
-            <h2 class="text-xl font-semibold text-gray-900 mb-3">🌟 Our Mission</h2>
+            <h2 class="text-xl font-medium text-gray-900 mb-3">🌟 Our Mission</h2>
             <p class="text-gray-700 leading-relaxed">At iKan, we believe that everyone deserves access to quality mental health support. We're on a mission to make mental wellness accessible, affordable, and stigma-free.</p>
           </div>
 
@@ -2335,7 +2468,7 @@ function createDefaultCMSContent(pageId: string): any {
       content: `
         <div class="space-y-8">
           <div class="bg-gradient-to-r from-blue-50 to-indigo-50 p-6 rounded-lg border border-blue-100">
-            <h2 class="text-xl font-semibold text-gray-900 mb-3">🔒 Your Privacy Matters</h2>
+            <h2 class="text-xl font-medium text-gray-900 mb-3">🔒 Your Privacy Matters</h2>
             <p class="text-gray-700 leading-relaxed">At iKan, we are committed to protecting your privacy and ensuring the security of your personal information. This policy explains how we collect, use, and safeguard your data when you use our mental health services.</p>
           </div>
 
@@ -2447,7 +2580,7 @@ function createDefaultCMSContent(pageId: string): any {
       content: `
         <div class="space-y-8">
           <div class="bg-gradient-to-r from-purple-50 to-pink-50 p-6 rounded-lg border border-purple-100">
-            <h2 class="text-xl font-semibold text-gray-900 mb-3">📋 Terms of Service</h2>
+            <h2 class="text-xl font-medium text-gray-900 mb-3">📋 Terms of Service</h2>
             <p class="text-gray-700 leading-relaxed">By accessing and using iKan's mental health platform, you agree to be bound by these Terms of Service and all applicable laws and regulations. Last updated: ${new Date().toLocaleDateString()}</p>
           </div>
 
@@ -2569,7 +2702,7 @@ function createDefaultCMSContent(pageId: string): any {
       content: `
         <div class="space-y-8">
           <div class="bg-gradient-to-r from-green-50 to-teal-50 p-6 rounded-lg border border-green-100">
-            <h2 class="text-xl font-semibold text-gray-900 mb-3">❓ Frequently Asked Questions</h2>
+            <h2 class="text-xl font-medium text-gray-900 mb-3">❓ Frequently Asked Questions</h2>
             <p class="text-gray-700 leading-relaxed">Find answers to common questions about iKan's mental health platform. Can't find what you're looking for? <a href="mailto:support@ikan.health" class="text-green-600 font-medium hover:underline">Contact our support team</a>.</p>
           </div>
 
@@ -2749,7 +2882,7 @@ function createDefaultCMSContent(pageId: string): any {
       content: `
         <div class="space-y-8">
           <div class="bg-gradient-to-r from-emerald-50 to-green-50 p-6 rounded-lg border border-emerald-100">
-            <h2 class="text-xl font-semibold text-gray-900 mb-3">💚 Our Satisfaction Guarantee</h2>
+            <h2 class="text-xl font-medium text-gray-900 mb-3">💚 Our Satisfaction Guarantee</h2>
             <p class="text-gray-700 leading-relaxed">At iKan, we're committed to your satisfaction with our mental health services. If you're not completely satisfied with your purchase, we offer a comprehensive and fair return policy.</p>
           </div>
 
@@ -4900,4 +5033,259 @@ app.delete("/admin/content/:id", requireAdmin, async (c) => {
   }
 });
 
-Deno.serve(app.fetch);
+// ═══════════════════════════════════════════════════════════════════════════════
+// PUBLIC PROFESSIONAL APPLICATION (Universal Link)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+app.post("/public/professional-application", async (c) => {
+  try {
+    const body = await c.req.json();
+    if (!body.name || !body.bio || !body.credentials) {
+      return c.json({ error: 'Name, credentials, and bio are required' }, 400);
+    }
+
+    const applicationId = `app-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+
+    const application = {
+      ...body,
+      id: applicationId,
+      professional_id: applicationId,
+      status: 'pending_review',
+      available: false,
+      published: false,
+      rating: 0,
+      reviewCount: 0,
+      reviews: [],
+      faqs: (body.clientFAQs || []).map((faq: any) => ({ question: faq.question || faq.q, answer: faq.answer || faq.a })),
+      approaches: body.therapeuticApproaches || [],
+      concernsICanHelp: body.expertises || [],
+      topExpertises: (body.expertises || []).slice(0, 3),
+      availability: [],
+      nextAvailableSlot: '',
+      qas: [],
+      articles: [],
+      submitted_at: new Date().toISOString(),
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    };
+
+    await kv.set(`professional:pending-${applicationId}`, application);
+    await kv.set(`professional_application:${applicationId}`, {
+      id: applicationId,
+      name: body.name,
+      credentials: body.credentials,
+      category: body.category || 'therapist',
+      location: body.location || '',
+      yearsExperience: body.yearsExperience || 0,
+      expertises: (body.expertises || []).slice(0, 5),
+      languages: body.languages || [],
+      status: 'pending_review',
+      submitted_at: new Date().toISOString(),
+    });
+
+    // Queue admin notification about new application
+    const notifId = `notif-${Date.now()}`;
+    await kv.set(`admin_notification:${notifId}`, {
+      id: notifId,
+      type: 'professional_application',
+      title: 'New Professional Application',
+      message: `${body.name} (${body.credentials}) has applied to join as a ${body.category || 'therapist'}. Location: ${body.location || 'Not specified'}.`,
+      applicationId,
+      read: false,
+      created_at: new Date().toISOString(),
+    });
+
+    // Attempt to send email notification if email provider is configured
+    try {
+      const emailConfig = await kv.get('comm-config:email');
+      if (emailConfig?.enabled && emailConfig?.api_key) {
+        await kv.set(`email_queue:${notifId}`, {
+          id: notifId,
+          to: emailConfig.sender_id || 'admin@ikan.health',
+          subject: `[iKan] New Professional Application: ${body.name}`,
+          body: `A new professional has applied to join iKan.\n\nName: ${body.name}\nCredentials: ${body.credentials}\nCategory: ${body.category || 'Therapist'}\nLocation: ${body.location || 'Not specified'}\nExperience: ${body.yearsExperience || 0} years\nLanguages: ${(body.languages || []).join(', ') || 'Not specified'}\n\nPlease review in Admin Dashboard > Consultation Manager > Applications tab.`,
+          status: 'queued',
+          created_at: new Date().toISOString(),
+        });
+        console.log(`📧 Admin email notification queued for new application: ${body.name}`);
+      }
+    } catch (emailErr) {
+      console.log('Email notification skipped (not configured):', emailErr);
+    }
+
+    console.log(`📋 New professional application: ${body.name} (${applicationId})`);
+    return c.json({ success: true, applicationId, message: 'Application submitted successfully. Our team will review it shortly.' });
+  } catch (error) {
+    console.error('Professional application error:', error);
+    return c.json({ error: 'Failed to submit application' }, 500);
+  }
+});
+
+app.get("/admin/professional-applications", requireAdmin, async (c) => {
+  try {
+    const applications = await kv.getByPrefix('professional_application:');
+    const sorted = (applications || []).filter((a: any) => a && a.id)
+      .sort((a: any, b: any) => new Date(b.submitted_at || 0).getTime() - new Date(a.submitted_at || 0).getTime());
+    return c.json({ applications: sorted });
+  } catch (error) {
+    console.error('Get applications error:', error);
+    return c.json({ error: 'Failed to get applications', applications: [] }, 500);
+  }
+});
+
+app.post("/admin/professional-applications/:id/approve", requireAdmin, async (c) => {
+  try {
+    const appId = c.req.param('id');
+    const pendingData = await kv.get(`professional:pending-${appId}`);
+    if (!pendingData) return c.json({ error: 'Application not found' }, 404);
+
+    const activeProfessional = { ...pendingData, id: appId, professional_id: appId, status: 'active', available: true, published: true, approved_at: new Date().toISOString() };
+    await kv.set(`professional:${appId}`, activeProfessional);
+    await kv.del(`professional:pending-${appId}`);
+
+    const tracker = await kv.get(`professional_application:${appId}`);
+    if (tracker) await kv.set(`professional_application:${appId}`, { ...tracker, status: 'approved' });
+
+    console.log(`✅ Application approved: ${pendingData.name}`);
+    return c.json({ success: true, professional: activeProfessional });
+  } catch (error) {
+    console.error('Approve application error:', error);
+    return c.json({ error: 'Failed to approve application' }, 500);
+  }
+});
+
+app.post("/admin/professional-applications/:id/reject", requireAdmin, async (c) => {
+  try {
+    const appId = c.req.param('id');
+    const { reason } = await c.req.json().catch(() => ({ reason: '' }));
+    const pendingData = await kv.get(`professional:pending-${appId}`);
+    if (!pendingData) return c.json({ error: 'Application not found' }, 404);
+
+    const rejectedData = { ...pendingData, status: 'rejected', rejected_at: new Date().toISOString(), rejection_reason: reason || 'Not specified' };
+    await kv.set(`professional:pending-${appId}`, rejectedData);
+
+    const tracker = await kv.get(`professional_application:${appId}`);
+    if (tracker) await kv.set(`professional_application:${appId}`, { ...tracker, status: 'rejected', rejection_reason: reason || 'Not specified' });
+
+    console.log(`❌ Application rejected: ${pendingData.name}`);
+    return c.json({ success: true });
+  } catch (error) {
+    console.error('Reject application error:', error);
+    return c.json({ error: 'Failed to reject application' }, 500);
+  }
+});
+
+app.get("/admin/professional-applications/:id", requireAdmin, async (c) => {
+  try {
+    const appId = c.req.param('id');
+    const fullData = await kv.get(`professional:pending-${appId}`);
+    if (!fullData) return c.json({ error: 'Application not found' }, 404);
+    return c.json({ application: fullData });
+  } catch (error) {
+    console.error('Get application detail error:', error);
+    return c.json({ error: 'Failed to get application' }, 500);
+  }
+});
+
+app.get("/admin/notifications", requireAdmin, async (c) => {
+  try {
+    const notifications = await kv.getByPrefix('admin_notification:');
+    const sorted = (notifications || []).filter((n: any) => n && n.id)
+      .sort((a: any, b: any) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime())
+      .slice(0, 50);
+    return c.json({ notifications: sorted });
+  } catch (error) {
+    return c.json({ error: 'Failed to get notifications' }, 500);
+  }
+});
+
+app.post("/admin/notifications/:id/read", requireAdmin, async (c) => {
+  try {
+    const id = c.req.param('id');
+    const notif = await kv.get(`admin_notification:${id}`);
+    if (notif) await kv.set(`admin_notification:${id}`, { ...notif, read: true });
+    return c.json({ success: true });
+  } catch (error) {
+    return c.json({ error: 'Failed to update notification' }, 500);
+  }
+});
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// SUPABASE STORAGE: File Uploads for Professionals
+// ═══════════════════════════════════════════════════════════════════════════════
+
+const UPLOAD_BUCKET = 'make-cc205da9-professional-uploads';
+let bucketInitialized = false;
+
+async function ensureBucket() {
+  if (bucketInitialized) return;
+  try {
+    const { data: buckets } = await supabase.storage.listBuckets();
+    const exists = buckets?.some((b: any) => b.name === UPLOAD_BUCKET);
+    if (!exists) {
+      await supabase.storage.createBucket(UPLOAD_BUCKET, { public: false });
+      console.log(`📦 Created storage bucket: ${UPLOAD_BUCKET}`);
+    }
+    bucketInitialized = true;
+  } catch (err) {
+    console.error('Bucket init error:', err);
+  }
+}
+
+app.post("/upload/professional-file", async (c) => {
+  try {
+    await ensureBucket();
+    const formData = await c.req.formData();
+    const file = formData.get('file') as File;
+    const category = formData.get('category') as string || 'general';
+    const professionalId = formData.get('professionalId') as string || 'unknown';
+
+    if (!file) return c.json({ error: 'No file provided' }, 400);
+    if (file.size > 10 * 1024 * 1024) return c.json({ error: 'File too large. Maximum 10MB.' }, 400);
+
+    const ext = file.name.split('.').pop() || 'bin';
+    const filePath = `${category}/${professionalId}/${Date.now()}-${Math.random().toString(36).substr(2, 6)}.${ext}`;
+    const arrayBuffer = await file.arrayBuffer();
+
+    const { data, error } = await supabase.storage.from(UPLOAD_BUCKET).upload(filePath, arrayBuffer, { contentType: file.type, upsert: false });
+    if (error) { console.error('Upload error:', error); return c.json({ error: `Upload failed: ${error.message}` }, 500); }
+
+    const { data: signedData, error: signedError } = await supabase.storage.from(UPLOAD_BUCKET).createSignedUrl(filePath, 7 * 24 * 60 * 60);
+    if (signedError) return c.json({ error: 'Uploaded but failed to create URL' }, 500);
+
+    console.log(`📎 File uploaded: ${filePath} (${file.size} bytes)`);
+    return c.json({ success: true, url: signedData.signedUrl, path: filePath, fileName: file.name, size: file.size });
+  } catch (error) {
+    console.error('File upload error:', error);
+    return c.json({ error: 'Failed to upload file' }, 500);
+  }
+});
+
+app.post("/upload/refresh-url", async (c) => {
+  try {
+    const { path: filePath } = await c.req.json();
+    if (!filePath) return c.json({ error: 'path is required' }, 400);
+    const { data, error } = await supabase.storage.from(UPLOAD_BUCKET).createSignedUrl(filePath, 7 * 24 * 60 * 60);
+    if (error) return c.json({ error: error.message }, 500);
+    return c.json({ url: data.signedUrl });
+  } catch (error) {
+    console.error('Refresh URL error:', error);
+    return c.json({ error: 'Failed to refresh URL' }, 500);
+  }
+});
+
+Deno.serve({
+  onError(err: unknown) {
+    // Connection-closed errors are already suppressed by the global
+    // unhandledrejection listener. If one still reaches here, swallow it.
+    const errStr = String(err);
+    if (errStr.includes('connection closed') || (err as any)?.name === 'Http') {
+      return new Response(null, { status: 499 });
+    }
+    console.error('Unhandled Deno.serve onError:', err);
+    return new Response(JSON.stringify({ error: 'Internal Server Error' }), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
+    });
+  },
+}, app.fetch);

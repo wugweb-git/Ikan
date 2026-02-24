@@ -25,15 +25,9 @@ import { validateUrl } from '../../lib/validation';
 import { useUnsavedChanges } from '../../hooks/useUnsavedChanges';
 import { UnsavedChangesDialog } from '../ui/unsaved-changes-dialog';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '../ui/dialog';
-import { Badge } from '../ui/badge';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '../ui/dropdown-menu';
-import { cn } from '../ui/utils';
 import { 
   EquipProgram, 
-  OnboardingQuestion, 
-  DayContent, 
-  Activity, 
-  WeekStructure 
 } from '../../lib/equip-admin-types';
 import { EquipBlockEditor } from './EquipBlockEditor';
 // import { EquipOnboardingEditor } from './EquipOnboardingEditor'; // REMOVED - Using DailyBuilder
@@ -473,7 +467,8 @@ export function EquipProgramWizard({ programId, onBack, onSave }: EquipProgramWi
             <Button
               variant="destructive"
               onClick={() => setIsDeleteDialogOpen(true)}
-              className="h-8 w-8 p-0 bg-red-50 text-red-600 hover:bg-red-100 hover:text-red-700 border-none shadow-none"
+              className="h-8 w-8 p-0 border-none shadow-none"
+              style={{ backgroundColor: 'var(--color-status-danger-light)', color: 'var(--color-status-danger)' }}
               title="Delete Program"
             >
               <Trash2 size={16} />

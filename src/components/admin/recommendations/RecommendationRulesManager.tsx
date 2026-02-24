@@ -5,7 +5,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '.
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../ui/select';
 import { Input } from '../../ui/input';
 import { apiClient } from '../../../lib/api-client';
-import { Trash2, Plus, Save, Sparkles, Loader2, ShieldCheck } from 'lucide-react';
+import { Trash2, Plus, Save, ShieldCheck } from 'lucide-react';
 import { useNotifications } from '../../../contexts/NotificationContext';
 
 export function RecommendationRulesManager({ onBack }: { onBack: () => void }) {
@@ -194,7 +194,7 @@ export function RecommendationRulesManager({ onBack }: { onBack: () => void }) {
   return (
     <div className="p-8 max-w-6xl mx-auto">
        <div className="flex justify-between items-center mb-8">
-           <h1 className="text-2xl font-bold">Recommendation Rules</h1>
+           <h1 className="text-2xl font-medium">Recommendation Rules</h1>
            <div className="flex gap-2">
                 <Button 
                     variant="outline" 
@@ -285,10 +285,10 @@ export function RecommendationRulesManager({ onBack }: { onBack: () => void }) {
                                <TableCell>
                                    <div className="flex items-center gap-2">
                                        <Button size="icon" variant="ghost" onClick={() => handleSaveRule(rule)}>
-                                           <Save className="w-4 h-4 text-green-600" />
+                                           <Save className="w-4 h-4" style={{ color: 'var(--color-status-success)' }} />
                                        </Button>
                                        <Button size="icon" variant="ghost" onClick={() => handleDeleteRule(rule.id)}>
-                                           <Trash2 className="w-4 h-4 text-red-500" />
+                                           <Trash2 className="w-4 h-4" style={{ color: 'var(--color-status-danger)' }} />
                                        </Button>
                                    </div>
                                </TableCell>

@@ -9,6 +9,9 @@ import { Label } from '../ui/label';
 import { Switch } from '../ui/switch';
 import { toast } from 'sonner@2.0.3';
 import { projectId, publicAnonKey } from '../../utils/supabase/info';
+import { AdminHeader } from './AdminHeader';
+import { AdminLoading } from './AdminLoading';
+import { AdminStatusBadge } from './AdminStatusBadge';
 
 interface MoodType {
   id: string;
@@ -271,56 +274,43 @@ export function AdminMoodManager({ onBack }: AdminMoodManagerProps) {
   };
 
   if (isLoading) {
-    return (
-      <div className="p-8">
-        <Card>
-          <CardContent className="p-12 text-center">
-            <p style={{ color: 'var(--color-text-muted)' }}>Loading mood types...</p>
-          </CardContent>
-        </Card>
-      </div>
-    );
+    return <AdminLoading message="Loading mood types..." />;
   }
 
   return (
     <div className="p-8 space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 
-            style={{ 
-              fontSize: 'var(--text-3xl)', 
-              fontWeight: 'var(--font-weight-medium)',
-              color: 'var(--color-text-primary)'
-            }}
-          >
-            Mood Type Manager
-          </h1>
-          <p style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-muted)', marginTop: 'var(--spacing-2)' }}>
-            Customize mood tracking options for journal entries
-          </p>
-        </div>
-        <div className="flex gap-2">
-           <Button 
+      <AdminHeader
+        title="Mood Type Manager"
+        description="Customize mood tracking options for journal entries"
+        actions={
+          <div className="flex gap-2">
+            <Button 
               variant="outline" 
               onClick={handleTestIntegrity}
               style={{ gap: 'var(--spacing-2)' }}
-           >
+            >
               <ShieldCheck className="w-4 h-4" />
               Test Integrity
-           </Button>
-           <Button 
-            onClick={() => {
-              resetForm();
-              setIsCreating(true);
-            }}
-            style={{ gap: 'var(--spacing-2)' }}
-          >
-            <Plus className="w-4 h-4" />
-            Add Mood Type
-          </Button>
-        </div>
-      </div>
+            </Button>
+            <Button 
+              onClick={() => {
+                resetForm();
+                setIsCreating(true);
+              }}
+              style={{ gap: 'var(--spacing-2)' }}
+            >
+              <Plus className="w-4 h-4" />
+              Add Mood Type
+            </Button>
+          </div>
+        }
+        stats={[
+          { label: 'Total Types', value: moods.length },
+          { label: 'Active', value: moods.filter(m => m.is_active).length },
+          { label: 'Inactive', value: moods.filter(m => !m.is_active).length },
+        ]}
+      />
 
       {/* Create/Edit Form */}
       {(isCreating || editingId) && (
@@ -347,12 +337,13 @@ export function AdminMoodManager({ onBack }: AdminMoodManagerProps) {
                         key={emoji}
                         type="button"
                         onClick={() => setFormData({ ...formData, emoji })}
-                        className="w-10 h-10 rounded hover:bg-gray-100 transition-colors text-2xl"
+                        className="w-10 h-10 rounded transition-colors text-2xl"
                         style={{ 
                           backgroundColor: formData.emoji === emoji 
                             ? 'var(--color-accent-default)' 
                             : 'transparent',
-                          border: '1px solid var(--color-border-default)'
+                          border: '1px solid var(--color-border-default)',
+                          cursor: 'pointer'
                         }}
                       >
                         {emoji}
@@ -533,15 +524,7 @@ export function AdminMoodManager({ onBack }: AdminMoodManagerProps) {
                             {mood.value}/10
                           </span>
                           {!mood.is_active && (
-                            <span 
-                              className="px-2 py-1 rounded text-xs"
-                              style={{ 
-                                backgroundColor: 'var(--color-text-muted)',
-                                color: 'white'
-                              }}
-                            >
-                              Inactive
-                            </span>
+                            <AdminStatusBadge status="inactive" />
                           )}
                         </div>
                         {mood.description && (

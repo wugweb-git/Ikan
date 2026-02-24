@@ -3,13 +3,13 @@ import { Image as ImageIcon, Upload, Trash2, Search, Download, ExternalLink, Fil
 import { useNotifications } from '../../contexts/NotificationContext';
 import { apiClient } from '../../lib/api-client';
 import { AdminHeader } from '../admin/AdminHeader';
-import { AdminEmptyState } from '../admin/AdminEmptyState';
+import { AdminLoading } from '../admin/AdminLoading';
 import { useIsMobile } from '../../hooks/useIsMobile';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Card, CardContent } from '../ui/card';
 import { FileUpload } from '../ui/file-upload';
-import { cn } from '../ui/utils';
+import { AdminEmptyState } from '../admin/AdminEmptyState';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '../ui/dialog';
 
 interface MediaFile {
@@ -161,26 +161,7 @@ export function AdminMediaManager({ onBack, className }: AdminMediaManagerProps)
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <div className="text-center">
-          <div
-            className="animate-spin rounded-full border-4 mx-auto mb-4"
-            style={{
-              width: '48px',
-              height: '48px',
-              borderColor: 'var(--color-accent-default)',
-              borderTopColor: 'var(--color-primary-default)'
-            }}
-          />
-          <p
-            style={{
-              fontFamily: 'var(--font-family-base)',
-              fontSize: 'var(--text-base)',
-              color: 'var(--color-text-muted)'
-            }}
-          >
-            Loading media files...
-          </p>
-        </div>
+        <AdminLoading />
       </div>
     );
   }

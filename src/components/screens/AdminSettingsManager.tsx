@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Settings, Save, Globe, Mail, Share2, Bell, Shield, Palette, Code, Search } from 'lucide-react';
+import { Settings, Save, Globe, Mail, Share2, Bell, Shield, Palette, Code } from 'lucide-react';
 import { useNotifications } from '../../contexts/NotificationContext';
 import { apiClient } from '../../lib/api-client';
 import { AdminHeader } from '../admin/AdminHeader';
+import { AdminLoading } from '../admin/AdminLoading';
 import { AdminSection } from '../admin/AdminSection';
 import { AdminFormField } from '../admin/AdminFormField';
 import { useIsMobile } from '../../hooks/useIsMobile';
@@ -11,7 +12,6 @@ import { Input } from '../ui/input';
 import { Textarea } from '../ui/textarea';
 import { Checkbox } from '../ui/checkbox';
 import { Label } from '../ui/label';
-import { cn } from '../ui/utils';
 
 interface SiteSettings {
   // General
@@ -161,24 +161,7 @@ export function AdminSettingsManager({ onBack, className }: AdminSettingsManager
   };
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="text-center">
-          <div
-            className="animate-spin rounded-full border-4 mx-auto mb-4"
-            style={{
-              width: '48px',
-              height: '48px',
-              borderColor: 'var(--color-accent-default)',
-              borderTopColor: 'var(--color-primary-default)'
-            }}
-          />
-          <p style={{ fontFamily: 'var(--font-family-base)', fontSize: 'var(--text-base)', color: 'var(--color-text-muted)' }}>
-            Loading settings...
-          </p>
-        </div>
-      </div>
-    );
+    return <AdminLoading message="Loading settings..." />;
   }
 
   return (
@@ -192,18 +175,11 @@ export function AdminSettingsManager({ onBack, className }: AdminSettingsManager
           <Button
             onClick={handleSave}
             disabled={saving}
-            style={{
-              height: 'var(--ikan-component-button-height)',
-              borderRadius: 'var(--ikan-component-border-radius)',
-              fontWeight: 'var(--font-weight-medium)',
-              gap: 'var(--spacing-2)',
-              backgroundColor: 'var(--color-primary-default)',
-              color: 'var(--color-primary-on)'
-            }}
+            className="gap-2 h-[var(--ikan-component-button-height)] rounded-[var(--ikan-component-border-radius)] font-medium bg-[var(--color-primary-default)] text-[var(--color-primary-on)]"
           >
             {saving ? (
               <>
-                <div className="animate-spin rounded-full border-2 w-4 h-4" style={{ borderColor: 'white', borderTopColor: 'transparent' }} />
+                <div className="animate-spin rounded-full border-2 w-4 h-4" style={{ borderColor: 'var(--color-text-inverse)', borderTopColor: 'transparent' }} />
                 Saving...
               </>
             ) : (
@@ -473,19 +449,11 @@ export function AdminSettingsManager({ onBack, className }: AdminSettingsManager
           <Button
             onClick={handleSave}
             disabled={saving}
-            style={{
-              height: 'var(--ikan-component-button-height)',
-              borderRadius: 'var(--ikan-component-border-radius)',
-              fontWeight: 'var(--font-weight-medium)',
-              gap: 'var(--spacing-2)',
-              backgroundColor: 'var(--color-primary-default)',
-              color: 'var(--color-primary-on)',
-              padding: '0 var(--spacing-6)'
-            }}
+            className="gap-2 h-[var(--ikan-component-button-height)] rounded-[var(--ikan-component-border-radius)] font-medium bg-[var(--color-primary-default)] text-[var(--color-primary-on)] px-6"
           >
             {saving ? (
               <>
-                <div className="animate-spin rounded-full border-2 w-4 h-4" style={{ borderColor: 'white', borderTopColor: 'transparent' }} />
+                <div className="animate-spin rounded-full border-2 w-4 h-4" style={{ borderColor: 'var(--color-text-inverse)', borderTopColor: 'transparent' }} />
                 Saving...
               </>
             ) : (

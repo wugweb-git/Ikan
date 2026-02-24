@@ -14,7 +14,7 @@ export function Corporate() {
         </CardHeader>
         <CardContent className="p-6">
           <div className="flex flex-col items-center justify-center py-8 text-center">
-            <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
+            <div className="w-16 h-16 rounded-full flex items-center justify-center mb-4" style={{ backgroundColor: 'var(--color-bg-muted)' }}>
               <Icon name="building" size={32} style={{ color: 'var(--color-text-muted)' }} />
             </div>
             <h3 style={{ 

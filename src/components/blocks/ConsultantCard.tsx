@@ -2,9 +2,7 @@ import React from 'react';
 import { cn } from '../ui/utils';
 import { MapPin, Star, Video, Phone, MessageCircle, Clock, Home } from 'lucide-react';
 import { Button } from '../ui/button';
-import { Card, CardContent } from '../ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
-import { Badge } from '../ui/badge';
 
 // Define Consultant type locally
 export interface Consultant {
@@ -43,7 +41,6 @@ interface ConsultantCardProps {
 }
 
 export function ConsultantCard({ consultant, onClick, onBook, className }: ConsultantCardProps) {
-  // Get minimum price for display - handle missing pricing data
   const minPrice = consultant.pricing ? Math.min(
     consultant.pricing.video || Infinity,
     consultant.pricing.call || Infinity,
@@ -51,170 +48,265 @@ export function ConsultantCard({ consultant, onClick, onBook, className }: Consu
     consultant.pricing.offline || Infinity
   ) : 0;
 
-  // Get session mode icons
-  const sessionIcons = {
-    online: <Video className="w-4 h-4" />,
-    video: <Video className="w-4 h-4" />,
-    call: <Phone className="w-4 h-4" />,
-    chat: <MessageCircle className="w-4 h-4" />,
-    offline: <Home className="w-4 h-4" />
+  const sessionIcons: Record<string, React.ReactNode> = {
+    online: <Video className="w-[18px] h-[18px]" />,
+    video: <Video className="w-[18px] h-[18px]" />,
+    call: <Phone className="w-[18px] h-[18px]" />,
+    chat: <MessageCircle className="w-[18px] h-[18px]" />,
+    offline: <Home className="w-[18px] h-[18px]" />,
   };
 
   return (
     <div
-      className={cn(
-        "consultant-card cursor-pointer",
-        className
-      )}
+      className={cn("consultant-card cursor-pointer", className)}
       onClick={onClick}
+      style={{
+        padding: '20px',
+        gap: '0',
+        marginBottom: '12px',
+        borderRadius: '16px',
+      }}
     >
-      {/* Top Section: Photo and Main Info */}
-      <div className="flex-1">
-        <div className="flex flex-col md:flex-row gap-6">
-          {/* Profile Photo - Using strict 16px radius for inner element */}
-          <div className="shrink-0 w-full md:w-auto flex justify-center md:block">
-            <Avatar 
-              className="consultant-avatar"
+      <div className="flex gap-4 w-full">
+        {/* Photo */}
+        <div className="shrink-0">
+          <Avatar
+            className="consultant-avatar"
+            style={{ width: '80px', height: '80px', borderRadius: '12px' }}
+          >
+            <AvatarImage src={consultant.photo} alt={consultant.name} className="object-cover" />
+            <AvatarFallback
+              style={{
+                backgroundColor: '#E9EBEF',
+                color: '#151515',
+                fontWeight: '500',
+                fontSize: '18px',
+              }}
             >
-              <AvatarImage src={consultant.photo} alt={consultant.name} className="object-cover" />
-              <AvatarFallback 
+              {consultant.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
+            </AvatarFallback>
+          </Avatar>
+        </div>
+
+        {/* Content */}
+        <div className="flex-1 min-w-0">
+          {/* Row 1: Name + Rating */}
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <h3
+                className="truncate"
                 style={{
-                  backgroundColor: '#E9EBEF',
+                  fontSize: '16px',
+                  fontWeight: 'var(--font-weight-medium)',
                   color: '#151515',
-                  fontWeight: '500',
+                  lineHeight: '1.3',
+                  margin: 0,
                 }}
               >
-                {consultant.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
-              </AvatarFallback>
-            </Avatar>
+                {consultant.name}
+              </h3>
+              <p
+                className="truncate"
+                style={{
+                  fontSize: '13px',
+                  fontWeight: 'var(--font-weight-regular)',
+                  color: '#757575',
+                  margin: '2px 0 0 0',
+                  lineHeight: '1.3',
+                }}
+              >
+                {consultant.credentials}
+              </p>
+            </div>
+
+            {/* Rating pill */}
+            <div
+              className="shrink-0 flex items-center gap-1"
+              style={{
+                padding: '4px 8px',
+                borderRadius: '8px',
+                border: '1px solid #E4E4E4',
+                background: 'white',
+              }}
+            >
+              <Star className="w-3 h-3" style={{ fill: '#FFA500', color: '#FFA500' }} />
+              <span style={{ fontSize: '12px', fontWeight: 'var(--font-weight-medium)', color: '#1A1A1A' }}>
+                {consultant.rating ? consultant.rating.toFixed(1) : '0.0'}
+              </span>
+              <span style={{ fontSize: '11px', color: '#757575' }}>
+                ({consultant.reviewCount || 0})
+              </span>
+            </div>
           </div>
 
-          {/* Main Info */}
-          <div className="flex-1 min-w-0">
-            <div className="flex justify-between items-start">
-              <div>
-                {/* Name */}
-                <h3 
-                  className="truncate text-[18px]"
-                  style={{
-                    color: '#151515',
-                    fontWeight: '600',
-                    marginBottom: '4px',
-                  }}
-                >
-                  {consultant.name}
-                </h3>
+          {/* Row 2: Category + Experience */}
+          <div className="flex items-center gap-2" style={{ marginTop: '8px' }}>
+            <span
+              style={{
+                fontSize: '11px',
+                fontWeight: 'var(--font-weight-medium)',
+                color: '#1A1A1A',
+                background: '#F5F5F5',
+                padding: '3px 8px',
+                borderRadius: '6px',
+                textTransform: 'capitalize',
+              }}
+            >
+              {consultant.category ? consultant.category.replace('-', ' ') : 'General'}
+            </span>
+            <span className="flex items-center gap-1" style={{ fontSize: '11px', color: '#757575' }}>
+              <Clock className="w-3 h-3" />
+              {consultant.yearsExperience || 0}+ yrs exp
+            </span>
+          </div>
 
-                {/* Credentials */}
-                <p 
-                  className="truncate text-[14px] mb-2"
+          {/* Row 3: Location */}
+          <div className="flex items-center gap-1" style={{ marginTop: '6px' }}>
+            <MapPin className="w-3 h-3" style={{ color: '#757575', flexShrink: 0 }} />
+            <span className="truncate" style={{ fontSize: '12px', color: '#757575' }}>
+              {consultant.location}
+            </span>
+          </div>
+
+          {/* Row 4: Specializations */}
+          <div style={{ marginTop: '10px' }}>
+            <p
+              style={{
+                fontSize: '10px',
+                fontWeight: 'var(--font-weight-medium)',
+                color: '#9E9E9E',
+                textTransform: 'uppercase',
+                letterSpacing: '0.05em',
+                margin: '0 0 6px 0',
+              }}
+            >
+              Specializes In
+            </p>
+            <div className="flex flex-wrap gap-1.5">
+              {(consultant.topExpertises || []).slice(0, 3).map((expertise) => (
+                <span
+                  key={expertise}
                   style={{
-                    color: '#757575', // Step 6
+                    fontSize: '11px',
+                    fontWeight: 'var(--font-weight-regular)',
+                    color: '#333',
+                    background: '#F5F5F5',
+                    padding: '3px 10px',
+                    borderRadius: '6px',
+                    border: '1px solid #EBEBEB',
                   }}
                 >
-                  {consultant.credentials}
+                  {expertise}
+                </span>
+              ))}
+              {(consultant.topExpertises?.length || 0) > 3 && (
+                <span
+                  style={{
+                    fontSize: '11px',
+                    color: '#757575',
+                    background: '#F5F5F5',
+                    padding: '3px 10px',
+                    borderRadius: '6px',
+                  }}
+                >
+                  +{consultant.topExpertises!.length - 3} more
+                </span>
+              )}
+            </div>
+          </div>
+
+          {/* Divider */}
+          <div style={{ height: '1px', background: '#EBEBEB', margin: '12px 0' }} />
+
+          {/* Row 5: Bottom bar */}
+          <div className="flex items-center justify-between">
+            {/* Session mode icons */}
+            <div className="flex gap-1.5">
+              {(consultant.sessionModes || []).slice(0, 4).map((mode) => (
+                <div
+                  key={mode}
+                  style={{
+                    padding: '6px',
+                    borderRadius: '8px',
+                    background: '#F5F5F5',
+                    color: '#757575',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                  title={mode}
+                >
+                  {sessionIcons[mode]}
+                </div>
+              ))}
+            </div>
+
+            {/* Price + Availability + Book */}
+            <div className="flex items-center gap-3">
+              <div className="text-right">
+                <p style={{ fontSize: '10px', color: '#9E9E9E', textTransform: 'uppercase', margin: 0, letterSpacing: '0.03em' }}>
+                  Starting at
+                </p>
+                <p style={{ fontSize: '15px', fontWeight: 'var(--font-weight-medium)', color: '#1A1A1A', margin: 0 }}>
+                  ₹{minPrice === Infinity ? '—' : minPrice}
                 </p>
               </div>
 
-              {/* Rating */}
-              <div className="flex items-center gap-1 bg-[#F5F5F5] px-2 py-1 rounded-[8px]">
-                <Star 
-                  className="w-3.5 h-3.5" 
-                  style={{ fill: '#FFA500', color: '#FFA500' }}
-                />
-                <span className="text-[12px] font-bold text-[#1A1A1A]">
-                  {consultant.rating ? consultant.rating.toFixed(1) : '0.0'}
-                </span>
-                <span className="text-[12px] text-[#757575]">
-                  ({consultant.reviewCount || 0})
-                </span>
-              </div>
-            </div>
-
-            {/* Category & Experience */}
-            <div className="flex items-center gap-3 mb-3">
-              <span className="text-[12px] font-medium text-[#1A1A1A] bg-[#F5F5F5] px-2 py-1 rounded-[8px] capitalize">
-                {consultant.category ? consultant.category.replace('-', ' ') : 'General'}
-              </span>
-              <span className="text-[12px] text-[#757575] flex items-center gap-1">
-                <Clock className="w-3.5 h-3.5" />
-                {consultant.yearsExperience || 0}+ yrs exp
-              </span>
-            </div>
-
-            {/* Location */}
-            <div className="flex items-center gap-1.5 text-[13px] text-[#757575] mb-4">
-              <MapPin className="w-3.5 h-3.5" />
-              <span className="truncate">{consultant.location}</span>
-            </div>
-
-            {/* Specialization Badges */}
-            <div className="mb-4">
-              <p className="text-[11px] font-medium text-[#9E9E9E] uppercase tracking-wider mb-2">Specializes In</p>
-              <div className="flex flex-wrap gap-2">
-                {(consultant.topExpertises || []).slice(0, 3).map((expertise) => (
-                  <span key={expertise} className="expertise-tag">
-                    {expertise}
-                  </span>
-                ))}
-                {(consultant.topExpertises?.length || 0) > 3 && (
-                  <span className="expertise-tag text-[#757575]">
-                    +{consultant.topExpertises!.length - 3} more
-                  </span>
-                )}
-              </div>
-            </div>
-
-            {/* Divider */}
-            <div className="h-px bg-[#E4E4E4] w-full my-4" />
-
-            {/* Bottom Actions */}
-            <div className="flex items-center justify-between">
-              {/* Session Modes */}
-              <div className="flex gap-2">
-                {(consultant.sessionModes || []).slice(0, 4).map((mode) => (
-                  <div
-                    key={mode}
-                    className="p-2 rounded-[8px] bg-[#F5F5F5] text-[#757575]"
-                    title={mode}
-                  >
-                    {sessionIcons[mode as keyof typeof sessionIcons]}
-                  </div>
-                ))}
-              </div>
-
-              <div className="flex items-center gap-4">
-                <div className="text-right">
-                  <p className="text-[11px] text-[#757575] uppercase">Starting at</p>
-                  <p className="text-[16px] font-bold text-[#1A1A1A]">₹{minPrice}</p>
+              {consultant.nextAvailableSlot && consultant.available ? (
+                <div
+                  style={{
+                    height: '32px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    padding: '0 10px',
+                    background: '#E8F5E9',
+                    color: '#1A1A1A',
+                    fontSize: '11px',
+                    fontWeight: 'var(--font-weight-medium)',
+                    borderRadius: '8px',
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  Next: {consultant.nextAvailableSlot}
                 </div>
-                
-                {/* Next Available Badge */}
-                <div className="flex gap-2">
-                  {consultant.nextAvailableSlot && consultant.available ? (
-                    <div className="h-[32px] flex items-center px-3 bg-[#E8F5E9] text-[#1A1A1A] text-[12px] font-semibold rounded-[8px]">
-                      Next: {consultant.nextAvailableSlot}
-                    </div>
-                  ) : (
-                    <div className="h-[32px] flex items-center px-3 bg-[#F5F5F5] text-[#757575] text-[12px] font-medium rounded-[8px]">
-                      Unavailable
-                    </div>
-                  )}
-                  
-                  {onBook && (
-                    <Button 
-                      size="sm" 
-                      className="h-[32px] rounded-[16px] bg-[#1A1A1A] hover:bg-[#333333] text-white text-[12px] px-4"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onBook(e);
-                      }}
-                    >
-                      Book
-                    </Button>
-                  )}
+              ) : (
+                <div
+                  style={{
+                    height: '32px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    padding: '0 10px',
+                    background: '#F5F5F5',
+                    color: '#757575',
+                    fontSize: '11px',
+                    fontWeight: 'var(--font-weight-medium)',
+                    borderRadius: '8px',
+                  }}
+                >
+                  Unavailable
                 </div>
-              </div>
+              )}
+
+              {onBook && (
+                <Button
+                  size="sm"
+                  style={{
+                    height: '32px',
+                    borderRadius: '8px',
+                    background: '#1A1A1A',
+                    color: 'white',
+                    fontSize: '12px',
+                    fontWeight: 'var(--font-weight-medium)',
+                    padding: '0 14px',
+                  }}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onBook(e);
+                  }}
+                >
+                  Book
+                </Button>
+              )}
             </div>
           </div>
         </div>

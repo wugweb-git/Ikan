@@ -1020,13 +1020,16 @@ export function ResourceDetail({ resourceId, onBack, onResourceSelect, className
           className="animate-pulse w-full max-w-4xl mx-auto p-8"
         >
           <div 
-            className="h-8 w-3/4 mb-4 bg-gray-200 rounded"
+            className="h-8 w-3/4 mb-4 rounded"
+            style={{ backgroundColor: 'var(--color-bg-muted)' }}
           ></div>
           <div 
-            className="h-4 w-1/2 mb-8 bg-gray-200 rounded"
+            className="h-4 w-1/2 mb-8 rounded"
+            style={{ backgroundColor: 'var(--color-bg-muted)' }}
           ></div>
           <div 
-            className="h-64 w-full bg-gray-200 rounded-xl"
+            className="h-64 w-full rounded-xl"
+            style={{ backgroundColor: 'var(--color-bg-muted)' }}
           ></div>
         </div>
       </div>
@@ -1045,7 +1048,7 @@ export function ResourceDetail({ resourceId, onBack, onResourceSelect, className
             Resource not found
           </h2>
           <p 
-            className="text-muted-foreground"
+            style={{ color: 'var(--color-text-muted)' }}
           >
             The resource you're looking for doesn't exist or has been moved.
           </p>
@@ -1064,12 +1067,12 @@ export function ResourceDetail({ resourceId, onBack, onResourceSelect, className
 
   if (isMobile) {
     return (
-      <div className="relative min-h-screen w-full" style={{ backgroundColor: '#FFFFFF' }}>
+      <div className="relative min-h-screen w-full" style={{ backgroundColor: 'var(--color-bg-card)' }}>
         {/* Reading Progress */}
-        <div className="fixed top-0 left-0 right-0 z-40 h-1 bg-gray-100">
+        <div className="fixed top-0 left-0 right-0 z-40 h-1" style={{ backgroundColor: 'var(--color-bg-muted)' }}>
           <div 
-            className="h-full bg-primary transition-all duration-300 ease-out"
-            style={{ width: `${readProgress}%` }}
+            className="h-full transition-all duration-300 ease-out"
+            style={{ width: `${readProgress}%`, backgroundColor: 'var(--color-primary-default)' }}
           />
         </div>
 
@@ -1096,7 +1099,7 @@ export function ResourceDetail({ resourceId, onBack, onResourceSelect, className
             />
 
             {/* Author Info */}
-            <div className="border-t border-gray-200 pt-8">
+            <div className="border-t pt-8" style={{ borderColor: 'var(--color-border-default)' }}>
               <ResourceAuthor
                 name={resource.author || 'Reza Moaiandin'}
                 avatar={resource.authorImage}
@@ -1152,12 +1155,12 @@ export function ResourceDetail({ resourceId, onBack, onResourceSelect, className
   }
 
   return (
-    <div className="relative min-h-screen w-full" style={{ backgroundColor: '#FFFFFF' }}>
+    <div className="relative min-h-screen w-full" style={{ backgroundColor: 'var(--color-bg-card)' }}>
       {/* Reading Progress */}
-      <div className="fixed top-0 left-0 right-0 z-40 h-1 bg-gray-100">
+      <div className="fixed top-0 left-0 right-0 z-40 h-1" style={{ backgroundColor: 'var(--color-bg-muted)' }}>
         <div 
-          className="h-full bg-primary transition-all duration-300 ease-out"
-          style={{ width: `${readProgress}%` }}
+          className="h-full transition-all duration-300 ease-out"
+          style={{ width: `${readProgress}%`, backgroundColor: 'var(--color-primary-default)' }}
         />
       </div>
 
@@ -1182,7 +1185,7 @@ export function ResourceDetail({ resourceId, onBack, onResourceSelect, className
               >
                 <ResourceCategory category={resource.category} />
               </div>
-              <div className="h-4 w-px bg-gray-300" />
+              <div className="h-4 w-px" style={{ backgroundColor: 'var(--grey-3)' }} />
               <div 
                 className="cursor-pointer hover:opacity-80 transition-opacity"
                 onClick={() => showToast('info', 'Type', `View all ${resource.contentType}s`)}
@@ -1196,11 +1199,11 @@ export function ResourceDetail({ resourceId, onBack, onResourceSelect, className
               content={renderContentBlocks(resource.content)}
             />
 
-            <div className="border-t border-gray-200 pt-10 space-y-10">
+            <div className="border-t pt-10 space-y-10" style={{ borderColor: 'var(--color-border-default)' }}>
               <div className="flex justify-between items-start">
                  {/* Author */}
                  <div 
-                   className="cursor-pointer hover:bg-gray-50 rounded-lg p-2 -ml-2 transition-colors"
+                   className="cursor-pointer hover:bg-[var(--color-bg-muted)] rounded-lg p-2 -ml-2 transition-colors"
                    onClick={() => showToast('info', 'Author', `View profile of ${resource.author || 'Reza Moaiandin'}`)}
                  >
                   <ResourceAuthor
@@ -1215,7 +1218,8 @@ export function ResourceDetail({ resourceId, onBack, onResourceSelect, className
                 <Button
                   variant="ghost"
                   onClick={handleShare}
-                  className="gap-2 text-muted-foreground hover:text-primary hover:bg-gray-100 transition-colors"
+                  className="gap-2 hover:bg-black/5 transition-colors"
+                  style={{ color: 'var(--color-text-muted)' }}
                 >
                   <Share2 size={18} />
                   Share

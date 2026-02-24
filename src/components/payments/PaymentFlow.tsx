@@ -143,7 +143,7 @@ export function PaymentFlow({
                   "flex items-center justify-center w-8 h-8 rounded-full border-2 transition-colors",
                   index < currentIndex && "bg-primary border-primary",
                   index === currentIndex && "border-primary",
-                  index > currentIndex && "border-gray-300"
+                  index > currentIndex && "border-[var(--color-border-default)]"
                 )}
                 style={{
                   backgroundColor: index < currentIndex ? 'var(--color-primary-default)' : 'transparent',

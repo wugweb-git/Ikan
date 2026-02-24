@@ -5,7 +5,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Badge } from '../ui/badge';
 import { Progress } from '../ui/progress';
 import { CheckCircle, Trophy, Calendar, Target, Download, Share2, ArrowRight, Star } from 'lucide-react';
-import { cn } from '../ui/utils';
 import { getEquipProgramContent, getStoredProgram, EquipProgramDetails } from '../../lib/equip-program-content';
 
 interface EquipProgramCompletionProps {
@@ -87,9 +86,9 @@ export function EquipProgramCompletion({ onContinue, onBackToDashboard }: EquipP
       <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: 'var(--color-bg-page)' }}>
         <div className="text-center space-y-4">
           <div className="animate-pulse">
-            <div className="w-12 h-12 bg-gray-300 rounded-lg mx-auto mb-4"></div>
-            <div className="h-4 bg-gray-300 rounded w-48 mx-auto mb-2"></div>
-            <div className="h-3 bg-gray-300 rounded w-32 mx-auto"></div>
+            <div className="w-12 h-12 rounded-lg mx-auto mb-4" style={{ backgroundColor: 'var(--color-bg-muted)' }}></div>
+            <div className="h-4 rounded w-48 mx-auto mb-2" style={{ backgroundColor: 'var(--color-bg-muted)' }}></div>
+            <div className="h-3 rounded w-32 mx-auto" style={{ backgroundColor: 'var(--color-bg-muted)' }}></div>
           </div>
         </div>
       </div>
@@ -113,7 +112,7 @@ export function EquipProgramCompletion({ onContinue, onBackToDashboard }: EquipP
             </div>
             <h1 style={{ 
               fontSize: 'var(--text-3xl)', 
-              fontWeight: 'var(--font-weight-bold)',
+              fontWeight: 'var(--font-weight-medium)',
               color: 'var(--color-status-success)'
             }}>
               Congratulations!
@@ -144,7 +143,7 @@ export function EquipProgramCompletion({ onContinue, onBackToDashboard }: EquipP
               <div>
                 <h1 style={{ 
                   fontSize: 'var(--text-2xl)', 
-                  fontWeight: 'var(--font-weight-bold)',
+                  fontWeight: 'var(--font-weight-medium)',
                   color: 'var(--color-text-primary)',
                   marginBottom: 'var(--spacing-2)'
                 }}>
@@ -191,7 +190,7 @@ export function EquipProgramCompletion({ onContinue, onBackToDashboard }: EquipP
                 <div>
                   <p style={{ 
                     fontSize: 'var(--text-2xl)', 
-                    fontWeight: 'var(--font-weight-bold)',
+                    fontWeight: 'var(--font-weight-medium)',
                     color: 'var(--color-text-primary)'
                   }}>
                     {stats.activitiesCompleted}
@@ -224,7 +223,7 @@ export function EquipProgramCompletion({ onContinue, onBackToDashboard }: EquipP
                 <div>
                   <p style={{ 
                     fontSize: 'var(--text-2xl)', 
-                    fontWeight: 'var(--font-weight-bold)',
+                    fontWeight: 'var(--font-weight-medium)',
                     color: 'var(--color-text-primary)'
                   }}>
                     {stats.daysActive}
@@ -257,7 +256,7 @@ export function EquipProgramCompletion({ onContinue, onBackToDashboard }: EquipP
                 <div>
                   <p style={{ 
                     fontSize: 'var(--text-2xl)', 
-                    fontWeight: 'var(--font-weight-bold)',
+                    fontWeight: 'var(--font-weight-medium)',
                     color: 'var(--color-text-primary)'
                   }}>
                     {stats.skillsLearned.length}
@@ -286,7 +285,7 @@ export function EquipProgramCompletion({ onContinue, onBackToDashboard }: EquipP
                 <div>
                   <p style={{ 
                     fontSize: 'var(--text-2xl)', 
-                    fontWeight: 'var(--font-weight-bold)',
+                    fontWeight: 'var(--font-weight-medium)',
                     color: 'var(--color-text-primary)'
                   }}>
                     Excellent

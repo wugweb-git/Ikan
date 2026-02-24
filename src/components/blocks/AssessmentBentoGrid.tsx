@@ -199,7 +199,7 @@ export function AssessmentBentoGrid({
                           className="bg-[#f5f5f5] rounded-[12px] flex items-center p-[12px] gap-[12px] flex-1"
                           style={{ minHeight: '72px' }}
                         >
-                          <div className="size-[40px] rounded-full bg-white flex items-center justify-center shrink-0">
+                          <div className="size-[40px] rounded-full flex items-center justify-center shrink-0" style={{ backgroundColor: 'var(--color-bg-card)' }}>
                             <Icon />
                           </div>
                           <p 

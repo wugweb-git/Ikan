@@ -5,15 +5,12 @@ import {
   CheckCircle,
   XCircle,
   Eye,
-  Lock,
-  Key,
   Users,
   Activity,
-  Clock
 } from 'lucide-react';
 import { Button } from '../ui/button';
 import { Card, CardContent } from '../ui/card';
-import { Badge } from '../ui/badge';
+import { AdminStatusBadge, resolveStatusVariant } from './AdminStatusBadge';
 import {
   Dialog,
   DialogContent,
@@ -27,6 +24,7 @@ import { Label } from '../ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { useNotifications } from '../../contexts/NotificationContext';
 import { AdminHeader } from './AdminHeader';
+import { AdminLoading } from './AdminLoading';
 import { useIsMobile } from '../../hooks/useIsMobile';
 
 interface ActiveSession {
@@ -226,9 +224,7 @@ export function AdminSecurity() {
                     
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-2">
-                        <Badge style={{ backgroundColor: getSeverityColor(alert.severity), color: 'white' }}>
-                          {alert.severity.toUpperCase()}
-                        </Badge>
+                        <AdminStatusBadge status={resolveStatusVariant(alert.severity)} label={alert.severity.toUpperCase()} />
                         <span style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}>
                           {alert.type.replace('_', ' ').toUpperCase()}
                         </span>
@@ -381,9 +377,7 @@ export function AdminSecurity() {
                           {log.user_email}
                         </td>
                         <td className="px-4 py-3">
-                          <Badge variant="outline">
-                            {log.action}
-                          </Badge>
+                          <AdminStatusBadge status="neutral" label={log.action} />
                         </td>
                         <td className="px-4 py-3" style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-muted)', fontFamily: 'monospace' }}>
                           {log.resource}

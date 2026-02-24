@@ -17,7 +17,7 @@ export function SkeletonLoader({
 }) {
   return (
     <motion.div
-      className={`bg-gray-200 ${className}`}
+      className={className}
       style={{
         width,
         height,

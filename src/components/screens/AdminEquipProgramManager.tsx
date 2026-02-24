@@ -5,15 +5,13 @@ import { apiClient } from '../../lib/api-client';
 import { cmsUtils } from '../admin/cms-utils';
 import { AdminHeader } from '../admin/AdminHeader';
 import { AdminEmptyState } from '../admin/AdminEmptyState';
+import { AdminStatusBadge } from '../admin/AdminStatusBadge';
 import { useIsMobile } from '../../hooks/useIsMobile';
 import { Button } from '../ui/button';
-import { Badge } from '../ui/badge';
 import { cn } from '../ui/utils';
 import { EquipProgramWizard } from './EquipProgramWizard';
 import { EquipProgram } from '../../lib/equip-admin-types';
 import { AdminDataTable, Column } from '../admin/AdminDataTable';
-import { ErrorState } from '../ui/error-state';
-import { EmptyState } from '../ui/empty-state';
 import { Skeleton } from '../ui/skeleton-loader';
 import { ImageWithFallback } from '../figma/ImageWithFallback';
 import {
@@ -148,7 +146,7 @@ export function AdminEquipProgramManager({ onBack, className }: AdminEquipProgra
       className: 'min-w-[300px]',
       render: (program) => (
         <div className="flex items-start gap-3">
-          <div className="w-12 h-12 rounded-md overflow-hidden flex-shrink-0 bg-gray-100 border border-gray-200">
+          <div className="w-12 h-12 rounded-md overflow-hidden flex-shrink-0" style={{ backgroundColor: 'var(--color-bg-muted)', border: '1px solid var(--color-border-default)' }}>
              <ImageWithFallback 
                src={program.thumbnail} 
                alt={program.title}
@@ -156,10 +154,10 @@ export function AdminEquipProgramManager({ onBack, className }: AdminEquipProgra
              />
           </div>
           <div className="flex-1">
-            <span className="font-medium truncate max-w-[300px]" title={program.title}>
+            <span className="truncate max-w-[300px]" style={{ fontWeight: 'var(--font-weight-medium)', fontFamily: 'var(--font-family-base)' }} title={program.title}>
               {program.title}
             </span>
-            <span className="text-xs text-muted-foreground truncate max-w-[300px] block" title={program.description}>
+            <span className="truncate max-w-[300px] block" style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)', fontFamily: 'var(--font-family-base)' }} title={program.description}>
               {program.description}
             </span>
           </div>
@@ -171,9 +169,7 @@ export function AdminEquipProgramManager({ onBack, className }: AdminEquipProgra
       accessorKey: 'category',
       sortable: true,
       render: (program) => (
-        <Badge variant="outline" className="capitalize">
-          {program.category}
-        </Badge>
+        <AdminStatusBadge status="neutral" label={program.category} />
       )
     },
     {
@@ -181,7 +177,7 @@ export function AdminEquipProgramManager({ onBack, className }: AdminEquipProgra
       accessorKey: 'duration',
       sortable: true,
       render: (program) => (
-        <span className="text-sm text-muted-foreground">
+        <span style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-muted)' }}>
           {program.duration} days
         </span>
       )
@@ -191,7 +187,7 @@ export function AdminEquipProgramManager({ onBack, className }: AdminEquipProgra
       accessorKey: 'created_at',
       sortable: true,
       render: (program) => (
-        <span className="text-sm text-muted-foreground">
+        <span style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-muted)' }}>
           {program.created_at ? new Date(program.created_at).toLocaleDateString() : '-'}
         </span>
       )
@@ -201,12 +197,7 @@ export function AdminEquipProgramManager({ onBack, className }: AdminEquipProgra
       accessorKey: 'published',
       sortable: true,
       render: (program) => (
-        <Badge 
-          className={program.published ? 'bg-green-100 text-green-800 hover:bg-green-100' : 'bg-gray-100 text-gray-800 hover:bg-gray-100'}
-          variant="outline"
-        >
-          {program.published ? 'Published' : 'Draft'}
-        </Badge>
+        <AdminStatusBadge status={program.published ? 'published' : 'draft'} />
       )
     },
     {
@@ -214,7 +205,7 @@ export function AdminEquipProgramManager({ onBack, className }: AdminEquipProgra
       accessorKey: 'enrollmentCount',
       sortable: true,
       render: (program) => (
-        <div className="flex items-center gap-1 text-sm text-muted-foreground">
+        <div className="flex items-center gap-1" style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-muted)' }}>
           <BookOpen className="w-3 h-3" />
           {program.enrollmentCount || 0}
         </div>
@@ -249,7 +240,7 @@ export function AdminEquipProgramManager({ onBack, className }: AdminEquipProgra
             </DropdownMenuItem>
             <DropdownMenuItem 
               onClick={(e) => { e.stopPropagation(); handleDelete(program.id); }}
-              className="text-red-600"
+              style={{ color: 'var(--color-status-danger)' }}
             >
               <Trash2 className="mr-2 h-4 w-4" /> Delete
             </DropdownMenuItem>
@@ -260,9 +251,9 @@ export function AdminEquipProgramManager({ onBack, className }: AdminEquipProgra
   ];
 
   const stats = [
-    { label: 'Total Programs', value: programs.length, icon: <BookOpen className="w-4 h-4 text-primary" /> },
-    { label: 'Published', value: programs.filter((p) => p.published).length, icon: <BookOpen className="w-4 h-4 text-green-500" /> },
-    { label: 'Total Enrollments', value: programs.reduce((acc, p) => acc + (p.enrollmentCount || 0), 0), icon: <BookOpen className="w-4 h-4 text-blue-500" /> }
+    { label: 'Total Programs', value: programs.length, icon: <BookOpen className="w-4 h-4" style={{ color: 'var(--color-primary-default)' }} /> },
+    { label: 'Published', value: programs.filter((p) => p.published).length, icon: <BookOpen className="w-4 h-4" style={{ color: 'var(--color-status-success)' }} /> },
+    { label: 'Total Enrollments', value: programs.reduce((acc, p) => acc + (p.enrollmentCount || 0), 0), icon: <BookOpen className="w-4 h-4" style={{ color: 'var(--color-info-default)' }} /> }
   ];
 
   if (viewMode === 'edit' || viewMode === 'create') {

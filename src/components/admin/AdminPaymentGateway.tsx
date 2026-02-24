@@ -2,22 +2,21 @@ import React, { useState, useEffect } from 'react';
 import {
   CreditCard,
   DollarSign,
-  Key,
   Save,
   TestTube,
   CheckCircle,
-  Clock,
   TrendingUp
 } from 'lucide-react';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Card, CardContent } from '../ui/card';
-import { Badge } from '../ui/badge';
+import { AdminStatusBadge, resolveStatusVariant } from './AdminStatusBadge';
 import { Label } from '../ui/label';
 import { Switch } from '../ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { useNotifications } from '../../contexts/NotificationContext';
 import { AdminHeader } from './AdminHeader';
+import { AdminLoading } from './AdminLoading';
 import { useIsMobile } from '../../hooks/useIsMobile';
 import { projectId, publicAnonKey } from '../../utils/supabase/info';
 
@@ -209,15 +208,6 @@ export function AdminPaymentGateway() {
       icon: <CheckCircle className="w-4 h-4" style={{ color: 'var(--color-success-default)' }} />
     },
   ];
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'success': return 'var(--color-success-default)';
-      case 'pending': return 'var(--color-warning-default)';
-      case 'failed': return 'var(--color-danger-default)';
-      default: return 'var(--color-text-muted)';
-    }
-  };
 
   return (
     <div 
@@ -573,9 +563,7 @@ export function AdminPaymentGateway() {
                             {txn.currency} {txn.amount.toLocaleString()}
                           </td>
                           <td className="px-4 py-3">
-                            <Badge style={{ backgroundColor: getStatusColor(txn.status), color: 'white' }}>
-                              {txn.status}
-                            </Badge>
+                            <AdminStatusBadge status={txn.status} />
                           </td>
                           <td className="px-4 py-3" style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-muted)' }}>
                             {new Date(txn.created_at).toLocaleString()}

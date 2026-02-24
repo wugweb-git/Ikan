@@ -5,8 +5,8 @@ import {
 } from 'lucide-react';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../ui/card';
-import { Badge } from '../ui/badge';
+import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
+import { AdminStatusBadge } from '../admin/AdminStatusBadge';
 import { Skeleton } from '../ui/skeleton-loader';
 import {
   DropdownMenu,
@@ -107,7 +107,7 @@ export function EquipAdminDashboard({ onBack }: EquipAdminDashboardProps = {}) {
   );
 
   return (
-    <div className="min-h-screen bg-gray-50/50 p-8">
+    <div className="min-h-screen p-8" style={{ backgroundColor: 'var(--color-bg-page)' }}>
       <div className="max-w-6xl mx-auto space-y-8">
         
         {/* Header */}
@@ -124,11 +124,11 @@ export function EquipAdminDashboard({ onBack }: EquipAdminDashboardProps = {}) {
               </Button>
             )}
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">Equip Programs</h1>
-              <p className="text-gray-500">Manage your mental health programs and courses.</p>
+              <h1 style={{ fontSize: 'var(--text-2xl)', fontWeight: 'var(--font-weight-medium)', color: 'var(--color-text-primary)' }}>Equip Programs</h1>
+              <p style={{ color: 'var(--color-text-muted)' }}>Manage your mental health programs and courses.</p>
             </div>
           </div>
-          <Button onClick={handleCreateNew} className="gap-2 bg-gray-900 text-white hover:bg-gray-800">
+          <Button onClick={handleCreateNew} className="gap-2" style={{ backgroundColor: 'var(--color-primary-default)', color: 'var(--color-primary-on)' }}>
             <Plus size={16} /> Create Program
           </Button>
         </div>
@@ -137,42 +137,43 @@ export function EquipAdminDashboard({ onBack }: EquipAdminDashboardProps = {}) {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Programs</CardTitle>
-              <Layout className="h-4 w-4 text-gray-500" />
+              <CardTitle style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--font-weight-medium)' }}>Total Programs</CardTitle>
+              <Layout className="h-4 w-4" style={{ color: 'var(--color-text-muted)' }} />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{programs.length}</div>
+              <div style={{ fontSize: 'var(--text-2xl)', fontWeight: 'var(--font-weight-medium)' }}>{programs.length}</div>
             </CardContent>
           </Card>
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Active Users</CardTitle>
-              <Users className="h-4 w-4 text-gray-500" />
+              <CardTitle style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--font-weight-medium)' }}>Active Users</CardTitle>
+              <Users className="h-4 w-4" style={{ color: 'var(--color-text-muted)' }} />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">--</div>
+              <div style={{ fontSize: 'var(--text-2xl)', fontWeight: 'var(--font-weight-medium)' }}>--</div>
             </CardContent>
           </Card>
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Completion Rate</CardTitle>
-              <BarChart3 className="h-4 w-4 text-gray-500" />
+              <CardTitle style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--font-weight-medium)' }}>Completion Rate</CardTitle>
+              <BarChart3 className="h-4 w-4" style={{ color: 'var(--color-text-muted)' }} />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">--%</div>
+              <div style={{ fontSize: 'var(--text-2xl)', fontWeight: 'var(--font-weight-medium)' }}>--%</div>
             </CardContent>
           </Card>
         </div>
 
         {/* Filters & Search */}
-        <div className="flex items-center gap-4 bg-white p-4 rounded-lg border shadow-sm">
+        <div className="flex items-center gap-4 p-4 rounded-lg border shadow-sm" style={{ backgroundColor: 'var(--color-bg-card)' }}>
           <div className="relative flex-1 max-w-sm">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4" style={{ color: 'var(--color-text-muted)' }} />
             <Input 
               placeholder="Search programs..." 
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
-              className="pl-9 bg-gray-50 border-gray-200"
+              className="pl-9"
+              style={{ backgroundColor: 'var(--color-bg-muted)', borderColor: 'var(--color-border-default)' }}
             />
           </div>
           <Button 
@@ -192,7 +193,7 @@ export function EquipAdminDashboard({ onBack }: EquipAdminDashboardProps = {}) {
                 <Card key={i} className="hover:shadow-md transition-shadow">
                   <div className="flex flex-col md:flex-row p-6 gap-6">
                     {/* Thumbnail Skeleton */}
-                    <div className="w-full md:w-48 h-32 bg-gray-100 rounded-lg flex-shrink-0 overflow-hidden">
+                    <div className="w-full md:w-48 h-32 rounded-lg flex-shrink-0 overflow-hidden" style={{ backgroundColor: 'var(--color-bg-muted)' }}>
                       <Skeleton className="w-full h-full" />
                     </div>
 
@@ -222,12 +223,12 @@ export function EquipAdminDashboard({ onBack }: EquipAdminDashboardProps = {}) {
               ))}
             </div>
           ) : filteredPrograms.length === 0 ? (
-            <div className="text-center py-24 bg-white rounded-xl border border-dashed">
-              <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4 text-gray-400">
+            <div className="text-center py-24 rounded-xl border border-dashed" style={{ backgroundColor: 'var(--color-bg-card)', borderColor: 'var(--color-border-default)' }}>
+              <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4" style={{ backgroundColor: 'var(--color-bg-muted)', color: 'var(--color-text-muted)' }}>
                 <Layout size={32} />
               </div>
-              <h3 className="text-lg font-medium text-gray-900">No programs found</h3>
-              <p className="text-gray-500 max-w-sm mx-auto mt-2 mb-6">
+              <h3 style={{ fontSize: 'var(--text-lg)', fontWeight: 'var(--font-weight-medium)', color: 'var(--color-text-primary)' }}>No programs found</h3>
+              <p className="max-w-sm mx-auto mt-2 mb-6" style={{ color: 'var(--color-text-muted)' }}>
                 Get started by creating your first program. You can define content, enrollment flow, and daily schedules.
               </p>
               <Button onClick={handleCreateNew} variant="outline">
@@ -239,11 +240,11 @@ export function EquipAdminDashboard({ onBack }: EquipAdminDashboardProps = {}) {
               <Card key={program.id} className="hover:shadow-md transition-shadow">
                 <div className="flex flex-col md:flex-row p-6 gap-6">
                   {/* Thumbnail */}
-                  <div className="w-full md:w-48 h-32 bg-gray-100 rounded-lg flex-shrink-0 overflow-hidden">
+                  <div className="w-full md:w-48 h-32 rounded-lg flex-shrink-0 overflow-hidden" style={{ backgroundColor: 'var(--color-bg-muted)' }}>
                     {program.thumbnail ? (
                       <img src={program.thumbnail} alt={program.title} className="w-full h-full object-cover" />
                     ) : (
-                      <div className="w-full h-full flex items-center justify-center text-gray-400">
+                      <div className="w-full h-full flex items-center justify-center" style={{ color: 'var(--color-text-muted)' }}>
                         <Layout size={32} />
                       </div>
                     )}
@@ -254,15 +255,14 @@ export function EquipAdminDashboard({ onBack }: EquipAdminDashboardProps = {}) {
                     <div className="flex items-start justify-between">
                       <div>
                         <div className="flex items-center gap-2 mb-1">
-                          <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
-                            {program.category || 'General'}
-                          </Badge>
-                          <Badge variant="outline" className={program.published ? "bg-green-50 text-green-700 border-green-200" : "bg-gray-100 text-gray-600 border-gray-200"}>
-                            {program.published ? 'Published' : 'Draft'}
-                          </Badge>
+                          <AdminStatusBadge status="info" label={program.category || 'General'} />
+                          <AdminStatusBadge 
+                            status={program.published ? 'published' : 'draft'} 
+                            label={program.published ? 'Published' : 'Draft'} 
+                          />
                         </div>
-                        <h3 className="text-xl font-semibold text-gray-900">{program.title}</h3>
-                        <p className="text-gray-500 line-clamp-2 mt-1">{program.description}</p>
+                        <h3 style={{ fontSize: 'var(--text-xl)', fontWeight: 'var(--font-weight-medium)', color: 'var(--color-text-primary)' }}>{program.title}</h3>
+                        <p className="line-clamp-2 mt-1" style={{ color: 'var(--color-text-muted)' }}>{program.description}</p>
                       </div>
                       
                       <DropdownMenu>
@@ -275,14 +275,14 @@ export function EquipAdminDashboard({ onBack }: EquipAdminDashboardProps = {}) {
                           <DropdownMenuItem onClick={() => handleEdit(program.id)}>
                             <Edit3 size={14} className="mr-2" /> Edit
                           </DropdownMenuItem>
-                          <DropdownMenuItem className="text-red-600" onClick={(e) => { e.stopPropagation(); handleDelete(program.id); }}>
+                          <DropdownMenuItem style={{ color: 'var(--color-status-danger)' }} onClick={(e) => { e.stopPropagation(); handleDelete(program.id); }}>
                             <Trash2 size={14} className="mr-2" /> Delete
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </div>
 
-                    <div className="flex items-center gap-6 text-sm text-gray-500 pt-2">
+                    <div className="flex items-center gap-6 pt-2" style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-muted)' }}>
                       <div className="flex items-center gap-2">
                         <Users size={16} />
                         <span>0 Enrolled</span>

@@ -1,11 +1,11 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { EquipProgram, DayContent, Activity, ExerciseConfig } from '../../lib/equip-admin-types';
+import { EquipProgram, DayContent, Activity } from '../../lib/equip-admin-types';
 import { BlockRenderer } from './BlockRenderer';
 import { ProgramCheckIn } from '../equip/ProgramCheckIn';
 import { Button } from '../ui/button';
 import { Progress } from '../ui/progress';
-import { ChevronLeft, Check, X, Settings } from 'lucide-react';
+import { ChevronLeft, Check, X } from 'lucide-react';
 import { useNotifications } from '../../contexts/NotificationContext';
 import { cn } from '../ui/utils';
 
@@ -22,15 +22,14 @@ interface ProgramPlayerProps {
 export interface PlayerResults {
   programId: string;
   completedDays: number[];
-  responses: Record<string, any>; // blockId -> value
+  responses: Record<string, any>;
   scores?: Record<string, number>;
   totalScore?: number;
   completedAt: string;
 }
 
-// Helper to group blocks into steps
 interface Step {
-  id: string; // stepGroupId or blockId
+  id: string;
   blocks: Activity[];
 }
 
@@ -52,7 +51,7 @@ const DAY_TYPE_CONFIG: Record<string, DayTypeConfig> = {
     autoAdvance: true,
     progressStyle: 'steps',
     primaryButtonText: (last) => last ? 'Complete' : 'Continue',
-    bgColor: 'bg-[#F2F2F7]' // Neutral
+    bgColor: 'bg-[var(--color-bg-page)]'
   },
   'assessment-lite': {
     layout: 'card',
@@ -60,7 +59,7 @@ const DAY_TYPE_CONFIG: Record<string, DayTypeConfig> = {
     autoAdvance: true,
     progressStyle: 'percentage',
     primaryButtonText: (last) => last ? 'Complete' : 'Next',
-    bgColor: 'bg-white' // Friendly
+    bgColor: 'bg-[var(--color-bg-card)]'
   },
   'learning': {
     layout: 'scrollable',
@@ -68,7 +67,7 @@ const DAY_TYPE_CONFIG: Record<string, DayTypeConfig> = {
     autoAdvance: false,
     progressStyle: 'percentage',
     primaryButtonText: (last) => 'Continue',
-    bgColor: 'bg-[#F9FAFB]' // Clean
+    bgColor: 'bg-[var(--color-bg-page)]'
   },
   'practice': {
     layout: 'scrollable',
@@ -76,7 +75,7 @@ const DAY_TYPE_CONFIG: Record<string, DayTypeConfig> = {
     autoAdvance: false,
     progressStyle: 'percentage',
     primaryButtonText: (last) => last ? 'Done for Today' : 'Next',
-    bgColor: 'bg-stone-50' // Warm/Safe
+    bgColor: 'bg-[var(--color-bg-page)]'
   },
   'workshop': {
     layout: 'step-focus',
@@ -84,7 +83,7 @@ const DAY_TYPE_CONFIG: Record<string, DayTypeConfig> = {
     autoAdvance: false,
     progressStyle: 'steps',
     primaryButtonText: (last) => last ? 'Finish' : 'Continue',
-    bgColor: 'bg-white'
+    bgColor: 'bg-[var(--color-bg-card)]'
   },
   'tracker': {
     layout: 'compact',
@@ -93,7 +92,7 @@ const DAY_TYPE_CONFIG: Record<string, DayTypeConfig> = {
     progressStyle: 'none',
     primaryButtonText: (last) => 'Save',
     singlePage: true,
-    bgColor: 'bg-[#F2F2F7]'
+    bgColor: 'bg-[var(--color-bg-page)]'
   },
   'reflection': {
     layout: 'scrollable',
@@ -101,36 +100,39 @@ const DAY_TYPE_CONFIG: Record<string, DayTypeConfig> = {
     autoAdvance: false,
     progressStyle: 'none',
     primaryButtonText: (last) => 'Complete Reflection',
-    bgColor: 'bg-indigo-50/30' // Calm
+    bgColor: 'bg-[var(--color-bg-page)]'
   }
 };
 
 const DEFAULT_CONFIG = DAY_TYPE_CONFIG['learning'];
 
+// ── Font helper ─────────────────────────────────────────────────
+const f = (size: string, weight: number = 400, color: string = 'var(--color-text-primary)') => ({
+  fontSize: `var(--text-${size})`,
+  fontWeight: weight,
+  fontFamily: 'var(--font-family-base)',
+  color,
+});
+
 const groupBlocksIntoSteps = (activities: Activity[], dayType: string = 'learning'): Step[] => {
   const config = DAY_TYPE_CONFIG[dayType] || DEFAULT_CONFIG;
   
-  // 1. Tracker/Single Page Mode: All blocks in one step
   if (config.singlePage) {
     return [{ id: 'single-page', blocks: activities }];
   }
 
-  // 2. Group by stepGroup
   const steps: Step[] = [];
   let currentStep: Step | null = null;
 
   activities.forEach((block, index) => {
-    // If block has a stepGroup, try to merge with current if same group
     if (block.stepGroup) {
       if (currentStep && currentStep.id === block.stepGroup) {
          currentStep.blocks.push(block);
       } else {
-         // Start new group step
          if (currentStep) steps.push(currentStep);
          currentStep = { id: block.stepGroup, blocks: [block] };
       }
     } else {
-      // No step group -> acts as individual step (One per frame rule)
       if (currentStep) {
         steps.push(currentStep);
         currentStep = null;
@@ -157,14 +159,12 @@ export function ProgramPlayer({
 }: ProgramPlayerProps) {
   const { showToast } = useNotifications();
 
-  // --- STATE ---
   const [currentDayNum, setCurrentDayNum] = useState(initialDay);
-  const [currentStepIndex, setCurrentStepIndex] = useState(0); // Tracking Steps, not Blocks
+  const [currentStepIndex, setCurrentStepIndex] = useState(0);
   const [responses, setResponses] = useState<Record<string, any>>(initialResponses);
   const [isDayComplete, setIsDayComplete] = useState(false);
   const [showCheckIn, setShowCheckIn] = useState(false);
 
-  // --- DERIVED STATE ---
   const activeDay = useMemo(() => 
     program.daily_content.find(d => d.day === currentDayNum), 
   [program.daily_content, currentDayNum]);
@@ -174,30 +174,23 @@ export function ProgramPlayer({
     return DAY_TYPE_CONFIG[activeDay.dayType || 'learning'] || DEFAULT_CONFIG;
   }, [activeDay]);
 
-  // Group blocks into steps
   const steps = useMemo(() => 
     activeDay ? groupBlocksIntoSteps(activeDay.activities, activeDay.dayType) : [], 
   [activeDay]);
 
   const activeStep = steps[currentStepIndex];
 
-  // Calculate progress
   const progressPercent = steps.length > 0 ? ((currentStepIndex) / steps.length) * 100 : 0;
   const progressText = `${currentStepIndex + 1} of ${steps.length}`;
 
-  // Validation: Are all required blocks in current step answered?
   const isStepValid = useMemo(() => {
     if (!activeStep) return false;
     return activeStep.blocks.every(block => {
-      // 1. Non-interactive blocks are always valid
       if (['lesson', 'content', 'conclude', 'video', 'media', 'info'].includes(block.type)) {
          return true;
       }
-      
-      // 2. Interactive blocks check
       if (!block.required) return true;
       const value = responses[block.id];
-      // Basic empty check
       if (Array.isArray(value)) return value.length > 0;
       return value !== undefined && value !== null && value !== '';
     });
@@ -212,14 +205,11 @@ export function ProgramPlayer({
     };
     setResponses(newResponses);
     
-    // Notify parent
     onProgressChange?.({ 
       currentBlockIndex: currentStepIndex, 
       responses: newResponses 
     });
 
-    // Auto-advance logic
-    // Only if allowed by DayType AND Block/Config allows it
     if (dayConfig.autoAdvance) {
       const targetBlock = activeStep?.blocks.find(b => b.id === blockId);
       
@@ -228,7 +218,6 @@ export function ProgramPlayer({
         (targetBlock?.exerciseConfig?.subtype === 'single-select');
 
       if (shouldAutoAdvance) {
-        // Re-validate with new value
         const stepValidWithNewValue = activeStep?.blocks.every(block => {
           if (!block.required) return true;
           const val = block.id === blockId ? value : responses[block.id];
@@ -237,7 +226,7 @@ export function ProgramPlayer({
         });
 
         if (stepValidWithNewValue) {
-          setTimeout(() => handleNext(), 300); // Small delay for UX
+          setTimeout(() => handleNext(), 300);
         }
       }
     }
@@ -249,8 +238,6 @@ export function ProgramPlayer({
       setCurrentStepIndex(nextIndex);
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } else {
-      // End of Day
-      // Check if this day triggers a program effectiveness check-in
       const checkInDays = [7, 14, 30];
       const isCheckInDay = checkInDays.includes(currentDayNum);
       const isLastDay = program.daily_content.length === currentDayNum;
@@ -272,11 +259,6 @@ export function ProgramPlayer({
   };
 
   const handleFinishDay = () => {
-    if (isDayComplete) { 
-        // Already marked complete
-    }
-
-    // Calculate results
     const results: PlayerResults = {
       programId: program.id,
       completedDays: [currentDayNum], 
@@ -284,7 +266,6 @@ export function ProgramPlayer({
       completedAt: new Date().toISOString()
     };
 
-    // If assessment (single day) or scoring enabled, calculate score
     if (program.daily_content.length === 1 && activeDay?.activities.some(b => b.exerciseConfig?.scoring?.enabled)) {
       let totalScore = 0;
       const scores: Record<string, number> = {};
@@ -294,7 +275,6 @@ export function ProgramPlayer({
         const answer = responses[block.id];
         
         if (config?.scoring?.enabled && answer) {
-           // Scoring logic
            if (config.correctAnswer && answer === config.correctAnswer) {
              const points = config.scoring.maxScore || 1;
              scores[block.id] = points;
@@ -302,7 +282,7 @@ export function ProgramPlayer({
            }
            else if (config.scoring.weights && config.options) {
              if (Array.isArray(answer)) {
-               answer.forEach(ans => {
+               answer.forEach((ans: string) => {
                  const idx = config.options!.indexOf(ans);
                  if (idx !== -1 && config.scoring!.weights![idx]) {
                    const points = config.scoring!.weights![idx];
@@ -333,7 +313,7 @@ export function ProgramPlayer({
   if (!activeDay) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen text-center p-8">
-        <h2 className="text-xl font-semibold mb-2">Day {currentDayNum} Not Found</h2>
+        <h2 style={{ ...f('xl', 500), marginBottom: 8 }}>Day {currentDayNum} Not Found</h2>
         <Button onClick={onExit} variant="outline">Back to Home</Button>
       </div>
     );
@@ -342,25 +322,23 @@ export function ProgramPlayer({
   // Completed Day Screen
   if (isDayComplete) {
     return (
-      <div className="fixed inset-0 bg-[#F5F5F5] z-50 flex items-center justify-center p-6">
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-6" style={{ backgroundColor: 'var(--color-bg-page)' }}>
         <motion.div 
           initial={{ opacity: 0, scale: 0.95, y: 20 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-          className="w-full max-w-sm bg-white rounded-[32px] shadow-xl shadow-black/5 p-10 text-center relative overflow-hidden"
+          className="w-full max-w-sm p-10 text-center relative overflow-hidden"
+          style={{ backgroundColor: 'var(--color-bg-card)', borderRadius: 28, boxShadow: 'var(--shadow-lg)' }}
         >
-          {/* Decorative Gradient Blob */}
-          <div className="absolute -top-20 -left-20 w-60 h-60 bg-gradient-to-br from-green-50 to-emerald-50 rounded-full blur-3xl opacity-50 pointer-events-none" />
-          
           <div className="relative z-10 space-y-8">
-            {/* Success Icon Animation */}
             <motion.div 
               initial={{ scale: 0, rotate: -45 }}
               animate={{ scale: 1, rotate: 0 }}
               transition={{ type: "spring", damping: 12, delay: 0.2 }}
-              className="w-24 h-24 mx-auto bg-[#F0FDF4] rounded-full flex items-center justify-center shadow-inner"
+              className="w-24 h-24 mx-auto rounded-full flex items-center justify-center"
+              style={{ backgroundColor: 'var(--color-status-success-light)' }}
             >
-               <Check size={40} className="text-[#16A34A]" strokeWidth={3.5} />
+               <Check size={40} style={{ color: 'var(--color-status-success)' }} strokeWidth={3.5} />
             </motion.div>
 
             <div className="space-y-3">
@@ -368,7 +346,7 @@ export function ProgramPlayer({
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.3 }}
-                className="text-[28px] font-bold text-[#151515] font-['Ubuntu'] tracking-tight"
+                style={{ ...f('2xl', 500), letterSpacing: '-0.01em' }}
               >
                 {activeDay.dayType === 'practice' ? 'All Done!' : 'Session Complete'}
               </motion.h2>
@@ -376,7 +354,7 @@ export function ProgramPlayer({
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.4 }}
-                className="text-[#717182] text-[16px] leading-relaxed font-normal"
+                style={{ ...f('base', 400, 'var(--color-text-muted)'), lineHeight: 1.6 }}
               >
                 Great job taking a moment for yourself. Your results are ready.
               </motion.p>
@@ -387,12 +365,18 @@ export function ProgramPlayer({
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.5 }}
             >
-              <Button 
+              <button 
                 onClick={handleFinishDay} 
-                className="w-full h-14 text-[17px] font-medium rounded-[20px] bg-[#2A2A2A] text-white hover:bg-black hover:scale-[1.02] active:scale-[0.98] transition-all shadow-lg shadow-gray-200"
+                style={{
+                  width: '100%', height: 56, borderRadius: 'var(--radius-lg)',
+                  backgroundColor: 'var(--color-primary-default)', color: '#fff',
+                  border: 'none', cursor: 'pointer',
+                  ...f('base', 500, '#fff'),
+                  boxShadow: 'var(--shadow-sm)', transition: 'all 0.15s',
+                }}
               >
                 {program.daily_content.length === 1 ? 'View Results' : 'Continue Journey'}
-              </Button>
+              </button>
             </motion.div>
           </div>
         </motion.div>
@@ -400,61 +384,108 @@ export function ProgramPlayer({
     );
   }
 
-  // Determine title to display
+  // Determine title
   const displayTitle = program.title || activeDay.title || (activeDay.dayType === 'practice' ? 'Assessment' : `Day ${currentDayNum}`);
+  const canGoBack = dayConfig.showBack && currentStepIndex > 0;
+  const canSkip = !activeStep?.blocks.every(b => b.required);
 
   return (
     <>
-      <div className={cn("fixed inset-0 flex flex-col font-['Ubuntu'] text-[#1C1C1E]", dayConfig.bgColor || 'bg-[#F2F2F7]')}>
-        {/* HEADER */}
-        <header className="flex-none bg-white/80 backdrop-blur-xl border-b border-black/[0.05] h-[60px] px-4 md:px-6 flex items-center justify-between z-50 relative">
-          {/* Left: Close */}
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            onClick={onExit} 
-            className="text-[#8E8E93] hover:text-[#1C1C1E] hover:bg-black/5 rounded-full w-10 h-10 transition-colors"
-          >
-            <X size={22} strokeWidth={2.5} />
-          </Button>
-          
+      <div className={cn("fixed inset-0 flex flex-col", dayConfig.bgColor || 'bg-[var(--color-bg-page)]')} style={{ color: 'var(--color-text-primary)' }}>
+
+        {/* ═══════════════════════════════════════════════════════════
+            HEADER — standardised: [Back/Close] [Title] [Progress]
+            ═══════════════════════════════════════════════════════════ */}
+        <header
+          className="flex-none flex items-center justify-between relative"
+          style={{
+            height: 60,
+            paddingLeft: 8,
+            paddingRight: 16,
+            paddingTop: 'env(safe-area-inset-top, 0px)',
+            backgroundColor: 'rgba(255,255,255,0.92)',
+            backdropFilter: 'blur(20px)',
+            WebkitBackdropFilter: 'blur(20px)',
+            borderBottom: '1px solid var(--color-border-default)',
+            zIndex: 50,
+          }}
+        >
+          {/* Left: Back (if mid-step) or Close (if first step) */}
+          <div style={{ width: 44, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            {canGoBack ? (
+              <motion.button
+                whileTap={{ scale: 0.9 }}
+                onClick={handlePrevious}
+                className="flex items-center justify-center"
+                style={{
+                  width: 40, height: 40, borderRadius: 20,
+                  background: 'none', border: 'none', cursor: 'pointer',
+                  color: 'var(--color-text-primary)',
+                }}
+              >
+                <ChevronLeft size={22} strokeWidth={2} />
+              </motion.button>
+            ) : (
+              <motion.button
+                whileTap={{ scale: 0.9 }}
+                onClick={onExit}
+                className="flex items-center justify-center"
+                style={{
+                  width: 36, height: 36, borderRadius: 18,
+                  backgroundColor: 'var(--color-bg-muted)',
+                  border: 'none', cursor: 'pointer',
+                  color: 'var(--color-text-muted)',
+                }}
+              >
+                <X size={18} strokeWidth={2.5} />
+              </motion.button>
+            )}
+          </div>
+
           {/* Center: Title */}
-          <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 max-w-[60%] text-center">
-            <h1 className="text-[15px] font-semibold text-[#1C1C1E] truncate tracking-tight">
+          <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 max-w-[55%] text-center">
+            <h1 className="truncate" style={{ ...f('sm', 500), letterSpacing: '-0.01em' }}>
                {displayTitle}
             </h1>
           </div>
 
-          {/* Right: Progress Pill */}
-          {dayConfig.progressStyle !== 'none' && (
-            <div className="flex items-center gap-3">
-              <div className="bg-black/[0.05] h-8 px-3 rounded-full flex items-center gap-2">
-                 {dayConfig.progressStyle === 'percentage' && (
-                   <div className="w-12 h-1 bg-black/10 rounded-full overflow-hidden">
-                      <motion.div 
-                        className="h-full bg-[#151515] rounded-full" 
-                        initial={{ width: 0 }}
-                        animate={{ width: `${progressPercent}%` }}
-                        transition={{ ease: "easeOut", duration: 0.5 }}
-                      />
-                   </div>
-                 )}
-                 <span className="text-[12px] font-semibold text-[#8E8E93] tabular-nums">
-                    {dayConfig.progressStyle === 'percentage' 
-                      ? `${Math.round(progressPercent)}%` 
-                      : progressText}
-                 </span>
+          {/* Right: Progress indicator */}
+          <div style={{ minWidth: 72, display: 'flex', justifyContent: 'flex-end' }}>
+            {dayConfig.progressStyle !== 'none' && (
+              <div
+                className="flex items-center gap-2"
+                style={{
+                  height: 32, padding: '0 12px',
+                  borderRadius: 'var(--radius-pill)',
+                  backgroundColor: 'var(--color-bg-muted)',
+                }}
+              >
+                {dayConfig.progressStyle === 'percentage' && (
+                  <div className="overflow-hidden" style={{ width: 40, height: 4, borderRadius: 2, backgroundColor: 'var(--color-border-default)' }}>
+                    <motion.div
+                      style={{ height: '100%', borderRadius: 2, backgroundColor: 'var(--color-primary-default)' }}
+                      initial={{ width: 0 }}
+                      animate={{ width: `${progressPercent}%` }}
+                      transition={{ ease: "easeOut", duration: 0.5 }}
+                    />
+                  </div>
+                )}
+                <span className="tabular-nums" style={{ ...f('xs', 500, 'var(--color-text-muted)') }}>
+                  {dayConfig.progressStyle === 'percentage'
+                    ? `${Math.round(progressPercent)}%`
+                    : progressText}
+                </span>
               </div>
-            </div>
-          )}
+            )}
+          </div>
         </header>
 
-        {/* BODY */}
+        {/* ═══════════════════════════════════════════════════════════
+            BODY — scrollable content area
+            ═══════════════════════════════════════════════════════════ */}
         <main className="flex-1 w-full max-w-2xl mx-auto flex flex-col relative overflow-hidden">
-          {/* Content Container */}
           <div className={cn(
              "flex-1 w-full flex flex-col px-4 md:px-8 overflow-y-auto scrollbar-hide py-6",
-             // Layout Adjustments based on dayConfig
              dayConfig.layout === 'centered' && "justify-center",
              dayConfig.layout === 'step-focus' && "justify-center",
              dayConfig.layout === 'scrollable' && "justify-start",
@@ -470,8 +501,9 @@ export function ProgramPlayer({
                    transition={{ duration: 0.3, ease: "easeInOut" }}
                    className={cn(
                      "w-full space-y-6",
-                     dayConfig.layout === 'card' && "bg-white p-6 rounded-3xl shadow-sm border border-black/5"
+                     dayConfig.layout === 'card' && "p-6 rounded-3xl shadow-sm"
                    )}
+                   style={dayConfig.layout === 'card' ? { backgroundColor: 'var(--color-bg-card)', border: '1px solid var(--color-border-default)' } : undefined}
                  >
                    {activeStep && activeStep.blocks.map(block => (
                      <BlockRenderer 
@@ -488,51 +520,52 @@ export function ProgramPlayer({
           </div>
         </main>
 
-        {/* FOOTER */}
-        <footer className="flex-none bg-white border-t border-black/[0.05] px-6 py-6 pb-8 z-50 shadow-[0_-4px_20px_rgba(0,0,0,0.02)]">
-          <div className="max-w-2xl mx-auto w-full space-y-4">
-            
+        {/* ═══════════════════════════════════════════════════════════
+            FOOTER — Primary CTA + optional skip
+            ═══════════════════════════════════════════════════════════ */}
+        <footer
+          className="flex-none"
+          style={{
+            padding: '16px 24px',
+            paddingBottom: 'max(env(safe-area-inset-bottom, 16px), 16px)',
+            backgroundColor: 'var(--color-bg-card)',
+            borderTop: '1px solid var(--color-border-default)',
+            zIndex: 50,
+          }}
+        >
+          <div className="max-w-2xl mx-auto w-full" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             {/* Primary Action */}
-            <Button 
+            <motion.button
+              whileTap={{ scale: 0.98 }}
               onClick={handleNext}
-              className={cn(
-                "w-full h-[56px] rounded-[18px] text-[17px] font-semibold transition-all shadow-sm",
-                "bg-[#151515] text-white hover:bg-black hover:shadow-md active:scale-[0.98]",
-                !isStepValid && "opacity-50 cursor-not-allowed bg-[#E5E5EA] text-[#8E8E93] shadow-none hover:bg-[#E5E5EA] active:scale-100"
-              )}
               disabled={!isStepValid}
+              style={{
+                width: '100%', height: 52, borderRadius: 'var(--radius-lg)',
+                backgroundColor: isStepValid ? 'var(--color-primary-default)' : 'var(--color-bg-muted)',
+                color: isStepValid ? '#fff' : 'var(--color-text-muted)',
+                border: 'none', cursor: isStepValid ? 'pointer' : 'not-allowed',
+                ...f('base', 500, isStepValid ? '#fff' : 'var(--color-text-muted)'),
+                boxShadow: isStepValid ? 'var(--shadow-sm)' : 'none',
+                transition: 'all 0.15s',
+                opacity: isStepValid ? 1 : 0.6,
+              }}
             >
               {dayConfig.primaryButtonText(currentStepIndex === steps.length - 1)}
-            </Button>
+            </motion.button>
 
-            {/* Secondary Actions Row */}
-            <div className="flex items-center justify-between px-2 h-6">
-               {/* Back Button */}
-               <div className="flex-1 text-left">
-                  {dayConfig.showBack && currentStepIndex > 0 && (
-                    <button
-                      onClick={handlePrevious}
-                      className="text-[#8E8E93] hover:text-[#1C1C1E] font-medium text-[15px] transition-colors flex items-center gap-1.5 pl-1 py-2"
-                    >
-                      <ChevronLeft size={18} />
-                      Back
-                    </button>
-                  )}
-               </div>
-               
-               {/* Skip Button (Conditional) */}
-               <div className="flex-1 text-right">
-                  {!activeStep?.blocks.every(b => b.required) && (
-                    <button
-                      onClick={handleNext}
-                      className="text-[#8E8E93] hover:text-[#1C1C1E] font-medium text-[15px] transition-colors pr-1 py-2"
-                    >
-                      Skip
-                    </button>
-                  )}
-               </div>
-            </div>
-
+            {/* Skip (only if not all blocks required) */}
+            {canSkip && (
+              <button
+                onClick={handleNext}
+                style={{
+                  background: 'none', border: 'none', cursor: 'pointer',
+                  ...f('sm', 500, 'var(--color-text-muted)'),
+                  padding: '6px 0', textAlign: 'center',
+                }}
+              >
+                Skip this step
+              </button>
+            )}
           </div>
         </footer>
       </div>

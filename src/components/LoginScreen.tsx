@@ -392,7 +392,8 @@ function AuthForm({ mode, onSuccess, onModeChange }: {
               type="checkbox"
               checked={formData.rememberMe}
               onChange={(e) => setFormData(prev => ({ ...prev, rememberMe: e.target.checked }))}
-              className="rounded border-gray-300 text-primary focus:ring-primary"
+              className="rounded text-primary focus:ring-primary"
+              style={{ borderColor: 'var(--color-border-default)' }}
             />
             <span 
               style={{
@@ -463,12 +464,12 @@ function AuthForm({ mode, onSuccess, onModeChange }: {
         <div className="space-y-4">
           <div className="relative">
             <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-gray-200"></div>
+              <div className="w-full border-t" style={{ borderColor: 'var(--color-border-default)' }}></div>
             </div>
             <div className="relative flex justify-center text-sm">
               <span 
-                className="px-2 bg-white"
-                style={{ color: 'var(--color-text-muted)' }}
+                className="px-2"
+                style={{ backgroundColor: 'var(--color-bg-card)' }}
               >
                 {authContent.form.social.continuePrefix}
               </span>
@@ -481,7 +482,8 @@ function AuthForm({ mode, onSuccess, onModeChange }: {
               type="button"
               onClick={() => handleSocialSignIn('google')}
               disabled={loading}
-              className="flex items-center justify-center px-4 py-2 border border-gray-200 rounded-md hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex items-center justify-center px-4 py-2 border rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              style={{ borderColor: 'var(--color-border-default)' }}
               aria-label="Sign in with Google"
             >
               <div className="w-5 h-5">
@@ -499,7 +501,8 @@ function AuthForm({ mode, onSuccess, onModeChange }: {
               type="button"
               onClick={() => handleSocialSignIn('linkedin_oidc')}
               disabled={loading}
-              className="flex items-center justify-center px-4 py-2 border border-gray-200 rounded-md hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex items-center justify-center px-4 py-2 border rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              style={{ borderColor: 'var(--color-border-default)' }}
               aria-label="Sign in with LinkedIn"
             >
               <div className="w-5 h-5">
@@ -514,7 +517,8 @@ function AuthForm({ mode, onSuccess, onModeChange }: {
               type="button"
               onClick={() => handleSocialSignIn('apple')}
               disabled={loading}
-              className="flex items-center justify-center px-4 py-2 border border-gray-200 rounded-md hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex items-center justify-center px-4 py-2 border rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              style={{ borderColor: 'var(--color-border-default)' }}
               aria-label="Sign in with Apple"
             >
               <div className="w-5 h-5">

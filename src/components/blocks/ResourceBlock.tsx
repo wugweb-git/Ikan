@@ -1,8 +1,19 @@
-import React from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { cn } from '../ui/utils';
 import { ImageWithFallback } from '../figma/ImageWithFallback';
 import { Skeleton } from '../ui/skeleton-loader';
-import { ResourcePost, ResourceCard } from './ResourceCard';
+import { ResourcePost } from './ResourceCard';
+import { resolveImageUrl } from '../../utils/image-utils';
+import { ChevronLeft, ChevronRight, ArrowRight } from 'lucide-react';
+import { useIsMobile } from '../../hooks/useIsMobile';
+
+export { ResourcePost };
+
+// Fallback image when no image is provided
+const FALLBACK_IMAGE = 'https://images.unsplash.com/photo-1499750310107-5fef28a66643?w=800&auto=format&fit=crop&q=80';
+
+// Hide scrollbar style ID
+const SCROLLBAR_STYLE_ID = 'ikan-resource-slider-style';
 
 export interface ResourceBlockProps {
   title?: string;
@@ -16,61 +27,192 @@ export interface ResourceBlockProps {
   className?: string;
 }
 
-function MobileResourceCard({ post, onClick }: { post: ResourcePost; onClick: () => void }) {
+/** Resource slider card — prominent image + category + title (no description) */
+function SliderResourceCard({ post, onClick, isMobile }: { post: ResourcePost; onClick: () => void; isMobile?: boolean }) {
+  const imageSrc = resolveImageUrl(post.image) || FALLBACK_IMAGE;
+
   return (
-    <div 
-      className="bg-white h-[113px] relative rounded-[16px] shrink-0 w-full cursor-pointer transition-transform active:scale-[0.98]"
+    <div
+      className="flex-shrink-0 cursor-pointer group"
       onClick={onClick}
+      style={{
+        width: isMobile ? 'calc(100vw - 48px)' : '300px',
+        maxWidth: isMobile ? '340px' : '300px',
+        borderRadius: 'var(--radius-lg)',
+        backgroundColor: 'var(--color-bg-card)',
+        border: '1px solid var(--color-border-default)',
+        overflow: 'hidden',
+        transition: 'box-shadow 0.25s ease, transform 0.25s ease',
+      }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.boxShadow = '0 8px 24px rgba(0,0,0,0.1)';
+        e.currentTarget.style.transform = 'translateY(-2px)';
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.boxShadow = 'none';
+        e.currentTarget.style.transform = 'translateY(0)';
+      }}
     >
-      <div aria-hidden="true" className="absolute border border-[rgba(0,0,0,0.1)] border-solid inset-0 pointer-events-none rounded-[16px]" />
-      <div className="flex flex-col justify-center size-full">
-        <div className="flex flex-col items-start justify-center p-[16px] relative size-full">
-          <div className="h-[80px] relative shrink-0 w-full">
-             
-             {/* Text Content (Right) */}
-             <div className="absolute flex flex-col gap-[4px] h-[80px] items-start left-[92px] top-0 w-[calc(100%-92px)]">
-                <div className="h-[16px] opacity-60 relative shrink-0 w-full">
-                  <p className="font-['Ubuntu',sans-serif] font-normal leading-[16px] text-[#151515] text-[12px] tracking-[0.72px] uppercase truncate">
-                    {post.category || "RESOURCE"}
-                  </p>
-                </div>
-                <div className="h-[60px] relative shrink-0 w-full overflow-hidden">
-                  <p className="font-['Ubuntu',sans-serif] font-medium leading-[20px] text-[#151515] text-[16px] line-clamp-3">
-                    {post.title}
-                  </p>
-                </div>
-             </div>
-
-             {/* Image (Left) */}
-             <div className="absolute bg-[#aeaeae] left-0 overflow-hidden rounded-[12px] size-[80px] top-0">
-                <ImageWithFallback src={post.image} alt={post.title} className="w-full h-full object-cover" />
-             </div>
-
+      {/* Image — prominent, top of card */}
+      <div
+        className="relative overflow-hidden w-full"
+        style={{ height: '190px', backgroundColor: '#E9EBEF' }}
+      >
+        <ImageWithFallback
+          src={imageSrc}
+          fallbackSrc={FALLBACK_IMAGE}
+          alt={post.title}
+          className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+          loading="lazy"
+          decoding="async"
+        />
+        {/* Category badge overlay */}
+        {post.category && (
+          <div
+            className="absolute top-3 left-3"
+            style={{
+              backgroundColor: 'rgba(255,255,255,0.92)',
+              borderRadius: 'var(--radius-md)',
+              padding: '4px 10px',
+              backdropFilter: 'blur(4px)',
+            }}
+          >
+            <span
+              style={{
+                fontSize: '11px',
+                fontWeight: 'var(--font-weight-medium)',
+                fontFamily: 'var(--font-family-base)',
+                color: 'var(--color-text-primary)',
+                textTransform: 'uppercase',
+                letterSpacing: '0.6px',
+              }}
+            >
+              {post.category}
+            </span>
           </div>
+        )}
+      </div>
+
+      {/* Text content — title only, no description */}
+      <div
+        style={{
+          padding: 'var(--spacing-4)',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 'var(--spacing-2)',
+        }}
+      >
+        {/* Date + Read time */}
+        <div className="flex items-center" style={{ gap: '6px' }}>
+          <span
+            style={{
+              fontSize: 'var(--text-xs)',
+              fontWeight: 'var(--font-weight-regular)',
+              fontFamily: 'var(--font-family-base)',
+              color: 'var(--color-text-muted)',
+            }}
+          >
+            {post.date}
+          </span>
+          {post.readTime && (
+            <>
+              <span style={{ color: 'var(--color-text-muted)', fontSize: '10px' }}>•</span>
+              <span
+                style={{
+                  fontSize: 'var(--text-xs)',
+                  fontWeight: 'var(--font-weight-regular)',
+                  fontFamily: 'var(--font-family-base)',
+                  color: 'var(--color-text-muted)',
+                }}
+              >
+                {post.readTime}
+              </span>
+            </>
+          )}
         </div>
+
+        {/* Title */}
+        <h3
+          className="line-clamp-2"
+          style={{
+            fontSize: 'var(--text-base)',
+            fontWeight: 'var(--font-weight-medium)',
+            fontFamily: 'var(--font-family-base)',
+            color: 'var(--color-text-primary)',
+            lineHeight: '1.4',
+            margin: 0,
+          }}
+        >
+          {post.title}
+        </h3>
       </div>
     </div>
   );
 }
 
-export function ResourceBlock({ 
-  title = "Recent Thoughts", 
-  posts = [], 
+export function ResourceBlock({
+  title = 'Recent Thoughts',
+  posts = [],
   loading = false,
-  onPostClick, 
-  maxPosts = 3,
-  className 
+  onPostClick,
+  onViewAll,
+  viewAllText = 'View All Resources',
+  maxPosts = 10,
+  className,
 }: ResourceBlockProps) {
-  
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(false);
+  const isMobile = useIsMobile();
+
   const displayPosts = posts.slice(0, maxPosts);
+
+  // Check scroll state
+  const updateScrollState = () => {
+    const el = scrollRef.current;
+    if (!el) return;
+    setCanScrollLeft(el.scrollLeft > 4);
+    setCanScrollRight(el.scrollLeft < el.scrollWidth - el.clientWidth - 4);
+  };
+
+  useEffect(() => {
+    // Small delay for layout to settle
+    const timer = setTimeout(updateScrollState, 100);
+    const el = scrollRef.current;
+    if (el) {
+      el.addEventListener('scroll', updateScrollState, { passive: true });
+    }
+    window.addEventListener('resize', updateScrollState);
+
+    // Inject scrollbar-hide style once
+    if (!document.getElementById(SCROLLBAR_STYLE_ID)) {
+      const style = document.createElement('style');
+      style.id = SCROLLBAR_STYLE_ID;
+      style.textContent = `.ikan-resource-slider::-webkit-scrollbar { display: none; }`;
+      document.head.appendChild(style);
+    }
+
+    return () => {
+      clearTimeout(timer);
+      if (el) el.removeEventListener('scroll', updateScrollState);
+      window.removeEventListener('resize', updateScrollState);
+    };
+  }, [displayPosts.length]);
+
+  const scroll = (direction: 'left' | 'right') => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const amount = 320;
+    el.scrollBy({ left: direction === 'right' ? amount : -amount, behavior: 'smooth' });
+  };
 
   if (loading) {
     return (
-      <div className={cn("flex flex-col gap-[16px] items-center justify-center py-[36px] w-full", className)}>
-        <Skeleton height="48px" width="200px" />
-        <div className="w-full max-w-7xl px-4 flex flex-col md:flex-row gap-6">
-          {[1, 2, 3].map(i => (
-            <Skeleton key={i} height="300px" width="100%" className="rounded-[16px]" />
+      <div className={cn('flex flex-col gap-5 py-9 w-full max-w-[1100px] mx-auto', className)}>
+        <Skeleton height="40px" width="240px" className="ml-6" />
+        <div className="w-full flex gap-4 px-6 overflow-hidden">
+          {[1, 2, 3].map((i) => (
+            <Skeleton key={i} height="280px" width="300px" className="rounded-2xl flex-shrink-0" />
           ))}
         </div>
       </div>
@@ -80,33 +222,118 @@ export function ResourceBlock({
   if (displayPosts.length === 0) return null;
 
   return (
-    <div className={cn("flex flex-col gap-[16px] items-center justify-center py-[36px] w-full", className)}>
-      <p className="font-['Ubuntu',sans-serif] font-medium leading-[48px] text-[32px] text-black text-center w-full mb-4">
-        {title}
-      </p>
-      
-      {/* Mobile Layout */}
-      <div className="w-full max-w-md flex flex-col items-center gap-[16px] px-[20px] md:hidden">
-        {displayPosts.map((post, index) => (
-          <MobileResourceCard
-            key={post.id || index}
-            post={post}
-            onClick={() => onPostClick?.(post)}
-          />
-        ))}
+    <div
+      className={cn('flex flex-col py-9 w-full', className)}
+      style={{ gap: 'var(--spacing-5)' }}
+    >
+      {/* Header — aligned with page max-width */}
+      <div
+        className="flex items-center justify-between w-full max-w-[1100px] mx-auto"
+        style={{
+          paddingLeft: 'var(--spacing-6)',
+          paddingRight: 'var(--spacing-6)',
+        }}
+      >
+        <p
+          style={{
+            fontFamily: 'var(--font-family-base)',
+            fontWeight: 'var(--font-weight-medium)',
+            fontSize: 'var(--text-2xl)',
+            color: 'var(--color-text-primary)',
+            lineHeight: '1.3',
+            margin: 0,
+          }}
+        >
+          {title}
+        </p>
+
+        {/* Nav arrows */}
+        <div className="flex items-center" style={{ gap: 'var(--spacing-2)' }}>
+          <button
+            onClick={() => scroll('left')}
+            disabled={!canScrollLeft}
+            className="flex items-center justify-center border-none cursor-pointer transition-all"
+            style={{
+              width: '36px',
+              height: '36px',
+              borderRadius: '50%',
+              backgroundColor: canScrollLeft ? 'var(--color-primary-default)' : 'var(--color-accent-default)',
+              color: canScrollLeft ? '#FFFFFF' : 'var(--color-text-muted)',
+              opacity: canScrollLeft ? 1 : 0.4,
+            }}
+            aria-label="Scroll left"
+          >
+            <ChevronLeft size={18} />
+          </button>
+          <button
+            onClick={() => scroll('right')}
+            disabled={!canScrollRight}
+            className="flex items-center justify-center border-none cursor-pointer transition-all"
+            style={{
+              width: '36px',
+              height: '36px',
+              borderRadius: '50%',
+              backgroundColor: canScrollRight ? 'var(--color-primary-default)' : 'var(--color-accent-default)',
+              color: canScrollRight ? '#FFFFFF' : 'var(--color-text-muted)',
+              opacity: canScrollRight ? 1 : 0.4,
+            }}
+            aria-label="Scroll right"
+          >
+            <ChevronRight size={18} />
+          </button>
+        </div>
       </div>
 
-      {/* Desktop Layout */}
-      <div className="hidden md:grid md:grid-cols-3 gap-8 w-full max-w-7xl px-8">
-        {displayPosts.map((post, index) => (
-          <ResourceCard
-            key={post.id || index}
-            post={post}
-            onClick={() => onPostClick?.(post)}
-            className="h-full bg-white border border-[#0000001a] shadow-none hover:shadow-lg transition-all"
+      {/* Horizontal slider — aligned with page max-width */}
+      <div className="relative w-full max-w-[1100px] mx-auto">
+        {/* Fade edges */}
+        {canScrollLeft && (
+          <div
+            className="absolute top-0 bottom-0 left-0 z-10 pointer-events-none"
+            style={{
+              width: '48px',
+              background: 'linear-gradient(to right, var(--color-bg-page, #F5F5F5), transparent)',
+            }}
           />
-        ))}
+        )}
+        {canScrollRight && (
+          <div
+            className="absolute top-0 bottom-0 right-0 z-10 pointer-events-none"
+            style={{
+              width: '48px',
+              background: 'linear-gradient(to left, var(--color-bg-page, #F5F5F5), transparent)',
+            }}
+          />
+        )}
+
+        <div
+          ref={scrollRef}
+          className="flex w-full overflow-x-auto ikan-resource-slider"
+          style={{
+            gap: 'var(--spacing-4)',
+            paddingLeft: 'var(--spacing-6)',
+            paddingRight: 'var(--spacing-6)',
+            paddingBottom: 'var(--spacing-2)',
+            scrollbarWidth: 'none',
+            msOverflowStyle: 'none',
+            WebkitOverflowScrolling: 'touch',
+          }}
+        >
+          {displayPosts.map((post, index) => (
+            <SliderResourceCard
+              key={post.id || index}
+              post={post}
+              onClick={() => onPostClick?.(post)}
+              isMobile={isMobile}
+            />
+          ))}
+        </div>
       </div>
+
+      {/* CTA — View All */}
+      {onViewAll && (
+        null
+      )}
     </div>
   );
 }

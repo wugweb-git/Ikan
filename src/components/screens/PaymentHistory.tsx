@@ -209,9 +209,9 @@ export function PaymentHistory({ className }: PaymentHistoryProps) {
     return (
       <div className={cn("space-y-6", className)}>
         <div className="animate-pulse space-y-4">
-          <div className="h-32 bg-gray-200 rounded"></div>
-          <div className="h-24 bg-gray-200 rounded"></div>
-          <div className="h-24 bg-gray-200 rounded"></div>
+          <div className="h-32 rounded" style={{ backgroundColor: 'var(--color-bg-muted)' }}></div>
+          <div className="h-24 rounded" style={{ backgroundColor: 'var(--color-bg-muted)' }}></div>
+          <div className="h-24 rounded" style={{ backgroundColor: 'var(--color-bg-muted)' }}></div>
         </div>
       </div>
     );
@@ -314,7 +314,7 @@ export function PaymentHistory({ className }: PaymentHistoryProps) {
                 <div key={transaction.id}>
                   <div 
                     className={cn(
-                      "flex items-center justify-between rounded-lg border hover:bg-gray-50 cursor-pointer transition-colors",
+                      "flex items-center justify-between rounded-lg border hover:bg-black/5 cursor-pointer transition-colors",
                       isMobile ? "p-3" : "p-4"
                     )}
                     onClick={() => setSelectedTransaction(selectedTransaction?.id === transaction.id ? null : transaction)}
@@ -328,7 +328,7 @@ export function PaymentHistory({ className }: PaymentHistoryProps) {
                       isMobile ? "gap-3" : "gap-4"
                     )}>
                       <div className={cn(
-                        "flex items-center justify-center rounded-full bg-gray-100",
+                        "flex items-center justify-center rounded-full",
                         isMobile ? "w-8 h-8" : "w-10 h-10"
                       )}>
                         <Icon 
@@ -386,7 +386,7 @@ export function PaymentHistory({ className }: PaymentHistoryProps) {
                   {/* Expanded Transaction Details */}
                   {selectedTransaction?.id === transaction.id && (
                     <div 
-                      className="mt-2 p-4 bg-gray-50 rounded-lg border"
+                      className="mt-2 p-4 rounded-lg border"
                       style={{ backgroundColor: 'var(--color-bg-muted)' }}
                     >
                       <div className={cn(

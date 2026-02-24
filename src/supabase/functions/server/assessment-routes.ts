@@ -58,6 +58,7 @@ export function registerAssessmentRoutes(app: Hono, requireAuth: any) {
                 user_id: userId,
                 assessment_id: data.assessmentId,
                 score: data.score,
+                max_score: data.maxScore || null,
                 status: data.status,
                 interpretation: data.interpretation,
                 responses: data.responses,
@@ -90,8 +91,15 @@ export function registerAssessmentRoutes(app: Hono, requireAuth: any) {
         try {
             const userId = c.get('userId');
             const results = await kv.getByPrefix(`assessment_result:${userId}:`);
-            // Filter out "latest" keys if they duplicate
-            const history = results.filter((r: any) => r.id && !r.id.includes('latest'));
+            // Deduplicate: the :latest keys store copies of results with the same id.
+            // Use a Map keyed by result.id to keep only unique entries.
+            const uniqueMap = new Map<string, any>();
+            for (const r of results) {
+              if (r && r.id && !uniqueMap.has(r.id)) {
+                uniqueMap.set(r.id, r);
+              }
+            }
+            const history = Array.from(uniqueMap.values());
             return c.json({ history });
         } catch (error) {
             return c.json({ error: 'Failed to get history' }, 500);

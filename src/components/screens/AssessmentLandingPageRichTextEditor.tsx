@@ -53,17 +53,17 @@ export function AssessmentLandingPageRichTextEditor({ data, onChange }: Assessme
 
   return (
     <div className="space-y-6">
-      <div className="bg-blue-50 border border-blue-100 rounded-lg p-4 flex items-start gap-3">
-        <LayoutTemplate className="w-5 h-5 text-blue-600 mt-0.5" />
+      <div className="rounded-lg p-4 flex items-start gap-3" style={{ backgroundColor: 'var(--color-info-light)', border: '1px solid var(--color-info-default)' }}>
+        <LayoutTemplate className="w-5 h-5 mt-0.5" style={{ color: 'var(--color-info-default)' }} />
         <div>
-          <h4 className="font-medium text-blue-900">Section 2: Landing Page Content</h4>
-          <p className="text-sm text-blue-800">
+          <h4 style={{ fontWeight: 'var(--font-weight-medium)', color: 'var(--color-info-default)' }}>Section 2: Landing Page Content</h4>
+          <p style={{ fontSize: 'var(--text-sm)', color: 'var(--color-info-default)' }}>
             Configure the main assessment information displayed in the bento grid. Section titles are fixed.
           </p>
         </div>
       </div>
 
-      <div className="space-y-6 bg-white p-6 rounded-xl border border-gray-200">
+      <div className="space-y-6 p-6 rounded-xl" style={{ backgroundColor: 'var(--color-bg-card)', border: '1px solid var(--color-border-default)' }}>
         <h3 className="text-lg font-medium border-b pb-2">What is this assessment?</h3>
         
         <AdminFormField label="Description (2-3 paragraphs)" required>
@@ -92,7 +92,7 @@ export function AssessmentLandingPageRichTextEditor({ data, onChange }: Assessme
         </AdminFormField>
       </div>
 
-      <div className="space-y-6 bg-white p-6 rounded-xl border border-gray-200">
+      <div className="space-y-6 p-6 rounded-xl" style={{ backgroundColor: 'var(--color-bg-card)', border: '1px solid var(--color-border-default)' }}>
         <h3 className="text-lg font-medium border-b pb-2">Things to Remember Before You Start</h3>
         
         <AdminFormField 
@@ -113,7 +113,7 @@ export function AssessmentLandingPageRichTextEditor({ data, onChange }: Assessme
         </AdminFormField>
       </div>
 
-      <div className="space-y-6 bg-white p-6 rounded-xl border border-gray-200">
+      <div className="space-y-6 p-6 rounded-xl" style={{ backgroundColor: 'var(--color-bg-card)', border: '1px solid var(--color-border-default)' }}>
         <h3 className="text-lg font-medium border-b pb-2">Important</h3>
         
         <AdminFormField 

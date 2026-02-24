@@ -9,13 +9,14 @@ import { Input } from '../ui/input';
 import { Textarea } from '../ui/textarea';
 import { Checkbox } from '../ui/checkbox';
 import { Label } from '../ui/label';
-import { Badge } from '../ui/badge';
+import { AdminStatusBadge } from '../admin/AdminStatusBadge';
 import { useFormValidation, ValidationSchema } from '../../hooks/useFormValidation';
 import { useUnsavedChanges } from '../../hooks/useUnsavedChanges';
 import { useKeyboardShortcuts } from '../../hooks/useKeyboardShortcuts';
 import { UnsavedChangesDialog } from '../ui/unsaved-changes-dialog';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '../ui/dialog';
 import { Button } from '../ui/button';
+import { AdminLoading } from '../admin/AdminLoading';
 
 interface UserProfile {
   user_id: string;
@@ -197,15 +198,7 @@ export function UserEditPage({ userId, onBack, onSave }: UserEditPageProps) {
         ]}
       >
         <div className="flex items-center justify-center py-12">
-          <div
-            className="animate-spin rounded-full border-4"
-            style={{
-              width: '48px',
-              height: '48px',
-              borderColor: 'var(--color-accent-default)',
-              borderTopColor: 'var(--color-primary-default)'
-            }}
-          />
+          <AdminLoading message="Loading user..." />
         </div>
       </AdminPageLayout>
     );
@@ -477,9 +470,7 @@ export function UserEditPage({ userId, onBack, onSave }: UserEditPageProps) {
                       </p>
                     </div>
                   </div>
-                  <Badge variant="default" style={{ backgroundColor: 'var(--color-success-default)' }}>
-                    Connected
-                  </Badge>
+                  <AdminStatusBadge status="Connected" variant="success" />
                 </div>
               )}
 
@@ -502,9 +493,7 @@ export function UserEditPage({ userId, onBack, onSave }: UserEditPageProps) {
                       </p>
                     </div>
                   </div>
-                  <Badge variant="default" style={{ backgroundColor: 'var(--color-success-default)' }}>
-                    Connected
-                  </Badge>
+                  <AdminStatusBadge status="Connected" variant="success" />
                 </div>
               )}
 

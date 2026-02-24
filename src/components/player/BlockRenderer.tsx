@@ -19,7 +19,7 @@ interface BlockRendererProps {
 }
 
 export function BlockRenderer({ block, value, onChange, readOnly = false }: BlockRendererProps) {
-  const { type, title, content, exerciseConfig } = block;
+  const { type, title, subtitle, content, exerciseConfig } = block;
 
   // --- HELPERS ---
   const cleanOptionLabel = (text: string) => {
@@ -76,7 +76,7 @@ export function BlockRenderer({ block, value, onChange, readOnly = false }: Bloc
     }
 
     return (
-      <div className="rounded-2xl overflow-hidden aspect-video bg-gray-100 mb-8 shadow-sm">
+      <div className="rounded-2xl overflow-hidden aspect-video mb-8 shadow-sm" style={{ backgroundColor: 'var(--color-bg-muted)' }}>
         <img 
           src={block.image_url} 
           alt={title} 
@@ -97,28 +97,28 @@ export function BlockRenderer({ block, value, onChange, readOnly = false }: Bloc
           <div className="absolute left-0 top-2 bottom-2 w-1 bg-gradient-to-b from-[#2A2A2A] to-transparent opacity-10 rounded-full hidden md:block" />
           
           <div 
-            className="prose prose-lg md:prose-xl max-w-none font-['Ubuntu'] text-[#1C1C1E] md:pl-6"
+            className="prose prose-lg md:prose-xl max-w-none text-[#1C1C1E] md:pl-6"
           >
              {/* Inject custom styles for this block content */}
              <style>{`
                .lesson-content h3 { 
-                 font-size: 1.75rem; 
-                 font-weight: 600; 
-                 letter-spacing: -0.02em; 
-                 margin-bottom: 1rem; 
-                 margin-top: 0;
-                 color: #111; 
-               }
-               .lesson-content p { 
-                 font-size: 1.125rem; 
-                 line-height: 1.7; 
-                 color: #3A3A3C; 
-                 margin-bottom: 1.5rem; 
-               }
-               .lesson-content strong { 
-                 font-weight: 600; 
-                 color: #000; 
-               }
+                  font-size: 1.75rem; 
+                  font-weight: 500; 
+                  letter-spacing: -0.02em; 
+                  margin-bottom: 1rem; 
+                  margin-top: 0;
+                  color: #111; 
+                }
+                .lesson-content p { 
+                  font-size: 1.125rem; 
+                  line-height: 1.7; 
+                  color: #3A3A3C; 
+                  margin-bottom: 1.5rem; 
+                }
+                .lesson-content strong { 
+                  font-weight: 500; 
+                  color: #000; 
+                }
                .lesson-content ul {
                  list-style-type: disc;
                  padding-left: 1.5rem;
@@ -148,7 +148,7 @@ export function BlockRenderer({ block, value, onChange, readOnly = false }: Bloc
     
     if (options.length === 0) {
       return (
-        <div className="p-4 bg-yellow-50 text-yellow-800 rounded-lg text-sm">
+        <div className="p-4 rounded-lg text-sm" style={{ backgroundColor: 'var(--color-status-warning-light)', color: 'var(--color-status-warning)' }}>
           No options provided for this question.
         </div>
       );
@@ -180,8 +180,8 @@ export function BlockRenderer({ block, value, onChange, readOnly = false }: Bloc
                  flex items-center w-full p-5 min-h-[64px]
                  bg-white border-2 border-transparent rounded-[16px] 
                  cursor-pointer transition-all shadow-[0_2px_12px_rgba(0,0,0,0.03)]
-                 text-[17px] text-[#1C1C1E] font-medium font-['Ubuntu']
-                 hover:bg-gray-50 hover:scale-[1.01]
+                 text-[17px] text-[#1C1C1E] font-medium
+                 hover:bg-[var(--color-bg-muted)] hover:scale-[1.01]
                  peer-data-[state=checked]:border-[#2A2A2A] peer-data-[state=checked]:bg-[#F9F9FA] peer-data-[state=checked]:shadow-md
                  active:scale-[0.99]
                "
@@ -203,7 +203,7 @@ export function BlockRenderer({ block, value, onChange, readOnly = false }: Bloc
 
     if (options.length === 0) {
       return (
-        <div className="p-4 bg-yellow-50 text-yellow-800 rounded-lg text-sm">
+        <div className="p-4 rounded-lg text-sm" style={{ backgroundColor: 'var(--color-status-warning-light)', color: 'var(--color-status-warning)' }}>
           No options provided for this question.
         </div>
       );
@@ -231,7 +231,7 @@ export function BlockRenderer({ block, value, onChange, readOnly = false }: Bloc
                 "flex items-center space-x-3 p-5 rounded-[16px] transition-all cursor-pointer shadow-[0_2px_12px_rgba(0,0,0,0.03)] border-2",
                 isChecked 
                   ? "bg-[#F9F9FA] border-[#2A2A2A] shadow-md" 
-                  : "bg-white border-transparent hover:bg-gray-50"
+                  : "bg-white border-transparent hover:bg-[var(--color-bg-muted)]"
               )}
               onClick={() => !readOnly && toggleValue(option)}
             >
@@ -276,22 +276,25 @@ export function BlockRenderer({ block, value, onChange, readOnly = false }: Bloc
               transition={{ delay: index * 0.05 }}
               className={cn(
                 "flex items-center space-x-4 p-4 rounded-[12px] transition-all cursor-pointer",
-                isChecked ? "bg-green-50/50" : "bg-transparent hover:bg-gray-50"
+                isChecked ? "bg-[var(--color-status-success-light)]" : "bg-transparent hover:bg-[var(--color-bg-muted)]"
               )}
               onClick={() => !readOnly && toggleValue(item)}
             >
               <div className={cn(
                 "w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors",
-                isChecked ? "border-green-500 bg-green-500 text-white" : "border-gray-300"
-              )}>
+                isChecked ? "text-white" : ""
+              )}
+              style={isChecked ? { borderColor: 'var(--color-status-success)', backgroundColor: 'var(--color-status-success)' } : { borderColor: 'var(--color-border-default)' }}
+              >
                  {isChecked && <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>}
               </div>
               <Label 
                 htmlFor={`check-${block.id}-${index}`} 
                 className={cn(
                   "flex-1 cursor-pointer text-[17px] font-medium transition-all",
-                  isChecked ? "text-gray-500 line-through decoration-gray-400" : "text-[#1C1C1E]"
+                  isChecked ? "line-through" : "text-[#1C1C1E]"
                 )}
+                style={isChecked ? { color: 'var(--color-text-muted)', textDecorationColor: 'var(--color-text-muted)' } : undefined}
               >
                 {cleanOptionLabel(item)}
               </Label>
@@ -315,7 +318,7 @@ export function BlockRenderer({ block, value, onChange, readOnly = false }: Bloc
              text-[17px] p-6 resize-none rounded-[20px] 
              border-0 bg-white shadow-[0_2px_16px_rgba(0,0,0,0.04)]
              focus:ring-2 focus:ring-[#2A2A2A] focus:shadow-lg
-             placeholder:text-[#AEAEB2] font-['Ubuntu'] leading-relaxed
+             placeholder:text-[#AEAEB2] leading-relaxed
              transition-all
           "
         />
@@ -408,7 +411,7 @@ export function BlockRenderer({ block, value, onChange, readOnly = false }: Bloc
           <Table>
             <TableHeader className="bg-[#F9F9FA]">
               <TableRow>
-                <TableHead className="w-[180px] font-semibold text-[#1C1C1E] min-w-[150px]">Activity</TableHead>
+                <TableHead className="w-[180px] font-medium text-[#1C1C1E] min-w-[150px]">Activity</TableHead>
                 {columns.map((col) => (
                   <TableHead key={col} className="text-center font-medium text-[#1C1C1E] min-w-[80px]">
                     {col}
@@ -429,7 +432,7 @@ export function BlockRenderer({ block, value, onChange, readOnly = false }: Bloc
                     return (
                       <TableCell key={col} className="text-center p-0">
                          <div 
-                           className="flex items-center justify-center w-full h-full py-4 cursor-pointer hover:bg-gray-50 transition-colors"
+                           className="flex items-center justify-center w-full h-full py-4 cursor-pointer hover:bg-[var(--color-bg-muted)] transition-colors"
                            onClick={() => toggleCell(row, col)}
                          >
                            <Checkbox 
@@ -480,7 +483,7 @@ export function BlockRenderer({ block, value, onChange, readOnly = false }: Bloc
                   "px-4 py-2 rounded-lg text-sm font-medium transition-colors border",
                   value === 'Yes' 
                     ? "bg-[#2A2A2A] text-white border-[#2A2A2A]" 
-                    : "bg-white text-[#1C1C1E] border-gray-200 hover:bg-gray-50"
+                    : "bg-white text-[#1C1C1E] border-[var(--color-border-default)] hover:bg-[var(--color-bg-muted)]"
                 )}
                 onClick={() => updateCell(rIdx, col, 'Yes')}
               >
@@ -491,7 +494,7 @@ export function BlockRenderer({ block, value, onChange, readOnly = false }: Bloc
                   "px-4 py-2 rounded-lg text-sm font-medium transition-colors border",
                   value === 'No' 
                     ? "bg-[#2A2A2A] text-white border-[#2A2A2A]" 
-                    : "bg-white text-[#1C1C1E] border-gray-200 hover:bg-gray-50"
+                    : "bg-white text-[#1C1C1E] border-[var(--color-border-default)] hover:bg-[var(--color-bg-muted)]"
                 )}
                 onClick={() => updateCell(rIdx, col, 'No')}
               >
@@ -505,7 +508,7 @@ export function BlockRenderer({ block, value, onChange, readOnly = false }: Bloc
       if (lowerCol.includes('(yes, no, na)') || lowerCol.includes('did it affect my sleep')) {
         return (
           <Select value={value} onValueChange={(val) => updateCell(rIdx, col, val)}>
-            <SelectTrigger className="w-full h-[60px] bg-gray-50 border-gray-100 focus:bg-white">
+            <SelectTrigger className="w-full h-[60px] focus:bg-white" style={{ backgroundColor: 'var(--color-bg-input)', borderColor: 'var(--color-border-default)' }}>
               <SelectValue placeholder="Select..." />
             </SelectTrigger>
             <SelectContent>
@@ -523,7 +526,8 @@ export function BlockRenderer({ block, value, onChange, readOnly = false }: Bloc
              type="date"
              value={value}
              onChange={(e) => updateCell(rIdx, col, e.target.value)}
-             className="h-[60px] border-gray-100 bg-gray-50 focus:bg-white text-[15px]"
+             className="h-[60px] text-[15px]"
+             style={{ borderColor: 'var(--color-border-default)', backgroundColor: 'var(--color-bg-input)' }}
           />
         );
       }
@@ -534,7 +538,8 @@ export function BlockRenderer({ block, value, onChange, readOnly = false }: Bloc
              type="time"
              value={value}
              onChange={(e) => updateCell(rIdx, col, e.target.value)}
-             className="h-[60px] border-gray-100 bg-gray-50 focus:bg-white text-[15px]"
+             className="h-[60px] text-[15px]"
+             style={{ borderColor: 'var(--color-border-default)', backgroundColor: 'var(--color-bg-input)' }}
           />
         );
       }
@@ -546,7 +551,8 @@ export function BlockRenderer({ block, value, onChange, readOnly = false }: Bloc
           placeholder="..."
           disabled={readOnly}
           rows={2}
-          className="min-h-[60px] resize-none border-gray-100 bg-gray-50 focus:bg-white transition-colors text-[15px] pt-4"
+          className="min-h-[60px] resize-none focus:bg-white transition-colors text-[15px] pt-4"
+          style={{ borderColor: 'var(--color-border-default)', backgroundColor: 'var(--color-bg-input)' }}
         />
       );
     };
@@ -609,10 +615,10 @@ export function BlockRenderer({ block, value, onChange, readOnly = false }: Bloc
                key={num}
                onClick={() => !readOnly && onChange(num)}
                className={cn(
-                 "w-12 h-14 rounded-[16px] flex items-center justify-center font-bold text-xl transition-all shadow-sm",
+                 "w-12 h-14 rounded-[16px] flex items-center justify-center font-medium text-xl transition-all shadow-sm",
                  value === num 
                   ? "bg-[#2A2A2A] text-white scale-110 shadow-lg ring-4 ring-[#2A2A2A]/10"
-                  : "bg-white text-[#1C1C1E] border border-gray-100 hover:bg-gray-50 hover:scale-105"
+                  : "bg-white text-[#1C1C1E] border border-[var(--color-border-default)] hover:bg-[var(--color-bg-muted)] hover:scale-105"
                )}
                disabled={readOnly}
              >
@@ -699,7 +705,7 @@ export function BlockRenderer({ block, value, onChange, readOnly = false }: Bloc
         <div className="flex items-center gap-2">
           {/* Badge: QUESTION */}
           {(type === 'exercise' || type === 'clinical_instrument') && (
-            <span className="text-[13px] font-bold text-[#8E8E93] uppercase tracking-wide font-['Ubuntu']">
+            <span className="text-[13px] font-medium text-[#8E8E93] uppercase tracking-wide">
                Question
             </span>
           )}
@@ -711,13 +717,20 @@ export function BlockRenderer({ block, value, onChange, readOnly = false }: Bloc
         </div>
         
         {/* Title - The main question text */}
-        <h2 className="text-[22px] md:text-[26px] font-semibold text-[#1C1C1E] leading-snug font-['Ubuntu'] tracking-tight">
+        <h2 className="text-[22px] md:text-[26px] font-medium text-[#1C1C1E] leading-snug tracking-tight">
           {displayTitle}
         </h2>
+
+        {/* Subtitle - Always visible when present */}
+        {subtitle && (
+          <p className="text-[15px] md:text-[17px] text-[#636366] font-normal leading-relaxed">
+            {subtitle}
+          </p>
+        )}
         
         {/* Prompt/Description - Only if different from title */}
         {finalShowPrompt && (
-          <p className="text-[17px] text-[#636366] font-['Ubuntu'] font-normal leading-relaxed">
+          <p className="text-[17px] text-[#636366] font-normal leading-relaxed">
             {exerciseConfig.prompt}
           </p>
         )}

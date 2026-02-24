@@ -7,15 +7,19 @@ import { Textarea } from '../ui/textarea';
 import { Card, CardContent } from '../ui/card';
 import { usePageContent } from '../../hooks/usePageContent';
 import { PageHero } from '../ui/PageHero';
+import { apiClient } from '../../lib/api-client';
+import { useNotifications } from '../../contexts/NotificationContext';
 
 interface ContactUsProps {
   className?: string;
+  onNavigate?: (route: string) => void;
   onBack?: () => void;
 }
 
-export function ContactUs({ className, onBack }: ContactUsProps) {
+export function ContactUs({ className, onNavigate, onBack }: ContactUsProps) {
   const isMobile = useIsMobile();
   const { content } = usePageContent('contact');
+  const { showToast } = useNotifications();
   
   const [formData, setFormData] = useState({
     name: '',
@@ -23,12 +27,40 @@ export function ContactUs({ className, onBack }: ContactUsProps) {
     subject: '',
     message: ''
   });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSubmitted, setIsSubmitted] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Handle form submission
-    console.log('Contact form submitted:', formData);
-    // You would typically send this to an API endpoint here
+    
+    if (!formData.name || !formData.email || !formData.message) {
+      showToast('error', 'Missing Fields', 'Please fill in your name, email, and message.');
+      return;
+    }
+
+    // Basic email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(formData.email)) {
+      showToast('error', 'Invalid Email', 'Please enter a valid email address.');
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      const response = await apiClient.submitContactForm(formData);
+      if (response.success) {
+        showToast('success', 'Message Sent', response.message || 'We will get back to you soon.');
+        setIsSubmitted(true);
+        setFormData({ name: '', email: '', subject: '', message: '' });
+      } else {
+        showToast('error', 'Error', response.error || 'Failed to send message.');
+      }
+    } catch (error) {
+      console.error('Contact form submission error:', error);
+      showToast('error', 'Error', 'Failed to send message. Please try again later.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const contactMethods = [
@@ -335,18 +367,19 @@ export function ContactUs({ className, onBack }: ContactUsProps) {
 
                   <Button
                     type="submit"
+                    disabled={isSubmitting || isSubmitted}
                     className="w-full ikan-button"
                     style={{
                       height: 'var(--ikan-component-button-height)',
                       borderRadius: 'var(--ikan-component-border-radius)',
-                      backgroundColor: 'var(--semantic-button-primary-bg)',
+                      backgroundColor: isSubmitted ? 'var(--color-status-success)' : 'var(--semantic-button-primary-bg)',
                       color: 'var(--semantic-button-primary-fg)',
                       fontSize: 'var(--text-base)',
                       fontWeight: 'var(--font-weight-medium)',
                       border: 'none'
                     }}
                   >
-                    Send Message
+                    {isSubmitted ? 'Message Sent' : isSubmitting ? 'Sending...' : 'Send Message'}
                   </Button>
                 </form>
               </div>
@@ -474,7 +507,7 @@ export function ContactUs({ className, onBack }: ContactUsProps) {
               
               <Button
                 variant="outline"
-                onClick={() => window.location.href = '/faq'}
+                onClick={() => onNavigate ? onNavigate('/faq') : window.location.href = '/faq'}
                 style={{
                   height: 'var(--ikan-component-button-height)',
                   borderRadius: 'var(--ikan-component-border-radius)',

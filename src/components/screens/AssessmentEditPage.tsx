@@ -21,6 +21,8 @@ import { useUnsavedChanges } from '../../hooks/useUnsavedChanges';
 import { useKeyboardShortcuts } from '../../hooks/useKeyboardShortcuts';
 import { UnsavedChangesDialog } from '../ui/unsaved-changes-dialog';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '../ui/dialog';
+import { AdminHeader } from '../admin/AdminHeader';
+import { AdminLoading } from '../admin/AdminLoading';
 
 interface Question {
   id: string;
@@ -318,15 +320,7 @@ export function AssessmentEditPage({ assessmentId, onBack, onSave }: AssessmentE
         ]}
       >
         <div className="flex items-center justify-center py-12">
-          <div
-            className="animate-spin rounded-full border-4"
-            style={{
-              width: '48px',
-              height: '48px',
-              borderColor: 'var(--color-accent-default)',
-              borderTopColor: 'var(--color-primary-default)'
-            }}
-          />
+          <AdminLoading message="Loading assessment..." />
         </div>
       </AdminPageLayout>
     );
@@ -644,7 +638,7 @@ export function AssessmentEditPage({ assessmentId, onBack, onSave }: AssessmentE
                     <div className="flex items-start gap-3 mb-4">
                       <div className="flex items-center gap-2">
                         <GripVertical className="w-4 h-4" style={{ color: 'var(--color-text-muted)' }} />
-                        <Badge variant="outline">Q{index + 1}</Badge>
+                        <Badge variant="outline" style={{ backgroundColor: 'var(--color-bg-muted)', color: 'var(--color-text-muted)', fontWeight: 'var(--font-weight-medium)', borderColor: 'var(--color-border-default)' }}>Q{index + 1}</Badge>
                       </div>
                       <div className="flex-1 space-y-3">
                         <Input

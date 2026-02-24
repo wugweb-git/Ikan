@@ -13,8 +13,12 @@ export function ResourceTags({ tags, className }: ResourceTagsProps) {
   return (
     <div className={cn("space-y-3", className)}>
       <h3 
-        className="text-base font-medium text-gray-900"
-        style={{ fontFamily: 'var(--font-family-base)' }}
+        style={{ 
+          fontFamily: 'var(--font-family-base)',
+          fontSize: 'var(--text-base)',
+          fontWeight: 'var(--font-weight-medium)',
+          color: 'var(--color-text-primary)'
+        }}
       >
         Tags
       </h3>
@@ -23,7 +27,15 @@ export function ResourceTags({ tags, className }: ResourceTagsProps) {
           <Badge
             key={tag}
             variant="secondary"
-            className="px-3 py-1 text-sm font-normal text-gray-600 bg-gray-100 border border-gray-200"
+            className="px-3 py-1"
+            style={{
+              fontSize: 'var(--text-sm)',
+              fontWeight: 'var(--font-weight-regular)',
+              color: 'var(--color-text-muted)',
+              backgroundColor: 'var(--color-bg-muted)',
+              borderColor: 'var(--color-border-default)',
+              borderWidth: '1px'
+            }}
           >
             {tag}
           </Badge>

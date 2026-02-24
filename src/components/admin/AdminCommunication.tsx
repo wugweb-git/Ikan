@@ -12,7 +12,7 @@ import {
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Card, CardContent } from '../ui/card';
-import { Badge } from '../ui/badge';
+import { AdminStatusBadge, resolveStatusVariant } from './AdminStatusBadge';
 import { Textarea } from '../ui/textarea';
 import { Label } from '../ui/label';
 import {
@@ -28,6 +28,7 @@ import { Checkbox } from '../ui/checkbox';
 import { useNotifications } from '../../contexts/NotificationContext';
 import { AdminHeader } from './AdminHeader';
 import { AdminEmptyState } from './AdminEmptyState';
+import { AdminLoading } from './AdminLoading';
 import { useIsMobile } from '../../hooks/useIsMobile';
 
 interface EmailTemplate {
@@ -165,15 +166,6 @@ export function AdminCommunication() {
     },
   ];
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'sent': return 'var(--color-success-default)';
-      case 'pending': return 'var(--color-warning-default)';
-      case 'failed': return 'var(--color-danger-default)';
-      default: return 'var(--color-text-muted)';
-    }
-  };
-
   const getTypeIcon = (type: string) => {
     switch (type) {
       case 'email': return <Mail className="w-4 h-4" />;
@@ -258,9 +250,7 @@ export function AdminCommunication() {
                         {template.subject}
                       </p>
                     </div>
-                    <Badge variant="outline">
-                      {template.category}
-                    </Badge>
+                    <AdminStatusBadge status={resolveStatusVariant(template.category)} label={template.category} />
                   </div>
                   <Button
                     variant="outline"
@@ -334,9 +324,7 @@ export function AdminCommunication() {
                           {item.subject}
                         </td>
                         <td className="px-4 py-3">
-                          <Badge style={{ backgroundColor: getStatusColor(item.status), color: 'white' }}>
-                            {item.status}
-                          </Badge>
+                          <AdminStatusBadge status={item.status} />
                         </td>
                         <td className="px-4 py-3" style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-muted)' }}>
                           {new Date(item.scheduled_at).toLocaleString()}

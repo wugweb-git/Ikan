@@ -31,22 +31,24 @@ export function ReassessmentPrompt({ isOpen, onClose, onConfirm }: ReassessmentP
           animate={{ y: 0, opacity: 1 }}
           exit={{ y: "100%", opacity: 0 }}
           transition={{ type: "spring", damping: 25, stiffness: 300 }}
-          className="w-full sm:max-w-md bg-white rounded-t-[32px] sm:rounded-[32px] p-8 pb-10 shadow-2xl pointer-events-auto relative m-4"
+          className="w-full sm:max-w-md rounded-t-[32px] sm:rounded-[32px] p-8 pb-10 shadow-2xl pointer-events-auto relative m-4"
+          style={{ backgroundColor: 'var(--color-bg-card)' }}
         >
           <button 
             onClick={onClose}
-            className="absolute top-6 right-6 p-2 rounded-full hover:bg-gray-100 text-gray-400 transition-colors"
+            className="absolute top-6 right-6 p-2 rounded-full transition-colors"
+            style={{ color: 'var(--color-text-muted)' }}
           >
             <Icon name="x" size={24} />
           </button>
 
           <div className="flex flex-col items-center text-center space-y-6">
-            <div className="w-16 h-16 bg-indigo-50 text-indigo-600 rounded-full flex items-center justify-center mb-2">
+            <div className="w-16 h-16 rounded-full flex items-center justify-center mb-2" style={{ backgroundColor: 'var(--color-status-info-light)', color: 'var(--color-status-info)' }}>
               <Icon name="activity" size={32} />
             </div>
 
             <div className="space-y-3">
-              <h2 className="text-2xl font-bold text-[var(--color-text-primary)]">
+              <h2 className="text-2xl font-medium text-[var(--color-text-primary)]">
                 Want to check where you are now?
               </h2>
               <p className="text-[var(--color-text-muted)] leading-relaxed text-lg">

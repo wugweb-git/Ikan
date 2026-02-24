@@ -1,17 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { Users, Search, Download, Edit, Shield, Building, UserPlus, MoreHorizontal, Trash2, UserX, UserCheck } from 'lucide-react';
+import { Users, Download, Edit, Shield, Building, UserPlus, MoreHorizontal, Trash2 } from 'lucide-react';
 import { useNotifications } from '../../contexts/NotificationContext';
 import { apiClient } from '../../lib/api-client';
 import { AdminHeader } from '../admin/AdminHeader';
-import { AdminEmptyState } from '../admin/AdminEmptyState';
 import { useIsMobile } from '../../hooks/useIsMobile';
 import { Button } from '../ui/button';
-import { Badge } from '../ui/badge';
-import { cn } from '../ui/utils';
+import { AdminStatusBadge } from '../admin/AdminStatusBadge';
 import { UserEditPage } from './UserEditPage';
 import { AdminDataTable, Column, FilterOption } from '../admin/AdminDataTable';
 import { SkeletonTable } from '../ui/skeleton-loader';
-import { ErrorState, InlineError } from '../ui/error-state';
+import { ErrorState } from '../ui/error-state';
 import { EmptyState } from '../ui/empty-state';
 import {
   DropdownMenu,
@@ -197,12 +195,12 @@ export function AdminUserManager({ onBack, className }: AdminUserManagerProps) {
       sortable: true,
       render: (user) => (
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0 text-primary font-medium">
+          <div className="w-10 h-10 rounded-full flex items-center justify-center shrink-0" style={{ backgroundColor: 'var(--color-accent-default)', color: 'var(--color-primary-default)', fontWeight: 'var(--font-weight-medium)' }}>
             {user.name?.charAt(0) || user.email?.charAt(0) || '?'}
           </div>
           <div className="flex flex-col">
-            <span className="font-medium truncate max-w-[200px]" title={user.name}>{user.name || 'Unknown'}</span>
-            <span className="text-xs text-muted-foreground truncate max-w-[200px]" title={user.email}>{user.email}</span>
+            <span className="truncate max-w-[200px]" style={{ fontWeight: 'var(--font-weight-medium)', fontFamily: 'var(--font-family-base)' }} title={user.name}>{user.name || 'Unknown'}</span>
+            <span className="truncate max-w-[200px]" style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)', fontFamily: 'var(--font-family-base)' }} title={user.email}>{user.email}</span>
           </div>
         </div>
       )
@@ -214,17 +212,13 @@ export function AdminUserManager({ onBack, className }: AdminUserManagerProps) {
       render: (user) => (
         <div className="flex gap-1">
           {user.is_admin && (
-            <Badge variant="default" className="bg-orange-100 text-orange-800 hover:bg-orange-100 border-orange-200">
-              Admin
-            </Badge>
+            <AdminStatusBadge status="warning" label="Admin" />
           )}
           {user.corporate_user && (
-            <Badge variant="default" className="bg-blue-100 text-blue-800 hover:bg-blue-100 border-blue-200">
-              Corporate
-            </Badge>
+            <AdminStatusBadge status="info" label="Corporate" />
           )}
           {!user.is_admin && !user.corporate_user && (
-             <Badge variant="outline">User</Badge>
+             <AdminStatusBadge status="neutral" label="User" />
           )}
         </div>
       )
@@ -234,22 +228,22 @@ export function AdminUserManager({ onBack, className }: AdminUserManagerProps) {
       accessorKey: 'program_progress', // Virtual key
       render: (user) => {
         const userEnrollment = enrollments.find(e => e.user_id === user.user_id && e.status === 'active');
-        if (!userEnrollment) return <span className="text-muted-foreground text-xs">-</span>;
+        if (!userEnrollment) return <span style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}>-</span>;
         
         const program = programs.find(p => p.id === userEnrollment.equip_id);
         const programName = program?.title || program?.name || 'Unknown Program';
         
         return (
           <div className="flex flex-col">
-            <span className="text-sm font-medium text-indigo-700">{programName}</span>
+            <span style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--font-weight-medium)', color: 'var(--color-primary-default)' }}>{programName}</span>
             <div className="flex items-center gap-2">
-              <div className="h-1.5 w-16 bg-gray-100 rounded-full overflow-hidden">
+              <div className="h-1.5 w-16 rounded-full overflow-hidden" style={{ backgroundColor: 'var(--color-bg-muted)' }}>
                 <div 
-                   className="h-full bg-indigo-500 rounded-full" 
-                   style={{ width: `${Math.min(100, (userEnrollment.current_day_number / (program?.days?.length || 30)) * 100)}%` }} 
+                   className="h-full rounded-full" 
+                   style={{ width: `${Math.min(100, (userEnrollment.current_day_number / (program?.days?.length || 30)) * 100)}%`, backgroundColor: 'var(--color-primary-default)' }} 
                 />
               </div>
-              <span className="text-xs text-muted-foreground">Day {userEnrollment.current_day_number}</span>
+              <span style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}>Day {userEnrollment.current_day_number}</span>
             </div>
           </div>
         );
@@ -259,10 +253,10 @@ export function AdminUserManager({ onBack, className }: AdminUserManagerProps) {
       header: 'Contact',
       accessorKey: 'phone',
       render: (user) => (
-        <div className="flex flex-col text-sm">
+        <div className="flex flex-col" style={{ fontSize: 'var(--text-sm)' }}>
           {user.phone && <span>{user.phone}</span>}
-          {user.location && <span className="text-muted-foreground text-xs">{user.location}</span>}
-          {!user.phone && !user.location && <span className="text-muted-foreground text-xs">-</span>}
+          {user.location && <span style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}>{user.location}</span>}
+          {!user.phone && !user.location && <span style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}>-</span>}
         </div>
       )
     },
@@ -271,7 +265,7 @@ export function AdminUserManager({ onBack, className }: AdminUserManagerProps) {
       accessorKey: 'created_at',
       sortable: true,
       render: (user) => (
-        <span className="text-sm text-muted-foreground">
+        <span style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-muted)' }}>
           {formatDate(user.created_at)}
         </span>
       )
@@ -298,7 +292,7 @@ export function AdminUserManager({ onBack, className }: AdminUserManagerProps) {
             <DropdownMenuSeparator />
             <DropdownMenuItem 
               onClick={(e) => { e.stopPropagation(); handleDelete(user.user_id, user.name || 'Unknown'); }}
-              className="text-red-600"
+              style={{ color: 'var(--color-status-danger)' }}
             >
               <Trash2 className="mr-2 h-4 w-4" /> Delete User
             </DropdownMenuItem>
@@ -320,22 +314,22 @@ export function AdminUserManager({ onBack, className }: AdminUserManagerProps) {
     {
       label: 'Total Users',
       value: users.length,
-      icon: <Users className="w-4 h-4 text-primary" />
+      icon: <Users className="w-4 h-4" style={{ color: 'var(--color-primary-default)' }} />
     },
     {
       label: 'Admins',
       value: users.filter((u) => u.is_admin).length,
-      icon: <Shield className="w-4 h-4 text-orange-500" />
+      icon: <Shield className="w-4 h-4" style={{ color: 'var(--color-status-warning)' }} />
     },
     {
       label: 'Corporate',
       value: users.filter((u) => u.corporate_user).length,
-      icon: <Building className="w-4 h-4 text-blue-500" />
+      icon: <Building className="w-4 h-4" style={{ color: 'var(--color-info-default)' }} />
     },
     {
       label: 'Regular Users',
       value: users.filter((u) => !u.is_admin && !u.corporate_user).length,
-      icon: <Users className="w-4 h-4 text-green-500" />
+      icon: <Users className="w-4 h-4" style={{ color: 'var(--color-status-success)' }} />
     }
   ];
 

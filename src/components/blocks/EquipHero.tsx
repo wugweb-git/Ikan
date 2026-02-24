@@ -56,14 +56,14 @@ export function EquipHero({
         <div className="max-w-[500px] flex flex-col gap-6 items-start">
           {/* Title */}
           <h1 
-            className="font-medium text-[32px] md:text-[40px] leading-[1.2] text-[#151515] font-['Ubuntu']"
+            className="font-medium text-[32px] md:text-[40px] leading-[1.2] text-[#151515]"
           >
             {title}
           </h1>
 
           {/* Description */}
           <p 
-            className="font-normal text-[16px] md:text-[18px] leading-[1.5] text-[#151515] font-['Ubuntu'] opacity-90"
+            className="font-normal text-[16px] md:text-[18px] leading-[1.5] text-[#151515] opacity-90"
           >
             {description}
           </p>

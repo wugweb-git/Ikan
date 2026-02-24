@@ -41,7 +41,7 @@ export function BookingModal({
       <div className="modal-content" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header flex justify-between items-center">
           <div>
-            <h2 className="text-[24px] font-semibold text-[#1A1A1A] mb-1">Book Consultation</h2>
+            <h2 className="text-[24px] font-medium text-[#1A1A1A] mb-1">Book Consultation</h2>
             <p className="text-[16px] text-[#757575]">with {consultantName}</p>
           </div>
           <button 

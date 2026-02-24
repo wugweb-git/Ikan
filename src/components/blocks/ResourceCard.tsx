@@ -85,10 +85,10 @@ export function ResourceCard({ post, onClick, variant = 'default', className }: 
 
             {/* Read Time - Hidden on mobile */}
             {post.readTime && (
-              <React.Fragment key="readTime">
-                <span className="hidden md:inline" style={{ color: 'var(--color-text-muted)' }}>•</span>
+              <span key="readTime" className="hidden md:contents">
+                <span style={{ color: 'var(--color-text-muted)' }}>•</span>
                 <div 
-                  className="hidden md:block text-sm"
+                  className="text-sm"
                   style={{
                     fontSize: 'var(--text-sm)',
                     fontWeight: 'var(--font-weight-regular)',
@@ -98,15 +98,15 @@ export function ResourceCard({ post, onClick, variant = 'default', className }: 
                 >
                   {post.readTime}
                 </div>
-              </React.Fragment>
+              </span>
             )}
 
             {/* Category - Hidden on mobile */}
             {post.category && (
-              <React.Fragment key="category">
-                <span className="hidden md:inline" style={{ color: 'var(--color-text-muted)' }}>•</span>
+              <span key="category" className="hidden md:contents">
+                <span style={{ color: 'var(--color-text-muted)' }}>•</span>
                 <div 
-                  className="hidden md:block text-sm"
+                  className="text-sm"
                   style={{
                     fontSize: 'var(--text-sm)',
                     fontWeight: 'var(--font-weight-regular)',
@@ -116,7 +116,7 @@ export function ResourceCard({ post, onClick, variant = 'default', className }: 
                 >
                   {post.category}
                 </div>
-              </React.Fragment>
+              </span>
             )}
           </div>
 

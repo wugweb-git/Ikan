@@ -1,343 +1,243 @@
-import React, { useState, useMemo } from 'react';
-import { Button } from '../../ui/button';
+import React from 'react';
 import { ErrorBoundary } from '../../ErrorBoundary';
-import { ChevronDown } from 'lucide-react';
-import { usePageContent } from '../../../hooks/usePageContent';
+import { MessageSquare } from 'lucide-react';
+import { useIsMobile } from '../../../hooks/useIsMobile';
+import {
+  Accordion,
+  AccordionItem,
+  AccordionTrigger,
+  AccordionContent,
+} from '../../ui/accordion';
 
-// Import assets
-import svgPaths from "../../../imports/svg-rdg85uq8eg";
+interface FAQSectionProps {
+  onNavigate?: (route: string) => void;
+}
 
-export function FAQSection() {
-  const [openModules, setOpenModules] = useState<Set<number>>(new Set());
-  const { content, loading } = usePageContent('homepage-faq');
+const faqItems = [
+  {
+    question: 'What is iKan and how does it support mental health?',
+    answer:
+      'iKan is a mental health PWA that provides access to professional consultants, self-guided programs, mood journaling, and mental health assessments — all in one place. Our goal is to make mental wellness accessible, private, and stigma-free.',
+  },
+  {
+    question: 'How do I book a consultation with a therapist?',
+    answer:
+      'Navigate to the Consultation page, browse our verified professionals by category, and select a time slot that works for you. You can filter by expertise, language, availability, and session mode (video, call, chat, or in-person).',
+  },
+  {
+    question: 'Are the Equip programs self-paced?',
+    answer:
+      'Yes. Equip programs are structured into daily modules you can complete at your own pace. Each program includes exercises, reflections, and progress tracking to help you build lasting habits.',
+  },
+  {
+    question: 'Is my data private and secure on iKan?',
+    answer:
+      'Absolutely. All user data is encrypted and treated as highly sensitive. We follow strict privacy guidelines, and our designs are intentionally subtle so you can use the app comfortably in any setting.',
+  },
+  {
+    question: 'What mental health assessments are available?',
+    answer:
+      'We offer clinically validated assessments for anxiety, depression, stress, well-being, and more. Results are private and can help guide your journey or inform conversations with a professional.',
+  },
+];
 
-  const faqData = useMemo(() => {
-    if (!content?.content) return null;
-    try {
-      return JSON.parse(content.content);
-    } catch (e) {
-      console.error('Failed to parse FAQ content', e);
-      return null;
+export function FAQSection({ onNavigate }: FAQSectionProps) {
+  const isMobile = useIsMobile();
+
+  const handleNavigateToFAQ = () => {
+    if (onNavigate) {
+      onNavigate('/faq');
     }
-  }, [content]);
+  };
 
-  if (loading || !faqData) {
-     return null;
-  }
-
-  const { eyebrow, headline, description, courseTitle, modules, cardTitle, features, ctaText } = faqData;
-
-  const toggleModule = (index: number) => {
-    const newOpenModules = new Set(openModules);
-    if (newOpenModules.has(index)) {
-      newOpenModules.delete(index);
-    } else {
-      newOpenModules.add(index);
+  const handleNavigateToContact = () => {
+    if (onNavigate) {
+      onNavigate('/contact');
     }
-    setOpenModules(newOpenModules);
   };
 
   return (
     <ErrorBoundary>
-      <section 
-        className="w-full animate-fade-in"
+      <section
         style={{
           backgroundColor: 'var(--color-bg-card)',
-          paddingTop: 'var(--spacing-8)',
-          paddingBottom: 'var(--spacing-8)'
+          padding: '80px 0',
         }}
       >
-        <div 
-          className="max-w-7xl mx-auto"
-          style={{ padding: '0 var(--spacing-4)' }}
+        <div
+          style={{
+            maxWidth: '1100px',
+            margin: '0 auto',
+            padding: '0 24px',
+          }}
         >
-          {/* Header */}
-          <div 
-            className="text-center space-y-4 mb-12 animate-slide-up"
-            style={{ marginBottom: 'var(--spacing-8)' }}
+          {/* Section Title */}
+          <h2
+            style={{
+              fontFamily: 'var(--font-family-base)',
+              fontSize: isMobile ? '32px' : '40px',
+              fontWeight: 'var(--font-weight-medium)',
+              color: 'var(--color-text-primary)',
+              lineHeight: '1.15',
+              marginBottom: '48px',
+              margin: '0 0 48px 0',
+            }}
           >
-            <div 
-              className="tracking-wide uppercase"
-              style={{
-                fontSize: 'var(--text-sm)',
-                fontWeight: 'var(--font-weight-medium)',
-                color: 'var(--color-text-muted)',
-                fontFamily: 'var(--font-family-base)',
-                letterSpacing: 'var(--letter-spacing-wide)'
-              }}
-            >
-              {eyebrow}
-            </div>
-            <h2 
-              className="max-w-4xl mx-auto"
-              style={{
-                fontSize: 'var(--text-3xl)',
-                fontWeight: 'var(--font-weight-medium)',
-                color: 'var(--color-text-primary)',
-                lineHeight: 'var(--line-height-sm)',
-                fontFamily: 'var(--font-family-base)'
-              }}
-            >
-              {headline.split('\\n').map((line: string, i: number) => (
-                <React.Fragment key={i}>
-                  {line}
-                  {i < headline.split('\\n').length - 1 && <br />}
-                </React.Fragment>
-              ))}
-            </h2>
-            <p 
-              className="max-w-3xl mx-auto leading-relaxed"
-              style={{
-                fontSize: 'var(--text-base)',
-                color: 'var(--color-text-muted)',
-                lineHeight: 'var(--line-height-md)',
-                fontFamily: 'var(--font-family-base)'
-              }}
-            >
-              {description}
-            </p>
-          </div>
+            Frequently
+            <br />
+            asked questions
+          </h2>
 
-          {/* Mobile Layout */}
-          <div className="block lg:hidden space-y-6">
-            {/* Course Header */}
-            <div 
-              className="p-6 rounded-xl text-center"
-              style={{
-                backgroundColor: 'var(--color-primary-default)',
-                color: 'var(--color-primary-on)',
-                borderRadius: 'var(--radius-lg)'
-              }}
-            >
-              <h3 
-                style={{
-                  fontSize: 'var(--text-xl)',
-                  fontWeight: 'var(--font-weight-medium)',
-                  fontFamily: 'var(--font-family-base)'
-                }}
-              >
-                {courseTitle}
-              </h3>
-            </div>
-
-            {/* Modules List */}
-            <div 
-              className="space-y-2 mobile-optimized"
-              style={{ gap: 'var(--spacing-2)' }}
-            >
-              {modules.map((module: string, index: number) => (
-                <Button
-                  key={index}
-                  onClick={() => toggleModule(index)}
-                  variant="ghost"
-                  className="w-full p-4 rounded-xl justify-between h-auto text-left mobile-button touch-target"
-                  style={{
-                    backgroundColor: 'var(--color-bg-card)',
-                    borderRadius: 'var(--radius-lg)',
-                    border: '1px solid var(--color-border-default)'
-                  }}
-                >
-                  <span 
-                    className="font-medium"
-                    style={{
-                      fontSize: 'var(--text-base)',
-                      fontWeight: 'var(--font-weight-medium)',
-                      color: 'var(--color-text-primary)',
-                      fontFamily: 'var(--font-family-base)'
-                    }}
-                  >
-                    {module}
-                  </span>
-                  <ChevronDown 
-                    className={`w-5 h-5 transition-transform ${openModules.has(index) ? 'rotate-180' : ''}`}
-                  />
-                </Button>
-              ))}
-            </div>
-
-            {/* Get Started Card */}
-            <div 
-              className="p-6 rounded-xl"
-              style={{
-                backgroundColor: 'var(--color-bg-card)',
-                borderRadius: 'var(--radius-lg)',
-                border: '1px solid var(--color-border-default)'
-              }}
-            >
-              <h3 
-                className="mb-6"
-                style={{
-                  fontSize: 'var(--text-xl)',
-                  fontWeight: 'var(--font-weight-medium)',
-                  color: 'var(--color-text-primary)',
-                  fontFamily: 'var(--font-family-base)'
-                }}
-              >
-                {cardTitle}
-              </h3>
-              
-              <div 
-                className="space-y-4 mb-6"
-                style={{ gap: 'var(--spacing-4)' }}
-              >
-                {features.map((feature: string, index: number) => (
-                  <div key={index} className="flex items-start gap-3">
-                    <div className="w-5 h-5 mt-0.5 flex-shrink-0">
-                      <svg viewBox="0 0 15 11" className="w-full h-full">
-                        <path d={svgPaths.p25a5e700} fill="var(--color-text-primary)" />
-                      </svg>
-                    </div>
-                    <p 
-                      className="leading-relaxed"
-                      style={{
-                        fontSize: 'var(--text-sm)',
-                        color: 'var(--color-text-primary)',
-                        lineHeight: 'var(--line-height-md)',
-                        fontFamily: 'var(--font-family-base)'
-                      }}
-                    >
-                      {feature}
-                    </p>
-                  </div>
-                ))}
-              </div>
-
-              <Button 
-                className="ikan-button w-full"
-                style={{
-                  backgroundColor: 'var(--color-primary-default)',
-                  color: 'var(--color-primary-on)',
-                  height: '48px',
-                  borderRadius: 'var(--radius-sm)'
-                }}
-              >
-                {ctaText}
-              </Button>
-            </div>
-          </div>
-
-          {/* Desktop Layout */}
-          <div className="hidden lg:block">
-            <div 
-              className="flex gap-8"
-              style={{ gap: 'var(--spacing-8)' }}
-            >
-              {/* Course Modules */}
-              <div 
-                className="flex-1 space-y-2"
-                style={{ gap: 'var(--spacing-2)' }}
-              >
-                {/* Course Header */}
-                <div 
-                  className="p-6 rounded-xl text-center mb-4"
-                  style={{
-                    backgroundColor: 'var(--color-primary-default)',
-                    color: 'var(--color-primary-on)',
-                    borderRadius: 'var(--radius-lg)',
-                    marginBottom: 'var(--spacing-4)'
-                  }}
-                >
-                  <h3 
-                    style={{
-                      fontSize: 'var(--text-xl)',
-                      fontWeight: 'var(--font-weight-medium)',
-                      fontFamily: 'var(--font-family-base)'
-                    }}
-                  >
-                    {courseTitle}
-                  </h3>
-                </div>
-
-                {/* Modules List */}
-                {modules.map((module: string, index: number) => (
-                  <Button
+          {/* Two-column layout */}
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: isMobile ? '1fr' : '1fr 340px',
+              gap: '40px',
+            }}
+          >
+            {/* Left: Radix Accordion */}
+            <div>
+              <Accordion type="single" collapsible defaultValue="item-0">
+                {faqItems.map((item, index) => (
+                  <AccordionItem
                     key={index}
-                    onClick={() => toggleModule(index)}
-                    variant="ghost"
-                    className="w-full p-6 rounded-xl justify-between h-auto text-left"
-                    style={{
-                      backgroundColor: 'var(--color-bg-card)',
-                      borderRadius: 'var(--radius-lg)',
-                      border: '1px solid var(--color-border-default)'
-                    }}
+                    value={`item-${index}`}
+                    className="border-b border-[#EBEBEB] last:border-b-0"
+                    style={{ borderColor: '#EBEBEB' }}
                   >
-                    <span 
-                      className="font-medium"
+                    <AccordionTrigger
+                      className="py-5 hover:no-underline"
                       style={{
-                        fontSize: 'var(--text-base)',
+                        fontFamily: 'var(--font-family-base)',
+                        fontSize: '16px',
                         fontWeight: 'var(--font-weight-medium)',
                         color: 'var(--color-text-primary)',
-                        fontFamily: 'var(--font-family-base)'
+                        lineHeight: '1.5',
+                        textDecoration: 'none',
                       }}
                     >
-                      {module}
-                    </span>
-                    <ChevronDown 
-                      className={`w-5 h-5 transition-transform ${openModules.has(index) ? 'rotate-180' : ''}`}
-                    />
-                  </Button>
-                ))}
-              </div>
-
-              {/* Get Started Card */}
-              <div 
-                className="w-96 p-8 rounded-xl"
-                style={{
-                  backgroundColor: 'var(--color-bg-card)',
-                  borderRadius: 'var(--radius-lg)',
-                  border: '1px solid var(--color-border-default)'
-                }}
-              >
-                <h3 
-                  className="mb-8"
-                  style={{
-                    fontSize: 'var(--text-xl)',
-                    fontWeight: 'var(--font-weight-medium)',
-                    color: 'var(--color-text-primary)',
-                    fontFamily: 'var(--font-family-base)'
-                  }}
-                >
-                  {cardTitle}
-                </h3>
-                
-                <div 
-                  className="space-y-4 mb-8"
-                  style={{ gap: 'var(--spacing-4)' }}
-                >
-                  {features.map((feature: string, index: number) => (
-                    <div key={index} className="flex items-start gap-3">
-                      <div className="w-5 h-5 mt-0.5 flex-shrink-0">
-                        <svg viewBox="0 0 15 11" className="w-full h-full">
-                          <path d={svgPaths.p25a5e700} fill="var(--color-text-primary)" />
-                        </svg>
-                      </div>
-                      <p 
-                        className="leading-relaxed"
+                      {item.question}
+                    </AccordionTrigger>
+                    <AccordionContent>
+                      <p
                         style={{
-                          fontSize: 'var(--text-sm)',
-                          color: 'var(--color-text-primary)',
-                          lineHeight: 'var(--line-height-md)',
-                          fontFamily: 'var(--font-family-base)'
+                          fontFamily: 'var(--font-family-base)',
+                          fontSize: '14px',
+                          fontWeight: 'var(--font-weight-regular)',
+                          color: 'var(--color-text-muted)',
+                          lineHeight: '1.7',
+                          margin: 0,
                         }}
                       >
-                        {feature}
+                        {item.answer}
                       </p>
-                    </div>
-                  ))}
-                </div>
+                    </AccordionContent>
+                  </AccordionItem>
+                ))}
+              </Accordion>
 
-                <Button 
-                  className="ikan-button w-full"
-                  style={{
-                    backgroundColor: 'var(--color-primary-default)',
-                    color: 'var(--color-primary-on)',
-                    height: '48px',
-                    borderRadius: 'var(--radius-sm)'
-                  }}
-                >
-                  {ctaText}
-                </Button>
+              {/* View all FAQs link */}
+              <button
+                onClick={handleNavigateToFAQ}
+                style={{
+                  fontFamily: 'var(--font-family-base)',
+                  fontSize: '14px',
+                  fontWeight: 'var(--font-weight-medium)',
+                  color: 'var(--color-text-muted)',
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  padding: '16px 0 0 0',
+                  textDecoration: 'underline',
+                  textUnderlineOffset: '3px',
+                  textAlign: 'left',
+                }}
+              >
+                View all FAQs
+              </button>
+            </div>
+
+            {/* Right: Contact / Know More Card */}
+            <div
+              style={{
+                border: '1px solid #EBEBEB',
+                borderRadius: '16px',
+                padding: '40px 32px',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                textAlign: 'center',
+                alignSelf: 'start',
+              }}
+            >
+              {/* Icon */}
+              <div
+                style={{
+                  width: '56px',
+                  height: '56px',
+                  backgroundColor: 'var(--color-text-primary)',
+                  borderRadius: '14px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  marginBottom: '24px',
+                }}
+              >
+                <MessageSquare
+                  style={{ width: '26px', height: '26px', color: 'white' }}
+                  fill="white"
+                />
               </div>
+
+              <h3
+                style={{
+                  fontFamily: 'var(--font-family-base)',
+                  fontSize: '18px',
+                  fontWeight: 'var(--font-weight-medium)',
+                  color: 'var(--color-text-primary)',
+                  lineHeight: '1.35',
+                  margin: '0 0 12px 0',
+                }}
+              >
+                Do you have more questions?
+              </h3>
+
+              <p
+                style={{
+                  fontFamily: 'var(--font-family-base)',
+                  fontSize: '14px',
+                  fontWeight: 'var(--font-weight-regular)',
+                  color: 'var(--color-text-muted)',
+                  lineHeight: '1.6',
+                  margin: '0 0 28px 0',
+                  maxWidth: '260px',
+                }}
+              >
+                We are here to help you on your mental health journey. Reach out
+                and we will get back to you.
+              </p>
+
+              <button
+                onClick={handleNavigateToContact}
+                style={{
+                  fontFamily: 'var(--font-family-base)',
+                  fontSize: '15px',
+                  fontWeight: 'var(--font-weight-medium)',
+                  color: 'white',
+                  backgroundColor: '#F97066',
+                  border: 'none',
+                  borderRadius: '12px',
+                  padding: '14px 32px',
+                  cursor: 'pointer',
+                  width: '100%',
+                  transition: 'opacity 0.2s ease',
+                }}
+                onMouseEnter={(e) => (e.currentTarget.style.opacity = '0.9')}
+                onMouseLeave={(e) => (e.currentTarget.style.opacity = '1')}
+              >
+                Contact Us
+              </button>
             </div>
           </div>
         </div>

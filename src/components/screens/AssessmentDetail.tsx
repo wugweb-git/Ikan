@@ -33,11 +33,13 @@ function ResourceSection({ onNavigate }: ResourceSectionProps) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    const controller = new AbortController();
     const fetchResources = async () => {
       try {
         const response = await fetch(
           `https://${projectId}.supabase.co/functions/v1/make-server-cc205da9/library/resources?limit=3`,
           {
+            signal: controller.signal,
             headers: {
               'Authorization': `Bearer ${publicAnonKey}`,
             },
@@ -53,7 +55,7 @@ function ResourceSection({ onNavigate }: ResourceSectionProps) {
           title: resource.title,
           description: resource.excerpt || resource.description || resource.content?.substring(0, 100) + '...' || '',
           date: new Date(resource.created_at || Date.now()).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
-          image: resource.image_url || resource.thumbnail_url || resource.featured_image || resource.thumbnail || resource.image || resource.metadata?.image || resource.metadata?.thumbnail || '',
+          image: resource.thumbnail || resource.image || resource.image_url || resource.thumbnail_url || resource.featured_image || resource.metadata?.image || resource.metadata?.thumbnail || '',
           slug: resource.slug,
           author: resource.author?.name,
           category: resource.category || 'General',
@@ -62,16 +64,19 @@ function ResourceSection({ onNavigate }: ResourceSectionProps) {
           link: resource.slug ? `/resources/${resource.slug}` : `/resources/${resource.id}`,
         }));
 
-        setPosts(transformedPosts);
-      } catch (err) {
+        if (!controller.signal.aborted) setPosts(transformedPosts);
+      } catch (err: any) {
+        if (err?.name === 'AbortError') return;
         console.error('Failed to fetch resources:', err);
         setPosts([]);
       } finally {
-        setLoading(false);
+        if (!controller.signal.aborted) setLoading(false);
       }
     };
 
     fetchResources();
+
+    return () => { controller.abort(); };
   }, []);
 
   // Always show block, let ResourceBlock handle empty state
@@ -113,6 +118,7 @@ export function AssessmentDetail({ assessmentId = 'anxiety', onNavigate }: Asses
 
   // Fetch assessment data from backend
   useEffect(() => {
+    const controller = new AbortController();
     const fetchAssessmentData = async () => {
       try {
         // DEMO MODE CHECK
@@ -158,6 +164,7 @@ export function AssessmentDetail({ assessmentId = 'anxiety', onNavigate }: Asses
         const response = await fetch(
           `https://${projectId}.supabase.co/functions/v1/make-server-cc205da9/assessments/${assessmentId}?t=${Date.now()}`,
           {
+            signal: controller.signal,
             headers: { 
               'Authorization': `Bearer ${publicAnonKey}`
             }
@@ -210,22 +217,25 @@ export function AssessmentDetail({ assessmentId = 'anxiety', onNavigate }: Asses
         // Fetch related assessments
         const relatedResponse = await fetch(
           `https://${projectId}.supabase.co/functions/v1/make-server-cc205da9/assessments?limit=3`,
-          { headers: { 'Authorization': `Bearer ${publicAnonKey}` } }
+          { signal: controller.signal, headers: { 'Authorization': `Bearer ${publicAnonKey}` } }
         );
         
         if (relatedResponse.ok) {
           const relatedData = await relatedResponse.json();
-          setRelatedAssessments(relatedData.assessments || []);
+          if (!controller.signal.aborted) setRelatedAssessments(relatedData.assessments || []);
         }
         
-      } catch (err) {
+      } catch (err: any) {
+        if (err?.name === 'AbortError') return;
         console.error('Failed to fetch assessment data:', err);
       } finally {
-        setIsLoading(false);
+        if (!controller.signal.aborted) setIsLoading(false);
       }
     };
 
     fetchAssessmentData();
+
+    return () => { controller.abort(); };
   }, [assessmentId]);
 
   if (isLoading) {

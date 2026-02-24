@@ -14,11 +14,12 @@ import {
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Card, CardContent } from '../ui/card';
-import { Badge } from '../ui/badge';
+import { AdminStatusBadge } from './AdminStatusBadge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { useNotifications } from '../../contexts/NotificationContext';
 import { AdminHeader } from './AdminHeader';
 import { AdminEmptyState } from './AdminEmptyState';
+import { AdminLoading } from './AdminLoading';
 import { useIsMobile } from '../../hooks/useIsMobile';
 import { projectId, publicAnonKey } from '../../utils/supabase/info';
 
@@ -211,24 +212,7 @@ export function AdminSystemLogs() {
           padding: 'var(--spacing-4)'
         }}
       >
-        <div className="text-center">
-          <div 
-            className="animate-spin rounded-full border-4 mx-auto mb-4"
-            style={{
-              width: '48px',
-              height: '48px',
-              borderColor: 'var(--color-accent-default)',
-              borderTopColor: 'var(--color-primary-default)'
-            }}
-          />
-          <p style={{ 
-            fontFamily: 'var(--font-family-base)',
-            fontSize: 'var(--text-base)',
-            color: 'var(--color-text-muted)'
-          }}>
-            Loading system logs...
-          </p>
-        </div>
+        <AdminLoading message="Loading system logs..." />
       </div>
     );
   }
@@ -251,12 +235,7 @@ export function AdminSystemLogs() {
               <Button
                 variant="outline"
                 onClick={handleRefresh}
-                style={{
-                  height: 'var(--ikan-component-button-height)',
-                  borderRadius: 'var(--ikan-component-border-radius)',
-                  fontWeight: 'var(--font-weight-medium)',
-                  gap: 'var(--spacing-2)'
-                }}
+                className="gap-2 h-[var(--ikan-component-button-height)] rounded-[var(--ikan-component-border-radius)] font-medium"
               >
                 <RefreshCw className="w-4 h-4" />
                 {!isMobile && 'Refresh'}
@@ -264,12 +243,7 @@ export function AdminSystemLogs() {
               <Button
                 variant="outline"
                 onClick={handleExport}
-                style={{
-                  height: 'var(--ikan-component-button-height)',
-                  borderRadius: 'var(--ikan-component-border-radius)',
-                  fontWeight: 'var(--font-weight-medium)',
-                  gap: 'var(--spacing-2)'
-                }}
+                className="gap-2 h-[var(--ikan-component-button-height)] rounded-[var(--ikan-component-border-radius)] font-medium"
               >
                 <Download className="w-4 h-4" />
                 {!isMobile && 'Export'}
@@ -277,14 +251,7 @@ export function AdminSystemLogs() {
               <Button
                 variant="outline"
                 onClick={handleClearLogs}
-                style={{
-                  height: 'var(--ikan-component-button-height)',
-                  borderRadius: 'var(--ikan-component-border-radius)',
-                  fontWeight: 'var(--font-weight-medium)',
-                  gap: 'var(--spacing-2)',
-                  color: 'var(--color-danger-default)',
-                  borderColor: 'var(--color-danger-default)'
-                }}
+                className="gap-2 h-[var(--ikan-component-button-height)] rounded-[var(--ikan-component-border-radius)] font-medium text-[var(--color-danger-default)] border-[var(--color-danger-default)]"
               >
                 <Trash2 className="w-4 h-4" />
                 {!isMobile && 'Clear'}
@@ -374,9 +341,15 @@ export function AdminSystemLogs() {
                     
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1">
-                        <Badge style={{ backgroundColor: getLevelColor(log.level), color: 'white' }}>
-                          {log.level}
-                        </Badge>
+                        <AdminStatusBadge
+                          status={
+                            log.level === 'ERROR' ? 'danger' :
+                            log.level === 'WARN' ? 'warning' :
+                            log.level === 'INFO' ? 'info' :
+                            'neutral'
+                          }
+                          label={log.level}
+                        />
                         <span style={{ 
                           fontSize: 'var(--text-xs)', 
                           color: 'var(--color-text-muted)',

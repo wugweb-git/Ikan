@@ -10,7 +10,6 @@ import { Textarea } from '../ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Checkbox } from '../ui/checkbox';
 import { Label } from '../ui/label';
-import { Badge } from '../ui/badge';
 import { ImageUpload } from '../ui/image-upload';
 import { TagInput } from '../ui/tag-input';
 import { RichTextEditor } from '../ui/rich-text-editor';
@@ -22,6 +21,7 @@ import { UnsavedChangesDialog } from '../ui/unsaved-changes-dialog';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '../ui/dialog';
 import { Button } from '../ui/button';
 import { AdminActionBar } from '../ui/admin-action-bar';
+import { AdminLoading } from '../admin/AdminLoading';
 
 export interface Resource {
   id: string;
@@ -310,15 +310,7 @@ export function ResourceEditPage({ resourceId, onBack, onSave }: ResourceEditPag
         ]}
       >
         <div className="flex items-center justify-center py-12">
-          <div
-            className="animate-spin rounded-full border-4"
-            style={{
-              width: '48px',
-              height: '48px',
-              borderColor: 'var(--color-accent-default)',
-              borderTopColor: 'var(--color-primary-default)'
-            }}
-          />
+          <AdminLoading message="Loading resource..." />
         </div>
       </AdminPageLayout>
     );

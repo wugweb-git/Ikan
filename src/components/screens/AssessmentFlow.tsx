@@ -8,11 +8,11 @@ import { AssessmentQuestion } from '../organisms/AssessmentQuestion';
 import { Icon } from '../Icon';
 import { useNotifications } from '../../contexts/NotificationContext';
 import { useAuth } from '../../contexts/AuthContext';
-import { cn } from '../ui/utils';
 import { apiClient } from '../../lib/api-client';
 import { projectId, publicAnonKey } from '../../utils/supabase/info';
 import { ProgressIndicator } from '../ui/progress-indicator';
 import { AssessmentResults } from './AssessmentResults';
+import { useOfflineSync } from '../../hooks/useOfflineSync';
 
 interface Question {
   id: string;
@@ -70,6 +70,7 @@ export function AssessmentFlow({
 }: AssessmentFlowProps) {
   const { showToast } = useNotifications();
   const { user } = useAuth();
+  const { isOnline, queueItem } = useOfflineSync();
   
   const [assessment, setAssessment] = useState<Assessment | null>(initialAssessment || null);
   const [equipProgram, setEquipProgram] = useState<any>(initialAssessment ? adaptAssessmentToProgram(initialAssessment as any) : null);
@@ -187,17 +188,40 @@ export function AssessmentFlow({
         // Run as side effects - do not await/block the UI
         (async () => {
           try {
-             // A. Save Response
-             await apiClient.saveAssessmentResponse(
-              assessment.id,
+             if (isOnline) {
+               // A. Save Response directly
+               await apiClient.saveAssessmentResponse(
+                assessment.id,
+                responses,
+                'completed',
+                score,
+                interpretation,
+                interpretation.label,
+                maxScore
+               );
+             } else {
+               // B. Queue for offline sync
+               queueItem('assessment_response', {
+                 assessmentId: assessment.id,
+                 responses,
+                 status: 'completed',
+                 score,
+                 interpretation,
+                 severityHint: interpretation.label
+               });
+               showToast('info', 'Saved Locally', 'Your results will sync when you are back online.');
+             }
+          } catch (saveError) {
+            console.error('Background save failed, queuing offline:', saveError);
+            // Fallback to offline queue
+            queueItem('assessment_response', {
+              assessmentId: assessment.id,
               responses,
-              'completed',
+              status: 'completed',
               score,
               interpretation,
-              interpretation.label 
-            );
-          } catch (saveError) {
-            console.error('❌ Background save failed:', saveError);
+              severityHint: interpretation.label
+            });
             showToast('warning', 'Saved Locally', 'Your results are saved locally and will sync later.');
           }
         })();
@@ -223,6 +247,8 @@ export function AssessmentFlow({
       return;
     }
 
+    const controller = new AbortController();
+
     const fetchAssessment = async () => {
       try {
         setLoading(true);
@@ -240,6 +266,7 @@ export function AssessmentFlow({
         const response = await fetch(
           `https://${projectId}.supabase.co/functions/v1/make-server-cc205da9/assessments/${assessmentId}?t=${Date.now()}`,
           {
+            signal: controller.signal,
             headers: {
               'Authorization': `Bearer ${publicAnonKey}`,
             },
@@ -339,7 +366,8 @@ export function AssessmentFlow({
         // Convert to Unified Program
         setEquipProgram(adaptAssessmentToProgram(mappedAssessment as any));
 
-      } catch (err) {
+      } catch (err: any) {
+        if (err?.name === 'AbortError') return; // Component unmounted — ignore
         console.error('Error fetching assessment:', err);
         // FALLBACK: Use Dummy Data if fetch fails
         console.warn('⚠️ Using DUMMY assessment data due to fetch failure');
@@ -352,6 +380,8 @@ export function AssessmentFlow({
     };
 
     fetchAssessment();
+
+    return () => { controller.abort(); };
   }, [assessmentId, initialAssessment]);
 
   // Handle results view
@@ -372,11 +402,8 @@ export function AssessmentFlow({
   // Loading state
   if (loading) {
     return (
-      <div className="fixed inset-0 bg-white z-50 flex items-center justify-center">
-        <div className="text-center space-y-4">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[var(--color-primary-default)]"></div>
-          <p className="text-[var(--color-text-muted)]">Loading assessment...</p>
-        </div>
+      <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ backgroundColor: 'var(--color-bg-page)' }}>
+        <LoadingSpinner message="Loading assessment..." />
       </div>
     );
   }
@@ -384,10 +411,10 @@ export function AssessmentFlow({
   // Error state
   if (error) {
     return (
-      <div className="fixed inset-0 bg-white z-50 flex items-center justify-center p-6">
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-6" style={{ backgroundColor: 'var(--color-bg-card)' }}>
         <div className="max-w-md w-full text-center space-y-4">
           <Icon name="alertCircle" size={48} className="text-[var(--color-status-error)] mx-auto" />
-          <h2 className="text-xl font-bold">Unable to Load</h2>
+          <h2 className="text-xl font-medium">Unable to Load</h2>
           <p className="text-[var(--color-text-muted)]">{error}</p>
           <Button onClick={onBack || (() => onNavigate?.('/assessment'))}>Go Back</Button>
         </div>
@@ -398,10 +425,10 @@ export function AssessmentFlow({
   // Ensure program exists before rendering player
   if (!equipProgram) {
     return (
-       <div className="fixed inset-0 bg-white z-50 flex items-center justify-center p-6">
+       <div className="fixed inset-0 z-50 flex items-center justify-center p-6" style={{ backgroundColor: 'var(--color-bg-card)' }}>
         <div className="max-w-md w-full text-center space-y-4">
           <Icon name="alertCircle" size={48} className="text-[var(--color-status-error)] mx-auto" />
-          <h2 className="text-xl font-bold">Assessment Not Found</h2>
+          <h2 className="text-xl font-medium">Assessment Not Found</h2>
           <p className="text-[var(--color-text-muted)]">The assessment data could not be initialized.</p>
           <Button onClick={onBack || (() => onNavigate?.('/assessment'))}>Return to List</Button>
         </div>
@@ -410,7 +437,7 @@ export function AssessmentFlow({
   }
 
   return (
-    <div className="fixed inset-0 bg-white z-50">
+    <div className="fixed inset-0 z-50" style={{ backgroundColor: 'var(--color-bg-card)' }}>
        <ProgramPlayer
          program={equipProgram}
          initialDay={1}

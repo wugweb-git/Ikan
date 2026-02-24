@@ -1,203 +1,226 @@
-import React, { useMemo } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { ErrorBoundary } from '../../ErrorBoundary';
-import { cn } from '../../ui/utils';
-import { ImageWithFallback } from '../../figma/ImageWithFallback';
-import { Play } from 'lucide-react';
-import { Button } from '../../ui/button';
-import { usePageContent } from '../../../hooks/usePageContent';
+import { useIsMobile } from '../../../hooks/useIsMobile';
+
+// Client logo imports from Figma
+import imgLogo2 from "figma:asset/1fa377842c0edee2e6d99526877c4abfe5cffba4.png";
+import imgLogo4 from "figma:asset/bed3a7c577bcfb0b6fc0334b0f93d8eddb9275f8.png";
+import imgLogo6 from "figma:asset/e12e76c2f5940d65dbebba2615815d6b5552f1cc.png";
+import imgLogo7 from "figma:asset/d246862ee8771400424ba422593c855cabc9ba4a.png";
+import imgLogo8 from "figma:asset/4d70d16cfc423d83c6ca9941c4d3da923cf039ac.png";
+import imgLogo9 from "figma:asset/17b5fecba5e52eb9055025402d9b0c25a870d0d2.png";
+import imgLogo10 from "figma:asset/7a674497643e29f384a4eaeb5616eeb32e4aa50b.png";
+import imgLogo11 from "figma:asset/ac0292f75b641a157de9af130cc05ecea5dd193f.png";
+
+const clientLogos = [
+  { src: imgLogo2, alt: 'Client logo 1' },
+  { src: imgLogo4, alt: 'Client logo 2' },
+  { src: imgLogo6, alt: 'Client logo 3' },
+  { src: imgLogo7, alt: 'Client logo 4' },
+  { src: imgLogo8, alt: 'Client logo 5' },
+  { src: imgLogo9, alt: 'Client logo 6' },
+  { src: imgLogo10, alt: 'Client logo 7' },
+  { src: imgLogo11, alt: 'Client logo 8' },
+];
 
 export function MissionSection() {
-  const { content, loading } = usePageContent('homepage-mission');
+  const isMobile = useIsMobile();
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const animRef = useRef<number>(0);
 
-  const missionData = useMemo(() => {
-    if (!content?.content) return null;
-    try {
-      return JSON.parse(content.content);
-    } catch (e) {
-      console.error('Failed to parse mission content', e);
-      return null;
+  // Inject keyframes once
+  useEffect(() => {
+    const styleId = 'ikan-logo-carousel-keyframes';
+    if (!document.getElementById(styleId)) {
+      const style = document.createElement('style');
+      style.id = styleId;
+      style.textContent = `
+        @keyframes ikan-logo-scroll {
+          0% { transform: translateX(0); }
+          100% { transform: translateX(-50%); }
+        }
+      `;
+      document.head.appendChild(style);
     }
-  }, [content]);
-
-  if (loading || !missionData) {
-     return null; // Or a skeleton
-  }
-
-  const { title, content: missionContent, videoCaption, image, imageAlt } = missionData;
-  const onVideoClick = () => console.log('Play video');
+  }, []);
 
   return (
     <ErrorBoundary>
-      <section 
-        className="w-full"
+      <section
         style={{
           backgroundColor: 'var(--color-bg-card)',
-          paddingTop: 'var(--spacing-8)',
-          paddingBottom: 'var(--spacing-8)'
+          paddingTop: isMobile ? '56px' : '80px',
+          paddingBottom: isMobile ? '48px' : '64px',
         }}
       >
-        <div 
-          className="max-w-7xl mx-auto"
-          style={{ padding: '0 var(--spacing-4)' }}
+        {/* ── Mission Statement ── */}
+        <div
+          style={{
+            maxWidth: '1100px',
+            margin: '0 auto',
+            padding: '0 24px',
+            textAlign: 'center',
+            marginBottom: isMobile ? '40px' : '56px',
+          }}
         >
-          {/* Mobile Layout */}
-          <div className="block lg:hidden space-y-6">
-            <div 
-              className="relative rounded-xl overflow-hidden aspect-video"
-              style={{ borderRadius: 'var(--radius-lg)' }}
-            >
-              <ImageWithFallback 
-                src={image}
-                alt={imageAlt}
-                className="w-full h-full object-cover"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
-              <div className="absolute inset-0 flex items-center justify-center">
-                <Button 
-                  onClick={onVideoClick}
-                  size="lg" 
-                  className="rounded-full w-16 h-16 p-0"
-                  style={{
-                    backgroundColor: 'rgba(255, 255, 255, 0.9)',
-                    color: 'var(--color-text-primary)',
-                    borderRadius: 'var(--radius-pill)'
-                  }}
-                >
-                  <Play className="w-6 h-6 ml-1" />
-                </Button>
-              </div>
-              <div className="absolute bottom-4 left-4 right-4">
-                <p 
-                  className="text-center"
-                  style={{
-                    color: 'var(--color-text-inverse)',
-                    fontSize: 'var(--text-sm)',
-                    fontWeight: 'var(--font-weight-medium)',
-                    fontFamily: 'var(--font-family-base)'
-                  }}
-                >
-                  {videoCaption}
-                </p>
-              </div>
-            </div>
+          <p
+            style={{
+              fontFamily: 'var(--font-family-base)',
+              fontSize: isMobile ? '13px' : '14px',
+              fontWeight: 'var(--font-weight-medium)',
+              color: 'var(--color-text-muted)',
+              letterSpacing: '1.5px',
+              textTransform: 'uppercase',
+              margin: '0 0 20px 0',
+            }}
+          >
+            Our Mission
+          </p>
 
-            <div 
-              className="p-6 rounded-xl"
+          <h2
+            style={{
+              fontFamily: 'var(--font-family-base)',
+              fontSize: isMobile ? '26px' : '40px',
+              fontWeight: 'var(--font-weight-medium)',
+              color: 'var(--color-text-primary)',
+              lineHeight: '1.35',
+              margin: '0 auto',
+              maxWidth: '820px',
+              letterSpacing: '-0.5px',
+            }}
+          >
+            Making mental healthcare{' '}
+            <span
               style={{
-                backgroundColor: 'var(--color-accent-default)',
-                borderRadius: 'var(--radius-lg)'
+                color: '#7ED4C8',
+                position: 'relative',
+                display: 'inline',
               }}
             >
-              <h2 
-                className="mb-4"
-                style={{
-                  fontSize: 'var(--text-2xl)',
-                  fontWeight: 'var(--font-weight-medium)',
-                  color: 'var(--color-text-primary)',
-                  fontFamily: 'var(--font-family-base)'
-                }}
-              >
-                {title}
-              </h2>
-              <p 
-                className="leading-relaxed"
-                style={{
-                  fontSize: 'var(--text-base)',
-                  color: 'var(--color-text-muted)',
-                  lineHeight: 'var(--line-height-md)',
-                  fontFamily: 'var(--font-family-base)'
-                }}
-              >
-                {missionContent}
-              </p>
-            </div>
-          </div>
-
-          {/* Desktop Layout */}
-          <div className="hidden lg:block">
-            <div 
-              className="flex gap-6 items-stretch"
-              style={{ gap: 'var(--spacing-6)' }}
+              accessible
+            </span>
+            ,{' '}
+            <span
+              style={{
+                color: '#F5A623',
+                position: 'relative',
+                display: 'inline',
+              }}
             >
-              {/* Video/Image Section */}
-              <div className="flex-shrink-0 w-96">
-                <div 
-                  className="relative rounded-xl overflow-hidden h-80"
-                  style={{ borderRadius: 'var(--radius-lg)' }}
-                >
-                  <ImageWithFallback 
-                    src={image}
-                    alt={imageAlt}
-                    className="w-full h-full object-cover"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <Button 
-                      onClick={onVideoClick}
-                      size="lg" 
-                      className="rounded-full w-16 h-16 p-0"
-                      style={{
-                        backgroundColor: 'rgba(255, 255, 255, 0.9)',
-                        color: 'var(--color-text-primary)',
-                        borderRadius: 'var(--radius-pill)'
-                      }}
-                    >
-                      <Play className="w-6 h-6 ml-1" />
-                    </Button>
-                  </div>
-                  <div className="absolute bottom-6 left-6 right-6">
-                    <p 
-                      className="text-center"
-                      style={{
-                        color: 'var(--color-text-inverse)',
-                        fontSize: 'var(--text-sm)',
-                        fontWeight: 'var(--font-weight-medium)',
-                        fontFamily: 'var(--font-family-base)'
-                      }}
-                    >
-                      {videoCaption.split('\n').map((line, i) => (
-                        <React.Fragment key={i}>
-                          {line}
-                          {i < videoCaption.split('\n').length - 1 && <br />}
-                        </React.Fragment>
-                      ))}
-                    </p>
-                  </div>
-                </div>
-              </div>
+              affordable
+            </span>
+            , and{' '}
+            <span
+              style={{
+                color: '#E84FAF',
+                position: 'relative',
+                display: 'inline',
+              }}
+            >
+              stigma-free
+            </span>{' '}
+            for everyone.
+          </h2>
 
-              {/* Content Section */}
-              <div 
-                className="flex-1 p-12 rounded-xl flex flex-col justify-center"
+          <p
+            style={{
+              fontFamily: 'var(--font-family-base)',
+              fontSize: isMobile ? '15px' : '17px',
+              fontWeight: 'var(--font-weight-regular)',
+              color: 'var(--color-text-muted)',
+              lineHeight: '1.7',
+              margin: '24px auto 0',
+              maxWidth: '640px',
+            }}
+          >
+            We believe everyone deserves support on their mental health journey.
+            iKan combines clinical expertise with thoughtful technology to meet
+            you where you are.
+          </p>
+        </div>
+
+        {/* ── Trusted-by label ── */}
+        <div style={{ textAlign: 'center', marginBottom: '24px' }}>
+          <p
+            style={{
+              fontFamily: 'var(--font-family-base)',
+              fontSize: '13px',
+              fontWeight: 'var(--font-weight-medium)',
+              color: 'var(--color-text-muted)',
+              letterSpacing: '1px',
+              textTransform: 'uppercase',
+              margin: 0,
+            }}
+          >
+            Trusted by leading organizations
+          </p>
+        </div>
+
+        {/* ── Logo Carousel ── */}
+        <div
+          style={{
+            width: '100%',
+            overflow: 'hidden',
+            position: 'relative',
+            height: '60px',
+            opacity: 0.6,
+          }}
+        >
+          {/* Fade edges */}
+          <div
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              bottom: 0,
+              width: '120px',
+              background:
+                'linear-gradient(to right, var(--color-bg-card), transparent)',
+              zIndex: 2,
+              pointerEvents: 'none',
+            }}
+          />
+          <div
+            style={{
+              position: 'absolute',
+              top: 0,
+              right: 0,
+              bottom: 0,
+              width: '120px',
+              background:
+                'linear-gradient(to left, var(--color-bg-card), transparent)',
+              zIndex: 2,
+              pointerEvents: 'none',
+            }}
+          />
+
+          {/* Scrolling track */}
+          <div
+            ref={scrollRef}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '48px',
+              width: 'max-content',
+              animation: 'ikan-logo-scroll 30s linear infinite',
+            }}
+          >
+            {/* Render logos twice for seamless loop */}
+            {[...clientLogos, ...clientLogos].map((logo, i) => (
+              <img
+                key={i}
+                src={logo.src}
+                alt={logo.alt}
                 style={{
-                  backgroundColor: 'var(--color-accent-default)',
-                  borderRadius: 'var(--radius-lg)'
+                  height: '48px',
+                  width: 'auto',
+                  objectFit: 'contain',
+                  flexShrink: 0,
+                  filter: 'grayscale(100%)',
                 }}
-              >
-                <h2 
-                  className="mb-6"
-                  style={{
-                    fontSize: 'var(--text-3xl)',
-                    fontWeight: 'var(--font-weight-medium)',
-                    color: 'var(--color-text-primary)',
-                    fontFamily: 'var(--font-family-base)'
-                  }}
-                >
-                  {title}
-                </h2>
-                <p 
-                  className="leading-relaxed"
-                  style={{
-                    fontSize: 'var(--text-base)',
-                    color: 'var(--color-text-muted)',
-                    lineHeight: 'var(--line-height-md)',
-                    fontFamily: 'var(--font-family-base)'
-                  }}
-                >
-                  {missionContent}
-                </p>
-              </div>
-            </div>
+                loading="lazy"
+              />
+            ))}
           </div>
         </div>
       </section>

@@ -1,9 +1,7 @@
-
 import React, { useState } from 'react';
 import { Wizard } from '../wizard/Wizard';
 import { WizardConfig } from '../wizard/types';
 import { Button } from '../ui/button';
-import { useNavigate } from 'react-router-dom';
 
 const TEST_CONFIG: WizardConfig = {
   id: 'test-wizard',
@@ -171,7 +169,7 @@ export function WizardTestScreen({ onBack }: { onBack?: () => void }) {
   if (results) {
       return (
           <div className="p-8 max-w-2xl mx-auto space-y-4">
-              <h1 className="text-2xl font-bold">Results JSON</h1>
+              <h1 className="text-2xl font-medium">Results JSON</h1>
               <pre className="bg-slate-100 p-4 rounded-lg overflow-auto text-xs">
                   {JSON.stringify(results, null, 2)}
               </pre>

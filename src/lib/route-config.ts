@@ -111,16 +111,6 @@ export const routes: RouteConfig[] = [
     description: 'Get in touch with us'
   },
   {
-    path: '/privacy',
-    label: 'Privacy Policy',
-    isPublic: true,
-    requiresAuth: false,
-    showInNavigation: true,
-    showInPublicNav: true,
-    showInPrivateNav: false,
-    description: 'Privacy policy and data handling'
-  },
-  {
     path: '/terms',
     label: 'Terms of Use',
     isPublic: true,
@@ -129,6 +119,46 @@ export const routes: RouteConfig[] = [
     showInPublicNav: true,
     showInPrivateNav: false,
     description: 'Terms and conditions'
+  },
+  {
+    path: '/privacy-policy',
+    label: 'Privacy Policy',
+    isPublic: true,
+    requiresAuth: false,
+    showInNavigation: false,
+    showInPublicNav: false,
+    showInPrivateNav: false,
+    description: 'Privacy policy (alternate path)'
+  },
+  {
+    path: '/return-policy',
+    label: 'Return Policy',
+    isPublic: true,
+    requiresAuth: false,
+    showInNavigation: false,
+    showInPublicNav: false,
+    showInPrivateNav: false,
+    description: 'Return and refund policy'
+  },
+  {
+    path: '/cancellation-policy',
+    label: 'Cancellation Policy',
+    isPublic: true,
+    requiresAuth: false,
+    showInNavigation: false,
+    showInPublicNav: false,
+    showInPrivateNav: false,
+    description: 'Cancellation policy'
+  },
+  {
+    path: '/sitemap',
+    label: 'Sitemap',
+    isPublic: true,
+    requiresAuth: false,
+    showInNavigation: false,
+    showInPublicNav: false,
+    showInPrivateNav: false,
+    description: 'Site map and page index'
   },
   {
     path: '/assessment-landing',
@@ -424,6 +454,11 @@ export const isPublicRoute = (path: string): boolean => {
     return true; // Consultant detail pages are public
   }
   
+  // Universal public links
+  if (path.startsWith('/join/')) {
+    return true;
+  }
+  
   const route = routes.find(r => r.path === path);
   return route?.isPublic ?? false;
 };
@@ -432,6 +467,11 @@ export const requiresAuth = (path: string): boolean => {
   // Handle dynamic routes like /consultation/:id
   if (path.startsWith('/consultation/')) {
     return false; // Consultant detail pages don't require auth
+  }
+  
+  // Universal public links don't require auth
+  if (path.startsWith('/join/')) {
+    return false;
   }
   
   const route = routes.find(r => r.path === path);

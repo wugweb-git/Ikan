@@ -24,7 +24,7 @@ export async function checkReassessmentTriggers(userId: string): Promise<Reasses
       apiClient.getUserEnrollments().catch(() => [])
     ]);
 
-    const assessmentList = Array.isArray(assessments) ? assessments : (assessments as any).responses || [];
+    const assessmentList = Array.isArray(assessments) ? assessments : (assessments as any).history || (assessments as any).responses || [];
     const recentMoods = (journalEntries as any).entries || [];
     const enrollmentList = enrollments || [];
 

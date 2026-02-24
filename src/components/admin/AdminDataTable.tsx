@@ -16,8 +16,7 @@ import {
   Search, 
   ArrowUpDown, 
   ArrowUp, 
-  ArrowDown,
-  Filter
+  ArrowDown
 } from 'lucide-react';
 import { Card, CardContent } from '../ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
@@ -152,8 +151,8 @@ export function AdminDataTable<T extends { [key: string]: any }>({
   const getSortIcon = (key: keyof T) => {
     if (sortConfig.key !== key) return <ArrowUpDown className="w-3 h-3 ml-1 opacity-50" />;
     return sortConfig.direction === 'asc' 
-      ? <ArrowUp className="w-3 h-3 ml-1 text-primary" />
-      : <ArrowDown className="w-3 h-3 ml-1 text-primary" />;
+      ? <ArrowUp className="w-3 h-3 ml-1" style={{ color: 'var(--color-primary-default)' }} />
+      : <ArrowDown className="w-3 h-3 ml-1" style={{ color: 'var(--color-primary-default)' }} />;
   };
 
   return (
@@ -166,7 +165,7 @@ export function AdminDataTable<T extends { [key: string]: any }>({
             <div className="flex flex-col md:flex-row gap-4 flex-1">
               {/* Search */}
               <div className="relative flex-1 max-w-md">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4" style={{ color: 'var(--color-text-muted)' }} />
                 <Input 
                   placeholder={searchPlaceholder}
                   value={searchTerm}
@@ -218,7 +217,8 @@ export function AdminDataTable<T extends { [key: string]: any }>({
             paginatedData.map((item, rowIdx) => (
               <Card 
                 key={(item[idField] as unknown as string) || rowIdx}
-                className={onRowClick ? "cursor-pointer transition-colors hover:bg-muted/50" : ""}
+                className={onRowClick ? "cursor-pointer transition-colors" : ""}
+                style={onRowClick ? { cursor: 'pointer' } : undefined}
                 onClick={() => onRowClick && onRowClick(item)}
               >
                 <CardContent className="p-4 flex gap-4">
@@ -228,7 +228,8 @@ export function AdminDataTable<T extends { [key: string]: any }>({
                        <img 
                           src={item[columns.find(c => c.type === 'image')!.imageKey!] as string || '/placeholder.png'} 
                           alt=""
-                          className="w-16 h-16 object-cover rounded-xl border border-gray-200"
+                          className="w-16 h-16 object-cover"
+                          style={{ borderRadius: 'var(--radius-lg)', border: '1px solid var(--color-border-default)' }}
                        />
                     </div>
                   )}
@@ -237,11 +238,11 @@ export function AdminDataTable<T extends { [key: string]: any }>({
                     {columns.filter(c => c.type !== 'image').map((col, colIdx) => (
                       <div key={colIdx} className="flex justify-between items-start gap-2">
                         {colIdx === 0 ? (
-                           <h4 className="font-medium text-[var(--color-text-primary)] truncate">
+                           <h4 className="truncate" style={{ fontWeight: 'var(--font-weight-medium)', color: 'var(--color-text-primary)', fontFamily: 'var(--font-family-base)' }}>
                              {col.render ? col.render(item) : (col.accessorKey ? (item[col.accessorKey] as ReactNode) : null)}
                            </h4>
                         ) : (
-                           <div className="text-sm text-[var(--color-text-muted)] truncate">
+                           <div className="truncate" style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-muted)', fontFamily: 'var(--font-family-base)' }}>
                              {col.header}: {col.render ? col.render(item) : (col.accessorKey ? (item[col.accessorKey] as ReactNode) : null)}
                            </div>
                         )}
@@ -252,7 +253,7 @@ export function AdminDataTable<T extends { [key: string]: any }>({
               </Card>
             ))
           ) : (
-            <div className="text-center p-8 text-muted-foreground bg-white rounded-xl border border-dashed">
+            <div className="text-center p-8" style={{ color: 'var(--color-text-muted)', backgroundColor: 'var(--color-bg-card)', borderRadius: 'var(--radius-lg)', border: '1px dashed var(--color-border-default)' }}>
               No results found
             </div>
           )}
@@ -265,7 +266,7 @@ export function AdminDataTable<T extends { [key: string]: any }>({
               {columns.map((col, index) => (
                 <TableHead 
                   key={index} 
-                  className={`${col.className || ''} ${col.sortable ? 'cursor-pointer select-none hover:bg-muted/50' : ''}`}
+                  className={`${col.className || ''} ${col.sortable ? 'cursor-pointer select-none' : ''}`}
                   onClick={() => col.sortable && col.accessorKey && handleSort(col.accessorKey)}
                 >
                   <div className="flex items-center">
@@ -291,8 +292,8 @@ export function AdminDataTable<T extends { [key: string]: any }>({
                           <img 
                             src={item[col.imageKey] as string || col.imageFallback || '/placeholder.png'} 
                             alt=""
-                            className="w-12 h-12 object-cover rounded-lg border border-gray-200"
-                            style={{ borderRadius: '12px' }}
+                            className="w-12 h-12 object-cover"
+                            style={{ borderRadius: 'var(--radius-md)', border: '1px solid var(--color-border-default)' }}
                             onError={(e) => {
                               if (col.imageFallback) {
                                 (e.target as HTMLImageElement).src = col.imageFallback;
@@ -323,7 +324,7 @@ export function AdminDataTable<T extends { [key: string]: any }>({
       {/* Pagination */}
       <div className="flex items-center justify-between px-2">
         <div className="flex items-center space-x-2">
-          <p className="text-sm text-muted-foreground">
+          <p style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-muted)', fontFamily: 'var(--font-family-base)' }}>
             {processedData.length > 0 ? (
                <>
                  Showing {(currentPage - 1) * currentPageSize + 1} to {Math.min(currentPage * currentPageSize, processedData.length)} of {processedData.length} entries

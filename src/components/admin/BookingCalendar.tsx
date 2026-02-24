@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { ChevronLeft, ChevronRight, Calendar, Clock } from 'lucide-react';
 import { Button } from '../ui/button';
-import { Badge } from '../ui/badge';
+import { AdminStatusBadge } from './AdminStatusBadge';
 import { Card, CardContent } from '../ui/card';
 
 interface TimeSlot {
@@ -260,13 +260,7 @@ export function BookingCalendar({ professionalName, onBookSlot }: BookingCalenda
                 >
                   {slot.time}
                   {slot.booked && (
-                    <Badge 
-                      variant="outline" 
-                      className="ml-2" 
-                      style={{ fontSize: '10px' }}
-                    >
-                      Booked
-                    </Badge>
+                    <AdminStatusBadge status="pending" label="Booked" />
                   )}
                 </button>
               ))}

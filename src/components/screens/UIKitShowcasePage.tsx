@@ -185,30 +185,30 @@ function FoundationsSection() {
       {/* Typography */}
       <ComponentShowcaseCard 
         title="Typography" 
-        description="Ubuntu font family with defined sizes and weights"
+        description="Inter font family with defined sizes and weights"
       >
         <div className="space-y-4">
           <div>
             <h1 style={{ fontSize: '32px', fontWeight: 'var(--font-weight-medium)' }}>
-              Heading 1 - Ubuntu Medium
+              Heading 1 - Inter Medium
             </h1>
             <p style={{ fontSize: '12px', color: '#6B7280' }}>32px / Medium (500)</p>
           </div>
           <div>
             <h2 style={{ fontSize: '24px', fontWeight: 'var(--font-weight-medium)' }}>
-              Heading 2 - Ubuntu Medium
+              Heading 2 - Inter Medium
             </h2>
             <p style={{ fontSize: '12px', color: '#6B7280' }}>24px / Medium (500)</p>
           </div>
           <div>
             <h3 style={{ fontSize: '18px', fontWeight: 'var(--font-weight-medium)' }}>
-              Heading 3 - Ubuntu Medium
+              Heading 3 - Inter Medium
             </h3>
             <p style={{ fontSize: '12px', color: '#6B7280' }}>18px / Medium (500)</p>
           </div>
           <div>
             <p style={{ fontSize: '16px', fontWeight: '400' }}>
-              Body Text - Ubuntu Regular
+              Body Text - Inter Regular
             </p>
             <p style={{ fontSize: '12px', color: '#6B7280' }}>16px / Regular (400)</p>
           </div>
@@ -328,7 +328,7 @@ function FormsSection() {
           <div>
             <Label>With Icon</Label>
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: 'var(--color-text-muted)' }} />
               <Input placeholder="Search..." className="pl-10" />
             </div>
           </div>
@@ -695,7 +695,7 @@ function LayoutsSection() {
           style={{ borderColor: '#E5E7EB', backgroundColor: '#F9FAFB' }}
         >
           <div className="space-y-4">
-            <div className="flex items-center justify-between p-4 bg-white rounded-lg">
+            <div className="flex items-center justify-between p-4 rounded-lg" style={{ backgroundColor: 'var(--color-bg-card)' }}>
               <div>
                 <h3 style={{ fontSize: '18px', fontWeight: 'var(--font-weight-medium)' }}>Page Title</h3>
                 <p style={{ fontSize: '14px', color: '#6B7280' }}>Page subtitle or description</p>
@@ -705,7 +705,7 @@ function LayoutsSection() {
                 <Button size="sm">Save</Button>
               </div>
             </div>
-            <div className="h-40 bg-white rounded-lg flex items-center justify-center">
+            <div className="h-40 rounded-lg flex items-center justify-center" style={{ backgroundColor: 'var(--color-bg-card)' }}>
               <p style={{ fontSize: '14px', color: '#6B7280' }}>Page content area</p>
             </div>
           </div>
@@ -747,7 +747,7 @@ function LayoutsSection() {
           className="relative h-64 overflow-hidden rounded-lg border"
           style={{ borderColor: '#E5E7EB' }}
         >
-          <div className="p-6 bg-white h-full">
+          <div className="p-6 h-full" style={{ backgroundColor: 'var(--color-bg-card)' }}>
             <p style={{ fontSize: '14px', color: '#6B7280', textAlign: 'center', paddingTop: '80px' }}>
               Scroll down to see the action bar (sticky at bottom)
             </p>

@@ -53,13 +53,13 @@ export function WizardStepper({ steps, currentStep, onStepClick, allowSkip = fal
                     ? "bg-[#1A1A1A] border-[#1A1A1A] text-white" 
                     : isCurrent
                       ? "bg-[#1A1A1A] border-[#1A1A1A] text-white"
-                      : "border-[#D9D9D9] text-[#757575] bg-transparent group-hover:border-gray-400"
+                      : "border-[#D9D9D9] text-[#757575] bg-transparent group-hover:border-[var(--color-border-strong)]"
                 )}
               >
                 {isCompleted ? (
                   <Check size={14} strokeWidth={3} />
                 ) : (
-                  <span className="text-xs font-bold">{index + 1}</span>
+                  <span className="text-xs font-medium">{index + 1}</span>
                 )}
               </div>
 

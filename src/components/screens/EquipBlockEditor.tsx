@@ -59,12 +59,12 @@ export function EquipBlockEditor({
   
   const getIcon = () => {
     switch (block.type) {
-      case 'lesson': return <BookOpen className="w-4 h-4 text-blue-500" />;
-      case 'exercise': return <PenTool className="w-4 h-4 text-purple-500" />;
-      case 'journal': return <MessageCircle className="w-4 h-4 text-orange-500" />;
-      case 'checklist': return <CheckSquare className="w-4 h-4 text-green-500" />;
-      case 'reflection': return <Target className="w-4 h-4 text-indigo-500" />;
-      case 'conclude': return <Target className="w-4 h-4 text-red-500" />;
+      case 'lesson': return <BookOpen className="w-4 h-4" style={{ color: 'var(--color-info-default)' }} />;
+      case 'exercise': return <PenTool className="w-4 h-4" style={{ color: 'var(--color-primary-default)' }} />;
+      case 'journal': return <MessageCircle className="w-4 h-4" style={{ color: 'var(--color-warning-default)' }} />;
+      case 'checklist': return <CheckSquare className="w-4 h-4" style={{ color: 'var(--color-status-success)' }} />;
+      case 'reflection': return <Target className="w-4 h-4" style={{ color: 'var(--color-info-default)' }} />;
+      case 'conclude': return <Target className="w-4 h-4" style={{ color: 'var(--color-status-danger)' }} />;
       default: return <BookOpen className="w-4 h-4" />;
     }
   };
@@ -74,19 +74,19 @@ export function EquipBlockEditor({
   const mediaType = isVideo ? 'video' : 'image';
 
   return (
-    <Card className={hideHeader ? "border-none shadow-none" : "border border-gray-200 shadow-sm mb-3"}>
+    <Card className={hideHeader ? "border-none shadow-none" : "shadow-sm mb-3"} style={!hideHeader ? { border: '1px solid var(--color-border-default)' } : undefined}>
       {!hideHeader && (
-      <div className="flex items-center gap-2 p-3 bg-gray-50 rounded-t-lg border-b">
-        <div className="cursor-grab text-gray-400 hover:text-gray-600">
+      <div className="flex items-center gap-2 p-3 rounded-t-lg" style={{ backgroundColor: 'var(--color-bg-muted)', borderBottom: '1px solid var(--color-border-default)' }}>
+        <div className="cursor-grab" style={{ color: 'var(--color-text-muted)' }}>
           <GripVertical className="w-4 h-4" />
         </div>
         
         <div className="flex items-center gap-2 flex-1">
           {getIcon()}
-          <span className="text-xs font-bold uppercase text-gray-500 tracking-wider">
+          <span className="uppercase tracking-wider" style={{ fontSize: 'var(--text-xs)', fontWeight: 'var(--font-weight-medium)', color: 'var(--color-text-muted)' }}>
             {block.type}
           </span>
-          <span className="text-sm font-medium text-gray-900 truncate max-w-[200px]">
+          <span className="truncate max-w-[200px]" style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--font-weight-medium)', color: 'var(--color-text-primary)' }}>
             {block.title || '(Untitled Block)'}
           </span>
         </div>
@@ -102,7 +102,7 @@ export function EquipBlockEditor({
               <ChevronDown className="w-3 h-3" />
             </Button>
           )}
-          <Button variant="ghost" size="sm" onClick={onDelete} className="h-6 w-6 p-0 text-red-500 hover:text-red-700">
+          <Button variant="ghost" size="sm" onClick={onDelete} className="h-6 w-6 p-0" style={{ color: 'var(--color-status-danger)' }}>
             <Trash2 className="w-3 h-3" />
           </Button>
           <Button variant="ghost" size="sm" onClick={onToggleExpand} className="h-6 w-6 p-0">
@@ -146,6 +146,16 @@ export function EquipBlockEditor({
             </div>
           </div>
 
+          {/* Block Subtitle */}
+          <div className="space-y-1">
+            <Label className="text-xs">Block Subtitle</Label>
+            <Input 
+              value={block.subtitle || ''} 
+              onChange={(e) => onChange({ subtitle: e.target.value })} 
+              placeholder="Brief description shown below the title"
+            />
+          </div>
+
           {/* DYNAMIC FIELDS BASED ON TYPE */}
           
           {/* 1. CONTENT / PROMPT SECTION (Lesson, Journal, Reflection, Conclude) */}
@@ -165,7 +175,7 @@ export function EquipBlockEditor({
 
           {/* 2. EXERCISE BLOCK */}
           {block.type === 'exercise' && (
-            <div className="space-y-4 border-l-2 border-purple-100 pl-4">
+            <div className="space-y-4 border-l-2 pl-4" style={{ borderColor: 'var(--color-accent-default)' }}>
               <div className="space-y-1">
                 <Label className="text-xs">Interaction Type</Label>
                 <Select 
@@ -335,9 +345,9 @@ export function EquipBlockEditor({
 
           {/* SCORING SECTION (Assessment Only) */}
           {(isAssessment || block.exerciseConfig?.scoring?.enabled) && block.type === 'exercise' && (
-             <div className="pt-2 border-t border-amber-100 bg-amber-50/50 p-3 rounded-md">
+             <div className="pt-2 border-t p-3 rounded-md" style={{ backgroundColor: 'var(--color-status-warning-light)' }}>
                <div className="flex items-center justify-between mb-2">
-                 <Label className="text-xs font-bold text-amber-800 flex items-center gap-1">
+                 <Label className="flex items-center gap-1" style={{ fontSize: 'var(--text-xs)', fontWeight: 'var(--font-weight-medium)', color: 'var(--color-status-warning)' }}>
                    <Target size={12} /> Scoring Configuration
                  </Label>
                  <div className="flex items-center gap-2">
@@ -350,16 +360,15 @@ export function EquipBlockEditor({
                         }
                       })}
                     />
-                    <Label className="text-xs text-amber-800">Enable Scoring</Label>
+                    <Label style={{ fontSize: 'var(--text-xs)', color: 'var(--color-status-warning)' }}>Enable Scoring</Label>
                  </div>
                </div>
 
                {block.exerciseConfig?.scoring?.enabled && (
                  <div className="space-y-3">
-                    {/* For MCQs: Weights per option */}
                     {['mcq', 'single-select', 'multi-select'].includes(block.exerciseConfig?.subtype || '') && (
                       <div className="space-y-1">
-                        <Label className="text-xs text-amber-700">
+                        <Label style={{ fontSize: 'var(--text-xs)', color: 'var(--color-status-warning)' }}>
                           Option Weights (Comma separated, order matches options)
                         </Label>
                         <Input 
@@ -374,14 +383,14 @@ export function EquipBlockEditor({
                             });
                           }}
                           placeholder="e.g. 0, 1, 0, 0 (Correct answer is 2nd option)"
-                          className="h-8 text-xs border-amber-200"
+                          className="h-8 text-xs"
+                          style={{ borderColor: 'var(--color-status-warning-light)' }}
                         />
                       </div>
                     )}
                     
-                    {/* Default Weight */}
                     <div className="flex items-center gap-2">
-                      <Label className="text-xs text-amber-700">Max Score</Label>
+                      <Label style={{ fontSize: 'var(--text-xs)', color: 'var(--color-status-warning)' }}>Max Score</Label>
                       <Input 
                         type="number"
                         value={block.exerciseConfig?.scoring?.maxScore || 1}
@@ -391,7 +400,7 @@ export function EquipBlockEditor({
                             scoring: { ...block.exerciseConfig?.scoring, maxScore: parseInt(e.target.value) }
                           }
                         })}
-                        className="w-16 h-7 text-xs border-amber-200"
+                        className="w-16 h-7 text-xs" style={{ backgroundColor: 'var(--color-bg-card)' }}
                       />
                     </div>
                  </div>
@@ -402,16 +411,16 @@ export function EquipBlockEditor({
           {/* WIZARD FLOW & INTERACTION SECTION (PROMOTED) */}
           <div className="pt-2 border-t mt-4">
              <div className="flex items-center gap-2 mb-2">
-                <Layers size={14} className="text-indigo-600" />
-                <Label className="text-xs font-bold text-gray-700 uppercase tracking-wider">Wizard Flow</Label>
+                <Layers size={14} style={{ color: 'var(--color-primary-default)' }} />
+                <Label className="uppercase tracking-wider" style={{ fontSize: 'var(--text-xs)', fontWeight: 'var(--font-weight-medium)', color: 'var(--color-text-muted)' }}>Wizard Flow</Label>
              </div>
              
-             <div className="bg-indigo-50/50 p-3 rounded-md border border-indigo-100 space-y-4">
+             <div className="p-3 rounded-md space-y-4" style={{ backgroundColor: 'var(--color-bg-muted)', border: '1px solid var(--color-border-default)' }}>
                {/* Step Grouping */}
                <div className="space-y-1">
                   <div className="flex items-center justify-between">
-                     <Label className="text-xs font-medium text-indigo-900">Step Group ID</Label>
-                     <span className="text-[10px] text-indigo-400">Optional</span>
+                     <Label className="text-xs" style={{ fontWeight: 'var(--font-weight-medium)' }}>Step Group ID</Label>
+                     <span style={{ fontSize: '10px', color: 'var(--color-text-muted)' }}>Optional</span>
                   </div>
                   <div className="flex gap-2">
                      <div className="relative flex-1">
@@ -419,18 +428,18 @@ export function EquipBlockEditor({
                            value={block.stepGroup || ''}
                            onChange={(e) => onChange({ stepGroup: e.target.value })}
                            placeholder="e.g. step-1"
-                           className="h-8 text-xs font-mono bg-white"
+                           className="h-8 text-xs font-mono" style={{ backgroundColor: 'var(--color-bg-card)' }}
                         />
                      </div>
                   </div>
-                  <p className="text-[10px] text-indigo-600/70">
+                  <p style={{ fontSize: '10px', color: 'var(--color-text-muted)' }}>
                      Blocks with the same Step ID appear together on one screen.
                   </p>
                </div>
 
                <div className="grid grid-cols-2 gap-4">
                   {/* Auto Advance */}
-                  <div className="flex items-start gap-2 p-2 bg-white rounded border border-indigo-100">
+                  <div className="flex items-start gap-2 p-2 rounded" style={{ backgroundColor: 'var(--color-bg-card)', border: '1px solid var(--color-border-default)' }}>
                      <Checkbox 
                         id="auto-advance"
                         checked={block.autoAdvance}
@@ -439,14 +448,14 @@ export function EquipBlockEditor({
                      />
                      <div>
                         <Label htmlFor="auto-advance" className="text-xs font-medium cursor-pointer block">Auto-Advance</Label>
-                        <p className="text-[10px] text-gray-400 leading-tight mt-0.5">
+                        <p className="leading-tight mt-0.5" style={{ fontSize: '10px', color: 'var(--color-text-muted)' }}>
                            Automatically move to next step when completed.
                         </p>
                      </div>
                   </div>
                   
                   {/* Required */}
-                  <div className="flex items-start gap-2 p-2 bg-white rounded border border-indigo-100">
+                  <div className="flex items-start gap-2 p-2 rounded" style={{ backgroundColor: 'var(--color-bg-card)', border: '1px solid var(--color-border-default)' }}>
                      <Checkbox 
                         id="required"
                         checked={block.required}
@@ -455,7 +464,7 @@ export function EquipBlockEditor({
                      />
                      <div>
                         <Label htmlFor="required" className="text-xs font-medium cursor-pointer block">Required</Label>
-                        <p className="text-[10px] text-gray-400 leading-tight mt-0.5">
+                        <p className="leading-tight mt-0.5" style={{ fontSize: '10px', color: 'var(--color-text-muted)' }}>
                            User must complete this block to proceed.
                         </p>
                      </div>
@@ -463,11 +472,11 @@ export function EquipBlockEditor({
                </div>
                
                <div className="flex items-center gap-2 justify-end pt-1">
-                  <Clock size={12} className="text-indigo-400" />
-                  <Label className="text-xs text-indigo-900">Est. Duration (m)</Label>
+                  <Clock size={12} style={{ color: 'var(--color-text-muted)' }} />
+                  <Label style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-primary)' }}>Est. Duration (m)</Label>
                   <Input 
                     type="number" 
-                    className="w-16 h-7 text-xs bg-white"
+                    className="w-16 h-7 text-xs" style={{ backgroundColor: 'var(--color-bg-card)' }}
                     value={block.duration}
                     onChange={(e) => onChange({ duration: parseInt(e.target.value) || 0 })}
                   />
@@ -477,7 +486,7 @@ export function EquipBlockEditor({
 
           {/* MEDIA SECTION */}
           <div className="pt-2 border-t mt-2">
-            <Label className="text-xs mb-2 block font-medium text-gray-700">Block Media</Label>
+            <Label className="mb-2 block" style={{ fontSize: 'var(--text-xs)', fontWeight: 'var(--font-weight-medium)', color: 'var(--color-text-muted)' }}>Block Media</Label>
             
             <Tabs defaultValue={mediaType} className="w-full">
               <TabsList className="grid w-full grid-cols-2 h-8 mb-2">
@@ -498,7 +507,7 @@ export function EquipBlockEditor({
                    className="w-[100px] h-auto" // Constraint: Max 100px width
                    aspectRatio="square"
                 />
-                <p className="text-[10px] text-gray-400 mt-1">
+                <p className="mt-1" style={{ fontSize: '10px', color: 'var(--color-text-muted)' }}>
                   Preview restricted to 100px width.
                 </p>
               </TabsContent>
@@ -511,7 +520,7 @@ export function EquipBlockEditor({
                     placeholder="https://youtube.com/..."
                     className="text-xs"
                   />
-                  <p className="text-[10px] text-gray-400">
+                  <p style={{ fontSize: '10px', color: 'var(--color-text-muted)' }}>
                     Paste a YouTube, Vimeo, or MP4 URL. This will replace any uploaded image.
                   </p>
                 </div>

@@ -39,6 +39,18 @@ export function Notifications() {
   const { user } = useAuth();
   const isMobile = useIsMobile();
   
+  // AbortController for async operations cleanup
+  const abortControllerRef = React.useRef<AbortController | null>(null);
+  // Debounce timer ref for quiet hours
+  const quietHoursTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+  
+  React.useEffect(() => {
+    return () => {
+      abortControllerRef.current?.abort();
+      if (quietHoursTimerRef.current) clearTimeout(quietHoursTimerRef.current);
+    };
+  }, []);
+  
   const [settings, setSettings] = useState<NotificationSettings>({
     // Push Notifications
     pushEnabled: true,
@@ -66,10 +78,12 @@ export function Notifications() {
 
   // Load settings from user profile
   useEffect(() => {
-    if (user?.user_metadata?.notification_settings) {
+    // Check both user_metadata (from Supabase auth) and top-level (from KV profile)
+    const savedSettings = user?.notification_settings || user?.user_metadata?.notification_settings;
+    if (savedSettings) {
       setSettings(prev => ({
         ...prev,
-        ...user.user_metadata.notification_settings
+        ...savedSettings
       }));
     }
   }, [user]);
@@ -110,12 +124,15 @@ export function Notifications() {
     const newSettings = { ...settings, [key]: value };
     setSettings(newSettings);
     
-    // Debounce this in a real app, but for now just save
-    try {
-      await apiClient.updateProfile({ notification_settings: newSettings });
-    } catch (error) {
-      console.error('Failed to update quiet hours:', error);
-    }
+    // Debounce the API call to avoid rapid requests on every keystroke
+    if (quietHoursTimerRef.current) clearTimeout(quietHoursTimerRef.current);
+    quietHoursTimerRef.current = setTimeout(async () => {
+      try {
+        await apiClient.updateProfile({ notification_settings: newSettings });
+      } catch (error) {
+        console.error('Failed to update quiet hours:', error);
+      }
+    }, 800);
   };
 
   const handleTestNotification = () => {

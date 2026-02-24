@@ -1,25 +1,48 @@
-import React, { useState, useEffect } from 'react';
-import { 
-  ArrowLeft, CheckCircle, Play, Clock, X 
+import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
+import {
+  CheckCircle, Play, Clock, ChevronLeft, ChevronRight, Lock,
 } from 'lucide-react';
 import { Button } from '../ui/button';
-import { Card, CardContent } from '../ui/card';
-import { cn } from '../ui/utils';
 import { EquipProgram } from '../../lib/equip-admin-types';
 import { ProgramPlayer } from '../player/ProgramPlayer';
 import { apiClient } from '../../lib/api-client';
 import { useNotifications } from '../../contexts/NotificationContext';
 import { toast } from 'sonner@2.0.3';
 import { DUMMY_EQUIP_PROGRAM, ALL_DUMMY_PROGRAMS } from '../../lib/demo-data';
+import tokens from '../../lib/design-tokens';
+import { LoadingSpinner } from '../LoadingSpinner';
+
+// ── design tokens ────────────────────────────────────────────────
+const B = {
+  primary: tokens.colors.primary.default,
+  primaryOn: tokens.colors.primary.on,
+  accent: tokens.colors.accent.default,
+  success: tokens.colors.status.success,
+  successLight: tokens.colors.status['success-light'],
+  muted: tokens.colors.text.muted,
+  textPrimary: tokens.colors.text.primary,
+  bgPage: tokens.colors.background.page,
+  bgCard: tokens.colors.background.card,
+  bgMuted: tokens.colors.background.muted,
+  border: tokens.colors.border.default,
+};
+
+const f = (size: string, weight: number = 400, color: string = B.textPrimary) => ({
+  fontSize: `var(--text-${size})`,
+  fontWeight: weight,
+  fontFamily: 'var(--font-family-base)',
+  color,
+});
 
 // ============================================================================
-// TYPES & INTERFACES
+// TYPES
 // ============================================================================
 
 interface UserProgress {
-  currentDay: number; // 1-based index
-  completedDays: Record<number, { 
-    status: 'completed' | 'skipped'; 
+  currentDay: number;
+  completedDays: Record<number, {
+    status: 'completed' | 'skipped';
     date: string;
     responses?: Record<string, any>;
   }>;
@@ -38,125 +61,460 @@ interface EquipProgramFlowProps {
 }
 
 // ============================================================================
-// COMPONENT 1: HOME (ENTRY POINT)
+// DAY STRIP — horizontal pill strip (CalendarStrip pattern for program days)
+// ============================================================================
+
+const PILL_W = 56;
+const PILL_GAP = 8;
+const STRIP_PAD = 16;
+
+interface DayStripProps {
+  days: { day: number; title: string; dayType?: string }[];
+  progress: UserProgress;
+  selectedDay: number;
+  onSelectDay: (day: number) => void;
+}
+
+function DayStrip({ days, progress, selectedDay, onSelectDay }: DayStripProps) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [visibleCount, setVisibleCount] = useState(7);
+
+  const measure = useCallback(() => {
+    if (!containerRef.current) return;
+    const w = containerRef.current.offsetWidth - STRIP_PAD * 2;
+    setVisibleCount(Math.max(3, Math.floor((w + PILL_GAP) / (PILL_W + PILL_GAP))));
+  }, []);
+
+  useEffect(() => {
+    measure();
+    const ro = new ResizeObserver(measure);
+    if (containerRef.current) ro.observe(containerRef.current);
+    return () => ro.disconnect();
+  }, [measure]);
+
+  // Compute page offset to ensure selectedDay is visible
+  const totalDays = days.length;
+  const [pageOffset, setPageOffset] = useState(0);
+
+  // Reset page when selectedDay changes
+  useEffect(() => {
+    const idx = days.findIndex(d => d.day === selectedDay);
+    if (idx >= 0) {
+      const page = Math.floor(idx / visibleCount);
+      setPageOffset(page);
+    }
+  }, [selectedDay, visibleCount, days]);
+
+  const startIdx = pageOffset * visibleCount;
+  const visibleDays = days.slice(startIdx, startIdx + visibleCount);
+  const canPrev = pageOffset > 0;
+  const canNext = startIdx + visibleCount < totalDays;
+
+  const getStatus = (day: number) => {
+    if (progress.completedDays[day]) return 'completed';
+    if (day === progress.currentDay) return 'current';
+    if (day < progress.currentDay) return 'skipped';
+    return 'locked';
+  };
+
+  return (
+    <div
+      ref={containerRef}
+      style={{
+        backgroundColor: B.bgCard,
+        borderRadius: 'var(--radius-lg)',
+        boxShadow: 'var(--shadow-sm)',
+        border: `1px solid ${B.border}`,
+        padding: STRIP_PAD,
+      }}
+    >
+      {/* Nav row */}
+      <div className="flex items-center justify-between" style={{ marginBottom: 10 }}>
+        <motion.button
+          whileTap={canPrev ? { scale: 0.9 } : undefined}
+          onClick={() => canPrev && setPageOffset(p => p - 1)}
+          disabled={!canPrev}
+          className="flex items-center justify-center"
+          style={{
+            width: 28, height: 28, borderRadius: '50%',
+            backgroundColor: B.bgMuted, border: 'none',
+            cursor: canPrev ? 'pointer' : 'not-allowed',
+            opacity: canPrev ? 1 : 0.3,
+          }}
+        >
+          <ChevronLeft size={14} style={{ color: B.muted }} />
+        </motion.button>
+        <span style={{ ...f('xs', 500, B.muted), textTransform: 'uppercase' as const, letterSpacing: '0.06em' }}>
+          Your Journey
+        </span>
+        <motion.button
+          whileTap={canNext ? { scale: 0.9 } : undefined}
+          onClick={() => canNext && setPageOffset(p => p + 1)}
+          disabled={!canNext}
+          className="flex items-center justify-center"
+          style={{
+            width: 28, height: 28, borderRadius: '50%',
+            backgroundColor: B.bgMuted, border: 'none',
+            cursor: canNext ? 'pointer' : 'not-allowed',
+            opacity: canNext ? 1 : 0.3,
+          }}
+        >
+          <ChevronRight size={14} style={{ color: B.muted }} />
+        </motion.button>
+      </div>
+
+      {/* Day pills */}
+      <div className="flex items-center justify-center" style={{ gap: PILL_GAP }}>
+        <AnimatePresence mode="popLayout">
+          {visibleDays.map((day, i) => {
+            const status = getStatus(day.day);
+            const isSelected = day.day === selectedDay;
+            const isLocked = status === 'locked';
+            const isCompleted = status === 'completed';
+            const isCurrent = status === 'current';
+
+            const isDark = isSelected;
+            const pillBg = isDark
+              ? B.primary
+              : isCompleted
+                ? `${B.success}14`
+                : B.accent;
+            const topColor = isDark ? 'rgba(255,255,255,0.65)' : B.muted;
+            const numColor = isDark ? B.primaryOn : isLocked ? B.muted : B.textPrimary;
+
+            return (
+              <motion.button
+                key={day.day}
+                initial={{ opacity: 0, scale: 0.85, y: 8 }}
+                animate={{ opacity: isLocked ? 0.4 : 1, scale: 1, y: 0 }}
+                transition={{ delay: i * 0.025, duration: 0.3, type: 'spring', stiffness: 350, damping: 22 }}
+                whileHover={!isLocked ? { y: -3, scale: 1.04 } : undefined}
+                whileTap={!isLocked ? { scale: 0.93 } : undefined}
+                onClick={() => !isLocked && onSelectDay(day.day)}
+                className="flex flex-col items-center justify-center"
+                style={{
+                  width: PILL_W,
+                  height: 72,
+                  borderRadius: 28,
+                  backgroundColor: pillBg,
+                  border: 'none',
+                  cursor: isLocked ? 'default' : 'pointer',
+                  gap: 4,
+                  padding: '8px 0',
+                  flexShrink: 0,
+                  position: 'relative',
+                  transition: 'background-color 0.25s ease',
+                }}
+              >
+                {/* Label */}
+                <span style={{
+                  fontSize: 9,
+                  fontWeight: 500,
+                  fontFamily: 'var(--font-family-base)',
+                  color: topColor,
+                  letterSpacing: '0.05em',
+                  lineHeight: 1,
+                  textTransform: 'uppercase' as const,
+                }}>
+                  {day.day === 0 ? 'INTRO' : `DAY`}
+                </span>
+
+                {/* Day number */}
+                {isLocked ? (
+                  <Lock size={16} style={{ color: B.muted }} />
+                ) : isCompleted && !isDark ? (
+                  <CheckCircle size={18} style={{ color: B.success }} />
+                ) : (
+                  <span style={{
+                    ...f('lg', 500, numColor),
+                    lineHeight: 1,
+                  }}>
+                    {day.day === 0 ? '0' : day.day}
+                  </span>
+                )}
+
+                {/* Current day pulsing dot */}
+                {isCurrent && !isDark && (
+                  <motion.div
+                    animate={{ scale: [1, 1.4, 1], opacity: [0.6, 1, 0.6] }}
+                    transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
+                    style={{
+                      position: 'absolute', bottom: 6,
+                      width: 5, height: 5, borderRadius: '50%',
+                      backgroundColor: B.primary,
+                    }}
+                  />
+                )}
+
+                {/* Selected + completed: small check */}
+                {isDark && isCompleted && (
+                  <motion.div
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    style={{
+                      position: 'absolute', bottom: 6,
+                      width: 6, height: 6, borderRadius: '50%',
+                      backgroundColor: B.success,
+                    }}
+                  />
+                )}
+              </motion.button>
+            );
+          })}
+        </AnimatePresence>
+      </div>
+    </div>
+  );
+}
+
+// ============================================================================
+// COMPONENT 1: HOME (ENTRY POINT) — now includes DayStrip
 // ============================================================================
 
 interface EquipProgramHomeProps {
   program: EquipProgram;
   progress: UserProgress;
   onStartSession: () => void;
-  onViewHistory: () => void;
+  onSelectDay: (day: number) => void;
   onRestart: () => void;
   onBack: () => void;
 }
 
-function EquipProgramHome({ program, progress, onStartSession, onViewHistory, onRestart, onBack }: EquipProgramHomeProps) {
-  const currentDayContent = program.daily_content?.find(d => d.day === progress.currentDay);
-  
-  // Calculate if program is complete (all days completed)
+function EquipProgramHome({ program, progress, onStartSession, onSelectDay, onRestart, onBack }: EquipProgramHomeProps) {
+  const [selectedDay, setSelectedDay] = useState(progress.currentDay);
+  const selectedDayContent = program.daily_content?.find(d => d.day === selectedDay);
   const totalDays = program.daily_content?.length || 0;
-  // Simple check: if currentDay > totalDays, or if all days are in completedDays
   const isProgramComplete = progress.currentDay > totalDays;
-
-  // Resume vs Start logic
   const hasStartedDay = progress.currentDayState.completedBlockIds.length > 0;
-  
+
+  const days = useMemo(() =>
+    (program.daily_content || []).map(d => ({
+      day: d.day,
+      title: d.title,
+      dayType: d.dayType,
+    })),
+    [program.daily_content]
+  );
+
+  const getStatus = (day: number) => {
+    if (progress.completedDays[day]) return 'completed';
+    if (day === progress.currentDay) return 'current';
+    if (day < progress.currentDay) return 'skipped';
+    return 'locked';
+  };
+
+  const selectedStatus = getStatus(selectedDay);
+  const isCurrentDay = selectedDay === progress.currentDay;
+  const isCompleted = selectedStatus === 'completed';
+
+  const handleDaySelect = (day: number) => {
+    setSelectedDay(day);
+  };
+
   return (
-    <div className="min-h-screen bg-[var(--color-bg-page)] flex flex-col relative">
-      <div className="absolute top-0 left-0 w-full h-64 bg-gradient-to-b from-[var(--color-accent-default)] to-transparent pointer-events-none" />
-
-      <div className="relative z-10 max-w-md mx-auto w-full p-6 flex flex-col min-h-screen">
-        {/* Header */}
-        <div className="flex justify-between items-center mb-8">
-          <Button variant="ghost" onClick={onBack} size="sm" className="-ml-3 text-[var(--color-text-muted)]">
-            <ArrowLeft size={20} />
-          </Button>
+    <div className="min-h-screen flex flex-col" style={{ backgroundColor: B.bgPage }}>
+      {/* Header */}
+      <header
+        className="flex-none flex items-center"
+        style={{
+          height: 60,
+          paddingLeft: 8,
+          paddingRight: 16,
+          paddingTop: 'env(safe-area-inset-top, 0px)',
+          backgroundColor: 'rgba(255,255,255,0.92)',
+          backdropFilter: 'blur(20px)',
+          WebkitBackdropFilter: 'blur(20px)',
+          borderBottom: `1px solid ${B.border}`,
+        }}
+      >
+        <motion.button
+          whileTap={{ scale: 0.9 }}
+          onClick={onBack}
+          className="flex items-center justify-center"
+          style={{
+            width: 40, height: 40, borderRadius: 'var(--radius-pill)',
+            background: 'none', border: 'none', cursor: 'pointer',
+            color: B.textPrimary,
+          }}
+        >
+          <ChevronLeft size={22} strokeWidth={2} />
+        </motion.button>
+        <div style={{ flex: 1, textAlign: 'center', paddingRight: 40 }}>
+          <h1 className="truncate" style={{ ...f('sm', 500), letterSpacing: '-0.01em' }}>
+            {program.title}
+          </h1>
         </div>
+      </header>
 
-        {/* Main Content */}
-        <div className="flex-1 flex flex-col justify-center pb-20">
-          {isProgramComplete ? (
-            <div className="text-center space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-              <div className="w-20 h-20 bg-green-50 text-[var(--color-status-success)] rounded-full flex items-center justify-center mx-auto mb-4">
-                <CheckCircle size={40} />
+      <div className="flex-1 overflow-y-auto" style={{ padding: '20px 16px', paddingBottom: 'max(env(safe-area-inset-bottom, 24px), 24px)' }}>
+        <div className="max-w-md mx-auto w-full" style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+
+          {/* Program complete banner */}
+          {isProgramComplete && (
+            <motion.div
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              style={{
+                textAlign: 'center', padding: '32px 20px',
+                backgroundColor: B.bgCard,
+                borderRadius: 'var(--radius-lg)',
+                border: `1px solid ${B.border}`,
+                boxShadow: tokens.shadow.sm,
+              }}
+            >
+              <div
+                className="mx-auto flex items-center justify-center"
+                style={{
+                  width: 64, height: 64, borderRadius: '50%',
+                  backgroundColor: B.successLight, marginBottom: 16,
+                }}
+              >
+                <CheckCircle size={32} style={{ color: B.success }} />
               </div>
-              <h1 className="text-3xl font-bold text-[var(--color-text-primary)]">Journey Complete!</h1>
-              <p className="text-[var(--color-text-muted)]">You've completed {program.title}.</p>
-              <Button className="w-full h-14 text-lg" onClick={onViewHistory}>
-                Review Your Path
-              </Button>
-              <Button 
-                variant="outline" 
-                className="w-full h-14 text-lg text-red-500 hover:text-red-600 hover:bg-red-50 border-red-100" 
+              <h2 style={{ ...f('xl', 500), margin: '0 0 6px' }}>Journey Complete!</h2>
+              <p style={{ ...f('sm', 400, B.muted), margin: '0 0 20px' }}>
+                You've completed {program.title}. Tap any day to review.
+              </p>
+              <button
                 onClick={onRestart}
+                style={{
+                  background: 'none', border: `1.5px solid ${B.border}`,
+                  borderRadius: 'var(--radius-md)', padding: '8px 20px',
+                  cursor: 'pointer', ...f('sm', 500, tokens.colors.status.danger),
+                }}
               >
                 Restart Program
-              </Button>
-            </div>
-          ) : (
-            <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-              <div className="text-center space-y-2">
-                <h2 className="text-sm font-semibold tracking-widest text-[var(--color-text-muted)] uppercase">
-                  {program.title}
-                </h2>
-                <h1 className="text-4xl font-bold text-[var(--color-text-primary)]">
-                  {progress.currentDay === 0 ? "Welcome" :
-                   currentDayContent?.dayType === 'practice' ? "Practice" : 
-                   `Day ${progress.currentDay}`}
-                </h1>
-                {progress.currentDay > 0 && (
-                  <p className="text-lg text-[var(--color-text-muted)]">
-                    of {Math.max(0, (program.daily_content?.length || 0) - (program.daily_content?.some(d => d.day === 0) ? 1 : 0))}
-                  </p>
-                )}
-              </div>
+              </button>
+            </motion.div>
+          )}
 
-              {currentDayContent ? (
-                <Card className="border-0 shadow-xl bg-white/90 backdrop-blur">
-                  <CardContent className="p-8 text-center space-y-6">
-                    <div className="space-y-2">
-                      <h3 className="text-xl font-semibold text-[var(--color-text-primary)]">
-                        {currentDayContent.title}
+          {/* Day strip */}
+          <DayStrip
+            days={days}
+            progress={progress}
+            selectedDay={selectedDay}
+            onSelectDay={handleDaySelect}
+          />
+
+          {/* Selected day card */}
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={selectedDay}
+              initial={{ opacity: 0, y: 14 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.3 }}
+            >
+              {selectedDayContent ? (
+                <div
+                  style={{
+                    backgroundColor: B.bgCard,
+                    borderRadius: 'var(--radius-lg)',
+                    border: `1px solid ${B.border}`,
+                    boxShadow: tokens.shadow.sm,
+                    overflow: 'hidden',
+                  }}
+                >
+                  {/* Accent bar */}
+                  <div style={{
+                    height: 3,
+                    backgroundColor: isCurrentDay ? B.primary : isCompleted ? B.success : B.accent,
+                  }} />
+
+                  <div style={{ padding: '20px' }}>
+                    {/* Day title + info */}
+                    <div style={{ marginBottom: 16 }}>
+                      <div className="flex items-center" style={{ gap: 8, marginBottom: 4 }}>
+                        <span style={{
+                          ...f('xs', 500, isCurrentDay ? B.primary : isCompleted ? B.success : B.muted),
+                          textTransform: 'uppercase' as const, letterSpacing: '0.06em',
+                        }}>
+                          {selectedDayContent.day === 0 ? 'Intro' : `Day ${selectedDayContent.day}`}
+                          {isCompleted && ' · Completed'}
+                          {isCurrentDay && ' · Current'}
+                        </span>
+                      </div>
+                      <h3 style={{ ...f('lg', 500), margin: '0 0 4px' }}>
+                        {selectedDayContent.title}
                       </h3>
-                      {currentDayContent.description && (
-                        <p className="text-[var(--color-text-muted)] text-sm">
-                          {currentDayContent.description}
+                      {selectedDayContent.description && (
+                        <p style={{ ...f('sm', 400, B.muted), margin: 0, lineHeight: 1.5 }}>
+                          {selectedDayContent.description}
                         </p>
                       )}
                     </div>
-                    
-                    <div className="flex items-center justify-center gap-2 text-sm text-[var(--color-text-muted)] bg-[var(--color-bg-muted)] py-2 px-4 rounded-full inline-flex mx-auto">
-                      <Clock size={16} />
-                      <span>~10 minutes</span>
+
+                    {/* Meta row */}
+                    <div className="flex items-center flex-wrap" style={{ gap: 8, marginBottom: 20 }}>
+                      <span className="flex items-center" style={{
+                        gap: 4, padding: '4px 12px', borderRadius: 'var(--radius-pill)',
+                        backgroundColor: B.bgMuted, ...f('xs', 500, B.muted),
+                      }}>
+                        <Clock size={12} /> ~10 min
+                      </span>
+                      <span style={{
+                        padding: '4px 12px', borderRadius: 'var(--radius-pill)',
+                        backgroundColor: B.bgMuted, ...f('xs', 500, B.muted),
+                      }}>
+                        {selectedDayContent.activities?.length || 0} activities
+                      </span>
                     </div>
 
-                    <Button 
-                      onClick={onStartSession}
-                      className="w-full h-14 text-lg rounded-[var(--radius-lg)] bg-[var(--color-primary-default)] text-white shadow-lg transition-all transform hover:scale-[1.02]"
-                    >
-                      <Play fill="currentColor" size={16} className="mr-2" />
-                      {hasStartedDay ? "Continue Session" : currentDayContent.dayType === 'practice' ? "Start Practice" : "Start Today"}
-                    </Button>
-                  </CardContent>
-                </Card>
+                    {/* Action button */}
+                    {isCurrentDay && (
+                      <motion.button
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.97 }}
+                        onClick={onStartSession}
+                        className="flex items-center justify-center"
+                        style={{
+                          width: '100%', height: 'var(--ikan-component-button-height)',
+                          borderRadius: 'var(--radius-lg)', border: 'none', cursor: 'pointer',
+                          backgroundColor: B.primary,
+                          ...f('base', 500, B.primaryOn),
+                          boxShadow: tokens.shadow.sm,
+                          gap: 8,
+                        }}
+                      >
+                        <Play fill="currentColor" size={16} />
+                        {hasStartedDay ? 'Continue Session' : 'Start Today'}
+                      </motion.button>
+                    )}
+
+                    {isCompleted && (
+                      <motion.button
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.97 }}
+                        onClick={() => onSelectDay(selectedDay)}
+                        className="flex items-center justify-center"
+                        style={{
+                          width: '100%', height: 'var(--ikan-component-button-height)',
+                          borderRadius: 'var(--radius-lg)',
+                          border: `1.5px solid ${B.border}`, cursor: 'pointer',
+                          backgroundColor: B.bgCard,
+                          ...f('sm', 500),
+                          gap: 'var(--spacing-2)',
+                        }}
+                      >
+                        Review Day
+                      </motion.button>
+                    )}
+                  </div>
+                </div>
               ) : (
-                <div className="text-center p-8 bg-[var(--color-bg-muted)] rounded-[var(--radius-lg)] border border-dashed border-[var(--color-border-default)]">
-                  <p className="text-[var(--color-text-muted)]">Content loading or not found for Day {progress.currentDay}</p>
+                <div style={{
+                  textAlign: 'center', padding: '40px 20px',
+                  backgroundColor: B.bgCard,
+                  borderRadius: 'var(--radius-lg)',
+                  border: `1px solid ${B.border}`,
+                }}>
+                  <p style={f('sm', 400, B.muted)}>
+                    Content for Day {selectedDay} not found.
+                  </p>
                 </div>
               )}
-            </div>
-          )}
-        </div>
-
-        {/* Footer */}
-        <div className="mt-auto pt-6 text-center">
-          <Button 
-            variant="ghost" 
-            onClick={onViewHistory}
-            className="text-gray-500 hover:text-gray-900 hover:bg-transparent"
-          >
-            View past days
-          </Button>
+            </motion.div>
+          </AnimatePresence>
         </div>
       </div>
     </div>
@@ -179,8 +537,8 @@ interface DaySessionScreenProps {
 
 function DaySessionScreen({ program, dayNumber, initialResponses, onCompleteDay, onProgress, onExit, mode = 'live' }: DaySessionScreenProps) {
   return (
-    <div className="fixed inset-0 bg-white z-50">
-       <ProgramPlayer 
+    <div className="fixed inset-0 z-50" style={{ backgroundColor: 'var(--color-bg-card)' }}>
+       <ProgramPlayer
          program={program}
          initialDay={dayNumber}
          initialResponses={initialResponses}
@@ -194,63 +552,6 @@ function DaySessionScreen({ program, dayNumber, initialResponses, onCompleteDay,
 }
 
 // ============================================================================
-// COMPONENT 3: DAY OVERVIEW (HISTORY)
-// ============================================================================
-
-function DayOverview({ program, progress, onBack, onSelectDay }: { program: EquipProgram, progress: UserProgress, onBack: () => void, onSelectDay: (day: number) => void }) {
-  const getStatus = (day: number) => {
-    if (progress.completedDays[day]) return progress.completedDays[day].status;
-    if (day === progress.currentDay) return 'current';
-    if (day < progress.currentDay) return 'skipped';
-    return 'locked';
-  };
-
-  return (
-    <div className="min-h-screen bg-[var(--color-bg-page)] p-6">
-      <div className="max-w-md mx-auto space-y-8">
-        <div className="flex items-center gap-4">
-           <Button variant="ghost" onClick={onBack} className="-ml-3"><ArrowLeft /></Button>
-           <h1 className="text-2xl font-bold">Your Journey</h1>
-        </div>
-
-        <div className="space-y-4">
-          {program.daily_content?.map((day) => {
-             const status = getStatus(day.day);
-             return (
-               <div 
-                 key={day.day}
-                 onClick={() => status !== 'locked' && onSelectDay(day.day)}
-                 className={cn(
-                   "p-4 rounded-[var(--radius-lg)] border flex items-center justify-between transition-all",
-                   status === 'current' ? "border-[var(--color-primary-default)] bg-white shadow-md" :
-                   status === 'locked' ? "opacity-50 bg-[var(--color-bg-muted)] border-transparent" :
-                   "bg-white border-transparent hover:border-[var(--color-border-default)] cursor-pointer"
-                 )}
-               >
-                  <div className="flex items-center gap-4">
-                     <div className={cn(
-                        "w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm",
-                        status === 'completed' ? "bg-[var(--color-status-success)] text-white" :
-                        status === 'current' ? "bg-[var(--color-primary-default)] text-white" :
-                        "bg-[var(--color-bg-muted)] text-[var(--color-text-muted)]"
-                     )}>
-                        {status === 'completed' ? <CheckCircle size={20} /> : day.day}
-                     </div>
-                     <div>
-                        <div className="font-semibold text-[var(--color-text-primary)]">{day.title}</div>
-                        <div className="text-xs text-[var(--color-text-muted)]">{day.dayType === 'practice' ? 'Practice Session' : `${day.activities.length} Activities`}</div>
-                     </div>
-                  </div>
-               </div>
-             );
-          })}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ============================================================================
 // MAIN COMPONENT: EQUIP PROGRAM FLOW
 // ============================================================================
 
@@ -258,9 +559,9 @@ export function EquipProgramFlow({ programId, enrollmentId, onBack, onComplete, 
   const { showToast } = useNotifications();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [view, setView] = useState<'home' | 'session' | 'history' | 'review'>('home');
+  const [view, setView] = useState<'home' | 'session' | 'review'>('home');
   const [reviewDay, setReviewDay] = useState<number | null>(null);
-  
+
   const [program, setProgram] = useState<EquipProgram | null>(null);
   const [progress, setProgress] = useState<UserProgress>({
     currentDay: 1,
@@ -272,31 +573,25 @@ export function EquipProgramFlow({ programId, enrollmentId, onBack, onComplete, 
   });
 
   const handleBack = () => {
-    if (onBack) {
-      onBack();
-    } else if (onNavigate) {
-      onNavigate('/dashboard');
-    }
+    if (onBack) onBack();
+    else if (onNavigate) onNavigate('/dashboard');
   };
 
-  // 1. Fetch Program & Progress
+  // Fetch Program & Progress
   useEffect(() => {
     const init = async () => {
       if (!programId) return;
-      
+
       try {
         setLoading(true);
 
-        // DEMO MODE CHECK
         const demoProgram = ALL_DUMMY_PROGRAMS.find(p => p.id === programId);
         if (programId === 'dummy-equip' || demoProgram) {
            console.log('⚡ Loading Demo Program Flow (Offline Mode)');
            setProgram(demoProgram || DUMMY_EQUIP_PROGRAM);
-           
-           // Set active demo program for Dashboard
+
            if (programId) localStorage.setItem('ikan-active-dummy-program', programId);
 
-           // Mock Progress
            const savedProgress = localStorage.getItem(`demo-progress-${programId}`);
            if (savedProgress) {
              setProgress(JSON.parse(savedProgress));
@@ -304,30 +599,20 @@ export function EquipProgramFlow({ programId, enrollmentId, onBack, onComplete, 
              setProgress({
                 currentDay: 1,
                 completedDays: {},
-                currentDayState: {
-                  completedBlockIds: [],
-                  responses: {}
-                }
+                currentDayState: { completedBlockIds: [], responses: {} }
              });
            }
            setLoading(false);
            return;
         }
-        
-        // A. Fetch Program
+
         const programData = await apiClient.getEquipProgram(programId);
-        if (!programData) {
-          throw new Error('Program not found');
-        }
+        if (!programData) throw new Error('Program not found');
         setProgram(programData as EquipProgram);
 
-        // B. Fetch Progress (if user is enrolled)
         try {
-          // Attempt to get detailed progress
           const progressData = await apiClient.getEnrollmentProgress(programId);
           if (progressData) {
-            // Map backend progress to frontend UserProgress
-            // Assuming progressData has current_day_number, completed_days, etc.
             setProgress(prev => ({
               ...prev,
               currentDay: progressData.current_day || 1,
@@ -335,32 +620,22 @@ export function EquipProgramFlow({ programId, enrollmentId, onBack, onComplete, 
                 acc[dayNum] = { status: 'completed', date: new Date().toISOString() };
                 return acc;
               }, {}),
-              currentDayState: {
-                completedBlockIds: [], // We might fetch this from user_block_responses if needed, but keeping it simple for now
-                responses: {} // Ideally we pre-fetch today's responses too
-              }
+              currentDayState: { completedBlockIds: [], responses: {} }
             }));
 
-            // Pre-fetch today's responses to allow resuming
             const todayContent = await apiClient.getTodayContent(programId);
             if (todayContent && todayContent.progress) {
-                // todayContent.progress is array of completed blocks?
-                // The API endpoint seems to return { day, blocks, progress }
-                // Let's assume progress contains the responses map if implemented
+              // Pre-populate if available
             }
           }
         } catch (e) {
-          // If 404/not enrolled, we might need to enroll or just start fresh
           console.warn('Progress fetch failed (maybe not enrolled)', e);
         }
 
       } catch (err: any) {
         console.error('Failed to load program flow', err);
-        // FALLBACK: Use Dummy Data
         console.warn('⚠️ Using DUMMY equip program data due to fetch failure');
         setProgram(DUMMY_EQUIP_PROGRAM);
-        // setError(err.message || 'Failed to load program');
-        // toast.error('Failed to load program');
         toast.info('Viewing Demo Program (Data Unavailable)');
       } finally {
         setLoading(false);
@@ -370,9 +645,7 @@ export function EquipProgramFlow({ programId, enrollmentId, onBack, onComplete, 
     init();
   }, [programId]);
 
-  // 2. Handle Progress Updates (Auto-Save)
   const handleProgress = async (p: { currentBlockIndex: number, responses: Record<string, any> }) => {
-     // Update Local State
      const newProgress = {
         ...progress,
         currentDayState: {
@@ -380,7 +653,7 @@ export function EquipProgramFlow({ programId, enrollmentId, onBack, onComplete, 
            responses: p.responses
         }
      };
-     
+
      setProgress(prev => ({
         ...prev,
         currentDayState: {
@@ -389,35 +662,13 @@ export function EquipProgramFlow({ programId, enrollmentId, onBack, onComplete, 
         }
      }));
 
-     // DEMO MODE: Save to LocalStorage
-     const isDemo = ALL_DUMMY_PROGRAMS.some(p => p.id === programId);
+     const isDemo = ALL_DUMMY_PROGRAMS.some(dp => dp.id === programId);
      if (isDemo) {
         localStorage.setItem(`demo-progress-${programId}`, JSON.stringify(newProgress));
         return;
      }
 
-     // Sync to Server
      if (programId) {
-        // Find the changed block(s) and save
-        // Ideally we only save the delta, but here we just iterate
-        // Optimization: In ProgramPlayer we pass the specific change. 
-        // But the callback signature is { currentBlockIndex, responses }
-        // We can just save the latest responses. 
-        // For efficiency, we can debounce or just save the last one? 
-        // Actually, let's just save all? No, that's too many calls.
-        
-        // Better: ProgramPlayer only updates responses when a block changes.
-        // We can iterate the responses keys and find what changed compared to prev state?
-        // Or simply: The backend endpoint allows saving specific block response.
-        // For MVP, let's just try to sync the whole state?
-        // No, `saveBlockResponse` takes a single blockId.
-        
-        // Let's rely on the user explicitly saving via "Next" if we don't want real-time field-level saving.
-        // BUT, the requirement is "User-Side ProgramPlayer — Rendering Rules... Submit Step Response".
-        // The ProgramPlayer calls onProgressChange on every change.
-        
-        // Let's implement a 'sync' that sends the whole blob or key updates
-        // The API has `syncEquipProgress`.
         try {
             await apiClient.syncEquipProgress(programId, {
                 dayNumber: progress.currentDay,
@@ -429,79 +680,59 @@ export function EquipProgramFlow({ programId, enrollmentId, onBack, onComplete, 
      }
   };
 
-  // 3. Handle Day Completion
   const handleCompleteDay = async () => {
      if (!programId) return;
 
-     // 1. Optimistic Update (Immediate Feedback)
      const nextDay = progress.currentDay + 1;
      const now = new Date().toISOString();
-     
+
      const newProgress = {
         ...progress,
         currentDay: nextDay,
         completedDays: {
            ...progress.completedDays,
-           [progress.currentDay]: { 
-             status: 'completed' as const, 
+           [progress.currentDay]: {
+             status: 'completed' as const,
              date: now,
-             responses: progress.currentDayState.responses 
+             responses: progress.currentDayState.responses
            }
         },
-        currentDayState: {
-           completedBlockIds: [],
-           responses: {}
-        }
+        currentDayState: { completedBlockIds: [], responses: {} }
      };
 
-     // Update Local State Immediately
      setProgress(newProgress);
-     
-     // Return to Home view immediately
      setView('home');
      showToast('success', 'Day Complete!', 'Great job.');
 
-     // DEMO MODE: Save to LocalStorage & Return
-     const isDemo = ALL_DUMMY_PROGRAMS.some(p => p.id === programId);
+     const isDemo = ALL_DUMMY_PROGRAMS.some(dp => dp.id === programId);
      if (isDemo) {
         localStorage.setItem(`demo-progress-${programId}`, JSON.stringify(newProgress));
         if (onComplete) onComplete();
         return;
      }
 
-     // 2. Sync to Backend in Background
      try {
        await apiClient.completeDay(programId, progress.currentDay);
-       
        if (onComplete) onComplete();
-       
      } catch (e) {
        console.error('Failed to sync completion status', e);
-       // We don't revert state here because we want to allow progress even if offline
-       // Just warn the user it might not have synced
-       // toast.warning('Progress saved on device (offline)');
      }
   };
 
   const handleRestart = async () => {
-    if (confirm('Are you sure you want to restart the program? Current progress will be reset, but your history is preserved locally.')) {
-        // Reset Local State
+    if (confirm('Are you sure you want to restart the program? Current progress will be reset.')) {
         const resetProgress: UserProgress = {
             currentDay: 1,
             completedDays: {},
-            currentDayState: {
-                completedBlockIds: [],
-                responses: {}
-            }
+            currentDayState: { completedBlockIds: [], responses: {} }
         };
         setProgress(resetProgress);
         setView('home');
 
-        if (programId === DUMMY_EQUIP_PROGRAM.id) {
+        if (programId === DUMMY_EQUIP_PROGRAM.id || ALL_DUMMY_PROGRAMS.some(dp => dp.id === programId)) {
              localStorage.removeItem(`demo-progress-${programId}`);
              showToast('success', 'Program restarted');
         } else {
-             // Attempt backend reset if API supports it
              try {
                  if ((apiClient as any).resetEquipProgress) {
                     await (apiClient as any).resetEquipProgress(programId);
@@ -509,7 +740,6 @@ export function EquipProgramFlow({ programId, enrollmentId, onBack, onComplete, 
                  showToast('success', 'Program restarted');
              } catch (e) {
                  console.error('Restart failed', e);
-                 // Even if backend fails, we reset locally to allow retry
              }
         }
     }
@@ -517,18 +747,17 @@ export function EquipProgramFlow({ programId, enrollmentId, onBack, onComplete, 
 
   if (loading) {
       return (
-          <div className="flex h-screen items-center justify-center flex-col gap-4">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900"></div>
-              <p className="text-gray-500">Loading program...</p>
+          <div className="flex h-screen items-center justify-center flex-col gap-4" style={{ backgroundColor: B.bgPage }}>
+              <LoadingSpinner message="Loading program..." />
           </div>
       );
   }
 
   if (error || !program) {
       return (
-          <div className="flex h-screen items-center justify-center flex-col gap-4 p-8 text-center">
-              <h2 className="text-xl font-bold text-red-600">Error Loading Program</h2>
-              <p className="text-gray-600">{error || 'Program data is missing'}</p>
+          <div className="flex h-screen items-center justify-center flex-col gap-4 p-8 text-center" style={{ backgroundColor: B.bgPage }}>
+              <h2 style={{ ...f('xl', 500, tokens.colors.status.danger) }}>Error Loading Program</h2>
+              <p style={f('sm', 400, B.muted)}>{error || 'Program data is missing'}</p>
               <Button onClick={onBack}>Go Back</Button>
           </div>
       );
@@ -537,18 +766,25 @@ export function EquipProgramFlow({ programId, enrollmentId, onBack, onComplete, 
   return (
     <>
       {view === 'home' && (
-        <EquipProgramHome 
-           program={program} 
+        <EquipProgramHome
+           program={program}
            progress={progress}
            onStartSession={() => setView('session')}
-           onViewHistory={() => setView('history')}
+           onSelectDay={(day) => {
+             if (day === progress.currentDay) {
+               setView('session');
+             } else if (progress.completedDays[day]) {
+               setReviewDay(day);
+               setView('review');
+             }
+           }}
            onRestart={handleRestart}
            onBack={handleBack}
         />
       )}
 
       {view === 'session' && (
-        <DaySessionScreen 
+        <DaySessionScreen
            program={program}
            dayNumber={progress.currentDay}
            initialResponses={progress.currentDayState.responses}
@@ -558,32 +794,14 @@ export function EquipProgramFlow({ programId, enrollmentId, onBack, onComplete, 
         />
       )}
 
-      {view === 'history' && (
-        <DayOverview 
-           program={program}
-           progress={progress}
-           onBack={() => setView('home')}
-           onSelectDay={(day) => {
-              // Allow replaying past days in read-only mode
-              if (day === progress.currentDay) {
-                  setView('session');
-              } else if (progress.completedDays[day]) {
-                  // Review past day
-                  setReviewDay(day);
-                  setView('review');
-              }
-           }}
-        />
-      )}
-
       {view === 'review' && reviewDay && (
-        <DaySessionScreen 
+        <DaySessionScreen
            program={program}
            dayNumber={reviewDay}
            initialResponses={progress.completedDays[reviewDay]?.responses || {}}
-           onCompleteDay={() => setView('history')}
-           onProgress={() => {}} // Read-only
-           onExit={() => setView('history')}
+           onCompleteDay={() => setView('home')}
+           onProgress={() => {}}
+           onExit={() => setView('home')}
            mode="preview"
         />
       )}

@@ -1,4 +1,4 @@
-import { WizardStepConfig, WizardFieldConfig, WizardLayout, WizardMode } from './types';
+import { WizardStepConfig, WizardLayout, WizardMode } from './types';
 import { WizardField } from './WizardField';
 import { motion } from 'motion/react';
 import { cn } from '../ui/utils';
@@ -123,7 +123,7 @@ export function WizardStep({ step, answers, context = {}, mode, onAnswerChange, 
         {title && (
           <h2 className={cn(
               "text-[var(--color-text-primary)] tracking-tight",
-              layout === 'centered' ? "text-3xl font-medium" : "text-2xl font-semibold"
+              layout === 'centered' ? "text-3xl font-medium" : "text-2xl font-medium"
           )}>
             {processedTitle}
           </h2>

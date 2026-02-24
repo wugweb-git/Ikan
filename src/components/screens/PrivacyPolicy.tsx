@@ -1,16 +1,15 @@
 import React from 'react';
 import { useIsMobile } from '../../hooks/useIsMobile';
-import { Icon } from '../Icon';
-import { Button } from '../ui/button';
 import { usePageContent } from '../../hooks/usePageContent';
 import { PageHero } from '../ui/PageHero';
+import { LoadingSpinner } from '../LoadingSpinner';
 
 interface PrivacyPolicyProps {
   className?: string;
-  onBack?: () => void;
+  onNavigate?: (route: string) => void;
 }
 
-export function PrivacyPolicy({ className, onBack }: PrivacyPolicyProps) {
+export function PrivacyPolicy({ className, onNavigate }: PrivacyPolicyProps) {
   const isMobile = useIsMobile();
   const { content, loading } = usePageContent('privacy');
 
@@ -22,28 +21,34 @@ export function PrivacyPolicy({ className, onBack }: PrivacyPolicyProps) {
         fontFamily: 'var(--font-family-base)'
       }}
     >
-      {/* Hero Section */}
       <PageHero 
         title={content?.title || 'Privacy Policy'}
         subtitle="Your privacy and data security are fundamental to our mission."
       />
 
-      {/* Content */}
       <div 
         className="w-full mx-auto"
         style={{
-          maxWidth: '900px',
-          padding: isMobile ? 'var(--ikan-component-spacing-large) var(--ikan-component-spacing-default)' : 'var(--ikan-component-spacing-large) var(--spacing-12)',
+          maxWidth: 'var(--banner-content-max, 1100px)',
+          padding: isMobile ? '24px 16px' : '40px 24px',
         }}
       >
         {loading ? (
           <div className="flex items-center justify-center py-12">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+            <LoadingSpinner message="Loading..." size="sm" />
           </div>
         ) : (
           <div 
             dangerouslySetInnerHTML={{ __html: content?.content || '' }}
-            className="bg-white rounded-lg shadow-sm border border-gray-100 p-6 md:p-10 prose max-w-none"
+            className="prose max-w-none"
+            style={{
+              backgroundColor: 'var(--color-bg-card)',
+              borderRadius: 'var(--radius-lg)',
+              border: '1px solid var(--color-border-light)',
+              boxShadow: 'var(--shadow-sm)',
+              padding: isMobile ? '24px' : '40px',
+              fontFamily: 'var(--font-family-base)',
+            }}
           />
         )}
       </div>

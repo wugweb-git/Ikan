@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { apiClient } from '../../lib/api-client';
 import { projectId, publicAnonKey } from '../../utils/supabase/info';
-import { getEquipProgramContent } from '../../lib/equip-program-content';
 import { EquipHero } from '../blocks/EquipHero';
 import { EquipBentoGrid } from '../blocks/EquipBentoGrid';
 import { EquipBlock } from '../blocks/EquipBlock';
@@ -9,13 +8,10 @@ import { ResourceBlock } from '../blocks/ResourceBlock';
 import { NewsletterBlock } from '../blocks/NewsletterBlock';
 import { ResourcePost } from '../blocks/ResourceCard';
 import { MobileHeader } from '../navigation/MobileHeader';
-import { TopNavBar } from '../navigation/TopNavBar';
 import { useIsMobile } from '../../hooks/useIsMobile';
 import { EmptyState } from '../ui/empty-state';
 import { Skeleton } from '../ui/skeleton-loader';
 import { EQUIP_CONTENT, NEWSLETTER_CONTENT, LEGACY_PROGRAM_IDS, FALLBACK_IMAGES } from '../../lib/constants/content';
-import { SLEEP_TIGHT_FALLBACK, FALLBACK_RELATED_PROGRAM, MOCK_RESOURCES } from '../../lib/content/equip';
-import { DUMMY_EQUIP_PROGRAM } from '../../lib/demo-data';
 
 interface EquipDetailProps {
   equipId?: string;
@@ -35,11 +31,13 @@ function ResourceSection({ onNavigate }: ResourceSectionProps) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    const controller = new AbortController();
     const fetchResources = async () => {
       try {
         const response = await fetch(
           `https://${projectId}.supabase.co/functions/v1/make-server-cc205da9/library/resources?limit=3`,
           {
+            signal: controller.signal,
             headers: {
               'Authorization': `Bearer ${publicAnonKey}`,
             },
@@ -55,7 +53,7 @@ function ResourceSection({ onNavigate }: ResourceSectionProps) {
           title: resource.title,
           description: resource.excerpt || resource.description || resource.content?.substring(0, 100) + '...' || '',
           date: new Date(resource.created_at || Date.now()).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
-          image: resource.image_url || resource.thumbnail_url || resource.featured_image || resource.thumbnail || resource.image || resource.metadata?.image || resource.metadata?.thumbnail || '',
+          image: resource.thumbnail || resource.image || resource.image_url || resource.thumbnail_url || resource.featured_image || resource.metadata?.image || resource.metadata?.thumbnail || '',
           slug: resource.slug,
           author: resource.author?.name,
           category: resource.category || 'General',
@@ -64,16 +62,19 @@ function ResourceSection({ onNavigate }: ResourceSectionProps) {
           link: resource.slug ? `/resources/${resource.slug}` : `/resources/${resource.id}`,
         }));
 
-        setPosts(transformedPosts);
-      } catch (err) {
+        if (!controller.signal.aborted) setPosts(transformedPosts);
+      } catch (err: any) {
+        if (err?.name === 'AbortError') return;
         console.error('Failed to fetch resources:', err);
         setPosts([]);
       } finally {
-        setLoading(false);
+        if (!controller.signal.aborted) setLoading(false);
       }
     };
 
     fetchResources();
+
+    return () => { controller.abort(); };
   }, []);
 
   // Always show block, let ResourceBlock handle empty state

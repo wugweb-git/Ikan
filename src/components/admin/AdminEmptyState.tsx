@@ -1,39 +1,58 @@
 import React from 'react';
 import { Button } from '../ui/button';
-import { LucideIcon } from 'lucide-react';
 
 interface AdminEmptyStateProps {
-  icon: LucideIcon;
+  icon: React.ReactNode;
   title: string;
   description: string;
   actionLabel?: string;
   onAction?: () => void;
+  action?: { label: string; onClick: () => void };
 }
 
 export function AdminEmptyState({
-  icon: Icon,
+  icon,
   title,
   description,
   actionLabel,
-  onAction
+  onAction,
+  action,
 }: AdminEmptyStateProps) {
+  const finalLabel = actionLabel || action?.label;
+  const finalHandler = onAction || action?.onClick;
+
+  // Support icon as either ReactNode or LucideIcon component
+  const renderIcon = () => {
+    if (React.isValidElement(icon)) {
+      return icon;
+    }
+    // If it's a component (LucideIcon), render it
+    const IconComp = icon as React.ComponentType<{ className?: string; style?: React.CSSProperties }>;
+    return <IconComp className="w-8 h-8" style={{ color: 'var(--color-text-muted)', opacity: 0.5 }} />;
+  };
+
   return (
     <div 
-      className="flex flex-col items-center justify-center text-center p-12 rounded-lg"
+      className="flex flex-col items-center justify-center text-center"
       style={{
         backgroundColor: 'var(--color-bg-card)',
         border: '1px solid var(--color-border-default)',
-        minHeight: '400px'
+        borderRadius: 'var(--radius-lg)',
+        padding: 'var(--spacing-12)',
+        minHeight: '400px',
       }}
     >
       <div 
-        className="w-16 h-16 rounded-full flex items-center justify-center mb-4"
-        style={{ backgroundColor: 'var(--color-bg-muted)' }}
+        className="flex items-center justify-center"
+        style={{
+          width: 64,
+          height: 64,
+          borderRadius: 'var(--radius-pill)',
+          backgroundColor: 'var(--color-bg-muted)',
+          marginBottom: 'var(--spacing-4)',
+        }}
       >
-        <Icon 
-          className="w-8 h-8" 
-          style={{ color: 'var(--color-text-muted)', opacity: 0.5 }} 
-        />
+        {renderIcon()}
       </div>
       
       <h3 style={{
@@ -41,7 +60,7 @@ export function AdminEmptyState({
         fontSize: 'var(--text-lg)',
         fontWeight: 'var(--font-weight-medium)',
         color: 'var(--color-text-primary)',
-        marginBottom: 'var(--spacing-2)'
+        marginBottom: 'var(--spacing-2)',
       }}>
         {title}
       </h3>
@@ -49,27 +68,29 @@ export function AdminEmptyState({
       <p style={{
         fontFamily: 'var(--font-family-base)',
         fontSize: 'var(--text-base)',
+        fontWeight: 'var(--font-weight-regular)',
         color: 'var(--color-text-muted)',
-        marginBottom: actionLabel ? 'var(--spacing-6)' : '0',
-        maxWidth: '400px'
+        marginBottom: finalLabel ? 'var(--spacing-6)' : '0',
+        maxWidth: '400px',
       }}>
         {description}
       </p>
       
-      {actionLabel && onAction && (
+      {finalLabel && finalHandler && (
         <Button 
-          onClick={onAction}
+          onClick={finalHandler}
           style={{
             height: 'var(--ikan-component-button-height)',
             borderRadius: 'var(--ikan-component-border-radius)',
             fontWeight: 'var(--font-weight-medium)',
+            fontFamily: 'var(--font-family-base)',
             paddingLeft: 'var(--spacing-6)',
             paddingRight: 'var(--spacing-6)',
             backgroundColor: 'var(--color-primary-default)',
-            color: 'var(--color-primary-on)'
+            color: 'var(--color-primary-on)',
           }}
         >
-          {actionLabel}
+          {finalLabel}
         </Button>
       )}
     </div>

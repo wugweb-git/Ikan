@@ -333,6 +333,17 @@ export const sanitizeProfileUpdate = (updates: any): any => {
     sanitized.emergencyContactRelationship = updates.emergencyContact.relationship ? sanitizeString(updates.emergencyContact.relationship) : null;
   }
   
+  // Also handle flat emergency contact fields (from Account.tsx data mapping fix)
+  if (updates.emergencyContactName !== undefined) {
+    sanitized.emergencyContactName = updates.emergencyContactName ? sanitizeString(updates.emergencyContactName) : null;
+  }
+  if (updates.emergencyContactPhone !== undefined) {
+    sanitized.emergencyContactPhone = updates.emergencyContactPhone ? sanitizeString(updates.emergencyContactPhone) : null;
+  }
+  if (updates.emergencyContactRelationship !== undefined) {
+    sanitized.emergencyContactRelationship = updates.emergencyContactRelationship ? sanitizeString(updates.emergencyContactRelationship) : null;
+  }
+  
   if (updates.preferences !== undefined) {
     sanitized.preferences = updates.preferences;
   }

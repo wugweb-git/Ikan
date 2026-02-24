@@ -239,12 +239,8 @@ export function AssessmentQuestion({
               Question {questionNumber} of {totalQuestions}
             </span>
             <div 
-              className="h-2 bg-gray-200 rounded-full"
-              style={{ 
-                width: '120px',
-                backgroundColor: 'var(--color-bg-muted)',
-                borderRadius: 'var(--radius-pill)'
-              }}
+              className="h-2 rounded-full"
+              style={{ backgroundColor: 'var(--color-bg-muted)' }}
             >
               <div 
                 className="h-2 rounded-full transition-all duration-300"

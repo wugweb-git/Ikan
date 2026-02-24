@@ -1,6 +1,5 @@
 import React from 'react';
 import { Button } from '../ui/button';
-import { Icon } from '../Icon';
 import { ChevronRight } from 'lucide-react';
 
 interface AdminHeaderProps {
@@ -32,19 +31,19 @@ export function AdminHeader({
     <div className="space-y-6">
       {/* Breadcrumbs */}
       {breadcrumbs && breadcrumbs.length > 0 && (
-        <nav className="flex items-center text-sm text-muted-foreground mb-2">
+        <nav className="flex items-center" style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-muted)', marginBottom: 'var(--spacing-2)' }}>
           {breadcrumbs.map((crumb, index) => (
             <React.Fragment key={crumb.label}>
               {index > 0 && <ChevronRight className="w-4 h-4 mx-2" />}
               {crumb.onClick ? (
                 <button 
                   onClick={crumb.onClick}
-                  className="hover:text-foreground transition-colors"
+                  style={{ color: 'var(--color-text-muted)', fontFamily: 'var(--font-family-base)', fontWeight: 'var(--font-weight-regular)', background: 'none', border: 'none', cursor: 'pointer' }}
                 >
                   {crumb.label}
                 </button>
               ) : (
-                <span className="text-foreground font-medium">{crumb.label}</span>
+                <span style={{ color: 'var(--color-text-primary)', fontWeight: 'var(--font-weight-medium)', fontFamily: 'var(--font-family-base)' }}>{crumb.label}</span>
               )}
             </React.Fragment>
           ))}

@@ -30,6 +30,15 @@ export function Preferences() {
   const { user } = useAuth();
   const isMobile = useIsMobile();
   
+  // AbortController for async operations cleanup
+  const abortControllerRef = React.useRef<AbortController | null>(null);
+  
+  React.useEffect(() => {
+    return () => {
+      abortControllerRef.current?.abort();
+    };
+  }, []);
+  
   const [preferences, setPreferences] = useState<UserPreferences>({
     language: 'en',
     theme: 'light',
@@ -46,10 +55,12 @@ export function Preferences() {
   });
 
   useEffect(() => {
-    if (user?.user_metadata?.preferences) {
+    // Check both top-level (from KV profile) and user_metadata (from Supabase auth)
+    const savedPrefs = user?.preferences || user?.user_metadata?.preferences;
+    if (savedPrefs) {
       setPreferences(prev => ({
         ...prev,
-        ...user.user_metadata.preferences
+        ...savedPrefs
       }));
     }
   }, [user]);
@@ -112,23 +123,18 @@ export function Preferences() {
       onClick={onChange}
       className="relative inline-flex items-center cursor-pointer touch-none"
       style={{
-        width: '90px',
-        height: '34px',
-        borderRadius: '9999px',
+        width: '44px',
+        height: '24px',
+        borderRadius: '12px',
         backgroundColor: enabled ? 'var(--color-primary-default)' : 'var(--color-bg-muted)',
         transition: 'background-color 0.2s ease',
-        border: '2px solid transparent',
+        border: 'none',
         padding: 0
       }}
     >
       <span
-        className="block bg-white rounded-full shadow-sm"
-        style={{
-          width: '30px',
-          height: '30px',
-          transform: enabled ? 'translateX(56px)' : 'translateX(0)',
-          transition: 'transform 0.2s ease'
-        }}
+        className="block rounded-full shadow-sm"
+        style={{ backgroundColor: 'var(--color-bg-card)' }}
       />
     </button>
   );

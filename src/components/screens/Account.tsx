@@ -16,35 +16,35 @@ import { apiClient } from '../../lib/api-client';
 import { useIsMobile } from '../../hooks/useIsMobile';
 import { validateProfile } from '../../lib/validation';
 import { AccountPageHeader } from '../blocks/AccountPageHeader';
-import svgPaths from '../../imports/svg-w4enjbypu8';
 
 // Mobile Header Components from Figma
 function MobileHeader({ title, onBack, rightAction }: { title: string, onBack?: () => void, rightAction?: React.ReactNode }) {
   return (
-    <div className="content-stretch flex gap-[12px] h-[73px] items-center left-0 pb-[0.586px] pt-0 px-[16px] w-full bg-[#f5f5f5] sticky top-0 z-50">
+    <div className="content-stretch flex items-center w-full sticky top-0 z-50" style={{ gap: 'var(--spacing-3)', height: '73px', paddingLeft: 'var(--spacing-4)', paddingRight: 'var(--spacing-4)', backgroundColor: 'var(--color-bg-page)' }}>
       <div aria-hidden="true" className="absolute border-b border-[rgba(0,0,0,0.1)] inset-x-0 bottom-0 pointer-events-none" />
       
       {/* Back Button */}
       {onBack && (
         <button 
           onClick={onBack}
-          className="relative rounded-[12px] shrink-0 size-[48px] flex items-center justify-center hover:bg-black/5 active:bg-black/10 transition-colors"
+          className="relative shrink-0 size-[48px] flex items-center justify-center hover:bg-black/5 active:bg-black/10 transition-colors"
+          style={{ borderRadius: 'var(--radius-md)' }}
           aria-label="Go back"
         >
            <svg className="block w-[16px] h-[16px]" fill="none" viewBox="0 0 16 16" aria-hidden="true">
             <g>
-              <path d="M8 12.6661L3.33355 7.99962L8 3.33317" stroke="#151515" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.33" />
-              <path d="M12.6661 7.99962H3.33317" stroke="#151515" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.33" />
+              <path d="M8 12.6661L3.33355 7.99962L8 3.33317" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.33" />
+              <path d="M12.6661 7.99962H3.33317" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.33" />
             </g>
           </svg>
         </button>
       )}
 
       {/* Title */}
-      <div className="basis-0 grow h-[27px] min-h-px min-w-px relative shrink-0 flex items-center">
+      <div className="basis-0 grow min-h-px min-w-px relative shrink-0 flex items-center">
         <h1 
-          className="font-medium text-[#151515] text-[18px] tracking-[-0.44px] truncate m-0"
-          style={{ fontFamily: 'var(--font-family-base)' }}
+          className="truncate m-0"
+          style={{ fontFamily: 'var(--font-family-base)', fontWeight: 'var(--font-weight-medium)', color: 'var(--color-text-primary)', fontSize: 'var(--text-lg)', letterSpacing: '-0.44px' }}
         >
           {title}
         </h1>
@@ -62,10 +62,10 @@ function MobileHeader({ title, onBack, rightAction }: { title: string, onBack?: 
 
 // Edit Icon for Header
 const IconEdit = () => (
-  <svg className="block w-4 h-4" fill="none" viewBox="0 0 16 16">
+  <svg className="block w-4 h-4" fill="none" viewBox="0 0 16 16" style={{ color: 'var(--color-text-muted)' }}>
      <g clipPath="url(#clip0_edit)">
-      <path d="M14.1153 4.54112C14.4678 4.18875 14.6658 3.7108 14.6659 3.21241C14.6659 2.71403 14.468 2.23603 14.1157 1.88358C13.7633 1.53112 13.2853 1.33308 12.787 1.33302C12.2886 1.33295 11.8106 1.53088 11.4581 1.88324L2.56121 10.7822C2.40643 10.9365 2.29196 11.1265 2.22789 11.3355L1.34727 14.2367C1.33004 14.2943 1.32874 14.3555 1.3435 14.4139C1.35826 14.4722 1.38854 14.5255 1.43113 14.568C1.47371 14.6105 1.527 14.6407 1.58536 14.6553C1.64372 14.67 1.70495 14.6686 1.76258 14.6513L4.66444 13.7713C4.87321 13.7078 5.0632 13.5941 5.21775 13.44L14.1153 4.54112Z" stroke="#5C5C5C" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.33327" />
-      <path d="M9.99952 3.33317L12.6661 5.99971" stroke="#5C5C5C" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.33327" />
+      <path d="M14.1153 4.54112C14.4678 4.18875 14.6658 3.7108 14.6659 3.21241C14.6659 2.71403 14.468 2.23603 14.1157 1.88358C13.7633 1.53112 13.2853 1.33308 12.787 1.33302C12.2886 1.33295 11.8106 1.53088 11.4581 1.88324L2.56121 10.7822C2.40643 10.9365 2.29196 11.1265 2.22789 11.3355L1.34727 14.2367C1.33004 14.2943 1.32874 14.3555 1.3435 14.4139C1.35826 14.4722 1.38854 14.5255 1.43113 14.568C1.47371 14.6105 1.527 14.6407 1.58536 14.6553C1.64372 14.67 1.70495 14.6686 1.76258 14.6513L4.66444 13.7713C4.87321 13.7078 5.0632 13.5941 5.21775 13.44L14.1153 4.54112Z" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.33327" />
+      <path d="M9.99952 3.33317L12.6661 5.99971" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.33327" />
      </g>
      <defs>
       <clipPath id="clip0_edit">
@@ -76,10 +76,10 @@ const IconEdit = () => (
 );
 
 const IconSave = () => (
-  <svg className="block w-4 h-4" fill="none" viewBox="0 0 24 24">
-    <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" stroke="#5C5C5C" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-    <polyline points="17 21 17 13 7 13 7 21" stroke="#5C5C5C" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-    <polyline points="7 3 7 8 15 8" stroke="#5C5C5C" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+  <svg className="block w-4 h-4" fill="none" viewBox="0 0 24 24" style={{ color: 'var(--color-text-muted)' }}>
+    <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+    <polyline points="17 21 17 13 7 13 7 21" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+    <polyline points="7 3 7 8 15 8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
   </svg>
 );
 
@@ -154,6 +154,7 @@ export function Account({ className, onNavigate }: AccountProps) {
         return;
       }
       
+      // Flatten emergencyContact to match the User interface / backend schema
       const response = await apiClient.updateProfile({
         name: userData.name,
         phone: userData.phone,
@@ -161,7 +162,9 @@ export function Account({ className, onNavigate }: AccountProps) {
         dateOfBirth: userData.dateOfBirth,
         gender: userData.gender,
         location: userData.location,
-        emergencyContact: userData.emergencyContact,
+        emergencyContactName: userData.emergencyContact?.name || '',
+        emergencyContactPhone: userData.emergencyContact?.phone || '',
+        emergencyContactRelationship: userData.emergencyContact?.relationship || '',
         preferences: userData.preferences
       });
       
@@ -184,9 +187,36 @@ export function Account({ className, onNavigate }: AccountProps) {
     try {
       if (action === 'connect') {
         showToast('info', 'Connecting...', `Connecting to ${provider === 'google' ? 'Google' : 'LinkedIn'}...`);
-        await apiClient.connectSocialAccount(provider);
-        showToast('success', 'Connected', `Successfully connected to ${provider === 'google' ? 'Google' : 'LinkedIn'}`);
+        
+        // Try real Supabase identity linking first
+        try {
+          const supabaseProvider = provider === 'linkedin' ? 'linkedin_oidc' : 'google';
+          await apiClient.linkSocialAccount(supabaseProvider as any);
+          // OAuth will redirect — toast on return is handled by auth state listener
+          return;
+        } catch (oauthError: any) {
+          // If provider is not enabled in Supabase, fall back to simulated connection
+          console.log(`OAuth linking unavailable for ${provider}, using simulated connection:`, oauthError.message);
+          await apiClient.connectSocialAccount(provider);
+          showToast('success', 'Connected', `Successfully connected to ${provider === 'google' ? 'Google' : 'LinkedIn'}`);
+        }
       } else {
+        // Try real Supabase identity unlinking first
+        try {
+          const identities = await apiClient.getLinkedIdentities();
+          const identity = identities.find((i: any) => 
+            i.provider === provider || i.provider === (provider === 'linkedin' ? 'linkedin_oidc' : provider)
+          );
+          if (identity) {
+            await apiClient.unlinkSocialAccount(identity.id);
+            showToast('success', 'Disconnected', `Successfully disconnected from ${provider === 'google' ? 'Google' : 'LinkedIn'}`);
+            return;
+          }
+        } catch (unlinkError: any) {
+          console.log(`OAuth unlinking unavailable for ${provider}, using simulated disconnect:`, unlinkError.message);
+        }
+        
+        // Fall back to simulated disconnection
         await apiClient.disconnectSocialAccount(provider);
         showToast('success', 'Disconnected', `Successfully disconnected from ${provider === 'google' ? 'Google' : 'LinkedIn'}`);
       }
@@ -273,7 +303,8 @@ export function Account({ className, onNavigate }: AccountProps) {
         rightAction = (
           <button 
             onClick={triggerProfileSave}
-            className="bg-white rounded-[8px] size-[40px] flex items-center justify-center hover:bg-gray-50 transition-colors"
+            className="rounded-[8px] size-[40px] flex items-center justify-center hover:bg-black/5 transition-colors"
+            style={{ backgroundColor: 'var(--color-bg-card)' }}
             aria-label={isProfileEditing ? "Save profile" : "Edit profile"}
           >
             {isProfileEditing ? <IconSave /> : <IconEdit />}
@@ -328,7 +359,7 @@ export function Account({ className, onNavigate }: AccountProps) {
 
     if (isMobile) {
       return (
-        <div className="flex flex-col h-full bg-[#f5f5f5] fixed inset-0 z-50 overflow-hidden">
+        <div className="flex flex-col h-full fixed inset-0 z-50 overflow-hidden" style={{ backgroundColor: 'var(--color-bg-page)' }}>
           <MobileHeader 
             title={title} 
             onBack={handleMobileBack} 
@@ -354,7 +385,7 @@ export function Account({ className, onNavigate }: AccountProps) {
   if (isMobile) {
     if (showMobileMenu) {
       return (
-        <div className={cn("w-full h-full bg-[#f5f5f5] flex flex-col fixed inset-0 z-50", className)}>
+        <div className={cn("w-full h-full flex flex-col fixed inset-0 z-50", className)} style={{ backgroundColor: 'var(--color-bg-page)' }}>
            <MobileHeader title="Account" /> 
            
           <div className="flex-1 overflow-y-auto px-[16px] py-[24px] pb-[100px]">
@@ -371,7 +402,7 @@ export function Account({ className, onNavigate }: AccountProps) {
     }
 
     return (
-      <div className={cn("w-full h-full bg-[#f5f5f5]", className)}>
+      <div className={cn("w-full h-full", className)} style={{ backgroundColor: 'var(--color-bg-page)' }}>
         {renderAccountContent()}
       </div>
     );
@@ -397,9 +428,9 @@ export function Account({ className, onNavigate }: AccountProps) {
           width: '300px',
           height: '100%',
           overflowY: 'hidden',
-          backgroundColor: '#FFFFFF',
+          backgroundColor: 'var(--color-bg-card)',
           borderRadius: '24px',
-          border: '1px solid #E4E4E4'
+          border: '1px solid var(--grey-2)'
         }}
       >
         <SideNavAccount

@@ -107,7 +107,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             // Fetch full profile in background (single attempt)
             setTimeout(async () => {
               try {
-                const { profile } = await apiClient.getProfile();
+                const profile = await apiClient.getProfile();
                 if (profile && profile.user_id === quickUser.user_id) {
                   setUser(profile);
                   console.log('✅ Full profile loaded successfully');
@@ -183,7 +183,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         // Background profile fetch with simpler retry logic
         setTimeout(async () => {
           try {
-            const { profile } = await apiClient.getProfile();
+            const profile = await apiClient.getProfile();
             if (profile && profile.user_id === quickUser.user_id) {
               setUser(profile);
               console.log('✅ Profile loaded via auth listener');
@@ -283,8 +283,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         // Fetch full profile in background (non-blocking)
         setTimeout(async () => {
           try {
-            const { profile } = await apiClient.getProfile();
-            setUser(profile); // Update with full profile when available
+            const profile = await apiClient.getProfile();
+            if (profile && profile.user_id === immediateUser.user_id) {
+              setUser(profile);
+              console.log('✅ Full profile loaded after sign-in');
+            }
           } catch (error) {
             console.log('Background profile fetch failed:', error);
             // Keep using the immediate user data
@@ -360,8 +363,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const updateProfile = async (updates: Partial<User>) => {
     try {
-      const { profile } = await apiClient.updateProfile(updates);
-      setUser(profile);
+      const profile = await apiClient.updateProfile(updates);
+      if (profile && profile.user_id) {
+        setUser(profile);
+      }
     } catch (error) {
       console.error('Update profile error:', error);
       throw error;

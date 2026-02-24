@@ -13,392 +13,579 @@ import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '../ui/accordion';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '../ui/dialog';
 import { Textarea } from '../ui/textarea';
-import { Icon } from '../Icon';
-import { BlockRenderer } from '../player/BlockRenderer';
-import { BookOpen, Check, AlertTriangle, Info, Bell, Settings, User, Activity } from 'lucide-react';
+import { AdminHeader } from '../admin/AdminHeader';
+import { AdminSection } from '../admin/AdminSection';
+import { AdminEmptyState } from '../admin/AdminEmptyState';
+import { AdminStatusBadge } from '../admin/AdminStatusBadge';
+import { Check, AlertTriangle, Info, Settings, Activity, Database, Inbox, Plus } from 'lucide-react';
+
+// ── Token helpers ──────────────────────────────────────────────────
+const f = (size: string, weight: number = 400, color: string = 'var(--color-text-primary)') => ({
+  fontFamily: 'var(--font-family-base)',
+  fontSize: `var(--text-${size})`,
+  fontWeight: weight,
+  color,
+});
 
 export function UIKitPatterns() {
-  const [mcqValue, setMcqValue] = useState<string>('');
-  const [scaleValue, setScaleValue] = useState<number | null>(null);
-  const [textValue, setTextValue] = useState<string>('');
-
-  // --- MOCK BLOCKS FOR DEMO ---
-  const mcqBlock = {
-    id: 'demo-mcq',
-    type: 'exercise',
-    title: 'How often do you feel anxious?',
-    content: '',
-    exerciseConfig: {
-      subtype: 'single-select',
-      prompt: 'Select the option that best describes your experience over the last 2 weeks.',
-      options: ['Not at all', 'Several days', 'More than half the days', 'Nearly every day']
-    }
-  };
-
-  const scaleBlock = {
-    id: 'demo-scale',
-    type: 'exercise',
-    title: 'Rate your energy level today',
-    content: '',
-    exerciseConfig: {
-      subtype: 'clinical_instrument',
-      prompt: 'Please rate from 1 (Low) to 5 (High)',
-      questions: ['Energy Level'],
-      scale: [
-        { label: 'Very Low', value: 1 },
-        { label: 'Low', value: 2 },
-        { label: 'Neutral', value: 3 },
-        { label: 'High', value: 4 },
-        { label: 'Very High', value: 5 }
-      ]
-    }
-  };
-
-  const journalBlock = {
-    id: 'demo-journal',
-    type: 'journal',
-    title: 'Daily Reflection',
-    content: '',
-    exerciseConfig: {
-      prompt: 'What is one thing you are grateful for today?',
-      maxEntries: 500
-    }
-  };
-
-  const lessonBlock = {
-    id: 'demo-lesson',
-    type: 'lesson',
-    title: 'Understanding Anxiety',
-    content: '<p>Anxiety is a natural response to stress. It\'s a feeling of fear or apprehension about what\'s to come.</p>',
-    image_url: 'https://images.unsplash.com/photo-1499209974431-9dddcece7f88?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80',
-    exerciseConfig: {}
-  };
-
   return (
-    <div className="space-y-8 animate-in fade-in duration-500">
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-8)' }}>
+      {/* Kit Header */}
       <div>
-        <h1 className="text-3xl font-bold text-gray-900">Admin UI Kit</h1>
-        <p className="text-gray-500">Comprehensive guide to iKan design system components, tokens, and patterns.</p>
+        <h1 style={{ ...f('3xl', 500), marginBottom: 'var(--spacing-2)' }}>
+          Admin UI Kit — Source of Truth
+        </h1>
+        <p style={f('base', 400, 'var(--color-text-muted)')}>
+          All finalized components, tokens, and patterns governing the iKan Admin Console.
+          Every screen must be built from these recycled instances.
+        </p>
       </div>
 
-      <Tabs defaultValue="primitives" className="w-full">
-        <TabsList className="grid w-full grid-cols-4 h-12">
-          <TabsTrigger value="primitives">Primitives</TabsTrigger>
-          <TabsTrigger value="components">Components</TabsTrigger>
+      <Tabs defaultValue="tokens" className="w-full">
+        <TabsList className="grid w-full grid-cols-5 h-12">
           <TabsTrigger value="tokens">Design Tokens</TabsTrigger>
-          <TabsTrigger value="blocks">Content Blocks</TabsTrigger>
+          <TabsTrigger value="primitives">Primitives</TabsTrigger>
+          <TabsTrigger value="admin">Admin Components</TabsTrigger>
+          <TabsTrigger value="patterns">Patterns</TabsTrigger>
+          <TabsTrigger value="states">State Handling</TabsTrigger>
         </TabsList>
 
-        {/* --- PRIMITIVES TAB --- */}
-        <TabsContent value="primitives" className="space-y-8 mt-6">
-          
-          {/* BUTTONS */}
-          <section className="space-y-4">
-            <h2 className="text-xl font-semibold border-b pb-2">Buttons</h2>
-            <div className="flex flex-wrap gap-4 items-center p-4 bg-white rounded-lg border">
-              <Button variant="default">Default</Button>
-              <Button variant="secondary">Secondary</Button>
-              <Button variant="outline">Outline</Button>
-              <Button variant="ghost">Ghost</Button>
-              <Button variant="destructive">Destructive</Button>
-              <Button variant="link">Link</Button>
-            </div>
-            <div className="flex flex-wrap gap-4 items-center p-4 bg-white rounded-lg border">
-               <Button size="lg">Large Button</Button>
-               <Button size="default">Default Button</Button>
-               <Button size="sm">Small</Button>
-               <Button size="icon"><Settings size={16} /></Button>
-            </div>
-          </section>
+        {/* ═══ TOKENS TAB ═══ */}
+        <TabsContent value="tokens" style={{ marginTop: 'var(--spacing-6)' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-8)' }}>
 
-          {/* BADGES */}
-          <section className="space-y-4">
-            <h2 className="text-xl font-semibold border-b pb-2">Badges</h2>
-            <div className="flex flex-wrap gap-4 p-4 bg-white rounded-lg border">
-              <Badge>Default</Badge>
-              <Badge variant="secondary">Secondary</Badge>
-              <Badge variant="outline">Outline</Badge>
-              <Badge variant="destructive">Destructive</Badge>
-              <Badge className="bg-blue-500 hover:bg-blue-600">Custom Blue</Badge>
-              <Badge className="bg-green-500 hover:bg-green-600">Success</Badge>
-            </div>
-          </section>
+            {/* Color Tokens */}
+            <section style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-4)' }}>
+              <h2 style={{ ...f('xl', 500), borderBottom: '1px solid var(--color-border-default)', paddingBottom: 'var(--spacing-2)' }}>
+                Color Tokens
+              </h2>
 
-          {/* INPUTS & FORMS */}
-          <section className="space-y-4">
-            <h2 className="text-xl font-semibold border-b pb-2">Inputs & Controls</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-6 bg-white rounded-lg border">
-              <div className="space-y-4">
-                <div className="grid w-full max-w-sm items-center gap-1.5">
-                  <Label htmlFor="email">Email</Label>
-                  <Input type="email" id="email" placeholder="Email" />
-                </div>
-                <div className="grid w-full max-w-sm items-center gap-1.5">
-                  <Label htmlFor="text">Text Area</Label>
-                  <Textarea placeholder="Type your message here." />
+              <div>
+                <h3 style={{ ...f('sm', 500), marginBottom: 'var(--spacing-2)' }}>Core Palette</h3>
+                <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+                  {[
+                    { name: '--color-primary-default', label: 'Primary', value: '#2A2A2A' },
+                    { name: '--color-primary-on', label: 'Primary On', value: '#FFFFFF' },
+                    { name: '--color-accent-default', label: 'Accent', value: '#E9EBEF' },
+                    { name: '--color-bg-page', label: 'Page BG', value: '#F5F5F5' },
+                    { name: '--color-bg-card', label: 'Card BG', value: '#FFFFFF' },
+                  ].map(c => (
+                    <div key={c.name} style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-2)' }}>
+                      <div style={{ height: 80, borderRadius: 'var(--radius-md)', boxShadow: 'var(--shadow-sm)', backgroundColor: `var(${c.name.replace('--', '--')})` }} />
+                      <span style={{ ...f('xs', 500), fontFamily: 'monospace' }}>{c.label}</span>
+                      <span style={f('xs', 400, 'var(--color-text-muted)')}>{c.value}</span>
+                    </div>
+                  ))}
                 </div>
               </div>
-              
-              <div className="space-y-6">
-                <div className="flex items-center space-x-2">
-                  <Switch id="airplane-mode" />
-                  <Label htmlFor="airplane-mode">Airplane Mode</Label>
-                </div>
-                
-                <div className="flex items-center space-x-2">
-                  <Checkbox id="terms" />
-                  <Label htmlFor="terms">Accept terms and conditions</Label>
-                </div>
 
-                <RadioGroup defaultValue="option-one">
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="option-one" id="option-one" />
-                    <Label htmlFor="option-one">Option One</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="option-two" id="option-two" />
-                    <Label htmlFor="option-two">Option Two</Label>
-                  </div>
-                </RadioGroup>
-
-                <Select>
-                  <SelectTrigger className="w-[180px]">
-                    <SelectValue placeholder="Select a fruit" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="apple">Apple</SelectItem>
-                    <SelectItem value="banana">Banana</SelectItem>
-                    <SelectItem value="blueberry">Blueberry</SelectItem>
-                  </SelectContent>
-                </Select>
+              <div>
+                <h3 style={{ ...f('sm', 500), marginBottom: 'var(--spacing-2)' }}>Status Colors</h3>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  {[
+                    { name: 'Success', token: '--color-status-success', light: '--color-status-success-light' },
+                    { name: 'Warning', token: '--color-status-warning', light: '--color-status-warning-light' },
+                    { name: 'Danger', token: '--color-status-danger', light: '--color-status-danger-light' },
+                    { name: 'Info', token: '--color-status-info', light: '--color-status-info-light' },
+                  ].map(c => (
+                    <div key={c.name} style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-1)' }}>
+                      <div style={{ display: 'flex', gap: 'var(--spacing-2)' }}>
+                        <div style={{ flex: 1, height: 48, borderRadius: 'var(--radius-sm)', backgroundColor: `var(${c.token})` }} />
+                        <div style={{ flex: 1, height: 48, borderRadius: 'var(--radius-sm)', backgroundColor: `var(${c.light})`, border: `1px solid var(${c.token})` }} />
+                      </div>
+                      <span style={{ ...f('xs', 500), fontFamily: 'monospace' }}>{c.name}</span>
+                    </div>
+                  ))}
+                </div>
               </div>
-            </div>
-          </section>
+
+              <div>
+                <h3 style={{ ...f('sm', 500), marginBottom: 'var(--spacing-2)' }}>Text Colors</h3>
+                <div className="grid grid-cols-3 gap-4">
+                  {[
+                    { label: 'Primary', token: '--color-text-primary', desc: '#151515 — headings, body' },
+                    { label: 'Muted', token: '--color-text-muted', desc: '#717182 — secondary text' },
+                    { label: 'Inverse', token: '--color-text-inverse', desc: '#FFFFFF — on dark bg' },
+                  ].map(c => (
+                    <div key={c.label} className="p-4 rounded-lg" style={{ backgroundColor: 'var(--color-bg-muted)', border: '1px solid var(--color-border-default)' }}>
+                      <span style={{ ...f('base', 500), color: `var(${c.token})` }}>{c.label}</span>
+                      <p style={f('xs', 400, 'var(--color-text-muted)')}>{c.desc}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </section>
+
+            {/* Typography Tokens */}
+            <section style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-4)' }}>
+              <h2 style={{ ...f('xl', 500), borderBottom: '1px solid var(--color-border-default)', paddingBottom: 'var(--spacing-2)' }}>
+                Typography
+              </h2>
+              <Card style={{ borderRadius: 'var(--radius-lg)' }}>
+                <CardContent className="p-6" style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-4)' }}>
+                  {[
+                    { label: 'Heading 1', size: '3xl', weight: 500 },
+                    { label: 'Heading 2', size: '2xl', weight: 500 },
+                    { label: 'Heading 3', size: 'xl', weight: 500 },
+                    { label: 'Heading 4', size: 'lg', weight: 500 },
+                    { label: 'Body', size: 'base', weight: 400 },
+                    { label: 'Small', size: 'sm', weight: 400 },
+                    { label: 'Caption', size: 'xs', weight: 400 },
+                  ].map(t => (
+                    <div key={t.label} className="flex items-baseline justify-between">
+                      <span style={f(t.size, t.weight)}>{t.label}</span>
+                      <span style={{ ...f('xs', 400, 'var(--color-text-muted)'), fontFamily: 'monospace' }}>
+                        --text-{t.size} / weight {t.weight}
+                      </span>
+                    </div>
+                  ))}
+                  <Alert>
+                    <Info className="h-4 w-4" />
+                    <AlertTitle>Font Weight Rule</AlertTitle>
+                    <AlertDescription>
+                      Only 400 (body) and 500 (headings/labels). Never use 600 or 700.
+                    </AlertDescription>
+                  </Alert>
+                </CardContent>
+              </Card>
+            </section>
+
+            {/* Spacing & Radius */}
+            <section style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-4)' }}>
+              <h2 style={{ ...f('xl', 500), borderBottom: '1px solid var(--color-border-default)', paddingBottom: 'var(--spacing-2)' }}>
+                Spacing & Radius
+              </h2>
+              <div className="grid grid-cols-2 gap-6">
+                <Card style={{ borderRadius: 'var(--radius-lg)' }}>
+                  <CardHeader><CardTitle style={f('base', 500)}>Spacing Scale (4px grid)</CardTitle></CardHeader>
+                  <CardContent>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-2)' }}>
+                      {[1,2,3,4,5,6,8,10,12,16].map(n => (
+                        <div key={n} className="flex items-center" style={{ gap: 'var(--spacing-3)' }}>
+                          <div style={{ width: `var(--spacing-${n})`, height: 12, backgroundColor: 'var(--color-primary-default)', borderRadius: 2, flexShrink: 0 }} />
+                          <span style={{ ...f('xs', 400, 'var(--color-text-muted)'), fontFamily: 'monospace', minWidth: 100 }}>
+                            --spacing-{n} = {n * 4}px
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+                <Card style={{ borderRadius: 'var(--radius-lg)' }}>
+                  <CardHeader><CardTitle style={f('base', 500)}>Border Radius</CardTitle></CardHeader>
+                  <CardContent>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-4)' }}>
+                      {[
+                        { name: '--radius-sm', val: '8px', use: 'Tabs, pills' },
+                        { name: '--radius-md', val: '12px', use: 'Buttons, inputs' },
+                        { name: '--radius-lg', val: '16px', use: 'Cards, sections' },
+                        { name: '--radius-pill', val: '9999px', use: 'Badges, nav bar' },
+                      ].map(r => (
+                        <div key={r.name} className="flex items-center" style={{ gap: 'var(--spacing-3)' }}>
+                          <div style={{ width: 48, height: 48, border: '2px solid var(--color-primary-default)', borderRadius: r.val, flexShrink: 0 }} />
+                          <div>
+                            <span style={{ ...f('sm', 500), fontFamily: 'monospace', display: 'block' }}>{r.name}</span>
+                            <span style={f('xs', 400, 'var(--color-text-muted)')}>{r.val} — {r.use}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            </section>
+          </div>
         </TabsContent>
 
-        {/* --- COMPONENTS TAB --- */}
-        <TabsContent value="components" className="space-y-8 mt-6">
-          
-          {/* CARDS */}
-          <section className="space-y-4">
-            <h2 className="text-xl font-semibold border-b pb-2">Cards</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Card Title</CardTitle>
-                  <CardDescription>Card Description goes here.</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <p>Card content. This is a basic card component used throughout the admin dashboard.</p>
-                </CardContent>
-                <CardFooter>
-                  <p>Card Footer</p>
-                </CardFooter>
-              </Card>
+        {/* ═══ PRIMITIVES TAB ═══ */}
+        <TabsContent value="primitives" style={{ marginTop: 'var(--spacing-6)' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-8)' }}>
 
-              <Card className="border-l-4 border-l-[var(--color-primary-default)]">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Activity className="text-primary" />
-                    Status Card
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-3xl font-bold">98.5%</div>
-                  <p className="text-xs text-muted-foreground">+2.5% from last month</p>
+            {/* Buttons */}
+            <section style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-4)' }}>
+              <h2 style={{ ...f('xl', 500), borderBottom: '1px solid var(--color-border-default)', paddingBottom: 'var(--spacing-2)' }}>Buttons</h2>
+              <Card style={{ borderRadius: 'var(--radius-lg)' }}>
+                <CardContent className="p-6">
+                  <div className="flex flex-wrap gap-4 items-center mb-4">
+                    <Button variant="default">Default</Button>
+                    <Button variant="secondary">Secondary</Button>
+                    <Button variant="outline">Outline</Button>
+                    <Button variant="ghost">Ghost</Button>
+                    <Button variant="destructive">Destructive</Button>
+                    <Button variant="link">Link</Button>
+                  </div>
+                  <div className="flex flex-wrap gap-4 items-center">
+                    <Button size="lg">Large Button</Button>
+                    <Button size="default">Default Button</Button>
+                    <Button size="sm">Small</Button>
+                    <Button size="icon"><Settings size={16} /></Button>
+                  </div>
                 </CardContent>
               </Card>
-            </div>
-          </section>
+            </section>
 
-          {/* ALERTS */}
-          <section className="space-y-4">
-            <h2 className="text-xl font-semibold border-b pb-2">Alerts</h2>
-            <div className="space-y-4">
-              <Alert>
-                <Info className="h-4 w-4" />
-                <AlertTitle>Heads up!</AlertTitle>
-                <AlertDescription>
-                  You can add components to your app using the cli.
-                </AlertDescription>
-              </Alert>
-              <Alert variant="destructive">
-                <AlertTriangle className="h-4 w-4" />
-                <AlertTitle>Error</AlertTitle>
-                <AlertDescription>
-                  Your session has expired. Please log in again.
-                </AlertDescription>
-              </Alert>
-            </div>
-          </section>
+            {/* Badges */}
+            <section style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-4)' }}>
+              <h2 style={{ ...f('xl', 500), borderBottom: '1px solid var(--color-border-default)', paddingBottom: 'var(--spacing-2)' }}>Badges</h2>
+              <Card style={{ borderRadius: 'var(--radius-lg)' }}>
+                <CardContent className="p-6 flex flex-wrap gap-4">
+                  <Badge>Default</Badge>
+                  <Badge variant="secondary">Secondary</Badge>
+                  <Badge variant="outline">Outline</Badge>
+                  <Badge variant="destructive">Destructive</Badge>
+                  <Badge style={{ backgroundColor: 'var(--color-status-success)', color: '#fff' }}>Success</Badge>
+                  <Badge style={{ backgroundColor: 'var(--color-status-info)', color: '#fff' }}>Info</Badge>
+                  <Badge style={{ backgroundColor: 'var(--color-status-warning)', color: '#fff' }}>Warning</Badge>
+                </CardContent>
+              </Card>
+            </section>
 
-          {/* ACCORDION */}
-          <section className="space-y-4">
-            <h2 className="text-xl font-semibold border-b pb-2">Accordion</h2>
-            <Accordion type="single" collapsible className="w-full bg-white p-4 rounded-lg border">
-              <AccordionItem value="item-1">
-                <AccordionTrigger>Is it accessible?</AccordionTrigger>
-                <AccordionContent>
-                  Yes. It adheres to the WAI-ARIA design pattern.
-                </AccordionContent>
-              </AccordionItem>
-              <AccordionItem value="item-2">
-                <AccordionTrigger>Is it styled?</AccordionTrigger>
-                <AccordionContent>
-                  Yes. It comes with default styles that matches the other components' aesthetic.
-                </AccordionContent>
-              </AccordionItem>
-            </Accordion>
-          </section>
+            {/* Inputs */}
+            <section style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-4)' }}>
+              <h2 style={{ ...f('xl', 500), borderBottom: '1px solid var(--color-border-default)', paddingBottom: 'var(--spacing-2)' }}>Inputs & Controls</h2>
+              <Card style={{ borderRadius: 'var(--radius-lg)' }}>
+                <CardContent className="p-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-4)' }}>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-1)' }}>
+                        <Label htmlFor="kit-email" style={f('sm', 500)}>Email</Label>
+                        <Input type="email" id="kit-email" placeholder="user@ikan.app" style={{ backgroundColor: 'var(--color-bg-input)', borderRadius: 'var(--radius-md)' }} />
+                      </div>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-1)' }}>
+                        <Label htmlFor="kit-text" style={f('sm', 500)}>Text Area</Label>
+                        <Textarea placeholder="Type your message here." style={{ backgroundColor: 'var(--color-bg-input)', borderRadius: 'var(--radius-md)' }} />
+                      </div>
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-6)' }}>
+                      <div className="flex items-center" style={{ gap: 'var(--spacing-2)' }}>
+                        <Switch id="kit-switch" />
+                        <Label htmlFor="kit-switch" style={f('sm', 400)}>Toggle setting</Label>
+                      </div>
+                      <div className="flex items-center" style={{ gap: 'var(--spacing-2)' }}>
+                        <Checkbox id="kit-check" />
+                        <Label htmlFor="kit-check" style={f('sm', 400)}>Accept terms</Label>
+                      </div>
+                      <RadioGroup defaultValue="option-one">
+                        <div className="flex items-center" style={{ gap: 'var(--spacing-2)' }}>
+                          <RadioGroupItem value="option-one" id="kit-r1" />
+                          <Label htmlFor="kit-r1" style={f('sm', 400)}>Option One</Label>
+                        </div>
+                        <div className="flex items-center" style={{ gap: 'var(--spacing-2)' }}>
+                          <RadioGroupItem value="option-two" id="kit-r2" />
+                          <Label htmlFor="kit-r2" style={f('sm', 400)}>Option Two</Label>
+                        </div>
+                      </RadioGroup>
+                      <Select>
+                        <SelectTrigger className="w-[180px]"><SelectValue placeholder="Select..." /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="a">Option A</SelectItem>
+                          <SelectItem value="b">Option B</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </section>
 
-          {/* DIALOGS */}
-          <section className="space-y-4">
-            <h2 className="text-xl font-semibold border-b pb-2">Overlays</h2>
-            <div className="flex gap-4">
+            {/* Alerts */}
+            <section style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-4)' }}>
+              <h2 style={{ ...f('xl', 500), borderBottom: '1px solid var(--color-border-default)', paddingBottom: 'var(--spacing-2)' }}>Alerts</h2>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-4)' }}>
+                <Alert>
+                  <Info className="h-4 w-4" />
+                  <AlertTitle>Information</AlertTitle>
+                  <AlertDescription>This is a standard informational alert.</AlertDescription>
+                </Alert>
+                <Alert variant="destructive">
+                  <AlertTriangle className="h-4 w-4" />
+                  <AlertTitle>Error</AlertTitle>
+                  <AlertDescription>Something went wrong. Please try again.</AlertDescription>
+                </Alert>
+              </div>
+            </section>
+
+            {/* Overlays */}
+            <section style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-4)' }}>
+              <h2 style={{ ...f('xl', 500), borderBottom: '1px solid var(--color-border-default)', paddingBottom: 'var(--spacing-2)' }}>Overlays</h2>
               <Dialog>
-                <DialogTrigger asChild>
-                  <Button variant="outline">Open Dialog</Button>
-                </DialogTrigger>
+                <DialogTrigger asChild><Button variant="outline">Open Dialog</Button></DialogTrigger>
                 <DialogContent className="sm:max-w-[425px]">
                   <DialogHeader>
                     <DialogTitle>Edit profile</DialogTitle>
-                    <DialogDescription>
-                      Make changes to your profile here. Click save when you're done.
-                    </DialogDescription>
+                    <DialogDescription>Make changes to your profile here.</DialogDescription>
                   </DialogHeader>
-                  <div className="grid gap-4 py-4">
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-4)', padding: 'var(--spacing-4) 0' }}>
                     <div className="grid grid-cols-4 items-center gap-4">
-                      <Label htmlFor="name" className="text-right">Name</Label>
-                      <Input id="name" value="Pedro Duarte" className="col-span-3" />
+                      <Label htmlFor="kit-name" className="text-right" style={f('sm', 500)}>Name</Label>
+                      <Input id="kit-name" defaultValue="Admin User" className="col-span-3" />
                     </div>
                   </div>
-                  <DialogFooter>
-                    <Button type="submit">Save changes</Button>
-                  </DialogFooter>
+                  <DialogFooter><Button type="submit">Save changes</Button></DialogFooter>
                 </DialogContent>
               </Dialog>
-            </div>
-          </section>
+            </section>
+          </div>
         </TabsContent>
 
-        {/* --- TOKENS TAB --- */}
-        <TabsContent value="tokens" className="space-y-8 mt-6">
-          <section className="space-y-4">
-            <h2 className="text-xl font-semibold border-b pb-2">Colors</h2>
-            <div className="space-y-4">
-              <div>
-                <h3 className="text-sm font-medium mb-2">Primary Palette</h3>
-                <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-                  {[
-                     { name: 'Primary', color: 'var(--color-primary-default)' },
-                     { name: 'Primary Light', color: 'var(--color-primary-light)' },
-                     { name: 'Primary Dark', color: 'var(--color-primary-dark)' },
-                  ].map(c => (
-                    <div key={c.name} className="flex flex-col gap-2">
-                      <div className="h-20 w-full rounded-md shadow-sm" style={{ backgroundColor: c.color }} />
-                      <span className="text-xs font-mono">{c.name}</span>
+        {/* ═══ ADMIN COMPONENTS TAB ═══ */}
+        <TabsContent value="admin" style={{ marginTop: 'var(--spacing-6)' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-8)' }}>
+
+            {/* AdminStatusBadge */}
+            <section style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-4)' }}>
+              <h2 style={{ ...f('xl', 500), borderBottom: '1px solid var(--color-border-default)', paddingBottom: 'var(--spacing-2)' }}>AdminStatusBadge</h2>
+              <p style={f('sm', 400, 'var(--color-text-muted)')}>
+                Unified status indicator for the entire admin ecosystem. Maps semantic status variants (e.g., 'published', 'active') to design tokens.
+              </p>
+              <Card style={{ borderRadius: 'var(--radius-lg)' }}>
+                <CardContent className="p-6">
+                  <div className="flex flex-wrap gap-4">
+                    <AdminStatusBadge status="success" label="Success" />
+                    <AdminStatusBadge status="warning" label="Warning" />
+                    <AdminStatusBadge status="danger" label="Danger" />
+                    <AdminStatusBadge status="info" label="Info" />
+                    <AdminStatusBadge status="neutral" label="Neutral" />
+                    <AdminStatusBadge status="primary" label="Primary" />
+                  </div>
+                  <div className="flex flex-wrap gap-4 mt-4 pt-4 border-t border-[var(--color-border-default)]">
+                    <AdminStatusBadge status="published" label="Published" dot />
+                    <AdminStatusBadge status="draft" label="Draft" dot />
+                    <AdminStatusBadge status="active" label="Active" dot />
+                    <AdminStatusBadge status="inactive" label="Inactive" dot />
+                    <AdminStatusBadge status="pending" label="Pending" dot />
+                    <AdminStatusBadge status="completed" label="Completed" dot />
+                  </div>
+                </CardContent>
+              </Card>
+            </section>
+
+            {/* AdminHeader */}
+            <section style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-4)' }}>
+              <h2 style={{ ...f('xl', 500), borderBottom: '1px solid var(--color-border-default)', paddingBottom: 'var(--spacing-2)' }}>AdminHeader</h2>
+              <p style={f('sm', 400, 'var(--color-text-muted)')}>
+                Every admin module MUST use this component. It provides: title, description, onBack, breadcrumbs, actions, and stats row.
+              </p>
+              <Card style={{ borderRadius: 'var(--radius-lg)' }}>
+                <CardContent className="p-6">
+                  <AdminHeader
+                    title="Module Title"
+                    description="Descriptive subtitle explaining what this module manages."
+                    stats={[
+                      { label: 'Total Items', value: 1284, trend: 'up' },
+                      { label: 'Active', value: 892, trend: 'up' },
+                      { label: 'Draft', value: 34, trend: 'neutral' },
+                      { label: 'Errors', value: 2, trend: 'down' },
+                    ]}
+                    actions={
+                      <Button style={{ gap: 'var(--spacing-2)', backgroundColor: 'var(--color-primary-default)', color: 'var(--color-primary-on)', borderRadius: 'var(--radius-md)' }}>
+                        <Plus size={14} /> Add New
+                      </Button>
+                    }
+                  />
+                </CardContent>
+              </Card>
+            </section>
+
+            {/* AdminSection */}
+            <section style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-4)' }}>
+              <h2 style={{ ...f('xl', 500), borderBottom: '1px solid var(--color-border-default)', paddingBottom: 'var(--spacing-2)' }}>AdminSection</h2>
+              <p style={f('sm', 400, 'var(--color-text-muted)')}>
+                Card-wrapped content section with optional icon, description, badge, collapsible behavior, and action buttons.
+              </p>
+              <AdminSection
+                title="Configuration Group"
+                description="Settings that control module behavior."
+                icon={<Settings size={20} />}
+                badge={<Badge variant="secondary">3 items</Badge>}
+                collapsible
+                actions={<Button variant="outline" size="sm">Edit All</Button>}
+              >
+                <div className="grid grid-cols-3 gap-4">
+                  {['Setting A', 'Setting B', 'Setting C'].map(s => (
+                    <div key={s} className="p-3 rounded-lg" style={{ backgroundColor: 'var(--color-bg-muted)', border: '1px solid var(--color-border-default)' }}>
+                      <span style={f('sm', 500)}>{s}</span>
                     </div>
                   ))}
                 </div>
-              </div>
+              </AdminSection>
+            </section>
 
-              <div>
-                <h3 className="text-sm font-medium mb-2">Status</h3>
-                <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-                  {[
-                     { name: 'Success', color: 'var(--color-status-success)' },
-                     { name: 'Warning', color: 'var(--color-status-warning)' },
-                     { name: 'Error', color: 'var(--color-status-error)' },
-                     { name: 'Info', color: 'var(--color-status-info)' },
-                  ].map(c => (
-                    <div key={c.name} className="flex flex-col gap-2">
-                      <div className="h-20 w-full rounded-md shadow-sm" style={{ backgroundColor: c.color }} />
-                      <span className="text-xs font-mono">{c.name}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </section>
+            {/* AdminEmptyState */}
+            <section style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-4)' }}>
+              <h2 style={{ ...f('xl', 500), borderBottom: '1px solid var(--color-border-default)', paddingBottom: 'var(--spacing-2)' }}>AdminEmptyState</h2>
+              <p style={f('sm', 400, 'var(--color-text-muted)')}>
+                Used when a table or list has no data. Provides icon, title, description, and optional CTA.
+              </p>
+              <AdminEmptyState
+                icon={Inbox}
+                title="No Items Found"
+                description="This is the empty state. Add your first item to get started."
+                actionLabel="Create First Item"
+                onAction={() => {}}
+              />
+            </section>
 
-          <section className="space-y-4">
-            <h2 className="text-xl font-semibold border-b pb-2">Typography</h2>
-            <div className="space-y-4 bg-white p-6 rounded-lg border">
-              <div>
-                <p className="text-4xl font-bold">Heading 1</p>
-                <span className="text-xs text-gray-400">text-4xl font-bold</span>
+            {/* Card Anatomy */}
+            <section style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-4)' }}>
+              <h2 style={{ ...f('xl', 500), borderBottom: '1px solid var(--color-border-default)', paddingBottom: 'var(--spacing-2)' }}>Card Patterns</h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <Card style={{ borderRadius: 'var(--radius-lg)' }}>
+                  <CardHeader>
+                    <CardTitle style={f('base', 500)}>Standard Card</CardTitle>
+                    <CardDescription style={f('sm', 400, 'var(--color-text-muted)')}>Card with header, content, footer.</CardDescription>
+                  </CardHeader>
+                  <CardContent><p style={f('sm', 400)}>Card body content goes here.</p></CardContent>
+                  <CardFooter><span style={f('xs', 400, 'var(--color-text-muted)')}>Footer text</span></CardFooter>
+                </Card>
+                <Card style={{ borderRadius: 'var(--radius-lg)', borderLeft: '4px solid var(--color-primary-default)' }}>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2" style={f('base', 500)}>
+                      <Activity size={16} style={{ color: 'var(--color-primary-default)' }} />
+                      Status Card
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div style={f('3xl', 500)}>98.5%</div>
+                    <p style={f('xs', 400, 'var(--color-text-muted)')}>+2.5% from last month</p>
+                  </CardContent>
+                </Card>
               </div>
-              <div>
-                <p className="text-3xl font-semibold">Heading 2</p>
-                <span className="text-xs text-gray-400">text-3xl font-semibold</span>
-              </div>
-              <div>
-                <p className="text-2xl font-medium">Heading 3</p>
-                <span className="text-xs text-gray-400">text-2xl font-medium</span>
-              </div>
-              <div>
-                <p className="text-base">Body text. Lorem ipsum dolor sit amet, consectetur adipiscing elit.</p>
-                <span className="text-xs text-gray-400">text-base</span>
-              </div>
-              <div>
-                <p className="text-sm text-gray-500">Small text / Muted</p>
-                <span className="text-xs text-gray-400">text-sm text-muted-foreground</span>
-              </div>
-            </div>
-          </section>
+            </section>
+          </div>
         </TabsContent>
 
-        {/* --- BLOCKS TAB --- */}
-        <TabsContent value="blocks" className="space-y-8 mt-6">
-          <section className="space-y-6">
-             <div>
-                <h2 className="text-2xl font-bold">Content Blocks</h2>
-                <p className="text-gray-500">
-                  Components powered by `BlockRenderer` used in Equip Programs and Assessments.
-                </p>
-             </div>
+        {/* ═══ PATTERNS TAB ═══ */}
+        <TabsContent value="patterns" style={{ marginTop: 'var(--spacing-6)' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-8)' }}>
+            <section style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-4)' }}>
+              <h2 style={{ ...f('xl', 500), borderBottom: '1px solid var(--color-border-default)', paddingBottom: 'var(--spacing-2)' }}>
+                Module Layout Pattern
+              </h2>
+              <p style={f('sm', 400, 'var(--color-text-muted)')}>
+                Every admin module follows this structure: AdminHeader → Stats Row → Filters/Actions → DataTable/Content → Pagination.
+              </p>
+              <Card style={{ borderRadius: 'var(--radius-lg)', border: '2px dashed var(--color-border-default)' }}>
+                <CardContent className="p-6" style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-4)' }}>
+                  {['AdminHeader (title + desc + actions)', 'Stats Row (4-col grid)', 'Search + Filters + Bulk Actions', 'AdminDataTable (sortable, paginated)', 'Pagination Controls'].map((step, i) => (
+                    <div key={i} className="flex items-center" style={{ gap: 'var(--spacing-3)' }}>
+                      <div style={{ width: 28, height: 28, borderRadius: 'var(--radius-pill)', backgroundColor: 'var(--color-primary-default)', color: 'var(--color-primary-on)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, ...f('xs', 500) }}>
+                        {i + 1}
+                      </div>
+                      <div style={{ flex: 1, padding: 'var(--spacing-3)', borderRadius: 'var(--radius-md)', backgroundColor: 'var(--color-bg-muted)', border: '1px solid var(--color-border-default)' }}>
+                        <span style={f('sm', 500)}>{step}</span>
+                      </div>
+                    </div>
+                  ))}
+                </CardContent>
+              </Card>
+            </section>
 
-             {/* MCQ Pattern */}
-             <Card className="border-l-4 border-l-[var(--color-primary-default)]">
-               <CardHeader>
-                 <CardTitle>Multiple Choice Question</CardTitle>
-                 <CardDescription>Standard pattern for assessments.</CardDescription>
-               </CardHeader>
-               <CardContent className="bg-gray-50 p-6 rounded-b-lg">
-                  <BlockRenderer block={mcqBlock} value={mcqValue} onChange={setMcqValue} />
-               </CardContent>
-             </Card>
+            <section style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-4)' }}>
+              <h2 style={{ ...f('xl', 500), borderBottom: '1px solid var(--color-border-default)', paddingBottom: 'var(--spacing-2)' }}>
+                Accordion
+              </h2>
+              <Accordion type="single" collapsible className="w-full">
+                <Card style={{ borderRadius: 'var(--radius-lg)' }}>
+                  <CardContent className="p-4">
+                    <AccordionItem value="item-1">
+                      <AccordionTrigger>Is it accessible?</AccordionTrigger>
+                      <AccordionContent>Yes. Adheres to WAI-ARIA design pattern.</AccordionContent>
+                    </AccordionItem>
+                    <AccordionItem value="item-2">
+                      <AccordionTrigger>Is it tokenized?</AccordionTrigger>
+                      <AccordionContent>Every color, spacing, and radius value uses design tokens.</AccordionContent>
+                    </AccordionItem>
+                  </CardContent>
+                </Card>
+              </Accordion>
+            </section>
+          </div>
+        </TabsContent>
 
-             {/* Clinical Instrument */}
-             <Card className="border-l-4 border-l-[var(--color-secondary-default)]">
-               <CardHeader>
-                 <CardTitle>Clinical Scale</CardTitle>
-               </CardHeader>
-               <CardContent className="bg-gray-50 p-6 rounded-b-lg">
-                  <BlockRenderer block={scaleBlock} value={scaleValue} onChange={setScaleValue} />
-               </CardContent>
-             </Card>
+        {/* ═══ STATE HANDLING TAB ═══ */}
+        <TabsContent value="states" style={{ marginTop: 'var(--spacing-6)' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-8)' }}>
 
-             {/* Journal */}
-             <Card className="border-l-4 border-l-[var(--color-accent-default)]">
-               <CardHeader>
-                 <CardTitle>Journal Entry</CardTitle>
-               </CardHeader>
-               <CardContent className="bg-gray-50 p-6 rounded-b-lg">
-                  <BlockRenderer block={journalBlock} value={textValue} onChange={setTextValue} />
-               </CardContent>
-             </Card>
+            <section style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-4)' }}>
+              <h2 style={{ ...f('xl', 500), borderBottom: '1px solid var(--color-border-default)', paddingBottom: 'var(--spacing-2)' }}>
+                Data State Handling
+              </h2>
+              <p style={f('sm', 400, 'var(--color-text-muted)')}>
+                Every data-driven component must handle these 4 states explicitly. No state may be left unhandled.
+              </p>
 
-             {/* Lesson */}
-             <Card className="border-l-4 border-l-purple-500">
-               <CardHeader>
-                 <CardTitle>Lesson Content</CardTitle>
-               </CardHeader>
-               <CardContent className="bg-gray-50 p-6 rounded-b-lg">
-                  <BlockRenderer block={lessonBlock} value={null} onChange={() => {}} />
-               </CardContent>
-             </Card>
-          </section>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Loading */}
+                <Card style={{ borderRadius: 'var(--radius-lg)' }}>
+                  <CardHeader><CardTitle style={f('sm', 500)}>Loading State</CardTitle></CardHeader>
+                  <CardContent className="flex justify-center p-8">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2" style={{ borderColor: 'var(--color-primary-default)' }} />
+                  </CardContent>
+                </Card>
+
+                {/* Empty */}
+                <Card style={{ borderRadius: 'var(--radius-lg)' }}>
+                  <CardHeader><CardTitle style={f('sm', 500)}>Empty State</CardTitle></CardHeader>
+                  <CardContent className="text-center p-8">
+                    <Database className="w-8 h-8 mx-auto mb-3" style={{ color: 'var(--color-text-muted)', opacity: 0.5 }} />
+                    <p style={f('sm', 400, 'var(--color-text-muted)')}>No data available</p>
+                  </CardContent>
+                </Card>
+
+                {/* Error */}
+                <Card style={{ borderRadius: 'var(--radius-lg)', border: '1px solid var(--color-status-danger)' }}>
+                  <CardHeader><CardTitle style={f('sm', 500)}>Error State</CardTitle></CardHeader>
+                  <CardContent className="p-4">
+                    <div className="flex items-center gap-3" style={{ padding: 'var(--spacing-3)', borderRadius: 'var(--radius-md)', backgroundColor: 'var(--color-status-danger-light)' }}>
+                      <AlertTriangle size={16} style={{ color: 'var(--color-status-danger)' }} />
+                      <span style={f('sm', 400, 'var(--color-status-danger)')}>Failed to load data. Please try again.</span>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Success */}
+                <Card style={{ borderRadius: 'var(--radius-lg)', border: '1px solid var(--color-status-success)' }}>
+                  <CardHeader><CardTitle style={f('sm', 500)}>Success State</CardTitle></CardHeader>
+                  <CardContent className="p-4">
+                    <div className="flex items-center gap-3" style={{ padding: 'var(--spacing-3)', borderRadius: 'var(--radius-md)', backgroundColor: 'var(--color-status-success-light)' }}>
+                      <Check size={16} style={{ color: 'var(--color-status-success)' }} />
+                      <span style={f('sm', 400, 'var(--color-status-success)')}>Operation completed successfully.</span>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            </section>
+
+            {/* Token Compliance Rules */}
+            <section style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-4)' }}>
+              <h2 style={{ ...f('xl', 500), borderBottom: '1px solid var(--color-border-default)', paddingBottom: 'var(--spacing-2)' }}>
+                Token Compliance Rules
+              </h2>
+              <Card style={{ borderRadius: 'var(--radius-lg)' }}>
+                <CardContent className="p-6">
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-3)' }}>
+                    {[
+                      { rule: 'No Tailwind color classes', detail: 'Use var(--color-*) tokens. bg-green-50, text-gray-500 etc. are banned.' },
+                      { rule: 'No hardcoded px for spacing', detail: 'Use var(--spacing-*) tokens. Based on 4px grid.' },
+                      { rule: 'No hardcoded border-radius', detail: 'Use var(--radius-sm/md/lg/pill) tokens.' },
+                      { rule: 'No font-weight 600/700', detail: 'Only 400 (body) and 500 (headings). Use var(--font-weight-medium).' },
+                      { rule: 'No hardcoded RGBA colors', detail: 'Use var(--color-status-*-light) for translucent backgrounds.' },
+                      { rule: 'Every module uses AdminHeader', detail: 'No raw <h1>/<h2> headers. Use the shared AdminHeader component.' },
+                    ].map((item, i) => (
+                      <div key={i} className="flex items-start" style={{ gap: 'var(--spacing-3)', padding: 'var(--spacing-3)', borderRadius: 'var(--radius-md)', backgroundColor: 'var(--color-bg-muted)' }}>
+                        <div style={{ width: 20, height: 20, borderRadius: 'var(--radius-pill)', backgroundColor: 'var(--color-status-danger)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: 11, fontWeight: 500 }}>!</div>
+                        <div>
+                          <span style={f('sm', 500)}>{item.rule}</span>
+                          <p style={f('xs', 400, 'var(--color-text-muted)')}>{item.detail}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            </section>
+          </div>
         </TabsContent>
       </Tabs>
     </div>

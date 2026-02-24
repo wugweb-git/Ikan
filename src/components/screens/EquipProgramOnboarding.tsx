@@ -1,20 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import { useIsMobile } from '../../hooks/useIsMobile';
 import { Button } from '../ui/button';
-import { cn } from '../ui/utils';
 import { apiClient } from '../../lib/api-client';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNotifications } from '../../contexts/NotificationContext';
 import { OnboardingData } from '../../lib/equip-types';
 import { OnboardingQuestionSet } from '../../lib/equip-onboarding-types';
-import { Wizard } from '../wizard/Wizard';
 import { TypeformWizard } from '../wizard/TypeformWizard';
-import { mapOnboardingToWizard } from '../wizard/migration-utils';
 import { projectId, publicAnonKey } from '../../utils/supabase/info';
 import { Icon } from '../Icon';
 import { ProgramPlayer } from '../player/ProgramPlayer';
 import { EquipProgram } from '../../lib/equip-admin-types';
-import { DUMMY_EQUIP_PROGRAM, ALL_DUMMY_PROGRAMS } from '../../lib/demo-data';
+import { ALL_DUMMY_PROGRAMS } from '../../lib/demo-data';
+import { LoadingSpinner } from '../LoadingSpinner';
 
 interface EquipOnboardingProps {
   programId?: string;
@@ -24,14 +21,13 @@ interface EquipOnboardingProps {
 }
 
 export function EquipOnboarding({ programId: propProgramId, onComplete, onBack, onNavigate }: EquipOnboardingProps) {
-  const isMobile = useIsMobile();
   const [programId, setProgramId] = useState<string>(propProgramId || '');
   const [questionSet, setQuestionSet] = useState<OnboardingQuestionSet | null>(null);
   const [unifiedProgram, setUnifiedProgram] = useState<EquipProgram | null>(null);
   const [hasDay0, setHasDay0] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const { addNotification, showToast } = useNotifications();
+  const { showToast } = useNotifications();
   const { user } = useAuth(); // Auth context for checking user status
 
   // ✅ Fetch Onboarding Questions from Database
@@ -300,7 +296,7 @@ export function EquipOnboarding({ programId: propProgramId, onComplete, onBack, 
   // UNIFIED PLAYER RENDER
   if (!loading && hasDay0 && unifiedProgram) {
     return (
-      <div className="fixed inset-0 bg-white z-50">
+      <div className="fixed inset-0 z-50" style={{ backgroundColor: 'var(--color-bg-card)' }}>
         <ProgramPlayer
           program={unifiedProgram}
           initialDay={0}
@@ -320,11 +316,8 @@ export function EquipOnboarding({ programId: propProgramId, onComplete, onBack, 
   // Loading State
   if (loading) {
     return (
-      <div className="min-h-screen bg-[var(--color-bg-page)] flex items-center justify-center">
-        <div className="flex flex-col items-center space-y-4">
-          <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin" />
-          <p className="text-muted-foreground">Loading program setup...</p>
-        </div>
+      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: 'var(--color-bg-page)' }}>
+        <LoadingSpinner message="Loading program setup..." />
       </div>
     );
   }
@@ -334,9 +327,9 @@ export function EquipOnboarding({ programId: propProgramId, onComplete, onBack, 
     return (
       <div className="min-h-screen bg-[var(--color-bg-page)] flex items-center justify-center p-6">
         <div className="flex flex-col items-center space-y-4 text-center max-w-md">
-          <Icon name="alertCircle" size={48} className="text-destructive" />
-          <h3 className="text-xl font-semibold">Unable to Load Program Setup</h3>
-          <p className="text-muted-foreground">{error || 'Program onboarding not found or unavailable.'}</p>
+          <Icon name="alertCircle" size={48} style={{ color: 'var(--color-status-danger)' }} />
+          <h3 className="text-xl font-medium">Unable to Load Program Setup</h3>
+          <p style={{ color: 'var(--color-text-muted)' }}>{error || 'Program onboarding not found or unavailable.'}</p>
           <Button onClick={onBack} variant="outline" className="mt-4">
             Go Back
           </Button>
@@ -344,8 +337,6 @@ export function EquipOnboarding({ programId: propProgramId, onComplete, onBack, 
       </div>
     );
   }
-
-  const wizardConfig = mapOnboardingToWizard(questionSet);
 
   // Convert to Typeform format
   console.log('📊 Converting onboarding to Typeform format...');

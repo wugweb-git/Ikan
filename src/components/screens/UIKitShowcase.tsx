@@ -1,10 +1,9 @@
 import React, { useState } from 'react';
 import { 
-  Palette, Type, Layout, CheckSquare, Bell, 
+  Palette, Type, CheckSquare, Bell, 
   Image as ImageIcon, Compass, PenTool, Layers
 } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
-import { PageHero } from '../ui/PageHero';
 import { UIKitFoundations } from '../uikit/UIKitFoundations';
 import { UIKitElements } from '../uikit/UIKitElements';
 import { UIKitForms } from '../uikit/UIKitForms';
@@ -33,9 +32,9 @@ export function UIKitShowcase({ onNavigate }: { onNavigate?: (route: string) => 
   return (
     <div className="min-h-screen bg-[var(--color-bg-page)] flex flex-col">
       {/* Custom Header for Full Screen Mode */}
-      <div className="bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between sticky top-0 z-50 shadow-sm">
+      <div className="border-b px-6 py-4 flex items-center justify-between sticky top-0 z-50 shadow-sm" style={{ backgroundColor: 'var(--color-bg-card)', borderColor: 'var(--color-border-default)' }}>
         <div>
-           <h1 className="text-xl font-bold text-[var(--color-text-primary)]">iKan Design System</h1>
+           <h1 className="text-xl font-medium text-[var(--color-text-primary)]">iKan Design System</h1>
            <p className="text-sm text-[var(--color-text-muted)]">UI Kit & Component Library</p>
         </div>
         <button 
@@ -54,7 +53,8 @@ export function UIKitShowcase({ onNavigate }: { onNavigate?: (route: string) => 
                 <TabsTrigger
                   key={tab.id}
                   value={tab.id}
-                  className="data-[state=active]:bg-[var(--color-primary-default)] data-[state=active]:text-white bg-white border border-gray-200 px-4 py-2.5 h-auto rounded-full shadow-sm whitespace-nowrap"
+                  className="data-[state=active]:bg-[var(--color-primary-default)] data-[state=active]:text-[var(--color-text-inverse)] px-4 py-2.5 h-auto rounded-full shadow-sm whitespace-nowrap"
+                  style={{ backgroundColor: 'var(--color-bg-card)', border: '1px solid var(--color-border-default)' }}
                 >
                   <tab.icon className="w-4 h-4 mr-2" />
                   {tab.label}

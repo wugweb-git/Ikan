@@ -1,13 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { FileText, Download, Edit, Plus, Eye, Tag, MoreHorizontal, EyeOff, Trash2, ExternalLink, ShieldCheck } from 'lucide-react';
+import { FileText, Download, Edit, Plus, Eye, Tag, MoreHorizontal, EyeOff, Trash2, ShieldCheck } from 'lucide-react';
 import { useNotifications } from '../../contexts/NotificationContext';
 import { apiClient } from '../../lib/api-client';
 import { AdminHeader } from '../admin/AdminHeader';
-import { AdminEmptyState } from '../admin/AdminEmptyState';
 import { useIsMobile } from '../../hooks/useIsMobile';
 import { Button } from '../ui/button';
-import { Badge } from '../ui/badge';
-import { cn } from '../ui/utils';
+import { AdminStatusBadge } from '../admin/AdminStatusBadge';
 import { ResourceEditPage, Resource } from './ResourceEditPage';
 import { AdminDataTable, Column, FilterOption } from '../admin/AdminDataTable';
 import { ImageWithFallback } from '../figma/ImageWithFallback';
@@ -63,10 +61,18 @@ export function AdminResourceManager({ onBack, className }: AdminResourceManager
       const loadedCategories = Array.isArray(data) ? data : data.categories || [];
       
       if (loadedCategories.length > 0) {
-        setCategories(loadedCategories.map((c: any) => ({
+        // Deduplicate by value to prevent duplicate key warnings in Select
+        const mapped = loadedCategories.map((c: any) => ({
           label: c.name || c.label,
-          value: c.slug || c.value || c.name.toLowerCase()
-        })));
+          value: c.slug || c.value || (c.name || '').toLowerCase().replace(/\s+/g, '-')
+        }));
+        const seen = new Set<string>();
+        const unique = mapped.filter((c: {label: string; value: string}) => {
+          if (seen.has(c.value)) return false;
+          seen.add(c.value);
+          return true;
+        });
+        setCategories(unique);
       } else {
         // Fallback defaults
         setCategories(RESOURCE_CATEGORIES);
@@ -213,7 +219,7 @@ export function AdminResourceManager({ onBack, className }: AdminResourceManager
       className: 'min-w-[300px]',
       render: (resource) => (
         <div className="flex items-center gap-3">
-           <div className="w-10 h-10 rounded bg-muted overflow-hidden shrink-0 border border-gray-200">
+           <div className="w-10 h-10 rounded overflow-hidden shrink-0" style={{ backgroundColor: 'var(--color-bg-muted)', border: '1px solid var(--color-border-default)' }}>
               <ImageWithFallback 
                 src={resource.thumbnail || ''} 
                 alt={resource.title} 
@@ -222,10 +228,10 @@ export function AdminResourceManager({ onBack, className }: AdminResourceManager
               />
            </div>
           <div className="flex flex-col">
-            <span className="font-medium truncate max-w-[250px]" title={resource.title}>
+            <span className="truncate max-w-[250px]" style={{ fontWeight: 'var(--font-weight-medium)', fontFamily: 'var(--font-family-base)' }} title={resource.title}>
               {resource.title}
             </span>
-            <span className="text-xs text-muted-foreground truncate max-w-[250px]">
+            <span className="truncate max-w-[250px]" style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)', fontFamily: 'var(--font-family-base)' }}>
               {resource.description}
             </span>
           </div>
@@ -237,9 +243,7 @@ export function AdminResourceManager({ onBack, className }: AdminResourceManager
       accessorKey: 'filter_type',
       sortable: true,
       render: (resource: any) => (
-        <Badge variant="secondary" className="capitalize">
-          {resource.filter_type || 'Article'}
-        </Badge>
+        <AdminStatusBadge status="neutral" label={resource.filter_type || 'Article'} />
       )
     },
     {
@@ -247,9 +251,7 @@ export function AdminResourceManager({ onBack, className }: AdminResourceManager
       accessorKey: 'category',
       sortable: true,
       render: (resource) => (
-        <Badge variant="outline" className="capitalize">
-          {resource.category}
-        </Badge>
+        <AdminStatusBadge status="neutral" label={resource.category} />
       )
     },
     {
@@ -257,19 +259,18 @@ export function AdminResourceManager({ onBack, className }: AdminResourceManager
       accessorKey: 'published',
       sortable: true,
       render: (resource) => (
-        <Badge 
-          className={resource.published ? 'bg-green-100 text-green-800 hover:bg-green-100' : 'bg-gray-100 text-gray-800 hover:bg-gray-100'}
-          variant="outline"
-        >
-          {resource.published ? 'Published' : 'Draft'}
-        </Badge>
+        <AdminStatusBadge 
+          status={resource.published ? 'published' : 'draft'} 
+          label={resource.published ? 'Published' : 'Draft'} 
+          dot
+        />
       )
     },
     {
       header: 'Author',
       accessorKey: 'author',
       render: (resource) => (
-        <span className="text-sm">
+        <span style={{ fontSize: 'var(--text-sm)', fontFamily: 'var(--font-family-base)' }}>
           {typeof resource.author === 'string' ? resource.author : (resource.author as any)?.name || '-'}
         </span>
       )
@@ -279,7 +280,7 @@ export function AdminResourceManager({ onBack, className }: AdminResourceManager
       accessorKey: 'created_at',
       sortable: true,
       render: (resource) => (
-        <span className="text-sm text-muted-foreground">
+        <span style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-muted)', fontFamily: 'var(--font-family-base)' }}>
           {resource.created_at ? new Date(resource.created_at).toLocaleDateString() : '-'}
         </span>
       )
@@ -287,7 +288,7 @@ export function AdminResourceManager({ onBack, className }: AdminResourceManager
     {
       header: 'Stats',
       render: (resource) => (
-        <div className="flex items-center gap-3 text-xs text-muted-foreground">
+        <div className="flex items-center gap-3" style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}>
           <span className="flex items-center gap-1"><Eye className="w-3 h-3" /> {resource.viewCount || 0}</span>
           <span className="flex items-center gap-1">❤️ {resource.likes || 0}</span>
         </div>
@@ -336,7 +337,7 @@ export function AdminResourceManager({ onBack, className }: AdminResourceManager
                 e.stopPropagation(); 
                 handleDelete(resource.id, resource.title); 
               }}
-              className="text-red-600 focus:bg-red-50 focus:text-red-700"
+              style={{ color: 'var(--color-status-danger)' }}
             >
               <Trash2 className="mr-2 h-4 w-4" /> Delete
             </DropdownMenuItem>
@@ -363,22 +364,22 @@ export function AdminResourceManager({ onBack, className }: AdminResourceManager
     {
       label: 'Total Resources',
       value: resources.length,
-      icon: <FileText className="w-4 h-4 text-primary" />
+      icon: <FileText className="w-4 h-4" style={{ color: 'var(--color-primary-default)' }} />
     },
     {
       label: 'Published',
       value: resources.filter((r) => r.published).length,
-      icon: <Eye className="w-4 h-4 text-green-500" />
+      icon: <Eye className="w-4 h-4" style={{ color: 'var(--color-status-success)' }} />
     },
     {
       label: 'Featured',
       value: resources.filter((r) => r.featured).length,
-      icon: <Tag className="w-4 h-4 text-orange-500" />
+      icon: <Tag className="w-4 h-4" style={{ color: 'var(--color-warning-default)' }} />
     },
     {
       label: 'Total Views',
       value: resources.reduce((acc, r) => acc + (r.viewCount || 0), 0),
-      icon: <Eye className="w-4 h-4 text-blue-500" />
+      icon: <Eye className="w-4 h-4" style={{ color: 'var(--color-info-default)' }} />
     }
   ];
 

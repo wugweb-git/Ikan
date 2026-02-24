@@ -1,10 +1,13 @@
 import React, { useEffect, useState } from 'react';
+import { motion } from 'motion/react';
 import { Card, CardContent } from '../ui/card';
 import { Button } from '../ui/button';
 import { Icon } from '../Icon';
 import { cn } from '../ui/utils';
 import { EngineResult, SeverityLevel } from '../../lib/recommendation-engine';
 import { apiClient } from '../../lib/api-client';
+import { ImageWithFallback } from '../figma/ImageWithFallback';
+import { ArrowRight } from 'lucide-react';
 
 interface AssessmentResultsProps {
   assessmentId?: string;
@@ -17,30 +20,76 @@ interface AssessmentResultsProps {
   className?: string;
 }
 
+// ─── Score Ring SVG ───────────────────────────────────────────
+function ScoreRing({ score, maxScore, color, size = 140 }: { score: number; maxScore: number; color: string; size?: number }) {
+  const strokeWidth = 10;
+  const radius = (size - strokeWidth) / 2;
+  const circumference = 2 * Math.PI * radius;
+  const pct = maxScore > 0 ? score / maxScore : 0;
+  const offset = circumference - pct * circumference;
+
+  return (
+    <div className="relative" style={{ width: size, height: size }}>
+      <svg viewBox={`0 0 ${size} ${size}`} width={size} height={size}>
+        {/* Track */}
+        <circle
+          cx={size / 2} cy={size / 2} r={radius}
+          fill="none" stroke="var(--color-bg-muted)" strokeWidth={strokeWidth}
+        />
+        {/* Progress */}
+        <motion.circle
+          cx={size / 2} cy={size / 2} r={radius}
+          fill="none" stroke={color} strokeWidth={strokeWidth}
+          strokeLinecap="round"
+          strokeDasharray={circumference}
+          initial={{ strokeDashoffset: circumference }}
+          animate={{ strokeDashoffset: offset }}
+          transition={{ duration: 1.2, ease: [0.33, 1, 0.68, 1] }}
+          style={{ transform: 'rotate(-90deg)', transformOrigin: 'center' }}
+        />
+      </svg>
+      <div className="absolute inset-0 flex flex-col items-center justify-center">
+        <motion.span
+          initial={{ opacity: 0, scale: 0.6 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.5, delay: 0.4 }}
+          style={{
+            fontSize: 36,
+            fontWeight: 500,
+            fontFamily: 'var(--font-family-base)',
+            color: 'var(--color-text-primary)',
+            lineHeight: 1,
+          }}
+        >
+          {score}
+        </motion.span>
+        <span style={{
+          fontSize: 'var(--text-xs)',
+          fontWeight: 400,
+          fontFamily: 'var(--font-family-base)',
+          color: 'var(--color-text-muted)',
+          marginTop: 2,
+        }}>
+          / {maxScore}
+        </span>
+      </div>
+    </div>
+  );
+}
+
 export function AssessmentResults({ 
-  assessmentId,
-  score,
-  maxScore,
-  recommendation,
-  onNavigate,
-  onReturnToDashboard,
-  onRetake,
-  className 
+  assessmentId, score, maxScore, recommendation,
+  onNavigate, onReturnToDashboard, onRetake, className 
 }: AssessmentResultsProps) {
   
-  // State for hydration if props are missing
   const [hydratedData, setHydratedData] = useState<any>(null);
 
   useEffect(() => {
     if (!assessmentId || !recommendation) {
       try {
         const stored = sessionStorage.getItem('lastAssessmentResults');
-        if (stored) {
-          setHydratedData(JSON.parse(stored));
-        }
-      } catch (e) {
-        // ignore
-      }
+        if (stored) setHydratedData(JSON.parse(stored));
+      } catch { /* ignore */ }
     }
   }, [assessmentId, recommendation]);
 
@@ -51,27 +100,40 @@ export function AssessmentResults({
     recommendation: recommendation || hydratedData?.recommendation as EngineResult | undefined
   };
 
-  // If still no data, show empty state
   if (!activeData.recommendation) {
-      return (
-          <div className={cn("w-full max-w-3xl mx-auto p-8 text-center", className)}>
-              <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Icon name="clipboard" size={32} className="text-gray-400" />
-              </div>
-              <h2 className="text-xl font-bold text-[var(--color-text-primary)] mb-2">No Results Found</h2>
-              <p className="text-[var(--color-text-muted)] mb-6">
-                  We couldn't find any recent assessment results. Please take an assessment first.
-              </p>
-              <Button onClick={() => onNavigate?.('/assessment')}>
-                  View Assessments
-              </Button>
-          </div>
-      );
+    return (
+      <div className={cn("w-full max-w-2xl mx-auto p-8 text-center", className)}>
+        <div style={{
+          width: 64, height: 64, borderRadius: '50%',
+          backgroundColor: 'var(--color-bg-muted)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          margin: '0 auto 16px',
+        }}>
+          <Icon name="clipboard" size={28} className="text-[var(--color-text-muted)]" />
+        </div>
+        <h2 style={{
+          fontSize: 'var(--text-xl)',
+          fontWeight: 500,
+          fontFamily: 'var(--font-family-base)',
+          color: 'var(--color-text-primary)',
+          marginBottom: 8,
+        }}>No Results Found</h2>
+        <p style={{
+          fontSize: 'var(--text-base)',
+          fontWeight: 400,
+          fontFamily: 'var(--font-family-base)',
+          color: 'var(--color-text-muted)',
+          marginBottom: 24,
+        }}>
+          We couldn't find recent assessment results. Please take an assessment first.
+        </p>
+        <Button onClick={() => onNavigate?.('/assessment')}>View Assessments</Button>
+      </div>
+    );
   }
 
   const { recommendation: rec, score: activeScore, maxScore: activeMax } = activeData;
 
-  // Visual polish: Score circle color
   const getSeverityColor = (severity: SeverityLevel) => {
     switch (severity) {
       case 'low': return 'var(--color-status-success)';
@@ -82,154 +144,265 @@ export function AssessmentResults({
   };
 
   const severityColor = getSeverityColor(rec.severity);
-  const scorePercentage = (activeMax || 1) > 0 ? ((activeScore || 0) / (activeMax || 1)) * 100 : 0;
 
-  // We can fetch the program details if we have an ID, to show a nice image
   const [programDetails, setProgramDetails] = useState<any>(null);
 
   useEffect(() => {
     if (rec.primaryAction.type === 'equip_program' && rec.primaryAction.programId) {
-      // Fetch program details for image/title
-      const fetchProg = async () => {
-         try {
-           const prog = await apiClient.getEquipProgram(rec.primaryAction.programId!);
-           if (prog) setProgramDetails(prog);
-         } catch (e) {
-           console.warn('Could not fetch recommended program details');
-         }
-      };
-      fetchProg();
+      (async () => {
+        try {
+          const prog = await apiClient.getEquipProgram(rec.primaryAction.programId!);
+          if (prog) setProgramDetails(prog);
+        } catch { /* ignore */ }
+      })();
     }
   }, [rec.primaryAction.programId]);
 
   return (
-    <div 
-      className={cn("w-full max-w-3xl mx-auto space-y-8 p-4 md:p-6 animate-fadeIn", className)}
-    >
-      {/* 1. Results Header & Score */}
-      <div className="text-center space-y-6">
-        <div className="relative inline-flex items-center justify-center">
-          {/* Circular Progress (Simple CSS) */}
-          <div 
-            className="w-32 h-32 rounded-full border-8 border-gray-100 flex items-center justify-center relative"
-          >
-             <div 
-               className="absolute inset-0 rounded-full border-8 border-transparent"
-               style={{
-                 borderTopColor: severityColor,
-                 borderRightColor: scorePercentage > 50 ? severityColor : 'transparent',
-                 borderBottomColor: scorePercentage > 75 ? severityColor : 'transparent',
-                 borderLeftColor: scorePercentage > 25 ? severityColor : 'transparent',
-                 transform: 'rotate(-45deg)', // Start at top
-                 transition: 'all 1s ease-out'
-               }}
-             />
-             <div className="text-center z-10">
-               <span className="block text-3xl font-bold text-[#1C1C1E]">{activeScore}</span>
-               <span className="text-xs text-[#8E8E93] uppercase font-medium">/ {activeMax}</span>
-             </div>
-          </div>
+    <div className={cn("w-full max-w-2xl mx-auto p-4 md:p-6", className)}>
+      <motion.div
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+        className="flex flex-col items-center"
+        style={{ gap: 32 }}
+      >
+        {/* ── Score Ring ── */}
+        <div className="flex flex-col items-center" style={{ gap: 16, paddingTop: 16 }}>
+          <ScoreRing
+            score={activeScore || 0}
+            maxScore={activeMax || 1}
+            color={severityColor}
+            size={140}
+          />
+          
+          {/* Severity badge */}
+          <span style={{
+            display: 'inline-block',
+            fontSize: 'var(--text-sm)',
+            fontWeight: 500,
+            fontFamily: 'var(--font-family-base)',
+            color: severityColor,
+            backgroundColor: `${severityColor}18`,
+            padding: '6px 16px',
+            borderRadius: 'var(--radius-pill)',
+            textTransform: 'capitalize',
+          }}>
+            {rec.severity} severity
+          </span>
         </div>
-        
-        <div className="space-y-2 max-w-lg mx-auto">
-          <h2 className="text-2xl font-semibold text-[#1C1C1E] capitalize">
-            {rec.severity} Severity
-          </h2>
-          <p className="text-[17px] text-[#3A3A3C] leading-relaxed">
+
+        {/* ── Message ── */}
+        <div className="text-center" style={{ maxWidth: 440 }}>
+          <p style={{
+            fontSize: 'var(--text-base)',
+            fontWeight: 400,
+            fontFamily: 'var(--font-family-base)',
+            color: 'var(--color-text-primary)',
+            lineHeight: 1.6,
+          }}>
             {rec.severityMessage}
           </p>
         </div>
-      </div>
 
-      <hr className="border-gray-100" />
+        <div style={{
+          width: '100%', height: 1,
+          backgroundColor: 'var(--color-border-default)',
+        }} />
 
-      {/* 2. Primary Recommendation Card */}
-      {rec.primaryAction.type === 'equip_program' && (
-        <div className="space-y-4">
-          <h3 className="text-sm font-bold text-[#8E8E93] uppercase tracking-wide">Recommended for you</h3>
-          
-          <Card className="overflow-hidden border-0 shadow-lg shadow-black/5 bg-white rounded-[24px]">
-            <div className="flex flex-col md:flex-row">
-               {/* Image Side (if program loaded) */}
-               <div className="w-full md:w-1/3 bg-gray-100 h-48 md:h-auto relative overflow-hidden">
-                  <img 
-                    src={programDetails?.thumbnail || programDetails?.cover_image || "https://images.unsplash.com/photo-1544367563-12123d895951?w=800&auto=format&fit=crop"} 
+        {/* ── Primary Recommendation ── */}
+        {rec.primaryAction.type === 'equip_program' && (
+          <div style={{ width: '100%' }}>
+            <span style={{
+              display: 'block',
+              fontSize: 'var(--text-xs)',
+              fontWeight: 500,
+              fontFamily: 'var(--font-family-base)',
+              color: 'var(--color-text-muted)',
+              textTransform: 'uppercase',
+              letterSpacing: '0.04em',
+              marginBottom: 12,
+            }}>
+              Recommended for you
+            </span>
+
+            <div
+              style={{
+                backgroundColor: 'var(--color-bg-card)',
+                borderRadius: 'var(--radius-lg)',
+                boxShadow: 'var(--shadow-sm)',
+                overflow: 'hidden',
+                border: '1px solid var(--color-border-default)',
+              }}
+            >
+              <div className="flex flex-col md:flex-row">
+                {/* Image */}
+                <div className="w-full md:w-2/5 relative overflow-hidden" style={{ minHeight: 180, backgroundColor: 'var(--color-bg-muted)' }}>
+                  <ImageWithFallback
+                    src={programDetails?.thumbnail || programDetails?.cover_image || "https://images.unsplash.com/photo-1544367563-12123d895951?w=800&auto=format&fit=crop"}
                     alt="Program"
                     className="w-full h-full object-cover"
+                    style={{ position: 'absolute', inset: 0 }}
                   />
-                  <div className="absolute inset-0 bg-black/10" />
-               </div>
+                </div>
 
-               {/* Content Side */}
-               <div className="p-6 md:p-8 flex-1 flex flex-col justify-center space-y-4">
-                  <div>
-                    <h4 className="text-xl font-semibold text-[#1C1C1E] mb-2">
-                      {rec.primaryAction.title}
-                    </h4>
-                    <p className="text-[#3A3A3C] leading-relaxed">
-                      {rec.primaryAction.body}
-                    </p>
-                  </div>
-                  
-                  <Button 
+                {/* Content */}
+                <div className="flex-1 flex flex-col justify-center" style={{ padding: 24, gap: 12 }}>
+                  <h4 style={{
+                    fontSize: 'var(--text-lg)',
+                    fontWeight: 500,
+                    fontFamily: 'var(--font-family-base)',
+                    color: 'var(--color-text-primary)',
+                    margin: 0,
+                  }}>
+                    {rec.primaryAction.title}
+                  </h4>
+                  <p style={{
+                    fontSize: 'var(--text-sm)',
+                    fontWeight: 400,
+                    fontFamily: 'var(--font-family-base)',
+                    color: 'var(--color-text-muted)',
+                    lineHeight: 1.5,
+                    margin: 0,
+                  }}>
+                    {rec.primaryAction.body}
+                  </p>
+                  <button
                     onClick={() => onNavigate && rec.primaryAction.programId && onNavigate(`/equip-program-onboarding?id=${rec.primaryAction.programId}`)}
-                    className="w-full md:w-fit h-12 px-8 rounded-full bg-[#2A2A2A] text-white hover:bg-black font-medium text-[16px] shadow-md transition-all hover:scale-105"
+                    style={{
+                      marginTop: 4,
+                      padding: '12px 24px',
+                      borderRadius: 'var(--radius-pill)',
+                      backgroundColor: 'var(--color-primary-default)',
+                      color: '#fff',
+                      border: 'none',
+                      cursor: 'pointer',
+                      fontSize: 'var(--text-base)',
+                      fontWeight: 500,
+                      fontFamily: 'var(--font-family-base)',
+                      width: 'fit-content',
+                    }}
                   >
                     {rec.primaryAction.cta}
-                  </Button>
-               </div>
+                  </button>
+                </div>
+              </div>
             </div>
-          </Card>
+          </div>
+        )}
+
+        {/* ── Secondary Recommendations ── */}
+        {rec.secondaryActions.length > 0 && (
+          <div style={{ width: '100%' }}>
+            <div className="grid grid-cols-1 md:grid-cols-2" style={{ gap: 12 }}>
+              {rec.secondaryActions.map((action, idx) => (
+                <div
+                  key={idx}
+                  onClick={() => onNavigate && action.route && onNavigate(action.route)}
+                  style={{
+                    backgroundColor: 'var(--color-bg-card)',
+                    borderRadius: 'var(--radius-lg)',
+                    boxShadow: 'var(--shadow-xs)',
+                    border: '1px solid var(--color-border-default)',
+                    padding: 20,
+                    cursor: action.route ? 'pointer' : 'default',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    justifyContent: 'space-between',
+                    gap: 12,
+                    transition: 'box-shadow 0.15s',
+                  }}
+                >
+                  <div>
+                    <span style={{
+                      fontSize: 'var(--text-xs)',
+                      fontWeight: 500,
+                      fontFamily: 'var(--font-family-base)',
+                      color: 'var(--color-text-muted)',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.03em',
+                    }}>
+                      {action.title}
+                    </span>
+                    <p style={{
+                      fontSize: 'var(--text-base)',
+                      fontWeight: 500,
+                      fontFamily: 'var(--font-family-base)',
+                      color: 'var(--color-text-primary)',
+                      margin: '6px 0 0',
+                    }}>
+                      {action.label}
+                    </p>
+                  </div>
+                  {action.route && (
+                    <span className="flex items-center" style={{
+                      fontSize: 'var(--text-sm)',
+                      fontWeight: 500,
+                      fontFamily: 'var(--font-family-base)',
+                      color: 'var(--color-text-muted)',
+                      gap: 4,
+                    }}>
+                      Explore <ArrowRight size={14} />
+                    </span>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* ── Professional Support Note ── */}
+        {rec.showProfessionalSupportNote && (
+          <div style={{
+            width: '100%',
+            backgroundColor: 'var(--color-status-info-light)',
+            borderRadius: 'var(--radius-lg)',
+            padding: 16,
+            border: '1px solid var(--color-border-default)',
+          }}>
+            <div className="flex items-start" style={{ gap: 12 }}>
+              <div style={{
+                width: 28, height: 28, borderRadius: '50%',
+                backgroundColor: 'var(--color-status-info)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                flexShrink: 0,
+                color: '#fff',
+              }}>
+                <Icon name="info" size={14} />
+              </div>
+              <p style={{
+                fontSize: 'var(--text-sm)',
+                fontWeight: 400,
+                fontFamily: 'var(--font-family-base)',
+                color: 'var(--color-text-primary)',
+                lineHeight: 1.5,
+                margin: 0,
+              }}>
+                If things feel overwhelming, professional support can make a real difference. You're not alone in this.
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* ── Footer ── */}
+        <div className="flex items-center justify-center" style={{ paddingTop: 16, paddingBottom: 24 }}>
+          <button
+            onClick={onReturnToDashboard}
+            style={{
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              fontSize: 'var(--text-sm)',
+              fontWeight: 500,
+              fontFamily: 'var(--font-family-base)',
+              color: 'var(--color-text-muted)',
+              padding: '8px 16px',
+            }}
+          >
+            Return to Home
+          </button>
         </div>
-      )}
-
-      {/* 3. Secondary Recommendations */}
-      {rec.secondaryActions.length > 0 && (
-        <div className="space-y-4">
-           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-             {rec.secondaryActions.map((action, idx) => (
-               <Card key={idx} className="p-6 rounded-[20px] border border-gray-100 shadow-sm hover:shadow-md transition-shadow bg-white flex flex-col justify-between h-full">
-                 <div className="space-y-2 mb-4">
-                   <h5 className="text-sm font-medium text-[#8E8E93]">{action.title}</h5>
-                   <p className="text-lg font-semibold text-[#1C1C1E]">{action.label}</p>
-                 </div>
-                 <Button 
-                   variant="outline" 
-                   className="w-full justify-between group"
-                   onClick={() => onNavigate && action.route && onNavigate(action.route)}
-                 >
-                   Explore
-                   <Icon name="arrowRight" size={16} className="text-gray-400 group-hover:text-black transition-colors" />
-                 </Button>
-               </Card>
-             ))}
-           </div>
-        </div>
-      )}
-
-      {/* 4. High Severity Note */}
-      {rec.showProfessionalSupportNote && (
-        <div className="bg-blue-50/50 p-4 rounded-[16px] flex items-start gap-3 border border-blue-100">
-           <div className="mt-0.5 p-1 bg-blue-100 rounded-full text-blue-600">
-             <Icon name="info" size={16} />
-           </div>
-           <p className="text-[15px] text-[#3A3A3C] leading-relaxed">
-             If things feel overwhelming, professional support can make a real difference.
-           </p>
-        </div>
-      )}
-
-      {/* Navigation Footer */}
-      <div className="flex justify-center pt-8">
-        <Button 
-          variant="ghost" 
-          onClick={onReturnToDashboard}
-          className="text-[#8E8E93] hover:text-[#1C1C1E]"
-        >
-          Return to Home
-        </Button>
-      </div>
-
+      </motion.div>
     </div>
   );
 }

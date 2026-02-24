@@ -10,7 +10,11 @@ export function ResourceCategory({ category, className }: ResourceCategoryProps)
   return (
     <Badge 
       variant="outline" 
-      className={`text-sm py-1 px-3 border-gray-300 text-gray-600 ${className || ''}`}
+      className={`text-sm py-1 px-3 ${className || ''}`}
+      style={{ 
+        borderColor: 'var(--color-border-default)',
+        color: 'var(--color-text-muted)'
+      }}
     >
       {category}
     </Badge>

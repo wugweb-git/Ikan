@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { Users, TrendingUp, BookOpen, Mail, Eye, Download, MoreHorizontal, Search, Calendar } from 'lucide-react';
+import { Users, TrendingUp, BookOpen, Mail, Eye, Download, MoreHorizontal, Calendar } from 'lucide-react';
 import { useNotifications } from '../../contexts/NotificationContext';
 import { apiClient } from '../../lib/api-client';
 import { AdminHeader } from '../admin/AdminHeader';
+import { AdminLoading } from '../admin/AdminLoading';
 import { AdminDataTable, Column } from '../admin/AdminDataTable';
 import { useIsMobile } from '../../hooks/useIsMobile';
 import { Button } from '../ui/button';
-import { Badge } from '../ui/badge';
-import { cn } from '../ui/utils';
+import { AdminStatusBadge } from '../admin/AdminStatusBadge';
 import { Card, CardContent } from '../ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
 import {
@@ -134,7 +134,7 @@ export function AdminUserDataManager({ onBack, className }: AdminUserDataManager
       ]);
 
       setMoodEntries(Array.isArray(moodData) ? moodData : moodData.entries || []);
-      setAssessmentResponses(Array.isArray(assessmentData) ? assessmentData : assessmentData.responses || []);
+      setAssessmentResponses(Array.isArray(assessmentData) ? assessmentData : assessmentData.history || assessmentData.responses || []);
       setEquipEnrollments(Array.isArray(equipData) ? equipData : equipData.enrollments || []);
       setConsultations(Array.isArray(consultationData) ? consultationData : consultationData.consultations || []);
     } catch (error: any) {
@@ -206,11 +206,11 @@ export function AdminUserDataManager({ onBack, className }: AdminUserDataManager
   ];
 
   const stats = [
-    { label: 'Total Users', value: users.length, icon: <Users className="w-4 h-4 text-primary" /> },
+    { label: 'Total Users', value: users.length, icon: <Users className="w-4 h-4" style={{ color: 'var(--color-primary-default)' }} /> },
     { 
       label: 'Active This Month', 
       value: users.filter(u => u.last_sign_in_at && new Date(u.last_sign_in_at) > new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)).length,
-      icon: <TrendingUp className="w-4 h-4 text-green-500" /> 
+      icon: <TrendingUp className="w-4 h-4" style={{ color: 'var(--color-status-success)' }} /> 
     }
   ];
 
@@ -230,9 +230,7 @@ export function AdminUserDataManager({ onBack, className }: AdminUserDataManager
         />
 
         {detailLoading ? (
-          <div className="flex items-center justify-center py-12">
-            <div className="animate-spin rounded-full border-4 mx-auto w-12 h-12 border-muted border-t-primary" />
-          </div>
+          <AdminLoading message="Loading user data..." />
         ) : (
             <Tabs defaultValue="mood" className="space-y-6">
               <TabsList>
@@ -258,7 +256,7 @@ export function AdminUserDataManager({ onBack, className }: AdminUserDataManager
                           <div className="flex items-start justify-between">
                             <div className="flex-1">
                               <div className="flex items-center gap-3 mb-2">
-                                <Badge variant="outline" className="capitalize">{entry.mood}</Badge>
+                                <AdminStatusBadge status="neutral" label={entry.mood} />
                                 <span style={{ fontSize: '13px', color: 'var(--color-text-muted)' }}>
                                   {new Date(entry.created_at).toLocaleString()}
                                 </span>
@@ -306,7 +304,7 @@ export function AdminUserDataManager({ onBack, className }: AdminUserDataManager
                                 <h4 style={{ fontWeight: 'var(--font-weight-medium)' }}>
                                   {response.assessment_title}
                                 </h4>
-                                <Badge variant="outline">Score: {response.score}</Badge>
+                                <AdminStatusBadge status="neutral" label={`Score: ${response.score}`} />
                               </div>
                               <p style={{ fontSize: '13px', color: 'var(--color-text-muted)' }}>
                                 Completed: {new Date(response.completed_at).toLocaleString()}
@@ -342,7 +340,7 @@ export function AdminUserDataManager({ onBack, className }: AdminUserDataManager
                                 <h4 style={{ fontWeight: 'var(--font-weight-medium)' }}>
                                   {enrollment.program_title}
                                 </h4>
-                                <Badge variant="outline">{enrollment.progress}% Complete</Badge>
+                                <AdminStatusBadge status="info" label={`${enrollment.progress}% Complete`} />
                               </div>
                               <p style={{ fontSize: '13px', color: 'var(--color-text-muted)' }}>
                                 Enrolled: {new Date(enrollment.enrolled_at).toLocaleDateString()}
@@ -380,23 +378,21 @@ export function AdminUserDataManager({ onBack, className }: AdminUserDataManager
                                 <h4 style={{ fontWeight: 'var(--font-weight-medium)' }}>
                                   {consultation.professional_name}
                                 </h4>
-                                <Badge 
-                                  variant="outline"
-                                  className={
-                                    consultation.status === 'completed' ? 'bg-green-100 text-green-800' :
-                                    consultation.status === 'cancelled' ? 'bg-red-100 text-red-800' :
-                                    'bg-blue-100 text-blue-800'
+                                <AdminStatusBadge 
+                                  status={
+                                    consultation.status === 'completed' ? 'success' :
+                                    consultation.status === 'cancelled' ? 'danger' :
+                                    'info'
                                   }
-                                >
-                                  {consultation.status}
-                                </Badge>
+                                  label={consultation.status}
+                                />
                               </div>
                               {consultation.professional_title && (
                                 <p style={{ fontSize: '13px', color: 'var(--color-text-muted)', marginBottom: '4px' }}>
                                   {consultation.professional_title}
                                 </p>
                               )}
-                              <div className="flex items-center gap-2 text-sm text-muted-foreground mt-2">
+                              <div className="flex items-center gap-2 mt-2" style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-muted)' }}>
                                 <Calendar className="w-4 h-4" />
                                 <span>{new Date(consultation.appointment_date).toLocaleString()}</span>
                               </div>
@@ -421,14 +417,7 @@ export function AdminUserDataManager({ onBack, className }: AdminUserDataManager
 
   // User List View
   if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="text-center">
-          <div className="animate-spin rounded-full border-4 mx-auto mb-4 w-12 h-12 border-muted border-t-primary" />
-          <p className="text-muted-foreground">Loading users...</p>
-        </div>
-      </div>
-    );
+    return <AdminLoading message="Loading users..." />;
   }
 
   return (

@@ -1,88 +1,261 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { cn } from '../ui/utils';
-import { Button } from '../ui/button';
+import { useIsMobile } from '../../hooks/useIsMobile';
+import { LayoutGrid } from 'lucide-react';
+import { apiClient } from '../../lib/api-client';
 
 interface NewsletterBlockProps {
+  title?: string;
+  benefits?: string[];
+  imageAlt?: string;
+  ctaText?: string;
+  privacyText?: string;
   onSubscribe?: (email: string) => void;
   className?: string;
 }
 
-export function NewsletterBlock({ onSubscribe, className }: NewsletterBlockProps) {
-  const handleSubmit = (e: React.FormEvent) => {
+export function NewsletterBlock({
+  title,
+  benefits,
+  imageAlt,
+  ctaText,
+  privacyText,
+  onSubscribe,
+  className,
+}: NewsletterBlockProps) {
+  const isMobile = useIsMobile();
+  const [email, setEmail] = useState('');
+  const [submitted, setSubmitted] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState('');
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Logic to handle subscription
-    onSubscribe?.('jamie@example.com');
+    if (!email.trim()) return;
+
+    setIsSubmitting(true);
+    setError('');
+
+    try {
+      const response = await apiClient.subscribeNewsletter(email.trim());
+      if (response.success) {
+        setSubmitted(true);
+        onSubscribe?.(email);
+      } else {
+        setError(response.error || 'Subscription failed.');
+      }
+    } catch (err) {
+      console.error('Newsletter signup error:', err);
+      setError('Network error. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
-    <div className={cn("w-full px-4 py-8", className)}>
-      <div className="bg-[#0a0a0a] rounded-[24px] lg:rounded-[40px] relative w-full overflow-hidden max-w-7xl mx-auto">
-        <div aria-hidden="true" className="absolute border border-[#2e2a2f] border-solid inset-0 pointer-events-none rounded-[24px] lg:rounded-[40px]" />
-        
-        <div className="p-[32px] lg:p-[60px] flex flex-col lg:flex-row items-center lg:items-start lg:justify-between gap-[32px] lg:gap-[60px]">
-            
-            {/* Header (Left on Desktop) */}
-            <div className="flex flex-col items-center lg:items-start text-center lg:text-left gap-[12px] lg:flex-1 lg:max-w-[500px]">
-              <div className="flex flex-col font-['Ubuntu',sans-serif] font-bold leading-[1.2] text-[32px] lg:text-[48px] text-white">
-                <p className="mb-0">Sign up for</p>
-                <p>our newsletter</p>
-              </div>
-              <p className="font-['Ubuntu',sans-serif] font-normal leading-[24px] text-[16px] lg:text-[18px] text-white opacity-80">
-                Stay Informed About Mental Health
-              </p>
-              
-              {/* Privacy Policy (Desktop Location) */}
-              <div className="hidden lg:block mt-4">
-                 <p className="font-['Ubuntu',sans-serif] font-normal text-[14px] leading-[21px] text-white/60">
-                   We store and process your personal data based on our privacy policy.
-                 </p>
-              </div>
-            </div>
+    <section
+      className={cn('w-full', className)}
+      style={{ padding: isMobile ? '40px 16px' : '64px 24px' }}
+    >
+      <div
+        style={{
+          maxWidth: '1100px',
+          margin: '0 auto',
+        }}
+      >
+        {/* Dark newsletter card */}
+        <div
+          style={{
+            backgroundColor: '#0a0a0a',
+            borderRadius: isMobile ? '24px' : '28px',
+            padding: isMobile ? '36px 24px' : '56px 56px',
+            display: 'flex',
+            flexDirection: isMobile ? 'column' : 'row',
+            alignItems: isMobile ? 'stretch' : 'flex-start',
+            justifyContent: 'space-between',
+            gap: isMobile ? '32px' : '56px',
+          }}
+        >
+          {/* Left — heading + description + privacy */}
+          <div
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '16px',
+              flex: '1 1 0',
+              maxWidth: isMobile ? '100%' : '420px',
+            }}
+          >
+            <h2
+              style={{
+                fontFamily: 'var(--font-family-base)',
+                fontWeight: 'var(--font-weight-medium)',
+                fontSize: isMobile ? '28px' : '36px',
+                lineHeight: '1.2',
+                color: '#FFFFFF',
+                margin: 0,
+              }}
+            >
+              {title || (
+                <>
+                  Sign up for
+                  <br />
+                  our newsletter
+                </>
+              )}
+            </h2>
+            <p
+              style={{
+                fontFamily: 'var(--font-family-base)',
+                fontWeight: 'var(--font-weight-regular)',
+                fontSize: isMobile ? '14px' : '15px',
+                lineHeight: '1.65',
+                color: 'rgba(255,255,255,0.7)',
+                margin: 0,
+                maxWidth: '380px',
+              }}
+            >
+              {(benefits && benefits[0]) ||
+                'Stay informed about mental health tips, new programs, and community updates.'}
+            </p>
 
-            {/* Input & Button Group (Right on Desktop) */}
-            <div className="flex flex-col items-center lg:items-end w-full lg:w-auto lg:flex-1 lg:max-w-[500px]">
-              <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-[12px] items-center justify-center w-full">
-                {/* Email Input */}
-                <div className="h-[50px] lg:h-[59px] w-full relative">
-                  <div className="bg-[#efefef] w-full h-full rounded-[8px] flex items-center px-[16px]">
-                    <input 
-                      type="email" 
-                      placeholder="jamie@example.com" 
-                      className="bg-transparent border-none outline-none w-full font-['Ubuntu',sans-serif] text-[16px] text-[#000000dd]"
-                    />
-                  </div>
-                </div>
+            {/* Privacy text */}
+            <p
+              style={{
+                fontFamily: 'var(--font-family-base)',
+                fontWeight: 'var(--font-weight-regular)',
+                fontSize: '12px',
+                lineHeight: '1.6',
+                color: 'rgba(255,255,255,0.4)',
+                margin: isMobile ? '4px 0 0' : '12px 0 0',
+              }}
+            >
+              Privacy:{' '}
+              {privacyText ||
+                'We store and process your personal data based on our privacy policy. You can unsubscribe at any time.'}
+            </p>
+          </div>
 
-                {/* Submit Button */}
-                <button 
-                  type="submit"
-                  className="bg-[#ffbe1a] h-[50px] lg:h-[59px] px-[24px] w-full sm:w-auto rounded-[8px] flex items-center justify-center gap-[8px] hover:brightness-105 transition-all shrink-0"
+          {/* Right — form */}
+          <div
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '12px',
+              flex: isMobile ? undefined : '1 1 0',
+              maxWidth: isMobile ? '100%' : '420px',
+              justifyContent: 'center',
+              alignSelf: 'center',
+              width: isMobile ? '100%' : undefined,
+            }}
+          >
+            {submitted ? (
+              <div
+                style={{
+                  backgroundColor: 'rgba(78,205,196,0.15)',
+                  borderRadius: '12px',
+                  padding: '20px 24px',
+                  textAlign: 'center',
+                }}
+              >
+                <p
+                  style={{
+                    fontFamily: 'var(--font-family-base)',
+                    fontWeight: 'var(--font-weight-medium)',
+                    fontSize: '16px',
+                    color: '#4ABDAC',
+                    margin: 0,
+                  }}
                 >
-                  {/* Dashboard Icon from Figma (Component 24) */}
-                  <div className="size-[18px] relative">
-                     <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-                        <rect x="2" y="2" width="6" height="6" rx="1" stroke="white" strokeWidth="1.5"/>
-                        <rect x="10" y="2" width="6" height="6" rx="1" stroke="white" strokeWidth="1.5"/>
-                        <rect x="2" y="10" width="6" height="6" rx="1" stroke="white" strokeWidth="1.5"/>
-                        <rect x="10" y="10" width="6" height="6" rx="1" stroke="white" strokeWidth="1.5"/>
-                     </svg>
-                  </div>
-                  <span className="font-['Ubuntu',sans-serif] font-medium text-[14px] text-[#2e2a2f] leading-[28px] whitespace-nowrap">
-                    Subscribe
-                  </span>
+                  Thank you for subscribing!
+                </p>
+              </div>
+            ) : (
+              <form
+                onSubmit={handleSubmit}
+                style={{
+                  display: 'flex',
+                  flexDirection: isMobile ? 'column' : 'row',
+                  gap: '10px',
+                  width: '100%',
+                }}
+              >
+                <div
+                  style={{
+                    backgroundColor: '#efefef',
+                    borderRadius: '10px',
+                    flex: 1,
+                    height: '48px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    padding: '0 16px',
+                  }}
+                >
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="your@email.com"
+                    required
+                    style={{
+                      background: 'transparent',
+                      border: 'none',
+                      outline: 'none',
+                      width: '100%',
+                      fontFamily: 'var(--font-family-base)',
+                      fontSize: '14px',
+                      color: '#333',
+                    }}
+                  />
+                </div>
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  style={{
+                    backgroundColor: isSubmitting ? '#D4A017' : '#FFBE1A',
+                    borderRadius: '10px',
+                    border: 'none',
+                    height: '48px',
+                    padding: '0 24px',
+                    cursor: 'pointer',
+                    fontFamily: 'var(--font-family-base)',
+                    fontWeight: 'var(--font-weight-medium)',
+                    fontSize: '14px',
+                    color: '#2A2A2A',
+                    whiteSpace: 'nowrap',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '8px',
+                    transition: 'filter 0.15s',
+                    flexShrink: 0,
+                  }}
+                  onMouseEnter={(e) =>
+                    (e.currentTarget.style.filter = 'brightness(1.05)')
+                  }
+                  onMouseLeave={(e) =>
+                    (e.currentTarget.style.filter = 'none')
+                  }
+                >
+                  <LayoutGrid size={15} strokeWidth={2.5} />
+                  {isSubmitting ? 'Subscribing...' : (ctaText || 'Subscribe')}
                 </button>
               </form>
-              
-              {/* Privacy Policy (Mobile Location) */}
-              <div className="lg:hidden mt-4 text-center">
-                 <p className="font-['Ubuntu',sans-serif] font-normal text-[14px] leading-[21px] text-white/60">
-                   We store and process your personal data based on our privacy policy.
-                 </p>
-              </div>
-            </div>
-
+            )}
+            {error && (
+              <p style={{
+                fontFamily: 'var(--font-family-base)',
+                fontSize: '13px',
+                color: '#F87171',
+                margin: '4px 0 0',
+                textAlign: 'center'
+              }}>
+                {error}
+              </p>
+            )}
+          </div>
         </div>
       </div>
-    </div>
+    </section>
   );
 }

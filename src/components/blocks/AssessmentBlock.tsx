@@ -2,6 +2,10 @@ import React from 'react';
 import { cn } from '../ui/utils';
 import { ImageWithFallback } from '../figma/ImageWithFallback';
 import { Skeleton } from '../ui/skeleton-loader';
+import { resolveImageUrl } from '../../utils/image-utils';
+import { ArrowRight } from 'lucide-react';
+
+const FALLBACK_IMAGE = 'https://images.unsplash.com/photo-1527137342181-19aab11a8ee8?auto=format&fit=crop&q=80&w=1000';
 
 export interface AssessmentProgram {
   title: string;
@@ -28,6 +32,8 @@ export interface AssessmentBlockProps {
 }
 
 function MobileAssessmentCard({ program, onClick }: { program: AssessmentProgram; onClick: () => void }) {
+  const imageSrc = resolveImageUrl(program.image) || FALLBACK_IMAGE;
+
   return (
     <div 
       className="bg-white relative rounded-[16px] shrink-0 w-full cursor-pointer transition-transform active:scale-[0.98]" 
@@ -40,20 +46,25 @@ function MobileAssessmentCard({ program, onClick }: { program: AssessmentProgram
             <div className="flex gap-[16px] items-start relative shrink-0 w-full">
               {/* Image Container */}
               <div className="flex h-[93px] items-end relative shrink-0 w-[98px]">
-                <div className="basis-0 grow h-full min-h-px min-w-px relative rounded-[12px] shrink-0 overflow-hidden">
-                  <ImageWithFallback src={program.image} alt={program.title} className="w-full h-full object-cover" />
+                <div className="basis-0 grow h-full min-h-px min-w-px relative rounded-[12px] shrink-0 overflow-hidden" style={{ backgroundColor: '#E9EBEF' }}>
+                  <ImageWithFallback 
+                    src={imageSrc} 
+                    fallbackSrc={FALLBACK_IMAGE}
+                    alt={program.title} 
+                    className="w-full h-full object-cover" 
+                  />
                 </div>
               </div>
 
               {/* Text Content */}
               <div className="basis-0 flex flex-col gap-[6px] grow items-start justify-end min-h-px min-w-px relative self-stretch shrink-0">
                 <div className="flex items-center justify-center relative shrink-0">
-                  <p className="font-['Ubuntu',sans-serif] font-medium leading-[20px] text-[#969696] text-[12px] tracking-[0.84px] uppercase">
+                  <p className="font-medium leading-[20px] text-[#969696] text-[12px] tracking-[0.84px] uppercase">
                     {program.category || "ASSESSMENT"}
                   </p>
                 </div>
                 <div className="flex flex-col justify-end leading-[0] min-w-full relative shrink-0 text-[#151515] text-[24px] w-[min-content]">
-                  <p className="font-['Ubuntu',sans-serif] font-medium leading-[30px] line-clamp-2">
+                  <p className="font-medium leading-[30px] line-clamp-2">
                     {program.title}
                   </p>
                 </div>
@@ -67,29 +78,38 @@ function MobileAssessmentCard({ program, onClick }: { program: AssessmentProgram
 }
 
 function DesktopAssessmentCard({ program, onClick }: { program: AssessmentProgram; onClick: () => void }) {
+  const imageSrc = resolveImageUrl(program.image) || FALLBACK_IMAGE;
+
   return (
     <div 
       className="bg-white rounded-[16px] flex flex-col h-full cursor-pointer transition-all hover:shadow-lg border border-[rgba(0,0,0,0.1)] overflow-hidden" 
       onClick={onClick}
     >
       {/* Image Top */}
-      <div className="h-[200px] w-full relative overflow-hidden">
-        <ImageWithFallback src={program.image} alt={program.title} className="w-full h-full object-cover" />
+      <div className="h-[200px] w-full relative overflow-hidden" style={{ backgroundColor: '#E9EBEF' }}>
+        <ImageWithFallback 
+          src={imageSrc} 
+          fallbackSrc={FALLBACK_IMAGE}
+          alt={program.title} 
+          className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" 
+        />
       </div>
 
       {/* Content Bottom */}
       <div className="flex flex-col p-[24px] gap-[12px] flex-1">
-        <p className="font-['Ubuntu',sans-serif] font-medium text-[#969696] text-[12px] tracking-[0.84px] uppercase">
+        <p className="font-medium text-[#969696] text-[12px] tracking-[0.84px] uppercase">
           {program.category || "ASSESSMENT"}
         </p>
-        <h3 className="font-['Ubuntu',sans-serif] font-medium text-[#151515] text-[24px] leading-[30px] line-clamp-2">
+        <h3 className="font-medium text-[#151515] text-[24px] leading-[30px] line-clamp-2">
           {program.title}
         </h3>
-        <p className="font-['Ubuntu',sans-serif] text-[#151515] opacity-80 text-[14px] leading-[20px] line-clamp-3 mt-auto">
+        <p className="text-[#151515] opacity-80 text-[14px] leading-[20px] line-clamp-3 mt-auto"
+           style={{ fontWeight: 'var(--font-weight-regular)' }}>
           {program.description}
         </p>
         {program.info && (
-          <p className="font-['Ubuntu',sans-serif] text-[#151515] opacity-60 text-[12px] mt-4">
+          <p className="text-[#151515] opacity-60 text-[12px] mt-4"
+             style={{ fontWeight: 'var(--font-weight-regular)' }}>
             {program.info}
           </p>
         )}
@@ -135,7 +155,7 @@ export function AssessmentBlock({
   return (
     <div className={cn("bg-[#414141] py-[24px] lg:py-[48px] px-[20px] relative w-full", className)}>
       <div className="flex flex-col items-center justify-center size-full gap-[32px] max-w-7xl mx-auto">
-        <h2 className="font-['Ubuntu',sans-serif] font-medium leading-[48px] text-[32px] text-white text-center w-full">
+        <h2 className="font-medium leading-[48px] text-[32px] text-white text-center w-full">
           {title}
         </h2>
         
@@ -160,6 +180,25 @@ export function AssessmentBlock({
             />
           ))}
         </div>
+
+        {/* CTA — View All Assessments */}
+        <button
+          onClick={() => onNavigate?.('/assessments')}
+          className="flex items-center justify-center cursor-pointer border-none transition-all hover:opacity-90"
+          style={{
+            gap: '8px',
+            backgroundColor: '#FFFFFF',
+            color: '#2A2A2A',
+            borderRadius: 'var(--radius-md)',
+            padding: '12px 32px',
+            fontFamily: 'var(--font-family-base)',
+            fontWeight: 'var(--font-weight-medium)',
+            fontSize: 'var(--text-base)',
+          }}
+        >
+          View All Assessments
+          <ArrowRight size={18} />
+        </button>
       </div>
     </div>
   );

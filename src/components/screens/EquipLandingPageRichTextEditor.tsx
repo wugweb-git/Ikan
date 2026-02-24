@@ -25,7 +25,7 @@ export function EquipLandingPageRichTextEditor({ data, onChange }: EquipLandingP
 
   return (
     <div className="space-y-6">
-      <div className="space-y-6 bg-white p-6 rounded-xl border border-gray-200">
+      <div className="space-y-6 p-6 rounded-xl" style={{ backgroundColor: 'var(--color-bg-card)', border: '1px solid var(--color-border-default)' }}>
         <h3 className="text-lg font-medium border-b pb-2">What is this program about?</h3>
         
         <AdminFormField label="Description" required helpText="Describe the program, its purpose, duration, and what participants will work on.">
@@ -72,7 +72,7 @@ export function EquipLandingPageRichTextEditor({ data, onChange }: EquipLandingP
         </AdminFormField>
       </div>
 
-      <div className="space-y-6 bg-white p-6 rounded-xl border border-gray-200">
+      <div className="space-y-6 p-6 rounded-xl" style={{ backgroundColor: 'var(--color-bg-card)', border: '1px solid var(--color-border-default)' }}>
         <h3 className="text-lg font-medium border-b pb-2">The program includes:</h3>
         
         <AdminFormField 
@@ -90,7 +90,7 @@ export function EquipLandingPageRichTextEditor({ data, onChange }: EquipLandingP
         </AdminFormField>
       </div>
 
-      <div className="space-y-6 bg-white p-6 rounded-xl border border-gray-200">
+      <div className="space-y-6 p-6 rounded-xl" style={{ backgroundColor: 'var(--color-bg-card)', border: '1px solid var(--color-border-default)' }}>
         <h3 className="text-lg font-medium border-b pb-2">How it works</h3>
         
         <AdminFormField 
@@ -108,7 +108,7 @@ export function EquipLandingPageRichTextEditor({ data, onChange }: EquipLandingP
         </AdminFormField>
       </div>
 
-      <div className="space-y-6 bg-white p-6 rounded-xl border border-gray-200">
+      <div className="space-y-6 p-6 rounded-xl" style={{ backgroundColor: 'var(--color-bg-card)', border: '1px solid var(--color-border-default)' }}>
         <h3 className="text-lg font-medium border-b pb-2">What you'll gain</h3>
         
         <AdminFormField 

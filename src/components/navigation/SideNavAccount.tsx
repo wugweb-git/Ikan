@@ -373,7 +373,7 @@ export function SideNavAccount({
                         <button
                           key={item.id}
                           onClick={() => onNavigate(item.route)}
-                          className="settings-item w-full transition-colors active:bg-gray-50 group"
+                          className="settings-item w-full transition-colors active:bg-[var(--color-bg-muted)] group"
                         >
                           <div className="flex flex-row items-center justify-between w-full h-full">
                             <div className="flex gap-[12px] items-center">
@@ -433,7 +433,7 @@ export function SideNavAccount({
                 <div className="settings-group">
                     <button
                       onClick={onLogout}
-                      className="settings-item w-full transition-colors active:bg-gray-50 group"
+                      className="settings-item w-full transition-colors active:bg-[var(--color-bg-muted)] group"
                     >
                       <div className="flex flex-row items-center justify-between w-full h-full">
                         <div className="flex gap-[12px] items-center">
@@ -452,15 +452,16 @@ export function SideNavAccount({
              <button
               onClick={onLogout}
               className={cn(
-                "relative w-full transition-all duration-200 group flex items-center rounded-[12px] h-[50px] bg-white border border-[#D1D5DB] hover:bg-red-50"
+                "relative w-full transition-all duration-200 group flex items-center rounded-[12px] h-[50px] border hover:bg-[var(--color-status-danger-light)]"
               )}
+              style={{ backgroundColor: 'var(--color-bg-card)', borderColor: 'var(--color-border-default)' }}
             >
               <div className="flex flex-row items-center justify-between w-full h-full px-[20px]">
                 <div className="flex gap-[12px] items-center">
                   <div className="shrink-0 w-[24px] flex items-center justify-center">
                     <IconLogOut color="#151515" />
                   </div>
-                  <div className="flex flex-col justify-center leading-[0] not-italic relative shrink-0 text-[#151515] group-hover:text-red-600 text-nowrap font-medium h-[28px] text-[14px]">
+                  <div className="flex flex-col justify-center leading-[0] not-italic relative shrink-0 text-[#151515] group-hover:text-[var(--color-status-danger)] text-nowrap font-medium h-[28px] text-[14px]">
                     <p className="leading-[28px]">Log out</p>
                   </div>
                 </div>

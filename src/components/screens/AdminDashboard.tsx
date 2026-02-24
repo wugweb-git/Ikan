@@ -1,13 +1,12 @@
 import React, { useState } from 'react';
+import { useNotifications } from '../../contexts/NotificationContext';
 import { 
   LayoutDashboard, 
   BarChart, 
   Users, 
   ClipboardList, 
   Table, 
-  Activity, 
   BookOpen, 
-  FileJson, 
   Tag, 
   Smile, 
   Settings, 
@@ -19,7 +18,15 @@ import {
   Search,
   Bell,
   User,
-  LogOut
+  LogOut,
+  Stethoscope,
+  Image,
+  Sparkles,
+  CreditCard,
+  MousePointerClick,
+  HeartPulse,
+  Palette,
+  Zap,
 } from 'lucide-react';
 import { cn } from '../ui/utils';
 import { Button } from '../ui/button';
@@ -46,10 +53,10 @@ import { AdminPaymentGateway } from '../admin/AdminPaymentGateway';
 import { AdminSecurity } from '../admin/AdminSecurity';
 import { AdminCategoryManager } from '../admin/AdminCategoryManager';
 import { AdminMoodManager } from '../admin/AdminMoodManager';
+import { AdminCheckinScalesManager } from '../admin/AdminCheckinScalesManager';
 import { RecommendationRulesManager } from '../admin/recommendations/RecommendationRulesManager';
 import { AdminBackupManager } from '../admin/AdminBackupManager';
 import { UIKitPatterns } from '../uikit/UIKitPatterns';
-import { Palette } from 'lucide-react';
 
 interface AdminDashboardProps {
   onNavigate: (path: string) => void;
@@ -69,6 +76,7 @@ type ViewType =
   | 'media'
   | 'categories'
   | 'moods'
+  | 'checkin-scales'
   | 'recommendations'
   | 'user-data'
   | 'settings'
@@ -81,6 +89,7 @@ type ViewType =
   | 'ui-kit';
 
 export function AdminDashboard({ onNavigate, initialView }: AdminDashboardProps) {
+  const { unreadCount } = useNotifications();
   const [currentView, setCurrentView] = useState<ViewType>((initialView as ViewType) || 'dashboard');
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -107,9 +116,9 @@ export function AdminDashboard({ onNavigate, initialView }: AdminDashboardProps)
         { id: 'equip', label: 'Equip Programs', icon: BookOpen },
         { id: 'assessments', label: 'Assessments', icon: ClipboardList },
         { id: 'resources', label: 'Resources', icon: Table },
-        { id: 'consultants', label: 'Consultants', icon: ClipboardList },
-        { id: 'pages', label: 'Pages', icon: FileJson },
-        { id: 'media', label: 'Media Library', icon: FileJson },
+        { id: 'consultants', label: 'Consultants', icon: Stethoscope },
+        { id: 'pages', label: 'Pages', icon: FileText },
+        { id: 'media', label: 'Media Library', icon: Image },
       ]
     },
     {
@@ -118,7 +127,8 @@ export function AdminDashboard({ onNavigate, initialView }: AdminDashboardProps)
       items: [
         { id: 'categories', label: 'Categories', icon: Tag },
         { id: 'moods', label: 'Mood Types', icon: Smile },
-        { id: 'recommendations', label: 'Rules Engine', icon: Activity },
+        { id: 'checkin-scales', label: 'Check-in Scales', icon: Zap },
+        { id: 'recommendations', label: 'Rules Engine', icon: Sparkles },
         { id: 'settings', label: 'Global Settings', icon: Settings },
       ]
     },
@@ -126,11 +136,11 @@ export function AdminDashboard({ onNavigate, initialView }: AdminDashboardProps)
       id: 'system',
       title: 'System & Logs',
       items: [
-        { id: 'user-data', label: 'User Activity', icon: Activity },
+        { id: 'user-data', label: 'User Activity', icon: MousePointerClick },
         { id: 'communication', label: 'Communication', icon: MessageSquare },
-        { id: 'payment-gateway', label: 'Payments', icon: Settings },
+        { id: 'payment-gateway', label: 'Payments', icon: CreditCard },
         { id: 'security', label: 'Security', icon: Shield },
-        { id: 'crud', label: 'System Health', icon: Activity },
+        { id: 'crud', label: 'System Health', icon: HeartPulse },
         { id: 'backup', label: 'Backups', icon: Database },
         { id: 'system-logs', label: 'System Logs', icon: Monitor },
       ]
@@ -173,15 +183,15 @@ export function AdminDashboard({ onNavigate, initialView }: AdminDashboardProps)
                 <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                   <Card 
                     className="p-6 cursor-pointer hover:shadow-md transition-all group border border-[var(--color-border-default)] cbt-card-small"
-                    style={{ borderRadius: '20px' }}
+                    style={{ borderRadius: 'var(--radius-lg)' }}
                     onClick={() => setCurrentView('users')}
                   >
                     <div className="flex items-start justify-between">
                       <div>
-                        <h3 className="text-lg font-medium text-[var(--color-text-primary)]">User Management</h3>
-                        <p className="text-sm text-[var(--color-text-muted)] mt-1">Manage accounts and roles</p>
+                        <h3 style={{ fontSize: 'var(--text-lg)', fontWeight: 'var(--font-weight-medium)', color: 'var(--color-text-primary)' }}>User Management</h3>
+                        <p style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-muted)', marginTop: 'var(--spacing-1)' }}>Manage accounts and roles</p>
                       </div>
-                      <div className="p-2 bg-[var(--grey-2)] text-[var(--color-primary-default)] rounded-lg group-hover:scale-110 transition-transform">
+                      <div className="p-2 rounded-lg group-hover:scale-110 transition-transform" style={{ backgroundColor: 'var(--color-bg-muted)', color: 'var(--color-primary-default)' }}>
                         <Users className="w-5 h-5" />
                       </div>
                     </div>
@@ -189,15 +199,15 @@ export function AdminDashboard({ onNavigate, initialView }: AdminDashboardProps)
 
                   <Card 
                     className="p-6 cursor-pointer hover:shadow-md transition-all group border border-[var(--color-border-default)] cbt-card-small"
-                    style={{ borderRadius: '20px' }}
+                    style={{ borderRadius: 'var(--radius-lg)' }}
                     onClick={() => setCurrentView('equip')}
                   >
                     <div className="flex items-start justify-between">
                       <div>
-                        <h3 className="text-lg font-medium text-[var(--color-text-primary)]">Equip Programs</h3>
-                        <p className="text-sm text-[var(--color-text-muted)] mt-1">Manage courses and content</p>
+                        <h3 style={{ fontSize: 'var(--text-lg)', fontWeight: 'var(--font-weight-medium)', color: 'var(--color-text-primary)' }}>Equip Programs</h3>
+                        <p style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-muted)', marginTop: 'var(--spacing-1)' }}>Manage courses and content</p>
                       </div>
-                      <div className="p-2 bg-[var(--grey-2)] text-[var(--color-accent-default)] rounded-lg group-hover:scale-110 transition-transform">
+                      <div className="p-2 rounded-lg group-hover:scale-110 transition-transform" style={{ backgroundColor: 'var(--color-bg-muted)', color: 'var(--color-primary-default)' }}>
                         <BookOpen className="w-5 h-5" />
                       </div>
                     </div>
@@ -205,16 +215,16 @@ export function AdminDashboard({ onNavigate, initialView }: AdminDashboardProps)
 
                   <Card 
                     className="p-6 cursor-pointer hover:shadow-md transition-all group border border-[var(--color-border-default)] cbt-card-small"
-                    style={{ borderRadius: '20px' }}
+                    style={{ borderRadius: 'var(--radius-lg)' }}
                     onClick={() => setCurrentView('crud')}
                   >
                     <div className="flex items-start justify-between">
                       <div>
-                        <h3 className="text-lg font-medium text-[var(--color-text-primary)]">System Health</h3>
-                        <p className="text-sm text-[var(--color-text-muted)] mt-1">Status: Operational</p>
+                        <h3 style={{ fontSize: 'var(--text-lg)', fontWeight: 'var(--font-weight-medium)', color: 'var(--color-text-primary)' }}>System Health</h3>
+                        <p style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-muted)', marginTop: 'var(--spacing-1)' }}>Status: Operational</p>
                       </div>
-                      <div className="p-2 bg-green-50 text-[var(--color-status-success)] rounded-lg group-hover:scale-110 transition-transform relative">
-                        <Activity className="w-5 h-5 animate-pulse" />
+                      <div className="p-2 rounded-lg group-hover:scale-110 transition-transform relative" style={{ backgroundColor: 'var(--color-status-success-light)', color: 'var(--color-status-success)' }}>
+                        <HeartPulse className="w-5 h-5 animate-pulse" />
                       </div>
                     </div>
                   </Card>
@@ -242,15 +252,16 @@ export function AdminDashboard({ onNavigate, initialView }: AdminDashboardProps)
       case 'media': return <AdminMediaManager onBack={() => setCurrentView('dashboard')} />;
       case 'categories': return <AdminCategoryManager onBack={() => setCurrentView('dashboard')} />;
       case 'moods': return <AdminMoodManager onBack={() => setCurrentView('dashboard')} />;
+      case 'checkin-scales': return <AdminCheckinScalesManager onBack={() => setCurrentView('dashboard')} />;
       case 'recommendations': return <RecommendationRulesManager onBack={() => setCurrentView('dashboard')} />;
       case 'user-data': return <AdminUserDataManager onBack={() => setCurrentView('dashboard')} />;
       case 'settings': return <AdminSettingsManager onBack={() => setCurrentView('dashboard')} />;
-      case 'crud': return <AdminCRUDTesting />;
-      case 'backup': return <AdminBackupManager />;
-      case 'system-logs': return <AdminSystemLogs />;
-      case 'communication': return <AdminCommunication />;
-      case 'payment-gateway': return <AdminPaymentGateway />;
-      case 'security': return <AdminSecurity />;
+      case 'crud': return <AdminCRUDTesting onBack={() => setCurrentView('dashboard')} />;
+      case 'backup': return <AdminBackupManager onBack={() => setCurrentView('dashboard')} />;
+      case 'system-logs': return <AdminSystemLogs onBack={() => setCurrentView('dashboard')} />;
+      case 'communication': return <AdminCommunication onBack={() => setCurrentView('dashboard')} />;
+      case 'payment-gateway': return <AdminPaymentGateway onBack={() => setCurrentView('dashboard')} />;
+      case 'security': return <AdminSecurity onBack={() => setCurrentView('dashboard')} />;
       case 'ui-kit': return <UIKitPatterns />;
       default: return <div>View not found</div>;
     }
@@ -264,12 +275,12 @@ export function AdminDashboard({ onNavigate, initialView }: AdminDashboardProps)
           {/* Header Area in Sidebar */}
           <div className="h-[96px] flex items-center px-4 border-b border-[var(--grey-2)]">
               <div className="flex items-center gap-4">
-                <div className="bg-[var(--primary)] rounded-lg p-2 text-white">
+                <div className="bg-[var(--primary)] rounded-lg p-2" style={{ color: 'var(--color-primary-on)' }}>
                   <Logo showText={false} iconSize={40} />
                 </div>
                 <div>
-                  <span className="text-[var(--grey-9)] font-bold text-xl tracking-tight block leading-none">iKan</span>
-                  <span className="text-[var(--grey-5)] text-xs font-medium uppercase tracking-wider">Admin Console</span>
+                  <span className="text-[var(--grey-9)] text-xl tracking-tight block leading-none" style={{ fontWeight: 'var(--font-weight-medium)' }}>iKan</span>
+                  <span className="text-[var(--grey-5)] text-xs uppercase tracking-wider" style={{ fontWeight: 'var(--font-weight-medium)' }}>Admin Console</span>
                 </div>
               </div>
           </div>
@@ -287,7 +298,7 @@ export function AdminDashboard({ onNavigate, initialView }: AdminDashboardProps)
       <div className="flex-1 ml-[20vw] flex flex-col min-h-screen">
         
         {/* Top Header (Full Width, Square) */}
-        <header className="sticky top-0 z-40 bg-white/90 backdrop-blur-md border-b border-[var(--grey-2)] h-[96px] px-4 flex items-center justify-between">
+        <header className="sticky top-0 z-40 backdrop-blur-md h-[96px] px-4 flex items-center justify-between" style={{ backgroundColor: 'var(--color-bg-card)', opacity: 0.95, borderBottom: '1px solid var(--color-border-default)' }}>
            
            {/* Search Area */}
            <div className="flex-1 max-w-xl">
@@ -295,7 +306,8 @@ export function AdminDashboard({ onNavigate, initialView }: AdminDashboardProps)
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--grey-5)]" />
                   <Input 
                       placeholder="Search resources, users, or settings..." 
-                      className="pl-10 bg-[var(--grey-1)] border-transparent focus:bg-white focus:border-[var(--grey-3)] transition-all h-[44px] rounded-lg w-full"
+                      className="pl-10 border-transparent transition-all h-[44px] rounded-lg w-full"
+                      style={{ backgroundColor: 'var(--color-bg-muted)' }}
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
                   />
@@ -320,22 +332,44 @@ export function AdminDashboard({ onNavigate, initialView }: AdminDashboardProps)
                   onClick={() => setCurrentView('ui-kit')}
                   className={cn(
                       "gap-2 bg-[var(--grey-2)] text-[var(--grey-9)] hover:bg-[var(--grey-3)] h-[44px] px-4 rounded-lg border border-[var(--grey-3)]", 
-                      currentView === 'ui-kit' && "bg-[var(--primary)] text-white border-[var(--primary)]"
+                      currentView === 'ui-kit' && "bg-[var(--color-primary-default)] text-[var(--color-primary-on)] border-[var(--color-primary-default)]"
                   )}
               >
                   <Palette className="w-4 h-4" />
-                  <span className="hidden md:inline font-medium">UI Kit</span>
+                  <span className="hidden md:inline" style={{ fontWeight: 'var(--font-weight-medium)' }}>UI Kit</span>
               </Button>
 
               <Button variant="ghost" size="icon" className="bg-[var(--grey-2)] text-[var(--grey-9)] hover:bg-[var(--grey-3)] relative rounded-lg h-[44px] w-[44px] border border-[var(--grey-3)]">
                   <Bell className="w-5 h-5" />
-                  <span className="absolute top-3 right-3 w-2 h-2 bg-[var(--danger)] rounded-full border-2 border-[var(--grey-0)]"></span>
+                  {unreadCount > 0 && (
+                    <span 
+                      className="absolute top-2 right-2 min-w-[8px] h-[8px] rounded-full border-2 border-[var(--grey-0)]"
+                      style={{ 
+                        backgroundColor: 'var(--color-status-danger)',
+                        ...(unreadCount > 0 ? {
+                          minWidth: '18px',
+                          height: '18px',
+                          top: '-4px',
+                          right: '-4px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          fontSize: 'var(--text-xs)',
+                          color: 'var(--color-text-inverse)',
+                          fontWeight: 'var(--font-weight-medium)',
+                          padding: '0 var(--spacing-1)'
+                        } : {})
+                       }}
+                    >
+                      {unreadCount}
+                    </span>
+                  )}
               </Button>
 
               <div className="flex items-center gap-3 ml-2 px-3 py-1.5 bg-[var(--grey-1)] rounded-lg border border-[var(--grey-2)]">
                   <div className="text-right hidden md:block">
-                      <p className="text-sm font-medium text-[var(--grey-9)] leading-none">Admin User</p>
-                      <p className="text-xs text-[var(--grey-5)] mt-1">Super Admin</p>
+                      <p style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--font-weight-medium)', color: 'var(--grey-9)' }} className="leading-none">Admin User</p>
+                      <p style={{ fontSize: 'var(--text-xs)', color: 'var(--grey-5)', marginTop: '4px' }}>Super Admin</p>
                   </div>
                   <div className="w-8 h-8 rounded-full bg-[var(--grey-3)] text-[var(--grey-7)] flex items-center justify-center">
                       <User className="w-4 h-4" />
@@ -346,10 +380,11 @@ export function AdminDashboard({ onNavigate, initialView }: AdminDashboardProps)
                   variant="ghost" 
                   size="sm" 
                   onClick={() => onNavigate('/')} 
-                  className="text-[var(--danger)] bg-red-50 hover:bg-red-100 hover:text-[var(--danger)] gap-2 h-[44px] px-4 rounded-lg ml-1 border border-red-100"
+                  style={{ backgroundColor: 'var(--color-status-danger-light)', color: 'var(--color-status-danger)', borderColor: 'var(--color-status-danger-light)' }}
+                  className="gap-2 h-[44px] px-4 rounded-lg ml-1 border hover:opacity-80"
               >
                   <LogOut className="w-4 h-4" />
-                  <span className="hidden md:inline font-medium">Exit</span>
+                  <span className="hidden md:inline" style={{ fontWeight: 'var(--font-weight-medium)' }}>Exit</span>
               </Button>
            </div>
         </header>

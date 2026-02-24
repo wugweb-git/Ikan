@@ -4,7 +4,7 @@ import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
 import { Icon } from '../Icon';
 import { availableIcons } from '../../components/Icon';
-import { Heart, Mail, Lock, Search, ChevronDown, AlertCircle, CheckCircle } from 'lucide-react';
+import { Heart, Search, ChevronDown, AlertCircle, CheckCircle } from 'lucide-react';
 
 export function UIKitElements() {
   return (
@@ -157,7 +157,7 @@ export function UIKitElements() {
                     
                     <div className="cbt-card-small p-6">
                         <div className="flex justify-between items-start mb-4">
-                             <h4 className="font-semibold text-[var(--grey-8)]">History Card</h4>
+                             <h4 className="font-medium text-[var(--grey-8)]">History Card</h4>
                              <span className="badge badge-success">Completed</span>
                         </div>
                         <p className="caption-text">

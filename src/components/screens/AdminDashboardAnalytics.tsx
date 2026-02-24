@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { TrendingUp, Users, BookOpen, Activity, DollarSign, Eye, Download, Calendar } from 'lucide-react';
+import { TrendingUp, Users, BookOpen, Activity, DollarSign, Eye, Calendar } from 'lucide-react';
 import { useNotifications } from '../../contexts/NotificationContext';
 import { apiClient } from '../../lib/api-client';
 import { AdminHeader } from '../admin/AdminHeader';
+import { AdminLoading } from '../admin/AdminLoading';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { useIsMobile } from '../../hooks/useIsMobile';
-import { cn } from '../ui/utils';
 import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
 interface AdminDashboardAnalyticsProps {
@@ -195,18 +195,7 @@ export function AdminDashboardAnalytics({ onBack, className }: AdminDashboardAna
         className="flex items-center justify-center min-h-[400px]"
       >
         <div className="text-center">
-          <div
-            className="animate-spin rounded-full border-4 mx-auto mb-4"
-            style={{
-              width: '48px',
-              height: '48px',
-              borderColor: 'var(--color-accent-default)',
-              borderTopColor: 'var(--color-primary-default)'
-            }}
-          />
-          <p style={{ fontFamily: 'var(--font-family-base)', fontSize: 'var(--text-base)', color: 'var(--color-text-muted)' }}>
-            Loading analytics...
-          </p>
+          <AdminLoading message="Loading analytics..." />
         </div>
       </div>
     );
@@ -319,7 +308,7 @@ export function AdminDashboardAnalytics({ onBack, className }: AdminDashboardAna
                     labelLine={false}
                     label={({ name, percent }) => `${name} (${(percent * 100).toFixed(0)}%)`}
                     outerRadius={80}
-                    fill="#8884d8"
+                    fill="var(--ikan-chart-fill-default)"
                     dataKey="value"
                   >
                     {analytics.categoryDistribution.map((entry, index) => (
@@ -364,7 +353,7 @@ export function AdminDashboardAnalytics({ onBack, className }: AdminDashboardAna
                       fontSize: 'var(--text-sm)'
                     }}
                   />
-                  <Bar dataKey="views" fill="var(--color-success-default)" />
+                  <Bar dataKey="views" fill="var(--ikan-chart-fill-default)" />
                 </BarChart>
               </ResponsiveContainer>
             </CardContent>

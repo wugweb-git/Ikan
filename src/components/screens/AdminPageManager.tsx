@@ -3,11 +3,9 @@ import { FileText, Download, Edit, Plus, MoreHorizontal, Eye, EyeOff, Trash2, Ex
 import { useNotifications } from '../../contexts/NotificationContext';
 import { apiClient } from '../../lib/api-client';
 import { AdminHeader } from '../admin/AdminHeader';
-import { AdminEmptyState } from '../admin/AdminEmptyState';
 import { useIsMobile } from '../../hooks/useIsMobile';
 import { Button } from '../ui/button';
-import { Badge } from '../ui/badge';
-import { cn } from '../ui/utils';
+import { AdminStatusBadge } from '../admin/AdminStatusBadge';
 import { PageEditPage, Page } from './PageEditPage';
 import { AdminDataTable, Column } from '../admin/AdminDataTable';
 import { SkeletonTable } from '../ui/skeleton-loader';
@@ -204,8 +202,8 @@ export function AdminPageManager({ onBack, className }: AdminPageManagerProps) {
       sortable: true,
       render: (page) => (
         <div className="flex flex-col">
-          <span className="font-medium">{page.name}</span>
-          <span className="text-xs text-muted-foreground">/{page.slug}</span>
+          <span style={{ fontWeight: 'var(--font-weight-medium)', fontFamily: 'var(--font-family-base)' }}>{page.name}</span>
+          <span style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)', fontFamily: 'monospace' }}>/{page.slug}</span>
         </div>
       )
     },
@@ -220,12 +218,10 @@ export function AdminPageManager({ onBack, className }: AdminPageManagerProps) {
       accessorKey: 'published',
       sortable: true,
       render: (page) => (
-        <Badge 
-          variant="outline" 
-          className={page.published ? 'bg-green-50 text-green-700 border-green-200' : 'bg-gray-50 text-gray-700 border-gray-200'}
-        >
-          {page.published ? 'Published' : 'Draft'}
-        </Badge>
+        <AdminStatusBadge 
+          status={page.published ? 'published' : 'draft'} 
+          label={page.published ? 'Published' : 'Draft'} 
+        />
       )
     },
     {
@@ -234,7 +230,7 @@ export function AdminPageManager({ onBack, className }: AdminPageManagerProps) {
       sortable: true,
       className: 'hidden md:table-cell',
       render: (page) => (
-        <span className="text-sm text-muted-foreground">
+        <span style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-muted)' }}>
           {page.lastUpdated ? new Date(page.lastUpdated).toLocaleDateString() : '-'}
         </span>
       )
@@ -245,7 +241,7 @@ export function AdminPageManager({ onBack, className }: AdminPageManagerProps) {
       sortable: true,
       className: 'hidden md:table-cell',
       render: (page) => (
-        <span className="text-sm text-muted-foreground">
+        <span style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-muted)' }}>
           {page.created_at ? new Date(page.created_at).toLocaleDateString() : '-'}
         </span>
       )
@@ -275,7 +271,7 @@ export function AdminPageManager({ onBack, className }: AdminPageManagerProps) {
             <DropdownMenuSeparator />
             <DropdownMenuItem 
               onClick={(e) => { e.stopPropagation(); handleDelete(page.id, page.name); }}
-              className="text-red-600"
+              style={{ color: 'var(--color-status-danger)' }}
             >
               <Trash2 className="mr-2 h-4 w-4" /> Delete
             </DropdownMenuItem>
@@ -301,7 +297,7 @@ export function AdminPageManager({ onBack, className }: AdminPageManagerProps) {
         {!isMobile && 'Sync System Pages'}
       </Button>
       <Button variant="outline" onClick={() => {}}><Download className="w-4 h-4" />{!isMobile && 'Export'}</Button>
-      <Button onClick={handleCreateNew} style={{ backgroundColor: 'var(--color-primary-default)', color: 'var(--color-primary-on)' }}><Plus className="w-4 h-4" />{!isMobile && 'Add Page'}</Button>
+      <Button onClick={handleCreateNew} className="gap-2 bg-[var(--color-primary-default)] text-[var(--color-primary-on)] hover:opacity-90"><Plus className="w-4 h-4" />{!isMobile && 'Add Page'}</Button>
     </div>
   );
 
