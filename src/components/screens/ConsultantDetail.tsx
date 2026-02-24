@@ -198,9 +198,8 @@ export function ConsultantDetail({ consultantId, onNavigate, className }: Consul
       {/* Header - Desktop Only - Empty placeholder space */}
       {!isMobile && (
         <div style={{ 
-          height: '88px', 
-          backgroundColor: 'var(--color-bg-card)', 
-          borderBottom: '1px solid var(--color-border-default)'
+          height: '120px', 
+          backgroundColor: 'var(--color-bg-page)', // Match page bg to blend in
         }} />
       )}
 

@@ -7,9 +7,8 @@ import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { NotificationProvider, useNotifications } from './contexts/NotificationContext';
 import { PaymentProvider } from './contexts/PaymentContext';
 import { JourneyProvider } from './contexts/JourneyContext';
-import { TopNavBar } from './components/navigation/TopNavBar';
+import { Navigation } from './components/navigation/Navigation';
 import { BottomNavBarMobile } from './components/navigation/BottomNavBarMobile';
-import { PublicNavBar } from './components/navigation/PublicNavBar';
 import { PublicBottomNavMobile } from './components/navigation/PublicBottomNavMobile';
 import { RouteGuard } from './components/RouteGuard';
 import { isPublicRoute, requiresAuth, DEFAULT_PUBLIC_ROUTE, DEFAULT_PRIVATE_ROUTE, routes } from './lib/route-config';
@@ -790,24 +789,41 @@ function AppContent() {
                            currentRoute === '/faq' ||
                            currentRoute === '/sitemap';
 
+  const isHeroRoute = shouldShowFooter || 
+                      currentRoute === '/' || 
+                      currentRoute === '/login' ||
+                      currentRoute === '/equip' ||
+                      currentRoute === '/resource' ||
+                      currentRoute === '/consultation' ||
+                      currentRoute === '/consultation-detail' ||
+                      currentRoute === '/equip-programs-landing' ||
+                      currentRoute === '/assessment-landing' ||
+                      currentRoute.startsWith('/equip-detail') ||
+                      currentRoute.startsWith('/resource-detail') ||
+                      currentRoute.startsWith('/assessment-detail') ||
+                      currentRoute.startsWith('/consultation/');
+
   return (
     <div className={cn(
       "flex flex-col min-h-[100dvh] bg-background font-sans antialiased text-foreground",
       currentRoute === '/login' ? "h-[100dvh] overflow-hidden" : ""
     )}>
-      {/* Top Navigation */}
+      {/* Top Navigation - Floating Capsule */}
       {!isMobile && currentRoute !== '/login' && !currentRoute.startsWith('/admin') && (
-        <div className="sticky top-0 z-40 w-full bg-white border-b border-border-light">
-          {user && currentRoute !== '/' ? (
-            <TopNavBar currentRoute={currentRoute} onNavigate={handleNavigate} />
-          ) : (
-            <PublicNavBar currentRoute={currentRoute} onNavigate={handleNavigate} onSignIn={handleSignIn} />
-          )}
-        </div>
+        <Navigation 
+          user={user} 
+          onNavigate={handleNavigate} 
+          onGetStarted={handleSignIn}
+          currentRoute={currentRoute}
+        />
       )}
 
       {/* Main Content Area */}
-      <main className="flex-1 w-full relative">
+      <main className={cn(
+        "flex-1 w-full relative",
+        // Add padding-top for routes that DON'T have a hero/full-screen section
+        !isHeroRoute && !currentRoute.startsWith('/admin') && "pt-[100px]"
+      )}>
         <div className={cn(
           "w-full h-full",
           // Add padding for mobile bottom nav if visible

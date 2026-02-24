@@ -54,29 +54,29 @@ export function SideNav({
   return (
     <div 
       className={cn(
-        "bg-white flex flex-col items-start relative rounded-[12px] w-full p-5",
+        "flex flex-col items-start relative w-full",
         className
       )} 
       style={style}
       data-name="Side Navigation"
     >
-      <div className="flex flex-col gap-[12px] w-full">
+      <div className="flex flex-col w-full">
         {groups.map((group) => (
-          <div key={group.id} className="w-full">
+          <div key={group.id} className="w-full mb-2">
             {/* Group Header */}
             {group.title && (
               <div 
                 className={cn(
-                  "px-[20px] py-[8px] flex items-center justify-between",
+                  "px-6 py-3 flex items-center justify-between",
                   group.collapsible ? "cursor-pointer select-none" : ""
                 )}
                 onClick={() => group.collapsible && toggleGroup(group.id)}
               >
-                <h3 className="text-[12px] font-medium text-[#717182] uppercase tracking-wider font-['Ubuntu']">
+                <h3 className="text-[11px] font-semibold text-[var(--grey-5)] uppercase tracking-wider">
                   {group.title}
                 </h3>
                 {group.collapsible && (
-                  <div className="text-[#717182]">
+                  <div className="text-[var(--grey-5)]">
                     {expandedGroups[group.id] ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
                   </div>
                 )}
@@ -85,7 +85,7 @@ export function SideNav({
 
             {/* Group Items */}
             {(expandedGroups[group.id] || !group.collapsible) && (
-              <div className={cn("flex flex-col gap-[8px]", group.title ? "mt-1" : "")}>
+              <div className="flex flex-col">
                 {group.items.map((item) => {
                   const Icon = item.icon;
                   const isActive = item.isActive;
@@ -95,28 +95,27 @@ export function SideNav({
                       key={item.id}
                       onClick={item.onClick}
                       className={cn(
-                        "relative rounded-[8px] w-full transition-all duration-200",
-                        isActive ? "bg-[#2e2a2f]" : "bg-white border border-[#f5f5f5] hover:bg-gray-50"
+                        "relative w-[calc(100%-64px)] mx-8 text-left transition-all duration-200 group rounded-lg mb-1",
+                        isActive 
+                          ? "bg-[var(--grey-3)] text-[var(--grey-9)] shadow-sm" 
+                          : "bg-transparent text-[var(--grey-9)] hover:bg-[var(--grey-2)] hover:text-[var(--grey-9)]"
                       )}
                     >
-                      <div className="flex flex-row items-center w-full">
-                        <div className="flex gap-[8px] items-center px-[20px] py-[10px] w-full">
-                          {Icon && (
-                            <div className="shrink-0 w-[18px] flex items-center justify-center">
-                              <Icon 
-                                color={isActive ? "white" : "black"} 
-                                size={18}
-                                className={isActive ? "text-white" : "text-black"}
-                              />
-                            </div>
-                          )}
-                          <div className={cn(
-                            "flex flex-col justify-center leading-[0] not-italic relative shrink-0 text-[14px] text-nowrap font-medium",
-                            isActive ? "text-white font-['Ubuntu']" : "text-[#151515] font-['Inter']"
-                          )}>
-                            <p className="leading-[28px]">{item.label}</p>
+                      <div className="flex flex-row items-center w-full px-3 py-2.5">
+                        {Icon && (
+                          <div className="shrink-0 w-5 h-5 flex items-center justify-center mr-3">
+                            <Icon 
+                              size={18}
+                              className={isActive ? "text-[var(--grey-9)]" : "text-[var(--grey-6)] group-hover:text-[var(--grey-9)]"}
+                            />
                           </div>
-                        </div>
+                        )}
+                        <span className={cn(
+                          "text-base",
+                          isActive ? "font-medium text-[var(--grey-9)]" : "font-normal text-[var(--grey-9)]"
+                        )}>
+                          {item.label}
+                        </span>
                       </div>
                     </button>
                   );
@@ -125,26 +124,6 @@ export function SideNav({
             )}
           </div>
         ))}
-
-        {onLogout && (
-          <div className="mt-4 pt-4 border-t border-[#f5f5f5]">
-             <button
-              onClick={onLogout}
-              className="relative rounded-[8px] w-full bg-white border border-[#f5f5f5] transition-all duration-200 hover:bg-red-50 group"
-            >
-              <div className="flex flex-row items-center w-full">
-                <div className="flex gap-[8px] items-center px-[20px] py-[10px] w-full">
-                  <div className="shrink-0 w-[18px] flex items-center justify-center">
-                    <LogOut size={18} className="text-black group-hover:text-red-600" />
-                  </div>
-                  <div className="flex flex-col justify-center leading-[0] not-italic relative shrink-0 text-[#151515] group-hover:text-red-600 text-[14px] text-nowrap font-medium font-['Inter']">
-                    <p className="leading-[28px]">{logoutLabel}</p>
-                  </div>
-                </div>
-              </div>
-            </button>
-          </div>
-        )}
       </div>
     </div>
   );

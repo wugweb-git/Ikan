@@ -92,9 +92,9 @@ export function UnifiedBasicInfoForm({
   ];
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-8">
       {/* Title (Full Width) */}
-      <div className="space-y-1.5">
+      <div className="space-y-2">
         <Label>{titleLabel} *</Label>
         <Input
           value={title}
@@ -104,22 +104,27 @@ export function UnifiedBasicInfoForm({
       </div>
 
       {/* Description (Full Width) */}
-      <div className="space-y-1.5">
+      <div className="space-y-2">
         <Label>{descriptionLabel} *</Label>
         <Textarea
           value={description}
           onChange={(e) => onDescriptionChange(e.target.value)}
           placeholder={`Enter ${descriptionLabel.toLowerCase()}...`}
-          className="min-h-[80px] resize-none"
+          className="min-h-[120px] resize-none"
+          style={{ 
+            borderRadius: 'var(--ikan-component-border-radius)', 
+            padding: '16px',
+            border: '1px solid var(--color-border-default)'
+          }}
         />
       </div>
 
       {/* Two Column Layout: Category + Difficulty */}
-      <div className="grid grid-cols-2 gap-3">
-        <div className="space-y-1.5">
+      <div className="grid grid-cols-2 gap-8">
+        <div className="space-y-2">
           <Label>{categoryLabel} *</Label>
           <Select value={category} onValueChange={onCategoryChange}>
-            <SelectTrigger className="h-9">
+            <SelectTrigger className="h-[52px] rounded-[16px]">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -132,10 +137,10 @@ export function UnifiedBasicInfoForm({
           </Select>
         </div>
 
-        <div className="space-y-1.5">
+        <div className="space-y-2">
           <Label>Difficulty Level</Label>
           <Select value={difficulty} onValueChange={onDifficultyChange}>
-            <SelectTrigger className="h-9">
+            <SelectTrigger className="h-[52px] rounded-[16px]">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -150,12 +155,12 @@ export function UnifiedBasicInfoForm({
       </div>
 
       {/* Two Column Layout: Assessment Type (if needed) + Duration */}
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-2 gap-8">
         {showAssessmentType && (
-          <div className="space-y-1.5">
+          <div className="space-y-2">
             <Label>Assessment Type</Label>
             <Select value={assessmentType} onValueChange={onAssessmentTypeChange}>
-              <SelectTrigger className="h-9">
+              <SelectTrigger className="h-[52px] rounded-[16px]">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -167,7 +172,7 @@ export function UnifiedBasicInfoForm({
           </div>
         )}
 
-        <div className={`space-y-1.5 ${showAssessmentType ? '' : 'col-span-2'}`}>
+        <div className={`space-y-2 ${showAssessmentType ? '' : 'col-span-2'}`}>
           <Label>
             {durationLabel} ({durationUnit}) *
           </Label>
@@ -177,23 +182,22 @@ export function UnifiedBasicInfoForm({
             onChange={(e) => onDurationChange(parseInt(e.target.value) || 0)}
             placeholder={`Enter ${durationUnit}...`}
             min="1"
-            className="h-9"
           />
         </div>
       </div>
 
-      {/* Image Section - Moved before Paywall for better layout */}
+      {/* Image Section */}
       {renderImageSection && (
-        <div className="space-y-1.5">
+        <div className="space-y-2 pt-4">
           <Label>{imageLabel}</Label>
           {renderImageSection()}
         </div>
       )}
 
-      {/* Paywall Section - Compact inline layout */}
+      {/* Paywall Section */}
       {showPaywall && (
-        <div className="rounded-lg border p-4" style={{ backgroundColor: 'var(--color-bg-muted)', borderColor: 'var(--color-border-default)' }}>
-          <div className="flex items-center gap-3 mb-3">
+        <div className="rounded-[16px] border p-6" style={{ backgroundColor: 'var(--color-bg-muted)', borderColor: 'var(--color-border-default)' }}>
+          <div className="flex items-center gap-3 mb-4">
             <Checkbox
               id="premium-toggle"
               checked={isPremium}
@@ -201,24 +205,24 @@ export function UnifiedBasicInfoForm({
             />
             <div className="flex-1">
               <Label htmlFor="premium-toggle" className="cursor-pointer">
-                <span style={{ fontWeight: 500, fontSize: 'var(--text-sm)' }}>
+                <span style={{ fontWeight: 500, fontSize: 'var(--text-base)' }}>
                   Premium Content (Paywall)
                 </span>
               </Label>
-              <p style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)', marginTop: '2px', lineHeight: '1.4' }}>
+              <p style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-muted)', marginTop: '4px', lineHeight: '1.4' }}>
                 Require subscription to access
               </p>
             </div>
           </div>
           
-          {/* Price input - Inline when premium is enabled */}
+          {/* Price input */}
           {isPremium && (
-            <div className="pl-8 flex items-center gap-3">
+            <div className="pl-8 flex items-center gap-4">
               <Label htmlFor="price-input" style={{ fontSize: 'var(--text-sm)', minWidth: '80px' }}>
                 Price (INR)
               </Label>
               <div className="flex items-center gap-2 max-w-[200px]">
-                <span style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-muted)' }}>₹</span>
+                <span style={{ fontSize: 'var(--text-lg)', color: 'var(--color-text-muted)' }}>₹</span>
                 <Input
                   id="price-input"
                   type="number"
@@ -227,7 +231,6 @@ export function UnifiedBasicInfoForm({
                   placeholder="299"
                   min="0"
                   step="1"
-                  className="h-9"
                 />
               </div>
             </div>

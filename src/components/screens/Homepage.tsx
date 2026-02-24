@@ -182,7 +182,9 @@ export function Homepage({ onNavigate, onGetStarted }: HomepageProps) {
         
         {/* Assessment Section (Intro/CTA) */}
         <ErrorBoundary>
-          <AssessmentSection onGetStarted={onGetStarted} />
+          <div id="assessment">
+            <AssessmentSection onGetStarted={onGetStarted} />
+          </div>
         </ErrorBoundary>
         
         {/* Mission Section */}
@@ -192,15 +194,17 @@ export function Homepage({ onNavigate, onGetStarted }: HomepageProps) {
         
         {/* Assessment Programs Block */}
         <ErrorBoundary>
-          <AssessmentBlock 
-            title={ASSESSMENT_PROGRAMS_TITLE}
-            subtitle={ASSESSMENT_PROGRAMS_SUBTITLE}
-            buttonText={ASSESSMENT_BUTTON_TEXT}
-            seeMoreText={ASSESSMENT_SEE_MORE_TEXT}
-            programs={assessments} 
-            loading={loading}
-            onNavigate={onNavigate} 
-          />
+          <div id="programs">
+            <AssessmentBlock 
+              title={ASSESSMENT_PROGRAMS_TITLE}
+              subtitle={ASSESSMENT_PROGRAMS_SUBTITLE}
+              buttonText={ASSESSMENT_BUTTON_TEXT}
+              seeMoreText={ASSESSMENT_SEE_MORE_TEXT}
+              programs={assessments} 
+              loading={loading}
+              onNavigate={onNavigate} 
+            />
+          </div>
         </ErrorBoundary>
         
         {/* Equip Programs Block */}
@@ -238,7 +242,9 @@ export function Homepage({ onNavigate, onGetStarted }: HomepageProps) {
         
         {/* FAQ Section */}
         <ErrorBoundary>
-          <FAQSection />
+          <div id="contact">
+            <FAQSection />
+          </div>
         </ErrorBoundary>
         
         {/* Newsletter Block - RECYCLED */}

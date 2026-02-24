@@ -421,10 +421,10 @@ function AuthForm({ mode, onSuccess, onModeChange }: {
         disabled={loading}
         className="ikan-button w-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed touch-target"
         style={{
-          height: '48px',
+          height: '52px',
           borderRadius: 'var(--radius-sm)',
-          backgroundColor: 'var(--color-primary-default)',
-          color: 'var(--color-primary-on)',
+          backgroundColor: '#1A1A1A',
+          color: '#FFFFFF',
           fontSize: 'var(--text-base)',
           fontFamily: 'var(--font-family-base)',
           fontWeight: 'var(--font-weight-medium)',

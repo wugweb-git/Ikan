@@ -83,7 +83,7 @@ export function Wizard({
   };
 
   const layoutClasses = config.layout === 'centered' 
-    ? "items-center justify-center max-w-3xl mx-auto" 
+    ? "items-center justify-start max-w-[1280px] mx-auto pt-[112px] pb-32" 
     : "max-w-2xl mx-auto pt-[var(--spacing-8)]";
 
   return (
@@ -140,10 +140,10 @@ export function Wizard({
 
       {/* Main Content */}
       <main className={cn(
-        "flex-1 flex flex-col px-[var(--spacing-4)] pb-[var(--spacing-4)] w-full",
+        "flex-1 flex flex-col px-[var(--spacing-4)] w-full",
         layoutClasses
       )}>
-        <div className="flex-1 flex flex-col justify-center min-h-0 w-full">
+        <div className="flex-1 flex flex-col justify-start min-h-0 w-full max-w-[1280px]">
           <AnimatePresence mode="wait">
              <WizardStep 
                key={currentStep.id}
@@ -162,26 +162,41 @@ export function Wizard({
           </AnimatePresence>
         </div>
 
-        {/* Footer Controls - Hidden for Centered Layout if Intro/Outro, or handled inside step?
-            Typeform usually puts controls inside the step for Intro/Outro, but floating for inputs.
-            Let's let WizardControls handle visibility logic or pass props.
-        */}
+        {/* Footer Controls */}
         {!isIntro && !isOutro && (
-            <WizardControls 
-              onNext={goToNext}
-              onBack={goToPrevious}
-              onSkip={handleSkip}
-              isFirst={currentStepIndex === 0}
-              isLast={currentStepIndex === totalSteps - 1}
-              isSubmitting={isSubmitting}
-              nextLabel={currentStep.nextLabel}
-              backLabel={currentStep.backLabel}
-              className={config.layout === 'centered' ? "mt-8" : ""}
-            />
+            config.layout === 'centered' ? (
+                <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-[#E4E4E4] py-6 z-50">
+                    <div className="max-w-[1280px] mx-auto px-10 w-full">
+                        <WizardControls 
+                          onNext={goToNext}
+                          onBack={goToPrevious}
+                          onSkip={handleSkip}
+                          isFirst={currentStepIndex === 0}
+                          isLast={currentStepIndex === totalSteps - 1}
+                          isSubmitting={isSubmitting}
+                          nextLabel={currentStep.nextLabel}
+                          backLabel={currentStep.backLabel}
+                          className="mt-0"
+                        />
+                    </div>
+                </div>
+            ) : (
+                <WizardControls 
+                  onNext={goToNext}
+                  onBack={goToPrevious}
+                  onSkip={handleSkip}
+                  isFirst={currentStepIndex === 0}
+                  isLast={currentStepIndex === totalSteps - 1}
+                  isSubmitting={isSubmitting}
+                  nextLabel={currentStep.nextLabel}
+                  backLabel={currentStep.backLabel}
+                  className=""
+                />
+            )
         )}
         
         {/* Soft Reset Debug/Feature (only if enabled) */}
-        {currentStep.rules?.resettable && !isIntro && !isOutro && (
+        {currentStep.rules?.resettable && !isIntro && !isOutro && config.layout !== 'centered' && (
             <div className="mt-[var(--spacing-4)] text-center">
                 <Button 
                   variant="ghost" 

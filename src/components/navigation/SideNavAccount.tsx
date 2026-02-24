@@ -359,13 +359,37 @@ export function SideNavAccount({
 
             {/* Group Items */}
             {(expandedGroups[group.id] || !group.collapsible) && (
-              <div className={cn("flex flex-col w-full", isMobile ? "gap-[16px]" : "gap-[8px] mt-1")}>
+              <div className={cn("flex flex-col w-full", isMobile ? "settings-group" : "gap-[8px] mt-1")}>
                 {group.items.map((item) => {
                   const isActive = currentRoute === item.route;
                   const Icon = item.icon;
                   
                   // Mobile specific styling vs Desktop
-                  const mobileButtonClasses = "bg-white border border-[rgba(0,0,0,0.05)] rounded-[16px] h-[64px] shadow-[0px_1px_2px_rgba(0,0,0,0.05)]";
+                  // Mobile: settings-item (defined in globals.css)
+                  // Desktop: existing logic
+                  
+                  if (isMobile) {
+                      return (
+                        <button
+                          key={item.id}
+                          onClick={() => onNavigate(item.route)}
+                          className="settings-item w-full transition-colors active:bg-gray-50 group"
+                        >
+                          <div className="flex flex-row items-center justify-between w-full h-full">
+                            <div className="flex gap-[12px] items-center">
+                              <div className="shrink-0 w-[24px] flex items-center justify-center">
+                                <Icon color="#151515" />
+                              </div>
+                              <div className="flex flex-col justify-center leading-none text-[#151515] font-medium text-[16px]">
+                                {item.label}
+                              </div>
+                            </div>
+                            <ChevronRight className="w-5 h-5 text-[#C7C7CC]" />
+                          </div>
+                        </button>
+                      );
+                  }
+
                   const desktopButtonClasses = isActive 
                     ? "bg-[#2a2a2a] border-[#2a2a2a]" 
                     : "bg-white border-[#D1D5DB] hover:bg-[#f5f5f5]";
@@ -375,26 +399,23 @@ export function SideNavAccount({
                       key={item.id}
                       onClick={() => onNavigate(item.route)}
                       className={cn(
-                        "relative w-full transition-all duration-200 overflow-hidden group flex items-center",
-                        isMobile ? mobileButtonClasses : `rounded-[12px] h-[50px] border ${desktopButtonClasses}`
+                        "relative w-full transition-all duration-200 overflow-hidden group flex items-center rounded-[12px] h-[50px] border",
+                        desktopButtonClasses
                       )}
                     >
                       <div className="flex flex-row items-center justify-between w-full h-full px-[20px]">
                         <div className="flex gap-[12px] items-center">
                           <div className="shrink-0 w-[24px] flex items-center justify-center">
-                            <Icon color={isActive && !isMobile ? "white" : "#151515"} />
+                            <Icon color={isActive ? "white" : "#151515"} />
                           </div>
                           <div className={cn(
                             "flex flex-col justify-center leading-[0] not-italic relative shrink-0 text-nowrap font-medium h-[28px]",
-                            isMobile ? "text-[16px] text-[#151515]" : "text-[14px]",
-                            isActive && !isMobile ? "text-white" : "text-[#151515]"
+                            "text-[14px]",
+                            isActive ? "text-white" : "text-[#151515]"
                           )}>
                             <p className="leading-[28px]">{item.label}</p>
                           </div>
                         </div>
-                        {isMobile && (
-                          <ChevronRight className="w-5 h-5 text-[#C7C7CC]" />
-                        )}
                       </div>
                     </button>
                   );
@@ -408,15 +429,30 @@ export function SideNavAccount({
           <div className={cn("w-full", isMobile ? "mt-[24px]" : "mt-[12px]")}>
              {!isMobile && <Separator className="mb-[17px] bg-[#E5E7EB]" />}
              
-             {/* Removed duplicate LEGAL header on mobile */}
-             
+             {isMobile ? (
+                <div className="settings-group">
+                    <button
+                      onClick={onLogout}
+                      className="settings-item w-full transition-colors active:bg-gray-50 group"
+                    >
+                      <div className="flex flex-row items-center justify-between w-full h-full">
+                        <div className="flex gap-[12px] items-center">
+                          <div className="shrink-0 w-[24px] flex items-center justify-center">
+                            <IconLogOut color="#151515" />
+                          </div>
+                          <div className="flex flex-col justify-center leading-none text-[#151515] font-medium text-[16px]">
+                            Log out
+                          </div>
+                        </div>
+                        <ChevronRight className="w-5 h-5 text-[#C7C7CC]" />
+                      </div>
+                    </button>
+                </div>
+             ) : (
              <button
               onClick={onLogout}
               className={cn(
-                "relative w-full transition-all duration-200 group flex items-center",
-                isMobile 
-                  ? "bg-white border border-[rgba(0,0,0,0.05)] rounded-[16px] h-[64px] shadow-[0px_1px_2px_rgba(0,0,0,0.05)]"
-                  : "rounded-[12px] h-[50px] bg-white border border-[#D1D5DB] hover:bg-red-50"
+                "relative w-full transition-all duration-200 group flex items-center rounded-[12px] h-[50px] bg-white border border-[#D1D5DB] hover:bg-red-50"
               )}
             >
               <div className="flex flex-row items-center justify-between w-full h-full px-[20px]">
@@ -424,18 +460,13 @@ export function SideNavAccount({
                   <div className="shrink-0 w-[24px] flex items-center justify-center">
                     <IconLogOut color="#151515" />
                   </div>
-                  <div className={cn(
-                    "flex flex-col justify-center leading-[0] not-italic relative shrink-0 text-[#151515] group-hover:text-red-600 text-nowrap font-medium h-[28px]",
-                    isMobile ? "text-[16px]" : "text-[14px]"
-                  )}>
+                  <div className="flex flex-col justify-center leading-[0] not-italic relative shrink-0 text-[#151515] group-hover:text-red-600 text-nowrap font-medium h-[28px] text-[14px]">
                     <p className="leading-[28px]">Log out</p>
                   </div>
                 </div>
-                {isMobile && (
-                  <ChevronRight className="w-5 h-5 text-[#C7C7CC]" />
-                )}
               </div>
             </button>
+            )}
           </div>
         )}
       </div>

@@ -70,10 +70,10 @@ const DraggableDay = ({ day, index, isSelected, onSelect, moveDay, onDuplicate, 
       onClick={onSelect}
       data-handler-id={handlerId}
       className={cn(
-        "group flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-all border mb-1",
+        "group flex items-center gap-3 p-3 rounded-[16px] cursor-pointer transition-all border mb-1",
         isSelected 
-          ? "bg-white border-blue-500 shadow-sm ring-1 ring-blue-500/10" 
-          : "bg-transparent border-transparent hover:bg-white hover:border-gray-200",
+          ? "bg-white border-blue-500 border-2 shadow-sm ring-1 ring-blue-500/10" 
+          : "bg-transparent border-transparent hover:bg-white hover:border-[#D9D9D9]",
         isDragging && "opacity-50"
       )}
     >
@@ -177,10 +177,10 @@ const DraggableBlock = ({ block, index, isSelected, onSelect, moveBlock, onDelet
       onClick={onSelect}
       data-handler-id={handlerId}
       className={cn(
-        "group p-3 rounded-lg border cursor-pointer transition-all hover:shadow-sm flex items-start gap-3",
+        "group p-3 rounded-[16px] border cursor-pointer transition-all hover:shadow-sm flex items-start gap-3",
         isSelected 
-          ? "bg-white border-blue-500 shadow-sm ring-1 ring-blue-500/10" 
-          : "bg-white border-gray-200 hover:border-blue-300",
+          ? "bg-white border-blue-500 border-2 shadow-sm ring-1 ring-blue-500/10" 
+          : "bg-white border-[#D9D9D9] hover:border-blue-300 border-[1px]",
         isDragging && "opacity-50"
       )}
     >
@@ -239,8 +239,8 @@ function BlockPaletteMenu({ onSelect }: { onSelect: (type: string, subtype?: str
    return (
       <DropdownMenu>
          <DropdownMenuTrigger asChild>
-            <Button size="sm" className="h-8 gap-1.5 bg-blue-600 hover:bg-blue-700 text-white">
-               <Plus size={14} /> Add Block
+            <Button size="sm" className="h-[48px] rounded-[16px] gap-1.5 bg-[#1A1A1A] hover:bg-[#333333] text-white px-4 shadow-sm">
+               <Plus size={16} /> Add Block
             </Button>
          </DropdownMenuTrigger>
          <DropdownMenuContent align="end">
@@ -469,7 +469,7 @@ export function EquipDailyEditor({
   };
 
   return (
-    <div className="h-[calc(100vh-250px)] flex border rounded-xl overflow-hidden bg-white shadow-sm ring-1 ring-gray-200">
+    <div className="h-[calc(100vh-250px)] flex border rounded-[24px] overflow-hidden bg-white shadow-sm ring-1 ring-gray-200">
       {/* COLUMN 1: DAY LIST (Timeline) - Hidden in Single Day Mode */}
       {!singleDayMode && (
       <div className="w-[20%] min-w-[200px] flex flex-col border-r bg-gray-50/50">

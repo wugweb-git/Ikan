@@ -16,6 +16,7 @@ import { Skeleton } from '../ui/skeleton-loader';
 import { EmptyState } from '../ui/empty-state';
 import { TouchFeedback } from '../ui/touch-feedback';
 import { PageHero } from '../ui/PageHero';
+import { BookingModal } from '../blocks/BookingModal';
 
 // Define Consultant type locally
 export interface Consultant {
@@ -136,6 +137,9 @@ export function Consultation({ className, onNavigate }: ConsultationProps) {
   const [selectedGender, setSelectedGender] = useState<string>('all');
   const [sortBy, setSortBy] = useState<SortOption>('recommended');
   const [showFilters, setShowFilters] = useState(false);
+  
+  // Booking Modal State
+  const [bookingConsultant, setBookingConsultant] = useState<Consultant | null>(null);
 
   // Get unique languages from all consultants
   const availableLanguages = Array.from(
@@ -260,8 +264,8 @@ export function Consultation({ className, onNavigate }: ConsultationProps) {
     (priceRange[0] !== 0 || priceRange[1] !== 5000 ? 1 : 0) +
     (selectedGender !== 'all' ? 1 : 0);
 
-  const FilterPanel = () => (
-    <div className="flex flex-col gap-6" style={{ padding: 'var(--spacing-4)' }}>
+  const FilterPanel = ({ className }: { className?: string }) => (
+    <div className={cn("flex flex-col gap-6", className)}>
       {/* Availability Quick Filters */}
       <div className="flex flex-col gap-3">
         <Label style={{ fontWeight: 'var(--font-weight-medium)', fontSize: 'var(--text-sm)' }}>
@@ -274,20 +278,16 @@ export function Consultation({ className, onNavigate }: ConsultationProps) {
             { value: 'tomorrow', label: 'Tomorrow' },
             { value: 'this-week', label: 'This Week' }
           ].map(option => (
-            <Button
+            <div
               key={option.value}
-              variant={availabilityFilter === option.value ? 'default' : 'outline'}
-              size="sm"
+              className={cn(
+                "filter-pill",
+                availabilityFilter === option.value && "active"
+              )}
               onClick={() => setAvailabilityFilter(option.value as AvailabilityFilter)}
-              style={{ 
-                height: '48px',
-                borderRadius: 'var(--radius-sm)',
-                fontSize: 'var(--text-sm)',
-                fontWeight: 'var(--font-weight-regular)'
-              }}
             >
               {option.label}
-            </Button>
+            </div>
           ))}
         </div>
       </div>
@@ -398,6 +398,7 @@ export function Consultation({ className, onNavigate }: ConsultationProps) {
 
   return (
     <div className={cn("flex flex-col", className)} style={{ minHeight: '100vh', backgroundColor: 'var(--color-bg-page)' }}>
+      {/* Hero Section */}
       <PageHero 
         title="Find Your Consultant" 
         subtitle="Connect with experienced mental health professionals" 
@@ -405,131 +406,154 @@ export function Consultation({ className, onNavigate }: ConsultationProps) {
 
       {/* Category Tabs */}
       <div style={{ backgroundColor: 'var(--color-bg-card)', borderBottom: '1px solid var(--color-border-default)' }}>
-        <Tabs value={selectedCategory} onValueChange={(v) => setSelectedCategory(v as CategoryType)}>
-          <TabsList className={cn("w-full justify-start overflow-x-auto", isMobile && "rounded-none")}>
-            <TabsTrigger value="all" style={{ fontWeight: 'var(--font-weight-medium)', fontSize: 'var(--text-sm)' }}>
-              All
-            </TabsTrigger>
-            <TabsTrigger value="therapist" style={{ fontWeight: 'var(--font-weight-medium)', fontSize: 'var(--text-sm)' }}>
-              Therapist
-            </TabsTrigger>
-            <TabsTrigger value="psychiatrist" style={{ fontWeight: 'var(--font-weight-medium)', fontSize: 'var(--text-sm)' }}>
-              Psychiatrist
-            </TabsTrigger>
-            <TabsTrigger value="counselor" style={{ fontWeight: 'var(--font-weight-medium)', fontSize: 'var(--text-sm)' }}>
-              Counselor
-            </TabsTrigger>
-            <TabsTrigger value="family-therapist" style={{ fontWeight: 'var(--font-weight-medium)', fontSize: 'var(--text-sm)' }}>
-              Family Therapist
-            </TabsTrigger>
-          </TabsList>
-        </Tabs>
+        <div className="app-container">
+          <Tabs value={selectedCategory} onValueChange={(v) => setSelectedCategory(v as CategoryType)}>
+            <TabsList className={cn("w-full justify-start overflow-x-auto h-14 bg-transparent p-0", isMobile && "rounded-none")}>
+              <TabsTrigger 
+                value="all" 
+                className="data-[state=active]:bg-[#F5F5F5] data-[state=active]:text-[#1A1A1A] data-[state=active]:shadow-none rounded-[12px] px-4 py-2 mr-2"
+                style={{ fontWeight: 'var(--font-weight-medium)', fontSize: 'var(--text-sm)' }}
+              >
+                All
+              </TabsTrigger>
+              <TabsTrigger 
+                value="therapist" 
+                className="data-[state=active]:bg-[#F5F5F5] data-[state=active]:text-[#1A1A1A] data-[state=active]:shadow-none rounded-[12px] px-4 py-2 mr-2"
+                style={{ fontWeight: 'var(--font-weight-medium)', fontSize: 'var(--text-sm)' }}
+              >
+                Therapist
+              </TabsTrigger>
+              <TabsTrigger 
+                value="psychiatrist" 
+                className="data-[state=active]:bg-[#F5F5F5] data-[state=active]:text-[#1A1A1A] data-[state=active]:shadow-none rounded-[12px] px-4 py-2 mr-2"
+                style={{ fontWeight: 'var(--font-weight-medium)', fontSize: 'var(--text-sm)' }}
+              >
+                Psychiatrist
+              </TabsTrigger>
+              <TabsTrigger 
+                value="counselor" 
+                className="data-[state=active]:bg-[#F5F5F5] data-[state=active]:text-[#1A1A1A] data-[state=active]:shadow-none rounded-[12px] px-4 py-2 mr-2"
+                style={{ fontWeight: 'var(--font-weight-medium)', fontSize: 'var(--text-sm)' }}
+              >
+                Counselor
+              </TabsTrigger>
+              <TabsTrigger 
+                value="family-therapist" 
+                className="data-[state=active]:bg-[#F5F5F5] data-[state=active]:text-[#1A1A1A] data-[state=active]:shadow-none rounded-[12px] px-4 py-2 mr-2"
+                style={{ fontWeight: 'var(--font-weight-medium)', fontSize: 'var(--text-sm)' }}
+              >
+                Family Therapist
+              </TabsTrigger>
+            </TabsList>
+          </Tabs>
+        </div>
       </div>
 
       {/* Search & Filter Bar */}
       <div style={{ 
         backgroundColor: 'var(--color-bg-card)', 
-        padding: 'var(--spacing-4)',
-        display: 'flex',
-        gap: 'var(--spacing-3)',
         borderBottom: '1px solid var(--color-border-default)'
       }}>
-        {/* Search */}
-        <div className="flex-1 relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-[var(--color-text-muted)]" />
-          <input
-            type="text"
-            placeholder="Search by name, expertise..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            style={{
-              width: '100%',
-              height: '48px',
-              paddingLeft: '40px',
-              paddingRight: 'var(--spacing-3)',
-              borderRadius: 'var(--radius-sm)',
-              border: '1px solid var(--color-border-default)',
-              fontSize: 'var(--text-sm)',
-              fontWeight: 'var(--font-weight-regular)',
-              backgroundColor: 'var(--color-bg-input)',
-              color: 'var(--color-text-primary)'
-            }}
-          />
+        <div className="app-container py-4 flex gap-3">
+          {/* Search */}
+          <div className="flex-1 relative">
+            <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-[var(--color-text-muted)]" />
+            <input
+              type="text"
+              placeholder="Search by name, expertise..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              style={{
+                width: '100%',
+                height: '52px',
+                paddingLeft: '48px',
+                paddingRight: 'var(--spacing-3)',
+                borderRadius: '16px',
+                border: '1px solid var(--color-border-default)',
+                fontSize: 'var(--text-sm)',
+                fontWeight: 'var(--font-weight-regular)',
+                backgroundColor: 'var(--color-bg-input)',
+                color: 'var(--color-text-primary)'
+              }}
+            />
+          </div>
+
+          {/* Filter Button (Mobile) */}
+          {isMobile && (
+            <Sheet open={showFilters} onOpenChange={setShowFilters}>
+              <SheetTrigger asChild>
+                <Button
+                  variant="outline"
+                  style={{
+                    height: '52px',
+                    borderRadius: '16px',
+                    position: 'relative'
+                  }}
+                >
+                  <Filter className="h-4 w-4" />
+                  {activeFilterCount > 0 && (
+                    <Badge
+                      variant="destructive"
+                      style={{
+                        position: 'absolute',
+                        top: '-8px',
+                        right: '-8px',
+                        height: '20px',
+                        minWidth: '20px',
+                        borderRadius: '10px',
+                        fontSize: '10px',
+                        fontWeight: 'var(--font-weight-medium)'
+                      }}
+                    >
+                      {activeFilterCount}
+                    </Badge>
+                  )}
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="left">
+                <SheetHeader>
+                  <SheetTitle style={{ fontWeight: 'var(--font-weight-medium)' }}>Filters</SheetTitle>
+                </SheetHeader>
+                <FilterPanel className="p-4" />
+              </SheetContent>
+            </Sheet>
+          )}
+
+          {/* Sort */}
+          <Select value={sortBy} onValueChange={(v) => setSortBy(v as SortOption)}>
+            <SelectTrigger style={{ width: isMobile ? '120px' : '180px', height: '52px', borderRadius: '16px' }}>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="recommended">Recommended</SelectItem>
+              <SelectItem value="rating">Highest Rated</SelectItem>
+              <SelectItem value="price-low">Price: Low to High</SelectItem>
+              <SelectItem value="price-high">Price: High to Low</SelectItem>
+              <SelectItem value="experience">Most Experience</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
-
-        {/* Filter Button (Mobile) */}
-        {isMobile && (
-          <Sheet open={showFilters} onOpenChange={setShowFilters}>
-            <SheetTrigger asChild>
-              <Button
-                variant="outline"
-                style={{
-                  height: '48px',
-                  borderRadius: 'var(--radius-sm)',
-                  position: 'relative'
-                }}
-              >
-                <Filter className="h-4 w-4" />
-                {activeFilterCount > 0 && (
-                  <Badge
-                    variant="destructive"
-                    style={{
-                      position: 'absolute',
-                      top: '-8px',
-                      right: '-8px',
-                      height: '20px',
-                      minWidth: '20px',
-                      borderRadius: '10px',
-                      fontSize: '10px',
-                      fontWeight: 'var(--font-weight-medium)'
-                    }}
-                  >
-                    {activeFilterCount}
-                  </Badge>
-                )}
-              </Button>
-            </SheetTrigger>
-            <SheetContent side="left">
-              <SheetHeader>
-                <SheetTitle style={{ fontWeight: 'var(--font-weight-medium)' }}>Filters</SheetTitle>
-              </SheetHeader>
-              <FilterPanel />
-            </SheetContent>
-          </Sheet>
-        )}
-
-        {/* Sort */}
-        <Select value={sortBy} onValueChange={(v) => setSortBy(v as SortOption)}>
-          <SelectTrigger style={{ width: isMobile ? '120px' : '180px', height: '48px', borderRadius: 'var(--radius-sm)' }}>
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="recommended">Recommended</SelectItem>
-            <SelectItem value="rating">Highest Rated</SelectItem>
-            <SelectItem value="price-low">Price: Low to High</SelectItem>
-            <SelectItem value="price-high">Price: High to Low</SelectItem>
-            <SelectItem value="experience">Most Experience</SelectItem>
-          </SelectContent>
-        </Select>
       </div>
 
       {/* Main Content */}
-      <div className="flex flex-1">
-        {/* Sidebar Filters (Desktop) */}
-        {!isMobile && (
-          <div style={{ 
-            width: '280px', 
-            backgroundColor: 'var(--color-bg-card)',
-            borderRight: '1px solid var(--color-border-default)',
-            overflowY: 'auto'
-          }}>
-            <FilterPanel />
-          </div>
-        )}
+      <div className="flex-1 app-container py-8">
+        <div className="flex gap-8">
+          {/* Sidebar Filters (Desktop) */}
+          {!isMobile && (
+            <div style={{ 
+              width: '280px', 
+              flexShrink: 0,
+              backgroundColor: '#F5F5F5', // Step 1
+              borderRadius: '24px',
+              padding: '24px' // Add padding inside the container
+            }}>
+              <FilterPanel />
+            </div>
+          )}
 
-        {/* Consultant List */}
-        <div className="flex-1 mobile-content-clearance" style={{ padding: 'var(--spacing-4)' }}>
-          {/* Loading State */}
+          {/* Consultant List */}
+          <div className="flex-1 mobile-content-clearance">
+            {/* Loading State */}
           {loading && (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {[1, 2, 3, 4, 5, 6].map((i) => (
@@ -588,6 +612,7 @@ export function Consultation({ className, onNavigate }: ConsultationProps) {
                   key={consultant.id}
                   consultant={consultant}
                   onClick={() => handleConsultantClick(consultant.id)}
+                  onBook={() => setBookingConsultant(consultant)}
                 />
               ))}
 
@@ -606,10 +631,22 @@ export function Consultation({ className, onNavigate }: ConsultationProps) {
                 </p>
               </div>
             )}
-          </div>
+            </div>
           )}
+          </div>
         </div>
       </div>
+
+      <BookingModal 
+        isOpen={!!bookingConsultant}
+        onClose={() => setBookingConsultant(null)}
+        consultantName={bookingConsultant?.name || ''}
+        onBook={(slotId) => {
+          console.log('Booked slot', slotId, 'for', bookingConsultant?.name);
+          setBookingConsultant(null);
+          // Here you would typically navigate to a confirmation page or show a success toast
+        }}
+      />
     </div>
   );
 }

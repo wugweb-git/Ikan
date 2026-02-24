@@ -66,14 +66,19 @@ export function ContactUs({ className, onBack }: ContactUsProps) {
       {/* Hero Section */}
       <PageHero 
         title={content?.title || "We're Here to Help"}
+        className="text-[var(--font-family-base)]"
       >
         {content?.content ? (
            <div 
              dangerouslySetInnerHTML={{ __html: content.content }}
-             className="prose prose-invert max-w-2xl mx-auto text-lg opacity-90 text-white"
+             className="prose prose-invert max-w-2xl mx-auto text-lg opacity-90 text-white font-normal"
+             style={{ fontFamily: 'var(--font-family-base)' }}
            />
         ) : (
-          <p className="text-white/90 max-w-2xl text-lg opacity-90">
+          <p 
+            className="text-white/90 max-w-2xl text-lg opacity-90 font-normal"
+            style={{ fontFamily: 'var(--font-family-base)' }}
+          >
             Your mental health journey matters to us. Reach out for support, questions, or just to connect.
           </p>
         )}
@@ -219,7 +224,8 @@ export function ContactUs({ className, onBack }: ContactUsProps) {
                         style={{
                           fontSize: 'var(--text-sm)',
                           fontWeight: 'var(--font-weight-medium)',
-                          color: 'var(--color-text-primary)'
+                          color: 'var(--color-text-primary)',
+                          fontFamily: 'var(--font-family-base)'
                         }}
                       >
                         Full Name
@@ -234,7 +240,8 @@ export function ContactUs({ className, onBack }: ContactUsProps) {
                           height: 'var(--ikan-component-input-height)',
                           borderRadius: 'var(--ikan-component-border-radius)',
                           fontSize: 'var(--text-base)',
-                          fontWeight: 'var(--font-weight-regular)'
+                          fontWeight: 'var(--font-weight-regular)',
+                          fontFamily: 'var(--font-family-base)'
                         }}
                       />
                     </div>
@@ -244,7 +251,8 @@ export function ContactUs({ className, onBack }: ContactUsProps) {
                         style={{
                           fontSize: 'var(--text-sm)',
                           fontWeight: 'var(--font-weight-medium)',
-                          color: 'var(--color-text-primary)'
+                          color: 'var(--color-text-primary)',
+                          fontFamily: 'var(--font-family-base)'
                         }}
                       >
                         Email Address
@@ -260,7 +268,8 @@ export function ContactUs({ className, onBack }: ContactUsProps) {
                           height: 'var(--ikan-component-input-height)',
                           borderRadius: 'var(--ikan-component-border-radius)',
                           fontSize: 'var(--text-base)',
-                          fontWeight: 'var(--font-weight-regular)'
+                          fontWeight: 'var(--font-weight-regular)',
+                          fontFamily: 'var(--font-family-base)'
                         }}
                       />
                     </div>
@@ -271,7 +280,8 @@ export function ContactUs({ className, onBack }: ContactUsProps) {
                       style={{
                         fontSize: 'var(--text-sm)',
                         fontWeight: 'var(--font-weight-medium)',
-                        color: 'var(--color-text-primary)'
+                        color: 'var(--color-text-primary)',
+                        fontFamily: 'var(--font-family-base)'
                       }}
                     >
                       Subject
@@ -286,7 +296,8 @@ export function ContactUs({ className, onBack }: ContactUsProps) {
                         height: 'var(--ikan-component-input-height)',
                         borderRadius: 'var(--ikan-component-border-radius)',
                         fontSize: 'var(--text-base)',
-                        fontWeight: 'var(--font-weight-regular)'
+                        fontWeight: 'var(--font-weight-regular)',
+                        fontFamily: 'var(--font-family-base)'
                       }}
                     />
                   </div>
@@ -296,7 +307,8 @@ export function ContactUs({ className, onBack }: ContactUsProps) {
                       style={{
                         fontSize: 'var(--text-sm)',
                         fontWeight: 'var(--font-weight-medium)',
-                        color: 'var(--color-text-primary)'
+                        color: 'var(--color-text-primary)',
+                        fontFamily: 'var(--font-family-base)'
                       }}
                     >
                       Message
@@ -315,7 +327,8 @@ export function ContactUs({ className, onBack }: ContactUsProps) {
                         color: 'var(--semantic-input-fg)',
                         padding: 'var(--ikan-component-spacing-small)',
                         resize: 'vertical',
-                        minHeight: '120px'
+                        minHeight: '120px',
+                        fontFamily: 'var(--font-family-base)'
                       }}
                     />
                   </div>

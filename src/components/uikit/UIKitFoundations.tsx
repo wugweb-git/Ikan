@@ -3,51 +3,66 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../ui
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
 
 export function UIKitFoundations() {
-  const colors = [
-    { name: 'Primary', var: '--color-primary-default', hex: '#2A2A2A' },
-    { name: 'Accent', var: '--color-accent-default', hex: '#E9EBEF' },
-    { name: 'Page Background', var: '--color-bg-page', hex: '#F5F5F5' },
-    { name: 'Card Background', var: '--color-bg-card', hex: '#FFFFFF' },
-    { name: 'Input Background', var: '--color-bg-input', hex: '#F3F3F5' },
-    { name: 'Success', var: '--color-status-success', hex: '#22C55E' },
-    { name: 'Danger', var: '--color-status-danger', hex: '#D4183D' },
-    { name: 'Warning', var: '--color-status-warning', hex: '#EAB308' },
-    { name: 'Info', var: '--color-status-info', hex: '#8B5CF6' },
+  const greyScale = [
+    { name: 'Grey 0 (Surface)', var: '--grey-0', hex: '#FFFFFF' },
+    { name: 'Grey 1 (App Bg)', var: '--grey-1', hex: '#F5F5F5' },
+    { name: 'Grey 2 (Hero Bg)', var: '--grey-2', hex: '#E4E4E4' },
+    { name: 'Grey 3 (Border)', var: '--grey-3', hex: '#D9D9D9' },
+    { name: 'Grey 4 (Disabled)', var: '--grey-4', hex: '#BDBDBD' },
+    { name: 'Grey 5 (Placeholder)', var: '--grey-5', hex: '#9E9E9E' },
+    { name: 'Grey 6 (Secondary)', var: '--grey-6', hex: '#757575' },
+    { name: 'Grey 7 (Muted)', var: '--grey-7', hex: '#545454' },
+    { name: 'Grey 8 (Body)', var: '--grey-8', hex: '#333333' },
+    { name: 'Grey 9 (Headings)', var: '--grey-9', hex: '#1A1A1A' },
+    { name: 'Grey 10 (Off-Black)', var: '--grey-10', hex: '#0D0D0D' },
   ];
 
-  const typography = [
-    { name: 'Text 4xl', var: '--text-4xl', size: '48px', weight: 'Medium (500)' },
-    { name: 'Text 3xl', var: '--text-3xl', size: '32px', weight: 'Medium (500)' },
-    { name: 'Text 2xl', var: '--text-2xl', size: '24px', weight: 'Medium (500)' },
-    { name: 'Text xl', var: '--text-xl', size: '20px', weight: 'Medium (500)' },
-    { name: 'Text lg', var: '--text-lg', size: '18px', weight: 'Medium (500)' },
-    { name: 'Text base', var: '--text-base', size: '16px', weight: 'Regular (400)' },
-    { name: 'Text sm', var: '--text-sm', size: '14px', weight: 'Regular (400)' },
-    { name: 'Text xs', var: '--text-xs', size: '12px', weight: 'Regular (400)' },
+  const typographyPrimitives = [
+    { name: 'Hero Title', class: 'hero-title', desc: '48px Bold (Grey 9)' },
+    { name: 'Section Heading', class: 'section-heading', desc: '32px Semibold (Grey 9)' },
+    { name: 'Card Title', class: 'card-title', desc: '24px Semibold (Grey 8)' },
+    { name: 'Body Text', class: 'body-text', desc: '18px Regular (Grey 8, 1.6 LH)' },
+    { name: 'Caption Text', class: 'caption-text', desc: '14px Regular (Grey 6)' },
+  ];
+
+  const gridBreakpoints = [
+    { name: 'Mobile', range: '< 600px', grid: '4-Column', notes: '16px Gutters. Full-width cards.' },
+    { name: 'Tablet', range: '600px – 1024px', grid: '8-Column', notes: '24px Gutters. 2-column card layouts.' },
+    { name: 'Desktop', range: '1025px – 1440px', grid: '12-Column', notes: '1280px Max-Width. 80px–100px Margins.' },
+    { name: 'Ultra-Wide', range: '> 1440px', grid: '12-Column', notes: 'Centered 1280px Container. Margins grow.' },
+  ];
+
+  const layoutModes = [
+    { name: 'Website / Marketing', density: 'Low', gap: '80px – 120px', padding: '40px (Radius 32px)', purpose: 'Hero sections, Landing pages.' },
+    { name: 'Web App / Dashboard', density: 'Medium', gap: '32px – 48px', padding: '24px – 32px (Radius 24px)', purpose: 'Dashboard, History cards.' },
+    { name: 'Admin Panel', density: 'High', gap: '16px – 24px', padding: '16px (Radius 16px)', purpose: 'User management, Data tables.' },
   ];
 
   return (
     <div className="space-y-8">
-      {/* Colors */}
+      {/* Grey Scale */}
       <Card>
         <CardHeader>
-          <CardTitle>Color System</CardTitle>
+          <CardTitle>Grey Scale System (0-10)</CardTitle>
           <CardDescription>
-            Semantic color tokens defined in globals.css.
+            The comprehensive neutral scale for the CBT design system.
           </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-            {colors.map((color) => (
+            {greyScale.map((color) => (
               <div key={color.name} className="space-y-2">
                 <div 
-                  className="h-20 w-full rounded-lg border border-border shadow-sm"
+                  className="h-20 w-full rounded-lg border border-border shadow-sm flex items-end p-2"
                   style={{ backgroundColor: `var(${color.var})` }}
-                />
+                >
+                    <span className={`text-xs font-mono ${parseInt(color.var.split('-')[2]) > 4 ? 'text-white' : 'text-black'}`}>
+                        {color.hex}
+                    </span>
+                </div>
                 <div>
                   <p className="font-medium text-sm">{color.name}</p>
                   <p className="text-xs text-muted-foreground font-mono">{color.var}</p>
-                  <p className="text-xs text-muted-foreground opacity-70">{color.hex}</p>
                 </div>
               </div>
             ))}
@@ -55,31 +70,92 @@ export function UIKitFoundations() {
         </CardContent>
       </Card>
 
-      {/* Typography */}
+      {/* Grid & Breakpoints */}
       <Card>
         <CardHeader>
-          <CardTitle>Typography Scale</CardTitle>
+          <CardTitle>Grid System & Breakpoints</CardTitle>
           <CardDescription>
-            Font Family: Ubuntu. Weights: Regular (400), Medium (500).
+            Responsive scale logic for Mobile, Tablet, and Desktop.
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="space-y-4">
-            {typography.map((type) => (
-              <div key={type.name} className="flex items-center gap-4 p-2 hover:bg-muted/50 rounded-lg">
-                <div className="w-32 shrink-0">
-                  <p className="text-sm font-medium">{type.name}</p>
-                  <p className="text-xs text-muted-foreground">{type.size}</p>
+             <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Breakpoint</TableHead>
+                    <TableHead>Range</TableHead>
+                    <TableHead>Grid</TableHead>
+                    <TableHead>Logic & Notes</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                    {gridBreakpoints.map((bp) => (
+                        <TableRow key={bp.name}>
+                            <TableCell className="font-medium">{bp.name}</TableCell>
+                            <TableCell className="font-mono text-xs">{bp.range}</TableCell>
+                            <TableCell>{bp.grid}</TableCell>
+                            <TableCell className="text-muted-foreground text-sm">{bp.notes}</TableCell>
+                        </TableRow>
+                    ))}
+                </TableBody>
+             </Table>
+        </CardContent>
+      </Card>
+
+      {/* Layout Modes (Density) */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Layout Modes (Density Rules)</CardTitle>
+          <CardDescription>
+            Adjusting gaps and padding based on context (Website vs App vs Admin).
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+             <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Context</TableHead>
+                    <TableHead>Density</TableHead>
+                    <TableHead>Vertical Gap</TableHead>
+                    <TableHead>Internal Padding (Radius)</TableHead>
+                    <TableHead>Purpose</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                    {layoutModes.map((mode) => (
+                        <TableRow key={mode.name}>
+                            <TableCell className="font-medium">{mode.name}</TableCell>
+                            <TableCell>{mode.density}</TableCell>
+                            <TableCell className="font-mono text-xs">{mode.gap}</TableCell>
+                            <TableCell className="font-mono text-xs">{mode.padding}</TableCell>
+                            <TableCell className="text-muted-foreground text-sm">{mode.purpose}</TableCell>
+                        </TableRow>
+                    ))}
+                </TableBody>
+             </Table>
+        </CardContent>
+      </Card>
+
+      {/* Typography Primitives */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Typography Primitives</CardTitle>
+          <CardDescription>
+            Standardized text styles for consistent hierarchy.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-8">
+            {typographyPrimitives.map((type) => (
+              <div key={type.name} className="space-y-2 border-b pb-4 last:border-0">
+                <div className="flex justify-between items-baseline mb-2">
+                    <span className="text-sm font-medium text-muted-foreground">{type.name}</span>
+                    <span className="text-xs font-mono bg-muted px-2 py-1 rounded">.{type.class}</span>
                 </div>
-                <div 
-                  style={{ 
-                    fontSize: `var(${type.var})`,
-                    fontWeight: type.weight.includes('Medium') ? 500 : 400
-                  }}
-                  className="truncate"
-                >
+                <div className={type.class}>
                   The quick brown fox jumps over the lazy dog
                 </div>
+                <p className="text-xs text-muted-foreground">{type.desc}</p>
               </div>
             ))}
           </div>
@@ -90,7 +166,7 @@ export function UIKitFoundations() {
       <div className="grid md:grid-cols-2 gap-6">
         <Card>
           <CardHeader>
-            <CardTitle>Spacing & Radius</CardTitle>
+            <CardTitle>Corner Scale (Radius)</CardTitle>
           </CardHeader>
           <CardContent>
              <Table>
@@ -98,24 +174,34 @@ export function UIKitFoundations() {
                   <TableRow>
                     <TableHead>Token</TableHead>
                     <TableHead>Value</TableHead>
+                    <TableHead>Usage</TableHead>
                     <TableHead>Preview</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   <TableRow>
-                    <TableCell>--radius-md</TableCell>
-                    <TableCell>12px</TableCell>
-                    <TableCell><div className="w-8 h-8 bg-primary rounded-[var(--radius-md)]"></div></TableCell>
+                    <TableCell className="font-mono text-xs">--radius-sm</TableCell>
+                    <TableCell>16px</TableCell>
+                    <TableCell className="text-xs text-muted-foreground">Buttons, Inputs</TableCell>
+                    <TableCell><div className="w-12 h-12 bg-primary rounded-[var(--radius-sm)]"></div></TableCell>
                   </TableRow>
                   <TableRow>
-                    <TableCell>--radius-lg</TableCell>
-                    <TableCell>16px</TableCell>
-                    <TableCell><div className="w-10 h-10 bg-primary rounded-[var(--radius-lg)]"></div></TableCell>
+                    <TableCell className="font-mono text-xs">--radius-md</TableCell>
+                    <TableCell>20px</TableCell>
+                    <TableCell className="text-xs text-muted-foreground">History Cards</TableCell>
+                    <TableCell><div className="w-12 h-12 bg-primary rounded-[var(--radius-md)]"></div></TableCell>
                   </TableRow>
                   <TableRow>
-                    <TableCell>--spacing-4</TableCell>
-                    <TableCell>16px</TableCell>
-                    <TableCell><div className="w-4 h-4 bg-primary"></div></TableCell>
+                    <TableCell className="font-mono text-xs">--radius-lg</TableCell>
+                    <TableCell>24px</TableCell>
+                    <TableCell className="text-xs text-muted-foreground">Main Containers</TableCell>
+                    <TableCell><div className="w-12 h-12 bg-primary rounded-[var(--radius-lg)]"></div></TableCell>
+                  </TableRow>
+                  <TableRow>
+                    <TableCell className="font-mono text-xs">--radius-xl</TableCell>
+                    <TableCell>32px</TableCell>
+                    <TableCell className="text-xs text-muted-foreground">Hero Sections</TableCell>
+                    <TableCell><div className="w-12 h-12 bg-primary rounded-[var(--radius-xl)]"></div></TableCell>
                   </TableRow>
                 </TableBody>
              </Table>
@@ -123,45 +209,31 @@ export function UIKitFoundations() {
         </Card>
 
         <Card>
-          <CardHeader>
-            <CardTitle>Shadows & Elevation</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-             <div className="p-4 bg-white shadow-sm rounded-lg border">
-                Shadow SM (--shadow-sm)
-             </div>
-             <div className="p-4 bg-white shadow-md rounded-lg border">
-                Shadow MD (--shadow-md)
-             </div>
-             <div className="p-4 bg-white shadow-lg rounded-lg border">
-                Shadow LG (--shadow-lg)
-             </div>
-          </CardContent>
+            <CardHeader>
+                <CardTitle>Layout & Spacing</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+                <div className="space-y-2">
+                    <div className="flex justify-between text-sm">
+                        <span>Max Content Width</span>
+                        <span className="font-mono">1280px (--max-content)</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                        <span>Desktop Padding</span>
+                        <span className="font-mono">100px (--desktop-padding)</span>
+                    </div>
+                     <div className="flex justify-between text-sm">
+                        <span>Button Height</span>
+                        <span className="font-mono">52px</span>
+                    </div>
+                     <div className="flex justify-between text-sm">
+                        <span>Input Height</span>
+                        <span className="font-mono">56px</span>
+                    </div>
+                </div>
+            </CardContent>
         </Card>
       </div>
-
-      {/* Motion */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Motion & Animation</CardTitle>
-        </CardHeader>
-        <CardContent>
-           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div className="space-y-2">
-                 <div className="w-16 h-16 bg-accent rounded-lg animate-pulse"></div>
-                 <p className="text-xs">Pulse</p>
-              </div>
-              <div className="space-y-2">
-                 <div className="w-16 h-16 bg-accent rounded-lg animate-bounce"></div>
-                 <p className="text-xs">Bounce</p>
-              </div>
-              <div className="space-y-2">
-                 <div className="w-16 h-16 bg-accent rounded-lg animate-spin"></div>
-                 <p className="text-xs">Spin</p>
-              </div>
-           </div>
-        </CardContent>
-      </Card>
     </div>
   );
 }

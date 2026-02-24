@@ -1,77 +1,52 @@
 import React from 'react';
-import { Icon } from '../Icon';
-import { navigationConfig } from '../../lib/navigation';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { LayoutDashboard, Smile, Users, PlusCircle } from 'lucide-react';
 import { cn } from '../ui/utils';
+import { useIsMobile } from '../../hooks/useIsMobile';
 
-interface MobileBottomNavProps {
-  currentRoute: string;
-  onNavigate: (route: string) => void;
-  className?: string;
-}
+export function MobileBottomNav() {
+  const isMobile = useIsMobile();
+  const location = useLocation();
+  const navigate = useNavigate();
 
-export function MobileBottomNav({ currentRoute, onNavigate, className }: MobileBottomNavProps) {
-  const navItems = navigationConfig.mobile.bottom_nav;
+  if (!isMobile) return null;
 
-  const getIconVariant = (iconPath: string): { name: string; variant?: string } => {
-    // Parse icon path like "{icon.home.roundedOutline}"
-    const match = iconPath.match(/\{icon\.(\w+)\.(\w+)\}/);
-    if (match) {
-      return { name: match[1], variant: match[2] };
-    }
-    return { name: 'home' }; // fallback
-  };
+  const navItems = [
+    { label: 'Dashboard', route: '/dashboard', icon: LayoutDashboard },
+    { label: 'Mood', route: '/mood-journal', icon: Smile },
+    { label: 'Consultation', route: '/consultation', icon: Users },
+  ];
 
   return (
-    <nav 
-      className={cn(
-        "fixed bottom-0 left-0 right-0 bg-card border-t border-border z-50",
-        "flex items-center justify-around",
-        "px-2 py-2 pb-safe-area-inset-bottom",
-        "animate-slide-up",
-        className
-      )}
-      style={{
-        minWidth: 'var(--constraint-nav-mobile-min)',
-        maxWidth: 'var(--constraint-nav-mobile-max)'
-      }}
-    >
+    <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-[#D9D9D9] h-[64px] pb-safe z-[50] flex items-center justify-around px-2">
       {navItems.map((item) => {
-        const isActive = currentRoute === item.route;
-        const { name, variant } = getIconVariant(item.icon || '');
+        const isActive = location.pathname.startsWith(item.route);
+        const Icon = item.icon;
         
         return (
           <button
             key={item.route}
-            onClick={() => onNavigate(item.route)}
+            onClick={() => navigate(item.route)}
             className={cn(
-              "flex flex-col items-center gap-1 px-3 py-2 rounded-lg transition-colors min-w-0",
-              "hover:bg-muted/50 active:bg-muted/80",
-              isActive && "text-primary"
+              "flex flex-col items-center justify-center gap-1 w-full h-full",
+              isActive ? "text-[#1A1A1A]" : "text-[#757575]"
             )}
-            aria-label={item.label}
           >
             <Icon 
-              name={name as any} 
-              variant={variant} 
-              size={20}
+              size={24} 
+              strokeWidth={2}
               className={cn(
                 "transition-colors",
-                isActive ? "text-primary" : "text-muted-foreground"
+                isActive ? "text-[#1A1A1A]" : "text-[#757575]"
               )}
             />
-            <span 
-              className={cn(
-                "text-xs truncate max-w-[60px] leading-none",
-                isActive ? "text-primary" : "text-muted-foreground"
-              )}
-            >
-              {item.label}
-            </span>
+            <span className="text-[10px] font-medium">{item.label}</span>
+            {isActive && (
+              <div className="absolute top-0 h-[2px] w-[32px] bg-[#1A1A1A] rounded-full" />
+            )}
           </button>
         );
       })}
-    </nav>
+    </div>
   );
 }
-
-export default MobileBottomNav;

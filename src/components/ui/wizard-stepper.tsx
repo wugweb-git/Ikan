@@ -48,31 +48,31 @@ export function WizardStepper({ steps, currentStep, onStepClick, allowSkip = fal
               {/* Indicator Circle */}
               <div 
                 className={cn(
-                  "w-8 h-8 rounded-full flex items-center justify-center border transition-all duration-200 shrink-0",
+                  "w-8 h-8 rounded-full flex items-center justify-center border-2 transition-all duration-200 shrink-0",
                   isCompleted 
-                    ? "bg-[var(--color-primary-default)] border-[var(--color-primary-default)] text-white" 
+                    ? "bg-[#1A1A1A] border-[#1A1A1A] text-white" 
                     : isCurrent
-                      ? "border-[var(--color-primary-default)] border-2 text-[var(--color-primary-default)] bg-white"
-                      : "border-gray-200 text-gray-400 bg-transparent group-hover:border-gray-300"
+                      ? "bg-[#1A1A1A] border-[#1A1A1A] text-white"
+                      : "border-[#D9D9D9] text-[#757575] bg-transparent group-hover:border-gray-400"
                 )}
               >
                 {isCompleted ? (
                   <Check size={14} strokeWidth={3} />
                 ) : (
-                  <span className="text-xs font-semibold">{index + 1}</span>
+                  <span className="text-xs font-bold">{index + 1}</span>
                 )}
               </div>
 
-              {/* Text Content (Hidden on small mobile, visible on larger) */}
-              <div className="hidden sm:flex flex-col">
+              {/* Text Content */}
+              <div className="hidden sm:flex flex-col items-start pt-1">
                 <span className={cn(
                   "text-sm font-medium leading-none mb-1 transition-colors",
-                  isCurrent ? "text-[var(--color-text-primary)]" : "text-[var(--color-text-muted)]"
+                  isCurrent ? "text-[#1A1A1A]" : "text-[#757575]"
                 )}>
                   {step.title}
                 </span>
                 {step.metadata && (
-                  <span className="text-[10px] text-[var(--color-text-muted)] uppercase tracking-wide">
+                  <span className="text-[10px] text-[#9E9E9E] uppercase tracking-wide">
                     {step.metadata}
                   </span>
                 )}
@@ -81,7 +81,7 @@ export function WizardStepper({ steps, currentStep, onStepClick, allowSkip = fal
 
             {/* Connector Line */}
             {index < steps.length - 1 && (
-              <div className="flex-1 h-[1px] bg-gray-200 min-w-[10px] hidden sm:block" />
+              <div className="flex-1 h-[2px] bg-[#D9D9D9] min-w-[20px] hidden sm:block mx-4" />
             )}
           </React.Fragment>
         );

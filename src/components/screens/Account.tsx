@@ -42,7 +42,10 @@ function MobileHeader({ title, onBack, rightAction }: { title: string, onBack?: 
 
       {/* Title */}
       <div className="basis-0 grow h-[27px] min-h-px min-w-px relative shrink-0 flex items-center">
-        <h1 className="font-['Inter:Medium',sans-serif] font-medium text-[#151515] text-[18px] tracking-[-0.44px] truncate m-0">
+        <h1 
+          className="font-medium text-[#151515] text-[18px] tracking-[-0.44px] truncate m-0"
+          style={{ fontFamily: 'var(--font-family-base)' }}
+        >
           {title}
         </h1>
       </div>
@@ -377,15 +380,14 @@ export function Account({ className, onNavigate }: AccountProps) {
   // Desktop layout
   return (
     <div 
-      className={cn("flex w-full", className)}
+      className={cn("flex w-full content-wrapper", className)}
       style={{ 
+        maxWidth: '1360px', // Match nav width for alignment
         flexDirection: 'row',
         alignItems: 'flex-start',
-        marginTop: '128px',
-        paddingLeft: '20px',
-        paddingRight: '20px',
+        marginTop: '20px', // Removed hardcoded 128px because padding is now in body/main
         gap: '54px',
-        height: 'calc(100vh - 128px - 100px)',
+        height: 'calc(100vh - 100px)', // Adjusted height calc
         overflow: 'hidden' 
       }}
     >
@@ -394,14 +396,17 @@ export function Account({ className, onNavigate }: AccountProps) {
         style={{ 
           width: '300px',
           height: '100%',
-          overflowY: 'hidden'
+          overflowY: 'hidden',
+          backgroundColor: '#FFFFFF',
+          borderRadius: '24px',
+          border: '1px solid #E4E4E4'
         }}
       >
         <SideNavAccount
           currentRoute={currentAccountRoute}
           onNavigate={handleAccountNavigate}
           onLogout={handleSignOut}
-          style={{ height: '100%' }}
+          style={{ height: '100%', border: 'none', boxShadow: 'none' }}
           isMobile={false}
         />
       </div>
@@ -409,7 +414,7 @@ export function Account({ className, onNavigate }: AccountProps) {
       <div 
         className="flex-1 min-w-0 flex flex-col h-full"
         style={{ 
-          maxWidth: '800px',
+          maxWidth: '100%', // Use full width of remaining space
           overflowY: 'auto',
           paddingBottom: '20px'
         }}

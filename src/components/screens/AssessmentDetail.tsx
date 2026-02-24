@@ -284,14 +284,6 @@ export function AssessmentDetail({ assessmentId = 'anxiety', onNavigate }: Asses
         showShare={false}
         transparent={true}
       />
-
-      {/* Desktop Navigation */}
-      <div className="hidden md:block">
-        <TopNavBar 
-          currentRoute="/assessment-detail" 
-          onNavigate={handleNavigate}
-        />
-      </div>
       
       <div className="w-full">
         {/* HERO SECTION */}

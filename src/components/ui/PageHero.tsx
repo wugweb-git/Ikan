@@ -35,8 +35,9 @@ export function PageHero({
       
       <div className="relative z-10 w-full max-w-7xl mx-auto px-4 md:px-6 flex flex-col items-center justify-center text-center">
         <h1 
-          className="font-['Ubuntu',sans-serif] font-medium text-white mb-4 max-w-4xl"
+          className="font-medium text-white mb-4 max-w-4xl"
           style={{ 
+            fontFamily: 'var(--font-family-base)',
             fontSize: '48px',
             lineHeight: '1.2'
           }}
@@ -46,8 +47,9 @@ export function PageHero({
         
         {subtitle && (
           <p 
-            className="font-['Ubuntu',sans-serif] text-white max-w-2xl text-lg opacity-80"
+            className="text-white max-w-2xl text-lg opacity-80"
             style={{ 
+              fontFamily: 'var(--font-family-base)',
               fontSize: '18px',
               lineHeight: '28px'
             }}

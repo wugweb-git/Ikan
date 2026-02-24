@@ -29,7 +29,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
        return (
          <div 
             className={cn(
-              "flex items-center gap-2 px-3 transition-colors focus-within:ring-2 focus-within:ring-ring/50",
+              "flex items-center gap-2 px-3 transition-colors focus-within:border-[#1A1A1A] focus-within:ring-0",
                // Only apply default border class if no border color class is provided
                // This prevents double borders if 'border' class was used with 'border-destructive'
                !className?.includes("border-") && "border",
@@ -58,8 +58,8 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
         type={type}
         data-slot="input"
         className={cn(
-          "flex w-full min-w-0 px-3 py-1 transition-[color,box-shadow] outline-none file:inline-flex file:h-7 file:border-0 file:bg-transparent file:text-sm file:font-medium disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50",
-          "focus-visible:ring-2 focus-visible:ring-ring/50",
+          "flex w-full min-w-0 px-3 py-1 transition-[color,box-shadow,border-color] outline-none file:inline-flex file:h-7 file:border-0 file:bg-transparent file:text-sm file:font-medium disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50",
+          "focus-visible:ring-0 focus-visible:border-[#1A1A1A]",
           "placeholder:text-muted-foreground selection:bg-primary selection:text-primary-foreground",
           "aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive",
           // Apply default border class if not overridden

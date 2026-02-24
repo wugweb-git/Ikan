@@ -130,7 +130,7 @@ export function WizardField({ field, value, onChange, onAutoAdvance, error, wiza
       case 'single_select':
         if (isCards) {
            return (
-             <div className="grid grid-cols-1 sm:grid-cols-2 gap-[var(--spacing-3)]">
+             <div className="flex flex-col gap-[var(--spacing-3)] max-w-[640px] mx-auto w-full">
                {options?.map((opt) => {
                  const isSelected = safeValue?.toString() === opt.value?.toString();
                  return (
@@ -143,16 +143,25 @@ export function WizardField({ field, value, onChange, onAutoAdvance, error, wiza
                         }
                      }}
                      className={cn(
-                       "cursor-pointer rounded-[var(--radius-md)] border-2 p-[var(--spacing-4)] transition-all",
-                       "hover:bg-[var(--color-accent-default)]",
-                       "min-h-[44px] flex items-center", // Touch target
+                       "cursor-pointer rounded-[16px] transition-all p-[20px] flex items-center",
+                       "min-h-[64px]", // Taller touch target
                        isSelected 
-                         ? "border-[var(--color-primary-default)] bg-[var(--color-primary-default)]/5" 
-                         : "border-[var(--color-border-default)] bg-[var(--color-bg-card)]"
+                         ? "border-2 border-[#1A1A1A] bg-[#FFFFFF]" 
+                         : "border border-[#E4E4E4] bg-[#F5F5F5] hover:bg-[#FFFFFF] hover:border-[#D9D9D9]"
                      )}
                    >
-                     <div className="text-[var(--color-text-primary)]">{opt.label}</div>
-                     {opt.description && <div className="text-[var(--color-text-muted)] mt-1">{opt.description}</div>}
+                     {/* Radio Circle Indicator */}
+                     <div className={cn(
+                        "w-5 h-5 rounded-full border-2 mr-4 flex-shrink-0 transition-colors",
+                        isSelected ? "border-[#1A1A1A] bg-[#1A1A1A]" : "border-[#D9D9D9] bg-transparent"
+                     )}>
+                        {isSelected && <div className="w-full h-full rounded-full bg-[#1A1A1A]" />}
+                     </div>
+
+                     <div className="flex-1">
+                        <div className={cn("text-[var(--text-base)] font-medium", isSelected ? "text-[#1A1A1A]" : "text-[#333333]")}>{opt.label}</div>
+                        {opt.description && <div className="text-[var(--text-sm)] text-[#757575] mt-1">{opt.description}</div>}
+                     </div>
                    </div>
                  );
                })}

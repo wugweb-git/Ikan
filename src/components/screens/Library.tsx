@@ -1,11 +1,10 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
 import { useIsMobile } from '../../hooks/useIsMobile';
 import { Card, CardContent } from '../ui/card';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { cn } from '../ui/utils';
-import { Search, BookOpen, Play, Video, Wrench, FileText, RefreshCw, Activity, Mic, GraduationCap } from 'lucide-react';
+import { Search, BookOpen, Play, Video, Wrench, FileText, RefreshCw, Activity, Mic, GraduationCap, ArrowRight } from 'lucide-react';
 import { CardSkeleton, LibraryEmptyState, StaggeredReveal } from '../utils/LoadingStates';
 import { ResourceBlock } from '../blocks/ResourceBlock';
 import { ResourceType } from '../blocks/ResourceType';
@@ -18,33 +17,27 @@ import { EmptyState } from '../ui/empty-state';
 import { OptimizedImage } from '../ui/optimized-image';
 import { PullToRefresh } from '../ui/touch-feedback';
 import { PageHero } from '../ui/PageHero';
+import { ImageWithFallback } from '../figma/ImageWithFallback';
+import { resolveImageUrl } from '../../utils/image-utils';
 
 import { RESOURCE_TYPES, RESOURCE_CATEGORIES } from '../../lib/constants';
 
-const ICON_MAP: Record<string, any> = {
-  'file-text': FileText,
-  'tool': Wrench,
-  'activity': Activity,
-  'video': Video,
-  'mic': Mic,
-  'book': BookOpen,
-  'graduation-cap': GraduationCap
-};
-
 interface LibraryProps {
   onResourceSelect?: (resourceId: string) => void;
+  onNavigate?: (route: string) => void;
   className?: string;
 }
 
 interface Resource extends ResourcePost {
   type: string;
+  published: boolean;
 }
 
-export function Library({ onResourceSelect, className }: LibraryProps) {
+export function Library({ onResourceSelect, onNavigate, className }: LibraryProps) {
   const isMobile = useIsMobile();
+
   const [searchQuery, setSearchQuery] = useState('');
-  const [activeTypeFilter, setActiveTypeFilter] = useState('all');
-  const [activeCategoryFilter, setActiveCategoryFilter] = useState('all');
+  const [activeCategoryFilter, setActiveCategoryFilter] = useState('All stories');
   const [loading, setLoading] = useState(true);
   const [resources, setResources] = useState<Resource[]>([]);
 
@@ -53,7 +46,6 @@ export function Library({ onResourceSelect, className }: LibraryProps) {
 
   // Manual refresh function
   const handleRefresh = () => {
-    console.log('🔄 Manual refresh triggered');
     hasLoadedResources.current = false;
     loadResources();
   };
@@ -64,32 +56,11 @@ export function Library({ onResourceSelect, className }: LibraryProps) {
     
     try {
       setLoading(true);
-      
-      console.log('📚 Loading resources from API...');
-      
       const response = await apiClient.getResources();
       
-      console.log('📚 API Response:', {
-        isArray: Array.isArray(response),
-        count: response?.length,
-        firstResource: response?.[0]
-      });
-      
-      // getResources() already returns the array directly
       if (response && Array.isArray(response)) {
-        // Map the response to match ResourcePost interface
         const mappedResources: Resource[] = response
           .map((resource: any) => {
-            // Log each resource for debugging
-            console.log('📄 Mapping resource:', {
-              id: resource.id,
-              title: resource.title,
-              category: resource.category,
-              contentType: resource.contentType,
-              published: resource.published
-            });
-
-            // Helper to determine resource type from category or contentType
             const getResourceType = (contentType: string | undefined, category: string | undefined): string => {
               const typeStr = (contentType || category || '').toLowerCase();
               const match = RESOURCE_TYPES.find(t => typeStr.includes(t.value));
@@ -101,16 +72,10 @@ export function Library({ onResourceSelect, className }: LibraryProps) {
               title: resource.title || 'Untitled Resource',
               description: resource.description || resource.excerpt || '',
               category: resource.category || 'General',
-              
-              // Map contentType/category to type for filtering
               type: getResourceType(resource.contentType, resource.category),
-              
-              // Format read time
               readTime: resource.read_time_minutes 
                 ? `${resource.read_time_minutes} min read` 
                 : (resource.readTime || '5 min read'),
-              
-              // Format date
               date: resource.created_at 
                 ? new Date(resource.created_at).toLocaleDateString('en-US', { 
                     year: 'numeric', 
@@ -118,51 +83,31 @@ export function Library({ onResourceSelect, className }: LibraryProps) {
                     day: 'numeric' 
                   })
                 : (resource.date || resource.publishedDate || 'Recently'),
-              
-              // Use thumbnail or fallback
               image: resource.thumbnail || resource.image || resource.image_url || 
                      'https://images.unsplash.com/photo-1499750310107-5fef28a66643?w=800',
-              
               slug: resource.id,
-              
-              // Store published status for filtering
               published: resource.published !== false
             };
           })
-          // Filter out unpublished resources (drafts)
-          .filter((resource: any) => resource.published !== false);
+          .filter((resource: any) => resource.published !== false)
+          // Sort by date (newest first) - assuming ID or created_at correlates, but best to sort if date is reliable
+          .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
-        // Deduplicate resources by ID
+        // Deduplicate
         const loadedResources = mappedResources.reduce((acc: Resource[], current) => {
-          const x = acc.find(item => item.id === current.id);
-          if (!x) {
+          if (!acc.find(item => item.id === current.id)) {
             return acc.concat([current]);
-          } else {
-            return acc;
           }
+          return acc;
         }, []);
         
         setResources(loadedResources);
-        
-        console.log('✅ Resources loaded and mapped:', {
-          total: response.length,
-          published: loadedResources.length,
-          categories: [...new Set(loadedResources.map(r => r.category))],
-          types: [...new Set(loadedResources.map(r => r.type))]
-        });
-        
-        logger.info('Resources loaded successfully from API', { count: loadedResources.length });
       } else {
-        logger.warn('No resources returned from API');
-        console.warn('❌ API returned non-array response:', response);
         setResources([]);
       }
-      
       hasLoadedResources.current = true;
-      
     } catch (error) {
       logger.error('Failed to load resources', error);
-      console.error('❌ Resource load error:', error);
       setResources([]); 
     } finally {
       setLoading(false);
@@ -173,37 +118,13 @@ export function Library({ onResourceSelect, className }: LibraryProps) {
     loadResources();
   }, []);
 
-  // Filter resources based on search and filters
-  const filteredResources = resources.filter(resource => {
-    const matchesSearch = resource.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         resource.description.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesType = activeTypeFilter === 'all' || resource.type === activeTypeFilter;
-    const matchesCategory = activeCategoryFilter === 'all' || 
-                           (resource.category || '').toLowerCase() === activeCategoryFilter.toLowerCase();
-    
-    return matchesSearch && matchesType && matchesCategory;
-  });
-
   const handleResourceClick = (post: ResourcePost) => {
-    logger.info('Resource clicked:', post.id);
-    // Navigate to resource detail with the resource ID
     if (onResourceSelect && post.id) {
       onResourceSelect(post.id);
-    } else {
-      logger.warn('Cannot navigate: missing onResourceSelect or post.id', { 
-        hasHandler: !!onResourceSelect, 
-        postId: post.id 
-      });
+    } else if (onNavigate && post.id) {
+      onNavigate(`/resource-detail?id=${post.id}`);
     }
   };
-
-  // Derive unique categories from resources
-  const categoryFilters = useMemo(() => {
-    return [
-      { id: 'all', label: 'All Resources' },
-      ...RESOURCE_CATEGORIES.map(c => ({ id: c.value, label: c.label }))
-    ];
-  }, []);
 
   // Pull to refresh handler for mobile
   const handlePullToRefresh = async () => {
@@ -211,185 +132,239 @@ export function Library({ onResourceSelect, className }: LibraryProps) {
     await loadResources();
   };
 
+  const categories = ['All stories', ...RESOURCE_CATEGORIES.map(c => c.label)];
+
+  // Derived state for featured and latest news
+  const featuredResource = resources.length > 0 ? resources[0] : null;
+  const latestNews = resources.slice(1, 5);
+
+  // Filter remaining resources based on category and search
+  const filteredResources = resources.filter(resource => {
+    const matchesSearch = resource.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                         resource.description.toLowerCase().includes(searchQuery.toLowerCase());
+    
+    // Check if category matches (case insensitive)
+    // Note: resource.category might be "Sleep" or "sleep"
+    const resourceCat = (resource.category || '').toLowerCase();
+    const filterCat = activeCategoryFilter.toLowerCase();
+    
+    const matchesCategory = activeCategoryFilter === 'All stories' || 
+                           resourceCat === filterCat;
+    
+    return matchesSearch && matchesCategory;
+  });
+
   const content = (
-    <div className={cn("w-full bg-[#f5f5f5]", className)}>
-      {/* Custom Hero Section with Search & Filters */}
-      <div className="w-full bg-black pt-[140px] pb-[60px] md:pt-[160px] md:pb-[80px] px-4 flex flex-col items-center justify-center text-center">
-        <h1 
-          className="font-['Ubuntu',sans-serif] font-medium text-white mb-4"
-          style={{ fontSize: '48px', lineHeight: '1.2' }}
-        >
-          Resources
-        </h1>
-        <p 
-          className="font-['Ubuntu',sans-serif] text-white max-w-2xl mx-auto opacity-80 mb-10"
-          style={{ fontSize: '18px', lineHeight: '28px' }}
-        >
-          Gain insight into your mental and emotional health and find ways to support yourself.
-        </p>
-
-        {/* Search & Filters Container */}
-        <div className="w-full max-w-5xl space-y-8 animate-fadeIn">
-          
-          {/* Search Bar */}
-          <div className="w-full max-w-2xl mx-auto relative">
-            <div className="absolute inset-y-0 left-0 flex items-center pointer-events-none pl-5">
-              <Search size={20} className="text-gray-400" />
-            </div>
-            <Input
-              type="text"
-              placeholder="Search resources..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full h-14 pl-12 pr-5 rounded-2xl border-none bg-white text-black placeholder:text-gray-500 focus-visible:ring-2 focus-visible:ring-white/50 shadow-lg"
-              style={{ fontSize: '16px' }}
-            />
-          </div>
-
-          {/* Type Filters */}
-          <div className="flex flex-wrap justify-center gap-3">
-             <Button
-                onClick={() => setActiveTypeFilter('all')}
-                variant="ghost"
-                className={cn(
-                  "rounded-full border transition-all h-10 px-5 gap-2",
-                  activeTypeFilter === 'all' 
-                    ? "bg-white text-black border-white hover:bg-white/90" 
-                    : "bg-transparent text-white border-white/30 hover:bg-white/10 hover:text-white"
-                )}
-              >
-                <BookOpen size={16} />
-                All
-              </Button>
-              {RESOURCE_TYPES.map(t => {
-                const Icon = ICON_MAP[t.icon] || BookOpen;
-                const isActive = activeTypeFilter === t.value;
-                return (
-                  <Button
-                    key={t.value}
-                    onClick={() => setActiveTypeFilter(t.value)}
-                    variant="ghost"
-                    className={cn(
-                      "rounded-full border transition-all h-10 px-5 gap-2",
-                      isActive
-                        ? "bg-white text-black border-white hover:bg-white/90" 
-                        : "bg-transparent text-white border-white/30 hover:bg-white/10 hover:text-white"
-                    )}
-                  >
-                    <Icon size={16} />
-                    {t.label}
-                  </Button>
-                )
-              })}
-          </div>
-
-          {/* Category Filters */}
-          <div className="flex flex-wrap justify-center gap-2 max-w-4xl mx-auto">
-             {categoryFilters.map(c => {
-               const isActive = activeCategoryFilter === c.id;
-               return (
-                  <button
-                    key={c.id}
-                    onClick={() => setActiveCategoryFilter(c.id)}
-                    className={cn(
-                      "rounded-full px-4 py-1.5 text-sm font-medium transition-all duration-200 border",
-                      isActive 
-                        ? "bg-white text-black border-white shadow-sm" 
-                        : "bg-transparent text-white/70 border-transparent hover:bg-white/10 hover:text-white"
-                    )}
-                    style={{ fontFamily: 'Ubuntu, sans-serif' }}
-                  >
-                    {c.label}
-                  </button>
-               )
-             })}
-          </div>
-
-        </div>
-      </div>
-
-      <div className="w-full max-w-7xl mx-auto px-4 py-12">
-      {/* Resources Grid */}
-      <div className="w-full">
-        <div 
-          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3"
-          style={{ gap: 'var(--spacing-4)' }}
-        >
-          {filteredResources.map((resource) => (
-            <ResourceCard
-              key={resource.id}
-              post={resource}
-              onClick={() => handleResourceClick(resource)}
-            />
-          ))}
-        </div>
-
-        {/* Empty State */}
-        {filteredResources.length === 0 && (
-          <div className="text-center py-12">
-            <BookOpen 
-              size={48} 
-              className="mx-auto mb-4 opacity-50"
-              style={{ color: 'var(--color-text-muted)' }}
-            />
-            <h3 
-              style={{
-                fontSize: 'var(--text-lg)',
-                fontWeight: 'var(--font-weight-medium)',
-                color: 'var(--color-text-primary)'
-              }}
-            >
-              No resources found
-            </h3>
-            <p 
-              className="mt-2"
-              style={{
-                fontSize: 'var(--text-sm)',
-                color: 'var(--color-text-muted)'
-              }}
-            >
-              Try adjusting your search or filters to find what you're looking for.
-            </p>
-          </div>
-        )}
-
-        {/* Loading State */}
-        {loading && (
-          <div 
-            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3"
-            style={{ gap: 'var(--spacing-4)' }}
+    <div className={cn("w-full min-h-screen", className)} style={{ backgroundColor: 'var(--color-bg-page)' }}>
+      <div className="w-full max-w-[1400px] mx-auto px-4 py-8 md:px-12 md:py-16">
+        
+        {/* Header Section */}
+        <div className="mb-12">
+          <h1 
+            className="text-4xl md:text-5xl lg:text-6xl text-[#151515] mb-8"
+            style={{ fontFamily: 'var(--font-family-base)', fontWeight: 'var(--font-weight-medium)' }}
           >
-            {[1, 2, 3, 4, 5, 6].map((i) => (
-              <Card key={i} className="rounded-xl">
-                <CardContent style={{ padding: 'var(--spacing-4)' }}>
-                  <div 
-                    className="animate-pulse flex flex-col"
-                    style={{ gap: 'var(--spacing-4)' }}
-                  >
-                    <div className="aspect-video bg-gray-200 rounded-xl"></div>
-                    <div className="h-3 bg-gray-200 rounded w-1/3"></div>
-                    <div className="h-6 bg-gray-200 rounded w-3/4"></div>
-                    <div 
-                      className="flex flex-col"
-                      style={{ gap: 'var(--spacing-2)' }}
-                    >
-                      <div className="h-4 bg-gray-200 rounded w-full"></div>
-                      <div className="h-4 bg-gray-200 rounded w-2/3"></div>
-                    </div>
+            Latest news
+          </h1>
+
+          {/* Featured + Latest Grid */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+            
+            {/* Featured Card (Left) */}
+            <div className="lg:col-span-7 flex flex-col">
+              {loading ? (
+                 <div className="w-full h-[500px] bg-black/5 rounded-[32px] animate-pulse" />
+              ) : featuredResource ? (
+                <div 
+                  className="rounded-[32px] p-6 md:p-8 flex flex-col h-full hover:shadow-lg transition-shadow duration-300 cursor-pointer group"
+                  onClick={() => handleResourceClick(featuredResource)}
+                  style={{ backgroundColor: 'var(--color-bg-card)' }}
+                >
+                  <div className="relative w-full aspect-[16/10] rounded-2xl overflow-hidden mb-8 bg-[#00A991]">
+                    <ImageWithFallback
+                      src={resolveImageUrl(featuredResource.image)}
+                      alt={featuredResource.title}
+                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                    />
                   </div>
-                </CardContent>
-              </Card>
-            ))}
+                  
+                  <div className="flex-1 flex flex-col items-start">
+                    <span 
+                      className="text-[#151515] px-4 py-1.5 rounded-full text-sm font-medium mb-4"
+                      style={{ backgroundColor: 'var(--color-bg-muted)' }}
+                    >
+                      Featured story
+                    </span>
+                    
+                    <h2 
+                      className="text-3xl md:text-4xl text-[#151515] mb-4 leading-tight"
+                      style={{ fontFamily: 'var(--font-family-base)', fontWeight: 'var(--font-weight-medium)' }}
+                    >
+                      {featuredResource.title}
+                    </h2>
+                    
+                    <p 
+                      className="text-[#717182] mb-8 text-sm md:text-base"
+                      style={{ fontFamily: 'var(--font-family-base)' }}
+                    >
+                      {featuredResource.date}
+                    </p>
+                    
+                    <button 
+                      className="mt-auto px-8 py-3 rounded-full text-[#151515] font-medium text-sm hover:opacity-90 transition-opacity"
+                      style={{ 
+                        background: 'linear-gradient(90deg, #FFA07A 0%, #FFC0CB 100%)',
+                        fontFamily: 'var(--font-family-base)'
+                      }}
+                    >
+                      Read more
+                    </button>
+                  </div>
+                </div>
+              ) : null}
+            </div>
+
+            {/* Latest News Grid (Right) */}
+            <div className="lg:col-span-5 grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-10 content-start">
+              {loading ? (
+                Array.from({ length: 4 }).map((_, i) => (
+                  <div key={i} className="flex flex-col gap-3">
+                    <div className="w-full aspect-[4/3] bg-black/5 rounded-2xl animate-pulse" />
+                    <div className="h-4 bg-black/5 w-3/4 rounded animate-pulse" />
+                    <div className="h-3 bg-black/5 w-1/2 rounded animate-pulse" />
+                  </div>
+                ))
+              ) : latestNews.map((news) => (
+                <div 
+                  key={news.id} 
+                  className="flex flex-col group cursor-pointer"
+                  onClick={() => onNavigate?.(`/resource-detail?id=${news.id}`)}
+                >
+                  <div className="w-full aspect-[4/3] rounded-2xl overflow-hidden mb-4" style={{ backgroundColor: 'var(--color-bg-muted)' }}>
+                    <ImageWithFallback
+                      src={resolveImageUrl(news.image)}
+                      alt={news.title}
+                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                    />
+                  </div>
+                  <h3 
+                    className="text-lg leading-snug mb-2 group-hover:text-[#00A991] transition-colors line-clamp-2"
+                    style={{ fontFamily: 'var(--font-family-base)', fontWeight: 'var(--font-weight-medium)' }}
+                  >
+                    {news.title}
+                  </h3>
+                  <span 
+                    className="text-[#717182] text-xs"
+                    style={{ fontFamily: 'var(--font-family-base)' }}
+                  >
+                    {news.date}
+                  </span>
+                </div>
+              ))}
+            </div>
+
           </div>
-        )}
+        </div>
 
-        {/* Featured Resource Section */}
-        {/* Removed duplicate Featured Resource Section */}
+        {/* News by Topic Section */}
+        <div className="mt-20">
+          <div className="flex flex-col gap-8 mb-10">
+            <h2 
+              className="text-4xl md:text-5xl text-[#151515]"
+              style={{ fontFamily: 'var(--font-family-base)', fontWeight: 'var(--font-weight-medium)' }}
+            >
+              News by topic
+            </h2>
+            
+            {/* Filter Pills */}
+            <div className="flex flex-wrap gap-3">
+              {categories.map((cat) => {
+                const isActive = activeCategoryFilter === cat;
+                return (
+                  <button
+                    key={cat}
+                    onClick={() => setActiveCategoryFilter(cat)}
+                    className={cn(
+                      "px-6 py-2.5 rounded-full text-sm font-medium transition-all duration-200 border",
+                      isActive
+                        ? "text-white border-[#2A2A2A]"
+                        : "text-[#151515] border-transparent hover:bg-[#F3F3F5]"
+                    )}
+                    style={{
+                        backgroundColor: isActive ? 'var(--color-primary-default)' : 'var(--color-bg-card)',
+                        fontFamily: 'var(--font-family-base)'
+                    }}
+                  >
+                    {cat}
+                  </button>
+                );
+              })}
+            </div>
 
-        {/* More Resources Section */}
-        {/* Removed duplicate More Resources Section */}
+            {/* Optional Search within topics */}
+            <div className="relative max-w-md">
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
+                <input 
+                    type="text" 
+                    placeholder="Search articles..." 
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="w-full pl-10 pr-4 py-2.5 rounded-full border-none text-sm focus:ring-1 focus:ring-black/10 placeholder:text-gray-400"
+                    style={{ 
+                        backgroundColor: 'var(--color-bg-card)',
+                        fontFamily: 'var(--font-family-base)' 
+                    }}
+                />
+            </div>
+          </div>
+
+          {/* All Resources Grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-12">
+            {loading ? (
+                Array.from({ length: 8 }).map((_, i) => (
+                  <div key={i} className="flex flex-col gap-3">
+                    <div className="w-full aspect-[4/3] bg-black/5 rounded-2xl animate-pulse" />
+                    <div className="h-4 bg-black/5 w-3/4 rounded animate-pulse" />
+                    <div className="h-3 bg-black/5 w-1/2 rounded animate-pulse" />
+                  </div>
+                ))
+            ) : filteredResources.length > 0 ? (
+                filteredResources.map((resource) => (
+                    <div 
+                      key={resource.id} 
+                      className="flex flex-col group cursor-pointer"
+                      onClick={() => onNavigate?.(`/resource-detail?id=${resource.id}`)}
+                    >
+                      <div className="w-full aspect-[4/3] rounded-2xl overflow-hidden mb-4" style={{ backgroundColor: 'var(--color-bg-muted)' }}>
+                        <ImageWithFallback
+                          src={resolveImageUrl(resource.image)}
+                          alt={resource.title}
+                          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                        />
+                      </div>
+                      <h3 
+                        className="text-lg leading-snug mb-2 group-hover:text-[#00A991] transition-colors line-clamp-2"
+                        style={{ fontFamily: 'var(--font-family-base)', fontWeight: 'var(--font-weight-medium)' }}
+                      >
+                        {resource.title}
+                      </h3>
+                      <span 
+                        className="text-[#717182] text-xs"
+                        style={{ fontFamily: 'var(--font-family-base)' }}
+                      >
+                        {resource.date}
+                      </span>
+                    </div>
+                  ))
+            ) : (
+                <div className="col-span-full py-20 text-center">
+                    <p className="text-gray-500" style={{ fontFamily: 'var(--font-family-base)' }}>No articles found matching your criteria.</p>
+                </div>
+            )}
+          </div>
+        </div>
+
       </div>
-    </div>
     </div>
   );
 

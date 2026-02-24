@@ -274,14 +274,6 @@ export function EquipDetail({ equipId = 'sleep-tight-9', onNavigate }: EquipDeta
         transparent={true}
       />
 
-      {/* Desktop Navigation */}
-      <div className="hidden md:block">
-        <TopNavBar 
-          currentRoute="/equip-detail" 
-          onNavigate={handleNavigate}
-        />
-      </div>
-      
       <div className="w-full">
         {/* HERO SECTION */}
         <EquipHero

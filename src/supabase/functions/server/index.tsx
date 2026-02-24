@@ -137,18 +137,28 @@ registerResourceRoutes(app, requireAuth);
       let page;
       if (pageId) {
          page = await kv.get(`page:${pageId}`);
-      } else {
-         // Fallback: Scan all pages (slow, but works for MVP)
-         const pages = await kv.getByPrefix("page:");
-         page = pages.find((p: any) => p.slug === slug);
+      } 
+      
+      // Attempt 2: Check standard CMS pages (hardcoded blocks) directly
+      // This avoids scanning all pages for common requests
+      if (!page) {
+        page = await kv.get(`cms_page:${slug}`);
+      }
+
+      // Attempt 3: Fallback scan of all pages (only if not found yet)
+      if (!page) {
+         try {
+           const pages = await kv.getByPrefix("page:");
+           if (Array.isArray(pages)) {
+             page = pages.find((p: any) => p.slug === slug);
+           }
+         } catch (e) {
+           console.warn(`KV Scan skipped for ${slug}:`, e);
+         }
       }
       
-      // Fallback: Check if it's one of our hardcoded CMS pages (homepage content blocks)
-      // This is crucial for the homepage components which expect specific hardcoded data structures
+      // Fallback: Generate default content if still not found
       if (!page) {
-        // Try getting from cms_page: prefix which is used for the hardcoded content blocks
-        // These are distinct from the "page:" prefix used by the Admin Page Manager
-        page = await kv.get(`cms_page:${slug}`);
         
         // If still not found, check if we should generate default content for it
         if (!page) {

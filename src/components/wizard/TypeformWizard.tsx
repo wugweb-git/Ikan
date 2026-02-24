@@ -24,9 +24,10 @@ interface TypeformWizardProps {
   steps: TypeformStep[];
   onComplete?: (results: any) => void;
   onExit?: () => void;
+  className?: string;
 }
 
-export function TypeformWizard({ steps, onComplete, onExit }: TypeformWizardProps) {
+export function TypeformWizard({ steps, onComplete, onExit, className }: TypeformWizardProps) {
   // Map simple Typeform steps to robust Wizard configuration
   const wizardConfig: WizardConfig = {
     id: 'typeform-wizard',
@@ -85,6 +86,7 @@ export function TypeformWizard({ steps, onComplete, onExit }: TypeformWizardProp
       config={wizardConfig}
       onComplete={onComplete}
       onExit={onExit}
+      className={className}
     />
   );
 }

@@ -1,4 +1,5 @@
 import React, { useState, useMemo, ReactNode } from 'react';
+import { useIsMobile } from '../../hooks/useIsMobile';
 import { 
   Table, 
   TableBody, 
@@ -61,6 +62,7 @@ export function AdminDataTable<T extends { [key: string]: any }>({
   pageSize = 10,
   idField = 'id'
 }: AdminDataTableProps<T>) {
+  const isMobile = useIsMobile();
   
   // -- State --
   const [currentPage, setCurrentPage] = useState(1);
@@ -209,9 +211,55 @@ export function AdminDataTable<T extends { [key: string]: any }>({
         </CardContent>
       </Card>
 
-      {/* Table */}
-      <div className="rounded-md border bg-white">
-        <Table>
+      {/* Table / Mobile Cards */}
+      {isMobile ? (
+        <div className="space-y-4">
+          {paginatedData.length > 0 ? (
+            paginatedData.map((item, rowIdx) => (
+              <Card 
+                key={(item[idField] as unknown as string) || rowIdx}
+                className={onRowClick ? "cursor-pointer transition-colors hover:bg-muted/50" : ""}
+                onClick={() => onRowClick && onRowClick(item)}
+              >
+                <CardContent className="p-4 flex gap-4">
+                  {/* Find image column if exists */}
+                  {columns.find(c => c.type === 'image' && c.imageKey) && (
+                    <div className="shrink-0">
+                       <img 
+                          src={item[columns.find(c => c.type === 'image')!.imageKey!] as string || '/placeholder.png'} 
+                          alt=""
+                          className="w-16 h-16 object-cover rounded-xl border border-gray-200"
+                       />
+                    </div>
+                  )}
+                  
+                  <div className="flex-1 min-w-0 space-y-2">
+                    {columns.filter(c => c.type !== 'image').map((col, colIdx) => (
+                      <div key={colIdx} className="flex justify-between items-start gap-2">
+                        {colIdx === 0 ? (
+                           <h4 className="font-medium text-[var(--color-text-primary)] truncate">
+                             {col.render ? col.render(item) : (col.accessorKey ? (item[col.accessorKey] as ReactNode) : null)}
+                           </h4>
+                        ) : (
+                           <div className="text-sm text-[var(--color-text-muted)] truncate">
+                             {col.header}: {col.render ? col.render(item) : (col.accessorKey ? (item[col.accessorKey] as ReactNode) : null)}
+                           </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            ))
+          ) : (
+            <div className="text-center p-8 text-muted-foreground bg-white rounded-xl border border-dashed">
+              No results found
+            </div>
+          )}
+        </div>
+      ) : (
+      <div className="admin-table-container">
+        <Table className="admin-table">
           <TableHeader>
             <TableRow>
               {columns.map((col, index) => (
@@ -233,7 +281,7 @@ export function AdminDataTable<T extends { [key: string]: any }>({
               paginatedData.map((item, rowIdx) => (
                 <TableRow 
                   key={(item[idField] as unknown as string) || rowIdx} 
-                  className={onRowClick ? "cursor-pointer hover:bg-muted/50" : ""}
+                  className={onRowClick ? "cursor-pointer" : ""}
                   onClick={() => onRowClick && onRowClick(item)}
                 >
                   {columns.map((col, colIdx) => (
@@ -244,6 +292,7 @@ export function AdminDataTable<T extends { [key: string]: any }>({
                             src={item[col.imageKey] as string || col.imageFallback || '/placeholder.png'} 
                             alt=""
                             className="w-12 h-12 object-cover rounded-lg border border-gray-200"
+                            style={{ borderRadius: '12px' }}
                             onError={(e) => {
                               if (col.imageFallback) {
                                 (e.target as HTMLImageElement).src = col.imageFallback;
@@ -269,6 +318,7 @@ export function AdminDataTable<T extends { [key: string]: any }>({
           </TableBody>
         </Table>
       </div>
+      )}
 
       {/* Pagination */}
       <div className="flex items-center justify-between px-2">

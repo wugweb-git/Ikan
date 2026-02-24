@@ -38,10 +38,11 @@ export interface Consultant {
 interface ConsultantCardProps {
   consultant: Consultant;
   onClick?: () => void;
+  onBook?: (e: React.MouseEvent) => void;
   className?: string;
 }
 
-export function ConsultantCard({ consultant, onClick, className }: ConsultantCardProps) {
+export function ConsultantCard({ consultant, onClick, onBook, className }: ConsultantCardProps) {
   // Get minimum price for display - handle missing pricing data
   const minPrice = consultant.pricing ? Math.min(
     consultant.pricing.video || Infinity,
@@ -60,185 +61,121 @@ export function ConsultantCard({ consultant, onClick, className }: ConsultantCar
   };
 
   return (
-    <Card
+    <div
       className={cn(
-        "cursor-pointer transition-all hover:shadow-md",
-        "bg-white",
+        "consultant-card cursor-pointer",
         className
       )}
       onClick={onClick}
-      style={{
-        borderRadius: 'var(--radius-lg)',
-      }}
     >
-      <CardContent className="p-0">
-        <div className="flex flex-col">
-          {/* Top Section: Photo and Main Info */}
-          <div className="flex gap-4 p-4">
-            {/* Profile Photo */}
+      {/* Top Section: Photo and Main Info */}
+      <div className="flex-1">
+        <div className="flex flex-col md:flex-row gap-6">
+          {/* Profile Photo - Using strict 16px radius for inner element */}
+          <div className="shrink-0 w-full md:w-auto flex justify-center md:block">
             <Avatar 
-              className="h-20 w-20 shrink-0"
-              style={{
-                borderRadius: 'var(--radius-md)',
-              }}
+              className="consultant-avatar"
             >
-              <AvatarImage src={consultant.photo} alt={consultant.name} />
+              <AvatarImage src={consultant.photo} alt={consultant.name} className="object-cover" />
               <AvatarFallback 
                 style={{
-                  backgroundColor: 'var(--color-accent-default)',
-                  color: 'var(--color-text-primary)',
-                  fontWeight: 'var(--font-weight-medium)',
+                  backgroundColor: '#E9EBEF',
+                  color: '#151515',
+                  fontWeight: '500',
                 }}
               >
                 {consultant.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
               </AvatarFallback>
             </Avatar>
-
-            {/* Main Info */}
-            <div className="flex-1 min-w-0">
-              {/* Name */}
-              <h3 
-                className="truncate"
-                style={{
-                  color: 'var(--color-text-primary)',
-                  fontWeight: 'var(--font-weight-medium)',
-                  marginBottom: 'var(--spacing-1)',
-                }}
-              >
-                {consultant.name}
-              </h3>
-
-              {/* Credentials */}
-              <p 
-                className="truncate text-sm mb-2"
-                style={{
-                  color: 'var(--color-text-muted)',
-                }}
-              >
-                {consultant.credentials}
-              </p>
-
-              {/* Category Badge */}
-              <Badge 
-                variant="secondary"
-                className="mb-2"
-                style={{
-                  textTransform: 'capitalize',
-                  fontSize: 'var(--text-xs)',
-                  fontWeight: 'var(--font-weight-regular)',
-                }}
-              >
-                {consultant.category ? consultant.category.replace('-', ' ') : 'General'}
-              </Badge>
-
-              {/* Rating and Experience */}
-              <div className="flex items-center gap-3 text-sm">
-                {/* Rating */}
-                <div className="flex items-center gap-1">
-                  <Star 
-                    className="w-4 h-4" 
-                    style={{ fill: 'var(--color-rating-star)', color: 'var(--color-rating-star)' }}
-                  />
-                  <span style={{ fontWeight: 'var(--font-weight-medium)' }}>
-                    {consultant.rating ? consultant.rating.toFixed(1) : '0.0'}
-                  </span>
-                  <span style={{ color: 'var(--color-text-muted)' }}>
-                    ({consultant.reviewCount || 0})
-                  </span>
-                </div>
-
-                {/* Experience */}
-                <div 
-                  className="flex items-center gap-1"
-                  style={{ color: 'var(--color-text-muted)' }}
-                >
-                  <Clock className="w-4 h-4" />
-                  <span>{consultant.yearsExperience || 0}+ yrs</span>
-                </div>
-              </div>
-            </div>
           </div>
 
-          {/* Divider */}
-          <div 
-            className="border-t mx-4"
-            style={{ borderColor: 'var(--color-border-default)' }}
-          />
+          {/* Main Info */}
+          <div className="flex-1 min-w-0">
+            <div className="flex justify-between items-start">
+              <div>
+                {/* Name */}
+                <h3 
+                  className="truncate text-[18px]"
+                  style={{
+                    color: '#151515',
+                    fontWeight: '600',
+                    marginBottom: '4px',
+                  }}
+                >
+                  {consultant.name}
+                </h3>
 
-          {/* Bottom Section: Details */}
-          <div className="p-4 space-y-3">
-            {/* Top Expertises */}
-            <div>
-              <p 
-                className="text-xs mb-2"
-                style={{
-                  color: 'var(--color-text-muted)',
-                  fontWeight: 'var(--font-weight-medium)',
-                }}
-              >
-                Specializes in
-              </p>
-              <div className="flex flex-wrap gap-1.5">
-                {(consultant.topExpertises || []).slice(0, 3).map((expertise) => (
-                  <Badge
-                    key={expertise}
-                    variant="outline"
-                    className="text-xs"
-                    style={{
-                      backgroundColor: 'var(--color-bg-muted)',
-                      borderColor: 'var(--color-border-default)',
-                      color: 'var(--color-text-primary)',
-                      fontWeight: 'var(--font-weight-regular)',
-                    }}
-                  >
-                    {expertise}
-                  </Badge>
-                ))}
+                {/* Credentials */}
+                <p 
+                  className="truncate text-[14px] mb-2"
+                  style={{
+                    color: '#757575', // Step 6
+                  }}
+                >
+                  {consultant.credentials}
+                </p>
+              </div>
+
+              {/* Rating */}
+              <div className="flex items-center gap-1 bg-[#F5F5F5] px-2 py-1 rounded-[8px]">
+                <Star 
+                  className="w-3.5 h-3.5" 
+                  style={{ fill: '#FFA500', color: '#FFA500' }}
+                />
+                <span className="text-[12px] font-bold text-[#1A1A1A]">
+                  {consultant.rating ? consultant.rating.toFixed(1) : '0.0'}
+                </span>
+                <span className="text-[12px] text-[#757575]">
+                  ({consultant.reviewCount || 0})
+                </span>
               </div>
             </div>
 
-            {/* Location and Languages */}
-            <div className="flex items-start gap-1 text-sm">
-              <MapPin 
-                className="w-4 h-4 mt-0.5 shrink-0" 
-                style={{ color: 'var(--color-text-muted)' }}
-              />
-              <span 
-                className="truncate"
-                style={{ color: 'var(--color-text-muted)' }}
-              >
-                {consultant.location}
+            {/* Category & Experience */}
+            <div className="flex items-center gap-3 mb-3">
+              <span className="text-[12px] font-medium text-[#1A1A1A] bg-[#F5F5F5] px-2 py-1 rounded-[8px] capitalize">
+                {consultant.category ? consultant.category.replace('-', ' ') : 'General'}
+              </span>
+              <span className="text-[12px] text-[#757575] flex items-center gap-1">
+                <Clock className="w-3.5 h-3.5" />
+                {consultant.yearsExperience || 0}+ yrs exp
               </span>
             </div>
 
-            {/* Languages */}
-            <div className="flex flex-wrap gap-1.5">
-              {(consultant.languages || []).slice(0, 3).map((lang) => (
-                <span
-                  key={lang}
-                  className="text-xs px-2 py-0.5 rounded"
-                  style={{
-                    backgroundColor: 'var(--color-bg-muted)',
-                    color: 'var(--color-text-muted)',
-                  }}
-                >
-                  {lang}
-                </span>
-              ))}
+            {/* Location */}
+            <div className="flex items-center gap-1.5 text-[13px] text-[#757575] mb-4">
+              <MapPin className="w-3.5 h-3.5" />
+              <span className="truncate">{consultant.location}</span>
             </div>
 
-            {/* Session Modes and Pricing */}
-            <div className="flex items-center justify-between pt-2">
+            {/* Specialization Badges */}
+            <div className="mb-4">
+              <p className="text-[11px] font-medium text-[#9E9E9E] uppercase tracking-wider mb-2">Specializes In</p>
+              <div className="flex flex-wrap gap-2">
+                {(consultant.topExpertises || []).slice(0, 3).map((expertise) => (
+                  <span key={expertise} className="expertise-tag">
+                    {expertise}
+                  </span>
+                ))}
+                {(consultant.topExpertises?.length || 0) > 3 && (
+                  <span className="expertise-tag text-[#757575]">
+                    +{consultant.topExpertises!.length - 3} more
+                  </span>
+                )}
+              </div>
+            </div>
+
+            {/* Divider */}
+            <div className="h-px bg-[#E4E4E4] w-full my-4" />
+
+            {/* Bottom Actions */}
+            <div className="flex items-center justify-between">
               {/* Session Modes */}
               <div className="flex gap-2">
                 {(consultant.sessionModes || []).slice(0, 4).map((mode) => (
                   <div
                     key={mode}
-                    className="p-1.5 rounded"
-                    style={{
-                      backgroundColor: 'var(--color-bg-muted)',
-                      color: 'var(--color-text-muted)',
-                    }}
+                    className="p-2 rounded-[8px] bg-[#F5F5F5] text-[#757575]"
                     title={mode}
                   >
                     {sessionIcons[mode as keyof typeof sessionIcons]}
@@ -246,54 +183,43 @@ export function ConsultantCard({ consultant, onClick, className }: ConsultantCar
                 ))}
               </div>
 
-              {/* Pricing */}
-              <div className="text-right">
-                <p 
-                  className="text-xs"
-                  style={{ color: 'var(--color-text-muted)' }}
-                >
-                  Starting at
-                </p>
-                <p 
-                  style={{
-                    fontWeight: 'var(--font-weight-medium)',
-                    color: 'var(--color-primary-default)',
-                  }}
-                >
-                  ₹{minPrice}
-                </p>
+              <div className="flex items-center gap-4">
+                <div className="text-right">
+                  <p className="text-[11px] text-[#757575] uppercase">Starting at</p>
+                  <p className="text-[16px] font-bold text-[#1A1A1A]">₹{minPrice}</p>
+                </div>
+                
+                {/* Next Available Badge */}
+                <div className="flex gap-2">
+                  {consultant.nextAvailableSlot && consultant.available ? (
+                    <div className="h-[32px] flex items-center px-3 bg-[#E8F5E9] text-[#1A1A1A] text-[12px] font-semibold rounded-[8px]">
+                      Next: {consultant.nextAvailableSlot}
+                    </div>
+                  ) : (
+                    <div className="h-[32px] flex items-center px-3 bg-[#F5F5F5] text-[#757575] text-[12px] font-medium rounded-[8px]">
+                      Unavailable
+                    </div>
+                  )}
+                  
+                  {onBook && (
+                    <Button 
+                      size="sm" 
+                      className="h-[32px] rounded-[16px] bg-[#1A1A1A] hover:bg-[#333333] text-white text-[12px] px-4"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onBook(e);
+                      }}
+                    >
+                      Book
+                    </Button>
+                  )}
+                </div>
               </div>
             </div>
-
-            {/* Next Available Slot */}
-            {consultant.nextAvailableSlot && consultant.available && (
-              <div 
-                className="text-xs px-3 py-1.5 rounded text-center"
-                style={{
-                  backgroundColor: 'var(--color-status-success-light)',
-                  color: 'var(--color-status-success)',
-                  fontWeight: 'var(--font-weight-medium)',
-                }}
-              >
-                Next available: {consultant.nextAvailableSlot}
-              </div>
-            )}
-
-            {!consultant.available && (
-              <div 
-                className="text-xs px-3 py-1.5 rounded text-center"
-                style={{
-                  backgroundColor: 'var(--color-bg-muted)',
-                  color: 'var(--color-text-muted)',
-                }}
-              >
-                Currently unavailable
-              </div>
-            )}
           </div>
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }
 

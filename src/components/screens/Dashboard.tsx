@@ -391,26 +391,24 @@ export function Dashboard({ className, onNavigate }: DashboardProps) {
 
                  {/* 5. Actions */}
                  <div className="flex flex-col sm:flex-row gap-3 pt-2">
-                   <Button 
+                   <button 
                      onClick={() => onNavigate?.(`/equip-program-onboarding?id=${recommendations[0].equip_id}`)}
-                     className="bg-[var(--color-primary-default)] text-[var(--color-primary-on)] hover:opacity-90 min-w-[140px]"
+                     className="cbt-button-primary min-w-[140px]"
                    >
                      Start Program
-                   </Button>
-                   <Button 
-                     variant="outline"
+                   </button>
+                   <button 
                      onClick={() => onNavigate?.(`/equip-detail?id=${recommendations[0].equip_id}`)}
-                     className="min-w-[140px]"
+                     className="cbt-button-secondary min-w-[140px]"
                    >
                      Learn more
-                   </Button>
-                   <Button 
-                     variant="ghost"
+                   </button>
+                   <button 
                      onClick={handleManualReassessment}
-                     className="text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]"
+                     className="cbt-button-ghost"
                    >
                      Re-check progress
-                   </Button>
+                   </button>
                  </div>
                  
                  {/* 7. Gentle Footer */}
@@ -482,9 +480,9 @@ export function Dashboard({ className, onNavigate }: DashboardProps) {
               const date = enrollment.completed_at ? new Date(enrollment.completed_at).toLocaleDateString() : 'Recently';
 
               return (
-                <Card 
+                <div 
                   key={enrollment.id} 
-                  className="cursor-pointer hover:shadow-md transition-shadow border-l-4 border-l-[var(--color-status-success)]"
+                  className="cbt-card-small bg-white cursor-pointer hover:shadow-md transition-shadow border-l-4 border-l-[var(--color-status-success)] overflow-hidden"
                   onClick={() => onNavigate?.(`/equip-program-flow?id=${enrollment.equip_id}`)}
                 >
                   <CardHeader>
@@ -503,7 +501,7 @@ export function Dashboard({ className, onNavigate }: DashboardProps) {
                       Review Journey <ArrowRight size={14} className="ml-1" />
                     </Button>
                   </CardContent>
-                </Card>
+                </div>
               );
             }) : (
                // Placeholder for audit if no programs completed
@@ -515,8 +513,8 @@ export function Dashboard({ className, onNavigate }: DashboardProps) {
             )}
 
             {/* Completed Assessments (Mock for Audit) */}
-            <Card 
-               className="cursor-pointer hover:shadow-md transition-shadow border-l-4 border-l-indigo-500"
+            <div 
+               className="cbt-card-small bg-white cursor-pointer hover:shadow-md transition-shadow border-l-4 border-l-indigo-500 overflow-hidden"
                onClick={() => onNavigate?.('/assessment-results')}
             >
                <CardHeader>
@@ -535,7 +533,7 @@ export function Dashboard({ className, onNavigate }: DashboardProps) {
                    View Results <ArrowRight size={14} className="ml-1" />
                  </Button>
                </CardContent>
-            </Card>
+            </div>
           </div>
         </section>
       )}
