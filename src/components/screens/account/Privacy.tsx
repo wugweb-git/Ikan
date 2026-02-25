@@ -466,16 +466,16 @@ export function Privacy() {
       </Card>
 
       {/* Privacy Information - DARK THEME */}
-      <Card style={{ backgroundColor: '#1A1A1A', border: 'none', borderRadius: '16px' }}>
+      <Card style={{ backgroundColor: 'var(--grey-9)', border: 'none', borderRadius: 'var(--radius-lg)' }}>
         <CardContent className="p-6">
           <div className="flex items-start gap-3">
-            <Icon name="info" size={20} style={{ color: '#FFFFFF' }} />
+            <Icon name="info" size={20} style={{ color: 'var(--color-text-inverse)' }} />
             <div>
               <h4 
                 style={{ 
                   fontSize: 'var(--text-base)', 
                   fontWeight: 'var(--font-weight-medium)',
-                  color: '#FFFFFF',
+                  color: 'var(--color-text-inverse)',
                   marginBottom: 'var(--spacing-2)'
                 }}
               >
@@ -483,7 +483,7 @@ export function Privacy() {
               </h4>
               <p style={{ 
                 fontSize: 'var(--text-sm)', 
-                color: '#A0A0A0',
+                color: 'var(--grey-4)',
                 lineHeight: 'var(--line-height-md)',
                 marginBottom: 'var(--spacing-3)'
               }}>
@@ -500,21 +500,21 @@ export function Privacy() {
                   style={{
                     fontSize: 'var(--text-sm)',
                     fontWeight: 'var(--font-weight-medium)',
-                    color: '#FFFFFF',
+                    color: 'var(--color-text-inverse)',
                     justifyContent: 'flex-start'
                   }}
                 >
                   <Icon name="fileText" size={14} />
                   Read Privacy Policy
                 </Button>
-                <span style={{ color: '#525252' }}>•</span>
+                <span style={{ color: 'var(--grey-7)' }}>•</span>
                 <Button 
                   variant="link" 
                   className="gap-2 p-0"
                   style={{
                     fontSize: 'var(--text-sm)',
                     fontWeight: 'var(--font-weight-medium)',
-                    color: '#FFFFFF',
+                    color: 'var(--color-text-inverse)',
                     justifyContent: 'flex-start'
                   }}
                 >

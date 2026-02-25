@@ -41,19 +41,22 @@ export function BookingModal({
       <div className="modal-content" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header flex justify-between items-center">
           <div>
-            <h2 className="text-[24px] font-medium text-[#1A1A1A] mb-1">Book Consultation</h2>
-            <p className="text-[16px] text-[#757575]">with {consultantName}</p>
+            <h2 className="text-[24px] font-medium mb-1" style={{ color: 'var(--color-text-primary)' }}>Book Consultation</h2>
+            <p className="text-[16px]" style={{ color: 'var(--color-text-muted)' }}>with {consultantName}</p>
           </div>
           <button 
             onClick={onClose}
-            className="p-2 hover:bg-[#F5F5F5] rounded-full transition-colors"
+            className="p-2 rounded-full transition-colors"
+            style={{ color: 'var(--color-text-primary)' }}
+            onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'var(--color-bg-muted)'; }}
+            onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; }}
           >
-            <X size={24} color="#1A1A1A" />
+            <X size={24} />
           </button>
         </div>
 
         <div className="mb-6">
-          <p className="text-[14px] font-medium text-[#1A1A1A] mb-3">Select a Time</p>
+          <p className="text-[14px] font-medium mb-3" style={{ color: 'var(--color-text-primary)' }}>Select a Time</p>
           <div className="time-slot-grid">
             {timeSlots.map((slot) => (
               <button
@@ -63,7 +66,7 @@ export function BookingModal({
                 className={cn(
                   "time-slot",
                   selectedSlot === slot.id && "selected",
-                  !slot.available && "opacity-50 cursor-not-allowed bg-[#F5F5F5] border-transparent"
+                  !slot.available && "opacity-50 cursor-not-allowed border-transparent"
                 )}
               >
                 {slot.time}

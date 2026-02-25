@@ -124,7 +124,7 @@ export function UnifiedBasicInfoForm({
         <div className="space-y-2">
           <Label>{categoryLabel} *</Label>
           <Select value={category} onValueChange={onCategoryChange}>
-            <SelectTrigger className="h-[52px] rounded-[16px]">
+            <SelectTrigger className="h-[52px]" style={{ borderRadius: 'var(--radius-lg)' }}>
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -140,7 +140,7 @@ export function UnifiedBasicInfoForm({
         <div className="space-y-2">
           <Label>Difficulty Level</Label>
           <Select value={difficulty} onValueChange={onDifficultyChange}>
-            <SelectTrigger className="h-[52px] rounded-[16px]">
+            <SelectTrigger className="h-[52px]" style={{ borderRadius: 'var(--radius-lg)' }}>
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -160,7 +160,7 @@ export function UnifiedBasicInfoForm({
           <div className="space-y-2">
             <Label>Assessment Type</Label>
             <Select value={assessmentType} onValueChange={onAssessmentTypeChange}>
-              <SelectTrigger className="h-[52px] rounded-[16px]">
+              <SelectTrigger className="h-[52px]" style={{ borderRadius: 'var(--radius-lg)' }}>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -196,7 +196,7 @@ export function UnifiedBasicInfoForm({
 
       {/* Paywall Section */}
       {showPaywall && (
-        <div className="rounded-[16px] border p-6" style={{ backgroundColor: 'var(--color-bg-muted)', borderColor: 'var(--color-border-default)' }}>
+        <div className="border p-6" style={{ backgroundColor: 'var(--color-bg-muted)', borderColor: 'var(--color-border-default)', borderRadius: 'var(--radius-lg)' }}>
           <div className="flex items-center gap-3 mb-4">
             <Checkbox
               id="premium-toggle"

@@ -12,12 +12,12 @@ interface AssessmentSectionProps {
  * Keyword highlight colors matching the hero section palette
  */
 const HIGHLIGHT_WORDS: Record<string, string> = {
-  'well-being': '#4ABDAC',
-  'wellbeing': '#4ABDAC',
-  'assessments': '#F0A830',
-  'programs': '#E87B7B',
-  'journey': '#4ABDAC',
-  'support': '#F0A830',
+  'well-being': 'var(--color-chart-1, #4ABDAC)',
+  'wellbeing': 'var(--color-chart-1, #4ABDAC)',
+  'assessments': 'var(--color-chart-2, #F0A830)',
+  'programs': 'var(--color-chart-3, #E87B7B)',
+  'journey': 'var(--color-chart-1, #4ABDAC)',
+  'support': 'var(--color-chart-2, #F0A830)',
 };
 
 function highlightKeywords(text: string): React.ReactNode[] {

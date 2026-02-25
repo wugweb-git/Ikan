@@ -50,7 +50,48 @@ import { registerContactRoutes } from './contact-routes.ts';
 import { registerScalesRoutes } from './scales-routes.ts';
 
 // ─────────────────────────────────────────────────────────────────────────────
-// GLOBAL: Suppress Deno's "Http: connection closed" unhandled rejection.
+// Layer 0: Centralized connection-closed error detection
+// ─────────────────────────────────────────────────────────────────────────────
+function isConnectionClosedError(err: unknown): boolean {
+  if (!err) return false;
+  const name = (err as any)?.name;
+  const msg = String(err).toLowerCase();
+  return (
+    name === 'Http' ||
+    (name === 'TypeError' && msg.includes('response')) ||
+    msg.includes('connection closed') ||
+    msg.includes('connection reset') ||
+    msg.includes('broken pipe') ||
+    msg.includes('aborted') ||
+    msg.includes('respondwith') ||
+    msg.includes('network socket disconnected') ||
+    msg.includes('message completed')
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Layer 0b: Console filter — last-resort suppression for connection-closed
+// errors that Deno's runtime logs directly to stderr BEFORE dispatching the
+// unhandledrejection / error events. Without this, the error surfaces in
+// dashboard logs even though it is non-fatal and fully handled.
+// ─────────────────────────────────────────────────────────────────────────────
+const _origConsoleError = console.error;
+console.error = (...args: any[]) => {
+  // Fast-path: error object with name "Http"
+  const first = args[0];
+  if (first && typeof first === 'object' && (first as any)?.name === 'Http') return;
+  // String scan for known patterns
+  const joined = args.map(String).join(' ').toLowerCase();
+  if (
+    joined.includes('connection closed before message completed') ||
+    joined.includes('respondwith') ||
+    (joined.includes('http') && joined.includes('connection closed'))
+  ) return;
+  _origConsoleError.apply(console, args);
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Layer 1: GLOBAL unhandledrejection listener
 //
 // This error fires inside Deno's internal `respondWith()` → `mapped()` chain
 // (ext:runtime/http.js) AFTER our handler has already returned a Response.
@@ -63,27 +104,41 @@ import { registerScalesRoutes } from './scales-routes.ts';
 // the ONLY way to suppress it is a global unhandledrejection listener.
 // ─────────────────────────────────────────────────────────────────────────────
 globalThis.addEventListener("unhandledrejection", (event: PromiseRejectionEvent) => {
-  const err = event.reason;
-  if (
-    err?.name === "Http" ||
-    String(err).includes("connection closed")
-  ) {
-    // Swallow — prevents Deno from logging the error to stderr.
+  if (isConnectionClosedError(event.reason)) {
+    event.preventDefault();
+    return;
+  }
+  // Check if the rejection reason's cause is a connection error (nested errors)
+  const cause = (event.reason as any)?.cause;
+  if (cause && isConnectionClosedError(cause)) {
     event.preventDefault();
     return;
   }
   // All other unhandled rejections: let Deno's default handler log them.
 });
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Layer 2: GLOBAL error listener (uncaught exceptions)
+// ─────────────────────────────────────────────────────────────────────────────
+globalThis.addEventListener("error", (event: ErrorEvent) => {
+  if (isConnectionClosedError(event.error ?? event.message)) {
+    event.preventDefault();
+    return;
+  }
+});
+
 const app = new Hono().basePath('/make-server-cc205da9');
 
-// Global error handler - catch connection-closed and other transient errors
+// ─────────────────────────────────────────────────────────────────────────────
+// Layer 3: Hono app.onError — return raw Response instead of c.json()
+//
+// c.json() tries to write to the socket, which re-throws if the client already
+// disconnected. Using `new Response(null, ...)` avoids that second explosion.
+// ─────────────────────────────────────────────────────────────────────────────
 app.onError((err, c) => {
-  // "Http: connection closed before message completed" is a transient Deno error
-  // that occurs when the client disconnects mid-response (e.g. during hot reload).
-  if (err?.name === 'Http' || err?.message?.includes('connection closed')) {
+  if (isConnectionClosedError(err)) {
     console.log('Client disconnected before response completed (non-fatal)');
-    return c.json({ error: 'Connection closed' }, 499);
+    return new Response(null, { status: 499 });
   }
   console.error('Unhandled server error:', err);
   return c.json({ error: 'Internal server error' }, 500);
@@ -5274,18 +5329,92 @@ app.post("/upload/refresh-url", async (c) => {
   }
 });
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Layer 4: Deno.serve onError — uses the centralized helper
+// Layer 5: Wrapped handler — short-circuits on aborted requests and wraps
+//          app.fetch() in try/catch so connection-closed errors from Hono's
+//          internal response-writing never propagate upward.
+// Layer 6: Abort-aware response wrapper — replaces the original Response body
+//          with a ReadableStream that monitors req.signal, so Deno never
+//          attempts to write bytes to a closed socket (preventing the
+//          ext:runtime/01_http.js respondWith error at the source).
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** Wrap a Response body in an abort-aware stream tied to the request signal. */
+function makeAbortAwareResponse(res: Response, signal: AbortSignal): Response {
+  // No body to stream — nothing to wrap
+  if (!res.body) return res;
+  // Already aborted — return empty immediately
+  if (signal.aborted) return new Response(null, { status: 499 });
+
+  const originalBody = res.body;
+  const reader = originalBody.getReader();
+
+  const wrappedBody = new ReadableStream({
+    async pull(controller) {
+      // Check abort BEFORE each chunk read
+      if (signal.aborted) {
+        controller.close();
+        reader.cancel().catch(() => {});
+        return;
+      }
+      try {
+        const { done, value } = await reader.read();
+        if (done) {
+          controller.close();
+        } else {
+          // Re-check after async read in case client disconnected mid-read
+          if (signal.aborted) {
+            controller.close();
+            reader.cancel().catch(() => {});
+          } else {
+            controller.enqueue(value);
+          }
+        }
+      } catch (err) {
+        if (isConnectionClosedError(err) || signal.aborted) {
+          controller.close();
+        } else {
+          controller.error(err);
+        }
+      }
+    },
+    cancel() {
+      reader.cancel().catch(() => {});
+    },
+  });
+
+  return new Response(wrappedBody, {
+    status: res.status,
+    statusText: res.statusText,
+    headers: res.headers,
+  });
+}
+
 Deno.serve({
   onError(err: unknown) {
-    // Connection-closed errors are already suppressed by the global
-    // unhandledrejection listener. If one still reaches here, swallow it.
-    const errStr = String(err);
-    if (errStr.includes('connection closed') || (err as any)?.name === 'Http') {
+    if (isConnectionClosedError(err)) {
       return new Response(null, { status: 499 });
     }
-    console.error('Unhandled Deno.serve onError:', err);
+    _origConsoleError('Unhandled Deno.serve onError:', err);
     return new Response(JSON.stringify({ error: 'Internal Server Error' }), {
       status: 500,
       headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
     });
   },
-}, app.fetch);
+}, async (req: Request) => {
+  // If the client already disconnected, don't bother running the handler.
+  if (req.signal.aborted) {
+    return new Response(null, { status: 499 });
+  }
+  try {
+    const response = await app.fetch(req);
+    // Wrap the response so Deno never writes to a closed socket
+    return makeAbortAwareResponse(response, req.signal);
+  } catch (err) {
+    if (isConnectionClosedError(err)) {
+      return new Response(null, { status: 499 });
+    }
+    throw err; // Re-throw non-connection errors so onError handles them.
+  }
+});

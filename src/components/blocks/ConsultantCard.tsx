@@ -64,7 +64,7 @@ export function ConsultantCard({ consultant, onClick, onBook, className }: Consu
         padding: '20px',
         gap: '0',
         marginBottom: '12px',
-        borderRadius: '16px',
+        borderRadius: 'var(--radius-lg)',
       }}
     >
       <div className="flex gap-4 w-full">
@@ -72,13 +72,13 @@ export function ConsultantCard({ consultant, onClick, onBook, className }: Consu
         <div className="shrink-0">
           <Avatar
             className="consultant-avatar"
-            style={{ width: '80px', height: '80px', borderRadius: '12px' }}
+            style={{ width: '80px', height: '80px', borderRadius: 'var(--radius-md)' }}
           >
             <AvatarImage src={consultant.photo} alt={consultant.name} className="object-cover" />
             <AvatarFallback
               style={{
-                backgroundColor: '#E9EBEF',
-                color: '#151515',
+                backgroundColor: 'var(--color-accent-default)',
+                color: 'var(--color-text-primary)',
                 fontWeight: '500',
                 fontSize: '18px',
               }}
@@ -98,7 +98,7 @@ export function ConsultantCard({ consultant, onClick, onBook, className }: Consu
                 style={{
                   fontSize: '16px',
                   fontWeight: 'var(--font-weight-medium)',
-                  color: '#151515',
+                  color: 'var(--color-text-primary)',
                   lineHeight: '1.3',
                   margin: 0,
                 }}
@@ -110,7 +110,7 @@ export function ConsultantCard({ consultant, onClick, onBook, className }: Consu
                 style={{
                   fontSize: '13px',
                   fontWeight: 'var(--font-weight-regular)',
-                  color: '#757575',
+                  color: 'var(--grey-6)',
                   margin: '2px 0 0 0',
                   lineHeight: '1.3',
                 }}
@@ -125,15 +125,15 @@ export function ConsultantCard({ consultant, onClick, onBook, className }: Consu
               style={{
                 padding: '4px 8px',
                 borderRadius: '8px',
-                border: '1px solid #E4E4E4',
+                border: '1px solid var(--grey-2)',
                 background: 'white',
               }}
             >
-              <Star className="w-3 h-3" style={{ fill: '#FFA500', color: '#FFA500' }} />
-              <span style={{ fontSize: '12px', fontWeight: 'var(--font-weight-medium)', color: '#1A1A1A' }}>
+              <Star className="w-3 h-3" style={{ fill: 'var(--color-status-warning)', color: 'var(--color-status-warning)' }} />
+              <span style={{ fontSize: '12px', fontWeight: 'var(--font-weight-medium)', color: 'var(--grey-9)' }}>
                 {consultant.rating ? consultant.rating.toFixed(1) : '0.0'}
               </span>
-              <span style={{ fontSize: '11px', color: '#757575' }}>
+              <span style={{ fontSize: '11px', color: 'var(--grey-6)' }}>
                 ({consultant.reviewCount || 0})
               </span>
             </div>
@@ -145,8 +145,8 @@ export function ConsultantCard({ consultant, onClick, onBook, className }: Consu
               style={{
                 fontSize: '11px',
                 fontWeight: 'var(--font-weight-medium)',
-                color: '#1A1A1A',
-                background: '#F5F5F5',
+                color: 'var(--grey-9)',
+                background: 'var(--grey-1)',
                 padding: '3px 8px',
                 borderRadius: '6px',
                 textTransform: 'capitalize',
@@ -154,7 +154,7 @@ export function ConsultantCard({ consultant, onClick, onBook, className }: Consu
             >
               {consultant.category ? consultant.category.replace('-', ' ') : 'General'}
             </span>
-            <span className="flex items-center gap-1" style={{ fontSize: '11px', color: '#757575' }}>
+            <span className="flex items-center gap-1" style={{ fontSize: '11px', color: 'var(--grey-6)' }}>
               <Clock className="w-3 h-3" />
               {consultant.yearsExperience || 0}+ yrs exp
             </span>
@@ -162,8 +162,8 @@ export function ConsultantCard({ consultant, onClick, onBook, className }: Consu
 
           {/* Row 3: Location */}
           <div className="flex items-center gap-1" style={{ marginTop: '6px' }}>
-            <MapPin className="w-3 h-3" style={{ color: '#757575', flexShrink: 0 }} />
-            <span className="truncate" style={{ fontSize: '12px', color: '#757575' }}>
+            <MapPin className="w-3 h-3" style={{ color: 'var(--grey-6)', flexShrink: 0 }} />
+            <span className="truncate" style={{ fontSize: '12px', color: 'var(--grey-6)' }}>
               {consultant.location}
             </span>
           </div>
@@ -174,7 +174,7 @@ export function ConsultantCard({ consultant, onClick, onBook, className }: Consu
               style={{
                 fontSize: '10px',
                 fontWeight: 'var(--font-weight-medium)',
-                color: '#9E9E9E',
+                color: 'var(--grey-5)',
                 textTransform: 'uppercase',
                 letterSpacing: '0.05em',
                 margin: '0 0 6px 0',
@@ -189,11 +189,11 @@ export function ConsultantCard({ consultant, onClick, onBook, className }: Consu
                   style={{
                     fontSize: '11px',
                     fontWeight: 'var(--font-weight-regular)',
-                    color: '#333',
-                    background: '#F5F5F5',
+                    color: 'var(--grey-8)',
+                    background: 'var(--grey-1)',
                     padding: '3px 10px',
                     borderRadius: '6px',
-                    border: '1px solid #EBEBEB',
+                    border: '1px solid var(--color-border-default)',
                   }}
                 >
                   {expertise}
@@ -203,8 +203,8 @@ export function ConsultantCard({ consultant, onClick, onBook, className }: Consu
                 <span
                   style={{
                     fontSize: '11px',
-                    color: '#757575',
-                    background: '#F5F5F5',
+                    color: 'var(--grey-6)',
+                    background: 'var(--grey-1)',
                     padding: '3px 10px',
                     borderRadius: '6px',
                   }}
@@ -216,7 +216,7 @@ export function ConsultantCard({ consultant, onClick, onBook, className }: Consu
           </div>
 
           {/* Divider */}
-          <div style={{ height: '1px', background: '#EBEBEB', margin: '12px 0' }} />
+          <div style={{ height: '1px', background: 'var(--color-border-default)', margin: '12px 0' }} />
 
           {/* Row 5: Bottom bar */}
           <div className="flex items-center justify-between">
@@ -228,8 +228,8 @@ export function ConsultantCard({ consultant, onClick, onBook, className }: Consu
                   style={{
                     padding: '6px',
                     borderRadius: '8px',
-                    background: '#F5F5F5',
-                    color: '#757575',
+                    background: 'var(--grey-1)',
+                    color: 'var(--grey-6)',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
@@ -244,10 +244,10 @@ export function ConsultantCard({ consultant, onClick, onBook, className }: Consu
             {/* Price + Availability + Book */}
             <div className="flex items-center gap-3">
               <div className="text-right">
-                <p style={{ fontSize: '10px', color: '#9E9E9E', textTransform: 'uppercase', margin: 0, letterSpacing: '0.03em' }}>
+                <p style={{ fontSize: '10px', color: 'var(--grey-5)', textTransform: 'uppercase', margin: 0, letterSpacing: '0.03em' }}>
                   Starting at
                 </p>
-                <p style={{ fontSize: '15px', fontWeight: 'var(--font-weight-medium)', color: '#1A1A1A', margin: 0 }}>
+                <p style={{ fontSize: '15px', fontWeight: 'var(--font-weight-medium)', color: 'var(--grey-9)', margin: 0 }}>
                   ₹{minPrice === Infinity ? '—' : minPrice}
                 </p>
               </div>
@@ -259,8 +259,8 @@ export function ConsultantCard({ consultant, onClick, onBook, className }: Consu
                     display: 'flex',
                     alignItems: 'center',
                     padding: '0 10px',
-                    background: '#E8F5E9',
-                    color: '#1A1A1A',
+                    background: 'var(--color-status-success-light)',
+                    color: 'var(--grey-9)',
                     fontSize: '11px',
                     fontWeight: 'var(--font-weight-medium)',
                     borderRadius: '8px',
@@ -276,8 +276,8 @@ export function ConsultantCard({ consultant, onClick, onBook, className }: Consu
                     display: 'flex',
                     alignItems: 'center',
                     padding: '0 10px',
-                    background: '#F5F5F5',
-                    color: '#757575',
+                    background: 'var(--grey-1)',
+                    color: 'var(--grey-6)',
                     fontSize: '11px',
                     fontWeight: 'var(--font-weight-medium)',
                     borderRadius: '8px',
@@ -293,7 +293,7 @@ export function ConsultantCard({ consultant, onClick, onBook, className }: Consu
                   style={{
                     height: '32px',
                     borderRadius: '8px',
-                    background: '#1A1A1A',
+                    background: 'var(--grey-9)',
                     color: 'white',
                     fontSize: '12px',
                     fontWeight: 'var(--font-weight-medium)',

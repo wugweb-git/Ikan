@@ -1,6 +1,6 @@
 import { ImageWithFallback } from '../../figma/ImageWithFallback';
 import { ErrorBoundary } from '../../ErrorBoundary';
-import { ButtonPrimary } from '../../buttons';
+import { Button } from '../../ui/button';
 import { cn } from '../../ui/utils';
 import { usePageContent } from '../../../hooks/usePageContent';
 import { useMemo, useState, useEffect, useRef } from 'react';
@@ -335,7 +335,7 @@ export function HeroSection({ onGetStarted }: HeroSectionProps) {
               >
                 {description}
               </p>
-              <ButtonPrimary
+              <Button
                 onClick={onGetStarted}
                 className="ikan-button w-full mobile-button touch-target"
                 style={{
@@ -345,7 +345,7 @@ export function HeroSection({ onGetStarted }: HeroSectionProps) {
                 }}
               >
                 {ctaText}
-              </ButtonPrimary>
+              </Button>
             </div>
 
             {/* Mobile: horizontal auto-scroll marquee */}
@@ -398,7 +398,7 @@ export function HeroSection({ onGetStarted }: HeroSectionProps) {
                 >
                   {description}
                 </p>
-                <ButtonPrimary
+                <Button
                   onClick={onGetStarted}
                   className="ikan-button"
                   style={{
@@ -408,7 +408,7 @@ export function HeroSection({ onGetStarted }: HeroSectionProps) {
                   }}
                 >
                   {ctaText}
-                </ButtonPrimary>
+                </Button>
               </div>
             </div>
 

@@ -49,7 +49,7 @@ export function PublicNavBar({ currentRoute, onNavigate, onSignIn, className }: 
       )}
       style={{ 
         backgroundColor: 'var(--color-bg-card)', 
-        border: '1px solid #D1D5DB',
+        border: '1px solid var(--color-border-default)',
         zIndex: 'var(--z-nav)',
         minWidth: 'var(--constraint-nav-desktop-min)',
         maxWidth: 'var(--constraint-nav-desktop-max)',

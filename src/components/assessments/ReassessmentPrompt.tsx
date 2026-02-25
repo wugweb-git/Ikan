@@ -31,8 +31,8 @@ export function ReassessmentPrompt({ isOpen, onClose, onConfirm }: ReassessmentP
           animate={{ y: 0, opacity: 1 }}
           exit={{ y: "100%", opacity: 0 }}
           transition={{ type: "spring", damping: 25, stiffness: 300 }}
-          className="w-full sm:max-w-md rounded-t-[32px] sm:rounded-[32px] p-8 pb-10 shadow-2xl pointer-events-auto relative m-4"
-          style={{ backgroundColor: 'var(--color-bg-card)' }}
+          className="w-full sm:max-w-md p-8 pb-10 shadow-2xl pointer-events-auto relative m-4"
+          style={{ backgroundColor: 'var(--color-bg-card)', borderRadius: 'var(--radius-xl)' }}
         >
           <button 
             onClick={onClose}

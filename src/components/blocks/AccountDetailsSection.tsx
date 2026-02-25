@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent } from '../ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
-import { TextInput } from '../inputs/TextInput';
 import { Button } from '../ui/button';
 import { cn } from '../ui/utils';
 import { Textarea } from '../ui/textarea';
@@ -89,7 +88,7 @@ function UserAvatar({ user, onAvatarChange, onRemoveAvatar, isEditing = false, u
   return (
     <div className="flex items-center gap-6">
       <div className="relative shrink-0">
-        <Avatar className="w-[89px] h-[89px] border border-[rgba(0,0,0,0.1)]">
+        <Avatar className="w-[89px] h-[89px] border" style={{ borderColor: 'var(--color-border-default)' }}>
           <AvatarImage src={user?.avatar} alt={user?.name} className="object-cover" />
           <AvatarFallback className="text-[20px] font-medium tracking-[-0.45px]" style={{ backgroundColor: 'var(--color-primary-default)', color: 'var(--color-text-inverse)' }}>
             {user?.name ? getInitials(user.name) : 'U'}
@@ -311,8 +310,8 @@ export function AccountDetailsSection({
               <Button
                 onClick={handleSave}
                 disabled={loading}
-                className="rounded-[8px] px-[20px] py-[10px] text-[14px] font-medium h-auto flex items-center gap-2"
-                style={{ backgroundColor: 'var(--color-primary-default)', color: 'var(--color-text-inverse)' }}
+                className="px-[20px] py-[10px] text-[14px] font-medium h-auto flex items-center gap-2"
+                style={{ backgroundColor: 'var(--color-primary-default)', color: 'var(--color-text-inverse)', borderRadius: 'var(--radius-sm)' }}
               >
                 <Save className="w-4 h-4" />
                 {loading ? 'Saving...' : 'Save Profile'}
@@ -321,8 +320,8 @@ export function AccountDetailsSection({
               <Button
                 onClick={() => setIsEditing(true)}
                 disabled={!editable}
-                className="rounded-[8px] px-[20px] py-[10px] text-[14px] font-medium h-auto flex items-center gap-2"
-                style={{ backgroundColor: 'var(--color-primary-default)', color: 'var(--color-text-inverse)' }}
+                className="px-[20px] py-[10px] text-[14px] font-medium h-auto flex items-center gap-2"
+                style={{ backgroundColor: 'var(--color-primary-default)', color: 'var(--color-text-inverse)', borderRadius: 'var(--radius-sm)' }}
               >
                 <Pencil className="w-4 h-4" />
                 Edit Profile
@@ -330,8 +329,8 @@ export function AccountDetailsSection({
             )}
             <Button
               variant="destructive"
-              className="rounded-[8px] px-[20px] py-[10px] text-[14px] font-medium h-auto flex items-center gap-2"
-              style={{ backgroundColor: 'var(--color-primary-default)', color: 'var(--color-text-inverse)' }}
+              className="px-[20px] py-[10px] text-[14px] font-medium h-auto flex items-center gap-2"
+              style={{ backgroundColor: 'var(--color-primary-default)', color: 'var(--color-text-inverse)', borderRadius: 'var(--radius-sm)' }}
             >
               <Trash2 className="w-4 h-4" />
               Delete Profile
@@ -343,12 +342,15 @@ export function AccountDetailsSection({
   };
 
   // Common Input Styles for Mobile consistency
-  const inputContainerClass = "rounded-[12px] h-[56px] w-full relative";
+  const inputContainerClass = "h-[56px] w-full relative";
   const inputClass = "bg-transparent border-none h-full w-full pl-[40px] pr-[12px] py-[12px] text-[16px] tracking-[-0.31px] focus:ring-0 focus:outline-none";
   const labelClass = "text-[16px] font-medium tracking-[-0.3px] mb-[4px]";
-  const cardClass = "rounded-[16px] border border-[rgba(0,0,0,0.1)] shadow-none p-0 overflow-hidden";
+  const cardClass = "shadow-none p-0 overflow-hidden border";
+  const cardStyle = { borderColor: 'var(--color-border-default)', borderRadius: 'var(--radius-lg)' } as React.CSSProperties;
   const cardHeaderClass = "h-[68px] px-[24px] flex items-center gap-[12px]";
   const cardTitleClass = "text-[16px] font-normal tracking-[-0.62px]";
+  const inputBorderClass = "absolute inset-0 border pointer-events-none" ;
+  const inputBorderStyle = { borderColor: 'var(--color-border-default)', borderRadius: 'var(--radius-md)' } as React.CSSProperties;
 
   // Helper for input icons
   const InputIcon = ({ path }: { path: string }) => (
@@ -365,7 +367,7 @@ export function AccountDetailsSection({
 
       <div className={cn("flex flex-col", isMobile ? "gap-[20px] pb-6" : "gap-[24px]")}>
         {/* Profile Information */}
-        <Card className={cardClass}>
+        <Card className={cardClass} style={cardStyle}>
           <div className={cardHeaderClass}>
             <IconProfile />
             <h2 className={cardTitleClass}>Profile Information</h2>
@@ -383,7 +385,7 @@ export function AccountDetailsSection({
               <div>
                 <label className={labelClass}>Full Name</label>
                 <div className={inputContainerClass}>
-                  <div className="absolute inset-0 border border-[rgba(0,0,0,0.1)] rounded-[12px] pointer-events-none" />
+                  <div className={inputBorderClass} style={inputBorderStyle} />
                   <InputIcon path={svgPaths.p30a1bda0} /> {/* User Icon */}
                   <input
                     value={formData.name}
@@ -399,7 +401,7 @@ export function AccountDetailsSection({
               <div>
                 <label className={labelClass}>Email Address</label>
                 <div className={inputContainerClass}>
-                  <div className="absolute inset-0 border border-[rgba(0,0,0,0.1)] rounded-[12px] pointer-events-none" />
+                  <div className={inputBorderClass} style={inputBorderStyle} />
                   <InputIcon path={svgPaths.p1db90b80} /> {/* Mail Icon */}
                   <input
                     value={formData.email}
@@ -419,7 +421,7 @@ export function AccountDetailsSection({
               <div>
                 <label className={labelClass}>Phone Number</label>
                 <div className={inputContainerClass}>
-                  <div className="absolute inset-0 border border-[rgba(0,0,0,0.1)] rounded-[12px] pointer-events-none" />
+                  <div className={inputBorderClass} style={inputBorderStyle} />
                   <InputIcon path={svgPaths.p26187580} /> {/* Phone Icon */}
                   <input
                     value={formData.phone}
@@ -435,14 +437,13 @@ export function AccountDetailsSection({
               <div>
                 <label className={labelClass}>Bio</label>
                 <div className="relative w-full">
-                  <div className="absolute inset-0 border border-[rgba(0,0,0,0.1)] rounded-[12px] pointer-events-none" />
+                  <div className={inputBorderClass} style={inputBorderStyle} />
                   <Textarea
                     value={formData.bio}
                     onChange={(e) => handleInputChange('bio', e.target.value)}
                     placeholder="Tell us about yourself..."
-                    className="bg-transparent border-none rounded-[12px] min-h-[48px] tracking-[-0.31px] text-[16px]"
-                    style={{ backgroundColor: 'var(--color-bg-card)', borderColor: 'var(--color-border-default)' }}
-                    disabled={!isEditing}
+                    className="bg-transparent border-none min-h-[48px] tracking-[-0.31px] text-[16px]"
+                    style={{ borderRadius: 'var(--radius-md)' }}
                   />
                 </div>
                 {fieldErrors.bio && <p className="text-[12px] mt-[4px] tracking-[-0.2px]" style={{ color: 'var(--color-status-danger)' }}>{fieldErrors.bio}</p>}
@@ -452,7 +453,7 @@ export function AccountDetailsSection({
         </Card>
 
         {/* Connected Accounts */}
-        <Card className={cardClass}>
+        <Card className={cardClass} style={cardStyle}>
           <div className={cardHeaderClass}>
             <IconConnected />
             <h2 className={cardTitleClass}>Connected Accounts</h2>
@@ -461,8 +462,8 @@ export function AccountDetailsSection({
              <div className="flex gap-[16px] w-full">
                 {/* LinkedIn */}
                 <button 
-                  className="flex-1 h-[56px] rounded-[12px] flex items-center justify-center gap-[8px]"
-                  style={{ backgroundColor: 'var(--color-accent-default)' }}
+                  className="flex-1 h-[56px] flex items-center justify-center gap-[8px]"
+                  style={{ borderRadius: 'var(--radius-md)' }}
                   onClick={() => onSocialSync?.('linkedin', 'connect')}
                   disabled={!isEditing}
                 >
@@ -471,8 +472,8 @@ export function AccountDetailsSection({
                 </button>
                 {/* Google */}
                 <button 
-                  className="flex-1 h-[56px] rounded-[12px] flex items-center justify-center gap-[8px]"
-                  style={{ backgroundColor: 'var(--color-accent-default)' }}
+                  className="flex-1 h-[56px] flex items-center justify-center gap-[8px]"
+                  style={{ borderRadius: 'var(--radius-md)' }}
                   onClick={() => onSocialSync?.('google', 'connect')}
                   disabled={!isEditing}
                 >
@@ -484,7 +485,7 @@ export function AccountDetailsSection({
         </Card>
 
         {/* Personal Details */}
-        <Card className={cardClass}>
+        <Card className={cardClass} style={cardStyle}>
           <div className={cardHeaderClass}>
             <IconPersonal />
             <h2 className={cardTitleClass}>Personal Details</h2>
@@ -494,7 +495,7 @@ export function AccountDetailsSection({
               <div className="flex-1">
                 <label className={labelClass}>Date of Birth</label>
                 <div className={inputContainerClass}>
-                  <div className="absolute inset-0 border border-[rgba(0,0,0,0.1)] rounded-[12px] pointer-events-none" />
+                  <div className={inputBorderClass} style={inputBorderStyle} />
                   <InputIcon path={svgPaths.p39ee6532} /> {/* Calendar Icon */}
                    {/* Using text input type for now to match visual placeholder behavior better than date input which varies by browser */}
                   <input
@@ -516,7 +517,7 @@ export function AccountDetailsSection({
                     onValueChange={(value) => handleInputChange('gender', value)}
                     disabled={!isEditing}
                   >
-                    <SelectTrigger className="w-full border-[rgba(0,0,0,0.1)] rounded-[12px] h-[56px] px-[12px]" style={{ backgroundColor: 'var(--color-bg-page)', color: 'var(--color-text-muted)' }}>
+                    <SelectTrigger className="w-full h-[56px] px-[12px]" style={{ backgroundColor: 'var(--color-bg-page)', color: 'var(--color-text-muted)', borderColor: 'var(--color-border-default)', borderRadius: 'var(--radius-md)' }}>
                       <SelectValue placeholder="Select gender" />
                     </SelectTrigger>
                     <SelectContent>
@@ -533,7 +534,7 @@ export function AccountDetailsSection({
               <div className="flex-1">
                 <label className={labelClass}>City</label>
                 <div className={inputContainerClass}>
-                  <div className="absolute inset-0 border border-[rgba(0,0,0,0.1)] rounded-[12px] pointer-events-none" />
+                  <div className={inputBorderClass} style={inputBorderStyle} />
                   <InputIcon path={svgPaths.p14548f00} /> {/* Location Icon */}
                   <input
                     value={formData.city}
@@ -547,7 +548,7 @@ export function AccountDetailsSection({
               <div className="flex-1">
                 <label className={labelClass}>Zip Code</label>
                 <div className={inputContainerClass}>
-                  <div className="absolute inset-0 border border-[rgba(0,0,0,0.1)] rounded-[12px] pointer-events-none" />
+                  <div className={inputBorderClass} style={inputBorderStyle} />
                   <InputIcon path={svgPaths.p14548f00} /> {/* Location Icon */}
                   <input
                     value={formData.zipCode}
@@ -563,7 +564,7 @@ export function AccountDetailsSection({
         </Card>
 
         {/* Emergency Contact */}
-        <Card className={cardClass}>
+        <Card className={cardClass} style={cardStyle}>
           <div className={cardHeaderClass}>
             <IconEmergency />
             <h2 className={cardTitleClass}>Emergency Contact</h2>
@@ -572,7 +573,7 @@ export function AccountDetailsSection({
             <div>
               <label className={labelClass}>Contact Name</label>
               <div className={inputContainerClass}>
-                <div className="absolute inset-0 border border-[rgba(0,0,0,0.1)] rounded-[12px] pointer-events-none" />
+                <div className={inputBorderClass} style={inputBorderStyle} />
                 <InputIcon path={svgPaths.p30a1bda0} />
                 <input
                   value={formData.emergencyContact.name}
@@ -591,7 +592,7 @@ export function AccountDetailsSection({
             <div>
               <label className={labelClass}>Contact Phone</label>
               <div className={inputContainerClass}>
-                <div className="absolute inset-0 border border-[rgba(0,0,0,0.1)] rounded-[12px] pointer-events-none" />
+                <div className={inputBorderClass} style={inputBorderStyle} />
                 <InputIcon path={svgPaths.p26187580} />
                 <input
                   value={formData.emergencyContact.phone}
@@ -610,7 +611,7 @@ export function AccountDetailsSection({
             <div>
               <label className={labelClass}>Relationship</label>
               <div className={inputContainerClass}>
-                <div className="absolute inset-0 border border-[rgba(0,0,0,0.1)] rounded-[12px] pointer-events-none" />
+                <div className={inputBorderClass} style={inputBorderStyle} />
                 <InputIcon path={svgPaths.p1f890f80} /> {/* Users/Relationship Icon */}
                 <input
                   value={formData.emergencyContact.relationship}

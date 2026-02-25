@@ -167,9 +167,9 @@ export function Preferences() {
               value={preferences.language}
               onValueChange={(value) => handlePreferenceChange('language', value)}
             >
-              <SelectTrigger className="w-full bg-[#f5f5f5] border-[rgba(0,0,0,0.1)] rounded-[12px] h-[56px] text-[#717182]">
+              <SelectTrigger className="w-full h-[56px]" style={{ backgroundColor: 'var(--color-bg-input)', borderColor: 'var(--color-border-default)', color: 'var(--color-text-muted)', borderRadius: 'var(--radius-md)' }}>
                 <div className="flex items-center gap-3">
-                  <Icon name="globe" size={16} className="text-[#717182]" />
+                  <Icon name="globe" size={16} style={{ color: 'var(--color-text-muted)' }} />
                   <SelectValue placeholder="Select language" />
                 </div>
               </SelectTrigger>
@@ -203,9 +203,9 @@ export function Preferences() {
               value={preferences.timezone}
               onValueChange={(value) => handlePreferenceChange('timezone', value)}
             >
-              <SelectTrigger className="w-full bg-[#f5f5f5] border-[rgba(0,0,0,0.1)] rounded-[12px] h-[56px] text-[#717182]">
+              <SelectTrigger className="w-full h-[56px]" style={{ backgroundColor: 'var(--color-bg-input)', borderColor: 'var(--color-border-default)', color: 'var(--color-text-muted)', borderRadius: 'var(--radius-md)' }}>
                 <div className="flex items-center gap-3">
-                  <Icon name="clock" size={16} className="text-[#717182]" />
+                  <Icon name="clock" size={16} style={{ color: 'var(--color-text-muted)' }} />
                   <SelectValue placeholder="Select timezone" />
                 </div>
               </SelectTrigger>
@@ -239,9 +239,9 @@ export function Preferences() {
               value={preferences.fontSize}
               onValueChange={(value) => handlePreferenceChange('fontSize', value as any)}
             >
-              <SelectTrigger className="w-full bg-[#f5f5f5] border-[rgba(0,0,0,0.1)] rounded-[12px] h-[56px] text-[#717182]">
+              <SelectTrigger className="w-full h-[56px]" style={{ backgroundColor: 'var(--color-bg-input)', borderColor: 'var(--color-border-default)', color: 'var(--color-text-muted)', borderRadius: 'var(--radius-md)' }}>
                 <div className="flex items-center gap-3">
-                  <Icon name="fileText" size={16} className="text-[#717182]" />
+                  <Icon name="fileText" size={16} style={{ color: 'var(--color-text-muted)' }} />
                   <SelectValue placeholder="Select font size" />
                 </div>
               </SelectTrigger>
@@ -506,9 +506,9 @@ export function Preferences() {
               value={preferences.measurementSystem}
               onValueChange={(value) => handlePreferenceChange('measurementSystem', value as any)}
             >
-              <SelectTrigger className="w-full bg-[#f5f5f5] border-[rgba(0,0,0,0.1)] rounded-[12px] h-[56px] text-[#717182]">
+              <SelectTrigger className="w-full h-[56px]" style={{ backgroundColor: 'var(--color-bg-input)', borderColor: 'var(--color-border-default)', color: 'var(--color-text-muted)', borderRadius: 'var(--radius-md)' }}>
                 <div className="flex items-center gap-3">
-                  <Icon name="sliders" size={16} className="text-[#717182]" />
+                  <Icon name="sliders" size={16} style={{ color: 'var(--color-text-muted)' }} />
                   <SelectValue placeholder="Select system" />
                 </div>
               </SelectTrigger>

@@ -103,8 +103,8 @@ export function FAQSection({ onNavigate }: FAQSectionProps) {
                   <AccordionItem
                     key={index}
                     value={`item-${index}`}
-                    className="border-b border-[#EBEBEB] last:border-b-0"
-                    style={{ borderColor: '#EBEBEB' }}
+                    className="border-b last:border-b-0"
+                    style={{ borderColor: 'var(--color-border-default)' }}
                   >
                     <AccordionTrigger
                       className="py-5 hover:no-underline"

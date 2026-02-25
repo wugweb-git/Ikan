@@ -56,7 +56,7 @@ function SliderResourceCard({ post, onClick, isMobile }: { post: ResourcePost; o
       {/* Image — prominent, top of card */}
       <div
         className="relative overflow-hidden w-full"
-        style={{ height: '190px', backgroundColor: '#E9EBEF' }}
+        style={{ height: '190px', backgroundColor: 'var(--color-accent-default)' }}
       >
         <ImageWithFallback
           src={imageSrc}
@@ -258,7 +258,7 @@ export function ResourceBlock({
               height: '36px',
               borderRadius: '50%',
               backgroundColor: canScrollLeft ? 'var(--color-primary-default)' : 'var(--color-accent-default)',
-              color: canScrollLeft ? '#FFFFFF' : 'var(--color-text-muted)',
+              color: canScrollLeft ? 'var(--color-text-inverse)' : 'var(--color-text-muted)',
               opacity: canScrollLeft ? 1 : 0.4,
             }}
             aria-label="Scroll left"
@@ -274,7 +274,7 @@ export function ResourceBlock({
               height: '36px',
               borderRadius: '50%',
               backgroundColor: canScrollRight ? 'var(--color-primary-default)' : 'var(--color-accent-default)',
-              color: canScrollRight ? '#FFFFFF' : 'var(--color-text-muted)',
+              color: canScrollRight ? 'var(--color-text-inverse)' : 'var(--color-text-muted)',
               opacity: canScrollRight ? 1 : 0.4,
             }}
             aria-label="Scroll right"
@@ -292,7 +292,7 @@ export function ResourceBlock({
             className="absolute top-0 bottom-0 left-0 z-10 pointer-events-none"
             style={{
               width: '48px',
-              background: 'linear-gradient(to right, var(--color-bg-page, #F5F5F5), transparent)',
+              background: 'linear-gradient(to right, var(--color-bg-page), transparent)',
             }}
           />
         )}
@@ -301,7 +301,7 @@ export function ResourceBlock({
             className="absolute top-0 bottom-0 right-0 z-10 pointer-events-none"
             style={{
               width: '48px',
-              background: 'linear-gradient(to left, var(--color-bg-page, #F5F5F5), transparent)',
+              background: 'linear-gradient(to left, var(--color-bg-page), transparent)',
             }}
           />
         )}

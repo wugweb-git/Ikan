@@ -66,7 +66,7 @@ export function NewsletterBlock({
         {/* Dark newsletter card */}
         <div
           style={{
-            backgroundColor: '#0a0a0a',
+            backgroundColor: 'var(--grey-10)',
             borderRadius: isMobile ? '24px' : '28px',
             padding: isMobile ? '36px 24px' : '56px 56px',
             display: 'flex',
@@ -92,7 +92,7 @@ export function NewsletterBlock({
                 fontWeight: 'var(--font-weight-medium)',
                 fontSize: isMobile ? '28px' : '36px',
                 lineHeight: '1.2',
-                color: '#FFFFFF',
+                color: 'var(--color-text-inverse)',
                 margin: 0,
               }}
             >
@@ -163,7 +163,7 @@ export function NewsletterBlock({
                     fontFamily: 'var(--font-family-base)',
                     fontWeight: 'var(--font-weight-medium)',
                     fontSize: '16px',
-                    color: '#4ABDAC',
+                    color: 'var(--color-status-success)',
                     margin: 0,
                   }}
                 >
@@ -182,10 +182,10 @@ export function NewsletterBlock({
               >
                 <div
                   style={{
-                    backgroundColor: '#efefef',
+                    backgroundColor: 'var(--color-bg-input)',
                     borderRadius: '10px',
                     flex: 1,
-                    height: '48px',
+                    height: 'var(--ikan-component-button-height)',
                     display: 'flex',
                     alignItems: 'center',
                     padding: '0 16px',
@@ -204,7 +204,7 @@ export function NewsletterBlock({
                       width: '100%',
                       fontFamily: 'var(--font-family-base)',
                       fontSize: '14px',
-                      color: '#333',
+                      color: 'var(--grey-8)',
                     }}
                   />
                 </div>
@@ -212,16 +212,16 @@ export function NewsletterBlock({
                   type="submit"
                   disabled={isSubmitting}
                   style={{
-                    backgroundColor: isSubmitting ? '#D4A017' : '#FFBE1A',
+                    backgroundColor: isSubmitting ? 'var(--color-status-warning)' : 'var(--color-status-warning-light)',
                     borderRadius: '10px',
                     border: 'none',
-                    height: '48px',
+                    height: 'var(--ikan-component-button-height)',
                     padding: '0 24px',
                     cursor: 'pointer',
                     fontFamily: 'var(--font-family-base)',
                     fontWeight: 'var(--font-weight-medium)',
                     fontSize: '14px',
-                    color: '#2A2A2A',
+                    color: 'var(--color-primary-default)',
                     whiteSpace: 'nowrap',
                     display: 'flex',
                     alignItems: 'center',
@@ -246,7 +246,7 @@ export function NewsletterBlock({
               <p style={{
                 fontFamily: 'var(--font-family-base)',
                 fontSize: '13px',
-                color: '#F87171',
+                color: 'var(--color-status-danger)',
                 margin: '4px 0 0',
                 textAlign: 'center'
               }}>

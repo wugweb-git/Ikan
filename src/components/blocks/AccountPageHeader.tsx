@@ -33,12 +33,12 @@ export function AccountPageHeader({
                 <ChevronLeft className="h-6 w-6" />
               </Button>
             )}
-            <h1 className="text-[30px] font-medium text-[#151515] leading-[36px] tracking-[0.35px]">
+            <h1 className="text-[30px] font-medium leading-[36px] tracking-[0.35px]" style={{ color: 'var(--color-text-primary)' }}>
               {title}
             </h1>
           </div>
           {subtitle && (
-            <p className="text-[14px] text-[#151515] leading-[27px] tracking-[-0.44px]">
+            <p className="text-[14px] leading-[27px] tracking-[-0.44px]" style={{ color: 'var(--color-text-primary)' }}>
               {subtitle}
             </p>
           )}

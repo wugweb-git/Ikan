@@ -186,7 +186,7 @@ export function AuthForm({ onSuccess, defaultTab = 'signin' }: AuthFormProps) {
         borderColor: 'var(--color-border-default)',
         color: 'var(--color-text-primary)',
         fontWeight: 'var(--font-weight-medium)',
-        minHeight: '48px',
+        minHeight: 'var(--ikan-component-button-height)',
         fontSize: 'var(--text-sm)',
         borderRadius: 'var(--radius-md)'
       }}

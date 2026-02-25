@@ -50,9 +50,9 @@ export function ResourceType({ activeType, onTypeChange, className }: ResourceTy
               paddingRight: 'var(--spacing-5)',
               paddingTop: 'var(--spacing-3)',
               paddingBottom: 'var(--spacing-3)',
-              backgroundColor: isActive ? '#2e2a2f' : 'white',
-              color: isActive ? 'white' : '#757575',
-              border: isActive ? 'none' : '1px solid #d9d9d9',
+              backgroundColor: isActive ? 'var(--color-primary-default)' : 'white',
+              color: isActive ? 'white' : 'var(--grey-6)',
+              border: isActive ? 'none' : '1px solid var(--grey-3)',
               fontSize: 'var(--text-sm)'
             }}
           >

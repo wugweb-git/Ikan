@@ -313,7 +313,7 @@ export function SideNavAccount({
     <div 
       className={cn(
         "flex flex-col items-start relative w-full",
-        isMobile ? "bg-transparent p-0 border-none" : "bg-white p-5 border border-[#D1D5DB] rounded-[12px]",
+        isMobile ? "bg-transparent p-0 border-none" : "bg-white p-5 border border-[var(--color-border-default)]",
         className
       )} 
       style={{
@@ -328,7 +328,7 @@ export function SideNavAccount({
             {/* Separator between groups (desktop only or specific mobile logic if needed) */}
             {/* Mobile design doesn't explicitly show separators between groups, just spacing. 
                 Desktop has them. Keeping desktop behavior, hiding on mobile if spacing handles it. */}
-            {!isMobile && index > 0 && <Separator className="mb-[12px] bg-[#E5E7EB]" />}
+            {!isMobile && index > 0 && <Separator className="mb-[12px] bg-[var(--color-border-default)]" />}
 
             {/* Group Header */}
             <div 
@@ -340,7 +340,7 @@ export function SideNavAccount({
               onClick={() => group.collapsible && toggleGroup(group.id)}
             >
               <h3 className={cn(
-                "font-medium text-[#717182] uppercase tracking-[0.6px]",
+                "font-medium text-[var(--color-text-muted)] uppercase tracking-[0.6px]",
                 isMobile ? "text-[13px] leading-[18px]" : "text-[12px] leading-[18px]"
               )}>
                 {group.title}
@@ -348,11 +348,11 @@ export function SideNavAccount({
               {group.collapsible && (
                 <div 
                   className={cn(
-                    "text-[#717182] transition-transform duration-200",
+                    "text-[var(--color-text-muted)] transition-transform duration-200",
                     expandedGroups[group.id] ? "rotate-0" : "rotate-180"
                   )}
                 >
-                  <IconChevron color="#717182" />
+                  <IconChevron color="var(--color-text-muted)" />
                 </div>
               )}
             </div>
@@ -378,40 +378,41 @@ export function SideNavAccount({
                           <div className="flex flex-row items-center justify-between w-full h-full">
                             <div className="flex gap-[12px] items-center">
                               <div className="shrink-0 w-[24px] flex items-center justify-center">
-                                <Icon color="#151515" />
+                                <Icon color="var(--color-text-primary)" />
                               </div>
-                              <div className="flex flex-col justify-center leading-none text-[#151515] font-medium text-[16px]">
+                              <div className="flex flex-col justify-center leading-none text-[var(--color-text-primary)] font-medium text-[16px]">
                                 {item.label}
                               </div>
                             </div>
-                            <ChevronRight className="w-5 h-5 text-[#C7C7CC]" />
+                            <ChevronRight className="w-5 h-5 text-[var(--color-text-muted)]" />
                           </div>
                         </button>
                       );
                   }
 
                   const desktopButtonClasses = isActive 
-                    ? "bg-[#2a2a2a] border-[#2a2a2a]" 
-                    : "bg-white border-[#D1D5DB] hover:bg-[#f5f5f5]";
+                    ? "bg-[var(--color-primary-default)] border-[var(--color-primary-default)]" 
+                    : "bg-white border-[var(--color-border-default)] hover:bg-[var(--color-bg-page)]";
                   
                   return (
                     <button
                       key={item.id}
                       onClick={() => onNavigate(item.route)}
                       className={cn(
-                        "relative w-full transition-all duration-200 overflow-hidden group flex items-center rounded-[12px] h-[50px] border",
+                        "relative w-full transition-all duration-200 overflow-hidden group flex items-center h-[50px] border",
                         desktopButtonClasses
                       )}
+                      style={{ borderRadius: 'var(--radius-md)' }}
                     >
                       <div className="flex flex-row items-center justify-between w-full h-full px-[20px]">
                         <div className="flex gap-[12px] items-center">
                           <div className="shrink-0 w-[24px] flex items-center justify-center">
-                            <Icon color={isActive ? "white" : "#151515"} />
+                            <Icon color={isActive ? "white" : "var(--color-text-primary)"} />
                           </div>
                           <div className={cn(
                             "flex flex-col justify-center leading-[0] not-italic relative shrink-0 text-nowrap font-medium h-[28px]",
                             "text-[14px]",
-                            isActive ? "text-white" : "text-[#151515]"
+                            isActive ? "text-white" : "text-[var(--color-text-primary)]"
                           )}>
                             <p className="leading-[28px]">{item.label}</p>
                           </div>
@@ -427,7 +428,7 @@ export function SideNavAccount({
 
         {onLogout && (
           <div className={cn("w-full", isMobile ? "mt-[24px]" : "mt-[12px]")}>
-             {!isMobile && <Separator className="mb-[17px] bg-[#E5E7EB]" />}
+             {!isMobile && <Separator className="mb-[17px] bg-[var(--color-border-default)]" />}
              
              {isMobile ? (
                 <div className="settings-group">
@@ -438,13 +439,13 @@ export function SideNavAccount({
                       <div className="flex flex-row items-center justify-between w-full h-full">
                         <div className="flex gap-[12px] items-center">
                           <div className="shrink-0 w-[24px] flex items-center justify-center">
-                            <IconLogOut color="#151515" />
+                            <IconLogOut color="var(--color-text-primary)" />
                           </div>
-                          <div className="flex flex-col justify-center leading-none text-[#151515] font-medium text-[16px]">
+                          <div className="flex flex-col justify-center leading-none text-[var(--color-text-primary)] font-medium text-[16px]">
                             Log out
                           </div>
                         </div>
-                        <ChevronRight className="w-5 h-5 text-[#C7C7CC]" />
+                        <ChevronRight className="w-5 h-5 text-[var(--color-text-muted)]" />
                       </div>
                     </button>
                 </div>
@@ -452,16 +453,16 @@ export function SideNavAccount({
              <button
               onClick={onLogout}
               className={cn(
-                "relative w-full transition-all duration-200 group flex items-center rounded-[12px] h-[50px] border hover:bg-[var(--color-status-danger-light)]"
+                "relative w-full transition-all duration-200 group flex items-center h-[50px] border hover:bg-[var(--color-status-danger-light)]"
               )}
-              style={{ backgroundColor: 'var(--color-bg-card)', borderColor: 'var(--color-border-default)' }}
+              style={{ backgroundColor: 'var(--color-bg-card)', borderColor: 'var(--color-border-default)', borderRadius: 'var(--radius-md)' }}
             >
               <div className="flex flex-row items-center justify-between w-full h-full px-[20px]">
                 <div className="flex gap-[12px] items-center">
                   <div className="shrink-0 w-[24px] flex items-center justify-center">
-                    <IconLogOut color="#151515" />
+                    <IconLogOut color="var(--color-text-primary)" />
                   </div>
-                  <div className="flex flex-col justify-center leading-[0] not-italic relative shrink-0 text-[#151515] group-hover:text-[var(--color-status-danger)] text-nowrap font-medium h-[28px] text-[14px]">
+                  <div className="flex flex-col justify-center leading-[0] not-italic relative shrink-0 text-[var(--color-text-primary)] group-hover:text-[var(--color-status-danger)] text-nowrap font-medium h-[28px] text-[14px]">
                     <p className="leading-[28px]">Log out</p>
                   </div>
                 </div>

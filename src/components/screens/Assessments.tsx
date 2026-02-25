@@ -531,7 +531,7 @@ export function Assessments({ className, onNavigate }: AssessmentsProps) {
                       </div>
                       <div className="bg-white/10 rounded-lg p-3 text-center backdrop-blur-sm">
                         <div className="text-xs mb-1" style={{ color: 'rgba(255,255,255,0.5)' }}>Plan</div>
-                        <div className="font-medium" style={{ color: '#A78BFA' }}>Action</div>
+                        <div className="font-medium" style={{ color: 'var(--color-status-info)' }}>Action</div>
                       </div>
                    </div>
                  </>

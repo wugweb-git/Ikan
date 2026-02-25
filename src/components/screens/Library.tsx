@@ -162,12 +162,12 @@ export function Library({ onResourceSelect, onNavigate, className }: LibraryProp
             {/* Featured Card (Left) */}
             <div className="lg:col-span-7 flex flex-col">
               {loading ? (
-                 <div className="w-full h-[500px] bg-black/5 rounded-[32px] animate-pulse" />
+                 <div className="w-full h-[500px] bg-black/5 animate-pulse" style={{ borderRadius: 'var(--radius-xl)' }} />
               ) : featuredResource ? (
                 <div 
-                  className="rounded-[32px] p-6 md:p-8 flex flex-col h-full hover:shadow-lg transition-shadow duration-300 cursor-pointer group"
+                  className="p-6 md:p-8 flex flex-col h-full hover:shadow-lg transition-shadow duration-300 cursor-pointer group"
                   onClick={() => handleResourceClick(featuredResource)}
-                  style={{ backgroundColor: 'var(--color-bg-card)' }}
+                  style={{ backgroundColor: 'var(--color-bg-card)', borderRadius: 'var(--radius-xl)' }}
                 >
                   <div className="relative w-full aspect-[16/10] rounded-2xl overflow-hidden mb-8" style={{ backgroundColor: 'var(--ikan-brand-library-accent)' }}>
                     <ImageWithFallback

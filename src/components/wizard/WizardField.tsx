@@ -143,24 +143,25 @@ export function WizardField({ field, value, onChange, onAutoAdvance, error, wiza
                         }
                      }}
                      className={cn(
-                       "cursor-pointer rounded-[16px] transition-all p-[20px] flex items-center",
-                       "min-h-[64px]", // Taller touch target
+                       "cursor-pointer transition-all p-[20px] flex items-center",
+                       "min-h-[64px]",
                        isSelected 
-                         ? "border-2 border-[#1A1A1A] bg-[#FFFFFF]" 
-                         : "border border-[#E4E4E4] bg-[#F5F5F5] hover:bg-[#FFFFFF] hover:border-[#D9D9D9]"
+                         ? "border-2 border-[var(--grey-9)] bg-[var(--color-bg-card)]" 
+                         : "border border-[var(--grey-2)] bg-[var(--grey-1)] hover:bg-[var(--color-bg-card)] hover:border-[var(--grey-3)]"
                      )}
+                     style={{ borderRadius: 'var(--radius-lg)' }}
                    >
                      {/* Radio Circle Indicator */}
                      <div className={cn(
                         "w-5 h-5 rounded-full border-2 mr-4 flex-shrink-0 transition-colors",
-                        isSelected ? "border-[#1A1A1A] bg-[#1A1A1A]" : "border-[#D9D9D9] bg-transparent"
+                        isSelected ? "border-[var(--color-primary-default)] bg-[var(--color-primary-default)]" : "border-[var(--grey-3)] bg-transparent"
                      )}>
-                        {isSelected && <div className="w-full h-full rounded-full bg-[#1A1A1A]" />}
+                        {isSelected && <div className="w-full h-full rounded-full bg-[var(--color-primary-default)]" />}
                      </div>
 
                      <div className="flex-1">
-                        <div className={cn("text-[var(--text-base)] font-medium", isSelected ? "text-[#1A1A1A]" : "text-[#333333]")}>{opt.label}</div>
-                        {opt.description && <div className="text-[var(--text-sm)] text-[#757575] mt-1">{opt.description}</div>}
+                        <div className={cn("text-[var(--text-base)] font-medium", isSelected ? "text-[var(--color-text-primary)]" : "text-[var(--grey-7)]")}>{opt.label}</div>
+                        {opt.description && <div className="text-[var(--text-sm)] text-[var(--color-text-muted)] mt-1">{opt.description}</div>}
                      </div>
                    </div>
                  );

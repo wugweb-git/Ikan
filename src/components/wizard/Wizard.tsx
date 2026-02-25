@@ -165,7 +165,7 @@ export function Wizard({
         {/* Footer Controls */}
         {!isIntro && !isOutro && (
             config.layout === 'centered' ? (
-                <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-[#E4E4E4] py-6 z-50">
+                <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-[var(--color-border-default)] py-6 z-50">
                     <div className="max-w-[1280px] mx-auto px-10 w-full">
                         <WizardControls 
                           onNext={goToNext}

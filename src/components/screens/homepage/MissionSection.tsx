@@ -212,7 +212,7 @@ export function MissionSection() {
                 src={logo.src}
                 alt={logo.alt}
                 style={{
-                  height: '48px',
+                  height: 'var(--ikan-component-button-height)',
                   width: 'auto',
                   objectFit: 'contain',
                   flexShrink: 0,

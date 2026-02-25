@@ -895,16 +895,16 @@ export function Security() {
       </Card>
 
       {/* Security Tips - DARK THEME */}
-      <Card style={{ backgroundColor: '#1A1A1A', border: 'none', borderRadius: '16px' }}>
+      <Card style={{ backgroundColor: 'var(--color-primary-default)', border: 'none', borderRadius: 'var(--radius-lg)' }}>
         <CardContent className="p-6">
           <div className="flex items-start gap-3">
-            <Icon name="alertTriangle" size={20} style={{ color: '#F59E0B' }} /> {/* Warning color kept but brightened/checked */}
+            <Icon name="alertTriangle" size={20} style={{ color: 'var(--color-status-warning)' }} />
             <div>
               <h4 
                 style={{ 
                   fontSize: 'var(--text-base)', 
                   fontWeight: 'var(--font-weight-medium)',
-                  color: '#FFFFFF',
+                  color: 'var(--color-text-inverse)',
                   marginBottom: 'var(--spacing-2)'
                 }}
               >
@@ -912,7 +912,7 @@ export function Security() {
               </h4>
               <ul style={{ 
                 fontSize: 'var(--text-sm)', 
-                color: '#A0A0A0',
+                color: 'var(--grey-5)',
                 lineHeight: 'var(--line-height-md)',
                 paddingLeft: 'var(--spacing-4)',
                 listStyle: 'disc'

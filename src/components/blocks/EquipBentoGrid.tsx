@@ -50,10 +50,10 @@ interface EquipBentoGridProps {
 }
 
 const CheckIcon = () => (
-  <div className="relative shrink-0 size-[20px]">
+  <div className="relative shrink-0 size-[20px]" style={{ color: 'var(--color-text-muted)' }}>
     <svg className="block size-full" fill="none" viewBox="0 0 18 18">
-      <path d="M8.9579 17.2908C13.5601 17.2908 17.2908 13.5601 17.2908 8.9579C17.2908 4.35575 13.5601 0.62497 8.9579 0.62497C4.35575 0.62497 0.62497 4.35575 0.62497 8.9579C0.62497 13.5601 4.35575 17.2908 8.9579 17.2908Z" stroke="#717182" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.25" />
-      <path d="M5.62497 8.9583L7.29156 10.6249L12.2916 5.62497" stroke="#717182" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.25" />
+      <path d="M8.9579 17.2908C13.5601 17.2908 17.2908 13.5601 17.2908 8.9579C17.2908 4.35575 13.5601 0.62497 8.9579 0.62497C4.35575 0.62497 0.62497 4.35575 0.62497 8.9579C0.62497 13.5601 4.35575 17.2908 8.9579 17.2908Z" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.25" />
+      <path d="M5.62497 8.9583L7.29156 10.6249L12.2916 5.62497" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.25" />
     </svg>
   </div>
 );
@@ -94,12 +94,7 @@ export function EquipBentoGrid({
     eligibilityPoint4 || section1?.isThisForYou?.points?.[3]
   ].filter(Boolean) as string[];
 
-  // 4 Tiles Data (Use section4.points or fallbacks)
-  // Mapping to Figma:
-  // Tile 1: Understand your sleep better
-  // Tile 2: Manage sleep-related thoughts
-  // Tile 3: Build sleep-friendly habits
-  // Tile 4: Develop reusable tools
+  // 4 Tiles Data
   const tilesData = [
     {
       title: "Understand your sleep better",
@@ -149,8 +144,8 @@ export function EquipBentoGrid({
 
   // How it works steps
   let howItWorksSteps = section3?.description || [
-    "First, you’ll learn practical techniques to calm your mind and improve sleep hygiene.",
-    "Then, you’ll build a personalized bedtime routine and practice these skills consistently."
+    "First, you'll learn practical techniques to calm your mind and improve sleep hygiene.",
+    "Then, you'll build a personalized bedtime routine and practice these skills consistently."
   ];
 
   // Safety check for howItWorksSteps
@@ -162,8 +157,9 @@ export function EquipBentoGrid({
 
   return (
     <section 
-      className={cn("w-full bg-[#f5f5f5]", className)}
+      className={cn("w-full", className)}
       style={{
+        backgroundColor: 'var(--color-bg-page)',
         paddingTop: '20px',
         paddingBottom: '20px'
       }}
@@ -177,8 +173,8 @@ export function EquipBentoGrid({
             
             {/* MAIN CARD - Order 1 */}
             <div 
-              className="bg-white rounded-[16px] p-[24px] lg:p-[32px] relative order-1"
-              style={{ border: '1px solid rgba(0,0,0,0.1)' }}
+              className="p-[24px] lg:p-[32px] relative order-1"
+              style={{ backgroundColor: 'var(--color-bg-card)', borderRadius: 'var(--radius-lg)', border: '1px solid var(--color-border-default)' }}
             >
               <div className="flex flex-col gap-[32px]">
                 
@@ -187,10 +183,10 @@ export function EquipBentoGrid({
                   <h2 
                     style={{
                       fontFamily: 'var(--font-family-base)',
-                      fontWeight: 400,
+                      fontWeight: 'var(--font-weight-regular)',
                       fontSize: '26px',
                       lineHeight: '24px',
-                      color: '#151515',
+                      color: 'var(--color-text-primary)',
                       margin: 0
                     }}
                   >
@@ -202,10 +198,10 @@ export function EquipBentoGrid({
                         key={i} 
                         style={{
                           fontFamily: 'var(--font-family-base)',
-                          fontWeight: 400,
-                          fontSize: '16px',
+                          fontWeight: 'var(--font-weight-regular)',
+                          fontSize: 'var(--text-base)',
                           lineHeight: '24px',
-                          color: '#151515',
+                          color: 'var(--color-text-primary)',
                           margin: 0
                         }}
                       >
@@ -218,10 +214,10 @@ export function EquipBentoGrid({
                 {/* Is This For You Section */}
                 <div className="flex flex-col lg:flex-row gap-[24px] lg:gap-[49px] items-start">
                   <div className="flex flex-col gap-[14px]">
-                    <p style={{ fontFamily: 'var(--font-family-base)', fontWeight: 500, fontSize: '14px', lineHeight: '24px', color: '#151515', textTransform: 'uppercase' }}>
+                    <p style={{ fontFamily: 'var(--font-family-base)', fontWeight: 'var(--font-weight-medium)', fontSize: 'var(--text-sm)', lineHeight: '24px', color: 'var(--color-text-primary)', textTransform: 'uppercase' }}>
                       IS THIS FOR YOU?
                     </p>
-                    <p style={{ fontFamily: 'var(--font-family-base)', fontWeight: 400, fontSize: '18px', lineHeight: '24px', color: '#151515', maxWidth: '167px' }}>
+                    <p style={{ fontFamily: 'var(--font-family-base)', fontWeight: 'var(--font-weight-regular)', fontSize: '18px', lineHeight: '24px', color: 'var(--color-text-primary)', maxWidth: '167px' }}>
                       {eligibilityIntro || "Sleep Tight may be helpful if:"}
                     </p>
                   </div>
@@ -229,11 +225,11 @@ export function EquipBentoGrid({
                   {/* Checklist Grid */}
                   <div className="w-full grid grid-cols-1 lg:grid-cols-2 gap-[18px]">
                     {eligibilityPoints.map((point, idx) => (
-                      <div key={idx} className="bg-[#f5f5f5] rounded-[12px] p-[12px] flex items-center gap-[12px] w-full">
-                        <div className="bg-white rounded-full size-[40px] flex items-center justify-center shrink-0">
+                      <div key={idx} className="p-[12px] flex items-center gap-[12px] w-full" style={{ backgroundColor: 'var(--color-bg-page)', borderRadius: 'var(--radius-md)' }}>
+                        <div className="rounded-full size-[40px] flex items-center justify-center shrink-0" style={{ backgroundColor: 'var(--color-bg-card)' }}>
                           <CheckIcon />
                         </div>
-                        <p style={{ fontFamily: 'var(--font-family-base)', fontWeight: 400, fontSize: '14px', lineHeight: '21px', color: '#171717' }}>
+                        <p style={{ fontFamily: 'var(--font-family-base)', fontWeight: 'var(--font-weight-regular)', fontSize: 'var(--text-sm)', lineHeight: '21px', color: 'var(--color-text-primary)' }}>
                           {point}
                         </p>
                       </div>
@@ -250,26 +246,15 @@ export function EquipBentoGrid({
               <div className="grid grid-cols-2 lg:flex lg:flex-row w-full">
                 {tilesData.map((tile, idx) => {
                   const Icon = tile.icon;
-                  // Border radius logic
-                  // Mobile (2 cols):
-                  // 0: TL  1: TR
-                  // 2: BL  3: BR
-                  // Desktop (4 cols):
-                  // 0: L   3: R
-                  
                   const isFirst = idx === 0;
                   const isLast = idx === tilesData.length - 1;
-                  const isSecond = idx === 1;
-                  const isThird = idx === 2;
 
                   let roundedClass = "";
-                  // Mobile classes (default)
                   if (idx === 0) roundedClass = "rounded-tl-[16px]";
                   else if (idx === 1) roundedClass = "rounded-tr-[16px]";
                   else if (idx === 2) roundedClass = "rounded-bl-[16px]";
                   else if (idx === 3) roundedClass = "rounded-br-[16px]";
 
-                  // Desktop overrides
                   const desktopRounded = isFirst ? "lg:rounded-l-[16px] lg:rounded-r-none" : 
                                        isLast ? "lg:rounded-r-[16px] lg:rounded-l-none" : 
                                        "lg:rounded-none";
@@ -278,26 +263,25 @@ export function EquipBentoGrid({
                     <div 
                       key={idx}
                       className={cn(
-                        "bg-white p-[16px] lg:px-[24px] lg:py-[20px] flex flex-col justify-center gap-[20px] lg:gap-[30px] border-[#d9d9d9] border lg:flex-1 relative",
+                        "p-[16px] lg:px-[24px] lg:py-[20px] flex flex-col justify-center gap-[20px] lg:gap-[30px] border lg:flex-1 relative",
                         roundedClass,
                         desktopRounded,
-                        // Fix border overlapping
-                        idx === 1 ? "border-l-0 lg:border-l-0" : "", // 2nd item no left border
-                        idx === 2 ? "border-t-0 lg:border-t-[1px] lg:border-l-0" : "", // 3rd item no top on mobile, no left on desktop
-                        idx === 3 ? "border-t-0 border-l-0 lg:border-t-[1px] lg:border-l-0" : "" // 4th item
+                        idx === 1 ? "border-l-0 lg:border-l-0" : "",
+                        idx === 2 ? "border-t-0 lg:border-t-[1px] lg:border-l-0" : "",
+                        idx === 3 ? "border-t-0 border-l-0 lg:border-t-[1px] lg:border-l-0" : ""
                       )}
-                      style={{ minHeight: '200px' }}
+                      style={{ backgroundColor: 'var(--color-bg-card)', borderColor: 'var(--color-border-default)', minHeight: '200px' }}
                     >
-                      <div className="size-[72px] rounded-full bg-[#f5f5f5] flex items-center justify-center">
+                      <div className="size-[72px] rounded-full flex items-center justify-center" style={{ backgroundColor: 'var(--color-bg-page)' }}>
                         <div className="size-[32px]">
-                          <Icon className="size-full text-black" strokeWidth={1.5} />
+                          <Icon className="size-full" style={{ color: 'var(--color-text-primary)' }} strokeWidth={1.5} />
                         </div>
                       </div>
                       <div className="flex flex-col justify-center h-[100px]">
-                        <p style={{ fontFamily: 'var(--font-family-base)', fontWeight: 500, fontSize: '16px', lineHeight: '24px', color: '#757575', marginBottom: 0 }}>
+                        <p style={{ fontFamily: 'var(--font-family-base)', fontWeight: 'var(--font-weight-medium)', fontSize: 'var(--text-base)', lineHeight: '24px', color: 'var(--color-text-muted)', marginBottom: 0 }}>
                           {tile.title}
                         </p>
-                        <p style={{ fontFamily: 'var(--font-family-base)', fontWeight: 400, fontSize: '16px', lineHeight: '24px', color: '#757575' }}>
+                        <p style={{ fontFamily: 'var(--font-family-base)', fontWeight: 'var(--font-weight-regular)', fontSize: 'var(--text-base)', lineHeight: '24px', color: 'var(--color-text-muted)' }}>
                           {tile.subtitle}
                         </p>
                       </div>
@@ -317,12 +301,12 @@ export function EquipBentoGrid({
               {rightItems.map((item, idx) => {
                 const Icon = item.icon;
                 return (
-                  <div key={idx} className="bg-white rounded-[16px] p-[20px] flex items-start gap-[12px] w-full" style={{ border: '1px solid rgba(0,0,0,0.1)' }}>
-                    <div className="size-[48px] shrink-0 rounded-full bg-[#f5f5f5] flex items-center justify-center">
-                      <Icon className="size-[24px] text-black" strokeWidth={1.5} />
+                  <div key={idx} className="p-[20px] flex items-start gap-[12px] w-full" style={{ backgroundColor: 'var(--color-bg-card)', borderRadius: 'var(--radius-lg)', border: '1px solid var(--color-border-default)' }}>
+                    <div className="size-[48px] shrink-0 rounded-full flex items-center justify-center" style={{ backgroundColor: 'var(--color-bg-page)' }}>
+                      <Icon className="size-[24px]" style={{ color: 'var(--color-text-primary)' }} strokeWidth={1.5} />
                     </div>
                     <div className="flex flex-col justify-center min-h-[48px]">
-                      <p style={{ fontFamily: 'var(--font-family-base)', fontWeight: 400, fontSize: '14px', lineHeight: '21px', color: '#171717' }}>
+                      <p style={{ fontFamily: 'var(--font-family-base)', fontWeight: 'var(--font-weight-regular)', fontSize: 'var(--text-sm)', lineHeight: '21px', color: 'var(--color-text-primary)' }}>
                         {item.text}
                       </p>
                     </div>
@@ -333,37 +317,37 @@ export function EquipBentoGrid({
 
             {/* HOW IT WORKS - Order 3 (Mobile), Order 2 (Desktop) */}
             <div 
-              className="order-3 lg:order-2 rounded-[16px] p-[24px] w-full"
-              style={{ backgroundColor: 'var(--color-bg-card)' }}
+              className="order-3 lg:order-2 p-[24px] w-full"
+              style={{ backgroundColor: 'var(--color-bg-card)', borderRadius: 'var(--radius-lg)' }}
             >
               <div className="flex flex-col gap-[12px]">
                 {/* Header */}
                 <div className="flex items-center gap-[12px]">
-                  <div className="size-[40px] rounded-full bg-[#f5f5f5] flex items-center justify-center">
-                    <ListTodo className="size-[20px] text-black" strokeWidth={1.5} />
+                  <div className="size-[40px] rounded-full flex items-center justify-center" style={{ backgroundColor: 'var(--color-bg-page)' }}>
+                    <ListTodo className="size-[20px]" style={{ color: 'var(--color-text-primary)' }} strokeWidth={1.5} />
                   </div>
-                  <p style={{ fontFamily: 'var(--font-family-base)', fontWeight: 500, fontSize: '18px', lineHeight: '25px', color: '#2e2a2f' }}>
+                  <p style={{ fontFamily: 'var(--font-family-base)', fontWeight: 'var(--font-weight-medium)', fontSize: '18px', lineHeight: '25px', color: 'var(--color-text-primary)' }}>
                     How it works
                   </p>
                 </div>
                 
                 {/* Subtitle */}
-                <p style={{ fontFamily: 'var(--font-family-base)', fontWeight: 400, fontSize: '12px', lineHeight: '14px', color: '#757575' }}>
+                <p style={{ fontFamily: 'var(--font-family-base)', fontWeight: 'var(--font-weight-regular)', fontSize: 'var(--text-xs)', lineHeight: '14px', color: 'var(--color-text-muted)' }}>
                   The program focuses on sleep in two stages.
                 </p>
 
                 {/* Steps */}
                 <div className="flex flex-col gap-[13px] items-center text-center py-2">
                   {howItWorksSteps.map((step, i) => (
-                    <p key={i} style={{ fontFamily: 'var(--font-family-base)', fontWeight: 400, fontSize: '12px', lineHeight: '18px', color: '#151515', width: '100%' }}>
+                    <p key={i} style={{ fontFamily: 'var(--font-family-base)', fontWeight: 'var(--font-weight-regular)', fontSize: 'var(--text-xs)', lineHeight: '18px', color: 'var(--color-text-primary)', width: '100%' }}>
                       {step}
                     </p>
                   ))}
                 </div>
 
                 {/* Footer */}
-                <div className="bg-[#eaeaea] rounded-[12px] px-[6px] py-[10px] flex items-center justify-center">
-                  <p style={{ fontFamily: 'var(--font-family-base)', fontStyle: 'italic', fontWeight: 400, fontSize: '12px', lineHeight: '18px', color: '#151515', textAlign: 'center' }}>
+                <div className="px-[6px] py-[10px] flex items-center justify-center" style={{ backgroundColor: 'var(--color-bg-muted)', borderRadius: 'var(--radius-md)' }}>
+                  <p style={{ fontFamily: 'var(--font-family-base)', fontStyle: 'italic', fontWeight: 'var(--font-weight-regular)', fontSize: 'var(--text-xs)', lineHeight: '18px', color: 'var(--color-text-primary)', textAlign: 'center' }}>
                     The focus is on habit-building — without medication or pressure — to support better rest over time.
                   </p>
                 </div>

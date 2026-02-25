@@ -1,9 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Card, CardContent } from '../ui/card';
-import { Progress } from '../ui/progress';
 import { Button } from '../ui/button';
-import { TextArea } from '../inputs/TextArea';
 import { AssessmentQuestion } from '../organisms/AssessmentQuestion';
 import { Icon } from '../Icon';
 import { useNotifications } from '../../contexts/NotificationContext';
@@ -13,6 +10,7 @@ import { projectId, publicAnonKey } from '../../utils/supabase/info';
 import { ProgressIndicator } from '../ui/progress-indicator';
 import { AssessmentResults } from './AssessmentResults';
 import { useOfflineSync } from '../../hooks/useOfflineSync';
+import { LoadingSpinner } from '../LoadingSpinner';
 
 interface Question {
   id: string;

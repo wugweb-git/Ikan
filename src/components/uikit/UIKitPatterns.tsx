@@ -17,6 +17,9 @@ import { AdminHeader } from '../admin/AdminHeader';
 import { AdminSection } from '../admin/AdminSection';
 import { AdminEmptyState } from '../admin/AdminEmptyState';
 import { AdminStatusBadge } from '../admin/AdminStatusBadge';
+import { SectionHero } from '../blocks/SectionHero';
+import { ResourceCard } from '../blocks/ResourceCard';
+import { ConsultantCard } from '../blocks/ConsultantCard';
 import { Check, AlertTriangle, Info, Settings, Activity, Database, Inbox, Plus } from 'lucide-react';
 
 // ── Token helpers ──────────────────────────────────────────────────
@@ -499,6 +502,121 @@ export function UIKitPatterns() {
                   </CardContent>
                 </Card>
               </Accordion>
+            </section>
+
+            {/* ── User-Facing Canonical Components ── */}
+            <section style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-4)' }}>
+              <h2 style={{ ...f('xl', 500), borderBottom: '1px solid var(--color-border-default)', paddingBottom: 'var(--spacing-2)' }}>
+                User-Facing Canonical Components
+              </h2>
+              <p style={f('sm', 400, 'var(--color-text-muted)')}>
+                Reusable production components used across the user-facing app. Always extend via props/variants instead of creating new files.
+              </p>
+
+              {/* SectionHero */}
+              <Card style={{ borderRadius: 'var(--radius-lg)' }}>
+                <CardHeader>
+                  <CardTitle style={f('base', 500)}>SectionHero</CardTitle>
+                  <CardDescription style={f('sm', 400, 'var(--color-text-muted)')}>
+                    Unified hero component for landing pages. Replaces the formerly-duplicate AssessmentHero and EquipHero.
+                    Props: title, description, buttonText, buttonLink, onButtonClick, backgroundImage, className.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="p-0 overflow-hidden" style={{ borderRadius: '0 0 var(--radius-lg) var(--radius-lg)' }}>
+                  <SectionHero
+                    title="Your Mental Health Journey"
+                    description="Clinically backed assessments, guided programs, and professional support — all in one place."
+                    buttonText="Get Started"
+                    onButtonClick={() => {}}
+                  />
+                </CardContent>
+              </Card>
+
+              {/* ResourceCard */}
+              <Card style={{ borderRadius: 'var(--radius-lg)' }}>
+                <CardHeader>
+                  <CardTitle style={f('base', 500)}>ResourceCard</CardTitle>
+                  <CardDescription style={f('sm', 400, 'var(--color-text-muted)')}>
+                    Used in Library/Resource listing pages. Supports article, video, and tool types. Responsive mobile/desktop layout.
+                    Props: post (ResourcePost), onClick, variant ('default' | 'featured'), className.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="p-6">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    {[
+                      { id: '1', title: 'Understanding Anxiety', description: 'Learn the science behind anxiety and evidence-based coping strategies.', date: 'Feb 20, 2026', image: '', type: 'article' as const, category: 'Mental Health', readTime: '5 min read' },
+                      { id: '2', title: 'Guided Breathing Exercise', description: 'A 10-minute video to help calm your nervous system.', date: 'Feb 18, 2026', image: '', type: 'video' as const, category: 'Wellness', readTime: '10 min watch' },
+                      { id: '3', title: 'Mood Tracker Template', description: 'Download our evidence-based mood tracking worksheet.', date: 'Feb 15, 2026', image: '', type: 'tool' as const, category: 'Tools', readTime: '2 min' },
+                    ].map(post => (
+                      <ResourceCard key={post.id} post={post} onClick={() => {}} />
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* ConsultantCard */}
+              <Card style={{ borderRadius: 'var(--radius-lg)' }}>
+                <CardHeader>
+                  <CardTitle style={f('base', 500)}>ConsultantCard</CardTitle>
+                  <CardDescription style={f('sm', 400, 'var(--color-text-muted)')}>
+                    Used in Consultation listing page. Displays therapist info, rating, specializations, pricing, and availability.
+                    Props: consultant (Consultant), onClick, onBook, className.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="p-6">
+                  <div style={{ maxWidth: '600px' }}>
+                    <ConsultantCard
+                      consultant={{
+                        id: 'demo-1',
+                        name: 'Dr. Sarah Chen',
+                        credentials: 'Ph.D., Licensed Clinical Psychologist',
+                        category: 'therapist',
+                        photo: '',
+                        yearsExperience: 12,
+                        languages: ['English', 'Mandarin'],
+                        location: 'Singapore',
+                        sessionModes: ['online', 'call', 'chat'],
+                        expertises: ['Anxiety', 'Depression', 'CBT', 'Mindfulness'],
+                        topExpertises: ['Anxiety', 'Depression', 'CBT'],
+                        approaches: ['CBT', 'Mindfulness-Based'],
+                        concernsICanHelp: ['Anxiety', 'Depression', 'Stress'],
+                        pricing: { video: 120, call: 100, chat: 80 },
+                        nextAvailableSlot: 'Tomorrow, 2pm',
+                        rating: 4.8,
+                        reviewCount: 142,
+                        bio: 'Experienced clinical psychologist specializing in anxiety and mood disorders.',
+                        qualifications: ['Ph.D. Clinical Psychology'],
+                        available: true,
+                      }}
+                      onClick={() => {}}
+                      onBook={() => {}}
+                    />
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* WellnessScoreCard note */}
+              <Card style={{ borderRadius: 'var(--radius-lg)' }}>
+                <CardHeader>
+                  <CardTitle style={f('base', 500)}>WellnessScoreCard</CardTitle>
+                  <CardDescription style={f('sm', 400, 'var(--color-text-muted)')}>
+                    Apple Watch-style concentric rings gauge on the Dashboard. Calculates a composite wellness score from mood logs, 
+                    assessment results, program enrollments, and fitness data. Features expandable dimension breakdown, 7-day trend sparkline, 
+                    and contextual recommendations. Requires live user data — see Dashboard for integration.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="p-6">
+                  <Alert>
+                    <Info className="h-4 w-4" />
+                    <AlertTitle>Data-Dependent Component</AlertTitle>
+                    <AlertDescription>
+                      WellnessScoreCard requires live engineResult, enrollments, and mood data from the user session.
+                      It is rendered on the Dashboard screen (<code style={{ fontFamily: 'monospace', fontSize: 'var(--text-xs)' }}>/components/WellnessScoreCard.tsx</code>).
+                      Props: hasLoggedMoodToday, activeEnrollment, activeProgram, completedEnrollments, engineResult, enrollments, recommendations, onNavigate, isFitnessConnected, fitnessData.
+                    </AlertDescription>
+                  </Alert>
+                </CardContent>
+              </Card>
             </section>
           </div>
         </TabsContent>

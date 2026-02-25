@@ -70,7 +70,7 @@ const DraggableDay = ({ day, index, isSelected, onSelect, moveDay, onDuplicate, 
       onClick={onSelect}
       data-handler-id={handlerId}
       className={cn(
-        "group flex items-center gap-3 p-3 rounded-[16px] cursor-pointer transition-all border mb-1",
+        "group flex items-center gap-3 p-3 cursor-pointer transition-all border mb-1",
         isSelected 
           ? "border-2 shadow-sm ring-1" 
           : "bg-transparent border-transparent",
@@ -185,7 +185,7 @@ const DraggableBlock = ({ block, index, isSelected, onSelect, moveBlock, onDelet
       onClick={onSelect}
       data-handler-id={handlerId}
       className={cn(
-        "group p-3 rounded-[16px] border cursor-pointer transition-all hover:shadow-sm flex items-start gap-3",
+        "group p-3 border cursor-pointer transition-all hover:shadow-sm flex items-start gap-3",
         isSelected 
           ? "border-2 shadow-sm ring-1" 
           : "border-[1px]",
@@ -251,7 +251,7 @@ function BlockPaletteMenu({ onSelect }: { onSelect: (type: string, subtype?: str
    return (
       <DropdownMenu>
          <DropdownMenuTrigger asChild>
-            <Button size="sm" className="h-[48px] rounded-[16px] gap-1.5 px-4 shadow-sm" style={{ backgroundColor: 'var(--color-primary-default)', color: 'var(--color-primary-on)' }}>
+            <Button size="sm" className="gap-1.5 px-4 shadow-sm" style={{ backgroundColor: 'var(--color-primary-default)', color: 'var(--color-primary-on)', height: 'var(--ikan-component-button-height)', borderRadius: 'var(--radius-lg)' }}>
                <Plus size={16} /> Add Block
             </Button>
          </DropdownMenuTrigger>
@@ -481,7 +481,7 @@ export function EquipDailyEditor({
   };
 
   return (
-    <div className="h-[calc(100vh-250px)] flex border rounded-[24px] overflow-hidden shadow-sm ring-1" style={{ backgroundColor: 'var(--color-bg-card)', borderColor: 'var(--color-border-default)', boxShadow: '0 0 0 1px var(--color-border-default)' }}>
+    <div className="h-[calc(100vh-250px)] flex border overflow-hidden shadow-sm ring-1" style={{ backgroundColor: 'var(--color-bg-card)', borderColor: 'var(--color-border-default)', boxShadow: '0 0 0 1px var(--color-border-default)', borderRadius: 'var(--radius-xl, 24px)' }}>
       {/* COLUMN 1: DAY LIST (Timeline) - Hidden in Single Day Mode */}
       {!singleDayMode && (
       <div className="w-[20%] min-w-[200px] flex flex-col border-r" style={{ backgroundColor: 'var(--color-bg-muted)' }}>

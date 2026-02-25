@@ -417,36 +417,36 @@ export function Consultation({ className, onNavigate }: ConsultationProps) {
               <TabsList className={cn("w-full justify-start overflow-x-auto h-14 bg-transparent p-0 rounded-none")}>
                 <TabsTrigger 
                   value="all" 
-                  className="data-[state=active]:bg-[var(--color-bg-page)] data-[state=active]:text-[var(--color-text-primary)] data-[state=active]:shadow-none rounded-[12px] px-4 py-2 mr-2"
-                  style={{ fontWeight: 'var(--font-weight-medium)', fontSize: 'var(--text-sm)' }}
+                  className="data-[state=active]:bg-[var(--color-bg-page)] data-[state=active]:text-[var(--color-text-primary)] data-[state=active]:shadow-none px-4 py-2 mr-2"
+                  style={{ fontWeight: 'var(--font-weight-medium)', fontSize: 'var(--text-sm)', borderRadius: 'var(--radius-md)' }}
                 >
                   All
                 </TabsTrigger>
                 <TabsTrigger 
                   value="therapist" 
-                  className="data-[state=active]:bg-[var(--color-bg-page)] data-[state=active]:text-[var(--color-text-primary)] data-[state=active]:shadow-none rounded-[12px] px-4 py-2 mr-2"
-                  style={{ fontWeight: 'var(--font-weight-medium)', fontSize: 'var(--text-sm)' }}
+                  className="data-[state=active]:bg-[var(--color-bg-page)] data-[state=active]:text-[var(--color-text-primary)] data-[state=active]:shadow-none px-4 py-2 mr-2"
+                  style={{ fontWeight: 'var(--font-weight-medium)', fontSize: 'var(--text-sm)', borderRadius: 'var(--radius-md)' }}
                 >
                   Therapist
                 </TabsTrigger>
                 <TabsTrigger 
                   value="psychiatrist" 
-                  className="data-[state=active]:bg-[var(--color-bg-page)] data-[state=active]:text-[var(--color-text-primary)] data-[state=active]:shadow-none rounded-[12px] px-4 py-2 mr-2"
-                  style={{ fontWeight: 'var(--font-weight-medium)', fontSize: 'var(--text-sm)' }}
+                  className="data-[state=active]:bg-[var(--color-bg-page)] data-[state=active]:text-[var(--color-text-primary)] data-[state=active]:shadow-none px-4 py-2 mr-2"
+                  style={{ fontWeight: 'var(--font-weight-medium)', fontSize: 'var(--text-sm)', borderRadius: 'var(--radius-md)' }}
                 >
                   Psychiatrist
                 </TabsTrigger>
                 <TabsTrigger 
                   value="counselor" 
-                  className="data-[state=active]:bg-[var(--color-bg-page)] data-[state=active]:text-[var(--color-text-primary)] data-[state=active]:shadow-none rounded-[12px] px-4 py-2 mr-2"
-                  style={{ fontWeight: 'var(--font-weight-medium)', fontSize: 'var(--text-sm)' }}
+                  className="data-[state=active]:bg-[var(--color-bg-page)] data-[state=active]:text-[var(--color-text-primary)] data-[state=active]:shadow-none px-4 py-2 mr-2"
+                  style={{ fontWeight: 'var(--font-weight-medium)', fontSize: 'var(--text-sm)', borderRadius: 'var(--radius-md)' }}
                 >
                   Counselor
                 </TabsTrigger>
                 <TabsTrigger 
                   value="family-therapist" 
-                  className="data-[state=active]:bg-[var(--color-bg-page)] data-[state=active]:text-[var(--color-text-primary)] data-[state=active]:shadow-none rounded-[12px] px-4 py-2 mr-2"
-                  style={{ fontWeight: 'var(--font-weight-medium)', fontSize: 'var(--text-sm)' }}
+                  className="data-[state=active]:bg-[var(--color-bg-page)] data-[state=active]:text-[var(--color-text-primary)] data-[state=active]:shadow-none px-4 py-2 mr-2"
+                  style={{ fontWeight: 'var(--font-weight-medium)', fontSize: 'var(--text-sm)', borderRadius: 'var(--radius-md)' }}
                 >
                   Family Therapist
                 </TabsTrigger>
@@ -563,36 +563,36 @@ export function Consultation({ className, onNavigate }: ConsultationProps) {
                   <TabsList className="w-full justify-start overflow-x-auto h-auto bg-transparent p-0 flex-wrap gap-1">
                     <TabsTrigger 
                       value="all" 
-                      className="data-[state=active]:bg-[var(--color-bg-card)] data-[state=active]:text-[var(--color-text-primary)] data-[state=active]:shadow-sm rounded-[12px] px-4 py-2"
-                      style={{ fontWeight: 'var(--font-weight-medium)', fontSize: 'var(--text-sm)' }}
+                      className="data-[state=active]:bg-[var(--color-bg-card)] data-[state=active]:text-[var(--color-text-primary)] data-[state=active]:shadow-sm px-4 py-2"
+                      style={{ fontWeight: 'var(--font-weight-medium)', fontSize: 'var(--text-sm)', borderRadius: 'var(--radius-md)' }}
                     >
                       All
                     </TabsTrigger>
                     <TabsTrigger 
                       value="therapist" 
-                      className="data-[state=active]:bg-[var(--color-bg-card)] data-[state=active]:text-[var(--color-text-primary)] data-[state=active]:shadow-sm rounded-[12px] px-4 py-2"
-                      style={{ fontWeight: 'var(--font-weight-medium)', fontSize: 'var(--text-sm)' }}
+                      className="data-[state=active]:bg-[var(--color-bg-card)] data-[state=active]:text-[var(--color-text-primary)] data-[state=active]:shadow-sm px-4 py-2"
+                      style={{ fontWeight: 'var(--font-weight-medium)', fontSize: 'var(--text-sm)', borderRadius: 'var(--radius-md)' }}
                     >
                       Therapist
                     </TabsTrigger>
                     <TabsTrigger 
                       value="psychiatrist" 
-                      className="data-[state=active]:bg-[var(--color-bg-card)] data-[state=active]:text-[var(--color-text-primary)] data-[state=active]:shadow-sm rounded-[12px] px-4 py-2"
-                      style={{ fontWeight: 'var(--font-weight-medium)', fontSize: 'var(--text-sm)' }}
+                      className="data-[state=active]:bg-[var(--color-bg-card)] data-[state=active]:text-[var(--color-text-primary)] data-[state=active]:shadow-sm px-4 py-2"
+                      style={{ fontWeight: 'var(--font-weight-medium)', fontSize: 'var(--text-sm)', borderRadius: 'var(--radius-md)' }}
                     >
                       Psychiatrist
                     </TabsTrigger>
                     <TabsTrigger 
                       value="counselor" 
-                      className="data-[state=active]:bg-[var(--color-bg-card)] data-[state=active]:text-[var(--color-text-primary)] data-[state=active]:shadow-sm rounded-[12px] px-4 py-2"
-                      style={{ fontWeight: 'var(--font-weight-medium)', fontSize: 'var(--text-sm)' }}
+                      className="data-[state=active]:bg-[var(--color-bg-card)] data-[state=active]:text-[var(--color-text-primary)] data-[state=active]:shadow-sm px-4 py-2"
+                      style={{ fontWeight: 'var(--font-weight-medium)', fontSize: 'var(--text-sm)', borderRadius: 'var(--radius-md)' }}
                     >
                       Counselor
                     </TabsTrigger>
                     <TabsTrigger 
                       value="family-therapist" 
-                      className="data-[state=active]:bg-[var(--color-bg-card)] data-[state=active]:text-[var(--color-text-primary)] data-[state=active]:shadow-sm rounded-[12px] px-4 py-2"
-                      style={{ fontWeight: 'var(--font-weight-medium)', fontSize: 'var(--text-sm)' }}
+                      className="data-[state=active]:bg-[var(--color-bg-card)] data-[state=active]:text-[var(--color-text-primary)] data-[state=active]:shadow-sm px-4 py-2"
+                      style={{ fontWeight: 'var(--font-weight-medium)', fontSize: 'var(--text-sm)', borderRadius: 'var(--radius-md)' }}
                     >
                       Family Therapist
                     </TabsTrigger>

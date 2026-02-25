@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, lazy, Suspense } from 'react';
+import React, { useState, useEffect, useCallback, lazy, Suspense, useReducer } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useTokens } from './lib/react-tokens';
 import { useIsMobile } from './hooks/useIsMobile';
@@ -83,6 +83,7 @@ import { SafePerformanceMonitor } from './components/monitoring/SafePerformanceM
 import { SkipToMainContent, useReducedMotion } from './components/ui/accessibility-helpers';
 import { OfflineBanner } from './components/OfflineBanner';
 import { useOfflineSync } from './hooks/useOfflineSync';
+import { usePullToRefresh } from './hooks/usePullToRefresh';
 
 // --- Suspense fallback ---
 function LazyFallback() {
@@ -103,72 +104,25 @@ function AppContent() {
   const prefersReducedMotion = useReducedMotion();
   const { isOnline, pendingCount, isSyncing, syncNow } = useOfflineSync();
   
+  // Pull-to-refresh (extracted hook)
+  const handlePullRefresh = useCallback(async () => {
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    showToast('success', 'Refreshed', 'Content updated successfully');
+    window.location.href = window.location.href;
+  }, [showToast]);
+  
+  usePullToRefresh({ enabled: isMobile, onRefresh: handlePullRefresh });
+  
   // All state hooks
   const [emergencyRender, setEmergencyRender] = useState(false);
   const [currentRoute, setCurrentRoute] = useState(DEFAULT_PUBLIC_ROUTE);
-  const [, setAppReady] = useState(false); // Write-only: triggers re-render on init
-  const [, setForceReady] = useState(false); // Write-only: triggers re-render on emergency
+  const [, forceRender] = useReducer((x: number) => x + 1, 0); // Triggers re-render on init/emergency
   const [resourceDetailId, setResourceDetailId] = useState<string | null>(null);
   const [consultantId, setConsultantId] = useState<string | null>(null);
-  const [, setIsRefreshing] = useState(false); // Write-only: pull-to-refresh state
-  const [touchStartY, setTouchStartY] = useState<number>(0);
-  const [pullDistance, setPullDistance] = useState<number>(0);
-  const [, setRouteHistory] = useState<string[]>([DEFAULT_PUBLIC_ROUTE]); // Write-only: tracks navigation history
 
   const handleSignIn = () => {
     setCurrentRoute('/login');
   };
-
-  // ALL CALLBACK HOOKS - CALLED CONSISTENTLY ON EVERY RENDER
-  const handleTouchStart = useCallback((e: TouchEvent) => {
-    if (!isMobile || window.scrollY > 0) return;
-    setTouchStartY(e.touches[0].clientY);
-  }, [isMobile]);
-
-  const handleTouchMove = useCallback((e: TouchEvent) => {  
-    if (!isMobile || window.scrollY > 0 || touchStartY === 0) return;
-    
-    const touchY = e.touches[0].clientY;
-    const distance = touchY - touchStartY;
-    const maxDistance = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--ikan-pull-refresh-max-distance')) || 150;
-    const triggerDistance = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--ikan-pull-refresh-trigger-distance')) || 80;
-    
-    if (distance > 0 && distance < maxDistance) {
-      setPullDistance(distance);
-      if (distance > triggerDistance) {
-        document.documentElement.style.setProperty('--pull-refresh-progress', '1');
-      } else {
-        document.documentElement.style.setProperty('--pull-refresh-progress', (distance / triggerDistance).toString());
-      }
-    }
-  }, [isMobile, touchStartY]);
-
-  const handleTouchEnd = useCallback(async () => {
-    const triggerDistance = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--ikan-pull-refresh-trigger-distance')) || 80;
-    
-    if (!isMobile || pullDistance < triggerDistance) {
-      setPullDistance(0);
-      setTouchStartY(0);
-      document.documentElement.style.removeProperty('--pull-refresh-progress');
-      return;
-    }
-
-    setIsRefreshing(true);
-    try {
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      showToast('success', 'Refreshed', 'Content updated successfully');
-      const currentUrl = window.location.href;
-      window.location.href = currentUrl;
-    } catch (error) {
-      logger.warn('Refresh failed:', error);
-      showToast('info', 'Already up to date', 'Your content is current');
-    } finally {
-      setIsRefreshing(false);
-      setPullDistance(0);
-      setTouchStartY(0);
-      document.documentElement.style.removeProperty('--pull-refresh-progress');
-    }
-  }, [isMobile, pullDistance, showToast]);
 
   const handleNavigate = useCallback((route: string, resourceId?: string) => {
     try {
@@ -195,7 +149,6 @@ function AppContent() {
         const id = path.split('/consultation/')[1];
         setConsultantId(id);
         setCurrentRoute('/consultation-detail');
-        setRouteHistory(prev => [...prev, '/consultation-detail']);
         if (typeof window !== 'undefined') {
           window.history.pushState({}, '', route);
         }
@@ -213,10 +166,10 @@ function AppContent() {
         return;
       }
       
-      setRouteHistory(prev => {
-        const newHistory = [...prev, path];
-        return newHistory.slice(-10);
-      });
+      // setRouteHistory(prev => {
+      //   const newHistory = [...prev, path];
+      //   return newHistory.slice(-10);
+      // });
       
       setCurrentRoute(path);
       
@@ -300,26 +253,10 @@ function AppContent() {
     }
   }, [isMobile]);
 
-  // Mobile touch listeners effect
-  useEffect(() => {
-    if (!isMobile) return;
-
-    document.addEventListener('touchstart', handleTouchStart, { passive: true });
-    document.addEventListener('touchmove', handleTouchMove, { passive: true });
-    document.addEventListener('touchend', handleTouchEnd, { passive: true });
-
-    return () => {
-      document.removeEventListener('touchstart', handleTouchStart);
-      document.removeEventListener('touchmove', handleTouchMove);
-      document.removeEventListener('touchend', handleTouchEnd);
-    };
-  }, [isMobile, handleTouchStart, handleTouchMove, handleTouchEnd]);
-
   // App initialization effect — delegates to extracted error-handlers utility
   useEffect(() => {
     logger.log('iKan app starting - immediate mode...');
-    setAppReady(true);
-    setForceReady(true);
+    forceRender();
     
     const cleanup = setupGlobalErrorHandlers({ showToast });
     
@@ -332,8 +269,7 @@ function AppContent() {
     const emergencyTimeout = setTimeout(() => {
       console.log('EMERGENCY: App stuck loading - forcing immediate render');
       setEmergencyRender(true);
-      setAppReady(true);
-      setForceReady(true);
+      forceRender();
     }, 5000);
 
     if (isInitialized || emergencyRender) {

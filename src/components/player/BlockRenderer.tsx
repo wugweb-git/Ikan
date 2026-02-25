@@ -94,10 +94,10 @@ export function BlockRenderer({ block, value, onChange, readOnly = false }: Bloc
         {/* Enhanced Lesson Typography */}
         <div className="relative">
           {/* Decorative side line to add visual interest */}
-          <div className="absolute left-0 top-2 bottom-2 w-1 bg-gradient-to-b from-[#2A2A2A] to-transparent opacity-10 rounded-full hidden md:block" />
+          <div className="absolute left-0 top-2 bottom-2 w-1 bg-gradient-to-b from-[var(--color-primary-default)] to-transparent opacity-10 rounded-full hidden md:block" />
           
           <div 
-            className="prose prose-lg md:prose-xl max-w-none text-[#1C1C1E] md:pl-6"
+            className="prose prose-lg md:prose-xl max-w-none text-[var(--color-text-primary)] md:pl-6"
           >
              {/* Inject custom styles for this block content */}
              <style>{`
@@ -107,17 +107,17 @@ export function BlockRenderer({ block, value, onChange, readOnly = false }: Bloc
                   letter-spacing: -0.02em; 
                   margin-bottom: 1rem; 
                   margin-top: 0;
-                  color: #111; 
+                  color: var(--color-text-primary); 
                 }
                 .lesson-content p { 
                   font-size: 1.125rem; 
                   line-height: 1.7; 
-                  color: #3A3A3C; 
+                  color: var(--grey-8); 
                   margin-bottom: 1.5rem; 
                 }
                 .lesson-content strong { 
                   font-weight: 500; 
-                  color: #000; 
+                  color: var(--color-text-primary); 
                 }
                .lesson-content ul {
                  list-style-type: disc;
@@ -126,7 +126,7 @@ export function BlockRenderer({ block, value, onChange, readOnly = false }: Bloc
                }
                .lesson-content li { 
                  margin-bottom: 0.5rem;
-                 color: #3A3A3C;
+                 color: var(--grey-8);
                }
              `}</style>
              <div className="lesson-content" dangerouslySetInnerHTML={{ __html: content }} />
@@ -136,7 +136,7 @@ export function BlockRenderer({ block, value, onChange, readOnly = false }: Bloc
         {/* If it's a very short lesson, add a placeholder visual if no image exists */}
         {!block.image_url && content.length < 200 && (
            <div className="flex justify-center opacity-50 py-8">
-              <div className="w-16 h-1 bg-[#2A2A2A] rounded-full" />
+              <div className="w-16 h-1 bg-[var(--color-primary-default)] rounded-full" />
            </div>
         )}
       </div>
@@ -178,16 +178,17 @@ export function BlockRenderer({ block, value, onChange, readOnly = false }: Bloc
                htmlFor={`opt-${block.id}-${index}`} 
                className="
                  flex items-center w-full p-5 min-h-[64px]
-                 bg-white border-2 border-transparent rounded-[16px] 
+                 bg-white border-2 border-transparent 
                  cursor-pointer transition-all shadow-[0_2px_12px_rgba(0,0,0,0.03)]
-                 text-[17px] text-[#1C1C1E] font-medium
+                 text-[17px] text-[var(--color-text-primary)] font-medium
                  hover:bg-[var(--color-bg-muted)] hover:scale-[1.01]
-                 peer-data-[state=checked]:border-[#2A2A2A] peer-data-[state=checked]:bg-[#F9F9FA] peer-data-[state=checked]:shadow-md
+                 peer-data-[state=checked]:border-[var(--color-primary-default)] peer-data-[state=checked]:bg-[var(--color-bg-input)] peer-data-[state=checked]:shadow-md
                  active:scale-[0.99]
                "
+               style={{ borderRadius: 'var(--radius-lg)' }}
              >
-               <div className="w-5 h-5 rounded-full border-2 border-[#E5E5EA] mr-4 flex items-center justify-center peer-data-[state=checked]:border-[#2A2A2A] transition-colors">
-                  <div className="w-2.5 h-2.5 rounded-full bg-[#2A2A2A] opacity-0 peer-data-[state=checked]:opacity-100 transition-opacity" />
+               <div className="w-5 h-5 rounded-full border-2 border-[var(--grey-2)] mr-4 flex items-center justify-center peer-data-[state=checked]:border-[var(--color-primary-default)] transition-colors">
+                  <div className="w-2.5 h-2.5 rounded-full bg-[var(--color-primary-default)] opacity-0 peer-data-[state=checked]:opacity-100 transition-opacity" />
                </div>
                {cleanOptionLabel(option)}
              </Label>
@@ -228,11 +229,12 @@ export function BlockRenderer({ block, value, onChange, readOnly = false }: Bloc
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.05 }}
               className={cn(
-                "flex items-center space-x-3 p-5 rounded-[16px] transition-all cursor-pointer shadow-[0_2px_12px_rgba(0,0,0,0.03)] border-2",
+                "flex items-center space-x-3 p-5 transition-all cursor-pointer shadow-[0_2px_12px_rgba(0,0,0,0.03)] border-2",
                 isChecked 
-                  ? "bg-[#F9F9FA] border-[#2A2A2A] shadow-md" 
+                  ? "bg-[var(--color-bg-input)] border-[var(--color-primary-default)] shadow-md" 
                   : "bg-white border-transparent hover:bg-[var(--color-bg-muted)]"
               )}
+              style={{ borderRadius: 'var(--radius-lg)' }}
               onClick={() => !readOnly && toggleValue(option)}
             >
               <Checkbox 
@@ -240,9 +242,9 @@ export function BlockRenderer({ block, value, onChange, readOnly = false }: Bloc
                 onCheckedChange={() => !readOnly && toggleValue(option)}
                 id={`multi-${block.id}-${index}`}
                 disabled={readOnly}
-                className="w-5 h-5 rounded-[6px] border-2 border-[#E5E5EA] data-[state=checked]:bg-[#2A2A2A] data-[state=checked]:border-[#2A2A2A]"
+                className="w-5 h-5 rounded-[6px] border-2 border-[var(--grey-2)] data-[state=checked]:bg-[var(--color-primary-default)] data-[state=checked]:border-[var(--color-primary-default)]"
               />
-              <Label htmlFor={`multi-${block.id}-${index}`} className="flex-1 cursor-pointer font-medium text-[17px] text-[#1C1C1E]">
+              <Label htmlFor={`multi-${block.id}-${index}`} className="flex-1 cursor-pointer font-medium text-[17px] text-[var(--color-text-primary)]">
                 {cleanOptionLabel(option)}
               </Label>
             </motion.div>
@@ -275,9 +277,10 @@ export function BlockRenderer({ block, value, onChange, readOnly = false }: Bloc
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: index * 0.05 }}
               className={cn(
-                "flex items-center space-x-4 p-4 rounded-[12px] transition-all cursor-pointer",
+                "flex items-center space-x-4 p-4 transition-all cursor-pointer",
                 isChecked ? "bg-[var(--color-status-success-light)]" : "bg-transparent hover:bg-[var(--color-bg-muted)]"
               )}
+              style={{ borderRadius: 'var(--radius-md)' }}
               onClick={() => !readOnly && toggleValue(item)}
             >
               <div className={cn(
@@ -292,7 +295,7 @@ export function BlockRenderer({ block, value, onChange, readOnly = false }: Bloc
                 htmlFor={`check-${block.id}-${index}`} 
                 className={cn(
                   "flex-1 cursor-pointer text-[17px] font-medium transition-all",
-                  isChecked ? "line-through" : "text-[#1C1C1E]"
+                  isChecked ? "line-through" : "text-[var(--color-text-primary)]"
                 )}
                 style={isChecked ? { color: 'var(--color-text-muted)', textDecorationColor: 'var(--color-text-muted)' } : undefined}
               >
@@ -317,13 +320,13 @@ export function BlockRenderer({ block, value, onChange, readOnly = false }: Bloc
           className="
              text-[17px] p-6 resize-none rounded-[20px] 
              border-0 bg-white shadow-[0_2px_16px_rgba(0,0,0,0.04)]
-             focus:ring-2 focus:ring-[#2A2A2A] focus:shadow-lg
-             placeholder:text-[#AEAEB2] leading-relaxed
+             focus:ring-2 focus:ring-[var(--color-primary-default)] focus:shadow-lg
+             placeholder:text-[var(--grey-4)] leading-relaxed
              transition-all
           "
         />
         {config.maxEntries && (
-          <p className="text-[13px] text-[#8E8E93] text-right font-medium">
+          <p className="text-[13px] text-[var(--grey-5)] text-right font-medium">
             {(value || '').length} / {config.maxEntries}
           </p>
         )}
@@ -353,7 +356,7 @@ export function BlockRenderer({ block, value, onChange, readOnly = false }: Bloc
              viewport={{ once: true }}
              className="space-y-4 bg-white p-6 rounded-[20px] shadow-sm"
             >
-             <h3 className="font-medium text-[#1C1C1E] text-[17px] leading-relaxed">{question}</h3>
+             <h3 className="font-medium text-[var(--color-text-primary)] text-[17px] leading-relaxed">{question}</h3>
              <RadioGroup
                 value={currentAnswers[qIdx]?.toString() || ""}
                 onValueChange={(val) => {
@@ -373,12 +376,13 @@ export function BlockRenderer({ block, value, onChange, readOnly = false }: Bloc
                       htmlFor={`q${qIdx}-opt${optIdx}`}
                       className="
                         flex items-center justify-center w-full p-3 min-h-[48px]
-                        text-[15px] font-medium text-[#1C1C1E]
-                        bg-[#F9F9FA] border border-transparent rounded-[12px] 
+                        text-[15px] font-medium text-[var(--color-text-primary)]
+                        bg-[var(--color-bg-input)] border border-transparent
                         cursor-pointer transition-all
-                        hover:bg-[#F2F2F7]
-                        peer-data-[state=checked]:bg-[#2A2A2A] peer-data-[state=checked]:text-white peer-data-[state=checked]:shadow-md
+                        hover:bg-[var(--color-bg-muted)]
+                        peer-data-[state=checked]:bg-[var(--color-primary-default)] peer-data-[state=checked]:text-white peer-data-[state=checked]:shadow-md
                       "
+                      style={{ borderRadius: 'var(--radius-md)' }}
                     >
                       {opt.label}
                     </Label>
@@ -406,14 +410,14 @@ export function BlockRenderer({ block, value, onChange, readOnly = false }: Bloc
     };
 
     return (
-      <div className="rounded-[16px] border overflow-hidden bg-white shadow-sm">
+      <div className="border overflow-hidden bg-white shadow-sm" style={{ borderRadius: 'var(--radius-lg)' }}>
         <div className="overflow-x-auto">
           <Table>
-            <TableHeader className="bg-[#F9F9FA]">
+            <TableHeader className="bg-[var(--color-bg-input)]">
               <TableRow>
-                <TableHead className="w-[180px] font-medium text-[#1C1C1E] min-w-[150px]">Activity</TableHead>
+                <TableHead className="w-[180px] font-medium text-[var(--color-text-primary)] min-w-[150px]">Activity</TableHead>
                 {columns.map((col) => (
-                  <TableHead key={col} className="text-center font-medium text-[#1C1C1E] min-w-[80px]">
+                  <TableHead key={col} className="text-center font-medium text-[var(--color-text-primary)] min-w-[80px]">
                     {col}
                   </TableHead>
                 ))}
@@ -422,7 +426,7 @@ export function BlockRenderer({ block, value, onChange, readOnly = false }: Bloc
             <TableBody>
               {rows.map((row, rIdx) => (
                 <TableRow key={row} className="hover:bg-transparent">
-                  <TableCell className="font-medium text-[#1C1C1E]">
+                  <TableCell className="font-medium text-[var(--color-text-primary)]">
                     {row}
                   </TableCell>
                   {columns.map((col, cIdx) => {
@@ -439,7 +443,7 @@ export function BlockRenderer({ block, value, onChange, readOnly = false }: Bloc
                              checked={isChecked}
                              onCheckedChange={() => toggleCell(row, col)}
                              disabled={readOnly}
-                             className="w-6 h-6 rounded-[6px] border-2 border-[#E5E5EA] data-[state=checked]:bg-[#2A2A2A] data-[state=checked]:border-[#2A2A2A]"
+                             className="w-6 h-6 rounded-[6px] border-2 border-[var(--grey-2)] data-[state=checked]:bg-[var(--color-primary-default)] data-[state=checked]:border-[var(--color-primary-default)]"
                            />
                          </div>
                       </TableCell>
@@ -482,8 +486,8 @@ export function BlockRenderer({ block, value, onChange, readOnly = false }: Bloc
                 className={cn(
                   "px-4 py-2 rounded-lg text-sm font-medium transition-colors border",
                   value === 'Yes' 
-                    ? "bg-[#2A2A2A] text-white border-[#2A2A2A]" 
-                    : "bg-white text-[#1C1C1E] border-[var(--color-border-default)] hover:bg-[var(--color-bg-muted)]"
+                    ? "bg-[var(--color-primary-default)] text-white border-[var(--color-primary-default)]" 
+                    : "bg-white text-[var(--color-text-primary)] border-[var(--color-border-default)] hover:bg-[var(--color-bg-muted)]"
                 )}
                 onClick={() => updateCell(rIdx, col, 'Yes')}
               >
@@ -493,8 +497,8 @@ export function BlockRenderer({ block, value, onChange, readOnly = false }: Bloc
                 className={cn(
                   "px-4 py-2 rounded-lg text-sm font-medium transition-colors border",
                   value === 'No' 
-                    ? "bg-[#2A2A2A] text-white border-[#2A2A2A]" 
-                    : "bg-white text-[#1C1C1E] border-[var(--color-border-default)] hover:bg-[var(--color-bg-muted)]"
+                    ? "bg-[var(--color-primary-default)] text-white border-[var(--color-primary-default)]" 
+                    : "bg-white text-[var(--color-text-primary)] border-[var(--color-border-default)] hover:bg-[var(--color-bg-muted)]"
                 )}
                 onClick={() => updateCell(rIdx, col, 'No')}
               >
@@ -559,13 +563,13 @@ export function BlockRenderer({ block, value, onChange, readOnly = false }: Bloc
 
     return (
       <div className="space-y-4">
-        <div className="rounded-[16px] border overflow-hidden bg-white shadow-sm">
+        <div className="border overflow-hidden bg-white shadow-sm" style={{ borderRadius: 'var(--radius-lg)' }}>
           <div className="overflow-x-auto">
             <Table>
-              <TableHeader className="bg-[#F9F9FA]">
+              <TableHeader className="bg-[var(--color-bg-input)]">
                 <TableRow>
                   {columns.map((col) => (
-                    <TableHead key={col} className="font-medium text-[#1C1C1E] min-w-[150px] whitespace-nowrap">
+                    <TableHead key={col} className="font-medium text-[var(--color-text-primary)] min-w-[150px] whitespace-nowrap">
                       {col}
                     </TableHead>
                   ))}
@@ -589,7 +593,7 @@ export function BlockRenderer({ block, value, onChange, readOnly = false }: Bloc
           <Button 
             variant="outline" 
             onClick={addRow}
-            className="w-full border-dashed border-2 h-12 text-[#8E8E93] hover:text-[#1C1C1E] hover:border-[#1C1C1E]"
+            className="w-full border-dashed border-2 h-12 text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] hover:border-[var(--color-text-primary)]"
           >
             + Add Entry
           </Button>
@@ -615,18 +619,19 @@ export function BlockRenderer({ block, value, onChange, readOnly = false }: Bloc
                key={num}
                onClick={() => !readOnly && onChange(num)}
                className={cn(
-                 "w-12 h-14 rounded-[16px] flex items-center justify-center font-medium text-xl transition-all shadow-sm",
+                 "w-12 h-14 flex items-center justify-center font-medium text-xl transition-all shadow-sm",
                  value === num 
-                  ? "bg-[#2A2A2A] text-white scale-110 shadow-lg ring-4 ring-[#2A2A2A]/10"
-                  : "bg-white text-[#1C1C1E] border border-[var(--color-border-default)] hover:bg-[var(--color-bg-muted)] hover:scale-105"
+                   ? "bg-[var(--color-primary-default)] text-white scale-110 shadow-lg ring-4 ring-[var(--color-primary-default)]/10"
+                   : "bg-white text-[var(--color-text-primary)] border border-[var(--color-border-default)] hover:bg-[var(--color-bg-muted)] hover:scale-105"
                )}
+               style={{ borderRadius: 'var(--radius-lg)' }}
                disabled={readOnly}
              >
                {num}
              </button>
            ))}
          </div>
-         <div className="flex justify-between text-[13px] font-medium text-[#AEAEB2] px-4">
+         <div className="flex justify-between text-[13px] font-medium text-[var(--color-text-muted)] px-4">
             <span>{minLabel}</span>
             <span>{maxLabel}</span>
          </div>
@@ -705,32 +710,32 @@ export function BlockRenderer({ block, value, onChange, readOnly = false }: Bloc
         <div className="flex items-center gap-2">
           {/* Badge: QUESTION */}
           {(type === 'exercise' || type === 'clinical_instrument') && (
-            <span className="text-[13px] font-medium text-[#8E8E93] uppercase tracking-wide">
+            <span className="text-[13px] font-medium text-[var(--color-text-muted)] uppercase tracking-wide">
                Question
             </span>
           )}
           {block.stepGroup && (
-             <span className="px-2 py-0.5 rounded-[4px] bg-[#F2F2F7] text-[13px] font-medium text-[#8E8E93]">
+             <span className="px-2 py-0.5 rounded-[4px] bg-[var(--color-bg-input)] text-[13px] font-medium text-[var(--color-text-muted)]">
                {block.stepGroup}
              </span>
           )}
         </div>
         
         {/* Title - The main question text */}
-        <h2 className="text-[22px] md:text-[26px] font-medium text-[#1C1C1E] leading-snug tracking-tight">
+        <h2 className="text-[22px] md:text-[26px] font-medium text-[var(--color-text-primary)] leading-snug tracking-tight">
           {displayTitle}
         </h2>
 
         {/* Subtitle - Always visible when present */}
         {subtitle && (
-          <p className="text-[15px] md:text-[17px] text-[#636366] font-normal leading-relaxed">
+          <p className="text-[15px] md:text-[17px] text-[var(--grey-6)] font-normal leading-relaxed">
             {subtitle}
           </p>
         )}
         
         {/* Prompt/Description - Only if different from title */}
         {finalShowPrompt && (
-          <p className="text-[17px] text-[#636366] font-normal leading-relaxed">
+          <p className="text-[17px] text-[var(--grey-6)] font-normal leading-relaxed">
             {exerciseConfig.prompt}
           </p>
         )}
