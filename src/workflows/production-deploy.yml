@@ -36,7 +36,7 @@ jobs:
             echo "❌ .env files found in repository"
             exit 1
           fi
-          if grep -r "SUPABASE_SERVICE_ROLE_KEY" --include="*.tsx" --include="*.ts" --include="*.js" .; then
+          if grep -r "SUPABASE_SERVICE_ROLE_KEY" --include="*.tsx" --include="*.ts" --include="*.js" --exclude-dir="supabase" --exclude-dir="node_modules" .; then
             echo "❌ Service role key found in client code"
             exit 1
           fi
