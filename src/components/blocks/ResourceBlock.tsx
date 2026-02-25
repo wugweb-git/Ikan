@@ -2,12 +2,12 @@ import React, { useRef, useState, useEffect } from 'react';
 import { cn } from '../ui/utils';
 import { ImageWithFallback } from '../figma/ImageWithFallback';
 import { Skeleton } from '../ui/skeleton-loader';
-import { ResourcePost } from './ResourceCard';
+import type { ResourcePost } from './ResourceCard';
 import { resolveImageUrl } from '../../utils/image-utils';
 import { ChevronLeft, ChevronRight, ArrowRight } from 'lucide-react';
 import { useIsMobile } from '../../hooks/useIsMobile';
 
-export { ResourcePost };
+export type { ResourcePost };
 
 // Fallback image when no image is provided
 const FALLBACK_IMAGE = 'https://images.unsplash.com/photo-1499750310107-5fef28a66643?w=800&auto=format&fit=crop&q=80';
