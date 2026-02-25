@@ -304,7 +304,7 @@ export function Account({ className, onNavigate }: AccountProps) {
           <button 
             onClick={triggerProfileSave}
             className="size-[40px] flex items-center justify-center hover:bg-black/5 transition-colors"
-            style={{ backgroundColor: 'var(--color-bg-card)', borderRadius: 'var(--radius-sm)' }}
+            style={{ backgroundColor: 'var(--color-bg-card)', borderRadius: 'var(--radius-xs)' }}
             aria-label={isProfileEditing ? "Save profile" : "Edit profile"}
           >
             {isProfileEditing ? <IconSave /> : <IconEdit />}

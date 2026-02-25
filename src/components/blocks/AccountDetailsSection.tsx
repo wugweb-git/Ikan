@@ -311,7 +311,7 @@ export function AccountDetailsSection({
                 onClick={handleSave}
                 disabled={loading}
                 className="px-[20px] py-[10px] text-[14px] font-medium h-auto flex items-center gap-2"
-                style={{ backgroundColor: 'var(--color-primary-default)', color: 'var(--color-text-inverse)', borderRadius: 'var(--radius-sm)' }}
+                style={{ backgroundColor: 'var(--color-primary-default)', color: 'var(--color-text-inverse)', borderRadius: 'var(--radius-xs)' }}
               >
                 <Save className="w-4 h-4" />
                 {loading ? 'Saving...' : 'Save Profile'}
@@ -321,7 +321,7 @@ export function AccountDetailsSection({
                 onClick={() => setIsEditing(true)}
                 disabled={!editable}
                 className="px-[20px] py-[10px] text-[14px] font-medium h-auto flex items-center gap-2"
-                style={{ backgroundColor: 'var(--color-primary-default)', color: 'var(--color-text-inverse)', borderRadius: 'var(--radius-sm)' }}
+                style={{ backgroundColor: 'var(--color-primary-default)', color: 'var(--color-text-inverse)', borderRadius: 'var(--radius-xs)' }}
               >
                 <Pencil className="w-4 h-4" />
                 Edit Profile
@@ -330,7 +330,7 @@ export function AccountDetailsSection({
             <Button
               variant="destructive"
               className="px-[20px] py-[10px] text-[14px] font-medium h-auto flex items-center gap-2"
-              style={{ backgroundColor: 'var(--color-primary-default)', color: 'var(--color-text-inverse)', borderRadius: 'var(--radius-sm)' }}
+              style={{ backgroundColor: 'var(--color-primary-default)', color: 'var(--color-text-inverse)', borderRadius: 'var(--radius-xs)' }}
             >
               <Trash2 className="w-4 h-4" />
               Delete Profile

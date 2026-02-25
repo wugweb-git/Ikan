@@ -1,8 +1,6 @@
-import React from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Button } from '../ui/button';
 import { Icon } from '../Icon';
-import { Card } from '../ui/card';
 
 interface ReassessmentPromptProps {
   isOpen: boolean;
