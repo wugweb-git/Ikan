@@ -183,7 +183,7 @@ export function AssessmentResults({
             fontWeight: 500,
             fontFamily: 'var(--font-family-base)',
             color: severityColor,
-            backgroundColor: `${severityColor}18`,
+            backgroundColor: `color-mix(in srgb, ${severityColor} 10%, transparent)`,
             padding: '6px 16px',
             borderRadius: 'var(--radius-pill)',
             textTransform: 'capitalize',
@@ -274,7 +274,7 @@ export function AssessmentResults({
                       padding: '12px 24px',
                       borderRadius: 'var(--radius-pill)',
                       backgroundColor: 'var(--color-primary-default)',
-                      color: '#fff',
+                      color: 'var(--color-text-inverse)',
                       border: 'none',
                       cursor: 'pointer',
                       fontSize: 'var(--text-base)',
@@ -366,7 +366,7 @@ export function AssessmentResults({
                 backgroundColor: 'var(--color-status-info)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 flexShrink: 0,
-                color: '#fff',
+                color: 'var(--color-text-inverse)',
               }}>
                 <Icon name="info" size={14} />
               </div>

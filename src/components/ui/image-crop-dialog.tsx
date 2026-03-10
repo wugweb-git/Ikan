@@ -236,7 +236,7 @@ export function ImageCropDialog({
               <div style={{
                 position: 'absolute', bottom: 8, left: '50%', transform: 'translateX(-50%)',
                 padding: '4px 12px', borderRadius: 'var(--radius-pill)',
-                backgroundColor: 'rgba(0,0,0,0.6)', color: '#fff',
+                backgroundColor: 'rgba(0,0,0,0.6)', color: 'var(--color-text-inverse)',
                 fontSize: 'var(--text-xs)', pointerEvents: 'none',
                 display: 'flex', alignItems: 'center', gap: 4,
               }}>

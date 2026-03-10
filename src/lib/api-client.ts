@@ -983,6 +983,43 @@ class ApiClient {
     if (error || !user) return [];
     return user.identities || [];
   }
+
+  // KV Audit
+  async runKVAudit() {
+    return this.request('/admin/kv-audit', { method: 'GET' }, true);
+  }
+
+  async cleanupKVKeys(keys: string[], dryRun = true) {
+    return this.request('/admin/kv-audit/cleanup', {
+      method: 'POST',
+      body: JSON.stringify({ keys, dryRun })
+    }, true);
+  }
+
+  async pruneAuditTrail(olderThanDays: number, dryRun = true) {
+    return this.request('/admin/kv-audit/prune-audit-trail', {
+      method: 'POST',
+      body: JSON.stringify({ olderThanDays, dryRun })
+    }, true);
+  }
+
+  async migrateNaming(fromPrefix: string, toPrefix: string, dryRun = true) {
+    return this.request('/admin/kv-audit/migrate-naming', {
+      method: 'POST',
+      body: JSON.stringify({ fromPrefix, toPrefix, dryRun })
+    }, true);
+  }
+
+  async saveAuditSnapshot(data: { score: number; totalKeys: number; orphanCount: number; inconsistencyCount: number; growthWarningCount: number; softDeletedCount: number; uncategorizedCount: number }) {
+    return this.request('/admin/kv-audit/save-snapshot', {
+      method: 'POST',
+      body: JSON.stringify(data)
+    }, true);
+  }
+
+  async getAuditTrends() {
+    return this.request('/admin/kv-audit/trends', { method: 'GET' }, true);
+  }
 }
 
 export const apiClient = new ApiClient();

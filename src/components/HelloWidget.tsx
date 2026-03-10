@@ -41,84 +41,65 @@ function getTimeOfDay(hour: number): TimeOfDay {
   return 'night';
 }
 
-function isDaytime(hour: number): boolean {
-  return hour >= 6 && hour < 19;
-}
-
 // ─── Gradient backgrounds per time of day ──────────────────────────
 function getTimeGradient(tod: TimeOfDay): string {
   switch (tod) {
-    case 'dawn': return 'linear-gradient(135deg, #FFE4C9 0%, #FFD0A0 40%, #FFC085 100%)';
-    case 'morning': return 'linear-gradient(135deg, #E8F4FD 0%, #D4ECFB 40%, #B8DFF7 100%)';
-    case 'afternoon': return 'linear-gradient(135deg, #FFF8E1 0%, #FFE9B0 40%, #FFD97A 100%)';
-    case 'evening': return 'linear-gradient(135deg, #E8D5F5 0%, #D4B8EA 40%, #C09FDE 100%)';
-    case 'night': return 'linear-gradient(135deg, #2A2A3E 0%, #1E1E30 40%, #151525 100%)';
+    case 'dawn': return 'linear-gradient(135deg, var(--color-tod-dawn-1) 0%, var(--color-tod-dawn-2) 40%, var(--color-tod-dawn-3) 100%)';
+    case 'morning': return 'linear-gradient(135deg, var(--color-tod-morning-1) 0%, var(--color-tod-morning-2) 40%, var(--color-tod-morning-3) 100%)';
+    case 'afternoon': return 'linear-gradient(135deg, var(--color-tod-afternoon-1) 0%, var(--color-tod-afternoon-2) 40%, var(--color-tod-afternoon-3) 100%)';
+    case 'evening': return 'linear-gradient(135deg, var(--color-tod-evening-1) 0%, var(--color-tod-evening-2) 40%, var(--color-tod-evening-3) 100%)';
+    case 'night': return 'linear-gradient(135deg, var(--color-tod-night-1) 0%, var(--color-tod-night-2) 40%, var(--color-tod-night-3) 100%)';
   }
 }
 
 function getTextColor(tod: TimeOfDay): string {
-  return tod === 'night' ? '#E8E8F0' : 'var(--color-text-primary)';
+  return tod === 'night' ? 'var(--color-tod-night-text)' : 'var(--color-text-primary)';
 }
 
 function getMutedColor(tod: TimeOfDay): string {
-  return tod === 'night' ? '#A0A0C0' : 'var(--color-text-muted)';
-}
-
-function getAccentColor(tod: TimeOfDay): string {
-  switch (tod) {
-    case 'dawn': return '#E87C3A';
-    case 'morning': return '#3B82F6';
-    case 'afternoon': return '#F59E0B';
-    case 'evening': return '#8B5CF6';
-    case 'night': return '#6366F1';
-  }
+  return tod === 'night' ? 'var(--color-tod-night-muted)' : 'var(--color-text-muted)';
 }
 
 function getDividerColor(tod: TimeOfDay): string {
   return tod === 'night' ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)';
 }
 
-function getPillBg(tod: TimeOfDay): string {
-  return tod === 'night' ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)';
-}
-
 // ─── Celestial Icon (Sun / Moon) ───────────────────────────────────
 function CelestialIcon({ tod, size = 48 }: { tod: TimeOfDay; size?: number }) {
   const s = size;
-  const isDay = tod !== 'night' && tod !== 'evening';
   const isDawn = tod === 'dawn';
   const isEvening = tod === 'evening';
 
   if (tod === 'night') {
-    // Moon with stars
+    // Moon with stars — decorative celestial SVG colors use tokens from globals.css
     return (
       <svg width={s} height={s} viewBox="0 0 64 64" fill="none">
         <defs>
           <linearGradient id="moonGrad" x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0%" stopColor="#E8E4D4" />
-            <stop offset="100%" stopColor="#D4D0C0" />
+            <stop offset="0%" stopColor="var(--color-celestial-moon-fill)" />
+            <stop offset="100%" stopColor="var(--color-celestial-moon-shadow)" />
           </linearGradient>
         </defs>
         {/* Moon crescent */}
         <circle cx="30" cy="30" r="16" fill="url(#moonGrad)" />
-        <circle cx="38" cy="24" r="14" fill="#1E1E30" />
+        <circle cx="38" cy="24" r="14" fill="var(--color-tod-night-2)" />
         {/* Moon craters */}
-        <circle cx="24" cy="28" r="2.5" fill="#D0CDB8" opacity="0.4" />
-        <circle cx="30" cy="36" r="1.8" fill="#D0CDB8" opacity="0.3" />
+        <circle cx="24" cy="28" r="2.5" fill="var(--color-celestial-crater)" opacity="0.4" />
+        <circle cx="30" cy="36" r="1.8" fill="var(--color-celestial-crater)" opacity="0.3" />
         {/* Stars */}
-        <circle cx="52" cy="12" r="1.2" fill="#FBBF24" opacity="0.9">
+        <circle cx="52" cy="12" r="1.2" fill="var(--color-celestial-star)" opacity="0.9">
           <animate attributeName="opacity" values="0.9;0.4;0.9" dur="3s" repeatCount="indefinite" />
         </circle>
-        <circle cx="48" cy="22" r="0.8" fill="#E8D5F5" opacity="0.7">
+        <circle cx="48" cy="22" r="0.8" fill="var(--color-celestial-star-alt)" opacity="0.7">
           <animate attributeName="opacity" values="0.7;0.3;0.7" dur="2.5s" repeatCount="indefinite" />
         </circle>
-        <circle cx="56" cy="28" r="1" fill="#FBBF24" opacity="0.6">
+        <circle cx="56" cy="28" r="1" fill="var(--color-celestial-star)" opacity="0.6">
           <animate attributeName="opacity" values="0.6;0.2;0.6" dur="4s" repeatCount="indefinite" />
         </circle>
-        <circle cx="14" cy="14" r="0.7" fill="#E8D5F5" opacity="0.5">
+        <circle cx="14" cy="14" r="0.7" fill="var(--color-celestial-star-alt)" opacity="0.5">
           <animate attributeName="opacity" values="0.5;0.2;0.5" dur="3.5s" repeatCount="indefinite" />
         </circle>
-        <circle cx="8" cy="24" r="0.9" fill="#FBBF24" opacity="0.8">
+        <circle cx="8" cy="24" r="0.9" fill="var(--color-celestial-star)" opacity="0.8">
           <animate attributeName="opacity" values="0.8;0.3;0.8" dur="2.8s" repeatCount="indefinite" />
         </circle>
       </svg>
@@ -126,9 +107,9 @@ function CelestialIcon({ tod, size = 48 }: { tod: TimeOfDay; size?: number }) {
   }
 
   if (isDawn || isEvening) {
-    // Half-sun on horizon
-    const sunColor = isDawn ? '#FFB347' : '#FF8C42';
-    const horizonColor = isDawn ? '#FFD4A0' : '#D4A0C0';
+    // Half-sun on horizon — decorative celestial SVG colors use tokens
+    const sunColor = isDawn ? 'var(--color-celestial-dawn-sun)' : 'var(--color-celestial-evening-sun)';
+    const horizonColor = isDawn ? 'var(--color-celestial-dawn-horizon)' : 'var(--color-celestial-evening-horizon)';
     return (
       <svg width={s} height={s} viewBox="0 0 64 64" fill="none">
         <defs>
@@ -165,8 +146,8 @@ function CelestialIcon({ tod, size = 48 }: { tod: TimeOfDay; size?: number }) {
     );
   }
 
-  // Full sun (morning / afternoon)
-  const sunColor = tod === 'afternoon' ? '#FFB800' : '#FFD166';
+  // Full sun (morning / afternoon) — decorative celestial SVG colors use tokens
+  const sunColor = tod === 'afternoon' ? 'var(--color-celestial-afternoon-sun)' : 'var(--color-celestial-morning-sun)';
   return (
     <svg width={s} height={s} viewBox="0 0 64 64" fill="none">
       <defs>
@@ -202,14 +183,14 @@ function CelestialIcon({ tod, size = 48 }: { tod: TimeOfDay; size?: number }) {
 // ─── Weather condition icon (small, for label) ─────────────────────
 function WeatherConditionIcon({ type, size = 20, tod }: { type: string; size?: number; tod: TimeOfDay }) {
   const s = size;
-  const mutedCloud = tod === 'night' ? '#6B7290' : '#9CA3AF';
-  const rain = tod === 'night' ? '#7DA0D4' : '#60A5FA';
+  const mutedCloud = tod === 'night' ? 'var(--color-weather-cloud-night)' : 'var(--color-weather-cloud-day)';
+  const rain = tod === 'night' ? 'var(--color-weather-rain-night)' : 'var(--color-weather-rain-day)';
 
   if (type === 'clear') return null; // celestial icon covers it
   if (type === 'partly-cloudy') {
     return (
       <svg width={s} height={s} viewBox="0 0 24 24" fill="none">
-        <circle cx="16" cy="8" r="4" fill={tod === 'night' ? '#E8E4D4' : '#FFB800'} />
+        <circle cx="16" cy="8" r="4" fill={tod === 'night' ? 'var(--color-celestial-moon-fill)' : 'var(--color-celestial-afternoon-sun)'} />
         <path d="M6 18c-2 0-3.5-1.5-3.5-3.5S4 11 6 11c.3-2 2-3.5 4-3.5 1.8 0 3.3 1.2 3.8 2.8.4-.2.8-.3 1.2-.3 2.2 0 4 1.8 4 4s-1.8 4-4 4H6z" fill={mutedCloud} />
       </svg>
     );
@@ -235,17 +216,17 @@ function WeatherConditionIcon({ type, size = 20, tod }: { type: string; size?: n
     return (
       <svg width={s} height={s} viewBox="0 0 24 24" fill="none">
         <path d="M6 14c-2 0-3.5-1.5-3.5-3.5S4 7 6 7c.3-2 2-3.5 4-3.5 1.8 0 3.3 1.2 3.8 2.8.4-.2.8-.3 1.2-.3 2.2 0 4 1.8 4 4s-1.8 4-4 4H6z" fill={mutedCloud} />
-        <circle cx="8" cy="18" r="1" fill="#93C5FD" />
-        <circle cx="12" cy="19" r="1" fill="#93C5FD" />
-        <circle cx="16" cy="18" r="1" fill="#93C5FD" />
+        <circle cx="8" cy="18" r="1" fill="var(--color-weather-snow)" />
+        <circle cx="12" cy="19" r="1" fill="var(--color-weather-snow)" />
+        <circle cx="16" cy="18" r="1" fill="var(--color-weather-snow)" />
       </svg>
     );
   }
   if (type === 'thunder') {
     return (
       <svg width={s} height={s} viewBox="0 0 24 24" fill="none">
-        <path d="M6 12c-2 0-3.5-1.5-3.5-3.5S4 5 6 5c.3-2 2-3.5 4-3.5 1.8 0 3.3 1.2 3.8 2.8.4-.2.8-.3 1.2-.3 2.2 0 4 1.8 4 4s-1.8 4-4 4H6z" fill="#6B7280" />
-        <polygon points="12,14 10,18 12,18 11,22 15,16 13,16 14,14" fill="#FBBF24" />
+        <path d="M6 12c-2 0-3.5-1.5-3.5-3.5S4 5 6 5c.3-2 2-3.5 4-3.5 1.8 0 3.3 1.2 3.8 2.8.4-.2.8-.3 1.2-.3 2.2 0 4 1.8 4 4s-1.8 4-4 4H6z" fill="var(--color-weather-thunder-cloud)" />
+        <polygon points="12,14 10,18 12,18 11,22 15,16 13,16 14,14" fill="var(--color-weather-lightning)" />
       </svg>
     );
   }
@@ -388,7 +369,6 @@ export function HelloWidget({ userName }: { userName?: string }) {
   // ── Derived values ───────────────────────────────────────────────
   const hour = now.getHours();
   const tod = getTimeOfDay(hour);
-  const isDay = isDaytime(hour);
   const greeting = getGreeting(tod);
   const weatherType = weather ? interpretWeatherCode(weather.code).type : 'cloudy';
 
@@ -398,8 +378,6 @@ export function HelloWidget({ userName }: { userName?: string }) {
 
   const textColor = getTextColor(tod);
   const mutedColor = getMutedColor(tod);
-  const accentColor = getAccentColor(tod);
-  const pillBg = getPillBg(tod);
   const dividerColor = getDividerColor(tod);
 
   // ── Loading skeleton ─────────────────────────────────────────────

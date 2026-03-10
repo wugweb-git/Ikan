@@ -1,7 +1,7 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Button } from '../ui/button';
-import { Check, Shield, Activity } from 'lucide-react';
+import { Check, Shield, Activity, Smartphone } from 'lucide-react';
 
 interface GoogleFitConsentModalProps {
   isOpen: boolean;
@@ -32,7 +32,7 @@ export function GoogleFitConsentModal({ isOpen, onClose, onConfirm }: GoogleFitC
           className="w-full max-w-md rounded-3xl overflow-hidden shadow-2xl relative z-10"
           style={{ backgroundColor: 'var(--color-bg-card)' }}
         >
-          {/* Header Image/Icon */}
+          {/* Header */}
           <div 
             className="p-8 flex flex-col items-center justify-center text-white space-y-4 relative overflow-hidden"
             style={{ background: 'linear-gradient(135deg, var(--color-status-info), var(--color-primary-default))' }}
@@ -43,13 +43,13 @@ export function GoogleFitConsentModal({ isOpen, onClose, onConfirm }: GoogleFitC
              <div className="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center backdrop-blur-md border border-white/30">
                <Activity size={32} strokeWidth={2.5} />
              </div>
-             <h2 style={{ fontSize: 'var(--text-2xl)', fontWeight: 'var(--font-weight-medium)' }} className="text-center">Connect Fitness Tracker</h2>
+             <h2 style={{ fontSize: 'var(--text-2xl)', fontWeight: 'var(--font-weight-medium)' }} className="text-center">Connect Health Connect</h2>
           </div>
 
           <div className="p-8 space-y-6">
             <div className="space-y-4">
               <p className="leading-relaxed text-center" style={{ color: 'var(--color-text-muted)' }}>
-                Syncing your activity data helps us provide more personalized wellness insights and updates your Wellness Score.
+                Syncing your activity data helps us provide more personalised wellness insights and updates your Wellness Score.
               </p>
 
               <div 
@@ -64,7 +64,7 @@ export function GoogleFitConsentModal({ isOpen, onClose, onConfirm }: GoogleFitC
                      <Check size={14} style={{ color: 'var(--color-status-success)' }} strokeWidth={3} />
                    </div>
                    <div>
-                     <h4 style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--font-weight-medium)', color: 'var(--color-text-primary)' }}>What We Pull (Read-Only)</h4>
+                     <h4 style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--font-weight-medium)', color: 'var(--color-text-primary)' }}>What we sync (read-only)</h4>
                      <p className="mt-1 leading-relaxed" style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}>
                        Steps, sleep duration & stages, active minutes, calories, distance, heart rate, and heart points.
                      </p>
@@ -76,9 +76,21 @@ export function GoogleFitConsentModal({ isOpen, onClose, onConfirm }: GoogleFitC
                      <Shield size={14} style={{ color: 'var(--color-status-danger)' }} />
                    </div>
                    <div>
-                     <h4 style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--font-weight-medium)', color: 'var(--color-text-primary)' }}>What We NEVER Pull</h4>
+                     <h4 style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--font-weight-medium)', color: 'var(--color-text-primary)' }}>What we never access</h4>
                      <p className="mt-1 leading-relaxed" style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}>
-                       GPS/Location, specific workouts, medical diagnoses, weight, or raw data.
+                       GPS/Location, specific workouts, medical diagnoses, or raw sensor data.
+                     </p>
+                   </div>
+                </div>
+
+                <div className="flex items-start gap-3">
+                   <div className="w-6 h-6 rounded-full flex items-center justify-center shrink-0 mt-0.5" style={{ backgroundColor: 'color-mix(in srgb, var(--color-status-info) 15%, transparent)' }}>
+                     <Smartphone size={14} style={{ color: 'var(--color-status-info)' }} />
+                   </div>
+                   <div>
+                     <h4 style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--font-weight-medium)', color: 'var(--color-text-primary)' }}>How it works</h4>
+                     <p className="mt-1 leading-relaxed" style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}>
+                       Health Connect syncs data from your Android device. You can also log data manually if you prefer.
                      </p>
                    </div>
                 </div>
@@ -110,7 +122,7 @@ export function GoogleFitConsentModal({ isOpen, onClose, onConfirm }: GoogleFitC
                   fontWeight: 'var(--font-weight-medium)'
                 }}
               >
-                Allow Access
+                Connect Health Connect
               </Button>
               <Button 
                 onClick={onClose}

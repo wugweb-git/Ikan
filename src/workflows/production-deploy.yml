@@ -162,9 +162,8 @@ jobs:
       - name: Build for staging
         env:
           VITE_APP_URL: https://staging.ikan.app
-          VITE_SUPABASE_URL: ${{ secrets.STAGING_SUPABASE_URL }}
-          VITE_SUPABASE_ANON_KEY: ${{ secrets.STAGING_SUPABASE_ANON_KEY }}
           VITE_ENABLE_DEBUG_MODE: true
+          # Note: VITE_SUPABASE_* env vars removed — app reads from hardcoded utils/supabase/info.tsx
         run: npm run build
 
       - name: Deploy to staging
@@ -196,10 +195,9 @@ jobs:
       - name: Build for production
         env:
           VITE_APP_URL: https://ikan.app
-          VITE_SUPABASE_URL: ${{ secrets.PRODUCTION_SUPABASE_URL }}
-          VITE_SUPABASE_ANON_KEY: ${{ secrets.PRODUCTION_SUPABASE_ANON_KEY }}
           VITE_ENABLE_DEBUG_MODE: false
           VITE_ENABLE_ANALYTICS: true
+          # Note: VITE_SUPABASE_* env vars removed — app reads from hardcoded utils/supabase/info.tsx
         run: npm run build
 
       - name: Final security check

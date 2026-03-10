@@ -70,7 +70,7 @@ export function RazorpayPayment({
 
       // Configure Razorpay options
       const options = {
-        key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || 'rzp_test_key', // Replace with actual key
+        key: import.meta.env.VITE_RAZORPAY_KEY_ID || 'rzp_test_key', // Replace with actual key
         amount: amount,
         currency: currency,
         name: 'iKan - Mental Health',
@@ -82,7 +82,7 @@ export function RazorpayPayment({
           contact: user.phone || ''
         },
         theme: {
-          color: '#2A2A2A' // iKan primary color
+          color: '#2A2A2A' // Maps to var(--color-primary-default) — Razorpay SDK requires raw hex
         },
         modal: {
           ondismiss: () => {

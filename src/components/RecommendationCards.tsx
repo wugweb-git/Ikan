@@ -83,7 +83,7 @@ export function RecommendationCards({ engineResult, onNavigate, className }: Rec
           <div
             style={{
               width: 32, height: 32, borderRadius: 10,
-              backgroundColor: `${config.color}20`,
+              backgroundColor: `color-mix(in srgb, ${config.color} 12%, transparent)`,
               color: config.color,
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               flexShrink: 0,

@@ -27,8 +27,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Checkbox } from '../ui/checkbox';
 import { useNotifications } from '../../contexts/NotificationContext';
 import { AdminHeader } from './AdminHeader';
-import { AdminEmptyState } from './AdminEmptyState';
-import { AdminLoading } from './AdminLoading';
+import { AdminCommunicationAPI } from './AdminCommunicationAPI';
 import { useIsMobile } from '../../hooks/useIsMobile';
 
 interface EmailTemplate {
@@ -49,9 +48,10 @@ interface NotificationQueue {
   scheduled_at: string;
 }
 
-export function AdminCommunication() {
+export function AdminCommunication({ onBack: _onBack }: { onBack?: () => void }) {
   const { showToast } = useNotifications();
   const isMobile = useIsMobile();
+  const [activeTab, setActiveTab] = useState<'templates' | 'api-config'>('templates');
   
   const [templates, setTemplates] = useState<EmailTemplate[]>([
     {
@@ -184,6 +184,46 @@ export function AdminCommunication() {
       }}
     >
       <div className="max-w-7xl mx-auto space-y-6">
+        {/* Tab Switcher */}
+        <div className="flex items-center" style={{ gap: 'var(--spacing-2)', marginBottom: 'var(--spacing-2)' }}>
+          <button
+            onClick={() => setActiveTab('templates')}
+            style={{
+              padding: 'var(--spacing-2) var(--spacing-4)',
+              borderRadius: 'var(--radius-md)',
+              fontSize: 'var(--text-sm)',
+              fontWeight: 'var(--font-weight-medium)',
+              border: 'none',
+              cursor: 'pointer',
+              backgroundColor: activeTab === 'templates' ? 'var(--color-primary-default)' : 'var(--color-bg-muted)',
+              color: activeTab === 'templates' ? 'var(--color-primary-on)' : 'var(--color-text-muted)',
+              transition: 'all 150ms ease',
+            }}
+          >
+            Templates &amp; Queue
+          </button>
+          <button
+            onClick={() => setActiveTab('api-config')}
+            style={{
+              padding: 'var(--spacing-2) var(--spacing-4)',
+              borderRadius: 'var(--radius-md)',
+              fontSize: 'var(--text-sm)',
+              fontWeight: 'var(--font-weight-medium)',
+              border: 'none',
+              cursor: 'pointer',
+              backgroundColor: activeTab === 'api-config' ? 'var(--color-primary-default)' : 'var(--color-bg-muted)',
+              color: activeTab === 'api-config' ? 'var(--color-primary-on)' : 'var(--color-text-muted)',
+              transition: 'all 150ms ease',
+            }}
+          >
+            Brevo API Config
+          </button>
+        </div>
+
+        {activeTab === 'api-config' ? (
+          <AdminCommunicationAPI />
+        ) : (
+        <>
         <AdminHeader
           title="Communication Center"
           description="Manage email templates, notifications, and broadcasts"
@@ -337,6 +377,8 @@ export function AdminCommunication() {
             </CardContent>
           </Card>
         </div>
+        </>
+        )}
       </div>
 
       {/* Template Edit Dialog */}

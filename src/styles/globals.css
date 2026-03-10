@@ -127,6 +127,101 @@
   --ikan-chart-neutral: #6B7280;
   --ikan-chart-fill-default: #8884d8;
 
+  /* Data Visualization — Wellness Dimensions */
+  --color-viz-red: #E53935;
+  --color-viz-red-light: #FFEBEE;
+  --color-viz-green: #43A047;
+  --color-viz-green-light: #E8F5E9;
+  --color-viz-blue: #1E88E5;
+  --color-viz-blue-light: #E3F2FD;
+  --color-viz-purple: #8E24AA;
+  --color-viz-purple-light: #F3E5F5;
+  --color-viz-orange: #F57C00;
+  --color-viz-orange-light: #FFF3E0;
+
+  /* Data Visualization — Extended Health Accents */
+  --color-viz-teal: #00897B;
+  --color-viz-deep-blue: #1565C0;
+  --color-viz-deep-purple: #5E35B1;
+  --color-viz-brown: #5D4037;
+  --color-viz-slate: #455A64;
+  --color-viz-pink: #D81B60;
+  --color-viz-amber: #FF8F00;
+  --color-viz-hydration: #2196F3;
+
+  /* Data Visualization — Sleep Stages */
+  --color-sleep-deep: #1A237E;
+  --color-sleep-light: #7986CB;
+  --color-sleep-rem: #CE93D8;
+  --color-sleep-awake: #FFCC80;
+
+  /* Data Visualization — Level Indicators */
+  --color-level-thriving: #34C759;
+  --color-level-growing: #007AFF;
+  --color-level-building: #FF9500;
+  --color-level-starting: #8E8E93;
+
+  /* Data Visualization — Trends */
+  --color-trend-positive: #34C759;
+  --color-trend-negative: #FF3B30;
+
+  /* Data Visualization — BMI Scale */
+  --color-bmi-normal: #4CAF50;
+  --color-bmi-caution: #FF9800;
+  --color-bmi-danger: #E53935;
+
+  /* Time of Day — Gradient Stops */
+  --color-tod-dawn-1: #FFE4C9;
+  --color-tod-dawn-2: #FFD0A0;
+  --color-tod-dawn-3: #FFC085;
+  --color-tod-morning-1: #E8F4FD;
+  --color-tod-morning-2: #D4ECFB;
+  --color-tod-morning-3: #B8DFF7;
+  --color-tod-afternoon-1: #FFF8E1;
+  --color-tod-afternoon-2: #FFE9B0;
+  --color-tod-afternoon-3: #FFD97A;
+  --color-tod-evening-1: #E8D5F5;
+  --color-tod-evening-2: #D4B8EA;
+  --color-tod-evening-3: #C09FDE;
+  --color-tod-night-1: #2A2A3E;
+  --color-tod-night-2: #1E1E30;
+  --color-tod-night-3: #151525;
+
+  /* Time of Day — Text */
+  --color-tod-night-text: #E8E8F0;
+  --color-tod-night-muted: #A0A0C0;
+
+  /* Time of Day — Accents */
+  --color-tod-dawn-accent: #E87C3A;
+  --color-tod-morning-accent: #3B82F6;
+  --color-tod-afternoon-accent: #F59E0B;
+  --color-tod-evening-accent: #8B5CF6;
+  --color-tod-night-accent: #6366F1;
+
+  /* Celestial & Weather Decorative */
+  --color-celestial-moon-fill: #E8E4D4;
+  --color-celestial-moon-shadow: #D4D0C0;
+  --color-celestial-crater: #D0CDB8;
+  --color-celestial-star: #FBBF24;
+  --color-celestial-star-alt: #E8D5F5;
+  --color-celestial-dawn-sun: #FFB347;
+  --color-celestial-evening-sun: #FF8C42;
+  --color-celestial-dawn-horizon: #FFD4A0;
+  --color-celestial-evening-horizon: #D4A0C0;
+  --color-celestial-morning-sun: #FFD166;
+  --color-celestial-afternoon-sun: #FFB800;
+  --color-weather-cloud-day: #9CA3AF;
+  --color-weather-cloud-night: #6B7290;
+  --color-weather-rain-day: #60A5FA;
+  --color-weather-rain-night: #7DA0D4;
+  --color-weather-snow: #93C5FD;
+  --color-weather-thunder-cloud: #6B7280;
+  --color-weather-lightning: #FBBF24;
+
+  /* iKan Logo */
+  --color-logo-bg: #101010;
+  --color-logo-accent: #FFBE1A;
+
   /* Spacing */
   --spacing-unit: 4px;
   --spacing-0: 0px;
@@ -231,6 +326,7 @@
   --ikan-component-border-radius: var(--radius-sm); /* 16px */
   --ikan-component-spacing-default: var(--spacing-4); /* 16px */
   --ikan-component-spacing-large: var(--spacing-6); /* 24px */
+  --ikan-component-spacing-small: var(--spacing-2); /* 8px */
   --ikan-animation-normal: var(--motion-duration-normal); /* 300ms */
   --constraint-sidebar-max: 280px;
 
@@ -252,11 +348,6 @@
   --semantic-card-padding: var(--spacing-4);
 
   /* Component-specific semantic tokens */
-  --ikan-component-button-height: 52px;
-  --ikan-component-input-height: 56px;
-  --ikan-component-border-radius: var(--radius-sm);
-  --ikan-component-spacing-default: var(--spacing-4);
-  --ikan-component-spacing-large: var(--spacing-6);
   --ikan-component-spacing-small: var(--spacing-2);
   
   /* Navigation semantic tokens */
@@ -789,15 +880,15 @@ html {
   display: flex;
   padding: 20px;
   background: var(--color-bg-card);
-  border: 1px solid #E8E8E8;
-  border-radius: 16px;
-  margin-bottom: 12px;
+  border: 1px solid var(--grey-2);
+  border-radius: var(--radius-sm);
+  margin-bottom: var(--spacing-3);
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
 .consultant-card:hover {
-  border-color: #D0D0D0;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  border-color: var(--grey-3);
+  box-shadow: var(--shadow-xs);
 }
 
 /* Avatar Styling */
@@ -812,22 +903,22 @@ html {
 .expertise-tag {
   display: inline-block;
   padding: 3px 10px;
-  background: #F5F5F5;
-  color: #333333;
+  background: var(--grey-1);
+  color: var(--grey-8);
   border-radius: 6px;
   font-size: 11px;
-  border: 1px solid #EBEBEB;
+  border: 1px solid var(--grey-2);
 }
 
 /* Availability Filter Pills */
 .filter-pill {
   height: 40px;
   padding: 0 16px;
-  border: 1px solid #D9D9D9;
+  border: 1px solid var(--grey-3);
   border-radius: 12px; /* Matching smaller interactive elements */
-  background: #FFFFFF;
+  background: var(--grey-0);
   font-size: 14px;
-  color: #757575; /* Step 6 */
+  color: var(--grey-6);
   cursor: pointer;
   display: inline-flex;
   align-items: center;
@@ -836,13 +927,13 @@ html {
 }
 
 .filter-pill:hover {
-  background: #F5F5F5;
+  background: var(--grey-1);
 }
 
 .filter-pill.active {
-  background: #1A1A1A; /* Step 9 */
-  color: #FFFFFF;
-  border-color: #1A1A1A;
+  background: var(--grey-9);
+  color: var(--grey-0);
+  border-color: var(--grey-9);
 }
 
 /* 1280px Grid & Layout Constraints */
@@ -904,33 +995,33 @@ html {
 
 .time-slot {
   height: 44px;
-  border: 1px solid #D9D9D9;
+  border: 1px solid var(--grey-3);
   border-radius: 12px; /* Inner Interaction Radius */
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
   font-size: 14px;
-  color: #333333;
+  color: var(--grey-8);
   transition: all 0.2s;
 }
 
 .time-slot:hover {
-  border-color: #1A1A1A;
+  border-color: var(--grey-9);
 }
 
 .time-slot.selected {
-  background: #1A1A1A; /* Step 9 */
-  color: #FFFFFF;
-  border-color: #1A1A1A;
+  background: var(--grey-9);
+  color: var(--grey-0);
+  border-color: var(--grey-9);
 }
 
 .modal-action-btn {
-  height: 52px;
-  border-radius: 16px;
-  background: #1A1A1A;
-  color: #FFFFFF;
-  font-weight: 500;
+  height: var(--ikan-component-button-height);
+  border-radius: var(--radius-sm);
+  background: var(--grey-9);
+  color: var(--grey-0);
+  font-weight: var(--font-weight-medium);
   width: 100%;
   border: none;
   cursor: pointer;
@@ -1517,7 +1608,7 @@ html {
 
   /* Hover effect for row selection */
   .admin-table tr:hover td {
-    background: #FAFAFA; /* Very subtle shift from Step 0 */
+    background: var(--color-neutral-100);
     cursor: pointer;
   }
 
@@ -1536,13 +1627,13 @@ html {
   }
 
   .badge-success {
-    background: #E8F5E9; /* Very light Sage */
-    color: #2E7D32;
+    background: var(--color-status-success-light);
+    color: var(--color-status-success);
   }
 
   .badge-warning {
-    background: #FFF3E0; /* Very light Peach */
-    color: #EF6C00;
+    background: var(--color-status-warning-light);
+    color: var(--color-status-warning);
   }
 
   @media (min-width: 1440px) {

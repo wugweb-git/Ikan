@@ -49,7 +49,7 @@ function ProgressRing({ pct, size = 90 }: { pct: number; size?: number }) {
       <div className="absolute inset-0 flex flex-col items-center justify-center">
         <span style={{
           fontSize: 22, fontWeight: 500, fontFamily: 'var(--font-family-base)',
-          color: '#fff', lineHeight: 1,
+          color: 'var(--color-text-inverse)', lineHeight: 1,
         }}>
           {pct}%
         </span>
@@ -98,8 +98,8 @@ export function ProgramProgressTracker({
             style={{ position: 'absolute', right: 0, top: 0, width: '50%', height: '100%', opacity: 0.06 }}
             viewBox="0 0 200 200" preserveAspectRatio="none"
           >
-            <path d="M100 0 Q120 50 100 100 Q80 150 100 200 L200 200 L200 0 Z" fill="#fff" />
-            <path d="M130 0 Q150 50 130 100 Q110 150 130 200 L200 200 L200 0 Z" fill="#fff" />
+            <path d="M100 0 Q120 50 100 100 Q80 150 100 200 L200 200 L200 0 Z" fill="var(--color-bg-card)" />
+            <path d="M130 0 Q150 50 130 100 Q110 150 130 200 L200 200 L200 0 Z" fill="var(--color-bg-card)" />
           </svg>
 
           <div style={{ padding: '20px 20px 18px', position: 'relative', zIndex: 1 }}>
@@ -119,7 +119,7 @@ export function ProgramProgressTracker({
                 </span>
 
                 {/* Title */}
-                <h3 style={{ ...f('2xl', 500, '#fff'), margin: '10px 0 0', lineHeight: 1.2 }}>
+                <h3 style={{ ...f('2xl', 500, 'var(--color-text-inverse)'), margin: '10px 0 0', lineHeight: 1.2 }}>
                   {activeProgram.title || 'Your Program'}
                 </h3>
 
@@ -155,7 +155,7 @@ export function ProgramProgressTracker({
                   className="flex items-center justify-center"
                   style={{
                     padding: '11px 20px', borderRadius: 'var(--radius-md)',
-                    backgroundColor: '#fff', color: 'var(--color-primary-default)',
+                    backgroundColor: 'var(--color-bg-card)', color: 'var(--color-primary-default)',
                     border: 'none', cursor: 'pointer', gap: 8,
                     ...f('sm', 500, 'var(--color-primary-default)'),
                   }}
@@ -196,13 +196,13 @@ export function ProgramProgressTracker({
           <div className="flex items-center" style={{ gap: 12 }}>
             <div style={{
               width: 36, height: 36, borderRadius: 10,
-              backgroundColor: engineResult.severity === 'low' ? '#E8F5E9'
-                : engineResult.severity === 'moderate' ? '#FFF3E0'
-                : '#FFEBEE',
+              backgroundColor: engineResult.severity === 'low' ? 'var(--color-status-success-light)'
+                : engineResult.severity === 'moderate' ? 'var(--color-status-warning-light)'
+                : 'var(--color-status-danger-light)',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              color: engineResult.severity === 'low' ? '#2E7D32'
-                : engineResult.severity === 'moderate' ? '#F57C00'
-                : '#C62828',
+              color: engineResult.severity === 'low' ? 'var(--color-status-success)'
+                : engineResult.severity === 'moderate' ? 'var(--color-status-warning)'
+                : 'var(--color-status-danger)',
               flexShrink: 0,
             }}>
               <BarChart3 size={18} />
@@ -212,12 +212,12 @@ export function ProgramProgressTracker({
                 <span style={f('sm', 500)}>Assessment</span>
                 <span style={{
                   fontSize: 10, fontWeight: 500, fontFamily: 'var(--font-family-base)',
-                  color: engineResult.severity === 'low' ? '#2E7D32'
-                    : engineResult.severity === 'moderate' ? '#F57C00'
-                    : '#C62828',
-                  backgroundColor: engineResult.severity === 'low' ? '#E8F5E9'
-                    : engineResult.severity === 'moderate' ? '#FFF3E0'
-                    : '#FFEBEE',
+                  color: engineResult.severity === 'low' ? 'var(--color-status-success)'
+                    : engineResult.severity === 'moderate' ? 'var(--color-status-warning)'
+                    : 'var(--color-status-danger)',
+                  backgroundColor: engineResult.severity === 'low' ? 'var(--color-status-success-light)'
+                    : engineResult.severity === 'moderate' ? 'var(--color-status-warning-light)'
+                    : 'var(--color-status-danger-light)',
                   padding: '2px 7px', borderRadius: 'var(--radius-pill)',
                   textTransform: 'capitalize' as const,
                 }}>
@@ -261,8 +261,8 @@ export function ProgramProgressTracker({
               onClick={() => onNavigate?.('/equip')}
               style={{
                 padding: '6px 14px', borderRadius: 'var(--radius-pill)',
-                backgroundColor: 'var(--color-primary-default)', color: '#fff',
-                border: 'none', cursor: 'pointer', ...f('xs', 500, '#fff'),
+                backgroundColor: 'var(--color-primary-default)', color: 'var(--color-text-inverse)',
+                border: 'none', cursor: 'pointer', ...f('xs', 500, 'var(--color-text-inverse)'),
               }}
             >
               Explore

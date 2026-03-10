@@ -139,7 +139,7 @@ export function AssessmentBlock({
 
   if (loading) {
     return (
-      <div className={cn("py-[24px] px-[20px] relative w-full", className)} style={{ backgroundColor: 'var(--color-primary-dark, #414141)' }}>
+      <div className={cn("py-[24px] px-[20px] relative w-full", className)} style={{ backgroundColor: 'var(--color-primary-default)' }}>
         <div className="flex flex-col items-center gap-[32px] w-full max-w-7xl mx-auto">
           <Skeleton height="48px" width="60%" className="bg-white/10" />
           <div className="flex flex-col md:grid md:grid-cols-3 gap-[16px] w-full">
@@ -155,7 +155,7 @@ export function AssessmentBlock({
   if (programs.length === 0) return null;
 
   return (
-    <div className={cn("py-[24px] lg:py-[48px] px-[20px] relative w-full", className)} style={{ backgroundColor: 'var(--color-primary-dark, #414141)' }}>
+    <div className={cn("py-[24px] lg:py-[48px] px-[20px] relative w-full", className)} style={{ backgroundColor: 'var(--color-primary-default)' }}>
       <div className="flex flex-col items-center justify-center size-full gap-[32px] max-w-7xl mx-auto">
         <h2 className="font-medium leading-[48px] text-[32px] text-center w-full" style={{ color: 'var(--color-primary-on)' }}>
           {title}

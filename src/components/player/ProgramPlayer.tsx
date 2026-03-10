@@ -369,9 +369,9 @@ export function ProgramPlayer({
                 onClick={handleFinishDay} 
                 style={{
                   width: '100%', height: 56, borderRadius: 'var(--radius-lg)',
-                  backgroundColor: 'var(--color-primary-default)', color: '#fff',
+                  backgroundColor: 'var(--color-primary-default)', color: 'var(--color-text-inverse)',
                   border: 'none', cursor: 'pointer',
-                  ...f('base', 500, '#fff'),
+                  ...f('base', 500, 'var(--color-text-inverse)'),
                   boxShadow: 'var(--shadow-sm)', transition: 'all 0.15s',
                 }}
               >
@@ -542,9 +542,9 @@ export function ProgramPlayer({
               style={{
                 width: '100%', height: 52, borderRadius: 'var(--radius-lg)',
                 backgroundColor: isStepValid ? 'var(--color-primary-default)' : 'var(--color-bg-muted)',
-                color: isStepValid ? '#fff' : 'var(--color-text-muted)',
+                color: isStepValid ? 'var(--color-text-inverse)' : 'var(--color-text-muted)',
                 border: 'none', cursor: isStepValid ? 'pointer' : 'not-allowed',
-                ...f('base', 500, isStepValid ? '#fff' : 'var(--color-text-muted)'),
+                ...f('base', 500, isStepValid ? 'var(--color-text-inverse)' : 'var(--color-text-muted)'),
                 boxShadow: isStepValid ? 'var(--shadow-sm)' : 'none',
                 transition: 'all 0.15s',
                 opacity: isStepValid ? 1 : 0.6,

@@ -1,8 +1,10 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import { useNotifications } from '../../contexts/NotificationContext';
+import { useAuth } from '../../contexts/AuthContext';
+import { apiClient } from '../../lib/api-client';
 
 // ──────────────────────────────────────────────────────────────────
-// Types
+// Types — kept identical so ActivityCard / WellnessScoreCard work
 // ──────────────────────────────────────────────────────────────────
 
 export interface SleepDetails {
@@ -20,21 +22,21 @@ export interface VitalsData {
   restingHeartRate: number;
   bloodPressureSystolic: number;
   bloodPressureDiastolic: number;
-  oxygenSaturation: number;      // SpO2 %
-  respiratoryRate: number;       // breaths/min
-  bodyTemperature: number;       // °C
-  bloodGlucose: number | null;   // mg/dL — null if not tracked
+  oxygenSaturation: number;
+  respiratoryRate: number;
+  bodyTemperature: number;
+  bloodGlucose: number | null;
 }
 
 export interface BodyData {
-  weight: number;                // kg
-  height: number;                // cm
+  weight: number;
+  height: number;
   bmi: number;
   bodyFatPct: number | null;
 }
 
 export interface NutritionData {
-  hydrationMl: number;           // mL today
+  hydrationMl: number;
   hydrationGoalMl: number;
   caloriesConsumed: number;
   proteinG: number;
@@ -45,7 +47,7 @@ export interface NutritionData {
 export interface WeeklyData {
   stepsPerDay: number[];
   caloriesPerDay: number[];
-  sleepPerDay: number[];         // hours each day
+  sleepPerDay: number[];
   goalsAchieved: number;
   avgSleep: number;
   avgActiveMinutes: number;
@@ -56,7 +58,7 @@ export interface HealthData {
   // ─── Activity ───
   steps: number;
   activeMinutes: number;
-  calories: number;              // active cal burned
+  calories: number;
   distanceKm: number;
   floorsClimbed: number;
   heartPoints: number;
@@ -74,219 +76,202 @@ export interface HealthData {
   weekly: WeeklyData;
   // ─── Meta ───
   lastUpdated: string;
+  source?: 'health-connect' | 'manual-entry';
 }
 
-export type FitnessProvider = 'google-fit' | 'health-connect' | null;
+export type FitnessProvider = 'health-connect' | null;
 
-interface FitnessContextType {
+interface HealthConnectContextType {
   isConnected: boolean;
   provider: FitnessProvider;
   isSyncing: boolean;
   data: HealthData | null;
+  lastSyncAt: string | null;
   connect: (provider?: FitnessProvider) => Promise<void>;
   disconnect: () => Promise<void>;
   sync: () => Promise<void>;
+  submitManualEntry: (entry: Partial<HealthData>) => Promise<void>;
 }
-
-// ──────────────────────────────────────────────────────────────────
-// Mock Data Generator
-// ──────────────────────────────────────────────────────────────────
-
-const rnd = (min: number, max: number) => Math.random() * (max - min) + min;
-const rndInt = (min: number, max: number) => Math.floor(rnd(min, max));
-
-const generateMockData = (): HealthData => {
-  const steps = rndInt(3000, 13000);
-  const sleepHours = Number(rnd(5, 9).toFixed(1));
-  const activeMinutes = rndInt(12, 95);
-  const calories = rndInt(140, 650);
-  const distanceKm = Number((steps * 0.00072).toFixed(1));
-  const heartPoints = rndInt(8, 85);
-
-  // Sleep
-  const bedH = rndInt(22, 25);
-  const wakeH = rndInt(5, 8);
-  const totalM = Math.round(sleepHours * 60);
-  const dp = 0.14 + Math.random() * 0.1;
-  const rp = 0.18 + Math.random() * 0.07;
-  const ap = 0.04 + Math.random() * 0.05;
-  const lp = 1 - dp - rp - ap;
-
-  const fmtH = (h: number) => {
-    const h12 = h > 12 ? h - 12 : h;
-    const ampm = h >= 12 && h < 24 ? 'PM' : 'AM';
-    return `${h12}:${String(rndInt(0, 59)).padStart(2, '0')} ${ampm}`;
-  };
-
-  const sleep: SleepDetails = {
-    totalHours: sleepHours,
-    bedtime: fmtH(bedH > 24 ? bedH - 24 : bedH),
-    wakeTime: fmtH(wakeH),
-    efficiency: rndInt(78, 96),
-    deepSleepMins: Math.round(totalM * dp),
-    lightSleepMins: Math.round(totalM * lp),
-    remSleepMins: Math.round(totalM * rp),
-    awakeMins: Math.round(totalM * ap),
-  };
-
-  // Vitals
-  const vitals: VitalsData = {
-    restingHeartRate: rndInt(54, 78),
-    bloodPressureSystolic: rndInt(108, 135),
-    bloodPressureDiastolic: rndInt(65, 88),
-    oxygenSaturation: rndInt(95, 100),
-    respiratoryRate: rndInt(12, 20),
-    bodyTemperature: Number(rnd(36.2, 37.1).toFixed(1)),
-    bloodGlucose: Math.random() > 0.5 ? rndInt(70, 140) : null,
-  };
-
-  // Body
-  const weight = Number(rnd(55, 95).toFixed(1));
-  const height = rndInt(155, 190);
-  const body: BodyData = {
-    weight,
-    height,
-    bmi: Number((weight / ((height / 100) ** 2)).toFixed(1)),
-    bodyFatPct: Math.random() > 0.4 ? Number(rnd(12, 35).toFixed(1)) : null,
-  };
-
-  // Nutrition
-  const nutrition: NutritionData = {
-    hydrationMl: rndInt(400, 2800),
-    hydrationGoalMl: 2500,
-    caloriesConsumed: rndInt(800, 2400),
-    proteinG: rndInt(20, 120),
-    carbsG: rndInt(80, 300),
-    fatG: rndInt(20, 100),
-  };
-
-  // Weekly
-  const stepsPerDay = Array.from({ length: 7 }, () => rndInt(2000, 14000));
-  stepsPerDay[6] = steps;
-  const caloriesPerDay = Array.from({ length: 7 }, () => rndInt(100, 700));
-  caloriesPerDay[6] = calories;
-  const sleepPerDay = Array.from({ length: 7 }, () => Number(rnd(4.5, 9.5).toFixed(1)));
-  sleepPerDay[6] = sleepHours;
-
-  const weekly: WeeklyData = {
-    stepsPerDay,
-    caloriesPerDay,
-    sleepPerDay,
-    goalsAchieved: rndInt(2, 7),
-    avgSleep: Number((sleepPerDay.reduce((a, b) => a + b, 0) / 7).toFixed(1)),
-    avgActiveMinutes: rndInt(20, 70),
-    totalCalories: caloriesPerDay.reduce((a, b) => a + b, 0),
-  };
-
-  return {
-    steps,
-    activeMinutes,
-    calories,
-    distanceKm,
-    floorsClimbed: rndInt(0, 20),
-    heartPoints,
-    vo2Max: Math.random() > 0.3 ? Number(rnd(28, 55).toFixed(1)) : null,
-    sleepHours,
-    sleep,
-    vitals,
-    body,
-    nutrition,
-    weekly,
-    lastUpdated: new Date().toISOString(),
-  };
-};
 
 // ──────────────────────────────────────────────────────────────────
 // Context
 // ──────────────────────────────────────────────────────────────────
 
-const GoogleFitContext = createContext<FitnessContextType | undefined>(undefined);
+const HealthConnectContext = createContext<HealthConnectContextType | undefined>(undefined);
+
+// ──────────────────────────────────────────────────────────────────
+// Provider — fetches real data from server, zero mock generation
+// ──────────────────────────────────────────────────────────────────
 
 export function GoogleFitProvider({ children }: { children: ReactNode }) {
   const { showToast } = useNotifications();
+  const { user } = useAuth();
   const [isConnected, setIsConnected] = useState(false);
   const [provider, setProvider] = useState<FitnessProvider>(null);
   const [isSyncing, setIsSyncing] = useState(false);
   const [data, setData] = useState<HealthData | null>(null);
+  const [lastSyncAt, setLastSyncAt] = useState<string | null>(null);
+  const [initialLoadDone, setInitialLoadDone] = useState(false);
 
-  useEffect(() => {
-    const storedAuth = localStorage.getItem('google_fit_connected');
-    const storedProvider = localStorage.getItem('google_fit_provider') as FitnessProvider;
-    const storedData = localStorage.getItem('google_fit_data');
+  // ── Fetch status + data from server ────────────────────────
+  const fetchFromServer = useCallback(async (silent = false) => {
+    try {
+      if (!silent) setIsSyncing(true);
 
-    if (storedAuth === 'true') {
-      setIsConnected(true);
-      setProvider(storedProvider || 'google-fit');
-      if (storedData) {
-        try {
-          const parsed = JSON.parse(storedData);
-          // Guard: if old shape, regenerate
-          if (!parsed.vitals || !parsed.body || !parsed.nutrition) {
-            const fresh = generateMockData();
-            setData(fresh);
-            localStorage.setItem('google_fit_data', JSON.stringify(fresh));
-          } else {
-            setData(parsed);
-          }
-        } catch {
-          const fresh = generateMockData();
-          setData(fresh);
-          localStorage.setItem('google_fit_data', JSON.stringify(fresh));
-        }
+      const [statusRes, dataRes] = await Promise.all([
+        apiClient.get('/health-connect/status'),
+        apiClient.get('/health-connect/data'),
+      ]);
+
+      const connected = statusRes?.connected === true;
+      setIsConnected(connected);
+      setProvider(connected ? 'health-connect' : null);
+      setLastSyncAt(statusRes?.lastSyncAt || null);
+
+      if (dataRes?.data) {
+        setData(dataRes.data as HealthData);
       } else {
-        const fresh = generateMockData();
-        setData(fresh);
-        localStorage.setItem('google_fit_data', JSON.stringify(fresh));
+        setData(null);
       }
+    } catch (err: any) {
+      // Silently fail on auth errors (user not logged in yet) and 404s (edge function cold start)
+      if (!err?.message?.includes('401') && !err?.message?.includes('404') && !err?.message?.includes('AbortError')) {
+        console.error('Health Connect fetch error:', err);
+      }
+    } finally {
+      if (!silent) setIsSyncing(false);
+      setInitialLoadDone(true);
     }
   }, []);
 
-  const connect = async (prov: FitnessProvider = 'google-fit') => {
-    setIsSyncing(true);
-    await new Promise(r => setTimeout(r, 1500));
-    setIsConnected(true);
-    setProvider(prov);
-    localStorage.setItem('google_fit_connected', 'true');
-    localStorage.setItem('google_fit_provider', prov || 'google-fit');
-    const d = generateMockData();
-    setData(d);
-    localStorage.setItem('google_fit_data', JSON.stringify(d));
-    setIsSyncing(false);
-    showToast('success', 'Connected', `${prov === 'health-connect' ? 'Health Connect' : 'Google Fit'} connected successfully.`);
-  };
+  // Load on mount — only fetch when user is authenticated
+  useEffect(() => {
+    if (!user) {
+      // Not logged in — reset to defaults
+      setIsConnected(false);
+      setProvider(null);
+      setData(null);
+      setLastSyncAt(null);
+      setInitialLoadDone(true);
+      // Lazily tear down native bridge if it was initialized
+      import('../../lib/health-connect-bridge').then(m => m.destroyHealthBridge()).catch(() => {});
+      return;
+    }
+    // Lazily init native bridge so TWA wrapper can push data (non-blocking)
+    import('../../lib/health-connect-bridge').then(m => {
+      m.initHealthBridge({
+        onDataReceived: () => fetchFromServer(true),
+        onError: (err) => console.error('[HealthBridge] Native push error:', err),
+      });
+    }).catch((err) => console.warn('[HealthBridge] Could not initialize:', err));
+    const timer = setTimeout(() => fetchFromServer(true), 300);
+    return () => {
+      clearTimeout(timer);
+      import('../../lib/health-connect-bridge').then(m => m.destroyHealthBridge()).catch(() => {});
+    };
+  }, [fetchFromServer, user]);
 
-  const disconnect = async () => {
-    setIsSyncing(true);
-    await new Promise(r => setTimeout(r, 500));
-    setIsConnected(false);
-    setProvider(null);
-    setData(null);
-    localStorage.removeItem('google_fit_connected');
-    localStorage.removeItem('google_fit_provider');
-    localStorage.removeItem('google_fit_data');
-    setIsSyncing(false);
-    showToast('info', 'Disconnected', 'Fitness tracker disconnected.');
-  };
+  // ── Connect ────────────────────────────────────────────────
+  const connect = useCallback(async (_provider: FitnessProvider = 'health-connect') => {
+    try {
+      setIsSyncing(true);
+      const res = await apiClient.post('/health-connect/connect', {
+        deviceName: navigator.userAgent,
+      });
+      if (res?.success) {
+        setIsConnected(true);
+        setProvider('health-connect');
+        showToast('success', 'Connected', 'Health Connect linked successfully.');
+        // Fetch any existing data
+        await fetchFromServer(true);
+      }
+    } catch (err) {
+      console.error('Health Connect connect error:', err);
+      showToast('error', 'Connection Failed', 'Could not connect to Health Connect. Please try again.');
+    } finally {
+      setIsSyncing(false);
+    }
+  }, [fetchFromServer, showToast]);
 
-  const sync = async () => {
+  // ── Disconnect ─────────────────────────────────────────────
+  const disconnect = useCallback(async () => {
+    try {
+      setIsSyncing(true);
+      await apiClient.post('/health-connect/disconnect', {});
+      setIsConnected(false);
+      setProvider(null);
+      setData(null);
+      setLastSyncAt(null);
+      showToast('info', 'Disconnected', 'Health Connect has been unlinked.');
+    } catch (err) {
+      console.error('Health Connect disconnect error:', err);
+      showToast('error', 'Error', 'Could not disconnect. Please try again.');
+    } finally {
+      setIsSyncing(false);
+    }
+  }, [showToast]);
+
+  // ── Sync (re-fetch from server) ────────────────────────────
+  const sync = useCallback(async () => {
     if (!isConnected) return;
     setIsSyncing(true);
-    await new Promise(r => setTimeout(r, 1800));
-    const d = generateMockData();
-    setData(d);
-    localStorage.setItem('google_fit_data', JSON.stringify(d));
-    setIsSyncing(false);
+    try {
+      await fetchFromServer(false);
+      showToast('success', 'Synced', 'Health data refreshed.');
+    } catch (err) {
+      console.error('Health Connect sync error:', err);
+    } finally {
+      setIsSyncing(false);
+    }
+  }, [isConnected, fetchFromServer, showToast]);
+
+  // ── Manual entry ───────────────────────────────────────────
+  const submitManualEntry = useCallback(async (entry: Partial<HealthData>) => {
+    try {
+      setIsSyncing(true);
+      const res = await apiClient.post('/health-connect/manual-entry', entry);
+      if (res?.data) {
+        setData(res.data as HealthData);
+        setIsConnected(true);
+        setProvider('health-connect');
+        showToast('success', 'Saved', 'Health data updated.');
+      }
+    } catch (err) {
+      console.error('Manual entry error:', err);
+      showToast('error', 'Error', 'Could not save health data.');
+    } finally {
+      setIsSyncing(false);
+    }
+  }, [showToast]);
+
+  // Don't render children until initial load is done to avoid flash
+  const value: HealthConnectContextType = {
+    isConnected,
+    provider,
+    isSyncing: isSyncing && initialLoadDone, // don't show syncing spinner on initial load
+    data,
+    lastSyncAt,
+    connect,
+    disconnect,
+    sync,
+    submitManualEntry,
   };
 
   return (
-    <GoogleFitContext.Provider value={{ isConnected, provider, isSyncing, data, connect, disconnect, sync }}>
+    <HealthConnectContext.Provider value={value}>
       {children}
-    </GoogleFitContext.Provider>
+    </HealthConnectContext.Provider>
   );
 }
 
+// ── Aliases ──────────────────────────────────────────────────────
+// Keep the old name so existing imports don't break
+export const HealthConnectProvider = GoogleFitProvider;
+
 export function useGoogleFit() {
-  const ctx = useContext(GoogleFitContext);
-  if (!ctx) throw new Error('useGoogleFit must be used within GoogleFitProvider');
+  const ctx = useContext(HealthConnectContext);
+  if (!ctx) throw new Error('useGoogleFit must be used within GoogleFitProvider / HealthConnectProvider');
   return ctx;
 }
+
+export const useHealthConnect = useGoogleFit;

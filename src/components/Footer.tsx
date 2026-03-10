@@ -20,6 +20,7 @@ function WugwebLogo() {
     <div className="relative shrink-0 size-[24px]" data-name="Wugweb Logo">
       <svg className="block size-full" fill="none" preserveAspectRatio="none" viewBox="0 0 24 24">
         <g id="Wugweb Logo">
+          {/* Wugweb brand colors — third-party logo, must remain as hex */}
           <rect fill="#101010" height="24" rx="6" width="24" />
           <g id="Vector">
             <path d={svgPaths.p34e2cf00} fill="white" />

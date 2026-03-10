@@ -32,6 +32,8 @@ const ICON_OPTIONS = [
   { value: 'folder', label: 'Folder', icon: FolderOpen },
 ];
 
+// Color picker presets — hex values required here as they are stored as data in KV
+// and rendered dynamically as backgroundColor. CSS variables cannot be used for stored data.
 const COLOR_PRESETS = [
   { value: '#2A2A2A', label: 'Primary' },
   { value: '#E9EBEF', label: 'Accent' },

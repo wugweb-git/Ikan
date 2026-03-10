@@ -36,6 +36,8 @@ const EMOJI_SUGGESTIONS = [
   '🥺', '😭', '😞', '😕', '😑', '😏', '😁'
 ];
 
+// Color picker presets — hex values required here as they are stored as data in KV
+// and rendered dynamically as backgroundColor. CSS variables cannot be used for stored data.
 const COLOR_PRESETS = [
   { value: '#EF4444', label: 'Red' },
   { value: '#F97316', label: 'Orange' },

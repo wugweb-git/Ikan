@@ -1,6 +1,7 @@
 import { Hono } from 'npm:hono';
 import * as kv from './kv_store.tsx';
 import { EquipService } from './program-service.ts';
+import { createClient } from "jsr:@supabase/supabase-js@2";
 
 export function registerAdminRoutes(app: Hono, requireAuth: any, requireAdmin: any) {
 
@@ -420,84 +421,7 @@ app.post("/admin/backup/create-checkpoint", requireAdmin, async (c) => {
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
     const backupId = `backup_${timestamp}`;
     
-    // Define prefixes to backup
-    const prefixes = [
-      'equip:',
-      'equip_slug:',
-      'idx_equip_days:',
-      'day:',
-      'idx_day_blocks:',
-      'block:',
-      'dataset:',
-      'dataset_key:',
-      'recommendation_rules',
-      'assessment_def:',
-      'resource:',
-      'page:',
-      'media:',
-      'category:'
-    ];
-    
-    const backupData: Record<string, any> = {};
-    
-    // 1. Gather all data
-    for (const prefix of prefixes) {
-      const items = await kv.getByPrefix(prefix);
-      // We need key-value pairs, but getByPrefix returns values (usually). 
-      // Wait, kv.getByPrefix implementation in kv_store.tsx usually returns values.
-      // But for restoration, we need the Keys.
-      // Let's check kv_store.tsx implementation of getByPrefix
-      
-      // If getByPrefix returns just values, we can't restore them to their original keys easily unless the value contains the ID/Key.
-      // Most of our entities contain 'id', so we can reconstruct `prefix:{id}`.
-      // But indices like `idx_equip_days:{id}` are just arrays.
-      
-      // We need a way to get raw KV pairs.
-      // If kv_store doesn't expose listKeys or similar, we might have a problem.
-      
-      // Let's assume for now we can rely on ID property for entities.
-      // But indices are tricky.
-      
-      // Actually, let's look at kv_store.tsx to see what getByPrefix returns.
-      // If it only returns values, I might need to extend it or work around it.
-    }
-    
-    // Since I can't check kv_store.tsx right now (I did check it earlier but didn't verify return type details for getByPrefix),
-    // let's assume I need to extend kv_store to support listing keys + values, 
-    // OR I can use the fact that I know the IDs from the values for entities.
-    
-    // But for indices (idx_...), the value is an array, and the key contains the ID of the parent.
-    // The value doesn't contain the parent ID usually.
-    
-    // WE NEED A BETTER BACKUP STRATEGY.
-    // Since I can't modify kv_store.tsx (it's protected), I have to rely on what it exposes.
-    
-    // Protected files: /supabase/functions/server/kv_store.tsx
-    
-    // Let's read kv_store.tsx to see exactly what getByPrefix does.
-    // If it returns [value, value], I'm in trouble for indices.
-    
-    // If I can't backup indices, I can reconstruct them?
-    // - idx_equip_days:{id} -> I can scan all days, check their equip_id, and rebuild the index.
-    // - idx_day_blocks:{id} -> Scan all blocks, check equip_day_id.
-    
-    // So if I backup all entities (Equip, Day, Block, Resource, Assessment, etc.), I can theoretically rebuild indices upon restore.
-    
-    // BUT, `equip_slug:` and `dataset_key:` are simple KV mappings.
-    // `equip_slug:{slug}` -> id.
-    // If I backup Equips, I have slug in the object. I can rebuild `equip_slug:`.
-    
-    // So the strategy is:
-    // 1. Backup all Entities (values).
-    // 2. On Restore:
-    //    a. Wipe existing data (optional, or just overwrite).
-    //    b. Restore Entities.
-    //    c. Rebuild Indices and Lookups.
-    
-    // This seems robust.
-    
-    // Let's refine the backup endpoint to gather entities.
-    
+    // Gather all entity data for backup
     const entities = {
       equips: await kv.getByPrefix('equip:'),
       days: await kv.getByPrefix('day:'),
@@ -710,4 +634,499 @@ app.get("/admin/analytics", requireAdmin, async (c) => {
   }
 });
 
+// ========================================
+// ADMIN - KV AUDIT (Orphan Detection)
+// ========================================
+
+app.get("/admin/kv-audit", requireAdmin, async (c) => {
+  try {
+    const auditSupabase = createClient(
+      Deno.env.get('SUPABASE_URL')!,
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
+    );
+
+    // ─── 1. Fetch ALL keys from the KV table ─────────────────────
+    // Paginate in batches of 1000 to handle large tables
+    let allRows: { key: string; value: any }[] = [];
+    let offset = 0;
+    const batchSize = 1000;
+    let hasMore = true;
+
+    while (hasMore) {
+      const { data, error } = await auditSupabase
+        .from('kv_store_cc205da9')
+        .select('key, value')
+        .range(offset, offset + batchSize - 1)
+        .order('key');
+
+      if (error) throw new Error(`KV scan error at offset ${offset}: ${error.message}`);
+      if (!data || data.length === 0) {
+        hasMore = false;
+      } else {
+        allRows = allRows.concat(data);
+        offset += batchSize;
+        if (data.length < batchSize) hasMore = false;
+      }
+    }
+
+    // ─── 2. Categorize keys by prefix ──────────────────────────
+    const KNOWN_PREFIXES = [
+      // System / content entities
+      'equip:', 'equip_slug:', 'idx_equip_days:', 'day:', 'idx_day_blocks:',
+      'block:', 'dataset:', 'dataset_key:', 'assessment_def:', 'resource:',
+      'category:', 'media:', 'page:', 'page_slug:', 'cms_page:', 'content:',
+      'content_slug:', 'recommendation_rule:', 'newsletter:', 'contact_submission:',
+      'contact_submissions:',
+      // User-scoped
+      'user:', 'journal:', 'journal_by_user:', 'tracker:', 'enrollment:',
+      'user_enrollment:', 'progress:', 'assessment_result:', 'assessment-result:',
+      'assessment_response_by_user:', 'assessment_response:', 'program-progress:',
+      'email-change:',
+      // Audit trail
+      'audit:',
+      // System
+      'sys_backups', 'backup_', 'recommendation_rules',
+      // Mood / scales
+      'mood_type:', 'checkin_scale:', 'mood_config',
+    ];
+
+    const categorized: Record<string, { count: number; keys: string[]; sampleValues: any[] }> = {};
+    const uncategorized: { key: string; value: any }[] = [];
+
+    for (const row of allRows) {
+      let matched = false;
+      for (const prefix of KNOWN_PREFIXES) {
+        if (row.key === prefix.replace(/:$/, '') || row.key.startsWith(prefix)) {
+          if (!categorized[prefix]) {
+            categorized[prefix] = { count: 0, keys: [], sampleValues: [] };
+          }
+          categorized[prefix].count++;
+          categorized[prefix].keys.push(row.key);
+          if (categorized[prefix].sampleValues.length < 2) {
+            categorized[prefix].sampleValues.push({ key: row.key, valuePreview: summarizeValue(row.value) });
+          }
+          matched = true;
+          break;
+        }
+      }
+      if (!matched) {
+        uncategorized.push({ key: row.key, value: summarizeValue(row.value) });
+      }
+    }
+
+    // ─── 3. Orphan detection ────────────────────────────────────
+    const orphans: { key: string; reason: string; category: string }[] = [];
+
+    // Build lookup maps
+    const keySet = new Set(allRows.map(r => r.key));
+    const rowMap = new Map(allRows.map(r => [r.key, r.value]));
+
+    // 3a. equip_slug → equip orphans
+    for (const row of allRows.filter(r => r.key.startsWith('equip_slug:'))) {
+      const equipId = row.value;
+      if (typeof equipId === 'string' && !keySet.has(`equip:${equipId}`)) {
+        orphans.push({ key: row.key, reason: `Points to equip:${equipId} which does not exist`, category: 'slug-dangling' });
+      }
+    }
+
+    // 3b. idx_equip_days → equip orphans
+    for (const row of allRows.filter(r => r.key.startsWith('idx_equip_days:'))) {
+      const equipId = row.key.replace('idx_equip_days:', '');
+      if (!keySet.has(`equip:${equipId}`)) {
+        orphans.push({ key: row.key, reason: `Index references equip:${equipId} which does not exist`, category: 'index-dangling' });
+      }
+      // Check each day ID in the array
+      if (Array.isArray(row.value)) {
+        for (const dayId of row.value) {
+          if (!keySet.has(`day:${dayId}`)) {
+            orphans.push({ key: row.key, reason: `Index contains day:${dayId} which does not exist`, category: 'index-stale-ref' });
+          }
+        }
+      }
+    }
+
+    // 3c. idx_day_blocks → day orphans
+    for (const row of allRows.filter(r => r.key.startsWith('idx_day_blocks:'))) {
+      const dayId = row.key.replace('idx_day_blocks:', '');
+      if (!keySet.has(`day:${dayId}`)) {
+        orphans.push({ key: row.key, reason: `Index references day:${dayId} which does not exist`, category: 'index-dangling' });
+      }
+      if (Array.isArray(row.value)) {
+        for (const blockId of row.value) {
+          if (!keySet.has(`block:${blockId}`)) {
+            orphans.push({ key: row.key, reason: `Index contains block:${blockId} which does not exist`, category: 'index-stale-ref' });
+          }
+        }
+      }
+    }
+
+    // 3d. page_slug → page orphans
+    for (const row of allRows.filter(r => r.key.startsWith('page_slug:'))) {
+      const pageId = row.value;
+      if (typeof pageId === 'string' && !keySet.has(`page:${pageId}`)) {
+        orphans.push({ key: row.key, reason: `Points to page:${pageId} which does not exist`, category: 'slug-dangling' });
+      }
+    }
+
+    // 3e. content_slug → content orphans
+    for (const row of allRows.filter(r => r.key.startsWith('content_slug:'))) {
+      const contentId = row.value;
+      if (typeof contentId === 'string' && !keySet.has(`content:${contentId}`)) {
+        orphans.push({ key: row.key, reason: `Points to content:${contentId} which does not exist`, category: 'slug-dangling' });
+      }
+    }
+
+    // 3f. dataset_key → dataset orphans
+    for (const row of allRows.filter(r => r.key.startsWith('dataset_key:'))) {
+      const datasetId = row.value;
+      if (typeof datasetId === 'string' && !keySet.has(`dataset:${datasetId}`)) {
+        orphans.push({ key: row.key, reason: `Points to dataset:${datasetId} which does not exist`, category: 'slug-dangling' });
+      }
+    }
+
+    // 3g. Days without parent equip
+    for (const row of allRows.filter(r => r.key.startsWith('day:') && !r.key.startsWith('day_'))) {
+      const val = row.value;
+      if (val && val.equip_id && !keySet.has(`equip:${val.equip_id}`)) {
+        orphans.push({ key: row.key, reason: `Day references equip:${val.equip_id} which does not exist`, category: 'entity-orphan' });
+      }
+    }
+
+    // 3h. Blocks without parent day
+    for (const row of allRows.filter(r => r.key.startsWith('block:'))) {
+      const val = row.value;
+      if (val && val.equip_day_id && !keySet.has(`day:${val.equip_day_id}`)) {
+        orphans.push({ key: row.key, reason: `Block references day:${val.equip_day_id} which does not exist`, category: 'entity-orphan' });
+      }
+    }
+
+    // 3i. Enrollment referencing deleted equips
+    for (const row of allRows.filter(r => r.key.startsWith('enrollment:'))) {
+      const val = row.value;
+      if (val && val.equip_id && !keySet.has(`equip:${val.equip_id}`)) {
+        orphans.push({ key: row.key, reason: `Enrollment references equip:${val.equip_id} which does not exist`, category: 'user-data-orphan' });
+      }
+    }
+
+    // 3j. journal_by_user without matching journal entry
+    for (const row of allRows.filter(r => r.key.startsWith('journal_by_user:'))) {
+      const val = row.value;
+      if (val && val.journal_entry_id && !keySet.has(`journal:${val.journal_entry_id}`)) {
+        orphans.push({ key: row.key, reason: `Index references journal:${val.journal_entry_id} which does not exist`, category: 'user-data-orphan' });
+      }
+    }
+
+    // ─── 4. Naming inconsistencies ────────────────────────────
+    const inconsistencies: { issue: string; keys: string[] }[] = [];
+
+    // assessment_result: vs assessment-result: (underscore vs hyphen)
+    const underscoreResults = allRows.filter(r => r.key.startsWith('assessment_result:'));
+    const hyphenResults = allRows.filter(r => r.key.startsWith('assessment-result:'));
+    if (underscoreResults.length > 0 && hyphenResults.length > 0) {
+      inconsistencies.push({
+        issue: 'Mixed naming convention: assessment_result: (underscore) and assessment-result: (hyphen) both exist',
+        keys: [...underscoreResults.slice(0, 3).map(r => r.key), ...hyphenResults.slice(0, 3).map(r => r.key)]
+      });
+    }
+
+    // program-progress: vs progress: (different prefix for same concept?)
+    const programProgress = allRows.filter(r => r.key.startsWith('program-progress:'));
+    const progressKeys = allRows.filter(r => r.key.startsWith('progress:'));
+    if (programProgress.length > 0 && progressKeys.length > 0) {
+      inconsistencies.push({
+        issue: 'Mixed naming: program-progress: and progress: both exist for progress tracking',
+        keys: [...programProgress.slice(0, 3).map(r => r.key), ...progressKeys.slice(0, 3).map(r => r.key)]
+      });
+    }
+
+    // ─── 5. Growth warnings (unbounded) ─────────────────────
+    const growthWarnings: { prefix: string; count: number; warning: string }[] = [];
+
+    const auditKeys = allRows.filter(r => r.key.startsWith('audit:'));
+    if (auditKeys.length > 100) {
+      growthWarnings.push({ prefix: 'audit:', count: auditKeys.length, warning: 'Audit trail is growing unbounded — consider periodic pruning' });
+    }
+
+    const contactKeys = allRows.filter(r => r.key.startsWith('contact_submission:') || r.key.startsWith('contact_submissions:'));
+    if (contactKeys.length > 200) {
+      growthWarnings.push({ prefix: 'contact_*:', count: contactKeys.length, warning: 'Contact submissions accumulating — consider archival' });
+    }
+
+    const backupKeys = allRows.filter(r => r.key.startsWith('backup_'));
+    if (backupKeys.length > 10) {
+      growthWarnings.push({ prefix: 'backup_*', count: backupKeys.length, warning: 'Too many backup snapshots stored in KV — old ones should be cleaned' });
+    }
+
+    // ─── 6. User data summary (multi-tenant) ──────────────
+    const userKeys = allRows.filter(r => r.key.startsWith('user:'));
+    const userIds = userKeys.map(r => r.key.replace('user:', ''));
+
+    // For each user, count their data footprint
+    const userDataFootprint: { userId: string; email?: string; keyCount: number; prefixes: Record<string, number> }[] = [];
+    const USER_DATA_PREFIXES = [
+      'journal_by_user:', 'journal:', 'tracker:', 'enrollment:', 'user_enrollment:',
+      'progress:', 'assessment_result:', 'assessment-result:', 'assessment_response_by_user:',
+      'program-progress:', 'audit:', 'email-change:'
+    ];
+
+    for (const uid of userIds.slice(0, 50)) { // Cap at 50 users for performance
+      const prefixCounts: Record<string, number> = {};
+      let total = 1; // the user: key itself
+      for (const row of allRows) {
+        for (const prefix of USER_DATA_PREFIXES) {
+          if (row.key.includes(uid) && row.key.startsWith(prefix)) {
+            prefixCounts[prefix] = (prefixCounts[prefix] || 0) + 1;
+            total++;
+          }
+        }
+      }
+      const userVal = rowMap.get(`user:${uid}`);
+      userDataFootprint.push({
+        userId: uid,
+        email: userVal?.email,
+        keyCount: total,
+        prefixes: prefixCounts
+      });
+    }
+
+    // Sort by footprint descending
+    userDataFootprint.sort((a, b) => b.keyCount - a.keyCount);
+
+    // ─── 7. Soft-deleted entities still in KV ─────────────
+    const softDeleted: string[] = [];
+    for (const row of allRows) {
+      if (row.value && typeof row.value === 'object' && row.value.deleted === true) {
+        softDeleted.push(row.key);
+      }
+    }
+
+    // ─── Response ──────────────────────────────────────────
+    return c.json({
+      audit: {
+        timestamp: new Date().toISOString(),
+        totalKeys: allRows.length,
+        categorized: Object.fromEntries(
+          Object.entries(categorized).map(([k, v]) => [k, { count: v.count, samples: v.sampleValues }])
+        ),
+        uncategorizedKeys: uncategorized.slice(0, 50),
+        uncategorizedCount: uncategorized.length,
+        orphans,
+        orphanCount: orphans.length,
+        inconsistencies,
+        growthWarnings,
+        softDeleted,
+        softDeletedCount: softDeleted.length,
+        userDataFootprint: userDataFootprint.slice(0, 20),
+        totalUsers: userIds.length,
+      }
+    });
+
+  } catch (error) {
+    console.error("KV Audit error:", error);
+    return c.json({ error: `KV Audit failed: ${error}` }, 500);
+  }
+});
+
+// ─── KV Audit: Cleanup orphaned keys ───────────────────────────
+app.post("/admin/kv-audit/cleanup", requireAdmin, async (c) => {
+  try {
+    const { keys, dryRun = true } = await c.req.json();
+
+    if (!Array.isArray(keys) || keys.length === 0) {
+      return c.json({ error: 'No keys provided for cleanup' }, 400);
+    }
+
+    // Safety cap
+    if (keys.length > 200) {
+      return c.json({ error: 'Too many keys (max 200 per batch)' }, 400);
+    }
+
+    if (dryRun) {
+      return c.json({ success: true, dryRun: true, wouldDelete: keys.length, keys });
+    }
+
+    // Actually delete
+    const deleted: string[] = [];
+    const failed: { key: string; error: string }[] = [];
+
+    for (const key of keys) {
+      try {
+        await kv.del(key);
+        deleted.push(key);
+      } catch (err) {
+        failed.push({ key, error: String(err) });
+      }
+    }
+
+    return c.json({ success: true, dryRun: false, deleted: deleted.length, failed, deletedKeys: deleted });
+
+  } catch (error) {
+    console.error("KV Cleanup error:", error);
+    return c.json({ error: `KV Cleanup failed: ${error}` }, 500);
+  }
+});
+
+// ─── KV Audit: Prune audit trail keys older than N days ────────
+app.post("/admin/kv-audit/prune-audit-trail", requireAdmin, async (c) => {
+  try {
+    const { olderThanDays = 30, dryRun = true } = await c.req.json();
+    
+    const auditSupabase = createClient(
+      Deno.env.get('SUPABASE_URL')!,
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
+    );
+
+    // Fetch all audit: keys
+    const { data: rows, error: fetchErr } = await auditSupabase
+      .from('kv_store_cc205da9')
+      .select('key, value')
+      .like('key', 'audit:%');
+    
+    if (fetchErr) throw new Error(`Fetch audit keys error: ${fetchErr.message}`);
+    if (!rows || rows.length === 0) {
+      return c.json({ success: true, message: 'No audit trail keys found', pruned: 0, total: 0 });
+    }
+
+    const cutoff = new Date(Date.now() - olderThanDays * 24 * 60 * 60 * 1000);
+    const toPrune: string[] = [];
+
+    for (const row of rows) {
+      const val = row.value;
+      const ts = val?.timestamp || val?.created_at || val?.date;
+      if (ts) {
+        const d = new Date(ts);
+        if (!isNaN(d.getTime()) && d < cutoff) {
+          toPrune.push(row.key);
+        }
+      }
+    }
+
+    if (dryRun) {
+      return c.json({ success: true, dryRun: true, wouldPrune: toPrune.length, total: rows.length, cutoffDate: cutoff.toISOString() });
+    }
+
+    // Actually delete
+    let deleted = 0;
+    for (const key of toPrune) {
+      try {
+        await kv.del(key);
+        deleted++;
+      } catch { /* skip failures */ }
+    }
+
+    return c.json({ success: true, dryRun: false, pruned: deleted, total: rows.length, cutoffDate: cutoff.toISOString() });
+
+  } catch (error) {
+    console.error("Audit trail prune error:", error);
+    return c.json({ error: `Audit trail prune failed: ${error}` }, 500);
+  }
+});
+
+// ─── KV Audit: Migrate naming (rename keys from one prefix to another) ──
+app.post("/admin/kv-audit/migrate-naming", requireAdmin, async (c) => {
+  try {
+    const { fromPrefix, toPrefix, dryRun = true } = await c.req.json();
+    
+    if (!fromPrefix || !toPrefix) {
+      return c.json({ error: 'fromPrefix and toPrefix are required' }, 400);
+    }
+
+    const auditSupabase = createClient(
+      Deno.env.get('SUPABASE_URL')!,
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
+    );
+
+    const { data: rows, error: fetchErr } = await auditSupabase
+      .from('kv_store_cc205da9')
+      .select('key, value')
+      .like('key', `${fromPrefix}%`);
+    
+    if (fetchErr) throw new Error(`Fetch keys error: ${fetchErr.message}`);
+    if (!rows || rows.length === 0) {
+      return c.json({ success: true, message: `No keys found with prefix "${fromPrefix}"`, migrated: 0 });
+    }
+
+    if (dryRun) {
+      const preview = rows.slice(0, 10).map(r => ({
+        from: r.key,
+        to: r.key.replace(fromPrefix, toPrefix)
+      }));
+      return c.json({ success: true, dryRun: true, wouldMigrate: rows.length, preview });
+    }
+
+    // Perform migration: copy to new key, delete old key
+    let migrated = 0;
+    const errors: { key: string; error: string }[] = [];
+
+    for (const row of rows) {
+      try {
+        const newKey = row.key.replace(fromPrefix, toPrefix);
+        await kv.set(newKey, row.value);
+        await kv.del(row.key);
+        migrated++;
+      } catch (err) {
+        errors.push({ key: row.key, error: String(err) });
+      }
+    }
+
+    return c.json({ success: true, dryRun: false, migrated, errors: errors.length > 0 ? errors : undefined });
+
+  } catch (error) {
+    console.error("Naming migration error:", error);
+    return c.json({ error: `Naming migration failed: ${error}` }, 500);
+  }
+});
+
+// ─── KV Audit: Save snapshot for trend tracking ────────────────
+app.post("/admin/kv-audit/save-snapshot", requireAdmin, async (c) => {
+  try {
+    const { score, totalKeys, orphanCount, inconsistencyCount, growthWarningCount, softDeletedCount, uncategorizedCount } = await c.req.json();
+    
+    const snapshots = await kv.get('sys_audit_snapshots') || [];
+    
+    snapshots.push({
+      timestamp: new Date().toISOString(),
+      score,
+      totalKeys,
+      orphanCount,
+      inconsistencyCount,
+      growthWarningCount,
+      softDeletedCount,
+      uncategorizedCount
+    });
+
+    // Keep last 30 snapshots
+    const trimmed = snapshots.slice(-30);
+    await kv.set('sys_audit_snapshots', trimmed);
+
+    return c.json({ success: true, snapshotCount: trimmed.length });
+
+  } catch (error) {
+    console.error("Save audit snapshot error:", error);
+    return c.json({ error: `Save snapshot failed: ${error}` }, 500);
+  }
+});
+
+app.get("/admin/kv-audit/trends", requireAdmin, async (c) => {
+  try {
+    const snapshots = await kv.get('sys_audit_snapshots') || [];
+    return c.json({ snapshots });
+  } catch (error) {
+    return c.json({ error: `Fetch trends failed: ${error}` }, 500);
+  }
+});
+
+}
+// ─── Helper: Summarize a value for display ────────────────��──────
+function summarizeValue(val: any): string {
+  if (val === null || val === undefined) return 'null';
+  if (typeof val === 'string') return val.length > 80 ? val.slice(0, 80) + '...' : val;
+  if (typeof val === 'number' || typeof val === 'boolean') return String(val);
+  if (Array.isArray(val)) return `Array(${val.length})`;
+  if (typeof val === 'object') {
+    const keys = Object.keys(val);
+    const preview = keys.slice(0, 4).join(', ');
+    return `{${preview}${keys.length > 4 ? ', ...' : ''}} (${keys.length} keys)`;
+  }
+  return String(val).slice(0, 80);
 }

@@ -125,7 +125,7 @@ export function EquipBlock({
                   borderRadius: 'var(--radius-lg, 16px)',
                   overflow: 'hidden',
                   cursor: 'pointer',
-                  border: '1px solid var(--color-border-light, #eee)',
+                  border: '1px solid var(--color-border-light)',
                   transition: 'box-shadow 0.2s ease, transform 0.2s ease',
                 }}
                 onMouseEnter={(e) => {

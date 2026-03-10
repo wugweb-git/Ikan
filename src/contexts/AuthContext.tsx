@@ -323,23 +323,100 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signInWithProvider = async (provider: 'google' | 'linkedin_oidc' | 'apple') => {
     try {
       setLoading(true);
-      
-      // Use Supabase social auth
-      const { data, error } = await supabase.auth.signInWithOAuth({
-        provider: provider,
-        options: {
-          redirectTo: `${window.location.origin}/`
+
+      // Detect if we're in an iframe (e.g. Figma Make preview) — use popup flow
+      const isInIframe = window.self !== window.top;
+
+      if (isInIframe) {
+        // Popup-based OAuth: get the URL without redirecting, then open in a popup
+        const { data, error } = await supabase.auth.signInWithOAuth({
+          provider,
+          options: {
+            redirectTo: `${window.location.origin}/`,
+            skipBrowserRedirect: true,
+          },
+        });
+
+        if (error || !data?.url) {
+          console.error(`${provider} sign-in error (popup):`, error);
+          throw new Error(error?.message || `Failed to start ${provider} sign-in.`);
         }
+
+        // Open OAuth in a popup window
+        const width = 500;
+        const height = 700;
+        const left = window.screenX + (window.innerWidth - width) / 2;
+        const top = window.screenY + (window.innerHeight - height) / 2;
+        const popup = window.open(
+          data.url,
+          `${provider}-oauth`,
+          `width=${width},height=${height},left=${left},top=${top},popup=yes,toolbar=no,menubar=no`
+        );
+
+        if (!popup) {
+          // Popup blocked — fall back to new tab
+          window.open(data.url, '_blank');
+          console.warn('Popup was blocked — opened OAuth in new tab. Close the tab after signing in.');
+        }
+
+        // Poll for session completion (the popup will store tokens in localStorage via Supabase)
+        const pollInterval = setInterval(async () => {
+          try {
+            const { data: sessionData } = await supabase.auth.getSession();
+            if (sessionData?.session) {
+              clearInterval(pollInterval);
+              setSession(sessionData.session);
+              const quickUser = {
+                user_id: sessionData.session.user.id,
+                email: sessionData.session.user.email || 'User',
+                name: sessionData.session.user.user_metadata?.name || 'User',
+                phone: sessionData.session.user.user_metadata?.phone,
+                corporate_user: false,
+              };
+              setUser(quickUser);
+              setLoading(false);
+              console.log(`✅ ${provider} OAuth completed via popup`);
+
+              // Close popup if still open
+              if (popup && !popup.closed) popup.close();
+
+              // Fetch full profile in background
+              setTimeout(async () => {
+                try {
+                  const profile = await apiClient.getProfile();
+                  if (profile && profile.user_id === quickUser.user_id) setUser(profile);
+                } catch (_e) { /* silent */ }
+              }, 1000);
+            }
+          } catch (_e) { /* silent */ }
+        }, 1500);
+
+        // Stop polling after 5 minutes
+        setTimeout(() => {
+          clearInterval(pollInterval);
+          setLoading(false);
+        }, 300000);
+
+        return; // Don't fall through to loading(false)
+      }
+
+      // Standard redirect-based OAuth (works on deployed sites)
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider,
+        options: {
+          redirectTo: `${window.location.origin}/`,
+        },
       });
-      
+
       if (error) {
         console.error(`${provider} sign-in error:`, error);
         throw new Error(`Failed to sign in with ${provider}. Please try again or contact support.`);
       }
-      
-      // Note: The actual sign-in completion will be handled by the auth state change listener
+
+      // The actual sign-in completion is handled by onAuthStateChange
       // since OAuth redirects the user away and back
-      
+      console.log(`${provider} OAuth redirect initiated`, data?.url ? '→ redirecting' : '');
+
     } catch (error) {
       console.error(`${provider} sign-in error:`, error);
       setLoading(false);

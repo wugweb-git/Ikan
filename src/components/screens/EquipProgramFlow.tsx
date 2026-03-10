@@ -177,7 +177,7 @@ function DayStrip({ days, progress, selectedDay, onSelectDay }: DayStripProps) {
             const pillBg = isDark
               ? B.primary
               : isCompleted
-                ? `${B.success}14`
+                ? `color-mix(in srgb, ${B.success} 8%, transparent)`
                 : B.accent;
             const topColor = isDark ? 'rgba(255,255,255,0.65)' : B.muted;
             const numColor = isDark ? B.primaryOn : isLocked ? B.muted : B.textPrimary;

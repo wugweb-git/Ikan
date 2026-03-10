@@ -55,7 +55,7 @@ export function getMoodOptions(): MoodOption[] {
       label: tokens.emojiSet["1"].label,
       value: 1,
       id: tokens.emojiSet["1"].id,
-      color: tokens.colors.status.danger, // Awful = danger
+      color: 'var(--color-status-danger)', // Awful = danger
       twemoji: tokens.emojiSet["1"].twemoji
     },
     {
@@ -63,7 +63,7 @@ export function getMoodOptions(): MoodOption[] {
       label: tokens.emojiSet["2"].label,
       value: 2,
       id: tokens.emojiSet["2"].id,
-      color: tokens.colors.status.warning, // Bad = warning
+      color: 'var(--color-status-warning)', // Bad = warning
       twemoji: tokens.emojiSet["2"].twemoji
     },
     {
@@ -71,7 +71,7 @@ export function getMoodOptions(): MoodOption[] {
       label: tokens.emojiSet["3"].label,
       value: 3,
       id: tokens.emojiSet["3"].id,
-      color: tokens.colors.neutral[500], // Meh = neutral
+      color: 'var(--color-neutral-500)', // Meh = neutral
       twemoji: tokens.emojiSet["3"].twemoji
     },
     {
@@ -79,7 +79,7 @@ export function getMoodOptions(): MoodOption[] {
       label: tokens.emojiSet["4"].label,
       value: 4,
       id: tokens.emojiSet["4"].id,
-      color: tokens.colors.status.success, // Good = success
+      color: 'var(--color-status-success)', // Good = success
       twemoji: tokens.emojiSet["4"].twemoji
     },
     {
@@ -87,7 +87,7 @@ export function getMoodOptions(): MoodOption[] {
       label: tokens.emojiSet["5"].label,
       value: 5,
       id: tokens.emojiSet["5"].id,
-      color: tokens.colors.status.success, // Great = success (brighter)
+      color: 'var(--color-status-success)', // Great = success
       twemoji: tokens.emojiSet["5"].twemoji
     }
   ];
@@ -106,7 +106,7 @@ export function getMoodOptionByValue(rating: number): MoodOption | undefined {
  */
 export function getMoodColor(rating: number): string {
   const option = getMoodOptionByValue(rating);
-  return option?.color || tokens.colors.neutral[500];
+  return option?.color || 'var(--color-neutral-500)';
 }
 
 /**
@@ -132,8 +132,8 @@ export function getMoodCSSVars(rating: number): React.CSSProperties {
   const color = getMoodColor(rating);
   return {
     '--mood-color': color,
-    '--mood-color-light': `${color}20`, // 20% opacity
-    '--mood-color-border': `${color}40`  // 40% opacity
+    '--mood-color-light': `color-mix(in srgb, ${color} 12%, transparent)`,
+    '--mood-color-border': `color-mix(in srgb, ${color} 25%, transparent)`
   } as React.CSSProperties;
 }
 
@@ -191,16 +191,16 @@ export function getMoodStats(ratings: number[]) {
 function resolveSeverityColors(severity: string): { color: string; bg: string } {
   switch (severity) {
     case 'danger':
-      return { color: tokens.colors.status.danger, bg: tokens.colors.status['danger-light'] };
+      return { color: 'var(--color-status-danger)', bg: 'var(--color-status-danger-light)' };
     case 'warning':
-      return { color: tokens.colors.status.warning, bg: tokens.colors.status['warning-light'] };
+      return { color: 'var(--color-status-warning)', bg: 'var(--color-status-warning-light)' };
     case 'info':
-      return { color: tokens.colors.status.info, bg: tokens.colors.status['info-light'] };
+      return { color: 'var(--color-status-info)', bg: 'var(--color-status-info-light)' };
     case 'success':
-      return { color: tokens.colors.status.success, bg: tokens.colors.status['success-light'] };
+      return { color: 'var(--color-status-success)', bg: 'var(--color-status-success-light)' };
     case 'neutral':
     default:
-      return { color: tokens.colors.neutral[500], bg: tokens.colors.neutral[200] };
+      return { color: 'var(--color-neutral-500)', bg: 'var(--color-neutral-200)' };
   }
 }
 
@@ -239,7 +239,7 @@ export function getStressLabel(value: number): string {
 // ═══════════════════════════════════════════════════════════════════
 // ASYNC SERVER LOADING — Fetches admin-managed overrides from the
 // server and caches them. Falls back to design-token defaults.
-// ═══════════════════════════════════════════════════════════════════
+// ═════════════════════════════���═════════════════════════════════════
 
 let _cachedEnergy: ScaleOption[] | null = null;
 let _cachedStress: ScaleOption[] | null = null;

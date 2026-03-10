@@ -446,7 +446,7 @@ export function MoodJournal({ onNavigate }: { onNavigate?: (path: string) => voi
                       label={m.label}
                       selected={formData.mood === m.value}
                       color={m.color}
-                      bg={`${m.color}18`}
+                      bg={`color-mix(in srgb, ${m.color} 10%, transparent)`}
                       onClick={() => {
                         setFormData(p => ({ ...p, mood: m.value }));
                         setTimeout(goNext, 400);
@@ -661,7 +661,7 @@ export function MoodJournal({ onNavigate }: { onNavigate?: (path: string) => voi
                     maxWidth: 400, margin: '0 auto 16px',
                     padding: 12, borderRadius: 'var(--radius-md)',
                     backgroundColor: B.yellowLight,
-                    border: `1.5px solid ${B.yellow}40`,
+                    border: `1.5px solid color-mix(in srgb, ${B.yellow} 25%, transparent)`,
                   }}
                 >
                   <div className="flex items-center justify-center" style={{ gap: 8 }}>
@@ -689,7 +689,7 @@ export function MoodJournal({ onNavigate }: { onNavigate?: (path: string) => voi
                     backgroundColor: B.yellow,
                     ...f('sm', 500, B.primary),
                     minHeight: 'var(--ikan-component-button-height)', opacity: isSubmitting ? 0.6 : 1,
-                    boxShadow: `0 3px 12px ${B.yellow}40`,
+                    boxShadow: `0 3px 12px color-mix(in srgb, ${B.yellow} 25%, transparent)`,
                   }}
                 >
                   {isSubmitting ? 'Saving…' : 'Save Check-in ✨'}
@@ -772,7 +772,7 @@ export function MoodJournal({ onNavigate }: { onNavigate?: (path: string) => voi
             </div>
             <span style={{
               padding: '3px 10px', borderRadius: 'var(--radius-pill)',
-              backgroundColor: `${moodColor}18`, color: moodColor,
+              backgroundColor: `color-mix(in srgb, ${moodColor} 10%, transparent)`, color: moodColor,
               ...f('xs', 500),
             }}>
               {entry.mood}/5

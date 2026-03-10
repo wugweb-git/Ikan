@@ -350,6 +350,9 @@ export function Account({ className, onNavigate }: AccountProps) {
             loading={isSavingProfile}
             onSave={handleSaveProfile}
             onSocialSync={handleSocialSync}
+            onDeleteProfile={() => {
+              showToast('info', 'Delete Profile', 'Profile deletion requested. This feature will be available soon.');
+            }}
             onBack={isMobile ? undefined : handleMobileBack}
             isEditing={isProfileEditing}
             setIsEditing={setIsProfileEditing}
@@ -413,24 +416,24 @@ export function Account({ className, onNavigate }: AccountProps) {
     <div 
       className={cn("flex w-full content-wrapper", className)}
       style={{ 
-        maxWidth: '1360px', // Match nav width for alignment
+        maxWidth: '1200px',
         flexDirection: 'row',
         alignItems: 'flex-start',
-        marginTop: '20px', // Removed hardcoded 128px because padding is now in body/main
-        gap: '54px',
-        height: 'calc(100vh - 100px)', // Adjusted height calc
+        marginTop: '20px',
+        gap: '24px',
+        height: 'calc(100vh - 100px)',
         overflow: 'hidden' 
       }}
     >
       <div 
         className="hidden md:block shrink-0" 
         style={{ 
-          width: '300px',
+          width: '260px',
           height: '100%',
           overflowY: 'hidden',
           backgroundColor: 'var(--color-bg-card)',
-          borderRadius: '24px',
-          border: '1px solid var(--grey-2)'
+          borderRadius: '16px',
+          border: '1px solid var(--color-border-default)'
         }}
       >
         <SideNavAccount

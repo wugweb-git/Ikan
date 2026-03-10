@@ -226,7 +226,7 @@ export function AdminDashboardAnalytics({ onBack, className }: AdminDashboardAna
                   <div
                     className="p-3 rounded-lg"
                     style={{
-                      backgroundColor: `${stat.bgColor}15`,
+                      backgroundColor: `color-mix(in srgb, ${stat.bgColor} 8%, transparent)`,
                       color: stat.color
                     }}
                   >

@@ -210,7 +210,7 @@ export function CalendarStrip({
             const pillBg = isDark
               ? B.primary
               : hasEntry
-                ? `${tokens.colors.status.success}14`
+                ? `color-mix(in srgb, var(--color-status-success) 8%, transparent)`
                 : B.accent;
             const dayColor = isDark ? 'rgba(255,255,255,0.7)' : B.muted;
             const dateColor = isDark ? B.primaryOn : B.textPrimary;
@@ -292,7 +292,7 @@ export function CalendarStrip({
                     style={{
                       position: 'absolute', bottom: 6,
                       width: 6, height: 6, borderRadius: '50%',
-                      backgroundColor: tokens.colors.status.success,
+                      backgroundColor: 'var(--color-status-success)',
                     }}
                   />
                 )}
@@ -305,7 +305,7 @@ export function CalendarStrip({
                     style={{
                       position: 'absolute', bottom: 6,
                       width: 5, height: 5, borderRadius: '50%',
-                      backgroundColor: tokens.colors.status.warning,
+                      backgroundColor: 'var(--color-status-warning)',
                     }}
                   />
                 )}
@@ -318,7 +318,7 @@ export function CalendarStrip({
                     style={{
                       position: 'absolute', bottom: 6,
                       width: 4, height: 4, borderRadius: '50%',
-                      backgroundColor: tokens.colors.status.danger,
+                      backgroundColor: 'var(--color-status-danger)',
                       opacity: 0.5,
                     }}
                   />
@@ -333,7 +333,7 @@ export function CalendarStrip({
                     className="absolute -top-1 -right-1 flex items-center justify-center"
                     style={{
                       width: 16, height: 16, borderRadius: '50%',
-                      backgroundColor: isDark ? tokens.colors.status.warning : B.primary,
+                      backgroundColor: isDark ? 'var(--color-status-warning)' : B.primary,
                       color: isDark ? B.primary : B.primaryOn,
                       fontSize: 9, fontWeight: 500,
                       border: `2px solid ${B.bgCard}`,

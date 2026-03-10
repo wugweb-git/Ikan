@@ -134,9 +134,12 @@
     --color-gray-500: oklch(.551 .027 264.364);
     --color-gray-700: oklch(.373 .034 259.733);
     --color-gray-900: oklch(.21 .034 264.665);
+    --color-neutral-100: oklch(.97 0 0);
     --color-neutral-200: oklch(.922 0 0);
     --color-neutral-300: oklch(.87 0 0);
     --color-neutral-400: oklch(.708 0 0);
+    --color-neutral-500: oklch(.556 0 0);
+    --color-neutral-700: oklch(.371 0 0);
     --color-black: #000;
     --color-white: #fff;
     --spacing: .25rem;
@@ -826,10 +829,6 @@
     left: calc(var(--spacing) * 4);
   }
 
-  .left-\[12px\] {
-    left: 12px;
-  }
-
   .left-\[50\%\] {
     left: 50%;
   }
@@ -1048,10 +1047,6 @@
     margin-top: 2px;
   }
 
-  .mt-\[4px\] {
-    margin-top: 4px;
-  }
-
   .mt-\[12px\] {
     margin-top: 12px;
   }
@@ -1130,10 +1125,6 @@
 
   .mb-16 {
     margin-bottom: calc(var(--spacing) * 16);
-  }
-
-  .mb-\[4px\] {
-    margin-bottom: 4px;
   }
 
   .mb-\[8px\] {
@@ -1529,16 +1520,8 @@
     height: 60px;
   }
 
-  .h-\[68px\] {
-    height: 68px;
-  }
-
   .h-\[80px\] {
     height: 80px;
-  }
-
-  .h-\[89px\] {
-    height: 89px;
   }
 
   .h-\[93px\] {
@@ -1619,6 +1602,10 @@
 
   .max-h-\[90vh\] {
     max-height: 90vh;
+  }
+
+  .max-h-\[400px\] {
+    max-height: 400px;
   }
 
   .min-h-0 {
@@ -1849,10 +1836,6 @@
     width: 80px;
   }
 
-  .w-\[89px\] {
-    width: 89px;
-  }
-
   .w-\[98px\] {
     width: 98px;
   }
@@ -1967,10 +1950,6 @@
 
   .max-w-\[640px\] {
     max-width: 640px;
-  }
-
-  .max-w-\[867px\] {
-    max-width: 867px;
   }
 
   .max-w-\[1100px\] {
@@ -2503,12 +2482,6 @@
     --tw-space-y-reverse: 0;
     margin-block-start: calc(calc(var(--spacing) * 10) * var(--tw-space-y-reverse));
     margin-block-end: calc(calc(var(--spacing) * 10) * calc(1 - var(--tw-space-y-reverse)));
-  }
-
-  :where(.space-y-\[16px\] > :not(:last-child)) {
-    --tw-space-y-reverse: 0;
-    margin-block-start: calc(16px * var(--tw-space-y-reverse));
-    margin-block-end: calc(16px * calc(1 - var(--tw-space-y-reverse)));
   }
 
   :where(.space-y-\[var\(--spacing-2\)\] > :not(:last-child)) {
@@ -3734,20 +3707,12 @@
     padding-inline: 6px;
   }
 
-  .px-\[12px\] {
-    padding-inline: 12px;
-  }
-
   .px-\[16px\] {
     padding-inline: 16px;
   }
 
   .px-\[20px\] {
     padding-inline: 20px;
-  }
-
-  .px-\[24px\] {
-    padding-inline: 24px;
   }
 
   .px-\[var\(--spacing-1\)\] {
@@ -3834,10 +3799,6 @@
     padding-block: 10px;
   }
 
-  .py-\[12px\] {
-    padding-block: 12px;
-  }
-
   .py-\[24px\] {
     padding-block: 24px;
   }
@@ -3864,6 +3825,10 @@
 
   .pt-2 {
     padding-top: calc(var(--spacing) * 2);
+  }
+
+  .pt-3 {
+    padding-top: calc(var(--spacing) * 3);
   }
 
   .pt-4 {
@@ -3930,8 +3895,8 @@
     padding-right: calc(var(--spacing) * 10);
   }
 
-  .pr-\[12px\] {
-    padding-right: 12px;
+  .pb-1 {
+    padding-bottom: calc(var(--spacing) * 1);
   }
 
   .pb-2 {
@@ -3974,10 +3939,6 @@
     padding-bottom: calc(var(--spacing) * 32);
   }
 
-  .pb-\[24px\] {
-    padding-bottom: 24px;
-  }
-
   .pb-\[60px\] {
     padding-bottom: 60px;
   }
@@ -4016,10 +3977,6 @@
 
   .pl-12 {
     padding-left: calc(var(--spacing) * 12);
-  }
-
-  .pl-\[40px\] {
-    padding-left: 40px;
   }
 
   .text-center {
@@ -4135,20 +4092,12 @@
     font-size: 17px;
   }
 
-  .text-\[20px\] {
-    font-size: 20px;
-  }
-
   .text-\[22px\] {
     font-size: 22px;
   }
 
   .text-\[24px\] {
     font-size: 24px;
-  }
-
-  .text-\[30px\] {
-    font-size: 30px;
   }
 
   .text-\[32px\] {
@@ -4170,11 +4119,6 @@
     line-height: 20px;
   }
 
-  .leading-\[27px\] {
-    --tw-leading: 27px;
-    line-height: 27px;
-  }
-
   .leading-\[28px\] {
     --tw-leading: 28px;
     line-height: 28px;
@@ -4183,11 +4127,6 @@
   .leading-\[30px\] {
     --tw-leading: 30px;
     line-height: 30px;
-  }
-
-  .leading-\[36px\] {
-    --tw-leading: 36px;
-    line-height: 36px;
   }
 
   .leading-\[48px\] {
@@ -4230,44 +4169,9 @@
     font-weight: var(--font-weight-semibold);
   }
 
-  .tracking-\[-0\.2px\] {
-    --tw-tracking: -.2px;
-    letter-spacing: -.2px;
-  }
-
-  .tracking-\[-0\.3px\] {
-    --tw-tracking: -.3px;
-    letter-spacing: -.3px;
-  }
-
-  .tracking-\[-0\.31px\] {
-    --tw-tracking: -.31px;
-    letter-spacing: -.31px;
-  }
-
-  .tracking-\[-0\.44px\] {
-    --tw-tracking: -.44px;
-    letter-spacing: -.44px;
-  }
-
-  .tracking-\[-0\.45px\] {
-    --tw-tracking: -.45px;
-    letter-spacing: -.45px;
-  }
-
-  .tracking-\[-0\.62px\] {
-    --tw-tracking: -.62px;
-    letter-spacing: -.62px;
-  }
-
   .tracking-\[0\.6px\] {
     --tw-tracking: .6px;
     letter-spacing: .6px;
-  }
-
-  .tracking-\[0\.35px\] {
-    --tw-tracking: .35px;
-    letter-spacing: .35px;
   }
 
   .tracking-\[0\.84px\] {
@@ -4970,12 +4874,6 @@
   @media (hover: hover) {
     .group-hover\:bg-transparent:is(:where(.group):hover *) {
       background-color: #0000;
-    }
-  }
-
-  @media (hover: hover) {
-    .group-hover\:text-\[var\(--color-status-danger\)\]:is(:where(.group):hover *) {
-      color: var(--color-status-danger);
     }
   }
 
@@ -5746,6 +5644,10 @@
 
   .active\:bg-\[var\(--color-bg-muted\)\]:active {
     background-color: var(--color-bg-muted);
+  }
+
+  .active\:bg-\[var\(--color-status-danger-light\)\]:active {
+    background-color: var(--color-status-danger-light);
   }
 
   .active\:bg-black\/10:active {
@@ -7693,8 +7595,8 @@
   }
 
   .admin-table tr:hover td {
+    background: var(--color-neutral-100);
     cursor: pointer;
-    background: #fafafa;
   }
 
   .admin-table tr:last-child td {
@@ -7710,13 +7612,13 @@
   }
 
   .badge-success {
-    color: #2e7d32;
-    background: #e8f5e9;
+    background: var(--color-status-success-light);
+    color: var(--color-status-success);
   }
 
   .badge-warning {
-    color: #ef6c00;
-    background: #fff3e0;
+    background: var(--color-status-warning-light);
+    color: var(--color-status-warning);
   }
 
   @media (width >= 1440px) {
@@ -7862,6 +7764,79 @@
   --ikan-chart-6: #ec4899;
   --ikan-chart-neutral: #6b7280;
   --ikan-chart-fill-default: #8884d8;
+  --color-viz-red: #e53935;
+  --color-viz-red-light: #ffebee;
+  --color-viz-green: #43a047;
+  --color-viz-green-light: #e8f5e9;
+  --color-viz-blue: #1e88e5;
+  --color-viz-blue-light: #e3f2fd;
+  --color-viz-purple: #8e24aa;
+  --color-viz-purple-light: #f3e5f5;
+  --color-viz-orange: #f57c00;
+  --color-viz-orange-light: #fff3e0;
+  --color-viz-teal: #00897b;
+  --color-viz-deep-blue: #1565c0;
+  --color-viz-deep-purple: #5e35b1;
+  --color-viz-brown: #5d4037;
+  --color-viz-slate: #455a64;
+  --color-viz-pink: #d81b60;
+  --color-viz-amber: #ff8f00;
+  --color-viz-hydration: #2196f3;
+  --color-sleep-deep: #1a237e;
+  --color-sleep-light: #7986cb;
+  --color-sleep-rem: #ce93d8;
+  --color-sleep-awake: #ffcc80;
+  --color-level-thriving: #34c759;
+  --color-level-growing: #007aff;
+  --color-level-building: #ff9500;
+  --color-level-starting: #8e8e93;
+  --color-trend-positive: #34c759;
+  --color-trend-negative: #ff3b30;
+  --color-bmi-normal: #4caf50;
+  --color-bmi-caution: #ff9800;
+  --color-bmi-danger: #e53935;
+  --color-tod-dawn-1: #ffe4c9;
+  --color-tod-dawn-2: #ffd0a0;
+  --color-tod-dawn-3: #ffc085;
+  --color-tod-morning-1: #e8f4fd;
+  --color-tod-morning-2: #d4ecfb;
+  --color-tod-morning-3: #b8dff7;
+  --color-tod-afternoon-1: #fff8e1;
+  --color-tod-afternoon-2: #ffe9b0;
+  --color-tod-afternoon-3: #ffd97a;
+  --color-tod-evening-1: #e8d5f5;
+  --color-tod-evening-2: #d4b8ea;
+  --color-tod-evening-3: #c09fde;
+  --color-tod-night-1: #2a2a3e;
+  --color-tod-night-2: #1e1e30;
+  --color-tod-night-3: #151525;
+  --color-tod-night-text: #e8e8f0;
+  --color-tod-night-muted: #a0a0c0;
+  --color-tod-dawn-accent: #e87c3a;
+  --color-tod-morning-accent: #3b82f6;
+  --color-tod-afternoon-accent: #f59e0b;
+  --color-tod-evening-accent: #8b5cf6;
+  --color-tod-night-accent: #6366f1;
+  --color-celestial-moon-fill: #e8e4d4;
+  --color-celestial-moon-shadow: #d4d0c0;
+  --color-celestial-crater: #d0cdb8;
+  --color-celestial-star: #fbbf24;
+  --color-celestial-star-alt: #e8d5f5;
+  --color-celestial-dawn-sun: #ffb347;
+  --color-celestial-evening-sun: #ff8c42;
+  --color-celestial-dawn-horizon: #ffd4a0;
+  --color-celestial-evening-horizon: #d4a0c0;
+  --color-celestial-morning-sun: #ffd166;
+  --color-celestial-afternoon-sun: #ffb800;
+  --color-weather-cloud-day: #9ca3af;
+  --color-weather-cloud-night: #6b7290;
+  --color-weather-rain-day: #60a5fa;
+  --color-weather-rain-night: #7da0d4;
+  --color-weather-snow: #93c5fd;
+  --color-weather-thunder-cloud: #6b7280;
+  --color-weather-lightning: #fbbf24;
+  --color-logo-bg: #101010;
+  --color-logo-accent: #ffbe1a;
   --spacing-unit: 4px;
   --spacing-0: 0px;
   --spacing-1: 4px;
@@ -7937,10 +7912,11 @@
   --constraint-sidebar-min: 64px;
   --ikan-component-button-height: 52px;
   --ikan-component-button-height-sm: 32px;
-  --ikan-component-input-height: 56px;
+  --ikan-component-input-height: 52px;
   --ikan-component-border-radius: var(--radius-sm);
   --ikan-component-spacing-default: var(--spacing-4);
   --ikan-component-spacing-large: var(--spacing-6);
+  --ikan-component-spacing-small: var(--spacing-2);
   --ikan-animation-normal: var(--motion-duration-normal);
   --constraint-sidebar-max: 280px;
   --semantic-button-primary-bg: var(--color-primary-default);
@@ -7956,7 +7932,6 @@
   --semantic-card-fg: var(--color-text-primary);
   --semantic-card-radius: var(--radius-lg);
   --semantic-card-padding: var(--spacing-4);
-  --ikan-component-spacing-small: var(--spacing-2);
   --ikan-nav-height-desktop: 80px;
   --ikan-nav-height-mobile: 60px;
   --ikan-nav-clearance-desktop: calc(var(--ikan-nav-height-desktop)  + var(--spacing-6));
@@ -8341,17 +8316,17 @@ html {
 
 .consultant-card {
   background: var(--color-bg-card);
-  border: 1px solid #e8e8e8;
-  border-radius: 16px;
-  margin-bottom: 12px;
+  border: 1px solid var(--grey-2);
+  border-radius: var(--radius-sm);
+  margin-bottom: var(--spacing-3);
   padding: 20px;
   transition: border-color .2s, box-shadow .2s;
   display: flex;
 }
 
 .consultant-card:hover {
-  border-color: #d0d0d0;
-  box-shadow: 0 2px 8px #0000000a;
+  border-color: var(--grey-3);
+  box-shadow: var(--shadow-xs);
 }
 
 .consultant-avatar {
@@ -8362,9 +8337,9 @@ html {
 }
 
 .expertise-tag {
-  color: #333;
-  background: #f5f5f5;
-  border: 1px solid #ebebeb;
+  background: var(--grey-1);
+  color: var(--grey-8);
+  border: 1px solid var(--grey-2);
   border-radius: 6px;
   padding: 3px 10px;
   font-size: 11px;
@@ -8372,14 +8347,14 @@ html {
 }
 
 .filter-pill {
-  color: #757575;
+  border: 1px solid var(--grey-3);
+  background: var(--grey-0);
+  height: 40px;
+  color: var(--grey-6);
   cursor: pointer;
-  background: #fff;
-  border: 1px solid #d9d9d9;
   border-radius: 12px;
   justify-content: center;
   align-items: center;
-  height: 40px;
   padding: 0 16px;
   font-size: 14px;
   transition: all .2s;
@@ -8387,13 +8362,13 @@ html {
 }
 
 .filter-pill:hover {
-  background: #f5f5f5;
+  background: var(--grey-1);
 }
 
 .filter-pill.active {
-  color: #fff;
-  background: #1a1a1a;
-  border-color: #1a1a1a;
+  background: var(--grey-9);
+  color: var(--grey-0);
+  border-color: var(--grey-9);
 }
 
 .app-container, .container-1280 {
@@ -8454,37 +8429,37 @@ html {
 }
 
 .time-slot {
+  border: 1px solid var(--grey-3);
   cursor: pointer;
-  color: #333;
-  border: 1px solid #d9d9d9;
+  height: 44px;
+  color: var(--grey-8);
   border-radius: 12px;
   justify-content: center;
   align-items: center;
-  height: 44px;
   font-size: 14px;
   transition: all .2s;
   display: flex;
 }
 
 .time-slot:hover {
-  border-color: #1a1a1a;
+  border-color: var(--grey-9);
 }
 
 .time-slot.selected {
-  color: #fff;
-  background: #1a1a1a;
-  border-color: #1a1a1a;
+  background: var(--grey-9);
+  color: var(--grey-0);
+  border-color: var(--grey-9);
 }
 
 .modal-action-btn {
-  color: #fff;
+  height: var(--ikan-component-button-height);
+  border-radius: var(--radius-sm);
+  background: var(--grey-9);
+  color: var(--grey-0);
+  font-weight: var(--font-weight-medium);
   cursor: pointer;
-  background: #1a1a1a;
   border: none;
-  border-radius: 16px;
   width: 100%;
-  height: 52px;
-  font-weight: 500;
   transition: opacity .2s;
 }
 

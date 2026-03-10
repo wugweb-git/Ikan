@@ -2,12 +2,13 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useGoogleFit, HealthData } from './GoogleFitContext';
 import { GoogleFitConsentModal } from './GoogleFitConsentModal';
+import { ManualEntryModal } from './ManualEntryModal';
 import { cn } from '../ui/utils';
 import {
-  Moon, Footprints, Heart, Activity, RefreshCw, ChevronDown,
-  Flame, MapPin, Zap, Clock, BedDouble, Sunrise,
+  Moon, Heart, Activity, RefreshCw,
+  Flame, MapPin, BedDouble, Sunrise,
   Droplets, Weight, Thermometer, Wind, TrendingUp,
-  Layers, CircleGauge,
+  Layers, CircleGauge, Clock, PenLine,
 } from 'lucide-react';
 
 // ─── FONT HELPER ────────────────────────────────────────────────
@@ -18,22 +19,11 @@ const f = (size: string, weight: number = 400, color: string = 'var(--color-text
   color,
 });
 
-// ─── Google Fit logo SVG ────────────────────────────────────────
-function GoogleFitLogo({ size = 24 }: { size?: number }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 48 48" aria-hidden="true">
-      <path d="M24 4L12 16l4.24 4.24L24 12.48l7.76 7.76L36 16z" fill="#4285F4" />
-      <path d="M12 16l-8 8 8 8 4.24-4.24L8.48 20l7.76-7.76z" fill="#EA4335" />
-      <path d="M36 16l8 8-8 8-4.24-4.24L39.52 20l-7.76-7.76z" fill="#34A853" />
-      <path d="M24 44l12-12-4.24-4.24L24 35.52l-7.76-7.76L12 32z" fill="#FBBC05" />
-    </svg>
-  );
-}
-
 // ─── Health Connect logo — official style ───────────────────────
 function HealthConnectLogo({ size = 24 }: { size?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 192 192" aria-hidden="true">
+      {/* Health Connect brand colors — mandated by brand guidelines, must remain as hex */}
       <defs>
         <linearGradient id="hc-g1" x1="0%" y1="0%" x2="100%" y2="100%">
           <stop offset="0%" stopColor="#4285F4" />
@@ -58,6 +48,15 @@ const TABS: { key: TabKey; label: string; icon: React.ElementType }[] = [
   { key: 'nutrition', label: 'Nutrition', icon: Droplets },
 ];
 
+// ─── Default fitness goals — single source of truth ─────────────
+const FITNESS_GOALS = {
+  steps: 10_000,
+  activeMinutes: 60,
+  calories: 500,
+  heartPoints: 50,
+  sleepHours: 8,
+} as const;
+
 // ─── Stat Row ───────────────────────────────────────────────────
 function StatRow({ icon: Icon, label, value, unit, accent }: {
   icon: React.ElementType; label: string; value: string | number; unit?: string; accent?: string;
@@ -67,7 +66,7 @@ function StatRow({ icon: Icon, label, value, unit, accent }: {
       <div className="flex items-center" style={{ gap: 10 }}>
         <div style={{
           width: 32, height: 32, borderRadius: 10,
-          backgroundColor: accent ? `${accent}18` : 'var(--color-bg-muted)',
+          backgroundColor: accent ? `color-mix(in srgb, ${accent} 10%, transparent)` : 'var(--color-bg-muted)',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           color: accent || 'var(--color-text-muted)',
         }}>
@@ -140,10 +139,10 @@ function SleepStagesBar({ sleep }: { sleep: HealthData['sleep'] }) {
   const total = sleep.deepSleepMins + sleep.lightSleepMins + sleep.remSleepMins + sleep.awakeMins;
   if (!total) return null;
   const segs = [
-    { label: 'Deep', m: sleep.deepSleepMins, c: '#1A237E' },
-    { label: 'Light', m: sleep.lightSleepMins, c: '#7986CB' },
-    { label: 'REM', m: sleep.remSleepMins, c: '#CE93D8' },
-    { label: 'Awake', m: sleep.awakeMins, c: '#FFCC80' },
+    { label: 'Deep', m: sleep.deepSleepMins, c: 'var(--color-sleep-deep)' },
+    { label: 'Light', m: sleep.lightSleepMins, c: 'var(--color-sleep-light)' },
+    { label: 'REM', m: sleep.remSleepMins, c: 'var(--color-sleep-rem)' },
+    { label: 'Awake', m: sleep.awakeMins, c: 'var(--color-sleep-awake)' },
   ];
   return (
     <div>
@@ -181,7 +180,7 @@ function HydrationBar({ current, goal }: { current: number; goal: number }) {
       <div style={{ height: 8, borderRadius: 4, backgroundColor: 'var(--color-bg-muted)', overflow: 'hidden' }}>
         <motion.div initial={{ width: 0 }} animate={{ width: `${pct * 100}%` }}
           transition={{ duration: 0.6 }}
-          style={{ height: '100%', borderRadius: 4, backgroundColor: '#2196F3' }} />
+          style={{ height: '100%', borderRadius: 4, backgroundColor: 'var(--color-viz-hydration)' }} />
       </div>
     </div>
   );
@@ -192,12 +191,12 @@ function HydrationBar({ current, goal }: { current: number; goal: number }) {
 // ═════════════════════════════════════════════════════════════════
 
 export function ActivityCard({ className }: { className?: string }) {
-  const { isConnected, provider, isSyncing, data, connect, sync } = useGoogleFit();
+  const { isConnected, isSyncing, data, connect, sync, submitManualEntry } = useGoogleFit();
   const [showConsent, setShowConsent] = useState(false);
-  const [connectProvider, setConnectProvider] = useState<'google-fit' | 'health-connect'>('google-fit');
+  const [showManualEntry, setShowManualEntry] = useState(false);
   const [activeTab, setActiveTab] = useState<TabKey>('activity');
 
-  // ─── NOT CONNECTED ────────────────────────────────────────
+  // ─── NOT CONNECTED — Figma design ──────────────────────────
   if (!isConnected) {
     return (
       <>
@@ -205,55 +204,123 @@ export function ActivityCard({ className }: { className?: string }) {
           backgroundColor: 'var(--color-bg-card)', borderRadius: 'var(--radius-lg)',
           boxShadow: 'var(--shadow-sm)', overflow: 'hidden',
           border: '1px solid var(--color-border-default)',
+          padding: '20px',
         }}>
-          <div style={{ padding: '20px 20px 0' }}>
-            <h3 style={{ ...f('base', 500), margin: 0 }}>Track your health</h3>
-            <p style={{ ...f('sm', 400, 'var(--color-text-muted)'), margin: '4px 0 0', lineHeight: 1.4 }}>
-              Connect a fitness service to see how movement, sleep & vitals affect your wellbeing.
-            </p>
+          {/* Header with HC logo */}
+          <div className="flex items-start" style={{ gap: 12, marginBottom: 12 }}>
+            <HealthConnectLogo size={28} />
+            <h3 style={{ ...f('base', 500), margin: 0, lineHeight: 1.3 }}>
+              Want more detailed workout data?
+            </h3>
           </div>
 
-          <div style={{ padding: '16px 20px 20px', display: 'flex', flexDirection: 'column', gap: 10 }}>
-            {/* Google Fit */}
-            <button onClick={() => { setConnectProvider('google-fit'); setShowConsent(true); }}
-              className="flex items-center w-full" style={{
-                gap: 14, padding: '14px 16px', borderRadius: 'var(--radius-md)',
-                border: '1px solid var(--color-border-default)', backgroundColor: 'var(--color-bg-muted)',
-                cursor: 'pointer', transition: 'border-color 0.15s',
-              }}>
-              <GoogleFitLogo size={28} />
-              <div style={{ textAlign: 'left', flex: 1 }}>
-                <div style={f('sm', 500)}>Google Fit</div>
-                <div style={f('xs', 400, 'var(--color-text-muted)')}>Steps, sleep, heart rate & more</div>
-              </div>
-              <ChevronDown size={16} style={{ color: 'var(--color-text-muted)', transform: 'rotate(-90deg)' }} />
-            </button>
+          {/* Description */}
+          <p style={{ ...f('sm', 400, 'var(--color-text-muted)'), margin: '0 0 20px', lineHeight: 1.5 }}>
+            With Health Connect, you can sync your favorite fitness apps to see calories, heart rate, and more from your runs. Set it up today.
+          </p>
 
-            {/* Health Connect */}
-            <button onClick={() => { setConnectProvider('health-connect'); setShowConsent(true); }}
-              className="flex items-center w-full" style={{
-                gap: 14, padding: '14px 16px', borderRadius: 'var(--radius-md)',
-                border: '1px solid var(--color-border-default)', backgroundColor: 'var(--color-bg-muted)',
-                cursor: 'pointer', transition: 'border-color 0.15s',
-              }}>
-              <HealthConnectLogo size={28} />
-              <div style={{ textAlign: 'left', flex: 1 }}>
-                <div style={f('sm', 500)}>Health Connect</div>
-                <div style={f('xs', 400, 'var(--color-text-muted)')}>Activity, vitals, body, nutrition & sleep</div>
-              </div>
-              <ChevronDown size={16} style={{ color: 'var(--color-text-muted)', transform: 'rotate(-90deg)' }} />
-            </button>
-          </div>
+          {/* Single CTA button */}
+          <button
+            onClick={() => setShowConsent(true)}
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: '12px 24px',
+              borderRadius: 'var(--radius-md)',
+              border: 'none',
+              backgroundColor: 'var(--color-primary-default)',
+              color: 'var(--color-text-inverse)',
+              fontSize: 'var(--text-sm)',
+              fontWeight: 500,
+              fontFamily: 'var(--font-family-base)',
+              cursor: 'pointer',
+              transition: 'opacity 0.15s',
+            }}
+          >
+            Sync with Health Connect
+          </button>
         </div>
 
         <GoogleFitConsentModal isOpen={showConsent} onClose={() => setShowConsent(false)}
-          onConfirm={() => { connect(connectProvider); setShowConsent(false); }} />
+          onConfirm={() => { connect('health-connect'); setShowConsent(false); }} />
       </>
     );
   }
 
-  // ─── CONNECTED ────────────────────────────────────────────
-  const pName = provider === 'health-connect' ? 'Health Connect' : 'Google Fit';
+  // ─── CONNECTED BUT NO DATA ────────────────────────────────
+  if (!data) {
+    return (
+      <>
+        <div className={cn(className)} style={{
+          backgroundColor: 'var(--color-bg-card)', borderRadius: 'var(--radius-lg)',
+          boxShadow: 'var(--shadow-sm)', overflow: 'hidden',
+        }}>
+          <div className="flex items-center justify-between" style={{ padding: '16px 20px 12px' }}>
+            <div className="flex items-center" style={{ gap: 10 }}>
+              <HealthConnectLogo size={22} />
+              <span style={f('base', 500)}>Health Connect</span>
+            </div>
+            <button onClick={() => sync()} disabled={isSyncing}
+              className="flex items-center justify-center"
+              style={{
+                width: 32, height: 32, borderRadius: '50%', border: 'none', cursor: 'pointer',
+                backgroundColor: 'var(--color-bg-muted)', color: 'var(--color-text-muted)',
+              }}>
+              <RefreshCw size={14} className={isSyncing ? 'animate-spin' : ''} />
+            </button>
+          </div>
+
+          <div style={{ padding: '20px', textAlign: 'center' }}>
+            <div style={{
+              width: 48, height: 48, borderRadius: 12, margin: '0 auto 12px',
+              backgroundColor: 'color-mix(in srgb, var(--color-status-info) 10%, transparent)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              color: 'var(--color-status-info)',
+            }}>
+              <Clock size={24} />
+            </div>
+            <p style={{ ...f('sm', 500), margin: '0 0 4px' }}>Waiting for data</p>
+            <p style={{ ...f('xs', 400, 'var(--color-text-muted)'), margin: '0 0 16px', lineHeight: 1.5, maxWidth: 280, marginLeft: 'auto', marginRight: 'auto' }}>
+              No data has synced yet. You can log your health metrics manually while waiting for Health Connect to sync.
+            </p>
+
+            <button
+              onClick={() => setShowManualEntry(true)}
+              className="flex items-center justify-center"
+              style={{
+                gap: 8, margin: '0 auto', padding: '10px 20px',
+                borderRadius: 'var(--radius-md)', border: 'none', cursor: 'pointer',
+                backgroundColor: 'var(--color-primary-default)',
+                color: 'var(--color-text-inverse)',
+                fontSize: 'var(--text-sm)', fontWeight: 500, fontFamily: 'var(--font-family-base)',
+              }}
+            >
+              <PenLine size={14} />
+              Log Manually
+            </button>
+          </div>
+
+          <div className="flex items-center" style={{
+            padding: '10px 20px', borderTop: '1px solid var(--color-border-default)',
+            gap: 8, fontSize: 11, color: 'var(--color-text-muted)', fontFamily: 'var(--font-family-base)',
+          }}>
+            <div style={{ width: 6, height: 6, borderRadius: '50%', backgroundColor: 'var(--color-status-warning)' }} />
+            Connected · Awaiting first sync
+          </div>
+        </div>
+
+        <ManualEntryModal
+          isOpen={showManualEntry}
+          onClose={() => setShowManualEntry(false)}
+          onSubmit={submitManualEntry}
+          isSyncing={isSyncing}
+        />
+      </>
+    );
+  }
+
+  // ─── CONNECTED WITH DATA ──────────────────────────────────
   const days = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
 
   return (
@@ -264,7 +331,7 @@ export function ActivityCard({ className }: { className?: string }) {
       {/* ── Header ── */}
       <div className="flex items-center justify-between" style={{ padding: '16px 20px 12px' }}>
         <div className="flex items-center" style={{ gap: 10 }}>
-          {provider === 'health-connect' ? <HealthConnectLogo size={22} /> : <GoogleFitLogo size={22} />}
+          <HealthConnectLogo size={22} />
           <span style={f('base', 500)}>Today's Health</span>
         </div>
         <button onClick={() => sync()} disabled={isSyncing}
@@ -277,216 +344,231 @@ export function ActivityCard({ className }: { className?: string }) {
         </button>
       </div>
 
-      {!data ? (
-        <div className="flex items-center justify-center" style={{ height: 80, ...f('sm', 400, 'var(--color-text-muted)') }}>
-          Syncing data…
+      <>
+        {/* ── Tabs ── */}
+        <div className="flex" style={{
+          padding: '0 20px', gap: 2, overflowX: 'auto',
+          borderBottom: '1px solid var(--color-border-default)',
+        }}>
+          {TABS.map(tab => {
+            const isActive = activeTab === tab.key;
+            const TabIcon = tab.icon;
+            return (
+              <button key={tab.key} onClick={() => setActiveTab(tab.key)}
+                className="flex items-center shrink-0"
+                style={{
+                  gap: 5, padding: '10px 12px', border: 'none', cursor: 'pointer',
+                  background: 'none', borderBottom: isActive ? '2px solid var(--color-primary-default)' : '2px solid transparent',
+                  color: isActive ? 'var(--color-text-primary)' : 'var(--color-text-muted)',
+                  fontSize: 'var(--text-xs)', fontWeight: 500, fontFamily: 'var(--font-family-base)',
+                  transition: 'all 0.15s',
+                }}>
+                <TabIcon size={14} />
+                <span className="hidden sm:inline">{tab.label}</span>
+              </button>
+            );
+          })}
         </div>
-      ) : (
-        <>
-          {/* ── Tabs ── */}
-          <div className="flex" style={{
-            padding: '0 20px', gap: 2, overflowX: 'auto',
-            borderBottom: '1px solid var(--color-border-default)',
-          }}>
-            {TABS.map(tab => {
-              const isActive = activeTab === tab.key;
-              const TabIcon = tab.icon;
-              return (
-                <button key={tab.key} onClick={() => setActiveTab(tab.key)}
-                  className="flex items-center shrink-0"
-                  style={{
-                    gap: 5, padding: '10px 12px', border: 'none', cursor: 'pointer',
-                    background: 'none', borderBottom: isActive ? '2px solid var(--color-primary-default)' : '2px solid transparent',
-                    color: isActive ? 'var(--color-text-primary)' : 'var(--color-text-muted)',
-                    fontSize: 'var(--text-xs)', fontWeight: 500, fontFamily: 'var(--font-family-base)',
-                    transition: 'all 0.15s',
-                  }}>
-                  <TabIcon size={14} />
-                  <span className="hidden sm:inline">{tab.label}</span>
-                </button>
-              );
-            })}
-          </div>
 
-          {/* ── Tab Content ── */}
-          <div style={{ padding: '16px 20px 20px', minHeight: 200 }}>
-            <AnimatePresence mode="wait">
-              <motion.div key={activeTab}
-                initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }}
-                transition={{ duration: 0.2 }}>
+        {/* ── Tab Content ── */}
+        <div style={{ padding: '16px 20px 20px', minHeight: 200 }}>
+          <AnimatePresence mode="wait">
+            <motion.div key={activeTab}
+              initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }}
+              transition={{ duration: 0.2 }}>
 
-                {/* ── ACTIVITY TAB ── */}
-                {activeTab === 'activity' && (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-                    {/* Ring row */}
-                    <div className="grid grid-cols-4" style={{ gap: 8 }}>
-                      <MiniRing pct={data.steps / 10000} color="#F57C00" label="Steps" value={data.steps.toLocaleString()} />
-                      <MiniRing pct={data.activeMinutes / 60} color="#2E7D32" label="Active" value={`${data.activeMinutes}m`} />
-                      <MiniRing pct={data.calories / 500} color="#E53935" label="Cal" value={String(data.calories)} />
-                      <MiniRing pct={data.heartPoints / 50} color="#7B1FA2" label="Pts" value={String(data.heartPoints)} />
-                    </div>
-
-                    {/* Detail stats */}
-                    <div>
-                      <StatRow icon={MapPin} label="Distance" value={data.distanceKm} unit="km" accent="#1565C0" />
-                      <StatRow icon={Layers} label="Floors climbed" value={data.floorsClimbed} accent="#00897B" />
-                      {data.vo2Max && <StatRow icon={Wind} label="VO₂ Max" value={data.vo2Max} unit="mL/kg/min" accent="#5E35B1" />}
-                    </div>
-
-                    {/* Weekly steps chart */}
-                    {data.weekly && (
-                      <div>
-                        <div className="flex items-center justify-between" style={{ marginBottom: 8 }}>
-                          <span style={f('sm', 500)}>Steps this week</span>
-                          <span style={f('xs', 400, 'var(--color-text-muted)')}>{data.weekly.goalsAchieved}/7 goals</span>
-                        </div>
-                        <BarChart data={data.weekly.stepsPerDay} color="#F57C00" labels={days} />
-                      </div>
-                    )}
+              {/* ── ACTIVITY TAB ── */}
+              {activeTab === 'activity' && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+                  {/* Ring row */}
+                  <div className="grid grid-cols-4" style={{ gap: 8 }}>
+                    <MiniRing pct={data.steps / FITNESS_GOALS.steps} color="var(--color-viz-orange)" label="Steps" value={data.steps.toLocaleString()} />
+                    <MiniRing pct={data.activeMinutes / FITNESS_GOALS.activeMinutes} color="var(--color-viz-green)" label="Active" value={`${data.activeMinutes}m`} />
+                    <MiniRing pct={data.calories / FITNESS_GOALS.calories} color="var(--color-viz-red)" label="Cal" value={String(data.calories)} />
+                    <MiniRing pct={data.heartPoints / FITNESS_GOALS.heartPoints} color="var(--color-viz-purple)" label="Pts" value={String(data.heartPoints)} />
                   </div>
-                )}
 
-                {/* ── SLEEP TAB ── */}
-                {activeTab === 'sleep' && (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
-                    {/* Main metric */}
-                    <div className="flex items-center" style={{ gap: 16 }}>
-                      <MiniRing pct={data.sleepHours / 8} color="#5E35B1" size={64} label="" value="" />
-                      <div>
-                        <div style={{ ...f('2xl', 500), lineHeight: 1 }}>{data.sleepHours}<span style={f('base', 400, 'var(--color-text-muted)')}> hrs</span></div>
-                        <div style={f('xs', 400, 'var(--color-text-muted)')}>Last night's sleep</div>
-                      </div>
-                    </div>
-
-                    {/* Stages */}
-                    {data.sleep && <SleepStagesBar sleep={data.sleep} />}
-
-                    {/* Details */}
-                    {data.sleep && (
-                      <div>
-                        <StatRow icon={BedDouble} label="Bedtime" value={data.sleep.bedtime} accent="#5E35B1" />
-                        <StatRow icon={Sunrise} label="Wake time" value={data.sleep.wakeTime} accent="#FF8F00" />
-                        <StatRow icon={CircleGauge} label="Efficiency" value={`${data.sleep.efficiency}%`} accent="#2E7D32" />
-                      </div>
-                    )}
-
-                    {/* Weekly sleep chart */}
-                    {data.weekly?.sleepPerDay && (
-                      <div>
-                        <div className="flex items-center justify-between" style={{ marginBottom: 8 }}>
-                          <span style={f('sm', 500)}>Sleep this week</span>
-                          <span style={f('xs', 400, 'var(--color-text-muted)')}>Avg {data.weekly.avgSleep}h</span>
-                        </div>
-                        <BarChart data={data.weekly.sleepPerDay} color="#5E35B1" labels={days} />
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {/* ── VITALS TAB ── */}
-                {activeTab === 'vitals' && data.vitals && (
+                  {/* Detail stats */}
                   <div>
-                    <StatRow icon={Heart} label="Resting heart rate" value={data.vitals.restingHeartRate} unit="bpm" accent="#E53935" />
-                    <StatRow icon={Activity} label="Blood pressure" value={`${data.vitals.bloodPressureSystolic}/${data.vitals.bloodPressureDiastolic}`} unit="mmHg" accent="#D81B60" />
-                    <StatRow icon={Wind} label="SpO₂" value={data.vitals.oxygenSaturation} unit="%" accent="#1565C0" />
-                    <StatRow icon={Wind} label="Respiratory rate" value={data.vitals.respiratoryRate} unit="br/min" accent="#00897B" />
-                    <StatRow icon={Thermometer} label="Body temperature" value={data.vitals.bodyTemperature} unit="°C" accent="#F57C00" />
-                    {data.vitals.bloodGlucose !== null && (
-                      <StatRow icon={Droplets} label="Blood glucose" value={data.vitals.bloodGlucose} unit="mg/dL" accent="#7B1FA2" />
-                    )}
+                    <StatRow icon={MapPin} label="Distance" value={data.distanceKm} unit="km" accent="var(--color-viz-deep-blue)" />
+                    <StatRow icon={Layers} label="Floors climbed" value={data.floorsClimbed} accent="var(--color-viz-teal)" />
+                    {data.vo2Max && <StatRow icon={Wind} label="VO₂ Max" value={data.vo2Max} unit="mL/kg/min" accent="var(--color-viz-deep-purple)" />}
                   </div>
-                )}
 
-                {/* ── BODY TAB ── */}
-                {activeTab === 'body' && data.body && (
-                  <div>
-                    <StatRow icon={Weight} label="Weight" value={data.body.weight} unit="kg" accent="#5D4037" />
-                    <StatRow icon={TrendingUp} label="Height" value={data.body.height} unit="cm" accent="#455A64" />
-                    <StatRow icon={CircleGauge} label="BMI" value={data.body.bmi} accent={
-                      data.body.bmi < 18.5 ? '#FF9800' : data.body.bmi < 25 ? '#4CAF50' : data.body.bmi < 30 ? '#FF9800' : '#E53935'
-                    } />
-                    {data.body.bodyFatPct !== null && (
-                      <StatRow icon={Layers} label="Body fat" value={data.body.bodyFatPct} unit="%" accent="#F57C00" />
-                    )}
-                    {/* BMI indicator */}
-                    <div style={{ marginTop: 16 }}>
-                      <div className="flex items-center justify-between" style={{ marginBottom: 6 }}>
-                        <span style={f('xs', 400, 'var(--color-text-muted)')}>BMI Range</span>
-                        <span style={f('xs', 500, data.body.bmi < 18.5 ? '#FF9800' : data.body.bmi < 25 ? '#4CAF50' : data.body.bmi < 30 ? '#FF9800' : '#E53935')}>
-                          {data.body.bmi < 18.5 ? 'Underweight' : data.body.bmi < 25 ? 'Normal' : data.body.bmi < 30 ? 'Overweight' : 'Obese'}
-                        </span>
-                      </div>
-                      <div style={{ height: 6, borderRadius: 3, background: 'linear-gradient(90deg, #FF9800, #4CAF50 30%, #4CAF50 55%, #FF9800 75%, #E53935)', position: 'relative' }}>
-                        <motion.div
-                          initial={{ left: 0 }} animate={{ left: `${Math.min(Math.max((data.body.bmi - 15) / 25, 0), 1) * 100}%` }}
-                          transition={{ duration: 0.6 }}
-                          style={{ position: 'absolute', top: -3, width: 12, height: 12, borderRadius: '50%', backgroundColor: 'var(--color-bg-card)', border: '2px solid var(--color-text-primary)', transform: 'translateX(-50%)' }}
-                        />
-                      </div>
-                      <div className="flex justify-between" style={{ marginTop: 4 }}>
-                        <span style={{ fontSize: 8, color: 'var(--color-text-muted)', fontFamily: 'var(--font-family-base)' }}>15</span>
-                        <span style={{ fontSize: 8, color: 'var(--color-text-muted)', fontFamily: 'var(--font-family-base)' }}>18.5</span>
-                        <span style={{ fontSize: 8, color: 'var(--color-text-muted)', fontFamily: 'var(--font-family-base)' }}>25</span>
-                        <span style={{ fontSize: 8, color: 'var(--color-text-muted)', fontFamily: 'var(--font-family-base)' }}>30</span>
-                        <span style={{ fontSize: 8, color: 'var(--color-text-muted)', fontFamily: 'var(--font-family-base)' }}>40</span>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* ── NUTRITION TAB ── */}
-                {activeTab === 'nutrition' && data.nutrition && (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
-                    <HydrationBar current={data.nutrition.hydrationMl} goal={data.nutrition.hydrationGoalMl} />
-
+                  {/* Weekly steps chart */}
+                  {data.weekly && (
                     <div>
-                      <span style={{ ...f('sm', 500), display: 'block', marginBottom: 10 }}>Macros today</span>
-                      <div className="grid grid-cols-3" style={{ gap: 10 }}>
-                        {[
-                          { label: 'Protein', g: data.nutrition.proteinG, c: '#E53935' },
-                          { label: 'Carbs', g: data.nutrition.carbsG, c: '#F57C00' },
-                          { label: 'Fat', g: data.nutrition.fatG, c: '#7B1FA2' },
-                        ].map(m => (
-                          <div key={m.label} style={{
-                            backgroundColor: 'var(--color-bg-muted)', borderRadius: 'var(--radius-md)',
-                            padding: '12px 8px', textAlign: 'center', border: '1px solid var(--color-border-light)',
-                          }}>
-                            <div style={{ width: 6, height: 6, borderRadius: '50%', backgroundColor: m.c, margin: '0 auto 6px' }} />
-                            <div style={{ ...f('base', 500), fontVariantNumeric: 'tabular-nums' }}>{m.g}<span style={f('xs', 400, 'var(--color-text-muted)')}>g</span></div>
-                            <div style={{ fontSize: 9, fontWeight: 500, color: 'var(--color-text-muted)', textTransform: 'uppercase' as const, letterSpacing: '0.05em', fontFamily: 'var(--font-family-base)' }}>{m.label}</div>
-                          </div>
-                        ))}
+                      <div className="flex items-center justify-between" style={{ marginBottom: 8 }}>
+                        <span style={f('sm', 500)}>Steps this week</span>
+                        <span style={f('xs', 400, 'var(--color-text-muted)')}>{data.weekly.goalsAchieved}/7 goals</span>
                       </div>
+                      <BarChart data={data.weekly.stepsPerDay} color="var(--color-viz-orange)" labels={days} />
                     </div>
+                  )}
+                </div>
+              )}
 
-                    <StatRow icon={Flame} label="Calories consumed" value={data.nutrition.caloriesConsumed.toLocaleString()} unit="kcal" accent="#E53935" />
-
-                    {/* Weekly calories chart */}
-                    {data.weekly?.caloriesPerDay && (
-                      <div>
-                        <div className="flex items-center justify-between" style={{ marginBottom: 8 }}>
-                          <span style={f('sm', 500)}>Active calories this week</span>
-                          <span style={f('xs', 400, 'var(--color-text-muted)')}>{data.weekly.totalCalories.toLocaleString()} total</span>
-                        </div>
-                        <BarChart data={data.weekly.caloriesPerDay} color="#E53935" labels={days} />
-                      </div>
-                    )}
+              {/* ── SLEEP TAB ── */}
+              {activeTab === 'sleep' && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
+                  {/* Main metric */}
+                  <div className="flex items-center" style={{ gap: 16 }}>
+                    <MiniRing pct={data.sleepHours / FITNESS_GOALS.sleepHours} color="var(--color-viz-deep-purple)" size={64} label="" value="" />
+                    <div>
+                      <div style={{ ...f('2xl', 500), lineHeight: 1 }}>{data.sleepHours}<span style={f('base', 400, 'var(--color-text-muted)')}> hrs</span></div>
+                      <div style={f('xs', 400, 'var(--color-text-muted)')}>Last night's sleep</div>
+                    </div>
                   </div>
-                )}
-              </motion.div>
-            </AnimatePresence>
-          </div>
-        </>
-      )}
+
+                  {/* Stages */}
+                  {data.sleep && <SleepStagesBar sleep={data.sleep} />}
+
+                  {/* Details */}
+                  {data.sleep && (
+                    <div>
+                      <StatRow icon={BedDouble} label="Bedtime" value={data.sleep.bedtime} accent="var(--color-viz-deep-purple)" />
+                      <StatRow icon={Sunrise} label="Wake time" value={data.sleep.wakeTime} accent="var(--color-viz-amber)" />
+                      <StatRow icon={CircleGauge} label="Efficiency" value={`${data.sleep.efficiency}%`} accent="var(--color-viz-green)" />
+                    </div>
+                  )}
+
+                  {/* Weekly sleep chart */}
+                  {data.weekly?.sleepPerDay && (
+                    <div>
+                      <div className="flex items-center justify-between" style={{ marginBottom: 8 }}>
+                        <span style={f('sm', 500)}>Sleep this week</span>
+                        <span style={f('xs', 400, 'var(--color-text-muted)')}>Avg {data.weekly.avgSleep}h</span>
+                      </div>
+                      <BarChart data={data.weekly.sleepPerDay} color="var(--color-viz-deep-purple)" labels={days} />
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* ── VITALS TAB ── */}
+              {activeTab === 'vitals' && data.vitals && (
+                <div>
+                  <StatRow icon={Heart} label="Resting heart rate" value={data.vitals.restingHeartRate} unit="bpm" accent="var(--color-viz-red)" />
+                  <StatRow icon={Activity} label="Blood pressure" value={`${data.vitals.bloodPressureSystolic}/${data.vitals.bloodPressureDiastolic}`} unit="mmHg" accent="var(--color-viz-pink)" />
+                  <StatRow icon={Wind} label="SpO₂" value={data.vitals.oxygenSaturation} unit="%" accent="var(--color-viz-deep-blue)" />
+                  <StatRow icon={Wind} label="Respiratory rate" value={data.vitals.respiratoryRate} unit="br/min" accent="var(--color-viz-teal)" />
+                  <StatRow icon={Thermometer} label="Body temperature" value={data.vitals.bodyTemperature} unit="°C" accent="var(--color-viz-orange)" />
+                  {data.vitals.bloodGlucose !== null && (
+                    <StatRow icon={Droplets} label="Blood glucose" value={data.vitals.bloodGlucose} unit="mg/dL" accent="var(--color-viz-purple)" />
+                  )}
+                </div>
+              )}
+
+              {/* ── BODY TAB ── */}
+              {activeTab === 'body' && data.body && (
+                <div>
+                  <StatRow icon={Weight} label="Weight" value={data.body.weight} unit="kg" accent="var(--color-viz-brown)" />
+                  <StatRow icon={TrendingUp} label="Height" value={data.body.height} unit="cm" accent="var(--color-viz-slate)" />
+                  <StatRow icon={CircleGauge} label="BMI" value={data.body.bmi} accent={
+                    data.body.bmi < 18.5 ? 'var(--color-bmi-caution)' : data.body.bmi < 25 ? 'var(--color-bmi-normal)' : data.body.bmi < 30 ? 'var(--color-bmi-caution)' : 'var(--color-bmi-danger)'
+                  } />
+                  {data.body.bodyFatPct !== null && (
+                    <StatRow icon={Layers} label="Body fat" value={data.body.bodyFatPct} unit="%" accent="var(--color-viz-orange)" />
+                  )}
+                  {/* BMI indicator */}
+                  <div style={{ marginTop: 16 }}>
+                    <div className="flex items-center justify-between" style={{ marginBottom: 6 }}>
+                      <span style={f('xs', 400, 'var(--color-text-muted)')}>BMI Range</span>
+                      <span style={f('xs', 500, data.body.bmi < 18.5 ? 'var(--color-bmi-caution)' : data.body.bmi < 25 ? 'var(--color-bmi-normal)' : data.body.bmi < 30 ? 'var(--color-bmi-caution)' : 'var(--color-bmi-danger)')}>
+                        {data.body.bmi < 18.5 ? 'Underweight' : data.body.bmi < 25 ? 'Normal' : data.body.bmi < 30 ? 'Overweight' : 'Obese'}
+                      </span>
+                    </div>
+                    <div style={{ height: 6, borderRadius: 3, background: 'linear-gradient(90deg, var(--color-bmi-caution), var(--color-bmi-normal) 30%, var(--color-bmi-normal) 55%, var(--color-bmi-caution) 75%, var(--color-bmi-danger))', position: 'relative' }}>
+                      <motion.div
+                        initial={{ left: 0 }} animate={{ left: `${Math.min(Math.max((data.body.bmi - 15) / 25, 0), 1) * 100}%` }}
+                        transition={{ duration: 0.6 }}
+                        style={{ position: 'absolute', top: -3, width: 12, height: 12, borderRadius: '50%', backgroundColor: 'var(--color-bg-card)', border: '2px solid var(--color-text-primary)', transform: 'translateX(-50%)' }}
+                      />
+                    </div>
+                    <div className="flex justify-between" style={{ marginTop: 4 }}>
+                      <span style={{ fontSize: 8, color: 'var(--color-text-muted)', fontFamily: 'var(--font-family-base)' }}>15</span>
+                      <span style={{ fontSize: 8, color: 'var(--color-text-muted)', fontFamily: 'var(--font-family-base)' }}>18.5</span>
+                      <span style={{ fontSize: 8, color: 'var(--color-text-muted)', fontFamily: 'var(--font-family-base)' }}>25</span>
+                      <span style={{ fontSize: 8, color: 'var(--color-text-muted)', fontFamily: 'var(--font-family-base)' }}>30</span>
+                      <span style={{ fontSize: 8, color: 'var(--color-text-muted)', fontFamily: 'var(--font-family-base)' }}>40</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* ── NUTRITION TAB ── */}
+              {activeTab === 'nutrition' && data.nutrition && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
+                  <HydrationBar current={data.nutrition.hydrationMl} goal={data.nutrition.hydrationGoalMl} />
+
+                  <div>
+                    <span style={{ ...f('sm', 500), display: 'block', marginBottom: 10 }}>Macros today</span>
+                    <div className="grid grid-cols-3" style={{ gap: 10 }}>
+                      {[
+                        { label: 'Protein', g: data.nutrition.proteinG, c: 'var(--color-viz-red)' },
+                        { label: 'Carbs', g: data.nutrition.carbsG, c: 'var(--color-viz-orange)' },
+                        { label: 'Fat', g: data.nutrition.fatG, c: 'var(--color-viz-purple)' },
+                      ].map(m => (
+                        <div key={m.label} style={{
+                          backgroundColor: 'var(--color-bg-muted)', borderRadius: 'var(--radius-md)',
+                          padding: '12px 8px', textAlign: 'center', border: '1px solid var(--color-border-light)',
+                        }}>
+                          <div style={{ width: 6, height: 6, borderRadius: '50%', backgroundColor: m.c, margin: '0 auto 6px' }} />
+                          <div style={{ ...f('base', 500), fontVariantNumeric: 'tabular-nums' }}>{m.g}<span style={f('xs', 400, 'var(--color-text-muted)')}>g</span></div>
+                          <div style={{ fontSize: 9, fontWeight: 500, color: 'var(--color-text-muted)', textTransform: 'uppercase' as const, letterSpacing: '0.05em', fontFamily: 'var(--font-family-base)' }}>{m.label}</div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <StatRow icon={Flame} label="Calories consumed" value={data.nutrition.caloriesConsumed.toLocaleString()} unit="kcal" accent="var(--color-viz-red)" />
+
+                  {/* Weekly calories chart */}
+                  {data.weekly?.caloriesPerDay && (
+                    <div>
+                      <div className="flex items-center justify-between" style={{ marginBottom: 8 }}>
+                        <span style={f('sm', 500)}>Active calories this week</span>
+                        <span style={f('xs', 400, 'var(--color-text-muted)')}>{data.weekly.totalCalories.toLocaleString()} total</span>
+                      </div>
+                      <BarChart data={data.weekly.caloriesPerDay} color="var(--color-viz-red)" labels={days} />
+                    </div>
+                  )}
+                </div>
+              )}
+            </motion.div>
+          </AnimatePresence>
+        </div>
+      </>
 
       {/* ── Footer ── */}
-      <div className="flex items-center" style={{
+      <div className="flex items-center justify-between" style={{
         padding: '10px 20px', borderTop: '1px solid var(--color-border-default)',
-        gap: 8, fontSize: 11, color: 'var(--color-text-muted)', fontFamily: 'var(--font-family-base)',
+        fontSize: 11, color: 'var(--color-text-muted)', fontFamily: 'var(--font-family-base)',
       }}>
-        <div style={{ width: 6, height: 6, borderRadius: '50%', backgroundColor: 'var(--color-status-success)' }} className="animate-pulse" />
-        Synced with {pName} · Read-only
+        <div className="flex items-center" style={{ gap: 8 }}>
+          <div style={{ width: 6, height: 6, borderRadius: '50%', backgroundColor: 'var(--color-status-success)' }} className="animate-pulse" />
+          Synced with Health Connect · {data.source === 'manual-entry' ? 'Manual entry' : 'Read-only'}
+        </div>
+        <button
+          onClick={() => setShowManualEntry(true)}
+          className="flex items-center"
+          style={{
+            gap: 4, border: 'none', background: 'none', cursor: 'pointer',
+            fontSize: 11, fontWeight: 500, fontFamily: 'var(--font-family-base)',
+            color: 'var(--color-primary-default)', padding: '2px 0',
+          }}
+        >
+          <PenLine size={11} />
+          Update
+        </button>
       </div>
+
+      <ManualEntryModal
+        isOpen={showManualEntry}
+        onClose={() => setShowManualEntry(false)}
+        onSubmit={submitManualEntry}
+        isSyncing={isSyncing}
+      />
     </div>
   );
 }

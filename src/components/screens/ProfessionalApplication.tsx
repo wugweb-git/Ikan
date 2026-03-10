@@ -456,7 +456,7 @@ export function ProfessionalApplication({ onNavigate }: ProfessionalApplicationP
                 <div style={{
                   width: 36, height: 36, borderRadius: 'var(--radius-pill)',
                   backgroundColor: isActive ? 'var(--color-primary-default)' : isDone ? 'var(--color-status-success)' : 'var(--color-bg-muted)',
-                  color: isActive || isDone ? '#fff' : 'var(--color-text-muted)',
+                  color: isActive || isDone ? 'var(--color-text-inverse)' : 'var(--color-text-muted)',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                   transition: 'all 0.2s',
                 }}>

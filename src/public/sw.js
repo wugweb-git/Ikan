@@ -30,7 +30,6 @@ self.addEventListener('unhandledrejection', (event) => {
 // Resources to cache immediately
 const STATIC_RESOURCES = [
   '/',
-  '/App.tsx',
   '/index.html',
   '/manifest.json',
   '/pwa-192x192.png',
@@ -347,7 +346,7 @@ async function handleStaticResource(request) {
     console.log('📱 iKan SW: Failed to load static resource:', request.url);
     
     // Return a minimal fallback for critical resources
-    if (request.url.includes('App.tsx') || request.url.includes('index.html')) {
+    if (request.url.includes('index.html')) {
       return new Response(
         `<!DOCTYPE html>
         <html>

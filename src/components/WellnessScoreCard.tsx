@@ -59,6 +59,30 @@ const f = (size: string, weight: number = 400, color: string = 'var(--color-text
   color,
 });
 
+// ─── Wellness scoring configuration — single source of truth ────
+// Dimension weights (max points per pillar, total = 100)
+const WELLNESS_WEIGHTS = {
+  mood: 20,
+  program: 25,
+  awareness: 20,
+  engagement: 15,
+  activity: 20,
+} as const;
+
+// Activity scoring thresholds used by the Activity dimension
+const ACTIVITY_THRESHOLDS = {
+  connectedBase: 6,            // base score for having fitness connected
+  steps:    { high: 8_000, mid: 5_000, low: 2_000, highPts: 5, midPts: 3, lowPts: 2 },
+  sleep:    { idealMin: 7, idealMax: 9, goodMin: 6, fairMin: 4, idealPts: 5, goodPts: 3, fairPts: 1 },
+  active:   { high: 30, mid: 15, highPts: 4, midPts: 2, anyPts: 1 },
+} as const;
+
+// Awareness score mapping by severity level
+const AWARENESS_BY_SEVERITY: Record<string, number> = {
+  low: 20, moderate: 14, high: 10,
+} as const;
+const AWARENESS_DEFAULT = 8;
+
 // ─── Concentric Rings Gauge ──────────────────────────────────
 // Apple Watch-style concentric rings – one ring per dimension
 function ConcentricRings({
@@ -92,7 +116,7 @@ function ConcentricRings({
             {/* Track */}
             <circle
               cx={center} cy={center} r={ring.radius}
-              fill="none" stroke={`${ring.color}18`}
+              fill="none" stroke={`color-mix(in srgb, ${ring.color} 10%, transparent)`}
               strokeWidth={ringWidth}
             />
             {/* Progress arc */}
@@ -202,72 +226,69 @@ export function WellnessScoreCard({
     const dims: Dimension[] = [];
     let total = 0, maxP = 0;
 
-    // 1. Mood (20)
-    const mood = hasLoggedMoodToday ? 20 : 0;
-    dims.push({ label: 'Mood', score: mood, max: 20, icon: <Heart size={14} />, color: '#E53935', bg: '#FFEBEE' });
-    total += mood; maxP += 20;
+    // 1. Mood
+    const mood = hasLoggedMoodToday ? WELLNESS_WEIGHTS.mood : 0;
+    dims.push({ label: 'Mood', score: mood, max: WELLNESS_WEIGHTS.mood, icon: <Heart size={14} />, color: 'var(--color-viz-red)', bg: 'var(--color-viz-red-light)' });
+    total += mood; maxP += WELLNESS_WEIGHTS.mood;
 
-    // 2. Program (25)
+    // 2. Program
     let prog = 0;
     if (activeEnrollment && activeProgram) {
       const d = activeEnrollment.current_day_number || 1;
       const t = activeProgram.daily_content?.length || 7;
-      prog = Math.min(25, Math.round((d / t) * 25));
+      prog = Math.min(WELLNESS_WEIGHTS.program, Math.round((d / t) * WELLNESS_WEIGHTS.program));
     }
-    if (completedEnrollments.length > 0) prog = 25;
-    dims.push({ label: 'Program', score: prog, max: 25, icon: <Zap size={14} />, color: '#43A047', bg: '#E8F5E9' });
-    total += prog; maxP += 25;
+    if (completedEnrollments.length > 0) prog = WELLNESS_WEIGHTS.program;
+    dims.push({ label: 'Program', score: prog, max: WELLNESS_WEIGHTS.program, icon: <Zap size={14} />, color: 'var(--color-viz-green)', bg: 'var(--color-viz-green-light)' });
+    total += prog; maxP += WELLNESS_WEIGHTS.program;
 
-    // 3. Awareness (20)
+    // 3. Awareness
     let aw = 0;
     if (engineResult) {
-      const s = engineResult.severity;
-      if (s === 'low') aw = 20;
-      else if (s === 'moderate') aw = 14;
-      else if (s === 'high') aw = 10;
-      else aw = 8;
+      aw = AWARENESS_BY_SEVERITY[engineResult.severity] ?? AWARENESS_DEFAULT;
     }
-    dims.push({ label: 'Awareness', score: aw, max: 20, icon: <Brain size={14} />, color: '#1E88E5', bg: '#E3F2FD' });
-    total += aw; maxP += 20;
+    dims.push({ label: 'Awareness', score: aw, max: WELLNESS_WEIGHTS.awareness, icon: <Brain size={14} />, color: 'var(--color-viz-blue)', bg: 'var(--color-viz-blue-light)' });
+    total += aw; maxP += WELLNESS_WEIGHTS.awareness;
 
-    // 4. Engagement (15)
+    // 4. Engagement
     let eng = 0;
     if (enrollments.length > 0) eng += 4;
     if (completedEnrollments.length > 0) eng += 3;
     if (hasLoggedMoodToday) eng += 3;
     if (engineResult) eng += 3;
     if (recommendations.length > 0) eng += 2;
-    eng = Math.min(15, eng);
-    dims.push({ label: 'Engagement', score: eng, max: 15, icon: <Shield size={14} />, color: '#8E24AA', bg: '#F3E5F5' });
-    total += eng; maxP += 15;
+    eng = Math.min(WELLNESS_WEIGHTS.engagement, eng);
+    dims.push({ label: 'Engagement', score: eng, max: WELLNESS_WEIGHTS.engagement, icon: <Shield size={14} />, color: 'var(--color-viz-purple)', bg: 'var(--color-viz-purple-light)' });
+    total += eng; maxP += WELLNESS_WEIGHTS.engagement;
 
-    // 5. Activity (20)
+    // 5. Activity
     let act = 0;
     if (isFitnessConnected) {
-      act += 6;
+      const AT = ACTIVITY_THRESHOLDS;
+      act += AT.connectedBase;
       if (fitnessData) {
-        if (fitnessData.steps >= 8000) act += 5;
-        else if (fitnessData.steps >= 5000) act += 3;
-        else if (fitnessData.steps >= 2000) act += 2;
+        if (fitnessData.steps >= AT.steps.high) act += AT.steps.highPts;
+        else if (fitnessData.steps >= AT.steps.mid) act += AT.steps.midPts;
+        else if (fitnessData.steps >= AT.steps.low) act += AT.steps.lowPts;
         const sh = fitnessData.sleepHours || 0;
-        if (sh >= 7 && sh <= 9) act += 5;
-        else if (sh >= 6) act += 3;
-        else if (sh >= 4) act += 1;
-        if (fitnessData.activeMinutes >= 30) act += 4;
-        else if (fitnessData.activeMinutes >= 15) act += 2;
-        else if (fitnessData.activeMinutes > 0) act += 1;
+        if (sh >= AT.sleep.idealMin && sh <= AT.sleep.idealMax) act += AT.sleep.idealPts;
+        else if (sh >= AT.sleep.goodMin) act += AT.sleep.goodPts;
+        else if (sh >= AT.sleep.fairMin) act += AT.sleep.fairPts;
+        if (fitnessData.activeMinutes >= AT.active.high) act += AT.active.highPts;
+        else if (fitnessData.activeMinutes >= AT.active.mid) act += AT.active.midPts;
+        else if (fitnessData.activeMinutes > 0) act += AT.active.anyPts;
       }
     }
-    act = Math.min(20, act);
-    dims.push({ label: 'Activity', score: act, max: 20, icon: <ActivityIcon size={14} />, color: '#F57C00', bg: '#FFF3E0' });
-    total += act; maxP += 20;
+    act = Math.min(WELLNESS_WEIGHTS.activity, act);
+    dims.push({ label: 'Activity', score: act, max: WELLNESS_WEIGHTS.activity, icon: <ActivityIcon size={14} />, color: 'var(--color-viz-orange)', bg: 'var(--color-viz-orange-light)' });
+    total += act; maxP += WELLNESS_WEIGHTS.activity;
 
     const pct = maxP > 0 ? Math.round((total / maxP) * 100) : 0;
     let level: string, lc: string;
-    if (pct >= 80) { level = 'Thriving'; lc = '#34C759'; }
-    else if (pct >= 55) { level = 'Growing'; lc = '#007AFF'; }
-    else if (pct >= 30) { level = 'Building'; lc = '#FF9500'; }
-    else { level = 'Getting Started'; lc = '#8E8E93'; }
+    if (pct >= 80) { level = 'Thriving'; lc = 'var(--color-level-thriving)'; }
+    else if (pct >= 55) { level = 'Growing'; lc = 'var(--color-level-growing)'; }
+    else if (pct >= 30) { level = 'Building'; lc = 'var(--color-level-building)'; }
+    else { level = 'Getting Started'; lc = 'var(--color-level-starting)'; }
 
     return { percentage: pct, dimensions: dims, level, levelColor: lc };
   }, [hasLoggedMoodToday, activeEnrollment, activeProgram, completedEnrollments, engineResult, enrollments, recommendations, isFitnessConnected, fitnessData]);
@@ -302,9 +323,9 @@ export function WellnessScoreCard({
           {delta !== null && (
             <span className="inline-flex items-center" style={{
               fontSize: 'var(--text-xs)', fontWeight: 500, fontFamily: 'var(--font-family-base)',
-              color: delta > 0 ? '#34C759' : delta < 0 ? '#FF3B30' : 'var(--color-text-muted)',
+              color: delta > 0 ? 'var(--color-trend-positive)' : delta < 0 ? 'var(--color-trend-negative)' : 'var(--color-text-muted)',
               gap: 3, padding: '2px 8px', borderRadius: 'var(--radius-pill)',
-              backgroundColor: delta > 0 ? '#34C75918' : delta < 0 ? '#FF3B3018' : 'var(--color-bg-muted)',
+              backgroundColor: delta > 0 ? 'color-mix(in srgb, var(--color-trend-positive) 10%, transparent)' : delta < 0 ? 'color-mix(in srgb, var(--color-trend-negative) 10%, transparent)' : 'var(--color-bg-muted)',
             }}>
               {delta > 0 ? <TrendingUp size={12} /> : delta < 0 ? <TrendingDown size={12} /> : <Minus size={12} />}
               {delta > 0 ? '+' : ''}{delta}

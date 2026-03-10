@@ -229,6 +229,7 @@ export function AdminPaymentGateway() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-3">
+                {/* Razorpay brand color — must remain as hex per brand guidelines */}
                 <CreditCard className="w-6 h-6" style={{ color: '#3395FF' }} />
                 <div>
                   <h3 style={{ fontSize: 'var(--text-base)', fontWeight: 'var(--font-weight-medium)' }}>
@@ -322,6 +323,7 @@ export function AdminPaymentGateway() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-3">
+                {/* Stripe brand color — must remain as hex per brand guidelines */}
                 <CreditCard className="w-6 h-6" style={{ color: '#635BFF' }} />
                 <div>
                   <h3 style={{ fontSize: 'var(--text-base)', fontWeight: 'var(--font-weight-medium)' }}>
@@ -424,6 +426,7 @@ export function AdminPaymentGateway() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-3">
+                {/* PayPal brand color — must remain as hex per brand guidelines */}
                 <CreditCard className="w-6 h-6" style={{ color: '#0070BA' }} />
                 <div>
                   <h3 style={{ fontSize: 'var(--text-base)', fontWeight: 'var(--font-weight-medium)' }}>

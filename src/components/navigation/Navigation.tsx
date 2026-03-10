@@ -1,7 +1,7 @@
 import React from 'react';
 import { LogoFull } from '../Logo';
 import { cn } from '../ui/utils';
-import { MessageCircle, LogIn } from 'lucide-react';
+import { MessageCircle, LogIn, User } from 'lucide-react';
 
 interface NavigationProps {
   user: any;
@@ -124,7 +124,18 @@ export function Navigation({ user, onNavigate, onGetStarted, currentRoute }: Nav
                 className="w-10 h-10 rounded-full border-2 border-[var(--grey-2)] overflow-hidden cursor-pointer"
                 onClick={() => onNavigate('/account')}
               >
-                 <img src={user.user_metadata?.avatar_url || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=64&h=64"} alt="User" />
+                 {user.user_metadata?.avatar_url ? (
+                   <img src={user.user_metadata.avatar_url} alt="User" className="w-full h-full object-cover" />
+                 ) : (
+                   <div
+                     className="w-full h-full flex items-center justify-center"
+                     style={{ backgroundColor: 'var(--color-primary-default)', color: 'var(--color-primary-on)' }}
+                   >
+                     {user.user_metadata?.name
+                       ? user.user_metadata.name.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2)
+                       : <User size={18} />}
+                   </div>
+                 )}
               </div>
             </div>
           ) : (

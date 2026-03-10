@@ -147,10 +147,16 @@ export function AuthForm({ onSuccess, defaultTab = 'signin' }: AuthFormProps) {
   const handleSocialSignIn = async (provider: 'google' | 'linkedin_oidc' | 'apple') => {
     try {
       await signInWithProvider(provider);
-      toast.success(authContent.messages.success.socialWelcome.title, {
-        description: `Signing in with ${provider === 'google' ? 'Google' : provider === 'linkedin_oidc' ? 'LinkedIn' : 'Apple'}...`
-      });
-      onSuccess?.();
+      const providerName = provider === 'google' ? 'Google' : provider === 'linkedin_oidc' ? 'LinkedIn' : 'Apple';
+      const isInIframe = window.self !== window.top;
+      if (isInIframe) {
+        toast.info(`Complete sign-in in the ${providerName} popup window...`);
+      } else {
+        toast.success(authContent.messages.success.socialWelcome.title, {
+          description: `Signing in with ${providerName}...`
+        });
+        onSuccess?.();
+      }
     } catch (error) {
       console.error(`${provider} sign in error:`, error);
       toast.error(authContent.messages.error.socialFailed.title, {
@@ -384,6 +390,7 @@ export function AuthForm({ onSuccess, defaultTab = 'signin' }: AuthFormProps) {
               </div>
 
               <div className="grid grid-cols-1 gap-3">
+                {/* Social login SVGs use brand-mandated colors — must remain as hex */}
                 <SocialButton
                   provider="google"
                   icon={
@@ -650,6 +657,7 @@ export function AuthForm({ onSuccess, defaultTab = 'signin' }: AuthFormProps) {
               </div>
 
               <div className="grid grid-cols-1 gap-3">
+                {/* Social login SVGs use brand-mandated colors — must remain as hex */}
                 <SocialButton
                   provider="google"
                   icon={

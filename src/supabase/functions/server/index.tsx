@@ -3,7 +3,6 @@ import { cors } from "npm:hono/cors";
 import { logger } from "npm:hono/logger";
 import { createClient } from "jsr:@supabase/supabase-js@2";
 import * as kv from "./kv_store.tsx";
-import { createHash, createHmac } from "node:crypto";
 
 // Import monitoring utilities
 import { getAPILogs } from "./logging.tsx";
@@ -24,17 +23,9 @@ import {
   validatePassword,
   hashPassword,
   verifyPassword,
-  validateEquipProgram,
   validateEmail
 } from "./validation.tsx";
 
-import { 
-  EquipService, 
-  EquipDayService, 
-  EquipBlockService, 
-  DatasetService 
-} from "./program-service.ts";
-import { ProgressService } from "./progress-service.ts";
 import { RecommendationService } from "./recommendation-service.ts";
 import { MigrationRunner } from "./migration-runner.ts";
 
@@ -48,6 +39,8 @@ import { registerNewsletterRoutes } from './newsletter-routes.ts';
 import { registerResourceRoutes } from './resource-routes.ts';
 import { registerContactRoutes } from './contact-routes.ts';
 import { registerScalesRoutes } from './scales-routes.ts';
+import { registerHealthConnectRoutes } from './health-connect-routes.ts';
+import { registerBrevoRoutes } from './brevo-routes.ts';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Layer 0: Centralized connection-closed error detection
@@ -166,7 +159,7 @@ app.use(
 );
 
 // Health check endpoint (Public)
-app.get("/health", (c) => c.json({ status: "ok", timestamp: new Date().toISOString() }));
+app.get("/health", (c) => c.json({ status: "ok", timestamp: new Date().toISOString(), version: "2.1" }));
 
 // Auth middleware for protected routes
 async function requireAuth(c: any, next: any) {
@@ -223,6 +216,8 @@ registerNewsletterRoutes(app);
 registerContactRoutes(app);
 registerResourceRoutes(app, requireAuth);
 registerScalesRoutes(app, requireAuth);
+registerHealthConnectRoutes(app, requireAuth);
+registerBrevoRoutes(app, requireAdmin, requireAuth);
 
   // CMS Public Routes
   app.get("/cms/pages/:slug", async (c) => {
@@ -3696,19 +3691,88 @@ app.post("/admin/communication/config", requireAdmin, async (c) => {
 
 /**
  * Test communication API (Admin Only)
+ * Delegates to Brevo /brevo/test endpoint for actual delivery
  */
 app.post("/admin/communication/test", requireAdmin, async (c) => {
   try {
     const { provider, recipient, message } = await c.req.json();
-    // Placeholder for actual API testing
-    // Implementation depends on which provider (email, SMS, WhatsApp)
-    return c.json({ 
-      success: true, 
-      message: `Test ${provider} message queued for ${recipient}` 
-    });
+
+    // Map legacy provider names to Brevo channels
+    const channelMap: Record<string, string> = {
+      email: "email", sendgrid: "email",
+      sms: "sms", twilio: "sms",
+      whatsapp: "whatsapp", "twilio-whatsapp": "whatsapp",
+    };
+    const channel = channelMap[provider] || provider;
+
+    // Call Brevo API directly
+    const BREVO_BASE = "https://api.brevo.com/v3";
+    const apiKey = Deno.env.get("BREVO_API_KEY");
+
+    if (!apiKey) {
+      return c.json({ error: "BREVO_API_KEY not configured. Please set it in environment secrets." }, 500);
+    }
+
+    if (channel === "email") {
+      const config = await kv.get("brevo-config");
+      const emailCfg = config?.email || {};
+      const res = await fetch(`${BREVO_BASE}/smtp/email`, {
+        method: "POST",
+        headers: { "api-key": apiKey, "Content-Type": "application/json", "Accept": "application/json" },
+        body: JSON.stringify({
+          to: [{ email: recipient }],
+          sender: { name: emailCfg.senderName || "iKan Health", email: emailCfg.senderEmail || "noreply@ikan.health" },
+          subject: "iKan Communication Test",
+          htmlContent: `<div style="font-family:Ubuntu,sans-serif;padding:24px"><h2 style="color:#2A2A2A;font-weight:500">Test Successful</h2><p style="color:#717182">${message || "Your Brevo email integration is working."}</p></div>`,
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) return c.json({ success: false, error: data?.message || `Brevo returned ${res.status}` }, res.status);
+      return c.json({ success: true, message: `Test email sent to ${recipient}`, messageId: data.messageId });
+    }
+
+    if (channel === "sms") {
+      const config = await kv.get("brevo-config");
+      const smsCfg = config?.sms || {};
+      const res = await fetch(`${BREVO_BASE}/transactionalSMS/sms`, {
+        method: "POST",
+        headers: { "api-key": apiKey, "Content-Type": "application/json", "Accept": "application/json" },
+        body: JSON.stringify({
+          recipient,
+          content: message || "iKan test: Brevo SMS integration is working.",
+          sender: smsCfg.senderName || "iKan",
+          type: "transactional",
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) return c.json({ success: false, error: data?.message || `Brevo returned ${res.status}` }, res.status);
+      return c.json({ success: true, message: `Test SMS sent to ${recipient}`, reference: data.reference });
+    }
+
+    if (channel === "whatsapp") {
+      const config = await kv.get("brevo-config");
+      const waCfg = config?.whatsapp || {};
+      if (!waCfg.senderNumber) return c.json({ error: "WhatsApp sender number not configured" }, 400);
+      if (!waCfg.testTemplateName) return c.json({ error: "WhatsApp test template not configured" }, 400);
+      const res = await fetch(`${BREVO_BASE}/whatsapp/sendMessage`, {
+        method: "POST",
+        headers: { "api-key": apiKey, "Content-Type": "application/json", "Accept": "application/json" },
+        body: JSON.stringify({
+          senderNumber: waCfg.senderNumber,
+          recipientNumber: recipient,
+          templateName: waCfg.testTemplateName,
+          templateLanguage: "en",
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) return c.json({ success: false, error: data?.message || `Brevo returned ${res.status}` }, res.status);
+      return c.json({ success: true, message: `Test WhatsApp sent to ${recipient}`, messageId: data.messageId });
+    }
+
+    return c.json({ error: `Unknown channel: ${channel}` }, 400);
   } catch (error) {
-    console.error('Error testing communication API:', error);
-    return c.json({ error: 'Failed to test API' }, 500);
+    console.log(`Error testing communication API: ${error}`);
+    return c.json({ error: `Failed to test API: ${error}` }, 500);
   }
 });
 
@@ -4384,7 +4448,7 @@ app.get("/user-activity/history", requireAuth, async (c) => {
 });
 
 // ========================================
-// HEALTH DATA (Google Fit) ENDPOINTS
+// HEALTH DATA (Legacy — see health-connect-routes.ts for new endpoints)
 // ========================================
 
 // Store health data

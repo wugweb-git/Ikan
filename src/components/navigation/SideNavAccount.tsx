@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { cn } from '../ui/utils';
 import { Separator } from '../ui/separator';
 import svgPaths from '../../imports/svg-tfxlcr50sc';
-import { ChevronDown, ChevronUp, ChevronRight } from 'lucide-react';
+import { ChevronRight } from 'lucide-react';
 
 interface SideNavAccountProps {
   currentRoute: string;
@@ -100,34 +100,6 @@ const IconAbout = ({ color = "currentColor" }: { color?: string }) => (
       <path d={svgPaths.p132bc00} fill={color} />
       <path d={svgPaths.p36b21200} fill={color} />
       <path d={svgPaths.p26bfc271} fill={color} />
-    </g>
-  </svg>
-);
-
-const IconFAQs = ({ color = "currentColor" }: { color?: string }) => (
-  <svg className="block w-[18px] h-[18px]" fill="none" viewBox="0 0 18 18">
-    <g>
-      <path d={svgPaths.p132bc00} fill={color} />
-      <path d={svgPaths.p36b21200} fill={color} />
-      <path d={svgPaths.p26bfc271} fill={color} />
-    </g>
-  </svg>
-);
-
-const IconHelp = ({ color = "currentColor" }: { color?: string }) => (
-  <svg className="block w-[18px] h-[18px]" fill="none" viewBox="0 0 18 18">
-    <path clipRule="evenodd" d={svgPaths.p19332900} fill={color} fillRule="evenodd" />
-  </svg>
-);
-
-const IconLegal = ({ color = "currentColor" }: { color?: string }) => (
-  <svg className="block w-[18px] h-[18px]" fill="none" viewBox="0 0 18 18">
-    <g>
-      <path d={svgPaths.p3a382d00} stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" />
-      <path d={svgPaths.p678c080} stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" />
-      <path d="M7.5 6.75H6" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" />
-      <path d="M12 9.75H6" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" />
-      <path d="M12 12.75H6" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" />
     </g>
   </svg>
 );
@@ -233,8 +205,8 @@ export function SideNavAccount({
       ]
     },
     {
-      id: 'settings',
-      title: 'SETTINGS',
+      id: 'system',
+      title: 'SYSTEM',
       collapsible: true,
       items: [
         { 
@@ -248,62 +220,12 @@ export function SideNavAccount({
           label: 'Security', 
           route: '/account/security', 
           icon: IconSecurity 
-        }
-      ]
-    },
-    {
-      id: 'support',
-      title: 'SUPPORT',
-      collapsible: true,
-      items: [
+        },
         { 
-          id: 'about', 
-          label: 'About', 
-          route: '/about', 
+          id: 'settings', 
+          label: 'Settings', 
+          route: '/account/settings', 
           icon: IconAbout 
-        },
-        { 
-          id: 'faqs', 
-          label: 'FAQs', 
-          route: '/faq', 
-          icon: IconFAQs 
-        },
-        { 
-          id: 'help', 
-          label: "Let's Talk", 
-          route: '/contact', 
-          icon: IconHelp 
-        }
-      ]
-    },
-    {
-      id: 'legal',
-      title: 'LEGAL',
-      collapsible: true,
-      items: [
-        {
-          id: 'privacy-policy',
-          label: 'Privacy Policy',
-          route: '/privacy-policy',
-          icon: IconLegal
-        },
-        {
-          id: 'terms',
-          label: 'Terms & Conditions',
-          route: '/terms',
-          icon: IconLegal
-        },
-        {
-          id: 'return-policy',
-          label: 'Return Policy',
-          route: '/return-policy',
-          icon: IconLegal
-        },
-        {
-          id: 'cancellation-policy',
-          label: 'Cancellation Policy',
-          route: '/cancellation-policy',
-          icon: IconLegal
         }
       ]
     }
@@ -434,18 +356,18 @@ export function SideNavAccount({
                 <div className="settings-group">
                     <button
                       onClick={onLogout}
-                      className="settings-item w-full transition-colors active:bg-[var(--color-bg-muted)] group"
+                      className="settings-item w-full transition-colors active:bg-[var(--color-status-danger-light)] group"
                     >
                       <div className="flex flex-row items-center justify-between w-full h-full">
                         <div className="flex gap-[12px] items-center">
                           <div className="shrink-0 w-[24px] flex items-center justify-center">
-                            <IconLogOut color="var(--color-text-primary)" />
+                            <IconLogOut color="var(--color-status-danger)" />
                           </div>
-                          <div className="flex flex-col justify-center leading-none text-[var(--color-text-primary)] font-medium text-[16px]">
+                          <div className="flex flex-col justify-center leading-none text-[var(--color-status-danger)] font-medium text-[16px]">
                             Log out
                           </div>
                         </div>
-                        <ChevronRight className="w-5 h-5 text-[var(--color-text-muted)]" />
+                        <ChevronRight className="w-5 h-5 text-[var(--color-status-danger)]" />
                       </div>
                     </button>
                 </div>
@@ -455,14 +377,14 @@ export function SideNavAccount({
               className={cn(
                 "relative w-full transition-all duration-200 group flex items-center h-[50px] border hover:bg-[var(--color-status-danger-light)]"
               )}
-              style={{ backgroundColor: 'var(--color-bg-card)', borderColor: 'var(--color-border-default)', borderRadius: 'var(--radius-md)' }}
+              style={{ backgroundColor: 'var(--color-bg-card)', borderColor: 'var(--color-status-danger)', borderRadius: 'var(--radius-md)' }}
             >
               <div className="flex flex-row items-center justify-between w-full h-full px-[20px]">
                 <div className="flex gap-[12px] items-center">
                   <div className="shrink-0 w-[24px] flex items-center justify-center">
-                    <IconLogOut color="var(--color-text-primary)" />
+                    <IconLogOut color="var(--color-status-danger)" />
                   </div>
-                  <div className="flex flex-col justify-center leading-[0] not-italic relative shrink-0 text-[var(--color-text-primary)] group-hover:text-[var(--color-status-danger)] text-nowrap font-medium h-[28px] text-[14px]">
+                  <div className="flex flex-col justify-center leading-[0] not-italic relative shrink-0 text-[var(--color-status-danger)] text-nowrap font-medium h-[28px] text-[14px]">
                     <p className="leading-[28px]">Log out</p>
                   </div>
                 </div>

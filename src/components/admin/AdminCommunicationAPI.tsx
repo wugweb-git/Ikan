@@ -1,189 +1,301 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Mail,
   MessageSquare,
-  Send,
   CheckCircle,
   Save,
-  TestTube
+  TestTube,
+  RefreshCw,
+  Shield,
+  Smartphone,
+  Clock,
+  XCircle,
+  ExternalLink,
 } from 'lucide-react';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Card, CardContent } from '../ui/card';
 import { Label } from '../ui/label';
-import { Textarea } from '../ui/textarea';
 import { Switch } from '../ui/switch';
 import { useNotifications } from '../../contexts/NotificationContext';
 import { AdminHeader } from './AdminHeader';
+import { AdminLoading } from './AdminLoading';
 import { useIsMobile } from '../../hooks/useIsMobile';
 import { projectId, publicAnonKey } from '../../utils/supabase/info';
 
-interface CommunicationConfig {
-  provider: string;
-  enabled: boolean;
-  api_key?: string;
-  api_secret?: string;
-  sender_id?: string;
-  webhook_url?: string;
-  updated_at?: string;
+const API_BASE = `https://${projectId}.supabase.co/functions/v1/make-server-cc205da9`;
+
+interface BrevoConfig {
+  email: {
+    enabled: boolean;
+    senderName: string;
+    senderEmail: string;
+  };
+  sms: {
+    enabled: boolean;
+    senderName: string;
+  };
+  whatsapp: {
+    enabled: boolean;
+    senderNumber: string;
+    testTemplateName: string;
+  };
+  updatedAt?: string;
 }
+
+interface BrevoAccount {
+  email: string;
+  firstName: string;
+  lastName: string;
+  companyName: string;
+  plan: any;
+}
+
+interface LogEntry {
+  channel: string;
+  recipient: string;
+  subject: string;
+  success: boolean;
+  timestamp: string;
+}
+
+const DEFAULT_CONFIG: BrevoConfig = {
+  email: { enabled: false, senderName: 'iKan Health', senderEmail: 'noreply@ikan.health' },
+  sms: { enabled: false, senderName: 'iKan' },
+  whatsapp: { enabled: false, senderNumber: '', testTemplateName: '' },
+};
 
 export function AdminCommunicationAPI() {
   const { showToast } = useNotifications();
   const isMobile = useIsMobile();
 
-  // Email configuration
-  const [emailConfig, setEmailConfig] = useState<CommunicationConfig>({
-    provider: 'sendgrid',
-    enabled: false,
-    api_key: '',
-    sender_id: 'noreply@ikan.health'
-  });
-
-  // SMS configuration  
-  const [smsConfig, setSmsConfig] = useState<CommunicationConfig>({
-    provider: 'twilio',
-    enabled: false,
-    api_key: '',
-    api_secret: '',
-    sender_id: '+1234567890'
-  });
-
-  // WhatsApp configuration
-  const [whatsappConfig, setWhatsappConfig] = useState<CommunicationConfig>({
-    provider: 'twilio-whatsapp',
-    enabled: false,
-    api_key: '',
-    api_secret: '',
-    sender_id: '+1234567890'
-  });
-
+  const [loading, setLoading] = useState(true);
+  const [config, setConfig] = useState<BrevoConfig>(DEFAULT_CONFIG);
+  const [account, setAccount] = useState<BrevoAccount | null>(null);
+  const [accountConnected, setAccountConnected] = useState(false);
+  const [apiKeyConfigured, setApiKeyConfigured] = useState(false);
+  const [logs, setLogs] = useState<LogEntry[]>([]);
   const [testing, setTesting] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [testRecipient, setTestRecipient] = useState({ email: '', sms: '', whatsapp: '' });
 
-  useEffect(() => {
-    loadConfigs();
+  const headers = {
+    'Authorization': `Bearer ${publicAnonKey}`,
+    'Content-Type': 'application/json',
+  };
+
+  // ── Load config + account status ─────────────────────────────
+  const loadData = useCallback(async () => {
+    try {
+      setLoading(true);
+      const [configRes, accountRes, logsRes] = await Promise.all([
+        fetch(`${API_BASE}/brevo/config`, { headers }).then(r => r.json()).catch(() => null),
+        fetch(`${API_BASE}/brevo/account`, { headers }).then(r => r.json()).catch(() => null),
+        fetch(`${API_BASE}/brevo/logs?limit=20`, { headers }).then(r => r.json()).catch(() => null),
+      ]);
+
+      if (configRes?.config) setConfig(configRes.config);
+      if (configRes?.apiKeyConfigured !== undefined) setApiKeyConfigured(configRes.apiKeyConfigured);
+
+      if (accountRes?.connected) {
+        setAccountConnected(true);
+        setAccount(accountRes.account);
+      } else {
+        setAccountConnected(false);
+        setAccount(null);
+      }
+
+      if (logsRes?.logs) setLogs(logsRes.logs);
+    } catch (err) {
+      console.error('Failed to load Brevo data:', err);
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
-  const loadConfigs = async () => {
+  useEffect(() => { loadData(); }, [loadData]);
+
+  // ── Save config ──────────────────────────────────────────────
+  const handleSave = async () => {
+    setSaving(true);
     try {
-      const response = await fetch(
-        `https://${projectId}.supabase.co/functions/v1/make-server-cc205da9/admin/communication/config`,
-        {
-          headers: {
-            'Authorization': `Bearer ${publicAnonKey}`
-          }
-        }
-      );
-
-      if (response.ok) {
-        const data = await response.json();
-        // Update configs from server
-        const configs = data.configs || [];
-        configs.forEach((cfg: any) => {
-          if (cfg.provider === 'sendgrid') setEmailConfig(cfg);
-          if (cfg.provider === 'twilio') setSmsConfig(cfg);
-          if (cfg.provider === 'twilio-whatsapp') setWhatsappConfig(cfg);
-        });
-      }
-    } catch (error) {
-      console.error('Failed to load communication configs:', error);
-    }
-  };
-
-  const handleSaveConfig = async (provider: string, config: CommunicationConfig) => {
-    try {
-      const response = await fetch(
-        `https://${projectId}.supabase.co/functions/v1/make-server-cc205da9/admin/communication/config`,
-        {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${publicAnonKey}`,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({ provider, config })
-        }
-      );
-
-      if (response.ok) {
-        showToast('success', 'Saved', `${provider} configuration saved successfully`);
+      const res = await fetch(`${API_BASE}/brevo/config`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(config),
+      });
+      if (res.ok) {
+        showToast('success', 'Saved', 'Brevo configuration saved successfully');
       } else {
-        showToast('error', 'Error', 'Failed to save configuration');
+        const data = await res.json().catch(() => ({}));
+        showToast('error', 'Error', data.error || 'Failed to save configuration');
       }
-    } catch (error) {
-      console.error('Error saving config:', error);
+    } catch (err) {
+      console.error('Error saving Brevo config:', err);
       showToast('error', 'Error', 'Failed to save configuration');
+    } finally {
+      setSaving(false);
     }
   };
 
-  const handleTest = async (provider: string, recipient: string) => {
-    setTesting(provider);
+  // ── Test channel ─────────────────────────────────────────────
+  const handleTest = async (channel: string) => {
+    const recipient = testRecipient[channel as keyof typeof testRecipient];
+    if (!recipient) {
+      showToast('error', 'Missing Recipient', `Enter a ${channel === 'email' ? 'email address' : 'phone number'} to test`);
+      return;
+    }
+    setTesting(channel);
     try {
-      const response = await fetch(
-        `https://${projectId}.supabase.co/functions/v1/make-server-cc205da9/admin/communication/test`,
-        {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${publicAnonKey}`,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            provider,
-            recipient,
-            message: 'Test message from iKan Admin Panel'
-          })
-        }
-      );
-
-      if (response.ok) {
-        showToast('success', 'Test Sent', `Test ${provider} message sent successfully`);
+      const res = await fetch(`${API_BASE}/brevo/test`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ channel, recipient }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok && data.success) {
+        showToast('success', 'Test Sent', `Test ${channel} sent to ${recipient}`);
+        // Refresh logs
+        const logsRes = await fetch(`${API_BASE}/brevo/logs?limit=20`, { headers }).then(r => r.json()).catch(() => null);
+        if (logsRes?.logs) setLogs(logsRes.logs);
       } else {
-        showToast('error', 'Test Failed', `Failed to send test ${provider} message`);
+        showToast('error', 'Test Failed', data.error || `Failed to send test ${channel}`);
       }
-    } catch (error) {
-      console.error('Error testing API:', error);
-      showToast('error', 'Test Failed', 'Failed to test API');
+    } catch (err) {
+      console.error(`Error testing ${channel}:`, err);
+      showToast('error', 'Test Failed', `Network error testing ${channel}`);
     } finally {
       setTesting(null);
     }
   };
 
+  // ── Stats ────────────────────────────────────────────────────
   const stats = [
     {
-      label: 'Email Service',
-      value: emailConfig.enabled ? 'Active' : 'Inactive',
-      icon: <Mail className="w-4 h-4" style={{ color: emailConfig.enabled ? 'var(--color-success-default)' : 'var(--color-text-muted)' }} />
+      label: 'API Status',
+      value: accountConnected ? 'Connected' : 'Not Connected',
+      icon: <Shield className="w-4 h-4" style={{ color: accountConnected ? 'var(--color-success-default)' : 'var(--color-danger-default)' }} />,
     },
     {
-      label: 'SMS Service',
-      value: smsConfig.enabled ? 'Active' : 'Inactive',
-      icon: <MessageSquare className="w-4 h-4" style={{ color: smsConfig.enabled ? 'var(--color-success-default)' : 'var(--color-text-muted)' }} />
+      label: 'Email',
+      value: config.email.enabled ? 'Active' : 'Inactive',
+      icon: <Mail className="w-4 h-4" style={{ color: config.email.enabled ? 'var(--color-success-default)' : 'var(--color-text-muted)' }} />,
+    },
+    {
+      label: 'SMS',
+      value: config.sms.enabled ? 'Active' : 'Inactive',
+      icon: <Smartphone className="w-4 h-4" style={{ color: config.sms.enabled ? 'var(--color-success-default)' : 'var(--color-text-muted)' }} />,
     },
     {
       label: 'WhatsApp',
-      value: whatsappConfig.enabled ? 'Active' : 'Inactive',
-      icon: <MessageSquare className="w-4 h-4" style={{ color: whatsappConfig.enabled ? 'var(--color-success-default)' : 'var(--color-text-muted)' }} />
-    },
-    {
-      label: 'Total Services',
-      value: [emailConfig.enabled, smsConfig.enabled, whatsappConfig.enabled].filter(Boolean).length,
-      icon: <CheckCircle className="w-4 h-4" style={{ color: 'var(--color-primary-default)' }} />
+      value: config.whatsapp.enabled ? 'Active' : 'Inactive',
+      icon: <MessageSquare className="w-4 h-4" style={{ color: config.whatsapp.enabled ? 'var(--color-success-default)' : 'var(--color-text-muted)' }} />,
     },
   ];
 
+  if (loading) {
+    return <AdminLoading message="Loading Brevo configuration..." />;
+  }
+
   return (
-    <div 
+    <div
       className="min-h-screen"
-      style={{ 
+      style={{
         backgroundColor: 'var(--color-bg-page)',
-        padding: isMobile ? 'var(--spacing-4)' : 'var(--spacing-8)'
+        padding: isMobile ? 'var(--spacing-4)' : 'var(--spacing-8)',
       }}
     >
       <div className="max-w-7xl mx-auto space-y-6">
         <AdminHeader
-          title="Communication API Management"
-          description="Configure Email, SMS, and WhatsApp API integrations"
+          title="Brevo Communication API"
+          description="Unified Email, SMS, and WhatsApp via Brevo (formerly Sendinblue)"
           stats={stats}
         />
+
+        {/* Account Status */}
+        <Card style={{ backgroundColor: 'var(--color-bg-card)', borderRadius: 'var(--radius-lg)' }}>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-3">
+                <div
+                  className="flex items-center justify-center"
+                  style={{
+                    width: 40, height: 40,
+                    borderRadius: 'var(--radius-sm)',
+                    backgroundColor: accountConnected ? 'var(--color-success-muted)' : 'var(--color-danger-muted)',
+                  }}
+                >
+                  {accountConnected
+                    ? <CheckCircle className="w-5 h-5" style={{ color: 'var(--color-success-default)' }} />
+                    : <XCircle className="w-5 h-5" style={{ color: 'var(--color-danger-default)' }} />
+                  }
+                </div>
+                <div>
+                  <h3 style={{ fontSize: 'var(--text-base)', fontWeight: 'var(--font-weight-medium)', color: 'var(--color-text-primary)' }}>
+                    Brevo Account
+                  </h3>
+                  <p style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-muted)' }}>
+                    {accountConnected
+                      ? `${account?.firstName} ${account?.lastName} — ${account?.email}`
+                      : apiKeyConfigured
+                        ? 'API key set but connection failed — verify your key'
+                        : 'Set BREVO_API_KEY in environment secrets to connect'
+                    }
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  onClick={loadData}
+                  style={{
+                    height: 'var(--ikan-component-button-height)',
+                    borderRadius: 'var(--ikan-component-border-radius)',
+                    fontWeight: 'var(--font-weight-medium)',
+                    gap: 'var(--spacing-2)',
+                  }}
+                >
+                  <RefreshCw className="w-4 h-4" />
+                  Refresh
+                </Button>
+                <a
+                  href="https://app.brevo.com"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <Button
+                    variant="outline"
+                    style={{
+                      height: 'var(--ikan-component-button-height)',
+                      borderRadius: 'var(--ikan-component-border-radius)',
+                      fontWeight: 'var(--font-weight-medium)',
+                      gap: 'var(--spacing-2)',
+                    }}
+                  >
+                    <ExternalLink className="w-4 h-4" />
+                    Brevo Dashboard
+                  </Button>
+                </a>
+              </div>
+            </div>
+            {account?.plan && (
+              <div
+                className="flex items-center gap-4"
+                style={{
+                  padding: 'var(--spacing-3)',
+                  borderRadius: 'var(--radius-sm)',
+                  backgroundColor: 'var(--color-bg-muted)',
+                  fontSize: 'var(--text-sm)',
+                  color: 'var(--color-text-muted)',
+                }}
+              >
+                <span>Plan: <strong style={{ fontWeight: 'var(--font-weight-medium)', color: 'var(--color-text-primary)' }}>{account.plan.type || 'Free'}</strong></span>
+                {account.plan.credits !== undefined && <span>Credits: {account.plan.credits}</span>}
+                {account.companyName && <span>Company: {account.companyName}</span>}
+              </div>
+            )}
+          </CardContent>
+        </Card>
 
         {/* Email Configuration */}
         <Card style={{ backgroundColor: 'var(--color-bg-card)', borderRadius: 'var(--radius-lg)' }}>
@@ -192,71 +304,76 @@ export function AdminCommunicationAPI() {
               <div className="flex items-center gap-3">
                 <Mail className="w-6 h-6" style={{ color: 'var(--color-primary-default)' }} />
                 <div>
-                  <h3 style={{ fontSize: 'var(--text-base)', fontWeight: 'var(--font-weight-medium)' }}>
-                    Email Service (SendGrid)
+                  <h3 style={{ fontSize: 'var(--text-base)', fontWeight: 'var(--font-weight-medium)', color: 'var(--color-text-primary)' }}>
+                    Email (Transactional)
                   </h3>
                   <p style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-muted)' }}>
-                    Configure email delivery via SendGrid
+                    Send transactional emails via Brevo SMTP API
                   </p>
                 </div>
               </div>
               <div className="flex items-center gap-2">
-                <Label>Enabled</Label>
+                <Label style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-muted)' }}>Enabled</Label>
                 <Switch
-                  checked={emailConfig.enabled}
-                  onCheckedChange={(checked) => setEmailConfig({ ...emailConfig, enabled: checked })}
+                  checked={config.email.enabled}
+                  onCheckedChange={(checked) => setConfig({ ...config, email: { ...config.email, enabled: checked } })}
                 />
               </div>
             </div>
 
             <div className="grid md:grid-cols-2 gap-4 mb-4">
               <div>
-                <Label>API Key</Label>
+                <Label style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--font-weight-medium)' }}>Sender Name</Label>
                 <Input
-                  type="password"
-                  value={emailConfig.api_key}
-                  onChange={(e) => setEmailConfig({ ...emailConfig, api_key: e.target.value })}
-                  placeholder="SG.xxxxxxxxxxxxx"
+                  value={config.email.senderName}
+                  onChange={(e) => setConfig({ ...config, email: { ...config.email, senderName: e.target.value } })}
+                  placeholder="iKan Health"
+                  style={{ borderRadius: 'var(--radius-md)' }}
                 />
               </div>
               <div>
-                <Label>Sender Email</Label>
+                <Label style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--font-weight-medium)' }}>Sender Email</Label>
                 <Input
-                  value={emailConfig.sender_id}
-                  onChange={(e) => setEmailConfig({ ...emailConfig, sender_id: e.target.value })}
+                  value={config.email.senderEmail}
+                  onChange={(e) => setConfig({ ...config, email: { ...config.email, senderEmail: e.target.value } })}
                   placeholder="noreply@ikan.health"
+                  style={{ borderRadius: 'var(--radius-md)' }}
                 />
               </div>
             </div>
 
-            <div className="flex gap-2">
+            {/* Test Email */}
+            <div
+              className="flex items-end gap-3"
+              style={{
+                padding: 'var(--spacing-4)',
+                borderRadius: 'var(--radius-sm)',
+                backgroundColor: 'var(--color-bg-muted)',
+              }}
+            >
+              <div className="flex-1">
+                <Label style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--font-weight-medium)' }}>Test Recipient Email</Label>
+                <Input
+                  type="email"
+                  value={testRecipient.email}
+                  onChange={(e) => setTestRecipient({ ...testRecipient, email: e.target.value })}
+                  placeholder="test@example.com"
+                  style={{ borderRadius: 'var(--radius-md)' }}
+                />
+              </div>
               <Button
-                onClick={() => handleSaveConfig('sendgrid', emailConfig)}
+                variant="outline"
+                onClick={() => handleTest('email')}
+                disabled={!config.email.enabled || testing === 'email' || !accountConnected}
                 style={{
                   height: 'var(--ikan-component-button-height)',
                   borderRadius: 'var(--ikan-component-border-radius)',
                   fontWeight: 'var(--font-weight-medium)',
                   gap: 'var(--spacing-2)',
-                  backgroundColor: 'var(--color-primary-default)',
-                  color: 'var(--color-primary-on)'
-                }}
-              >
-                <Save className="w-4 h-4" />
-                Save Configuration
-              </Button>
-              <Button
-                variant="outline"
-                onClick={() => handleTest('email', 'test@example.com')}
-                disabled={!emailConfig.enabled || testing === 'email'}
-                style={{
-                  height: 'var(--ikan-component-button-height)',
-                  borderRadius: 'var(--ikan-component-border-radius)',
-                  fontWeight: 'var(--font-weight-medium)',
-                  gap: 'var(--spacing-2)'
                 }}
               >
                 <TestTube className="w-4 h-4" />
-                {testing === 'email' ? 'Testing...' : 'Test Email'}
+                {testing === 'email' ? 'Sending...' : 'Send Test'}
               </Button>
             </div>
           </CardContent>
@@ -267,82 +384,72 @@ export function AdminCommunicationAPI() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-3">
-                <MessageSquare className="w-6 h-6" style={{ color: 'var(--color-primary-default)' }} />
+                <Smartphone className="w-6 h-6" style={{ color: 'var(--color-primary-default)' }} />
                 <div>
-                  <h3 style={{ fontSize: 'var(--text-base)', fontWeight: 'var(--font-weight-medium)' }}>
-                    SMS Service (Twilio)
+                  <h3 style={{ fontSize: 'var(--text-base)', fontWeight: 'var(--font-weight-medium)', color: 'var(--color-text-primary)' }}>
+                    SMS (Transactional)
                   </h3>
                   <p style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-muted)' }}>
-                    Configure SMS delivery via Twilio
+                    Send transactional SMS via Brevo SMS API
                   </p>
                 </div>
               </div>
               <div className="flex items-center gap-2">
-                <Label>Enabled</Label>
+                <Label style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-muted)' }}>Enabled</Label>
                 <Switch
-                  checked={smsConfig.enabled}
-                  onCheckedChange={(checked) => setSmsConfig({ ...smsConfig, enabled: checked })}
+                  checked={config.sms.enabled}
+                  onCheckedChange={(checked) => setConfig({ ...config, sms: { ...config.sms, enabled: checked } })}
                 />
               </div>
             </div>
 
             <div className="grid md:grid-cols-2 gap-4 mb-4">
               <div>
-                <Label>Account SID</Label>
+                <Label style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--font-weight-medium)' }}>Sender Name</Label>
                 <Input
-                  type="password"
-                  value={smsConfig.api_key}
-                  onChange={(e) => setSmsConfig({ ...smsConfig, api_key: e.target.value })}
-                  placeholder="ACxxxxxxxxxxxxx"
+                  value={config.sms.senderName}
+                  onChange={(e) => setConfig({ ...config, sms: { ...config.sms, senderName: e.target.value } })}
+                  placeholder="iKan"
+                  style={{ borderRadius: 'var(--radius-md)' }}
                 />
-              </div>
-              <div>
-                <Label>Auth Token</Label>
-                <Input
-                  type="password"
-                  value={smsConfig.api_secret}
-                  onChange={(e) => setSmsConfig({ ...smsConfig, api_secret: e.target.value })}
-                  placeholder="Auth Token"
-                />
-              </div>
-              <div>
-                <Label>Twilio Phone Number</Label>
-                <Input
-                  value={smsConfig.sender_id}
-                  onChange={(e) => setSmsConfig({ ...smsConfig, sender_id: e.target.value })}
-                  placeholder="+1234567890"
-                />
+                <p style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)', marginTop: 'var(--spacing-1)' }}>
+                  Max 11 alphanumeric characters. Some countries require a registered sender ID.
+                </p>
               </div>
             </div>
 
-            <div className="flex gap-2">
+            {/* Test SMS */}
+            <div
+              className="flex items-end gap-3"
+              style={{
+                padding: 'var(--spacing-4)',
+                borderRadius: 'var(--radius-sm)',
+                backgroundColor: 'var(--color-bg-muted)',
+              }}
+            >
+              <div className="flex-1">
+                <Label style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--font-weight-medium)' }}>Test Phone Number</Label>
+                <Input
+                  type="tel"
+                  value={testRecipient.sms}
+                  onChange={(e) => setTestRecipient({ ...testRecipient, sms: e.target.value })}
+                  placeholder="+91XXXXXXXXXX"
+                  style={{ borderRadius: 'var(--radius-md)' }}
+                />
+              </div>
               <Button
-                onClick={() => handleSaveConfig('twilio', smsConfig)}
+                variant="outline"
+                onClick={() => handleTest('sms')}
+                disabled={!config.sms.enabled || testing === 'sms' || !accountConnected}
                 style={{
                   height: 'var(--ikan-component-button-height)',
                   borderRadius: 'var(--ikan-component-border-radius)',
                   fontWeight: 'var(--font-weight-medium)',
                   gap: 'var(--spacing-2)',
-                  backgroundColor: 'var(--color-primary-default)',
-                  color: 'var(--color-primary-on)'
-                }}
-              >
-                <Save className="w-4 h-4" />
-                Save Configuration
-              </Button>
-              <Button
-                variant="outline"
-                onClick={() => handleTest('sms', '+1234567890')}
-                disabled={!smsConfig.enabled || testing === 'sms'}
-                style={{
-                  height: 'var(--ikan-component-button-height)',
-                  borderRadius: 'var(--ikan-component-border-radius)',
-                  fontWeight: 'var(--font-weight-medium)',
-                  gap: 'var(--spacing-2)'
                 }}
               >
                 <TestTube className="w-4 h-4" />
-                {testing === 'sms' ? 'Testing...' : 'Test SMS'}
+                {testing === 'sms' ? 'Sending...' : 'Send Test'}
               </Button>
             </div>
           </CardContent>
@@ -355,122 +462,208 @@ export function AdminCommunicationAPI() {
               <div className="flex items-center gap-3">
                 <MessageSquare className="w-6 h-6" style={{ color: 'var(--color-success-default)' }} />
                 <div>
-                  <h3 style={{ fontSize: 'var(--text-base)', fontWeight: 'var(--font-weight-medium)' }}>
-                    WhatsApp Business API
+                  <h3 style={{ fontSize: 'var(--text-base)', fontWeight: 'var(--font-weight-medium)', color: 'var(--color-text-primary)' }}>
+                    WhatsApp Business
                   </h3>
                   <p style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-muted)' }}>
-                    Configure WhatsApp messaging via Twilio or Meta
+                    Send WhatsApp messages via Brevo WhatsApp API (template-based)
                   </p>
                 </div>
               </div>
               <div className="flex items-center gap-2">
-                <Label>Enabled</Label>
+                <Label style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-muted)' }}>Enabled</Label>
                 <Switch
-                  checked={whatsappConfig.enabled}
-                  onCheckedChange={(checked) => setWhatsappConfig({ ...whatsappConfig, enabled: checked })}
+                  checked={config.whatsapp.enabled}
+                  onCheckedChange={(checked) => setConfig({ ...config, whatsapp: { ...config.whatsapp, enabled: checked } })}
                 />
               </div>
             </div>
 
             <div className="grid md:grid-cols-2 gap-4 mb-4">
               <div>
-                <Label>API Key / Account SID</Label>
+                <Label style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--font-weight-medium)' }}>Sender Phone Number</Label>
                 <Input
-                  type="password"
-                  value={whatsappConfig.api_key}
-                  onChange={(e) => setWhatsappConfig({ ...whatsappConfig, api_key: e.target.value })}
-                  placeholder="ACxxxxxxxxxxxxx"
+                  value={config.whatsapp.senderNumber}
+                  onChange={(e) => setConfig({ ...config, whatsapp: { ...config.whatsapp, senderNumber: e.target.value } })}
+                  placeholder="+91XXXXXXXXXX"
+                  style={{ borderRadius: 'var(--radius-md)' }}
                 />
+                <p style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)', marginTop: 'var(--spacing-1)' }}>
+                  Must be a WhatsApp Business number registered in your Brevo account.
+                </p>
               </div>
               <div>
-                <Label>API Secret / Auth Token</Label>
+                <Label style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--font-weight-medium)' }}>Test Template Name</Label>
                 <Input
-                  type="password"
-                  value={whatsappConfig.api_secret}
-                  onChange={(e) => setWhatsappConfig({ ...whatsappConfig, api_secret: e.target.value })}
-                  placeholder="Secret Token"
+                  value={config.whatsapp.testTemplateName}
+                  onChange={(e) => setConfig({ ...config, whatsapp: { ...config.whatsapp, testTemplateName: e.target.value } })}
+                  placeholder="hello_world"
+                  style={{ borderRadius: 'var(--radius-md)' }}
                 />
-              </div>
-              <div>
-                <Label>WhatsApp Number</Label>
-                <Input
-                  value={whatsappConfig.sender_id}
-                  onChange={(e) => setWhatsappConfig({ ...whatsappConfig, sender_id: e.target.value })}
-                  placeholder="whatsapp:+1234567890"
-                />
-              </div>
-              <div>
-                <Label>Webhook URL</Label>
-                <Input
-                  value={whatsappConfig.webhook_url}
-                  onChange={(e) => setWhatsappConfig({ ...whatsappConfig, webhook_url: e.target.value })}
-                  placeholder="https://your-domain.com/webhook"
-                />
+                <p style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)', marginTop: 'var(--spacing-1)' }}>
+                  Pre-approved template name for test messages.
+                </p>
               </div>
             </div>
 
-            <div className="flex gap-2">
+            {/* Test WhatsApp */}
+            <div
+              className="flex items-end gap-3"
+              style={{
+                padding: 'var(--spacing-4)',
+                borderRadius: 'var(--radius-sm)',
+                backgroundColor: 'var(--color-bg-muted)',
+              }}
+            >
+              <div className="flex-1">
+                <Label style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--font-weight-medium)' }}>Test WhatsApp Number</Label>
+                <Input
+                  type="tel"
+                  value={testRecipient.whatsapp}
+                  onChange={(e) => setTestRecipient({ ...testRecipient, whatsapp: e.target.value })}
+                  placeholder="+91XXXXXXXXXX"
+                  style={{ borderRadius: 'var(--radius-md)' }}
+                />
+              </div>
               <Button
-                onClick={() => handleSaveConfig('twilio-whatsapp', whatsappConfig)}
+                variant="outline"
+                onClick={() => handleTest('whatsapp')}
+                disabled={!config.whatsapp.enabled || testing === 'whatsapp' || !accountConnected}
                 style={{
                   height: 'var(--ikan-component-button-height)',
                   borderRadius: 'var(--ikan-component-border-radius)',
                   fontWeight: 'var(--font-weight-medium)',
                   gap: 'var(--spacing-2)',
-                  backgroundColor: 'var(--color-primary-default)',
-                  color: 'var(--color-primary-on)'
-                }}
-              >
-                <Save className="w-4 h-4" />
-                Save Configuration
-              </Button>
-              <Button
-                variant="outline"
-                onClick={() => handleTest('whatsapp', 'whatsapp:+1234567890')}
-                disabled={!whatsappConfig.enabled || testing === 'whatsapp'}
-                style={{
-                  height: 'var(--ikan-component-button-height)',
-                  borderRadius: 'var(--ikan-component-border-radius)',
-                  fontWeight: 'var(--font-weight-medium)',
-                  gap: 'var(--spacing-2)'
                 }}
               >
                 <TestTube className="w-4 h-4" />
-                {testing === 'whatsapp' ? 'Testing...' : 'Test WhatsApp'}
+                {testing === 'whatsapp' ? 'Sending...' : 'Send Test'}
               </Button>
             </div>
+          </CardContent>
+        </Card>
+
+        {/* Save Button */}
+        <div className="flex justify-end">
+          <Button
+            onClick={handleSave}
+            disabled={saving}
+            style={{
+              height: 'var(--ikan-component-button-height)',
+              borderRadius: 'var(--ikan-component-border-radius)',
+              fontWeight: 'var(--font-weight-medium)',
+              gap: 'var(--spacing-2)',
+              backgroundColor: 'var(--color-primary-default)',
+              color: 'var(--color-primary-on)',
+              paddingLeft: 'var(--spacing-6)',
+              paddingRight: 'var(--spacing-6)',
+            }}
+          >
+            <Save className="w-4 h-4" />
+            {saving ? 'Saving...' : 'Save All Configuration'}
+          </Button>
+        </div>
+
+        {/* Recent Communication Logs */}
+        <Card style={{ backgroundColor: 'var(--color-bg-card)', borderRadius: 'var(--radius-lg)' }}>
+          <CardContent className="p-6">
+            <div className="flex items-center gap-3 mb-4">
+              <Clock className="w-5 h-5" style={{ color: 'var(--color-primary-default)' }} />
+              <h3 style={{ fontSize: 'var(--text-base)', fontWeight: 'var(--font-weight-medium)', color: 'var(--color-text-primary)' }}>
+                Recent Activity
+              </h3>
+              <span
+                style={{
+                  fontSize: 'var(--text-xs)',
+                  color: 'var(--color-text-muted)',
+                  backgroundColor: 'var(--color-bg-muted)',
+                  padding: '2px 8px',
+                  borderRadius: 'var(--radius-xs)',
+                }}
+              >
+                Last {logs.length} entries
+              </span>
+            </div>
+
+            {logs.length === 0 ? (
+              <p style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-muted)', textAlign: 'center', padding: 'var(--spacing-6)' }}>
+                No communication logs yet. Send a test message to get started.
+              </p>
+            ) : (
+              <div className="space-y-2">
+                {[...logs].reverse().slice(0, 10).map((log, i) => (
+                  <div
+                    key={`${log.timestamp}-${i}`}
+                    className="flex items-center justify-between"
+                    style={{
+                      padding: 'var(--spacing-3)',
+                      borderRadius: 'var(--radius-sm)',
+                      backgroundColor: 'var(--color-bg-muted)',
+                    }}
+                  >
+                    <div className="flex items-center gap-3">
+                      {log.channel === 'email' && <Mail className="w-4 h-4" style={{ color: 'var(--color-primary-default)' }} />}
+                      {log.channel === 'sms' && <Smartphone className="w-4 h-4" style={{ color: 'var(--color-primary-default)' }} />}
+                      {log.channel === 'whatsapp' && <MessageSquare className="w-4 h-4" style={{ color: 'var(--color-success-default)' }} />}
+                      <div>
+                        <span style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--font-weight-medium)', color: 'var(--color-text-primary)' }}>
+                          {log.recipient}
+                        </span>
+                        <p style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}>
+                          {log.subject}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {log.success
+                        ? <CheckCircle className="w-4 h-4" style={{ color: 'var(--color-success-default)' }} />
+                        : <XCircle className="w-4 h-4" style={{ color: 'var(--color-danger-default)' }} />
+                      }
+                      <span style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}>
+                        {new Date(log.timestamp).toLocaleString()}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </CardContent>
         </Card>
 
         {/* Documentation */}
         <Card style={{ backgroundColor: 'var(--color-bg-muted)', borderRadius: 'var(--radius-lg)' }}>
           <CardContent className="p-6">
-            <h3 style={{ fontSize: 'var(--text-base)', fontWeight: 'var(--font-weight-medium)', marginBottom: 'var(--spacing-3)' }}>
-              📚 Setup Documentation
+            <h3 style={{ fontSize: 'var(--text-base)', fontWeight: 'var(--font-weight-medium)', marginBottom: 'var(--spacing-3)', color: 'var(--color-text-primary)' }}>
+              Setup Guide
             </h3>
-            <div className="space-y-2" style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-muted)' }}>
-              <p>
-                <strong>Email (SendGrid):</strong> Get API key from{' '}
-                <a href="https://sendgrid.com" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--color-primary-default)' }}>
-                  SendGrid Dashboard
-                </a>
-              </p>
-              <p>
-                <strong>SMS (Twilio):</strong> Get Account SID and Auth Token from{' '}
-                <a href="https://console.twilio.com" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--color-primary-default)' }}>
-                  Twilio Console
-                </a>
-              </p>
-              <p>
-                <strong>WhatsApp:</strong> Register for WhatsApp Business API via{' '}
-                <a href="https://www.twilio.com/whatsapp" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--color-primary-default)' }}>
-                  Twilio WhatsApp
-                </a>
-                {' '}or{' '}
-                <a href="https://developers.facebook.com/products/whatsapp" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--color-primary-default)' }}>
-                  Meta Business
-                </a>
-              </p>
+            <div className="space-y-3" style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-muted)' }}>
+              <div className="flex items-start gap-2">
+                <span style={{ fontWeight: 'var(--font-weight-medium)', color: 'var(--color-text-primary)', minWidth: 20 }}>1.</span>
+                <p>
+                  Create a free Brevo account at{' '}
+                  <a href="https://app.brevo.com/account/register" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--color-primary-default)' }}>
+                    app.brevo.com
+                  </a>
+                  {' '}(300 emails/day free)
+                </p>
+              </div>
+              <div className="flex items-start gap-2">
+                <span style={{ fontWeight: 'var(--font-weight-medium)', color: 'var(--color-text-primary)', minWidth: 20 }}>2.</span>
+                <p>
+                  Generate an API key in{' '}
+                  <a href="https://app.brevo.com/settings/keys/api" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--color-primary-default)' }}>
+                    Settings &gt; SMTP &amp; API &gt; API Keys
+                  </a>
+                </p>
+              </div>
+              <div className="flex items-start gap-2">
+                <span style={{ fontWeight: 'var(--font-weight-medium)', color: 'var(--color-text-primary)', minWidth: 20 }}>3.</span>
+                <p>Set the key as <code style={{ backgroundColor: 'var(--color-bg-card)', padding: '1px 6px', borderRadius: 'var(--radius-xs)', fontSize: 'var(--text-xs)' }}>BREVO_API_KEY</code> in your Supabase environment secrets</p>
+              </div>
+              <div className="flex items-start gap-2">
+                <span style={{ fontWeight: 'var(--font-weight-medium)', color: 'var(--color-text-primary)', minWidth: 20 }}>4.</span>
+                <p>For SMS, purchase SMS credits in your Brevo dashboard. For WhatsApp, connect your WhatsApp Business account via Brevo.</p>
+              </div>
             </div>
           </CardContent>
         </Card>

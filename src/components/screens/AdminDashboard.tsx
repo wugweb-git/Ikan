@@ -49,6 +49,7 @@ import { AdminDashboardAnalytics } from './AdminDashboardAnalytics';
 import { AdminCRUDTesting } from '../admin/AdminCRUDTesting';
 import { AdminSystemLogs } from '../admin/AdminSystemLogs';
 import { AdminCommunication } from '../admin/AdminCommunication';
+import { AdminCommunicationAPI } from '../admin/AdminCommunicationAPI';
 import { AdminPaymentGateway } from '../admin/AdminPaymentGateway';
 import { AdminSecurity } from '../admin/AdminSecurity';
 import { AdminCategoryManager } from '../admin/AdminCategoryManager';
@@ -57,6 +58,7 @@ import { AdminCheckinScalesManager } from '../admin/AdminCheckinScalesManager';
 import { RecommendationRulesManager } from '../admin/recommendations/RecommendationRulesManager';
 import { AdminBackupManager } from '../admin/AdminBackupManager';
 import { UIKitPatterns } from '../uikit/UIKitPatterns';
+import { AdminKVAudit } from '../admin/AdminKVAudit';
 
 interface AdminDashboardProps {
   onNavigate: (path: string) => void;
@@ -83,10 +85,12 @@ type ViewType =
   | 'crud'
   | 'system-logs'
   | 'communication'
+  | 'communication-api'
   | 'payment-gateway'
   | 'security'
   | 'backup'
-  | 'ui-kit';
+  | 'ui-kit'
+  | 'kv-audit';
 
 export function AdminDashboard({ onNavigate, initialView }: AdminDashboardProps) {
   const { unreadCount } = useNotifications();
@@ -142,6 +146,7 @@ export function AdminDashboard({ onNavigate, initialView }: AdminDashboardProps)
         { id: 'security', label: 'Security', icon: Shield },
         { id: 'crud', label: 'System Health', icon: HeartPulse },
         { id: 'backup', label: 'Backups', icon: Database },
+        { id: 'kv-audit', label: 'KV Audit', icon: Search },
         { id: 'system-logs', label: 'System Logs', icon: Monitor },
       ]
     }
@@ -258,8 +263,10 @@ export function AdminDashboard({ onNavigate, initialView }: AdminDashboardProps)
       case 'settings': return <AdminSettingsManager onBack={() => setCurrentView('dashboard')} />;
       case 'crud': return <AdminCRUDTesting onBack={() => setCurrentView('dashboard')} />;
       case 'backup': return <AdminBackupManager onBack={() => setCurrentView('dashboard')} />;
+      case 'kv-audit': return <AdminKVAudit onBack={() => setCurrentView('dashboard')} />;
       case 'system-logs': return <AdminSystemLogs onBack={() => setCurrentView('dashboard')} />;
-      case 'communication': return <AdminCommunication onBack={() => setCurrentView('dashboard')} />;
+      case 'communication': return <AdminCommunication onBack={() => setCurrentView('dashboard')} onNavigateToAPI={() => setCurrentView('communication-api')} />;
+      case 'communication-api': return <AdminCommunicationAPI />;
       case 'payment-gateway': return <AdminPaymentGateway onBack={() => setCurrentView('dashboard')} />;
       case 'security': return <AdminSecurity onBack={() => setCurrentView('dashboard')} />;
       case 'ui-kit': return <UIKitPatterns />;

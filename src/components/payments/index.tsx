@@ -74,11 +74,11 @@ export function getPaymentStatusLabel(status: Transaction['status']): string {
 export function getRazorpayConfig(isDevelopment: boolean = true) {
   return {
     keyId: isDevelopment 
-      ? process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || 'rzp_test_key'
-      : process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID_LIVE || '',
+      ? import.meta.env.VITE_RAZORPAY_KEY_ID || 'rzp_test_key'
+      : import.meta.env.VITE_RAZORPAY_KEY_ID_LIVE || '',
     theme: {
-      color: '#2A2A2A', // iKan primary color
-      backdrop_color: '#F5F5F5'
+      color: '#2A2A2A', // Maps to var(--color-primary-default) — Razorpay SDK requires raw hex
+      backdrop_color: '#F5F5F5' // Maps to var(--color-bg-page) — Razorpay SDK requires raw hex
     },
     modal: {
       animation: true,

@@ -236,9 +236,9 @@ export function UIKitPatterns() {
                   <Badge variant="secondary">Secondary</Badge>
                   <Badge variant="outline">Outline</Badge>
                   <Badge variant="destructive">Destructive</Badge>
-                  <Badge style={{ backgroundColor: 'var(--color-status-success)', color: '#fff' }}>Success</Badge>
-                  <Badge style={{ backgroundColor: 'var(--color-status-info)', color: '#fff' }}>Info</Badge>
-                  <Badge style={{ backgroundColor: 'var(--color-status-warning)', color: '#fff' }}>Warning</Badge>
+                  <Badge style={{ backgroundColor: 'var(--color-status-success)', color: 'var(--color-text-inverse)' }}>Success</Badge>
+                  <Badge style={{ backgroundColor: 'var(--color-status-info)', color: 'var(--color-text-inverse)' }}>Info</Badge>
+                  <Badge style={{ backgroundColor: 'var(--color-status-warning)', color: 'var(--color-text-inverse)' }}>Warning</Badge>
                 </CardContent>
               </Card>
             </section>
@@ -692,7 +692,7 @@ export function UIKitPatterns() {
                       { rule: 'Every module uses AdminHeader', detail: 'No raw <h1>/<h2> headers. Use the shared AdminHeader component.' },
                     ].map((item, i) => (
                       <div key={i} className="flex items-start" style={{ gap: 'var(--spacing-3)', padding: 'var(--spacing-3)', borderRadius: 'var(--radius-md)', backgroundColor: 'var(--color-bg-muted)' }}>
-                        <div style={{ width: 20, height: 20, borderRadius: 'var(--radius-pill)', backgroundColor: 'var(--color-status-danger)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: 11, fontWeight: 500 }}>!</div>
+                        <div style={{ width: 20, height: 20, borderRadius: 'var(--radius-pill)', backgroundColor: 'var(--color-status-danger)', color: 'var(--color-text-inverse)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: 11, fontWeight: 500 }}>!</div>
                         <div>
                           <span style={f('sm', 500)}>{item.rule}</span>
                           <p style={f('xs', 400, 'var(--color-text-muted)')}>{item.detail}</p>

@@ -35,9 +35,7 @@ jobs:
     
     - name: Build application
       run: npm run build
-      env:
-        VITE_SUPABASE_PROJECT_ID: ${{ secrets.VITE_SUPABASE_PROJECT_ID }}
-        VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+      # Note: VITE_SUPABASE_* env vars removed — app reads from hardcoded utils/supabase/info.tsx
     
     - name: Upload build artifacts
       uses: actions/upload-artifact@v4
@@ -65,10 +63,7 @@ jobs:
     
     - name: Build for production
       run: npm run build
-      env:
-        VITE_SUPABASE_PROJECT_ID: ${{ secrets.VITE_SUPABASE_PROJECT_ID }}
-        VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
-        VITE_API_BASE_URL: ${{ secrets.VITE_API_BASE_URL }}
+      # Note: VITE_SUPABASE_* env vars removed — app reads from hardcoded utils/supabase/info.tsx
     
     # Add your deployment step here
     # Example for Vercel:

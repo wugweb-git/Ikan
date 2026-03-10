@@ -547,7 +547,7 @@ export function Dashboard({ className, onNavigate }: DashboardProps) {
               </div>
             </motion.div>
 
-            {/* Activity (Google Fit) */}
+            {/* Activity (Health Connect) */}
             <ActivityCard />
 
             {/* Program Check-in (conditional) */}
@@ -583,7 +583,7 @@ export function Dashboard({ className, onNavigate }: DashboardProps) {
                     </p>
                   </div>
                   <button style={{
-                    backgroundColor: '#fff', color: 'var(--color-primary-default)',
+                    backgroundColor: 'var(--color-bg-card)', color: 'var(--color-primary-default)',
                     borderRadius: 'var(--radius-pill)', border: 'none', cursor: 'pointer',
                     padding: 'var(--spacing-2) var(--spacing-4)', ...f('xs', 500, 'var(--color-primary-default)'),
                   }}>

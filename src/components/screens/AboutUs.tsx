@@ -378,7 +378,7 @@ export function AboutUs({ onNavigate, className }: AboutUsProps) {
                 }}
                 onMouseEnter={(e) => {
                   (e.currentTarget as HTMLElement).style.boxShadow = '0 8px 24px rgba(0,0,0,0.06)';
-                  (e.currentTarget as HTMLElement).style.borderColor = `${val.color}30`;
+                  (e.currentTarget as HTMLElement).style.borderColor = `color-mix(in srgb, ${val.color} 19%, transparent)`;
                 }}
                 onMouseLeave={(e) => {
                   (e.currentTarget as HTMLElement).style.boxShadow = 'none';
@@ -390,7 +390,7 @@ export function AboutUs({ onNavigate, className }: AboutUsProps) {
                     width: '48px',
                     height: '48px',
                     borderRadius: 'var(--radius-md)',
-                    backgroundColor: `${val.color}14`,
+                    backgroundColor: `color-mix(in srgb, ${val.color} 8%, transparent)`,
                     color: val.color,
                     display: 'flex',
                     alignItems: 'center',

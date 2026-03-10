@@ -73,11 +73,11 @@ const API_BASE = `https://${projectId}.supabase.co/functions/v1/make-server-cc20
 const headers = { Authorization: `Bearer ${publicAnonKey}`, 'Content-Type': 'application/json' };
 
 const SEVERITY_OPTIONS = [
-  { value: 'success', label: 'Success (Green)', color: B.success },
-  { value: 'info', label: 'Info (Blue)', color: B.info },
-  { value: 'warning', label: 'Warning (Amber)', color: B.warning },
-  { value: 'danger', label: 'Danger (Red)', color: B.danger },
-  { value: 'neutral', label: 'Neutral (Gray)', color: tokens.colors.neutral[500] },
+  { value: 'success', label: 'Success (Green)', color: 'var(--color-status-success)' },
+  { value: 'info', label: 'Info (Blue)', color: 'var(--color-status-info)' },
+  { value: 'warning', label: 'Warning (Amber)', color: 'var(--color-status-warning)' },
+  { value: 'danger', label: 'Danger (Red)', color: 'var(--color-status-danger)' },
+  { value: 'neutral', label: 'Neutral (Gray)', color: 'var(--color-neutral-500)' },
 ];
 
 const EMOJI_PICKS = {
@@ -88,20 +88,20 @@ const EMOJI_PICKS = {
 
 function getSeverityColor(severity: string): string {
   const opt = SEVERITY_OPTIONS.find(s => s.value === severity);
-  return opt?.color || tokens.colors.neutral[500];
+  return opt?.color || 'var(--color-neutral-500)';
 }
 
 function getSeverityBg(severity: string): string {
   switch (severity) {
-    case 'success': return B.successLight;
-    case 'warning': return B.warningLight;
-    case 'danger': return B.dangerLight;
-    case 'info': return B.infoLight;
-    default: return tokens.colors.neutral[200];
+    case 'success': return 'var(--color-status-success-light)';
+    case 'warning': return 'var(--color-status-warning-light)';
+    case 'danger': return 'var(--color-status-danger-light)';
+    case 'info': return 'var(--color-status-info-light)';
+    default: return 'var(--color-neutral-200)';
   }
 }
 
-// ═══════════════════════════════════════════════════════════════════
+// ════════════════════════════════════════���══════════════════════════
 // MAIN COMPONENT
 // ══════════════════════════════════════════════════════════════════
 
@@ -361,7 +361,7 @@ export function AdminCheckinScalesManager({ onBack }: AdminCheckinScalesManagerP
               <Button variant="outline" onClick={checkIntegrity} style={{ gap: 'var(--spacing-2)' }}>
                 <ShieldCheck size={14} /> Integrity Check
               </Button>
-              <Button variant="outline" onClick={() => handleReset(activeTab)} style={{ gap: 'var(--spacing-2)', color: B.danger, borderColor: `${B.danger}40` }}>
+              <Button variant="outline" onClick={() => handleReset(activeTab)} style={{ gap: 'var(--spacing-2)', color: B.danger, borderColor: `color-mix(in srgb, ${B.danger} 25%, transparent)` }}>
                 <RotateCcw size={14} /> Reset to Defaults
               </Button>
               <Button onClick={() => { resetForms(); setIsCreating(true); }} style={{ gap: 'var(--spacing-2)' }}>
@@ -533,7 +533,7 @@ export function AdminCheckinScalesManager({ onBack }: AdminCheckinScalesManagerP
                                   style={{
                                     padding: '4px 10px', borderRadius: 'var(--radius-pill)', cursor: 'pointer',
                                     border: scaleForm.severity === s.value ? `2px solid ${s.color}` : `1px solid ${B.border}`,
-                                    backgroundColor: scaleForm.severity === s.value ? `${s.color}18` : 'transparent',
+                                    backgroundColor: scaleForm.severity === s.value ? `color-mix(in srgb, ${s.color} 10%, transparent)` : 'transparent',
                                     ...f('xs', 500, scaleForm.severity === s.value ? s.color : B.muted),
                                     gap: 'var(--spacing-1)',
                                   }}
