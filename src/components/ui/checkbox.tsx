@@ -6,6 +6,17 @@ import { CheckIcon } from "lucide-react@0.487.0";
 
 import { cn } from "./utils";
 
+// Filter out Figma inspector internal props (_fg*) to prevent React DOM warnings
+function filterFigmaProps(props: Record<string, unknown>) {
+  const filtered: Record<string, unknown> = {};
+  for (const key in props) {
+    if (!key.startsWith('_fg')) {
+      filtered[key] = props[key];
+    }
+  }
+  return filtered;
+}
+
 function Checkbox({
   className,
   style,
@@ -22,7 +33,7 @@ function Checkbox({
         borderRadius: 'var(--ikan-component-border-radius)',
         ...style
       }}
-      {...props}
+      {...filterFigmaProps(props)}
     >
       <CheckboxPrimitive.Indicator
         data-slot="checkbox-indicator"

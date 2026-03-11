@@ -1,6 +1,5 @@
-import React from "react";
+import { cn } from '../ui/utils';
 import { Button } from "../ui/button";
-import { cn } from "../ui/utils";
 
 /**
  * SectionHero - Unified hero component for landing pages.

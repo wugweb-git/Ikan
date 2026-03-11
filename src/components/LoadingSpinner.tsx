@@ -1,4 +1,4 @@
-import React from 'react';
+import { cn } from './ui/utils';
 
 interface LoadingSpinnerProps {
   message?: string;

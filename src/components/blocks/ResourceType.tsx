@@ -1,4 +1,4 @@
-import React from 'react';
+import { Badge } from '../ui/badge';
 import { Button } from '../ui/button';
 import { BookOpen, Video, Wrench, FileText, Activity, Mic, GraduationCap } from 'lucide-react';
 import { RESOURCE_TYPES } from '../../lib/constants';

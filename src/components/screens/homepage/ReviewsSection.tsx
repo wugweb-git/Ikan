@@ -1,4 +1,4 @@
-import React from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Star, Eye } from 'lucide-react';
 import { useIsMobile } from '../../../hooks/useIsMobile';
 import { ImageWithFallback } from '../../figma/ImageWithFallback';

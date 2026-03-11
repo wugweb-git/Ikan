@@ -1,4 +1,4 @@
-import React, { useState, useMemo, ReactNode } from 'react';
+import { useState, useMemo, ReactNode } from 'react';
 import { useIsMobile } from '../../hooks/useIsMobile';
 import { 
   Table, 
@@ -259,8 +259,8 @@ export function AdminDataTable<T extends { [key: string]: any }>({
           )}
         </div>
       ) : (
-      <div className="admin-table-container">
-        <Table className="admin-table">
+      <div className="admin-table-container overflow-x-auto">
+        <Table className="admin-table min-w-0">
           <TableHeader>
             <TableRow>
               {columns.map((col, index) => (
@@ -322,9 +322,9 @@ export function AdminDataTable<T extends { [key: string]: any }>({
       )}
 
       {/* Pagination */}
-      <div className="flex items-center justify-between px-2">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 px-2">
         <div className="flex items-center space-x-2">
-          <p style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-muted)', fontFamily: 'var(--font-family-base)' }}>
+          <p className="whitespace-nowrap" style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-muted)', fontFamily: 'var(--font-family-base)' }}>
             {processedData.length > 0 ? (
                <>
                  Showing {(currentPage - 1) * currentPageSize + 1} to {Math.min(currentPage * currentPageSize, processedData.length)} of {processedData.length} entries

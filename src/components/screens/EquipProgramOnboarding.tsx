@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '../ui/button';
 import { apiClient } from '../../lib/api-client';
 import { useAuth } from '../../contexts/AuthContext';
@@ -10,7 +10,6 @@ import { projectId, publicAnonKey } from '../../utils/supabase/info';
 import { Icon } from '../Icon';
 import { ProgramPlayer } from '../player/ProgramPlayer';
 import { EquipProgram } from '../../lib/equip-admin-types';
-import { ALL_DUMMY_PROGRAMS } from '../../lib/demo-data';
 import { LoadingSpinner } from '../LoadingSpinner';
 
 interface EquipOnboardingProps {
@@ -61,43 +60,6 @@ export function EquipOnboarding({ programId: propProgramId, onComplete, onBack, 
         
         console.log('📥 Fetching onboarding questions for program:', id);
 
-        // DEMO MODE CHECK
-        const demoProgram = ALL_DUMMY_PROGRAMS.find(p => p.id === id);
-        if (id === 'dummy-equip' || demoProgram) {
-           console.log('⚡ Loading Demo Onboarding (Offline Mode)');
-           // Create a dummy question set
-           const dummyQuestionSet: OnboardingQuestionSet = {
-             id: 'dummy-onboarding',
-             equip_id: id,
-             title: 'Demo Setup',
-             description: 'Let\'s get your demo environment ready.',
-             is_required_before_start: true,
-             version: '1.0.0',
-             sections: [],
-             questions: [
-               {
-                 id: 'q1',
-                 text: 'What is your primary goal for this demo?',
-                 type: 'single-choice',
-                 options: ['Testing UI', 'Verifying Logic', 'Just Browsing'],
-                 required: true
-               },
-               {
-                 id: 'q2',
-                 text: 'How familiar are you with the platform?',
-                 type: 'scale',
-                 scaleMin: 1,
-                 scaleMax: 5,
-                 scaleLabels: { min: 'New', max: 'Expert' },
-                 required: false
-               }
-             ]
-           };
-           setQuestionSet(dummyQuestionSet);
-           setLoading(false);
-           return;
-        }
-        
         // Fetch the equip program to get its onboarding configuration
         const response = await fetch(
           `https://${projectId}.supabase.co/functions/v1/make-server-cc205da9/equip/programs/${id}`,
@@ -209,30 +171,6 @@ export function EquipOnboarding({ programId: propProgramId, onComplete, onBack, 
         return;
       }
 
-      // ⚡ DEMO INTERCEPT: If using dummy program, mock successful enrollment
-      const demoProgram = ALL_DUMMY_PROGRAMS.find(p => p.id === slug);
-      if (slug === 'dummy-equip' || demoProgram) {
-          console.log('⚡ Mocking enrollment for dummy program');
-          
-          // Simulate API delay
-          await new Promise(resolve => setTimeout(resolve, 800));
-          
-          const mockEnrollmentId = `enroll_dummy_${Date.now()}`;
-          localStorage.setItem('ikan-current-enrollment', mockEnrollmentId);
-          localStorage.setItem('ikan-active-dummy-program', slug);
-          localStorage.setItem('ikan-equip-onboarding-answers', JSON.stringify(answers));
-          
-          showToast('success', 'Demo Enrollment Complete', 'Starting your demo journey!');
-          
-          if (onComplete) {
-              onComplete(answers);
-          } else if (onNavigate) {
-              // Ensure we navigate to the program flow with the dummy ID
-              onNavigate(`/equip-program-flow?id=${slug}`);
-          }
-          return;
-      }
-      
       // Legacy mapping for backward compatibility
       const legacyData: OnboardingData = {
         personalInfo: { name: 'Equip User', preferredName: '', age: '', pronouns: '' },

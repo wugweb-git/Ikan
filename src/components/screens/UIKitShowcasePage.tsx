@@ -1,11 +1,10 @@
 import React, { useState } from 'react';
 import { 
-  Palette, Type, Layout, Grid, Package, Layers, 
-  FileText, MousePointer, List, Database, Shield,
-  Settings, Bell, Users, Calendar, ChevronRight,
-  Check, X, Info, AlertTriangle, Loader2, Search,
-  Plus, Edit, Trash2, Download, Upload, Eye, Heart,
-  Star, Share2, MessageSquare, Mail, Phone, Map
+  Palette, Layout, Package,
+  FileText, MousePointer, Database,
+  Bell,
+  Check, Info, AlertTriangle, Loader2, Search,
+  Plus, Edit
 } from 'lucide-react';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
@@ -15,7 +14,6 @@ import { Badge } from '../ui/badge';
 import { Avatar } from '../ui/avatar';
 import { Checkbox } from '../ui/checkbox';
 import { Switch } from '../ui/switch';
-import { RadioGroup } from '../ui/radio-group';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
 import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
@@ -29,14 +27,14 @@ import { AdminActionBar } from '../ui/admin-action-bar';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '../ui/accordion';
 import { EmptyState } from '../ui/empty-state';
 import { Skeleton } from '../ui/skeleton';
-import { WizardLayout } from '../ui/wizard-layout';
-import { WizardStep } from '../ui/wizard-stepper';
 
 interface UIKitShowcasePageProps {
-  onBack: () => void;
+  onBack?: () => void;
+  onNavigate?: (route: string) => void;
 }
 
-export function UIKitShowcasePage({ onBack }: UIKitShowcasePageProps) {
+export function UIKitShowcasePage({ onBack, onNavigate }: UIKitShowcasePageProps) {
+  const handleBack = onBack || (onNavigate ? () => onNavigate('/dashboard') : undefined);
   const [activeCategory, setActiveCategory] = useState('foundations');
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -54,7 +52,7 @@ export function UIKitShowcasePage({ onBack }: UIKitShowcasePageProps) {
       title="iKan UI Kit"
       subtitle="Complete component library and design system reference"
       maxWidth="full"
-      onBack={onBack}
+      onBack={handleBack}
     >
       <div className="flex gap-6">
         {/* Sidebar Navigation */}

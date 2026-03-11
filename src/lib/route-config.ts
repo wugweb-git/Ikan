@@ -121,6 +121,16 @@ export const routes: RouteConfig[] = [
     description: 'Terms and conditions'
   },
   {
+    path: '/privacy',
+    label: 'Privacy Policy',
+    isPublic: true,
+    requiresAuth: false,
+    showInNavigation: false,
+    showInPublicNav: false,
+    showInPrivateNav: false,
+    description: 'Privacy policy'
+  },
+  {
     path: '/privacy-policy',
     label: 'Privacy Policy',
     isPublic: true,

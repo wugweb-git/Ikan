@@ -1,16 +1,15 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { TrendingUp, Users, BookOpen, Activity, DollarSign, Eye, Calendar } from 'lucide-react';
 import { useNotifications } from '../../contexts/NotificationContext';
 import { apiClient } from '../../lib/api-client';
 import { AdminHeader } from '../admin/AdminHeader';
 import { AdminLoading } from '../admin/AdminLoading';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
-import { useIsMobile } from '../../hooks/useIsMobile';
-import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 interface AdminDashboardAnalyticsProps {
   onBack?: () => void;
-  className?: string;
+  embedded?: boolean;
 }
 
 interface AnalyticsData {
@@ -26,9 +25,8 @@ interface AnalyticsData {
   revenueOverTime: Array<{ month: string; revenue: number }>;
 }
 
-export function AdminDashboardAnalytics({ onBack, className }: AdminDashboardAnalyticsProps) {
+export function AdminDashboardAnalytics({ onBack, embedded }: AdminDashboardAnalyticsProps) {
   const { showToast } = useNotifications();
-  const isMobile = useIsMobile();
   const [loading, setLoading] = useState(true);
   const [analytics, setAnalytics] = useState<AnalyticsData>({
     totalUsers: 0,
@@ -115,16 +113,48 @@ export function AdminDashboardAnalytics({ onBack, className }: AdminDashboardAna
         return acc;
       }, {});
 
-      const categoryDistribution = Object.entries(categories).map(([name, value]) => ({
-        name,
-        value: value as number
-      }));
+      const categoryDistribution = Object.entries(categories)
+        .filter(([name]) => name != null && name !== '')
+        .map(([name, value]) => ({
+          name: String(name),
+          value: value as number
+        }));
 
       // Revenue over time (last 6 months) - Keep mock for now as we don't have real revenue aggregation yet
       const revenueOverTime = Array.from({ length: 6 }, (_, i) => ({
-        month: new Date(Date.now() - (5 - i) * 30 * 24 * 60 * 60 * 1000).toLocaleDateString('en-US', { month: 'short' }),
+        month: new Date(Date.now() - (5 - i) * 30 * 24 * 60 * 60 * 1000).toLocaleDateString('en-US', { month: 'short', year: '2-digit' }),
         revenue: Math.floor(Math.random() * 5000) + 2000
       }));
+
+      // Sanitize all chart data to prevent null keys
+      const safeUserGrowth = (userGrowth || []).filter((d: any) => d.date != null).map((d: any, i: number) => ({
+        ...d,
+        date: d.date || `Day ${i + 1}`
+      }));
+      
+      // Deduplicate resource view names to prevent recharts null key warnings
+      const seenNames = new Set<string>();
+      const safeResourceViews = (resourceViews || [])
+        .filter((d: any) => d.name != null)
+        .map((d: any, i: number) => {
+          let name = d.name || `Resource ${i + 1}`;
+          if (seenNames.has(name)) {
+            name = `${name} (${i + 1})`;
+          }
+          seenNames.add(name);
+          return { ...d, name };
+        });
+
+      // Deduplicate category names
+      const seenCatNames = new Set<string>();
+      const safeCategoryDistribution = categoryDistribution.map((d, i) => {
+        let name = d.name;
+        if (seenCatNames.has(name)) {
+          name = `${name} (${i + 1})`;
+        }
+        seenCatNames.add(name);
+        return { ...d, name };
+      });
 
       setAnalytics({
         totalUsers: usersArray.length,
@@ -133,9 +163,9 @@ export function AdminDashboardAnalytics({ onBack, className }: AdminDashboardAna
         totalPrograms: programsArray.length,
         totalRevenue: revenueOverTime.reduce((sum, r) => sum + r.revenue, 0),
         activeUsers: activeUsersCount,
-        userGrowth,
-        resourceViews,
-        categoryDistribution,
+        userGrowth: safeUserGrowth,
+        resourceViews: safeResourceViews,
+        categoryDistribution: safeCategoryDistribution,
         revenueOverTime
       });
     } catch (error: any) {
@@ -202,13 +232,15 @@ export function AdminDashboardAnalytics({ onBack, className }: AdminDashboardAna
   }
 
   return (
-    <div className="max-w-7xl mx-auto space-y-6">
-      <AdminHeader
-        title="Dashboard Analytics"
-        description="Track your platform's performance and growth"
-        onBack={onBack}
-        breadcrumbs={[{ label: 'Admin', onClick: onBack }, { label: 'Analytics' }]}
-      />
+    <div className={embedded ? "space-y-6" : "max-w-7xl mx-auto space-y-6"}>
+      {!embedded && (
+        <AdminHeader
+          title="Dashboard Analytics"
+          description="Track your platform's performance and growth"
+          onBack={onBack}
+          breadcrumbs={[{ label: 'Admin', onClick: onBack }, { label: 'Analytics' }]}
+        />
+      )}
 
       {/* Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -271,22 +303,29 @@ export function AdminDashboardAnalytics({ onBack, className }: AdminDashboardAna
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <ResponsiveContainer width="100%" height={300}>
-                <LineChart data={analytics.userGrowth}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border-default)" />
-                  <XAxis dataKey="date" stroke="var(--color-text-muted)" style={{ fontSize: 'var(--text-xs)' }} />
-                  <YAxis stroke="var(--color-text-muted)" style={{ fontSize: 'var(--text-xs)' }} />
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: 'var(--color-bg-card)',
-                      border: '1px solid var(--color-border-default)',
-                      borderRadius: 'var(--radius-md)',
-                      fontSize: 'var(--text-sm)'
-                    }}
-                  />
-                  <Line type="monotone" dataKey="count" stroke="var(--color-primary-default)" strokeWidth={2} dot={{ fill: 'var(--color-primary-default)' }} />
-                </LineChart>
-              </ResponsiveContainer>
+              {analytics.userGrowth.length > 0 ? (
+                <ResponsiveContainer width="100%" height={300}>
+                  <LineChart data={analytics.userGrowth} id="user-growth-chart">
+                    <CartesianGrid key="grid" strokeDasharray="3 3" stroke="var(--color-border-default)" />
+                    <XAxis key="xaxis" dataKey="date" stroke="var(--color-text-muted)" style={{ fontSize: 'var(--text-xs)' }} />
+                    <YAxis key="yaxis" stroke="var(--color-text-muted)" style={{ fontSize: 'var(--text-xs)' }} />
+                    <Tooltip
+                      key="tooltip"
+                      contentStyle={{
+                        backgroundColor: 'var(--color-bg-card)',
+                        border: '1px solid var(--color-border-default)',
+                        borderRadius: 'var(--radius-md)',
+                        fontSize: 'var(--text-sm)'
+                      }}
+                    />
+                    <Line key="line" type="monotone" dataKey="count" stroke="var(--color-primary-default)" strokeWidth={2} dot={{ fill: 'var(--color-primary-default)' }} />
+                  </LineChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="flex items-center justify-center" style={{ height: 300, color: 'var(--color-text-muted)', fontSize: 'var(--text-sm)' }}>
+                  No user growth data available
+                </div>
+              )}
             </CardContent>
           </Card>
 
@@ -299,32 +338,41 @@ export function AdminDashboardAnalytics({ onBack, className }: AdminDashboardAna
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <ResponsiveContainer width="100%" height={300}>
-                <PieChart>
-                  <Pie
-                    data={analytics.categoryDistribution}
-                    cx="50%"
-                    cy="50%"
-                    labelLine={false}
-                    label={({ name, percent }) => `${name} (${(percent * 100).toFixed(0)}%)`}
-                    outerRadius={80}
-                    fill="var(--ikan-chart-fill-default)"
-                    dataKey="value"
-                  >
-                    {analytics.categoryDistribution.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                    ))}
-                  </Pie>
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: 'var(--color-bg-card)',
-                      border: '1px solid var(--color-border-default)',
-                      borderRadius: 'var(--radius-md)',
-                      fontSize: 'var(--text-sm)'
-                    }}
-                  />
-                </PieChart>
-              </ResponsiveContainer>
+              {analytics.categoryDistribution.length > 0 ? (
+                <ResponsiveContainer width="100%" height={300}>
+                  <PieChart id="category-distribution-chart">
+                    <Pie
+                      key="pie"
+                      data={analytics.categoryDistribution}
+                      cx="50%"
+                      cy="50%"
+                      labelLine={false}
+                      label={({ name, percent }) => `${name} (${(percent * 100).toFixed(0)}%)`}
+                      outerRadius={80}
+                      fill="var(--ikan-chart-fill-default)"
+                      dataKey="value"
+                      nameKey="name"
+                    >
+                      {analytics.categoryDistribution.map((_entry, index) => (
+                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                      ))}
+                    </Pie>
+                    <Tooltip
+                      key="tooltip"
+                      contentStyle={{
+                        backgroundColor: 'var(--color-bg-card)',
+                        border: '1px solid var(--color-border-default)',
+                        borderRadius: 'var(--radius-md)',
+                        fontSize: 'var(--text-sm)'
+                      }}
+                    />
+                  </PieChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="flex items-center justify-center" style={{ height: 300, color: 'var(--color-text-muted)', fontSize: 'var(--text-sm)' }}>
+                  No category data available
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>
@@ -340,22 +388,29 @@ export function AdminDashboardAnalytics({ onBack, className }: AdminDashboardAna
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={analytics.resourceViews} layout="vertical">
-                  <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border-default)" />
-                  <XAxis type="number" stroke="var(--color-text-muted)" style={{ fontSize: 'var(--text-xs)' }} />
-                  <YAxis dataKey="name" type="category" stroke="var(--color-text-muted)" style={{ fontSize: 'var(--text-xs)' }} width={100} />
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: 'var(--color-bg-card)',
-                      border: '1px solid var(--color-border-default)',
-                      borderRadius: 'var(--radius-md)',
-                      fontSize: 'var(--text-sm)'
-                    }}
-                  />
-                  <Bar dataKey="views" fill="var(--ikan-chart-fill-default)" />
-                </BarChart>
-              </ResponsiveContainer>
+              {analytics.resourceViews.length > 0 ? (
+                <ResponsiveContainer width="100%" height={300}>
+                  <BarChart data={analytics.resourceViews} layout="vertical" id="resource-views-chart">
+                    <CartesianGrid key="grid" strokeDasharray="3 3" stroke="var(--color-border-default)" />
+                    <XAxis key="xaxis" type="number" stroke="var(--color-text-muted)" style={{ fontSize: 'var(--text-xs)' }} />
+                    <YAxis key="yaxis" dataKey="name" type="category" stroke="var(--color-text-muted)" style={{ fontSize: 'var(--text-xs)' }} width={100} />
+                    <Tooltip
+                      key="tooltip"
+                      contentStyle={{
+                        backgroundColor: 'var(--color-bg-card)',
+                        border: '1px solid var(--color-border-default)',
+                        borderRadius: 'var(--radius-md)',
+                        fontSize: 'var(--text-sm)'
+                      }}
+                    />
+                    <Bar key="bar" dataKey="views" fill="var(--ikan-chart-fill-default)" />
+                  </BarChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="flex items-center justify-center" style={{ height: 300, color: 'var(--color-text-muted)', fontSize: 'var(--text-sm)' }}>
+                  No resource view data available
+                </div>
+              )}
             </CardContent>
           </Card>
 
@@ -368,22 +423,29 @@ export function AdminDashboardAnalytics({ onBack, className }: AdminDashboardAna
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={analytics.revenueOverTime}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border-default)" />
-                  <XAxis dataKey="month" stroke="var(--color-text-muted)" style={{ fontSize: 'var(--text-xs)' }} />
-                  <YAxis stroke="var(--color-text-muted)" style={{ fontSize: 'var(--text-xs)' }} />
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: 'var(--color-bg-card)',
-                      border: '1px solid var(--color-border-default)',
-                      borderRadius: 'var(--radius-md)',
-                      fontSize: 'var(--text-sm)'
-                    }}
-                  />
-                  <Bar dataKey="revenue" fill="var(--color-warning-default)" />
-                </BarChart>
-              </ResponsiveContainer>
+              {analytics.revenueOverTime.length > 0 ? (
+                <ResponsiveContainer width="100%" height={300}>
+                  <BarChart data={analytics.revenueOverTime} id="revenue-chart">
+                    <CartesianGrid key="grid" strokeDasharray="3 3" stroke="var(--color-border-default)" />
+                    <XAxis key="xaxis" dataKey="month" stroke="var(--color-text-muted)" style={{ fontSize: 'var(--text-xs)' }} />
+                    <YAxis key="yaxis" stroke="var(--color-text-muted)" style={{ fontSize: 'var(--text-xs)' }} />
+                    <Tooltip
+                      key="tooltip"
+                      contentStyle={{
+                        backgroundColor: 'var(--color-bg-card)',
+                        border: '1px solid var(--color-border-default)',
+                        borderRadius: 'var(--radius-md)',
+                        fontSize: 'var(--text-sm)'
+                      }}
+                    />
+                    <Bar key="bar" dataKey="revenue" fill="var(--color-warning-default)" />
+                  </BarChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="flex items-center justify-center" style={{ height: 300, color: 'var(--color-text-muted)', fontSize: 'var(--text-sm)' }}>
+                  No revenue data available
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>

@@ -1,9 +1,5 @@
-import React from 'react';
-import { LayoutTemplate } from 'lucide-react';
 import { EquipProgram } from '../../lib/equip-admin-types';
 import { Textarea } from '../ui/textarea';
-import { Label } from '../ui/label';
-import { Input } from '../ui/input';
 import { AdminFormField } from '../admin/AdminFormField';
 
 interface EquipLandingPageRichTextEditorProps {

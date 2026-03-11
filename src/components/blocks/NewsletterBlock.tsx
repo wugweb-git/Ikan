@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { cn } from '../ui/utils';
 import { useIsMobile } from '../../hooks/useIsMobile';
 import { LayoutGrid } from 'lucide-react';

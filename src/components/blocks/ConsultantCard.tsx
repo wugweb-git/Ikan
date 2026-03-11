@@ -1,4 +1,4 @@
-import React from 'react';
+import type React from 'react';
 import { cn } from '../ui/utils';
 import { MapPin, Star, Video, Phone, MessageCircle, Clock, Home } from 'lucide-react';
 import { Button } from '../ui/button';

@@ -95,7 +95,7 @@ export function SideNav({
                       key={item.id}
                       onClick={item.onClick}
                       className={cn(
-                        "relative w-[calc(100%-64px)] mx-8 text-left transition-all duration-200 group rounded-lg mb-1",
+                        "relative w-[calc(100%-32px)] mx-4 text-left transition-all duration-200 group rounded-lg mb-1",
                         isActive 
                           ? "bg-[var(--grey-3)] text-[var(--grey-9)] shadow-sm" 
                           : "bg-transparent text-[var(--grey-9)] hover:bg-[var(--grey-2)] hover:text-[var(--grey-9)]"

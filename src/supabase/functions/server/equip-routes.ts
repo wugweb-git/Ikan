@@ -23,9 +23,6 @@ app.get("/admin/equip/enrollments", requireAuth, async (c) => {
 
 app.get("/equip/programs", async (c) => {
   try {
-    // Ensure defaults exist (seed if empty)
-    await EquipService.ensureDefaults();
-
     const programs = await EquipService.listEquips();
     return c.json({ programs });
   } catch (error) {

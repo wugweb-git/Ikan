@@ -1,4 +1,4 @@
-import React from 'react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '../ui/button';
 import { Icon } from '../Icon';
 import { cn } from '../ui/utils';
@@ -110,8 +110,8 @@ export function Pagination({
             className="gap-1"
             aria-label="Go to first page"
           >
-            <Icon name="chevronLeft" size={14} />
-            <Icon name="chevronLeft" size={14} />
+            <ChevronLeft size={14} />
+            <ChevronLeft size={14} />
           </Button>
         )}
 
@@ -125,7 +125,7 @@ export function Pagination({
             className="gap-1"
             aria-label="Go to previous page"
           >
-            <Icon name="chevronLeft" size={14} />
+            <ChevronLeft size={14} />
             <span className="hidden sm:inline">Previous</span>
           </Button>
         )}
@@ -202,7 +202,7 @@ export function Pagination({
             aria-label="Go to next page"
           >
             <span className="hidden sm:inline">Next</span>
-            <Icon name="chevronRight" size={14} />
+            <ChevronRight size={14} />
           </Button>
         )}
 
@@ -216,8 +216,8 @@ export function Pagination({
             className="gap-1"
             aria-label="Go to last page"
           >
-            <Icon name="chevronRight" size={14} />
-            <Icon name="chevronRight" size={14} />
+            <ChevronRight size={14} />
+            <ChevronRight size={14} />
           </Button>
         )}
       </div>

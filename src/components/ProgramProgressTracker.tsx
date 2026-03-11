@@ -1,4 +1,4 @@
-import React from 'react';
+import { useEffect, useState } from 'react';
 import { motion } from 'motion/react';
 import { Play, CheckCircle2, ArrowRight, CalendarCheck, BarChart3 } from 'lucide-react';
 

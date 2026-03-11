@@ -2,6 +2,17 @@ import * as React from "react";
 
 import { cn } from "./utils";
 
+// Filter out Figma inspector internal props (_fg*) to prevent React DOM warnings
+function filterFigmaProps(props: Record<string, unknown>) {
+  const filtered: Record<string, unknown> = {};
+  for (const key in props) {
+    if (!key.startsWith('_fg')) {
+      filtered[key] = props[key];
+    }
+  }
+  return filtered;
+}
+
 function Textarea({ className, style, ...props }: React.ComponentProps<"textarea">) {
   return (
     <textarea
@@ -20,7 +31,7 @@ function Textarea({ className, style, ...props }: React.ComponentProps<"textarea
         color: 'var(--color-text-primary)',
         ...style
       }}
-      {...props}
+      {...filterFigmaProps(props)}
     />
   );
 }

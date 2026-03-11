@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNotifications } from '../../contexts/NotificationContext';
 import { 
   LayoutDashboard, 
@@ -27,6 +27,9 @@ import {
   HeartPulse,
   Palette,
   Zap,
+  Inbox,
+  Menu,
+  X,
 } from 'lucide-react';
 import { cn } from '../ui/utils';
 import { Button } from '../ui/button';
@@ -59,6 +62,23 @@ import { RecommendationRulesManager } from '../admin/recommendations/Recommendat
 import { AdminBackupManager } from '../admin/AdminBackupManager';
 import { UIKitPatterns } from '../uikit/UIKitPatterns';
 import { AdminKVAudit } from '../admin/AdminKVAudit';
+import { AdminContactSubmissions } from '../admin/AdminContactSubmissions';
+
+// Mobile sidebar hook
+function useIsMobileAdmin() {
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 1024);
+  const [isCompact, setIsCompact] = useState(window.innerWidth >= 1024 && window.innerWidth < 1280);
+  useEffect(() => {
+    const handler = () => {
+      const w = window.innerWidth;
+      setIsMobile(w < 1024);
+      setIsCompact(w >= 1024 && w < 1280);
+    };
+    window.addEventListener('resize', handler);
+    return () => window.removeEventListener('resize', handler);
+  }, []);
+  return { isMobile, isCompact };
+}
 
 interface AdminDashboardProps {
   onNavigate: (path: string) => void;
@@ -90,14 +110,17 @@ type ViewType =
   | 'security'
   | 'backup'
   | 'ui-kit'
-  | 'kv-audit';
+  | 'kv-audit'
+  | 'contact-newsletter';
 
 export function AdminDashboard({ onNavigate, initialView }: AdminDashboardProps) {
   const { unreadCount } = useNotifications();
   const [currentView, setCurrentView] = useState<ViewType>((initialView as ViewType) || 'dashboard');
   const [searchQuery, setSearchQuery] = useState('');
+  const { isMobile, isCompact } = useIsMobileAdmin();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (initialView) {
       setCurrentView(initialView as ViewType);
     }
@@ -142,6 +165,7 @@ export function AdminDashboard({ onNavigate, initialView }: AdminDashboardProps)
       items: [
         { id: 'user-data', label: 'User Activity', icon: MousePointerClick },
         { id: 'communication', label: 'Communication', icon: MessageSquare },
+        { id: 'contact-newsletter', label: 'Contact & Newsletter', icon: Inbox },
         { id: 'payment-gateway', label: 'Payments', icon: CreditCard },
         { id: 'security', label: 'Security', icon: Shield },
         { id: 'crud', label: 'System Health', icon: HeartPulse },
@@ -160,6 +184,7 @@ export function AdminDashboard({ onNavigate, initialView }: AdminDashboardProps)
       onClick: () => {
         setCurrentView(item.id as ViewType);
         window.scrollTo(0,0);
+        if (isMobile) setSidebarOpen(false);
       }
     }))
   }));
@@ -240,9 +265,7 @@ export function AdminDashboard({ onNavigate, initialView }: AdminDashboardProps)
                  <h2 className="mb-4">
                     Dashboard Analytics
                 </h2>
-                <div className="grid gap-6 lg:grid-cols-2">
-                     <AdminDashboardAnalytics onBack={() => {}} />
-                </div>
+                <AdminDashboardAnalytics embedded />
             </div>
           </div>
         );
@@ -270,30 +293,50 @@ export function AdminDashboard({ onNavigate, initialView }: AdminDashboardProps)
       case 'payment-gateway': return <AdminPaymentGateway onBack={() => setCurrentView('dashboard')} />;
       case 'security': return <AdminSecurity onBack={() => setCurrentView('dashboard')} />;
       case 'ui-kit': return <UIKitPatterns />;
+      case 'contact-newsletter': return <AdminContactSubmissions onBack={() => setCurrentView('dashboard')} />;
       default: return <div>View not found</div>;
     }
   };
 
   return (
-    <div className="min-h-screen bg-[var(--grey-1)] flex font-sans">
+    <div className="min-h-screen bg-[var(--grey-1)] flex font-sans overflow-x-hidden">
+
+      {/* Mobile overlay backdrop */}
+      {isMobile && sidebarOpen && (
+        <div
+          className="fixed inset-0 bg-black/40 z-40 transition-opacity"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
       
-      {/* 1. FIXED SIDEBAR (Left, No Rounding, Full Height) */}
-      <aside className="w-[20vw] fixed inset-y-0 left-0 bg-[var(--grey-0)] border-r border-[var(--grey-2)] z-50 flex flex-col">
+      {/* 1. SIDEBAR — fixed on desktop, slide-over on mobile */}
+      <aside
+        className={cn(
+          "w-[260px] min-w-[260px] fixed inset-y-0 left-0 bg-[var(--grey-0)] border-r border-[var(--grey-2)] z-50 flex flex-col transition-transform duration-300",
+          isMobile && !sidebarOpen && "-translate-x-full",
+          isMobile && sidebarOpen && "translate-x-0"
+        )}
+      >
           {/* Header Area in Sidebar */}
-          <div className="h-[96px] flex items-center px-4 border-b border-[var(--grey-2)]">
-              <div className="flex items-center gap-4">
-                <div className="bg-[var(--primary)] rounded-lg p-2" style={{ color: 'var(--color-primary-on)' }}>
-                  <Logo showText={false} iconSize={40} />
+          <div className="h-[64px] lg:h-[96px] flex items-center px-4 border-b border-[var(--grey-2)] justify-between">
+              <div className="flex items-center gap-3">
+                <div className="bg-[var(--primary)] rounded-lg p-1.5 lg:p-2 flex items-center justify-center" style={{ color: 'var(--color-text-inverse)' }}>
+                  <Logo showText={false} iconSize={isMobile ? 28 : 40} style={{ color: 'var(--color-text-inverse)' }} />
                 </div>
                 <div>
-                  <span className="text-[var(--grey-9)] text-xl tracking-tight block leading-none" style={{ fontWeight: 'var(--font-weight-medium)' }}>iKan</span>
+                  <span className="text-[var(--grey-9)] text-lg lg:text-xl tracking-tight block leading-none" style={{ fontWeight: 'var(--font-weight-medium)' }}>iKan</span>
                   <span className="text-[var(--grey-5)] text-xs uppercase tracking-wider" style={{ fontWeight: 'var(--font-weight-medium)' }}>Admin Console</span>
                 </div>
               </div>
+              {isMobile && (
+                <Button variant="ghost" size="icon" onClick={() => setSidebarOpen(false)} className="h-8 w-8">
+                  <X className="w-5 h-5" />
+                </Button>
+              )}
           </div>
 
           {/* Navigation Items */}
-          <div className="flex-1 overflow-y-auto custom-scrollbar py-8">
+          <div className="flex-1 overflow-y-auto custom-scrollbar py-4">
              <SideNav 
                groups={navGroups} 
                className="w-full space-y-1"
@@ -301,18 +344,37 @@ export function AdminDashboard({ onNavigate, initialView }: AdminDashboardProps)
           </div>
       </aside>
 
-      {/* 2. MAIN CONTENT AREA (Offset by Sidebar Width) */}
-      <div className="flex-1 ml-[20vw] flex flex-col min-h-screen">
+      {/* 2. MAIN CONTENT AREA — offset by sidebar on desktop, full-width on mobile */}
+      <div className={cn("flex-1 flex flex-col min-h-screen min-w-0", !isMobile && "ml-[260px]")}>
         
-        {/* Top Header (Full Width, Square) */}
-        <header className="sticky top-0 z-40 backdrop-blur-md h-[96px] px-4 flex items-center justify-between" style={{ backgroundColor: 'var(--color-bg-card)', opacity: 0.95, borderBottom: '1px solid var(--color-border-default)' }}>
-           
+        {/* Top Header */}
+        <header
+          className="sticky top-0 z-30 backdrop-blur-md px-3 lg:px-4 flex items-center justify-between gap-2"
+          style={{
+            backgroundColor: 'var(--color-bg-card)',
+            opacity: 0.95,
+            borderBottom: '1px solid var(--color-border-default)',
+            height: isMobile ? '56px' : '96px',
+          }}
+        >
+           {/* Mobile hamburger */}
+           {isMobile && (
+             <Button
+               variant="ghost"
+               size="icon"
+               onClick={() => setSidebarOpen(true)}
+               className="shrink-0 h-[44px] w-[44px] rounded-lg bg-[var(--grey-2)] text-[var(--grey-9)] border border-[var(--grey-3)]"
+             >
+               <Menu className="w-5 h-5" />
+             </Button>
+           )}
+
            {/* Search Area */}
-           <div className="flex-1 max-w-xl">
+           <div className="flex-1 min-w-0 max-w-xl">
               <div className="relative">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--grey-5)]" />
                   <Input 
-                      placeholder="Search resources, users, or settings..." 
+                      placeholder={isMobile ? "Search..." : "Search resources, users, or settings..."} 
                       className="pl-10 border-transparent transition-all h-[44px] rounded-lg w-full"
                       style={{ backgroundColor: 'var(--color-bg-muted)' }}
                       value={searchQuery}
@@ -322,50 +384,59 @@ export function AdminDashboard({ onNavigate, initialView }: AdminDashboardProps)
            </div>
 
            {/* Right Actions */}
-           <div className="flex items-center gap-3 pl-4">
-              <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  onClick={() => onNavigate('/dashboard')}
-                  className="gap-2 bg-[var(--grey-2)] text-[var(--grey-9)] hover:bg-[var(--grey-3)] h-[44px] px-4 rounded-lg border border-[var(--grey-3)]"
-              >
-                  <LayoutDashboard className="w-4 h-4" />
-                  <span className="font-medium">Dashboard</span>
-              </Button>
+           <div className="flex items-center gap-2 lg:gap-3 shrink-0">
+              {/* Desktop-only buttons — icon-only in compact mode (1024–1280px) */}
+              {!isMobile && (
+                <>
+                  <Button 
+                      variant="ghost" 
+                      size={isCompact ? "icon" : "sm"}
+                      onClick={() => onNavigate('/dashboard')}
+                      className={cn(
+                        "bg-[var(--grey-2)] text-[var(--grey-9)] hover:bg-[var(--grey-3)] h-[44px] rounded-lg border border-[var(--grey-3)]",
+                        isCompact ? "w-[44px]" : "gap-2 px-4"
+                      )}
+                      title="Go to Dashboard"
+                  >
+                      <LayoutDashboard className="w-4 h-4" />
+                      {!isCompact && <span style={{ fontWeight: 'var(--font-weight-medium)' }}>Dashboard</span>}
+                  </Button>
 
-              <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  onClick={() => setCurrentView('ui-kit')}
-                  className={cn(
-                      "gap-2 bg-[var(--grey-2)] text-[var(--grey-9)] hover:bg-[var(--grey-3)] h-[44px] px-4 rounded-lg border border-[var(--grey-3)]", 
-                      currentView === 'ui-kit' && "bg-[var(--color-primary-default)] text-[var(--color-primary-on)] border-[var(--color-primary-default)]"
-                  )}
-              >
-                  <Palette className="w-4 h-4" />
-                  <span className="hidden md:inline" style={{ fontWeight: 'var(--font-weight-medium)' }}>UI Kit</span>
-              </Button>
+                  <Button 
+                      variant="ghost" 
+                      size={isCompact ? "icon" : "sm"}
+                      onClick={() => setCurrentView('ui-kit')}
+                      className={cn(
+                          "bg-[var(--grey-2)] text-[var(--grey-9)] hover:bg-[var(--grey-3)] h-[44px] rounded-lg border border-[var(--grey-3)]",
+                          isCompact ? "w-[44px]" : "gap-2 px-4",
+                          currentView === 'ui-kit' && "bg-[var(--color-primary-default)] text-[var(--color-primary-on)] border-[var(--color-primary-default)]"
+                      )}
+                      title="UI Kit"
+                  >
+                      <Palette className="w-4 h-4" />
+                      {!isCompact && <span style={{ fontWeight: 'var(--font-weight-medium)' }}>UI Kit</span>}
+                  </Button>
+                </>
+              )}
 
               <Button variant="ghost" size="icon" className="bg-[var(--grey-2)] text-[var(--grey-9)] hover:bg-[var(--grey-3)] relative rounded-lg h-[44px] w-[44px] border border-[var(--grey-3)]">
                   <Bell className="w-5 h-5" />
                   {unreadCount > 0 && (
                     <span 
-                      className="absolute top-2 right-2 min-w-[8px] h-[8px] rounded-full border-2 border-[var(--grey-0)]"
+                      className="absolute rounded-full border-2 border-[var(--grey-0)]"
                       style={{ 
                         backgroundColor: 'var(--color-status-danger)',
-                        ...(unreadCount > 0 ? {
-                          minWidth: '18px',
-                          height: '18px',
-                          top: '-4px',
-                          right: '-4px',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          fontSize: 'var(--text-xs)',
-                          color: 'var(--color-text-inverse)',
-                          fontWeight: 'var(--font-weight-medium)',
-                          padding: '0 var(--spacing-1)'
-                        } : {})
+                        minWidth: '18px',
+                        height: '18px',
+                        top: '-4px',
+                        right: '-4px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: 'var(--text-xs)',
+                        color: 'var(--color-text-inverse)',
+                        fontWeight: 'var(--font-weight-medium)',
+                        padding: '0 var(--spacing-1)'
                        }}
                     >
                       {unreadCount}
@@ -373,11 +444,14 @@ export function AdminDashboard({ onNavigate, initialView }: AdminDashboardProps)
                   )}
               </Button>
 
-              <div className="flex items-center gap-3 ml-2 px-3 py-1.5 bg-[var(--grey-1)] rounded-lg border border-[var(--grey-2)]">
-                  <div className="text-right hidden md:block">
-                      <p style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--font-weight-medium)', color: 'var(--grey-9)' }} className="leading-none">Admin User</p>
-                      <p style={{ fontSize: 'var(--text-xs)', color: 'var(--grey-5)', marginTop: '4px' }}>Super Admin</p>
-                  </div>
+              {/* User avatar — always visible, name only on wide desktop */}
+              <div className="flex items-center gap-2 lg:gap-3 lg:ml-2 px-2 lg:px-3 py-1.5 bg-[var(--grey-1)] rounded-lg border border-[var(--grey-2)]">
+                  {!isMobile && !isCompact && (
+                    <div className="text-right">
+                        <p style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--font-weight-medium)', color: 'var(--grey-9)' }} className="leading-none">Admin User</p>
+                        <p style={{ fontSize: 'var(--text-xs)', color: 'var(--grey-5)', marginTop: '4px' }}>Super Admin</p>
+                    </div>
+                  )}
                   <div className="w-8 h-8 rounded-full bg-[var(--grey-3)] text-[var(--grey-7)] flex items-center justify-center">
                       <User className="w-4 h-4" />
                   </div>
@@ -388,16 +462,17 @@ export function AdminDashboard({ onNavigate, initialView }: AdminDashboardProps)
                   size="sm" 
                   onClick={() => onNavigate('/')} 
                   style={{ backgroundColor: 'var(--color-status-danger-light)', color: 'var(--color-status-danger)', borderColor: 'var(--color-status-danger-light)' }}
-                  className="gap-2 h-[44px] px-4 rounded-lg ml-1 border hover:opacity-80"
+                  className={cn("gap-2 h-[44px] rounded-lg border hover:opacity-80", (isMobile || isCompact) ? "px-2 w-[44px]" : "px-4 ml-1")}
+                  title="Exit Admin"
               >
                   <LogOut className="w-4 h-4" />
-                  <span className="hidden md:inline" style={{ fontWeight: 'var(--font-weight-medium)' }}>Exit</span>
+                  {!isMobile && !isCompact && <span style={{ fontWeight: 'var(--font-weight-medium)' }}>Exit</span>}
               </Button>
            </div>
         </header>
 
         {/* Scrollable Main Content */}
-        <main className="flex-1 p-8 w-full max-w-[1600px] mx-auto">
+        <main className={cn("flex-1 w-full max-w-[1600px] mx-auto", isMobile ? "p-4" : "p-8")}>
           <ErrorBoundary>
             {renderContent()}
           </ErrorBoundary>

@@ -9,6 +9,33 @@ export function registerAdminRoutes(app: Hono, requireAuth: any, requireAdmin: a
 // ADMIN - DEBUG & UTILS
 // ========================================
 
+// ========================================
+// ADMIN - SETTINGS
+// ========================================
+
+app.get("/admin/settings", requireAdmin, async (c) => {
+  try {
+    const settings = await kv.get('settings:site') || {};
+    return c.json({ settings });
+  } catch (error) {
+    console.error('Failed to load settings:', error);
+    return c.json({ error: 'Failed to load settings' }, 500);
+  }
+});
+
+app.put("/admin/settings", requireAdmin, async (c) => {
+  try {
+    const body = await c.req.json();
+    const existing = await kv.get('settings:site') || {};
+    const updated = { ...existing, ...body, updated_at: new Date().toISOString() };
+    await kv.set('settings:site', updated);
+    return c.json({ settings: updated, success: true });
+  } catch (error) {
+    console.error('Failed to save settings:', error);
+    return c.json({ error: 'Failed to save settings' }, 500);
+  }
+});
+
 app.get("/admin/debug/check-status", requireAuth, async (c) => {
   try {
     const user = c.get('user');
@@ -671,23 +698,45 @@ app.get("/admin/kv-audit", requireAdmin, async (c) => {
 
     // ─── 2. Categorize keys by prefix ──────────────────────────
     const KNOWN_PREFIXES = [
-      // System / content entities
+      // System / content entities (admin-managed)
       'equip:', 'equip_slug:', 'idx_equip_days:', 'day:', 'idx_day_blocks:',
       'block:', 'dataset:', 'dataset_key:', 'assessment_def:', 'resource:',
       'category:', 'media:', 'page:', 'page_slug:', 'cms_page:', 'content:',
       'content_slug:', 'recommendation_rule:', 'newsletter:', 'contact_submission:',
       'contact_submissions:',
+      // User-facing entity copies (multi-tenant sync)
+      'equip_program:', 'equip_program_by_slug:', 'assessment:', 'library:resource:',
       // User-scoped
       'user:', 'journal:', 'journal_by_user:', 'tracker:', 'enrollment:',
       'user_enrollment:', 'progress:', 'assessment_result:', 'assessment-result:',
       'assessment_response_by_user:', 'assessment_response:', 'program-progress:',
       'email-change:',
+      // Professionals / consultants
+      'professional:', 'professional:pending-', 'professional_application:', 'consultant:',
+      // Activity tracking
+      'activity:read:', 'activity:user:', 'user_activity:',
+      // Admin notifications
+      'admin_notification:',
+      // Payments
+      'payment:',
+      // Health Connect
+      'hc_status:', 'hc_data:', 'hc_history:',
+      // Communication / Brevo
+      'comm-config:', 'email_queue:', 'brevo-config', 'brevo-logs',
+      // Settings
+      'settings:site',
       // Audit trail
       'audit:',
       // System
-      'sys_backups', 'backup_', 'recommendation_rules',
+      'sys_backups', 'backup_', 'recommendation_rules', 'sys_audit_snapshots',
+      // Monitoring
+      'api-log:', 'metrics:',
       // Mood / scales
       'mood_type:', 'checkin_scale:', 'mood_config',
+      // Sessions
+      'active_sessions:',
+      // General activity catch-all (MUST be after activity:read: and activity:user:)
+      'activity:',
     ];
 
     const categorized: Record<string, { count: number; keys: string[]; sampleValues: any[] }> = {};
@@ -857,6 +906,48 @@ app.get("/admin/kv-audit", requireAdmin, async (c) => {
       growthWarnings.push({ prefix: 'backup_*', count: backupKeys.length, warning: 'Too many backup snapshots stored in KV — old ones should be cleaned' });
     }
 
+    // Activity tracking keys (write-only, unbounded)
+    const activityReadKeys = allRows.filter(r => r.key.startsWith('activity:read:'));
+    if (activityReadKeys.length > 200) {
+      growthWarnings.push({ prefix: 'activity:read:', count: activityReadKeys.length, warning: 'Read-activity records are write-only and never pruned — consider periodic cleanup' });
+    }
+
+    const userActivityKeys = allRows.filter(r => r.key.startsWith('user_activity:'));
+    if (userActivityKeys.length > 200) {
+      growthWarnings.push({ prefix: 'user_activity:', count: userActivityKeys.length, warning: 'User activity logs growing unbounded — one key per action per user' });
+    }
+
+    // Admin notifications (never pruned)
+    const adminNotifKeys = allRows.filter(r => r.key.startsWith('admin_notification:'));
+    if (adminNotifKeys.length > 50) {
+      growthWarnings.push({ prefix: 'admin_notification:', count: adminNotifKeys.length, warning: 'Admin notifications are never pruned. Read notifications stay forever.' });
+    }
+
+    // Email queue (write-only, never processed)
+    const emailQueueKeys = allRows.filter(r => r.key.startsWith('email_queue:'));
+    if (emailQueueKeys.length > 0) {
+      growthWarnings.push({ prefix: 'email_queue:', count: emailQueueKeys.length, warning: 'Email queue entries are written but never processed or cleaned in current code' });
+    }
+
+    // API logs and metrics
+    const apiLogKeys = allRows.filter(r => r.key.startsWith('api-log:'));
+    if (apiLogKeys.length > 1000) {
+      growthWarnings.push({ prefix: 'api-log:', count: apiLogKeys.length, warning: 'API logs exceeding 1000 entries — auto-prune may not be keeping up' });
+    }
+
+    // Multi-tenant prefix mismatch warnings
+    const equipAdminCount = allRows.filter(r => r.key.startsWith('equip:') && !r.key.startsWith('equip_')).length;
+    const equipUserCount = allRows.filter(r => r.key.startsWith('equip_program:')).length;
+    if (equipAdminCount > 0 && equipUserCount === 0) {
+      growthWarnings.push({ prefix: 'equip_program:', count: 0, warning: `⚠️ CRITICAL: ${equipAdminCount} admin programs (equip:) exist but 0 user-facing copies (equip_program:). Users cannot see any programs. Run "Sync Prefixes" to fix.` });
+    }
+
+    const assessmentDefCount = allRows.filter(r => r.key.startsWith('assessment_def:')).length;
+    const assessmentUserCount = allRows.filter(r => r.key.startsWith('assessment:') && !r.key.startsWith('assessment_')).length;
+    if (assessmentDefCount > 0 && assessmentUserCount === 0) {
+      growthWarnings.push({ prefix: 'assessment:', count: 0, warning: `⚠️ CRITICAL: ${assessmentDefCount} admin assessment defs (assessment_def:) exist but 0 user-facing copies (assessment:). Run "Sync Prefixes" to fix.` });
+    }
+
     // ─── 6. User data summary (multi-tenant) ──────────────
     const userKeys = allRows.filter(r => r.key.startsWith('user:'));
     const userIds = userKeys.map(r => r.key.replace('user:', ''));
@@ -866,7 +957,9 @@ app.get("/admin/kv-audit", requireAdmin, async (c) => {
     const USER_DATA_PREFIXES = [
       'journal_by_user:', 'journal:', 'tracker:', 'enrollment:', 'user_enrollment:',
       'progress:', 'assessment_result:', 'assessment-result:', 'assessment_response_by_user:',
-      'program-progress:', 'audit:', 'email-change:'
+      'program-progress:', 'audit:', 'email-change:',
+      'user_activity:', 'activity:user:', 'hc_status:', 'hc_data:', 'hc_history:',
+      'payment:'
     ];
 
     for (const uid of userIds.slice(0, 50)) { // Cap at 50 users for performance
@@ -892,7 +985,7 @@ app.get("/admin/kv-audit", requireAdmin, async (c) => {
     // Sort by footprint descending
     userDataFootprint.sort((a, b) => b.keyCount - a.keyCount);
 
-    // ─── 7. Soft-deleted entities still in KV ─────────────
+    // ─── 7. Soft-deleted entities still in KV ────────────��
     const softDeleted: string[] = [];
     for (const row of allRows) {
       if (row.value && typeof row.value === 'object' && row.value.deleted === true) {
@@ -1116,8 +1209,150 @@ app.get("/admin/kv-audit/trends", requireAdmin, async (c) => {
   }
 });
 
+// ─── KV Audit: Sync admin prefixes to user-facing prefixes ─────
+// Fixes the multi-tenant mismatch where admin writes equip:, assessment_def:, resource:
+// but users read equip_program:, assessment:, library:resource:
+app.post("/admin/kv-audit/sync-prefixes", requireAdmin, async (c) => {
+  try {
+    const body = await c.req.json().catch(() => ({}));
+    const dryRun = body.dryRun !== false; // Default to dry run
+    const actions: string[] = [];
+    let synced = 0;
+
+    // ── Sync equip: → equip_program: ──────────────────────
+    const equips = await kv.getByPrefix("equip:");
+    for (const equip of equips) {
+      if (!equip || !equip.id) continue;
+      const existingProgram = await kv.get(`equip_program:${equip.id}`);
+      if (!existingProgram) {
+        actions.push(`SYNC equip:${equip.id} → equip_program:${equip.id}`);
+        if (!dryRun) {
+          await kv.set(`equip_program:${equip.id}`, equip);
+          if (equip.slug) {
+            await kv.set(`equip_program_by_slug:${equip.slug}`, equip);
+            actions.push(`SYNC equip_slug:${equip.slug} → equip_program_by_slug:${equip.slug}`);
+          }
+        }
+        synced++;
+      }
+    }
+
+    // ── Sync assessment_def: → assessment: ────────────────
+    const assessmentDefs = await kv.getByPrefix("assessment_def:");
+    for (const def of assessmentDefs) {
+      if (!def || !def.id || def.deleted) continue;
+      const existingAssessment = await kv.get(`assessment:${def.id}`);
+      if (!existingAssessment) {
+        actions.push(`SYNC assessment_def:${def.id} → assessment:${def.id}`);
+        if (!dryRun) {
+          await kv.set(`assessment:${def.id}`, def);
+        }
+        synced++;
+      }
+    }
+
+    // ── Sync resource: → library:resource: ────────────────
+    const resources = await kv.getByPrefix("resource:");
+    for (const res of resources) {
+      if (!res || !res.id) continue;
+      const existingLib = await kv.get(`library:resource:${res.id}`);
+      if (!existingLib) {
+        actions.push(`SYNC resource:${res.id} → library:resource:${res.id}`);
+        if (!dryRun) {
+          await kv.set(`library:resource:${res.id}`, res);
+        }
+        synced++;
+      }
+    }
+
+    console.log(`${dryRun ? "DRY RUN" : "EXECUTED"}: Synced ${synced} records across prefixes`);
+
+    return c.json({
+      dryRun,
+      synced,
+      actions,
+      message: dryRun
+        ? `Would sync ${synced} records. Set dryRun: false to execute.`
+        : `Successfully synced ${synced} records.`,
+    });
+  } catch (err) {
+    console.log(`KV sync error: ${err}`);
+    return c.json({ error: `KV sync failed: ${err}` }, 500);
+  }
+});
+
+// ─── KV Audit: Purge all keys matching a prefix ─────────────────
+app.post("/admin/kv-audit/purge-prefix", requireAdmin, async (c) => {
+  try {
+    const { prefix, dryRun = true } = await c.req.json();
+
+    if (!prefix || typeof prefix !== 'string' || prefix.length < 2) {
+      return c.json({ error: 'A valid prefix (min 2 chars) is required' }, 400);
+    }
+
+    const auditSupabase = createClient(
+      Deno.env.get('SUPABASE_URL')!,
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
+    );
+
+    // Fetch all keys matching the prefix
+    const { data: rows, error: fetchErr } = await auditSupabase
+      .from('kv_store_cc205da9')
+      .select('key')
+      .like('key', `${prefix}%`);
+
+    if (fetchErr) throw new Error(`Fetch keys error: ${fetchErr.message}`);
+    if (!rows || rows.length === 0) {
+      return c.json({ success: true, message: `No keys found with prefix "${prefix}"`, deleted: 0, total: 0 });
+    }
+
+    if (dryRun) {
+      return c.json({
+        success: true,
+        dryRun: true,
+        wouldDelete: rows.length,
+        sampleKeys: rows.slice(0, 10).map(r => r.key),
+        prefix
+      });
+    }
+
+    // Safety cap per batch
+    if (rows.length > 5000) {
+      return c.json({ error: `Too many keys (${rows.length}). Purge in smaller batches or contact support.` }, 400);
+    }
+
+    // Actually delete
+    let deleted = 0;
+    const failed: string[] = [];
+
+    for (const row of rows) {
+      try {
+        await kv.del(row.key);
+        deleted++;
+      } catch {
+        failed.push(row.key);
+      }
+    }
+
+    console.log(`PURGE: Deleted ${deleted}/${rows.length} keys with prefix "${prefix}". ${failed.length} failures.`);
+
+    return c.json({
+      success: true,
+      dryRun: false,
+      deleted,
+      total: rows.length,
+      failed: failed.length,
+      prefix
+    });
+
+  } catch (error) {
+    console.error("KV Purge error:", error);
+    return c.json({ error: `KV Purge failed: ${error}` }, 500);
+  }
+});
+
 }
-// ─── Helper: Summarize a value for display ────────────────��──────
+// ─── Helper: Summarize a value for display ──────────────────────
 function summarizeValue(val: any): string {
   if (val === null || val === undefined) return 'null';
   if (typeof val === 'string') return val.length > 80 ? val.slice(0, 80) + '...' : val;

@@ -3,7 +3,6 @@
  * Shows back button + page title. Follows iKan design tokens.
  * Hidden on desktop (Navigation.tsx capsule handles that).
  */
-import React from 'react';
 import { ArrowLeft, Share2, Bell } from 'lucide-react';
 import { Button } from '../ui/button';
 import { cn } from '../ui/utils';

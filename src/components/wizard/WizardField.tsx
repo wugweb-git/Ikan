@@ -1,4 +1,4 @@
-import React from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { WizardFieldConfig, WizardMode } from './types';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';

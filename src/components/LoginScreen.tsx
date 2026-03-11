@@ -8,11 +8,11 @@ import { cn } from './ui/utils';
 import { authContent } from '../lib/content/auth';
 import { Input } from './ui/input';
 import { Mail, Lock, User, Eye, EyeOff, ArrowLeft } from 'lucide-react';
-import svgPaths from "../imports/svg-850apu7kjy";
 
 interface LoginScreenProps {
   onSuccess?: () => void;
   onBack?: () => void;
+  onNavigate?: (route: string) => void;
   reason?: 'session-expired' | 'normal' | 'auth-required' | 'user-initiated';
   redirectRoute?: string;
 }
@@ -549,10 +549,13 @@ function AuthForm({ mode, onSuccess, onModeChange }: {
 
 // Logo component is now imported from ./Logo
 
-export default function LoginScreen({ onSuccess, onBack, reason, redirectRoute }: LoginScreenProps) {
+export default function LoginScreen({ onSuccess, onBack, onNavigate, reason, redirectRoute: _redirectRoute }: LoginScreenProps) {
   const isMobile = useIsMobile();
   const [authMode, setAuthMode] = useState<AuthMode>('login');
   const { showToast } = useNotifications();
+
+  // Use onNavigate as fallback for onBack
+  const handleBack = onBack || (onNavigate ? () => onNavigate('/') : undefined);
 
   // Show appropriate message based on reason
   useEffect(() => {
@@ -597,7 +600,7 @@ export default function LoginScreen({ onSuccess, onBack, reason, redirectRoute }
             <AuthHeader 
               mode={authMode} 
               onModeChange={setAuthMode}
-              onBack={onBack}
+              onBack={handleBack}
             />
 
             {/* Auth Form */}

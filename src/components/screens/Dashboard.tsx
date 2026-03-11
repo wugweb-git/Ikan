@@ -3,10 +3,9 @@ import { motion } from 'motion/react';
 import { apiClient } from '../../lib/api-client';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNotifications } from '../../contexts/NotificationContext';
-import { ArrowRight, Activity, Smile, Check, Brain, Compass } from 'lucide-react';
+import { ArrowRight, Activity, Smile, Check, Brain, Compass, BarChart3, ClipboardList, Play } from 'lucide-react';
 import { ImageWithFallback } from '../figma/ImageWithFallback';
 import { SPECIAL_PROGRAM_IDS } from '../../lib/constants/content';
-import { DUMMY_EQUIP_PROGRAM, ALL_DUMMY_PROGRAMS } from '../../lib/demo-data';
 import { ProgramCheckIn } from '../equip/ProgramCheckIn';
 import { ReassessmentPrompt } from '../assessments/ReassessmentPrompt';
 import { checkReassessmentTriggers, ReassessmentReason } from '../../lib/reassessment-triggers';
@@ -15,17 +14,27 @@ import { useGoogleFit } from '../integrations/GoogleFitContext';
 import { cn } from '../ui/utils';
 import { evaluateAssessment, EngineResult } from '../../lib/recommendation-engine';
 import { RecommendationCards } from '../RecommendationCards';
-import { WellnessScoreCard } from '../WellnessScoreCard';
 import { ResourceBlock } from '../blocks/ResourceBlock';
 import { ResourcePost } from '../blocks/ResourceCard';
 import { HelloWidget } from '../HelloWidget';
 import { ProgramProgressTracker } from '../ProgramProgressTracker';
 import { DashboardActionBlocks } from '../DashboardActionBlocks';
 import { LoadingSpinner } from '../LoadingSpinner';
+import { CorporateProgramCard } from '../CorporateProgramCard';
 
 interface DashboardProps {
   className?: string;
   onNavigate?: (route: string) => void;
+}
+
+// ─── Assessment score type ────────────────────────────────────────
+interface AssessmentScore {
+  assessmentId: string;
+  assessmentName: string;
+  score: number;
+  maxScore: number;
+  severity: string;
+  completedAt: string;
 }
 
 // ─── Font helper (design-token compliant) ─────────────────────────
@@ -199,7 +208,7 @@ function ExploreWidget({
 export function Dashboard({ className, onNavigate }: DashboardProps) {
   const { user } = useAuth();
   const { showToast } = useNotifications();
-  const { isConnected: isFitnessConnected, data: fitnessData } = useGoogleFit();
+  useGoogleFit(); // Hook must be called; ActivityCard uses it internally
   const [loading, setLoading] = useState(true);
   const [enrollments, setEnrollments] = useState<any[]>([]);
   const [recommendations, setRecommendations] = useState<any[]>([]);
@@ -210,6 +219,9 @@ export function Dashboard({ className, onNavigate }: DashboardProps) {
 
   // Engine-driven recommendations from assessment results
   const [engineResult, setEngineResult] = useState<EngineResult | null>(null);
+
+  // Latest scores per assessment type
+  const [assessmentScores, setAssessmentScores] = useState<AssessmentScore[]>([]);
 
   // Resources for the ResourceBlock
   const [resources, setResources] = useState<ResourcePost[]>([]);
@@ -247,10 +259,6 @@ export function Dashboard({ className, onNavigate }: DashboardProps) {
     if (shouldTrigger && reason) {
       setTimeout(() => setReassessment({ isOpen: true, reason }), 2000);
     }
-  };
-
-  const handleManualReassessment = () => {
-    setReassessment({ isOpen: true, reason: 'manual' });
   };
 
   const handleReassessmentConfirm = () => {
@@ -298,40 +306,15 @@ export function Dashboard({ className, onNavigate }: DashboardProps) {
       ]);
       if (!isMounted) return;
 
-      // Demo enrollment
-      const dummyProgramId = localStorage.getItem('ikan-active-dummy-program');
-      const dummyProgram = dummyProgramId ? ALL_DUMMY_PROGRAMS.find(p => p.id === dummyProgramId) : null;
-      if (dummyProgram && dummyProgramId) {
-        const exists = enrollData.some((e: any) => e.equip_id === dummyProgramId);
-        if (!exists) {
-          const storedProgress = localStorage.getItem(`demo-progress-${dummyProgramId}`);
-          const progress = storedProgress ? JSON.parse(storedProgress) : { currentDay: 1 };
-          const totalDays = dummyProgram.daily_content.length;
-          const isCompleted = progress.currentDay > totalDays;
-          enrollData.unshift({
-            id: 'dummy-enrollment', equip_id: dummyProgramId,
-            status: isCompleted ? 'completed' : 'active',
-            current_day_number: progress.currentDay || 1,
-            created_at: new Date().toISOString(),
-            completed_at: isCompleted ? new Date().toISOString() : null
-          });
-        }
-      }
-
       let programDetails = null;
       const active = enrollData.find((e: any) => e.status === 'active');
       if (active) {
-        if (active.equip_id === DUMMY_EQUIP_PROGRAM.id) {
-          programDetails = DUMMY_EQUIP_PROGRAM;
-          setActiveProgram(DUMMY_EQUIP_PROGRAM);
-        } else {
-          try {
-            programDetails = await apiClient.getEquipProgram(active.equip_id);
-            setActiveProgram(programDetails);
-          } catch (e: any) {
-            if (!e.message?.includes('404')) console.error("Failed to load active program details", e);
-            setActiveProgram(null);
-          }
+        try {
+          programDetails = await apiClient.getEquipProgram(active.equip_id);
+          setActiveProgram(programDetails);
+        } catch (e: any) {
+          if (!e.message?.includes('404')) console.error("Failed to load active program details", e);
+          setActiveProgram(null);
         }
       } else {
         setActiveProgram(null);
@@ -354,12 +337,36 @@ export function Dashboard({ className, onNavigate }: DashboardProps) {
         if (Array.isArray(responses) && responses.length > 0) {
           const seen = new Set<string>();
           const dedupedResponses = responses.filter((r: any) => { if (!r.id || seen.has(r.id)) return false; seen.add(r.id); return true; });
-          const latestAssessment = dedupedResponses
+          const completedResponses = dedupedResponses
             .filter((r: any) => r.status === 'completed' && r.score !== undefined)
-            .sort((a: any, b: any) => new Date(b.completed_at || b.created_at || 0).getTime() - new Date(a.completed_at || a.created_at || 0).getTime())[0];
-          if (latestAssessment) {
-            const slug = latestAssessment.assessment_id || latestAssessment.assessmentId || 'general';
-            const result = evaluateAssessment(slug, latestAssessment.score || 0, latestAssessment.max_score || latestAssessment.maxScore || 100);
+            .sort((a: any, b: any) => new Date(b.completed_at || b.created_at || 0).getTime() - new Date(a.completed_at || a.created_at || 0).getTime());
+
+          // Build latest score per assessment type
+          const latestByType = new Map<string, any>();
+          for (const r of completedResponses) {
+            const id = r.assessment_id || r.assessmentId || 'general';
+            if (!latestByType.has(id)) latestByType.set(id, r);
+          }
+          const scores: AssessmentScore[] = Array.from(latestByType.entries()).map(([id, r]) => {
+            const maxScore = r.max_score || r.maxScore || 100;
+            const result = evaluateAssessment(id, r.score || 0, maxScore);
+            const name = r.assessment_name || r.assessmentName || r.title || id.replace(/-/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase());
+            return {
+              assessmentId: id,
+              assessmentName: name,
+              score: r.score || 0,
+              maxScore,
+              severity: result.severity,
+              completedAt: r.completed_at || r.created_at || '',
+            };
+          });
+          setAssessmentScores(scores);
+
+          // Engine result from latest overall
+          if (completedResponses.length > 0) {
+            const latest = completedResponses[0];
+            const slug = latest.assessment_id || latest.assessmentId || 'general';
+            const result = evaluateAssessment(slug, latest.score || 0, latest.max_score || latest.maxScore || 100);
             setEngineResult(result);
           }
         }
@@ -437,31 +444,112 @@ export function Dashboard({ className, onNavigate }: DashboardProps) {
           <HelloWidget userName={userName} />
         </motion.header>
 
-        {/* ─── WIDGET 2: Wellness Score ─── */}
+        {/* ─── WIDGET 1b: Corporate Program (if enrolled) ─── */}
+        <CorporateProgramCard onNavigate={onNavigate} />
+
+        {/* ─── WIDGET 2: Assessment Scores ─── */}
         <motion.section
-          aria-label="Wellness health score"
-          data-widget="wellness-score"
+          aria-label="Assessment scores"
+          data-widget="assessment-scores"
           initial={{ opacity: 0, y: 14 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.45, delay: 0.05 }}
         >
-          <WellnessScoreCard
-            hasLoggedMoodToday={hasLoggedMoodToday}
-            activeEnrollment={activeEnrollment}
-            activeProgram={activeProgram}
-            completedEnrollments={completedEnrollments}
-            engineResult={engineResult}
-            enrollments={enrollments}
-            recommendations={recommendations}
-            onNavigate={onNavigate}
-            isFitnessConnected={isFitnessConnected}
-            fitnessData={fitnessData}
-          />
+          <SectionLabel>Assessments</SectionLabel>
+          <div style={{ backgroundColor: 'var(--color-bg-card)', borderRadius: 'var(--radius-lg)', boxShadow: 'var(--shadow-sm)', border: '1px solid var(--color-border-default)', overflow: 'hidden' }}>
+            {assessmentScores.length > 0 ? (
+              <div style={{ display: 'flex', flexDirection: 'column' }}>
+                {assessmentScores.map((s, i) => {
+                  const severityColor = s.severity === 'low' ? 'var(--color-status-success)' : s.severity === 'moderate' ? 'var(--color-status-warning)' : 'var(--color-status-danger)';
+                  const severityBg = s.severity === 'low' ? 'var(--color-status-success-light)' : s.severity === 'moderate' ? 'var(--color-status-warning-light)' : 'var(--color-status-danger-light)';
+                  return (
+                    <div
+                      key={s.assessmentId}
+                      onClick={() => onNavigate?.('/assessment')}
+                      style={{
+                        padding: '16px 20px', cursor: 'pointer',
+                        borderBottom: i < assessmentScores.length - 1 ? '1px solid var(--color-border-default)' : 'none',
+                        transition: 'background 0.15s',
+                      }}
+                      onMouseEnter={(e) => { (e.currentTarget as HTMLDivElement).style.background = 'var(--color-bg-muted)'; }}
+                      onMouseLeave={(e) => { (e.currentTarget as HTMLDivElement).style.background = 'transparent'; }}
+                    >
+                      <div className="flex items-center" style={{ gap: 12 }}>
+                        <div style={{
+                          width: 40, height: 40, borderRadius: 10,
+                          backgroundColor: severityBg, display: 'flex',
+                          alignItems: 'center', justifyContent: 'center',
+                          color: severityColor, flexShrink: 0,
+                        }}>
+                          <BarChart3 size={18} />
+                        </div>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div className="flex items-center" style={{ gap: 8 }}>
+                            <span style={f('sm', 500)}>{s.assessmentName}</span>
+                            <span style={{
+                              fontSize: 10, fontWeight: 500, fontFamily: 'var(--font-family-base)',
+                              color: severityColor, backgroundColor: severityBg,
+                              padding: '2px 8px', borderRadius: 'var(--radius-pill)',
+                              textTransform: 'capitalize' as const,
+                            }}>
+                              {s.severity}
+                            </span>
+                          </div>
+                          <p style={{ ...f('xs', 400, 'var(--color-text-muted)'), margin: '2px 0 0' }}>
+                            Score: {s.score}/{s.maxScore} · {s.completedAt ? new Date(s.completedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'Recent'}
+                          </p>
+                        </div>
+                        <ArrowRight size={16} style={{ color: 'var(--color-text-muted)', flexShrink: 0 }} />
+                      </div>
+                    </div>
+                  );
+                })}
+                {/* CTA to take more */}
+                <div
+                  onClick={() => onNavigate?.('/assessment')}
+                  style={{ padding: '14px 20px', cursor: 'pointer', borderTop: assessmentScores.length > 0 ? '1px solid var(--color-border-default)' : 'none' }}
+                >
+                  <div className="flex items-center justify-center" style={{ gap: 8 }}>
+                    <ClipboardList size={16} style={{ color: 'var(--color-text-muted)' }} />
+                    <span style={f('sm', 500, 'var(--color-text-muted)')}>Take another assessment</span>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              /* Empty state: no assessments taken yet */
+              <div style={{ padding: '24px 20px', textAlign: 'center' as const }}>
+                <div style={{
+                  width: 48, height: 48, borderRadius: 'var(--radius-md)',
+                  backgroundColor: 'var(--color-bg-muted)', display: 'flex',
+                  alignItems: 'center', justifyContent: 'center',
+                  margin: '0 auto 12px', color: 'var(--color-text-muted)',
+                }}>
+                  <ClipboardList size={22} />
+                </div>
+                <h3 style={{ ...f('sm', 500), margin: '0 0 4px' }}>No assessments yet</h3>
+                <p style={{ ...f('xs', 400, 'var(--color-text-muted)'), margin: '0 0 16px', lineHeight: 1.5 }}>
+                  Take a quick assessment to understand where you stand.
+                </p>
+                <button
+                  onClick={() => onNavigate?.('/assessment')}
+                  className="flex items-center justify-center"
+                  style={{
+                    margin: '0 auto', padding: '10px 24px', borderRadius: 'var(--radius-pill)',
+                    backgroundColor: 'var(--color-primary-default)', color: 'var(--color-text-inverse)',
+                    border: 'none', cursor: 'pointer', gap: 8,
+                    ...f('sm', 500, 'var(--color-text-inverse)'),
+                  }}
+                >
+                  <Play size={14} fill="currentColor" /> Begin Assessment
+                </button>
+              </div>
+            )}
+          </div>
         </motion.section>
 
-        {/* ─── WIDGET 3: Your Journey ─── */}
+        {/* ─── WIDGET 3: Equip Progress ─── */}
         <motion.section
-          aria-label="Program and assessment progress"
+          aria-label="Program progress"
           data-widget="program-progress"
           initial={{ opacity: 0, y: 14 }}
           animate={{ opacity: 1, y: 0 }}
@@ -471,7 +559,7 @@ export function Dashboard({ className, onNavigate }: DashboardProps) {
             activeEnrollment={activeEnrollment}
             activeProgram={activeProgram}
             completedEnrollments={completedEnrollments}
-            engineResult={engineResult}
+            engineResult={null}
             onNavigate={onNavigate}
           />
         </motion.section>

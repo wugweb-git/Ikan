@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Wizard } from '../wizard/Wizard';
 import { WizardConfig } from '../wizard/types';
 import { Button } from '../ui/button';

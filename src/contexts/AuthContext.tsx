@@ -1,7 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { apiClient, User } from '../lib/api-client';
 import { supabase } from '../lib/supabase-client'; // Use singleton client
-import { isOfflineMode, offlineDemoUser } from '../lib/offline-fallbacks';
 import type { Session } from '@supabase/supabase-js';
 
 interface AuthContextType {
@@ -15,6 +14,7 @@ interface AuthContextType {
   signInWithProvider: (provider: 'google' | 'linkedin_oidc' | 'apple') => Promise<void>;
   signOut: () => Promise<void>;
   updateProfile: (updates: Partial<User>) => Promise<void>;
+  refreshProfile: () => Promise<void>;
   recoverSession: () => Promise<boolean>;
   resetPassword: (email: string) => Promise<void>;
 }
@@ -450,6 +450,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const refreshProfile = async () => {
+    try {
+      const profile = await apiClient.getProfile();
+      if (profile && profile.user_id) {
+        setUser(profile);
+      }
+    } catch (error) {
+      console.error('Refresh profile error:', error);
+      throw error;
+    }
+  };
+
   const recoverSession = async (): Promise<boolean> => {
     try {
       console.log('🔧 Attempting session recovery...');
@@ -589,6 +601,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     signInWithProvider,
     signOut,
     updateProfile,
+    refreshProfile,
     recoverSession,
     resetPassword,
   };

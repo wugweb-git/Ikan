@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import {
   Mail,
   Send,
@@ -320,6 +320,28 @@ export function AdminCommunication({ onBack: _onBack }: { onBack?: () => void })
           </h3>
           <Card style={{ backgroundColor: 'var(--color-bg-card)', borderRadius: 'var(--radius-lg)' }}>
             <CardContent className="p-0">
+              {isMobile ? (
+                <div className="divide-y" style={{ borderColor: 'var(--color-border-default)' }}>
+                  {queue.map((item) => (
+                    <div key={item.id} className="p-4 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          {getTypeIcon(item.type)}
+                          <span style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--font-weight-medium)', textTransform: 'capitalize' }}>
+                            {item.type}
+                          </span>
+                        </div>
+                        <AdminStatusBadge status={item.status} />
+                      </div>
+                      <div style={{ fontSize: 'var(--text-sm)' }}>{item.subject}</div>
+                      <div className="flex justify-between" style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}>
+                        <span style={{ fontFamily: 'monospace' }}>{item.recipient}</span>
+                        <span>{new Date(item.scheduled_at).toLocaleDateString()}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
               <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead style={{ backgroundColor: 'var(--color-bg-muted)' }}>
@@ -374,6 +396,7 @@ export function AdminCommunication({ onBack: _onBack }: { onBack?: () => void })
                   </tbody>
                 </table>
               </div>
+              )}
             </CardContent>
           </Card>
         </div>

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { cn } from '../ui/utils';
 import { 
   Star, 
@@ -30,7 +30,7 @@ import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { apiClient } from '../../lib/api-client';
 import { useIsMobile } from '../../hooks/useIsMobile';
-import { toast } from 'sonner';
+import { toast } from 'sonner@2.0.3';
 import { MobileHeader } from '../navigation/MobileHeader';
 import { LoadingSpinner } from '../LoadingSpinner';
 

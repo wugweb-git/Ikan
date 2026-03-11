@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import {
   CreditCard,
   DollarSign,
@@ -527,6 +527,27 @@ export function AdminPaymentGateway() {
             </h3>
             <Card style={{ backgroundColor: 'var(--color-bg-card)', borderRadius: 'var(--radius-lg)' }}>
               <CardContent className="p-0">
+                {isMobile ? (
+                  <div className="divide-y" style={{ borderColor: 'var(--color-border-default)' }}>
+                    {transactions.slice(0, 10).map((txn) => (
+                      <div key={txn.id} className="p-4 space-y-2">
+                        <div className="flex items-center justify-between">
+                          <span style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--font-weight-medium)' }}>
+                            {txn.currency} {txn.amount.toLocaleString()}
+                          </span>
+                          <AdminStatusBadge status={txn.status} />
+                        </div>
+                        <div style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)', fontFamily: 'monospace' }}>
+                          {txn.id}
+                        </div>
+                        <div className="flex justify-between" style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}>
+                          <span style={{ textTransform: 'capitalize' }}>{txn.gateway}</span>
+                          <span>{new Date(txn.created_at).toLocaleDateString()}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
                 <div className="overflow-x-auto">
                   <table className="w-full">
                     <thead style={{ backgroundColor: 'var(--color-bg-muted)' }}>
@@ -576,6 +597,7 @@ export function AdminPaymentGateway() {
                     </tbody>
                   </table>
                 </div>
+                )}
               </CardContent>
             </Card>
           </div>

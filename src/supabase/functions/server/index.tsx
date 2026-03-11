@@ -27,7 +27,6 @@ import {
 } from "./validation.tsx";
 
 import { RecommendationService } from "./recommendation-service.ts";
-import { MigrationRunner } from "./migration-runner.ts";
 
 import { registerEquipRoutes } from './equip-routes.ts';
 import { registerProgressRoutes } from './progress-routes.ts';
@@ -41,6 +40,7 @@ import { registerContactRoutes } from './contact-routes.ts';
 import { registerScalesRoutes } from './scales-routes.ts';
 import { registerHealthConnectRoutes } from './health-connect-routes.ts';
 import { registerBrevoRoutes } from './brevo-routes.ts';
+import { registerCorporateRoutes } from './corporate-routes.ts';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Layer 0: Centralized connection-closed error detection
@@ -83,7 +83,7 @@ console.error = (...args: any[]) => {
   _origConsoleError.apply(console, args);
 };
 
-// ─────────────────────────────────────────────────────────────────────────────
+// ���────────────────────────────────────────────────────────────────────────────
 // Layer 1: GLOBAL unhandledrejection listener
 //
 // This error fires inside Deno's internal `respondWith()` → `mapped()` chain
@@ -127,7 +127,7 @@ const app = new Hono().basePath('/make-server-cc205da9');
 //
 // c.json() tries to write to the socket, which re-throws if the client already
 // disconnected. Using `new Response(null, ...)` avoids that second explosion.
-// ─────────────────────────────────────────────────────────────────────────────
+// ─────────────────���───────────────────────────────────────────────────────────
 app.onError((err, c) => {
   if (isConnectionClosedError(err)) {
     console.log('Client disconnected before response completed (non-fatal)');
@@ -212,12 +212,13 @@ registerRecommendationRoutes(app, requireAuth);
 registerAdminRoutes(app, requireAuth, requireAdmin);
 registerAssessmentRoutes(app, requireAuth);
 registerMoodRoutes(app, requireAuth);
-registerNewsletterRoutes(app);
-registerContactRoutes(app);
+registerNewsletterRoutes(app, requireAdmin);
+registerContactRoutes(app, requireAdmin);
 registerResourceRoutes(app, requireAuth);
 registerScalesRoutes(app, requireAuth);
 registerHealthConnectRoutes(app, requireAuth);
 registerBrevoRoutes(app, requireAdmin, requireAuth);
+registerCorporateRoutes(app);
 
   // CMS Public Routes
   app.get("/cms/pages/:slug", async (c) => {
@@ -250,18 +251,17 @@ registerBrevoRoutes(app, requireAdmin, requireAuth);
          }
       }
       
-      // Fallback: Generate default content if still not found
+      // Fallback: Return in-memory default content if still not found.
+      // NOTE: We do NOT persist defaults automatically — use "Sync System Pages"
+      // in Admin → Page Manager to deliberately create missing pages.
       if (!page) {
-        
-        // If still not found, check if we should generate default content for it
-        if (!page) {
            const requiredPageIds = [
              'about', 'privacy', 'terms', 'faq', 'contact', 'return-policy', 'cancellation-policy', 'sitemap',
              'homepage-hero', 'homepage-assessment', 'homepage-mission', 'homepage-benefits', 'homepage-faq', 'homepage-newsletter', 'homepage-equip-intro'
            ];
            
            if (requiredPageIds.includes(slug)) {
-              console.log(`Generating default content for ${slug}`);
+              console.log(`Returning in-memory default content for ${slug} (not persisted)`);
               const defaultContent = createDefaultCMSContent(slug);
               page = {
                 id: slug,
@@ -272,12 +272,10 @@ registerBrevoRoutes(app, requireAdmin, requireAuth);
                 content: defaultContent.content,
                 lastUpdated: defaultContent.lastUpdated,
                 created_at: new Date().toISOString(),
-                updated_at: new Date().toISOString()
+                updated_at: new Date().toISOString(),
+                _generated: true
               };
-              // Persist it so next time we find it
-              await kv.set(`cms_page:${slug}`, page);
            }
-        }
       }
 
       if (!page) {
@@ -296,27 +294,6 @@ registerBrevoRoutes(app, requireAdmin, requireAuth);
       return c.json({ error: "Failed to fetch page" }, 500);
     }
   });
-
-// Initialization endpoint
-app.post("/init/sample-data", async (c) => {
-  const authHeader = c.req.header('Authorization');
-  const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
-  
-  // Allow if using service role key
-  if (authHeader !== `Bearer ${serviceRoleKey}`) {
-    // Also allow if it's a dev environment or if explicit anon key is allowed (unlikely)
-    // For now, strict check
-    return c.json({ error: 'Unauthorized: Service Role Key required' }, 401);
-  }
-
-  try {
-    const result = await MigrationRunner.run();
-    return c.json(result);
-  } catch (error: any) {
-    console.error("Initialization failed:", error);
-    return c.json({ error: error.message }, 500);
-  }
-});
 
 // User signup endpoint
 app.post("/auth/signup", async (c) => {
@@ -462,6 +439,11 @@ app.put("/users/profile", requireAuth, async (c) => {
     // Update privacy settings
     if (updates.privacy_settings !== undefined) {
       updatedProfile.privacy_settings = updates.privacy_settings;
+    }
+    
+    // Update security settings
+    if (updates.security_settings !== undefined) {
+      updatedProfile.security_settings = updates.security_settings;
     }
     
     await kv.set(`user:${userId}`, updatedProfile);
@@ -1726,7 +1708,6 @@ app.post("/admin/resources", requireAdmin, async (c) => {
       created_by: user.id
     };
     
-    // Use the new prefix for consistency with seeded data
     await kv.set(`library:resource:${resourceId}`, newResource);
     
     console.log(`✅ Resource created: ${resourceId}`);
@@ -2114,19 +2095,6 @@ app.delete("/admin/users/:userId", requireAuth, async (c) => {
   }
 });
 
-// ========================================
-// MIGRATION ENDPOINT (PHASE 4)
-// ========================================
-
-app.post("/admin/migrate/v1", requireAdmin, async (c) => {
-  try {
-    const result = await MigrationRunner.run();
-    return c.json(result);
-  } catch (error: any) {
-    return c.json({ success: false, error: error.message }, 500);
-  }
-});
-
 // Consultation/Professional Endpoints
 app.get("/consultation/professionals", async (c) => {
   try {
@@ -2300,43 +2268,9 @@ app.get("/cms/pages", requireAuth, async (c) => {
       .map(item => item?.value)
       .filter(page => page && page.id && page.name && page.title && page.slug);
 
-    // List of required standard pages
-    const requiredPageIds = [
-      'about', 'privacy', 'terms', 'faq', 'contact', 'return-policy', 'cancellation-policy', 'sitemap',
-      'homepage-hero', 'homepage-assessment', 'homepage-mission', 'homepage-benefits', 'homepage-faq', 'homepage-newsletter', 'homepage-equip-intro'
-    ];
-    const missingPages = [];
-
-    // Check for missing standard pages
-    for (const pageId of requiredPageIds) {
-       const exists = validPages.some(p => p.id === pageId || p.slug === pageId);
-       if (!exists) {
-         missingPages.push(pageId);
-       }
-    }
-
-    // Create any missing standard pages
-    if (missingPages.length > 0) {
-      console.log(`📄 Creating ${missingPages.length} missing CMS pages: ${missingPages.join(', ')}`);
-      
-      for (const pageId of missingPages) {
-        const defaultContent = createDefaultCMSContent(pageId);
-        const page = {
-          id: pageId,
-          name: defaultContent.title,
-          title: defaultContent.title,
-          slug: pageId,
-          published: true,
-          content: defaultContent.content,
-          lastUpdated: defaultContent.lastUpdated,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        };
-        
-        await kv.set(`cms_page:${page.id}`, page);
-        validPages.push(page);
-      }
-    }
+    // NOTE: We no longer auto-create missing system pages on GET.
+    // Use "Sync System Pages" in Admin → Page Manager to deliberately
+    // create any missing pages. This prevents CRUD side-effects on reads.
     
     console.log(`✅ Returning ${validPages.length} CMS pages`);
     return c.json({ pages: validPages });
@@ -3374,53 +3308,7 @@ function createDefaultCMSContent(pageId: string): any {
 
 
 
-// Newsletter Signup Endpoint
-app.post("/newsletter/signup", async (c) => {
-  try {
-    const { name, email } = await c.req.json();
-    
-    if (!email) {
-      return c.json({ error: 'Email is required' }, 400);
-    }
-
-    // Validate email format
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-      return c.json({ error: 'Invalid email format' }, 400);
-    }
-
-    const subscriberId = `newsletter:${email}`;
-    
-    // Check if already subscribed
-    const existingSubscriber = await kv.get(subscriberId);
-    if (existingSubscriber) {
-      return c.json({ 
-        message: 'You are already subscribed to our newsletter',
-        alreadySubscribed: true 
-      }, 200);
-    }
-
-    // Create newsletter subscription
-    const subscription = {
-      email,
-      name: name || '',
-      subscribed_at: new Date().toISOString(),
-      status: 'active',
-      source: 'website'
-    };
-
-    await kv.set(subscriberId, subscription);
-    
-    console.log(`✅ Newsletter subscription: ${email}`);
-    return c.json({ 
-      message: 'Successfully subscribed to newsletter!',
-      success: true 
-    });
-  } catch (error) {
-    console.log('Newsletter signup error:', error);
-    return c.json({ error: 'Failed to process newsletter signup' }, 500);
-  }
-});
+// Newsletter signup is handled by newsletter-routes.ts (registerNewsletterRoutes)
 
 // ============================================================================
 // ANALYTICS ENDPOINTS

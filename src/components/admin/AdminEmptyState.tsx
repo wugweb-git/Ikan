@@ -1,5 +1,5 @@
 import React from 'react';
-import { Button } from '../ui/button';
+import { cn } from '../ui/utils';
 
 interface AdminEmptyStateProps {
   icon: React.ReactNode;

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { cn } from '../ui/utils';
 import { Separator } from '../ui/separator';
 import svgPaths from '../../imports/svg-tfxlcr50sc';
-import { ChevronRight } from 'lucide-react';
+import { ChevronRight, FileText, ScrollText, RotateCcw, XCircle } from 'lucide-react';
 
 interface SideNavAccountProps {
   currentRoute: string;
@@ -14,7 +14,6 @@ interface SideNavAccountProps {
 }
 
 // Icon Components from Figma SVGs
-
 const IconProfile = ({ color = "currentColor" }: { color?: string }) => (
   <svg className="block w-[15px] h-[17px]" fill="none" viewBox="0 0 13.9077 16.0073">
     <g>
@@ -119,6 +118,20 @@ const IconChevron = ({ color = "currentColor" }: { color?: string }) => (
   </svg>
 );
 
+// Lucide-based icon wrappers for Legal section
+const IconPrivacyPolicy = ({ color = "currentColor" }: { color?: string }) => (
+  <FileText size={18} color={color} />
+);
+const IconTerms = ({ color = "currentColor" }: { color?: string }) => (
+  <ScrollText size={18} color={color} />
+);
+const IconReturnPolicy = ({ color = "currentColor" }: { color?: string }) => (
+  <RotateCcw size={18} color={color} />
+);
+const IconCancellation = ({ color = "currentColor" }: { color?: string }) => (
+  <XCircle size={18} color={color} />
+);
+
 interface NavItem {
   id: string;
   label: string;
@@ -133,212 +146,250 @@ interface NavGroup {
   collapsible?: boolean;
 }
 
-export function SideNavAccount({ 
-  currentRoute, 
-  onNavigate, 
+// ─── Group title style ─────────────────────────────────────────
+const groupTitleStyle: React.CSSProperties = {
+  fontSize: '11px',
+  fontWeight: 'var(--font-weight-medium)' as any,
+  fontFamily: 'var(--font-family-base)',
+  color: 'var(--color-text-muted)',
+  textTransform: 'uppercase' as any,
+  letterSpacing: '0.8px',
+  lineHeight: '16px',
+  margin: 0
+};
+
+export function SideNavAccount({
+  currentRoute,
+  onNavigate,
   onLogout,
   className,
   style,
   isMobile = false
 }: SideNavAccountProps) {
-  
-  // Initialize with only top 2 groups open to satisfy constraint
-  // On mobile, maybe defaults are different? Figma implies ACCOUNT and PREFERENCES are open.
+
   const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({
     'profile': true,
     'preferences': true,
-    'settings': false,
-    'support': false,
-    'legal': false
+    'system': true
   });
 
   const toggleGroup = (groupId: string) => {
-    setExpandedGroups(prev => ({
-      ...prev,
-      [groupId]: !prev[groupId]
-    }));
+    setExpandedGroups(prev => ({ ...prev, [groupId]: !prev[groupId] }));
   };
 
   const navGroups: NavGroup[] = [
     {
       id: 'profile',
-      title: 'ACCOUNT',
+      title: 'Account',
       collapsible: true,
       items: [
-        { 
-          id: 'profile', 
-          label: 'Profile', 
-          route: '/account/profile', 
-          icon: IconProfile 
-        },
-        { 
-          id: 'payments', 
-          label: 'Payments', 
-          route: '/account/payments', 
-          icon: IconPayments 
-        },
-        { 
-          id: 'organization', 
-          label: 'Organization', 
-          route: '/account/corporate', 
-          icon: IconOrganization 
-        }
+        { id: 'profile', label: 'Profile', route: '/account/profile', icon: IconProfile },
+        { id: 'payments', label: 'Payments', route: '/account/payments', icon: IconPayments },
+        { id: 'organization', label: 'Organization', route: '/account/corporate', icon: IconOrganization }
       ]
     },
     {
       id: 'preferences',
-      title: 'PREFERENCES',
+      title: 'Preferences',
       collapsible: true,
       items: [
-        { 
-          id: 'preferences', 
-          label: 'Preferences', 
-          route: '/account/preferences', 
-          icon: IconPreferences 
-        },
-        { 
-          id: 'notifications', 
-          label: 'Notifications', 
-          route: '/account/notifications', 
-          icon: IconNotifications 
-        }
+        { id: 'preferences', label: 'Preferences', route: '/account/preferences', icon: IconPreferences },
+        { id: 'notifications', label: 'Notifications', route: '/account/notifications', icon: IconNotifications }
       ]
     },
     {
       id: 'system',
-      title: 'SYSTEM',
+      title: 'System',
       collapsible: true,
       items: [
-        { 
-          id: 'privacy', 
-          label: 'Privacy', 
-          route: '/account/privacy', 
-          icon: IconPrivacy 
-        },
-        { 
-          id: 'security', 
-          label: 'Security', 
-          route: '/account/security', 
-          icon: IconSecurity 
-        },
-        { 
-          id: 'settings', 
-          label: 'Settings', 
-          route: '/account/settings', 
-          icon: IconAbout 
-        }
+        { id: 'privacy', label: 'Privacy', route: '/account/privacy', icon: IconPrivacy },
+        { id: 'security', label: 'Security', route: '/account/security', icon: IconSecurity },
+        { id: 'settings', label: 'Settings', route: '/account/settings', icon: IconAbout }
+      ]
+    },
+    {
+      id: 'legal',
+      title: 'Legal',
+      collapsible: true,
+      items: [
+        { id: 'privacy-policy', label: 'Privacy Policy', route: '/privacy', icon: IconPrivacyPolicy },
+        { id: 'terms', label: 'Terms & Conditions', route: '/terms', icon: IconTerms },
+        { id: 'return-policy', label: 'Return Policy', route: '/return-policy', icon: IconReturnPolicy },
+        { id: 'cancellation-policy', label: 'Cancellation Policy', route: '/cancellation-policy', icon: IconCancellation }
       ]
     }
   ];
 
+  // ─── Mobile Layout ──────────────────────────────────────────
+  if (isMobile) {
+    return (
+      <div
+        className={cn("flex flex-col items-start relative w-full bg-transparent p-0 border-none", className)}
+        style={{ ...style, boxShadow: 'none' }}
+        data-name="SideNavAccount"
+      >
+        <div className="flex flex-col w-full" style={{ gap: '24px' }}>
+          {navGroups.map((group) => (
+            <div key={group.id} className="w-full">
+              {/* Group Title */}
+              <div
+                className="flex items-center justify-between cursor-pointer"
+                style={{ paddingLeft: '16px', paddingRight: '16px', marginBottom: '8px' }}
+                onClick={() => group.collapsible && toggleGroup(group.id)}
+              >
+                <h3 style={groupTitleStyle}>{group.title}</h3>
+                {group.collapsible && (
+                  <div
+                    className="transition-transform duration-200"
+                    style={{ transform: expandedGroups[group.id] ? 'rotate(0deg)' : 'rotate(180deg)' }}
+                  >
+                    <IconChevron color="var(--color-text-muted)" />
+                  </div>
+                )}
+              </div>
+
+              {/* Items */}
+              {(expandedGroups[group.id] || !group.collapsible) && (
+                <div className="settings-group flex flex-col w-full">
+                  {group.items.map((item) => {
+                    const Icon = item.icon;
+                    return (
+                      <button
+                        key={item.id}
+                        onClick={() => onNavigate(item.route)}
+                        className="settings-item w-full transition-colors active:bg-[var(--color-bg-muted)] group"
+                      >
+                        <div className="flex flex-row items-center justify-between w-full h-full">
+                          <div className="flex items-center" style={{ gap: '12px' }}>
+                            <div className="shrink-0 w-[24px] flex items-center justify-center">
+                              <Icon color="var(--color-text-primary)" />
+                            </div>
+                            <span
+                              style={{
+                                fontSize: '16px',
+                                fontWeight: 'var(--font-weight-medium)' as any,
+                                color: 'var(--color-text-primary)',
+                                fontFamily: 'var(--font-family-base)'
+                              }}
+                            >
+                              {item.label}
+                            </span>
+                          </div>
+                          <ChevronRight className="w-5 h-5" style={{ color: 'var(--color-text-muted)' }} />
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          ))}
+
+          {/* Logout — danger style */}
+          {onLogout && (
+            <div className="w-full" style={{ marginTop: '8px' }}>
+              <Separator style={{ backgroundColor: 'var(--color-border-default)', marginBottom: '16px' }} />
+              <div className="settings-group">
+                <button
+                  onClick={onLogout}
+                  className="settings-item w-full transition-colors active:bg-[rgba(239,68,68,0.08)] group"
+                >
+                  <div className="flex flex-row items-center justify-between w-full h-full">
+                    <div className="flex items-center" style={{ gap: '12px' }}>
+                      <div className="shrink-0 w-[24px] flex items-center justify-center">
+                        <IconLogOut color="var(--color-status-danger)" />
+                      </div>
+                      <span
+                        style={{
+                          fontSize: '16px',
+                          fontWeight: 'var(--font-weight-medium)' as any,
+                          color: 'var(--color-status-danger)',
+                          fontFamily: 'var(--font-family-base)'
+                        }}
+                      >
+                        Log out
+                      </span>
+                    </div>
+                    <ChevronRight className="w-5 h-5" style={{ color: 'var(--color-status-danger)' }} />
+                  </div>
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  // ─── Desktop Layout ─────────────────────────────────────────
   return (
-    <div 
-      className={cn(
-        "flex flex-col items-start relative w-full",
-        isMobile ? "bg-transparent p-0 border-none" : "bg-white p-5 border border-[var(--color-border-default)]",
-        className
-      )} 
-      style={{
-        ...style,
-        boxShadow: 'none'
-      }}
+    <div
+      className={cn("flex flex-col items-start relative w-full bg-white border border-[var(--color-border-default)]", className)}
+      style={{ ...style, boxShadow: 'none', padding: '12px' }}
       data-name="SideNavAccount"
     >
-      <div className={cn("flex flex-col w-full", isMobile ? "gap-[16px]" : "gap-[12px]")}>
+      <div className="flex flex-col w-full" style={{ gap: '12px' }}>
         {navGroups.map((group, index) => (
           <div key={group.id} className="w-full">
-            {/* Separator between groups (desktop only or specific mobile logic if needed) */}
-            {/* Mobile design doesn't explicitly show separators between groups, just spacing. 
-                Desktop has them. Keeping desktop behavior, hiding on mobile if spacing handles it. */}
-            {!isMobile && index > 0 && <Separator className="mb-[12px] bg-[var(--color-border-default)]" />}
+            {index > 0 && <Separator style={{ backgroundColor: 'var(--color-border-default)', marginBottom: '12px' }} />}
 
             {/* Group Header */}
-            <div 
-              className={cn(
-                "flex items-center justify-between",
-                isMobile ? "px-[16px] mb-[8px]" : "px-[0px] py-[8px] h-[34px]",
-                group.collapsible ? "cursor-pointer" : ""
-              )}
+            <div
+              className="flex items-center justify-between cursor-pointer"
+              style={{ padding: '0 4px', marginBottom: '6px' }}
               onClick={() => group.collapsible && toggleGroup(group.id)}
             >
-              <h3 className={cn(
-                "font-medium text-[var(--color-text-muted)] uppercase tracking-[0.6px]",
-                isMobile ? "text-[13px] leading-[18px]" : "text-[12px] leading-[18px]"
-              )}>
-                {group.title}
-              </h3>
+              <h3 style={groupTitleStyle}>{group.title}</h3>
               {group.collapsible && (
-                <div 
-                  className={cn(
-                    "text-[var(--color-text-muted)] transition-transform duration-200",
-                    expandedGroups[group.id] ? "rotate-0" : "rotate-180"
-                  )}
+                <div
+                  className="transition-transform duration-200"
+                  style={{ transform: expandedGroups[group.id] ? 'rotate(0deg)' : 'rotate(180deg)' }}
                 >
                   <IconChevron color="var(--color-text-muted)" />
                 </div>
               )}
             </div>
 
-            {/* Group Items */}
+            {/* Items */}
             {(expandedGroups[group.id] || !group.collapsible) && (
-              <div className={cn("flex flex-col w-full", isMobile ? "settings-group" : "gap-[8px] mt-1")}>
+              <div className="flex flex-col w-full" style={{ gap: '4px' }}>
                 {group.items.map((item) => {
                   const isActive = currentRoute === item.route;
                   const Icon = item.icon;
-                  
-                  // Mobile specific styling vs Desktop
-                  // Mobile: settings-item (defined in globals.css)
-                  // Desktop: existing logic
-                  
-                  if (isMobile) {
-                      return (
-                        <button
-                          key={item.id}
-                          onClick={() => onNavigate(item.route)}
-                          className="settings-item w-full transition-colors active:bg-[var(--color-bg-muted)] group"
-                        >
-                          <div className="flex flex-row items-center justify-between w-full h-full">
-                            <div className="flex gap-[12px] items-center">
-                              <div className="shrink-0 w-[24px] flex items-center justify-center">
-                                <Icon color="var(--color-text-primary)" />
-                              </div>
-                              <div className="flex flex-col justify-center leading-none text-[var(--color-text-primary)] font-medium text-[16px]">
-                                {item.label}
-                              </div>
-                            </div>
-                            <ChevronRight className="w-5 h-5 text-[var(--color-text-muted)]" />
-                          </div>
-                        </button>
-                      );
-                  }
 
-                  const desktopButtonClasses = isActive 
-                    ? "bg-[var(--color-primary-default)] border-[var(--color-primary-default)]" 
-                    : "bg-white border-[var(--color-border-default)] hover:bg-[var(--color-bg-page)]";
-                  
                   return (
                     <button
                       key={item.id}
                       onClick={() => onNavigate(item.route)}
                       className={cn(
-                        "relative w-full transition-all duration-200 overflow-hidden group flex items-center h-[50px] border",
-                        desktopButtonClasses
+                        "relative w-full transition-all duration-200 flex items-center overflow-hidden",
+                        isActive
+                          ? "bg-[var(--color-primary-default)]"
+                          : "bg-transparent hover:bg-[var(--color-bg-page)]"
                       )}
-                      style={{ borderRadius: 'var(--radius-md)' }}
+                      style={{
+                        borderRadius: 'var(--radius-md)',
+                        height: '44px',
+                        padding: '0 16px',
+                        border: 'none',
+                        cursor: 'pointer'
+                      }}
                     >
-                      <div className="flex flex-row items-center justify-between w-full h-full px-[20px]">
-                        <div className="flex gap-[12px] items-center">
-                          <div className="shrink-0 w-[24px] flex items-center justify-center">
-                            <Icon color={isActive ? "white" : "var(--color-text-primary)"} />
-                          </div>
-                          <div className={cn(
-                            "flex flex-col justify-center leading-[0] not-italic relative shrink-0 text-nowrap font-medium h-[28px]",
-                            "text-[14px]",
-                            isActive ? "text-white" : "text-[var(--color-text-primary)]"
-                          )}>
-                            <p className="leading-[28px]">{item.label}</p>
-                          </div>
+                      <div className="flex items-center" style={{ gap: '12px' }}>
+                        <div className="shrink-0 w-[20px] flex items-center justify-center">
+                          <Icon color={isActive ? "white" : "var(--color-text-primary)"} />
                         </div>
+                        <span
+                          style={{
+                            fontSize: '14px',
+                            fontWeight: 'var(--font-weight-medium)' as any,
+                            fontFamily: 'var(--font-family-base)',
+                            color: isActive ? 'white' : 'var(--color-text-primary)',
+                            lineHeight: '20px'
+                          }}
+                        >
+                          {item.label}
+                        </span>
                       </div>
                     </button>
                   );
@@ -348,49 +399,39 @@ export function SideNavAccount({
           </div>
         ))}
 
+        {/* Logout — danger */}
         {onLogout && (
-          <div className={cn("w-full", isMobile ? "mt-[24px]" : "mt-[12px]")}>
-             {!isMobile && <Separator className="mb-[17px] bg-[var(--color-border-default)]" />}
-             
-             {isMobile ? (
-                <div className="settings-group">
-                    <button
-                      onClick={onLogout}
-                      className="settings-item w-full transition-colors active:bg-[var(--color-status-danger-light)] group"
-                    >
-                      <div className="flex flex-row items-center justify-between w-full h-full">
-                        <div className="flex gap-[12px] items-center">
-                          <div className="shrink-0 w-[24px] flex items-center justify-center">
-                            <IconLogOut color="var(--color-status-danger)" />
-                          </div>
-                          <div className="flex flex-col justify-center leading-none text-[var(--color-status-danger)] font-medium text-[16px]">
-                            Log out
-                          </div>
-                        </div>
-                        <ChevronRight className="w-5 h-5 text-[var(--color-status-danger)]" />
-                      </div>
-                    </button>
-                </div>
-             ) : (
-             <button
+          <div className="w-full">
+            <Separator style={{ backgroundColor: 'var(--color-border-default)', marginBottom: '16px' }} />
+            <button
               onClick={onLogout}
-              className={cn(
-                "relative w-full transition-all duration-200 group flex items-center h-[50px] border hover:bg-[var(--color-status-danger-light)]"
-              )}
-              style={{ backgroundColor: 'var(--color-bg-card)', borderColor: 'var(--color-status-danger)', borderRadius: 'var(--radius-md)' }}
+              className="relative w-full transition-all duration-200 flex items-center hover:bg-[rgba(239,68,68,0.06)]"
+              style={{
+                borderRadius: 'var(--radius-md)',
+                height: '44px',
+                padding: '0 16px',
+                border: '1px solid var(--color-status-danger)',
+                backgroundColor: 'transparent',
+                cursor: 'pointer'
+              }}
             >
-              <div className="flex flex-row items-center justify-between w-full h-full px-[20px]">
-                <div className="flex gap-[12px] items-center">
-                  <div className="shrink-0 w-[24px] flex items-center justify-center">
-                    <IconLogOut color="var(--color-status-danger)" />
-                  </div>
-                  <div className="flex flex-col justify-center leading-[0] not-italic relative shrink-0 text-[var(--color-status-danger)] text-nowrap font-medium h-[28px] text-[14px]">
-                    <p className="leading-[28px]">Log out</p>
-                  </div>
+              <div className="flex items-center" style={{ gap: '12px' }}>
+                <div className="shrink-0 w-[20px] flex items-center justify-center">
+                  <IconLogOut color="var(--color-status-danger)" />
                 </div>
+                <span
+                  style={{
+                    fontSize: '14px',
+                    fontWeight: 'var(--font-weight-medium)' as any,
+                    fontFamily: 'var(--font-family-base)',
+                    color: 'var(--color-status-danger)',
+                    lineHeight: '20px'
+                  }}
+                >
+                  Log out
+                </span>
               </div>
             </button>
-            )}
           </div>
         )}
       </div>

@@ -1,4 +1,4 @@
-import React from 'react';
+import { cn } from './ui/utils';
 import { motion } from 'motion/react';
 import { ArrowRight, Calendar, MessageCircle } from 'lucide-react';
 

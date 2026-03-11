@@ -6,7 +6,7 @@ import { Label } from './ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 import { Checkbox } from './ui/checkbox';
 import { useAuth } from '../contexts/AuthContext';
-import { User, Mail, Lock, Phone, Heart, Eye, EyeOff, Database } from 'lucide-react';
+import { User, Mail, Lock, Phone, Heart, Eye, EyeOff } from 'lucide-react';
 import { toast } from 'sonner@2.0.3';
 import { authContent } from '../lib/content/auth';
 import { projectId, publicAnonKey } from '../utils/supabase/info';
@@ -25,7 +25,6 @@ interface AuthFormProps {
 export function AuthForm({ onSuccess, defaultTab = 'signin' }: AuthFormProps) {
   const { signIn, signUp, signInWithProvider, loading } = useAuth();
   const [activeTab, setActiveTab] = useState(defaultTab);
-  const [seedingUsers, setSeedingUsers] = useState(false);
   
   // Sign In Form State
   const [signInData, setSignInData] = useState({
@@ -163,11 +162,6 @@ export function AuthForm({ onSuccess, defaultTab = 'signin' }: AuthFormProps) {
         description: error instanceof Error ? error.message : `Failed to sign in with ${provider}. Please try again.`
       });
     }
-  };
-
-  // Seed demo users function
-  const handleSeedDemoUsers = async () => {
-    toast.info('Seeding is disabled in production.');
   };
 
   const SocialButton = ({ 
@@ -711,47 +705,6 @@ export function AuthForm({ onSuccess, defaultTab = 'signin' }: AuthFormProps) {
             </div>
           </TabsContent>
         </Tabs>
-
-        {/* Demo Credentials Helper */}
-        <div 
-          className="mt-6 pt-6 border-t text-center"
-          style={{ borderColor: 'var(--color-border-default)' }}
-        >
-          <p 
-            className="mb-3"
-            style={{ 
-              fontSize: 'var(--text-xs)', 
-              color: 'var(--color-text-muted)' 
-            }}
-          >
-            First time here? Create demo accounts automatically
-          </p>
-          <Button
-            type="button"
-            variant="outline"
-            onClick={handleSeedDemoUsers}
-            disabled={seedingUsers || loading}
-            className="w-full gap-2"
-            style={{
-              borderColor: 'var(--color-primary-default)',
-              color: 'var(--color-primary-default)',
-              fontWeight: 'var(--font-weight-medium)'
-            }}
-          >
-            {seedingUsers ? (
-              <>
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current"></div>
-                Seeding Database...
-              </>
-            ) : (
-              <>
-                <Database size={16} />
-                Seed Demo Users
-              </>
-            )}
-          </Button>
-        </div>
-
 
       </CardContent>
     </Card>

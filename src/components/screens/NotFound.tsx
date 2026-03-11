@@ -1,6 +1,5 @@
-import React from 'react';
+import { MapPin, Home, ArrowLeft, Search, HelpCircle, BookOpen, MessageCircle } from 'lucide-react';
 import { useIsMobile } from '../../hooks/useIsMobile';
-import { Home, ArrowLeft, Search } from 'lucide-react';
 import { PageHero } from '../ui/PageHero';
 
 interface NotFoundProps {

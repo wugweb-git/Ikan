@@ -1,3 +1,4 @@
+import type React from 'react';
 import { ImageWithFallback } from '../../figma/ImageWithFallback';
 import { ErrorBoundary } from '../../ErrorBoundary';
 import { Button } from '../../ui/button';

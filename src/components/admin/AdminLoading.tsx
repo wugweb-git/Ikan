@@ -1,14 +1,9 @@
-import React from 'react';
-import { useIsMobile } from '../../hooks/useIsMobile';
-
 interface AdminLoadingProps {
   message?: string;
   fullScreen?: boolean;
 }
 
 export function AdminLoading({ message = 'Loading...', fullScreen = false }: AdminLoadingProps) {
-  const isMobile = useIsMobile();
-  
   const content = (
     <div className="flex flex-col items-center justify-center text-center p-6">
       <div 

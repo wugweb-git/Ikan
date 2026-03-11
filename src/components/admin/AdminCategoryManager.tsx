@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { AdminHeader } from './AdminHeader';
 import { Button } from '../ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
@@ -8,7 +8,7 @@ import { Label } from '../ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Plus, X, Save, FolderOpen, Edit2, Trash2, FileText, Tag, Filter, Type, Sparkles, ShieldCheck } from 'lucide-react';
 import { apiClient } from '../../lib/api-client';
-import { toast } from 'sonner';
+import { toast } from 'sonner@2.0.3';
 
 export interface AdminCategoryManagerProps {
   onBack: () => void;

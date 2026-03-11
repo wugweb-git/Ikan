@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { 
   Plus, Edit3, Trash2, MoreVertical, Search, 
   Layout, Users, BarChart3, ChevronRight 

@@ -3,7 +3,6 @@
  * Displays pending sync count and syncing state.
  * Follows iKan design tokens and accessibility guidelines.
  */
-import React from 'react';
 import { WifiOff, RefreshCw, Check } from 'lucide-react';
 import { cn } from './ui/utils';
 

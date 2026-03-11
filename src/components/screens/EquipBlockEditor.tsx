@@ -1,4 +1,4 @@
-import React from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { 
   BookOpen, 
   PenTool, 

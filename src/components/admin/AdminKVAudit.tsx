@@ -1,15 +1,16 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Button } from '../ui/button';
 import { Card } from '../ui/card';
 import { apiClient } from '../../lib/api-client';
 import {
   Database, AlertTriangle, Trash2, RefreshCw, ChevronDown, ChevronRight,
   CheckCircle, XCircle, Users, HardDrive, Search, Shield, Loader2,
-  Clock, ArrowRightLeft, TrendingUp, Save
+  Clock, ArrowRightLeft, TrendingUp, Save, Flame
 } from 'lucide-react';
 import { AdminHeader } from './AdminHeader';
 import { AdminLoading } from './AdminLoading';
 import { AdminStatusBadge } from './AdminStatusBadge';
+import { useIsMobile } from '../../hooks/useIsMobile';
 
 interface AuditData {
   timestamp: string;
@@ -31,7 +32,7 @@ interface AdminKVAuditProps {
   onBack?: () => void;
 }
 
-// ─── Section wrapper ────────────────────────────────────────────
+// ─── Section wrapper ───────────────────────────────────────────
 function AuditSection({ title, icon: Icon, count, variant, children, defaultOpen = false }: {
   title: string;
   icon: React.ElementType;
@@ -105,6 +106,7 @@ function KeyBadge({ keyName }: { keyName: string }) {
 }
 
 export function AdminKVAudit({ onBack }: AdminKVAuditProps) {
+  const isMobile = useIsMobile();
   const [loading, setLoading] = useState(false);
   const [audit, setAudit] = useState<AuditData | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -122,6 +124,14 @@ export function AdminKVAudit({ onBack }: AdminKVAuditProps) {
   const [snapshotResult, setSnapshotResult] = useState<string | null>(null);
   const [trends, setTrends] = useState<{ timestamp: string; score: number; totalKeys: number; orphanCount: number }[]>([]);
   const [trendsLoaded, setTrendsLoaded] = useState(false);
+  const [syncLoading, setSyncLoading] = useState(false);
+  const [syncResult, setSyncResult] = useState<string | null>(null);
+
+  // Purge state
+  const [purgePrefix, setPurgePrefix] = useState('');
+  const [purgeLoading, setPurgeLoading] = useState(false);
+  const [purgeResult, setPurgeResult] = useState<string | null>(null);
+  const [purgeConfirm, setPurgeConfirm] = useState(false);
 
   const runAudit = useCallback(async () => {
     setLoading(true);
@@ -445,6 +455,83 @@ export function AdminKVAudit({ onBack }: AdminKVAuditProps) {
         )}
       </AuditSection>
 
+      {/* ─── Multi-Tenant Prefix Sync ──────────────────────────── */}
+      <AuditSection
+        title="Multi-Tenant Prefix Sync"
+        icon={ArrowRightLeft}
+        count={audit.growthWarnings.filter(w => w.warning.includes('CRITICAL')).length}
+        variant={audit.growthWarnings.some(w => w.warning.includes('CRITICAL')) ? 'danger' : 'success'}
+        defaultOpen={audit.growthWarnings.some(w => w.warning.includes('CRITICAL'))}
+      >
+        <div className="space-y-4">
+          <p style={{ fontFamily: 'var(--font-family-base)', fontSize: 'var(--text-sm)', color: 'var(--color-text-muted)' }}>
+            In iKan's multi-tenant architecture, admin creates content with one prefix (e.g. <KeyBadge keyName="equip:" />) but users read from another (e.g. <KeyBadge keyName="equip_program:" />). This tool copies admin records to user-facing prefixes so content becomes visible.
+          </p>
+          <div className="p-3 rounded-lg" style={{
+            backgroundColor: 'var(--color-bg-muted)',
+            border: '1px solid var(--color-border-default)',
+            fontFamily: 'var(--font-family-base)',
+            fontSize: 'var(--text-xs)',
+            color: 'var(--color-text-muted)'
+          }}>
+            <div className="space-y-1">
+              <div className="flex items-center gap-2"><KeyBadge keyName="equip:" /> → <KeyBadge keyName="equip_program:" /> (Programs)</div>
+              <div className="flex items-center gap-2"><KeyBadge keyName="assessment_def:" /> → <KeyBadge keyName="assessment:" /> (Assessments)</div>
+              <div className="flex items-center gap-2"><KeyBadge keyName="resource:" /> → <KeyBadge keyName="library:resource:" /> (Library)</div>
+            </div>
+          </div>
+          <div className="flex items-center gap-3 flex-wrap">
+            <Button
+              variant="outline" size="sm"
+              onClick={async () => {
+                setSyncLoading(true); setSyncResult(null);
+                try {
+                  const res = await apiClient.syncPrefixes(true);
+                  setSyncResult(`Dry run: Would sync ${res.synced} record(s). ${res.actions?.length ? res.actions.join(', ') : 'Everything is in sync.'}`);
+                } catch (err: any) { setSyncResult(`Error: ${err?.message}`); }
+                finally { setSyncLoading(false); }
+              }}
+              disabled={syncLoading}
+              className="gap-1"
+              style={{ height: 'var(--ikan-component-button-height)', borderRadius: 'var(--radius-md)' }}
+            >
+              <Search className="w-3 h-3" /> Dry Run
+            </Button>
+            <Button
+              size="sm"
+              onClick={async () => {
+                setSyncLoading(true); setSyncResult(null);
+                try {
+                  const res = await apiClient.syncPrefixes(false);
+                  setSyncResult(`Synced ${res.synced} record(s) to user-facing prefixes.`);
+                  await runAudit();
+                } catch (err: any) { setSyncResult(`Error: ${err?.message}`); }
+                finally { setSyncLoading(false); }
+              }}
+              disabled={syncLoading}
+              className="gap-1"
+              style={{
+                height: 'var(--ikan-component-button-height)', borderRadius: 'var(--radius-md)',
+                backgroundColor: 'var(--color-primary-default)', color: 'var(--color-primary-on)'
+              }}
+            >
+              {syncLoading ? <Loader2 className="w-3 h-3 animate-spin" /> : <ArrowRightLeft className="w-3 h-3" />}
+              Sync Now
+            </Button>
+          </div>
+          {syncResult && (
+            <div className="p-3 rounded-lg" style={{
+              backgroundColor: syncResult.startsWith('Error') ? 'var(--color-status-danger-light)' : 'var(--color-status-success-light)',
+              border: `1px solid ${syncResult.startsWith('Error') ? 'var(--color-status-danger)' : 'var(--color-status-success)'}`,
+              fontFamily: 'var(--font-family-base)', fontSize: 'var(--text-sm)',
+              color: syncResult.startsWith('Error') ? 'var(--color-status-danger)' : 'var(--color-status-success)'
+            }}>
+              {syncResult}
+            </div>
+          )}
+        </div>
+      </AuditSection>
+
       {/* ─── Key Categories (Inventory) ─────────────────────── */}
       <AuditSection
         title="Key Inventory"
@@ -452,6 +539,26 @@ export function AdminKVAudit({ onBack }: AdminKVAuditProps) {
         count={Object.keys(audit.categorized).length}
         variant="info"
       >
+        {isMobile ? (
+          <div className="divide-y" style={{ borderColor: 'var(--color-border-default)' }}>
+            {sortedCategories.map(([prefix, data]) => {
+              const isUserData = prefix.startsWith('user:') || prefix.startsWith('journal') || prefix.startsWith('enrollment') || prefix.startsWith('progress') || prefix.startsWith('tracker');
+              const statusVal = isUserData ? 'info' : prefix.startsWith('audit:') || prefix.startsWith('backup') ? 'neutral' : 'primary';
+              const labelVal = isUserData ? 'User Data' : prefix.startsWith('audit:') ? 'Audit Trail' : prefix.startsWith('backup') ? 'System' : prefix.startsWith('idx_') ? 'Index' : prefix.endsWith('_slug:') || prefix.endsWith('_key:') ? 'Lookup' : 'Content';
+              return (
+                <div key={prefix} className="py-3 space-y-1" style={{ fontFamily: 'var(--font-family-base)' }}>
+                  <div className="flex items-center justify-between">
+                    <KeyBadge keyName={prefix} />
+                    <span style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--font-weight-medium)', color: 'var(--color-text-primary)' }}>
+                      {data.count}
+                    </span>
+                  </div>
+                  <AdminStatusBadge status={statusVal as any} label={labelVal} />
+                </div>
+              );
+            })}
+          </div>
+        ) : (
         <div className="overflow-x-auto">
           <table className="w-full" style={{ fontFamily: 'var(--font-family-base)', fontSize: 'var(--text-sm)' }}>
             <thead>
@@ -483,6 +590,7 @@ export function AdminKVAudit({ onBack }: AdminKVAuditProps) {
             </tbody>
           </table>
         </div>
+        )}
       </AuditSection>
 
       {/* ─── Audit Trail Pruning ─────────────────────────────── */}
@@ -714,6 +822,27 @@ export function AdminKVAudit({ onBack }: AdminKVAuditProps) {
             </p>
           )}
           {trendsLoaded && trends.length > 0 && (
+            isMobile ? (
+              <div className="divide-y" style={{ borderColor: 'var(--color-border-default)' }}>
+                {[...trends].reverse().slice(0, 15).map((s, i) => (
+                  <div key={i} className="py-3 space-y-1" style={{ fontFamily: 'var(--font-family-base)' }}>
+                    <div className="flex items-center justify-between">
+                      <span style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}>
+                        {new Date(s.timestamp).toLocaleString()}
+                      </span>
+                      <AdminStatusBadge
+                        status={s.score >= 90 ? 'success' : s.score >= 70 ? 'warning' : 'danger'}
+                        label={`${s.score}%`}
+                      />
+                    </div>
+                    <div className="flex items-center justify-between" style={{ fontSize: 'var(--text-sm)' }}>
+                      <span style={{ color: 'var(--color-text-muted)' }}>Keys: <span style={{ fontWeight: 'var(--font-weight-medium)', color: 'var(--color-text-primary)' }}>{s.totalKeys}</span></span>
+                      <span style={{ color: s.orphanCount > 0 ? 'var(--color-status-danger)' : 'var(--color-status-success)' }}>Orphans: {s.orphanCount}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
             <div className="overflow-x-auto">
               <table className="w-full" style={{ fontFamily: 'var(--font-family-base)', fontSize: 'var(--text-sm)' }}>
                 <thead>
@@ -747,38 +876,192 @@ export function AdminKVAudit({ onBack }: AdminKVAuditProps) {
                 </tbody>
               </table>
             </div>
+            )
           )}
         </div>
       </AuditSection>
 
-      {/* ─── Uncategorized Keys ──────────────────────────────── */}
-      {audit.uncategorizedCount > 0 && (
-        <AuditSection
-          title="Uncategorized Keys"
-          icon={Search}
-          count={audit.uncategorizedCount}
-          variant="warning"
-        >
-          <p style={{ fontFamily: 'var(--font-family-base)', fontSize: 'var(--text-sm)', color: 'var(--color-text-muted)', marginBottom: '8px' }}>
-            These keys don't match any known prefix pattern. They may be stale or from deprecated features.
+      {/* ─── Uncategorized Keys (auto-grouped by prefix) ────── */}
+      {audit.uncategorizedCount > 0 && (() => {
+        // Auto-detect prefix clusters from uncategorized keys
+        const prefixGroups: Record<string, { keys: { key: string; value: string }[]; count: number }> = {};
+        for (const k of audit.uncategorizedKeys) {
+          const colonIdx = k.key.indexOf(':');
+          const detectedPrefix = colonIdx > 0 ? k.key.substring(0, colonIdx + 1) : k.key;
+          if (!prefixGroups[detectedPrefix]) {
+            prefixGroups[detectedPrefix] = { keys: [], count: 0 };
+          }
+          prefixGroups[detectedPrefix].keys.push(k);
+          prefixGroups[detectedPrefix].count++;
+        }
+        const sortedGroups = Object.entries(prefixGroups).sort((a, b) => b[1].count - a[1].count);
+        const sampledTotal = audit.uncategorizedKeys.length;
+        const actualTotal = audit.uncategorizedCount;
+
+        return (
+          <AuditSection
+            title="Uncategorized Keys"
+            icon={Search}
+            count={audit.uncategorizedCount}
+            variant="warning"
+          >
+            <p style={{ fontFamily: 'var(--font-family-base)', fontSize: 'var(--text-sm)', color: 'var(--color-text-muted)', marginBottom: '12px' }}>
+              These keys don't match any known prefix pattern. They have been auto-grouped by detected prefix.
+              {actualTotal > sampledTotal && (
+                <span> Showing {sampledTotal} of {actualTotal} keys.</span>
+              )}
+            </p>
+            <div className="space-y-3">
+              {sortedGroups.map(([prefix, group]) => {
+                const estimatedCount = actualTotal > sampledTotal
+                  ? Math.round((group.count / sampledTotal) * actualTotal)
+                  : group.count;
+                return (
+                  <div key={prefix} className="p-3 rounded-lg" style={{
+                    backgroundColor: 'var(--color-bg-muted)',
+                    border: '1px solid var(--color-border-default)'
+                  }}>
+                    <div className="flex items-center justify-between mb-2 flex-wrap gap-2">
+                      <div className="flex items-center gap-2">
+                        <KeyBadge keyName={prefix} />
+                        <AdminStatusBadge
+                          status="warning"
+                          label={actualTotal > sampledTotal ? `~${estimatedCount} keys` : `${group.count} keys`}
+                        />
+                      </div>
+                      <Button
+                        variant="outline" size="sm"
+                        onClick={() => {
+                          setPurgePrefix(prefix);
+                          setPurgeResult(null);
+                          setPurgeConfirm(false);
+                        }}
+                        className="gap-1"
+                        style={{
+                          height: 'var(--ikan-component-button-height)',
+                          borderRadius: 'var(--radius-md)',
+                          fontSize: 'var(--text-xs)'
+                        }}
+                      >
+                        <Flame className="w-3 h-3" /> Purge
+                      </Button>
+                    </div>
+                    <div className="space-y-1 max-h-[150px] overflow-y-auto">
+                      {group.keys.slice(0, 5).map(k => (
+                        <div key={k.key} className="flex items-start gap-2 py-0.5">
+                          <code style={{
+                            fontFamily: 'monospace', fontSize: '11px',
+                            color: 'var(--color-text-muted)',
+                            wordBreak: 'break-all'
+                          }}>
+                            {k.key}
+                          </code>
+                          <span style={{ fontSize: '11px', color: 'var(--color-text-muted)', flexShrink: 0 }}>
+                            {k.value}
+                          </span>
+                        </div>
+                      ))}
+                      {group.keys.length > 5 && (
+                        <p style={{ fontFamily: 'var(--font-family-base)', fontSize: '11px', color: 'var(--color-text-muted)' }}>
+                          ... and {group.count - 5} more sampled
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </AuditSection>
+        );
+      })()}
+
+      {/* ─── Purge by Prefix ──────────────────────────────────── */}
+      <AuditSection
+        title="Purge by Prefix"
+        icon={Flame}
+        count={0}
+        variant="danger"
+      >
+        <div className="space-y-4">
+          <p style={{ fontFamily: 'var(--font-family-base)', fontSize: 'var(--text-sm)', color: 'var(--color-text-muted)' }}>
+            Delete all KV keys matching a given prefix. Use with extreme caution. Always dry-run first.
           </p>
-          <div className="space-y-1">
-            {audit.uncategorizedKeys.map(k => (
-              <div key={k.key} className="flex items-center gap-2 py-1">
-                <KeyBadge keyName={k.key} />
-                <span style={{ fontFamily: 'var(--font-family-base)', fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}>
-                  {k.value}
-                </span>
-              </div>
-            ))}
-            {audit.uncategorizedCount > 50 && (
-              <p style={{ fontFamily: 'var(--font-family-base)', fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}>
-                ... and {audit.uncategorizedCount - 50} more
-              </p>
-            )}
+          <div className={`flex items-center gap-3 ${isMobile ? 'flex-col items-stretch' : 'flex-wrap'}`}>
+            <input
+              type="text"
+              value={purgePrefix}
+              onChange={e => { setPurgePrefix(e.target.value); setPurgeConfirm(false); setPurgeResult(null); }}
+              placeholder="e.g. activity: or active_sessions:"
+              style={{
+                fontFamily: 'monospace', fontSize: 'var(--text-sm)',
+                padding: '8px 12px', borderRadius: 'var(--radius-md)',
+                border: '1px solid var(--color-border-default)',
+                backgroundColor: 'var(--color-bg-input)', color: 'var(--color-text-primary)',
+                minWidth: isMobile ? '100%' : '280px'
+              }}
+            />
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline" size="sm"
+                onClick={async () => {
+                  if (!purgePrefix || purgePrefix.length < 2) return;
+                  setPurgeLoading(true); setPurgeResult(null); setPurgeConfirm(false);
+                  try {
+                    const res = await apiClient.purgeKVPrefix(purgePrefix, true);
+                    if (res.wouldDelete === 0) {
+                      setPurgeResult(`No keys found with prefix "${purgePrefix}".`);
+                    } else {
+                      setPurgeResult(`Dry run: Would delete ${res.wouldDelete} key(s) with prefix "${purgePrefix}".${res.sampleKeys?.length ? ` Samples: ${res.sampleKeys.slice(0, 3).join(', ')}` : ''}`);
+                      setPurgeConfirm(true);
+                    }
+                  } catch (err: any) { setPurgeResult(`Error: ${err?.message}`); }
+                  finally { setPurgeLoading(false); }
+                }}
+                disabled={purgeLoading || !purgePrefix || purgePrefix.length < 2}
+                className="gap-1"
+                style={{ height: 'var(--ikan-component-button-height)', borderRadius: 'var(--radius-md)' }}
+              >
+                {purgeLoading && !purgeConfirm ? <Loader2 className="w-3 h-3 animate-spin" /> : <Search className="w-3 h-3" />} Dry Run
+              </Button>
+              {purgeConfirm && (
+                <Button
+                  size="sm"
+                  onClick={async () => {
+                    if (!purgePrefix) return;
+                    setPurgeLoading(true);
+                    try {
+                      const res = await apiClient.purgeKVPrefix(purgePrefix, false);
+                      setPurgeResult(`Purged ${res.deleted} of ${res.total} keys with prefix "${purgePrefix}".${res.failed ? ` ${res.failed} failed.` : ''}`);
+                      setPurgeConfirm(false);
+                      await runAudit();
+                    } catch (err: any) { setPurgeResult(`Error: ${err?.message}`); }
+                    finally { setPurgeLoading(false); }
+                  }}
+                  disabled={purgeLoading}
+                  className="gap-1"
+                  style={{
+                    height: 'var(--ikan-component-button-height)', borderRadius: 'var(--radius-md)',
+                    backgroundColor: 'var(--color-status-danger)', color: 'var(--color-text-inverse)'
+                  }}
+                >
+                  {purgeLoading ? <Loader2 className="w-3 h-3 animate-spin" /> : <Flame className="w-3 h-3" />}
+                  Confirm Purge
+                </Button>
+              )}
+            </div>
           </div>
-        </AuditSection>
-      )}
+          {purgeResult && (
+            <div className="p-3 rounded-lg" style={{
+              backgroundColor: purgeResult.startsWith('Error') ? 'var(--color-status-danger-light)' : purgeConfirm ? 'var(--color-status-warning-light)' : 'var(--color-status-success-light)',
+              border: `1px solid ${purgeResult.startsWith('Error') ? 'var(--color-status-danger)' : purgeConfirm ? 'var(--color-status-warning)' : 'var(--color-status-success)'}`,
+              fontFamily: 'var(--font-family-base)', fontSize: 'var(--text-sm)',
+              color: purgeResult.startsWith('Error') ? 'var(--color-status-danger)' : purgeConfirm ? 'var(--color-status-warning)' : 'var(--color-status-success)'
+            }}>
+              {purgeResult}
+            </div>
+          )}
+        </div>
+      </AuditSection>
 
       {/* ─── User Data Footprint (Multi-Tenant) ─────────────── */}
       <AuditSection
@@ -790,6 +1073,42 @@ export function AdminKVAudit({ onBack }: AdminKVAuditProps) {
         <p style={{ fontFamily: 'var(--font-family-base)', fontSize: 'var(--text-sm)', color: 'var(--color-text-muted)', marginBottom: '12px' }}>
           Top users by KV key count. Important for multi-tenant data isolation auditing.
         </p>
+        {isMobile ? (
+          <div className="divide-y" style={{ borderColor: 'var(--color-border-default)' }}>
+            {audit.userDataFootprint.map(u => (
+              <div key={u.userId} className="py-3 space-y-2" style={{ fontFamily: 'var(--font-family-base)' }}>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <span style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--font-weight-medium)', color: 'var(--color-text-primary)' }}>
+                      {u.email || 'Unknown'}
+                    </span>
+                    <br />
+                    <span style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)', fontFamily: 'monospace' }}>
+                      {u.userId.slice(0, 8)}...
+                    </span>
+                  </div>
+                  <span style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--font-weight-medium)', color: 'var(--color-text-primary)' }}>
+                    {u.keyCount} keys
+                  </span>
+                </div>
+                <div className="flex flex-wrap gap-1">
+                  {Object.entries(u.prefixes).filter(([, v]) => v > 0).map(([prefix, count]) => (
+                    <span key={prefix} style={{
+                      fontSize: 'var(--text-xs)',
+                      backgroundColor: 'var(--color-bg-muted)',
+                      color: 'var(--color-text-muted)',
+                      padding: '1px 6px',
+                      borderRadius: 'var(--radius-xs)',
+                      fontFamily: 'monospace'
+                    }}>
+                      {prefix.replace(/:$/, '')}:{count}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
         <div className="overflow-x-auto">
           <table className="w-full" style={{ fontFamily: 'var(--font-family-base)', fontSize: 'var(--text-sm)' }}>
             <thead>
@@ -837,6 +1156,7 @@ export function AdminKVAudit({ onBack }: AdminKVAuditProps) {
             </tbody>
           </table>
         </div>
+        )}
       </AuditSection>
     </div>
   );

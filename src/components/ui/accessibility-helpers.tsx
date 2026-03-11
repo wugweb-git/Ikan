@@ -1,5 +1,4 @@
-import React, { useEffect, useRef } from 'react';
-import { cn } from './utils';
+import { type ReactNode, type KeyboardEvent as ReactKeyboardEvent, useEffect, useRef, useState } from 'react';
 
 // Skip to main content link (for keyboard navigation)
 export function SkipToMainContent() {
@@ -33,7 +32,7 @@ export function SkipToMainContent() {
 
 // Screen reader only text
 interface ScreenReaderOnlyProps {
-  children: React.ReactNode;
+  children: ReactNode;
   as?: keyof JSX.IntrinsicElements;
 }
 
@@ -57,7 +56,7 @@ export function ScreenReaderOnly({ children, as: Component = 'span' }: ScreenRea
 
 // Focus trap for modals and dialogs
 interface FocusTrapProps {
-  children: React.ReactNode;
+  children: ReactNode;
   active?: boolean;
   className?: string;
 }
@@ -109,7 +108,7 @@ export function FocusTrap({ children, active = true, className }: FocusTrapProps
 
 // Live region for dynamic content announcements
 interface LiveRegionProps {
-  children: React.ReactNode;
+  children: ReactNode;
   politeness?: 'polite' | 'assertive' | 'off';
   atomic?: boolean;
   relevant?: 'additions' | 'removals' | 'text' | 'all';
@@ -138,7 +137,7 @@ export function LiveRegion({
 
 // Keyboard navigation helper
 interface KeyboardNavigableProps {
-  children: React.ReactNode;
+  children: ReactNode;
   onEnter?: () => void;
   onSpace?: () => void;
   onEscape?: () => void;
@@ -162,7 +161,7 @@ export function KeyboardNavigable({
   className,
   tabIndex = 0
 }: KeyboardNavigableProps) {
-  const handleKeyDown = (e: React.KeyboardEvent) => {
+  const handleKeyDown = (e: ReactKeyboardEvent) => {
     switch (e.key) {
       case 'Enter':
         e.preventDefault();
@@ -209,7 +208,7 @@ export function KeyboardNavigable({
 
 // Focus visible indicator (for keyboard navigation)
 export function useFocusVisible() {
-  const [isFocusVisible, setIsFocusVisible] = React.useState(false);
+  const [isFocusVisible, setIsFocusVisible] = useState(false);
 
   useEffect(() => {
     const handleMouseDown = () => setIsFocusVisible(false);
@@ -233,7 +232,7 @@ export function useFocusVisible() {
 
 // High contrast mode detector
 export function useHighContrastMode() {
-  const [isHighContrast, setIsHighContrast] = React.useState(false);
+  const [isHighContrast, setIsHighContrast] = useState(false);
 
   useEffect(() => {
     const checkHighContrast = () => {
@@ -256,7 +255,7 @@ export function useHighContrastMode() {
 
 // Reduced motion detector
 export function useReducedMotion() {
-  const [prefersReducedMotion, setPrefersReducedMotion] = React.useState(false);
+  const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
 
   useEffect(() => {
     const checkReducedMotion = () => {

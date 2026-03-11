@@ -1,4 +1,4 @@
-import React from 'react';
+import { ChevronRight, Home } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Icon } from '../Icon';
 import { cn } from '../ui/utils';

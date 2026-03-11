@@ -178,7 +178,7 @@ export function Notifications() {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Icon name="bell" size={20} style={{ color: 'var(--color-primary-default)' }} />
+            <Icon name="bell" size={20} style={{ color: 'var(--color-text-primary)' }} />
             Push Notifications
           </CardTitle>
         </CardHeader>
@@ -321,7 +321,7 @@ export function Notifications() {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Icon name="mail" size={20} style={{ color: 'var(--color-primary-default)' }} />
+            <Icon name="mail" size={20} style={{ color: 'var(--color-text-primary)' }} />
             Email Notifications
           </CardTitle>
         </CardHeader>
@@ -437,7 +437,7 @@ export function Notifications() {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Icon name="smartphone" size={20} style={{ color: 'var(--color-primary-default)' }} />
+            <Icon name="smartphone" size={20} style={{ color: 'var(--color-text-primary)' }} />
             In-App Settings
           </CardTitle>
         </CardHeader>
@@ -524,7 +524,7 @@ export function Notifications() {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Icon name="moon" size={20} style={{ color: 'var(--color-primary-default)' }} />
+            <Icon name="moon" size={20} style={{ color: 'var(--color-text-primary)' }} />
             Quiet Hours
           </CardTitle>
         </CardHeader>
@@ -642,7 +642,7 @@ export function Notifications() {
       <Card>
         <CardContent className="p-6">
           <div className="flex items-start gap-3">
-            <Icon name="zap" size={20} style={{ color: 'var(--color-primary-default)' }} />
+            <Icon name="zap" size={20} style={{ color: 'var(--color-text-primary)' }} />
             <div className="flex-1">
               <h4 
                 style={{ 

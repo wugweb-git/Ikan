@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
+import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import {
   CheckCircle, Play, Clock, ChevronLeft, ChevronRight, Lock,
@@ -9,7 +9,6 @@ import { ProgramPlayer } from '../player/ProgramPlayer';
 import { apiClient } from '../../lib/api-client';
 import { useNotifications } from '../../contexts/NotificationContext';
 import { toast } from 'sonner@2.0.3';
-import { DUMMY_EQUIP_PROGRAM, ALL_DUMMY_PROGRAMS } from '../../lib/demo-data';
 import tokens from '../../lib/design-tokens';
 import { LoadingSpinner } from '../LoadingSpinner';
 
@@ -585,27 +584,6 @@ export function EquipProgramFlow({ programId, enrollmentId, onBack, onComplete, 
       try {
         setLoading(true);
 
-        const demoProgram = ALL_DUMMY_PROGRAMS.find(p => p.id === programId);
-        if (programId === 'dummy-equip' || demoProgram) {
-           console.log('⚡ Loading Demo Program Flow (Offline Mode)');
-           setProgram(demoProgram || DUMMY_EQUIP_PROGRAM);
-
-           if (programId) localStorage.setItem('ikan-active-dummy-program', programId);
-
-           const savedProgress = localStorage.getItem(`demo-progress-${programId}`);
-           if (savedProgress) {
-             setProgress(JSON.parse(savedProgress));
-           } else {
-             setProgress({
-                currentDay: 1,
-                completedDays: {},
-                currentDayState: { completedBlockIds: [], responses: {} }
-             });
-           }
-           setLoading(false);
-           return;
-        }
-
         const programData = await apiClient.getEquipProgram(programId);
         if (!programData) throw new Error('Program not found');
         setProgram(programData as EquipProgram);
@@ -634,9 +612,8 @@ export function EquipProgramFlow({ programId, enrollmentId, onBack, onComplete, 
 
       } catch (err: any) {
         console.error('Failed to load program flow', err);
-        console.warn('⚠️ Using DUMMY equip program data due to fetch failure');
-        setProgram(DUMMY_EQUIP_PROGRAM);
-        toast.info('Viewing Demo Program (Data Unavailable)');
+        setProgram(null);
+        toast.error('Unable to load program. Please try again later.');
       } finally {
         setLoading(false);
       }
@@ -646,14 +623,6 @@ export function EquipProgramFlow({ programId, enrollmentId, onBack, onComplete, 
   }, [programId]);
 
   const handleProgress = async (p: { currentBlockIndex: number, responses: Record<string, any> }) => {
-     const newProgress = {
-        ...progress,
-        currentDayState: {
-           completedBlockIds: Object.keys(p.responses),
-           responses: p.responses
-        }
-     };
-
      setProgress(prev => ({
         ...prev,
         currentDayState: {
@@ -661,12 +630,6 @@ export function EquipProgramFlow({ programId, enrollmentId, onBack, onComplete, 
            responses: p.responses
         }
      }));
-
-     const isDemo = ALL_DUMMY_PROGRAMS.some(dp => dp.id === programId);
-     if (isDemo) {
-        localStorage.setItem(`demo-progress-${programId}`, JSON.stringify(newProgress));
-        return;
-     }
 
      if (programId) {
         try {
@@ -704,13 +667,6 @@ export function EquipProgramFlow({ programId, enrollmentId, onBack, onComplete, 
      setView('home');
      showToast('success', 'Day Complete!', 'Great job.');
 
-     const isDemo = ALL_DUMMY_PROGRAMS.some(dp => dp.id === programId);
-     if (isDemo) {
-        localStorage.setItem(`demo-progress-${programId}`, JSON.stringify(newProgress));
-        if (onComplete) onComplete();
-        return;
-     }
-
      try {
        await apiClient.completeDay(programId, progress.currentDay);
        if (onComplete) onComplete();
@@ -729,18 +685,13 @@ export function EquipProgramFlow({ programId, enrollmentId, onBack, onComplete, 
         setProgress(resetProgress);
         setView('home');
 
-        if (programId === DUMMY_EQUIP_PROGRAM.id || ALL_DUMMY_PROGRAMS.some(dp => dp.id === programId)) {
-             localStorage.removeItem(`demo-progress-${programId}`);
-             showToast('success', 'Program restarted');
-        } else {
-             try {
-                 if ((apiClient as any).resetEquipProgress) {
-                    await (apiClient as any).resetEquipProgress(programId);
-                 }
-                 showToast('success', 'Program restarted');
-             } catch (e) {
-                 console.error('Restart failed', e);
-             }
+        try {
+            if ((apiClient as any).resetEquipProgress) {
+               await (apiClient as any).resetEquipProgress(programId);
+            }
+            showToast('success', 'Program restarted');
+        } catch (e) {
+            console.error('Restart failed', e);
         }
     }
   };

@@ -1232,532 +1232,151 @@ html {
   }
 }
 
-/* Page padding to prevent nav overlap */
-/* REMOVED: Managed dynamically in App.tsx to allow Hero sections to be full height */
-/* main, .page-content {
-  padding-top: 100px; 
-} */
-
-/* Main content container baseline */
-.ikan-main-content {
-  width: 100%;
-  margin: 0;
-  box-sizing: border-box;
+/* Account pages: override Card default gap for consistent spacing */
+.account-content [data-slot="card"] {
+  gap: 0;
+  border-radius: 16px;
+  box-shadow: none;
 }
 
-/* Remove legacy responsive overrides that were causing layout issues */
-
-/* iKan Content Grid System */
-.ikan-content-grid {
-  display: grid;
-  gap: var(--spacing-6);
-  /* Single column on mobile */
-  grid-template-columns: 1fr;
+/* Account pages: consistent CardHeader styling */
+.account-content [data-slot="card-header"] {
+  padding: 20px 24px 16px 24px;
 }
 
-@media (min-width: 768px) {
-  .ikan-content-grid {
-    gap: var(--spacing-8);
-    /* Two columns on tablet+ where appropriate */
-    grid-template-columns: 2fr 1fr;
+.account-content [data-slot="card-title"] {
+  font-size: 16px;
+  font-weight: var(--font-weight-medium);
+  font-family: var(--font-family-base);
+  line-height: 22px;
+  color: var(--color-text-primary);
+}
+
+.account-content [data-slot="card-content"] {
+  padding-left: 24px;
+  padding-right: 24px;
+}
+
+.account-content [data-slot="card-content"]:last-child {
+  padding-bottom: 24px;
+}
+
+/* Account layout tablet responsive */
+@media (max-width: 1024px) {
+  .account-layout-desktop {
+    padding-left: 20px !important;
+    padding-right: 20px !important;
   }
 }
 
-@media (min-width: 1024px) {
-  .ikan-content-grid {
-    /* Three columns on desktop where appropriate */
-    grid-template-columns: 1fr 2fr 1fr;
-  }
-}
-
-/* Mobile-first responsive utilities for iKan PWA */
-@layer utilities {
-  /* Mobile content clearance for bottom navigation */
-  .mobile-content-clearance {
-    padding-bottom: 96px; /* Increased to 96px (24 * 4) to clear floating nav */
-  }
-
-  @media (min-width: 768px) {
-    .mobile-content-clearance {
-      padding-bottom: var(--spacing-6);
-    }
-  }
-
-  /* Enhanced touch targets using semantic tokens */
-  .touch-target {
-    min-height: var(--ikan-touch-target-min);
-    min-width: var(--ikan-touch-target-min);
-    touch-action: manipulation;
-    -webkit-tap-highlight-color: transparent;
-    cursor: pointer;
-  }
-  
-  /* Mobile-optimized buttons using semantic tokens */
-  .mobile-button {
-    min-height: var(--ikan-touch-target-preferred);
-    padding: var(--ikan-component-spacing-small) var(--ikan-component-spacing-default);
-    touch-action: manipulation;
-    -webkit-tap-highlight-color: transparent;
-    user-select: none;
-    -webkit-user-select: none;
-    transition: all var(--ikan-animation-fast) ease;
-    border-radius: var(--ikan-component-border-radius);
-  }
-  
-  .mobile-button:active {
-    transform: scale(0.98);
-    opacity: 0.8;
-  }
-  
-  /* Mobile-specific animations */
-  .mobile-slide-up {
-    animation: mobile-slide-up 0.3s ease-out;
-  }
-  
-  .mobile-bounce-in {
-    animation: mobile-bounce-in 0.5s ease-out;
-  }
-  
-  /* Mobile performance optimizations */
-  .mobile-optimized {
-    -webkit-backface-visibility: hidden;
-    backface-visibility: hidden;
-    -webkit-perspective: 1000px;
-    perspective: 1000px;
-    transform: translateZ(0);
-    will-change: transform;
-  }
-  
-  /* Swipe gesture indicators */
-  .swipe-indicator {
-    position: relative;
-  }
-  
-  .swipe-indicator::after {
-    content: '';
-    position: absolute;
-    top: 50%;
-    right: var(--spacing-4);
-    width: 20px;
-    height: 2px;
-    background: var(--color-text-muted);
-    border-radius: 1px;
-    transform: translateY(-50%);
-    opacity: 0.5;
-  }
-  
-  .swipe-indicator::before {
-    content: '';
-    position: absolute;
-    top: 50%;
-    right: var(--spacing-4);
-    width: 0;
-    height: 0;
-    border-left: 6px solid var(--color-text-muted);
-    border-top: 3px solid transparent;
-    border-bottom: 3px solid transparent;
-    transform: translateY(-50%);
-    opacity: 0.5;
-  }
-  
-  /* Mobile-optimized scrolling */
-  .mobile-scroll {
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: none;
-    -ms-overflow-style: none;
-  }
-  .mobile-scroll::-webkit-scrollbar {
-    display: none;
-  }
-  
-  /* Responsive text sizes using iKan tokens */
-  .text-responsive-xs { font-size: var(--text-xs); }
-  .text-responsive-sm { font-size: var(--text-sm); }
-  .text-responsive-base { font-size: var(--text-base); }
-  .text-responsive-lg { font-size: var(--text-lg); }
-  .text-responsive-xl { font-size: var(--text-xl); }
-  
-  /* iKan Layout Primitives */
-  .section-wrapper {
-    width: 100%;
-    background-color: var(--grey-1);
-  }
-
-  .content-container {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 0 20px;
-  }
-
-  .container-responsive {
-    width: 90%;
-    max-width: 1280px;
-    margin: 0 auto;
-  }
-  
-  /* iKan Typography Primitives */
-  .hero-title {
-    font-size: var(--text-4xl); /* 48px */
-    font-weight: var(--font-weight-bold); /* 700 */
-    color: var(--grey-9);
-    margin-bottom: 32px;
-  }
-
-  .section-heading {
-    font-size: var(--text-3xl); /* 32px */
-    font-weight: var(--font-weight-semibold); /* 600 */
-    color: var(--grey-9);
-  }
-
-  .card-title {
-    font-size: var(--text-2xl); /* 24px */
-    font-weight: var(--font-weight-semibold); /* 600 */
-    color: var(--grey-8);
-  }
-
-  .body-text {
-    font-size: var(--text-lg); /* 18px */
-    font-weight: var(--font-weight-regular); /* 400 */
-    line-height: 1.6;
-    color: var(--grey-8);
-    margin-bottom: 24px;
-  }
-
-  .caption-text {
-    font-size: var(--text-sm); /* 14px */
-    font-weight: var(--font-weight-regular); /* 400 */
-    color: var(--grey-6);
-  }
-
-  /* iKan Spacing Primitives */
-  .section {
-    padding-top: 100px;
-    padding-bottom: 100px;
-  }
-  
-  /* CBT Component Classes */
-  .cbt-card {
-    background-color: var(--cbt-surface);
-    border: 1px solid var(--cbt-border);
-    border-radius: var(--radius-lg); /* 24px or 32px */
-  }
-
-  .cbt-card-small {
-    background-color: var(--cbt-surface);
-    border: 1px solid var(--cbt-border);
-    border-radius: var(--radius-md); /* 20px - History Card/Small Content */
-  }
-
-  .cbt-input {
-    background-color: var(--cbt-surface);
-    border: 1px solid var(--cbt-border);
-    border-radius: var(--radius-sm); /* 16px */
-    height: var(--ikan-component-input-height); /* 56px */
-    color: var(--cbt-text-body);
-    padding: 0 16px;
-    font-size: 16px;
-  }
-  
-  .cbt-input::placeholder {
-    color: var(--cbt-placeholder);
-  }
-  
-  .cbt-input-pill {
-    background-color: var(--cbt-surface);
-    border: 1px solid var(--cbt-border);
-    border-radius: var(--radius-pill); /* 9999px */
-    height: var(--ikan-component-input-height); /* 56px */
-    color: var(--cbt-text-body);
-    padding: 0 24px;
-    font-size: 16px;
-  }
-  
-  .cbt-input-pill::placeholder {
-    color: var(--cbt-placeholder);
-  }
-
-  .cbt-label {
-    display: block;
-    font-size: 14px;
-    font-weight: var(--font-weight-bold);
-    color: var(--grey-8);
-    margin-bottom: 8px;
-  }
-
-  .cbt-instruction-box {
-    background-color: var(--cbt-bg);
-    border: 1px solid var(--cbt-border);
-    border-radius: var(--radius-sm); /* 16px */
-  }
-
-  /* BUTTON PRIMITIVES */
-  
-  /* Primary Button - High-value actions */
-  .cbt-button-primary {
-    height: var(--ikan-component-button-height); /* 52px */
-    border-radius: var(--radius-sm); /* 16px */
-    background-color: var(--grey-9); /* #1A1A1A */
-    color: var(--grey-0); /* White */
-    font-weight: var(--font-weight-bold);
-    font-size: 16px;
-    border: none;
-    padding: 0 24px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    transition: background-color 0.2s;
-    cursor: pointer;
-  }
-  
-  .cbt-button-primary:hover {
-    background-color: var(--grey-8); /* #333333 */
-  }
-  
-  /* Secondary Button - Alternative choices */
-  .cbt-button-secondary {
-    height: var(--ikan-component-button-height); /* 52px */
-    border-radius: var(--radius-sm); /* 16px */
-    background-color: var(--grey-1); /* #F5F5F5 */
-    color: var(--grey-8); /* #333333 */
-    font-weight: var(--font-weight-semibold);
-    font-size: 16px;
-    border: 1px solid var(--cbt-border); /* #D9D9D9 */
-    padding: 0 24px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.2s;
-    cursor: pointer;
-  }
-  
-  .cbt-button-secondary:hover {
-    background-color: var(--grey-1);
-    border-color: var(--grey-4); /* #BDBDBD */
-  }
-  
-  /* Ghost Button - Low-priority actions */
-  .cbt-button-ghost {
-    height: var(--ikan-component-button-height);
-    border-radius: var(--radius-sm);
-    background-color: transparent;
-    color: var(--grey-6); /* #757575 */
-    font-weight: var(--font-weight-medium);
-    font-size: 16px;
-    border: none;
-    padding: 0 24px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.2s;
-    cursor: pointer;
-  }
-  
-  .cbt-button-ghost:hover {
-    background-color: var(--grey-1); /* #F5F5F5 */
-    color: var(--grey-8); /* #333333 */
-  }
-
-  .cbt-hero-section {
-    background-color: var(--cbt-hero);
-    border-radius: 0 0 var(--radius-xl) var(--radius-xl); /* Rounded bottom corners for hero */
-    padding-top: 80px;
-    padding-bottom: 80px;
-    width: 100%;
-  }
-  
-  /* Navigation Pill */
-  .cbt-nav-pill {
-    border-radius: var(--radius-pill);
-    background-color: var(--grey-9);
-    color: white;
-  }
-  
-  /* Admin Table Styles */
-  .admin-table-container {
-    background: var(--cbt-surface);
-    border: 1px solid var(--cbt-border-med);
-    border-radius: var(--radius-sm); /* 16px */
-    overflow: hidden;
-    width: 100%;
-  }
-
-  .admin-table {
-    width: 100%;
-    border-collapse: collapse;
-    text-align: left;
-  }
-
-  .admin-table th {
-    background: var(--cbt-bg); /* Step 1 */
-    padding: 16px;
-    font-size: 13px;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    font-weight: var(--font-weight-bold);
-    color: var(--cbt-text-body);
-    border-bottom: 1px solid var(--cbt-border-med);
-  }
-
-  .admin-table td {
-    padding: 16px;
-    font-size: 14px;
-    color: var(--cbt-text-body);
-    border-bottom: 1px solid var(--cbt-border-light); /* Step 2 */
-    vertical-align: middle;
-  }
-
-  /* Hover effect for row selection */
-  .admin-table tr:hover td {
-    background: var(--color-neutral-100);
-    cursor: pointer;
-  }
-
-  /* Remove border from last row */
-  .admin-table tr:last-child td {
-    border-bottom: none;
-  }
-
-  /* Status Badges */
-  .badge {
-    padding: 4px 12px;
-    border-radius: 8px;
-    font-size: 12px;
-    font-weight: 500;
-    display: inline-block;
-  }
-
-  .badge-success {
-    background: var(--color-status-success-light);
-    color: var(--color-status-success);
-  }
-
-  .badge-warning {
-    background: var(--color-status-warning-light);
-    color: var(--color-status-warning);
-  }
-
-  @media (min-width: 1440px) {
-    .container-responsive {
-      max-width: var(--max-content);
-      padding-left: var(--desktop-padding);
-      padding-right: var(--desktop-padding);
-      width: 100%;
-      box-sizing: border-box;
-    }
-  }
-
-  @media (min-width: 640px) {
-    .text-responsive-xs { font-size: var(--text-sm); }
-    .text-responsive-sm { font-size: var(--text-base); }
-    .text-responsive-base { font-size: var(--text-lg); }
-    .text-responsive-lg { font-size: var(--text-xl); }
-    .text-responsive-xl { font-size: var(--text-2xl); }
-  }
-  
-  /* Mobile-first spacing using semantic tokens */
-  .space-mobile-sm > * + * { margin-top: var(--ikan-component-spacing-small); }
-  .space-mobile-md > * + * { margin-top: var(--ikan-component-spacing-default); }
-  .space-mobile-lg > * + * { margin-top: var(--ikan-component-spacing-large); }
-}
-
-/* --- NAVIGATION CAPSULE (Floating Design) --- */
-
-/* 1. The Wrapper (Always centered) */
+/* ─── Floating Desktop Capsule Nav ─── */
 .nav-fixed-wrapper {
   position: fixed;
-  top: 24px; 
+  top: 0;
   left: 0;
   right: 0;
-  width: 100%;
+  z-index: var(--z-nav, 50);
   display: flex;
   justify-content: center;
-  z-index: 1000;
-  padding: 0 40px; /* Essential gap for the 'floating' look */
-  pointer-events: none; /* Allow clicks to pass through the wrapper around the nav */
+  padding: 16px 40px;
 }
 
-/* 2. The Capsule (The 1440px Desktop Rule) */
+@media (max-width: 768px) {
+  .nav-fixed-wrapper {
+    padding: 12px 16px;
+  }
+}
+
 .ikan-capsule-nav {
-  pointer-events: auto; /* Re-enable clicks on the nav itself */
-  width: 100%;
-  /* At 1440px, this leaves 40px space on each side (1440 - 80 = 1360) */
-  max-width: 1360px; 
-  height: 80px; 
-  background: rgba(255, 255, 255, 0.9);
-  backdrop-filter: blur(15px);
-  -webkit-backdrop-filter: blur(15px);
-  border: 1px solid var(--grey-2);
-  border-radius: 9999px; /* Pill Shape */
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 16px; 
-  box-shadow: none;
-  transition: all 0.3s ease; /* Smooth transition when resizing */
+  width: 100%;
+  max-width: 1360px;
+  padding: 0 24px;
+  height: var(--ikan-nav-height-desktop, 80px);
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--grey-2);
+  border-radius: var(--ikan-capsule-radius, 9999px);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+  transition: box-shadow var(--transition-base), background var(--transition-base);
 }
 
-/* 3. Media Query for 1024px (Tablets/Small Laptops) */
-@media (max-width: 1024px) {
-  .nav-fixed-wrapper {
-    top: 16px; /* Tighter gap for smaller screens */
-    padding: 0 20px;
-  }
-
-  .ikan-capsule-nav {
-    height: 72px; /* Slightly shorter to save vertical space */
-    padding: 0 24px;
-    max-width: 980px; /* Fits comfortably within 1024px */
-  }
-
-  .nav-link {
-    font-size: 15px; /* Subtle downscale for text density */
-    padding: 8px 14px;
-  }
+.dark .ikan-capsule-nav {
+  background: rgba(26, 26, 26, 0.92);
+  border-color: var(--grey-8);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.3);
 }
 
-/* Navigation Link Styles */
+/* Navigation Links */
 .nav-link {
-  color: var(--grey-9);
-  font-weight: 500;
-  padding: 10px 16px;
-  border-radius: var(--radius-pill);
-  transition: all 0.2s ease;
-  text-decoration: none;
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  padding: 8px 14px;
+  font-size: var(--text-sm);
+  font-weight: var(--font-weight-medium);
+  font-family: var(--font-family-base);
+  color: var(--color-text-muted);
   background: transparent;
   border: none;
+  border-radius: var(--radius-pill);
   cursor: pointer;
   white-space: nowrap;
-  font-size: 16px;
+  transition: color var(--transition-fast), background var(--transition-fast);
+  line-height: 1.4;
 }
 
 .nav-link:hover {
-  color: var(--primary);
-  background: rgba(0, 0, 0, 0.04);
+  color: var(--color-text-primary);
+  background: var(--color-bg-muted);
 }
 
 .nav-link.active {
-  color: var(--primary-dark);
-  background: var(--primary-light);
-  font-weight: 500;
+  color: var(--color-text-primary);
+  background: var(--color-accent-default);
 }
 
+.dark .nav-link {
+  color: var(--grey-5);
+}
+
+.dark .nav-link:hover {
+  color: var(--grey-2);
+  background: var(--grey-8);
+}
+
+.dark .nav-link.active {
+  color: var(--grey-0);
+  background: var(--grey-8);
+}
+
+/* Primary Nav Button (Sign In) */
 .btn-nav-primary {
-  background-color: var(--primary);
-  color: white;
-  font-weight: 500;
-  padding: 10px 24px;
-  border-radius: var(--radius-pill);
-  transition: all 0.2s ease;
-  white-space: nowrap;
-  font-size: 16px;
-  border: none;
-  cursor: pointer;
   display: inline-flex;
   align-items: center;
+  justify-content: center;
+  padding: 8px 20px;
+  font-size: var(--text-sm);
+  font-weight: var(--font-weight-medium);
+  font-family: var(--font-family-base);
+  color: var(--color-primary-on);
+  background: var(--color-primary-default);
+  border: none;
+  border-radius: var(--radius-pill);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: opacity var(--transition-fast);
+  line-height: 1.4;
 }
 
 .btn-nav-primary:hover {
-  filter: brightness(1.1);
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+  opacity: 0.9;
+}
+
+.dark .btn-nav-primary {
+  background: var(--grey-0);
+  color: var(--grey-10);
 }

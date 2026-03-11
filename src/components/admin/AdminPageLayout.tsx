@@ -1,5 +1,5 @@
-import React from 'react';
-import { Save, Trash2, X, FileText } from 'lucide-react';
+import type React from 'react';
+import { ArrowLeft, Settings } from 'lucide-react';
 import { Button } from '../ui/button';
 import { AdminStatusBadge } from './AdminStatusBadge';
 import { useIsMobile } from '../../hooks/useIsMobile';

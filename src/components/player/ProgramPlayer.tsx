@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { EquipProgram, DayContent, Activity } from '../../lib/equip-admin-types';
 import { BlockRenderer } from './BlockRenderer';

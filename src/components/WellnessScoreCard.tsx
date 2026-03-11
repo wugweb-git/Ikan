@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, type ReactNode } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Heart, Zap, Brain, Shield, Activity as ActivityIcon, TrendingUp, TrendingDown, Minus, ChevronDown } from 'lucide-react';
 import { EngineResult } from '../lib/recommendation-engine';
@@ -8,7 +8,7 @@ interface Dimension {
   label: string;
   score: number;
   max: number;
-  icon: React.ReactNode;
+  icon: ReactNode;
   color: string;
   bg: string;
 }

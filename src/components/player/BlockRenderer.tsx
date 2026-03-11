@@ -1,4 +1,4 @@
-import React from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { motion } from 'motion/react';
 import { Activity, ExerciseConfig } from '../../lib/equip-admin-types';
 import { Label } from '../ui/label';

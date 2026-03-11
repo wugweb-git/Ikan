@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { 
   Plus, Trash2, Edit2, Save, X, Smile, GripVertical, ShieldCheck, Sparkles 
 } from 'lucide-react';
@@ -8,7 +8,7 @@ import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { Switch } from '../ui/switch';
 import { toast } from 'sonner@2.0.3';
-import { projectId, publicAnonKey } from '../../utils/supabase/info';
+import { apiClient } from '../../lib/api-client';
 import { AdminHeader } from './AdminHeader';
 import { AdminLoading } from './AdminLoading';
 import { AdminStatusBadge } from './AdminStatusBadge';
@@ -53,7 +53,7 @@ const COLOR_PRESETS = [
   { value: '#6B7280', label: 'Gray' },
 ];
 
-export function AdminMoodManager({ onBack }: AdminMoodManagerProps) {
+export function AdminMoodManager({ onBack: _onBack }: AdminMoodManagerProps) {
   const [moods, setMoods] = useState<MoodType[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -75,15 +75,8 @@ export function AdminMoodManager({ onBack }: AdminMoodManagerProps) {
   const loadMoods = async () => {
     setIsLoading(true);
     try {
-      const response = await fetch(
-        `https://${projectId}.supabase.co/functions/v1/make-server-cc205da9/moods`,
-        { headers: { Authorization: `Bearer ${publicAnonKey}` } }
-      );
-      
-      if (!response.ok) throw new Error('Failed to load moods');
-      
-      const data = await response.json();
-      setMoods(data.moods || []);
+      const moodList = await apiClient.listMoods();
+      setMoods(moodList);
     } catch (error) {
       console.warn('Moods backend unreachable, using fallback data:', error);
       // Fallback sample data
@@ -94,7 +87,6 @@ export function AdminMoodManager({ onBack }: AdminMoodManagerProps) {
         { id: '4', emoji: '😡', label: 'Angry', value: 1, color: '#EF4444', description: 'Feeling frustrated or mad', is_active: true, order: 3, created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
         { id: '5', emoji: '😌', label: 'Calm', value: 7, color: '#8B5CF6', description: 'Feeling peaceful and relaxed', is_active: true, order: 4, created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
       ]);
-      // toast.error('Failed to load mood types - using sample data');
     } finally {
       setIsLoading(false);
     }
@@ -149,23 +141,7 @@ export function AdminMoodManager({ onBack }: AdminMoodManagerProps) {
     }
 
     try {
-      const response = await fetch(
-        `https://${projectId}.supabase.co/functions/v1/make-server-cc205da9/moods`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${publicAnonKey}`
-          },
-          body: JSON.stringify({
-            ...formData,
-            order: moods.length
-          })
-        }
-      );
-
-      if (!response.ok) throw new Error('Failed to create mood type');
-
+      await apiClient.post('/moods', { ...formData, order: moods.length });
       toast.success('Mood type created successfully');
       resetForm();
       loadMoods();
@@ -177,20 +153,10 @@ export function AdminMoodManager({ onBack }: AdminMoodManagerProps) {
 
   const handleUpdate = async (id: string) => {
     try {
-      const response = await fetch(
-        `https://${projectId}.supabase.co/functions/v1/make-server-cc205da9/moods/${id}`,
-        {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${publicAnonKey}`
-          },
-          body: JSON.stringify(formData)
-        }
-      );
-
-      if (!response.ok) throw new Error('Failed to update mood type');
-
+      await apiClient.request(`/moods/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify(formData)
+      }, true);
       toast.success('Mood type updated successfully');
       setEditingId(null);
       resetForm();
@@ -207,16 +173,7 @@ export function AdminMoodManager({ onBack }: AdminMoodManagerProps) {
     }
 
     try {
-      const response = await fetch(
-        `https://${projectId}.supabase.co/functions/v1/make-server-cc205da9/moods/${id}`,
-        {
-          method: 'DELETE',
-          headers: { Authorization: `Bearer ${publicAnonKey}` }
-        }
-      );
-
-      if (!response.ok) throw new Error('Failed to delete mood type');
-
+      await apiClient.request(`/moods/${id}`, { method: 'DELETE' }, true);
       toast.success('Mood type deleted successfully');
       loadMoods();
     } catch (error) {
@@ -227,20 +184,10 @@ export function AdminMoodManager({ onBack }: AdminMoodManagerProps) {
 
   const handleToggleActive = async (id: string, is_active: boolean) => {
     try {
-      const response = await fetch(
-        `https://${projectId}.supabase.co/functions/v1/make-server-cc205da9/moods/${id}`,
-        {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${publicAnonKey}`
-          },
-          body: JSON.stringify({ is_active: !is_active })
-        }
-      );
-
-      if (!response.ok) throw new Error('Failed to toggle mood type');
-
+      await apiClient.request(`/moods/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify({ is_active: !is_active })
+      }, true);
       toast.success(is_active ? 'Mood type disabled' : 'Mood type enabled');
       loadMoods();
     } catch (error) {

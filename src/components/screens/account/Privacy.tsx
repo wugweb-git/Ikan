@@ -135,7 +135,7 @@ export function Privacy() {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Icon name="database" size={20} style={{ color: 'var(--color-primary-default)' }} />
+            <Icon name="database" size={20} style={{ color: 'var(--color-text-primary)' }} />
             Data Collection
           </CardTitle>
         </CardHeader>
@@ -222,7 +222,7 @@ export function Privacy() {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Icon name="share2" size={20} style={{ color: 'var(--color-primary-default)' }} />
+            <Icon name="share2" size={20} style={{ color: 'var(--color-text-primary)' }} />
             Sharing & Communications
           </CardTitle>
         </CardHeader>
@@ -309,7 +309,7 @@ export function Privacy() {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Icon name="download" size={20} style={{ color: 'var(--color-primary-default)' }} />
+            <Icon name="download" size={20} style={{ color: 'var(--color-text-primary)' }} />
             Data Management
           </CardTitle>
         </CardHeader>

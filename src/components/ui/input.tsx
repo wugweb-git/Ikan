@@ -1,6 +1,17 @@
 import * as React from "react";
 import { cn } from "./utils";
 
+// Filter out Figma inspector internal props (_fg*) to prevent React DOM warnings
+function filterFigmaProps(props: Record<string, unknown>) {
+  const filtered: Record<string, unknown> = {};
+  for (const key in props) {
+    if (!key.startsWith('_fg')) {
+      filtered[key] = props[key];
+    }
+  }
+  return filtered;
+}
+
 export interface InputProps extends React.ComponentProps<"input"> {
   startIcon?: React.ReactNode;
   endIcon?: React.ReactNode;
@@ -46,7 +57,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
                type={type}
                className="w-full h-full bg-transparent border-none outline-none text-[var(--color-text-primary)] placeholder:text-[var(--color-text-muted)] focus:ring-0 shadow-none p-0 m-0"
                ref={ref}
-               {...props}
+               {...filterFigmaProps(props)}
             />
             {endIcon && <div className="text-[var(--color-text-muted)] flex-shrink-0">{endIcon}</div>}
          </div>
@@ -71,7 +82,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
           ...borderStyle
         }}
         ref={ref}
-        {...props}
+        {...filterFigmaProps(props)}
       />
     );
   }

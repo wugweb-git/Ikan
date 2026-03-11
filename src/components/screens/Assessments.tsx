@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
 import { Card, CardContent } from '../ui/card';
 import { Button } from '../ui/button';
@@ -129,8 +129,6 @@ const getAssessmentImage = (category?: string, customImage?: string) => {
 
 import { PageHero } from '../ui/PageHero';
 
-import { DUMMY_ASSESSMENT } from '../../lib/demo-data';
-
 export function Assessments({ className, onNavigate }: AssessmentsProps) {
   const { user } = useAuth();
   const { showToast } = useNotifications();
@@ -210,25 +208,15 @@ export function Assessments({ className, onNavigate }: AssessmentsProps) {
               transformAssessmentData(a, {})
             );
             
-            // Ensure Demo Assessment is ALWAYS present for testing
-            const hasDemo = apiAssessments.some(a => a.id === DUMMY_ASSESSMENT.id || a.slug === DUMMY_ASSESSMENT.id);
-            if (!hasDemo) {
-               console.log('➕ Force Adding Demo Assessment to list');
-               // Ensure we transform it correctly
-               apiAssessments.unshift(transformAssessmentData(DUMMY_ASSESSMENT, {}));
-            }
-            
             setAssessments(apiAssessments);
           } else {
             console.warn('Assessments response was not an array:', response);
-            // Fallback to at least showing the demo
-            setAssessments([transformAssessmentData(DUMMY_ASSESSMENT, {})]);
+            setAssessments([]);
           }
         } catch (error) {
           console.warn('Failed to fetch API assessments:', error);
           showToast('error', 'Connection Error', 'Failed to load assessments. Please try again later.');
-          // Fallback to at least showing the demo
-          setAssessments([transformAssessmentData(DUMMY_ASSESSMENT, {})]);
+          setAssessments([]);
         }
 
         setLoading(false);
@@ -663,6 +651,16 @@ export function Assessments({ className, onNavigate }: AssessmentsProps) {
                 <Skeleton key={i} variant="rectangular" height="320px" className="rounded-[var(--radius-lg)]" />
               ))}
             </div>
+          ) : assessments.length === 0 ? (
+            <Card className="border-none shadow-sm rounded-[var(--radius-lg)]" style={{ backgroundColor: 'var(--color-bg-card)' }}>
+              <CardContent className="text-center p-12">
+                <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4" style={{ backgroundColor: 'var(--color-bg-muted)' }}>
+                  <FileText size={24} className="text-[var(--color-text-muted)]" />
+                </div>
+                <h3 className="text-lg font-medium text-[var(--color-text-primary)] mb-2">No assessments available</h3>
+                <p className="text-[var(--color-text-muted)]">Assessments will appear here once they are published. Please check back later.</p>
+              </CardContent>
+            </Card>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {assessments.filter(assessment => {

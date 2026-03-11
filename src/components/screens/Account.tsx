@@ -17,18 +17,16 @@ import { useIsMobile } from '../../hooks/useIsMobile';
 import { validateProfile } from '../../lib/validation';
 import { AccountPageHeader } from '../blocks/AccountPageHeader';
 
-// Mobile Header Components from Figma
+// Mobile Header Component
 function MobileHeader({ title, onBack, rightAction }: { title: string, onBack?: () => void, rightAction?: React.ReactNode }) {
   return (
-    <div className="content-stretch flex items-center w-full sticky top-0 z-50" style={{ gap: 'var(--spacing-3)', height: '73px', paddingLeft: 'var(--spacing-4)', paddingRight: 'var(--spacing-4)', backgroundColor: 'var(--color-bg-page)' }}>
-      <div aria-hidden="true" className="absolute border-b border-[rgba(0,0,0,0.1)] inset-x-0 bottom-0 pointer-events-none" />
-      
+    <div className="content-stretch flex items-center w-full sticky top-0 z-50" style={{ gap: 'var(--spacing-3)', height: '56px', paddingLeft: 'var(--spacing-4)', paddingRight: 'var(--spacing-4)', backgroundColor: 'var(--color-bg-page)', borderBottom: '1px solid rgba(0,0,0,0.08)' }}>
       {/* Back Button */}
       {onBack && (
         <button 
           onClick={onBack}
-          className="relative shrink-0 size-[48px] flex items-center justify-center hover:bg-black/5 active:bg-black/10 transition-colors"
-          style={{ borderRadius: 'var(--radius-md)' }}
+          className="relative shrink-0 flex items-center justify-center hover:bg-black/5 active:bg-black/10 transition-colors"
+          style={{ width: '40px', height: '40px', borderRadius: 'var(--radius-sm)', border: 'none', background: 'transparent', cursor: 'pointer' }}
           aria-label="Go back"
         >
            <svg className="block w-[16px] h-[16px]" fill="none" viewBox="0 0 16 16" aria-hidden="true">
@@ -41,10 +39,10 @@ function MobileHeader({ title, onBack, rightAction }: { title: string, onBack?: 
       )}
 
       {/* Title */}
-      <div className="basis-0 grow min-h-px min-w-px relative shrink-0 flex items-center">
+      <div className="basis-0 grow min-w-0 flex items-center">
         <h1 
           className="truncate m-0"
-          style={{ fontFamily: 'var(--font-family-base)', fontWeight: 'var(--font-weight-medium)', color: 'var(--color-text-primary)', fontSize: 'var(--text-lg)', letterSpacing: '-0.44px' }}
+          style={{ fontFamily: 'var(--font-family-base)', fontWeight: 'var(--font-weight-medium)', color: 'var(--color-text-primary)', fontSize: '18px', letterSpacing: '-0.3px', lineHeight: '24px' }}
         >
           {title}
         </h1>
@@ -89,7 +87,7 @@ interface AccountProps {
 }
 
 export function Account({ className, onNavigate }: AccountProps) {
-  const { user, signOut } = useAuth();
+  const { user, signOut, refreshProfile, updateProfile } = useAuth();
   const { showToast } = useNotifications();
   const isMobile = useIsMobile();
   const [currentAccountRoute, setCurrentAccountRoute] = useState('/account/profile');
@@ -155,7 +153,7 @@ export function Account({ className, onNavigate }: AccountProps) {
       }
       
       // Flatten emergencyContact to match the User interface / backend schema
-      const response = await apiClient.updateProfile({
+      await updateProfile({
         name: userData.name,
         phone: userData.phone,
         bio: userData.bio,
@@ -167,10 +165,6 @@ export function Account({ className, onNavigate }: AccountProps) {
         emergencyContactRelationship: userData.emergencyContact?.relationship || '',
         preferences: userData.preferences
       });
-      
-      if (response.error) {
-        throw new Error(response.error);
-      }
       
       showToast('success', 'Profile Updated', 'Your profile has been saved successfully.');
       setIsProfileEditing(false);
@@ -350,6 +344,10 @@ export function Account({ className, onNavigate }: AccountProps) {
             loading={isSavingProfile}
             onSave={handleSaveProfile}
             onSocialSync={handleSocialSync}
+            onAvatarUploaded={() => {
+              // Refresh the auth context user so the nav avatar updates
+              refreshProfile().catch(e => console.error('Failed to refresh profile after avatar upload:', e));
+            }}
             onDeleteProfile={() => {
               showToast('info', 'Delete Profile', 'Profile deletion requested. This feature will be available soon.');
             }}
@@ -368,7 +366,7 @@ export function Account({ className, onNavigate }: AccountProps) {
             onBack={handleMobileBack} 
             rightAction={rightAction}
           />
-          <div className="flex-1 overflow-y-auto p-[20px] pb-[100px]">
+          <div className="flex-1 overflow-y-auto p-[20px] pb-[100px] account-content">
             {content}
           </div>
         </div>
@@ -414,23 +412,25 @@ export function Account({ className, onNavigate }: AccountProps) {
   // Desktop layout
   return (
     <div 
-      className={cn("flex w-full content-wrapper", className)}
+      className={cn("flex w-full account-layout-desktop", className)}
       style={{ 
-        maxWidth: '1200px',
+        maxWidth: '1360px',
+        margin: '0 auto',
         flexDirection: 'row',
         alignItems: 'flex-start',
-        marginTop: '20px',
+        padding: '0 56px',
+        marginTop: '16px',
         gap: '24px',
-        height: 'calc(100vh - 100px)',
+        height: 'calc(100vh - 96px)',
         overflow: 'hidden' 
       }}
     >
       <div 
         className="hidden md:block shrink-0" 
         style={{ 
-          width: '260px',
+          width: '240px',
           height: '100%',
-          overflowY: 'hidden',
+          overflowY: 'auto',
           backgroundColor: 'var(--color-bg-card)',
           borderRadius: '16px',
           border: '1px solid var(--color-border-default)'
@@ -440,17 +440,16 @@ export function Account({ className, onNavigate }: AccountProps) {
           currentRoute={currentAccountRoute}
           onNavigate={handleAccountNavigate}
           onLogout={handleSignOut}
-          style={{ height: '100%', border: 'none', boxShadow: 'none' }}
+          style={{ height: '100%', border: 'none', boxShadow: 'none', borderRadius: '16px' }}
           isMobile={false}
         />
       </div>
 
       <div 
-        className="flex-1 min-w-0 flex flex-col h-full"
+        className="flex-1 min-w-0 flex flex-col h-full account-content"
         style={{ 
-          maxWidth: '100%', // Use full width of remaining space
           overflowY: 'auto',
-          paddingBottom: '20px'
+          paddingBottom: '24px'
         }}
       >
         {renderAccountContent()}

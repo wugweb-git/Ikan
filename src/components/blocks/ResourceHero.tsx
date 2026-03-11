@@ -1,4 +1,3 @@
-import React from 'react';
 import { cn } from '../ui/utils';
 import { ImageWithFallback } from '../figma/ImageWithFallback';
 

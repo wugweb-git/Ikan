@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Shield,
   AlertTriangle,
@@ -268,6 +268,36 @@ export function AdminSecurity() {
           </h3>
           <Card style={{ backgroundColor: 'var(--color-bg-card)', borderRadius: 'var(--radius-lg)' }}>
             <CardContent className="p-0">
+              {isMobile ? (
+                <div className="divide-y" style={{ borderColor: 'var(--color-border-default)' }}>
+                  {sessions.slice(0, 10).map((session) => (
+                    <div key={session.id} className="p-4 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--font-weight-medium)' }}>
+                          {session.user_email}
+                        </span>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            setSelectedSession(session);
+                            setIsSessionDialogOpen(true);
+                          }}
+                        >
+                          <Eye className="w-4 h-4" />
+                        </Button>
+                      </div>
+                      <div style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)', fontFamily: 'monospace' }}>
+                        IP: {session.ip_address}
+                      </div>
+                      <div className="flex justify-between" style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}>
+                        <span>Started: {new Date(session.started_at).toLocaleDateString()}</span>
+                        <span>Last: {new Date(session.last_activity).toLocaleDateString()}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
               <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead style={{ backgroundColor: 'var(--color-bg-muted)' }}>
@@ -326,6 +356,7 @@ export function AdminSecurity() {
                   </tbody>
                 </table>
               </div>
+              )}
             </CardContent>
           </Card>
         </div>
@@ -341,6 +372,27 @@ export function AdminSecurity() {
           </h3>
           <Card style={{ backgroundColor: 'var(--color-bg-card)', borderRadius: 'var(--radius-lg)' }}>
             <CardContent className="p-0">
+              {isMobile ? (
+                <div className="divide-y" style={{ borderColor: 'var(--color-border-default)' }}>
+                  {auditLogs.slice(0, 15).map((log) => (
+                    <div key={log.id} className="p-4 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--font-weight-medium)' }}>
+                          {log.user_email}
+                        </span>
+                        <AdminStatusBadge status="neutral" label={log.action} />
+                      </div>
+                      <div style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)', fontFamily: 'monospace' }}>
+                        {log.resource}
+                      </div>
+                      <div className="flex justify-between" style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}>
+                        <span>{new Date(log.timestamp).toLocaleString()}</span>
+                        <span style={{ fontFamily: 'monospace' }}>{log.ip_address}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
               <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead style={{ backgroundColor: 'var(--color-bg-muted)' }}>
@@ -390,6 +442,7 @@ export function AdminSecurity() {
                   </tbody>
                 </table>
               </div>
+              )}
             </CardContent>
           </Card>
         </div>

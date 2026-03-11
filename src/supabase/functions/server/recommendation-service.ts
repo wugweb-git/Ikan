@@ -43,7 +43,7 @@ export const RecommendationRuleService = {
   },
 
   async clearRules(): Promise<void> {
-     // Helper for seeding/migration to avoid duplicates if needed
+     // Helper for admin cleanup to avoid duplicates if needed
      const rules = await this.listRules();
      for (const r of rules) {
        await kv.del(`recommendation_rule:${r.id}`);

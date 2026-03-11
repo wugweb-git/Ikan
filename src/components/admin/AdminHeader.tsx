@@ -1,6 +1,5 @@
-import React from 'react';
-import { Button } from '../ui/button';
-import { ChevronRight } from 'lucide-react';
+import type React from 'react';
+import { ArrowLeft } from 'lucide-react';
 
 interface AdminHeaderProps {
   title: string;
@@ -33,7 +32,7 @@ export function AdminHeader({
       {breadcrumbs && breadcrumbs.length > 0 && (
         <nav className="flex items-center" style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-muted)', marginBottom: 'var(--spacing-2)' }}>
           {breadcrumbs.map((crumb, index) => (
-            <React.Fragment key={crumb.label}>
+            <span key={crumb.label} className="inline-flex items-center">
               {index > 0 && <ChevronRight className="w-4 h-4 mx-2" />}
               {crumb.onClick ? (
                 <button 
@@ -45,14 +44,14 @@ export function AdminHeader({
               ) : (
                 <span style={{ color: 'var(--color-text-primary)', fontWeight: 'var(--font-weight-medium)', fontFamily: 'var(--font-family-base)' }}>{crumb.label}</span>
               )}
-            </React.Fragment>
+            </span>
           ))}
         </nav>
       )}
 
       {/* Header Section */}
-      <div className="flex items-start justify-between gap-4">
-        <div className="flex items-start gap-3 flex-1">
+      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+        <div className="flex items-start gap-3 flex-1 min-w-0">
           {onBack && (
              <Button
                variant="ghost"
@@ -60,7 +59,7 @@ export function AdminHeader({
                onClick={onBack}
                className="mt-1"
              >
-               <ChevronRight className="w-6 h-6 rotate-180" />
+               <ArrowLeft className="w-6 h-6" />
              </Button>
           )}
           <div className="flex-1">
@@ -87,7 +86,7 @@ export function AdminHeader({
         
         {/* Actions */}
         {actions && (
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap shrink-0">
             {actions}
           </div>
         )}

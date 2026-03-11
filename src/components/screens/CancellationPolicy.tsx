@@ -1,4 +1,3 @@
-import React from 'react';
 import { useIsMobile } from '../../hooks/useIsMobile';
 import { usePageContent } from '../../hooks/usePageContent';
 import { PageHero } from '../ui/PageHero';

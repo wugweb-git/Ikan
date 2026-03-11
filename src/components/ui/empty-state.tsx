@@ -1,7 +1,6 @@
-import React from 'react';
+import { cn } from './utils';
 import { FileQuestion, Search, Inbox, FolderOpen, Plus } from 'lucide-react';
 import { Button } from './button';
-import { cn } from './utils';
 
 interface EmptyStateProps {
   title?: string;

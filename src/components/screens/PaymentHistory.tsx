@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Badge } from '../ui/badge';
 import { Button } from '../ui/button';
@@ -220,10 +220,10 @@ export function PaymentHistory({ className }: PaymentHistoryProps) {
   return (
     <div className={cn("space-y-6", className)}>
       {/* Payment Summary */}
-      <Card>
+      <Card className="gap-0" style={{ borderRadius: '16px', boxShadow: 'none' }}>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Icon name="creditCard" size={20} style={{ color: 'var(--color-primary-default)' }} />
+          <CardTitle className="flex items-center gap-2" style={{ fontSize: '16px', fontWeight: 'var(--font-weight-medium)', fontFamily: 'var(--font-family-base)', lineHeight: '22px' }}>
+            <Icon name="creditCard" size={20} style={{ color: 'var(--color-text-primary)' }} />
             Payment Summary
           </CardTitle>
         </CardHeader>
@@ -293,10 +293,10 @@ export function PaymentHistory({ className }: PaymentHistoryProps) {
       </Card>
 
       {/* Transaction History */}
-      <Card>
+      <Card className="gap-0" style={{ borderRadius: '16px', boxShadow: 'none' }}>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Icon name="receipt" size={20} style={{ color: 'var(--color-primary-default)' }} />
+          <CardTitle className="flex items-center gap-2" style={{ fontSize: '16px', fontWeight: 'var(--font-weight-medium)', fontFamily: 'var(--font-family-base)', lineHeight: '22px' }}>
+            <Icon name="receipt" size={20} style={{ color: 'var(--color-text-primary)' }} />
             Transaction History
           </CardTitle>
         </CardHeader>
@@ -472,7 +472,7 @@ export function PaymentHistory({ className }: PaymentHistoryProps) {
       </Card>
 
       {/* Help Section */}
-      <Card>
+      <Card className="gap-0" style={{ borderRadius: '16px', boxShadow: 'none' }}>
         <CardContent className="p-6">
           <div className="flex items-start gap-3">
             <Icon name="help" size={20} style={{ color: 'var(--color-primary-default)' }} />

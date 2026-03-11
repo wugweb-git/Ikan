@@ -140,7 +140,7 @@ function AppContent() {
         '/equip', '/equip-programs-landing', '/equip-detail', '/equip-program-onboarding', '/equip-program-flow', '/equip-program-completion',
         '/consultation', '/consultation-detail', '/resource', '/resource-detail', '/account', 
         '/about', '/faq', '/privacy', '/privacy-policy', '/terms', '/contact', '/return-policy', '/cancellation-policy', '/sitemap', '/login', '/route-test', '/private-route-test', '/wizard-test',
-        '/admin', '/admin/login', '/admin/resources', '/admin/equip', '/admin/users', '/admin/consultants', '/admin/assessments', '/admin/analytics', '/admin/settings', '/admin/pages', '/admin/media', '/admin/crud',
+        '/admin', '/admin/login', '/admin/resources', '/admin/equip', '/admin/users', '/admin/consultants', '/admin/assessments', '/admin/analytics', '/admin/settings', '/admin/pages', '/admin/media', '/admin/crud', '/admin/contact-newsletter',
         '/join/professional', '/uikit', '/uikit-page'
       ];
       
@@ -417,7 +417,7 @@ function AppContent() {
         case '/private-route-test':
           return withSuspense(<PrivateRouteTest onNavigate={handleNavigate} />);
         case '/wizard-test':
-          return withSuspense(<WizardTestScreen onNavigate={handleNavigate} />);
+          return withSuspense(<WizardTestScreen onBack={() => handleNavigate('/dashboard')} />);
         case '/uikit':
           return withSuspense(<UIKitShowcase onNavigate={handleNavigate} />);
         case '/uikit-page':
@@ -606,7 +606,7 @@ function AppContent() {
 
 export default function App() {
   useTokens();
-  
+
   return (
     <ErrorBoundary>
       <AuthProvider>

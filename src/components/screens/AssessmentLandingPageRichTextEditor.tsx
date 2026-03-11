@@ -1,4 +1,3 @@
-import React from 'react';
 import { LayoutTemplate, Plus, X } from 'lucide-react';
 import { Assessment } from './AssessmentEditPageWizard';
 import { AdminFormField } from '../admin/AdminFormField';

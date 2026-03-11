@@ -1,6 +1,5 @@
-import React from 'react';
-import { Check } from 'lucide-react';
 import { cn } from './utils';
+import { Check } from 'lucide-react';
 
 export interface Step {
   id: string;

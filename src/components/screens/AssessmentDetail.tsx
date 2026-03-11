@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { projectId, publicAnonKey } from '../../utils/supabase/info';
 import { AssessmentHero } from '../blocks/AssessmentHero';
 import { AssessmentBentoGrid } from '../blocks/AssessmentBentoGrid';
@@ -13,7 +13,6 @@ import { Skeleton } from '../ui/skeleton-loader';
 import { Button } from '../ui/button';
 import defaultBentoImage from "figma:asset/8ce2a19aab5abaf51a83cb99ea2d61447f96d8b2.png";
 import { ASSESSMENT_CONTENT, NEWSLETTER_CONTENT, FALLBACK_IMAGES, ASSESSMENT_FALLBACKS, DEFAULT_METADATA } from '../../lib/constants/content';
-import { DUMMY_ASSESSMENT } from '../../lib/demo-data';
 
 interface AssessmentDetailProps {
   assessmentId?: string;
@@ -121,45 +120,6 @@ export function AssessmentDetail({ assessmentId = 'anxiety', onNavigate }: Asses
     const controller = new AbortController();
     const fetchAssessmentData = async () => {
       try {
-        // DEMO MODE CHECK
-        if (assessmentId === DUMMY_ASSESSMENT.id) {
-           console.log('⚡ Loading Demo Assessment (Offline Mode)');
-           setAssessmentData({
-             title: DUMMY_ASSESSMENT.title,
-             description: DUMMY_ASSESSMENT.description,
-             hero_image: FALLBACK_IMAGES.DEFAULT,
-             cta_button_text: "Start Assessment",
-             cta_button_link: `/assessment-flow?type=${DUMMY_ASSESSMENT.id}`,
-             
-             questions: DUMMY_ASSESSMENT.questions,
-             duration: 5,
-             difficulty: 'Beginner',
-             metadata: {},
-             
-             // Content Sections
-             section1_title: "How it works",
-             section1_eligibility_title: "Simple process:",
-             section1_eligibility_points: ["Answer a few questions", "Get instant results", "View recommendations"],
-             section1_who_title: "Who is this for?",
-             section1_who_content: "Anyone interested in testing the assessment flow.",
-             
-             section2_title: "About this Demo",
-             section2_content: "This is a demonstration of the assessment UI patterns. It functions exactly like a real assessment but runs entirely in your browser.",
-             section2_image: defaultBentoImage,
-             section2_bullets: ["UI Testing", "Flow Verification", "Responsive Layout"],
-             
-             section3_title: "What you'll see",
-             section3_subtitle: "Instant feedback",
-             section3_content: ["Score calculation", "Result interpretation", "Next steps"],
-             
-             section4_notes_title: "Important Note",
-             section4_notes: [{ title: "Demo Data", description: "This data is not saved to the backend." }]
-           });
-           setRelatedAssessments([]);
-           setIsLoading(false);
-           return;
-        }
-
         // Fetch main assessment data
         const response = await fetch(
           `https://${projectId}.supabase.co/functions/v1/make-server-cc205da9/assessments/${assessmentId}?t=${Date.now()}`,

@@ -10,10 +10,21 @@ import {
 
 import { cn } from "./utils";
 
+// Filter out Figma inspector internal props (_fg*) to prevent React DOM warnings
+function filterFigmaProps(props: Record<string, any>) {
+  const filtered: Record<string, any> = {};
+  for (const key in props) {
+    if (!key.startsWith('_fg')) {
+      filtered[key] = props[key];
+    }
+  }
+  return filtered;
+}
+
 function Select({
   ...props
 }: React.ComponentProps<typeof SelectPrimitive.Root>) {
-  return <SelectPrimitive.Root data-slot="select" {...props} />;
+  return <SelectPrimitive.Root data-slot="select" {...filterFigmaProps(props)} />;
 }
 
 function SelectGroup({
@@ -55,7 +66,7 @@ function SelectTrigger({
         color: 'var(--color-text-primary)',
         ...style
       }}
-      {...props}
+      {...filterFigmaProps(props)}
     >
       {children}
       <SelectPrimitive.Icon asChild>

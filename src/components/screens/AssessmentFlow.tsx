@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Button } from '../ui/button';
 import { AssessmentQuestion } from '../organisms/AssessmentQuestion';
@@ -55,7 +55,6 @@ interface AssessmentFlowProps {
 
 import { ProgramPlayer, PlayerResults } from '../player/ProgramPlayer';
 import { adaptAssessmentToProgram } from '../../lib/assessment-adapter';
-import { DUMMY_ASSESSMENT } from '../../lib/demo-data';
 import { evaluateAssessment } from '../../lib/recommendation-engine';
 
 export function AssessmentFlow({  
@@ -251,15 +250,6 @@ export function AssessmentFlow({
       try {
         setLoading(true);
 
-        // DEMO MODE CHECK
-        if (assessmentId === DUMMY_ASSESSMENT.id) {
-           console.log('⚡ Loading Demo Assessment Flow (Offline Mode)');
-           setAssessment(DUMMY_ASSESSMENT as any);
-           setEquipProgram(adaptAssessmentToProgram(DUMMY_ASSESSMENT as any));
-           setLoading(false);
-           return;
-        }
-
         // Add timestamp to prevent caching
         const response = await fetch(
           `https://${projectId}.supabase.co/functions/v1/make-server-cc205da9/assessments/${assessmentId}?t=${Date.now()}`,
@@ -367,11 +357,7 @@ export function AssessmentFlow({
       } catch (err: any) {
         if (err?.name === 'AbortError') return; // Component unmounted — ignore
         console.error('Error fetching assessment:', err);
-        // FALLBACK: Use Dummy Data if fetch fails
-        console.warn('⚠️ Using DUMMY assessment data due to fetch failure');
-        setAssessment(DUMMY_ASSESSMENT as any);
-        setEquipProgram(adaptAssessmentToProgram(DUMMY_ASSESSMENT as any));
-        // setError('Failed to load assessment. Please try again.'); // Don't show error, show dummy
+        setError('Failed to load assessment. Please try again later.');
       } finally {
         setLoading(false);
       }

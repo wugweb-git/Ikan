@@ -2,10 +2,17 @@ import { Hono } from "npm:hono";
 import * as kv from "./kv_store.tsx";
 
 export function registerMoodRoutes(app: Hono, middleware: any) {
-  // GET /moods
+  // GET /moods - returns KV-stored moods or defaults
   app.get("/moods", middleware, async (c) => {
+    try {
+      const storedMoods = await kv.getByPrefix('mood_type:');
+      if (storedMoods && storedMoods.length > 0) {
+        return c.json({ moods: storedMoods });
+      }
+    } catch (_e) {
+      // Fall through to defaults
+    }
     // Return default moods
-    // In a real app, these might come from the database
     const moods = [
         { id: '1', value: 1, label: 'Angry', emoji: '😡', color: '#F97316', order: 1, is_active: true },
         { id: '2', value: 2, label: 'Upset', emoji: '😢', color: '#3B82F6', order: 2, is_active: true },
@@ -14,6 +21,57 @@ export function registerMoodRoutes(app: Hono, middleware: any) {
         { id: '5', value: 5, label: 'Great', emoji: '😄', color: '#22C55E', order: 5, is_active: true }
     ];
     return c.json({ moods });
+  });
+
+  // POST /moods - create a new mood type
+  app.post("/moods", middleware, async (c) => {
+    try {
+      const body = await c.req.json();
+      const id = crypto.randomUUID();
+      const mood = {
+        ...body,
+        id,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      };
+      await kv.set(`mood_type:${id}`, mood);
+      return c.json({ mood });
+    } catch (error) {
+      console.error("Error creating mood type:", error);
+      return c.json({ error: "Failed to create mood type" }, 500);
+    }
+  });
+
+  // PUT /moods/:id - update a mood type
+  app.put("/moods/:id", middleware, async (c) => {
+    try {
+      const id = c.req.param("id");
+      const updates = await c.req.json();
+      const existing = await kv.get(`mood_type:${id}`);
+      const mood = {
+        ...(existing || {}),
+        ...updates,
+        id,
+        updated_at: new Date().toISOString()
+      };
+      await kv.set(`mood_type:${id}`, mood);
+      return c.json({ mood });
+    } catch (error) {
+      console.error("Error updating mood type:", error);
+      return c.json({ error: "Failed to update mood type" }, 500);
+    }
+  });
+
+  // DELETE /moods/:id - delete a mood type
+  app.delete("/moods/:id", middleware, async (c) => {
+    try {
+      const id = c.req.param("id");
+      await kv.del(`mood_type:${id}`);
+      return c.json({ success: true });
+    } catch (error) {
+      console.error("Error deleting mood type:", error);
+      return c.json({ error: "Failed to delete mood type" }, 500);
+    }
   });
 
   // GET /user/journal

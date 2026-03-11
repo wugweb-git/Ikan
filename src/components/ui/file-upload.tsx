@@ -1,4 +1,4 @@
-import React, { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback } from 'react';
 import { Upload, X, File, Image as ImageIcon, FileText, Film, Music, Loader2, CheckCircle, AlertCircle } from 'lucide-react';
 import { Button } from './button';
 import { cn } from './utils';

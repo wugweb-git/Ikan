@@ -1,7 +1,6 @@
-import React from 'react';
+import { cn } from './utils';
 import { AlertTriangle, RefreshCw, Home, ArrowLeft } from 'lucide-react';
 import { Button } from './button';
-import { cn } from './utils';
 
 interface ErrorStateProps {
   title?: string;

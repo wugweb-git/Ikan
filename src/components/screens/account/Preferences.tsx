@@ -145,7 +145,7 @@ export function Preferences() {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Icon name="settings" size={20} style={{ color: 'var(--color-primary-default)' }} />
+            <Icon name="settings" size={20} style={{ color: 'var(--color-text-primary)' }} />
             General Settings
           </CardTitle>
         </CardHeader>
@@ -259,7 +259,7 @@ export function Preferences() {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Icon name="layout" size={20} style={{ color: 'var(--color-primary-default)' }} />
+            <Icon name="layout" size={20} style={{ color: 'var(--color-text-primary)' }} />
             Content Preferences
           </CardTitle>
         </CardHeader>
@@ -397,7 +397,7 @@ export function Preferences() {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Icon name="eye" size={20} style={{ color: 'var(--color-primary-default)' }} />
+            <Icon name="eye" size={20} style={{ color: 'var(--color-text-primary)' }} />
             Accessibility
           </CardTitle>
         </CardHeader>
@@ -484,7 +484,7 @@ export function Preferences() {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Icon name="globe" size={20} style={{ color: 'var(--color-primary-default)' }} />
+            <Icon name="globe" size={20} style={{ color: 'var(--color-text-primary)' }} />
             Regional Settings
           </CardTitle>
         </CardHeader>

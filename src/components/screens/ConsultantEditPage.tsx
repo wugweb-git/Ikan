@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Save, Trash2, Eye, User, Briefcase, MapPin, DollarSign, Star,
   Video, Phone, MessageSquare, Sparkles, Languages, GraduationCap,

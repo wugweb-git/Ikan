@@ -1,4 +1,4 @@
-import React from 'react';
+import { useEffect, useState } from 'react';
 import { ErrorBoundary } from '../../ErrorBoundary';
 import { MessageSquare } from 'lucide-react';
 import { useIsMobile } from '../../../hooks/useIsMobile';

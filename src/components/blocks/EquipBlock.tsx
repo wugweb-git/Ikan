@@ -1,4 +1,3 @@
-import React from 'react';
 import { ErrorBoundary } from '../ErrorBoundary';
 import { ArrowRight, Clock } from 'lucide-react';
 import { ImageWithFallback } from '../figma/ImageWithFallback';

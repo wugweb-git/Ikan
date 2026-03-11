@@ -1,4 +1,4 @@
-import React from 'react';
+import type React from 'react';
 import { Label } from '../ui/label';
 import { FormFieldError } from '../ui/form-field-error';
 import { Info, AlertCircle } from 'lucide-react';

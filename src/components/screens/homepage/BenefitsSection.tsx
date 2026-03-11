@@ -1,4 +1,4 @@
-import React from 'react';
+import { cn } from '../../ui/utils';
 import { ErrorBoundary } from '../../ErrorBoundary';
 import { ImageWithFallback } from '../../figma/ImageWithFallback';
 import { useIsMobile } from '../../../hooks/useIsMobile';

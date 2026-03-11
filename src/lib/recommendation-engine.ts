@@ -1,5 +1,5 @@
 // 1️⃣ Assessment → Severity → Recommendation Mapping
-// (Backend / Admin-seeded rules)
+// (Backend / Admin-managed rules)
 
 export type SeverityLevel = 'low' | 'moderate' | 'high';
 

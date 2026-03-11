@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { 
   Palette, Type, CheckSquare, Bell, 
   Image as ImageIcon, Compass, PenTool, Layers

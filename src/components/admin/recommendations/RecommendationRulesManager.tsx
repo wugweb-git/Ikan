@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '../../ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '../../ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../ui/table';
@@ -12,7 +12,7 @@ export function RecommendationRulesManager({ onBack }: { onBack: () => void }) {
   const [rules, setRules] = useState<any[]>([]);
   const [equips, setEquips] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [seeding, setSeeding] = useState(false);
+  const [deduplicating, setDeduplicating] = useState(false);
   const { showToast } = useNotifications();
 
   // Load Data
@@ -81,7 +81,7 @@ export function RecommendationRulesManager({ onBack }: { onBack: () => void }) {
   };
 
   const handleDeduplicate = async () => {
-      setSeeding(true); // Re-using seeding state for loading spinner
+      setDeduplicating(true);
       try {
           const rulesData = await apiClient.request('/admin/recommendations/rules', { method: 'GET' }, true, 0);
           const allRules = rulesData.rules || [];
@@ -104,7 +104,7 @@ export function RecommendationRulesManager({ onBack }: { onBack: () => void }) {
 
           if (toDelete.length === 0) {
               showToast('success', 'No duplicates found.');
-              setSeeding(false);
+              setDeduplicating(false);
               return;
           }
 
@@ -123,7 +123,7 @@ export function RecommendationRulesManager({ onBack }: { onBack: () => void }) {
           console.error(e);
           showToast('error', `Cleanup failed: ${e.message}`);
       } finally {
-          setSeeding(false);
+          setDeduplicating(false);
       }
   };
 

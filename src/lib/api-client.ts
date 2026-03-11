@@ -23,7 +23,6 @@ import type {
 export type { UserProfile as User };
 
 import { projectId, publicAnonKey } from '../utils/supabase/info';
-import { ALL_DUMMY_PROGRAMS } from './demo-data';
 import { cacheForOffline, readOfflineCache } from '../hooks/useOfflineSync';
 
 const API_BASE = `https://${projectId}.supabase.co/functions/v1/make-server-cc205da9`;
@@ -279,31 +278,22 @@ class ApiClient {
   async getEquipPrograms() {
     try {
       const res = await this.request('/equip/programs', { method: 'GET' }, true);
-      const realPrograms = (res.programs || []).map((p: EquipProgramRaw) => ({
+      const programs = (res.programs || []).map((p: EquipProgramRaw) => ({
         ...p,
         title: p.title || p.name || 'Untitled Program'
       }));
-      const allPrograms = [...ALL_DUMMY_PROGRAMS, ...realPrograms];
-      cacheForOffline('equip-programs', allPrograms);
-      return allPrograms;
+      cacheForOffline('equip-programs', programs);
+      return programs;
     } catch (e: any) {
       if (e?.name === 'AbortError') throw e;
       console.warn('Failed to fetch equip programs, attempting offline cache fallback:', e?.message);
       const cached = readOfflineCache<any[]>('equip-programs');
       if (cached) return cached;
-      // Minimum viable fallback: always show demo programs
-      return [...ALL_DUMMY_PROGRAMS];
+      return [];
     }
   }
 
   async getEquipProgram(id: string) {
-    // ⚡ DEMO INTERCEPT
-    const demoProgram = ALL_DUMMY_PROGRAMS.find(p => p.id === id);
-    if (demoProgram) {
-        console.log('⚡ API Client: Serving Demo Program', id);
-        return demoProgram;
-    }
-
     const res = await this.request(`/equip/programs/${id}?t=${Date.now()}`, { method: 'GET' }, true);
     const raw = res.program;
     
@@ -320,7 +310,7 @@ class ApiClient {
             image_url: day.image_url,
             dayType: day.day_type || day.dayType || 'learning',
             activities: (day.blocks || []).map((block: EquipProgramBlock) => {
-                // Fix for legacy 'sleep_diary' type in seeded data
+                // Fix for legacy 'sleep_diary' block type
                 if (block.block_type === 'sleep_diary' || block.type === 'sleep_diary') {
                     return {
                         id: block.id,
@@ -404,16 +394,6 @@ class ApiClient {
   }
 
   async enrollUser(equipId: string) {
-    const demoProgram = ALL_DUMMY_PROGRAMS.find(p => p.id === equipId);
-    if (demoProgram) {
-        return {
-            id: `mock-enroll-${equipId}`,
-            equip_id: equipId,
-            status: 'active',
-            current_day_number: 1,
-            created_at: new Date().toISOString()
-        };
-    }
     const res = await this.request(`/equip/purchase/${equipId}`, { 
       method: 'POST',
       body: JSON.stringify({}) 
@@ -467,30 +447,9 @@ class ApiClient {
     try {
       if (!(await this.isAuthenticated())) return [];
       const res = await this.request('/recommendations', { method: 'GET' }, true);
-      
-      // Inject Demo Recommendations
-      const demoRecs = ALL_DUMMY_PROGRAMS.map(p => ({
-          id: p.id,
-          equip_id: p.id,
-          title: p.title,
-          description: p.description,
-          image_url: p.daily_content[0]?.activities[0]?.image_url,
-          match_score: 90,
-          tags: [p.category]
-      }));
-
-      return [...demoRecs, ...(res.recommendations || [])];
+      return res.recommendations || [];
     } catch (e) {
-      // Fallback to demos on error
-      return ALL_DUMMY_PROGRAMS.map(p => ({
-          id: p.id,
-          equip_id: p.id,
-          title: p.title,
-          description: p.description,
-          image_url: p.daily_content[0]?.activities[0]?.image_url,
-          match_score: 90,
-          tags: [p.category]
-      }));
+      return [];
     }
   }
 
@@ -628,19 +587,6 @@ class ApiClient {
   }
 
   async createEquipEnrollment(data: { programId: string, onboardingData: Record<string, unknown> }) {
-    const demoProgram = ALL_DUMMY_PROGRAMS.find(p => p.id === data.programId);
-    if (demoProgram) {
-        return {
-            enrollment: {
-                id: `mock-enroll-${data.programId}`,
-                equip_id: data.programId,
-                status: 'active',
-                current_day_number: 1,
-                created_at: new Date().toISOString()
-            }
-        };
-    }
-    
     // We'll use the /equip/purchase endpoint which effectively enrolls the user
     // Backend expects "onboarding_data" (snake_case) not "onboardingData" (camelCase)
     return this.request(`/equip/purchase/${data.programId}`, {
@@ -901,6 +847,29 @@ class ApiClient {
     }, false);
   }
 
+  // Admin: Contact Submissions
+  async getContactSubmissions() {
+    return this.request('/admin/contact-submissions', { method: 'GET' }, true);
+  }
+
+  async updateContactSubmission(id: string, data: { status?: string; adminNotes?: string }) {
+    return this.request(`/admin/contact-submissions/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(data)
+    }, true);
+  }
+
+  async deleteContactSubmission(id: string) {
+    return this.request(`/admin/contact-submissions/${id}`, {
+      method: 'DELETE'
+    }, true);
+  }
+
+  // Admin: Newsletter Subscribers
+  async getNewsletterSubscribers() {
+    return this.request('/admin/newsletter-subscribers', { method: 'GET' }, true);
+  }
+
   // Password Change
   async changePassword(currentPassword: string, newPassword: string) {
     return this.request('/users/password', {
@@ -1019,6 +988,32 @@ class ApiClient {
 
   async getAuditTrends() {
     return this.request('/admin/kv-audit/trends', { method: 'GET' }, true);
+  }
+
+  async syncPrefixes(dryRun = true) {
+    return this.request('/admin/kv-audit/sync-prefixes', {
+      method: 'POST',
+      body: JSON.stringify({ dryRun })
+    }, true);
+  }
+
+  async purgeKVPrefix(prefix: string, dryRun = true) {
+    return this.request('/admin/kv-audit/purge-prefix', {
+      method: 'POST',
+      body: JSON.stringify({ prefix, dryRun })
+    }, true);
+  }
+
+  // Settings
+  async getSettings() {
+    return this.request('/admin/settings', { method: 'GET' }, true);
+  }
+
+  async updateSettings(settings: Record<string, any>) {
+    return this.request('/admin/settings', {
+      method: 'PUT',
+      body: JSON.stringify(settings)
+    }, true);
   }
 }
 

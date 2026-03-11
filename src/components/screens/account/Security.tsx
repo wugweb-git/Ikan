@@ -31,7 +31,7 @@ interface SecuritySettings {
 
 export function Security() {
   const { showToast } = useNotifications();
-  const { user } = useAuth();
+  const { user, refreshProfile } = useAuth();
   const isMobile = useIsMobile();
   
   const [settings, setSettings] = useState<SecuritySettings>({
@@ -41,22 +41,65 @@ export function Security() {
     sessionTimeout: 30
   });
 
+  // Load security settings from user profile
+  React.useEffect(() => {
+    if (user?.security_settings) {
+      setSettings(prev => ({
+        ...prev,
+        ...user.security_settings
+      }));
+    }
+  }, [user]);
+
+  // Compute dynamic "last changed" text from profile timestamps
+  const formatLastChanged = (isoDate?: string) => {
+    if (!isoDate) return 'Never changed';
+    const date = new Date(isoDate);
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+    if (diffDays < 1) return 'Changed today';
+    if (diffDays === 1) return 'Changed yesterday';
+    if (diffDays < 30) return `Last changed ${diffDays} days ago`;
+    if (diffDays < 365) {
+      const months = Math.floor(diffDays / 30);
+      return `Last changed ${months} month${months > 1 ? 's' : ''} ago`;
+    }
+    const years = Math.floor(diffDays / 365);
+    return `Last changed ${years} year${years > 1 ? 's' : ''} ago`;
+  };
+
+  const passwordLastChanged = formatLastChanged(user?.password_changed_at as string | undefined);
+  const emailLastChanged = formatLastChanged(user?.email_changed_at as string | undefined);
+
+  // Dynamic session data based on current browser
+  const getBrowserInfo = () => {
+    const ua = navigator.userAgent;
+    if (ua.includes('Chrome') && !ua.includes('Edg')) return 'Chrome';
+    if (ua.includes('Firefox')) return 'Firefox';
+    if (ua.includes('Safari') && !ua.includes('Chrome')) return 'Safari';
+    if (ua.includes('Edg')) return 'Edge';
+    return 'Browser';
+  };
+
+  const getOSInfo = () => {
+    const ua = navigator.userAgent;
+    if (ua.includes('Windows')) return 'Windows';
+    if (ua.includes('Mac')) return 'macOS';
+    if (ua.includes('Linux')) return 'Linux';
+    if (ua.includes('iPhone') || ua.includes('iPad')) return 'iOS';
+    if (ua.includes('Android')) return 'Android';
+    return 'Unknown OS';
+  };
+
   const [sessions, setSessions] = useState<LoginSession[]>([
     {
       id: 'current',
-      device: 'Chrome on Windows',
-      location: 'Mumbai, India',
-      ip: '49.207.xxx.xxx',
+      device: `${getBrowserInfo()} on ${getOSInfo()}`,
+      location: 'Current Location',
+      ip: '—',
       lastActive: new Date().toISOString(),
       current: true
-    },
-    {
-      id: 'session-2',
-      device: 'Safari on iPhone',
-      location: 'Mumbai, India',
-      ip: '49.207.xxx.xxx',
-      lastActive: new Date(Date.now() - 3600000).toISOString(),
-      current: false
     }
   ]);
 
@@ -75,17 +118,27 @@ export function Security() {
   const [emailForm, setEmailForm] = useState({ newEmail: '', password: '', verificationToken: '' });
   const [emailChangeLoading, setEmailChangeLoading] = useState(false);
 
-  const handleToggleSetting = (key: keyof SecuritySettings) => {
+  const handleToggleSetting = async (key: keyof SecuritySettings) => {
     if (key === 'twoFactorEnabled' && !settings.twoFactorEnabled) {
       setShow2FASetup(true);
       return;
     }
     
-    setSettings(prev => ({
-      ...prev,
-      [key]: !prev[key]
-    }));
-    showToast('success', 'Updated', 'Security setting updated');
+    const newSettings = {
+      ...settings,
+      [key]: !settings[key]
+    };
+    setSettings(newSettings);
+
+    try {
+      await apiClient.updateProfile({ security_settings: newSettings } as any);
+      await refreshProfile();
+      showToast('success', 'Updated', 'Security setting updated');
+    } catch (_error) {
+      // Revert on failure
+      setSettings(settings);
+      showToast('error', 'Error', 'Failed to save security setting');
+    }
   };
 
   const handleChangePassword = () => {
@@ -116,6 +169,7 @@ export function Security() {
         showToast('success', 'Password Changed', 'Your password has been updated successfully');
         setShowPasswordChange(false);
         setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
+        refreshProfile(); // Refresh to get updated password_changed_at
       }).catch((error) => {
         showToast('error', 'Error', error.message || 'Failed to change password');
       });
@@ -163,6 +217,7 @@ export function Security() {
       setShowEmailChange(false);
       setEmailChangeStep('request');
       setEmailForm({ newEmail: '', password: '', verificationToken: '' });
+      refreshProfile(); // Refresh to get updated email_changed_at
     } catch (error: any) {
       showToast('error', 'Error', error.message || 'Failed to verify email change');
     } finally {
@@ -204,7 +259,7 @@ export function Security() {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Icon name="key" size={20} style={{ color: 'var(--color-primary-default)' }} />
+            <Icon name="key" size={20} style={{ color: 'var(--color-text-primary)' }} />
             Password
           </CardTitle>
         </CardHeader>
@@ -224,7 +279,7 @@ export function Security() {
                   fontSize: 'var(--text-xs)', 
                   color: 'var(--color-text-muted)'
                 }}>
-                  Last changed 30 days ago
+                  {passwordLastChanged}
                 </div>
               </div>
               <Button
@@ -381,7 +436,7 @@ export function Security() {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Icon name="mail" size={20} style={{ color: 'var(--color-primary-default)' }} />
+            <Icon name="mail" size={20} style={{ color: 'var(--color-text-primary)' }} />
             Email
           </CardTitle>
         </CardHeader>
@@ -401,7 +456,7 @@ export function Security() {
                   fontSize: 'var(--text-xs)', 
                   color: 'var(--color-text-muted)'
                 }}>
-                  Last changed 30 days ago
+                  {emailLastChanged}
                 </div>
               </div>
               <Button
@@ -601,7 +656,7 @@ export function Security() {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Icon name="shield" size={20} style={{ color: 'var(--color-primary-default)' }} />
+            <Icon name="shield" size={20} style={{ color: 'var(--color-text-primary)' }} />
             Two-Factor Authentication
           </CardTitle>
         </CardHeader>
@@ -707,7 +762,7 @@ export function Security() {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Icon name="logIn" size={20} style={{ color: 'var(--color-primary-default)' }} />
+            <Icon name="logIn" size={20} style={{ color: 'var(--color-text-primary)' }} />
             Login Settings
           </CardTitle>
         </CardHeader>
@@ -810,7 +865,7 @@ export function Security() {
         <CardHeader>
           <div className="flex items-center justify-between">
             <CardTitle className="flex items-center gap-2">
-              <Icon name="monitor" size={20} style={{ color: 'var(--color-primary-default)' }} />
+              <Icon name="monitor" size={20} style={{ color: 'var(--color-text-primary)' }} />
               Active Sessions
             </CardTitle>
             {sessions.length > 1 && (
