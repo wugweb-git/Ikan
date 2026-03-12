@@ -164,11 +164,14 @@ app.post("/admin/assessments", requireAdmin, async (c) => {
     const assessment = {
       ...data,
       id,
+      assessment_id: id,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
     };
     
+    // Write to BOTH prefixes so admin edits are immediately visible to public endpoint
     await kv.set(`assessment_def:${id}`, assessment);
+    await kv.set(`assessment:${id}`, assessment);
     
     return c.json({ assessment });
   } catch (error) {
@@ -183,20 +186,20 @@ app.put("/admin/assessments/:id", requireAdmin, async (c) => {
     const id = c.req.param("id");
     const updates = await c.req.json();
     
-    // Get existing
-    const existing = await kv.get(`assessment_def:${id}`);
-    
-    // If not in DB, check defaults (we can "edit" defaults by saving a copy)
-    // But since we are managing dynamic assessments, we just save the new state
+    // Get existing from either prefix
+    const existing = await kv.get(`assessment_def:${id}`) || await kv.get(`assessment:${id}`);
     
     const assessment = {
       ...(existing || {}),
       ...updates,
       id,
+      assessment_id: id,
       updated_at: new Date().toISOString()
     };
     
+    // Write to BOTH prefixes
     await kv.set(`assessment_def:${id}`, assessment);
+    await kv.set(`assessment:${id}`, assessment);
     
     return c.json({ assessment });
   } catch (error) {
@@ -210,29 +213,20 @@ app.delete("/admin/assessments/:id", requireAdmin, async (c) => {
   try {
     const id = c.req.param("id");
     
-    // We don't actually delete from defaults (can't), but we can mark as deleted in DB
-    // Or if it's a dynamic one, we delete it.
+    // Fetch data BEFORE deleting so we can clean up slug aliases
+    const existing = await kv.get(`assessment_def:${id}`) || await kv.get(`assessment:${id}`);
     
-    // Check if it's dynamic
-    const existing = await kv.get(`assessment_def:${id}`);
+    // Hard-delete from BOTH prefixes so the assessment is truly gone
+    await kv.del(`assessment_def:${id}`);
+    await kv.del(`assessment:${id}`);
     
-    if (existing) {
-      // It exists in DB, so we can delete it (or mark deleted)
-      // If we delete it, and it overrides a default, the default will reappear.
-      // So we should mark as deleted.
-      
-      const deletedAssessment = {
-        ...existing,
-        deleted: true,
-        updated_at: new Date().toISOString()
-      };
-      
-      await kv.set(`assessment_def:${id}`, deletedAssessment);
-    } else {
-      // It might be a default assessment. We need to create a record saying it's deleted.
-      await kv.set(`assessment_def:${id}`, { id, deleted: true });
+    // Also clean up any slug-based alias
+    if (existing?.slug && existing.slug !== id) {
+      await kv.del(`assessment:${existing.slug}`);
+      await kv.del(`assessment_def:${existing.slug}`);
     }
     
+    console.log(`✅ Assessment hard-deleted: ${id}`);
     return c.json({ success: true });
   } catch (error) {
     console.error('Delete assessment error:', error);
@@ -985,7 +979,7 @@ app.get("/admin/kv-audit", requireAdmin, async (c) => {
     // Sort by footprint descending
     userDataFootprint.sort((a, b) => b.keyCount - a.keyCount);
 
-    // ─── 7. Soft-deleted entities still in KV ────────────��
+    // ─── 7. Soft-deleted entities still in KV ────────────
     const softDeleted: string[] = [];
     for (const row of allRows) {
       if (row.value && typeof row.value === 'object' && row.value.deleted === true) {

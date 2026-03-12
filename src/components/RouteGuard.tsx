@@ -1,6 +1,6 @@
 import React from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { isPublicRoute, requiresAuth, DEFAULT_PUBLIC_ROUTE } from '../lib/route-config';
+import { requiresAuth } from '../lib/route-config';
 import LoginScreen from './LoginScreen';
 
 interface RouteGuardProps {
@@ -30,32 +30,23 @@ export function RouteGuard({ currentRoute, onNavigate, children }: RouteGuardPro
     );
   }
 
+  // Admin routes handle their own auth flow (AdminLoginScreen)
+  if (currentRoute.startsWith('/admin')) {
+    return <>{children}</>;
+  }
+
   // Check if current route requires authentication
   const routeRequiresAuth = requiresAuth(currentRoute);
-  const routeIsPublic = isPublicRoute(currentRoute);
 
   // If user is not authenticated and trying to access a private route
   if (!user && routeRequiresAuth) {
     return (
       <LoginScreen 
-        onSuccess={() => onNavigate('/dashboard')}
+        onSuccess={() => onNavigate(currentRoute)}
         reason="auth-required"
         redirectRoute={currentRoute}
       />
     );
-  }
-
-  // If user is authenticated but on invalid route, redirect to dashboard
-  if (user && !routeIsPublic && !routeRequiresAuth) {
-    // This shouldn't happen with our route config, but just in case
-    setTimeout(() => onNavigate('/dashboard'), 0);
-    return null;
-  }
-
-  // If no user and trying to access invalid public route, redirect to default public route
-  if (!user && !routeIsPublic && !routeRequiresAuth) {
-    setTimeout(() => onNavigate(DEFAULT_PUBLIC_ROUTE), 0);
-    return null;
   }
 
   // Route is accessible, render children

@@ -230,6 +230,16 @@ export const routes: RouteConfig[] = [
     showInPrivateNav: false,
     description: 'User login and authentication'
   },
+  {
+    path: '/admin/login',
+    label: 'Admin Sign In',
+    isPublic: true,
+    requiresAuth: false,
+    showInNavigation: false,
+    showInPublicNav: false,
+    showInPrivateNav: false,
+    description: 'Admin login and authentication'
+  },
 
   // Private App Routes
   {

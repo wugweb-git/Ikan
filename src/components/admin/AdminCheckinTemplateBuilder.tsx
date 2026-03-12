@@ -1,3 +1,18 @@
+import { toast } from 'sonner@2.0.3';
+import { useState, useEffect, useCallback } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
+import {
+  Plus, Trash2, Edit2, Save, X, GripVertical, Copy, Eye, EyeOff,
+  ChevronDown, ChevronUp, RotateCcw, ShieldCheck, AlertTriangle, Check,
+  Smile, Type, Tag, List, SlidersHorizontal, ToggleLeft,
+  AlertCircle, ArrowUp, ArrowDown, Pencil,
+} from 'lucide-react';
+import { Card, CardContent } from '../ui/card';
+import { Button } from '../ui/button';
+import { Input } from '../ui/input';
+import { Label } from '../ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
+import { Switch } from '../ui/switch';
 import { apiClient } from '../../lib/api-client';
 import tokens from '../../lib/design-tokens';
 import { getScaleByKey, getAvailableScaleKeys, getContextTags } from '../../lib/emoji-utils';
@@ -437,7 +452,7 @@ function StepEditorCard({
 
 // ═══════════════════════════════════════════════════════════════════
 // MAIN COMPONENT
-// ═══════════════════════════════════════════════════════════════════
+// ═════════════════════════════════════════════════════════════���═════
 interface AdminCheckinTemplateBuilderProps {
   onBack?: () => void;
 }
@@ -622,8 +637,7 @@ export function AdminCheckinTemplateBuilder({ onBack }: AdminCheckinTemplateBuil
     <div>
       <AdminHeader
         title="Check-in Builder"
-        subtitle="Configure the steps users see when logging a mood journal entry. Drag to reorder, add or remove steps."
-        icon={<Smile size={20} />}
+        description="Configure the steps users see when logging a mood journal entry. Drag to reorder, add or remove steps."
         onBack={onBack}
         actions={
           <div className="flex items-center gap-2">

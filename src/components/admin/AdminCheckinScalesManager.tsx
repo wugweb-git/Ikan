@@ -11,6 +11,7 @@ import { Label } from '../ui/label';
 import { Switch } from '../ui/switch';
 import { toast } from 'sonner@2.0.3';
 import { projectId, publicAnonKey } from '../../utils/supabase/info';
+import { supabase } from '../../lib/supabase-client';
 import tokens from '../../lib/design-tokens';
 import { AdminHeader } from './AdminHeader';
 import { AdminLoading } from './AdminLoading';
@@ -70,7 +71,12 @@ const f = (size: string, weight: number = 400, color: string = B.textPrimary) =>
 });
 
 const API_BASE = `https://${projectId}.supabase.co/functions/v1/make-server-cc205da9`;
-const headers = { Authorization: `Bearer ${publicAnonKey}`, 'Content-Type': 'application/json' };
+
+async function getAuthHeaders() {
+  const { data } = await supabase.auth.getSession();
+  const token = data.session?.access_token || publicAnonKey;
+  return { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' };
+}
 
 const SEVERITY_OPTIONS = [
   { value: 'success', label: 'Success (Green)', color: 'var(--color-status-success)' },
@@ -138,11 +144,11 @@ export function AdminCheckinScalesManager({ onBack }: AdminCheckinScalesManagerP
     setLoading(true);
     try {
       const [eRes, sRes, slRes, pRes, tRes] = await Promise.all([
-        fetch(`${API_BASE}/scales/energy`, { headers }).then(r => r.json()),
-        fetch(`${API_BASE}/scales/stress`, { headers }).then(r => r.json()),
-        fetch(`${API_BASE}/scales/sleep`, { headers }).then(r => r.json()),
-        fetch(`${API_BASE}/scales/pain`, { headers }).then(r => r.json()),
-        fetch(`${API_BASE}/scales/context-tags`, { headers }).then(r => r.json()),
+        fetch(`${API_BASE}/scales/energy`, { headers: await getAuthHeaders() }).then(r => r.json()),
+        fetch(`${API_BASE}/scales/stress`, { headers: await getAuthHeaders() }).then(r => r.json()),
+        fetch(`${API_BASE}/scales/sleep`, { headers: await getAuthHeaders() }).then(r => r.json()),
+        fetch(`${API_BASE}/scales/pain`, { headers: await getAuthHeaders() }).then(r => r.json()),
+        fetch(`${API_BASE}/scales/context-tags`, { headers: await getAuthHeaders() }).then(r => r.json()),
       ]);
       setEnergyItems((eRes.items || []).sort((a: ScaleItem, b: ScaleItem) => a.order - b.order));
       setStressItems((sRes.items || []).sort((a: ScaleItem, b: ScaleItem) => a.order - b.order));
@@ -164,7 +170,7 @@ export function AdminCheckinScalesManager({ onBack }: AdminCheckinScalesManagerP
     setSaving(true);
     try {
       const res = await fetch(`${API_BASE}/scales/${type}`, {
-        method: 'PUT', headers, body: JSON.stringify({ items }),
+        method: 'PUT', headers: await getAuthHeaders(), body: JSON.stringify({ items }),
       });
       if (!res.ok) throw new Error(await res.text());
       toast.success(`${type === 'energy' ? 'Energy' : type === 'stress' ? 'Stress' : type === 'sleep' ? 'Sleep' : 'Pain'} scale saved`);
@@ -179,7 +185,7 @@ export function AdminCheckinScalesManager({ onBack }: AdminCheckinScalesManagerP
     setSaving(true);
     try {
       const res = await fetch(`${API_BASE}/scales/context-tags`, {
-        method: 'PUT', headers, body: JSON.stringify({ items }),
+        method: 'PUT', headers: await getAuthHeaders(), body: JSON.stringify({ items }),
       });
       if (!res.ok) throw new Error(await res.text());
       toast.success('Context tags saved');
@@ -196,7 +202,7 @@ export function AdminCheckinScalesManager({ onBack }: AdminCheckinScalesManagerP
     try {
       const resetType = type === 'tags' ? 'context-tags' : type;
       const res = await fetch(`${API_BASE}/scales/reset`, {
-        method: 'POST', headers, body: JSON.stringify({ type: resetType }),
+        method: 'POST', headers: await getAuthHeaders(), body: JSON.stringify({ type: resetType }),
       });
       if (!res.ok) throw new Error(await res.text());
       toast.success(`${label} reset to defaults`);

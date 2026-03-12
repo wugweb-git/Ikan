@@ -22,6 +22,7 @@ import { AdminEmptyState } from './AdminEmptyState';
 import { AdminLoading } from './AdminLoading';
 import { useIsMobile } from '../../hooks/useIsMobile';
 import { projectId, publicAnonKey } from '../../utils/supabase/info';
+import { supabase } from '../../lib/supabase-client';
 
 type LogLevel = 'DEBUG' | 'INFO' | 'WARN' | 'ERROR';
 
@@ -55,11 +56,13 @@ export function AdminSystemLogs() {
   const loadLogs = async () => {
     try {
       setLoading(true);
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData.session?.access_token || publicAnonKey;
       const response = await fetch(
         `https://${projectId}.supabase.co/functions/v1/make-server-cc205da9/admin/system-logs`,
         {
           headers: {
-            'Authorization': `Bearer ${publicAnonKey}`
+            'Authorization': `Bearer ${token}`
           }
         }
       );

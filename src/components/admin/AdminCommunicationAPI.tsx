@@ -22,6 +22,7 @@ import { AdminHeader } from './AdminHeader';
 import { AdminLoading } from './AdminLoading';
 import { useIsMobile } from '../../hooks/useIsMobile';
 import { projectId, publicAnonKey } from '../../utils/supabase/info';
+import { supabase } from '../../lib/supabase-client';
 
 const API_BASE = `https://${projectId}.supabase.co/functions/v1/make-server-cc205da9`;
 
@@ -79,15 +80,20 @@ export function AdminCommunicationAPI() {
   const [saving, setSaving] = useState(false);
   const [testRecipient, setTestRecipient] = useState({ email: '', sms: '', whatsapp: '' });
 
-  const headers = {
-    'Authorization': `Bearer ${publicAnonKey}`,
-    'Content-Type': 'application/json',
+  const getHeaders = async () => {
+    const { data } = await supabase.auth.getSession();
+    const token = data.session?.access_token || publicAnonKey;
+    return {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    };
   };
 
   // ── Load config + account status ─────────────────────────────
   const loadData = useCallback(async () => {
     try {
       setLoading(true);
+      const headers = await getHeaders();
       const [configRes, accountRes, logsRes] = await Promise.all([
         fetch(`${API_BASE}/brevo/config`, { headers }).then(r => r.json()).catch(() => null),
         fetch(`${API_BASE}/brevo/account`, { headers }).then(r => r.json()).catch(() => null),
@@ -119,6 +125,7 @@ export function AdminCommunicationAPI() {
   const handleSave = async () => {
     setSaving(true);
     try {
+      const headers = await getHeaders();
       const res = await fetch(`${API_BASE}/brevo/config`, {
         method: 'POST',
         headers,
@@ -147,6 +154,7 @@ export function AdminCommunicationAPI() {
     }
     setTesting(channel);
     try {
+      const headers = await getHeaders();
       const res = await fetch(`${API_BASE}/brevo/test`, {
         method: 'POST',
         headers,

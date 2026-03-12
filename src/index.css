@@ -5991,9 +5991,39 @@
     color: var(--destructive);
   }
 
-  @media (width < 850px) {
-    .max-\[850px\]\:hidden {
-      display: none;
+  @media (width < 48rem) {
+    .max-md\:bottom-\[100px\] {
+      bottom: 100px;
+    }
+  }
+
+  @media (width < 48rem) {
+    .max-md\:left-3 {
+      left: calc(var(--spacing) * 3);
+    }
+  }
+
+  @media (width < 48rem) {
+    .max-md\:h-5 {
+      height: calc(var(--spacing) * 5);
+    }
+  }
+
+  @media (width < 48rem) {
+    .max-md\:h-10 {
+      height: calc(var(--spacing) * 10);
+    }
+  }
+
+  @media (width < 48rem) {
+    .max-md\:w-5 {
+      width: calc(var(--spacing) * 5);
+    }
+  }
+
+  @media (width < 48rem) {
+    .max-md\:w-10 {
+      width: calc(var(--spacing) * 10);
     }
   }
 

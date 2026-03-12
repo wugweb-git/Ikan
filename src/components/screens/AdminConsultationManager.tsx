@@ -26,6 +26,7 @@ import {
   DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger,
 } from "../ui/dropdown-menu";
 import { projectId, publicAnonKey } from '../../utils/supabase/info';
+import { supabase } from '../../lib/supabase-client';
 
 interface AdminConsultationManagerProps {
   onBack?: () => void;
@@ -146,9 +147,11 @@ export function AdminConsultationManager({ onBack, onNavigate }: AdminConsultati
   const loadApplications = async () => {
     try {
       setLoadingApps(true);
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData.session?.access_token || publicAnonKey;
       const response = await fetch(
         `https://${projectId}.supabase.co/functions/v1/make-server-cc205da9/admin/professional-applications`,
-        { headers: { Authorization: `Bearer ${publicAnonKey}` } }
+        { headers: { Authorization: `Bearer ${token}` } }
       );
       const data = await response.json();
       setApplications(data.applications || []);
@@ -162,9 +165,11 @@ export function AdminConsultationManager({ onBack, onNavigate }: AdminConsultati
 
   const loadApplicationDetail = async (appId: string) => {
     try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData.session?.access_token || publicAnonKey;
       const response = await fetch(
         `https://${projectId}.supabase.co/functions/v1/make-server-cc205da9/admin/professional-applications/${appId}`,
-        { headers: { Authorization: `Bearer ${publicAnonKey}` } }
+        { headers: { Authorization: `Bearer ${token}` } }
       );
       const data = await response.json();
       if (data.application) {
@@ -182,9 +187,11 @@ export function AdminConsultationManager({ onBack, onNavigate }: AdminConsultati
   const handleApproveApp = async (appId: string) => {
     setProcessingApp(appId);
     try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData.session?.access_token || publicAnonKey;
       const response = await fetch(
         `https://${projectId}.supabase.co/functions/v1/make-server-cc205da9/admin/professional-applications/${appId}/approve`,
-        { method: 'POST', headers: { Authorization: `Bearer ${publicAnonKey}`, 'Content-Type': 'application/json' } }
+        { method: 'POST', headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' } }
       );
       const data = await response.json();
       if (data.success) {
@@ -207,11 +214,13 @@ export function AdminConsultationManager({ onBack, onNavigate }: AdminConsultati
     if (!rejectAppId) return;
     setProcessingApp(rejectAppId);
     try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData.session?.access_token || publicAnonKey;
       const response = await fetch(
         `https://${projectId}.supabase.co/functions/v1/make-server-cc205da9/admin/professional-applications/${rejectAppId}/reject`,
         {
           method: 'POST',
-          headers: { Authorization: `Bearer ${publicAnonKey}`, 'Content-Type': 'application/json' },
+          headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
           body: JSON.stringify({ reason: rejectReason })
         }
       );

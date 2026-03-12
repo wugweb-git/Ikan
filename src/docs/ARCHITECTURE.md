@@ -1,0 +1,159 @@
+# iKan PWA - Architecture Overview
+
+> **Last updated**: March 12, 2026
+> **Audience**: All developers contributing to iKan
+
+---
+
+## Tech Stack
+
+| Layer | Technology | Version |
+|-------|-----------|---------|
+| **Frontend** | React + TypeScript | React 18, TS 5.2 |
+| **Styling** | Tailwind CSS v4 + Radix UI | v4.0-alpha |
+| **Animation** | Motion (formerly Framer Motion) | v10.18 |
+| **Build** | Vite | v5.1 |
+| **Backend** | Supabase Edge Functions (Deno + Hono) | Hono on Deno |
+| **Database** | Supabase Postgres (KV table) | Postgres 15 |
+| **Auth** | Supabase Auth | v2 |
+| **Storage** | Supabase Storage (private buckets) | v2 |
+| **Deployment** | Vercel (frontend) + Supabase (backend) | - |
+| **PWA** | vite-plugin-pwa + Workbox | v0.19 |
+| **Toasts** | sonner | v2.0.3 |
+| **Forms** | react-hook-form | v7.55.0 |
+| **Icons** | Lucide React | v0.344 |
+| **Charts** | Recharts | v2.12 |
+
+---
+
+## Three-Tier Architecture
+
+```
+Browser (React SPA / PWA)
+    |
+    |  HTTPS (Bearer token)
+    v
+Supabase Edge Function (Deno / Hono server)
+    |
+    |  Supabase client (service role key)
+    v
+Supabase Postgres  (kv_store_cc205da9 table)
+Supabase Storage   (private buckets prefixed make-cc205da9)
+Supabase Auth      (user management)
+```
+
+### Data Flow
+
+1. **Frontend** calls the Hono server via `ApiClient` (`/lib/api-client.ts`)
+2. **API base URL**: `https://<projectId>.supabase.co/functions/v1/make-server-cc205da9/<route>`
+3. **Auth**: Requests include `Authorization: Bearer <jwt>` - the JWT comes from `supabase.auth.getSession()` for authenticated users, or the public anon key for public endpoints
+4. **Server** validates the JWT via `requireAuth` or `requireAdmin` middleware, then reads/writes the KV store
+5. **KV Store**: All data is stored as JSON in a single `kv_store_cc205da9` table with `key TEXT` / `value JSONB` columns
+
+### Key KV Prefixes
+
+| Prefix | Description |
+|--------|------------|
+| `user:<id>` | User profiles (includes `is_admin` flag) |
+| `assessment_def:<id>` | Assessment definitions (primary) |
+| `assessment:<id>` | Assessment definitions (legacy, dual-written) |
+| `resource:<id>` | Library resources |
+| `equip_program:<id>` | Equip wellness programs |
+| `settings:site` | Global site settings |
+| `mood:<userId>:<date>` | Mood journal entries |
+| `contact_submission:<id>` | Contact form submissions |
+| `newsletter:<email>` | Newsletter subscriptions |
+| `checkin_template:<id>` | Check-in scale templates |
+| `hero_banner:<id>` | Hero banner configurations |
+| `corporate_program:<id>` | Corporate program data |
+
+---
+
+## Routing
+
+iKan uses **manual client-side routing** (NOT react-router). Navigation state is managed in `App.tsx` via `useState`:
+
+```tsx
+const [currentRoute, setCurrentRoute] = useState(DEFAULT_PUBLIC_ROUTE);
+```
+
+The `handleNavigate` callback uses `window.history.pushState()` for URL updates and renders the matching screen component via a switch/conditional block.
+
+- **Route config**: `/lib/route-config.ts` defines all valid routes with metadata (public/private, nav visibility)
+- **Navigation config**: `/lib/navigation.ts` defines top nav and bottom nav items
+- **Route guard**: `/components/RouteGuard.tsx` checks auth status before rendering private routes
+
+### Route Categories
+
+| Category | Examples | Auth Required |
+|----------|---------|--------------|
+| Public Marketing | `/`, `/about`, `/faq`, `/contact` | No |
+| Public Features | `/assessment`, `/equip`, `/consultation` | No |
+| Private User | `/dashboard`, `/mood-journal`, `/account` | Yes |
+| Private Flows | `/assessment-flow`, `/equip-program-flow` | Yes |
+| Admin | `/admin`, `/admin/resources`, `/admin/users` | Yes + `is_admin` |
+| Legal | `/privacy`, `/terms`, `/return-policy` | No |
+
+---
+
+## Authentication
+
+### Frontend (Supabase Auth SDK)
+- **Singleton client**: `/lib/supabase-client.ts` - single `createClient` instance shared app-wide
+- **Auth context**: `/contexts/AuthContext.tsx` - provides `user`, `session`, `signIn`, `signUp`, `signOut`
+- **Social login**: Supports Google, LinkedIn OIDC, Apple (requires Supabase dashboard config)
+
+### Backend Middleware
+- **`requireAuth`**: Validates JWT, sets `c.userId` and `c.user` on the Hono context
+- **`requireAdmin`**: Same as `requireAuth` + checks `user:<id>.is_admin === true` in KV
+
+### Auth Header Pattern
+Admin components must use the user's actual JWT (not the anon key):
+
+```tsx
+async function getAuthHeaders() {
+  const { data } = await supabase.auth.getSession();
+  const token = data.session?.access_token;
+  return {
+    'Content-Type': 'application/json',
+    'Authorization': `Bearer ${token}`,
+  };
+}
+```
+
+> **Known issue**: Some non-admin components still use `publicAnonKey` in their fetch headers. These work for `requireAuth` routes but would fail if moved to `requireAdmin` routes.
+
+---
+
+## PWA Configuration
+
+- **Service Worker**: Auto-generated by `vite-plugin-pwa` with Workbox
+- **Cache Strategy**: `NetworkFirst` for API calls, `CacheFirst` for images
+- **Manifest**: Configured in `vite.config.ts` with app shortcuts for Dashboard, Assessment, Programs
+- **Icons**: `/public/pwa-*.png` and `/public/apple-touch-icon.png`
+
+---
+
+## Design System
+
+All design tokens are defined in:
+- **CSS variables**: `/styles/globals.css`
+- **JS tokens**: `/lib/react-tokens.ts` and `/lib/design-tokens.ts`
+
+See `/guidelines/Guidelines.md` for the complete design system reference.
+
+### Key Rules
+- Font weights: **400 (regular)** for body, **500 (medium)** for headings. Never use 600/700.
+- Colors: Primary `#2A2A2A`, Background `#F5F5F5`, Cards `#FFFFFF`
+- Spacing: 4px grid system
+- Border radius: `12px` for buttons/inputs, `16px` for cards
+
+---
+
+## Security
+
+- `SUPABASE_SERVICE_ROLE_KEY` is **server-side only** - never exposed to the frontend
+- CORS is wide-open (`origin: "*"`) for the edge function (typical for SPAs with JWT auth)
+- Vercel headers include `X-Frame-Options: DENY`, `X-XSS-Protection`, CSP via `Referrer-Policy`
+- CI pipeline checks for leaked service keys in client code
+- `SecurityProvider` component wraps the app for client-side security features

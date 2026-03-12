@@ -39,6 +39,7 @@ export interface UserProfile {
   name: string;
   phone?: string;
   corporate_user: boolean;
+  is_admin?: boolean;
   avatar_url?: string;
   bio?: string;
   dateOfBirth?: string;
@@ -253,7 +254,7 @@ export interface AnalyticsData {
   moodTrends: Array<Record<string, unknown>>;
 }
 
-// ─── Generic API Response ────────────────────────────────────────
+// ─── Generic API Response ───────────────────────────────��────────
 
 export interface ApiResponse<T = unknown> {
   data?: T;

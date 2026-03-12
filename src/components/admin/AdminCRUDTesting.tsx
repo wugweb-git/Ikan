@@ -203,7 +203,8 @@ export function AdminCRUDTesting({ onBack }: { onBack?: () => void }) {
 
       // Scan professionals
       try {
-        const professionals: any[] = await apiClient.getProfessionals();
+        const profResult = await apiClient.getProfessionals();
+        const professionals: any[] = profResult.professionals || [];
         for (const p of professionals) {
           const nameMatch = isSuspect(p.name);
           const bioMatch = isSuspect(p.bio || p.description);

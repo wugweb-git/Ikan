@@ -14,7 +14,7 @@ export function registerAssessmentRoutes(app: Hono, requireAuth: any) {
             DEFAULT_ASSESSMENTS.forEach(a => map.set(a.id, a));
             dynamic.forEach(a => map.set(a.id, a));
             
-            const assessments = Array.from(map.values()).filter((a: any) => !a.deleted);
+            const assessments = Array.from(map.values()).filter((a: any) => !a.deleted && a.published !== false);
             
             return c.json({ assessments });
         } catch (error) {

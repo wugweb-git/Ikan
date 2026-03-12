@@ -125,7 +125,7 @@ globalThis.addEventListener("error", (event: ErrorEvent) => {
 
 const app = new Hono().basePath('/make-server-cc205da9');
 
-// ─────────────────────────────────────────────────────────────────────────────
+// ────────────────────────────────────────────────────────────���────────────────
 // Layer 3: Hono app.onError — return raw Response instead of c.json()
 //
 // c.json() tries to write to the socket, which re-throws if the client already
@@ -155,7 +155,7 @@ app.use(
   cors({
     origin: "*",
     allowHeaders: ["Content-Type", "Authorization"],
-    allowMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowMethods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     exposeHeaders: ["Content-Length"],
     maxAge: 600,
   }),
@@ -1233,8 +1233,8 @@ app.get("/assessments", async (c) => {
     const validAssessments = assessments.filter((a: any) => a && a.id);
     const uniqueAssessments = Array.from(new Map(validAssessments.map((a: any) => [a.id, a])).values());
     
-    // ✅ FILTER OUT UNPUBLISHED/DRAFT ASSESSMENTS - Only return published assessments
-    const publishedAssessments = uniqueAssessments.filter((a: any) => a.published !== false);
+    // ✅ FILTER OUT UNPUBLISHED/DRAFT and DELETED ASSESSMENTS
+    const publishedAssessments = uniqueAssessments.filter((a: any) => a.published !== false && a.deleted !== true);
     
     console.log(`✅ Returning ${publishedAssessments.length} published assessments (${uniqueAssessments.length} total)`);
     return c.json({ assessments: publishedAssessments });
@@ -1261,9 +1261,9 @@ app.get("/assessments/:assessmentId", async (c) => {
       );
     }
     
-    if (!assessment) {
-      // Return 404 if not found
-      console.log(`❌ Assessment not found: ${assessmentId}`);
+    if (!assessment || assessment.deleted === true) {
+      // Return 404 if not found or soft-deleted
+      console.log(`❌ Assessment not found or deleted: ${assessmentId}`);
       return c.json({ error: 'Assessment not found' }, 404);
     }
     
@@ -1299,6 +1299,8 @@ app.post("/assessments", requireAuth, async (c) => {
     };
     
     await kv.set(`assessment:${assessmentId}`, newAssessment);
+    // Also sync to assessment_def: prefix for admin consistency
+    await kv.set(`assessment_def:${assessmentId}`, newAssessment);
     
     console.log(`✅ Assessment created: ${assessmentId}`);
     return c.json({ assessment: newAssessment });

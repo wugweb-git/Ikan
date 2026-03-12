@@ -462,6 +462,7 @@ function AppContent() {
   const isHeroRoute = shouldShowFooter || 
                       currentRoute === '/' || 
                       currentRoute === '/login' ||
+                      currentRoute === '/assessment' ||
                       currentRoute === '/equip' ||
                       currentRoute === '/resource' ||
                       currentRoute === '/consultation' ||

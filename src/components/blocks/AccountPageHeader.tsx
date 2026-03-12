@@ -1,5 +1,6 @@
 import type React from 'react';
 import { ArrowLeft } from 'lucide-react';
+import { cn } from '../ui/utils';
 
 interface AccountPageHeaderProps {
   title: string;

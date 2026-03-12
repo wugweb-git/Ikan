@@ -19,6 +19,7 @@ import { AdminHeader } from './AdminHeader';
 import { AdminLoading } from './AdminLoading';
 import { useIsMobile } from '../../hooks/useIsMobile';
 import { projectId, publicAnonKey } from '../../utils/supabase/info';
+import { supabase } from '../../lib/supabase-client';
 
 interface PaymentConfig {
   gateway: string;
@@ -77,6 +78,14 @@ export function AdminPaymentGateway() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [testing, setTesting] = useState<string | null>(null);
 
+  const getAuthHeaders = async (includeContentType = false) => {
+    const { data } = await supabase.auth.getSession();
+    const token = data.session?.access_token || publicAnonKey;
+    const h: Record<string, string> = { 'Authorization': `Bearer ${token}` };
+    if (includeContentType) h['Content-Type'] = 'application/json';
+    return h;
+  };
+
   useEffect(() => {
     loadConfigs();
     loadTransactions();
@@ -84,13 +93,10 @@ export function AdminPaymentGateway() {
 
   const loadConfigs = async () => {
     try {
+      const headers = await getAuthHeaders();
       const response = await fetch(
         `https://${projectId}.supabase.co/functions/v1/make-server-cc205da9/admin/payment/config`,
-        {
-          headers: {
-            'Authorization': `Bearer ${publicAnonKey}`
-          }
-        }
+        { headers }
       );
 
       if (response.ok) {
@@ -109,13 +115,10 @@ export function AdminPaymentGateway() {
 
   const loadTransactions = async () => {
     try {
+      const headers = await getAuthHeaders();
       const response = await fetch(
         `https://${projectId}.supabase.co/functions/v1/make-server-cc205da9/admin/payment/transactions`,
-        {
-          headers: {
-            'Authorization': `Bearer ${publicAnonKey}`
-          }
-        }
+        { headers }
       );
 
       if (response.ok) {
@@ -129,14 +132,12 @@ export function AdminPaymentGateway() {
 
   const handleSaveConfig = async (gateway: string, config: PaymentConfig) => {
     try {
+      const headers = await getAuthHeaders(true);
       const response = await fetch(
         `https://${projectId}.supabase.co/functions/v1/make-server-cc205da9/admin/payment/config`,
         {
           method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${publicAnonKey}`,
-            'Content-Type': 'application/json'
-          },
+          headers,
           body: JSON.stringify({ gateway, config })
         }
       );
@@ -155,14 +156,12 @@ export function AdminPaymentGateway() {
   const handleTest = async (gateway: string, amount: number) => {
     setTesting(gateway);
     try {
+      const headers = await getAuthHeaders(true);
       const response = await fetch(
         `https://${projectId}.supabase.co/functions/v1/make-server-cc205da9/admin/payment/test`,
         {
           method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${publicAnonKey}`,
-            'Content-Type': 'application/json'
-          },
+          headers,
           body: JSON.stringify({ gateway, amount })
         }
       );
