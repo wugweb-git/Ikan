@@ -1,5 +1,5 @@
 import type React from 'react';
-import { cn } from '../ui/utils';
+import { Badge } from '../ui/badge';
 
 /**
  * AdminStatusBadge — Unified status badge for the entire admin ecosystem.

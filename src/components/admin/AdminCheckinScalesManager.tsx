@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import {
   Plus, Trash2, Edit2, Save, X, Zap, Brain, Tag,
-  RotateCcw, ShieldCheck, GripVertical,
+  RotateCcw, ShieldCheck, GripVertical, Moon, HeartPulse,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
@@ -34,7 +34,7 @@ interface TagItem {
   order: number;
 }
 
-type TabKey = 'energy' | 'stress' | 'tags';
+type TabKey = 'energy' | 'stress' | 'sleep' | 'pain' | 'tags';
 
 interface AdminCheckinScalesManagerProps {
   onBack?: () => void;
@@ -83,6 +83,8 @@ const SEVERITY_OPTIONS = [
 const EMOJI_PICKS = {
   energy: ['🪫', '😴', '⚡', '💪', '🔥', '🚀', '🏃', '🧘', '💤', '🌟', '⭐', '✨'],
   stress: ['😌', '🤔', '😤', '😰', '🤯', '😓', '😖', '😩', '🧊', '🌊', '🍃', '💆'],
+  sleep: ['🛌', '😴', '💤', '🌙', '🌜', '🌛', '🌟', '😌', '😩', '🥱', '🛏️', '✨'],
+  pain: ['😊', '😐', '😕', '😧', '😭', '🤕', '💊', '🩹', '❤️‍🩹', '🏥', '💉', '🩺'],
   tags:   ['💼', '😴', '🏃', '❤️', '📚', '💰', '🎉', '✨', '🎮', '🎵', '🍽️', '🏠', '🧠', '🙏', '🌿', '☕', '👶', '🐾', '✈️', '🎯'],
 };
 
@@ -113,6 +115,8 @@ export function AdminCheckinScalesManager({ onBack }: AdminCheckinScalesManagerP
   // Data
   const [energyItems, setEnergyItems] = useState<ScaleItem[]>([]);
   const [stressItems, setStressItems] = useState<ScaleItem[]>([]);
+  const [sleepItems, setSleepItems] = useState<ScaleItem[]>([]);
+  const [painItems, setPainItems] = useState<ScaleItem[]>([]);
   const [tagItems, setTagItems] = useState<TagItem[]>([]);
 
   // Editing
@@ -133,13 +137,17 @@ export function AdminCheckinScalesManager({ onBack }: AdminCheckinScalesManagerP
   const fetchAll = async () => {
     setLoading(true);
     try {
-      const [eRes, sRes, tRes] = await Promise.all([
+      const [eRes, sRes, slRes, pRes, tRes] = await Promise.all([
         fetch(`${API_BASE}/scales/energy`, { headers }).then(r => r.json()),
         fetch(`${API_BASE}/scales/stress`, { headers }).then(r => r.json()),
+        fetch(`${API_BASE}/scales/sleep`, { headers }).then(r => r.json()),
+        fetch(`${API_BASE}/scales/pain`, { headers }).then(r => r.json()),
         fetch(`${API_BASE}/scales/context-tags`, { headers }).then(r => r.json()),
       ]);
       setEnergyItems((eRes.items || []).sort((a: ScaleItem, b: ScaleItem) => a.order - b.order));
       setStressItems((sRes.items || []).sort((a: ScaleItem, b: ScaleItem) => a.order - b.order));
+      setSleepItems((slRes.items || []).sort((a: ScaleItem, b: ScaleItem) => a.order - b.order));
+      setPainItems((pRes.items || []).sort((a: ScaleItem, b: ScaleItem) => a.order - b.order));
       setTagItems((tRes.items || []).sort((a: TagItem, b: TagItem) => a.order - b.order));
     } catch (e) {
       console.error('Failed to fetch scales:', e);
@@ -152,14 +160,14 @@ export function AdminCheckinScalesManager({ onBack }: AdminCheckinScalesManagerP
   useEffect(() => { fetchAll(); }, []);
 
   // ── Save ───────────────────────────────────────────────────────
-  const saveScale = async (type: 'energy' | 'stress', items: ScaleItem[]) => {
+  const saveScale = async (type: 'energy' | 'stress' | 'sleep' | 'pain', items: ScaleItem[]) => {
     setSaving(true);
     try {
       const res = await fetch(`${API_BASE}/scales/${type}`, {
         method: 'PUT', headers, body: JSON.stringify({ items }),
       });
       if (!res.ok) throw new Error(await res.text());
-      toast.success(`${type === 'energy' ? 'Energy' : 'Stress'} scale saved`);
+      toast.success(`${type === 'energy' ? 'Energy' : type === 'stress' ? 'Stress' : type === 'sleep' ? 'Sleep' : 'Pain'} scale saved`);
       await fetchAll();
     } catch (e) {
       console.error(`Failed to save ${type} scale:`, e);
@@ -183,7 +191,7 @@ export function AdminCheckinScalesManager({ onBack }: AdminCheckinScalesManagerP
   };
 
   const handleReset = async (type: TabKey) => {
-    const label = type === 'energy' ? 'Energy Scale' : type === 'stress' ? 'Stress Scale' : 'Context Tags';
+    const label = type === 'energy' ? 'Energy Scale' : type === 'stress' ? 'Stress Scale' : type === 'sleep' ? 'Sleep Scale' : type === 'pain' ? 'Pain Scale' : 'Context Tags';
     if (!confirm(`Reset ${label} to design-token defaults? This will overwrite your custom changes.`)) return;
     try {
       const resetType = type === 'tags' ? 'context-tags' : type;
@@ -200,10 +208,12 @@ export function AdminCheckinScalesManager({ onBack }: AdminCheckinScalesManagerP
   };
 
   // ── Scale CRUD helpers ─────────────────────────────────────────
-  const getCurrentScaleItems = () => activeTab === 'energy' ? energyItems : stressItems;
+  const getCurrentScaleItems = () => activeTab === 'energy' ? energyItems : activeTab === 'stress' ? stressItems : activeTab === 'sleep' ? sleepItems : painItems;
   const setCurrentScaleItems = (items: ScaleItem[]) => {
     if (activeTab === 'energy') setEnergyItems(items);
-    else setStressItems(items);
+    else if (activeTab === 'stress') setStressItems(items);
+    else if (activeTab === 'sleep') setSleepItems(items);
+    else setPainItems(items);
   };
 
   const addScaleItem = () => {
@@ -222,7 +232,7 @@ export function AdminCheckinScalesManager({ onBack }: AdminCheckinScalesManagerP
     };
     const updated = [...items, newItem];
     setCurrentScaleItems(updated);
-    saveScale(activeTab as 'energy' | 'stress', updated);
+    saveScale(activeTab as 'energy' | 'stress' | 'sleep' | 'pain', updated);
     resetForms();
   };
 
@@ -232,7 +242,7 @@ export function AdminCheckinScalesManager({ onBack }: AdminCheckinScalesManagerP
       item.id === id ? { ...item, ...scaleForm, id } as ScaleItem : item
     );
     setCurrentScaleItems(updated);
-    saveScale(activeTab as 'energy' | 'stress', updated);
+    saveScale(activeTab as 'energy' | 'stress' | 'sleep' | 'pain', updated);
     resetForms();
   };
 
@@ -242,7 +252,7 @@ export function AdminCheckinScalesManager({ onBack }: AdminCheckinScalesManagerP
     // Re-order
     items.forEach((item, idx) => { item.order = idx; item.value = idx + 1; });
     setCurrentScaleItems(items);
-    saveScale(activeTab as 'energy' | 'stress', items);
+    saveScale(activeTab as 'energy' | 'stress' | 'sleep' | 'pain', items);
   };
 
   const toggleScaleActive = (id: string) => {
@@ -250,7 +260,7 @@ export function AdminCheckinScalesManager({ onBack }: AdminCheckinScalesManagerP
       i.id === id ? { ...i, is_active: !i.is_active } : i
     );
     setCurrentScaleItems(items);
-    saveScale(activeTab as 'energy' | 'stress', items);
+    saveScale(activeTab as 'energy' | 'stress' | 'sleep' | 'pain', items);
   };
 
   // ── Tag CRUD helpers ───────────────────────────────────────────
@@ -333,6 +343,8 @@ export function AdminCheckinScalesManager({ onBack }: AdminCheckinScalesManagerP
   const TABS: { key: TabKey; label: string; icon: React.ReactNode; desc: string }[] = [
     { key: 'energy', label: 'Energy Scale', icon: <Zap size={16} />, desc: 'How energetic users feel' },
     { key: 'stress', label: 'Stress Scale', icon: <Brain size={16} />, desc: 'User stress levels' },
+    { key: 'sleep', label: 'Sleep Scale', icon: <Moon size={16} />, desc: 'User sleep quality' },
+    { key: 'pain', label: 'Pain Scale', icon: <HeartPulse size={16} />, desc: 'User pain levels' },
     { key: 'tags', label: 'Context Tags', icon: <Tag size={16} />, desc: 'What shaped the day' },
   ];
 
@@ -372,6 +384,8 @@ export function AdminCheckinScalesManager({ onBack }: AdminCheckinScalesManagerP
           stats={[
             { label: 'Energy Items', value: energyItems.length },
             { label: 'Stress Items', value: stressItems.length },
+            { label: 'Sleep Items', value: sleepItems.length },
+            { label: 'Pain Items', value: painItems.length },
             { label: 'Context Tags', value: tagItems.length },
           ]}
         />
@@ -401,7 +415,7 @@ export function AdminCheckinScalesManager({ onBack }: AdminCheckinScalesManagerP
                   backgroundColor: isActive ? B.accent : 'transparent',
                   ...f('xs', 500, B.muted),
                 }}>
-                  {tab.key === 'energy' ? energyItems.length : tab.key === 'stress' ? stressItems.length : tagItems.length}
+                  {tab.key === 'energy' ? energyItems.length : tab.key === 'stress' ? stressItems.length : tab.key === 'sleep' ? sleepItems.length : tab.key === 'pain' ? painItems.length : tagItems.length}
                 </span>
               </button>
             );
@@ -491,7 +505,7 @@ export function AdminCheckinScalesManager({ onBack }: AdminCheckinScalesManagerP
                             style={{ backgroundColor: B.bgInput }}
                           />
                           <div className="flex flex-wrap" style={{ gap: 'var(--spacing-1)' }}>
-                            {EMOJI_PICKS[activeTab === 'energy' ? 'energy' : 'stress'].map(e => (
+                            {EMOJI_PICKS[activeTab === 'energy' ? 'energy' : activeTab === 'stress' ? 'stress' : activeTab === 'sleep' ? 'sleep' : 'pain'].map(e => (
                               <button key={e} onClick={() => setScaleForm(p => ({ ...p, emoji: e }))}
                                 style={{
                                   width: 32, height: 32, borderRadius: 6, fontSize: 18,

@@ -47,9 +47,27 @@ interface TagItem {
   order: number;
 }
 
+const DEFAULT_SLEEP: ScaleItem[] = [
+  { id: "terrible",  value: 1, label: "Terrible",  emoji: "\u{1F629}", severity: "danger",  is_active: true, order: 0 },
+  { id: "poor",      value: 2, label: "Poor",      emoji: "\u{1F634}", severity: "warning", is_active: true, order: 1 },
+  { id: "fair",      value: 3, label: "Fair",      emoji: "\u{1F636}\u{200D}\u{1F32B}\u{FE0F}", severity: "neutral", is_active: true, order: 2 },
+  { id: "good",      value: 4, label: "Good",      emoji: "\u{1F60C}", severity: "success", is_active: true, order: 3 },
+  { id: "excellent", value: 5, label: "Excellent", emoji: "\u{1F31F}", severity: "success", is_active: true, order: 4 },
+];
+
+const DEFAULT_PAIN: ScaleItem[] = [
+  { id: "none",     value: 1, label: "None",     emoji: "\u{1F60A}", severity: "success", is_active: true, order: 0 },
+  { id: "mild",     value: 2, label: "Mild",     emoji: "\u{1F610}", severity: "info",    is_active: true, order: 1 },
+  { id: "moderate", value: 3, label: "Moderate", emoji: "\u{1F615}", severity: "warning", is_active: true, order: 2 },
+  { id: "severe",   value: 4, label: "Severe",   emoji: "\u{1F627}", severity: "danger",  is_active: true, order: 3 },
+  { id: "extreme",  value: 5, label: "Extreme",  emoji: "\u{1F62D}", severity: "danger",  is_active: true, order: 4 },
+];
+
 const KV_KEY_ENERGY = "checkin_scale:energy";
 const KV_KEY_STRESS = "checkin_scale:stress";
 const KV_KEY_TAGS   = "checkin_scale:context_tags";
+const KV_KEY_SLEEP  = "checkin_scale:sleep";
+const KV_KEY_PAIN   = "checkin_scale:pain";
 
 export function registerScalesRoutes(app: Hono, middleware: any) {
 
@@ -131,6 +149,58 @@ export function registerScalesRoutes(app: Hono, middleware: any) {
     }
   });
 
+  // ── GET /scales/sleep ──────────────────────────────────────────
+  app.get("/scales/sleep", middleware, async (c) => {
+    try {
+      const saved = await kv.get(KV_KEY_SLEEP);
+      return c.json({ items: saved || DEFAULT_SLEEP });
+    } catch (e) {
+      console.log("Error loading sleep scale:", e);
+      return c.json({ items: DEFAULT_SLEEP });
+    }
+  });
+
+  // ── PUT /scales/sleep ──────────────────────────────────────────
+  app.put("/scales/sleep", middleware, async (c) => {
+    try {
+      const { items } = await c.req.json();
+      if (!Array.isArray(items) || items.length === 0) {
+        return c.json({ error: "Items array is required" }, 400);
+      }
+      await kv.set(KV_KEY_SLEEP, items);
+      return c.json({ success: true, items });
+    } catch (e) {
+      console.log("Error saving sleep scale:", e);
+      return c.json({ error: "Failed to save sleep scale" }, 500);
+    }
+  });
+
+  // ── GET /scales/pain ───────────────────────────────────────────
+  app.get("/scales/pain", middleware, async (c) => {
+    try {
+      const saved = await kv.get(KV_KEY_PAIN);
+      return c.json({ items: saved || DEFAULT_PAIN });
+    } catch (e) {
+      console.log("Error loading pain scale:", e);
+      return c.json({ items: DEFAULT_PAIN });
+    }
+  });
+
+  // ── PUT /scales/pain ───────────────────────────────────────────
+  app.put("/scales/pain", middleware, async (c) => {
+    try {
+      const { items } = await c.req.json();
+      if (!Array.isArray(items) || items.length === 0) {
+        return c.json({ error: "Items array is required" }, 400);
+      }
+      await kv.set(KV_KEY_PAIN, items);
+      return c.json({ success: true, items });
+    } catch (e) {
+      console.log("Error saving pain scale:", e);
+      return c.json({ error: "Failed to save pain scale" }, 500);
+    }
+  });
+
   // ── POST /scales/reset ────────────────────────────────────────
   // Resets all scales to design-token defaults
   app.post("/scales/reset", middleware, async (c) => {
@@ -145,13 +215,21 @@ export function registerScalesRoutes(app: Hono, middleware: any) {
       } else if (type === "context-tags") {
         await kv.del(KV_KEY_TAGS);
         return c.json({ success: true, items: DEFAULT_TAGS });
+      } else if (type === "sleep") {
+        await kv.del(KV_KEY_SLEEP);
+        return c.json({ success: true, items: DEFAULT_SLEEP });
+      } else if (type === "pain") {
+        await kv.del(KV_KEY_PAIN);
+        return c.json({ success: true, items: DEFAULT_PAIN });
       } else if (type === "all") {
         await kv.del(KV_KEY_ENERGY);
         await kv.del(KV_KEY_STRESS);
         await kv.del(KV_KEY_TAGS);
+        await kv.del(KV_KEY_SLEEP);
+        await kv.del(KV_KEY_PAIN);
         return c.json({ success: true, message: "All scales reset to defaults" });
       }
-      return c.json({ error: "Unknown type. Use energy, stress, context-tags, or all." }, 400);
+      return c.json({ error: "Unknown type. Use energy, stress, context-tags, sleep, pain, or all." }, 400);
     } catch (e) {
       console.log("Error resetting scales:", e);
       return c.json({ error: "Failed to reset scales" }, 500);

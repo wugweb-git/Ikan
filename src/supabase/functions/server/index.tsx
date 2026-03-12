@@ -41,6 +41,9 @@ import { registerScalesRoutes } from './scales-routes.ts';
 import { registerHealthConnectRoutes } from './health-connect-routes.ts';
 import { registerBrevoRoutes } from './brevo-routes.ts';
 import { registerCorporateRoutes } from './corporate-routes.ts';
+import { registerKVAuditRoutes } from './kv-audit-routes.ts';
+import { registerCheckinTemplateRoutes } from './checkin-template-routes.ts';
+import { registerHeroBannerRoutes } from './hero-banner-routes.ts';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Layer 0: Centralized connection-closed error detection
@@ -219,6 +222,9 @@ registerScalesRoutes(app, requireAuth);
 registerHealthConnectRoutes(app, requireAuth);
 registerBrevoRoutes(app, requireAdmin, requireAuth);
 registerCorporateRoutes(app);
+registerKVAuditRoutes(app, requireAuth);
+registerCheckinTemplateRoutes(app, requireAuth);
+registerHeroBannerRoutes(app, requireAuth);
 
   // CMS Public Routes
   app.get("/cms/pages/:slug", async (c) => {
@@ -5217,7 +5223,7 @@ app.post("/admin/notifications/:id/read", requireAdmin, async (c) => {
   }
 });
 
-// ═══════════════════════════════════════════════════════════════════════════════
+// ═════════════════��═════════════════════════════════════════════════════════════
 // SUPABASE STORAGE: File Uploads for Professionals
 // ═══════════════════════════════════════════════════════════════════════════════
 

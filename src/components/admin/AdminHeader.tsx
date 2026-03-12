@@ -1,5 +1,6 @@
 import type React from 'react';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, ChevronRight } from 'lucide-react';
+import { Button } from '../ui/button';
 
 interface AdminHeaderProps {
   title: string;

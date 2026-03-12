@@ -734,19 +734,95 @@ class ApiClient {
     }
   }
 
-  async createJournalEntry(date: string, mood: number, note: string, emotions: string[], energy: number, stress?: number, contextTags?: string[]) {
+  async createJournalEntry(date: string, mood: number, note: string, emotions: string[], energy: number, stress?: number, contextTags?: string[], extraFields?: Record<string, any>) {
     return this.request('/user/journal', { 
       method: 'POST',
       body: JSON.stringify({
         date,
         mood_rating: mood,
         freehand_text_content: note,
-        emotions, // Legacy: keep sending for backward compatibility or map contextTags here?
+        emotions,
         energy,
         stress_level: stress,
-        context_tags: contextTags
+        context_tags: contextTags,
+        ...(extraFields || {}),
       })
     }, true);
+  }
+
+  // ── Check-in Template ─────────────────────────────────────────
+  async getActiveCheckinTemplate() {
+    try {
+      const res = await this.request('/checkin-template/active', { method: 'GET' }, true);
+      cacheForOffline('checkin-template-active', res);
+      return res;
+    } catch (e) {
+      const cached = readOfflineCache<any>('checkin-template-active');
+      if (cached) return cached;
+      return { template: null, _isDefault: true };
+    }
+  }
+
+  async getCheckinTemplates() {
+    return this.request('/checkin-templates', { method: 'GET' }, true);
+  }
+
+  async getCheckinTemplate(id: string) {
+    return this.request(`/checkin-template/${id}`, { method: 'GET' }, true);
+  }
+
+  async createCheckinTemplate(data: any) {
+    return this.request('/checkin-template', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }, true);
+  }
+
+  async updateCheckinTemplate(id: string, data: any) {
+    return this.request(`/checkin-template/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    }, true);
+  }
+
+  async deleteCheckinTemplate(id: string) {
+    return this.request(`/checkin-template/${id}`, { method: 'DELETE' }, true);
+  }
+
+  async activateCheckinTemplate(id: string) {
+    return this.request(`/checkin-template/${id}/activate`, { method: 'POST' }, true);
+  }
+
+  async seedDefaultCheckinTemplate() {
+    return this.request('/checkin-template/seed-default', { method: 'POST' }, true);
+  }
+
+  // ── Hero Banners ─────────────────────────────────────────────
+  async getHeroBanners() {
+    return this.request('/hero-banners', { method: 'GET' }, true);
+  }
+
+  async getHeroBanner(pageKey: string) {
+    try {
+      const res = await this.request(`/hero-banners/${pageKey}`, { method: 'GET' }, true);
+      cacheForOffline(`hero-banner-${pageKey}`, res);
+      return res;
+    } catch (_e) {
+      const cached = readOfflineCache<any>(`hero-banner-${pageKey}`);
+      if (cached) return cached;
+      return { banner: null };
+    }
+  }
+
+  async updateHeroBanner(pageKey: string, data: { title: string; subtitle: string; image_url: string; cta_text?: string; cta_link?: string }) {
+    return this.request(`/hero-banners/${pageKey}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    }, true);
+  }
+
+  async resetHeroBanner(pageKey: string) {
+    return this.request(`/hero-banners/reset/${pageKey}`, { method: 'POST' }, true);
   }
 
   // Admin Users

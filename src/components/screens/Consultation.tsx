@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import { motion } from 'motion/react';
 import { cn } from '../ui/utils';
 import { Filter, Search, X } from 'lucide-react';
 import { apiClient } from '../../lib/api-client';
@@ -13,8 +12,6 @@ import { Checkbox } from '../ui/checkbox';
 import { Label } from '../ui/label';
 import { useIsMobile } from '../../hooks/useIsMobile';
 import { Skeleton } from '../ui/skeleton-loader';
-import { EmptyState } from '../ui/empty-state';
-import { TouchFeedback } from '../ui/touch-feedback';
 import { PageHero } from '../ui/PageHero';
 import { BookingModal } from '../blocks/BookingModal';
 
@@ -92,6 +89,14 @@ interface ConsultationProps {
   onNavigate?: (route: string, consultantId?: string) => void;
 }
 
+interface HeroBanner {
+  title: string;
+  subtitle: string;
+  image_url: string;
+  cta_text?: string;
+  cta_link?: string;
+}
+
 type CategoryType = 'all' | 'therapist' | 'psychiatrist' | 'counselor' | 'family-therapist';
 type AvailabilityFilter = 'all' | 'today' | 'tomorrow' | 'this-week';
 type SortOption = 'recommended' | 'rating' | 'price-low' | 'price-high' | 'experience';
@@ -101,7 +106,17 @@ export function Consultation({ className, onNavigate }: ConsultationProps) {
   const [consultants, setConsultants] = useState<Consultant[]>([]);
   const [filteredConsultants, setFilteredConsultants] = useState<Consultant[]>([]);
   const [loading, setLoading] = useState(true);
+  const [heroBanner, setHeroBanner] = useState<HeroBanner | null>(null);
   
+  // Load hero banner from admin config
+  useEffect(() => {
+    let isMounted = true;
+    apiClient.getHeroBanner('consultation').then(res => {
+      if (isMounted && res?.banner) setHeroBanner(res.banner);
+    }).catch(() => {});
+    return () => { isMounted = false; };
+  }, []);
+
   // Load consultants from API
   useEffect(() => {
     let isMounted = true;
@@ -405,8 +420,11 @@ export function Consultation({ className, onNavigate }: ConsultationProps) {
     <div className={cn("flex flex-col", className)} style={{ minHeight: '100vh', backgroundColor: 'var(--color-bg-page)' }}>
       {/* Hero Section */}
       <PageHero 
-        title="Find Your Consultant" 
-        subtitle="Connect with experienced mental health professionals" 
+        title={heroBanner?.title || 'Find Your Consultant'}
+        subtitle={heroBanner?.subtitle || 'Connect with experienced mental health professionals'}
+        backgroundImage={heroBanner?.image_url}
+        ctaText={heroBanner?.cta_text}
+        ctaLink={heroBanner?.cta_link}
       />
 
       {/* Mobile-only: Category Tabs */}

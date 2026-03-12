@@ -5,7 +5,7 @@
  * Number of visible days increases with screen width.
  * Today always sits on the right edge.
  */
-import React, { useMemo, useRef, useState, useEffect, useCallback } from 'react';
+import { useMemo, useRef, useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import tokens from '../lib/design-tokens';
@@ -71,7 +71,7 @@ export function CalendarStrip({
   markedDates = {},
   dayCount,
   allowFuture = false,
-  accentColor,
+  accentColor: _accentColor,
   showNavArrows = true,
 }: CalendarStripProps) {
   const containerRef = useRef<HTMLDivElement>(null);

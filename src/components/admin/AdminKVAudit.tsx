@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, type ElementType, type ReactNode } from 'react';
 import { Button } from '../ui/button';
 import { Card } from '../ui/card';
 import { apiClient } from '../../lib/api-client';
@@ -35,10 +35,10 @@ interface AdminKVAuditProps {
 // ─── Section wrapper ───────────────────────────────────────────
 function AuditSection({ title, icon: Icon, count, variant, children, defaultOpen = false }: {
   title: string;
-  icon: React.ElementType;
+  icon: ElementType;
   count: number;
   variant: 'success' | 'warning' | 'danger' | 'info' | 'neutral';
-  children: React.ReactNode;
+  children: ReactNode;
   defaultOpen?: boolean;
 }) {
   const [open, setOpen] = useState(defaultOpen);

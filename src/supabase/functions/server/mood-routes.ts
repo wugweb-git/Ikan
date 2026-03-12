@@ -114,10 +114,11 @@ export function registerMoodRoutes(app: Hono, middleware: any) {
     try {
         const userId = c.get('userId');
         const body = await c.req.json();
-        const { date, mood_rating, freehand_text_content, emotions, energy, stress_level, context_tags } = body;
+        const { date, mood_rating, freehand_text_content, emotions, energy, stress_level, context_tags,
+                sleep_quality, pain_level, pain_impact, extra_responses, ...otherFields } = body;
         
-        if (!date || mood_rating === undefined) {
-            return c.json({ error: 'Date and mood rating are required' }, 400);
+        if (!date) {
+            return c.json({ error: 'Date is required' }, 400);
         }
 
         const id = crypto.randomUUID();
@@ -126,12 +127,16 @@ export function registerMoodRoutes(app: Hono, middleware: any) {
             journal_entry_id: id, // For compatibility
             user_id: userId,
             date,
-            mood_rating,
-            freehand_text_content,
+            mood_rating: mood_rating ?? null,
+            freehand_text_content: freehand_text_content || null,
             emotions: emotions || [],
-            energy: energy || 3,
+            energy: energy || null,
             stress_level: stress_level || null,
             context_tags: context_tags || [],
+            sleep_quality: sleep_quality ?? null,
+            pain_level: pain_level ?? null,
+            pain_impact: pain_impact ?? null,
+            extra_responses: extra_responses || otherFields || {},
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString()
         };

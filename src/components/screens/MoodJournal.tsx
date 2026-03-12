@@ -16,11 +16,9 @@ import {
   getEnergyOptions,
   getStressOptions,
   getContextTags,
-  getEnergyEmoji,
-  getStressEmoji,
   loadCustomScales,
+  getScaleByKey,
 } from '../../lib/emoji-utils';
-import type { ScaleOption, ContextTag } from '../../lib/emoji-utils';
 import tokens from '../../lib/design-tokens';
 import { projectId, publicAnonKey } from '../../utils/supabase/info';
 
@@ -38,6 +36,32 @@ interface MoodEntry {
   context_tags?: string[];
   emotions?: string[];
   created_at?: string;
+}
+
+// Template types (matching backend)
+interface CheckinStep {
+  id: string;
+  order: number;
+  type: 'emoji_scale' | 'free_text' | 'multi_select' | 'single_choice' | 'slider' | 'yes_no';
+  question: string;
+  subtitle?: string;
+  hero_emoji?: string;
+  scale_key?: string;
+  options?: string[];
+  slider_min?: number;
+  slider_max?: number;
+  slider_labels?: string[];
+  required: boolean;
+  ema_category?: string;
+  save_as?: string;
+}
+
+interface CheckinTemplate {
+  id: string;
+  name: string;
+  description?: string;
+  steps: CheckinStep[];
+  is_active: boolean;
 }
 
 // Scales are read at render time (after loadCustomScales caches server data)
@@ -143,7 +167,7 @@ function EmojiOption({
 // MAIN COMPONENT
 // ═══════════════════════════════════════════════════════════════════
 
-export function MoodJournal({ onNavigate }: { onNavigate?: (path: string) => void }) {
+export function MoodJournal({ onNavigate: _onNavigate }: { onNavigate?: (path: string) => void }) {
   const { showToast } = useNotifications();
   const { user } = useAuth();
   const isMobile = useIsMobile();
@@ -152,26 +176,27 @@ export function MoodJournal({ onNavigate }: { onNavigate?: (path: string) => voi
   const [entries, setEntries] = useState<MoodEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedDate, setSelectedDate] = useState<string>(toDateStr(new Date()));
-  const [scalesReady, setScalesReady] = useState(false);
+  const [, setScalesReady] = useState(false);
+  const [template, setTemplate] = useState<CheckinTemplate | null>(null);
 
-  // Inline check-in state (replaces wizard overlay)
-  const [checkinStep, setCheckinStep] = useState(0); // 0=mood, 1=energy, 2=stress, 3=note, 4=tags
-  const [formData, setFormData] = useState({
-    mood: null as number | null,
-    energy: null as number | null,
-    stress: null as number | null,
-    note: '',
-    tags: [] as string[],
-  });
+  // Inline check-in state — dynamic per template steps
+  const [checkinStep, setCheckinStep] = useState(0);
+  const [formData, setFormData] = useState<Record<string, any>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [justSaved, setJustSaved] = useState(false);
 
   const moodOptions = useMemo(() => getMoodOptions(), []);
 
-  // ── Load custom scales from server (one-time) ──────────────────
+  // ── Load custom scales + template from server (one-time) ──────
   useEffect(() => {
     const apiBase = `https://${projectId}.supabase.co/functions/v1/make-server-cc205da9`;
-    loadCustomScales(apiBase, publicAnonKey).then(() => setScalesReady(true)).catch(() => setScalesReady(true));
+    Promise.all([
+      loadCustomScales(apiBase, publicAnonKey),
+      apiClient.getActiveCheckinTemplate().catch(() => null),
+    ]).then(([, tplRes]) => {
+      if (tplRes?.template) setTemplate(tplRes.template);
+      setScalesReady(true);
+    }).catch(() => setScalesReady(true));
   }, []);
 
   // ── Fetch ──────────────────────────────────────────────────────
@@ -275,29 +300,46 @@ export function MoodJournal({ onNavigate }: { onNavigate?: (path: string) => voi
   useEffect(() => {
     if (isToday && !justSaved) {
       setCheckinStep(0);
-      setFormData({ mood: null, energy: null, stress: null, note: '', tags: [] });
+      setFormData({});
     }
   }, [selectedDate]);
 
   // ── Save handler ───────────────────────────────────────────────
   const handleSave = async () => {
-    if (!user || !formData.mood) return;
+    if (!user) return;
+    // Map formData (keyed by save_as) to the API fields
+    const mood = formData['mood_rating'] ?? formData['mood'] ?? null;
+    const note = formData['freehand_text_content'] ?? formData['note'] ?? '';
+    const energy = formData['energy'] ?? null;
+    const stress = formData['stress_level'] ?? formData['stress'] ?? null;
+    const tags = formData['context_tags'] ?? formData['tags'] ?? [];
+    
+    // Collect any extra dynamic fields
+    const knownKeys = new Set(['mood_rating', 'mood', 'freehand_text_content', 'note', 'energy', 'stress_level', 'stress', 'context_tags', 'tags']);
+    const extraFields: Record<string, any> = {};
+    for (const [k, v] of Object.entries(formData)) {
+      if (!knownKeys.has(k) && v !== null && v !== undefined && v !== '') {
+        extraFields[k] = v;
+      }
+    }
+
     const payload = {
-      date: todayStr, mood: formData.mood, note: formData.note,
-      emotions: formData.tags, energy: formData.energy || 3,
-      stress: formData.stress || 3, contextTags: formData.tags,
+      date: todayStr, mood: mood || 3, note,
+      emotions: tags, energy: energy || 3,
+      stress, contextTags: tags,
     };
     setIsSubmitting(true);
     try {
       if (isOnline) {
         await apiClient.createJournalEntry(
           payload.date, payload.mood, payload.note,
-          payload.emotions, payload.energy, payload.stress, payload.contextTags
+          payload.emotions, payload.energy, payload.stress, payload.contextTags,
+          extraFields,
         );
         showToast('success', 'Saved!', 'Your mood check-in is saved.');
         await fetchEntries();
       } else {
-        queueItem('mood_entry', payload);
+        queueItem('mood_entry', { ...payload, ...extraFields });
         setEntries(prev => [{
           id: `local-${Date.now()}`, date: payload.date, mood: payload.mood,
           energy: payload.energy, stress: payload.stress, note: payload.note,
@@ -307,15 +349,29 @@ export function MoodJournal({ onNavigate }: { onNavigate?: (path: string) => voi
       }
       setJustSaved(true);
       setCheckinStep(0);
-      setFormData({ mood: null, energy: null, stress: null, note: '', tags: [] });
+      setFormData({});
     } catch (error) {
       console.error(error);
-      queueItem('mood_entry', payload);
+      queueItem('mood_entry', { ...payload, ...extraFields });
       showToast('warning', 'Queued', 'Saved locally.');
     } finally { setIsSubmitting(false); }
   };
 
-  const TOTAL_STEPS = 5;
+  // ── Fallback template if server hasn't returned one yet ────────
+  const FALLBACK_STEPS: CheckinStep[] = useMemo(() => [
+    { id: 'mood', order: 0, type: 'emoji_scale', question: 'How are you feeling?', subtitle: 'Tap the emoji that matches your vibe', hero_emoji: '🤔', scale_key: 'mood', required: true, save_as: 'mood_rating' },
+    { id: 'energy', order: 1, type: 'emoji_scale', question: "What's your energy like?", subtitle: 'From drained to fully charged', hero_emoji: '⚡', scale_key: 'energy', required: false, save_as: 'energy' },
+    { id: 'stress', order: 2, type: 'emoji_scale', question: 'Stress level?', subtitle: "Be honest — there's no wrong answer", hero_emoji: '😌', scale_key: 'stress', required: false, save_as: 'stress_level' },
+    { id: 'note', order: 3, type: 'free_text', question: 'Anything on your mind?', subtitle: 'A quick note to capture this moment', hero_emoji: '✏️', required: false, save_as: 'freehand_text_content' },
+    { id: 'tags', order: 4, type: 'multi_select', question: 'What shaped your day?', subtitle: 'Pick whatever applies — or skip to save', hero_emoji: '🏷️', scale_key: 'context_tags', required: false, save_as: 'context_tags' },
+  ], []);
+
+  const activeSteps = useMemo(() => {
+    const steps = template?.steps ?? FALLBACK_STEPS;
+    return [...steps].sort((a, b) => a.order - b.order);
+  }, [template, FALLBACK_STEPS]);
+
+  const TOTAL_STEPS = activeSteps.length;
   const goNext = () => { if (checkinStep < TOTAL_STEPS - 1) setCheckinStep(s => s + 1); else handleSave(); };
   const goBack = () => { if (checkinStep > 0) setCheckinStep(s => s - 1); };
 
@@ -323,7 +379,325 @@ export function MoodJournal({ onNavigate }: { onNavigate?: (path: string) => voi
   const startNewCheckin = () => {
     setJustSaved(false);
     setCheckinStep(0);
-    setFormData({ mood: null, energy: null, stress: null, note: '', tags: [] });
+    setFormData({});
+  };
+
+  // ═══════════════════════════════════════════════════════════════
+  // DYNAMIC STEP RENDERER
+  // ═══════════════════════════════════════════════════════════════
+
+  const renderDynamicStep = (step: CheckinStep, stepIndex: number) => {
+    const fieldKey = step.save_as || step.id;
+    const currentValue = formData[fieldKey];
+    const isLastStep = stepIndex === TOTAL_STEPS - 1;
+
+    return (
+      <motion.div
+        key={`step-${step.id}`}
+        initial={{ opacity: 0, x: 40 }}
+        animate={{ opacity: 1, x: 0 }}
+        exit={{ opacity: 0, x: -40 }}
+        transition={{ duration: 0.25 }}
+        style={{ textAlign: 'center' }}
+      >
+        {/* Hero emoji */}
+        {step.hero_emoji && (
+          <motion.span
+            style={{ fontSize: 52, display: 'block', marginBottom: 8 }}
+            animate={{ scale: [1, 1.1, 1], rotate: [0, -6, 6, 0] }}
+            transition={{ duration: 2, delay: 0.2, repeat: Infinity, ease: 'easeInOut', repeatDelay: 2 }}
+          >
+            {step.type === 'emoji_scale' && currentValue
+              ? (getScaleByKey(step.scale_key || '').find(o => o.value === currentValue)?.emoji || step.hero_emoji)
+              : step.hero_emoji}
+          </motion.span>
+        )}
+
+        <h2 style={{ ...f('lg', 500), margin: '0 0 4px' }}>{step.question}</h2>
+        {step.subtitle && <p style={{ ...f('xs', 400, B.muted), margin: '0 0 20px' }}>{step.subtitle}</p>}
+
+        {/* ── emoji_scale ── */}
+        {step.type === 'emoji_scale' && (() => {
+          const scaleOptions = step.scale_key === 'mood' ? moodOptions.map(m => ({
+            value: m.value, emoji: m.emoji, label: m.label,
+            color: m.color, bg: `color-mix(in srgb, ${m.color} 10%, transparent)`,
+          })) : getScaleByKey(step.scale_key || '');
+          return (
+            <div className="flex items-stretch justify-center" style={{ gap: isMobile ? 2 : 6, maxWidth: 400, margin: '0 auto' }}>
+              {scaleOptions.map((opt, i) => (
+                <EmojiOption
+                  key={opt.value}
+                  emoji={opt.emoji}
+                  label={opt.label}
+                  selected={currentValue === opt.value}
+                  color={opt.color}
+                  bg={opt.bg}
+                  onClick={() => {
+                    setFormData(p => ({ ...p, [fieldKey]: opt.value }));
+                    if (!isLastStep) setTimeout(goNext, 400);
+                  }}
+                  delay={0.06 + i * 0.06}
+                />
+              ))}
+            </div>
+          );
+        })()}
+
+        {/* ── free_text ── */}
+        {step.type === 'free_text' && (
+          <>
+            <motion.textarea
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.15 }}
+              value={currentValue || ''}
+              onChange={e => setFormData(p => ({ ...p, [fieldKey]: e.target.value }))}
+              placeholder="I felt…"
+              rows={3}
+              className="w-full resize-none focus:outline-none"
+              style={{
+                maxWidth: 400, margin: '0 auto', display: 'block',
+                padding: '12px 14px', borderRadius: 'var(--radius-md)',
+                border: `1.5px solid ${B.border}`,
+                backgroundColor: B.bgMuted,
+                ...f('sm'), lineHeight: 1.6,
+              }}
+            />
+            <div style={{ marginTop: 16, maxWidth: 400, margin: '16px auto 0' }}>
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.97 }}
+                onClick={isLastStep ? handleSave : goNext}
+                style={{
+                  width: '100%', padding: '12px 20px',
+                  borderRadius: 'var(--radius-md)', border: 'none', cursor: 'pointer',
+                  backgroundColor: isLastStep ? B.yellow : B.primary,
+                  ...f('sm', 500, isLastStep ? B.primary : B.primaryOn),
+                  minHeight: 'var(--ikan-component-button-height)',
+                }}
+              >
+                {isLastStep ? (isSubmitting ? 'Saving…' : 'Save Check-in ✨') : (currentValue ? 'Next →' : 'Skip →')}
+              </motion.button>
+            </div>
+          </>
+        )}
+
+        {/* ── multi_select ── */}
+        {step.type === 'multi_select' && (() => {
+          const selectedTags: string[] = currentValue || [];
+          const tagOptions = step.scale_key === 'context_tags' ? CONTEXT_TAGS() : (step.options || []).map((o) => ({ id: o, label: o, emoji: '✨' }));
+          return (
+            <>
+              <div className="flex flex-wrap justify-center" style={{ gap: 8, maxWidth: 400, margin: '0 auto 20px' }}>
+                {tagOptions.map((tag: any, i: number) => {
+                  const sel = selectedTags.includes(tag.label);
+                  return (
+                    <motion.button
+                      key={tag.label}
+                      initial={{ opacity: 0, scale: 0.8, y: 6 }}
+                      animate={{ opacity: 1, scale: 1, y: 0 }}
+                      transition={{ delay: 0.06 + i * 0.04, type: 'spring', stiffness: 300, damping: 20 }}
+                      whileHover={{ scale: 1.06 }}
+                      whileTap={{ scale: 0.92 }}
+                      onClick={() =>
+                        setFormData(p => ({
+                          ...p,
+                          [fieldKey]: sel
+                            ? (p[fieldKey] || []).filter((t: string) => t !== tag.label)
+                            : [...(p[fieldKey] || []), tag.label],
+                        }))
+                      }
+                      style={{
+                        padding: '7px 14px', borderRadius: 'var(--radius-pill)',
+                        backgroundColor: sel ? B.primary : B.bgCard,
+                        color: sel ? B.primaryOn : B.textPrimary,
+                        border: sel ? `1.5px solid ${B.primary}` : `1.5px solid ${B.border}`,
+                        cursor: 'pointer', transition: 'background-color 0.2s, border-color 0.2s',
+                        ...f('xs', 500, sel ? B.primaryOn : B.textPrimary),
+                        display: 'flex', alignItems: 'center', gap: 5,
+                      }}
+                    >
+                      <span style={{ fontSize: 14 }}>{tag.emoji}</span>
+                      {tag.label}
+                    </motion.button>
+                  );
+                })}
+              </div>
+
+              {/* Summary preview on last step */}
+              {isLastStep && (
+                <motion.div
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.3, duration: 0.3 }}
+                  style={{
+                    maxWidth: 400, margin: '0 auto 16px',
+                    padding: 12, borderRadius: 'var(--radius-md)',
+                    backgroundColor: B.yellowLight,
+                    border: `1.5px solid color-mix(in srgb, ${B.yellow} 25%, transparent)`,
+                  }}
+                >
+                  <div className="flex items-center justify-center" style={{ gap: 8 }}>
+                    {activeSteps.filter(s => s.type === 'emoji_scale' && formData[s.save_as || s.id]).map(s => {
+                      const val = formData[s.save_as || s.id];
+                      const scale = getScaleByKey(s.scale_key || '');
+                      const opt = scale.find(o => o.value === val);
+                      return <span key={s.id} style={{ fontSize: 22 }}>{opt?.emoji || '❓'}</span>;
+                    })}
+                  </div>
+                  {formData['freehand_text_content'] && (
+                    <p style={{ ...f('xs', 400, B.muted), margin: '4px 0 0', fontStyle: 'italic' }}>
+                      "{String(formData['freehand_text_content']).slice(0, 60)}{String(formData['freehand_text_content']).length > 60 ? '…' : ''}"
+                    </p>
+                  )}
+                </motion.div>
+              )}
+
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.96 }}
+                onClick={isLastStep ? handleSave : goNext}
+                disabled={isSubmitting && isLastStep}
+                style={{
+                  width: '100%', maxWidth: 400, padding: 'var(--spacing-3) var(--spacing-5)',
+                  borderRadius: 'var(--radius-md)', border: 'none', cursor: 'pointer',
+                  backgroundColor: isLastStep ? B.yellow : B.primary,
+                  ...f('sm', 500, isLastStep ? B.primary : B.primaryOn),
+                  minHeight: 'var(--ikan-component-button-height)',
+                  opacity: isSubmitting ? 0.6 : 1,
+                  boxShadow: isLastStep ? `0 3px 12px color-mix(in srgb, ${B.yellow} 25%, transparent)` : 'none',
+                }}
+              >
+                {isLastStep ? (isSubmitting ? 'Saving…' : 'Save Check-in ✨') : 'Next →'}
+              </motion.button>
+            </>
+          );
+        })()}
+
+        {/* ── single_choice ── */}
+        {step.type === 'single_choice' && (
+          <div className="space-y-2" style={{ maxWidth: 400, margin: '0 auto' }}>
+            {(step.options || []).map((opt, i) => {
+              const sel = currentValue === opt;
+              return (
+                <motion.button
+                  key={opt}
+                  initial={{ opacity: 0, y: 6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.06 + i * 0.05 }}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.97 }}
+                  onClick={() => {
+                    setFormData(p => ({ ...p, [fieldKey]: opt }));
+                    if (!isLastStep) setTimeout(goNext, 400);
+                  }}
+                  className="w-full text-left"
+                  style={{
+                    padding: '12px 16px', borderRadius: 'var(--radius-md)',
+                    backgroundColor: sel ? B.primary : B.bgCard,
+                    color: sel ? B.primaryOn : B.textPrimary,
+                    border: sel ? `2px solid ${B.primary}` : `1.5px solid ${B.border}`,
+                    cursor: 'pointer', transition: 'all 0.15s',
+                    ...f('sm', sel ? 500 : 400, sel ? B.primaryOn : B.textPrimary),
+                  }}
+                >
+                  {opt}
+                </motion.button>
+              );
+            })}
+            {isLastStep && currentValue && (
+              <motion.button
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.96 }}
+                onClick={handleSave}
+                disabled={isSubmitting}
+                style={{
+                  width: '100%', padding: 'var(--spacing-3) var(--spacing-5)', marginTop: 12,
+                  borderRadius: 'var(--radius-md)', border: 'none', cursor: 'pointer',
+                  backgroundColor: B.yellow,
+                  ...f('sm', 500, B.primary),
+                  minHeight: 'var(--ikan-component-button-height)', opacity: isSubmitting ? 0.6 : 1,
+                }}
+              >
+                {isSubmitting ? 'Saving…' : 'Save Check-in ✨'}
+              </motion.button>
+            )}
+          </div>
+        )}
+
+        {/* ── slider ── */}
+        {step.type === 'slider' && (
+          <div style={{ maxWidth: 400, margin: '0 auto' }}>
+            <div style={{ textAlign: 'center', marginBottom: 12 }}>
+              <span style={{ ...f('2xl', 500), color: B.primary }}>
+                {currentValue ?? Math.round(((step.slider_min ?? 0) + (step.slider_max ?? 10)) / 2)}
+              </span>
+            </div>
+            <input
+              type="range"
+              min={step.slider_min ?? 0}
+              max={step.slider_max ?? 10}
+              value={currentValue ?? Math.round(((step.slider_min ?? 0) + (step.slider_max ?? 10)) / 2)}
+              onChange={e => setFormData(p => ({ ...p, [fieldKey]: Number(e.target.value) }))}
+              className="w-full"
+              style={{ accentColor: B.primary }}
+            />
+            {step.slider_labels && step.slider_labels.length > 0 && (
+              <div className="flex justify-between" style={{ marginTop: 4 }}>
+                {step.slider_labels.map((l, i) => (
+                  <span key={i} style={f('xs', 400, B.muted)}>{l}</span>
+                ))}
+              </div>
+            )}
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.97 }}
+              onClick={isLastStep ? handleSave : goNext}
+              style={{
+                width: '100%', padding: '12px 20px', marginTop: 20,
+                borderRadius: 'var(--radius-md)', border: 'none', cursor: 'pointer',
+                backgroundColor: isLastStep ? B.yellow : B.primary,
+                ...f('sm', 500, isLastStep ? B.primary : B.primaryOn),
+                minHeight: 'var(--ikan-component-button-height)',
+              }}
+            >
+              {isLastStep ? (isSubmitting ? 'Saving…' : 'Save Check-in ✨') : 'Next →'}
+            </motion.button>
+          </div>
+        )}
+
+        {/* ── yes_no ── */}
+        {step.type === 'yes_no' && (
+          <div className="flex items-center justify-center" style={{ gap: 12 }}>
+            {['Yes', 'No'].map(opt => {
+              const sel = currentValue === opt;
+              return (
+                <motion.button
+                  key={opt}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => {
+                    setFormData(p => ({ ...p, [fieldKey]: opt }));
+                    if (!isLastStep) setTimeout(goNext, 400);
+                  }}
+                  style={{
+                    padding: '14px 36px', borderRadius: 'var(--radius-md)',
+                    backgroundColor: sel ? B.primary : B.bgCard,
+                    color: sel ? B.primaryOn : B.textPrimary,
+                    border: sel ? `2px solid ${B.primary}` : `1.5px solid ${B.border}`,
+                    cursor: 'pointer', ...f('base', 500, sel ? B.primaryOn : B.textPrimary),
+                  }}
+                >
+                  {opt}
+                </motion.button>
+              );
+            })}
+          </div>
+        )}
+      </motion.div>
+    );
   };
 
   // ═══════════════════════════════════════════════════════════════
@@ -385,7 +759,10 @@ export function MoodJournal({ onNavigate }: { onNavigate?: (path: string) => voi
       );
     }
 
-    // Step-by-step inline check-in
+    // Step-by-step inline check-in — now driven by activeSteps
+    const currentStepDef = activeSteps[checkinStep];
+    if (!currentStepDef) return null;
+
     return (
       <motion.div
         initial={{ opacity: 0, y: 12 }}
@@ -414,288 +791,10 @@ export function MoodJournal({ onNavigate }: { onNavigate?: (path: string) => voi
           ))}
         </div>
 
-        {/* Step content */}
+        {/* Dynamic step content */}
         <div style={{ padding: '20px 20px 24px' }}>
           <AnimatePresence mode="wait">
-            {/* Step 0: Mood */}
-            {checkinStep === 0 && (
-              <motion.div
-                key="step-mood"
-                initial={{ opacity: 0, x: 40 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -40 }}
-                transition={{ duration: 0.25 }}
-                style={{ textAlign: 'center' }}
-              >
-                <motion.span
-                  style={{ fontSize: 52, display: 'block', marginBottom: 8 }}
-                  animate={{ rotate: [0, -8, 8, -4, 0], scale: [1, 1.05, 1] }}
-                  transition={{ duration: 2, delay: 0.2, ease: 'easeInOut', repeat: Infinity, repeatDelay: 3 }}
-                >
-                  {formData.mood ? getMoodEmoji(formData.mood) : '🤔'}
-                </motion.span>
-                <h2 style={{ ...f('lg', 500), margin: '0 0 4px' }}>How are you feeling?</h2>
-                <p style={{ ...f('xs', 400, B.muted), margin: '0 0 20px' }}>
-                  Tap the emoji that matches your vibe
-                </p>
-                <div className="flex items-stretch justify-center" style={{ gap: isMobile ? 2 : 6, maxWidth: 400, margin: '0 auto' }}>
-                  {moodOptions.map((m, i) => (
-                    <EmojiOption
-                      key={m.value}
-                      emoji={m.emoji}
-                      label={m.label}
-                      selected={formData.mood === m.value}
-                      color={m.color}
-                      bg={`color-mix(in srgb, ${m.color} 10%, transparent)`}
-                      onClick={() => {
-                        setFormData(p => ({ ...p, mood: m.value }));
-                        setTimeout(goNext, 400);
-                      }}
-                      delay={0.06 + i * 0.06}
-                    />
-                  ))}
-                </div>
-              </motion.div>
-            )}
-
-            {/* Step 1: Energy */}
-            {checkinStep === 1 && (
-              <motion.div
-                key="step-energy"
-                initial={{ opacity: 0, x: 40 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -40 }}
-                transition={{ duration: 0.25 }}
-                style={{ textAlign: 'center' }}
-              >
-                <motion.span
-                  style={{ fontSize: 52, display: 'block', marginBottom: 8 }}
-                  animate={{ scale: [1, 1.15, 1] }}
-                  transition={{ duration: 1.8, delay: 0.2, repeat: Infinity, ease: 'easeInOut' }}
-                >
-                  {formData.energy ? ENERGY_SCALE().find(e => e.value === formData.energy)?.emoji : '⚡'}
-                </motion.span>
-                <h2 style={{ ...f('lg', 500), margin: '0 0 4px' }}>What's your energy like?</h2>
-                <p style={{ ...f('xs', 400, B.muted), margin: '0 0 20px' }}>
-                  From drained to fully charged
-                </p>
-                <div className="flex items-stretch justify-center" style={{ gap: isMobile ? 2 : 6, maxWidth: 400, margin: '0 auto' }}>
-                  {ENERGY_SCALE().map((e, i) => (
-                    <EmojiOption
-                      key={e.value}
-                      emoji={e.emoji}
-                      label={e.label}
-                      selected={formData.energy === e.value}
-                      color={e.color}
-                      bg={e.bg}
-                      onClick={() => {
-                        setFormData(p => ({ ...p, energy: e.value }));
-                        setTimeout(goNext, 400);
-                      }}
-                      delay={0.06 + i * 0.06}
-                    />
-                  ))}
-                </div>
-              </motion.div>
-            )}
-
-            {/* Step 2: Stress */}
-            {checkinStep === 2 && (
-              <motion.div
-                key="step-stress"
-                initial={{ opacity: 0, x: 40 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -40 }}
-                transition={{ duration: 0.25 }}
-                style={{ textAlign: 'center' }}
-              >
-                <motion.span
-                  style={{ fontSize: 52, display: 'block', marginBottom: 8 }}
-                  animate={{ y: [0, -6, 0] }}
-                  transition={{ duration: 2.2, delay: 0.2, repeat: Infinity, ease: 'easeInOut' }}
-                >
-                  {formData.stress ? STRESS_SCALE().find(s => s.value === formData.stress)?.emoji : '😌'}
-                </motion.span>
-                <h2 style={{ ...f('lg', 500), margin: '0 0 4px' }}>Stress level?</h2>
-                <p style={{ ...f('xs', 400, B.muted), margin: '0 0 20px' }}>
-                  Be honest — there's no wrong answer
-                </p>
-                <div className="flex items-stretch justify-center" style={{ gap: isMobile ? 2 : 6, maxWidth: 400, margin: '0 auto' }}>
-                  {STRESS_SCALE().map((s, i) => (
-                    <EmojiOption
-                      key={s.value}
-                      emoji={s.emoji}
-                      label={s.label}
-                      selected={formData.stress === s.value}
-                      color={s.color}
-                      bg={s.bg}
-                      onClick={() => {
-                        setFormData(p => ({ ...p, stress: s.value }));
-                        setTimeout(goNext, 400);
-                      }}
-                      delay={0.06 + i * 0.06}
-                    />
-                  ))}
-                </div>
-              </motion.div>
-            )}
-
-            {/* Step 3: Note */}
-            {checkinStep === 3 && (
-              <motion.div
-                key="step-note"
-                initial={{ opacity: 0, x: 40 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -40 }}
-                transition={{ duration: 0.25 }}
-                style={{ textAlign: 'center' }}
-              >
-                <motion.span
-                  style={{ fontSize: 48, display: 'block', marginBottom: 8 }}
-                  animate={{ rotate: [0, 6, -6, 0] }}
-                  transition={{ duration: 2.5, delay: 0.3, repeat: Infinity, ease: 'easeInOut' }}
-                >
-                  ✏️
-                </motion.span>
-                <h2 style={{ ...f('lg', 500), margin: '0 0 4px' }}>Anything on your mind?</h2>
-                <p style={{ ...f('xs', 400, B.muted), margin: '0 0 16px' }}>
-                  A quick note to capture this moment
-                </p>
-                <motion.textarea
-                  initial={{ opacity: 0, y: 8 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.15 }}
-                  value={formData.note}
-                  onChange={e => setFormData(p => ({ ...p, note: e.target.value }))}
-                  placeholder="I felt…"
-                  rows={3}
-                  className="w-full resize-none focus:outline-none"
-                  style={{
-                    maxWidth: 400, margin: '0 auto', display: 'block',
-                    padding: '12px 14px', borderRadius: 'var(--radius-md)',
-                    border: `1.5px solid ${B.border}`,
-                    backgroundColor: B.bgMuted,
-                    ...f('sm'), lineHeight: 1.6,
-                  }}
-                />
-                <div style={{ marginTop: 16, maxWidth: 400, margin: '16px auto 0' }}>
-                  <motion.button
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.97 }}
-                    onClick={goNext}
-                    style={{
-                      width: '100%', padding: '12px 20px',
-                      borderRadius: 'var(--radius-md)', border: 'none', cursor: 'pointer',
-                      backgroundColor: B.primary,
-                      ...f('sm', 500, B.primaryOn),
-                      minHeight: 'var(--ikan-component-button-height)',
-                    }}
-                  >
-                    {formData.note ? 'Next →' : 'Skip →'}
-                  </motion.button>
-                </div>
-              </motion.div>
-            )}
-
-            {/* Step 4: Tags + Save */}
-            {checkinStep === 4 && (
-              <motion.div
-                key="step-tags"
-                initial={{ opacity: 0, x: 40 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -40 }}
-                transition={{ duration: 0.25 }}
-                style={{ textAlign: 'center' }}
-              >
-                <motion.span
-                  style={{ fontSize: 48, display: 'block', marginBottom: 8 }}
-                  animate={{ scale: [1, 1.1, 1] }}
-                  transition={{ duration: 1.8, delay: 0.3, repeat: Infinity, ease: 'easeInOut' }}
-                >
-                  🏷️
-                </motion.span>
-                <h2 style={{ ...f('lg', 500), margin: '0 0 4px' }}>What shaped your day?</h2>
-                <p style={{ ...f('xs', 400, B.muted), margin: '0 0 18px' }}>
-                  Pick whatever applies — or skip to save
-                </p>
-                <div className="flex flex-wrap justify-center" style={{ gap: 8, maxWidth: 400, margin: '0 auto 20px' }}>
-                  {CONTEXT_TAGS().map((tag, i) => {
-                    const sel = formData.tags.includes(tag.label);
-                    return (
-                      <motion.button
-                        key={tag.label}
-                        initial={{ opacity: 0, scale: 0.8, y: 6 }}
-                        animate={{ opacity: 1, scale: 1, y: 0 }}
-                        transition={{ delay: 0.06 + i * 0.04, type: 'spring', stiffness: 300, damping: 20 }}
-                        whileHover={{ scale: 1.06 }}
-                        whileTap={{ scale: 0.92 }}
-                        onClick={() =>
-                          setFormData(p => ({
-                            ...p,
-                            tags: sel ? p.tags.filter(t => t !== tag.label) : [...p.tags, tag.label],
-                          }))
-                        }
-                        style={{
-                          padding: '7px 14px', borderRadius: 'var(--radius-pill)',
-                          backgroundColor: sel ? B.primary : B.bgCard,
-                          color: sel ? B.primaryOn : B.textPrimary,
-                          border: sel ? `1.5px solid ${B.primary}` : `1.5px solid ${B.border}`,
-                          cursor: 'pointer', transition: 'background-color 0.2s, border-color 0.2s',
-                          ...f('xs', 500, sel ? B.primaryOn : B.textPrimary),
-                          display: 'flex', alignItems: 'center', gap: 5,
-                        }}
-                      >
-                        <span style={{ fontSize: 14 }}>{tag.emoji}</span>
-                        {tag.label}
-                      </motion.button>
-                    );
-                  })}
-                </div>
-
-                {/* Summary preview */}
-                <motion.div
-                  initial={{ opacity: 0, y: 8 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.3, duration: 0.3 }}
-                  style={{
-                    maxWidth: 400, margin: '0 auto 16px',
-                    padding: 12, borderRadius: 'var(--radius-md)',
-                    backgroundColor: B.yellowLight,
-                    border: `1.5px solid color-mix(in srgb, ${B.yellow} 25%, transparent)`,
-                  }}
-                >
-                  <div className="flex items-center justify-center" style={{ gap: 8 }}>
-                    <motion.span animate={{ scale: [1, 1.12, 1] }} transition={{ duration: 1.5, repeat: Infinity }} style={{ fontSize: 24 }}>
-                      {formData.mood ? getMoodEmoji(formData.mood) : '😐'}
-                    </motion.span>
-                    <span style={{ fontSize: 18 }}>{ENERGY_SCALE().find(e => e.value === formData.energy)?.emoji || '⚡'}</span>
-                    <span style={{ fontSize: 18 }}>{STRESS_SCALE().find(s => s.value === formData.stress)?.emoji || '😌'}</span>
-                  </div>
-                  {formData.note && (
-                    <p style={{ ...f('xs', 400, B.muted), margin: '4px 0 0', fontStyle: 'italic' }}>
-                      "{formData.note.slice(0, 60)}{formData.note.length > 60 ? '…' : ''}"
-                    </p>
-                  )}
-                </motion.div>
-
-                <motion.button
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.96 }}
-                  onClick={handleSave}
-                  disabled={isSubmitting}
-                  style={{
-                    width: '100%', maxWidth: 400, padding: 'var(--spacing-3) var(--spacing-5)',
-                    borderRadius: 'var(--radius-md)', border: 'none', cursor: 'pointer',
-                    backgroundColor: B.yellow,
-                    ...f('sm', 500, B.primary),
-                    minHeight: 'var(--ikan-component-button-height)', opacity: isSubmitting ? 0.6 : 1,
-                    boxShadow: `0 3px 12px color-mix(in srgb, ${B.yellow} 25%, transparent)`,
-                  }}
-                >
-                  {isSubmitting ? 'Saving…' : 'Save Check-in ✨'}
-                </motion.button>
-              </motion.div>
-            )}
+            {renderDynamicStep(currentStepDef, checkinStep)}
           </AnimatePresence>
 
           {/* Back button (steps > 0) */}

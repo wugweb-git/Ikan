@@ -46,9 +46,10 @@ export function getEmojiData(rating: 1 | 2 | 3 | 4 | 5): EmojiData {
 }
 
 /**
- * Get all mood options based on design tokens
+ * Get all mood options — returns cached server data if loaded, else design-token defaults
  */
 export function getMoodOptions(): MoodOption[] {
+  if (_cachedMoods) return _cachedMoods;
   return [
     {
       emoji: tokens.emojiSet["1"].char,
@@ -239,11 +240,14 @@ export function getStressLabel(value: number): string {
 // ═══════════════════════════════════════════════════════════════════
 // ASYNC SERVER LOADING — Fetches admin-managed overrides from the
 // server and caches them. Falls back to design-token defaults.
-// ═════════════════════════════���═════════════════════════════════════
+// ══════════════════════════════════════════════════════════════════
 
+let _cachedMoods: MoodOption[] | null = null;
 let _cachedEnergy: ScaleOption[] | null = null;
 let _cachedStress: ScaleOption[] | null = null;
 let _cachedTags: ContextTag[] | null = null;
+let _cachedSleep: ScaleOption[] | null = null;
+let _cachedPain: ScaleOption[] | null = null;
 let _loadPromise: Promise<void> | null = null;
 
 /**
@@ -256,11 +260,28 @@ export async function loadCustomScales(apiBase: string, anonKey: string): Promis
   _loadPromise = (async () => {
     const headers = { Authorization: `Bearer ${anonKey}` };
     try {
-      const [eRes, sRes, tRes] = await Promise.all([
+      const [eRes, sRes, tRes, slRes, pRes, moodsRes] = await Promise.all([
         fetch(`${apiBase}/scales/energy`, { headers }).then(r => r.ok ? r.json() : null).catch(() => null),
         fetch(`${apiBase}/scales/stress`, { headers }).then(r => r.ok ? r.json() : null).catch(() => null),
         fetch(`${apiBase}/scales/context-tags`, { headers }).then(r => r.ok ? r.json() : null).catch(() => null),
+        fetch(`${apiBase}/scales/sleep`, { headers }).then(r => r.ok ? r.json() : null).catch(() => null),
+        fetch(`${apiBase}/scales/pain`, { headers }).then(r => r.ok ? r.json() : null).catch(() => null),
+        fetch(`${apiBase}/moods`, { headers }).then(r => r.ok ? r.json() : null).catch(() => null),
       ]);
+
+      // Mood types from AdminMoodManager (KV mood_type:* via /moods)
+      if (moodsRes?.moods && Array.isArray(moodsRes.moods) && moodsRes.moods.length > 0) {
+        _cachedMoods = moodsRes.moods
+          .filter((m: any) => m.is_active !== false)
+          .sort((a: any, b: any) => (a.value || a.order || 0) - (b.value || b.order || 0))
+          .map((m: any) => ({
+            emoji: m.emoji || m.char || '😐',
+            label: m.label || 'Unknown',
+            value: m.value,
+            id: m.id,
+            color: m.color || 'var(--color-neutral-500)',
+          }));
+      }
 
       if (eRes?.items && Array.isArray(eRes.items) && eRes.items.length > 0) {
         _cachedEnergy = eRes.items
@@ -289,6 +310,26 @@ export async function loadCustomScales(apiBase: string, anonKey: string): Promis
           .map((i: any) => ({ id: i.id, label: i.label, emoji: i.emoji || i.char }));
       }
 
+      if (slRes?.items && Array.isArray(slRes.items) && slRes.items.length > 0) {
+        _cachedSleep = slRes.items
+          .filter((i: any) => i.is_active !== false)
+          .sort((a: any, b: any) => a.order - b.order)
+          .map((i: any) => {
+            const { color, bg } = resolveSeverityColors(i.severity || 'neutral');
+            return { value: i.value, id: i.id, label: i.label, emoji: i.emoji || i.char, color, bg };
+          });
+      }
+
+      if (pRes?.items && Array.isArray(pRes.items) && pRes.items.length > 0) {
+        _cachedPain = pRes.items
+          .filter((i: any) => i.is_active !== false)
+          .sort((a: any, b: any) => a.order - b.order)
+          .map((i: any) => {
+            const { color, bg } = resolveSeverityColors(i.severity || 'neutral');
+            return { value: i.value, id: i.id, label: i.label, emoji: i.emoji || i.char, color, bg };
+          });
+      }
+
       console.log('✅ Custom check-in scales loaded from server');
     } catch (e) {
       console.warn('⚠️ Could not load custom scales, using design-token defaults:', e);
@@ -302,9 +343,12 @@ export async function loadCustomScales(apiBase: string, anonKey: string): Promis
  * Clear cached scales (e.g. after admin save)
  */
 export function clearScaleCache(): void {
+  _cachedMoods = null;
   _cachedEnergy = null;
   _cachedStress = null;
   _cachedTags = null;
+  _cachedSleep = null;
+  _cachedPain = null;
   _loadPromise = null;
 }
 
@@ -344,6 +388,63 @@ export function getContextTags(): ContextTag[] {
   }));
 }
 
+/**
+ * Get sleep options — returns cached server data if loaded, else hardcoded defaults
+ */
+export function getSleepOptions(): ScaleOption[] {
+  if (_cachedSleep) return _cachedSleep;
+  // Hardcoded defaults matching scales-routes.ts DEFAULT_SLEEP
+  return [
+    { value: 1, id: 'terrible',  label: 'Terrible',  emoji: '😩', color: 'var(--color-status-danger)',  bg: 'var(--color-status-danger-light)' },
+    { value: 2, id: 'poor',      label: 'Poor',      emoji: '😴', color: 'var(--color-status-warning)', bg: 'var(--color-status-warning-light)' },
+    { value: 3, id: 'fair',      label: 'Fair',      emoji: '😶‍🌫️', color: 'var(--color-neutral-500)',    bg: 'var(--color-neutral-200)' },
+    { value: 4, id: 'good',      label: 'Good',      emoji: '😌', color: 'var(--color-status-success)', bg: 'var(--color-status-success-light)' },
+    { value: 5, id: 'excellent', label: 'Excellent', emoji: '🌟', color: 'var(--color-status-success)', bg: 'var(--color-status-success-light)' },
+  ];
+}
+
+/**
+ * Get pain options — returns cached server data if loaded, else hardcoded defaults
+ */
+export function getPainOptions(): ScaleOption[] {
+  if (_cachedPain) return _cachedPain;
+  return [
+    { value: 1, id: 'none',     label: 'None',     emoji: '😊', color: 'var(--color-status-success)', bg: 'var(--color-status-success-light)' },
+    { value: 2, id: 'mild',     label: 'Mild',     emoji: '😐', color: 'var(--color-status-info)',    bg: 'var(--color-status-info-light)' },
+    { value: 3, id: 'moderate', label: 'Moderate', emoji: '😕', color: 'var(--color-status-warning)', bg: 'var(--color-status-warning-light)' },
+    { value: 4, id: 'severe',   label: 'Severe',   emoji: '😧', color: 'var(--color-status-danger)',  bg: 'var(--color-status-danger-light)' },
+    { value: 5, id: 'extreme',  label: 'Extreme',  emoji: '😭', color: 'var(--color-status-danger)',  bg: 'var(--color-status-danger-light)' },
+  ];
+}
+
+/**
+ * Generic scale getter by key name — used by the dynamic check-in renderer
+ */
+export function getScaleByKey(key: string): ScaleOption[] {
+  switch (key) {
+    case 'mood':    return getMoodOptions().map(m => ({ value: m.value, id: m.id, label: m.label, emoji: m.emoji, color: m.color, bg: `color-mix(in srgb, ${m.color} 10%, transparent)` }));
+    case 'energy':  return getEnergyOptions();
+    case 'stress':  return getStressOptions();
+    case 'sleep':   return getSleepOptions();
+    case 'pain':    return getPainOptions();
+    default:        return [];
+  }
+}
+
+/**
+ * Get all available scale keys with metadata — used by the admin builder dropdown
+ * Reads actual data from server cache so the list reflects what admins have configured
+ */
+export function getAvailableScaleKeys(): { value: string; label: string; emoji: string; count: number }[] {
+  return [
+    { value: 'mood',    label: 'Mood',    emoji: getMoodOptions()[0]?.emoji || '🤔', count: getMoodOptions().length },
+    { value: 'energy',  label: 'Energy',  emoji: getEnergyOptions()[0]?.emoji || '⚡', count: getEnergyOptions().length },
+    { value: 'stress',  label: 'Stress',  emoji: getStressOptions()[0]?.emoji || '😌', count: getStressOptions().length },
+    { value: 'sleep',   label: 'Sleep',   emoji: getSleepOptions()[0]?.emoji || '🌙', count: getSleepOptions().length },
+    { value: 'pain',    label: 'Pain',    emoji: getPainOptions()[0]?.emoji || '💊', count: getPainOptions().length },
+  ];
+}
+
 export default {
   getEmojiData,
   getMoodOptions,
@@ -357,6 +458,10 @@ export default {
   getEnergyOptions,
   getStressOptions,
   getContextTags,
+  getSleepOptions,
+  getPainOptions,
+  getScaleByKey,
+  getAvailableScaleKeys,
   getEnergyEmoji,
   getEnergyLabel,
   getStressEmoji,

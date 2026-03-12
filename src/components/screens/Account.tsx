@@ -360,13 +360,13 @@ export function Account({ className, onNavigate }: AccountProps) {
 
     if (isMobile) {
       return (
-        <div className="flex flex-col h-full fixed inset-0 z-50 overflow-hidden" style={{ backgroundColor: 'var(--color-bg-page)' }}>
+        <div className="flex flex-col min-h-screen" style={{ backgroundColor: 'var(--color-bg-page)' }}>
           <MobileHeader 
             title={title} 
             onBack={handleMobileBack} 
             rightAction={rightAction}
           />
-          <div className="flex-1 overflow-y-auto p-[20px] pb-[100px] account-content">
+          <div className="flex-1 overflow-y-auto p-[20px] pb-[120px] account-content">
             {content}
           </div>
         </div>
@@ -386,10 +386,10 @@ export function Account({ className, onNavigate }: AccountProps) {
   if (isMobile) {
     if (showMobileMenu) {
       return (
-        <div className={cn("w-full h-full flex flex-col fixed inset-0 z-50", className)} style={{ backgroundColor: 'var(--color-bg-page)' }}>
+        <div className={cn("w-full flex flex-col min-h-screen", className)} style={{ backgroundColor: 'var(--color-bg-page)' }}>
            <MobileHeader title="Account" /> 
            
-          <div className="flex-1 overflow-y-auto px-[16px] py-[24px] pb-[100px]">
+          <div className="flex-1 overflow-y-auto px-[16px] py-[24px] pb-[120px]">
             <SideNavAccount
               currentRoute={currentAccountRoute}
               onNavigate={handleAccountNavigate}

@@ -8,6 +8,14 @@ import { SkeletonCard } from '../ui/skeleton-loader';
 
 const FALLBACK_IMAGE = 'https://images.unsplash.com/photo-1527137342181-19aab11a8ee8?auto=format&fit=crop&q=80&w=1000';
 
+interface HeroBanner {
+  title: string;
+  subtitle: string;
+  image_url: string;
+  cta_text?: string;
+  cta_link?: string;
+}
+
 interface EquipProgramsProps {
   onNavigate?: (path: string) => void;
 }
@@ -15,14 +23,23 @@ interface EquipProgramsProps {
 export function EquipPrograms({ onNavigate }: EquipProgramsProps) {
   const [programs, setPrograms] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [heroBanner, setHeroBanner] = useState<HeroBanner | null>(null);
   const isMobile = useIsMobile();
   const { showToast } = useNotifications();
 
   useEffect(() => {
     let isMounted = true;
     loadPrograms(isMounted);
+    loadHeroBanner(isMounted);
     return () => { isMounted = false; };
   }, []);
+
+  const loadHeroBanner = async (isMounted: boolean = true) => {
+    try {
+      const res = await apiClient.getHeroBanner('equip');
+      if (isMounted && res?.banner) setHeroBanner(res.banner);
+    } catch (_e) { /* use defaults */ }
+  };
 
   const loadPrograms = async (isMounted: boolean = true) => {
     try {
@@ -54,8 +71,11 @@ export function EquipPrograms({ onNavigate }: EquipProgramsProps) {
   return (
     <div>
       <PageHero
-        title="Equip Programs"
-        subtitle="Evidence-based programs designed to support your mental health journey."
+        title={heroBanner?.title || 'Equip Programs'}
+        subtitle={heroBanner?.subtitle || 'Evidence-based programs designed to support your mental health journey.'}
+        backgroundImage={heroBanner?.image_url}
+        ctaText={heroBanner?.cta_text}
+        ctaLink={heroBanner?.cta_link}
       />
 
       <div
@@ -83,113 +103,154 @@ export function EquipPrograms({ onNavigate }: EquipProgramsProps) {
           <div
             style={{
               textAlign: 'center',
-              padding: isMobile ? '48px 24px' : '64px 24px',
-              backgroundColor: 'var(--color-bg-card)',
-              borderRadius: 'var(--radius-lg)',
-              border: '1px solid var(--color-border-light)',
+              padding: isMobile ? '48px 24px' : '80px 24px',
             }}
           >
-            <p style={{
-              fontFamily: 'var(--font-family-base)',
-              fontSize: 'var(--text-lg)',
-              fontWeight: 500,
-              color: 'var(--color-text-primary)',
-              margin: '0 0 8px',
-            }}>
-              0 current programs
-            </p>
-            <p style={{
-              fontFamily: 'var(--font-family-base)',
-              fontSize: 'var(--text-sm)',
-              fontWeight: 400,
-              color: 'var(--color-text-muted)',
-              margin: 0,
-            }}>
-              New programs will appear here when available.
+            <div style={{ fontSize: 48, marginBottom: 16 }}>🧘</div>
+            <h2
+              style={{
+                fontFamily: 'var(--font-family-base)',
+                fontWeight: 500,
+                fontSize: 'var(--text-xl)',
+                color: 'var(--color-text-primary)',
+                margin: '0 0 8px',
+              }}
+            >
+              Programs Coming Soon
+            </h2>
+            <p
+              style={{
+                fontFamily: 'var(--font-family-base)',
+                fontWeight: 400,
+                fontSize: 'var(--text-sm)',
+                color: 'var(--color-text-muted)',
+                maxWidth: 400,
+                margin: '0 auto',
+              }}
+            >
+              We're preparing evidence-based programs to support your mental health journey. Check back soon.
             </p>
           </div>
         ) : (
+          /* Program cards grid */
           <div
             style={{
               display: 'grid',
-              gridTemplateColumns: isMobile ? '1fr' : programs.length < 3 ? 'repeat(2, 1fr)' : 'repeat(3, 1fr)',
+              gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fill, minmax(340px, 1fr))',
               gap: '24px',
             }}
           >
-            {programs.map((program) => (
-              <div
-                key={program.id}
-                onClick={() => handleViewProgram(program.id)}
-                style={{
-                  backgroundColor: 'var(--color-bg-card)',
-                  borderRadius: 'var(--radius-lg)',
-                  overflow: 'hidden',
-                  cursor: 'pointer',
-                  boxShadow: 'var(--shadow-sm)',
-                  transition: 'transform 0.2s ease, box-shadow 0.2s ease',
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.transform = 'translateY(-2px)';
-                  e.currentTarget.style.boxShadow = 'var(--shadow-md, 0 4px 12px rgba(0,0,0,0.1))';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.transform = 'translateY(0)';
-                  e.currentTarget.style.boxShadow = 'var(--shadow-sm)';
-                }}
-              >
-                <div style={{ position: 'relative', paddingTop: '56.25%', overflow: 'hidden' }}>
-                  <ImageWithFallback
-                    src={program.image_url || program.cover_image || FALLBACK_IMAGE}
-                    alt={program.title || 'Equip Program'}
-                    style={{
-                      position: 'absolute',
-                      top: 0,
-                      left: 0,
-                      width: '100%',
-                      height: '100%',
-                      objectFit: 'cover',
-                    }}
-                  />
-                </div>
-                <div style={{ padding: '16px' }}>
-                  <h3 style={{
-                    fontFamily: 'var(--font-family-base)',
-                    fontSize: 'var(--text-lg)',
-                    fontWeight: 500,
-                    color: 'var(--color-text-primary)',
-                    margin: '0 0 8px',
-                    lineHeight: 'var(--line-height-sm)',
-                  }}>
-                    {program.title || program.name || 'Untitled Program'}
-                  </h3>
-                  <p style={{
-                    fontFamily: 'var(--font-family-base)',
-                    fontSize: 'var(--text-sm)',
-                    fontWeight: 400,
-                    color: 'var(--color-text-muted)',
-                    margin: 0,
-                    lineHeight: 'var(--line-height-sm)',
-                    display: '-webkit-box',
-                    WebkitLineClamp: 2,
-                    WebkitBoxOrient: 'vertical',
+            {programs.map((program) => {
+              const equipId = program.equip_id || program.id;
+              const thumbnail = program.thumbnail || program.hero_image || FALLBACK_IMAGE;
+              const title = program.title || program.name || 'Untitled Program';
+              const description = program.description || program.short_description || '';
+              const duration = program.duration || program.total_days
+                ? `${program.total_days || program.duration} days`
+                : '';
+
+              return (
+                <div
+                  key={equipId}
+                  onClick={() => handleViewProgram(equipId)}
+                  style={{
+                    borderRadius: 'var(--radius-lg)',
                     overflow: 'hidden',
-                  }}>
-                    {program.description || program.subtitle || 'Discover this program'}
-                  </p>
-                  {program.duration_days && (
-                    <p style={{
-                      fontFamily: 'var(--font-family-base)',
-                      fontSize: 'var(--text-xs)',
-                      fontWeight: 400,
-                      color: 'var(--color-text-muted)',
-                      margin: '8px 0 0',
-                    }}>
-                      {program.duration_days} days
-                    </p>
-                  )}
+                    backgroundColor: 'var(--color-bg-card)',
+                    boxShadow: 'var(--shadow-sm)',
+                    cursor: 'pointer',
+                    transition: 'transform 0.2s, box-shadow 0.2s',
+                    border: '1px solid var(--color-border-default)',
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.transform = 'translateY(-2px)';
+                    e.currentTarget.style.boxShadow = 'var(--shadow-md, 0 4px 12px rgba(0,0,0,0.1))';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.transform = 'translateY(0)';
+                    e.currentTarget.style.boxShadow = 'var(--shadow-sm)';
+                  }}
+                >
+                  {/* Thumbnail */}
+                  <div style={{ position: 'relative', width: '100%', aspectRatio: '16/9', overflow: 'hidden' }}>
+                    <ImageWithFallback
+                      src={thumbnail}
+                      alt={title}
+                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                    />
+                    {duration && (
+                      <span
+                        style={{
+                          position: 'absolute',
+                          bottom: 10,
+                          right: 10,
+                          padding: '4px 10px',
+                          borderRadius: 'var(--radius-pill)',
+                          backgroundColor: 'rgba(0,0,0,0.6)',
+                          color: '#fff',
+                          fontFamily: 'var(--font-family-base)',
+                          fontWeight: 500,
+                          fontSize: 'var(--text-xs)',
+                        }}
+                      >
+                        {duration}
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Card body */}
+                  <div style={{ padding: 16 }}>
+                    <h3
+                      style={{
+                        fontFamily: 'var(--font-family-base)',
+                        fontWeight: 500,
+                        fontSize: 'var(--text-base)',
+                        color: 'var(--color-text-primary)',
+                        margin: '0 0 6px',
+                        lineHeight: 1.3,
+                      }}
+                    >
+                      {title}
+                    </h3>
+                    {description && (
+                      <p
+                        style={{
+                          fontFamily: 'var(--font-family-base)',
+                          fontWeight: 400,
+                          fontSize: 'var(--text-sm)',
+                          color: 'var(--color-text-muted)',
+                          margin: 0,
+                          lineHeight: 1.5,
+                          display: '-webkit-box',
+                          WebkitLineClamp: 2,
+                          WebkitBoxOrient: 'vertical',
+                          overflow: 'hidden',
+                        }}
+                      >
+                        {description}
+                      </p>
+                    )}
+                    {program.category && (
+                      <span
+                        style={{
+                          display: 'inline-block',
+                          marginTop: 10,
+                          padding: '3px 10px',
+                          borderRadius: 'var(--radius-pill)',
+                          backgroundColor: 'var(--color-accent-default)',
+                          fontFamily: 'var(--font-family-base)',
+                          fontWeight: 500,
+                          fontSize: 'var(--text-xs)',
+                          color: 'var(--color-text-muted)',
+                        }}
+                      >
+                        {program.category}
+                      </span>
+                    )}
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>

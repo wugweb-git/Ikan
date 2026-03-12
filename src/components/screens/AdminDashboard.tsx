@@ -63,6 +63,8 @@ import { AdminBackupManager } from '../admin/AdminBackupManager';
 import { UIKitPatterns } from '../uikit/UIKitPatterns';
 import { AdminKVAudit } from '../admin/AdminKVAudit';
 import { AdminContactSubmissions } from '../admin/AdminContactSubmissions';
+import { AdminCheckinTemplateBuilder } from '../admin/AdminCheckinTemplateBuilder';
+import { AdminHeroBannerManager } from '../admin/AdminHeroBannerManager';
 
 // Mobile sidebar hook
 function useIsMobileAdmin() {
@@ -111,7 +113,9 @@ type ViewType =
   | 'backup'
   | 'ui-kit'
   | 'kv-audit'
-  | 'contact-newsletter';
+  | 'contact-newsletter'
+  | 'checkin-builder'
+  | 'hero-banner';
 
 export function AdminDashboard({ onNavigate, initialView }: AdminDashboardProps) {
   const { unreadCount } = useNotifications();
@@ -143,9 +147,11 @@ export function AdminDashboard({ onNavigate, initialView }: AdminDashboardProps)
         { id: 'equip', label: 'Equip Programs', icon: BookOpen },
         { id: 'assessments', label: 'Assessments', icon: ClipboardList },
         { id: 'resources', label: 'Resources', icon: Table },
+        { id: 'checkin-builder', label: 'Check-in Builder', icon: Smile },
         { id: 'consultants', label: 'Consultants', icon: Stethoscope },
         { id: 'pages', label: 'Pages', icon: FileText },
         { id: 'media', label: 'Media Library', icon: Image },
+        { id: 'hero-banner', label: 'Hero Banners', icon: Palette },
       ]
     },
     {
@@ -294,6 +300,8 @@ export function AdminDashboard({ onNavigate, initialView }: AdminDashboardProps)
       case 'security': return <AdminSecurity onBack={() => setCurrentView('dashboard')} />;
       case 'ui-kit': return <UIKitPatterns />;
       case 'contact-newsletter': return <AdminContactSubmissions onBack={() => setCurrentView('dashboard')} />;
+      case 'checkin-builder': return <AdminCheckinTemplateBuilder onBack={() => setCurrentView('dashboard')} />;
+      case 'hero-banner': return <AdminHeroBannerManager onBack={() => setCurrentView('dashboard')} />;
       default: return <div>View not found</div>;
     }
   };
