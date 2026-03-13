@@ -3,7 +3,7 @@ import { TrendingUp, Users, BookOpen, Activity, DollarSign, Eye, Calendar } from
 import { useNotifications } from '../../contexts/NotificationContext';
 import { apiClient } from '../../lib/api-client';
 import { AdminHeader } from '../admin/AdminHeader';
-import { AdminLoading } from '../admin/AdminLoading';
+import { AdminSkeleton, AdminErrorState } from '../admin/AdminErrorState';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
@@ -28,6 +28,7 @@ interface AnalyticsData {
 export function AdminDashboardAnalytics({ onBack, embedded }: AdminDashboardAnalyticsProps) {
   const { showToast } = useNotifications();
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [analytics, setAnalytics] = useState<AnalyticsData>({
     totalUsers: 0,
     totalResources: 0,
@@ -42,21 +43,34 @@ export function AdminDashboardAnalytics({ onBack, embedded }: AdminDashboardAnal
   });
 
   useEffect(() => {
-    loadAnalytics();
+    const controller = new AbortController();
+    loadAnalytics(controller.signal);
+    return () => controller.abort();
   }, []);
 
-  const loadAnalytics = async () => {
+  const loadAnalytics = async (signal?: AbortSignal) => {
     try {
       setLoading(true);
       
-      // Fetch all data in parallel
+      // Race each call against a 12s timeout to prevent indefinite hangs
+      const withTimeout = <T,>(p: Promise<T>, fallback: T): Promise<T> => {
+        return Promise.race([
+          p,
+          new Promise<T>((resolve) => setTimeout(() => resolve(fallback), 12000))
+        ]);
+      };
+
+      // Fetch all data in parallel with timeouts
       const [users, resources, consultants, programs, realAnalytics] = await Promise.all([
-        apiClient.getUsers().catch(() => ({ users: [] })),
-        apiClient.getResources().catch(() => []),
-        apiClient.get('/consultants').catch(() => ({ consultants: [] })),
-        apiClient.getEquipPrograms().catch(() => []),
-        apiClient.getAggregatedAnalytics().catch(() => null)
+        withTimeout(apiClient.getUsers().catch(() => ({ users: [] })), { users: [] }),
+        withTimeout(apiClient.getResources().catch(() => []), []),
+        withTimeout(apiClient.get('/consultants').catch(() => ({ consultants: [] })), { consultants: [] }),
+        withTimeout(apiClient.getEquipPrograms().catch(() => []), []),
+        withTimeout(apiClient.getAggregatedAnalytics().catch(() => null), null)
       ]);
+
+      // If component unmounted, bail
+      if (signal?.aborted) return;
 
       const usersArray = Array.isArray(users) ? users : users.users || [];
       const resourcesArray = Array.isArray(resources) ? resources : [];
@@ -92,18 +106,18 @@ export function AdminDashboardAnalytics({ onBack, embedded }: AdminDashboardAnal
 
         activeUsersCount = realAnalytics.summary?.activeUsers7d || 0;
       } else {
-        // Fallback to mock data
-        userGrowth = Array.from({ length: 30 }, (_, i) => ({
-          date: new Date(Date.now() - (29 - i) * 24 * 60 * 60 * 1000).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-          count: Math.floor(Math.random() * 50) + (i * 2) + 10
+        // No real analytics endpoint returned data — show zeroed-out state instead of fake data
+        userGrowth = Array.from({ length: 7 }, (_, i) => ({
+          date: new Date(Date.now() - (6 - i) * 24 * 60 * 60 * 1000).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+          count: 0
         }));
 
-        resourceViews = resourcesArray.slice(0, 5).map((r: any, i) => ({
+        resourceViews = resourcesArray.slice(0, 5).map((r: any, i: number) => ({
           name: r.title?.substring(0, 20) || `Resource ${i + 1}`,
-          views: Math.floor(Math.random() * 1000) + 100
+          views: 0  // No view tracking available
         }));
 
-        activeUsersCount = Math.floor(usersArray.length * 0.6);
+        activeUsersCount = 0;
       }
 
       // Category distribution
@@ -120,11 +134,8 @@ export function AdminDashboardAnalytics({ onBack, embedded }: AdminDashboardAnal
           value: value as number
         }));
 
-      // Revenue over time (last 6 months) - Keep mock for now as we don't have real revenue aggregation yet
-      const revenueOverTime = Array.from({ length: 6 }, (_, i) => ({
-        month: new Date(Date.now() - (5 - i) * 30 * 24 * 60 * 60 * 1000).toLocaleDateString('en-US', { month: 'short', year: '2-digit' }),
-        revenue: Math.floor(Math.random() * 5000) + 2000
-      }));
+      // Revenue — no real revenue tracking in KV, show zeroed state
+      const revenueOverTime: Array<{ month: string; revenue: number }> = [];
 
       // Sanitize all chart data to prevent null keys
       const safeUserGrowth = (userGrowth || []).filter((d: any) => d.date != null).map((d: any, i: number) => ({
@@ -170,6 +181,7 @@ export function AdminDashboardAnalytics({ onBack, embedded }: AdminDashboardAnal
       });
     } catch (error: any) {
       console.error('Failed to load analytics:', error);
+      setError('Failed to load analytics data');
       showToast('error', 'Error', 'Failed to load analytics data');
     } finally {
       setLoading(false);
@@ -183,7 +195,6 @@ export function AdminDashboardAnalytics({ onBack, embedded }: AdminDashboardAnal
       icon: <Users className="w-5 h-5" />,
       color: 'var(--color-primary-default)',
       bgColor: 'var(--color-primary-default)',
-      change: '+12.5%'
     },
     {
       label: 'Total Resources',
@@ -191,23 +202,20 @@ export function AdminDashboardAnalytics({ onBack, embedded }: AdminDashboardAnal
       icon: <BookOpen className="w-5 h-5" />,
       color: 'var(--color-info-default)',
       bgColor: 'var(--color-info-default)',
-      change: '+8.3%'
     },
     {
-      label: 'Active Users',
+      label: 'Active Users (7d)',
       value: analytics.activeUsers.toLocaleString(),
       icon: <Activity className="w-5 h-5" />,
       color: 'var(--color-success-default)',
       bgColor: 'var(--color-success-default)',
-      change: '+15.2%'
     },
     {
-      label: 'Total Revenue',
-      value: `$${analytics.totalRevenue.toLocaleString()}`,
-      icon: <DollarSign className="w-5 h-5" />,
+      label: 'Equip Programs',
+      value: analytics.totalPrograms.toLocaleString(),
+      icon: <BookOpen className="w-5 h-5" />,
       color: 'var(--color-warning-default)',
       bgColor: 'var(--color-warning-default)',
-      change: '+22.1%'
     }
   ];
 
@@ -221,12 +229,36 @@ export function AdminDashboardAnalytics({ onBack, embedded }: AdminDashboardAnal
 
   if (loading) {
     return (
-      <div
-        className="flex items-center justify-center min-h-[400px]"
-      >
-        <div className="text-center">
-          <AdminLoading message="Loading analytics..." />
-        </div>
+      <div className="space-y-6">
+        {!embedded && (
+          <AdminHeader
+            title="Dashboard Analytics"
+            description="Loading analytics data..."
+            onBack={onBack}
+            breadcrumbs={[{ label: 'Admin', onClick: onBack }, { label: 'Analytics' }]}
+          />
+        )}
+        <AdminSkeleton rows={6} />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="space-y-6">
+        {!embedded && (
+          <AdminHeader
+            title="Dashboard Analytics"
+            description="Track your platform's performance and growth"
+            onBack={onBack}
+            breadcrumbs={[{ label: 'Admin', onClick: onBack }, { label: 'Analytics' }]}
+          />
+        )}
+        <AdminErrorState
+          title="Analytics Unavailable"
+          message={error}
+          onRetry={loadAnalytics}
+        />
       </div>
     );
   }
@@ -264,15 +296,6 @@ export function AdminDashboardAnalytics({ onBack, embedded }: AdminDashboardAnal
                   >
                     {stat.icon}
                   </div>
-                  <span
-                    style={{
-                      fontSize: 'var(--text-sm)',
-                      color: 'var(--color-success-default)',
-                      fontWeight: 'var(--font-weight-medium)'
-                    }}
-                  >
-                    {stat.change}
-                  </span>
                 </div>
                 <p
                   style={{

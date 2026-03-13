@@ -1,6 +1,6 @@
 import { Hono } from "npm:hono";
 import { createClient } from "jsr:@supabase/supabase-js@2";
-import * as kv from "./kv_store.tsx";
+import * as kv from "./kv_dual_write.ts";
 
 // ─── KV Schema for Corporate Program ──────────────────────────────
 // user_employer:{user_id}              → { employer_id, enrolled_at, status }
@@ -130,8 +130,8 @@ export function registerCorporateRoutes(app: Hono) {
       const user = await getAuthUser(c.req.header("Authorization"));
       if (!user) return c.json({ error: "Unauthorized" }, 401);
 
-      // Check admin
-      const profileRaw = await kv.get(`profile:${user.id}`);
+      // Check admin — profiles are stored under user: prefix
+      const profileRaw = await kv.get(`user:${user.id}`);
       const profile = profileRaw ? (typeof profileRaw === "string" ? JSON.parse(profileRaw) : profileRaw) : {};
       if (!profile.is_admin) {
         return c.json({ error: "Admin access required" }, 403);
@@ -169,7 +169,7 @@ export function registerCorporateRoutes(app: Hono) {
       const user = await getAuthUser(c.req.header("Authorization"));
       if (!user) return c.json({ error: "Unauthorized" }, 401);
 
-      const profileRaw = await kv.get(`profile:${user.id}`);
+      const profileRaw = await kv.get(`user:${user.id}`);
       const profile = profileRaw ? (typeof profileRaw === "string" ? JSON.parse(profileRaw) : profileRaw) : {};
       if (!profile.is_admin) {
         return c.json({ error: "Admin access required" }, 403);

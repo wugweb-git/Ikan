@@ -10,13 +10,12 @@ import {
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Card, CardContent } from '../ui/card';
-import { AdminStatusBadge, resolveStatusVariant } from './AdminStatusBadge';
+import { AdminStatusBadge } from './AdminStatusBadge';
 import { Label } from '../ui/label';
 import { Switch } from '../ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { useNotifications } from '../../contexts/NotificationContext';
 import { AdminHeader } from './AdminHeader';
-import { AdminLoading } from './AdminLoading';
 import { useIsMobile } from '../../hooks/useIsMobile';
 import { projectId, publicAnonKey } from '../../utils/supabase/info';
 import { supabase } from '../../lib/supabase-client';
@@ -56,25 +55,6 @@ export function AdminPaymentGateway() {
     secret_key: ''
   });
 
-  // Stripe configuration
-  const [stripeConfig, setStripeConfig] = useState<PaymentConfig>({
-    gateway: 'stripe',
-    enabled: false,
-    mode: 'test',
-    api_key: '',
-    secret_key: '',
-    webhook_secret: ''
-  });
-
-  // PayPal configuration
-  const [paypalConfig, setPaypalConfig] = useState<PaymentConfig>({
-    gateway: 'paypal',
-    enabled: false,
-    mode: 'test',
-    api_key: '', // Client ID
-    secret_key: '' // Secret
-  });
-
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [testing, setTesting] = useState<string | null>(null);
 
@@ -104,8 +84,6 @@ export function AdminPaymentGateway() {
         const configs = data.configs || [];
         configs.forEach((cfg: any) => {
           if (cfg.gateway === 'razorpay') setRazorpayConfig(cfg);
-          if (cfg.gateway === 'stripe') setStripeConfig(cfg);
-          if (cfg.gateway === 'paypal') setPaypalConfig(cfg);
         });
       }
     } catch (error) {
@@ -187,8 +165,8 @@ export function AdminPaymentGateway() {
 
   const stats = [
     {
-      label: 'Active Gateways',
-      value: [razorpayConfig.enabled, stripeConfig.enabled, paypalConfig.enabled].filter(Boolean).length,
+      label: 'Gateway Status',
+      value: razorpayConfig.enabled ? 'Active' : 'Inactive',
       icon: <CreditCard className="w-4 h-4" style={{ color: 'var(--color-primary-default)' }} />
     },
     {
@@ -218,8 +196,8 @@ export function AdminPaymentGateway() {
     >
       <div className="max-w-7xl mx-auto space-y-6">
         <AdminHeader
-          title="Payment Gateway Management"
-          description="Configure payment gateways and monitor transactions"
+          title="Payment Gateway — Razorpay"
+          description="Configure Razorpay payment gateway and monitor transactions"
           stats={stats}
         />
 
@@ -317,203 +295,6 @@ export function AdminPaymentGateway() {
           </CardContent>
         </Card>
 
-        {/* Stripe Configuration */}
-        <Card style={{ backgroundColor: 'var(--color-bg-card)', borderRadius: 'var(--radius-lg)' }}>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between mb-6">
-              <div className="flex items-center gap-3">
-                {/* Stripe brand color — must remain as hex per brand guidelines */}
-                <CreditCard className="w-6 h-6" style={{ color: '#635BFF' }} />
-                <div>
-                  <h3 style={{ fontSize: 'var(--text-base)', fontWeight: 'var(--font-weight-medium)' }}>
-                    Stripe
-                  </h3>
-                  <p style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-muted)' }}>
-                    Global payment processing platform
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-center gap-2">
-                <Label>Enabled</Label>
-                <Switch
-                  checked={stripeConfig.enabled}
-                  onCheckedChange={(checked) => setStripeConfig({ ...stripeConfig, enabled: checked })}
-                />
-              </div>
-            </div>
-
-            <div className="grid md:grid-cols-2 gap-4 mb-4">
-              <div>
-                <Label>Mode</Label>
-                <Select 
-                  value={stripeConfig.mode} 
-                  onValueChange={(mode: any) => setStripeConfig({ ...stripeConfig, mode })}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="test">Test Mode</SelectItem>
-                    <SelectItem value="live">Live Mode</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label>Publishable Key</Label>
-                <Input
-                  type="password"
-                  value={stripeConfig.api_key}
-                  onChange={(e) => setStripeConfig({ ...stripeConfig, api_key: e.target.value })}
-                  placeholder="pk_test_xxxxxxxxxxxxx"
-                />
-              </div>
-              <div>
-                <Label>Secret Key</Label>
-                <Input
-                  type="password"
-                  value={stripeConfig.secret_key}
-                  onChange={(e) => setStripeConfig({ ...stripeConfig, secret_key: e.target.value })}
-                  placeholder="sk_test_xxxxxxxxxxxxx"
-                />
-              </div>
-              <div>
-                <Label>Webhook Secret</Label>
-                <Input
-                  type="password"
-                  value={stripeConfig.webhook_secret}
-                  onChange={(e) => setStripeConfig({ ...stripeConfig, webhook_secret: e.target.value })}
-                  placeholder="whsec_xxxxxxxxxxxxx"
-                />
-              </div>
-            </div>
-
-            <div className="flex gap-2">
-              <Button
-                onClick={() => handleSaveConfig('stripe', stripeConfig)}
-                style={{
-                  height: 'var(--ikan-component-button-height)',
-                  borderRadius: 'var(--ikan-component-border-radius)',
-                  fontWeight: 'var(--font-weight-medium)',
-                  gap: 'var(--spacing-2)',
-                  backgroundColor: 'var(--color-primary-default)',
-                  color: 'var(--color-primary-on)'
-                }}
-              >
-                <Save className="w-4 h-4" />
-                Save Configuration
-              </Button>
-              <Button
-                variant="outline"
-                onClick={() => handleTest('stripe', 100)}
-                disabled={!stripeConfig.enabled || testing === 'stripe'}
-                style={{
-                  height: 'var(--ikan-component-button-height)',
-                  borderRadius: 'var(--ikan-component-border-radius)',
-                  fontWeight: 'var(--font-weight-medium)',
-                  gap: 'var(--spacing-2)'
-                }}
-              >
-                <TestTube className="w-4 h-4" />
-                {testing === 'stripe' ? 'Testing...' : 'Test Payment'}
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* PayPal Configuration */}
-        <Card style={{ backgroundColor: 'var(--color-bg-card)', borderRadius: 'var(--radius-lg)' }}>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between mb-6">
-              <div className="flex items-center gap-3">
-                {/* PayPal brand color — must remain as hex per brand guidelines */}
-                <CreditCard className="w-6 h-6" style={{ color: '#0070BA' }} />
-                <div>
-                  <h3 style={{ fontSize: 'var(--text-base)', fontWeight: 'var(--font-weight-medium)' }}>
-                    PayPal
-                  </h3>
-                  <p style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-muted)' }}>
-                    Trusted online payment system
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-center gap-2">
-                <Label>Enabled</Label>
-                <Switch
-                  checked={paypalConfig.enabled}
-                  onCheckedChange={(checked) => setPaypalConfig({ ...paypalConfig, enabled: checked })}
-                />
-              </div>
-            </div>
-
-            <div className="grid md:grid-cols-2 gap-4 mb-4">
-              <div>
-                <Label>Mode</Label>
-                <Select 
-                  value={paypalConfig.mode} 
-                  onValueChange={(mode: any) => setPaypalConfig({ ...paypalConfig, mode })}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="test">Sandbox Mode</SelectItem>
-                    <SelectItem value="live">Live Mode</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label>Client ID</Label>
-                <Input
-                  type="password"
-                  value={paypalConfig.api_key}
-                  onChange={(e) => setPaypalConfig({ ...paypalConfig, api_key: e.target.value })}
-                  placeholder="Client ID"
-                />
-              </div>
-              <div>
-                <Label>Secret</Label>
-                <Input
-                  type="password"
-                  value={paypalConfig.secret_key}
-                  onChange={(e) => setPaypalConfig({ ...paypalConfig, secret_key: e.target.value })}
-                  placeholder="Secret"
-                />
-              </div>
-            </div>
-
-            <div className="flex gap-2">
-              <Button
-                onClick={() => handleSaveConfig('paypal', paypalConfig)}
-                style={{
-                  height: 'var(--ikan-component-button-height)',
-                  borderRadius: 'var(--ikan-component-border-radius)',
-                  fontWeight: 'var(--font-weight-medium)',
-                  gap: 'var(--spacing-2)',
-                  backgroundColor: 'var(--color-primary-default)',
-                  color: 'var(--color-primary-on)'
-                }}
-              >
-                <Save className="w-4 h-4" />
-                Save Configuration
-              </Button>
-              <Button
-                variant="outline"
-                onClick={() => handleTest('paypal', 100)}
-                disabled={!paypalConfig.enabled || testing === 'paypal'}
-                style={{
-                  height: 'var(--ikan-component-button-height)',
-                  borderRadius: 'var(--ikan-component-border-radius)',
-                  fontWeight: 'var(--font-weight-medium)',
-                  gap: 'var(--spacing-2)'
-                }}
-              >
-                <TestTube className="w-4 h-4" />
-                {testing === 'paypal' ? 'Testing...' : 'Test Payment'}
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-
         {/* Recent Transactions */}
         {transactions.length > 0 && (
           <div>
@@ -606,7 +387,7 @@ export function AdminPaymentGateway() {
         <Card style={{ backgroundColor: 'var(--color-bg-muted)', borderRadius: 'var(--radius-lg)' }}>
           <CardContent className="p-6">
             <h3 style={{ fontSize: 'var(--text-base)', fontWeight: 'var(--font-weight-medium)', marginBottom: 'var(--spacing-3)' }}>
-              📚 Setup Documentation
+              Setup Documentation
             </h3>
             <div className="space-y-2" style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-muted)' }}>
               <p>
@@ -615,17 +396,8 @@ export function AdminPaymentGateway() {
                   Razorpay Dashboard
                 </a>
               </p>
-              <p>
-                <strong>Stripe:</strong> Get API keys from{' '}
-                <a href="https://dashboard.stripe.com/apikeys" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--color-primary-default)' }}>
-                  Stripe Dashboard
-                </a>
-              </p>
-              <p>
-                <strong>PayPal:</strong> Get credentials from{' '}
-                <a href="https://developer.paypal.com/dashboard/applications" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--color-primary-default)' }}>
-                  PayPal Developer Portal
-                </a>
+              <p style={{ marginTop: 'var(--spacing-2)' }}>
+                <strong>Steps:</strong> 1. Create a Razorpay account → 2. Generate test API keys → 3. Enter keys above → 4. Test with a ₹1 payment → 5. Switch to live mode when ready.
               </p>
             </div>
           </CardContent>

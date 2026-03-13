@@ -336,7 +336,7 @@ export function AuthForm({ onSuccess, defaultTab = 'signin' }: AuthFormProps) {
               >
                 {loading ? (
                   <>
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                    <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
                     {authContent.form.buttons.signingIn}
                   </>
                 ) : (
@@ -618,7 +618,7 @@ export function AuthForm({ onSuccess, defaultTab = 'signin' }: AuthFormProps) {
               >
                 {loading ? (
                   <>
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                    <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
                     {authContent.form.buttons.creatingAccount}
                   </>
                 ) : (

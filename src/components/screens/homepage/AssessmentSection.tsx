@@ -56,7 +56,7 @@ export function AssessmentSection({ onGetStarted }: AssessmentSectionProps) {
   if (loading || !assessmentData) {
     return (
       <div className="w-full h-96 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2" style={{ borderColor: 'var(--color-primary-default)' }}></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-[3px]" style={{ borderColor: 'var(--color-accent-default)', borderTopColor: 'var(--color-primary-default)' }}></div>
       </div>
     );
   }

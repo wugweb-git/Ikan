@@ -203,8 +203,7 @@ export function SideNavAccount({
       collapsible: true,
       items: [
         { id: 'privacy', label: 'Privacy', route: '/account/privacy', icon: IconPrivacy },
-        { id: 'security', label: 'Security', route: '/account/security', icon: IconSecurity },
-        { id: 'settings', label: 'Settings', route: '/account/settings', icon: IconAbout }
+        { id: 'security', label: 'Security', route: '/account/security', icon: IconSecurity }
       ]
     },
     {

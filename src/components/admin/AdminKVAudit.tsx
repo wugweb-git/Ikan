@@ -133,6 +133,11 @@ export function AdminKVAudit({ onBack }: AdminKVAuditProps) {
   const [purgeResult, setPurgeResult] = useState<string | null>(null);
   const [purgeConfirm, setPurgeConfirm] = useState(false);
 
+  // Activity key migration/purge state
+  const [activityPurgeLoading, setActivityPurgeLoading] = useState(false);
+  const [activityPurgeResult, setActivityPurgeResult] = useState<string | null>(null);
+  const [activityPurgeConfirm, setActivityPurgeConfirm] = useState(false);
+
   const runAudit = useCallback(async () => {
     setLoading(true);
     setError(null);
@@ -166,6 +171,30 @@ export function AdminKVAudit({ onBack }: AdminKVAuditProps) {
     if (!audit) return;
     const all = new Set(audit.orphans.map(o => o.key));
     setSelectedOrphans(all);
+  };
+
+  const handleActivityPurge = async (dryRun: boolean) => {
+    setActivityPurgeLoading(true);
+    setActivityPurgeResult(null);
+    try {
+      const res = await apiClient.purgeActivityKeys(dryRun);
+      if (dryRun) {
+        setActivityPurgeResult(
+          `Dry run: Found ${res.legacyKeysFound} legacy keys to migrate.\n` +
+          `Breakdown: ${JSON.stringify(res.breakdown)}\n` +
+          `Sample keys: ${(res.sampleKeys || []).slice(0, 5).join(', ')}`
+        );
+      } else {
+        setActivityPurgeResult(`Migrated & deleted ${res.deleted} legacy keys. Merged: ${JSON.stringify(res.merged)}`);
+        setActivityPurgeConfirm(false);
+        // Re-run audit to reflect changes
+        runAudit();
+      }
+    } catch (err: any) {
+      setActivityPurgeResult(`Error: ${err?.message || 'Failed to purge'}`);
+    } finally {
+      setActivityPurgeLoading(false);
+    }
   };
 
   const handleCleanup = async (dryRun: boolean) => {
@@ -427,6 +456,68 @@ export function AdminKVAudit({ onBack }: AdminKVAuditProps) {
                 </div>
               </div>
             ))}
+
+            {/* Activity Key Migration Tool */}
+            <div className="mt-4 p-4 rounded-lg" style={{ backgroundColor: 'var(--color-bg-card)', border: '1px solid var(--color-border-default)' }}>
+              <div className="flex items-start gap-3">
+                <Flame className="w-5 h-5 shrink-0 mt-0.5" style={{ color: 'var(--color-status-warning)' }} />
+                <div className="flex-1 space-y-3">
+                  <div>
+                    <p style={{ fontFamily: 'var(--font-family-base)', fontSize: 'var(--text-sm)', fontWeight: 'var(--font-weight-medium)' }}>
+                      Migrate &amp; Purge Legacy Activity Keys
+                    </p>
+                    <p style={{ fontFamily: 'var(--font-family-base)', fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)', marginTop: '4px' }}>
+                      Merges old per-event keys (<KeyBadge keyName="user_activity:uid:ts" />, <KeyBadge keyName="activity:ts:uid" />, <KeyBadge keyName="analytics:ts-rand" />) 
+                      into capped arrays (<KeyBadge keyName="user_activity:uid" />, <KeyBadge keyName="activity:daily:date" />, <KeyBadge keyName="analytics:daily:date" />) then deletes the originals.
+                    </p>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      disabled={activityPurgeLoading}
+                      onClick={() => handleActivityPurge(true)}
+                      style={{ fontFamily: 'var(--font-family-base)', fontSize: 'var(--text-xs)' }}
+                    >
+                      {activityPurgeLoading ? <Loader2 className="w-3 h-3 animate-spin mr-1" /> : <Search className="w-3 h-3 mr-1" />}
+                      Dry Run
+                    </Button>
+                    {!activityPurgeConfirm ? (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        disabled={activityPurgeLoading}
+                        onClick={() => setActivityPurgeConfirm(true)}
+                        style={{ fontFamily: 'var(--font-family-base)', fontSize: 'var(--text-xs)', color: 'var(--color-status-danger)', borderColor: 'var(--color-status-danger)' }}
+                      >
+                        <Trash2 className="w-3 h-3 mr-1" />
+                        Migrate &amp; Purge
+                      </Button>
+                    ) : (
+                      <Button
+                        size="sm"
+                        disabled={activityPurgeLoading}
+                        onClick={() => handleActivityPurge(false)}
+                        style={{ fontFamily: 'var(--font-family-base)', fontSize: 'var(--text-xs)', backgroundColor: 'var(--color-status-danger)', color: 'white' }}
+                      >
+                        {activityPurgeLoading ? <Loader2 className="w-3 h-3 animate-spin mr-1" /> : <AlertTriangle className="w-3 h-3 mr-1" />}
+                        Confirm — This is irreversible
+                      </Button>
+                    )}
+                  </div>
+                  {activityPurgeResult && (
+                    <pre className="p-3 rounded text-xs overflow-x-auto whitespace-pre-wrap" style={{
+                      fontFamily: 'monospace',
+                      backgroundColor: 'var(--color-bg-muted)',
+                      color: 'var(--color-text-primary)',
+                      maxHeight: '200px'
+                    }}>
+                      {activityPurgeResult}
+                    </pre>
+                  )}
+                </div>
+              </div>
+            </div>
           </div>
         )}
       </AuditSection>

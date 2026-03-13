@@ -1,5 +1,5 @@
 import { Hono } from 'npm:hono';
-import * as kv from './kv_store.tsx';
+import * as kv from './kv_dual_write.ts';
 import { EquipService, EquipDayService, EquipBlockService } from './program-service.ts';
 
 export function registerEquipRoutes(app: Hono, requireAuth: any) {
@@ -142,6 +142,11 @@ app.delete("/equip/programs/:equipId", requireAuth, async (c) => {
     }
 
     await EquipService.deleteEquip(targetId);
+    // Also clean up the user-facing equip_program: prefix (legacy dual-prefix system)
+    await kv.del(`equip_program:${targetId}`).catch(() => {});
+    if (existing?.slug) {
+      await kv.del(`equip_program_by_slug:${existing.slug}`).catch(() => {});
+    }
     return c.json({ success: true });
   } catch (error) {
     console.log('Delete equip error:', error);

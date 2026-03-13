@@ -118,6 +118,17 @@ export function readOfflineCache<T = any>(key: string): T | null {
   }
 }
 
+/**
+ * Invalidate a specific offline cache entry (e.g. after a delete/mutation).
+ */
+export function invalidateOfflineCache(key: string): void {
+  try {
+    localStorage.removeItem(`${CACHE_PREFIX}${key}`);
+  } catch {
+    // ignore
+  }
+}
+
 function evictOldestCache() {
   try {
     const keys = Object.keys(localStorage)

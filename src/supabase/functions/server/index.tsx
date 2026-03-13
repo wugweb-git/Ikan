@@ -2,7 +2,7 @@ import { Hono } from "npm:hono";
 import { cors } from "npm:hono/cors";
 import { logger } from "npm:hono/logger";
 import { createClient } from "jsr:@supabase/supabase-js@2";
-import * as kv from "./kv_store.tsx";
+import * as kv from "./kv_dual_write.ts";
 
 // Import monitoring utilities
 import { getAPILogs } from "./logging.tsx";
@@ -197,7 +197,26 @@ async function requireAdmin(c: any, next: any) {
 
   // Check if user is admin
   const userProfile = await kv.get(`user:${user.id}`);
-  if (!userProfile?.is_admin) {
+
+  // Super-admin override: admin@wugweb.com is ALWAYS admin (top of chain)
+  const SUPER_ADMIN_EMAIL = 'admin@wugweb.com';
+  const isSuperAdmin = user.email?.toLowerCase() === SUPER_ADMIN_EMAIL;
+
+  if (isSuperAdmin && (!userProfile || !userProfile.is_admin)) {
+    // Auto-repair: ensure super admin always has the flag set in KV
+    const repaired = {
+      ...(userProfile || {}),
+      user_id: user.id,
+      email: user.email,
+      is_admin: true,
+      is_super_admin: true,
+      updated_at: new Date().toISOString(),
+    };
+    await kv.set(`user:${user.id}`, repaired);
+    console.log(`🔧 Auto-repaired super admin flag for ${SUPER_ADMIN_EMAIL}`);
+  }
+
+  if (!isSuperAdmin && !userProfile?.is_admin) {
     console.log(`🚫 Non-admin user ${user.id} attempted to access admin endpoint`);
     return c.json({ error: 'Admin access required' }, 403);
   }
@@ -1223,235 +1242,15 @@ app.get("/journal/entries/:date", requireAuth, async (c) => {
   }
 });
 
-// Assessment Endpoints
-app.get("/assessments", async (c) => {
-  try {
-    // Get all available assessments
-    let assessments = await kv.getByPrefix('assessment:');
-
-    // Filter out null/undefined entries and duplicates (since we store by ID and Slug)
-    const validAssessments = assessments.filter((a: any) => a && a.id);
-    const uniqueAssessments = Array.from(new Map(validAssessments.map((a: any) => [a.id, a])).values());
-    
-    // ✅ FILTER OUT UNPUBLISHED/DRAFT and DELETED ASSESSMENTS
-    const publishedAssessments = uniqueAssessments.filter((a: any) => a.published !== false && a.deleted !== true);
-    
-    console.log(`✅ Returning ${publishedAssessments.length} published assessments (${uniqueAssessments.length} total)`);
-    return c.json({ assessments: publishedAssessments });
-  } catch (error) {
-    console.error('❌ Get assessments error:', error);
-    return c.json({ error: 'Failed to retrieve assessments', assessments: [] }, 500);
-  }
-});
-
-app.get("/assessments/:assessmentId", async (c) => {
-  try {
-    const assessmentId = c.req.param('assessmentId');
-    console.log(`🔍 Looking up assessment: ${assessmentId}`);
-    
-    // Try direct lookup first
-    let assessment = await kv.get(`assessment:${assessmentId}`);
-    
-    // If not found, search through all assessments by ID or slug
-    if (!assessment) {
-      console.log(`⚠️ Assessment not found by key, searching by ID/slug...`);
-      const allAssessments = await kv.getByPrefix('assessment:');
-      assessment = allAssessments.find((a: any) => 
-        a && (a.id === assessmentId || a.slug === assessmentId || a.assessment_id === assessmentId)
-      );
-    }
-    
-    if (!assessment || assessment.deleted === true) {
-      // Return 404 if not found or soft-deleted
-      console.log(`❌ Assessment not found or deleted: ${assessmentId}`);
-      return c.json({ error: 'Assessment not found' }, 404);
-    }
-    
-    console.log(`✅ Found assessment: ${assessment.title || assessment.slug}`);
-    return c.json({ assessment });
-  } catch (error) {
-    console.log('Get assessment error:', error);
-    return c.json({ error: 'Failed to retrieve assessment' }, 500);
-  }
-});
-
-app.post("/assessments", requireAuth, async (c) => {
-  try {
-    const user = c.get('user');
-    
-    // Check if user is admin
-    const userProfile = await kv.get(`user:${user.id}`);
-    if (!userProfile?.is_admin) {
-      return c.json({ error: 'Admin access required' }, 403);
-    }
-    
-    const assessmentData = await c.req.json();
-    // Use assessment_id if provided, otherwise use id, otherwise generate new
-    const assessmentId = assessmentData.assessment_id || assessmentData.id || `assessment-${Date.now()}`;
-    
-    // Ensure both ID fields are set for compatibility
-    const newAssessment = {
-      ...assessmentData,
-      id: assessmentId,
-      assessment_id: assessmentId,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
-    };
-    
-    await kv.set(`assessment:${assessmentId}`, newAssessment);
-    // Also sync to assessment_def: prefix for admin consistency
-    await kv.set(`assessment_def:${assessmentId}`, newAssessment);
-    
-    console.log(`✅ Assessment created: ${assessmentId}`);
-    return c.json({ assessment: newAssessment });
-  } catch (error) {
-    console.log('Create assessment error:', error);
-    return c.json({ error: 'Failed to create assessment' }, 500);
-  }
-});
-
-app.put("/assessments/:assessmentId", requireAuth, async (c) => {
-  try {
-    const user = c.get('user');
-    const assessmentId = c.req.param('assessmentId');
-    console.log(`📝 Updating assessment: ${assessmentId}`);
-    
-    // Check if user is admin
-    const userProfile = await kv.get(`user:${user.id}`);
-    if (!userProfile?.is_admin) {
-      return c.json({ error: 'Admin access required' }, 403);
-    }
-    
-    const updates = await c.req.json();
-    
-    // Try direct lookup first
-    let existingAssessment = await kv.get(`assessment:${assessmentId}`);
-    let storageKey = `assessment:${assessmentId}`;
-    
-    // If not found, search by ID/slug
-    if (!existingAssessment) {
-      const allAssessments = await kv.getByPrefix('assessment:');
-      const found = allAssessments.find((a: any) => 
-        a && (a.id === assessmentId || a.slug === assessmentId || a.assessment_id === assessmentId)
-      );
-      
-      if (found) {
-        existingAssessment = found;
-        // Use the actual storage key (slug or id)
-        storageKey = `assessment:${found.slug || found.id}`;
-      }
-    }
-    
-    if (!existingAssessment) {
-      console.log(`❌ Assessment not found for update: ${assessmentId}`);
-      return c.json({ error: 'Assessment not found' }, 404);
-    }
-    
-    const updatedAssessment = {
-      ...existingAssessment,
-      ...updates,
-      id: existingAssessment.id,
-      assessment_id: existingAssessment.assessment_id || existingAssessment.id,
-      slug: existingAssessment.slug,
-      updated_at: new Date().toISOString()
-    };
-    
-    await kv.set(storageKey, updatedAssessment);
-    
-    console.log(`✅ Assessment updated: ${storageKey}`);
-    return c.json({ assessment: updatedAssessment });
-  } catch (error) {
-    console.log('Update assessment error:', error);
-    return c.json({ error: 'Failed to update assessment' }, 500);
-  }
-});
-
-app.delete("/assessments/:assessmentId", requireAuth, async (c) => {
-  try {
-    const user = c.get('user');
-    const assessmentId = c.req.param('assessmentId');
-    console.log(`🗑️ Deleting assessment: ${assessmentId}`);
-    
-    // Check if user is admin
-    const userProfile = await kv.get(`user:${user.id}`);
-    if (!userProfile?.is_admin) {
-      return c.json({ error: 'Admin access required' }, 403);
-    }
-    
-    // Try direct lookup first
-    let existingAssessment = await kv.get(`assessment:${assessmentId}`);
-    let storageKey = `assessment:${assessmentId}`;
-    
-    // If not found, search by ID/slug
-    if (!existingAssessment) {
-      const allAssessments = await kv.getByPrefix('assessment:');
-      const found = allAssessments.find((a: any) => 
-        a && (a.id === assessmentId || a.slug === assessmentId || a.assessment_id === assessmentId)
-      );
-      
-      if (found) {
-        existingAssessment = found;
-        // Use the actual storage key (slug or id)
-        storageKey = `assessment:${found.slug || found.id}`;
-      }
-    }
-    
-    if (!existingAssessment) {
-      console.log(`❌ Assessment not found for deletion: ${assessmentId}`);
-      return c.json({ error: 'Assessment not found' }, 404);
-    }
-    
-    await kv.del(storageKey);
-    
-    console.log(`✅ Assessment deleted: ${storageKey}`);
-    return c.json({ success: true, message: 'Assessment deleted successfully' });
-  } catch (error) {
-    console.log('Delete assessment error:', error);
-    return c.json({ error: 'Failed to delete assessment' }, 500);
-  }
-});
-
-app.post("/assessments/:assessmentId/responses", requireAuth, async (c) => {
-  try {
-    const userId = c.get('userId');
-    const assessmentId = c.req.param('assessmentId');
-    const { responses, status, score, interpretation, severity } = await c.req.json();
-    
-    const responseId = `${userId}-${assessmentId}-${Date.now()}`;
-    const assessmentResponse = {
-      response_id: responseId,
-      user_id: userId,
-      assessment_id: assessmentId,
-      responses,
-      status: status || 'in_progress',
-      score: score || null,
-      interpretation: interpretation || null, // Store full interpretation object/string
-      severity: severity || null, // Explicit severity: low, mild, moderate, high
-      started_at: new Date().toISOString(),
-      completed_at: status === 'completed' ? new Date().toISOString() : null
-    };
-
-    await kv.set(`assessment_response:${responseId}`, assessmentResponse);
-    await kv.set(`assessment_response_by_user:${userId}:${assessmentId}:latest`, assessmentResponse);
-    
-    return c.json({ response: assessmentResponse });
-  } catch (error) {
-    console.log('Save assessment response error:', error);
-    return c.json({ error: 'Failed to save assessment response' }, 500);
-  }
-});
-
-app.get("/assessments/responses/user", requireAuth, async (c) => {
-  try {
-    const userId = c.get('userId');
-    const responses = await kv.getByPrefix(`assessment_response_by_user:${userId}`);
-    
-    return c.json({ responses });
-  } catch (error) {
-    console.log('Get user assessment responses error:', error);
-    return c.json({ error: 'Failed to retrieve assessment responses' }, 500);
-  }
-});
+// ─── DEAD INLINE ASSESSMENT ROUTES REMOVED ─────────────────────
+// GET/POST/PUT/DELETE /assessments/* and /assessments/:id/responses
+// were removed — they were shadowed by assessment-routes.ts
+// (registered first via registerAssessmentRoutes) and admin-routes.ts.
+// Assessment CRUD is now solely handled by:
+//   • assessment-routes.ts  → GET /assessments, GET /assessments/:id,
+//                              POST /user/assessments, GET /user/assessments/history
+//   • admin-routes.ts       → POST/PUT/DELETE /admin/assessments/:id
+// ────────────────────────────────────────────────────────────────
 
 // ========================================
 // EQUIP PROGRAMS LIST ENDPOINT
@@ -2050,12 +1849,24 @@ app.put("/admin/users/:userId", requireAuth, async (c) => {
       return c.json({ error: 'User not found' }, 404);
     }
     
+    // Protect super admin from demotion
+    const SUPER_ADMIN_EMAIL = 'admin@wugweb.com';
+    if (currentProfile.email?.toLowerCase() === SUPER_ADMIN_EMAIL && updates.is_admin === false) {
+      return c.json({ error: 'Cannot demote the system super admin (admin@wugweb.com)' }, 403);
+    }
+    
     const updatedProfile = {
       ...currentProfile,
       ...updates,
       user_id: userId, // Prevent changing user ID
       updated_at: new Date().toISOString()
     };
+    
+    // Ensure super admin always keeps admin + super_admin flags
+    if (currentProfile.email?.toLowerCase() === SUPER_ADMIN_EMAIL) {
+      updatedProfile.is_admin = true;
+      updatedProfile.is_super_admin = true;
+    }
     
     await kv.set(`user:${userId}`, updatedProfile);
     return c.json({ profile: updatedProfile });
@@ -3335,25 +3146,33 @@ app.post("/analytics/engagement", async (c) => {
       return c.json({ error: 'resource_id and action are required' }, 400);
     }
 
-    // Generate unique analytics ID
-    const analyticsId = `analytics:${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    const now = new Date();
+    const dateKey = now.toISOString().split('T')[0];
+    const analyticsId = `eng_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`;
     
-    // Store analytics data with timestamp
+    // Store analytics data in daily bucket (not individual keys)
     const analyticsRecord = {
       ...analyticsData,
-      tracked_at: new Date().toISOString(),
+      tracked_at: now.toISOString(),
       id: analyticsId
     };
 
-    await kv.set(analyticsId, analyticsRecord);
+    const dailyKey = `analytics:daily:${dateKey}`;
+    const dailyBucket: any[] = (await kv.get(dailyKey)) || [];
+    dailyBucket.push(analyticsRecord);
+    await kv.set(dailyKey, dailyBucket);
     
-    // Also store by resource ID for easy querying
-    const resourceAnalyticsKey = `analytics:resource:${analyticsData.resource_id}`;
-    const existingAnalytics = await kv.get(resourceAnalyticsKey) || [];
-    existingAnalytics.push(analyticsId);
-    await kv.set(resourceAnalyticsKey, existingAnalytics);
+    // Update per-resource counter (lightweight — just a count + last action)
+    const resourceCounterKey = `analytics:counter:${analyticsData.resource_id}`;
+    const counter = (await kv.get(resourceCounterKey)) || { views: 0, reads: 0, shares: 0, total: 0 };
+    counter.total = (counter.total || 0) + 1;
+    if (analyticsData.action === 'view') counter.views = (counter.views || 0) + 1;
+    else if (analyticsData.action === 'read') counter.reads = (counter.reads || 0) + 1;
+    else if (analyticsData.action === 'share') counter.shares = (counter.shares || 0) + 1;
+    counter.last_action = now.toISOString();
+    await kv.set(resourceCounterKey, counter);
     
-    console.log(`📊 Analytics tracked: ${analyticsData.action} on resource ${analyticsData.resource_id}`);
+    console.log(`Analytics tracked: ${analyticsData.action} on resource ${analyticsData.resource_id}`);
     
     return c.json({ 
       success: true,
@@ -3669,6 +3488,90 @@ app.post("/admin/communication/test", requireAdmin, async (c) => {
   } catch (error) {
     console.log(`Error testing communication API: ${error}`);
     return c.json({ error: `Failed to test API: ${error}` }, 500);
+  }
+});
+
+// ============================================================================
+// EMAIL TEMPLATE CRUD ENDPOINTS
+// ============================================================================
+
+/**
+ * List all email templates (Admin Only)
+ */
+app.get("/admin/communication/templates", requireAdmin, async (c) => {
+  try {
+    const templates = await kv.getByPrefix('email-template:');
+    return c.json({ templates: templates || [] });
+  } catch (error) {
+    console.log(`Error fetching email templates: ${error}`);
+    return c.json({ error: 'Failed to fetch templates' }, 500);
+  }
+});
+
+/**
+ * Save/update an email template (Admin Only)
+ */
+app.post("/admin/communication/templates", requireAdmin, async (c) => {
+  try {
+    const template = await c.req.json();
+    if (!template.id) {
+      template.id = `tpl_${Date.now()}`;
+    }
+    template.updated_at = new Date().toISOString();
+    if (!template.created_at) {
+      template.created_at = template.updated_at;
+    }
+    const key = `email-template:${template.id}`;
+    await kv.set(key, template);
+    return c.json({ success: true, template });
+  } catch (error) {
+    console.log(`Error saving email template: ${error}`);
+    return c.json({ error: 'Failed to save template' }, 500);
+  }
+});
+
+/**
+ * Delete an email template (Admin Only)
+ */
+app.delete("/admin/communication/templates/:id", requireAdmin, async (c) => {
+  try {
+    const id = c.req.param('id');
+    await kv.del(`email-template:${id}`);
+    return c.json({ success: true });
+  } catch (error) {
+    console.log(`Error deleting email template: ${error}`);
+    return c.json({ error: 'Failed to delete template' }, 500);
+  }
+});
+
+/**
+ * List notification queue items (Admin Only)
+ */
+app.get("/admin/communication/queue", requireAdmin, async (c) => {
+  try {
+    const items = await kv.getByPrefix('notif-queue:');
+    return c.json({ queue: items || [] });
+  } catch (error) {
+    console.log(`Error fetching notification queue: ${error}`);
+    return c.json({ error: 'Failed to fetch queue' }, 500);
+  }
+});
+
+/**
+ * Queue a broadcast notification (Admin Only)
+ */
+app.post("/admin/communication/queue", requireAdmin, async (c) => {
+  try {
+    const item = await c.req.json();
+    item.id = `bcast_${Date.now()}`;
+    item.status = 'pending';
+    item.scheduled_at = new Date().toISOString();
+    const key = `notif-queue:${item.id}`;
+    await kv.set(key, item);
+    return c.json({ success: true, item });
+  } catch (error) {
+    console.log(`Error queuing broadcast: ${error}`);
+    return c.json({ error: 'Failed to queue broadcast' }, 500);
   }
 });
 
@@ -4099,6 +4002,9 @@ app.delete("/categories/:categoryId", requireAuth, async (c) => {
 // ACTIVITY LOG & ANALYTICS ENDPOINTS
 // ========================================
 
+// --- Constants for activity log retention ---
+const USER_ACTIVITY_CAP = 200;       // Max events per user rolling log
+
 // Log activity (login, resource view, etc.)
 app.post("/analytics/activity", requireAuth, async (c) => {
   try {
@@ -4109,23 +4015,34 @@ app.post("/analytics/activity", requireAuth, async (c) => {
       return c.json({ error: 'Activity type is required' }, 400);
     }
 
-    const activityId = `activity:${Date.now()}:${user.id}`;
+    const now = new Date();
+    const dateKey = now.toISOString().split('T')[0]; // YYYY-MM-DD
     const activity = {
-      id: activityId,
+      id: `act_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`,
       userId: user.id,
       type, // 'login', 'resource_view', 'program_start', etc.
       resourceId: resourceId || null,
       metadata: metadata || {},
-      timestamp: new Date().toISOString()
+      timestamp: now.toISOString()
     };
 
-    // Store in main activity log
-    await kv.set(activityId, activity);
-    
-    // Also store in user-specific log for easier user history
-    await kv.set(`user_activity:${user.id}:${Date.now()}`, activity);
+    // 1. Append to per-user rolling log (capped array)
+    const userKey = `user_activity:${user.id}`;
+    const userLog: any[] = (await kv.get(userKey)) || [];
+    userLog.push(activity);
+    // Trim to keep only the most recent entries
+    const trimmed = userLog.length > USER_ACTIVITY_CAP
+      ? userLog.slice(userLog.length - USER_ACTIVITY_CAP)
+      : userLog;
+    await kv.set(userKey, trimmed);
 
-    console.log(`📊 Activity logged: ${type} for user ${user.id}`);
+    // 2. Append to daily global bucket (for admin analytics)
+    const dailyKey = `activity:daily:${dateKey}`;
+    const dailyLog: any[] = (await kv.get(dailyKey)) || [];
+    dailyLog.push(activity);
+    await kv.set(dailyKey, dailyLog);
+
+    console.log(`Activity logged: ${type} for user ${user.id}`);
     return c.json({ success: true, activity });
   } catch (error) {
     console.error('Log activity error:', error);
@@ -4136,17 +4053,15 @@ app.post("/analytics/activity", requireAuth, async (c) => {
 // Get aggregated activity analytics
 app.get("/analytics/aggregated", requireAdmin, async (c) => {
   try {
-    // Fetch all activities
-    // Note: In a real production system with millions of rows, you'd use a dedicated analytics DB
-    // or pre-aggregated counters. For this KV store, we'll scan.
-    const activities = await kv.getByPrefix('activity:');
+    // Fetch daily activity buckets (new format: activity:daily:YYYY-MM-DD = array)
+    const dailyBuckets = await kv.getByPrefix('activity:daily:');
     
     // Initialize counters
     const stats = {
       totalLogins: 0,
       totalResourceViews: 0,
-      activeUsers24h: new Set(),
-      activeUsers7d: new Set(),
+      activeUsers24h: new Set<string>(),
+      activeUsers7d: new Set<string>(),
       resourceViews: {} as Record<string, number>,
       dailyActivity: {} as Record<string, number>
     };
@@ -4155,31 +4070,30 @@ app.get("/analytics/aggregated", requireAdmin, async (c) => {
     const oneDayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
     const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
 
-    for (const item of activities) {
-      const act = item; // kv.getByPrefix returns values directly in this setup if configured, or { key, value }
-      // Based on previous code, getByPrefix returns array of values? 
-      // Checking `kv.getByPrefix` usage: `const categories = await kv.getByPrefix('category:');`
-      // It seems it returns values. Let's assume it returns values.
-      
-      if (!act || !act.timestamp) continue;
-      
-      const date = new Date(act.timestamp);
-      const dateStr = date.toISOString().split('T')[0];
+    for (const bucket of dailyBuckets) {
+      // Each bucket is an array of activity objects
+      const activities = Array.isArray(bucket) ? bucket : [bucket];
+      for (const act of activities) {
+        if (!act || !act.timestamp) continue;
+        
+        const date = new Date(act.timestamp);
+        const dateStr = date.toISOString().split('T')[0];
 
-      // Daily Activity Count
-      stats.dailyActivity[dateStr] = (stats.dailyActivity[dateStr] || 0) + 1;
+        // Daily Activity Count
+        stats.dailyActivity[dateStr] = (stats.dailyActivity[dateStr] || 0) + 1;
 
-      // Active Users
-      if (date > oneDayAgo) stats.activeUsers24h.add(act.userId);
-      if (date > sevenDaysAgo) stats.activeUsers7d.add(act.userId);
+        // Active Users
+        if (date > oneDayAgo && act.userId) stats.activeUsers24h.add(act.userId);
+        if (date > sevenDaysAgo && act.userId) stats.activeUsers7d.add(act.userId);
 
-      // Type-specific stats
-      if (act.type === 'login') {
-        stats.totalLogins++;
-      } else if (act.type === 'resource_view') {
-        stats.totalResourceViews++;
-        if (act.resourceId) {
-          stats.resourceViews[act.resourceId] = (stats.resourceViews[act.resourceId] || 0) + 1;
+        // Type-specific stats
+        if (act.type === 'login') {
+          stats.totalLogins++;
+        } else if (act.type === 'resource_view') {
+          stats.totalResourceViews++;
+          if (act.resourceId) {
+            stats.resourceViews[act.resourceId] = (stats.resourceViews[act.resourceId] || 0) + 1;
+          }
         }
       }
     }
@@ -4253,28 +4167,12 @@ app.get("/user-activity/goals", requireAuth, async (c) => {
     
     let weeklyResourcesRead = 0;
     
-    // Try to get from the dedicated read tracking list first (from mark-read endpoint)
-    const readActivityIds = await kv.get(`activity:user:${userId}:reads`) || [];
-    if (readActivityIds.length > 0) {
-      // We have IDs, we would need to check timestamps. 
-      // Since we don't want to fetch all individually, we can rely on the fact that IDs usually contain timestamps 
-      // or we just trust the client for now? No, let's look at the implementation of mark-read.
-      // It stores full objects in `activity:read:...` but only IDs in the user list.
-      // For simplicity/performance in this MVP, let's check the user_activity log instead.
-      
-      const recentActivities = await kv.getByPrefix(`user_activity:${userId}:`);
-      weeklyResourcesRead = recentActivities.filter((act: any) => 
-        (act.type === 'resource_view' || act.type === 'read') && 
-        new Date(act.timestamp) >= startOfWeek
-      ).length;
-    } else {
-        // Fallback to scanning user_activity prefix
-        const recentActivities = await kv.getByPrefix(`user_activity:${userId}:`);
-        weeklyResourcesRead = recentActivities.filter((act: any) => 
-            (act.type === 'resource_view' || act.type === 'read') && 
-            new Date(act.timestamp) >= startOfWeek
-        ).length;
-    }
+    // Read from the capped per-user activity array
+    const userActivities: any[] = (await kv.get(`user_activity:${userId}`)) || [];
+    weeklyResourcesRead = userActivities.filter((act: any) => 
+      (act.type === 'resource_view' || act.type === 'read') && 
+      act.timestamp && new Date(act.timestamp) >= startOfWeek
+    ).length;
 
     return c.json({
       goals: [
@@ -4296,8 +4194,8 @@ app.get("/user-activity/history", requireAuth, async (c) => {
     const user = c.get('user');
     const limit = parseInt(c.req.query('limit') || '5');
     
-    // Get user activity
-    const activities = await kv.getByPrefix(`user_activity:${user.id}:`);
+    // Get user activity from capped rolling array
+    const activities: any[] = (await kv.get(`user_activity:${user.id}`)) || [];
     
     // Filter for resource views and sort by timestamp descending
     const resourceViews = activities
@@ -4340,6 +4238,147 @@ app.get("/user-activity/history", requireAuth, async (c) => {
   } catch (error) {
     console.error('Get activity history error:', error);
     return c.json({ error: 'Failed to retrieve history' }, 500);
+  }
+});
+
+// ========================================
+// ACTIVITY & ANALYTICS PURGE ENDPOINTS
+// ========================================
+
+/**
+ * Purge legacy per-event activity/analytics keys (Admin Only)
+ * Migrates data from old per-event keys into the new capped-array format,
+ * then deletes the orphaned keys.
+ *
+ * Old patterns being cleaned:
+ *   user_activity:{userId}:{timestamp}  → merged into user_activity:{userId} (array)
+ *   activity:{timestamp}:{userId}       → merged into activity:daily:{date} (array)
+ *   analytics:{timestamp}-{random}      → merged into analytics:daily:{date} (array)
+ */
+app.post("/admin/purge-activity-keys", requireAdmin, async (c) => {
+  try {
+    const { dryRun = true } = await c.req.json().catch(() => ({ dryRun: true }));
+
+    // Direct DB access to get keys (kv.getByPrefix only returns values)
+    const { data: allKeys, error: qErr } = await supabase
+      .from('kv_store_cc205da9')
+      .select('key, value')
+      .or(
+        'key.like.user_activity:%:%,' +       // old per-event user activity
+        'key.like.activity:1%,' +               // old per-event global activity (starts with timestamp)
+        'key.like.analytics:1%'                 // old per-event analytics (starts with timestamp)
+      )
+      .limit(5000);
+
+    if (qErr) {
+      console.log(`Purge query error: ${qErr.message}`);
+      return c.json({ error: `DB query failed: ${qErr.message}` }, 500);
+    }
+
+    // Filter out the new format keys (daily buckets, counters, resource indices)
+    const legacyKeys = (allKeys || []).filter((row: any) => {
+      const k = row.key;
+      // Keep new-format keys: activity:daily:*, analytics:daily:*, analytics:counter:*, analytics:resource:*
+      if (k.startsWith('activity:daily:')) return false;
+      if (k.startsWith('analytics:daily:')) return false;
+      if (k.startsWith('analytics:counter:')) return false;
+      if (k.startsWith('analytics:resource:')) return false;
+      // user_activity:{userId} (no second colon after userId) is the new array key — keep it
+      // user_activity:{userId}:{timestamp} has 3+ colon-segments — purge it
+      if (k.startsWith('user_activity:')) {
+        const parts = k.split(':');
+        return parts.length >= 3; // old format has userId:timestamp
+      }
+      return true;
+    });
+
+    // --- Migration: merge old data into new buckets before deleting ---
+    const userActivityMerge: Record<string, any[]> = {};
+    const dailyActivityMerge: Record<string, any[]> = {};
+    const dailyAnalyticsMerge: Record<string, any[]> = {};
+
+    for (const row of legacyKeys) {
+      const k = row.key;
+      const v = row.value;
+      if (!v) continue;
+
+      if (k.startsWith('user_activity:')) {
+        const parts = k.split(':');
+        const userId = parts[1];
+        if (!userActivityMerge[userId]) userActivityMerge[userId] = [];
+        userActivityMerge[userId].push(v);
+      } else if (k.startsWith('activity:')) {
+        const dateStr = v.timestamp ? new Date(v.timestamp).toISOString().split('T')[0] : 'unknown';
+        if (!dailyActivityMerge[dateStr]) dailyActivityMerge[dateStr] = [];
+        dailyActivityMerge[dateStr].push(v);
+      } else if (k.startsWith('analytics:')) {
+        const dateStr = v.tracked_at ? new Date(v.tracked_at).toISOString().split('T')[0] : 'unknown';
+        if (!dailyAnalyticsMerge[dateStr]) dailyAnalyticsMerge[dateStr] = [];
+        dailyAnalyticsMerge[dateStr].push(v);
+      }
+    }
+
+    const keysToDelete = legacyKeys.map((r: any) => r.key);
+
+    if (dryRun) {
+      return c.json({
+        dryRun: true,
+        legacyKeysFound: keysToDelete.length,
+        breakdown: {
+          userActivity: Object.keys(userActivityMerge).length + ' users',
+          dailyActivity: Object.keys(dailyActivityMerge).length + ' days',
+          dailyAnalytics: Object.keys(dailyAnalyticsMerge).length + ' days',
+        },
+        sampleKeys: keysToDelete.slice(0, 20),
+        message: 'Set dryRun: false to execute migration + deletion'
+      });
+    }
+
+    // Merge user activity into capped arrays
+    for (const [userId, events] of Object.entries(userActivityMerge)) {
+      const existingKey = `user_activity:${userId}`;
+      const existing: any[] = (await kv.get(existingKey)) || [];
+      const merged = [...existing, ...events]
+        .sort((a: any, b: any) => new Date(a.timestamp || 0).getTime() - new Date(b.timestamp || 0).getTime())
+        .slice(-USER_ACTIVITY_CAP);
+      await kv.set(existingKey, merged);
+    }
+
+    // Merge global activity into daily buckets
+    for (const [dateStr, events] of Object.entries(dailyActivityMerge)) {
+      if (dateStr === 'unknown') continue;
+      const dailyKey = `activity:daily:${dateStr}`;
+      const existing: any[] = (await kv.get(dailyKey)) || [];
+      await kv.set(dailyKey, [...existing, ...events]);
+    }
+
+    // Merge analytics into daily buckets
+    for (const [dateStr, events] of Object.entries(dailyAnalyticsMerge)) {
+      if (dateStr === 'unknown') continue;
+      const dailyKey = `analytics:daily:${dateStr}`;
+      const existing: any[] = (await kv.get(dailyKey)) || [];
+      await kv.set(dailyKey, [...existing, ...events]);
+    }
+
+    // Delete old keys in batches of 100
+    for (let i = 0; i < keysToDelete.length; i += 100) {
+      const batch = keysToDelete.slice(i, i + 100);
+      await kv.mdel(batch);
+    }
+
+    console.log(`Purge complete: migrated + deleted ${keysToDelete.length} legacy keys`);
+    return c.json({
+      success: true,
+      deleted: keysToDelete.length,
+      merged: {
+        userActivityUsers: Object.keys(userActivityMerge).length,
+        dailyActivityDays: Object.keys(dailyActivityMerge).length,
+        dailyAnalyticsDays: Object.keys(dailyAnalyticsMerge).length,
+      }
+    });
+  } catch (error) {
+    console.log(`Purge error: ${error}`);
+    return c.json({ error: `Purge failed: ${error}` }, 500);
   }
 });
 

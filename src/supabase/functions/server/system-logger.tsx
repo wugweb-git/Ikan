@@ -3,7 +3,7 @@
  * Server-side logging infrastructure for application events
  */
 
-import * as kv from "./kv_store.tsx";
+import * as kv from "./kv_dual_write.ts";
 
 export type LogLevel = 'DEBUG' | 'INFO' | 'WARN' | 'ERROR';
 

@@ -23,7 +23,7 @@ import type {
 export type { UserProfile as User };
 
 import { projectId, publicAnonKey } from '../utils/supabase/info';
-import { cacheForOffline, readOfflineCache } from '../hooks/useOfflineSync';
+import { cacheForOffline, readOfflineCache, invalidateOfflineCache } from '../hooks/useOfflineSync';
 
 const API_BASE = `https://${projectId}.supabase.co/functions/v1/make-server-cc205da9`;
 
@@ -702,7 +702,11 @@ class ApiClient {
   }
 
   async deleteAssessment(id: string) {
-    return this.request(`/admin/assessments/${id}`, { method: 'DELETE' }, true);
+    const res = await this.request(`/admin/assessments/${id}`, { method: 'DELETE' }, true);
+    // Invalidate stale offline caches so deleted assessment doesn't reappear
+    invalidateOfflineCache('assessments-list');
+    invalidateOfflineCache(`assessment-${id}`);
+    return res;
   }
 
   // Mood Journal
@@ -797,7 +801,7 @@ class ApiClient {
     return this.request('/checkin-template/seed-default', { method: 'POST' }, true);
   }
 
-  // ── Hero Banners ─────────────────────────────────────────────
+  // ── Hero Banners ─────────────────────��───────────────────────
   async getHeroBanners() {
     return this.request('/hero-banners', { method: 'GET' }, true);
   }
@@ -1077,6 +1081,13 @@ class ApiClient {
     return this.request('/admin/kv-audit/purge-prefix', {
       method: 'POST',
       body: JSON.stringify({ prefix, dryRun })
+    }, true);
+  }
+
+  async purgeActivityKeys(dryRun = true) {
+    return this.request('/admin/purge-activity-keys', {
+      method: 'POST',
+      body: JSON.stringify({ dryRun })
     }, true);
   }
 

@@ -1,4 +1,4 @@
-import * as kv from './kv_store.tsx';
+import * as kv from './kv_dual_write.ts';
 import { 
   Equip, 
   EquipDay, 

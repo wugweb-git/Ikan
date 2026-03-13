@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, lazy, Suspense } from 'react';
 import { useNotifications } from '../../contexts/NotificationContext';
 import { 
   LayoutDashboard, 
@@ -12,9 +12,7 @@ import {
   Settings, 
   Database, 
   FileText, 
-  Monitor, 
   MessageSquare, 
-  Shield, 
   Search,
   Bell,
   User,
@@ -38,33 +36,47 @@ import { Input } from '../ui/input';
 import { SideNav, SideNavGroup } from '../navigation/SideNav';
 import { Logo } from '../Logo';
 import { ErrorBoundary } from '../ErrorBoundary';
-import { AdminUserManager } from './AdminUserManager';
-import { AdminConsultationManager } from './AdminConsultationManager';
-import { AdminResourceManager } from './AdminResourceManager';
-import { AdminAssessmentManager } from './AdminAssessmentManager';
-import { EquipAdminDashboard } from './EquipAdminDashboard';
-import { AdminEquipAnalytics } from './AdminEquipAnalytics';
-import { AdminPageManager } from './AdminPageManager';
-import { AdminMediaManager } from './AdminMediaManager';
-import { AdminUserDataManager } from './AdminUserDataManager';
-import { AdminSettingsManager } from './AdminSettingsManager';
-import { AdminDashboardAnalytics } from './AdminDashboardAnalytics';
-import { AdminCRUDTesting } from '../admin/AdminCRUDTesting';
-import { AdminSystemLogs } from '../admin/AdminSystemLogs';
-import { AdminCommunication } from '../admin/AdminCommunication';
-import { AdminCommunicationAPI } from '../admin/AdminCommunicationAPI';
-import { AdminPaymentGateway } from '../admin/AdminPaymentGateway';
-import { AdminSecurity } from '../admin/AdminSecurity';
-import { AdminCategoryManager } from '../admin/AdminCategoryManager';
-import { AdminMoodManager } from '../admin/AdminMoodManager';
-import { AdminCheckinScalesManager } from '../admin/AdminCheckinScalesManager';
-import { RecommendationRulesManager } from '../admin/recommendations/RecommendationRulesManager';
-import { AdminBackupManager } from '../admin/AdminBackupManager';
-import { UIKitPatterns } from '../uikit/UIKitPatterns';
-import { AdminKVAudit } from '../admin/AdminKVAudit';
-import { AdminContactSubmissions } from '../admin/AdminContactSubmissions';
-import { AdminCheckinTemplateBuilder } from '../admin/AdminCheckinTemplateBuilder';
-import { AdminHeroBannerManager } from '../admin/AdminHeroBannerManager';
+
+// ── ALL admin screens are lazy-loaded ──────────────────────────────
+// Only the screen the user navigates to gets downloaded & parsed.
+// This prevents the entire admin bundle (~20 heavy screens) from
+// blocking the initial dashboard render, which was causing hangs.
+const L = {
+  UserManager: lazy(() => import('./AdminUserManager').then(m => ({ default: m.AdminUserManager }))),
+  ConsultationManager: lazy(() => import('./AdminConsultationManager').then(m => ({ default: m.AdminConsultationManager }))),
+  ResourceManager: lazy(() => import('./AdminResourceManager').then(m => ({ default: m.AdminResourceManager }))),
+  AssessmentManager: lazy(() => import('./AdminAssessmentManager').then(m => ({ default: m.AdminAssessmentManager }))),
+  EquipDashboard: lazy(() => import('./EquipAdminDashboard').then(m => ({ default: m.EquipAdminDashboard }))),
+  PageManager: lazy(() => import('./AdminPageManager').then(m => ({ default: m.AdminPageManager }))),
+  MediaManager: lazy(() => import('./AdminMediaManager').then(m => ({ default: m.AdminMediaManager }))),
+  UserDataManager: lazy(() => import('./AdminUserDataManager').then(m => ({ default: m.AdminUserDataManager }))),
+  SettingsManager: lazy(() => import('./AdminSettingsManager').then(m => ({ default: m.AdminSettingsManager }))),
+  Analytics: lazy(() => import('./AdminDashboardAnalytics').then(m => ({ default: m.AdminDashboardAnalytics }))),
+  EquipAnalytics: lazy(() => import('./AdminEquipAnalytics').then(m => ({ default: m.AdminEquipAnalytics }))),
+  Communication: lazy(() => import('../admin/AdminCommunication').then(m => ({ default: m.AdminCommunication }))),
+  PaymentGateway: lazy(() => import('../admin/AdminPaymentGateway').then(m => ({ default: m.AdminPaymentGateway }))),
+  CategoryManager: lazy(() => import('../admin/AdminCategoryManager').then(m => ({ default: m.AdminCategoryManager }))),
+  MoodManager: lazy(() => import('../admin/AdminMoodManager').then(m => ({ default: m.AdminMoodManager }))),
+  CheckinScalesManager: lazy(() => import('../admin/AdminCheckinScalesManager').then(m => ({ default: m.AdminCheckinScalesManager }))),
+  RecommendationRules: lazy(() => import('../admin/recommendations/RecommendationRulesManager').then(m => ({ default: m.RecommendationRulesManager }))),
+  BackupManager: lazy(() => import('../admin/AdminBackupManager').then(m => ({ default: m.AdminBackupManager }))),
+  CheckinBuilder: lazy(() => import('../admin/AdminCheckinTemplateBuilder').then(m => ({ default: m.AdminCheckinTemplateBuilder }))),
+  HeroBannerManager: lazy(() => import('../admin/AdminHeroBannerManager').then(m => ({ default: m.AdminHeroBannerManager }))),
+  KVAudit: lazy(() => import('../admin/AdminKVAudit').then(m => ({ default: m.AdminKVAudit }))),
+  CRUDTesting: lazy(() => import('../admin/AdminCRUDTesting').then(m => ({ default: m.AdminCRUDTesting }))),
+  ContactSubmissions: lazy(() => import('../admin/AdminContactSubmissions').then(m => ({ default: m.AdminContactSubmissions }))),
+};
+
+// Shared skeleton fallback for lazy screen loading
+function AdminScreenSkeleton() {
+  return (
+    <div className="space-y-4 animate-pulse">
+      <div className="h-8 w-48 rounded-lg" style={{ backgroundColor: 'var(--color-bg-muted)' }} />
+      <div className="h-4 w-72 rounded" style={{ backgroundColor: 'var(--color-bg-muted)' }} />
+      <div className="h-[300px] rounded-lg mt-4" style={{ backgroundColor: 'var(--color-bg-muted)' }} />
+    </div>
+  );
+}
 
 // Mobile sidebar hook
 function useIsMobileAdmin() {
@@ -105,13 +117,9 @@ type ViewType =
   | 'user-data'
   | 'settings'
   | 'crud'
-  | 'system-logs'
   | 'communication'
-  | 'communication-api'
   | 'payment-gateway'
-  | 'security'
   | 'backup'
-  | 'ui-kit'
   | 'kv-audit'
   | 'contact-newsletter'
   | 'checkin-builder'
@@ -173,11 +181,9 @@ export function AdminDashboard({ onNavigate, initialView }: AdminDashboardProps)
         { id: 'communication', label: 'Communication', icon: MessageSquare },
         { id: 'contact-newsletter', label: 'Contact & Newsletter', icon: Inbox },
         { id: 'payment-gateway', label: 'Payments', icon: CreditCard },
-        { id: 'security', label: 'Security', icon: Shield },
         { id: 'crud', label: 'System Health', icon: HeartPulse },
         { id: 'backup', label: 'Backups', icon: Database },
         { id: 'kv-audit', label: 'KV Audit', icon: Search },
-        { id: 'system-logs', label: 'System Logs', icon: Monitor },
       ]
     }
   ].map(group => ({
@@ -195,7 +201,14 @@ export function AdminDashboard({ onNavigate, initialView }: AdminDashboardProps)
     }))
   }));
 
+  const goBack = () => setCurrentView('dashboard');
+
   const renderContent = () => {
+    // Every screen is wrapped in Suspense so only the active one loads
+    const S = ({ children }: { children: React.ReactNode }) => (
+      <Suspense fallback={<AdminScreenSkeleton />}>{children}</Suspense>
+    );
+
     switch (currentView) {
       case 'dashboard':
         return (
@@ -271,37 +284,33 @@ export function AdminDashboard({ onNavigate, initialView }: AdminDashboardProps)
                  <h2 className="mb-4">
                     Dashboard Analytics
                 </h2>
-                <AdminDashboardAnalytics embedded />
+                <S><L.Analytics embedded /></S>
             </div>
           </div>
         );
-      case 'analytics': return <AdminDashboardAnalytics onBack={() => setCurrentView('dashboard')} />;
-      case 'users': return <AdminUserManager onBack={() => setCurrentView('dashboard')} />;
-      case 'consultants': return <AdminConsultationManager onBack={() => setCurrentView('dashboard')} />;
-      case 'resources': return <AdminResourceManager onBack={() => setCurrentView('dashboard')} />;
-      case 'assessments': return <AdminAssessmentManager onBack={() => setCurrentView('dashboard')} />;
-      case 'equip': return <EquipAdminDashboard onBack={() => setCurrentView('dashboard')} />;
-      case 'equip-analytics': return <AdminEquipAnalytics onBack={() => setCurrentView('dashboard')} />;
-      case 'pages': return <AdminPageManager onBack={() => setCurrentView('dashboard')} />;
-      case 'media': return <AdminMediaManager onBack={() => setCurrentView('dashboard')} />;
-      case 'categories': return <AdminCategoryManager onBack={() => setCurrentView('dashboard')} />;
-      case 'moods': return <AdminMoodManager onBack={() => setCurrentView('dashboard')} />;
-      case 'checkin-scales': return <AdminCheckinScalesManager onBack={() => setCurrentView('dashboard')} />;
-      case 'recommendations': return <RecommendationRulesManager onBack={() => setCurrentView('dashboard')} />;
-      case 'user-data': return <AdminUserDataManager onBack={() => setCurrentView('dashboard')} />;
-      case 'settings': return <AdminSettingsManager onBack={() => setCurrentView('dashboard')} />;
-      case 'crud': return <AdminCRUDTesting onBack={() => setCurrentView('dashboard')} />;
-      case 'backup': return <AdminBackupManager onBack={() => setCurrentView('dashboard')} />;
-      case 'kv-audit': return <AdminKVAudit onBack={() => setCurrentView('dashboard')} />;
-      case 'system-logs': return <AdminSystemLogs onBack={() => setCurrentView('dashboard')} />;
-      case 'communication': return <AdminCommunication onBack={() => setCurrentView('dashboard')} onNavigateToAPI={() => setCurrentView('communication-api')} />;
-      case 'communication-api': return <AdminCommunicationAPI />;
-      case 'payment-gateway': return <AdminPaymentGateway onBack={() => setCurrentView('dashboard')} />;
-      case 'security': return <AdminSecurity onBack={() => setCurrentView('dashboard')} />;
-      case 'ui-kit': return <UIKitPatterns />;
-      case 'contact-newsletter': return <AdminContactSubmissions onBack={() => setCurrentView('dashboard')} />;
-      case 'checkin-builder': return <AdminCheckinTemplateBuilder onBack={() => setCurrentView('dashboard')} />;
-      case 'hero-banner': return <AdminHeroBannerManager onBack={() => setCurrentView('dashboard')} />;
+      case 'analytics': return <S><L.Analytics onBack={goBack} /></S>;
+      case 'users': return <S><L.UserManager onBack={goBack} /></S>;
+      case 'consultants': return <S><L.ConsultationManager onBack={goBack} /></S>;
+      case 'resources': return <S><L.ResourceManager onBack={goBack} /></S>;
+      case 'assessments': return <S><L.AssessmentManager onBack={goBack} /></S>;
+      case 'equip': return <S><L.EquipDashboard onBack={goBack} /></S>;
+      case 'equip-analytics': return <S><L.EquipAnalytics onBack={goBack} /></S>;
+      case 'pages': return <S><L.PageManager onBack={goBack} /></S>;
+      case 'media': return <S><L.MediaManager onBack={goBack} /></S>;
+      case 'categories': return <S><L.CategoryManager onBack={goBack} /></S>;
+      case 'moods': return <S><L.MoodManager onBack={goBack} /></S>;
+      case 'checkin-scales': return <S><L.CheckinScalesManager onBack={goBack} /></S>;
+      case 'recommendations': return <S><L.RecommendationRules onBack={goBack} /></S>;
+      case 'user-data': return <S><L.UserDataManager onBack={goBack} /></S>;
+      case 'settings': return <S><L.SettingsManager onBack={goBack} /></S>;
+      case 'crud': return <S><L.CRUDTesting onBack={goBack} /></S>;
+      case 'backup': return <S><L.BackupManager onBack={goBack} /></S>;
+      case 'kv-audit': return <S><L.KVAudit onBack={goBack} /></S>;
+      case 'communication': return <S><L.Communication onBack={goBack} /></S>;
+      case 'payment-gateway': return <S><L.PaymentGateway /></S>;
+      case 'contact-newsletter': return <S><L.ContactSubmissions onBack={goBack} /></S>;
+      case 'checkin-builder': return <S><L.CheckinBuilder onBack={goBack} /></S>;
+      case 'hero-banner': return <S><L.HeroBannerManager onBack={goBack} /></S>;
       default: return <div>View not found</div>;
     }
   };
@@ -317,7 +326,7 @@ export function AdminDashboard({ onNavigate, initialView }: AdminDashboardProps)
         />
       )}
       
-      {/* 1. SIDEBAR — fixed on desktop, slide-over on mobile */}
+      {/* 1. SIDEBAR -- fixed on desktop, slide-over on mobile */}
       <aside
         className={cn(
           "w-[260px] min-w-[260px] fixed inset-y-0 left-0 bg-[var(--grey-0)] border-r border-[var(--grey-2)] z-50 flex flex-col transition-transform duration-300",
@@ -352,7 +361,7 @@ export function AdminDashboard({ onNavigate, initialView }: AdminDashboardProps)
           </div>
       </aside>
 
-      {/* 2. MAIN CONTENT AREA — offset by sidebar on desktop, full-width on mobile */}
+      {/* 2. MAIN CONTENT AREA -- offset by sidebar on desktop, full-width on mobile */}
       <div className={cn("flex-1 flex flex-col min-h-screen min-w-0", !isMobile && "ml-[260px]")}>
         
         {/* Top Header */}
@@ -393,7 +402,7 @@ export function AdminDashboard({ onNavigate, initialView }: AdminDashboardProps)
 
            {/* Right Actions */}
            <div className="flex items-center gap-2 lg:gap-3 shrink-0">
-              {/* Desktop-only buttons — icon-only in compact mode (1024–1280px) */}
+              {/* Desktop-only buttons -- icon-only in compact mode (1024-1280px) */}
               {!isMobile && (
                 <>
                   <Button 
@@ -410,20 +419,6 @@ export function AdminDashboard({ onNavigate, initialView }: AdminDashboardProps)
                       {!isCompact && <span style={{ fontWeight: 'var(--font-weight-medium)' }}>Dashboard</span>}
                   </Button>
 
-                  <Button 
-                      variant="ghost" 
-                      size={isCompact ? "icon" : "sm"}
-                      onClick={() => setCurrentView('ui-kit')}
-                      className={cn(
-                          "bg-[var(--grey-2)] text-[var(--grey-9)] hover:bg-[var(--grey-3)] h-[44px] rounded-lg border border-[var(--grey-3)]",
-                          isCompact ? "w-[44px]" : "gap-2 px-4",
-                          currentView === 'ui-kit' && "bg-[var(--color-primary-default)] text-[var(--color-primary-on)] border-[var(--color-primary-default)]"
-                      )}
-                      title="UI Kit"
-                  >
-                      <Palette className="w-4 h-4" />
-                      {!isCompact && <span style={{ fontWeight: 'var(--font-weight-medium)' }}>UI Kit</span>}
-                  </Button>
                 </>
               )}
 
@@ -452,7 +447,7 @@ export function AdminDashboard({ onNavigate, initialView }: AdminDashboardProps)
                   )}
               </Button>
 
-              {/* User avatar — always visible, name only on wide desktop */}
+              {/* User avatar -- always visible, name only on wide desktop */}
               <div className="flex items-center gap-2 lg:gap-3 lg:ml-2 px-2 lg:px-3 py-1.5 bg-[var(--grey-1)] rounded-lg border border-[var(--grey-2)]">
                   {!isMobile && !isCompact && (
                     <div className="text-right">
@@ -480,7 +475,7 @@ export function AdminDashboard({ onNavigate, initialView }: AdminDashboardProps)
         </header>
 
         {/* Scrollable Main Content */}
-        <main className={cn("flex-1 w-full max-w-[1600px] mx-auto", isMobile ? "p-4" : "p-8")}>
+        <main className={cn("flex-1 w-full max-w-[1600px] mx-auto overflow-x-hidden", isMobile ? "p-4" : "p-8")}>
           <ErrorBoundary>
             {renderContent()}
           </ErrorBoundary>

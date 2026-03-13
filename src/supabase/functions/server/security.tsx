@@ -5,7 +5,7 @@
 
 import { Context } from "npm:hono";
 import { createClient } from "jsr:@supabase/supabase-js@2";
-import * as kv from "./kv_store.tsx";
+import * as kv from "./kv_dual_write.ts";
 
 // Simple console logger to avoid circular dependencies
 const securityLogger = {

@@ -259,8 +259,8 @@ export function AdminDataTable<T extends { [key: string]: any }>({
           )}
         </div>
       ) : (
-      <div className="admin-table-container overflow-x-auto">
-        <Table className="admin-table min-w-0">
+      <div className="overflow-hidden" style={{ borderRadius: 'var(--radius-lg)', border: '1px solid var(--color-border-default)' }}>
+        <Table className="w-full table-fixed">
           <TableHeader>
             <TableRow>
               {columns.map((col, index) => (
@@ -268,8 +268,9 @@ export function AdminDataTable<T extends { [key: string]: any }>({
                   key={index} 
                   className={`${col.className || ''} ${col.sortable ? 'cursor-pointer select-none' : ''}`}
                   onClick={() => col.sortable && col.accessorKey && handleSort(col.accessorKey)}
+                  style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
                 >
-                  <div className="flex items-center">
+                  <div className="flex items-center truncate">
                     {col.header}
                     {col.sortable && col.accessorKey && getSortIcon(col.accessorKey)}
                   </div>
@@ -286,13 +287,13 @@ export function AdminDataTable<T extends { [key: string]: any }>({
                   onClick={() => onRowClick && onRowClick(item)}
                 >
                   {columns.map((col, colIdx) => (
-                    <TableCell key={colIdx} className={col.className}>
+                    <TableCell key={colIdx} className={col.className} style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 0 }}>
                       {col.type === 'image' && col.imageKey ? (
-                        <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-3 truncate">
                           <img 
                             src={item[col.imageKey] as string || col.imageFallback || '/placeholder.png'} 
                             alt=""
-                            className="w-12 h-12 object-cover"
+                            className="w-12 h-12 object-cover shrink-0"
                             style={{ borderRadius: 'var(--radius-md)', border: '1px solid var(--color-border-default)' }}
                             onError={(e) => {
                               if (col.imageFallback) {
@@ -300,10 +301,14 @@ export function AdminDataTable<T extends { [key: string]: any }>({
                               }
                             }}
                           />
-                          {col.render ? col.render(item) : (col.accessorKey ? (item[col.accessorKey] as ReactNode) : null)}
+                          <span className="truncate">
+                            {col.render ? col.render(item) : (col.accessorKey ? (item[col.accessorKey] as ReactNode) : null)}
+                          </span>
                         </div>
                       ) : (
-                        col.render ? col.render(item) : (col.accessorKey ? (item[col.accessorKey] as ReactNode) : null)
+                        <span className="truncate block">
+                          {col.render ? col.render(item) : (col.accessorKey ? (item[col.accessorKey] as ReactNode) : null)}
+                        </span>
                       )}
                     </TableCell>
                   ))}

@@ -10,7 +10,7 @@
 
 ### 1. Assessment Route Duplication (Medium Priority)
 
-**Status**: Workaround in place, cleanup pending
+**Status**: Mostly fixed, dead code cleanup pending
 
 Assessment routes are registered in TWO places:
 
@@ -19,7 +19,7 @@ Assessment routes are registered in TWO places:
 
 Hono uses first-registered-match routing, so `assessment-routes.ts` wins. The inline routes in `index.tsx` are effectively dead code.
 
-**Workaround**: Create/update operations dual-write to both `assessment_def:` and `assessment:` prefixes. Delete operations hard-delete from both prefixes in `admin-routes.ts`.
+**Fix applied**: Delete now uses tombstones (`deleted: true`) for default assessments so they don't reappear from the hardcoded array. Non-default assessments are still hard-deleted.
 
 **TODO**: Remove the dead inline assessment routes from `index.tsx`.
 
@@ -40,43 +40,81 @@ Six non-admin components still use `publicAnonKey` in their fetch headers instea
 | ProfessionalApplication | `/components/screens/ProfessionalApplication.tsx` |
 | image-upload | `/components/ui/image-upload.tsx` |
 
-These currently work because they hit `requireAuth` routes (not `requireAdmin`), and the anon key + session cookie may satisfy auth in some cases. However, this is fragile and should be migrated to use the proper JWT pattern.
-
 **Fix pattern**: Replace direct `fetch` calls with `apiClient` methods, or add the `getAuthHeaders()` helper.
 
 ---
 
-### 3. Potential TypeScript Strict Mode Violations (High Priority)
+### 3. Equip Program Dual-Prefix System (Medium Priority)
 
-**Status**: Build not verified after recent changes
+**Status**: Partial fix applied
 
-Recent changes to five admin components (`AdminCommunicationAPI.tsx`, `AdminCheckinScalesManager.tsx`, `AdminPaymentGateway.tsx`, `AdminSystemLogs.tsx`, `AdminConsultationManager.tsx`) may have introduced or exposed unused imports under `noUnusedLocals: true`.
+Two different KV prefix systems exist for Equip programs:
+- **`equip:`** — Used by `EquipService` (program-service.ts) and admin CRUD via equip-routes.ts
+- **`equip_program:`** — Used by the public listing route in index.tsx
 
-Known suspects:
-- `AdminLoading` import in `AdminPaymentGateway.tsx`
-- `resolveStatusVariant` import in `AdminPaymentGateway.tsx`
+**Fix applied**: Delete now cleans up both prefixes. A "Sync Prefixes" tool was added to the KV Audit admin panel to bulk-sync `equip:` → `equip_program:` records.
 
-**Action**: Run `npm run type-check` and fix all errors before deploying.
+**TODO**: Unify to a single prefix or ensure all create/update routes dual-write.
 
 ---
 
-## Resolved Issues (Recent)
+## Resolved Issues (March 12, 2026 Session)
 
-### CORS Missing PATCH Method (Fixed March 2026)
+### Super Admin Protection (Fixed)
+- `admin@wugweb.com` is now the system super admin (top of chain)
+- Auto-repaired in `requireAdmin` middleware if KV flag is missing
+- Cannot be demoted via admin user management routes
+- `is_super_admin: true` flag set on their KV profile
 
-The `allowMethods` in `index.tsx` was missing `"PATCH"`, causing PATCH preflight requests to fail. Now includes all methods: `GET, POST, PUT, PATCH, DELETE, OPTIONS`.
+### Assessment Deletion (DEFAULT_ASSESSMENTS Reappearing) (Fixed)
+- **Root cause**: Hard-deleting from KV caused hardcoded `DEFAULT_ASSESSMENTS` to reappear on next list
+- **Fix**: Default assessments are now tombstoned (`deleted: true`) instead of hard-deleted, which the list filter respects
 
-### Admin Components Using Anon Key (Fixed March 2026)
+### Resource Deletion (Dual-Prefix Cleanup) (Fixed)
+- **Root cause**: `admin-routes.ts` DELETE only cleaned `resource:` prefix, missing `library:resource:`
+- **Fix**: DELETE now cleans both `resource:${id}` and `library:resource:${id}`
 
-Five admin components were using `Bearer ${publicAnonKey}` instead of the user's JWT, causing all `requireAdmin` requests to 401. All five now use an async `getAuthHeaders()` helper that fetches the real token from `supabase.auth.getSession()`.
+### Equip Program Deletion (Dual-Prefix Cleanup) (Fixed)
+- **Root cause**: `equip-routes.ts` DELETE only cleaned `equip:` prefix via EquipService, missing `equip_program:`
+- **Fix**: DELETE now also cleans `equip_program:${id}` and `equip_program_by_slug:${slug}`
 
-### Assessment Deletion KV Prefix Mismatch (Fixed)
+### Corporate Routes Admin Check (Fixed)
+- **Root cause**: `corporate-routes.ts` used wrong KV prefix `profile:${user.id}` instead of `user:${user.id}`
+- **Fix**: Updated both occurrences to use `user:${user.id}`
 
-Assessment deletion was only removing from one KV prefix. Now dual-deletes from both `assessment_def:` and `assessment:` prefixes.
+### Analytics Mock Data (Fixed)
+- **Root cause**: Admin analytics endpoint returned `Math.random()` values for views and activity
+- **Fix**: Now returns real data from KV (journal entries for activity chart, 0 for views since no tracking exists)
 
-### Admin Widget RBAC (Fixed)
+### AdminPaymentGateway TypeScript Violations (Fixed)
+- Removed unused imports: `resolveStatusVariant`, `AdminLoading`
 
-`AdminWidget` floating button now only renders for users with `is_admin: true` in their KV profile.
+### Previous Session Fixes
+- CORS `allowMethods` missing `"PATCH"` — now included
+- Five admin components using `publicAnonKey` instead of JWT — all fixed with `getAuthHeaders()`
+- Assessment deletion KV prefix mismatch — dual-delete from both prefixes
+- `AdminWidget` RBAC — only renders for `is_admin: true` users
+
+---
+
+## New Components Added
+
+### `AdminErrorState` (`/components/admin/AdminErrorState.tsx`)
+Standardized error state for admin panels. Use instead of falling back to mock/demo data.
+- Shows muted grey container with error icon, message, and optional retry button
+- Also exports `AdminSkeleton` for loading states
+
+---
+
+## Hardcoded Data Inventory
+
+| Location | What | Status |
+|----------|------|--------|
+| `default-assessments.ts` | PHQ-9, GAD-7 assessment definitions | Intentional — provides baseline assessments. Tombstone mechanism prevents deleted defaults from reappearing |
+| `admin-routes.ts` media upload | `placehold.co` mock URL for uploaded media | Known limitation — Supabase Storage not wired into admin-routes. Use index.tsx avatar upload route as reference |
+| `admin-routes.ts` analytics | Activity chart, resource views | **Fixed** — now uses real journal entry data |
+| `index.tsx` CMS defaults | Default page content for about, privacy, terms, etc. | Intentional — fallback content when CMS pages haven't been created yet |
+| Various admin components | Hardcoded onboarding questions | Intentional — default templates |
 
 ---
 
@@ -86,33 +124,26 @@ Assessment deletion was only removing from one KV prefix. Now dual-deletes from 
 
 | Item | Priority | Description |
 |------|----------|------------|
-| Dead assessment routes in `index.tsx` | Medium | ~50 lines of unreachable code |
-| Manual routing in `App.tsx` | Low | Large switch/conditional block; consider react-router if complexity grows |
-| `App.tsx` size | Low | Entry point is large; consider extracting route rendering into a separate component |
+| Dead assessment routes in `index.tsx` | Medium | ~150 lines of unreachable code (lines 1227-1412) |
+| Dead resource routes in `index.tsx` | Medium | Duplicated by admin-routes.ts (lines 1677-1840) |
+| Dead equip listing routes in `index.tsx` | Medium | `GET /equip-programs` reads wrong prefix |
+| Manual routing in `App.tsx` | Low | Large switch/conditional block |
+| `App.tsx` size | Low | Entry point is large |
 
 ### Code Quality
 
 | Item | Priority | Description |
 |------|----------|------------|
-| Inconsistent error handling | Medium | Some components use try/catch, some don't; some log errors, some don't |
-| Mixed fetch patterns | Medium | Some components use `apiClient`, others use raw `fetch` |
-| Console.log usage | Low | Some files still use `console.log` instead of `logger` |
-| Commented-out code | Low | Various files have commented-out sections (e.g., `setRouteHistory` in `App.tsx`) |
+| Inconsistent error handling | Medium | Some components use try/catch, some don't |
+| Mixed fetch patterns | Medium | Some use `apiClient`, others use raw `fetch` |
+| Console.log usage | Low | Some files use `console.log` instead of `logger` |
 
 ### Testing
 
 | Item | Priority | Description |
 |------|----------|------------|
-| No unit tests | High | No test files exist; testing infrastructure needs setup |
+| No unit tests | High | No test files exist |
 | No integration tests | High | API endpoints have no automated tests |
-| Dev test screens | Low | `RouteTestScreen`, `WizardTestScreen`, `UIKitShowcase` are dev-only; consider dev-only build flag |
-
-### Performance
-
-| Item | Priority | Description |
-|------|----------|------------|
-| Lazy loading granularity | Low | Most screens are lazy-loaded, but some imports could be further split |
-| Image optimization | Low | Not all images use WebP with fallbacks |
 
 ---
 
@@ -120,9 +151,10 @@ Assessment deletion was only removing from one KV prefix. Now dual-deletes from 
 
 | Item | Status | Description |
 |------|--------|------------|
-| Service role key isolation | OK | Only used server-side in edge functions |
-| JWT validation | OK | All protected routes validate JWT via middleware |
-| CORS | Acceptable | Wide-open `origin: "*"` is standard for JWT-authenticated SPAs |
+| Super admin protection | OK | `admin@wugweb.com` cannot be demoted |
+| Service role key isolation | OK | Only used server-side |
+| JWT validation | OK | All protected routes validate JWT |
+| CORS | Acceptable | Wide-open `origin: "*"` with JWT auth |
 | Input sanitization | Partial | Server has `sanitizeProfileUpdate` but not all endpoints sanitize |
 | Rate limiting | Missing | No rate limiting on API endpoints |
 | Content Security Policy | Partial | Headers set in Vercel but no strict CSP |

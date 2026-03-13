@@ -3,7 +3,7 @@
  * Tracks system performance metrics
  */
 
-import * as kv from "./kv_store.tsx";
+import * as kv from "./kv_dual_write.ts";
 
 export interface PerformanceMetrics {
   timestamp: string;

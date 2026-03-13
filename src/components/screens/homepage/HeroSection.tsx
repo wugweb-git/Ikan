@@ -291,7 +291,7 @@ export function HeroSection({ onGetStarted }: HeroSectionProps) {
   if (loading || !heroData) {
     return (
       <div className="w-full h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2" style={{ borderColor: 'var(--color-primary-default)' }}></div>
+        <div className="animate-spin rounded-full h-10 w-10 border-[3px]" style={{ borderColor: 'var(--color-accent-default)', borderTopColor: 'var(--color-primary-default)' }}></div>
       </div>
     );
   }

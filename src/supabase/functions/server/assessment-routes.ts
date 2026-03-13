@@ -1,5 +1,5 @@
 import { Hono } from 'npm:hono';
-import * as kv from './kv_store.tsx';
+import * as kv from './kv_dual_write.ts';
 import { DEFAULT_ASSESSMENTS } from './default-assessments.ts';
 
 export function registerAssessmentRoutes(app: Hono, requireAuth: any) {

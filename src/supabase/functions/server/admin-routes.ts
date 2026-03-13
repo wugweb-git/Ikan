@@ -1,7 +1,11 @@
 import { Hono } from 'npm:hono';
-import * as kv from './kv_store.tsx';
+import * as kv from './kv_dual_write.ts';
 import { EquipService } from './program-service.ts';
 import { createClient } from "jsr:@supabase/supabase-js@2";
+import { DEFAULT_ASSESSMENTS } from './default-assessments.ts';
+
+// Super-admin email — this account can never be demoted and is always the root admin
+const SUPER_ADMIN_EMAIL = 'admin@wugweb.com';
 
 export function registerAdminRoutes(app: Hono, requireAuth: any, requireAdmin: any) {
 
@@ -212,22 +216,63 @@ app.put("/admin/assessments/:id", requireAdmin, async (c) => {
 app.delete("/admin/assessments/:id", requireAdmin, async (c) => {
   try {
     const id = c.req.param("id");
+    console.log(`🗑️  DELETE assessment requested: "${id}"`);
     
     // Fetch data BEFORE deleting so we can clean up slug aliases
     const existing = await kv.get(`assessment_def:${id}`) || await kv.get(`assessment:${id}`);
     
-    // Hard-delete from BOTH prefixes so the assessment is truly gone
-    await kv.del(`assessment_def:${id}`);
-    await kv.del(`assessment:${id}`);
+    // Check if this is a hardcoded default assessment (phq-9, gad-7, etc.)
+    // For defaults we MUST write a tombstone so they don't reappear from DEFAULT_ASSESSMENTS
+    const isDefault = DEFAULT_ASSESSMENTS.some(a => a.id === id);
     
-    // Also clean up any slug-based alias
-    if (existing?.slug && existing.slug !== id) {
-      await kv.del(`assessment:${existing.slug}`);
-      await kv.del(`assessment_def:${existing.slug}`);
+    // ── Aggressive cleanup: find ALL KV keys that reference this assessment ──
+    // This catches stray keys from duplicate route registrations, slug aliases,
+    // sync operations, and any other code paths that stored copies.
+    const strayKeys = await kv.findKeysBySubstring(id);
+    // Only target assessment-related prefixes (don't nuke user results)
+    const assessmentKeyPrefixes = ['assessment:', 'assessment_def:'];
+    const keysToClean = strayKeys.filter(k =>
+      assessmentKeyPrefixes.some(prefix => k.startsWith(prefix))
+    );
+    
+    console.log(`   Found ${keysToClean.length} KV key(s) to clean: ${JSON.stringify(keysToClean)}`);
+    
+    if (isDefault) {
+      // Write tombstone — the list route filters on deleted === true
+      const tombstone = { ...(existing || {}), id, deleted: true, deleted_at: new Date().toISOString() };
+      // Tombstone ALL matching keys
+      for (const key of keysToClean) {
+        await kv.set(key, tombstone);
+      }
+      // Ensure the canonical keys exist as tombstones even if not found by scan
+      await kv.set(`assessment_def:${id}`, tombstone);
+      await kv.set(`assessment:${id}`, tombstone);
+      console.log(`✅ Assessment tombstoned (is default): ${id}`);
+    } else {
+      // Non-default: hard-delete ALL matching keys
+      for (const key of keysToClean) {
+        await kv.del(key);
+      }
+      // Ensure canonical keys are deleted even if not found by scan
+      await kv.del(`assessment_def:${id}`);
+      await kv.del(`assessment:${id}`);
+      console.log(`✅ Assessment hard-deleted: ${id} (${keysToClean.length} keys removed)`);
     }
     
-    console.log(`✅ Assessment hard-deleted: ${id}`);
-    return c.json({ success: true });
+    // Also clean up any slug-based alias not caught by substring search
+    if (existing?.slug && existing.slug !== id) {
+      if (isDefault) {
+        const tombstone = { id, slug: existing.slug, deleted: true, deleted_at: new Date().toISOString() };
+        await kv.set(`assessment:${existing.slug}`, tombstone);
+        await kv.set(`assessment_def:${existing.slug}`, tombstone);
+      } else {
+        await kv.del(`assessment:${existing.slug}`);
+        await kv.del(`assessment_def:${existing.slug}`);
+      }
+      console.log(`   Also cleaned slug alias: ${existing.slug}`);
+    }
+    
+    return c.json({ success: true, keysRemoved: keysToClean.length });
   } catch (error) {
     console.error('Delete assessment error:', error);
     return c.json({ error: 'Failed to delete assessment' }, 500);
@@ -290,7 +335,10 @@ app.put("/admin/resources/:id", requireAdmin, async (c) => {
 app.delete("/admin/resources/:id", requireAdmin, async (c) => {
   try {
     const id = c.req.param("id");
+    // Clean BOTH prefixes — resources may exist under resource: or library:resource:
     await kv.del(`resource:${id}`);
+    await kv.del(`library:resource:${id}`);
+    console.log(`✅ Resource deleted from both prefixes: ${id}`);
     return c.json({ success: true });
   } catch (error) {
     return c.json({ error: "Failed to delete resource" }, 500);
@@ -609,43 +657,65 @@ app.get("/admin/analytics", requireAdmin, async (c) => {
   try {
     const period = c.req.query("period") || "week";
     
-    // In a real application, we would aggregate real data.
-    // For now, we return calculated metrics based on existing entities where possible,
-    // and mock trend data since we don't have historical logs in KV store in a queryable way.
-
     const users = await kv.getByPrefix("user:");
     const resources = await kv.getByPrefix("resource:");
+    const libraryResources = await kv.getByPrefix("library:resource:");
+    const assessments = await kv.getByPrefix("assessment_def:");
+    const enrollments = await kv.getByPrefix("enrollment:");
+    const journalEntries = await kv.getByPrefix("journal:");
     
     // Calculate active users (users updated recently)
     const now = new Date();
     const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+    const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
     
     const activeUsers7d = users.filter((u: any) => {
       if (!u.updated_at) return false;
       return new Date(u.updated_at) > sevenDaysAgo;
     }).length;
 
-    // Mock trend data
-    const activityChart = Array.from({ length: 30 }, (_, i) => ({
-      date: new Date(now.getTime() - (29 - i) * 24 * 60 * 60 * 1000).toISOString(),
-      count: Math.floor(Math.random() * 20) + 5 // Mock data
-    }));
+    const activeUsers30d = users.filter((u: any) => {
+      if (!u.updated_at) return false;
+      return new Date(u.updated_at) > thirtyDaysAgo;
+    }).length;
 
-    const topResources = resources.slice(0, 5).map((r: any) => ({
+    // Real activity chart — group journal entries by date for the last 30 days
+    const activityMap: Record<string, number> = {};
+    for (let i = 29; i >= 0; i--) {
+      const d = new Date(now.getTime() - i * 24 * 60 * 60 * 1000);
+      activityMap[d.toISOString().slice(0, 10)] = 0;
+    }
+    for (const entry of journalEntries) {
+      const date = (entry.date || entry.created_at || '').slice(0, 10);
+      if (date in activityMap) {
+        activityMap[date]++;
+      }
+    }
+    const activityChart = Object.entries(activityMap).map(([date, count]) => ({ date, count }));
+
+    // Real top resources — no random views; report real counts as 0 (no view tracking yet)
+    const allResources = [...resources, ...libraryResources];
+    const uniqueResources = Array.from(new Map(allResources.filter((r: any) => r?.id).map((r: any) => [r.id, r])).values());
+    const topResources = uniqueResources.slice(0, 5).map((r: any) => ({
       id: r.id,
-      title: r.title,
-      views: Math.floor(Math.random() * 500) + 50 // Mock data
+      title: r.title || 'Untitled',
+      views: 0  // No view tracking in KV — returns 0 instead of fake data
     }));
 
     return c.json({
       analytics: {
         summary: {
           activeUsers7d,
+          activeUsers30d,
           totalUsers: users.length,
-          totalResources: resources.length
+          totalResources: uniqueResources.length,
+          totalAssessments: assessments.filter((a: any) => !a.deleted).length,
+          totalEnrollments: enrollments.length,
+          totalJournalEntries: journalEntries.length,
         },
         activityChart,
-        topResources
+        topResources,
+        _note: "View counts require view-tracking infrastructure. Activity chart is based on real journal entries."
       }
     });
 

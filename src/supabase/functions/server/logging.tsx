@@ -4,7 +4,7 @@
  */
 
 import { Context } from "npm:hono";
-import * as kv from "./kv_store.tsx";
+import * as kv from "./kv_dual_write.ts";
 
 export interface APILogEntry {
   id: string;

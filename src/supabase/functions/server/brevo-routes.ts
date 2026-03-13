@@ -1,5 +1,5 @@
+import * as kv from "./kv_dual_write.ts";
 import { Hono } from "npm:hono";
-import * as kv from "./kv_store.tsx";
 
 // ─────────────────────────────────────────────────────────────────
 // Brevo Communication Routes
@@ -69,7 +69,7 @@ interface WhatsAppPayload {
 
 export function registerBrevoRoutes(app: Hono, requireAdmin: any, requireAuth: any) {
 
-  // ═════════════════��══════════════════════════════════════════════
+  // ═══════════════════════════════════════════════════════════════
   // ADMIN: Configuration Management
   // ════════════════════════════════════════════════════════════════
 

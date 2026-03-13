@@ -303,8 +303,8 @@ export function RazorpayPayment({
         >
           {isLoading ? (
             <>
-              <div className="animate-spin rounded-full h-4 w-4 border-b-2" 
-                   style={{ borderColor: 'var(--color-primary-on)' }}></div>
+              <div className="animate-spin rounded-full h-4 w-4 border-2" 
+                   style={{ borderColor: 'var(--color-primary-on)', borderTopColor: 'transparent' }}></div>
               Processing...
             </>
           ) : !razorpayLoaded ? (

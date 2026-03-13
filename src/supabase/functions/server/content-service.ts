@@ -1,4 +1,4 @@
-import * as kv from './kv_store.tsx';
+import * as kv from './kv_dual_write.ts';
 import { ContentItem } from './shared-types.ts';
 
 const generateId = () => crypto.randomUUID();

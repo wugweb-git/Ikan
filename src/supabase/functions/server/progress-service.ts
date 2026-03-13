@@ -1,4 +1,4 @@
-import * as kv from './kv_store.tsx';
+import * as kv from './kv_dual_write.ts';
 import { EquipService, EquipDayService, EquipBlockService } from './program-service.ts';
 import { ContentService } from './content-service.ts';
 

@@ -1,21 +1,32 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, lazy, Suspense } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { AuthForm } from '../AuthForm';
 import { AccountDetailsSection } from '../blocks/AccountDetailsSection';
 import { SideNavAccount } from '../navigation/SideNavAccount';
-import { PaymentHistory } from './PaymentHistory';
-import { AppSettings } from './account/AppSettings';
-import { Preferences } from './account/Preferences';
-import { Privacy } from './account/Privacy';
-import { Notifications } from './account/Notifications';
-import { Security } from './account/Security';
-import { Corporate } from './account/Corporate';
 import { cn } from '../ui/utils';
 import { useNotifications } from '../../contexts/NotificationContext';
 import { apiClient } from '../../lib/api-client';
 import { useIsMobile } from '../../hooks/useIsMobile';
 import { validateProfile } from '../../lib/validation';
 import { AccountPageHeader } from '../blocks/AccountPageHeader';
+
+// Lazy-load all account sub-screens so only the active tab loads
+const PaymentHistory = lazy(() => import('./PaymentHistory').then(m => ({ default: m.PaymentHistory })));
+const Preferences = lazy(() => import('./account/Preferences').then(m => ({ default: m.Preferences })));
+const Privacy = lazy(() => import('./account/Privacy').then(m => ({ default: m.Privacy })));
+const Notifications = lazy(() => import('./account/Notifications').then(m => ({ default: m.Notifications })));
+const Security = lazy(() => import('./account/Security').then(m => ({ default: m.Security })));
+const Corporate = lazy(() => import('./account/Corporate').then(m => ({ default: m.Corporate })));
+
+// Loading skeleton for account sub-screens
+function AccountSkeleton() {
+  return (
+    <div className="space-y-4 animate-pulse">
+      <div className="h-6 w-32 rounded" style={{ backgroundColor: 'var(--color-bg-muted)' }} />
+      <div className="h-[200px] rounded-lg" style={{ backgroundColor: 'var(--color-bg-muted)' }} />
+    </div>
+  );
+}
 
 // Mobile Header Component
 function MobileHeader({ title, onBack, rightAction }: { title: string, onBack?: () => void, rightAction?: React.ReactNode }) {
@@ -263,32 +274,33 @@ export function Account({ className, onNavigate }: AccountProps) {
     switch (currentAccountRoute) {
       case '/account/dashboard': 
       case '/account/settings':
-        title = "Settings";
-        content = <AppSettings />;
+        // Settings was removed — redirect to preferences
+        title = "Preferences";
+        content = <Suspense fallback={<AccountSkeleton />}><Preferences /></Suspense>;
         break;
       case '/account/privacy':
         title = "Privacy";
-        content = <Privacy />;
+        content = <Suspense fallback={<AccountSkeleton />}><Privacy /></Suspense>;
         break;
       case '/account/preferences':
         title = "Preferences";
-        content = <Preferences />;
+        content = <Suspense fallback={<AccountSkeleton />}><Preferences /></Suspense>;
         break;
       case '/account/notifications':
         title = "Notifications";
-        content = <Notifications />;
+        content = <Suspense fallback={<AccountSkeleton />}><Notifications /></Suspense>;
         break;
       case '/account/payments':
         title = "Payments";
-        content = <PaymentHistory />;
+        content = <Suspense fallback={<AccountSkeleton />}><PaymentHistory /></Suspense>;
         break;
       case '/account/security':
         title = "Security";
-        content = <Security />;
+        content = <Suspense fallback={<AccountSkeleton />}><Security /></Suspense>;
         break;
       case '/account/corporate':
         title = "Organization";
-        content = <Corporate />;
+        content = <Suspense fallback={<AccountSkeleton />}><Corporate /></Suspense>;
         break;
       default: // '/account/profile'
         title = "My Profile";
@@ -345,7 +357,6 @@ export function Account({ className, onNavigate }: AccountProps) {
             onSave={handleSaveProfile}
             onSocialSync={handleSocialSync}
             onAvatarUploaded={() => {
-              // Refresh the auth context user so the nav avatar updates
               refreshProfile().catch(e => console.error('Failed to refresh profile after avatar upload:', e));
             }}
             onDeleteProfile={() => {

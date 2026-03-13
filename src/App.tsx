@@ -65,12 +65,7 @@ const Sitemap = lazy(() => import('./components/screens/Sitemap').then(m => ({ d
 const AdminDashboard = lazy(() => import('./components/screens/AdminDashboard').then(m => ({ default: m.AdminDashboard })));
 const AdminLoginScreen = lazy(() => import('./components/admin/AdminLoginScreen').then(m => ({ default: m.AdminLoginScreen })));
 
-// Dev/internal screens
-const UIKitShowcase = lazy(() => import('./components/screens/UIKitShowcase').then(m => ({ default: m.UIKitShowcase })));
-const UIKitShowcasePage = lazy(() => import('./components/screens/UIKitShowcasePage').then(m => ({ default: m.UIKitShowcasePage })));
-const RouteTestScreen = lazy(() => import('./components/screens/RouteTestScreen').then(m => ({ default: m.RouteTestScreen })));
-const PrivateRouteTest = lazy(() => import('./components/screens/PrivateRouteTest').then(m => ({ default: m.PrivateRouteTest })));
-const WizardTestScreen = lazy(() => import('./components/screens/WizardTestScreen').then(m => ({ default: m.WizardTestScreen })));
+
 
 // --- Eagerly loaded non-screen components ---
 import { AdminWidget } from './components/admin/AdminWidget';
@@ -139,9 +134,9 @@ function AppContent() {
         '/', '/dashboard', '/mood-journal', '/assessment', '/assessment-landing', '/assessment-detail', '/assessment-flow', '/assessment-results',
         '/equip', '/equip-programs-landing', '/equip-detail', '/equip-program-onboarding', '/equip-program-flow', '/equip-program-completion',
         '/consultation', '/consultation-detail', '/resource', '/resource-detail', '/account', 
-        '/about', '/faq', '/privacy', '/privacy-policy', '/terms', '/contact', '/return-policy', '/cancellation-policy', '/sitemap', '/login', '/route-test', '/private-route-test', '/wizard-test',
+        '/about', '/faq', '/privacy', '/privacy-policy', '/terms', '/contact', '/return-policy', '/cancellation-policy', '/sitemap', '/login',
         '/admin', '/admin/login', '/admin/resources', '/admin/equip', '/admin/users', '/admin/consultants', '/admin/assessments', '/admin/analytics', '/admin/settings', '/admin/pages', '/admin/media', '/admin/crud', '/admin/contact-newsletter',
-        '/join/professional', '/uikit', '/uikit-page'
+        '/join/professional'
       ];
       
       // Handle consultant detail route pattern
@@ -412,16 +407,6 @@ function AppContent() {
           return withSuspense(<Sitemap onNavigate={handleNavigate} />);
         case '/login':
           return <LoginScreen onNavigate={handleNavigate} onSuccess={() => handleNavigate('/dashboard')} />;
-        case '/route-test':
-          return withSuspense(<RouteTestScreen onNavigate={handleNavigate} />);
-        case '/private-route-test':
-          return withSuspense(<PrivateRouteTest onNavigate={handleNavigate} />);
-        case '/wizard-test':
-          return withSuspense(<WizardTestScreen onBack={() => handleNavigate('/dashboard')} />);
-        case '/uikit':
-          return withSuspense(<UIKitShowcase onNavigate={handleNavigate} />);
-        case '/uikit-page':
-          return withSuspense(<UIKitShowcasePage onNavigate={handleNavigate} />);
         case '/join/professional':
           return withSuspense(<ProfessionalApplication onNavigate={handleNavigate} />);
         default:
@@ -440,8 +425,7 @@ function AppContent() {
     !currentRoute.startsWith('/admin') &&
     !currentRoute.startsWith('/assessment-flow') &&
     !currentRoute.startsWith('/equip-program-flow') &&
-    !currentRoute.startsWith('/equip-program-onboarding') &&
-    !currentRoute.startsWith('/uikit');
+    !currentRoute.startsWith('/equip-program-onboarding');
   const shouldShowFooter = currentRoute === '/' || 
                            currentRoute === '/about' || 
                            currentRoute === '/contact' || 

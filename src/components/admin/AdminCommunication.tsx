@@ -1,13 +1,15 @@
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
   Mail,
   Send,
-  Users,
   MessageSquare,
   Bell,
   FileText,
   Plus,
-  Eye
+  Eye,
+  Trash2,
+  Loader2,
+  RefreshCw
 } from 'lucide-react';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
@@ -24,11 +26,12 @@ import {
   DialogDescription
 } from '../ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
-import { Checkbox } from '../ui/checkbox';
 import { useNotifications } from '../../contexts/NotificationContext';
 import { AdminHeader } from './AdminHeader';
 import { AdminCommunicationAPI } from './AdminCommunicationAPI';
 import { useIsMobile } from '../../hooks/useIsMobile';
+import { projectId, publicAnonKey } from '../../utils/supabase/info';
+import { supabase } from '../../lib/supabase-client';
 
 interface EmailTemplate {
   id: string;
@@ -37,6 +40,7 @@ interface EmailTemplate {
   body: string;
   category: 'welcome' | 'notification' | 'reminder' | 'marketing';
   created_at: string;
+  updated_at?: string;
 }
 
 interface NotificationQueue {
@@ -53,43 +57,9 @@ export function AdminCommunication({ onBack: _onBack }: { onBack?: () => void })
   const isMobile = useIsMobile();
   const [activeTab, setActiveTab] = useState<'templates' | 'api-config'>('templates');
   
-  const [templates, setTemplates] = useState<EmailTemplate[]>([
-    {
-      id: '1',
-      name: 'Welcome Email',
-      subject: 'Welcome to iKan Mental Health',
-      body: 'Dear {{name}},\n\nWelcome to iKan! We\'re here to support your mental wellness journey...',
-      category: 'welcome',
-      created_at: new Date().toISOString()
-    },
-    {
-      id: '2',
-      name: 'Assessment Reminder',
-      subject: 'Complete Your Weekly Assessment',
-      body: 'Hi {{name}},\n\nIt\'s time for your weekly mental health check-in...',
-      category: 'reminder',
-      created_at: new Date().toISOString()
-    }
-  ]);
-
-  const [queue, setQueue] = useState<NotificationQueue[]>([
-    {
-      id: '1',
-      type: 'email',
-      recipient: 'user@example.com',
-      subject: 'Welcome Email',
-      status: 'sent',
-      scheduled_at: new Date(Date.now() - 3600000).toISOString()
-    },
-    {
-      id: '2',
-      type: 'push',
-      recipient: 'user-123',
-      subject: 'Daily Mood Check-in',
-      status: 'pending',
-      scheduled_at: new Date(Date.now() + 3600000).toISOString()
-    }
-  ]);
+  const [templates, setTemplates] = useState<EmailTemplate[]>([]);
+  const [queue, setQueue] = useState<NotificationQueue[]>([]);
+  const [loading, setLoading] = useState(true);
 
   const [isTemplateDialogOpen, setIsTemplateDialogOpen] = useState(false);
   const [isBroadcastDialogOpen, setIsBroadcastDialogOpen] = useState(false);
@@ -101,10 +71,61 @@ export function AdminCommunication({ onBack: _onBack }: { onBack?: () => void })
   const [broadcastBody, setBroadcastBody] = useState('');
   const [broadcastAudience, setBroadcastAudience] = useState('all');
 
+  const getAuthHeaders = useCallback(async (includeContentType = false) => {
+    const { data } = await supabase.auth.getSession();
+    const token = data.session?.access_token || publicAnonKey;
+    const h: Record<string, string> = { 'Authorization': `Bearer ${token}` };
+    if (includeContentType) h['Content-Type'] = 'application/json';
+    return h;
+  }, []);
+
+  const baseUrl = `https://${projectId}.supabase.co/functions/v1/make-server-cc205da9`;
+
+  // Load templates from KV
+  const loadTemplates = useCallback(async () => {
+    try {
+      const headers = await getAuthHeaders();
+      const res = await fetch(`${baseUrl}/admin/communication/templates`, { headers });
+      if (res.ok) {
+        const data = await res.json();
+        setTemplates(data.templates || []);
+      } else {
+        console.error('Failed to fetch templates:', res.status);
+      }
+    } catch (err) {
+      console.error('Error loading templates:', err);
+    }
+  }, [getAuthHeaders, baseUrl]);
+
+  // Load queue from KV
+  const loadQueue = useCallback(async () => {
+    try {
+      const headers = await getAuthHeaders();
+      const res = await fetch(`${baseUrl}/admin/communication/queue`, { headers });
+      if (res.ok) {
+        const data = await res.json();
+        setQueue(data.queue || []);
+      } else {
+        console.error('Failed to fetch queue:', res.status);
+      }
+    } catch (err) {
+      console.error('Error loading queue:', err);
+    }
+  }, [getAuthHeaders, baseUrl]);
+
+  useEffect(() => {
+    const load = async () => {
+      setLoading(true);
+      await Promise.all([loadTemplates(), loadQueue()]);
+      setLoading(false);
+    };
+    load();
+  }, [loadTemplates, loadQueue]);
+
   const handleCreateTemplate = () => {
     const newTemplate: EmailTemplate = {
-      id: Date.now().toString(),
-      name: 'New Template',
+      id: '',
+      name: '',
       subject: '',
       body: '',
       category: 'notification',
@@ -114,33 +135,96 @@ export function AdminCommunication({ onBack: _onBack }: { onBack?: () => void })
     setIsTemplateDialogOpen(true);
   };
 
-  const handleSaveTemplate = () => {
-    if (selectedTemplate) {
-      if (templates.find(t => t.id === selectedTemplate.id)) {
-        setTemplates(prev => prev.map(t => t.id === selectedTemplate.id ? selectedTemplate : t));
+  const handleSaveTemplate = async () => {
+    if (!selectedTemplate || !selectedTemplate.name.trim()) {
+      showToast('error', 'Validation', 'Template name is required');
+      return;
+    }
+    try {
+      const headers = await getAuthHeaders(true);
+      const res = await fetch(`${baseUrl}/admin/communication/templates`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(selectedTemplate)
+      });
+      if (res.ok) {
+        const data = await res.json();
+        // Update local state
+        if (data.template) {
+          setTemplates(prev => {
+            const existing = prev.findIndex(t => t.id === data.template.id);
+            if (existing >= 0) {
+              const updated = [...prev];
+              updated[existing] = data.template;
+              return updated;
+            }
+            return [...prev, data.template];
+          });
+        }
+        showToast('success', 'Saved', 'Template saved successfully');
+        setIsTemplateDialogOpen(false);
+        setSelectedTemplate(null);
       } else {
-        setTemplates(prev => [...prev, selectedTemplate]);
+        showToast('error', 'Error', 'Failed to save template');
       }
-      showToast('success', 'Saved', 'Template saved successfully');
-      setIsTemplateDialogOpen(false);
-      setSelectedTemplate(null);
+    } catch (err) {
+      console.error('Error saving template:', err);
+      showToast('error', 'Error', 'Failed to save template');
     }
   };
 
-  const handleSendBroadcast = () => {
-    const newNotification: NotificationQueue = {
-      id: Date.now().toString(),
-      type: broadcastType,
-      recipient: broadcastAudience === 'all' ? 'all-users' : `segment-${broadcastAudience}`,
-      subject: broadcastSubject,
-      status: 'pending',
-      scheduled_at: new Date().toISOString()
-    };
-    setQueue(prev => [newNotification, ...prev]);
-    showToast('success', 'Queued', 'Broadcast message queued for delivery');
-    setIsBroadcastDialogOpen(false);
-    setBroadcastSubject('');
-    setBroadcastBody('');
+  const handleDeleteTemplate = async (id: string) => {
+    try {
+      const headers = await getAuthHeaders();
+      const res = await fetch(`${baseUrl}/admin/communication/templates/${id}`, {
+        method: 'DELETE',
+        headers
+      });
+      if (res.ok) {
+        setTemplates(prev => prev.filter(t => t.id !== id));
+        showToast('success', 'Deleted', 'Template deleted');
+      } else {
+        showToast('error', 'Error', 'Failed to delete template');
+      }
+    } catch (err) {
+      console.error('Error deleting template:', err);
+      showToast('error', 'Error', 'Failed to delete template');
+    }
+  };
+
+  const handleSendBroadcast = async () => {
+    if (!broadcastSubject.trim() || !broadcastBody.trim()) {
+      showToast('error', 'Validation', 'Subject and message are required');
+      return;
+    }
+    try {
+      const headers = await getAuthHeaders(true);
+      const res = await fetch(`${baseUrl}/admin/communication/queue`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({
+          type: broadcastType,
+          recipient: broadcastAudience === 'all' ? 'all-users' : `segment-${broadcastAudience}`,
+          subject: broadcastSubject,
+          body: broadcastBody
+        })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.item) {
+          setQueue(prev => [data.item, ...prev]);
+        }
+        showToast('success', 'Queued', 'Broadcast message queued for delivery');
+        setIsBroadcastDialogOpen(false);
+        setBroadcastSubject('');
+        setBroadcastBody('');
+      } else {
+        showToast('error', 'Error', 'Failed to queue broadcast');
+      }
+    } catch (err) {
+      console.error('Error queuing broadcast:', err);
+      showToast('error', 'Error', 'Failed to queue broadcast');
+    }
   };
 
   const stats = [
@@ -155,7 +239,7 @@ export function AdminCommunication({ onBack: _onBack }: { onBack?: () => void })
       icon: <MessageSquare className="w-4 h-4" style={{ color: 'var(--color-warning-default)' }} />
     },
     {
-      label: 'Sent Today',
+      label: 'Sent',
       value: queue.filter(n => n.status === 'sent').length,
       icon: <Send className="w-4 h-4" style={{ color: 'var(--color-success-default)' }} />
     },
@@ -232,6 +316,19 @@ export function AdminCommunication({ onBack: _onBack }: { onBack?: () => void })
             <>
               <Button
                 variant="outline"
+                onClick={() => { loadTemplates(); loadQueue(); }}
+                style={{
+                  height: 'var(--ikan-component-button-height)',
+                  borderRadius: 'var(--ikan-component-border-radius)',
+                  fontWeight: 'var(--font-weight-medium)',
+                  gap: 'var(--spacing-2)'
+                }}
+              >
+                <RefreshCw className="w-4 h-4" />
+                {!isMobile && 'Refresh'}
+              </Button>
+              <Button
+                variant="outline"
                 onClick={handleCreateTemplate}
                 style={{
                   height: 'var(--ikan-component-button-height)',
@@ -261,6 +358,12 @@ export function AdminCommunication({ onBack: _onBack }: { onBack?: () => void })
           }
         />
 
+        {loading ? (
+          <div className="flex items-center justify-center py-16">
+            <Loader2 className="w-8 h-8 animate-spin" style={{ color: 'var(--color-text-muted)' }} />
+          </div>
+        ) : (
+        <>
         {/* Email Templates */}
         <div>
           <h3 style={{
@@ -270,6 +373,30 @@ export function AdminCommunication({ onBack: _onBack }: { onBack?: () => void })
           }}>
             Email Templates
           </h3>
+          {templates.length === 0 ? (
+            <Card style={{ backgroundColor: 'var(--color-bg-card)', borderRadius: 'var(--radius-lg)' }}>
+              <CardContent className="p-8 text-center">
+                <FileText className="w-10 h-10 mx-auto mb-3" style={{ color: 'var(--color-text-muted)' }} />
+                <p style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-muted)' }}>
+                  No templates yet. Create your first email template to get started.
+                </p>
+                <Button
+                  variant="outline"
+                  onClick={handleCreateTemplate}
+                  className="mt-4"
+                  style={{
+                    height: 'var(--ikan-component-button-height)',
+                    borderRadius: 'var(--ikan-component-border-radius)',
+                    fontWeight: 'var(--font-weight-medium)',
+                    gap: 'var(--spacing-2)'
+                  }}
+                >
+                  <Plus className="w-4 h-4" />
+                  Create Template
+                </Button>
+              </CardContent>
+            </Card>
+          ) : (
           <div className="grid md:grid-cols-2 gap-4">
             {templates.map(template => (
               <Card 
@@ -287,26 +414,37 @@ export function AdminCommunication({ onBack: _onBack }: { onBack?: () => void })
                         {template.name}
                       </h4>
                       <p style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-muted)' }}>
-                        {template.subject}
+                        {template.subject || '(no subject)'}
                       </p>
                     </div>
                     <AdminStatusBadge status={resolveStatusVariant(template.category)} label={template.category} />
                   </div>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => {
-                      setSelectedTemplate(template);
-                      setIsTemplateDialogOpen(true);
-                    }}
-                  >
-                    <Eye className="w-4 h-4 mr-2" />
-                    Edit
-                  </Button>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        setSelectedTemplate(template);
+                        setIsTemplateDialogOpen(true);
+                      }}
+                    >
+                      <Eye className="w-4 h-4 mr-2" />
+                      Edit
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleDeleteTemplate(template.id)}
+                      style={{ color: 'var(--color-status-danger)' }}
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </div>
                 </CardContent>
               </Card>
             ))}
           </div>
+          )}
         </div>
 
         {/* Notification Queue */}
@@ -318,6 +456,16 @@ export function AdminCommunication({ onBack: _onBack }: { onBack?: () => void })
           }}>
             Notification Queue
           </h3>
+          {queue.length === 0 ? (
+            <Card style={{ backgroundColor: 'var(--color-bg-card)', borderRadius: 'var(--radius-lg)' }}>
+              <CardContent className="p-8 text-center">
+                <Send className="w-10 h-10 mx-auto mb-3" style={{ color: 'var(--color-text-muted)' }} />
+                <p style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-muted)' }}>
+                  No broadcasts sent yet. Send your first broadcast to see it here.
+                </p>
+              </CardContent>
+            </Card>
+          ) : (
           <Card style={{ backgroundColor: 'var(--color-bg-card)', borderRadius: 'var(--radius-lg)' }}>
             <CardContent className="p-0">
               {isMobile ? (
@@ -399,7 +547,10 @@ export function AdminCommunication({ onBack: _onBack }: { onBack?: () => void })
               )}
             </CardContent>
           </Card>
+          )}
         </div>
+        </>
+        )}
         </>
         )}
       </div>
@@ -409,7 +560,7 @@ export function AdminCommunication({ onBack: _onBack }: { onBack?: () => void })
         <DialogContent className="max-w-3xl">
           <DialogHeader>
             <DialogTitle>
-              {selectedTemplate?.name || 'New Template'}
+              {selectedTemplate?.id ? 'Edit Template' : 'New Template'}
             </DialogTitle>
             <DialogDescription>
               Create or edit email templates with dynamic placeholders
@@ -463,7 +614,7 @@ export function AdminCommunication({ onBack: _onBack }: { onBack?: () => void })
                   className="min-h-[200px]"
                 />
                 <p style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)', marginTop: 'var(--spacing-2)' }}>
-                  Available placeholders: {'{'}{'{'} name {'}'}{'}'}, {'{'}{'{'} email {'}'}{'}'}, {'{'}{'{'} date {'}'}{'}'} 
+                  Available placeholders: {'{{'}name{'}}'}, {'{{'}email{'}}'}, {'{{'}date{'}}'}
                 </p>
               </div>
             </div>
