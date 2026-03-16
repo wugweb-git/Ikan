@@ -485,6 +485,7 @@ app.put("/users/profile", requireAuth, async (c) => {
     if (sanitizedUpdates.gender !== undefined) updatedProfile.gender = sanitizedUpdates.gender;
     if (sanitizedUpdates.location !== undefined) updatedProfile.location = sanitizedUpdates.location;
     if (sanitizedUpdates.avatar_url !== undefined) updatedProfile.avatar_url = sanitizedUpdates.avatar_url;
+    if (updates.zipCode !== undefined) updatedProfile.zipCode = updates.zipCode;
     
     // Update emergency contact fields
     if (sanitizedUpdates.emergencyContactName !== undefined) {
@@ -2320,9 +2321,10 @@ app.post("/analytics/engagement", async (c) => {
     const resourceCounterKey = `analytics:counter:${analyticsData.resource_id}`;
     const counter = (await kv.get(resourceCounterKey)) || { views: 0, reads: 0, shares: 0, total: 0 };
     counter.total = (counter.total || 0) + 1;
-    if (analyticsData.action === 'view') counter.views = (counter.views || 0) + 1;
-    else if (analyticsData.action === 'read') counter.reads = (counter.reads || 0) + 1;
-    else if (analyticsData.action === 'share') counter.shares = (counter.shares || 0) + 1;
+    const act = analyticsData.action;
+    if (act === 'view' || act === 'resource_view_started' || act === 'resource_loaded') counter.views = (counter.views || 0) + 1;
+    else if (act === 'read') counter.reads = (counter.reads || 0) + 1;
+    else if (act === 'share') counter.shares = (counter.shares || 0) + 1;
     counter.last_action = now.toISOString();
     await kv.set(resourceCounterKey, counter);
     
@@ -3616,6 +3618,98 @@ app.get("/user-activity/history", requireAuth, async (c) => {
   } catch (error) {
     console.error('Get activity history error:', error);
     return c.json({ error: 'Failed to retrieve history' }, 500);
+  }
+});
+
+// Get comprehensive activity feed for dashboard (all activity types)
+app.get("/user-activity/feed", requireAuth, async (c) => {
+  try {
+    const user = c.get('user');
+    const userId = user.id;
+    const limit = parseInt(c.req.query('limit') || '10');
+
+    const feed: any[] = [];
+
+    // 1. Activity log entries (resource views, logins, etc.)
+    const activities: any[] = (await kv.get(`user_activity:${userId}`)) || [];
+    for (const act of activities) {
+      feed.push({
+        type: act.type || 'activity',
+        label: act.type === 'resource_view' ? 'Read an article' : act.type === 'login' ? 'Logged in' : act.type || 'Activity',
+        detail: act.resourceTitle || act.metadata?.title || '',
+        timestamp: act.timestamp,
+        route: act.type === 'resource_view' && act.resourceId ? `/resource-detail?id=${act.resourceId}` : '/dashboard',
+      });
+    }
+
+    // 2. Assessment completions
+    const assessmentResults = await kv.getByPrefix(`assessment_result:${userId}:`);
+    const seenAssessmentIds = new Set<string>();
+    for (const r of assessmentResults) {
+      if (!r || !r.id || seenAssessmentIds.has(r.id)) continue;
+      seenAssessmentIds.add(r.id);
+      if (r.completed_at || r.status === 'completed') {
+        const aName = r.assessment_name || r.assessmentName || r.assessment_id || 'Assessment';
+        feed.push({
+          type: 'assessment_completed',
+          label: `Completed ${aName}`,
+          detail: r.score !== undefined ? `Score: ${r.score}${r.max_score ? `/${r.max_score}` : ''}` : '',
+          timestamp: r.completed_at || r.created_at,
+          route: '/assessment',
+        });
+      }
+    }
+
+    // 3. Journal / mood entries
+    const journals = await kv.getByPrefix(`journal:${userId}:`);
+    for (const j of journals) {
+      if (!j) continue;
+      feed.push({
+        type: 'mood_logged',
+        label: 'Logged mood',
+        detail: j.mood ? `Feeling ${j.mood}` : 'Mood check-in',
+        timestamp: j.date || j.created_at,
+        route: '/mood-journal',
+      });
+    }
+
+    // 4. Program progress (day completions)
+    const progressEntries = await kv.getByPrefix(`progress:${userId}:`);
+    for (const p of progressEntries) {
+      if (!p || !p.day_completed) continue;
+      feed.push({
+        type: 'program_day_completed',
+        label: `Completed Day ${p.day_number || '?'}`,
+        detail: p.equip_title || p.equip_id || 'Program',
+        timestamp: p.completed_at || p.updated_at,
+        route: p.equip_id ? `/equip-program-flow?id=${p.equip_id}` : '/equip',
+      });
+    }
+
+    // 5. Enrollments
+    const enrollments = await kv.getByPrefix(`enrollment:${userId}:`);
+    for (const e of enrollments) {
+      if (!e) continue;
+      feed.push({
+        type: e.status === 'completed' ? 'program_completed' : 'enrolled',
+        label: e.status === 'completed' ? 'Completed a program' : 'Enrolled in a program',
+        detail: e.equip_title || e.equip_id || 'Program',
+        timestamp: e.status === 'completed' ? (e.completed_at || e.updated_at) : e.enrolled_at,
+        route: e.equip_id ? `/equip-program-flow?id=${e.equip_id}` : '/equip',
+      });
+    }
+
+    // Sort by timestamp descending, deduplicate, and limit
+    feed.sort((a, b) => {
+      const tsA = a.timestamp ? new Date(a.timestamp).getTime() : 0;
+      const tsB = b.timestamp ? new Date(b.timestamp).getTime() : 0;
+      return tsB - tsA;
+    });
+
+    return c.json({ feed: feed.slice(0, limit) });
+  } catch (error) {
+    console.error('Get activity feed error:', error);
+    return c.json({ error: 'Failed to retrieve activity feed' }, 500);
   }
 });
 

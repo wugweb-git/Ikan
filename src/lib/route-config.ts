@@ -478,6 +478,11 @@ export const isPublicRoute = (path: string): boolean => {
   if (path.startsWith('/join/')) {
     return true;
   }
+
+  // CMS pages are always public
+  if (path.startsWith('/page/')) {
+    return true;
+  }
   
   const route = routes.find(r => r.path === path);
   return route?.isPublic ?? false;
@@ -491,6 +496,11 @@ export const requiresAuth = (path: string): boolean => {
   
   // Universal public links don't require auth
   if (path.startsWith('/join/')) {
+    return false;
+  }
+
+  // CMS pages are always public
+  if (path.startsWith('/page/')) {
     return false;
   }
   

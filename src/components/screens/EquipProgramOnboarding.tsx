@@ -252,7 +252,7 @@ export function EquipOnboarding({ programId: propProgramId, onComplete, onBack, 
               },
               prefill: {
                 email: user.email || '',
-                name: user.user_metadata?.full_name || user.email?.split('@')[0] || '',
+                name: user.name || user.email?.split('@')[0] || '',
               },
               theme: { color: '#2A2A2A' },
               modal: {

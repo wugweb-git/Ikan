@@ -43,6 +43,7 @@ export function RouteGuard({ currentRoute, onNavigate, children }: RouteGuardPro
     return (
       <LoginScreen 
         onSuccess={() => onNavigate(currentRoute)}
+        onNavigate={onNavigate}
         reason="auth-required"
         redirectRoute={currentRoute}
       />

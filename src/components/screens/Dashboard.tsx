@@ -3,7 +3,7 @@ import { motion } from 'motion/react';
 import { apiClient } from '../../lib/api-client';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNotifications } from '../../contexts/NotificationContext';
-import { ArrowRight, Activity, Smile, Check, BarChart3, ClipboardList, Play, TrendingUp, Brain, Compass } from 'lucide-react';
+import { ArrowRight, Activity, Smile, Check, BarChart3, ClipboardList, Play, TrendingUp, Brain, Compass, BookOpen, Calendar } from 'lucide-react';
 import { SPECIAL_PROGRAM_IDS } from '../../lib/constants/content';
 import { ReassessmentPrompt } from '../assessments/ReassessmentPrompt';
 import { checkReassessmentTriggers, ReassessmentReason } from '../../lib/reassessment-triggers';
@@ -20,6 +20,7 @@ import { LoadingSpinner } from '../LoadingSpinner';
 import { CorporateProgramCard } from '../CorporateProgramCard';
 import { ProgramProgressTracker } from '../ProgramProgressTracker';
 import { IkanScoreCard } from '../IkanScoreCard';
+import { usePublicSettings } from '../../hooks/usePublicSettings';
 
 interface DashboardProps {
   className?: string;
@@ -108,6 +109,7 @@ function SectionLabel({ children, className }: { children: React.ReactNode; clas
 export function Dashboard({ className, onNavigate }: DashboardProps) {
   const { user } = useAuth();
   const { showToast } = useNotifications();
+  const { settings: publicSettings } = usePublicSettings();
   useGoogleFit(); // Hook must be called; ActivityCard uses it internally
   const [loading, setLoading] = useState(true);
   const [enrollments, setEnrollments] = useState<any[]>([]);
@@ -116,6 +118,9 @@ export function Dashboard({ className, onNavigate }: DashboardProps) {
   const [topRecDetails, setTopRecDetails] = useState<any>(null);
   const [userName, setUserName] = useState('Friend');
   const [hasLoggedMoodToday, setHasLoggedMoodToday] = useState(false);
+
+  // Server-sourced activity feed
+  const [activityFeed, setActivityFeed] = useState<any[]>([]);
 
   // Engine-driven recommendations from assessment results
   const [engineResult, setEngineResult] = useState<EngineResult | null>(null);
@@ -156,7 +161,7 @@ export function Dashboard({ className, onNavigate }: DashboardProps) {
 
   const runReassessmentChecks = async () => {
     if (!user) return;
-    const userId = user.user_id || (user as any).id;
+    const userId = user.user_id;
     const dismissedAt = localStorage.getItem(`reassessment_dismissed_${userId}`);
     if (dismissedAt) {
       const hoursSince = (Date.now() - parseInt(dismissedAt)) / (1000 * 60 * 60);
@@ -175,13 +180,13 @@ export function Dashboard({ className, onNavigate }: DashboardProps) {
 
   const handleReassessmentClose = () => {
     setReassessment({ ...reassessment, isOpen: false });
-    const userId = user?.user_id || (user as any)?.id;
+    const userId = user?.user_id;
     if (userId) localStorage.setItem(`reassessment_dismissed_${userId}`, Date.now().toString());
   };
 
   const loadDashboardData = async (isMounted: boolean = true) => {
     if (!user) return;
-    const userId = user.user_id || (user as any).id;
+    const userId = user.user_id;
     const CACHE_KEY = `dashboard_data_${userId}`;
 
     let hasCachedData = false;
@@ -209,11 +214,16 @@ export function Dashboard({ className, onNavigate }: DashboardProps) {
       const entries = (journalData as any).entries || [];
       setHasLoggedMoodToday(entries.length > 0);
 
-      const [enrollData, recData] = await Promise.all([
+      const [enrollData, recData, feedData] = await Promise.all([
         apiClient.getUserEnrollments(),
-        apiClient.getRecommendations()
+        apiClient.getRecommendations(),
+        apiClient.getActivityFeed(10).catch(() => ({ feed: [] }))
       ]);
       if (!isMounted) return;
+
+      // Store activity feed
+      const feedItems = feedData?.feed || [];
+      if (feedItems.length > 0) setActivityFeed(feedItems);
 
       let programDetails = null;
       const active = enrollData.find((e: any) => e.status === 'active');
@@ -270,11 +280,6 @@ export function Dashboard({ className, onNavigate }: DashboardProps) {
 
           const scores: AssessmentScore[] = Array.from(latestByType.entries())
             .filter(([_, r]) => r.score !== undefined && r.score !== null) // Include all scored assessments (even 0)
-            .filter(([id]) => {
-              // If we have assessment definitions, validate the result references an existing assessment
-              if (!availableAssessmentIds) return true;
-              return availableAssessmentIds.has(id);
-            })
             .map(([id, r]) => {
             const maxScore = r.max_score || r.maxScore || 100;
             const result = evaluateAssessment(id, r.score || 0, maxScore);
@@ -288,6 +293,7 @@ export function Dashboard({ className, onNavigate }: DashboardProps) {
               completedAt: r.completed_at || r.created_at || '',
             };
           });
+          console.log('[Dashboard] Assessment history: found', completedResponses.length, 'completed responses,', scores.length, 'display scores');
           setAssessmentScores(scores);
 
           // Engine result from latest real assessment (not check-ins)
@@ -347,12 +353,25 @@ export function Dashboard({ className, onNavigate }: DashboardProps) {
     );
   }
 
-  // ═══════════════════════════════════════════════════════════════════
-  // DERIVED: Latest Activity
+  // ══════════════════════════════════════════════════════════════════
+  // DERIVED: Latest Activity (merge server feed + local state)
   // ═══════════════════════════════════════════════════════════════════
   const latestActivity = (() => {
     const candidates: { type: string; label: string; detail: string; date: string; ts: number; route: string }[] = [];
-    // Add ALL completed assessment types as separate entries
+
+    // 1. Server-sourced activity feed (resource reads, mood logs, program days, etc.)
+    for (const item of activityFeed) {
+      candidates.push({
+        type: item.type || 'activity',
+        label: item.label || 'Activity',
+        detail: item.detail || '',
+        date: item.timestamp || '',
+        ts: item.timestamp ? new Date(item.timestamp).getTime() : 0,
+        route: item.route || '/dashboard',
+      });
+    }
+
+    // 2. In-memory enrichments (these may duplicate server data but dedup handles it)
     for (const score of assessmentScores) {
       candidates.push({
         type: 'assessment', label: `Completed ${score.assessmentName}`,
@@ -370,7 +389,6 @@ export function Dashboard({ className, onNavigate }: DashboardProps) {
         route: `/equip-program-flow?id=${activeEnrollment.equip_id}`,
       });
     }
-    // Add completed program entries
     for (const enrollment of completedEnrollments) {
       candidates.push({
         type: 'completed', label: `Completed program`,
@@ -386,8 +404,19 @@ export function Dashboard({ className, onNavigate }: DashboardProps) {
         date: new Date().toISOString(), ts: Date.now(), route: '/mood-journal',
       });
     }
+
+    // Sort by timestamp, deduplicate by label+date combo, return top 5
     candidates.sort((a, b) => b.ts - a.ts);
-    return candidates.slice(0, 5); // Show up to 5 most recent activities
+    const seen = new Set<string>();
+    const deduped: typeof candidates = [];
+    for (const c of candidates) {
+      const key = `${c.label}:${c.date?.slice(0, 10) || ''}`;
+      if (!seen.has(key)) {
+        seen.add(key);
+        deduped.push(c);
+      }
+    }
+    return deduped.slice(0, 5);
   })();
 
   // ═══════════════════════════════════════════════════════════════════
@@ -411,8 +440,27 @@ export function Dashboard({ className, onNavigate }: DashboardProps) {
           {latestActivity.length > 0 ? (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               {latestActivity.map((item, idx) => {
-                const iconBg = item.type === 'assessment' ? 'var(--color-status-info-light)' : item.type === 'program' ? 'var(--color-accent-default)' : 'var(--color-status-success-light)';
-                const iconColor = item.type === 'assessment' ? 'var(--color-status-info)' : item.type === 'program' ? 'var(--color-primary-default)' : 'var(--color-status-success)';
+                // Icon config by activity type
+                const isAssessment = item.type === 'assessment' || item.type === 'assessment_completed';
+                const isProgram = item.type === 'program' || item.type === 'program_day_completed' || item.type === 'enrolled';
+                const isMood = item.type === 'mood' || item.type === 'mood_logged';
+                const isResource = item.type === 'resource_view';
+                const isCompleted = item.type === 'completed' || item.type === 'program_completed';
+
+                const iconBg = isAssessment ? 'var(--color-status-info-light)'
+                  : (isProgram || isCompleted) ? 'var(--color-accent-default)'
+                  : isResource ? 'rgba(124,58,237,0.1)'
+                  : 'var(--color-status-success-light)';
+                const iconColor = isAssessment ? 'var(--color-status-info)'
+                  : (isProgram || isCompleted) ? 'var(--color-primary-default)'
+                  : isResource ? '#7C3AED'
+                  : 'var(--color-status-success)';
+                const IconComp = isAssessment ? BarChart3
+                  : isProgram ? Play
+                  : isCompleted ? Check
+                  : isResource ? BookOpen
+                  : isMood ? Smile
+                  : Calendar;
                 return (
                   <div key={`${item.type}-${idx}`}
                     onClick={() => onNavigate?.(item.route)}
@@ -420,7 +468,7 @@ export function Dashboard({ className, onNavigate }: DashboardProps) {
                   >
                     <div className="flex items-center" style={{ gap: 14 }}>
                       <div style={{ width: 44, height: 44, borderRadius: 12, backgroundColor: iconBg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, color: iconColor }}>
-                        {item.type === 'assessment' ? <BarChart3 size={20} /> : item.type === 'program' ? <Play size={20} /> : <Smile size={20} />}
+                        <IconComp size={20} />
                       </div>
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <h3 style={{ ...f('sm', 500), margin: 0 }}>{item.label}</h3>
@@ -502,21 +550,44 @@ export function Dashboard({ className, onNavigate }: DashboardProps) {
             {/* Right: Wellness Insight */}
             <div
               onClick={() => onNavigate?.(engineResult ? '/timeline' : '/mood-journal')}
-              style={{ backgroundColor: 'var(--color-bg-card)', borderRadius: 'var(--radius-lg)', boxShadow: 'var(--shadow-sm)', border: '1px solid var(--color-border-default)', cursor: 'pointer', overflow: 'hidden' }}
+              style={{
+                borderRadius: 'var(--radius-lg)',
+                boxShadow: 'var(--shadow-sm)',
+                cursor: 'pointer',
+                overflow: 'hidden',
+                border: engineResult
+                  ? `1px solid ${engineResult.severity === 'low' ? 'var(--color-status-success-light)' : engineResult.severity === 'moderate' ? 'var(--color-status-warning-light)' : 'var(--color-status-danger-light)'}`
+                  : '1px solid var(--color-border-default)',
+                background: engineResult
+                  ? (engineResult.severity === 'low'
+                    ? 'linear-gradient(135deg, #F0FDF4 0%, #DCFCE7 100%)'
+                    : engineResult.severity === 'moderate'
+                    ? 'linear-gradient(135deg, #FFFBEB 0%, #FEF3C7 100%)'
+                    : 'linear-gradient(135deg, #FEF2F2 0%, #FEE2E2 100%)')
+                  : 'var(--color-bg-card)',
+              }}
             >
               <div className="flex items-center" style={{ padding: 'var(--spacing-4) var(--spacing-5)', gap: 'var(--spacing-4)' }}>
                 <div style={{
                   width: 48, height: 48, borderRadius: 'var(--radius-md)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-                  backgroundColor: engineResult ? (engineResult.severity === 'low' ? 'var(--color-status-success-light)' : engineResult.severity === 'moderate' ? 'var(--color-status-warning-light)' : 'var(--color-status-danger-light)') : 'var(--color-bg-muted)',
+                  backgroundColor: engineResult ? (engineResult.severity === 'low' ? 'rgba(34,197,94,0.15)' : engineResult.severity === 'moderate' ? 'rgba(245,158,11,0.15)' : 'rgba(239,68,68,0.15)') : 'var(--color-bg-muted)',
                   color: engineResult ? (engineResult.severity === 'low' ? 'var(--color-status-success)' : engineResult.severity === 'moderate' ? 'var(--color-status-warning)' : 'var(--color-status-danger)') : 'var(--color-text-muted)',
                 }}>
-                  <TrendingUp size={22} />
+                  {engineResult
+                    ? (engineResult.severity === 'low' ? <Check size={22} strokeWidth={2.5} /> : engineResult.severity === 'moderate' ? <Activity size={22} /> : <Brain size={22} />)
+                    : <TrendingUp size={22} />
+                  }
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <h3 style={{ ...f('sm', 500), margin: 0 }}>Wellness Insight</h3>
+                  <h3 style={{ ...f('sm', 500), margin: 0 }}>
+                    {engineResult
+                      ? (engineResult.severity === 'low' ? 'Looking good' : engineResult.severity === 'moderate' ? 'Needs attention' : 'Let\'s talk about it')
+                      : 'Wellness Insight'
+                    }
+                  </h3>
                   <p style={{ ...f('xs', 400, 'var(--color-text-muted)'), margin: '2px 0 0', lineHeight: 1.4 }}>
                     {engineResult
-                      ? (engineResult.severity === 'low' ? "You're doing well. Keep up the positive habits." : engineResult.severity === 'moderate' ? 'Some areas need attention. Consider your recommendations.' : 'Your well-being needs support. Explore resources below.')
+                      ? (engineResult.severity === 'low' ? "You're doing well. Keep up the positive habits." : engineResult.severity === 'moderate' ? 'A few areas could use some care. Explore your recommendations.' : 'Your well-being needs support. We\'re here for you.')
                       : 'Complete an assessment to see your wellness insights.'}
                   </p>
                 </div>
@@ -547,35 +618,92 @@ export function Dashboard({ className, onNavigate }: DashboardProps) {
         <motion.section aria-label="Explore" data-widget="explore" initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.45, delay: 0.24 }}>
           <SectionLabel>Explore</SectionLabel>
           <div className="grid grid-cols-2" style={{ gap: 'var(--spacing-3)' }}>
+            {/* Programs card — uses admin hero image if configured */}
             <motion.div
               onClick={() => onNavigate?.('/equip')}
               whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.98 }}
-              style={{ background: 'linear-gradient(135deg, #F5F3FF 0%, #EDE9FE 50%, #DDD6FE 100%)', borderRadius: 'var(--radius-lg)', boxShadow: 'var(--shadow-sm)', border: '1px solid #DDD6FE', padding: '24px 16px', cursor: 'pointer', textAlign: 'center' as const, position: 'relative', overflow: 'hidden' }}
+              style={{
+                background: publicSettings.exploreCardProgramsImage ? 'none' : 'linear-gradient(135deg, #F5F3FF 0%, #EDE9FE 50%, #DDD6FE 100%)',
+                borderRadius: 'var(--radius-lg)',
+                boxShadow: 'var(--shadow-sm)',
+                border: publicSettings.exploreCardProgramsImage ? '1px solid var(--color-border-default)' : '1px solid #DDD6FE',
+                cursor: 'pointer',
+                textAlign: 'center' as const,
+                position: 'relative',
+                overflow: 'hidden',
+                ...(publicSettings.exploreCardProgramsImage ? { padding: 0 } : { padding: '24px 16px' }),
+              }}
             >
-              {/* Decorative circle */}
-              <div style={{ position: 'absolute', top: -20, right: -20, width: 80, height: 80, borderRadius: '50%', background: 'rgba(124,58,237,0.06)' }} />
-              <div style={{ position: 'relative', zIndex: 1 }}>
-                <div style={{ width: 52, height: 52, borderRadius: 16, backgroundColor: 'rgba(124,58,237,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 12px', color: '#7C3AED' }}>
-                  <Brain size={24} />
-                </div>
-                <h3 style={{ ...f('sm', 500), margin: 0 }}>Programs</h3>
-                <p style={{ ...f('xs', 400, 'var(--color-text-muted)'), margin: '4px 0 0', lineHeight: 1.4 }}>Guided wellness journeys</p>
-              </div>
+              {publicSettings.exploreCardProgramsImage ? (
+                <>
+                  <div style={{ height: 100, overflow: 'hidden' }}>
+                    <img
+                      src={publicSettings.exploreCardProgramsImage}
+                      alt="Programs"
+                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                    />
+                  </div>
+                  <div style={{ padding: '12px 16px 16px' }}>
+                    <h3 style={{ ...f('sm', 500), margin: 0 }}>Programs</h3>
+                    <p style={{ ...f('xs', 400, 'var(--color-text-muted)'), margin: '4px 0 0', lineHeight: 1.4 }}>Guided wellness journeys</p>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div style={{ position: 'absolute', top: -20, right: -20, width: 80, height: 80, borderRadius: '50%', background: 'rgba(124,58,237,0.06)' }} />
+                  <div style={{ position: 'relative', zIndex: 1 }}>
+                    <div style={{ width: 52, height: 52, borderRadius: 16, backgroundColor: 'rgba(124,58,237,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 12px', color: '#7C3AED' }}>
+                      <Brain size={24} />
+                    </div>
+                    <h3 style={{ ...f('sm', 500), margin: 0 }}>Programs</h3>
+                    <p style={{ ...f('xs', 400, 'var(--color-text-muted)'), margin: '4px 0 0', lineHeight: 1.4 }}>Guided wellness journeys</p>
+                  </div>
+                </>
+              )}
             </motion.div>
+
+            {/* Assessments card — uses admin hero image if configured */}
             <motion.div
               onClick={() => onNavigate?.('/assessment')}
               whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.98 }}
-              style={{ background: 'linear-gradient(135deg, #F0F9FF 0%, #E0F2FE 50%, #BAE6FD 100%)', borderRadius: 'var(--radius-lg)', boxShadow: 'var(--shadow-sm)', border: '1px solid #BAE6FD', padding: '24px 16px', cursor: 'pointer', textAlign: 'center' as const, position: 'relative', overflow: 'hidden' }}
+              style={{
+                background: publicSettings.exploreCardAssessmentsImage ? 'none' : 'linear-gradient(135deg, #F0F9FF 0%, #E0F2FE 50%, #BAE6FD 100%)',
+                borderRadius: 'var(--radius-lg)',
+                boxShadow: 'var(--shadow-sm)',
+                border: publicSettings.exploreCardAssessmentsImage ? '1px solid var(--color-border-default)' : '1px solid #BAE6FD',
+                cursor: 'pointer',
+                textAlign: 'center' as const,
+                position: 'relative',
+                overflow: 'hidden',
+                ...(publicSettings.exploreCardAssessmentsImage ? { padding: 0 } : { padding: '24px 16px' }),
+              }}
             >
-              {/* Decorative circle */}
-              <div style={{ position: 'absolute', top: -20, right: -20, width: 80, height: 80, borderRadius: '50%', background: 'rgba(14,165,233,0.06)' }} />
-              <div style={{ position: 'relative', zIndex: 1 }}>
-                <div style={{ width: 52, height: 52, borderRadius: 16, backgroundColor: 'rgba(14,165,233,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 12px', color: '#0EA5E9' }}>
-                  <Compass size={24} />
-                </div>
-                <h3 style={{ ...f('sm', 500), margin: 0 }}>Assessments</h3>
-                <p style={{ ...f('xs', 400, 'var(--color-text-muted)'), margin: '4px 0 0', lineHeight: 1.4 }}>Understand your well-being</p>
-              </div>
+              {publicSettings.exploreCardAssessmentsImage ? (
+                <>
+                  <div style={{ height: 100, overflow: 'hidden' }}>
+                    <img
+                      src={publicSettings.exploreCardAssessmentsImage}
+                      alt="Assessments"
+                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                    />
+                  </div>
+                  <div style={{ padding: '12px 16px 16px' }}>
+                    <h3 style={{ ...f('sm', 500), margin: 0 }}>Assessments</h3>
+                    <p style={{ ...f('xs', 400, 'var(--color-text-muted)'), margin: '4px 0 0', lineHeight: 1.4 }}>Understand your well-being</p>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div style={{ position: 'absolute', top: -20, right: -20, width: 80, height: 80, borderRadius: '50%', background: 'rgba(14,165,233,0.06)' }} />
+                  <div style={{ position: 'relative', zIndex: 1 }}>
+                    <div style={{ width: 52, height: 52, borderRadius: 16, backgroundColor: 'rgba(14,165,233,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 12px', color: '#0EA5E9' }}>
+                      <Compass size={24} />
+                    </div>
+                    <h3 style={{ ...f('sm', 500), margin: 0 }}>Assessments</h3>
+                    <p style={{ ...f('xs', 400, 'var(--color-text-muted)'), margin: '4px 0 0', lineHeight: 1.4 }}>Understand your well-being</p>
+                  </div>
+                </>
+              )}
             </motion.div>
           </div>
         </motion.section>

@@ -125,15 +125,15 @@ export function Navigation({ user, onNavigate, onGetStarted, currentRoute }: Nav
                 className="w-10 h-10 rounded-full border-2 border-[var(--grey-2)] overflow-hidden cursor-pointer"
                 onClick={() => onNavigate('/account')}
               >
-                 {(user.avatar_url || user.user_metadata?.avatar_url) ? (
-                   <img src={user.avatar_url || user.user_metadata.avatar_url} alt="User" className="w-full h-full object-cover" />
+                 {user.avatar_url ? (
+                   <img src={user.avatar_url as string} alt="User" className="w-full h-full object-cover" />
                  ) : (
                    <div
                      className="w-full h-full flex items-center justify-center"
                      style={{ backgroundColor: 'var(--color-primary-default)', color: 'var(--color-primary-on)' }}
                    >
-                     {(user.name || user.user_metadata?.name)
-                       ? (user.name || user.user_metadata.name).split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2)
+                     {user.name
+                       ? String(user.name).split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2)
                        : <User size={18} />}
                    </div>
                  )}

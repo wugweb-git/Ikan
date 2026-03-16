@@ -83,6 +83,7 @@ export interface Assessment {
   questions: any[]; // relaxed type
   daily_content?: DayContent[]; // New unified field
   scoringMethod?: 'sum' | 'average' | 'custom';
+  scoring_profile_id?: string;
   resultCategories?: Array<{ min: number; max: number; label: string; description: string }>;
   published: boolean;
   published_at?: string;
@@ -146,6 +147,18 @@ export function AssessmentEditPageWizard({ assessmentId, onBack, onSave }: Asses
 
   // Categories and difficulty from KV via useMetadata (no hardcoded fallbacks)
   const { categories: metaCategories, difficultyLevels: metaDifficulty, scoringMethods: metaScoringMethods } = useMetadata();
+
+  // Scoring profiles from backend
+  const [scoringProfiles, setScoringProfiles] = useState<Array<{ id: string; name: string }>>([]);
+  useEffect(() => {
+    apiClient.request('/admin/scoring-profiles', { method: 'GET' }, true, 0)
+      .then((data: any) => {
+        if (data?.profiles && Array.isArray(data.profiles)) {
+          setScoringProfiles(data.profiles.map((p: any) => ({ id: p.id, name: p.name || p.id })));
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   const [formData, setFormData] = useState<Partial<Assessment>>({
     title: '',
@@ -625,6 +638,23 @@ export function AssessmentEditPageWizard({ assessmentId, onBack, onSave }: Asses
                 </Select>
               </AdminFormField>
               
+              {scoringProfiles.length > 0 && (
+                <AdminFormField label="Scoring Profile" description="Link to a scoring profile from the Scoring Engine for severity band mapping">
+                  <Select
+                    value={formData.scoring_profile_id || '_none'}
+                    onValueChange={(v: any) => setFormData({ ...formData, scoring_profile_id: v === '_none' ? undefined : v })}
+                  >
+                    <SelectTrigger><SelectValue placeholder="Select a scoring profile..." /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="_none">None (use default percentage bands)</SelectItem>
+                      {scoringProfiles.map(p => (
+                        <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </AdminFormField>
+              )}
+
               <div className="space-y-4">
                 <div className="flex justify-between items-center">
                   <Label>Result Categories</Label>

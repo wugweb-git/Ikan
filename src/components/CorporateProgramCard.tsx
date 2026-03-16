@@ -59,7 +59,7 @@ export function CorporateProgramCard({ onNavigate }: CorporateProgramCardProps) 
   useEffect(() => {
     if (!user) { setLoading(false); return; }
 
-    const CACHE_KEY = `corporate_program_${user.id}`;
+    const CACHE_KEY = `corporate_program_${user.user_id}`;
     // Try cache first
     try {
       const cached = localStorage.getItem(CACHE_KEY);

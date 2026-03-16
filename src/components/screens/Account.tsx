@@ -172,6 +172,7 @@ export function Account({ className, onNavigate }: AccountProps) {
         dateOfBirth: userData.dateOfBirth,
         gender: userData.gender,
         location: userData.location,
+        zipCode: userData.zipCode,
         emergencyContactName: userData.emergencyContact?.name || '',
         emergencyContactPhone: userData.emergencyContact?.phone || '',
         emergencyContactRelationship: userData.emergencyContact?.relationship || '',

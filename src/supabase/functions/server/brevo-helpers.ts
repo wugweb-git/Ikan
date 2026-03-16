@@ -3,7 +3,7 @@
  * Centralises the API key lookup, base URL, and common request patterns.
  */
 
-import * as kv from "./kv_store.tsx";
+import * as kv from "./kv_dual_write.ts";
 
 const BREVO_BASE_URL = "https://api.brevo.com/v3";
 

@@ -252,7 +252,7 @@ export function AccountDetailsSection({
     gender: user?.gender || '',
     location: user?.location || '',
     city: user?.location ? user.location.split(',')[0].trim() : '',
-    zipCode: '',
+    zipCode: user?.location && user.location.includes(',') ? user.location.split(',').slice(1).join(',').trim() : '',
     emergencyContact: {
       name: user?.emergencyContact?.name || '',
       phone: user?.emergencyContact?.phone || '',
@@ -274,7 +274,7 @@ export function AccountDetailsSection({
         gender: user.gender || '',
         location: user.location || '',
         city: user.location ? user.location.split(',')[0].trim() : '',
-        zipCode: '',
+        zipCode: user.location && user.location.includes(',') ? user.location.split(',').slice(1).join(',').trim() : '',
         emergencyContact: {
           name: user.emergencyContact?.name || '',
           phone: user.emergencyContact?.phone || '',

@@ -212,7 +212,10 @@ export function clearEngineConfigCache(): void {
 
 /** Pre-warm the engine cache (call on app init) */
 export async function initEngineConfig(): Promise<void> {
-  await loadEngineConfig();
+  await Promise.all([
+    loadEngineConfig(),
+    loadScoringProfiles(),
+  ]);
 }
 
 // ══════════════════════════════════════════════════════════════════

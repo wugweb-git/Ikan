@@ -728,14 +728,32 @@ app.get("/admin/analytics", requireAdmin, async (c) => {
     }
     const activityChart = Object.entries(activityMap).map(([date, count]) => ({ date, count }));
 
-    // Real top resources — no random views; report real counts as 0 (no view tracking yet)
+    // Real top resources — pull real view counters from analytics:counter:{id} keys
     const allResources = [...resources, ...libraryResources];
     const uniqueResources = Array.from(new Map(allResources.filter((r: any) => r?.id).map((r: any) => [r.id, r])).values());
-    const topResources = uniqueResources.slice(0, 5).map((r: any) => ({
+
+    // Fetch real view counters for all resources
+    const counterKeys = uniqueResources.map((r: any) => `analytics:counter:${r.id}`);
+    let counters: any[] = [];
+    if (counterKeys.length > 0) {
+      try {
+        counters = await kv.mget(counterKeys);
+      } catch (e) {
+        console.error("Failed to fetch resource counters:", e);
+        counters = counterKeys.map(() => null);
+      }
+    }
+
+    const resourcesWithViews = uniqueResources.map((r: any, i: number) => ({
       id: r.id,
       title: r.title || 'Untitled',
-      views: 0  // No view tracking in KV — returns 0 instead of fake data
+      views: (counters[i] as any)?.views || 0
     }));
+
+    // Sort by views descending, take top 5
+    const topResources = resourcesWithViews
+      .sort((a: any, b: any) => b.views - a.views)
+      .slice(0, 5);
 
     return c.json({
       analytics: {
@@ -749,8 +767,7 @@ app.get("/admin/analytics", requireAdmin, async (c) => {
           totalJournalEntries: journalEntries.length,
         },
         activityChart,
-        topResources,
-        _note: "View counts require view-tracking infrastructure. Activity chart is based on real journal entries."
+        topResources
       }
     });
 

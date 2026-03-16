@@ -220,8 +220,8 @@ export function UnifiedBasicInfoForm({
                 <Input
                   id="price-input"
                   type="number"
-                  value={price}
-                  onChange={(e) => onPriceChange?.(parseInt(e.target.value) || 0)}
+                  value={Math.round(price / 100) || ''}
+                  onChange={(e) => onPriceChange?.(Math.round((parseFloat(e.target.value) || 0) * 100))}
                   placeholder="299"
                   min="0"
                   step="1"

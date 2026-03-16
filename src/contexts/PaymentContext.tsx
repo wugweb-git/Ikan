@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useCallback } from 'react';
+import React, { createContext, useContext, useState, useCallback, useRef } from 'react';
 import { useAuth } from './AuthContext';
 import { useNotifications } from './NotificationContext';
 import { apiClient } from '../lib/api-client';
@@ -33,6 +33,15 @@ export interface PaymentMethod {
   enabled: boolean;
 }
 
+interface RazorpayPaymentData {
+  razorpay_order_id: string;
+  razorpay_payment_id: string;
+  razorpay_signature: string;
+  amount: number;
+  currency: string;
+  programId: string;
+}
+
 interface PaymentContextType {
   // State
   isLoading: boolean;
@@ -53,15 +62,6 @@ interface PaymentContextType {
   setUIPreferences: (prefs: { showReceipt?: boolean; showExpiry?: boolean; showReminderToggle?: boolean }) => void;
 }
 
-interface RazorpayPaymentData {
-  razorpay_order_id: string;
-  razorpay_payment_id: string;
-  razorpay_signature: string;
-  amount: number;
-  currency: string;
-  programId: string;
-}
-
 const PaymentContext = createContext<PaymentContextType | undefined>(undefined);
 
 export function usePayment() {
@@ -79,12 +79,10 @@ interface PaymentProviderProps {
 // Razorpay script loader
 const loadRazorpayScript = (): Promise<boolean> => {
   return new Promise((resolve) => {
-    // Check if script already loaded
     if (window.Razorpay) {
       resolve(true);
       return;
     }
-
     const script = document.createElement('script');
     script.src = 'https://checkout.razorpay.com/v1/checkout.js';
     script.onload = () => resolve(true);
@@ -92,6 +90,13 @@ const loadRazorpayScript = (): Promise<boolean> => {
     document.body.appendChild(script);
   });
 };
+
+/** Helper to extract a human-readable message from any error */
+function getErrorMessage(err: unknown): string {
+  if (err instanceof Error) return err.message;
+  if (typeof err === 'string') return err;
+  return 'An unknown error occurred';
+}
 
 export function PaymentProvider({ children }: PaymentProviderProps) {
   const { user } = useAuth();
@@ -105,6 +110,12 @@ export function PaymentProvider({ children }: PaymentProviderProps) {
   const [showExpiry, setShowExpiry] = useState(true);
   const [showReminderToggle, setShowReminderToggle] = useState(true);
 
+  // Ref so that processPayment can always read the latest verifyPayment without
+  // needing it in a dependency array (avoids stale-closure & TDZ ordering issues).
+  const verifyPaymentRef = useRef<(pid: string, oid: string, sig: string) => Promise<boolean>>(
+    async () => false
+  );
+
   // JSON spec payment methods: ["razorpay"]
   const paymentMethods: PaymentMethod[] = [
     {
@@ -116,6 +127,39 @@ export function PaymentProvider({ children }: PaymentProviderProps) {
     }
   ];
 
+  // ── verifyPayment (defined FIRST so the ref is populated before processPayment) ──
+  const verifyPayment = useCallback(async (
+    paymentId: string, 
+    orderId: string, 
+    signature: string
+  ): Promise<boolean> => {
+    try {
+      console.log('🔍 Verifying payment:', { paymentId, orderId });
+      
+      const verificationResponse = await apiClient.verifyPayment({
+        razorpay_payment_id: paymentId,
+        razorpay_order_id: orderId,
+        razorpay_signature: signature,
+        transaction_id: currentTransaction?.metadata?.transaction_id,
+      });
+
+      if (verificationResponse?.success) {
+        console.log('✅ Payment verification successful');
+        return true;
+      } else {
+        console.error('❌ Payment verification failed:', verificationResponse?.error);
+        return false;
+      }
+    } catch (error: unknown) {
+      console.error('❌ Payment verification error:', error);
+      return false;
+    }
+  }, [currentTransaction]);
+
+  // Keep the ref always pointing at the latest version
+  verifyPaymentRef.current = verifyPayment;
+
+  // ── initializePayment ──
   const initializePayment = useCallback(async (
     programId: string, 
     amount: number, 
@@ -128,16 +172,14 @@ export function PaymentProvider({ children }: PaymentProviderProps) {
     setIsLoading(true);
     
     try {
-      // Clear any existing transaction
       setCurrentTransaction(undefined);
       console.log('🚀 Initializing payment:', { programId, amount, currency });
       
-      // Create order on server
       const orderResponse = await apiClient.createPaymentOrder({
         program_id: programId,
         amount,
         currency,
-        user_id: user.id,
+        user_id: user.user_id,
         receipt_email: showReceipt
       });
 
@@ -149,31 +191,35 @@ export function PaymentProvider({ children }: PaymentProviderProps) {
 
       console.log('✅ Payment order created:', orderResponse.order_id);
       
-      // Create transaction record
       const transaction: Transaction = {
         id: orderResponse.order_id,
-        user_id: user.id,
+        user_id: user.user_id,
         provider: 'razorpay',
         amount,
         currency,
         status: 'pending',
         created_at: new Date().toISOString(),
-        metadata: { programId, receiptEmail: showReceipt, key_id: orderResponse.key_id, transaction_id: orderResponse.transaction_id }
+        metadata: {
+          programId,
+          receiptEmail: showReceipt,
+          key_id: orderResponse.key_id,
+          transaction_id: orderResponse.transaction_id,
+        }
       };
 
       setCurrentTransaction(transaction);
-      
       return orderResponse.order_id;
       
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('❌ Payment initialization failed:', error);
-      showToast('error', 'Payment Failed', error.message || 'Failed to initialize payment');
+      showToast('error', 'Payment Failed', getErrorMessage(error));
       throw error;
     } finally {
       setIsLoading(false);
     }
   }, [user, showReceipt, showToast]);
 
+  // ── processPayment ──
   const processPayment = useCallback(async (paymentData: RazorpayPaymentData): Promise<boolean> => {
     if (!user) {
       console.error('❌ Payment processing failed: User not authenticated');
@@ -190,15 +236,14 @@ export function PaymentProvider({ children }: PaymentProviderProps) {
     try {
       console.log('🔄 Processing payment:', paymentData.razorpay_payment_id);
 
-      // Verify payment on server
-      const verificationResult = await verifyPayment(
+      // Use the ref so we always call the latest verifyPayment
+      const verificationResult = await verifyPaymentRef.current(
         paymentData.razorpay_payment_id,
         paymentData.razorpay_order_id,
         paymentData.razorpay_signature
       );
 
       if (verificationResult) {
-        // Update transaction status
         const updatedTransaction: Transaction = {
           ...currentTransaction,
           provider_payment_id: paymentData.razorpay_payment_id,
@@ -206,10 +251,8 @@ export function PaymentProvider({ children }: PaymentProviderProps) {
         };
         setCurrentTransaction(updatedTransaction);
 
-        // Show success notification
         showToast('success', 'Payment Successful!', 'Your program access has been activated.');
         
-        // Add notification to history
         addNotification({
           type: 'success',
           title: 'Payment Completed',
@@ -225,10 +268,9 @@ export function PaymentProvider({ children }: PaymentProviderProps) {
         throw new Error('Payment verification failed');
       }
 
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('❌ Payment processing failed:', error);
       
-      // Update transaction status
       if (currentTransaction) {
         setCurrentTransaction({
           ...currentTransaction,
@@ -236,51 +278,21 @@ export function PaymentProvider({ children }: PaymentProviderProps) {
         });
       }
 
-      showToast('error', 'Payment Failed', error.message || 'Payment could not be processed');
+      showToast('error', 'Payment Failed', getErrorMessage(error));
       return false;
     } finally {
       setIsLoading(false);
     }
   }, [user, currentTransaction, showToast, addNotification]);
 
-  const verifyPayment = useCallback(async (
-    paymentId: string, 
-    orderId: string, 
-    signature: string
-  ): Promise<boolean> => {
-    try {
-      console.log('🔍 Verifying payment:', { paymentId, orderId });
-      
-      const verificationResponse = await apiClient.verifyPayment({
-        razorpay_payment_id: paymentId,
-        razorpay_order_id: orderId,
-        razorpay_signature: signature,
-        transaction_id: currentTransaction?.metadata?.transaction_id,
-      });
-
-      if (verificationResponse.success) {
-        console.log('✅ Payment verification successful');
-        return true;
-      } else {
-        console.error('❌ Payment verification failed:', verificationResponse.error);
-        return false;
-      }
-
-    } catch (error) {
-      console.error('❌ Payment verification error:', error);
-      return false;
-    }
-  }, [currentTransaction]);
-
+  // ── getTransactionHistory ──
   const getTransactionHistory = useCallback(async (): Promise<Transaction[]> => {
-    if (!user) {
-      return [];
-    }
+    if (!user) return [];
 
     try {
       const payments = await apiClient.getPaymentHistory();
       return payments || [];
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Failed to fetch transaction history:', error);
       return [];
     }

@@ -39,6 +39,8 @@ export interface PublicSettings {
   certifications: Array<{ imageUrl: string; alt: string }>;
   primaryColor: string;
   accentColor: string;
+  exploreCardProgramsImage: string;
+  exploreCardAssessmentsImage: string;
   enableUserRegistration: boolean;
   maintenanceMode: boolean;
 }
@@ -73,6 +75,8 @@ const DEFAULTS: PublicSettings = {
   certifications: [],
   primaryColor: '',
   accentColor: '',
+  exploreCardProgramsImage: '',
+  exploreCardAssessmentsImage: '',
   enableUserRegistration: true,
   maintenanceMode: false,
 };

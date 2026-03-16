@@ -85,7 +85,14 @@ import { useOfflineSync } from './hooks/useOfflineSync';
 import { usePullToRefresh } from './hooks/usePullToRefresh';
 
 // --- Suspense fallback ---
+// Uses a delayed render so fast-loading chunks don't flash a spinner
 function LazyFallback() {
+  const [show, setShow] = useState(false);
+  useEffect(() => {
+    const t = setTimeout(() => setShow(true), 300); // 300ms grace period
+    return () => clearTimeout(t);
+  }, []);
+  if (!show) return null;
   return <LoadingSpinner fullScreen message="Loading..." />;
 }
 
@@ -517,7 +524,7 @@ function AppContent() {
   return (
     <div className={cn(
       "flex flex-col min-h-[100dvh] bg-background font-sans antialiased text-foreground",
-      currentRoute === '/login' ? "h-[100dvh] overflow-hidden" : ""
+      currentRoute === '/login' ? "h-[100dvh] md:overflow-hidden overflow-y-auto" : ""
     )}>
       {/* Accessibility: Skip to main content link */}
       <SkipToMainContent />

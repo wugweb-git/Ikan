@@ -37,7 +37,8 @@ import { Button } from '../ui/button';
 import { Card } from '../ui/card';
 import { Input } from '../ui/input';
 import { SideNav, SideNavGroup } from '../navigation/SideNav';
-import { Logo } from '../Logo';
+import { LogoIcon } from '../Logo';
+import { usePublicSettings } from '../../hooks/usePublicSettings';
 import { ErrorBoundary } from '../ErrorBoundary';
 
 // ── ALL admin screens are lazy-loaded ──────────────────────────────
@@ -73,12 +74,23 @@ const L = {
 // Stable Suspense wrapper - defined OUTSIDE component to prevent remounting
 function SuspenseScreen({ children }: { children: React.ReactNode }) {
   return (
-    <Suspense fallback={
-      <div className="flex flex-col items-center justify-center p-8 gap-3" style={{ minHeight: 200 }}>
-        <Loader2 className="w-6 h-6 animate-spin" style={{ color: 'var(--color-text-muted)' }} />
-        <span style={{ color: 'var(--color-text-muted)', fontSize: 'var(--text-sm)' }}>Loading…</span>
-      </div>
-    }>{children}</Suspense>
+    <Suspense fallback={<AdminLazyFallback />}>{children}</Suspense>
+  );
+}
+
+// Delayed fallback to prevent flash on fast loads
+function AdminLazyFallback() {
+  const [show, setShow] = useState(false);
+  useEffect(() => {
+    const t = setTimeout(() => setShow(true), 250);
+    return () => clearTimeout(t);
+  }, []);
+  if (!show) return <div style={{ minHeight: 200 }} />;
+  return (
+    <div className="flex flex-col items-center justify-center p-8 gap-3" style={{ minHeight: 200 }}>
+      <Loader2 className="w-6 h-6 animate-spin" style={{ color: 'var(--color-text-muted)' }} />
+      <span style={{ color: 'var(--color-text-muted)', fontSize: 'var(--text-sm)' }}>Loading…</span>
+    </div>
   );
 }
 
@@ -139,6 +151,7 @@ type ViewType =
 export function AdminDashboard({ onNavigate, initialView }: AdminDashboardProps) {
   const { unreadCount } = useNotifications();
   const { user } = useAuth();
+  const { settings: siteSettings } = usePublicSettings();
   const [currentView, setCurrentView] = useState<ViewType>((initialView as ViewType) || 'dashboard');
   const [searchQuery, setSearchQuery] = useState('');
   const { isMobile, isCompact } = useIsMobileAdmin();
@@ -405,14 +418,18 @@ export function AdminDashboard({ onNavigate, initialView }: AdminDashboardProps)
         style={{ willChange: isMobile ? 'transform' : 'auto' }}
       >
           {/* Header Area in Sidebar */}
-          <div className="h-[64px] lg:h-[96px] flex items-center px-4 border-b border-[var(--grey-2)] justify-between">
-              <div className="flex items-center gap-3">
-                <div className="bg-[var(--primary)] rounded-lg p-1.5 lg:p-2 flex items-center justify-center" style={{ color: 'var(--color-text-inverse)' }}>
-                  <Logo showText={false} iconSize={isMobile ? 28 : 40} style={{ color: 'var(--color-text-inverse)' }} />
+          <div className="h-[64px] lg:h-[72px] flex items-center px-4 border-b border-[var(--grey-2)] justify-between">
+              <div className="flex items-center gap-3 cursor-pointer" onClick={() => setCurrentView('dashboard')}>
+                <div className="rounded-lg p-1.5 flex items-center justify-center shrink-0" style={{ backgroundColor: 'var(--color-primary-default)' }}>
+                  {siteSettings.logoIconUrl ? (
+                    <img src={siteSettings.logoIconUrl} alt={siteSettings.siteName || 'iKan'} style={{ width: isMobile ? 28 : 32, height: isMobile ? 28 : 32, objectFit: 'contain' }} />
+                  ) : (
+                    <LogoIcon size={isMobile ? 28 : 32} style={{ color: 'var(--color-text-inverse)' }} />
+                  )}
                 </div>
                 <div>
-                  <span className="text-[var(--grey-9)] text-lg lg:text-xl tracking-tight block leading-none" style={{ fontWeight: 'var(--font-weight-medium)' }}>iKan</span>
-                  <span className="text-[var(--grey-5)] text-xs uppercase tracking-wider" style={{ fontWeight: 'var(--font-weight-medium)' }}>Admin Console</span>
+                  <span className="text-[var(--grey-9)] text-base lg:text-lg tracking-tight block leading-none" style={{ fontWeight: 'var(--font-weight-medium)', fontFamily: 'var(--font-family-base)' }}>{siteSettings.siteName || 'iKan'}</span>
+                  <span className="text-[var(--grey-5)] text-[10px] uppercase tracking-wider" style={{ fontWeight: 'var(--font-weight-medium)', fontFamily: 'var(--font-family-base)' }}>Admin Console</span>
                 </div>
               </div>
               {isMobile && (
@@ -436,11 +453,11 @@ export function AdminDashboard({ onNavigate, initialView }: AdminDashboardProps)
         
         {/* Top Header */}
         <header
-          className="sticky top-0 z-30 px-3 lg:px-4 flex items-center justify-between gap-2"
+          className="sticky top-0 z-30 px-3 lg:px-6 flex items-center justify-between gap-3"
           style={{
             backgroundColor: 'var(--color-bg-card)',
             borderBottom: '1px solid var(--color-border-default)',
-            height: isMobile ? '56px' : '96px',
+            height: isMobile ? '56px' : '72px',
           }}
         >
            {/* Mobile hamburger */}
@@ -518,13 +535,13 @@ export function AdminDashboard({ onNavigate, initialView }: AdminDashboardProps)
               <div className="flex items-center gap-2 lg:gap-3 lg:ml-2 px-2 lg:px-3 py-1.5 bg-[var(--grey-1)] rounded-lg border border-[var(--grey-2)]">
                   {!isMobile && !isCompact && (
                     <div className="text-right">
-                        <p style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--font-weight-medium)', color: 'var(--grey-9)' }} className="leading-none">{user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'Admin'}</p>
+                        <p style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--font-weight-medium)', color: 'var(--grey-9)' }} className="leading-none">{user?.name || user?.email?.split('@')[0] || 'Admin'}</p>
                         <p style={{ fontSize: 'var(--text-xs)', color: 'var(--grey-5)', marginTop: '4px' }}>Administrator</p>
                     </div>
                   )}
                   <div className="w-8 h-8 rounded-full bg-[var(--grey-3)] text-[var(--grey-7)] flex items-center justify-center overflow-hidden">
-                      {user?.user_metadata?.avatar_url ? (
-                        <img src={user.user_metadata.avatar_url} alt="" className="w-full h-full object-cover" />
+                      {user?.avatar_url ? (
+                        <img src={String(user.avatar_url)} alt="" className="w-full h-full object-cover" />
                       ) : (
                         <User className="w-4 h-4" />
                       )}

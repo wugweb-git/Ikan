@@ -133,8 +133,14 @@ class ApiClient {
         throw error;
       }
 
-      if (retryCount < 2 && (!error.message || !error.message.includes('401') && !error.message.includes('409'))) {
-        // Simple retry logic with linear backoff (except for auth and conflict errors)
+      // Only retry on 5xx server errors and network errors (not 4xx client errors)
+      const errorMsg = error?.message || '';
+      const isNetworkError = error?.name === 'TypeError' && errorMsg.toLowerCase().includes('failed to fetch');
+      const is5xxError = /API Error: 5\d\d/.test(errorMsg);
+      const isRetryable = isNetworkError || is5xxError || !errorMsg;
+      
+      if (retryCount < 2 && isRetryable) {
+        // Retry with linear backoff for transient errors
         await new Promise(resolve => setTimeout(resolve, 1000 * (retryCount + 1)));
         return this.request(path, options, auth, retryCount + 1);
       }
@@ -144,10 +150,10 @@ class ApiClient {
       // Also suppress 409 logging as it is used for idempotent create-if-not-exists flows
       // Also suppress network errors (Failed to fetch) as they are transient
       const msg = error?.message?.toLowerCase() || '';
-      const isNetworkError = error?.name === 'TypeError' && msg.includes('failed to fetch');
-      if (!error.message || (!error.message.includes('401') && !error.message.includes('404') && !error.message.includes('409') && !isNetworkError)) {
+      const isNetworkErrorLog = error?.name === 'TypeError' && msg.includes('failed to fetch');
+      if (!error.message || (!error.message.includes('401') && !error.message.includes('404') && !error.message.includes('409') && !isNetworkErrorLog)) {
         console.error('API Request failed', error);
-      } else if (isNetworkError) {
+      } else if (isNetworkErrorLog) {
         console.warn('API Request: network unreachable (will retry when online)');
       }
       
@@ -188,6 +194,16 @@ class ApiClient {
       console.log(`[Activity] ${action}`, metadata);
     }
     return { success: true };
+  }
+
+  // Activity Feed (comprehensive — for dashboard)
+  async getActivityFeed(limit: number = 10): Promise<{ feed: any[] }> {
+    try {
+      const res = await this.request(`/user-activity/feed?limit=${limit}`, { method: 'GET' }, true);
+      return res || { feed: [] };
+    } catch {
+      return { feed: [] };
+    }
   }
 
   // CMS

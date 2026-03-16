@@ -20,6 +20,7 @@ import { ResourceTags } from '../blocks/ResourceTags';
 interface ResourceDetailProps {
   resourceId: string;
   onBack?: () => void;
+  onNavigate?: (route: string) => void;
   onResourceSelect?: (id: string) => void;
   className?: string;
 }
@@ -53,7 +54,7 @@ interface ResourceContent {
   authorImage?: string;
 }
 
-export function ResourceDetail({ resourceId, onBack, onResourceSelect, className }: ResourceDetailProps) {
+export function ResourceDetail({ resourceId, onBack, onNavigate, onResourceSelect, className }: ResourceDetailProps) {
   const isMobile = useIsMobile();
   const { showToast } = useNotifications();
   const { user } = useAuth();
@@ -633,7 +634,7 @@ export function ResourceDetail({ resourceId, onBack, onResourceSelect, className
       
       // Format data with snake_case for backend compatibility
       const engagementData = {
-        user_id: user.id,
+        user_id: user.user_id,
         resource_id: resourceId,
         action,
         timestamp: new Date().toISOString(),
@@ -659,7 +660,7 @@ export function ResourceDetail({ resourceId, onBack, onResourceSelect, className
         const offlineAnalytics = JSON.parse(localStorage.getItem('ikan-offline-analytics') || '[]');
         offlineAnalytics.push({
           resource_id: resourceId,
-          user_id: user?.id,
+          user_id: user?.user_id,
           action,
           timestamp: new Date().toISOString(),
           session_data: data
@@ -725,11 +726,11 @@ export function ResourceDetail({ resourceId, onBack, onResourceSelect, className
         return;
       }
 
-      console.log(`📖 Marking resource ${resourceId} as read for user ${user.id}`);
+      console.log(`📖 Marking resource ${resourceId} as read for user ${user.user_id}`);
       
       const readData = {
         resourceId,
-        userId: user.id,
+        userId: user.user_id,
         readingTimeSeconds: readingTime,
         completionPercentage: Math.min(readProgress, 100),
         readAt: new Date().toISOString(),
@@ -742,10 +743,10 @@ export function ResourceDetail({ resourceId, onBack, onResourceSelect, className
       }, 3);
 
       // Update local storage for quick access
-      const userReadResources = JSON.parse(localStorage.getItem(`ikan-read-resources-${user.id}`) || '[]');
+      const userReadResources = JSON.parse(localStorage.getItem(`ikan-read-resources-${user.user_id}`) || '[]');
       if (!userReadResources.includes(resourceId)) {
         userReadResources.push(resourceId);
-        localStorage.setItem(`ikan-read-resources-${user.id}`, JSON.stringify(userReadResources));
+        localStorage.setItem(`ikan-read-resources-${user.user_id}`, JSON.stringify(userReadResources));
       }
 
       // Track successful read completion
@@ -765,7 +766,7 @@ export function ResourceDetail({ resourceId, onBack, onResourceSelect, className
         const offlineReads = JSON.parse(localStorage.getItem('ikan-offline-reads') || '[]');
         offlineReads.push({
           resourceId,
-          userId: user?.id,
+          userId: user?.user_id,
           readingTimeSeconds: readingTime,
           completionPercentage: readProgress,
           timestamp: new Date().toISOString()

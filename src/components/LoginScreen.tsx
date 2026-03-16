@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useNotifications } from '../contexts/NotificationContext';
 import { Icon } from './Icon';
-import { Logo } from './Logo';
+import { Logo, LogoFull } from './Logo';
 import { cn } from './ui/utils';
 import { authContent } from '../lib/content/auth';
 import { Input } from './ui/input';
@@ -18,68 +18,96 @@ interface LoginScreenProps {
 
 type AuthMode = 'login' | 'signup' | 'forgot';
 
-// Hero section with overlaying text on Unsplash image
+const REMEMBER_EMAIL_KEY = 'ikan_remembered_email';
+
+const HERO_IMAGE_URL = "https://images.unsplash.com/photo-1766391607256-44175538aa48?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxjYWxtJTIwbmF0dXJlJTIwbWluZGZ1bG5lc3MlMjBwZWFjZWZ1bCUyMGdyZWVufGVufDF8fHx8MTc3MzY1OTY0MHww&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral";
+
+const HERO_FEATURES = [
+  { icon: 'shield' as const, text: authContent.hero.features.private },
+  { icon: 'heart' as const, text: authContent.hero.features.evidence },
+  { icon: 'users' as const, text: authContent.hero.features.support },
+];
+
+// Hero section — renders as a full side panel (md+) with image, gradient, and text overlay
 function HeroSection() {
   return (
     <div className="relative w-full h-full flex items-center justify-center overflow-hidden">
       {/* Background Image */}
       <div aria-hidden="true" className="absolute inset-0">
-        <img 
-          alt="Peaceful nature scene representing mental wellness" 
-          className="w-full h-full object-cover" 
-          src="https://images.unsplash.com/photo-1766391607256-44175538aa48?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxjYWxtJTIwbmF0dXJlJTIwbWluZGZ1bG5lc3MlMjBwZWFjZWZ1bCUyMGdyZWVufGVufDF8fHx8MTc3MzM3NTQ1MHww&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral" 
+        <img
+          alt={authContent.hero.imageAlt}
+          className="w-full h-full object-cover"
+          src={HERO_IMAGE_URL}
         />
         {/* Gradient Overlay */}
-        <div className="absolute inset-0 hidden lg:block" style={{ background: 'linear-gradient(160deg, rgba(42,42,42,0.7) 0%, rgba(42,42,42,0.4) 50%, rgba(42,42,42,0.65) 100%)' }} />
+        <div
+          className="absolute inset-0"
+          style={{
+            background:
+              'linear-gradient(160deg, rgba(42,42,42,0.72) 0%, rgba(42,42,42,0.38) 50%, rgba(42,42,42,0.68) 100%)',
+          }}
+        />
       </div>
-      
+
       {/* Overlaying Text Content */}
-      <div className="relative z-10 text-center text-white max-w-lg mx-auto px-8">
+      <div className="relative z-10 text-center text-white max-w-md mx-auto px-6 lg:px-8">
         <div style={{ marginBottom: 24 }}>
-          <Logo />
+          <LogoFull height={36} style={{ color: 'white', margin: '0 auto' }} />
         </div>
-        <h1 
+        <h1
           style={{
             fontSize: 'var(--text-2xl)',
-            fontWeight: 500,
+            fontWeight: 'var(--font-weight-medium)',
             lineHeight: 'var(--line-height-sm)',
             color: 'white',
             fontFamily: 'var(--font-family-base)',
-            marginBottom: 16,
+            margin: '0 0 16px 0',
           }}
         >
           {authContent.hero.title}
         </h1>
-        <p 
+        <p
           style={{
             fontSize: 'var(--text-base)',
-            fontWeight: 400,
+            fontWeight: 'var(--font-weight-regular)',
             lineHeight: 'var(--line-height-md)',
             color: 'rgba(255, 255, 255, 0.85)',
             fontFamily: 'var(--font-family-base)',
-            marginBottom: 32,
+            margin: '0 0 32px 0',
           }}
         >
           {authContent.hero.subtitle}
         </p>
-        
-        {/* Feature highlights */}
-        <div className="hidden md:flex justify-center gap-6">
-          {[
-            { icon: 'shield', text: authContent.hero.features.private },
-            { icon: 'heart', text: authContent.hero.features.evidence },
-            { icon: 'users', text: authContent.hero.features.support },
-          ].map((feature) => (
+
+        {/* Feature highlights — visible on all hero sizes */}
+        <div className="flex flex-col md:flex-row items-center justify-center gap-4 md:gap-6">
+          {HERO_FEATURES.map((feature) => (
             <div key={feature.text} className="flex items-center gap-2" style={{ opacity: 0.9 }}>
-              <div style={{
-                width: 32, height: 32, borderRadius: 'var(--radius-md)',
-                backgroundColor: 'rgba(255,255,255,0.15)',
-                backdropFilter: 'blur(8px)',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-              }}>
+              <div
+                style={{
+                  width: 32,
+                  height: 32,
+                  borderRadius: 'var(--radius-md)',
+                  backgroundColor: 'rgba(255,255,255,0.15)',
+                  backdropFilter: 'blur(8px)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexShrink: 0,
+                }}
+              >
                 <Icon name={feature.icon as any} size={16} style={{ color: 'white' }} />
               </div>
-              <span style={{ fontSize: 'var(--text-sm)', color: 'rgba(255,255,255,0.9)', fontFamily: 'var(--font-family-base)' }}>{feature.text}</span>
+              <span
+                style={{
+                  fontSize: 'var(--text-sm)',
+                  color: 'rgba(255,255,255,0.9)',
+                  fontFamily: 'var(--font-family-base)',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                {feature.text}
+              </span>
             </div>
           ))}
         </div>
@@ -117,7 +145,7 @@ function AuthHeader({ mode, onModeChange, onBack }: { mode: AuthMode; onModeChan
 
   return (
     <div className="space-y-6">
-      {/* Back Button and Logo */}
+      {/* Back Button and Logo — Logo hidden on mobile (shown in branded strip instead) */}
       <div className="flex items-center justify-between">
         {onBack && (
           <button
@@ -133,8 +161,8 @@ function AuthHeader({ mode, onModeChange, onBack }: { mode: AuthMode; onModeChan
           </button>
         )}
         
-        {/* Logo centered in remaining space */}
-        <div className={cn("flex", onBack ? "flex-1 justify-center" : "justify-center w-full")}>
+        {/* Logo — hide on mobile (already in branded strip), hide on md+ (already in hero panel) */}
+        <div className={cn("hidden", onBack ? "flex-1 justify-center" : "justify-center w-full")}>
           <Logo />
         </div>
         
@@ -195,12 +223,21 @@ function AuthForm({ mode, onSuccess, onModeChange }: {
   const { showToast } = useNotifications();
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [formData, setFormData] = useState({
-    email: '',
-    password: '',
-    confirmPassword: '',
-    fullName: '',
-    rememberMe: false
+  const [formData, setFormData] = useState(() => {
+    // Restore remembered email
+    let savedEmail = '';
+    let remembered = false;
+    try {
+      const saved = localStorage.getItem(REMEMBER_EMAIL_KEY);
+      if (saved) { savedEmail = saved; remembered = true; }
+    } catch { /* ignore */ }
+    return {
+      email: savedEmail,
+      password: '',
+      confirmPassword: '',
+      fullName: '',
+      rememberMe: remembered,
+    };
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -253,6 +290,12 @@ function AuthForm({ mode, onSuccess, onModeChange }: {
     } else {
       try {
         await signIn(formData.email, formData.password);
+        // Persist or clear remembered email
+        if (formData.rememberMe) {
+          localStorage.setItem(REMEMBER_EMAIL_KEY, formData.email);
+        } else {
+          localStorage.removeItem(REMEMBER_EMAIL_KEY);
+        }
         showToast('success', authContent.messages.success.welcomeBack.title, authContent.messages.success.welcomeBack.description);
         onSuccess?.();
       } catch (error) {
@@ -579,46 +622,78 @@ export default function LoginScreen({ onSuccess, onBack, onNavigate, reason, red
   }, [reason, showToast]);
 
   return (
-    <div 
+    <div
       className="h-full w-full"
       style={{ backgroundColor: 'var(--color-bg-page)' }}
     >
-      {/* Main Content - Standard Auth Screen Layout */}
-      <div className="h-full flex flex-col lg:flex-row">
-        {/* Left Side - Hero Section with Image and Text - Desktop (lg+) Only */}
-        <div 
-          className="relative items-center justify-center hidden lg:flex w-1/2 h-full overflow-hidden"
-        >
+      {/* Main Content — adaptive split layout */}
+      <div className="h-full flex flex-col md:flex-row">
+        {/* Left Side — Hero panel: hidden on mobile, 40% on tablet, 50% on desktop */}
+        <div className="relative hidden md:flex items-center justify-center md:w-[40%] lg:w-1/2 h-full overflow-hidden">
           <HeroSection />
         </div>
 
-        {/* Right Side - Auth Form — full width on mobile/tablet, 50% on desktop */}
-        <div 
-          className="flex items-center justify-center flex-1 w-full lg:w-1/2 h-full p-6 lg:p-8 overflow-y-auto"
+        {/* Mobile-only branded header strip (shown below md) */}
+        <div
+          className="md:hidden relative w-full overflow-hidden"
+          style={{ height: 160 }}
+        >
+          <img
+            src={HERO_IMAGE_URL}
+            alt={authContent.hero.imageAlt}
+            className="absolute inset-0 w-full h-full object-cover"
+          />
+          <div
+            className="absolute inset-0"
+            style={{
+              background:
+                'linear-gradient(180deg, rgba(42,42,42,0.65) 0%, rgba(42,42,42,0.85) 100%)',
+            }}
+          />
+          <div className="relative z-10 flex flex-col items-center justify-center h-full px-6">
+            <LogoFull height={28} style={{ color: 'white' }} />
+            <p
+              style={{
+                fontSize: 'var(--text-sm)',
+                fontWeight: 'var(--font-weight-regular)',
+                color: 'rgba(255,255,255,0.8)',
+                fontFamily: 'var(--font-family-base)',
+                marginTop: 8,
+                textAlign: 'center',
+              }}
+            >
+              {authContent.hero.title}
+            </p>
+          </div>
+        </div>
+
+        {/* Right Side — Auth form: full-width on mobile, 60% tablet, 50% desktop */}
+        <div
+          className="flex items-start md:items-center justify-center flex-1 w-full md:w-[60%] lg:w-1/2 h-auto md:h-full p-6 lg:p-8 overflow-y-auto"
           style={{ backgroundColor: 'var(--color-bg-card)' }}
         >
-          <div className="w-full max-w-md space-y-8">
+          <div className="w-full max-w-md space-y-8 py-2 md:py-0">
             {/* Auth Header with Logo and Back Button */}
-            <AuthHeader 
-              mode={authMode} 
+            <AuthHeader
+              mode={authMode}
               onModeChange={setAuthMode}
               onBack={handleBack}
             />
 
             {/* Auth Form */}
-            <AuthForm 
-              mode={authMode} 
-              onSuccess={onSuccess} 
+            <AuthForm
+              mode={authMode}
+              onSuccess={onSuccess}
               onModeChange={setAuthMode}
             />
 
             {/* Footer */}
             <div className="text-center">
-              <p 
+              <p
                 className="text-xs"
-                style={{ 
+                style={{
                   color: 'var(--color-text-muted)',
-                  fontFamily: 'var(--font-family-base)'
+                  fontFamily: 'var(--font-family-base)',
                 }}
               >
                 {authContent.form.footer}
