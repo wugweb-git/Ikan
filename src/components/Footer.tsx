@@ -1,17 +1,8 @@
-import { Icon } from './Icon';
 import { cn } from './ui/utils';
 import { Mail, Phone, Facebook, Instagram, Linkedin, Youtube } from 'lucide-react';
 import { LogoFull } from './Logo';
 import { ImageWithFallback } from './figma/ImageWithFallback';
-import { useState } from 'react';
-
-// Certification/compliance images - Using public URLs
-const imgIso = "https://images.unsplash.com/photo-1633265486064-086b219458ec?w=150&h=150&fit=crop"; // ISO certification
-const imgAsset31 = "https://images.unsplash.com/photo-1551135049-8a33b5883817?w=150&h=150&fit=crop"; // TUV
-const imgLayer1 = "https://images.unsplash.com/photo-1587440871875-191322ee64b0?w=150&h=150&fit=crop"; // Cert 1
-const imgLayer4 = "https://images.unsplash.com/photo-1450101499163-c8848c66ca85?w=150&h=150&fit=crop"; // Cert 2
-const imgLayer2 = "https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?w=150&h=150&fit=crop"; // Cert 3
-const imgLayer3 = "https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=150&h=150&fit=crop"; // Cert 4
+import { useSiteSettings } from '../hooks/useSiteSettings';
 
 import svgPaths from "../imports/svg-ul0k820b9n";
 
@@ -34,7 +25,7 @@ function WugwebLogo() {
   );
 }
 
-// Custom X (Twitter) Icon
+// Custom X (formerly Twitter) Icon
 function XIcon({ size = 24, className = "" }: { size?: number, className?: string }) {
   return (
     <svg 
@@ -72,19 +63,22 @@ interface FooterProps {
 }
 
 export function Footer({ onNavigate, className }: FooterProps) {
+  const { settings, loading: settingsLoading } = useSiteSettings();
+
   const handleNavigate = (path: string) => {
     if (onNavigate) {
       onNavigate(path);
     }
   };
 
+  // Build social links from settings — only show links that have a URL configured
   const socialLinks = [
-    { name: 'Facebook', icon: Facebook, url: 'https://facebook.com/ikan.health' },
-    { name: 'Instagram', icon: Instagram, url: 'https://instagram.com/ikan.health' },
-    { name: 'LinkedIn', icon: Linkedin, url: 'https://linkedin.com/company/ikan-health' },
-    { name: 'YouTube', icon: Youtube, url: 'https://youtube.com/@ikan.health' },
-    { name: 'X', icon: XIcon, url: 'https://twitter.com/ikan_health' },
-  ];
+    settings.facebookUrl && { name: 'Facebook', icon: Facebook, url: settings.facebookUrl },
+    settings.instagramUrl && { name: 'Instagram', icon: Instagram, url: settings.instagramUrl },
+    settings.linkedinUrl && { name: 'LinkedIn', icon: Linkedin, url: settings.linkedinUrl },
+    settings.youtubeUrl && { name: 'YouTube', icon: Youtube, url: settings.youtubeUrl },
+    settings.xUrl && { name: 'X', icon: XIcon, url: settings.xUrl },
+  ].filter(Boolean) as Array<{ name: string; icon: any; url: string }>;
 
   const quickLinks = [
     { name: 'Home', path: '/' },
@@ -108,12 +102,21 @@ export function Footer({ onNavigate, className }: FooterProps) {
     { name: 'Cancellation Policy', path: '/cancellation-policy' },
   ];
 
+  // Contact info from settings
+  const contactEmail = settings.contactEmail || '';
+  const contactPhone = settings.contactPhone || '';
+  const contactWhatsapp = settings.contactWhatsapp || '';
+  const companyDescription = settings.companyDescription || '';
+
+  // Certifications from settings
+  const certifications = settings.certifications || [];
+
   return (
     <footer 
       className={cn("w-full flex-none", className)}
       style={{
-        backgroundColor: 'var(--color-primary-default)', // Replaced hardcoded #2A2A2A
-        color: 'var(--color-primary-on)', // Replaced hardcoded #FFFFFF
+        backgroundColor: 'var(--color-primary-default)',
+        color: 'var(--color-primary-on)',
         paddingTop: 'var(--spacing-8)',
         paddingBottom: 'var(--spacing-8)'
       }}
@@ -126,36 +129,44 @@ export function Footer({ onNavigate, className }: FooterProps) {
           {/* Brand & Description Column (Span 4) */}
           <div className="lg:col-span-4 space-y-8">
             <div className="space-y-4">
-              <LogoFull height={32} className="text-white" style={{ color: 'white' }} />
+              {/* Logo: use settings logoFullLightUrl if available, else fallback to component */}
+              {settings.logoFullLightUrl ? (
+                <img src={settings.logoFullLightUrl} alt={settings.siteName || 'iKan'} className="h-8 object-contain" />
+              ) : (
+                <LogoFull height={32} className="text-white" style={{ color: 'white' }} />
+              )}
               <p 
                 className="max-w-xs"
                 style={{
                   fontSize: 'var(--text-sm)',
-                  color: 'var(--color-primary-on)', // Replaced #FFFFFF
+                  color: 'var(--color-primary-on)',
                   lineHeight: '1.6',
                   fontFamily: 'var(--font-family-base)',
                   opacity: 0.8
                 }}
               >
-                Ikan is your trusted partner in mental health and wellness. We provide evidence-based tools, professional assessments, and expert support to help you on your journey to better mental health.
+                {companyDescription || 'Ikan is your trusted partner in mental health and wellness. We provide evidence-based tools, professional assessments, and expert support to help you on your journey to better mental health.'}
               </p>
             </div>
             
             {/* Certifications */}
-             <div className="space-y-2">
-               <p className="text-[10px] uppercase tracking-wider opacity-50 font-medium">Certifications</p>
-               <div className="flex gap-3 items-center flex-wrap opacity-90">
-                 <div className="w-8 h-8 relative grayscale hover:grayscale-0 transition-all"><ImageWithFallback src={imgAsset31} alt="Certification" className="w-full h-full object-contain" /></div>
-                 <div className="w-8 h-8 relative grayscale hover:grayscale-0 transition-all"><ImageWithFallback src={imgIso} alt="ISO 27001" className="w-full h-full object-contain" /></div>
-                 <div className="w-8 h-6 relative grayscale hover:grayscale-0 transition-all"><ImageWithFallback src={imgLayer1} alt="Cert 1" className="w-full h-full object-contain" /></div>
-                 <div className="w-8 h-6 relative grayscale hover:grayscale-0 transition-all"><ImageWithFallback src={imgLayer4} alt="Cert 2" className="w-full h-full object-contain" /></div>
-                 <div className="w-16 h-4 relative grayscale hover:grayscale-0 transition-all"><ImageWithFallback src={imgLayer2} alt="Cert 3" className="w-full h-full object-contain" /></div>
-                 <div className="w-8 h-8 relative grayscale hover:grayscale-0 transition-all"><ImageWithFallback src={imgLayer3} alt="Cert 4" className="w-full h-full object-contain" /></div>
-               </div>
-             </div>
+            {certifications.length > 0 && (
+              <div className="space-y-2">
+                <p className="text-[10px] uppercase tracking-wider opacity-50 font-medium">Certifications</p>
+                <div className="flex gap-3 items-center flex-wrap opacity-90">
+                  {certifications.map((cert, idx) => (
+                    cert.imageUrl && (
+                      <div key={idx} className="w-8 h-8 relative grayscale hover:grayscale-0 transition-all">
+                        <ImageWithFallback src={cert.imageUrl} alt={cert.alt || 'Certification'} className="w-full h-full object-contain" />
+                      </div>
+                    )
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
 
-          {/* Spacer (Span 1) - Reduced to make room for 3 columns on right */}
+          {/* Spacer (Span 1) */}
           <div className="hidden lg:block lg:col-span-1"></div>
 
           {/* Links Columns (Span 7) */}
@@ -210,57 +221,71 @@ export function Footer({ onNavigate, className }: FooterProps) {
                 Contact Us
               </h3>
               <div className="space-y-3 mb-8">
-                <div className="flex items-center gap-3 group cursor-pointer">
-                  <Mail className="w-4 h-4 text-white opacity-60 group-hover:opacity-100 transition-opacity" />
-                  <a 
-                    href="mailto:support@ikan.health" 
-                    className="text-sm font-medium hover:text-white text-white/90 transition-colors"
-                  >
-                    support@ikan.health
-                  </a>
-                </div>
-                <div className="flex items-center gap-3 group cursor-pointer">
-                  <Phone className="w-4 h-4 text-white opacity-60 group-hover:opacity-100 transition-opacity" />
-                  <a 
-                    href="tel:08001110111" 
-                    className="text-sm font-medium hover:text-white text-white/90 transition-colors"
-                  >
-                    0 800 111 0 111
-                  </a>
-                </div>
-                <div className="flex items-center gap-3 group cursor-pointer">
-                  <WhatsAppIcon className="w-4 h-4 text-white opacity-60 group-hover:opacity-100 transition-opacity" />
-                  <a 
-                    href="https://wa.me/918001110111" 
-                    className="text-sm font-medium hover:text-white text-white/90 transition-colors"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    0 800 111 0 111
-                  </a>
-                </div>
+                {contactEmail && (
+                  <div className="flex items-center gap-3 group cursor-pointer">
+                    <Mail className="w-4 h-4 text-white opacity-60 group-hover:opacity-100 transition-opacity" />
+                    <a 
+                      href={`mailto:${contactEmail}`} 
+                      className="text-sm font-medium hover:text-white text-white/90 transition-colors"
+                    >
+                      {contactEmail}
+                    </a>
+                  </div>
+                )}
+                {contactPhone && (
+                  <div className="flex items-center gap-3 group cursor-pointer">
+                    <Phone className="w-4 h-4 text-white opacity-60 group-hover:opacity-100 transition-opacity" />
+                    <a 
+                      href={`tel:${contactPhone.replace(/\s/g, '')}`} 
+                      className="text-sm font-medium hover:text-white text-white/90 transition-colors"
+                    >
+                      {contactPhone}
+                    </a>
+                  </div>
+                )}
+                {contactWhatsapp && (
+                  <div className="flex items-center gap-3 group cursor-pointer">
+                    <WhatsAppIcon className="w-4 h-4 text-white opacity-60 group-hover:opacity-100 transition-opacity" />
+                    <a 
+                      href={`https://wa.me/${contactWhatsapp.replace(/[^0-9]/g, '')}`} 
+                      className="text-sm font-medium hover:text-white text-white/90 transition-colors"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      {contactWhatsapp}
+                    </a>
+                  </div>
+                )}
+                {/* Fallback when no contact info configured */}
+                {!contactEmail && !contactPhone && !contactWhatsapp && !settingsLoading && (
+                  <p className="text-xs text-white/40 italic">Contact info not configured</p>
+                )}
               </div>
 
               {/* Follow Us - Nested under Contact Us column */}
-              <h3 
-                className="mb-4 text-sm font-medium text-white/50 uppercase tracking-wide"
-              >
-                Follow Us
-              </h3>
-              <div className="flex flex-wrap gap-2">
-                {socialLinks.map((social) => (
-                  <a
-                    key={social.name}
-                    href={social.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center justify-center w-8 h-8 rounded-full bg-white/5 hover:bg-white/20 text-white transition-all"
-                    aria-label={social.name}
+              {socialLinks.length > 0 && (
+                <>
+                  <h3 
+                    className="mb-4 text-sm font-medium text-white/50 uppercase tracking-wide"
                   >
-                    <social.icon size={16} />
-                  </a>
-                ))}
-              </div>
+                    Follow Us
+                  </h3>
+                  <div className="flex flex-wrap gap-2">
+                    {socialLinks.map((social) => (
+                      <a
+                        key={social.name}
+                        href={social.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center justify-center w-8 h-8 rounded-full bg-white/5 hover:bg-white/20 text-white transition-all"
+                        aria-label={social.name}
+                      >
+                        <social.icon size={16} />
+                      </a>
+                    ))}
+                  </div>
+                </>
+              )}
             </div>
           </div>
         </div>
@@ -273,7 +298,7 @@ export function Footer({ onNavigate, className }: FooterProps) {
             <div 
               className="text-xs text-white/50"
             >
-              © {new Date().getFullYear()} iKan. All rights reserved.
+              © {new Date().getFullYear()} {settings.siteName || 'iKan'}. All rights reserved.
             </div>
             <div className="flex items-center gap-2 opacity-80 hover:opacity-100 transition-opacity">
                 <span className="text-[10px] text-white/70 font-medium">Designed by</span>

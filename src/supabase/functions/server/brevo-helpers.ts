@@ -3,6 +3,8 @@
  * Centralises the API key lookup, base URL, and common request patterns.
  */
 
+import * as kv from "./kv_store.tsx";
+
 const BREVO_BASE_URL = "https://api.brevo.com/v3";
 
 export function getBrevoApiKey(): string | null {
@@ -70,7 +72,25 @@ export async function sendTransactionalEmail(opts: {
   replyTo?: { email: string; name?: string };
   tags?: string[];
 }): Promise<{ ok: boolean; error?: string }> {
-  const sender = opts.sender || { name: "iKan Health", email: "noreply@ikan.health" };
+  // Resolve sender: explicit opt > global settings:site > hardcoded fallback
+  let sender = opts.sender;
+  if (!sender) {
+    try {
+      const siteSettings: any = await kv.get("settings:site");
+      if (siteSettings?.smtpFromEmail) {
+        sender = {
+          name: siteSettings.smtpFromName || "iKan Health",
+          email: siteSettings.smtpFromEmail,
+        };
+      }
+    } catch (_e) {
+      // Ignore KV read errors — fall through to default
+    }
+  }
+  if (!sender) {
+    sender = { name: "iKan Health", email: "noreply@ikan.health" };
+  }
+
   const result = await brevoPost("/smtp/email", {
     sender,
     to: opts.to,

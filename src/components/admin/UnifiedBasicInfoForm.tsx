@@ -4,6 +4,7 @@ import { Label } from '../ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Textarea } from '../ui/textarea';
 import { Checkbox } from '../ui/checkbox';
+import { useMetadata } from '../../hooks/useMetadata';
 
 interface UnifiedBasicInfoFormProps {
   // Common fields
@@ -70,26 +71,19 @@ export function UnifiedBasicInfoForm({
     durationUnit = 'minutes',
     imageLabel = 'Cover Image',
     subtitle = 'Configure basic details',
-    categories = [
-      { value: 'wellness', label: 'Wellness' },
-      { value: 'mental-health', label: 'Mental Health' },
-      { value: 'stress', label: 'Stress' },
-      { value: 'anxiety', label: 'Anxiety' },
-      { value: 'depression', label: 'Depression' },
-      { value: 'sleep', label: 'Sleep' },
-      { value: 'relationships', label: 'Relationships' }
-    ],
+    categories: configCategories,
     showAssessmentType = false,
     assessmentType = 'standard',
     onAssessmentTypeChange,
     showPaywall = false
   } = config;
 
-  const difficultyLevels = [
-    { value: 'beginner', label: 'Beginner' },
-    { value: 'intermediate', label: 'Intermediate' },
-    { value: 'advanced', label: 'Advanced' }
-  ];
+  const { difficultyLevels: kvDifficultyLevels, assessmentTypes: kvAssessmentTypes, categories: kvCategories } = useMetadata();
+  const difficultyLevels = kvDifficultyLevels;
+  // Use KV categories if caller didn't pass explicit ones
+  const categories = configCategories && configCategories.length > 0
+    ? configCategories
+    : kvCategories;
 
   return (
     <div className="space-y-8">
@@ -164,9 +158,9 @@ export function UnifiedBasicInfoForm({
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="standard">Standard Assessment</SelectItem>
-                <SelectItem value="clinical">Clinical Screening</SelectItem>
-                <SelectItem value="self-reflection">Self Reflection</SelectItem>
+                {kvAssessmentTypes.map((at) => (
+                  <SelectItem key={at.value} value={at.value}>{at.label}</SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>

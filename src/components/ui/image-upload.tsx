@@ -1,11 +1,13 @@
+import { projectId } from '../../utils/supabase/info';
+import { getAuthHeaders } from '../../lib/supabase-client';
 import { useRef, useState } from 'react';
 import { Upload, X, Image as ImageIcon, Crop, Eye } from 'lucide-react';
 import { Button } from './button';
 import { cn } from './utils';
-import { projectId, publicAnonKey } from '../../utils/supabase/info';
 import { toast } from 'sonner@2.0.3';
 import { ImageCropDialog } from './image-crop-dialog';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from './dialog';
+import { compressImage, formatFileSize } from '../../lib/image-compress';
 
 interface ImageUploadProps {
   value?: string;
@@ -119,15 +121,30 @@ export function ImageUpload({
     setUploadProgress(0);
 
     try {
+      // ── Client-side compression & WebP conversion ──────────────
+      let uploadBlob: File | Blob = file;
+      try {
+        const result = await compressImage(file, { maxDimension: 2048, quality: 0.82 });
+        uploadBlob = result.blob;
+        if (result.compressedSize < result.originalSize) {
+          console.log(
+            `[ImageUpload] Compressed ${formatFileSize(result.originalSize)} → ${formatFileSize(result.compressedSize)} (${result.outputType})${result.wasResized ? ' (resized)' : ''}`
+          );
+        }
+      } catch (compressErr) {
+        console.warn('[ImageUpload] Compression skipped:', compressErr);
+        // Continue with original file
+      }
+
       const formData = new FormData();
-      formData.append('file', file);
+      formData.append('file', uploadBlob);
       formData.append('bucket', bucket);
       
       const response = await fetch(
         `https://${projectId}.supabase.co/functions/v1/make-server-cc205da9/upload-image`,
         {
           method: 'POST',
-          headers: { 'Authorization': `Bearer ${publicAnonKey}` },
+          headers: await getAuthHeaders(),
           body: formData
         }
       );
@@ -166,7 +183,7 @@ export function ImageUpload({
           `https://${projectId}.supabase.co/functions/v1/make-server-cc205da9/upload/professional-file`,
           {
             method: 'POST',
-            headers: { 'Authorization': `Bearer ${publicAnonKey}` },
+            headers: await getAuthHeaders(),
             body: formData
           }
         );

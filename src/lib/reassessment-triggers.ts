@@ -31,7 +31,7 @@ export async function checkReassessmentTriggers(userId: string): Promise<Reasses
     // 1. Time-Based Logic
     // "14 days after last assessment"
     const lastAssessment = assessmentList
-        .filter((a: any) => !a.assessment_id.startsWith('checkin_')) // Exclude check-ins
+        .filter((a: any) => a.assessment_id && !a.assessment_id.startsWith('checkin_')) // Exclude check-ins
         .sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())[0];
 
     if (lastAssessment) {
@@ -78,7 +78,7 @@ export async function checkReassessmentTriggers(userId: string): Promise<Reasses
     // Check for recent negative check-in
     // We fetch check-ins by looking for assessment_id starting with 'checkin_' in the assessmentList we already have
     const lastCheckIn = assessmentList
-      .filter((a: any) => a.assessment_id.startsWith('checkin_'))
+      .filter((a: any) => a.assessment_id && a.assessment_id.startsWith('checkin_'))
       .sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())[0];
 
     if (lastCheckIn) {

@@ -1,4 +1,6 @@
-import { useState, useRef } from 'react';
+import { projectId } from '../../utils/supabase/info';
+import { getAuthHeaders } from '../../lib/supabase-client';
+import { useState, useRef, useEffect } from 'react';
 import {
   User, Briefcase, Heart, HelpCircle, Users, Clock, FileText,
   Upload, Plus, X, Languages, GraduationCap, Video, Phone, MessageSquare,
@@ -12,14 +14,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Checkbox } from '../ui/checkbox';
 import { Label } from '../ui/label';
 import { Switch } from '../ui/switch';
-import { projectId, publicAnonKey } from '../../utils/supabase/info';
 import { useIsMobile } from '../../hooks/useIsMobile';
-import {
-  expertiseCategories,
-  therapeuticApproachOptions,
-  demographicSpecialtyOptions,
-  languageOptions
-} from './ConsultantEditPage';
+import { useMetadata } from '../../hooks/useMetadata';
 
 const DAYS_OF_WEEK = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 
@@ -50,11 +46,30 @@ interface ProfessionalApplicationProps {
 
 export function ProfessionalApplication({ onNavigate }: ProfessionalApplicationProps) {
   const isMobile = useIsMobile();
+  const {
+    consultantTypes,
+    languages: kvLanguages,
+    therapeuticApproaches: kvTherapeuticApproaches,
+    demographicSpecialties: kvDemographicSpecialties,
+    expertiseCategories: kvExpertiseCategories,
+  } = useMetadata();
+
+  const expertiseCategories = kvExpertiseCategories.map(e => e.label);
+  const therapeuticApproachOptions = kvTherapeuticApproaches.map(e => e.label);
+  const demographicSpecialtyOptions = kvDemographicSpecialties.map(e => e.label);
+  const languageOptions = kvLanguages.map(e => e.label);
+
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [currentStep, setCurrentStep] = useState(0);
   const formRef = useRef<HTMLDivElement>(null);
+
+  // Ensure page scrolls to top on mount
+  useEffect(() => {
+    window.scrollTo(0, 0);
+    console.log('📝 ProfessionalApplication mounted at', window.location.pathname);
+  }, []);
 
   const [formData, setFormData] = useState({
     name: '',
@@ -95,7 +110,7 @@ export function ProfessionalApplication({ onNavigate }: ProfessionalApplicationP
 
       const response = await fetch(
         `https://${projectId}.supabase.co/functions/v1/make-server-cc205da9/upload/professional-file`,
-        { method: 'POST', headers: { Authorization: `Bearer ${publicAnonKey}` }, body: fd }
+        { method: 'POST', headers: await getAuthHeaders(), body: fd }
       );
       const result = await response.json();
       if (result.success) return result.url;
@@ -121,7 +136,7 @@ export function ProfessionalApplication({ onNavigate }: ProfessionalApplicationP
         `https://${projectId}.supabase.co/functions/v1/make-server-cc205da9/public/professional-application`,
         {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${publicAnonKey}` },
+          headers: { ...(await getAuthHeaders(true)) },
           body: JSON.stringify(formData),
         }
       );
@@ -192,10 +207,9 @@ export function ProfessionalApplication({ onNavigate }: ProfessionalApplicationP
               <Select value={formData.category} onValueChange={(v) => setFormData({ ...formData, category: v })}>
                 <SelectTrigger style={inputStyle}><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="therapist">Therapist</SelectItem>
-                  <SelectItem value="psychiatrist">Psychiatrist</SelectItem>
-                  <SelectItem value="counselor">Counselor</SelectItem>
-                  <SelectItem value="family-therapist">Family Therapist</SelectItem>
+                  {consultantTypes.map((ct) => (
+                    <SelectItem key={ct.value} value={ct.value}>{ct.label}</SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>

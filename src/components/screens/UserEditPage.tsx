@@ -191,11 +191,6 @@ export function UserEditPage({ userId, onBack, onSave }: UserEditPageProps) {
     return (
       <AdminPageLayout
         title="Loading..."
-        breadcrumbs={[
-          { label: 'Admin', onClick: onBack },
-          { label: 'Users', onClick: onBack },
-          { label: 'Loading...' }
-        ]}
       >
         <div className="flex items-center justify-center py-12">
           <AdminLoading message="Loading user..." />
@@ -215,11 +210,6 @@ export function UserEditPage({ userId, onBack, onSave }: UserEditPageProps) {
       <AdminPageLayout
         title={userId ? formData.name || 'Edit User' : 'New User'}
         subtitle={userId ? formData.email || 'Update user information' : 'Create a new user account'}
-        breadcrumbs={[
-          { label: 'Admin', onClick: onBack },
-          { label: 'Users', onClick: onBack },
-          { label: userId ? formData.name || 'Edit' : 'New User' }
-        ]}
         status={getUserStatus()}
         primaryAction={{
           label: userId ? 'Save Changes' : 'Create User',

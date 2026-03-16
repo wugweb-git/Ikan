@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { projectId, publicAnonKey } from '../../utils/supabase/info';
+import { projectId } from '../../utils/supabase/info';
+import { getAuthHeaders } from '../../lib/supabase-client';
 import { AssessmentHero } from '../blocks/AssessmentHero';
 import { AssessmentBentoGrid } from '../blocks/AssessmentBentoGrid';
 import { AssessmentBlock } from '../blocks/AssessmentBlock';
@@ -39,9 +40,7 @@ function ResourceSection({ onNavigate }: ResourceSectionProps) {
           `https://${projectId}.supabase.co/functions/v1/make-server-cc205da9/library/resources?limit=3`,
           {
             signal: controller.signal,
-            headers: {
-              'Authorization': `Bearer ${publicAnonKey}`,
-            },
+            headers: await getAuthHeaders(),
           }
         );
 
@@ -125,9 +124,7 @@ export function AssessmentDetail({ assessmentId = 'anxiety', onNavigate }: Asses
           `https://${projectId}.supabase.co/functions/v1/make-server-cc205da9/assessments/${assessmentId}?t=${Date.now()}`,
           {
             signal: controller.signal,
-            headers: { 
-              'Authorization': `Bearer ${publicAnonKey}`
-            }
+            headers: await getAuthHeaders()
           }
         );
         
@@ -177,7 +174,7 @@ export function AssessmentDetail({ assessmentId = 'anxiety', onNavigate }: Asses
         // Fetch related assessments
         const relatedResponse = await fetch(
           `https://${projectId}.supabase.co/functions/v1/make-server-cc205da9/assessments?limit=3`,
-          { signal: controller.signal, headers: { 'Authorization': `Bearer ${publicAnonKey}` } }
+          { signal: controller.signal, headers: await getAuthHeaders() }
         );
         
         if (relatedResponse.ok) {

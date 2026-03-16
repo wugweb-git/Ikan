@@ -24,7 +24,7 @@ interface Assessment {
   questionCount: number;
   status: 'available' | 'in-progress' | 'completed';
   lastCompletedDate?: string;
-  category: 'anxiety' | 'depression' | 'stress' | 'wellness' | 'burnout' | 'sleep' | 'work-life';
+  category: string;
   metadata?: any;
   questions?: any[];
   imageUrl?: string;
@@ -708,7 +708,13 @@ export function Assessments({ className, onNavigate }: AssessmentsProps) {
                     <Card 
                       className="h-full border-none shadow-sm hover:shadow-lg transition-all duration-300 rounded-[var(--radius-lg)] overflow-hidden cursor-pointer group flex flex-col"
                       style={{ backgroundColor: 'var(--color-bg-card)' }}
-                      onClick={() => handleStartAssessment(assessment)}
+                      onClick={() => {
+                        if (currentTab === 'history' && assessment.status === 'completed') {
+                          onNavigate?.(`/assessment-history-detail?id=${assessment.id}`);
+                        } else {
+                          handleStartAssessment(assessment);
+                        }
+                      }}
                     >
                       {/* Image Header */}
                       <div className="relative h-48 overflow-hidden">
@@ -758,7 +764,7 @@ export function Assessments({ className, onNavigate }: AssessmentsProps) {
                           style={{ backgroundColor: 'var(--color-bg-muted)' }}
                           variant="outline"
                         >
-                          {isCompleted ? 'Retake Assessment' : 'Start Assessment'}
+                          {currentTab === 'history' && isCompleted ? 'View History' : isCompleted ? 'Retake Assessment' : 'Start Assessment'}
                           <ArrowRight size={16} className="ml-2" />
                         </Button>
                       </CardContent>

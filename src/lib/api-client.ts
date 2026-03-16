@@ -46,8 +46,29 @@ class ApiClient {
   }
 
   async getToken() {
-    const { data } = await supabase.auth.getSession();
-    return data.session?.access_token;
+    try {
+      const { data, error } = await supabase.auth.getSession();
+      if (error) {
+        // Handle invalid refresh token — clear the broken session
+        if (
+          error.message?.includes('Refresh Token') ||
+          error.message?.includes('refresh_token') ||
+          error.message?.includes('Invalid Refresh Token') ||
+          error.message?.includes('not found')
+        ) {
+          console.warn('Auth: Invalid refresh token detected in getToken, signing out');
+          await supabase.auth.signOut().catch(() => {});
+          return null;
+        }
+        console.warn('Auth: getSession error:', error.message);
+        return null;
+      }
+      return data.session?.access_token ?? null;
+    } catch (err: any) {
+      // Catch any unexpected errors (network, etc.)
+      console.warn('Auth: getToken failed:', err?.message || err);
+      return null;
+    }
   }
 
   async healthCheck() {
@@ -112,16 +133,22 @@ class ApiClient {
         throw error;
       }
 
-      if (retryCount < 2 && (!error.message || !error.message.includes('401'))) {
-        // Simple retry logic with linear backoff (except for auth errors)
+      if (retryCount < 2 && (!error.message || !error.message.includes('401') && !error.message.includes('409'))) {
+        // Simple retry logic with linear backoff (except for auth and conflict errors)
         await new Promise(resolve => setTimeout(resolve, 1000 * (retryCount + 1)));
         return this.request(path, options, auth, retryCount + 1);
       }
       
       // Suppress 401 error logging to avoid console noise during auth checks
       // Also suppress 404 logging as it is often used for "check if exists" logic
-      if (!error.message || (!error.message.includes('401') && !error.message.includes('404'))) {
+      // Also suppress 409 logging as it is used for idempotent create-if-not-exists flows
+      // Also suppress network errors (Failed to fetch) as they are transient
+      const msg = error?.message?.toLowerCase() || '';
+      const isNetworkError = error?.name === 'TypeError' && msg.includes('failed to fetch');
+      if (!error.message || (!error.message.includes('401') && !error.message.includes('404') && !error.message.includes('409') && !isNetworkError)) {
         console.error('API Request failed', error);
+      } else if (isNetworkError) {
+        console.warn('API Request: network unreachable (will retry when online)');
       }
       
       throw error;
@@ -151,9 +178,16 @@ class ApiClient {
 
   // Activity Logging
   async logActivity(action: string, metadata: any = {}) {
-    // No-op for now as backend endpoint is not yet available
-    console.log(`[Activity] ${action}`, metadata);
-    return Promise.resolve({ success: true });
+    try {
+      await this.request('/activity-log', {
+        method: 'POST',
+        body: JSON.stringify({ action, metadata, timestamp: new Date().toISOString() }),
+      }, true);
+    } catch {
+      // Activity logging is non-critical — fire and forget
+      console.log(`[Activity] ${action}`, metadata);
+    }
+    return { success: true };
   }
 
   // CMS
@@ -161,14 +195,19 @@ class ApiClient {
     return this.request(`/cms/pages/${slug}`, { method: 'GET' }, true);
   }
 
+  // CMS (public — no auth required, used by user-facing CMS page renderer)
+  async getPagePublic(slug: string) {
+    return this.request(`/cms/pages/${slug}`, { method: 'GET' }, false);
+  }
+
   async getAdminPage(id: string) {
-    const res = await this.request(`/admin/pages/${id}`, { method: 'GET' }, true);
-    return res.page;
+    const res = await this.request(`/cms/pages/${id}`, { method: 'GET' }, true);
+    return res.page || res;
   }
 
   async getPages() {
     try {
-      const res = await this.request('/admin/pages', { method: 'GET' }, true);
+      const res = await this.request('/cms/pages', { method: 'GET' }, true);
       return res.pages || [];
     } catch (e) {
       console.warn('Failed to fetch pages', e);
@@ -177,23 +216,23 @@ class ApiClient {
   }
 
   async createPage(data: PageData) {
-    const res = await this.request('/admin/pages', { 
+    const res = await this.request('/cms/pages', { 
       method: 'POST', 
       body: JSON.stringify(data)
     }, true);
-    return res.page;
+    return res.page || res;
   }
 
   async updatePage(id: string, data: PageData) {
-    const res = await this.request(`/admin/pages/${id}`, { 
+    const res = await this.request(`/cms/pages/${id}`, { 
       method: 'PUT', 
       body: JSON.stringify(data)
     }, true);
-    return res.page;
+    return res.page || res;
   }
 
   async deletePage(id: string) {
-    return this.request(`/admin/pages/${id}`, { method: 'DELETE' }, true);
+    return this.request(`/cms/pages/${id}`, { method: 'DELETE' }, true);
   }
 
   // Auth
@@ -401,6 +440,10 @@ class ApiClient {
     return res.enrollment;
   }
 
+  async leaveProgram(equipId: string) {
+    return this.request(`/user/enrollments/${equipId}`, { method: 'DELETE' }, true);
+  }
+
   async getTodayContent(equipId: string) {
     return this.request(`/user/equip/${equipId}/today`, { method: 'GET' }, true);
   }
@@ -440,6 +483,31 @@ class ApiClient {
     }
     // Otherwise treat as sync
     return this.syncEquipProgress(equipId, data);
+  }
+
+  // Reminders
+  async checkReminders() {
+    try {
+      if (!(await this.isAuthenticated())) return null;
+      return this.request('/reminders/check', { method: 'POST' }, true);
+    } catch (e) {
+      console.warn('Reminder check failed (non-critical):', e);
+      return null;
+    }
+  }
+
+  // File uploads for program blocks
+  async uploadBlockFile(equipId: string, dayNum: number, blockId: string, file: File) {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('equipId', equipId);
+    formData.append('dayNum', dayNum.toString());
+    formData.append('blockId', blockId);
+    return this.request('/user/equip/upload', {
+      method: 'POST',
+      body: formData,
+      // Content-Type is auto-skipped for FormData in request()
+    }, true);
   }
 
   // Recommendations
@@ -538,7 +606,7 @@ class ApiClient {
   // Media Management
   async getMediaFiles() {
     try {
-      const res = await this.request('/admin/media/files', { method: 'GET' }, true);
+      const res = await this.request('/media', { method: 'GET' }, true);
       return res.files || [];
     } catch (e) {
       console.error('Failed to get media files', e);
@@ -548,7 +616,15 @@ class ApiClient {
   }
 
   async deleteMediaFile(id: string) {
-    return this.request(`/admin/media/files/${id}`, { method: 'DELETE' }, true);
+    return this.request(`/media/${id}`, { method: 'DELETE' }, true);
+  }
+
+  async renameMediaFile(id: string, fileName: string) {
+    return this.request(`/media/${id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ fileName })
+    }, true);
   }
 
   async uploadMediaFile(file: File, bucket: string = 'make-cc205da9-media') {
@@ -556,7 +632,7 @@ class ApiClient {
     formData.append('file', file);
     formData.append('bucket', bucket);
 
-    return this.request('/admin/media/upload', {
+    return this.request('/upload', {
       method: 'POST',
       body: formData
     }, true);
@@ -797,11 +873,7 @@ class ApiClient {
     return this.request(`/checkin-template/${id}/activate`, { method: 'POST' }, true);
   }
 
-  async seedDefaultCheckinTemplate() {
-    return this.request('/checkin-template/seed-default', { method: 'POST' }, true);
-  }
-
-  // ── Hero Banners ─────────────────────��───────────────────────
+  // ── Hero Banners ────────────────────────────────────────────
   async getHeroBanners() {
     return this.request('/hero-banners', { method: 'GET' }, true);
   }
@@ -827,6 +899,15 @@ class ApiClient {
 
   async resetHeroBanner(pageKey: string) {
     return this.request(`/hero-banners/reset/${pageKey}`, { method: 'POST' }, true);
+  }
+
+  // ── iKAN Score ─────────────────────────────────────────────────
+  async getIkanScore() {
+    return this.request('/user/ikan-score', { method: 'GET' }, true);
+  }
+
+  async getIkanScoreHistory() {
+    return this.request('/user/ikan-score/history', { method: 'GET' }, true);
   }
 
   // Admin Users
@@ -855,6 +936,37 @@ class ApiClient {
 
   async deleteUser(userId: string) {
     return this.request(`/admin/users/${userId}`, { method: 'DELETE' }, true);
+  }
+
+  // Admin user data access
+  async getUserMoodEntries(userId: string) {
+    try {
+      const res = await this.request(`/admin/users/${userId}/mood-entries`, { method: 'GET' }, true);
+      return res.entries || [];
+    } catch (e) {
+      console.warn(`Failed to fetch mood entries for user ${userId}:`, e);
+      return [];
+    }
+  }
+
+  async getUserEquipEnrollments(userId: string) {
+    try {
+      const res = await this.request(`/admin/users/${userId}/enrollments`, { method: 'GET' }, true);
+      return res.enrollments || [];
+    } catch (e) {
+      console.warn(`Failed to fetch enrollments for user ${userId}:`, e);
+      return [];
+    }
+  }
+
+  async getUserConsultations(userId: string) {
+    try {
+      const res = await this.request(`/admin/users/${userId}/consultations`, { method: 'GET' }, true);
+      return res.consultations || [];
+    } catch (e) {
+      console.warn(`Failed to fetch consultations for user ${userId}:`, e);
+      return [];
+    }
   }
 
   // Analytics
@@ -1091,7 +1203,7 @@ class ApiClient {
     }, true);
   }
 
-  // Settings
+  // Settings (admin)
   async getSettings() {
     return this.request('/admin/settings', { method: 'GET' }, true);
   }
@@ -1100,6 +1212,31 @@ class ApiClient {
     return this.request('/admin/settings', {
       method: 'PUT',
       body: JSON.stringify(settings)
+    }, true);
+  }
+
+  // Settings (public — no auth required, used by footer/header/SEO)
+  async getPublicSettings() {
+    return this.request('/settings', { method: 'GET' }, false);
+  }
+
+  // ── Check-in Scales (public GET, admin PUT) ──────────────────────
+  async getScale(scaleKey: string) {
+    return this.request(`/scales/${scaleKey}`, { method: 'GET' }, false);
+  }
+
+  async updateScale(scaleKey: string, items: any[]) {
+    return this.request(`/scales/${scaleKey}`, {
+      method: 'PUT',
+      body: JSON.stringify({ items })
+    }, true);
+  }
+
+  // Brevo Communication
+  async testBrevoChannel(channel: string, recipient: string) {
+    return this.request('/brevo/test', {
+      method: 'POST',
+      body: JSON.stringify({ channel, recipient })
     }, true);
   }
 }

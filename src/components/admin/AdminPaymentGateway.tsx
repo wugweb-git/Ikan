@@ -57,13 +57,28 @@ export function AdminPaymentGateway() {
 
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [testing, setTesting] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const getAuthHeaders = async (includeContentType = false) => {
-    const { data } = await supabase.auth.getSession();
-    const token = data.session?.access_token || publicAnonKey;
-    const h: Record<string, string> = { 'Authorization': `Bearer ${token}` };
-    if (includeContentType) h['Content-Type'] = 'application/json';
-    return h;
+    try {
+      const { data, error } = await supabase.auth.getSession();
+      if (error) {
+        console.warn('Auth: getSession error in PaymentGateway:', error.message);
+        const h: Record<string, string> = { 'Authorization': `Bearer ${publicAnonKey}` };
+        if (includeContentType) h['Content-Type'] = 'application/json';
+        return h;
+      }
+      const token = data.session?.access_token || publicAnonKey;
+      const h: Record<string, string> = { 'Authorization': `Bearer ${token}` };
+      if (includeContentType) h['Content-Type'] = 'application/json';
+      return h;
+    } catch (err) {
+      console.warn('Auth: getAuthHeaders failed in PaymentGateway:', err);
+      const h: Record<string, string> = { 'Authorization': `Bearer ${publicAnonKey}` };
+      if (includeContentType) h['Content-Type'] = 'application/json';
+      return h;
+    }
   };
 
   useEffect(() => {
@@ -73,6 +88,7 @@ export function AdminPaymentGateway() {
 
   const loadConfigs = async () => {
     try {
+      setLoading(true);
       const headers = await getAuthHeaders();
       const response = await fetch(
         `https://${projectId}.supabase.co/functions/v1/make-server-cc205da9/admin/payment/config`,
@@ -88,6 +104,9 @@ export function AdminPaymentGateway() {
       }
     } catch (error) {
       console.error('Failed to load payment configs:', error);
+      setError('Failed to load payment configuration');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -144,14 +163,18 @@ export function AdminPaymentGateway() {
         }
       );
 
-      if (response.ok) {
-        showToast('success', 'Test Transaction', `Test payment of ₹${amount} initiated`);
+      const data = await response.json();
+      
+      if (response.ok && data.success) {
+        showToast('success', 'Razorpay Order Created', `Order ${data.order_id} — ₹${data.amount}. Check your Razorpay dashboard.`);
+        // Reload transactions to show the new pending test transaction
+        loadTransactions();
       } else {
-        showToast('error', 'Test Failed', 'Failed to initiate test transaction');
+        showToast('error', 'Test Failed', data.error || data.hint || 'Failed to create Razorpay order');
       }
     } catch (error) {
       console.error('Error testing gateway:', error);
-      showToast('error', 'Test Failed', 'Failed to test gateway');
+      showToast('error', 'Test Failed', 'Network error — could not reach the server');
     } finally {
       setTesting(null);
     }

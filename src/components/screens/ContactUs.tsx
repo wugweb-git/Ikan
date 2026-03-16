@@ -63,20 +63,24 @@ export function ContactUs({ className, onNavigate, onBack }: ContactUsProps) {
     }
   };
 
+  const supportEmail = content?.contactEmail || 'support@ikan.health';
+  const crisisPhone = content?.crisisPhone || '915298721';
+  const crisisLabel = content?.crisisLabel || 'iCALL Suicide Prevention Helpline';
+
   const contactMethods = [
     {
       icon: 'mail',
       title: 'Email Support',
       description: 'Get help with your account and services',
-      value: 'support@ikan.health',
-      action: 'mailto:support@ikan.health'
+      value: supportEmail,
+      action: `mailto:${supportEmail}`
     },
     {
       icon: 'phone',
       title: 'Crisis Support',
-      description: 'iCALL Suicide Prevention Helpline',
-      value: '915298721',
-      action: 'tel:915298721'
+      description: crisisLabel,
+      value: crisisPhone,
+      action: `tel:${crisisPhone}`
     },
     {
       icon: 'messageCircle',

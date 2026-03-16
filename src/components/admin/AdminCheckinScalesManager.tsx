@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
 import {
   Plus, Trash2, Edit2, Save, X, Zap, Brain, Tag,
-  RotateCcw, ShieldCheck, GripVertical, Moon, HeartPulse,
+  GripVertical, Moon, Flame, Heart, Smile, AlertCircle,
+  ChevronDown, ChevronUp, ToggleLeft, ToggleRight
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
@@ -10,757 +10,506 @@ import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { Switch } from '../ui/switch';
 import { toast } from 'sonner@2.0.3';
-import { projectId, publicAnonKey } from '../../utils/supabase/info';
-import { supabase } from '../../lib/supabase-client';
-import tokens from '../../lib/design-tokens';
 import { AdminHeader } from './AdminHeader';
 import { AdminLoading } from './AdminLoading';
+import { projectId, publicAnonKey } from '../../utils/supabase/info';
+import { supabase } from '../../lib/supabase-client';
 
 // ── Types ──────────────────────────────────────────────────────────
 interface ScaleItem {
   id: string;
+  emoji: string;
+  label: string;
   value: number;
-  label: string;
-  emoji: string;
-  severity: string;
-  is_active: boolean;
   order: number;
+  severity?: string;
+  is_active: boolean;
 }
 
-interface TagItem {
-  id: string;
+interface ScaleType {
+  key: string;
   label: string;
-  emoji: string;
-  is_active: boolean;
-  order: number;
+  icon: React.ElementType;
+  description: string;
+  endpoint: string;
 }
-
-type TabKey = 'energy' | 'stress' | 'sleep' | 'pain' | 'tags';
 
 interface AdminCheckinScalesManagerProps {
   onBack?: () => void;
 }
 
-// ── Design token helpers ───────────────────────────────────────────
-const B = {
-  primary: tokens.colors.primary.default,
-  primaryOn: tokens.colors.primary.on,
-  accent: tokens.colors.accent.default,
-  success: tokens.colors.status.success,
-  successLight: tokens.colors.status['success-light'],
-  warning: tokens.colors.status.warning,
-  warningLight: tokens.colors.status['warning-light'],
-  danger: tokens.colors.status.danger,
-  dangerLight: tokens.colors.status['danger-light'],
-  info: tokens.colors.status.info,
-  infoLight: tokens.colors.status['info-light'],
-  muted: tokens.colors.text.muted,
-  textPrimary: tokens.colors.text.primary,
-  bgPage: tokens.colors.background.page,
-  bgCard: tokens.colors.background.card,
-  bgMuted: tokens.colors.background.muted,
-  bgInput: tokens.colors.background.input,
-  border: tokens.colors.border.default,
-};
-
-const f = (size: string, weight: number = 400, color: string = B.textPrimary) => ({
-  fontSize: `var(--text-${size})`,
-  fontWeight: weight,
-  fontFamily: 'var(--font-family-base)',
-  color,
-});
-
-const API_BASE = `https://${projectId}.supabase.co/functions/v1/make-server-cc205da9`;
-
-async function getAuthHeaders() {
-  const { data } = await supabase.auth.getSession();
-  const token = data.session?.access_token || publicAnonKey;
-  return { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' };
-}
-
-const SEVERITY_OPTIONS = [
-  { value: 'success', label: 'Success (Green)', color: 'var(--color-status-success)' },
-  { value: 'info', label: 'Info (Blue)', color: 'var(--color-status-info)' },
-  { value: 'warning', label: 'Warning (Amber)', color: 'var(--color-status-warning)' },
-  { value: 'danger', label: 'Danger (Red)', color: 'var(--color-status-danger)' },
-  { value: 'neutral', label: 'Neutral (Gray)', color: 'var(--color-neutral-500)' },
+// ── Scale types config ─────────────────────────────────────────────
+const SCALE_TYPES: ScaleType[] = [
+  { key: 'energy', label: 'Energy', icon: Zap, description: 'Energy level assessment scale', endpoint: '/scales/energy' },
+  { key: 'stress', label: 'Stress', icon: Flame, description: 'Stress level tracking scale', endpoint: '/scales/stress' },
+  { key: 'sleep', label: 'Sleep', icon: Moon, description: 'Sleep quality assessment scale', endpoint: '/scales/sleep' },
+  { key: 'pain', label: 'Pain', icon: Heart, description: 'Pain severity tracking scale', endpoint: '/scales/pain' },
+  { key: 'context-tags', label: 'Context Tags', icon: Tag, description: 'Contextual tags for check-ins', endpoint: '/scales/context-tags' },
 ];
 
-const EMOJI_PICKS = {
-  energy: ['🪫', '😴', '⚡', '💪', '🔥', '🚀', '🏃', '🧘', '💤', '🌟', '⭐', '✨'],
-  stress: ['😌', '🤔', '😤', '😰', '🤯', '😓', '😖', '😩', '🧊', '🌊', '🍃', '💆'],
-  sleep: ['🛌', '😴', '💤', '🌙', '🌜', '🌛', '🌟', '😌', '😩', '🥱', '🛏️', '✨'],
-  pain: ['😊', '😐', '😕', '😧', '😭', '🤕', '💊', '🩹', '❤️‍🩹', '🏥', '💉', '🩺'],
-  tags:   ['💼', '😴', '🏃', '❤️', '📚', '💰', '🎉', '✨', '🎮', '🎵', '🍽️', '🏠', '🧠', '🙏', '🌿', '☕', '👶', '🐾', '✈️', '🎯'],
+const SEVERITY_OPTIONS = [
+  { value: 'very-low', label: 'Very Low', color: '#EF4444' },
+  { value: 'low', label: 'Low', color: '#F97316' },
+  { value: 'neutral', label: 'Neutral', color: '#EAB308' },
+  { value: 'high', label: 'High', color: '#22C55E' },
+  { value: 'very-high', label: 'Very High', color: '#10B981' },
+];
+
+const EMOJI_PICKS = [
+  '😴', '🥱', '😐', '🙂', '😊', '😃', '🔥',
+  '😰', '😤', '😌', '🧘', '💤', '🌙', '⚡',
+  '💪', '🏃', '🎯', '❤️', '💔', '😖', '🤕',
+  '🏷️', '📌', '🏠', '💼', '🎵', '🍽️', '👥',
+];
+
+const BASE_URL = `https://${projectId}.supabase.co/functions/v1/make-server-cc205da9`;
+
+// ── Helpers ────────────────────────────────────────────────────────
+const f = (size?: string, weight?: number | string, color?: string) => ({
+  fontFamily: 'var(--font-family-base)',
+  ...(size && { fontSize: `var(--text-${size})` }),
+  ...(weight && { fontWeight: typeof weight === 'number' ? weight : `var(--font-weight-${weight})` }),
+  ...(color && { color }),
+});
+
+const makeId = () => `scale-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+
+// ── Helper to get auth token ─────────────────────────────────────
+const getAuthToken = async (): Promise<string> => {
+  const { data } = await supabase.auth.getSession();
+  return data.session?.access_token || publicAnonKey;
 };
 
-function getSeverityColor(severity: string): string {
-  const opt = SEVERITY_OPTIONS.find(s => s.value === severity);
-  return opt?.color || 'var(--color-neutral-500)';
-}
-
-function getSeverityBg(severity: string): string {
-  switch (severity) {
-    case 'success': return 'var(--color-status-success-light)';
-    case 'warning': return 'var(--color-status-warning-light)';
-    case 'danger': return 'var(--color-status-danger-light)';
-    case 'info': return 'var(--color-status-info-light)';
-    default: return 'var(--color-neutral-200)';
-  }
-}
-
-// ══════════════════════════════════════════════════════════════════
-// MAIN COMPONENT
-// ══════════════════════════════════════════════════════════════════
-
-export function AdminCheckinScalesManager({ onBack }: AdminCheckinScalesManagerProps) {
-  const [activeTab, setActiveTab] = useState<TabKey>('energy');
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-
-  // Data
-  const [energyItems, setEnergyItems] = useState<ScaleItem[]>([]);
-  const [stressItems, setStressItems] = useState<ScaleItem[]>([]);
-  const [sleepItems, setSleepItems] = useState<ScaleItem[]>([]);
-  const [painItems, setPainItems] = useState<ScaleItem[]>([]);
-  const [tagItems, setTagItems] = useState<TagItem[]>([]);
-
-  // Editing
+// ════════════════════════════════════════════════════════════════════
+export function AdminCheckinScalesManager({ onBack: _onBack }: AdminCheckinScalesManagerProps) {
+  const [activeScale, setActiveScale] = useState<string>('energy');
+  const [items, setItems] = useState<ScaleItem[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [isCreating, setIsCreating] = useState(false);
+  const [expandedId, setExpandedId] = useState<string | null>(null);
 
-  // Scale form
-  const [scaleForm, setScaleForm] = useState<Partial<ScaleItem>>({
-    emoji: '⚡', label: '', value: 3, severity: 'neutral', is_active: true,
+  const [formData, setFormData] = useState<Partial<ScaleItem>>({
+    emoji: '😐',
+    label: '',
+    value: 0,
+    order: 0,
+    severity: 'neutral',
+    is_active: true,
   });
 
-  // Tag form
-  const [tagForm, setTagForm] = useState<Partial<TagItem>>({
-    emoji: '✨', label: '', is_active: true,
-  });
+  const scaleConfig = SCALE_TYPES.find(s => s.key === activeScale)!;
 
-  // ── Fetch ──────────────────────────────────────────────────────
-  const fetchAll = async () => {
-    setLoading(true);
+  // ── Load scale data ─────────────────────────────────────────────
+  const loadScale = async (scaleKey?: string) => {
+    const config = SCALE_TYPES.find(s => s.key === (scaleKey || activeScale));
+    if (!config) return;
+    setIsLoading(true);
     try {
-      const [eRes, sRes, slRes, pRes, tRes] = await Promise.all([
-        fetch(`${API_BASE}/scales/energy`, { headers: await getAuthHeaders() }).then(r => r.json()),
-        fetch(`${API_BASE}/scales/stress`, { headers: await getAuthHeaders() }).then(r => r.json()),
-        fetch(`${API_BASE}/scales/sleep`, { headers: await getAuthHeaders() }).then(r => r.json()),
-        fetch(`${API_BASE}/scales/pain`, { headers: await getAuthHeaders() }).then(r => r.json()),
-        fetch(`${API_BASE}/scales/context-tags`, { headers: await getAuthHeaders() }).then(r => r.json()),
-      ]);
-      setEnergyItems((eRes.items || []).sort((a: ScaleItem, b: ScaleItem) => a.order - b.order));
-      setStressItems((sRes.items || []).sort((a: ScaleItem, b: ScaleItem) => a.order - b.order));
-      setSleepItems((slRes.items || []).sort((a: ScaleItem, b: ScaleItem) => a.order - b.order));
-      setPainItems((pRes.items || []).sort((a: ScaleItem, b: ScaleItem) => a.order - b.order));
-      setTagItems((tRes.items || []).sort((a: TagItem, b: TagItem) => a.order - b.order));
-    } catch (e) {
-      console.error('Failed to fetch scales:', e);
-      toast.error('Failed to load check-in scales');
+      const res = await fetch(`${BASE_URL}${config.endpoint}`, {
+        headers: { Authorization: `Bearer ${publicAnonKey}` },
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      const loaded = Array.isArray(data.items) ? data.items : [];
+      setItems(loaded.sort((a: ScaleItem, b: ScaleItem) => a.order - b.order));
+    } catch (err) {
+      console.error(`Failed to load ${config.label} scale:`, err);
+      toast.error(`Failed to load ${config.label} scale`);
+      setItems([]);
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   };
 
-  useEffect(() => { fetchAll(); }, []);
+  useEffect(() => {
+    loadScale();
+  }, [activeScale]);
 
-  // ── Save ───────────────────────────────────────────────────────
-  const saveScale = async (type: 'energy' | 'stress' | 'sleep' | 'pain', items: ScaleItem[]) => {
-    setSaving(true);
+  // ── Save all items ──────────────────────────────────────────────
+  const saveAll = async (newItems: ScaleItem[]) => {
+    setIsSaving(true);
     try {
-      const res = await fetch(`${API_BASE}/scales/${type}`, {
-        method: 'PUT', headers: await getAuthHeaders(), body: JSON.stringify({ items }),
+      const token = await getAuthToken();
+      const res = await fetch(`${BASE_URL}${scaleConfig.endpoint}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ items: newItems }),
       });
-      if (!res.ok) throw new Error(await res.text());
-      toast.success(`${type === 'energy' ? 'Energy' : type === 'stress' ? 'Stress' : type === 'sleep' ? 'Sleep' : 'Pain'} scale saved`);
-      await fetchAll();
-    } catch (e) {
-      console.error(`Failed to save ${type} scale:`, e);
-      toast.error(`Failed to save ${type} scale`);
-    } finally { setSaving(false); }
-  };
-
-  const saveTags = async (items: TagItem[]) => {
-    setSaving(true);
-    try {
-      const res = await fetch(`${API_BASE}/scales/context-tags`, {
-        method: 'PUT', headers: await getAuthHeaders(), body: JSON.stringify({ items }),
-      });
-      if (!res.ok) throw new Error(await res.text());
-      toast.success('Context tags saved');
-      await fetchAll();
-    } catch (e) {
-      console.error('Failed to save context tags:', e);
-      toast.error('Failed to save context tags');
-    } finally { setSaving(false); }
-  };
-
-  const handleReset = async (type: TabKey) => {
-    const label = type === 'energy' ? 'Energy Scale' : type === 'stress' ? 'Stress Scale' : type === 'sleep' ? 'Sleep Scale' : type === 'pain' ? 'Pain Scale' : 'Context Tags';
-    if (!confirm(`Reset ${label} to design-token defaults? This will overwrite your custom changes.`)) return;
-    try {
-      const resetType = type === 'tags' ? 'context-tags' : type;
-      const res = await fetch(`${API_BASE}/scales/reset`, {
-        method: 'POST', headers: await getAuthHeaders(), body: JSON.stringify({ type: resetType }),
-      });
-      if (!res.ok) throw new Error(await res.text());
-      toast.success(`${label} reset to defaults`);
-      await fetchAll();
-    } catch (e) {
-      console.error('Reset failed:', e);
-      toast.error('Failed to reset');
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      toast.success(`${scaleConfig.label} scale saved`);
+      setItems(newItems);
+    } catch (err) {
+      console.error(`Failed to save ${scaleConfig.label} scale:`, err);
+      toast.error(`Failed to save ${scaleConfig.label} scale`);
+    } finally {
+      setIsSaving(false);
     }
   };
 
-  // ── Scale CRUD helpers ─────────────────────────────────────────
-  const getCurrentScaleItems = () => activeTab === 'energy' ? energyItems : activeTab === 'stress' ? stressItems : activeTab === 'sleep' ? sleepItems : painItems;
-  const setCurrentScaleItems = (items: ScaleItem[]) => {
-    if (activeTab === 'energy') setEnergyItems(items);
-    else if (activeTab === 'stress') setStressItems(items);
-    else if (activeTab === 'sleep') setSleepItems(items);
-    else setPainItems(items);
-  };
-
-  const addScaleItem = () => {
-    if (!scaleForm.label?.trim() || !scaleForm.emoji) {
-      toast.error('Emoji and label are required'); return;
-    }
-    const items = getCurrentScaleItems();
-    const newItem: ScaleItem = {
-      id: scaleForm.label!.toLowerCase().replace(/\s+/g, '-') + '-' + Date.now(),
-      value: scaleForm.value || items.length + 1,
-      label: scaleForm.label!.trim(),
-      emoji: scaleForm.emoji!,
-      severity: scaleForm.severity || 'neutral',
-      is_active: scaleForm.is_active !== false,
-      order: items.length,
-    };
-    const updated = [...items, newItem];
-    setCurrentScaleItems(updated);
-    saveScale(activeTab as 'energy' | 'stress' | 'sleep' | 'pain', updated);
-    resetForms();
-  };
-
-  const updateScaleItem = (id: string) => {
-    const items = getCurrentScaleItems();
-    const updated = items.map(item =>
-      item.id === id ? { ...item, ...scaleForm, id } as ScaleItem : item
-    );
-    setCurrentScaleItems(updated);
-    saveScale(activeTab as 'energy' | 'stress' | 'sleep' | 'pain', updated);
-    resetForms();
-  };
-
-  const deleteScaleItem = (id: string) => {
-    if (!confirm('Delete this scale item?')) return;
-    const items = getCurrentScaleItems().filter(i => i.id !== id);
-    // Re-order
-    items.forEach((item, idx) => { item.order = idx; item.value = idx + 1; });
-    setCurrentScaleItems(items);
-    saveScale(activeTab as 'energy' | 'stress' | 'sleep' | 'pain', items);
-  };
-
-  const toggleScaleActive = (id: string) => {
-    const items = getCurrentScaleItems().map(i =>
-      i.id === id ? { ...i, is_active: !i.is_active } : i
-    );
-    setCurrentScaleItems(items);
-    saveScale(activeTab as 'energy' | 'stress' | 'sleep' | 'pain', items);
-  };
-
-  // ── Tag CRUD helpers ───────────────────────────────────────────
-  const addTagItem = () => {
-    if (!tagForm.label?.trim() || !tagForm.emoji) {
-      toast.error('Emoji and label are required'); return;
-    }
-    const newTag: TagItem = {
-      id: tagForm.label!.toLowerCase().replace(/\s+/g, '-') + '-' + Date.now(),
-      label: tagForm.label!.trim(),
-      emoji: tagForm.emoji!,
-      is_active: tagForm.is_active !== false,
-      order: tagItems.length,
-    };
-    const updated = [...tagItems, newTag];
-    setTagItems(updated);
-    saveTags(updated);
-    resetForms();
-  };
-
-  const updateTagItem = (id: string) => {
-    const updated = tagItems.map(item =>
-      item.id === id ? { ...item, ...tagForm, id } as TagItem : item
-    );
-    setTagItems(updated);
-    saveTags(updated);
-    resetForms();
-  };
-
-  const deleteTagItem = (id: string) => {
-    if (!confirm('Delete this tag?')) return;
-    const items = tagItems.filter(i => i.id !== id);
-    items.forEach((item, idx) => { item.order = idx; });
-    setTagItems(items);
-    saveTags(items);
-  };
-
-  const toggleTagActive = (id: string) => {
-    const items = tagItems.map(i =>
-      i.id === id ? { ...i, is_active: !i.is_active } : i
-    );
-    setTagItems(items);
-    saveTags(items);
-  };
-
-  // ── Form helpers ───────────────────────────────────────────────
-  const resetForms = () => {
-    setScaleForm({ emoji: '⚡', label: '', value: 3, severity: 'neutral', is_active: true });
-    setTagForm({ emoji: '✨', label: '', is_active: true });
+  // ── CRUD ────────────────────────────────────────────────────────
+  const resetForm = () => {
+    setFormData({ emoji: '😐', label: '', value: 0, order: items.length, severity: 'neutral', is_active: true });
     setEditingId(null);
     setIsCreating(false);
   };
 
-  const startEditScale = (item: ScaleItem) => {
-    setEditingId(item.id);
-    setScaleForm({ emoji: item.emoji, label: item.label, value: item.value, severity: item.severity, is_active: item.is_active });
-    setIsCreating(false);
+  const handleCreate = () => {
+    if (!formData.label) { toast.error('Label is required'); return; }
+    const newItem: ScaleItem = {
+      id: makeId(),
+      emoji: formData.emoji || '😐',
+      label: formData.label || '',
+      value: formData.value ?? items.length,
+      order: formData.order ?? items.length,
+      severity: formData.severity || 'neutral',
+      is_active: formData.is_active !== false,
+    };
+    const updated = [...items, newItem];
+    saveAll(updated);
+    resetForm();
   };
 
-  const startEditTag = (item: TagItem) => {
-    setEditingId(item.id);
-    setTagForm({ emoji: item.emoji, label: item.label, is_active: item.is_active });
-    setIsCreating(false);
-  };
-
-  // ── Integrity check ───────────────────────────────────────────
-  const checkIntegrity = () => {
-    let issues = 0;
-    const items = activeTab === 'tags' ? tagItems : getCurrentScaleItems();
-    items.forEach((item: any) => {
-      if (!item.label) issues++;
-      if (!item.emoji) issues++;
-      if (activeTab !== 'tags' && (item.value < 1 || item.value > 10)) issues++;
-    });
-    if (issues === 0) toast.success('Integrity check passed!');
-    else toast.warning(`Found ${issues} issue(s). Fix missing labels, emojis, or out-of-range values.`);
-  };
-
-  // ── Tab config ─────────────────────────────────────────────────
-  const TABS: { key: TabKey; label: string; icon: React.ReactNode; desc: string }[] = [
-    { key: 'energy', label: 'Energy Scale', icon: <Zap size={16} />, desc: 'How energetic users feel' },
-    { key: 'stress', label: 'Stress Scale', icon: <Brain size={16} />, desc: 'User stress levels' },
-    { key: 'sleep', label: 'Sleep Scale', icon: <Moon size={16} />, desc: 'User sleep quality' },
-    { key: 'pain', label: 'Pain Scale', icon: <HeartPulse size={16} />, desc: 'User pain levels' },
-    { key: 'tags', label: 'Context Tags', icon: <Tag size={16} />, desc: 'What shaped the day' },
-  ];
-
-  // ═══════════════════════════════════════════════════════════════
-  // RENDER
-  // ═══════════════════════════════════════════════════════════════
-
-  if (loading) {
-    return (
-      <div style={{ padding: 'var(--spacing-8)' }}>
-        <AdminLoading message="Loading check-in scales..." />
-      </div>
+  const handleUpdate = (id: string) => {
+    if (!formData.label) { toast.error('Label is required'); return; }
+    const updated = items.map(item =>
+      item.id === id ? { ...item, ...formData, id } : item
     );
-  }
+    saveAll(updated);
+    resetForm();
+  };
 
+  const handleDelete = (id: string) => {
+    if (!confirm('Delete this scale item?')) return;
+    const updated = items.filter(item => item.id !== id)
+      .map((item, idx) => ({ ...item, order: idx }));
+    saveAll(updated);
+  };
+
+  const handleToggleActive = (id: string) => {
+    const updated = items.map(item =>
+      item.id === id ? { ...item, is_active: !item.is_active } : item
+    );
+    saveAll(updated);
+  };
+
+  const moveItem = (id: string, direction: 'up' | 'down') => {
+    const idx = items.findIndex(i => i.id === id);
+    if (idx < 0) return;
+    const newIdx = direction === 'up' ? idx - 1 : idx + 1;
+    if (newIdx < 0 || newIdx >= items.length) return;
+    const updated = [...items];
+    [updated[idx], updated[newIdx]] = [updated[newIdx], updated[idx]];
+    const reordered = updated.map((item, i) => ({ ...item, order: i }));
+    saveAll(reordered);
+  };
+
+  const startEdit = (item: ScaleItem) => {
+    setFormData(item);
+    setEditingId(item.id);
+    setIsCreating(false);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const B = {
+    primary: 'var(--color-text-primary)',
+    muted: 'var(--color-text-muted)',
+    card: 'var(--color-bg-card)',
+    page: 'var(--color-bg-page)',
+    input: 'var(--color-bg-input)',
+    border: 'var(--color-border-default)',
+    accent: 'var(--color-primary-default)',
+  };
+
+  // ════════════════════════════════════════════════════════════════
   return (
-    <div style={{ padding: 'var(--spacing-8)' }}>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-6)' }}>
+    <div className="max-w-7xl mx-auto space-y-6">
+      <AdminHeader
+        title="Check-in Scales"
+        description="Manage emoji scales for check-in assessments (energy, stress, sleep, pain, context tags)"
+      />
 
-        {/* Header */}
-        <AdminHeader
-          title="Check-in Scale Manager"
-          description="Customize the Energy, Stress, and Context Tag options shown in the Mood Journal check-in wizard"
-          actions={
-            <div className="flex items-center" style={{ gap: 'var(--spacing-2)' }}>
-              <Button variant="outline" onClick={checkIntegrity} style={{ gap: 'var(--spacing-2)' }}>
-                <ShieldCheck size={14} /> Integrity Check
-              </Button>
-              <Button variant="outline" onClick={() => handleReset(activeTab)} style={{ gap: 'var(--spacing-2)', color: B.danger, borderColor: `color-mix(in srgb, ${B.danger} 25%, transparent)` }}>
-                <RotateCcw size={14} /> Reset to Defaults
-              </Button>
-              <Button onClick={() => { resetForms(); setIsCreating(true); }} style={{ gap: 'var(--spacing-2)' }}>
-                <Plus size={14} /> Add Item
-              </Button>
-            </div>
-          }
-          stats={[
-            { label: 'Energy Items', value: energyItems.length },
-            { label: 'Stress Items', value: stressItems.length },
-            { label: 'Sleep Items', value: sleepItems.length },
-            { label: 'Pain Items', value: painItems.length },
-            { label: 'Context Tags', value: tagItems.length },
-          ]}
-        />
-
-        {/* Tabs */}
-        <div className="flex items-center" style={{ gap: 'var(--spacing-1)', backgroundColor: B.bgMuted, borderRadius: 'var(--radius-md)', padding: 'var(--spacing-1)' }}>
-          {TABS.map(tab => {
-            const isActive = activeTab === tab.key;
+      <div className="flex gap-6">
+        {/* ── Left: Scale Tabs ── */}
+        <div className="w-[220px] shrink-0 space-y-1">
+          <p style={{ ...f('xs', 500, B.muted), textTransform: 'uppercase', letterSpacing: '0.05em', padding: '0 12px', marginBottom: 8 }}>
+            Scale Types
+          </p>
+          {SCALE_TYPES.map(scale => {
+            const isActive = activeScale === scale.key;
+            const ScaleIcon = scale.icon;
             return (
               <button
-                key={tab.key}
-                onClick={() => { setActiveTab(tab.key); resetForms(); }}
-                className="flex items-center justify-center"
+                key={scale.key}
+                onClick={() => { setActiveScale(scale.key); resetForm(); }}
+                className="w-full text-left flex items-center gap-3 rounded-lg transition-colors"
                 style={{
-                  flex: 1, padding: '10px 16px', borderRadius: 'var(--radius-sm)',
-                  backgroundColor: isActive ? B.bgCard : 'transparent',
-                  boxShadow: isActive ? tokens.shadow.sm : 'none',
-                  border: 'none', cursor: 'pointer',
-                  ...f('sm', isActive ? 500 : 400, isActive ? B.textPrimary : B.muted),
-                  display: 'flex', alignItems: 'center', gap: 'var(--spacing-2)',
+                  padding: '10px 12px',
+                  backgroundColor: isActive ? B.accent : 'transparent',
+                  color: isActive ? 'white' : B.primary,
+                  ...f('sm', isActive ? 500 : 400),
+                  borderRadius: 'var(--radius-md)',
                 }}
               >
-                {tab.icon}
-                {tab.label}
-                <span style={{
-                  padding: '1px 6px', borderRadius: 'var(--radius-pill)',
-                  backgroundColor: isActive ? B.accent : 'transparent',
-                  ...f('xs', 500, B.muted),
-                }}>
-                  {tab.key === 'energy' ? energyItems.length : tab.key === 'stress' ? stressItems.length : tab.key === 'sleep' ? sleepItems.length : tab.key === 'pain' ? painItems.length : tagItems.length}
-                </span>
+                <ScaleIcon className="w-4 h-4 shrink-0" style={{ opacity: isActive ? 1 : 0.6 }} />
+                <span className="truncate flex-1">{scale.label}</span>
               </button>
             );
           })}
         </div>
 
-        {/* Create/Edit Form */}
-        <AnimatePresence>
-          {(isCreating || editingId) && (
-            <motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: 'auto' }}
-              exit={{ opacity: 0, height: 0 }}
+        {/* ── Right: Scale Editor ── */}
+        <div className="flex-1 min-w-0 space-y-4">
+          {/* Toolbar */}
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2">
+              {React.createElement(scaleConfig.icon, { className: 'w-5 h-5', style: { color: B.muted } })}
+              <span style={{ ...f('base', 500, B.primary) }}>{scaleConfig.label} Scale</span>
+              <span style={{ ...f('sm', 400, B.muted) }}>({items.length} items)</span>
+            </div>
+            <Button
+              onClick={() => { resetForm(); setIsCreating(true); }}
+              className="gap-2 shrink-0"
+              style={{ borderRadius: 'var(--ikan-component-border-radius)', ...f(undefined, 500) }}
             >
-              <Card>
-                <CardHeader>
-                  <CardTitle>{isCreating ? 'Add New Item' : 'Edit Item'}</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  {activeTab === 'tags' ? (
-                    /* Tag Form */
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-4)' }}>
-                      <div className="grid grid-cols-2 gap-4">
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-2)' }}>
-                          <Label style={f('sm', 500)}>Emoji</Label>
-                          <Input
-                            value={tagForm.emoji || ''}
-                            onChange={e => setTagForm(p => ({ ...p, emoji: e.target.value }))}
-                            placeholder="✨"
-                            className="text-center text-3xl h-16"
-                            maxLength={2}
-                            style={{ backgroundColor: B.bgInput }}
-                          />
-                          <div className="flex flex-wrap" style={{ gap: 'var(--spacing-1)' }}>
-                            {EMOJI_PICKS.tags.map(e => (
-                              <button key={e} onClick={() => setTagForm(p => ({ ...p, emoji: e }))}
-                                style={{
-                                  width: 32, height: 32, borderRadius: 6, fontSize: 18,
-                                  border: tagForm.emoji === e ? `2px solid ${B.primary}` : `1px solid ${B.border}`,
-                                  backgroundColor: tagForm.emoji === e ? B.accent : 'transparent',
-                                  cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                }}
-                              >{e}</button>
-                            ))}
-                          </div>
-                        </div>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-2)' }}>
-                          <Label style={f('sm', 500)}>Label</Label>
-                          <Input
-                            value={tagForm.label || ''}
-                            onChange={e => setTagForm(p => ({ ...p, label: e.target.value }))}
-                            placeholder="e.g. Work, Sleep, Health"
-                            style={{ backgroundColor: B.bgInput }}
-                          />
-                          <div className="flex items-center" style={{ gap: 'var(--spacing-2)', marginTop: 'var(--spacing-2)' }}>
-                            <Switch checked={tagForm.is_active !== false} onCheckedChange={c => setTagForm(p => ({ ...p, is_active: c }))} />
-                            <Label style={f('sm', 400, B.muted)}>Active (visible to users)</Label>
-                          </div>
-                        </div>
-                      </div>
-                      {/* Preview */}
-                      <div className="flex items-center justify-center" style={{ padding: 'var(--spacing-4)', borderRadius: 'var(--radius-md)', backgroundColor: B.bgMuted, gap: 'var(--spacing-2)' }}>
-                        <span style={{ fontSize: 20 }}>{tagForm.emoji || '✨'}</span>
-                        <span style={f('sm', 500)}>{tagForm.label || 'Tag Label'}</span>
-                      </div>
-                      <div className="flex" style={{ gap: 'var(--spacing-2)' }}>
-                        {editingId ? (
-                          <Button onClick={() => updateTagItem(editingId)}><Save size={14} className="mr-2" /> Save</Button>
-                        ) : (
-                          <Button onClick={addTagItem}><Plus size={14} className="mr-2" /> Add Tag</Button>
-                        )}
-                        <Button variant="outline" onClick={resetForms}><X size={14} className="mr-2" /> Cancel</Button>
-                      </div>
-                    </div>
-                  ) : (
-                    /* Scale Form (Energy / Stress) */
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-4)' }}>
-                      <div className="grid grid-cols-2 gap-4">
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-2)' }}>
-                          <Label style={f('sm', 500)}>Emoji</Label>
-                          <Input
-                            value={scaleForm.emoji || ''}
-                            onChange={e => setScaleForm(p => ({ ...p, emoji: e.target.value }))}
-                            placeholder="⚡"
-                            className="text-center text-3xl h-16"
-                            maxLength={2}
-                            style={{ backgroundColor: B.bgInput }}
-                          />
-                          <div className="flex flex-wrap" style={{ gap: 'var(--spacing-1)' }}>
-                            {EMOJI_PICKS[activeTab === 'energy' ? 'energy' : activeTab === 'stress' ? 'stress' : activeTab === 'sleep' ? 'sleep' : 'pain'].map(e => (
-                              <button key={e} onClick={() => setScaleForm(p => ({ ...p, emoji: e }))}
-                                style={{
-                                  width: 32, height: 32, borderRadius: 6, fontSize: 18,
-                                  border: scaleForm.emoji === e ? `2px solid ${B.primary}` : `1px solid ${B.border}`,
-                                  backgroundColor: scaleForm.emoji === e ? B.accent : 'transparent',
-                                  cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                }}
-                              >{e}</button>
-                            ))}
-                          </div>
-                        </div>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-3)' }}>
-                          <div>
-                            <Label style={f('sm', 500)}>Label</Label>
-                            <Input
-                              value={scaleForm.label || ''}
-                              onChange={e => setScaleForm(p => ({ ...p, label: e.target.value }))}
-                              placeholder="e.g. Exhausted, Energetic"
-                              style={{ backgroundColor: B.bgInput }}
-                            />
-                          </div>
-                          <div>
-                            <Label style={f('sm', 500)}>Numeric Value (1-10)</Label>
-                            <Input
-                              type="number" min={1} max={10}
-                              value={scaleForm.value || 3}
-                              onChange={e => setScaleForm(p => ({ ...p, value: parseInt(e.target.value) || 1 }))}
-                              style={{ backgroundColor: B.bgInput }}
-                            />
-                          </div>
-                          <div>
-                            <Label style={f('sm', 500)}>Severity (Color)</Label>
-                            <div className="flex flex-wrap" style={{ gap: 'var(--spacing-1)', marginTop: 'var(--spacing-1)' }}>
-                              {SEVERITY_OPTIONS.map(s => (
-                                <button
-                                  key={s.value}
-                                  onClick={() => setScaleForm(p => ({ ...p, severity: s.value }))}
-                                  className="flex items-center"
-                                  style={{
-                                    padding: '4px 10px', borderRadius: 'var(--radius-pill)', cursor: 'pointer',
-                                    border: scaleForm.severity === s.value ? `2px solid ${s.color}` : `1px solid ${B.border}`,
-                                    backgroundColor: scaleForm.severity === s.value ? `color-mix(in srgb, ${s.color} 10%, transparent)` : 'transparent',
-                                    ...f('xs', 500, scaleForm.severity === s.value ? s.color : B.muted),
-                                    gap: 'var(--spacing-1)',
-                                  }}
-                                >
-                                  <div style={{ width: 8, height: 8, borderRadius: '50%', backgroundColor: s.color }} />
-                                  {s.label.split(' ')[0]}
-                                </button>
-                              ))}
-                            </div>
-                          </div>
-                          <div className="flex items-center" style={{ gap: 'var(--spacing-2)' }}>
-                            <Switch checked={scaleForm.is_active !== false} onCheckedChange={c => setScaleForm(p => ({ ...p, is_active: c }))} />
-                            <Label style={f('sm', 400, B.muted)}>Active</Label>
-                          </div>
-                        </div>
-                      </div>
-                      {/* Preview */}
-                      <div
-                        className="flex flex-col items-center justify-center"
+              <Plus className="w-4 h-4" /> Add Item
+            </Button>
+          </div>
+
+          {/* Create / Edit Form */}
+          {(isCreating || editingId) && (
+            <Card style={{ borderRadius: 'var(--radius-lg)' }}>
+              <CardHeader>
+                <CardTitle style={{ ...f('base', 500) }}>
+                  {isCreating ? 'Add' : 'Edit'} Scale Item
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {/* Emoji picker row */}
+                <div className="space-y-2">
+                  <Label style={{ ...f('sm', 500) }}>Emoji</Label>
+                  <div className="flex flex-wrap gap-2">
+                    {EMOJI_PICKS.map(em => (
+                      <button
+                        key={em}
+                        onClick={() => setFormData({ ...formData, emoji: em })}
+                        className="w-10 h-10 flex items-center justify-center rounded-lg transition-all text-xl"
                         style={{
-                          padding: 'var(--spacing-4) var(--spacing-5)', borderRadius: 'var(--radius-md)',
-                          backgroundColor: getSeverityBg(scaleForm.severity || 'neutral'),
-                          border: `2px solid ${getSeverityColor(scaleForm.severity || 'neutral')}`,
-                          gap: 'var(--spacing-2)',
+                          backgroundColor: formData.emoji === em ? B.accent : B.input,
+                          border: formData.emoji === em ? `2px solid ${B.accent}` : `1px solid ${B.border}`,
+                          borderRadius: 'var(--radius-md)',
+                          transform: formData.emoji === em ? 'scale(1.15)' : 'scale(1)',
                         }}
                       >
-                        <span style={{ fontSize: 36 }}>{scaleForm.emoji || '⚡'}</span>
-                        <span style={{ ...f('sm', 500, getSeverityColor(scaleForm.severity || 'neutral')) }}>
-                          {scaleForm.label || 'Scale Label'}
-                        </span>
-                        <span style={f('xs', 400, B.muted)}>Value: {scaleForm.value || 3}</span>
-                      </div>
-                      <div className="flex" style={{ gap: 'var(--spacing-2)' }}>
-                        {editingId ? (
-                          <Button onClick={() => updateScaleItem(editingId)}><Save size={14} className="mr-2" /> Save</Button>
-                        ) : (
-                          <Button onClick={addScaleItem}><Plus size={14} className="mr-2" /> Add Item</Button>
-                        )}
-                        <Button variant="outline" onClick={resetForms}><X size={14} className="mr-2" /> Cancel</Button>
-                      </div>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            </motion.div>
-          )}
-        </AnimatePresence>
+                        {em}
+                      </button>
+                    ))}
+                  </div>
+                </div>
 
-        {/* Items List */}
-        <Card>
-          <CardHeader>
-            <CardTitle>
-              {TABS.find(t => t.key === activeTab)?.label} ({activeTab === 'tags' ? tagItems.length : getCurrentScaleItems().length})
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {activeTab === 'tags' ? (
-              /* Tags list */
-              tagItems.length === 0 ? (
-                <div className="text-center" style={{ padding: 'var(--spacing-12)' }}>
-                  <Tag size={36} className="mx-auto mb-4" style={{ color: B.muted }} />
-                  <p style={f('sm', 400, B.muted)}>No context tags yet. Add one to get started.</p>
-                </div>
-              ) : (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-2)' }}>
-                  {tagItems.map(tag => (
-                    <div
-                      key={tag.id}
-                      className="flex items-center justify-between"
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label style={{ ...f('sm', 500) }}>Label *</Label>
+                    <Input
+                      value={formData.label || ''}
+                      onChange={e => setFormData({ ...formData, label: e.target.value })}
+                      placeholder="e.g. High Energy"
+                      className="bg-[var(--color-bg-input)]"
+                      style={{ borderRadius: 'var(--ikan-component-border-radius)' }}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label style={{ ...f('sm', 500) }}>Value (numeric)</Label>
+                    <Input
+                      type="number"
+                      value={formData.value ?? 0}
+                      onChange={e => setFormData({ ...formData, value: parseInt(e.target.value) || 0 })}
+                      className="bg-[var(--color-bg-input)]"
+                      style={{ borderRadius: 'var(--ikan-component-border-radius)' }}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label style={{ ...f('sm', 500) }}>Severity</Label>
+                    <select
+                      value={formData.severity || 'neutral'}
+                      onChange={e => setFormData({ ...formData, severity: e.target.value })}
                       style={{
-                        padding: 'var(--spacing-3) var(--spacing-4)', borderRadius: 'var(--radius-md)',
-                        backgroundColor: editingId === tag.id ? B.accent : B.bgMuted,
-                        border: editingId === tag.id ? `2px solid ${B.primary}` : `1px solid ${B.border}`,
-                        opacity: tag.is_active ? 1 : 0.5,
+                        width: '100%', padding: '8px 10px', borderRadius: 'var(--ikan-component-border-radius)',
+                        backgroundColor: B.input, border: `1px solid ${B.border}`, ...f('sm'),
                       }}
                     >
-                      <div className="flex items-center" style={{ gap: 'var(--spacing-3)' }}>
-                        <GripVertical size={14} style={{ color: B.muted, cursor: 'grab' }} />
-                        <span style={{ fontSize: 28 }}>{tag.emoji}</span>
-                        <div>
-                          <span style={f('sm', 500)}>{tag.label}</span>
-                          {!tag.is_active && (
-                            <span style={{ ...f('xs', 500, B.muted), marginLeft: 'var(--spacing-2)', padding: '1px 6px', borderRadius: 'var(--radius-pill)', backgroundColor: B.bgMuted }}>
-                              Hidden
-                            </span>
-                          )}
+                      {SEVERITY_OPTIONS.map(sev => (
+                        <option key={sev.value} value={sev.value}>{sev.label}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label style={{ ...f('sm', 500) }}>Order</Label>
+                    <Input
+                      type="number"
+                      value={formData.order ?? 0}
+                      onChange={e => setFormData({ ...formData, order: parseInt(e.target.value) || 0 })}
+                      className="bg-[var(--color-bg-input)]"
+                      style={{ borderRadius: 'var(--ikan-component-border-radius)' }}
+                    />
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-3">
+                  <Switch
+                    checked={formData.is_active !== false}
+                    onCheckedChange={checked => setFormData({ ...formData, is_active: checked })}
+                  />
+                  <Label style={{ ...f('sm', 400) }}>Active</Label>
+                </div>
+
+                <div className="flex gap-2 justify-end">
+                  <Button variant="outline" onClick={resetForm} style={{ borderRadius: 'var(--ikan-component-border-radius)' }}>
+                    <X className="w-4 h-4 mr-2" /> Cancel
+                  </Button>
+                  {editingId ? (
+                    <Button onClick={() => handleUpdate(editingId)} disabled={isSaving} style={{ borderRadius: 'var(--ikan-component-border-radius)' }}>
+                      <Save className="w-4 h-4 mr-2" /> {isSaving ? 'Saving...' : 'Save'}
+                    </Button>
+                  ) : (
+                    <Button onClick={handleCreate} disabled={isSaving} style={{ borderRadius: 'var(--ikan-component-border-radius)' }}>
+                      <Plus className="w-4 h-4 mr-2" /> {isSaving ? 'Adding...' : 'Add'}
+                    </Button>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Items List */}
+          <Card style={{ borderRadius: 'var(--radius-lg)' }}>
+            <CardContent className="p-0">
+              {isLoading ? (
+                <div className="p-8 text-center" style={{ color: B.muted }}>
+                  <AdminLoading message={`Loading ${scaleConfig.label} scale...`} />
+                </div>
+              ) : items.length === 0 ? (
+                <div className="p-12 text-center">
+                  <Smile className="w-12 h-12 mx-auto mb-4" style={{ color: B.muted }} />
+                  <p style={{ ...f('base', 500, B.primary), marginBottom: 4 }}>No items yet</p>
+                  <p style={{ ...f('sm', 400, B.muted) }}>
+                    Click "Add Item" to create {scaleConfig.label.toLowerCase()} scale entries
+                  </p>
+                </div>
+              ) : (
+                <div className="divide-y divide-[var(--color-border-default)]">
+                  {items.map((item, idx) => {
+                    const isEditing = editingId === item.id;
+                    const sev = SEVERITY_OPTIONS.find(s => s.value === item.severity);
+                    return (
+                      <div
+                        key={item.id}
+                        className={`flex items-center gap-4 p-4 transition-colors ${
+                          isEditing ? 'bg-[var(--color-accent-default)]' : 'hover:bg-[var(--color-bg-muted)]'
+                        } ${!item.is_active ? 'opacity-50' : ''}`}
+                      >
+                        {/* Reorder controls */}
+                        <div className="flex flex-col gap-1 shrink-0">
+                          <button
+                            onClick={() => moveItem(item.id, 'up')}
+                            disabled={idx === 0}
+                            className="p-0.5 rounded hover:bg-[var(--color-bg-muted)] disabled:opacity-30"
+                          >
+                            <ChevronUp className="w-3.5 h-3.5" style={{ color: B.muted }} />
+                          </button>
+                          <button
+                            onClick={() => moveItem(item.id, 'down')}
+                            disabled={idx === items.length - 1}
+                            className="p-0.5 rounded hover:bg-[var(--color-bg-muted)] disabled:opacity-30"
+                          >
+                            <ChevronDown className="w-3.5 h-3.5" style={{ color: B.muted }} />
+                          </button>
                         </div>
-                      </div>
-                      <div className="flex items-center" style={{ gap: 'var(--spacing-2)' }}>
-                        <Switch checked={tag.is_active} onCheckedChange={() => toggleTagActive(tag.id)} />
-                        <Button variant="outline" size="sm" onClick={() => startEditTag(tag)}>
-                          <Edit2 size={14} />
-                        </Button>
-                        <Button variant="outline" size="sm" onClick={() => deleteTagItem(tag.id)}>
-                          <Trash2 size={14} style={{ color: B.danger }} />
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )
-            ) : (
-              /* Scale list (Energy or Stress) */
-              getCurrentScaleItems().length === 0 ? (
-                <div className="text-center" style={{ padding: 'var(--spacing-12)' }}>
-                  {activeTab === 'energy' ? <Zap size={36} className="mx-auto mb-4" style={{ color: B.muted }} /> : <Brain size={36} className="mx-auto mb-4" style={{ color: B.muted }} />}
-                  <p style={f('sm', 400, B.muted)}>No scale items yet. Add one to get started.</p>
-                </div>
-              ) : (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-2)' }}>
-                  {getCurrentScaleItems().map(item => (
-                    <div
-                      key={item.id}
-                      className="flex items-center justify-between"
-                      style={{
-                        padding: 'var(--spacing-3) var(--spacing-4)', borderRadius: 'var(--radius-md)',
-                        backgroundColor: editingId === item.id ? B.accent : B.bgMuted,
-                        border: editingId === item.id ? `2px solid ${B.primary}` : `1px solid ${B.border}`,
-                        opacity: item.is_active ? 1 : 0.5,
-                      }}
-                    >
-                      <div className="flex items-center" style={{ gap: 'var(--spacing-3)' }}>
-                        <GripVertical size={14} style={{ color: B.muted, cursor: 'grab' }} />
+
+                        {/* Emoji */}
                         <div
-                          className="flex items-center justify-center"
+                          className="w-12 h-12 flex items-center justify-center rounded-xl text-2xl shrink-0"
                           style={{
-                            width: 48, height: 48, borderRadius: 'var(--radius-md)',
-                            backgroundColor: getSeverityBg(item.severity),
+                            backgroundColor: sev ? `${sev.color}18` : B.input,
+                            border: `1px solid ${B.border}`,
                           }}
                         >
-                          <span style={{ fontSize: 26 }}>{item.emoji}</span>
+                          {item.emoji}
                         </div>
-                        <div>
-                          <div className="flex items-center" style={{ gap: 'var(--spacing-2)' }}>
-                            <span style={f('sm', 500)}>{item.label}</span>
-                            <span style={{
-                              padding: '1px 6px', borderRadius: 'var(--radius-pill)',
-                              backgroundColor: getSeverityColor(item.severity),
-                              ...f('xs', 500, B.primaryOn),
-                            }}>
-                              {item.value}
-                            </span>
+
+                        {/* Info */}
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span style={{ ...f('base', 500, B.primary) }}>{item.label}</span>
+                            {sev && (
+                              <span
+                                className="rounded-full"
+                                style={{
+                                  ...f('xs', 500),
+                                  padding: '2px 8px',
+                                  backgroundColor: `${sev.color}18`,
+                                  color: sev.color,
+                                }}
+                              >
+                                {sev.label}
+                              </span>
+                            )}
                             {!item.is_active && (
-                              <span style={{ ...f('xs', 500, B.muted), padding: '1px 6px', borderRadius: 'var(--radius-pill)', backgroundColor: B.bgMuted }}>
-                                Hidden
+                              <span
+                                className="rounded-full"
+                                style={{
+                                  ...f('xs', 500),
+                                  padding: '2px 8px',
+                                  backgroundColor: 'var(--color-bg-muted)',
+                                  color: B.muted,
+                                }}
+                              >
+                                Inactive
                               </span>
                             )}
                           </div>
-                          <span style={{ ...f('xs', 400, B.muted), textTransform: 'capitalize' as const }}>
-                            {item.severity}
-                          </span>
+                          <p style={{ ...f('xs', 400, B.muted), marginTop: 2 }}>
+                            Value: {item.value} · Order: {item.order}
+                          </p>
+                        </div>
+
+                        {/* Actions */}
+                        <div className="flex items-center gap-1 shrink-0">
+                          <button
+                            onClick={() => handleToggleActive(item.id)}
+                            className="p-2 rounded-lg hover:bg-[var(--color-bg-muted)] transition-colors"
+                            title={item.is_active ? 'Deactivate' : 'Activate'}
+                          >
+                            {item.is_active
+                              ? <ToggleRight className="w-4 h-4" style={{ color: '#22C55E' }} />
+                              : <ToggleLeft className="w-4 h-4" style={{ color: B.muted }} />
+                            }
+                          </button>
+                          <button
+                            onClick={() => startEdit(item)}
+                            className="p-2 rounded-lg hover:bg-[var(--color-bg-muted)] transition-colors"
+                          >
+                            <Edit2 className="w-4 h-4" style={{ color: B.muted }} />
+                          </button>
+                          <button
+                            onClick={() => handleDelete(item.id)}
+                            className="p-2 rounded-lg hover:bg-[var(--color-bg-muted)] transition-colors"
+                          >
+                            <Trash2 className="w-4 h-4" style={{ color: 'var(--color-status-danger)' }} />
+                          </button>
                         </div>
                       </div>
-                      <div className="flex items-center" style={{ gap: 'var(--spacing-2)' }}>
-                        <Switch checked={item.is_active} onCheckedChange={() => toggleScaleActive(item.id)} />
-                        <Button variant="outline" size="sm" onClick={() => startEditScale(item)}>
-                          <Edit2 size={14} />
-                        </Button>
-                        <Button variant="outline" size="sm" onClick={() => deleteScaleItem(item.id)}>
-                          <Trash2 size={14} style={{ color: B.danger }} />
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
-              )
-            )}
-          </CardContent>
-        </Card>
-
-        {/* How it works */}
-        <Card>
-          <CardHeader>
-            <CardTitle>How Check-in Scales Work</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-4)' }}>
-              <div className="flex" style={{ gap: 'var(--spacing-3)' }}>
-                <span style={{ fontSize: 24 }}>🔄</span>
-                <div>
-                  <p style={f('sm', 500)}>Design Token Defaults</p>
-                  <p style={f('xs', 400, B.muted)}>
-                    Scales start from values defined in design-tokens.ts. Custom overrides are stored in the server KV store and take priority.
-                  </p>
-                </div>
-              </div>
-              <div className="flex" style={{ gap: 'var(--spacing-3)' }}>
-                <span style={{ fontSize: 24 }}>📱</span>
-                <div>
-                  <p style={f('sm', 500)}>Used in Mood Journal</p>
-                  <p style={f('xs', 400, B.muted)}>
-                    The check-in wizard (How are you feeling? → Energy → Stress → Note → Tags) reads these scales at mount time. Changes appear immediately.
-                  </p>
-                </div>
-              </div>
-              <div className="flex" style={{ gap: 'var(--spacing-3)' }}>
-                <span style={{ fontSize: 24 }}>⚡</span>
-                <div>
-                  <p style={f('sm', 500)}>Severity Colors</p>
-                  <p style={f('xs', 400, B.muted)}>
-                    Each scale item maps to a severity (success/info/warning/danger/neutral) which determines the color shown in the journal UI.
-                  </p>
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+              )}
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </div>
   );

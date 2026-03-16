@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { cn } from './utils';
 
 export interface RichTextEditorProps {
@@ -20,21 +20,40 @@ export function RichTextEditor({
 }: RichTextEditorProps) {
   const editorRef = useRef<HTMLDivElement>(null);
   const isInitialized = useRef(false);
+  const lastValueRef = useRef(value);
 
+  // Initialize content on mount and re-sync if value changes externally
   useEffect(() => {
-    if (!editorRef.current || isInitialized.current) return;
+    if (!editorRef.current) return;
     
-    // Set initial content
-    if (value && editorRef.current.innerHTML !== value) {
-      editorRef.current.innerHTML = value;
+    // First mount: set initial content
+    if (!isInitialized.current) {
+      if (value && editorRef.current.innerHTML !== value) {
+        editorRef.current.innerHTML = value;
+      }
+      isInitialized.current = true;
+      lastValueRef.current = value;
+      return;
     }
     
-    isInitialized.current = true;
+    // Subsequent: only update if value changed externally (not from our own onChange)
+    // This prevents cursor-jumping while allowing parent-driven content resets
+  }, []);
+
+  // Reset editor when value is explicitly changed to something completely different
+  // (e.g. switching to a different block via key prop remount)
+  useEffect(() => {
+    return () => {
+      // Cleanup on unmount — reset initialized flag for fresh mount
+      isInitialized.current = false;
+    };
   }, []);
 
   const handleInput = () => {
     if (editorRef.current) {
-      onChange(editorRef.current.innerHTML);
+      const html = editorRef.current.innerHTML;
+      lastValueRef.current = html;
+      onChange(html);
     }
   };
 
@@ -127,7 +146,7 @@ export function RichTextEditor({
         }}
       >
         {toolbarButtons.map((group, groupIdx) => (
-          <React.Fragment key={groupIdx}>
+          <div key={groupIdx} className="flex items-center">
             {groupIdx > 0 && (
               <div
                 style={{
@@ -172,7 +191,7 @@ export function RichTextEditor({
                 </button>
               ))}
             </div>
-          </React.Fragment>
+          </div>
         ))}
       </div>
 

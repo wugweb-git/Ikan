@@ -72,11 +72,24 @@ export function AdminCommunication({ onBack: _onBack }: { onBack?: () => void })
   const [broadcastAudience, setBroadcastAudience] = useState('all');
 
   const getAuthHeaders = useCallback(async (includeContentType = false) => {
-    const { data } = await supabase.auth.getSession();
-    const token = data.session?.access_token || publicAnonKey;
-    const h: Record<string, string> = { 'Authorization': `Bearer ${token}` };
-    if (includeContentType) h['Content-Type'] = 'application/json';
-    return h;
+    try {
+      const { data, error } = await supabase.auth.getSession();
+      if (error) {
+        console.warn('Auth: getSession error in AdminCommunication:', error.message);
+        const h: Record<string, string> = { 'Authorization': `Bearer ${publicAnonKey}` };
+        if (includeContentType) h['Content-Type'] = 'application/json';
+        return h;
+      }
+      const token = data.session?.access_token || publicAnonKey;
+      const h: Record<string, string> = { 'Authorization': `Bearer ${token}` };
+      if (includeContentType) h['Content-Type'] = 'application/json';
+      return h;
+    } catch (err) {
+      console.warn('Auth: getAuthHeaders failed in AdminCommunication:', err);
+      const h: Record<string, string> = { 'Authorization': `Bearer ${publicAnonKey}` };
+      if (includeContentType) h['Content-Type'] = 'application/json';
+      return h;
+    }
   }, []);
 
   const baseUrl = `https://${projectId}.supabase.co/functions/v1/make-server-cc205da9`;

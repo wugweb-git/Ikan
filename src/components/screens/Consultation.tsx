@@ -13,6 +13,7 @@ import { Label } from '../ui/label';
 import { useIsMobile } from '../../hooks/useIsMobile';
 import { Skeleton } from '../ui/skeleton-loader';
 import { PageHero } from '../ui/PageHero';
+import { useMetadata } from '../../hooks/useMetadata';
 import { BookingModal } from '../blocks/BookingModal';
 
 // Define Consultant type locally
@@ -44,45 +45,7 @@ export interface Consultant {
   available: boolean;
 }
 
-// Expertise categories
-export const expertiseCategories = [
-  "Anxiety Disorders",
-  "Depressive Disorders",
-  "Relationship Skills",
-  "Stress Management",
-  "Anger Management",
-  "Grief and Loss",
-  "Loneliness",
-  "Lack of Motivation",
-  "Negative Thinking",
-  "Overthinking",
-  "Self-Improvement",
-  "Sleep Disorder",
-  "Bipolar Disorder",
-  "Obsessive-Compulsive Disorder (OCD)",
-  "Schizophrenia",
-  "Sexual Dysfunction",
-  "General Well-Being",
-  "LGBTQIA+ Concerns",
-  "Adult ADHD",
-  "Personality Disorder",
-  "Trauma",
-  "Child Specialist / Child Therapy",
-  "Eating Disorders",
-  "Trauma-Related Disorders",
-  "Adult Autism / Neurodiversity",
-  "Geriatric Mental Health",
-  "Fertility and Pregnancy Concerns",
-  "Work-Related Concerns",
-  "Parenting Concerns",
-  "Life Transitions",
-  "Academic Concerns",
-  "Communication Skills",
-  "PTSD",
-  "Addiction Recovery",
-  "Body Image",
-  "Self-Esteem"
-];
+// REMOVED: No hardcoded FALLBACK_EXPERTISE_CATEGORIES — KV is the single source of truth via useMetadata
 
 interface ConsultationProps {
   className?: string;
@@ -103,6 +66,8 @@ type SortOption = 'recommended' | 'rating' | 'price-low' | 'price-high' | 'exper
 
 export function Consultation({ className, onNavigate }: ConsultationProps) {
   const isMobile = useIsMobile();
+  // Expertise categories from KV metadata (no hardcoded fallback)
+  const { expertiseCategories: kvExpertiseCategories } = useMetadata();
   const [consultants, setConsultants] = useState<Consultant[]>([]);
   const [filteredConsultants, setFilteredConsultants] = useState<Consultant[]>([]);
   const [loading, setLoading] = useState(true);
@@ -166,6 +131,14 @@ export function Consultation({ className, onNavigate }: ConsultationProps) {
     new Set(consultants.flatMap(c => c.languages))
   ).sort();
 
+  // Derive expertise categories: merge consultant data with KV metadata, no hardcoded fallback
+  const expertiseCategories = consultants.length > 0
+    ? Array.from(new Set([
+        ...consultants.flatMap(c => c.expertises || []),
+        ...kvExpertiseCategories.map(e => e.label)
+      ])).sort()
+    : kvExpertiseCategories.map(e => e.label);
+  
   // Apply filters
   useEffect(() => {
     let filtered = [...consultants];
@@ -207,13 +180,14 @@ export function Consultation({ className, onNavigate }: ConsultationProps) {
 
     // Price filter
     filtered = filtered.filter(c => {
-      // Check if pricing exists and has valid values
-      if (!c.pricing) return false;
+      // If no pricing data exists, include the consultant when using default price range
+      if (!c.pricing) return priceRange[0] === 0 && priceRange[1] === 5000;
       const minPrice = Math.min(
         c.pricing.video || Infinity, 
         c.pricing.call || Infinity, 
         c.pricing.chat || Infinity
       );
+      if (minPrice === Infinity) return priceRange[0] === 0 && priceRange[1] === 5000;
       return minPrice >= priceRange[0] && minPrice <= priceRange[1];
     });
 
@@ -545,8 +519,8 @@ export function Consultation({ className, onNavigate }: ConsultationProps) {
 
             {/* Sort */}
             <Select value={sortBy} onValueChange={(v) => setSortBy(v as SortOption)}>
-              <SelectTrigger style={{ width: '120px', height: '52px', borderRadius: '16px' }}>
-                <SelectValue />
+              <SelectTrigger style={{ width: isMobile ? '44px' : '120px', height: '52px', borderRadius: '16px', flexShrink: 0 }}>
+                <SelectValue placeholder="Sort" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="recommended">Recommended</SelectItem>
@@ -561,7 +535,7 @@ export function Consultation({ className, onNavigate }: ConsultationProps) {
       )}
 
       {/* Main Content */}
-      <div className="flex-1 app-container px-[0px] py-[48px]">
+      <div className="flex-1 app-container" style={{ padding: isMobile ? '16px 16px 80px' : '48px 0' }}>
         <div className="flex gap-8">
           {/* Sidebar Filters (Desktop) */}
           {!isMobile && (
@@ -755,11 +729,13 @@ export function Consultation({ className, onNavigate }: ConsultationProps) {
       <BookingModal 
         isOpen={!!bookingConsultant}
         onClose={() => setBookingConsultant(null)}
+        consultantId={bookingConsultant?.id}
         consultantName={bookingConsultant?.name || ''}
-        onBook={(slotId) => {
-          console.log('Booked slot', slotId, 'for', bookingConsultant?.name);
+        sessionModes={bookingConsultant?.sessionModes || ['video', 'call']}
+        pricing={bookingConsultant?.pricing}
+        onBook={(bookingData) => {
+          console.log('Booking confirmed:', bookingData, 'for', bookingConsultant?.name);
           setBookingConsultant(null);
-          // Here you would typically navigate to a confirmation page or show a success toast
         }}
       />
     </div>

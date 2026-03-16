@@ -1,78 +1,94 @@
-import React, { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '../../ui/card';
-import { Button } from '../../ui/button';
-import { Icon } from '../../Icon';
-import { Separator } from '../../ui/separator';
-import { Badge } from '../../ui/badge';
+import React, { useState, useEffect } from 'react';
 import { useNotifications } from '../../../contexts/NotificationContext';
 import { useAuth } from '../../../contexts/AuthContext';
+import { apiClient } from '../../../lib/api-client';
 import { useIsMobile } from '../../../hooks/useIsMobile';
 import { cn } from '../../ui/utils';
-import { apiClient } from '../../../lib/api-client';
 import { validatePassword, isCommonPassword, validateEmail } from '../../../lib/validation';
 import { PasswordStrength } from '../../ui/password-strength';
 import { ToggleSwitch } from '../../ui/toggle-switch';
+import { Key, Mail, Shield, Monitor, ChevronDown, ChevronUp, X } from 'lucide-react';
 
-interface LoginSession {
-  id: string;
-  device: string;
-  location: string;
-  ip: string;
-  lastActive: string;
-  current: boolean;
-}
+// ─── Font helper ──────────────────────────────────────────────
+const f = (size: string, weight: number = 400, color: string = 'var(--color-text-primary)') => ({
+  fontSize: `var(--text-${size})`,
+  fontWeight: weight,
+  fontFamily: 'var(--font-family-base)',
+  color,
+});
 
-interface SecuritySettings {
-  twoFactorEnabled: boolean;
-  biometricEnabled: boolean;
-  loginAlerts: boolean;
-  sessionTimeout: number; // in minutes
-}
+// ─── Styled input ─────────────────────────────────────────────
+const inputStyle: React.CSSProperties = {
+  width: '100%',
+  padding: '10px 14px',
+  borderRadius: 'var(--radius-md)',
+  border: '1px solid var(--color-border-default)',
+  backgroundColor: 'var(--color-bg-input)',
+  fontFamily: 'var(--font-family-base)',
+  fontSize: 'var(--text-sm)',
+  fontWeight: 400,
+  color: 'var(--color-text-primary)',
+  outline: 'none',
+};
+
+const btnPrimary: React.CSSProperties = {
+  padding: '10px 20px',
+  borderRadius: 'var(--radius-md)',
+  border: 'none',
+  backgroundColor: 'var(--color-primary-default)',
+  cursor: 'pointer',
+  ...f('sm', 500, 'white'),
+};
+
+const btnOutline: React.CSSProperties = {
+  padding: '10px 20px',
+  borderRadius: 'var(--radius-md)',
+  border: '1px solid var(--color-border-default)',
+  backgroundColor: 'var(--color-bg-card)',
+  cursor: 'pointer',
+  ...f('sm', 500),
+};
 
 export function Security() {
   const { showToast } = useNotifications();
   const { user, refreshProfile } = useAuth();
   const isMobile = useIsMobile();
-  
-  const [settings, setSettings] = useState<SecuritySettings>({
-    twoFactorEnabled: false,
-    biometricEnabled: true,
-    loginAlerts: true,
-    sessionTimeout: 30
-  });
 
-  // Load security settings from user profile
-  React.useEffect(() => {
-    if (user?.security_settings) {
-      setSettings(prev => ({
-        ...prev,
-        ...user.security_settings
-      }));
+  // ─── Password ─────────────────────────────────
+  const [showPasswordForm, setShowPasswordForm] = useState(false);
+  const [passwordForm, setPasswordForm] = useState({ current: '', newPw: '', confirm: '' });
+  const [changingPassword, setChangingPassword] = useState(false);
+
+  // ─── Email ────────────────────────────────────
+  const [showEmailForm, setShowEmailForm] = useState(false);
+  const [emailForm, setEmailForm] = useState({ newEmail: '', password: '', token: '' });
+  const [emailStep, setEmailStep] = useState<'request' | 'verify'>('request');
+  const [changingEmail, setChangingEmail] = useState(false);
+
+  // ─── 2FA ──────────────────────────────────────
+  const [twoFactorEnabled, setTwoFactorEnabled] = useState(false);
+
+  useEffect(() => {
+    if (user?.security_settings?.twoFactorEnabled) {
+      setTwoFactorEnabled(true);
     }
   }, [user]);
 
-  // Compute dynamic "last changed" text from profile timestamps
+  // Computed "last changed" text
   const formatLastChanged = (isoDate?: string) => {
     if (!isoDate) return 'Never changed';
-    const date = new Date(isoDate);
-    const now = new Date();
-    const diffMs = now.getTime() - date.getTime();
-    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-    if (diffDays < 1) return 'Changed today';
-    if (diffDays === 1) return 'Changed yesterday';
-    if (diffDays < 30) return `Last changed ${diffDays} days ago`;
-    if (diffDays < 365) {
-      const months = Math.floor(diffDays / 30);
-      return `Last changed ${months} month${months > 1 ? 's' : ''} ago`;
-    }
-    const years = Math.floor(diffDays / 365);
-    return `Last changed ${years} year${years > 1 ? 's' : ''} ago`;
+    const days = Math.floor((Date.now() - new Date(isoDate).getTime()) / (1000 * 60 * 60 * 24));
+    if (days < 1) return 'Changed today';
+    if (days === 1) return 'Changed yesterday';
+    if (days < 30) return `Last changed ${days} days ago`;
+    const months = Math.floor(days / 30);
+    return `Last changed ${months} month${months > 1 ? 's' : ''} ago`;
   };
 
   const passwordLastChanged = formatLastChanged(user?.password_changed_at as string | undefined);
   const emailLastChanged = formatLastChanged(user?.email_changed_at as string | undefined);
 
-  // Dynamic session data based on current browser
+  // Current session info (from browser)
   const getBrowserInfo = () => {
     const ua = navigator.userAgent;
     if (ua.includes('Chrome') && !ua.includes('Edg')) return 'Chrome';
@@ -81,7 +97,6 @@ export function Security() {
     if (ua.includes('Edg')) return 'Edge';
     return 'Browser';
   };
-
   const getOSInfo = () => {
     const ua = navigator.userAgent;
     if (ua.includes('Windows')) return 'Windows';
@@ -89,899 +104,282 @@ export function Security() {
     if (ua.includes('Linux')) return 'Linux';
     if (ua.includes('iPhone') || ua.includes('iPad')) return 'iOS';
     if (ua.includes('Android')) return 'Android';
-    return 'Unknown OS';
+    return 'Unknown';
   };
 
-  const [sessions, setSessions] = useState<LoginSession[]>([
-    {
-      id: 'current',
-      device: `${getBrowserInfo()} on ${getOSInfo()}`,
-      location: 'Current Location',
-      ip: '—',
-      lastActive: new Date().toISOString(),
-      current: true
+  // ─── Handlers ──────────────────────────────────
+
+  const handleChangePassword = async () => {
+    if (!passwordForm.current.trim()) {
+      showToast('error', 'Error', 'Enter your current password'); return;
     }
-  ]);
-
-  const [showPasswordChange, setShowPasswordChange] = useState(false);
-  const [passwordForm, setPasswordForm] = useState({
-    currentPassword: '',
-    newPassword: '',
-    confirmPassword: ''
-  });
-
-  const [show2FASetup, setShow2FASetup] = useState(false);
-
-  // Email change state
-  const [showEmailChange, setShowEmailChange] = useState(false);
-  const [emailChangeStep, setEmailChangeStep] = useState<'request' | 'verify'>('request');
-  const [emailForm, setEmailForm] = useState({ newEmail: '', password: '', verificationToken: '' });
-  const [emailChangeLoading, setEmailChangeLoading] = useState(false);
-
-  const handleToggleSetting = async (key: keyof SecuritySettings) => {
-    if (key === 'twoFactorEnabled' && !settings.twoFactorEnabled) {
-      setShow2FASetup(true);
-      return;
+    const pwError = validatePassword(passwordForm.newPw);
+    if (pwError) { showToast('error', 'Error', pwError.message); return; }
+    if (isCommonPassword(passwordForm.newPw)) {
+      showToast('error', 'Error', 'Password is too common'); return;
     }
-    
-    const newSettings = {
-      ...settings,
-      [key]: !settings[key]
-    };
-    setSettings(newSettings);
-
+    if (passwordForm.newPw !== passwordForm.confirm) {
+      showToast('error', 'Error', 'Passwords do not match'); return;
+    }
     try {
-      await apiClient.updateProfile({ security_settings: newSettings } as any);
-      await refreshProfile();
-      showToast('success', 'Updated', 'Security setting updated');
-    } catch (_error) {
-      // Revert on failure
-      setSettings(settings);
-      showToast('error', 'Error', 'Failed to save security setting');
+      setChangingPassword(true);
+      await apiClient.changePassword(passwordForm.current, passwordForm.newPw);
+      showToast('success', 'Password Changed', 'Your password has been updated');
+      setShowPasswordForm(false);
+      setPasswordForm({ current: '', newPw: '', confirm: '' });
+      refreshProfile();
+    } catch (err: any) {
+      showToast('error', 'Error', err.message || 'Failed to change password');
+    } finally {
+      setChangingPassword(false);
     }
-  };
-
-  const handleChangePassword = () => {
-    if (passwordForm.newPassword !== passwordForm.confirmPassword) {
-      showToast('error', 'Error', 'New passwords do not match');
-      return;
-    }
-    
-    if (!passwordForm.currentPassword.trim()) {
-      showToast('error', 'Error', 'Please enter your current password');
-      return;
-    }
-    
-    const passwordError = validatePassword(passwordForm.newPassword);
-    if (passwordError) {
-      showToast('error', 'Error', passwordError.message);
-      return;
-    }
-    
-    if (isCommonPassword(passwordForm.newPassword)) {
-      showToast('error', 'Error', 'Password is too common. Please choose a stronger password');
-      return;
-    }
-    
-    // In real app, this would call an API
-    apiClient.changePassword(passwordForm.currentPassword, passwordForm.newPassword)
-      .then(() => {
-        showToast('success', 'Password Changed', 'Your password has been updated successfully');
-        setShowPasswordChange(false);
-        setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
-        refreshProfile(); // Refresh to get updated password_changed_at
-      }).catch((error) => {
-        showToast('error', 'Error', error.message || 'Failed to change password');
-      });
   };
 
   const handleRequestEmailChange = async () => {
-    if (!emailForm.newEmail.trim()) {
-      showToast('error', 'Error', 'Please enter a new email address');
-      return;
-    }
-
-    const emailError = validateEmail(emailForm.newEmail);
-    if (emailError) {
-      showToast('error', 'Error', emailError.message || 'Please enter a valid email address');
-      return;
-    }
-
-    if (!emailForm.password.trim()) {
-      showToast('error', 'Error', 'Please enter your current password to confirm');
-      return;
-    }
-
+    if (!emailForm.newEmail.trim()) { showToast('error', 'Error', 'Enter a new email'); return; }
+    const emailErr = validateEmail(emailForm.newEmail);
+    if (emailErr) { showToast('error', 'Error', emailErr.message || 'Invalid email'); return; }
+    if (!emailForm.password.trim()) { showToast('error', 'Error', 'Enter your password to confirm'); return; }
     try {
-      setEmailChangeLoading(true);
+      setChangingEmail(true);
       await apiClient.requestEmailChange(emailForm.newEmail, emailForm.password);
-      showToast('success', 'Verification Sent', 'A verification token has been generated. In production, this would be sent to your new email.');
-      setEmailChangeStep('verify');
-    } catch (error: any) {
-      showToast('error', 'Error', error.message || 'Failed to request email change');
+      showToast('success', 'Verification Sent', 'Check your new email for a verification token');
+      setEmailStep('verify');
+    } catch (err: any) {
+      showToast('error', 'Error', err.message || 'Failed to request email change');
     } finally {
-      setEmailChangeLoading(false);
+      setChangingEmail(false);
     }
   };
 
   const handleVerifyEmailChange = async () => {
-    if (!emailForm.verificationToken.trim()) {
-      showToast('error', 'Error', 'Please enter the verification token');
-      return;
-    }
-
+    if (!emailForm.token.trim()) { showToast('error', 'Error', 'Enter the verification token'); return; }
     try {
-      setEmailChangeLoading(true);
-      await apiClient.verifyEmailChange(emailForm.verificationToken);
-      showToast('success', 'Email Changed', 'Your email address has been updated successfully');
-      setShowEmailChange(false);
-      setEmailChangeStep('request');
-      setEmailForm({ newEmail: '', password: '', verificationToken: '' });
-      refreshProfile(); // Refresh to get updated email_changed_at
-    } catch (error: any) {
-      showToast('error', 'Error', error.message || 'Failed to verify email change');
+      setChangingEmail(true);
+      await apiClient.verifyEmailChange(emailForm.token);
+      showToast('success', 'Email Changed', 'Your email has been updated');
+      setShowEmailForm(false);
+      setEmailStep('request');
+      setEmailForm({ newEmail: '', password: '', token: '' });
+      refreshProfile();
+    } catch (err: any) {
+      showToast('error', 'Error', err.message || 'Failed to verify');
     } finally {
-      setEmailChangeLoading(false);
+      setChangingEmail(false);
     }
   };
 
-  const handleEnable2FA = () => {
-    setSettings(prev => ({ ...prev, twoFactorEnabled: true }));
-    showToast('success', '2FA Enabled', 'Two-factor authentication has been enabled');
-    setShow2FASetup(false);
-  };
-
-  const handleRevokeSession = (sessionId: string) => {
-    setSessions(prev => prev.filter(s => s.id !== sessionId));
-    showToast('success', 'Session Revoked', 'Device has been logged out');
-  };
-
-  const handleRevokeAllSessions = () => {
-    setSessions(prev => prev.filter(s => s.current));
-    showToast('success', 'All Sessions Revoked', 'All other devices have been logged out');
-  };
-
-  const formatLastActive = (dateString: string) => {
-    const date = new Date(dateString);
-    const now = new Date();
-    const diffMs = now.getTime() - date.getTime();
-    const diffMins = Math.floor(diffMs / 60000);
-    
-    if (diffMins < 1) return 'Just now';
-    if (diffMins < 60) return `${diffMins} minutes ago`;
-    if (diffMins < 1440) return `${Math.floor(diffMins / 60)} hours ago`;
-    return `${Math.floor(diffMins / 1440)} days ago`;
+  const handleToggle2FA = async () => {
+    const newVal = !twoFactorEnabled;
+    setTwoFactorEnabled(newVal);
+    try {
+      await apiClient.updateProfile({ security_settings: { twoFactorEnabled: newVal } } as any);
+      await refreshProfile();
+      showToast('success', newVal ? '2FA Enabled' : '2FA Disabled',
+        newVal ? 'Two-factor authentication is now active' : 'Two-factor authentication has been disabled');
+    } catch {
+      setTwoFactorEnabled(!newVal);
+      showToast('error', 'Error', 'Failed to update 2FA setting');
+    }
   };
 
   return (
-    <div className="space-y-6">
-      {/* Password */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Icon name="key" size={20} style={{ color: 'var(--color-text-primary)' }} />
-            Password
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {!showPasswordChange ? (
-            <div className="flex items-center justify-between">
-              <div>
-                <div style={{ 
-                  fontSize: 'var(--text-sm)', 
-                  fontWeight: 'var(--font-weight-medium)',
-                  color: 'var(--color-text-primary)',
-                  marginBottom: 'var(--spacing-1)'
-                }}>
-                  Change Password
-                </div>
-                <div style={{ 
-                  fontSize: 'var(--text-xs)', 
-                  color: 'var(--color-text-muted)'
-                }}>
-                  {passwordLastChanged}
-                </div>
-              </div>
-              <Button
-                variant="outline"
-                onClick={() => setShowPasswordChange(true)}
-                style={{
-                  height: 'var(--ikan-component-button-height)',
-                  borderRadius: 'var(--ikan-component-border-radius)',
-                  fontSize: 'var(--text-sm)',
-                  fontWeight: 'var(--font-weight-medium)'
-                }}
-              >
-                Change Password
-              </Button>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              <div>
-                <label 
-                  htmlFor="current-password"
-                  style={{ 
-                    fontSize: 'var(--text-sm)', 
-                    fontWeight: 'var(--font-weight-medium)',
-                    color: 'var(--color-text-primary)',
-                    display: 'block',
-                    marginBottom: 'var(--spacing-2)'
-                  }}
-                >
-                  Current Password
-                </label>
-                <input
-                  id="current-password"
-                  type="password"
-                  value={passwordForm.currentPassword}
-                  onChange={(e) => setPasswordForm(prev => ({ ...prev, currentPassword: e.target.value }))}
-                  style={{
-                    width: '100%',
-                    padding: 'var(--spacing-2) var(--spacing-3)',
-                    borderRadius: 'var(--ikan-component-border-radius)',
-                    border: '1px solid var(--color-border-default)',
-                    backgroundColor: 'var(--color-bg-input)',
-                    fontSize: 'var(--text-sm)',
-                    fontFamily: 'var(--font-family-base)',
-                    fontWeight: 'var(--font-weight-regular)',
-                    color: 'var(--color-text-primary)'
-                  }}
-                />
-              </div>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-6)' }}>
 
-              <div>
-                <label 
-                  htmlFor="new-password"
-                  style={{ 
-                    fontSize: 'var(--text-sm)', 
-                    fontWeight: 'var(--font-weight-medium)',
-                    color: 'var(--color-text-primary)',
-                    display: 'block',
-                    marginBottom: 'var(--spacing-2)'
-                  }}
-                >
-                  New Password
-                </label>
-                <input
-                  id="new-password"
-                  type="password"
-                  value={passwordForm.newPassword}
-                  onChange={(e) => setPasswordForm(prev => ({ ...prev, newPassword: e.target.value }))}
-                  style={{
-                    width: '100%',
-                    padding: 'var(--spacing-2) var(--spacing-3)',
-                    borderRadius: 'var(--ikan-component-border-radius)',
-                    border: '1px solid var(--color-border-default)',
-                    backgroundColor: 'var(--color-bg-input)',
-                    fontSize: 'var(--text-sm)',
-                    fontFamily: 'var(--font-family-base)',
-                    fontWeight: 'var(--font-weight-regular)',
-                    color: 'var(--color-text-primary)'
-                  }}
-                />
-                <PasswordStrength password={passwordForm.newPassword} />
-              </div>
+      {/* ═══ ACCOUNT SECURITY ═══ */}
+      <section>
+        <div style={{ ...f('xs', 500, 'var(--color-text-muted)'), textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 10 }}>
+          Account Security
+        </div>
+        <div style={{
+          backgroundColor: 'var(--color-bg-card)',
+          borderRadius: 'var(--radius-lg)',
+          border: '1px solid var(--color-border-default)',
+          overflow: 'hidden',
+        }}>
 
-              <div>
-                <label 
-                  htmlFor="confirm-password"
-                  style={{ 
-                    fontSize: 'var(--text-sm)', 
-                    fontWeight: 'var(--font-weight-medium)',
-                    color: 'var(--color-text-primary)',
-                    display: 'block',
-                    marginBottom: 'var(--spacing-2)'
-                  }}
-                >
-                  Confirm New Password
-                </label>
-                <input
-                  id="confirm-password"
-                  type="password"
-                  value={passwordForm.confirmPassword}
-                  onChange={(e) => setPasswordForm(prev => ({ ...prev, confirmPassword: e.target.value }))}
-                  style={{
-                    width: '100%',
-                    padding: 'var(--spacing-2) var(--spacing-3)',
-                    borderRadius: 'var(--ikan-component-border-radius)',
-                    border: '1px solid var(--color-border-default)',
-                    backgroundColor: 'var(--color-bg-input)',
-                    fontSize: 'var(--text-sm)',
-                    fontFamily: 'var(--font-family-base)',
-                    fontWeight: 'var(--font-weight-regular)',
-                    color: 'var(--color-text-primary)'
-                  }}
-                />
-              </div>
-
-              <div className={cn(
-                "flex",
-                isMobile ? "flex-col gap-2" : "gap-2 justify-end"
-              )}>
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    setShowPasswordChange(false);
-                    setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
-                  }}
-                  style={{
-                    height: 'var(--ikan-component-button-height)',
-                    borderRadius: 'var(--ikan-component-border-radius)',
-                    fontSize: 'var(--text-sm)',
-                    fontWeight: 'var(--font-weight-medium)'
-                  }}
-                >
-                  Cancel
-                </Button>
-                <Button
-                  onClick={handleChangePassword}
-                  style={{
-                    height: 'var(--ikan-component-button-height)',
-                    borderRadius: 'var(--ikan-component-border-radius)',
-                    fontSize: 'var(--text-sm)',
-                    fontWeight: 'var(--font-weight-medium)',
-                    backgroundColor: 'var(--color-primary-default)',
-                    color: 'white'
-                  }}
-                >
-                  Update Password
-                </Button>
-              </div>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Email */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Icon name="mail" size={20} style={{ color: 'var(--color-text-primary)' }} />
-            Email
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {!showEmailChange ? (
-            <div className="flex items-center justify-between">
-              <div>
-                <div style={{ 
-                  fontSize: 'var(--text-sm)', 
-                  fontWeight: 'var(--font-weight-medium)',
-                  color: 'var(--color-text-primary)',
-                  marginBottom: 'var(--spacing-1)'
-                }}>
-                  Change Email
-                </div>
-                <div style={{ 
-                  fontSize: 'var(--text-xs)', 
-                  color: 'var(--color-text-muted)'
-                }}>
-                  {emailLastChanged}
-                </div>
-              </div>
-              <Button
-                variant="outline"
-                onClick={() => setShowEmailChange(true)}
-                style={{
-                  height: 'var(--ikan-component-button-height)',
-                  borderRadius: 'var(--ikan-component-border-radius)',
-                  fontSize: 'var(--text-sm)',
-                  fontWeight: 'var(--font-weight-medium)'
-                }}
-              >
-                Change Email
-              </Button>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {emailChangeStep === 'request' && (
-                <>
-                  <div>
-                    <label 
-                      htmlFor="new-email"
-                      style={{ 
-                        fontSize: 'var(--text-sm)', 
-                        fontWeight: 'var(--font-weight-medium)',
-                        color: 'var(--color-text-primary)',
-                        display: 'block',
-                        marginBottom: 'var(--spacing-2)'
-                      }}
-                    >
-                      New Email
-                    </label>
-                    <input
-                      id="new-email"
-                      type="email"
-                      value={emailForm.newEmail}
-                      onChange={(e) => setEmailForm(prev => ({ ...prev, newEmail: e.target.value }))}
-                      style={{
-                        width: '100%',
-                        padding: 'var(--spacing-2) var(--spacing-3)',
-                        borderRadius: 'var(--ikan-component-border-radius)',
-                        border: '1px solid var(--color-border-default)',
-                        backgroundColor: 'var(--color-bg-input)',
-                        fontSize: 'var(--text-sm)',
-                        fontFamily: 'var(--font-family-base)',
-                        fontWeight: 'var(--font-weight-regular)',
-                        color: 'var(--color-text-primary)'
-                      }}
-                    />
-                  </div>
-
-                  <div>
-                    <label 
-                      htmlFor="current-password"
-                      style={{ 
-                        fontSize: 'var(--text-sm)', 
-                        fontWeight: 'var(--font-weight-medium)',
-                        color: 'var(--color-text-primary)',
-                        display: 'block',
-                        marginBottom: 'var(--spacing-2)'
-                      }}
-                    >
-                      Current Password
-                    </label>
-                    <input
-                      id="current-password"
-                      type="password"
-                      value={emailForm.password}
-                      onChange={(e) => setEmailForm(prev => ({ ...prev, password: e.target.value }))}
-                      style={{
-                        width: '100%',
-                        padding: 'var(--spacing-2) var(--spacing-3)',
-                        borderRadius: 'var(--ikan-component-border-radius)',
-                        border: '1px solid var(--color-border-default)',
-                        backgroundColor: 'var(--color-bg-input)',
-                        fontSize: 'var(--text-sm)',
-                        fontFamily: 'var(--font-family-base)',
-                        fontWeight: 'var(--font-weight-regular)',
-                        color: 'var(--color-text-primary)'
-                      }}
-                    />
-                  </div>
-
-                  <div className={cn(
-                    "flex",
-                    isMobile ? "flex-col gap-2" : "gap-2 justify-end"
-                  )}>
-                    <Button
-                      variant="outline"
-                      onClick={() => {
-                        setShowEmailChange(false);
-                        setEmailForm({ newEmail: '', password: '', verificationToken: '' });
-                      }}
-                      style={{
-                        height: 'var(--ikan-component-button-height)',
-                        borderRadius: 'var(--ikan-component-border-radius)',
-                        fontSize: 'var(--text-sm)',
-                        fontWeight: 'var(--font-weight-medium)'
-                      }}
-                    >
-                      Cancel
-                    </Button>
-                    <Button
-                      onClick={handleRequestEmailChange}
-                      disabled={emailChangeLoading}
-                      style={{
-                        height: 'var(--ikan-component-button-height)',
-                        borderRadius: 'var(--ikan-component-border-radius)',
-                        fontSize: 'var(--text-sm)',
-                        fontWeight: 'var(--font-weight-medium)',
-                        backgroundColor: 'var(--color-primary-default)',
-                        color: 'white'
-                      }}
-                    >
-                      {emailChangeLoading ? 'Sending...' : 'Request Email Change'}
-                    </Button>
-                  </div>
-                </>
-              )}
-
-              {emailChangeStep === 'verify' && (
-                <>
-                  <div>
-                    <label 
-                      htmlFor="verification-token"
-                      style={{ 
-                        fontSize: 'var(--text-sm)', 
-                        fontWeight: 'var(--font-weight-medium)',
-                        color: 'var(--color-text-primary)',
-                        display: 'block',
-                        marginBottom: 'var(--spacing-2)'
-                      }}
-                    >
-                      Verification Token
-                    </label>
-                    <input
-                      id="verification-token"
-                      type="text"
-                      value={emailForm.verificationToken}
-                      onChange={(e) => setEmailForm(prev => ({ ...prev, verificationToken: e.target.value }))}
-                      style={{
-                        width: '100%',
-                        padding: 'var(--spacing-2) var(--spacing-3)',
-                        borderRadius: 'var(--ikan-component-border-radius)',
-                        border: '1px solid var(--color-border-default)',
-                        backgroundColor: 'var(--color-bg-input)',
-                        fontSize: 'var(--text-sm)',
-                        fontFamily: 'var(--font-family-base)',
-                        fontWeight: 'var(--font-weight-regular)',
-                        color: 'var(--color-text-primary)'
-                      }}
-                    />
-                  </div>
-
-                  <div className={cn(
-                    "flex",
-                    isMobile ? "flex-col gap-2" : "gap-2 justify-end"
-                  )}>
-                    <Button
-                      variant="outline"
-                      onClick={() => {
-                        setShowEmailChange(false);
-                        setEmailForm({ newEmail: '', password: '', verificationToken: '' });
-                      }}
-                      style={{
-                        height: 'var(--ikan-component-button-height)',
-                        borderRadius: 'var(--ikan-component-border-radius)',
-                        fontSize: 'var(--text-sm)',
-                        fontWeight: 'var(--font-weight-medium)'
-                      }}
-                    >
-                      Cancel
-                    </Button>
-                    <Button
-                      onClick={handleVerifyEmailChange}
-                      disabled={emailChangeLoading}
-                      style={{
-                        height: 'var(--ikan-component-button-height)',
-                        borderRadius: 'var(--ikan-component-border-radius)',
-                        fontSize: 'var(--text-sm)',
-                        fontWeight: 'var(--font-weight-medium)',
-                        backgroundColor: 'var(--color-primary-default)',
-                        color: 'white'
-                      }}
-                    >
-                      {emailChangeLoading ? 'Verifying...' : 'Verify Email Change'}
-                    </Button>
-                  </div>
-                </>
-              )}
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Two-Factor Authentication */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Icon name="shield" size={20} style={{ color: 'var(--color-text-primary)' }} />
-            Two-Factor Authentication
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex items-center justify-between py-3">
-            <div className="flex-1 mr-4">
-              <div className="flex items-center gap-2 mb-1">
-                <span style={{ 
-                  fontSize: 'var(--text-sm)', 
-                  fontWeight: 'var(--font-weight-medium)',
-                  color: 'var(--color-text-primary)'
-                }}>
-                  Enable 2FA
-                </span>
-                {settings.twoFactorEnabled && (
-                  <Badge style={{ backgroundColor: 'var(--color-status-success-light)', color: 'var(--color-status-success)' }}>
-                    Active
-                  </Badge>
-                )}
-              </div>
-              <div style={{ 
-                fontSize: 'var(--text-xs)', 
-                color: 'var(--color-text-muted)',
-                lineHeight: 'var(--line-height-md)'
-              }}>
-                Add an extra layer of security with SMS or authenticator app
-              </div>
-            </div>
-            <ToggleSwitch 
-              enabled={settings.twoFactorEnabled} 
-              onChange={() => handleToggleSetting('twoFactorEnabled')}
-            />
-          </div>
-
-          {show2FASetup && !settings.twoFactorEnabled && (
-            <>
-              <Separator />
-              <div 
-                className="p-4 rounded-lg space-y-3"
-                style={{ backgroundColor: 'var(--color-bg-muted)' }}
-              >
-                <h4 style={{ 
-                  fontSize: 'var(--text-sm)', 
-                  fontWeight: 'var(--font-weight-medium)',
-                  color: 'var(--color-text-primary)'
-                }}>
-                  Setup Two-Factor Authentication
-                </h4>
-                <p style={{ 
-                  fontSize: 'var(--text-xs)', 
-                  color: 'var(--color-text-muted)'
-                }}>
-                  Choose your preferred 2FA method:
-                </p>
-                <div className="space-y-2">
-                  <Button
-                    variant="outline"
-                    className="w-full gap-2 justify-start"
-                    onClick={handleEnable2FA}
-                    style={{
-                      height: 'var(--ikan-component-button-height)',
-                      borderRadius: 'var(--ikan-component-border-radius)',
-                      fontSize: 'var(--text-sm)',
-                      fontWeight: 'var(--font-weight-medium)'
-                    }}
-                  >
-                    <Icon name="smartphone" size={16} />
-                    SMS Authentication
-                  </Button>
-                  <Button
-                    variant="outline"
-                    className="w-full gap-2 justify-start"
-                    onClick={handleEnable2FA}
-                    style={{
-                      height: 'var(--ikan-component-button-height)',
-                      borderRadius: 'var(--ikan-component-border-radius)',
-                      fontSize: 'var(--text-sm)',
-                      fontWeight: 'var(--font-weight-medium)'
-                    }}
-                  >
-                    <Icon name="key" size={16} />
-                    Authenticator App
-                  </Button>
-                </div>
-                <Button
-                  variant="ghost"
-                  onClick={() => setShow2FASetup(false)}
-                  className="w-full"
-                  style={{
-                    fontSize: 'var(--text-sm)',
-                    fontWeight: 'var(--font-weight-medium)'
-                  }}
-                >
-                  Cancel
-                </Button>
-              </div>
-            </>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Login Settings */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Icon name="logIn" size={20} style={{ color: 'var(--color-text-primary)' }} />
-            Login Settings
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex items-center justify-between py-3">
-            <div className="flex-1 mr-4">
-              <div style={{ 
-                fontSize: 'var(--text-sm)', 
-                fontWeight: 'var(--font-weight-medium)',
-                color: 'var(--color-text-primary)',
-                marginBottom: 'var(--spacing-1)'
-              }}>
-                Biometric Login
-              </div>
-              <div style={{ 
-                fontSize: 'var(--text-xs)', 
-                color: 'var(--color-text-muted)',
-                lineHeight: 'var(--line-height-md)'
-              }}>
-                Use fingerprint or face recognition to log in
-              </div>
-            </div>
-            <ToggleSwitch 
-              enabled={settings.biometricEnabled} 
-              onChange={() => handleToggleSetting('biometricEnabled')}
-            />
-          </div>
-
-          <Separator />
-
-          <div className="flex items-center justify-between py-3">
-            <div className="flex-1 mr-4">
-              <div style={{ 
-                fontSize: 'var(--text-sm)', 
-                fontWeight: 'var(--font-weight-medium)',
-                color: 'var(--color-text-primary)',
-                marginBottom: 'var(--spacing-1)'
-              }}>
-                Login Alerts
-              </div>
-              <div style={{ 
-                fontSize: 'var(--text-xs)', 
-                color: 'var(--color-text-muted)',
-                lineHeight: 'var(--line-height-md)'
-              }}>
-                Get notified of new login attempts
-              </div>
-            </div>
-            <ToggleSwitch 
-              enabled={settings.loginAlerts} 
-              onChange={() => handleToggleSetting('loginAlerts')}
-            />
-          </div>
-
-          <Separator />
-
-          <div>
-            <div style={{ 
-              fontSize: 'var(--text-sm)', 
-              fontWeight: 'var(--font-weight-medium)',
-              color: 'var(--color-text-primary)',
-              marginBottom: 'var(--spacing-1)'
-            }}>
-              Session Timeout
-            </div>
-            <div style={{ 
-              fontSize: 'var(--text-xs)', 
-              color: 'var(--color-text-muted)',
-              marginBottom: 'var(--spacing-3)'
-            }}>
-              Automatically log out after inactivity
-            </div>
-            <select
-              value={settings.sessionTimeout}
-              onChange={(e) => setSettings(prev => ({ ...prev, sessionTimeout: Number(e.target.value) }))}
-              style={{
-                width: '100%',
-                padding: 'var(--spacing-2) var(--spacing-3)',
-                borderRadius: 'var(--ikan-component-border-radius)',
-                border: '1px solid var(--color-border-default)',
-                backgroundColor: 'var(--color-bg-input)',
-                fontSize: 'var(--text-sm)',
-                fontFamily: 'var(--font-family-base)',
-                fontWeight: 'var(--font-weight-regular)',
-                color: 'var(--color-text-primary)'
-              }}
+          {/* ── Password Row ── */}
+          <div style={{ borderBottom: '1px solid var(--color-border-default)' }}>
+            <div
+              className="flex items-center justify-between"
+              style={{ padding: '16px 20px', cursor: 'pointer' }}
+              onClick={() => setShowPasswordForm(!showPasswordForm)}
             >
-              <option value={15}>15 minutes</option>
-              <option value={30}>30 minutes</option>
-              <option value={60}>1 hour</option>
-              <option value={240}>4 hours</option>
-              <option value={1440}>24 hours</option>
-            </select>
-          </div>
-        </CardContent>
-      </Card>
+              <div className="flex items-center" style={{ gap: 12 }}>
+                <div style={{
+                  width: 36, height: 36, borderRadius: 10,
+                  backgroundColor: 'var(--color-bg-muted)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  color: 'var(--color-text-primary)', flexShrink: 0,
+                }}>
+                  <Key size={18} />
+                </div>
+                <div>
+                  <div style={f('sm', 500)}>Change Password</div>
+                  <div style={{ ...f('xs', 400, 'var(--color-text-muted)'), marginTop: 2 }}>{passwordLastChanged}</div>
+                </div>
+              </div>
+              {showPasswordForm ? <ChevronUp size={18} style={{ color: 'var(--color-text-muted)' }} /> : <ChevronDown size={18} style={{ color: 'var(--color-text-muted)' }} />}
+            </div>
 
-      {/* Active Sessions */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle className="flex items-center gap-2">
-              <Icon name="monitor" size={20} style={{ color: 'var(--color-text-primary)' }} />
-              Active Sessions
-            </CardTitle>
-            {sessions.length > 1 && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleRevokeAllSessions}
-                style={{
-                  fontSize: 'var(--text-xs)',
-                  fontWeight: 'var(--font-weight-medium)',
-                  color: 'var(--color-status-danger)'
-                }}
-              >
-                Revoke All
-              </Button>
+            {showPasswordForm && (
+              <div style={{ padding: '0 20px 16px', display: 'flex', flexDirection: 'column', gap: 12 }}>
+                <div>
+                  <label style={{ ...f('xs', 500), display: 'block', marginBottom: 6 }}>Current Password</label>
+                  <input type="password" value={passwordForm.current} onChange={e => setPasswordForm(p => ({ ...p, current: e.target.value }))} style={inputStyle} />
+                </div>
+                <div>
+                  <label style={{ ...f('xs', 500), display: 'block', marginBottom: 6 }}>New Password</label>
+                  <input type="password" value={passwordForm.newPw} onChange={e => setPasswordForm(p => ({ ...p, newPw: e.target.value }))} style={inputStyle} />
+                  <PasswordStrength password={passwordForm.newPw} />
+                </div>
+                <div>
+                  <label style={{ ...f('xs', 500), display: 'block', marginBottom: 6 }}>Confirm New Password</label>
+                  <input type="password" value={passwordForm.confirm} onChange={e => setPasswordForm(p => ({ ...p, confirm: e.target.value }))} style={inputStyle} />
+                </div>
+                <div className={cn('flex', isMobile ? 'flex-col gap-2' : 'gap-2 justify-end')}>
+                  <button onClick={() => { setShowPasswordForm(false); setPasswordForm({ current: '', newPw: '', confirm: '' }); }} style={btnOutline}>Cancel</button>
+                  <button onClick={handleChangePassword} disabled={changingPassword} style={{ ...btnPrimary, opacity: changingPassword ? 0.6 : 1 }}>
+                    {changingPassword ? 'Updating...' : 'Update Password'}
+                  </button>
+                </div>
+              </div>
             )}
           </div>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {sessions.map((session, index) => (
-              <div key={session.id}>
-                <div className="flex items-start justify-between">
-                  <div className="flex items-start gap-3 flex-1">
-                    <div 
-                      className="flex items-center justify-center rounded-full"
-                      style={{
-                        width: '40px',
-                        height: '40px',
-                        backgroundColor: session.current ? 'var(--color-primary-light)' : 'var(--color-bg-muted)'
-                      }}
-                    >
-                      <Icon 
-                        name={session.device.includes('iPhone') ? 'smartphone' : 'monitor'} 
-                        size={20} 
-                        style={{ color: session.current ? 'var(--color-primary-default)' : 'var(--color-text-muted)' }}
-                      />
-                    </div>
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-1">
-                        <span style={{ 
-                          fontSize: 'var(--text-sm)', 
-                          fontWeight: 'var(--font-weight-medium)',
-                          color: 'var(--color-text-primary)'
-                        }}>
-                          {session.device}
-                        </span>
-                        {session.current && (
-                          <Badge style={{ backgroundColor: 'var(--color-status-success-light)', color: 'var(--color-status-success)' }}>
-                            Current
-                          </Badge>
-                        )}
-                      </div>
-                      <p style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}>
-                        {session.location} • {session.ip}
-                      </p>
-                      <p style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}>
-                        {formatLastActive(session.lastActive)}
-                      </p>
-                    </div>
-                  </div>
-                  {!session.current && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleRevokeSession(session.id)}
-                      style={{
-                        fontSize: 'var(--text-xs)',
-                        fontWeight: 'var(--font-weight-medium)',
-                        color: 'var(--color-status-danger)'
-                      }}
-                    >
-                      Revoke
-                    </Button>
-                  )}
-                </div>
-                {index < sessions.length - 1 && <Separator className="mt-4" />}
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
 
-      {/* Security Tips - DARK THEME */}
-      <Card style={{ backgroundColor: 'var(--color-primary-default)', border: 'none', borderRadius: 'var(--radius-lg)' }}>
-        <CardContent className="p-6">
-          <div className="flex items-start gap-3">
-            <Icon name="alertTriangle" size={20} style={{ color: 'var(--color-status-warning)' }} />
-            <div>
-              <h4 
-                style={{ 
-                  fontSize: 'var(--text-base)', 
-                  fontWeight: 'var(--font-weight-medium)',
-                  color: 'var(--color-text-inverse)',
-                  marginBottom: 'var(--spacing-2)'
-                }}
-              >
-                Security Tips
-              </h4>
-              <ul style={{ 
-                fontSize: 'var(--text-sm)', 
-                color: 'var(--grey-5)',
-                lineHeight: 'var(--line-height-md)',
-                paddingLeft: 'var(--spacing-4)',
-                listStyle: 'disc'
-              }}>
-                <li>Use a strong, unique password</li>
-                <li>Enable two-factor authentication</li>
-                <li>Regularly review your active sessions</li>
-                <li>Never share your password or 2FA codes</li>
-                <li>Log out from shared or public devices</li>
-              </ul>
+          {/* ── Email Row ── */}
+          <div style={{ borderBottom: '1px solid var(--color-border-default)' }}>
+            <div
+              className="flex items-center justify-between"
+              style={{ padding: '16px 20px', cursor: 'pointer' }}
+              onClick={() => setShowEmailForm(!showEmailForm)}
+            >
+              <div className="flex items-center" style={{ gap: 12 }}>
+                <div style={{
+                  width: 36, height: 36, borderRadius: 10,
+                  backgroundColor: 'var(--color-bg-muted)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  color: 'var(--color-text-primary)', flexShrink: 0,
+                }}>
+                  <Mail size={18} />
+                </div>
+                <div>
+                  <div style={f('sm', 500)}>Change Email</div>
+                  <div style={{ ...f('xs', 400, 'var(--color-text-muted)'), marginTop: 2 }}>
+                    {user?.email || 'No email set'} · {emailLastChanged}
+                  </div>
+                </div>
+              </div>
+              {showEmailForm ? <ChevronUp size={18} style={{ color: 'var(--color-text-muted)' }} /> : <ChevronDown size={18} style={{ color: 'var(--color-text-muted)' }} />}
+            </div>
+
+            {showEmailForm && (
+              <div style={{ padding: '0 20px 16px', display: 'flex', flexDirection: 'column', gap: 12 }}>
+                {emailStep === 'request' ? (
+                  <>
+                    <div>
+                      <label style={{ ...f('xs', 500), display: 'block', marginBottom: 6 }}>New Email</label>
+                      <input type="email" value={emailForm.newEmail} onChange={e => setEmailForm(p => ({ ...p, newEmail: e.target.value }))} style={inputStyle} />
+                    </div>
+                    <div>
+                      <label style={{ ...f('xs', 500), display: 'block', marginBottom: 6 }}>Current Password</label>
+                      <input type="password" value={emailForm.password} onChange={e => setEmailForm(p => ({ ...p, password: e.target.value }))} style={inputStyle} />
+                    </div>
+                    <div className={cn('flex', isMobile ? 'flex-col gap-2' : 'gap-2 justify-end')}>
+                      <button onClick={() => { setShowEmailForm(false); setEmailForm({ newEmail: '', password: '', token: '' }); }} style={btnOutline}>Cancel</button>
+                      <button onClick={handleRequestEmailChange} disabled={changingEmail} style={{ ...btnPrimary, opacity: changingEmail ? 0.6 : 1 }}>
+                        {changingEmail ? 'Sending...' : 'Request Change'}
+                      </button>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div>
+                      <label style={{ ...f('xs', 500), display: 'block', marginBottom: 6 }}>Verification Token</label>
+                      <input type="text" value={emailForm.token} onChange={e => setEmailForm(p => ({ ...p, token: e.target.value }))} style={inputStyle} placeholder="Enter token from email" />
+                    </div>
+                    <div className={cn('flex', isMobile ? 'flex-col gap-2' : 'gap-2 justify-end')}>
+                      <button onClick={() => { setShowEmailForm(false); setEmailStep('request'); setEmailForm({ newEmail: '', password: '', token: '' }); }} style={btnOutline}>Cancel</button>
+                      <button onClick={handleVerifyEmailChange} disabled={changingEmail} style={{ ...btnPrimary, opacity: changingEmail ? 0.6 : 1 }}>
+                        {changingEmail ? 'Verifying...' : 'Verify'}
+                      </button>
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* ── 2FA Row ── */}
+          <div style={{ padding: '16px 20px' }}>
+            <div className="flex items-center justify-between" style={{ gap: 16 }}>
+              <div className="flex items-center" style={{ gap: 12 }}>
+                <div style={{
+                  width: 36, height: 36, borderRadius: 10,
+                  backgroundColor: twoFactorEnabled ? 'var(--color-status-success-light)' : 'var(--color-bg-muted)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  color: twoFactorEnabled ? 'var(--color-status-success)' : 'var(--color-text-primary)', flexShrink: 0,
+                }}>
+                  <Shield size={18} />
+                </div>
+                <div>
+                  <div className="flex items-center" style={{ gap: 8 }}>
+                    <span style={f('sm', 500)}>Two-Factor Authentication</span>
+                    {twoFactorEnabled && (
+                      <span style={{
+                        ...f('xs', 500, 'var(--color-status-success)'),
+                        backgroundColor: 'var(--color-status-success-light)',
+                        padding: '2px 8px', borderRadius: 'var(--radius-pill)',
+                      }}>Active</span>
+                    )}
+                  </div>
+                  <div style={{ ...f('xs', 400, 'var(--color-text-muted)'), marginTop: 2 }}>
+                    Extra layer of security for your account
+                  </div>
+                </div>
+              </div>
+              <ToggleSwitch enabled={twoFactorEnabled} onChange={handleToggle2FA} />
             </div>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </section>
+
+      {/* ═══ ACTIVE SESSION ═══ */}
+      <section>
+        <div style={{ ...f('xs', 500, 'var(--color-text-muted)'), textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 10 }}>
+          Active Session
+        </div>
+        <div style={{
+          backgroundColor: 'var(--color-bg-card)',
+          borderRadius: 'var(--radius-lg)',
+          border: '1px solid var(--color-border-default)',
+          padding: '16px 20px',
+        }}>
+          <div className="flex items-center" style={{ gap: 12 }}>
+            <div style={{
+              width: 36, height: 36, borderRadius: 10,
+              backgroundColor: 'var(--color-status-success-light)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              color: 'var(--color-status-success)', flexShrink: 0,
+            }}>
+              <Monitor size={18} />
+            </div>
+            <div style={{ flex: 1 }}>
+              <div className="flex items-center" style={{ gap: 8 }}>
+                <span style={f('sm', 500)}>{getBrowserInfo()} on {getOSInfo()}</span>
+                <span style={{
+                  ...f('xs', 500, 'var(--color-status-success)'),
+                  backgroundColor: 'var(--color-status-success-light)',
+                  padding: '2px 8px', borderRadius: 'var(--radius-pill)',
+                }}>Current</span>
+              </div>
+              <div style={{ ...f('xs', 400, 'var(--color-text-muted)'), marginTop: 2 }}>
+                Active now
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
     </div>
   );
 }

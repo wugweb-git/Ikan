@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { LayoutDashboard, Smile, Users, User, Compass } from 'lucide-react';
 import { cn } from '../ui/utils';
 import { useMobileOptimizations } from '../../hooks/useMobileOptimizations';
+import { preloadMoodJournal } from '../../lib/lazy-with-retry';
 
 interface BottomNavBarMobileProps {
   currentRoute: string;
@@ -70,6 +71,13 @@ export function BottomNavBarMobile({
     onNavigate(route);
   };
 
+  // Preload heavy chunks when user shows intent (hover/touch)
+  const handlePreload = (route: string) => {
+    if (route === '/mood-journal') {
+      preloadMoodJournal();
+    }
+  };
+
   return (
     <div 
       className={cn(
@@ -117,6 +125,8 @@ export function BottomNavBarMobile({
             <button
               key={item.route}
               onClick={() => handleTabPress(item.route)}
+              onTouchStart={() => handlePreload(item.route)}
+              onMouseEnter={() => handlePreload(item.route)}
               aria-label={`${item.label}${badgeCount > 0 ? `, ${badgeCount} notifications` : ''}`}
               aria-current={isActive ? 'page' : undefined}
               className={cn(

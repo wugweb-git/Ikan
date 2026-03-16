@@ -12,11 +12,12 @@ import { AccountPageHeader } from '../blocks/AccountPageHeader';
 
 // Lazy-load all account sub-screens so only the active tab loads
 const PaymentHistory = lazy(() => import('./PaymentHistory').then(m => ({ default: m.PaymentHistory })));
-const Preferences = lazy(() => import('./account/Preferences').then(m => ({ default: m.Preferences })));
 const Privacy = lazy(() => import('./account/Privacy').then(m => ({ default: m.Privacy })));
 const Notifications = lazy(() => import('./account/Notifications').then(m => ({ default: m.Notifications })));
 const Security = lazy(() => import('./account/Security').then(m => ({ default: m.Security })));
+const Legal = lazy(() => import('./account/Legal').then(m => ({ default: m.Legal })));
 const Corporate = lazy(() => import('./account/Corporate').then(m => ({ default: m.Corporate })));
+const Integration = lazy(() => import('./account/Integration').then(m => ({ default: m.Integration })));
 
 // Loading skeleton for account sub-screens
 function AccountSkeleton() {
@@ -188,50 +189,6 @@ export function Account({ className, onNavigate }: AccountProps) {
     }
   };
 
-  const handleSocialSync = async (provider: 'google' | 'linkedin', action: 'connect' | 'disconnect') => {
-    try {
-      if (action === 'connect') {
-        showToast('info', 'Connecting...', `Connecting to ${provider === 'google' ? 'Google' : 'LinkedIn'}...`);
-        
-        // Try real Supabase identity linking first
-        try {
-          const supabaseProvider = provider === 'linkedin' ? 'linkedin_oidc' : 'google';
-          await apiClient.linkSocialAccount(supabaseProvider as any);
-          // OAuth will redirect — toast on return is handled by auth state listener
-          return;
-        } catch (oauthError: any) {
-          // If provider is not enabled in Supabase, fall back to simulated connection
-          console.log(`OAuth linking unavailable for ${provider}, using simulated connection:`, oauthError.message);
-          await apiClient.connectSocialAccount(provider);
-          showToast('success', 'Connected', `Successfully connected to ${provider === 'google' ? 'Google' : 'LinkedIn'}`);
-        }
-      } else {
-        // Try real Supabase identity unlinking first
-        try {
-          const identities = await apiClient.getLinkedIdentities();
-          const identity = identities.find((i: any) => 
-            i.provider === provider || i.provider === (provider === 'linkedin' ? 'linkedin_oidc' : provider)
-          );
-          if (identity) {
-            await apiClient.unlinkSocialAccount(identity.id);
-            showToast('success', 'Disconnected', `Successfully disconnected from ${provider === 'google' ? 'Google' : 'LinkedIn'}`);
-            return;
-          }
-        } catch (unlinkError: any) {
-          console.log(`OAuth unlinking unavailable for ${provider}, using simulated disconnect:`, unlinkError.message);
-        }
-        
-        // Fall back to simulated disconnection
-        await apiClient.disconnectSocialAccount(provider);
-        showToast('success', 'Disconnected', `Successfully disconnected from ${provider === 'google' ? 'Google' : 'LinkedIn'}`);
-      }
-    } catch (error) {
-      console.error(`Failed to ${action} ${provider}:`, error);
-      showToast('error', `${action === 'connect' ? 'Connection' : 'Disconnection'} Failed`, 
-        `Failed to ${action} ${provider === 'google' ? 'Google' : 'LinkedIn'}. Please try again.`);
-    }
-  };
-
   // Helper to trigger save from header button
   const triggerProfileSave = () => {
     // This is a bit tricky since handleSaveProfile needs data from AccountDetailsSection.
@@ -274,36 +231,41 @@ export function Account({ className, onNavigate }: AccountProps) {
     switch (currentAccountRoute) {
       case '/account/dashboard': 
       case '/account/settings':
-        // Settings was removed — redirect to preferences
-        title = "Preferences";
-        content = <Suspense fallback={<AccountSkeleton />}><Preferences /></Suspense>;
+      case '/account/preferences':
+        // Preferences merged into Notifications
+        title = "Notifications";
+        content = <Suspense fallback={<AccountSkeleton />}><Notifications /></Suspense>;
         break;
       case '/account/privacy':
         title = "Privacy";
         content = <Suspense fallback={<AccountSkeleton />}><Privacy /></Suspense>;
-        break;
-      case '/account/preferences':
-        title = "Preferences";
-        content = <Suspense fallback={<AccountSkeleton />}><Preferences /></Suspense>;
         break;
       case '/account/notifications':
         title = "Notifications";
         content = <Suspense fallback={<AccountSkeleton />}><Notifications /></Suspense>;
         break;
       case '/account/payments':
-        title = "Payments";
+        title = "Billing";
         content = <Suspense fallback={<AccountSkeleton />}><PaymentHistory /></Suspense>;
         break;
       case '/account/security':
         title = "Security";
         content = <Suspense fallback={<AccountSkeleton />}><Security /></Suspense>;
         break;
+      case '/account/legal':
+        title = "Legal";
+        content = <Suspense fallback={<AccountSkeleton />}><Legal onNavigate={onNavigate} /></Suspense>;
+        break;
       case '/account/corporate':
         title = "Organization";
         content = <Suspense fallback={<AccountSkeleton />}><Corporate /></Suspense>;
         break;
+      case '/account/integration':
+        title = "Integration";
+        content = <Suspense fallback={<AccountSkeleton />}><Integration /></Suspense>;
+        break;
       default: // '/account/profile'
-        title = "My Profile";
+        title = "Profile";
         
         // Add Edit Button for Profile
         rightAction = (
@@ -318,54 +280,33 @@ export function Account({ className, onNavigate }: AccountProps) {
         );
 
         content = (
-          <AccountDetailsSection
-            user={{
-              name: user.name,
-              email: user.email,
-              phone: user.phone,
-              avatar: user.avatar_url,
-              bio: user.bio || '',
-              dateOfBirth: user.dateOfBirth || '',
-              gender: user.gender || '',
-              location: user.location || '',
-              emergencyContact: {
-                name: user.emergencyContactName || '',
-                phone: user.emergencyContactPhone || '',
-                relationship: user.emergencyContactRelationship || ''
-              },
-              connectedAccounts: {
-                google: {
-                  connected: user.googleConnected || false,
-                  email: user.googleEmail || '',
-                  connectedAt: user.googleConnectedAt || ''
-                },
-                linkedin: {
-                  connected: user.linkedinConnected || false,
-                  email: user.linkedinEmail || '',
-                  connectedAt: user.linkedinConnectedAt || ''
+          <div className="space-y-6">
+            <AccountDetailsSection
+              user={{
+                name: user.name,
+                email: user.email,
+                phone: user.phone,
+                avatar: user.avatar_url,
+                bio: user.bio || '',
+                dateOfBirth: user.dateOfBirth || '',
+                gender: user.gender || '',
+                location: user.location || '',
+                emergencyContact: {
+                  name: user.emergencyContactName || '',
+                  phone: user.emergencyContactPhone || '',
+                  relationship: user.emergencyContactRelationship || ''
                 }
-              },
-              preferences: {
-                emailNotifications: true,
-                pushNotifications: true,
-                weeklyReports: false,
-                moodReminders: true,
-              }
-            }}
-            editable={true}
-            loading={isSavingProfile}
-            onSave={handleSaveProfile}
-            onSocialSync={handleSocialSync}
-            onAvatarUploaded={() => {
-              refreshProfile().catch(e => console.error('Failed to refresh profile after avatar upload:', e));
-            }}
-            onDeleteProfile={() => {
-              showToast('info', 'Delete Profile', 'Profile deletion requested. This feature will be available soon.');
-            }}
-            onBack={isMobile ? undefined : handleMobileBack}
-            isEditing={isProfileEditing}
-            setIsEditing={setIsProfileEditing}
-          />
+              }}
+              editable={true}
+              loading={isSavingProfile}
+              onSave={handleSaveProfile}
+              onAvatarUploaded={() => {
+                refreshProfile().catch(e => console.error('Failed to refresh profile after avatar upload:', e));
+              }}
+              isEditing={isProfileEditing}
+              setIsEditing={setIsProfileEditing}
+            />
+          </div>
         );
     }
 

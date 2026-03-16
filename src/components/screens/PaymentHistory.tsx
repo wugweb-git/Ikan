@@ -1,14 +1,22 @@
 import { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Badge } from '../ui/badge';
-import { Button } from '../ui/button';
 import { Separator } from '../ui/separator';
-import { Icon } from '../Icon';
 import { apiClient } from '../../lib/api-client';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNotifications } from '../../contexts/NotificationContext';
 import { useIsMobile } from '../../hooks/useIsMobile';
 import { cn } from '../ui/utils';
+import {
+  CreditCard, Receipt, Check, Clock, X, RotateCcw, Download, ChevronDown, ChevronUp, Inbox,
+} from 'lucide-react';
+
+// ─── Font helper ──────────────────────────────────────────────
+const f = (size: string, weight: number = 400, color: string = 'var(--color-text-primary)') => ({
+  fontSize: `var(--text-${size})`,
+  fontWeight: weight,
+  fontFamily: 'var(--font-family-base)',
+  color,
+});
 
 interface Transaction {
   id: string;
@@ -40,474 +48,280 @@ export function PaymentHistory({ className }: PaymentHistoryProps) {
   const { showToast } = useNotifications();
   const isMobile = useIsMobile();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
-  const [summary, setSummary] = useState<PaymentSummary>({
-    totalSpent: 0,
-    totalPrograms: 0,
-    activePrograms: 0,
-    completedPrograms: 0
-  });
+  const [summary, setSummary] = useState<PaymentSummary | null>(null);
   const [loading, setLoading] = useState(true);
-  const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [expandedId, setExpandedId] = useState<string | null>(null);
 
   useEffect(() => {
-    // Wait for auth to initialize
     if (authLoading) return;
+    if (!user) { setLoading(false); return; }
 
-    if (!user) {
-      setLoading(false);
-      return;
-    }
-
-    // Add delay to prevent immediate loading issues
-    const timer = setTimeout(() => {
-      loadPaymentHistory();
-    }, 100);
-    
+    const timer = setTimeout(() => loadPaymentHistory(), 100);
     return () => clearTimeout(timer);
   }, [user, authLoading]);
 
   const loadPaymentHistory = async () => {
     try {
       setLoading(true);
+      setError(null);
       const history = await apiClient.getPaymentHistory();
-      
-      if (history.length > 0) {
-        // Calculate summary from real data
-        const realSummary: PaymentSummary = {
+
+      setTransactions(history ?? []);
+
+      // Compute summary from real data only — no fallbacks
+      if (history && history.length > 0) {
+        setSummary({
           totalSpent: history.reduce((sum: number, t: Transaction) => sum + (t.type === 'purchase' ? t.amount : 0), 0),
           totalPrograms: history.filter((t: Transaction) => t.type === 'purchase').length,
-          activePrograms: history.filter((t: Transaction) => t.type === 'purchase' && t.status === 'completed').length, // Simplification
-          completedPrograms: 0 // Cannot determine from payments alone
-        };
-        
-        setTransactions(history);
-        setSummary(realSummary);
+          activePrograms: history.filter((t: Transaction) => t.type === 'purchase' && t.status === 'completed').length,
+          completedPrograms: 0,
+        });
       } else {
-        // Use mock data if no real history exists (for demo purposes)
-        console.log('No payment history found, using mock data for demo');
-        
-        // Mock data for demo
-        const mockTransactions: Transaction[] = [
-          {
-            id: 'txn_001',
-            type: 'purchase',
-            programId: 'equip-burnout-32',
-            programTitle: 'Burnout Recovery Program',
-            amount: 49900, // in cents
-            currency: 'INR',
-            status: 'completed',
-            paymentMethod: 'Razorpay - UPI',
-            transactionId: 'pay_NyJONOPe5UF5xE',
-            date: '2024-01-15T10:30:00Z',
-            description: '32-day comprehensive burnout recovery program'
-          },
-          {
-            id: 'txn_002',
-            type: 'purchase',
-            programId: 'equip-mindfulness-8week',
-            programTitle: '8-Week Mindfulness Course',
-            amount: 39900,
-            currency: 'INR',
-            status: 'completed',
-            paymentMethod: 'Razorpay - Credit Card',
-            transactionId: 'pay_MxKLMNOp3TG2vH',
-            date: '2024-01-10T15:45:00Z',
-            description: 'Evidence-based mindfulness training program'
-          },
-          {
-            id: 'txn_003',
-            type: 'purchase',
-            programId: 'equip-anxiety-management',
-            programTitle: 'Anxiety Management Toolkit',
-            amount: 29900,
-            currency: 'INR',
-            status: 'completed',
-            paymentMethod: 'Razorpay - Debit Card',
-            transactionId: 'pay_LvQRSTuv4WX8yZ',
-            date: '2024-01-05T12:20:00Z',
-            description: 'Comprehensive anxiety management strategies'
-          }
-        ];
-
-        const mockSummary: PaymentSummary = {
-          totalSpent: mockTransactions.reduce((sum, t) => sum + (t.type === 'purchase' ? t.amount : 0), 0),
-          totalPrograms: mockTransactions.filter(t => t.type === 'purchase').length,
-          activePrograms: 2,
-          completedPrograms: 1
-        };
-
-        setTransactions(mockTransactions);
-        setSummary(mockSummary);
+        setSummary(null);
       }
-    } catch (error) {
-      console.error('Failed to load payment history:', error);
-      showToast('error', 'Error', 'Failed to load payment history');
+    } catch (err: any) {
+      console.error('Failed to load payment history:', err);
+      setError('Unable to load billing information. Please try again later.');
     } finally {
       setLoading(false);
     }
   };
 
-  const formatAmount = (amount: number, currency: string) => {
-    return new Intl.NumberFormat('en-IN', {
-      style: 'currency',
-      currency: currency,
-      minimumFractionDigits: 0
-    }).format(amount / 100);
-  };
+  const formatAmount = (amount: number, currency: string) =>
+    new Intl.NumberFormat('en-IN', { style: 'currency', currency, minimumFractionDigits: 0 }).format(amount / 100);
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-IN', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-  };
+  const formatDate = (dateString: string) =>
+    new Date(dateString).toLocaleDateString('en-IN', { year: 'numeric', month: 'short', day: 'numeric' });
 
   const getStatusColor = (status: Transaction['status']) => {
     switch (status) {
-      case 'completed':
-        return 'var(--color-status-success)';
-      case 'pending':
-        return 'var(--color-status-warning)';
-      case 'failed':
-        return 'var(--color-status-danger)';
-      case 'refunded':
-        return 'var(--color-text-muted)';
-      default:
-        return 'var(--color-text-muted)';
+      case 'completed': return 'var(--color-status-success)';
+      case 'pending': return 'var(--color-status-warning)';
+      case 'failed': return 'var(--color-status-danger)';
+      case 'refunded': return 'var(--color-text-muted)';
+      default: return 'var(--color-text-muted)';
     }
   };
 
-  const getStatusIcon = (status: Transaction['status']) => {
+  const StatusIcon = ({ status }: { status: Transaction['status'] }) => {
+    const size = 16;
+    const color = getStatusColor(status);
     switch (status) {
-      case 'completed':
-        return 'check';
-      case 'pending':
-        return 'clock';
-      case 'failed':
-        return 'x';
-      case 'refunded':
-        return 'rotate-ccw';
-      default:
-        return 'circle';
+      case 'completed': return <Check size={size} style={{ color }} />;
+      case 'pending': return <Clock size={size} style={{ color }} />;
+      case 'failed': return <X size={size} style={{ color }} />;
+      case 'refunded': return <RotateCcw size={size} style={{ color }} />;
+      default: return null;
     }
   };
 
-  const handleDownloadReceipt = (transaction: Transaction) => {
-    // In real app, this would download or generate a receipt
-    showToast('info', 'Receipt', `Receipt for ${transaction.programTitle} will be sent to your email`);
-  };
-
-  const handleRequestRefund = (transaction: Transaction) => {
-    // In real app, this would open a refund request flow
-    showToast('info', 'Refund Request', `Refund request for ${transaction.programTitle} has been submitted`);
-  };
-
+  // ─── Loading skeleton ───────────────────────────────────────
   if (loading) {
     return (
-      <div className={cn("space-y-6", className)}>
-        <div className="animate-pulse space-y-4">
-          <div className="h-32 rounded" style={{ backgroundColor: 'var(--color-bg-muted)' }}></div>
-          <div className="h-24 rounded" style={{ backgroundColor: 'var(--color-bg-muted)' }}></div>
-          <div className="h-24 rounded" style={{ backgroundColor: 'var(--color-bg-muted)' }}></div>
+      <div className={cn('', className)} style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-6)' }}>
+        <div className="animate-pulse" style={{ height: 100, borderRadius: 'var(--radius-lg)', backgroundColor: 'var(--color-bg-muted)' }} />
+        <div className="animate-pulse" style={{ height: 200, borderRadius: 'var(--radius-lg)', backgroundColor: 'var(--color-bg-muted)' }} />
+      </div>
+    );
+  }
+
+  // ─── Error state ────────────────────────────────────────────
+  if (error) {
+    return (
+      <div className={cn('', className)} style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-6)' }}>
+        <div style={{
+          backgroundColor: 'var(--color-bg-card)', borderRadius: 'var(--radius-lg)',
+          border: '1px solid var(--color-border-default)', padding: '40px 20px',
+          textAlign: 'center',
+        }}>
+          <Receipt size={40} style={{ color: 'var(--color-text-muted)', margin: '0 auto 12px' }} />
+          <div style={f('sm', 500, 'var(--color-status-danger)')}>{error}</div>
+          <button
+            onClick={loadPaymentHistory}
+            style={{
+              marginTop: 16, padding: '8px 20px', borderRadius: 'var(--radius-md)',
+              border: '1px solid var(--color-border-default)', backgroundColor: 'var(--color-bg-card)',
+              cursor: 'pointer', ...f('sm', 500),
+            }}
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // ─── Empty state (no transactions in KV) ────────────────────
+  if (transactions.length === 0) {
+    return (
+      <div className={cn('', className)} style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-6)' }}>
+        <div style={{
+          backgroundColor: 'var(--color-bg-card)', borderRadius: 'var(--radius-lg)',
+          border: '1px solid var(--color-border-default)', padding: '48px 20px',
+          textAlign: 'center',
+        }}>
+          <Inbox size={44} style={{ color: 'var(--color-text-muted)', margin: '0 auto 16px' }} />
+          <div style={f('base', 500)}>No billing history</div>
+          <div style={{ ...f('sm', 400, 'var(--color-text-muted)'), marginTop: 4, lineHeight: 1.5 }}>
+            When you purchase programs, your transactions will appear here.
+          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className={cn("space-y-6", className)}>
-      {/* Payment Summary */}
-      <Card className="gap-0" style={{ borderRadius: '16px', boxShadow: 'none' }}>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2" style={{ fontSize: '16px', fontWeight: 'var(--font-weight-medium)', fontFamily: 'var(--font-family-base)', lineHeight: '22px' }}>
-            <Icon name="creditCard" size={20} style={{ color: 'var(--color-text-primary)' }} />
-            Payment Summary
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className={cn(
-            "grid gap-4",
-            isMobile ? "grid-cols-2" : "grid-cols-2 md:grid-cols-4"
-          )}>
-            <div className="text-center">
-              <div 
-                style={{ 
-                  fontSize: 'var(--text-2xl)', 
-                  fontWeight: 'var(--font-weight-medium)',
-                  color: 'var(--color-primary-default)'
-                }}
-              >
-                {formatAmount(summary.totalSpent, 'INR')}
-              </div>
-              <p style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-muted)' }}>
-                Total Spent
-              </p>
-            </div>
-            <div className="text-center">
-              <div 
-                style={{ 
-                  fontSize: 'var(--text-2xl)', 
-                  fontWeight: 'var(--font-weight-medium)',
-                  color: 'var(--color-primary-default)'
-                }}
-              >
-                {summary.totalPrograms}
-              </div>
-              <p style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-muted)' }}>
-                Programs Purchased
-              </p>
-            </div>
-            <div className="text-center">
-              <div 
-                style={{ 
-                  fontSize: 'var(--text-2xl)', 
-                  fontWeight: 'var(--font-weight-medium)',
-                  color: 'var(--color-status-info)'
-                }}
-              >
-                {summary.activePrograms}
-              </div>
-              <p style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-muted)' }}>
-                Active Programs
-              </p>
-            </div>
-            <div className="text-center">
-              <div 
-                style={{ 
-                  fontSize: 'var(--text-2xl)', 
-                  fontWeight: 'var(--font-weight-medium)',
-                  color: 'var(--color-status-success)'
-                }}
-              >
-                {summary.completedPrograms}
-              </div>
-              <p style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-muted)' }}>
-                Completed Programs
-              </p>
-            </div>
+    <div className={cn('', className)} style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-6)' }}>
+
+      {/* ═══ SUMMARY ═══ */}
+      {summary && (
+        <section>
+          <div style={{ ...f('xs', 500, 'var(--color-text-muted)'), textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 10 }}>
+            Overview
           </div>
-        </CardContent>
-      </Card>
-
-      {/* Transaction History */}
-      <Card className="gap-0" style={{ borderRadius: '16px', boxShadow: 'none' }}>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2" style={{ fontSize: '16px', fontWeight: 'var(--font-weight-medium)', fontFamily: 'var(--font-family-base)', lineHeight: '22px' }}>
-            <Icon name="receipt" size={20} style={{ color: 'var(--color-text-primary)' }} />
-            Transaction History
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {transactions.length === 0 ? (
-            <div className="text-center py-8">
-              <Icon name="receipt" size={48} className="mx-auto mb-4" style={{ color: 'var(--color-text-muted)' }} />
-              <p style={{ color: 'var(--color-text-muted)' }}>
-                No transactions found
-              </p>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {transactions.map((transaction, index) => (
-                <div key={transaction.id}>
-                  <div 
-                    className={cn(
-                      "flex items-center justify-between rounded-lg border hover:bg-black/5 cursor-pointer transition-colors",
-                      isMobile ? "p-3" : "p-4"
-                    )}
-                    onClick={() => setSelectedTransaction(selectedTransaction?.id === transaction.id ? null : transaction)}
-                    style={{
-                      borderRadius: 'var(--ikan-component-border-radius)',
-                      minHeight: isMobile ? 'var(--ikan-touch-target-preferred)' : 'auto'
-                    }}
-                  >
-                    <div className={cn(
-                      "flex items-center flex-1",
-                      isMobile ? "gap-3" : "gap-4"
-                    )}>
-                      <div className={cn(
-                        "flex items-center justify-center rounded-full",
-                        isMobile ? "w-8 h-8" : "w-10 h-10"
-                      )}>
-                        <Icon 
-                          name={getStatusIcon(transaction.status)} 
-                          size={isMobile ? 16 : 20} 
-                          style={{ color: getStatusColor(transaction.status) }}
-                        />
-                      </div>
-                      
-                      <div className="flex-1">
-                        <h4 
-                          style={{ 
-                            fontSize: 'var(--text-base)', 
-                            fontWeight: 'var(--font-weight-medium)',
-                            color: 'var(--color-text-primary)'
-                          }}
-                        >
-                          {transaction.programTitle}
-                        </h4>
-                        <p style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-muted)' }}>
-                          {formatDate(transaction.date)} • {transaction.paymentMethod}
-                        </p>
-                      </div>
-                      
-                      <div className="text-right">
-                        <div 
-                          style={{ 
-                            fontSize: 'var(--text-lg)', 
-                            fontWeight: 'var(--font-weight-medium)',
-                            color: transaction.type === 'purchase' ? 'var(--color-text-primary)' : 'var(--color-status-success)'
-                          }}
-                        >
-                          {transaction.type === 'refund' ? '+' : ''}{formatAmount(transaction.amount, transaction.currency)}
-                        </div>
-                        <Badge 
-                          variant={transaction.status === 'completed' ? 'default' : 'secondary'}
-                          style={{ 
-                            backgroundColor: transaction.status === 'completed' ? 'var(--color-status-success-light)' : 'var(--color-bg-muted)',
-                            color: getStatusColor(transaction.status),
-                            textTransform: 'capitalize'
-                          }}
-                        >
-                          {transaction.status}
-                        </Badge>
-                      </div>
-                    </div>
-                    
-                    <Icon 
-                      name={selectedTransaction?.id === transaction.id ? "chevronUp" : "chevronDown"} 
-                      size={16} 
-                      style={{ color: 'var(--color-text-muted)' }}
-                    />
-                  </div>
-
-                  {/* Expanded Transaction Details */}
-                  {selectedTransaction?.id === transaction.id && (
-                    <div 
-                      className="mt-2 p-4 rounded-lg border"
-                      style={{ backgroundColor: 'var(--color-bg-muted)' }}
-                    >
-                      <div className={cn(
-                        "grid gap-4 mb-4",
-                        isMobile ? "grid-cols-1" : "grid-cols-1 md:grid-cols-2"
-                      )}>
-                        <div>
-                          <h5 style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--font-weight-medium)', color: 'var(--color-text-primary)' }}>
-                            Transaction ID
-                          </h5>
-                          <p style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-muted)' }}>
-                            {transaction.transactionId}
-                          </p>
-                        </div>
-                        <div>
-                          <h5 style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--font-weight-medium)', color: 'var(--color-text-primary)' }}>
-                            Program ID
-                          </h5>
-                          <p style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-muted)' }}>
-                            {transaction.programId}
-                          </p>
-                        </div>
-                      </div>
-                      
-                      {transaction.description && (
-                        <div className="mb-4">
-                          <h5 style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--font-weight-medium)', color: 'var(--color-text-primary)' }}>
-                            Description
-                          </h5>
-                          <p style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-muted)' }}>
-                            {transaction.description}
-                          </p>
-                        </div>
-                      )}
-                      
-                      <div className={cn(
-                        "flex",
-                        isMobile ? "flex-col gap-3" : "flex-row gap-2"
-                      )}>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleDownloadReceipt(transaction)}
-                          className="gap-2"
-                          style={{
-                            height: 'var(--ikan-component-button-height)',
-                            borderRadius: 'var(--ikan-component-border-radius)',
-                            fontSize: 'var(--text-sm)',
-                            fontWeight: 'var(--font-weight-medium)'
-                          }}
-                        >
-                          <Icon name="download" size={14} />
-                          Download Receipt
-                        </Button>
-                        
-                        {transaction.status === 'completed' && transaction.type === 'purchase' && (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleRequestRefund(transaction)}
-                            className="gap-2"
-                            style={{
-                              height: 'var(--ikan-component-button-height)',
-                              borderRadius: 'var(--ikan-component-border-radius)',
-                              fontSize: 'var(--text-sm)',
-                              fontWeight: 'var(--font-weight-medium)'
-                            }}
-                          >
-                            <Icon name="rotateLeft" size={14} />
-                            Request Refund
-                          </Button>
-                        )}
-                      </div>
-                    </div>
-                  )}
-                  
-                  {index < transactions.length - 1 && <Separator className="mt-4" />}
+          <div style={{
+            backgroundColor: 'var(--color-bg-card)', borderRadius: 'var(--radius-lg)',
+            border: '1px solid var(--color-border-default)', overflow: 'hidden',
+          }}>
+            <div className={cn('grid', isMobile ? 'grid-cols-2' : 'grid-cols-4')} style={{ gap: 0 }}>
+              {[
+                { label: 'Total Spent', value: formatAmount(summary.totalSpent, 'INR'), color: 'var(--color-primary-default)' },
+                { label: 'Programs', value: String(summary.totalPrograms), color: 'var(--color-primary-default)' },
+                { label: 'Active', value: String(summary.activePrograms), color: 'var(--color-status-info)' },
+                { label: 'Completed', value: String(summary.completedPrograms), color: 'var(--color-status-success)' },
+              ].map((stat, i) => (
+                <div key={stat.label} style={{
+                  padding: '20px 16px', textAlign: 'center',
+                  borderRight: (isMobile ? i % 2 === 0 : i < 3) ? '1px solid var(--color-border-default)' : 'none',
+                  borderBottom: isMobile && i < 2 ? '1px solid var(--color-border-default)' : 'none',
+                }}>
+                  <div style={{ ...f('xl', 500, stat.color) }}>{stat.value}</div>
+                  <div style={{ ...f('xs', 400, 'var(--color-text-muted)'), marginTop: 2 }}>{stat.label}</div>
                 </div>
               ))}
             </div>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Help Section */}
-      <Card className="gap-0" style={{ borderRadius: '16px', boxShadow: 'none' }}>
-        <CardContent className="p-6">
-          <div className="flex items-start gap-3">
-            <Icon name="help" size={20} style={{ color: 'var(--color-primary-default)' }} />
-            <div>
-              <h4 
-                style={{ 
-                  fontSize: 'var(--text-base)', 
-                  fontWeight: 'var(--font-weight-medium)',
-                  color: 'var(--color-text-primary)',
-                  marginBottom: 'var(--spacing-1)'
-                }}
-              >
-                Need Help with Payments?
-              </h4>
-              <p style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-muted)', marginBottom: 'var(--spacing-3)' }}>
-                If you have questions about your payments or need assistance with refunds, our support team is here to help.
-              </p>
-              <Button 
-                variant="outline" 
-                size="sm" 
-                className="gap-2"
-                style={{
-                  height: 'var(--ikan-component-button-height)',
-                  borderRadius: 'var(--ikan-component-border-radius)',
-                  fontSize: 'var(--text-sm)',
-                  fontWeight: 'var(--font-weight-medium)'
-                }}
-              >
-                <Icon name="messageCircle" size={14} />
-                Contact Support
-              </Button>
-            </div>
           </div>
-        </CardContent>
-      </Card>
+        </section>
+      )}
+
+      {/* ═══ TRANSACTION HISTORY ═══ */}
+      <section>
+        <div style={{ ...f('xs', 500, 'var(--color-text-muted)'), textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 10 }}>
+          Transactions
+        </div>
+        <div style={{
+          backgroundColor: 'var(--color-bg-card)', borderRadius: 'var(--radius-lg)',
+          border: '1px solid var(--color-border-default)', overflow: 'hidden',
+        }}>
+          {transactions.map((txn, i) => {
+            const isExpanded = expandedId === txn.id;
+            const isLast = i === transactions.length - 1;
+
+            return (
+              <div key={txn.id} style={{ borderBottom: isLast ? 'none' : '1px solid var(--color-border-default)' }}>
+                {/* Row */}
+                <button
+                  onClick={() => setExpandedId(isExpanded ? null : txn.id)}
+                  style={{
+                    width: '100%', padding: '16px 20px', border: 'none', background: 'transparent',
+                    cursor: 'pointer', textAlign: 'left', transition: 'background 0.1s',
+                  }}
+                >
+                  <div className="flex items-center" style={{ gap: 12 }}>
+                    <div style={{
+                      width: 36, height: 36, borderRadius: 10,
+                      backgroundColor: 'var(--color-bg-muted)', display: 'flex',
+                      alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+                    }}>
+                      <StatusIcon status={txn.status} />
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div className="truncate" style={f('sm', 500)}>{txn.programTitle}</div>
+                      <div style={{ ...f('xs', 400, 'var(--color-text-muted)'), marginTop: 2 }}>
+                        {formatDate(txn.date)} · {txn.paymentMethod}
+                      </div>
+                    </div>
+                    <div style={{ textAlign: 'right', flexShrink: 0, display: 'flex', alignItems: 'center', gap: 10 }}>
+                      <div>
+                        <div style={f('sm', 500, txn.type === 'refund' ? 'var(--color-status-success)' : 'var(--color-text-primary)')}>
+                          {txn.type === 'refund' ? '+' : ''}{formatAmount(txn.amount, txn.currency)}
+                        </div>
+                        <Badge style={{
+                          backgroundColor: txn.status === 'completed' ? 'var(--color-status-success-light)' : 'var(--color-bg-muted)',
+                          color: getStatusColor(txn.status), textTransform: 'capitalize', fontSize: 10,
+                        }}>
+                          {txn.status}
+                        </Badge>
+                      </div>
+                      {isExpanded
+                        ? <ChevronUp size={14} style={{ color: 'var(--color-text-muted)' }} />
+                        : <ChevronDown size={14} style={{ color: 'var(--color-text-muted)' }} />}
+                    </div>
+                  </div>
+                </button>
+
+                {/* Expanded Details */}
+                {isExpanded && (
+                  <div style={{
+                    padding: '0 20px 16px', display: 'flex', flexDirection: 'column', gap: 12,
+                  }}>
+                    <div style={{
+                      padding: 16, borderRadius: 'var(--radius-md)',
+                      backgroundColor: 'var(--color-bg-muted)',
+                    }}>
+                      <div className={cn('grid gap-4', isMobile ? 'grid-cols-1' : 'grid-cols-2')}>
+                        <div>
+                          <div style={f('xs', 500, 'var(--color-text-muted)')}>Transaction ID</div>
+                          <div style={{ ...f('sm', 400), marginTop: 2 }}>{txn.transactionId}</div>
+                        </div>
+                        <div>
+                          <div style={f('xs', 500, 'var(--color-text-muted)')}>Program ID</div>
+                          <div style={{ ...f('sm', 400), marginTop: 2 }}>{txn.programId}</div>
+                        </div>
+                      </div>
+                      {txn.description && (
+                        <div style={{ marginTop: 12 }}>
+                          <div style={f('xs', 500, 'var(--color-text-muted)')}>Description</div>
+                          <div style={{ ...f('sm', 400), marginTop: 2 }}>{txn.description}</div>
+                        </div>
+                      )}
+                    </div>
+                    <div className={cn('flex', isMobile ? 'flex-col gap-2' : 'gap-2')}>
+                      <button
+                        onClick={() => showToast('info', 'Receipt', `Receipt for ${txn.programTitle} will be sent to your email`)}
+                        className="flex items-center justify-center"
+                        style={{
+                          padding: '8px 16px', borderRadius: 'var(--radius-md)',
+                          border: '1px solid var(--color-border-default)',
+                          backgroundColor: 'var(--color-bg-card)', cursor: 'pointer',
+                          gap: 6, ...f('sm', 500),
+                        }}
+                      >
+                        <Download size={14} /> Download Receipt
+                      </button>
+                      {txn.status === 'completed' && txn.type === 'purchase' && (
+                        <button
+                          onClick={() => showToast('info', 'Refund', `Refund request for ${txn.programTitle} has been submitted`)}
+                          className="flex items-center justify-center"
+                          style={{
+                            padding: '8px 16px', borderRadius: 'var(--radius-md)',
+                            border: '1px solid var(--color-border-default)',
+                            backgroundColor: 'var(--color-bg-card)', cursor: 'pointer',
+                            gap: 6, ...f('sm', 500),
+                          }}
+                        >
+                          <RotateCcw size={14} /> Request Refund
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </section>
     </div>
   );
 }

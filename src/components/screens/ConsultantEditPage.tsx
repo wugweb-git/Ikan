@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import {
   Save, Trash2, Eye, User, Briefcase, MapPin, DollarSign, Star,
-  Video, Phone, MessageSquare, Sparkles, Languages, GraduationCap,
-  Heart, HelpCircle, Users, Clock, FileText, Upload, Plus, X, Quote
+  Video, Phone, MessageSquare, Languages, GraduationCap,
+  Heart, HelpCircle, Users, Clock, FileText, Upload, Plus, X, Quote, Sparkles
 } from 'lucide-react';
 import { useNotifications } from '../../contexts/NotificationContext';
 import { apiClient } from '../../lib/api-client';
@@ -26,13 +26,14 @@ import { Badge } from '../ui/badge';
 import { Switch } from '../ui/switch';
 import { AdminActionBar } from '../ui/admin-action-bar';
 import { AdminLoading } from '../admin/AdminLoading';
+import { useMetadata } from '../../hooks/useMetadata';
 
 // ── Consultant Interface ───────────────────────────────────────────
 export interface Consultant {
   id: string;
   name: string;
   credentials: string;
-  category: 'therapist' | 'psychiatrist' | 'counselor' | 'family-therapist';
+  category: string;
   expertises: string[];
   available: boolean;
   location: string;
@@ -67,43 +68,7 @@ export interface Consultant {
   [key: string]: any;
 }
 
-// ── Constants ──────────────────────────────────────────────────────
-export const expertiseCategories = [
-  "Relationship Skills", "Communication Skills", "Parenting Support",
-  "LGBTQIA+ Concerns", "Couples Therapy", "Stress Management",
-  "Anxiety", "Depression", "Trauma", "Grief & Loss",
-  "Self-Esteem", "Life Transitions", "Anger Management",
-  "Work-related Concerns", "Academic Concerns",
-  "Anxiety Disorders", "Depressive Disorders", "PTSD",
-  "Sleep Disorder", "OCD", "Eating Disorders"
-];
-
-export const therapeuticApproachOptions = [
-  "Cognitive Behavioral Therapy (CBT)",
-  "Emotionally Focused Therapy (EFT)",
-  "Attachment-based Therapy",
-  "Trauma-informed Therapy",
-  "Mindfulness-based Approaches",
-  "Narrative Therapy",
-  "Solution-Focused Therapy",
-  "Person-Centered Therapy",
-  "DBT Skills",
-  "Psychodynamic Therapy",
-  "EMDR",
-  "Art Therapy",
-  "Play Therapy"
-];
-
-export const demographicSpecialtyOptions = [
-  "Children", "Adolescents", "Adults", "Couples",
-  "LGBTQIA+ Clients", "Elderly Clients", "Neurodivergent Clients",
-  "Corporate Professionals", "Parents", "Students", "Families"
-];
-
-export const languageOptions = [
-  "English", "Hindi", "Tamil", "Telugu", "Kannada", "Malayalam",
-  "Bengali", "Marathi", "Gujarati", "Punjabi", "Urdu", "Odia"
-];
+// ── Constants (static only – all metadata now from useMetadata hook) ──
 
 const DAYS_OF_WEEK = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 
@@ -122,6 +87,21 @@ const inputStyle = {
 
 export function ConsultantEditPage({ consultantId, onBack, onSave }: ConsultantEditPageProps) {
   const { showToast } = useNotifications();
+  const {
+    consultantTypes,
+    languages: kvLanguages,
+    therapeuticApproaches: kvTherapeuticApproaches,
+    demographicSpecialties: kvDemographicSpecialties,
+    expertiseCategories: kvExpertiseCategories,
+    sessionFormats: kvSessionFormats,
+  } = useMetadata();
+
+  // Derive string arrays for checkbox lists from KV metadata
+  const expertiseCategories = kvExpertiseCategories.map(e => e.label);
+  const therapeuticApproachOptions = kvTherapeuticApproaches.map(e => e.label);
+  const demographicSpecialtyOptions = kvDemographicSpecialties.map(e => e.label);
+  const languageOptions = kvLanguages.map(e => e.label);
+
   const [loading, setLoading] = useState(!!consultantId);
   const [saving, setSaving] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -209,32 +189,6 @@ export function ConsultantEditPage({ consultantId, onBack, onSave }: ConsultantE
     } finally {
       setLoading(false);
     }
-  };
-
-  const handleAutoFill = () => {
-    setFormData(prev => ({
-      ...prev,
-      bio: prev.bio || `Dr. ${prev.name || 'Smith'} has over ${prev.yearsExperience || 10} years of experience in clinical psychology. Specializing in cognitive behavioral therapy and mindfulness-based interventions.`,
-      pricing: { video: prev.pricing?.video || 1500, call: prev.pricing?.call || 1000, chat: prev.pricing?.chat || 500 },
-      sessionModes: (prev.sessionModes?.length || 0) === 0 ? ['online', 'call'] : prev.sessionModes,
-      expertises: (prev.expertises?.length || 0) === 0 ? ['Anxiety', 'Stress Management', 'Depression'] : prev.expertises,
-      yearsExperience: prev.yearsExperience || 5,
-      rating: prev.rating || 4.9,
-      location: prev.location || 'Mumbai, India',
-      available: true,
-      languages: (prev.languages?.length || 0) === 0 ? ['English', 'Hindi'] : prev.languages,
-      therapeuticApproaches: (prev.therapeuticApproaches?.length || 0) === 0 ? ['Cognitive Behavioral Therapy (CBT)', 'Mindfulness-based Approaches'] : prev.therapeuticApproaches,
-      qualifications: (prev.qualifications?.length || 0) === 0 ? ['Ph.D. Clinical Psychology', 'Licensed Clinical Psychologist', 'RCI Registered'] : prev.qualifications,
-      demographicSpecialties: (prev.demographicSpecialties?.length || 0) === 0 ? ['Adults', 'Couples', 'Corporate Professionals'] : prev.demographicSpecialties,
-      therapeuticPhilosophy: prev.therapeuticPhilosophy || 'I believe in creating a safe, non-judgmental space where clients can explore their thoughts and emotions. My approach is collaborative and evidence-based.',
-      availabilityPreferences: {
-        workingHours: prev.availabilityPreferences?.workingHours || '10:00 AM - 6:00 PM',
-        daysAvailable: (prev.availabilityPreferences?.daysAvailable?.length || 0) === 0 ? ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'] : prev.availabilityPreferences?.daysAvailable || [],
-        weekendAvailability: prev.availabilityPreferences?.weekendAvailability || false,
-      },
-    }));
-    showToast('success', 'Auto-Filled', 'Form populated with suggestions.');
-    markAsUnsaved();
   };
 
   const handleSave = async (publish?: boolean) => {
@@ -393,11 +347,7 @@ export function ConsultantEditPage({ consultantId, onBack, onSave }: ConsultantE
           onClick: () => handleSave(),
           loading: saving
         }}
-        actions={
-          <Button variant="outline" onClick={handleAutoFill} title="Auto-fill empty fields">
-            <Sparkles className="w-4 h-4 mr-2" /> Auto-Fill
-          </Button>
-        }
+        actions={undefined}
         secondaryActions={[
           ...(consultantId ? [{ label: 'Delete', icon: <Trash2 className="w-4 h-4" />, onClick: () => setIsDeleteDialogOpen(true), variant: 'destructive' as const }] : [])
         ]}
@@ -419,10 +369,9 @@ export function ConsultantEditPage({ consultantId, onBack, onSave }: ConsultantE
               <Select value={formData.category} onValueChange={(v: any) => setFormData({ ...formData, category: v })}>
                 <SelectTrigger style={inputStyle}><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="therapist">Therapist</SelectItem>
-                  <SelectItem value="psychiatrist">Psychiatrist</SelectItem>
-                  <SelectItem value="counselor">Counselor</SelectItem>
-                  <SelectItem value="family-therapist">Family Therapist</SelectItem>
+                  {consultantTypes.map((ct) => (
+                    <SelectItem key={ct.value} value={ct.value}>{ct.label}</SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </AdminFormField>
@@ -525,7 +474,7 @@ export function ConsultantEditPage({ consultantId, onBack, onSave }: ConsultantE
           </div>
         </AdminSection>
 
-        {/* ═══════════ SECTION 4: Therapeutic Approaches ═══════════ */}
+        {/* ══════════ SECTION 4: Therapeutic Approaches ═══════════ */}
         <AdminSection title="Therapeutic Approaches Used" description="Modalities and therapeutic frameworks" icon={<Heart className="w-5 h-5" />}>
           <div className="grid md:grid-cols-2 gap-3">
             {therapeuticApproachOptions.map((approach) => (
@@ -598,27 +547,28 @@ export function ConsultantEditPage({ consultantId, onBack, onSave }: ConsultantE
             <div>
               <Label className="mb-3 block" style={{ fontFamily: 'var(--font-family-base)', fontWeight: 'var(--font-weight-medium)' }}>Session Formats</Label>
               <div className="flex flex-wrap gap-4">
-                {([
-                  { key: 'online' as const, label: 'Video Call', icon: Video },
-                  { key: 'call' as const, label: 'Phone Call', icon: Phone },
-                  { key: 'chat' as const, label: 'Chat', icon: MessageSquare },
-                ]).map(({ key, label, icon: Ic }) => (
+                {kvSessionFormats.map(sf => {
+                  // Map KV session format values to icons
+                  const iconMap: Record<string, any> = { video: Video, call: Phone, chat: MessageSquare, 'in-person': MapPin };
+                  const Ic = iconMap[sf.value] || Video;
+                  return (
                   <div
-                    key={key}
+                    key={sf.value}
                     className="flex items-center gap-3 p-4 rounded-lg border cursor-pointer"
                     style={{
-                      borderColor: formData.sessionModes?.includes(key) ? 'var(--color-primary-default)' : 'var(--color-border-default)',
-                      backgroundColor: formData.sessionModes?.includes(key) ? 'var(--color-primary-subtle)' : 'var(--color-bg-card)',
+                      borderColor: formData.sessionModes?.includes(sf.value) ? 'var(--color-primary-default)' : 'var(--color-border-default)',
+                      backgroundColor: formData.sessionModes?.includes(sf.value) ? 'var(--color-primary-subtle)' : 'var(--color-bg-card)',
                       borderRadius: 'var(--radius-md)',
                     }}
-                    onClick={() => toggleArray('sessionModes', key)}
+                    onClick={() => toggleArray('sessionModes', sf.value)}
                   >
-                    <Checkbox id={`mode-${key}`} checked={formData.sessionModes?.includes(key)} onCheckedChange={() => toggleArray('sessionModes', key)} />
-                    <Label htmlFor={`mode-${key}`} className="cursor-pointer capitalize flex items-center gap-2">
-                      <Ic className="w-4 h-4" /> {label}
+                    <Checkbox id={`mode-${sf.value}`} checked={formData.sessionModes?.includes(sf.value)} onCheckedChange={() => toggleArray('sessionModes', sf.value)} />
+                    <Label htmlFor={`mode-${sf.value}`} className="cursor-pointer capitalize flex items-center gap-2">
+                      <Ic className="w-4 h-4" /> {sf.label}
                     </Label>
                   </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
 

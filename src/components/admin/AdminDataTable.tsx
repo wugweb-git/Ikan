@@ -260,7 +260,8 @@ export function AdminDataTable<T extends { [key: string]: any }>({
         </div>
       ) : (
       <div className="overflow-hidden" style={{ borderRadius: 'var(--radius-lg)', border: '1px solid var(--color-border-default)' }}>
-        <Table className="w-full table-fixed">
+        <div className="overflow-x-auto">
+        <Table className="w-full">
           <TableHeader>
             <TableRow>
               {columns.map((col, index) => (
@@ -287,7 +288,7 @@ export function AdminDataTable<T extends { [key: string]: any }>({
                   onClick={() => onRowClick && onRowClick(item)}
                 >
                   {columns.map((col, colIdx) => (
-                    <TableCell key={colIdx} className={col.className} style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 0 }}>
+                    <TableCell key={colIdx} className={col.className} style={{ verticalAlign: 'middle' }}>
                       {col.type === 'image' && col.imageKey ? (
                         <div className="flex items-center gap-3 truncate">
                           <img 
@@ -305,9 +306,11 @@ export function AdminDataTable<T extends { [key: string]: any }>({
                             {col.render ? col.render(item) : (col.accessorKey ? (item[col.accessorKey] as ReactNode) : null)}
                           </span>
                         </div>
+                      ) : col.render ? (
+                        col.render(item)
                       ) : (
-                        <span className="truncate block">
-                          {col.render ? col.render(item) : (col.accessorKey ? (item[col.accessorKey] as ReactNode) : null)}
+                        <span className="truncate block" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          {col.accessorKey ? (item[col.accessorKey] as ReactNode) : null}
                         </span>
                       )}
                     </TableCell>
@@ -323,6 +326,7 @@ export function AdminDataTable<T extends { [key: string]: any }>({
             )}
           </TableBody>
         </Table>
+        </div>
       </div>
       )}
 

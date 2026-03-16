@@ -1,6 +1,5 @@
 import type React from 'react';
-import { ArrowLeft, ChevronRight } from 'lucide-react';
-import { Button } from '../ui/button';
+import { ChevronRight } from 'lucide-react';
 
 interface AdminHeaderProps {
   title: string;
@@ -12,6 +11,7 @@ interface AdminHeaderProps {
     icon?: React.ReactNode;
     trend?: 'up' | 'down' | 'neutral';
   }[];
+  /** @deprecated Back button has been globally removed from AdminHeader */
   onBack?: () => void;
   breadcrumbs?: {
     label: string;
@@ -24,7 +24,6 @@ export function AdminHeader({
   description, 
   actions,
   stats,
-  onBack,
   breadcrumbs
 }: AdminHeaderProps) {
   return (
@@ -52,17 +51,7 @@ export function AdminHeader({
 
       {/* Header Section */}
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
-        <div className="flex items-start gap-3 flex-1 min-w-0">
-          {onBack && (
-             <Button
-               variant="ghost"
-               size="sm"
-               onClick={onBack}
-               className="mt-1"
-             >
-               <ArrowLeft className="w-6 h-6" />
-             </Button>
-          )}
+        <div className="flex-1 min-w-0">
           <div className="flex-1">
             <h1 style={{
               fontFamily: 'var(--font-family-base)',

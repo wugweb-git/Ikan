@@ -27,6 +27,8 @@ import {
 } from "../ui/dropdown-menu";
 import { projectId, publicAnonKey } from '../../utils/supabase/info';
 import { supabase } from '../../lib/supabase-client';
+import { copyToClipboard } from '../../lib/clipboard';
+import { useMetadata } from '../../hooks/useMetadata';
 
 interface AdminConsultationManagerProps {
   onBack?: () => void;
@@ -83,6 +85,7 @@ interface ApplicationDetail {
 export function AdminConsultationManager({ onBack, onNavigate }: AdminConsultationManagerProps) {
   const { showToast } = useNotifications();
   const isMobile = useIsMobile();
+  const { consultantTypes: kvConsultantTypes } = useMetadata();
   const [loading, setLoading] = useState(true);
   const [professionals, setProfessionals] = useState<Consultant[]>([]);
   const [activeTab, setActiveTab] = useState<'professionals' | 'applications'>('professionals');
@@ -129,10 +132,10 @@ export function AdminConsultationManager({ onBack, onNavigate }: AdminConsultati
         ...item,
         id: item.professional_id || item.id,
         expertises: item.specialties || item.expertises || [],
-        category: item.category || 'Therapist',
+        category: item.category || '',
         available: item.available !== undefined ? item.available : false,
-        rating: item.rating || 5.0,
-        credentials: item.title || item.credentials || 'Professional'
+        rating: item.rating,
+        credentials: item.title || item.credentials || ''
       }));
       setProfessionals(mapped);
     } catch (error) {
@@ -147,8 +150,7 @@ export function AdminConsultationManager({ onBack, onNavigate }: AdminConsultati
   const loadApplications = async () => {
     try {
       setLoadingApps(true);
-      const { data: sessionData } = await supabase.auth.getSession();
-      const token = sessionData.session?.access_token || publicAnonKey;
+      const token = await getSafeToken();
       const response = await fetch(
         `https://${projectId}.supabase.co/functions/v1/make-server-cc205da9/admin/professional-applications`,
         { headers: { Authorization: `Bearer ${token}` } }
@@ -165,8 +167,7 @@ export function AdminConsultationManager({ onBack, onNavigate }: AdminConsultati
 
   const loadApplicationDetail = async (appId: string) => {
     try {
-      const { data: sessionData } = await supabase.auth.getSession();
-      const token = sessionData.session?.access_token || publicAnonKey;
+      const token = await getSafeToken();
       const response = await fetch(
         `https://${projectId}.supabase.co/functions/v1/make-server-cc205da9/admin/professional-applications/${appId}`,
         { headers: { Authorization: `Bearer ${token}` } }
@@ -187,8 +188,7 @@ export function AdminConsultationManager({ onBack, onNavigate }: AdminConsultati
   const handleApproveApp = async (appId: string) => {
     setProcessingApp(appId);
     try {
-      const { data: sessionData } = await supabase.auth.getSession();
-      const token = sessionData.session?.access_token || publicAnonKey;
+      const token = await getSafeToken();
       const response = await fetch(
         `https://${projectId}.supabase.co/functions/v1/make-server-cc205da9/admin/professional-applications/${appId}/approve`,
         { method: 'POST', headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' } }
@@ -214,8 +214,7 @@ export function AdminConsultationManager({ onBack, onNavigate }: AdminConsultati
     if (!rejectAppId) return;
     setProcessingApp(rejectAppId);
     try {
-      const { data: sessionData } = await supabase.auth.getSession();
-      const token = sessionData.session?.access_token || publicAnonKey;
+      const token = await getSafeToken();
       const response = await fetch(
         `https://${projectId}.supabase.co/functions/v1/make-server-cc205da9/admin/professional-applications/${rejectAppId}/reject`,
         {
@@ -243,24 +242,14 @@ export function AdminConsultationManager({ onBack, onNavigate }: AdminConsultati
     }
   };
 
-  const handleCopyLink = () => {
+  const handleCopyLink = async () => {
     const link = `${window.location.origin}/join/professional`;
-    navigator.clipboard.writeText(link);
-    showToast('success', 'Link Copied', 'Universal application link copied to clipboard.');
-  };
-
-  const handleTestIntegrity = () => {
-    let issues = 0;
-    const report: string[] = [];
-    professionals.forEach(p => {
-      const missing = [];
-      if (!p.name) missing.push('Name');
-      if (!p.credentials) missing.push('Credentials');
-      if (!p.category) missing.push('Category');
-      if (missing.length > 0) { issues++; report.push(`"${p.name || 'Unknown'}": Missing ${missing.join(', ')}`); }
-    });
-    if (issues === 0) showToast('success', 'Integrity Check Passed', 'All profiles appear valid.');
-    else { console.warn('Issues:', report); showToast('warning', 'Issues Found', `${issues} profiles with missing data.`); }
+    const ok = await copyToClipboard(link);
+    if (ok) {
+      showToast('success', 'Link Copied', 'Universal application link copied to clipboard.');
+    } else {
+      showToast('info', 'Copy Manually', 'Auto-copy is blocked in this environment. Please select the link text and copy it manually.');
+    }
   };
 
   const handleExport = () => {
@@ -328,7 +317,7 @@ export function AdminConsultationManager({ onBack, onNavigate }: AdminConsultati
       render: (p) => (
         <div className="flex flex-col gap-1" style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}>
           <span className="flex items-center gap-1"><MapPin className="w-3 h-3" /> {p.location}</span>
-          <span className="flex items-center gap-1"><Star className="w-3 h-3" style={{ color: 'var(--color-rating-star)', fill: 'var(--color-rating-star)' }} /> {p.rating?.toFixed(1) || '5.0'}</span>
+          <span className="flex items-center gap-1"><Star className="w-3 h-3" style={{ color: 'var(--color-rating-star)', fill: 'var(--color-rating-star)' }} /> {p.rating?.toFixed(1) || '-'}</span>
         </div>
       )
     },
@@ -413,10 +402,7 @@ export function AdminConsultationManager({ onBack, onNavigate }: AdminConsultati
   ];
 
   const filters: FilterOption[] = [
-    { key: 'category', label: 'Category', options: [
-      { label: 'Therapist', value: 'therapist' }, { label: 'Psychiatrist', value: 'psychiatrist' },
-      { label: 'Counselor', value: 'counselor' }, { label: 'Family Therapist', value: 'family-therapist' },
-    ]},
+    { key: 'category', label: 'Category', options: kvConsultantTypes.map(ct => ({ label: ct.label, value: ct.value })) },
   ];
 
   const appFilters: FilterOption[] = [
@@ -439,16 +425,11 @@ export function AdminConsultationManager({ onBack, onNavigate }: AdminConsultati
       <AdminHeader
         title="Consultation Manager"
         description="Manage professionals, review applications, and share the universal onboarding link"
-        onBack={onBack}
-        breadcrumbs={[{ label: 'Admin', onClick: onBack }, { label: 'Consultation Manager' }]}
         stats={stats}
         actions={
           <div className="flex gap-2 flex-wrap">
             <Button variant="outline" onClick={() => setShowLinkDialog(true)} style={{ gap: 'var(--spacing-2)' }}>
               <Link2 className="w-4 h-4" /> {!isMobile && 'Share Link'}
-            </Button>
-            <Button variant="outline" onClick={handleTestIntegrity}>
-              <ShieldCheck className="w-4 h-4 mr-2" />{!isMobile && 'Integrity'}
             </Button>
             <Button onClick={handleCreateNew} style={{ backgroundColor: 'var(--color-primary-default)', color: 'var(--color-primary-on)' }}>
               <Plus className="w-4 h-4 mr-2" />{!isMobile && 'Add Professional'}
@@ -762,9 +743,23 @@ export function AdminConsultationManager({ onBack, onNavigate }: AdminConsultati
           </DialogHeader>
           <div style={{ marginTop: 'var(--spacing-4)' }}>
             <div className="flex items-center gap-2">
-              <div className="flex-1 p-3 rounded-lg" style={{ backgroundColor: 'var(--color-bg-muted)', borderRadius: 'var(--radius-md)', fontFamily: 'monospace', fontSize: 'var(--text-sm)', wordBreak: 'break-all' }}>
-                {window.location.origin}/join/professional
-              </div>
+              <input
+                readOnly
+                value={`${window.location.origin}/join/professional`}
+                onClick={(e) => (e.target as HTMLInputElement).select()}
+                style={{
+                  flex: 1,
+                  padding: 'var(--spacing-3)',
+                  borderRadius: 'var(--radius-md)',
+                  backgroundColor: 'var(--color-bg-muted)',
+                  fontFamily: 'monospace',
+                  fontSize: 'var(--text-sm)',
+                  border: '1px solid var(--color-border-default)',
+                  outline: 'none',
+                  wordBreak: 'break-all',
+                  cursor: 'text',
+                }}
+              />
               <Button onClick={handleCopyLink} style={{ gap: 'var(--spacing-2)', borderRadius: 'var(--radius-md)' }}>
                 <Copy className="w-4 h-4" /> Copy
               </Button>
@@ -775,6 +770,12 @@ export function AdminConsultationManager({ onBack, onNavigate }: AdminConsultati
           </div>
           <DialogFooter className="mt-4">
             <Button variant="outline" onClick={() => setShowLinkDialog(false)}>Close</Button>
+            <Button
+              onClick={() => { setShowLinkDialog(false); if (onNavigate) onNavigate('/join/professional'); }}
+              style={{ gap: 'var(--spacing-2)', backgroundColor: 'var(--color-primary-default)', color: 'var(--color-primary-on)', borderRadius: 'var(--radius-md)' }}
+            >
+              <ExternalLink className="w-4 h-4" /> Preview Form
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -804,4 +805,21 @@ function PreviewSection({ title, children }: { title: string; children: React.Re
       {children}
     </div>
   );
+}
+
+// ── Helper: Safe Token Getter ──
+
+// Safe token getter that handles invalid refresh tokens
+async function getSafeToken(): Promise<string> {
+  try {
+    const { data, error } = await supabase.auth.getSession();
+    if (error) {
+      console.warn('Auth: getSession error in ConsultationManager:', error.message);
+      return publicAnonKey;
+    }
+    return data.session?.access_token || publicAnonKey;
+  } catch (err) {
+    console.warn('Auth: getSafeToken failed:', err);
+    return publicAnonKey;
+  }
 }

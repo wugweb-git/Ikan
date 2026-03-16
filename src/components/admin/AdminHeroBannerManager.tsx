@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
 import { Save, RotateCcw, ExternalLink, Check, Upload, Link2 } from 'lucide-react';
 import { Card, CardContent } from '../ui/card';
 import { Button } from '../ui/button';
@@ -163,7 +162,7 @@ export function AdminHeroBannerManager({ onBack }: AdminHeroBannerManagerProps) 
       />
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 24, marginTop: 24 }}>
-        <AnimatePresence>
+        <div>
           {['assessments', 'equip', 'consultation'].map((pageKey, i) => {
             const meta = PAGE_META[pageKey];
             const banner = editedBanners[pageKey];
@@ -174,11 +173,8 @@ export function AdminHeroBannerManager({ onBack }: AdminHeroBannerManagerProps) 
             if (!banner) return null;
 
             return (
-              <motion.div
+              <div
                 key={pageKey}
-                initial={{ opacity: 0, y: 12 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.08, duration: 0.25 }}
               >
                 <Card
                   style={{
@@ -495,10 +491,10 @@ export function AdminHeroBannerManager({ onBack }: AdminHeroBannerManagerProps) 
                     </div>
                   </CardContent>
                 </Card>
-              </motion.div>
+              </div>
             );
           })}
-        </AnimatePresence>
+        </div>
       </div>
     </div>
   );

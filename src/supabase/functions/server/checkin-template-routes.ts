@@ -3,10 +3,8 @@ import * as kv from "./kv_dual_write.ts";
 // ═══════════════════════════════════════════════════════════════════
 // Check-in Template Routes
 //
-// Allows admins to define the step sequence of the Mood Journal
-// check-in flow via a block-builder interface. Each template is
-// an ordered list of "steps" with configurable types, questions,
-// and scale references.
+// 100% KV-backed. No hardcoded defaults. No seed functions.
+// Admin creates templates via the backend. If KV is empty, return empty.
 // ═══════════════════════════════════════════════════════════════════
 
 export interface CheckinStep {
@@ -16,14 +14,14 @@ export interface CheckinStep {
   question: string;
   subtitle?: string;
   hero_emoji?: string;
-  scale_key?: string;          // references checkin_scale:{key} or mood_type:
-  options?: string[];           // for single_choice type
-  slider_min?: number;          // for slider type
+  scale_key?: string;
+  options?: string[];
+  slider_min?: number;
   slider_max?: number;
-  slider_labels?: string[];     // e.g. ["Not at all", "Extremely"]
+  slider_labels?: string[];
   required: boolean;
-  ema_category?: string;        // EMA category tag for analytics
-  save_as?: string;             // field name in journal entry (e.g. "mood_rating", "sleep_quality")
+  ema_category?: string;
+  save_as?: string;
 }
 
 export interface CheckinTemplate {
@@ -36,111 +34,6 @@ export interface CheckinTemplate {
   updated_at: string;
   created_by?: string;
 }
-
-// ── Default Template ────────────────────────────────────────────
-const DEFAULT_TEMPLATE: CheckinTemplate = {
-  id: "default",
-  name: "Daily Check-in",
-  description: "Standard daily mood and wellness check-in",
-  is_active: true,
-  steps: [
-    {
-      id: "mood",
-      order: 0,
-      type: "emoji_scale",
-      question: "How are you feeling now?",
-      subtitle: "Tap the emoji that matches your vibe",
-      hero_emoji: "🤔",
-      scale_key: "mood",
-      required: true,
-      ema_category: "Mood",
-      save_as: "mood_rating",
-    },
-    {
-      id: "energy",
-      order: 1,
-      type: "emoji_scale",
-      question: "What's your energy like?",
-      subtitle: "From drained to fully charged",
-      hero_emoji: "⚡",
-      scale_key: "energy",
-      required: false,
-      ema_category: "Energy",
-      save_as: "energy",
-    },
-    {
-      id: "stress",
-      order: 2,
-      type: "emoji_scale",
-      question: "How stressed do you feel today?",
-      subtitle: "Be honest — there's no wrong answer",
-      hero_emoji: "😌",
-      scale_key: "stress",
-      required: false,
-      ema_category: "Stress",
-      save_as: "stress_level",
-    },
-    {
-      id: "sleep",
-      order: 3,
-      type: "emoji_scale",
-      question: "How would you rate your sleep?",
-      subtitle: "Think about last night's sleep quality",
-      hero_emoji: "🌙",
-      scale_key: "sleep",
-      required: false,
-      ema_category: "Sleep",
-      save_as: "sleep_quality",
-    },
-    {
-      id: "pain_experience",
-      order: 4,
-      type: "emoji_scale",
-      question: "How would you describe your pain?",
-      subtitle: "Rate your overall pain level right now",
-      hero_emoji: "💊",
-      scale_key: "pain",
-      required: false,
-      ema_category: "Pain Experience",
-      save_as: "pain_level",
-    },
-    {
-      id: "pain_impact",
-      order: 5,
-      type: "single_choice",
-      question: "Has pain interfered with your usual activity?",
-      subtitle: "Think about the last 24 hours",
-      hero_emoji: "🏃",
-      options: ["Not at all", "A little bit", "Moderately", "Quite a bit", "Extremely"],
-      required: false,
-      ema_category: "Pain Impact",
-      save_as: "pain_impact",
-    },
-    {
-      id: "note",
-      order: 6,
-      type: "free_text",
-      question: "Anything on your mind?",
-      subtitle: "A quick note to capture this moment",
-      hero_emoji: "✏️",
-      required: false,
-      save_as: "freehand_text_content",
-    },
-    {
-      id: "tags",
-      order: 7,
-      type: "multi_select",
-      question: "What shaped your day?",
-      subtitle: "Pick whatever applies — or skip to save",
-      hero_emoji: "🏷️",
-      scale_key: "context_tags",
-      required: false,
-      save_as: "context_tags",
-    },
-  ],
-  created_at: new Date().toISOString(),
-  updated_at: new Date().toISOString(),
-};
 
 const KV_ACTIVE_KEY = "checkin_template_active";
 
@@ -160,16 +53,16 @@ export function registerCheckinTemplateRoutes(app: Hono, requireAuth: any) {
 
       // Check for any template marked active
       const allTemplates = await kv.getByPrefix("checkin_template:");
-      const active = allTemplates.find((t: any) => t.is_active === true);
+      const active = allTemplates.find((t: any) => t && typeof t === "object" && t.is_active === true);
       if (active) {
         return c.json({ template: active });
       }
 
-      // Return default template
-      return c.json({ template: DEFAULT_TEMPLATE, _isDefault: true });
+      // No active template — return null. Admin must create one.
+      return c.json({ template: null, _message: "No active check-in template. Create one in admin." });
     } catch (err) {
       console.log(`Get active template error: ${err}`);
-      return c.json({ template: DEFAULT_TEMPLATE, _isDefault: true });
+      return c.json({ template: null, error: `Failed to get active template: ${err}` }, 500);
     }
   });
 
@@ -183,15 +76,7 @@ export function registerCheckinTemplateRoutes(app: Hono, requireAuth: any) {
       }
 
       const templates = await kv.getByPrefix("checkin_template:");
-      // Filter out the active pointer key
       const filtered = templates.filter((t: any) => t && typeof t === "object" && t.id);
-
-      // If no templates exist, seed the default
-      if (filtered.length === 0) {
-        await kv.set(`checkin_template:${DEFAULT_TEMPLATE.id}`, DEFAULT_TEMPLATE);
-        await kv.set(KV_ACTIVE_KEY, DEFAULT_TEMPLATE.id);
-        return c.json({ templates: [DEFAULT_TEMPLATE] });
-      }
 
       return c.json({ templates: filtered });
     } catch (err) {
@@ -206,9 +91,6 @@ export function registerCheckinTemplateRoutes(app: Hono, requireAuth: any) {
       const id = c.req.param("id");
       const template = await kv.get(`checkin_template:${id}`);
       if (!template) {
-        if (id === "default") {
-          return c.json({ template: DEFAULT_TEMPLATE });
-        }
         return c.json({ error: "Template not found" }, 404);
       }
       return c.json({ template });
@@ -228,13 +110,18 @@ export function registerCheckinTemplateRoutes(app: Hono, requireAuth: any) {
       }
 
       const body = await c.req.json();
+
+      if (!body.steps || !Array.isArray(body.steps) || body.steps.length === 0) {
+        return c.json({ error: "At least one step is required" }, 400);
+      }
+
       const id = body.id || crypto.randomUUID();
 
       const template: CheckinTemplate = {
         id,
         name: body.name || "New Check-in Template",
         description: body.description || "",
-        steps: (body.steps || DEFAULT_TEMPLATE.steps).map((s: any, i: number) => ({
+        steps: body.steps.map((s: any, i: number) => ({
           ...s,
           id: s.id || crypto.randomUUID(),
           order: s.order ?? i,
@@ -249,7 +136,6 @@ export function registerCheckinTemplateRoutes(app: Hono, requireAuth: any) {
 
       // If this is set as active, update the pointer
       if (template.is_active) {
-        // Deactivate all others
         const all = await kv.getByPrefix("checkin_template:");
         for (const t of all) {
           if (t && t.id && t.id !== id && t.is_active) {
@@ -280,11 +166,15 @@ export function registerCheckinTemplateRoutes(app: Hono, requireAuth: any) {
       const body = await c.req.json();
 
       const existing = await kv.get(`checkin_template:${id}`);
+      if (!existing) {
+        return c.json({ error: "Template not found" }, 404);
+      }
+
       const template: CheckinTemplate = {
-        ...(existing || {}),
+        ...existing,
         ...body,
         id,
-        steps: (body.steps || existing?.steps || []).map((s: any, i: number) => ({
+        steps: (body.steps || existing.steps || []).map((s: any, i: number) => ({
           ...s,
           id: s.id || crypto.randomUUID(),
           order: s.order ?? i,
@@ -323,22 +213,11 @@ export function registerCheckinTemplateRoutes(app: Hono, requireAuth: any) {
       }
 
       const id = c.req.param("id");
-      if (id === "default") {
-        return c.json({ error: "Cannot delete the default template" }, 400);
-      }
 
-      // Check if this is the active template
+      // If this is the active template, clear the active pointer
       const activeId = await kv.get(KV_ACTIVE_KEY);
       if (activeId === id) {
-        // Revert to default
-        await kv.set(KV_ACTIVE_KEY, "default");
-        // Ensure default exists
-        const defaultExists = await kv.get("checkin_template:default");
-        if (!defaultExists) {
-          await kv.set("checkin_template:default", { ...DEFAULT_TEMPLATE, is_active: true });
-        } else {
-          await kv.set("checkin_template:default", { ...defaultExists, is_active: true });
-        }
+        await kv.del(KV_ACTIVE_KEY);
       }
 
       await kv.del(`checkin_template:${id}`);
@@ -361,8 +240,8 @@ export function registerCheckinTemplateRoutes(app: Hono, requireAuth: any) {
 
       const id = c.req.param("id");
       const template = await kv.get(`checkin_template:${id}`);
-      if (!template && id !== "default") {
-        return c.json({ error: "Template not found" }, 404);
+      if (!template) {
+        return c.json({ error: "Template not found. Create it first." }, 404);
       }
 
       // Deactivate all
@@ -374,11 +253,7 @@ export function registerCheckinTemplateRoutes(app: Hono, requireAuth: any) {
       }
 
       // Activate target
-      if (id === "default" && !template) {
-        await kv.set("checkin_template:default", { ...DEFAULT_TEMPLATE, is_active: true });
-      } else {
-        await kv.set(`checkin_template:${id}`, { ...template, is_active: true, updated_at: new Date().toISOString() });
-      }
+      await kv.set(`checkin_template:${id}`, { ...template, is_active: true, updated_at: new Date().toISOString() });
       await kv.set(KV_ACTIVE_KEY, id);
 
       console.log(`Activated check-in template: ${id}`);
@@ -386,26 +261,6 @@ export function registerCheckinTemplateRoutes(app: Hono, requireAuth: any) {
     } catch (err) {
       console.log(`Activate template error: ${err}`);
       return c.json({ error: `Failed to activate template: ${err}` }, 500);
-    }
-  });
-
-  // ── POST /checkin-template/seed-default — Seed the default ──
-  app.post("/checkin-template/seed-default", requireAuth, async (c) => {
-    try {
-      const userId = c.get("userId");
-      const userProfile = await kv.get(`user:${userId}`);
-      if (!userProfile?.is_admin) {
-        return c.json({ error: "Admin access required" }, 403);
-      }
-
-      await kv.set(`checkin_template:${DEFAULT_TEMPLATE.id}`, { ...DEFAULT_TEMPLATE, is_active: true });
-      await kv.set(KV_ACTIVE_KEY, DEFAULT_TEMPLATE.id);
-
-      console.log("Seeded default check-in template");
-      return c.json({ success: true, template: DEFAULT_TEMPLATE });
-    } catch (err) {
-      console.log(`Seed default error: ${err}`);
-      return c.json({ error: `Failed to seed default: ${err}` }, 500);
     }
   });
 }

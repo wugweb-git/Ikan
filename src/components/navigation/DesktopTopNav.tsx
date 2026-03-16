@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import { Icon, AccountIcon, MoreIcon } from '../Icon';
 import { navigationConfig } from '../../lib/navigation';
 import { Button } from '../ui/button';
+import { LogoIcon } from '../Logo';
+import { usePublicSettings } from '../../hooks/usePublicSettings';
 import { 
   DropdownMenu, 
   DropdownMenuContent, 
@@ -20,6 +22,8 @@ interface DesktopTopNavProps {
 
 export function DesktopTopNav({ currentRoute, onNavigate, className }: DesktopTopNavProps) {
   const topNavItems = navigationConfig.desktop.top_nav;
+  const { settings } = usePublicSettings();
+  const siteName = settings.siteName || 'iKan';
 
   const getIconVariant = (iconPath: string): { name: string; variant?: string } => {
     const match = iconPath.match(/\{icon\.(\w+)\.(\w+)\}/);
@@ -43,8 +47,19 @@ export function DesktopTopNav({ currentRoute, onNavigate, className }: DesktopTo
     >
       <div className="mx-auto flex h-16 items-center justify-between px-6 max-w-7xl">
         {/* Logo */}
-        <div className="flex items-center gap-3">
-          <div className="text-xl font-medium text-primary">iKan</div>
+        <div 
+          className="flex items-center gap-3 cursor-pointer" 
+          onClick={() => onNavigate('/dashboard')}
+          role="link"
+          tabIndex={0}
+          onKeyDown={(e) => { if (e.key === 'Enter') onNavigate('/dashboard'); }}
+        >
+          {settings.logoIconUrl ? (
+            <img src={settings.logoIconUrl} alt={siteName} className="h-8 w-8 object-contain" />
+          ) : (
+            <LogoIcon size={28} />
+          )}
+          <div className="text-xl font-medium text-primary" style={{ fontFamily: 'var(--font-family-base)', fontWeight: 'var(--font-weight-medium)' }}>{siteName}</div>
         </div>
 
         {/* Main Navigation */}

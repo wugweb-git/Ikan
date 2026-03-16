@@ -2,9 +2,8 @@ export const navigationConfig = {
   "name": "iKan - navigation",
   "desktop": {
     "top_nav": [
-      { "label": "Home", "icon": "{icon.home.roundedOutline}", "route": "/dashboard", "state": "default", "ariaLabel": "Go to dashboard" },
-      { "label": "Assessments", "icon": "{icon.checkCircle.outline}", "route": "/assessments" },
-      { "label": "Programs", "icon": "{icon.tools.roundedOutline}", "route": "/equip-programs" },
+      { "label": "Assessment", "icon": "{icon.checkCircle.outline}", "route": "/assessments" },
+      { "label": "Equip", "icon": "{icon.tools.roundedOutline}", "route": "/equip-programs" },
       { "label": "Library", "icon": "{icon.library.roundedOutline}", "route": "/library" },
       { "label": "Consultation", "icon": "{icon.chat.default}", "route": "/consultation" }
     ],

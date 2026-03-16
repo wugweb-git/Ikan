@@ -29,6 +29,19 @@ app.post("/user/enroll/:equipId", requireAuth, async (c) => {
   }
 });
 
+// Leave / withdraw from a program (soft-delete, preserves progress)
+app.delete("/user/enrollments/:equipId", requireAuth, async (c) => {
+  try {
+    const userId = c.get('userId');
+    const equipId = c.req.param('equipId');
+    await ProgressService.unenrollUser(userId, equipId);
+    return c.json({ success: true });
+  } catch (error) {
+    console.log('Unenroll error:', error);
+    return c.json({ error: 'Failed to leave program' }, 500);
+  }
+});
+
 app.get("/user/equip/:equipId/today", requireAuth, async (c) => {
   try {
     const userId = c.get('userId');
@@ -103,6 +116,90 @@ app.post("/user/equip/:equipId/sync", requireAuth, async (c) => {
     return c.json({ success: true });
   } catch (error) {
     return c.json({ error: 'Sync failed' }, 500);
+  }
+});
+
+// ── File upload for program blocks ────────────────────────────────
+app.post("/user/equip/upload", requireAuth, async (c) => {
+  try {
+    const userId = c.get('userId');
+    const formData = await c.req.formData();
+    const file = formData.get('file') as File | null;
+    const equipId = formData.get('equipId') as string;
+    const dayNum = formData.get('dayNum') as string;
+    const blockId = formData.get('blockId') as string;
+
+    if (!file || !equipId || !blockId) {
+      return c.json({ error: 'Missing file, equipId, or blockId' }, 400);
+    }
+
+    // Max 10MB for user uploads
+    if (file.size > 10 * 1024 * 1024) {
+      return c.json({ error: 'File too large (max 10MB)' }, 413);
+    }
+
+    const { createClient } = await import("jsr:@supabase/supabase-js@2");
+    const supabase = createClient(
+      Deno.env.get('SUPABASE_URL')!,
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+    );
+
+    const bucket = 'make-cc205da9-user-uploads';
+
+    // Ensure bucket exists
+    const { data: buckets } = await supabase.storage.listBuckets();
+    const bucketExists = buckets?.some((b: any) => b.name === bucket);
+    if (!bucketExists) {
+      await supabase.storage.createBucket(bucket, {
+        public: false,
+        fileSizeLimit: 10485760, // 10MB
+      });
+    }
+
+    // Upload
+    const timestamp = Date.now();
+    const ext = file.name.split('.').pop() || 'bin';
+    const filePath = `${userId}/${equipId}/day${dayNum}/${blockId}-${timestamp}.${ext}`;
+
+    const arrayBuffer = await file.arrayBuffer();
+    const { error: uploadError } = await supabase.storage
+      .from(bucket)
+      .upload(filePath, new Uint8Array(arrayBuffer), {
+        contentType: file.type,
+        upsert: true,
+      });
+
+    if (uploadError) {
+      console.log(`Upload error for user ${userId}: ${uploadError.message}`);
+      return c.json({ error: `Upload failed: ${uploadError.message}` }, 500);
+    }
+
+    // Generate signed URL (7 days)
+    const { data: signedUrlData } = await supabase.storage
+      .from(bucket)
+      .createSignedUrl(filePath, 604800);
+
+    // Store reference in KV
+    const uploadKey = `upload:${userId}:${equipId}:${dayNum}:${blockId}`;
+    await kv.set(uploadKey, {
+      fileName: file.name,
+      fileSize: file.size,
+      fileType: file.type,
+      bucket,
+      filePath,
+      signedUrl: signedUrlData?.signedUrl,
+      uploadedAt: new Date().toISOString(),
+    });
+
+    return c.json({
+      success: true,
+      fileName: file.name,
+      fileSize: file.size,
+      signedUrl: signedUrlData?.signedUrl,
+    });
+  } catch (error) {
+    console.log(`File upload error: ${error}`);
+    return c.json({ error: `Upload failed: ${error}` }, 500);
   }
 });
 

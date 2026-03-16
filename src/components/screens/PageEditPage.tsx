@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Save, Trash2, FileText, Edit, Search, Image, Video, Upload, EyeOff, X, Sparkles } from 'lucide-react';
+import { Save, Trash2, FileText, Edit, Search, Image, Video, Upload, EyeOff, X } from 'lucide-react';
 import { useNotifications } from '../../contexts/NotificationContext';
 import { apiClient } from '../../lib/api-client';
 import { AdminPageLayout } from '../admin/AdminPageLayout';
@@ -16,7 +16,6 @@ import { useKeyboardShortcuts } from '../../hooks/useKeyboardShortcuts';
 import { UnsavedChangesDialog } from '../ui/unsaved-changes-dialog';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '../ui/dialog';
 import { RichTextEditor } from '../ui/rich-text-editor';
-import { AdminActionBar } from '../ui/admin-action-bar';
 import { AdminLoading } from '../admin/AdminLoading';
 
 export interface Page {
@@ -25,10 +24,17 @@ export interface Page {
   title: string;
   slug: string;
   content: string;
-  // New Media Fields
-  featuredImage?: string;
+  // Hero Section Fields
+  heroEnabled?: boolean;
   heroImage?: string;
+  heroTitle?: string;
+  heroSubtitle?: string;
+  heroCtaText?: string;
+  heroCtaLink?: string;
   heroVideoUrl?: string;
+  heroOverlayOpacity?: number;
+  // Media Fields
+  featuredImage?: string;
   ogImage?: string;
   // SEO Fields
   metaDescription?: string;
@@ -39,6 +45,7 @@ export interface Page {
   published_at?: string;
   created_at?: string;
   updated_at?: string;
+  lastUpdated?: string;
 }
 
 interface PageEditPageProps {
@@ -58,9 +65,15 @@ export function PageEditPage({ pageId, onBack, onSave }: PageEditPageProps) {
     title: '',
     slug: '',
     content: '',
-    featuredImage: '',
+    heroEnabled: false,
     heroImage: '',
+    heroTitle: '',
+    heroSubtitle: '',
+    heroCtaText: '',
+    heroCtaLink: '',
     heroVideoUrl: '',
+    heroOverlayOpacity: 50,
+    featuredImage: '',
     ogImage: '',
     metaDescription: '',
     metaKeywords: '',
@@ -100,27 +113,14 @@ export function PageEditPage({ pageId, onBack, onSave }: PageEditPageProps) {
     }
   };
 
-  const handleAutoFill = () => {
-    setFormData(prev => ({
-        ...prev,
-        title: prev.title || 'New Page Title',
-        slug: prev.slug || 'new-page-slug',
-        content: prev.content || `<h1>Welcome to ${prev.title || 'this page'}</h1><p>This is a placeholder content block. You can edit this text.</p><h2>Section 1</h2><p>Add more details here.</p>`,
-        metaDescription: prev.metaDescription || `Learn more about ${prev.title || 'this topic'} on iKan.`,
-        metaKeywords: prev.metaKeywords || 'wellness, mental health, guide',
-        ogTitle: prev.ogTitle || prev.title,
-        ogDescription: prev.ogDescription || prev.metaDescription,
-        featuredImage: prev.featuredImage || 'https://source.unsplash.com/1200x630/?wellness,calm',
-        heroImage: prev.heroImage || 'https://source.unsplash.com/1920x1080/?nature,peace',
-        published: false
-    }));
-    showToast('success', 'Auto-Filled', 'Form populated with suggestions.');
-    markAsUnsaved();
-  };
-
   const handleSave = async (shouldPublish?: boolean) => {
     if (!validateForm(formData)) {
-      showToast('error', 'Validation Error', 'Please fix the errors');
+      const missingFields: string[] = [];
+      if (!formData.name || formData.name.trim().length < 2) missingFields.push('Page Name');
+      if (!formData.title || formData.title.trim().length < 3) missingFields.push('Page Title');
+      if (!formData.slug || formData.slug.trim().length < 2) missingFields.push('URL Slug');
+      if (!formData.content || formData.content.trim().length < 10) missingFields.push('Content (min 10 chars)');
+      showToast('error', 'Validation Error', `Please fix: ${missingFields.join(', ')}`);
       return;
     }
 
@@ -128,15 +128,7 @@ export function PageEditPage({ pageId, onBack, onSave }: PageEditPageProps) {
       setSaving(true);
 
       const dataToSave = { ...formData };
-      
-      // 🐛 DEBUG: Log what we're saving
-      console.log('📤 [PAGE SAVE] Starting save operation...');
-      console.log('📤 [PAGE SAVE] Page ID:', pageId);
-      console.log('📤 [PAGE SAVE] Should Publish:', shouldPublish);
-      console.log('📤 [PAGE SAVE] Name:', dataToSave.name);
-      console.log('📤 [PAGE SAVE] Title:', dataToSave.title);
-      console.log('📤 [PAGE SAVE] Full Data:', JSON.stringify(dataToSave, null, 2));
-      
+
       // Handle publish/unpublish
       if (shouldPublish !== undefined) {
         dataToSave.published = shouldPublish;
@@ -146,20 +138,16 @@ export function PageEditPage({ pageId, onBack, onSave }: PageEditPageProps) {
       }
 
       if (pageId) {
-        console.log('📤 [PAGE SAVE] Calling updatePage...');
         await apiClient.updatePage(pageId, dataToSave);
-        console.log('✅ [PAGE SAVE] Update successful!');
         showToast('success', 'Success', dataToSave.published ? 'Page published successfully' : 'Page saved as draft');
       } else {
-        console.log('📤 [PAGE SAVE] Calling createPage...');
         await apiClient.createPage(dataToSave);
-        console.log('✅ [PAGE SAVE] Create successful!');
         showToast('success', 'Success', dataToSave.published ? 'Page published successfully' : 'Page created as draft');
       }
       markAsSaved();
       onSave();
     } catch (error: any) {
-      console.error('❌ [PAGE SAVE] Failed to save page:', error);
+      console.error('Failed to save page:', error);
       showToast('error', 'Error', error.message || 'Failed to save');
     } finally {
       setSaving(false);
@@ -191,7 +179,7 @@ export function PageEditPage({ pageId, onBack, onSave }: PageEditPageProps) {
 
   if (loading) {
     return (
-      <AdminPageLayout title="Loading..." breadcrumbs={[{ label: 'Admin', onClick: onBack }, { label: 'Pages', onClick: onBack }, { label: 'Loading...' }]}>
+      <AdminPageLayout title="Loading..." subtitle="Loading page data...">
         <div className="flex items-center justify-center py-12">
           <AdminLoading message="Loading page..." />
         </div>
@@ -211,14 +199,7 @@ export function PageEditPage({ pageId, onBack, onSave }: PageEditPageProps) {
           onClick: () => handleSave(!formData.published),
           loading: saving
         }}
-        actions={
-            <Button variant="outline" onClick={handleAutoFill} title="Auto-fill empty fields">
-                <Sparkles className="w-4 h-4 mr-2" />
-                Auto-Fill
-            </Button>
-        }
         secondaryActions={[
-          // Button 1: Cancel
           {
             label: 'Cancel',
             icon: <X className="w-4 h-4" />,
@@ -231,26 +212,20 @@ export function PageEditPage({ pageId, onBack, onSave }: PageEditPageProps) {
             },
             variant: 'outline' as const
           },
-          // Button 2: Delete
           ...(pageId
-            ? [
-                {
-                  label: 'Delete',
-                  icon: <Trash2 className="w-4 h-4" />,
-                  onClick: () => setIsDeleteDialogOpen(true),
-                  variant: 'destructive' as const
-                }
-              ]
-            : [
-                {
-                  label: 'Delete',
-                  icon: <Trash2 className="w-4 h-4" />,
-                  onClick: () => {},
-                  variant: 'ghost' as const,
-                  disabled: true
-                }
-              ]),
-          // Button 3: Save Draft
+            ? [{
+                label: 'Delete',
+                icon: <Trash2 className="w-4 h-4" />,
+                onClick: () => setIsDeleteDialogOpen(true),
+                variant: 'destructive' as const
+              }]
+            : [{
+                label: 'Delete',
+                icon: <Trash2 className="w-4 h-4" />,
+                onClick: () => {},
+                variant: 'ghost' as const,
+                disabled: true
+              }]),
           {
             label: 'Save Draft',
             icon: <Save className="w-4 h-4" />,
@@ -261,6 +236,7 @@ export function PageEditPage({ pageId, onBack, onSave }: PageEditPageProps) {
         toggleActions={[]}
         maxWidth="xl"
       >
+        {/* Section 1: Page Information */}
         <AdminSection title="Page Information" description="Basic page settings" icon={<FileText className="w-5 h-5" />}>
           <div className="grid md:grid-cols-2 gap-6">
             <AdminFormField label="Page Name" required error={errors.name}>
@@ -272,98 +248,161 @@ export function PageEditPage({ pageId, onBack, onSave }: PageEditPageProps) {
             <AdminFormField label="URL Slug" required error={errors.slug}>
               <Input value={formData.slug} onChange={(e) => setFormData({ ...formData, slug: e.target.value.toLowerCase().replace(/\s+/g, '-') })} placeholder="about-us" />
             </AdminFormField>
+            <AdminFormField label="Featured Image URL" helpText="Thumbnail image for page listings (1200x630px)">
+              <Input
+                value={formData.featuredImage}
+                onChange={(e) => setFormData({ ...formData, featuredImage: e.target.value })}
+                placeholder="https://example.com/image.jpg"
+              />
+            </AdminFormField>
           </div>
         </AdminSection>
 
-        <AdminSection title="Content Editor" description="Page content (Markdown supported)" icon={<Edit className="w-5 h-5" />}>
-          <AdminFormField label="Content" required error={errors.content}>
-            <RichTextEditor 
-              value={formData.content || ''} 
-              onChange={(value) => setFormData({ ...formData, content: value })} 
+        {/* Section 2: Hero Banner */}
+        <AdminSection title="Hero Banner" description="Full-width hero section displayed at the top of the page" icon={<Image className="w-5 h-5" />}>
+          <div
+            className="flex items-center gap-3 p-4 rounded-lg mb-6"
+            style={{ backgroundColor: 'var(--color-bg-muted)' }}
+          >
+            <Checkbox
+              id="heroEnabled"
+              checked={formData.heroEnabled || false}
+              onCheckedChange={(checked) => setFormData({ ...formData, heroEnabled: checked as boolean })}
+            />
+            <Label htmlFor="heroEnabled" className="cursor-pointer" style={{ fontWeight: 'var(--font-weight-medium)', fontFamily: 'var(--font-family-base)' }}>
+              Enable hero banner for this page
+            </Label>
+          </div>
+
+          {formData.heroEnabled && (
+            <div className="space-y-6">
+              {/* Hero Preview */}
+              {formData.heroImage && (
+                <div
+                  className="relative rounded-lg overflow-hidden"
+                  style={{ height: '200px', border: '1px solid var(--color-border-default)' }}
+                >
+                  <img
+                    src={formData.heroImage}
+                    alt="Hero preview"
+                    className="w-full h-full object-cover"
+                  />
+                  <div
+                    className="absolute inset-0 flex flex-col items-center justify-center text-center px-6"
+                    style={{ backgroundColor: `rgba(0,0,0,${(formData.heroOverlayOpacity || 50) / 100})` }}
+                  >
+                    {formData.heroTitle && (
+                      <p style={{ color: 'white', fontSize: 'var(--text-2xl)', fontWeight: 'var(--font-weight-medium)', fontFamily: 'var(--font-family-base)', marginBottom: 'var(--spacing-2)' }}>
+                        {formData.heroTitle}
+                      </p>
+                    )}
+                    {formData.heroSubtitle && (
+                      <p style={{ color: 'rgba(255,255,255,0.85)', fontSize: 'var(--text-sm)', fontFamily: 'var(--font-family-base)' }}>
+                        {formData.heroSubtitle}
+                      </p>
+                    )}
+                    {formData.heroCtaText && (
+                      <div
+                        className="mt-3 px-4 py-2 rounded-lg inline-block"
+                        style={{ backgroundColor: 'var(--color-primary-default)', color: 'white', fontSize: 'var(--text-sm)', fontWeight: 'var(--font-weight-medium)' }}
+                      >
+                        {formData.heroCtaText}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              <div className="grid md:grid-cols-2 gap-6">
+                <AdminFormField label="Hero Image URL" helpText="Background image for the hero section (1920x800px recommended)">
+                  <Input
+                    value={formData.heroImage}
+                    onChange={(e) => setFormData({ ...formData, heroImage: e.target.value })}
+                    placeholder="https://example.com/hero-banner.jpg"
+                  />
+                </AdminFormField>
+
+                <AdminFormField label="Overlay Opacity" helpText="Dark overlay strength (0 = none, 100 = solid black)">
+                  <div className="flex items-center gap-3">
+                    <input
+                      type="range"
+                      min={0}
+                      max={100}
+                      value={formData.heroOverlayOpacity || 50}
+                      onChange={(e) => setFormData({ ...formData, heroOverlayOpacity: parseInt(e.target.value) })}
+                      className="flex-1"
+                      style={{ accentColor: 'var(--color-primary-default)' }}
+                    />
+                    <span style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-muted)', fontFamily: 'var(--font-family-base)', minWidth: '36px', textAlign: 'right' }}>
+                      {formData.heroOverlayOpacity || 50}%
+                    </span>
+                  </div>
+                </AdminFormField>
+
+                <AdminFormField label="Hero Title" helpText="Large heading displayed over the hero image">
+                  <Input
+                    value={formData.heroTitle}
+                    onChange={(e) => setFormData({ ...formData, heroTitle: e.target.value })}
+                    placeholder="Welcome to Our Story"
+                  />
+                </AdminFormField>
+
+                <AdminFormField label="Hero Subtitle" helpText="Supporting text below the hero title">
+                  <Input
+                    value={formData.heroSubtitle}
+                    onChange={(e) => setFormData({ ...formData, heroSubtitle: e.target.value })}
+                    placeholder="Learn more about our mission and values"
+                  />
+                </AdminFormField>
+
+                <AdminFormField label="CTA Button Text" helpText="Call-to-action button label (leave empty to hide)">
+                  <Input
+                    value={formData.heroCtaText}
+                    onChange={(e) => setFormData({ ...formData, heroCtaText: e.target.value })}
+                    placeholder="Get Started"
+                  />
+                </AdminFormField>
+
+                <AdminFormField label="CTA Button Link" helpText="URL the button navigates to">
+                  <Input
+                    value={formData.heroCtaLink}
+                    onChange={(e) => setFormData({ ...formData, heroCtaLink: e.target.value })}
+                    placeholder="/assessment"
+                  />
+                </AdminFormField>
+
+                <AdminFormField
+                  label="Hero Video URL (Optional)"
+                  helpText="YouTube or Vimeo URL for background video instead of image"
+                >
+                  <div className="flex items-center gap-2">
+                    <Video className="w-5 h-5 shrink-0" style={{ color: 'var(--color-text-muted)' }} />
+                    <Input
+                      value={formData.heroVideoUrl}
+                      onChange={(e) => setFormData({ ...formData, heroVideoUrl: e.target.value })}
+                      placeholder="https://youtube.com/watch?v=..."
+                    />
+                  </div>
+                </AdminFormField>
+              </div>
+            </div>
+          )}
+        </AdminSection>
+
+        {/* Section 3: Content Editor */}
+        <AdminSection title="Page Content" description="Rich text editor — supports headings, lists, links, images, and raw HTML" icon={<Edit className="w-5 h-5" />}>
+          <AdminFormField label="Content" required error={errors.content} helpText="Use the toolbar to format text. The editor outputs HTML which is rendered as-is on the page.">
+            <RichTextEditor
+              value={formData.content || ''}
+              onChange={(value) => setFormData({ ...formData, content: value })}
               placeholder="Start writing your page content..."
               minHeight="400px"
             />
           </AdminFormField>
         </AdminSection>
 
-        <AdminSection 
-          title="Media & Hero Section" 
-          description="Featured images and hero video" 
-          icon={<Image className="w-5 h-5" />}
-        >
-          <div className="grid md:grid-cols-2 gap-6">
-            <AdminFormField 
-              label="Featured Image URL" 
-              helpText="Main image for the page (1200x630px recommended)"
-            >
-              <Input 
-                value={formData.featuredImage} 
-                onChange={(e) => setFormData({ ...formData, featuredImage: e.target.value })} 
-                placeholder="https://example.com/image.jpg" 
-              />
-              {formData.featuredImage && (
-                <div className="mt-2 rounded-lg overflow-hidden border" style={{ borderColor: 'var(--color-border-default)' }}>
-                  <img src={formData.featuredImage} alt="Featured preview" className="w-full h-48 object-cover" />
-                </div>
-              )}
-            </AdminFormField>
-
-            <AdminFormField 
-              label="Hero Image URL" 
-              helpText="Large hero section image (1920x1080px recommended)"
-            >
-              <Input 
-                value={formData.heroImage} 
-                onChange={(e) => setFormData({ ...formData, heroImage: e.target.value })} 
-                placeholder="https://example.com/hero.jpg" 
-              />
-              {formData.heroImage && (
-                <div className="mt-2 rounded-lg overflow-hidden border" style={{ borderColor: 'var(--color-border-default)' }}>
-                  <img src={formData.heroImage} alt="Hero preview" className="w-full h-48 object-cover" />
-                </div>
-              )}
-            </AdminFormField>
-
-            <AdminFormField 
-              label="Hero Video URL" 
-              helpText="YouTube or Vimeo URL for hero section background video"
-            >
-              <div className="flex gap-2">
-                <Video className="w-5 h-5 text-[var(--color-text-muted)] mt-2" />
-                <Input 
-                  value={formData.heroVideoUrl} 
-                  onChange={(e) => setFormData({ ...formData, heroVideoUrl: e.target.value })} 
-                  placeholder="https://youtube.com/watch?v=..." 
-                />
-              </div>
-              {formData.heroVideoUrl && (
-                <div className="mt-2 p-3 rounded-lg bg-[var(--color-bg-muted)]" style={{ fontSize: 'var(--text-sm)' }}>
-                  <p style={{ color: 'var(--color-text-muted)' }}>
-                    Video URL: <span style={{ color: 'var(--color-text-primary)' }}>{formData.heroVideoUrl}</span>
-                  </p>
-                </div>
-              )}
-            </AdminFormField>
-
-            <AdminFormField 
-              label="Social Share Image (OG:Image)" 
-              helpText="Image for social media previews (1200x630px)"
-            >
-              <Input 
-                value={formData.ogImage} 
-                onChange={(e) => setFormData({ ...formData, ogImage: e.target.value })} 
-                placeholder="https://example.com/social.jpg" 
-              />
-              {formData.ogImage && (
-                <div className="mt-2 rounded-lg overflow-hidden border" style={{ borderColor: 'var(--color-border-default)' }}>
-                  <img src={formData.ogImage} alt="Social preview" className="w-full h-32 object-cover" />
-                </div>
-              )}
-            </AdminFormField>
-          </div>
-        </AdminSection>
-
-        <AdminSection title="SEO & Publishing" description="Meta tags and visibility" icon={<Search className="w-5 h-5" />}>
+        {/* Section 4: SEO & Publishing */}
+        <AdminSection title="SEO & Publishing" description="Meta tags, social share settings, and visibility" icon={<Search className="w-5 h-5" />}>
           <div className="grid md:grid-cols-2 gap-6">
             <AdminFormField label="Meta Description">
               <Textarea value={formData.metaDescription} onChange={(e) => setFormData({ ...formData, metaDescription: e.target.value })} placeholder="Page description for search engines" className="min-h-[80px]" />
@@ -371,31 +410,36 @@ export function PageEditPage({ pageId, onBack, onSave }: PageEditPageProps) {
             <AdminFormField label="Meta Keywords">
               <Input value={formData.metaKeywords} onChange={(e) => setFormData({ ...formData, metaKeywords: e.target.value })} placeholder="keyword1, keyword2, keyword3" />
             </AdminFormField>
-            <AdminFormField label="OG Title">
+            <AdminFormField label="OG Title" helpText="Title for social media shares">
               <Input value={formData.ogTitle} onChange={(e) => setFormData({ ...formData, ogTitle: e.target.value })} placeholder="Title for social media shares" />
             </AdminFormField>
-            <AdminFormField label="OG Description">
+            <AdminFormField label="OG Description" helpText="Description for social media shares">
               <Textarea value={formData.ogDescription} onChange={(e) => setFormData({ ...formData, ogDescription: e.target.value })} placeholder="Description for social media shares" className="min-h-[80px]" />
+            </AdminFormField>
+            <AdminFormField label="Social Share Image (OG:Image)" helpText="Image for social media previews (1200x630px)">
+              <Input
+                value={formData.ogImage}
+                onChange={(e) => setFormData({ ...formData, ogImage: e.target.value })}
+                placeholder="https://example.com/social.jpg"
+              />
+              {formData.ogImage && (
+                <div className="mt-2 rounded-lg overflow-hidden" style={{ border: '1px solid var(--color-border-default)' }}>
+                  <img src={formData.ogImage} alt="Social preview" className="w-full h-32 object-cover" />
+                </div>
+              )}
             </AdminFormField>
           </div>
 
-          <div className="flex items-center gap-3 p-4 rounded-lg hover:bg-[var(--color-bg-muted)] transition-colors mt-4">
+          <div
+            className="flex items-center gap-3 p-4 rounded-lg mt-6"
+            style={{ backgroundColor: 'var(--color-bg-muted)' }}
+          >
             <Checkbox id="published" checked={formData.published} onCheckedChange={(checked) => setFormData({ ...formData, published: checked as boolean })} />
-            <Label htmlFor="published" className="cursor-pointer">Published - Make this page visible to all users</Label>
+            <Label htmlFor="published" className="cursor-pointer" style={{ fontFamily: 'var(--font-family-base)' }}>
+              Published — Make this page visible to all users
+            </Label>
           </div>
         </AdminSection>
-        
-        {/* WordPress-Style Action Bar */}
-        <AdminActionBar
-          onDelete={pageId ? () => setIsDeleteDialogOpen(true) : undefined}
-          onCancel={onBack}
-          onSaveDraft={() => handleSave(false)}
-          onPublish={() => handleSave(true)}
-          isPublished={formData.published}
-          isSaving={saving}
-          showDelete={!!pageId}
-          publishLabel={formData.published ? 'Update' : 'Save and Publish'}
-        />
       </AdminPageLayout>
 
       <UnsavedChangesDialog open={showWarning} onOpenChange={setShowWarning} onConfirm={() => { markAsSaved(); onBack(); }} />

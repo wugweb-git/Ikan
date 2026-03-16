@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
+import { projectId } from '../../utils/supabase/info';
+import { getAuthHeaders } from '../../lib/supabase-client';
 import { apiClient } from '../../lib/api-client';
-import { projectId, publicAnonKey } from '../../utils/supabase/info';
 import { EquipHero } from '../blocks/EquipHero';
 import { EquipBentoGrid } from '../blocks/EquipBentoGrid';
 import { EquipBlock } from '../blocks/EquipBlock';
@@ -38,9 +39,7 @@ function ResourceSection({ onNavigate }: ResourceSectionProps) {
           `https://${projectId}.supabase.co/functions/v1/make-server-cc205da9/library/resources?limit=3`,
           {
             signal: controller.signal,
-            headers: {
-              'Authorization': `Bearer ${publicAnonKey}`,
-            },
+            headers: await getAuthHeaders(),
           }
         );
 

@@ -6,6 +6,7 @@ import { useNotifications } from '../../contexts/NotificationContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { apiClient } from '../../lib/api-client';
 import { resolveImageUrl } from '../../utils/image-utils';
+import { copyToClipboard } from '../../lib/clipboard';
 
 // Import dynamic UI blocks
 import { ResourceHero } from '../blocks/ResourceHero';
@@ -286,7 +287,8 @@ export function ResourceDetail({ resourceId, onBack, onResourceSelect, className
         });
         
         // Log simple activity for admin dashboard
-        apiClient.logActivity('resource_view', resourceId, {
+        apiClient.logActivity('resource_view', {
+          resourceId,
           title: resource?.title || 'Unknown Resource'
         }).catch(err => console.log('Simple activity log failed', err));
 
@@ -645,8 +647,7 @@ export function ResourceDetail({ resourceId, onBack, onResourceSelect, className
 
       // Try to send analytics to backend
       await retryWithBackoff(async () => {
-        const response = await apiClient.post('/analytics/engagement', engagementData);
-        return response.data;
+        await apiClient.post('/analytics/engagement', engagementData);
       }, 2); // Only 2 retries for analytics to avoid blocking
 
       console.log('📊 Analytics tracked:', action);
@@ -737,13 +738,7 @@ export function ResourceDetail({ resourceId, onBack, onResourceSelect, className
 
       // Send to backend with retry mechanism
       await retryWithBackoff(async () => {
-        const response = await apiClient.post('/user-activity/mark-read', readData);
-        
-        if (response.status !== 200) {
-          throw new Error(`Failed to mark as read: ${response.status}`);
-        }
-        
-        return response.data;
+        await apiClient.post('/user-activity/mark-read', readData);
       }, 3);
 
       // Update local storage for quick access
@@ -825,43 +820,20 @@ export function ResourceDetail({ resourceId, onBack, onResourceSelect, className
       }
 
       // Fallback to clipboard
-      if (navigator.clipboard && navigator.clipboard.writeText) {
-        try {
-          await navigator.clipboard.writeText(window.location.href);
+      try {
+        const copied = await copyToClipboard(window.location.href);
+        if (copied) {
           showToast('success', 'Link Copied', 'Resource link copied to clipboard');
           
           // Track successful clipboard share
           await trackUserEngagement('share_completed', { method: 'clipboard' });
           console.log('✅ Resource link copied to clipboard');
-          
-        } catch (clipboardError) {
-          console.warn('Clipboard write failed:', clipboardError);
+        } else {
           throw new Error('Clipboard access failed');
         }
-      } else {
-        // Ultimate fallback for older browsers
-        try {
-          // Create temporary input element
-          const tempInput = document.createElement('input');
-          tempInput.value = window.location.href;
-          document.body.appendChild(tempInput);
-          tempInput.select();
-          tempInput.setSelectionRange(0, 99999); // For mobile devices
-          
-          const successful = document.execCommand('copy');
-          document.body.removeChild(tempInput);
-          
-          if (successful) {
-            showToast('success', 'Link Copied', 'Resource link copied to clipboard');
-            await trackUserEngagement('share_completed', { method: 'legacy_clipboard' });
-          } else {
-            throw new Error('Copy command failed');
-          }
-        } catch (legacyError) {
-          // Final fallback - show share dialog
-          showToast('info', 'Share Resource', `Copy this link: ${window.location.href}`);
-          await trackUserEngagement('share_fallback_shown');
-        }
+      } catch (clipboardError) {
+        console.warn('Clipboard write failed:', clipboardError);
+        throw new Error('Clipboard access failed');
       }
       
     } catch (error: any) {
@@ -1101,7 +1073,7 @@ export function ResourceDetail({ resourceId, onBack, onResourceSelect, className
             {/* Author Info */}
             <div className="border-t pt-8" style={{ borderColor: 'var(--color-border-default)' }}>
               <ResourceAuthor
-                name={resource.author || 'Reza Moaiandin'}
+                name={resource.author || 'iKan Team'}
                 avatar={resource.authorImage}
                 date={resource.publishedDate || '2024-09-30'}
                 readTime={`${resource.readTimeMinutes} min read`}
@@ -1204,10 +1176,10 @@ export function ResourceDetail({ resourceId, onBack, onResourceSelect, className
                  {/* Author */}
                  <div 
                    className="cursor-pointer hover:bg-[var(--color-bg-muted)] rounded-lg p-2 -ml-2 transition-colors"
-                   onClick={() => showToast('info', 'Author', `View profile of ${resource.author || 'Reza Moaiandin'}`)}
+                   onClick={() => showToast('info', 'Author', `View profile of ${resource.author || 'iKan Team'}`)}
                  >
                   <ResourceAuthor
-                    name={resource.author || 'Reza Moaiandin'}
+                    name={resource.author || 'iKan Team'}
                     avatar={resource.authorImage}
                     date={resource.publishedDate || '2024-09-30'}
                     readTime={`${resource.readTimeMinutes} min read`}

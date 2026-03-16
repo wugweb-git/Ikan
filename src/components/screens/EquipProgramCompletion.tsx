@@ -1,430 +1,446 @@
 import { useState, useEffect } from 'react';
+import { motion } from 'motion/react';
 import { useIsMobile } from '../../hooks/useIsMobile';
 import { Button } from '../ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
-import { Badge } from '../ui/badge';
+import { Card, CardContent } from '../ui/card';
 import { Progress } from '../ui/progress';
-import { CheckCircle, Trophy, Calendar, Target, Download, Share2, ArrowRight, Star } from 'lucide-react';
-import { getEquipProgramContent, getStoredProgram, EquipProgramDetails } from '../../lib/equip-program-content';
+import { CheckCircle, Trophy, Calendar, Target, ArrowRight, Star, BookOpen, Clock, BarChart3, Sparkles } from 'lucide-react';
+import { apiClient } from '../../lib/api-client';
+import { EquipProgram } from '../../lib/equip-admin-types';
+import { LoadingSpinner } from '../LoadingSpinner';
+
+// ── Design token font helper ──────────────────────────────────
+const f = (size: string, weight: number = 400, color: string = 'var(--color-text-primary)') => ({
+  fontSize: `var(--text-${size})`,
+  fontWeight: weight,
+  fontFamily: 'var(--font-family-base)',
+  color,
+});
 
 interface EquipProgramCompletionProps {
+  programId?: string;
   onContinue?: () => void;
   onBackToDashboard?: () => void;
+  onNavigate?: (route: string) => void;
 }
 
 interface CompletionStats {
   activitiesCompleted: number;
   totalActivities: number;
-  daysActive: number;
+  daysCompleted: number;
   totalDays: number;
-  skillsLearned: string[];
-  certificateEarned: boolean;
+  topicsCovered: string[];
 }
 
-// Sample completion data
-const getCompletionStats = (programSlug: string): CompletionStats => {
-  const baseStats = {
-    activitiesCompleted: 15,
-    totalActivities: 18,
-    daysActive: 28,
-    totalDays: 42,
-    skillsLearned: [
-      'Stress recognition',
-      'Mindfulness techniques',
-      'Boundary setting',
-      'Energy management'
-    ],
-    certificateEarned: true
-  };
+// Derive stats from real program + progress data
+function deriveCompletionStats(program: EquipProgram, completedDays: number[]): CompletionStats {
+  const totalDays = program.daily_content?.length || 0;
+  const daysCompleted = completedDays.length;
 
-  if (programSlug === 'burnout-recovery') {
-    return {
-      ...baseStats,
-      skillsLearned: [
-        'Burnout recognition and prevention',
-        'Rest and recovery techniques',
-        'Work-life boundary setting',
-        'Energy audit and management',
-        'Sustainable work practices',
-        'Stress management strategies'
-      ]
-    };
-  }
+  let totalActivities = 0;
+  let activitiesCompleted = 0;
+  const topicSet = new Set<string>();
 
-  return baseStats;
-};
-
-export function EquipProgramCompletion({ onContinue, onBackToDashboard }: EquipProgramCompletionProps) {
-  const isMobile = useIsMobile();
-  const [content, setContent] = useState<EquipProgramDetails | null>(null);
-  const [stats, setStats] = useState<CompletionStats | null>(null);
-  const [showCelebration, setShowCelebration] = useState(true);
-
-  // Load program content and stats
-  useEffect(() => {
-    const storedProgram = getStoredProgram();
-    if (storedProgram && storedProgram.slug) {
-      const programContent = getEquipProgramContent(storedProgram.slug);
-      setContent(programContent);
-      
-      if (programContent) {
-        const completionStats = getCompletionStats(programContent.slug);
-        setStats(completionStats);
-      }
+  (program.daily_content || []).forEach(day => {
+    const count = day.activities?.length || 0;
+    totalActivities += count;
+    if (completedDays.includes(day.day)) {
+      activitiesCompleted += count;
     }
+    // Collect topics from day titles
+    if (day.title && day.title !== 'Assessment' && day.title !== 'Onboarding') {
+      topicSet.add(day.title);
+    }
+  });
 
-    // Hide celebration animation after 3 seconds
-    const timer = setTimeout(() => {
-      setShowCelebration(false);
-    }, 3000);
+  return {
+    activitiesCompleted,
+    totalActivities: totalActivities || 1,
+    daysCompleted,
+    totalDays: totalDays || 1,
+    topicsCovered: Array.from(topicSet).slice(0, 8),
+  };
+}
 
-    return () => clearTimeout(timer);
-  }, []);
+export function EquipProgramCompletion({ programId, onContinue, onBackToDashboard, onNavigate }: EquipProgramCompletionProps) {
+  const isMobile = useIsMobile();
+  const [program, setProgram] = useState<EquipProgram | null>(null);
+  const [stats, setStats] = useState<CompletionStats | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [showCelebration, setShowCelebration] = useState(true);
+  const [recommendations, setRecommendations] = useState<any[]>([]);
 
-  if (!content || !stats) {
+  const handleContinue = onContinue || (onNavigate ? () => onNavigate('/equip') : undefined);
+  const handleBackToDashboard = onBackToDashboard || (onNavigate ? () => onNavigate('/dashboard') : undefined);
+
+  // Resolve programId from props or URL query
+  const resolvedId = programId || (() => {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      return params.get('id') || '';
+    } catch { return ''; }
+  })();
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const load = async () => {
+      if (!resolvedId) {
+        setError('No program ID provided');
+        setLoading(false);
+        return;
+      }
+
+      try {
+        setLoading(true);
+
+        // Fetch program + progress in parallel
+        const [programData, progressData] = await Promise.all([
+          apiClient.getEquipProgram(resolvedId),
+          apiClient.getEnrollmentProgress(resolvedId).catch(() => null),
+        ]);
+
+        if (!isMounted) return;
+
+        if (!programData) {
+          setError('Program not found');
+          setLoading(false);
+          return;
+        }
+
+        setProgram(programData as EquipProgram);
+
+        // Extract completed days from progress
+        const completedDays: number[] = progressData?.completed_days || [];
+        const derivedStats = deriveCompletionStats(programData as EquipProgram, completedDays);
+        setStats(derivedStats);
+
+        // Fetch recommendations (non-blocking)
+        try {
+          const recs = await apiClient.getRecommendations();
+          if (isMounted && Array.isArray(recs)) {
+            // Enrich each rec with a navigation link
+            const enriched = recs.slice(0, 3).map((rec: any) => ({
+              ...rec,
+              link: rec.link || (rec.equip_id ? `/equip-detail?id=${rec.equip_id}` : null),
+              title: rec.title || rec.name || 'Recommended Program',
+              description: rec.description || rec.rationale || '',
+            }));
+            setRecommendations(enriched);
+          }
+        } catch {
+          // Non-critical
+        }
+
+      } catch (err: any) {
+        if (isMounted) {
+          console.error('Failed to load completion data:', err);
+          setError(err.message || 'Failed to load program data');
+        }
+      } finally {
+        if (isMounted) setLoading(false);
+      }
+    };
+
+    load();
+
+    // Celebration auto-dismiss
+    const timer = setTimeout(() => setShowCelebration(false), 3000);
+    return () => { isMounted = false; clearTimeout(timer); };
+  }, [resolvedId]);
+
+  // ── Loading state ──
+  if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: 'var(--color-bg-page)' }}>
-        <div className="text-center space-y-4">
-          <div className="animate-pulse">
-            <div className="w-12 h-12 rounded-lg mx-auto mb-4" style={{ backgroundColor: 'var(--color-bg-muted)' }}></div>
-            <div className="h-4 rounded w-48 mx-auto mb-2" style={{ backgroundColor: 'var(--color-bg-muted)' }}></div>
-            <div className="h-3 rounded w-32 mx-auto" style={{ backgroundColor: 'var(--color-bg-muted)' }}></div>
+        <LoadingSpinner message="Loading your results..." />
+      </div>
+    );
+  }
+
+  // ── Error state ──
+  if (error || !program) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-8" style={{ backgroundColor: 'var(--color-bg-page)' }}>
+        <div className="text-center space-y-4 max-w-sm">
+          <div
+            className="w-16 h-16 rounded-full flex items-center justify-center mx-auto"
+            style={{ backgroundColor: 'var(--color-status-danger-light)' }}
+          >
+            <BarChart3 size={28} style={{ color: 'var(--color-status-danger)' }} />
           </div>
+          <h2 style={f('xl', 500)}>Unable to load completion data</h2>
+          <p style={f('sm', 400, 'var(--color-text-muted)')}>
+            {error || 'Program data is unavailable. Please try again.'}
+          </p>
+          <Button onClick={handleBackToDashboard}>Back to Dashboard</Button>
         </div>
       </div>
     );
   }
 
-  const completionPercentage = (stats.activitiesCompleted / stats.totalActivities) * 100;
-  const activePercentage = (stats.daysActive / stats.totalDays) * 100;
+  // ── Stats ──
+  const completionPct = stats ? (stats.activitiesCompleted / stats.totalActivities) * 100 : 0;
+  const consistencyPct = stats ? (stats.daysCompleted / stats.totalDays) * 100 : 0;
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: 'var(--color-bg-page)' }}>
-      {/* Celebration Animation */}
+      {/* Celebration Overlay */}
       {showCelebration && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none">
-          <div className="text-center space-y-4 animate-scale-in">
-            <div 
-              className="p-8 rounded-full mx-auto animate-bounce"
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none"
+          style={{ backgroundColor: 'rgba(255,255,255,0.85)' }}
+        >
+          <motion.div
+            initial={{ scale: 0.5, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ type: 'spring', damping: 12 }}
+            className="text-center space-y-4"
+          >
+            <div
+              className="p-8 rounded-full mx-auto w-28 h-28 flex items-center justify-center"
               style={{ backgroundColor: 'var(--color-status-success)' }}
             >
-              <Trophy size={64} style={{ color: 'white' }} />
+              <Trophy size={56} style={{ color: 'white' }} />
             </div>
-            <h1 style={{ 
-              fontSize: 'var(--text-3xl)', 
-              fontWeight: 'var(--font-weight-medium)',
-              color: 'var(--color-status-success)'
-            }}>
-              Congratulations!
-            </h1>
-            <p style={{ 
-              fontSize: 'var(--text-lg)', 
-              color: 'var(--color-text-primary)'
-            }}>
-              You've completed the program!
-            </p>
-          </div>
-        </div>
+            <h1 style={f('3xl', 500, 'var(--color-status-success)')}>Congratulations!</h1>
+            <p style={f('lg', 400)}>You've completed the program!</p>
+          </motion.div>
+        </motion.div>
       )}
 
       {/* Main Content */}
-      <div className="max-w-4xl mx-auto px-4 py-8">
+      <div className="max-w-3xl mx-auto px-4 py-8" style={{ paddingBottom: 'env(safe-area-inset-bottom, 24px)' }}>
         {/* Header Card */}
-        <Card className="mb-8">
-          <CardContent className="pt-8">
-            <div className="text-center space-y-6">
-              <div 
-                className="p-6 rounded-full mx-auto w-24 h-24 flex items-center justify-center"
-                style={{ backgroundColor: 'var(--color-status-success)' }}
-              >
-                <Trophy size={48} style={{ color: 'white' }} />
-              </div>
-              
-              <div>
-                <h1 style={{ 
-                  fontSize: 'var(--text-2xl)', 
-                  fontWeight: 'var(--font-weight-medium)',
-                  color: 'var(--color-text-primary)',
-                  marginBottom: 'var(--spacing-2)'
-                }}>
-                  Program Completed!
-                </h1>
-                <h2 style={{ 
-                  fontSize: 'var(--text-xl)', 
-                  fontWeight: 'var(--font-weight-medium)',
-                  color: 'var(--color-text-primary)',
-                  marginBottom: 'var(--spacing-2)'
-                }}>
-                  {content.title}
-                </h2>
-                <p style={{ 
-                  fontSize: 'var(--text-base)', 
-                  color: 'var(--color-text-muted)'
-                }}>
-                  You've successfully completed your mental health journey. Here's a summary of your achievements.
-                </p>
-              </div>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+        >
+          <Card style={{ borderRadius: 'var(--radius-lg)', border: '1px solid var(--color-border-default)', overflow: 'hidden', marginBottom: 24 }}>
+            <CardContent style={{ padding: isMobile ? 24 : 40 }}>
+              <div className="text-center space-y-5">
+                <div
+                  className="w-20 h-20 rounded-full flex items-center justify-center mx-auto"
+                  style={{ backgroundColor: 'var(--color-status-success)' }}
+                >
+                  <Trophy size={40} style={{ color: 'white' }} />
+                </div>
 
-              {stats.certificateEarned && (
-                <Badge className="gap-2 px-4 py-2" variant="secondary">
-                  <CheckCircle size={16} />
-                  Certificate Earned
-                </Badge>
-              )}
-            </div>
-          </CardContent>
-        </Card>
+                <div className="space-y-2">
+                  <h1 style={f('2xl', 500)}>Program Completed!</h1>
+                  <h2 style={f('lg', 500)}>{program.title}</h2>
+                  <p style={{ ...f('base', 400, 'var(--color-text-muted)'), lineHeight: 1.6, maxWidth: 480, margin: '0 auto' }}>
+                    You've successfully completed your journey. Here's a summary of what you achieved.
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
 
         {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          {/* Activities Completed */}
-          <Card>
-            <CardContent className="p-6">
-              <div className="text-center space-y-3">
-                <div 
-                  className="p-3 rounded-full mx-auto w-12 h-12 flex items-center justify-center"
-                  style={{ backgroundColor: 'var(--color-status-info)' + '20' }}
-                >
-                  <CheckCircle size={24} style={{ color: 'var(--color-status-info)' }} />
+        {stats && (
+          <motion.div
+            initial={{ opacity: 0, y: 14 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1, duration: 0.4 }}
+            className="grid grid-cols-2 lg:grid-cols-4 gap-4"
+            style={{ marginBottom: 24 }}
+          >
+            {[
+              {
+                icon: CheckCircle,
+                value: stats.activitiesCompleted,
+                label: 'Activities',
+                color: 'var(--color-status-info)',
+                bg: 'var(--color-status-info-light)',
+                sub: `${completionPct.toFixed(0)}% complete`,
+                pct: completionPct,
+              },
+              {
+                icon: Calendar,
+                value: stats.daysCompleted,
+                label: 'Days Active',
+                color: 'var(--color-status-success)',
+                bg: 'var(--color-status-success-light)',
+                sub: `of ${stats.totalDays} days`,
+                pct: consistencyPct,
+              },
+              {
+                icon: BookOpen,
+                value: stats.topicsCovered.length,
+                label: 'Topics Covered',
+                color: 'var(--color-status-warning)',
+                bg: 'var(--color-status-warning-light)',
+                sub: null,
+                pct: null,
+              },
+              {
+                icon: Sparkles,
+                value: stats.daysCompleted >= stats.totalDays ? 'Complete' : `${consistencyPct.toFixed(0)}%`,
+                label: 'Journey Status',
+                color: 'var(--color-primary-default)',
+                bg: 'color-mix(in srgb, var(--color-primary-default) 10%, transparent)',
+                sub: null,
+                pct: null,
+              },
+            ].map((card, i) => (
+              <Card key={i} style={{ borderRadius: 'var(--radius-lg)', border: '1px solid var(--color-border-default)' }}>
+                <CardContent style={{ padding: 16, textAlign: 'center' }}>
+                  <div className="space-y-3">
+                    <div
+                      className="w-10 h-10 rounded-full flex items-center justify-center mx-auto"
+                      style={{ backgroundColor: card.bg }}
+                    >
+                      <card.icon size={20} style={{ color: card.color }} />
+                    </div>
+                    <div>
+                      <p style={f('xl', 500)}>{card.value}</p>
+                      <p style={f('xs', 400, 'var(--color-text-muted)')}>{card.label}</p>
+                    </div>
+                    {card.pct !== null && (
+                      <>
+                        <Progress value={card.pct} className="h-1.5" />
+                        <p style={f('xs', 400, 'var(--color-text-muted)')}>{card.sub}</p>
+                      </>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </motion.div>
+        )}
+
+        {/* Topics Covered */}
+        {stats && stats.topicsCovered.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 14 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2, duration: 0.4 }}
+          >
+            <Card style={{ borderRadius: 'var(--radius-lg)', border: '1px solid var(--color-border-default)', marginBottom: 24 }}>
+              <CardContent style={{ padding: 20 }}>
+                <h3 style={{ ...f('base', 500), marginBottom: 16 }}>Topics You Explored</h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {stats.topicsCovered.map((topic, index) => (
+                    <div
+                      key={index}
+                      className="flex items-center gap-3"
+                      style={{
+                        padding: '10px 14px',
+                        borderRadius: 'var(--radius-md)',
+                        backgroundColor: 'var(--color-bg-muted)',
+                      }}
+                    >
+                      <CheckCircle size={16} style={{ color: 'var(--color-status-success)', flexShrink: 0 }} />
+                      <span style={f('sm', 400)}>{topic}</span>
+                    </div>
+                  ))}
                 </div>
-                <div>
-                  <p style={{ 
-                    fontSize: 'var(--text-2xl)', 
-                    fontWeight: 'var(--font-weight-medium)',
-                    color: 'var(--color-text-primary)'
-                  }}>
-                    {stats.activitiesCompleted}
-                  </p>
-                  <p style={{ 
-                    fontSize: 'var(--text-sm)', 
-                    color: 'var(--color-text-muted)'
-                  }}>
-                    Activities Completed
-                  </p>
-                </div>
-                <Progress value={completionPercentage} className="h-2" />
-                <p style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}>
-                  {completionPercentage.toFixed(0)}% Complete
+              </CardContent>
+            </Card>
+          </motion.div>
+        )}
+
+        {/* No topics fallback */}
+        {stats && stats.topicsCovered.length === 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 14 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2, duration: 0.4 }}
+          >
+            <Card style={{ borderRadius: 'var(--radius-lg)', border: '1px solid var(--color-border-default)', marginBottom: 24 }}>
+              <CardContent style={{ padding: 24, textAlign: 'center' }}>
+                <Star size={24} style={{ color: 'var(--color-status-warning)', margin: '0 auto 8px' }} />
+                <p style={f('sm', 400, 'var(--color-text-muted)')}>
+                  You completed {stats.daysCompleted} day{stats.daysCompleted !== 1 ? 's' : ''} of content across {stats.activitiesCompleted} activities.
                 </p>
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          </motion.div>
+        )}
 
-          {/* Days Active */}
-          <Card>
-            <CardContent className="p-6">
-              <div className="text-center space-y-3">
-                <div 
-                  className="p-3 rounded-full mx-auto w-12 h-12 flex items-center justify-center"
-                  style={{ backgroundColor: 'var(--color-status-success)' + '20' }}
-                >
-                  <Calendar size={24} style={{ color: 'var(--color-status-success)' }} />
+        {/* Recommendations (from KV) */}
+        {recommendations.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 14 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3, duration: 0.4 }}
+          >
+            <Card style={{ borderRadius: 'var(--radius-lg)', border: '1px solid var(--color-border-default)', marginBottom: 24 }}>
+              <CardContent style={{ padding: 20 }}>
+                <h3 style={{ ...f('base', 500), marginBottom: 16 }}>What's Next?</h3>
+                <div className="space-y-3">
+                  {recommendations.map((rec: any, i: number) => (
+                    <button
+                      key={i}
+                      onClick={() => rec.link && onNavigate?.(rec.link)}
+                      className="w-full flex items-center gap-4 text-left"
+                      style={{
+                        padding: '12px 14px',
+                        borderRadius: 'var(--radius-md)',
+                        backgroundColor: 'var(--color-bg-muted)',
+                        border: 'none',
+                        cursor: rec.link ? 'pointer' : 'default',
+                        transition: 'background-color 0.15s',
+                      }}
+                    >
+                      <div
+                        className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0"
+                        style={{ backgroundColor: 'color-mix(in srgb, var(--color-primary-default) 10%, transparent)' }}
+                      >
+                        <ArrowRight size={16} style={{ color: 'var(--color-primary-default)' }} />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p style={f('sm', 500)}>{rec.title || rec.name || 'Recommendation'}</p>
+                        {rec.description && (
+                          <p style={{ ...f('xs', 400, 'var(--color-text-muted)'), marginTop: 2 }}>
+                            {rec.description}
+                          </p>
+                        )}
+                      </div>
+                    </button>
+                  ))}
                 </div>
-                <div>
-                  <p style={{ 
-                    fontSize: 'var(--text-2xl)', 
-                    fontWeight: 'var(--font-weight-medium)',
-                    color: 'var(--color-text-primary)'
-                  }}>
-                    {stats.daysActive}
-                  </p>
-                  <p style={{ 
-                    fontSize: 'var(--text-sm)', 
-                    color: 'var(--color-text-muted)'
-                  }}>
-                    Days Active
-                  </p>
-                </div>
-                <Progress value={activePercentage} className="h-2" />
-                <p style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}>
-                  {activePercentage.toFixed(0)}% Consistency
-                </p>
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          </motion.div>
+        )}
 
-          {/* Skills Learned */}
-          <Card>
-            <CardContent className="p-6">
-              <div className="text-center space-y-3">
-                <div 
-                  className="p-3 rounded-full mx-auto w-12 h-12 flex items-center justify-center"
-                  style={{ backgroundColor: 'var(--color-status-warning)' + '20' }}
-                >
-                  <Target size={24} style={{ color: 'var(--color-status-warning)' }} />
-                </div>
-                <div>
-                  <p style={{ 
-                    fontSize: 'var(--text-2xl)', 
-                    fontWeight: 'var(--font-weight-medium)',
-                    color: 'var(--color-text-primary)'
-                  }}>
-                    {stats.skillsLearned.length}
-                  </p>
-                  <p style={{ 
-                    fontSize: 'var(--text-sm)', 
-                    color: 'var(--color-text-muted)'
-                  }}>
-                    Skills Learned
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Overall Rating */}
-          <Card>
-            <CardContent className="p-6">
-              <div className="text-center space-y-3">
-                <div 
-                  className="p-3 rounded-full mx-auto w-12 h-12 flex items-center justify-center"
-                  style={{ backgroundColor: 'var(--color-primary-default)' + '20' }}
-                >
-                  <Star size={24} style={{ color: 'var(--color-primary-default)' }} />
-                </div>
-                <div>
-                  <p style={{ 
-                    fontSize: 'var(--text-2xl)', 
-                    fontWeight: 'var(--font-weight-medium)',
-                    color: 'var(--color-text-primary)'
-                  }}>
-                    Excellent
-                  </p>
-                  <p style={{ 
-                    fontSize: 'var(--text-sm)', 
-                    color: 'var(--color-text-muted)'
-                  }}>
-                    Performance
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Skills Acquired */}
-        <Card className="mb-8">
-          <CardHeader>
-            <CardTitle style={{ fontSize: 'var(--text-lg)' }}>
-              Skills You've Mastered
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {stats.skillsLearned.map((skill, index) => (
-                <div 
-                  key={index}
-                  className="flex items-center gap-3 p-3 rounded-lg"
-                  style={{ backgroundColor: 'var(--color-bg-muted)' }}
-                >
-                  <CheckCircle size={20} style={{ color: 'var(--color-status-success)' }} />
-                  <span style={{ 
-                    fontSize: 'var(--text-sm)', 
-                    color: 'var(--color-text-primary)'
-                  }}>
-                    {skill}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Next Steps */}
-        <Card className="mb-8">
-          <CardHeader>
-            <CardTitle style={{ fontSize: 'var(--text-lg)' }}>
-              What's Next?
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <Button 
-                variant="outline"
-                className="gap-2 h-auto p-4 justify-start"
-              >
-                <Download size={20} />
-                <div className="text-left">
-                  <p style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--font-weight-medium)' }}>
-                    Download Certificate
-                  </p>
-                  <p style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}>
-                    Get your completion certificate
-                  </p>
-                </div>
-              </Button>
-
-              <Button 
-                variant="outline"
-                className="gap-2 h-auto p-4 justify-start"
-              >
-                <Share2 size={20} />
-                <div className="text-left">
-                  <p style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--font-weight-medium)' }}>
-                    Share Achievement
-                  </p>
-                  <p style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}>
-                    Celebrate your success
-                  </p>
-                </div>
-              </Button>
-
-              <Button 
-                variant="outline"
-                className="gap-2 h-auto p-4 justify-start"
-                onClick={onContinue}
-              >
-                <Target size={20} />
-                <div className="text-left">
-                  <p style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--font-weight-medium)' }}>
-                    Explore More Programs
-                  </p>
-                  <p style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}>
-                    Continue your journey
-                  </p>
-                </div>
-              </Button>
-
-              <Button 
-                variant="outline"
-                className="gap-2 h-auto p-4 justify-start"
-              >
-                <Calendar size={20} />
-                <div className="text-left">
-                  <p style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--font-weight-medium)' }}>
-                    Schedule Check-in
-                  </p>
-                  <p style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}>
-                    Maintain your progress
-                  </p>
-                </div>
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Main Actions */}
-        <div className="flex flex-col sm:flex-row gap-4 justify-center">
+        {/* Action Buttons */}
+        <motion.div
+          initial={{ opacity: 0, y: 14 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.35, duration: 0.4 }}
+          className="flex flex-col sm:flex-row gap-3 justify-center"
+        >
           <Button
-            onClick={onBackToDashboard}
             variant="outline"
-            className="gap-2"
+            onClick={handleBackToDashboard}
+            style={{ borderRadius: 'var(--radius-md)', height: 48, ...f('sm', 500) }}
           >
             Back to Dashboard
           </Button>
-
           <Button
-            onClick={onContinue}
+            onClick={handleContinue}
             className="gap-2"
             style={{
+              borderRadius: 'var(--radius-md)',
+              height: 48,
               backgroundColor: 'var(--color-primary-default)',
-              color: 'var(--color-primary-on)'
+              color: 'var(--color-text-inverse)',
+              ...f('sm', 500, 'var(--color-text-inverse)'),
             }}
           >
             Explore More Programs
             <ArrowRight size={16} />
           </Button>
-        </div>
+        </motion.div>
       </div>
     </div>
   );

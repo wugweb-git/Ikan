@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Save, Trash2, FileText, BookOpen, Download, Globe, Eye, Tag, Link as LinkIcon, Upload, EyeOff, X, Sparkles } from 'lucide-react';
+import { Save, Trash2, FileText, BookOpen, Download, Globe, Eye, Tag, Link as LinkIcon, Upload, EyeOff, X } from 'lucide-react';
 import { useNotifications } from '../../contexts/NotificationContext';
 import { apiClient } from '../../lib/api-client';
 import { AdminPageLayout } from '../admin/AdminPageLayout';
@@ -18,6 +18,7 @@ import { validateUrl } from '../../lib/validation';
 import { useUnsavedChanges } from '../../hooks/useUnsavedChanges';
 import { useKeyboardShortcuts } from '../../hooks/useKeyboardShortcuts';
 import { UnsavedChangesDialog } from '../ui/unsaved-changes-dialog';
+import { useMetadata } from '../../hooks/useMetadata';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '../ui/dialog';
 import { Button } from '../ui/button';
 import { AdminActionBar } from '../ui/admin-action-bar';
@@ -53,18 +54,12 @@ interface ResourceEditPageProps {
   onSave: () => void;
 }
 
-const difficultyOptions = [
-  { value: 'beginner', label: 'Beginner' },
-  { value: 'intermediate', label: 'Intermediate' },
-  { value: 'advanced', label: 'Advanced' }
-];
-
 export function ResourceEditPage({ resourceId, onBack, onSave }: ResourceEditPageProps) {
   const { showToast } = useNotifications();
+  const { categories: kvCategories, filterTypes: kvFilterTypes, difficultyLevels: kvDifficultyLevels } = useMetadata();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [categoryOptions, setCategoryOptions] = useState<any[]>([]);
 
   const [formData, setFormData] = useState<Partial<Resource>>({
     title: '',
@@ -136,36 +131,12 @@ export function ResourceEditPage({ resourceId, onBack, onSave }: ResourceEditPag
   }, [formData]);
 
   useEffect(() => {
-    loadCategories();
     if (resourceId) {
       loadResource();
     } else {
       setLoading(false);
     }
   }, [resourceId]);
-
-  const loadCategories = async () => {
-    try {
-      const data = await apiClient.getCategories();
-      const loadedCategories = Array.isArray(data) ? data : data.categories || [];
-      
-      if (loadedCategories.length > 0) {
-        setCategoryOptions(loadedCategories.map((c: any) => ({
-          label: c.name || c.label,
-          value: c.slug || c.value || c.name.toLowerCase()
-        })));
-      }
-    } catch (error) {
-      console.warn('Failed to load categories, using defaults', error);
-      setCategoryOptions([
-        { label: 'Anxiety', value: 'anxiety' },
-        { label: 'Depression', value: 'depression' },
-        { label: 'Stress', value: 'stress' },
-        { label: 'Sleep', value: 'sleep' },
-        { label: 'Wellness', value: 'wellness' }
-      ]);
-    }
-  };
 
   const loadResource = async () => {
     try {
@@ -186,21 +157,6 @@ export function ResourceEditPage({ resourceId, onBack, onSave }: ResourceEditPag
     } finally {
       setLoading(false);
     }
-  };
-
-  const handleAutoFill = () => {
-    setFormData(prev => ({
-        ...prev,
-        description: prev.description || `Comprehensive guide about ${prev.title || 'this topic'}. Learn practical strategies and expert insights.`,
-        content: prev.content || `<h2>Introduction</h2><p>Start with an engaging introduction about ${prev.title || 'this topic'}.</p><h3>Key Takeaways</h3><ul><li>Point 1</li><li>Point 2</li></ul><h3>Conclusion</h3><p>Summarize the main points.</p>`,
-        readTime: prev.readTime || 5,
-        author: prev.author || 'iKan Editorial Team',
-        tags: (prev.tags?.length || 0) === 0 ? ['wellness', prev.category || 'general'] : prev.tags,
-        difficulty: prev.difficulty || 'beginner',
-        thumbnail: prev.thumbnail || `https://source.unsplash.com/800x600/?${prev.category || 'wellness'},calm`
-    }));
-    showToast('success', 'Auto-Filled', 'Form populated with suggestions.');
-    markAsUnsaved();
   };
 
   const handleSave = async (shouldPublish?: boolean) => {
@@ -303,11 +259,6 @@ export function ResourceEditPage({ resourceId, onBack, onSave }: ResourceEditPag
     return (
       <AdminPageLayout
         title="Loading..."
-        breadcrumbs={[
-          { label: 'Admin', onClick: onBack },
-          { label: 'Resources', onClick: onBack },
-          { label: 'Loading...' }
-        ]}
       >
         <div className="flex items-center justify-center py-12">
           <AdminLoading message="Loading resource..." />
@@ -380,12 +331,7 @@ export function ResourceEditPage({ resourceId, onBack, onSave }: ResourceEditPag
             onChange: (checked) => setFormData({ ...formData, featured: checked })
           }
         ]}
-        actions={
-            <Button variant="outline" onClick={handleAutoFill} title="Auto-fill empty fields">
-                <Sparkles className="w-4 h-4 mr-2" />
-                Auto-Fill
-            </Button>
-        }
+        actions={undefined}
         maxWidth="xl"
       >
         {/* Basic Information */}
@@ -433,7 +379,7 @@ export function ResourceEditPage({ resourceId, onBack, onSave }: ResourceEditPag
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {categoryOptions.map((opt) => (
+                  {kvCategories.map((opt) => (
                     <SelectItem key={opt.value} value={opt.value}>
                       {opt.label}
                     </SelectItem>
@@ -456,15 +402,11 @@ export function ResourceEditPage({ resourceId, onBack, onSave }: ResourceEditPag
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="article">Article</SelectItem>
-                  <SelectItem value="tool">Tool</SelectItem>
-                  <SelectItem value="exercise">Exercise</SelectItem>
-                  <SelectItem value="video">Video</SelectItem>
-                  <SelectItem value="audio">Audio</SelectItem>
-                  <SelectItem value="podcast">Podcast</SelectItem>
-                  <SelectItem value="workbook">Workbook</SelectItem>
-                  <SelectItem value="guide">Guide</SelectItem>
-                  <SelectItem value="course">Course</SelectItem>
+                  {kvFilterTypes.map((opt) => (
+                    <SelectItem key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </AdminFormField>
@@ -483,7 +425,7 @@ export function ResourceEditPage({ resourceId, onBack, onSave }: ResourceEditPag
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {difficultyOptions.map((opt) => (
+                  {kvDifficultyLevels.map((opt) => (
                     <SelectItem key={opt.value} value={opt.value}>
                       {opt.label}
                     </SelectItem>

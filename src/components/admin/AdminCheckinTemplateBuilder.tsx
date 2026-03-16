@@ -1,6 +1,5 @@
 import { toast } from 'sonner@2.0.3';
 import { useState, useEffect, useCallback } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
 import {
   Plus, Trash2, Edit2, Save, X, GripVertical, Copy, Eye, EyeOff,
   ChevronDown, ChevronUp, RotateCcw, ShieldCheck, AlertTriangle, Check,
@@ -15,9 +14,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Switch } from '../ui/switch';
 import { apiClient } from '../../lib/api-client';
 import tokens from '../../lib/design-tokens';
-import { getScaleByKey, getAvailableScaleKeys, getContextTags } from '../../lib/emoji-utils';
+import { getScaleByKey, getAvailableScaleKeys, getContextTags, loadCustomScales } from '../../lib/emoji-utils';
 import { AdminHeader } from './AdminHeader';
 import { AdminLoading } from './AdminLoading';
+import { useMetadata } from '../../hooks/useMetadata';
+import { projectId, publicAnonKey } from '../../utils/supabase/info';
 
 // ── Types (matching backend) ────────────────────────────────────
 interface CheckinStep {
@@ -87,11 +88,8 @@ const BLOCK_TYPES: { value: CheckinStep['type']; label: string; icon: any; descr
   { value: 'yes_no', label: 'Yes / No', icon: ToggleLeft, description: 'Simple binary question' },
 ];
 
-const EMA_CATEGORIES = [
-  'Mood', 'Energy', 'Stress', 'Sleep', 'Pain Experience', 'Pain Impact',
-  'Anxiety', 'Social', 'Activity', 'Nutrition', 'Custom',
-];
-
+// EMA_CATEGORIES removed — now fetched from KV via useMetadata().emaCategories
+// No fallback — KV is the single source of truth
 const EMOJI_PICKS = [
   '🤔', '⚡', '😌', '🌙', '💊', '🏃', '✏️', '🏷️', '😊', '🧠', '❤️',
   '🔥', '💪', '🌟', '🎯', '📊', '💭', '🍽️', '🧘', '👥', '🎵',
@@ -120,6 +118,7 @@ function StepEditorCard({
   onMoveDown,
   onDuplicate,
   onDelete,
+  emaCategories,
 }: {
   step: CheckinStep;
   index: number;
@@ -131,23 +130,17 @@ function StepEditorCard({
   onMoveDown: () => void;
   onDuplicate: () => void;
   onDelete: () => void;
+  emaCategories: string[];
 }) {
   const Icon = getBlockIcon(step.type);
 
   return (
-    <motion.div
-      layout
-      initial={{ opacity: 0, y: 12 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -12, scale: 0.95 }}
-      transition={{ duration: 0.2 }}
-    >
+    <div>
       <Card
         style={{
           borderRadius: 'var(--radius-lg)',
           border: `1.5px solid ${expanded ? B.primary : B.border}`,
           overflow: 'hidden',
-          transition: 'border-color 0.2s',
         }}
       >
         {/* Collapsed Header */}
@@ -217,242 +210,234 @@ function StepEditorCard({
         </div>
 
         {/* Expanded Editor */}
-        <AnimatePresence>
-          {expanded && (
-            <motion.div
-              initial={{ height: 0, opacity: 0 }}
-              animate={{ height: 'auto', opacity: 1 }}
-              exit={{ height: 0, opacity: 0 }}
-              transition={{ duration: 0.25 }}
-              style={{ overflow: 'hidden' }}
-            >
-              <CardContent style={{ padding: '0 16px 16px', borderTop: `1px solid ${B.border}` }}>
-                <div className="space-y-4" style={{ paddingTop: 16 }}>
-                  {/* Row 1: Type + Scale Key */}
-                  <div className="grid grid-cols-2 gap-3">
+        {expanded && (
+          <div style={{ overflow: 'hidden' }}>
+            <CardContent style={{ padding: '0 16px 16px', borderTop: `1px solid ${B.border}` }}>
+              <div className="space-y-4" style={{ paddingTop: 16 }}>
+                {/* Row 1: Type + Scale Key */}
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <Label style={{ ...f('xs', 500, B.muted), marginBottom: 4, display: 'block' }}>Block Type</Label>
+                    <select
+                      value={step.type}
+                      onChange={e => onChange({ type: e.target.value as CheckinStep['type'] })}
+                      style={{
+                        width: '100%', padding: '8px 10px', borderRadius: 'var(--radius-md)',
+                        border: `1.5px solid ${B.border}`, backgroundColor: B.bgInput,
+                        ...f('sm'), cursor: 'pointer',
+                      }}
+                    >
+                      {BLOCK_TYPES.map(bt => (
+                        <option key={bt.value} value={bt.value}>{bt.label}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {(step.type === 'emoji_scale' || step.type === 'multi_select') && (
                     <div>
-                      <Label style={{ ...f('xs', 500, B.muted), marginBottom: 4, display: 'block' }}>Block Type</Label>
+                      <Label style={{ ...f('xs', 500, B.muted), marginBottom: 4, display: 'block' }}>Scale / Source</Label>
                       <select
-                        value={step.type}
-                        onChange={e => onChange({ type: e.target.value as CheckinStep['type'] })}
+                        value={step.scale_key || ''}
+                        onChange={e => onChange({ scale_key: e.target.value || undefined })}
                         style={{
                           width: '100%', padding: '8px 10px', borderRadius: 'var(--radius-md)',
                           border: `1.5px solid ${B.border}`, backgroundColor: B.bgInput,
                           ...f('sm'), cursor: 'pointer',
                         }}
                       >
-                        {BLOCK_TYPES.map(bt => (
-                          <option key={bt.value} value={bt.value}>{bt.label}</option>
-                        ))}
+                        <option value="">Select scale...</option>
+                        {step.type === 'emoji_scale' ? (
+                          getAvailableScaleKeys().map(sk => (
+                            <option key={sk.value} value={sk.value}>{sk.emoji} {sk.label} ({sk.count})</option>
+                          ))
+                        ) : (
+                          <option value="context_tags">Context Tags</option>
+                        )}
                       </select>
                     </div>
+                  )}
+                </div>
 
-                    {(step.type === 'emoji_scale' || step.type === 'multi_select') && (
-                      <div>
-                        <Label style={{ ...f('xs', 500, B.muted), marginBottom: 4, display: 'block' }}>Scale / Source</Label>
-                        <select
-                          value={step.scale_key || ''}
-                          onChange={e => onChange({ scale_key: e.target.value || undefined })}
+                {/* Question */}
+                <div>
+                  <Label style={{ ...f('xs', 500, B.muted), marginBottom: 4, display: 'block' }}>Question</Label>
+                  <Input
+                    value={step.question}
+                    onChange={e => onChange({ question: e.target.value })}
+                    placeholder="How are you feeling?"
+                    style={{
+                      borderRadius: 'var(--radius-md)',
+                      border: `1.5px solid ${B.border}`,
+                      backgroundColor: B.bgInput,
+                      ...f('sm'),
+                    }}
+                  />
+                </div>
+
+                {/* Subtitle */}
+                <div>
+                  <Label style={{ ...f('xs', 500, B.muted), marginBottom: 4, display: 'block' }}>Subtitle (optional)</Label>
+                  <Input
+                    value={step.subtitle || ''}
+                    onChange={e => onChange({ subtitle: e.target.value || undefined })}
+                    placeholder="Tap the emoji that matches your vibe"
+                    style={{
+                      borderRadius: 'var(--radius-md)',
+                      border: `1.5px solid ${B.border}`,
+                      backgroundColor: B.bgInput,
+                      ...f('sm'),
+                    }}
+                  />
+                </div>
+
+                {/* Row: Emoji + EMA Category + Save As */}
+                <div className="grid grid-cols-3 gap-3">
+                  <div>
+                    <Label style={{ ...f('xs', 500, B.muted), marginBottom: 4, display: 'block' }}>Hero Emoji</Label>
+                    <div className="flex flex-wrap gap-1" style={{ padding: 4, borderRadius: 'var(--radius-md)', border: `1px solid ${B.border}`, backgroundColor: B.bgInput, maxHeight: 80, overflowY: 'auto' }}>
+                      {EMOJI_PICKS.map(em => (
+                        <button
+                          key={em}
+                          onClick={() => onChange({ hero_emoji: em })}
                           style={{
-                            width: '100%', padding: '8px 10px', borderRadius: 'var(--radius-md)',
-                            border: `1.5px solid ${B.border}`, backgroundColor: B.bgInput,
-                            ...f('sm'), cursor: 'pointer',
+                            width: 28, height: 28, borderRadius: 'var(--radius-sm)',
+                            border: step.hero_emoji === em ? `2px solid ${B.primary}` : '2px solid transparent',
+                            backgroundColor: step.hero_emoji === em ? B.bgMuted : 'transparent',
+                            cursor: 'pointer', fontSize: 15, display: 'flex', alignItems: 'center', justifyContent: 'center',
                           }}
                         >
-                          <option value="">Select scale...</option>
-                          {step.type === 'emoji_scale' ? (
-                            getAvailableScaleKeys().map(sk => (
-                              <option key={sk.value} value={sk.value}>{sk.emoji} {sk.label} ({sk.count})</option>
-                            ))
-                          ) : (
-                            <option value="context_tags">Context Tags</option>
-                          )}
-                        </select>
-                      </div>
-                    )}
+                          {em}
+                        </button>
+                      ))}
+                    </div>
                   </div>
-
-                  {/* Question */}
                   <div>
-                    <Label style={{ ...f('xs', 500, B.muted), marginBottom: 4, display: 'block' }}>Question</Label>
+                    <Label style={{ ...f('xs', 500, B.muted), marginBottom: 4, display: 'block' }}>EMA Category</Label>
+                    <select
+                      value={step.ema_category || ''}
+                      onChange={e => onChange({ ema_category: e.target.value || undefined })}
+                      style={{
+                        width: '100%', padding: '8px 10px', borderRadius: 'var(--radius-md)',
+                        border: `1.5px solid ${B.border}`, backgroundColor: B.bgInput,
+                        ...f('sm'), cursor: 'pointer',
+                      }}
+                    >
+                      <option value="">None</option>
+                      {emaCategories.map(cat => (
+                        <option key={cat} value={cat}>{cat}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <Label style={{ ...f('xs', 500, B.muted), marginBottom: 4, display: 'block' }}>Save As (field key)</Label>
                     <Input
-                      value={step.question}
-                      onChange={e => onChange({ question: e.target.value })}
-                      placeholder="How are you feeling?"
+                      value={step.save_as || ''}
+                      onChange={e => onChange({ save_as: e.target.value || undefined })}
+                      placeholder="e.g. mood_rating"
                       style={{
                         borderRadius: 'var(--radius-md)',
                         border: `1.5px solid ${B.border}`,
                         backgroundColor: B.bgInput,
-                        ...f('sm'),
+                        ...f('xs'),
+                        fontFamily: 'monospace',
                       }}
                     />
-                  </div>
-
-                  {/* Subtitle */}
-                  <div>
-                    <Label style={{ ...f('xs', 500, B.muted), marginBottom: 4, display: 'block' }}>Subtitle (optional)</Label>
-                    <Input
-                      value={step.subtitle || ''}
-                      onChange={e => onChange({ subtitle: e.target.value || undefined })}
-                      placeholder="Tap the emoji that matches your vibe"
-                      style={{
-                        borderRadius: 'var(--radius-md)',
-                        border: `1.5px solid ${B.border}`,
-                        backgroundColor: B.bgInput,
-                        ...f('sm'),
-                      }}
-                    />
-                  </div>
-
-                  {/* Row: Emoji + EMA Category + Save As */}
-                  <div className="grid grid-cols-3 gap-3">
-                    <div>
-                      <Label style={{ ...f('xs', 500, B.muted), marginBottom: 4, display: 'block' }}>Hero Emoji</Label>
-                      <div className="flex flex-wrap gap-1" style={{ padding: 4, borderRadius: 'var(--radius-md)', border: `1px solid ${B.border}`, backgroundColor: B.bgInput, maxHeight: 80, overflowY: 'auto' }}>
-                        {EMOJI_PICKS.map(em => (
-                          <button
-                            key={em}
-                            onClick={() => onChange({ hero_emoji: em })}
-                            style={{
-                              width: 28, height: 28, borderRadius: 'var(--radius-sm)',
-                              border: step.hero_emoji === em ? `2px solid ${B.primary}` : '2px solid transparent',
-                              backgroundColor: step.hero_emoji === em ? B.bgMuted : 'transparent',
-                              cursor: 'pointer', fontSize: 15, display: 'flex', alignItems: 'center', justifyContent: 'center',
-                            }}
-                          >
-                            {em}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                    <div>
-                      <Label style={{ ...f('xs', 500, B.muted), marginBottom: 4, display: 'block' }}>EMA Category</Label>
-                      <select
-                        value={step.ema_category || ''}
-                        onChange={e => onChange({ ema_category: e.target.value || undefined })}
-                        style={{
-                          width: '100%', padding: '8px 10px', borderRadius: 'var(--radius-md)',
-                          border: `1.5px solid ${B.border}`, backgroundColor: B.bgInput,
-                          ...f('sm'), cursor: 'pointer',
-                        }}
-                      >
-                        <option value="">None</option>
-                        {EMA_CATEGORIES.map(cat => (
-                          <option key={cat} value={cat}>{cat}</option>
-                        ))}
-                      </select>
-                    </div>
-                    <div>
-                      <Label style={{ ...f('xs', 500, B.muted), marginBottom: 4, display: 'block' }}>Save As (field key)</Label>
-                      <Input
-                        value={step.save_as || ''}
-                        onChange={e => onChange({ save_as: e.target.value || undefined })}
-                        placeholder="e.g. mood_rating"
-                        style={{
-                          borderRadius: 'var(--radius-md)',
-                          border: `1.5px solid ${B.border}`,
-                          backgroundColor: B.bgInput,
-                          ...f('xs'),
-                          fontFamily: 'monospace',
-                        }}
-                      />
-                    </div>
-                  </div>
-
-                  {/* Single Choice options */}
-                  {step.type === 'single_choice' && (
-                    <div>
-                      <Label style={{ ...f('xs', 500, B.muted), marginBottom: 4, display: 'block' }}>Options (one per line)</Label>
-                      <textarea
-                        value={(step.options || []).join('\n')}
-                        onChange={e => onChange({ options: e.target.value.split('\n').filter(Boolean) })}
-                        rows={4}
-                        placeholder="Not at all&#10;A little bit&#10;Moderately&#10;Quite a bit&#10;Extremely"
-                        className="w-full resize-none focus:outline-none"
-                        style={{
-                          padding: '10px 12px', borderRadius: 'var(--radius-md)',
-                          border: `1.5px solid ${B.border}`, backgroundColor: B.bgInput,
-                          ...f('sm'), lineHeight: 1.6,
-                        }}
-                      />
-                    </div>
-                  )}
-
-                  {/* Slider config */}
-                  {step.type === 'slider' && (
-                    <div className="grid grid-cols-3 gap-3">
-                      <div>
-                        <Label style={{ ...f('xs', 500, B.muted), marginBottom: 4, display: 'block' }}>Min</Label>
-                        <Input
-                          type="number"
-                          value={step.slider_min ?? 0}
-                          onChange={e => onChange({ slider_min: Number(e.target.value) })}
-                          style={{ borderRadius: 'var(--radius-md)', border: `1.5px solid ${B.border}`, backgroundColor: B.bgInput, ...f('sm') }}
-                        />
-                      </div>
-                      <div>
-                        <Label style={{ ...f('xs', 500, B.muted), marginBottom: 4, display: 'block' }}>Max</Label>
-                        <Input
-                          type="number"
-                          value={step.slider_max ?? 10}
-                          onChange={e => onChange({ slider_max: Number(e.target.value) })}
-                          style={{ borderRadius: 'var(--radius-md)', border: `1.5px solid ${B.border}`, backgroundColor: B.bgInput, ...f('sm') }}
-                        />
-                      </div>
-                      <div>
-                        <Label style={{ ...f('xs', 500, B.muted), marginBottom: 4, display: 'block' }}>Labels (comma-sep)</Label>
-                        <Input
-                          value={(step.slider_labels || []).join(', ')}
-                          onChange={e => onChange({ slider_labels: e.target.value.split(',').map(s => s.trim()).filter(Boolean) })}
-                          placeholder="Not at all, Extremely"
-                          style={{ borderRadius: 'var(--radius-md)', border: `1.5px solid ${B.border}`, backgroundColor: B.bgInput, ...f('xs') }}
-                        />
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Required + actions */}
-                  <div className="flex items-center justify-between" style={{ paddingTop: 8, borderTop: `1px solid ${B.border}` }}>
-                    <div className="flex items-center gap-2">
-                      <Switch
-                        checked={step.required}
-                        onCheckedChange={v => onChange({ required: v })}
-                      />
-                      <span style={f('xs', 400, B.muted)}>Required</span>
-                    </div>
-
-                    <div className="flex items-center gap-2">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={onDuplicate}
-                        style={{ gap: 4, ...f('xs', 400, B.muted) }}
-                      >
-                        <Copy size={13} /> Duplicate
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={onDelete}
-                        style={{ gap: 4, ...f('xs', 400, B.danger) }}
-                      >
-                        <Trash2 size={13} /> Delete
-                      </Button>
-                    </div>
                   </div>
                 </div>
-              </CardContent>
-            </motion.div>
-          )}
-        </AnimatePresence>
+
+                {/* Single Choice options */}
+                {step.type === 'single_choice' && (
+                  <div>
+                    <Label style={{ ...f('xs', 500, B.muted), marginBottom: 4, display: 'block' }}>Options (one per line)</Label>
+                    <textarea
+                      value={(step.options || []).join('\n')}
+                      onChange={e => onChange({ options: e.target.value.split('\n').filter(Boolean) })}
+                      rows={4}
+                      placeholder="Not at all&#10;A little bit&#10;Moderately&#10;Quite a bit&#10;Extremely"
+                      className="w-full resize-none focus:outline-none"
+                      style={{
+                        padding: '10px 12px', borderRadius: 'var(--radius-md)',
+                        border: `1.5px solid ${B.border}`, backgroundColor: B.bgInput,
+                        ...f('sm'), lineHeight: 1.6,
+                      }}
+                    />
+                  </div>
+                )}
+
+                {/* Slider config */}
+                {step.type === 'slider' && (
+                  <div className="grid grid-cols-3 gap-3">
+                    <div>
+                      <Label style={{ ...f('xs', 500, B.muted), marginBottom: 4, display: 'block' }}>Min</Label>
+                      <Input
+                        type="number"
+                        value={step.slider_min ?? 0}
+                        onChange={e => onChange({ slider_min: Number(e.target.value) })}
+                        style={{ borderRadius: 'var(--radius-md)', border: `1.5px solid ${B.border}`, backgroundColor: B.bgInput, ...f('sm') }}
+                      />
+                    </div>
+                    <div>
+                      <Label style={{ ...f('xs', 500, B.muted), marginBottom: 4, display: 'block' }}>Max</Label>
+                      <Input
+                        type="number"
+                        value={step.slider_max ?? 10}
+                        onChange={e => onChange({ slider_max: Number(e.target.value) })}
+                        style={{ borderRadius: 'var(--radius-md)', border: `1.5px solid ${B.border}`, backgroundColor: B.bgInput, ...f('sm') }}
+                      />
+                    </div>
+                    <div>
+                      <Label style={{ ...f('xs', 500, B.muted), marginBottom: 4, display: 'block' }}>Labels (comma-sep)</Label>
+                      <Input
+                        value={(step.slider_labels || []).join(', ')}
+                        onChange={e => onChange({ slider_labels: e.target.value.split(',').map(s => s.trim()).filter(Boolean) })}
+                        placeholder="Not at all, Extremely"
+                        style={{ borderRadius: 'var(--radius-md)', border: `1.5px solid ${B.border}`, backgroundColor: B.bgInput, ...f('xs') }}
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {/* Required + actions */}
+                <div className="flex items-center justify-between" style={{ paddingTop: 8, borderTop: `1px solid ${B.border}` }}>
+                  <div className="flex items-center gap-2">
+                    <Switch
+                      checked={step.required}
+                      onCheckedChange={v => onChange({ required: v })}
+                    />
+                    <span style={f('xs', 400, B.muted)}>Required</span>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={onDuplicate}
+                      style={{ gap: 4, ...f('xs', 400, B.muted) }}
+                    >
+                      <Copy size={13} /> Duplicate
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={onDelete}
+                      style={{ gap: 4, ...f('xs', 400, B.danger) }}
+                    >
+                      <Trash2 size={13} /> Delete
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </div>
+        )}
       </Card>
-    </motion.div>
+    </div>
   );
 }
 
 // ═══════════════════════════════════════════════════════════════════
 // MAIN COMPONENT
-// ═════════════════════════════════════════════════════════════���═════
+// ═══════════════════════════════════════════════════════════════════
 interface AdminCheckinTemplateBuilderProps {
   onBack?: () => void;
 }
@@ -467,6 +452,12 @@ export function AdminCheckinTemplateBuilder({ onBack }: AdminCheckinTemplateBuil
   const [showAddPicker, setShowAddPicker] = useState(false);
   const [editingName, setEditingName] = useState(false);
   const [previewMode, setPreviewMode] = useState(false);
+
+  // EMA categories from KV metadata, with fallback while loading
+  const { emaCategories: emaMeta } = useMetadata();
+  const emaCategoryLabels = emaMeta.length > 0
+    ? emaMeta.map(c => c.label)
+    : [];
 
   // ── Fetch templates ───────────────────────────────────────────
   const fetchTemplates = useCallback(async () => {
@@ -486,6 +477,14 @@ export function AdminCheckinTemplateBuilder({ onBack }: AdminCheckinTemplateBuil
   }, []);
 
   useEffect(() => { fetchTemplates(); }, [fetchTemplates]);
+
+  // Load custom scales from KV so the Scale/Source dropdown reflects
+  // admin-managed overrides (not just design-token defaults)
+  const [scalesLoaded, setScalesLoaded] = useState(false);
+  useEffect(() => {
+    const apiBase = `https://${projectId}.supabase.co/functions/v1/make-server-cc205da9`;
+    loadCustomScales(apiBase, publicAnonKey).then(() => setScalesLoaded(true)).catch(() => setScalesLoaded(true));
+  }, []);
 
   // ── Template mutations ────────────────────────────────────────
   const handleSave = async () => {
@@ -536,16 +535,7 @@ export function AdminCheckinTemplateBuilder({ onBack }: AdminCheckinTemplateBuil
     }
   };
 
-  const handleSeedDefault = async () => {
-    try {
-      await apiClient.seedDefaultCheckinTemplate();
-      toast.success('Default template seeded');
-      await fetchTemplates();
-    } catch (error) {
-      console.error('Seed error:', error);
-      toast.error('Failed to seed default');
-    }
-  };
+  // handleSeedDefault removed — no seed functions per project rules
 
   const handleNewTemplate = async () => {
     const name = prompt('Template name:', 'New Check-in');
@@ -638,17 +628,14 @@ export function AdminCheckinTemplateBuilder({ onBack }: AdminCheckinTemplateBuil
       <AdminHeader
         title="Check-in Builder"
         description="Configure the steps users see when logging a mood journal entry. Drag to reorder, add or remove steps."
-        onBack={onBack}
         actions={
           <div className="flex items-center gap-2">
             {dirty && (
-              <motion.span
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
+              <span
                 style={{ ...f('xs', 500, B.warning), padding: '3px 10px', borderRadius: 'var(--radius-pill)', backgroundColor: B.warningLight }}
               >
                 Unsaved changes
-              </motion.span>
+              </span>
             )}
             <Button
               variant="outline"
@@ -720,10 +707,10 @@ export function AdminCheckinTemplateBuilder({ onBack }: AdminCheckinTemplateBuil
                   <p style={f('sm', 400, B.muted)}>No templates yet</p>
                   <Button
                     size="sm"
-                    onClick={handleSeedDefault}
+                    onClick={handleNewTemplate}
                     style={{ marginTop: 8, gap: 4, borderRadius: 'var(--radius-md)', ...f('xs', 500) }}
                   >
-                    <RotateCcw size={13} /> Seed Default
+                    <Plus size={13} /> Create Template
                   </Button>
                 </div>
               )}
@@ -767,15 +754,6 @@ export function AdminCheckinTemplateBuilder({ onBack }: AdminCheckinTemplateBuil
                     <Trash2 size={13} /> Delete Template
                   </Button>
                 )}
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="w-full"
-                  onClick={handleSeedDefault}
-                  style={{ gap: 4, borderRadius: 'var(--radius-md)', ...f('xs', 400, B.muted) }}
-                >
-                  <RotateCcw size={13} /> Reset to Default
-                </Button>
               </div>
             </Card>
           )}
@@ -838,7 +816,6 @@ export function AdminCheckinTemplateBuilder({ onBack }: AdminCheckinTemplateBuil
               </Card>
 
               {/* Steps list */}
-              <AnimatePresence mode="popLayout">
                 {activeTemplate.steps.map((step, index) => (
                   <StepEditorCard
                     key={step.id}
@@ -852,16 +829,13 @@ export function AdminCheckinTemplateBuilder({ onBack }: AdminCheckinTemplateBuil
                     onMoveDown={() => moveStep(index, 1)}
                     onDuplicate={() => duplicateStep(index)}
                     onDelete={() => deleteStep(index)}
+                    emaCategories={emaCategoryLabels}
                   />
                 ))}
-              </AnimatePresence>
 
               {/* Add step */}
               {showAddPicker ? (
-                <motion.div
-                  initial={{ opacity: 0, y: 8 }}
-                  animate={{ opacity: 1, y: 0 }}
-                >
+                <div>
                   <Card style={{ borderRadius: 'var(--radius-lg)', border: `2px dashed ${B.primary}`, padding: 16 }}>
                     <div className="flex items-center justify-between" style={{ marginBottom: 12 }}>
                       <span style={f('sm', 500)}>Add a Step</span>
@@ -873,16 +847,14 @@ export function AdminCheckinTemplateBuilder({ onBack }: AdminCheckinTemplateBuil
                       {BLOCK_TYPES.map(bt => {
                         const BIcon = bt.icon;
                         return (
-                          <motion.button
+                          <button
                             key={bt.value}
-                            whileHover={{ scale: 1.02, y: -2 }}
-                            whileTap={{ scale: 0.97 }}
                             onClick={() => addStep(bt.value)}
                             className="flex flex-col items-center gap-2 text-center"
                             style={{
                               padding: '14px 8px', borderRadius: 'var(--radius-md)',
                               border: `1.5px solid ${B.border}`, backgroundColor: B.bgCard,
-                              cursor: 'pointer', transition: 'border-color 0.15s',
+                              cursor: 'pointer',
                             }}
                           >
                             <div style={{ width: 36, height: 36, borderRadius: 'var(--radius-md)', backgroundColor: B.bgMuted, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -890,27 +862,25 @@ export function AdminCheckinTemplateBuilder({ onBack }: AdminCheckinTemplateBuil
                             </div>
                             <span style={f('xs', 500)}>{bt.label}</span>
                             <span style={{ ...f('xs', 400, B.muted), lineHeight: 1.3 }}>{bt.description}</span>
-                          </motion.button>
+                          </button>
                         );
                       })}
                     </div>
                   </Card>
-                </motion.div>
+                </div>
               ) : (
-                <motion.button
-                  whileHover={{ scale: 1.01 }}
-                  whileTap={{ scale: 0.99 }}
+                <button
                   onClick={() => setShowAddPicker(true)}
                   className="w-full flex items-center justify-center gap-2"
                   style={{
                     padding: 16, borderRadius: 'var(--radius-lg)',
                     border: `2px dashed ${B.border}`, backgroundColor: 'transparent',
-                    cursor: 'pointer', transition: 'border-color 0.15s',
+                    cursor: 'pointer',
                     ...f('sm', 500, B.muted),
                   }}
                 >
                   <Plus size={16} /> Add Step
-                </motion.button>
+                </button>
               )}
             </div>
           )}
@@ -949,36 +919,28 @@ function StepPreview({ template }: { template: CheckinTemplate }) {
       {/* Progress dots */}
       <div className="flex items-center justify-center" style={{ padding: '16px 20px 0', gap: 6 }}>
         {steps.map((_, i) => (
-          <motion.div
+          <div
             key={i}
-            animate={{
+            style={{
               width: i === currentStep ? 22 : 8,
               backgroundColor: i <= currentStep ? B.warning : B.bgMuted,
+              height: 6,
+              borderRadius: 3,
+              transition: 'width 0.3s, background-color 0.3s',
             }}
-            style={{ height: 6, borderRadius: 3 }}
-            transition={{ duration: 0.3, type: 'spring', stiffness: 300, damping: 22 }}
           />
         ))}
       </div>
 
       {/* Step content */}
       <div style={{ padding: '24px 20px 28px', textAlign: 'center' }}>
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={step.id}
-            initial={{ opacity: 0, x: 30 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -30 }}
-            transition={{ duration: 0.2 }}
-          >
+          <div key={step.id}>
             {step.hero_emoji && (
-              <motion.span
+              <span
                 style={{ fontSize: 48, display: 'block', marginBottom: 8 }}
-                animate={{ scale: [1, 1.1, 1] }}
-                transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
               >
                 {step.hero_emoji}
-              </motion.span>
+              </span>
             )}
             <h2 style={{ ...f('lg', 500), margin: '0 0 4px' }}>{step.question || 'Question...'}</h2>
             {step.subtitle && <p style={{ ...f('xs', 400, B.muted), margin: '0 0 16px' }}>{step.subtitle}</p>}
@@ -1068,8 +1030,7 @@ function StepPreview({ template }: { template: CheckinTemplate }) {
                 ))}
               </div>
             )}
-          </motion.div>
-        </AnimatePresence>
+          </div>
 
         {/* Nav buttons */}
         <div className="flex items-center justify-center gap-3" style={{ marginTop: 24 }}>

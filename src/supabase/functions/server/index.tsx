@@ -44,6 +44,8 @@ import { registerCorporateRoutes } from './corporate-routes.ts';
 import { registerKVAuditRoutes } from './kv-audit-routes.ts';
 import { registerCheckinTemplateRoutes } from './checkin-template-routes.ts';
 import { registerHeroBannerRoutes } from './hero-banner-routes.ts';
+import { registerIkanScoreRoutes } from './ikan-score-routes.ts';
+import { registerReminderRoutes } from './reminder-routes.ts';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Layer 0: Centralized connection-closed error detection
@@ -237,13 +239,15 @@ registerMoodRoutes(app, requireAuth);
 registerNewsletterRoutes(app, requireAdmin);
 registerContactRoutes(app, requireAdmin);
 registerResourceRoutes(app, requireAuth);
-registerScalesRoutes(app, requireAuth);
+registerScalesRoutes(app, requireAdmin);
 registerHealthConnectRoutes(app, requireAuth);
 registerBrevoRoutes(app, requireAdmin, requireAuth);
 registerCorporateRoutes(app);
 registerKVAuditRoutes(app, requireAuth);
 registerCheckinTemplateRoutes(app, requireAuth);
 registerHeroBannerRoutes(app, requireAuth);
+registerIkanScoreRoutes(app, requireAuth);
+registerReminderRoutes(app, requireAuth, requireAdmin, supabase);
 
   // CMS Public Routes
   app.get("/cms/pages/:slug", async (c) => {
@@ -276,33 +280,8 @@ registerHeroBannerRoutes(app, requireAuth);
          }
       }
       
-      // Fallback: Return in-memory default content if still not found.
-      // NOTE: We do NOT persist defaults automatically — use "Sync System Pages"
-      // in Admin → Page Manager to deliberately create missing pages.
-      if (!page) {
-           const requiredPageIds = [
-             'about', 'privacy', 'terms', 'faq', 'contact', 'return-policy', 'cancellation-policy', 'sitemap',
-             'homepage-hero', 'homepage-assessment', 'homepage-mission', 'homepage-benefits', 'homepage-faq', 'homepage-newsletter', 'homepage-equip-intro'
-           ];
-           
-           if (requiredPageIds.includes(slug)) {
-              console.log(`Returning in-memory default content for ${slug} (not persisted)`);
-              const defaultContent = createDefaultCMSContent(slug);
-              page = {
-                id: slug,
-                name: defaultContent.title,
-                title: defaultContent.title,
-                slug: slug,
-                published: true,
-                content: defaultContent.content,
-                lastUpdated: defaultContent.lastUpdated,
-                created_at: new Date().toISOString(),
-                updated_at: new Date().toISOString(),
-                _generated: true
-              };
-           }
-      }
-
+      // No hardcoded defaults — if KV is empty, return 404.
+      // Admins should create pages via Admin → Page Manager.
       if (!page) {
         return c.json({ error: "Page not found" }, 404);
       }
@@ -338,6 +317,69 @@ app.post("/auth/signup", async (c) => {
     });
 
     if (error) {
+      // Handle "already registered" — update the existing user's password instead of failing.
+      // This keeps the prototype-friendly behavior where any email + password combination works.
+      if (error.message?.includes('already been registered')) {
+        console.log(`User ${email} already exists — updating password for prototype access`);
+        try {
+          // Find the existing user by email
+          const { data: listData, error: listError } = await supabase.auth.admin.listUsers();
+          if (listError) throw listError;
+          const existingUser = listData.users.find(
+            (u: any) => u.email?.toLowerCase() === email.toLowerCase()
+          );
+          if (!existingUser) {
+            console.log(`Could not find existing user ${email} to update`);
+            return c.json({ error: 'User exists but could not be resolved' }, 400);
+          }
+
+          // Update the user's password
+          const { data: updatedData, error: updateError } = await supabase.auth.admin.updateUserById(
+            existingUser.id,
+            { password, user_metadata: { name, phone, corporate_user: corporate_user || false } }
+          );
+          if (updateError) {
+            console.log(`Failed to update password for ${email}:`, updateError);
+            return c.json({ error: updateError.message }, 400);
+          }
+
+          // Ensure KV profile exists
+          const existingProfile = await kv.get(`user:${existingUser.id}`);
+          if (!existingProfile) {
+            await kv.set(`user:${existingUser.id}`, {
+              user_id: existingUser.id,
+              email,
+              name,
+              phone: phone || null,
+              avatar_url: null,
+              corporate_user: corporate_user || false,
+              bio: null,
+              dateOfBirth: null,
+              gender: null,
+              location: null,
+              emergencyContactName: null,
+              emergencyContactPhone: null,
+              emergencyContactRelationship: null,
+              googleConnected: false,
+              googleEmail: null,
+              googleConnectedAt: null,
+              linkedinConnected: false,
+              linkedinEmail: null,
+              linkedinConnectedAt: null,
+              is_admin: false,
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString()
+            });
+          }
+
+          console.log(`✅ Password updated for ${email} — prototype auto-fix`);
+          return c.json({ user: updatedData.user });
+        } catch (upsertError) {
+          console.log('Upsert fallback failed:', upsertError);
+          return c.json({ error: 'User already exists and password update failed' }, 400);
+        }
+      }
+
       console.log('Signup error:', error);
       return c.json({ error: error.message }, 400);
     }
@@ -451,6 +493,13 @@ app.put("/users/profile", requireAuth, async (c) => {
       updatedProfile.emergencyContactRelationship = sanitizedUpdates.emergencyContactRelationship;
     }
     
+    // Update corporate/organisation fields
+    if (updates.corporate_designation !== undefined) updatedProfile.corporate_designation = updates.corporate_designation;
+    if (updates.corporate_email !== undefined) updatedProfile.corporate_email = updates.corporate_email;
+    if (updates.corporate_phone !== undefined) updatedProfile.corporate_phone = updates.corporate_phone;
+    if (updates.corporate_department !== undefined) updatedProfile.corporate_department = updates.corporate_department;
+    if (updates.corporate_employee_id !== undefined) updatedProfile.corporate_employee_id = updates.corporate_employee_id;
+
     // Update preferences
     if (sanitizedUpdates.preferences !== undefined) {
       updatedProfile.preferences = sanitizedUpdates.preferences;
@@ -995,6 +1044,12 @@ app.delete("/users/me", requireAuth, async (c) => {
     // Also delete the "latest" keys which are not in the list returned by getByPrefix on the user prefix if strict
     // But our structure is `assessment_response_by_user:${userId}:${assessmentId}:latest` so they should be included
     
+    // Delete iKAN score snapshots
+    const ikanScores = await kv.getByPrefix(`ikan_score:${userId}:`);
+    for (const s of ikanScores) {
+      if (s?.date) await kv.del(`ikan_score:${userId}:${s.date}`);
+    }
+
     // Delete payments/transactions
     const payments = await kv.getByPrefix(`payment:${userId}`);
     for (const payment of payments) {
@@ -1259,11 +1314,13 @@ app.get("/journal/entries/:date", requireAuth, async (c) => {
 // Get all Equip Programs (Public Endpoint)
 app.get("/equip-programs", async (c) => {
   try {
-    // Get all equip programs
-    let programs = await kv.getByPrefix('equip_program:');
+    // Get all equip programs — merge both prefixes for backward compat
+    const equip1 = await kv.getByPrefix('equip_program:');
+    const equip2 = await kv.getByPrefix('equip:');
+    const allPrograms = [...equip1, ...equip2];
 
-    // Filter out null/undefined entries
-    const validPrograms = programs.filter((p: any) => p && (p.id || p.equip_id));
+    // Filter out null/undefined entries — require at least a slug or title to be a real program
+    const validPrograms = allPrograms.filter((p: any) => p && (p.id || p.equip_id) && (p.slug || p.title));
     
     // Deduplicate by ID (equip_id or id)
     const uniquePrograms = Array.from(
@@ -1274,9 +1331,28 @@ app.get("/equip-programs", async (c) => {
     
     // ✅ FILTER OUT UNPUBLISHED/DRAFT PROGRAMS - Only return published programs
     const publishedPrograms = uniquePrograms.filter((p: any) => p.published !== false);
+
+    // ✅ Compute enrollment counts from KV (real data, not hardcoded)
+    // NOTE: Two enrollment systems exist with different field names:
+    //   1. /equip/purchase stores: { programId } (index.tsx)
+    //   2. ProgressService stores: { equip_id } (progress-service.ts)
+    const allEnrollments = await kv.getByPrefix('enrollment:');
+    const enrollmentCountMap: Record<string, number> = {};
+    for (const enrollment of allEnrollments) {
+      if (!enrollment) continue;
+      const eid = enrollment.equip_id || enrollment.programId;
+      if (!eid) continue;
+      enrollmentCountMap[eid] = (enrollmentCountMap[eid] || 0) + 1;
+    }
+
+    // Attach enrollment counts to each program
+    const programsWithCounts = publishedPrograms.map((p: any) => ({
+      ...p,
+      enrollmentCount: enrollmentCountMap[p.equip_id || p.id] || 0,
+    }));
     
-    console.log(`✅ Returning ${publishedPrograms.length} published equip programs (${uniquePrograms.length} total)`);
-    return c.json({ programs: publishedPrograms });
+    console.log(`✅ Returning ${programsWithCounts.length} published equip programs (${uniquePrograms.length} total)`);
+    return c.json({ programs: programsWithCounts });
   } catch (error) {
     console.error('❌ Get equip programs error:', error);
     return c.json({ error: 'Failed to retrieve equip programs', programs: [] }, 500);
@@ -1306,8 +1382,15 @@ app.get("/equip/:programId", async (c) => {
       return c.json({ error: 'Program not found' }, 404);
     }
     
-    console.log(`✅ Equip program found: ${program.id || program.equip_id}`);
-    return c.json({ program });
+    // Compute enrollment count for this specific program
+    const programId2 = program.equip_id || program.id;
+    const allEnrollmentsForProgram = await kv.getByPrefix('enrollment:');
+    const enrollmentCount = allEnrollmentsForProgram.filter(
+      (e: any) => e && e.equip_id === programId2
+    ).length;
+    
+    console.log(`✅ Equip program found: ${programId2} (${enrollmentCount} enrollments)`);
+    return c.json({ program: { ...program, enrollmentCount } });
   } catch (error) {
     console.error('❌ Get equip program error:', error);
     return c.json({ error: 'Failed to retrieve program' }, 500);
@@ -1335,77 +1418,12 @@ app.get("/recommendations", requireAuth, async (c) => {
 
 
 
-// Library Resource Endpoints
-app.get("/library/resources", async (c) => {
-  try {
-    const { category, limit = 50, offset = 0 } = c.req.query();
-    
-    // Check both possible prefixes for resources
-    let resources = await kv.getByPrefix('library:resource:');
-    
-    // If no resources found with new prefix, try legacy prefix
-    if (resources.length === 0) {
-      resources = await kv.getByPrefix('resource:');
-    }
-    
-    // Filter out null/undefined entries
-    resources = resources.filter((r: any) => r && r.id);
-    
-    // ✅ FILTER OUT UNPUBLISHED/DRAFT RESOURCES - Only return published resources
-    resources = resources.filter((resource: any) => resource.published !== false);
-    
-    // Filter by category if provided
-    if (category) {
-      resources = resources.filter((resource: any) => resource.category === category);
-    }
-    
-    // Sort by created_at descending and apply pagination
-    resources = resources
-      .sort((a: any, b: any) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime())
-      .slice(parseInt(offset), parseInt(offset) + parseInt(limit));
-    
-    console.log(`✅ Returning ${resources.length} published resources`);
-    return c.json({ resources });
-  } catch (error) {
-    console.error('❌ Get library resources error:', error);
-    return c.json({ error: 'Failed to retrieve resources', resources: [] }, 500);
-  }
-});
-
-app.get("/library/resources/:resourceId", async (c) => {
-  try {
-    const resourceId = c.req.param('resourceId');
-    console.log(`🔍 Looking up resource: ${resourceId}`);
-    
-    // Try direct lookup with both prefixes
-    let resource = await kv.get(`library:resource:${resourceId}`);
-    if (!resource) {
-      resource = await kv.get(`resource:${resourceId}`);
-    }
-    
-    // If not found, search by ID/slug in both prefixes
-    if (!resource) {
-      let allResources = await kv.getByPrefix('library:resource:');
-      if (allResources.length === 0) {
-        allResources = await kv.getByPrefix('resource:');
-      }
-      resource = allResources.find((r: any) => 
-        r && (r.id === resourceId || r.slug === resourceId)
-      );
-    }
-    
-    if (!resource) {
-      console.log(`❌ Resource not found: ${resourceId}`);
-      return c.json({ error: 'Resource not found' }, 404);
-    }
-    
-    console.log(`✅ Found resource: ${resource.title || resource.slug}`);
-    return c.json({ resource });
-  } catch (error) {
-    console.log('Get library resource error:', error);
-    return c.json({ error: 'Failed to retrieve resource' }, 500);
-  }
-});
+// ─── DEAD INLINE LIBRARY/RESOURCE ROUTES REMOVED ───────────────
+// GET /library/resources, GET /library/resources/:resourceId
+// were removed — shadowed by resource-routes.ts (registered first
+// via registerResourceRoutes). Resource CRUD is now solely handled
+// by resource-routes.ts.
+// ────────────────────────────────────────────────────────────────
 
 // ============================================================================
 // CONSULTANTS ENDPOINTS
@@ -1471,172 +1489,35 @@ app.get("/consultants/:id", async (c) => {
   }
 });
 
+// ========================================
+// BOOKINGS ENDPOINTS
+// ========================================
 
-
-// Admin Resource Management Endpoints
-app.get("/admin/resources", requireAdmin, async (c) => {
+app.post("/bookings", requireAuth, async (c) => {
   try {
-    // Get all resources - check both prefixes
-    let resources = await kv.getByPrefix('library:resource:');
-    if (resources.length === 0) {
-      resources = await kv.getByPrefix('resource:');
-    }
-    
-    // Filter out null/undefined entries
-    resources = resources.filter((r: any) => r && r.id);
-    
-    console.log(`✅ Admin fetched ${resources.length} resources`);
-    
-    // Sort by created_at descending
-    const sortedResources = resources.sort((a: any, b: any) => 
-      new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime()
-    );
-    
-    return c.json({ resources: sortedResources });
-  } catch (error) {
-    console.error('❌ Get admin resources error:', error);
-    return c.json({ error: 'Failed to retrieve resources', resources: [] }, 500);
-  }
+    const userId = c.get('userId');
+    const data = await c.req.json();
+    const bookingId = `booking_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+    const booking = { id: bookingId, user_id: userId, consultant_id: data.consultant_id, consultant_name: data.consultant_name || '', date: data.date, time: data.time, mode: data.mode || 'video', status: 'pending', created_at: new Date().toISOString() };
+    await kv.set(`booking:${userId}:${bookingId}`, booking);
+    console.log(`📅 Booking created: ${bookingId}`);
+    return c.json({ booking });
+  } catch (error) { console.error('Create booking error:', error); return c.json({ error: 'Failed to create booking' }, 500); }
 });
 
-app.post("/admin/resources", requireAdmin, async (c) => {
+app.get("/bookings", requireAuth, async (c) => {
   try {
-    const user = c.get('user');
-    
-    const resourceData = await c.req.json();
-    // Use provided id if available, otherwise generate new
-    const resourceId = resourceData.id || `resource-${Date.now()}`;
-    
-    const newResource = {
-      ...resourceData,
-      id: resourceId,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-      created_by: user.id
-    };
-    
-    await kv.set(`library:resource:${resourceId}`, newResource);
-    
-    console.log(`✅ Resource created: ${resourceId}`);
-    return c.json({ resource: newResource });
-  } catch (error) {
-    console.log('Create resource error:', error);
-    return c.json({ error: 'Failed to create resource' }, 500);
-  }
+    const userId = c.get('userId');
+    const bookings = await kv.getByPrefix(`booking:${userId}:`);
+    const sorted = bookings.filter((b: any) => b?.id).sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+    return c.json({ bookings: sorted });
+  } catch (error) { console.error('Get bookings error:', error); return c.json({ error: 'Failed to get bookings' }, 500); }
 });
 
-app.put("/admin/resources/:resourceId", requireAuth, async (c) => {
-  try {
-    const user = c.get('user');
-    const resourceId = c.req.param('resourceId');
-    console.log(`📝 Updating resource: ${resourceId}`);
-    
-    // Check if user is admin
-    const userProfile = await kv.get(`user:${user.id}`);
-    if (!userProfile?.is_admin) {
-      return c.json({ error: 'Admin access required' }, 403);
-    }
-    
-    const updates = await c.req.json();
-    
-    // Try direct lookup with both prefixes
-    let existingResource = await kv.get(`library:resource:${resourceId}`);
-    let storageKey = `library:resource:${resourceId}`;
-    
-    if (!existingResource) {
-      existingResource = await kv.get(`resource:${resourceId}`);
-      storageKey = `resource:${resourceId}`;
-    }
-    
-    // If not found, search by ID/slug
-    if (!existingResource) {
-      let allResources = await kv.getByPrefix('library:resource:');
-      if (allResources.length === 0) {
-        allResources = await kv.getByPrefix('resource:');
-      }
-      const found = allResources.find((r: any) => 
-        r && (r.id === resourceId || r.slug === resourceId)
-      );
-      
-      if (found) {
-        existingResource = found;
-        // Determine which prefix was used
-        const isNewPrefix = (await kv.get(`library:resource:${found.slug || found.id}`)) !== null;
-        storageKey = isNewPrefix ? `library:resource:${found.slug || found.id}` : `resource:${found.slug || found.id}`;
-      }
-    }
-    
-    if (!existingResource) {
-      console.log(`❌ Resource not found for update: ${resourceId}`);
-      return c.json({ error: 'Resource not found' }, 404);
-    }
-    
-    const updatedResource = {
-      ...existingResource,
-      ...updates,
-      id: existingResource.id,
-      slug: existingResource.slug,
-      updated_at: new Date().toISOString(),
-      updated_by: user.id
-    };
-    
-    await kv.set(storageKey, updatedResource);
-    
-    console.log(`✅ Resource updated: ${storageKey}`);
-    return c.json({ resource: updatedResource });
-  } catch (error) {
-    console.log('Update resource error:', error);
-    return c.json({ error: 'Failed to update resource' }, 500);
-  }
-});
-
-app.delete("/admin/resources/:resourceId", requireAuth, async (c) => {
-  try {
-    const user = c.get('user');
-    const resourceId = c.req.param('resourceId');
-    console.log(`🗑️ Deleting resource: ${resourceId}`);
-    
-    // Check if user is admin
-    const userProfile = await kv.get(`user:${user.id}`);
-    if (!userProfile?.is_admin) {
-      return c.json({ error: 'Admin access required' }, 403);
-    }
-    
-    // FETCH resource first to identify all keys (ID and Slug)
-    let resource = await kv.get(`library:resource:${resourceId}`);
-    if (!resource) resource = await kv.get(`resource:${resourceId}`);
-    
-    // If not found by ID, try finding by slug/ID in all resources
-    if (!resource) {
-       const all1 = await kv.getByPrefix('library:resource:');
-       const all2 = await kv.getByPrefix('resource:');
-       resource = [...all1, ...all2].find((r: any) => r && (r.id === resourceId || r.slug === resourceId));
-    }
-
-    if (!resource) {
-      return c.json({ error: 'Resource not found' }, 404);
-    }
-
-    // Construct all possible keys to ensure cleanup
-    const keysToDelete = [
-      `library:resource:${resource.id}`,
-      `resource:${resource.id}`
-    ];
-    
-    if (resource.slug) {
-      keysToDelete.push(`library:resource:${resource.slug}`);
-      keysToDelete.push(`resource:${resource.slug}`);
-    }
-
-    await kv.mdel(keysToDelete);
-    
-    console.log(`✅ Resource deleted (keys: ${keysToDelete.join(', ')})`);
-    return c.json({ success: true, message: 'Resource deleted successfully' });
-  } catch (error) {
-    console.log('Delete resource error:', error);
-    return c.json({ error: 'Failed to delete resource' }, 500);
-  }
-});
+// ─── DEAD INLINE ADMIN RESOURCE ROUTES REMOVED ─────────────────
+// GET/POST/PUT/DELETE /admin/resources were removed — shadowed by
+// resource-routes.ts (registered first via registerResourceRoutes).
+// ────────────────────────────────────────────────────────────────
 
 // Set user as admin endpoint (for initial admin setup)
 app.post("/admin/set-admin/:userId", requireAuth, async (c) => {
@@ -1895,22 +1776,123 @@ app.delete("/admin/users/:userId", requireAuth, async (c) => {
     
     const userProfile = await kv.get(`user:${userId}`);
     if (!userProfile) {
-      return c.json({ error: 'User not found' }, 404);
+      // Fallback: scan user profiles to find matching user_id
+      const allUsers = await kv.getByPrefix('user:');
+      const matchedUser = allUsers.find((u: any) => u?.user_id === userId);
+      if (!matchedUser) {
+        return c.json({ error: 'User not found' }, 404);
+      }
+      await kv.del(`user:${matchedUser.user_id}`);
+    } else {
+      await kv.del(`user:${userId}`);
     }
     
-    // Delete user and related data
-    await kv.del(`user:${userId}`);
-    
-    // Optionally delete related data (journal entries, etc.)
-    const journalEntries = await kv.getByPrefix(`journal:${userId}:`);
-    for (const entry of journalEntries) {
-      await kv.del(`journal:${userId}:${entry.date}`);
+    // Clean up related data (best-effort)
+    try {
+      const enrollments = await kv.getByPrefix(`user_enrollment:${userId}:`);
+      for (const enrollment of enrollments) {
+        if (enrollment?.id) await kv.del(`enrollment:${enrollment.id}`);
+      }
+    } catch (cleanupErr) {
+      console.log('Non-critical cleanup error during user deletion:', cleanupErr);
     }
     
     return c.json({ success: true, message: 'User deleted successfully' });
   } catch (error) {
     console.log('Admin delete user error:', error);
     return c.json({ error: 'Failed to delete user' }, 500);
+  }
+});
+
+// Admin - Get User Mood Entries
+app.get("/admin/users/:userId/mood-entries", requireAuth, async (c) => {
+  try {
+    const adminUser = c.get('user');
+    const userId = c.req.param('userId');
+    const adminProfile = await kv.get(`user:${adminUser.id}`);
+    if (!adminProfile?.is_admin) return c.json({ error: 'Admin access required' }, 403);
+
+    const journalEntries = await kv.getByPrefix(`journal_by_user:${userId}:`);
+    const moodEntries = await kv.getByPrefix(`mood:${userId}:`);
+    
+    // Also check journal: prefix (entries stored as journal:{entryId} with userId inside)
+    const allJournals = await kv.getByPrefix('journal:');
+    const userJournals = allJournals.filter((j: any) => j?.user_id === userId);
+    
+    // Merge and deduplicate
+    const seen = new Set<string>();
+    const entries: any[] = [];
+    for (const entry of [...journalEntries, ...moodEntries, ...userJournals]) {
+      if (!entry) continue;
+      const id = entry.id || entry.date || JSON.stringify(entry);
+      if (!seen.has(id)) { seen.add(id); entries.push(entry); }
+    }
+    entries.sort((a, b) => (b.date || b.created_at || '').localeCompare(a.date || a.created_at || ''));
+    return c.json({ entries });
+  } catch (error) {
+    console.log('Admin get user mood entries error:', error);
+    return c.json({ error: 'Failed to fetch user mood entries' }, 500);
+  }
+});
+
+// Admin - Get User Enrollments
+app.get("/admin/users/:userId/enrollments", requireAuth, async (c) => {
+  try {
+    const adminUser = c.get('user');
+    const userId = c.req.param('userId');
+    const adminProfile = await kv.get(`user:${adminUser.id}`);
+    if (!adminProfile?.is_admin) return c.json({ error: 'Admin access required' }, 403);
+
+    const userEnrollments = await kv.getByPrefix(`user_enrollment:${userId}:`);
+    const allEnrollments = await kv.getByPrefix('enrollment:');
+    const matchedEnrollments = allEnrollments.filter((e: any) => e?.user_id === userId);
+    
+    const seen = new Set<string>();
+    const enrollments: any[] = [];
+    for (const e of [...userEnrollments, ...matchedEnrollments]) {
+      if (!e) continue;
+      const id = e.id || e.program_id || JSON.stringify(e);
+      if (!seen.has(id)) { seen.add(id); enrollments.push(e); }
+    }
+    return c.json({ enrollments });
+  } catch (error) {
+    console.log('Admin get user enrollments error:', error);
+    return c.json({ error: 'Failed to fetch user enrollments' }, 500);
+  }
+});
+
+// Admin - Get User Consultations
+app.get("/admin/users/:userId/consultations", requireAuth, async (c) => {
+  try {
+    const adminUser = c.get('user');
+    const userId = c.req.param('userId');
+    const adminProfile = await kv.get(`user:${adminUser.id}`);
+    if (!adminProfile?.is_admin) return c.json({ error: 'Admin access required' }, 403);
+
+    const bookings = await kv.getByPrefix(`booking:${userId}:`);
+    return c.json({ consultations: bookings || [] });
+  } catch (error) {
+    console.log('Admin get user consultations error:', error);
+    return c.json({ error: 'Failed to fetch user consultations' }, 500);
+  }
+});
+
+// Admin - Get User Assessment Responses
+app.get("/admin/users/:userId/assessments", requireAuth, async (c) => {
+  try {
+    const adminUser = c.get('user');
+    const userId = c.req.param('userId');
+    const adminProfile = await kv.get(`user:${adminUser.id}`);
+    if (!adminProfile?.is_admin) return c.json({ error: 'Admin access required' }, 403);
+
+    const results1 = await kv.getByPrefix(`assessment_result:${userId}:`);
+    const results2 = await kv.getByPrefix(`assessment-result:${userId}:`);
+    const responses = await kv.getByPrefix(`assessment_response_by_user:${userId}:`);
+    
+    return c.json({ history: [...(results1 || []), ...(results2 || [])], responses: responses || [] });
+  } catch (error) {
+    console.log('Admin get user assessments error:', error);
+    return c.json({ error: 'Failed to fetch user assessment data' }, 500);
   }
 });
 
@@ -2083,9 +2065,16 @@ app.get("/cms/pages", requireAuth, async (c) => {
     const pagesData = await kv.getByPrefix('cms_page:');
     
     // Filter out null/invalid entries and get valid pages
+    // getByPrefix returns values directly, not {key, value} pairs
+    // Only require slug; name/title can be backfilled if missing
     const validPages = (pagesData || [])
-      .map(item => item?.value)
-      .filter(page => page && page.id && page.name && page.title && page.slug);
+      .filter(page => page && page.slug)
+      .map(page => ({
+        ...page,
+        id: page.id || page.slug,
+        name: page.name || page.title || page.slug,
+        title: page.title || page.name || page.slug,
+      }));
 
     // NOTE: We no longer auto-create missing system pages on GET.
     // Use "Sync System Pages" in Admin → Page Manager to deliberately
@@ -2135,6 +2124,14 @@ app.post("/cms/pages", requireAuth, async (c) => {
       featuredImage: data.featuredImage || '',
       heroImage: data.heroImage || '',
       heroVideoUrl: data.heroVideoUrl || '',
+      // Hero section structured fields
+      heroEnabled: data.heroEnabled || false,
+      heroTitle: data.heroTitle || '',
+      heroSubtitle: data.heroSubtitle || '',
+      heroCtaText: data.heroCtaText || '',
+      heroCtaLink: data.heroCtaLink || '',
+      heroOverlayOpacity: data.heroOverlayOpacity ?? 40,
+      // SEO fields
       ogImage: data.ogImage || '',
       metaDescription: data.metaDescription || '',
       metaKeywords: data.metaKeywords || '',
@@ -2192,942 +2189,99 @@ app.delete("/cms/pages/:pageId", requireAuth, async (c) => {
   }
 });
 
-// Helper function to create default CMS content
-function createDefaultCMSContent(pageId: string): any {
-  const defaults: { [key: string]: any } = {
-    'about': {
-      title: 'About iKan',
-      content: `
-        <div class="space-y-8">
-          <div class="bg-gradient-to-r from-indigo-50 to-purple-50 p-6 rounded-lg border border-indigo-100">
-            <h2 class="text-xl font-medium text-gray-900 mb-3">🌟 Our Mission</h2>
-            <p class="text-gray-700 leading-relaxed">At iKan, we believe that everyone deserves access to quality mental health support. We're on a mission to make mental wellness accessible, affordable, and stigma-free.</p>
-          </div>
-
-          <div class="grid gap-6">
-            <section class="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
-              <h3 class="text-lg font-medium text-gray-900 mb-4 flex items-center">
-                <span class="mr-2">💙</span> What We Do
-              </h3>
-              <p class="text-gray-700 leading-relaxed mb-4">
-                iKan is a comprehensive mental health platform that connects you with licensed professionals, evidence-based self-help programs, and a supportive community. Whether you're dealing with stress, anxiety, depression, or just looking to improve your overall well-being, we're here to help.
-              </p>
-              <ul class="space-y-2 text-gray-700 ml-4">
-                <li>• One-on-one consultations with qualified therapists and counselors</li>
-                <li>• Self-paced programs based on cognitive behavioral therapy (CBT)</li>
-                <li>• Mood tracking and personalized insights</li>
-                <li>• Resource library with articles, guides, and tools</li>
-                <li>• 24/7 crisis support and emergency resources</li>
-              </ul>
-            </section>
-
-            <section class="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
-              <h3 class="text-lg font-medium text-gray-900 mb-4 flex items-center">
-                <span class="mr-2">🎯</span> Our Values
-              </h3>
-              <div class="grid md:grid-cols-2 gap-4">
-                <div class="bg-blue-50 p-4 rounded-lg border border-blue-200">
-                  <h4 class="font-medium text-gray-900 mb-2">Accessibility</h4>
-                  <p class="text-sm text-gray-700">Mental health support should be available to everyone, regardless of location or financial situation.</p>
-                </div>
-                <div class="bg-green-50 p-4 rounded-lg border border-green-200">
-                  <h4 class="font-medium text-gray-900 mb-2">Privacy</h4>
-                  <p class="text-sm text-gray-700">Your data and conversations are completely confidential and protected with industry-leading security.</p>
-                </div>
-                <div class="bg-purple-50 p-4 rounded-lg border border-purple-200">
-                  <h4 class="font-medium text-gray-900 mb-2">Evidence-Based</h4>
-                  <p class="text-sm text-gray-700">All our programs and approaches are grounded in scientific research and proven therapeutic methods.</p>
-                </div>
-                <div class="bg-orange-50 p-4 rounded-lg border border-orange-200">
-                  <h4 class="font-medium text-gray-900 mb-2">Stigma-Free</h4>
-                  <p class="text-sm text-gray-700">We're working to normalize conversations about mental health and create a judgment-free space for healing.</p>
-                </div>
-              </div>
-            </section>
-
-            <section class="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
-              <h3 class="text-lg font-medium text-gray-900 mb-4 flex items-center">
-                <span class="mr-2">👥</span> Our Team
-              </h3>
-              <p class="text-gray-700 leading-relaxed">
-                iKan is built by a diverse team of mental health professionals, technologists, and individuals with lived experience. Our licensed therapists, psychiatrists, and counselors bring decades of combined expertise in various therapeutic modalities and specializations.
-              </p>
-            </section>
-          </div>
-
-          <div class="bg-indigo-900 text-white p-6 rounded-lg">
-            <h3 class="text-lg font-medium mb-3">Ready to Start Your Journey?</h3>
-            <p class="mb-4">Take the first step towards better mental health today. Our team is here to support you every step of the way.</p>
-            <a href="/consultation" class="inline-block bg-white text-indigo-900 px-6 py-3 rounded-lg font-medium hover:bg-indigo-50 transition-colors">
-              Book a Consultation
-            </a>
-          </div>
-        </div>
-      `,
-      lastUpdated: new Date().toISOString()
-    },
-    'privacy': {
-      title: 'Privacy Policy',
-      content: `
-        <div class="space-y-8">
-          <div class="bg-gradient-to-r from-blue-50 to-indigo-50 p-6 rounded-lg border border-blue-100">
-            <h2 class="text-xl font-medium text-gray-900 mb-3">🔒 Your Privacy Matters</h2>
-            <p class="text-gray-700 leading-relaxed">At iKan, we are committed to protecting your privacy and ensuring the security of your personal information. This policy explains how we collect, use, and safeguard your data when you use our mental health services.</p>
-          </div>
-
-          <div class="grid gap-6">
-            <section class="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
-              <h3 class="text-lg font-medium text-gray-900 mb-4 flex items-center">
-                <span class="mr-2">📝</span> Information We Collect
-              </h3>
-              <div class="space-y-4 text-gray-700">
-                <div class="pl-4 border-l-4 border-blue-200">
-                  <h4 class="font-medium text-gray-900 mb-2">Personal Information</h4>
-                  <p>Information you provide directly, including name, email, and assessment responses when you create an account or use our services.</p>
-                </div>
-                <div class="pl-4 border-l-4 border-green-200">
-                  <h4 class="font-medium text-gray-900 mb-2">Usage Information</h4>
-                  <p>Automatically collected data about your platform interactions, session duration, and device information to improve our services.</p>
-                </div>
-                <div class="pl-4 border-l-4 border-purple-200">
-                  <h4 class="font-medium text-gray-900 mb-2">Health Data</h4>
-                  <p>Mental health assessment responses and mood tracking data, which receive the highest level of protection.</p>
-                </div>
-              </div>
-            </section>
-
-            <section class="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
-              <h3 class="text-lg font-medium text-gray-900 mb-4 flex items-center">
-                <span class="mr-2">🎯</span> How We Use Your Information
-              </h3>
-              <ul class="space-y-3 text-gray-700">
-                <li class="flex items-start">
-                  <span class="text-green-500 mr-3 mt-1">✓</span>
-                  <span>Provide personalized mental health support and recommendations</span>
-                </li>
-                <li class="flex items-start">
-                  <span class="text-green-500 mr-3 mt-1">✓</span>
-                  <span>Improve our services and develop new features</span>
-                </li>
-                <li class="flex items-start">
-                  <span class="text-green-500 mr-3 mt-1">✓</span>
-                  <span>Ensure platform security and prevent fraud</span>
-                </li>
-                <li class="flex items-start">
-                  <span class="text-red-500 mr-3 mt-1">✗</span>
-                  <span><strong>We never sell your personal data to third parties</strong></span>
-                </li>
-              </ul>
-            </section>
-
-            <section class="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
-              <h3 class="text-lg font-medium text-gray-900 mb-4 flex items-center">
-                <span class="mr-2">🛡️</span> Data Security & Protection
-              </h3>
-              <div class="grid md:grid-cols-2 gap-4 text-gray-700">
-                <div class="bg-gray-50 p-4 rounded-lg">
-                  <h4 class="font-medium text-gray-900 mb-2">Encryption</h4>
-                  <p class="text-sm">End-to-end encryption for all sensitive data transmission and storage.</p>
-                </div>
-                <div class="bg-gray-50 p-4 rounded-lg">
-                  <h4 class="font-medium text-gray-900 mb-2">Access Control</h4>
-                  <p class="text-sm">Strict access controls with multi-factor authentication for all team members.</p>
-                </div>
-                <div class="bg-gray-50 p-4 rounded-lg">
-                  <h4 class="font-medium text-gray-900 mb-2">Regular Audits</h4>
-                  <p class="text-sm">Third-party security audits and compliance with healthcare data standards.</p>
-                </div>
-                <div class="bg-gray-50 p-4 rounded-lg">
-                  <h4 class="font-medium text-gray-900 mb-2">Data Minimization</h4>
-                  <p class="text-sm">We collect only the data necessary to provide our services effectively.</p>
-                </div>
-              </div>
-            </section>
-
-            <section class="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
-              <h3 class="text-lg font-medium text-gray-900 mb-4 flex items-center">
-                <span class="mr-2">⚖️</span> Your Rights
-              </h3>
-              <div class="space-y-3 text-gray-700">
-                <p class="bg-blue-50 p-4 rounded-lg border border-blue-200">
-                  <strong class="text-blue-900">You have full control over your data.</strong> You can access, update, or delete your personal information at any time through your account settings.
-                </p>
-                <ul class="space-y-2 ml-4">
-                  <li>• Request a copy of your data</li>
-                  <li>• Correct inaccurate information</li>
-                  <li>• Delete your account and associated data</li>
-                  <li>• Opt out of non-essential communications</li>
-                </ul>
-              </div>
-            </section>
-          </div>
-
-          <div class="bg-gray-900 text-white p-6 rounded-lg">
-            <h3 class="text-lg font-medium mb-3 flex items-center">
-              <span class="mr-2">📞</span> Questions? We're Here to Help
-            </h3>
-            <p class="text-gray-300 mb-4">If you have any questions about this Privacy Policy or how we handle your data, our privacy team is ready to assist you.</p>
-            <div class="flex flex-col sm:flex-row gap-4">
-              <a href="mailto:privacy@ikan.health" class="bg-white text-gray-900 px-4 py-2 rounded-lg font-medium hover:bg-gray-100 transition-colors text-center">
-                Email: privacy@ikan.health
-              </a>
-              <span class="text-gray-400 text-sm self-center">Response within 24 hours</span>
-            </div>
-          </div>
-        </div>
-      `,
-      lastUpdated: new Date().toISOString()
-    },
-    'terms': {
-      title: 'Terms of Service',
-      content: `
-        <div class="space-y-8">
-          <div class="bg-gradient-to-r from-purple-50 to-pink-50 p-6 rounded-lg border border-purple-100">
-            <h2 class="text-xl font-medium text-gray-900 mb-3">📋 Terms of Service</h2>
-            <p class="text-gray-700 leading-relaxed">By accessing and using iKan's mental health platform, you agree to be bound by these Terms of Service and all applicable laws and regulations. Last updated: ${new Date().toLocaleDateString()}</p>
-          </div>
-
-          <div class="grid gap-6">
-            <section class="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
-              <h3 class="text-lg font-medium text-gray-900 mb-4 flex items-center">
-                <span class="mr-2">🎯</span> Scope of Services
-              </h3>
-              <div class="space-y-4 text-gray-700">
-                <p class="bg-blue-50 p-4 rounded-lg border border-blue-200">
-                  Our platform is designed to <strong>support your mental health journey</strong> through evidence-based assessments, personalized programs, and curated resources.
-                </p>
-                <ul class="space-y-2 ml-4">
-                  <li>• Mental health assessments and progress tracking</li>
-                  <li>• Personalized equip programs and interventions</li>
-                  <li>• Resource library and educational content</li>
-                  <li>• Professional consultation matching</li>
-                </ul>
-              </div>
-            </section>
-
-            <section class="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
-              <h3 class="text-lg font-medium text-gray-900 mb-4 flex items-center">
-                <span class="mr-2">👤</span> Your Responsibilities
-              </h3>
-              <div class="grid gap-4">
-                <div class="border-l-4 border-green-400 pl-4">
-                  <h4 class="font-medium text-gray-900 mb-2">Account Security</h4>
-                  <p class="text-gray-700 text-sm">Maintain the confidentiality of your account credentials and notify us immediately of any unauthorized access.</p>
-                </div>
-                <div class="border-l-4 border-blue-400 pl-4">
-                  <h4 class="font-medium text-gray-900 mb-2">Accurate Information</h4>
-                  <p class="text-gray-700 text-sm">Provide accurate and honest information in assessments to ensure effective recommendations.</p>
-                </div>
-                <div class="border-l-4 border-purple-400 pl-4">
-                  <h4 class="font-medium text-gray-900 mb-2">Appropriate Use</h4>
-                  <p class="text-gray-700 text-sm">Use our services for their intended purpose and respect other users and mental health professionals.</p>
-                </div>
-              </div>
-            </section>
-
-            <section class="bg-red-50 p-6 rounded-lg border border-red-200">
-              <h3 class="text-lg font-medium text-red-900 mb-4 flex items-center">
-                <span class="mr-2">⚠️</span> Important Medical Disclaimer
-              </h3>
-              <div class="space-y-4">
-                <div class="bg-white p-4 rounded-lg border border-red-200">
-                  <p class="text-red-800 font-medium mb-2">Our services are NOT a substitute for professional medical care.</p>
-                  <ul class="space-y-1 text-red-700 text-sm ml-4">
-                    <li>• Always consult qualified healthcare providers for medical advice</li>
-                    <li>• Do not use our platform for emergency mental health situations</li>
-                    <li>• Seek immediate help if you're experiencing thoughts of self-harm</li>
-                  </ul>
-                </div>
-                <div class="bg-gray-900 text-white p-4 rounded-lg">
-                  <p class="font-medium mb-2">🚨 Crisis Resources:</p>
-                  <div class="grid sm:grid-cols-2 gap-2 text-sm">
-                    <p>• National: 988 Suicide & Crisis Lifeline</p>
-                    <p>• Text: HOME to 741741</p>
-                    <p>• Emergency: 911</p>
-                    <p>• International: befrienders.org</p>
-                  </div>
-                </div>
-              </div>
-            </section>
-
-            <section class="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
-              <h3 class="text-lg font-medium text-gray-900 mb-4 flex items-center">
-                <span class="mr-2">🛡️</span> Limitation of Liability
-              </h3>
-              <div class="space-y-4 text-gray-700">
-                <p class="bg-yellow-50 p-4 rounded-lg border border-yellow-200">
-                  <strong class="text-yellow-800">Legal Protection:</strong> iKan provides tools and resources for mental wellness support. We are not liable for indirect, incidental, or consequential damages arising from service use.
-                </p>
-                <div class="grid md:grid-cols-2 gap-4">
-                  <div class="bg-gray-50 p-4 rounded-lg">
-                    <h4 class="font-medium text-gray-900 mb-2">Service Availability</h4>
-                    <p class="text-sm">We strive for 99.9% uptime but cannot guarantee uninterrupted service.</p>
-                  </div>
-                  <div class="bg-gray-50 p-4 rounded-lg">
-                    <h4 class="font-medium text-gray-900 mb-2">Content Accuracy</h4>
-                    <p class="text-sm">Information is provided for educational purposes and regularly updated.</p>
-                  </div>
-                </div>
-              </div>
-            </section>
-
-            <section class="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
-              <h3 class="text-lg font-medium text-gray-900 mb-4 flex items-center">
-                <span class="mr-2">🔄</span> Updates & Modifications
-              </h3>
-              <div class="space-y-4">
-                <p class="text-gray-700">We may update these terms to reflect service improvements or legal requirements. You'll be notified of significant changes.</p>
-                <div class="bg-blue-50 p-4 rounded-lg border border-blue-200">
-                  <h4 class="font-medium text-blue-900 mb-2">How We'll Notify You:</h4>
-                  <ul class="text-blue-800 text-sm space-y-1">
-                    <li>• Email notification to your registered address</li>
-                    <li>• In-app notification banner</li>
-                    <li>• 30-day notice for major changes</li>
-                  </ul>
-                </div>
-              </div>
-            </section>
-          </div>
-
-          <div class="bg-gray-900 text-white p-6 rounded-lg">
-            <h3 class="text-lg font-medium mb-3">Questions About These Terms?</h3>
-            <p class="text-gray-300 mb-4">Our legal team is available to clarify any aspect of our Terms of Service.</p>
-            <a href="mailto:legal@ikan.health" class="bg-white text-gray-900 px-4 py-2 rounded-lg font-medium hover:bg-gray-100 transition-colors inline-block">
-              Contact Legal Team
-            </a>
-          </div>
-        </div>
-      `,
-      lastUpdated: new Date().toISOString()
-    },
-    'faq': {
-      title: 'Frequently Asked Questions',
-      content: `
-        <div class="space-y-8">
-          <div class="bg-gradient-to-r from-green-50 to-teal-50 p-6 rounded-lg border border-green-100">
-            <h2 class="text-xl font-medium text-gray-900 mb-3">❓ Frequently Asked Questions</h2>
-            <p class="text-gray-700 leading-relaxed">Find answers to common questions about iKan's mental health platform. Can't find what you're looking for? <a href="mailto:support@ikan.health" class="text-green-600 font-medium hover:underline">Contact our support team</a>.</p>
-          </div>
-
-          <div class="space-y-6">
-            <section class="bg-white rounded-lg shadow-sm border border-gray-100">
-              <div class="bg-gray-50 px-6 py-4 border-b border-gray-100">
-                <h3 class="text-lg font-medium text-gray-900 flex items-center">
-                  <span class="mr-2">🌟</span> Getting Started
-                </h3>
-              </div>
-              <div class="p-6 space-y-6">
-                <div class="border-l-4 border-blue-400 pl-4">
-                  <h4 class="font-medium text-gray-900 mb-2">What is iKan?</h4>
-                  <p class="text-gray-700 text-sm">iKan is a comprehensive mental health platform that provides evidence-based assessments, personalized equip programs, and a curated resource library to support your mental wellness journey.</p>
-                </div>
-                <div class="border-l-4 border-green-400 pl-4">
-                  <h4 class="font-medium text-gray-900 mb-2">How do I get started?</h4>
-                  <p class="text-gray-700 text-sm mb-3">Getting started is simple:</p>
-                  <ol class="text-gray-700 text-sm space-y-1 ml-4">
-                    <li>1. Create your free account</li>
-                    <li>2. Complete our initial assessment (10-15 minutes)</li>
-                    <li>3. Receive personalized recommendations</li>
-                    <li>4. Start your mental wellness journey</li>
-                  </ol>
-                </div>
-                <div class="border-l-4 border-purple-400 pl-4">
-                  <h4 class="font-medium text-gray-900 mb-2">Is my information secure?</h4>
-                  <p class="text-gray-700 text-sm">Absolutely. We use industry-standard encryption and security measures to protect your personal and mental health information. Your privacy is our top priority, and we never sell your data.</p>
-                </div>
-              </div>
-            </section>
-
-            <section class="bg-white rounded-lg shadow-sm border border-gray-100">
-              <div class="bg-blue-50 px-6 py-4 border-b border-blue-100">
-                <h3 class="text-lg font-medium text-gray-900 flex items-center">
-                  <span class="mr-2">📊</span> Assessments
-                </h3>
-              </div>
-              <div class="p-6 space-y-6">
-                <div class="grid md:grid-cols-2 gap-6">
-                  <div class="bg-gray-50 p-4 rounded-lg">
-                    <h4 class="font-medium text-gray-900 mb-2 flex items-center">
-                      <span class="text-blue-500 mr-2">⏱️</span> Duration
-                    </h4>
-                    <p class="text-gray-700 text-sm">Most assessments take 10-15 minutes to complete. You can save your progress and return anytime.</p>
-                  </div>
-                  <div class="bg-gray-50 p-4 rounded-lg">
-                    <h4 class="font-medium text-gray-900 mb-2 flex items-center">
-                      <span class="text-green-500 mr-2">🔄</span> Frequency
-                    </h4>
-                    <p class="text-gray-700 text-sm">We recommend monthly assessments to track your progress and adjust recommendations.</p>
-                  </div>
-                </div>
-                <div class="bg-blue-50 p-4 rounded-lg border border-blue-200">
-                  <h4 class="font-medium text-blue-900 mb-2">Available Assessments:</h4>
-                  <ul class="text-blue-800 text-sm space-y-1">
-                    <li>• PHQ-9 Depression Screening</li>
-                    <li>• GAD-7 Anxiety Assessment</li>
-                    <li>• Burnout Risk Evaluation</li>
-                    <li>• Stress Level Assessment</li>
-                    <li>• Overall Wellness Check-in</li>
-                  </ul>
-                </div>
-              </div>
-            </section>
-
-            <section class="bg-white rounded-lg shadow-sm border border-gray-100">
-              <div class="bg-purple-50 px-6 py-4 border-b border-purple-100">
-                <h3 class="text-lg font-medium text-gray-900 flex items-center">
-                  <span class="mr-2">🎯</span> Equip Programs
-                </h3>
-              </div>
-              <div class="p-6 space-y-6">
-                <div class="border-l-4 border-purple-400 pl-4">
-                  <h4 class="font-medium text-gray-900 mb-2">What are Equip Programs?</h4>
-                  <p class="text-gray-700 text-sm">Equip Programs are structured, evidence-based mental health interventions designed to help you develop coping skills and improve your overall wellbeing.</p>
-                </div>
-                <div class="grid md:grid-cols-2 gap-4">
-                  <div class="bg-purple-50 p-4 rounded-lg border border-purple-200">
-                    <h4 class="font-medium text-purple-900 mb-2">Popular Programs:</h4>
-                    <ul class="text-purple-800 text-sm space-y-1">
-                      <li>• Burnout Recovery (32 days)</li>
-                      <li>• Stress Management (30 days)</li>
-                      <li>• Better Sleep (21 days)</li>
-                      <li>• Productivity Challenge (7 days)</li>
-                    </ul>
-                  </div>
-                  <div class="bg-gray-50 p-4 rounded-lg">
-                    <h4 class="font-medium text-gray-900 mb-2">How to Access:</h4>
-                    <p class="text-gray-700 text-sm">Programs are recommended based on your assessment results. You can also browse our program library and choose ones that interest you.</p>
-                  </div>
-                </div>
-              </div>
-            </section>
-
-            <section class="bg-white rounded-lg shadow-sm border border-gray-100">
-              <div class="bg-yellow-50 px-6 py-4 border-b border-yellow-100">
-                <h3 class="text-lg font-medium text-gray-900 flex items-center">
-                  <span class="mr-2">💰</span> Pricing & Plans
-                </h3>
-              </div>
-              <div class="p-6 space-y-4">
-                <div class="grid md:grid-cols-3 gap-4">
-                  <div class="bg-green-50 p-4 rounded-lg border border-green-200">
-                    <h4 class="font-medium text-green-900 mb-2">Free Features</h4>
-                    <ul class="text-green-800 text-sm space-y-1">
-                      <li>• Basic assessments</li>
-                      <li>• Resource library access</li>
-                      <li>• Mood tracking</li>
-                    </ul>
-                  </div>
-                  <div class="bg-blue-50 p-4 rounded-lg border border-blue-200">
-                    <h4 class="font-medium text-blue-900 mb-2">Equip Programs</h4>
-                    <ul class="text-blue-800 text-sm space-y-1">
-                      <li>• ₹199 - ₹499 each</li>
-                      <li>• One-time payment</li>
-                      <li>• Lifetime access</li>
-                    </ul>
-                  </div>
-                  <div class="bg-purple-50 p-4 rounded-lg border border-purple-200">
-                    <h4 class="font-medium text-purple-900 mb-2">Consultations</h4>
-                    <ul class="text-purple-800 text-sm space-y-1">
-                      <li>• Professional matching</li>
-                      <li>• Secure video sessions</li>
-                      <li>• Flexible scheduling</li>
-                    </ul>
-                  </div>
-                </div>
-              </div>
-            </section>
-
-            <section class="bg-white rounded-lg shadow-sm border border-gray-100">
-              <div class="bg-orange-50 px-6 py-4 border-b border-orange-100">
-                <h3 class="text-lg font-medium text-gray-900 flex items-center">
-                  <span class="mr-2">🤝</span> Support & Help
-                </h3>
-              </div>
-              <div class="p-6 space-y-4">
-                <div class="grid md:grid-cols-2 gap-6">
-                  <div class="space-y-4">
-                    <div class="border-l-4 border-orange-400 pl-4">
-                      <h4 class="font-medium text-gray-900 mb-2">Contact Support</h4>
-                      <p class="text-gray-700 text-sm">Email us at <a href="mailto:support@ikan.health" class="text-orange-600 font-medium hover:underline">support@ikan.health</a> or use our in-app contact form. We typically respond within 24 hours.</p>
-                    </div>
-                    <div class="border-l-4 border-red-400 pl-4">
-                      <h4 class="font-medium text-gray-900 mb-2">Crisis Support</h4>
-                      <p class="text-gray-700 text-sm">For mental health emergencies, contact your local emergency services or call 988 (Suicide & Crisis Lifeline).</p>
-                    </div>
-                  </div>
-                  <div class="bg-gray-50 p-4 rounded-lg">
-                    <h4 class="font-medium text-gray-900 mb-3">Quick Links</h4>
-                    <ul class="space-y-2 text-sm">
-                      <li><a href="/privacy" class="text-blue-600 hover:underline">Privacy Policy</a></li>
-                      <li><a href="/terms" class="text-blue-600 hover:underline">Terms of Service</a></li>
-                      <li><a href="/return-policy" class="text-blue-600 hover:underline">Return Policy</a></li>
-                      <li><a href="/contact" class="text-blue-600 hover:underline">Contact Us</a></li>
-                    </ul>
-                  </div>
-                </div>
-              </div>
-            </section>
-          </div>
-        </div>
-      `,
-      lastUpdated: new Date().toISOString()
-    },
-    'contact': {
-      title: "We're Here to Help",
-      content: `
-        <p>Your mental health journey matters to us. Reach out for support, questions, or just to connect.</p>
-        <p><strong>Note:</strong> If you are in immediate danger, please call emergency services.</p>
-      `,
-      lastUpdated: new Date().toISOString()
-    },
-    'return-policy': {
-      title: 'Return Policy',
-      content: `
-        <div class="space-y-8">
-          <div class="bg-gradient-to-r from-emerald-50 to-green-50 p-6 rounded-lg border border-emerald-100">
-            <h2 class="text-xl font-medium text-gray-900 mb-3">💚 Our Satisfaction Guarantee</h2>
-            <p class="text-gray-700 leading-relaxed">At iKan, we're committed to your satisfaction with our mental health services. If you're not completely satisfied with your purchase, we offer a comprehensive and fair return policy.</p>
-          </div>
-
-          <div class="grid gap-6">
-            <section class="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
-              <h3 class="text-lg font-medium text-gray-900 mb-4 flex items-center">
-                <span class="mr-2">📱</span> Digital Services Refund
-              </h3>
-              <div class="space-y-4">
-                <p class="text-gray-700">For digital assessment reports, equip programs, and consultations:</p>
-                <div class="grid md:grid-cols-3 gap-4">
-                  <div class="bg-green-50 p-4 rounded-lg border border-green-200">
-                    <h4 class="font-medium text-green-900 mb-2">7-Day Full Refund</h4>
-                    <p class="text-green-800 text-sm">Complete refund available within 7 days of purchase, no questions asked.</p>
-                  </div>
-                  <div class="bg-blue-50 p-4 rounded-lg border border-blue-200">
-                    <h4 class="font-medium text-blue-900 mb-2">Partial Refunds</h4>
-                    <p class="text-blue-800 text-sm">Available for unused portions of programs based on progress completed.</p>
-                  </div>
-                  <div class="bg-purple-50 p-4 rounded-lg border border-purple-200">
-                    <h4 class="font-medium text-purple-900 mb-2">Easy Process</h4>
-                    <p class="text-purple-800 text-sm">Submit requests via email to <a href="mailto:billing@ikan.health" class="underline">billing@ikan.health</a></p>
-                  </div>
-                </div>
-              </div>
-            </section>
-
-            <section class="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
-              <h3 class="text-lg font-medium text-gray-900 mb-4 flex items-center">
-                <span class="mr-2">🔄</span> Subscription Services
-              </h3>
-              <div class="bg-blue-50 p-4 rounded-lg border border-blue-200">
-                <p class="text-blue-900 font-medium mb-3">Flexible subscription management:</p>
-                <ul class="space-y-2 text-blue-800">
-                  <li class="flex items-start">
-                    <span class="text-green-500 mr-2 mt-1">✓</span>
-                    <span>Cancel anytime with no cancellation fees</span>
-                  </li>
-                  <li class="flex items-start">
-                    <span class="text-green-500 mr-2 mt-1">✓</span>
-                    <span>Refunds prorated to the date of cancellation</span>
-                  </li>
-                  <li class="flex items-start">
-                    <span class="text-green-500 mr-2 mt-1">✓</span>
-                    <span>Access continues until the end of billing period</span>
-                  </li>
-                </ul>
-              </div>
-            </section>
-
-            <section class="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
-              <h3 class="text-lg font-medium text-gray-900 mb-4 flex items-center">
-                <span class="mr-2">👨‍⚕️</span> Consultation Services
-              </h3>
-              <div class="grid md:grid-cols-2 gap-4">
-                <div class="space-y-4">
-                  <div class="border-l-4 border-green-400 pl-4">
-                    <h4 class="font-medium text-gray-900 mb-2">24+ Hours Notice</h4>
-                    <p class="text-gray-700 text-sm">Full refund available for cancellations made 24+ hours before appointment</p>
-                  </div>
-                  <div class="border-l-4 border-yellow-400 pl-4">
-                    <h4 class="font-medium text-gray-900 mb-2">2-24 Hours Notice</h4>
-                    <p class="text-gray-700 text-sm">Rescheduling credit available (no cash refund)</p>
-                  </div>
-                </div>
-                <div class="bg-red-50 p-4 rounded-lg border border-red-200">
-                  <h4 class="font-medium text-red-900 mb-2">No-Show Policy</h4>
-                  <p class="text-red-800 text-sm">Appointments missed without notice are non-refundable to respect our professionals' time.</p>
-                </div>
-              </div>
-            </section>
-
-            <section class="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
-              <h3 class="text-lg font-medium text-gray-900 mb-4 flex items-center">
-                <span class="mr-2">📝</span> How to Request a Refund
-              </h3>
-              <div class="grid lg:grid-cols-2 gap-6">
-                <div class="space-y-4">
-                  <div class="bg-gray-50 p-4 rounded-lg">
-                    <h4 class="font-medium text-gray-900 mb-3">What to Include:</h4>
-                    <ul class="space-y-2 text-gray-700 text-sm">
-                      <li>• Your order number or transaction ID</li>
-                      <li>• Reason for the refund request</li>
-                      <li>• Your registered email address</li>
-                      <li>• Any relevant feedback (optional)</li>
-                    </ul>
-                  </div>
-                  <div class="bg-blue-50 p-4 rounded-lg border border-blue-200">
-                    <h4 class="font-medium text-blue-900 mb-2">Contact Information:</h4>
-                    <p class="text-blue-800 text-sm">Email: <a href="mailto:billing@ikan.health" class="underline font-medium">billing@ikan.health</a></p>
-                    <p class="text-blue-700 text-xs mt-1">Response within 24 hours</p>
-                  </div>
-                </div>
-                <div class="space-y-4">
-                  <div class="bg-green-50 p-4 rounded-lg border border-green-200">
-                    <h4 class="font-medium text-green-900 mb-2">Processing Timeline:</h4>
-                    <ul class="space-y-1 text-green-800 text-sm">
-                      <li>• Review: 1-2 business days</li>
-                      <li>• Approval: Same day</li>
-                      <li>• Bank processing: 3-5 business days</li>
-                    </ul>
-                  </div>
-                  <div class="bg-purple-50 p-4 rounded-lg border border-purple-200">
-                    <h4 class="font-medium text-purple-900 mb-2">Refund Method:</h4>
-                    <p class="text-purple-800 text-sm">Refunds are issued to your original payment method (credit card, PayPal, etc.)</p>
-                  </div>
-                </div>
-              </div>
-            </section>
-          </div>
-
-          <div class="bg-gray-900 text-white p-6 rounded-lg">
-            <h3 class="text-lg font-medium mb-3">Questions About Returns?</h3>
-            <p class="text-gray-300 mb-4">Our billing team is here to help with any questions about refunds, credits, or payment issues.</p>
-            <div class="flex flex-col sm:flex-row gap-4">
-              <a href="mailto:billing@ikan.health" class="bg-white text-gray-900 px-4 py-2 rounded-lg font-medium hover:bg-gray-100 transition-colors text-center">
-                Contact Billing Team
-              </a>
-              <a href="/faq" class="border border-gray-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-gray-800 transition-colors text-center">
-                View FAQ
-              </a>
-            </div>
-          </div>
-        </div>
-      `,
-      lastUpdated: new Date().toISOString()
-    },
-    'cancellation-policy': {
-      title: 'Cancellation Policy',
-      content: `
-        <h2>Account Cancellation</h2>
-        <p>You may cancel your iKan account at any time. Here's what you need to know about our cancellation process.</p>
-        
-        <h2>How to Cancel</h2>
-        <p>You can cancel your account through:</p>
-        <ul>
-          <li>Your account settings page</li>
-          <li>Contacting our support team at support@ikan.health</li>
-          <li>Using our online cancellation form</li>
-        </ul>
-        
-        <h2>Subscription Cancellation</h2>
-        <p>For subscription services:</p>
-        <ul>
-          <li>Cancel anytime before your next billing date</li>
-          <li>No cancellation fees or penalties</li>
-          <li>Access continues until the end of your current billing period</li>
-          <li>Automatic renewal will be disabled upon cancellation</li>
-        </ul>
-        
-        <h2>Appointment Cancellation</h2>
-        <p>For consultation appointments:</p>
-        <ul>
-          <li>Cancel up to 24 hours before for full refund</li>
-          <li>Cancel 2-24 hours before for rescheduling credit</li>
-          <li>Cancellations less than 2 hours before are non-refundable</li>
-        </ul>
-        
-        <h2>Data Retention</h2>
-        <p>After account cancellation:</p>
-        <ul>
-          <li>Personal data will be deleted within 30 days</li>
-          <li>Assessment results may be retained for research purposes (anonymized)</li>
-          <li>You can request immediate data deletion by contacting privacy@ikan.health</li>
-        </ul>
-        
-        <h2>Reactivation</h2>
-        <p>You can reactivate your account within 30 days of cancellation by logging in. After 30 days, you'll need to create a new account.</p>
-        
-        <h2>Questions?</h2>
-        <p>If you have questions about cancellation, please contact our support team at support@ikan.health.</p>
-      `,
-      lastUpdated: new Date().toISOString()
-    },
-    'sitemap': {
-      title: 'Sitemap',
-      content: `
-        <h2>Site Navigation</h2>
-        <p>Find all the pages and resources available on the iKan platform.</p>
-        
-        <h2>Main Sections</h2>
-        <h3>Getting Started</h3>
-        <ul>
-          <li><a href="/">Home</a></li>
-          <li><a href="/about">About Us</a></li>
-          <li><a href="/login">Sign In</a></li>
-        </ul>
-        
-        <h3>Mental Health Tools</h3>
-        <ul>
-          <li><a href="/assessments">Assessments</a></li>
-          <li><a href="/equip-programs">Equip Programs</a></li>
-          <li><a href="/library">Resource Library</a></li>
-          <li><a href="/consultation">Consultation Services</a></li>
-        </ul>
-        
-        <h3>User Dashboard</h3>
-        <ul>
-          <li><a href="/dashboard">Dashboard</a></li>
-          <li><a href="/mood-journal">Mood Journal</a></li>
-          <li><a href="/account">Account Settings</a></li>
-        </ul>
-        
-        <h2>Support & Information</h2>
-        <h3>Help Center</h3>
-        <ul>
-          <li><a href="/faq">Frequently Asked Questions</a></li>
-          <li><a href="/contact">Contact Us</a></li>
-          <li><a href="/crisis-support">Crisis Support Resources</a></li>
-        </ul>
-        
-        <h3>Legal & Policies</h3>
-        <ul>
-          <li><a href="/privacy">Privacy Policy</a></li>
-          <li><a href="/terms">Terms of Service</a></li>
-          <li><a href="/return-policy">Return Policy</a></li>
-          <li><a href="/cancellation-policy">Cancellation Policy</a></li>
-        </ul>
-        
-        <h2>Resources by Category</h2>
-        <h3>Mental Health Topics</h3>
-        <ul>
-          <li>Anxiety Management</li>
-          <li>Depression Support</li>
-          <li>Stress Relief</li>
-          <li>Sleep Improvement</li>
-          <li>Mindfulness & Meditation</li>
-          <li>Relationship Wellness</li>
-        </ul>
-        
-        <h3>Assessment Types</h3>
-        <ul>
-          <li>Mental Health Screening</li>
-          <li>Anxiety Assessment</li>
-          <li>Depression Screening</li>
-          <li>Stress Level Evaluation</li>
-          <li>Wellness Check-in</li>
-        </ul>
-        
-        <h2>Mobile App</h2>
-        <p>Access iKan on mobile devices through our progressive web app (PWA) for a seamless experience across all platforms.</p>
-      `,
-      lastUpdated: new Date().toISOString()
-    },
-    'homepage-hero': {
-      title: 'Homepage Hero',
-      content: JSON.stringify({
-        title: "Reimagining mental health care.",
-        description: "Stay on top of your mental health with real time monitoring and insights, expert therapists, science backed tools and programs.",
-        ctaText: "Get Started",
-        statistics: [
-          {
-            type: 'label',
-            title: 'Acceptance',
-            bgImage: "https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=1200&h=600&fit=crop",
-            videoImage: "https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?w=800&h=800&fit=crop"
-          },
-          {
-            type: 'stat',
-            number: '2500+',
-            description: 'People who have gained more wellbeing through our platform',
-            bgImage: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=600&h=600&fit=crop",
-            videoImage: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=600&h=600&fit=crop"
-          },
-          {
-            type: 'label',
-            title: 'Understanding',
-            bgImage: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=600&h=600&fit=crop",
-            videoImage: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=600&h=600&fit=crop"
-          },
-          {
-            type: 'stat',
-            number: '52+',
-            description: 'Qualified Psychologists',
-            bgImage: "https://images.unsplash.com/photo-1573497019236-17f8177b81e8?w=400&h=400&fit=crop",
-            videoImage: "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=400&h=400&fit=crop"
-          },
-          {
-            type: 'label',
-            title: 'Compassion',
-            bgImage: "https://images.unsplash.com/photo-1573497161161-c3e73707e25c?w=400&h=400&fit=crop",
-            videoImage: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=400&h=400&fit=crop"
-          },
-          {
-            type: 'stat',
-            number: '96%',
-            description: 'Recommend our courses',
-            bgImage: null,
-            videoImage: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=600&h=600&fit=crop",
-            videoImage2: "https://images.unsplash.com/photo-1580489944761-15a19d654956?w=600&h=600&fit=crop"
-          }
-        ]
-      }),
-      lastUpdated: new Date().toISOString()
-    },
-    'homepage-assessment': {
-      title: 'Homepage Assessment Intro',
-      content: JSON.stringify({
-        title: "iKan is the mental health platform for the modern era.",
-        description: "Get actionable and quantified insights about your mental health. Screen for issues prevent them from turning chronic with the help of our experts and evidence backed tools.",
-        ctaText: "Get Started",
-        image: "https://images.unsplash.com/photo-1724176636904-394580bfedf5?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxtZW50YWwlMjBoZWFsdGglMjB0ZWNobm9sb2d5JTIwYW5hbHl0aWNzJTIwaW5zaWdodHN8ZW58MXx8fHwxNzY1NDQ3NTMyfDA&ixlib=rb-4.1.0&q=80&w=1080",
-        programsTitle: "Assessment Programs",
-        programsSubtitle: "PROGRAM",
-        buttonText: "Take Assessment",
-        programs: [
-          { title: "Adult Therapy", image: "https://images.unsplash.com/photo-1758273240373-370993d0275d?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080" },
-          { title: "Adult Psychiatry", image: "https://images.unsplash.com/photo-1758273240403-052b3c99f636?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080" },
-          { title: "Hospital Care", image: "https://images.unsplash.com/photo-1711343777918-6d395c16e37f?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080" }
-        ]
-      }),
-      lastUpdated: new Date().toISOString()
-    },
-    'homepage-mission': {
-      title: 'Homepage Mission',
-      content: JSON.stringify({
-        title: "Our Mission",
-        content: "We believe mental health is for everyone. Our mission is to fix the broken system and democratize mental healthcare by creating an accessible, secure, and people-centric and science-backed platform empowering every individual to achieve lasting well-being.",
-        videoCaption: "Watch the full\\ninterview",
-        image: "https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?w=600&h=400&fit=crop",
-        imageAlt: "Mission interview"
-      }),
-      lastUpdated: new Date().toISOString()
-    },
-    'homepage-testimonial': {
-      title: 'Homepage Testimonial',
-      content: JSON.stringify({
-        quote: "This platform has transformed how I manage my mental health. The tools are easy to use and the professionals are incredibly supportive.",
-        author: "Sarah J.",
-        role: "Member since 2023",
-        avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&h=150&fit=crop"
-      }),
-      lastUpdated: new Date().toISOString()
-    },
-    'homepage-benefits': {
-      title: 'Homepage Benefits',
-      content: JSON.stringify({
-        title: "Who is it for?",
-        benefits: [
-          {
-            targetType: 'individuals',
-            title: 'For Individuals',
-            subtitle: 'Find Balance',
-            description: 'Personalized mental health support tailored to your unique journey. Access therapy, tools, and a supportive community.',
-            color: '#E0F2FE',
-            iconColor: '#0284C7'
-          },
-          {
-            targetType: 'employers',
-            title: 'For Employers',
-            subtitle: 'Support Your Team',
-            description: 'Empower your workforce with comprehensive mental wellness programs. Boost productivity and improve team morale.',
-            color: '#F0FDF4',
-            iconColor: '#16A34A'
-          },
-          {
-            targetType: 'professionals',
-            title: 'For Professionals',
-            subtitle: 'Expand Your Reach',
-            description: 'Join our network of certified mental health professionals. Connect with clients and manage your practice efficiently.',
-            color: '#FAF5FF',
-            iconColor: '#9333EA'
-          }
-        ]
-      }),
-      lastUpdated: new Date().toISOString()
-    },
-    'homepage-faq': {
-      title: 'Homepage FAQ',
-      content: JSON.stringify({
-        eyebrow: "Your Course",
-        headline: "Psychological Help for Stress.\\nWhat this course offers you:",
-        description: "Change takes time. Similar to sports or meditation, you won't feel immediate improvement - a clear plan and persistence are the keys to success. That's why our courses are designed for sustainability.",
-        courseTitle: "6 Month Group Course",
-        modules: [
-          "MODULE 1: Start your journey!",
-          "MODULE 2: My symptoms and goals",
-          "MODULE 3: Psychological stress model",
-          "MODULE 4: Resources and resilience",
-          "MODULE 5: Self-worth and personal beliefs",
-          "MODULE 6: Open discussion session",
-          "MODULE 7: Reflection and review"
-        ],
-        cardTitle: "Begin your journey",
-        features: [
-          "1 month risk-free trial",
-          "Self-paced learning modules",
-          "Community support included"
-        ],
-        ctaText: "Get Started"
-      }),
-      lastUpdated: new Date().toISOString()
-    },
-    'homepage-newsletter': {
-      title: 'Homepage Newsletter',
-      content: JSON.stringify({
-        title: "Newsletter Signup",
-        benefits: [
-          "Get weekly mental health tips and insights",
-          "Early access to new features and programs",
-          "Exclusive resources and guided exercises"
-        ],
-        imageUrl: "https://images.unsplash.com/photo-1758273240360-76b908e7582a?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxtZW50YWwlMjBoZWFsdGglMjB3ZWxsbmVzcyUyMHN1cHBvcnR8ZW58MXx8fHwxNzY0OTUxMDY1fDA&ixlib=rb-4.1.0&q=80&w=1080",
-        imageAlt: "Mental health and wellness support",
-        privacyText: "Privacy: We store and process your personal data based on our privacy policy. You can unsubscribe at any time.",
-        ctaText: "Sign up now!"
-      }),
-      lastUpdated: new Date().toISOString()
-    },
-    'homepage-equip-intro': {
-      title: 'Homepage Equip Intro',
-      content: JSON.stringify({
-        title: "Equip Programs",
-        subtitle: "PROGRAM",
-        features: [
-          "Flexible — whenever and wherever you want",
-          "Self-paced learning modules",
-          "Expert-designed curriculum",
-          "Community support included",
-          "Progress tracking tools"
-        ],
-        ctaText: "LEARN MORE",
-        footerText: "Supported by leading healthcare providers"
-      }),
-      lastUpdated: new Date().toISOString()
-    }
-  };
-
-  return defaults[pageId] || {
-    title: `${pageId.charAt(0).toUpperCase() + pageId.slice(1)} Page`,
-    content: `<h2>${pageId.charAt(0).toUpperCase() + pageId.slice(1)}</h2><p>Content for this page will be available soon.</p>`,
-    lastUpdated: new Date().toISOString()
-  };
-}
-
-
-
-
-
+// NOTE: createDefaultCMSContent removed — KV is sole source of truth.
+// The old function (~930 lines of hardcoded HTML) has been deleted.
+// If a CMS page doesn't exist in KV, the GET handler returns 404.
 
 
 // Newsletter signup is handled by newsletter-routes.ts (registerNewsletterRoutes)
+
+// ============================================================================
+// ACTIVITY LOG (captures user and admin actions for system logs)
+// ============================================================================
+
+app.post("/activity-log", requireAuth, async (c) => {
+  try {
+    const userId = c.get('userId');
+    const { action, metadata, timestamp } = await c.req.json();
+    const now = timestamp || new Date().toISOString();
+    const logId = `actlog_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`;
+    const record = { id: logId, user_id: userId, action, metadata, created_at: now };
+    await kv.set(`activity_log:${logId}`, JSON.stringify(record));
+    return c.json({ success: true });
+  } catch (error) {
+    console.log('Activity log error:', error);
+    return c.json({ success: true }); // Non-critical — don't fail requests
+  }
+});
+
+app.get("/admin/activity-logs", requireAuth, async (c) => {
+  try {
+    const raw = await kv.getByPrefix('activity_log:');
+    const logs = raw
+      .map((r: any) => { try { return typeof r === 'string' ? JSON.parse(r) : r; } catch { return null; } })
+      .filter(Boolean)
+      .sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+      .slice(0, 200); // Last 200 entries
+    return c.json({ logs });
+  } catch (error) {
+    console.log('Get activity logs error:', error);
+    return c.json({ logs: [] });
+  }
+});
+
+// ============================================================================
+// BADGE COUNTS (notification badges for mobile bottom nav)
+// ============================================================================
+
+app.get("/badge-counts", requireAuth, async (c) => {
+  try {
+    const userId = c.get('userId');
+    const today = new Date().toISOString().split('T')[0];
+    const badges: Record<string, number> = {};
+
+    // 1. Journal: 1 if user hasn't logged today
+    try {
+      const todayEntries = await kv.getByPrefix(`journal:${userId}:${today}`);
+      if (!todayEntries || todayEntries.length === 0) {
+        badges['/mood-journal'] = 1;
+      }
+    } catch { /* silent */ }
+
+    // 2. Equip: count active enrollments with uncompleted today-days
+    try {
+      const enrollments = await kv.getByPrefix(`enrollment:${userId}:`);
+      let newDays = 0;
+      for (const enrollment of enrollments) {
+        const e = typeof enrollment === 'string' ? JSON.parse(enrollment) : enrollment;
+        if (e.status === 'active' && e.current_day !== undefined) {
+          const dayKey = `day_progress:${userId}:${e.program_id || e.equip_id}:${e.current_day}`;
+          const dayProgress = await kv.get(dayKey);
+          if (!dayProgress) newDays++;
+        }
+      }
+      if (newDays > 0) badges['/equip'] = newDays;
+    } catch { /* silent */ }
+
+    // 3. Consultation: count upcoming scheduled bookings
+    try {
+      const bookings = await kv.getByPrefix(`booking:${userId}:`);
+      let upcoming = 0;
+      for (const booking of bookings) {
+        const b = typeof booking === 'string' ? JSON.parse(booking) : booking;
+        if (b.status === 'scheduled' && b.appointment_date >= today) {
+          upcoming++;
+        }
+      }
+      if (upcoming > 0) badges['/consultation'] = upcoming;
+    } catch { /* silent */ }
+
+    return c.json(badges);
+  } catch (error) {
+    console.log('Badge counts error:', error);
+    return c.json({});
+  }
+});
 
 // ============================================================================
 // ANALYTICS ENDPOINTS
@@ -3614,20 +2768,104 @@ app.post("/admin/payment/config", requireAdmin, async (c) => {
 });
 
 /**
- * Test payment gateway (Admin Only)
+ * Test payment gateway — creates a real Razorpay order (Admin Only)
  */
 app.post("/admin/payment/test", requireAdmin, async (c) => {
   try {
     const { gateway, amount } = await c.req.json();
-    // Placeholder for actual gateway testing
-    return c.json({ 
-      success: true, 
-      message: `Test transaction of ₹${amount} initiated with ${gateway}` 
+    if (gateway !== 'razorpay') return c.json({ error: `Gateway '${gateway}' not supported` }, 400);
+
+    const config = await kv.get('payment-config:razorpay');
+    if (!config?.enabled) return c.json({ error: 'Razorpay not enabled. Save configuration first.' }, 400);
+
+    const razorpayKeyId = config.api_key;
+    const razorpayKeySecret = Deno.env.get('RAZORPAY_KEY_SECRET');
+    if (!razorpayKeyId || !razorpayKeySecret) return c.json({ error: 'API key or RAZORPAY_KEY_SECRET not configured.' }, 400);
+
+    const amountInPaise = Math.round((amount || 100) * 100);
+    const rRes = await fetch('https://api.razorpay.com/v1/orders', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Basic ' + btoa(`${razorpayKeyId}:${razorpayKeySecret}`) },
+      body: JSON.stringify({ amount: amountInPaise, currency: 'INR', receipt: `test_${Date.now()}`, notes: { type: 'test' } })
     });
+
+    if (!rRes.ok) {
+      const err = await rRes.text();
+      console.error('Razorpay test order failed:', rRes.status, err);
+      return c.json({ error: `Razorpay API error (${rRes.status}): ${err}`, hint: rRes.status === 401 ? 'Check API key/secret.' : undefined }, 400);
+    }
+
+    const order = await rRes.json();
+    const txnId = `txn_test_${Date.now()}`;
+    await kv.set(`transaction:${txnId}`, { id: txnId, gateway: 'razorpay', razorpay_order_id: order.id, amount: amount || 100, currency: 'INR', status: 'pending', type: 'test', description: `Test ₹${amount || 100}`, created_at: new Date().toISOString() });
+
+    console.log(`✅ Razorpay test order: ${order.id} for ₹${amount || 100}`);
+    return c.json({ success: true, order_id: order.id, amount: amount || 100, key_id: razorpayKeyId, message: `Order ${order.id} created for ₹${amount || 100}` });
   } catch (error) {
-    console.error('Error testing payment gateway:', error);
-    return c.json({ error: 'Failed to test gateway' }, 500);
+    console.error('Error testing gateway:', error);
+    return c.json({ error: `Failed to test gateway: ${error}` }, 500);
   }
+});
+
+/**
+ * Create a payment order for user-facing purchases (Authenticated)
+ */
+app.post("/payment/create-order", requireAuth, async (c) => {
+  try {
+    const userId = c.get('userId');
+    const { amount, currency = 'INR', description, metadata } = await c.req.json();
+    if (!amount || amount <= 0) return c.json({ error: 'Invalid amount' }, 400);
+
+    const config = await kv.get('payment-config:razorpay');
+    if (!config?.enabled) return c.json({ error: 'Payment gateway not configured' }, 503);
+
+    const razorpayKeyId = config.api_key;
+    const razorpayKeySecret = Deno.env.get('RAZORPAY_KEY_SECRET');
+    if (!razorpayKeyId || !razorpayKeySecret) return c.json({ error: 'Payment credentials unavailable' }, 503);
+
+    const receipt = `order_${userId.slice(0, 8)}_${Date.now()}`;
+    const rRes = await fetch('https://api.razorpay.com/v1/orders', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Basic ' + btoa(`${razorpayKeyId}:${razorpayKeySecret}`) },
+      body: JSON.stringify({ amount: Math.round(amount * 100), currency, receipt, notes: { user_id: userId, description: description || '', ...(metadata || {}) } })
+    });
+
+    if (!rRes.ok) { const e = await rRes.text(); console.error('Order creation failed:', e); return c.json({ error: 'Failed to create order' }, 500); }
+    const order = await rRes.json();
+
+    const txnId = `txn_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+    await kv.set(`transaction:${txnId}`, { id: txnId, gateway: 'razorpay', razorpay_order_id: order.id, user_id: userId, amount, currency, status: 'pending', description: description || '', metadata: metadata || {}, created_at: new Date().toISOString() });
+
+    return c.json({ order_id: order.id, amount: Math.round(amount * 100), currency, key_id: razorpayKeyId, transaction_id: txnId });
+  } catch (error) { console.error('Error creating order:', error); return c.json({ error: `Order creation failed: ${error}` }, 500); }
+});
+
+/**
+ * Verify payment after Razorpay checkout (Authenticated)
+ */
+app.post("/payment/verify", requireAuth, async (c) => {
+  try {
+    const userId = c.get('userId');
+    const { razorpay_order_id, razorpay_payment_id, razorpay_signature, transaction_id } = await c.req.json();
+    if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) return c.json({ error: 'Missing verification params' }, 400);
+
+    const razorpayKeySecret = Deno.env.get('RAZORPAY_KEY_SECRET');
+    if (!razorpayKeySecret) return c.json({ error: 'Verification unavailable' }, 503);
+
+    const enc = new TextEncoder();
+    const key = await crypto.subtle.importKey('raw', enc.encode(razorpayKeySecret), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
+    const sig = await crypto.subtle.sign('HMAC', key, enc.encode(`${razorpay_order_id}|${razorpay_payment_id}`));
+    const expected = Array.from(new Uint8Array(sig)).map(b => b.toString(16).padStart(2, '0')).join('');
+
+    if (expected !== razorpay_signature) {
+      if (transaction_id) { const t = await kv.get(`transaction:${transaction_id}`); if (t) await kv.set(`transaction:${transaction_id}`, { ...t, status: 'failed', failed_reason: 'signature_mismatch', updated_at: new Date().toISOString() }); }
+      return c.json({ error: 'Signature mismatch' }, 400);
+    }
+
+    if (transaction_id) { const t = await kv.get(`transaction:${transaction_id}`); if (t) await kv.set(`transaction:${transaction_id}`, { ...t, status: 'success', razorpay_payment_id, verified_at: new Date().toISOString() }); }
+    console.log(`✅ Payment verified: ${razorpay_payment_id}`);
+    return c.json({ success: true, payment_id: razorpay_payment_id });
+  } catch (error) { console.error('Verify error:', error); return c.json({ error: `Verification failed: ${error}` }, 500); }
 });
 
 /**
@@ -3650,8 +2888,8 @@ app.get("/admin/payment/transactions", requireAdmin, async (c) => {
 // FILE UPLOAD ENDPOINT (Media Library)
 // ============================================================================
 
-// Upload file to Supabase Storage
-app.post("/upload", async (c) => {
+// Upload file to Supabase Storage — admin only
+app.post("/upload", requireAdmin, async (c) => {
   try {
     const formData = await c.req.formData();
     const file = formData.get('file') as File;
@@ -3739,8 +2977,8 @@ app.post("/upload", async (c) => {
   }
 });
 
-// Upload image - Alias for /upload endpoint (specifically for image uploads)
-app.post("/upload-image", async (c) => {
+// Upload image - Alias for /upload endpoint — admin only
+app.post("/upload-image", requireAdmin, async (c) => {
   try {
     const formData = await c.req.formData();
     const file = formData.get('file') as File;
@@ -3821,8 +3059,8 @@ app.post("/upload-image", async (c) => {
   }
 });
 
-// Get all media files (for media library)
-app.get("/media", async (c) => {
+// Get all media files (for media library) — admin only
+app.get("/media", requireAdmin, async (c) => {
   try {
     const files = await kv.getByPrefix('media:');
     
@@ -3839,8 +3077,8 @@ app.get("/media", async (c) => {
   }
 });
 
-// Delete media file
-app.delete("/media/:id", async (c) => {
+// Delete media file — admin only
+app.delete("/media/:id", requireAdmin, async (c) => {
   try {
     const id = c.req.param('id');
     const fileMetadata = await kv.get(`media:${id}`);
@@ -3869,6 +3107,34 @@ app.delete("/media/:id", async (c) => {
   }
 });
 
+// Rename / update media file metadata — admin only
+app.patch("/media/:id", requireAdmin, async (c) => {
+  try {
+    const id = c.req.param('id');
+    const body = await c.req.json();
+    const fileMetadata = await kv.get(`media:${id}`);
+    
+    if (!fileMetadata) {
+      return c.json({ error: 'File not found' }, 404);
+    }
+
+    // Only allow updating fileName (rename) and any future metadata fields
+    const updated = {
+      ...fileMetadata,
+      fileName: body.fileName ?? fileMetadata.fileName,
+      updatedAt: new Date().toISOString()
+    };
+
+    await kv.set(`media:${id}`, updated);
+
+    console.log(`✏️ Renamed media file: ${fileMetadata.fileName} → ${updated.fileName}`);
+    return c.json({ success: true, file: updated });
+  } catch (error) {
+    console.error('Rename media error:', error);
+    return c.json({ error: 'Failed to rename file' }, 500);
+  }
+});
+
 // ============================================================================
 // SETTINGS ENDPOINTS
 // ============================================================================
@@ -3885,8 +3151,8 @@ app.get("/settings", async (c) => {
   }
 });
 
-// Update site settings
-app.put("/settings", async (c) => {
+// Update site settings — admin only
+app.put("/settings", requireAdmin, async (c) => {
   try {
     const body = await c.req.json();
     await kv.set('settings:site', body);
@@ -3995,6 +3261,89 @@ app.delete("/categories/:categoryId", requireAuth, async (c) => {
   } catch (error) {
     console.error('Delete category error:', error);
     return c.json({ error: 'Failed to delete category' }, 500);
+  }
+});
+
+// Bulk sync metadata items (admin-initiated, idempotent – skips items whose slug+type already exist)
+app.post("/categories/sync", requireAuth, async (c) => {
+  try {
+    const user = c.get('user');
+    const userProfile = await kv.get(`user:${user.id}`);
+    if (!userProfile?.is_admin) {
+      return c.json({ error: 'Admin access required' }, 403);
+    }
+
+    const { items, updateExisting } = await c.req.json();
+    if (!Array.isArray(items) || items.length === 0) {
+      return c.json({ error: 'items array is required' }, 400);
+    }
+
+    // Load existing — build a map by type::slug → existing entry
+    const existing = await kv.getByPrefix('category:');
+    const existingMap = new Map<string, any>();
+    for (const e of existing) {
+      if (e?.type && e?.slug) {
+        existingMap.set(`${e.type}::${e.slug}`, e);
+      }
+    }
+
+    let created = 0;
+    let updated = 0;
+    let skipped = 0;
+    const now = new Date().toISOString();
+
+    for (const item of items) {
+      const slug = item.slug || item.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+      const key = `${item.type}::${slug}`;
+      const existingEntry = existingMap.get(key);
+
+      if (existingEntry) {
+        // If updateExisting flag is set, update icon/color/description on existing items
+        if (updateExisting) {
+          const needsUpdate =
+            (item.icon && existingEntry.icon !== item.icon) ||
+            (item.color && existingEntry.color !== item.color) ||
+            (item.description && !existingEntry.description && item.description);
+
+          if (needsUpdate) {
+            const merged = {
+              ...existingEntry,
+              icon: item.icon || existingEntry.icon || 'tag',
+              color: item.color || existingEntry.color || '#2A2A2A',
+              description: item.description || existingEntry.description || '',
+              updated_at: now,
+            };
+            await kv.set(`category:${existingEntry.id}`, merged);
+            updated++;
+            continue;
+          }
+        }
+        skipped++;
+        continue;
+      }
+
+      const id = item.id || `cat-${item.type}-${slug}`;
+      const entry = {
+        id,
+        name: item.name,
+        slug,
+        type: item.type,
+        icon: item.icon || 'tag',
+        color: item.color || '#2A2A2A',
+        description: item.description || '',
+        created_at: now,
+        updated_at: now,
+      };
+      await kv.set(`category:${id}`, entry);
+      existingMap.set(key, entry);
+      created++;
+    }
+
+    console.log(`✅ Metadata sync complete: ${created} created, ${updated} updated, ${skipped} unchanged`);
+    return c.json({ success: true, created, updated, skipped, total: items.length });
+  } catch (error) {
+    console.error('❌ Metadata sync error:', error);
+    return c.json({ error: 'Failed to sync metadata' }, 500);
   }
 });
 

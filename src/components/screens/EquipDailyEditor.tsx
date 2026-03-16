@@ -1,8 +1,8 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback, memo } from 'react';
 import { 
   Plus, Trash2, GripVertical, Settings, MoreHorizontal, 
   Copy, ChevronRight, BookOpen, Clock, Calendar, FastForward,
-  PenTool, MessageCircle, Target
+  PenTool, MessageCircle, Target, AlertTriangle, Info, Layers, Zap
 } from 'lucide-react';
 import { useDrag, useDrop } from 'react-dnd';
 import { Button } from '../ui/button';
@@ -34,7 +34,7 @@ interface DraggableDayProps {
   onDelete: () => void;
 }
 
-const DraggableDay = ({ day, index, isSelected, onSelect, moveDay, onDuplicate, onDelete }: DraggableDayProps) => {
+const DraggableDay = memo(function DraggableDay({ day, index, isSelected, onSelect, moveDay, onDuplicate, onDelete }: DraggableDayProps) {
   const ref = useRef<HTMLDivElement>(null);
 
   const [{ handlerId }, drop] = useDrop({
@@ -70,74 +70,87 @@ const DraggableDay = ({ day, index, isSelected, onSelect, moveDay, onDuplicate, 
       onClick={onSelect}
       data-handler-id={handlerId}
       className={cn(
-        "group flex items-center gap-3 p-3 cursor-pointer transition-all border mb-1",
+        "group flex flex-col items-center gap-1 px-3 py-2 cursor-pointer transition-all border shrink-0 min-w-[80px] max-w-[120px]",
         isSelected 
-          ? "border-2 shadow-sm ring-1" 
+          ? "border-2 shadow-sm" 
           : "bg-transparent border-transparent",
-        isSelected && "bg-[var(--color-bg-card)] border-[var(--color-primary-default)] ring-[var(--color-primary-default)]/10",
+        isSelected && "bg-[var(--color-bg-card)] border-[var(--color-primary-default)]",
         !isSelected && "hover:bg-[var(--color-bg-card)] hover:border-[var(--color-border-default)]",
         isDragging && "opacity-50"
       )}
+      style={{ borderRadius: 'var(--radius-lg)' }}
     >
-      <div className="cursor-grab" style={{ color: 'var(--color-text-muted)' }}>
-        <GripVertical size={14} />
-      </div>
-
-      <div 
-        className="w-6 h-6 rounded-md flex items-center justify-center shrink-0"
-        style={{ 
-          fontSize: 'var(--text-xs)', 
-          fontWeight: 'var(--font-weight-medium)',
-          backgroundColor: isSelected ? 'var(--color-info-light)' : 'var(--color-bg-muted)', 
-          color: isSelected ? 'var(--color-info-default)' : 'var(--color-text-muted)' 
-        }}
-      >
-        {day.day}
+      {/* Drag handle + day number row */}
+      <div className="flex items-center gap-1.5 w-full">
+        <div className="cursor-grab" style={{ color: 'var(--color-text-muted)' }}>
+          <GripVertical size={12} />
+        </div>
+        <div 
+          className="w-5 h-5 rounded-md flex items-center justify-center shrink-0"
+          style={{ 
+            fontSize: '10px', 
+            fontWeight: 'var(--font-weight-medium)',
+            backgroundColor: isSelected ? 'var(--color-info-light)' : day.day === 0 ? 'var(--color-status-warning-light)' : 'var(--color-bg-muted)', 
+            color: isSelected ? 'var(--color-info-default)' : day.day === 0 ? 'var(--color-status-warning)' : 'var(--color-text-muted)' 
+          }}
+        >
+          {day.day === 0 ? '0' : day.day}
+        </div>
+        {/* Kebab menu */}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button 
+              variant="ghost" size="icon" 
+              className="h-5 w-5 ml-auto opacity-0 group-hover:opacity-100 transition-opacity"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <MoreHorizontal size={12} />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onDuplicate(); }}>
+              <Copy className="w-4 h-4 mr-2" /> Duplicate
+            </DropdownMenuItem>
+            <DropdownMenuItem 
+              onClick={(e) => { e.stopPropagation(); onDelete(); }}
+              style={{ color: 'var(--color-status-danger)' }}
+            >
+              <Trash2 className="w-4 h-4 mr-2" /> Delete
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
       
-      <div className="flex-1 min-w-0">
-        <p className="truncate" style={{ 
-          fontSize: 'var(--text-sm)', 
-          fontWeight: 'var(--font-weight-medium)',
-          color: isSelected ? 'var(--color-text-primary)' : 'var(--color-text-muted)' 
-        }}>
-          {day.title || `Day ${day.day}`}
-        </p>
-        <div className="flex items-center gap-2 mt-0.5">
-          <Badge variant="outline" className="text-[9px] px-1 py-0 h-3.5 uppercase" style={{ backgroundColor: 'var(--color-bg-muted)', color: 'var(--color-text-muted)', borderColor: 'var(--color-border-default)', fontWeight: 'var(--font-weight-medium)' }}>
+      {/* Title */}
+      <p className="truncate w-full text-center" style={{ 
+        fontSize: '11px', 
+        fontWeight: 'var(--font-weight-medium)',
+        color: isSelected ? 'var(--color-text-primary)' : 'var(--color-text-muted)',
+        lineHeight: 1.2,
+      }}>
+        {day.day === 0 ? (day.title || 'Onboarding') : (day.title || `Day ${day.day}`)}
+      </p>
+
+      {/* Type badge + block count */}
+      <div className="flex items-center gap-1">
+        {day.day === 0 ? (
+          <Badge variant="outline" className="text-[8px] px-1 py-0 h-3 uppercase" style={{ backgroundColor: 'var(--color-status-warning-light)', color: 'var(--color-status-warning)', borderColor: 'var(--color-status-warning)', fontWeight: 'var(--font-weight-medium)' }}>
+            Onboarding
+          </Badge>
+        ) : (
+          <Badge variant="outline" className="text-[8px] px-1 py-0 h-3 uppercase" style={{ backgroundColor: 'var(--color-bg-muted)', color: 'var(--color-text-muted)', borderColor: 'var(--color-border-default)', fontWeight: 'var(--font-weight-medium)' }}>
             {day.dayType || 'lesson'}
           </Badge>
-          <span style={{ fontSize: '10px', color: 'var(--color-text-muted)' }}>
-            {day.activities.length} blocks
-          </span>
-        </div>
+        )}
+        <span style={{ fontSize: '9px', color: 'var(--color-text-muted)' }}>
+          {day.activities.length}
+        </span>
       </div>
-
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button 
-            variant="ghost" size="icon" 
-            className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <MoreHorizontal size={14} />
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end">
-          <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onDuplicate(); }}>
-            <Copy className="w-4 h-4 mr-2" /> Duplicate
-          </DropdownMenuItem>
-          <DropdownMenuItem 
-            onClick={(e) => { e.stopPropagation(); onDelete(); }}
-            style={{ color: 'var(--color-status-danger)' }}
-          >
-            <Trash2 className="w-4 h-4 mr-2" /> Delete
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
     </div>
   );
-};
+}, (prev, next) => {
+  return prev.day === next.day && prev.index === next.index && prev.isSelected === next.isSelected;
+});
 
 // --- DRAGGABLE BLOCK COMPONENT ---
 interface DraggableBlockProps {
@@ -149,7 +162,7 @@ interface DraggableBlockProps {
   onDelete: () => void;
 }
 
-const DraggableBlock = ({ block, index, isSelected, onSelect, moveBlock, onDelete }: DraggableBlockProps) => {
+const DraggableBlock = memo(function DraggableBlock({ block, index, isSelected, onSelect, moveBlock, onDelete }: DraggableBlockProps) {
   const ref = useRef<HTMLDivElement>(null);
 
   const [{ handlerId }, drop] = useDrop({
@@ -235,7 +248,9 @@ const DraggableBlock = ({ block, index, isSelected, onSelect, moveBlock, onDelet
       </Button>
     </div>
   );
-};
+}, (prev, next) => {
+  return prev.block === next.block && prev.index === next.index && prev.isSelected === next.isSelected;
+});
 
 export interface DailyBuilderProps {
   program: { daily_content?: DayContent[] } & Record<string, any>;
@@ -299,10 +314,10 @@ export function EquipDailyEditor({
         // Create implicit day if missing
         const implicitDay: DayContent = {
           day: 1,
-          title: 'Assessment Content',
+          title: mode === 'assessment' ? 'Assessment Content' : 'Content',
           description: '',
           activities: [],
-          dayType: 'practice'
+          dayType: mode === 'assessment' ? 'assessment' : 'practice'
         };
         handleDaysChange([implicitDay]);
       } else if (days.length > 1) {
@@ -324,14 +339,27 @@ export function EquipDailyEditor({
 
   const moveDay = (dragIndex: number, hoverIndex: number) => {
     if (singleDayMode || readOnly) return;
-    const newDays = [...days];
-    const [draggedDay] = newDays.splice(dragIndex, 1);
-    newDays.splice(hoverIndex, 0, draggedDay);
-    // Reassign day numbers
-    const reordered = newDays.map((d, i) => ({ ...d, day: i + 1 }));
-    handleDaysChange(reordered);
+    // Protect Day 0 (onboarding) from reordering
+    const day0 = days.find(d => d.day === 0);
+    const regularDays = days.filter(d => d.day !== 0);
+    
+    // Only reorder among regular days (indices offset by 1 if Day 0 exists)
+    const offset = day0 ? 1 : 0;
+    const adjDragIdx = dragIndex - offset;
+    const adjHoverIdx = hoverIndex - offset;
+    
+    if (adjDragIdx < 0 || adjHoverIdx < 0) return; // Can't move Day 0
+    if (adjDragIdx >= regularDays.length || adjHoverIdx >= regularDays.length) return;
+    
+    const newRegular = [...regularDays];
+    const [draggedDay] = newRegular.splice(adjDragIdx, 1);
+    newRegular.splice(adjHoverIdx, 0, draggedDay);
+    // Reassign day numbers (1-based for regular days)
+    const reordered = newRegular.map((d, i) => ({ ...d, day: i + 1 }));
+    
+    handleDaysChange(day0 ? [day0, ...reordered] : reordered);
     if (selectedDayNum === draggedDay.day) {
-      setSelectedDayNum(hoverIndex + 1);
+      setSelectedDayNum(adjHoverIdx + 1);
     }
   };
 
@@ -349,7 +377,9 @@ export function EquipDailyEditor({
 
   const handleAddDay = () => {
     if (singleDayMode || readOnly) return;
-    const newDayNum = days.length + 1;
+    // Count only regular days (exclude Day 0)
+    const regularDays = days.filter(d => d.day !== 0);
+    const newDayNum = regularDays.length + 1;
     const newDay: DayContent = {
       day: newDayNum,
       title: `Day ${newDayNum}`,
@@ -364,13 +394,14 @@ export function EquipDailyEditor({
 
   const handleDeleteDay = (dayNum: number) => {
     if (singleDayMode || readOnly) return;
-    const newDays = days.filter(d => d.day !== dayNum).map((d, i) => ({
-      ...d,
-      day: i + 1
-    }));
-    handleDaysChange(newDays);
+    if (dayNum === 0) return; // Cannot delete onboarding day
+    const day0 = days.find(d => d.day === 0);
+    const regularDays = days.filter(d => d.day !== 0 && d.day !== dayNum);
+    // Renumber regular days
+    const renumbered = regularDays.map((d, i) => ({ ...d, day: i + 1 }));
+    handleDaysChange(day0 ? [day0, ...renumbered] : renumbered);
     if (selectedDayNum === dayNum) {
-      setSelectedDayNum(newDays.length > 0 ? newDays[0].day : null);
+      setSelectedDayNum(renumbered.length > 0 ? renumbered[0].day : (day0 ? 0 : null));
     }
   };
 
@@ -481,243 +512,369 @@ export function EquipDailyEditor({
   };
 
   return (
-    <div className="h-[calc(100vh-250px)] flex border overflow-hidden shadow-sm ring-1" style={{ backgroundColor: 'var(--color-bg-card)', borderColor: 'var(--color-border-default)', boxShadow: '0 0 0 1px var(--color-border-default)', borderRadius: 'var(--radius-xl, 24px)' }}>
-      {/* COLUMN 1: DAY LIST (Timeline) - Hidden in Single Day Mode */}
+    <div className="h-[calc(100vh-250px)] flex flex-col border overflow-hidden shadow-sm ring-1" style={{ backgroundColor: 'var(--color-bg-card)', borderColor: 'var(--color-border-default)', boxShadow: '0 0 0 1px var(--color-border-default)', borderRadius: 'var(--radius-xl, 24px)' }}>
+      {/* ROW 1: HORIZONTAL DAY STRIP — Hidden in Single Day Mode */}
       {!singleDayMode && (
-      <div className="w-[20%] min-w-[200px] flex flex-col border-r" style={{ backgroundColor: 'var(--color-bg-muted)' }}>
-        <div className="p-4 border-b flex items-center justify-between sticky top-0 z-10 h-14" style={{ backgroundColor: 'var(--color-bg-card)' }}>
-          <span style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--font-weight-medium)', color: 'var(--color-text-muted)' }}>Days ({days.length})</span>
+      <div className="shrink-0 border-b" style={{ backgroundColor: 'var(--color-bg-muted)' }}>
+        <div className="px-4 py-2 flex items-center gap-3">
+          <span style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--font-weight-medium)', color: 'var(--color-text-muted)', whiteSpace: 'nowrap' }}>Days ({days.length})</span>
+          
+          {/* Scrollable day chips */}
+          <div className="flex-1 overflow-x-auto flex items-center gap-1.5 py-1 scrollbar-thin" style={{ scrollbarWidth: 'thin' }}>
+            {days.length === 0 ? (
+              <span style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}>No days added yet</span>
+            ) : (
+              days.map((day, index) => (
+                <DraggableDay
+                  key={day.day}
+                  day={day}
+                  index={index}
+                  isSelected={selectedDayNum === day.day}
+                  onSelect={() => { setSelectedDayNum(day.day); setSelectedBlockId(null); }}
+                  moveDay={moveDay}
+                  onDuplicate={() => handleDuplicateDay(day)}
+                  onDelete={() => handleDeleteDay(day.day)}
+                />
+              ))
+            )}
+          </div>
+
           {!readOnly && (
-            <Button onClick={handleAddDay} size="sm" variant="outline" className="h-8 gap-1.5">
+            <Button onClick={handleAddDay} size="sm" className="gap-1.5 shrink-0 shadow-sm" style={{ backgroundColor: 'var(--color-primary-default)', color: 'var(--color-primary-on)', borderRadius: 'var(--radius-lg)' }}>
               <Plus size={14} /> Add
             </Button>
-          )}
-        </div>
-        
-        <div className="flex-1 overflow-y-auto p-2">
-          {days.length === 0 ? (
-            <div className="text-center py-12 px-4" style={{ color: 'var(--color-text-muted)', fontSize: 'var(--text-xs)' }}>
-              No days added. Click "Add" to start.
-            </div>
-          ) : (
-            days.map((day, index) => (
-              <DraggableDay
-                key={day.day}
-                day={day}
-                index={index}
-                isSelected={selectedDayNum === day.day}
-                onSelect={() => { setSelectedDayNum(day.day); setSelectedBlockId(null); }}
-                moveDay={moveDay}
-                onDuplicate={() => handleDuplicateDay(day)}
-                onDelete={() => handleDeleteDay(day.day)}
-              />
-            ))
           )}
         </div>
       </div>
       )}
 
-      {/* COLUMN 2: STRUCTURE (Content Blocks) */}
-      <div className={cn(
-        "flex flex-col border-r",
-        singleDayMode ? "w-[35%] min-w-[300px]" : "w-[30%] min-w-[300px]"
-      )} style={{ backgroundColor: 'var(--color-bg-card)' }}>
-        {activeDay ? (
-          <>
-            <div className="p-4 border-b flex items-center justify-between sticky top-0 z-10 h-14" style={{ backgroundColor: 'var(--color-bg-card)' }}>
-              <div>
-                 <h3 className="truncate max-w-[150px]" style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--font-weight-medium)', color: 'var(--color-text-muted)' }}>
-                   {getDayLabel()}
-                 </h3>
-                 <p className="uppercase tracking-wide" style={{ fontSize: '10px', color: 'var(--color-text-muted)' }}>
-                   Structure
-                 </p>
-              </div>
-              {!readOnly && (
-                <BlockPaletteMenu onSelect={addBlock} />
-              )}
-            </div>
-
-            <div className="flex-1 overflow-y-auto p-2 space-y-2" style={{ backgroundColor: 'var(--color-bg-muted)' }}>
-              {/* 1. Day Configuration Item - Only show in Multi-day mode */}
-              {!singleDayMode && (
-              <div 
-                onClick={() => setSelectedBlockId(null)}
-                className={cn(
-                  "p-3 rounded-lg border cursor-pointer transition-all flex items-center gap-3"
-                )}
-                style={selectedBlockId === null 
-                  ? { backgroundColor: 'var(--color-info-light)', borderColor: 'var(--color-info-default)', boxShadow: '0 0 0 1px var(--color-info-default)' }
-                  : { backgroundColor: 'var(--color-bg-card)', borderColor: 'var(--color-border-default)' }
-                }
-              >
-                <div className="w-8 h-8 rounded-full flex items-center justify-center shrink-0" style={{ backgroundColor: 'var(--color-info-light)', color: 'var(--color-info-default)' }}>
-                  <Settings size={14} />
-                </div>
+      {/* ROW 2: TWO-COLUMN LAYOUT — Structure + Editor */}
+      <div className="flex-1 flex overflow-hidden">
+        {/* LEFT COLUMN: STRUCTURE (Content Blocks) */}
+        <div className={cn(
+          "flex flex-col border-r",
+          singleDayMode ? "w-[35%] min-w-[300px]" : "w-[35%] min-w-[280px]"
+        )} style={{ backgroundColor: 'var(--color-bg-card)' }}>
+          {activeDay ? (
+            <>
+              <div className="p-4 border-b flex items-center justify-between sticky top-0 z-10 h-14" style={{ backgroundColor: 'var(--color-bg-card)' }}>
                 <div>
-                  <p style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--font-weight-medium)', color: 'var(--color-text-primary)' }}>Day Configuration</p>
-                  <p style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}>Metadata & Goals</p>
+                   <h3 className="truncate max-w-[150px]" style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--font-weight-medium)', color: 'var(--color-text-muted)' }}>
+                     {getDayLabel()}
+                   </h3>
+                   <p className="uppercase tracking-wide" style={{ fontSize: '10px', color: 'var(--color-text-muted)' }}>
+                     Structure
+                   </p>
                 </div>
-                {selectedBlockId === null && <div className="ml-auto" style={{ color: 'var(--color-info-default)' }}><ChevronRight size={14} /></div>}
+                {!readOnly && (
+                  <BlockPaletteMenu onSelect={addBlock} />
+                )}
               </div>
-              )}
 
-              {!singleDayMode && (
-              <div className="my-2 border-t relative" style={{ borderColor: 'var(--color-border-default)' }}>
-                <span className="absolute left-1/2 -translate-x-1/2 -top-2 px-2" style={{ backgroundColor: 'var(--color-bg-muted)', fontSize: '10px', color: 'var(--color-text-muted)', fontWeight: 'var(--font-weight-medium)' }}>
-                  BLOCKS
-                </span>
-              </div>
-              )}
-
-              {/* 2. Draggable Blocks */}
-              {activeDay.activities.map((block, index) => (
-                <DraggableBlock
-                  key={block.id}
-                  block={block}
-                  index={index}
-                  isSelected={selectedBlockId === block.id}
-                  onSelect={() => setSelectedBlockId(block.id)}
-                  moveBlock={moveBlock}
-                  onDelete={() => deleteBlock(block.id)}
-                />
-              ))}
-
-              {activeDay.activities.length === 0 && !readOnly && (
-                <div className="text-center py-8 px-4 border-2 border-dashed rounded-lg" style={{ borderColor: 'var(--color-border-default)', backgroundColor: 'var(--color-bg-muted)' }}>
-                  <p style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}>No content blocks yet.</p>
-                  <Button variant="link" size="sm" onClick={addBlock} className="h-auto p-0 mt-1" style={{ fontSize: 'var(--text-xs)', color: 'var(--color-primary-default)' }}>
-                    Add your first block
-                  </Button>
+              <div className="flex-1 overflow-y-auto p-2 space-y-2" style={{ backgroundColor: 'var(--color-bg-muted)' }}>
+                {/* 1. Day Configuration Item - Only show in Multi-day mode */}
+                {!singleDayMode && (
+                <div 
+                  onClick={() => setSelectedBlockId(null)}
+                  className={cn(
+                    "p-3 rounded-lg border cursor-pointer transition-all flex items-center gap-3"
+                  )}
+                  style={selectedBlockId === null 
+                    ? { backgroundColor: 'var(--color-info-light)', borderColor: 'var(--color-info-default)', boxShadow: '0 0 0 1px var(--color-info-default)' }
+                    : { backgroundColor: 'var(--color-bg-card)', borderColor: 'var(--color-border-default)' }
+                  }
+                >
+                  <div className="w-8 h-8 rounded-full flex items-center justify-center shrink-0" style={{ backgroundColor: 'var(--color-info-light)', color: 'var(--color-info-default)' }}>
+                    <Settings size={14} />
+                  </div>
+                  <div>
+                    <p style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--font-weight-medium)', color: 'var(--color-text-primary)' }}>Day Configuration</p>
+                    <p style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}>Metadata & Goals</p>
+                  </div>
+                  {selectedBlockId === null && <div className="ml-auto" style={{ color: 'var(--color-info-default)' }}><ChevronRight size={14} /></div>}
                 </div>
-              )}
-            </div>
-          </>
-        ) : (
-          <div className="flex-1 flex flex-col items-center justify-center p-8 text-center" style={{ color: 'var(--color-text-muted)' }}>
-            <div className="w-12 h-12 rounded-full flex items-center justify-center mb-3" style={{ backgroundColor: 'var(--color-bg-muted)' }}>
-              <Calendar size={20} style={{ color: 'var(--color-text-muted)' }} />
-            </div>
-            <p style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--font-weight-medium)', color: 'var(--color-text-muted)' }}>No Day Selected</p>
-            <p className="mt-1" style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}>Select a day from the timeline to edit its structure.</p>
-          </div>
-        )}
-      </div>
+                )}
 
-      {/* COLUMN 3: CONTEXTUAL EDITOR (Flex-1) */}
-      <div className="flex-1 flex flex-col overflow-hidden" style={{ backgroundColor: 'var(--color-bg-muted)' }}>
-        {activeDay ? (
-          <div className="flex-1 overflow-y-auto">
-            {/* SCOPE HINT HEADER */}
-            <div className="h-8 border-b px-4 flex items-center uppercase tracking-wider sticky top-0 z-10" style={{ backgroundColor: 'var(--color-bg-card)', fontSize: '10px', color: 'var(--color-text-muted)', fontWeight: 'var(--font-weight-medium)' }}>
-              {singleDayMode ? `${getModeLabel()} Mode` : `Editing: Day ${activeDay.day}`} 
-              <span className="mx-2" style={{ color: 'var(--color-border-default)' }}>•</span> 
-              {selectedBlockId ? 'Block Editor' : 'Configuration'}
-            </div>
+                {!singleDayMode && (
+                <div className="my-2 border-t relative" style={{ borderColor: 'var(--color-border-default)' }}>
+                  <span className="absolute left-1/2 -translate-x-1/2 -top-2 px-2" style={{ backgroundColor: 'var(--color-bg-muted)', fontSize: '10px', color: 'var(--color-text-muted)', fontWeight: 'var(--font-weight-medium)' }}>
+                    BLOCKS
+                  </span>
+                </div>
+                )}
 
-            <div className="p-8">
-              <div className="max-w-2xl mx-auto">
-                {selectedBlockId === null && !singleDayMode ? (
-                  // --- DAY CONFIGURATION EDITOR (Multi-day only) ---
-                  <div className="animate-in fade-in duration-300 space-y-6">
-                    <div>
-                      <h2 style={{ fontSize: 'var(--text-xl)', fontWeight: 'var(--font-weight-medium)', color: 'var(--color-text-primary)' }}>Day Configuration</h2>
-                      <p style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-muted)' }}>Define the identity and goals for Day {activeDay.day}.</p>
-                    </div>
+                {/* 2. Draggable Blocks */}
+                {activeDay.activities.map((block, index) => (
+                  <DraggableBlock
+                    key={block.id}
+                    block={block}
+                    index={index}
+                    isSelected={selectedBlockId === block.id}
+                    onSelect={() => setSelectedBlockId(block.id)}
+                    moveBlock={moveBlock}
+                    onDelete={() => deleteBlock(block.id)}
+                  />
+                ))}
 
-                    <Card>
-                      <CardContent className="p-6 space-y-6">
-                        <AdminFormField label="Day Title">
-                          <Input 
-                            value={activeDay.title} 
-                            onChange={e => handleUpdateDay(activeDay.day, { title: e.target.value })}
-                            placeholder="e.g. Introduction to Mindfulness"
-                            style={{ fontWeight: 'var(--font-weight-medium)' }}
-                            disabled={readOnly}
-                          />
-                        </AdminFormField>
-
-                        <div className="grid grid-cols-2 gap-4">
-                          <AdminFormField label="Day Type">
-                            <Select 
-                              value={activeDay.dayType || 'lesson'} 
-                              onValueChange={(v: any) => handleUpdateDay(activeDay.day, { dayType: v })}
-                              disabled={readOnly}
-                            >
-                              <SelectTrigger><SelectValue /></SelectTrigger>
-                              <SelectContent>
-                                {Object.entries(DAY_TYPE_PRESETS).map(([key, preset]) => (
-                                  <SelectItem key={key} value={key}>
-                                    <div className="flex items-center gap-2">
-                                      <span>{preset.label}</span>
-                                    </div>
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          </AdminFormField>
-
-                          <AdminFormField label="Order">
-                            <Input value={activeDay.day} disabled style={{ backgroundColor: 'var(--color-bg-muted)' }} />
-                          </AdminFormField>
-                        </div>
-
-                        <AdminFormField label="Description">
-                          <Textarea 
-                            value={activeDay.description || ''} 
-                            onChange={e => handleUpdateDay(activeDay.day, { description: e.target.value })}
-                            placeholder="Brief summary of what the user will achieve today..."
-                            rows={3}
-                            disabled={readOnly}
-                          />
-                        </AdminFormField>
-                      </CardContent>
-                    </Card>
-                  </div>
-                ) : activeBlock ? (
-                  // --- BLOCK EDITOR ---
-                  <div className="animate-in fade-in duration-300">
-                    <div className="mb-6">
-                      <div className="flex items-center gap-2 mb-1">
-                        <Badge variant="secondary" className="uppercase tracking-wider text-[10px]" style={{ backgroundColor: 'var(--color-accent-default)', color: 'var(--color-text-primary)', fontWeight: 'var(--font-weight-medium)' }}>
-                          {activeBlock.type} Block
-                        </Badge>
-                      </div>
-                      <h2 style={{ fontSize: 'var(--text-xl)', fontWeight: 'var(--font-weight-medium)', color: 'var(--color-text-primary)' }}>
-                        {activeBlock.title || 'Untitled Block'}
-                      </h2>
-                    </div>
-
-                    <EquipBlockEditor
-                      key={activeBlock.id}
-                      block={activeBlock}
-                      onChange={updates => updateBlock(activeBlock.id, updates)}
-                      onDelete={() => deleteBlock(activeBlock.id)}
-                      isExpanded={true}
-                      onToggleExpand={() => {}} 
-                      moveUp={undefined}
-                      moveDown={undefined}
-                      hideHeader={true}
-                      isAssessment={mode === 'assessment'}
-                    />
-                  </div>
-                ) : (
-                  <div className="flex flex-col items-center justify-center h-64" style={{ color: 'var(--color-text-muted)' }}>
-                    <p>
-                      {singleDayMode
-                        ? "Select a block to edit." 
-                        : "Block not found."}
-                    </p>
+                {activeDay.activities.length === 0 && !readOnly && (
+                  <div className="text-center py-8 px-4 border-2 border-dashed rounded-lg" style={{ borderColor: 'var(--color-border-default)', backgroundColor: 'var(--color-bg-muted)' }}>
+                    <p style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}>No content blocks yet.</p>
+                    <Button variant="link" size="sm" onClick={addBlock} className="h-auto p-0 mt-1" style={{ fontSize: 'var(--text-xs)', color: 'var(--color-primary-default)' }}>
+                      Add your first block
+                    </Button>
                   </div>
                 )}
               </div>
+            </>
+          ) : (
+            <div className="flex-1 flex flex-col items-center justify-center p-8 text-center" style={{ color: 'var(--color-text-muted)' }}>
+              <div className="w-12 h-12 rounded-full flex items-center justify-center mb-3" style={{ backgroundColor: 'var(--color-bg-muted)' }}>
+                <Calendar size={20} style={{ color: 'var(--color-text-muted)' }} />
+              </div>
+              <p style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--font-weight-medium)', color: 'var(--color-text-muted)' }}>No Day Selected</p>
+              <p className="mt-1" style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}>Select a day from the timeline to edit its structure.</p>
             </div>
-          </div>
-        ) : (
-          <div className="flex-1 flex items-center justify-center" style={{ color: 'var(--color-text-muted)', backgroundColor: 'var(--color-bg-muted)' }}>
-            <p>Select a day to view properties</p>
-          </div>
-        )}
+          )}
+        </div>
+
+        {/* RIGHT COLUMN: CONTEXTUAL EDITOR (Flex-1) */}
+        <div className="flex-1 flex flex-col overflow-hidden" style={{ backgroundColor: 'var(--color-bg-muted)' }}>
+          {activeDay ? (
+            <div className="flex-1 overflow-y-auto">
+              {/* SCOPE HINT HEADER */}
+              <div className="h-8 border-b px-4 flex items-center uppercase tracking-wider sticky top-0 z-10" style={{ backgroundColor: 'var(--color-bg-card)', fontSize: '10px', color: 'var(--color-text-muted)', fontWeight: 'var(--font-weight-medium)' }}>
+                {singleDayMode ? `${getModeLabel()} Mode` : `Editing: Day ${activeDay.day}`} 
+                <span className="mx-2" style={{ color: 'var(--color-border-default)' }}>•</span> 
+                {selectedBlockId ? 'Block Editor' : 'Configuration'}
+              </div>
+
+              <div className="p-8">
+                <div className="max-w-2xl mx-auto">
+                  {selectedBlockId === null && !singleDayMode ? (
+                    // --- DAY CONFIGURATION EDITOR (Multi-day only) ---
+                    <div className="animate-in fade-in duration-300 space-y-6">
+                      <div>
+                        <h2 style={{ fontSize: 'var(--text-xl)', fontWeight: 'var(--font-weight-medium)', color: 'var(--color-text-primary)' }}>Day Configuration</h2>
+                        <p style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-muted)' }}>Define the identity and goals for Day {activeDay.day}.</p>
+                      </div>
+
+                      <Card>
+                        <CardContent className="p-6 space-y-6">
+                          <AdminFormField label="Day Title">
+                            <Input 
+                              value={activeDay.title} 
+                              onChange={e => handleUpdateDay(activeDay.day, { title: e.target.value })}
+                              placeholder="e.g. Introduction to Mindfulness"
+                              style={{ fontWeight: 'var(--font-weight-medium)' }}
+                              disabled={readOnly}
+                            />
+                          </AdminFormField>
+
+                          <div className="grid grid-cols-2 gap-4">
+                            <AdminFormField label="Day Type">
+                              <Select 
+                                value={activeDay.dayType || 'lesson'} 
+                                onValueChange={(v: any) => handleUpdateDay(activeDay.day, { dayType: v })}
+                                disabled={readOnly}
+                              >
+                                <SelectTrigger><SelectValue /></SelectTrigger>
+                                <SelectContent>
+                                  {Object.entries(DAY_TYPE_PRESETS).map(([key, preset]) => (
+                                    <SelectItem key={key} value={key}>
+                                      <div className="flex items-center gap-2">
+                                        <span>{preset.label}</span>
+                                      </div>
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </AdminFormField>
+
+                            <AdminFormField label="Order">
+                              <Input value={activeDay.day} disabled style={{ backgroundColor: 'var(--color-bg-muted)' }} />
+                            </AdminFormField>
+                          </div>
+
+                          <AdminFormField label="Description">
+                            <Textarea 
+                              value={activeDay.description || ''} 
+                              onChange={e => handleUpdateDay(activeDay.day, { description: e.target.value })}
+                              placeholder="Brief summary of what the user will achieve today..."
+                              rows={3}
+                              disabled={readOnly}
+                            />
+                          </AdminFormField>
+                        </CardContent>
+                      </Card>
+
+                      {/* ── DAY TYPE PRESET DETAILS ── */}
+                      {(() => {
+                        const preset = getPresetForDayType(activeDay.dayType || 'learning');
+                        if (!preset) return null;
+                        return (
+                          <Card style={{ border: '1px solid var(--color-border-default)' }}>
+                            <CardContent className="p-0">
+                              {/* Preset header */}
+                              <div className="px-5 py-3 flex items-center gap-3" style={{ borderBottom: '1px solid var(--color-border-default)', backgroundColor: 'var(--color-bg-muted)' }}>
+                                <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: 'var(--color-primary-default)', opacity: 0.1 }}>
+                                  <Zap size={14} style={{ color: 'var(--color-primary-default)' }} />
+                                </div>
+                                <div>
+                                  <p style={{ fontSize: 'var(--text-sm)', fontWeight: 500, fontFamily: 'var(--font-family-base)', color: 'var(--color-text-primary)' }}>
+                                    {preset.label} Preset
+                                  </p>
+                                  <p style={{ fontSize: 'var(--text-xs)', fontFamily: 'var(--font-family-base)', color: 'var(--color-text-muted)' }}>
+                                    {preset.description}
+                                  </p>
+                                </div>
+                              </div>
+
+                              <div className="p-5 space-y-4">
+                                {/* Auto-config grid */}
+                                <div>
+                                  <p className="uppercase tracking-wider mb-2" style={{ fontSize: '10px', fontWeight: 500, fontFamily: 'var(--font-family-base)', color: 'var(--color-text-muted)' }}>
+                                    Player Behavior
+                                  </p>
+                                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                                    {Object.entries(preset.autoConfig).map(([key, val]) => (
+                                      <div key={key} className="flex items-center gap-2 p-2 rounded-md" style={{ backgroundColor: 'var(--color-bg-muted)', border: '1px solid var(--color-border-default)' }}>
+                                        <div className="w-4 h-4 rounded-full flex items-center justify-center shrink-0" style={{ 
+                                          backgroundColor: val ? 'var(--color-status-success-light)' : 'var(--color-bg-muted)',
+                                          border: val ? 'none' : '1px solid var(--color-border-default)'
+                                        }}>
+                                          {val && <div className="w-2 h-2 rounded-full" style={{ backgroundColor: 'var(--color-status-success)' }} />}
+                                        </div>
+                                        <span style={{ fontSize: '10px', fontWeight: 500, fontFamily: 'var(--font-family-base)', color: val ? 'var(--color-text-primary)' : 'var(--color-text-muted)' }}>
+                                          {key.replace(/([A-Z])/g, ' $1').replace(/^./, s => s.toUpperCase())}
+                                        </span>
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+
+                                {/* Step Group Rules */}
+                                <div>
+                                  <p className="uppercase tracking-wider mb-2" style={{ fontSize: '10px', fontWeight: 500, fontFamily: 'var(--font-family-base)', color: 'var(--color-text-muted)' }}>
+                                    Step Groups
+                                  </p>
+                                  <div className="flex flex-wrap gap-1.5">
+                                    <span style={{
+                                      fontSize: '10px', fontWeight: 500, fontFamily: 'var(--font-family-base)',
+                                      padding: '2px 8px', borderRadius: 'var(--radius-pill)',
+                                      backgroundColor: preset.stepGroupRules.allowed ? 'var(--color-status-success-light)' : 'var(--color-status-danger-light)',
+                                      color: preset.stepGroupRules.allowed ? 'var(--color-status-success)' : 'var(--color-status-danger)',
+                                    }}>
+                                      {preset.stepGroupRules.allowed ? 'Allowed' : 'Not Allowed'}
+                                    </span>
+                                    {preset.stepGroupRules.required && (
+                                      <span style={{ fontSize: '10px', fontWeight: 500, fontFamily: 'var(--font-family-base)', padding: '2px 8px', borderRadius: 'var(--radius-pill)', backgroundColor: 'var(--color-status-warning-light)', color: 'var(--color-status-warning)' }}>
+                                        Required
+                                      </span>
+                                    )}
+                                    {preset.stepGroupRules.maxBlocksPerStep && (
+                                      <span style={{ fontSize: '10px', fontWeight: 500, fontFamily: 'var(--font-family-base)', padding: '2px 8px', borderRadius: 'var(--radius-pill)', backgroundColor: 'var(--color-bg-muted)', color: 'var(--color-text-muted)', border: '1px solid var(--color-border-default)' }}>
+                                        Max {preset.stepGroupRules.maxBlocksPerStep}/step
+                                      </span>
+                                    )}
+                                    {preset.stepGroupRules.oneBlockPerStep && (
+                                      <span style={{ fontSize: '10px', fontWeight: 500, fontFamily: 'var(--font-family-base)', padding: '2px 8px', borderRadius: 'var(--radius-pill)', backgroundColor: 'var(--color-bg-muted)', color: 'var(--color-text-muted)', border: '1px solid var(--color-border-default)' }}>
+                                        1 block/step
+                                      </span>
+                                    )}
+                                  </div>
+                                </div>
+
+                                {/* Allowed Blocks */}
+                                <div>
+                                  <p className="uppercase tracking-wider mb-2" style={{ fontSize: '10px', fontWeight: 500, fontFamily: 'var(--font-family-base)', color: 'var(--color-text-muted)' }}>
+                                    Allowed Block Types
+                                  </p>
+                                  <div className="flex flex-wrap gap-1">
+                                    {preset.allowedBlocks.map(b => (
+                                      <span key={b} style={{ fontSize: '10px', fontFamily: 'monospace', padding: '1px 6px', borderRadius: 4, backgroundColor: 'var(--color-bg-muted)', color: 'var(--color-text-muted)', border: '1px solid var(--color-border-default)' }}>
+                                        {b}
+                                      </span>
+                                    ))}
+                                  </div>
+                                </div>
+
+                                {/* Warnings */}
+                                {preset.warnings.length > 0 && (
+                                  <div className="space-y-1">
+                                    {preset.warnings.map((w, i) => (
+                                      <div key={i} className="flex items-start gap-2 p-2 rounded-md" style={{ backgroundColor: 'var(--color-status-warning-light)' }}>
+                                        <AlertTriangle size={12} className="mt-0.5 shrink-0" style={{ color: 'var(--color-status-warning)' }} />
+                                        <span style={{ fontSize: 'var(--text-xs)', fontFamily: 'var(--font-family-base)', color: 'var(--color-status-warning)', lineHeight: 1.4 }}>{w}</span>
+                                      </div>
+                                    ))}
+                                  </div>
+                                )}
+
+                                {/* Errors / Validation rules */}
+                                {preset.errors.length > 0 && (
+                                  <div className="space-y-1">
+                                    <p className="uppercase tracking-wider mb-1" style={{ fontSize: '10px', fontWeight: 500, fontFamily: 'var(--font-family-base)', color: 'var(--color-status-danger)' }}>
+                                      Validation Rules
+                                    </p>
+                                    {preset.errors.map((e, i) => (
+                                      <div key={i} className="flex items-start gap-2 p-2 rounded-md" style={{ backgroundColor: 'var(--color-status-danger-light)' }}>
+                                        <Info size={12} className="mt-0.5 shrink-0" style={{ color: 'var(--color-status-danger)' }} />
+                                        <span style={{ fontSize: 'var(--text-xs)', fontFamily: 'var(--font-family-base)', color: 'var(--color-status-danger)', lineHeight: 1.4 }}>{e}</span>
+                                      </div>
+                                    ))}
+                                  </div>
+                                )}
+                              </div>
+                            </CardContent>
+                          </Card>
+                        );
+                      })()}
+                    </div>
+                  ) : activeBlock ? (
+                    // --- BLOCK EDITOR ---
+                    <div className="animate-in fade-in duration-300">
+                      <div className="mb-6">
+                        <div className="flex items-center gap-2 mb-1">
+                          <Badge variant="secondary" className="uppercase tracking-wider text-[10px]" style={{ backgroundColor: 'var(--color-accent-default)', color: 'var(--color-text-primary)', fontWeight: 'var(--font-weight-medium)' }}>
+                            {activeBlock.type} Block
+                          </Badge>
+                        </div>
+                        <h2 style={{ fontSize: 'var(--text-xl)', fontWeight: 'var(--font-weight-medium)', color: 'var(--color-text-primary)' }}>
+                          {activeBlock.title || 'Untitled Block'}
+                        </h2>
+                      </div>
+
+                      <EquipBlockEditor
+                        key={activeBlock.id}
+                        block={activeBlock}
+                        onChange={updates => updateBlock(activeBlock.id, updates)}
+                        onDelete={() => deleteBlock(activeBlock.id)}
+                        isExpanded={true}
+                        onToggleExpand={() => {}} 
+                        moveUp={undefined}
+                        moveDown={undefined}
+                        hideHeader={true}
+                        isAssessment={mode === 'assessment'}
+                      />
+                    </div>
+                  ) : (
+                    <div className="flex flex-col items-center justify-center h-64" style={{ color: 'var(--color-text-muted)' }}>
+                      <p>
+                        {singleDayMode
+                          ? "Select a block to edit." 
+                          : "Block not found."}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="flex-1 flex items-center justify-center" style={{ color: 'var(--color-text-muted)', backgroundColor: 'var(--color-bg-muted)' }}>
+              <p>Select a day to view properties</p>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

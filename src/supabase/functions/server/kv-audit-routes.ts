@@ -123,6 +123,9 @@ const KV_SCHEMA: KVKeyDef[] = [
   // ── CHECK-IN SCALES ─────────────────────────────────────────
   { prefix: "checkin_scale:", description: "Check-in scale configuration", owner: "scales-routes.ts", consumers: ["scales-routes.ts"], scoped: "global", category: "scales", orphanRisk: "none" },
 
+  // ── iKAN SCORE ─────────────────────────────────────────────
+  { prefix: "ikan_score:", description: "Daily iKAN wellness score snapshots", owner: "ikan-score-routes.ts", consumers: ["ikan-score-routes.ts"], scoped: "user", category: "scoring", orphanRisk: "low", notes: "Daily snapshots for trend tracking, keyed as ikan_score:{userId}:{date}" },
+
   // ── ACTIVITY TRACKING ───────────────────────────────────────
   { prefix: "activity:read:", description: "Read activity record", owner: "index.tsx", consumers: [], scoped: "entity", category: "activity", orphanRisk: "high", notes: "Write-only; never cleaned" },
   { prefix: "activity:user:", description: "User's read activity ID list", owner: "index.tsx", consumers: ["index.tsx"], scoped: "user", category: "activity", orphanRisk: "medium" },
@@ -168,6 +171,27 @@ const KV_SCHEMA: KVKeyDef[] = [
   // ── CONTACT SUBMISSIONS ─────────────────────────────────────
   { prefix: "contact_submission:", description: "Contact form submission", owner: "contact-routes.ts", consumers: ["contact-routes.ts"], scoped: "entity", category: "contact", orphanRisk: "low" },
   { prefix: "contact_submissions:", description: "Contact submissions (alternate)", owner: "contact-routes.ts", consumers: ["contact-routes.ts"], scoped: "entity", category: "contact", orphanRisk: "low", notes: "Alternate prefix for contact submissions" },
+
+  // ── ACTIVITY LOGS ───────────────────────────────────────────
+  { prefix: "activity_log:", description: "User activity log entry", owner: "index.tsx", consumers: ["index.tsx"], scoped: "entity", category: "activity", orphanRisk: "high", notes: "Write-heavy; one entry per tracked action; grows unbounded" },
+
+  // ── BOOKINGS / CONSULTATIONS ────────────────────────────────
+  { prefix: "booking:", description: "Consultation booking record", owner: "index.tsx", consumers: ["index.tsx"], scoped: "user", category: "booking", orphanRisk: "medium", notes: "User consultation bookings with professionals" },
+
+  // ── TRANSACTIONS / PAYMENTS ─────────────────────────────────
+  { prefix: "transaction:", description: "Razorpay payment transaction", owner: "index.tsx", consumers: ["index.tsx"], scoped: "entity", category: "payment", orphanRisk: "medium", notes: "Payment transactions via Razorpay gateway" },
+
+  // ── SCORING ENGINE ──────────────────────────────────────────
+  { prefix: "scoring-profile:", description: "Scoring engine profile config", owner: "admin-routes.ts", consumers: ["admin-routes.ts"], scoped: "entity", category: "scoring", orphanRisk: "low", notes: "Admin-defined scoring profiles for assessments" },
+
+  // ── HERO BANNERS ────────────────────────────────────────────
+  { prefix: "hero_banner:", description: "Hero banner config per page", owner: "hero-banner-routes.ts", consumers: ["hero-banner-routes.ts"], scoped: "global", category: "cms", orphanRisk: "none", notes: "Per-page hero banner overrides for built-in screens" },
+
+  // ── CHECK-IN TEMPLATES ──────────────────────────────────────
+  { prefix: "checkin_template:", description: "Check-in flow template", owner: "checkin-template-routes.ts", consumers: ["checkin-template-routes.ts"], scoped: "global", category: "scales", orphanRisk: "low", notes: "Admin-configured check-in flow templates" },
+
+  // ── REMINDERS ───────────────────────────────────────────────
+  { prefix: "reminder:last:", description: "Last reminder sent timestamp", owner: "reminder-routes.ts", consumers: ["reminder-routes.ts"], scoped: "user", category: "communication", orphanRisk: "low", notes: "Cooldown timestamps for reminder deduplication" },
 ];
 
 // Sort prefixes longest-first so longer prefixes match before shorter ones

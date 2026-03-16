@@ -134,8 +134,11 @@ export function GoogleFitProvider({ children }: { children: ReactNode }) {
         setData(null);
       }
     } catch (err: any) {
-      // Silently fail on auth errors (user not logged in yet) and 404s (edge function cold start)
-      if (!err?.message?.includes('401') && !err?.message?.includes('404') && !err?.message?.includes('AbortError')) {
+      // Silently fail on auth errors (user not logged in yet), 404s (edge function cold start),
+      // and network errors (server unreachable / offline)
+      const msg = err?.message?.toLowerCase() || '';
+      const isNetworkError = err?.name === 'TypeError' && msg.includes('failed to fetch');
+      if (!err?.message?.includes('401') && !err?.message?.includes('404') && !err?.message?.includes('AbortError') && !isNetworkError) {
         console.error('Health Connect fetch error:', err);
       }
     } finally {

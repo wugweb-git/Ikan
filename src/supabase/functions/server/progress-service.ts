@@ -9,10 +9,11 @@ import { ContentService } from './content-service.ts';
 export interface UserEnrollment {
   user_id: string;
   equip_id: string;
-  status: 'active' | 'completed' | 'paused';
+  status: 'active' | 'completed' | 'paused' | 'withdrawn';
   current_day_number: number;
   started_at: string;
   last_activity_at: string;
+  withdrawn_at?: string;
 }
 
 export interface UserDayProgress {
@@ -34,7 +35,16 @@ export const ProgressService = {
   async enrollUser(userId: string, equipId: string): Promise<UserEnrollment> {
     const key = `enrollment:${userId}:${equipId}`;
     const existing = await kv.get(key);
-    if (existing) return existing;
+    if (existing) {
+      // If previously withdrawn, re-activate the enrollment (preserving progress)
+      if (existing.status === 'withdrawn') {
+        existing.status = 'active';
+        delete existing.withdrawn_at;
+        existing.last_activity_at = new Date().toISOString();
+        await kv.set(key, existing);
+      }
+      return existing;
+    }
 
     const enrollment: UserEnrollment = {
       user_id: userId,
@@ -55,11 +65,26 @@ export const ProgressService = {
 
   async getUserEnrollments(userId: string): Promise<UserEnrollment[]> {
     const all = await kv.getByPrefix(`enrollment:${userId}:`);
-    return all || [];
+    // Filter out withdrawn enrollments so they don't show on the user's dashboard
+    return (all || []).filter((e: any) => e.status !== 'withdrawn');
   },
 
   async getEnrollment(userId: string, equipId: string): Promise<UserEnrollment | null> {
     return await kv.get(`enrollment:${userId}:${equipId}`);
+  },
+
+  // UNENROLL — Soft-delete by setting status to 'withdrawn'
+  // Preserves progress data so user can re-enroll later if desired
+  async unenrollUser(userId: string, equipId: string): Promise<void> {
+    const key = `enrollment:${userId}:${equipId}`;
+    const existing = await kv.get(key);
+    if (!existing) return;
+
+    await kv.set(key, {
+      ...existing,
+      status: 'withdrawn',
+      withdrawn_at: new Date().toISOString(),
+    });
   },
 
   // DAY PROGRESS

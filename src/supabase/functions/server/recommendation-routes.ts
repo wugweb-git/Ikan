@@ -64,4 +64,18 @@ app.delete("/admin/recommendations/rules/:id", requireAuth, async (c) => {
   }
 });
 
+// ========================================
+// PUBLIC ENDPOINT: Get recommendation engine config
+// Used by the frontend engine to load admin-configured rules instead of hardcoded defaults
+// ========================================
+app.get("/recommendations/engine-config", async (c) => {
+  try {
+    const rules = await RecommendationRuleService.listRules();
+    return c.json({ rules });
+  } catch (error) {
+    console.error('Failed to fetch engine config:', error);
+    return c.json({ rules: [] }, 500);
+  }
+});
+
 } // End registerRecommendationRoutes

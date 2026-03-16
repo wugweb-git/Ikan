@@ -395,6 +395,89 @@ export const DEFAULT_CMS_CONTENT: { [key: string]: any } = {
     `,
     lastUpdated: new Date().toISOString()
   },
+  'lets-talk': {
+    title: "Let's Talk",
+    content: `
+      <div class="space-y-8">
+        <div class="bg-gradient-to-r from-teal-50 to-cyan-50 p-6 rounded-lg border border-teal-100">
+          <h2 class="text-xl font-semibold text-gray-900 mb-3">💬 Let's Talk</h2>
+          <p class="text-gray-700 leading-relaxed">Taking the first step is often the hardest part. Whether you have questions, need guidance, or are ready to start your mental health journey — we're here to listen.</p>
+        </div>
+
+        <div class="grid gap-6">
+          <section class="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
+            <h3 class="text-lg font-medium text-gray-900 mb-4 flex items-center">
+              <span class="mr-2">🤝</span> How Can We Help?
+            </h3>
+            <div class="grid md:grid-cols-2 gap-4">
+              <div class="bg-teal-50 p-4 rounded-lg border border-teal-200">
+                <h4 class="font-medium text-gray-900 mb-2">General Inquiries</h4>
+                <p class="text-sm text-gray-700">Questions about our platform, services, or how to get started.</p>
+                <a href="mailto:hello@ikan.health" class="text-teal-600 font-medium text-sm hover:underline mt-2 inline-block">hello@ikan.health</a>
+              </div>
+              <div class="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                <h4 class="font-medium text-gray-900 mb-2">Book a Consultation</h4>
+                <p class="text-sm text-gray-700">Ready to speak with a professional? Schedule a consultation today.</p>
+                <a href="/consultation" class="text-blue-600 font-medium text-sm hover:underline mt-2 inline-block">Book Now →</a>
+              </div>
+              <div class="bg-purple-50 p-4 rounded-lg border border-purple-200">
+                <h4 class="font-medium text-gray-900 mb-2">Partnerships</h4>
+                <p class="text-sm text-gray-700">Interested in partnering with iKan for corporate wellness or research?</p>
+                <a href="mailto:partners@ikan.health" class="text-purple-600 font-medium text-sm hover:underline mt-2 inline-block">partners@ikan.health</a>
+              </div>
+              <div class="bg-orange-50 p-4 rounded-lg border border-orange-200">
+                <h4 class="font-medium text-gray-900 mb-2">Technical Support</h4>
+                <p class="text-sm text-gray-700">Having trouble with the app? Our support team can help.</p>
+                <a href="mailto:support@ikan.health" class="text-orange-600 font-medium text-sm hover:underline mt-2 inline-block">support@ikan.health</a>
+              </div>
+            </div>
+          </section>
+
+          <section class="bg-red-50 p-6 rounded-lg border border-red-200">
+            <h3 class="text-lg font-medium text-red-900 mb-4 flex items-center">
+              <span class="mr-2">🚨</span> Crisis Support
+            </h3>
+            <div class="bg-white p-4 rounded-lg border border-red-200">
+              <p class="text-red-800 font-medium mb-2">If you or someone you know is in immediate danger, please reach out now:</p>
+              <div class="grid sm:grid-cols-2 gap-2 text-sm text-red-700">
+                <p>• National: 988 Suicide & Crisis Lifeline</p>
+                <p>• Text: HOME to 741741</p>
+                <p>• Emergency: 911</p>
+                <p>• International: befrienders.org</p>
+              </div>
+            </div>
+          </section>
+        </div>
+      </div>
+    `,
+    lastUpdated: new Date().toISOString()
+  },
+  'not-found': {
+    title: 'Page Not Found',
+    content: `
+      <div class="space-y-8 text-center py-8">
+        <div class="text-6xl mb-4">🔍</div>
+        <h2 class="text-2xl font-semibold text-gray-900">Oops! Page Not Found</h2>
+        <p class="text-gray-600 max-w-md mx-auto leading-relaxed">The page you're looking for doesn't exist or may have been moved. Don't worry — let's get you back on track.</p>
+
+        <div class="flex flex-col sm:flex-row gap-4 justify-center mt-6">
+          <a href="/" class="inline-block bg-gray-900 text-white px-6 py-3 rounded-lg font-medium hover:bg-gray-800 transition-colors">Go to Homepage</a>
+          <a href="/contact" class="inline-block bg-gray-100 text-gray-900 px-6 py-3 rounded-lg font-medium hover:bg-gray-200 transition-colors">Contact Support</a>
+        </div>
+
+        <div class="mt-8 bg-blue-50 p-6 rounded-lg border border-blue-100 max-w-lg mx-auto text-left">
+          <h3 class="text-lg font-medium text-gray-900 mb-3">Looking for something specific?</h3>
+          <ul class="space-y-2 text-sm text-gray-700">
+            <li>• <a href="/assessments" class="text-blue-600 hover:underline">Take an Assessment</a></li>
+            <li>• <a href="/resources" class="text-blue-600 hover:underline">Browse Resources</a></li>
+            <li>• <a href="/consultation" class="text-blue-600 hover:underline">Book a Consultation</a></li>
+            <li>• <a href="/faq" class="text-blue-600 hover:underline">Frequently Asked Questions</a></li>
+          </ul>
+        </div>
+      </div>
+    `,
+    lastUpdated: new Date().toISOString()
+  },
   'homepage-hero': {
     title: 'Homepage Hero',
     content: JSON.stringify({

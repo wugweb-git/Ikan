@@ -241,7 +241,7 @@ export function AdminKVAudit({ onBack }: AdminKVAuditProps) {
   if (error && !audit) {
     return (
       <div className="space-y-6">
-        <AdminHeader title="KV Database Audit" description="Scan the key-value store for orphaned and inconsistent data" onBack={onBack} />
+        <AdminHeader title="KV Database Audit" description="Scan the key-value store for orphaned and inconsistent data" />
         <Card className="p-6" style={{ borderRadius: 'var(--radius-lg)', border: '1px solid var(--color-status-danger-light)' }}>
           <div className="flex items-center gap-3">
             <XCircle className="w-5 h-5" style={{ color: 'var(--color-status-danger)' }} />

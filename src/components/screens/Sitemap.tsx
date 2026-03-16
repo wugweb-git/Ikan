@@ -1,23 +1,7 @@
 import React from 'react';
 import { useIsMobile } from '../../hooks/useIsMobile';
 import { PageHero } from '../ui/PageHero';
-import {
-  Home,
-  Info,
-  BookOpen,
-  ClipboardCheck,
-  Users,
-  Stethoscope,
-  Mail,
-  HelpCircle,
-  Shield,
-  FileText,
-  Ban,
-  RotateCcw,
-  Map,
-  Heart,
-  UserCircle,
-} from 'lucide-react';
+import { usePageContent } from '../../hooks/usePageContent';
 
 interface SitemapProps {
   className?: string;
@@ -76,6 +60,7 @@ const sitemapGroups: SitemapGroup[] = [
 
 export function Sitemap({ className, onNavigate, onBack }: SitemapProps) {
   const isMobile = useIsMobile();
+  const { content } = usePageContent('sitemap');
 
   return (
     <div
@@ -87,8 +72,8 @@ export function Sitemap({ className, onNavigate, onBack }: SitemapProps) {
     >
       {/* Hero Section */}
       <PageHero
-        title="Site Navigation"
-        subtitle="Explore all pages and resources available on the iKan mental health platform."
+        title={content?.heroTitle || 'Site Navigation'}
+        subtitle={content?.heroSubtitle || 'Explore all pages and resources available on iKan.'}
       />
 
       {/* Content */}

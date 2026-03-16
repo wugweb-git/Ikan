@@ -102,6 +102,20 @@ export function RecommendationCards({ engineResult, onNavigate, className }: Rec
             }}>
               {config.label}
             </span>
+            {/* Assessment source info */}
+            {(engineResult.assessmentName || engineResult.assessmentSlug) && (
+              <p style={{
+                fontSize: 'var(--text-xs)',
+                fontWeight: 400,
+                fontFamily: 'var(--font-family-base)',
+                color: 'var(--color-text-muted)',
+                margin: '0 0 4px',
+                lineHeight: 1.3,
+              }}>
+                Based on your {engineResult.assessmentName || engineResult.assessmentSlug} result
+                {engineResult.score !== undefined && engineResult.maxScore ? ` (${engineResult.score}/${engineResult.maxScore})` : ''}
+              </p>
+            )}
             <p style={{
               fontSize: 'var(--text-sm)',
               fontWeight: 400,
@@ -110,7 +124,7 @@ export function RecommendationCards({ engineResult, onNavigate, className }: Rec
               lineHeight: 'var(--line-height-md)',
               margin: 0,
             }}>
-              {severityMessage}
+              {severityMessage || 'Your assessment results have been analyzed.'}
             </p>
           </div>
         </div>

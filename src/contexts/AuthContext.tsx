@@ -99,7 +99,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               email: session.user.email || 'User',
               name: session.user.user_metadata?.name || 'User',
               phone: session.user.user_metadata?.phone,
-              corporate_user: false
+              corporate_user: false,
+              is_admin: (() => { try { return localStorage.getItem(`ikan_is_admin_${session.user.id}`) === 'true'; } catch { return false; } })()
             };
             setUser(quickUser);
             console.log('✅ Valid session found, user set:', quickUser.name);
@@ -111,6 +112,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 if (profile && profile.user_id === quickUser.user_id) {
                   setUser(profile);
                   console.log('✅ Full profile loaded successfully');
+                  // Cache is_admin for instant access on next load
+                  try { localStorage.setItem(`ikan_is_admin_${profile.user_id}`, profile.is_admin ? 'true' : 'false'); } catch {}
                 }
               } catch (error) {
                 console.log('📦 Profile fetch failed during initialization - keeping quick user data');
@@ -142,59 +145,66 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     // Set up auth listener for ongoing auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log('Auth state changed:', event, session ? 'with session' : 'no session');
-      
-      // Handle different auth events
-      if (event === 'SIGNED_OUT' || event === 'TOKEN_REFRESHED' && !session) {
-        console.log('🔄 User signed out or session invalid');
-        setSession(null);
-        setUser(null);
-        return;
-      }
-      
-      setSession(session);
-
-      if (session?.user) {
-        // Log login activity if this is a fresh sign in
-        if (event === 'SIGNED_IN') {
-          apiClient.logActivity('login').catch(e => console.log('Login logging failed', e));
-        }
-
-        // Validate session before using it
-        const now = Math.floor(Date.now() / 1000);
-        if (session.expires_at && session.expires_at <= now) {
-          console.log('🔄 Session expired in auth listener');
+      try {
+        console.log('Auth state changed:', event, session ? 'with session' : 'no session');
+        
+        // Handle different auth events
+        if (event === 'SIGNED_OUT' || (event === 'TOKEN_REFRESHED' && !session)) {
+          console.log('Auth: User signed out or session invalid');
           setSession(null);
           setUser(null);
           return;
         }
         
-        // Quick user setup
-        const quickUser = {
-          user_id: session.user.id,
-          email: session.user.email || 'User',
-          name: session.user.user_metadata?.name || 'User',
-          phone: session.user.user_metadata?.phone,
-          corporate_user: false
-        };
-        setUser(quickUser);
-        console.log('🔄 Auth state: User signed in', quickUser.name);
-        
-        // Background profile fetch with simpler retry logic
-        setTimeout(async () => {
-          try {
-            const profile = await apiClient.getProfile();
-            if (profile && profile.user_id === quickUser.user_id) {
-              setUser(profile);
-              console.log('✅ Profile loaded via auth listener');
-            }
-          } catch (error) {
-            console.log('📦 Profile fetch via auth listener failed - keeping quick user data');
+        setSession(session);
+
+        if (session?.user) {
+          // Log login activity if this is a fresh sign in
+          if (event === 'SIGNED_IN') {
+            apiClient.logActivity('login').catch(e => console.log('Login logging failed', e));
           }
-        }, 500);
-      } else {
-        console.log('🔄 Auth state: User signed out');
-        setUser(null);
+
+          // Validate session before using it
+          const now = Math.floor(Date.now() / 1000);
+          if (session.expires_at && session.expires_at <= now) {
+            console.log('🔄 Session expired in auth listener');
+            setSession(null);
+            setUser(null);
+            return;
+          }
+          
+          // Quick user setup
+          const quickUser = {
+            user_id: session.user.id,
+            email: session.user.email || 'User',
+            name: session.user.user_metadata?.name || 'User',
+            phone: session.user.user_metadata?.phone,
+            corporate_user: false,
+            is_admin: (() => { try { return localStorage.getItem(`ikan_is_admin_${session.user.id}`) === 'true'; } catch { return false; } })()
+          };
+          setUser(quickUser);
+          console.log('🔄 Auth state: User signed in', quickUser.name);
+          
+          // Background profile fetch with simpler retry logic
+          setTimeout(async () => {
+            try {
+              const profile = await apiClient.getProfile();
+              if (profile && profile.user_id === quickUser.user_id) {
+                setUser(profile);
+                console.log('✅ Profile loaded via auth listener');
+                // Cache is_admin for instant access on next load
+                try { localStorage.setItem(`ikan_is_admin_${profile.user_id}`, profile.is_admin ? 'true' : 'false'); } catch {}
+              }
+            } catch (error) {
+              console.log('📦 Profile fetch via auth listener failed - keeping quick user data');
+            }
+          }, 500);
+        } else {
+          console.log('🔄 Auth state: User signed out');
+          setUser(null);
+        }
+      } catch (error) {
+        console.error('Error in auth state change handler:', error);
       }
     });
 
@@ -215,17 +225,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         // Auto-create user for ANY failed login in this environment (Prototyping Friendliness)
         // This avoids "Invalid login credentials" blocking the user flow
         if (error.message?.includes('Invalid login credentials')) {
-          console.log(`⚠️ User ${email} not found. Auto-creating for prototype...`);
+          console.log(`⚠️ User ${email} not found or wrong password. Auto-creating/updating for prototype...`);
           
           try {
             // Generate a name from email if not provided
             const name = email.split('@')[0].split(/[._]/).map(s => s.charAt(0).toUpperCase() + s.slice(1)).join(' ');
             
-            console.log(`Creating user: ${name} (${email})`);
+            console.log(`Creating/updating user: ${name} (${email})`);
             await apiClient.signUp(email, password, name);
             
-            // Wait a moment for propagation
-            await new Promise(resolve => setTimeout(resolve, 800));
+            // Wait for Supabase auth propagation (password updates may take slightly longer)
+            await new Promise(resolve => setTimeout(resolve, 1200));
             
             // Retry sign-in
             const { data: retryData, error: retryError } = await supabase.auth.signInWithPassword({
@@ -234,7 +244,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             });
             
             if (retryError) {
-              console.error('Retry login failed:', retryError);
+              console.error('Retry login after auto-create/update failed:', retryError);
               throw retryError;
             }
             
@@ -249,11 +259,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 corporate_user: false
               });
               
-              console.log('✅ Account automatically created for prototype testing');
+              console.log('✅ Account automatically created/updated for prototype testing');
               return;
             }
           } catch (createError) {
-             console.error('Auto-creation failed:', createError);
+             console.error('Auto-creation/update failed:', createError);
              // Fall through to throw original error
           }
         }
@@ -276,7 +286,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           email: data.user.email || email,
           name: data.user.user_metadata?.name || 'User',
           phone: data.user.user_metadata?.phone,
-          corporate_user: false
+          corporate_user: false,
+          is_admin: (() => { try { return localStorage.getItem(`ikan_is_admin_${data.user.id}`) === 'true'; } catch { return false; } })()
         };
         setUser(immediateUser);
         
@@ -287,6 +298,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             if (profile && profile.user_id === immediateUser.user_id) {
               setUser(profile);
               console.log('✅ Full profile loaded after sign-in');
+              // Cache is_admin for instant access on next load
+              try { localStorage.setItem(`ikan_is_admin_${profile.user_id}`, profile.is_admin ? 'true' : 'false'); } catch {}
             }
           } catch (error) {
             console.log('Background profile fetch failed:', error);
@@ -372,6 +385,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 name: sessionData.session.user.user_metadata?.name || 'User',
                 phone: sessionData.session.user.user_metadata?.phone,
                 corporate_user: false,
+                is_admin: (() => { try { return localStorage.getItem(`ikan_is_admin_${sessionData.session.user.id}`) === 'true'; } catch { return false; } })()
               };
               setUser(quickUser);
               setLoading(false);
@@ -384,7 +398,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               setTimeout(async () => {
                 try {
                   const profile = await apiClient.getProfile();
-                  if (profile && profile.user_id === quickUser.user_id) setUser(profile);
+                  if (profile && profile.user_id === quickUser.user_id) {
+                    setUser(profile);
+                    // Cache is_admin for instant access on next load
+                    try { localStorage.setItem(`ikan_is_admin_${profile.user_id}`, profile.is_admin ? 'true' : 'false'); } catch {}
+                  }
                 } catch (_e) { /* silent */ }
               }, 1000);
             }
@@ -427,6 +445,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signOut = async () => {
     try {
       setLoading(true);
+      // Clear cached is_admin before signing out
+      if (user?.user_id) {
+        try { localStorage.removeItem(`ikan_is_admin_${user.user_id}`); } catch {}
+      }
       await apiClient.signOut();
       setUser(null);
       setSession(null);
@@ -522,7 +544,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               email: refreshedSession.user.email || 'User',
               name: refreshedSession.user.user_metadata?.name || 'User',
               phone: refreshedSession.user.user_metadata?.phone,
-              corporate_user: false
+              corporate_user: false,
+              is_admin: (() => { try { return localStorage.getItem(`ikan_is_admin_${refreshedSession.user.id}`) === 'true'; } catch { return false; } })()
             };
             setUser(recoveredUser);
             console.log('✅ Session recovered with refresh');
@@ -545,7 +568,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             email: currentSession.user.email || 'User',
             name: currentSession.user.user_metadata?.name || 'User',
             phone: currentSession.user.user_metadata?.phone,
-            corporate_user: false
+            corporate_user: false,
+            is_admin: (() => { try { return localStorage.getItem(`ikan_is_admin_${currentSession.user.id}`) === 'true'; } catch { return false; } })()
           };
           setUser(recoveredUser);
           console.log('✅ Session recovered (was still valid)');

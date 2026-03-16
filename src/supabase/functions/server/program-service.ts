@@ -37,6 +37,7 @@ export const EquipService = {
     };
 
     await kv.set(`equip:${id}`, equip);
+    await kv.set(`equip_program:${id}`, equip); // Dual-write for public listing
     await kv.set(`equip_slug:${data.slug}`, id);
     // Initialize days index
     await kv.set(`idx_equip_days:${id}`, []);
@@ -74,6 +75,7 @@ export const EquipService = {
     };
 
     await kv.set(`equip:${id}`, updated);
+    await kv.set(`equip_program:${id}`, updated); // Dual-write for public listing
     return updated;
   },
 
@@ -100,6 +102,8 @@ export const EquipService = {
     
     // 4. Delete Equip
     await kv.del(`equip:${id}`);
+    await kv.del(`equip_program:${id}`); // Dual-delete public listing prefix
+    await kv.del(`equip_program_by_slug:${equip.slug}`); // Cleanup slug index if exists
 
     // 5. Cleanup Enrollments (Scanning all enrollments - expensive but necessary for consistency)
     // Ideally we should have an index, but for now scan is fine.

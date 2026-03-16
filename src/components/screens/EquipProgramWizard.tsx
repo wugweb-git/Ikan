@@ -1,10 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { 
-  Plus, Trash2, BookOpen, Calendar, LayoutList, GripVertical, 
-  ChevronUp, ChevronDown, X, Info, Lightbulb, Save, Upload,
-  Settings, Copy, Search, MoreHorizontal, Clock, Sparkles
+  Save, Trash2, Eye, Plus, X, EyeOff, Upload, GripVertical, ArrowUp, ArrowDown
 } from 'lucide-react';
-import { DndProvider, useDrag, useDrop } from 'react-dnd';
+import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import { useNotifications } from '../../contexts/NotificationContext';
 import { apiClient } from '../../lib/api-client';
@@ -27,13 +25,19 @@ import { UnsavedChangesDialog } from '../ui/unsaved-changes-dialog';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '../ui/dialog';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '../ui/dropdown-menu';
 import { 
-  EquipProgram, 
+  EquipProgram,
+  OnboardingQuestion,
+  Activity,
+  DayContent,
+  DEFAULT_CHECKIN_CONFIG,
+  type CheckInConfig,
 } from '../../lib/equip-admin-types';
 import { EquipBlockEditor } from './EquipBlockEditor';
-// import { EquipOnboardingEditor } from './EquipOnboardingEditor'; // REMOVED - Using DailyBuilder
 import { EquipLandingPageRichTextEditor } from './EquipLandingPageRichTextEditor';
 import { EquipDailyEditor as DailyBuilder } from './EquipDailyEditor';
 import { UnifiedBasicInfoForm } from '../admin/UnifiedBasicInfoForm';
+import { useMetadata } from '../../hooks/useMetadata';
+import { ProgramPlayer } from '../player/ProgramPlayer';
 
 interface EquipProgramWizardProps {
   programId?: string;
@@ -41,20 +45,8 @@ interface EquipProgramWizardProps {
   onSave: () => void;
 }
 
-const defaultCategoryOptions = [
-  { value: 'anxiety', label: 'Anxiety Management' },
-  { value: 'depression', label: 'Depression Support' },
-  { value: 'stress', label: 'Stress Reduction' },
-  { value: 'resilience', label: 'Building Resilience' },
-  { value: 'mindfulness', label: 'Mindfulness' },
-  { value: 'other', label: 'Other' }
-];
-
-const difficultyOptions = [
-  { value: 'beginner', label: 'Beginner' },
-  { value: 'intermediate', label: 'Intermediate' },
-  { value: 'advanced', label: 'Advanced' }
-];
+// Fallback category/difficulty options — used only while metadata hasn't loaded from KV
+// REMOVED: No hardcoded fallbacks — KV is the single source of truth
 
 // --- MAPPING HELPERS FOR UNIFIED CONTENT SYSTEM ---
 // Converts Legacy Onboarding Questions <-> Unified Block Schema (Day 0)
@@ -139,37 +131,12 @@ export function EquipProgramWizard({ programId, onBack, onSave }: EquipProgramWi
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [currentStep, setCurrentStep] = useState(0);
   const [selectedQuestion, setSelectedQuestion] = useState<OnboardingQuestion | null>(null);
-  const [categoryOptions, setCategoryOptions] = useState(defaultCategoryOptions);
-  
-  useEffect(() => {
-    loadCategories();
-  }, []);
+  const [showPlayerPreview, setShowPlayerPreview] = useState(false);
 
-  const loadCategories = async () => {
-    try {
-      const data = await apiClient.getCategories();
-      if (Array.isArray(data) && data.length > 0) {
-        // Deduplicate categories by slug/value
-        const uniqueMap = new Map();
-        
-        data.forEach((c: any) => {
-             if (c.slug && !uniqueMap.has(c.slug)) {
-                 uniqueMap.set(c.slug, {
-                    label: c.name,
-                    value: c.slug
-                 });
-             }
-        });
-        
-        // If API returns valid data, use it.
-        if (uniqueMap.size > 0) {
-            setCategoryOptions(Array.from(uniqueMap.values()));
-        }
-      }
-    } catch (error) {
-      console.warn('Failed to load categories', error);
-    }
-  };
+  // ── Metadata-driven categories & difficulty levels ──────────
+  const { categories: metaCategories, difficultyLevels: metaDifficulty } = useMetadata();
+  const categoryOptions = metaCategories.map(c => ({ label: c.label, value: c.value }));
+  const difficultyOptions = metaDifficulty.map(d => ({ label: d.label, value: d.value }));
 
   const [formData, setFormData] = useState<Partial<EquipProgram>>({
     title: '',
@@ -212,6 +179,7 @@ export function EquipProgramWizard({ programId, onBack, onSave }: EquipProgramWi
   const { hasUnsavedChanges, markAsSaved, markAsUnsaved, setShowWarning, showWarning } = useUnsavedChanges();
 
   const [localProgramId, setLocalProgramId] = useState(programId);
+  const hasLoadedRef = useRef(false);
 
   // Load Data
   useEffect(() => {
@@ -222,8 +190,14 @@ export function EquipProgramWizard({ programId, onBack, onSave }: EquipProgramWi
     }
   }, [localProgramId]);
 
+  // Mark unsaved only AFTER initial load — use ref to skip first load
   useEffect(() => {
-    if (formData.title) markAsUnsaved();
+    if (!hasLoadedRef.current) {
+      // Skip the first cycle (initial load / API data load)
+      if (!loading) hasLoadedRef.current = true;
+      return;
+    }
+    markAsUnsaved();
   }, [formData]);
 
   const loadProgram = async () => {
@@ -254,25 +228,6 @@ export function EquipProgramWizard({ programId, onBack, onSave }: EquipProgramWi
     }
   };
 
-  const handleAutoFill = () => {
-    setFormData(prev => {
-        return {
-            ...prev,
-            description: prev.description || `A ${prev.duration_days || 28}-day journey to master ${prev.title || 'wellness'}. Includes daily exercises and reflections.`,
-            subtitle: prev.subtitle || 'Transform your life with daily practice.',
-            duration_days: prev.duration_days || 28,
-            price: prev.price || 499,
-            is_paid: prev.is_paid !== undefined ? prev.is_paid : true,
-            tags: (prev.tags?.length || 0) === 0 ? ['wellness', 'self-care', prev.category || 'general'] : prev.tags,
-            difficulty: prev.difficulty || 'beginner',
-            // NOTE: We do NOT auto-fill content (daily_content/structure) or images anymore.
-            // This prevents overwriting user structure and broken image links.
-        };
-    });
-    showToast('success', 'Auto-Filled', 'Program details populated with suggestions.');
-    markAsUnsaved();
-  };
-
   const generateDailyContent = (count: number) => {
     if ((formData.daily_content || []).length > 0) return;
     const days: DayContent[] = Array.from({ length: count }, (_, i) => ({
@@ -285,7 +240,8 @@ export function EquipProgramWizard({ programId, onBack, onSave }: EquipProgramWi
     setFormData(prev => ({ ...prev, daily_content: days }));
   };
 
-  // Steps Configuration
+  // Steps Configuration — 3 steps (Onboarding merged into Daily Builder as Day 0)
+  const totalSteps = 2; // 0-indexed max
   const wizardSteps: WizardStep[] = [
     {
       id: 'basic',
@@ -300,44 +256,41 @@ export function EquipProgramWizard({ programId, onBack, onSave }: EquipProgramWi
       metadata: '6 Bento Tiles'
     },
     {
-      id: 'onboarding',
-      title: 'Onboarding',
-      status: currentStep === 2 ? 'current' : currentStep > 2 ? 'completed' : 'upcoming',
-      metadata: `${(formData.onboarding_questions || []).length} Questions`
-    },
-    {
       id: 'daily',
-      title: 'Daily Builder',
-      status: currentStep === 3 ? 'current' : currentStep > 3 ? 'completed' : 'upcoming',
-      metadata: `${(formData.daily_content || []).filter(d => d.day > 0).length} Days`
+      title: 'Content Builder',
+      status: currentStep === 2 ? 'current' : currentStep > 2 ? 'completed' : 'upcoming',
+      metadata: `${(formData.daily_content || []).length} Days (incl. Day 0 Onboarding)`
     }
   ];
 
   // Navigation saves progress. Save preserves state. Publish changes lifecycle.
-  const persistWizard = async (currentData: Partial<EquipProgram>, isAutoSave = false) => {
+  const persistWizard = async (currentData: any, isAutoSave = false) => {
     setSaving(true);
     try {
-      // UNIFIED SYSTEM ADAPTER:
-      // Convert Onboarding Questions to Blocks (Day 0)
-      const onboardingBlocks = (currentData.onboarding_questions || []).map(mapQuestionToBlock);
+      // UNIFIED SYSTEM: Day 0 is now edited directly in the Content Builder.
+      // If Day 0 exists in daily_content, use it as-is.
+      // If Day 0 is missing, create it from legacy onboarding_questions (backward compat).
+      const dailyContent = currentData.daily_content || [];
+      const hasDay0 = dailyContent.some((d: any) => d.day === 0);
       
-      const onboardingDay: DayContent = {
-         day: 0,
-         title: 'Onboarding',
-         description: 'Initial assessment',
-         dayType: 'lesson', // or 'assessment'
-         activities: onboardingBlocks
-      };
-      
-      // Merge Day 0 into daily_content
-      const existingDaily = currentData.daily_content?.filter(d => d.day !== 0) || [];
-      const unifiedDailyContent = [onboardingDay, ...existingDaily];
+      let unifiedDailyContent: DayContent[];
+      if (hasDay0) {
+        // Day 0 already exists — use daily_content directly
+        unifiedDailyContent = dailyContent;
+      } else {
+        // Fallback: create Day 0 from legacy onboarding_questions
+        const onboardingBlocks = (currentData.onboarding_questions || []).map(mapQuestionToBlock);
+        const onboardingDay: DayContent = {
+          day: 0, title: 'Onboarding', description: 'Initial assessment',
+          dayType: 'lesson', activities: onboardingBlocks
+        };
+        unifiedDailyContent = [onboardingDay, ...dailyContent];
+      }
       
       const payload = {
          ...currentData,
          daily_content: unifiedDailyContent,
-         // We keep onboarding_questions in payload too for legacy safety/Editor compatibility 
-         // but backend should ideally prioritize daily_content
+         // Keep onboarding_questions in payload for legacy safety
       };
 
       let result;
@@ -400,7 +353,7 @@ export function EquipProgramWizard({ programId, onBack, onSave }: EquipProgramWi
   };
 
   // Helper to get or create Day 0 (Onboarding)
-  const getOnboardingDay = (): DayContent => {
+  const getOnboardingDay = useCallback((): DayContent => {
     // Try to find Day 0 in daily_content first
     const existingDay0 = formData.daily_content?.find(d => d.day === 0);
     if (existingDay0) return existingDay0;
@@ -414,17 +367,37 @@ export function EquipProgramWizard({ programId, onBack, onSave }: EquipProgramWi
       dayType: 'lesson',
       activities: onboardingBlocks
     };
-  };
+  }, [formData.daily_content, formData.onboarding_questions]);
+
+  // Memoize program prop for DailyBuilder to prevent unnecessary re-renders
+  const builderProgram = useMemo(() => {
+    const dc = formData.daily_content || [];
+    const hasDay0 = dc.some(d => d.day === 0);
+    return {
+      ...formData,
+      daily_content: hasDay0 ? dc : [getOnboardingDay(), ...dc]
+    };
+  }, [formData, getOnboardingDay]);
+
+  // Stable callback for DailyBuilder
+  const handleBuilderChange = useCallback((updates: any) => {
+    const day0 = updates.daily_content?.find((d: DayContent) => d.day === 0);
+    setFormData(prev => {
+      const newQuestions = day0?.activities?.map(mapBlockToQuestion) || prev.onboarding_questions || [];
+      return { ...prev, ...updates, onboarding_questions: newQuestions };
+    });
+  }, []);
 
 
   return (
+    <DndProvider backend={HTML5Backend}>
     <>
       <WizardLayout
         title={formData.title || 'Untitled Program'}
         status={formData.published ? 'published' : 'draft'}
         steps={wizardSteps}
         currentStep={currentStep}
-        fullWidth={currentStep === 2 || currentStep === 3} // Use full width for builders
+        fullWidth={currentStep === 2} // Use full width for builder
         onStepChange={(newStep) => {
           if (newStep > currentStep) {
             if (validateForm(formData)) setCurrentStep(newStep);
@@ -441,7 +414,7 @@ export function EquipProgramWizard({ programId, onBack, onSave }: EquipProgramWi
         onNext={async () => {
           if (validateForm(formData)) {
             await persistWizard(formData, true); // Auto-save on continue
-            setCurrentStep(s => Math.min(s + 1, 3));
+            setCurrentStep(s => Math.min(s + 1, totalSteps));
           } else {
             showToast('error', 'Validation Error', 'Please correct the errors before proceeding');
           }
@@ -458,8 +431,8 @@ export function EquipProgramWizard({ programId, onBack, onSave }: EquipProgramWi
         finishButtonText={localProgramId ? 'Save & Close' : 'Create Program'}
         stepTitle={wizardSteps[currentStep].title}
         stepDescription={
-          currentStep === 3 
-            ? "Build your daily syllabus by stacking content blocks." 
+          currentStep === 2 
+            ? "Build your program content. Day 0 = Onboarding, Day 1+ = Daily sessions." 
             : "Configure program details."
         }
         footerLeftContent={
@@ -477,15 +450,18 @@ export function EquipProgramWizard({ programId, onBack, onSave }: EquipProgramWi
         }
         footerRightContent={
           <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              onClick={handleAutoFill}
-              className="h-8 px-2 gap-2"
-              title="Auto-fill empty fields & syllabus"
-            >
-              <Sparkles size={16} />
-              <span className="text-xs font-medium hidden md:inline">Auto-Fill</span>
-            </Button>
+            {/* Preview Player button */}
+            {(formData.daily_content || []).some(d => d.activities?.length > 0) && (
+              <Button
+                variant="outline"
+                onClick={() => setShowPlayerPreview(true)}
+                className="h-8 px-3 gap-1.5"
+                title="Preview Program Player"
+              >
+                <Eye size={14} />
+                <span className="text-xs font-medium hidden sm:inline">Preview</span>
+              </Button>
+            )}
             <Button
               variant="outline"
               onClick={() => persistWizard(formData)}
@@ -557,6 +533,97 @@ export function EquipProgramWizard({ programId, onBack, onSave }: EquipProgramWi
                 </div>
               )}
             />
+
+            {/* ── MILESTONE CHECK-IN CONFIGURATION ── */}
+            <Card className="mt-6" style={{ border: '1px solid var(--color-border-default)' }}>
+              <CardContent className="p-6 space-y-5">
+                <div className="flex items-start justify-between">
+                  <div>
+                    <h3 style={{ fontSize: 'var(--text-base)', fontWeight: 500, fontFamily: 'var(--font-family-base)', color: 'var(--color-text-primary)' }}>
+                      Milestone Check-ins
+                    </h3>
+                    <p style={{ fontSize: 'var(--text-sm)', fontFamily: 'var(--font-family-base)', color: 'var(--color-text-muted)', marginTop: 2, lineHeight: 1.5 }}>
+                      A 4-step modal (perceived change, confidence, continuation intent, feedback) shown at key points during the program.
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <Checkbox
+                      id="checkin-enabled"
+                      checked={(formData.checkInConfig ?? DEFAULT_CHECKIN_CONFIG).enabled}
+                      onCheckedChange={(c) => {
+                        const current = formData.checkInConfig ?? { ...DEFAULT_CHECKIN_CONFIG };
+                        setFormData({ ...formData, checkInConfig: { ...current, enabled: !!c } });
+                      }}
+                    />
+                    <Label htmlFor="checkin-enabled" style={{ fontSize: 'var(--text-sm)', fontWeight: 500, fontFamily: 'var(--font-family-base)', cursor: 'pointer' }}>
+                      Enabled
+                    </Label>
+                  </div>
+                </div>
+
+                {(formData.checkInConfig ?? DEFAULT_CHECKIN_CONFIG).enabled && (
+                  <div className="space-y-4 pt-2" style={{ borderTop: '1px solid var(--color-border-default)' }}>
+                    {/* Trigger Days */}
+                    <AdminFormField label="Trigger Days" description="Day numbers that show the check-in modal (comma-separated)">
+                      <Input
+                        value={(formData.checkInConfig?.triggerDays ?? DEFAULT_CHECKIN_CONFIG.triggerDays).join(', ')}
+                        onChange={(e) => {
+                          const days = e.target.value
+                            .split(',')
+                            .map(s => parseInt(s.trim()))
+                            .filter(n => !isNaN(n) && n > 0);
+                          const current = formData.checkInConfig ?? { ...DEFAULT_CHECKIN_CONFIG };
+                          setFormData({ ...formData, checkInConfig: { ...current, triggerDays: days } });
+                        }}
+                        placeholder="e.g. 7, 14, 30"
+                      />
+                    </AdminFormField>
+
+                    {/* Trigger on Last Day */}
+                    <div className="flex items-center gap-2">
+                      <Checkbox
+                        id="checkin-last-day"
+                        checked={(formData.checkInConfig ?? DEFAULT_CHECKIN_CONFIG).triggerOnLastDay}
+                        onCheckedChange={(c) => {
+                          const current = formData.checkInConfig ?? { ...DEFAULT_CHECKIN_CONFIG };
+                          setFormData({ ...formData, checkInConfig: { ...current, triggerOnLastDay: !!c } });
+                        }}
+                      />
+                      <Label htmlFor="checkin-last-day" className="cursor-pointer" style={{ fontSize: 'var(--text-sm)', fontFamily: 'var(--font-family-base)', fontWeight: 400 }}>
+                        Also trigger on the last day of the program
+                      </Label>
+                    </div>
+
+                    {/* Custom Title */}
+                    <AdminFormField label="Custom Modal Title" description="Optional — overrides program title in the check-in header">
+                      <Input
+                        value={formData.checkInConfig?.customTitle || ''}
+                        onChange={(e) => {
+                          const current = formData.checkInConfig ?? { ...DEFAULT_CHECKIN_CONFIG };
+                          setFormData({ ...formData, checkInConfig: { ...current, customTitle: e.target.value || undefined } });
+                        }}
+                        placeholder="Leave blank to use program title"
+                      />
+                    </AdminFormField>
+
+                    {/* Preview */}
+                    <div className="p-3 rounded-lg" style={{ backgroundColor: 'var(--color-bg-muted)', border: '1px solid var(--color-border-default)' }}>
+                      <p style={{ fontSize: 'var(--text-xs)', fontFamily: 'var(--font-family-base)', color: 'var(--color-text-muted)', lineHeight: 1.5 }}>
+                        <strong style={{ fontWeight: 500 }}>Preview:</strong> Check-in will appear on 
+                        {' '}Day{(formData.checkInConfig?.triggerDays ?? DEFAULT_CHECKIN_CONFIG.triggerDays).length > 1 ? 's' : ''}{' '}
+                        <strong style={{ fontWeight: 500 }}>
+                          {(formData.checkInConfig?.triggerDays ?? DEFAULT_CHECKIN_CONFIG.triggerDays).join(', ')}
+                        </strong>
+                        {(formData.checkInConfig ?? DEFAULT_CHECKIN_CONFIG).triggerOnLastDay && (
+                          <> and <strong style={{ fontWeight: 500 }}>the last day</strong></>
+                        )}
+                        .{' '}Title: "<em>{formData.checkInConfig?.customTitle || formData.title || 'Program Title'}</em>"
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
           </div>
         )}
 
@@ -564,54 +631,47 @@ export function EquipProgramWizard({ programId, onBack, onSave }: EquipProgramWi
         {currentStep === 1 && (
           <EquipLandingPageRichTextEditor 
             data={formData}
-            onChange={(updates) => setFormData({ ...formData, ...updates })}
+            onChange={(updates) => setFormData(prev => ({ ...prev, ...updates }))}
           />
         )}
 
-        {/* STEP 2: ONBOARDING (Unified Builder) */}
+        {/* STEP 2: CONTENT BUILDER (Day 0 = Onboarding, Day 1+ = Daily Sessions) */}
         {currentStep === 2 && (
-          <DndProvider backend={HTML5Backend}>
-            <DailyBuilder
-              program={{ 
-                ...formData, 
-                daily_content: [getOnboardingDay()] 
-              }}
-              mode="onboarding"
-              singleDayMode={true}
-              onProgramChange={(updates) => {
-                // updates.daily_content will contain ONLY Day 0 (because singleDayMode)
-                const updatedDay0 = updates.daily_content?.[0];
-                if (updatedDay0) {
-                  // 1. Update daily_content in formData (replace/add Day 0)
-                  const otherDays = formData.daily_content?.filter(d => d.day !== 0) || [];
-                  const newDailyContent = [updatedDay0, ...otherDays];
-                  
-                  // 2. Sync onboarding_questions for legacy compat
-                  const newQuestions = updatedDay0.activities.map(mapBlockToQuestion);
-                  
-                  setFormData({ 
-                    ...formData, 
-                    daily_content: newDailyContent,
-                    onboarding_questions: newQuestions
-                  });
-                }
-              }}
-            />
-          </DndProvider>
-        )}
-
-        {/* STEP 3: DAILY BUILDER */}
-        {currentStep === 3 && (
-          <DndProvider backend={HTML5Backend}>
-            <DailyBuilder
-              program={formData}
-              mode="equip"
-              singleDayMode={false}
-              onProgramChange={(updates) => setFormData({ ...formData, ...updates })}
-            />
-          </DndProvider>
+          <DailyBuilder
+            program={builderProgram}
+            mode="equip"
+            singleDayMode={false}
+            onProgramChange={handleBuilderChange}
+          />
         )}
       </WizardLayout>
+
+      {/* ── Player Preview Dialog ── */}
+      {showPlayerPreview && (
+        <div className="fixed inset-0 z-[100]" style={{ backgroundColor: 'var(--color-bg-card)' }}>
+          <div className="absolute top-3 right-3 z-[101] flex items-center gap-2">
+            <span style={{ fontSize: 'var(--text-xs)', fontWeight: 500, fontFamily: 'var(--font-family-base)', color: 'var(--color-text-inverse)', backgroundColor: 'var(--color-primary-default)', padding: '4px 12px', borderRadius: 'var(--radius-pill)' }}>
+              Preview Mode
+            </span>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowPlayerPreview(false)}
+              className="h-8 px-3 gap-1.5 shadow-lg"
+              style={{ backgroundColor: 'var(--color-bg-card)' }}
+            >
+              <X size={14} /> Close Preview
+            </Button>
+          </div>
+          <ProgramPlayer
+            program={formData as EquipProgram}
+            initialDay={1}
+            onComplete={() => setShowPlayerPreview(false)}
+            onExit={() => setShowPlayerPreview(false)}
+            mode="preview"
+          />
+        </div>
+      )}
 
       <UnsavedChangesDialog
         open={showWarning}
@@ -651,5 +711,6 @@ export function EquipProgramWizard({ programId, onBack, onSave }: EquipProgramWi
         </DialogContent>
       </Dialog>
     </>
+    </DndProvider>
   );
 }

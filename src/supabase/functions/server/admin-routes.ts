@@ -1,10 +1,8 @@
-import { Hono } from 'npm:hono';
-import * as kv from './kv_dual_write.ts';
 import { EquipService } from './program-service.ts';
 import { createClient } from "jsr:@supabase/supabase-js@2";
-import { DEFAULT_ASSESSMENTS } from './default-assessments.ts';
+import * as kv from "./kv_dual_write.ts";
 
-// Super-admin email — this account can never be demoted and is always the root admin
+// Super-admin email
 const SUPER_ADMIN_EMAIL = 'admin@wugweb.com';
 
 export function registerAdminRoutes(app: Hono, requireAuth: any, requireAdmin: any) {
@@ -221,13 +219,7 @@ app.delete("/admin/assessments/:id", requireAdmin, async (c) => {
     // Fetch data BEFORE deleting so we can clean up slug aliases
     const existing = await kv.get(`assessment_def:${id}`) || await kv.get(`assessment:${id}`);
     
-    // Check if this is a hardcoded default assessment (phq-9, gad-7, etc.)
-    // For defaults we MUST write a tombstone so they don't reappear from DEFAULT_ASSESSMENTS
-    const isDefault = DEFAULT_ASSESSMENTS.some(a => a.id === id);
-    
     // ── Aggressive cleanup: find ALL KV keys that reference this assessment ──
-    // This catches stray keys from duplicate route registrations, slug aliases,
-    // sync operations, and any other code paths that stored copies.
     const strayKeys = await kv.findKeysBySubstring(id);
     // Only target assessment-related prefixes (don't nuke user results)
     const assessmentKeyPrefixes = ['assessment:', 'assessment_def:'];
@@ -237,38 +229,19 @@ app.delete("/admin/assessments/:id", requireAdmin, async (c) => {
     
     console.log(`   Found ${keysToClean.length} KV key(s) to clean: ${JSON.stringify(keysToClean)}`);
     
-    if (isDefault) {
-      // Write tombstone — the list route filters on deleted === true
-      const tombstone = { ...(existing || {}), id, deleted: true, deleted_at: new Date().toISOString() };
-      // Tombstone ALL matching keys
-      for (const key of keysToClean) {
-        await kv.set(key, tombstone);
-      }
-      // Ensure the canonical keys exist as tombstones even if not found by scan
-      await kv.set(`assessment_def:${id}`, tombstone);
-      await kv.set(`assessment:${id}`, tombstone);
-      console.log(`✅ Assessment tombstoned (is default): ${id}`);
-    } else {
-      // Non-default: hard-delete ALL matching keys
-      for (const key of keysToClean) {
-        await kv.del(key);
-      }
-      // Ensure canonical keys are deleted even if not found by scan
-      await kv.del(`assessment_def:${id}`);
-      await kv.del(`assessment:${id}`);
-      console.log(`✅ Assessment hard-deleted: ${id} (${keysToClean.length} keys removed)`);
+    // Always hard-delete — no more tombstones needed since assessments are 100% KV-backed
+    for (const key of keysToClean) {
+      await kv.del(key);
     }
+    // Ensure canonical keys are deleted even if not found by scan
+    await kv.del(`assessment_def:${id}`);
+    await kv.del(`assessment:${id}`);
+    console.log(`✅ Assessment hard-deleted: ${id} (${keysToClean.length} keys removed)`);
     
     // Also clean up any slug-based alias not caught by substring search
     if (existing?.slug && existing.slug !== id) {
-      if (isDefault) {
-        const tombstone = { id, slug: existing.slug, deleted: true, deleted_at: new Date().toISOString() };
-        await kv.set(`assessment:${existing.slug}`, tombstone);
-        await kv.set(`assessment_def:${existing.slug}`, tombstone);
-      } else {
-        await kv.del(`assessment:${existing.slug}`);
-        await kv.del(`assessment_def:${existing.slug}`);
-      }
+      await kv.del(`assessment:${existing.slug}`);
+      await kv.del(`assessment_def:${existing.slug}`);
       console.log(`   Also cleaned slug alias: ${existing.slug}`);
     }
     
@@ -425,9 +398,31 @@ app.get("/admin/media/files", requireAdmin, async (c) => {
 app.delete("/admin/media/files/:id", requireAdmin, async (c) => {
   try {
     const id = c.req.param("id");
+    
+    // Load metadata to get bucket and file path for storage deletion
+    const fileMetadata = await kv.get(`media:${id}`);
+    
+    if (fileMetadata && fileMetadata.bucket && fileMetadata.filePath) {
+      // Delete from Supabase Storage
+      const supabase = createClient(
+        Deno.env.get('SUPABASE_URL')!,
+        Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+      );
+      const { error: storageError } = await supabase.storage
+        .from(fileMetadata.bucket)
+        .remove([fileMetadata.filePath]);
+      if (storageError) {
+        console.error(`Storage deletion warning for media:${id}:`, storageError);
+        // Continue to delete KV even if storage delete fails
+      }
+    }
+    
+    // Delete metadata from KV
     await kv.del(`media:${id}`);
+    console.log(`🗑️ Media deleted: ${fileMetadata?.fileName || id}`);
     return c.json({ success: true });
   } catch (error) {
+    console.error("Delete media error:", error);
     return c.json({ error: "Failed to delete media file" }, 500);
   }
 });
@@ -436,47 +431,87 @@ app.post("/admin/media/upload", requireAdmin, async (c) => {
   try {
     const body = await c.req.parseBody();
     const file = body['file'];
-    const bucket = body['bucket'] || 'make-cc205da9-media';
+    const bucket = (body['bucket'] as string) || 'make-cc205da9-media';
 
     if (!file || !(file instanceof File)) {
       return c.json({ error: "No file provided" }, 400);
     }
 
-    // In a real environment, we would upload to Supabase Storage here.
-    // For this environment, we will mock it or store small files in KV (not recommended for large files)
-    // Or just return a placeholder if we can't actually upload.
-    
-    // Since we can't easily upload to storage from here without the supabase client setup for storage (which we have in index.tsx but not passed here easily without imports),
-    // we'll assume the frontend might have uploaded it directly or we need to use the storage API.
-    
-    // However, the instructions say: "Store large files in Supabase Storage instead of the key value table."
-    // and "When returning files from the server, provide the frontend with signed URLs"
-    
-    // Let's import createClient to use storage
-    // But we need the environment variables.
-    
-    // For now, let's just log and return a mock URL to satisfy the API contract, 
-    // or try to use KV if it's small (images usually aren't).
-    
-    const id = crypto.randomUUID();
-    const mockUrl = `https://placehold.co/600x400?text=${encodeURIComponent(file.name)}`;
-    
+    // Create Supabase client for storage operations
+    const supabase = createClient(
+      Deno.env.get('SUPABASE_URL')!,
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+    );
+
+    // Ensure bucket exists (idempotent)
+    const { data: buckets } = await supabase.storage.listBuckets();
+    const bucketExists = buckets?.some((b: any) => b.name === bucket);
+    if (!bucketExists) {
+      console.log(`📦 Creating media bucket: ${bucket}`);
+      const { error: bucketError } = await supabase.storage.createBucket(bucket, {
+        public: false,
+        fileSizeLimit: 52428800 // 50MB
+      });
+      if (bucketError) {
+        console.error('Bucket creation error:', bucketError);
+        return c.json({ error: 'Failed to create storage bucket' }, 500);
+      }
+    }
+
+    // Generate unique filename
+    const timestamp = Date.now();
+    const randomStr = Math.random().toString(36).substring(2, 9);
+    const fileExt = file.name.split('.').pop() || 'bin';
+    const sanitizedName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+    const fileName = `${timestamp}-${randomStr}.${fileExt}`;
+    const filePath = `uploads/${fileName}`;
+
+    // Convert File to Uint8Array for upload
+    const arrayBuffer = await file.arrayBuffer();
+    const uint8Array = new Uint8Array(arrayBuffer);
+
+    // Upload to Supabase Storage
+    const { data: uploadData, error: uploadError } = await supabase.storage
+      .from(bucket)
+      .upload(filePath, uint8Array, {
+        contentType: file.type,
+        upsert: false
+      });
+
+    if (uploadError) {
+      console.error('Storage upload error:', uploadError);
+      return c.json({ error: `Upload failed: ${uploadError.message}` }, 500);
+    }
+
+    // Generate signed URL (valid for 1 year)
+    const { data: signedUrlData } = await supabase.storage
+      .from(bucket)
+      .createSignedUrl(filePath, 31536000); // 1 year
+
+    if (!signedUrlData) {
+      console.error('Failed to generate signed URL for uploaded file');
+      return c.json({ error: 'File uploaded but failed to generate access URL' }, 500);
+    }
+
+    const id = `${timestamp}-${randomStr}`;
     const mediaFile = {
       id,
-      name: file.name,
-      type: file.type,
-      size: file.size,
-      url: mockUrl, // In real app, this would be the storage URL
+      fileName: file.name,
+      fileSize: file.size,
+      fileType: file.type,
+      filePath,
       bucket,
-      created_at: new Date().toISOString()
+      url: signedUrlData.signedUrl,
+      uploadedAt: new Date().toISOString()
     };
-    
+
     await kv.set(`media:${id}`, mediaFile);
-    
+
+    console.log(`📤 Media uploaded: ${file.name} (${(file.size / 1024).toFixed(2)} KB) → ${filePath}`);
     return c.json(mediaFile);
   } catch (error) {
-    console.error("Upload error:", error);
-    return c.json({ error: "Failed to upload file" }, 500);
+    console.error("Media upload error:", error);
+    return c.json({ error: `Failed to upload file: ${error}` }, 500);
   }
 });
 
@@ -778,7 +813,7 @@ app.get("/admin/kv-audit", requireAdmin, async (c) => {
       // Professionals / consultants
       'professional:', 'professional:pending-', 'professional_application:', 'consultant:',
       // Activity tracking
-      'activity:read:', 'activity:user:', 'user_activity:',
+      'activity:read:', 'activity:user:', 'user_activity:', 'ikan_score:',
       // Admin notifications
       'admin_notification:',
       // Payments
@@ -1234,7 +1269,7 @@ app.post("/admin/kv-audit/migrate-naming", requireAdmin, async (c) => {
   }
 });
 
-// ─── KV Audit: Save snapshot for trend tracking ────────────────
+// ── KV Audit: Save snapshot for trend tracking ────────────────
 app.post("/admin/kv-audit/save-snapshot", requireAdmin, async (c) => {
   try {
     const { score, totalKeys, orphanCount, inconsistencyCount, growthWarningCount, softDeletedCount, uncategorizedCount } = await c.req.json();
@@ -1412,6 +1447,48 @@ app.post("/admin/kv-audit/purge-prefix", requireAdmin, async (c) => {
   } catch (error) {
     console.error("KV Purge error:", error);
     return c.json({ error: `KV Purge failed: ${error}` }, 500);
+  }
+});
+
+// ========================================
+// ADMIN - SCORING ENGINE PROFILES
+// ========================================
+
+app.get("/admin/scoring-profiles", requireAdmin, async (c) => {
+  try {
+    const profileKeys = await kv.getByPrefix("scoring-profile:");
+    const profiles = Array.isArray(profileKeys) ? profileKeys : [];
+    return c.json({ profiles });
+  } catch (error) {
+    console.error("Failed to load scoring profiles:", error);
+    return c.json({ profiles: [] });
+  }
+});
+
+app.post("/admin/scoring-profiles", requireAdmin, async (c) => {
+  try {
+    const { profile } = await c.req.json();
+    if (!profile || !profile.id) {
+      return c.json({ error: "Profile with id is required" }, 400);
+    }
+    profile.updated_at = new Date().toISOString();
+    if (!profile.created_at) profile.created_at = profile.updated_at;
+    await kv.set(`scoring-profile:${profile.id}`, profile);
+    return c.json({ profile });
+  } catch (error) {
+    console.error("Failed to save scoring profile:", error);
+    return c.json({ error: `Failed to save scoring profile: ${error}` }, 500);
+  }
+});
+
+app.delete("/admin/scoring-profiles/:id", requireAdmin, async (c) => {
+  try {
+    const id = c.req.param("id");
+    await kv.del(`scoring-profile:${id}`);
+    return c.json({ success: true });
+  } catch (error) {
+    console.error("Failed to delete scoring profile:", error);
+    return c.json({ error: `Failed to delete scoring profile: ${error}` }, 500);
   }
 });
 

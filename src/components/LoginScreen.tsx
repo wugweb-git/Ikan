@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useNotifications } from '../contexts/NotificationContext';
-import { useIsMobile } from '../hooks/useIsMobile';
 import { Icon } from './Icon';
 import { Logo } from './Logo';
 import { cn } from './ui/utils';
@@ -26,53 +25,63 @@ function HeroSection() {
       {/* Background Image */}
       <div aria-hidden="true" className="absolute inset-0">
         <img 
-          alt="Peaceful meditation scene representing mental wellness" 
+          alt="Peaceful nature scene representing mental wellness" 
           className="w-full h-full object-cover" 
-          src="https://images.unsplash.com/photo-1758274538961-fe8f1f24166f?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxtZWRpdGF0aW9uJTIwd2VsbG5lc3MlMjBtZW50YWwlMjBoZWFsdGglMjBwZWFjZWZ1bCUyMHBlcnNvbnxlbnwxfHx8fDE3NTkyOTYyNzR8MA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral" 
+          src="https://images.unsplash.com/photo-1766391607256-44175538aa48?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxjYWxtJTIwbmF0dXJlJTIwbWluZGZ1bG5lc3MlMjBwZWFjZWZ1bCUyMGdyZWVufGVufDF8fHx8MTc3MzM3NTQ1MHww&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral" 
         />
         {/* Gradient Overlay */}
-        <div className="absolute inset-0 bg-gradient-to-br from-black/40 via-black/20 to-black/60 hidden lg:block" />
+        <div className="absolute inset-0 hidden lg:block" style={{ background: 'linear-gradient(160deg, rgba(42,42,42,0.7) 0%, rgba(42,42,42,0.4) 50%, rgba(42,42,42,0.65) 100%)' }} />
       </div>
       
       {/* Overlaying Text Content */}
-      <div className="relative z-10 text-center text-white max-w-2xl mx-auto px-8">
+      <div className="relative z-10 text-center text-white max-w-lg mx-auto px-8">
+        <div style={{ marginBottom: 24 }}>
+          <Logo />
+        </div>
         <h1 
-          className="mb-6"
           style={{
-            fontSize: 'var(--text-3xl)',
-            fontWeight: 'var(--font-weight-medium)',
+            fontSize: 'var(--text-2xl)',
+            fontWeight: 500,
             lineHeight: 'var(--line-height-sm)',
-            color: 'white'
+            color: 'white',
+            fontFamily: 'var(--font-family-base)',
+            marginBottom: 16,
           }}
         >
           {authContent.hero.title}
         </h1>
         <p 
-          className="mb-8"
           style={{
-            fontSize: 'var(--text-lg)',
-            fontWeight: 'var(--font-weight-regular)',
+            fontSize: 'var(--text-base)',
+            fontWeight: 400,
             lineHeight: 'var(--line-height-md)',
-            color: 'rgba(255, 255, 255, 0.9)'
+            color: 'rgba(255, 255, 255, 0.85)',
+            fontFamily: 'var(--font-family-base)',
+            marginBottom: 32,
           }}
         >
           {authContent.hero.subtitle}
         </p>
         
         {/* Feature highlights */}
-        <div className="hidden md:grid md:grid-cols-3 gap-6 text-sm">
-          <div className="flex items-center gap-3">
-            <Icon name="shield" size={20} style={{ color: 'white' }} />
-            <span style={{ color: 'rgba(255, 255, 255, 0.9)' }}>{authContent.hero.features.private}</span>
-          </div>
-          <div className="flex items-center gap-3">
-            <Icon name="heart" size={20} style={{ color: 'white' }} />
-            <span style={{ color: 'rgba(255, 255, 255, 0.9)' }}>{authContent.hero.features.evidence}</span>
-          </div>
-          <div className="flex items-center gap-3">
-            <Icon name="users" size={20} style={{ color: 'white' }} />
-            <span style={{ color: 'rgba(255, 255, 255, 0.9)' }}>{authContent.hero.features.support}</span>
-          </div>
+        <div className="hidden md:flex justify-center gap-6">
+          {[
+            { icon: 'shield', text: authContent.hero.features.private },
+            { icon: 'heart', text: authContent.hero.features.evidence },
+            { icon: 'users', text: authContent.hero.features.support },
+          ].map((feature) => (
+            <div key={feature.text} className="flex items-center gap-2" style={{ opacity: 0.9 }}>
+              <div style={{
+                width: 32, height: 32, borderRadius: 'var(--radius-md)',
+                backgroundColor: 'rgba(255,255,255,0.15)',
+                backdropFilter: 'blur(8px)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+              }}>
+                <Icon name={feature.icon as any} size={16} style={{ color: 'white' }} />
+              </div>
+              <span style={{ fontSize: 'var(--text-sm)', color: 'rgba(255,255,255,0.9)', fontFamily: 'var(--font-family-base)' }}>{feature.text}</span>
+            </div>
+          ))}
         </div>
       </div>
     </div>
@@ -430,17 +439,17 @@ function AuthForm({ mode, onSuccess, onModeChange }: {
       <button
         type="submit"
         disabled={loading}
-        className="ikan-button w-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed touch-target"
+        className="ikan-button w-full transition-all disabled:opacity-50 disabled:cursor-not-allowed touch-target"
         style={{
           height: '52px',
-          borderRadius: 'var(--radius-sm)',
-          backgroundColor: 'var(--color-neutral-700)',
+          borderRadius: 'var(--radius-md)',
+          backgroundColor: 'var(--color-primary-default)',
           color: 'var(--color-text-inverse)',
           fontSize: 'var(--text-base)',
           fontFamily: 'var(--font-family-base)',
-          fontWeight: 'var(--font-weight-medium)',
+          fontWeight: 500,
           border: 'none',
-          cursor: 'pointer'
+          cursor: 'pointer',
         }}
       >
         {loading ? (
@@ -492,11 +501,11 @@ function AuthForm({ mode, onSuccess, onModeChange }: {
               type="button"
               onClick={() => handleSocialSignIn('google')}
               disabled={loading}
-              className="flex items-center justify-center px-4 py-2 border rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              style={{ borderColor: 'var(--color-border-default)' }}
+              className="flex items-center justify-center gap-2 border transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              style={{ borderColor: 'var(--color-border-default)', borderRadius: 'var(--radius-md)', height: 44, fontSize: 'var(--text-sm)', fontFamily: 'var(--font-family-base)' }}
               aria-label="Sign in with Google"
             >
-              <div className="w-5 h-5">
+              <div className="w-5 h-5 flex-shrink-0">
                 {/* Google brand colors — mandated by brand guidelines, must remain as hex */}
                 <svg className="block size-full" viewBox="0 0 24 24">
                   <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
@@ -512,11 +521,11 @@ function AuthForm({ mode, onSuccess, onModeChange }: {
               type="button"
               onClick={() => handleSocialSignIn('linkedin_oidc')}
               disabled={loading}
-              className="flex items-center justify-center px-4 py-2 border rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              style={{ borderColor: 'var(--color-border-default)' }}
+              className="flex items-center justify-center gap-2 border transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              style={{ borderColor: 'var(--color-border-default)', borderRadius: 'var(--radius-md)', height: 44, fontSize: 'var(--text-sm)', fontFamily: 'var(--font-family-base)' }}
               aria-label="Sign in with LinkedIn"
             >
-              <div className="w-5 h-5">
+              <div className="w-5 h-5 flex-shrink-0">
                 {/* LinkedIn brand color — mandated by brand guidelines, must remain as hex */}
                 <svg className="block size-full" viewBox="0 0 24 24">
                   <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z" fill="#0077B5"/>
@@ -529,11 +538,11 @@ function AuthForm({ mode, onSuccess, onModeChange }: {
               type="button"
               onClick={() => handleSocialSignIn('apple')}
               disabled={loading}
-              className="flex items-center justify-center px-4 py-2 border rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              style={{ borderColor: 'var(--color-border-default)' }}
+              className="flex items-center justify-center gap-2 border transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              style={{ borderColor: 'var(--color-border-default)', borderRadius: 'var(--radius-md)', height: 44, fontSize: 'var(--text-sm)', fontFamily: 'var(--font-family-base)' }}
               aria-label="Sign in with Apple"
             >
-              <div className="w-5 h-5">
+              <div className="w-5 h-5 flex-shrink-0">
                 {/* Apple brand color — mandated by brand guidelines, must remain as hex */}
                 <svg className="block size-full" viewBox="0 0 24 24">
                   <path d="M12.152 6.896c-.948 0-2.415-1.078-3.96-1.04-2.04.027-3.91 1.183-4.961 3.014-2.117 3.675-.546 9.103 1.519 12.09 1.013 1.454 2.208 3.09 3.792 3.039 1.52-.065 2.09-.987 3.935-.987 1.831 0 2.35.987 3.96.948 1.637-.026 2.676-1.48 3.676-2.948 1.156-1.688 1.636-3.325 1.662-3.415-.039-.013-3.182-1.221-3.22-4.857-.026-3.04 2.48-4.494 2.597-4.559-1.429-2.09-3.623-2.324-4.39-2.376-2-.156-3.675 1.09-4.61 1.09zM15.53 3.83c.843-1.012 1.4-2.427 1.245-3.83-1.207.052-2.662.805-3.532 1.818-.78.896-1.454 2.338-1.273 3.714 1.338.104 2.715-.688 3.559-1.701" fill="#000000"/>
@@ -550,7 +559,6 @@ function AuthForm({ mode, onSuccess, onModeChange }: {
 // Logo component is now imported from ./Logo
 
 export default function LoginScreen({ onSuccess, onBack, onNavigate, reason, redirectRoute: _redirectRoute }: LoginScreenProps) {
-  const isMobile = useIsMobile();
   const [authMode, setAuthMode] = useState<AuthMode>('login');
   const { showToast } = useNotifications();
 
@@ -576,23 +584,17 @@ export default function LoginScreen({ onSuccess, onBack, onNavigate, reason, red
       style={{ backgroundColor: 'var(--color-bg-page)' }}
     >
       {/* Main Content - Standard Auth Screen Layout */}
-      <div className={cn("h-full flex", isMobile ? "flex-col" : "flex-row")}>
-        {/* Left Side - Hero Section with Image and Text - Desktop Only */}
+      <div className="h-full flex flex-col lg:flex-row">
+        {/* Left Side - Hero Section with Image and Text - Desktop (lg+) Only */}
         <div 
-          className={cn(
-            "relative flex items-center justify-center hidden lg:flex",
-            "w-1/2 h-full"
-          )}
+          className="relative items-center justify-center hidden lg:flex w-1/2 h-full overflow-hidden"
         >
           <HeroSection />
         </div>
 
-        {/* Right Side - Auth Form */}
+        {/* Right Side - Auth Form — full width on mobile/tablet, 50% on desktop */}
         <div 
-          className={cn(
-            "flex items-center justify-center",
-            isMobile ? "flex-1 w-full p-6 h-full overflow-y-auto" : "w-1/2 h-full p-8 overflow-y-auto"
-          )}
+          className="flex items-center justify-center flex-1 w-full lg:w-1/2 h-full p-6 lg:p-8 overflow-y-auto"
           style={{ backgroundColor: 'var(--color-bg-card)' }}
         >
           <div className="w-full max-w-md space-y-8">

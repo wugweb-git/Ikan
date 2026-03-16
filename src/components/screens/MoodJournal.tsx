@@ -979,7 +979,7 @@ export function MoodJournal({ onNavigate: _onNavigate }: { onNavigate?: (path: s
         <div className="flex items-center justify-between" style={{ marginBottom: 6 }}>
           <div className="flex items-center" style={{ gap: 6 }}>
             <TrendingUp size={14} style={{ color: B.yellow }} />
-            <span style={{ ...f('xs', 500, B.muted), textTransform: 'uppercase' as const, letterSpacing: '0.04em' }}>
+            <span style={{ ...f('xs', 500, B.muted), textTransform: 'uppercase', letterSpacing: '0.04em' }}>
               14-day mood
             </span>
           </div>

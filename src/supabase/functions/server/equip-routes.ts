@@ -24,7 +24,27 @@ app.get("/admin/equip/enrollments", requireAuth, async (c) => {
 app.get("/equip/programs", async (c) => {
   try {
     const programs = await EquipService.listEquips();
-    return c.json({ programs });
+
+    // Compute real enrollment counts from KV
+    // NOTE: Two enrollment systems exist:
+    //   1. /equip/purchase stores: enrollment:{enrollmentId} with { programId }
+    //   2. ProgressService stores: enrollment:{userId}:{equipId} with { equip_id }
+    // We must check BOTH field names to count correctly.
+    const allEnrollments = await kv.getByPrefix('enrollment:');
+    const enrollmentCountMap: Record<string, number> = {};
+    for (const e of allEnrollments) {
+      if (!e) continue;
+      const eid = e.equip_id || e.programId;
+      if (!eid) continue;
+      enrollmentCountMap[eid] = (enrollmentCountMap[eid] || 0) + 1;
+    }
+
+    const programsWithCounts = programs.map((p: any) => ({
+      ...p,
+      enrollmentCount: enrollmentCountMap[p.id] || enrollmentCountMap[p.equip_id] || 0,
+    }));
+
+    return c.json({ programs: programsWithCounts });
   } catch (error) {
     console.log('List equip programs error:', error);
     return c.json({ error: 'Failed to list programs' }, 500);

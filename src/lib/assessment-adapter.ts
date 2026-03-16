@@ -1,4 +1,4 @@
-import { EquipProgram, DayContent, Activity, ExerciseConfig } from './equip-admin-types';
+import { EquipProgram, DayContent, Activity, ExerciseConfig, InteractionType } from './equip-admin-types';
 
 // Legacy Types
 interface LegacyQuestion {
@@ -76,10 +76,19 @@ export function adaptAssessmentToProgram(assessment: LegacyAssessment): EquipPro
       }
     };
 
+    // Determine the unified interaction type
+    const interaction: InteractionType = 
+      subtype === 'multi-select' ? 'select-many' :
+      subtype === 'ephemeral-journal' ? 'write' :
+      subtype === 'rating_scale' ? 'rate' :
+      subtype === 'clinical_instrument' ? 'clinical' :
+      'select-one'; // mcq, single-select, etc.
+
     return {
       id: q.id,
       title: q.text, // For single day assessments, title is often the question
       type: 'exercise',
+      interaction,
       content: '', // Question text is in config.prompt or title
       duration: 1,
       required: q.required ?? true,

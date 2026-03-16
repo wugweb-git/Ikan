@@ -101,7 +101,7 @@ export function AdminErrorState({
 export function AdminSkeleton({ rows = 5, compact = false }: { rows?: number; compact?: boolean }) {
   return (
     <div
-      className="space-y-3 animate-pulse"
+      className="space-y-3"
       style={{
         backgroundColor: 'var(--color-bg-muted, #F0F0F0)',
         border: '1px solid var(--color-border-default, #E0E0E0)',

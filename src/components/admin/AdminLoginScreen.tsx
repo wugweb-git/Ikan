@@ -29,17 +29,13 @@ export function AdminLoginScreen({ onNavigate, onLoginSuccess }: AdminLoginScree
 
     setIsLoading(true);
     try {
-      const { error } = await signIn(email, password);
-      if (error) throw error;
-      
-      // Ideally, we would check for admin role here
-      // const profile = await apiClient.getProfile();
-      // if (profile.role !== 'admin') throw new Error('Unauthorized access');
+      // signIn returns void and throws on error — do NOT destructure
+      await signIn(email, password);
 
       showToast('success', 'Welcome Back', 'Successfully logged into Admin Console');
       onLoginSuccess();
     } catch (error: any) {
-      console.error('Login failed:', error);
+      console.error('Admin login failed:', error);
       showToast('error', 'Login Failed', error.message || 'Invalid credentials');
     } finally {
       setIsLoading(false);

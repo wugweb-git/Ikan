@@ -69,19 +69,30 @@ export type EquipStatus = 'draft' | 'published' | 'archived';
 export type BlockType = 
   | 'lesson'
   | 'exercise'
-  | 'table'
   | 'journal'
   | 'checklist'
   | 'reflection'
-  | 'quiz'
-  | 'text';
+  | 'conclude'
+  | 'sleep-diary'
+  | 'table'   // legacy alias
+  | 'quiz'    // legacy alias
+  | 'text';   // legacy alias
 
 export type DatasetType = 
   | 'mcq'
-  | 'multi_select'
+  | 'single-select'
+  | 'multi-select'
   | 'table'
-  | 'journal'
-  | 'checklist';
+  | 'input-table'
+  | 'structured-list'
+  | 'clinical_instrument'
+  | 'rating_scale'
+  | 'likert'
+  | 'comparison_matrix'
+  | 'ephemeral-journal'
+  | 'multi_select'  // legacy alias
+  | 'journal'       // legacy alias
+  | 'checklist';    // legacy alias
 
 export type SeverityLevel = 'low' | 'mild' | 'moderate' | 'high';
 
@@ -162,10 +173,13 @@ export interface RecommendationRule {
   id: string;
   assessment_category: string;
   min_severity: SeverityLevel;
-  equip_id: string;
+  equip_id?: string;  // Legacy — use target_id instead
+  recommendation_type?: 'equip' | 'resource' | 'assessment';
+  target_id?: string;
   priority: number;
   rationale: string;
   created_at: string;
+  updated_at?: string;
 }
 
 export interface EquipWithDays extends Equip {

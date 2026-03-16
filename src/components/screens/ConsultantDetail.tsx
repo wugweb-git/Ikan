@@ -1,38 +1,10 @@
-import { useState, useEffect } from 'react';
-import { cn } from '../ui/utils';
-import { 
-  Star, 
-  MapPin, 
-  Calendar as CalendarIcon,
-  Video, 
-  Phone, 
-  MessageCircle,
-  ChevronRight,
-  ThumbsUp,
-  CheckCircle2,
-  Clock,
-  Award,
-  Heart,
-  Users,
-  Quote,
-  Play,
-} from 'lucide-react';
-import { Button } from '../ui/button';
-import { Badge } from '../ui/badge';
-import { Card, CardContent } from '../ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '../ui/accordion';
-import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
-import { Separator } from '../ui/separator';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '../ui/dialog';
-import { Textarea } from '../ui/textarea';
-import { Input } from '../ui/input';
-import { Label } from '../ui/label';
 import { apiClient } from '../../lib/api-client';
 import { useIsMobile } from '../../hooks/useIsMobile';
 import { toast } from 'sonner@2.0.3';
 import { MobileHeader } from '../navigation/MobileHeader';
 import { LoadingSpinner } from '../LoadingSpinner';
+import { BookingModal } from '../blocks/BookingModal';
+import { copyToClipboard } from '../../lib/clipboard';
 
 // Define types locally
 export interface ConsultantAvailability {
@@ -173,8 +145,12 @@ export function ConsultantDetail({ consultantId, onNavigate, className }: Consul
       }
     } else {
       // Fallback: Copy to clipboard
-      navigator.clipboard.writeText(window.location.href);
-      toast.success('Link copied to clipboard');
+      const ok = await copyToClipboard(window.location.href);
+      if (ok) {
+        toast.success('Link copied to clipboard');
+      } else {
+        toast.error('Unable to copy link');
+      }
       setShowShareDialog(true);
     }
   };
@@ -859,28 +835,30 @@ export function ConsultantDetail({ consultantId, onNavigate, className }: Consul
           bottom: 0, 
           left: 0, 
           right: 0, 
-          padding: 'var(--spacing-4)',
+          padding: '12px 16px',
+          paddingBottom: 'max(12px, env(safe-area-inset-bottom))',
           backgroundColor: 'var(--color-bg-card)',
           borderTop: '1px solid var(--color-border-default)',
           zIndex: 50
         }}>
-          <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center justify-between">
             <div>
-              <p style={{ fontSize: 'var(--text-xs)', fontWeight: 'var(--font-weight-regular)', color: 'var(--color-text-muted)' }}>
+              <p style={{ fontSize: 'var(--text-xs)', fontWeight: 'var(--font-weight-regular)', color: 'var(--color-text-muted)', margin: 0 }}>
                 Starting from
               </p>
-              <p style={{ fontSize: 'var(--text-lg)', fontWeight: 'var(--font-weight-medium)' }}>
-                ₹{Math.min(...Object.values(consultant.pricing).filter(p => p > 0))}
+              <p style={{ fontSize: 'var(--text-lg)', fontWeight: 'var(--font-weight-medium)', margin: 0 }}>
+                ₹{(() => { const prices = Object.values(consultant.pricing).filter(p => typeof p === 'number' && p > 0); return prices.length > 0 ? Math.min(...prices) : '—'; })()}
               </p>
             </div>
             <Button
-              onClick={handleBooking}
+              onClick={() => setShowBookingDialog(true)}
               disabled={!consultant.available}
               aria-label={`Book appointment with ${consultant.name}`}
               style={{
-                height: 'var(--ikan-component-button-height)',
+                height: '48px',
+                minWidth: '160px',
                 padding: '0 var(--spacing-6)',
-                borderRadius: 'var(--radius-sm)',
+                borderRadius: 'var(--radius-md)',
                 fontWeight: 'var(--font-weight-medium)',
                 fontSize: 'var(--text-sm)'
               }}
@@ -891,8 +869,22 @@ export function ConsultantDetail({ consultantId, onNavigate, className }: Consul
         </div>
       )}
 
+      {/* Booking Modal (mobile) */}
+      <BookingModal
+        isOpen={showBookingDialog && isMobile}
+        onClose={() => setShowBookingDialog(false)}
+        consultantId={consultant.id}
+        consultantName={consultant.name}
+        sessionModes={consultant.sessionModes as string[]}
+        pricing={consultant.pricing}
+        onBook={(bookingData) => {
+          console.log('Booking confirmed:', bookingData);
+          setShowBookingDialog(false);
+        }}
+      />
+
       {/* Booking Confirmation Dialog */}
-      <Dialog open={showBookingDialog} onOpenChange={setShowBookingDialog}>
+      <Dialog open={showBookingDialog && !isMobile} onOpenChange={setShowBookingDialog}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle style={{ fontWeight: 'var(--font-weight-medium)' }}>Confirm Booking</DialogTitle>

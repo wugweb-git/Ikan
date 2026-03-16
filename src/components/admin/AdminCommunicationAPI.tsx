@@ -81,12 +81,18 @@ export function AdminCommunicationAPI() {
   const [testRecipient, setTestRecipient] = useState({ email: '', sms: '', whatsapp: '' });
 
   const getHeaders = async () => {
-    const { data } = await supabase.auth.getSession();
-    const token = data.session?.access_token || publicAnonKey;
-    return {
-      'Authorization': `Bearer ${token}`,
-      'Content-Type': 'application/json',
-    };
+    try {
+      const { data, error } = await supabase.auth.getSession();
+      if (error) {
+        console.warn('Auth: getSession error in CommunicationAPI:', error.message);
+        return { 'Authorization': `Bearer ${publicAnonKey}`, 'Content-Type': 'application/json' };
+      }
+      const token = data.session?.access_token || publicAnonKey;
+      return { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' };
+    } catch (err) {
+      console.warn('Auth: getHeaders failed in CommunicationAPI:', err);
+      return { 'Authorization': `Bearer ${publicAnonKey}`, 'Content-Type': 'application/json' };
+    }
   };
 
   // ── Load config + account status ─────────────────────────────

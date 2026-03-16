@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { EquipProgram, DayContent, Activity } from '../../lib/equip-admin-types';
+import { EquipProgram, DayContent, Activity, DEFAULT_CHECKIN_CONFIG, resolveInteraction } from '../../lib/equip-admin-types';
 import { BlockRenderer } from './BlockRenderer';
 import { ProgramCheckIn } from '../equip/ProgramCheckIn';
 import { Button } from '../ui/button';
@@ -186,8 +186,10 @@ export function ProgramPlayer({
   const isStepValid = useMemo(() => {
     if (!activeStep) return false;
     return activeStep.blocks.every(block => {
-      if (['lesson', 'content', 'conclude', 'video', 'media', 'info'].includes(block.type)) {
-         return true;
+      const interaction = resolveInteraction(block);
+      // Content/read blocks are always valid (no user input needed)
+      if (['read', 'complete', 'watch'].includes(interaction)) {
+        return true;
       }
       if (!block.required) return true;
       const value = responses[block.id];
@@ -213,9 +215,10 @@ export function ProgramPlayer({
     if (dayConfig.autoAdvance) {
       const targetBlock = activeStep?.blocks.find(b => b.id === blockId);
       
+      // Use interaction taxonomy for auto-advance decisions
+      const interaction = targetBlock ? resolveInteraction(targetBlock) : null;
       const shouldAutoAdvance = targetBlock?.autoAdvance || 
-        (targetBlock?.exerciseConfig?.subtype === 'mcq') ||
-        (targetBlock?.exerciseConfig?.subtype === 'single-select');
+        interaction === 'select-one';  // single-selection interactions auto-advance
 
       if (shouldAutoAdvance) {
         const stepValidWithNewValue = activeStep?.blocks.every(block => {
@@ -238,11 +241,16 @@ export function ProgramPlayer({
       setCurrentStepIndex(nextIndex);
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } else {
-      const checkInDays = [7, 14, 30];
-      const isCheckInDay = checkInDays.includes(currentDayNum);
+      // Determine check-in trigger from program config (or legacy defaults)
+      const config = program.checkInConfig ?? DEFAULT_CHECKIN_CONFIG;
       const isLastDay = program.daily_content.length === currentDayNum;
 
-      if ((isCheckInDay || isLastDay) && !showCheckIn) {
+      const shouldCheckIn = config.enabled && (
+        config.triggerDays.includes(currentDayNum) ||
+        (config.triggerOnLastDay && isLastDay)
+      );
+
+      if (shouldCheckIn && !showCheckIn) {
         setShowCheckIn(true);
       } else {
         setIsDayComplete(true);
@@ -512,6 +520,8 @@ export function ProgramPlayer({
                        value={responses[block.id]}
                        onChange={(val) => handleBlockChange(block.id, val)}
                        readOnly={mode === 'preview'}
+                       equipId={program.id}
+                       dayNum={activeDay?.day}
                      />
                    ))}
                  </motion.div>
@@ -572,7 +582,7 @@ export function ProgramPlayer({
 
       <ProgramCheckIn
         programId={program.id}
-        programTitle={program.title}
+        programTitle={program.checkInConfig?.customTitle || program.title}
         currentDay={currentDayNum}
         isOpen={showCheckIn}
         onClose={() => {

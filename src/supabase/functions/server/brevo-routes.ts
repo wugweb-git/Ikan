@@ -157,15 +157,25 @@ export function registerBrevoRoutes(app: Hono, requireAdmin: any, requireAuth: a
         return c.json({ error: "Either 'subject' or 'templateId' is required" }, 400);
       }
 
-      // Load sender defaults from config
+      // Load sender defaults: brevo-config first, then settings:site fallback
       const config = await kv.get("brevo-config");
       const emailConfig = config?.email || {};
+      let senderName = emailConfig.senderName;
+      let senderEmail = emailConfig.senderEmail;
+
+      if (!senderName || !senderEmail) {
+        const siteSettings: any = await kv.get("settings:site");
+        if (siteSettings) {
+          senderName = senderName || siteSettings.smtpFromName;
+          senderEmail = senderEmail || siteSettings.smtpFromEmail;
+        }
+      }
 
       const emailBody: Record<string, unknown> = {
         to: payload.to,
         sender: payload.sender || {
-          name: emailConfig.senderName || "iKan Health",
-          email: emailConfig.senderEmail || "noreply@ikan.health",
+          name: senderName || "iKan Health",
+          email: senderEmail || "noreply@ikan.health",
         },
       };
 
@@ -305,13 +315,25 @@ export function registerBrevoRoutes(app: Hono, requireAdmin: any, requireAuth: a
 
       switch (channel) {
         case "email": {
+          // Resolve sender: brevo-config > settings:site > fallback
           const config = await kv.get("brevo-config");
           const emailConfig = config?.email || {};
+          let testSenderName = emailConfig.senderName;
+          let testSenderEmail = emailConfig.senderEmail;
+
+          if (!testSenderName || !testSenderEmail) {
+            const siteSettings: any = await kv.get("settings:site");
+            if (siteSettings) {
+              testSenderName = testSenderName || siteSettings.smtpFromName;
+              testSenderEmail = testSenderEmail || siteSettings.smtpFromEmail;
+            }
+          }
+
           result = await brevoRequest("/smtp/email", {
             to: [{ email: recipient }],
             sender: {
-              name: emailConfig.senderName || "iKan Health",
-              email: emailConfig.senderEmail || "noreply@ikan.health",
+              name: testSenderName || "iKan Health",
+              email: testSenderEmail || "noreply@ikan.health",
             },
             subject: "iKan Communication Test",
             htmlContent: `

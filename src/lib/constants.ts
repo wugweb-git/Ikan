@@ -1,3 +1,22 @@
+/**
+ * ⚠️ LEGACY CONSTANTS – DO NOT IMPORT IN COMPONENTS
+ *
+ * These lists were the original hardcoded metadata before the KV-backed
+ * Metadata Manager (AdminCategoryManager) was built.
+ *
+ * The single source of truth for categories, content types, and filter types
+ * is now KV (prefix `category:`), consumed via the `useMetadata()` hook
+ * from `/hooks/useMetadata.ts`.
+ *
+ * These arrays are kept ONLY for:
+ *   - Historical reference
+ *   - Potential one-time migration/seeding scripts
+ *
+ * If you need category/type data in a component, use:
+ *   import { useMetadata } from '../hooks/useMetadata';
+ *   const { categories, contentTypes, filterTypes } = useMetadata();
+ */
+
 export const RESOURCE_CATEGORIES = [
   { label: 'General', value: 'general' },
   { label: 'Anxiety', value: 'anxiety' },

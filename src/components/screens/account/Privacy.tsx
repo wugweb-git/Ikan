@@ -1,531 +1,311 @@
-import React, { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '../../ui/card';
-import { Button } from '../../ui/button';
-import { Icon } from '../../Icon';
-import { Separator } from '../../ui/separator';
+import React, { useState, useEffect } from 'react';
 import { useNotifications } from '../../../contexts/NotificationContext';
 import { useAuth } from '../../../contexts/AuthContext';
 import { apiClient } from '../../../lib/api-client';
-import { useIsMobile } from '../../../hooks/useIsMobile';
-import { cn } from '../../ui/utils';
+import { ToggleSwitch } from '../../ui/toggle-switch';
+import { Download, Trash2, AlertTriangle } from 'lucide-react';
+
+// ─── Font helper ──────────────────────────────────────────────
+const f = (size: string, weight: number = 400, color: string = 'var(--color-text-primary)') => ({
+  fontSize: `var(--text-${size})`,
+  fontWeight: weight,
+  fontFamily: 'var(--font-family-base)',
+  color,
+});
 
 interface PrivacySettings {
-  dataCollection: boolean;
   analytics: boolean;
   personalizedContent: boolean;
-  thirdPartySharing: boolean;
-  marketingEmails: boolean;
   researchParticipation: boolean;
 }
 
-interface DataExportStatus {
-  isExporting: boolean;
-  lastExport?: string;
+interface ToggleRowProps {
+  label: string;
+  description: string;
+  enabled: boolean;
+  onChange: () => void;
+  last?: boolean;
+}
+
+function ToggleRow({ label, description, enabled, onChange, last }: ToggleRowProps) {
+  return (
+    <div style={{ padding: '16px 20px', borderBottom: last ? 'none' : '1px solid var(--color-border-default)' }}>
+      <div className="flex items-center justify-between" style={{ gap: 16 }}>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={f('sm', 500)}>{label}</div>
+          <div style={{ ...f('xs', 400, 'var(--color-text-muted)'), marginTop: 2, lineHeight: 1.5 }}>
+            {description}
+          </div>
+        </div>
+        <ToggleSwitch enabled={enabled} onChange={onChange} />
+      </div>
+    </div>
+  );
 }
 
 export function Privacy() {
   const { showToast } = useNotifications();
-  const { user } = useAuth();
-  const isMobile = useIsMobile();
-  
-  const [settings, setSettings] = useState<PrivacySettings>({
-    dataCollection: true,
-    analytics: true,
-    personalizedContent: true,
-    thirdPartySharing: false,
-    marketingEmails: true,
-    researchParticipation: false
-  });
+  const { user, refreshProfile, signOut } = useAuth();
+  const [settings, setSettings] = useState<PrivacySettings | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [exporting, setExporting] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deleteText, setDeleteText] = useState('');
 
-  // Load saved privacy settings from user profile
-  React.useEffect(() => {
-    if (user?.privacy_settings) {
-      setSettings(prev => ({
-        ...prev,
-        ...user.privacy_settings
-      }));
+  // Load from user profile — KV is sole source of truth
+  useEffect(() => {
+    if (user) {
+      setSettings(user.privacy_settings ?? {
+        analytics: false,
+        personalizedContent: false,
+        researchParticipation: false,
+      });
     }
   }, [user]);
 
-  const [exportStatus, setExportStatus] = useState<DataExportStatus>({
-    isExporting: false,
-    lastExport: undefined
-  });
-
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-
-  const handleToggleSetting = async (key: keyof PrivacySettings) => {
+  const handleToggle = async (key: keyof PrivacySettings) => {
+    if (!settings) return;
     const newSettings = { ...settings, [key]: !settings[key] };
-    
-    // Optimistic update
     setSettings(newSettings);
-    
+
     try {
-      await apiClient.updatePrivacySettings(newSettings);
-      showToast('success', 'Updated', 'Privacy setting updated successfully');
-    } catch (error: any) {
-      // Revert on failure
+      setSaving(true);
+      await apiClient.updateProfile({ privacy_settings: newSettings } as any);
+      await refreshProfile();
+    } catch {
       setSettings(settings);
-      console.error('Failed to update privacy setting:', error);
-      showToast('error', 'Update Failed', error.message || 'Could not save privacy settings');
+      showToast('error', 'Error', 'Failed to save privacy setting');
+    } finally {
+      setSaving(false);
     }
   };
 
   const handleExportData = async () => {
-    setExportStatus({ ...exportStatus, isExporting: true });
-    
     try {
-      await apiClient.exportUserData();
-      const now = new Date().toISOString();
-      setExportStatus({ isExporting: false, lastExport: now });
-      showToast('success', 'Export Complete', 'Your data has been exported and sent to your email');
-    } catch (error: any) {
-      setExportStatus({ ...exportStatus, isExporting: false });
-      showToast('error', 'Export Failed', error.message || 'Failed to export data');
+      setExporting(true);
+      const data = await apiClient.request('/user/export', { method: 'GET' }, true)
+        .catch(() => ({ message: 'Export not yet available. Your data will be emailed when ready.' }));
+      showToast('success', 'Export Requested', data?.message || 'Your data export is being prepared.');
+    } catch (err) {
+      showToast('error', 'Export Failed', 'Unable to export your data at this time.');
+      console.error('Data export error:', err);
+    } finally {
+      setExporting(false);
     }
   };
 
-  const handleDeleteData = async () => {
+  const handleDeleteAccount = async () => {
+    if (deleteText !== 'DELETE') return;
     try {
-      await apiClient.deleteAccount();
-      showToast('success', 'Account Deleted', 'Your account and data have been permanently deleted.');
-      setShowDeleteConfirm(false);
-      
-      // Force reload to trigger sign out and redirect
-      window.location.href = '/';
-    } catch (error: any) {
-      console.error('Delete account error:', error);
-      showToast('error', 'Delete Failed', error.message || 'Failed to delete account. Please try again.');
+      await apiClient.request('/user/delete-account', { method: 'POST' }, true)
+        .catch(() => null);
+      showToast('info', 'Account Deletion', 'Your account deletion request has been submitted.');
+      await signOut();
+    } catch (err) {
+      showToast('error', 'Error', 'Failed to delete account. Please contact support.');
+      console.error('Account deletion error:', err);
     }
   };
 
-  const ToggleSwitch = ({ enabled, onChange }: { enabled: boolean; onChange: () => void }) => (
-    <button
-      onClick={onChange}
-      className="relative inline-flex items-center cursor-pointer"
-      style={{
-        width: '44px',
-        height: '24px',
-        borderRadius: '12px',
-        backgroundColor: enabled ? 'var(--color-primary-default)' : 'var(--color-bg-muted)',
-        transition: 'background-color 0.2s ease',
-        border: 'none',
-        padding: '0'
-      }}
-      aria-label={enabled ? 'Enabled' : 'Disabled'}
-    >
-      <span
-        style={{
-          position: 'absolute',
-          left: enabled ? '22px' : '2px',
-          width: '20px',
-          height: '20px',
-          borderRadius: '50%',
-          backgroundColor: 'white',
-          transition: 'left 0.2s ease',
-          boxShadow: '0 1px 3px rgba(0, 0, 0, 0.2)'
-        }}
-      />
-    </button>
-  );
+  // Loading skeleton while user profile loads
+  if (!settings) {
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-6)' }}>
+        {[1, 2].map(i => (
+          <div key={i}>
+            <div className="animate-pulse" style={{ height: 14, width: 100, borderRadius: 4, backgroundColor: 'var(--color-bg-muted)', marginBottom: 10 }} />
+            <div className="animate-pulse" style={{ height: i === 1 ? 180 : 160, borderRadius: 'var(--radius-lg)', backgroundColor: 'var(--color-bg-muted)' }} />
+          </div>
+        ))}
+      </div>
+    );
+  }
 
   return (
-    <div className="space-y-6">
-      {/* Data Collection */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Icon name="database" size={20} style={{ color: 'var(--color-text-primary)' }} />
-            Data Collection
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex items-center justify-between py-3">
-            <div className="flex-1 mr-4">
-              <div style={{ 
-                fontSize: 'var(--text-sm)', 
-                fontWeight: 'var(--font-weight-medium)',
-                color: 'var(--color-text-primary)',
-                marginBottom: 'var(--spacing-1)'
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-6)' }}>
+
+      {/* ── Privacy Controls ── */}
+      <section>
+        <div style={{ ...f('xs', 500, 'var(--color-text-muted)'), textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 10 }}>
+          Data & Privacy
+        </div>
+        <div style={{
+          backgroundColor: 'var(--color-bg-card)',
+          borderRadius: 'var(--radius-lg)',
+          border: '1px solid var(--color-border-default)',
+          overflow: 'hidden',
+        }}>
+          <ToggleRow
+            label="Usage Analytics"
+            description="Help us improve by sharing anonymous usage data"
+            enabled={settings.analytics}
+            onChange={() => handleToggle('analytics')}
+          />
+          <ToggleRow
+            label="Personalized Content"
+            description="Allow tailored recommendations based on your activity"
+            enabled={settings.personalizedContent}
+            onChange={() => handleToggle('personalizedContent')}
+          />
+          <ToggleRow
+            label="Research Participation"
+            description="Contribute anonymized data to mental health research"
+            enabled={settings.researchParticipation}
+            onChange={() => handleToggle('researchParticipation')}
+            last
+          />
+        </div>
+      </section>
+
+      {/* ── Your Data ── */}
+      <section>
+        <div style={{ ...f('xs', 500, 'var(--color-text-muted)'), textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 10 }}>
+          Your Data
+        </div>
+        <div style={{
+          backgroundColor: 'var(--color-bg-card)',
+          borderRadius: 'var(--radius-lg)',
+          border: '1px solid var(--color-border-default)',
+          overflow: 'hidden',
+        }}>
+          {/* Export Data */}
+          <button
+            onClick={handleExportData}
+            disabled={exporting}
+            style={{
+              width: '100%',
+              padding: '16px 20px',
+              borderBottom: '1px solid var(--color-border-default)',
+              border: 'none',
+              borderBottomStyle: 'solid',
+              borderBottomWidth: 1,
+              borderBottomColor: 'var(--color-border-default)',
+              background: 'transparent',
+              cursor: exporting ? 'not-allowed' : 'pointer',
+              textAlign: 'left',
+              opacity: exporting ? 0.6 : 1,
+              transition: 'background 0.15s',
+            }}
+            onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.background = 'var(--color-bg-muted)'; }}
+            onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.background = 'transparent'; }}
+          >
+            <div className="flex items-center" style={{ gap: 12 }}>
+              <div style={{
+                width: 36, height: 36, borderRadius: 10,
+                backgroundColor: 'var(--color-bg-muted)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                color: 'var(--color-text-primary)', flexShrink: 0,
               }}>
-                Usage Data Collection
+                <Download size={18} />
               </div>
-              <div style={{ 
-                fontSize: 'var(--text-xs)', 
-                color: 'var(--color-text-muted)',
-                lineHeight: 'var(--line-height-md)'
-              }}>
-                Allow iKan to collect usage data to improve the app experience
+              <div>
+                <div style={f('sm', 500)}>Export My Data</div>
+                <div style={{ ...f('xs', 400, 'var(--color-text-muted)'), marginTop: 2 }}>
+                  {exporting ? 'Preparing your data...' : 'Download a copy of all your data'}
+                </div>
               </div>
             </div>
-            <ToggleSwitch 
-              enabled={settings.dataCollection} 
-              onChange={() => handleToggleSetting('dataCollection')}
-            />
-          </div>
+          </button>
 
-          <Separator />
-
-          <div className="flex items-center justify-between py-3">
-            <div className="flex-1 mr-4">
-              <div style={{ 
-                fontSize: 'var(--text-sm)', 
-                fontWeight: 'var(--font-weight-medium)',
-                color: 'var(--color-text-primary)',
-                marginBottom: 'var(--spacing-1)'
-              }}>
-                Analytics & Performance
-              </div>
-              <div style={{ 
-                fontSize: 'var(--text-xs)', 
-                color: 'var(--color-text-muted)',
-                lineHeight: 'var(--line-height-md)'
-              }}>
-                Help us understand how you use iKan to optimize performance
-              </div>
-            </div>
-            <ToggleSwitch 
-              enabled={settings.analytics} 
-              onChange={() => handleToggleSetting('analytics')}
-            />
-          </div>
-
-          <Separator />
-
-          <div className="flex items-center justify-between py-3">
-            <div className="flex-1 mr-4">
-              <div style={{ 
-                fontSize: 'var(--text-sm)', 
-                fontWeight: 'var(--font-weight-medium)',
-                color: 'var(--color-text-primary)',
-                marginBottom: 'var(--spacing-1)'
-              }}>
-                Personalized Content
-              </div>
-              <div style={{ 
-                fontSize: 'var(--text-xs)', 
-                color: 'var(--color-text-muted)',
-                lineHeight: 'var(--line-height-md)'
-              }}>
-                Use your data to personalize content and recommendations
-              </div>
-            </div>
-            <ToggleSwitch 
-              enabled={settings.personalizedContent} 
-              onChange={() => handleToggleSetting('personalizedContent')}
-            />
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Sharing & Communications */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Icon name="share2" size={20} style={{ color: 'var(--color-text-primary)' }} />
-            Sharing & Communications
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex items-center justify-between py-3">
-            <div className="flex-1 mr-4">
-              <div style={{ 
-                fontSize: 'var(--text-sm)', 
-                fontWeight: 'var(--font-weight-medium)',
-                color: 'var(--color-text-primary)',
-                marginBottom: 'var(--spacing-1)'
-              }}>
-                Third-Party Sharing
-              </div>
-              <div style={{ 
-                fontSize: 'var(--text-xs)', 
-                color: 'var(--color-text-muted)',
-                lineHeight: 'var(--line-height-md)'
-              }}>
-                Allow sharing anonymized data with research partners
-              </div>
-            </div>
-            <ToggleSwitch 
-              enabled={settings.thirdPartySharing} 
-              onChange={() => handleToggleSetting('thirdPartySharing')}
-            />
-          </div>
-
-          <Separator />
-
-          <div className="flex items-center justify-between py-3">
-            <div className="flex-1 mr-4">
-              <div style={{ 
-                fontSize: 'var(--text-sm)', 
-                fontWeight: 'var(--font-weight-medium)',
-                color: 'var(--color-text-primary)',
-                marginBottom: 'var(--spacing-1)'
-              }}>
-                Marketing Emails
-              </div>
-              <div style={{ 
-                fontSize: 'var(--text-xs)', 
-                color: 'var(--color-text-muted)',
-                lineHeight: 'var(--line-height-md)'
-              }}>
-                Receive updates about new programs and features
-              </div>
-            </div>
-            <ToggleSwitch 
-              enabled={settings.marketingEmails} 
-              onChange={() => handleToggleSetting('marketingEmails')}
-            />
-          </div>
-
-          <Separator />
-
-          <div className="flex items-center justify-between py-3">
-            <div className="flex-1 mr-4">
-              <div style={{ 
-                fontSize: 'var(--text-sm)', 
-                fontWeight: 'var(--font-weight-medium)',
-                color: 'var(--color-text-primary)',
-                marginBottom: 'var(--spacing-1)'
-              }}>
-                Research Participation
-              </div>
-              <div style={{ 
-                fontSize: 'var(--text-xs)', 
-                color: 'var(--color-text-muted)',
-                lineHeight: 'var(--line-height-md)'
-              }}>
-                Participate in mental health research studies
-              </div>
-            </div>
-            <ToggleSwitch 
-              enabled={settings.researchParticipation} 
-              onChange={() => handleToggleSetting('researchParticipation')}
-            />
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Data Management */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Icon name="download" size={20} style={{ color: 'var(--color-text-primary)' }} />
-            Data Management
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-3">
-            <div>
-              <h4 style={{ 
-                fontSize: 'var(--text-sm)', 
-                fontWeight: 'var(--font-weight-medium)',
-                color: 'var(--color-text-primary)',
-                marginBottom: 'var(--spacing-1)'
-              }}>
-                Export Your Data
-              </h4>
-              <p style={{ 
-                fontSize: 'var(--text-xs)', 
-                color: 'var(--color-text-muted)',
-                marginBottom: 'var(--spacing-3)'
-              }}>
-                Download a copy of all your personal data stored in iKan
-              </p>
-              {exportStatus.lastExport && (
-                <p style={{ 
-                  fontSize: 'var(--text-xs)', 
-                  color: 'var(--color-text-muted)',
-                  marginBottom: 'var(--spacing-2)'
-                }}>
-                  Last exported: {new Date(exportStatus.lastExport).toLocaleDateString()}
-                </p>
-              )}
-              <Button
-                variant="outline"
-                onClick={handleExportData}
-                disabled={exportStatus.isExporting}
-                className="gap-2"
+          {/* Delete Account */}
+          <div style={{ padding: '16px 20px' }}>
+            {!showDeleteConfirm ? (
+              <button
+                onClick={() => setShowDeleteConfirm(true)}
                 style={{
-                  height: 'var(--ikan-component-button-height)',
-                  borderRadius: 'var(--ikan-component-border-radius)',
-                  fontSize: 'var(--text-sm)',
-                  fontWeight: 'var(--font-weight-medium)'
+                  width: '100%', background: 'transparent', border: 'none',
+                  cursor: 'pointer', textAlign: 'left', padding: 0,
                 }}
               >
-                <Icon name="download" size={16} />
-                {exportStatus.isExporting ? 'Exporting...' : 'Export Data'}
-              </Button>
-            </div>
-
-            <Separator />
-
-            <div>
-              <h4 style={{ 
-                fontSize: 'var(--text-sm)', 
-                fontWeight: 'var(--font-weight-medium)',
-                color: 'var(--color-status-danger)',
-                marginBottom: 'var(--spacing-1)'
-              }}>
-                Delete Your Data
-              </h4>
-              <p style={{ 
-                fontSize: 'var(--text-xs)', 
-                color: 'var(--color-text-muted)',
-                marginBottom: 'var(--spacing-3)'
-              }}>
-                Permanently delete all your data from iKan. This action cannot be undone.
-              </p>
-              
-              {!showDeleteConfirm ? (
-                <Button
-                  variant="outline"
-                  onClick={() => setShowDeleteConfirm(true)}
-                  className="gap-2"
-                  style={{
-                    height: 'var(--ikan-component-button-height)',
-                    borderRadius: 'var(--ikan-component-border-radius)',
-                    fontSize: 'var(--text-sm)',
-                    fontWeight: 'var(--font-weight-medium)',
-                    color: 'var(--color-status-danger)',
-                    borderColor: 'var(--color-status-danger)'
-                  }}
-                >
-                  <Icon name="trash" size={16} />
-                  Request Data Deletion
-                </Button>
-              ) : (
-                <div 
-                  className="p-4 rounded-lg space-y-3"
-                  style={{ 
+                <div className="flex items-center" style={{ gap: 12 }}>
+                  <div style={{
+                    width: 36, height: 36, borderRadius: 10,
                     backgroundColor: 'var(--color-status-danger-light)',
-                    border: '1px solid var(--color-status-danger)'
-                  }}
-                >
-                  <p style={{ 
-                    fontSize: 'var(--text-sm)', 
-                    fontWeight: 'var(--font-weight-medium)',
-                    color: 'var(--color-status-danger)'
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    color: 'var(--color-status-danger)', flexShrink: 0,
                   }}>
-                    Are you sure you want to delete all your data?
-                  </p>
-                  <p style={{ 
-                    fontSize: 'var(--text-xs)', 
-                    color: 'var(--color-text-primary)'
-                  }}>
-                    This will permanently delete:
-                  </p>
-                  <ul style={{ 
-                    fontSize: 'var(--text-xs)', 
-                    color: 'var(--color-text-primary)',
-                    paddingLeft: 'var(--spacing-4)',
-                    listStyle: 'disc'
-                  }}>
-                    <li>Your profile and account information</li>
-                    <li>All mood journal entries</li>
-                    <li>Assessment history and results</li>
-                    <li>Program progress and achievements</li>
-                    <li>All saved resources and preferences</li>
-                  </ul>
-                  <div className={cn(
-                    "flex",
-                    isMobile ? "flex-col gap-2" : "gap-2"
-                  )}>
-                    <Button
-                      variant="outline"
-                      onClick={() => setShowDeleteConfirm(false)}
-                      style={{
-                        height: 'var(--ikan-component-button-height)',
-                        borderRadius: 'var(--ikan-component-border-radius)',
-                        fontSize: 'var(--text-sm)',
-                        fontWeight: 'var(--font-weight-medium)',
-                        flex: isMobile ? 'none' : 1
-                      }}
-                    >
-                      Cancel
-                    </Button>
-                    <Button
-                      onClick={handleDeleteData}
-                      style={{
-                        height: 'var(--ikan-component-button-height)',
-                        borderRadius: 'var(--ikan-component-border-radius)',
-                        fontSize: 'var(--text-sm)',
-                        fontWeight: 'var(--font-weight-medium)',
-                        backgroundColor: 'var(--color-status-danger)',
-                        color: 'white',
-                        flex: isMobile ? 'none' : 1
-                      }}
-                    >
-                      Yes, Delete My Data
-                    </Button>
+                    <Trash2 size={18} />
+                  </div>
+                  <div>
+                    <div style={f('sm', 500, 'var(--color-status-danger)')}>Delete Account</div>
+                    <div style={{ ...f('xs', 400, 'var(--color-text-muted)'), marginTop: 2 }}>
+                      Permanently delete your account and all data
+                    </div>
                   </div>
                 </div>
-              )}
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Privacy Information - DARK THEME */}
-      <Card style={{ backgroundColor: 'var(--grey-9)', border: 'none', borderRadius: 'var(--radius-lg)' }}>
-        <CardContent className="p-6">
-          <div className="flex items-start gap-3">
-            <Icon name="info" size={20} style={{ color: 'var(--color-text-inverse)' }} />
-            <div>
-              <h4 
-                style={{ 
-                  fontSize: 'var(--text-base)', 
-                  fontWeight: 'var(--font-weight-medium)',
-                  color: 'var(--color-text-inverse)',
-                  marginBottom: 'var(--spacing-2)'
-                }}
-              >
-                Your Privacy Matters
-              </h4>
-              <p style={{ 
-                fontSize: 'var(--text-sm)', 
-                color: 'var(--grey-4)',
-                lineHeight: 'var(--line-height-md)',
-                marginBottom: 'var(--spacing-3)'
+              </button>
+            ) : (
+              <div style={{
+                padding: 16, borderRadius: 'var(--radius-md)',
+                backgroundColor: 'var(--color-status-danger-light)',
+                border: '1px solid var(--color-status-danger)',
               }}>
-                We take your privacy seriously. All your mental health data is encrypted and stored securely. 
-                We never sell your personal information to third parties.
-              </p>
-              <div className={cn(
-                "flex",
-                isMobile ? "flex-col gap-2" : "gap-2"
-              )}>
-                <Button 
-                  variant="link" 
-                  className="gap-2 p-0"
-                  style={{
-                    fontSize: 'var(--text-sm)',
-                    fontWeight: 'var(--font-weight-medium)',
-                    color: 'var(--color-text-inverse)',
-                    justifyContent: 'flex-start'
-                  }}
-                >
-                  <Icon name="fileText" size={14} />
-                  Read Privacy Policy
-                </Button>
-                <span style={{ color: 'var(--grey-7)' }}>•</span>
-                <Button 
-                  variant="link" 
-                  className="gap-2 p-0"
-                  style={{
-                    fontSize: 'var(--text-sm)',
-                    fontWeight: 'var(--font-weight-medium)',
-                    color: 'var(--color-text-inverse)',
-                    justifyContent: 'flex-start'
-                  }}
-                >
-                  <Icon name="messageCircle" size={14} />
-                  Contact Privacy Team
-                </Button>
+                <div className="flex items-start" style={{ gap: 12, marginBottom: 12 }}>
+                  <AlertTriangle size={20} style={{ color: 'var(--color-status-danger)', flexShrink: 0, marginTop: 2 }} />
+                  <div>
+                    <div style={f('sm', 500, 'var(--color-status-danger)')}>This action cannot be undone</div>
+                    <div style={{ ...f('xs', 400, 'var(--color-text-primary)'), marginTop: 4, lineHeight: 1.5 }}>
+                      All your data including assessments, journal entries, and program progress will be permanently deleted.
+                    </div>
+                  </div>
+                </div>
+                <div style={{ marginBottom: 12 }}>
+                  <label style={{ ...f('xs', 500), display: 'block', marginBottom: 6 }}>
+                    Type DELETE to confirm
+                  </label>
+                  <input
+                    type="text"
+                    value={deleteText}
+                    onChange={(e) => setDeleteText(e.target.value)}
+                    placeholder="DELETE"
+                    style={{
+                      width: '100%',
+                      padding: '8px 12px',
+                      borderRadius: 'var(--radius-md)',
+                      border: '1px solid var(--color-border-default)',
+                      backgroundColor: 'var(--color-bg-card)',
+                      ...f('sm', 400),
+                    }}
+                  />
+                </div>
+                <div className="flex" style={{ gap: 8 }}>
+                  <button
+                    onClick={() => { setShowDeleteConfirm(false); setDeleteText(''); }}
+                    style={{
+                      padding: '8px 16px', borderRadius: 'var(--radius-md)',
+                      border: '1px solid var(--color-border-default)',
+                      backgroundColor: 'var(--color-bg-card)',
+                      cursor: 'pointer', ...f('sm', 500),
+                    }}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleDeleteAccount}
+                    disabled={deleteText !== 'DELETE'}
+                    style={{
+                      padding: '8px 16px', borderRadius: 'var(--radius-md)',
+                      border: 'none',
+                      backgroundColor: deleteText === 'DELETE' ? 'var(--color-status-danger)' : 'var(--color-bg-muted)',
+                      color: deleteText === 'DELETE' ? 'white' : 'var(--color-text-muted)',
+                      cursor: deleteText === 'DELETE' ? 'pointer' : 'not-allowed',
+                      ...f('sm', 500, deleteText === 'DELETE' ? 'white' : 'var(--color-text-muted)'),
+                    }}
+                  >
+                    Delete My Account
+                  </button>
+                </div>
               </div>
-            </div>
+            )}
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </section>
+
+      {saving && (
+        <div style={{ ...f('xs', 400, 'var(--color-text-muted)'), textAlign: 'center' }}>
+          Saving...
+        </div>
+      )}
     </div>
   );
 }

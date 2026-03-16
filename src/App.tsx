@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, lazy, Suspense, useReducer } from 'react';
+import React, { useState, useEffect, useCallback, lazy, Suspense } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useTokens } from './lib/react-tokens';
 import { useIsMobile } from './hooks/useIsMobile';
@@ -19,6 +19,8 @@ import { cn } from './components/ui/utils';
 import { logger } from './lib/logger';
 import { setupGlobalErrorHandlers } from './lib/error-handlers';
 import { LoadingSpinner } from './components/LoadingSpinner';
+import { useNotificationBadges } from './hooks/useNotificationBadges';
+import { lazyRetry } from './lib/lazy-with-retry';
 
 // --- Eagerly loaded core screens (always needed) ---
 import { Dashboard } from './components/screens/Dashboard';
@@ -29,49 +31,51 @@ import LoginScreen from './components/LoginScreen';
 // --- Lazy loaded screens (split by category) ---
 
 // Assessment screens
-const Assessments = lazy(() => import('./components/screens/Assessments').then(m => ({ default: m.Assessments })));
-const AssessmentLandingNew = lazy(() => import('./components/screens/AssessmentLandingNew').then(m => ({ default: m.AssessmentLandingNew })));
-const AssessmentDetail = lazy(() => import('./components/screens/AssessmentDetail').then(m => ({ default: m.AssessmentDetail })));
-const AssessmentFlow = lazy(() => import('./components/screens/AssessmentFlow').then(m => ({ default: m.AssessmentFlow })));
-const AssessmentResults = lazy(() => import('./components/screens/AssessmentResults').then(m => ({ default: m.AssessmentResults })));
+const Assessments = lazy(() => lazyRetry(() => import('./components/screens/Assessments').then(m => ({ default: m.Assessments })), 'Assessments'));
+const AssessmentLandingNew = lazy(() => lazyRetry(() => import('./components/screens/AssessmentLandingNew').then(m => ({ default: m.AssessmentLandingNew })), 'AssessmentLandingNew'));
+const AssessmentDetail = lazy(() => lazyRetry(() => import('./components/screens/AssessmentDetail').then(m => ({ default: m.AssessmentDetail })), 'AssessmentDetail'));
+const AssessmentFlow = lazy(() => lazyRetry(() => import('./components/screens/AssessmentFlow').then(m => ({ default: m.AssessmentFlow })), 'AssessmentFlow'));
+const AssessmentResults = lazy(() => lazyRetry(() => import('./components/screens/AssessmentResults').then(m => ({ default: m.AssessmentResults })), 'AssessmentResults'));
+const AssessmentHistoryDetail = lazy(() => lazyRetry(() => import('./components/screens/AssessmentHistoryDetail').then(m => ({ default: m.AssessmentHistoryDetail })), 'AssessmentHistoryDetail'));
 
 // Equip screens
-const EquipPrograms = lazy(() => import('./components/screens/EquipPrograms').then(m => ({ default: m.EquipPrograms })));
-const EquipDetail = lazy(() => import('./components/screens/EquipDetail').then(m => ({ default: m.EquipDetail })));
-const EquipOnboarding = lazy(() => import('./components/screens/EquipProgramOnboarding').then(m => ({ default: m.EquipOnboarding })));
-const EquipProgramFlow = lazy(() => import('./components/screens/EquipProgramFlow').then(m => ({ default: m.EquipProgramFlow })));
-const EquipProgramCompletion = lazy(() => import('./components/screens/EquipProgramCompletion').then(m => ({ default: m.EquipProgramCompletion })));
+const EquipPrograms = lazy(() => lazyRetry(() => import('./components/screens/EquipPrograms').then(m => ({ default: m.EquipPrograms })), 'EquipPrograms'));
+const EquipDetail = lazy(() => lazyRetry(() => import('./components/screens/EquipDetail').then(m => ({ default: m.EquipDetail })), 'EquipDetail'));
+const EquipOnboarding = lazy(() => lazyRetry(() => import('./components/screens/EquipProgramOnboarding').then(m => ({ default: m.EquipOnboarding })), 'EquipOnboarding'));
+const EquipProgramFlow = lazy(() => lazyRetry(() => import('./components/screens/EquipProgramFlow').then(m => ({ default: m.EquipProgramFlow })), 'EquipProgramFlow'));
+const EquipProgramCompletion = lazy(() => lazyRetry(() => import('./components/screens/EquipProgramCompletion').then(m => ({ default: m.EquipProgramCompletion })), 'EquipProgramCompletion'));
 
 // User screens
-const Consultation = lazy(() => import('./components/screens/Consultation').then(m => ({ default: m.Consultation })));
-const ConsultantDetail = lazy(() => import('./components/screens/ConsultantDetail').then(m => ({ default: m.ConsultantDetail })));
-const Library = lazy(() => import('./components/screens/Library').then(m => ({ default: m.Library })));
-const Account = lazy(() => import('./components/screens/Account').then(m => ({ default: m.Account })));
-const MoodJournal = lazy(() => import('./components/screens/MoodJournal').then(m => ({ default: m.MoodJournal })));
-const ResourceDetail = lazy(() => import('./components/screens/ResourceDetail').then(m => ({ default: m.ResourceDetail })));
-const ProfessionalApplication = lazy(() => import('./components/screens/ProfessionalApplication').then(m => ({ default: m.ProfessionalApplication })));
+const Consultation = lazy(() => lazyRetry(() => import('./components/screens/Consultation').then(m => ({ default: m.Consultation })), 'Consultation'));
+const ConsultantDetail = lazy(() => lazyRetry(() => import('./components/screens/ConsultantDetail').then(m => ({ default: m.ConsultantDetail })), 'ConsultantDetail'));
+const Library = lazy(() => lazyRetry(() => import('./components/screens/Library').then(m => ({ default: m.Library })), 'Library'));
+const Account = lazy(() => lazyRetry(() => import('./components/screens/Account').then(m => ({ default: m.Account })), 'Account'));
+const MoodJournal = lazy(() => lazyRetry(() => import('./components/screens/MoodJournal').then(m => ({ default: m.MoodJournal })), 'MoodJournal'));
+const ResourceDetail = lazy(() => lazyRetry(() => import('./components/screens/ResourceDetail').then(m => ({ default: m.ResourceDetail })), 'ResourceDetail'));
+const ProfessionalApplication = lazy(() => lazyRetry(() => import('./components/screens/ProfessionalApplication').then(m => ({ default: m.ProfessionalApplication })), 'ProfessionalApplication'));
+const WellnessTimeline = lazy(() => lazyRetry(() => import('./components/screens/WellnessTimeline').then(m => ({ default: m.WellnessTimeline })), 'WellnessTimeline'));
 
 // Static/legal pages
-const AboutUs = lazy(() => import('./components/screens/AboutUs').then(m => ({ default: m.AboutUs })));
-const FAQ = lazy(() => import('./components/screens/FAQ').then(m => ({ default: m.FAQ })));
-const PrivacyPolicy = lazy(() => import('./components/screens/PrivacyPolicy').then(m => ({ default: m.PrivacyPolicy })));
-const TermsOfUse = lazy(() => import('./components/screens/TermsOfUse').then(m => ({ default: m.TermsOfUse })));
-const ContactUs = lazy(() => import('./components/screens/ContactUs').then(m => ({ default: m.ContactUs })));
-const ReturnPolicy = lazy(() => import('./components/screens/ReturnPolicy').then(m => ({ default: m.ReturnPolicy })));
-const CancellationPolicy = lazy(() => import('./components/screens/CancellationPolicy').then(m => ({ default: m.CancellationPolicy })));
-const Sitemap = lazy(() => import('./components/screens/Sitemap').then(m => ({ default: m.Sitemap })));
+const AboutUs = lazy(() => lazyRetry(() => import('./components/screens/AboutUs').then(m => ({ default: m.AboutUs })), 'AboutUs'));
+const FAQ = lazy(() => lazyRetry(() => import('./components/screens/FAQ').then(m => ({ default: m.FAQ })), 'FAQ'));
+const PrivacyPolicy = lazy(() => lazyRetry(() => import('./components/screens/PrivacyPolicy').then(m => ({ default: m.PrivacyPolicy })), 'PrivacyPolicy'));
+const TermsOfUse = lazy(() => lazyRetry(() => import('./components/screens/TermsOfUse').then(m => ({ default: m.TermsOfUse })), 'TermsOfUse'));
+const ContactUs = lazy(() => lazyRetry(() => import('./components/screens/ContactUs').then(m => ({ default: m.ContactUs })), 'ContactUs'));
+const ReturnPolicy = lazy(() => lazyRetry(() => import('./components/screens/ReturnPolicy').then(m => ({ default: m.ReturnPolicy })), 'ReturnPolicy'));
+const CancellationPolicy = lazy(() => lazyRetry(() => import('./components/screens/CancellationPolicy').then(m => ({ default: m.CancellationPolicy })), 'CancellationPolicy'));
+const Sitemap = lazy(() => lazyRetry(() => import('./components/screens/Sitemap').then(m => ({ default: m.Sitemap })), 'Sitemap'));
+const CmsPageRenderer = lazy(() => lazyRetry(() => import('./components/screens/CmsPageRenderer').then(m => ({ default: m.CmsPageRenderer })), 'CmsPageRenderer'));
 
 // Admin screens
-const AdminDashboard = lazy(() => import('./components/screens/AdminDashboard').then(m => ({ default: m.AdminDashboard })));
-const AdminLoginScreen = lazy(() => import('./components/admin/AdminLoginScreen').then(m => ({ default: m.AdminLoginScreen })));
-
-
+const AdminDashboard = lazy(() => lazyRetry(() => import('./components/screens/AdminDashboard').then(m => ({ default: m.AdminDashboard })), 'AdminDashboard'));
+const AdminLoginScreen = lazy(() => lazyRetry(() => import('./components/admin/AdminLoginScreen').then(m => ({ default: m.AdminLoginScreen })), 'AdminLoginScreen'));
 
 // --- Eagerly loaded non-screen components ---
 import { AdminWidget } from './components/admin/AdminWidget';
 import { GoogleFitProvider } from './components/integrations/GoogleFitContext';
 import { Footer } from './components/Footer';
 import { ErrorBoundary } from './components/ErrorBoundary';
+import { ChunkErrorBoundary } from './components/ChunkErrorBoundary';
 import { SecurityProvider } from './components/security/SecurityProvider';
 import { CrisisSupport, useCrisisSupport } from './components/safety/CrisisSupport';
 import { SafePerformanceMonitor } from './components/monitoring/SafePerformanceMonitor';
@@ -98,20 +102,28 @@ function AppContent() {
   
   const prefersReducedMotion = useReducedMotion();
   const { isOnline, pendingCount, isSyncing, syncNow } = useOfflineSync();
+  const notificationBadges = useNotificationBadges();
   
   // Pull-to-refresh (extracted hook)
   const handlePullRefresh = useCallback(async () => {
     await new Promise(resolve => setTimeout(resolve, 1000));
     showToast('success', 'Refreshed', 'Content updated successfully');
-    window.location.href = window.location.href;
+    // Trigger a soft re-render instead of full page reload which destroys iframe
+    window.dispatchEvent(new CustomEvent('ikan-refresh'));
   }, [showToast]);
   
   usePullToRefresh({ enabled: isMobile, onRefresh: handlePullRefresh });
   
   // All state hooks
   const [emergencyRender, setEmergencyRender] = useState(false);
-  const [currentRoute, setCurrentRoute] = useState(DEFAULT_PUBLIC_ROUTE);
-  const [, forceRender] = useReducer((x: number) => x + 1, 0); // Triggers re-render on init/emergency
+  const [currentRoute, setCurrentRoute] = useState(() => {
+    // Read the initial route from the URL so direct navigation (e.g. /join/professional) works
+    if (typeof window !== 'undefined') {
+      const path = window.location.pathname;
+      if (path && path !== '/') return path;
+    }
+    return DEFAULT_PUBLIC_ROUTE;
+  });
   const [resourceDetailId, setResourceDetailId] = useState<string | null>(null);
   const [consultantId, setConsultantId] = useState<string | null>(null);
 
@@ -131,12 +143,13 @@ function AppContent() {
       const [path, search] = route.split('?');
       
       const validRoutes = [
-        '/', '/dashboard', '/mood-journal', '/assessment', '/assessment-landing', '/assessment-detail', '/assessment-flow', '/assessment-results',
+        '/', '/dashboard', '/mood-journal', '/assessment', '/assessment-landing', '/assessment-detail', '/assessment-flow', '/assessment-results', '/assessment-history-detail',
         '/equip', '/equip-programs-landing', '/equip-detail', '/equip-program-onboarding', '/equip-program-flow', '/equip-program-completion',
         '/consultation', '/consultation-detail', '/resource', '/resource-detail', '/account', 
         '/about', '/faq', '/privacy', '/privacy-policy', '/terms', '/contact', '/return-policy', '/cancellation-policy', '/sitemap', '/login',
         '/admin', '/admin/login', '/admin/resources', '/admin/equip', '/admin/users', '/admin/consultants', '/admin/assessments', '/admin/analytics', '/admin/settings', '/admin/pages', '/admin/media', '/admin/crud', '/admin/contact-newsletter',
-        '/join/professional'
+        '/join/professional',
+        '/timeline'
       ];
       
       // Handle consultant detail route pattern
@@ -151,14 +164,19 @@ function AppContent() {
       }
       
       if (!validRoutes.includes(path)) {
-        logger.warn('Invalid route:', path, 'redirecting to appropriate default');
-        const defaultRoute = user ? DEFAULT_PRIVATE_ROUTE : DEFAULT_PUBLIC_ROUTE;
-        setCurrentRoute(defaultRoute);
-        setResourceDetailId(null);
-        if (typeof window !== 'undefined') {
-          window.history.pushState({}, '', defaultRoute);
+        // Allow CMS page routes (e.g. /page/some-slug) through
+        if (path.startsWith('/page/')) {
+          // CMS page — let it pass through to the switch
+        } else {
+          logger.warn('Invalid route:', path, 'redirecting to appropriate default');
+          const defaultRoute = user ? DEFAULT_PRIVATE_ROUTE : DEFAULT_PUBLIC_ROUTE;
+          setCurrentRoute(defaultRoute);
+          setResourceDetailId(null);
+          if (typeof window !== 'undefined') {
+            window.history.pushState({}, '', defaultRoute);
+          }
+          return;
         }
-        return;
       }
       
       // setRouteHistory(prev => {
@@ -250,8 +268,7 @@ function AppContent() {
 
   // App initialization effect — delegates to extracted error-handlers utility
   useEffect(() => {
-    logger.log('iKan app starting - immediate mode...');
-    forceRender();
+    logger.log('iKan app starting...');
     
     const cleanup = setupGlobalErrorHandlers({ showToast });
     
@@ -259,17 +276,14 @@ function AppContent() {
     return cleanup;
   }, []);
 
-  // Emergency fallback effect
+  // Emergency fallback effect — only needed if auth initialization hangs
   useEffect(() => {
-    const emergencyTimeout = setTimeout(() => {
-      console.log('EMERGENCY: App stuck loading - forcing immediate render');
-      setEmergencyRender(true);
-      forceRender();
-    }, 5000);
+    if (isInitialized || emergencyRender) return; // Already initialized, skip
 
-    if (isInitialized || emergencyRender) {
-      clearTimeout(emergencyTimeout);
-    }
+    const emergencyTimeout = setTimeout(() => {
+      console.log('EMERGENCY: Auth init timed out after 5s - forcing render');
+      setEmergencyRender(true);
+    }, 5000);
 
     return () => clearTimeout(emergencyTimeout);
   }, [isInitialized, emergencyRender]);
@@ -294,12 +308,27 @@ function AppContent() {
     }
   }, [currentRoute]);
 
+  // Fix invalid route state (moved out of render to avoid setState-during-render)
+  useEffect(() => {
+    if (!currentRoute || typeof currentRoute !== 'string') {
+      const defaultRoute = user ? DEFAULT_PRIVATE_ROUTE : DEFAULT_PUBLIC_ROUTE;
+      setCurrentRoute(defaultRoute);
+    }
+  }, [currentRoute, user]);
+
+  // Redirect unauthenticated users from admin routes (moved out of render)
+  useEffect(() => {
+    if (currentRoute.startsWith('/admin') && currentRoute !== '/admin/login' && !user && isInitialized) {
+      setCurrentRoute('/admin/login');
+    }
+  }, [currentRoute, user, isInitialized]);
+
   // Render function
   const renderScreen = () => {
     try {
       if (!currentRoute || typeof currentRoute !== 'string') {
         console.log('Invalid route detected, falling back to default');
-        setCurrentRoute(user ? DEFAULT_PRIVATE_ROUTE : DEFAULT_PUBLIC_ROUTE);
+        // Don't setState during render — return a safe fallback and fix route via effect
         return null;
       }
 
@@ -327,8 +356,17 @@ function AppContent() {
         }
 
         if (!user) {
-            handleNavigate('/admin/login');
-            return null;
+            // Don't call handleNavigate during render — return login screen directly
+            return (
+              <ErrorBoundary>
+                <Suspense fallback={<LazyFallback />}>
+                  <AdminLoginScreen 
+                      onNavigate={handleNavigate} 
+                      onLoginSuccess={() => handleNavigate('/admin')} 
+                  />
+                </Suspense>
+              </ErrorBoundary>
+            );
         }
 
         const adminPath = currentRoute.replace('/admin/', '');
@@ -365,6 +403,8 @@ function AppContent() {
           return withSuspense(<AssessmentFlow assessmentId={queryParams.id || queryParams.type} onNavigate={handleNavigate} />);
         case '/assessment-results':
           return withSuspense(<AssessmentResults onNavigate={handleNavigate} />);
+        case '/assessment-history-detail':
+          return withSuspense(<AssessmentHistoryDetail onNavigate={handleNavigate} />);
         case '/equip':
         case '/equip-programs-landing':
           return withSuspense(<EquipPrograms onNavigate={handleNavigate} />);
@@ -375,7 +415,7 @@ function AppContent() {
         case '/equip-program-flow':
           return withSuspense(<EquipProgramFlow programId={queryParams.id} onNavigate={handleNavigate} />);
         case '/equip-program-completion':
-          return withSuspense(<EquipProgramCompletion onNavigate={handleNavigate} />);
+          return withSuspense(<EquipProgramCompletion programId={queryParams.id} onNavigate={handleNavigate} />);
         case '/consultation':
           return withSuspense(<Consultation onNavigate={handleNavigate} />);
         case '/consultation-detail':
@@ -387,7 +427,15 @@ function AppContent() {
         case '/account':
           return withSuspense(<Account onNavigate={handleNavigate} />);
         case '/mood-journal':
-          return withSuspense(<MoodJournal onNavigate={handleNavigate} />);
+          return (
+            <ErrorBoundary>
+              <ChunkErrorBoundary chunkName="Mood Journal" onRetry={() => handleNavigate('/mood-journal')}>
+                <Suspense fallback={<LazyFallback />}>
+                  <MoodJournal onNavigate={handleNavigate} />
+                </Suspense>
+              </ChunkErrorBoundary>
+            </ErrorBoundary>
+          );
         case '/about':
           return withSuspense(<AboutUs onNavigate={handleNavigate} />);
         case '/faq':
@@ -409,8 +457,18 @@ function AppContent() {
           return <LoginScreen onNavigate={handleNavigate} onSuccess={() => handleNavigate('/dashboard')} />;
         case '/join/professional':
           return withSuspense(<ProfessionalApplication onNavigate={handleNavigate} />);
-        default:
+        case '/timeline':
+          return withSuspense(<WellnessTimeline onNavigate={handleNavigate} />);
+        default: {
+          // Try CMS page rendering for /page/:slug routes
+          if (currentRoute.startsWith('/page/')) {
+            const slug = currentRoute.replace('/page/', '');
+            if (slug) {
+              return withSuspense(<CmsPageRenderer slug={slug} onNavigate={handleNavigate} />);
+            }
+          }
           return <NotFound onNavigate={handleNavigate} />;
+        }
       }
     } catch (error) {
       console.error('Error rendering screen:', error);
@@ -435,7 +493,8 @@ function AppContent() {
                            currentRoute === '/return-policy' ||
                            currentRoute === '/cancellation-policy' ||
                            currentRoute === '/faq' ||
-                           currentRoute === '/sitemap';
+                           currentRoute === '/sitemap' ||
+                           currentRoute.startsWith('/page/');
 
   const isFullScreenFlow = currentRoute.startsWith('/assessment-flow') ||
                            currentRoute.startsWith('/equip-program-flow') ||
@@ -495,18 +554,25 @@ function AppContent() {
           isMobile && showPrivateNav ? "pb-24" : ""
         )}>
           <RouteGuard currentRoute={currentRoute} onNavigate={handleNavigate}>
-            <AnimatePresence mode="wait" initial={false}>
-              <motion.div
-                key={currentRoute}
-                initial={prefersReducedMotion ? false : { opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={prefersReducedMotion ? undefined : { opacity: 0, y: -10 }}
-                transition={{ duration: prefersReducedMotion ? 0 : 0.2, ease: "easeOut" }}
-                className="w-full h-full"
-              >
+            {currentRoute.startsWith('/admin') ? (
+              // Admin routes: NO animation wrapper — render directly for speed
+              <div className="w-full h-full">
                 {renderScreen()}
-              </motion.div>
-            </AnimatePresence>
+              </div>
+            ) : (
+              <AnimatePresence mode="wait" initial={false}>
+                <motion.div
+                  key={currentRoute}
+                  initial={prefersReducedMotion ? false : { opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={prefersReducedMotion ? undefined : { opacity: 0, y: -10 }}
+                  transition={{ duration: prefersReducedMotion ? 0 : 0.2, ease: "easeOut" }}
+                  className="w-full h-full"
+                >
+                  {renderScreen()}
+                </motion.div>
+              </AnimatePresence>
+            )}
           </RouteGuard>
         </div>
       </main>
@@ -531,10 +597,7 @@ function AppContent() {
         <BottomNavBarMobile 
           currentRoute={currentRoute}
           onNavigate={handleNavigate}
-          notificationBadges={{
-            '/mood-journal': 2,
-            '/assessment': 1
-          }}
+          notificationBadges={notificationBadges}
         />
       )}
 

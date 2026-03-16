@@ -203,7 +203,6 @@ export function AdminEquipAnalytics({ onBack, className }: AdminEquipAnalyticsPr
       <AdminHeader
         title="Equip Program Analytics"
         subtitle="Track enrollment, completion rates, and user progress"
-        onBack={onBack}
       />
 
       <div className="max-w-7xl mx-auto p-6 space-y-6">

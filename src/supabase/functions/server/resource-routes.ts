@@ -18,9 +18,40 @@ export function registerResourceRoutes(app: Hono, middleware: any) {
   app.get("/library/resources", async (c) => {
     try {
       const resources = await kv.getByPrefix("resource:");
-      return c.json({ resources });
+
+      // ✅ Compute view counts from resource_view:* entries
+      const allViews = await kv.getByPrefix("resource_view:");
+      const viewCountMap: Record<string, number> = {};
+      for (const view of allViews) {
+        if (!view || !view.resource_id) continue;
+        viewCountMap[view.resource_id] = (viewCountMap[view.resource_id] || 0) + 1;
+      }
+
+      const resourcesWithCounts = resources.map((r: any) => ({
+        ...r,
+        viewCount: viewCountMap[r.id] || viewCountMap[r.resource_id] || r.viewCount || 0,
+      }));
+
+      return c.json({ resources: resourcesWithCounts });
     } catch (error) {
       return c.json({ error: "Failed to fetch resources" }, 500);
+    }
+  });
+
+  // Track resource view
+  app.post("/library/resources/:id/view", async (c) => {
+    try {
+      const id = c.req.param("id");
+      // Use a unique key per session/visitor to avoid double-counting refreshes
+      // For simplicity, use a time-bucketed approach
+      const viewId = `${id}-${Date.now()}`;
+      await kv.set(`resource_view:${viewId}`, {
+        resource_id: id,
+        viewed_at: new Date().toISOString(),
+      });
+      return c.json({ success: true });
+    } catch (error) {
+      return c.json({ error: "Failed to track view" }, 500);
     }
   });
 

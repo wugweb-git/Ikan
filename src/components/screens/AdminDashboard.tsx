@@ -1,5 +1,6 @@
-import { useState, useEffect, lazy, Suspense } from 'react';
+import { useState, useEffect, lazy, Suspense, useMemo, useCallback, useRef } from 'react';
 import { useNotifications } from '../../contexts/NotificationContext';
+import { useAuth } from '../../contexts/AuthContext';
 import { 
   LayoutDashboard, 
   BarChart, 
@@ -21,13 +22,15 @@ import {
   Image,
   Sparkles,
   CreditCard,
-  MousePointerClick,
   HeartPulse,
   Palette,
   Zap,
   Inbox,
   Menu,
   X,
+  Loader2,
+  Blocks,
+  Calculator,
 } from 'lucide-react';
 import { cn } from '../ui/utils';
 import { Button } from '../ui/button';
@@ -49,14 +52,12 @@ const L = {
   EquipDashboard: lazy(() => import('./EquipAdminDashboard').then(m => ({ default: m.EquipAdminDashboard }))),
   PageManager: lazy(() => import('./AdminPageManager').then(m => ({ default: m.AdminPageManager }))),
   MediaManager: lazy(() => import('./AdminMediaManager').then(m => ({ default: m.AdminMediaManager }))),
-  UserDataManager: lazy(() => import('./AdminUserDataManager').then(m => ({ default: m.AdminUserDataManager }))),
   SettingsManager: lazy(() => import('./AdminSettingsManager').then(m => ({ default: m.AdminSettingsManager }))),
   Analytics: lazy(() => import('./AdminDashboardAnalytics').then(m => ({ default: m.AdminDashboardAnalytics }))),
   EquipAnalytics: lazy(() => import('./AdminEquipAnalytics').then(m => ({ default: m.AdminEquipAnalytics }))),
   Communication: lazy(() => import('../admin/AdminCommunication').then(m => ({ default: m.AdminCommunication }))),
   PaymentGateway: lazy(() => import('../admin/AdminPaymentGateway').then(m => ({ default: m.AdminPaymentGateway }))),
   CategoryManager: lazy(() => import('../admin/AdminCategoryManager').then(m => ({ default: m.AdminCategoryManager }))),
-  MoodManager: lazy(() => import('../admin/AdminMoodManager').then(m => ({ default: m.AdminMoodManager }))),
   CheckinScalesManager: lazy(() => import('../admin/AdminCheckinScalesManager').then(m => ({ default: m.AdminCheckinScalesManager }))),
   RecommendationRules: lazy(() => import('../admin/recommendations/RecommendationRulesManager').then(m => ({ default: m.RecommendationRulesManager }))),
   BackupManager: lazy(() => import('../admin/AdminBackupManager').then(m => ({ default: m.AdminBackupManager }))),
@@ -65,31 +66,41 @@ const L = {
   KVAudit: lazy(() => import('../admin/AdminKVAudit').then(m => ({ default: m.AdminKVAudit }))),
   CRUDTesting: lazy(() => import('../admin/AdminCRUDTesting').then(m => ({ default: m.AdminCRUDTesting }))),
   ContactSubmissions: lazy(() => import('../admin/AdminContactSubmissions').then(m => ({ default: m.AdminContactSubmissions }))),
+  BlockTypeViewer: lazy(() => import('../admin/AdminBlockTypeViewer').then(m => ({ default: m.AdminBlockTypeViewer }))),
+  ScoringEngine: lazy(() => import('../admin/AdminScoringEngine').then(m => ({ default: m.AdminScoringEngine }))),
 };
 
-// Shared skeleton fallback for lazy screen loading
-function AdminScreenSkeleton() {
+// Stable Suspense wrapper - defined OUTSIDE component to prevent remounting
+function SuspenseScreen({ children }: { children: React.ReactNode }) {
   return (
-    <div className="space-y-4 animate-pulse">
-      <div className="h-8 w-48 rounded-lg" style={{ backgroundColor: 'var(--color-bg-muted)' }} />
-      <div className="h-4 w-72 rounded" style={{ backgroundColor: 'var(--color-bg-muted)' }} />
-      <div className="h-[300px] rounded-lg mt-4" style={{ backgroundColor: 'var(--color-bg-muted)' }} />
-    </div>
+    <Suspense fallback={
+      <div className="flex flex-col items-center justify-center p-8 gap-3" style={{ minHeight: 200 }}>
+        <Loader2 className="w-6 h-6 animate-spin" style={{ color: 'var(--color-text-muted)' }} />
+        <span style={{ color: 'var(--color-text-muted)', fontSize: 'var(--text-sm)' }}>Loading…</span>
+      </div>
+    }>{children}</Suspense>
   );
 }
 
-// Mobile sidebar hook
+// Mobile sidebar hook - with throttled resize
 function useIsMobileAdmin() {
   const [isMobile, setIsMobile] = useState(window.innerWidth < 1024);
   const [isCompact, setIsCompact] = useState(window.innerWidth >= 1024 && window.innerWidth < 1280);
+  const rafRef = useRef(0);
   useEffect(() => {
     const handler = () => {
-      const w = window.innerWidth;
-      setIsMobile(w < 1024);
-      setIsCompact(w >= 1024 && w < 1280);
+      cancelAnimationFrame(rafRef.current);
+      rafRef.current = requestAnimationFrame(() => {
+        const w = window.innerWidth;
+        setIsMobile(w < 1024);
+        setIsCompact(w >= 1024 && w < 1280);
+      });
     };
     window.addEventListener('resize', handler);
-    return () => window.removeEventListener('resize', handler);
+    return () => {
+      window.removeEventListener('resize', handler);
+      cancelAnimationFrame(rafRef.current);
+    };
   }, []);
   return { isMobile, isCompact };
 }
@@ -111,10 +122,8 @@ type ViewType =
   | 'pages'
   | 'media'
   | 'categories'
-  | 'moods'
   | 'checkin-scales'
   | 'recommendations'
-  | 'user-data'
   | 'settings'
   | 'crud'
   | 'communication'
@@ -123,14 +132,18 @@ type ViewType =
   | 'kv-audit'
   | 'contact-newsletter'
   | 'checkin-builder'
-  | 'hero-banner';
+  | 'hero-banner'
+  | 'block-type-viewer'
+  | 'scoring-engine';
 
 export function AdminDashboard({ onNavigate, initialView }: AdminDashboardProps) {
   const { unreadCount } = useNotifications();
+  const { user } = useAuth();
   const [currentView, setCurrentView] = useState<ViewType>((initialView as ViewType) || 'dashboard');
   const [searchQuery, setSearchQuery] = useState('');
   const { isMobile, isCompact } = useIsMobileAdmin();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [searchResults, setSearchResults] = useState<{ id: ViewType; label: string; group: string }[]>([]);
 
   useEffect(() => {
     if (initialView) {
@@ -138,7 +151,45 @@ export function AdminDashboard({ onNavigate, initialView }: AdminDashboardProps)
     }
   }, [initialView]);
 
-  const navGroups: SideNavGroup[] = [
+  // Search through admin sections
+  useEffect(() => {
+    if (!searchQuery.trim()) {
+      setSearchResults([]);
+      return;
+    }
+    const q = searchQuery.toLowerCase();
+    const allItems: { id: ViewType; label: string; group: string; keywords: string }[] = [
+      { id: 'dashboard', label: 'Dashboard', group: 'Overview', keywords: 'home overview' },
+      { id: 'analytics', label: 'Analytics', group: 'Overview', keywords: 'charts graphs stats metrics' },
+      { id: 'users', label: 'Users & Accounts', group: 'Overview', keywords: 'user account member role admin' },
+      { id: 'equip', label: 'Equip Programs', group: 'Content', keywords: 'program course equip module day block' },
+      { id: 'assessments', label: 'Assessments', group: 'Content', keywords: 'assessment quiz test survey' },
+      { id: 'resources', label: 'Resources', group: 'Content', keywords: 'resource article blog library' },
+      { id: 'checkin-builder', label: 'Check-in Builder', group: 'Content', keywords: 'checkin check-in template builder mood' },
+      { id: 'consultants', label: 'Consultants', group: 'Content', keywords: 'consultant therapist professional doctor' },
+      { id: 'pages', label: 'Pages', group: 'Content', keywords: 'page cms content privacy terms faq' },
+      { id: 'media', label: 'Media Library', group: 'Content', keywords: 'media image upload file photo' },
+      { id: 'hero-banner', label: 'Hero Banners', group: 'Content', keywords: 'hero banner header image' },
+      { id: 'categories', label: 'Meta Manager', group: 'Config', keywords: 'category tag label metadata type mood' },
+      { id: 'checkin-scales', label: 'Check-in Scales', group: 'Config', keywords: 'scale checkin energy stress sleep' },
+      { id: 'recommendations', label: 'Rules Engine', group: 'Config', keywords: 'recommendation rule engine severity' },
+      { id: 'scoring-engine', label: 'Scoring Engine', group: 'Config', keywords: 'scoring engine' },
+      { id: 'block-type-viewer', label: 'Block Types', group: 'Config', keywords: 'block type viewer' },
+      { id: 'settings', label: 'Global Settings', group: 'Config', keywords: 'settings config configuration' },
+      { id: 'communication', label: 'Communication', group: 'System', keywords: 'email notification message brevo' },
+      { id: 'contact-newsletter', label: 'Contact & Newsletter', group: 'System', keywords: 'contact newsletter subscription' },
+      { id: 'payment-gateway', label: 'Payments', group: 'System', keywords: 'payment razorpay gateway transaction' },
+      { id: 'crud', label: 'System Health', group: 'System', keywords: 'health status api endpoint crud' },
+      { id: 'backup', label: 'Backups', group: 'System', keywords: 'backup restore checkpoint' },
+      { id: 'kv-audit', label: 'KV Audit', group: 'System', keywords: 'kv audit database key value prefix' },
+    ];
+    const matches = allItems.filter(item =>
+      item.label.toLowerCase().includes(q) || item.keywords.includes(q) || item.group.toLowerCase().includes(q)
+    );
+    setSearchResults(matches);
+  }, [searchQuery]);
+
+  const navGroups: SideNavGroup[] = useMemo(() => [
     {
       id: 'main',
       title: 'Overview',
@@ -166,10 +217,11 @@ export function AdminDashboard({ onNavigate, initialView }: AdminDashboardProps)
       id: 'configuration',
       title: 'Configuration',
       items: [
-        { id: 'categories', label: 'Categories', icon: Tag },
-        { id: 'moods', label: 'Mood Types', icon: Smile },
+        { id: 'categories', label: 'Meta Manager', icon: Tag },
         { id: 'checkin-scales', label: 'Check-in Scales', icon: Zap },
         { id: 'recommendations', label: 'Rules Engine', icon: Sparkles },
+        { id: 'scoring-engine', label: 'Scoring Engine', icon: Calculator },
+        { id: 'block-type-viewer', label: 'Block Types', icon: Blocks },
         { id: 'settings', label: 'Global Settings', icon: Settings },
       ]
     },
@@ -177,7 +229,6 @@ export function AdminDashboard({ onNavigate, initialView }: AdminDashboardProps)
       id: 'system',
       title: 'System & Logs',
       items: [
-        { id: 'user-data', label: 'User Activity', icon: MousePointerClick },
         { id: 'communication', label: 'Communication', icon: MessageSquare },
         { id: 'contact-newsletter', label: 'Contact & Newsletter', icon: Inbox },
         { id: 'payment-gateway', label: 'Payments', icon: CreditCard },
@@ -199,39 +250,50 @@ export function AdminDashboard({ onNavigate, initialView }: AdminDashboardProps)
         if (isMobile) setSidebarOpen(false);
       }
     }))
-  }));
-
-  const goBack = () => setCurrentView('dashboard');
-
+  })), [currentView, isMobile]);
+  
+  const goBack = useCallback(() => setCurrentView('dashboard'), []);
+  
   const renderContent = () => {
     // Every screen is wrapped in Suspense so only the active one loads
-    const S = ({ children }: { children: React.ReactNode }) => (
-      <Suspense fallback={<AdminScreenSkeleton />}>{children}</Suspense>
-    );
-
+    // IMPORTANT: Use SuspenseScreen directly instead of an inline wrapper 
+    // to prevent remounting children when AdminDashboard re-renders.
     switch (currentView) {
       case 'dashboard':
         return (
           <div className="space-y-8 admin-dashboard-header">
             <div>
-              <h1 className="mb-2">
+              <h1 style={{
+                fontFamily: 'var(--font-family-base)',
+                fontSize: 'var(--text-3xl)',
+                fontWeight: 'var(--font-weight-medium)',
+                color: 'var(--color-text-primary)',
+                marginBottom: 'var(--spacing-2)'
+              }}>
                 Admin Dashboard
               </h1>
               <p style={{ 
                 fontSize: 'var(--text-base)', 
-                color: 'var(--color-text-muted)' 
+                color: 'var(--color-text-muted)',
+                fontFamily: 'var(--font-family-base)'
               }}>
                 Overview of system performance and recent activity.
               </p>
             </div>
             
             <div className="space-y-2">
-                <h2 className="mb-4">
+                <h2 style={{
+                  fontFamily: 'var(--font-family-base)',
+                  fontSize: 'var(--text-xl)',
+                  fontWeight: 'var(--font-weight-medium)',
+                  color: 'var(--color-text-primary)',
+                  marginBottom: 'var(--spacing-4)'
+                }}>
                     Overview
                 </h2>
                 <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                   <Card 
-                    className="p-6 cursor-pointer hover:shadow-md transition-all group border border-[var(--color-border-default)] cbt-card-small"
+                    className="p-6 cursor-pointer hover:shadow-md group border border-[var(--color-border-default)] cbt-card-small"
                     style={{ borderRadius: 'var(--radius-lg)' }}
                     onClick={() => setCurrentView('users')}
                   >
@@ -240,14 +302,14 @@ export function AdminDashboard({ onNavigate, initialView }: AdminDashboardProps)
                         <h3 style={{ fontSize: 'var(--text-lg)', fontWeight: 'var(--font-weight-medium)', color: 'var(--color-text-primary)' }}>User Management</h3>
                         <p style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-muted)', marginTop: 'var(--spacing-1)' }}>Manage accounts and roles</p>
                       </div>
-                      <div className="p-2 rounded-lg group-hover:scale-110 transition-transform" style={{ backgroundColor: 'var(--color-bg-muted)', color: 'var(--color-primary-default)' }}>
+                      <div className="p-2 rounded-lg" style={{ backgroundColor: 'var(--color-bg-muted)', color: 'var(--color-primary-default)' }}>
                         <Users className="w-5 h-5" />
                       </div>
                     </div>
                   </Card>
 
                   <Card 
-                    className="p-6 cursor-pointer hover:shadow-md transition-all group border border-[var(--color-border-default)] cbt-card-small"
+                    className="p-6 cursor-pointer hover:shadow-md group border border-[var(--color-border-default)] cbt-card-small"
                     style={{ borderRadius: 'var(--radius-lg)' }}
                     onClick={() => setCurrentView('equip')}
                   >
@@ -256,14 +318,14 @@ export function AdminDashboard({ onNavigate, initialView }: AdminDashboardProps)
                         <h3 style={{ fontSize: 'var(--text-lg)', fontWeight: 'var(--font-weight-medium)', color: 'var(--color-text-primary)' }}>Equip Programs</h3>
                         <p style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-muted)', marginTop: 'var(--spacing-1)' }}>Manage courses and content</p>
                       </div>
-                      <div className="p-2 rounded-lg group-hover:scale-110 transition-transform" style={{ backgroundColor: 'var(--color-bg-muted)', color: 'var(--color-primary-default)' }}>
+                      <div className="p-2 rounded-lg" style={{ backgroundColor: 'var(--color-bg-muted)', color: 'var(--color-primary-default)' }}>
                         <BookOpen className="w-5 h-5" />
                       </div>
                     </div>
                   </Card>
 
                   <Card 
-                    className="p-6 cursor-pointer hover:shadow-md transition-all group border border-[var(--color-border-default)] cbt-card-small"
+                    className="p-6 cursor-pointer hover:shadow-md group border border-[var(--color-border-default)] cbt-card-small"
                     style={{ borderRadius: 'var(--radius-lg)' }}
                     onClick={() => setCurrentView('crud')}
                   >
@@ -272,8 +334,8 @@ export function AdminDashboard({ onNavigate, initialView }: AdminDashboardProps)
                         <h3 style={{ fontSize: 'var(--text-lg)', fontWeight: 'var(--font-weight-medium)', color: 'var(--color-text-primary)' }}>System Health</h3>
                         <p style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-muted)', marginTop: 'var(--spacing-1)' }}>Status: Operational</p>
                       </div>
-                      <div className="p-2 rounded-lg group-hover:scale-110 transition-transform relative" style={{ backgroundColor: 'var(--color-status-success-light)', color: 'var(--color-status-success)' }}>
-                        <HeartPulse className="w-5 h-5 animate-pulse" />
+                      <div className="p-2 rounded-lg relative" style={{ backgroundColor: 'var(--color-status-success-light)', color: 'var(--color-status-success)' }}>
+                        <HeartPulse className="w-5 h-5" />
                       </div>
                     </div>
                   </Card>
@@ -281,36 +343,42 @@ export function AdminDashboard({ onNavigate, initialView }: AdminDashboardProps)
             </div>
             
             <div className="space-y-4">
-                 <h2 className="mb-4">
+                 <h2 style={{
+                   fontFamily: 'var(--font-family-base)',
+                   fontSize: 'var(--text-xl)',
+                   fontWeight: 'var(--font-weight-medium)',
+                   color: 'var(--color-text-primary)',
+                   marginBottom: 'var(--spacing-4)'
+                 }}>
                     Dashboard Analytics
                 </h2>
-                <S><L.Analytics embedded /></S>
+                <SuspenseScreen><L.Analytics embedded /></SuspenseScreen>
             </div>
           </div>
         );
-      case 'analytics': return <S><L.Analytics onBack={goBack} /></S>;
-      case 'users': return <S><L.UserManager onBack={goBack} /></S>;
-      case 'consultants': return <S><L.ConsultationManager onBack={goBack} /></S>;
-      case 'resources': return <S><L.ResourceManager onBack={goBack} /></S>;
-      case 'assessments': return <S><L.AssessmentManager onBack={goBack} /></S>;
-      case 'equip': return <S><L.EquipDashboard onBack={goBack} /></S>;
-      case 'equip-analytics': return <S><L.EquipAnalytics onBack={goBack} /></S>;
-      case 'pages': return <S><L.PageManager onBack={goBack} /></S>;
-      case 'media': return <S><L.MediaManager onBack={goBack} /></S>;
-      case 'categories': return <S><L.CategoryManager onBack={goBack} /></S>;
-      case 'moods': return <S><L.MoodManager onBack={goBack} /></S>;
-      case 'checkin-scales': return <S><L.CheckinScalesManager onBack={goBack} /></S>;
-      case 'recommendations': return <S><L.RecommendationRules onBack={goBack} /></S>;
-      case 'user-data': return <S><L.UserDataManager onBack={goBack} /></S>;
-      case 'settings': return <S><L.SettingsManager onBack={goBack} /></S>;
-      case 'crud': return <S><L.CRUDTesting onBack={goBack} /></S>;
-      case 'backup': return <S><L.BackupManager onBack={goBack} /></S>;
-      case 'kv-audit': return <S><L.KVAudit onBack={goBack} /></S>;
-      case 'communication': return <S><L.Communication onBack={goBack} /></S>;
-      case 'payment-gateway': return <S><L.PaymentGateway /></S>;
-      case 'contact-newsletter': return <S><L.ContactSubmissions onBack={goBack} /></S>;
-      case 'checkin-builder': return <S><L.CheckinBuilder onBack={goBack} /></S>;
-      case 'hero-banner': return <S><L.HeroBannerManager onBack={goBack} /></S>;
+      case 'analytics': return <SuspenseScreen><L.Analytics onBack={goBack} /></SuspenseScreen>;
+      case 'users': return <SuspenseScreen><L.UserManager onBack={goBack} /></SuspenseScreen>;
+      case 'consultants': return <SuspenseScreen><L.ConsultationManager onBack={goBack} onNavigate={onNavigate} /></SuspenseScreen>;
+      case 'resources': return <SuspenseScreen><L.ResourceManager onBack={goBack} /></SuspenseScreen>;
+      case 'assessments': return <SuspenseScreen><L.AssessmentManager onBack={goBack} /></SuspenseScreen>;
+      case 'equip': return <SuspenseScreen><L.EquipDashboard onBack={goBack} /></SuspenseScreen>;
+      case 'equip-analytics': return <SuspenseScreen><L.EquipAnalytics onBack={goBack} /></SuspenseScreen>;
+      case 'pages': return <SuspenseScreen><L.PageManager onBack={goBack} /></SuspenseScreen>;
+      case 'media': return <SuspenseScreen><L.MediaManager onBack={goBack} /></SuspenseScreen>;
+      case 'categories': return <SuspenseScreen><L.CategoryManager onBack={goBack} /></SuspenseScreen>;
+      case 'checkin-scales': return <SuspenseScreen><L.CheckinScalesManager onBack={goBack} /></SuspenseScreen>;
+      case 'recommendations': return <SuspenseScreen><L.RecommendationRules onBack={goBack} /></SuspenseScreen>;
+      case 'settings': return <SuspenseScreen><L.SettingsManager onBack={goBack} /></SuspenseScreen>;
+      case 'crud': return <SuspenseScreen><L.CRUDTesting onBack={goBack} /></SuspenseScreen>;
+      case 'backup': return <SuspenseScreen><L.BackupManager onBack={goBack} /></SuspenseScreen>;
+      case 'kv-audit': return <SuspenseScreen><L.KVAudit onBack={goBack} /></SuspenseScreen>;
+      case 'communication': return <SuspenseScreen><L.Communication onBack={goBack} /></SuspenseScreen>;
+      case 'payment-gateway': return <SuspenseScreen><L.PaymentGateway /></SuspenseScreen>;
+      case 'contact-newsletter': return <SuspenseScreen><L.ContactSubmissions onBack={goBack} /></SuspenseScreen>;
+      case 'checkin-builder': return <SuspenseScreen><L.CheckinBuilder onBack={goBack} /></SuspenseScreen>;
+      case 'hero-banner': return <SuspenseScreen><L.HeroBannerManager onBack={goBack} /></SuspenseScreen>;
+      case 'block-type-viewer': return <SuspenseScreen><L.BlockTypeViewer onBack={goBack} /></SuspenseScreen>;
+      case 'scoring-engine': return <SuspenseScreen><L.ScoringEngine onBack={goBack} /></SuspenseScreen>;
       default: return <div>View not found</div>;
     }
   };
@@ -329,10 +397,12 @@ export function AdminDashboard({ onNavigate, initialView }: AdminDashboardProps)
       {/* 1. SIDEBAR -- fixed on desktop, slide-over on mobile */}
       <aside
         className={cn(
-          "w-[260px] min-w-[260px] fixed inset-y-0 left-0 bg-[var(--grey-0)] border-r border-[var(--grey-2)] z-50 flex flex-col transition-transform duration-300",
+          "w-[260px] min-w-[260px] fixed inset-y-0 left-0 bg-[var(--grey-0)] border-r border-[var(--grey-2)] z-50 flex flex-col",
+          isMobile ? "transition-transform duration-300" : "",
           isMobile && !sidebarOpen && "-translate-x-full",
           isMobile && sidebarOpen && "translate-x-0"
         )}
+        style={{ willChange: isMobile ? 'transform' : 'auto' }}
       >
           {/* Header Area in Sidebar */}
           <div className="h-[64px] lg:h-[96px] flex items-center px-4 border-b border-[var(--grey-2)] justify-between">
@@ -366,10 +436,9 @@ export function AdminDashboard({ onNavigate, initialView }: AdminDashboardProps)
         
         {/* Top Header */}
         <header
-          className="sticky top-0 z-30 backdrop-blur-md px-3 lg:px-4 flex items-center justify-between gap-2"
+          className="sticky top-0 z-30 px-3 lg:px-4 flex items-center justify-between gap-2"
           style={{
             backgroundColor: 'var(--color-bg-card)',
-            opacity: 0.95,
             borderBottom: '1px solid var(--color-border-default)',
             height: isMobile ? '56px' : '96px',
           }}
@@ -397,36 +466,34 @@ export function AdminDashboard({ onNavigate, initialView }: AdminDashboardProps)
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
                   />
+                  {searchResults.length > 0 && (
+                    <div 
+                      className="absolute top-full left-0 right-0 mt-1 z-50 rounded-lg border overflow-hidden"
+                      style={{ backgroundColor: 'var(--color-bg-card)', borderColor: 'var(--color-border-default)', boxShadow: 'var(--shadow-lg, 0 10px 15px -3px rgba(0,0,0,.1))' }}
+                    >
+                      {searchResults.slice(0, 8).map((item) => (
+                        <button
+                          key={item.id}
+                          className="w-full text-left px-4 py-3 flex items-center justify-between hover:bg-[var(--color-bg-muted)] transition-colors"
+                          onClick={() => { setCurrentView(item.id); setSearchQuery(''); setSearchResults([]); }}
+                        >
+                          <span style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--font-weight-medium)', color: 'var(--color-text-primary)' }}>{item.label}</span>
+                          <span style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}>{item.group}</span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
               </div>
            </div>
 
            {/* Right Actions */}
            <div className="flex items-center gap-2 lg:gap-3 shrink-0">
-              {/* Desktop-only buttons -- icon-only in compact mode (1024-1280px) */}
-              {!isMobile && (
-                <>
-                  <Button 
-                      variant="ghost" 
-                      size={isCompact ? "icon" : "sm"}
-                      onClick={() => onNavigate('/dashboard')}
-                      className={cn(
-                        "bg-[var(--grey-2)] text-[var(--grey-9)] hover:bg-[var(--grey-3)] h-[44px] rounded-lg border border-[var(--grey-3)]",
-                        isCompact ? "w-[44px]" : "gap-2 px-4"
-                      )}
-                      title="Go to Dashboard"
-                  >
-                      <LayoutDashboard className="w-4 h-4" />
-                      {!isCompact && <span style={{ fontWeight: 'var(--font-weight-medium)' }}>Dashboard</span>}
-                  </Button>
 
-                </>
-              )}
-
-              <Button variant="ghost" size="icon" className="bg-[var(--grey-2)] text-[var(--grey-9)] hover:bg-[var(--grey-3)] relative rounded-lg h-[44px] w-[44px] border border-[var(--grey-3)]">
+              <Button variant="ghost" size="icon" className="bg-[var(--grey-2)] text-[var(--grey-9)] hover:bg-[var(--grey-3)] relative rounded-lg h-[44px] w-[44px] border border-[var(--grey-3)]" title="Notifications" onClick={() => { setCurrentView('communication'); window.scrollTo(0, 0); }}>
                   <Bell className="w-5 h-5" />
                   {unreadCount > 0 && (
                     <span 
-                      className="absolute rounded-full border-2 border-[var(--grey-0)]"
+                      className="absolute rounded-full border-2 border-[var(--grey-0)] pointer-events-none"
                       style={{ 
                         backgroundColor: 'var(--color-status-danger)',
                         minWidth: '18px',
@@ -451,12 +518,16 @@ export function AdminDashboard({ onNavigate, initialView }: AdminDashboardProps)
               <div className="flex items-center gap-2 lg:gap-3 lg:ml-2 px-2 lg:px-3 py-1.5 bg-[var(--grey-1)] rounded-lg border border-[var(--grey-2)]">
                   {!isMobile && !isCompact && (
                     <div className="text-right">
-                        <p style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--font-weight-medium)', color: 'var(--grey-9)' }} className="leading-none">Admin User</p>
-                        <p style={{ fontSize: 'var(--text-xs)', color: 'var(--grey-5)', marginTop: '4px' }}>Super Admin</p>
+                        <p style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--font-weight-medium)', color: 'var(--grey-9)' }} className="leading-none">{user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'Admin'}</p>
+                        <p style={{ fontSize: 'var(--text-xs)', color: 'var(--grey-5)', marginTop: '4px' }}>Administrator</p>
                     </div>
                   )}
-                  <div className="w-8 h-8 rounded-full bg-[var(--grey-3)] text-[var(--grey-7)] flex items-center justify-center">
-                      <User className="w-4 h-4" />
+                  <div className="w-8 h-8 rounded-full bg-[var(--grey-3)] text-[var(--grey-7)] flex items-center justify-center overflow-hidden">
+                      {user?.user_metadata?.avatar_url ? (
+                        <img src={user.user_metadata.avatar_url} alt="" className="w-full h-full object-cover" />
+                      ) : (
+                        <User className="w-4 h-4" />
+                      )}
                   </div>
               </div>
               

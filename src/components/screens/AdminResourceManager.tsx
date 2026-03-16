@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { FileText, Download, Edit, Plus, Eye, Tag, MoreHorizontal, EyeOff, Trash2, ShieldCheck } from 'lucide-react';
+import { FileText, Download, Edit, Plus, Eye, Tag, MoreHorizontal, EyeOff, Trash2 } from 'lucide-react';
 import { useNotifications } from '../../contexts/NotificationContext';
 import { apiClient } from '../../lib/api-client';
 import { AdminHeader } from '../admin/AdminHeader';
@@ -12,7 +12,7 @@ import { ImageWithFallback } from '../figma/ImageWithFallback';
 import { ErrorState } from '../ui/error-state';
 import { EmptyState } from '../ui/empty-state';
 import { SkeletonTable } from '../ui/skeleton-loader';
-import { RESOURCE_CATEGORIES, RESOURCE_TYPES } from '../../lib/constants';
+import { useMetadata, invalidateMetadataCache } from '../../hooks/useMetadata';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -32,10 +32,9 @@ type ViewMode = 'list' | 'edit' | 'create';
 export function AdminResourceManager({ onBack, className }: AdminResourceManagerProps) {
   const { showToast } = useNotifications();
   const isMobile = useIsMobile();
+  const { categories: kvCategories, filterTypes: kvFilterTypes, contentTypes: kvContentTypes } = useMetadata();
 
   const [resources, setResources] = useState<Resource[]>([]);
-  const [categories, setCategories] = useState<{label: string, value: string}[]>([]);
-  const [filterTypes, setFilterTypes] = useState<{label: string, value: string}[]>(RESOURCE_TYPES);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
 
@@ -51,36 +50,8 @@ export function AdminResourceManager({ onBack, className }: AdminResourceManager
 
   const loadData = async () => {
     setLoading(true);
-    await Promise.all([loadResources(), loadCategories()]);
+    await loadResources();
     setLoading(false);
-  };
-
-  const loadCategories = async () => {
-    try {
-      const data = await apiClient.getCategories();
-      const loadedCategories = Array.isArray(data) ? data : data.categories || [];
-      
-      if (loadedCategories.length > 0) {
-        // Deduplicate by value to prevent duplicate key warnings in Select
-        const mapped = loadedCategories.map((c: any) => ({
-          label: c.name || c.label,
-          value: c.slug || c.value || (c.name || '').toLowerCase().replace(/\s+/g, '-')
-        }));
-        const seen = new Set<string>();
-        const unique = mapped.filter((c: {label: string; value: string}) => {
-          if (seen.has(c.value)) return false;
-          seen.add(c.value);
-          return true;
-        });
-        setCategories(unique);
-      } else {
-        // Fallback defaults
-        setCategories(RESOURCE_CATEGORIES);
-      }
-    } catch (error) {
-      console.warn('Failed to load categories, using defaults', error);
-      setCategories(RESOURCE_CATEGORIES);
-    }
   };
 
   const loadResources = async () => {
@@ -145,30 +116,6 @@ export function AdminResourceManager({ onBack, className }: AdminResourceManager
     showToast('success', 'Export Complete', 'Resources exported to CSV');
   };
 
-  const handleTestIntegrity = () => {
-    let issues = 0;
-    const report: string[] = [];
-
-    resources.forEach(r => {
-        const missingFields = [];
-        if (!r.title) missingFields.push('Title');
-        if (!r.category) missingFields.push('Category');
-        if (!r.description) missingFields.push('Description');
-        
-        if (missingFields.length > 0) {
-            issues++;
-            report.push(`Resource "${r.title || 'Untitled'}": Missing ${missingFields.join(', ')}`);
-        }
-    });
-
-    if (issues === 0) {
-        showToast('success', 'Integrity Check Passed', 'All resources appear to be valid.');
-    } else {
-        console.warn('Integrity Issues:', report);
-        showToast('warning', 'Integrity Issues Found', `Found ${issues} resources with missing data. Check console for details.`);
-    }
-  };
-
   const handleCreateNew = () => {
     setSelectedResourceId(undefined);
     setViewMode('create');
@@ -189,7 +136,6 @@ export function AdminResourceManager({ onBack, className }: AdminResourceManager
       await apiClient.updateResource(id, { published });
       setResources((prev) => prev.map((r) => (r.id === id ? { ...r, published } : r)));
       showToast('success', 'Resource Updated', `Resource ${published ? 'published' : 'unpublished'}`);
-      loadResources(); // Reload to get fresh data
     } catch (error: any) {
       console.error('Failed to update resource:', error);
       showToast('error', 'API Error', 'Failed to update resource');
@@ -216,23 +162,22 @@ export function AdminResourceManager({ onBack, className }: AdminResourceManager
       header: 'Title',
       accessorKey: 'title',
       sortable: true,
-      className: 'min-w-[300px]',
+      className: 'min-w-[280px]',
       render: (resource) => (
         <div className="flex items-center gap-3">
-           <div className="w-10 h-10 rounded overflow-hidden shrink-0" style={{ backgroundColor: 'var(--color-bg-muted)', border: '1px solid var(--color-border-default)' }}>
+           <div className="w-10 h-10 rounded-lg overflow-hidden shrink-0" style={{ backgroundColor: 'var(--color-bg-muted)', border: '1px solid var(--color-border-default)' }}>
               <ImageWithFallback 
                 src={resource.thumbnail || ''} 
                 alt={resource.title} 
                 className="w-full h-full object-cover"
-                fallbackText="📄"
               />
            </div>
-          <div className="flex flex-col">
-            <span className="truncate max-w-[250px]" style={{ fontWeight: 'var(--font-weight-medium)', fontFamily: 'var(--font-family-base)' }} title={resource.title}>
+          <div className="flex flex-col min-w-0">
+            <span className="truncate" style={{ fontWeight: 'var(--font-weight-medium)', fontFamily: 'var(--font-family-base)', fontSize: 'var(--text-sm)' }} title={resource.title}>
               {resource.title}
             </span>
-            <span className="truncate max-w-[250px]" style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)', fontFamily: 'var(--font-family-base)' }}>
-              {resource.description}
+            <span className="truncate" style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)', fontFamily: 'var(--font-family-base)' }}>
+              {resource.description?.substring(0, 60)}{(resource.description?.length || 0) > 60 ? '...' : ''}
             </span>
           </div>
         </div>
@@ -242,22 +187,25 @@ export function AdminResourceManager({ onBack, className }: AdminResourceManager
       header: 'Format',
       accessorKey: 'filter_type',
       sortable: true,
+      className: 'w-[100px]',
       render: (resource: any) => (
-        <AdminStatusBadge status="neutral" label={resource.filter_type || 'Article'} />
+        <AdminStatusBadge status="neutral" label={resource.filter_type || '-'} />
       )
     },
     {
       header: 'Category',
       accessorKey: 'category',
       sortable: true,
+      className: 'w-[120px]',
       render: (resource) => (
-        <AdminStatusBadge status="neutral" label={resource.category} />
+        <AdminStatusBadge status="neutral" label={resource.category || '-'} />
       )
     },
     {
       header: 'Status',
       accessorKey: 'published',
       sortable: true,
+      className: 'w-[110px]',
       render: (resource) => (
         <AdminStatusBadge 
           status={resource.published ? 'published' : 'draft'} 
@@ -269,6 +217,7 @@ export function AdminResourceManager({ onBack, className }: AdminResourceManager
     {
       header: 'Author',
       accessorKey: 'author',
+      className: 'w-[100px]',
       render: (resource) => (
         <span style={{ fontSize: 'var(--text-sm)', fontFamily: 'var(--font-family-base)' }}>
           {typeof resource.author === 'string' ? resource.author : (resource.author as any)?.name || '-'}
@@ -279,6 +228,7 @@ export function AdminResourceManager({ onBack, className }: AdminResourceManager
       header: 'Created',
       accessorKey: 'created_at',
       sortable: true,
+      className: 'w-[110px]',
       render: (resource) => (
         <span style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-muted)', fontFamily: 'var(--font-family-base)' }}>
           {resource.created_at ? new Date(resource.created_at).toLocaleDateString() : '-'}
@@ -287,6 +237,7 @@ export function AdminResourceManager({ onBack, className }: AdminResourceManager
     },
     {
       header: 'Stats',
+      className: 'w-[100px]',
       render: (resource) => (
         <div className="flex items-center gap-3" style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}>
           <span className="flex items-center gap-1"><Eye className="w-3 h-3" /> {resource.viewCount || 0}</span>
@@ -296,11 +247,11 @@ export function AdminResourceManager({ onBack, className }: AdminResourceManager
     },
     {
       header: 'Actions',
-      className: 'text-right',
+      className: 'w-[60px] text-right',
       render: (resource) => (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="h-8 w-8 p-0">
+            <Button variant="ghost" className="h-8 w-8 p-0" onClick={(e) => e.stopPropagation()}>
               <span className="sr-only">Open menu</span>
               <MoreHorizontal className="h-4 w-4" />
             </Button>
@@ -351,12 +302,12 @@ export function AdminResourceManager({ onBack, className }: AdminResourceManager
     {
       key: 'category',
       label: 'Category',
-      options: categories.length > 0 ? categories : RESOURCE_CATEGORIES
+      options: kvCategories
     },
     {
       key: 'filter_type',
       label: 'Format',
-      options: filterTypes
+      options: kvFilterTypes
     }
   ];
 
@@ -397,8 +348,6 @@ export function AdminResourceManager({ onBack, className }: AdminResourceManager
         <AdminHeader
           title="Resource Manager"
           description="Loading resources..."
-          onBack={onBack}
-          breadcrumbs={[{ label: 'Admin', onClick: onBack }, { label: 'Resource Manager' }]}
         />
         <SkeletonTable rows={8} columns={6} />
       </div>
@@ -411,8 +360,6 @@ export function AdminResourceManager({ onBack, className }: AdminResourceManager
         <AdminHeader
           title="Resource Manager"
           description="Manage educational content, articles, and guides"
-          onBack={onBack}
-          breadcrumbs={[{ label: 'Admin', onClick: onBack }, { label: 'Resource Manager' }]}
         />
         <ErrorState
           variant="error"
@@ -431,8 +378,6 @@ export function AdminResourceManager({ onBack, className }: AdminResourceManager
         <AdminHeader
           title="Resource Manager"
           description="Manage educational content, articles, and guides"
-          onBack={onBack}
-          breadcrumbs={[{ label: 'Admin', onClick: onBack }, { label: 'Resource Manager' }]}
         />
         <EmptyState
           variant="folder"
@@ -450,20 +395,13 @@ export function AdminResourceManager({ onBack, className }: AdminResourceManager
       <AdminHeader
         title="Resource Manager"
         description="Manage educational content, articles, and guides"
-        onBack={onBack}
-        breadcrumbs={[{ label: 'Admin', onClick: onBack }, { label: 'Resource Manager' }]}
         stats={stats}
         actions={
-          <div className="flex gap-2">
-             <Button variant="outline" onClick={handleTestIntegrity} title="Check data integrity">
-                <ShieldCheck className="w-4 h-4 mr-2" />
-                {!isMobile && 'Test Integrity'}
-             </Button>
-             <Button onClick={handleCreateNew} className="gap-2" aria-label="Create new resource">
-                <Plus className="w-4 h-4" />
-                {!isMobile && 'Add Resource'}
-             </Button>
-          </div>
+          <Button onClick={handleCreateNew} className="gap-2" aria-label="Create new resource"
+            style={{ backgroundColor: 'var(--color-primary-default)', color: 'var(--color-primary-on)' }}>
+             <Plus className="w-4 h-4" />
+             {!isMobile && 'Add Resource'}
+          </Button>
         }
       />
 

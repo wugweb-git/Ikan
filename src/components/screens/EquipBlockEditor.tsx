@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo, memo } from 'react';
 import { 
   BookOpen, 
   PenTool, 
@@ -15,7 +15,9 @@ import {
   Layers,
   FastForward,
   AlertCircle,
-  Clock
+  Clock,
+  Moon,
+  Upload
 } from 'lucide-react';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
@@ -26,8 +28,33 @@ import { Label } from '../ui/label';
 import { Card, CardContent } from '../ui/card';
 import { ImageUpload } from '../ui/image-upload';
 import { RichTextEditor } from '../ui/rich-text-editor';
-import { Activity } from '../../lib/equip-admin-types';
+import { Activity, resolveInteraction, INTERACTION_META, type InteractionType } from '../../lib/equip-admin-types';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
+import { useMetadata } from '../../hooks/useMetadata';
+
+// Fallback exercise subtypes — used only while MetaManager hasn't loaded
+const FALLBACK_EXERCISE_SUBTYPES = [
+  { value: 'mcq', label: 'Multiple Choice Question' },
+  { value: 'single-select', label: 'Single Select List' },
+  { value: 'multi-select', label: 'Multi Select List' },
+  { value: 'table', label: 'Checklist Table (Yes/No)' },
+  { value: 'input-table', label: 'Input Table (Data Entry)' },
+  { value: 'structured-list', label: 'Structured List' },
+  { value: 'rating-scale', label: 'Rating Scale' },
+  { value: 'clinical-instrument', label: 'Clinical Instrument (GAD-7, PHQ-9)' },
+  { value: 'upload', label: 'File Upload' },
+];
+
+// Fallback block types — used only while MetaManager hasn't loaded
+const FALLBACK_BLOCK_TYPES = [
+  { value: 'lesson', label: '📚 Lesson (Read)' },
+  { value: 'exercise', label: '✏️ Exercise (Interact)' },
+  { value: 'journal', label: '📝 Journal (Write)' },
+  { value: 'checklist', label: '☑️ Checklist (Track)' },
+  { value: 'reflection', label: '💭 Reflection (Think)' },
+  { value: 'conclude', label: '🎯 Conclude (Finish)' },
+  { value: 'sleep-diary', label: '🌙 Sleep Diary (Track)' },
+];
 
 interface EquipBlockEditorProps {
   block: Activity;
@@ -43,7 +70,7 @@ interface EquipBlockEditorProps {
   isAssessment?: boolean;
 }
 
-export function EquipBlockEditor({ 
+function EquipBlockEditorInner({ 
   block, 
   onChange, 
   onDelete, 
@@ -57,6 +84,19 @@ export function EquipBlockEditor({
   isAssessment
 }: EquipBlockEditorProps) {
   
+  // MetaManager — exercise subtypes from KV
+  const { exerciseSubtypes: kvExerciseSubtypes, blockTypes: kvBlockTypes } = useMetadata();
+  const exerciseSubtypeOptions = kvExerciseSubtypes.length > 0
+    ? kvExerciseSubtypes.map(s => ({ value: s.value, label: s.label }))
+    : FALLBACK_EXERCISE_SUBTYPES;
+  const blockTypeOptions = kvBlockTypes.length > 0
+    ? kvBlockTypes.map(s => ({ value: s.value, label: s.label }))
+    : FALLBACK_BLOCK_TYPES;
+
+  // Resolve the current interaction for display
+  const currentInteraction = resolveInteraction(block);
+  const interactionMeta = INTERACTION_META[currentInteraction];
+
   const getIcon = () => {
     switch (block.type) {
       case 'lesson': return <BookOpen className="w-4 h-4" style={{ color: 'var(--color-info-default)' }} />;
@@ -65,6 +105,7 @@ export function EquipBlockEditor({
       case 'checklist': return <CheckSquare className="w-4 h-4" style={{ color: 'var(--color-status-success)' }} />;
       case 'reflection': return <Target className="w-4 h-4" style={{ color: 'var(--color-info-default)' }} />;
       case 'conclude': return <Target className="w-4 h-4" style={{ color: 'var(--color-status-danger)' }} />;
+      case 'sleep-diary': return <Moon className="w-4 h-4" style={{ color: 'var(--color-info-default)' }} />;
       default: return <BookOpen className="w-4 h-4" />;
     }
   };
@@ -135,12 +176,9 @@ export function EquipBlockEditor({
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="lesson">📚 Lesson (Read)</SelectItem>
-                  <SelectItem value="exercise">✏️ Exercise (Interact)</SelectItem>
-                  <SelectItem value="journal">📝 Journal (Write)</SelectItem>
-                  <SelectItem value="checklist">☑️ Checklist (Track)</SelectItem>
-                  <SelectItem value="reflection">💭 Reflection (Think)</SelectItem>
-                  <SelectItem value="conclude">🎯 Conclude (Finish)</SelectItem>
+                  {blockTypeOptions.map((bt) => (
+                    <SelectItem key={bt.value} value={bt.value}>{bt.label}</SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
@@ -156,18 +194,55 @@ export function EquipBlockEditor({
             />
           </div>
 
+          {/* RESOLVED INTERACTION INDICATOR */}
+          <div 
+            className="flex items-center gap-3 p-3 rounded-lg"
+            style={{ backgroundColor: 'var(--color-bg-muted)', border: '1px solid var(--color-border-default)' }}
+          >
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span style={{ fontSize: 'var(--text-xs)', fontWeight: 500, fontFamily: 'var(--font-family-base)', color: 'var(--color-text-muted)' }}>
+                  Interaction
+                </span>
+                <span style={{ 
+                  fontSize: '10px', fontWeight: 500, fontFamily: 'var(--font-family-base)',
+                  color: 'var(--color-primary-default)', backgroundColor: 'color-mix(in srgb, var(--color-primary-default) 10%, transparent)',
+                  padding: '1px 8px', borderRadius: 'var(--radius-pill)',
+                }}>
+                  {currentInteraction}
+                </span>
+                <span style={{ 
+                  fontSize: '10px', fontWeight: 500, fontFamily: 'var(--font-family-base)',
+                  color: 'var(--color-status-info)', backgroundColor: 'var(--color-status-info-light)',
+                  padding: '1px 8px', borderRadius: 'var(--radius-pill)',
+                }}>
+                  User {interactionMeta.verb.toLowerCase()}
+                </span>
+              </div>
+              <p style={{ fontSize: '10px', fontFamily: 'var(--font-family-base)', color: 'var(--color-text-muted)', marginTop: 2, lineHeight: 1.4 }}>
+                {interactionMeta.description}
+                {!block.interaction && block.exerciseConfig?.subtype && <span> (auto-mapped from {block.type} + {block.exerciseConfig.subtype})</span>}
+                {!block.interaction && !block.exerciseConfig?.subtype && <span> (auto-mapped from {block.type})</span>}
+              </p>
+            </div>
+          </div>
+
           {/* DYNAMIC FIELDS BASED ON TYPE */}
           
-          {/* 1. CONTENT / PROMPT SECTION (Lesson, Journal, Reflection, Conclude) */}
-          {['lesson', 'journal', 'reflection', 'conclude'].includes(block.type) && (
+          {/* 1. CONTENT / PROMPT SECTION (Lesson, Journal, Reflection, Conclude, Sleep Diary) */}
+          {['lesson', 'journal', 'reflection', 'conclude', 'sleep-diary'].includes(block.type) && (
             <div className="space-y-2">
               <Label className="text-xs">
-                {block.type === 'lesson' || block.type === 'conclude' ? 'Content' : 'Prompt / Instructions'}
+                {block.type === 'lesson' || block.type === 'conclude' ? 'Content' 
+                  : block.type === 'sleep-diary' ? 'Sleep Diary Instructions'
+                  : 'Prompt / Instructions'}
               </Label>
               <RichTextEditor
                 value={block.content}
                 onChange={(val) => onChange({ content: val })}
-                placeholder={block.type === 'lesson' ? "Write educational content..." : "Write the prompt for the user..."}
+                placeholder={block.type === 'lesson' ? "Write educational content..." 
+                  : block.type === 'sleep-diary' ? "Instructions for the sleep diary entry..."
+                  : "Write the prompt for the user..."}
                 minHeight="150px"
               />
             </div>
@@ -188,13 +263,9 @@ export function EquipBlockEditor({
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="mcq">Multiple Choice Question</SelectItem>
-                    <SelectItem value="single-select">Single Select List</SelectItem>
-                    <SelectItem value="multi-select">Multi Select List</SelectItem>
-                    <SelectItem value="table">Checklist Table (Yes/No)</SelectItem>
-                    <SelectItem value="input-table">Input Table (Data Entry)</SelectItem>
-                    <SelectItem value="structured-list">Structured List</SelectItem>
-                    <SelectItem value="clinical_instrument">Clinical Instrument (GAD-7, PHQ-9)</SelectItem>
+                    {exerciseSubtypeOptions.map((subtype) => (
+                      <SelectItem key={subtype.value} value={subtype.value}>{subtype.label}</SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
@@ -240,7 +311,7 @@ export function EquipBlockEditor({
               )}
 
               {/* Clinical Instrument Config */}
-              {block.exerciseConfig?.subtype === 'clinical_instrument' && (
+              {block.exerciseConfig?.subtype === 'clinical-instrument' && (
                 <div className="space-y-4 pt-2 border-t border-dashed">
                   <div className="space-y-1">
                     <Label className="text-xs">Questions (One per line)</Label>
@@ -272,6 +343,52 @@ export function EquipBlockEditor({
                        placeholder="Not at all : 0&#10;Several days : 1&#10;More than half the days : 2&#10;Nearly every day : 3"
                        rows={4}
                      />
+                  </div>
+                </div>
+              )}
+
+              {/* Rating Scale Config */}
+              {block.exerciseConfig?.subtype === 'rating-scale' && (
+                <div className="space-y-4 pt-2 border-t border-dashed">
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-1">
+                      <Label className="text-xs">Min Value</Label>
+                      <Input
+                        type="number"
+                        value={block.exerciseConfig?.slider_min ?? 0}
+                        onChange={(e) => onChange({
+                          exerciseConfig: { ...block.exerciseConfig, slider_min: parseInt(e.target.value) || 0 }
+                        })}
+                        placeholder="0"
+                        className="h-8 text-xs"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-xs">Max Value</Label>
+                      <Input
+                        type="number"
+                        value={block.exerciseConfig?.slider_max ?? 10}
+                        onChange={(e) => onChange({
+                          exerciseConfig: { ...block.exerciseConfig, slider_max: parseInt(e.target.value) || 10 }
+                        })}
+                        placeholder="10"
+                        className="h-8 text-xs"
+                      />
+                    </div>
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs">Scale Labels (comma separated, e.g. "Very Low, Low, Moderate, High, Very High")</Label>
+                    <Input
+                      value={(block.exerciseConfig?.slider_labels || []).join(', ')}
+                      onChange={(e) => onChange({
+                        exerciseConfig: {
+                          ...block.exerciseConfig,
+                          slider_labels: e.target.value.split(',').map(s => s.trim()).filter(Boolean)
+                        }
+                      })}
+                      placeholder="Not at all, Slightly, Moderately, Very, Extremely"
+                      className="h-8 text-xs"
+                    />
                   </div>
                 </div>
               )}
@@ -318,6 +435,61 @@ export function EquipBlockEditor({
                        })}
                      />
                      <Label htmlFor="allow_add_rows" className="text-xs font-normal">Allow user to add rows</Label>
+                  </div>
+                </div>
+              )}
+
+              {/* Upload Config */}
+              {block.exerciseConfig?.subtype === 'upload' && (
+                <div className="space-y-4 pt-2 border-t border-dashed">
+                  <div className="flex items-center gap-2 mb-1">
+                    <Upload size={14} style={{ color: 'var(--color-primary-default)' }} />
+                    <Label className="text-xs" style={{ fontWeight: 'var(--font-weight-medium)' }}>Upload Settings</Label>
+                  </div>
+
+                  <div className="space-y-1">
+                    <Label className="text-xs">Accepted File Types (comma separated)</Label>
+                    <Input
+                      value={(block.exerciseConfig?.acceptedFileTypes || []).join(', ')}
+                      onChange={(e) => onChange({
+                        exerciseConfig: {
+                          ...block.exerciseConfig,
+                          acceptedFileTypes: e.target.value.split(',').map(s => s.trim()).filter(Boolean)
+                        }
+                      })}
+                      placeholder="image/*, .pdf, .doc, .docx, audio/*"
+                      className="h-8 text-xs"
+                    />
+                    <p style={{ fontSize: '10px', color: 'var(--color-text-muted)' }}>
+                      Use MIME types (image/*, audio/*) or extensions (.pdf, .doc). Leave empty for default (images, PDFs, docs, audio).
+                    </p>
+                  </div>
+
+                  <div className="space-y-1">
+                    <Label className="text-xs">Max File Size (MB)</Label>
+                    <Input
+                      type="number"
+                      value={Math.round((block.exerciseConfig?.maxFileSize || 10485760) / (1024 * 1024))}
+                      onChange={(e) => onChange({
+                        exerciseConfig: {
+                          ...block.exerciseConfig,
+                          maxFileSize: (parseInt(e.target.value) || 10) * 1024 * 1024
+                        }
+                      })}
+                      placeholder="10"
+                      className="h-8 text-xs w-24"
+                      min={1}
+                      max={10}
+                    />
+                    <p style={{ fontSize: '10px', color: 'var(--color-text-muted)' }}>
+                      Maximum 10MB per file. Files are stored securely in private storage.
+                    </p>
+                  </div>
+
+                  <div className="p-2 rounded-md" style={{ backgroundColor: 'var(--color-status-info-light)', border: '1px solid var(--color-border-default)' }}>
+                    <p style={{ fontSize: '10px', color: 'var(--color-status-info)', lineHeight: 1.5 }}>
+                      Uploaded files are stored in Supabase Storage with signed URLs. Users see a tap-to-upload area with drag feedback and a success state showing the filename and size.
+                    </p>
                   </div>
                 </div>
               )}
@@ -533,3 +705,16 @@ export function EquipBlockEditor({
     </Card>
   );
 }
+
+// Memoize to prevent re-renders when sibling blocks change
+export const EquipBlockEditor = memo(EquipBlockEditorInner, (prev, next) => {
+  // Only re-render if this block's own data changed
+  return (
+    prev.block === next.block &&
+    prev.isExpanded === next.isExpanded &&
+    prev.isFirst === next.isFirst &&
+    prev.isLast === next.isLast &&
+    prev.hideHeader === next.hideHeader &&
+    prev.isAssessment === next.isAssessment
+  );
+});

@@ -1,3 +1,5 @@
+import { projectId } from '../../utils/supabase/info';
+import { getAuthHeaders } from '../../lib/supabase-client';
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Button } from '../ui/button';
@@ -6,7 +8,6 @@ import { Icon } from '../Icon';
 import { useNotifications } from '../../contexts/NotificationContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { apiClient } from '../../lib/api-client';
-import { projectId, publicAnonKey } from '../../utils/supabase/info';
 import { ProgressIndicator } from '../ui/progress-indicator';
 import { AssessmentResults } from './AssessmentResults';
 import { useOfflineSync } from '../../hooks/useOfflineSync';
@@ -55,7 +56,7 @@ interface AssessmentFlowProps {
 
 import { ProgramPlayer, PlayerResults } from '../player/ProgramPlayer';
 import { adaptAssessmentToProgram } from '../../lib/assessment-adapter';
-import { evaluateAssessment } from '../../lib/recommendation-engine';
+import { evaluateAssessment, loadScoringProfiles, loadAdminRules } from '../../lib/recommendation-engine';
 
 export function AssessmentFlow({  
   assessmentId,
@@ -77,6 +78,14 @@ export function AssessmentFlow({
   // New state for handling local results display
   const [showResults, setShowResults] = useState(false);
   const [calculatedResults, setCalculatedResults] = useState<any>(null);
+
+  // Pre-load scoring profiles and admin rules for Score/Rules Engine integration
+  useEffect(() => {
+    Promise.all([
+      loadScoringProfiles(),
+      loadAdminRules(),
+    ]).catch(() => {});
+  }, []);
 
   const handleRetake = () => {
     setShowResults(false);
@@ -143,11 +152,12 @@ export function AssessmentFlow({
       
       const maxScore = assessment.scoring.ranges[assessment.scoring.ranges.length - 1]?.max || 21;
       
-      // Run Recommendation Engine
+      // Run Recommendation Engine — pass scoring profile if assessment has one linked
       const recommendation = evaluateAssessment(
          assessment.id,
          score,
-         maxScore
+         maxScore,
+         (assessment as any).scoring_profile_id || (assessment as any).scoringProfileId
       );
 
       // Construct Results Object
@@ -255,9 +265,7 @@ export function AssessmentFlow({
           `https://${projectId}.supabase.co/functions/v1/make-server-cc205da9/assessments/${assessmentId}?t=${Date.now()}`,
           {
             signal: controller.signal,
-            headers: {
-              'Authorization': `Bearer ${publicAnonKey}`,
-            },
+            headers: await getAuthHeaders(),
           }
         );
 

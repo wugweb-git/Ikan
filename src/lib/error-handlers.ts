@@ -92,27 +92,35 @@ interface ErrorHandlerCallbacks {
  */
 export function setupGlobalErrorHandlers({ showToast }: ErrorHandlerCallbacks): () => void {
   // --- Fetch wrapper ---
-  const originalFetch = window.fetch;
-  window.fetch = async (...args: Parameters<typeof fetch>) => {
-    try {
-      return await originalFetch(...args);
-    } catch (error: any) {
-      const msg = error instanceof Error ? error.message : String(error);
-      const lower = msg.toLowerCase();
+  // Guard against stacking on hot-reload: only wrap if not already wrapped
+  const alreadyWrapped = (window.fetch as any).__ikanWrapped;
+  const originalFetch = alreadyWrapped ? (window.fetch as any).__originalFetch : window.fetch;
 
-      if (
-        lower.includes('failed to fetch') ||
-        lower.includes('network error') ||
-        lower.includes('connection refused') ||
-        error.name === 'TypeError'
-      ) {
-        logger.log('Global fetch error intercepted - enabling offline mode:', msg);
-        setOfflineMode(true);
-        showToast?.('info', 'Working offline', 'Some features may be limited until connection is restored');
+  if (!alreadyWrapped) {
+    const wrappedFetch = async (...args: Parameters<typeof fetch>) => {
+      try {
+        return await originalFetch(...args);
+      } catch (error: any) {
+        const msg = error instanceof Error ? error.message : String(error);
+        const lower = msg.toLowerCase();
+
+        if (
+          lower.includes('failed to fetch') ||
+          lower.includes('network error') ||
+          lower.includes('connection refused') ||
+          error.name === 'TypeError'
+        ) {
+          logger.log('Global fetch error intercepted - enabling offline mode:', msg);
+          setOfflineMode(true);
+          showToast?.('info', 'Working offline', 'Some features may be limited until connection is restored');
+        }
+        throw error;
       }
-      throw error;
-    }
-  };
+    };
+    (wrappedFetch as any).__ikanWrapped = true;
+    (wrappedFetch as any).__originalFetch = originalFetch;
+    window.fetch = wrappedFetch;
+  }
 
   // --- Unhandled rejection ---
   const handleUnhandledRejection = (event: PromiseRejectionEvent) => {
@@ -149,42 +157,63 @@ export function setupGlobalErrorHandlers({ showToast }: ErrorHandlerCallbacks): 
   };
 
   // --- Message handler ---
+  // Only handle messages from our own app origin — never interfere with
+  // Figma's iframe messages or other third-party message channels.
   const handleMessage = (event: MessageEvent) => {
+    // Skip messages from different origins (e.g. Figma's iframe communication)
+    try {
+      if (event.origin && event.origin !== window.location.origin) {
+        return;
+      }
+    } catch {
+      // If origin check fails, skip handling entirely
+      return;
+    }
+
     if (event.data && typeof event.data === 'object') {
       const data = event.data;
       if (data.error || data.timeout || (data.type && data.type.includes('timeout'))) {
         console.log('Message-based error handled gracefully:', data);
-        event.preventDefault?.();
-        event.stopPropagation?.();
-        return false;
+        // Don't call preventDefault/stopPropagation — it can break iframe messaging
+        return;
       }
     }
   };
 
   // --- Console overrides ---
-  const originalConsoleError = console.error;
-  const originalConsoleWarn = console.warn;
+  // Guard against stacking: only wrap if not already wrapped
+  const alreadyOverridden = (console.error as any).__ikanWrapped;
+  const originalConsoleError = alreadyOverridden ? (console.error as any).__original : console.error;
+  const originalConsoleWarn = alreadyOverridden ? (console.warn as any).__original : console.warn;
 
-  console.error = (...args: any[]) => {
-    const str = args.join(' ').toLowerCase();
-    if (
-      matchesPattern(str, CONSOLE_SUPPRESS_PATTERNS) ||
-      (str.includes('message') && str.includes('timeout'))
-    ) {
-      console.log('Console error suppressed (CMS timeout):', ...args);
-      return;
-    }
-    originalConsoleError.apply(console, args);
-  };
+  if (!alreadyOverridden) {
+    const wrappedError = (...args: any[]) => {
+      const str = args.join(' ').toLowerCase();
+      if (
+        matchesPattern(str, CONSOLE_SUPPRESS_PATTERNS) ||
+        (str.includes('message') && str.includes('timeout'))
+      ) {
+        console.log('Console error suppressed (CMS timeout):', ...args);
+        return;
+      }
+      originalConsoleError.apply(console, args);
+    };
+    (wrappedError as any).__ikanWrapped = true;
+    (wrappedError as any).__original = originalConsoleError;
+    console.error = wrappedError;
 
-  console.warn = (...args: any[]) => {
-    const str = args.join(' ').toLowerCase();
-    if (matchesPattern(str, CONSOLE_SUPPRESS_PATTERNS)) {
-      console.log('Console warning suppressed (CMS timeout):', ...args);
-      return;
-    }
-    originalConsoleWarn.apply(console, args);
-  };
+    const wrappedWarn = (...args: any[]) => {
+      const str = args.join(' ').toLowerCase();
+      if (matchesPattern(str, CONSOLE_SUPPRESS_PATTERNS)) {
+        console.log('Console warning suppressed (CMS timeout):', ...args);
+        return;
+      }
+      originalConsoleWarn.apply(console, args);
+    };
+    (wrappedWarn as any).__ikanWrapped = true;
+    (wrappedWarn as any).__original = originalConsoleWarn;
+    console.warn = wrappedWarn;
+  }
 
   // --- Register listeners ---
   window.addEventListener('unhandledrejection', handleUnhandledRejection);
@@ -212,6 +241,7 @@ export function setupGlobalErrorHandlers({ showToast }: ErrorHandlerCallbacks): 
     window.removeEventListener('unhandledrejection', handleUnhandledRejection);
     window.removeEventListener('error', handleWindowError);
     window.removeEventListener('message', handleMessage);
+    // Restore originals
     console.error = originalConsoleError;
     console.warn = originalConsoleWarn;
     window.fetch = originalFetch;

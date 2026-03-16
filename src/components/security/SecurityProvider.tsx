@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNotifications } from '../../contexts/NotificationContext';
 
@@ -98,20 +98,29 @@ export function SecurityProvider({ children }: SecurityProviderProps) {
   useEffect(() => {
     if (!user) return;
 
+    // Throttle activity updates to at most once every 60 seconds
+    // to prevent constant re-renders from mousemove/scroll events
+    let lastUpdateTime = Date.now();
+    const THROTTLE_MS = 60_000; // 1 minute
+
     const updateActivity = () => {
+      const now = Date.now();
+      if (now - lastUpdateTime < THROTTLE_MS) return; // Skip if within throttle window
+      lastUpdateTime = now;
       setLastActivity(new Date());
       setSessionTimeoutWarning(false);
     };
 
     // Track various user activities
-    const events = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart'];
+    const events = ['mousedown', 'keypress', 'scroll', 'touchstart'];
+    // NOTE: Removed 'mousemove' — it fires too frequently and caused render storms
     
     events.forEach(event => {
       document.addEventListener(event, updateActivity, { passive: true });
     });
 
     // Initial activity
-    updateActivity();
+    setLastActivity(new Date());
 
     return () => {
       events.forEach(event => {
@@ -194,19 +203,8 @@ export function SecurityProvider({ children }: SecurityProviderProps) {
   }, [user]);
 
   // Privacy-focused error boundary
-  useEffect(() => {
-    const handleUnhandledRejection = (event: PromiseRejectionEvent) => {
-      // Log error without exposing sensitive data
-      logSecurityEvent('unhandled_promise_rejection', {
-        message: 'Promise rejection occurred',
-        stack: event.reason?.stack ? 'Stack trace available' : 'No stack trace',
-        // Don't log the actual error details to protect user privacy
-      });
-    };
-
-    window.addEventListener('unhandledrejection', handleUnhandledRejection);
-    return () => window.removeEventListener('unhandledrejection', handleUnhandledRejection);
-  }, []);
+  // NOTE: Removed duplicate unhandledrejection listener — already handled
+  // by /lib/error-handlers.ts setupGlobalErrorHandlers()
 
   const value: SecurityContextType = {
     isSecureConnection,

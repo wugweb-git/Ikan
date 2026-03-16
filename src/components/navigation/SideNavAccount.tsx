@@ -2,7 +2,12 @@ import React, { useState } from 'react';
 import { cn } from '../ui/utils';
 import { Separator } from '../ui/separator';
 import svgPaths from '../../imports/svg-tfxlcr50sc';
-import { ChevronRight, FileText, ScrollText, RotateCcw, XCircle } from 'lucide-react';
+import { ChevronRight, Link2, LogOut, Scale, Settings } from 'lucide-react';
+import { useAuth } from '../../contexts/AuthContext';
+
+const IconLegal = ({ color = "currentColor" }: { color?: string }) => (
+  <Scale size={18} color={color} />
+);
 
 interface SideNavAccountProps {
   currentRoute: string;
@@ -48,22 +53,6 @@ const IconOrganization = ({ color = "currentColor" }: { color?: string }) => (
   </svg>
 );
 
-const IconPreferences = ({ color = "currentColor" }: { color?: string }) => (
-  <svg className="block w-[18px] h-[18px]" fill="none" viewBox="0 0 18 17.6449">
-    <g>
-      <path d={svgPaths.p6656b80} fill={color} />
-      <path d={svgPaths.p10da980} fill={color} />
-      <path d={svgPaths.p29f7df80} fill={color} />
-      <path d={svgPaths.p2d44f700} fill={color} />
-      <path d={svgPaths.pf7d2800} fill={color} />
-      <path d={svgPaths.p39b09d00} fill={color} />
-      <path d={svgPaths.p22900400} fill={color} />
-      <path d={svgPaths.p3f3f7080} fill={color} />
-      <path d={svgPaths.p39f74900} fill={color} />
-    </g>
-  </svg>
-);
-
 const IconNotifications = ({ color = "currentColor" }: { color?: string }) => (
   <svg className="block w-[13px] h-[15px]" fill="none" viewBox="0 0 13 14.4901">
     <g>
@@ -93,43 +82,18 @@ const IconSecurity = ({ color = "currentColor" }: { color?: string }) => (
   </svg>
 );
 
-const IconAbout = ({ color = "currentColor" }: { color?: string }) => (
-  <svg className="block w-[18px] h-[18px]" fill="none" viewBox="0 0 18 18">
-    <g>
-      <path d={svgPaths.p132bc00} fill={color} />
-      <path d={svgPaths.p36b21200} fill={color} />
-      <path d={svgPaths.p26bfc271} fill={color} />
-    </g>
-  </svg>
-);
-
-const IconLogOut = ({ color = "currentColor" }: { color?: string }) => (
-  <svg className="block w-[18px] h-[18px]" fill="none" viewBox="0 0 12.0199 17.9402">
-    <g>
-      <path d={svgPaths.p3317b780} fill={color} />
-      <path d={svgPaths.ped6b480} fill={color} />
-    </g>
-  </svg>
-);
-
 const IconChevron = ({ color = "currentColor" }: { color?: string }) => (
   <svg className="block w-[14px] h-[14px]" fill="none" viewBox="0 0 8.16667 4.66667" style={{ overflow: 'visible' }}>
     <path d={svgPaths.p1d8d0700} stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.16667" />
   </svg>
 );
 
-// Lucide-based icon wrappers for Legal section
-const IconPrivacyPolicy = ({ color = "currentColor" }: { color?: string }) => (
-  <FileText size={18} color={color} />
+const IconLogOut = ({ color = "currentColor" }: { color?: string }) => (
+  <LogOut size={18} color={color} />
 );
-const IconTerms = ({ color = "currentColor" }: { color?: string }) => (
-  <ScrollText size={18} color={color} />
-);
-const IconReturnPolicy = ({ color = "currentColor" }: { color?: string }) => (
-  <RotateCcw size={18} color={color} />
-);
-const IconCancellation = ({ color = "currentColor" }: { color?: string }) => (
-  <XCircle size={18} color={color} />
+
+const IconIntegration = ({ color = "currentColor" }: { color?: string }) => (
+  <Link2 size={18} color={color} />
 );
 
 interface NavItem {
@@ -167,10 +131,12 @@ export function SideNavAccount({
   isMobile = false
 }: SideNavAccountProps) {
 
+  const { user } = useAuth();
+  const isAdmin = !!(user && (user as any).is_admin);
+
   const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({
-    'profile': true,
-    'preferences': true,
-    'system': true
+    'account': true,
+    'settings': true,
   });
 
   const toggleGroup = (groupId: string) => {
@@ -179,42 +145,25 @@ export function SideNavAccount({
 
   const navGroups: NavGroup[] = [
     {
-      id: 'profile',
-      title: 'Account',
-      collapsible: true,
+      id: 'account',
+      title: '',
+      collapsible: false,
       items: [
         { id: 'profile', label: 'Profile', route: '/account/profile', icon: IconProfile },
-        { id: 'payments', label: 'Payments', route: '/account/payments', icon: IconPayments },
+        { id: 'integration', label: 'Integration', route: '/account/integration', icon: IconIntegration },
+        { id: 'billing', label: 'Billing', route: '/account/payments', icon: IconPayments },
         { id: 'organization', label: 'Organization', route: '/account/corporate', icon: IconOrganization }
       ]
     },
     {
-      id: 'preferences',
-      title: 'Preferences',
-      collapsible: true,
+      id: 'settings',
+      title: '',
+      collapsible: false,
       items: [
-        { id: 'preferences', label: 'Preferences', route: '/account/preferences', icon: IconPreferences },
-        { id: 'notifications', label: 'Notifications', route: '/account/notifications', icon: IconNotifications }
-      ]
-    },
-    {
-      id: 'system',
-      title: 'System',
-      collapsible: true,
-      items: [
-        { id: 'privacy', label: 'Privacy', route: '/account/privacy', icon: IconPrivacy },
-        { id: 'security', label: 'Security', route: '/account/security', icon: IconSecurity }
-      ]
-    },
-    {
-      id: 'legal',
-      title: 'Legal',
-      collapsible: true,
-      items: [
-        { id: 'privacy-policy', label: 'Privacy Policy', route: '/privacy', icon: IconPrivacyPolicy },
-        { id: 'terms', label: 'Terms & Conditions', route: '/terms', icon: IconTerms },
-        { id: 'return-policy', label: 'Return Policy', route: '/return-policy', icon: IconReturnPolicy },
-        { id: 'cancellation-policy', label: 'Cancellation Policy', route: '/cancellation-policy', icon: IconCancellation }
+        { id: 'notifications', label: 'Notifications', route: '/account/notifications', icon: IconNotifications },
+        { id: 'security', label: 'Security', route: '/account/security', icon: IconSecurity },
+        { id: 'legal', label: 'Legal', route: '/account/legal', icon: IconLegal },
+        { id: 'privacy', label: 'Privacy', route: '/account/privacy', icon: IconPrivacy }
       ]
     }
   ];
@@ -231,6 +180,7 @@ export function SideNavAccount({
           {navGroups.map((group) => (
             <div key={group.id} className="w-full">
               {/* Group Title */}
+              {group.title && (
               <div
                 className="flex items-center justify-between cursor-pointer"
                 style={{ paddingLeft: '16px', paddingRight: '16px', marginBottom: '8px' }}
@@ -246,6 +196,7 @@ export function SideNavAccount({
                   </div>
                 )}
               </div>
+              )}
 
               {/* Items */}
               {(expandedGroups[group.id] || !group.collapsible) && (
@@ -289,6 +240,33 @@ export function SideNavAccount({
             <div className="w-full" style={{ marginTop: '8px' }}>
               <Separator style={{ backgroundColor: 'var(--color-border-default)', marginBottom: '16px' }} />
               <div className="settings-group">
+                {/* Admin Console link for admin users */}
+                {isAdmin && (
+                  <button
+                    onClick={() => onNavigate('/admin')}
+                    className="settings-item w-full transition-colors active:bg-[var(--color-bg-muted)] group"
+                    style={{ marginBottom: '8px' }}
+                  >
+                    <div className="flex flex-row items-center justify-between w-full h-full">
+                      <div className="flex items-center" style={{ gap: '12px' }}>
+                        <div className="shrink-0 w-[24px] flex items-center justify-center">
+                          <Settings size={18} color="var(--color-status-warning)" />
+                        </div>
+                        <span
+                          style={{
+                            fontSize: '16px',
+                            fontWeight: 'var(--font-weight-medium)' as any,
+                            color: 'var(--color-text-primary)',
+                            fontFamily: 'var(--font-family-base)'
+                          }}
+                        >
+                          Admin Console
+                        </span>
+                      </div>
+                      <ChevronRight className="w-5 h-5" style={{ color: 'var(--color-text-muted)' }} />
+                    </div>
+                  </button>
+                )}
                 <button
                   onClick={onLogout}
                   className="settings-item w-full transition-colors active:bg-[rgba(239,68,68,0.08)] group"
@@ -296,7 +274,7 @@ export function SideNavAccount({
                   <div className="flex flex-row items-center justify-between w-full h-full">
                     <div className="flex items-center" style={{ gap: '12px' }}>
                       <div className="shrink-0 w-[24px] flex items-center justify-center">
-                        <IconLogOut color="var(--color-status-danger)" />
+                        <LogOut color="var(--color-status-danger)" />
                       </div>
                       <span
                         style={{
@@ -333,6 +311,7 @@ export function SideNavAccount({
             {index > 0 && <Separator style={{ backgroundColor: 'var(--color-border-default)', marginBottom: '12px' }} />}
 
             {/* Group Header */}
+            {group.title && (
             <div
               className="flex items-center justify-between cursor-pointer"
               style={{ padding: '0 4px', marginBottom: '6px' }}
@@ -348,6 +327,7 @@ export function SideNavAccount({
                 </div>
               )}
             </div>
+            )}
 
             {/* Items */}
             {(expandedGroups[group.id] || !group.collapsible) && (
@@ -402,6 +382,39 @@ export function SideNavAccount({
         {onLogout && (
           <div className="w-full">
             <Separator style={{ backgroundColor: 'var(--color-border-default)', marginBottom: '16px' }} />
+            {/* Admin Console link for admin users */}
+            {isAdmin && (
+              <button
+                onClick={() => onNavigate('/admin')}
+                className="relative w-full transition-all duration-200 flex items-center hover:bg-[var(--color-bg-page)]"
+                style={{
+                  borderRadius: 'var(--radius-md)',
+                  height: '44px',
+                  padding: '0 16px',
+                  border: 'none',
+                  backgroundColor: 'transparent',
+                  cursor: 'pointer',
+                  marginBottom: '8px'
+                }}
+              >
+                <div className="flex items-center" style={{ gap: '12px' }}>
+                  <div className="shrink-0 w-[20px] flex items-center justify-center">
+                    <Settings size={18} color="var(--color-status-warning)" />
+                  </div>
+                  <span
+                    style={{
+                      fontSize: '14px',
+                      fontWeight: 'var(--font-weight-medium)' as any,
+                      fontFamily: 'var(--font-family-base)',
+                      color: 'var(--color-text-primary)',
+                      lineHeight: '20px'
+                    }}
+                  >
+                    Admin Console
+                  </span>
+                </div>
+              </button>
+            )}
             <button
               onClick={onLogout}
               className="relative w-full transition-all duration-200 flex items-center hover:bg-[rgba(239,68,68,0.06)]"
@@ -416,7 +429,7 @@ export function SideNavAccount({
             >
               <div className="flex items-center" style={{ gap: '12px' }}>
                 <div className="shrink-0 w-[20px] flex items-center justify-center">
-                  <IconLogOut color="var(--color-status-danger)" />
+                  <LogOut color="var(--color-status-danger)" />
                 </div>
                 <span
                   style={{

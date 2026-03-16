@@ -9,7 +9,7 @@ export interface Consultant {
   id: string;
   name: string;
   credentials: string;
-  category: 'therapist' | 'psychiatrist' | 'counselor' | 'family-therapist';
+  category: string;
   photo: string;
   yearsExperience: number;
   languages: string[];
@@ -291,13 +291,14 @@ export function ConsultantCard({ consultant, onClick, onBook, className }: Consu
                 <Button
                   size="sm"
                   style={{
-                    height: '32px',
-                    borderRadius: '8px',
-                    background: 'var(--grey-9)',
+                    height: '36px',
+                    minWidth: '44px',
+                    borderRadius: '10px',
+                    background: 'var(--color-primary-default)',
                     color: 'white',
                     fontSize: '12px',
                     fontWeight: 'var(--font-weight-medium)',
-                    padding: '0 14px',
+                    padding: '0 16px',
                   }}
                   onClick={(e) => {
                     e.stopPropagation();

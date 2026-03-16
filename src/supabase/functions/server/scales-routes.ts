@@ -1,83 +1,30 @@
 import * as kv from "./kv_dual_write.ts";
 
-// ── Default Scales (mirrors design-tokens.ts) ──────────────────────────
-const DEFAULT_ENERGY: ScaleItem[] = [
-  { id: "exhausted", value: 1, label: "Exhausted", emoji: "\u{1FAAB}", severity: "danger", is_active: true, order: 0 },
-  { id: "tired",     value: 2, label: "Tired",     emoji: "\u{1F634}", severity: "warning", is_active: true, order: 1 },
-  { id: "moderate",  value: 3, label: "Moderate",  emoji: "\u{26A1}",  severity: "neutral", is_active: true, order: 2 },
-  { id: "energetic", value: 4, label: "Energetic", emoji: "\u{1F4AA}", severity: "success", is_active: true, order: 3 },
-  { id: "charged",   value: 5, label: "Charged!",  emoji: "\u{1F525}", severity: "success", is_active: true, order: 4 },
-];
-
-const DEFAULT_STRESS: ScaleItem[] = [
-  { id: "chill",   value: 1, label: "Chill",   emoji: "\u{1F60C}", severity: "success", is_active: true, order: 0 },
-  { id: "mild",    value: 2, label: "Mild",    emoji: "\u{1F914}", severity: "info",    is_active: true, order: 1 },
-  { id: "medium",  value: 3, label: "Medium",  emoji: "\u{1F624}", severity: "warning", is_active: true, order: 2 },
-  { id: "high",    value: 4, label: "High",    emoji: "\u{1F630}", severity: "warning", is_active: true, order: 3 },
-  { id: "extreme", value: 5, label: "Yikes!",  emoji: "\u{1F92F}", severity: "danger",  is_active: true, order: 4 },
-];
-
-const DEFAULT_TAGS: TagItem[] = [
-  { id: "work",          label: "Work",          emoji: "\u{1F4BC}", is_active: true, order: 0 },
-  { id: "sleep",         label: "Sleep",         emoji: "\u{1F634}", is_active: true, order: 1 },
-  { id: "health",        label: "Health",        emoji: "\u{1F3C3}", is_active: true, order: 2 },
-  { id: "relationships", label: "Relationships", emoji: "\u{2764}\u{FE0F}", is_active: true, order: 3 },
-  { id: "studies",       label: "Studies",       emoji: "\u{1F4DA}", is_active: true, order: 4 },
-  { id: "finances",      label: "Finances",      emoji: "\u{1F4B0}", is_active: true, order: 5 },
-  { id: "fun",           label: "Fun",           emoji: "\u{1F389}", is_active: true, order: 6 },
-  { id: "other",         label: "Other",         emoji: "\u{2728}",  is_active: true, order: 7 },
-];
-
-interface ScaleItem {
-  id: string;
-  value: number;
-  label: string;
-  emoji: string;
-  severity: string;
-  is_active: boolean;
-  order: number;
-}
-
-interface TagItem {
-  id: string;
-  label: string;
-  emoji: string;
-  is_active: boolean;
-  order: number;
-}
-
-const DEFAULT_SLEEP: ScaleItem[] = [
-  { id: "terrible",  value: 1, label: "Terrible",  emoji: "\u{1F629}", severity: "danger",  is_active: true, order: 0 },
-  { id: "poor",      value: 2, label: "Poor",      emoji: "\u{1F634}", severity: "warning", is_active: true, order: 1 },
-  { id: "fair",      value: 3, label: "Fair",      emoji: "\u{1F636}\u{200D}\u{1F32B}\u{FE0F}", severity: "neutral", is_active: true, order: 2 },
-  { id: "good",      value: 4, label: "Good",      emoji: "\u{1F60C}", severity: "success", is_active: true, order: 3 },
-  { id: "excellent", value: 5, label: "Excellent", emoji: "\u{1F31F}", severity: "success", is_active: true, order: 4 },
-];
-
-const DEFAULT_PAIN: ScaleItem[] = [
-  { id: "none",     value: 1, label: "None",     emoji: "\u{1F60A}", severity: "success", is_active: true, order: 0 },
-  { id: "mild",     value: 2, label: "Mild",     emoji: "\u{1F610}", severity: "info",    is_active: true, order: 1 },
-  { id: "moderate", value: 3, label: "Moderate", emoji: "\u{1F615}", severity: "warning", is_active: true, order: 2 },
-  { id: "severe",   value: 4, label: "Severe",   emoji: "\u{1F627}", severity: "danger",  is_active: true, order: 3 },
-  { id: "extreme",  value: 5, label: "Extreme",  emoji: "\u{1F62D}", severity: "danger",  is_active: true, order: 4 },
-];
-
+// ── KV Keys ─────────────────────────────────────────────────────────
 const KV_KEY_ENERGY = "checkin_scale:energy";
 const KV_KEY_STRESS = "checkin_scale:stress";
 const KV_KEY_TAGS   = "checkin_scale:context_tags";
 const KV_KEY_SLEEP  = "checkin_scale:sleep";
 const KV_KEY_PAIN   = "checkin_scale:pain";
 
+// All scale data is 100% KV-backed. No hardcoded defaults.
+// If KV is empty, return empty. Admin creates content via the backend.
+
 export function registerScalesRoutes(app: Hono, middleware: any) {
 
+  // ── GET routes are PUBLIC (no auth required) ──────────────────────
+  // Scale definitions are configuration data needed by user-facing
+  // check-in flow, same pattern as GET /assessments and GET /equip/programs.
+  // PUT/DELETE routes remain protected with requireAuth.
+
   // ── GET /scales/energy ────────────────────────────────────────
-  app.get("/scales/energy", middleware, async (c) => {
+  app.get("/scales/energy", async (c) => {
     try {
       const saved = await kv.get(KV_KEY_ENERGY);
-      return c.json({ items: saved || DEFAULT_ENERGY });
+      return c.json({ items: saved || [] });
     } catch (e) {
       console.log("Error loading energy scale:", e);
-      return c.json({ items: DEFAULT_ENERGY });
+      return c.json({ items: [], error: "Failed to load energy scale" }, 500);
     }
   });
 
@@ -97,13 +44,13 @@ export function registerScalesRoutes(app: Hono, middleware: any) {
   });
 
   // ── GET /scales/stress ────────────────────────────────────────
-  app.get("/scales/stress", middleware, async (c) => {
+  app.get("/scales/stress", async (c) => {
     try {
       const saved = await kv.get(KV_KEY_STRESS);
-      return c.json({ items: saved || DEFAULT_STRESS });
+      return c.json({ items: saved || [] });
     } catch (e) {
       console.log("Error loading stress scale:", e);
-      return c.json({ items: DEFAULT_STRESS });
+      return c.json({ items: [], error: "Failed to load stress scale" }, 500);
     }
   });
 
@@ -123,13 +70,13 @@ export function registerScalesRoutes(app: Hono, middleware: any) {
   });
 
   // ── GET /scales/context-tags ──────────────────────────────────
-  app.get("/scales/context-tags", middleware, async (c) => {
+  app.get("/scales/context-tags", async (c) => {
     try {
       const saved = await kv.get(KV_KEY_TAGS);
-      return c.json({ items: saved || DEFAULT_TAGS });
+      return c.json({ items: saved || [] });
     } catch (e) {
       console.log("Error loading context tags:", e);
-      return c.json({ items: DEFAULT_TAGS });
+      return c.json({ items: [], error: "Failed to load context tags" }, 500);
     }
   });
 
@@ -149,13 +96,13 @@ export function registerScalesRoutes(app: Hono, middleware: any) {
   });
 
   // ── GET /scales/sleep ──────────────────────────────────────────
-  app.get("/scales/sleep", middleware, async (c) => {
+  app.get("/scales/sleep", async (c) => {
     try {
       const saved = await kv.get(KV_KEY_SLEEP);
-      return c.json({ items: saved || DEFAULT_SLEEP });
+      return c.json({ items: saved || [] });
     } catch (e) {
       console.log("Error loading sleep scale:", e);
-      return c.json({ items: DEFAULT_SLEEP });
+      return c.json({ items: [], error: "Failed to load sleep scale" }, 500);
     }
   });
 
@@ -175,13 +122,13 @@ export function registerScalesRoutes(app: Hono, middleware: any) {
   });
 
   // ── GET /scales/pain ───────────────────────────────────────────
-  app.get("/scales/pain", middleware, async (c) => {
+  app.get("/scales/pain", async (c) => {
     try {
       const saved = await kv.get(KV_KEY_PAIN);
-      return c.json({ items: saved || DEFAULT_PAIN });
+      return c.json({ items: saved || [] });
     } catch (e) {
       console.log("Error loading pain scale:", e);
-      return c.json({ items: DEFAULT_PAIN });
+      return c.json({ items: [], error: "Failed to load pain scale" }, 500);
     }
   });
 
@@ -200,38 +147,27 @@ export function registerScalesRoutes(app: Hono, middleware: any) {
     }
   });
 
-  // ── POST /scales/reset ────────────────────────────────────────
-  // Resets all scales to design-token defaults
-  app.post("/scales/reset", middleware, async (c) => {
+  // ── DELETE /scales/:type ──────────────────────────────────────
+  // Deletes a scale from KV. After this, GET returns empty [].
+  app.delete("/scales/:type", middleware, async (c) => {
     try {
-      const { type } = await c.req.json();
-      if (type === "energy") {
-        await kv.del(KV_KEY_ENERGY);
-        return c.json({ success: true, items: DEFAULT_ENERGY });
-      } else if (type === "stress") {
-        await kv.del(KV_KEY_STRESS);
-        return c.json({ success: true, items: DEFAULT_STRESS });
-      } else if (type === "context-tags") {
-        await kv.del(KV_KEY_TAGS);
-        return c.json({ success: true, items: DEFAULT_TAGS });
-      } else if (type === "sleep") {
-        await kv.del(KV_KEY_SLEEP);
-        return c.json({ success: true, items: DEFAULT_SLEEP });
-      } else if (type === "pain") {
-        await kv.del(KV_KEY_PAIN);
-        return c.json({ success: true, items: DEFAULT_PAIN });
-      } else if (type === "all") {
-        await kv.del(KV_KEY_ENERGY);
-        await kv.del(KV_KEY_STRESS);
-        await kv.del(KV_KEY_TAGS);
-        await kv.del(KV_KEY_SLEEP);
-        await kv.del(KV_KEY_PAIN);
-        return c.json({ success: true, message: "All scales reset to defaults" });
+      const type = c.req.param("type");
+      const keyMap: Record<string, string> = {
+        energy: KV_KEY_ENERGY,
+        stress: KV_KEY_STRESS,
+        "context-tags": KV_KEY_TAGS,
+        sleep: KV_KEY_SLEEP,
+        pain: KV_KEY_PAIN,
+      };
+      const key = keyMap[type];
+      if (!key) {
+        return c.json({ error: "Unknown type. Use energy, stress, context-tags, sleep, or pain." }, 400);
       }
-      return c.json({ error: "Unknown type. Use energy, stress, context-tags, sleep, pain, or all." }, 400);
+      await kv.del(key);
+      return c.json({ success: true, message: `Scale "${type}" deleted from KV` });
     } catch (e) {
-      console.log("Error resetting scales:", e);
-      return c.json({ error: "Failed to reset scales" }, 500);
+      console.log("Error deleting scale:", e);
+      return c.json({ error: "Failed to delete scale" }, 500);
     }
   });
 }

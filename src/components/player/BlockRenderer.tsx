@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { motion } from 'motion/react';
-import { Activity, ExerciseConfig } from '../../lib/equip-admin-types';
+import { Activity, ExerciseConfig, resolveInteraction } from '../../lib/equip-admin-types';
 import { Label } from '../ui/label';
 import { RadioGroup, RadioGroupItem } from '../ui/radio-group';
 import { Checkbox } from '../ui/checkbox';
@@ -16,10 +16,17 @@ interface BlockRendererProps {
   value: any;
   onChange: (value: any) => void;
   readOnly?: boolean;
+  equipId?: string;
+  dayNum?: number;
 }
 
-export function BlockRenderer({ block, value, onChange, readOnly = false }: BlockRendererProps) {
+export function BlockRenderer({ block, value, onChange, readOnly = false, equipId, dayNum }: BlockRendererProps) {
   const { type, title, subtitle, content, exerciseConfig } = block;
+
+  // --- Upload state (hoisted to top level to comply with Rules of Hooks) ---
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // --- HELPERS ---
   const cleanOptionLabel = (text: string) => {
@@ -639,57 +646,207 @@ export function BlockRenderer({ block, value, onChange, readOnly = false }: Bloc
     );
   };
 
+  const renderFileUpload = (config: ExerciseConfig) => {
+    const accepted = config.acceptedFileTypes || ['image/*', '.pdf', '.doc', '.docx', 'audio/*'];
+    const maxSize = config.maxFileSize || 10 * 1024 * 1024; // 10MB default
+
+    const currentFile = value as { fileName?: string; signedUrl?: string; fileSize?: number } | null;
+
+    const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+
+      if (file.size > maxSize) {
+        setUploadError(`File too large. Maximum size is ${Math.round(maxSize / 1024 / 1024)}MB.`);
+        return;
+      }
+
+      setUploadError(null);
+      setUploading(true);
+
+      try {
+        // Use props passed from ProgramPlayer
+        const resolvedEquipId = equipId || 'unknown';
+        const resolvedDayNum = dayNum || 0;
+
+        const { apiClient } = await import('../../lib/api-client');
+        const result = await apiClient.uploadBlockFile(resolvedEquipId, resolvedDayNum, block.id, file);
+
+        if (result?.success) {
+          onChange({
+            fileName: result.fileName,
+            fileSize: result.fileSize,
+            signedUrl: result.signedUrl,
+          });
+        } else {
+          setUploadError(result?.error || 'Upload failed. Please try again.');
+        }
+      } catch (err: any) {
+        console.error('File upload error:', err);
+        setUploadError(err.message || 'Upload failed');
+      } finally {
+        setUploading(false);
+      }
+    };
+
+    const formatSize = (bytes: number) => {
+      if (bytes < 1024) return `${bytes} B`;
+      if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+      return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+    };
+
+    return (
+      <div className="space-y-4">
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept={accepted.join(',')}
+          onChange={handleFileSelect}
+          className="hidden"
+          disabled={readOnly || uploading}
+        />
+
+        {currentFile?.fileName ? (
+          /* File already uploaded */
+          <div
+            className="flex items-center gap-4 p-5 bg-white shadow-[0_2px_12px_rgba(0,0,0,0.03)]"
+            style={{ borderRadius: 'var(--radius-lg)' }}
+          >
+            <div
+              className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
+              style={{ backgroundColor: 'var(--color-status-success-light)' }}
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--color-status-success)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="20 6 9 17 4 12" />
+              </svg>
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-[15px] font-medium text-[var(--color-text-primary)] truncate">
+                {currentFile.fileName}
+              </p>
+              {currentFile.fileSize && (
+                <p className="text-[13px] text-[var(--color-text-muted)]">
+                  {formatSize(currentFile.fileSize)}
+                </p>
+              )}
+            </div>
+            {!readOnly && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => fileInputRef.current?.click()}
+                style={{ borderRadius: 'var(--radius-md)' }}
+              >
+                Replace
+              </Button>
+            )}
+          </div>
+        ) : (
+          /* Upload area */
+          <button
+            onClick={() => !readOnly && !uploading && fileInputRef.current?.click()}
+            disabled={readOnly || uploading}
+            className="w-full flex flex-col items-center gap-3 p-8 border-2 border-dashed transition-all"
+            style={{
+              borderRadius: 'var(--radius-lg)',
+              borderColor: uploading ? 'var(--color-primary-default)' : 'var(--color-border-default)',
+              backgroundColor: uploading ? 'color-mix(in srgb, var(--color-primary-default) 4%, white)' : 'white',
+              cursor: readOnly ? 'default' : uploading ? 'wait' : 'pointer',
+            }}
+          >
+            {uploading ? (
+              <>
+                <div className="w-8 h-8 border-2 border-[var(--color-primary-default)] border-t-transparent rounded-full animate-spin" />
+                <span className="text-[15px] font-medium text-[var(--color-primary-default)]">Uploading...</span>
+              </>
+            ) : (
+              <>
+                <div
+                  className="w-12 h-12 rounded-2xl flex items-center justify-center"
+                  style={{ backgroundColor: 'var(--color-bg-muted)' }}
+                >
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--color-text-muted)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                    <polyline points="17 8 12 3 7 8" />
+                    <line x1="12" y1="3" x2="12" y2="15" />
+                  </svg>
+                </div>
+                <div className="text-center">
+                  <p className="text-[15px] font-medium text-[var(--color-text-primary)]">
+                    Tap to upload a file
+                  </p>
+                  <p className="text-[13px] text-[var(--color-text-muted)] mt-1">
+                    Max {Math.round(maxSize / 1024 / 1024)}MB
+                  </p>
+                </div>
+              </>
+            )}
+          </button>
+        )}
+
+        {uploadError && (
+          <div
+            className="flex items-center gap-2 p-3 text-[13px] font-medium"
+            style={{
+              borderRadius: 'var(--radius-md)',
+              backgroundColor: 'var(--color-status-danger-light)',
+              color: 'var(--color-status-danger)',
+            }}
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="12" r="10" /><line x1="15" y1="9" x2="9" y2="15" /><line x1="9" y1="9" x2="15" y2="15" />
+            </svg>
+            {uploadError}
+          </div>
+        )}
+      </div>
+    );
+  };
+
   // --- DISPATCHER ---
 
   const renderContent = () => {
-    // Specific block type handlers
-    if (type === 'lesson' || type === 'conclude') {
-      return renderLesson();
-    }
-
-    // Interactive types via Exercise Config
+    // Use the unified interaction taxonomy for dispatch
+    const interaction = resolveInteraction(block);
     const config = exerciseConfig || {};
-    
-    if (config.subtype === 'clinical_instrument') {
-      return renderClinicalInstrument(config);
-    }
-    if (config.subtype === 'rating_scale' || config.subtype === 'likert') {
-      return renderRatingScale(config);
-    }
-    if (config.subtype === 'table') {
-      return renderTableChecklist(config);
-    }
-    if (config.subtype === 'input-table' || config.subtype === 'comparison_matrix') {
-      return renderInputTable(config);
-    }
-    if (config.subtype === 'mcq' || config.subtype === 'single-select') {
-      return renderMCQ(config);
-    }
-    if (config.subtype === 'multi-select') {
-      return renderMultiSelect(config);
-    }
-    if (config.subtype === 'structured-list' || type === 'checklist') {
-      return renderChecklist(config);
-    }
 
-    // Fix: If options exist, render as MCQ even if labeled as journal/ephemeral
-    // This handles data inconsistencies where subtype is 'ephemeral-journal' but has options
-    if ((config.options && config.options.length > 0) && (type === 'journal' || config.subtype === 'ephemeral-journal')) {
-      return renderMCQ(config);
-    }
+    switch (interaction) {
+      case 'read':
+      case 'complete':
+      case 'watch':
+        return renderLesson();
 
-    if (type === 'journal' || type === 'reflection' || config.subtype === 'ephemeral-journal') {
-      return renderTextResponse(config);
-    }
-    
-    // Fallback for exercises without specific subtype (default to text if prompt exists, else lesson-like)
-    if (type === 'exercise') {
-      if (config.options?.length) return renderMCQ(config);
-      return renderTextResponse(config);
-    }
+      case 'clinical':
+        return renderClinicalInstrument(config);
 
-    // Fallback: render content as lesson
-    return renderLesson();
+      case 'rate':
+        return renderRatingScale(config);
+
+      case 'track-table':
+        return renderTableChecklist(config);
+
+      case 'input-table':
+        return renderInputTable(config);
+
+      case 'select-one':
+        return renderMCQ(config);
+
+      case 'select-many':
+        return renderMultiSelect(config);
+
+      case 'check':
+        return renderChecklist(config);
+
+      case 'write':
+        return renderTextResponse(config);
+
+      case 'upload':
+        return renderFileUpload(config);
+
+      default:
+        // Final fallback: render as lesson
+        return renderLesson();
+    }
   };
 
   // Determine if we show a separate prompt text

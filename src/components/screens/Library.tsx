@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useIsMobile } from '../../hooks/useIsMobile';
+import { useMetadata } from '../../hooks/useMetadata';
 import { cn } from '../ui/utils';
 import { Search } from 'lucide-react';
 import { ResourcePost } from '../blocks/ResourceCard';
@@ -8,8 +9,6 @@ import { logger } from '../../lib/logger';
 import { PullToRefresh } from '../ui/touch-feedback';
 import { ImageWithFallback } from '../figma/ImageWithFallback';
 import { resolveImageUrl } from '../../utils/image-utils';
-
-import { RESOURCE_TYPES, RESOURCE_CATEGORIES } from '../../lib/constants';
 
 interface LibraryProps {
   onResourceSelect?: (resourceId: string) => void;
@@ -24,6 +23,7 @@ interface Resource extends ResourcePost {
 
 export function Library({ onResourceSelect, onNavigate, className }: LibraryProps) {
   const isMobile = useIsMobile();
+  const { categories: kvCategories, filterTypes: kvFilterTypes, loading: metaLoading } = useMetadata();
 
   const [searchQuery, setSearchQuery] = useState('');
   const [activeCategoryFilter, setActiveCategoryFilter] = useState('All stories');
@@ -52,7 +52,7 @@ export function Library({ onResourceSelect, onNavigate, className }: LibraryProp
           .map((resource: any) => {
             const getResourceType = (contentType: string | undefined, category: string | undefined): string => {
               const typeStr = (contentType || category || '').toLowerCase();
-              const match = RESOURCE_TYPES.find(t => typeStr.includes(t.value));
+              const match = kvFilterTypes.find(t => typeStr.includes(t.value));
               return match ? match.value : 'article';
             };
 
@@ -121,7 +121,7 @@ export function Library({ onResourceSelect, onNavigate, className }: LibraryProp
     await loadResources();
   };
 
-  const categories = ['All stories', ...RESOURCE_CATEGORIES.map(c => c.label)];
+  const categories = ['All stories', ...kvCategories.map(c => c.label)];
 
   // Derived state for featured and latest news
   const featuredResource = resources.length > 0 ? resources[0] : null;

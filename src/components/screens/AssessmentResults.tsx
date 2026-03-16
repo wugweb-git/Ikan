@@ -4,7 +4,7 @@ import { Card, CardContent } from '../ui/card';
 import { Button } from '../ui/button';
 import { Icon } from '../Icon';
 import { cn } from '../ui/utils';
-import { EngineResult, SeverityLevel } from '../../lib/recommendation-engine';
+import { EngineResult, SeverityLevel, getSeverityBandFromProfile } from '../../lib/recommendation-engine';
 import { apiClient } from '../../lib/api-client';
 import { ImageWithFallback } from '../figma/ImageWithFallback';
 import { ArrowRight } from 'lucide-react';
@@ -135,6 +135,12 @@ export function AssessmentResults({
   const { recommendation: rec, score: activeScore, maxScore: activeMax } = activeData;
 
   const getSeverityColor = (severity: SeverityLevel) => {
+    // Try to get color from scoring profile band first
+    const profileBand = activeData.assessmentId
+      ? getSeverityBandFromProfile(activeScore || 0, (activeData as any).scoringProfileId || '')
+      : null;
+    if (profileBand?.color) return profileBand.color;
+
     switch (severity) {
       case 'low': return 'var(--color-status-success)';
       case 'moderate': return 'var(--color-status-warning)';

@@ -27,7 +27,7 @@ export function AdminWidget({ onNavigate }: AdminWidgetProps) {
       <Button 
         variant="default" 
         size="icon" 
-        className="h-12 w-12 rounded-full shadow-lg transition-transform hover:scale-105 max-md:h-10 max-md:w-10"
+        className="h-12 w-12 rounded-full shadow-lg max-md:h-10 max-md:w-10"
         style={{
           backgroundColor: 'var(--color-primary-default)',
           color: 'var(--color-primary-on)',

@@ -1,4 +1,3 @@
-
 import { apiClient } from '../../lib/api-client';
 import { 
   stressAssessmentData, 
@@ -191,23 +190,16 @@ export const cmsUtils = {
             let modified = false;
             const updates: any = {};
 
-            // Read Time
+            // Read Time (computed from content — not hardcoded)
             if (!res.read_time) {
                 const wordCount = (res.content || "").split(/\s+/).length;
                 updates.read_time = Math.ceil(wordCount / 200) || 1;
                 modified = true;
             }
-
-            // Image
-            if (!res.image_url) {
-                updates.image_url = `https://source.unsplash.com/800x600/?${res.category || 'wellness'},calm`;
-                modified = true;
-            }
             
-            // Category
+            // Category — only flag, don't inject
             if (!res.category) {
-                updates.category = 'General';
-                modified = true;
+                logs.push(`Resource "${res.title || res.id}": Missing category — please set manually.`);
             }
 
             if (modified) {
@@ -232,45 +224,25 @@ export const cmsUtils = {
          const profData = await apiClient.getProfessionals();
          const consultants = profData.professionals || [];
          
+         let issueCount = 0;
          for (const prof of consultants) {
-             let modified = false;
-             const updates: any = {};
-
-             // Rating
-             if (!prof.rating) {
-                 updates.rating = 4.8; // Default high rating
-                 modified = true;
-             }
-
-             // Pricing
-             if (!prof.pricing) {
-                 updates.pricing = { video: 1500, call: 1000, chat: 500 };
-                 modified = true;
-             }
-
-             // Session Modes
-             if (!prof.sessionModes || prof.sessionModes.length === 0) {
-                 updates.sessionModes = ['online', 'call'];
-                 modified = true;
-             }
-             
-             // Years Experience
-             if (prof.yearsExperience === undefined || prof.yearsExperience === null) {
-                 updates.yearsExperience = 5;
-                 modified = true;
-             }
-
-             if (modified) {
-                 const finalUpdate = {
-                     ...prof,
-                     ...updates,
-                     expertises: prof.expertises || prof.specialties || []
-                 };
-                 await apiClient.updateProfessional(prof.id, finalUpdate);
-                 consultantCount++;
-             }
+              const missing: string[] = [];
+              if (!prof.rating) missing.push('rating');
+              if (!prof.pricing) missing.push('pricing');
+              if (!prof.sessionModes || prof.sessionModes.length === 0) missing.push('sessionModes');
+              if (prof.yearsExperience === undefined || prof.yearsExperience === null) missing.push('yearsExperience');
+              
+              if (missing.length > 0) {
+                  issueCount++;
+                  logs.push(`Consultant "${prof.name || prof.id}": Missing ${missing.join(', ')} — edit their profile to set these values.`);
+              }
          }
-         logs.push(`Consultants: Updated ${consultantCount} profiles.`);
+         
+         if (issueCount === 0) {
+             logs.push('All consultant profiles are complete.');
+         } else {
+             logs.push(`Found ${issueCount} consultant(s) with incomplete profiles. Edit them in the Consultation Manager.`);
+         }
     } catch (e: any) {
         logs.push(`Consultant Error: ${e.message}`);
     }

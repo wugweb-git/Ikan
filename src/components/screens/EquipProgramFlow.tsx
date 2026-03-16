@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import {
   CheckCircle, Play, Clock, ChevronLeft, ChevronRight, Lock,
+  LogOut,
 } from 'lucide-react';
 import { Button } from '../ui/button';
 import { EquipProgram } from '../../lib/equip-admin-types';
@@ -277,9 +278,11 @@ interface EquipProgramHomeProps {
   onSelectDay: (day: number) => void;
   onRestart: () => void;
   onBack: () => void;
+  onLeaveProgram: () => void;
+  onNavigate?: (path: string) => void;
 }
 
-function EquipProgramHome({ program, progress, onStartSession, onSelectDay, onRestart, onBack }: EquipProgramHomeProps) {
+function EquipProgramHome({ program, progress, onStartSession, onSelectDay, onRestart, onBack, onLeaveProgram, onNavigate }: EquipProgramHomeProps) {
   const [selectedDay, setSelectedDay] = useState(progress.currentDay);
   const selectedDayContent = program.daily_content?.find(d => d.day === selectedDay);
   const totalDays = program.daily_content?.length || 0;
@@ -374,16 +377,28 @@ function EquipProgramHome({ program, progress, onStartSession, onSelectDay, onRe
               <p style={{ ...f('sm', 400, B.muted), margin: '0 0 20px' }}>
                 You've completed {program.title}. Tap any day to review.
               </p>
-              <button
-                onClick={onRestart}
-                style={{
-                  background: 'none', border: `1.5px solid ${B.border}`,
-                  borderRadius: 'var(--radius-md)', padding: '8px 20px',
-                  cursor: 'pointer', ...f('sm', 500, tokens.colors.status.danger),
-                }}
-              >
-                Restart Program
-              </button>
+              <div className="flex items-center justify-center gap-3 flex-wrap">
+                <button
+                  onClick={() => onNavigate?.(`/equip-program-completion?id=${program.id}`)}
+                  style={{
+                    background: B.primary, border: 'none',
+                    borderRadius: 'var(--radius-md)', padding: '10px 24px',
+                    cursor: 'pointer', ...f('sm', 500, tokens.colors.text.inverse),
+                  }}
+                >
+                  View Summary
+                </button>
+                <button
+                  onClick={onRestart}
+                  style={{
+                    background: 'none', border: `1.5px solid ${B.border}`,
+                    borderRadius: 'var(--radius-md)', padding: '8px 20px',
+                    cursor: 'pointer', ...f('sm', 500, tokens.colors.status.danger),
+                  }}
+                >
+                  Restart Program
+                </button>
+              </div>
             </motion.div>
           )}
 
@@ -514,6 +529,28 @@ function EquipProgramHome({ program, progress, onStartSession, onSelectDay, onRe
               )}
             </motion.div>
           </AnimatePresence>
+
+          {/* Leave program option */}
+          {!isProgramComplete && (
+            <button
+              onClick={onLeaveProgram}
+              className="flex items-center justify-center w-full"
+              style={{
+                gap: 6, padding: '12px 16px',
+                borderRadius: 'var(--radius-md)',
+                border: 'none', background: 'none',
+                cursor: 'pointer',
+                ...f('xs', 500, B.muted),
+                opacity: 0.7,
+                transition: 'opacity 0.15s',
+              }}
+              onMouseEnter={e => (e.currentTarget.style.opacity = '1')}
+              onMouseLeave={e => (e.currentTarget.style.opacity = '0.7')}
+            >
+              <LogOut size={14} />
+              Leave Program
+            </button>
+          )}
         </div>
       </div>
     </div>
@@ -696,6 +733,23 @@ export function EquipProgramFlow({ programId, enrollmentId, onBack, onComplete, 
     }
   };
 
+  const handleLeaveProgram = async () => {
+    if (!programId) return;
+    const confirmed = confirm(
+      'Are you sure you want to leave this program? Your progress will be saved and you can re-enroll later.'
+    );
+    if (!confirmed) return;
+
+    try {
+      await apiClient.leaveProgram(programId);
+      showToast('success', 'You have left the program');
+      handleBack();
+    } catch (e) {
+      console.error('Failed to leave program:', e);
+      toast.error('Could not leave the program. Please try again.');
+    }
+  };
+
   if (loading) {
       return (
           <div className="flex h-screen items-center justify-center flex-col gap-4" style={{ backgroundColor: B.bgPage }}>
@@ -731,6 +785,8 @@ export function EquipProgramFlow({ programId, enrollmentId, onBack, onComplete, 
            }}
            onRestart={handleRestart}
            onBack={handleBack}
+           onLeaveProgram={handleLeaveProgram}
+           onNavigate={onNavigate}
         />
       )}
 

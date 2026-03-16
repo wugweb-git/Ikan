@@ -1,9 +1,9 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent } from '../../ui/card';
 import { Icon } from '../../Icon';
 import { apiClient } from '../../../lib/api-client';
 import { useAuth } from '../../../contexts/AuthContext';
-import { Building2, Mail, Phone, User, Calendar, Gift, Baby, ExternalLink, Globe } from 'lucide-react';
+import { Building2, Mail, Phone, User, Calendar, Gift, Baby, ExternalLink, Globe, Briefcase, BadgeCheck } from 'lucide-react';
 
 // ─── Font helper ──────────────────────────────────────────────────
 const f = (size: string, weight: number = 400, color: string = 'var(--color-text-primary)') => ({
@@ -157,6 +157,26 @@ export function Corporate() {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-6)' }}>
+      {/* ── Your Company Details ── */}
+      <Card className="gap-0 shadow-none" style={{ borderRadius: '16px' }}>
+        <div className="flex items-center" style={{ padding: '20px 24px 16px 24px', gap: '8px' }}>
+          <BadgeCheck size={20} style={{ color: 'var(--color-text-primary)' }} />
+          <h2 style={{ fontSize: '16px', fontWeight: 'var(--font-weight-medium)', color: 'var(--color-text-primary)', fontFamily: 'var(--font-family-base)', lineHeight: '22px', margin: 0 }}>
+            Your Company Profile
+          </h2>
+        </div>
+        <CardContent className="p-0" style={{ padding: '0 24px 24px 24px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <InfoRow icon={<Building2 size={16} />} label="Company Name" value={program.employer_name} />
+            <InfoRow icon={<Briefcase size={16} />} label="Designation" value={(user as any)?.corporate_designation} />
+            <InfoRow icon={<Mail size={16} />} label="Company Email" value={(user as any)?.corporate_email || (user as any)?.email} />
+            <InfoRow icon={<Phone size={16} />} label="Company Phone" value={(user as any)?.corporate_phone} />
+            <InfoRow icon={<Globe size={16} />} label="Department" value={(user as any)?.corporate_department} />
+            <InfoRow icon={<User size={16} />} label="Employee ID" value={(user as any)?.corporate_employee_id} />
+          </div>
+        </CardContent>
+      </Card>
+
       {/* ── Organization Info ── */}
       <Card className="gap-0 shadow-none" style={{ borderRadius: '16px' }}>
         <div className="flex items-center" style={{ padding: '20px 24px 16px 24px', gap: '8px' }}>
@@ -520,6 +540,21 @@ export function Corporate() {
           </CardContent>
         </Card>
       )}
+    </div>
+  );
+}
+
+// ─── Helper component for InfoRow ────────────────────────────────
+function InfoRow({ icon, label, value }: { icon: React.ReactNode, label: string, value?: string }) {
+  return (
+    <div className="flex items-center" style={{ gap: 12 }}>
+      {icon}
+      <div style={{ flex: 1 }}>
+        <span style={{ ...f('xs', 500, 'var(--color-text-muted)'), display: 'block' }}>{label}</span>
+        {value && (
+          <span style={{ ...f('sm', 400), display: 'block' }}>{value}</span>
+        )}
+      </div>
     </div>
   );
 }

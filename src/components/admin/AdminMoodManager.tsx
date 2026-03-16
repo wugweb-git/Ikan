@@ -28,6 +28,8 @@ interface MoodType {
 
 interface AdminMoodManagerProps {
   onBack?: () => void;
+  /** When true, hides outer padding and AdminHeader (used when embedded in Meta Manager) */
+  embedded?: boolean;
 }
 
 const EMOJI_SUGGESTIONS = [
@@ -53,7 +55,7 @@ const COLOR_PRESETS = [
   { value: '#6B7280', label: 'Gray' },
 ];
 
-export function AdminMoodManager({ onBack: _onBack }: AdminMoodManagerProps) {
+export function AdminMoodManager({ onBack: _onBack, embedded }: AdminMoodManagerProps) {
   const [moods, setMoods] = useState<MoodType[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -78,60 +80,12 @@ export function AdminMoodManager({ onBack: _onBack }: AdminMoodManagerProps) {
       const moodList = await apiClient.listMoods();
       setMoods(moodList);
     } catch (error) {
-      console.warn('Moods backend unreachable, using fallback data:', error);
-      // Fallback sample data
-      setMoods([
-        { id: '1', emoji: '😢', label: 'Sad', value: 2, color: '#3B82F6', description: 'Feeling down or upset', is_active: true, order: 0, created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
-        { id: '2', emoji: '😐', label: 'Neutral', value: 5, color: '#6B7280', description: 'Feeling okay, neither good nor bad', is_active: true, order: 1, created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
-        { id: '3', emoji: '😊', label: 'Happy', value: 8, color: '#10B981', description: 'Feeling good and positive', is_active: true, order: 2, created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
-        { id: '4', emoji: '😡', label: 'Angry', value: 1, color: '#EF4444', description: 'Feeling frustrated or mad', is_active: true, order: 3, created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
-        { id: '5', emoji: '😌', label: 'Calm', value: 7, color: '#8B5CF6', description: 'Feeling peaceful and relaxed', is_active: true, order: 4, created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
-      ]);
+      console.error('Failed to load moods:', error);
+      toast.error('Failed to load mood types');
+      setMoods([]);
     } finally {
       setIsLoading(false);
     }
-  };
-
-  const handleTestIntegrity = () => {
-    let issues = 0;
-    const report: string[] = [];
-
-    moods.forEach(mood => {
-        const missingFields = [];
-        if (!mood.label) missingFields.push('Label');
-        if (!mood.emoji) missingFields.push('Emoji');
-        if (!mood.value) missingFields.push('Value');
-        
-        if (missingFields.length > 0) {
-            issues++;
-            report.push(`Mood "${mood.label || 'Untitled'}": Missing ${missingFields.join(', ')}`);
-        }
-        
-        if (mood.value < 1 || mood.value > 10) {
-            issues++;
-            report.push(`Mood "${mood.label}": Value out of range (${mood.value})`);
-        }
-    });
-
-    if (issues === 0) {
-        toast.success('Integrity Check Passed: All moods valid.');
-    } else {
-        console.warn('Integrity Issues:', report);
-        toast.warning(`Found ${issues} integrity issues. Check console.`);
-    }
-  };
-
-  const handleAutoFill = () => {
-    setFormData(prev => ({
-        ...prev,
-        label: prev.label || 'New Mood',
-        emoji: prev.emoji || '😊',
-        value: prev.value || 5,
-        color: prev.color || '#22C55E',
-        description: prev.description || 'Auto-generated description.',
-        is_active: true
-    }));
-    toast.success('Auto-Filled with suggestions');
   };
 
   const handleCreate = async () => {
@@ -227,39 +181,33 @@ export function AdminMoodManager({ onBack: _onBack }: AdminMoodManagerProps) {
   }
 
   return (
-    <div className="p-8 space-y-6">
+    <div className={embedded ? 'space-y-6' : 'p-8 space-y-6'}>
       {/* Header */}
-      <AdminHeader
-        title="Mood Type Manager"
-        description="Customize mood tracking options for journal entries"
-        actions={
-          <div className="flex gap-2">
-            <Button 
-              variant="outline" 
-              onClick={handleTestIntegrity}
-              style={{ gap: 'var(--spacing-2)' }}
-            >
-              <ShieldCheck className="w-4 h-4" />
-              Test Integrity
-            </Button>
-            <Button 
-              onClick={() => {
-                resetForm();
-                setIsCreating(true);
-              }}
-              style={{ gap: 'var(--spacing-2)' }}
-            >
-              <Plus className="w-4 h-4" />
-              Add Mood Type
-            </Button>
-          </div>
-        }
-        stats={[
-          { label: 'Total Types', value: moods.length },
-          { label: 'Active', value: moods.filter(m => m.is_active).length },
-          { label: 'Inactive', value: moods.filter(m => !m.is_active).length },
-        ]}
-      />
+      {!embedded && (
+        <AdminHeader
+          title="Mood Type Manager"
+          description="Customize mood tracking options for journal entries"
+          actions={
+            <div className="flex gap-2">
+              <Button 
+                onClick={() => {
+                  resetForm();
+                  setIsCreating(true);
+                }}
+                style={{ gap: 'var(--spacing-2)' }}
+              >
+                <Plus className="w-4 h-4" />
+                Add Mood Type
+              </Button>
+            </div>
+          }
+          stats={[
+            { label: 'Total Types', value: moods.length },
+            { label: 'Active', value: moods.filter(m => m.is_active).length },
+            { label: 'Inactive', value: moods.filter(m => !m.is_active).length },
+          ]}
+        />
+      )}
 
       {/* Create/Edit Form */}
       {(isCreating || editingId) && (
@@ -394,10 +342,6 @@ export function AdminMoodManager({ onBack: _onBack }: AdminMoodManagerProps) {
             </div>
 
             <div className="flex gap-2">
-              <Button variant="outline" onClick={handleAutoFill} title="Auto-fill empty fields">
-                <Sparkles className="w-4 h-4 mr-2" />
-                Auto-Fill
-              </Button>
               {editingId ? (
                 <Button onClick={() => handleUpdate(editingId)}>
                   <Save className="w-4 h-4 mr-2" />

@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { Save, Trash2, ClipboardList, HelpCircle, Eye, Plus, GripVertical, X, Upload, EyeOff, Lightbulb, Sparkles } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { Save, Trash2, ClipboardList, HelpCircle, Eye, Plus, GripVertical, X, Upload, EyeOff } from 'lucide-react';
 import { useNotifications } from '../../contexts/NotificationContext';
 import { apiClient } from '../../lib/api-client';
 import { AdminFormField } from '../admin/AdminFormField';
@@ -13,18 +13,18 @@ import { Card, CardContent } from '../ui/card';
 import { ImageUpload } from '../ui/image-upload';
 import { WizardLayout } from '../ui/wizard-layout';
 import { WizardStep } from '../ui/wizard-stepper';
-import { AssessmentResultsManager } from './AssessmentResultsManager';
 import { AssessmentLandingPageRichTextEditor } from './AssessmentLandingPageRichTextEditor';
 import { UnifiedBasicInfoForm } from '../admin/UnifiedBasicInfoForm';
 import { useFormValidation, ValidationSchema } from '../../hooks/useFormValidation';
 import { validateUrl } from '../../lib/validation';
+import { useMetadata } from '../../hooks/useMetadata';
 import { useUnsavedChanges } from '../../hooks/useUnsavedChanges';
 import { UnsavedChangesDialog } from '../ui/unsaved-changes-dialog';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '../ui/dialog';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import { EquipDailyEditor as DailyBuilder } from './EquipDailyEditor';
-import { DayContent, Activity } from '../../lib/equip-admin-types';
+import { DayContent, Activity, resolveInteraction } from '../../lib/equip-admin-types';
 import { AdminLoading } from '../admin/AdminLoading';
 
 // Adapter to convert legacy Question[] to Block[] (Activity[])
@@ -32,29 +32,38 @@ const convertQuestionsToDay = (questions: any[]): DayContent => {
   return {
     day: 1,
     title: 'Assessment Content',
-    dayType: 'lesson', // Default, doesn't matter much for assessment mode
-    activities: questions.map((q, idx) => ({
-      id: q.id || `block-${idx}`,
-      title: q.text || 'Untitled Question',
-      type: 'exercise', // Assessments are mostly exercises
-      duration: q.timeLimit || 2,
-      required: q.required !== false,
-      autoAdvance: q.autoAdvance,
-      stepGroup: q.stepGroup,
-      image_url: q.icon || q.imageUrl, // Map icon to image_url for now
-      content: '', // Not used for exercise usually
-      exerciseConfig: {
-        subtype: q.type === 'multiple-choice' ? 'mcq' : 
-                 q.type === 'scale' ? 'single-select' : 
-                 q.type === 'text' ? 'text' : 'mcq',
-        prompt: q.text,
-        options: q.options || [],
-        scoring: {
-           enabled: true, // Auto-enable scoring for imported questions
-           weights: [], // Legacy questions might not have weights
+    dayType: 'assessment',
+    activities: questions.map((q, idx) => {
+      // Determine interaction + subtype from legacy question type
+      let subtype: string = 'mcq';
+      let interaction: string = 'select-one';
+      if (q.type === 'multiple-choice') { subtype = 'multi-select'; interaction = 'select-many'; }
+      else if (q.type === 'scale') { subtype = 'rating_scale'; interaction = 'rate'; }
+      else if (q.type === 'text' || q.type === 'textarea') { subtype = 'ephemeral-journal'; interaction = 'write'; }
+
+      return {
+        id: q.id || `block-${idx}`,
+        title: q.text || 'Untitled Question',
+        type: 'exercise' as const,
+        interaction: interaction as any,
+        duration: q.timeLimit || 2,
+        required: q.required !== false,
+        autoAdvance: q.autoAdvance,
+        stepGroup: q.stepGroup,
+        image_url: q.icon || q.imageUrl,
+        content: '',
+        order: idx,
+        exerciseConfig: {
+          subtype: subtype as any,
+          prompt: q.text,
+          options: q.options || [],
+          scoring: {
+            enabled: true,
+            weights: [],
+          }
         }
-      }
-    }))
+      };
+    })
   };
 };
 
@@ -124,19 +133,8 @@ interface AssessmentEditPageWizardProps {
   onSave: () => void;
 }
 
-const categoryOptions = [
-  { value: 'anxiety', label: 'Anxiety' },
-  { value: 'depression', label: 'Depression' },
-  { value: 'stress', label: 'Stress' },
-  { value: 'wellness', label: 'General Wellness' },
-  { value: 'other', label: 'Other' }
-];
-
-const difficultyOptions = [
-  { value: 'beginner', label: 'Beginner' },
-  { value: 'intermediate', label: 'Intermediate' },
-  { value: 'advanced', label: 'Advanced' }
-];
+// REMOVED: No hardcoded categoryOptions — KV is the single source of truth via useMetadata
+// REMOVED: No hardcoded difficultyOptions — KV is the single source of truth via useMetadata
 
 export function AssessmentEditPageWizard({ assessmentId, onBack, onSave }: AssessmentEditPageWizardProps) {
   const { showToast } = useNotifications();
@@ -145,48 +143,17 @@ export function AssessmentEditPageWizard({ assessmentId, onBack, onSave }: Asses
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [currentStep, setCurrentStep] = useState(0);
   const [localAssessmentId, setLocalAssessmentId] = useState(assessmentId);
-  const [dynamicCategoryOptions, setDynamicCategoryOptions] = useState(categoryOptions);
 
-  useEffect(() => {
-    loadCategories();
-  }, []);
-
-  const loadCategories = async () => {
-    try {
-      const data = await apiClient.getCategories();
-      if (Array.isArray(data) && data.length > 0) {
-        // Deduplicate categories by slug/value
-        const uniqueMap = new Map();
-        // Add defaults first to preserve them if API doesn't return them, 
-        // or add API first? Usually API is source of truth.
-        // Let's assume API is source of truth, but we want to ensure no duplicates.
-        
-        data.forEach((c: any) => {
-             if (c.slug && !uniqueMap.has(c.slug)) {
-                 uniqueMap.set(c.slug, {
-                    label: c.name,
-                    value: c.slug
-                 });
-             }
-        });
-        
-        // If API returns valid data, use it.
-        if (uniqueMap.size > 0) {
-            setDynamicCategoryOptions(Array.from(uniqueMap.values()));
-        }
-      }
-    } catch (error) {
-      console.warn('Failed to load categories', error);
-    }
-  };
+  // Categories and difficulty from KV via useMetadata (no hardcoded fallbacks)
+  const { categories: metaCategories, difficultyLevels: metaDifficulty, scoringMethods: metaScoringMethods } = useMetadata();
 
   const [formData, setFormData] = useState<Partial<Assessment>>({
     title: '',
     description: '',
-    category: 'wellness',
+    category: '',
     filter_type: 'assessment',
     duration: 10,
-    difficulty: 'beginner',
+    difficulty: '',
     questions: [],
     scoringMethod: 'sum',
     resultCategories: [],
@@ -257,6 +224,8 @@ export function AssessmentEditPageWizard({ assessmentId, onBack, onSave }: Asses
   const { errors, validateForm } = useFormValidation(validationSchema);
   const { hasUnsavedChanges, markAsSaved, markAsUnsaved, setShowWarning, showWarning } = useUnsavedChanges();
 
+  const hasLoadedRef = useRef(false);
+
   const handleArrayFieldChange = (field: keyof Assessment, value: string) => {
     setFormData({
       ...formData,
@@ -283,9 +252,11 @@ export function AssessmentEditPageWizard({ assessmentId, onBack, onSave }: Asses
   };
 
   useEffect(() => {
-    if (formData.title || formData.description) {
-      markAsUnsaved();
+    if (!hasLoadedRef.current) {
+      if (!loading) hasLoadedRef.current = true;
+      return;
     }
+    markAsUnsaved();
   }, [formData]);
 
   useEffect(() => {
@@ -323,122 +294,28 @@ export function AssessmentEditPageWizard({ assessmentId, onBack, onSave }: Asses
     }
   };
 
-  const handleAutoFill = () => {
-    // Legacy / Generic Auto-Fill (Text Only)
-    // 1. Determine Context
-    const title = formData.title || 'Wellness';
-    const category = formData.category || 'general';
-    const isSleep = title.toLowerCase().includes('sleep') || category === 'sleep';
-    const isStress = title.toLowerCase().includes('stress') || category === 'stress';
-    
-    // 2. Generate Generic Content based on context
-    setFormData(prev => {
-        // --- Helper for Landing Page Defaults ---
-        const mainTitle = prev.main_title || `Why take this ${category} assessment?`;
-        
-        const mainContent = (prev.main_content?.length || 0) > 0 ? prev.main_content : [
-            `Understand your ${category} symptoms better`,
-            'Get personalized insights based on your answers',
-            'Take the first step towards feeling better'
-        ];
-
-        const section2Content = prev.section2_content || 
-            `This assessment helps you understand how ${isStress ? 'stress' : isSleep ? 'poor sleep' : category} has been affecting your daily life. ` +
-            `It focuses on how you've been feeling over the last 2 weeks.`;
-
-        const section2Bullets = (prev.section2_bullets?.length || 0) > 0 ? prev.section2_bullets : [
-            `${isSleep ? 'Sleep quality' : 'Emotional wellbeing'}`,
-            'Daily functioning',
-            'Physical symptoms'
-        ];
-
-        // --- Helper for Result Categories ---
-        const defaultResults = (prev.resultCategories?.length || 0) > 0 ? prev.resultCategories : [
-            { min: 0, max: 10, label: 'Low', description: 'You are managing well. Keep up your healthy habits.' },
-            { min: 11, max: 20, label: 'Moderate', description: 'You are showing some signs of strain. Consider our recommended programs.' },
-            { min: 21, max: 40, label: 'High', description: 'Your results suggest you are struggling. We recommend seeking professional support.' }
-        ];
-
-        return {
-            ...prev,
-            // Basic Info
-            description: prev.description || `Evaluate your ${category} levels with this standard assessment.`,
-            cta_button_text: prev.cta_button_text || 'Start Assessment',
-            duration: prev.duration || 5,
-            difficulty: prev.difficulty || 'beginner',
-            scoringMethod: prev.scoringMethod || 'sum',
-            
-            // Landing Page - Section 1 (Eligibility/How it works)
-            section1_title: prev.section1_title || 'How it works',
-            section1_eligibility_title: prev.section1_eligibility_title || 'What to expect:',
-            section1_eligibility_points: (prev.section1_eligibility_points?.length || 0) === 0 
-                ? ['Answer simple questions', 'Get instant results', 'Review expert advice'] 
-                : prev.section1_eligibility_points,
-            section1_who_title: prev.section1_who_title || 'Who can take this?',
-            section1_who_content: prev.section1_who_content || 'This assessment is designed for adults 18+ looking to understand their mental wellbeing.',
-
-            // Landing Page - Main Content
-            main_title: mainTitle,
-            main_content: mainContent,
-
-            // Landing Page - Section 2 (Description & Measures)
-            section2_title: prev.section2_title || 'What is this assessment?',
-            section2_content: section2Content,
-            section2_bullets: section2Bullets,
-
-            // Landing Page - Section 3 (What you'll see)
-            section3_title: prev.section3_title || "What you'll see",
-            section3_subtitle: prev.section3_subtitle || "Understanding your mental health is the first step.",
-            section3_content: (prev.section3_content?.length || 0) > 0 ? prev.section3_content : [
-               '10-15 simple questions',
-               'Instant analysis',
-               'Personalized action plan'
-            ],
-
-            // Landing Page - Highlights
-            highlights_title: prev.highlights_title || 'Assessment Highlights',
-            highlights: (prev.highlights?.length || 0) === 0 
-                ? ['Clinically validated approach', 'Takes less than 5 minutes', 'Private & Confidential'] 
-                : prev.highlights,
-
-            // Landing Page - Notes
-            notes_title: prev.notes_title || 'Things to keep in mind',
-            notes: (prev.notes?.length || 0) === 0 
-                ? ['This is not a medical diagnosis', 'Consult a professional for serious concerns'] 
-                : prev.notes,
-
-            // Results Configuration
-            resultCategories: defaultResults,
-
-            // NOTE: We do NOT auto-fill content (questions/daily_content) or images anymore.
-            // This prevents overwriting user structure and broken image links.
-        };
-    });
-
-    showToast('success', 'Auto-Filled', 'Form populated with generated suggestions.');
-    markAsUnsaved();
-  };
-
   // Navigation saves progress. Save preserves state. Publish changes lifecycle.
   const persistWizard = async (currentData: Partial<Assessment>, isAutoSave = false) => {
     setSaving(true);
     try {
-      // SYNC BACK: Ensure questions field is populated for legacy compatibility if needed
-      // Map daily_content[0].activities -> questions
-      // Ideally backend should accept daily_content.
-      // But we'll sync it just in case.
+      // SYNC BACK: Map daily_content blocks -> legacy questions for backward compat
       if (currentData.daily_content && currentData.daily_content.length > 0) {
-          // This is a rough mapping back to Question format to satisfy TypeScript/Legacy
-          // Note: This might be lossy if Question schema is stricter than Block.
-          // But since we are moving to Blocks, we prioritize preserving Block data (daily_content).
-          currentData.questions = currentData.daily_content[0].activities.map(block => ({
-              id: block.id,
-              text: block.exerciseConfig?.prompt || block.title,
-              type: block.exerciseConfig?.subtype === 'mcq' ? 'multiple-choice' : 'text', // simplified
-              options: block.exerciseConfig?.options || [],
-              required: block.required,
-              timeLimit: block.duration
-          }));
+          currentData.questions = currentData.daily_content[0].activities.map(block => {
+              const interaction = resolveInteraction(block);
+              // Map interaction back to legacy question type
+              const legacyType = interaction === 'select-many' ? 'multiple-choice'
+                : interaction === 'rate' ? 'scale'
+                : interaction === 'write' ? 'text'
+                : 'single-choice'; // select-one, clinical, etc.
+              return {
+                id: block.id,
+                text: block.exerciseConfig?.prompt || block.title,
+                type: legacyType,
+                options: block.exerciseConfig?.options || [],
+                required: block.required,
+                timeLimit: block.duration
+              };
+          });
       }
 
       let result;
@@ -471,9 +348,10 @@ export function AssessmentEditPageWizard({ assessmentId, onBack, onSave }: Asses
         // 1. Fetch latest server state (Rely on persisted state)
         const serverData = await apiClient.getAssessment(localAssessmentId);
         
-        // Validation for Publish (on SERVER data)
+        // Validation for Publish — check daily_content blocks (source of truth)
         if (!serverData.published) {
-             if ((serverData.questions || []).length === 0) {
+             const blockCount = serverData.daily_content?.[0]?.activities?.length || (serverData.questions || []).length;
+             if (blockCount === 0) {
                  showToast('error', 'Validation Error', 'Please add at least one question to publish');
                  setSaving(false);
                  return;
@@ -517,33 +395,8 @@ export function AssessmentEditPageWizard({ assessmentId, onBack, onSave }: Asses
     }
   };
 
-  const addQuestion = () => {
-    const newQuestion: Question = {
-      id: `q-${Date.now()}`,
-      text: '',
-      type: 'multiple-choice',
-      options: ['Option 1', 'Option 2', 'Option 3'],
-      required: true
-    };
-    setFormData({
-      ...formData,
-      questions: [...(formData.questions || []), newQuestion]
-    });
-  };
-
-  const updateQuestion = (id: string, updates: Partial<Question>) => {
-    setFormData({
-      ...formData,
-      questions: (formData.questions || []).map((q) => (q.id === id ? { ...q, ...updates } : q))
-    });
-  };
-
-  const deleteQuestion = (id: string) => {
-    setFormData({
-      ...formData,
-      questions: (formData.questions || []).filter((q) => q.id !== id)
-    });
-  };
+  // LEGACY QUESTION FUNCTIONS REMOVED — Assessment editing now uses DailyBuilder (daily_content)
+  // addQuestion, updateQuestion, deleteQuestion are no longer needed.
 
   const addResultCategory = () => {
     setFormData({
@@ -571,7 +424,7 @@ export function AssessmentEditPageWizard({ assessmentId, onBack, onSave }: Asses
     {
       id: 'questions',
       title: 'Questions',
-      subtitle: `${(formData.questions || []).length} added`,
+      subtitle: `${(formData.daily_content?.[0]?.activities || formData.questions || []).length} blocks`,
       status: currentStep === 2 ? 'current' : currentStep > 2 ? 'completed' : 'upcoming'
     },
     {
@@ -591,6 +444,7 @@ export function AssessmentEditPageWizard({ assessmentId, onBack, onSave }: Asses
   }
 
   return (
+    <DndProvider backend={HTML5Backend}>
     <>
       <WizardLayout
         title={formData.title || 'Untitled Assessment'}
@@ -649,15 +503,6 @@ export function AssessmentEditPageWizard({ assessmentId, onBack, onSave }: Asses
           <div className="flex items-center gap-2">
             <Button
               variant="outline"
-              onClick={handleAutoFill}
-              className="h-8 px-2 gap-2"
-              title="Auto-fill empty fields"
-            >
-              <Sparkles size={16} />
-              <span className="text-xs font-medium hidden md:inline">Auto-Fill</span>
-            </Button>
-            <Button
-              variant="outline"
               onClick={() => persistWizard(formData)}
               disabled={saving}
               className="h-8 w-8 p-0"
@@ -683,8 +528,8 @@ export function AssessmentEditPageWizard({ assessmentId, onBack, onSave }: Asses
             <UnifiedBasicInfoForm
               title={formData.title || ''}
               description={formData.description || ''}
-              category={formData.category || 'wellness'}
-              difficulty={formData.difficulty || 'beginner'}
+              category={formData.category || ''}
+              difficulty={formData.difficulty || ''}
               duration={formData.duration || 5}
               isPremium={formData.is_premium || false}
               price={formData.price || 0}
@@ -703,7 +548,7 @@ export function AssessmentEditPageWizard({ assessmentId, onBack, onSave }: Asses
                 durationUnit: 'minutes',
                 imageLabel: 'Assessment Image (Thumbnail)',
                 subtitle: 'Configure assessment details',
-                categories: dynamicCategoryOptions,
+                // No explicit categories — UnifiedBasicInfoForm uses useMetadata internally
                 showAssessmentType: true,
                 assessmentType: formData.filter_type || 'assessment',
                 onAssessmentTypeChange: (value) => setFormData({ ...formData, filter_type: value }),
@@ -736,21 +581,19 @@ export function AssessmentEditPageWizard({ assessmentId, onBack, onSave }: Asses
           <div className="space-y-8">
             <AssessmentLandingPageRichTextEditor
               data={formData}
-              onChange={(updates) => setFormData({ ...formData, ...updates })}
+              onChange={(updates) => setFormData(prev => ({ ...prev, ...updates }))}
             />
           </div>
         )}
 
         {/* Step 2: Questions (Unified Daily Builder) */}
         {currentStep === 2 && (
-           <DndProvider backend={HTML5Backend}>
-             <DailyBuilder
-               program={formData}
-               mode="assessment"
-               singleDayMode={true}
-               onProgramChange={(updates) => setFormData({ ...formData, ...updates })}
-             />
-           </DndProvider>
+           <DailyBuilder
+             program={formData}
+             mode="assessment"
+             singleDayMode={true}
+             onProgramChange={(updates) => setFormData(prev => ({ ...prev, ...updates }))}
+           />
         )}
 
         {/* Step 3: Scoring & Results */}
@@ -766,9 +609,18 @@ export function AssessmentEditPageWizard({ assessmentId, onBack, onSave }: Asses
                 >
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="sum">Sum of Values (0-5 scale)</SelectItem>
-                    <SelectItem value="average">Average Score</SelectItem>
-                    <SelectItem value="custom">Custom Logic</SelectItem>
+                    {metaScoringMethods.length > 0 ? (
+                      metaScoringMethods.map(m => (
+                        <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>
+                      ))
+                    ) : (
+                      <>
+                        <SelectItem value="sum">Sum of Values</SelectItem>
+                        <SelectItem value="average">Average Score</SelectItem>
+                        <SelectItem value="weighted">Weighted Sum</SelectItem>
+                        <SelectItem value="custom">Custom Logic</SelectItem>
+                      </>
+                    )}
                   </SelectContent>
                 </Select>
               </AdminFormField>
@@ -894,5 +746,6 @@ export function AssessmentEditPageWizard({ assessmentId, onBack, onSave }: Asses
         </DialogContent>
       </Dialog>
     </>
+    </DndProvider>
   );
 }

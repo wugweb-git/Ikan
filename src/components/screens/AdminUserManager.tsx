@@ -11,6 +11,7 @@ import { AdminDataTable, Column, FilterOption } from '../admin/AdminDataTable';
 import { SkeletonTable } from '../ui/skeleton-loader';
 import { ErrorState } from '../ui/error-state';
 import { EmptyState } from '../ui/empty-state';
+import { useMetadata } from '../../hooks/useMetadata';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -48,6 +49,7 @@ type ViewMode = 'list' | 'edit' | 'create';
 export function AdminUserManager({ onBack, className }: AdminUserManagerProps) {
   const { showToast } = useNotifications();
   const isMobile = useIsMobile();
+  const { accountTypes: kvAccountTypes } = useMetadata();
 
   const [users, setUsers] = useState<UserProfile[]>([]);
   const [enrollments, setEnrollments] = useState<any[]>([]);
@@ -186,9 +188,25 @@ export function AdminUserManager({ onBack, className }: AdminUserManagerProps) {
     }
   };
 
+  // Compute role string for filtering
+  const usersWithRole = users.map(u => ({
+    ...u,
+    role: u.is_admin ? 'admin' : u.corporate_user ? 'corporate' : 'user',
+  }));
+
   // -- Data Table Configuration --
 
-  const columns: Column<UserProfile>[] = [
+  const FALLBACK_ACCOUNT_TYPES = [
+    { label: 'User', value: 'user' },
+    { label: 'Admin', value: 'admin' },
+    { label: 'Corporate', value: 'corporate' },
+  ];
+
+  const accountTypeOptions = kvAccountTypes.length > 0
+    ? kvAccountTypes.map(t => ({ label: t.label, value: t.value }))
+    : FALLBACK_ACCOUNT_TYPES;
+
+  const columns: Column<UserProfile & { role?: string }>[] = [
     {
       header: 'User',
       accessorKey: 'name',
@@ -303,11 +321,11 @@ export function AdminUserManager({ onBack, className }: AdminUserManagerProps) {
   ];
 
   const filters: FilterOption[] = [
-    // We can simulate role filtering by checking multiple boolean flags in the main table logic if we passed a custom filter function
-    // But for now, our generic table supports simple equality checks. 
-    // We'll skip complex role filtering in the generic table for this quick refactor, 
-    // OR we could map roles to a string property 'role' in a wrapper if needed.
-    // For simplicity, let's rely on Search which covers most use cases.
+    {
+      key: 'role',
+      label: 'Account Type',
+      options: accountTypeOptions,
+    },
   ];
 
   const stats = [
@@ -343,8 +361,6 @@ export function AdminUserManager({ onBack, className }: AdminUserManagerProps) {
         <AdminHeader
           title="Account Management"
           description="Loading users..."
-          onBack={onBack}
-          breadcrumbs={[{ label: 'Admin', onClick: onBack }, { label: 'Account Management' }]}
         />
         <SkeletonTable rows={10} columns={5} />
       </div>
@@ -357,8 +373,6 @@ export function AdminUserManager({ onBack, className }: AdminUserManagerProps) {
         <AdminHeader
           title="Account Management"
           description="Manage platform access, roles, and user profiles"
-          onBack={onBack}
-          breadcrumbs={[{ label: 'Admin', onClick: onBack }, { label: 'Account Management' }]}
         />
         <ErrorState
           variant="error"
@@ -377,8 +391,6 @@ export function AdminUserManager({ onBack, className }: AdminUserManagerProps) {
         <AdminHeader
           title="Account Management"
           description="Manage platform access, roles, and user profiles"
-          onBack={onBack}
-          breadcrumbs={[{ label: 'Admin', onClick: onBack }, { label: 'Account Management' }]}
         />
         <EmptyState
           variant="default"
@@ -396,8 +408,6 @@ export function AdminUserManager({ onBack, className }: AdminUserManagerProps) {
       <AdminHeader
         title="Account Management"
         description="Manage platform access, roles, and user profiles"
-        onBack={onBack}
-        breadcrumbs={[{ label: 'Admin', onClick: onBack }, { label: 'Account Management' }]}
         stats={stats}
         actions={
           <Button onClick={handleCreateNew} className="gap-2">
@@ -409,8 +419,9 @@ export function AdminUserManager({ onBack, className }: AdminUserManagerProps) {
 
       <AdminDataTable 
         columns={columns} 
-        data={users} 
+        data={usersWithRole} 
         searchKeys={['name', 'email', 'phone']}
+        filters={filters}
         searchPlaceholder="Search users..."
         onRowClick={(item) => handleEdit(item.user_id)}
         idField="user_id"

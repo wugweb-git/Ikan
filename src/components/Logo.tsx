@@ -2,6 +2,7 @@ import React from 'react';
 import { motion } from 'motion/react';
 import svgPathsIcon from "../imports/svg-ptmlmkxncr";
 import svgPathsFull from "../imports/svg-epzl744ze1";
+import { usePublicSettings } from '../hooks/usePublicSettings';
 
 // Icon-only logo component
 export function LogoIcon({ 
@@ -17,6 +18,31 @@ export function LogoIcon({
   loading?: boolean;
   interactive?: boolean;
 }) {
+  const { settings } = usePublicSettings();
+  const customIcon = settings.logoIconUrl;
+
+  // If admin uploaded a custom icon, render it as an image
+  if (customIcon) {
+    return (
+      <motion.div
+        className={`relative ${className}`}
+        style={{ width: size, height: size, ...style }}
+        data-name="LogoIcon"
+        initial={{ opacity: 0, scale: 0.8 }}
+        animate={{ opacity: 1, scale: 1, rotate: loading ? [0, 360] : 0 }}
+        transition={{
+          opacity: { duration: 0.3 },
+          scale: { duration: 0.3, type: "spring", stiffness: 300 },
+          rotate: { duration: 2, repeat: loading ? Infinity : 0, ease: "linear" }
+        }}
+        whileHover={interactive ? { scale: 1.1, rotate: 5, transition: { duration: 0.2 } } : {}}
+        whileTap={interactive ? { scale: 0.95, transition: { duration: 0.1 } } : {}}
+      >
+        <img src={customIcon} alt={settings.siteName || 'iKan'} className="block w-full h-full object-contain" />
+      </motion.div>
+    );
+  }
+
   return (
     <motion.div 
       className={`relative ${className}`} 
@@ -87,6 +113,22 @@ export function LogoFull({ height = 32, className = "", style = {} }: {
   className?: string; 
   style?: React.CSSProperties; 
 }) {
+  const { settings } = usePublicSettings();
+  const customLogo = settings.logoUrl || settings.logoFullDarkUrl;
+
+  // If admin uploaded a custom full logo, render it as an image
+  if (customLogo) {
+    return (
+      <div
+        className={`relative ${className}`}
+        style={{ height, width: 'auto', ...style }}
+        data-name="LogoFull"
+      >
+        <img src={customLogo} alt={settings.siteName || 'iKan'} className="block h-full w-auto object-contain" />
+      </div>
+    );
+  }
+
   return (
     <div 
       className={`relative ${className}`} 
@@ -130,6 +172,9 @@ export function Logo({
   loading?: boolean;
   interactive?: boolean;
 }) {
+  const { settings } = usePublicSettings();
+  const siteName = settings.siteName || 'iKan';
+
   if (!showText) {
     return <LogoIcon size={iconSize} className={className} style={style} loading={loading} interactive={interactive} />;
   }
@@ -166,7 +211,7 @@ export function Logo({
           ease: "easeOut"
         }}
       >
-        iKan
+        {siteName}
       </motion.span>
     </motion.div>
   );

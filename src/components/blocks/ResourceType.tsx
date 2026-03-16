@@ -1,7 +1,7 @@
 import { Badge } from '../ui/badge';
 import { Button } from '../ui/button';
 import { BookOpen, Video, Wrench, FileText, Activity, Mic, GraduationCap } from 'lucide-react';
-import { RESOURCE_TYPES } from '../../lib/constants';
+import { useMetadata } from '../../hooks/useMetadata';
 
 interface ResourceTypeProps {
   activeType: string;
@@ -16,16 +16,22 @@ const ICON_MAP: Record<string, any> = {
   'video': Video,
   'mic': Mic,
   'book': BookOpen,
-  'graduation-cap': GraduationCap
+  'graduation-cap': GraduationCap,
+  'filter': FileText,
+  'tag': FileText,
+  'type': FileText,
+  'folder': BookOpen,
 };
 
 export function ResourceType({ activeType, onTypeChange, className }: ResourceTypeProps) {
+  const { filterTypes } = useMetadata();
+
   const typeFilters = [
     { id: 'all', label: 'All', icon: BookOpen },
-    ...RESOURCE_TYPES.map(t => ({
+    ...filterTypes.map(t => ({
       id: t.value,
       label: t.label,
-      icon: ICON_MAP[t.icon] || BookOpen
+      icon: ICON_MAP[t.icon || 'file-text'] || BookOpen
     }))
   ];
 

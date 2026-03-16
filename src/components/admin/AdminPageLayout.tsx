@@ -103,7 +103,7 @@ export function AdminPageLayout({
             <button
               onClick={secondaryActions[0]?.onClick}
               disabled={primaryAction?.loading}
-              className="flex items-center justify-center transition-all hover:scale-105 active:scale-95"
+              className="flex items-center justify-center"
               style={{
                 width: '56px',
                 height: '56px',
@@ -123,7 +123,7 @@ export function AdminPageLayout({
             <button
               onClick={secondaryActions[1]?.onClick}
               disabled={!secondaryActions[1] || primaryAction?.loading}
-              className="flex items-center justify-center transition-all hover:scale-105 active:scale-95"
+              className="flex items-center justify-center"
               style={{
                 width: '56px',
                 height: '56px',
@@ -143,7 +143,7 @@ export function AdminPageLayout({
             <button
               onClick={secondaryActions[2]?.onClick}
               disabled={primaryAction?.loading}
-              className="flex items-center justify-center transition-all hover:scale-105 active:scale-95"
+              className="flex items-center justify-center"
               style={{
                 width: '56px',
                 height: '56px',
@@ -164,7 +164,7 @@ export function AdminPageLayout({
               <button
                 onClick={primaryAction.onClick}
                 disabled={primaryAction.disabled || primaryAction.loading}
-                className="flex items-center justify-center transition-all hover:scale-105 active:scale-95"
+                className="flex items-center justify-center"
                 style={{
                   width: '56px',
                   height: '56px',

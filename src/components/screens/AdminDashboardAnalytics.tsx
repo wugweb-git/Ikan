@@ -234,8 +234,6 @@ export function AdminDashboardAnalytics({ onBack, embedded }: AdminDashboardAnal
           <AdminHeader
             title="Dashboard Analytics"
             description="Loading analytics data..."
-            onBack={onBack}
-            breadcrumbs={[{ label: 'Admin', onClick: onBack }, { label: 'Analytics' }]}
           />
         )}
         <AdminSkeleton rows={6} />
@@ -250,8 +248,6 @@ export function AdminDashboardAnalytics({ onBack, embedded }: AdminDashboardAnal
           <AdminHeader
             title="Dashboard Analytics"
             description="Track your platform's performance and growth"
-            onBack={onBack}
-            breadcrumbs={[{ label: 'Admin', onClick: onBack }, { label: 'Analytics' }]}
           />
         )}
         <AdminErrorState
@@ -269,8 +265,6 @@ export function AdminDashboardAnalytics({ onBack, embedded }: AdminDashboardAnal
         <AdminHeader
           title="Dashboard Analytics"
           description="Track your platform's performance and growth"
-          onBack={onBack}
-          breadcrumbs={[{ label: 'Admin', onClick: onBack }, { label: 'Analytics' }]}
         />
       )}
 

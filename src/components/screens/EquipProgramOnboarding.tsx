@@ -1,3 +1,5 @@
+import { projectId } from '../../utils/supabase/info';
+import { getAuthHeaders } from '../../lib/supabase-client';
 import { useState, useEffect } from 'react';
 import { Button } from '../ui/button';
 import { apiClient } from '../../lib/api-client';
@@ -6,7 +8,6 @@ import { useNotifications } from '../../contexts/NotificationContext';
 import { OnboardingData } from '../../lib/equip-types';
 import { OnboardingQuestionSet } from '../../lib/equip-onboarding-types';
 import { TypeformWizard } from '../wizard/TypeformWizard';
-import { projectId, publicAnonKey } from '../../utils/supabase/info';
 import { Icon } from '../Icon';
 import { ProgramPlayer } from '../player/ProgramPlayer';
 import { EquipProgram } from '../../lib/equip-admin-types';
@@ -64,9 +65,7 @@ export function EquipOnboarding({ programId: propProgramId, onComplete, onBack, 
         const response = await fetch(
           `https://${projectId}.supabase.co/functions/v1/make-server-cc205da9/equip/programs/${id}`,
           {
-            headers: {
-              'Authorization': `Bearer ${publicAnonKey}`,
-            },
+            headers: await getAuthHeaders(),
           }
         );
 
