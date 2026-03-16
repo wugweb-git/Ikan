@@ -141,7 +141,7 @@ export function PaymentProvider({ children }: PaymentProviderProps) {
         receipt_email: showReceipt
       });
 
-      if (!orderResponse || !orderResponse.success) {
+      if (!orderResponse || !orderResponse.order_id) {
         const errorMsg = orderResponse?.error || 'Failed to create payment order';
         console.error('❌ Payment order creation failed:', errorMsg);
         throw new Error(errorMsg);
@@ -158,14 +158,14 @@ export function PaymentProvider({ children }: PaymentProviderProps) {
         currency,
         status: 'pending',
         created_at: new Date().toISOString(),
-        metadata: { programId, receiptEmail: showReceipt }
+        metadata: { programId, receiptEmail: showReceipt, key_id: orderResponse.key_id, transaction_id: orderResponse.transaction_id }
       };
 
       setCurrentTransaction(transaction);
       
       return orderResponse.order_id;
       
-    } catch (error) {
+    } catch (error: any) {
       console.error('❌ Payment initialization failed:', error);
       showToast('error', 'Payment Failed', error.message || 'Failed to initialize payment');
       throw error;
@@ -254,7 +254,8 @@ export function PaymentProvider({ children }: PaymentProviderProps) {
       const verificationResponse = await apiClient.verifyPayment({
         razorpay_payment_id: paymentId,
         razorpay_order_id: orderId,
-        razorpay_signature: signature
+        razorpay_signature: signature,
+        transaction_id: currentTransaction?.metadata?.transaction_id,
       });
 
       if (verificationResponse.success) {
@@ -269,7 +270,7 @@ export function PaymentProvider({ children }: PaymentProviderProps) {
       console.error('❌ Payment verification error:', error);
       return false;
     }
-  }, []);
+  }, [currentTransaction]);
 
   const getTransactionHistory = useCallback(async (): Promise<Transaction[]> => {
     if (!user) {
@@ -277,8 +278,8 @@ export function PaymentProvider({ children }: PaymentProviderProps) {
     }
 
     try {
-      const response = await apiClient.getTransactionHistory(user.id);
-      return response.transactions || [];
+      const payments = await apiClient.getPaymentHistory();
+      return payments || [];
     } catch (error) {
       console.error('Failed to fetch transaction history:', error);
       return [];

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { projectId } from '../../utils/supabase/info';
 import { getAuthHeaders } from '../../lib/supabase-client';
 import { apiClient } from '../../lib/api-client';
+import { useAuth } from '../../contexts/AuthContext';
 import { EquipHero } from '../blocks/EquipHero';
 import { EquipBentoGrid } from '../blocks/EquipBentoGrid';
 import { EquipBlock } from '../blocks/EquipBlock';
@@ -124,7 +125,10 @@ export function EquipDetail({ equipId = 'sleep-tight-9', onNavigate }: EquipDeta
   const [equipData, setEquipData] = useState<any>(null);
   const [relatedPrograms, setRelatedPrograms] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [hasPurchased, setHasPurchased] = useState(false);
+  const [purchaseCheckDone, setPurchaseCheckDone] = useState(false);
   const isMobile = useIsMobile();
+  const { user } = useAuth();
 
   // Define handleNavigate at the top
   const handleNavigate = (path: string) => {
@@ -183,6 +187,29 @@ export function EquipDetail({ equipId = 'sleep-tight-9', onNavigate }: EquipDeta
     }
   }, [equipId]);
 
+  // Check if user has purchased the program
+  useEffect(() => {
+    const checkPurchase = async () => {
+      if (user && equipData?.is_paid) {
+        try {
+          const response = await apiClient.checkProgramPurchase(equipId);
+          setHasPurchased(response.purchased);
+        } catch (err) {
+          console.error('Error checking program purchase:', err);
+        } finally {
+          setPurchaseCheckDone(true);
+        }
+      } else {
+        // Free programs or not logged in — skip purchase check
+        setPurchaseCheckDone(true);
+      }
+    };
+
+    if (!isLoading && equipData) {
+      checkPurchase();
+    }
+  }, [user, equipId, equipData, isLoading]);
+
   // Loading state
   if (isLoading) {
     return (
@@ -217,6 +244,29 @@ export function EquipDetail({ equipId = 'sleep-tight-9', onNavigate }: EquipDeta
       </div>
     );
   }
+
+  // Paid program helpers
+  const isPaid = !!(equipData.is_paid && equipData.price > 0);
+  const priceDisplay = isPaid
+    ? new Intl.NumberFormat('en-IN', { style: 'currency', currency: equipData.currency || 'INR', minimumFractionDigits: 0 }).format(equipData.price / 100)
+    : null;
+  const canStart = !isPaid || hasPurchased;
+
+  // CTA button text depends on payment status
+  const ctaButtonText = (() => {
+    if (!isPaid) return equipData.cta_button_text || 'Start Program';
+    if (hasPurchased) return 'Continue to Program';
+    return `Pay ${priceDisplay} to Start`;
+  })();
+
+  const handleCtaClick = () => {
+    if (!isPaid || hasPurchased) {
+      handleNavigate(equipData.cta_button_link || `/equip-program-onboarding?id=${equipId}`);
+    } else {
+      // Navigate to onboarding which will handle payment gate
+      handleNavigate(`/equip-program-onboarding?id=${equipId}`);
+    }
+  };
 
   // Map related programs to EquipBlock format
   const equipPrograms = relatedPrograms
@@ -256,12 +306,77 @@ export function EquipDetail({ equipId = 'sleep-tight-9', onNavigate }: EquipDeta
         <EquipHero
           title={equipData.title}
           description={equipData.description}
-          buttonText={equipData.cta_button_text || 'Start Program'}
+          buttonText={ctaButtonText}
           buttonLink={equipData.cta_button_link || `/equip-program-onboarding?id=${equipId}`}
-          onButtonClick={() => handleNavigate(equipData.cta_button_link || `/equip-program-onboarding?id=${equipId}`)}
+          onButtonClick={handleCtaClick}
           backgroundImage={equipData.hero_image}
           backgroundAlt={`${equipData.title} - Program landing page`}
         />
+
+        {/* PRICING BANNER (for paid programs) */}
+        {isPaid && (
+          <div style={{
+            maxWidth: 800, margin: '0 auto', padding: '0 var(--spacing-4)',
+          }}>
+            <div style={{
+              background: hasPurchased
+                ? 'linear-gradient(135deg, #F0FDF4 0%, #DCFCE7 100%)'
+                : 'linear-gradient(135deg, #FFF7ED 0%, #FEF3C7 100%)',
+              borderRadius: 'var(--radius-lg)',
+              padding: 'var(--spacing-5) var(--spacing-6)',
+              border: `1px solid ${hasPurchased ? '#BBF7D0' : '#FDE68A'}`,
+              marginTop: 'var(--spacing-4)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              flexWrap: 'wrap' as const,
+              gap: 'var(--spacing-3)',
+            }}>
+              <div>
+                <p style={{
+                  fontSize: 'var(--text-sm)',
+                  fontWeight: 500,
+                  fontFamily: 'var(--font-family-base)',
+                  color: hasPurchased ? 'var(--color-status-success)' : 'var(--color-text-primary)',
+                  margin: 0,
+                }}>
+                  {hasPurchased ? '✓ You have access to this program' : 'Premium Program'}
+                </p>
+                <p style={{
+                  fontSize: 'var(--text-xs)',
+                  fontWeight: 400,
+                  fontFamily: 'var(--font-family-base)',
+                  color: 'var(--color-text-muted)',
+                  margin: '4px 0 0',
+                }}>
+                  {hasPurchased
+                    ? 'Start or continue your program anytime.'
+                    : `One-time payment of ${priceDisplay} for full access`}
+                </p>
+              </div>
+              {!hasPurchased && (
+                <button
+                  onClick={handleCtaClick}
+                  style={{
+                    backgroundColor: 'var(--color-primary-default)',
+                    color: 'var(--color-text-inverse)',
+                    border: 'none',
+                    borderRadius: 'var(--radius-md)',
+                    padding: 'var(--spacing-2) var(--spacing-5)',
+                    fontSize: 'var(--text-sm)',
+                    fontWeight: 500,
+                    fontFamily: 'var(--font-family-base)',
+                    cursor: 'pointer',
+                    whiteSpace: 'nowrap' as const,
+                    minHeight: 'var(--ikan-touch-target-min, 44px)',
+                  }}
+                >
+                  {ctaButtonText}
+                </button>
+              )}
+            </div>
+          </div>
+        )}
         
         {/* MIDDLE SECTION: BENTO GRID (Replaces Sections 1-4) */}
         <EquipBentoGrid

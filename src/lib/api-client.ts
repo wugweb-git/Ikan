@@ -267,6 +267,52 @@ class ApiClient {
     return res.payments || [];
   }
 
+  // Payment Gateway — Razorpay
+  async createPaymentOrder(data: { program_id: string; amount: number; currency?: string; user_id?: string; receipt_email?: boolean; description?: string }) {
+    return this.request('/payment/create-order', {
+      method: 'POST',
+      body: JSON.stringify({
+        amount: data.amount,
+        currency: data.currency || 'INR',
+        description: data.description || `Program purchase: ${data.program_id}`,
+        metadata: { program_id: data.program_id },
+      }),
+    }, true);
+  }
+
+  async verifyPayment(data: { razorpay_payment_id: string; razorpay_order_id: string; razorpay_signature: string; transaction_id?: string }) {
+    return this.request('/payment/verify', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }, true);
+  }
+
+  async recordProgramPayment(data: { programId: string; programTitle: string; amount: number; currency?: string; transactionId: string; paymentMethod?: string }) {
+    return this.request('/users/payments', {
+      method: 'POST',
+      body: JSON.stringify({
+        ...data,
+        currency: data.currency || 'INR',
+        status: 'completed',
+        paymentMethod: data.paymentMethod || 'razorpay',
+      }),
+    }, true);
+  }
+
+  async checkProgramPurchase(programId: string): Promise<{ purchased: boolean; payment?: any }> {
+    try {
+      const res = await this.request(`/payment/check-purchase/${programId}`, { method: 'GET' }, true);
+      return res;
+    } catch {
+      return { purchased: false };
+    }
+  }
+
+  async getTransactionHistory(userId?: string) {
+    const res = await this.request('/users/payments', { method: 'GET' }, true);
+    return { transactions: res.payments || [] };
+  }
+
   // Social Accounts
   async connectSocialAccount(provider: string) {
     return this.request(`/user/connect-social/${provider}`, { method: 'POST' }, true);

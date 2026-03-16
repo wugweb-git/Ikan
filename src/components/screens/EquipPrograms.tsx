@@ -196,6 +196,26 @@ export function EquipPrograms({ onNavigate }: EquipProgramsProps) {
                         {duration}
                       </span>
                     )}
+                    {/* Price badge for paid programs */}
+                    {program.is_paid && program.price > 0 && (
+                      <span
+                        style={{
+                          position: 'absolute',
+                          top: 10,
+                          right: 10,
+                          padding: '4px 10px',
+                          borderRadius: 'var(--radius-pill)',
+                          backgroundColor: '#FEF3C7',
+                          color: '#92400E',
+                          fontFamily: 'var(--font-family-base)',
+                          fontWeight: 500,
+                          fontSize: 'var(--text-xs)',
+                          border: '1px solid #FDE68A',
+                        }}
+                      >
+                        {new Intl.NumberFormat('en-IN', { style: 'currency', currency: program.currency || 'INR', minimumFractionDigits: 0 }).format(program.price / 100)}
+                      </span>
+                    )}
                   </div>
 
                   {/* Card body */}

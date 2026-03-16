@@ -27,8 +27,9 @@ export function EquipOnboarding({ programId: propProgramId, onComplete, onBack, 
   const [hasDay0, setHasDay0] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [programData, setProgramData] = useState<any>(null);
   const { showToast } = useNotifications();
-  const { user } = useAuth(); // Auth context for checking user status
+  const { user } = useAuth();
 
   // ✅ Fetch Onboarding Questions from Database
   useEffect(() => {
@@ -76,6 +77,9 @@ export function EquipOnboarding({ programId: propProgramId, onComplete, onBack, 
         const data = await response.json();
         const program = data.program;
         
+        // Store full program data for payment checks
+        setProgramData(program);
+
         // UNIFIED SYSTEM CHECK: Does this program have Day 0 (Onboarding Blocks)?
         const day0 = program?.daily_content?.find((d: any) => d.day === 0);
         if (day0 && day0.activities && day0.activities.length > 0) {
@@ -168,6 +172,102 @@ export function EquipOnboarding({ programId: propProgramId, onComplete, onBack, 
           window.location.href = '/login?returnTo=onboarding';
         }
         return;
+      }
+
+      // 💳 Payment Gate: Check if program is paid and require purchase
+      const isPaid = programData?.is_paid && (programData?.price > 0);
+      if (isPaid) {
+        const purchaseCheck = await apiClient.checkProgramPurchase(slug);
+        if (!purchaseCheck.purchased) {
+          console.log('💳 Program requires payment, initiating Razorpay checkout');
+          localStorage.setItem('ikan-pending-onboarding-answers', JSON.stringify(answers));
+          localStorage.setItem('ikan-pending-onboarding-program', slug);
+          
+          try {
+            // Create order on server
+            const priceInRupees = programData.price / 100; // price stored in paise
+            const orderRes = await apiClient.createPaymentOrder({
+              program_id: slug,
+              amount: priceInRupees,
+              currency: programData.currency || 'INR',
+              description: `${programData.title || 'Program'} enrollment`,
+            });
+
+            if (!orderRes?.order_id || !orderRes?.key_id) {
+              throw new Error('Failed to create payment order');
+            }
+
+            // Load Razorpay script
+            await new Promise<void>((resolve, reject) => {
+              if ((window as any).Razorpay) { resolve(); return; }
+              const s = document.createElement('script');
+              s.src = 'https://checkout.razorpay.com/v1/checkout.js';
+              s.onload = () => resolve();
+              s.onerror = () => reject(new Error('Failed to load payment gateway'));
+              document.body.appendChild(s);
+            });
+
+            // Open Razorpay checkout
+            const rzp = new (window as any).Razorpay({
+              key: orderRes.key_id,
+              amount: orderRes.amount,
+              currency: orderRes.currency || 'INR',
+              name: 'iKan',
+              description: programData.title || 'Program Purchase',
+              order_id: orderRes.order_id,
+              handler: async (response: any) => {
+                try {
+                  // Verify payment
+                  const verifyRes = await apiClient.verifyPayment({
+                    razorpay_payment_id: response.razorpay_payment_id,
+                    razorpay_order_id: response.razorpay_order_id,
+                    razorpay_signature: response.razorpay_signature,
+                    transaction_id: orderRes.transaction_id,
+                  });
+
+                  if (verifyRes?.success) {
+                    // Record in payment history
+                    await apiClient.recordProgramPayment({
+                      programId: slug,
+                      programTitle: programData.title || 'Program',
+                      amount: programData.price,
+                      currency: programData.currency || 'INR',
+                      transactionId: response.razorpay_payment_id,
+                      paymentMethod: 'razorpay',
+                    });
+
+                    showToast('success', 'Payment Successful', 'Proceeding with enrollment...');
+                    // Re-submit onboarding (payment is now done)
+                    const savedAnswers = JSON.parse(localStorage.getItem('ikan-pending-onboarding-answers') || '{}');
+                    localStorage.removeItem('ikan-pending-onboarding-answers');
+                    localStorage.removeItem('ikan-pending-onboarding-program');
+                    await submitOnboarding(savedAnswers);
+                  } else {
+                    showToast('error', 'Payment Verification Failed', 'Please contact support.');
+                  }
+                } catch (verifyErr) {
+                  console.error('Payment verification failed:', verifyErr);
+                  showToast('error', 'Payment Error', 'Verification failed. Please contact support.');
+                }
+              },
+              prefill: {
+                email: user.email || '',
+                name: user.user_metadata?.full_name || user.email?.split('@')[0] || '',
+              },
+              theme: { color: '#2A2A2A' },
+              modal: {
+                ondismiss: () => {
+                  showToast('info', 'Payment Cancelled', 'You can complete the payment anytime to start the program.');
+                },
+              },
+            });
+            rzp.open();
+          } catch (payErr) {
+            console.error('Payment initialization failed:', payErr);
+            showToast('error', 'Payment Error', 'Failed to initialize payment. Please try again.');
+          }
+          return; // Stop enrollment flow — will resume in handler after successful payment
+        }
       }
 
       // Legacy mapping for backward compatibility

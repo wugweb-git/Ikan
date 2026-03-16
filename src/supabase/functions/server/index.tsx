@@ -2869,6 +2869,35 @@ app.post("/payment/verify", requireAuth, async (c) => {
 });
 
 /**
+ * Check if user has purchased a specific program (Authenticated)
+ */
+app.get("/payment/check-purchase/:programId", requireAuth, async (c) => {
+  try {
+    const userId = c.get('userId');
+    const programId = c.req.param('programId');
+
+    // Check payments by prefix for this user
+    const payments = await kv.getByPrefix(`payment:${userId}`);
+    const match = payments.find((p: any) => p.programId === programId && p.status === 'completed');
+    
+    if (match) {
+      return c.json({ purchased: true, payment: match });
+    }
+
+    // Also check enrollment — if user is already enrolled, they've "purchased"
+    const enrollment = await kv.get(`user_enrollment:${userId}:${programId}`);
+    if (enrollment && enrollment.status !== 'cancelled') {
+      return c.json({ purchased: true, enrollment });
+    }
+
+    return c.json({ purchased: false });
+  } catch (error) {
+    console.error('Check purchase error:', error);
+    return c.json({ purchased: false, error: 'Check failed' });
+  }
+});
+
+/**
  * Get payment transactions (Admin Only)
  */
 app.get("/admin/payment/transactions", requireAdmin, async (c) => {
