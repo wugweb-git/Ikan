@@ -4,7 +4,7 @@ import {
   DollarSign,
   Save,
   TestTube,
-  CheckCircle,
+  CircleCheck,
   TrendingUp
 } from 'lucide-react';
 import { Button } from '../ui/button';
@@ -205,7 +205,7 @@ export function AdminPaymentGateway() {
     {
       label: 'Success Rate',
       value: totalTransactions > 0 ? `${((successfulTransactions / totalTransactions) * 100).toFixed(1)}%` : '0%',
-      icon: <CheckCircle className="w-4 h-4" style={{ color: 'var(--color-success-default)' }} />
+      icon: <CircleCheck className="w-4 h-4" style={{ color: 'var(--color-success-default)' }} />
     },
   ];
 

@@ -1446,10 +1446,6 @@
     height: 18px;
   }
 
-  .h-\[44px\] {
-    height: 44px;
-  }
-
   .h-\[52px\] {
     height: 52px;
   }
@@ -1596,14 +1592,6 @@
 
   .min-h-\[120px\] {
     min-height: 120px;
-  }
-
-  .min-h-\[150px\] {
-    min-height: 150px;
-  }
-
-  .min-h-\[200px\] {
-    min-height: 200px;
   }
 
   .min-h-\[320px\] {
@@ -1776,10 +1764,6 @@
 
   .w-\[35\%\] {
     width: 35%;
-  }
-
-  .w-\[44px\] {
-    width: 44px;
   }
 
   .w-\[60px\] {
@@ -2207,6 +2191,10 @@
     grid-template-columns: repeat(7, minmax(0, 1fr));
   }
 
+  .grid-cols-\[1fr_280px\] {
+    grid-template-columns: 1fr 280px;
+  }
+
   .grid-rows-\[auto_auto\] {
     grid-template-rows: auto auto;
   }
@@ -2599,10 +2587,6 @@
     border-radius: var(--radius-md);
   }
 
-  .rounded-none {
-    border-radius: 0;
-  }
-
   .rounded-sm {
     border-radius: var(--radius-sm);
   }
@@ -2767,10 +2751,6 @@
 
   .border-\[var\(--color-status-danger\)\] {
     border-color: var(--color-status-danger);
-  }
-
-  .border-\[var\(--grey-0\)\] {
-    border-color: var(--grey-0);
   }
 
   .border-\[var\(--grey-2\)\] {
@@ -3007,10 +2987,6 @@
 
   .bg-\[var\(--grey-1\)\] {
     background-color: var(--grey-1);
-  }
-
-  .bg-\[var\(--grey-2\)\] {
-    background-color: var(--grey-2);
   }
 
   .bg-\[var\(--grey-3\)\] {
@@ -4864,12 +4840,6 @@
   }
 
   @media (hover: hover) {
-    .hover\:bg-\[var\(--grey-3\)\]:hover {
-      background-color: var(--grey-3);
-    }
-  }
-
-  @media (hover: hover) {
     .hover\:bg-accent:hover {
       background-color: var(--accent);
     }
@@ -5026,12 +4996,6 @@
   }
 
   @media (hover: hover) {
-    .hover\:text-primary:hover {
-      color: var(--primary);
-    }
-  }
-
-  @media (hover: hover) {
     .hover\:text-white:hover {
       color: var(--color-white);
     }
@@ -5165,10 +5129,6 @@
     }
   }
 
-  .focus\:ring-primary:focus {
-    --tw-ring-color: var(--primary);
-  }
-
   .focus\:ring-ring:focus {
     --tw-ring-color: var(--ring);
   }
@@ -5293,6 +5253,16 @@
   @supports (color: color-mix(in lab, red, red)) {
     .active\:bg-black\/10:active {
       background-color: color-mix(in oklab, var(--color-black) 10%, transparent);
+    }
+  }
+
+  .active\:bg-black\/\[0\.03\]:active {
+    background-color: #00000008;
+  }
+
+  @supports (color: color-mix(in lab, red, red)) {
+    .active\:bg-black\/\[0\.03\]:active {
+      background-color: color-mix(in oklab, var(--color-black) 3%, transparent);
     }
   }
 
@@ -5433,30 +5403,8 @@
     gap: calc(var(--spacing) * 2);
   }
 
-  .data-\[state\=active\]\:bg-\[var\(--color-bg-card\)\][data-state="active"] {
-    background-color: var(--color-bg-card);
-  }
-
-  .data-\[state\=active\]\:bg-\[var\(--color-bg-page\)\][data-state="active"] {
-    background-color: var(--color-bg-page);
-  }
-
   .data-\[state\=active\]\:bg-card[data-state="active"] {
     background-color: var(--card);
-  }
-
-  .data-\[state\=active\]\:text-\[var\(--color-text-primary\)\][data-state="active"] {
-    color: var(--color-text-primary);
-  }
-
-  .data-\[state\=active\]\:shadow-none[data-state="active"] {
-    --tw-shadow: 0 0 #0000;
-    box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);
-  }
-
-  .data-\[state\=active\]\:shadow-sm[data-state="active"] {
-    --tw-shadow: 0 1px 3px 0 var(--tw-shadow-color, #0000001a), 0 1px 2px -1px var(--tw-shadow-color, #0000001a);
-    box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);
   }
 
   .data-\[state\=checked\]\:translate-x-4[data-state="checked"] {
@@ -5804,12 +5752,6 @@
   }
 
   @media (width >= 48rem) {
-    .md\:h-full {
-      height: 100%;
-    }
-  }
-
-  @media (width >= 48rem) {
     .md\:w-2\/5 {
       width: 40%;
     }
@@ -5824,18 +5766,6 @@
   @media (width >= 48rem) {
     .md\:w-48 {
       width: calc(var(--spacing) * 48);
-    }
-  }
-
-  @media (width >= 48rem) {
-    .md\:w-\[40\%\] {
-      width: 40%;
-    }
-  }
-
-  @media (width >= 48rem) {
-    .md\:w-\[60\%\] {
-      width: 60%;
     }
   }
 
@@ -5940,12 +5870,6 @@
   @media (width >= 48rem) {
     .md\:px-12 {
       padding-inline: calc(var(--spacing) * 12);
-    }
-  }
-
-  @media (width >= 48rem) {
-    .md\:py-0 {
-      padding-block: calc(var(--spacing) * 0);
     }
   }
 
@@ -6093,12 +6017,6 @@
   }
 
   @media (width >= 64rem) {
-    .lg\:ml-2 {
-      margin-left: calc(var(--spacing) * 2);
-    }
-  }
-
-  @media (width >= 64rem) {
     .lg\:block {
       display: block;
     }
@@ -6144,12 +6062,6 @@
   @media (width >= 64rem) {
     .lg\:min-h-\[600px\] {
       min-height: 600px;
-    }
-  }
-
-  @media (width >= 64rem) {
-    .lg\:w-1\/2 {
-      width: 50%;
     }
   }
 
@@ -6222,12 +6134,6 @@
   @media (width >= 64rem) {
     .lg\:justify-start {
       justify-content: flex-start;
-    }
-  }
-
-  @media (width >= 64rem) {
-    .lg\:gap-3 {
-      gap: calc(var(--spacing) * 3);
     }
   }
 
@@ -6328,12 +6234,6 @@
   }
 
   @media (width >= 64rem) {
-    .lg\:p-8 {
-      padding: calc(var(--spacing) * 8);
-    }
-  }
-
-  @media (width >= 64rem) {
     .lg\:p-\[20px\] {
       padding: 20px;
     }
@@ -6342,18 +6242,6 @@
   @media (width >= 64rem) {
     .lg\:p-\[32px\] {
       padding: 32px;
-    }
-  }
-
-  @media (width >= 64rem) {
-    .lg\:px-3 {
-      padding-inline: calc(var(--spacing) * 3);
-    }
-  }
-
-  @media (width >= 64rem) {
-    .lg\:px-6 {
-      padding-inline: calc(var(--spacing) * 6);
     }
   }
 
@@ -6403,13 +6291,6 @@
     .lg\:text-6xl {
       font-size: var(--text-6xl);
       line-height: var(--tw-leading, var(--text-6xl--line-height));
-    }
-  }
-
-  @media (width >= 64rem) {
-    .lg\:text-lg {
-      font-size: var(--text-lg);
-      line-height: var(--tw-leading, var(--text-lg--line-height));
     }
   }
 
@@ -7448,16 +7329,15 @@ html {
 .consultant-card {
   background: var(--color-bg-card);
   border: 1px solid var(--grey-2);
-  border-radius: var(--radius-sm);
-  margin-bottom: var(--spacing-3);
+  border-radius: var(--radius-lg);
   padding: 20px;
   transition: border-color .2s, box-shadow .2s;
   display: flex;
 }
 
 .consultant-card:hover {
-  border-color: var(--grey-3);
-  box-shadow: var(--shadow-xs);
+  border-color: var(--color-primary-default);
+  box-shadow: 0 2px 12px #0000000f;
 }
 
 .consultant-avatar {

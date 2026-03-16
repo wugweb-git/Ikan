@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Button } from '../ui/button';
 import { Card, CardContent } from '../ui/card';
 import { apiClient } from '../../lib/api-client';
-import { CheckCircle, Loader2, Save, RotateCcw, Clock, Database, AlertCircle } from 'lucide-react';
+import { CircleCheck, Loader2, Save, RotateCcw, Clock, Database, CircleAlert } from 'lucide-react';
 import { AdminStatusBadge } from './AdminStatusBadge';
 import { AdminHeader } from './AdminHeader';
 import { AdminEmptyState } from './AdminEmptyState';
@@ -100,7 +100,7 @@ export function AdminBackupManager({ onBack }: AdminBackupManagerProps) {
       {error && (
         <Card style={{ borderRadius: 'var(--radius-lg)', border: '1px solid var(--color-status-danger)', backgroundColor: 'var(--color-status-danger-light)' }}>
           <CardContent className="p-4 flex items-center gap-3">
-            <AlertCircle className="w-5 h-5 flex-shrink-0" style={{ color: 'var(--color-status-danger)' }} />
+            <CircleAlert className="w-5 h-5 flex-shrink-0" style={{ color: 'var(--color-status-danger)' }} />
             <span style={{ fontFamily: 'var(--font-family-base)', fontSize: 'var(--text-sm)', color: 'var(--color-status-danger)', fontWeight: 'var(--font-weight-medium)' }}>
               {error}
             </span>
@@ -112,7 +112,7 @@ export function AdminBackupManager({ onBack }: AdminBackupManagerProps) {
       {success && (
         <Card style={{ borderRadius: 'var(--radius-lg)', border: '1px solid var(--color-status-success)', backgroundColor: 'var(--color-status-success-light)' }}>
           <CardContent className="p-4 flex items-center gap-3">
-            <CheckCircle className="w-5 h-5 flex-shrink-0" style={{ color: 'var(--color-status-success)' }} />
+            <CircleCheck className="w-5 h-5 flex-shrink-0" style={{ color: 'var(--color-status-success)' }} />
             <span style={{ fontFamily: 'var(--font-family-base)', fontSize: 'var(--text-sm)', color: 'var(--color-status-success)', fontWeight: 'var(--font-weight-medium)' }}>
               {success}
             </span>

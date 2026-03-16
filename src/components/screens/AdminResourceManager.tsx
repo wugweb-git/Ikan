@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { FileText, Download, Edit, Plus, Eye, Tag, MoreHorizontal, EyeOff, Trash2 } from 'lucide-react';
+import { FileText, Download, Pencil, Plus, Eye, Tag, MoreHorizontal, EyeOff, Trash2 } from 'lucide-react';
 import { useNotifications } from '../../contexts/NotificationContext';
 import { apiClient } from '../../lib/api-client';
 import { AdminHeader } from '../admin/AdminHeader';
@@ -265,7 +265,7 @@ export function AdminResourceManager({ onBack, className }: AdminResourceManager
                 handleEdit(resource.id); 
               }}
             >
-              <Edit className="mr-2 h-4 w-4" /> Edit
+              <Pencil className="mr-2 h-4 w-4" /> Edit
             </DropdownMenuItem>
             <DropdownMenuItem 
               onClick={(e) => { 

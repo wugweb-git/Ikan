@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { FileText, Edit, Plus, MoreHorizontal, Eye, EyeOff, Trash2, ExternalLink, RefreshCw, Image } from 'lucide-react';
+import { FileText, Pencil, Plus, MoreHorizontal, Eye, EyeOff, Trash2, ExternalLink, RefreshCw, Image } from 'lucide-react';
 import { useNotifications } from '../../contexts/NotificationContext';
 import { apiClient } from '../../lib/api-client';
 import { AdminHeader } from '../admin/AdminHeader';
@@ -321,7 +321,7 @@ export function AdminPageManager({ onBack, className }: AdminPageManagerProps) {
             <DropdownMenuContent align="end" sideOffset={5}>
               <DropdownMenuLabel>Actions</DropdownMenuLabel>
               <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleEdit(page.id); }}>
-                <Edit className="mr-2 h-4 w-4" /> Edit Page
+                <Pencil className="mr-2 h-4 w-4" /> Edit Page
               </DropdownMenuItem>
               <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleTogglePublish(page.id, !page.published); }}>
                 {page.published ? <EyeOff className="mr-2 h-4 w-4" /> : <Eye className="mr-2 h-4 w-4" />} {page.published ? 'Unpublish' : 'Publish'}

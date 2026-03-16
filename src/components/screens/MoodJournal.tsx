@@ -176,7 +176,7 @@ export function MoodJournal({ onNavigate: _onNavigate }: { onNavigate?: (path: s
   const [entries, setEntries] = useState<MoodEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedDate, setSelectedDate] = useState<string>(toDateStr(new Date()));
-  const [, setScalesReady] = useState(false);
+  const [scalesReady, setScalesReady] = useState(false);
   const [template, setTemplate] = useState<CheckinTemplate | null>(null);
 
   // Inline check-in state — dynamic per template steps
@@ -185,7 +185,12 @@ export function MoodJournal({ onNavigate: _onNavigate }: { onNavigate?: (path: s
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [justSaved, setJustSaved] = useState(false);
 
-  const moodOptions = useMemo(() => getMoodOptions(), []);
+  const moodOptions = useMemo(() => getMoodOptions(), [scalesReady]);
+
+  // Re-derive scale data after server load completes
+  const energyScale = useMemo(() => ENERGY_SCALE(), [scalesReady]);
+  const stressScale = useMemo(() => STRESS_SCALE(), [scalesReady]);
+  const contextTags = useMemo(() => CONTEXT_TAGS(), [scalesReady]);
 
   // ── Load custom scales + template from server (one-time) ──────
   useEffect(() => {
@@ -485,7 +490,7 @@ export function MoodJournal({ onNavigate: _onNavigate }: { onNavigate?: (path: s
         {/* ── multi_select ── */}
         {step.type === 'multi_select' && (() => {
           const selectedTags: string[] = currentValue || [];
-          const tagOptions = step.scale_key === 'context_tags' ? CONTEXT_TAGS() : (step.options || []).map((o) => ({ id: o, label: o, emoji: '✨' }));
+          const tagOptions = step.scale_key === 'context_tags' ? contextTags : (step.options || []).map((o) => ({ id: o, label: o, emoji: '✨' }));
           return (
             <>
               <div className="flex flex-wrap justify-center" style={{ gap: 8, maxWidth: 400, margin: '0 auto 20px' }}>
@@ -827,8 +832,8 @@ export function MoodJournal({ onNavigate: _onNavigate }: { onNavigate?: (path: s
     const moodEmoji = moodOpt?.emoji || '😐';
     const moodLabel = moodOpt?.label || 'Unknown';
     const moodColor = moodOpt?.color || B.muted;
-    const energyInfo = ENERGY_SCALE().find(e => e.value === entry.energy);
-    const stressInfo = STRESS_SCALE().find(s => s.value === (entry.stress || 3));
+    const energyInfo = energyScale.find(e => e.value === entry.energy);
+    const stressInfo = stressScale.find(s => s.value === (entry.stress || 3));
     const time = entry.created_at
       ? new Date(entry.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
       : '';
@@ -927,7 +932,7 @@ export function MoodJournal({ onNavigate: _onNavigate }: { onNavigate?: (path: s
           {entry.context_tags && entry.context_tags.length > 0 && (
             <div className="flex flex-wrap" style={{ gap: 4 }}>
               {entry.context_tags.map(tag => {
-                const tagInfo = CONTEXT_TAGS().find(t => t.label === tag);
+                const tagInfo = contextTags.find(t => t.label === tag);
                 return (
                   <span key={tag} style={{
                     padding: '2px 8px', borderRadius: 'var(--radius-pill)',

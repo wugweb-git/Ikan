@@ -2,9 +2,9 @@ import { projectId } from '../../utils/supabase/info';
 import { getAuthHeaders } from '../../lib/supabase-client';
 import { useState, useRef, useEffect } from 'react';
 import {
-  User, Briefcase, Heart, HelpCircle, Users, Clock, FileText,
+  User, Briefcase, Heart, CircleHelp, Users, Clock, FileText,
   Upload, Plus, X, Languages, GraduationCap, Video, Phone, MessageSquare,
-  CheckCircle, Sparkles, ArrowLeft, Send, Loader2, Quote
+  CircleCheck, Sparkles, ArrowLeft, Send, Loader2, Quote
 } from 'lucide-react';
 import { Card, CardContent } from '../ui/card';
 import { Button } from '../ui/button';
@@ -170,7 +170,7 @@ export function ProfessionalApplication({ onNavigate }: ProfessionalApplicationP
         <Card style={{ maxWidth: 520, width: '100%', borderRadius: 'var(--radius-lg)', textAlign: 'center' }}>
           <CardContent style={{ padding: 'var(--spacing-8)' }}>
             <div style={{ width: 64, height: 64, borderRadius: 'var(--radius-pill)', backgroundColor: 'var(--color-status-success-light)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto var(--spacing-4)' }}>
-              <CheckCircle className="w-8 h-8" style={{ color: 'var(--color-status-success)' }} />
+              <CircleCheck className="w-8 h-8" style={{ color: 'var(--color-status-success)' }} />
             </div>
             <h1 style={{ fontFamily: 'var(--font-family-base)', fontSize: 'var(--text-2xl)', fontWeight: 500, marginBottom: 'var(--spacing-3)' }}>
               Application Submitted!
@@ -474,7 +474,7 @@ export function ProfessionalApplication({ onNavigate }: ProfessionalApplicationP
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                   transition: 'all 0.2s',
                 }}>
-                  {isDone ? <CheckCircle className="w-5 h-5" /> : <StepIcon className="w-5 h-5" />}
+                  {isDone ? <CircleCheck className="w-5 h-5" /> : <StepIcon className="w-5 h-5" />}
                 </div>
                 <span style={{ fontSize: 'var(--text-xs)', fontWeight: isActive ? 500 : 400, color: isActive ? 'var(--color-text-primary)' : 'var(--color-text-muted)' }}>
                   {step.label}

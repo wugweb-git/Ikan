@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { TrendingUp, Users, BookOpen, Activity, CheckCircle, X, Target, Calendar, Clock, Award } from 'lucide-react';
+import { TrendingUp, Users, BookOpen, Activity, CircleCheck, X, Target, Calendar, Clock, Award } from 'lucide-react';
 import { useNotifications } from '../../contexts/NotificationContext';
 import { apiClient } from '../../lib/api-client';
 import { AdminHeader } from '../admin/AdminHeader';
@@ -250,7 +250,7 @@ export function AdminEquipAnalytics({ onBack, className }: AdminEquipAnalyticsPr
                   </h3>
                 </div>
                 <div className="w-12 h-12 rounded-full flex items-center justify-center" style={{ backgroundColor: 'var(--ikan-chart-2-light)' }}>
-                  <CheckCircle size={24} style={{ color: 'var(--ikan-chart-2-dark)' }} />
+                  <CircleCheck size={24} style={{ color: 'var(--ikan-chart-2-dark)' }} />
                 </div>
               </div>
             </CardContent>

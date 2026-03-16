@@ -1,5 +1,5 @@
 import { cn } from './utils';
-import { CheckCircle, Circle } from 'lucide-react';
+import { CircleCheck, Circle } from 'lucide-react';
 
 interface ProgressIndicatorProps {
   steps: string[];
@@ -57,7 +57,7 @@ export function ProgressIndicator({
                 }}
               >
                 {index < currentStep ? (
-                  <CheckCircle className="w-5 h-5" />
+                  <CircleCheck className="w-5 h-5" />
                 ) : (
                   index + 1
                 )}

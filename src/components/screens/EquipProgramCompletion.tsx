@@ -4,7 +4,7 @@ import { useIsMobile } from '../../hooks/useIsMobile';
 import { Button } from '../ui/button';
 import { Card, CardContent } from '../ui/card';
 import { Progress } from '../ui/progress';
-import { CheckCircle, Trophy, Calendar, Target, ArrowRight, Star, BookOpen, Clock, BarChart3, Sparkles } from 'lucide-react';
+import { CircleCheck, Trophy, Calendar, Target, ArrowRight, Star, BookOpen, Clock, BarChart3, Sparkles } from 'lucide-react';
 import { apiClient } from '../../lib/api-client';
 import { EquipProgram } from '../../lib/equip-admin-types';
 import { LoadingSpinner } from '../LoadingSpinner';
@@ -254,7 +254,7 @@ export function EquipProgramCompletion({ programId, onContinue, onBackToDashboar
           >
             {[
               {
-                icon: CheckCircle,
+                icon: CircleCheck,
                 value: stats.activitiesCompleted,
                 label: 'Activities',
                 color: 'var(--color-status-info)',
@@ -337,7 +337,7 @@ export function EquipProgramCompletion({ programId, onContinue, onBackToDashboar
                         backgroundColor: 'var(--color-bg-muted)',
                       }}
                     >
-                      <CheckCircle size={16} style={{ color: 'var(--color-status-success)', flexShrink: 0 }} />
+                      <CircleCheck size={16} style={{ color: 'var(--color-status-success)', flexShrink: 0 }} />
                       <span style={f('sm', 400)}>{topic}</span>
                     </div>
                   ))}

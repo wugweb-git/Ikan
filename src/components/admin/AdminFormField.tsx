@@ -1,7 +1,7 @@
 import type React from 'react';
 import { Label } from '../ui/label';
 import { FormFieldError } from '../ui/form-field-error';
-import { Info, AlertCircle } from 'lucide-react';
+import { Info, CircleAlert } from 'lucide-react';
 
 interface AdminFormFieldProps {
   label: string;
@@ -52,7 +52,7 @@ export function AdminFormField({
               className="flex items-start gap-2 mt-2 p-2 rounded"
               style={{ backgroundColor: 'var(--color-warning-subtle)' }}
             >
-              <AlertCircle
+              <CircleAlert
                 className="w-4 h-4 flex-shrink-0 mt-0.5"
                 style={{ color: 'var(--color-warning-default)' }}
               />
@@ -101,7 +101,7 @@ export function AdminFormField({
           className="flex items-start gap-2 mt-2 p-2 rounded"
           style={{ backgroundColor: 'var(--color-warning-subtle)' }}
         >
-          <AlertCircle
+          <CircleAlert
             className="w-4 h-4 flex-shrink-0 mt-0.5"
             style={{ color: 'var(--color-warning-default)' }}
           />

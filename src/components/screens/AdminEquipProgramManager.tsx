@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { BookOpen, Plus, MoreHorizontal, Edit, Trash2, Eye, EyeOff, Users } from 'lucide-react';
+import { BookOpen, Plus, MoreHorizontal, Pencil, Trash2, Eye, EyeOff, Users } from 'lucide-react';
 import { useNotifications } from '../../contexts/NotificationContext';
 import { apiClient } from '../../lib/api-client';
 import { AdminHeader } from '../admin/AdminHeader';
@@ -227,7 +227,7 @@ export function AdminEquipProgramManager({ onBack, className }: AdminEquipProgra
           <DropdownMenuContent align="end">
             <DropdownMenuLabel>Actions</DropdownMenuLabel>
             <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleEdit(program.id); }}>
-              <Edit className="mr-2 h-4 w-4" /> Edit Program
+              <Pencil className="mr-2 h-4 w-4" /> Edit Program
             </DropdownMenuItem>
             <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleTogglePublish(program.id, !program.published); }}>
               {program.published ? (

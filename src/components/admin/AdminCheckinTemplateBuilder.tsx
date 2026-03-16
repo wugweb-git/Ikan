@@ -1,10 +1,10 @@
 import { toast } from 'sonner@2.0.3';
 import { useState, useEffect, useCallback } from 'react';
 import {
-  Plus, Trash2, Edit2, Save, X, GripVertical, Copy, Eye, EyeOff,
+  Plus, Trash2, Save, X, GripVertical, Copy, Eye, EyeOff,
   ChevronDown, ChevronUp, RotateCcw, ShieldCheck, AlertTriangle, Check,
   Smile, Type, Tag, List, SlidersHorizontal, ToggleLeft,
-  AlertCircle, ArrowUp, ArrowDown, Pencil,
+  CircleAlert, ArrowUp, ArrowDown, Pencil,
 } from 'lucide-react';
 import { Card, CardContent } from '../ui/card';
 import { Button } from '../ui/button';
@@ -97,7 +97,7 @@ const EMOJI_PICKS = [
 
 function getBlockIcon(type: CheckinStep['type']) {
   const found = BLOCK_TYPES.find(b => b.value === type);
-  return found ? found.icon : AlertCircle;
+  return found ? found.icon : CircleAlert;
 }
 
 function getBlockLabel(type: CheckinStep['type']) {
@@ -948,10 +948,18 @@ function StepPreview({ template }: { template: CheckinTemplate }) {
             {/* Type-specific preview */}
             {step.type === 'emoji_scale' && (() => {
               const scaleItems = getScaleByKey(step.scale_key || '');
-              const items = scaleItems.length > 0 ? scaleItems : [{emoji:'😡',value:1},{emoji:'😢',value:2},{emoji:'😐',value:3},{emoji:'😊',value:4},{emoji:'😄',value:5}];
+              if (scaleItems.length === 0) {
+                return (
+                  <div style={{ padding: '16px 20px', borderRadius: 'var(--radius-md)', backgroundColor: B.bgMuted, ...f('xs', 400, B.muted), textAlign: 'center' }}>
+                    {step.scale_key
+                      ? `No data loaded for scale "${step.scale_key}". Check Admin > Scales.`
+                      : 'No scale selected. Choose a scale in the step editor.'}
+                  </div>
+                );
+              }
               return (
                 <div className="flex items-center justify-center" style={{ gap: 8 }}>
-                  {items.map(opt => (
+                  {scaleItems.map(opt => (
                     <div key={opt.value} style={{
                       width: 48, height: 48, borderRadius: 'var(--radius-md)',
                       backgroundColor: B.bgMuted, display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -991,7 +999,16 @@ function StepPreview({ template }: { template: CheckinTemplate }) {
             {step.type === 'multi_select' && (() => {
               const tags = step.scale_key === 'context_tags'
                 ? getContextTags().slice(0, 6)
-                : (step.options || ['Option 1', 'Option 2', 'Option 3']).map(o => ({ label: o, emoji: '✨' }));
+                : (step.options || []).map(o => ({ label: o, emoji: '✨' }));
+              if (tags.length === 0) {
+                return (
+                  <div style={{ padding: '16px 20px', borderRadius: 'var(--radius-md)', backgroundColor: B.bgMuted, ...f('xs', 400, B.muted), textAlign: 'center' }}>
+                    {step.scale_key === 'context_tags'
+                      ? 'No context tags loaded. Check Admin > Scales.'
+                      : 'No options defined. Add options in the step editor.'}
+                  </div>
+                );
+              }
               return (
                 <div className="flex flex-wrap justify-center" style={{ gap: 8 }}>
                   {tags.map((tag: any) => (

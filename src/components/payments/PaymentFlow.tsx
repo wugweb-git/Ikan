@@ -273,7 +273,7 @@ export function PaymentFlow({
           <div 
             style={{ 
               fontSize: 'var(--text-2xl)', 
-              fontWeight: 'var(--font-weight-semibold)',
+              fontWeight: 'var(--font-weight-medium)',
               color: 'var(--color-text-primary)'
             }}
           >

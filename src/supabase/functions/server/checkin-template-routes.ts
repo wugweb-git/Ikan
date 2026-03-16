@@ -37,6 +37,40 @@ export interface CheckinTemplate {
 
 const KV_ACTIVE_KEY = "checkin_template_active";
 
+// Default check-in template — lazy-initialized into KV so admin can see/edit it
+const DEFAULT_TEMPLATE_ID = "default-daily-checkin";
+const DEFAULT_TEMPLATE = {
+  id: DEFAULT_TEMPLATE_ID,
+  name: "Daily Check-in",
+  description: "A quick mood & wellbeing check-in",
+  steps: [
+    { id: "mood", order: 0, type: "emoji_scale", question: "How are you feeling?", subtitle: "Tap the emoji that matches your vibe", hero_emoji: "🤔", scale_key: "mood", required: true, save_as: "mood_rating" },
+    { id: "energy", order: 1, type: "emoji_scale", question: "What's your energy like?", subtitle: "From drained to fully charged", hero_emoji: "⚡", scale_key: "energy", required: false, save_as: "energy" },
+    { id: "stress", order: 2, type: "emoji_scale", question: "Stress level?", subtitle: "Be honest — there's no wrong answer", hero_emoji: "😌", scale_key: "stress", required: false, save_as: "stress_level" },
+    { id: "note", order: 3, type: "free_text", question: "Anything on your mind?", subtitle: "A quick note to capture this moment", hero_emoji: "✏️", required: false, save_as: "freehand_text_content" },
+    { id: "tags", order: 4, type: "multi_select", question: "What shaped your day?", subtitle: "Pick whatever applies — or skip to save", hero_emoji: "🏷️", scale_key: "context_tags", required: false, save_as: "context_tags" },
+  ],
+  is_active: true,
+  created_at: new Date().toISOString(),
+  updated_at: new Date().toISOString(),
+  created_by: "system",
+};
+
+async function getOrInitDefaultTemplate(): Promise<any> {
+  // Try existing first
+  const allTemplates = await kv.getByPrefix("checkin_template:");
+  const active = allTemplates.find((t: any) => t && typeof t === "object" && t.is_active === true);
+  if (active) return active;
+
+  // Lazy-init default
+  console.log("Lazy-initializing default check-in template in KV");
+  const now = new Date().toISOString();
+  const tpl = { ...DEFAULT_TEMPLATE, created_at: now, updated_at: now };
+  await kv.set(`checkin_template:${DEFAULT_TEMPLATE_ID}`, tpl);
+  await kv.set(KV_ACTIVE_KEY, DEFAULT_TEMPLATE_ID);
+  return tpl;
+}
+
 export function registerCheckinTemplateRoutes(app: Hono, requireAuth: any) {
 
   // ── GET /checkin-template/active — Get the active template ───
@@ -51,15 +85,9 @@ export function registerCheckinTemplateRoutes(app: Hono, requireAuth: any) {
         }
       }
 
-      // Check for any template marked active
-      const allTemplates = await kv.getByPrefix("checkin_template:");
-      const active = allTemplates.find((t: any) => t && typeof t === "object" && t.is_active === true);
-      if (active) {
-        return c.json({ template: active });
-      }
-
-      // No active template — return null. Admin must create one.
-      return c.json({ template: null, _message: "No active check-in template. Create one in admin." });
+      // No active template found — lazy-init default
+      const defaultTemplate = await getOrInitDefaultTemplate();
+      return c.json({ template: defaultTemplate });
     } catch (err) {
       console.log(`Get active template error: ${err}`);
       return c.json({ template: null, error: `Failed to get active template: ${err}` }, 500);
@@ -75,8 +103,14 @@ export function registerCheckinTemplateRoutes(app: Hono, requireAuth: any) {
         return c.json({ error: "Admin access required" }, 403);
       }
 
-      const templates = await kv.getByPrefix("checkin_template:");
-      const filtered = templates.filter((t: any) => t && typeof t === "object" && t.id);
+      let templates = await kv.getByPrefix("checkin_template:");
+      let filtered = templates.filter((t: any) => t && typeof t === "object" && t.id);
+
+      // If empty, lazy-init default so admin can see it
+      if (filtered.length === 0) {
+        const defaultTpl = await getOrInitDefaultTemplate();
+        filtered = [defaultTpl];
+      }
 
       return c.json({ templates: filtered });
     } catch (err) {

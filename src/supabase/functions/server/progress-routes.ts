@@ -203,4 +203,143 @@ app.post("/user/equip/upload", requireAuth, async (c) => {
   }
 });
 
+// ── Learning Diary / Worksheet ───────────────────────────────────
+// Consolidates ALL user activity during a program enrollment into a
+// structured diary: program day responses, mood entries, assessments,
+// and general activities that occurred during the enrollment period.
+app.get("/user/equip/:equipId/diary", requireAuth, async (c) => {
+  try {
+    const userId = c.get('userId');
+    const equipId = c.req.param('equipId');
+
+    // 1. Enrollment info
+    const enrollment = await ProgressService.getEnrollment(userId, equipId);
+    if (!enrollment) {
+      return c.json({ error: 'Not enrolled in this program' }, 404);
+    }
+
+    const startedAt = enrollment.started_at || enrollment.enrolled_at;
+    const completedAt = enrollment.status === 'completed' ? (enrollment.last_activity_at || new Date().toISOString()) : null;
+    const periodStart = startedAt ? new Date(startedAt).getTime() : 0;
+    const periodEnd = completedAt ? new Date(completedAt).getTime() : Date.now();
+
+    // 2. Program definition for day/block labels
+    const equip = await kv.get(`equip:${equipId}`);
+    const programTitle = equip?.title || equipId;
+    const dailyContent = equip?.daily_content || [];
+
+    // 3. All day progress (responses to blocks)
+    const allProgress = await kv.getByPrefix(`progress:${userId}:${equipId}:`);
+    const dayEntries: any[] = [];
+
+    for (const dp of (allProgress || [])) {
+      if (!dp) continue;
+      const dayNum = dp.day_number;
+      const dayDef = dailyContent[dayNum - 1] || {};
+      const dayTitle = dayDef.title || `Day ${dayNum}`;
+      const blocks = dayDef.blocks || [];
+
+      // Map block responses to include block metadata
+      const responses: any[] = [];
+      for (const [blockId, response] of Object.entries(dp.block_responses || {})) {
+        const blockDef = blocks.find((b: any) => b.id === blockId) || {};
+        responses.push({
+          blockId,
+          blockType: blockDef.type || 'unknown',
+          blockTitle: blockDef.title || blockDef.label || blockDef.prompt || blockId,
+          response,
+        });
+      }
+
+      dayEntries.push({
+        type: 'program_day',
+        dayNumber: dayNum,
+        dayTitle,
+        completed: dp.completed,
+        completedAt: dp.completed_at,
+        responses,
+      });
+    }
+
+    // Sort days by number
+    dayEntries.sort((a, b) => a.dayNumber - b.dayNumber);
+
+    // 4. Mood journal entries during the enrollment period
+    const journals = await kv.getByPrefix(`journal:${userId}:`);
+    const moodEntries: any[] = [];
+    for (const j of (journals || [])) {
+      if (!j) continue;
+      const ts = new Date(j.created_at || j.date || 0).getTime();
+      if (ts >= periodStart && ts <= periodEnd) {
+        moodEntries.push({
+          type: 'mood',
+          date: j.created_at || j.date,
+          mood: j.mood_rating || j.mood,
+          energy: j.energy,
+          stress: j.stress_level || j.stress,
+          note: j.freehand_text_content || j.note || '',
+          tags: j.context_tags || j.emotions || [],
+        });
+      }
+    }
+
+    // 5. Assessment results during the enrollment period
+    const assessmentResults = await kv.getByPrefix(`assessment_result:${userId}:`);
+    const assessmentDefs = await kv.getByPrefix('assessment_def:');
+    const asmNameMap = new Map<string, string>();
+    const asmMaxMap = new Map<string, number>();
+    for (const def of (assessmentDefs || [])) {
+      if (def?.id) {
+        asmNameMap.set(def.id, def.title || def.name || def.id);
+        if (def.scoring?.ranges?.length > 0) {
+          asmMaxMap.set(def.id, def.scoring.ranges[def.scoring.ranges.length - 1]?.max);
+        }
+      }
+    }
+
+    const assessmentEntries: any[] = [];
+    const seenIds = new Set<string>();
+    for (const r of (assessmentResults || [])) {
+      if (!r || !r.id || seenIds.has(r.id)) continue;
+      seenIds.add(r.id);
+      const ts = new Date(r.completed_at || r.created_at || 0).getTime();
+      if (ts >= periodStart && ts <= periodEnd) {
+        const aId = r.assessment_id || r.assessmentId;
+        if (aId?.startsWith('checkin_') || aId?.startsWith('checkin-')) continue;
+        const maxScore = r.max_score || asmMaxMap.get(aId) || null;
+        assessmentEntries.push({
+          type: 'assessment',
+          date: r.completed_at || r.created_at,
+          assessmentId: aId,
+          assessmentName: r.assessment_name || asmNameMap.get(aId) || aId,
+          score: r.score,
+          maxScore,
+          pct: maxScore ? Math.round((r.score / maxScore) * 100) : null,
+          severity: r.severity_hint,
+        });
+      }
+    }
+
+    return c.json({
+      diary: {
+        programId: equipId,
+        programTitle,
+        enrollment: {
+          status: enrollment.status,
+          startedAt,
+          completedAt,
+          currentDay: enrollment.current_day_number,
+          totalDays: equip?.duration_days || dailyContent.length,
+        },
+        days: dayEntries,
+        moods: moodEntries.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()),
+        assessments: assessmentEntries.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()),
+      },
+    });
+  } catch (error) {
+    console.log('Learning diary error:', error);
+    return c.json({ error: `Failed to build learning diary: ${error}` }, 500);
+  }
+});
+
 } // End registerProgressRoutes

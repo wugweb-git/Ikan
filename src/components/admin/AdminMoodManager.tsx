@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { 
-  Plus, Trash2, Edit2, Save, X, Smile, GripVertical, ShieldCheck, Sparkles 
+  Plus, Trash2, Pencil, Save, X, Smile, GripVertical, ShieldCheck, Sparkles 
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
@@ -437,7 +437,7 @@ export function AdminMoodManager({ onBack: _onBack, embedded }: AdminMoodManager
                         size="sm"
                         onClick={() => startEdit(mood)}
                       >
-                        <Edit2 className="w-4 h-4" />
+                        <Pencil className="w-4 h-4" />
                       </Button>
                       <Button
                         variant="outline"

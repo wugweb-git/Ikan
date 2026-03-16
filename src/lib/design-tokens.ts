@@ -85,40 +85,9 @@ export default {
     }
   },
 
-  "emojiSet": {
-    "1": { "id": "awful", "label": "Awful", "char": "😫", "twemoji": "1f62b.svg" },
-    "2": { "id": "bad", "label": "Bad", "char": "😕", "twemoji": "1f615.svg" },
-    "3": { "id": "meh", "label": "Meh", "char": "😐", "twemoji": "1f610.svg" },
-    "4": { "id": "good", "label": "Good", "char": "🙂", "twemoji": "1f642.svg" },
-    "5": { "id": "great", "label": "Great", "char": "😄", "twemoji": "1f604.svg" }
-  },
-
-  "energyScale": {
-    "1": { "id": "exhausted", "label": "Exhausted", "char": "🪫", "severity": "danger" },
-    "2": { "id": "tired", "label": "Tired", "char": "😴", "severity": "warning" },
-    "3": { "id": "moderate", "label": "Moderate", "char": "⚡", "severity": "neutral" },
-    "4": { "id": "energetic", "label": "Energetic", "char": "💪", "severity": "success" },
-    "5": { "id": "charged", "label": "Charged!", "char": "🔥", "severity": "success" }
-  },
-
-  "stressScale": {
-    "1": { "id": "chill", "label": "Chill", "char": "😌", "severity": "success" },
-    "2": { "id": "mild", "label": "Mild", "char": "🤔", "severity": "info" },
-    "3": { "id": "medium", "label": "Medium", "char": "😤", "severity": "warning" },
-    "4": { "id": "high", "label": "High", "char": "😰", "severity": "warning" },
-    "5": { "id": "extreme", "label": "Yikes!", "char": "🤯", "severity": "danger" }
-  },
-
-  "contextTags": [
-    { "id": "work", "label": "Work", "char": "💼" },
-    { "id": "sleep", "label": "Sleep", "char": "😴" },
-    { "id": "health", "label": "Health", "char": "🏃" },
-    { "id": "relationships", "label": "Relationships", "char": "❤️" },
-    { "id": "studies", "label": "Studies", "char": "📚" },
-    { "id": "finances", "label": "Finances", "char": "💰" },
-    { "id": "fun", "label": "Fun", "char": "🎉" },
-    { "id": "other", "label": "Other", "char": "✨" }
-  ],
+  // Scale data (emojiSet, energyScale, stressScale, contextTags) REMOVED.
+  // All scale/mood/tag data is now 100% KV-backed with server-side lazy-init.
+  // See scales-routes.ts for default data and emoji-utils.ts for frontend getters.
 
   "aliases": {
     "color": {

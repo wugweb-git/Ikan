@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Save, Trash2, FileText, Edit, Search, Image, Video, Upload, EyeOff, X } from 'lucide-react';
+import { Save, Trash2, FileText, Pencil, Search, Image, Video, Upload, EyeOff, X } from 'lucide-react';
 import { useNotifications } from '../../contexts/NotificationContext';
 import { apiClient } from '../../lib/api-client';
 import { AdminPageLayout } from '../admin/AdminPageLayout';
@@ -390,7 +390,7 @@ export function PageEditPage({ pageId, onBack, onSave }: PageEditPageProps) {
         </AdminSection>
 
         {/* Section 3: Content Editor */}
-        <AdminSection title="Page Content" description="Rich text editor — supports headings, lists, links, images, and raw HTML" icon={<Edit className="w-5 h-5" />}>
+        <AdminSection title="Page Content" description="Rich text editor — supports headings, lists, links, images, and raw HTML" icon={<Pencil className="w-5 h-5" />}>
           <AdminFormField label="Content" required error={errors.content} helpText="Use the toolbar to format text. The editor outputs HTML which is rendered as-is on the page.">
             <RichTextEditor
               value={formData.content || ''}

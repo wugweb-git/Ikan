@@ -4,7 +4,7 @@ import { Card } from '../ui/card';
 import { apiClient } from '../../lib/api-client';
 import {
   Database, AlertTriangle, Trash2, RefreshCw, ChevronDown, ChevronRight,
-  CheckCircle, XCircle, Users, HardDrive, Search, Shield, Loader2,
+  CircleCheck, CircleX, Users, HardDrive, Search, Shield, Loader2,
   Clock, ArrowRightLeft, TrendingUp, Save, Flame
 } from 'lucide-react';
 import { AdminHeader } from './AdminHeader';
@@ -244,7 +244,7 @@ export function AdminKVAudit({ onBack }: AdminKVAuditProps) {
         <AdminHeader title="KV Database Audit" description="Scan the key-value store for orphaned and inconsistent data" />
         <Card className="p-6" style={{ borderRadius: 'var(--radius-lg)', border: '1px solid var(--color-status-danger-light)' }}>
           <div className="flex items-center gap-3">
-            <XCircle className="w-5 h-5" style={{ color: 'var(--color-status-danger)' }} />
+            <CircleX className="w-5 h-5" style={{ color: 'var(--color-status-danger)' }} />
             <span style={{ fontFamily: 'var(--font-family-base)', fontSize: 'var(--text-base)', color: 'var(--color-status-danger)' }}>
               {error}
             </span>
@@ -312,7 +312,7 @@ export function AdminKVAudit({ onBack }: AdminKVAuditProps) {
       >
         {audit.orphanCount === 0 ? (
           <div className="flex items-center gap-2" style={{ color: 'var(--color-status-success)' }}>
-            <CheckCircle className="w-4 h-4" />
+            <CircleCheck className="w-4 h-4" />
             <span style={{ fontFamily: 'var(--font-family-base)', fontSize: 'var(--text-sm)' }}>No orphaned keys detected</span>
           </div>
         ) : (
@@ -409,7 +409,7 @@ export function AdminKVAudit({ onBack }: AdminKVAuditProps) {
       >
         {audit.inconsistencies.length === 0 ? (
           <div className="flex items-center gap-2" style={{ color: 'var(--color-status-success)' }}>
-            <CheckCircle className="w-4 h-4" />
+            <CircleCheck className="w-4 h-4" />
             <span style={{ fontFamily: 'var(--font-family-base)', fontSize: 'var(--text-sm)' }}>No naming inconsistencies</span>
           </div>
         ) : (
@@ -437,7 +437,7 @@ export function AdminKVAudit({ onBack }: AdminKVAuditProps) {
       >
         {audit.growthWarnings.length === 0 ? (
           <div className="flex items-center gap-2" style={{ color: 'var(--color-status-success)' }}>
-            <CheckCircle className="w-4 h-4" />
+            <CircleCheck className="w-4 h-4" />
             <span style={{ fontFamily: 'var(--font-family-base)', fontSize: 'var(--text-sm)' }}>All key groups within healthy limits</span>
           </div>
         ) : (
@@ -531,7 +531,7 @@ export function AdminKVAudit({ onBack }: AdminKVAuditProps) {
       >
         {audit.softDeletedCount === 0 ? (
           <div className="flex items-center gap-2" style={{ color: 'var(--color-status-success)' }}>
-            <CheckCircle className="w-4 h-4" />
+            <CircleCheck className="w-4 h-4" />
             <span style={{ fontFamily: 'var(--font-family-base)', fontSize: 'var(--text-sm)' }}>No soft-deleted entities lingering in KV</span>
           </div>
         ) : (

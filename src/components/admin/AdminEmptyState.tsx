@@ -8,7 +8,7 @@ interface AdminEmptyStateProps {
   description: string;
   actionLabel?: string;
   onAction?: () => void;
-  action?: { label: string; onClick: () => void };
+  action?: { label: string; onClick: () => void } | React.ReactNode;
 }
 
 export function AdminEmptyState({
@@ -19,8 +19,10 @@ export function AdminEmptyState({
   onAction,
   action,
 }: AdminEmptyStateProps) {
-  const finalLabel = actionLabel || action?.label;
-  const finalHandler = onAction || action?.onClick;
+  // Determine if action is a ReactNode or config object
+  const isActionNode = React.isValidElement(action);
+  const finalLabel = actionLabel || (!isActionNode && action && typeof action === 'object' && 'label' in action ? (action as any).label : undefined);
+  const finalHandler = onAction || (!isActionNode && action && typeof action === 'object' && 'onClick' in action ? (action as any).onClick : undefined);
 
   // Support icon as either ReactNode or LucideIcon component
   const renderIcon = () => {
@@ -77,7 +79,9 @@ export function AdminEmptyState({
         {description}
       </p>
       
-      {finalLabel && finalHandler && (
+      {isActionNode && action}
+
+      {!isActionNode && finalLabel && finalHandler && (
         <Button 
           onClick={finalHandler}
           style={{

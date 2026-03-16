@@ -1,6 +1,6 @@
 import type React from 'react';
 import { cn } from '../ui/utils';
-import { MapPin, Star, Video, Phone, MessageCircle, Clock, Home } from 'lucide-react';
+import { MapPin, Star, Video, Phone, MessageCircle, Clock, House } from 'lucide-react';
 import { Button } from '../ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 
@@ -53,7 +53,7 @@ export function ConsultantCard({ consultant, onClick, onBook, className }: Consu
     video: <Video className="w-[18px] h-[18px]" />,
     call: <Phone className="w-[18px] h-[18px]" />,
     chat: <MessageCircle className="w-[18px] h-[18px]" />,
-    offline: <Home className="w-[18px] h-[18px]" />,
+    offline: <House className="w-[18px] h-[18px]" />,
   };
 
   return (
@@ -63,8 +63,18 @@ export function ConsultantCard({ consultant, onClick, onBook, className }: Consu
       style={{
         padding: '20px',
         gap: '0',
-        marginBottom: '12px',
         borderRadius: 'var(--radius-lg)',
+        backgroundColor: 'var(--color-bg-card)',
+        border: '1px solid var(--color-border-default)',
+        transition: 'box-shadow 0.15s, border-color 0.15s',
+      }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.borderColor = 'var(--color-primary-default)';
+        e.currentTarget.style.boxShadow = '0 2px 12px rgba(0,0,0,0.06)';
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.borderColor = 'var(--color-border-default)';
+        e.currentTarget.style.boxShadow = 'none';
       }}
     >
       <div className="flex gap-4 w-full">

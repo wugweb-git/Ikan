@@ -26,6 +26,7 @@ function ScoreRing({ score, maxScore, color, size = 140 }: { score: number; maxS
   const radius = (size - strokeWidth) / 2;
   const circumference = 2 * Math.PI * radius;
   const pct = maxScore > 0 ? score / maxScore : 0;
+  const pctDisplay = Math.round(pct * 100);
   const offset = circumference - pct * circumference;
 
   return (
@@ -61,7 +62,7 @@ function ScoreRing({ score, maxScore, color, size = 140 }: { score: number; maxS
             lineHeight: 1,
           }}
         >
-          {score}
+          {pctDisplay}%
         </motion.span>
         <span style={{
           fontSize: 'var(--text-xs)',
@@ -70,7 +71,7 @@ function ScoreRing({ score, maxScore, color, size = 140 }: { score: number; maxS
           color: 'var(--color-text-muted)',
           marginTop: 2,
         }}>
-          / {maxScore}
+          {score} / {maxScore}
         </span>
       </div>
     </div>

@@ -126,34 +126,39 @@ export function setupGlobalErrorHandlers({ showToast }: ErrorHandlerCallbacks): 
   const handleUnhandledRejection = (event: PromiseRejectionEvent) => {
     const msg = event.reason?.message || String(event.reason) || 'Unknown error';
     const lower = msg.toLowerCase();
-    event.preventDefault();
+    // NOTE: Do NOT call event.preventDefault() unconditionally — it hides errors from the console.
 
     if (matchesPattern(lower, NETWORK_ERROR_PATTERNS)) {
+      event.preventDefault();
       console.log('Network connectivity issue - switching to offline mode:', msg);
       setOfflineMode(true);
       showToast?.('info', 'Working offline', 'Some features may be limited until connection is restored');
       return;
     }
     if (matchesPattern(lower, BACKGROUND_ERROR_PATTERNS)) {
+      event.preventDefault();
       console.log('Background/CMS operation failed gracefully (normal):', msg);
       return;
     }
-    console.log('Unhandled promise rejection caught and handled:', msg);
+    // Allow unknown rejections to propagate to console for debugging
+    console.log('Unhandled promise rejection caught:', msg);
   };
 
   // --- Window error ---
   const handleWindowError = (event: ErrorEvent) => {
     const msg = event.message || event.error?.message || 'Unknown error';
     const lower = msg.toLowerCase();
-    event.preventDefault();
+    // NOTE: Do NOT call event.preventDefault() unconditionally — it hides errors from the console.
 
     if (matchesPattern(lower, NETWORK_ERROR_PATTERNS.slice(0, 5))) {
+      event.preventDefault();
       console.log('Network error in window handler - enabling offline mode:', msg);
       setOfflineMode(true);
       return false;
     }
-    console.log('Window error handled gracefully:', msg);
-    return false;
+    // Allow unknown errors to propagate to console for debugging
+    console.log('Window error caught (not suppressed):', msg);
+    return true; // Let the browser's default error handling continue
   };
 
   // --- Message handler ---

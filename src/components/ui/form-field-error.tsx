@@ -1,4 +1,4 @@
-import { AlertCircle } from 'lucide-react';
+import { CircleAlert } from 'lucide-react';
 import { cn } from './utils';
 
 interface FormFieldErrorProps {
@@ -15,7 +15,7 @@ export function FormFieldError({ error, className }: FormFieldErrorProps) {
       role="alert"
       aria-live="polite"
     >
-      <AlertCircle 
+      <CircleAlert 
         size={14} 
         style={{ color: 'var(--color-status-danger)' }}
       />

@@ -1,27 +1,26 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { cn } from '../ui/utils';
-import { Filter, Search, X } from 'lucide-react';
+import { Search, X, LayoutGrid, List, Sparkles, SlidersHorizontal } from 'lucide-react';
 import { apiClient } from '../../lib/api-client';
 import { ConsultantCard } from '../blocks/ConsultantCard';
 import { Button } from '../ui/button';
-import { Badge } from '../ui/badge';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '../ui/sheet';
-import { Tabs, TabsList, TabsTrigger } from '../ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Checkbox } from '../ui/checkbox';
-import { Label } from '../ui/label';
 import { useIsMobile } from '../../hooks/useIsMobile';
 import { Skeleton } from '../ui/skeleton-loader';
 import { PageHero } from '../ui/PageHero';
 import { useMetadata } from '../../hooks/useMetadata';
 import { BookingModal } from '../blocks/BookingModal';
+import { useAuth } from '../../contexts/AuthContext';
+import { motion, AnimatePresence } from 'motion/react';
 
-// Define Consultant type locally
+// ── Consultant type ─────────────────────────────────────────────
 export interface Consultant {
   id: string;
   name: string;
   credentials: string;
-  category: 'therapist' | 'psychiatrist' | 'counselor' | 'family-therapist';
+  category: string;
   photo: string;
   yearsExperience: number;
   languages: string[];
@@ -45,8 +44,6 @@ export interface Consultant {
   available: boolean;
 }
 
-// REMOVED: No hardcoded FALLBACK_EXPERTISE_CATEGORIES — KV is the single source of truth via useMetadata
-
 interface ConsultationProps {
   className?: string;
   onNavigate?: (route: string, consultantId?: string) => void;
@@ -60,673 +57,876 @@ interface HeroBanner {
   cta_link?: string;
 }
 
-type CategoryType = 'all' | 'therapist' | 'psychiatrist' | 'counselor' | 'family-therapist';
 type AvailabilityFilter = 'all' | 'today' | 'tomorrow' | 'this-week';
-type SortOption = 'recommended' | 'rating' | 'price-low' | 'price-high' | 'experience';
+type SortOption = 'recommended' | 'rating' | 'price-low' | 'price-high' | 'experience' | 'next-available';
+type ViewMode = 'stack' | 'grid';
+
+// ── font helper ─────────────────────────────────────────────────
+const f = (size = 'sm', weight: 400 | 500 = 400, color?: string): React.CSSProperties => ({
+  fontSize: `var(--text-${size})`,
+  fontWeight: weight,
+  fontFamily: 'var(--font-family-base)',
+  ...(color ? { color } : {}),
+});
 
 export function Consultation({ className, onNavigate }: ConsultationProps) {
   const isMobile = useIsMobile();
-  // Expertise categories from KV metadata (no hardcoded fallback)
-  const { expertiseCategories: kvExpertiseCategories } = useMetadata();
+  const { user } = useAuth();
+
+  // ── Metadata from KV ──────────────────────────────────────────
+  const {
+    consultantTypes: kvConsultantTypes,
+    expertiseCategories: kvExpertiseCategories,
+    languages: kvLanguages,
+  } = useMetadata();
+
+  // ── Data state ────────────────────────────────────────────────
   const [consultants, setConsultants] = useState<Consultant[]>([]);
-  const [filteredConsultants, setFilteredConsultants] = useState<Consultant[]>([]);
   const [loading, setLoading] = useState(true);
   const [heroBanner, setHeroBanner] = useState<HeroBanner | null>(null);
-  
-  // Load hero banner from admin config
-  useEffect(() => {
-    let isMounted = true;
-    apiClient.getHeroBanner('consultation').then(res => {
-      if (isMounted && res?.banner) setHeroBanner(res.banner);
-    }).catch(() => {});
-    return () => { isMounted = false; };
-  }, []);
+  const [recommendedExpertises, setRecommendedExpertises] = useState<string[]>([]);
 
-  // Load consultants from API
-  useEffect(() => {
-    let isMounted = true;
-    const loadConsultants = async () => {
-      try {
-        setLoading(true);
-        const response = await apiClient.getProfessionals();
-        if (!isMounted) return;
-        if (response && Array.isArray(response)) {
-          const mapped = response.map((p: any) => ({ ...p, id: p.id || p.professional_id }));
-          setConsultants(mapped);
-          setFilteredConsultants(mapped);
-        } else if (response && response.professionals) {
-           const mapped = response.professionals.map((p: any) => ({ ...p, id: p.id || p.professional_id }));
-           setConsultants(mapped);
-           setFilteredConsultants(mapped);
-        }
-      } catch (error: any) {
-        if (error?.name === 'AbortError') return;
-        console.error('Failed to load consultants:', error);
-      } finally {
-        if (isMounted) setLoading(false);
-      }
-    };
-    
-    loadConsultants();
-
-    return () => { isMounted = false; };
-  }, []);
-  
-  // Filter states
-  const [selectedCategory, setSelectedCategory] = useState<CategoryType>('all');
+  // ── Filter state ──────────────────────────────────────────────
+  const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedLanguages, setSelectedLanguages] = useState<string[]>([]);
   const [selectedExpertises, setSelectedExpertises] = useState<string[]>([]);
   const [availabilityFilter, setAvailabilityFilter] = useState<AvailabilityFilter>('all');
-  const [priceRange, setPriceRange] = useState<[number, number]>([0, 5000]);
-  const [selectedGender, setSelectedGender] = useState<string>('all');
+  const [priceRange, setPriceRange] = useState<[number, number]>([0, 10000]);
   const [sortBy, setSortBy] = useState<SortOption>('recommended');
+  const [viewMode, setViewMode] = useState<ViewMode>('stack');
   const [showFilters, setShowFilters] = useState(false);
-  
-  // Booking Modal State
+
+  // ── Booking modal ─────────────────────────────────────────────
   const [bookingConsultant, setBookingConsultant] = useState<Consultant | null>(null);
 
-  // Get unique languages from all consultants
-  const availableLanguages = Array.from(
-    new Set(consultants.flatMap(c => c.languages))
-  ).sort();
-
-  // Derive expertise categories: merge consultant data with KV metadata, no hardcoded fallback
-  const expertiseCategories = consultants.length > 0
-    ? Array.from(new Set([
-        ...consultants.flatMap(c => c.expertises || []),
-        ...kvExpertiseCategories.map(e => e.label)
-      ])).sort()
-    : kvExpertiseCategories.map(e => e.label);
-  
-  // Apply filters
+  // ── Load hero banner ──────────────────────────────────────────
   useEffect(() => {
+    let m = true;
+    apiClient.getHeroBanner('consultation').then(res => {
+      if (m && res?.banner) setHeroBanner(res.banner);
+    }).catch(() => {});
+    return () => { m = false; };
+  }, []);
+
+  // ── Load consultants ──────────────────────────────────────────
+  useEffect(() => {
+    let m = true;
+    (async () => {
+      try {
+        setLoading(true);
+        const response = await apiClient.getProfessionals();
+        if (!m) return;
+        const list = Array.isArray(response) ? response : response?.professionals || [];
+        const mapped = list.map((p: any) => ({ ...p, id: p.id || p.professional_id }));
+        setConsultants(mapped);
+      } catch (error: any) {
+        if (error?.name === 'AbortError') return;
+        console.error('Failed to load consultants:', error);
+      } finally {
+        if (m) setLoading(false);
+      }
+    })();
+    return () => { m = false; };
+  }, []);
+
+  // ── Load recommendation context from latest assessment ────────
+  useEffect(() => {
+    if (!user) return;
+    let m = true;
+    (async () => {
+      try {
+        const res = await apiClient.getUserAssessmentResponses();
+        if (!m) return;
+        const history = res?.history || [];
+        if (history.length === 0) return;
+        // Find latest completed assessment
+        const sorted = [...history]
+          .filter((r: any) => r.completed_at)
+          .sort((a: any, b: any) => new Date(b.completed_at).getTime() - new Date(a.completed_at).getTime());
+        if (sorted.length === 0) return;
+        const latest = sorted[0];
+        const maxScore = latest.max_score || latest.maxScore || 100;
+        const pct = maxScore > 0 ? (latest.score / maxScore) : 0;
+        // If moderate/high severity, derive recommended expertise areas
+        if (pct > 0.33) {
+          const interpretation = latest.interpretation;
+          const areas: string[] = [];
+          if (interpretation?.primary_area) areas.push(interpretation.primary_area);
+          if (interpretation?.recommended_expertise) areas.push(...interpretation.recommended_expertise);
+          // Fallback: use assessment name as an expertise area hint
+          const aName = latest.assessment_name || latest.assessment_id || '';
+          if (aName && areas.length === 0) {
+            const cleaned = aName.replace(/[-_]/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase());
+            areas.push(cleaned);
+          }
+          setRecommendedExpertises(areas.map(a => a.toLowerCase()));
+        }
+      } catch { /* silent */ }
+    })();
+    return () => { m = false; };
+  }, [user]);
+
+  // ── Derive dynamic categories from consultantTypes metadata + consultant data ──
+  const categoryOptions = useMemo(() => {
+    const fromKV = kvConsultantTypes.map(ct => ({ value: ct.value, label: ct.label }));
+    const fromData = Array.from(new Set(consultants.map(c => c.category).filter(Boolean)))
+      .map(cat => ({
+        value: cat,
+        label: cat.replace(/[-_]/g, ' ').replace(/\b\w/g, c => c.toUpperCase()),
+      }));
+    // Merge, dedup by value
+    const merged = new Map<string, string>();
+    for (const item of [...fromKV, ...fromData]) {
+      if (item.value && !merged.has(item.value)) merged.set(item.value, item.label);
+    }
+    return Array.from(merged.entries()).map(([value, label]) => ({ value, label }));
+  }, [kvConsultantTypes, consultants]);
+
+  // ── Derive available languages ────────────────────────────────
+  const availableLanguages = useMemo(() => {
+    const fromKV = kvLanguages.map(l => l.label);
+    const fromData = consultants.flatMap(c => c.languages || []);
+    return Array.from(new Set([...fromKV, ...fromData])).sort();
+  }, [kvLanguages, consultants]);
+
+  // ── Derive expertise categories ───────────────────────────────
+  const expertiseCategories = useMemo(() => {
+    const fromKV = kvExpertiseCategories.map(e => e.label);
+    const fromData = consultants.flatMap(c => c.expertises || []);
+    return Array.from(new Set([...fromKV, ...fromData])).sort();
+  }, [kvExpertiseCategories, consultants]);
+
+  // ── Dynamic price range from data ─────────────────────────────
+  const dynamicPriceRange = useMemo<[number, number]>(() => {
+    if (consultants.length === 0) return [0, 10000];
+    const prices = consultants
+      .map(c => {
+        if (!c.pricing) return null;
+        return Math.min(
+          c.pricing.video || Infinity,
+          c.pricing.call || Infinity,
+          c.pricing.chat || Infinity,
+          c.pricing.offline || Infinity,
+        );
+      })
+      .filter((p): p is number => p !== null && p !== Infinity);
+    if (prices.length === 0) return [0, 10000];
+    return [Math.min(...prices), Math.max(...prices)];
+  }, [consultants]);
+
+  // Reset price range when data loads
+  useEffect(() => {
+    if (consultants.length > 0) {
+      setPriceRange(dynamicPriceRange);
+    }
+  }, [dynamicPriceRange, consultants.length]);
+
+  // ── Check if a consultant is recommended ──────────────────────
+  const isRecommended = useCallback((c: Consultant): boolean => {
+    if (recommendedExpertises.length === 0) return false;
+    const cExpertises = [...(c.expertises || []), ...(c.topExpertises || [])].map(e => e.toLowerCase());
+    return recommendedExpertises.some(re => cExpertises.some(ce => ce.includes(re) || re.includes(ce)));
+  }, [recommendedExpertises]);
+
+  // ── Apply filters ─────────────────────────────────────────────
+  const filteredConsultants = useMemo(() => {
     let filtered = [...consultants];
 
-    // Category filter
+    // Category
     if (selectedCategory !== 'all') {
       filtered = filtered.filter(c => c.category === selectedCategory);
     }
 
-    // Search filter
+    // Search
     if (searchQuery) {
-      const query = searchQuery.toLowerCase();
+      const q = searchQuery.toLowerCase();
       filtered = filtered.filter(c =>
-        c.name.toLowerCase().includes(query) ||
-        c.expertises.some(e => e.toLowerCase().includes(query)) ||
-        c.bio.toLowerCase().includes(query)
+        c.name?.toLowerCase().includes(q) ||
+        (c.expertises || []).some(e => e.toLowerCase().includes(q)) ||
+        c.credentials?.toLowerCase().includes(q) ||
+        c.bio?.toLowerCase().includes(q)
       );
     }
 
-    // Language filter
+    // Languages
     if (selectedLanguages.length > 0) {
       filtered = filtered.filter(c =>
-        selectedLanguages.some(lang => c.languages.includes(lang))
+        selectedLanguages.some(lang => (c.languages || []).includes(lang))
       );
     }
 
-    // Expertise filter
+    // Expertise
     if (selectedExpertises.length > 0) {
       filtered = filtered.filter(c =>
-        selectedExpertises.some(exp => c.expertises.includes(exp))
+        selectedExpertises.some(exp => (c.expertises || []).includes(exp))
       );
     }
 
-    // Availability filter
+    // Availability
     if (availabilityFilter !== 'all') {
-      // Mock filter - in production, check actual availability dates
       filtered = filtered.filter(c => c.available);
     }
 
-    // Price filter
+    // Price
     filtered = filtered.filter(c => {
-      // If no pricing data exists, include the consultant when using default price range
-      if (!c.pricing) return priceRange[0] === 0 && priceRange[1] === 5000;
+      if (!c.pricing) return true;
       const minPrice = Math.min(
-        c.pricing.video || Infinity, 
-        c.pricing.call || Infinity, 
-        c.pricing.chat || Infinity
+        c.pricing.video || Infinity,
+        c.pricing.call || Infinity,
+        c.pricing.chat || Infinity,
       );
-      if (minPrice === Infinity) return priceRange[0] === 0 && priceRange[1] === 5000;
+      if (minPrice === Infinity) return true;
       return minPrice >= priceRange[0] && minPrice <= priceRange[1];
     });
 
     // Sort
     switch (sortBy) {
       case 'rating':
-        filtered.sort((a, b) => b.rating - a.rating);
+        filtered.sort((a, b) => (b.rating || 0) - (a.rating || 0));
         break;
       case 'price-low':
         filtered.sort((a, b) => {
-          const aMin = a.pricing ? Math.min(
-            a.pricing.video || Infinity, 
-            a.pricing.call || Infinity, 
-            a.pricing.chat || Infinity
-          ) : Infinity;
-          const bMin = b.pricing ? Math.min(
-            b.pricing.video || Infinity, 
-            b.pricing.call || Infinity, 
-            b.pricing.chat || Infinity
-          ) : Infinity;
+          const aMin = a.pricing ? Math.min(a.pricing.video || Infinity, a.pricing.call || Infinity, a.pricing.chat || Infinity) : Infinity;
+          const bMin = b.pricing ? Math.min(b.pricing.video || Infinity, b.pricing.call || Infinity, b.pricing.chat || Infinity) : Infinity;
           return aMin - bMin;
         });
         break;
       case 'price-high':
         filtered.sort((a, b) => {
-          const aMax = a.pricing ? Math.max(
-            a.pricing.video || 0, 
-            a.pricing.call || 0, 
-            a.pricing.chat || 0
-          ) : 0;
-          const bMax = b.pricing ? Math.max(
-            b.pricing.video || 0, 
-            b.pricing.call || 0, 
-            b.pricing.chat || 0
-          ) : 0;
+          const aMax = a.pricing ? Math.max(a.pricing.video || 0, a.pricing.call || 0, a.pricing.chat || 0) : 0;
+          const bMax = b.pricing ? Math.max(b.pricing.video || 0, b.pricing.call || 0, b.pricing.chat || 0) : 0;
           return bMax - aMax;
         });
         break;
       case 'experience':
-        filtered.sort((a, b) => b.yearsExperience - a.yearsExperience);
+        filtered.sort((a, b) => (b.yearsExperience || 0) - (a.yearsExperience || 0));
         break;
-      default: // recommended
-        filtered.sort((a, b) => (b.rating * b.reviewCount) - (a.rating * a.reviewCount));
+      case 'next-available':
+        filtered.sort((a, b) => {
+          if (a.available && !b.available) return -1;
+          if (!a.available && b.available) return 1;
+          return 0;
+        });
+        break;
+      default: {
+        // Recommended: boost recommended consultants to top, then by weighted score
+        filtered.sort((a, b) => {
+          const aRec = isRecommended(a) ? 1000 : 0;
+          const bRec = isRecommended(b) ? 1000 : 0;
+          return (bRec + (b.rating || 0) * (b.reviewCount || 0)) - (aRec + (a.rating || 0) * (a.reviewCount || 0));
+        });
+      }
     }
 
-    setFilteredConsultants(filtered);
-  }, [selectedCategory, searchQuery, selectedLanguages, selectedExpertises, availabilityFilter, priceRange, selectedGender, sortBy, consultants]);
+    return filtered;
+  }, [consultants, selectedCategory, searchQuery, selectedLanguages, selectedExpertises, availabilityFilter, priceRange, sortBy, isRecommended]);
 
-  const handleConsultantClick = (consultantId: string) => {
-    if (onNavigate) {
-      onNavigate(`/consultation/${consultantId}`, consultantId);
-    }
-  };
+  // ── Active filter count ───────────────────────────────────────
+  const activeFilterCount =
+    (selectedCategory !== 'all' ? 1 : 0) +
+    selectedLanguages.length +
+    selectedExpertises.length +
+    (availabilityFilter !== 'all' ? 1 : 0) +
+    (priceRange[0] !== dynamicPriceRange[0] || priceRange[1] !== dynamicPriceRange[1] ? 1 : 0);
 
   const clearFilters = () => {
+    setSelectedCategory('all');
     setSearchQuery('');
     setSelectedLanguages([]);
     setSelectedExpertises([]);
     setAvailabilityFilter('all');
-    setPriceRange([0, 5000]);
-    setSelectedGender('all');
+    setPriceRange(dynamicPriceRange);
   };
 
-  const activeFilterCount = 
-    selectedLanguages.length + 
-    selectedExpertises.length + 
-    (availabilityFilter !== 'all' ? 1 : 0) +
-    (priceRange[0] !== 0 || priceRange[1] !== 5000 ? 1 : 0) +
-    (selectedGender !== 'all' ? 1 : 0);
+  const handleConsultantClick = (consultantId: string) => {
+    onNavigate?.(`/consultation/${consultantId}`, consultantId);
+  };
 
-  const FilterPanel = ({ className }: { className?: string }) => (
-    <div className={cn("flex flex-col gap-6", className)}>
-      {/* Availability Quick Filters */}
-      <div className="flex flex-col gap-3">
-        <Label style={{ fontWeight: 'var(--font-weight-medium)', fontSize: 'var(--text-sm)' }}>
-          Availability
-        </Label>
-        <div className="flex flex-wrap gap-2">
+  // ════════════════════════════════════════════════════════════════
+  // FILTER PANEL (shared between mobile sheet & desktop sidebar)
+  // ════════════════════════════════════════════════════════════════
+  const FilterPanel = ({ inSheet }: { inSheet?: boolean }) => (
+    <div className="flex flex-col" style={{ gap: 20 }}>
+      {/* Clear Filters — top right */}
+      {activeFilterCount > 0 && (
+        <button
+          onClick={clearFilters}
+          style={{
+            ...f('xs', 500, 'var(--color-status-danger)'),
+            background: 'none', border: 'none', cursor: 'pointer',
+            alignSelf: 'flex-end', padding: '4px 0',
+          }}
+        >
+          Clear all ({activeFilterCount})
+        </button>
+      )}
+
+      {/* Availability pills */}
+      <div className="flex flex-col" style={{ gap: 8 }}>
+        <span style={f('xs', 500, 'var(--color-text-muted)')}>AVAILABILITY</span>
+        <div className="flex flex-wrap" style={{ gap: 6 }}>
           {[
             { value: 'all', label: 'All' },
             { value: 'today', label: 'Today' },
             { value: 'tomorrow', label: 'Tomorrow' },
-            { value: 'this-week', label: 'This Week' }
-          ].map(option => (
-            <div
-              key={option.value}
-              className={cn(
-                "filter-pill",
-                availabilityFilter === option.value && "active"
-              )}
-              onClick={() => setAvailabilityFilter(option.value as AvailabilityFilter)}
+            { value: 'this-week', label: 'This Week' },
+          ].map(opt => (
+            <button
+              key={opt.value}
+              onClick={() => setAvailabilityFilter(opt.value as AvailabilityFilter)}
+              style={{
+                ...f('xs', 500),
+                padding: '6px 14px',
+                borderRadius: 'var(--radius-pill)',
+                border: '1px solid',
+                borderColor: availabilityFilter === opt.value ? 'var(--color-primary-default)' : 'var(--color-border-default)',
+                backgroundColor: availabilityFilter === opt.value ? 'var(--color-primary-default)' : 'var(--color-bg-card)',
+                color: availabilityFilter === opt.value ? 'var(--color-text-inverse)' : 'var(--color-text-primary)',
+                cursor: 'pointer',
+                transition: 'all 0.15s',
+              }}
             >
-              {option.label}
-            </div>
+              {opt.label}
+            </button>
           ))}
         </div>
       </div>
 
-      {/* Language Filter */}
-      <div className="flex flex-col gap-3">
-        <Label style={{ fontWeight: 'var(--font-weight-medium)', fontSize: 'var(--text-sm)' }}>
-          Language
-        </Label>
-        <div className="flex flex-col gap-2">
-          {availableLanguages.slice(0, 5).map(lang => (
-            <div key={lang} className="flex items-center gap-2">
-              <Checkbox
-                id={`lang-${lang}`}
-                checked={selectedLanguages.includes(lang)}
-                onCheckedChange={(checked) => {
-                  if (checked) {
-                    setSelectedLanguages([...selectedLanguages, lang]);
-                  } else {
-                    setSelectedLanguages(selectedLanguages.filter(l => l !== lang));
-                  }
-                }}
-              />
-              <Label
-                htmlFor={`lang-${lang}`}
-                className="cursor-pointer"
-                style={{ fontWeight: 'var(--font-weight-regular)', fontSize: 'var(--text-sm)' }}
-              >
-                {lang}
-              </Label>
-            </div>
-          ))}
+      {/* Language pills with checkboxes */}
+      {availableLanguages.length > 0 && (
+        <div className="flex flex-col" style={{ gap: 8 }}>
+          <span style={f('xs', 500, 'var(--color-text-muted)')}>LANGUAGE</span>
+          <div className="flex flex-col" style={{ gap: 6 }}>
+            {availableLanguages.map(lang => (
+              <label key={lang} className="flex items-center cursor-pointer" style={{ gap: 8 }}>
+                <Checkbox
+                  checked={selectedLanguages.includes(lang)}
+                  onCheckedChange={(checked) => {
+                    setSelectedLanguages(prev =>
+                      checked ? [...prev, lang] : prev.filter(l => l !== lang)
+                    );
+                  }}
+                />
+                <span style={f('sm', 400)}>{lang}</span>
+              </label>
+            ))}
+          </div>
         </div>
-      </div>
+      )}
 
-      {/* Expertise Filter */}
-      <div className="flex flex-col gap-3">
-        <Label style={{ fontWeight: 'var(--font-weight-medium)', fontSize: 'var(--text-sm)' }}>
-          Expertise
-        </Label>
-        <div className="flex flex-col gap-2 max-h-48 overflow-y-auto">
-          {expertiseCategories.slice(0, 10).map(exp => (
-            <div key={exp} className="flex items-center gap-2">
-              <Checkbox
-                id={`exp-${exp}`}
-                checked={selectedExpertises.includes(exp)}
-                onCheckedChange={(checked) => {
-                  if (checked) {
-                    setSelectedExpertises([...selectedExpertises, exp]);
-                  } else {
-                    setSelectedExpertises(selectedExpertises.filter(e => e !== exp));
-                  }
-                }}
-              />
-              <Label
-                htmlFor={`exp-${exp}`}
-                className="cursor-pointer"
-                style={{ fontWeight: 'var(--font-weight-regular)', fontSize: 'var(--text-sm)' }}
-              >
-                {exp}
-              </Label>
-            </div>
-          ))}
+      {/* Expertise as pills (not radio list) */}
+      {expertiseCategories.length > 0 && (
+        <div className="flex flex-col" style={{ gap: 8 }}>
+          <span style={f('xs', 500, 'var(--color-text-muted)')}>EXPERTISE</span>
+          <div className="flex flex-wrap" style={{ gap: 6, maxHeight: inSheet ? 200 : 240, overflowY: 'auto' }}>
+            {expertiseCategories.map(exp => {
+              const active = selectedExpertises.includes(exp);
+              return (
+                <button
+                  key={exp}
+                  onClick={() => {
+                    setSelectedExpertises(prev =>
+                      active ? prev.filter(e => e !== exp) : [...prev, exp]
+                    );
+                  }}
+                  style={{
+                    ...f('xs', active ? 500 : 400),
+                    padding: '5px 12px',
+                    borderRadius: 'var(--radius-pill)',
+                    border: '1px solid',
+                    borderColor: active ? 'var(--color-primary-default)' : 'var(--color-border-default)',
+                    backgroundColor: active ? 'var(--color-primary-default)' : 'var(--color-bg-card)',
+                    color: active ? 'var(--color-text-inverse)' : 'var(--color-text-primary)',
+                    cursor: 'pointer',
+                    transition: 'all 0.15s',
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  {exp}
+                </button>
+              );
+            })}
+          </div>
         </div>
-      </div>
+      )}
 
-      {/* Price Range */}
-      <div className="flex flex-col gap-3">
-        <Label style={{ fontWeight: 'var(--font-weight-medium)', fontSize: 'var(--text-sm)' }}>
-          Price Range
-        </Label>
-        <div className="flex items-center gap-2">
-          <span style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--font-weight-regular)' }}>
-            ₹{priceRange[0]}
-          </span>
+      {/* Price Range — dual slider */}
+      <div className="flex flex-col" style={{ gap: 8 }}>
+        <span style={f('xs', 500, 'var(--color-text-muted)')}>PRICE RANGE</span>
+        <div className="flex items-center" style={{ gap: 10 }}>
+          <span style={f('xs', 500)}>₹{priceRange[0]}</span>
           <input
             type="range"
-            min="0"
-            max="5000"
-            step="100"
+            min={dynamicPriceRange[0]}
+            max={dynamicPriceRange[1]}
+            step={50}
             value={priceRange[1]}
             onChange={(e) => setPriceRange([priceRange[0], parseInt(e.target.value)])}
             className="flex-1"
+            style={{ accentColor: 'var(--color-primary-default)' }}
           />
-          <span style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--font-weight-regular)' }}>
-            ₹{priceRange[1]}
-          </span>
+          <span style={f('xs', 500)}>₹{priceRange[1]}</span>
         </div>
       </div>
-
-      {/* Clear Filters */}
-      {activeFilterCount > 0 && (
-        <Button
-          variant="outline"
-          onClick={clearFilters}
-          style={{
-            height: 'var(--ikan-component-button-height)',
-            borderRadius: 'var(--radius-md)',
-            fontWeight: 'var(--font-weight-medium)'
-          }}
-        >
-          <X className="mr-2 h-4 w-4" />
-          Clear Filters ({activeFilterCount})
-        </Button>
-      )}
     </div>
   );
 
+  // ════════════════════════════════════════════════════════════════
+  // SKELETON CARDS
+  // ════════════════════════════════════════════════════════════════
+  const SkeletonCards = () => (
+    <div className={viewMode === 'grid' ? 'grid grid-cols-1 md:grid-cols-2 gap-4' : 'flex flex-col gap-4'}>
+      {[1, 2, 3, 4, 5, 6].map(i => (
+        <div key={i} style={{ backgroundColor: 'var(--color-bg-card)', borderRadius: 'var(--radius-lg)', border: '1px solid var(--color-border-default)', padding: 20 }}>
+          <div className="flex" style={{ gap: 16 }}>
+            <Skeleton variant="circular" width="72px" height="72px" />
+            <div className="flex-1" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <Skeleton variant="text" height="20px" width="60%" />
+              <Skeleton variant="text" height="14px" width="40%" />
+              <div className="flex" style={{ gap: 6 }}>
+                <Skeleton variant="rectangular" width="60px" height="22px" className="rounded-full" />
+                <Skeleton variant="rectangular" width="80px" height="22px" className="rounded-full" />
+              </div>
+            </div>
+          </div>
+          <div style={{ marginTop: 14, display: 'flex', gap: 6 }}>
+            <Skeleton variant="rectangular" width="80px" height="24px" className="rounded-full" />
+            <Skeleton variant="rectangular" width="100px" height="24px" className="rounded-full" />
+            <Skeleton variant="rectangular" width="70px" height="24px" className="rounded-full" />
+          </div>
+          <div style={{ marginTop: 14, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <Skeleton variant="text" height="16px" width="100px" />
+            <Skeleton variant="button" height="36px" width="80px" />
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+
+  // ════════════════════════════════════════════════════════════════
+  // RENDER
+  // ════════════════════════════════════════════════════════════════
   return (
-    <div className={cn("flex flex-col", className)} style={{ minHeight: '100vh', backgroundColor: 'var(--color-bg-page)' }}>
-      {/* Hero Section */}
-      <PageHero 
+    <div className={cn('flex flex-col', className)} style={{ minHeight: '100vh', backgroundColor: 'var(--color-bg-page)' }}>
+      {/* ── Hero ────────────────────────────────────────────────── */}
+      <PageHero
         title={heroBanner?.title || 'Find Your Consultant'}
-        subtitle={heroBanner?.subtitle || 'Connect with experienced mental health professionals'}
+        subtitle={heroBanner?.subtitle || 'Connect with experienced mental health professionals who understand your needs.'}
         backgroundImage={heroBanner?.image_url}
         ctaText={heroBanner?.cta_text}
         ctaLink={heroBanner?.cta_link}
       />
 
-      {/* Mobile-only: Category Tabs */}
+      {/* ── Mobile: Search + Filter bar ─────────────────────────── */}
       {isMobile && (
         <div style={{ backgroundColor: 'var(--color-bg-card)', borderBottom: '1px solid var(--color-border-default)' }}>
-          <div className="app-container">
-            <Tabs value={selectedCategory} onValueChange={(v) => setSelectedCategory(v as CategoryType)}>
-              <TabsList className={cn("w-full justify-start overflow-x-auto h-14 bg-transparent p-0 rounded-none")}>
-                <TabsTrigger 
-                  value="all" 
-                  className="data-[state=active]:bg-[var(--color-bg-page)] data-[state=active]:text-[var(--color-text-primary)] data-[state=active]:shadow-none px-4 py-2 mr-2"
-                  style={{ fontWeight: 'var(--font-weight-medium)', fontSize: 'var(--text-sm)', borderRadius: 'var(--radius-md)' }}
-                >
-                  All
-                </TabsTrigger>
-                <TabsTrigger 
-                  value="therapist" 
-                  className="data-[state=active]:bg-[var(--color-bg-page)] data-[state=active]:text-[var(--color-text-primary)] data-[state=active]:shadow-none px-4 py-2 mr-2"
-                  style={{ fontWeight: 'var(--font-weight-medium)', fontSize: 'var(--text-sm)', borderRadius: 'var(--radius-md)' }}
-                >
-                  Therapist
-                </TabsTrigger>
-                <TabsTrigger 
-                  value="psychiatrist" 
-                  className="data-[state=active]:bg-[var(--color-bg-page)] data-[state=active]:text-[var(--color-text-primary)] data-[state=active]:shadow-none px-4 py-2 mr-2"
-                  style={{ fontWeight: 'var(--font-weight-medium)', fontSize: 'var(--text-sm)', borderRadius: 'var(--radius-md)' }}
-                >
-                  Psychiatrist
-                </TabsTrigger>
-                <TabsTrigger 
-                  value="counselor" 
-                  className="data-[state=active]:bg-[var(--color-bg-page)] data-[state=active]:text-[var(--color-text-primary)] data-[state=active]:shadow-none px-4 py-2 mr-2"
-                  style={{ fontWeight: 'var(--font-weight-medium)', fontSize: 'var(--text-sm)', borderRadius: 'var(--radius-md)' }}
-                >
-                  Counselor
-                </TabsTrigger>
-                <TabsTrigger 
-                  value="family-therapist" 
-                  className="data-[state=active]:bg-[var(--color-bg-page)] data-[state=active]:text-[var(--color-text-primary)] data-[state=active]:shadow-none px-4 py-2 mr-2"
-                  style={{ fontWeight: 'var(--font-weight-medium)', fontSize: 'var(--text-sm)', borderRadius: 'var(--radius-md)' }}
-                >
-                  Family Therapist
-                </TabsTrigger>
-              </TabsList>
-            </Tabs>
-          </div>
-        </div>
-      )}
-
-      {/* Mobile-only: Search & Filter Bar */}
-      {isMobile && (
-        <div style={{ 
-          backgroundColor: 'var(--color-bg-card)', 
-          borderBottom: '1px solid var(--color-border-default)'
-        }}>
-          <div className="app-container py-4 flex gap-3">
+          <div className="app-container" style={{ padding: '12px 16px', display: 'flex', gap: 10 }}>
             {/* Search */}
             <div className="flex-1 relative">
-              <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-[var(--color-text-muted)]" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2" style={{ width: 18, height: 18, color: 'var(--color-text-muted)' }} />
               <input
                 type="text"
-                placeholder="Search by name, expertise..."
+                placeholder="Search name, expertise..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 style={{
-                  width: '100%',
-                  height: '52px',
-                  paddingLeft: '48px',
-                  paddingRight: 'var(--spacing-3)',
-                  borderRadius: '16px',
+                  width: '100%', height: 44,
+                  paddingLeft: 40, paddingRight: 12,
+                  borderRadius: 'var(--radius-md)',
                   border: '1px solid var(--color-border-default)',
-                  fontSize: 'var(--text-sm)',
-                  fontWeight: 'var(--font-weight-regular)',
-                  backgroundColor: 'var(--color-bg-input)',
-                  color: 'var(--color-text-primary)'
+                  ...f('sm'), backgroundColor: 'var(--color-bg-input)',
+                  color: 'var(--color-text-primary)',
                 }}
               />
             </div>
 
-            {/* Filter Button (Mobile) */}
+            {/* Filter button */}
             <Sheet open={showFilters} onOpenChange={setShowFilters}>
               <SheetTrigger asChild>
-                <Button
-                  variant="outline"
-                  style={{
-                    height: '52px',
-                    borderRadius: '16px',
-                    position: 'relative'
-                  }}
-                >
-                  <Filter className="h-4 w-4" />
+                <button style={{
+                  width: 44, height: 44, borderRadius: 'var(--radius-md)',
+                  border: '1px solid var(--color-border-default)',
+                  backgroundColor: 'var(--color-bg-card)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  cursor: 'pointer', position: 'relative', flexShrink: 0,
+                }}>
+                  <SlidersHorizontal size={18} style={{ color: 'var(--color-text-muted)' }} />
                   {activeFilterCount > 0 && (
-                    <Badge
-                      variant="destructive"
-                      style={{
-                        position: 'absolute',
-                        top: '-8px',
-                        right: '-8px',
-                        height: '20px',
-                        minWidth: '20px',
-                        borderRadius: '10px',
-                        fontSize: '10px',
-                        fontWeight: 'var(--font-weight-medium)'
-                      }}
-                    >
+                    <span style={{
+                      position: 'absolute', top: -6, right: -6,
+                      width: 18, height: 18, borderRadius: '50%',
+                      backgroundColor: 'var(--color-status-danger)',
+                      color: 'white', fontSize: 10, fontWeight: 500,
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    }}>
                       {activeFilterCount}
-                    </Badge>
+                    </span>
                   )}
-                </Button>
+                </button>
               </SheetTrigger>
               <SheetContent side="left">
                 <SheetHeader>
                   <SheetTitle style={{ fontWeight: 'var(--font-weight-medium)' }}>Filters</SheetTitle>
                 </SheetHeader>
-                <FilterPanel className="p-4" />
+                <div style={{ padding: 16 }}>
+                  <FilterPanel inSheet />
+                </div>
               </SheetContent>
             </Sheet>
-
-            {/* Sort */}
-            <Select value={sortBy} onValueChange={(v) => setSortBy(v as SortOption)}>
-              <SelectTrigger style={{ width: isMobile ? '44px' : '120px', height: '52px', borderRadius: '16px', flexShrink: 0 }}>
-                <SelectValue placeholder="Sort" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="recommended">Recommended</SelectItem>
-                <SelectItem value="rating">Highest Rated</SelectItem>
-                <SelectItem value="price-low">Price: Low to High</SelectItem>
-                <SelectItem value="price-high">Price: High to Low</SelectItem>
-                <SelectItem value="experience">Most Experience</SelectItem>
-              </SelectContent>
-            </Select>
           </div>
+
+          {/* Mobile: category scroll pills */}
+          {categoryOptions.length > 0 && (
+            <div style={{ padding: '0 16px 12px', overflowX: 'auto', display: 'flex', gap: 6, WebkitOverflowScrolling: 'touch', scrollbarWidth: 'none' }}>
+              <button
+                onClick={() => setSelectedCategory('all')}
+                style={{
+                  ...f('xs', 500),
+                  padding: '6px 16px', borderRadius: 'var(--radius-pill)',
+                  border: '1px solid',
+                  borderColor: selectedCategory === 'all' ? 'var(--color-primary-default)' : 'var(--color-border-default)',
+                  backgroundColor: selectedCategory === 'all' ? 'var(--color-primary-default)' : 'var(--color-bg-card)',
+                  color: selectedCategory === 'all' ? 'white' : 'var(--color-text-primary)',
+                  cursor: 'pointer', whiteSpace: 'nowrap', flexShrink: 0,
+                }}
+              >
+                All
+              </button>
+              {categoryOptions.map(cat => (
+                <button
+                  key={cat.value}
+                  onClick={() => setSelectedCategory(cat.value)}
+                  style={{
+                    ...f('xs', 500),
+                    padding: '6px 16px', borderRadius: 'var(--radius-pill)',
+                    border: '1px solid',
+                    borderColor: selectedCategory === cat.value ? 'var(--color-primary-default)' : 'var(--color-border-default)',
+                    backgroundColor: selectedCategory === cat.value ? 'var(--color-primary-default)' : 'var(--color-bg-card)',
+                    color: selectedCategory === cat.value ? 'white' : 'var(--color-text-primary)',
+                    cursor: 'pointer', whiteSpace: 'nowrap', flexShrink: 0,
+                  }}
+                >
+                  {cat.label}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
       )}
 
-      {/* Main Content */}
-      <div className="flex-1 app-container" style={{ padding: isMobile ? '16px 16px 80px' : '48px 0' }}>
-        <div className="flex gap-8">
-          {/* Sidebar Filters (Desktop) */}
+      {/* ── Main Content Area ────────────────────────────────────── */}
+      <div className="flex-1 app-container" style={{ padding: isMobile ? '16px 16px 80px' : '32px 0 48px' }}>
+        <div className="flex" style={{ gap: 28 }}>
+          {/* ── Desktop Sidebar ──────────────────────────────────── */}
           {!isMobile && (
-            <div style={{ 
-              width: '280px', 
-              flexShrink: 0,
-            }}>
+            <div style={{ width: 280, flexShrink: 0 }}>
               <div style={{
-                backgroundColor: 'var(--color-bg-page)',
-                borderRadius: '24px',
-                padding: '24px',
                 position: 'sticky',
-                top: '140px',
+                top: 80,
+                backgroundColor: 'var(--color-bg-card)',
+                borderRadius: 'var(--radius-lg)',
+                border: '1px solid var(--color-border-default)',
+                padding: 20,
+                maxHeight: 'calc(100vh - 100px)',
+                overflowY: 'auto',
               }}>
-                {/* Category Tabs in Sidebar */}
-                <Tabs value={selectedCategory} onValueChange={(v) => setSelectedCategory(v as CategoryType)}>
-                  <TabsList className="w-full justify-start overflow-x-auto h-auto bg-transparent p-0 flex-wrap gap-1">
-                    <TabsTrigger 
-                      value="all" 
-                      className="data-[state=active]:bg-[var(--color-bg-card)] data-[state=active]:text-[var(--color-text-primary)] data-[state=active]:shadow-sm px-4 py-2"
-                      style={{ fontWeight: 'var(--font-weight-medium)', fontSize: 'var(--text-sm)', borderRadius: 'var(--radius-md)' }}
+                {/* Role/Type pills */}
+                <div className="flex flex-col" style={{ gap: 8, marginBottom: 16 }}>
+                  <span style={f('xs', 500, 'var(--color-text-muted)')}>ROLE / TYPE</span>
+                  <div className="flex flex-wrap" style={{ gap: 6 }}>
+                    <button
+                      onClick={() => setSelectedCategory('all')}
+                      style={{
+                        ...f('xs', 500),
+                        padding: '5px 14px', borderRadius: 'var(--radius-pill)',
+                        border: '1px solid',
+                        borderColor: selectedCategory === 'all' ? 'var(--color-primary-default)' : 'var(--color-border-default)',
+                        backgroundColor: selectedCategory === 'all' ? 'var(--color-primary-default)' : 'transparent',
+                        color: selectedCategory === 'all' ? 'white' : 'var(--color-text-primary)',
+                        cursor: 'pointer',
+                      }}
                     >
                       All
-                    </TabsTrigger>
-                    <TabsTrigger 
-                      value="therapist" 
-                      className="data-[state=active]:bg-[var(--color-bg-card)] data-[state=active]:text-[var(--color-text-primary)] data-[state=active]:shadow-sm px-4 py-2"
-                      style={{ fontWeight: 'var(--font-weight-medium)', fontSize: 'var(--text-sm)', borderRadius: 'var(--radius-md)' }}
-                    >
-                      Therapist
-                    </TabsTrigger>
-                    <TabsTrigger 
-                      value="psychiatrist" 
-                      className="data-[state=active]:bg-[var(--color-bg-card)] data-[state=active]:text-[var(--color-text-primary)] data-[state=active]:shadow-sm px-4 py-2"
-                      style={{ fontWeight: 'var(--font-weight-medium)', fontSize: 'var(--text-sm)', borderRadius: 'var(--radius-md)' }}
-                    >
-                      Psychiatrist
-                    </TabsTrigger>
-                    <TabsTrigger 
-                      value="counselor" 
-                      className="data-[state=active]:bg-[var(--color-bg-card)] data-[state=active]:text-[var(--color-text-primary)] data-[state=active]:shadow-sm px-4 py-2"
-                      style={{ fontWeight: 'var(--font-weight-medium)', fontSize: 'var(--text-sm)', borderRadius: 'var(--radius-md)' }}
-                    >
-                      Counselor
-                    </TabsTrigger>
-                    <TabsTrigger 
-                      value="family-therapist" 
-                      className="data-[state=active]:bg-[var(--color-bg-card)] data-[state=active]:text-[var(--color-text-primary)] data-[state=active]:shadow-sm px-4 py-2"
-                      style={{ fontWeight: 'var(--font-weight-medium)', fontSize: 'var(--text-sm)', borderRadius: 'var(--radius-md)' }}
-                    >
-                      Family Therapist
-                    </TabsTrigger>
-                  </TabsList>
-                </Tabs>
+                    </button>
+                    {categoryOptions.map(cat => (
+                      <button
+                        key={cat.value}
+                        onClick={() => setSelectedCategory(cat.value)}
+                        style={{
+                          ...f('xs', 500),
+                          padding: '5px 14px', borderRadius: 'var(--radius-pill)',
+                          border: '1px solid',
+                          borderColor: selectedCategory === cat.value ? 'var(--color-primary-default)' : 'var(--color-border-default)',
+                          backgroundColor: selectedCategory === cat.value ? 'var(--color-primary-default)' : 'transparent',
+                          color: selectedCategory === cat.value ? 'white' : 'var(--color-text-primary)',
+                          cursor: 'pointer',
+                        }}
+                      >
+                        {cat.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
 
                 {/* Divider */}
-                <div style={{ height: '1px', backgroundColor: 'var(--color-border-default)', margin: '16px 0' }} />
+                <div style={{ height: 1, backgroundColor: 'var(--color-border-default)', margin: '4px 0 16px' }} />
 
-                {/* Search in Sidebar */}
-                <div className="relative mb-3">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-[var(--color-text-muted)]" />
+                {/* Search */}
+                <div className="relative" style={{ marginBottom: 12 }}>
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2" style={{ width: 16, height: 16, color: 'var(--color-text-muted)' }} />
                   <input
                     type="text"
-                    placeholder="Search by name, expertise..."
+                    placeholder="Search name, expertise..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     style={{
-                      width: '100%',
-                      height: 'var(--ikan-component-input-height)',
-                      paddingLeft: '36px',
-                      paddingRight: 'var(--spacing-3)',
+                      width: '100%', height: 40,
+                      paddingLeft: 36, paddingRight: 12,
                       borderRadius: 'var(--radius-md)',
                       border: '1px solid var(--color-border-default)',
-                      fontSize: 'var(--text-sm)',
-                      fontWeight: 'var(--font-weight-regular)',
-                      backgroundColor: 'var(--color-bg-card)',
-                      color: 'var(--color-text-primary)'
+                      ...f('sm'), backgroundColor: 'var(--color-bg-input)',
+                      color: 'var(--color-text-primary)',
                     }}
                   />
                 </div>
 
-                {/* Sort in Sidebar */}
-                <Select value={sortBy} onValueChange={(v) => setSortBy(v as SortOption)}>
-                  <SelectTrigger style={{ width: '100%', height: 'var(--ikan-component-input-height)', borderRadius: 'var(--radius-md)', backgroundColor: 'var(--color-bg-card)' }}>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="recommended">Recommended</SelectItem>
-                    <SelectItem value="rating">Highest Rated</SelectItem>
-                    <SelectItem value="price-low">Price: Low to High</SelectItem>
-                    <SelectItem value="price-high">Price: High to Low</SelectItem>
-                    <SelectItem value="experience">Most Experience</SelectItem>
-                  </SelectContent>
-                </Select>
+                {/* Sort */}
+                <div style={{ marginBottom: 16 }}>
+                  <Select value={sortBy} onValueChange={(v) => setSortBy(v as SortOption)}>
+                    <SelectTrigger style={{ width: '100%', height: 40, borderRadius: 'var(--radius-md)', backgroundColor: 'var(--color-bg-input)' }}>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="recommended">Recommended</SelectItem>
+                      <SelectItem value="rating">Highest Rated</SelectItem>
+                      <SelectItem value="price-low">Lowest Price</SelectItem>
+                      <SelectItem value="price-high">Highest Price</SelectItem>
+                      <SelectItem value="experience">Most Experience</SelectItem>
+                      <SelectItem value="next-available">Next Available</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
 
-                {/* Divider */}
-                <div style={{ height: '1px', backgroundColor: 'var(--color-border-default)', margin: '16px 0' }} />
+                <div style={{ height: 1, backgroundColor: 'var(--color-border-default)', margin: '0 0 16px' }} />
 
-                {/* Existing Filter Panel */}
                 <FilterPanel />
               </div>
             </div>
           )}
 
-          {/* Consultant List */}
-          <div className="flex-1 mobile-content-clearance">
-            {/* Loading State */}
-          {loading && (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {[1, 2, 3, 4, 5, 6].map((i) => (
-                <div key={i} className="rounded-xl overflow-hidden" style={{ backgroundColor: 'var(--color-bg-card)', border: '1px solid var(--color-border-default)' }}>
-                  {/* Profile Header */}
-                  <div className="p-6 space-y-4">
-                    <div className="flex items-start gap-4">
-                      <Skeleton variant="circular" width="80px" height="80px" />
-                      <div className="flex-1 space-y-2">
-                        <Skeleton variant="text" height="24px" width="70%" />
-                        <Skeleton variant="text" height="16px" width="50%" />
-                        <div className="flex gap-1">
-                          {[1, 2, 3, 4, 5].map((star) => (
-                            <Skeleton key={star} variant="circular" width="16px" height="16px" />
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-                    
-                    {/* Bio */}
-                    <Skeleton variant="text" height="16px" width="100%" />
-                    <Skeleton variant="text" height="16px" width="90%" />
-                    
-                    {/* Badges */}
-                    <div className="flex flex-wrap gap-2 pt-2">
-                      <Skeleton variant="rectangular" width="80px" height="24px" className="rounded-full" />
-                      <Skeleton variant="rectangular" width="100px" height="24px" className="rounded-full" />
-                      <Skeleton variant="rectangular" width="70px" height="24px" className="rounded-full" />
-                    </div>
-                    
-                    {/* Pricing */}
-                    <div className="pt-4 space-y-2">
-                      <Skeleton variant="text" height="20px" width="150px" />
-                      <Skeleton variant="button" height="40px" width="100%" />
-                    </div>
-                  </div>
+          {/* ── Results Column ───────────────────────────────────── */}
+          <div className="flex-1 min-w-0">
+            {/* Results header: count + view toggle + sort (mobile) */}
+            <div className="flex items-center justify-between" style={{ marginBottom: 16 }}>
+              <div>
+                {!loading && (
+                  <p style={{ ...f('sm', 500), margin: 0 }}>
+                    <span style={{ color: 'var(--color-primary-default)' }}>{filteredConsultants.length}</span>
+                    <span style={{ color: 'var(--color-text-muted)', fontWeight: 400 }}>
+                      {' '}consultant{filteredConsultants.length !== 1 ? 's' : ''} found
+                    </span>
+                  </p>
+                )}
+              </div>
+
+              <div className="flex items-center" style={{ gap: 6 }}>
+                {/* Sort select (mobile only) */}
+                {isMobile && (
+                  <Select value={sortBy} onValueChange={(v) => setSortBy(v as SortOption)}>
+                    <SelectTrigger style={{ height: 36, borderRadius: 'var(--radius-md)', fontSize: 'var(--text-xs)', width: 'auto', minWidth: 100 }}>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="recommended">Recommended</SelectItem>
+                      <SelectItem value="rating">Highest Rated</SelectItem>
+                      <SelectItem value="price-low">Lowest Price</SelectItem>
+                      <SelectItem value="experience">Most Experience</SelectItem>
+                      <SelectItem value="next-available">Next Available</SelectItem>
+                    </SelectContent>
+                  </Select>
+                )}
+
+                {/* View mode toggle */}
+                <div className="flex" style={{
+                  borderRadius: 'var(--radius-md)',
+                  border: '1px solid var(--color-border-default)',
+                  overflow: 'hidden',
+                }}>
+                  <button
+                    onClick={() => setViewMode('stack')}
+                    aria-label="List view"
+                    style={{
+                      width: 36, height: 36, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      backgroundColor: viewMode === 'stack' ? 'var(--color-primary-default)' : 'var(--color-bg-card)',
+                      color: viewMode === 'stack' ? 'white' : 'var(--color-text-muted)',
+                      border: 'none', cursor: 'pointer',
+                    }}
+                  >
+                    <List size={16} />
+                  </button>
+                  <button
+                    onClick={() => setViewMode('grid')}
+                    aria-label="Grid view"
+                    style={{
+                      width: 36, height: 36, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      backgroundColor: viewMode === 'grid' ? 'var(--color-primary-default)' : 'var(--color-bg-card)',
+                      color: viewMode === 'grid' ? 'white' : 'var(--color-text-muted)',
+                      border: 'none', cursor: 'pointer',
+                      borderLeft: '1px solid var(--color-border-default)',
+                    }}
+                  >
+                    <LayoutGrid size={16} />
+                  </button>
                 </div>
-              ))}
+              </div>
             </div>
-          )}
 
-          {/* Results Count */}
-          {!loading && (
-            <div style={{ marginBottom: 'var(--spacing-4)' }}>
-              <p style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--font-weight-regular)', color: 'var(--color-text-muted)' }}>
-                {filteredConsultants.length} consultant{filteredConsultants.length !== 1 ? 's' : ''} found
-              </p>
-            </div>
-          )}
-
-          {/* Consultant Cards */}
-          {!loading && (
-            <div className="flex flex-col gap-4">
-              {filteredConsultants.map(consultant => (
-                <ConsultantCard
-                  key={consultant.id}
-                  consultant={consultant}
-                  onClick={() => handleConsultantClick(consultant.id)}
-                  onBook={() => setBookingConsultant(consultant)}
-                />
-              ))}
-
-            {filteredConsultants.length === 0 && (
-              <div style={{ 
-                padding: 'var(--spacing-8)', 
-                textAlign: 'center',
-                backgroundColor: 'var(--color-bg-card)',
-                borderRadius: 'var(--radius-lg)'
-              }}>
-                <p style={{ fontSize: 'var(--text-base)', fontWeight: 'var(--font-weight-medium)', marginBottom: 'var(--spacing-2)' }}>
-                  No consultants found
-                </p>
-                <p style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--font-weight-regular)', color: 'var(--color-text-muted)' }}>
-                  Try adjusting your filters or search query
-                </p>
+            {/* Active filter chips (shown inline) */}
+            {activeFilterCount > 0 && (
+              <div className="flex flex-wrap items-center" style={{ gap: 6, marginBottom: 14 }}>
+                {selectedCategory !== 'all' && (
+                  <span onClick={() => setSelectedCategory('all')} style={{
+                    ...f('xs', 500), cursor: 'pointer',
+                    padding: '4px 10px', borderRadius: 'var(--radius-pill)',
+                    backgroundColor: 'var(--color-accent-default)',
+                    color: 'var(--color-text-primary)',
+                    display: 'flex', alignItems: 'center', gap: 4,
+                  }}>
+                    {selectedCategory.replace(/[-_]/g, ' ')} <X size={12} />
+                  </span>
+                )}
+                {selectedExpertises.map(e => (
+                  <span key={e} onClick={() => setSelectedExpertises(prev => prev.filter(x => x !== e))} style={{
+                    ...f('xs', 500), cursor: 'pointer',
+                    padding: '4px 10px', borderRadius: 'var(--radius-pill)',
+                    backgroundColor: 'var(--color-accent-default)',
+                    color: 'var(--color-text-primary)',
+                    display: 'flex', alignItems: 'center', gap: 4,
+                  }}>
+                    {e} <X size={12} />
+                  </span>
+                ))}
+                {selectedLanguages.map(l => (
+                  <span key={l} onClick={() => setSelectedLanguages(prev => prev.filter(x => x !== l))} style={{
+                    ...f('xs', 500), cursor: 'pointer',
+                    padding: '4px 10px', borderRadius: 'var(--radius-pill)',
+                    backgroundColor: 'var(--color-accent-default)',
+                    color: 'var(--color-text-primary)',
+                    display: 'flex', alignItems: 'center', gap: 4,
+                  }}>
+                    {l} <X size={12} />
+                  </span>
+                ))}
+                <button onClick={clearFilters} style={{
+                  ...f('xs', 500, 'var(--color-status-danger)'),
+                  background: 'none', border: 'none', cursor: 'pointer', padding: '4px 6px',
+                }}>
+                  Clear all
+                </button>
               </div>
             )}
-            </div>
-          )}
+
+            {/* Recommended banner */}
+            {recommendedExpertises.length > 0 && !loading && (
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                style={{
+                  padding: '12px 16px',
+                  borderRadius: 'var(--radius-md)',
+                  background: 'linear-gradient(135deg, #F0FDF4 0%, #DCFCE7 100%)',
+                  border: '1px solid var(--color-status-success-light)',
+                  marginBottom: 16,
+                  display: 'flex', alignItems: 'center', gap: 10,
+                }}
+              >
+                <Sparkles size={18} style={{ color: 'var(--color-status-success)', flexShrink: 0 }} />
+                <p style={{ ...f('xs', 400, 'var(--color-text-primary)'), margin: 0 }}>
+                  Based on your latest assessment, we've highlighted consultants who specialize in areas that may help you.
+                </p>
+              </motion.div>
+            )}
+
+            {/* Loading */}
+            {loading && <SkeletonCards />}
+
+            {/* Results */}
+            {!loading && (
+              <div className={viewMode === 'grid' ? 'grid grid-cols-1 md:grid-cols-2 gap-4' : 'flex flex-col gap-3'}>
+                <AnimatePresence mode="popLayout">
+                  {filteredConsultants.map((consultant, idx) => (
+                    <motion.div
+                      key={consultant.id}
+                      layout
+                      initial={{ opacity: 0, y: 12 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, scale: 0.95 }}
+                      transition={{ duration: 0.2, delay: idx < 10 ? idx * 0.03 : 0 }}
+                      style={{ position: 'relative' }}
+                    >
+                      {/* Recommended badge */}
+                      {isRecommended(consultant) && (
+                        <div style={{
+                          position: 'absolute', top: 10, right: 10, zIndex: 2,
+                          display: 'flex', alignItems: 'center', gap: 4,
+                          padding: '4px 10px', borderRadius: 'var(--radius-pill)',
+                          background: 'linear-gradient(135deg, #22C55E, #16A34A)',
+                          color: 'white',
+                          ...f('xs', 500),
+                          fontSize: 10,
+                          boxShadow: '0 1px 4px rgba(34,197,94,0.3)',
+                        }}>
+                          <Sparkles size={10} />
+                          Recommended for you
+                        </div>
+                      )}
+                      <ConsultantCard
+                        consultant={consultant}
+                        onClick={() => handleConsultantClick(consultant.id)}
+                        onBook={() => setBookingConsultant(consultant)}
+                      />
+                    </motion.div>
+                  ))}
+                </AnimatePresence>
+
+                {/* Empty state */}
+                {filteredConsultants.length === 0 && (
+                  <div style={{
+                    padding: 40, textAlign: 'center',
+                    backgroundColor: 'var(--color-bg-card)',
+                    borderRadius: 'var(--radius-lg)',
+                    border: '1px solid var(--color-border-default)',
+                    gridColumn: '1 / -1',
+                  }}>
+                    <div style={{ fontSize: 40, marginBottom: 12 }}>🔍</div>
+                    <p style={{ ...f('base', 500), margin: '0 0 6px' }}>
+                      No consultants match your filters
+                    </p>
+                    <p style={{ ...f('sm', 400, 'var(--color-text-muted)'), margin: '0 0 16px' }}>
+                      Try adjusting your criteria or clearing filters.
+                    </p>
+                    <Button
+                      variant="outline"
+                      onClick={clearFilters}
+                      style={{
+                        borderRadius: 'var(--radius-md)',
+                        fontWeight: 'var(--font-weight-medium)',
+                      }}
+                    >
+                      <X className="mr-2 h-4 w-4" />
+                      Clear Filters
+                    </Button>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </div>
       </div>
 
-      <BookingModal 
+      {/* ── Booking Modal ────────────────────────────────────────── */}
+      <BookingModal
         isOpen={!!bookingConsultant}
         onClose={() => setBookingConsultant(null)}
         consultantId={bookingConsultant?.id}

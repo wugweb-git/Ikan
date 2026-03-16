@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Users, Download, Edit, Shield, Building, UserPlus, MoreHorizontal, Trash2 } from 'lucide-react';
+import { Users, Download, Pencil, Shield, Building, UserPlus, MoreHorizontal, Trash2 } from 'lucide-react';
 import { useNotifications } from '../../contexts/NotificationContext';
 import { apiClient } from '../../lib/api-client';
 import { AdminHeader } from '../admin/AdminHeader';
@@ -302,7 +302,7 @@ export function AdminUserManager({ onBack, className }: AdminUserManagerProps) {
           <DropdownMenuContent align="end">
             <DropdownMenuLabel>Actions</DropdownMenuLabel>
             <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleEdit(user.user_id); }}>
-              <Edit className="mr-2 h-4 w-4" /> Edit User
+              <Pencil className="mr-2 h-4 w-4" /> Edit User
             </DropdownMenuItem>
             <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleToggleAdmin(user.user_id, user.is_admin || false); }}>
               <Shield className="mr-2 h-4 w-4" /> {user.is_admin ? 'Remove Admin' : 'Grant Admin'}

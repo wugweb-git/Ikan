@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import {
-  CheckCircle, Play, Clock, ChevronLeft, ChevronRight, Lock,
+  CircleCheck, Play, Clock, ChevronLeft, ChevronRight, Lock,
   LogOut,
 } from 'lucide-react';
 import { Button } from '../ui/button';
@@ -223,7 +223,7 @@ function DayStrip({ days, progress, selectedDay, onSelectDay }: DayStripProps) {
                 {isLocked ? (
                   <Lock size={16} style={{ color: B.muted }} />
                 ) : isCompleted && !isDark ? (
-                  <CheckCircle size={18} style={{ color: B.success }} />
+                  <CircleCheck size={18} style={{ color: B.success }} />
                 ) : (
                   <span style={{
                     ...f('lg', 500, numColor),
@@ -371,7 +371,7 @@ function EquipProgramHome({ program, progress, onStartSession, onSelectDay, onRe
                   backgroundColor: B.successLight, marginBottom: 16,
                 }}
               >
-                <CheckCircle size={32} style={{ color: B.success }} />
+                <CircleCheck size={32} style={{ color: B.success }} />
               </div>
               <h2 style={{ ...f('xl', 500), margin: '0 0 6px' }}>Journey Complete!</h2>
               <p style={{ ...f('sm', 400, B.muted), margin: '0 0 20px' }}>

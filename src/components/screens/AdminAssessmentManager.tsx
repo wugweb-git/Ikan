@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { ClipboardList, Plus, Eye, MoreHorizontal, EyeOff, Trash2, Edit } from 'lucide-react';
+import { ClipboardList, Plus, Eye, MoreHorizontal, EyeOff, Trash2, Pencil } from 'lucide-react';
 import { useNotifications } from '../../contexts/NotificationContext';
 import { apiClient } from '../../lib/api-client';
 import { AdminHeader } from '../admin/AdminHeader';
@@ -233,7 +233,7 @@ export function AdminAssessmentManager({ onBack, className }: AdminAssessmentMan
             <DropdownMenuItem 
               onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleEdit(assessment.id); }}
             >
-              <Edit className="mr-2 h-4 w-4" /> Edit
+              <Pencil className="mr-2 h-4 w-4" /> Edit
             </DropdownMenuItem>
             <DropdownMenuItem 
               onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleTogglePublish(assessment.id, !assessment.published); }}

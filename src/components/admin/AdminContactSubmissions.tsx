@@ -5,7 +5,7 @@ import { apiClient } from '../../lib/api-client';
 import {
   Mail,
   Inbox,
-  CheckCircle,
+  CircleCheck,
   Archive,
   Trash2,
   RefreshCw,
@@ -526,7 +526,7 @@ function SubmissionCard({
                 disabled={isLoading}
                 style={{ borderRadius: 'var(--radius-md)', fontFamily: 'var(--font-family-base)', fontWeight: 'var(--font-weight-medium)' as any }}
               >
-                <CheckCircle className="w-4 h-4 mr-1" />
+                <CircleCheck className="w-4 h-4 mr-1" />
                 Mark Replied
               </Button>
             )}

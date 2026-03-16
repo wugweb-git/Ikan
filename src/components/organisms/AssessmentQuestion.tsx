@@ -119,7 +119,7 @@ export function AssessmentQuestion({
           <span 
             style={{ 
               fontSize: 'var(--text-lg)', 
-              fontWeight: 'var(--font-weight-semibold)',
+              fontWeight: 'var(--font-weight-medium)',
               color: 'var(--color-primary-default)'
             }}
           >
@@ -259,7 +259,7 @@ export function AssessmentQuestion({
           <h2 
             style={{
               fontSize: 'var(--text-xl)',
-              fontWeight: 'var(--font-weight-semibold)',
+              fontWeight: 'var(--font-weight-medium)',
               color: 'var(--color-text-primary)',
               lineHeight: 'var(--line-height-sm)'
             }}

@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import {
   Users, Download, Plus, Star, MapPin, Calendar as CalendarIcon,
-  Edit2, MoreHorizontal, ShieldCheck, FileText, CheckCircle, XCircle,
-  Eye, Clock, Briefcase, Languages, Link2, Copy, ExternalLink
+  MoreHorizontal, ShieldCheck, FileText, CircleCheck, CircleX,
+  Eye, Clock, Briefcase, Languages, Link2, Copy, ExternalLink,
+  Pencil
 } from 'lucide-react';
 import { useNotifications } from '../../contexts/NotificationContext';
 import { apiClient } from '../../lib/api-client';
@@ -330,7 +331,7 @@ export function AdminConsultationManager({ onBack, onNavigate }: AdminConsultati
             <DropdownMenuLabel>Actions</DropdownMenuLabel>
             <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleViewCalendar(p); }}><CalendarIcon className="mr-2 h-4 w-4" /> View Calendar</DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleEdit(p.id); }}><Edit2 className="mr-2 h-4 w-4" /> Edit Profile</DropdownMenuItem>
+            <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleEdit(p.id); }}><Pencil className="mr-2 h-4 w-4" /> Edit Profile</DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       )
@@ -388,11 +389,11 @@ export function AdminConsultationManager({ onBack, onNavigate }: AdminConsultati
             <>
               <Button size="sm" onClick={(e) => { e.stopPropagation(); handleApproveApp(a.id); }} disabled={processingApp === a.id}
                 style={{ gap: 'var(--spacing-1)', height: 'var(--ikan-component-button-height-sm)', fontSize: 'var(--text-xs)', backgroundColor: 'var(--color-status-success)', color: 'var(--color-text-inverse)' }}>
-                <CheckCircle className="w-3 h-3" /> Approve
+                <CircleCheck className="w-3 h-3" /> Approve
               </Button>
               <Button variant="outline" size="sm" onClick={(e) => { e.stopPropagation(); setRejectAppId(a.id); setShowRejectDialog(true); }}
                 style={{ gap: 'var(--spacing-1)', height: 'var(--ikan-component-button-height-sm)', fontSize: 'var(--text-xs)', color: 'var(--color-status-danger)', borderColor: 'var(--color-status-danger)' }}>
-                <XCircle className="w-3 h-3" /> Reject
+                <CircleX className="w-3 h-3" /> Reject
               </Button>
             </>
           )}
@@ -566,7 +567,7 @@ export function AdminConsultationManager({ onBack, onNavigate }: AdminConsultati
                     <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 'var(--spacing-2)' }}>
                       {selectedApplication.qualifications.map((q, i) => (
                         <li key={i} className="flex items-start gap-2">
-                          <CheckCircle className="w-4 h-4 mt-0.5" style={{ color: 'var(--color-primary-default)', flexShrink: 0 }} />
+                          <CircleCheck className="w-4 h-4 mt-0.5" style={{ color: 'var(--color-primary-default)', flexShrink: 0 }} />
                           <span style={{ fontSize: 'var(--text-sm)' }}>{q}</span>
                         </li>
                       ))}
@@ -610,7 +611,7 @@ export function AdminConsultationManager({ onBack, onNavigate }: AdminConsultati
                     )}
                     {selectedApplication.availabilityPreferences.weekendAvailability && (
                       <p className="flex items-center gap-1 mt-2" style={{ fontSize: 'var(--text-sm)', color: 'var(--color-status-success)' }}>
-                        <CheckCircle className="w-3 h-3" /> Available on weekends
+                        <CircleCheck className="w-3 h-3" /> Available on weekends
                       </p>
                     )}
                   </PreviewSection>
@@ -677,25 +678,25 @@ export function AdminConsultationManager({ onBack, onNavigate }: AdminConsultati
                 <DialogFooter className="mt-6">
                   <Button variant="outline" onClick={() => { setRejectAppId(selectedApplication.id); setShowRejectDialog(true); }}
                     style={{ color: 'var(--color-status-danger)', borderColor: 'var(--color-status-danger)', gap: 'var(--spacing-2)' }} disabled={!!processingApp}>
-                    <XCircle className="w-4 h-4" /> Reject
+                    <CircleX className="w-4 h-4" /> Reject
                   </Button>
                   <Button onClick={() => handleApproveApp(selectedApplication.id)}
                     style={{ backgroundColor: 'var(--color-status-success)', color: 'var(--color-text-inverse)', gap: 'var(--spacing-2)' }} disabled={!!processingApp}>
-                    <CheckCircle className="w-4 h-4" /> Approve & Publish
+                    <CircleCheck className="w-4 h-4" /> Approve & Publish
                   </Button>
                 </DialogFooter>
               )}
               {selectedApplication.status === 'approved' && (
                 <div className="mt-4 p-3 rounded-lg" style={{ backgroundColor: 'var(--color-status-success-light)', borderRadius: 'var(--radius-md)' }}>
                   <p className="flex items-center gap-2" style={{ fontSize: 'var(--text-sm)', color: 'var(--color-status-success)', fontWeight: 500 }}>
-                    <CheckCircle className="w-4 h-4" /> This application has been approved
+                    <CircleCheck className="w-4 h-4" /> This application has been approved
                   </p>
                 </div>
               )}
               {selectedApplication.status === 'rejected' && (
                 <div className="mt-4 p-3 rounded-lg" style={{ backgroundColor: 'var(--color-status-danger-light)', borderRadius: 'var(--radius-md)' }}>
                   <p className="flex items-center gap-2" style={{ fontSize: 'var(--text-sm)', color: 'var(--color-status-danger)', fontWeight: 500 }}>
-                    <XCircle className="w-4 h-4" /> This application has been rejected
+                    <CircleX className="w-4 h-4" /> This application has been rejected
                   </p>
                   {selectedApplication.rejection_reason && (
                     <p style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)', marginTop: 4 }}>Reason: {selectedApplication.rejection_reason}</p>

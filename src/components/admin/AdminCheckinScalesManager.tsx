@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import {
-  Plus, Trash2, Edit2, Save, X, Zap, Brain, Tag,
-  GripVertical, Moon, Flame, Heart, Smile, AlertCircle,
+  Plus, Trash2, Pencil, Save, X, Zap, Brain, Tag,
+  GripVertical, Moon, Flame, Heart, Smile,
   ChevronDown, ChevronUp, ToggleLeft, ToggleRight
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
@@ -493,7 +493,7 @@ export function AdminCheckinScalesManager({ onBack: _onBack }: AdminCheckinScale
                             onClick={() => startEdit(item)}
                             className="p-2 rounded-lg hover:bg-[var(--color-bg-muted)] transition-colors"
                           >
-                            <Edit2 className="w-4 h-4" style={{ color: B.muted }} />
+                            <Pencil className="w-4 h-4" style={{ color: B.muted }} />
                           </button>
                           <button
                             onClick={() => handleDelete(item.id)}

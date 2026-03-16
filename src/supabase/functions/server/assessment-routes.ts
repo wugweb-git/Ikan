@@ -106,6 +106,41 @@ export function registerAssessmentRoutes(app: Hono, requireAuth: any) {
               }
             }
             const history = Array.from(uniqueMap.values());
+
+            // Resolve max_score and assessment_name from definitions when missing
+            const needsLookup = history.filter(r => !r.max_score || !r.assessment_name);
+            if (needsLookup.length > 0) {
+              // Collect unique assessment IDs that need lookup
+              const idsToLookup = new Set<string>();
+              for (const r of needsLookup) {
+                const aId = r.assessment_id || r.assessmentId;
+                if (aId) idsToLookup.add(aId);
+              }
+              // Fetch definitions
+              const defMap = new Map<string, any>();
+              for (const aId of idsToLookup) {
+                try {
+                  const def = await kv.get(`assessment_def:${aId}`);
+                  if (def) defMap.set(aId, def);
+                } catch { /* skip */ }
+              }
+              // Enrich history entries
+              for (const r of history) {
+                const aId = r.assessment_id || r.assessmentId;
+                const def = aId ? defMap.get(aId) : null;
+                if (def) {
+                  // Resolve max_score from scoring ranges if missing
+                  if (!r.max_score && def.scoring?.ranges?.length > 0) {
+                    r.max_score = def.scoring.ranges[def.scoring.ranges.length - 1]?.max || null;
+                  }
+                  // Resolve assessment name if missing
+                  if (!r.assessment_name) {
+                    r.assessment_name = def.title || def.name || aId;
+                  }
+                }
+              }
+            }
+
             return c.json({ history });
         } catch (error) {
             return c.json({ error: 'Failed to get history' }, 500);

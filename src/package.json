@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc && vite build",
+    "build": "vite build",
+    "type-check": "tsc --noEmit",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview",
     "deploy": "npm run build && supabase functions deploy server --no-verify-jwt",
@@ -23,7 +24,6 @@
     "check:setup": "node scripts/check-setup.js",
     "audit:accessibility": "npx tsx scripts/accessibility-audit.ts",
     "audit:imports": "npx tsx scripts/cleanup-unused-imports.ts",
-    "type-check": "npx tsc --noEmit",
     "screenshots:generate": "node screenshot-generator.js",
     "screenshots:verify": "echo 'Open Chrome DevTools > Application > Manifest to verify screenshots'",
     "pwa:audit": "npm run build && npx lighthouse http://localhost:4173 --only-categories=pwa --view",

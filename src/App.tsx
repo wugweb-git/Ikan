@@ -22,11 +22,50 @@ import { LoadingSpinner } from './components/LoadingSpinner';
 import { useNotificationBadges } from './hooks/useNotificationBadges';
 import { lazyRetry } from './lib/lazy-with-retry';
 
-// --- Eagerly loaded core screens (always needed) ---
-import { Dashboard } from './components/screens/Dashboard';
-import { Homepage } from './components/screens/Homepage';
-import { NotFound } from './components/screens/NotFound';
-import LoginScreen from './components/LoginScreen';
+// ── DIAGNOSTIC: Global error handler fires before React mounts ──
+// This ensures ANY crash (module eval, React mount, etc.) shows something.
+if (typeof window !== 'undefined') {
+  const showFatalError = (msg: string, source?: string) => {
+    // Only inject once
+    if (document.getElementById('ikan-fatal-error')) return;
+    const el = document.createElement('div');
+    el.id = 'ikan-fatal-error';
+    el.style.cssText = 'position:fixed;inset:0;z-index:99999;display:flex;align-items:center;justify-content:center;background:#F5F5F5;font-family:system-ui,sans-serif;padding:24px;';
+    el.innerHTML = `
+      <div style="max-width:480px;text-align:center;">
+        <div style="font-size:48px;margin-bottom:16px;">⚠️</div>
+        <h2 style="font-size:20px;font-weight:500;color:#151515;margin:0 0 12px;">Something went wrong</h2>
+        <p style="font-size:14px;color:#717182;line-height:1.5;margin:0 0 16px;">${msg}</p>
+        ${source ? `<p style="font-size:12px;color:#999;word-break:break-all;margin:0 0 16px;">${source}</p>` : ''}
+        <button onclick="location.reload()" style="padding:10px 24px;background:#2A2A2A;color:#fff;border:none;border-radius:12px;font-size:14px;cursor:pointer;">Reload App</button>
+        <p style="font-size:12px;color:#717182;margin:16px 0 0;">If this keeps happening, try clearing your browser cache.</p>
+      </div>
+    `;
+    (document.getElementById('root') || document.body).appendChild(el);
+  };
+
+  window.addEventListener('error', (e) => {
+    console.error('[iKan Fatal]', e.message, e.filename, e.lineno);
+    // Only show for fatal errors that prevent rendering (give React 3s to mount)
+    setTimeout(() => {
+      const root = document.getElementById('root');
+      if (root && root.children.length === 0) {
+        showFatalError(e.message || 'The app failed to load.', e.filename ? `${e.filename}:${e.lineno}` : undefined);
+      }
+    }, 3000);
+  });
+
+  window.addEventListener('unhandledrejection', (e) => {
+    console.error('[iKan Fatal Promise]', e.reason);
+  });
+}
+
+// --- ALL screens are now lazy-loaded to prevent module-level crashes ---
+// Previously eagerly loaded screens moved to lazy:
+const Dashboard = lazy(() => lazyRetry(() => import('./components/screens/Dashboard').then(m => ({ default: m.Dashboard })), 'Dashboard'));
+const Homepage = lazy(() => lazyRetry(() => import('./components/screens/Homepage').then(m => ({ default: m.Homepage })), 'Homepage'));
+const NotFound = lazy(() => lazyRetry(() => import('./components/screens/NotFound').then(m => ({ default: m.NotFound })), 'NotFound'));
+const LoginScreen = lazy(() => lazyRetry(() => import('./components/LoginScreen').then(m => ({ default: m.default || m.LoginScreen })), 'LoginScreen'));
 
 // --- Lazy loaded screens (split by category) ---
 
@@ -332,6 +371,13 @@ function AppContent() {
 
   // Render function
   const renderScreen = () => {
+    // Define withSuspense OUTSIDE try/catch so the catch block can use it
+    const withSuspense = (component: React.ReactNode) => (
+      <ErrorBoundary>
+        <Suspense fallback={<LazyFallback />}>{component}</Suspense>
+      </ErrorBoundary>
+    );
+
     try {
       if (!currentRoute || typeof currentRoute !== 'string') {
         console.log('Invalid route detected, falling back to default');
@@ -389,17 +435,13 @@ function AppContent() {
       }
 
       // Wrap lazy-loaded components in Suspense
-      const withSuspense = (component: React.ReactNode) => (
-        <ErrorBoundary>
-          <Suspense fallback={<LazyFallback />}>{component}</Suspense>
-        </ErrorBoundary>
-      );
+      // (withSuspense is defined above the try block so catch can also use it)
 
       switch (currentRoute) {
         case '/':
-          return <Homepage onNavigate={handleNavigate} onGetStarted={handleSignIn} />;
+          return withSuspense(<Homepage onNavigate={handleNavigate} onGetStarted={handleSignIn} />);
         case '/dashboard':
-          return <Dashboard onNavigate={handleNavigate} />;
+          return withSuspense(<Dashboard onNavigate={handleNavigate} />);
         case '/assessment':
           return withSuspense(<Assessments onNavigate={handleNavigate} />);
         case '/assessment-landing':
@@ -461,7 +503,7 @@ function AppContent() {
         case '/sitemap':
           return withSuspense(<Sitemap onNavigate={handleNavigate} />);
         case '/login':
-          return <LoginScreen onNavigate={handleNavigate} onSuccess={() => handleNavigate('/dashboard')} />;
+          return withSuspense(<LoginScreen onNavigate={handleNavigate} onSuccess={() => handleNavigate('/dashboard')} />);
         case '/join/professional':
           return withSuspense(<ProfessionalApplication onNavigate={handleNavigate} />);
         case '/timeline':
@@ -474,12 +516,12 @@ function AppContent() {
               return withSuspense(<CmsPageRenderer slug={slug} onNavigate={handleNavigate} />);
             }
           }
-          return <NotFound onNavigate={handleNavigate} />;
+          return withSuspense(<NotFound onNavigate={handleNavigate} />);
         }
       }
     } catch (error) {
       console.error('Error rendering screen:', error);
-      return <Dashboard onNavigate={handleNavigate} />;
+      return withSuspense(<Dashboard onNavigate={handleNavigate} />);
     }
   };
 

@@ -2,6 +2,7 @@ import React from 'react';
 import { useIsMobile } from '../../hooks/useIsMobile';
 import { PageHero } from '../ui/PageHero';
 import { usePageContent } from '../../hooks/usePageContent';
+import { House, Info, Mail, ClipboardCheck, BookOpen, Stethoscope, Users, UserCircle, Heart, CircleHelp, Shield, FileText, Ban, RotateCcw } from 'lucide-react';
 
 interface SitemapProps {
   className?: string;
@@ -25,7 +26,7 @@ const sitemapGroups: SitemapGroup[] = [
   {
     title: 'Main Pages',
     links: [
-      { label: 'Home', route: '/', icon: <Home size={18} />, description: 'Landing page with resources, assessments, and programs' },
+      { label: 'Home', route: '/', icon: <House size={18} />, description: 'Landing page with resources, assessments, and programs' },
       { label: 'About Us', route: '/about', icon: <Info size={18} />, description: 'Our mission, values, and what iKan offers' },
       { label: 'Contact Us', route: '/contact', icon: <Mail size={18} />, description: 'Get in touch with the iKan team' },
     ],
@@ -49,7 +50,7 @@ const sitemapGroups: SitemapGroup[] = [
   {
     title: 'Legal & Help',
     links: [
-      { label: 'FAQ', route: '/faq', icon: <HelpCircle size={18} />, description: 'Frequently asked questions and help center' },
+      { label: 'FAQ', route: '/faq', icon: <CircleHelp size={18} />, description: 'Frequently asked questions and help center' },
       { label: 'Privacy Policy', route: '/privacy-policy', icon: <Shield size={18} />, description: 'How we handle and protect your data' },
       { label: 'Terms of Service', route: '/terms', icon: <FileText size={18} />, description: 'Legal terms governing use of iKan' },
       { label: 'Cancellation Policy', route: '/cancellation-policy', icon: <Ban size={18} />, description: 'How to cancel subscriptions and services' },

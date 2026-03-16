@@ -1,4 +1,4 @@
-import { MapPin, Home, ArrowLeft, Search, HelpCircle, BookOpen, MessageCircle } from 'lucide-react';
+import { MapPin, House, ArrowLeft, Search, CircleHelp, BookOpen, MessageCircle } from 'lucide-react';
 import { useIsMobile } from '../../hooks/useIsMobile';
 import { PageHero } from '../ui/PageHero';
 
@@ -103,7 +103,7 @@ export function NotFound({ onNavigate }: NotFoundProps) {
               onMouseEnter={(e) => { e.currentTarget.style.opacity = '0.9'; }}
               onMouseLeave={(e) => { e.currentTarget.style.opacity = '1'; }}
             >
-              <Home size={18} />
+              <House size={18} />
               Return Home
             </button>
 

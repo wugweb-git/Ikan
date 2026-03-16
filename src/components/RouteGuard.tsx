@@ -1,7 +1,10 @@
-import React from 'react';
+import React, { lazy, Suspense } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { requiresAuth } from '../lib/route-config';
-import LoginScreen from './LoginScreen';
+import { LoadingSpinner } from './LoadingSpinner';
+
+// Lazy-load LoginScreen to prevent it from being eagerly evaluated
+const LoginScreen = lazy(() => import('./LoginScreen'));
 
 interface RouteGuardProps {
   currentRoute: string;
@@ -41,12 +44,14 @@ export function RouteGuard({ currentRoute, onNavigate, children }: RouteGuardPro
   // If user is not authenticated and trying to access a private route
   if (!user && routeRequiresAuth) {
     return (
-      <LoginScreen 
-        onSuccess={() => onNavigate(currentRoute)}
-        onNavigate={onNavigate}
-        reason="auth-required"
-        redirectRoute={currentRoute}
-      />
+      <Suspense fallback={<LoadingSpinner fullScreen message="Loading..." />}>
+        <LoginScreen 
+          onSuccess={() => onNavigate(currentRoute)}
+          onNavigate={onNavigate}
+          reason="auth-required"
+          redirectRoute={currentRoute}
+        />
+      </Suspense>
     );
   }
 

@@ -1,4 +1,4 @@
-import { ChevronRight, Home } from 'lucide-react';
+import { ChevronRight, House } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Icon } from '../Icon';
 import { cn } from '../ui/utils';

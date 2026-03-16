@@ -3,7 +3,7 @@ import { motion } from 'motion/react';
 import { apiClient } from '../../lib/api-client';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNotifications } from '../../contexts/NotificationContext';
-import { ArrowRight, Activity, Smile, Check, BarChart3, ClipboardList, Play, TrendingUp, Brain, Compass, BookOpen, Calendar } from 'lucide-react';
+import { ArrowRight, Activity, Smile, Check, BarChart3, ClipboardList, Play, TrendingUp, Brain, Compass, BookOpen, Calendar, ChevronRight } from 'lucide-react';
 import { SPECIAL_PROGRAM_IDS } from '../../lib/constants/content';
 import { ReassessmentPrompt } from '../assessments/ReassessmentPrompt';
 import { checkReassessmentTriggers, ReassessmentReason } from '../../lib/reassessment-triggers';
@@ -42,16 +42,17 @@ function isRealAssessment(r: any): boolean {
   const id = (r.assessment_id || r.assessmentId || '').toLowerCase();
   // Skip program check-ins stored as assessments
   if (id.startsWith('checkin_') || id.startsWith('checkin-')) return false;
-  // Skip internal assessment prefixes
-  if (id.startsWith('asm_') || id.startsWith('asm-')) return false;
   // Skip explicitly zero-score completed check-ins (program check-ins use score: 0)
   if (r.score === 0 && r.responses?.type === 'program_checkin') return false;
   return true;
 }
 
-function cleanAssessmentName(id: string, rawName: string): string {
-  // Map known internal IDs to readable names
-  const nameMap: Record<string, string> = {
+function cleanAssessmentName(id: string, rawName: string, nameMap?: Map<string, string>): string {
+  // 1. Check server-fetched definitions map first (most accurate)
+  if (nameMap?.has(id)) return nameMap.get(id)!;
+
+  // 2. Map known well-known IDs to readable names
+  const wellKnown: Record<string, string> = {
     'phq-9': 'Depression (PHQ-9)',
     'phq9': 'Depression (PHQ-9)',
     'gad-7': 'Anxiety (GAD-7)',
@@ -61,16 +62,20 @@ function cleanAssessmentName(id: string, rawName: string): string {
     'general': 'General Wellness',
   };
   const lower = id.toLowerCase();
-  if (nameMap[lower]) return nameMap[lower];
-  // If the raw name looks like an ID (has underscores/hyphens and no spaces), prettify it
-  if (rawName && rawName.includes(' ') && !rawName.startsWith('checkin') && !rawName.startsWith('asm')) {
+  if (wellKnown[lower]) return wellKnown[lower];
+
+  // 3. If the raw name looks human-readable (has spaces, no internal prefixes), use it
+  if (rawName && rawName.includes(' ') && !rawName.startsWith('checkin') && !rawName.startsWith('asm_')) {
     return rawName;
   }
-  // Fallback: prettify the ID
-  return id
+
+  // 4. Strip auto-generated prefix pattern "asm_<timestamp>_" and prettify
+  const cleaned = id
+    .replace(/^asm_\d+_/, '')  // strip asm_<timestamp>_ prefix
     .replace(/[-_]/g, ' ')
     .replace(/\b\w/g, (c: string) => c.toUpperCase())
     .replace(/^Assessment /, '');
+  return cleaned || rawName || 'Assessment';
 }
 
 // ─── Font helper (design-token compliant) ─────────────────────────
@@ -268,25 +273,33 @@ export function Dashboard({ className, onNavigate }: DashboardProps) {
             if (!latestByType.has(id)) latestByType.set(id, r);
           }
 
-          // Fetch available assessment definitions to validate results
-          let availableAssessmentIds: Set<string> | null = null;
+          // Fetch available assessment definitions to build name lookup
+          let assessmentNameMap: Map<string, string> | undefined;
           try {
             const assessmentDefs = await apiClient.request('/assessments', { method: 'GET' }, false);
             const defs = assessmentDefs?.assessments || assessmentDefs || [];
             if (Array.isArray(defs) && defs.length > 0) {
-              availableAssessmentIds = new Set(defs.map((d: any) => d.id || d.slug).filter(Boolean));
+              assessmentNameMap = new Map<string, string>();
+              for (const d of defs) {
+                const defId = d.id || d.slug;
+                const defTitle = d.title || d.name;
+                if (defId && defTitle) {
+                  assessmentNameMap.set(defId, defTitle);
+                  if (d.slug && d.id !== d.slug) assessmentNameMap.set(d.slug, defTitle);
+                }
+              }
             }
-          } catch { /* non-critical — skip validation if defs unavailable */ }
+          } catch { /* non-critical — skip if defs unavailable */ }
 
           const scores: AssessmentScore[] = Array.from(latestByType.entries())
-            .filter(([_, r]) => r.score !== undefined && r.score !== null) // Include all scored assessments (even 0)
+            .filter(([_, r]) => r.score !== undefined && r.score !== null)
             .map(([id, r]) => {
             const maxScore = r.max_score || r.maxScore || 100;
             const result = evaluateAssessment(id, r.score || 0, maxScore);
             const rawName = r.assessment_name || r.assessmentName || r.title || id;
             return {
               assessmentId: id,
-              assessmentName: cleanAssessmentName(id, rawName),
+              assessmentName: cleanAssessmentName(id, rawName, assessmentNameMap),
               score: r.score || 0,
               maxScore,
               severity: result.severity,
@@ -302,7 +315,7 @@ export function Dashboard({ className, onNavigate }: DashboardProps) {
             const slug = latest.assessment_id || latest.assessmentId || 'general';
             const result = evaluateAssessment(slug, latest.score || 0, latest.max_score || latest.maxScore || 100);
             // Attach assessment name for display in RecommendationCards
-            result.assessmentName = cleanAssessmentName(slug, latest.assessment_name || latest.assessmentName || latest.title || slug);
+            result.assessmentName = cleanAssessmentName(slug, latest.assessment_name || latest.assessmentName || latest.title || slug, assessmentNameMap);
             setEngineResult(result);
           }
         }
@@ -373,9 +386,10 @@ export function Dashboard({ className, onNavigate }: DashboardProps) {
 
     // 2. In-memory enrichments (these may duplicate server data but dedup handles it)
     for (const score of assessmentScores) {
+      const pctVal = score.maxScore > 0 ? Math.round((score.score / score.maxScore) * 100) : 0;
       candidates.push({
-        type: 'assessment', label: `Completed ${score.assessmentName}`,
-        detail: `Score: ${score.score} / ${score.maxScore} · ${score.severity}`,
+        type: 'assessment', label: score.assessmentName,
+        detail: `${pctVal}% (${score.score}/${score.maxScore}) · ${score.severity}`,
         date: score.completedAt, ts: score.completedAt ? new Date(score.completedAt).getTime() : 0,
         route: '/assessment',
       });
@@ -438,9 +452,14 @@ export function Dashboard({ className, onNavigate }: DashboardProps) {
         <motion.section aria-label="Latest activity" data-widget="latest-activity" initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.45, delay: 0.03 }}>
           <SectionLabel>Latest Activity</SectionLabel>
           {latestActivity.length > 0 ? (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <div style={{
+              backgroundColor: 'var(--color-bg-card)',
+              borderRadius: 'var(--radius-lg)',
+              boxShadow: 'var(--shadow-sm)',
+              border: '1px solid var(--color-border-default)',
+              overflow: 'hidden',
+            }}>
               {latestActivity.map((item, idx) => {
-                // Icon config by activity type
                 const isAssessment = item.type === 'assessment' || item.type === 'assessment_completed';
                 const isProgram = item.type === 'program' || item.type === 'program_day_completed' || item.type === 'enrolled';
                 const isMood = item.type === 'mood' || item.type === 'mood_logged';
@@ -450,33 +469,50 @@ export function Dashboard({ className, onNavigate }: DashboardProps) {
                 const iconBg = isAssessment ? 'var(--color-status-info-light)'
                   : (isProgram || isCompleted) ? 'var(--color-accent-default)'
                   : isResource ? 'rgba(124,58,237,0.1)'
-                  : 'var(--color-status-success-light)';
+                  : isMood ? 'var(--color-status-success-light)'
+                  : 'var(--color-bg-muted)';
                 const iconColor = isAssessment ? 'var(--color-status-info)'
                   : (isProgram || isCompleted) ? 'var(--color-primary-default)'
                   : isResource ? '#7C3AED'
-                  : 'var(--color-status-success)';
+                  : isMood ? 'var(--color-status-success)'
+                  : 'var(--color-text-muted)';
                 const IconComp = isAssessment ? BarChart3
                   : isProgram ? Play
                   : isCompleted ? Check
                   : isResource ? BookOpen
                   : isMood ? Smile
                   : Calendar;
+
+                const dateStr = item.date && item.type !== 'mood'
+                  ? new Date(item.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+                  : '';
+
                 return (
                   <div key={`${item.type}-${idx}`}
                     onClick={() => onNavigate?.(item.route)}
-                    style={{ backgroundColor: 'var(--color-bg-card)', borderRadius: 'var(--radius-lg)', boxShadow: 'var(--shadow-sm)', padding: '16px 20px', border: '1px solid var(--color-border-default)', cursor: 'pointer', transition: 'box-shadow 0.15s' }}
+                    className="active:bg-black/[0.03] transition-colors"
+                    style={{
+                      padding: '14px 16px',
+                      cursor: 'pointer',
+                      borderBottom: idx < latestActivity.length - 1 ? '1px solid var(--color-border-default)' : 'none',
+                    }}
                   >
-                    <div className="flex items-center" style={{ gap: 14 }}>
-                      <div style={{ width: 44, height: 44, borderRadius: 12, backgroundColor: iconBg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, color: iconColor }}>
-                        <IconComp size={20} />
+                    <div className="flex items-center" style={{ gap: 12 }}>
+                      <div style={{
+                        width: 40, height: 40, borderRadius: 10,
+                        backgroundColor: iconBg, display: 'flex',
+                        alignItems: 'center', justifyContent: 'center',
+                        flexShrink: 0, color: iconColor,
+                      }}>
+                        <IconComp size={18} />
                       </div>
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <h3 style={{ ...f('sm', 500), margin: 0 }}>{item.label}</h3>
-                        <p style={{ ...f('xs', 400, 'var(--color-text-muted)'), margin: '2px 0 0' }}>
-                          {item.detail}{item.date && item.type !== 'mood' ? ` · ${new Date(item.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}` : ''}
+                        <p style={{ ...f('xs', 400, 'var(--color-text-muted)'), margin: '1px 0 0' }}>
+                          {item.detail}{dateStr ? ` · ${dateStr}` : ''}
                         </p>
                       </div>
-                      <ArrowRight size={16} style={{ color: 'var(--color-text-muted)', flexShrink: 0 }} />
+                      <ChevronRight size={16} style={{ color: 'var(--color-text-muted)', flexShrink: 0, opacity: 0.4 }} />
                     </div>
                   </div>
                 );
@@ -724,28 +760,59 @@ export function Dashboard({ className, onNavigate }: DashboardProps) {
                 {assessmentScores.slice(0, 5).map((s, i) => {
                   const severityColor = s.severity === 'low' ? 'var(--color-status-success)' : s.severity === 'moderate' ? 'var(--color-status-warning)' : 'var(--color-status-danger)';
                   const severityBg = s.severity === 'low' ? 'var(--color-status-success-light)' : s.severity === 'moderate' ? 'var(--color-status-warning-light)' : 'var(--color-status-danger-light)';
+                  const pct = s.maxScore > 0 ? Math.round((s.score / s.maxScore) * 100) : 0;
                   return (
-                    <div key={s.assessmentId} onClick={() => onNavigate?.(`/assessment-history-detail?id=${s.assessmentId}`)}
-                      style={{ padding: '14px 20px', cursor: 'pointer', borderBottom: i < Math.min(assessmentScores.length, 5) - 1 ? '1px solid var(--color-border-default)' : 'none', transition: 'background 0.15s' }}
-                      onMouseEnter={(e) => { (e.currentTarget as HTMLDivElement).style.background = 'var(--color-bg-muted)'; }}
-                      onMouseLeave={(e) => { (e.currentTarget as HTMLDivElement).style.background = 'transparent'; }}
+                    <div key={`${s.assessmentId}-${i}`} onClick={() => onNavigate?.(`/assessment-history-detail?id=${s.assessmentId}`)}
+                      className="active:bg-black/[0.03] transition-colors"
+                      style={{
+                        padding: '14px 16px', cursor: 'pointer',
+                        borderBottom: i < Math.min(assessmentScores.length, 5) - 1 ? '1px solid var(--color-border-default)' : 'none',
+                      }}
                     >
                       <div className="flex items-center" style={{ gap: 12 }}>
-                        <div style={{ width: 36, height: 36, borderRadius: 10, backgroundColor: severityBg, display: 'flex', alignItems: 'center', justifyContent: 'center', color: severityColor, flexShrink: 0 }}>
-                          <BarChart3 size={16} />
+                        {/* Mini progress ring */}
+                        <div style={{ position: 'relative', width: 40, height: 40, flexShrink: 0 }}>
+                          <svg viewBox="0 0 40 40" width={40} height={40}>
+                            <circle cx={20} cy={20} r={16} fill="none" stroke="var(--color-bg-muted)" strokeWidth={3} />
+                            <circle cx={20} cy={20} r={16} fill="none" stroke={severityColor} strokeWidth={3}
+                              strokeLinecap="round"
+                              strokeDasharray={`${2 * Math.PI * 16}`}
+                              strokeDashoffset={`${2 * Math.PI * 16 * (1 - pct / 100)}`}
+                              style={{ transform: 'rotate(-90deg)', transformOrigin: 'center' }}
+                            />
+                          </svg>
+                          <span style={{
+                            position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            fontSize: 10, fontWeight: 500, fontFamily: 'var(--font-family-base)', color: severityColor,
+                          }}>
+                            {pct}%
+                          </span>
                         </div>
+
                         <div style={{ flex: 1, minWidth: 0 }}>
-                          <span style={f('sm', 500)}>{s.assessmentName}</span>
+                          <span style={{ ...f('sm', 500), display: 'block', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{s.assessmentName}</span>
                           <p style={{ ...f('xs', 400, 'var(--color-text-muted)'), margin: '1px 0 0' }}>
-                            {s.completedAt ? new Date(s.completedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'Recent'} · Score: {s.score}/{s.maxScore}
+                            {s.completedAt ? new Date(s.completedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'Recent'} · {s.score}/{s.maxScore}
                           </p>
                         </div>
-                        <span style={{ fontSize: 10, fontWeight: 500, fontFamily: 'var(--font-family-base)', color: severityColor, backgroundColor: severityBg, padding: '2px 8px', borderRadius: 'var(--radius-pill)', textTransform: 'capitalize' as const }}>{s.severity}</span>
+
+                        <span style={{
+                          fontSize: 10, fontWeight: 500, fontFamily: 'var(--font-family-base)',
+                          color: severityColor, backgroundColor: severityBg,
+                          padding: '3px 10px', borderRadius: 'var(--radius-pill)',
+                          textTransform: 'capitalize' as const, flexShrink: 0,
+                        }}>
+                          {s.severity}
+                        </span>
+                        <ChevronRight size={16} style={{ color: 'var(--color-text-muted)', flexShrink: 0, opacity: 0.4 }} />
                       </div>
                     </div>
                   );
                 })}
-                <div onClick={() => onNavigate?.('/assessment')} style={{ padding: '12px 20px', cursor: 'pointer', borderTop: '1px solid var(--color-border-default)' }}>
+                <div onClick={() => onNavigate?.('/assessment')}
+                  className="active:bg-black/[0.03] transition-colors"
+                  style={{ padding: '12px 16px', cursor: 'pointer', borderTop: '1px solid var(--color-border-default)' }}
+                >
                   <div className="flex items-center justify-center" style={{ gap: 8 }}>
                     <ClipboardList size={14} style={{ color: 'var(--color-text-muted)' }} />
                     <span style={f('xs', 500, 'var(--color-text-muted)')}>Take another assessment</span>

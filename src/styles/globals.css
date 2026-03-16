@@ -881,14 +881,13 @@ html {
   padding: 20px;
   background: var(--color-bg-card);
   border: 1px solid var(--grey-2);
-  border-radius: var(--radius-sm);
-  margin-bottom: var(--spacing-3);
+  border-radius: var(--radius-lg);
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
 .consultant-card:hover {
-  border-color: var(--grey-3);
-  box-shadow: var(--shadow-xs);
+  border-color: var(--color-primary-default);
+  box-shadow: 0 2px 12px rgba(0,0,0,0.06);
 }
 
 /* Avatar Styling */

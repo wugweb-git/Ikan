@@ -75,6 +75,30 @@ export function WellnessTimeline({ onNavigate }: WellnessTimelineProps) {
     try {
       const allEvents: TimelineEvent[] = [];
 
+      // Pre-fetch assessment definitions for name resolution
+      let assessmentNameMap: Map<string, string> | undefined;
+      try {
+        const assessmentDefs = await apiClient.getAssessments();
+        if (Array.isArray(assessmentDefs) && assessmentDefs.length > 0) {
+          assessmentNameMap = new Map<string, string>();
+          for (const d of assessmentDefs) {
+            const defId = d.id || d.slug;
+            const defTitle = d.title || d.name;
+            if (defId && defTitle) {
+              assessmentNameMap.set(defId, defTitle);
+              if (d.slug && d.id !== d.slug) assessmentNameMap.set(d.slug, defTitle);
+            }
+          }
+        }
+      } catch { /* non-critical */ }
+
+      // Helper to resolve assessment name
+      const resolveAssessmentName = (id: string, rawName: string): string => {
+        if (assessmentNameMap?.has(id)) return assessmentNameMap.get(id)!;
+        if (rawName && rawName.includes(' ') && !rawName.startsWith('asm_') && !rawName.startsWith('checkin_')) return rawName;
+        return id.replace(/^asm_\d+_/, '').replace(/[-_]/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase()) || 'Assessment';
+      };
+
       // Fetch assessment history
       try {
         const assessmentData = await apiClient.getUserAssessmentResponses().catch(() => ({ history: [] }));
@@ -88,13 +112,14 @@ export function WellnessTimeline({ onNavigate }: WellnessTimelineProps) {
             
             const maxScore = r.max_score || r.maxScore || 100;
             const severity = r.score <= maxScore * 0.33 ? 'low' : r.score <= maxScore * 0.66 ? 'moderate' : 'high';
-            const name = r.assessment_name || r.assessmentName || r.title || id.replace(/[-_]/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase());
+            const rawName = r.assessment_name || r.assessmentName || r.title || id;
+            const name = resolveAssessmentName(id, rawName);
 
             allEvents.push({
               id: r.id || `assessment-${Date.now()}-${Math.random()}`,
               type: 'assessment',
-              title: `Completed ${name}`,
-              detail: `Score: ${r.score} / ${maxScore}`,
+              title: name,
+              detail: `${maxScore > 0 ? Math.round((r.score / maxScore) * 100) : 0}% (${r.score}/${maxScore})`,
               date: r.completed_at || r.created_at || '',
               ts: new Date(r.completed_at || r.created_at || 0).getTime(),
               route: '/assessment',
@@ -303,30 +328,54 @@ export function WellnessTimeline({ onNavigate }: WellnessTimelineProps) {
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                 {dayEvents.map((event) => {
                   const colors = getEventColors(event.type, event.severity);
+                  const pct = event.type === 'assessment' && event.score !== undefined && event.maxScore
+                    ? Math.round((event.score / event.maxScore) * 100)
+                    : null;
                   return (
                     <div
                       key={event.id}
                       onClick={() => event.route && onNavigate?.(event.route)}
+                      className="active:bg-black/[0.03] transition-colors"
                       style={{
                         backgroundColor: 'var(--color-bg-card)',
                         borderRadius: 'var(--radius-lg)',
                         border: '1px solid var(--color-border-default)',
-                        padding: '14px 18px',
+                        padding: '14px 16px',
                         cursor: event.route ? 'pointer' : 'default',
-                        transition: 'box-shadow 0.15s',
                       }}
                     >
                       <div className="flex items-center" style={{ gap: 12 }}>
-                        <div style={{
-                          width: 36, height: 36, borderRadius: 10,
-                          backgroundColor: colors.bg, color: colors.fg,
-                          display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-                        }}>
-                          {getEventIcon(event.type)}
-                        </div>
+                        {/* Show mini ring for assessments, icon for others */}
+                        {pct !== null ? (
+                          <div style={{ position: 'relative', width: 36, height: 36, flexShrink: 0 }}>
+                            <svg viewBox="0 0 36 36" width={36} height={36}>
+                              <circle cx={18} cy={18} r={14} fill="none" stroke="var(--color-bg-muted)" strokeWidth={2.5} />
+                              <circle cx={18} cy={18} r={14} fill="none" stroke={colors.fg} strokeWidth={2.5}
+                                strokeLinecap="round"
+                                strokeDasharray={`${2 * Math.PI * 14}`}
+                                strokeDashoffset={`${2 * Math.PI * 14 * (1 - pct / 100)}`}
+                                style={{ transform: 'rotate(-90deg)', transformOrigin: 'center' }}
+                              />
+                            </svg>
+                            <span style={{
+                              position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                              fontSize: 9, fontWeight: 500, fontFamily: 'var(--font-family-base)', color: colors.fg,
+                            }}>
+                              {pct}%
+                            </span>
+                          </div>
+                        ) : (
+                          <div style={{
+                            width: 36, height: 36, borderRadius: 10,
+                            backgroundColor: colors.bg, color: colors.fg,
+                            display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+                          }}>
+                            {getEventIcon(event.type)}
+                          </div>
+                        )}
                         <div style={{ flex: 1, minWidth: 0 }}>
-                          <h4 style={{ ...f('sm', 500), margin: 0 }}>{event.title}</h4>
-                          <p style={{ ...f('xs', 400, 'var(--color-text-muted)'), margin: '2px 0 0' }}>
+                          <h4 style={{ ...f('sm', 500), margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{event.title}</h4>
+                          <p style={{ ...f('xs', 400, 'var(--color-text-muted)'), margin: '1px 0 0' }}>
                             {event.detail}
                             {event.date && ` \u00B7 ${new Date(event.date).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}`}
                           </p>
@@ -335,13 +384,13 @@ export function WellnessTimeline({ onNavigate }: WellnessTimelineProps) {
                           <span style={{
                             fontSize: 10, fontWeight: 500, fontFamily: 'var(--font-family-base)',
                             color: colors.fg, backgroundColor: colors.bg,
-                            padding: '2px 8px', borderRadius: 'var(--radius-pill)',
+                            padding: '3px 10px', borderRadius: 'var(--radius-pill)',
                             textTransform: 'capitalize' as const, flexShrink: 0,
                           }}>
                             {event.severity}
                           </span>
                         )}
-                        {event.route && <ChevronRight size={14} style={{ color: 'var(--color-text-muted)', flexShrink: 0 }} />}
+                        {event.route && <ChevronRight size={14} style={{ color: 'var(--color-text-muted)', flexShrink: 0, opacity: 0.4 }} />}
                       </div>
                     </div>
                   );

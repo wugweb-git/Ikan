@@ -1,5 +1,5 @@
 // emoji-utils.ts - iKan emoji system utilities
-import tokens from './design-tokens';
+// ALL scale data comes from server (KV). No hardcoded fallbacks.
 
 export interface EmojiData {
   id: string;
@@ -33,160 +33,6 @@ export interface ContextTag {
 }
 
 /**
- * Get emoji data from design tokens
- */
-export function getEmojiData(rating: 1 | 2 | 3 | 4 | 5): EmojiData {
-  const emojiData = tokens.emojiSet[rating.toString()];
-  return {
-    id: emojiData.id,
-    label: emojiData.label,
-    char: emojiData.char,
-    twemoji: emojiData.twemoji
-  };
-}
-
-/**
- * Get all mood options — returns cached server data if loaded, else design-token defaults
- */
-export function getMoodOptions(): MoodOption[] {
-  if (_cachedMoods) return _cachedMoods;
-  return [
-    {
-      emoji: tokens.emojiSet["1"].char,
-      label: tokens.emojiSet["1"].label,
-      value: 1,
-      id: tokens.emojiSet["1"].id,
-      color: 'var(--color-status-danger)', // Awful = danger
-      twemoji: tokens.emojiSet["1"].twemoji
-    },
-    {
-      emoji: tokens.emojiSet["2"].char,
-      label: tokens.emojiSet["2"].label,
-      value: 2,
-      id: tokens.emojiSet["2"].id,
-      color: 'var(--color-status-warning)', // Bad = warning
-      twemoji: tokens.emojiSet["2"].twemoji
-    },
-    {
-      emoji: tokens.emojiSet["3"].char,
-      label: tokens.emojiSet["3"].label,
-      value: 3,
-      id: tokens.emojiSet["3"].id,
-      color: 'var(--color-neutral-500)', // Meh = neutral
-      twemoji: tokens.emojiSet["3"].twemoji
-    },
-    {
-      emoji: tokens.emojiSet["4"].char,
-      label: tokens.emojiSet["4"].label,
-      value: 4,
-      id: tokens.emojiSet["4"].id,
-      color: 'var(--color-status-success)', // Good = success
-      twemoji: tokens.emojiSet["4"].twemoji
-    },
-    {
-      emoji: tokens.emojiSet["5"].char,
-      label: tokens.emojiSet["5"].label,
-      value: 5,
-      id: tokens.emojiSet["5"].id,
-      color: 'var(--color-status-success)', // Great = success
-      twemoji: tokens.emojiSet["5"].twemoji
-    }
-  ];
-}
-
-/**
- * Get mood option by rating value
- */
-export function getMoodOptionByValue(rating: number): MoodOption | undefined {
-  const options = getMoodOptions();
-  return options.find(option => option.value === rating);
-}
-
-/**
- * Get mood color by rating value
- */
-export function getMoodColor(rating: number): string {
-  const option = getMoodOptionByValue(rating);
-  return option?.color || 'var(--color-neutral-500)';
-}
-
-/**
- * Get mood emoji by rating value
- */
-export function getMoodEmoji(rating: number): string {
-  const option = getMoodOptionByValue(rating);
-  return option?.emoji || '😐';
-}
-
-/**
- * Get mood label by rating value
- */
-export function getMoodLabel(rating: number): string {
-  const option = getMoodOptionByValue(rating);
-  return option?.label || 'Unknown';
-}
-
-/**
- * CSS custom properties for mood colors (for dynamic styling)
- */
-export function getMoodCSSVars(rating: number): React.CSSProperties {
-  const color = getMoodColor(rating);
-  return {
-    '--mood-color': color,
-    '--mood-color-light': `color-mix(in srgb, ${color} 12%, transparent)`,
-    '--mood-color-border': `color-mix(in srgb, ${color} 25%, transparent)`
-  } as React.CSSProperties;
-}
-
-/**
- * Validate mood rating
- */
-export function isValidMoodRating(rating: any): rating is 1 | 2 | 3 | 4 | 5 {
-  return typeof rating === 'number' && rating >= 1 && rating <= 5 && Number.isInteger(rating);
-}
-
-/**
- * Get mood statistics helpers
- */
-export function getMoodStats(ratings: number[]) {
-  if (ratings.length === 0) {
-    return {
-      average: 0,
-      total: 0,
-      distribution: {},
-      mostCommon: null,
-      trend: 'neutral'
-    };
-  }
-
-  const average = ratings.reduce((sum, rating) => sum + rating, 0) / ratings.length;
-  const distribution = ratings.reduce((acc, rating) => {
-    acc[rating] = (acc[rating] || 0) + 1;
-    return acc;
-  }, {} as Record<number, number>);
-
-  const mostCommon = Object.entries(distribution)
-    .sort(([,a], [,b]) => b - a)[0]?.[0];
-
-  // Simple trend calculation (compare first half with second half)
-  const midpoint = Math.floor(ratings.length / 2);
-  const firstHalfAvg = ratings.slice(0, midpoint).reduce((sum, rating) => sum + rating, 0) / midpoint;
-  const secondHalfAvg = ratings.slice(midpoint).reduce((sum, rating) => sum + rating, 0) / (ratings.length - midpoint);
-  
-  let trend = 'neutral';
-  if (secondHalfAvg > firstHalfAvg + 0.3) trend = 'improving';
-  else if (secondHalfAvg < firstHalfAvg - 0.3) trend = 'declining';
-
-  return {
-    average: Math.round(average * 10) / 10, // Round to 1 decimal place
-    total: ratings.length,
-    distribution,
-    mostCommon: mostCommon ? parseInt(mostCommon) : null,
-    trend
-  };
-}
-
-/**
  * Resolve a severity keyword to actual color/bg tokens
  */
 function resolveSeverityColors(severity: string): { color: string; bg: string } {
@@ -205,42 +51,10 @@ function resolveSeverityColors(severity: string): { color: string; bg: string } 
   }
 }
 
-/**
- * Get energy emoji by value
- */
-export function getEnergyEmoji(value: number): string {
-  const opt = getEnergyOptions().find(o => o.value === value);
-  return opt?.emoji || '⚡';
-}
-
-/**
- * Get energy label by value
- */
-export function getEnergyLabel(value: number): string {
-  const opt = getEnergyOptions().find(o => o.value === value);
-  return opt?.label || 'Moderate';
-}
-
-/**
- * Get stress emoji by value
- */
-export function getStressEmoji(value: number): string {
-  const opt = getStressOptions().find(o => o.value === value);
-  return opt?.emoji || '😤';
-}
-
-/**
- * Get stress label by value
- */
-export function getStressLabel(value: number): string {
-  const opt = getStressOptions().find(o => o.value === value);
-  return opt?.label || 'Medium';
-}
-
 // ═══════════════════════════════════════════════════════════════════
-// ASYNC SERVER LOADING — Fetches admin-managed overrides from the
-// server and caches them. Falls back to design-token defaults.
-// ══════════════════════════════════════════════════════════════════
+// SERVER-LOADED CACHE — populated by loadCustomScales() at app mount.
+// No hardcoded fallbacks. If server hasn't been called yet, returns [].
+// ═══════════════════════════════════════════════════════════════════
 
 let _cachedMoods: MoodOption[] | null = null;
 let _cachedEnergy: ScaleOption[] | null = null;
@@ -253,6 +67,8 @@ let _loadPromise: Promise<void> | null = null;
 /**
  * Load custom scales from server. Call this once at app/page mount.
  * Safe to call multiple times (deduplicates).
+ * Server endpoints lazy-init defaults into KV on first read,
+ * so this will always return data (never empty on a fresh tenant).
  */
 export async function loadCustomScales(apiBase: string, anonKey: string): Promise<void> {
   if (_loadPromise) return _loadPromise;
@@ -266,20 +82,22 @@ export async function loadCustomScales(apiBase: string, anonKey: string): Promis
         fetch(`${apiBase}/scales/context-tags`, { headers }).then(r => r.ok ? r.json() : null).catch(() => null),
         fetch(`${apiBase}/scales/sleep`, { headers }).then(r => r.ok ? r.json() : null).catch(() => null),
         fetch(`${apiBase}/scales/pain`, { headers }).then(r => r.ok ? r.json() : null).catch(() => null),
-        fetch(`${apiBase}/moods`, { headers }).then(r => r.ok ? r.json() : null).catch(() => null),
+        fetch(`${apiBase}/scales/moods`, { headers }).then(r => r.ok ? r.json() : null).catch(() => null),
       ]);
 
-      // Mood types from AdminMoodManager (KV mood_type:* via /moods)
-      if (moodsRes?.moods && Array.isArray(moodsRes.moods) && moodsRes.moods.length > 0) {
-        _cachedMoods = moodsRes.moods
+      // Mood types from /scales/moods (lazy-inited by server)
+      const moodItems = moodsRes?.moods || moodsRes?.items;
+      if (moodItems && Array.isArray(moodItems) && moodItems.length > 0) {
+        _cachedMoods = moodItems
           .filter((m: any) => m.is_active !== false)
           .sort((a: any, b: any) => (a.value || a.order || 0) - (b.value || b.order || 0))
           .map((m: any) => ({
-            emoji: m.emoji || m.char || '😐',
-            label: m.label || 'Unknown',
+            emoji: m.emoji || m.char || '',
+            label: m.label || '',
             value: m.value,
             id: m.id,
             color: m.color || 'var(--color-neutral-500)',
+            twemoji: m.twemoji,
           }));
       }
 
@@ -330,9 +148,9 @@ export async function loadCustomScales(apiBase: string, anonKey: string): Promis
           });
       }
 
-      console.log('✅ Custom check-in scales loaded from server');
+      console.log('Custom check-in scales loaded from server');
     } catch (e) {
-      console.warn('⚠️ Could not load custom scales, using design-token defaults:', e);
+      console.warn('Could not load custom scales from server:', e);
     }
   })();
 
@@ -352,69 +170,178 @@ export function clearScaleCache(): void {
   _loadPromise = null;
 }
 
+// ═══════════════════════════════════════════════════════════════════
+// PUBLIC GETTERS — return server-cached data or empty []
+// ═══════════════════════════════════════════════════════════════════
+
 /**
- * Get energy options — returns cached server data if loaded, else design-token defaults
+ * Get emoji data by numeric rating — uses server-cached moods
+ */
+export function getEmojiData(rating: 1 | 2 | 3 | 4 | 5): EmojiData {
+  const moods = getMoodOptions();
+  const match = moods.find(m => m.value === rating);
+  if (match) {
+    return { id: match.id, label: match.label, char: match.emoji, twemoji: match.twemoji || '' };
+  }
+  // Render-safety fallback (not data initialization — just prevents crash)
+  return { id: `mood-${rating}`, label: `Level ${rating}`, char: '', twemoji: '' };
+}
+
+/**
+ * Get all mood options — returns server-cached data
+ */
+export function getMoodOptions(): MoodOption[] {
+  return _cachedMoods || [];
+}
+
+/**
+ * Get mood option by rating value
+ */
+export function getMoodOptionByValue(rating: number): MoodOption | undefined {
+  return getMoodOptions().find(option => option.value === rating);
+}
+
+/**
+ * Get mood color by rating value
+ */
+export function getMoodColor(rating: number): string {
+  return getMoodOptionByValue(rating)?.color || 'var(--color-neutral-500)';
+}
+
+/**
+ * Get mood emoji by rating value
+ */
+export function getMoodEmoji(rating: number): string {
+  return getMoodOptionByValue(rating)?.emoji || '';
+}
+
+/**
+ * Get mood label by rating value
+ */
+export function getMoodLabel(rating: number): string {
+  return getMoodOptionByValue(rating)?.label || '';
+}
+
+/**
+ * CSS custom properties for mood colors (for dynamic styling)
+ */
+export function getMoodCSSVars(rating: number): React.CSSProperties {
+  const color = getMoodColor(rating);
+  return {
+    '--mood-color': color,
+    '--mood-color-light': `color-mix(in srgb, ${color} 12%, transparent)`,
+    '--mood-color-border': `color-mix(in srgb, ${color} 25%, transparent)`
+  } as React.CSSProperties;
+}
+
+/**
+ * Validate mood rating
+ */
+export function isValidMoodRating(rating: any): rating is 1 | 2 | 3 | 4 | 5 {
+  return typeof rating === 'number' && rating >= 1 && rating <= 5 && Number.isInteger(rating);
+}
+
+/**
+ * Get mood statistics helpers
+ */
+export function getMoodStats(ratings: number[]) {
+  if (ratings.length === 0) {
+    return {
+      average: 0,
+      total: 0,
+      distribution: {},
+      mostCommon: null,
+      trend: 'neutral'
+    };
+  }
+
+  const average = ratings.reduce((sum, rating) => sum + rating, 0) / ratings.length;
+  const distribution = ratings.reduce((acc, rating) => {
+    acc[rating] = (acc[rating] || 0) + 1;
+    return acc;
+  }, {} as Record<number, number>);
+
+  const mostCommon = Object.entries(distribution)
+    .sort(([,a], [,b]) => b - a)[0]?.[0];
+
+  const midpoint = Math.floor(ratings.length / 2);
+  const firstHalfAvg = ratings.slice(0, midpoint).reduce((sum, rating) => sum + rating, 0) / midpoint;
+  const secondHalfAvg = ratings.slice(midpoint).reduce((sum, rating) => sum + rating, 0) / (ratings.length - midpoint);
+  
+  let trend = 'neutral';
+  if (secondHalfAvg > firstHalfAvg + 0.3) trend = 'improving';
+  else if (secondHalfAvg < firstHalfAvg - 0.3) trend = 'declining';
+
+  return {
+    average: Math.round(average * 10) / 10,
+    total: ratings.length,
+    distribution,
+    mostCommon: mostCommon ? parseInt(mostCommon) : null,
+    trend
+  };
+}
+
+/**
+ * Get energy options — returns server-cached data
  */
 export function getEnergyOptions(): ScaleOption[] {
-  if (_cachedEnergy) return _cachedEnergy;
-  return [1, 2, 3, 4, 5].map(v => {
-    const entry = (tokens as any).energyScale[v.toString()];
-    const { color, bg } = resolveSeverityColors(entry.severity);
-    return { value: v, id: entry.id, label: entry.label, emoji: entry.char, color, bg };
-  });
+  return _cachedEnergy || [];
 }
 
 /**
- * Get stress options — returns cached server data if loaded, else design-token defaults
+ * Get stress options — returns server-cached data
  */
 export function getStressOptions(): ScaleOption[] {
-  if (_cachedStress) return _cachedStress;
-  return [1, 2, 3, 4, 5].map(v => {
-    const entry = (tokens as any).stressScale[v.toString()];
-    const { color, bg } = resolveSeverityColors(entry.severity);
-    return { value: v, id: entry.id, label: entry.label, emoji: entry.char, color, bg };
-  });
+  return _cachedStress || [];
 }
 
 /**
- * Get context tags — returns cached server data if loaded, else design-token defaults
+ * Get context tags — returns server-cached data
  */
 export function getContextTags(): ContextTag[] {
-  if (_cachedTags) return _cachedTags;
-  return ((tokens as any).contextTags || []).map((t: any) => ({
-    id: t.id,
-    label: t.label,
-    emoji: t.char,
-  }));
+  return _cachedTags || [];
 }
 
 /**
- * Get sleep options — returns cached server data if loaded, else hardcoded defaults
+ * Get sleep options — returns server-cached data
  */
 export function getSleepOptions(): ScaleOption[] {
-  if (_cachedSleep) return _cachedSleep;
-  // Hardcoded defaults matching scales-routes.ts DEFAULT_SLEEP
-  return [
-    { value: 1, id: 'terrible',  label: 'Terrible',  emoji: '😩', color: 'var(--color-status-danger)',  bg: 'var(--color-status-danger-light)' },
-    { value: 2, id: 'poor',      label: 'Poor',      emoji: '😴', color: 'var(--color-status-warning)', bg: 'var(--color-status-warning-light)' },
-    { value: 3, id: 'fair',      label: 'Fair',      emoji: '😶‍🌫️', color: 'var(--color-neutral-500)',    bg: 'var(--color-neutral-200)' },
-    { value: 4, id: 'good',      label: 'Good',      emoji: '😌', color: 'var(--color-status-success)', bg: 'var(--color-status-success-light)' },
-    { value: 5, id: 'excellent', label: 'Excellent', emoji: '🌟', color: 'var(--color-status-success)', bg: 'var(--color-status-success-light)' },
-  ];
+  return _cachedSleep || [];
 }
 
 /**
- * Get pain options — returns cached server data if loaded, else hardcoded defaults
+ * Get pain options — returns server-cached data
  */
 export function getPainOptions(): ScaleOption[] {
-  if (_cachedPain) return _cachedPain;
-  return [
-    { value: 1, id: 'none',     label: 'None',     emoji: '😊', color: 'var(--color-status-success)', bg: 'var(--color-status-success-light)' },
-    { value: 2, id: 'mild',     label: 'Mild',     emoji: '😐', color: 'var(--color-status-info)',    bg: 'var(--color-status-info-light)' },
-    { value: 3, id: 'moderate', label: 'Moderate', emoji: '😕', color: 'var(--color-status-warning)', bg: 'var(--color-status-warning-light)' },
-    { value: 4, id: 'severe',   label: 'Severe',   emoji: '😧', color: 'var(--color-status-danger)',  bg: 'var(--color-status-danger-light)' },
-    { value: 5, id: 'extreme',  label: 'Extreme',  emoji: '😭', color: 'var(--color-status-danger)',  bg: 'var(--color-status-danger-light)' },
-  ];
+  return _cachedPain || [];
+}
+
+/**
+ * Get energy emoji by value
+ */
+export function getEnergyEmoji(value: number): string {
+  return getEnergyOptions().find(o => o.value === value)?.emoji || '';
+}
+
+/**
+ * Get energy label by value
+ */
+export function getEnergyLabel(value: number): string {
+  return getEnergyOptions().find(o => o.value === value)?.label || '';
+}
+
+/**
+ * Get stress emoji by value
+ */
+export function getStressEmoji(value: number): string {
+  return getStressOptions().find(o => o.value === value)?.emoji || '';
+}
+
+/**
+ * Get stress label by value
+ */
+export function getStressLabel(value: number): string {
+  return getStressOptions().find(o => o.value === value)?.label || '';
 }
 
 /**
@@ -433,7 +360,6 @@ export function getScaleByKey(key: string): ScaleOption[] {
 
 /**
  * Get all available scale keys with metadata — used by the admin builder dropdown
- * Reads actual data from server cache so the list reflects what admins have configured
  */
 export function getAvailableScaleKeys(): { value: string; label: string; emoji: string; count: number }[] {
   return [

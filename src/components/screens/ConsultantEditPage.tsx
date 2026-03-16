@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import {
   Save, Trash2, Eye, User, Briefcase, MapPin, DollarSign, Star,
   Video, Phone, MessageSquare, Languages, GraduationCap,
-  Heart, HelpCircle, Users, Clock, FileText, Upload, Plus, X, Quote, Sparkles
+  Heart, CircleHelp, Users, Clock, FileText, Upload, Plus, X, Quote, Sparkles
 } from 'lucide-react';
 import { useNotifications } from '../../contexts/NotificationContext';
 import { apiClient } from '../../lib/api-client';
@@ -675,7 +675,7 @@ export function ConsultantEditPage({ consultantId, onBack, onSave }: ConsultantE
         <AdminSection
           title="Common Client FAQs"
           description="Questions and answers that will be displayed on the therapist's profile"
-          icon={<HelpCircle className="w-5 h-5" />}
+          icon={<CircleHelp className="w-5 h-5" />}
           badge={<Badge variant="secondary" style={{ backgroundColor: 'var(--color-accent-default)', color: 'var(--color-text-primary)', fontWeight: 'var(--font-weight-medium)' }}>{formData.clientFAQs?.length || 0}</Badge>}
         >
           <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-4)' }}>

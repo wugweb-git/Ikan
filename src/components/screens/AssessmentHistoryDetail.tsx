@@ -66,6 +66,7 @@ const getTrend = (attempts: AssessmentAttempt[]) => {
 function ChartTooltip({ active, payload, label }: any) {
   if (!active || !payload?.length) return null;
   const data = payload[0].payload;
+  const pct = data.maxScore > 0 ? Math.round((data.score / data.maxScore) * 100) : 0;
   return (
     <div
       style={{
@@ -78,7 +79,7 @@ function ChartTooltip({ active, payload, label }: any) {
     >
       <p style={f('xs', 500)}>{data.dateLabel}</p>
       <p style={{ ...f('lg', 500), marginTop: 2 }}>
-        {data.score}<span style={f('xs', 400, 'var(--color-text-muted)')}> / {data.maxScore}</span>
+        {pct}%<span style={f('xs', 400, 'var(--color-text-muted)')}> ({data.score}/{data.maxScore})</span>
       </p>
       {data.severity && (
         <span
@@ -204,13 +205,16 @@ export function AssessmentHistoryDetail({ assessmentId, onBack, onNavigate }: As
 
     const attemptRows = attempts
       .map(
-        (a, i) => `
+        (a, i) => {
+          const aPct = a.maxScore > 0 ? Math.round((a.score / a.maxScore) * 100) : 0;
+          return `
         <tr>
           <td style="padding:10px 14px;border-bottom:1px solid #E9EBEF;">${i === 0 ? 'Latest' : `#${attempts.length - i}`}</td>
           <td style="padding:10px 14px;border-bottom:1px solid #E9EBEF;">${dateStr(a.completedAt)}</td>
-          <td style="padding:10px 14px;border-bottom:1px solid #E9EBEF;font-weight:500;">${a.score} / ${a.maxScore}</td>
+          <td style="padding:10px 14px;border-bottom:1px solid #E9EBEF;font-weight:500;">${aPct}% <span style="color:#717182;font-weight:400">(${a.score}/${a.maxScore})</span></td>
           <td style="padding:10px 14px;border-bottom:1px solid #E9EBEF;text-transform:capitalize;">${a.severity || '—'}</td>
-        </tr>`
+        </tr>`;
+        }
       )
       .join('');
 
@@ -259,7 +263,7 @@ export function AssessmentHistoryDetail({ assessmentId, onBack, onNavigate }: As
         <div class="summary">
           <div class="stat">
             <div class="stat-label">Latest Score</div>
-            <div class="stat-value">${latest.score}<span style="font-size:16px;color:#717182;font-weight:400"> / ${latest.maxScore}</span></div>
+            <div class="stat-value">${latest.maxScore > 0 ? Math.round((latest.score / latest.maxScore) * 100) : 0}%<span style="font-size:14px;color:#717182;font-weight:400"> (${latest.score}/${latest.maxScore})</span></div>
             ${latest.severity ? `<div class="stat-sub" style="text-transform:capitalize">${latest.severity}</div>` : ''}
           </div>
           <div class="stat">
@@ -448,8 +452,8 @@ export function AssessmentHistoryDetail({ assessmentId, onBack, onNavigate }: As
                     />
                   </svg>
                   <div className="absolute inset-0 flex flex-col items-center justify-center">
-                    <span style={f('xl', 500)}>{latest.score}</span>
-                    <span style={f('xs', 400, 'var(--color-text-muted)')}>/ {latest.maxScore}</span>
+                    <span style={f('xl', 500)}>{latest.maxScore > 0 ? Math.round((latest.score / latest.maxScore) * 100) : 0}%</span>
+                    <span style={f('xs', 400, 'var(--color-text-muted)')}>{latest.score} / {latest.maxScore}</span>
                   </div>
                 </div>
 
@@ -630,8 +634,8 @@ export function AssessmentHistoryDetail({ assessmentId, onBack, onNavigate }: As
 
                       {/* Score */}
                       <div className="text-right">
-                        <span style={f('lg', 500)}>{attempt.score}</span>
-                        <span style={f('xs', 400, 'var(--color-text-muted)')}> / {attempt.maxScore}</span>
+                        <span style={f('lg', 500)}>{Math.round(pct)}%</span>
+                        <span style={f('xs', 400, 'var(--color-text-muted)')}> ({attempt.score}/{attempt.maxScore})</span>
                         {attempt.severity && (
                           <div
                             style={{

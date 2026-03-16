@@ -3,7 +3,7 @@ import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { LogoIcon } from '../Logo';
-import { Lock, ArrowLeft, Loader2, AlertCircle, Eye, EyeOff, Mail } from 'lucide-react';
+import { Lock, ArrowLeft, Loader2, CircleAlert, Eye, EyeOff, Mail } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNotifications } from '../../contexts/NotificationContext';
 import { usePublicSettings } from '../../hooks/usePublicSettings';
@@ -268,7 +268,7 @@ export function AdminLoginScreen({ onNavigate, onLoginSuccess }: AdminLoginScree
             fontFamily: 'var(--font-family-base)',
           }}
         >
-          <AlertCircle className="w-4 h-4 shrink-0" />
+          <CircleAlert className="w-4 h-4 shrink-0" />
           <span>Authorized personnel only. All activities are logged.</span>
         </div>
       </div>

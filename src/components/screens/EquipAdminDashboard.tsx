@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { 
-  Plus, Edit3, Trash2, MoreVertical, Search, 
-  Layout, Users, ChevronRight 
+  Plus, Pencil, Trash2, MoreVertical, Search, 
+  LayoutGrid, Users, ChevronRight 
 } from 'lucide-react';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
@@ -103,8 +103,8 @@ export function EquipAdminDashboard({ onBack }: EquipAdminDashboardProps = {}) {
         title="Equip Program Manager"
         description="Manage wellness and therapeutic programs"
         stats={[
-          { label: 'Total Programs', value: programs.length, icon: <Layout className="h-4 w-4" style={{ color: 'var(--color-primary-default)' }} /> },
-          { label: 'Published', value: programs.filter(p => p.published).length, icon: <Layout className="h-4 w-4" style={{ color: 'var(--color-status-success)' }} /> },
+          { label: 'Total Programs', value: programs.length, icon: <LayoutGrid className="h-4 w-4" style={{ color: 'var(--color-primary-default)' }} /> },
+          { label: 'Published', value: programs.filter(p => p.published).length, icon: <LayoutGrid className="h-4 w-4" style={{ color: 'var(--color-status-success)' }} /> },
           { label: 'Total Enrollments', value: programs.reduce((acc, p) => acc + (p.enrollmentCount || 0), 0), icon: <Users className="h-4 w-4" style={{ color: 'var(--color-status-info)' }} /> },
         ]}
         actions={
@@ -165,7 +165,7 @@ export function EquipAdminDashboard({ onBack }: EquipAdminDashboardProps = {}) {
         ) : filteredPrograms.length === 0 ? (
           <div className="text-center py-24 rounded-xl border border-dashed" style={{ backgroundColor: 'var(--color-bg-card)', borderColor: 'var(--color-border-default)' }}>
             <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4" style={{ backgroundColor: 'var(--color-bg-muted)', color: 'var(--color-text-muted)' }}>
-              <Layout size={32} />
+              <LayoutGrid size={32} />
             </div>
             <h3 style={{ fontSize: 'var(--text-lg)', fontWeight: 'var(--font-weight-medium)', color: 'var(--color-text-primary)' }}>No programs found</h3>
             <p className="max-w-sm mx-auto mt-2 mb-6" style={{ color: 'var(--color-text-muted)' }}>
@@ -184,7 +184,7 @@ export function EquipAdminDashboard({ onBack }: EquipAdminDashboardProps = {}) {
                     <img src={program.thumbnail} alt={program.title} className="w-full h-full object-cover" />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center" style={{ color: 'var(--color-text-muted)' }}>
-                      <Layout size={32} />
+                      <LayoutGrid size={32} />
                     </div>
                   )}
                 </div>
@@ -209,7 +209,7 @@ export function EquipAdminDashboard({ onBack }: EquipAdminDashboardProps = {}) {
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                         <DropdownMenuItem onClick={() => handleEdit(program.id)}>
-                          <Edit3 size={14} className="mr-2" /> Edit
+                          <Pencil size={14} className="mr-2" /> Edit
                         </DropdownMenuItem>
                         <DropdownMenuItem style={{ color: 'var(--color-status-danger)' }} onClick={(e) => { e.stopPropagation(); handleDelete(program.id); }}>
                           <Trash2 size={14} className="mr-2" /> Delete
@@ -223,7 +223,7 @@ export function EquipAdminDashboard({ onBack }: EquipAdminDashboardProps = {}) {
                       <span>{program.enrollmentCount || 0} Enrolled</span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <Layout size={16} />
+                      <LayoutGrid size={16} />
                       <span>{program.daily_content?.length || 0} Days</span>
                     </div>
                     <div className="flex-1" />

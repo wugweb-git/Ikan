@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Save, Trash2, ClipboardList, HelpCircle, Eye, Plus, GripVertical, X, Upload, EyeOff } from 'lucide-react';
+import { Save, Trash2, ClipboardList, CircleHelp, Eye, Plus, GripVertical, X, Upload, EyeOff } from 'lucide-react';
 import { useNotifications } from '../../contexts/NotificationContext';
 import { apiClient } from '../../lib/api-client';
 import { AdminFormField } from '../admin/AdminFormField';

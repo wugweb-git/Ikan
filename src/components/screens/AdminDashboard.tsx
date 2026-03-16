@@ -417,19 +417,19 @@ export function AdminDashboard({ onNavigate, initialView }: AdminDashboardProps)
         )}
         style={{ willChange: isMobile ? 'transform' : 'auto' }}
       >
-          {/* Header Area in Sidebar */}
+          {/* Sidebar Logo Area */}
           <div className="h-[64px] lg:h-[72px] flex items-center px-4 border-b border-[var(--grey-2)] justify-between">
-              <div className="flex items-center gap-3 cursor-pointer" onClick={() => setCurrentView('dashboard')}>
-                <div className="rounded-lg p-1.5 flex items-center justify-center shrink-0" style={{ backgroundColor: 'var(--color-primary-default)' }}>
+              <div className="flex items-center gap-3 cursor-pointer min-w-0" onClick={() => setCurrentView('dashboard')}>
+                <div className="shrink-0 flex items-center justify-center" style={{ width: isMobile ? 36 : 40, height: isMobile ? 36 : 40 }}>
                   {siteSettings.logoIconUrl ? (
-                    <img src={siteSettings.logoIconUrl} alt={siteSettings.siteName || 'iKan'} style={{ width: isMobile ? 28 : 32, height: isMobile ? 28 : 32, objectFit: 'contain' }} />
+                    <img src={siteSettings.logoIconUrl} alt={siteSettings.siteName || 'iKan'} className="w-full h-full object-contain" />
                   ) : (
-                    <LogoIcon size={isMobile ? 28 : 32} style={{ color: 'var(--color-text-inverse)' }} />
+                    <LogoIcon size={isMobile ? 36 : 40} />
                   )}
                 </div>
-                <div>
-                  <span className="text-[var(--grey-9)] text-base lg:text-lg tracking-tight block leading-none" style={{ fontWeight: 'var(--font-weight-medium)', fontFamily: 'var(--font-family-base)' }}>{siteSettings.siteName || 'iKan'}</span>
-                  <span className="text-[var(--grey-5)] text-[10px] uppercase tracking-wider" style={{ fontWeight: 'var(--font-weight-medium)', fontFamily: 'var(--font-family-base)' }}>Admin Console</span>
+                <div className="min-w-0">
+                  <span className="block leading-tight truncate" style={{ fontSize: 'var(--text-base)', fontWeight: 'var(--font-weight-medium)', color: 'var(--color-text-primary)', fontFamily: 'var(--font-family-base)' }}>{siteSettings.siteName || 'iKan Mental Health'}</span>
+                  <span className="block leading-tight" style={{ fontSize: '10px', fontWeight: 'var(--font-weight-medium)', color: 'var(--color-text-muted)', letterSpacing: '0.08em', textTransform: 'uppercase', fontFamily: 'var(--font-family-base)' }}>Admin Console</span>
                 </div>
               </div>
               {isMobile && (
@@ -453,11 +453,12 @@ export function AdminDashboard({ onNavigate, initialView }: AdminDashboardProps)
         
         {/* Top Header */}
         <header
-          className="sticky top-0 z-30 px-3 lg:px-6 flex items-center justify-between gap-3"
+          className="sticky top-0 z-30 flex items-center justify-between gap-4"
           style={{
             backgroundColor: 'var(--color-bg-card)',
             borderBottom: '1px solid var(--color-border-default)',
             height: isMobile ? '56px' : '72px',
+            padding: isMobile ? '0 12px' : '0 24px',
           }}
         >
            {/* Mobile hamburger */}
@@ -466,7 +467,14 @@ export function AdminDashboard({ onNavigate, initialView }: AdminDashboardProps)
                variant="ghost"
                size="icon"
                onClick={() => setSidebarOpen(true)}
-               className="shrink-0 h-[44px] w-[44px] rounded-lg bg-[var(--grey-2)] text-[var(--grey-9)] border border-[var(--grey-3)]"
+               className="shrink-0"
+               style={{
+                 height: 40,
+                 width: 40,
+                 borderRadius: 'var(--radius-md)',
+                 backgroundColor: 'var(--color-bg-muted)',
+                 color: 'var(--color-text-primary)',
+               }}
              >
                <Menu className="w-5 h-5" />
              </Button>
@@ -475,23 +483,37 @@ export function AdminDashboard({ onNavigate, initialView }: AdminDashboardProps)
            {/* Search Area */}
            <div className="flex-1 min-w-0 max-w-xl">
               <div className="relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--grey-5)]" />
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: 'var(--color-text-muted)' }} />
                   <Input 
                       placeholder={isMobile ? "Search..." : "Search resources, users, or settings..."} 
-                      className="pl-10 border-transparent transition-all h-[44px] rounded-lg w-full"
-                      style={{ backgroundColor: 'var(--color-bg-muted)' }}
+                      className="pl-10 border-none w-full"
+                      style={{ 
+                        backgroundColor: 'var(--color-bg-muted)', 
+                        height: 40,
+                        borderRadius: 'var(--radius-md)',
+                        fontSize: 'var(--text-sm)',
+                        fontFamily: 'var(--font-family-base)',
+                      }}
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
                   />
                   {searchResults.length > 0 && (
                     <div 
-                      className="absolute top-full left-0 right-0 mt-1 z-50 rounded-lg border overflow-hidden"
-                      style={{ backgroundColor: 'var(--color-bg-card)', borderColor: 'var(--color-border-default)', boxShadow: 'var(--shadow-lg, 0 10px 15px -3px rgba(0,0,0,.1))' }}
+                      className="absolute top-full left-0 right-0 mt-1 z-50 overflow-hidden"
+                      style={{ 
+                        backgroundColor: 'var(--color-bg-card)', 
+                        border: '1px solid var(--color-border-default)',
+                        borderRadius: 'var(--radius-md)', 
+                        boxShadow: 'var(--shadow-lg, 0 10px 15px -3px rgba(0,0,0,.1))',
+                      }}
                     >
                       {searchResults.slice(0, 8).map((item) => (
                         <button
                           key={item.id}
-                          className="w-full text-left px-4 py-3 flex items-center justify-between hover:bg-[var(--color-bg-muted)] transition-colors"
+                          className="w-full text-left px-4 py-3 flex items-center justify-between transition-colors"
+                          style={{ fontFamily: 'var(--font-family-base)' }}
+                          onMouseOver={(e) => e.currentTarget.style.backgroundColor = 'var(--color-bg-muted)'}
+                          onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
                           onClick={() => { setCurrentView(item.id); setSearchQuery(''); setSearchResults([]); }}
                         >
                           <span style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--font-weight-medium)', color: 'var(--color-text-primary)' }}>{item.label}</span>
@@ -504,61 +526,109 @@ export function AdminDashboard({ onNavigate, initialView }: AdminDashboardProps)
            </div>
 
            {/* Right Actions */}
-           <div className="flex items-center gap-2 lg:gap-3 shrink-0">
+           <div className="flex items-center gap-2 shrink-0">
 
-              <Button variant="ghost" size="icon" className="bg-[var(--grey-2)] text-[var(--grey-9)] hover:bg-[var(--grey-3)] relative rounded-lg h-[44px] w-[44px] border border-[var(--grey-3)]" title="Notifications" onClick={() => { setCurrentView('communication'); window.scrollTo(0, 0); }}>
-                  <Bell className="w-5 h-5" />
+              {/* Notifications */}
+              <button
+                onClick={() => { setCurrentView('communication'); window.scrollTo(0, 0); }}
+                title="Notifications"
+                className="relative flex items-center justify-center transition-colors"
+                style={{
+                  width: 40,
+                  height: 40,
+                  borderRadius: 'var(--radius-md)',
+                  backgroundColor: 'var(--color-bg-muted)',
+                  color: 'var(--color-text-primary)',
+                  border: 'none',
+                  cursor: 'pointer',
+                }}
+                onMouseOver={(e) => e.currentTarget.style.backgroundColor = 'var(--color-border-default)'}
+                onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'var(--color-bg-muted)'}
+              >
+                  <Bell className="w-[18px] h-[18px]" />
                   {unreadCount > 0 && (
                     <span 
-                      className="absolute rounded-full border-2 border-[var(--grey-0)] pointer-events-none"
+                      className="absolute pointer-events-none flex items-center justify-center"
                       style={{ 
                         backgroundColor: 'var(--color-status-danger)',
-                        minWidth: '18px',
-                        height: '18px',
-                        top: '-4px',
-                        right: '-4px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        fontSize: 'var(--text-xs)',
+                        minWidth: 16,
+                        height: 16,
+                        top: -2,
+                        right: -2,
+                        borderRadius: '999px',
+                        border: '2px solid var(--color-bg-card)',
+                        fontSize: '10px',
                         color: 'var(--color-text-inverse)',
                         fontWeight: 'var(--font-weight-medium)',
-                        padding: '0 var(--spacing-1)'
+                        padding: '0 3px',
+                        lineHeight: 1,
                        }}
                     >
                       {unreadCount}
                     </span>
                   )}
-              </Button>
+              </button>
 
-              {/* User avatar -- always visible, name only on wide desktop */}
-              <div className="flex items-center gap-2 lg:gap-3 lg:ml-2 px-2 lg:px-3 py-1.5 bg-[var(--grey-1)] rounded-lg border border-[var(--grey-2)]">
-                  {!isMobile && !isCompact && (
-                    <div className="text-right">
-                        <p style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--font-weight-medium)', color: 'var(--grey-9)' }} className="leading-none">{user?.name || user?.email?.split('@')[0] || 'Admin'}</p>
-                        <p style={{ fontSize: 'var(--text-xs)', color: 'var(--grey-5)', marginTop: '4px' }}>Administrator</p>
-                    </div>
-                  )}
-                  <div className="w-8 h-8 rounded-full bg-[var(--grey-3)] text-[var(--grey-7)] flex items-center justify-center overflow-hidden">
+              {/* User Avatar + Info */}
+              <div 
+                className="flex items-center gap-2 cursor-default"
+                style={{
+                  padding: isMobile || isCompact ? '4px' : '4px 12px 4px 4px',
+                  borderRadius: 'var(--radius-md)',
+                  backgroundColor: 'var(--color-bg-muted)',
+                }}
+              >
+                  <div 
+                    className="flex items-center justify-center overflow-hidden shrink-0"
+                    style={{ 
+                      width: 32, 
+                      height: 32, 
+                      borderRadius: 'var(--radius-md)',
+                      backgroundColor: 'var(--color-primary-default)',
+                      color: 'var(--color-text-inverse)',
+                      fontSize: 'var(--text-sm)',
+                      fontWeight: 'var(--font-weight-medium)',
+                    }}
+                  >
                       {user?.avatar_url ? (
                         <img src={String(user.avatar_url)} alt="" className="w-full h-full object-cover" />
                       ) : (
-                        <User className="w-4 h-4" />
+                        <span>{(user?.name || user?.email || 'A').charAt(0).toUpperCase()}</span>
                       )}
                   </div>
+                  {!isMobile && !isCompact && (
+                    <div className="text-left min-w-0">
+                        <p className="leading-tight truncate" style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--font-weight-medium)', color: 'var(--color-text-primary)', fontFamily: 'var(--font-family-base)' }}>{user?.name || user?.email?.split('@')[0] || 'Admin'}</p>
+                    </div>
+                  )}
               </div>
               
-              <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  onClick={() => onNavigate('/')} 
-                  style={{ backgroundColor: 'var(--color-status-danger-light)', color: 'var(--color-status-danger)', borderColor: 'var(--color-status-danger-light)' }}
-                  className={cn("gap-2 h-[44px] rounded-lg border hover:opacity-80", (isMobile || isCompact) ? "px-2 w-[44px]" : "px-4 ml-1")}
-                  title="Exit Admin"
+              {/* Exit Admin */}
+              <button
+                onClick={() => onNavigate('/')} 
+                title="Exit Admin Console"
+                className="flex items-center justify-center gap-1.5 transition-colors"
+                style={{
+                  height: 40,
+                  minWidth: 40,
+                  paddingLeft: isMobile || isCompact ? 0 : 12,
+                  paddingRight: isMobile || isCompact ? 0 : 12,
+                  borderRadius: 'var(--radius-md)',
+                  backgroundColor: 'var(--color-status-danger-light)',
+                  color: 'var(--color-status-danger)',
+                  border: 'none',
+                  cursor: 'pointer',
+                  fontWeight: 'var(--font-weight-medium)',
+                  fontSize: 'var(--text-sm)',
+                  fontFamily: 'var(--font-family-base)',
+                  width: isMobile || isCompact ? 40 : 'auto',
+                }}
+                onMouseOver={(e) => e.currentTarget.style.opacity = '0.8'}
+                onMouseOut={(e) => e.currentTarget.style.opacity = '1'}
               >
                   <LogOut className="w-4 h-4" />
-                  {!isMobile && !isCompact && <span style={{ fontWeight: 'var(--font-weight-medium)' }}>Exit</span>}
-              </Button>
+                  {!isMobile && !isCompact && <span>Exit</span>}
+              </button>
            </div>
         </header>
 

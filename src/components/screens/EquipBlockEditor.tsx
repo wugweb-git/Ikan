@@ -14,7 +14,7 @@ import {
   Video,
   Layers,
   FastForward,
-  AlertCircle,
+  CircleAlert,
   Clock,
   Moon,
   Upload

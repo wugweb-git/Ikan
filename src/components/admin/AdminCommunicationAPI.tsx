@@ -2,14 +2,14 @@ import { useState, useEffect, useCallback } from 'react';
 import {
   Mail,
   MessageSquare,
-  CheckCircle,
+  CircleCheck,
   Save,
   TestTube,
   RefreshCw,
   Shield,
   Smartphone,
   Clock,
-  XCircle,
+  CircleX,
   ExternalLink,
 } from 'lucide-react';
 import { Button } from '../ui/button';
@@ -240,8 +240,8 @@ export function AdminCommunicationAPI() {
                   }}
                 >
                   {accountConnected
-                    ? <CheckCircle className="w-5 h-5" style={{ color: 'var(--color-success-default)' }} />
-                    : <XCircle className="w-5 h-5" style={{ color: 'var(--color-danger-default)' }} />
+                    ? <CircleCheck className="w-5 h-5" style={{ color: 'var(--color-success-default)' }} />
+                    : <CircleX className="w-5 h-5" style={{ color: 'var(--color-danger-default)' }} />
                   }
                 </div>
                 <div>
@@ -630,8 +630,8 @@ export function AdminCommunicationAPI() {
                     </div>
                     <div className="flex items-center gap-2">
                       {log.success
-                        ? <CheckCircle className="w-4 h-4" style={{ color: 'var(--color-success-default)' }} />
-                        : <XCircle className="w-4 h-4" style={{ color: 'var(--color-danger-default)' }} />
+                        ? <CircleCheck className="w-4 h-4" style={{ color: 'var(--color-success-default)' }} />
+                        : <CircleX className="w-4 h-4" style={{ color: 'var(--color-danger-default)' }} />
                       }
                       <span style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}>
                         {new Date(log.timestamp).toLocaleString()}

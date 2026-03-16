@@ -2652,20 +2652,28 @@ app.post("/admin/communication/test", requireAdmin, async (c) => {
 // ============================================================================
 
 /**
- * List all email templates (Admin Only)
+ * List all notification templates — email, sms, whatsapp (Admin Only)
  */
 app.get("/admin/communication/templates", requireAdmin, async (c) => {
   try {
-    const templates = await kv.getByPrefix('email-template:');
-    return c.json({ templates: templates || [] });
+    const templates = await kv.getByPrefix('notif-template:');
+    // Also migrate any old email-template: entries
+    const legacyTemplates = await kv.getByPrefix('email-template:');
+    const all = [...(templates || [])];
+    for (const lt of (legacyTemplates || [])) {
+      if (!all.find((t: any) => t.id === lt.id)) {
+        all.push({ ...lt, channel: lt.channel || 'email' });
+      }
+    }
+    return c.json({ templates: all });
   } catch (error) {
-    console.log(`Error fetching email templates: ${error}`);
-    return c.json({ error: 'Failed to fetch templates' }, 500);
+    console.log(`Error fetching notification templates: ${error}`);
+    return c.json({ error: `Failed to fetch templates: ${error}` }, 500);
   }
 });
 
 /**
- * Save/update an email template (Admin Only)
+ * Save/update a notification template (Admin Only)
  */
 app.post("/admin/communication/templates", requireAdmin, async (c) => {
   try {
@@ -2673,30 +2681,36 @@ app.post("/admin/communication/templates", requireAdmin, async (c) => {
     if (!template.id) {
       template.id = `tpl_${Date.now()}`;
     }
+    if (!template.channel) {
+      template.channel = 'email';
+    }
     template.updated_at = new Date().toISOString();
     if (!template.created_at) {
       template.created_at = template.updated_at;
     }
-    const key = `email-template:${template.id}`;
+    const key = `notif-template:${template.id}`;
     await kv.set(key, template);
+    // Clean up legacy key if it exists
+    await kv.del(`email-template:${template.id}`);
     return c.json({ success: true, template });
   } catch (error) {
-    console.log(`Error saving email template: ${error}`);
-    return c.json({ error: 'Failed to save template' }, 500);
+    console.log(`Error saving notification template: ${error}`);
+    return c.json({ error: `Failed to save template: ${error}` }, 500);
   }
 });
 
 /**
- * Delete an email template (Admin Only)
+ * Delete a notification template (Admin Only)
  */
 app.delete("/admin/communication/templates/:id", requireAdmin, async (c) => {
   try {
     const id = c.req.param('id');
+    await kv.del(`notif-template:${id}`);
     await kv.del(`email-template:${id}`);
     return c.json({ success: true });
   } catch (error) {
-    console.log(`Error deleting email template: ${error}`);
-    return c.json({ error: 'Failed to delete template' }, 500);
+    console.log(`Error deleting notification template: ${error}`);
+    return c.json({ error: `Failed to delete template: ${error}` }, 500);
   }
 });
 
@@ -3630,6 +3644,50 @@ app.get("/user-activity/feed", requireAuth, async (c) => {
 
     const feed: any[] = [];
 
+    // Pre-fetch assessment & equip definitions for name resolution
+    const assessmentDefs = await kv.getByPrefix('assessment_def:');
+    const assessmentNameMap = new Map<string, string>();
+    const assessmentMaxScoreMap = new Map<string, number>();
+    for (const def of (assessmentDefs || [])) {
+      if (def && (def.id || def.slug)) {
+        const title = def.title || def.name || '';
+        if (title) {
+          assessmentNameMap.set(def.id, title);
+          if (def.slug) assessmentNameMap.set(def.slug, title);
+        }
+        // Resolve max score from scoring ranges
+        if (def.scoring?.ranges?.length > 0) {
+          const maxFromRanges = def.scoring.ranges[def.scoring.ranges.length - 1]?.max;
+          if (maxFromRanges) {
+            assessmentMaxScoreMap.set(def.id, maxFromRanges);
+            if (def.slug) assessmentMaxScoreMap.set(def.slug, maxFromRanges);
+          }
+        }
+      }
+    }
+    const equipDefs = await kv.getByPrefix('equip:');
+    const equipNameMap = new Map<string, string>();
+    for (const def of (equipDefs || [])) {
+      if (def && def.id) {
+        const title = def.title || def.name || '';
+        if (title) equipNameMap.set(def.id, title);
+      }
+    }
+
+    const resolveAssessmentName = (r: any): string => {
+      const id = r.assessment_id || r.assessmentId || '';
+      if (assessmentNameMap.has(id)) return assessmentNameMap.get(id)!;
+      const stored = r.assessment_name || r.assessmentName || r.title || '';
+      if (stored && /[a-zA-Z]/.test(stored) && !stored.startsWith('asm_') && !stored.startsWith('checkin_') && stored.includes(' ')) return stored;
+      return id.replace(/^asm_\d+_/, '').replace(/[-_]/g, ' ').replace(/\b\w/g, (ch: string) => ch.toUpperCase()) || 'Assessment';
+    };
+
+    const resolveEquipName = (equipId: string, fallback?: string): string => {
+      if (equipNameMap.has(equipId)) return equipNameMap.get(equipId)!;
+      if (fallback && fallback.includes(' ') && !fallback.startsWith('equip_')) return fallback;
+      return equipId.replace(/[-_]/g, ' ').replace(/\b\w/g, (ch: string) => ch.toUpperCase()) || 'Program';
+    };
+
     // 1. Activity log entries (resource views, logins, etc.)
     const activities: any[] = (await kv.get(`user_activity:${userId}`)) || [];
     for (const act of activities) {
@@ -3649,13 +3707,21 @@ app.get("/user-activity/feed", requireAuth, async (c) => {
       if (!r || !r.id || seenAssessmentIds.has(r.id)) continue;
       seenAssessmentIds.add(r.id);
       if (r.completed_at || r.status === 'completed') {
-        const aName = r.assessment_name || r.assessmentName || r.assessment_id || 'Assessment';
+        const assessmentId = r.assessment_id || r.assessmentId || '';
+        if (assessmentId.startsWith('checkin_') || assessmentId.startsWith('checkin-')) continue;
+        const resolvedName = resolveAssessmentName(r);
+        const resolvedMax = r.max_score || r.maxScore || assessmentMaxScoreMap.get(assessmentId) || null;
+        const pctStr = (r.score !== undefined && resolvedMax) ? `${Math.round((r.score / resolvedMax) * 100)}% (${r.score}/${resolvedMax})` : '';
         feed.push({
           type: 'assessment_completed',
-          label: `Completed ${aName}`,
-          detail: r.score !== undefined ? `Score: ${r.score}${r.max_score ? `/${r.max_score}` : ''}` : '',
+          label: resolvedName,
+          detail: pctStr,
           timestamp: r.completed_at || r.created_at,
           route: '/assessment',
+          assessmentId,
+          assessmentName: resolvedName,
+          score: r.score,
+          maxScore: resolvedMax,
         });
       }
     }
@@ -3677,12 +3743,14 @@ app.get("/user-activity/feed", requireAuth, async (c) => {
     const progressEntries = await kv.getByPrefix(`progress:${userId}:`);
     for (const p of progressEntries) {
       if (!p || !p.day_completed) continue;
+      const eTitle = resolveEquipName(p.equip_id || '', p.equip_title);
       feed.push({
         type: 'program_day_completed',
         label: `Completed Day ${p.day_number || '?'}`,
-        detail: p.equip_title || p.equip_id || 'Program',
+        detail: eTitle,
         timestamp: p.completed_at || p.updated_at,
         route: p.equip_id ? `/equip-program-flow?id=${p.equip_id}` : '/equip',
+        equipName: eTitle,
       });
     }
 
@@ -3690,12 +3758,14 @@ app.get("/user-activity/feed", requireAuth, async (c) => {
     const enrollments = await kv.getByPrefix(`enrollment:${userId}:`);
     for (const e of enrollments) {
       if (!e) continue;
+      const eTitle = resolveEquipName(e.equip_id || '', e.equip_title);
       feed.push({
         type: e.status === 'completed' ? 'program_completed' : 'enrolled',
-        label: e.status === 'completed' ? 'Completed a program' : 'Enrolled in a program',
-        detail: e.equip_title || e.equip_id || 'Program',
+        label: e.status === 'completed' ? `Completed ${eTitle}` : `Enrolled in ${eTitle}`,
+        detail: eTitle,
         timestamp: e.status === 'completed' ? (e.completed_at || e.updated_at) : e.enrolled_at,
         route: e.equip_id ? `/equip-program-flow?id=${e.equip_id}` : '/equip',
+        equipName: eTitle,
       });
     }
 
@@ -3921,10 +3991,18 @@ app.get("/moods", async (c) => {
   try {
     const moods = await kv.getByPrefix('mood:');
     const validMoods = moods.filter((mood: any) => mood && mood.id);
-    console.log(`✅ Returning ${validMoods.length} mood types`);
-    return c.json({ moods: validMoods });
+    
+    if (validMoods.length > 0) {
+      console.log(`Returning ${validMoods.length} mood types`);
+      return c.json({ moods: validMoods });
+    }
+
+    // No moods in KV — the /scales/moods lazy-init handles seeding.
+    // Return empty here; frontend loadCustomScales() hits /scales/moods for init.
+    console.log('No mood types found in KV, returning empty');
+    return c.json({ moods: [] });
   } catch (error) {
-    console.error('❌ Get moods error:', error);
+    console.error('Get moods error:', error);
     return c.json({ error: 'Failed to retrieve mood types', moods: [] }, 500);
   }
 });
@@ -4326,18 +4404,7 @@ app.delete('/categories/:id', requireAdmin, async (c) => {
 // MOOD MANAGEMENT ENDPOINTS
 // =====================================================
 
-// Get all moods
-app.get('/moods', async (c) => {
-  try {
-    const moods = await kv.getByPrefix('mood:');
-    const validMoods = moods.filter((mood: any) => mood && mood.id);
-    console.log(`✅ Returning ${validMoods.length} moods`);
-    return c.json(validMoods);
-  } catch (error) {
-    console.error('Get moods error:', error);
-    return c.json({ error: 'Failed to fetch moods' }, 500);
-  }
-});
+// Get all moods — REMOVED duplicate; canonical handler is in MOOD TYPE MANAGEMENT section above
 
 // Get single mood
 app.get('/moods/:id', async (c) => {

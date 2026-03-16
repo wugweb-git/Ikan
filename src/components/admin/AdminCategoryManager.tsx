@@ -6,7 +6,7 @@ import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import {
-  Plus, X, Save, FolderOpen, Edit2, Trash2, FileText, Tag, Filter, Type, Sparkles, ShieldCheck,
+  Plus, X, Save, FolderOpen, Pencil, Trash2, FileText, Tag, Filter, Type, Sparkles, ShieldCheck,
   RefreshCw, Download, Search, Folder,
   Heart, HeartHandshake, HeartPulse,
   Brain, Activity, Zap, Flame, Sun, Moon, Cloud, CloudLightning,
@@ -28,7 +28,7 @@ import {
   LayoutGrid, Blocks,
   Signal, BarChart, TrendingUp,
   Link,
-  AlertTriangle, AlertCircle,
+  AlertTriangle, CircleAlert,
   Repeat,
   Wrench, Settings,
   Palette, PenTool, Calendar,
@@ -82,7 +82,7 @@ const ICON_MAP: Record<string, any> = {
   'layout-grid': LayoutGrid, 'blocks': Blocks,
   'signal': Signal, 'bar-chart': BarChart, 'trending-up': TrendingUp,
   'link': Link,
-  'alert-triangle': AlertTriangle, 'alert-circle': AlertCircle,
+  'alert-triangle': AlertTriangle, 'alert-circle': CircleAlert,
   'refresh-cw': RefreshCw, 'repeat': Repeat,
   'tool': Wrench, 'wrench': Wrench, 'settings': Settings,
   'palette': Palette, 'pen-tool': PenTool, 'calendar': Calendar,
@@ -696,7 +696,7 @@ export function AdminCategoryManager({ onBack }: AdminCategoryManagerProps) {
                             </div>
                             <div className="flex items-center gap-2 shrink-0 ml-2">
                               <Button variant="outline" size="sm" onClick={() => startEdit(item)} style={{ borderRadius: 'var(--radius-md)' }}>
-                                <Edit2 className="w-4 h-4" />
+                                <Pencil className="w-4 h-4" />
                               </Button>
                               <Button variant="outline" size="sm" onClick={() => handleDelete(item.id)} style={{ borderRadius: 'var(--radius-md)' }}>
                                 <Trash2 className="w-4 h-4" style={{ color: 'var(--color-status-danger)' }} />

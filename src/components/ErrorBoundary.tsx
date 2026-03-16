@@ -1,5 +1,5 @@
 import { Component, ErrorInfo, ReactNode } from 'react';
-import { AlertCircle, RefreshCw, Home } from 'lucide-react';
+import { CircleAlert, RefreshCw, House } from 'lucide-react';
 
 interface Props {
   children: ReactNode;
@@ -81,7 +81,7 @@ export class ErrorBoundary extends Component<Props, State> {
         <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: 'var(--color-bg-page)' }}>
           <div className="text-center space-y-4 max-w-md px-4">
             <div className="flex items-center justify-center mb-4">
-              <AlertCircle size={48} color="var(--color-status-danger)" />
+              <CircleAlert size={48} color="var(--color-status-danger)" />
             </div>
             
             <div className="space-y-4">
@@ -172,7 +172,7 @@ export class ErrorBoundary extends Component<Props, State> {
                     cursor: 'pointer'
                   }}
                 >
-                  <Home size={16} />
+                  <House size={16} />
                   Go to Homepage
                 </button>
               </div>
