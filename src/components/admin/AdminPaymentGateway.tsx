@@ -414,13 +414,13 @@ export function AdminPaymentGateway() {
             </h3>
             <div className="space-y-2" style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-muted)' }}>
               <p>
-                <strong>Razorpay:</strong> Get API keys from{' '}
+                <span style={{ fontWeight: 'var(--font-weight-medium)' }}>Razorpay:</span> Get API keys from{' '}
                 <a href="https://dashboard.razorpay.com/app/keys" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--color-primary-default)' }}>
                   Razorpay Dashboard
                 </a>
               </p>
               <p style={{ marginTop: 'var(--spacing-2)' }}>
-                <strong>Steps:</strong> 1. Create a Razorpay account → 2. Generate test API keys → 3. Enter keys above → 4. Test with a ₹1 payment → 5. Switch to live mode when ready.
+                <span style={{ fontWeight: 'var(--font-weight-medium)' }}>Steps:</span> 1. Create a Razorpay account → 2. Generate test API keys → 3. Enter keys above → 4. Test with a ₹1 payment → 5. Switch to live mode when ready.
               </p>
             </div>
           </CardContent>

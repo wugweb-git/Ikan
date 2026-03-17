@@ -151,7 +151,7 @@ class ApiClient {
       // Also suppress network errors (Failed to fetch) as they are transient
       const msg = error?.message?.toLowerCase() || '';
       const isNetworkErrorLog = error?.name === 'TypeError' && msg.includes('failed to fetch');
-      if (!error.message || (!error.message.includes('401') && !error.message.includes('404') && !error.message.includes('409') && !isNetworkErrorLog)) {
+      if (!error.message || (!error.message.includes('401') && !error.message.includes('403') && !error.message.includes('404') && !error.message.includes('409') && !isNetworkErrorLog)) {
         console.error('API Request failed', error);
       } else if (isNetworkErrorLog) {
         console.warn('API Request: network unreachable (will retry when online)');
@@ -585,17 +585,8 @@ class ApiClient {
 
   // Resources
   async getResources() {
-    // Try admin endpoint first if authenticated, else public
-    if (await this.isAuthenticated()) {
-      try {
-        const res = await this.request('/admin/resources', { method: 'GET' }, true);
-        const resources = res.resources || [];
-        cacheForOffline('resources', resources);
-        return resources;
-      } catch (e) {
-        // Fallback to library resources below
-      }
-    }
+    // Always use the public library endpoint for fetching resources
+    // Admin endpoint is only needed for admin CRUD operations
     try {
       const res = await this.request('/library/resources', { method: 'GET' }, true);
       const resources = res.resources || [];

@@ -179,6 +179,7 @@ export interface Activity {
 export interface DayContent {
   day: number;
   title: string;
+  subtitle?: string;
   description: string;
   activities: Activity[];
   image_url?: string;

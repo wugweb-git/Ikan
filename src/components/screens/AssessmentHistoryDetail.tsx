@@ -293,7 +293,7 @@ export function AssessmentHistoryDetail({ assessmentId, onBack, onNavigate }: As
         </table>
 
         <div class="disclaimer">
-          <strong>Note:</strong> This report is for personal reference and does not constitute a clinical diagnosis.
+          <span style="font-weight: 500;">Note:</span> This report is for personal reference and does not constitute a clinical diagnosis.
           Scores from self-report assessments should be discussed with a qualified mental health professional
           for proper interpretation.
         </div>

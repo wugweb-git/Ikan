@@ -207,7 +207,7 @@ function buildUserConfirmationHtml(name: string, subject: string): string {
     <div style="font-family: Ubuntu, system-ui, sans-serif; max-width: 600px; margin: 0 auto;">
       <h2 style="color: #2A2A2A; margin-bottom: 16px;">Thank you for reaching out, ${escapeHtml(name)}</h2>
       <p style="color: #151515; line-height: 1.6;">
-        We have received your message regarding <strong>"${escapeHtml(subject)}"</strong> and our team will get back to you within 24 hours.
+        We have received your message regarding <span style="font-weight: 500;">"${escapeHtml(subject)}"</span> and our team will get back to you within 24 hours.
       </p>
       <p style="color: #151515; line-height: 1.6;">
         If your matter is urgent, please don't hesitate to reach out to us directly at

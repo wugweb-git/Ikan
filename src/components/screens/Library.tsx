@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useIsMobile } from '../../hooks/useIsMobile';
 import { useMetadata } from '../../hooks/useMetadata';
 import { cn } from '../ui/utils';
-import { Search } from 'lucide-react';
+import { Search, BookOpen, Video, Headphones, FileText, Image as ImageIcon } from 'lucide-react';
 import { ResourcePost } from '../blocks/ResourceCard';
 import { apiClient } from '../../lib/api-client';
 import { logger } from '../../lib/logger';
@@ -19,27 +19,37 @@ interface LibraryProps {
 interface Resource extends ResourcePost {
   type: string;
   published: boolean;
+  featured?: boolean;
 }
+
+// Content type definitions with icons
+const CONTENT_TYPES = [
+  { value: 'all', label: 'All', icon: null },
+  { value: 'article', label: 'Articles', icon: FileText },
+  { value: 'video', label: 'Videos', icon: Video },
+  { value: 'podcast', label: 'Podcasts', icon: Headphones },
+  { value: 'guide', label: 'Guides', icon: BookOpen },
+  { value: 'infographic', label: 'Infographics', icon: ImageIcon },
+];
 
 export function Library({ onResourceSelect, onNavigate, className }: LibraryProps) {
   const isMobile = useIsMobile();
   const { categories: kvCategories, filterTypes: kvFilterTypes, loading: metaLoading } = useMetadata();
 
   const [searchQuery, setSearchQuery] = useState('');
-  const [activeCategoryFilter, setActiveCategoryFilter] = useState('All stories');
+  const [activeTab, setActiveTab] = useState<'categories' | 'content-type'>('categories');
+  const [activeCategoryFilter, setActiveCategoryFilter] = useState('All');
+  const [activeContentType, setActiveContentType] = useState('all');
   const [loading, setLoading] = useState(true);
   const [resources, setResources] = useState<Resource[]>([]);
 
-  // Ref to track if resources have been loaded
   const hasLoadedResources = useRef(false);
 
-  // Manual refresh function
   const handleRefresh = () => {
     hasLoadedResources.current = false;
     loadResources();
   };
 
-  // Load resources from API
   const loadResources = async () => {
     if (hasLoadedResources.current) return;
     
@@ -75,11 +85,11 @@ export function Library({ onResourceSelect, onNavigate, className }: LibraryProp
               image: resource.thumbnail || resource.image || resource.image_url || 
                      'https://images.unsplash.com/photo-1499750310107-5fef28a66643?w=800',
               slug: resource.id,
-              published: resource.published !== false
+              published: resource.published !== false,
+              featured: resource.featured === true
             };
           })
           .filter((resource: any) => resource.published !== false)
-          // Sort by date (newest first) - assuming ID or created_at correlates, but best to sort if date is reliable
           .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
         // Deduplicate
@@ -115,245 +125,414 @@ export function Library({ onResourceSelect, onNavigate, className }: LibraryProp
     }
   };
 
-  // Pull to refresh handler for mobile
   const handlePullToRefresh = async () => {
     hasLoadedResources.current = false;
     await loadResources();
   };
 
-  const categories = ['All stories', ...kvCategories.map(c => c.label)];
+  const categories = ['All', ...kvCategories.map(c => c.label)];
 
-  // Derived state for featured and latest news
-  const featuredResource = resources.length > 0 ? resources[0] : null;
-  const latestNews = resources.slice(1, 5);
+  // Featured resources (pinned from admin)
+  const featuredResources = resources.filter(r => r.featured);
 
-  // Filter remaining resources based on category and search
+  // Filter resources based on search, category, and content type
   const filteredResources = resources.filter(resource => {
-    const matchesSearch = resource.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         resource.description.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesSearch = !searchQuery || 
+      resource.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      resource.description.toLowerCase().includes(searchQuery.toLowerCase());
     
-    // Check if category matches (case insensitive)
-    // Note: resource.category might be "Sleep" or "sleep"
     const resourceCat = (resource.category || '').toLowerCase();
     const filterCat = activeCategoryFilter.toLowerCase();
+    const matchesCategory = activeCategoryFilter === 'All' || resourceCat === filterCat;
     
-    const matchesCategory = activeCategoryFilter === 'All stories' || 
-                           resourceCat === filterCat;
+    const matchesType = activeContentType === 'all' || resource.type === activeContentType;
     
-    return matchesSearch && matchesCategory;
+    return matchesSearch && matchesCategory && matchesType;
   });
 
   const content = (
     <div className={cn("w-full min-h-screen", className)} style={{ backgroundColor: 'var(--color-bg-page)' }}>
-      <div className="w-full max-w-[1400px] mx-auto px-4 py-8 md:px-12 md:py-16">
+      <div className="w-full max-w-[1400px] mx-auto px-4 py-8 md:px-12 md:py-12">
         
-        {/* Header Section */}
-        <div className="mx-[0px] my-[48px]">
+        {/* Page Title */}
+        <div style={{ marginBottom: 'var(--spacing-8)' }}>
           <h1 
-            className="text-4xl md:text-5xl lg:text-6xl mb-8"
-            style={{ fontFamily: 'var(--font-family-base)', fontWeight: 'var(--font-weight-medium)', color: 'var(--color-text-primary)' }}
+            style={{ 
+              fontSize: isMobile ? 'var(--text-3xl)' : 'var(--text-4xl)',
+              fontFamily: 'var(--font-family-base)', 
+              fontWeight: 'var(--font-weight-medium)', 
+              color: 'var(--color-text-primary)',
+              margin: '0 0 var(--spacing-2) 0'
+            }}
           >
-            Latest news
+            Resources
           </h1>
-
-          {/* Featured + Latest Grid */}
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-            
-            {/* Featured Card (Left) */}
-            <div className="lg:col-span-7 flex flex-col">
-              {loading ? (
-                 <div className="w-full h-[500px] bg-black/5 animate-pulse" style={{ borderRadius: 'var(--radius-xl)' }} />
-              ) : featuredResource ? (
-                <div 
-                  className="p-6 md:p-8 flex flex-col h-full hover:shadow-lg transition-shadow duration-300 cursor-pointer group"
-                  onClick={() => handleResourceClick(featuredResource)}
-                  style={{ backgroundColor: 'var(--color-bg-card)', borderRadius: 'var(--radius-xl)' }}
-                >
-                  <div className="relative w-full aspect-[16/10] rounded-2xl overflow-hidden mb-8" style={{ backgroundColor: 'var(--ikan-brand-library-accent)' }}>
-                    <ImageWithFallback
-                      src={resolveImageUrl(featuredResource.image)}
-                      alt={featuredResource.title}
-                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                    />
-                  </div>
-                  
-                  <div className="flex-1 flex flex-col items-start">
-                    <span 
-                      className="px-4 py-1.5 rounded-full text-sm font-medium mb-4"
-                      style={{ backgroundColor: 'var(--color-bg-muted)', color: 'var(--color-text-primary)' }}
-                    >
-                      Featured story
-                    </span>
-                    
-                    <h2 
-                      className="text-3xl md:text-4xl mb-4 leading-tight"
-                      style={{ fontFamily: 'var(--font-family-base)', fontWeight: 'var(--font-weight-medium)', color: 'var(--color-text-primary)' }}
-                    >
-                      {featuredResource.title}
-                    </h2>
-                    
-                    <p 
-                      className="mb-8 text-sm md:text-base"
-                      style={{ fontFamily: 'var(--font-family-base)', color: 'var(--color-text-muted)' }}
-                    >
-                      {featuredResource.date}
-                    </p>
-                    
-                    <button 
-                      className="mt-auto px-8 py-3 rounded-full font-medium text-sm hover:opacity-90 transition-opacity"
-                      style={{ 
-                        background: 'linear-gradient(90deg, var(--ikan-brand-cta-gradient-start) 0%, var(--ikan-brand-cta-gradient-end) 100%)',
-                        fontFamily: 'var(--font-family-base)',
-                        color: 'var(--color-text-primary)'
-                       }}
-                    >
-                      Read more
-                    </button>
-                  </div>
-                </div>
-              ) : null}
-            </div>
-
-            {/* Latest News Grid (Right) */}
-            <div className="lg:col-span-5 grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-10 content-start">
-              {loading ? (
-                Array.from({ length: 4 }).map((_, i) => (
-                  <div key={i} className="flex flex-col gap-3">
-                    <div className="w-full aspect-[4/3] bg-black/5 rounded-2xl animate-pulse" />
-                    <div className="h-4 bg-black/5 w-3/4 rounded animate-pulse" />
-                    <div className="h-3 bg-black/5 w-1/2 rounded animate-pulse" />
-                  </div>
-                ))
-              ) : latestNews.map((news) => (
-                <div 
-                  key={news.id} 
-                  className="flex flex-col group cursor-pointer"
-                  onClick={() => onNavigate?.(`/resource-detail?id=${news.id}`)}
-                >
-                  <div className="w-full aspect-[4/3] rounded-2xl overflow-hidden mb-4" style={{ backgroundColor: 'var(--color-bg-muted)' }}>
-                    <ImageWithFallback
-                      src={resolveImageUrl(news.image)}
-                      alt={news.title}
-                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                    />
-                  </div>
-                  <h3 
-                    className="text-lg leading-snug mb-2 transition-colors line-clamp-2"
-                    style={{ fontFamily: 'var(--font-family-base)', fontWeight: 'var(--font-weight-medium)', color: 'var(--color-text-primary)' }}
-                  >
-                    {news.title}
-                  </h3>
-                  <span 
-                    className="text-xs"
-                    style={{ fontFamily: 'var(--font-family-base)', color: 'var(--color-text-muted)' }}
-                  >
-                    {news.date}
-                  </span>
-                </div>
-              ))}
-            </div>
-
-          </div>
+          <p style={{ 
+            fontSize: 'var(--text-sm)', 
+            fontFamily: 'var(--font-family-base)', 
+            fontWeight: 400,
+            color: 'var(--color-text-muted)',
+            margin: 0
+          }}>
+            Explore articles, guides, and tools to support your mental health journey
+          </p>
         </div>
 
-        {/* News by Topic Section */}
-        <div className="mt-20">
-          <div className="flex flex-col gap-8 mb-10">
-            <h2 
-              className="text-4xl md:text-5xl"
-              style={{ fontFamily: 'var(--font-family-base)', fontWeight: 'var(--font-weight-medium)', color: 'var(--color-text-primary)' }}
-            >
-              News by topic
+        {/* Search Bar */}
+        <div className="relative max-w-lg" style={{ marginBottom: 'var(--spacing-6)' }}>
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: 'var(--color-text-muted)' }} />
+          <input 
+            type="text" 
+            placeholder="Search resources..." 
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full pl-10 pr-4 py-2.5 rounded-full border-none text-sm focus:ring-1 focus:ring-black/10"
+            style={{ 
+              backgroundColor: 'var(--color-bg-card)',
+              fontFamily: 'var(--font-family-base)',
+              color: 'var(--color-text-primary)',
+              height: 44,
+              fontSize: 'var(--text-sm)',
+            }}
+          />
+        </div>
+
+        {/* Tab Switcher: Categories / Content Type */}
+        <div className="flex" style={{ gap: 0, marginBottom: 'var(--spacing-6)', borderBottom: '1px solid var(--color-border-default)' }}>
+          {(['categories', 'content-type'] as const).map((tab) => {
+            const isActive = activeTab === tab;
+            return (
+              <button
+                key={tab}
+                onClick={() => setActiveTab(tab)}
+                style={{
+                  padding: 'var(--spacing-3) var(--spacing-5)',
+                  fontSize: 'var(--text-sm)',
+                  fontFamily: 'var(--font-family-base)',
+                  fontWeight: isActive ? 'var(--font-weight-medium)' : 400,
+                  color: isActive ? 'var(--color-text-primary)' : 'var(--color-text-muted)',
+                  background: 'none',
+                  border: 'none',
+                  borderBottom: isActive ? '2px solid var(--color-primary-default)' : '2px solid transparent',
+                  cursor: 'pointer',
+                  transition: 'all 0.15s',
+                  marginBottom: -1,
+                }}
+              >
+                {tab === 'categories' ? 'Categories' : 'Content Type'}
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Filter Pills based on active tab */}
+        <div className="flex flex-wrap" style={{ gap: 'var(--spacing-2)', marginBottom: 'var(--spacing-8)' }}>
+          {activeTab === 'categories' ? (
+            categories.map((cat) => {
+              const isActive = activeCategoryFilter === cat;
+              return (
+                <button
+                  key={cat}
+                  onClick={() => setActiveCategoryFilter(cat)}
+                  className={cn(
+                    "rounded-full text-sm transition-all duration-200 border",
+                    isActive ? "border-[var(--color-primary-default)]" : "border-transparent"
+                  )}
+                  style={{
+                    padding: 'var(--spacing-2) var(--spacing-4)',
+                    backgroundColor: isActive ? 'var(--color-primary-default)' : 'var(--color-bg-card)',
+                    color: isActive ? 'var(--color-text-inverse)' : 'var(--color-text-primary)',
+                    fontFamily: 'var(--font-family-base)',
+                    fontWeight: isActive ? 'var(--font-weight-medium)' : 400,
+                    fontSize: 'var(--text-sm)',
+                    cursor: 'pointer',
+                  }}
+                >
+                  {cat}
+                </button>
+              );
+            })
+          ) : (
+            CONTENT_TYPES.map((type) => {
+              const isActive = activeContentType === type.value;
+              const IconComp = type.icon;
+              return (
+                <button
+                  key={type.value}
+                  onClick={() => setActiveContentType(type.value)}
+                  className={cn(
+                    "rounded-full text-sm transition-all duration-200 border flex items-center",
+                    isActive ? "border-[var(--color-primary-default)]" : "border-transparent"
+                  )}
+                  style={{
+                    padding: 'var(--spacing-2) var(--spacing-4)',
+                    gap: 'var(--spacing-2)',
+                    backgroundColor: isActive ? 'var(--color-primary-default)' : 'var(--color-bg-card)',
+                    color: isActive ? 'var(--color-text-inverse)' : 'var(--color-text-primary)',
+                    fontFamily: 'var(--font-family-base)',
+                    fontWeight: isActive ? 'var(--font-weight-medium)' : 400,
+                    fontSize: 'var(--text-sm)',
+                    cursor: 'pointer',
+                  }}
+                >
+                  {IconComp && <IconComp size={14} />}
+                  {type.label}
+                </button>
+              );
+            })
+          )}
+        </div>
+
+        {/* Featured Resource Highlight */}
+        {!loading && featuredResources.length > 0 && !searchQuery && activeCategoryFilter === 'All' && activeContentType === 'all' && (
+          <div style={{ marginBottom: 'var(--spacing-8)' }}>
+            <h2 style={{
+              fontSize: 'var(--text-lg)',
+              fontFamily: 'var(--font-family-base)',
+              fontWeight: 'var(--font-weight-medium)',
+              color: 'var(--color-text-primary)',
+              marginBottom: 'var(--spacing-4)',
+            }}>
+              Featured
             </h2>
-            
-            {/* Filter Pills */}
-            <div className="flex flex-wrap gap-3">
-              {categories.map((cat) => {
-                const isActive = activeCategoryFilter === cat;
-                return (
-                  <button
-                    key={cat}
-                    onClick={() => setActiveCategoryFilter(cat)}
-                    className={cn(
-                      "px-6 py-2.5 rounded-full text-sm font-medium transition-all duration-200 border",
-                      isActive
-                        ? "border-[var(--color-primary-default)]"
-                        : "border-transparent"
-                    )}
-                    style={{
-                        backgroundColor: isActive ? 'var(--color-primary-default)' : 'var(--color-bg-card)',
-                        color: isActive ? 'var(--color-text-inverse)' : 'var(--color-text-primary)',
-                        fontFamily: 'var(--font-family-base)'
-                    }}
+            <div className={cn(
+              "grid gap-6",
+              featuredResources.length === 1 ? "grid-cols-1" : "grid-cols-1 md:grid-cols-2"
+            )}>
+              {featuredResources.slice(0, 2).map((resource) => (
+                <div
+                  key={`featured-${resource.id}`}
+                  className="group cursor-pointer flex flex-col md:flex-row overflow-hidden"
+                  onClick={() => onNavigate?.(`/resource-detail?id=${resource.id}`)}
+                  style={{
+                    backgroundColor: 'var(--color-bg-card)',
+                    borderRadius: 'var(--radius-lg)',
+                    boxShadow: 'var(--shadow-sm)',
+                    transition: 'box-shadow 0.2s',
+                  }}
+                  onMouseEnter={(e) => { e.currentTarget.style.boxShadow = 'var(--shadow-md)'; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.boxShadow = 'var(--shadow-sm)'; }}
+                >
+                  <div
+                    className="w-full md:w-2/5 aspect-[16/10] md:aspect-auto overflow-hidden"
+                    style={{ backgroundColor: 'var(--color-bg-muted)', minHeight: isMobile ? undefined : 200 }}
                   >
-                    {cat}
-                  </button>
-                );
-              })}
-            </div>
-
-            {/* Optional Search within topics */}
-            <div className="relative max-w-md">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: 'var(--color-text-muted)' }} />
-                <input 
-                    type="text" 
-                    placeholder="Search articles..." 
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2.5 rounded-full border-none text-sm focus:ring-1 focus:ring-black/10"
-                    style={{ 
-                        backgroundColor: 'var(--color-bg-card)',
-                        fontFamily: 'var(--font-family-base)',
-                        color: 'var(--color-text-primary)'
-                    }}
-                />
-            </div>
-          </div>
-
-          {/* All Resources Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-12">
-            {loading ? (
-                Array.from({ length: 8 }).map((_, i) => (
-                  <div key={i} className="flex flex-col gap-3">
-                    <div className="w-full aspect-[4/3] bg-black/5 rounded-2xl animate-pulse" />
-                    <div className="h-4 bg-black/5 w-3/4 rounded animate-pulse" />
-                    <div className="h-3 bg-black/5 w-1/2 rounded animate-pulse" />
+                    <ImageWithFallback
+                      src={resolveImageUrl(resource.image)}
+                      alt={resource.title}
+                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                    />
                   </div>
-                ))
-            ) : filteredResources.length > 0 ? (
-                filteredResources.map((resource) => (
-                    <div 
-                      key={resource.id} 
-                      className="flex flex-col group cursor-pointer"
-                      onClick={() => onNavigate?.(`/resource-detail?id=${resource.id}`)}
+                  <div className="flex-1 flex flex-col justify-center" style={{ padding: 'var(--spacing-5)' }}>
+                    <span
+                      style={{
+                        fontSize: 'var(--text-xs)',
+                        fontFamily: 'var(--font-family-base)',
+                        fontWeight: 'var(--font-weight-medium)',
+                        color: 'var(--color-primary-default)',
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.05em',
+                        marginBottom: 'var(--spacing-2)',
+                      }}
                     >
-                      <div className="w-full aspect-[4/3] rounded-2xl overflow-hidden mb-4" style={{ backgroundColor: 'var(--color-bg-muted)' }}>
-                        <ImageWithFallback
-                          src={resolveImageUrl(resource.image)}
-                          alt={resource.title}
-                          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                        />
-                      </div>
-                      <h3 
-                        className="text-lg leading-snug mb-2 transition-colors line-clamp-2"
-                        style={{ fontFamily: 'var(--font-family-base)', fontWeight: 'var(--font-weight-medium)', color: 'var(--color-text-primary)' }}
+                      Featured · {resource.category}
+                    </span>
+                    <h3
+                      className="line-clamp-2"
+                      style={{
+                        fontFamily: 'var(--font-family-base)',
+                        fontWeight: 'var(--font-weight-medium)',
+                        color: 'var(--color-text-primary)',
+                        fontSize: isMobile ? 'var(--text-lg)' : 'var(--text-xl)',
+                        margin: '0 0 var(--spacing-2) 0',
+                        lineHeight: 1.3,
+                      }}
+                    >
+                      {resource.title}
+                    </h3>
+                    {resource.description && (
+                      <p
+                        className="line-clamp-2"
+                        style={{
+                          fontFamily: 'var(--font-family-base)',
+                          color: 'var(--color-text-muted)',
+                          fontSize: 'var(--text-sm)',
+                          fontWeight: 400,
+                          margin: '0 0 var(--spacing-3) 0',
+                          lineHeight: 'var(--line-height-md)',
+                        }}
                       >
-                        {resource.title}
-                      </h3>
-                      <span 
-                        className="text-xs"
-                        style={{ fontFamily: 'var(--font-family-base)', color: 'var(--color-text-muted)' }}
-                      >
+                        {resource.description}
+                      </p>
+                    )}
+                    <div className="flex items-center" style={{ gap: 'var(--spacing-3)' }}>
+                      {resource.readTime && (
+                        <span style={{
+                          fontSize: 'var(--text-xs)',
+                          fontFamily: 'var(--font-family-base)',
+                          color: 'var(--color-text-muted)',
+                          fontWeight: 400,
+                        }}>
+                          {resource.readTime}
+                        </span>
+                      )}
+                      <span style={{
+                        fontSize: 'var(--text-xs)',
+                        fontFamily: 'var(--font-family-base)',
+                        color: 'var(--color-text-muted)',
+                        fontWeight: 400,
+                      }}>
                         {resource.date}
                       </span>
                     </div>
-                  ))
-            ) : (
-                <div className="col-span-full py-20 text-center">
-                    <p style={{ fontFamily: 'var(--font-family-base)', color: 'var(--color-text-muted)' }}>No articles found matching your criteria.</p>
+                  </div>
                 </div>
-            )}
+              ))}
+            </div>
           </div>
+        )}
+
+        {/* Results count */}
+        {!loading && (
+          <p style={{ 
+            fontSize: 'var(--text-xs)', 
+            fontFamily: 'var(--font-family-base)', 
+            color: 'var(--color-text-muted)',
+            marginBottom: 'var(--spacing-4)',
+            fontWeight: 400,
+          }}>
+            {filteredResources.length} {filteredResources.length === 1 ? 'resource' : 'resources'} found
+          </p>
+        )}
+
+        {/* Resources Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-6 gap-y-10">
+          {loading ? (
+            Array.from({ length: 8 }).map((_, i) => (
+              <div key={i} className="flex flex-col gap-3">
+                <div className="w-full aspect-[4/3] bg-black/5 rounded-2xl animate-pulse" />
+                <div className="h-4 bg-black/5 w-3/4 rounded animate-pulse" />
+                <div className="h-3 bg-black/5 w-1/2 rounded animate-pulse" />
+              </div>
+            ))
+          ) : filteredResources.length > 0 ? (
+            filteredResources.map((resource) => (
+              <div 
+                key={resource.id} 
+                className="flex flex-col group cursor-pointer"
+                onClick={() => onNavigate?.(`/resource-detail?id=${resource.id}`)}
+              >
+                <div 
+                  className="w-full aspect-[4/3] overflow-hidden mb-4" 
+                  style={{ backgroundColor: 'var(--color-bg-muted)', borderRadius: 'var(--radius-lg)' }}
+                >
+                  <ImageWithFallback
+                    src={resolveImageUrl(resource.image)}
+                    alt={resource.title}
+                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                  />
+                </div>
+                {/* Type badge */}
+                <div className="flex items-center" style={{ gap: 'var(--spacing-2)', marginBottom: 'var(--spacing-2)' }}>
+                  <span 
+                    style={{ 
+                      fontSize: 'var(--text-xs)', 
+                      fontFamily: 'var(--font-family-base)',
+                      fontWeight: 'var(--font-weight-medium)',
+                      color: 'var(--color-text-muted)',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.04em',
+                    }}
+                  >
+                    {resource.category}
+                  </span>
+                  {resource.readTime && (
+                    <>
+                      <span style={{ color: 'var(--color-text-muted)', fontSize: 'var(--text-xs)' }}>·</span>
+                      <span style={{ 
+                        fontSize: 'var(--text-xs)', 
+                        fontFamily: 'var(--font-family-base)',
+                        color: 'var(--color-text-muted)',
+                        fontWeight: 400,
+                      }}>
+                        {resource.readTime}
+                      </span>
+                    </>
+                  )}
+                </div>
+                <h3 
+                  className="leading-snug mb-2 transition-colors line-clamp-2"
+                  style={{ 
+                    fontFamily: 'var(--font-family-base)', 
+                    fontWeight: 'var(--font-weight-medium)', 
+                    color: 'var(--color-text-primary)',
+                    fontSize: 'var(--text-base)',
+                    margin: '0 0 var(--spacing-1) 0',
+                  }}
+                >
+                  {resource.title}
+                </h3>
+                {resource.description && (
+                  <p 
+                    className="line-clamp-2"
+                    style={{ 
+                      fontFamily: 'var(--font-family-base)', 
+                      color: 'var(--color-text-muted)',
+                      fontSize: 'var(--text-sm)',
+                      fontWeight: 400,
+                      margin: '0 0 var(--spacing-2) 0',
+                      lineHeight: 'var(--line-height-md)',
+                    }}
+                  >
+                    {resource.description}
+                  </p>
+                )}
+                <span 
+                  style={{ 
+                    fontFamily: 'var(--font-family-base)', 
+                    color: 'var(--color-text-muted)',
+                    fontSize: 'var(--text-xs)',
+                    fontWeight: 400,
+                  }}
+                >
+                  {resource.date}
+                </span>
+              </div>
+            ))
+          ) : (
+            <div className="col-span-full py-20 text-center">
+              <div style={{ fontSize: 48, marginBottom: 'var(--spacing-4)' }}>📚</div>
+              <p style={{ 
+                fontFamily: 'var(--font-family-base)', 
+                color: 'var(--color-text-muted)',
+                fontSize: 'var(--text-sm)',
+                fontWeight: 400,
+              }}>
+                No resources found matching your criteria.
+              </p>
+              <button
+                onClick={() => {
+                  setSearchQuery('');
+                  setActiveCategoryFilter('All');
+                  setActiveContentType('all');
+                }}
+                style={{
+                  marginTop: 'var(--spacing-3)',
+                  fontSize: 'var(--text-sm)',
+                  fontFamily: 'var(--font-family-base)',
+                  fontWeight: 'var(--font-weight-medium)',
+                  color: 'var(--color-primary-default)',
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  textDecoration: 'underline',
+                  textUnderlineOffset: 2,
+                }}
+              >
+                Clear all filters
+              </button>
+            </div>
+          )}
         </div>
 
       </div>

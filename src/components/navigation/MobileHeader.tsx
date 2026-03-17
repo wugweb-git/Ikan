@@ -37,6 +37,7 @@ const ROUTE_TITLES: Record<string, string> = {
   '/cancellation-policy': 'Cancellation Policy',
   '/sitemap': 'Sitemap',
   '/payment-history': 'Payment History',
+  '/learning-diary': 'Learning Diary',
 };
 
 // Routes where we DON'T show a back button (top-level tabs)

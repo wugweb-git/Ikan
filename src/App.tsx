@@ -93,6 +93,7 @@ const MoodJournal = lazy(() => lazyRetry(() => import('./components/screens/Mood
 const ResourceDetail = lazy(() => lazyRetry(() => import('./components/screens/ResourceDetail').then(m => ({ default: m.ResourceDetail })), 'ResourceDetail'));
 const ProfessionalApplication = lazy(() => lazyRetry(() => import('./components/screens/ProfessionalApplication').then(m => ({ default: m.ProfessionalApplication })), 'ProfessionalApplication'));
 const WellnessTimeline = lazy(() => lazyRetry(() => import('./components/screens/WellnessTimeline').then(m => ({ default: m.WellnessTimeline })), 'WellnessTimeline'));
+const LearningDiary = lazy(() => lazyRetry(() => import('./components/screens/LearningDiary').then(m => ({ default: m.LearningDiary })), 'LearningDiary'));
 
 // Static/legal pages
 const AboutUs = lazy(() => lazyRetry(() => import('./components/screens/AboutUs').then(m => ({ default: m.AboutUs })), 'AboutUs'));
@@ -166,12 +167,24 @@ function AppContent() {
     // Read the initial route from the URL so direct navigation (e.g. /join/professional) works
     if (typeof window !== 'undefined') {
       const path = window.location.pathname;
+      // Handle /consultation/:id pattern — extract to /consultation-detail
+      if (path.startsWith('/consultation/') && path !== '/consultation/') {
+        return '/consultation-detail';
+      }
       if (path && path !== '/') return path;
     }
     return DEFAULT_PUBLIC_ROUTE;
   });
   const [resourceDetailId, setResourceDetailId] = useState<string | null>(null);
-  const [consultantId, setConsultantId] = useState<string | null>(null);
+  const [consultantId, setConsultantId] = useState<string | null>(() => {
+    if (typeof window !== 'undefined') {
+      const path = window.location.pathname;
+      if (path.startsWith('/consultation/') && path !== '/consultation/') {
+        return path.split('/consultation/')[1];
+      }
+    }
+    return null;
+  });
 
   const handleSignIn = () => {
     setCurrentRoute('/login');
@@ -195,7 +208,8 @@ function AppContent() {
         '/about', '/faq', '/privacy', '/privacy-policy', '/terms', '/contact', '/return-policy', '/cancellation-policy', '/sitemap', '/login',
         '/admin', '/admin/login', '/admin/resources', '/admin/equip', '/admin/users', '/admin/consultants', '/admin/assessments', '/admin/analytics', '/admin/settings', '/admin/pages', '/admin/media', '/admin/crud', '/admin/contact-newsletter',
         '/join/professional',
-        '/timeline'
+        '/timeline',
+        '/learning-diary'
       ];
       
       // Handle consultant detail route pattern
@@ -338,7 +352,14 @@ function AppContent() {
   useEffect(() => {
     const handlePopState = () => {
       const path = window.location.pathname;
-      setCurrentRoute(path || DEFAULT_PUBLIC_ROUTE);
+      // Handle /consultation/:id pattern on back/forward
+      if (path.startsWith('/consultation/') && path !== '/consultation/') {
+        const id = path.split('/consultation/')[1];
+        setConsultantId(id);
+        setCurrentRoute('/consultation-detail');
+      } else {
+        setCurrentRoute(path || DEFAULT_PUBLIC_ROUTE);
+      }
       window.scrollTo({ top: 0 });
     };
 
@@ -508,6 +529,8 @@ function AppContent() {
           return withSuspense(<ProfessionalApplication onNavigate={handleNavigate} />);
         case '/timeline':
           return withSuspense(<WellnessTimeline onNavigate={handleNavigate} />);
+        case '/learning-diary':
+          return withSuspense(<LearningDiary equipId={queryParams.id} onNavigate={handleNavigate} />);
         default: {
           // Try CMS page rendering for /page/:slug routes
           if (currentRoute.startsWith('/page/')) {

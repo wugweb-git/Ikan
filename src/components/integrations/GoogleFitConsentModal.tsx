@@ -88,7 +88,7 @@ export function GoogleFitConsentModal({ isOpen, onClose, onConfirm }: GoogleFitC
             >
               <Shield className="w-4 h-4 mt-0.5 shrink-0" />
               <p>
-                Your data is stored securely and used <strong>only</strong> for trend overlays. It never affects your clinical scoring or diagnosis.
+                Your data is stored securely and used <span style={{ fontWeight: 'var(--font-weight-medium)' }}>only</span> for trend overlays. It never affects your clinical scoring or diagnosis.
               </p>
             </div>
           </div>

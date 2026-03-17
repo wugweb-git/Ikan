@@ -323,7 +323,7 @@ export function Assessments({ className, onNavigate }: AssessmentsProps) {
   const handleAssessmentComplete = async (results: any) => {
     // Run Recommendation Engine
     const score = results.score || 0;
-    const maxScore = results.maxScore || 100;
+    const maxScore = results.maxScore || 0;
     
     const recommendation = evaluateAssessment(
        selectedAssessment?.slug || selectedAssessment?.id || '',
@@ -848,7 +848,7 @@ export function Assessments({ className, onNavigate }: AssessmentsProps) {
         <AssessmentResults
           assessmentId={selectedAssessment.id}
           score={assessmentResults.score}
-          maxScore={assessmentResults.maxScore || 100}
+          maxScore={assessmentResults.maxScore}
           recommendation={assessmentResults.recommendation}
           onNavigate={onNavigate}
           onReturnToDashboard={handleReturnToList}

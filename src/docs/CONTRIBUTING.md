@@ -1,6 +1,6 @@
 # iKan PWA - Contributing Guide
 
-> **Last updated**: March 12, 2026
+> **Last updated**: March 17, 2026
 > **Audience**: All contributors
 
 ---

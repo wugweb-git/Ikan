@@ -337,6 +337,16 @@ export const routes: RouteConfig[] = [
     showInPrivateNav: true,
     description: 'Account settings and preferences'
   },
+  {
+    path: '/learning-diary',
+    label: 'Learning Diary',
+    isPublic: false,
+    requiresAuth: true,
+    showInNavigation: false,
+    showInPublicNav: false,
+    showInPrivateNav: false,
+    description: 'Your program learning diary and worksheet'
+  },
 
   // Admin Routes
   {

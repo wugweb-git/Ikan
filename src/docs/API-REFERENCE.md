@@ -1,6 +1,6 @@
 # iKan PWA - API Reference
 
-> **Last updated**: March 12, 2026
+> **Last updated**: March 17, 2026
 > **Base URL**: `https://<projectId>.supabase.co/functions/v1/make-server-cc205da9`
 > **Auth**: `Authorization: Bearer <jwt>` (user JWT or anon key for public endpoints)
 

@@ -43,7 +43,7 @@ export function PageHero({
   return (
     <section
       className={cn(
-        'relative w-full flex flex-col items-center justify-center text-center overflow-hidden pt-[140px] pb-[60px] md:pt-[160px] md:pb-[80px]',
+        'relative w-full flex flex-col items-center justify-center text-center overflow-hidden pt-[100px] pb-[36px] md:pt-[160px] md:pb-[80px]',
         className
       )}
       style={{ backgroundColor: '#1a1a1a' }}

@@ -79,22 +79,17 @@ export function IkanScoreCard({ onNavigate, isLoggedIn = true }: IkanScoreCardPr
       <div
         onClick={() => onNavigate?.('/timeline')}
         style={{
-          background: 'rgba(255,255,255,0.6)',
-          backdropFilter: 'blur(30px)',
-          WebkitBackdropFilter: 'blur(30px)',
-          borderRadius: 28,
-          border: '1px solid rgba(255,255,255,0.4)',
-          boxShadow: '0 30px 80px rgba(0,0,0,0.12)',
-          padding: '28px 24px',
+          background: 'var(--color-bg-card)',
+          borderRadius: 'var(--radius-lg)',
+          border: '1px solid var(--color-border-default)',
+          boxShadow: 'var(--shadow-sm)',
+          padding: '20px',
           cursor: 'pointer',
-          position: 'relative',
-          overflow: 'hidden',
+          textAlign: 'center',
         }}
       >
-        <div style={{ textAlign: 'center' }}>
-          <h3 style={{ ...f('base', 500), margin: 0 }}>iKAN Score</h3>
-          <p style={{ ...f('xs', 400, 'var(--color-text-muted)'), margin: '8px 0 0' }}>Unable to compute score right now</p>
-        </div>
+        <h3 style={{ ...f('sm', 500), margin: 0 }}>iKAN Score</h3>
+        <p style={{ ...f('xs', 400, 'var(--color-text-muted)'), margin: '6px 0 0' }}>Unable to compute score right now</p>
       </div>
     );
   }

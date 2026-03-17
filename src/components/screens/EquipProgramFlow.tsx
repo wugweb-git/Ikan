@@ -451,9 +451,9 @@ function EquipProgramHome({ program, progress, onStartSession, onSelectDay, onRe
                       <h3 style={{ ...f('lg', 500), margin: '0 0 4px' }}>
                         {selectedDayContent.title}
                       </h3>
-                      {selectedDayContent.description && (
+                      {(selectedDayContent.description || selectedDayContent.subtitle) && (
                         <p style={{ ...f('sm', 400, B.muted), margin: 0, lineHeight: 1.5 }}>
-                          {selectedDayContent.description}
+                          {selectedDayContent.subtitle || selectedDayContent.description}
                         </p>
                       )}
                     </div>

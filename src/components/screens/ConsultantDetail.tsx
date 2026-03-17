@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import { apiClient } from '../../lib/api-client';
 import { useIsMobile } from '../../hooks/useIsMobile';
 import { toast } from 'sonner@2.0.3';
@@ -5,6 +6,19 @@ import { MobileHeader } from '../navigation/MobileHeader';
 import { LoadingSpinner } from '../LoadingSpinner';
 import { BookingModal } from '../blocks/BookingModal';
 import { copyToClipboard } from '../../lib/clipboard';
+import { cn } from '../ui/utils';
+import { Star, MapPin, Clock, Video, Phone, MessageCircle, House, Globe, Check, ChevronRight, Share2, Calendar, Heart, Award, CircleCheck, Quote, ThumbsUp, Users, Play } from 'lucide-react';
+import { Avatar, AvatarImage, AvatarFallback } from '../ui/avatar';
+import { Badge } from '../ui/badge';
+import { Card, CardContent } from '../ui/card';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '../ui/tabs';
+import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from '../ui/accordion';
+import { Button } from '../ui/button';
+import { Input } from '../ui/input';
+import { Label } from '../ui/label';
+import { Textarea } from '../ui/textarea';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '../ui/dialog';
+import { Separator } from '../ui/separator';
 
 // Define types locally
 export interface ConsultantAvailability {
@@ -117,8 +131,20 @@ export function ConsultantDetail({ consultantId, onNavigate, className }: Consul
 
   if (!consultant) {
     return (
-      <div className="flex items-center justify-center min-h-screen" style={{ backgroundColor: 'var(--color-bg-page)' }}>
-        <LoadingSpinner message="Loading consultant..." />
+      <div className="flex flex-col items-center justify-center min-h-screen" style={{ backgroundColor: 'var(--color-bg-page)', gap: 'var(--spacing-4)' }}>
+        <div style={{ fontSize: 48, marginBottom: 'var(--spacing-2)' }}>🔍</div>
+        <h2 style={{ fontSize: 'var(--text-lg)', fontWeight: 'var(--font-weight-medium)', color: 'var(--color-text-primary)', margin: 0 }}>
+          Consultant not found
+        </h2>
+        <p style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--font-weight-regular)', color: 'var(--color-text-muted)', margin: 0, textAlign: 'center', maxWidth: 320 }}>
+          This consultant profile may have been removed or is currently unavailable.
+        </p>
+        <Button
+          onClick={() => onNavigate?.('/consultation')}
+          style={{ marginTop: 'var(--spacing-2)', borderRadius: 'var(--radius-md)' }}
+        >
+          Browse Consultants
+        </Button>
       </div>
     );
   }
@@ -179,15 +205,15 @@ export function ConsultantDetail({ consultantId, onNavigate, className }: Consul
     setQuestionerName('');
   };
 
-  const availableSlots = consultant.availability.find(a => a.date === selectedDate)?.slots || [];
-  const currentPrice = consultant.pricing[selectedSessionType as keyof typeof consultant.pricing] || 0;
+  const availableSlots = (consultant.availability || []).find(a => a.date === selectedDate)?.slots || [];
+  const currentPrice = consultant.pricing?.[selectedSessionType as keyof typeof consultant.pricing] || 0;
 
   const categoryLabel = {
     'therapist': 'Therapist',
     'psychiatrist': 'Psychiatrist',
     'counselor': 'Counselor',
     'family-therapist': 'Family Therapist'
-  }[consultant.category];
+  }[consultant.category] || consultant.category;
 
   return (
     <div className={cn("flex flex-col min-h-screen", className)} style={{ backgroundColor: 'var(--color-bg-page)' }}>
@@ -279,7 +305,7 @@ export function ConsultantDetail({ consultantId, onNavigate, className }: Consul
                     <span style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--font-weight-regular)', color: 'var(--color-text-muted)' }}>
                       Languages:
                     </span>
-                    {consultant.languages.map(lang => (
+                    {(consultant.languages || []).map(lang => (
                       <Badge key={lang} variant="outline" style={{ fontWeight: 'var(--font-weight-regular)', fontSize: 'var(--text-xs)' }}>
                         {lang}
                       </Badge>
@@ -288,7 +314,7 @@ export function ConsultantDetail({ consultantId, onNavigate, className }: Consul
 
                   {/* Session Modes */}
                   <div className="flex flex-wrap gap-2">
-                    {consultant.sessionModes.map(mode => (
+                    {(consultant.sessionModes || []).map(mode => (
                       <Badge key={mode} style={{ fontWeight: 'var(--font-weight-regular)', fontSize: 'var(--text-xs)' }}>
                         {mode === 'online' && <Video className="mr-1 h-3 w-3" />}
                         {mode === 'call' && <Phone className="mr-1 h-3 w-3" />}
@@ -314,7 +340,7 @@ export function ConsultantDetail({ consultantId, onNavigate, className }: Consul
                 Concerns I Can Help With
               </h2>
               <div className="grid gap-3" style={{ gridTemplateColumns: isMobile ? '1fr' : 'repeat(2, 1fr)' }}>
-                {consultant.concernsICanHelp.map((concern, index) => (
+                {(consultant.concernsICanHelp || []).map((concern, index) => (
                   <div
                     key={index}
                     style={{
@@ -349,18 +375,18 @@ export function ConsultantDetail({ consultantId, onNavigate, className }: Consul
                 I Offer Therapy For
               </h2>
               <div className="flex flex-wrap gap-2">
-                {consultant.expertises.map((expertise, index) => (
+                {(consultant.expertises || []).map((expertise, index) => (
                   <Badge
                     key={index}
-                    variant={consultant.topExpertises.includes(expertise) ? 'default' : 'secondary'}
+                    variant={(consultant.topExpertises || []).includes(expertise) ? 'default' : 'secondary'}
                     style={{ 
                       fontWeight: 'var(--font-weight-regular)', 
                       fontSize: 'var(--text-sm)',
                       padding: 'var(--spacing-2) var(--spacing-3)'
                     }}
                   >
-                    {consultant.topExpertises.includes(expertise) && (
-                      <CheckCircle2 className="mr-1 h-3 w-3" />
+                    {(consultant.topExpertises || []).includes(expertise) && (
+                      <CircleCheck className="mr-1 h-3 w-3" />
                     )}
                     {expertise}
                   </Badge>
@@ -435,12 +461,12 @@ export function ConsultantDetail({ consultantId, onNavigate, className }: Consul
 
                 <TabsContent value="qualifications">
                   <ul className="space-y-2">
-                    {consultant.qualifications.map((qual, index) => (
+                    {(consultant.qualifications || []).map((qual, index) => (
                       <li
                         key={index}
                         className="flex items-start gap-2"
                       >
-                        <CheckCircle2 className="h-4 w-4 mt-1" style={{ color: 'var(--color-primary-default)' }} />
+                        <CircleCheck className="h-4 w-4 mt-1" style={{ color: 'var(--color-primary-default)' }} />
                         <span style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--font-weight-regular)' }}>
                           {qual}
                         </span>
@@ -551,7 +577,7 @@ export function ConsultantDetail({ consultantId, onNavigate, className }: Consul
                   )}
                   {consultant.availabilityPreferences.weekendAvailability && (
                     <div className="flex items-center gap-2">
-                      <CheckCircle2 className="h-4 w-4" style={{ color: 'var(--color-status-success)' }} />
+                      <CircleCheck className="h-4 w-4" style={{ color: 'var(--color-status-success)' }} />
                       <span style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--font-weight-regular)' }}>Available on weekends</span>
                     </div>
                   )}
@@ -624,7 +650,7 @@ export function ConsultantDetail({ consultantId, onNavigate, className }: Consul
                           </span>
                           {review.verified && (
                             <Badge variant="outline" style={{ fontSize: '10px', fontWeight: 'var(--font-weight-regular)' }}>
-                              <CheckCircle2 className="mr-1 h-3 w-3" />
+                              <CircleCheck className="mr-1 h-3 w-3" />
                               Verified
                             </Badge>
                           )}
@@ -847,7 +873,7 @@ export function ConsultantDetail({ consultantId, onNavigate, className }: Consul
                 Starting from
               </p>
               <p style={{ fontSize: 'var(--text-lg)', fontWeight: 'var(--font-weight-medium)', margin: 0 }}>
-                ₹{(() => { const prices = Object.values(consultant.pricing).filter(p => typeof p === 'number' && p > 0); return prices.length > 0 ? Math.min(...prices) : '—'; })()}
+                ₹{(() => { const prices = Object.values(consultant.pricing || {}).filter(p => typeof p === 'number' && p > 0); return prices.length > 0 ? Math.min(...prices) : '—'; })()}
               </p>
             </div>
             <Button
@@ -1024,9 +1050,9 @@ function BookingPanel({
             Session Type
           </Label>
           <div className="grid grid-cols-2 gap-2">
-            {consultant.sessionModes.map(mode => {
+            {(consultant.sessionModes || []).map(mode => {
               const modeKey = mode as 'video' | 'call' | 'chat' | 'offline';
-              const price = consultant.pricing[modeKey];
+              const price = consultant.pricing?.[modeKey];
               if (!price) return null;
 
               return (
@@ -1065,7 +1091,7 @@ function BookingPanel({
             Select Date
           </Label>
           <div className="flex flex-col gap-2">
-            {consultant.availability.map((avail) => (
+            {(consultant.availability || []).map((avail) => (
               <Button
                 key={avail.date}
                 variant={selectedDate === avail.date ? 'default' : 'outline'}
@@ -1080,7 +1106,7 @@ function BookingPanel({
                   fontSize: 'var(--text-sm)'
                 }}
               >
-                <CalendarIcon className="mr-2 h-4 w-4" />
+                <Calendar className="mr-2 h-4 w-4" />
                 {new Date(avail.date).toLocaleDateString('en-US', { 
                   weekday: 'short', 
                   month: 'short', 

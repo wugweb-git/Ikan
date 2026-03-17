@@ -4,7 +4,7 @@ export const DEFAULT_CMS_CONTENT: { [key: string]: any } = {
     content: `
       <div class="space-y-8">
         <div class="bg-gradient-to-r from-indigo-50 to-purple-50 p-6 rounded-lg border border-indigo-100">
-          <h2 class="text-xl font-semibold text-gray-900 mb-3">🌟 Our Mission</h2>
+          <h2 class="text-xl font-medium text-gray-900 mb-3">🌟 Our Mission</h2>
           <p class="text-gray-700 leading-relaxed">At iKan, we believe that everyone deserves access to quality mental health support. We're on a mission to make mental wellness accessible, affordable, and stigma-free.</p>
         </div>
 
@@ -75,7 +75,7 @@ export const DEFAULT_CMS_CONTENT: { [key: string]: any } = {
     content: `
       <div class="space-y-8">
         <div class="bg-gradient-to-r from-blue-50 to-indigo-50 p-6 rounded-lg border border-blue-100">
-          <h2 class="text-xl font-semibold text-gray-900 mb-3">🔒 Your Privacy Matters</h2>
+          <h2 class="text-xl font-medium text-gray-900 mb-3">🔒 Your Privacy Matters</h2>
           <p class="text-gray-700 leading-relaxed">At iKan, we are committed to protecting your privacy and ensuring the security of your personal information. This policy explains how we collect, use, and safeguard your data when you use our mental health services.</p>
         </div>
 
@@ -119,7 +119,7 @@ export const DEFAULT_CMS_CONTENT: { [key: string]: any } = {
               </li>
               <li class="flex items-start">
                 <span class="text-red-500 mr-3 mt-1">✗</span>
-                <span><strong>We never sell your personal data to third parties</strong></span>
+                <span><span style="font-weight: 500;">We never sell your personal data to third parties</span></span>
               </li>
             </ul>
           </section>
@@ -187,7 +187,7 @@ export const DEFAULT_CMS_CONTENT: { [key: string]: any } = {
     content: `
       <div class="space-y-8">
         <div class="bg-gradient-to-r from-purple-50 to-pink-50 p-6 rounded-lg border border-purple-100">
-          <h2 class="text-xl font-semibold text-gray-900 mb-3">📋 Terms of Service</h2>
+          <h2 class="text-xl font-medium text-gray-900 mb-3">📋 Terms of Service</h2>
           <p class="text-gray-700 leading-relaxed">By accessing and using iKan's mental health platform, you agree to be bound by these Terms of Service and all applicable laws and regulations. Last updated: ${new Date().toLocaleDateString()}</p>
         </div>
 
@@ -198,7 +198,7 @@ export const DEFAULT_CMS_CONTENT: { [key: string]: any } = {
             </h3>
             <div class="space-y-4 text-gray-700">
               <p class="bg-blue-50 p-4 rounded-lg border border-blue-200">
-                Our platform is designed to <strong>support your mental health journey</strong> through evidence-based assessments, personalized programs, and curated resources.
+                Our platform is designed to <span style="font-weight: 500;">support your mental health journey</span> through evidence-based assessments, personalized programs, and curated resources.
               </p>
               <ul class="space-y-2 ml-4">
                 <li>• Mental health assessments and progress tracking</li>
@@ -271,7 +271,7 @@ export const DEFAULT_CMS_CONTENT: { [key: string]: any } = {
     content: `
       <div class="space-y-8">
         <div class="bg-gradient-to-r from-green-50 to-teal-50 p-6 rounded-lg border border-green-100">
-          <h2 class="text-xl font-semibold text-gray-900 mb-3">❓ Frequently Asked Questions</h2>
+          <h2 class="text-xl font-medium text-gray-900 mb-3">❓ Frequently Asked Questions</h2>
           <p class="text-gray-700 leading-relaxed">Find answers to common questions about iKan's mental health platform. Can't find what you're looking for? <a href="mailto:support@ikan.health" class="text-green-600 font-medium hover:underline">Contact our support team</a>.</p>
         </div>
 
@@ -354,7 +354,7 @@ export const DEFAULT_CMS_CONTENT: { [key: string]: any } = {
     title: "We're Here to Help",
     content: `
       <p>Your mental health journey matters to us. Reach out for support, questions, or just to connect.</p>
-      <p><strong>Note:</strong> If you are in immediate danger, please call emergency services.</p>
+      <p><span style="font-weight: 500;">Note:</span> If you are in immediate danger, please call emergency services.</p>
     `,
     lastUpdated: new Date().toISOString()
   },
@@ -363,7 +363,7 @@ export const DEFAULT_CMS_CONTENT: { [key: string]: any } = {
     content: `
       <div class="space-y-8">
         <div class="bg-gradient-to-r from-emerald-50 to-green-50 p-6 rounded-lg border border-emerald-100">
-          <h2 class="text-xl font-semibold text-gray-900 mb-3">💚 Our Satisfaction Guarantee</h2>
+          <h2 class="text-xl font-medium text-gray-900 mb-3">💚 Our Satisfaction Guarantee</h2>
           <p class="text-gray-700 leading-relaxed">At iKan, we're committed to your satisfaction. If you're not completely satisfied with your purchase, we offer a comprehensive and fair return policy.</p>
         </div>
         <p>Please contact billing@ikan.health for all refund requests.</p>
@@ -400,7 +400,7 @@ export const DEFAULT_CMS_CONTENT: { [key: string]: any } = {
     content: `
       <div class="space-y-8">
         <div class="bg-gradient-to-r from-teal-50 to-cyan-50 p-6 rounded-lg border border-teal-100">
-          <h2 class="text-xl font-semibold text-gray-900 mb-3">💬 Let's Talk</h2>
+          <h2 class="text-xl font-medium text-gray-900 mb-3">💬 Let's Talk</h2>
           <p class="text-gray-700 leading-relaxed">Taking the first step is often the hardest part. Whether you have questions, need guidance, or are ready to start your mental health journey — we're here to listen.</p>
         </div>
 
@@ -457,7 +457,7 @@ export const DEFAULT_CMS_CONTENT: { [key: string]: any } = {
     content: `
       <div class="space-y-8 text-center py-8">
         <div class="text-6xl mb-4">🔍</div>
-        <h2 class="text-2xl font-semibold text-gray-900">Oops! Page Not Found</h2>
+        <h2 class="text-2xl font-medium text-gray-900">Oops! Page Not Found</h2>
         <p class="text-gray-600 max-w-md mx-auto leading-relaxed">The page you're looking for doesn't exist or may have been moved. Don't worry — let's get you back on track.</p>
 
         <div class="flex flex-col sm:flex-row gap-4 justify-center mt-6">

@@ -51,13 +51,8 @@ function HeroSection() {
         }} />
       </div>
 
-      {/* Content — left-aligned, bottom-weighted */}
+      {/* Content — left-aligned, bottom-weighted, no logo */}
       <div className="relative z-10 flex flex-col justify-end h-full" style={{ padding: '48px 40px' }}>
-        {/* Logo */}
-        <div style={{ marginBottom: 32 }}>
-          <LogoFull height={32} style={{ color: 'white' }} />
-        </div>
-
         {/* Title */}
         <h1 style={{
           ...f('3xl', 500, 'white'),
@@ -476,104 +471,99 @@ export default function LoginScreen({ onSuccess, onBack, onNavigate, reason, red
   };
 
   return (
-    <div style={{ width: '100%', height: '100%', backgroundColor: 'var(--color-bg-card)' }}>
+    <div style={{ width: '100%', height: '100vh', backgroundColor: 'var(--color-bg-card)', overflow: 'hidden' }}>
       <div className="flex flex-col md:flex-row" style={{ height: '100%' }}>
 
-        {/* ── LEFT PANEL: Hero (desktop) ─────────────────────────── */}
+        {/* ── LEFT PANEL: Hero (desktop only) ─────────────────────── */}
         <div className="hidden md:flex" style={{ width: '45%', height: '100%', flexShrink: 0 }}>
           <HeroSection />
         </div>
 
-        {/* ── MOBILE HEADER: branded strip ───────────────────────── */}
-        <div className="md:hidden relative w-full" style={{ height: 180, flexShrink: 0 }}>
-          <img src={HERO_IMAGE_URL} alt={authContent.hero.imageAlt} className="absolute inset-0 w-full h-full object-cover" />
-          <div className="absolute inset-0" style={{
-            background: 'linear-gradient(180deg, rgba(20,20,20,0.5) 0%, rgba(20,20,20,0.85) 100%)',
-          }} />
-          <div className="relative z-10 flex flex-col justify-end h-full" style={{ padding: '0 24px 24px' }}>
-            <LogoFull height={26} style={{ color: 'white', marginBottom: 10 }} />
-            <p style={{ ...f('sm', 400, 'rgba(255,255,255,0.8)'), margin: 0 }}>
-              {authContent.hero.title}
-            </p>
-          </div>
-        </div>
-
-        {/* ── RIGHT PANEL: Auth form ─────────────────────────────── */}
+        {/* ── RIGHT PANEL: Auth form (always visible) ─────────────── */}
         <div
-          className="flex-1 flex items-start md:items-center justify-center overflow-y-auto"
-          style={{ backgroundColor: 'var(--color-bg-card)' }}
+          className="flex-1 flex flex-col overflow-y-auto"
+          style={{ backgroundColor: 'var(--color-bg-card)', position: 'relative' }}
         >
-          <div style={{ width: '100%', maxWidth: 420, padding: '32px 28px 40px', margin: '0 auto' }}>
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={authMode}
-                initial={{ opacity: 0, y: 12 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -12 }}
-                transition={{ duration: 0.2 }}
-              >
-                {/* Back button */}
-                {handleBack && (
-                  <button
-                    onClick={handleBack}
-                    className="flex items-center"
-                    style={{
-                      ...f('sm', 500, 'var(--color-text-muted)'),
-                      gap: 6, marginBottom: 28,
-                      background: 'none', border: 'none', cursor: 'pointer',
-                      padding: 0,
-                    }}
-                  >
-                    <ArrowLeft size={16} />
-                    {authContent.header.back}
-                  </button>
-                )}
+          {/* Black logo — top right */}
+          <div style={{ position: 'absolute', top: 24, right: 28, zIndex: 10 }}>
+            <LogoFull height={28} style={{ color: '#2A2A2A' }} />
+          </div>
 
-                {/* Title + subtitle — left-aligned */}
-                <div style={{ marginBottom: 8 }}>
-                  <h1 style={{ ...f('2xl', 500, 'var(--color-text-primary)'), margin: '0 0 8px', lineHeight: 1.2 }}>
-                    {getTitle()}
-                  </h1>
-                  <p style={{ ...f('sm', 400, 'var(--color-text-muted)'), margin: '0 0 4px' }}>
-                    {getSubtitle()}
-                  </p>
-                </div>
+          <div className="flex-1 flex items-center justify-center">
+            <div style={{ width: '100%', maxWidth: 420, padding: '32px 28px', margin: '0 auto' }}>
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={authMode}
+                  initial={{ opacity: 0, y: 12 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -12 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  {/* Back button only — no logo on right side */}
+                  {handleBack && (
+                    <div style={{ marginBottom: 24 }}>
+                      <button
+                        onClick={handleBack}
+                        className="flex items-center"
+                        style={{
+                          ...f('sm', 500, 'var(--color-text-muted)'),
+                          gap: 6,
+                          background: 'none', border: 'none', cursor: 'pointer',
+                          padding: 0,
+                        }}
+                      >
+                        <ArrowLeft size={16} />
+                        {authContent.header.back}
+                      </button>
+                    </div>
+                  )}
 
-                {/* Mode switcher — left-aligned */}
-                {authMode !== 'forgot' && (
-                  <div className="flex items-center" style={{ gap: 4, marginBottom: 28 }}>
-                    <span style={f('sm', 400, 'var(--color-text-muted)')}>
-                      {authMode === 'login' ? authContent.messages.switch.toSignup : authContent.messages.switch.toLogin}
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => setAuthMode(authMode === 'login' ? 'signup' : 'login')}
-                      style={{
-                        ...f('sm', 500, 'var(--color-primary-default)'),
-                        background: 'none', border: 'none', cursor: 'pointer', padding: 0,
-                        textDecoration: 'underline', textUnderlineOffset: 2,
-                      }}
-                    >
-                      {authMode === 'login' ? authContent.messages.switch.toSignupAction : authContent.messages.switch.toLoginAction}
-                    </button>
+                  {/* Title + subtitle — left-aligned */}
+                  <div style={{ marginBottom: 8 }}>
+                    <h1 style={{ ...f('2xl', 500, 'var(--color-text-primary)'), margin: '0 0 8px', lineHeight: 1.2 }}>
+                      {getTitle()}
+                    </h1>
+                    <p style={{ ...f('sm', 400, 'var(--color-text-muted)'), margin: '0 0 4px' }}>
+                      {getSubtitle()}
+                    </p>
                   </div>
-                )}
 
-                {authMode === 'forgot' && <div style={{ height: 20 }} />}
+                  {/* Mode switcher — left-aligned */}
+                  {authMode !== 'forgot' && (
+                    <div className="flex items-center" style={{ gap: 4, marginBottom: 24 }}>
+                      <span style={f('sm', 400, 'var(--color-text-muted)')}>
+                        {authMode === 'login' ? authContent.messages.switch.toSignup : authContent.messages.switch.toLogin}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => setAuthMode(authMode === 'login' ? 'signup' : 'login')}
+                        style={{
+                          ...f('sm', 500, 'var(--color-primary-default)'),
+                          background: 'none', border: 'none', cursor: 'pointer', padding: 0,
+                          textDecoration: 'underline', textUnderlineOffset: 2,
+                        }}
+                      >
+                        {authMode === 'login' ? authContent.messages.switch.toSignupAction : authContent.messages.switch.toLoginAction}
+                      </button>
+                    </div>
+                  )}
 
-                {/* Form */}
-                <AuthForm mode={authMode} onSuccess={onSuccess} onModeChange={setAuthMode} />
+                  {authMode === 'forgot' && <div style={{ height: 16 }} />}
 
-                {/* Footer */}
-                <p style={{
-                  ...f('xs', 400, 'var(--color-text-muted)'),
-                  margin: '24px 0 0',
-                  lineHeight: 1.5,
-                }}>
-                  {authContent.form.footer}
-                </p>
-              </motion.div>
-            </AnimatePresence>
+                  {/* Form */}
+                  <AuthForm mode={authMode} onSuccess={onSuccess} onModeChange={setAuthMode} />
+
+                  {/* Footer */}
+                  <p style={{
+                    ...f('xs', 400, 'var(--color-text-muted)'),
+                    margin: '20px 0 0',
+                    lineHeight: 1.5,
+                  }}>
+                    {authContent.form.footer}
+                  </p>
+                </motion.div>
+              </AnimatePresence>
+            </div>
           </div>
         </div>
       </div>

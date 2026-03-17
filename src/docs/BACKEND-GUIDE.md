@@ -1,6 +1,6 @@
 # iKan PWA - Backend Guide
 
-> **Last updated**: March 12, 2026
+> **Last updated**: March 17, 2026
 > **Audience**: Backend and full-stack developers
 
 ---

@@ -678,8 +678,8 @@ export function AdminCRUDTesting({ onBack }: { onBack?: () => void }) {
               System Health Monitor
             </h3>
             <p style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-muted)', maxWidth: '480px', margin: '0 auto' }}>
-              Run a <strong>System Audit</strong> to check API connectivity and entity counts, or
-              use <strong>Scan for Test Data</strong> to find and delete leftover CRUD/demo/test content
+              Run a <span style={{ fontWeight: 'var(--font-weight-medium)' }}>System Audit</span> to check API connectivity and entity counts, or
+              use <span style={{ fontWeight: 'var(--font-weight-medium)' }}>Scan for Test Data</span> to find and delete leftover CRUD/demo/test content
               that may have been published to users. All reads are safe — writes only happen when you
               explicitly confirm a delete.
             </p>

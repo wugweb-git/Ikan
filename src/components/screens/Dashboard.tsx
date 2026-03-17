@@ -437,8 +437,8 @@ export function Dashboard({ className, onNavigate }: DashboardProps) {
   // RENDER — follows dashboard-layout.md reference (11 widgets)
   // ═══════════════════════════════════════════════════════════════════
   return (
-    <div className={cn('max-w-4xl mx-auto pb-28', className)} style={{ padding: 'var(--spacing-4) var(--spacing-4) var(--spacing-28)' }}>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-6)' }}>
+    <div className={cn('max-w-4xl mx-auto', className)} style={{ padding: '0 var(--spacing-4) 120px' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
 
         {/* ─── 1. Greeting + Weather ─── */}
         <motion.header initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }} aria-label="Dashboard greeting" data-widget="greeting">

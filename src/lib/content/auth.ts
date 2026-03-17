@@ -118,9 +118,9 @@ export const authContent = {
       authRequired: { title: "Sign In Required", description: "Please sign in to access this feature." }
     },
     switch: {
-      toSignup: "Don't have an account? Sign up", // LoginScreen
+      toSignup: "Don't have an account?",
       toSignupAction: "Sign up",
-      toLogin: "Already have an account? Sign in", // LoginScreen uses "Already have an account?" then button "Sign in"
+      toLogin: "Already have an account?",
       toLoginAction: "Sign in"
     }
   }

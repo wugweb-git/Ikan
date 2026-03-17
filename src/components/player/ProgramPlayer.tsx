@@ -292,7 +292,7 @@ export function ProgramPlayer({
              if (Array.isArray(answer)) {
                answer.forEach((ans: string) => {
                  const idx = config.options!.indexOf(ans);
-                 if (idx !== -1 && config.scoring!.weights![idx]) {
+                 if (idx !== -1 && typeof config.scoring!.weights![idx] === 'number') {
                    const points = config.scoring!.weights![idx];
                    scores[block.id] = (scores[block.id] || 0) + points;
                    totalScore += points;
@@ -300,7 +300,7 @@ export function ProgramPlayer({
                });
              } else {
                const optionIndex = config.options.indexOf(answer);
-               if (optionIndex !== -1 && config.scoring.weights[optionIndex]) {
+               if (optionIndex !== -1 && typeof config.scoring.weights[optionIndex] === 'number') {
                  const points = config.scoring.weights[optionIndex];
                  scores[block.id] = points;
                  totalScore += points;
@@ -394,8 +394,8 @@ export function ProgramPlayer({
 
   // Determine title
   const displayTitle = program.title || activeDay.title || (activeDay.dayType === 'practice' ? 'Assessment' : `Day ${currentDayNum}`);
+  const displaySubtitle = activeDay.subtitle || null;
   const canGoBack = dayConfig.showBack && currentStepIndex > 0;
-  const canSkip = !activeStep?.blocks.every(b => b.required);
 
   return (
     <>
@@ -450,11 +450,16 @@ export function ProgramPlayer({
             )}
           </div>
 
-          {/* Center: Title */}
-          <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 max-w-[55%] text-center">
+          {/* Left-aligned Title */}
+          <div className="flex-1 min-w-0 ml-1">
             <h1 className="truncate" style={{ ...f('sm', 500), letterSpacing: '-0.01em' }}>
                {displayTitle}
             </h1>
+            {displaySubtitle && (
+              <p className="truncate" style={{ ...f('xs', 400, 'var(--color-text-muted)'), marginTop: 1 }}>
+                {displaySubtitle}
+              </p>
+            )}
           </div>
 
           {/* Right: Progress indicator */}
@@ -531,7 +536,7 @@ export function ProgramPlayer({
         </main>
 
         {/* ═══════════════════════════════════════════════════════════
-            FOOTER — Primary CTA + optional skip
+            FOOTER — Primary CTA
             ═══════════════════════════════════════════════════════════ */}
         <footer
           className="flex-none"
@@ -562,20 +567,6 @@ export function ProgramPlayer({
             >
               {dayConfig.primaryButtonText(currentStepIndex === steps.length - 1)}
             </motion.button>
-
-            {/* Skip (only if not all blocks required) */}
-            {canSkip && (
-              <button
-                onClick={handleNext}
-                style={{
-                  background: 'none', border: 'none', cursor: 'pointer',
-                  ...f('sm', 500, 'var(--color-text-muted)'),
-                  padding: '6px 0', textAlign: 'center',
-                }}
-              >
-                Skip this step
-              </button>
-            )}
           </div>
         </footer>
       </div>

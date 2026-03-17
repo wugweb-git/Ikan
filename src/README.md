@@ -2,6 +2,13 @@
 
 A comprehensive, multi-tenant mental wellness Progressive Web App built with React 18, TypeScript, Tailwind CSS v4, and Supabase.
 
+### 🌟 Current State
+- ✅ Wired up LearningDiary.tsx
+- ✅ Migrated fully to Tailwind v4 @theme directives (globals.css)
+- ✅ Removed dead tailwind.config.ts and legacy PostCSS references
+- ✅ Cleaned up references in docs and tsconfig
+- 🔜 Next up: consultation listing flow, mood journal emoji scales, and notification template editor CRUD
+
 ---
 
 ## Quick Start

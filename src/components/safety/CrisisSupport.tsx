@@ -199,7 +199,7 @@ export function CrisisSupport({ isVisible, onClose, triggerReason = 'user_reques
                   textAlign: 'center',
                   lineHeight: 'var(--line-height-sm)'
                 }}>
-                  <strong>Remember:</strong> This app is not a substitute for professional mental health care. 
+                  <span style={{ fontWeight: 'var(--font-weight-medium)' }}>Remember:</span> This app is not a substitute for professional mental health care. 
                   If you're in crisis, please contact emergency services or a crisis hotline immediately.
                 </p>
               </div>

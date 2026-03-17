@@ -426,6 +426,17 @@ export function EquipProgramCompletion({ programId, onContinue, onBackToDashboar
           >
             Back to Dashboard
           </Button>
+          {resolvedId && onNavigate && (
+            <Button
+              variant="outline"
+              onClick={() => onNavigate(`/learning-diary?id=${resolvedId}`)}
+              className="gap-2"
+              style={{ borderRadius: 'var(--radius-md)', height: 48, ...f('sm', 500) }}
+            >
+              <BookOpen size={16} />
+              View Learning Diary
+            </Button>
+          )}
           <Button
             onClick={handleContinue}
             className="gap-2"

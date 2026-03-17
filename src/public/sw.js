@@ -368,8 +368,8 @@ async function handleStaticResource(request) {
             <p>You're currently offline. Please check your connection and try again.</p>
             <div style="margin-top: 20px; padding: 15px; background: white; border-radius: 8px;">
               <h3>Crisis Resources</h3>
-              <p><strong>US:</strong> Call or text 988</p>
-              <p><strong>International:</strong> Visit findahelpline.com</p>
+              <p><span style="font-weight: 500;">US:</span> Call or text 988</p>
+              <p><span style="font-weight: 500;">International:</span> Visit findahelpline.com</p>
             </div>
           </body>
         </html>`,
@@ -422,9 +422,9 @@ async function handleHtmlRequest(request) {
             <p>You're currently offline. The app will work again when your connection is restored.</p>
             <div class="crisis-box">
               <h3 style="color: #2A2A2A;">Crisis Resources</h3>
-              <p><strong>US:</strong> Call or text 988 for immediate help</p>
-              <p><strong>Text:</strong> HOME to 741741</p>
-              <p><strong>International:</strong> Visit findahelpline.com</p>
+              <p><span style="font-weight: 500;">US:</span> Call or text 988 for immediate help</p>
+              <p><span style="font-weight: 500;">Text:</span> HOME to 741741</p>
+              <p><span style="font-weight: 500;">International:</span> Visit findahelpline.com</p>
             </div>
             <button onclick="window.location.reload()" style="
               margin-top: 20px; 

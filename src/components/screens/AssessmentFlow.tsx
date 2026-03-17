@@ -32,6 +32,7 @@ interface Assessment {
   id: string;
   title: string;
   description: string;
+  subtitle?: string;
   questions: Question[];
   scoring: {
     type: 'sum' | 'average';
@@ -70,8 +71,14 @@ export function AssessmentFlow({
   const { user } = useAuth();
   const { isOnline, queueItem } = useOfflineSync();
   
-  const [assessment, setAssessment] = useState<Assessment | null>(initialAssessment || null);
-  const [equipProgram, setEquipProgram] = useState<any>(initialAssessment ? adaptAssessmentToProgram(initialAssessment as any) : null);
+  const [assessment, setAssessment] = useState<Assessment | null>(() => {
+    if (!initialAssessment) return null;
+    return normalizeAssessment(initialAssessment);
+  });
+  const [equipProgram, setEquipProgram] = useState<any>(() => {
+    if (!initialAssessment) return null;
+    return adaptAssessmentToProgram(normalizeAssessment(initialAssessment) as any);
+  });
   const [loading, setLoading] = useState(!initialAssessment);
   const [error, setError] = useState<string | null>(null);
 
@@ -99,40 +106,42 @@ export function AssessmentFlow({
       if (!assessment) return;
       const responses = playerResults.responses;
 
-      // Calculate Score
-      const numericResponses = Object.values(responses).map(val => {
-        if (typeof val === 'number') return val;
-        // Try parsing string to int if it looks like a number
-        if (typeof val === 'string' && !isNaN(parseInt(val))) return parseInt(val);
-        return 0;
-      });
-      
+      // Use ProgramPlayer's computed totalScore if available (most reliable — uses weight indices directly)
       let score = 0;
-      // 1. First, try to calculate score using the legacy map method which might fail for text options
-      const basicScore = numericResponses.reduce((sum, value) => sum + value, 0);
-
-      // 2. Enhanced Scoring: Look up values from options if basic calculation yields 0 but we have responses
-      if (basicScore === 0 && Object.keys(responses).length > 0) {
-        assessment.questions.forEach(q => {
-          const answer = responses[q.id];
-          if (answer !== undefined && answer !== null) {
-            // Find option that matches answer text
-            const matchedOption = q.options?.find(opt => {
-              const optText = typeof opt === 'string' ? opt : (opt.text || opt.label || opt.value);
-              return String(optText) === String(answer);
-            });
-            
-            if (matchedOption && typeof matchedOption === 'object' && typeof matchedOption.value === 'number') {
-              score += matchedOption.value;
-            } else if (typeof answer === 'number') {
-               score += answer;
-            } else if (typeof answer === 'string' && !isNaN(parseInt(answer))) {
-               score += parseInt(answer);
-            }
-          }
-        });
+      if (typeof playerResults.totalScore === 'number') {
+        score = playerResults.totalScore;
       } else {
-        score = basicScore;
+        // Fallback: Calculate score from responses
+        const numericResponses = Object.values(responses).map(val => {
+          if (typeof val === 'number') return val;
+          if (typeof val === 'string' && !isNaN(parseInt(val))) return parseInt(val);
+          return 0;
+        });
+        
+        const basicScore = numericResponses.reduce((sum, value) => sum + value, 0);
+
+        // Enhanced Scoring: Look up values from options if basic calculation yields 0 but we have responses
+        if (basicScore === 0 && Object.keys(responses).length > 0) {
+          assessment.questions.forEach(q => {
+            const answer = responses[q.id];
+            if (answer !== undefined && answer !== null) {
+              const matchedOption = q.options?.find(opt => {
+                const optText = typeof opt === 'string' ? opt : (opt.text || opt.label || opt.value);
+                return String(optText) === String(answer);
+              });
+              
+              if (matchedOption && typeof matchedOption === 'object' && typeof matchedOption.value === 'number') {
+                score += matchedOption.value;
+              } else if (typeof answer === 'number') {
+                 score += answer;
+              } else if (typeof answer === 'string' && !isNaN(parseInt(answer))) {
+                 score += parseInt(answer);
+              }
+            }
+          });
+        } else {
+          score = basicScore;
+        }
       }
       
       // Handle Average Type
@@ -150,7 +159,27 @@ export function AssessmentFlow({
          icon: 'success' 
       };
       
-      const maxScore = assessment.scoring.ranges[assessment.scoring.ranges.length - 1]?.max || 21;
+      // Compute maxScore from questions: sum of highest option value per question
+      // This is more accurate than relying on scoring range boundaries
+      let computedMaxScore = 0;
+      if (assessment.questions && assessment.questions.length > 0) {
+        assessment.questions.forEach((q: any) => {
+          if (q.options && Array.isArray(q.options) && q.options.length > 0) {
+            let maxVal = 0;
+            q.options.forEach((opt: any) => {
+              if (typeof opt === 'object' && typeof opt.value === 'number') {
+                maxVal = Math.max(maxVal, opt.value);
+              }
+            });
+            computedMaxScore += maxVal;
+          }
+        });
+      }
+      
+      // Use computed max from questions if available, otherwise fall back to scoring range max
+      const maxScore = computedMaxScore > 0 
+        ? computedMaxScore 
+        : (assessment.scoring.ranges[assessment.scoring.ranges.length - 1]?.max || 21);
       
       // Run Recommendation Engine — pass scoring profile if assessment has one linked
       const recommendation = evaluateAssessment(
@@ -243,8 +272,8 @@ export function AssessmentFlow({
   // Fetch assessment data if not provided
   useEffect(() => {
     if (initialAssessment) {
-      setAssessment(initialAssessment);
-      setEquipProgram(adaptAssessmentToProgram(initialAssessment as any));
+      setAssessment(normalizeAssessment(initialAssessment));
+      setEquipProgram(adaptAssessmentToProgram(normalizeAssessment(initialAssessment) as any));
       setLoading(false);
       return;
     }
@@ -306,13 +335,15 @@ export function AssessmentFlow({
             rawOptions = [];
           }
 
-          const options = rawOptions.map((opt: any) => {
-            if (typeof opt === 'string') return { id: opt, text: opt, value: opt };
+          const options = rawOptions.map((opt: any, optIndex: number) => {
+            if (typeof opt === 'string') return { id: opt, text: opt, value: optIndex };
             if (typeof opt === 'number') return { id: String(opt), text: String(opt), value: opt };
+            // Use nullish coalescing (??) instead of || to preserve 0 as a valid numeric value
+            const optValue = (typeof opt.value === 'number') ? opt.value : (opt.score != null ? Number(opt.score) : optIndex);
             return {
-              id: opt.id || opt.value || opt.text || opt.label,
-              text: opt.text || opt.label || opt.value || opt.name,
-              value: opt.value || opt.text || opt.label
+              id: opt.id || String(opt.value ?? '') || opt.text || opt.label,
+              text: opt.text || opt.label || String(opt.value ?? '') || opt.name,
+              value: optValue
             };
           });
 
@@ -349,6 +380,7 @@ export function AssessmentFlow({
           id: fetchedAssessment.id,
           title: fetchedAssessment.title,
           description: fetchedAssessment.description || '',
+          subtitle: fetchedAssessment.subtitle || fetchedAssessment.sub_title || '',
           questions: questions,
           scoring: fetchedAssessment.scoring || {
             type: 'sum',
@@ -439,4 +471,38 @@ export function AssessmentFlow({
        />
     </div>
   );
+}
+
+function normalizeAssessment(assessment: Assessment): Assessment {
+  return {
+    ...assessment,
+    questions: assessment.questions.map(q => {
+      // Resolve options to ensure all have numeric values
+      let rawOptions = q.options || [];
+
+      // Handle raw string arrays (from KV)
+      const options = (rawOptions as any[]).map((opt: any, idx: number) => {
+        if (typeof opt === 'string') return { id: opt, text: opt, value: idx };
+        if (typeof opt === 'number') return { id: String(opt), text: String(opt), value: opt };
+        const optValue = (typeof opt.value === 'number') ? opt.value : (opt.score != null ? Number(opt.score) : idx);
+        return {
+          id: opt.id || String(opt.value ?? '') || opt.text || opt.label,
+          text: opt.text || opt.label || String(opt.value ?? '') || opt.name || String(idx),
+          value: optValue
+        };
+      });
+
+      // Normalize type
+      const typeMap: Record<string, string> = {
+        'multiple_choice': 'multiple-choice', 'multiselect': 'multiple-choice',
+        'single_choice': 'single-choice', 'select': 'single-choice',
+        'radio': 'single-choice', 'mcq': 'single-choice',
+        'rating': 'scale', 'scale': 'scale',
+        'text': 'text', 'input': 'text', 'textarea': 'text'
+      };
+      const type = (typeMap[q.type] || q.type) as Question['type'];
+
+      return { ...q, text: q.text || (q as any).question_text || (q as any).title || 'Untitled', type, options };
+    })
+  };
 }

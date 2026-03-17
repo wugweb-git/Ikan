@@ -19,6 +19,7 @@ interface LegacyAssessment {
   id: string;
   title: string;
   description: string;
+  subtitle?: string;
   questions: LegacyQuestion[];
   scoring?: any;
 }
@@ -50,8 +51,17 @@ export function adaptAssessmentToProgram(assessment: LegacyAssessment): EquipPro
       options = q.options.map(opt => {
         if (typeof opt === 'string') return opt;
         if (typeof opt === 'number') return String(opt);
-        return opt.label || opt.text || opt.value || opt.name || JSON.stringify(opt);
+        return opt.label || opt.text || String(opt.value ?? '') || opt.name || JSON.stringify(opt);
       });
+      
+      // Extract weights from option objects that have numeric values
+      const extractedWeights = q.options.map((opt: any, idx: number) => {
+        if (typeof opt === 'number') return opt;
+        if (typeof opt === 'object' && opt !== null && typeof opt.value === 'number') return opt.value;
+        // Fallback: use index as weight for Likert-like scales (Never=0, Rarely=1, ...)
+        return idx;
+      });
+      weights = extractedWeights as number[];
     }
     
     // Fallback: If MCQ but no options, switch to text input to prevent broken UI
@@ -102,6 +112,7 @@ export function adaptAssessmentToProgram(assessment: LegacyAssessment): EquipPro
   const dayContent: DayContent = {
     day: 1,
     title: assessment.title,
+    subtitle: assessment.subtitle || undefined,
     description: assessment.description,
     activities,
     dayType: 'practice'

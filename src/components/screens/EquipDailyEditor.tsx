@@ -670,6 +670,15 @@ export function EquipDailyEditor({
                             />
                           </AdminFormField>
 
+                          <AdminFormField label="Day Subtitle">
+                            <Input 
+                              value={activeDay.subtitle || ''} 
+                              onChange={e => handleUpdateDay(activeDay.day, { subtitle: e.target.value })}
+                              placeholder="e.g. Learn the basics of breathing exercises"
+                              disabled={readOnly}
+                            />
+                          </AdminFormField>
+
                           <div className="grid grid-cols-2 gap-4">
                             <AdminFormField label="Day Type">
                               <Select 

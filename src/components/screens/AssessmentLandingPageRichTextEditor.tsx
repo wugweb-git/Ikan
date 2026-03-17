@@ -97,7 +97,7 @@ export function AssessmentLandingPageRichTextEditor({ data, onChange }: Assessme
         <AdminFormField 
           label="4 reminder items (one per line)" 
           required
-          help="Enter exactly 4 items, one per line. You can use HTML for bold: &lt;strong&gt;past month&lt;/strong&gt;"
+          help="Enter exactly 4 items, one per line."
         >
           <Textarea
             value={(data.section4_notes || []).map(n => typeof n === 'string' ? n : n.title).join('\n')}

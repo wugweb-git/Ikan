@@ -1,6 +1,6 @@
 # iKan PWA - Getting Started
 
-> **Last updated**: March 12, 2026
+> **Last updated**: March 17, 2026
 > **Audience**: New developers joining the project
 
 ---
@@ -117,7 +117,6 @@ These are configured in the Supabase dashboard under Edge Function secrets:
 | `tsconfig.node.json` | TypeScript config for Node.js tooling |
 | `vite.config.ts` | Vite + PWA + path aliases |
 | `postcss.config.js` | PostCSS for Tailwind |
-| `tailwind.config.ts` | Tailwind CSS v4 configuration |
 | `vercel.json` | Vercel deployment + headers + rewrites |
 | `supabase/config.toml` | Supabase project configuration |
 | `lighthouserc.json` | Lighthouse CI thresholds |

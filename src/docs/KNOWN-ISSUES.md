@@ -1,6 +1,6 @@
 # iKan PWA - Known Issues & Tech Debt
 
-> **Last updated**: March 16, 2026 (Session 13)
+> **Last updated**: March 17, 2026
 > **Audience**: All developers
 > **Purpose**: Track known issues, technical debt, and planned cleanup work
 
