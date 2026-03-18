@@ -1,7 +1,8 @@
-import { useState, useEffect, useRef } from 'react';
-import { Star, Eye } from 'lucide-react';
+import { useMemo } from 'react';
+import { Star } from 'lucide-react';
 import { useIsMobile } from '../../../hooks/useIsMobile';
 import { ImageWithFallback } from '../../figma/ImageWithFallback';
+import { usePageContent } from '../../../hooks/usePageContent';
 
 /* ─── Data ─── */
 interface Review {
@@ -11,7 +12,7 @@ interface Review {
   avatarEmoji: string;
 }
 
-const reviews: Review[] = [
+const DEFAULT_REVIEWS: Review[] = [
   {
     quote:
       'iKan helped me understand my emotions better. I used to bottle everything up, but now I have tools to process what I feel. The assessments gave me clarity I never expected.',
@@ -35,7 +36,7 @@ const reviews: Review[] = [
   },
 ];
 
-const HERO_IMAGE =
+const DEFAULT_HERO_IMAGE =
   'https://images.unsplash.com/photo-1758275557348-23950a3ddeae?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxncm91cCUyMGZyaWVuZHMlMjBoYXBweSUyMG91dGRvb3IlMjBnYXRoZXJpbmclMjBkaXZlcnNlfGVufDF8fHx8MTc3MTkwODY4M3ww&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral';
 
 /* ─── Star Row ─── */
@@ -43,12 +44,7 @@ function Stars() {
   return (
     <div className="flex items-center" style={{ gap: '3px' }}>
       {[1, 2, 3, 4, 5].map((i) => (
-        <Star
-          key={i}
-          size={18}
-          fill="#F5A623"
-          stroke="none"
-        />
+        <Star key={i} size={18} fill="#F5A623" stroke="none" />
       ))}
     </div>
   );
@@ -69,7 +65,6 @@ function ReviewCard({ review }: { review: Review }) {
         minWidth: 0,
       }}
     >
-      {/* Top: stars + quote */}
       <div className="flex flex-col" style={{ gap: '16px' }}>
         <Stars />
         <p
@@ -86,7 +81,6 @@ function ReviewCard({ review }: { review: Review }) {
         </p>
       </div>
 
-      {/* Bottom: avatar + name */}
       <div className="flex items-center" style={{ gap: '12px', marginTop: '24px' }}>
         <div
           style={{
@@ -181,6 +175,16 @@ function MobileReviewCard({ review }: { review: Review }) {
 export function ReviewsSection() {
   const isMobile = useIsMobile();
 
+  const { content: cmsContent } = usePageContent('homepage-reviews-section');
+  const cms = useMemo(() => {
+    if (!cmsContent?.content) return null;
+    try { return JSON.parse(cmsContent.content); } catch { return null; }
+  }, [cmsContent]);
+
+  const heading = cms?.heading || 'Reasons to keep showing up';
+  const heroImage = cms?.heroImage || DEFAULT_HERO_IMAGE;
+  const reviews: Review[] = cms?.reviews || DEFAULT_REVIEWS;
+
   return (
     <section
       style={{
@@ -216,9 +220,8 @@ export function ReviewsSection() {
               textAlign: 'center',
             }}
           >
-            Reasons to keep showing up
+            {heading}
           </h2>
-          {/* Playful eyes icon */}
           <div className="flex items-center" style={{ gap: '4px' }}>
             <div
               style={{
@@ -242,7 +245,6 @@ export function ReviewsSection() {
         {/* ── Desktop layout ── */}
         {!isMobile && (
           <div className="relative">
-            {/* Hero image */}
             <div
               style={{
                 width: '100%',
@@ -252,14 +254,13 @@ export function ReviewsSection() {
               }}
             >
               <ImageWithFallback
-                src={HERO_IMAGE}
+                src={heroImage}
                 alt="A supportive community of people sharing moments together"
                 className="w-full h-full object-cover"
                 style={{ objectPosition: 'center 30%' }}
               />
             </div>
 
-            {/* Cards overlapping the image bottom */}
             <div
               className="flex"
               style={{
@@ -280,7 +281,6 @@ export function ReviewsSection() {
         {/* ── Mobile layout ── */}
         {isMobile && (
           <div className="flex flex-col" style={{ gap: '16px' }}>
-            {/* Hero image — smaller on mobile */}
             <div
               style={{
                 width: '100%',
@@ -290,14 +290,13 @@ export function ReviewsSection() {
               }}
             >
               <ImageWithFallback
-                src={HERO_IMAGE}
+                src={heroImage}
                 alt="A supportive community of people sharing moments together"
                 className="w-full h-full object-cover"
                 style={{ objectPosition: 'center 30%' }}
               />
             </div>
 
-            {/* Cards stacked on mobile */}
             {reviews.map((review) => (
               <MobileReviewCard key={review.name} review={review} />
             ))}

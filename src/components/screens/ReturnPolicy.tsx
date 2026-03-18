@@ -21,8 +21,9 @@ export function ReturnPolicy({ className, onNavigate }: ReturnPolicyProps) {
       }}
     >
       <PageHero 
-        title={content?.title || 'Return & Refund Policy'}
-        subtitle="Understanding our refund and return policy for iKan services."
+        title={content?.heroTitle || content?.title || 'Return & Refund Policy'}
+        subtitle={content?.heroSubtitle || (content as any)?.subtitle || 'Understanding our refund and return policy for iKan services.'}
+        backgroundImage={content?.heroImage}
       />
 
       <div 

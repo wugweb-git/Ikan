@@ -566,6 +566,7 @@ function AppContent() {
                            currentRoute === '/cancellation-policy' ||
                            currentRoute === '/faq' ||
                            currentRoute === '/sitemap' ||
+                           currentRoute === '/resource' ||
                            currentRoute.startsWith('/page/');
 
   const isFullScreenFlow = currentRoute.startsWith('/assessment-flow') ||

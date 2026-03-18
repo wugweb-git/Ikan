@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { 
-  Save, Trash2, Eye, Plus, X, EyeOff, Upload, GripVertical, ArrowUp, ArrowDown
+  Save, Trash2, Eye, Plus, X, EyeOff, Upload, GripVertical, ArrowUp, ArrowDown, AlertCircle
 } from 'lucide-react';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
@@ -128,6 +128,7 @@ export function EquipProgramWizard({ programId, onBack, onSave }: EquipProgramWi
   const { showToast } = useNotifications();
   const [loading, setLoading] = useState(!!programId);
   const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [currentStep, setCurrentStep] = useState(0);
   const [selectedQuestion, setSelectedQuestion] = useState<OnboardingQuestion | null>(null);
@@ -180,6 +181,41 @@ export function EquipProgramWizard({ programId, onBack, onSave }: EquipProgramWi
 
   const [localProgramId, setLocalProgramId] = useState(programId);
   const hasLoadedRef = useRef(false);
+  const LOCAL_STORAGE_KEY = `ikan_equip_draft_${programId || 'new'}`;
+
+  // ── localStorage crash recovery ──────────────────────────────
+  // On mount: check if there's a localStorage backup
+  useEffect(() => {
+    if (programId) return; // Only restore for NEW programs (editing existing reloads from server)
+    try {
+      const saved = localStorage.getItem(LOCAL_STORAGE_KEY);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed && parsed.title) {
+          setFormData(prev => ({ ...prev, ...parsed }));
+          showToast('info', 'Draft Recovered', 'We restored your unsaved changes from a previous session.');
+        }
+      }
+    } catch { /* ignore corrupt data */ }
+  }, []);
+
+  // On every form change: backup to localStorage (debounced)
+  const backupTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => {
+    if (!hasLoadedRef.current) return; // Don't backup initial load
+    if (backupTimerRef.current) clearTimeout(backupTimerRef.current);
+    backupTimerRef.current = setTimeout(() => {
+      try {
+        localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(formData));
+      } catch { /* quota exceeded — non-critical */ }
+    }, 2000);
+    return () => { if (backupTimerRef.current) clearTimeout(backupTimerRef.current); };
+  }, [formData]);
+
+  // Clear localStorage backup after successful save
+  const clearLocalBackup = () => {
+    try { localStorage.removeItem(LOCAL_STORAGE_KEY); } catch {}
+  };
 
   // Load Data
   useEffect(() => {
@@ -266,6 +302,9 @@ export function EquipProgramWizard({ programId, onBack, onSave }: EquipProgramWi
   // Navigation saves progress. Save preserves state. Publish changes lifecycle.
   const persistWizard = async (currentData: any, isAutoSave = false) => {
     setSaving(true);
+    setSaveError(null);
+    // Suppress auth sign-out during save — don't lose state on token expiry
+    apiClient.suppressSignOut(true);
     try {
       // UNIFIED SYSTEM: Day 0 is now edited directly in the Content Builder.
       // If Day 0 exists in daily_content, use it as-is.
@@ -302,12 +341,25 @@ export function EquipProgramWizard({ programId, onBack, onSave }: EquipProgramWi
       }
       
       markAsSaved();
+      clearLocalBackup();
       if (!isAutoSave) showToast('success', 'Saved', 'Changes saved successfully');
       return true;
-    } catch (e) {
-      if (!isAutoSave) showToast('error', 'Error', 'Failed to save progress');
+    } catch (e: any) {
+      const errorMsg = e?.message || 'Unknown error';
+      const isAuthError = errorMsg.includes('401') || errorMsg.includes('403') || errorMsg.includes('Unauthorized');
+      
+      if (isAutoSave) {
+        // CRITICAL FIX: Show auto-save failures instead of silently swallowing them
+        setSaveError(isAuthError ? 'Session expired — please save manually or re-login' : 'Auto-save failed');
+        console.error('Auto-save failed:', errorMsg);
+      } else {
+        showToast('error', 'Save Failed', isAuthError
+          ? 'Your session expired. Please log in again and retry.'
+          : 'Failed to save progress. Your changes are backed up locally.');
+      }
       return false;
     } finally {
+      apiClient.suppressSignOut(false);
       setSaving(false);
     }
   };
@@ -483,6 +535,39 @@ export function EquipProgramWizard({ programId, onBack, onSave }: EquipProgramWi
           </div>
         }
       >
+        {/* ── Save Error Banner ── */}
+        {saveError && (
+          <div
+            className="flex items-center gap-3"
+            style={{
+              padding: '10px 16px',
+              borderRadius: 'var(--radius-md)',
+              backgroundColor: 'var(--color-status-danger-light)',
+              border: '1px solid var(--color-status-danger)',
+              marginBottom: 16,
+              fontFamily: 'var(--font-family-base)',
+            }}
+            role="alert"
+          >
+            <AlertCircle size={16} style={{ color: 'var(--color-status-danger)', flexShrink: 0 }} />
+            <span style={{ fontSize: 'var(--text-sm)', fontWeight: 400, color: 'var(--color-text-primary)', flex: 1 }}>
+              {saveError}
+            </span>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => { setSaveError(null); persistWizard(formData); }}
+              className="h-7 px-3 text-xs shrink-0"
+              style={{ borderColor: 'var(--color-status-danger)', color: 'var(--color-status-danger)' }}
+            >
+              Retry Save
+            </Button>
+            <button onClick={() => setSaveError(null)} className="p-0 border-none bg-transparent cursor-pointer" style={{ color: 'var(--color-text-muted)' }}>
+              <X size={14} />
+            </button>
+          </div>
+        )}
+
         {/* STEP 0: BASIC INFO */}
         {currentStep === 0 && (
           <div>

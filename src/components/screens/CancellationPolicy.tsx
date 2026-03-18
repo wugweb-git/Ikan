@@ -21,8 +21,9 @@ export function CancellationPolicy({ className, onNavigate }: CancellationPolicy
       }}
     >
       <PageHero 
-        title={content?.title || 'Cancellation Policy'}
-        subtitle="We understand plans change. Cancel anytime with no penalties or hidden fees."
+        title={content?.heroTitle || content?.title || 'Cancellation Policy'}
+        subtitle={content?.heroSubtitle || (content as any)?.subtitle || 'We understand plans change. Cancel anytime with no penalties or hidden fees.'}
+        backgroundImage={content?.heroImage}
       />
 
       <div 

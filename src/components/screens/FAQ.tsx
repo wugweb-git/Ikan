@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Search, MessageSquarePlus } from 'lucide-react';
 import { useIsMobile } from '../../hooks/useIsMobile';
+import { usePageContent } from '../../hooks/usePageContent';
 import { PageHero } from '../ui/PageHero';
 import {
   Accordion,
@@ -14,160 +15,156 @@ interface FAQProps {
   onNavigate?: (route: string) => void;
 }
 
-// FAQ data organised into categories
-const faqCategories = [
-  {
-    id: 'about',
-    title: 'About iKan',
-    items: [
-      {
-        question: 'What is iKan and how does it support mental health?',
-        answer:
-          'iKan is a mental health progressive web app (PWA) that provides access to professional consultants, self-guided programs, mood journaling, and clinically validated assessments — all in one place. Our goal is to make mental wellness accessible, private, and stigma-free.',
-      },
-      {
-        question: 'Is iKan a replacement for therapy?',
-        answer:
-          'No. iKan is a complement to professional care, not a replacement. Our Equip programs, mood tracking, and resources are designed to support your wellbeing between sessions or as a first step. For clinical concerns, we always encourage working with a licensed professional — and our consultation feature can connect you with one.',
-      },
-      {
-        question: 'How is iKan different from other mental health apps?',
-        answer:
-          'iKan combines self-paced CBT-based programs, professional consultations, mood journaling, and a resource library into a single platform. We follow "Calm Tech" design principles — our interface is intentionally subtle so you can use the app comfortably in any setting without drawing attention.',
-      },
-    ],
-  },
-  {
-    id: 'getting-started',
-    title: 'Signing Up & Getting Started',
-    items: [
-      {
-        question: 'How do I create an account?',
-        answer:
-          'Tap "Get Started" on the homepage, enter your name, email, and a secure password. Your account will be confirmed automatically — no email verification required during the beta period.',
-      },
-      {
-        question: 'Is iKan free to use?',
-        answer:
-          'Browsing resources, assessments, and our library is free. Individual Equip programs and professional consultations are paid services. Pricing is displayed clearly before purchase — no hidden fees.',
-      },
-      {
-        question: 'Can I use iKan without signing in?',
-        answer:
-          'Yes. Public pages like Resources, Assessments (overview), Equip program listings, and informational content are accessible without an account. Signing in unlocks mood journaling, program enrolment, consultation booking, and personalised recommendations.',
-      },
-    ],
-  },
-  {
-    id: 'account',
-    title: 'Managing Your Account',
-    items: [
-      {
-        question: 'How do I update my profile information?',
-        answer:
-          'Navigate to your Account page from the bottom navigation (mobile) or the profile menu (desktop). You can update your name, phone number, bio, date of birth, gender, location, and emergency contact details.',
-      },
-      {
-        question: 'How do I change my password or email?',
-        answer:
-          'Go to Account → Security section. You can change your password by entering your current and new password. To change your email, submit a change request and verify via the confirmation link sent to the new address.',
-      },
-      {
-        question: 'Can I export or delete my data?',
-        answer:
-          'Yes. Under Account → Data & Privacy, you can export all your data (profile, journal entries, assessment results, and program progress) as a JSON file. You can also permanently delete your account — this action is irreversible and removes all data from our systems.',
-      },
-    ],
-  },
-  {
-    id: 'subscriptions',
-    title: 'Subscriptions & Billing',
-    items: [
-      {
-        question: 'What payment methods do you accept?',
-        answer:
-          'We accept all major credit and debit cards, UPI, and net banking through our secure Razorpay integration. All transactions are encrypted and processed in INR.',
-      },
-      {
-        question: 'How do I view my payment history?',
-        answer:
-          'Go to Account → Payment History to see a complete record of your transactions, including program purchases, consultation fees, and any refunds.',
-      },
-      {
-        question: 'What is your refund policy?',
-        answer:
-          'We offer refunds on a case-by-case basis. If you are unsatisfied with a program or session, please contact our support team within 7 days of purchase. Detailed terms are available on our Return Policy page.',
-      },
-    ],
-  },
-  {
-    id: 'sessions',
-    title: 'Sessions & Programs',
-    items: [
-      {
-        question: 'How do I book a consultation with a therapist?',
-        answer:
-          'Navigate to the Consultation page, browse our verified professionals by category, and select a time slot that works for you. You can filter by expertise, language, availability, and session mode (video, call, chat, or in-person).',
-      },
-      {
-        question: 'Are the Equip programs self-paced?',
-        answer:
-          'Yes. Equip programs are structured into daily modules you can complete at your own pace. Each program includes exercises, reflections, and progress tracking to help you build lasting habits.',
-      },
-      {
-        question: 'What mental health assessments are available?',
-        answer:
-          'We offer clinically validated assessments for anxiety (GAD-7), depression (PHQ-9), stress, well-being, and more. Results are private and can help guide your journey or inform conversations with a professional.',
-      },
-      {
-        question: 'How does mood journaling work?',
-        answer:
-          'The Mood Journal lets you log your mood daily with a rating, emotions, energy level, and free-text reflections. Over time, iKan visualises trends so you can understand patterns in your mental health.',
-      },
-    ],
-  },
-  {
-    id: 'trust-safety',
-    title: 'Trust, Safety & Privacy',
-    items: [
-      {
-        question: 'Is my data private and secure?',
-        answer:
-          'Absolutely. All user data is encrypted and treated as highly sensitive. We follow strict privacy guidelines and never share your data with third parties. Our designs are intentionally subtle so you can use the app comfortably in any setting.',
-      },
-      {
-        question: 'What should I do in a mental health emergency?',
-        answer:
-          'If you or someone you know is in immediate danger, please call your local emergency services (911) or the iCALL Suicide Prevention Helpline at 915298721. iKan always provides visible access to crisis resources throughout the app.',
-      },
-      {
-        question: 'How are consultants verified?',
-        answer:
-          'All consultants on iKan are licensed professionals. We verify their credentials, qualifications, and experience before they join the platform. You can view each consultant\'s profile, specialisations, and user reviews before booking.',
-      },
-    ],
-  },
-];
-
 export function FAQ({ className, onNavigate }: FAQProps) {
   const isMobile = useIsMobile();
   const [searchQuery, setSearchQuery] = useState('');
 
+  // ── CMS content ──
+  const { content: cmsContent } = usePageContent('page-faq');
+  const cms = useMemo(() => {
+    if (!cmsContent?.content) return null;
+    try { return JSON.parse(cmsContent.content); } catch { return null; }
+  }, [cmsContent]);
+
+  const heroTitle = cmsContent?.heroTitle || cms?.heroTitle || 'FAQs & Help Center';
+  const heroSubtitle = cmsContent?.heroSubtitle || cms?.heroSubtitle || 'Find answers to common questions about iKan, your account, programs, and more.';
+  const searchPlaceholder = cms?.searchPlaceholder || 'Search for answers...';
+  const noResultsText = cms?.noResultsText || 'No results found. Try a different search term.';
+  const ctaTitle = cms?.ctaTitle || 'Still have questions?';
+  const ctaDescription = cms?.ctaDescription || 'We are here to help you on your mental health journey. Submit a ticket and our team will get back to you.';
+  const ctaButtonText = cms?.ctaButtonText || 'Contact Support';
+  const ctaButtonRoute = cms?.ctaButtonRoute || '/contact';
+
+  const faqCategories = cms?.categories || [
+    {
+      id: 'about',
+      title: 'About iKan',
+      items: [
+        {
+          question: 'What is iKan and how does it support mental health?',
+          answer: 'iKan is a mental health progressive web app (PWA) that provides access to professional consultants, self-guided programs, mood journaling, and clinically validated assessments — all in one place. Our goal is to make mental wellness accessible, private, and stigma-free.',
+        },
+        {
+          question: 'Is iKan a replacement for therapy?',
+          answer: 'No. iKan is designed to complement professional therapy, not replace it. Our tools — like mood journaling, self-guided Equip programs, and validated assessments — can support your well-being between sessions or help you decide when to seek professional help. For clinical concerns, we always recommend consulting a licensed therapist.',
+        },
+        {
+          question: 'How is iKan different from other mental health apps?',
+          answer: 'iKan combines clinically validated assessments, structured self-help programs, mood journaling, and direct access to verified consultants — all within a single, privacy-first platform. We focus on accessibility, evidence-based approaches, and a stigma-free experience tailored for users in India.',
+        },
+      ],
+    },
+    {
+      id: 'getting-started',
+      title: 'Signing Up & Getting Started',
+      items: [
+        {
+          question: 'How do I create an account?',
+          answer: 'Tap the "Sign Up" button on the homepage, enter your name, email, and a password. Your account will be created instantly — no email verification required during our beta period. You can start exploring assessments, programs, and resources right away.',
+        },
+        {
+          question: 'Is iKan free to use?',
+          answer: 'iKan offers a free tier that includes mood journaling, mental health assessments, and access to the resource library. Premium features — such as Equip programs and one-on-one consultations — may require a subscription or per-session payment.',
+        },
+        {
+          question: 'Can I use iKan without signing in?',
+          answer: 'Yes! You can browse the resource library, read articles, explore the About page, and view available programs and consultants without an account. However, features like mood journaling, assessments, and booking consultations require you to sign in.',
+        },
+      ],
+    },
+    {
+      id: 'account',
+      title: 'Managing Your Account',
+      items: [
+        {
+          question: 'How do I update my profile information?',
+          answer: 'Go to your Account page from the bottom navigation (or top nav on desktop), then tap "Personal Information". You can update your name, phone number, bio, date of birth, gender, location, and emergency contact details.',
+        },
+        {
+          question: 'How do I change my password or email?',
+          answer: 'Navigate to Account → Security Settings. From there you can change your password by entering your current and new password. To change your email, go to Account → Personal Information and use the email change option — a verification step will confirm the update.',
+        },
+        {
+          question: 'Can I export or delete my data?',
+          answer: 'Yes. Under Account → Privacy Settings, you can request a full data export or account deletion. Data exports are delivered as a downloadable file. Account deletion permanently removes all your data from our systems in compliance with privacy regulations.',
+        },
+      ],
+    },
+    {
+      id: 'billing',
+      title: 'Subscriptions & Billing',
+      items: [
+        {
+          question: 'What payment methods do you accept?',
+          answer: 'We accept all major payment methods through Razorpay, including credit cards, debit cards, UPI, net banking, and popular digital wallets. All transactions are securely processed and encrypted.',
+        },
+        {
+          question: 'How do I view my payment history?',
+          answer: 'Go to Account → Payment History to see a complete record of all your transactions, including program purchases and consultation bookings. Each entry shows the date, amount, and status of the payment.',
+        },
+        {
+          question: 'What is your refund policy?',
+          answer: 'Refund eligibility depends on the type of purchase. Consultation cancellations made at least 24 hours in advance are eligible for a full refund. Program subscriptions may be refunded within the first 7 days if no content has been accessed. Visit our Return Policy page for full details.',
+        },
+      ],
+    },
+    {
+      id: 'sessions-programs',
+      title: 'Sessions & Programs',
+      items: [
+        {
+          question: 'How do I book a consultation with a therapist?',
+          answer: 'Navigate to the Consultation page, browse verified therapists by speciality, and select a time slot that works for you. You can view each consultant\'s profile, qualifications, and areas of expertise before booking. Payment is processed securely at the time of booking.',
+        },
+        {
+          question: 'Are the Equip programs self-paced?',
+          answer: 'Yes! Equip programs are structured as daily activities but are entirely self-paced. Each day includes a mix of content — readings, reflections, audio exercises, and check-ins. You can progress at your own speed and revisit completed days anytime.',
+        },
+        {
+          question: 'What mental health assessments are available?',
+          answer: 'iKan offers clinically validated screening tools including the PHQ-9 (depression), GAD-7 (anxiety), PSS (stress), and more. These assessments provide instant insights into your mental well-being and can help guide conversations with a professional.',
+        },
+        {
+          question: 'How does mood journaling work?',
+          answer: 'The Mood Journal lets you log your emotional state daily using simple mood selectors and optional notes. Over time, you can track patterns and trends on your Wellness Timeline. It takes less than a minute and helps build self-awareness about your mental health.',
+        },
+      ],
+    },
+    {
+      id: 'privacy-safety',
+      title: 'Trust, Safety & Privacy',
+      items: [
+        {
+          question: 'Is my data private and secure?',
+          answer: 'Absolutely. All user data is encrypted and treated as highly sensitive. We follow strict privacy guidelines and never share your data with third parties. Our designs are intentionally subtle so you can use the app comfortably in any setting.',
+        },
+        {
+          question: 'What should I do in a mental health emergency?',
+          answer: 'If you or someone you know is in immediate danger, please call emergency services (112 in India) or reach out to a crisis helpline such as iCall (9152987821) or Vandrevala Foundation (1860-2662-345). iKan provides quick access to crisis resources from within the app, but is not a substitute for emergency services.',
+        },
+        {
+          question: 'How are consultants verified?',
+          answer: 'All consultants on iKan go through a thorough verification process. We verify their professional qualifications, licenses, and years of experience. Each consultant\'s profile displays their credentials, specialisations, and areas of expertise so you can make an informed choice.',
+        },
+      ],
+    },
+  ];
+
   // Filter FAQ items based on search
   const filteredCategories = searchQuery.trim()
     ? faqCategories
-        .map((cat) => ({
+        .map((cat: any) => ({
           ...cat,
           items: cat.items.filter(
-            (item) =>
+            (item: any) =>
               item.question.toLowerCase().includes(searchQuery.toLowerCase()) ||
               item.answer.toLowerCase().includes(searchQuery.toLowerCase())
           ),
         }))
-        .filter((cat) => cat.items.length > 0)
+        .filter((cat: any) => cat.items.length > 0)
     : faqCategories;
 
-  const totalResults = filteredCategories.reduce((sum, cat) => sum + cat.items.length, 0);
+  const totalResults = filteredCategories.reduce((sum: number, cat: any) => sum + cat.items.length, 0);
 
   return (
     <div
@@ -177,13 +174,8 @@ export function FAQ({ className, onNavigate }: FAQProps) {
         fontFamily: 'var(--font-family-base)',
       }}
     >
-      {/* Hero Section */}
-      <PageHero
-        title="FAQs & Help Center"
-        subtitle="Find answers to common questions about iKan, your account, programs, and more."
-      />
+      <PageHero title={heroTitle} subtitle={heroSubtitle} backgroundImage={cmsContent?.heroImage} />
 
-      {/* Content */}
       <div
         className="w-full mx-auto"
         style={{
@@ -196,10 +188,7 @@ export function FAQ({ className, onNavigate }: FAQProps) {
         {/* Search Bar */}
         <div
           className="relative w-full mx-auto"
-          style={{
-            maxWidth: '640px',
-            marginBottom: isMobile ? '32px' : '48px',
-          }}
+          style={{ maxWidth: '640px', marginBottom: isMobile ? '32px' : '48px' }}
         >
           <Search
             className="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none"
@@ -210,7 +199,7 @@ export function FAQ({ className, onNavigate }: FAQProps) {
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search for answers..."
+            placeholder={searchPlaceholder}
             style={{
               width: '100%',
               height: 'var(--ikan-component-input-height)',
@@ -240,14 +229,14 @@ export function FAQ({ className, onNavigate }: FAQProps) {
             }}
           >
             {totalResults === 0
-              ? 'No results found. Try a different search term.'
+              ? noResultsText
               : `Showing ${totalResults} result${totalResults !== 1 ? 's' : ''}`}
           </p>
         )}
 
         {/* FAQ Categories */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: isMobile ? '24px' : '32px' }}>
-          {filteredCategories.map((category) => (
+          {filteredCategories.map((category: any) => (
             <div
               key={category.id}
               style={{
@@ -257,12 +246,7 @@ export function FAQ({ className, onNavigate }: FAQProps) {
                 overflow: 'hidden',
               }}
             >
-              {/* Category Header */}
-              <div
-                style={{
-                  padding: isMobile ? '16px 16px 0' : '24px 32px 0',
-                }}
-              >
+              <div style={{ padding: isMobile ? '16px 16px 0' : '24px 32px 0' }}>
                 <h2
                   style={{
                     fontFamily: 'var(--font-family-base)',
@@ -277,10 +261,9 @@ export function FAQ({ className, onNavigate }: FAQProps) {
                 </h2>
               </div>
 
-              {/* Accordion */}
               <div style={{ padding: isMobile ? '0 16px 8px' : '0 32px 8px' }}>
                 <Accordion type="single" collapsible>
-                  {category.items.map((item, index) => (
+                  {category.items.map((item: any, index: number) => (
                     <AccordionItem
                       key={index}
                       value={`${category.id}-${index}`}
@@ -357,7 +340,7 @@ export function FAQ({ className, onNavigate }: FAQProps) {
               margin: '0 0 8px 0',
             }}
           >
-            Still have questions?
+            {ctaTitle}
           </h3>
 
           <p
@@ -371,11 +354,11 @@ export function FAQ({ className, onNavigate }: FAQProps) {
               margin: '0 auto 24px',
             }}
           >
-            We are here to help you on your mental health journey. Submit a ticket and our team will get back to you.
+            {ctaDescription}
           </p>
 
           <button
-            onClick={() => onNavigate?.('/contact')}
+            onClick={() => onNavigate?.(ctaButtonRoute)}
             style={{
               fontFamily: 'var(--font-family-base)',
               fontSize: 'var(--text-base)',
@@ -391,7 +374,7 @@ export function FAQ({ className, onNavigate }: FAQProps) {
             onMouseEnter={(e) => (e.currentTarget.style.opacity = '0.9')}
             onMouseLeave={(e) => (e.currentTarget.style.opacity = '1')}
           >
-            Contact Support
+            {ctaButtonText}
           </button>
         </div>
       </div>

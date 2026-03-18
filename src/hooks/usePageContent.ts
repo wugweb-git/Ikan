@@ -6,6 +6,14 @@ export interface PageContent {
   title: string;
   content: string; // HTML content
   lastUpdated?: string;
+  // Hero fields from page manager
+  heroEnabled?: boolean;
+  heroImage?: string;
+  heroTitle?: string;
+  heroSubtitle?: string;
+  heroCtaText?: string;
+  heroCtaLink?: string;
+  heroOverlayOpacity?: number;
 }
 
 /**

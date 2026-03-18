@@ -31,6 +31,11 @@ class ApiClient {
   private token: string | null = null;
   // Track in-flight AbortControllers so components can cancel on unmount
   private inflightControllers = new Set<AbortController>();
+  // When true, suppress auto-signout on refresh token errors (e.g. during saves)
+  private _suppressSignOut = false;
+
+  /** Temporarily suppress auto-signout (e.g. during critical save operations). */
+  suppressSignOut(suppress: boolean) { this._suppressSignOut = suppress; }
 
   /** Create an AbortController tied to this client; auto-cleaned on completion. */
   createAbortController(): AbortController {
@@ -56,6 +61,10 @@ class ApiClient {
           error.message?.includes('Invalid Refresh Token') ||
           error.message?.includes('not found')
         ) {
+          if (this._suppressSignOut) {
+            console.warn('Auth: Invalid refresh token detected in getToken, but sign-out suppressed (critical operation in progress)');
+            return null;
+          }
           console.warn('Auth: Invalid refresh token detected in getToken, signing out');
           await supabase.auth.signOut().catch(() => {});
           return null;
@@ -400,54 +409,95 @@ class ApiClient {
     
     if (!raw) return null;
 
+    // ── CRITICAL: Dual-format resolution ──
+    // The PUT route stores daily_content as a blob field in equip:{id}.
+    // The GET route (getFullEquip) loads separate equip_day: entries into `days`.
+    // If `days` is empty but `daily_content` exists in the blob, prefer the blob.
+    const hasSeparateDays = Array.isArray(raw.days) && raw.days.length > 0;
+    const hasBlobContent = Array.isArray(raw.daily_content) && raw.daily_content.length > 0;
+
+    let dailyContent: any[];
+
+    if (hasSeparateDays) {
+      // Normalized format: map separate day/block entities to frontend format
+      dailyContent = raw.days.map((day: EquipProgramDay) => ({
+        day: day.day_number,
+        title: day.title,
+        description: day.description || '',
+        image_url: day.image_url,
+        dayType: day.day_type || day.dayType || 'learning',
+        subtitle: day.subtitle || '',
+        activities: (day.blocks || []).map((block: EquipProgramBlock) => {
+          // Fix for legacy 'sleep_diary' block type
+          if (block.block_type === 'sleep_diary' || block.type === 'sleep_diary') {
+            return {
+              id: block.id,
+              title: block.title || 'Sleep Log',
+              type: 'exercise',
+              content: block.content || '',
+              duration: block.estimated_time_minutes || 5,
+              required: block.is_required !== false,
+              exerciseConfig: {
+                subtype: 'input-table',
+                prompt: block.description || 'Please record your sleep details below.',
+                columns: ['Bed Time', 'Wake Time', 'Quality (1-5)', 'Notes'],
+                allow_add_rows: true,
+                ...(block.exercise_config || block.exerciseConfig || {})
+              },
+              stepGroup: block.step_group_id || block.stepGroup,
+              autoAdvance: block.auto_advance || block.autoAdvance,
+              image_url: block.image_url
+            };
+          }
+
+          // Standard mapping
+          return {
+            id: block.id,
+            title: block.title || 'Untitled Block',
+            type: block.block_type || block.type || 'lesson',
+            content: block.content || '',
+            duration: block.estimated_time_minutes || 5,
+            required: block.is_required !== undefined ? block.is_required : true,
+            exerciseConfig: block.exercise_config || block.exerciseConfig || {},
+            stepGroup: block.step_group_id || block.stepGroup,
+            autoAdvance: block.auto_advance || block.autoAdvance,
+            image_url: block.image_url
+          };
+        })
+      }));
+    } else if (hasBlobContent) {
+      // Blob format: daily_content was stored directly by PUT route
+      // Already in frontend format — just ensure field consistency
+      dailyContent = raw.daily_content.map((day: any) => ({
+        day: day.day ?? day.day_number ?? 0,
+        title: day.title || '',
+        description: day.description || '',
+        image_url: day.image_url,
+        dayType: day.dayType || day.day_type || 'learning',
+        subtitle: day.subtitle || '',
+        activities: (day.activities || day.blocks || []).map((block: any) => ({
+          id: block.id,
+          title: block.title || 'Untitled Block',
+          type: block.type || block.block_type || 'lesson',
+          content: block.content || '',
+          duration: block.duration || block.estimated_time_minutes || 5,
+          required: block.required !== undefined ? block.required : (block.is_required !== undefined ? block.is_required : true),
+          exerciseConfig: block.exerciseConfig || block.exercise_config || {},
+          stepGroup: block.stepGroup || block.step_group_id,
+          autoAdvance: block.autoAdvance || block.auto_advance || false,
+          image_url: block.image_url,
+          order: block.order
+        }))
+      }));
+    } else {
+      dailyContent = [];
+    }
+
     // Transform backend format to frontend format
     return {
         ...raw,
-        title: raw.title || raw.name, // Map name to title
-        daily_content: (raw.days || []).map((day: EquipProgramDay) => ({
-            day: day.day_number,
-            title: day.title,
-            description: day.description || '',
-            image_url: day.image_url,
-            dayType: day.day_type || day.dayType || 'learning',
-            activities: (day.blocks || []).map((block: EquipProgramBlock) => {
-                // Fix for legacy 'sleep_diary' block type
-                if (block.block_type === 'sleep_diary' || block.type === 'sleep_diary') {
-                    return {
-                        id: block.id,
-                        title: block.title || 'Sleep Log',
-                        type: 'exercise',
-                        content: block.content || '',
-                        duration: block.estimated_time_minutes || 5,
-                        required: block.is_required !== false, // Default to true
-                        exerciseConfig: {
-                            subtype: 'input-table',
-                            prompt: block.description || 'Please record your sleep details below.',
-                            columns: ['Bed Time', 'Wake Time', 'Quality (1-5)', 'Notes'],
-                            allow_add_rows: true,
-                            ...(block.exercise_config || block.exerciseConfig || {})
-                        },
-                        stepGroup: block.step_group_id || block.stepGroup,
-                        autoAdvance: block.auto_advance || block.autoAdvance,
-                        image_url: block.image_url
-                    };
-                }
-
-                // Standard mapping
-                return {
-                    id: block.id,
-                    title: block.title || 'Untitled Block',
-                    type: block.block_type || block.type || 'lesson',
-                    content: block.content || '',
-                    duration: block.estimated_time_minutes || 5,
-                    required: block.is_required,
-                    exerciseConfig: block.exercise_config || block.exerciseConfig || {},
-                    stepGroup: block.step_group_id || block.stepGroup,
-                    autoAdvance: block.auto_advance || block.autoAdvance,
-                    image_url: block.image_url
-                };
-            })
-        }))
+        title: raw.title || raw.name,
+        daily_content: dailyContent,
     };
   }
 
@@ -928,12 +978,12 @@ class ApiClient {
 
   // ── Hero Banners ────────────────────────────────────────────
   async getHeroBanners() {
-    return this.request('/hero-banners', { method: 'GET' }, true);
+    return this.request('/hero-banners', { method: 'GET' }, false);
   }
 
   async getHeroBanner(pageKey: string) {
     try {
-      const res = await this.request(`/hero-banners/${pageKey}`, { method: 'GET' }, true);
+      const res = await this.request(`/hero-banners/${pageKey}`, { method: 'GET' }, false);
       cacheForOffline(`hero-banner-${pageKey}`, res);
       return res;
     } catch (_e) {

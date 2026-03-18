@@ -33,7 +33,7 @@ function SliderResourceCard({ post, onClick, isMobile }: { post: ResourcePost; o
 
   return (
     <div
-      className="flex-shrink-0 cursor-pointer group"
+      className="flex-shrink-0 cursor-pointer group flex flex-col overflow-hidden"
       onClick={onClick}
       style={{
         width: isMobile ? 'calc(100vw - 48px)' : '300px',
@@ -41,7 +41,6 @@ function SliderResourceCard({ post, onClick, isMobile }: { post: ResourcePost; o
         borderRadius: 'var(--radius-lg)',
         backgroundColor: 'var(--color-bg-card)',
         border: '1px solid var(--color-border-default)',
-        overflow: 'hidden',
         transition: 'box-shadow 0.25s ease, transform 0.25s ease',
       }}
       onMouseEnter={(e) => {
@@ -71,9 +70,9 @@ function SliderResourceCard({ post, onClick, isMobile }: { post: ResourcePost; o
           <div
             className="absolute top-3 left-3"
             style={{
-              backgroundColor: 'rgba(255,255,255,0.92)',
-              borderRadius: 'var(--radius-md)',
-              padding: '4px 10px',
+              backgroundColor: 'rgba(0,0,0,0.65)',
+              borderRadius: 'var(--radius-pill, 999px)',
+              padding: '4px 12px',
               backdropFilter: 'blur(4px)',
             }}
           >
@@ -82,7 +81,7 @@ function SliderResourceCard({ post, onClick, isMobile }: { post: ResourcePost; o
                 fontSize: '11px',
                 fontWeight: 'var(--font-weight-medium)',
                 fontFamily: 'var(--font-family-base)',
-                color: 'var(--color-text-primary)',
+                color: '#FFFFFF',
                 textTransform: 'uppercase',
                 letterSpacing: '0.6px',
               }}
@@ -93,13 +92,13 @@ function SliderResourceCard({ post, onClick, isMobile }: { post: ResourcePost; o
         )}
       </div>
 
-      {/* Text content — title only, no description */}
+      {/* Text content */}
       <div
         style={{
           padding: 'var(--spacing-4)',
           display: 'flex',
           flexDirection: 'column',
-          gap: 'var(--spacing-2)',
+          gap: '6px',
         }}
       >
         {/* Date + Read time */}

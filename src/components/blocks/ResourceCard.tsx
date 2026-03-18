@@ -1,7 +1,5 @@
-import { Button } from '../ui/button';
 import { ImageWithFallback } from '../figma/ImageWithFallback';
 import { cn } from '../ui/utils';
-import { BookOpen, Video, Wrench } from 'lucide-react';
 import { resolveImageUrl } from '../../utils/image-utils';
 
 export interface ResourcePost {
@@ -27,153 +25,111 @@ interface ResourceCardProps {
 export function ResourceCard({ post, onClick, variant = 'default', className }: ResourceCardProps) {
   return (
     <div 
-      className={cn("p-4 rounded-xl cursor-pointer hover:shadow-md transition-shadow duration-300", className)}
+      className={cn("cursor-pointer group flex flex-col overflow-hidden", className)}
       onClick={onClick}
       style={{
         backgroundColor: 'var(--color-bg-card)',
         borderRadius: 'var(--radius-lg)',
-        border: '1px solid var(--color-border-default)'
+        border: '1px solid var(--color-border-default)',
+        transition: 'box-shadow 0.25s ease, transform 0.25s ease',
       }}
+      onMouseEnter={(e) => { e.currentTarget.style.boxShadow = '0 8px 24px rgba(0,0,0,0.08)'; e.currentTarget.style.transform = 'translateY(-2px)'; }}
+      onMouseLeave={(e) => { e.currentTarget.style.boxShadow = 'none'; e.currentTarget.style.transform = 'translateY(0)'; }}
     >
+      {/* Image with category pill overlay */}
       <div 
-        className="h-full flex flex-row md:flex-col gap-3 md:gap-4"
+        className="relative overflow-hidden w-full"
+        style={{
+          aspectRatio: '4/3',
+          backgroundColor: 'var(--color-bg-muted)',
+        }}
       >
-        {/* Image */}
-        <div 
-          className="relative rounded-lg overflow-hidden shrink-0 w-[80px] h-[80px] md:w-full md:h-auto md:aspect-video"
-          style={{ borderRadius: 'var(--radius-lg)' }}
-        >
-          <ImageWithFallback 
-            src={resolveImageUrl(post.image)}
-            alt={post.title}
-            className="w-full h-full object-cover"
-            loading="lazy"
-            decoding="async"
-          />
-        </div>
-
-        <div className="flex flex-col flex-1 gap-1 md:gap-4">
-          {/* Metadata */}
-          <div className="flex items-center gap-3">
-            {/* Type Icon - Hidden on mobile */}
-            {post.type && (
-              <div 
-                className="hidden md:flex items-center justify-center w-6 h-6 rounded-full"
-                style={{ backgroundColor: 'var(--color-bg-page)' }}
-                title={post.type.charAt(0).toUpperCase() + post.type.slice(1)}
-              >
-                {post.type === 'video' && <Video size={12} style={{ color: 'var(--color-text-muted)' }} />}
-                {post.type === 'tool' && <Wrench size={12} style={{ color: 'var(--color-text-muted)' }} />}
-                {post.type === 'article' && <BookOpen size={12} style={{ color: 'var(--color-text-muted)' }} />}
-              </div>
-            )}
-            
-            {/* Date */}
-            <div 
-              className="text-xs md:text-sm uppercase tracking-wide opacity-60"
-              style={{
-                fontSize: 'var(--text-xs)',
-                fontWeight: 'var(--font-weight-regular)',
-                color: 'var(--color-text-primary)',
-                fontFamily: 'var(--font-family-base)',
-                letterSpacing: 'var(--letter-spacing-wide)'
-              }}
-            >
-              {post.date}
-            </div>
-
-            {/* Read Time - Hidden on mobile */}
-            {post.readTime && (
-              <span key="readTime" className="hidden md:contents">
-                <span style={{ color: 'var(--color-text-muted)' }}>•</span>
-                <div 
-                  className="text-sm"
-                  style={{
-                    fontSize: 'var(--text-sm)',
-                    fontWeight: 'var(--font-weight-regular)',
-                    color: 'var(--color-text-muted)',
-                    fontFamily: 'var(--font-family-base)'
-                  }}
-                >
-                  {post.readTime}
-                </div>
-              </span>
-            )}
-
-            {/* Category - Hidden on mobile */}
-            {post.category && (
-              <span key="category" className="hidden md:contents">
-                <span style={{ color: 'var(--color-text-muted)' }}>•</span>
-                <div 
-                  className="text-sm"
-                  style={{
-                    fontSize: 'var(--text-sm)',
-                    fontWeight: 'var(--font-weight-regular)',
-                    color: 'var(--color-primary-default)',
-                    fontFamily: 'var(--font-family-base)'
-                  }}
-                >
-                  {post.category}
-                </div>
-              </span>
-            )}
-          </div>
-
-          {/* Title */}
-          <h3 
-            className="text-base md:text-lg leading-tight md:leading-normal"
+        <ImageWithFallback 
+          src={resolveImageUrl(post.image)}
+          alt={post.title}
+          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+          loading="lazy"
+          decoding="async"
+        />
+        {/* Category pill overlay */}
+        {post.category && (
+          <div
+            className="absolute top-3 left-3"
             style={{
-              fontWeight: 'var(--font-weight-medium)',
-              color: 'var(--color-text-primary)',
-              fontFamily: 'var(--font-family-base)',
+              backgroundColor: 'rgba(0,0,0,0.65)',
+              borderRadius: 'var(--radius-pill, 999px)',
+              padding: '4px 12px',
+              backdropFilter: 'blur(4px)',
             }}
           >
-            {post.title}
-          </h3>
-
-          {/* Description and Read More - Hidden on mobile */}
-          <div 
-            className="hidden md:flex flex-1 flex-col justify-between space-y-4"
-            style={{ gap: 'var(--spacing-4)' }}
-          >
-            <p 
-              className="leading-relaxed"
+            <span
               style={{
-                fontSize: 'var(--text-sm)',
-                fontWeight: 'var(--font-weight-regular)',
-                color: 'var(--color-text-primary)',
-                lineHeight: 'var(--line-height-md)',
-                fontFamily: 'var(--font-family-base)'
+                fontSize: '11px',
+                fontWeight: 'var(--font-weight-medium)',
+                fontFamily: 'var(--font-family-base)',
+                color: '#FFFFFF',
+                textTransform: 'uppercase',
+                letterSpacing: '0.6px',
               }}
             >
-              {post.description}
-            </p>
-            <div 
-              className="pt-4 border-t"
-              style={{ 
-                borderTopColor: 'var(--color-border-default)',
-                paddingTop: 'var(--spacing-4)'
-              }}
-            >
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onClick?.();
-                }}
-                className="p-0 h-auto bg-transparent border-none cursor-pointer hover:opacity-70 transition-opacity"
+              {post.category}
+            </span>
+          </div>
+        )}
+      </div>
+
+      {/* Text content */}
+      <div
+        style={{
+          padding: 'var(--spacing-4)',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '6px',
+        }}
+      >
+        {/* Date + Read time */}
+        <div className="flex items-center" style={{ gap: '6px' }}>
+          <span
+            style={{
+              fontSize: 'var(--text-xs)',
+              fontWeight: 'var(--font-weight-regular)',
+              fontFamily: 'var(--font-family-base)',
+              color: 'var(--color-text-muted)',
+            }}
+          >
+            {post.date}
+          </span>
+          {post.readTime && (
+            <>
+              <span style={{ color: 'var(--color-text-muted)', fontSize: '10px' }}>•</span>
+              <span
                 style={{
-                  fontSize: 'var(--text-sm)',
+                  fontSize: 'var(--text-xs)',
                   fontWeight: 'var(--font-weight-regular)',
-                  color: 'var(--color-text-primary)',
                   fontFamily: 'var(--font-family-base)',
-                  letterSpacing: 'var(--letter-spacing-normal)'
+                  color: 'var(--color-text-muted)',
                 }}
               >
-                Read more →
-              </button>
-            </div>
-          </div>
+                {post.readTime}
+              </span>
+            </>
+          )}
         </div>
+
+        {/* Title */}
+        <h3 
+          className="line-clamp-2"
+          style={{
+            fontSize: 'var(--text-base)',
+            fontWeight: 'var(--font-weight-medium)',
+            color: 'var(--color-text-primary)',
+            fontFamily: 'var(--font-family-base)',
+            lineHeight: '1.4',
+            margin: 0,
+          }}
+        >
+          {post.title}
+        </h3>
       </div>
     </div>
   );

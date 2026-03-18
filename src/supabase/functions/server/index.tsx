@@ -268,6 +268,23 @@ registerReminderRoutes(app, requireAuth, requireAdmin, supabase);
         page = await kv.get(`cms_page:${slug}`);
       }
 
+      // Attempt 2b: If slug starts with 'page-', resolve to the base page manager slug
+      // e.g. 'page-faq' → 'faq', 'page-contact' → 'contact', 'page-about-us' → 'about'
+      if (!page && slug.startsWith('page-')) {
+        const PAGE_SLUG_ALIASES: Record<string, string> = {
+          'page-about-us': 'about',
+          'page-faq': 'faq',
+          'page-contact': 'contact',
+          'page-sitemap': 'sitemap',
+          'page-not-found': 'not-found',
+        };
+        const baseSlug = PAGE_SLUG_ALIASES[slug] || slug.replace(/^page-/, '');
+        const basePage = await kv.get(`cms_page:${baseSlug}`);
+        if (basePage) {
+          page = basePage;
+        }
+      }
+
       // Attempt 3: Fallback scan of all pages (only if not found yet)
       if (!page) {
          try {
@@ -3655,13 +3672,27 @@ app.get("/user-activity/feed", requireAuth, async (c) => {
           assessmentNameMap.set(def.id, title);
           if (def.slug) assessmentNameMap.set(def.slug, title);
         }
-        // Resolve max score from scoring ranges
-        if (def.scoring?.ranges?.length > 0) {
-          const maxFromRanges = def.scoring.ranges[def.scoring.ranges.length - 1]?.max;
-          if (maxFromRanges) {
-            assessmentMaxScoreMap.set(def.id, maxFromRanges);
-            if (def.slug) assessmentMaxScoreMap.set(def.slug, maxFromRanges);
+        // Resolve max score: prefer computing from questions, fall back to scoring ranges
+        let computedMax = 0;
+        if (def.questions && Array.isArray(def.questions) && def.questions.length > 0) {
+          for (const q of def.questions) {
+            if (q.options && Array.isArray(q.options)) {
+              let maxVal = 0;
+              for (const opt of q.options) {
+                const v = typeof opt === 'object' ? (opt.value ?? opt.score ?? 0) : 0;
+                if (typeof v === 'number' && v > maxVal) maxVal = v;
+              }
+              computedMax += maxVal;
+            }
           }
+        }
+        if (computedMax === 0 && def.scoring?.ranges?.length > 0) {
+          const maxFromRanges = def.scoring.ranges[def.scoring.ranges.length - 1]?.max;
+          if (maxFromRanges) computedMax = maxFromRanges;
+        }
+        if (computedMax > 0) {
+          assessmentMaxScoreMap.set(def.id, computedMax);
+          if (def.slug) assessmentMaxScoreMap.set(def.slug, computedMax);
         }
       }
     }

@@ -39,13 +39,22 @@ const DEFAULTS: Record<string, HeroBanner> = {
     cta_link: '',
     updated_at: new Date().toISOString(),
   },
+  resources: {
+    page_key: 'resources',
+    title: 'Resource Library',
+    subtitle: 'Articles, guides, and tools curated by mental health professionals to support your journey.',
+    image_url: 'https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxsaWJyYXJ5JTIwYm9va3MlMjByZWFkaW5nJTIwa25vd2xlZGdlfGVufDF8fHx8MTc3MzMyMTU3M3ww&ixlib=rb-4.1.0&q=80&w=1080',
+    cta_text: '',
+    cta_link: '',
+    updated_at: new Date().toISOString(),
+  },
 };
 
 const KV_PREFIX = 'hero_banner:';
 
 export function registerHeroBannerRoutes(app: Hono, middleware: any) {
-  // GET /hero-banners — list all hero banners (admin)
-  app.get("/hero-banners", middleware, async (c) => {
+  // GET /hero-banners — list all hero banners (PUBLIC — no auth required)
+  app.get("/hero-banners", async (c) => {
     try {
       const stored = await kv.getByPrefix(KV_PREFIX);
       const bannerMap: Record<string, HeroBanner> = { ...DEFAULTS };
@@ -62,8 +71,8 @@ export function registerHeroBannerRoutes(app: Hono, middleware: any) {
     }
   });
 
-  // GET /hero-banners/:pageKey — get a single page's hero banner
-  app.get("/hero-banners/:pageKey", middleware, async (c) => {
+  // GET /hero-banners/:pageKey — get a single page's hero banner (PUBLIC)
+  app.get("/hero-banners/:pageKey", async (c) => {
     try {
       const pageKey = c.req.param("pageKey");
       const stored = await kv.get(`${KV_PREFIX}${pageKey}`);

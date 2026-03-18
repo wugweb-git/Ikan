@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useIsMobile } from '../../hooks/useIsMobile';
 import { PageHero } from '../ui/PageHero';
 import { usePageContent } from '../../hooks/usePageContent';
@@ -10,58 +10,73 @@ interface SitemapProps {
   onBack?: () => void;
 }
 
-interface SitemapLink {
-  label: string;
-  route: string;
-  icon: React.ReactNode;
-  description: string;
-}
+// Icon map for rendering from CMS icon names
+const ICON_MAP: Record<string, React.ReactNode> = {
+  house: <House size={18} />,
+  info: <Info size={18} />,
+  mail: <Mail size={18} />,
+  'clipboard-check': <ClipboardCheck size={18} />,
+  'book-open': <BookOpen size={18} />,
+  stethoscope: <Stethoscope size={18} />,
+  users: <Users size={18} />,
+  'user-circle': <UserCircle size={18} />,
+  heart: <Heart size={18} />,
+  'circle-help': <CircleHelp size={18} />,
+  shield: <Shield size={18} />,
+  'file-text': <FileText size={18} />,
+  ban: <Ban size={18} />,
+  'rotate-ccw': <RotateCcw size={18} />,
+};
 
-interface SitemapGroup {
-  title: string;
-  links: SitemapLink[];
-}
-
-const sitemapGroups: SitemapGroup[] = [
+const DEFAULT_GROUPS = [
   {
     title: 'Main Pages',
     links: [
-      { label: 'Home', route: '/', icon: <House size={18} />, description: 'Landing page with resources, assessments, and programs' },
-      { label: 'About Us', route: '/about', icon: <Info size={18} />, description: 'Our mission, values, and what iKan offers' },
-      { label: 'Contact Us', route: '/contact', icon: <Mail size={18} />, description: 'Get in touch with the iKan team' },
+      { label: 'Home', route: '/', icon: 'house', description: 'Landing page with resources, assessments, and programs' },
+      { label: 'About Us', route: '/about', icon: 'info', description: 'Our mission, values, and what iKan offers' },
+      { label: 'Contact Us', route: '/contact', icon: 'mail', description: 'Get in touch with the iKan team' },
     ],
   },
   {
     title: 'Mental Health Services',
     links: [
-      { label: 'Assessments', route: '/assessment', icon: <ClipboardCheck size={18} />, description: 'Clinically validated mental health screenings' },
-      { label: 'Equip Programs', route: '/equip', icon: <BookOpen size={18} />, description: 'Self-paced CBT-based wellness programs' },
-      { label: 'Consultation', route: '/consultation', icon: <Stethoscope size={18} />, description: 'Book sessions with licensed professionals' },
-      { label: 'Resources', route: '/resource', icon: <Users size={18} />, description: 'Articles, guides, and mental health tools' },
+      { label: 'Assessments', route: '/assessment', icon: 'clipboard-check', description: 'Clinically validated mental health screenings' },
+      { label: 'Equip Programs', route: '/equip', icon: 'book-open', description: 'Self-paced CBT-based wellness programs' },
+      { label: 'Consultation', route: '/consultation', icon: 'stethoscope', description: 'Book sessions with licensed professionals' },
+      { label: 'Resources', route: '/resource', icon: 'users', description: 'Articles, guides, and mental health tools' },
     ],
   },
   {
     title: 'Your Account',
     links: [
-      { label: 'My Account', route: '/account', icon: <UserCircle size={18} />, description: 'Profile, settings, and payment history' },
-      { label: 'Mood Journal', route: '/mood-journal', icon: <Heart size={18} />, description: 'Track your daily mood and emotions' },
+      { label: 'My Account', route: '/account', icon: 'user-circle', description: 'Profile, settings, and payment history' },
+      { label: 'Mood Journal', route: '/mood-journal', icon: 'heart', description: 'Track your daily mood and emotions' },
     ],
   },
   {
     title: 'Legal & Help',
     links: [
-      { label: 'FAQ', route: '/faq', icon: <CircleHelp size={18} />, description: 'Frequently asked questions and help center' },
-      { label: 'Privacy Policy', route: '/privacy-policy', icon: <Shield size={18} />, description: 'How we handle and protect your data' },
-      { label: 'Terms of Service', route: '/terms', icon: <FileText size={18} />, description: 'Legal terms governing use of iKan' },
-      { label: 'Cancellation Policy', route: '/cancellation-policy', icon: <Ban size={18} />, description: 'How to cancel subscriptions and services' },
-      { label: 'Return Policy', route: '/return-policy', icon: <RotateCcw size={18} />, description: 'Our refund and return policy' },
+      { label: 'FAQ', route: '/faq', icon: 'circle-help', description: 'Frequently asked questions and help center' },
+      { label: 'Privacy Policy', route: '/privacy-policy', icon: 'shield', description: 'How we handle and protect your data' },
+      { label: 'Terms of Service', route: '/terms', icon: 'file-text', description: 'Legal terms governing use of iKan' },
+      { label: 'Cancellation Policy', route: '/cancellation-policy', icon: 'ban', description: 'How to cancel subscriptions and services' },
+      { label: 'Return Policy', route: '/return-policy', icon: 'rotate-ccw', description: 'Our refund and return policy' },
     ],
   },
 ];
 
 export function Sitemap({ className, onNavigate, onBack }: SitemapProps) {
   const isMobile = useIsMobile();
-  const { content } = usePageContent('sitemap');
+
+  const { content: cmsContent } = usePageContent('page-sitemap');
+  const cms = useMemo(() => {
+    if (!cmsContent?.content) return null;
+    try { return JSON.parse(cmsContent.content); } catch { return null; }
+  }, [cmsContent]);
+
+  const heroTitle = cmsContent?.heroTitle || cms?.heroTitle || 'Site Navigation';
+  const heroSubtitle = cmsContent?.heroSubtitle || cms?.heroSubtitle || 'Explore all pages and resources available on iKan.';
+  const groups = cms?.groups || DEFAULT_GROUPS;
 
   return (
     <div
@@ -71,13 +86,8 @@ export function Sitemap({ className, onNavigate, onBack }: SitemapProps) {
         fontFamily: 'var(--font-family-base)',
       }}
     >
-      {/* Hero Section */}
-      <PageHero
-        title={content?.heroTitle || 'Site Navigation'}
-        subtitle={content?.heroSubtitle || 'Explore all pages and resources available on iKan.'}
-      />
+      <PageHero title={heroTitle} subtitle={heroSubtitle} backgroundImage={cmsContent?.heroImage} />
 
-      {/* Content */}
       <div
         className="w-full mx-auto"
         style={{
@@ -94,7 +104,7 @@ export function Sitemap({ className, onNavigate, onBack }: SitemapProps) {
             gap: '24px',
           }}
         >
-          {sitemapGroups.map((group) => (
+          {groups.map((group: any) => (
             <div
               key={group.title}
               style={{
@@ -119,7 +129,7 @@ export function Sitemap({ className, onNavigate, onBack }: SitemapProps) {
               </h2>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                {group.links.map((link) => (
+                {group.links.map((link: any) => (
                   <button
                     key={link.route}
                     onClick={() => onNavigate?.(link.route)}
@@ -151,7 +161,7 @@ export function Sitemap({ className, onNavigate, onBack }: SitemapProps) {
                         flexShrink: 0,
                       }}
                     >
-                      {link.icon}
+                      {ICON_MAP[link.icon] || <FileText size={18} />}
                     </div>
                     <div>
                       <p

@@ -1,7 +1,9 @@
 import { cn } from '../../ui/utils';
+import { useMemo } from 'react';
 import { ErrorBoundary } from '../../ErrorBoundary';
 import { ImageWithFallback } from '../../figma/ImageWithFallback';
 import { useIsMobile } from '../../../hooks/useIsMobile';
+import { usePageContent } from '../../../hooks/usePageContent';
 
 interface AudienceCard {
   title: string;
@@ -11,7 +13,7 @@ interface AudienceCard {
   imageAlt: string;
 }
 
-const audienceCards: AudienceCard[] = [
+const DEFAULT_CARDS: AudienceCard[] = [
   {
     title: 'For Individuals',
     subtitle: 'Your mental wellness, your pace.',
@@ -50,8 +52,19 @@ interface BenefitsSectionProps {
 export function BenefitsSection({ onNavigate, ctaText = 'Learn more', ctaRoute = '/about' }: BenefitsSectionProps) {
   const isMobile = useIsMobile();
 
+  const { content: cmsContent } = usePageContent('homepage-benefits-section');
+  const cms = useMemo(() => {
+    if (!cmsContent?.content) return null;
+    try { return JSON.parse(cmsContent.content); } catch { return null; }
+  }, [cmsContent]);
+
+  const heading = cms?.heading || 'Who is it for';
+  const resolvedCtaText = cms?.ctaText || ctaText;
+  const resolvedCtaRoute = cms?.ctaRoute || ctaRoute;
+  const cards: AudienceCard[] = cms?.cards || DEFAULT_CARDS;
+
   const handleCTA = () => {
-    if (onNavigate) onNavigate(ctaRoute);
+    if (onNavigate) onNavigate(resolvedCtaRoute);
   };
 
   return (
@@ -83,7 +96,7 @@ export function BenefitsSection({ onNavigate, ctaText = 'Learn more', ctaRoute =
                 margin: '0',
               }}
             >
-              Who is it for
+              {heading}
             </h2>
           </div>
 
@@ -117,9 +130,9 @@ export function BenefitsSection({ onNavigate, ctaText = 'Learn more', ctaRoute =
 
           {/* Cards */}
           {isMobile ? (
-            <MobileLayout />
+            <MobileLayout cards={cards} />
           ) : (
-            <DesktopFanLayout />
+            <DesktopFanLayout cards={cards} />
           )}
 
           {/* CTA Button */}
@@ -148,7 +161,7 @@ export function BenefitsSection({ onNavigate, ctaText = 'Learn more', ctaRoute =
                 e.currentTarget.style.transform = 'translateY(0)';
               }}
             >
-              {ctaText}
+              {resolvedCtaText}
             </button>
           </div>
         </div>
@@ -158,7 +171,7 @@ export function BenefitsSection({ onNavigate, ctaText = 'Learn more', ctaRoute =
 }
 
 /* ─── Desktop Fan Layout ─── */
-function DesktopFanLayout() {
+function DesktopFanLayout({ cards }: { cards: AudienceCard[] }) {
   return (
     <div
       style={{
@@ -182,7 +195,7 @@ function DesktopFanLayout() {
         onMouseEnter={(e) => (e.currentTarget.style.transform = 'rotate(3deg) translateY(-6px)')}
         onMouseLeave={(e) => (e.currentTarget.style.transform = 'rotate(6deg)')}
       >
-        <FanCard card={audienceCards[0]} />
+        <FanCard card={cards[0]} />
       </div>
 
       {/* Center card — straight, accent gradient */}
@@ -195,7 +208,7 @@ function DesktopFanLayout() {
         onMouseEnter={(e) => (e.currentTarget.style.transform = 'translateY(-6px)')}
         onMouseLeave={(e) => (e.currentTarget.style.transform = 'translateY(0)')}
       >
-        <FanCard card={audienceCards[1]} isCenter />
+        <FanCard card={cards[1]} isCenter />
       </div>
 
       {/* Right card — tilted counter-clockwise */}
@@ -211,7 +224,7 @@ function DesktopFanLayout() {
         onMouseEnter={(e) => (e.currentTarget.style.transform = 'rotate(-3deg) translateY(-6px)')}
         onMouseLeave={(e) => (e.currentTarget.style.transform = 'rotate(-6deg)')}
       >
-        <FanCard card={audienceCards[2]} />
+        <FanCard card={cards[2]} />
       </div>
     </div>
   );
@@ -307,10 +320,10 @@ function FanCard({ card, isCenter }: { card: AudienceCard; isCenter?: boolean })
 }
 
 /* ─── Mobile Layout ─── */
-function MobileLayout() {
+function MobileLayout({ cards }: { cards: AudienceCard[] }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-      {audienceCards.map((card, index) => (
+      {cards.map((card, index) => (
         <MobileCard key={index} card={card} />
       ))}
     </div>

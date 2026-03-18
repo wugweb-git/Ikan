@@ -1,6 +1,7 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { ErrorBoundary } from '../../ErrorBoundary';
 import { useIsMobile } from '../../../hooks/useIsMobile';
+import { usePageContent } from '../../../hooks/usePageContent';
 
 // Client logo imports from Figma
 import imgLogo2 from "figma:asset/1fa377842c0edee2e6d99526877c4abfe5cffba4.png";
@@ -27,6 +28,20 @@ export function MissionSection() {
   const isMobile = useIsMobile();
   const scrollRef = useRef<HTMLDivElement>(null);
   const animRef = useRef<number>(0);
+
+  // ── CMS content with fallback ──
+  const { content: cmsContent } = usePageContent('homepage-mission-section');
+  const cms = useMemo(() => {
+    if (!cmsContent?.content) return null;
+    try { return JSON.parse(cmsContent.content); } catch { return null; }
+  }, [cmsContent]);
+
+  const label = cms?.label || 'Our Mission';
+  const description = cms?.description || 'We believe everyone deserves support on their mental health journey. iKan combines clinical expertise with thoughtful technology to meet you where you are.';
+  const trustedByLabel = cms?.trustedByLabel || 'Trusted by leading organizations';
+
+  // Parse heading with <highlighted> markers
+  const highlightColors = cms?.highlightColors || { accessible: '#7ED4C8', affordable: '#F5A623', 'stigma-free': '#E84FAF' };
 
   // Inject keyframes once
   useEffect(() => {
@@ -74,7 +89,7 @@ export function MissionSection() {
               margin: '0 0 20px 0',
             }}
           >
-            Our Mission
+            {label}
           </p>
 
           <h2
@@ -92,7 +107,7 @@ export function MissionSection() {
             Making mental healthcare{' '}
             <span
               style={{
-                color: '#7ED4C8',
+                color: highlightColors['accessible'] || '#7ED4C8',
                 position: 'relative',
                 display: 'inline',
               }}
@@ -102,7 +117,7 @@ export function MissionSection() {
             ,{' '}
             <span
               style={{
-                color: '#F5A623',
+                color: highlightColors['affordable'] || '#F5A623',
                 position: 'relative',
                 display: 'inline',
               }}
@@ -112,7 +127,7 @@ export function MissionSection() {
             , and{' '}
             <span
               style={{
-                color: '#E84FAF',
+                color: highlightColors['stigma-free'] || '#E84FAF',
                 position: 'relative',
                 display: 'inline',
               }}
@@ -133,9 +148,7 @@ export function MissionSection() {
               maxWidth: '640px',
             }}
           >
-            We believe everyone deserves support on their mental health journey.
-            iKan combines clinical expertise with thoughtful technology to meet
-            you where you are.
+            {description}
           </p>
         </div>
 
@@ -152,7 +165,7 @@ export function MissionSection() {
               margin: 0,
             }}
           >
-            Trusted by leading organizations
+            {trustedByLabel}
           </p>
         </div>
 

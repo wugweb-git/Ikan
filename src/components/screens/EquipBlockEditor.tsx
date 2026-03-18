@@ -26,11 +26,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Checkbox } from '../ui/checkbox';
 import { Label } from '../ui/label';
 import { Card, CardContent } from '../ui/card';
-import { ImageUpload } from '../ui/image-upload';
 import { RichTextEditor } from '../ui/rich-text-editor';
 import { Activity, resolveInteraction, INTERACTION_META, type InteractionType } from '../../lib/equip-admin-types';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
 import { useMetadata } from '../../hooks/useMetadata';
+import { getPresetForDayType, type DayTypePreset } from '../admin/day-presets';
+import { projectId } from '../../utils/supabase/info';
+import { getAuthHeaders } from '../../lib/supabase-client';
+import { toast } from 'sonner@2.0.3';
 
 // Fallback exercise subtypes — used only while MetaManager hasn't loaded
 const FALLBACK_EXERCISE_SUBTYPES = [
@@ -68,6 +70,7 @@ interface EquipBlockEditorProps {
   isLast?: boolean;
   hideHeader?: boolean;
   isAssessment?: boolean;
+  dayType?: string; // Pass the parent day's type for preset-awareness
 }
 
 function EquipBlockEditorInner({ 
@@ -81,8 +84,37 @@ function EquipBlockEditorInner({
   isFirst,
   isLast,
   hideHeader,
-  isAssessment
+  isAssessment,
+  dayType
 }: EquipBlockEditorProps) {
+  
+  const imageInputRef = useRef<HTMLInputElement>(null);
+  
+  // Image upload handler
+  const handleImageUpload = async (file: File) => {
+    if (!file.type.startsWith('image/')) {
+      toast.error('Please select an image file');
+      return;
+    }
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('bucket', 'equip-program-images');
+      const response = await fetch(
+        `https://${projectId}.supabase.co/functions/v1/make-server-cc205da9/upload-image`,
+        { method: 'POST', headers: await getAuthHeaders(), body: formData }
+      );
+      if (!response.ok) throw new Error(`Upload failed: ${response.status}`);
+      const data = await response.json();
+      if (data.url) {
+        onChange({ image_url: data.url });
+        toast.success('Image uploaded');
+      }
+    } catch (err) {
+      console.error('Upload error:', err);
+      toast.error('Upload failed. Try pasting a URL instead.');
+    }
+  };
   
   // MetaManager — exercise subtypes from KV
   const { exerciseSubtypes: kvExerciseSubtypes, blockTypes: kvBlockTypes } = useMetadata();
@@ -154,25 +186,16 @@ function EquipBlockEditorInner({
       )}
 
       {(isExpanded || hideHeader) && (
-        <CardContent className={hideHeader ? "p-0 space-y-4" : "p-4 space-y-4"}>
+        <CardContent className={hideHeader ? "p-0 space-y-3" : "p-3 space-y-3"}>
           
-          {/* COMMON FIELDS */}
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-1">
-              <Label className="text-xs">Block Title</Label>
-              <Input 
-                value={block.title} 
-                onChange={(e) => onChange({ title: e.target.value })} 
-                placeholder="e.g. Introduction to Sleep"
-              />
-            </div>
-            <div className="space-y-1">
-              <Label className="text-xs">Type</Label>
+          {/* ── TOP BAR: Type pill + Interaction pill + Media icon ── */}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-1.5 flex-wrap">
               <Select 
                 value={block.type} 
                 onValueChange={(val: any) => onChange({ type: val })}
               >
-                <SelectTrigger>
+                <SelectTrigger className="h-5 w-auto gap-1 px-2 border-none shadow-none text-[10px] uppercase tracking-wider" style={{ backgroundColor: 'var(--color-accent-default)', color: 'var(--color-text-primary)', fontWeight: 500, fontFamily: 'var(--font-family-base)', borderRadius: 'var(--radius-pill)' }}>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -181,58 +204,98 @@ function EquipBlockEditorInner({
                   ))}
                 </SelectContent>
               </Select>
+              <span style={{ 
+                fontSize: '9px', fontWeight: 500, fontFamily: 'var(--font-family-base)',
+                color: 'var(--color-primary-default)', backgroundColor: 'color-mix(in srgb, var(--color-primary-default) 10%, transparent)',
+                padding: '2px 7px', borderRadius: 'var(--radius-pill)',
+              }}>
+                {currentInteraction}
+              </span>
+              <span style={{ 
+                fontSize: '9px', fontWeight: 500, fontFamily: 'var(--font-family-base)',
+                color: 'var(--color-status-info)', backgroundColor: 'var(--color-status-info-light)',
+                padding: '2px 7px', borderRadius: 'var(--radius-pill)',
+              }}>
+                {interactionMeta.verb}
+              </span>
+            </div>
+            {/* Media buttons — always visible */}
+            <div className="flex items-center gap-1">
+              <input
+                ref={imageInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={(e) => e.target.files?.[0] && handleImageUpload(e.target.files[0])}
+              />
+              <button
+                type="button"
+                onClick={() => imageInputRef.current?.click()}
+                className="h-7 w-7 flex items-center justify-center rounded-md transition-colors hover:bg-[var(--color-accent-default)]"
+                title="Upload image"
+                style={{ border: block.image_url && !isVideo ? '1.5px solid var(--color-primary-default)' : '1px solid var(--color-border-default)' }}
+              >
+                <ImageIcon size={14} style={{ color: block.image_url && !isVideo ? 'var(--color-primary-default)' : 'var(--color-text-muted)' }} />
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  const url = prompt('Enter video URL (YouTube, Vimeo, or MP4):');
+                  if (url) onChange({ image_url: url });
+                }}
+                className="h-7 w-7 flex items-center justify-center rounded-md transition-colors hover:bg-[var(--color-accent-default)]"
+                title="Add video URL"
+                style={{ border: isVideo ? '1.5px solid var(--color-primary-default)' : '1px solid var(--color-border-default)' }}
+              >
+                <Video size={14} style={{ color: isVideo ? 'var(--color-primary-default)' : 'var(--color-text-muted)' }} />
+              </button>
             </div>
           </div>
 
-          {/* Block Subtitle */}
-          <div className="space-y-1">
-            <Label className="text-xs">Block Subtitle</Label>
+          {/* COMMON FIELDS — Title + Subtitle compact */}
+          <div className="space-y-2">
+            <Input 
+              value={block.title} 
+              onChange={(e) => onChange({ title: e.target.value })} 
+              placeholder="Block title..."
+              className="h-8 text-xs border-none shadow-none px-0 focus-visible:ring-0"
+              style={{ fontSize: 'var(--text-sm)', fontWeight: 500, fontFamily: 'var(--font-family-base)', color: 'var(--color-text-primary)' }}
+            />
             <Input 
               value={block.subtitle || ''} 
               onChange={(e) => onChange({ subtitle: e.target.value })} 
-              placeholder="Brief description shown below the title"
+              placeholder="Subtitle (optional)"
+              className="h-6 text-xs border-none shadow-none px-0 focus-visible:ring-0"
+              style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}
             />
           </div>
 
-          {/* RESOLVED INTERACTION INDICATOR */}
-          <div 
-            className="flex items-center gap-3 p-3 rounded-lg"
-            style={{ backgroundColor: 'var(--color-bg-muted)', border: '1px solid var(--color-border-default)' }}
-          >
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2 flex-wrap">
-                <span style={{ fontSize: 'var(--text-xs)', fontWeight: 500, fontFamily: 'var(--font-family-base)', color: 'var(--color-text-muted)' }}>
-                  Interaction
-                </span>
-                <span style={{ 
-                  fontSize: '10px', fontWeight: 500, fontFamily: 'var(--font-family-base)',
-                  color: 'var(--color-primary-default)', backgroundColor: 'color-mix(in srgb, var(--color-primary-default) 10%, transparent)',
-                  padding: '1px 8px', borderRadius: 'var(--radius-pill)',
-                }}>
-                  {currentInteraction}
-                </span>
-                <span style={{ 
-                  fontSize: '10px', fontWeight: 500, fontFamily: 'var(--font-family-base)',
-                  color: 'var(--color-status-info)', backgroundColor: 'var(--color-status-info-light)',
-                  padding: '1px 8px', borderRadius: 'var(--radius-pill)',
-                }}>
-                  User {interactionMeta.verb.toLowerCase()}
-                </span>
-              </div>
-              <p style={{ fontSize: '10px', fontFamily: 'var(--font-family-base)', color: 'var(--color-text-muted)', marginTop: 2, lineHeight: 1.4 }}>
-                {interactionMeta.description}
-                {!block.interaction && block.exerciseConfig?.subtype && <span> (auto-mapped from {block.type} + {block.exerciseConfig.subtype})</span>}
-                {!block.interaction && !block.exerciseConfig?.subtype && <span> (auto-mapped from {block.type})</span>}
-              </p>
+          {/* ── MEDIA PREVIEW (only when media exists) ── */}
+          {block.image_url && (
+            <div className="flex items-center gap-2 px-2.5 py-1.5 rounded-md" style={{ backgroundColor: 'var(--color-bg-muted)', border: '1px solid var(--color-border-default)' }}>
+              {!isVideo ? (
+                <img src={block.image_url} className="w-8 h-8 rounded object-cover shrink-0" alt="" />
+              ) : (
+                <Video size={14} style={{ color: 'var(--color-text-muted)' }} />
+              )}
+              <Input
+                value={block.image_url || ''}
+                onChange={(e) => onChange({ image_url: e.target.value })}
+                placeholder={isVideo ? "Video URL" : "Image URL"}
+                className="h-6 text-[10px] flex-1 border-none shadow-none px-1"
+              />
+              <Button variant="ghost" size="icon" className="h-5 w-5 shrink-0" style={{ color: 'var(--color-status-danger)' }} onClick={() => onChange({ image_url: '' })}>
+                <Trash2 size={10} />
+              </Button>
             </div>
-          </div>
+          )}
 
           {/* DYNAMIC FIELDS BASED ON TYPE */}
           
           {/* 1. CONTENT / PROMPT SECTION (Lesson, Journal, Reflection, Conclude, Sleep Diary) */}
           {['lesson', 'journal', 'reflection', 'conclude', 'sleep-diary'].includes(block.type) && (
-            <div className="space-y-2">
-              <Label className="text-xs">
+            <div className="space-y-1">
+              <Label style={{ fontSize: '10px', fontWeight: 500, fontFamily: 'var(--font-family-base)', color: 'var(--color-text-muted)' }}>
                 {block.type === 'lesson' || block.type === 'conclude' ? 'Content' 
                   : block.type === 'sleep-diary' ? 'Sleep Diary Instructions'
                   : 'Prompt / Instructions'}
@@ -243,7 +306,7 @@ function EquipBlockEditorInner({
                 placeholder={block.type === 'lesson' ? "Write educational content..." 
                   : block.type === 'sleep-diary' ? "Instructions for the sleep diary entry..."
                   : "Write the prompt for the user..."}
-                minHeight="150px"
+                minHeight="80px"
               />
             </div>
           )}
@@ -582,122 +645,124 @@ function EquipBlockEditorInner({
 
           {/* WIZARD FLOW & INTERACTION SECTION (PROMOTED) */}
           <div className="pt-2 border-t mt-4">
-             <div className="flex items-center gap-2 mb-2">
-                <Layers size={14} style={{ color: 'var(--color-primary-default)' }} />
-                <Label className="uppercase tracking-wider" style={{ fontSize: 'var(--text-xs)', fontWeight: 'var(--font-weight-medium)', color: 'var(--color-text-muted)' }}>Wizard Flow</Label>
-             </div>
-             
-             <div className="p-3 rounded-md space-y-4" style={{ backgroundColor: 'var(--color-bg-muted)', border: '1px solid var(--color-border-default)' }}>
-               {/* Step Grouping */}
-               <div className="space-y-1">
-                  <div className="flex items-center justify-between">
-                     <Label className="text-xs" style={{ fontWeight: 'var(--font-weight-medium)' }}>Step Group ID</Label>
-                     <span style={{ fontSize: '10px', color: 'var(--color-text-muted)' }}>Optional</span>
-                  </div>
-                  <div className="flex gap-2">
-                     <div className="relative flex-1">
-                        <Input 
-                           value={block.stepGroup || ''}
-                           onChange={(e) => onChange({ stepGroup: e.target.value })}
-                           placeholder="e.g. step-1"
-                           className="h-8 text-xs font-mono" style={{ backgroundColor: 'var(--color-bg-card)' }}
-                        />
-                     </div>
-                  </div>
-                  <p style={{ fontSize: '10px', color: 'var(--color-text-muted)' }}>
-                     Blocks with the same Step ID appear together on one screen.
-                  </p>
-               </div>
+             {(() => {
+               const preset = dayType ? getPresetForDayType(dayType) : undefined;
+               const presetManaged = preset && (
+                 preset.autoConfig.autoAdvance !== undefined ||
+                 preset.autoConfig.scoringEnabled !== undefined ||
+                 !preset.stepGroupRules.allowed
+               );
 
-               <div className="grid grid-cols-2 gap-4">
-                  {/* Auto Advance */}
-                  <div className="flex items-start gap-2 p-2 rounded" style={{ backgroundColor: 'var(--color-bg-card)', border: '1px solid var(--color-border-default)' }}>
-                     <Checkbox 
-                        id="auto-advance"
-                        checked={block.autoAdvance}
-                        onCheckedChange={(c) => onChange({ autoAdvance: c as boolean })}
-                        className="mt-0.5"
-                     />
-                     <div>
-                        <Label htmlFor="auto-advance" className="text-xs font-medium cursor-pointer block">Auto-Advance</Label>
-                        <p className="leading-tight mt-0.5" style={{ fontSize: '10px', color: 'var(--color-text-muted)' }}>
-                           Automatically move to next step when completed.
-                        </p>
-                     </div>
-                  </div>
-                  
-                  {/* Required */}
-                  <div className="flex items-start gap-2 p-2 rounded" style={{ backgroundColor: 'var(--color-bg-card)', border: '1px solid var(--color-border-default)' }}>
-                     <Checkbox 
-                        id="required"
-                        checked={block.required}
-                        onCheckedChange={(c) => onChange({ required: c as boolean })}
-                        className="mt-0.5"
-                     />
-                     <div>
-                        <Label htmlFor="required" className="text-xs font-medium cursor-pointer block">Required</Label>
-                        <p className="leading-tight mt-0.5" style={{ fontSize: '10px', color: 'var(--color-text-muted)' }}>
-                           User must complete this block to proceed.
-                        </p>
-                     </div>
-                  </div>
-               </div>
-               
-               <div className="flex items-center gap-2 justify-end pt-1">
-                  <Clock size={12} style={{ color: 'var(--color-text-muted)' }} />
-                  <Label style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-primary)' }}>Est. Duration (m)</Label>
-                  <Input 
-                    type="number" 
-                    className="w-16 h-7 text-xs" style={{ backgroundColor: 'var(--color-bg-card)' }}
-                    value={block.duration}
-                    onChange={(e) => onChange({ duration: parseInt(e.target.value) || 0 })}
-                  />
-               </div>
-             </div>
-          </div>
+               return (
+                 <>
+                   <div className="flex items-center gap-2 mb-2">
+                     <Layers size={14} style={{ color: 'var(--color-primary-default)' }} />
+                     <Label className="uppercase tracking-wider" style={{ fontSize: 'var(--text-xs)', fontWeight: 'var(--font-weight-medium)', color: 'var(--color-text-muted)' }}>Wizard Flow</Label>
+                     {presetManaged && (
+                       <span style={{
+                         fontSize: '9px', fontWeight: 500, fontFamily: 'var(--font-family-base)',
+                         color: 'var(--color-status-success)', backgroundColor: 'var(--color-status-success-light)',
+                         padding: '1px 6px', borderRadius: 'var(--radius-pill)',
+                       }}>
+                         {preset.label} preset
+                       </span>
+                     )}
+                   </div>
 
-          {/* MEDIA SECTION */}
-          <div className="pt-2 border-t mt-2">
-            <Label className="mb-2 block" style={{ fontSize: 'var(--text-xs)', fontWeight: 'var(--font-weight-medium)', color: 'var(--color-text-muted)' }}>Block Media</Label>
-            
-            <Tabs defaultValue={mediaType} className="w-full">
-              <TabsList className="grid w-full grid-cols-2 h-8 mb-2">
-                <TabsTrigger value="image" className="text-xs">
-                  <ImageIcon size={12} className="mr-2" /> Image
-                </TabsTrigger>
-                <TabsTrigger value="video" className="text-xs">
-                  <Video size={12} className="mr-2" /> Video URL
-                </TabsTrigger>
-              </TabsList>
-              
-              <TabsContent value="image">
-                <ImageUpload
-                   value={!isVideo ? (block.image_url || '') : ''}
-                   onChange={(url) => onChange({ image_url: url })}
-                   bucket="equip-program-images"
-                   placeholder="Upload block image (max 100px width)"
-                   className="w-[100px] h-auto" // Constraint: Max 100px width
-                   aspectRatio="square"
-                />
-                <p className="mt-1" style={{ fontSize: '10px', color: 'var(--color-text-muted)' }}>
-                  Preview restricted to 100px width.
-                </p>
-              </TabsContent>
-              
-              <TabsContent value="video">
-                <div className="space-y-2">
-                  <Input 
-                    value={isVideo ? (block.image_url || '') : ''}
-                    onChange={(e) => onChange({ image_url: e.target.value })}
-                    placeholder="https://youtube.com/..."
-                    className="text-xs"
-                  />
-                  <p style={{ fontSize: '10px', color: 'var(--color-text-muted)' }}>
-                    Paste a YouTube, Vimeo, or MP4 URL. This will replace any uploaded image.
-                  </p>
-                </div>
-              </TabsContent>
-            </Tabs>
+                   {/* Preset summary bar — when day type manages these */}
+                   {presetManaged && (
+                     <div className="flex flex-wrap items-center gap-1.5 mb-2 px-2.5 py-1.5 rounded-md" style={{ backgroundColor: 'var(--color-status-success-light)', border: '1px solid color-mix(in srgb, var(--color-status-success) 20%, transparent)' }}>
+                       {preset.autoConfig.autoAdvance !== undefined && (
+                         <span style={{ fontSize: '10px', fontWeight: 500, fontFamily: 'var(--font-family-base)', color: 'var(--color-status-success)' }}>
+                           Auto-advance: {preset.autoConfig.autoAdvance ? 'on' : 'off'}
+                         </span>
+                       )}
+                       {preset.autoConfig.autoAdvance !== undefined && preset.autoConfig.saveOnExit !== undefined && (
+                         <span style={{ color: 'var(--color-status-success)', opacity: 0.4 }}>·</span>
+                       )}
+                       {preset.autoConfig.saveOnExit && (
+                         <span style={{ fontSize: '10px', fontWeight: 500, fontFamily: 'var(--font-family-base)', color: 'var(--color-status-success)' }}>
+                           Save on exit
+                         </span>
+                       )}
+                       {!preset.stepGroupRules.allowed && (
+                         <>
+                           <span style={{ color: 'var(--color-status-success)', opacity: 0.4 }}>·</span>
+                           <span style={{ fontSize: '10px', fontWeight: 500, fontFamily: 'var(--font-family-base)', color: 'var(--color-status-success)' }}>
+                             No step groups
+                           </span>
+                         </>
+                       )}
+                     </div>
+                   )}
+                   
+                   <div className="p-3 rounded-md space-y-4" style={{ backgroundColor: 'var(--color-bg-muted)', border: '1px solid var(--color-border-default)' }}>
+                     {/* Step Grouping — hide if preset disallows */}
+                     {(!preset || preset.stepGroupRules.allowed) && (
+                       <div className="space-y-1">
+                         <div className="flex items-center justify-between">
+                           <Label className="text-xs" style={{ fontWeight: 'var(--font-weight-medium)' }}>Step Group ID</Label>
+                           <span style={{ fontSize: '10px', color: 'var(--color-text-muted)' }}>Optional</span>
+                         </div>
+                         <div className="flex gap-2">
+                           <div className="relative flex-1">
+                             <Input 
+                               value={block.stepGroup || ''}
+                               onChange={(e) => onChange({ stepGroup: e.target.value })}
+                               placeholder="e.g. step-1"
+                               className="h-8 text-xs font-mono" style={{ backgroundColor: 'var(--color-bg-card)' }}
+                             />
+                           </div>
+                         </div>
+                         <p style={{ fontSize: '10px', color: 'var(--color-text-muted)' }}>
+                           Blocks with the same Step ID appear together on one screen.
+                         </p>
+                       </div>
+                     )}
+
+                     <div className="grid grid-cols-3 gap-3">
+                       {/* Auto Advance */}
+                       <div className="flex items-start gap-2 p-2 rounded" style={{ backgroundColor: 'var(--color-bg-card)', border: '1px solid var(--color-border-default)' }}>
+                         <Checkbox 
+                           id="auto-advance"
+                           checked={block.autoAdvance}
+                           onCheckedChange={(c) => onChange({ autoAdvance: c as boolean })}
+                           className="mt-0.5"
+                         />
+                         <div>
+                           <Label htmlFor="auto-advance" className="text-xs font-medium cursor-pointer block">Auto</Label>
+                         </div>
+                       </div>
+                       
+                       {/* Required */}
+                       <div className="flex items-start gap-2 p-2 rounded" style={{ backgroundColor: 'var(--color-bg-card)', border: '1px solid var(--color-border-default)' }}>
+                         <Checkbox 
+                           id="required"
+                           checked={block.required}
+                           onCheckedChange={(c) => onChange({ required: c as boolean })}
+                           className="mt-0.5"
+                         />
+                         <div>
+                           <Label htmlFor="required" className="text-xs font-medium cursor-pointer block">Required</Label>
+                         </div>
+                       </div>
+
+                       {/* Duration — inline */}
+                       <div className="flex items-center gap-1.5 p-2 rounded" style={{ backgroundColor: 'var(--color-bg-card)', border: '1px solid var(--color-border-default)' }}>
+                         <Clock size={11} style={{ color: 'var(--color-text-muted)' }} />
+                         <Input 
+                           type="number" 
+                           className="w-12 h-6 text-[11px] p-1 text-center" style={{ backgroundColor: 'var(--color-bg-card)' }}
+                           value={block.duration}
+                           onChange={(e) => onChange({ duration: parseInt(e.target.value) || 0 })}
+                         />
+                         <span style={{ fontSize: '10px', color: 'var(--color-text-muted)' }}>m</span>
+                       </div>
+                     </div>
+                   </div>
+                 </>
+               );
+             })()}
           </div>
 
         </CardContent>
@@ -715,6 +780,7 @@ export const EquipBlockEditor = memo(EquipBlockEditorInner, (prev, next) => {
     prev.isFirst === next.isFirst &&
     prev.isLast === next.isLast &&
     prev.hideHeader === next.hideHeader &&
-    prev.isAssessment === next.isAssessment
+    prev.isAssessment === next.isAssessment &&
+    prev.dayType === next.dayType
   );
 });

@@ -274,7 +274,7 @@ export function AdminDashboard({ onNavigate, initialView }: AdminDashboardProps)
     switch (currentView) {
       case 'dashboard':
         return (
-          <div className="space-y-8 admin-dashboard-header">
+          <div className="space-y-6 admin-dashboard-header">
             <div>
               <h1 style={{
                 fontFamily: 'var(--font-family-base)',
@@ -290,83 +290,11 @@ export function AdminDashboard({ onNavigate, initialView }: AdminDashboardProps)
                 color: 'var(--color-text-muted)',
                 fontFamily: 'var(--font-family-base)'
               }}>
-                Overview of system performance and recent activity.
+                Platform metrics at a glance.
               </p>
             </div>
             
-            <div className="space-y-2">
-                <h2 style={{
-                  fontFamily: 'var(--font-family-base)',
-                  fontSize: 'var(--text-xl)',
-                  fontWeight: 'var(--font-weight-medium)',
-                  color: 'var(--color-text-primary)',
-                  marginBottom: 'var(--spacing-4)'
-                }}>
-                    Overview
-                </h2>
-                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                  <Card 
-                    className="p-6 cursor-pointer hover:shadow-md group border border-[var(--color-border-default)] cbt-card-small"
-                    style={{ borderRadius: 'var(--radius-lg)' }}
-                    onClick={() => setCurrentView('users')}
-                  >
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <h3 style={{ fontSize: 'var(--text-lg)', fontWeight: 'var(--font-weight-medium)', color: 'var(--color-text-primary)' }}>User Management</h3>
-                        <p style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-muted)', marginTop: 'var(--spacing-1)' }}>Manage accounts and roles</p>
-                      </div>
-                      <div className="p-2 rounded-lg" style={{ backgroundColor: 'var(--color-bg-muted)', color: 'var(--color-primary-default)' }}>
-                        <Users className="w-5 h-5" />
-                      </div>
-                    </div>
-                  </Card>
-
-                  <Card 
-                    className="p-6 cursor-pointer hover:shadow-md group border border-[var(--color-border-default)] cbt-card-small"
-                    style={{ borderRadius: 'var(--radius-lg)' }}
-                    onClick={() => setCurrentView('equip')}
-                  >
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <h3 style={{ fontSize: 'var(--text-lg)', fontWeight: 'var(--font-weight-medium)', color: 'var(--color-text-primary)' }}>Equip Programs</h3>
-                        <p style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-muted)', marginTop: 'var(--spacing-1)' }}>Manage courses and content</p>
-                      </div>
-                      <div className="p-2 rounded-lg" style={{ backgroundColor: 'var(--color-bg-muted)', color: 'var(--color-primary-default)' }}>
-                        <BookOpen className="w-5 h-5" />
-                      </div>
-                    </div>
-                  </Card>
-
-                  <Card 
-                    className="p-6 cursor-pointer hover:shadow-md group border border-[var(--color-border-default)] cbt-card-small"
-                    style={{ borderRadius: 'var(--radius-lg)' }}
-                    onClick={() => setCurrentView('crud')}
-                  >
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <h3 style={{ fontSize: 'var(--text-lg)', fontWeight: 'var(--font-weight-medium)', color: 'var(--color-text-primary)' }}>System Health</h3>
-                        <p style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-muted)', marginTop: 'var(--spacing-1)' }}>Status: Operational</p>
-                      </div>
-                      <div className="p-2 rounded-lg relative" style={{ backgroundColor: 'var(--color-status-success-light)', color: 'var(--color-status-success)' }}>
-                        <HeartPulse className="w-5 h-5" />
-                      </div>
-                    </div>
-                  </Card>
-                </div>
-            </div>
-            
-            <div className="space-y-4">
-                 <h2 style={{
-                   fontFamily: 'var(--font-family-base)',
-                   fontSize: 'var(--text-xl)',
-                   fontWeight: 'var(--font-weight-medium)',
-                   color: 'var(--color-text-primary)',
-                   marginBottom: 'var(--spacing-4)'
-                 }}>
-                    Dashboard Analytics
-                </h2>
-                <SuspenseScreen><L.Analytics embedded /></SuspenseScreen>
-            </div>
+            <SuspenseScreen><L.Analytics embedded /></SuspenseScreen>
           </div>
         );
       case 'analytics': return <SuspenseScreen><L.Analytics onBack={goBack} /></SuspenseScreen>;

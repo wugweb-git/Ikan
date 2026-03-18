@@ -72,6 +72,7 @@ export const DEFAULT_CMS_CONTENT: { [key: string]: any } = {
   },
   'privacy': {
     title: 'Privacy Policy',
+    subtitle: 'Your privacy and data security are fundamental to our mission.',
     content: `
       <div class="space-y-8">
         <div class="bg-gradient-to-r from-blue-50 to-indigo-50 p-6 rounded-lg border border-blue-100">
@@ -184,6 +185,7 @@ export const DEFAULT_CMS_CONTENT: { [key: string]: any } = {
   },
   'terms': {
     title: 'Terms of Service',
+    subtitle: "Important legal terms governing your use of iKan's mental health platform and services.",
     content: `
       <div class="space-y-8">
         <div class="bg-gradient-to-r from-purple-50 to-pink-50 p-6 rounded-lg border border-purple-100">
@@ -239,7 +241,7 @@ export const DEFAULT_CMS_CONTENT: { [key: string]: any } = {
                 <ul class="space-y-1 text-red-700 text-sm ml-4">
                   <li>• Always consult qualified healthcare providers for medical advice</li>
                   <li>• Do not use our platform for emergency mental health situations</li>
-                  <li>• Seek immediate help if you're experiencing thoughts of self-harm</li>
+                  <li>Seek immediate help if you're experiencing thoughts of self-harm</li>
                 </ul>
               </div>
               <div class="bg-gray-900 text-white p-4 rounded-lg">
@@ -360,6 +362,7 @@ export const DEFAULT_CMS_CONTENT: { [key: string]: any } = {
   },
   'return-policy': {
     title: 'Return Policy',
+    subtitle: 'Understanding our refund and return policy for iKan services.',
     content: `
       <div class="space-y-8">
         <div class="bg-gradient-to-r from-emerald-50 to-green-50 p-6 rounded-lg border border-emerald-100">
@@ -373,6 +376,7 @@ export const DEFAULT_CMS_CONTENT: { [key: string]: any } = {
   },
   'cancellation-policy': {
     title: 'Cancellation Policy',
+    subtitle: 'We understand plans change. Cancel anytime with no penalties or hidden fees.',
     content: `
       <h2>Account Cancellation</h2>
       <p>You may cancel your iKan account at any time.</p>
@@ -667,5 +671,396 @@ export const DEFAULT_CMS_CONTENT: { [key: string]: any } = {
       footerText: "Supported by leading healthcare providers"
     }),
     lastUpdated: new Date().toISOString()
-  }
+  },
+
+  // ═══════════════════════════════════════════════════════════════
+  // HOMEPAGE SUB-SECTION CMS DEFAULTS (externalized from components)
+  // ═══════════════════════════════════════════════════════════════
+
+  'homepage-mission-section': {
+    title: 'Homepage Mission Section',
+    content: JSON.stringify({
+      label: 'Our Mission',
+      heading: 'Making mental healthcare <accessible>, <affordable>, and <stigma-free> for everyone.',
+      highlightColors: {
+        accessible: '#7ED4C8',
+        affordable: '#F5A623',
+        'stigma-free': '#E84FAF',
+      },
+      description: 'We believe everyone deserves support on their mental health journey. iKan combines clinical expertise with thoughtful technology to meet you where you are.',
+      trustedByLabel: 'Trusted by leading organizations',
+    }),
+    lastUpdated: new Date().toISOString()
+  },
+
+  'homepage-benefits-section': {
+    title: 'Homepage Benefits Section',
+    content: JSON.stringify({
+      heading: 'Who is it for',
+      ctaText: 'Learn more',
+      ctaRoute: '/about',
+      cards: [
+        {
+          title: 'For Individuals',
+          subtitle: 'Your mental wellness, your pace.',
+          description: 'Access self-guided programs, mood journaling, and professional consultations — all in a private, stigma-free space designed around your comfort.',
+          image: 'https://images.unsplash.com/photo-1726377240070-19b747fc9f19?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxwZXJzb24lMjBwZWFjZWZ1bCUyMGpvdXJuYWxpbmclMjBzZWxmJTIwY2FyZXxlbnwxfHx8fDE3NzE5MDYwNzB8MA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral',
+          imageAlt: 'Person journaling for self care',
+        },
+        {
+          title: 'For Organizations',
+          subtitle: 'Invest in your people.',
+          description: 'Bring mental wellness into the workplace. Equip your teams with assessments, curated programs, and professional support that scales with your organization.',
+          image: 'https://images.unsplash.com/photo-1758691737182-d42aefd6dee8?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxjb3Jwb3JhdGUlMjB3b3JrcGxhY2UlMjB3ZWxsbmVzcyUyMHRlYW0lMjBtZWV0aW5nfGVufDF8fHx8MTc3MTkwNjA3MXww&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral',
+          imageAlt: 'Workplace wellness team meeting',
+        },
+        {
+          title: 'For Healthcare Providers',
+          subtitle: 'Extend care beyond the clinic.',
+          description: 'Use clinically validated assessments, track patient progress, and recommend structured programs — all on a platform built with privacy at its core.',
+          image: 'https://images.unsplash.com/photo-1758691463610-3c2ecf5fb3fa?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxoZWFsdGhjYXJlJTIwcHJvZmVzc2lvbmFsJTIwc3RldGhvc2NvcGUlMjBzbWlsaW5nfGVufDF8fHx8MTc3MTkwNjA3NHww&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral',
+          imageAlt: 'Healthcare professional smiling',
+        },
+      ],
+    }),
+    lastUpdated: new Date().toISOString()
+  },
+
+  'homepage-howitworks-section': {
+    title: 'Homepage How It Works Section',
+    content: JSON.stringify({
+      heading: 'How it works',
+      ctaText: 'Get Started',
+      ctaRoute: '/assessments',
+      cards: [
+        {
+          step: 1,
+          title: 'Take an Assessment',
+          subtitle: 'Understand where you are.',
+          description: 'Answer a few simple, clinically backed questions. Our assessments help you understand your emotional well-being — privately, at your own pace.',
+          image: 'https://images.unsplash.com/photo-1650046825506-8901c4b837b1?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxtZW50YWwlMjBoZWFsdGglMjBhc3Nlc3NtZW50JTIwcXVlc3Rpb25uYWlyZSUyMHRhYmxldHxlbnwxfHx8fDE3NzE5MDU3ODB8MA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral',
+          imageAlt: 'Mental health assessment on tablet',
+          iconName: 'clipboard-check',
+        },
+        {
+          step: 2,
+          title: 'Connect with a Professional',
+          subtitle: 'Find the right support for you.',
+          description: 'Browse therapists, psychiatrists, and counselors. Pick your preferred language, session mode, and availability — we handle the rest.',
+          image: 'https://images.unsplash.com/photo-1758273241078-8eec353836be?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHx0aGVyYXB5JTIwc2Vzc2lvbiUyMGNvdW5zZWxpbmclMjBjb252ZXJzYXRpb258ZW58MXx8fHwxNzcxOTA1NzgxfDA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral',
+          imageAlt: 'Therapy counseling session',
+          iconName: 'users',
+        },
+        {
+          step: 3,
+          title: 'Build Daily Habits',
+          subtitle: 'Make wellness your ritual.',
+          description: 'Join an Equip program with self-paced modules. Track your mood, practice mindfulness, and build lasting habits — one day at a time.',
+          image: 'https://images.unsplash.com/photo-1758272422634-e8ed8e252a14?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxtZWRpdGF0aW9uJTIwbWluZGZ1bG5lc3MlMjBkYWlseSUyMHdlbGxuZXNzJTIwcm91dGluZXxlbnwxfHx8fDE3NzE5MDU3ODF8MA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral',
+          imageAlt: 'Mindfulness and daily wellness',
+          iconName: 'sparkles',
+        },
+      ],
+    }),
+    lastUpdated: new Date().toISOString()
+  },
+
+  'homepage-stats-section': {
+    title: 'Homepage Stats Section',
+    content: JSON.stringify({
+      stats: [
+        { value: '50,000+', label: 'Assessments completed', icon: 'avatars' },
+        { value: '2M+', label: 'iKan members', icon: 'assessments' },
+        { value: '500+', label: 'Sessions a day', icon: 'sessions' },
+      ],
+    }),
+    lastUpdated: new Date().toISOString()
+  },
+
+  'homepage-faq-section': {
+    title: 'Homepage FAQ Section',
+    content: JSON.stringify({
+      heading: 'Frequently\\nasked questions',
+      viewAllText: 'View all FAQs',
+      contactCard: {
+        title: 'Do you have more questions?',
+        description: 'We are here to help you on your mental health journey. Reach out and we will get back to you.',
+        buttonText: 'Contact Us',
+        buttonLink: '/contact',
+      },
+      items: [
+        {
+          question: 'What is iKan and how does it support mental health?',
+          answer: 'iKan is a mental health PWA that provides access to professional consultants, self-guided programs, mood journaling, and mental health assessments — all in one place. Our goal is to make mental wellness accessible, private, and stigma-free.',
+        },
+        {
+          question: 'How do I book a consultation with a therapist?',
+          answer: 'Navigate to the Consultation page, browse our verified professionals by category, and select a time slot that works for you. You can filter by expertise, language, availability, and session mode (video, call, chat, or in-person).',
+        },
+        {
+          question: 'Are the Equip programs self-paced?',
+          answer: 'Yes. Equip programs are structured into daily modules you can complete at your own pace. Each program includes exercises, reflections, and progress tracking to help you build lasting habits.',
+        },
+        {
+          question: 'Is my data private and secure on iKan?',
+          answer: 'Absolutely. All user data is encrypted and treated as highly sensitive. We follow strict privacy guidelines, and our designs are intentionally subtle so you can use the app comfortably in any setting.',
+        },
+        {
+          question: 'What mental health assessments are available?',
+          answer: 'We offer clinically validated assessments for anxiety, depression, stress, well-being, and more. Results are private and can help guide your journey or inform conversations with a professional.',
+        },
+      ],
+    }),
+    lastUpdated: new Date().toISOString()
+  },
+
+  'homepage-reviews-section': {
+    title: 'Homepage Reviews Section',
+    content: JSON.stringify({
+      heading: 'Reasons to keep showing up',
+      heroImage: 'https://images.unsplash.com/photo-1758275557348-23950a3ddeae?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxncm91cCUyMGZyaWVuZHMlMjBoYXBweSUyMG91dGRvb3IlMjBnYXRoZXJpbmclMjBkaXZlcnNlfGVufDF8fHx8MTc3MTkwODY4M3ww&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral',
+      reviews: [
+        {
+          quote: 'iKan helped me understand my emotions better. I used to bottle everything up, but now I have tools to process what I feel. The assessments gave me clarity I never expected.',
+          name: 'Priya M.',
+          avatarBg: '#7ED4C8',
+          avatarEmoji: '😊',
+        },
+        {
+          quote: 'I was hesitant at first, but the guided programs made it so easy to start. The Equip programs fit right into my schedule, and I genuinely look forward to each session now.',
+          name: 'Arjun K.',
+          avatarBg: '#F5C842',
+          avatarEmoji: '😌',
+        },
+        {
+          quote: "Finding affordable mental health support felt impossible until I found iKan. The resources are thoughtful and the consultations are judgment-free. It's changed how I take care of myself.",
+          name: 'Sneha R.',
+          avatarBg: '#E8A0D4',
+          avatarEmoji: '🤗',
+        },
+      ],
+    }),
+    lastUpdated: new Date().toISOString()
+  },
+
+  // ═══════════════════════════════════════════════════════════════
+  // ABOUT US PAGE — Full structured content
+  // ═══════════════════════════════════════════════════════════════
+
+  'page-about-us': {
+    title: 'About Us Page',
+    content: JSON.stringify({
+      hero: {
+        title: 'To us, mental health matters.',
+        subtitle: 'At iKan, we believe mental health is for everyone.',
+      },
+      story: {
+        label: 'Our Story',
+        heading: 'Born from <personal> experience',
+        headingHighlightColor: 'var(--ikan-brand-teal)',
+        paragraphs: [
+          'At some point everyone has struggled. Decades old friends Sachin, Vedanshu and Kartik have also faced their share of struggles, each one of us embarking on a personal journey to understand what we were going through. All of us witnessed first hand the barriers and gaps in mental healthcare in India and realised that the system is broken.',
+          'Conversations with people who had struggled and therapists who had learned mental healthcare is inaccessible, costly, episodic, fragmented and needs to be fixed. We realised mental healthcare needs to stop being treated as a blackbox. The only way forward is by bringing people and technology together while being open and transparent. So we created <iKan>.',
+        ],
+        image: 'https://images.unsplash.com/photo-1667351326034-c6d733c57dc9?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxncm91cCUyMGZyaWVuZHMlMjBjb2xsYWJvcmF0aW9uJTIwc3RhcnR1cCUyMGluZGlhfGVufDF8fHx8MTc3MTkxMjE1OXww&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral',
+        imageAlt: 'Founders collaborating on iKan',
+      },
+      mission: {
+        label: 'Mission',
+        title: 'Making mental health care accessible, affordable, and stigma-free for every individual in India.',
+        description: 'We are on a mission to bridge the gap between people and quality mental health support — through technology, compassion, and transparency.',
+      },
+      vision: {
+        label: 'Vision',
+        title: 'A world where seeking mental health support is as natural as visiting a doctor.',
+        description: 'We envision a future where mental wellness is normalised, people have the tools they need at their fingertips, and no one suffers in silence.',
+      },
+      values: [
+        {
+          iconName: 'heart',
+          title: 'People Centric',
+          description: 'At iKan we keep you at the heart of everything, our sole focus is to empower you and make mental health care accessible for all.',
+          color: 'var(--ikan-brand-teal)',
+        },
+        {
+          iconName: 'shield',
+          title: 'Secure',
+          description: 'We value your privacy very highly, we are committed to ensuring your data is always safe and secure.',
+          color: 'var(--ikan-brand-amber)',
+        },
+        {
+          iconName: 'flask-conical',
+          title: 'Science Backed',
+          description: 'Everything we do is backed by research and validated by practising psychologists.',
+          color: 'var(--ikan-brand-coral)',
+        },
+        {
+          iconName: 'handshake',
+          title: 'Our Promise',
+          description: 'We believe mental health care is for everyone and we are eager to make it a reality.',
+          color: 'var(--ikan-brand-slate)',
+        },
+      ],
+      valuesHeading: "Why you'll love iKan",
+      teamHeading: 'Our Team',
+      teamDescription: 'The people behind iKan, driven by personal experience and a shared belief that mental health care should be better.',
+      founders: [
+        {
+          name: 'Kartik Chandra',
+          role: 'Co-Founder and CEO',
+          bio: 'Kartik has a decade long experience in general and health insurance and health tech across various functions. He brings his experience and learnings from his personal journey to positioning iKan for growth and long term success.',
+          image: 'https://images.unsplash.com/photo-1649433658557-54cf58577c68?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxpbmRpYW4lMjBtYW4lMjBwcm9mZXNzaW9uYWwlMjBoZWFkc2hvdCUyMHBvcnRyYWl0fGVufDF8fHx8MTc3MTkxMjE1Nnww&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral',
+        },
+        {
+          name: 'Vedanshu Srivastava',
+          role: 'Co-Founder and Product Head',
+          bio: 'Vedanshu has a decade long experience in general and health insurance and health tech across various functions. He brings his experience and learnings from his personal journey to positioning iKan for growth and long term success.',
+          image: 'https://images.unsplash.com/photo-1720167300687-5e1a11ea955d?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxpbmRpYW4lMjBtYWxlJTIwZW50cmVwcmVuZXVyJTIwcG9ydHJhaXQlMjBidXNpbmVzc3xlbnwxfHx8fDE3NzE5MTIxNTd8MA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral',
+        },
+        {
+          name: 'Sachin Vaishampayan',
+          role: 'Co-Founder and CTO',
+          bio: 'Sachin has worked in research and education for over a decade, leading and managing internationally funded projects across diverse landscapes. He has extensive experience in content creation and designing engaging learning modules, which he blends with his personal interest in developing mental health aids for growth and innovation at iKan.',
+          image: 'https://images.unsplash.com/photo-1739249432260-0bcfdc382e5c?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxpbmRpYW4lMjBtYW4lMjB0ZWNobm9sb2d5JTIwcHJvZmVzc2lvbmFsJTIwaGVhZHNob3R8ZW58MXx8fHwxNzcxOTEyMTU3fDA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral',
+        },
+      ],
+      team: [
+        {
+          name: 'Vaibhav Shukla',
+          role: 'System Architect',
+          image: 'https://images.unsplash.com/photo-1681165232934-c09dfa5ee694?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxpbmRpYW4lMjBtYWxlJTIwc29mdHdhcmUlMjBlbmdpbmVlciUyMHBvcnRyYWl0fGVufDF8fHx8MTc3MTkxMjE1OHww&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral',
+        },
+        {
+          name: 'Amitabh Bhatnagar',
+          role: 'Dev Engineer',
+          image: 'https://images.unsplash.com/photo-1764312386450-5d39879fb715?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxpbmRpYW4lMjBtYWxlJTIwZGV2ZWxvcGVyJTIwcG9ydHJhaXQlMjBjYXN1YWx8ZW58MXx8fHwxNzcxOTEyMTU4fDA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral',
+        },
+        {
+          name: 'Divyanshu Pundir',
+          role: 'UX Designer',
+          image: 'https://images.unsplash.com/photo-1662302392561-b1deecd3579d?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxpbmRpYW4lMjBtYW4lMjBjcmVhdGl2ZSUyMHByb2Zlc3Npb25hbCUyMHNtaWxpbmd8ZW58MXx8fHwxNzcxOTEyMTYyfDA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral',
+        },
+      ],
+    }),
+    lastUpdated: new Date().toISOString()
+  },
+
+  // ═══════════════════════════════════════════════════════════════
+  // FULL PAGE CMS DEFAULTS (structured JSON for page components)
+  // ═══════════════════════════════════════════════════════════════
+
+  'page-faq': {
+    title: 'FAQs & Help Center',
+    content: JSON.stringify({
+      heroTitle: 'FAQs & Help Center',
+      heroSubtitle: 'Find answers to common questions about iKan, your account, programs, and more.',
+      searchPlaceholder: 'Search for answers...',
+      noResultsText: 'No results found. Try a different search term.',
+      ctaTitle: 'Still have questions?',
+      ctaDescription: 'We are here to help you on your mental health journey. Submit a ticket and our team will get back to you.',
+      ctaButtonText: 'Contact Support',
+      ctaButtonRoute: '/contact',
+      categories: [
+        { id: 'about', title: 'About iKan', items: [
+          { question: 'What is iKan and how does it support mental health?', answer: 'iKan is a mental health progressive web app (PWA) that provides access to professional consultants, self-guided programs, mood journaling, and clinically validated assessments — all in one place. Our goal is to make mental wellness accessible, private, and stigma-free.' },
+          { question: 'Is iKan a replacement for therapy?', answer: 'No. iKan is a complement to professional care, not a replacement. Our Equip programs, mood tracking, and resources are designed to support your wellbeing between sessions or as a first step.' },
+          { question: 'How is iKan different from other mental health apps?', answer: 'iKan combines self-paced CBT-based programs, professional consultations, mood journaling, and a resource library into a single platform. We follow "Calm Tech" design principles.' },
+        ]},
+        { id: 'getting-started', title: 'Signing Up & Getting Started', items: [
+          { question: 'How do I create an account?', answer: 'Tap "Get Started" on the homepage, enter your name, email, and a secure password. Your account will be confirmed automatically.' },
+          { question: 'Is iKan free to use?', answer: 'Browsing resources, assessments, and our library is free. Individual Equip programs and professional consultations are paid services.' },
+          { question: 'Can I use iKan without signing in?', answer: 'Yes. Public pages like Resources, Assessments, Equip listings, and informational content are accessible without an account.' },
+        ]},
+        { id: 'account', title: 'Managing Your Account', items: [
+          { question: 'How do I update my profile information?', answer: 'Navigate to your Account page. You can update your name, phone number, bio, date of birth, gender, location, and emergency contact details.' },
+          { question: 'How do I change my password or email?', answer: 'Go to Account → Security section. You can change your password by entering your current and new password.' },
+          { question: 'Can I export or delete my data?', answer: 'Yes. Under Account → Data & Privacy, you can export all your data as a JSON file. You can also permanently delete your account.' },
+        ]},
+        { id: 'subscriptions', title: 'Subscriptions & Billing', items: [
+          { question: 'What payment methods do you accept?', answer: 'We accept all major credit and debit cards, UPI, and net banking through our secure Razorpay integration.' },
+          { question: 'How do I view my payment history?', answer: 'Go to Account → Payment History to see a complete record of your transactions.' },
+          { question: 'What is your refund policy?', answer: 'We offer refunds on a case-by-case basis. Contact our support team within 7 days of purchase.' },
+        ]},
+        { id: 'sessions', title: 'Sessions & Programs', items: [
+          { question: 'How do I book a consultation with a therapist?', answer: 'Navigate to the Consultation page, browse our verified professionals by category, and select a time slot.' },
+          { question: 'Are the Equip programs self-paced?', answer: 'Yes. Equip programs are structured into daily modules you can complete at your own pace.' },
+          { question: 'What mental health assessments are available?', answer: 'We offer clinically validated assessments for anxiety (GAD-7), depression (PHQ-9), stress, well-being, and more.' },
+          { question: 'How does mood journaling work?', answer: 'The Mood Journal lets you log your mood daily with a rating, emotions, energy level, and free-text reflections.' },
+        ]},
+        { id: 'trust-safety', title: 'Trust, Safety & Privacy', items: [
+          { question: 'Is my data private and secure?', answer: 'Absolutely. All user data is encrypted and treated as highly sensitive. We never share your data with third parties.' },
+          { question: 'What should I do in a mental health emergency?', answer: 'Call your local emergency services (911) or the iCALL Suicide Prevention Helpline at 915298721.' },
+          { question: 'How are consultants verified?', answer: 'All consultants on iKan are licensed professionals. We verify their credentials and experience before they join.' },
+        ]},
+      ],
+    }),
+    lastUpdated: new Date().toISOString()
+  },
+
+  'page-contact': {
+    title: 'Contact Us',
+    content: JSON.stringify({
+      heroTitle: "We're Here to Help",
+      heroSubtitle: 'Your mental health journey matters to us. Reach out for support, questions, or just to connect.',
+      supportEmail: 'support@ikan.health',
+      crisisPhone: '915298721',
+      crisisLabel: 'iCALL Suicide Prevention Helpline',
+      contactMethods: [
+        { icon: 'mail', title: 'Email Support', description: 'Get help with your account and services', value: 'support@ikan.health', action: 'mailto:support@ikan.health' },
+        { icon: 'phone', title: 'Crisis Support', description: 'iCALL Suicide Prevention Helpline', value: '915298721', action: 'tel:915298721' },
+        { icon: 'messageCircle', title: 'Live Chat', description: 'Chat with our support team', value: 'Available 9 AM - 6 PM IST', action: '#' },
+      ],
+      formTitle: 'Send us a Message',
+      formSubtitle: 'We typically respond within 24 hours during business days.',
+      crisisCard: { title: 'Need Immediate Help?', description: "If you're having thoughts of self-harm or suicide, please reach out for immediate support.", buttons: [{ label: 'Call iCALL - 915298721', action: 'tel:915298721' }, { label: 'Call 911 - Emergency', action: 'tel:911' }] },
+      faqCard: { title: 'Looking for Quick Answers?', description: 'Check our FAQ section for instant answers to common questions.', buttonText: 'Visit FAQ Section', buttonRoute: '/faq' },
+    }),
+    lastUpdated: new Date().toISOString()
+  },
+
+  'page-sitemap': {
+    title: 'Site Navigation',
+    content: JSON.stringify({
+      heroTitle: 'Site Navigation',
+      heroSubtitle: 'Explore all pages and resources available on iKan.',
+      groups: [
+        { title: 'Main Pages', links: [
+          { label: 'Home', route: '/', icon: 'house', description: 'Landing page with resources, assessments, and programs' },
+          { label: 'About Us', route: '/about', icon: 'info', description: 'Our mission, values, and what iKan offers' },
+          { label: 'Contact Us', route: '/contact', icon: 'mail', description: 'Get in touch with the iKan team' },
+        ]},
+        { title: 'Mental Health Services', links: [
+          { label: 'Assessments', route: '/assessment', icon: 'clipboard-check', description: 'Clinically validated mental health screenings' },
+          { label: 'Equip Programs', route: '/equip', icon: 'book-open', description: 'Self-paced CBT-based wellness programs' },
+          { label: 'Consultation', route: '/consultation', icon: 'stethoscope', description: 'Book sessions with licensed professionals' },
+          { label: 'Resources', route: '/resource', icon: 'users', description: 'Articles, guides, and mental health tools' },
+        ]},
+        { title: 'Your Account', links: [
+          { label: 'My Account', route: '/account', icon: 'user-circle', description: 'Profile, settings, and payment history' },
+          { label: 'Mood Journal', route: '/mood-journal', icon: 'heart', description: 'Track your daily mood and emotions' },
+        ]},
+        { title: 'Legal & Help', links: [
+          { label: 'FAQ', route: '/faq', icon: 'circle-help', description: 'Frequently asked questions and help center' },
+          { label: 'Privacy Policy', route: '/privacy-policy', icon: 'shield', description: 'How we handle and protect your data' },
+          { label: 'Terms of Service', route: '/terms', icon: 'file-text', description: 'Legal terms governing use of iKan' },
+          { label: 'Cancellation Policy', route: '/cancellation-policy', icon: 'ban', description: 'How to cancel subscriptions and services' },
+          { label: 'Return Policy', route: '/return-policy', icon: 'rotate-ccw', description: 'Our refund and return policy' },
+        ]},
+      ],
+    }),
+    lastUpdated: new Date().toISOString()
+  },
+
+  'page-not-found': {
+    title: 'Page Not Found',
+    content: JSON.stringify({
+      heroTitle: 'Page Not Found',
+      heroSubtitle: "We couldn't find the page you're looking for.",
+      heading: 'Lost your way?',
+      description: 'The page you are looking for might have been removed, had its name changed, or is temporarily unavailable.',
+      homeButtonText: 'Return Home',
+      backButtonText: 'Go Back',
+    }),
+    lastUpdated: new Date().toISOString()
+  },
 };

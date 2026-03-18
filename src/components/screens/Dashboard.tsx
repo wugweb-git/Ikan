@@ -275,17 +275,42 @@ export function Dashboard({ className, onNavigate }: DashboardProps) {
 
           // Fetch available assessment definitions to build name lookup
           let assessmentNameMap: Map<string, string> | undefined;
+          let assessmentMaxScoreMap: Map<string, number> | undefined;
           try {
             const assessmentDefs = await apiClient.request('/assessments', { method: 'GET' }, false);
             const defs = assessmentDefs?.assessments || assessmentDefs || [];
             if (Array.isArray(defs) && defs.length > 0) {
               assessmentNameMap = new Map<string, string>();
+              assessmentMaxScoreMap = new Map<string, number>();
               for (const d of defs) {
                 const defId = d.id || d.slug;
                 const defTitle = d.title || d.name;
                 if (defId && defTitle) {
                   assessmentNameMap.set(defId, defTitle);
                   if (d.slug && d.id !== d.slug) assessmentNameMap.set(d.slug, defTitle);
+                }
+                // Compute max score from questions (sum of highest option value per question)
+                let computedMax = 0;
+                if (d.questions && Array.isArray(d.questions) && d.questions.length > 0) {
+                  for (const q of d.questions) {
+                    if (q.options && Array.isArray(q.options)) {
+                      let maxVal = 0;
+                      for (const opt of q.options) {
+                        const v = typeof opt === 'object' ? (opt.value ?? opt.score ?? 0) : 0;
+                        if (typeof v === 'number' && v > maxVal) maxVal = v;
+                      }
+                      computedMax += maxVal;
+                    }
+                  }
+                }
+                // Fall back to scoring ranges if question-level computation yields 0
+                if (computedMax === 0 && d.scoring?.ranges?.length > 0) {
+                  const maxFromRanges = d.scoring.ranges[d.scoring.ranges.length - 1]?.max;
+                  if (maxFromRanges) computedMax = maxFromRanges;
+                }
+                if (defId && computedMax > 0) {
+                  assessmentMaxScoreMap.set(defId, computedMax);
+                  if (d.slug && d.id !== d.slug) assessmentMaxScoreMap.set(d.slug, computedMax);
                 }
               }
             }
@@ -294,7 +319,7 @@ export function Dashboard({ className, onNavigate }: DashboardProps) {
           const scores: AssessmentScore[] = Array.from(latestByType.entries())
             .filter(([_, r]) => r.score !== undefined && r.score !== null)
             .map(([id, r]) => {
-            const maxScore = r.max_score || r.maxScore || 100;
+            const maxScore = r.max_score || r.maxScore || assessmentMaxScoreMap?.get(id) || 100;
             const result = evaluateAssessment(id, r.score || 0, maxScore);
             const rawName = r.assessment_name || r.assessmentName || r.title || id;
             return {
@@ -313,7 +338,7 @@ export function Dashboard({ className, onNavigate }: DashboardProps) {
           if (completedResponses.length > 0) {
             const latest = completedResponses.find((r: any) => (r.score || 0) > 0) || completedResponses[0];
             const slug = latest.assessment_id || latest.assessmentId || 'general';
-            const result = evaluateAssessment(slug, latest.score || 0, latest.max_score || latest.maxScore || 100);
+            const result = evaluateAssessment(slug, latest.score || 0, latest.max_score || latest.maxScore || assessmentMaxScoreMap?.get(slug) || 100);
             // Attach assessment name for display in RecommendationCards
             result.assessmentName = cleanAssessmentName(slug, latest.assessment_name || latest.assessmentName || latest.title || slug, assessmentNameMap);
             setEngineResult(result);

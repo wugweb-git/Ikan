@@ -21,8 +21,9 @@ export function PrivacyPolicy({ className, onNavigate }: PrivacyPolicyProps) {
       }}
     >
       <PageHero 
-        title={content?.title || 'Privacy Policy'}
-        subtitle="Your privacy and data security are fundamental to our mission."
+        title={content?.heroTitle || content?.title || 'Privacy Policy'}
+        subtitle={content?.heroSubtitle || (content as any)?.subtitle || 'Your privacy and data security are fundamental to our mission.'}
+        backgroundImage={content?.heroImage}
       />
 
       <div 

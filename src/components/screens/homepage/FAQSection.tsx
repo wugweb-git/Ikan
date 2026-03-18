@@ -1,7 +1,8 @@
-import { useEffect, useState } from 'react';
+import { useMemo } from 'react';
 import { ErrorBoundary } from '../../ErrorBoundary';
 import { MessageSquare } from 'lucide-react';
 import { useIsMobile } from '../../../hooks/useIsMobile';
+import { usePageContent } from '../../../hooks/usePageContent';
 import {
   Accordion,
   AccordionItem,
@@ -13,7 +14,7 @@ interface FAQSectionProps {
   onNavigate?: (route: string) => void;
 }
 
-const faqItems = [
+const DEFAULT_FAQ_ITEMS = [
   {
     question: 'What is iKan and how does it support mental health?',
     answer:
@@ -44,16 +45,29 @@ const faqItems = [
 export function FAQSection({ onNavigate }: FAQSectionProps) {
   const isMobile = useIsMobile();
 
+  const { content: cmsContent } = usePageContent('homepage-faq-section');
+  const cms = useMemo(() => {
+    if (!cmsContent?.content) return null;
+    try { return JSON.parse(cmsContent.content); } catch { return null; }
+  }, [cmsContent]);
+
+  const headingRaw = cms?.heading || 'Frequently\nasked questions';
+  const headingLines = headingRaw.replace(/\\n/g, '\n').split('\n');
+  const viewAllText = cms?.viewAllText || 'View all FAQs';
+  const faqItems = cms?.items || DEFAULT_FAQ_ITEMS;
+  const contactCard = cms?.contactCard || {
+    title: 'Do you have more questions?',
+    description: 'We are here to help you on your mental health journey. Reach out and we will get back to you.',
+    buttonText: 'Contact Us',
+    buttonLink: '/contact',
+  };
+
   const handleNavigateToFAQ = () => {
-    if (onNavigate) {
-      onNavigate('/faq');
-    }
+    if (onNavigate) onNavigate('/faq');
   };
 
   const handleNavigateToContact = () => {
-    if (onNavigate) {
-      onNavigate('/contact');
-    }
+    if (onNavigate) onNavigate(contactCard.buttonLink || '/contact');
   };
 
   return (
@@ -79,13 +93,15 @@ export function FAQSection({ onNavigate }: FAQSectionProps) {
               fontWeight: 'var(--font-weight-medium)',
               color: 'var(--color-text-primary)',
               lineHeight: '1.15',
-              marginBottom: '48px',
               margin: '0 0 48px 0',
             }}
           >
-            Frequently
-            <br />
-            asked questions
+            {headingLines.map((line: string, i: number) => (
+              <span key={i}>
+                {i > 0 && <br />}
+                {line}
+              </span>
+            ))}
           </h2>
 
           {/* Two-column layout */}
@@ -99,7 +115,7 @@ export function FAQSection({ onNavigate }: FAQSectionProps) {
             {/* Left: Radix Accordion */}
             <div>
               <Accordion type="single" collapsible defaultValue="item-0">
-                {faqItems.map((item, index) => (
+                {faqItems.map((item: any, index: number) => (
                   <AccordionItem
                     key={index}
                     value={`item-${index}`}
@@ -137,7 +153,6 @@ export function FAQSection({ onNavigate }: FAQSectionProps) {
                 ))}
               </Accordion>
 
-              {/* View all FAQs link */}
               <button
                 onClick={handleNavigateToFAQ}
                 style={{
@@ -154,7 +169,7 @@ export function FAQSection({ onNavigate }: FAQSectionProps) {
                   textAlign: 'left',
                 }}
               >
-                View all FAQs
+                {viewAllText}
               </button>
             </div>
 
@@ -171,7 +186,6 @@ export function FAQSection({ onNavigate }: FAQSectionProps) {
                 alignSelf: 'start',
               }}
             >
-              {/* Icon */}
               <div
                 style={{
                   width: '56px',
@@ -200,7 +214,7 @@ export function FAQSection({ onNavigate }: FAQSectionProps) {
                   margin: '0 0 12px 0',
                 }}
               >
-                Do you have more questions?
+                {contactCard.title}
               </h3>
 
               <p
@@ -214,8 +228,7 @@ export function FAQSection({ onNavigate }: FAQSectionProps) {
                   maxWidth: '260px',
                 }}
               >
-                We are here to help you on your mental health journey. Reach out
-                and we will get back to you.
+                {contactCard.description}
               </p>
 
               <button
@@ -236,7 +249,7 @@ export function FAQSection({ onNavigate }: FAQSectionProps) {
                 onMouseEnter={(e) => (e.currentTarget.style.opacity = '0.9')}
                 onMouseLeave={(e) => (e.currentTarget.style.opacity = '1')}
               >
-                Contact Us
+                {contactCard.buttonText}
               </button>
             </div>
           </div>

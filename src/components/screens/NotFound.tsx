@@ -1,5 +1,7 @@
-import { MapPin, House, ArrowLeft, Search, CircleHelp, BookOpen, MessageCircle } from 'lucide-react';
+import { useMemo } from 'react';
+import { House, ArrowLeft, Search } from 'lucide-react';
 import { useIsMobile } from '../../hooks/useIsMobile';
+import { usePageContent } from '../../hooks/usePageContent';
 import { PageHero } from '../ui/PageHero';
 
 interface NotFoundProps {
@@ -9,15 +11,25 @@ interface NotFoundProps {
 export function NotFound({ onNavigate }: NotFoundProps) {
   const isMobile = useIsMobile();
 
+  const { content: cmsContent } = usePageContent('page-not-found');
+  const cms = useMemo(() => {
+    if (!cmsContent?.content) return null;
+    try { return JSON.parse(cmsContent.content); } catch { return null; }
+  }, [cmsContent]);
+
+  const heroTitle = cmsContent?.heroTitle || cms?.heroTitle || 'Page Not Found';
+  const heroSubtitle = cmsContent?.heroSubtitle || cms?.heroSubtitle || "We couldn't find the page you're looking for.";
+  const heading = cms?.heading || 'Lost your way?';
+  const description = cms?.description || 'The page you are looking for might have been removed, had its name changed, or is temporarily unavailable.';
+  const homeButtonText = cms?.homeButtonText || 'Return Home';
+  const backButtonText = cms?.backButtonText || 'Go Back';
+
   return (
     <div
       className="min-h-screen flex flex-col"
       style={{ backgroundColor: 'var(--color-bg-page)', fontFamily: 'var(--font-family-base)' }}
     >
-      <PageHero
-        title="Page Not Found"
-        subtitle="We couldn't find the page you're looking for."
-      />
+      <PageHero title={heroTitle} subtitle={heroSubtitle} backgroundImage={cmsContent?.heroImage} />
 
       <div
         className="flex-1 w-full mx-auto flex items-center justify-center"
@@ -38,7 +50,6 @@ export function NotFound({ onNavigate }: NotFoundProps) {
             padding: isMobile ? '24px 0' : '40px 32px',
           }}
         >
-          {/* Icon */}
           <div
             style={{
               width: '80px',
@@ -54,7 +65,6 @@ export function NotFound({ onNavigate }: NotFoundProps) {
             <Search size={36} style={{ color: 'var(--color-text-muted)' }} />
           </div>
 
-          {/* Text */}
           <h2
             style={{
               fontFamily: 'var(--font-family-base)',
@@ -64,7 +74,7 @@ export function NotFound({ onNavigate }: NotFoundProps) {
               margin: '0 0 8px 0',
             }}
           >
-            Lost your way?
+            {heading}
           </h2>
           <p
             style={{
@@ -76,10 +86,9 @@ export function NotFound({ onNavigate }: NotFoundProps) {
               margin: '0 0 32px 0',
             }}
           >
-            The page you are looking for might have been removed, had its name changed, or is temporarily unavailable.
+            {description}
           </p>
 
-          {/* Actions */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
             <button
               onClick={() => onNavigate?.('/')}
@@ -104,7 +113,7 @@ export function NotFound({ onNavigate }: NotFoundProps) {
               onMouseLeave={(e) => { e.currentTarget.style.opacity = '1'; }}
             >
               <House size={18} />
-              Return Home
+              {homeButtonText}
             </button>
 
             <button
@@ -130,7 +139,7 @@ export function NotFound({ onNavigate }: NotFoundProps) {
               onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; }}
             >
               <ArrowLeft size={18} />
-              Go Back
+              {backButtonText}
             </button>
           </div>
         </div>

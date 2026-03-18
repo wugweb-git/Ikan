@@ -81,7 +81,8 @@ export const EquipService = {
 
   async listEquips(): Promise<Equip[]> {
     const all = await kv.getByPrefix('equip:');
-    return all.filter((item: any) => item && item.id && item.slug && item.category); 
+    // Only require id and title/slug — category may not be set on new programs
+    return all.filter((item: any) => item && item.id && (item.slug || item.title)); 
   },
 
   async deleteEquip(id: string): Promise<void> {

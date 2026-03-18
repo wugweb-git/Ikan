@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { FileText, Download, Pencil, Plus, Eye, Tag, MoreHorizontal, EyeOff, Trash2 } from 'lucide-react';
+import { FileText, Download, Pencil, Plus, Eye, Tag, MoreHorizontal, EyeOff, Trash2, Star } from 'lucide-react';
 import { useNotifications } from '../../contexts/NotificationContext';
 import { apiClient } from '../../lib/api-client';
 import { AdminHeader } from '../admin/AdminHeader';
@@ -142,6 +142,17 @@ export function AdminResourceManager({ onBack, className }: AdminResourceManager
     }
   };
 
+  const handleToggleFeatured = async (id: string, featured: boolean) => {
+    try {
+      await apiClient.updateResource(id, { featured });
+      setResources((prev) => prev.map((r) => (r.id === id ? { ...r, featured } : r)));
+      showToast('success', 'Resource Updated', `Resource ${featured ? 'marked as featured' : 'removed from featured'}`);
+    } catch (error: any) {
+      console.error('Failed to toggle featured:', error);
+      showToast('error', 'API Error', 'Failed to update resource');
+    }
+  };
+
   const handleDelete = async (id: string, resourceTitle: string) => {
     if (!confirm(`Are you sure you want to delete resource "${resourceTitle}"? This action cannot be undone.`)) return;
     
@@ -173,9 +184,14 @@ export function AdminResourceManager({ onBack, className }: AdminResourceManager
               />
            </div>
           <div className="flex flex-col min-w-0">
-            <span className="truncate" style={{ fontWeight: 'var(--font-weight-medium)', fontFamily: 'var(--font-family-base)', fontSize: 'var(--text-sm)' }} title={resource.title}>
-              {resource.title}
-            </span>
+            <div className="flex items-center gap-1.5">
+              <span className="truncate" style={{ fontWeight: 'var(--font-weight-medium)', fontFamily: 'var(--font-family-base)', fontSize: 'var(--text-sm)' }} title={resource.title}>
+                {resource.title}
+              </span>
+              {resource.featured && (
+                <Star className="w-3.5 h-3.5 shrink-0" style={{ color: '#F59E0B', fill: '#F59E0B' }} />
+              )}
+            </div>
             <span className="truncate" style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)', fontFamily: 'var(--font-family-base)' }}>
               {resource.description?.substring(0, 60)}{(resource.description?.length || 0) > 60 ? '...' : ''}
             </span>
@@ -280,6 +296,20 @@ export function AdminResourceManager({ onBack, className }: AdminResourceManager
                 <Eye className="mr-2 h-4 w-4" />
               )}
               {resource.published ? 'Unpublish' : 'Publish'}
+            </DropdownMenuItem>
+            <DropdownMenuItem 
+              onClick={(e) => { 
+                e.preventDefault();
+                e.stopPropagation(); 
+                handleToggleFeatured(resource.id, !resource.featured); 
+              }}
+            >
+              {resource.featured ? (
+                <Star className="mr-2 h-4 w-4" />
+              ) : (
+                <Star className="mr-2 h-4 w-4" style={{ color: 'var(--color-text-muted)' }} />
+              )}
+              {resource.featured ? 'Remove from Featured' : 'Mark as Featured'}
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem 

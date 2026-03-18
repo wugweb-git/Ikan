@@ -1,5 +1,5 @@
 import type React from 'react';
-import { ArrowLeft, Settings, X, Trash2, FileText, Save } from 'lucide-react';
+import { ArrowLeft, Settings, X, Trash2, FileText, Save, Star } from 'lucide-react';
 import { Button } from '../ui/button';
 import { AdminStatusBadge } from './AdminStatusBadge';
 import { useIsMobile } from '../../hooks/useIsMobile';
@@ -97,6 +97,28 @@ export function AdminPageLayout({
         {/* Actions */}
         {!isMobile && (primaryAction || secondaryActions.length > 0 || toggleActions.length > 0) && (
           <div className="flex items-center gap-3 ml-4">
+            {/* Toggle Actions (e.g. Featured) */}
+            {toggleActions.length > 0 && toggleActions.map((toggle, idx) => (
+              <button
+                key={`toggle-${idx}`}
+                onClick={() => toggle.onChange(!toggle.checked)}
+                className="flex items-center justify-center"
+                style={{
+                  width: '56px',
+                  height: '56px',
+                  borderRadius: 'var(--radius-md)',
+                  backgroundColor: toggle.checked ? '#FEF3C7' : 'var(--color-bg-muted)',
+                  color: toggle.checked ? '#D97706' : 'var(--color-text-muted)',
+                  border: `1px solid ${toggle.checked ? '#F59E0B' : 'var(--color-border-default)'}`,
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease',
+                }}
+                title={`${toggle.label}: ${toggle.checked ? 'ON' : 'OFF'}`}
+              >
+                <Star size={24} fill={toggle.checked ? '#F59E0B' : 'none'} />
+              </button>
+            ))}
+
             {/* 4 Fixed Square Icon Action Buttons */}
             
             {/* 1. Cancel Button */}

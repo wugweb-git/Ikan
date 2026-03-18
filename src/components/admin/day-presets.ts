@@ -223,6 +223,105 @@ export const DAY_TYPE_PRESETS: Record<string, DayTypePreset> = {
     },
     warnings: [],
     errors: []
+  },
+  'check-in': {
+    label: 'Check-In',
+    description: 'Quick daily mood/wellness check. 1-3 questions, no scoring.',
+    defaultBlocks: [
+      {
+        type: 'exercise',
+        title: 'How are you feeling?',
+        content: 'Rate your mood right now.',
+        required: true,
+        autoAdvance: true,
+        exerciseConfig: { subtype: 'rating-scale', slider_min: 1, slider_max: 5, slider_labels: ['Awful', 'Bad', 'Okay', 'Good', 'Great'] }
+      },
+      {
+        type: 'journal',
+        title: 'Quick note',
+        content: 'Anything on your mind? (optional)',
+        required: false,
+        autoAdvance: false,
+      },
+      { type: 'conclude', title: 'Done', content: 'Thanks for checking in!', autoAdvance: false }
+    ],
+    allowedBlocks: ['rating_scale', 'mcq_single', 'journal', 'lesson', 'boolean'],
+    blockedComponents: ['table', 'checklist', 'clinical'],
+    autoConfig: {
+      autoAdvance: true,
+      navigationBack: false,
+      scoringEnabled: false,
+      saveOnExit: true
+    },
+    stepGroupRules: {
+      allowed: false,
+      required: false,
+      oneBlockPerStep: true
+    },
+    warnings: ['Keep check-ins under 2 minutes for best completion rates.'],
+    errors: []
+  },
+  'rest': {
+    label: 'Rest Day',
+    description: 'No active tasks. Optional motivation or gentle prompt.',
+    defaultBlocks: [
+      {
+        type: 'lesson',
+        title: 'Rest Day',
+        content: 'Take it easy today. You\'re doing great.',
+        autoAdvance: false
+      }
+    ],
+    allowedBlocks: ['lesson'],
+    blockedComponents: ['exercise', 'journal', 'checklist', 'table'],
+    autoConfig: {
+      autoAdvance: false,
+      navigationBack: false
+    },
+    stepGroupRules: {
+      allowed: false,
+      required: false
+    },
+    warnings: ['Rest days auto-complete — no user action needed.'],
+    errors: []
+  },
+  'quiz': {
+    label: 'Quiz',
+    description: 'Knowledge check with scoring. Tests retention from learning days.',
+    defaultBlocks: [
+      { type: 'lesson', title: 'Quiz Intro', content: 'Let\'s see what you remember.', autoAdvance: false },
+      {
+        type: 'exercise',
+        title: 'Question 1',
+        content: '',
+        required: true,
+        autoAdvance: true,
+        exerciseConfig: { subtype: 'mcq', scoring: { enabled: true, maxScore: 1 } }
+      },
+      {
+        type: 'exercise',
+        title: 'Question 2',
+        content: '',
+        required: true,
+        autoAdvance: true,
+        exerciseConfig: { subtype: 'mcq', scoring: { enabled: true, maxScore: 1 } }
+      },
+      { type: 'conclude', title: 'Results', content: 'Here\'s how you did.', autoAdvance: false }
+    ],
+    allowedBlocks: ['mcq_single', 'mcq_multi', 'rating_scale', 'boolean', 'lesson'],
+    blockedComponents: ['journal', 'table', 'checklist'],
+    autoConfig: {
+      autoAdvance: true,
+      navigationBack: false,
+      scoringEnabled: true
+    },
+    stepGroupRules: {
+      allowed: false,
+      required: false,
+      oneBlockPerStep: true
+    },
+    warnings: ['Keep quizzes to 5-10 questions max.'],
+    errors: []
   }
 };
 

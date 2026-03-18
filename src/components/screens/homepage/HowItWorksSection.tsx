@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { ErrorBoundary } from '../../ErrorBoundary';
 import { ImageWithFallback } from '../../figma/ImageWithFallback';
 import { ClipboardCheck, Users, Sparkles } from 'lucide-react';
 import { useIsMobile } from '../../../hooks/useIsMobile';
+import { usePageContent } from '../../../hooks/usePageContent';
 
 interface HowItWorksCard {
   step: number;
@@ -11,10 +12,17 @@ interface HowItWorksCard {
   description: string;
   image: string;
   imageAlt: string;
-  icon: React.ReactNode;
+  iconName?: string;
+  icon?: React.ReactNode;
 }
 
-const cards: HowItWorksCard[] = [
+const ICON_MAP: Record<string, React.ReactNode> = {
+  'clipboard-check': <ClipboardCheck style={{ width: 22, height: 22 }} />,
+  'users': <Users style={{ width: 22, height: 22 }} />,
+  'sparkles': <Sparkles style={{ width: 22, height: 22 }} />,
+};
+
+const DEFAULT_CARDS: HowItWorksCard[] = [
   {
     step: 1,
     title: 'Take an Assessment',
@@ -24,7 +32,7 @@ const cards: HowItWorksCard[] = [
     image:
       'https://images.unsplash.com/photo-1650046825506-8901c4b837b1?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxtZW50YWwlMjBoZWFsdGglMjBhc3Nlc3NtZW50JTIwcXVlc3Rpb25uYWlyZSUyMHRhYmxldHxlbnwxfHx8fDE3NzE5MDU3ODB8MA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral',
     imageAlt: 'Mental health assessment on tablet',
-    icon: <ClipboardCheck style={{ width: 22, height: 22 }} />,
+    iconName: 'clipboard-check',
   },
   {
     step: 2,
@@ -35,7 +43,7 @@ const cards: HowItWorksCard[] = [
     image:
       'https://images.unsplash.com/photo-1758273241078-8eec353836be?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHx0aGVyYXB5JTIwc2Vzc2lvbiUyMGNvdW5zZWxpbmclMjBjb252ZXJzYXRpb258ZW58MXx8fHwxNzcxOTA1NzgxfDA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral',
     imageAlt: 'Therapy counseling session',
-    icon: <Users style={{ width: 22, height: 22 }} />,
+    iconName: 'users',
   },
   {
     step: 3,
@@ -46,7 +54,7 @@ const cards: HowItWorksCard[] = [
     image:
       'https://images.unsplash.com/photo-1758272422634-e8ed8e252a14?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxtZWRpdGF0aW9uJTIwbWluZGZ1bG5lc3MlMjBkYWlseSUyMHdlbGxuZXNzJTIwcm91dGluZXxlbnwxfHx8fDE3NzE5MDU3ODF8MA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral',
     imageAlt: 'Mindfulness and daily wellness',
-    icon: <Sparkles style={{ width: 22, height: 22 }} />,
+    iconName: 'sparkles',
   },
 ];
 
@@ -54,11 +62,34 @@ interface HowItWorksSectionProps {
   onNavigate?: (route: string) => void;
 }
 
+function resolveIcon(card: HowItWorksCard): React.ReactNode {
+  if (card.icon) return card.icon;
+  return ICON_MAP[card.iconName || ''] || <ClipboardCheck style={{ width: 22, height: 22 }} />;
+}
+
 export function HowItWorksSection({ onNavigate }: HowItWorksSectionProps) {
   const isMobile = useIsMobile();
 
+  const { content: cmsContent } = usePageContent('homepage-howitworks-section');
+  const cms = useMemo(() => {
+    if (!cmsContent?.content) return null;
+    try { return JSON.parse(cmsContent.content); } catch { return null; }
+  }, [cmsContent]);
+
+  const heading = cms?.heading || 'How it works';
+  const ctaText = cms?.ctaText || 'Get Started';
+  const ctaRoute = cms?.ctaRoute || '/assessments';
+
+  const cards: HowItWorksCard[] = useMemo(() => {
+    if (!cms?.cards) return DEFAULT_CARDS;
+    return cms.cards.map((c: any, i: number) => ({
+      ...DEFAULT_CARDS[i],
+      ...c,
+    }));
+  }, [cms]);
+
   const handleCTA = () => {
-    if (onNavigate) onNavigate('/assessments');
+    if (onNavigate) onNavigate(ctaRoute);
   };
 
   return (
@@ -90,7 +121,7 @@ export function HowItWorksSection({ onNavigate }: HowItWorksSectionProps) {
                 margin: '0 0 12px 0',
               }}
             >
-              How it works
+              {heading}
             </h2>
 
             {/* Decorative dots */}
@@ -124,14 +155,12 @@ export function HowItWorksSection({ onNavigate }: HowItWorksSectionProps) {
 
           {/* Cards Fan Layout (Desktop) / Stacked (Mobile) */}
           {isMobile ? (
-            /* Mobile: Stacked cards */
             <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
               {cards.map((card) => (
                 <MobileCard key={card.step} card={card} />
               ))}
             </div>
           ) : (
-            /* Desktop: Fan layout */
             <div
               style={{
                 display: 'flex',
@@ -142,7 +171,6 @@ export function HowItWorksSection({ onNavigate }: HowItWorksSectionProps) {
                 marginBottom: '16px',
               }}
             >
-              {/* Left Card — tilted right */}
               <div
                 style={{
                   position: 'absolute',
@@ -155,7 +183,6 @@ export function HowItWorksSection({ onNavigate }: HowItWorksSectionProps) {
                 <DesktopCard card={cards[0]} />
               </div>
 
-              {/* Center Card — straight, gradient bg */}
               <div
                 style={{
                   position: 'relative',
@@ -165,7 +192,6 @@ export function HowItWorksSection({ onNavigate }: HowItWorksSectionProps) {
                 <DesktopCard card={cards[1]} isCenter />
               </div>
 
-              {/* Right Card — tilted left */}
               <div
                 style={{
                   position: 'absolute',
@@ -206,7 +232,7 @@ export function HowItWorksSection({ onNavigate }: HowItWorksSectionProps) {
                 e.currentTarget.style.transform = 'translateY(0)';
               }}
             >
-              Get Started
+              {ctaText}
             </button>
           </div>
         </div>
@@ -243,7 +269,6 @@ function DesktopCard({
         minHeight: '400px',
       }}
     >
-      {/* Title */}
       <h3
         style={{
           fontFamily: 'var(--font-family-base)',
@@ -257,7 +282,6 @@ function DesktopCard({
         {card.title}
       </h3>
 
-      {/* Subtitle */}
       <p
         style={{
           fontFamily: 'var(--font-family-base)',
@@ -271,7 +295,6 @@ function DesktopCard({
         {card.subtitle}
       </p>
 
-      {/* Icon row */}
       <div style={{ display: 'flex', gap: '8px', margin: '4px 0' }}>
         <div
           style={{
@@ -287,11 +310,10 @@ function DesktopCard({
             color: 'var(--color-text-primary)',
           }}
         >
-          {card.icon}
+          {resolveIcon(card)}
         </div>
       </div>
 
-      {/* Description */}
       <p
         style={{
           fontFamily: 'var(--font-family-base)',
@@ -305,7 +327,6 @@ function DesktopCard({
         {card.description}
       </p>
 
-      {/* Image */}
       <div
         style={{
           marginTop: 'auto',
@@ -345,7 +366,6 @@ function MobileCard({ card }: { card: HowItWorksCard }) {
         gap: '12px',
       }}
     >
-      {/* Step badge + title row */}
       <div
         style={{
           display: 'flex',
@@ -366,7 +386,7 @@ function MobileCard({ card }: { card: HowItWorksCard }) {
             flexShrink: 0,
           }}
         >
-          {card.icon}
+          {resolveIcon(card)}
         </div>
         <h3
           style={{
@@ -382,7 +402,6 @@ function MobileCard({ card }: { card: HowItWorksCard }) {
         </h3>
       </div>
 
-      {/* Subtitle */}
       <p
         style={{
           fontFamily: 'var(--font-family-base)',
@@ -395,7 +414,6 @@ function MobileCard({ card }: { card: HowItWorksCard }) {
         {card.subtitle}
       </p>
 
-      {/* Description */}
       <p
         style={{
           fontFamily: 'var(--font-family-base)',
@@ -409,7 +427,6 @@ function MobileCard({ card }: { card: HowItWorksCard }) {
         {card.description}
       </p>
 
-      {/* Image */}
       <div
         style={{
           borderRadius: '12px',

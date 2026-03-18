@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { ImageWithFallback } from '../figma/ImageWithFallback';
 import { useIsMobile } from '../../hooks/useIsMobile';
 import { ResourceBlock } from '../blocks/ResourceBlock';
@@ -15,6 +15,7 @@ import { NEWSLETTER_CONTENT } from '../../lib/constants/content';
 import { PageHero } from '../ui/PageHero';
 import { HowItWorksSection } from './homepage/HowItWorksSection';
 import { BenefitsSection } from './homepage/BenefitsSection';
+import { usePageContent } from '../../hooks/usePageContent';
 
 interface AboutUsProps {
   onNavigate?: (route: string, resourceId?: string) => void;
@@ -23,36 +24,12 @@ interface AboutUsProps {
 
 /* ─── Content Data ─── */
 
-const VALUES = [
-  {
-    icon: <Heart style={{ width: 24, height: 24 }} />,
-    title: 'People Centric',
-    description:
-      'At iKan we keep you at the heart of everything, our sole focus is to empower you and make mental health care accessible for all.',
-    color: 'var(--ikan-brand-teal)',
-  },
-  {
-    icon: <Shield style={{ width: 24, height: 24 }} />,
-    title: 'Secure',
-    description:
-      'We value your privacy very highly, we are committed to ensuring your data is always safe and secure.',
-    color: 'var(--ikan-brand-amber)',
-  },
-  {
-    icon: <FlaskConical style={{ width: 24, height: 24 }} />,
-    title: 'Science Backed',
-    description:
-      'Everything we do is backed by research and validated by practising psychologists.',
-    color: 'var(--ikan-brand-coral)',
-  },
-  {
-    icon: <Handshake style={{ width: 24, height: 24 }} />,
-    title: 'Our Promise',
-    description:
-      'We believe mental health care is for everyone and we are eager to make it a reality.',
-    color: 'var(--ikan-brand-slate)',
-  },
-];
+const ICON_MAP: Record<string, React.ReactNode> = {
+  heart: <Heart style={{ width: 24, height: 24 }} />,
+  shield: <Shield style={{ width: 24, height: 24 }} />,
+  'flask-conical': <FlaskConical style={{ width: 24, height: 24 }} />,
+  handshake: <Handshake style={{ width: 24, height: 24 }} />,
+};
 
 interface TeamMember {
   name: string;
@@ -61,58 +38,69 @@ interface TeamMember {
   image: string;
 }
 
-const FOUNDERS: TeamMember[] = [
-  {
-    name: 'Kartik Chandra',
-    role: 'Co-Founder and CEO',
-    bio: 'Kartik has a decade long experience in general and health insurance and health tech across various functions. He brings his experience and learnings from his personal journey to positioning iKan for growth and long term success.',
-    image:
-      'https://images.unsplash.com/photo-1649433658557-54cf58577c68?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxpbmRpYW4lMjBtYW4lMjBwcm9mZXNzaW9uYWwlMjBoZWFkc2hvdCUyMHBvcnRyYWl0fGVufDF8fHx8MTc3MTkxMjE1Nnww&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral',
-  },
-  {
-    name: 'Vedanshu Srivastava',
-    role: 'Co-Founder and Product Head',
-    bio: 'Vedanshu has a decade long experience in general and health insurance and health tech across various functions. He brings his experience and learnings from his personal journey to positioning iKan for growth and long term success.',
-    image:
-      'https://images.unsplash.com/photo-1720167300687-5e1a11ea955d?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxpbmRpYW4lMjBtYWxlJTIwZW50cmVwcmVuZXVyJTIwcG9ydHJhaXQlMjBidXNpbmVzc3xlbnwxfHx8fDE3NzE5MTIxNTd8MA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral',
-  },
-  {
-    name: 'Sachin Vaishampayan',
-    role: 'Co-Founder and CTO',
-    bio: 'Sachin has worked in research and education for over a decade, leading and managing internationally funded projects across diverse landscapes. He has extensive experience in content creation and designing engaging learning modules, which he blends with his personal interest in developing mental health aids for growth and innovation at iKan.',
-    image:
-      'https://images.unsplash.com/photo-1739249432260-0bcfdc382e5c?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxpbmRpYW4lMjBtYW4lMjB0ZWNobm9sb2d5JTIwcHJvZmVzc2lvbmFsJTIwaGVhZHNob3R8ZW58MXx8fHwxNzcxOTEyMTU3fDA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral',
-  },
-];
-
-const TEAM: TeamMember[] = [
-  {
-    name: 'Vaibhav Shukla',
-    role: 'System Architect',
-    image:
-      'https://images.unsplash.com/photo-1681165232934-c09dfa5ee694?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxpbmRpYW4lMjBtYWxlJTIwc29mdHdhcmUlMjBlbmdpbmVlciUyMHBvcnRyYWl0fGVufDF8fHx8MTc3MTkxMjE1OHww&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral',
-  },
-  {
-    name: 'Amitabh Bhatnagar',
-    role: 'Dev Engineer',
-    image:
-      'https://images.unsplash.com/photo-1764312386450-5d39879fb715?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxpbmRpYW4lMjBtYWxlJTIwZGV2ZWxvcGVyJTIwcG9ydHJhaXQlMjBjYXN1YWx8ZW58MXx8fHwxNzcxOTEyMTU4fDA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral',
-  },
-  {
-    name: 'Divyanshu Pundir',
-    role: 'UX Designer',
-    image:
-      'https://images.unsplash.com/photo-1662302392561-b1deecd3579d?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxpbmRpYW4lMjBtYW4lMjBjcmVhdGl2ZSUyMHByb2Zlc3Npb25hbCUyMHNtaWxpbmd8ZW58MXx8fHwxNzcxOTEyMTYyfDA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral',
-  },
-];
-
-const STORY_IMAGE =
-  'https://images.unsplash.com/photo-1667351326034-c6d733c57dc9?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxncm91cCUyMGZyaWVuZHMlMjBjb2xsYWJvcmF0aW9uJTIwc3RhcnR1cCUyMGluZGlhfGVufDF8fHx8MTc3MTkxMjE1OXww&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral';
-
 /* ─── Component ─── */
 
 export function AboutUs({ onNavigate, className }: AboutUsProps) {
   const isMobile = useIsMobile();
+
+  // ── CMS content for the entire About Us page ──
+  const { content: cmsContent } = usePageContent('page-about-us');
+  const cms = useMemo(() => {
+    if (!cmsContent?.content) return null;
+    try { return JSON.parse(cmsContent.content); } catch { return null; }
+  }, [cmsContent]);
+
+  // ── Hero banner from the hero banner system ──
+  const [heroBanner, setHeroBanner] = useState<{ title: string; subtitle: string; image_url: string; cta_text: string; cta_link: string } | null>(null);
+
+  useEffect(() => {
+    apiClient.getHeroBanner('about').then(res => {
+      if (res?.banner) setHeroBanner(res.banner);
+    }).catch(() => {});
+  }, []);
+
+  // Resolve all content from CMS with inline defaults
+  const heroTitle = heroBanner?.title || cms?.hero?.title || 'To us, mental health matters.';
+  const heroSubtitle = heroBanner?.subtitle || cms?.hero?.subtitle || 'At iKan, we believe mental health is for everyone.';
+  const heroImage = heroBanner?.image_url || undefined;
+
+  const storyLabel = cms?.story?.label || 'Our Story';
+  const storyImage = cms?.story?.image || 'https://images.unsplash.com/photo-1667351326034-c6d733c57dc9?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxncm91cCUyMGZyaWVuZHMlMjBjb2xsYWJvcmF0aW9uJTIwc3RhcnR1cCUyMGluZGlhfGVufDF8fHx8MTc3MTkxMjE1OXww&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral';
+  const storyImageAlt = cms?.story?.imageAlt || 'Founders collaborating on iKan';
+
+  const missionLabel = cms?.mission?.label || 'Mission';
+  const missionTitle = cms?.mission?.title || 'Making mental health care accessible, affordable, and stigma-free for every individual in India.';
+  const missionDescription = cms?.mission?.description || 'We are on a mission to bridge the gap between people and quality mental health support — through technology, compassion, and transparency.';
+
+  const visionLabel = cms?.vision?.label || 'Vision';
+  const visionTitle = cms?.vision?.title || 'A world where seeking mental health support is as natural as visiting a doctor.';
+  const visionDescription = cms?.vision?.description || 'We envision a future where mental wellness is normalised, people have the tools they need at their fingertips, and no one suffers in silence.';
+
+  const valuesHeading = cms?.valuesHeading || "Why you'll love iKan";
+  const teamHeading = cms?.teamHeading || 'Our Team';
+  const teamDescription = cms?.teamDescription || 'The people behind iKan, driven by personal experience and a shared belief that mental health care should be better.';
+
+  const values = useMemo(() => {
+    if (!cms?.values) return [
+      { iconName: 'heart', title: 'People Centric', description: 'At iKan we keep you at the heart of everything, our sole focus is to empower you and make mental health care accessible for all.', color: 'var(--ikan-brand-teal)' },
+      { iconName: 'shield', title: 'Secure', description: 'We value your privacy very highly, we are committed to ensuring your data is always safe and secure.', color: 'var(--ikan-brand-amber)' },
+      { iconName: 'flask-conical', title: 'Science Backed', description: 'Everything we do is backed by research and validated by practising psychologists.', color: 'var(--ikan-brand-coral)' },
+      { iconName: 'handshake', title: 'Our Promise', description: 'We believe mental health care is for everyone and we are eager to make it a reality.', color: 'var(--ikan-brand-slate)' },
+    ];
+    return cms.values;
+  }, [cms]);
+
+  const founders: TeamMember[] = cms?.founders || [
+    { name: 'Kartik Chandra', role: 'Co-Founder and CEO', bio: 'Kartik has a decade long experience in general and health insurance and health tech across various functions.', image: 'https://images.unsplash.com/photo-1649433658557-54cf58577c68?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxpbmRpYW4lMjBtYW4lMjBwcm9mZXNzaW9uYWwlMjBoZWFkc2hvdCUyMHBvcnRyYWl0fGVufDF8fHx8MTc3MTkxMjE1Nnww&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral' },
+    { name: 'Vedanshu Srivastava', role: 'Co-Founder and Product Head', bio: 'Vedanshu has a decade long experience in general and health insurance and health tech across various functions.', image: 'https://images.unsplash.com/photo-1720167300687-5e1a11ea955d?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxpbmRpYW4lMjBtYWxlJTIwZW50cmVwcmVuZXVyJTIwcG9ydHJhaXQlMjBidXNpbmVzc3xlbnwxfHx8fDE3NzE5MTIxNTd8MA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral' },
+    { name: 'Sachin Vaishampayan', role: 'Co-Founder and CTO', bio: 'Sachin has worked in research and education for over a decade.', image: 'https://images.unsplash.com/photo-1739249432260-0bcfdc382e5c?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxpbmRpYW4lMjBtYW4lMjB0ZWNobm9sb2d5JTIwcHJvZmVzc2lvbmFsJTIwaGVhZHNob3R8ZW58MXx8fHwxNzcxOTEyMTU3fDA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral' },
+  ];
+
+  const team: TeamMember[] = cms?.team || [
+    { name: 'Vaibhav Shukla', role: 'System Architect', image: 'https://images.unsplash.com/photo-1681165232934-c09dfa5ee694?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxpbmRpYW4lMjBtYWxlJTIwc29mdHdhcmUlMjBlbmdpbmVlciUyMHBvcnRyYWl0fGVufDF8fHx8MTc3MTkxMjE1OHww&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral' },
+    { name: 'Amitabh Bhatnagar', role: 'Dev Engineer', image: 'https://images.unsplash.com/photo-1764312386450-5d39879fb715?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxpbmRpYW4lMjBtYWxlJTIwZGV2ZWxvcGVyJTIwcG9ydHJhaXQlMjBjYXN1YWx8ZW58MXx8fHwxNzcxOTEyMTU4fDA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral' },
+    { name: 'Divyanshu Pundir', role: 'UX Designer', image: 'https://images.unsplash.com/photo-1662302392561-b1deecd3579d?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxpbmRpYW4lMjBtYW4lMjBjcmVhdGl2ZSUyMHByb2Zlc3Npb25hbCUyMHNtaWxpbmd8ZW58MXx8fHwxNzcxOTEyMTYyfDA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral' },
+  ];
 
   const [resources, setResources] = useState<ResourcePost[]>([]);
   const [loadingResources, setLoadingResources] = useState(true);
@@ -164,8 +152,9 @@ export function AboutUs({ onNavigate, className }: AboutUsProps) {
           1. HERO BANNER
       ═══════════════════════════════════════════════ */}
       <PageHero
-        title="To us, mental health matters."
-        subtitle="At iKan, we believe mental health is for everyone."
+        title={heroTitle}
+        subtitle={heroSubtitle}
+        backgroundImage={heroImage}
       />
 
       {/* ═══════════════════════════════════════════════
@@ -183,7 +172,7 @@ export function AboutUs({ onNavigate, className }: AboutUsProps) {
           >
             {/* Text */}
             <div>
-              <SectionLabel color="var(--ikan-brand-teal)">Our Story</SectionLabel>
+              <SectionLabel color="var(--ikan-brand-teal)">{storyLabel}</SectionLabel>
               <h2
                 style={{
                   fontFamily: 'var(--font-family-base)',
@@ -225,8 +214,8 @@ export function AboutUs({ onNavigate, className }: AboutUsProps) {
               }}
             >
               <ImageWithFallback
-                src={STORY_IMAGE}
-                alt="Founders collaborating on iKan"
+                src={storyImage}
+                alt={storyImageAlt}
                 style={{ width: '100%', height: '100%', objectFit: 'cover' }}
               />
             </div>
@@ -258,7 +247,7 @@ export function AboutUs({ onNavigate, className }: AboutUsProps) {
                 minHeight: isMobile ? 'auto' : '260px',
               }}
             >
-              <SectionLabel color="rgba(255,255,255,0.5)">Mission</SectionLabel>
+              <SectionLabel color="rgba(255,255,255,0.5)">{missionLabel}</SectionLabel>
               <h3
                 style={{
                   fontFamily: 'var(--font-family-base)',
@@ -269,7 +258,7 @@ export function AboutUs({ onNavigate, className }: AboutUsProps) {
                   margin: '0 0 16px 0',
                 }}
               >
-                Making mental health care accessible, affordable, and stigma-free for every individual in India.
+                {missionTitle}
               </h3>
               <p
                 style={{
@@ -281,8 +270,7 @@ export function AboutUs({ onNavigate, className }: AboutUsProps) {
                   margin: '0',
                 }}
               >
-                We are on a mission to bridge the gap between people and quality mental health support
-                — through technology, compassion, and transparency.
+                {missionDescription}
               </p>
             </div>
 
@@ -298,7 +286,7 @@ export function AboutUs({ onNavigate, className }: AboutUsProps) {
                 minHeight: isMobile ? 'auto' : '260px',
               }}
             >
-              <SectionLabel color="var(--ikan-brand-teal-dark)">Vision</SectionLabel>
+              <SectionLabel color="var(--ikan-brand-teal-dark)">{visionLabel}</SectionLabel>
               <h3
                 style={{
                   fontFamily: 'var(--font-family-base)',
@@ -309,7 +297,7 @@ export function AboutUs({ onNavigate, className }: AboutUsProps) {
                   margin: '0 0 16px 0',
                 }}
               >
-                A world where seeking mental health support is as natural as visiting a doctor.
+                {visionTitle}
               </h3>
               <p
                 style={{
@@ -321,8 +309,7 @@ export function AboutUs({ onNavigate, className }: AboutUsProps) {
                   margin: '0',
                 }}
               >
-                We envision a future where mental wellness is normalised, people have the tools they
-                need at their fingertips, and no one suffers in silence.
+                {visionDescription}
               </p>
             </div>
           </div>
@@ -346,8 +333,7 @@ export function AboutUs({ onNavigate, className }: AboutUsProps) {
                 margin: '0 0 12px 0',
               }}
             >
-              Why you'll love{' '}
-              <span style={{ color: 'var(--ikan-brand-teal)' }}>iKan</span>
+              {valuesHeading}
             </h2>
             {/* Decorative dots */}
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', marginTop: '12px' }}>
@@ -366,7 +352,7 @@ export function AboutUs({ onNavigate, className }: AboutUsProps) {
               gap: '20px',
             }}
           >
-            {VALUES.map((val, idx) => (
+            {values.map((val, idx) => (
               <div
                 key={idx}
                 style={{
@@ -398,7 +384,7 @@ export function AboutUs({ onNavigate, className }: AboutUsProps) {
                     marginBottom: 'var(--spacing-4)',
                   }}
                 >
-                  {val.icon}
+                  {ICON_MAP[val.iconName]}
                 </div>
                 <h3
                   style={{
@@ -460,7 +446,7 @@ export function AboutUs({ onNavigate, className }: AboutUsProps) {
                 margin: '0 0 12px 0',
               }}
             >
-              Our Team
+              {teamHeading}
             </h2>
             <p
               style={{
@@ -475,8 +461,7 @@ export function AboutUs({ onNavigate, className }: AboutUsProps) {
                 marginRight: 'auto',
               }}
             >
-              The people behind iKan, driven by personal experience and a shared belief that mental
-              health care should be better.
+              {teamDescription}
             </p>
             {/* Dots */}
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', marginTop: '14px' }}>
@@ -494,7 +479,7 @@ export function AboutUs({ onNavigate, className }: AboutUsProps) {
               marginBottom: '40px',
             }}
           >
-            {FOUNDERS.map((founder, idx) => (
+            {founders.map((founder, idx) => (
               <FounderCard key={idx} member={founder} isMobile={isMobile} />
             ))}
           </div>
@@ -509,7 +494,7 @@ export function AboutUs({ onNavigate, className }: AboutUsProps) {
               margin: '0 auto',
             }}
           >
-            {TEAM.map((member, idx) => (
+            {team.map((member, idx) => (
               <TeamCard key={idx} member={member} isMobile={isMobile} />
             ))}
           </div>

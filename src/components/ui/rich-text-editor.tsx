@@ -138,25 +138,26 @@ export function RichTextEditor({
     >
       {/* Toolbar */}
       <div
-        className="flex flex-wrap gap-1 border-b"
+        className="flex flex-nowrap gap-0 border-b overflow-x-auto"
         style={{
-          padding: 'var(--spacing-2)',
+          padding: '2px 4px',
           borderColor: 'var(--color-border-default)',
           backgroundColor: 'var(--color-bg-muted)'
         }}
       >
         {toolbarButtons.map((group, groupIdx) => (
-          <div key={groupIdx} className="flex items-center">
+          <div key={groupIdx} className="flex items-center shrink-0">
             {groupIdx > 0 && (
               <div
                 style={{
                   width: '1px',
+                  height: '16px',
                   backgroundColor: 'var(--color-border-default)',
-                  margin: '0 var(--spacing-1)'
+                  margin: '0 2px'
                 }}
               />
             )}
-            <div className="flex gap-1">
+            <div className="flex gap-0">
               {group.buttons.map((btn, btnIdx) => (
                 <button
                   key={btnIdx}
@@ -174,10 +175,10 @@ export function RichTextEditor({
                   title={btn.title}
                   className="hover:bg-[var(--color-bg-card)] transition-colors rounded"
                   style={{
-                    padding: 'var(--spacing-2)',
-                    minWidth: '32px',
-                    height: '32px',
-                    fontSize: 'var(--text-sm)',
+                    padding: '2px 4px',
+                    minWidth: '24px',
+                    height: '24px',
+                    fontSize: '11px',
                     fontFamily: 'var(--font-family-base)',
                     fontWeight: 'var(--font-weight-medium)',
                     color: 'var(--color-text-primary)',
@@ -203,9 +204,9 @@ export function RichTextEditor({
         className="focus:outline-none rich-text-editor-content"
         style={{
           minHeight,
-          padding: 'var(--spacing-4)',
+          padding: '8px 12px',
           fontFamily: 'var(--font-family-base)',
-          fontSize: 'var(--text-base)',
+          fontSize: 'var(--text-sm)',
           lineHeight: 'var(--line-height-base)',
           color: 'var(--color-text-primary)',
           backgroundColor: 'var(--color-bg-card)',

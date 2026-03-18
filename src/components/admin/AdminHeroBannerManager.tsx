@@ -66,6 +66,11 @@ const PAGE_META: Record<string, { label: string; emoji: string; description: str
     emoji: '💬',
     description: 'Hero banner shown on the Find Your Consultant page',
   },
+  resources: {
+    label: 'Resources',
+    emoji: '📚',
+    description: 'Hero banner shown on the Resource Library page',
+  },
 };
 
 interface AdminHeroBannerManagerProps {
@@ -163,7 +168,7 @@ export function AdminHeroBannerManager({ onBack }: AdminHeroBannerManagerProps) 
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 24, marginTop: 24 }}>
         <div>
-          {['assessments', 'equip', 'consultation'].map((pageKey, i) => {
+          {['assessments', 'equip', 'consultation', 'resources'].map((pageKey, i) => {
             const meta = PAGE_META[pageKey];
             const banner = editedBanners[pageKey];
             const isDirty = dirtyKeys.has(pageKey);

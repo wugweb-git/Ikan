@@ -21,8 +21,9 @@ export function TermsOfUse({ className, onNavigate }: TermsOfUseProps) {
       }}
     >
       <PageHero 
-        title={content?.title || 'Terms of Service'}
-        subtitle="Important legal terms governing your use of iKan's mental health platform and services."
+        title={content?.heroTitle || content?.title || 'Terms of Service'}
+        subtitle={content?.heroSubtitle || (content as any)?.subtitle || "Important legal terms governing your use of iKan's mental health platform and services."}
+        backgroundImage={content?.heroImage}
       />
 
       <div 

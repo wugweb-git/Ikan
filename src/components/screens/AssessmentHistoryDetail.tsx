@@ -139,6 +139,26 @@ export function AssessmentHistoryDetail({ assessmentId, onBack, onNavigate }: As
 
         if (metaRes) setAssessmentMeta(metaRes);
 
+        // Compute maxScore from assessment definition questions
+        let defMaxScore = 0;
+        if (metaRes?.questions && Array.isArray(metaRes.questions)) {
+          for (const q of metaRes.questions) {
+            if (q.options && Array.isArray(q.options)) {
+              let maxVal = 0;
+              for (const opt of q.options) {
+                const v = typeof opt === 'object' ? (opt.value ?? opt.score ?? 0) : 0;
+                if (typeof v === 'number' && v > maxVal) maxVal = v;
+              }
+              defMaxScore += maxVal;
+            }
+          }
+        }
+        // Fall back to scoring ranges
+        if (defMaxScore === 0 && metaRes?.scoring?.ranges?.length > 0) {
+          const maxFromRanges = metaRes.scoring.ranges[metaRes.scoring.ranges.length - 1]?.max;
+          if (maxFromRanges) defMaxScore = maxFromRanges;
+        }
+
         // Parse history — extract attempts for THIS assessment
         const allHistory = (historyRes as any)?.history || (historyRes as any)?.responses || (historyRes as any)?.assessments || [];
         const relevantAttempts: AssessmentAttempt[] = [];
@@ -152,7 +172,7 @@ export function AssessmentHistoryDetail({ assessmentId, onBack, onNavigate }: As
                 assessmentId: entryId,
                 assessmentName: entry.assessmentTitle || entry.assessment_title || metaRes?.title || 'Assessment',
                 score: entry.score ?? entry.calculated_score ?? 0,
-                maxScore: entry.maxScore ?? entry.max_score ?? 21,
+                maxScore: entry.maxScore ?? entry.max_score ?? (defMaxScore > 0 ? defMaxScore : 21),
                 severity: entry.severityHint || entry.severity_hint || entry.interpretation?.label?.toLowerCase() || undefined,
                 interpretation: entry.interpretation,
                 completedAt: entry.completed_at || entry.completedAt || new Date().toISOString(),

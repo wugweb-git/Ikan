@@ -2,7 +2,8 @@ import { useState, useEffect, useRef, useCallback, memo } from 'react';
 import { 
   Plus, Trash2, GripVertical, Settings, MoreHorizontal, 
   Copy, ChevronRight, BookOpen, Clock, Calendar, FastForward,
-  PenTool, MessageCircle, Target, AlertTriangle, Info, Layers, Zap
+  PenTool, MessageCircle, Target, AlertTriangle, Info, Layers, Zap,
+  RotateCcw
 } from 'lucide-react';
 import { useDrag, useDrop } from 'react-dnd';
 import { Button } from '../ui/button';
@@ -64,87 +65,44 @@ const DraggableDay = memo(function DraggableDay({ day, index, isSelected, onSele
 
   drag(drop(ref));
 
-  return (
-    <div 
-      ref={ref}
-      onClick={onSelect}
-      data-handler-id={handlerId}
-      className={cn(
-        "group flex flex-col items-center gap-1 px-3 py-2 cursor-pointer transition-all border shrink-0 min-w-[80px] max-w-[120px]",
-        isSelected 
-          ? "border-2 shadow-sm" 
-          : "bg-transparent border-transparent",
-        isSelected && "bg-[var(--color-bg-card)] border-[var(--color-primary-default)]",
-        !isSelected && "hover:bg-[var(--color-bg-card)] hover:border-[var(--color-border-default)]",
-        isDragging && "opacity-50"
-      )}
-      style={{ borderRadius: 'var(--radius-lg)' }}
-    >
-      {/* Drag handle + day number row */}
-      <div className="flex items-center gap-1.5 w-full">
-        <div className="cursor-grab" style={{ color: 'var(--color-text-muted)' }}>
-          <GripVertical size={12} />
-        </div>
-        <div 
-          className="w-5 h-5 rounded-md flex items-center justify-center shrink-0"
-          style={{ 
-            fontSize: '10px', 
-            fontWeight: 'var(--font-weight-medium)',
-            backgroundColor: isSelected ? 'var(--color-info-light)' : day.day === 0 ? 'var(--color-status-warning-light)' : 'var(--color-bg-muted)', 
-            color: isSelected ? 'var(--color-info-default)' : day.day === 0 ? 'var(--color-status-warning)' : 'var(--color-text-muted)' 
-          }}
-        >
-          {day.day === 0 ? '0' : day.day}
-        </div>
-        {/* Kebab menu */}
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button 
-              variant="ghost" size="icon" 
-              className="h-5 w-5 ml-auto opacity-0 group-hover:opacity-100 transition-opacity"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <MoreHorizontal size={12} />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onDuplicate(); }}>
-              <Copy className="w-4 h-4 mr-2" /> Duplicate
-            </DropdownMenuItem>
-            <DropdownMenuItem 
-              onClick={(e) => { e.stopPropagation(); onDelete(); }}
-              style={{ color: 'var(--color-status-danger)' }}
-            >
-              <Trash2 className="w-4 h-4 mr-2" /> Delete
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </div>
-      
-      {/* Title */}
-      <p className="truncate w-full text-center" style={{ 
-        fontSize: '11px', 
-        fontWeight: 'var(--font-weight-medium)',
-        color: isSelected ? 'var(--color-text-primary)' : 'var(--color-text-muted)',
-        lineHeight: 1.2,
-      }}>
-        {day.day === 0 ? (day.title || 'Onboarding') : (day.title || `Day ${day.day}`)}
-      </p>
+  const isOnboarding = day.day === 0;
+  // Color-code by day type
+  const typeColor = isOnboarding ? '#E5A100'
+    : day.dayType === 'assessment' ? '#7C3AED'
+    : day.dayType === 'assessment-lite' ? '#8B5CF6'
+    : day.dayType === 'practice' ? '#059669'
+    : day.dayType === 'reflection' ? '#0284C7'
+    : day.dayType === 'rest' ? '#64748B'
+    : day.dayType === 'quiz' ? '#D97706'
+    : day.dayType === 'check-in' ? '#EC4899'
+    : day.dayType === 'tracker' ? '#10B981'
+    : day.dayType === 'workshop' ? '#6366F1'
+    : 'var(--color-primary-default)';
 
-      {/* Type badge + block count */}
-      <div className="flex items-center gap-1">
-        {day.day === 0 ? (
-          <Badge variant="outline" className="text-[8px] px-1 py-0 h-3 uppercase" style={{ backgroundColor: 'var(--color-status-warning-light)', color: 'var(--color-status-warning)', borderColor: 'var(--color-status-warning)', fontWeight: 'var(--font-weight-medium)' }}>
-            Onboarding
-          </Badge>
-        ) : (
-          <Badge variant="outline" className="text-[8px] px-1 py-0 h-3 uppercase" style={{ backgroundColor: 'var(--color-bg-muted)', color: 'var(--color-text-muted)', borderColor: 'var(--color-border-default)', fontWeight: 'var(--font-weight-medium)' }}>
-            {day.dayType || 'lesson'}
-          </Badge>
-        )}
-        <span style={{ fontSize: '9px', color: 'var(--color-text-muted)' }}>
-          {day.activities.length}
-        </span>
+  return (
+    <div
+      ref={ref}
+      data-handler-id={handlerId}
+      className="shrink-0"
+      style={{ opacity: isDragging ? 0.4 : 1 }}
+    >
+      <div
+        onClick={onSelect}
+        className="flex items-center justify-center cursor-pointer transition-all"
+        style={{
+          width: 34,
+          height: 34,
+          borderRadius: 'var(--radius-md)',
+          fontSize: 12,
+          fontWeight: 500,
+          fontFamily: 'var(--font-family-base)',
+          backgroundColor: isSelected ? typeColor : 'var(--color-bg-card)',
+          color: isSelected ? '#fff' : typeColor,
+          border: isSelected ? 'none' : `1.5px solid ${typeColor}40`,
+          boxShadow: isSelected ? `0 2px 8px ${typeColor}30` : 'none',
+        }}
+      >
+        {day.day}
       </div>
     </div>
   );
@@ -261,8 +219,37 @@ export interface DailyBuilderProps {
   readOnly?: boolean;
 }
 
+// --- HELPER: Collision-resistant block ID generator ---
+let _blockIdCounter = 0;
+function generateBlockId(): string {
+  return `block-${Date.now()}-${++_blockIdCounter}-${Math.random().toString(36).substr(2, 6)}`;
+}
+
 // --- HELPER COMPONENTS ---
-function BlockPaletteMenu({ onSelect }: { onSelect: (type: string, subtype?: string) => void }) {
+function BlockPaletteMenu({ onSelect, dayType }: { onSelect: (type: string, subtype?: string) => void; dayType?: string }) {
+   const preset = dayType ? getPresetForDayType(dayType) : undefined;
+   
+   // Block type definitions with their allowed-block keys for matching
+   const blockTypes = [
+     { type: 'lesson', label: 'Lesson', icon: <BookOpen size={14} className="mr-2" />, keys: ['lesson'] },
+     { type: 'exercise', label: 'Exercise', icon: <PenTool size={14} className="mr-2" />, keys: ['mcq_single', 'mcq_multi', 'rating_scale', 'likert', 'boolean', 'short_text', 'long_text'] },
+     { type: 'journal', label: 'Journal', icon: <MessageCircle size={14} className="mr-2" />, keys: ['journal', 'journal_short'] },
+     { type: 'conclude', label: 'Conclusion', icon: <Target size={14} className="mr-2" />, keys: ['summary', 'conclude'] },
+   ];
+   
+   // Filter by preset if available
+   const filtered = preset
+     ? blockTypes.filter(bt => {
+         // Always allow if any of the block's keys overlap with preset allowedBlocks
+         // Also allow if it's not explicitly blocked
+         const isBlocked = preset.blockedComponents.some(bc => bt.keys.some(k => k.includes(bc)) || bt.type.includes(bc));
+         if (isBlocked) return false;
+         // If preset has allowedBlocks, check overlap
+         const hasOverlap = bt.keys.some(k => preset.allowedBlocks.includes(k)) || preset.allowedBlocks.includes(bt.type);
+         return hasOverlap;
+       })
+     : blockTypes;
+
    return (
       <DropdownMenu>
          <DropdownMenuTrigger asChild>
@@ -271,18 +258,16 @@ function BlockPaletteMenu({ onSelect }: { onSelect: (type: string, subtype?: str
             </Button>
          </DropdownMenuTrigger>
          <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={() => onSelect('lesson')}>
-               <BookOpen size={14} className="mr-2" /> Lesson
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => onSelect('exercise')}>
-               <PenTool size={14} className="mr-2" /> Exercise
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => onSelect('journal')}>
-               <MessageCircle size={14} className="mr-2" /> Journal
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => onSelect('conclude')}>
-               <Target size={14} className="mr-2" /> Conclusion
-            </DropdownMenuItem>
+            {filtered.map(bt => (
+              <DropdownMenuItem key={bt.type} onClick={() => onSelect(bt.type)}>
+                {bt.icon} {bt.label}
+              </DropdownMenuItem>
+            ))}
+            {filtered.length === 0 && (
+              <DropdownMenuItem disabled>
+                <span style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}>No blocks allowed for this day type</span>
+              </DropdownMenuItem>
+            )}
          </DropdownMenuContent>
       </DropdownMenu>
    )
@@ -412,7 +397,7 @@ export function EquipDailyEditor({
       ...dayToDuplicate,
       day: newDayNum,
       title: `${dayToDuplicate.title} (Copy)`,
-      activities: dayToDuplicate.activities.map(a => ({ ...a, id: `block-${Date.now()}-${Math.random().toString(36).substr(2, 9)}` }))
+      activities: dayToDuplicate.activities.map(a => ({ ...a, id: generateBlockId() }))
     };
     handleDaysChange([...days, newDay]);
     setSelectedDayNum(newDayNum);
@@ -429,7 +414,7 @@ export function EquipDailyEditor({
           if (preset && preset.defaultBlocks) {
              const newBlocks = preset.defaultBlocks.map((b, i) => ({
                 ...b,
-                id: `block-${Date.now()}-${i}`,
+                id: generateBlockId(),
                 order: i,
                 required: b.required ?? false,
                 title: b.title || 'Untitled Block'
@@ -452,13 +437,18 @@ export function EquipDailyEditor({
 
   const addBlock = (type: string = 'lesson', subtype?: string) => {
     if (!activeDay || readOnly) return;
+    
+    // Get preset config for auto-setting block properties
+    const preset = activeDay.dayType ? getPresetForDayType(activeDay.dayType) : undefined;
+    
     const newBlock: Activity = {
-      id: `block-${Date.now()}`,
+      id: generateBlockId(),
       title: type === 'lesson' ? 'New Lesson' : 'New Activity',
       type: type as any,
       content: '',
       duration: 5,
-      required: true,
+      required: preset?.autoConfig.scoringEnabled ? true : true, // always default required
+      autoAdvance: preset?.autoConfig.autoAdvance ?? false,
       order: activeDay.activities.length,
       exerciseConfig: subtype ? { subtype: subtype as any } : undefined
     };
@@ -567,7 +557,7 @@ export function EquipDailyEditor({
                    </p>
                 </div>
                 {!readOnly && (
-                  <BlockPaletteMenu onSelect={addBlock} />
+                  <BlockPaletteMenu onSelect={addBlock} dayType={activeDay.dayType} />
                 )}
               </div>
 
@@ -587,11 +577,38 @@ export function EquipDailyEditor({
                   <div className="w-8 h-8 rounded-full flex items-center justify-center shrink-0" style={{ backgroundColor: 'var(--color-info-light)', color: 'var(--color-info-default)' }}>
                     <Settings size={14} />
                   </div>
-                  <div>
+                  <div className="flex-1 min-w-0">
                     <p style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--font-weight-medium)', color: 'var(--color-text-primary)' }}>Day Configuration</p>
                     <p style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}>Metadata & Goals</p>
                   </div>
-                  {selectedBlockId === null && <div className="ml-auto" style={{ color: 'var(--color-info-default)' }}><ChevronRight size={14} /></div>}
+                  {/* Day actions — Duplicate / Delete */}
+                  <div className="flex items-center gap-0.5 shrink-0" onClick={(e) => e.stopPropagation()}>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7"
+                      style={{ color: 'var(--color-text-muted)' }}
+                      title="Duplicate Day"
+                      onClick={() => activeDay && handleDuplicateDay(activeDay)}
+                      disabled={readOnly}
+                    >
+                      <Copy size={13} />
+                    </Button>
+                    {activeDay && activeDay.day !== 0 && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7"
+                        style={{ color: 'var(--color-status-danger)' }}
+                        title="Delete Day"
+                        onClick={() => activeDay && handleDeleteDay(activeDay.day)}
+                        disabled={readOnly}
+                      >
+                        <Trash2 size={13} />
+                      </Button>
+                    )}
+                  </div>
+                  {selectedBlockId === null && <div style={{ color: 'var(--color-info-default)' }}><ChevronRight size={14} /></div>}
                 </div>
                 )}
 
@@ -648,18 +665,18 @@ export function EquipDailyEditor({
                 {selectedBlockId ? 'Block Editor' : 'Configuration'}
               </div>
 
-              <div className="p-8">
+              <div className="p-4">
                 <div className="max-w-2xl mx-auto">
                   {selectedBlockId === null && !singleDayMode ? (
                     // --- DAY CONFIGURATION EDITOR (Multi-day only) ---
-                    <div className="animate-in fade-in duration-300 space-y-6">
+                    <div className="animate-in fade-in duration-300 space-y-4">
                       <div>
-                        <h2 style={{ fontSize: 'var(--text-xl)', fontWeight: 'var(--font-weight-medium)', color: 'var(--color-text-primary)' }}>Day Configuration</h2>
-                        <p style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-muted)' }}>Define the identity and goals for Day {activeDay.day}.</p>
+                        <h2 style={{ fontSize: 'var(--text-base)', fontWeight: 'var(--font-weight-medium)', color: 'var(--color-text-primary)' }}>Day Configuration</h2>
+                        <p style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}>Define the identity and goals for Day {activeDay.day}.</p>
                       </div>
 
                       <Card>
-                        <CardContent className="p-6 space-y-6">
+                        <CardContent className="p-4 space-y-4">
                           <AdminFormField label="Day Title">
                             <Input 
                               value={activeDay.title} 
@@ -728,7 +745,7 @@ export function EquipDailyEditor({
                                 <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: 'var(--color-primary-default)', opacity: 0.1 }}>
                                   <Zap size={14} style={{ color: 'var(--color-primary-default)' }} />
                                 </div>
-                                <div>
+                                <div className="flex-1">
                                   <p style={{ fontSize: 'var(--text-sm)', fontWeight: 500, fontFamily: 'var(--font-family-base)', color: 'var(--color-text-primary)' }}>
                                     {preset.label} Preset
                                   </p>
@@ -736,6 +753,33 @@ export function EquipDailyEditor({
                                     {preset.description}
                                   </p>
                                 </div>
+                                {/* Reset to preset defaults */}
+                                {!readOnly && activeDay.activities.length > 0 && (
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="gap-1 h-7 px-2 shrink-0"
+                                    style={{ fontSize: '10px', color: 'var(--color-status-warning)', fontWeight: 500 }}
+                                    title="Replace all blocks with preset defaults"
+                                    onClick={() => {
+                                      if (!confirm(`Reset Day ${activeDay.day} blocks to ${preset.label} defaults? This will replace all existing blocks.`)) return;
+                                      const newBlocks = preset.defaultBlocks.map((b, i) => ({
+                                        ...b,
+                                        id: generateBlockId(),
+                                        order: i,
+                                        required: b.required ?? false,
+                                        title: b.title || 'Untitled Block'
+                                      })) as Activity[];
+                                      handleUpdateDay(activeDay.day, { activities: newBlocks });
+                                      setSelectedBlockId(null);
+                                      setTimeout(() => {
+                                        if (newBlocks.length > 0) setSelectedBlockId(newBlocks[0].id);
+                                      }, 100);
+                                    }}
+                                  >
+                                    <RotateCcw size={11} /> Reset blocks
+                                  </Button>
+                                )}
                               </div>
 
                               <div className="p-5 space-y-4">
@@ -842,17 +886,6 @@ export function EquipDailyEditor({
                   ) : activeBlock ? (
                     // --- BLOCK EDITOR ---
                     <div className="animate-in fade-in duration-300">
-                      <div className="mb-6">
-                        <div className="flex items-center gap-2 mb-1">
-                          <Badge variant="secondary" className="uppercase tracking-wider text-[10px]" style={{ backgroundColor: 'var(--color-accent-default)', color: 'var(--color-text-primary)', fontWeight: 'var(--font-weight-medium)' }}>
-                            {activeBlock.type} Block
-                          </Badge>
-                        </div>
-                        <h2 style={{ fontSize: 'var(--text-xl)', fontWeight: 'var(--font-weight-medium)', color: 'var(--color-text-primary)' }}>
-                          {activeBlock.title || 'Untitled Block'}
-                        </h2>
-                      </div>
-
                       <EquipBlockEditor
                         key={activeBlock.id}
                         block={activeBlock}
@@ -864,6 +897,7 @@ export function EquipDailyEditor({
                         moveDown={undefined}
                         hideHeader={true}
                         isAssessment={mode === 'assessment'}
+                        dayType={activeDay?.dayType}
                       />
                     </div>
                   ) : (

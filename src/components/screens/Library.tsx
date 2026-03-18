@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { useIsMobile } from '../../hooks/useIsMobile';
 import { useMetadata } from '../../hooks/useMetadata';
 import { cn } from '../ui/utils';
@@ -9,6 +9,8 @@ import { logger } from '../../lib/logger';
 import { PullToRefresh } from '../ui/touch-feedback';
 import { ImageWithFallback } from '../figma/ImageWithFallback';
 import { resolveImageUrl } from '../../utils/image-utils';
+import { LIBRARY_LABELS } from '../../lib/constants/content';
+import { PageHero } from '../ui/PageHero';
 
 interface LibraryProps {
   onResourceSelect?: (resourceId: string) => void;
@@ -32,6 +34,99 @@ const CONTENT_TYPES = [
   { value: 'infographic', label: 'Infographics', icon: ImageIcon },
 ];
 
+/* ─── Shared Blog Card Component ─── */
+function BlogCard({ resource, onClick, size = 'default' }: { resource: Resource; onClick: () => void; size?: 'default' | 'small' }) {
+  const isSmall = size === 'small';
+  return (
+    <div
+      className="group cursor-pointer flex flex-col overflow-hidden"
+      onClick={onClick}
+      style={{
+        backgroundColor: 'var(--color-bg-card)',
+        borderRadius: 'var(--radius-lg)',
+        border: '1px solid var(--color-border-default)',
+        transition: 'box-shadow 0.25s ease, transform 0.25s ease',
+      }}
+      onMouseEnter={(e) => { e.currentTarget.style.boxShadow = '0 8px 24px rgba(0,0,0,0.08)'; e.currentTarget.style.transform = 'translateY(-2px)'; }}
+      onMouseLeave={(e) => { e.currentTarget.style.boxShadow = 'none'; e.currentTarget.style.transform = 'translateY(0)'; }}
+    >
+      {/* Image with category pill overlay */}
+      <div
+        className="relative overflow-hidden w-full"
+        style={{
+          aspectRatio: isSmall ? '16/10' : '4/3',
+          backgroundColor: 'var(--color-bg-muted)',
+        }}
+      >
+        <ImageWithFallback
+          src={resolveImageUrl(resource.image)}
+          alt={resource.title}
+          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+          loading="lazy"
+        />
+        {/* Category pill overlay */}
+        {resource.category && (
+          <div
+            className="absolute top-3 left-3"
+            style={{
+              backgroundColor: 'rgba(0,0,0,0.65)',
+              borderRadius: 'var(--radius-pill, 999px)',
+              padding: '4px 12px',
+              backdropFilter: 'blur(4px)',
+            }}
+          >
+            <span
+              style={{
+                fontSize: '11px',
+                fontWeight: 'var(--font-weight-medium)',
+                fontFamily: 'var(--font-family-base)',
+                color: '#FFFFFF',
+                textTransform: 'uppercase',
+                letterSpacing: '0.6px',
+              }}
+            >
+              {resource.category}
+            </span>
+          </div>
+        )}
+      </div>
+
+      {/* Text content */}
+      <div style={{ padding: isSmall ? '12px 14px 14px' : 'var(--spacing-4)', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+        {/* Date + Read time */}
+        <div className="flex items-center" style={{ gap: '6px' }}>
+          <span style={{ fontSize: 'var(--text-xs)', fontWeight: 400, fontFamily: 'var(--font-family-base)', color: 'var(--color-text-muted)' }}>
+            {resource.date}
+          </span>
+          {resource.readTime && (
+            <>
+              <span style={{ color: 'var(--color-text-muted)', fontSize: '10px' }}>•</span>
+              <span style={{ fontSize: 'var(--text-xs)', fontWeight: 400, fontFamily: 'var(--font-family-base)', color: 'var(--color-text-muted)' }}>
+                {resource.readTime}
+              </span>
+            </>
+          )}
+        </div>
+
+        {/* Title */}
+        <h3
+          className="line-clamp-2"
+          style={{
+            fontSize: isSmall ? 'var(--text-sm)' : 'var(--text-base)',
+            fontWeight: 'var(--font-weight-medium)',
+            fontFamily: 'var(--font-family-base)',
+            color: 'var(--color-text-primary)',
+            lineHeight: '1.4',
+            margin: 0,
+          }}
+        >
+          {resource.title}
+        </h3>
+      </div>
+    </div>
+  );
+}
+
 export function Library({ onResourceSelect, onNavigate, className }: LibraryProps) {
   const isMobile = useIsMobile();
   const { categories: kvCategories, filterTypes: kvFilterTypes, loading: metaLoading } = useMetadata();
@@ -42,8 +137,16 @@ export function Library({ onResourceSelect, onNavigate, className }: LibraryProp
   const [activeContentType, setActiveContentType] = useState('all');
   const [loading, setLoading] = useState(true);
   const [resources, setResources] = useState<Resource[]>([]);
+  const [heroBanner, setHeroBanner] = useState<{ title: string; subtitle: string; image_url: string; cta_text: string; cta_link: string } | null>(null);
 
   const hasLoadedResources = useRef(false);
+
+  // Fetch hero banner for this page
+  useEffect(() => {
+    apiClient.getHeroBanner('resources').then(res => {
+      if (res?.banner) setHeroBanner(res.banner);
+    }).catch(() => {});
+  }, []);
 
   const handleRefresh = () => {
     hasLoadedResources.current = false;
@@ -130,8 +233,6 @@ export function Library({ onResourceSelect, onNavigate, className }: LibraryProp
     await loadResources();
   };
 
-  const categories = ['All', ...kvCategories.map(c => c.label)];
-
   // Featured resources (pinned from admin)
   const featuredResources = resources.filter(r => r.featured);
 
@@ -150,34 +251,42 @@ export function Library({ onResourceSelect, onNavigate, className }: LibraryProp
     return matchesSearch && matchesCategory && matchesType;
   });
 
+  // ── Only show categories / content types that have active posts ──
+  const activeCategoriesSet = useMemo(() => {
+    const cats = new Set<string>();
+    resources.forEach(r => { if (r.category) cats.add(r.category); });
+    return cats;
+  }, [resources]);
+
+  const categories = useMemo(() => {
+    const allCats = kvCategories.map(c => c.label).filter(label => activeCategoriesSet.has(label));
+    return ['All', ...allCats];
+  }, [kvCategories, activeCategoriesSet]);
+
+  const activeContentTypesSet = useMemo(() => {
+    const types = new Set<string>();
+    types.add('all');
+    resources.forEach(r => { if (r.type) types.add(r.type); });
+    return types;
+  }, [resources]);
+
+  const visibleContentTypes = useMemo(() => {
+    return CONTENT_TYPES.filter(ct => activeContentTypesSet.has(ct.value));
+  }, [activeContentTypesSet]);
+
   const content = (
     <div className={cn("w-full min-h-screen", className)} style={{ backgroundColor: 'var(--color-bg-page)' }}>
+      {/* Hero Banner */}
+      <PageHero
+        title={heroBanner?.title || LIBRARY_LABELS.PAGE_TITLE}
+        subtitle={heroBanner?.subtitle || LIBRARY_LABELS.PAGE_SUBTITLE}
+        backgroundImage={heroBanner?.image_url}
+        ctaText={heroBanner?.cta_text}
+        ctaLink={heroBanner?.cta_link}
+      />
+
       <div className="w-full max-w-[1400px] mx-auto px-4 py-8 md:px-12 md:py-12">
         
-        {/* Page Title */}
-        <div style={{ marginBottom: 'var(--spacing-8)' }}>
-          <h1 
-            style={{ 
-              fontSize: isMobile ? 'var(--text-3xl)' : 'var(--text-4xl)',
-              fontFamily: 'var(--font-family-base)', 
-              fontWeight: 'var(--font-weight-medium)', 
-              color: 'var(--color-text-primary)',
-              margin: '0 0 var(--spacing-2) 0'
-            }}
-          >
-            Resources
-          </h1>
-          <p style={{ 
-            fontSize: 'var(--text-sm)', 
-            fontFamily: 'var(--font-family-base)', 
-            fontWeight: 400,
-            color: 'var(--color-text-muted)',
-            margin: 0
-          }}>
-            Explore articles, guides, and tools to support your mental health journey
-          </p>
-        </div>
-
         {/* Search Bar */}
         <div className="relative max-w-lg" style={{ marginBottom: 'var(--spacing-6)' }}>
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: 'var(--color-text-muted)' }} />
@@ -253,7 +362,7 @@ export function Library({ onResourceSelect, onNavigate, className }: LibraryProp
               );
             })
           ) : (
-            CONTENT_TYPES.map((type) => {
+            visibleContentTypes.map((type) => {
               const isActive = activeContentType === type.value;
               const IconComp = type.icon;
               return (
@@ -283,111 +392,161 @@ export function Library({ onResourceSelect, onNavigate, className }: LibraryProp
           )}
         </div>
 
-        {/* Featured Resource Highlight */}
+        {/* ─── Featured Bento Section ─── */}
         {!loading && featuredResources.length > 0 && !searchQuery && activeCategoryFilter === 'All' && activeContentType === 'all' && (
-          <div style={{ marginBottom: 'var(--spacing-8)' }}>
-            <h2 style={{
-              fontSize: 'var(--text-lg)',
-              fontFamily: 'var(--font-family-base)',
-              fontWeight: 'var(--font-weight-medium)',
-              color: 'var(--color-text-primary)',
-              marginBottom: 'var(--spacing-4)',
-            }}>
-              Featured
-            </h2>
-            <div className={cn(
-              "grid gap-6",
-              featuredResources.length === 1 ? "grid-cols-1" : "grid-cols-1 md:grid-cols-2"
-            )}>
-              {featuredResources.slice(0, 2).map((resource) => (
+          <div style={{ marginBottom: 'var(--spacing-10, 40px)' }}>
+            <div className="flex items-center justify-between" style={{ marginBottom: 'var(--spacing-4)' }}>
+              <h2 style={{
+                fontSize: 'var(--text-lg)',
+                fontFamily: 'var(--font-family-base)',
+                fontWeight: 'var(--font-weight-medium)',
+                color: 'var(--color-text-primary)',
+                margin: 0,
+              }}>
+                {LIBRARY_LABELS.FEATURED}
+              </h2>
+            </div>
+
+            {/* Bento grid: left hero + right 2×2 */}
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr',
+                gap: isMobile ? '16px' : '20px',
+              }}
+            >
+              {/* Left — Large featured card */}
+              <div
+                className="group cursor-pointer overflow-hidden flex flex-col"
+                onClick={() => onNavigate?.(`/resource-detail?id=${featuredResources[0].id}`)}
+                style={{
+                  backgroundColor: 'var(--color-bg-card)',
+                  borderRadius: 'var(--radius-lg)',
+                  border: '1px solid var(--color-border-default)',
+                  transition: 'box-shadow 0.25s ease, transform 0.25s ease',
+                  gridRow: isMobile ? undefined : 'span 1',
+                }}
+                onMouseEnter={(e) => { e.currentTarget.style.boxShadow = '0 8px 28px rgba(0,0,0,0.08)'; e.currentTarget.style.transform = 'translateY(-2px)'; }}
+                onMouseLeave={(e) => { e.currentTarget.style.boxShadow = 'none'; e.currentTarget.style.transform = 'translateY(0)'; }}
+              >
+                {/* Image */}
                 <div
-                  key={`featured-${resource.id}`}
-                  className="group cursor-pointer flex flex-col md:flex-row overflow-hidden"
-                  onClick={() => onNavigate?.(`/resource-detail?id=${resource.id}`)}
+                  className="relative overflow-hidden w-full"
                   style={{
-                    backgroundColor: 'var(--color-bg-card)',
-                    borderRadius: 'var(--radius-lg)',
-                    boxShadow: 'var(--shadow-sm)',
-                    transition: 'box-shadow 0.2s',
+                    aspectRatio: isMobile ? '16/9' : '16/10',
+                    backgroundColor: 'var(--color-bg-muted)',
                   }}
-                  onMouseEnter={(e) => { e.currentTarget.style.boxShadow = 'var(--shadow-md)'; }}
-                  onMouseLeave={(e) => { e.currentTarget.style.boxShadow = 'var(--shadow-sm)'; }}
                 >
-                  <div
-                    className="w-full md:w-2/5 aspect-[16/10] md:aspect-auto overflow-hidden"
-                    style={{ backgroundColor: 'var(--color-bg-muted)', minHeight: isMobile ? undefined : 200 }}
-                  >
-                    <ImageWithFallback
-                      src={resolveImageUrl(resource.image)}
-                      alt={resource.title}
-                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                    />
-                  </div>
-                  <div className="flex-1 flex flex-col justify-center" style={{ padding: 'var(--spacing-5)' }}>
-                    <span
+                  <ImageWithFallback
+                    src={resolveImageUrl(featuredResources[0].image)}
+                    alt={featuredResources[0].title}
+                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                  />
+                  {/* Category pill overlay */}
+                  {featuredResources[0].category && (
+                    <div
+                      className="absolute top-3 left-3"
                       style={{
-                        fontSize: 'var(--text-xs)',
-                        fontFamily: 'var(--font-family-base)',
-                        fontWeight: 'var(--font-weight-medium)',
-                        color: 'var(--color-primary-default)',
-                        textTransform: 'uppercase',
-                        letterSpacing: '0.05em',
-                        marginBottom: 'var(--spacing-2)',
+                        backgroundColor: 'rgba(0,0,0,0.65)',
+                        borderRadius: 'var(--radius-pill, 999px)',
+                        padding: '4px 12px',
+                        backdropFilter: 'blur(4px)',
                       }}
                     >
-                      Featured · {resource.category}
-                    </span>
-                    <h3
-                      className="line-clamp-2"
-                      style={{
-                        fontFamily: 'var(--font-family-base)',
-                        fontWeight: 'var(--font-weight-medium)',
-                        color: 'var(--color-text-primary)',
-                        fontSize: isMobile ? 'var(--text-lg)' : 'var(--text-xl)',
-                        margin: '0 0 var(--spacing-2) 0',
-                        lineHeight: 1.3,
-                      }}
-                    >
-                      {resource.title}
-                    </h3>
-                    {resource.description && (
-                      <p
-                        className="line-clamp-2"
-                        style={{
-                          fontFamily: 'var(--font-family-base)',
-                          color: 'var(--color-text-muted)',
-                          fontSize: 'var(--text-sm)',
-                          fontWeight: 400,
-                          margin: '0 0 var(--spacing-3) 0',
-                          lineHeight: 'var(--line-height-md)',
-                        }}
-                      >
-                        {resource.description}
-                      </p>
-                    )}
-                    <div className="flex items-center" style={{ gap: 'var(--spacing-3)' }}>
-                      {resource.readTime && (
-                        <span style={{
-                          fontSize: 'var(--text-xs)',
-                          fontFamily: 'var(--font-family-base)',
-                          color: 'var(--color-text-muted)',
-                          fontWeight: 400,
-                        }}>
-                          {resource.readTime}
-                        </span>
-                      )}
-                      <span style={{
-                        fontSize: 'var(--text-xs)',
-                        fontFamily: 'var(--font-family-base)',
-                        color: 'var(--color-text-muted)',
-                        fontWeight: 400,
-                      }}>
-                        {resource.date}
+                      <span style={{ fontSize: '11px', fontWeight: 'var(--font-weight-medium)', fontFamily: 'var(--font-family-base)', color: '#FFFFFF', textTransform: 'uppercase', letterSpacing: '0.6px' }}>
+                        {featuredResources[0].category}
                       </span>
                     </div>
-                  </div>
+                  )}
                 </div>
-              ))}
+
+                {/* Text */}
+                <div style={{ padding: isMobile ? '16px' : '20px 24px 24px', display: 'flex', flexDirection: 'column', gap: '8px', flex: 1 }}>
+                  <span
+                    style={{
+                      fontSize: 'var(--text-xs)',
+                      fontFamily: 'var(--font-family-base)',
+                      fontWeight: 'var(--font-weight-medium)',
+                      color: 'var(--color-text-muted)',
+                      backgroundColor: 'var(--color-bg-muted)',
+                      borderRadius: 'var(--radius-pill, 999px)',
+                      padding: '3px 10px',
+                      alignSelf: 'flex-start',
+                    }}
+                  >
+                    Featured story
+                  </span>
+
+                  <h3
+                    className="line-clamp-3"
+                    style={{
+                      fontFamily: 'var(--font-family-base)',
+                      fontWeight: 'var(--font-weight-medium)',
+                      color: 'var(--color-text-primary)',
+                      fontSize: isMobile ? 'var(--text-xl)' : 'var(--text-2xl)',
+                      margin: '4px 0 0 0',
+                      lineHeight: 1.3,
+                    }}
+                  >
+                    {featuredResources[0].title}
+                  </h3>
+
+                  <div className="flex items-center" style={{ gap: '6px', marginTop: '4px' }}>
+                    <span style={{ fontSize: 'var(--text-xs)', fontFamily: 'var(--font-family-base)', color: 'var(--color-text-muted)', fontWeight: 400 }}>
+                      {featuredResources[0].date}
+                    </span>
+                    {featuredResources[0].readTime && (
+                      <>
+                        <span style={{ color: 'var(--color-text-muted)', fontSize: '10px' }}>•</span>
+                        <span style={{ fontSize: 'var(--text-xs)', fontFamily: 'var(--font-family-base)', color: 'var(--color-text-muted)', fontWeight: 400 }}>
+                          {featuredResources[0].readTime}
+                        </span>
+                      </>
+                    )}
+                  </div>
+
+                  <button
+                    onClick={(e) => { e.stopPropagation(); onNavigate?.(`/resource-detail?id=${featuredResources[0].id}`); }}
+                    style={{
+                      marginTop: '8px',
+                      alignSelf: 'flex-start',
+                      padding: '8px 20px',
+                      borderRadius: 'var(--radius-pill, 999px)',
+                      backgroundColor: 'var(--ikan-brand-coral-bg, #FFF0ED)',
+                      color: 'var(--ikan-brand-coral, #E8604C)',
+                      fontFamily: 'var(--font-family-base)',
+                      fontWeight: 'var(--font-weight-medium)',
+                      fontSize: 'var(--text-sm)',
+                      border: 'none',
+                      cursor: 'pointer',
+                      transition: 'opacity 0.15s',
+                    }}
+                    onMouseEnter={(e) => { e.currentTarget.style.opacity = '0.85'; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.opacity = '1'; }}
+                  >
+                    Read more
+                  </button>
+                </div>
+              </div>
+
+              {/* Right — 2×2 grid of smaller cards */}
+              <div
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: '1fr 1fr',
+                  gridTemplateRows: '1fr 1fr',
+                  gap: isMobile ? '12px' : '16px',
+                }}
+              >
+                {featuredResources.slice(1, 5).map((resource) => (
+                  <BlogCard
+                    key={`featured-${resource.id}`}
+                    resource={resource}
+                    onClick={() => onNavigate?.(`/resource-detail?id=${resource.id}`)}
+                    size="small"
+                  />
+                ))}
+              </div>
             </div>
           </div>
         )}
@@ -406,98 +565,24 @@ export function Library({ onResourceSelect, onNavigate, className }: LibraryProp
         )}
 
         {/* Resources Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-6 gap-y-10">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4" style={{ gap: isMobile ? '16px' : '20px' }}>
           {loading ? (
             Array.from({ length: 8 }).map((_, i) => (
-              <div key={i} className="flex flex-col gap-3">
-                <div className="w-full aspect-[4/3] bg-black/5 rounded-2xl animate-pulse" />
-                <div className="h-4 bg-black/5 w-3/4 rounded animate-pulse" />
-                <div className="h-3 bg-black/5 w-1/2 rounded animate-pulse" />
+              <div key={i} className="flex flex-col" style={{ borderRadius: 'var(--radius-lg)', overflow: 'hidden', backgroundColor: 'var(--color-bg-card)' }}>
+                <div className="w-full aspect-[4/3] bg-black/5 animate-pulse" />
+                <div style={{ padding: 'var(--spacing-4)', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  <div className="h-3 bg-black/5 w-1/2 rounded animate-pulse" />
+                  <div className="h-4 bg-black/5 w-3/4 rounded animate-pulse" />
+                </div>
               </div>
             ))
           ) : filteredResources.length > 0 ? (
             filteredResources.map((resource) => (
-              <div 
-                key={resource.id} 
-                className="flex flex-col group cursor-pointer"
+              <BlogCard
+                key={resource.id}
+                resource={resource}
                 onClick={() => onNavigate?.(`/resource-detail?id=${resource.id}`)}
-              >
-                <div 
-                  className="w-full aspect-[4/3] overflow-hidden mb-4" 
-                  style={{ backgroundColor: 'var(--color-bg-muted)', borderRadius: 'var(--radius-lg)' }}
-                >
-                  <ImageWithFallback
-                    src={resolveImageUrl(resource.image)}
-                    alt={resource.title}
-                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                  />
-                </div>
-                {/* Type badge */}
-                <div className="flex items-center" style={{ gap: 'var(--spacing-2)', marginBottom: 'var(--spacing-2)' }}>
-                  <span 
-                    style={{ 
-                      fontSize: 'var(--text-xs)', 
-                      fontFamily: 'var(--font-family-base)',
-                      fontWeight: 'var(--font-weight-medium)',
-                      color: 'var(--color-text-muted)',
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.04em',
-                    }}
-                  >
-                    {resource.category}
-                  </span>
-                  {resource.readTime && (
-                    <>
-                      <span style={{ color: 'var(--color-text-muted)', fontSize: 'var(--text-xs)' }}>·</span>
-                      <span style={{ 
-                        fontSize: 'var(--text-xs)', 
-                        fontFamily: 'var(--font-family-base)',
-                        color: 'var(--color-text-muted)',
-                        fontWeight: 400,
-                      }}>
-                        {resource.readTime}
-                      </span>
-                    </>
-                  )}
-                </div>
-                <h3 
-                  className="leading-snug mb-2 transition-colors line-clamp-2"
-                  style={{ 
-                    fontFamily: 'var(--font-family-base)', 
-                    fontWeight: 'var(--font-weight-medium)', 
-                    color: 'var(--color-text-primary)',
-                    fontSize: 'var(--text-base)',
-                    margin: '0 0 var(--spacing-1) 0',
-                  }}
-                >
-                  {resource.title}
-                </h3>
-                {resource.description && (
-                  <p 
-                    className="line-clamp-2"
-                    style={{ 
-                      fontFamily: 'var(--font-family-base)', 
-                      color: 'var(--color-text-muted)',
-                      fontSize: 'var(--text-sm)',
-                      fontWeight: 400,
-                      margin: '0 0 var(--spacing-2) 0',
-                      lineHeight: 'var(--line-height-md)',
-                    }}
-                  >
-                    {resource.description}
-                  </p>
-                )}
-                <span 
-                  style={{ 
-                    fontFamily: 'var(--font-family-base)', 
-                    color: 'var(--color-text-muted)',
-                    fontSize: 'var(--text-xs)',
-                    fontWeight: 400,
-                  }}
-                >
-                  {resource.date}
-                </span>
-              </div>
+              />
             ))
           ) : (
             <div className="col-span-full py-20 text-center">

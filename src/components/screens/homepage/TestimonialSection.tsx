@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { ErrorBoundary } from '../../ErrorBoundary';
 import { ClipboardCheck, Heart } from 'lucide-react';
 import { useIsMobile } from '../../../hooks/useIsMobile';
+import { usePageContent } from '../../../hooks/usePageContent';
 
 interface StatItem {
   value: string;
@@ -9,7 +10,7 @@ interface StatItem {
   icon: 'avatars' | 'assessments' | 'sessions';
 }
 
-const stats: StatItem[] = [
+const DEFAULT_STATS: StatItem[] = [
   {
     value: '50,000+',
     label: 'Assessments completed',
@@ -95,6 +96,14 @@ function StatIcon({ type }: { type: StatItem['icon'] }) {
 
 export function TestimonialSection() {
   const isMobile = useIsMobile();
+
+  const { content: cmsContent } = usePageContent('homepage-stats-section');
+  const cms = useMemo(() => {
+    if (!cmsContent?.content) return null;
+    try { return JSON.parse(cmsContent.content); } catch { return null; }
+  }, [cmsContent]);
+
+  const stats: StatItem[] = cms?.stats || DEFAULT_STATS;
 
   return (
     <ErrorBoundary>

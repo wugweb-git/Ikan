@@ -230,12 +230,19 @@ export const SEED_DATA: SeedItem[] = [
   s('Course',   'filter_type', 'course',   { icon: 'graduation-cap' }),
 
   // ── Interaction Types ─────────────────────────────────────────
-  s('Emoji Scale',   'interaction_type', 'emoji-scale',   { icon: 'smile',               description: 'Pick from emoji options (mood, energy, etc.)' }),
-  s('Free Text',     'interaction_type', 'free-text',     { icon: 'type',                description: 'Open-ended text input' }),
-  s('Multi Select',  'interaction_type', 'multi-select',  { icon: 'list-checks',         description: 'Pick multiple tags/options' }),
-  s('Single Choice', 'interaction_type', 'single-choice', { icon: 'circle-check',        description: 'Pick one from a list' }),
-  s('Slider',        'interaction_type', 'slider',        { icon: 'sliders-horizontal',  description: 'Numeric slider with labels' }),
-  s('Yes / No',      'interaction_type', 'yes-no',        { icon: 'toggle-left',         description: 'Binary yes/no toggle' }),
+  // Must match all 12 InteractionType values from equip-admin-types.ts
+  s('Read',           'interaction_type', 'read',        { icon: 'book-open',          description: 'User reads/scrolls through content' }),
+  s('Watch',          'interaction_type', 'watch',       { icon: 'film',               description: 'User watches embedded video or media' }),
+  s('Select One',     'interaction_type', 'select-one',  { icon: 'circle-check',       description: 'User picks one option from a list' }),
+  s('Select Many',    'interaction_type', 'select-many', { icon: 'list-checks',        description: 'User picks multiple options' }),
+  s('Write',          'interaction_type', 'write',       { icon: 'pen-tool',           description: 'User types free-form text response' }),
+  s('Rate',           'interaction_type', 'rate',        { icon: 'sliders-horizontal', description: 'User picks a number on a scale' }),
+  s('Check Off',      'interaction_type', 'check',       { icon: 'check-square',       description: 'User toggles items in a checklist' }),
+  s('Track (Table)',  'interaction_type', 'track-table', { icon: 'toggle-left',        description: 'User fills yes/no grid or diary' }),
+  s('Input (Table)',  'interaction_type', 'input-table', { icon: 'layout-grid',        description: 'User fills data into table cells' }),
+  s('Clinical Scale', 'interaction_type', 'clinical',    { icon: 'clipboard-list',     description: 'User answers scored clinical instrument' }),
+  s('Upload',         'interaction_type', 'upload',      { icon: 'image',              description: 'User uploads a file (document, image, audio)' }),
+  s('Complete',       'interaction_type', 'complete',    { icon: 'circle-check',       description: 'Day-ending summary or conclusion' }),
 
   // ── Block Types (Equip/Program) ───────────────────────────────
   s('Lesson',      'block_type', 'lesson',      { icon: 'book-open',   description: 'Informational content block' }),
@@ -387,13 +394,18 @@ export const SEED_DATA: SeedItem[] = [
   s('Premium',    'account_type', 'premium',    { icon: 'sparkles',   color: '#8B5CF6', description: 'Premium subscription user' }),
 
   // ── Day Config Types ───────────────────────────────────────────
-  s('Assessment',      'day_config_type', 'assessment',      { icon: 'clipboard-list', description: 'Baseline measurement, severity scoring' }),
-  s('Assessment Lite', 'day_config_type', 'assessment-lite', { icon: 'clipboard-check', description: 'Awareness, non-scored check-ins' }),
-  s('Learning',        'day_config_type', 'learning',        { icon: 'book-open',      description: 'Concept introduction and understanding' }),
-  s('Practice',        'day_config_type', 'practice',        { icon: 'pen-tool',       description: 'User data capture, reflection, application' }),
-  s('Workshop',        'day_config_type', 'workshop',        { icon: 'blocks',         description: 'Multi-step thinking (ideation, evaluation)' }),
-  s('Tracker',         'day_config_type', 'tracker',         { icon: 'repeat',         description: 'Daily repetition, habits, streaks' }),
-  s('Reflection',      'day_config_type', 'reflection',      { icon: 'brain',          description: 'Closure, sense-making, review' }),
+  // Must match all 10+ DAY_TYPE_PRESETS from day-presets.ts
+  s('Onboarding',     'day_config_type', 'onboarding',     { icon: 'zap',             color: '#F59E0B', description: 'First-time intro, consent, and orientation' }),
+  s('Assessment',     'day_config_type', 'assessment',     { icon: 'clipboard-list',  color: '#8B5CF6', description: 'Baseline measurement, severity scoring' }),
+  s('Assessment Lite','day_config_type', 'assessment-lite',{ icon: 'clipboard-check', color: '#A78BFA', description: 'Awareness, non-scored check-ins' }),
+  s('Learning',       'day_config_type', 'learning',       { icon: 'book-open',       color: '#2A2A2A', description: 'Concept introduction and understanding' }),
+  s('Practice',       'day_config_type', 'practice',       { icon: 'pen-tool',        color: '#22C55E', description: 'User data capture, reflection, application' }),
+  s('Reflection',     'day_config_type', 'reflection',     { icon: 'brain',           color: '#3B82F6', description: 'Closure, sense-making, review' }),
+  s('Rest',           'day_config_type', 'rest',           { icon: 'moon',            color: '#9CA3AF', description: 'No active tasks, optional motivation' }),
+  s('Quiz',           'day_config_type', 'quiz',           { icon: 'circle-check',    color: '#F59E0B', description: 'Knowledge check with scoring, tests retention' }),
+  s('Check-In',       'day_config_type', 'check-in',       { icon: 'heart-pulse',     color: '#EC4899', description: 'Quick mood/wellness check with rating' }),
+  s('Tracker',        'day_config_type', 'tracker',        { icon: 'repeat',          color: '#10B981', description: 'Daily repetition, habits, streaks' }),
+  s('Workshop',       'day_config_type', 'workshop',       { icon: 'blocks',          color: '#6366F1', description: 'Multi-step thinking (ideation, evaluation)' }),
 
   // ── Exercise Subtypes ──────────────────────────────────────────
   s('MCQ',                  'exercise_subtype', 'mcq',                  { icon: 'circle-check',       description: 'Standard MCQ with single correct answer' }),

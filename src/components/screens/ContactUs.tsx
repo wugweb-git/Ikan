@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useIsMobile } from '../../hooks/useIsMobile';
 import { Icon } from '../Icon';
 import { Button } from '../ui/button';
@@ -20,7 +20,14 @@ export function ContactUs({ className, onNavigate, onBack }: ContactUsProps) {
   const isMobile = useIsMobile();
   const { content } = usePageContent('contact');
   const { showToast } = useNotifications();
-  
+
+  // ── CMS structured content ──
+  const { content: cmsFull } = usePageContent('page-contact');
+  const cms = useMemo(() => {
+    if (!cmsFull?.content) return null;
+    try { return JSON.parse(cmsFull.content); } catch { return null; }
+  }, [cmsFull]);
+
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -63,11 +70,11 @@ export function ContactUs({ className, onNavigate, onBack }: ContactUsProps) {
     }
   };
 
-  const supportEmail = content?.contactEmail || 'support@ikan.health';
-  const crisisPhone = content?.crisisPhone || '915298721';
-  const crisisLabel = content?.crisisLabel || 'iCALL Suicide Prevention Helpline';
+  const supportEmail = cms?.supportEmail || content?.contactEmail || 'support@ikan.health';
+  const crisisPhone = cms?.crisisPhone || content?.crisisPhone || '915298721';
+  const crisisLabel = cms?.crisisLabel || content?.crisisLabel || 'iCALL Suicide Prevention Helpline';
 
-  const contactMethods = [
+  const contactMethods = cms?.contactMethods || [
     {
       icon: 'mail',
       title: 'Email Support',
@@ -86,10 +93,17 @@ export function ContactUs({ className, onNavigate, onBack }: ContactUsProps) {
       icon: 'messageCircle',
       title: 'Live Chat',
       description: 'Chat with our support team',
-      value: 'Available 9 AM - 6 PM EST',
+      value: 'Available 9 AM - 6 PM IST',
       action: '#'
     }
   ];
+
+  const formTitle = cms?.formTitle || 'Send us a Message';
+  const formSubtitle = cms?.formSubtitle || 'We typically respond within 24 hours during business days.';
+  const crisisCard = cms?.crisisCard || { title: 'Need Immediate Help?', description: "If you're having thoughts of self-harm or suicide, please reach out for immediate support.", buttons: [{ label: 'Call iCALL - 915298721', action: 'tel:915298721' }, { label: 'Call 911 - Emergency', action: 'tel:911' }] };
+  const faqCard = cms?.faqCard || { title: 'Looking for Quick Answers?', description: 'Check our FAQ section for instant answers to common questions about assessments, programs, and your account.', buttonText: 'Visit FAQ Section', buttonRoute: '/faq' };
+
+  const heroTitle = cms?.heroTitle || content?.title || "We're Here to Help";
 
   return (
     <div 
@@ -101,7 +115,7 @@ export function ContactUs({ className, onNavigate, onBack }: ContactUsProps) {
     >
       {/* Hero Section */}
       <PageHero 
-        title={content?.title || "We're Here to Help"}
+        title={heroTitle}
         className="text-[var(--font-family-base)]"
       >
         {content?.content ? (
@@ -115,7 +129,7 @@ export function ContactUs({ className, onNavigate, onBack }: ContactUsProps) {
             className="text-white/90 max-w-2xl text-lg opacity-90 font-normal"
             style={{ fontFamily: 'var(--font-family-base)' }}
           >
-            Your mental health journey matters to us. Reach out for support, questions, or just to connect.
+            {cms?.heroSubtitle || 'Your mental health journey matters to us. Reach out for support, questions, or just to connect.'}
           </p>
         )}
       </PageHero>
@@ -238,7 +252,7 @@ export function ContactUs({ className, onNavigate, onBack }: ContactUsProps) {
                       margin: '0'
                     }}
                   >
-                    Send us a Message
+                    {formTitle}
                   </h2>
                   <p 
                     style={{
@@ -249,7 +263,7 @@ export function ContactUs({ className, onNavigate, onBack }: ContactUsProps) {
                       lineHeight: 'var(--line-height-md)'
                     }}
                   >
-                    We typically respond within 24 hours during business days.
+                    {formSubtitle}
                   </p>
                 </div>
 
@@ -419,7 +433,7 @@ export function ContactUs({ className, onNavigate, onBack }: ContactUsProps) {
                     margin: '0'
                   }}
                 >
-                  Need Immediate Help?
+                  {crisisCard.title}
                 </h3>
                 
                 <p 
@@ -431,12 +445,14 @@ export function ContactUs({ className, onNavigate, onBack }: ContactUsProps) {
                     margin: '0'
                   }}
                 >
-                  If you're having thoughts of self-harm or suicide, please reach out for immediate support.
+                  {crisisCard.description}
                 </p>
 
                 <div className="space-y-3">
+                  {crisisCard.buttons.map((btn: any, i: number) => (
                   <Button
-                    onClick={() => window.open('tel:915298721', '_blank')}
+                    key={i}
+                    onClick={() => window.open(btn.action, '_blank')}
                     variant="outline"
                     className="w-full"
                     style={{
@@ -449,25 +465,9 @@ export function ContactUs({ className, onNavigate, onBack }: ContactUsProps) {
                       fontWeight: 'var(--font-weight-medium)'
                     }}
                   >
-                    Call iCALL - 915298721
+                    {btn.label}
                   </Button>
-                  
-                  <Button
-                    onClick={() => window.open('tel:911', '_blank')}
-                    variant="outline"
-                    className="w-full"
-                    style={{
-                      height: 'var(--ikan-component-button-height)',
-                      borderRadius: 'var(--ikan-component-border-radius)',
-                      backgroundColor: 'rgba(255, 255, 255, 0.1)',
-                      color: 'var(--color-text-inverse)',
-                      border: '1px solid rgba(255, 255, 255, 0.3)',
-                      fontSize: 'var(--text-sm)',
-                      fontWeight: 'var(--font-weight-medium)'
-                    }}
-                  >
-                    Call 911 - Emergency
-                  </Button>
+                  ))}
                 </div>
               </div>
             </CardContent>
@@ -494,7 +494,7 @@ export function ContactUs({ className, onNavigate, onBack }: ContactUsProps) {
                   margin: '0'
                 }}
               >
-                Looking for Quick Answers?
+                {faqCard.title}
               </h3>
               
               <p 
@@ -506,12 +506,12 @@ export function ContactUs({ className, onNavigate, onBack }: ContactUsProps) {
                   lineHeight: 'var(--line-height-md)'
                 }}
               >
-                Check our FAQ section for instant answers to common questions about assessments, programs, and your account.
+                {faqCard.description}
               </p>
               
               <Button
                 variant="outline"
-                onClick={() => onNavigate ? onNavigate('/faq') : window.location.href = '/faq'}
+                onClick={() => onNavigate ? onNavigate(faqCard.buttonRoute || '/faq') : window.location.href = '/faq'}
                 style={{
                   height: 'var(--ikan-component-button-height)',
                   borderRadius: 'var(--ikan-component-border-radius)',
@@ -520,7 +520,7 @@ export function ContactUs({ className, onNavigate, onBack }: ContactUsProps) {
                   marginTop: 'var(--ikan-component-spacing-default)'
                 }}
               >
-                Visit FAQ Section
+                {faqCard.buttonText}
               </Button>
             </div>
           </CardContent>

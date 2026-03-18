@@ -77,16 +77,41 @@ export function WellnessTimeline({ onNavigate }: WellnessTimelineProps) {
 
       // Pre-fetch assessment definitions for name resolution
       let assessmentNameMap: Map<string, string> | undefined;
+      let assessmentMaxScoreMap: Map<string, number> | undefined;
       try {
         const assessmentDefs = await apiClient.getAssessments();
         if (Array.isArray(assessmentDefs) && assessmentDefs.length > 0) {
           assessmentNameMap = new Map<string, string>();
+          assessmentMaxScoreMap = new Map<string, number>();
           for (const d of assessmentDefs) {
             const defId = d.id || d.slug;
             const defTitle = d.title || d.name;
             if (defId && defTitle) {
               assessmentNameMap.set(defId, defTitle);
               if (d.slug && d.id !== d.slug) assessmentNameMap.set(d.slug, defTitle);
+            }
+            // Compute max score from questions (sum of highest option value per question)
+            let computedMax = 0;
+            if (d.questions && Array.isArray(d.questions) && d.questions.length > 0) {
+              for (const q of d.questions) {
+                if (q.options && Array.isArray(q.options)) {
+                  let maxVal = 0;
+                  for (const opt of q.options) {
+                    const v = typeof opt === 'object' ? (opt.value ?? opt.score ?? 0) : 0;
+                    if (typeof v === 'number' && v > maxVal) maxVal = v;
+                  }
+                  computedMax += maxVal;
+                }
+              }
+            }
+            // Fall back to scoring ranges if question-level computation yields 0
+            if (computedMax === 0 && d.scoring?.ranges?.length > 0) {
+              const maxFromRanges = d.scoring.ranges[d.scoring.ranges.length - 1]?.max;
+              if (maxFromRanges) computedMax = maxFromRanges;
+            }
+            if (defId && computedMax > 0) {
+              assessmentMaxScoreMap.set(defId, computedMax);
+              if (d.slug && d.id !== d.slug) assessmentMaxScoreMap.set(d.slug, computedMax);
             }
           }
         }
@@ -110,7 +135,7 @@ export function WellnessTimeline({ onNavigate }: WellnessTimelineProps) {
             // Skip check-ins
             if (id.startsWith('checkin_') || id.startsWith('checkin-')) continue;
             
-            const maxScore = r.max_score || r.maxScore || 100;
+            const maxScore = r.max_score || r.maxScore || assessmentMaxScoreMap?.get(id) || 100;
             const severity = r.score <= maxScore * 0.33 ? 'low' : r.score <= maxScore * 0.66 ? 'moderate' : 'high';
             const rawName = r.assessment_name || r.assessmentName || r.title || id;
             const name = resolveAssessmentName(id, rawName);
