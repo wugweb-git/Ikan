@@ -1,4 +1,4 @@
-import { useState, useEffect, lazy, Suspense, useMemo, useCallback, useRef } from 'react';
+import { useState, useEffect, lazy, Suspense, useMemo, useCallback, useRef, startTransition } from 'react';
 import { useNotifications } from '../../contexts/NotificationContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { 
@@ -160,7 +160,7 @@ export function AdminDashboard({ onNavigate, initialView }: AdminDashboardProps)
 
   useEffect(() => {
     if (initialView) {
-      setCurrentView(initialView as ViewType);
+      startTransition(() => setCurrentView(initialView as ViewType));
     }
   }, [initialView]);
 
@@ -258,14 +258,14 @@ export function AdminDashboard({ onNavigate, initialView }: AdminDashboardProps)
       ...item,
       isActive: currentView === item.id,
       onClick: () => {
-        setCurrentView(item.id as ViewType);
+        startTransition(() => setCurrentView(item.id as ViewType));
         window.scrollTo(0,0);
         if (isMobile) setSidebarOpen(false);
       }
     }))
   })), [currentView, isMobile]);
   
-  const goBack = useCallback(() => setCurrentView('dashboard'), []);
+  const goBack = useCallback(() => startTransition(() => setCurrentView('dashboard')), []);
   
   const renderContent = () => {
     // Every screen is wrapped in Suspense so only the active one loads
@@ -347,7 +347,7 @@ export function AdminDashboard({ onNavigate, initialView }: AdminDashboardProps)
       >
           {/* Sidebar Logo Area */}
           <div className="h-[64px] lg:h-[72px] flex items-center px-4 border-b border-[var(--grey-2)] justify-between">
-              <div className="flex items-center gap-3 cursor-pointer min-w-0" onClick={() => setCurrentView('dashboard')}>
+              <div className="flex items-center gap-3 cursor-pointer min-w-0" onClick={() => startTransition(() => setCurrentView('dashboard'))}>
                 <div className="shrink-0 flex items-center justify-center" style={{ width: isMobile ? 36 : 40, height: isMobile ? 36 : 40 }}>
                   {siteSettings.logoIconUrl ? (
                     <img src={siteSettings.logoIconUrl} alt={siteSettings.siteName || 'iKan'} className="w-full h-full object-contain" />
@@ -442,7 +442,7 @@ export function AdminDashboard({ onNavigate, initialView }: AdminDashboardProps)
                           style={{ fontFamily: 'var(--font-family-base)' }}
                           onMouseOver={(e) => e.currentTarget.style.backgroundColor = 'var(--color-bg-muted)'}
                           onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
-                          onClick={() => { setCurrentView(item.id); setSearchQuery(''); setSearchResults([]); }}
+                          onClick={() => { startTransition(() => setCurrentView(item.id)); setSearchQuery(''); setSearchResults([]); }}
                         >
                           <span style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--font-weight-medium)', color: 'var(--color-text-primary)' }}>{item.label}</span>
                           <span style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}>{item.group}</span>
@@ -458,7 +458,7 @@ export function AdminDashboard({ onNavigate, initialView }: AdminDashboardProps)
 
               {/* Notifications */}
               <button
-                onClick={() => { setCurrentView('communication'); window.scrollTo(0, 0); }}
+                onClick={() => { startTransition(() => setCurrentView('communication')); window.scrollTo(0, 0); }}
                 title="Notifications"
                 className="relative flex items-center justify-center transition-colors"
                 style={{

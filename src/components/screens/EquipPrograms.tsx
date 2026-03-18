@@ -51,7 +51,10 @@ export function EquipPrograms({ onNavigate }: EquipProgramsProps) {
         console.warn('API load failed, no programs available');
       }
 
-      if (isMounted) setPrograms(data);
+      // CRITICAL: Only show published programs to users
+      // Server also filters, but this is a client-side safety net
+      const published = data.filter((p: any) => p.published === true);
+      if (isMounted) setPrograms(published);
     } catch (error: any) {
       if (error?.name === 'AbortError') return;
       console.error(error);

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, lazy, Suspense } from 'react';
+import React, { useState, useEffect, useCallback, lazy, Suspense, startTransition } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useTokens } from './lib/react-tokens';
 import { useIsMobile } from './hooks/useIsMobile';
@@ -187,7 +187,7 @@ function AppContent() {
   });
 
   const handleSignIn = () => {
-    setCurrentRoute('/login');
+    startTransition(() => setCurrentRoute('/login'));
   };
 
   const handleNavigate = useCallback((route: string, resourceId?: string) => {
@@ -216,7 +216,7 @@ function AppContent() {
       if (path.startsWith('/consultation/')) {
         const id = path.split('/consultation/')[1];
         setConsultantId(id);
-        setCurrentRoute('/consultation-detail');
+        startTransition(() => setCurrentRoute('/consultation-detail'));
         if (typeof window !== 'undefined') {
           window.history.pushState({}, '', route);
         }
@@ -230,7 +230,7 @@ function AppContent() {
         } else {
           logger.warn('Invalid route:', path, 'redirecting to appropriate default');
           const defaultRoute = user ? DEFAULT_PRIVATE_ROUTE : DEFAULT_PUBLIC_ROUTE;
-          setCurrentRoute(defaultRoute);
+          startTransition(() => setCurrentRoute(defaultRoute));
           setResourceDetailId(null);
           if (typeof window !== 'undefined') {
             window.history.pushState({}, '', defaultRoute);
@@ -244,7 +244,7 @@ function AppContent() {
       //   return newHistory.slice(-10);
       // });
       
-      setCurrentRoute(path);
+      startTransition(() => setCurrentRoute(path));
       
       if (typeof window !== 'undefined') {
         window.history.pushState({}, '', route);
@@ -261,7 +261,7 @@ function AppContent() {
       }
     } catch (error) {
       logger.error('Navigation error:', error);
-      setCurrentRoute('/dashboard');
+      startTransition(() => setCurrentRoute('/dashboard'));
       setResourceDetailId(null);
     }
   }, [isMobile, user, triggerHapticFeedback]);
@@ -272,7 +272,7 @@ function AppContent() {
   useEffect(() => {
     if (isInitialized) {
       if (user && currentRoute === '/') {
-        setCurrentRoute(DEFAULT_PRIVATE_ROUTE);
+        startTransition(() => setCurrentRoute(DEFAULT_PRIVATE_ROUTE));
       } 
     }
   }, [user, isInitialized, currentRoute]);
@@ -356,9 +356,9 @@ function AppContent() {
       if (path.startsWith('/consultation/') && path !== '/consultation/') {
         const id = path.split('/consultation/')[1];
         setConsultantId(id);
-        setCurrentRoute('/consultation-detail');
+        startTransition(() => setCurrentRoute('/consultation-detail'));
       } else {
-        setCurrentRoute(path || DEFAULT_PUBLIC_ROUTE);
+        startTransition(() => setCurrentRoute(path || DEFAULT_PUBLIC_ROUTE));
       }
       window.scrollTo({ top: 0 });
     };
@@ -379,14 +379,14 @@ function AppContent() {
   useEffect(() => {
     if (!currentRoute || typeof currentRoute !== 'string') {
       const defaultRoute = user ? DEFAULT_PRIVATE_ROUTE : DEFAULT_PUBLIC_ROUTE;
-      setCurrentRoute(defaultRoute);
+      startTransition(() => setCurrentRoute(defaultRoute));
     }
   }, [currentRoute, user]);
 
   // Redirect unauthenticated users from admin routes (moved out of render)
   useEffect(() => {
     if (currentRoute.startsWith('/admin') && currentRoute !== '/admin/login' && !user && isInitialized) {
-      setCurrentRoute('/admin/login');
+      startTransition(() => setCurrentRoute('/admin/login'));
     }
   }, [currentRoute, user, isInitialized]);
 

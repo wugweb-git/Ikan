@@ -155,6 +155,11 @@ export function EquipDetail({ equipId = 'sleep-tight-9', onNavigate }: EquipDeta
             throw new Error('Program not found');
         }
 
+        // Guard: non-admin users cannot view unpublished programs
+        if (program.published === false && !user?.is_admin) {
+            throw new Error('Program not available');
+        }
+
         setEquipData({
           ...program,
           // Use hero_image if available, otherwise fallback to cover_image, thumbnail, or default
@@ -165,8 +170,10 @@ export function EquipDetail({ equipId = 'sleep-tight-9', onNavigate }: EquipDeta
         // Fetch related programs
         try {
           const relatedProgramsList = await apiClient.getEquipPrograms();
-          // Filter to just a few
-          setRelatedPrograms(relatedProgramsList.slice(0, 3) || []);
+          // Filter to published only, exclude current, limit to 3
+          const filtered = relatedProgramsList
+            .filter((p: any) => p.published === true && (p.id !== equipId && p.equip_id !== equipId));
+          setRelatedPrograms(filtered.slice(0, 3) || []);
         } catch (relatedError) {
           console.warn('Failed to load related programs:', relatedError);
         }

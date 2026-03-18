@@ -387,7 +387,7 @@ class ApiClient {
   // Equip Programs
   async getEquipPrograms() {
     try {
-      const res = await this.request('/equip/programs', { method: 'GET' }, true);
+      const res = await this.request('/equip/programs', { method: 'GET' }, false);
       const programs = (res.programs || []).map((p: EquipProgramRaw) => ({
         ...p,
         title: p.title || p.name || 'Untitled Program'
@@ -401,6 +401,15 @@ class ApiClient {
       if (cached) return cached;
       return [];
     }
+  }
+
+  // Admin: all programs (including unpublished) with enrollment counts
+  async getAdminEquipPrograms() {
+    const res = await this.request('/admin/equip/programs', { method: 'GET' }, true);
+    return (res.programs || []).map((p: EquipProgramRaw) => ({
+      ...p,
+      title: p.title || p.name || 'Untitled Program'
+    }));
   }
 
   async getEquipProgram(id: string) {

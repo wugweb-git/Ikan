@@ -25,11 +25,26 @@ app.get("/equip/programs", async (c) => {
   try {
     const programs = await EquipService.listEquips();
 
-    // Compute real enrollment counts from KV
-    // NOTE: Two enrollment systems exist:
-    //   1. /equip/purchase stores: enrollment:{enrollmentId} with { programId }
-    //   2. ProgressService stores: enrollment:{userId}:{equipId} with { equip_id }
-    // We must check BOTH field names to count correctly.
+    // PUBLIC endpoint: ONLY published programs. No auth sniffing.
+    const published = programs.filter((p: any) => p.published === true);
+
+    return c.json({ programs: published });
+  } catch (error) {
+    console.log('List equip programs error:', error);
+    return c.json({ error: 'Failed to list programs' }, 500);
+  }
+});
+
+// ADMIN endpoint: all programs with enrollment counts
+app.get("/admin/equip/programs", requireAuth, async (c) => {
+  try {
+    const user = c.get('user');
+    const userProfile = await kv.get(`user:${user.id}`);
+    if (!userProfile?.is_admin) return c.json({ error: 'Admin access required' }, 403);
+
+    const programs = await EquipService.listEquips();
+
+    // Compute enrollment counts
     const allEnrollments = await kv.getByPrefix('enrollment:');
     const enrollmentCountMap: Record<string, number> = {};
     for (const e of allEnrollments) {
@@ -46,7 +61,7 @@ app.get("/equip/programs", async (c) => {
 
     return c.json({ programs: programsWithCounts });
   } catch (error) {
-    console.log('List equip programs error:', error);
+    console.log('Admin list equip programs error:', error);
     return c.json({ error: 'Failed to list programs' }, 500);
   }
 });

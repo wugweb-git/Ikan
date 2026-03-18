@@ -42,8 +42,8 @@ export function EquipAdminDashboard({ onBack }: EquipAdminDashboardProps = {}) {
   const loadPrograms = async () => {
     setLoading(true);
     try {
-      // Fetch list of programs
-      const data = await apiClient.getEquipPrograms();
+      // Fetch list of programs (admin endpoint — includes unpublished + enrollment counts)
+      const data = await apiClient.getAdminEquipPrograms();
       const loadedPrograms = Array.isArray(data) ? data : (data as any).programs || [];
       setPrograms(loadedPrograms);
     } catch (error) {
