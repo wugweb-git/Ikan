@@ -220,7 +220,7 @@ export function AdminCategoryManager({ onBack }: AdminCategoryManagerProps) {
   const loadAllItems = async () => {
     setIsLoading(true);
     try {
-      const allCategories = await apiClient.getCategories();
+      const allCategories = await apiClient.getAdminCategories();
       const raw = (Array.isArray(allCategories) ? allCategories : allCategories.categories || []).filter(
         (item: CategoryItem) => item && item.id
       );

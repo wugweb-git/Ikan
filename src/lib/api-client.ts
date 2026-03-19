@@ -686,12 +686,22 @@ class ApiClient {
     return this.request(`/admin/resources/${id}`, { method: 'DELETE' }, true);
   }
 
-  async getCategories() {
+  async getPublicCategories() {
+    try {
+      const res = await this.request('/categories', { method: 'GET' }, false);
+      return res.categories || [];
+    } catch (e) {
+      console.warn('Failed to fetch public categories, returning empty list');
+      return [];
+    }
+  }
+
+  async getAdminCategories() {
     try {
       const res = await this.request('/admin/categories', { method: 'GET' }, true);
       return res.categories || [];
     } catch (e) {
-      console.warn('Failed to fetch categories, returning empty list');
+      console.warn('Failed to fetch admin categories, returning empty list');
       return [];
     }
   }
