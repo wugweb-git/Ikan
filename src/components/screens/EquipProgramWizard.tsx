@@ -474,19 +474,25 @@ export function EquipProgramWizard({ programId, onBack, onSave }: EquipProgramWi
         onSaveDraft={() => persistWizard(formDataRef.current)}
         onNext={async () => {
           if (validateForm(formDataRef.current)) {
-            await persistWizard(formDataRef.current, true); // Auto-save on continue
-            setCurrentStep(s => Math.min(s + 1, totalSteps));
+            const saved = await persistWizard(formDataRef.current, true); // Auto-save on continue
+            if (saved) {
+              setCurrentStep(s => Math.min(s + 1, totalSteps));
+            }
           } else {
             showToast('error', 'Validation Error', 'Please correct the errors before proceeding');
           }
         }}
         onPrevious={async () => {
-           await persistWizard(formDataRef.current, true); // Auto-save on back
-           setCurrentStep(s => Math.max(s - 1, 0));
+           const saved = await persistWizard(formDataRef.current, true); // Auto-save on back
+           if (saved) {
+             setCurrentStep(s => Math.max(s - 1, 0));
+           }
         }}
         onFinish={async () => {
-           await persistWizard(formDataRef.current);
-           onSave();
+           const saved = await persistWizard(formDataRef.current);
+           if (saved) {
+             onSave();
+           }
         }}
         isLoading={saving}
         finishButtonText={localProgramId ? 'Save & Close' : 'Create Program'}
