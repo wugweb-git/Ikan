@@ -49,7 +49,7 @@ export function AdminEquipProgramManager({ onBack, className }: AdminEquipProgra
   const loadPrograms = async () => {
     try {
       setLoading(true);
-      const response = await apiClient.getEquipPrograms();
+      const response = await apiClient.getAdminEquipPrograms();
       const data = Array.isArray(response) ? response : response.programs || [];
       
       const mappedPrograms = data.map((item: any, index: number) => ({
