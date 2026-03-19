@@ -1,3 +1,5 @@
+// LEGACY NOTICE: Root /index.html and /vite.config.ts are the active app shell and build config.
+// This src/ copy is retained only for historical reference; do not add new metadata, PWA, or deploy changes here.
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
