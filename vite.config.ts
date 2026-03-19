@@ -1,69 +1,173 @@
+import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react';
+import tailwindcss from '@tailwindcss/vite';
+import { VitePWA } from 'vite-plugin-pwa';
+import path from 'path';
 
-  import { defineConfig } from 'vite';
-  import react from '@vitejs/plugin-react';
-  import tailwindcss from '@tailwindcss/vite';
-  import path from 'path';
+export default defineConfig({
+  plugins: [
+    react(),
+    tailwindcss(),
+    VitePWA({
+      registerType: 'autoUpdate',
+      manifestFilename: 'manifest.json',
+      injectRegister: 'auto',
+      includeAssets: [
+        'favicon.svg',
+        'apple-touch-icon.png',
+        'maskable-icon-512x512.png',
+      ],
+      manifest: {
+        name: 'iKan Mental Health',
+        short_name: 'iKan',
+        description: 'Your comprehensive mental wellness companion',
+        theme_color: '#2A2A2A',
+        background_color: '#F5F5F5',
+        display: 'standalone',
+        orientation: 'portrait-primary',
+        start_url: '/',
+        scope: '/',
+        categories: ['health', 'medical', 'wellness', 'lifestyle'],
+        icons: [
+          {
+            src: 'pwa-192x192.png',
+            sizes: '192x192',
+            type: 'image/png',
+          },
+          {
+            src: 'pwa-512x512.png',
+            sizes: '512x512',
+            type: 'image/png',
+          },
+          {
+            src: 'maskable-icon-512x512.png',
+            sizes: '512x512',
+            type: 'image/png',
+            purpose: 'maskable',
+          },
+        ],
+        shortcuts: [
+          {
+            name: 'Daily Check-in',
+            short_name: 'Check-in',
+            description: 'Track your daily mood',
+            url: '/dashboard?tab=mood',
+            icons: [{ src: 'pwa-192x192.png', sizes: '192x192', type: 'image/png' }],
+          },
+          {
+            name: 'Assessment',
+            short_name: 'Assessment',
+            description: 'Take a mental health assessment',
+            url: '/assessments',
+            icons: [{ src: 'pwa-192x192.png', sizes: '192x192', type: 'image/png' }],
+          },
+          {
+            name: 'Programs',
+            short_name: 'Programs',
+            description: 'Browse wellness programs',
+            url: '/equip-programs',
+            icons: [{ src: 'pwa-192x192.png', sizes: '192x192', type: 'image/png' }],
+          },
+        ],
 
-  export default defineConfig({
-    plugins: [react(), tailwindcss()],
-    resolve: {
-      extensions: ['.js', '.jsx', '.ts', '.tsx', '.json'],
-      alias: {
-        'vaul@1.1.2': 'vaul',
-        'sonner@2.0.3': 'sonner',
-        'recharts@2.15.2': 'recharts',
-        'react-resizable-panels@2.1.7': 'react-resizable-panels',
-        'react-hook-form@7.55.0': 'react-hook-form',
-        'react-day-picker@8.10.1': 'react-day-picker',
-        'lucide-react@0.487.0': 'lucide-react',
-        'input-otp@1.4.2': 'input-otp',
-        'figma:asset/e12e76c2f5940d65dbebba2615815d6b5552f1cc.png': path.resolve(__dirname, './src/assets/e12e76c2f5940d65dbebba2615815d6b5552f1cc.png'),
-        'figma:asset/d246862ee8771400424ba422593c855cabc9ba4a.png': path.resolve(__dirname, './src/assets/d246862ee8771400424ba422593c855cabc9ba4a.png'),
-        'figma:asset/bed3a7c577bcfb0b6fc0334b0f93d8eddb9275f8.png': path.resolve(__dirname, './src/assets/bed3a7c577bcfb0b6fc0334b0f93d8eddb9275f8.png'),
-        'figma:asset/ac0292f75b641a157de9af130cc05ecea5dd193f.png': path.resolve(__dirname, './src/assets/ac0292f75b641a157de9af130cc05ecea5dd193f.png'),
-        'figma:asset/8ce2a19aab5abaf51a83cb99ea2d61447f96d8b2.png': path.resolve(__dirname, './src/assets/8ce2a19aab5abaf51a83cb99ea2d61447f96d8b2.png'),
-        'figma:asset/7a674497643e29f384a4eaeb5616eeb32e4aa50b.png': path.resolve(__dirname, './src/assets/7a674497643e29f384a4eaeb5616eeb32e4aa50b.png'),
-        'figma:asset/4d70d16cfc423d83c6ca9941c4d3da923cf039ac.png': path.resolve(__dirname, './src/assets/4d70d16cfc423d83c6ca9941c4d3da923cf039ac.png'),
-        'figma:asset/25d8d01a36eaa618a0c4fdd22ae73fb856925905.png': path.resolve(__dirname, './src/assets/25d8d01a36eaa618a0c4fdd22ae73fb856925905.png'),
-        'figma:asset/1fa377842c0edee2e6d99526877c4abfe5cffba4.png': path.resolve(__dirname, './src/assets/1fa377842c0edee2e6d99526877c4abfe5cffba4.png'),
-        'figma:asset/17b5fecba5e52eb9055025402d9b0c25a870d0d2.png': path.resolve(__dirname, './src/assets/17b5fecba5e52eb9055025402d9b0c25a870d0d2.png'),
-        'embla-carousel-react@8.6.0': 'embla-carousel-react',
-        'cmdk@1.1.1': 'cmdk',
-        'class-variance-authority@0.7.1': 'class-variance-authority',
-        '@radix-ui/react-tooltip@1.1.8': '@radix-ui/react-tooltip',
-        '@radix-ui/react-toggle@1.1.2': '@radix-ui/react-toggle',
-        '@radix-ui/react-toggle-group@1.1.2': '@radix-ui/react-toggle-group',
-        '@radix-ui/react-tabs@1.1.3': '@radix-ui/react-tabs',
-        '@radix-ui/react-slot@1.1.2': '@radix-ui/react-slot',
-        '@radix-ui/react-slider@1.2.3': '@radix-ui/react-slider',
-        '@radix-ui/react-separator@1.1.2': '@radix-ui/react-separator',
-        '@radix-ui/react-select@2.1.6': '@radix-ui/react-select',
-        '@radix-ui/react-scroll-area@1.2.3': '@radix-ui/react-scroll-area',
-        '@radix-ui/react-popover@1.1.6': '@radix-ui/react-popover',
-        '@radix-ui/react-navigation-menu@1.2.5': '@radix-ui/react-navigation-menu',
-        '@radix-ui/react-menubar@1.1.6': '@radix-ui/react-menubar',
-        '@radix-ui/react-label@2.1.2': '@radix-ui/react-label',
-        '@radix-ui/react-hover-card@1.1.6': '@radix-ui/react-hover-card',
-        '@radix-ui/react-dropdown-menu@2.1.6': '@radix-ui/react-dropdown-menu',
-        '@radix-ui/react-dialog@1.1.6': '@radix-ui/react-dialog',
-        '@radix-ui/react-context-menu@2.2.6': '@radix-ui/react-context-menu',
-        '@radix-ui/react-collapsible@1.1.3': '@radix-ui/react-collapsible',
-        '@radix-ui/react-checkbox@1.1.4': '@radix-ui/react-checkbox',
-        '@radix-ui/react-avatar@1.1.3': '@radix-ui/react-avatar',
-        '@radix-ui/react-aspect-ratio@1.1.2': '@radix-ui/react-aspect-ratio',
-        '@radix-ui/react-alert-dialog@1.1.6': '@radix-ui/react-alert-dialog',
-        '@radix-ui/react-accordion@1.2.3': '@radix-ui/react-accordion',
-        '@jsr/supabase__supabase-js@2.49.8': '@jsr/supabase__supabase-js',
-        '@jsr/supabase__supabase-js@2': '@jsr/supabase__supabase-js',
-        '@': path.resolve(__dirname, './src'),
       },
+      workbox: {
+        globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
+        runtimeCaching: [
+          {
+            urlPattern: ({ url }) => {
+              return url.origin.includes('.supabase.co') && url.pathname.includes('/functions/v1/make-server-cc205da9/');
+            },
+            handler: 'NetworkFirst',
+            options: {
+              cacheName: 'api-cache',
+              expiration: {
+                maxEntries: 100,
+                maxAgeSeconds: 60 * 60 * 24,
+              },
+              cacheKeyWillBeUsed: async ({ request }) => {
+                return `${request.url}_${request.method}`;
+              },
+            },
+          },
+          {
+            urlPattern: /^https:\/\/.*\.supabase\.co\/storage\/v1\/object\/public\/.*/i,
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'images-cache',
+              expiration: {
+                maxEntries: 200,
+                maxAgeSeconds: 60 * 60 * 24 * 30,
+              },
+            },
+          },
+        ],
+      },
+      devOptions: {
+        enabled: true,
+      },
+    }),
+  ],
+  resolve: {
+    extensions: ['.js', '.jsx', '.ts', '.tsx', '.json'],
+    alias: {
+      'vaul@1.1.2': 'vaul',
+      'sonner@2.0.3': 'sonner',
+      'recharts@2.15.2': 'recharts',
+      'react-resizable-panels@2.1.7': 'react-resizable-panels',
+      'react-hook-form@7.55.0': 'react-hook-form',
+      'react-day-picker@8.10.1': 'react-day-picker',
+      'lucide-react@0.487.0': 'lucide-react',
+      'input-otp@1.4.2': 'input-otp',
+      'motion/react': path.resolve(__dirname, './node_modules/motion/dist/es/react.mjs'),
+      'motion/react-client': path.resolve(__dirname, './node_modules/motion/dist/es/react-client.mjs'),
+      'figma:asset/e12e76c2f5940d65dbebba2615815d6b5552f1cc.png': path.resolve(__dirname, './src/assets/e12e76c2f5940d65dbebba2615815d6b5552f1cc.png'),
+      'figma:asset/d246862ee8771400424ba422593c855cabc9ba4a.png': path.resolve(__dirname, './src/assets/d246862ee8771400424ba422593c855cabc9ba4a.png'),
+      'figma:asset/bed3a7c577bcfb0b6fc0334b0f93d8eddb9275f8.png': path.resolve(__dirname, './src/assets/bed3a7c577bcfb0b6fc0334b0f93d8eddb9275f8.png'),
+      'figma:asset/ac0292f75b641a157de9af130cc05ecea5dd193f.png': path.resolve(__dirname, './src/assets/ac0292f75b641a157de9af130cc05ecea5dd193f.png'),
+      'figma:asset/8ce2a19aab5abaf51a83cb99ea2d61447f96d8b2.png': path.resolve(__dirname, './src/assets/8ce2a19aab5abaf51a83cb99ea2d61447f96d8b2.png'),
+      'figma:asset/7a674497643e29f384a4eaeb5616eeb32e4aa50b.png': path.resolve(__dirname, './src/assets/7a674497643e29f384a4eaeb5616eeb32e4aa50b.png'),
+      'figma:asset/4d70d16cfc423d83c6ca9941c4d3da923cf039ac.png': path.resolve(__dirname, './src/assets/4d70d16cfc423d83c6ca9941c4d3da923cf039ac.png'),
+      'figma:asset/25d8d01a36eaa618a0c4fdd22ae73fb856925905.png': path.resolve(__dirname, './src/assets/25d8d01a36eaa618a0c4fdd22ae73fb856925905.png'),
+      'figma:asset/1fa377842c0edee2e6d99526877c4abfe5cffba4.png': path.resolve(__dirname, './src/assets/1fa377842c0edee2e6d99526877c4abfe5cffba4.png'),
+      'figma:asset/17b5fecba5e52eb9055025402d9b0c25a870d0d2.png': path.resolve(__dirname, './src/assets/17b5fecba5e52eb9055025402d9b0c25a870d0d2.png'),
+      'embla-carousel-react@8.6.0': 'embla-carousel-react',
+      'cmdk@1.1.1': 'cmdk',
+      'class-variance-authority@0.7.1': 'class-variance-authority',
+      '@radix-ui/react-tooltip@1.1.8': '@radix-ui/react-tooltip',
+      '@radix-ui/react-toggle@1.1.2': '@radix-ui/react-toggle',
+      '@radix-ui/react-toggle-group@1.1.2': '@radix-ui/react-toggle-group',
+      '@radix-ui/react-tabs@1.1.3': '@radix-ui/react-tabs',
+      '@radix-ui/react-slot@1.1.2': '@radix-ui/react-slot',
+      '@radix-ui/react-slider@1.2.3': '@radix-ui/react-slider',
+      '@radix-ui/react-separator@1.1.2': '@radix-ui/react-separator',
+      '@radix-ui/react-select@2.1.6': '@radix-ui/react-select',
+      '@radix-ui/react-scroll-area@1.2.3': '@radix-ui/react-scroll-area',
+      '@radix-ui/react-popover@1.1.6': '@radix-ui/react-popover',
+      '@radix-ui/react-navigation-menu@1.2.5': '@radix-ui/react-navigation-menu',
+      '@radix-ui/react-menubar@1.1.6': '@radix-ui/react-menubar',
+      '@radix-ui/react-label@2.1.2': '@radix-ui/react-label',
+      '@radix-ui/react-hover-card@1.1.6': '@radix-ui/react-hover-card',
+      '@radix-ui/react-dropdown-menu@2.1.6': '@radix-ui/react-dropdown-menu',
+      '@radix-ui/react-dialog@1.1.6': '@radix-ui/react-dialog',
+      '@radix-ui/react-context-menu@2.2.6': '@radix-ui/react-context-menu',
+      '@radix-ui/react-collapsible@1.1.3': '@radix-ui/react-collapsible',
+      '@radix-ui/react-checkbox@1.1.4': '@radix-ui/react-checkbox',
+      '@radix-ui/react-avatar@1.1.3': '@radix-ui/react-avatar',
+      '@radix-ui/react-aspect-ratio@1.1.2': '@radix-ui/react-aspect-ratio',
+      '@radix-ui/react-alert-dialog@1.1.6': '@radix-ui/react-alert-dialog',
+      '@radix-ui/react-accordion@1.2.3': '@radix-ui/react-accordion',
+      '@jsr/supabase__supabase-js@2.49.8': '@jsr/supabase__supabase-js',
+      '@jsr/supabase__supabase-js@2': '@jsr/supabase__supabase-js',
+      '@': path.resolve(__dirname, './src'),
     },
-    build: {
-      target: 'esnext',
-      outDir: 'build',
-    },
-    server: {
-      port: 3000,
-      open: true,
-    },
-  });
+  },
+  build: {
+    target: 'esnext',
+    outDir: 'build',
+  },
+  server: {
+    port: 3000,
+    open: true,
+  },
+});
