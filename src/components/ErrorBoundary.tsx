@@ -24,10 +24,30 @@ export class ErrorBoundary extends Component<Props, State> {
   };
 
   public static getDerivedStateFromError(error: Error): Partial<State> {
+    // Suspense-related errors should not trigger the error boundary UI —
+    // they are transient and React will recover via Suspense fallbacks.
+    const msg = error?.message || '';
+    if (
+      msg.includes('suspended while responding to synchronous input') ||
+      msg.includes('A component suspended')
+    ) {
+      return { hasError: false, error: null };
+    }
     return { hasError: true, error };
   }
 
   public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+    // Skip logging/handling for Suspense-related transient errors
+    const msg = error?.message || '';
+    if (
+      msg.includes('suspended while responding to synchronous input') ||
+      msg.includes('A component suspended')
+    ) {
+      // Reset state so children re-render normally
+      this.setState({ hasError: false, error: null, errorInfo: null });
+      return;
+    }
+
     console.error('🔴 ErrorBoundary caught error:', error);
     console.error('📍 Component stack:', errorInfo.componentStack);
     

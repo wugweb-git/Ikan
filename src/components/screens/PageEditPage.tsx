@@ -240,18 +240,18 @@ export function PageEditPage({ pageId, onBack, onSave }: PageEditPageProps) {
         <AdminSection title="Page Information" description="Basic page settings" icon={<FileText className="w-5 h-5" />}>
           <div className="grid md:grid-cols-2 gap-6">
             <AdminFormField label="Page Name" required error={errors.name}>
-              <Input value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} placeholder="About Us" />
+              <Input value={formData.name} onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))} placeholder="About Us" />
             </AdminFormField>
             <AdminFormField label="Page Title" required error={errors.title}>
-              <Input value={formData.title} onChange={(e) => setFormData({ ...formData, title: e.target.value })} placeholder="About Us - iKan" />
+              <Input value={formData.title} onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))} placeholder="About Us - iKan" />
             </AdminFormField>
             <AdminFormField label="URL Slug" required error={errors.slug}>
-              <Input value={formData.slug} onChange={(e) => setFormData({ ...formData, slug: e.target.value.toLowerCase().replace(/\s+/g, '-') })} placeholder="about-us" />
+              <Input value={formData.slug} onChange={(e) => setFormData(prev => ({ ...prev, slug: e.target.value.toLowerCase().replace(/\s+/g, '-') }))} placeholder="about-us" />
             </AdminFormField>
             <AdminFormField label="Featured Image URL" helpText="Thumbnail image for page listings (1200x630px)">
               <Input
                 value={formData.featuredImage}
-                onChange={(e) => setFormData({ ...formData, featuredImage: e.target.value })}
+                onChange={(e) => setFormData(prev => ({ ...prev, featuredImage: e.target.value }))}
                 placeholder="https://example.com/image.jpg"
               />
             </AdminFormField>
@@ -267,7 +267,7 @@ export function PageEditPage({ pageId, onBack, onSave }: PageEditPageProps) {
             <Checkbox
               id="heroEnabled"
               checked={formData.heroEnabled || false}
-              onCheckedChange={(checked) => setFormData({ ...formData, heroEnabled: checked as boolean })}
+              onCheckedChange={(checked) => setFormData(prev => ({ ...prev, heroEnabled: checked as boolean }))}
             />
             <Label htmlFor="heroEnabled" className="cursor-pointer" style={{ fontWeight: 'var(--font-weight-medium)', fontFamily: 'var(--font-family-base)' }}>
               Enable hero banner for this page
@@ -317,7 +317,7 @@ export function PageEditPage({ pageId, onBack, onSave }: PageEditPageProps) {
                 <AdminFormField label="Hero Image URL" helpText="Background image for the hero section (1920x800px recommended)">
                   <Input
                     value={formData.heroImage}
-                    onChange={(e) => setFormData({ ...formData, heroImage: e.target.value })}
+                    onChange={(e) => setFormData(prev => ({ ...prev, heroImage: e.target.value }))}
                     placeholder="https://example.com/hero-banner.jpg"
                   />
                 </AdminFormField>
@@ -329,7 +329,7 @@ export function PageEditPage({ pageId, onBack, onSave }: PageEditPageProps) {
                       min={0}
                       max={100}
                       value={formData.heroOverlayOpacity || 50}
-                      onChange={(e) => setFormData({ ...formData, heroOverlayOpacity: parseInt(e.target.value) })}
+                      onChange={(e) => setFormData(prev => ({ ...prev, heroOverlayOpacity: parseInt(e.target.value) }))}
                       className="flex-1"
                       style={{ accentColor: 'var(--color-primary-default)' }}
                     />
@@ -342,7 +342,7 @@ export function PageEditPage({ pageId, onBack, onSave }: PageEditPageProps) {
                 <AdminFormField label="Hero Title" helpText="Large heading displayed over the hero image">
                   <Input
                     value={formData.heroTitle}
-                    onChange={(e) => setFormData({ ...formData, heroTitle: e.target.value })}
+                    onChange={(e) => setFormData(prev => ({ ...prev, heroTitle: e.target.value }))}
                     placeholder="Welcome to Our Story"
                   />
                 </AdminFormField>
@@ -350,7 +350,7 @@ export function PageEditPage({ pageId, onBack, onSave }: PageEditPageProps) {
                 <AdminFormField label="Hero Subtitle" helpText="Supporting text below the hero title">
                   <Input
                     value={formData.heroSubtitle}
-                    onChange={(e) => setFormData({ ...formData, heroSubtitle: e.target.value })}
+                    onChange={(e) => setFormData(prev => ({ ...prev, heroSubtitle: e.target.value }))}
                     placeholder="Learn more about our mission and values"
                   />
                 </AdminFormField>
@@ -358,7 +358,7 @@ export function PageEditPage({ pageId, onBack, onSave }: PageEditPageProps) {
                 <AdminFormField label="CTA Button Text" helpText="Call-to-action button label (leave empty to hide)">
                   <Input
                     value={formData.heroCtaText}
-                    onChange={(e) => setFormData({ ...formData, heroCtaText: e.target.value })}
+                    onChange={(e) => setFormData(prev => ({ ...prev, heroCtaText: e.target.value }))}
                     placeholder="Get Started"
                   />
                 </AdminFormField>
@@ -366,7 +366,7 @@ export function PageEditPage({ pageId, onBack, onSave }: PageEditPageProps) {
                 <AdminFormField label="CTA Button Link" helpText="URL the button navigates to">
                   <Input
                     value={formData.heroCtaLink}
-                    onChange={(e) => setFormData({ ...formData, heroCtaLink: e.target.value })}
+                    onChange={(e) => setFormData(prev => ({ ...prev, heroCtaLink: e.target.value }))}
                     placeholder="/assessment"
                   />
                 </AdminFormField>
@@ -379,7 +379,7 @@ export function PageEditPage({ pageId, onBack, onSave }: PageEditPageProps) {
                     <Video className="w-5 h-5 shrink-0" style={{ color: 'var(--color-text-muted)' }} />
                     <Input
                       value={formData.heroVideoUrl}
-                      onChange={(e) => setFormData({ ...formData, heroVideoUrl: e.target.value })}
+                      onChange={(e) => setFormData(prev => ({ ...prev, heroVideoUrl: e.target.value }))}
                       placeholder="https://youtube.com/watch?v=..."
                     />
                   </div>
@@ -394,7 +394,7 @@ export function PageEditPage({ pageId, onBack, onSave }: PageEditPageProps) {
           <AdminFormField label="Content" required error={errors.content} helpText="Use the toolbar to format text. The editor outputs HTML which is rendered as-is on the page.">
             <RichTextEditor
               value={formData.content || ''}
-              onChange={(value) => setFormData({ ...formData, content: value })}
+              onChange={(value) => setFormData(prev => ({ ...prev, content: value }))}
               placeholder="Start writing your page content..."
               minHeight="400px"
             />
@@ -405,21 +405,21 @@ export function PageEditPage({ pageId, onBack, onSave }: PageEditPageProps) {
         <AdminSection title="SEO & Publishing" description="Meta tags, social share settings, and visibility" icon={<Search className="w-5 h-5" />}>
           <div className="grid md:grid-cols-2 gap-6">
             <AdminFormField label="Meta Description">
-              <Textarea value={formData.metaDescription} onChange={(e) => setFormData({ ...formData, metaDescription: e.target.value })} placeholder="Page description for search engines" className="min-h-[80px]" />
+              <Textarea value={formData.metaDescription} onChange={(e) => setFormData(prev => ({ ...prev, metaDescription: e.target.value }))} placeholder="Page description for search engines" className="min-h-[80px]" />
             </AdminFormField>
             <AdminFormField label="Meta Keywords">
-              <Input value={formData.metaKeywords} onChange={(e) => setFormData({ ...formData, metaKeywords: e.target.value })} placeholder="keyword1, keyword2, keyword3" />
+              <Input value={formData.metaKeywords} onChange={(e) => setFormData(prev => ({ ...prev, metaKeywords: e.target.value }))} placeholder="keyword1, keyword2, keyword3" />
             </AdminFormField>
             <AdminFormField label="OG Title" helpText="Title for social media shares">
-              <Input value={formData.ogTitle} onChange={(e) => setFormData({ ...formData, ogTitle: e.target.value })} placeholder="Title for social media shares" />
+              <Input value={formData.ogTitle} onChange={(e) => setFormData(prev => ({ ...prev, ogTitle: e.target.value }))} placeholder="Title for social media shares" />
             </AdminFormField>
             <AdminFormField label="OG Description" helpText="Description for social media shares">
-              <Textarea value={formData.ogDescription} onChange={(e) => setFormData({ ...formData, ogDescription: e.target.value })} placeholder="Description for social media shares" className="min-h-[80px]" />
+              <Textarea value={formData.ogDescription} onChange={(e) => setFormData(prev => ({ ...prev, ogDescription: e.target.value }))} placeholder="Description for social media shares" className="min-h-[80px]" />
             </AdminFormField>
             <AdminFormField label="Social Share Image (OG:Image)" helpText="Image for social media previews (1200x630px)">
               <Input
                 value={formData.ogImage}
-                onChange={(e) => setFormData({ ...formData, ogImage: e.target.value })}
+                onChange={(e) => setFormData(prev => ({ ...prev, ogImage: e.target.value }))}
                 placeholder="https://example.com/social.jpg"
               />
               {formData.ogImage && (
@@ -434,7 +434,7 @@ export function PageEditPage({ pageId, onBack, onSave }: PageEditPageProps) {
             className="flex items-center gap-3 p-4 rounded-lg mt-6"
             style={{ backgroundColor: 'var(--color-bg-muted)' }}
           >
-            <Checkbox id="published" checked={formData.published} onCheckedChange={(checked) => setFormData({ ...formData, published: checked as boolean })} />
+            <Checkbox id="published" checked={formData.published} onCheckedChange={(checked) => setFormData(prev => ({ ...prev, published: checked as boolean }))} />
             <Label htmlFor="published" className="cursor-pointer" style={{ fontFamily: 'var(--font-family-base)' }}>
               Published — Make this page visible to all users
             </Label>

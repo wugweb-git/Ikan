@@ -186,6 +186,7 @@ const ALL_TYPES: MetadataType[] = [
   'session_format',
   'account_type',
   'mood_type',
+  'checkin_block_type',
 ];
 
 export function AdminCategoryManager({ onBack }: AdminCategoryManagerProps) {
@@ -220,9 +221,17 @@ export function AdminCategoryManager({ onBack }: AdminCategoryManagerProps) {
     setIsLoading(true);
     try {
       const allCategories = await apiClient.getCategories();
-      const valid = (Array.isArray(allCategories) ? allCategories : allCategories.categories || []).filter(
+      const raw = (Array.isArray(allCategories) ? allCategories : allCategories.categories || []).filter(
         (item: CategoryItem) => item && item.id
       );
+      // Dedup by type::slug to prevent repeated entries from multiple syncs
+      const seen = new Set<string>();
+      const valid = raw.filter((item: CategoryItem) => {
+        const key = `${item.type}::${item.slug}`;
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      });
       setAllItems(valid);
     } catch (error) {
       toast.error('Failed to load metadata items');
@@ -507,7 +516,7 @@ export function AdminCategoryManager({ onBack }: AdminCategoryManagerProps) {
                           onChange={(e) => {
                             const name = e.target.value;
                             const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
-                            setFormData({ ...formData, name, slug: editingId ? formData.slug : slug });
+                            setFormData(prev => ({ ...prev, name, slug: editingId ? prev.slug : slug }));
                           }}
                           placeholder="Name"
                           className="bg-[var(--color-bg-input)]"
@@ -518,7 +527,7 @@ export function AdminCategoryManager({ onBack }: AdminCategoryManagerProps) {
                         <Label style={{ fontFamily: 'var(--font-family-base)', fontWeight: 'var(--font-weight-medium)' }}>Slug</Label>
                         <Input
                           value={formData.slug}
-                          onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
+                          onChange={(e) => setFormData(prev => ({ ...prev, slug: e.target.value }))}
                           placeholder="url-friendly-slug"
                           className="bg-[var(--color-bg-input)]"
                           style={{ borderRadius: 'var(--ikan-component-border-radius)' }}
@@ -528,7 +537,7 @@ export function AdminCategoryManager({ onBack }: AdminCategoryManagerProps) {
                       {/* Icon Picker */}
                       <div className="space-y-2">
                         <Label style={{ fontFamily: 'var(--font-family-base)', fontWeight: 'var(--font-weight-medium)' }}>Icon</Label>
-                        <Select value={formData.icon || 'tag'} onValueChange={(value) => setFormData({ ...formData, icon: value })}>
+                        <Select value={formData.icon || 'tag'} onValueChange={(value) => setFormData(prev => ({ ...prev, icon: value }))}>
                           <SelectTrigger className="bg-[var(--color-bg-input)]" style={{ borderRadius: 'var(--ikan-component-border-radius)' }}>
                             <SelectValue>
                               {(() => { const Ic = getIconComponent(formData.icon); return <div className="flex items-center gap-2"><Ic className="w-4 h-4" /><span>{formData.icon || 'tag'}</span></div>; })()}
@@ -561,7 +570,7 @@ export function AdminCategoryManager({ onBack }: AdminCategoryManagerProps) {
                       <div className="space-y-2">
                         <Label style={{ fontFamily: 'var(--font-family-base)', fontWeight: 'var(--font-weight-medium)' }}>Color</Label>
                         <div className="flex gap-2">
-                          <Select value={formData.color || '#2A2A2A'} onValueChange={(value) => setFormData({ ...formData, color: value })}>
+                          <Select value={formData.color || '#2A2A2A'} onValueChange={(value) => setFormData(prev => ({ ...prev, color: value }))}>
                             <SelectTrigger className="bg-[var(--color-bg-input)]" style={{ borderRadius: 'var(--ikan-component-border-radius)' }}>
                               <SelectValue>
                                 <div className="flex items-center gap-2">
@@ -584,7 +593,7 @@ export function AdminCategoryManager({ onBack }: AdminCategoryManagerProps) {
                           <input
                             type="color"
                             value={formData.color || '#2A2A2A'}
-                            onChange={(e) => setFormData({ ...formData, color: e.target.value })}
+                            onChange={(e) => setFormData(prev => ({ ...prev, color: e.target.value }))}
                             className="w-12 h-10 rounded cursor-pointer border border-[var(--color-border-default)]"
                           />
                         </div>
@@ -594,7 +603,7 @@ export function AdminCategoryManager({ onBack }: AdminCategoryManagerProps) {
                         <Label style={{ fontFamily: 'var(--font-family-base)', fontWeight: 'var(--font-weight-medium)' }}>Description</Label>
                         <Input
                           value={formData.description}
-                          onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                          onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
                           placeholder="Brief description"
                           className="bg-[var(--color-bg-input)]"
                           style={{ borderRadius: 'var(--ikan-component-border-radius)' }}

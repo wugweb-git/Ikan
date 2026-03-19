@@ -244,7 +244,7 @@ export function UserEditPage({ userId, onBack, onSave }: UserEditPageProps) {
             <AdminFormField label="Full Name" required error={errors.name}>
               <Input
                 value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
                 placeholder="John Doe"
                 style={{
                   height: 'var(--ikan-component-button-height)',
@@ -257,7 +257,7 @@ export function UserEditPage({ userId, onBack, onSave }: UserEditPageProps) {
               <Input
                 type="email"
                 value={formData.email}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
                 placeholder="john@example.com"
                 style={{
                   height: 'var(--ikan-component-button-height)',
@@ -285,7 +285,7 @@ export function UserEditPage({ userId, onBack, onSave }: UserEditPageProps) {
               <Input
                 type="tel"
                 value={formData.phone || ''}
-                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                onChange={(e) => setFormData(prev => ({ ...prev, phone: e.target.value }))}
                 placeholder="+91 98765 43210"
                 style={{
                   height: 'var(--ikan-component-button-height)',
@@ -297,7 +297,7 @@ export function UserEditPage({ userId, onBack, onSave }: UserEditPageProps) {
             <AdminFormField label="Location" helpText="City, Country">
               <Input
                 value={formData.location || ''}
-                onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+                onChange={(e) => setFormData(prev => ({ ...prev, location: e.target.value }))}
                 placeholder="Mumbai, India"
                 style={{
                   height: 'var(--ikan-component-button-height)',
@@ -310,7 +310,7 @@ export function UserEditPage({ userId, onBack, onSave }: UserEditPageProps) {
               <Input
                 type="date"
                 value={formData.dateOfBirth || ''}
-                onChange={(e) => setFormData({ ...formData, dateOfBirth: e.target.value })}
+                onChange={(e) => setFormData(prev => ({ ...prev, dateOfBirth: e.target.value }))}
                 style={{
                   height: 'var(--ikan-component-button-height)',
                   borderRadius: 'var(--ikan-component-border-radius)'
@@ -321,7 +321,7 @@ export function UserEditPage({ userId, onBack, onSave }: UserEditPageProps) {
             <AdminFormField label="Gender" helpText="Optional">
               <Input
                 value={formData.gender || ''}
-                onChange={(e) => setFormData({ ...formData, gender: e.target.value })}
+                onChange={(e) => setFormData(prev => ({ ...prev, gender: e.target.value }))}
                 placeholder="Male, Female, Other"
                 style={{
                   height: 'var(--ikan-component-button-height)',
@@ -334,7 +334,7 @@ export function UserEditPage({ userId, onBack, onSave }: UserEditPageProps) {
           <AdminFormField label="Bio" description="Optional personal description" helpText="Tell us about yourself">
             <Textarea
               value={formData.bio || ''}
-              onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
+              onChange={(e) => setFormData(prev => ({ ...prev, bio: e.target.value }))}
               placeholder="Brief biography or personal note..."
               className="min-h-[100px]"
               style={{
@@ -355,7 +355,7 @@ export function UserEditPage({ userId, onBack, onSave }: UserEditPageProps) {
               <Checkbox
                 id="is_admin"
                 checked={formData.is_admin}
-                onCheckedChange={(checked) => setFormData({ ...formData, is_admin: checked as boolean })}
+                onCheckedChange={(checked) => setFormData(prev => ({ ...prev, is_admin: checked as boolean }))}
               />
               <div className="flex-1">
                 <Label htmlFor="is_admin" className="cursor-pointer flex items-center gap-2">
@@ -372,7 +372,7 @@ export function UserEditPage({ userId, onBack, onSave }: UserEditPageProps) {
               <Checkbox
                 id="corporate_user"
                 checked={formData.corporate_user}
-                onCheckedChange={(checked) => setFormData({ ...formData, corporate_user: checked as boolean })}
+                onCheckedChange={(checked) => setFormData(prev => ({ ...prev, corporate_user: checked as boolean }))}
               />
               <div className="flex-1">
                 <Label htmlFor="corporate_user" className="cursor-pointer flex items-center gap-2">
@@ -397,7 +397,7 @@ export function UserEditPage({ userId, onBack, onSave }: UserEditPageProps) {
             <AdminFormField label="Contact Name" helpText="Emergency contact person">
               <Input
                 value={formData.emergencyContactName || ''}
-                onChange={(e) => setFormData({ ...formData, emergencyContactName: e.target.value })}
+                onChange={(e) => setFormData(prev => ({ ...prev, emergencyContactName: e.target.value }))}
                 placeholder="Jane Doe"
                 style={{
                   height: 'var(--ikan-component-button-height)',
@@ -410,7 +410,7 @@ export function UserEditPage({ userId, onBack, onSave }: UserEditPageProps) {
               <Input
                 type="tel"
                 value={formData.emergencyContactPhone || ''}
-                onChange={(e) => setFormData({ ...formData, emergencyContactPhone: e.target.value })}
+                onChange={(e) => setFormData(prev => ({ ...prev, emergencyContactPhone: e.target.value }))}
                 placeholder="+91 98765 43210"
                 style={{
                   height: 'var(--ikan-component-button-height)',
@@ -422,7 +422,7 @@ export function UserEditPage({ userId, onBack, onSave }: UserEditPageProps) {
             <AdminFormField label="Relationship" helpText="Relation to user">
               <Input
                 value={formData.emergencyContactRelationship || ''}
-                onChange={(e) => setFormData({ ...formData, emergencyContactRelationship: e.target.value })}
+                onChange={(e) => setFormData(prev => ({ ...prev, emergencyContactRelationship: e.target.value }))}
                 placeholder="Spouse, Parent, Sibling"
                 style={{
                   height: 'var(--ikan-component-button-height)',

@@ -6,7 +6,7 @@ import { Icon } from '../Icon';
 import { cn } from '../ui/utils';
 import { EngineResult, SeverityLevel, getSeverityBandFromProfile } from '../../lib/recommendation-engine';
 import { apiClient } from '../../lib/api-client';
-import { ImageWithFallback } from '../figma/ImageWithFallback';
+import { ContentImage } from '../ui/ContentImage';
 import { ArrowRight } from 'lucide-react';
 
 interface AssessmentResultsProps {
@@ -245,8 +245,8 @@ export function AssessmentResults({
               <div className="flex flex-col md:flex-row">
                 {/* Image */}
                 <div className="w-full md:w-2/5 relative overflow-hidden" style={{ minHeight: 180, backgroundColor: 'var(--color-bg-muted)' }}>
-                  <ImageWithFallback
-                    src={programDetails?.thumbnail || programDetails?.cover_image || "https://images.unsplash.com/photo-1544367563-12123d895951?w=800&auto=format&fit=crop"}
+                  <ContentImage
+                    src={programDetails?.thumbnail || programDetails?.cover_image || ''}
                     alt="Program"
                     className="w-full h-full object-cover"
                     style={{ position: 'absolute', inset: 0 }}

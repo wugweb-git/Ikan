@@ -201,38 +201,41 @@ export function ProgramPlayer({
   // --- ACTIONS ---
 
   const handleBlockChange = (blockId: string, value: any) => {
-    const newResponses = {
-      ...responses,
-      [blockId]: value
-    };
-    setResponses(newResponses);
-    
-    onProgressChange?.({ 
-      currentBlockIndex: currentStepIndex, 
-      responses: newResponses 
-    });
+    setResponses(prev => {
+      const newResponses = {
+        ...prev,
+        [blockId]: value
+      };
 
-    if (dayConfig.autoAdvance) {
-      const targetBlock = activeStep?.blocks.find(b => b.id === blockId);
-      
-      // Use interaction taxonomy for auto-advance decisions
-      const interaction = targetBlock ? resolveInteraction(targetBlock) : null;
-      const shouldAutoAdvance = targetBlock?.autoAdvance || 
-        interaction === 'select-one';  // single-selection interactions auto-advance
+      onProgressChange?.({ 
+        currentBlockIndex: currentStepIndex, 
+        responses: newResponses 
+      });
 
-      if (shouldAutoAdvance) {
-        const stepValidWithNewValue = activeStep?.blocks.every(block => {
-          if (!block.required) return true;
-          const val = block.id === blockId ? value : responses[block.id];
-          if (Array.isArray(val)) return val.length > 0;
-          return val !== undefined && val !== null && val !== '';
-        });
+      if (dayConfig.autoAdvance) {
+        const targetBlock = activeStep?.blocks.find(b => b.id === blockId);
+        
+        // Use interaction taxonomy for auto-advance decisions
+        const interaction = targetBlock ? resolveInteraction(targetBlock) : null;
+        const shouldAutoAdvance = targetBlock?.autoAdvance || 
+          interaction === 'select-one';  // single-selection interactions auto-advance
 
-        if (stepValidWithNewValue) {
-          setTimeout(() => handleNext(), 300);
+        if (shouldAutoAdvance) {
+          const stepValidWithNewValue = activeStep?.blocks.every(block => {
+            if (!block.required) return true;
+            const val = block.id === blockId ? value : newResponses[block.id];
+            if (Array.isArray(val)) return val.length > 0;
+            return val !== undefined && val !== null && val !== '';
+          });
+
+          if (stepValidWithNewValue) {
+            setTimeout(() => handleNext(), 300);
+          }
         }
       }
-    }
+
+      return newResponses;
+    });
   };
 
   const handleNext = () => {

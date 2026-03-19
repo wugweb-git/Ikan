@@ -96,9 +96,11 @@ export function ProfessionalApplication({ onNavigate }: ProfessionalApplicationP
   });
 
   const toggleArray = (field: string, value: string) => {
-    const current = (formData as any)[field] || [];
-    const updated = current.includes(value) ? current.filter((v: string) => v !== value) : [...current, value];
-    setFormData({ ...formData, [field]: updated });
+    setFormData(prev => {
+      const current = (prev as any)[field] || [];
+      const updated = current.includes(value) ? current.filter((v: string) => v !== value) : [...current, value];
+      return { ...prev, [field]: updated };
+    });
   };
 
   const handleFileUpload = async (file: File, category: string): Promise<string | null> => {
@@ -196,15 +198,15 @@ export function ProfessionalApplication({ onNavigate }: ProfessionalApplicationP
           <div className="grid md:grid-cols-2 gap-4">
             <div>
               <Label style={{ fontWeight: 500, fontSize: 'var(--text-sm)', marginBottom: 4, display: 'block' }}>Full Name *</Label>
-              <Input value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} placeholder="Dr. Jane Doe" style={inputStyle} />
+              <Input value={formData.name} onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))} placeholder="Dr. Jane Doe" style={inputStyle} />
             </div>
             <div>
               <Label style={{ fontWeight: 500, fontSize: 'var(--text-sm)', marginBottom: 4, display: 'block' }}>Credentials *</Label>
-              <Input value={formData.credentials} onChange={(e) => setFormData({ ...formData, credentials: e.target.value })} placeholder="Ph.D., Clinical Psychologist" style={inputStyle} />
+              <Input value={formData.credentials} onChange={(e) => setFormData(prev => ({ ...prev, credentials: e.target.value }))} placeholder="Ph.D., Clinical Psychologist" style={inputStyle} />
             </div>
             <div>
               <Label style={{ fontWeight: 500, fontSize: 'var(--text-sm)', marginBottom: 4, display: 'block' }}>Category</Label>
-              <Select value={formData.category} onValueChange={(v) => setFormData({ ...formData, category: v })}>
+              <Select value={formData.category} onValueChange={(v) => setFormData(prev => ({ ...prev, category: v }))}>
                 <SelectTrigger style={inputStyle}><SelectValue /></SelectTrigger>
                 <SelectContent>
                   {consultantTypes.map((ct) => (
@@ -215,20 +217,20 @@ export function ProfessionalApplication({ onNavigate }: ProfessionalApplicationP
             </div>
             <div>
               <Label style={{ fontWeight: 500, fontSize: 'var(--text-sm)', marginBottom: 4, display: 'block' }}>Years of Experience</Label>
-              <Input type="number" value={formData.yearsExperience} onChange={(e) => setFormData({ ...formData, yearsExperience: parseInt(e.target.value) || 0 })} min="0" max="60" style={inputStyle} />
+              <Input type="number" value={formData.yearsExperience} onChange={(e) => setFormData(prev => ({ ...prev, yearsExperience: parseInt(e.target.value) || 0 }))} min="0" max="60" style={inputStyle} />
             </div>
             <div>
               <Label style={{ fontWeight: 500, fontSize: 'var(--text-sm)', marginBottom: 4, display: 'block' }}>Location</Label>
-              <Input value={formData.location} onChange={(e) => setFormData({ ...formData, location: e.target.value })} placeholder="Mumbai, India" style={inputStyle} />
+              <Input value={formData.location} onChange={(e) => setFormData(prev => ({ ...prev, location: e.target.value }))} placeholder="Mumbai, India" style={inputStyle} />
             </div>
             <div>
               <Label style={{ fontWeight: 500, fontSize: 'var(--text-sm)', marginBottom: 4, display: 'block' }}>Photo URL</Label>
-              <Input value={formData.photo} onChange={(e) => setFormData({ ...formData, photo: e.target.value })} placeholder="https://..." style={inputStyle} />
+              <Input value={formData.photo} onChange={(e) => setFormData(prev => ({ ...prev, photo: e.target.value }))} placeholder="https://..." style={inputStyle} />
               <input type="file" accept="image/*" className="hidden" id="photo-upload" onChange={async (e) => {
                 const file = e.target.files?.[0];
                 if (file) {
                   const url = await handleFileUpload(file, 'photo');
-                  if (url) setFormData({ ...formData, photo: url });
+                  if (url) setFormData(prev => ({ ...prev, photo: url }));
                 }
               }} />
               <Button variant="outline" size="sm" onClick={() => document.getElementById('photo-upload')?.click()} style={{ marginTop: 'var(--spacing-2)', gap: 'var(--spacing-2)', borderRadius: 'var(--radius-md)' }}>
@@ -238,7 +240,7 @@ export function ProfessionalApplication({ onNavigate }: ProfessionalApplicationP
           </div>
           <div>
             <Label style={{ fontWeight: 500, fontSize: 'var(--text-sm)', marginBottom: 4, display: 'block' }}>Brief Introduction *</Label>
-            <Textarea value={formData.bio} onChange={(e) => setFormData({ ...formData, bio: e.target.value })} placeholder="Tell us about yourself, your background, and your approach to therapy..." className="min-h-[120px]" style={{ borderRadius: 'var(--radius-md)' }} />
+            <Textarea value={formData.bio} onChange={(e) => setFormData(prev => ({ ...prev, bio: e.target.value }))} placeholder="Tell us about yourself, your background, and your approach to therapy..." className="min-h-[120px]" style={{ borderRadius: 'var(--radius-md)' }} />
           </div>
           <div>
             <Label style={{ fontWeight: 500, fontSize: 'var(--text-sm)', marginBottom: 8, display: 'block' }}>Languages Spoken</Label>
@@ -285,11 +287,11 @@ export function ProfessionalApplication({ onNavigate }: ProfessionalApplicationP
             <p style={sectionDescStyle}>Degrees, certifications, licenses, and additional training.</p>
             {formData.qualifications.map((q, i) => (
               <div key={i} className="flex items-center gap-2 mb-2">
-                <Input value={q} onChange={(e) => { const qs = [...formData.qualifications]; qs[i] = e.target.value; setFormData({ ...formData, qualifications: qs }); }} placeholder="e.g., Ph.D. Clinical Psychology" style={inputStyle} className="flex-1" />
-                <Button variant="ghost" size="icon" onClick={() => setFormData({ ...formData, qualifications: formData.qualifications.filter((_, j) => j !== i) })} style={{ color: 'var(--color-status-danger)' }}><X className="w-4 h-4" /></Button>
+                <Input value={q} onChange={(e) => { const qs = [...formData.qualifications]; qs[i] = e.target.value; setFormData(prev => ({ ...prev, qualifications: qs })); }} placeholder="e.g., Ph.D. Clinical Psychology" style={inputStyle} className="flex-1" />
+                <Button variant="ghost" size="icon" onClick={() => setFormData(prev => ({ ...prev, qualifications: prev.qualifications.filter((_, j) => j !== i) }))} style={{ color: 'var(--color-status-danger)' }}><X className="w-4 h-4" /></Button>
               </div>
             ))}
-            <Button variant="outline" onClick={() => setFormData({ ...formData, qualifications: [...formData.qualifications, ''] })} style={{ gap: 'var(--spacing-2)', borderRadius: 'var(--radius-md)' }}><Plus className="w-4 h-4" /> Add Qualification</Button>
+            <Button variant="outline" onClick={() => setFormData(prev => ({ ...prev, qualifications: [...prev.qualifications, ''] }))} style={{ gap: 'var(--spacing-2)', borderRadius: 'var(--radius-md)' }}><Plus className="w-4 h-4" /> Add Qualification</Button>
           </div>
         </div>
       );
@@ -310,7 +312,7 @@ export function ProfessionalApplication({ onNavigate }: ProfessionalApplicationP
           </div>
           <div>
             <h3 style={sectionTitleStyle}>Therapeutic Philosophy</h3>
-            <Textarea value={formData.therapeuticPhilosophy} onChange={(e) => setFormData({ ...formData, therapeuticPhilosophy: e.target.value })} placeholder="Describe your guiding philosophy..." className="min-h-[100px]" style={{ borderRadius: 'var(--radius-md)' }} />
+            <Textarea value={formData.therapeuticPhilosophy} onChange={(e) => setFormData(prev => ({ ...prev, therapeuticPhilosophy: e.target.value }))} placeholder="Describe your guiding philosophy..." className="min-h-[100px]" style={{ borderRadius: 'var(--radius-md)' }} />
           </div>
           <div>
             <h3 style={sectionTitleStyle}>Session Formats</h3>
@@ -331,7 +333,7 @@ export function ProfessionalApplication({ onNavigate }: ProfessionalApplicationP
         <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-6)' }}>
           <div>
             <h3 style={sectionTitleStyle}>Working Hours</h3>
-            <Input value={formData.availabilityPreferences.workingHours} onChange={(e) => setFormData({ ...formData, availabilityPreferences: { ...formData.availabilityPreferences, workingHours: e.target.value } })} placeholder="e.g., 10:00 AM - 6:00 PM IST" style={inputStyle} />
+            <Input value={formData.availabilityPreferences.workingHours} onChange={(e) => setFormData(prev => ({ ...prev, availabilityPreferences: { ...prev.availabilityPreferences, workingHours: e.target.value } }))} placeholder="e.g., 10:00 AM - 6:00 PM IST" style={inputStyle} />
           </div>
           <div>
             <h3 style={sectionTitleStyle}>Days Available</h3>
@@ -340,8 +342,12 @@ export function ProfessionalApplication({ onNavigate }: ProfessionalApplicationP
                 const sel = formData.availabilityPreferences.daysAvailable.includes(day);
                 return (
                   <button key={day} type="button" onClick={() => {
-                    const days = sel ? formData.availabilityPreferences.daysAvailable.filter(d => d !== day) : [...formData.availabilityPreferences.daysAvailable, day];
-                    setFormData({ ...formData, availabilityPreferences: { ...formData.availabilityPreferences, daysAvailable: days } });
+                    setFormData(prev => {
+                      const days = prev.availabilityPreferences.daysAvailable.includes(day)
+                        ? prev.availabilityPreferences.daysAvailable.filter(d => d !== day)
+                        : [...prev.availabilityPreferences.daysAvailable, day];
+                      return { ...prev, availabilityPreferences: { ...prev.availabilityPreferences, daysAvailable: days } };
+                    });
                   }} style={{ padding: 'var(--spacing-2) var(--spacing-4)', borderRadius: 'var(--radius-md)', border: '1px solid', borderColor: sel ? 'var(--color-primary-default)' : 'var(--color-border-default)', backgroundColor: sel ? 'var(--color-primary-default)' : 'var(--color-bg-card)', color: sel ? 'var(--color-primary-on)' : 'var(--color-text-primary)', fontSize: 'var(--text-sm)', fontWeight: 500, cursor: 'pointer' }}>
                     {day.slice(0, 3)}
                   </button>
@@ -350,7 +356,7 @@ export function ProfessionalApplication({ onNavigate }: ProfessionalApplicationP
             </div>
           </div>
           <div className="flex items-center gap-3">
-            <Switch checked={formData.availabilityPreferences.weekendAvailability} onCheckedChange={(c) => setFormData({ ...formData, availabilityPreferences: { ...formData.availabilityPreferences, weekendAvailability: c } })} />
+            <Switch checked={formData.availabilityPreferences.weekendAvailability} onCheckedChange={(c) => setFormData(prev => ({ ...prev, availabilityPreferences: { ...prev.availabilityPreferences, weekendAvailability: c } }))} />
             <Label style={{ fontSize: 'var(--text-sm)' }}>Available on weekends</Label>
           </div>
           <div>
@@ -360,16 +366,16 @@ export function ProfessionalApplication({ onNavigate }: ProfessionalApplicationP
               <div key={i} className="p-3 rounded-lg border mb-3" style={{ borderColor: 'var(--color-border-default)', borderRadius: 'var(--radius-md)' }}>
                 <div className="flex justify-between mb-2">
                   <span style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}>FAQ #{i + 1}</span>
-                  <Button variant="ghost" size="icon" onClick={() => setFormData({ ...formData, clientFAQs: formData.clientFAQs.filter((_, j) => j !== i) })} style={{ height: 24, width: 24, color: 'var(--color-status-danger)' }}><X className="w-3 h-3" /></Button>
+                  <Button variant="ghost" size="icon" onClick={() => setFormData(prev => ({ ...prev, clientFAQs: prev.clientFAQs.filter((_, j) => j !== i) }))} style={{ height: 24, width: 24, color: 'var(--color-status-danger)' }}><X className="w-3 h-3" /></Button>
                 </div>
-                <Input value={faq.question} onChange={(e) => { const faqs = [...formData.clientFAQs]; faqs[i] = { ...faqs[i], question: e.target.value }; setFormData({ ...formData, clientFAQs: faqs }); }} placeholder="Question..." className="mb-2" style={inputStyle} />
-                <Textarea value={faq.answer} onChange={(e) => { const faqs = [...formData.clientFAQs]; faqs[i] = { ...faqs[i], answer: e.target.value }; setFormData({ ...formData, clientFAQs: faqs }); }} placeholder="Answer..." className="min-h-[60px]" style={{ borderRadius: 'var(--radius-md)' }} />
+                <Input value={faq.question} onChange={(e) => { const faqs = [...formData.clientFAQs]; faqs[i] = { ...faqs[i], question: e.target.value }; setFormData(prev => ({ ...prev, clientFAQs: faqs })); }} placeholder="Question..." className="mb-2" style={inputStyle} />
+                <Textarea value={faq.answer} onChange={(e) => { const faqs = [...formData.clientFAQs]; faqs[i] = { ...faqs[i], answer: e.target.value }; setFormData(prev => ({ ...prev, clientFAQs: faqs })); }} placeholder="Answer..." className="min-h-[60px]" style={{ borderRadius: 'var(--radius-md)' }} />
               </div>
             ))}
             <div className="flex gap-2">
-              <Button variant="outline" onClick={() => setFormData({ ...formData, clientFAQs: [...formData.clientFAQs, { question: '', answer: '' }] })} style={{ gap: 'var(--spacing-2)', borderRadius: 'var(--radius-md)' }}><Plus className="w-4 h-4" /> Add FAQ</Button>
+              <Button variant="outline" onClick={() => setFormData(prev => ({ ...prev, clientFAQs: [...prev.clientFAQs, { question: '', answer: '' }] }))} style={{ gap: 'var(--spacing-2)', borderRadius: 'var(--radius-md)' }}><Plus className="w-4 h-4" /> Add FAQ</Button>
               {formData.clientFAQs.length === 0 && (
-                <Button variant="outline" onClick={() => setFormData({ ...formData, clientFAQs: [{ question: 'Do you see individuals, couples, or families?', answer: '' }, { question: 'How many sessions do clients typically need?', answer: '' }, { question: 'What is your general working style?', answer: '' }] })} style={{ gap: 'var(--spacing-2)', borderRadius: 'var(--radius-md)' }}><Sparkles className="w-4 h-4" /> Load Suggested</Button>
+                <Button variant="outline" onClick={() => setFormData(prev => ({ ...prev, clientFAQs: [{ question: 'Do you see individuals, couples, or families?', answer: '' }, { question: 'How many sessions do clients typically need?', answer: '' }, { question: 'What is your general working style?', answer: '' }] }))} style={{ gap: 'var(--spacing-2)', borderRadius: 'var(--radius-md)' }}><Sparkles className="w-4 h-4" /> Load Suggested</Button>
               )}
             </div>
           </div>
@@ -381,24 +387,24 @@ export function ProfessionalApplication({ onNavigate }: ProfessionalApplicationP
           <div>
             <h3 style={sectionTitleStyle}>Video Introduction</h3>
             <p style={sectionDescStyle}>YouTube, Vimeo, or direct video link.</p>
-            <Input value={formData.videoIntroUrl} onChange={(e) => setFormData({ ...formData, videoIntroUrl: e.target.value })} placeholder="https://youtube.com/watch?v=..." style={inputStyle} />
+            <Input value={formData.videoIntroUrl} onChange={(e) => setFormData(prev => ({ ...prev, videoIntroUrl: e.target.value }))} placeholder="https://youtube.com/watch?v=..." style={inputStyle} />
           </div>
           <div>
             <h3 style={sectionTitleStyle}>Certificates for Verification</h3>
             {formData.certificates.map((c, i) => (
               <div key={i} className="flex items-center gap-2 mb-2">
-                <Input value={c} onChange={(e) => { const certs = [...formData.certificates]; certs[i] = e.target.value; setFormData({ ...formData, certificates: certs }); }} placeholder="Certificate URL or upload below" style={inputStyle} className="flex-1" />
-                <Button variant="ghost" size="icon" onClick={() => setFormData({ ...formData, certificates: formData.certificates.filter((_, j) => j !== i) })} style={{ color: 'var(--color-status-danger)' }}><X className="w-4 h-4" /></Button>
+                <Input value={c} onChange={(e) => { const certs = [...formData.certificates]; certs[i] = e.target.value; setFormData(prev => ({ ...prev, certificates: certs })); }} placeholder="Certificate URL or upload below" style={inputStyle} className="flex-1" />
+                <Button variant="ghost" size="icon" onClick={() => setFormData(prev => ({ ...prev, certificates: prev.certificates.filter((_, j) => j !== i) }))} style={{ color: 'var(--color-status-danger)' }}><X className="w-4 h-4" /></Button>
               </div>
             ))}
             <div className="flex gap-2">
-              <Button variant="outline" onClick={() => setFormData({ ...formData, certificates: [...formData.certificates, ''] })} style={{ gap: 'var(--spacing-2)', borderRadius: 'var(--radius-md)' }}><Plus className="w-4 h-4" /> Add Certificate</Button>
+              <Button variant="outline" onClick={() => setFormData(prev => ({ ...prev, certificates: [...prev.certificates, ''] }))} style={{ gap: 'var(--spacing-2)', borderRadius: 'var(--radius-md)' }}><Plus className="w-4 h-4" /> Add Certificate</Button>
               <div>
                 <input type="file" accept="image/*,.pdf" className="hidden" id="cert-upload" onChange={async (e) => {
                   const file = e.target.files?.[0];
                   if (file) {
                     const url = await handleFileUpload(file, 'certificate');
-                    if (url) setFormData({ ...formData, certificates: [...formData.certificates, url] });
+                    if (url) setFormData(prev => ({ ...prev, certificates: [...prev.certificates, url] }));
                   }
                 }} />
                 <Button variant="outline" onClick={() => document.getElementById('cert-upload')?.click()} style={{ gap: 'var(--spacing-2)', borderRadius: 'var(--radius-md)' }}><Upload className="w-4 h-4" /> Upload File</Button>
@@ -412,16 +418,16 @@ export function ProfessionalApplication({ onNavigate }: ProfessionalApplicationP
               <div key={i} className="p-3 rounded-lg border mb-3" style={{ borderColor: 'var(--color-border-default)', borderRadius: 'var(--radius-md)' }}>
                 <div className="flex justify-between mb-2">
                   <span style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}>Testimonial #{i + 1}</span>
-                  <Button variant="ghost" size="icon" onClick={() => setFormData({ ...formData, testimonials: formData.testimonials.filter((_, j) => j !== i) })} style={{ height: 24, width: 24, color: 'var(--color-status-danger)' }}><X className="w-3 h-3" /></Button>
+                  <Button variant="ghost" size="icon" onClick={() => setFormData(prev => ({ ...prev, testimonials: prev.testimonials.filter((_, j) => j !== i) }))} style={{ height: 24, width: 24, color: 'var(--color-status-danger)' }}><X className="w-3 h-3" /></Button>
                 </div>
-                <Textarea value={t.text} onChange={(e) => { const ts = [...formData.testimonials]; ts[i] = { ...ts[i], text: e.target.value }; setFormData({ ...formData, testimonials: ts }); }} placeholder="Testimonial text..." className="mb-2 min-h-[60px]" style={{ borderRadius: 'var(--radius-md)' }} />
-                <Input value={t.clientName} onChange={(e) => { const ts = [...formData.testimonials]; ts[i] = { ...ts[i], clientName: e.target.value }; setFormData({ ...formData, testimonials: ts }); }} placeholder="Client name (or anonymous)" style={inputStyle} />
+                <Textarea value={t.text} onChange={(e) => { const ts = [...formData.testimonials]; ts[i] = { ...ts[i], text: e.target.value }; setFormData(prev => ({ ...prev, testimonials: ts })); }} placeholder="Testimonial text..." className="mb-2 min-h-[60px]" style={{ borderRadius: 'var(--radius-md)' }} />
+                <Input value={t.clientName} onChange={(e) => { const ts = [...formData.testimonials]; ts[i] = { ...ts[i], clientName: e.target.value }; setFormData(prev => ({ ...prev, testimonials: ts })); }} placeholder="Client name (or anonymous)" style={inputStyle} />
               </div>
             ))}
-            <Button variant="outline" onClick={() => setFormData({ ...formData, testimonials: [...formData.testimonials, { text: '', clientName: '' }] })} style={{ gap: 'var(--spacing-2)', borderRadius: 'var(--radius-md)' }}><Plus className="w-4 h-4" /> Add Testimonial</Button>
+            <Button variant="outline" onClick={() => setFormData(prev => ({ ...prev, testimonials: [...prev.testimonials, { text: '', clientName: '' }] }))} style={{ gap: 'var(--spacing-2)', borderRadius: 'var(--radius-md)' }}><Plus className="w-4 h-4" /> Add Testimonial</Button>
           </div>
           <div className="flex items-center gap-3 p-4 rounded-lg" style={{ backgroundColor: 'var(--color-bg-muted)', borderRadius: 'var(--radius-md)' }}>
-            <Switch checked={formData.willingToShareArticles} onCheckedChange={(c) => setFormData({ ...formData, willingToShareArticles: c })} />
+            <Switch checked={formData.willingToShareArticles} onCheckedChange={(c) => setFormData(prev => ({ ...prev, willingToShareArticles: c }))} />
             <div>
               <Label style={{ fontWeight: 500, fontSize: 'var(--text-sm)' }}>Willing to contribute articles</Label>
               <p style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}>Share articles on our blog/resources section</p>

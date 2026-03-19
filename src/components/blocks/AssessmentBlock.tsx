@@ -1,10 +1,8 @@
 import { cn } from '../ui/utils';
-import { ImageWithFallback } from '../figma/ImageWithFallback';
+import { ContentImage } from '../ui/ContentImage';
 import { Skeleton } from '../ui/skeleton-loader';
 import { resolveImageUrl } from '../../utils/image-utils';
 import { ArrowRight } from 'lucide-react';
-
-const FALLBACK_IMAGE = 'https://images.unsplash.com/photo-1527137342181-19aab11a8ee8?auto=format&fit=crop&q=80&w=1000';
 
 export interface AssessmentProgram {
   title: string;
@@ -31,7 +29,7 @@ export interface AssessmentBlockProps {
 }
 
 function MobileAssessmentCard({ program, onClick }: { program: AssessmentProgram; onClick: () => void }) {
-  const imageSrc = resolveImageUrl(program.image) || FALLBACK_IMAGE;
+  const imageSrc = resolveImageUrl(program.image);
 
   return (
     <div 
@@ -47,9 +45,8 @@ function MobileAssessmentCard({ program, onClick }: { program: AssessmentProgram
               {/* Image Container */}
               <div className="flex h-[93px] items-end relative shrink-0 w-[98px]">
                 <div className="basis-0 grow h-full min-h-px min-w-px relative shrink-0 overflow-hidden" style={{ backgroundColor: 'var(--color-accent-default)', borderRadius: 'var(--radius-md)' }}>
-                  <ImageWithFallback 
+                  <ContentImage 
                     src={imageSrc} 
-                    fallbackSrc={FALLBACK_IMAGE}
                     alt={program.title} 
                     className="w-full h-full object-cover" 
                   />
@@ -78,7 +75,7 @@ function MobileAssessmentCard({ program, onClick }: { program: AssessmentProgram
 }
 
 function DesktopAssessmentCard({ program, onClick }: { program: AssessmentProgram; onClick: () => void }) {
-  const imageSrc = resolveImageUrl(program.image) || FALLBACK_IMAGE;
+  const imageSrc = resolveImageUrl(program.image);
 
   return (
     <div 
@@ -88,9 +85,8 @@ function DesktopAssessmentCard({ program, onClick }: { program: AssessmentProgra
     >
       {/* Image Top */}
       <div className="h-[200px] w-full relative overflow-hidden" style={{ backgroundColor: 'var(--color-accent-default)' }}>
-        <ImageWithFallback 
+        <ContentImage 
           src={imageSrc} 
-          fallbackSrc={FALLBACK_IMAGE}
           alt={program.title} 
           className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" 
         />

@@ -239,11 +239,15 @@ export function AssessmentEditPageWizard({ assessmentId, onBack, onSave }: Asses
 
   const hasLoadedRef = useRef(false);
 
+  // ── Ref to always have the latest formData for saves ──────────
+  const formDataRef = useRef(formData);
+  useEffect(() => { formDataRef.current = formData; }, [formData]);
+
   const handleArrayFieldChange = (field: keyof Assessment, value: string) => {
-    setFormData({
-      ...formData,
+    setFormData(prev => ({
+      ...prev,
       [field]: value.split('\n').filter(line => line.trim() !== '')
-    });
+    }));
   };
 
   const getArrayFieldString = (field: keyof Assessment) => {
@@ -412,13 +416,13 @@ export function AssessmentEditPageWizard({ assessmentId, onBack, onSave }: Asses
   // addQuestion, updateQuestion, deleteQuestion are no longer needed.
 
   const addResultCategory = () => {
-    setFormData({
-      ...formData,
+    setFormData(prev => ({
+      ...prev,
       resultCategories: [
-        ...(formData.resultCategories || []),
+        ...(prev.resultCategories || []),
         { min: 0, max: 10, label: 'New Category', description: '' }
       ]
-    });
+    }));
   };
 
   const wizardSteps: WizardStep[] = [
@@ -477,21 +481,21 @@ export function AssessmentEditPageWizard({ assessmentId, onBack, onSave }: Asses
           if (hasUnsavedChanges) setShowWarning(true);
           else onBack();
         }}
-        onSaveDraft={() => persistWizard(formData)}
+        onSaveDraft={() => persistWizard(formDataRef.current)}
         onNext={async () => {
-          if (validateForm(formData)) {
-             await persistWizard(formData, true);
+          if (validateForm(formDataRef.current)) {
+             await persistWizard(formDataRef.current, true);
              setCurrentStep(s => Math.min(s + 1, 3));
           } else {
              showToast('error', 'Validation Error', 'Please complete required fields');
           }
         }}
         onPrevious={async () => {
-           await persistWizard(formData, true);
+           await persistWizard(formDataRef.current, true);
            setCurrentStep(s => Math.max(s - 1, 0));
         }}
         onFinish={async () => {
-           await persistWizard(formData);
+           await persistWizard(formDataRef.current);
            onSave();
         }}
         isLoading={saving}
@@ -516,7 +520,7 @@ export function AssessmentEditPageWizard({ assessmentId, onBack, onSave }: Asses
           <div className="flex items-center gap-2">
             <Button
               variant="outline"
-              onClick={() => persistWizard(formData)}
+              onClick={() => persistWizard(formDataRef.current)}
               disabled={saving}
               className="h-8 w-8 p-0"
               title="Save Progress"
@@ -546,13 +550,13 @@ export function AssessmentEditPageWizard({ assessmentId, onBack, onSave }: Asses
               duration={formData.duration || 5}
               isPremium={formData.is_premium || false}
               price={formData.price || 0}
-              onTitleChange={(value) => setFormData({ ...formData, title: value })}
-              onDescriptionChange={(value) => setFormData({ ...formData, description: value })}
-              onCategoryChange={(value: any) => setFormData({ ...formData, category: value })}
-              onDifficultyChange={(value: any) => setFormData({ ...formData, difficulty: value })}
-              onDurationChange={(value) => setFormData({ ...formData, duration: value })}
-              onIsPremiumChange={(value) => setFormData({ ...formData, is_premium: value })}
-              onPriceChange={(value) => setFormData({ ...formData, price: value })}
+              onTitleChange={(value) => setFormData(prev => ({ ...prev, title: value }))}
+              onDescriptionChange={(value) => setFormData(prev => ({ ...prev, description: value }))}
+              onCategoryChange={(value: any) => setFormData(prev => ({ ...prev, category: value }))}
+              onDifficultyChange={(value: any) => setFormData(prev => ({ ...prev, difficulty: value }))}
+              onDurationChange={(value) => setFormData(prev => ({ ...prev, duration: value }))}
+              onIsPremiumChange={(value) => setFormData(prev => ({ ...prev, is_premium: value }))}
+              onPriceChange={(value) => setFormData(prev => ({ ...prev, price: value }))}
               config={{
                 titleLabel: 'Assessment Title',
                 descriptionLabel: 'Description',
@@ -564,7 +568,7 @@ export function AssessmentEditPageWizard({ assessmentId, onBack, onSave }: Asses
                 // No explicit categories — UnifiedBasicInfoForm uses useMetadata internally
                 showAssessmentType: true,
                 assessmentType: formData.filter_type || 'assessment',
-                onAssessmentTypeChange: (value) => setFormData({ ...formData, filter_type: value }),
+                onAssessmentTypeChange: (value) => setFormData(prev => ({ ...prev, filter_type: value })),
                 showPaywall: true
               }}
               renderImageSection={() => (
@@ -572,7 +576,7 @@ export function AssessmentEditPageWizard({ assessmentId, onBack, onSave }: Asses
                   <div className="w-24 h-24 flex-shrink-0">
                     <ImageUpload
                       value={formData.thumbnail || ''}
-                      onChange={(url) => setFormData({ ...formData, thumbnail: url })}
+                      onChange={(url) => setFormData(prev => ({ ...prev, thumbnail: url }))}
                       aspectRatio="square"
                     />
                   </div>
@@ -605,7 +609,7 @@ export function AssessmentEditPageWizard({ assessmentId, onBack, onSave }: Asses
              program={formData}
              mode="assessment"
              singleDayMode={true}
-             onProgramChange={(updates) => setFormData(prev => ({ ...prev, ...updates }))}
+             onProgramChange={(updates) => setFormData(prev => ({ ...prev, ...(typeof updates === 'function' ? updates(prev) : updates) }))}
            />
         )}
 
@@ -618,7 +622,7 @@ export function AssessmentEditPageWizard({ assessmentId, onBack, onSave }: Asses
               <AdminFormField label="Scoring Method">
                 <Select
                   value={formData.scoringMethod || 'sum'}
-                  onValueChange={(v: any) => setFormData({ ...formData, scoringMethod: v })}
+                  onValueChange={(v: any) => setFormData(prev => ({ ...prev, scoringMethod: v }))}
                 >
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
@@ -642,7 +646,7 @@ export function AssessmentEditPageWizard({ assessmentId, onBack, onSave }: Asses
                 <AdminFormField label="Scoring Profile" description="Link to a scoring profile from the Scoring Engine for severity band mapping">
                   <Select
                     value={formData.scoring_profile_id || '_none'}
-                    onValueChange={(v: any) => setFormData({ ...formData, scoring_profile_id: v === '_none' ? undefined : v })}
+                    onValueChange={(v: any) => setFormData(prev => ({ ...prev, scoring_profile_id: v === '_none' ? undefined : v }))}
                   >
                     <SelectTrigger><SelectValue placeholder="Select a scoring profile..." /></SelectTrigger>
                     <SelectContent>
@@ -675,9 +679,11 @@ export function AssessmentEditPageWizard({ assessmentId, onBack, onSave }: Asses
                             className="h-6 w-6"
                             style={{ color: 'var(--color-text-muted)' }}
                             onClick={() => {
-                              const newCats = [...(formData.resultCategories || [])];
-                              newCats.splice(idx, 1);
-                              setFormData({ ...formData, resultCategories: newCats });
+                              setFormData(prev => {
+                                const newCats = [...(prev.resultCategories || [])];
+                                newCats.splice(idx, 1);
+                                return { ...prev, resultCategories: newCats };
+                              });
                             }}
                           >
                             <X size={14} />
@@ -690,9 +696,11 @@ export function AssessmentEditPageWizard({ assessmentId, onBack, onSave }: Asses
                               type="number" 
                               value={cat.min} 
                               onChange={(e) => {
-                                const newCats = [...(formData.resultCategories || [])];
-                                newCats[idx].min = parseInt(e.target.value) || 0;
-                                setFormData({ ...formData, resultCategories: newCats });
+                                setFormData(prev => {
+                                  const newCats = [...(prev.resultCategories || [])];
+                                  newCats[idx] = { ...newCats[idx], min: parseInt(e.target.value) || 0 };
+                                  return { ...prev, resultCategories: newCats };
+                                });
                               }}
                             />
                           </AdminFormField>
@@ -701,9 +709,11 @@ export function AssessmentEditPageWizard({ assessmentId, onBack, onSave }: Asses
                               type="number" 
                               value={cat.max} 
                               onChange={(e) => {
-                                const newCats = [...(formData.resultCategories || [])];
-                                newCats[idx].max = parseInt(e.target.value) || 0;
-                                setFormData({ ...formData, resultCategories: newCats });
+                                setFormData(prev => {
+                                  const newCats = [...(prev.resultCategories || [])];
+                                  newCats[idx] = { ...newCats[idx], max: parseInt(e.target.value) || 0 };
+                                  return { ...prev, resultCategories: newCats };
+                                });
                               }}
                             />
                           </AdminFormField>
@@ -713,9 +723,11 @@ export function AssessmentEditPageWizard({ assessmentId, onBack, onSave }: Asses
                           <Input 
                             value={cat.label} 
                             onChange={(e) => {
-                              const newCats = [...(formData.resultCategories || [])];
-                              newCats[idx].label = e.target.value;
-                              setFormData({ ...formData, resultCategories: newCats });
+                              setFormData(prev => {
+                                const newCats = [...(prev.resultCategories || [])];
+                                newCats[idx] = { ...newCats[idx], label: e.target.value };
+                                return { ...prev, resultCategories: newCats };
+                              });
                             }}
                             placeholder="e.g. Mild Anxiety"
                           />
@@ -725,9 +737,11 @@ export function AssessmentEditPageWizard({ assessmentId, onBack, onSave }: Asses
                           <Textarea 
                             value={cat.description} 
                             onChange={(e) => {
-                              const newCats = [...(formData.resultCategories || [])];
-                              newCats[idx].description = e.target.value;
-                              setFormData({ ...formData, resultCategories: newCats });
+                              setFormData(prev => {
+                                const newCats = [...(prev.resultCategories || [])];
+                                newCats[idx] = { ...newCats[idx], description: e.target.value };
+                                return { ...prev, resultCategories: newCats };
+                              });
                             }}
                             placeholder="Feedback shown to user..."
                           />

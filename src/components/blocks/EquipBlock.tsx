@@ -1,6 +1,6 @@
 import { ErrorBoundary } from '../ErrorBoundary';
 import { ArrowRight, Clock } from 'lucide-react';
-import { ImageWithFallback } from '../figma/ImageWithFallback';
+import { ContentImage } from '../ui/ContentImage';
 
 export interface EquipProgram {
   title: string;
@@ -139,7 +139,7 @@ export function EquipBlock({
                 {/* Card Image */}
                 {program.image && (
                   <div style={{ height: '180px', overflow: 'hidden' }}>
-                    <ImageWithFallback
+                    <ContentImage
                       src={program.image}
                       alt={program.title}
                       style={{

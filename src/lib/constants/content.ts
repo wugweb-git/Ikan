@@ -235,7 +235,6 @@ export const DATA_FALLBACKS = {
   EQUIP_DESCRIPTION: 'Mental wellness program',
   EQUIP_DURATION: '18 days',
   EQUIP_ACTIVITIES: 'Self-paced modules',
-  RESOURCE_FALLBACK_IMAGE: 'https://images.unsplash.com/photo-1499750310107-5fef28a66643?w=800',
 } as const;
 
 // Add legal page and footer labels

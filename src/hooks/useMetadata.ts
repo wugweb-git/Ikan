@@ -44,6 +44,7 @@ interface MetadataBucket {
   accountTypes: MetadataOption[];
   dayConfigTypes: MetadataOption[];
   exerciseSubtypes: MetadataOption[];
+  checkinBlockTypes: MetadataOption[];
 }
 
 interface MetadataState extends MetadataBucket {
@@ -73,6 +74,7 @@ const EMPTY_BUCKET: MetadataBucket = {
   accountTypes: [],
   dayConfigTypes: [],
   exerciseSubtypes: [],
+  checkinBlockTypes: [],
 };
 
 // Map from KV `type` field → bucket key
@@ -98,6 +100,7 @@ const TYPE_TO_BUCKET: Record<string, keyof MetadataBucket> = {
   account_type: 'accountTypes',
   day_config_type: 'dayConfigTypes',
   exercise_subtype: 'exerciseSubtypes',
+  checkin_block_type: 'checkinBlockTypes',
 };
 
 // Module-level cache so every hook consumer shares one fetch
@@ -151,6 +154,7 @@ async function fetchAllMetadata(): Promise<MetadataBucket> {
       accountTypes: [],
       dayConfigTypes: [],
       exerciseSubtypes: [],
+      checkinBlockTypes: [],
     };
 
     for (const item of allItems) {

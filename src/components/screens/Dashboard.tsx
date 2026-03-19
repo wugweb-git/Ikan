@@ -319,7 +319,9 @@ export function Dashboard({ className, onNavigate }: DashboardProps) {
           const scores: AssessmentScore[] = Array.from(latestByType.entries())
             .filter(([_, r]) => r.score !== undefined && r.score !== null)
             .map(([id, r]) => {
-            const maxScore = r.max_score || r.maxScore || assessmentMaxScoreMap?.get(id) || 100;
+            const resolvedMax = r.max_score || r.maxScore || assessmentMaxScoreMap?.get(id);
+            if (!resolvedMax) console.warn(`[Dashboard] No maxScore resolved for assessment "${id}", score=${r.score}. Backend enrichment may have failed.`);
+            const maxScore = resolvedMax || r.score || 1; // Worst case: use score itself to avoid inflated percentages
             const result = evaluateAssessment(id, r.score || 0, maxScore);
             const rawName = r.assessment_name || r.assessmentName || r.title || id;
             return {
@@ -338,7 +340,7 @@ export function Dashboard({ className, onNavigate }: DashboardProps) {
           if (completedResponses.length > 0) {
             const latest = completedResponses.find((r: any) => (r.score || 0) > 0) || completedResponses[0];
             const slug = latest.assessment_id || latest.assessmentId || 'general';
-            const result = evaluateAssessment(slug, latest.score || 0, latest.max_score || latest.maxScore || assessmentMaxScoreMap?.get(slug) || 100);
+            const result = evaluateAssessment(slug, latest.score || 0, latest.max_score || latest.maxScore || assessmentMaxScoreMap?.get(slug) || latest.score || 1);
             // Attach assessment name for display in RecommendationCards
             result.assessmentName = cleanAssessmentName(slug, latest.assessment_name || latest.assessmentName || latest.title || slug, assessmentNameMap);
             setEngineResult(result);

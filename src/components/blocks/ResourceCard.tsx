@@ -1,4 +1,4 @@
-import { ImageWithFallback } from '../figma/ImageWithFallback';
+import { ContentImage } from '../ui/ContentImage';
 import { cn } from '../ui/utils';
 import { resolveImageUrl } from '../../utils/image-utils';
 
@@ -44,7 +44,7 @@ export function ResourceCard({ post, onClick, variant = 'default', className }: 
           backgroundColor: 'var(--color-bg-muted)',
         }}
       >
-        <ImageWithFallback 
+        <ContentImage 
           src={resolveImageUrl(post.image)}
           alt={post.title}
           className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"

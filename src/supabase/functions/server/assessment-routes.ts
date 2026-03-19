@@ -64,7 +64,7 @@ export function registerAssessmentRoutes(app: Hono, requireAuth: any) {
                 user_id: userId,
                 assessment_id: data.assessmentId,
                 score: data.score,
-                max_score: data.maxScore || null,
+                max_score: data.maxScore ?? null,
                 status: data.status,
                 interpretation: data.interpretation,
                 responses: data.responses,
@@ -129,9 +129,27 @@ export function registerAssessmentRoutes(app: Hono, requireAuth: any) {
                 const aId = r.assessment_id || r.assessmentId;
                 const def = aId ? defMap.get(aId) : null;
                 if (def) {
-                  // Resolve max_score from scoring ranges if missing
-                  if (!r.max_score && def.scoring?.ranges?.length > 0) {
-                    r.max_score = def.scoring.ranges[def.scoring.ranges.length - 1]?.max || null;
+                  // Resolve max_score: prefer computed from questions, fallback to scoring ranges
+                  if (!r.max_score) {
+                    // 1. Compute from questions (sum of highest option value per question)
+                    let computedMax = 0;
+                    if (def.questions && Array.isArray(def.questions) && def.questions.length > 0) {
+                      for (const q of def.questions) {
+                        if (q.options && Array.isArray(q.options)) {
+                          let maxVal = 0;
+                          for (const opt of q.options) {
+                            const v = typeof opt === 'object' ? (opt.value ?? opt.score ?? 0) : 0;
+                            if (typeof v === 'number' && v > maxVal) maxVal = v;
+                          }
+                          computedMax += maxVal;
+                        }
+                      }
+                    }
+                    // 2. Fallback to scoring range max
+                    if (computedMax === 0 && def.scoring?.ranges?.length > 0) {
+                      computedMax = def.scoring.ranges[def.scoring.ranges.length - 1]?.max || 0;
+                    }
+                    if (computedMax > 0) r.max_score = computedMax;
                   }
                   // Resolve assessment name if missing
                   if (!r.assessment_name) {

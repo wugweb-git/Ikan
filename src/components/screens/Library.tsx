@@ -7,7 +7,7 @@ import { ResourcePost } from '../blocks/ResourceCard';
 import { apiClient } from '../../lib/api-client';
 import { logger } from '../../lib/logger';
 import { PullToRefresh } from '../ui/touch-feedback';
-import { ImageWithFallback } from '../figma/ImageWithFallback';
+import { ContentImage } from '../ui/ContentImage';
 import { resolveImageUrl } from '../../utils/image-utils';
 import { LIBRARY_LABELS } from '../../lib/constants/content';
 import { PageHero } from '../ui/PageHero';
@@ -58,7 +58,7 @@ function BlogCard({ resource, onClick, size = 'default' }: { resource: Resource;
           backgroundColor: 'var(--color-bg-muted)',
         }}
       >
-        <ImageWithFallback
+        <ContentImage
           src={resolveImageUrl(resource.image)}
           alt={resource.title}
           className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
@@ -185,8 +185,7 @@ export function Library({ onResourceSelect, onNavigate, className }: LibraryProp
                     day: 'numeric' 
                   })
                 : (resource.date || resource.publishedDate || 'Recently'),
-              image: resource.thumbnail || resource.image || resource.image_url || 
-                     'https://images.unsplash.com/photo-1499750310107-5fef28a66643?w=800',
+              image: resource.thumbnail || resource.image || resource.image_url || '',
               slug: resource.id,
               published: resource.published !== false,
               featured: resource.featured === true
@@ -437,7 +436,7 @@ export function Library({ onResourceSelect, onNavigate, className }: LibraryProp
                     backgroundColor: 'var(--color-bg-muted)',
                   }}
                 >
-                  <ImageWithFallback
+                  <ContentImage
                     src={resolveImageUrl(featuredResources[0].image)}
                     alt={featuredResources[0].title}
                     className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"

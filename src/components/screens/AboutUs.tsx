@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { ImageWithFallback } from '../figma/ImageWithFallback';
+import { ContentImage } from '../ui/ContentImage';
 import { useIsMobile } from '../../hooks/useIsMobile';
 import { ResourceBlock } from '../blocks/ResourceBlock';
 import { NewsletterBlock } from '../blocks/NewsletterBlock';
@@ -213,7 +213,7 @@ export function AboutUs({ onNavigate, className }: AboutUsProps) {
                 aspectRatio: isMobile ? '16/10' : '4/3',
               }}
             >
-              <ImageWithFallback
+              <ContentImage
                 src={storyImage}
                 alt={storyImageAlt}
                 style={{ width: '100%', height: '100%', objectFit: 'cover' }}
@@ -583,7 +583,7 @@ function FounderCard({ member, isMobile }: { member: TeamMember; isMobile: boole
     >
       {/* Photo */}
       <div style={{ height: isMobile ? '220px' : '240px', overflow: 'hidden' }}>
-        <ImageWithFallback
+        <ContentImage
           src={member.image}
           alt={member.name}
           style={{ width: '100%', height: '100%', objectFit: 'cover' }}
@@ -654,7 +654,7 @@ function TeamCard({ member, isMobile }: { member: TeamMember; isMobile: boolean 
     >
       {/* Avatar */}
       <div style={{ height: isMobile ? '160px' : '180px', overflow: 'hidden' }}>
-        <ImageWithFallback
+        <ContentImage
           src={member.image}
           alt={member.name}
           style={{ width: '100%', height: '100%', objectFit: 'cover' }}

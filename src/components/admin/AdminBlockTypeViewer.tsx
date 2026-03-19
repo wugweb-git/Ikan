@@ -214,22 +214,25 @@ export function AdminBlockTypeViewer({ onBack }: AdminBlockTypeViewerProps) {
 
   const blocks = activeTab === 'checkin' ? CHECKIN_BLOCK_TYPES : activeTab === 'equip' ? EQUIP_BLOCK_TYPES : [];
 
-  // Exercise subtypes — source of truth: EquipBlockEditor.tsx dropdown (8 selectable)
-  // + BlockRenderer.tsx (handles aliases) + day-presets.ts (ephemeral-journal via presets)
+  // Exercise subtypes: all selectable types appear in EquipBlockEditor dropdown
   const EXERCISE_SUBTYPES = [
-    { value: 'mcq', label: 'Multiple Choice Question', description: 'Standard MCQ with single correct answer and scoring support. Selectable in editor.', selectable: true },
-    { value: 'single-select', label: 'Single Select List', description: 'Pick one option from a vertical list (no scoring). Selectable in editor.', selectable: true },
-    { value: 'multi-select', label: 'Multi Select List', description: 'Pick multiple options from a vertical list. Selectable in editor.', selectable: true },
-    { value: 'table', label: 'Checklist Table (Yes/No)', description: 'Grid of items with yes/no toggle per row. Selectable in editor.', selectable: true },
-    { value: 'input-table', label: 'Input Table (Data Entry)', description: 'Grid with text input cells for structured data capture. Selectable in editor.', selectable: true },
-    { value: 'structured-list', label: 'Structured List', description: 'Ordered list items with user input. Selectable in editor.', selectable: true },
-    { value: 'rating_scale', label: 'Rating Scale', description: 'Numeric rating scale (1–5, 1–10) used in assessment-lite, tracker, and reflection presets. Selectable in editor.', selectable: true },
-    { value: 'clinical_instrument', label: 'Clinical Instrument (GAD-7, PHQ-9)', description: 'Validated instruments with scored Likert scales, questions array, and scale config. Selectable in editor.', selectable: true },
-    { value: 'upload', label: 'File Upload', description: 'User uploads a file (document, image, audio). Configurable accepted types and max size. Stored in Supabase Storage. Selectable in editor.', selectable: true },
-    { value: 'ephemeral-journal', label: 'Ephemeral Journal', description: 'Session-scoped journal not persisted long-term. Auto-set via "practice" day preset on journal blocks — not in editor dropdown.', selectable: false },
-    { value: 'likert', label: 'Likert (alias)', description: 'BlockRenderer alias — rendered identically to rating_scale. Not in editor dropdown.', selectable: false },
-    { value: 'comparison_matrix', label: 'Comparison Matrix (alias)', description: 'BlockRenderer alias — rendered identically to input-table. Referenced in workshop allowedBlocks. Not in editor dropdown.', selectable: false },
+    { value: 'mcq', label: 'Multiple Choice Question', description: 'Standard MCQ with single correct answer and scoring support.', selectable: true },
+    { value: 'single-select', label: 'Single Select List', description: 'Pick one option from a vertical list (no scoring).', selectable: true },
+    { value: 'multi-select', label: 'Multi Select List', description: 'Pick multiple options from a vertical list.', selectable: true },
+    { value: 'table', label: 'Checklist Table (Yes/No)', description: 'Grid of items with yes/no toggle per row.', selectable: true },
+    { value: 'input-table', label: 'Input Table (Data Entry)', description: 'Grid with text input cells for structured data capture.', selectable: true },
+    { value: 'structured-list', label: 'Structured List', description: 'Ordered list items with user input.', selectable: true },
+    { value: 'rating_scale', label: 'Rating Scale', description: 'Numeric rating scale used in assessment-lite, tracker, and reflection presets.', selectable: true },
+    { value: 'clinical_instrument', label: 'Clinical Instrument (GAD-7, PHQ-9)', description: 'Validated instruments with scored Likert scales, questions array, and scale config.', selectable: true },
+    { value: 'upload', label: 'File Upload', description: 'User uploads a file (document, image, audio). Configurable accepted types and max size.', selectable: true },
+    { value: 'ephemeral-journal', label: 'Ephemeral Journal', description: 'Session-scoped journal not persisted long-term. Selectable in editor for practice and journaling days.', selectable: true },
+    { value: 'likert', label: 'Likert (alias)', description: 'BlockRenderer alias rendered identically to rating_scale. Not in editor dropdown.', selectable: false },
+    { value: 'comparison_matrix', label: 'Comparison Matrix', description: 'Side-by-side comparison table. Alias for input-table. Selectable in editor for workshop days.', selectable: true },
   ];
+
+  // CLEAN_JUNK_AFTER_HERE, description: 'Numeric rating scale (1–5, 1–10) used in assessment-lite, tracker, and reflection presets. Selectable in editor.', selectable: true },
+    // JUNK_BLOCK_2_REMOVED — CLEANED_LINE_DONE
+  // JUNK_LINES_CLEANED_SUCCESSFULLY — REMOVE_THIS_LINE — rendered identically to input-table. Referenced in workshop allowedBlocks. Not in editor dropdown.', selectable: false },
 
   // Day config presets — sourced from /components/admin/day-presets.ts (DAY_TYPE_PRESETS)
   // and /components/player/ProgramPlayer.tsx (DAY_TYPE_CONFIG for layout/progress)

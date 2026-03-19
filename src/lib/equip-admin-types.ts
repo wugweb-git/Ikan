@@ -80,6 +80,7 @@ export function resolveInteraction(activity: Activity): InteractionType {
         return 'track-table';
       case 'input-table':
       case 'comparison_matrix':
+      case 'comparison-matrix':
         return 'input-table';
       case 'structured-list':
         return 'check';
@@ -135,7 +136,7 @@ export const INTERACTION_META: Record<InteractionType, { label: string; verb: st
 };
 
 export interface ExerciseConfig {
-  subtype?: 'multi-select' | 'single-select' | 'mcq' | 'table' | 'input-table' | 'ephemeral-journal' | 'structured-list' | 'clinical_instrument' | 'rating_scale' | 'likert' | 'comparison_matrix' | 'upload';
+  subtype?: 'multi-select' | 'single-select' | 'mcq' | 'table' | 'input-table' | 'ephemeral-journal' | 'structured-list' | 'clinical_instrument' | 'rating_scale' | 'likert' | 'comparison_matrix' | 'comparison-matrix' | 'upload';
   prompt?: string;
   options?: string[];
   questions?: string[]; // For clinical instruments

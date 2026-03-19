@@ -45,6 +45,9 @@ interface EquipBentoGridProps {
   eligibilityPoint2?: string;
   eligibilityPoint3?: string;
   eligibilityPoint4?: string;
+  rightColumnItems?: Array<{ icon?: string; text: string }>;
+  howItWorksSubtitle?: string;
+  howItWorksFooter?: string;
   className?: string;
 }
 
@@ -71,6 +74,9 @@ export function EquipBentoGrid({
   eligibilityPoint2,
   eligibilityPoint3,
   eligibilityPoint4,
+  rightColumnItems,
+  howItWorksSubtitle,
+  howItWorksFooter,
   className
 }: EquipBentoGridProps) {
 
@@ -93,31 +99,31 @@ export function EquipBentoGrid({
     eligibilityPoint4 || section1?.isThisForYou?.points?.[3]
   ].filter(Boolean) as string[];
 
-  // 4 Tiles Data
-  const tilesData = [
-    {
-      title: "Understand your sleep better",
-      subtitle: "Notice patterns and key disruptors",
-      icon: CalendarIcon
-    },
-    {
-      title: "Manage sleep-related thoughts",
-      subtitle: "Respond to worries that keep you awake",
-      icon: Brain
-    },
-    {
-      title: "Build sleep-friendly habits",
-      subtitle: "Create routines that support rest",
-      icon: Zap
-    },
-    {
-      title: "Develop reusable tools",
-      subtitle: "Skills you can return to anytime",
-      icon: Wrench
-    }
+  // 4 Tiles Data — generic defaults, overridden by section4 or tile4Content
+  const defaultTiles = [
+    { title: "Gain deeper understanding", subtitle: "Identify patterns and triggers", icon: CalendarIcon },
+    { title: "Learn practical techniques", subtitle: "Evidence-based strategies you can use", icon: Brain },
+    { title: "Build lasting habits", subtitle: "Create routines that support well-being", icon: Zap },
+    { title: "Develop your toolkit", subtitle: "Skills you can return to anytime", icon: Wrench }
   ];
 
-  // If section4 data exists, use it to override title/subtitle
+  const tilesData = [...defaultTiles];
+
+  // Override from tile4Content (array of objects with title/description)
+  if (tile4Content && Array.isArray(tile4Content) && tile4Content.length > 0) {
+    tile4Content.slice(0, 4).forEach((p: any, i: number) => {
+      if (i < tilesData.length) {
+        if (typeof p === 'string') {
+          tilesData[i].title = p;
+        } else if (p && typeof p === 'object') {
+          if (p.title) tilesData[i].title = p.title;
+          if (p.description || p.subtitle) tilesData[i].subtitle = p.description || p.subtitle;
+        }
+      }
+    });
+  }
+
+  // Override from section4 (structured props)
   if (section4?.points && Array.isArray(section4.points) && section4.points.length >= 4) {
     section4.points.slice(0, 4).forEach((p, i) => {
       tilesData[i].title = p.title;
@@ -125,26 +131,21 @@ export function EquipBentoGrid({
     });
   }
 
-  // Right Column Items (3 Items)
-  const rightItems = [
-    {
-      icon: Clock,
-      text: "A structured 18-day journey designed to fit into daily life"
-    },
-    {
-      icon: Smile,
-      text: "Sleep, mood, and habit trackers"
-    },
-    {
-      icon: FlaskConical,
-      text: "Science-backed techniques, including CBT"
-    }
+  // Right Column Items (3 Items) — generic defaults
+  const defaultRightItems = [
+    { icon: Clock, text: "A structured journey designed to fit into daily life" },
+    { icon: Smile, text: "Mood and progress trackers included" },
+    { icon: FlaskConical, text: "Evidence-based techniques and exercises" }
   ];
 
+  const resolvedRightItems = rightColumnItems
+    ? rightColumnItems.map(item => ({ icon: Clock, text: item.text }))
+    : defaultRightItems;
+
   // How it works steps
-  let howItWorksSteps = section3?.description || [
-    "First, you'll learn practical techniques to calm your mind and improve sleep hygiene.",
-    "Then, you'll build a personalized bedtime routine and practice these skills consistently."
+  let howItWorksSteps = section3?.description || tile3Content || [
+    "You'll start with foundational concepts and guided exercises.",
+    "Then you'll build on those skills with daily practice and reflection."
   ];
 
   // Safety check for howItWorksSteps
@@ -217,7 +218,7 @@ export function EquipBentoGrid({
                       IS THIS FOR YOU?
                     </p>
                     <p style={{ fontFamily: 'var(--font-family-base)', fontWeight: 'var(--font-weight-regular)', fontSize: '18px', lineHeight: '24px', color: 'var(--color-text-primary)', maxWidth: '167px' }}>
-                      {eligibilityIntro || "Sleep Tight may be helpful if:"}
+                      {eligibilityIntro || "This program may be helpful if:"}
                     </p>
                   </div>
                   
@@ -297,7 +298,7 @@ export function EquipBentoGrid({
             
             {/* 3 ITEMS GROUP - Order 4 (Mobile), Order 1 (Desktop) */}
             <div className="order-4 lg:order-1 flex flex-col gap-[20px]">
-              {rightItems.map((item, idx) => {
+              {resolvedRightItems.map((item, idx) => {
                 const Icon = item.icon;
                 return (
                   <div key={idx} className="p-[20px] flex items-start gap-[12px] w-full" style={{ backgroundColor: 'var(--color-bg-card)', borderRadius: 'var(--radius-lg)', border: '1px solid var(--color-border-default)' }}>
@@ -332,7 +333,7 @@ export function EquipBentoGrid({
                 
                 {/* Subtitle */}
                 <p style={{ fontFamily: 'var(--font-family-base)', fontWeight: 'var(--font-weight-regular)', fontSize: 'var(--text-xs)', lineHeight: '14px', color: 'var(--color-text-muted)' }}>
-                  The program focuses on sleep in two stages.
+                  {howItWorksSubtitle || "This program works in progressive stages."}
                 </p>
 
                 {/* Steps */}
@@ -347,7 +348,7 @@ export function EquipBentoGrid({
                 {/* Footer */}
                 <div className="px-[6px] py-[10px] flex items-center justify-center" style={{ backgroundColor: 'var(--color-bg-muted)', borderRadius: 'var(--radius-md)' }}>
                   <p style={{ fontFamily: 'var(--font-family-base)', fontStyle: 'italic', fontWeight: 'var(--font-weight-regular)', fontSize: 'var(--text-xs)', lineHeight: '18px', color: 'var(--color-text-primary)', textAlign: 'center' }}>
-                    The focus is on habit-building — without medication or pressure — to support better rest over time.
+                    {howItWorksFooter || "The focus is on building sustainable habits and developing practical skills you can use every day."}
                   </p>
                 </div>
               </div>

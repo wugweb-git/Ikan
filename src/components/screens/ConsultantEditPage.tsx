@@ -168,8 +168,8 @@ export function ConsultantEditPage({ consultantId, onBack, onSave }: ConsultantE
     try {
       setLoading(true);
       const data = await apiClient.getProfessionalById(consultantId!);
-      setFormData({
-        ...formData,
+      setFormData(prev => ({
+        ...prev,
         ...data,
         languages: data.languages || [],
         therapeuticApproaches: data.therapeuticApproaches || [],
@@ -182,7 +182,7 @@ export function ConsultantEditPage({ consultantId, onBack, onSave }: ConsultantE
         testimonials: data.testimonials || [],
         videoIntroUrl: data.videoIntroUrl || '',
         certificates: data.certificates || [],
-      });
+      }));
     } catch (error) {
       console.error('Failed to load consultant:', error);
       showToast('error', 'Error', 'Failed to load consultant data');
@@ -253,75 +253,85 @@ export function ConsultantEditPage({ consultantId, onBack, onSave }: ConsultantE
 
   // ── Helper: toggle in array ──
   const toggleArray = (field: keyof Consultant, value: string) => {
-    const current = (formData[field] as string[]) || [];
-    const updated = current.includes(value) ? current.filter(v => v !== value) : [...current, value];
-    setFormData({ ...formData, [field]: updated });
+    setFormData(prev => {
+      const current = (prev[field] as string[]) || [];
+      const updated = current.includes(value) ? current.filter(v => v !== value) : [...current, value];
+      return { ...prev, [field]: updated };
+    });
   };
 
   // ── Helper: add FAQ ──
   const addFAQ = () => {
-    setFormData({
-      ...formData,
-      clientFAQs: [...(formData.clientFAQs || []), { question: '', answer: '' }]
-    });
+    setFormData(prev => ({
+      ...prev,
+      clientFAQs: [...(prev.clientFAQs || []), { question: '', answer: '' }]
+    }));
   };
 
   const updateFAQ = (index: number, field: 'question' | 'answer', value: string) => {
-    const faqs = [...(formData.clientFAQs || [])];
-    faqs[index] = { ...faqs[index], [field]: value };
-    setFormData({ ...formData, clientFAQs: faqs });
+    setFormData(prev => {
+      const faqs = [...(prev.clientFAQs || [])];
+      faqs[index] = { ...faqs[index], [field]: value };
+      return { ...prev, clientFAQs: faqs };
+    });
   };
 
   const removeFAQ = (index: number) => {
-    setFormData({ ...formData, clientFAQs: (formData.clientFAQs || []).filter((_, i) => i !== index) });
+    setFormData(prev => ({ ...prev, clientFAQs: (prev.clientFAQs || []).filter((_, i) => i !== index) }));
   };
 
   // ── Helper: add Testimonial ──
   const addTestimonial = () => {
-    setFormData({
-      ...formData,
-      testimonials: [...(formData.testimonials || []), { text: '', clientName: '' }]
-    });
+    setFormData(prev => ({
+      ...prev,
+      testimonials: [...(prev.testimonials || []), { text: '', clientName: '' }]
+    }));
   };
 
   const updateTestimonial = (index: number, field: 'text' | 'clientName', value: string) => {
-    const items = [...(formData.testimonials || [])];
-    items[index] = { ...items[index], [field]: value };
-    setFormData({ ...formData, testimonials: items });
+    setFormData(prev => {
+      const items = [...(prev.testimonials || [])];
+      items[index] = { ...items[index], [field]: value };
+      return { ...prev, testimonials: items };
+    });
   };
 
   const removeTestimonial = (index: number) => {
-    setFormData({ ...formData, testimonials: (formData.testimonials || []).filter((_, i) => i !== index) });
+    setFormData(prev => ({ ...prev, testimonials: (prev.testimonials || []).filter((_, i) => i !== index) }));
   };
 
   // ── Helper: add Qualification ──
   const addQualification = () => {
-    setFormData({ ...formData, qualifications: [...(formData.qualifications || []), ''] });
+    setFormData(prev => ({ ...prev, qualifications: [...(prev.qualifications || []), ''] }));
   };
 
   const updateQualification = (index: number, value: string) => {
-    const items = [...(formData.qualifications || [])];
-    items[index] = value;
-    setFormData({ ...formData, qualifications: items });
+    setFormData(prev => {
+      const items = [...(prev.qualifications || [])];
+      items[index] = value;
+      return { ...prev, qualifications: items };
+    });
   };
 
   const removeQualification = (index: number) => {
-    setFormData({ ...formData, qualifications: (formData.qualifications || []).filter((_, i) => i !== index) });
+    setFormData(prev => ({ ...prev, qualifications: (prev.qualifications || []).filter((_, i) => i !== index) }));
   };
 
   // ── Helper: add Certificate URL ──
   const addCertificate = () => {
-    setFormData({ ...formData, certificates: [...(formData.certificates || []), ''] });
+    setFormData(prev => ({ ...prev, certificates: [...(prev.certificates || []), ''] }));
   };
 
   const updateCertificate = (index: number, value: string) => {
-    const items = [...(formData.certificates || [])];
-    items[index] = value;
-    setFormData({ ...formData, certificates: items });
+    setFormData(prev => {
+      const items = [...(prev.certificates || [])];
+      items[index] = value;
+      return { ...prev, certificates: items };
+    });
   };
 
   const removeCertificate = (index: number) => {
-    setFormData({ ...formData, certificates: (formData.certificates || []).filter((_, i) => i !== index) });
+    setFormData(prev => ({ ...prev, certificates: (prev.certificates || []).filter((_, i) => i !== index) }));
   };
 
   // ── Loading ──
@@ -358,15 +368,15 @@ export function ConsultantEditPage({ consultantId, onBack, onSave }: ConsultantE
         <AdminSection title="Basic Information" description="Core details about the mental health professional" icon={<User className="w-5 h-5" />}>
           <div className="grid md:grid-cols-2 gap-6">
             <AdminFormField label="Full Name" required error={errors.name}>
-              <Input value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} placeholder="Dr. Jane Doe" style={inputStyle} />
+              <Input value={formData.name} onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))} placeholder="Dr. Jane Doe" style={inputStyle} />
             </AdminFormField>
 
             <AdminFormField label="Credentials" required error={errors.credentials} helpText="Primary credential or title">
-              <Input value={formData.credentials} onChange={(e) => setFormData({ ...formData, credentials: e.target.value })} placeholder="Ph.D., Clinical Psychologist" style={inputStyle} />
+              <Input value={formData.credentials} onChange={(e) => setFormData(prev => ({ ...prev, credentials: e.target.value }))} placeholder="Ph.D., Clinical Psychologist" style={inputStyle} />
             </AdminFormField>
 
             <AdminFormField label="Category" required>
-              <Select value={formData.category} onValueChange={(v: any) => setFormData({ ...formData, category: v })}>
+              <Select value={formData.category} onValueChange={(v: any) => setFormData(prev => ({ ...prev, category: v }))}>
                 <SelectTrigger style={inputStyle}><SelectValue /></SelectTrigger>
                 <SelectContent>
                   {consultantTypes.map((ct) => (
@@ -377,15 +387,15 @@ export function ConsultantEditPage({ consultantId, onBack, onSave }: ConsultantE
             </AdminFormField>
 
             <AdminFormField label="Years of Experience" required error={errors.yearsExperience} helpText="Total years practicing">
-              <Input type="number" value={formData.yearsExperience} onChange={(e) => setFormData({ ...formData, yearsExperience: parseInt(e.target.value) || 0 })} min="0" max="60" style={inputStyle} />
+              <Input type="number" value={formData.yearsExperience} onChange={(e) => setFormData(prev => ({ ...prev, yearsExperience: parseInt(e.target.value) || 0 }))} min="0" max="60" style={inputStyle} />
             </AdminFormField>
 
             <AdminFormField label="Location" required error={errors.location}>
-              <Input value={formData.location} onChange={(e) => setFormData({ ...formData, location: e.target.value })} placeholder="Mumbai, India" style={inputStyle} />
+              <Input value={formData.location} onChange={(e) => setFormData(prev => ({ ...prev, location: e.target.value }))} placeholder="Mumbai, India" style={inputStyle} />
             </AdminFormField>
 
             <AdminFormField label="Photo" helpText="Professional headshot or avatar">
-              <ImageUpload value={formData.photo} onChange={(url) => setFormData({ ...formData, photo: url })} placeholder="https://..." aspectRatio="square" />
+              <ImageUpload value={formData.photo} onChange={(url) => setFormData(prev => ({ ...prev, photo: url }))} placeholder="https://..." aspectRatio="square" />
             </AdminFormField>
           </div>
 
@@ -393,7 +403,7 @@ export function ConsultantEditPage({ consultantId, onBack, onSave }: ConsultantE
             <AdminFormField label="Brief Introduction" required error={errors.bio} description="Tell potential clients about the professional's background and approach">
               <Textarea
                 value={formData.bio}
-                onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
+                onChange={(e) => setFormData(prev => ({ ...prev, bio: e.target.value }))}
                 placeholder="Write a compelling bio highlighting education, experience, and therapeutic approach..."
                 className="min-h-[120px]"
                 style={{ borderRadius: 'var(--ikan-component-border-radius)' }}
@@ -421,7 +431,7 @@ export function ConsultantEditPage({ consultantId, onBack, onSave }: ConsultantE
                   if (e.target.value.trim()) {
                     const extras = e.target.value.split(',').map(l => l.trim()).filter(Boolean);
                     const current = formData.languages || [];
-                    setFormData({ ...formData, languages: [...new Set([...current, ...extras])] });
+                    setFormData(prev => ({ ...prev, languages: [...new Set([...current, ...extras])] }));
                     e.target.value = '';
                   }
                 }}
@@ -586,7 +596,7 @@ export function ConsultantEditPage({ consultantId, onBack, onSave }: ConsultantE
                       <Input
                         type="number"
                         value={formData.pricing?.[key] || 0}
-                        onChange={(e) => setFormData({ ...formData, pricing: { ...(formData.pricing || { video: 0, call: 0, chat: 0 }), [key]: parseInt(e.target.value) || 0 } })}
+                        onChange={(e) => setFormData(prev => ({ ...prev, pricing: { ...(prev.pricing || { video: 0, call: 0, chat: 0 }), [key]: parseInt(e.target.value) || 0 } }))}
                         style={{ ...inputStyle, paddingLeft: 'var(--spacing-8)' }}
                       />
                     </div>
@@ -601,7 +611,7 @@ export function ConsultantEditPage({ consultantId, onBack, onSave }: ConsultantE
         <AdminSection title="Availability & Time Preferences" description="Preferred working hours and schedule" icon={<Clock className="w-5 h-5" />}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-6)' }}>
             <div className="flex items-center gap-3">
-              <Checkbox id="available" checked={formData.available} onCheckedChange={(checked) => setFormData({ ...formData, available: checked as boolean })} />
+              <Checkbox id="available" checked={formData.available} onCheckedChange={(checked) => setFormData(prev => ({ ...prev, available: checked as boolean }))} />
               <Label htmlFor="available" className="cursor-pointer" style={{ fontFamily: 'var(--font-family-base)', fontWeight: 'var(--font-weight-medium)' }}>
                 Available for booking
               </Label>
@@ -610,7 +620,7 @@ export function ConsultantEditPage({ consultantId, onBack, onSave }: ConsultantE
             <AdminFormField label="Working Hours" helpText="e.g., 10:00 AM - 6:00 PM IST">
               <Input
                 value={formData.availabilityPreferences?.workingHours || ''}
-                onChange={(e) => setFormData({ ...formData, availabilityPreferences: { ...(formData.availabilityPreferences || { workingHours: '', daysAvailable: [], weekendAvailability: false }), workingHours: e.target.value } })}
+                onChange={(e) => setFormData(prev => ({ ...prev, availabilityPreferences: { ...(prev.availabilityPreferences || { workingHours: '', daysAvailable: [], weekendAvailability: false }), workingHours: e.target.value } }))}
                 placeholder="10:00 AM - 6:00 PM IST"
                 style={inputStyle}
               />
@@ -628,7 +638,7 @@ export function ConsultantEditPage({ consultantId, onBack, onSave }: ConsultantE
                       onClick={() => {
                         const current = formData.availabilityPreferences?.daysAvailable || [];
                         const updated = current.includes(day) ? current.filter(d => d !== day) : [...current, day];
-                        setFormData({ ...formData, availabilityPreferences: { ...(formData.availabilityPreferences || { workingHours: '', daysAvailable: [], weekendAvailability: false }), daysAvailable: updated } });
+                        setFormData(prev => ({ ...prev, availabilityPreferences: { ...(prev.availabilityPreferences || { workingHours: '', daysAvailable: [], weekendAvailability: false }), daysAvailable: updated } }));
                       }}
                       className="px-4 py-2 rounded-lg border transition-all"
                       style={{
@@ -653,7 +663,7 @@ export function ConsultantEditPage({ consultantId, onBack, onSave }: ConsultantE
               <Switch
                 id="weekend-avail"
                 checked={formData.availabilityPreferences?.weekendAvailability || false}
-                onCheckedChange={(checked) => setFormData({ ...formData, availabilityPreferences: { ...(formData.availabilityPreferences || { workingHours: '', daysAvailable: [], weekendAvailability: false }), weekendAvailability: checked } })}
+                onCheckedChange={(checked) => setFormData(prev => ({ ...prev, availabilityPreferences: { ...(prev.availabilityPreferences || { workingHours: '', daysAvailable: [], weekendAvailability: false }), weekendAvailability: checked } }))}
               />
               <Label htmlFor="weekend-avail" style={{ fontFamily: 'var(--font-family-base)', fontSize: 'var(--text-sm)' }}>Available on weekends</Label>
             </div>
@@ -664,7 +674,7 @@ export function ConsultantEditPage({ consultantId, onBack, onSave }: ConsultantE
         <AdminSection title="Therapeutic Philosophy" description="Guiding principles or philosophies in their practice" icon={<Heart className="w-5 h-5" />}>
           <Textarea
             value={formData.therapeuticPhilosophy || ''}
-            onChange={(e) => setFormData({ ...formData, therapeuticPhilosophy: e.target.value })}
+            onChange={(e) => setFormData(prev => ({ ...prev, therapeuticPhilosophy: e.target.value }))}
             placeholder="Describe the therapist's guiding philosophy, values, and core beliefs about therapy..."
             className="min-h-[100px]"
             style={{ borderRadius: 'var(--ikan-component-border-radius)' }}
@@ -719,15 +729,15 @@ export function ConsultantEditPage({ consultantId, onBack, onSave }: ConsultantE
                 <Button
                   variant="outline"
                   onClick={() => {
-                    setFormData({
-                      ...formData,
+                    setFormData(prev => ({
+                      ...prev,
                       clientFAQs: [
                         { question: 'Do you see individuals, couples, or families?', answer: '' },
                         { question: 'How many sessions do clients typically need?', answer: '' },
                         { question: 'Do you give homework or structured exercises?', answer: '' },
                         { question: 'What is your general working style?', answer: '' },
                       ]
-                    });
+                    }));
                   }}
                   style={{ gap: 'var(--spacing-2)', borderRadius: 'var(--ikan-component-border-radius)' }}
                 >
@@ -789,7 +799,7 @@ export function ConsultantEditPage({ consultantId, onBack, onSave }: ConsultantE
             <Switch
               id="willing-articles"
               checked={formData.willingToShareArticles || false}
-              onCheckedChange={(checked) => setFormData({ ...formData, willingToShareArticles: checked })}
+              onCheckedChange={(checked) => setFormData(prev => ({ ...prev, willingToShareArticles: checked }))}
             />
             <Label htmlFor="willing-articles" style={{ fontFamily: 'var(--font-family-base)', fontSize: 'var(--text-sm)' }}>
               Willing to share articles to be published on our site
@@ -803,7 +813,7 @@ export function ConsultantEditPage({ consultantId, onBack, onSave }: ConsultantE
             <AdminFormField label="Video Introduction URL" helpText="YouTube, Vimeo, or direct video link">
               <Input
                 value={formData.videoIntroUrl || ''}
-                onChange={(e) => setFormData({ ...formData, videoIntroUrl: e.target.value })}
+                onChange={(e) => setFormData(prev => ({ ...prev, videoIntroUrl: e.target.value }))}
                 placeholder="https://youtube.com/watch?v=..."
                 style={inputStyle}
               />

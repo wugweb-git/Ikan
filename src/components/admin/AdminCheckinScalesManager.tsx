@@ -296,7 +296,7 @@ export function AdminCheckinScalesManager({ onBack: _onBack }: AdminCheckinScale
                     {EMOJI_PICKS.map(em => (
                       <button
                         key={em}
-                        onClick={() => setFormData({ ...formData, emoji: em })}
+                        onClick={() => setFormData(prev => ({ ...prev, emoji: em }))}
                         className="w-10 h-10 flex items-center justify-center rounded-lg transition-all text-xl"
                         style={{
                           backgroundColor: formData.emoji === em ? B.accent : B.input,
@@ -316,7 +316,7 @@ export function AdminCheckinScalesManager({ onBack: _onBack }: AdminCheckinScale
                     <Label style={{ ...f('sm', 500) }}>Label *</Label>
                     <Input
                       value={formData.label || ''}
-                      onChange={e => setFormData({ ...formData, label: e.target.value })}
+                      onChange={e => setFormData(prev => ({ ...prev, label: e.target.value }))}
                       placeholder="e.g. High Energy"
                       className="bg-[var(--color-bg-input)]"
                       style={{ borderRadius: 'var(--ikan-component-border-radius)' }}
@@ -327,7 +327,7 @@ export function AdminCheckinScalesManager({ onBack: _onBack }: AdminCheckinScale
                     <Input
                       type="number"
                       value={formData.value ?? 0}
-                      onChange={e => setFormData({ ...formData, value: parseInt(e.target.value) || 0 })}
+                      onChange={e => setFormData(prev => ({ ...prev, value: parseInt(e.target.value) || 0 }))}
                       className="bg-[var(--color-bg-input)]"
                       style={{ borderRadius: 'var(--ikan-component-border-radius)' }}
                     />
@@ -336,7 +336,7 @@ export function AdminCheckinScalesManager({ onBack: _onBack }: AdminCheckinScale
                     <Label style={{ ...f('sm', 500) }}>Severity</Label>
                     <select
                       value={formData.severity || 'neutral'}
-                      onChange={e => setFormData({ ...formData, severity: e.target.value })}
+                      onChange={e => setFormData(prev => ({ ...prev, severity: e.target.value }))}
                       style={{
                         width: '100%', padding: '8px 10px', borderRadius: 'var(--ikan-component-border-radius)',
                         backgroundColor: B.input, border: `1px solid ${B.border}`, ...f('sm'),
@@ -352,7 +352,7 @@ export function AdminCheckinScalesManager({ onBack: _onBack }: AdminCheckinScale
                     <Input
                       type="number"
                       value={formData.order ?? 0}
-                      onChange={e => setFormData({ ...formData, order: parseInt(e.target.value) || 0 })}
+                      onChange={e => setFormData(prev => ({ ...prev, order: parseInt(e.target.value) || 0 }))}
                       className="bg-[var(--color-bg-input)]"
                       style={{ borderRadius: 'var(--ikan-component-border-radius)' }}
                     />
@@ -362,7 +362,7 @@ export function AdminCheckinScalesManager({ onBack: _onBack }: AdminCheckinScale
                 <div className="flex items-center gap-3">
                   <Switch
                     checked={formData.is_active !== false}
-                    onCheckedChange={checked => setFormData({ ...formData, is_active: checked })}
+                    onCheckedChange={checked => setFormData(prev => ({ ...prev, is_active: checked }))}
                   />
                   <Label style={{ ...f('sm', 400) }}>Active</Label>
                 </div>

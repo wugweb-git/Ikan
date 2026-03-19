@@ -1,6 +1,6 @@
 import { useRef, useState, useEffect } from 'react';
 import { cn } from '../ui/utils';
-import { ImageWithFallback } from '../figma/ImageWithFallback';
+import { ContentImage } from '../ui/ContentImage';
 import { Skeleton } from '../ui/skeleton-loader';
 import type { ResourcePost } from './ResourceCard';
 import { resolveImageUrl } from '../../utils/image-utils';
@@ -8,9 +8,6 @@ import { ChevronLeft, ChevronRight, ArrowRight } from 'lucide-react';
 import { useIsMobile } from '../../hooks/useIsMobile';
 
 export type { ResourcePost };
-
-// Fallback image when no image is provided
-const FALLBACK_IMAGE = 'https://images.unsplash.com/photo-1499750310107-5fef28a66643?w=800&auto=format&fit=crop&q=80';
 
 // Hide scrollbar style ID
 const SCROLLBAR_STYLE_ID = 'ikan-resource-slider-style';
@@ -29,7 +26,7 @@ export interface ResourceBlockProps {
 
 /** Resource slider card — prominent image + category + title (no description) */
 function SliderResourceCard({ post, onClick, isMobile }: { post: ResourcePost; onClick: () => void; isMobile?: boolean }) {
-  const imageSrc = resolveImageUrl(post.image) || FALLBACK_IMAGE;
+  const imageSrc = resolveImageUrl(post.image);
 
   return (
     <div
@@ -57,9 +54,8 @@ function SliderResourceCard({ post, onClick, isMobile }: { post: ResourcePost; o
         className="relative overflow-hidden w-full"
         style={{ height: '190px', backgroundColor: 'var(--color-accent-default)' }}
       >
-        <ImageWithFallback
+        <ContentImage
           src={imageSrc}
-          fallbackSrc={FALLBACK_IMAGE}
           alt={post.title}
           className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
           loading="lazy"

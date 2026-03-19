@@ -183,6 +183,10 @@ export function EquipProgramWizard({ programId, onBack, onSave }: EquipProgramWi
   const hasLoadedRef = useRef(false);
   const LOCAL_STORAGE_KEY = `ikan_equip_draft_${programId || 'new'}`;
 
+  // ── Ref to always have the latest formData for saves ──────────
+  const formDataRef = useRef(formData);
+  useEffect(() => { formDataRef.current = formData; }, [formData]);
+
   // ── localStorage crash recovery ──────────────────────────────
   // On mount: check if there's a localStorage backup
   useEffect(() => {
@@ -394,8 +398,8 @@ export function EquipProgramWizard({ programId, onBack, onSave }: EquipProgramWi
        
        showToast('success', newStatus ? 'Published' : 'Unpublished', 'Program status updated based on last saved version.');
        
-       // Refresh local data to ensure we have the unified blocks if any server-side logic ran
-       loadProgram();
+       // DO NOT call loadProgram() here — it would overwrite any unsaved local changes.
+       // The published flag is already updated in local state above.
        
     } catch (e) {
        showToast('error', 'Error', 'Failed to update status');
@@ -432,9 +436,14 @@ export function EquipProgramWizard({ programId, onBack, onSave }: EquipProgramWi
   }, [formData, getOnboardingDay]);
 
   // Stable callback for DailyBuilder
-  const handleBuilderChange = useCallback((updates: any) => {
-    const day0 = updates.daily_content?.find((d: DayContent) => d.day === 0);
+  const handleBuilderChange = useCallback((updatesOrUpdater: any) => {
     setFormData(prev => {
+      const updates = typeof updatesOrUpdater === 'function' ? updatesOrUpdater(prev) : updatesOrUpdater;
+      
+      // If daily_content wasn't updated, just return merged state
+      if (!updates.daily_content) return { ...prev, ...updates };
+
+      const day0 = updates.daily_content.find((d: DayContent) => d.day === 0);
       const newQuestions = day0?.activities?.map(mapBlockToQuestion) || prev.onboarding_questions || [];
       return { ...prev, ...updates, onboarding_questions: newQuestions };
     });
@@ -462,21 +471,21 @@ export function EquipProgramWizard({ programId, onBack, onSave }: EquipProgramWi
           if (hasUnsavedChanges) setShowWarning(true);
           else onBack();
         }}
-        onSaveDraft={() => persistWizard(formData)}
+        onSaveDraft={() => persistWizard(formDataRef.current)}
         onNext={async () => {
-          if (validateForm(formData)) {
-            await persistWizard(formData, true); // Auto-save on continue
+          if (validateForm(formDataRef.current)) {
+            await persistWizard(formDataRef.current, true); // Auto-save on continue
             setCurrentStep(s => Math.min(s + 1, totalSteps));
           } else {
             showToast('error', 'Validation Error', 'Please correct the errors before proceeding');
           }
         }}
         onPrevious={async () => {
-           await persistWizard(formData, true); // Auto-save on back
+           await persistWizard(formDataRef.current, true); // Auto-save on back
            setCurrentStep(s => Math.max(s - 1, 0));
         }}
         onFinish={async () => {
-           await persistWizard(formData);
+           await persistWizard(formDataRef.current);
            onSave();
         }}
         isLoading={saving}
@@ -516,7 +525,7 @@ export function EquipProgramWizard({ programId, onBack, onSave }: EquipProgramWi
             )}
             <Button
               variant="outline"
-              onClick={() => persistWizard(formData)}
+              onClick={() => persistWizard(formDataRef.current)}
               disabled={saving}
               className="h-8 w-8 p-0"
               title="Save Progress"
@@ -556,7 +565,7 @@ export function EquipProgramWizard({ programId, onBack, onSave }: EquipProgramWi
             <Button
               variant="outline"
               size="sm"
-              onClick={() => { setSaveError(null); persistWizard(formData); }}
+              onClick={() => { setSaveError(null); persistWizard(formDataRef.current); }}
               className="h-7 px-3 text-xs shrink-0"
               style={{ borderColor: 'var(--color-status-danger)', color: 'var(--color-status-danger)' }}
             >
@@ -579,13 +588,13 @@ export function EquipProgramWizard({ programId, onBack, onSave }: EquipProgramWi
               duration={formData.duration_days || 28}
               isPremium={formData.is_paid || false}
               price={formData.price || 0}
-              onTitleChange={(value) => setFormData({ ...formData, title: value })}
-              onDescriptionChange={(value) => setFormData({ ...formData, description: value })}
-              onCategoryChange={(value) => setFormData({ ...formData, category: value })}
-              onDifficultyChange={(value) => setFormData({ ...formData, difficulty: value })}
-              onDurationChange={(value) => setFormData({ ...formData, duration_days: value })}
-              onIsPremiumChange={(value) => setFormData({ ...formData, is_paid: value })}
-              onPriceChange={(value) => setFormData({ ...formData, price: value })}
+              onTitleChange={(value) => setFormData(prev => ({ ...prev, title: value }))}
+              onDescriptionChange={(value) => setFormData(prev => ({ ...prev, description: value }))}
+              onCategoryChange={(value) => setFormData(prev => ({ ...prev, category: value }))}
+              onDifficultyChange={(value) => setFormData(prev => ({ ...prev, difficulty: value }))}
+              onDurationChange={(value) => setFormData(prev => ({ ...prev, duration_days: value }))}
+              onIsPremiumChange={(value) => setFormData(prev => ({ ...prev, is_paid: value }))}
+              onPriceChange={(value) => setFormData(prev => ({ ...prev, price: value }))}
               config={{
                 titleLabel: 'Program Title',
                 descriptionLabel: 'Description',
@@ -603,7 +612,7 @@ export function EquipProgramWizard({ programId, onBack, onSave }: EquipProgramWi
                   <div className="w-24 h-24 flex-shrink-0">
                     <ImageUpload 
                       value={formData.cover_image || formData.thumbnail || ''}
-                      onChange={v => setFormData({ ...formData, cover_image: v, thumbnail: v })}
+                      onChange={v => setFormData(prev => ({ ...prev, cover_image: v, thumbnail: v }))}
                       placeholder="Select Image"
                       aspectRatio="square"
                     />
@@ -637,7 +646,9 @@ export function EquipProgramWizard({ programId, onBack, onSave }: EquipProgramWi
                       checked={(formData.checkInConfig ?? DEFAULT_CHECKIN_CONFIG).enabled}
                       onCheckedChange={(c) => {
                         const current = formData.checkInConfig ?? { ...DEFAULT_CHECKIN_CONFIG };
-                        setFormData({ ...formData, checkInConfig: { ...current, enabled: !!c } });
+                        setFormData(prev => {
+                          return { ...prev, checkInConfig: { ...current, enabled: !!c } };
+                        });
                       }}
                     />
                     <Label htmlFor="checkin-enabled" style={{ fontSize: 'var(--text-sm)', fontWeight: 500, fontFamily: 'var(--font-family-base)', cursor: 'pointer' }}>
@@ -657,8 +668,10 @@ export function EquipProgramWizard({ programId, onBack, onSave }: EquipProgramWi
                             .split(',')
                             .map(s => parseInt(s.trim()))
                             .filter(n => !isNaN(n) && n > 0);
-                          const current = formData.checkInConfig ?? { ...DEFAULT_CHECKIN_CONFIG };
-                          setFormData({ ...formData, checkInConfig: { ...current, triggerDays: days } });
+                          setFormData(prev => {
+                            const current = prev.checkInConfig ?? { ...DEFAULT_CHECKIN_CONFIG };
+                            return { ...prev, checkInConfig: { ...current, triggerDays: days } };
+                          });
                         }}
                         placeholder="e.g. 7, 14, 30"
                       />
@@ -670,8 +683,10 @@ export function EquipProgramWizard({ programId, onBack, onSave }: EquipProgramWi
                         id="checkin-last-day"
                         checked={(formData.checkInConfig ?? DEFAULT_CHECKIN_CONFIG).triggerOnLastDay}
                         onCheckedChange={(c) => {
-                          const current = formData.checkInConfig ?? { ...DEFAULT_CHECKIN_CONFIG };
-                          setFormData({ ...formData, checkInConfig: { ...current, triggerOnLastDay: !!c } });
+                          setFormData(prev => {
+                            const current = prev.checkInConfig ?? { ...DEFAULT_CHECKIN_CONFIG };
+                            return { ...prev, checkInConfig: { ...current, triggerOnLastDay: !!c } };
+                          });
                         }}
                       />
                       <Label htmlFor="checkin-last-day" className="cursor-pointer" style={{ fontSize: 'var(--text-sm)', fontFamily: 'var(--font-family-base)', fontWeight: 400 }}>
@@ -684,8 +699,10 @@ export function EquipProgramWizard({ programId, onBack, onSave }: EquipProgramWi
                       <Input
                         value={formData.checkInConfig?.customTitle || ''}
                         onChange={(e) => {
-                          const current = formData.checkInConfig ?? { ...DEFAULT_CHECKIN_CONFIG };
-                          setFormData({ ...formData, checkInConfig: { ...current, customTitle: e.target.value || undefined } });
+                          setFormData(prev => {
+                            const current = prev.checkInConfig ?? { ...DEFAULT_CHECKIN_CONFIG };
+                            return { ...prev, checkInConfig: { ...current, customTitle: e.target.value || undefined } };
+                          });
                         }}
                         placeholder="Leave blank to use program title"
                       />

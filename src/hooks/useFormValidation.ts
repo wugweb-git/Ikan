@@ -6,6 +6,8 @@ export interface ValidationRule {
   maxLength?: number;
   pattern?: RegExp;
   custom?: (value: any) => string | null;
+  /** A boolean-returning validator: return true if valid, false if invalid */
+  validate?: (value: any) => boolean;
   message?: string;
 }
 
@@ -49,6 +51,14 @@ export function useFormValidation(schema: ValidationSchema) {
     // Custom validation
     if (rule.custom) {
       return rule.custom(value);
+    }
+
+    // Boolean validate function
+    if (rule.validate) {
+      const isValid = rule.validate(value);
+      if (!isValid) {
+        return rule.message || `${field} is invalid`;
+      }
     }
 
     return null;
@@ -96,6 +106,7 @@ export function useFormValidation(schema: ValidationSchema) {
     validateForm,
     validateSingleField,
     clearError,
+    clearErrors: clearAllErrors,
     clearAllErrors,
     hasErrors: Object.keys(errors).length > 0
   };

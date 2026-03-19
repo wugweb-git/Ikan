@@ -154,10 +154,18 @@ export const ProgressService = {
         // Or just blindly increment. The UI handles "End of Program".
         // Let's verify max days to be safe.
         const equip = await EquipService.getEquip(equipId);
-        if (equip && dayNumber < equip.duration_days) {
+        if (equip) {
+          // Determine total days: prefer blob daily_content length, then duration_days
+          let totalDays = equip.duration_days || 0;
+          if (Array.isArray(equip.daily_content) && equip.daily_content.length > 0) {
+            // Count only regular days (exclude Day 0 onboarding)
+            totalDays = equip.daily_content.filter((d: any) => (d.day ?? d.day_number) !== 0).length;
+          }
+          if (dayNumber < totalDays) {
              enrollment.current_day_number = dayNumber + 1;
-        } else {
+          } else {
              enrollment.status = 'completed';
+          }
         }
         enrollment.last_activity_at = new Date().toISOString();
         await kv.set(`enrollment:${userId}:${equipId}`, enrollment);
@@ -184,9 +192,9 @@ export const ProgressService = {
   },
 
   async syncProgress(userId: string, equipId: string, data: any): Promise<void> {
-    // data: { currentDay, completedBlockIds, responses }
+    // data: { currentDay/dayNumber, completedBlockIds, responses }
     // We update the current day's progress
-    const dayNum = data.currentDay;
+    const dayNum = data.dayNumber || data.currentDay;
     if (!dayNum) return;
 
     const key = `progress:${userId}:${equipId}:${dayNum}`;
@@ -222,17 +230,56 @@ export const ProgressService = {
 
     const dayNum = enrollment.current_day_number;
     
-    // Fetch Day Schema
-    // We need to find the day ID for this number.
+    // ── CRITICAL: Prefer blob daily_content over separate entities ──
+    // The wizard PUT route stores content in equip:{id}.daily_content blob
+    // but does NOT create/update separate day:/block: entities.
+    // We must check the blob first.
+    const equip = await EquipService.getEquip(equipId);
+    if (!equip) return null;
+
+    if (Array.isArray(equip.daily_content) && equip.daily_content.length > 0) {
+      // Blob format — match by day number
+      const day = equip.daily_content.find((d: any) => (d.day ?? d.day_number) === dayNum);
+      if (!day) return null;
+
+      // Map activities/blocks to a consistent shape
+      const blocks = (day.activities || day.blocks || []).map((b: any) => ({
+        id: b.id,
+        title: b.title || 'Untitled Block',
+        type: b.type || b.block_type || 'lesson',
+        content: b.content || '',
+        duration: b.duration || b.estimated_time_minutes || 5,
+        required: b.required !== undefined ? b.required : true,
+        exerciseConfig: b.exerciseConfig || b.exercise_config || {},
+        stepGroup: b.stepGroup || b.step_group_id,
+        autoAdvance: b.autoAdvance || b.auto_advance || false,
+        image_url: b.image_url,
+        order: b.order,
+        interaction: b.interaction,
+        subtitle: b.subtitle,
+      }));
+
+      return {
+        enrollment,
+        day: {
+          day_number: day.day ?? day.day_number,
+          title: day.title || `Day ${dayNum}`,
+          description: day.description || '',
+          dayType: day.dayType || day.day_type || 'learning',
+          subtitle: day.subtitle || '',
+        },
+        blocks,
+      };
+    }
+
+    // Fallback: separate entity system (legacy programs created via POST route)
     const days = await EquipDayService.listDaysForEquip(equipId);
     const day = days.find(d => d.day_number === dayNum);
     
-    if (!day) return null; // Should not happen unless schema changed
+    if (!day) return null;
 
-    // Fetch Blocks
     const rawBlocks = await EquipBlockService.listBlocksForDay(day.id);
     
-    // Hydrate Content
     const blocks = await Promise.all(rawBlocks.map(async (b: any) => {
         if (b.content_ref_id) {
             const content = await ContentService.getContentBySlug(b.content_ref_id) 

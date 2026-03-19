@@ -13,7 +13,7 @@ import { MobileHeader } from '../navigation/MobileHeader';
 import { useIsMobile } from '../../hooks/useIsMobile';
 import { EmptyState } from '../ui/empty-state';
 import { Skeleton } from '../ui/skeleton-loader';
-import { EQUIP_CONTENT, NEWSLETTER_CONTENT, LEGACY_PROGRAM_IDS, FALLBACK_IMAGES } from '../../lib/constants/content';
+import { EQUIP_CONTENT, NEWSLETTER_CONTENT, LEGACY_PROGRAM_IDS } from '../../lib/constants/content';
 
 interface EquipDetailProps {
   equipId?: string;
@@ -162,8 +162,8 @@ export function EquipDetail({ equipId = 'sleep-tight-9', onNavigate }: EquipDeta
 
         setEquipData({
           ...program,
-          // Use hero_image if available, otherwise fallback to cover_image, thumbnail, or default
-          hero_image: program.hero_image || program.cover_image || program.thumbnail || FALLBACK_IMAGES.DEFAULT,
+          // Use hero_image if available, otherwise fallback to cover_image or thumbnail
+          hero_image: program.hero_image || program.cover_image || program.thumbnail || '',
           cta_button_link: program.cta_button_link || `/equip-program-onboarding?id=${equipId}`,
         });
 
@@ -396,6 +396,9 @@ export function EquipDetail({ equipId = 'sleep-tight-9', onNavigate }: EquipDeta
           eligibilityPoint2={equipData.metadata?.eligibility_point_2}
           eligibilityPoint3={equipData.metadata?.eligibility_point_3}
           eligibilityPoint4={equipData.metadata?.eligibility_point_4}
+          rightColumnItems={equipData.metadata?.right_column_items}
+          howItWorksSubtitle={equipData.metadata?.how_it_works_subtitle}
+          howItWorksFooter={equipData.metadata?.how_it_works_footer}
         />
         
         {/* BOTTOM SECTION: EQUIP BLOCK - Related Programs */}

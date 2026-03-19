@@ -421,14 +421,39 @@ class ApiClient {
     // ── CRITICAL: Dual-format resolution ──
     // The PUT route stores daily_content as a blob field in equip:{id}.
     // The GET route (getFullEquip) loads separate equip_day: entries into `days`.
-    // If `days` is empty but `daily_content` exists in the blob, prefer the blob.
+    // PRIORITY: Blob daily_content is ALWAYS more current than separate entities
+    // because PUT updates the blob but NOT the separate equip_day:/equip_block: entities.
     const hasSeparateDays = Array.isArray(raw.days) && raw.days.length > 0;
     const hasBlobContent = Array.isArray(raw.daily_content) && raw.daily_content.length > 0;
 
     let dailyContent: any[];
 
-    if (hasSeparateDays) {
-      // Normalized format: map separate day/block entities to frontend format
+    if (hasBlobContent) {
+      // Blob format: daily_content was stored directly by PUT route — ALWAYS prefer this
+      // Already in frontend format — just ensure field consistency
+      dailyContent = raw.daily_content.map((day: any) => ({
+        day: day.day ?? day.day_number ?? 0,
+        title: day.title || '',
+        description: day.description || '',
+        image_url: day.image_url,
+        dayType: day.dayType || day.day_type || 'learning',
+        subtitle: day.subtitle || '',
+        activities: (day.activities || day.blocks || []).map((block: any) => ({
+          id: block.id,
+          title: block.title || 'Untitled Block',
+          type: block.type || block.block_type || 'lesson',
+          content: block.content || '',
+          duration: block.duration || block.estimated_time_minutes || 5,
+          required: block.required !== undefined ? block.required : (block.is_required !== undefined ? block.is_required : true),
+          exerciseConfig: block.exerciseConfig || block.exercise_config || {},
+          stepGroup: block.stepGroup || block.step_group_id,
+          autoAdvance: block.autoAdvance || block.auto_advance || false,
+          image_url: block.image_url,
+          order: block.order
+        }))
+      }));
+    } else if (hasSeparateDays) {
+      // Fallback: Normalized format from legacy separate day/block entities
       dailyContent = raw.days.map((day: EquipProgramDay) => ({
         day: day.day_number,
         title: day.title,
@@ -473,30 +498,6 @@ class ApiClient {
             image_url: block.image_url
           };
         })
-      }));
-    } else if (hasBlobContent) {
-      // Blob format: daily_content was stored directly by PUT route
-      // Already in frontend format — just ensure field consistency
-      dailyContent = raw.daily_content.map((day: any) => ({
-        day: day.day ?? day.day_number ?? 0,
-        title: day.title || '',
-        description: day.description || '',
-        image_url: day.image_url,
-        dayType: day.dayType || day.day_type || 'learning',
-        subtitle: day.subtitle || '',
-        activities: (day.activities || day.blocks || []).map((block: any) => ({
-          id: block.id,
-          title: block.title || 'Untitled Block',
-          type: block.type || block.block_type || 'lesson',
-          content: block.content || '',
-          duration: block.duration || block.estimated_time_minutes || 5,
-          required: block.required !== undefined ? block.required : (block.is_required !== undefined ? block.is_required : true),
-          exerciseConfig: block.exerciseConfig || block.exercise_config || {},
-          stepGroup: block.stepGroup || block.step_group_id,
-          autoAdvance: block.autoAdvance || block.auto_advance || false,
-          image_url: block.image_url,
-          order: block.order
-        }))
       }));
     } else {
       dailyContent = [];

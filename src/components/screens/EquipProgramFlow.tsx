@@ -285,8 +285,10 @@ interface EquipProgramHomeProps {
 function EquipProgramHome({ program, progress, onStartSession, onSelectDay, onRestart, onBack, onLeaveProgram, onNavigate }: EquipProgramHomeProps) {
   const [selectedDay, setSelectedDay] = useState(progress.currentDay);
   const selectedDayContent = program.daily_content?.find(d => d.day === selectedDay);
-  const totalDays = program.daily_content?.length || 0;
-  const isProgramComplete = progress.currentDay > totalDays;
+  // Compute max regular day number (exclude Day 0 onboarding)
+  const regularDays = (program.daily_content || []).filter(d => d.day !== 0);
+  const maxDayNum = regularDays.length > 0 ? Math.max(...regularDays.map(d => d.day)) : 0;
+  const isProgramComplete = progress.currentDay > maxDayNum && maxDayNum > 0;
   const hasStartedDay = progress.currentDayState.completedBlockIds.length > 0;
 
   const days = useMemo(() =>
@@ -608,6 +610,10 @@ export function EquipProgramFlow({ programId, enrollmentId, onBack, onComplete, 
     }
   });
 
+  // Ref to always have the latest progress for async callbacks
+  const progressRef = useRef(progress);
+  useEffect(() => { progressRef.current = progress; }, [progress]);
+
   const handleBack = () => {
     if (onBack) onBack();
     else if (onNavigate) onNavigate('/dashboard');
@@ -628,13 +634,30 @@ export function EquipProgramFlow({ programId, enrollmentId, onBack, onComplete, 
         try {
           const progressData = await apiClient.getEnrollmentProgress(programId);
           if (progressData) {
+            // progressData shape: { enrollment: { current_day_number, ... }, days: [{ day_number, completed, ... }] }
+            const enrollment = progressData.enrollment || progressData;
+            const completedDayEntries = (progressData.days || progressData.completed_days || []);
+            
+            // Build completedDays map from backend progress records
+            const completedDays: Record<number, any> = {};
+            if (Array.isArray(completedDayEntries)) {
+              completedDayEntries.forEach((d: any) => {
+                // Handle both formats: array of day numbers or array of progress objects
+                if (typeof d === 'number') {
+                  completedDays[d] = { status: 'completed', date: new Date().toISOString() };
+                } else if (d && d.completed) {
+                  const dayNum = d.day_number ?? d.dayNumber;
+                  if (dayNum != null) {
+                    completedDays[dayNum] = { status: 'completed', date: d.completed_at || new Date().toISOString(), responses: d.block_responses };
+                  }
+                }
+              });
+            }
+
             setProgress(prev => ({
               ...prev,
-              currentDay: progressData.current_day || 1,
-              completedDays: (progressData.completed_days || []).reduce((acc: any, dayNum: number) => {
-                acc[dayNum] = { status: 'completed', date: new Date().toISOString() };
-                return acc;
-              }, {}),
+              currentDay: enrollment.current_day_number || enrollment.current_day || 1,
+              completedDays,
               currentDayState: { completedBlockIds: [], responses: {} }
             }));
 
@@ -671,7 +694,7 @@ export function EquipProgramFlow({ programId, enrollmentId, onBack, onComplete, 
      if (programId) {
         try {
             await apiClient.syncEquipProgress(programId, {
-                dayNumber: progress.currentDay,
+                dayNumber: progressRef.current.currentDay,
                 responses: p.responses
             });
         } catch (e) {
@@ -683,18 +706,20 @@ export function EquipProgramFlow({ programId, enrollmentId, onBack, onComplete, 
   const handleCompleteDay = async () => {
      if (!programId) return;
 
-     const nextDay = progress.currentDay + 1;
+     const currentProgress = progressRef.current;
+     const currentDay = currentProgress.currentDay;
+     const nextDay = currentDay + 1;
      const now = new Date().toISOString();
 
      const newProgress = {
-        ...progress,
+        ...currentProgress,
         currentDay: nextDay,
         completedDays: {
-           ...progress.completedDays,
-           [progress.currentDay]: {
+           ...currentProgress.completedDays,
+           [currentDay]: {
              status: 'completed' as const,
              date: now,
-             responses: progress.currentDayState.responses
+             responses: currentProgress.currentDayState.responses
            }
         },
         currentDayState: { completedBlockIds: [], responses: {} }
@@ -705,7 +730,7 @@ export function EquipProgramFlow({ programId, enrollmentId, onBack, onComplete, 
      showToast('success', 'Day Complete!', 'Great job.');
 
      try {
-       await apiClient.completeDay(programId, progress.currentDay);
+       await apiClient.completeDay(programId, currentDay);
        if (onComplete) onComplete();
      } catch (e) {
        console.error('Failed to sync completion status', e);

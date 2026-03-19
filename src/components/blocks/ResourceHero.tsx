@@ -1,5 +1,5 @@
+import { ContentImage } from '../ui/ContentImage';
 import { cn } from '../ui/utils';
-import { ImageWithFallback } from '../figma/ImageWithFallback';
 
 interface ResourceHeroProps {
   title: string;
@@ -25,7 +25,7 @@ export function ResourceHero({
     >
       {/* Background Image */}
       <div className="absolute inset-0">
-        <ImageWithFallback 
+        <ContentImage 
           src={image} 
           alt={imageAlt}
           className="w-full h-full object-cover" 

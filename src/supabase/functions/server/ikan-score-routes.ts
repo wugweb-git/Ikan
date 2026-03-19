@@ -54,7 +54,7 @@ function moodToWellness(moodRating: number): number {
 }
 
 // ─── Resolve max score ───────────────────────────────────────────
-function resolveMaxScore(result: any): number {
+async function resolveMaxScore(result: any): Promise<number> {
   // 1. Stored max_score from submission
   if (result.max_score && result.max_score > 0) return result.max_score;
   if (result.maxScore && result.maxScore > 0) return result.maxScore;
@@ -72,7 +72,38 @@ function resolveMaxScore(result: any): number {
     }
   }
 
-  // 4. Absolute last resort: use 100 (may be inaccurate)
+  // 4. Fetch assessment definition and compute from questions
+  const assessmentId = result.assessment_id || result.assessmentId;
+  if (assessmentId) {
+    try {
+      const def = await kv.get(`assessment_def:${assessmentId}`);
+      if (def) {
+        // Compute from questions (sum of highest option value per question)
+        let computedMax = 0;
+        if (def.questions && Array.isArray(def.questions) && def.questions.length > 0) {
+          for (const q of def.questions) {
+            if (q.options && Array.isArray(q.options)) {
+              let maxVal = 0;
+              for (const opt of q.options) {
+                const v = typeof opt === 'object' ? (opt.value ?? opt.score ?? 0) : 0;
+                if (typeof v === 'number' && v > maxVal) maxVal = v;
+              }
+              computedMax += maxVal;
+            }
+          }
+        }
+        if (computedMax > 0) return computedMax;
+        // Fallback to scoring ranges from definition
+        if (def.scoring?.ranges?.length > 0) {
+          const rangeMax = def.scoring.ranges[def.scoring.ranges.length - 1]?.max;
+          if (rangeMax && rangeMax > 0) return rangeMax;
+        }
+      }
+    } catch { /* non-critical */ }
+  }
+
+  // 5. Absolute last resort: use 100 (may be inaccurate)
+  console.log(`[ikan-score] WARNING: Could not resolve maxScore for assessment ${assessmentId || id}, falling back to 100`);
   return 100;
 }
 
@@ -155,7 +186,7 @@ async function computeIkanScore(userId: string): Promise<IkanScoreResult> {
   let assessmentWellnessSum = 0;
   for (const [id, r] of latestByType) {
     if (r.score === undefined || r.score === null) continue;
-    const maxScore = resolveMaxScore(r);
+    const maxScore = await resolveMaxScore(r);
     const wellness = assessmentScoreToWellness(r.score, maxScore, id);
     const name = await resolveAssessmentName(id);
     assessmentDetails.push({ id, name, wellness });
@@ -240,7 +271,7 @@ async function computeIkanScore(userId: string): Promise<IkanScoreResult> {
       // Try to get the program to know total days
       const program = await kv.get(`equip_program:${e.equip_id}`).catch(() => null)
         || await kv.get(`equip:${e.equip_id}`).catch(() => null);
-      const totalDays = program?.days?.length || program?.duration_days || program?.total_days || 30;
+      const totalDays = program?.daily_content?.length || program?.days?.length || program?.duration_days || program?.total_days || 30;
       const currentDay = e.current_day_number || 1;
       const progress = Math.min(100, Math.round((currentDay / totalDays) * 100));
       progressSum += progress;

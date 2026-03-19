@@ -328,7 +328,7 @@ export function ResourceEditPage({ resourceId, onBack, onSave }: ResourceEditPag
           {
             label: 'Featured',
             checked: formData.featured || false,
-            onChange: (checked) => setFormData({ ...formData, featured: checked })
+            onChange: (checked) => setFormData(prev => ({ ...prev, featured: checked }))
           }
         ]}
         actions={undefined}
@@ -344,7 +344,7 @@ export function ResourceEditPage({ resourceId, onBack, onSave }: ResourceEditPag
             <AdminFormField label="Title" required error={errors.title}>
               <Input
                 value={formData.title || ''}
-                onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
                 placeholder="Understanding Anxiety: A Complete Guide"
                 style={{
                   height: 'var(--ikan-component-button-height)',
@@ -356,7 +356,7 @@ export function ResourceEditPage({ resourceId, onBack, onSave }: ResourceEditPag
             <AdminFormField label="Author" required error={errors.author}>
               <Input
                 value={formData.author || ''}
-                onChange={(e) => setFormData({ ...formData, author: e.target.value })}
+                onChange={(e) => setFormData(prev => ({ ...prev, author: e.target.value }))}
                 placeholder="Dr. Jane Smith"
                 style={{
                   height: 'var(--ikan-component-button-height)',
@@ -368,7 +368,7 @@ export function ResourceEditPage({ resourceId, onBack, onSave }: ResourceEditPag
             <AdminFormField label="Topic Category" required>
               <Select
                 value={formData.category || 'general'}
-                onValueChange={(v: any) => setFormData({ ...formData, category: v })}
+                onValueChange={(v: any) => setFormData(prev => ({ ...prev, category: v }))}
               >
                 <SelectTrigger
                   style={{
@@ -391,7 +391,7 @@ export function ResourceEditPage({ resourceId, onBack, onSave }: ResourceEditPag
             <AdminFormField label="Content Format" required>
               <Select
                 value={formData.filter_type || 'article'}
-                onValueChange={(v: any) => setFormData({ ...formData, filter_type: v })}
+                onValueChange={(v: any) => setFormData(prev => ({ ...prev, filter_type: v }))}
               >
                 <SelectTrigger
                   style={{
@@ -414,7 +414,7 @@ export function ResourceEditPage({ resourceId, onBack, onSave }: ResourceEditPag
             <AdminFormField label="Difficulty Level">
               <Select
                 value={formData.difficulty || 'beginner'}
-                onValueChange={(v: any) => setFormData({ ...formData, difficulty: v })}
+                onValueChange={(v: any) => setFormData(prev => ({ ...prev, difficulty: v }))}
               >
                 <SelectTrigger
                   style={{
@@ -438,7 +438,7 @@ export function ResourceEditPage({ resourceId, onBack, onSave }: ResourceEditPag
               <Input
                 type="number"
                 value={formData.readTime || 0}
-                onChange={(e) => setFormData({ ...formData, readTime: parseInt(e.target.value) || 0 })}
+                onChange={(e) => setFormData(prev => ({ ...prev, readTime: parseInt(e.target.value) || 0 }))}
                 min="1"
                 max="120"
                 style={{
@@ -451,7 +451,7 @@ export function ResourceEditPage({ resourceId, onBack, onSave }: ResourceEditPag
             <AdminFormField label="Thumbnail URL" helpText="Preview image for the resource">
               <ImageUpload
                 value={formData.thumbnail || ''}
-                onChange={(url) => setFormData({ ...formData, thumbnail: url })}
+                onChange={(url) => setFormData(prev => ({ ...prev, thumbnail: url }))}
                 placeholder="https://..."
               />
             </AdminFormField>
@@ -465,7 +465,7 @@ export function ResourceEditPage({ resourceId, onBack, onSave }: ResourceEditPag
           >
             <Textarea
               value={formData.description || ''}
-              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+              onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
               placeholder="A comprehensive guide to understanding and managing anxiety..."
               className="min-h-[100px]"
               style={{
@@ -477,7 +477,7 @@ export function ResourceEditPage({ resourceId, onBack, onSave }: ResourceEditPag
           <AdminFormField label="Tags" description="Keywords for categorization and search">
             <TagInput
               value={formData.tags || []}
-              onChange={(tags) => setFormData({ ...formData, tags })}
+              onChange={(tags) => setFormData(prev => ({ ...prev, tags }))}
               placeholder="Add tags..."
             />
           </AdminFormField>
@@ -496,7 +496,7 @@ export function ResourceEditPage({ resourceId, onBack, onSave }: ResourceEditPag
           >
             <RichTextEditor
               value={formData.content || ''}
-              onChange={(value) => setFormData({ ...formData, content: value })}
+              onChange={(value) => setFormData(prev => ({ ...prev, content: value }))}
               placeholder="Start writing your resource content..."
               minHeight="300px"
             />
@@ -513,7 +513,7 @@ export function ResourceEditPage({ resourceId, onBack, onSave }: ResourceEditPag
             <AdminFormField label="PDF URL" helpText="Link to downloadable PDF">
               <Input
                 value={formData.pdfUrl || ''}
-                onChange={(e) => setFormData({ ...formData, pdfUrl: e.target.value })}
+                onChange={(e) => setFormData(prev => ({ ...prev, pdfUrl: e.target.value }))}
                 placeholder="https://example.com/guide.pdf"
                 style={{
                   height: 'var(--ikan-component-button-height)',
@@ -525,7 +525,7 @@ export function ResourceEditPage({ resourceId, onBack, onSave }: ResourceEditPag
             <AdminFormField label="Video URL" helpText="YouTube or Vimeo link">
               <Input
                 value={formData.videoUrl || ''}
-                onChange={(e) => setFormData({ ...formData, videoUrl: e.target.value })}
+                onChange={(e) => setFormData(prev => ({ ...prev, videoUrl: e.target.value }))}
                 placeholder="https://youtube.com/watch?v=..."
                 style={{
                   height: 'var(--ikan-component-button-height)',
@@ -537,7 +537,7 @@ export function ResourceEditPage({ resourceId, onBack, onSave }: ResourceEditPag
             <AdminFormField label="External Link" helpText="Link to external resource">
               <Input
                 value={formData.externalLink || ''}
-                onChange={(e) => setFormData({ ...formData, externalLink: e.target.value })}
+                onChange={(e) => setFormData(prev => ({ ...prev, externalLink: e.target.value }))}
                 placeholder="https://external-resource.com"
                 style={{
                   height: 'var(--ikan-component-button-height)',

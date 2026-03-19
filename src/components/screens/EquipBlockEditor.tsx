@@ -45,6 +45,8 @@ const FALLBACK_EXERCISE_SUBTYPES = [
   { value: 'rating-scale', label: 'Rating Scale' },
   { value: 'clinical-instrument', label: 'Clinical Instrument (GAD-7, PHQ-9)' },
   { value: 'upload', label: 'File Upload' },
+  { value: 'ephemeral-journal', label: 'Ephemeral Journal' },
+  { value: 'comparison-matrix', label: 'Comparison Matrix' },
 ];
 
 // Fallback block types — used only while MetaManager hasn't loaded
@@ -129,8 +131,11 @@ function EquipBlockEditorInner({
   const currentInteraction = resolveInteraction(block);
   const interactionMeta = INTERACTION_META[currentInteraction];
 
+  // Safety: coerce block.type to string in case of corrupted data
+  const safeBlockType = typeof block.type === 'string' ? block.type : 'lesson';
+
   const getIcon = () => {
-    switch (block.type) {
+    switch (safeBlockType) {
       case 'lesson': return <BookOpen className="w-4 h-4" style={{ color: 'var(--color-info-default)' }} />;
       case 'exercise': return <PenTool className="w-4 h-4" style={{ color: 'var(--color-primary-default)' }} />;
       case 'journal': return <MessageCircle className="w-4 h-4" style={{ color: 'var(--color-warning-default)' }} />;
@@ -147,7 +152,7 @@ function EquipBlockEditorInner({
   const mediaType = isVideo ? 'video' : 'image';
 
   return (
-    <Card className={hideHeader ? "border-none shadow-none" : "shadow-sm mb-3"} style={!hideHeader ? { border: '1px solid var(--color-border-default)' } : undefined}>
+    <Card className={hideHeader ? "border-none shadow-none bg-transparent" : "shadow-sm mb-3"} style={!hideHeader ? { border: '1px solid var(--color-border-default)' } : undefined}>
       {!hideHeader && (
       <div className="flex items-center gap-2 p-3 rounded-t-lg" style={{ backgroundColor: 'var(--color-bg-muted)', borderBottom: '1px solid var(--color-border-default)' }}>
         <div className="cursor-grab" style={{ color: 'var(--color-text-muted)' }}>
@@ -186,40 +191,19 @@ function EquipBlockEditorInner({
       )}
 
       {(isExpanded || hideHeader) && (
-        <CardContent className={hideHeader ? "p-0 space-y-3" : "p-3 space-y-3"}>
+        <CardContent className={hideHeader ? "p-0 space-y-2" : "p-3 space-y-3"}>
           
-          {/* ── TOP BAR: Type pill + Interaction pill + Media icon ── */}
+          {/* ── HEADER ROW: Block label + interaction badges + media icons ── */}
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-1.5 flex-wrap">
-              <Select 
-                value={block.type} 
-                onValueChange={(val: any) => onChange({ type: val })}
-              >
-                <SelectTrigger className="h-5 w-auto gap-1 px-2 border-none shadow-none text-[10px] uppercase tracking-wider" style={{ backgroundColor: 'var(--color-accent-default)', color: 'var(--color-text-primary)', fontWeight: 500, fontFamily: 'var(--font-family-base)', borderRadius: 'var(--radius-pill)' }}>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {blockTypeOptions.map((bt) => (
-                    <SelectItem key={bt.value} value={bt.value}>{bt.label}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <span style={{ 
-                fontSize: '9px', fontWeight: 500, fontFamily: 'var(--font-family-base)',
-                color: 'var(--color-primary-default)', backgroundColor: 'color-mix(in srgb, var(--color-primary-default) 10%, transparent)',
-                padding: '2px 7px', borderRadius: 'var(--radius-pill)',
-              }}>
-                {currentInteraction}
+            <div className="flex items-center gap-1.5">
+              {getIcon()}
+              <span style={{ fontSize: '12px', fontWeight: 500, fontFamily: 'var(--font-family-base)', color: 'var(--color-text-primary)' }}>
+                Interactive Block
               </span>
-              <span style={{ 
-                fontSize: '9px', fontWeight: 500, fontFamily: 'var(--font-family-base)',
-                color: 'var(--color-status-info)', backgroundColor: 'var(--color-status-info-light)',
-                padding: '2px 7px', borderRadius: 'var(--radius-pill)',
-              }}>
-                {interactionMeta.verb}
+              <span style={{ fontSize: '9px', fontWeight: 500, fontFamily: 'var(--font-family-base)', color: 'var(--color-text-muted)', backgroundColor: 'var(--color-bg-muted)', padding: '1px 6px', borderRadius: 'var(--radius-pill)' }}>
+                {block.type}/{currentInteraction}
               </span>
             </div>
-            {/* Media buttons — always visible */}
             <div className="flex items-center gap-1">
               <input
                 ref={imageInputRef}
@@ -231,11 +215,11 @@ function EquipBlockEditorInner({
               <button
                 type="button"
                 onClick={() => imageInputRef.current?.click()}
-                className="h-7 w-7 flex items-center justify-center rounded-md transition-colors hover:bg-[var(--color-accent-default)]"
+                className="h-6 w-6 flex items-center justify-center rounded transition-colors hover:bg-[var(--color-accent-default)]"
                 title="Upload image"
-                style={{ border: block.image_url && !isVideo ? '1.5px solid var(--color-primary-default)' : '1px solid var(--color-border-default)' }}
+                style={{ opacity: block.image_url && !isVideo ? 1 : 0.4 }}
               >
-                <ImageIcon size={14} style={{ color: block.image_url && !isVideo ? 'var(--color-primary-default)' : 'var(--color-text-muted)' }} />
+                <ImageIcon size={13} style={{ color: block.image_url && !isVideo ? 'var(--color-primary-default)' : 'var(--color-text-muted)' }} />
               </button>
               <button
                 type="button"
@@ -243,32 +227,54 @@ function EquipBlockEditorInner({
                   const url = prompt('Enter video URL (YouTube, Vimeo, or MP4):');
                   if (url) onChange({ image_url: url });
                 }}
-                className="h-7 w-7 flex items-center justify-center rounded-md transition-colors hover:bg-[var(--color-accent-default)]"
+                className="h-6 w-6 flex items-center justify-center rounded transition-colors hover:bg-[var(--color-accent-default)]"
                 title="Add video URL"
-                style={{ border: isVideo ? '1.5px solid var(--color-primary-default)' : '1px solid var(--color-border-default)' }}
+                style={{ opacity: isVideo ? 1 : 0.4 }}
               >
-                <Video size={14} style={{ color: isVideo ? 'var(--color-primary-default)' : 'var(--color-text-muted)' }} />
+                <Video size={13} style={{ color: isVideo ? 'var(--color-primary-default)' : 'var(--color-text-muted)' }} />
               </button>
             </div>
           </div>
 
-          {/* COMMON FIELDS — Title + Subtitle compact */}
-          <div className="space-y-2">
-            <Input 
-              value={block.title} 
-              onChange={(e) => onChange({ title: e.target.value })} 
-              placeholder="Block title..."
-              className="h-8 text-xs border-none shadow-none px-0 focus-visible:ring-0"
-              style={{ fontSize: 'var(--text-sm)', fontWeight: 500, fontFamily: 'var(--font-family-base)', color: 'var(--color-text-primary)' }}
-            />
-            <Input 
-              value={block.subtitle || ''} 
-              onChange={(e) => onChange({ subtitle: e.target.value })} 
-              placeholder="Subtitle (optional)"
-              className="h-6 text-xs border-none shadow-none px-0 focus-visible:ring-0"
-              style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}
-            />
+          {/* ── PRIMARY ROW: Title (75%) + Type dropdown (25%) ── */}
+          <div className="flex gap-2">
+            <div className="flex-[3]">
+              <Input 
+                value={block.title} 
+                onChange={(e) => onChange({ title: e.target.value })} 
+                placeholder="Block title..."
+                className="h-9 text-sm"
+                style={{ fontWeight: 500, fontFamily: 'var(--font-family-base)', color: 'var(--color-text-primary)', borderRadius: 'var(--radius-md)' }}
+              />
+            </div>
+            <div className="flex-[1]">
+              <Select 
+                value={block.type} 
+                onValueChange={(val: any) => onChange({ type: val })}
+              >
+                <SelectTrigger className="h-9" style={{ fontSize: '12px', borderRadius: 'var(--radius-md)' }}>
+                  <div className="flex items-center gap-1.5">
+                    {getIcon()}
+                    <SelectValue />
+                  </div>
+                </SelectTrigger>
+                <SelectContent>
+                  {blockTypeOptions.map((bt) => (
+                    <SelectItem key={bt.value} value={bt.value}>{bt.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
+
+          {/* ── SECONDARY ROW: Subtitle ── */}
+          <Input 
+            value={block.subtitle || ''} 
+            onChange={(e) => onChange({ subtitle: e.target.value })} 
+            placeholder="Subtitle (optional)"
+            className="h-7 text-xs"
+            style={{ color: 'var(--color-text-muted)', borderColor: 'transparent', backgroundColor: 'var(--color-bg-muted)', borderRadius: 'var(--radius-md)' }}
+          />
 
           {/* ── MEDIA PREVIEW (only when media exists) ── */}
           {block.image_url && (
@@ -457,7 +463,7 @@ function EquipBlockEditorInner({
               )}
 
               {/* Table Config */}
-              {(block.exerciseConfig?.subtype === 'table' || block.exerciseConfig?.subtype === 'input-table') && (
+              {(block.exerciseConfig?.subtype === 'table' || block.exerciseConfig?.subtype === 'input-table' || block.exerciseConfig?.subtype === 'comparison-matrix' || block.exerciseConfig?.subtype === 'comparison_matrix') && (
                 <div className="space-y-4 pt-2 border-t border-dashed">
                   <div className="space-y-1">
                     <Label className="text-xs">Column Headers (One per line)</Label>
@@ -643,8 +649,8 @@ function EquipBlockEditorInner({
              </div>
           )}
 
-          {/* WIZARD FLOW & INTERACTION SECTION (PROMOTED) */}
-          <div className="pt-2 border-t mt-4">
+          {/* WIZARD FLOW & INTERACTION SECTION */}
+          <div className="pt-2 mt-2" style={{ borderTop: '1px solid var(--color-border-default)' }}>
              {(() => {
                const preset = dayType ? getPresetForDayType(dayType) : undefined;
                const presetManaged = preset && (
@@ -655,109 +661,77 @@ function EquipBlockEditorInner({
 
                return (
                  <>
-                   <div className="flex items-center gap-2 mb-2">
-                     <Layers size={14} style={{ color: 'var(--color-primary-default)' }} />
-                     <Label className="uppercase tracking-wider" style={{ fontSize: 'var(--text-xs)', fontWeight: 'var(--font-weight-medium)', color: 'var(--color-text-muted)' }}>Wizard Flow</Label>
+                   <div className="flex items-center gap-1.5 mb-2">
+                     <Layers size={11} style={{ color: 'var(--color-text-muted)' }} />
+                     <span style={{ fontSize: '10px', fontWeight: 500, fontFamily: 'var(--font-family-base)', color: 'var(--color-text-muted)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Wizard Flow</span>
                      {presetManaged && (
                        <span style={{
                          fontSize: '9px', fontWeight: 500, fontFamily: 'var(--font-family-base)',
                          color: 'var(--color-status-success)', backgroundColor: 'var(--color-status-success-light)',
-                         padding: '1px 6px', borderRadius: 'var(--radius-pill)',
+                         padding: '1px 5px', borderRadius: 'var(--radius-pill)',
                        }}>
-                         {preset.label} preset
+                         {preset.label}
                        </span>
                      )}
                    </div>
 
-                   {/* Preset summary bar — when day type manages these */}
-                   {presetManaged && (
-                     <div className="flex flex-wrap items-center gap-1.5 mb-2 px-2.5 py-1.5 rounded-md" style={{ backgroundColor: 'var(--color-status-success-light)', border: '1px solid color-mix(in srgb, var(--color-status-success) 20%, transparent)' }}>
-                       {preset.autoConfig.autoAdvance !== undefined && (
-                         <span style={{ fontSize: '10px', fontWeight: 500, fontFamily: 'var(--font-family-base)', color: 'var(--color-status-success)' }}>
-                           Auto-advance: {preset.autoConfig.autoAdvance ? 'on' : 'off'}
-                         </span>
-                       )}
-                       {preset.autoConfig.autoAdvance !== undefined && preset.autoConfig.saveOnExit !== undefined && (
-                         <span style={{ color: 'var(--color-status-success)', opacity: 0.4 }}>·</span>
-                       )}
-                       {preset.autoConfig.saveOnExit && (
-                         <span style={{ fontSize: '10px', fontWeight: 500, fontFamily: 'var(--font-family-base)', color: 'var(--color-status-success)' }}>
-                           Save on exit
-                         </span>
-                       )}
-                       {!preset.stepGroupRules.allowed && (
-                         <>
-                           <span style={{ color: 'var(--color-status-success)', opacity: 0.4 }}>·</span>
-                           <span style={{ fontSize: '10px', fontWeight: 500, fontFamily: 'var(--font-family-base)', color: 'var(--color-status-success)' }}>
-                             No step groups
-                           </span>
-                         </>
-                       )}
-                     </div>
-                   )}
-                   
-                   <div className="p-3 rounded-md space-y-4" style={{ backgroundColor: 'var(--color-bg-muted)', border: '1px solid var(--color-border-default)' }}>
-                     {/* Step Grouping — hide if preset disallows */}
+                   {/* CONTROL ROW: Single inline row */}
+                   <div className="flex items-center gap-2 flex-wrap">
+                     {/* Step Group ID */}
                      {(!preset || preset.stepGroupRules.allowed) && (
-                       <div className="space-y-1">
-                         <div className="flex items-center justify-between">
-                           <Label className="text-xs" style={{ fontWeight: 'var(--font-weight-medium)' }}>Step Group ID</Label>
-                           <span style={{ fontSize: '10px', color: 'var(--color-text-muted)' }}>Optional</span>
-                         </div>
-                         <div className="flex gap-2">
-                           <div className="relative flex-1">
-                             <Input 
-                               value={block.stepGroup || ''}
-                               onChange={(e) => onChange({ stepGroup: e.target.value })}
-                               placeholder="e.g. step-1"
-                               className="h-8 text-xs font-mono" style={{ backgroundColor: 'var(--color-bg-card)' }}
-                             />
-                           </div>
-                         </div>
-                         <p style={{ fontSize: '10px', color: 'var(--color-text-muted)' }}>
-                           Blocks with the same Step ID appear together on one screen.
-                         </p>
+                       <div className="flex items-center gap-1">
+                         <Input 
+                           value={block.stepGroup || ''}
+                           onChange={(e) => onChange({ stepGroup: e.target.value })}
+                           placeholder="Step ID"
+                           className="h-7 w-24 text-[11px] font-mono"
+                           style={{ borderRadius: 'var(--radius-md)' }}
+                         />
+                         <span style={{ fontSize: '9px', color: 'var(--color-text-muted)', fontFamily: 'var(--font-family-base)' }}>Optional</span>
                        </div>
                      )}
 
-                     <div className="grid grid-cols-3 gap-3">
-                       {/* Auto Advance */}
-                       <div className="flex items-start gap-2 p-2 rounded" style={{ backgroundColor: 'var(--color-bg-card)', border: '1px solid var(--color-border-default)' }}>
-                         <Checkbox 
-                           id="auto-advance"
-                           checked={block.autoAdvance}
-                           onCheckedChange={(c) => onChange({ autoAdvance: c as boolean })}
-                           className="mt-0.5"
-                         />
-                         <div>
-                           <Label htmlFor="auto-advance" className="text-xs font-medium cursor-pointer block">Auto</Label>
-                         </div>
-                       </div>
-                       
-                       {/* Required */}
-                       <div className="flex items-start gap-2 p-2 rounded" style={{ backgroundColor: 'var(--color-bg-card)', border: '1px solid var(--color-border-default)' }}>
-                         <Checkbox 
-                           id="required"
-                           checked={block.required}
-                           onCheckedChange={(c) => onChange({ required: c as boolean })}
-                           className="mt-0.5"
-                         />
-                         <div>
-                           <Label htmlFor="required" className="text-xs font-medium cursor-pointer block">Required</Label>
-                         </div>
-                       </div>
+                     {/* Auto toggle chip */}
+                     <button
+                       type="button"
+                       onClick={() => onChange({ autoAdvance: !block.autoAdvance })}
+                       className="h-7 px-2.5 flex items-center gap-1 rounded-md text-[11px] transition-colors"
+                       style={{
+                         fontWeight: 500, fontFamily: 'var(--font-family-base)',
+                         backgroundColor: block.autoAdvance ? 'var(--color-primary-default)' : 'var(--color-bg-card)',
+                         color: block.autoAdvance ? 'var(--color-primary-on)' : 'var(--color-text-muted)',
+                         border: block.autoAdvance ? 'none' : '1px solid var(--color-border-default)',
+                       }}
+                     >
+                       <FastForward size={10} /> Auto
+                     </button>
 
-                       {/* Duration — inline */}
-                       <div className="flex items-center gap-1.5 p-2 rounded" style={{ backgroundColor: 'var(--color-bg-card)', border: '1px solid var(--color-border-default)' }}>
-                         <Clock size={11} style={{ color: 'var(--color-text-muted)' }} />
-                         <Input 
-                           type="number" 
-                           className="w-12 h-6 text-[11px] p-1 text-center" style={{ backgroundColor: 'var(--color-bg-card)' }}
-                           value={block.duration}
-                           onChange={(e) => onChange({ duration: parseInt(e.target.value) || 0 })}
-                         />
-                         <span style={{ fontSize: '10px', color: 'var(--color-text-muted)' }}>m</span>
-                       </div>
+                     {/* Required toggle chip */}
+                     <button
+                       type="button"
+                       onClick={() => onChange({ required: !block.required })}
+                       className="h-7 px-2.5 flex items-center gap-1 rounded-md text-[11px] transition-colors"
+                       style={{
+                         fontWeight: 500, fontFamily: 'var(--font-family-base)',
+                         backgroundColor: block.required ? 'var(--color-primary-default)' : 'var(--color-bg-card)',
+                         color: block.required ? 'var(--color-primary-on)' : 'var(--color-text-muted)',
+                         border: block.required ? 'none' : '1px solid var(--color-border-default)',
+                       }}
+                     >
+                       Required
+                     </button>
+
+                     {/* Duration inline */}
+                     <div className="flex items-center gap-1 h-7 px-2 rounded-md" style={{ border: '1px solid var(--color-border-default)', backgroundColor: 'var(--color-bg-card)' }}>
+                       <Clock size={10} style={{ color: 'var(--color-text-muted)' }} />
+                       <input 
+                         type="number" 
+                         className="w-8 h-5 text-[11px] text-center bg-transparent border-none outline-none"
+                         style={{ fontFamily: 'var(--font-family-base)', color: 'var(--color-text-primary)' }}
+                         value={block.duration}
+                         onChange={(e) => onChange({ duration: parseInt(e.target.value) || 0 })}
+                       />
+                       <span style={{ fontSize: '9px', color: 'var(--color-text-muted)' }}>m</span>
                      </div>
                    </div>
                  </>

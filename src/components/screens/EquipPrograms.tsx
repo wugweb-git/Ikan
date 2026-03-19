@@ -1,12 +1,10 @@
 import { useEffect, useState } from 'react';
 import { apiClient } from '../../lib/api-client';
 import { PageHero } from '../ui/PageHero';
-import { ImageWithFallback } from '../figma/ImageWithFallback';
+import { ContentImage } from '../ui/ContentImage';
 import { useNotifications } from '../../contexts/NotificationContext';
 import { useIsMobile } from '../../hooks/useIsMobile';
 import { SkeletonCard } from '../ui/skeleton-loader';
-
-const FALLBACK_IMAGE = 'https://images.unsplash.com/photo-1527137342181-19aab11a8ee8?auto=format&fit=crop&q=80&w=1000';
 
 interface HeroBanner {
   title: string;
@@ -145,7 +143,7 @@ export function EquipPrograms({ onNavigate }: EquipProgramsProps) {
           >
             {programs.map((program) => {
               const equipId = program.equip_id || program.id;
-              const thumbnail = program.thumbnail || program.hero_image || FALLBACK_IMAGE;
+              const thumbnail = program.thumbnail || program.hero_image || '';
               const title = program.title || program.name || 'Untitled Program';
               const description = program.description || program.short_description || '';
               const duration = program.duration || program.total_days
@@ -176,7 +174,7 @@ export function EquipPrograms({ onNavigate }: EquipProgramsProps) {
                 >
                   {/* Thumbnail */}
                   <div style={{ position: 'relative', width: '100%', aspectRatio: '16/9', overflow: 'hidden' }}>
-                    <ImageWithFallback
+                    <ContentImage
                       src={thumbnail}
                       alt={title}
                       style={{ width: '100%', height: '100%', objectFit: 'cover' }}

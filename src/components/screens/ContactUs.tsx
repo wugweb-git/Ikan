@@ -282,7 +282,7 @@ export function ContactUs({ className, onNavigate, onBack }: ContactUsProps) {
                       </label>
                       <Input
                         value={formData.name}
-                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                        onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
                         placeholder="Your name"
                         className="ikan-input"
                         startIcon={<Icon name="user" size={18} />}
@@ -310,7 +310,7 @@ export function ContactUs({ className, onNavigate, onBack }: ContactUsProps) {
                       <Input
                         type="email"
                         value={formData.email}
-                        onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                        onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
                         placeholder="your@email.com"
                         className="ikan-input"
                         startIcon={<Icon name="mail" size={18} />}
@@ -338,7 +338,7 @@ export function ContactUs({ className, onNavigate, onBack }: ContactUsProps) {
                     </label>
                     <Input
                       value={formData.subject}
-                      onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
+                      onChange={(e) => setFormData(prev => ({ ...prev, subject: e.target.value }))}
                       placeholder="What can we help you with?"
                       className="ikan-input"
                       startIcon={<Icon name="helpCircle" size={18} />}
@@ -365,7 +365,7 @@ export function ContactUs({ className, onNavigate, onBack }: ContactUsProps) {
                     </label>
                     <Textarea
                       value={formData.message}
-                      onChange={(e) => setFormData({ ...formData, message: e.target.value })}
+                      onChange={(e) => setFormData(prev => ({ ...prev, message: e.target.value }))}
                       placeholder="Tell us more about your question or concern..."
                       rows={6}
                       style={{

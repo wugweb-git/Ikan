@@ -1,4 +1,4 @@
-import { useState, useEffect, lazy, Suspense, useMemo, useCallback, useRef, startTransition } from 'react';
+import { useState, useEffect, lazy, Suspense, useMemo, useCallback, useRef, startTransition, useDeferredValue } from 'react';
 import { useNotifications } from '../../contexts/NotificationContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { 
@@ -152,14 +152,19 @@ export function AdminDashboard({ onNavigate, initialView }: AdminDashboardProps)
   const { unreadCount } = useNotifications();
   const { user } = useAuth();
   const { settings: siteSettings } = usePublicSettings();
-  const [currentView, setCurrentView] = useState<ViewType>((initialView as ViewType) || 'dashboard');
+  const [currentView, setCurrentView] = useState<ViewType>('dashboard');
   const [searchQuery, setSearchQuery] = useState('');
   const { isMobile, isCompact } = useIsMobileAdmin();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [searchResults, setSearchResults] = useState<{ id: ViewType; label: string; group: string }[]>([]);
+  // Defer the view so context-driven re-renders don't cause synchronous suspension
+  const deferredView = useDeferredValue(currentView);
+  // Track mount to avoid rendering lazy components during initial synchronous render
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => { setMounted(true); }, []);
 
   useEffect(() => {
-    if (initialView) {
+    if (initialView && initialView !== 'dashboard') {
       startTransition(() => setCurrentView(initialView as ViewType));
     }
   }, [initialView]);
@@ -268,10 +273,14 @@ export function AdminDashboard({ onNavigate, initialView }: AdminDashboardProps)
   const goBack = useCallback(() => startTransition(() => setCurrentView('dashboard')), []);
   
   const renderContent = () => {
+    // Don't render lazy components until after mount to avoid synchronous suspension
+    if (!mounted) {
+      return <AdminLazyFallback />;
+    }
     // Every screen is wrapped in Suspense so only the active one loads
     // IMPORTANT: Use SuspenseScreen directly instead of an inline wrapper 
     // to prevent remounting children when AdminDashboard re-renders.
-    switch (currentView) {
+    switch (deferredView) {
       case 'dashboard':
         return (
           <div className="space-y-6 admin-dashboard-header">

@@ -222,7 +222,7 @@ export function AdminMoodManager({ onBack: _onBack, embedded }: AdminMoodManager
                 <div className="space-y-2">
                   <Input
                     value={formData.emoji}
-                    onChange={(e) => setFormData({ ...formData, emoji: e.target.value })}
+                    onChange={(e) => setFormData(prev => ({ ...prev, emoji: e.target.value }))}
                     placeholder="😊"
                     className="text-center text-4xl h-20"
                     maxLength={2}
@@ -233,7 +233,7 @@ export function AdminMoodManager({ onBack: _onBack, embedded }: AdminMoodManager
                       <button
                         key={emoji}
                         type="button"
-                        onClick={() => setFormData({ ...formData, emoji })}
+                        onClick={() => setFormData(prev => ({ ...prev, emoji }))}
                         className="w-10 h-10 rounded transition-colors text-2xl"
                         style={{ 
                           backgroundColor: formData.emoji === emoji 
@@ -255,7 +255,7 @@ export function AdminMoodManager({ onBack: _onBack, embedded }: AdminMoodManager
                   <Label>Label *</Label>
                   <Input
                     value={formData.label}
-                    onChange={(e) => setFormData({ ...formData, label: e.target.value })}
+                    onChange={(e) => setFormData(prev => ({ ...prev, label: e.target.value }))}
                     placeholder="e.g. Happy, Sad, Anxious"
                     style={{ backgroundColor: 'var(--color-bg-input)' }}
                   />
@@ -268,7 +268,7 @@ export function AdminMoodManager({ onBack: _onBack, embedded }: AdminMoodManager
                     min="1"
                     max="10"
                     value={formData.value}
-                    onChange={(e) => setFormData({ ...formData, value: parseInt(e.target.value) || 1 })}
+                    onChange={(e) => setFormData(prev => ({ ...prev, value: parseInt(e.target.value) || 1 }))}
                     style={{ backgroundColor: 'var(--color-bg-input)' }}
                   />
                   <p style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}>
@@ -282,7 +282,7 @@ export function AdminMoodManager({ onBack: _onBack, embedded }: AdminMoodManager
                 <div className="flex gap-2">
                   <select
                     value={formData.color}
-                    onChange={(e) => setFormData({ ...formData, color: e.target.value })}
+                    onChange={(e) => setFormData(prev => ({ ...prev, color: e.target.value }))}
                     className="flex-1 h-10 px-3 rounded-lg"
                     style={{ 
                       backgroundColor: 'var(--color-bg-input)',
@@ -298,7 +298,7 @@ export function AdminMoodManager({ onBack: _onBack, embedded }: AdminMoodManager
                   <input
                     type="color"
                     value={formData.color}
-                    onChange={(e) => setFormData({ ...formData, color: e.target.value })}
+                    onChange={(e) => setFormData(prev => ({ ...prev, color: e.target.value }))}
                     className="w-12 h-10 rounded cursor-pointer"
                     style={{ border: '1px solid var(--color-border-default)' }}
                   />
@@ -309,7 +309,7 @@ export function AdminMoodManager({ onBack: _onBack, embedded }: AdminMoodManager
                 <Label>Description</Label>
                 <Input
                   value={formData.description}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                  onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
                   placeholder="Brief description"
                   style={{ backgroundColor: 'var(--color-bg-input)' }}
                 />
@@ -318,7 +318,7 @@ export function AdminMoodManager({ onBack: _onBack, embedded }: AdminMoodManager
               <div className="flex items-center gap-3 col-span-2">
                 <Switch
                   checked={formData.is_active}
-                  onCheckedChange={(checked) => setFormData({ ...formData, is_active: checked })}
+                  onCheckedChange={(checked) => setFormData(prev => ({ ...prev, is_active: checked }))}
                 />
                 <Label>Active (visible to users)</Label>
               </div>

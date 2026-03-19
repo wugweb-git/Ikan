@@ -7,7 +7,7 @@ import { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
 import { apiClient } from '../../lib/api-client';
 import { usePublicSettings } from '../../hooks/usePublicSettings';
-import { ImageWithFallback } from '../figma/ImageWithFallback';
+import { ContentImage } from '../ui/ContentImage';
 import { Button } from '../ui/button';
 import { ArrowLeft } from 'lucide-react';
 
@@ -111,7 +111,7 @@ export function CmsPageRenderer({ slug, onNavigate, className }: CmsPageRenderer
             maxWidth: 1200,
           }}
         >
-          <ImageWithFallback
+          <ContentImage
             src={page.heroImage}
             alt={page.heroTitle || page.title}
             className="absolute inset-0 w-full h-full object-cover"

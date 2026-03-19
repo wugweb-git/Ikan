@@ -150,59 +150,61 @@ const DraggableBlock = memo(function DraggableBlock({ block, index, isSelected, 
 
   drag(drop(ref));
 
+  // Safety guard: block.type might be corrupted (e.g., event object stored as type)
+  const safeType = typeof block.type === 'string' ? block.type : 'lesson';
+
   return (
     <div 
       ref={ref}
       onClick={onSelect}
       data-handler-id={handlerId}
       className={cn(
-        "group p-3 border cursor-pointer transition-all hover:shadow-sm flex items-start gap-3",
+        "group px-2 py-1.5 border cursor-pointer transition-all hover:shadow-sm flex items-center gap-2",
         isSelected 
-          ? "border-2 shadow-sm ring-1" 
+          ? "border-[1.5px] shadow-sm" 
           : "border-[1px]",
-        isSelected && "bg-[var(--color-bg-card)] border-[var(--color-primary-default)] ring-[var(--color-primary-default)]/10",
+        isSelected && "bg-[var(--color-bg-card)] border-[var(--color-primary-default)]",
         !isSelected && "bg-[var(--color-bg-card)] border-[var(--color-border-default)] hover:border-[var(--color-primary-default)]",
         isDragging && "opacity-50"
       )}
+      style={{ borderRadius: 'var(--radius-md)' }}
     >
-      <div className="mt-1 cursor-grab" style={{ color: 'var(--color-text-muted)' }}>
-        <GripVertical size={14} />
+      <div className="cursor-grab" style={{ color: 'var(--color-text-muted)', opacity: 0.4 }}>
+        <GripVertical size={12} />
       </div>
       <div className="flex-1 min-w-0">
-        <div className="flex items-center justify-between mb-1">
-          <div className="flex items-center gap-1">
-            <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-4 uppercase tracking-wider" style={{ backgroundColor: 'var(--color-accent-default)', color: 'var(--color-text-primary)', fontWeight: 'var(--font-weight-medium)' }}>
-              {block.type}
-            </Badge>
-            {block.stepGroup && (
-              <Badge variant="outline" className="text-[9px] px-1 py-0 h-4 ml-1" style={{ backgroundColor: 'var(--color-bg-muted)', color: 'var(--color-text-muted)', borderColor: 'var(--color-border-default)', fontWeight: 'var(--font-weight-medium)' }}>
-                Step: {block.stepGroup}
-              </Badge>
-            )}
-            {block.autoAdvance && (
-              <Badge variant="outline" className="text-[9px] px-1 py-0 h-4 ml-1" style={{ backgroundColor: 'var(--color-info-light)', color: 'var(--color-info-default)', borderColor: 'var(--color-info-default)' }} title="Auto-advance enabled">
-                <FastForward size={8} className="mr-0.5" /> Auto
-              </Badge>
-            )}
-          </div>
+        <div className="flex items-center gap-1">
+          <span className="text-[9px] px-1 py-0 uppercase tracking-wider" style={{ color: 'var(--color-text-muted)', fontWeight: 500, fontFamily: 'var(--font-family-base)' }}>
+            {safeType}
+          </span>
+          {block.stepGroup && (
+            <span className="text-[8px] px-1 py-0" style={{ color: 'var(--color-text-muted)', opacity: 0.6 }}>
+              {block.stepGroup}
+            </span>
+          )}
+          {block.autoAdvance && (
+            <FastForward size={8} style={{ color: 'var(--color-info-default)', opacity: 0.6 }} />
+          )}
         </div>
         <p className="truncate" style={{ 
-          fontSize: 'var(--text-sm)', 
-          fontWeight: 'var(--font-weight-medium)', 
-          color: isSelected ? 'var(--color-text-primary)' : 'var(--color-text-muted)' 
+          fontSize: '12px', 
+          fontWeight: 500,
+          fontFamily: 'var(--font-family-base)',
+          color: isSelected ? 'var(--color-text-primary)' : 'var(--color-text-muted)',
+          lineHeight: 1.3,
         }}>
-          {block.title || '(Untitled Block)'}
-        </p>
-        <p className="mt-0.5 truncate" style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}>
-          {block.duration || 5} min • {block.required ? 'Required' : 'Optional'}
+          {block.title || '(Untitled)'}
         </p>
       </div>
+      <span style={{ fontSize: '9px', color: 'var(--color-text-muted)', opacity: 0.5, whiteSpace: 'nowrap' }}>
+        {block.duration || 5}m
+      </span>
       <Button 
-        variant="ghost" size="icon" className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+        variant="ghost" size="icon" className="h-5 w-5 opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
         style={{ color: 'var(--color-text-muted)' }}
         onClick={(e) => { e.stopPropagation(); onDelete(); }}
       >
-        <Trash2 size={12} />
+        <Trash2 size={10} />
       </Button>
     </div>
   );
@@ -253,8 +255,8 @@ function BlockPaletteMenu({ onSelect, dayType }: { onSelect: (type: string, subt
    return (
       <DropdownMenu>
          <DropdownMenuTrigger asChild>
-            <Button size="sm" className="gap-1.5 px-4 shadow-sm" style={{ backgroundColor: 'var(--color-primary-default)', color: 'var(--color-primary-on)', height: 'var(--ikan-component-button-height)', borderRadius: 'var(--radius-lg)' }}>
-               <Plus size={16} /> Add Block
+            <Button variant="outline" size="sm" className="gap-1 px-2.5 h-7" style={{ fontSize: '11px', color: 'var(--color-text-muted)', borderColor: 'var(--color-border-default)', borderRadius: 'var(--radius-md)' }}>
+               <Plus size={12} /> Add
             </Button>
          </DropdownMenuTrigger>
          <DropdownMenuContent align="end">
@@ -284,15 +286,27 @@ export function EquipDailyEditor({
 }: DailyBuilderProps) {
   
   const days = program.daily_content || [];
-  const [selectedDayNum, setSelectedDayNum] = useState<number | null>(days.length > 0 ? 1 : null);
+  const [selectedDayNum, setSelectedDayNum] = useState<number | null>(() => {
+    if (days.length === 0) return null;
+    // Prefer day 1 if it exists, otherwise first available day
+    const day1 = days.find(d => d.day === 1);
+    return day1 ? 1 : days[0].day;
+  });
   const [selectedBlockId, setSelectedBlockId] = useState<string | null>(null);
 
   // Helper to update days
-  const handleDaysChange = (newDays: DayContent[]) => {
-    onProgramChange({ daily_content: newDays });
+  const handleDaysChange = (newDaysOrUpdater: DayContent[] | ((prevDays: DayContent[]) => DayContent[])) => {
+    onProgramChange((prevProgram: any) => {
+        const currentDays = prevProgram.daily_content || [];
+        const resolvedNewDays = typeof newDaysOrUpdater === 'function' ? newDaysOrUpdater(currentDays) : newDaysOrUpdater;
+        return { daily_content: resolvedNewDays };
+    });
   };
 
   // Ensure selection validity & Single Day Mode Enforcement
+  // Track day numbers as a stable string for dependency comparison
+  const dayNumbers = days.map(d => d.day).join(',');
+  
   useEffect(() => {
     if (singleDayMode) {
       if (days.length === 0) {
@@ -313,126 +327,157 @@ export function EquipDailyEditor({
         setSelectedDayNum(days[0].day);
       }
     } else {
-       if (selectedDayNum === null && days.length > 0) {
-         setSelectedDayNum(days[0].day);
+       // If no day selected OR selected day no longer exists, pick first available
+       const selectedExists = selectedDayNum !== null && days.some(d => d.day === selectedDayNum);
+       if (!selectedExists && days.length > 0) {
+         const day1 = days.find(d => d.day === 1);
+         setSelectedDayNum(day1 ? 1 : days[0].day);
        }
     }
-  }, [days.length, singleDayMode]);
+  }, [dayNumbers, singleDayMode]);
 
   const activeDay = days.find(d => d.day === selectedDayNum);
   const activeBlock = activeDay?.activities.find(b => b.id === selectedBlockId);
 
+  // If selected block no longer exists (deleted/changed), reset
+  const activeBlockIds = activeDay?.activities.map(b => b.id).join(',') || '';
+  useEffect(() => {
+    if (selectedBlockId && activeDay && !activeDay.activities.some(b => b.id === selectedBlockId)) {
+      setSelectedBlockId(null);
+    }
+  }, [selectedBlockId, activeBlockIds]);
+
   const moveDay = (dragIndex: number, hoverIndex: number) => {
     if (singleDayMode || readOnly) return;
-    // Protect Day 0 (onboarding) from reordering
-    const day0 = days.find(d => d.day === 0);
-    const regularDays = days.filter(d => d.day !== 0);
     
-    // Only reorder among regular days (indices offset by 1 if Day 0 exists)
-    const offset = day0 ? 1 : 0;
-    const adjDragIdx = dragIndex - offset;
-    const adjHoverIdx = hoverIndex - offset;
-    
-    if (adjDragIdx < 0 || adjHoverIdx < 0) return; // Can't move Day 0
-    if (adjDragIdx >= regularDays.length || adjHoverIdx >= regularDays.length) return;
-    
-    const newRegular = [...regularDays];
-    const [draggedDay] = newRegular.splice(adjDragIdx, 1);
-    newRegular.splice(adjHoverIdx, 0, draggedDay);
-    // Reassign day numbers (1-based for regular days)
-    const reordered = newRegular.map((d, i) => ({ ...d, day: i + 1 }));
-    
-    handleDaysChange(day0 ? [day0, ...reordered] : reordered);
-    if (selectedDayNum === draggedDay.day) {
-      setSelectedDayNum(adjHoverIdx + 1);
-    }
+    handleDaysChange((currentDays) => {
+      // Protect Day 0 (onboarding) from reordering
+      const day0 = currentDays.find(d => d.day === 0);
+      const regularDays = currentDays.filter(d => d.day !== 0);
+      
+      // Only reorder among regular days (indices offset by 1 if Day 0 exists)
+      const offset = day0 ? 1 : 0;
+      const adjDragIdx = dragIndex - offset;
+      const adjHoverIdx = hoverIndex - offset;
+      
+      if (adjDragIdx < 0 || adjHoverIdx < 0) return currentDays; // Can't move Day 0
+      if (adjDragIdx >= regularDays.length || adjHoverIdx >= regularDays.length) return currentDays;
+      
+      const newRegular = [...regularDays];
+      const [draggedDay] = newRegular.splice(adjDragIdx, 1);
+      newRegular.splice(adjHoverIdx, 0, draggedDay);
+      // Reassign day numbers (1-based for regular days)
+      const reordered = newRegular.map((d, i) => ({ ...d, day: i + 1 }));
+      
+      if (selectedDayNum === draggedDay.day) {
+        setSelectedDayNum(adjHoverIdx + 1);
+      }
+      
+      return day0 ? [day0, ...reordered] : reordered;
+    });
   };
 
   const moveBlock = (dragIndex: number, hoverIndex: number) => {
     if (!activeDay || readOnly) return;
-    const newActivities = [...activeDay.activities];
-    const [draggedBlock] = newActivities.splice(dragIndex, 1);
-    newActivities.splice(hoverIndex, 0, draggedBlock);
-    
-    const newDays = days.map(d => 
-      d.day === activeDay.day ? { ...d, activities: newActivities } : d
-    );
-    handleDaysChange(newDays);
+    handleDaysChange((currentDays) => currentDays.map(d => {
+      if (d.day === activeDay.day) {
+        const newActivities = [...d.activities];
+        const [draggedBlock] = newActivities.splice(dragIndex, 1);
+        newActivities.splice(hoverIndex, 0, draggedBlock);
+        return { ...d, activities: newActivities };
+      }
+      return d;
+    }));
   };
 
   const handleAddDay = () => {
     if (singleDayMode || readOnly) return;
-    // Count only regular days (exclude Day 0)
-    const regularDays = days.filter(d => d.day !== 0);
-    const newDayNum = regularDays.length + 1;
-    const newDay: DayContent = {
-      day: newDayNum,
-      title: `Day ${newDayNum}`,
-      description: '',
-      activities: [],
-      dayType: 'lesson'
-    };
-    handleDaysChange([...days, newDay]);
-    setSelectedDayNum(newDayNum);
-    setSelectedBlockId(null);
+    
+    handleDaysChange((currentDays) => {
+      // Count only regular days (exclude Day 0)
+      const regularDays = currentDays.filter(d => d.day !== 0);
+      const newDayNum = regularDays.length + 1;
+      const newDay: DayContent = {
+        day: newDayNum,
+        title: `Day ${newDayNum}`,
+        description: '',
+        activities: [],
+        dayType: 'lesson'
+      };
+      
+      setSelectedDayNum(newDayNum);
+      setSelectedBlockId(null);
+      return [...currentDays, newDay];
+    });
   };
 
   const handleDeleteDay = (dayNum: number) => {
     if (singleDayMode || readOnly) return;
     if (dayNum === 0) return; // Cannot delete onboarding day
-    const day0 = days.find(d => d.day === 0);
-    const regularDays = days.filter(d => d.day !== 0 && d.day !== dayNum);
-    // Renumber regular days
-    const renumbered = regularDays.map((d, i) => ({ ...d, day: i + 1 }));
-    handleDaysChange(day0 ? [day0, ...renumbered] : renumbered);
-    if (selectedDayNum === dayNum) {
-      setSelectedDayNum(renumbered.length > 0 ? renumbered[0].day : (day0 ? 0 : null));
-    }
+    
+    handleDaysChange((currentDays) => {
+      const day0 = currentDays.find(d => d.day === 0);
+      const regularDays = currentDays.filter(d => d.day !== 0 && d.day !== dayNum);
+      // Renumber regular days
+      const renumbered = regularDays.map((d, i) => ({ ...d, day: i + 1 }));
+      
+      if (selectedDayNum === dayNum) {
+        setSelectedDayNum(renumbered.length > 0 ? renumbered[0].day : (day0 ? 0 : null));
+      }
+      
+      return day0 ? [day0, ...renumbered] : renumbered;
+    });
   };
 
   const handleDuplicateDay = (dayToDuplicate: DayContent) => {
     if (singleDayMode || readOnly) return;
-    const newDayNum = days.length + 1;
-    const newDay: DayContent = {
-      ...dayToDuplicate,
-      day: newDayNum,
-      title: `${dayToDuplicate.title} (Copy)`,
-      activities: dayToDuplicate.activities.map(a => ({ ...a, id: generateBlockId() }))
-    };
-    handleDaysChange([...days, newDay]);
-    setSelectedDayNum(newDayNum);
+    
+    handleDaysChange((currentDays) => {
+      const newDayNum = currentDays.length + 1;
+      const newDay: DayContent = {
+        ...dayToDuplicate,
+        day: newDayNum,
+        title: `${dayToDuplicate.title} (Copy)`,
+        activities: dayToDuplicate.activities.map(a => ({ ...a, id: generateBlockId() }))
+      };
+      setSelectedDayNum(newDayNum);
+      return [...currentDays, newDay];
+    });
   };
 
   const handleUpdateDay = (dayNum: number, updates: Partial<DayContent>) => {
     if (readOnly) return;
 
-    // Check if dayType changed and auto-populate if empty
-    const currentDay = days.find(d => d.day === dayNum);
-    if (updates.dayType && currentDay && updates.dayType !== currentDay.dayType) {
-       if (currentDay.activities.length === 0) {
-          const preset = getPresetForDayType(updates.dayType);
-          if (preset && preset.defaultBlocks) {
-             const newBlocks = preset.defaultBlocks.map((b, i) => ({
-                ...b,
-                id: generateBlockId(),
-                order: i,
-                required: b.required ?? false,
-                title: b.title || 'Untitled Block'
-             })) as Activity[];
-             updates.activities = newBlocks;
-             
-             // Also update selected block to first one
-             setTimeout(() => {
-                if (newBlocks.length > 0) setSelectedBlockId(newBlocks[0].id);
-             }, 100);
-          }
-       }
-    }
+    handleDaysChange((currentDays) => {
+      // Check if dayType changed and auto-populate if empty
+      const currentDay = currentDays.find(d => d.day === dayNum);
+      const updatesToApply = { ...updates };
+      
+      if (updatesToApply.dayType && currentDay && updatesToApply.dayType !== currentDay.dayType) {
+         if (currentDay.activities.length === 0) {
+            const preset = getPresetForDayType(updatesToApply.dayType);
+            if (preset && preset.defaultBlocks) {
+               const newBlocks = preset.defaultBlocks.map((b, i) => ({
+                  ...b,
+                  id: generateBlockId(),
+                  order: i,
+                  required: b.required ?? false,
+                  title: b.title || 'Untitled Block'
+               })) as Activity[];
+               updatesToApply.activities = newBlocks;
+               
+               // Also update selected block to first one
+               setTimeout(() => {
+                  if (newBlocks.length > 0) setSelectedBlockId(newBlocks[0].id);
+               }, 100);
+            }
+         }
+      }
 
-    const newDays = days.map(d => 
-      d.day === dayNum ? { ...d, ...updates } : d
-    );
-    handleDaysChange(newDays);
+      return currentDays.map(d => 
+        d.day === dayNum ? { ...d, ...updatesToApply } : d
+      );
+    });
   };
 
   const addBlock = (type: string = 'lesson', subtype?: string) => {
@@ -452,33 +497,30 @@ export function EquipDailyEditor({
       order: activeDay.activities.length,
       exerciseConfig: subtype ? { subtype: subtype as any } : undefined
     };
-    const newDays = days.map(d => 
-      d.day === activeDay.day ? { ...d, activities: [...d.activities, newBlock] } : d
-    );
-    handleDaysChange(newDays);
+    handleDaysChange((currentDays) => currentDays.map(d => 
+      d.day === activeDay.day ? { ...d, activities: [...d.activities, { ...newBlock, order: d.activities.length }] } : d
+    ));
     setSelectedBlockId(newBlock.id);
   };
 
   const updateBlock = (blockId: string, updates: Partial<Activity>) => {
     if (!activeDay || readOnly) return;
-    const newDays = days.map(d => 
+    handleDaysChange((currentDays) => currentDays.map(d => 
       d.day === activeDay.day ? {
         ...d,
         activities: d.activities.map(b => b.id === blockId ? { ...b, ...updates } : b)
       } : d
-    );
-    handleDaysChange(newDays);
+    ));
   };
 
   const deleteBlock = (blockId: string) => {
     if (!activeDay || readOnly) return;
-    const newDays = days.map(d => 
+    handleDaysChange((currentDays) => currentDays.map(d => 
       d.day === activeDay.day ? {
         ...d,
         activities: d.activities.filter(b => b.id !== blockId)
       } : d
-    );
-    handleDaysChange(newDays);
+    ));
     if (selectedBlockId === blockId) {
       setSelectedBlockId(null);
     }
@@ -636,7 +678,7 @@ export function EquipDailyEditor({
                 {activeDay.activities.length === 0 && !readOnly && (
                   <div className="text-center py-8 px-4 border-2 border-dashed rounded-lg" style={{ borderColor: 'var(--color-border-default)', backgroundColor: 'var(--color-bg-muted)' }}>
                     <p style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}>No content blocks yet.</p>
-                    <Button variant="link" size="sm" onClick={addBlock} className="h-auto p-0 mt-1" style={{ fontSize: 'var(--text-xs)', color: 'var(--color-primary-default)' }}>
+                    <Button variant="link" size="sm" onClick={() => addBlock()} className="h-auto p-0 mt-1" style={{ fontSize: 'var(--text-xs)', color: 'var(--color-primary-default)' }}>
                       Add your first block
                     </Button>
                   </div>
@@ -669,69 +711,74 @@ export function EquipDailyEditor({
                 <div className="max-w-2xl mx-auto">
                   {selectedBlockId === null && !singleDayMode ? (
                     // --- DAY CONFIGURATION EDITOR (Multi-day only) ---
-                    <div className="animate-in fade-in duration-300 space-y-4">
+                    <div className="animate-in fade-in duration-300 space-y-3">
                       <div>
-                        <h2 style={{ fontSize: 'var(--text-base)', fontWeight: 'var(--font-weight-medium)', color: 'var(--color-text-primary)' }}>Day Configuration</h2>
-                        <p style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}>Define the identity and goals for Day {activeDay.day}.</p>
+                        <h2 style={{ fontSize: '13px', fontWeight: 500, fontFamily: 'var(--font-family-base)', color: 'var(--color-text-primary)' }}>Day Configuration</h2>
+                        <p style={{ fontSize: '10px', color: 'var(--color-text-muted)', fontFamily: 'var(--font-family-base)' }}>Define the identity and goals for Day {activeDay.day}.</p>
                       </div>
 
-                      <Card>
-                        <CardContent className="p-4 space-y-4">
-                          <AdminFormField label="Day Title">
+                      {/* Compact 2-column grid form */}
+                      <div className="space-y-2">
+                        {/* Title + Type row */}
+                        <div className="grid grid-cols-[1fr_140px] gap-2">
+                          <div>
+                            <label style={{ fontSize: '10px', fontWeight: 500, fontFamily: 'var(--font-family-base)', color: 'var(--color-text-muted)', display: 'block', marginBottom: 2 }}>Day Title</label>
                             <Input 
                               value={activeDay.title} 
                               onChange={e => handleUpdateDay(activeDay.day, { title: e.target.value })}
                               placeholder="e.g. Introduction to Mindfulness"
-                              style={{ fontWeight: 'var(--font-weight-medium)' }}
+                              className="h-9"
+                              style={{ fontWeight: 500, fontSize: '13px', borderRadius: 'var(--radius-md)' }}
                               disabled={readOnly}
                             />
-                          </AdminFormField>
-
-                          <AdminFormField label="Day Subtitle">
-                            <Input 
-                              value={activeDay.subtitle || ''} 
-                              onChange={e => handleUpdateDay(activeDay.day, { subtitle: e.target.value })}
-                              placeholder="e.g. Learn the basics of breathing exercises"
-                              disabled={readOnly}
-                            />
-                          </AdminFormField>
-
-                          <div className="grid grid-cols-2 gap-4">
-                            <AdminFormField label="Day Type">
-                              <Select 
-                                value={activeDay.dayType || 'lesson'} 
-                                onValueChange={(v: any) => handleUpdateDay(activeDay.day, { dayType: v })}
-                                disabled={readOnly}
-                              >
-                                <SelectTrigger><SelectValue /></SelectTrigger>
-                                <SelectContent>
-                                  {Object.entries(DAY_TYPE_PRESETS).map(([key, preset]) => (
-                                    <SelectItem key={key} value={key}>
-                                      <div className="flex items-center gap-2">
-                                        <span>{preset.label}</span>
-                                      </div>
-                                    </SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
-                            </AdminFormField>
-
-                            <AdminFormField label="Order">
-                              <Input value={activeDay.day} disabled style={{ backgroundColor: 'var(--color-bg-muted)' }} />
-                            </AdminFormField>
                           </div>
-
-                          <AdminFormField label="Description">
-                            <Textarea 
-                              value={activeDay.description || ''} 
-                              onChange={e => handleUpdateDay(activeDay.day, { description: e.target.value })}
-                              placeholder="Brief summary of what the user will achieve today..."
-                              rows={3}
+                          <div>
+                            <label style={{ fontSize: '10px', fontWeight: 500, fontFamily: 'var(--font-family-base)', color: 'var(--color-text-muted)', display: 'block', marginBottom: 2 }}>Day Type</label>
+                            <Select 
+                              value={activeDay.dayType || 'lesson'} 
+                              onValueChange={(v: any) => handleUpdateDay(activeDay.day, { dayType: v })}
                               disabled={readOnly}
-                            />
-                          </AdminFormField>
-                        </CardContent>
-                      </Card>
+                            >
+                              <SelectTrigger className="h-9" style={{ fontSize: '12px', borderRadius: 'var(--radius-md)' }}><SelectValue /></SelectTrigger>
+                              <SelectContent>
+                                {Object.entries(DAY_TYPE_PRESETS).map(([key, preset]) => (
+                                  <SelectItem key={key} value={key}>
+                                    <div className="flex items-center gap-2">
+                                      <span>{preset.label}</span>
+                                    </div>
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        </div>
+
+                        {/* Subtitle */}
+                        <div>
+                          <label style={{ fontSize: '10px', fontWeight: 500, fontFamily: 'var(--font-family-base)', color: 'var(--color-text-muted)', display: 'block', marginBottom: 2 }}>Subtitle</label>
+                          <Input 
+                            value={activeDay.subtitle || ''} 
+                            onChange={e => handleUpdateDay(activeDay.day, { subtitle: e.target.value })}
+                            placeholder="e.g. Learn the basics of breathing exercises"
+                            className="h-8"
+                            style={{ fontSize: '12px', color: 'var(--color-text-muted)', borderRadius: 'var(--radius-md)' }}
+                            disabled={readOnly}
+                          />
+                        </div>
+
+                        {/* Description */}
+                        <div>
+                          <label style={{ fontSize: '10px', fontWeight: 500, fontFamily: 'var(--font-family-base)', color: 'var(--color-text-muted)', display: 'block', marginBottom: 2 }}>Description</label>
+                          <Textarea 
+                            value={activeDay.description || ''} 
+                            onChange={e => handleUpdateDay(activeDay.day, { description: e.target.value })}
+                            placeholder="Brief summary..."
+                            rows={2}
+                            style={{ fontSize: '12px', borderRadius: 'var(--radius-md)', minHeight: '52px' }}
+                            disabled={readOnly}
+                          />
+                        </div>
+                      </div>
 
                       {/* ── DAY TYPE PRESET DETAILS ── */}
                       {(() => {

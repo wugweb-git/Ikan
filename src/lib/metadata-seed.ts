@@ -34,7 +34,8 @@ export type MetadataType =
   | 'severity_level'
   | 'account_type'
   | 'day_config_type'
-  | 'exercise_subtype';
+  | 'exercise_subtype'
+  | 'checkin_block_type';
 
 // ═══════════════════════════════════════════════════════════════
 // Hierarchy / Grouping — organise metadata types by domain
@@ -68,7 +69,7 @@ export const METADATA_TYPE_GROUPS: MetadataGroup[] = [
     label: 'Assessments & Scoring',
     icon: 'clipboard-list',
     description: 'Assessment types, scoring methods, severity levels, and check-in categories',
-    types: ['assessment_type', 'scoring_method', 'severity_level', 'ema_category'],
+    types: ['assessment_type', 'scoring_method', 'severity_level', 'ema_category', 'checkin_block_type'],
   },
   {
     key: 'consultants',
@@ -111,6 +112,7 @@ export const METADATA_TYPE_LABELS: Record<MetadataType, string> = {
   account_type: 'Account Types',
   day_config_type: 'Day Config Types',
   exercise_subtype: 'Exercise Subtypes',
+  checkin_block_type: 'Check-in Block Types',
 };
 
 export const METADATA_TYPE_ICONS: Record<MetadataType, string> = {
@@ -135,6 +137,7 @@ export const METADATA_TYPE_ICONS: Record<MetadataType, string> = {
   account_type: 'user-check',
   day_config_type: 'calendar',
   exercise_subtype: 'pen-tool',
+  checkin_block_type: 'smile',
 };
 
 /**
@@ -417,4 +420,15 @@ export const SEED_DATA: SeedItem[] = [
   s('Rating Scale',        'exercise_subtype', 'rating-scale',        { icon: 'sliders-horizontal', description: 'Numeric rating scale (1–5, 1–10)' }),
   s('Clinical Instrument', 'exercise_subtype', 'clinical-instrument', { icon: 'clipboard-list',     description: 'Validated instruments with scored Likert scales' }),
   s('File Upload',         'exercise_subtype', 'upload',              { icon: 'image',              description: 'User uploads a file (document, image, audio)' }),
+  s('Ephemeral Journal',   'exercise_subtype', 'ephemeral-journal',   { icon: 'notebook',           description: 'Session-scoped journal not persisted long-term. Selectable in editor.' }),
+  s('Comparison Matrix',   'exercise_subtype', 'comparison-matrix',   { icon: 'layout-grid',        description: 'Side-by-side comparison table. Alias for input-table with comparison layout.' }),
+
+  // ── Check-in Block Types (widget types for check-in flow steps) ─
+  s('Emoji Scale',   'checkin_block_type', 'emoji-scale',   { icon: 'smile',               description: 'User picks from emoji options representing mood, energy, etc.' }),
+  s('Free Text',     'checkin_block_type', 'free-text',     { icon: 'pen-tool',            description: 'Open-ended text input for journaling or notes' }),
+  s('Multi Select',  'checkin_block_type', 'multi-select',  { icon: 'list-checks',         description: 'User picks multiple tags/options from a set' }),
+  s('Single Choice', 'checkin_block_type', 'single-choice', { icon: 'circle-check',        description: 'User picks one option from a list' }),
+  s('Slider',        'checkin_block_type', 'slider',        { icon: 'sliders-horizontal',  description: 'Numeric slider with min/max values and labels' }),
+  s('Yes / No',      'checkin_block_type', 'yes-no',        { icon: 'toggle-left',         description: 'Simple binary question — yes or no' }),
+  s('Context Tags',  'checkin_block_type', 'context-tags',  { icon: 'tag',                 description: 'Contextual tags for situational tracking' }),
 ];
