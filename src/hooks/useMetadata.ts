@@ -128,7 +128,7 @@ function dedup(items: MetadataOption[]): MetadataOption[] {
 
 async function fetchAllMetadata(): Promise<MetadataBucket> {
   try {
-    const data = await apiClient.getCategories();
+    const data = await apiClient.getPublicCategories();
     const allItems = Array.isArray(data) ? data : data.categories || [];
 
     // Build empty bucket
