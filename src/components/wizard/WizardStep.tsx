@@ -1,6 +1,6 @@
 import { WizardStepConfig, WizardLayout, WizardMode } from './types';
 import { WizardField } from './WizardField';
-import { motion } from 'motion/react';
+import { motion } from 'framer-motion';
 import { cn } from '../ui/utils';
 import { Button } from '../ui/button';
 import { ArrowRight, Check } from 'lucide-react';

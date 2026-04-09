@@ -2,7 +2,7 @@ import React, { useMemo } from 'react';
 import { ErrorBoundary } from '../../ErrorBoundary';
 import { usePageContent } from '../../../hooks/usePageContent';
 import { useIsMobile } from '../../../hooks/useIsMobile';
-import imgPhoneMockup from "figma:asset/25d8d01a36eaa618a0c4fdd22ae73fb856925905.png";
+import imgPhoneMockup from "../../../assets/25d8d01a36eaa618a0c4fdd22ae73fb856925905.png";
 
 interface AssessmentSectionProps {
   onGetStarted: () => void;
