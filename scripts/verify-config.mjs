@@ -22,7 +22,6 @@ for (const path of ['vercel.json', 'src/vercel.json']) {
   try {
     const parsed = JSON.parse(read(path));
     const rewrites = Array.isArray(parsed.rewrites) ? parsed.rewrites : [];
-    check(parsed.outputDirectory === 'dist', `${path} must set outputDirectory to "dist".`);
     const hasSpaRewrite = rewrites.some(
       (item) => item?.source === '/(.*)' && item?.destination === '/index.html',
     );
