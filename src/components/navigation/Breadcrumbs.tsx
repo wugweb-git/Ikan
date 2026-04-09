@@ -1,5 +1,5 @@
-import { ChevronRight, House } from 'lucide-react';
-import { motion, AnimatePresence } from 'motion/react';
+import { ChevronRight, Home } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Icon } from '../Icon';
 import { cn } from '../ui/utils';
 

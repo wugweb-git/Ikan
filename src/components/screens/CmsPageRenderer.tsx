@@ -4,7 +4,7 @@
  * Supports hero section, HTML content, and SEO meta.
  */
 import { useState, useEffect } from 'react';
-import { motion } from 'motion/react';
+import { motion } from 'framer-motion';
 import { apiClient } from '../../lib/api-client';
 import { usePublicSettings } from '../../hooks/usePublicSettings';
 import { ContentImage } from '../ui/ContentImage';

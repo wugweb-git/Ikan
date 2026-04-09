@@ -2,6 +2,37 @@ import { Hono } from 'npm:hono';
 import * as kv from './kv_dual_write.ts';
 
 export function registerAssessmentRoutes(app: Hono, requireAuth: any) {
+    // Admin list (includes unpublished)
+    app.get("/admin/assessments", requireAuth, async (c) => {
+        try {
+            const user = c.get('user');
+            const userProfile = await kv.get(`user:${user.id}`);
+            if (!userProfile?.is_admin) return c.json({ error: 'Admin access required' }, 403);
+
+            const all = await kv.getByPrefix('assessment_def:');
+            const assessments = all.filter((a: any) => a && a.id && !a.deleted);
+
+            const allResults = await kv.getByPrefix('assessment_result:');
+            const completionCountMap: Record<string, number> = {};
+            const seenResultIds = new Set<string>();
+            for (const result of allResults) {
+                if (!result || !result.assessment_id || !result.id) continue;
+                if (seenResultIds.has(result.id)) continue;
+                seenResultIds.add(result.id);
+                completionCountMap[result.assessment_id] = (completionCountMap[result.assessment_id] || 0) + 1;
+            }
+
+            const assessmentsWithCounts = assessments.map((a: any) => ({
+                ...a,
+                completionCount: completionCountMap[a.id] || completionCountMap[a.assessment_id] || 0,
+            }));
+
+            return c.json({ assessments: assessmentsWithCounts });
+        } catch (error) {
+            console.error('Failed to list admin assessments:', error);
+            return c.json({ error: 'Failed to list assessments' }, 500);
+        }
+    });
 
     // Get available assessments — 100% KV-backed, no hardcoded fallbacks
     app.get("/assessments", async (c) => {

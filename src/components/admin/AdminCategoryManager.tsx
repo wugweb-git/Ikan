@@ -28,7 +28,7 @@ import {
   LayoutGrid, Blocks,
   Signal, BarChart, TrendingUp,
   Link,
-  AlertTriangle, CircleAlert,
+  AlertTriangle, AlertCircle,
   Repeat,
   Wrench, Settings,
   Palette, PenTool, Calendar,
@@ -37,7 +37,7 @@ import {
   Apple,
 } from 'lucide-react';
 import { apiClient } from '../../lib/api-client';
-import { toast } from 'sonner@2.0.3';
+import { toast } from 'sonner';
 import { invalidateMetadataCache } from '../../hooks/useMetadata';
 import { SEED_DATA, METADATA_TYPE_LABELS, METADATA_TYPE_ICONS, METADATA_TYPE_GROUPS, type MetadataType } from '../../lib/metadata-seed';
 import { Skeleton } from '../ui/skeleton-loader';
@@ -82,7 +82,7 @@ const ICON_MAP: Record<string, any> = {
   'layout-grid': LayoutGrid, 'blocks': Blocks,
   'signal': Signal, 'bar-chart': BarChart, 'trending-up': TrendingUp,
   'link': Link,
-  'alert-triangle': AlertTriangle, 'alert-circle': CircleAlert,
+  'alert-triangle': AlertTriangle, 'alert-circle': AlertCircle,
   'refresh-cw': RefreshCw, 'repeat': Repeat,
   'tool': Wrench, 'wrench': Wrench, 'settings': Settings,
   'palette': Palette, 'pen-tool': PenTool, 'calendar': Calendar,

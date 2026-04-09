@@ -1,6 +1,6 @@
 import type React from 'react';
 import { cn } from '../ui/utils';
-import { MapPin, Star, Video, Phone, MessageCircle, Clock, House } from 'lucide-react';
+import { MapPin, Star, Video, Phone, MessageCircle, Clock, Home } from 'lucide-react';
 import { Button } from '../ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 
@@ -53,7 +53,7 @@ export function ConsultantCard({ consultant, onClick, onBook, className }: Consu
     video: <Video className="w-[18px] h-[18px]" />,
     call: <Phone className="w-[18px] h-[18px]" />,
     chat: <MessageCircle className="w-[18px] h-[18px]" />,
-    offline: <House className="w-[18px] h-[18px]" />,
+    offline: <Home className="w-[18px] h-[18px]" />,
   };
 
   return (

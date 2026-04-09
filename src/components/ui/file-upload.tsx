@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback } from 'react';
-import { Upload, X, File, Image as ImageIcon, FileText, Film, Music, Loader2, CircleCheck, CircleAlert } from 'lucide-react';
+import { Upload, X, File, Image as ImageIcon, FileText, Film, Music, Loader2, CircleCheck, AlertCircle } from 'lucide-react';
 import { Button } from './button';
 import { cn } from './utils';
 import { apiClient } from '../../lib/api-client';
@@ -260,7 +260,7 @@ export function FileUpload({
               <CircleCheck className="w-8 h-8" style={{ color: 'var(--color-success-default)' }} />
             )}
             {uploadProgress.status === 'error' && (
-              <CircleAlert className="w-8 h-8" style={{ color: 'var(--color-danger-default)' }} />
+              <AlertCircle className="w-8 h-8" style={{ color: 'var(--color-danger-default)' }} />
             )}
 
             <div className="flex-1">

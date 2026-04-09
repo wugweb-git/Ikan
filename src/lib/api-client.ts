@@ -870,6 +870,11 @@ class ApiClient {
     }
   }
 
+  async getAdminAssessments() {
+    const res = await this.request('/admin/assessments', { method: 'GET' }, true);
+    return res.assessments || [];
+  }
+
   async getAssessment(id: string) {
     try {
       const res = await this.request(`/assessments/${id}?t=${Date.now()}`, { method: 'GET' }, true);

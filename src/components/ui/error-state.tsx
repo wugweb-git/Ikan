@@ -1,5 +1,5 @@
 import { cn } from './utils';
-import { AlertTriangle, RefreshCw, House, ArrowLeft } from 'lucide-react';
+import { AlertTriangle, RefreshCw, Home, ArrowLeft } from 'lucide-react';
 import { Button } from './button';
 
 interface ErrorStateProps {
@@ -140,7 +140,7 @@ export function ErrorState({
               gap: 'var(--spacing-2)'
             }}
           >
-            <House className="w-4 h-4" />
+            <Home className="w-4 h-4" />
             Home
           </Button>
         )}

@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { House, ArrowLeft, Search } from 'lucide-react';
+import { Home, ArrowLeft, Search } from 'lucide-react';
 import { useIsMobile } from '../../hooks/useIsMobile';
 import { usePageContent } from '../../hooks/usePageContent';
 import { PageHero } from '../ui/PageHero';
@@ -112,7 +112,7 @@ export function NotFound({ onNavigate }: NotFoundProps) {
               onMouseEnter={(e) => { e.currentTarget.style.opacity = '0.9'; }}
               onMouseLeave={(e) => { e.currentTarget.style.opacity = '1'; }}
             >
-              <House size={18} />
+              <Home size={18} />
               {homeButtonText}
             </button>
 

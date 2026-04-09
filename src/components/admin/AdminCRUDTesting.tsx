@@ -3,7 +3,7 @@ import { Button } from '../ui/button';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '../ui/card';
 import { useNotifications } from '../../contexts/NotificationContext';
 import { apiClient } from '../../lib/api-client';
-import { Activity, CircleCheck, CircleAlert, RefreshCw, Trash2, Search, ShieldAlert } from 'lucide-react';
+import { Activity, CircleCheck, AlertCircle, RefreshCw, Trash2, Search, ShieldAlert } from 'lucide-react';
 import { AdminHeader } from './AdminHeader';
 
 interface HealthResult {
@@ -414,7 +414,7 @@ export function AdminCRUDTesting({ onBack }: { onBack?: () => void }) {
               >
                 {healthData.status === 'Healthy' ?
                   <CircleCheck className="w-5 h-5" /> :
-                  <CircleAlert className="w-5 h-5" />
+                  <AlertCircle className="w-5 h-5" />
                 }
                 <span style={{ fontSize: 'var(--text-lg)', fontWeight: 'var(--font-weight-medium)' }}>
                   {healthData.status}
@@ -634,7 +634,7 @@ export function AdminCRUDTesting({ onBack }: { onBack?: () => void }) {
                   <div className="flex items-center gap-2 min-w-0 flex-1">
                     {result.status === 'success' ?
                       <CircleCheck className="w-4 h-4 shrink-0" style={{ color: 'var(--color-status-success)' }} /> :
-                      <CircleAlert className="w-4 h-4 shrink-0" style={{ color: 'var(--color-status-danger)' }} />
+                      <AlertCircle className="w-4 h-4 shrink-0" style={{ color: 'var(--color-status-danger)' }} />
                     }
                     <div className="min-w-0">
                       <span style={{

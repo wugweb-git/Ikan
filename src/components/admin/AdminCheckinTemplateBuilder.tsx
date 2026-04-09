@@ -1,10 +1,10 @@
-import { toast } from 'sonner@2.0.3';
+import { toast } from 'sonner';
 import { useState, useEffect, useCallback } from 'react';
 import {
   Plus, Trash2, Save, X, GripVertical, Copy, Eye, EyeOff,
   ChevronDown, ChevronUp, RotateCcw, ShieldCheck, AlertTriangle, Check,
   Smile, Type, Tag, List, SlidersHorizontal, ToggleLeft,
-  CircleAlert, ArrowUp, ArrowDown, Pencil,
+  AlertCircle, ArrowUp, ArrowDown, Pencil,
 } from 'lucide-react';
 import { Card, CardContent } from '../ui/card';
 import { Button } from '../ui/button';
@@ -97,7 +97,7 @@ const EMOJI_PICKS = [
 
 function getBlockIcon(type: CheckinStep['type']) {
   const found = BLOCK_TYPES.find(b => b.value === type);
-  return found ? found.icon : CircleAlert;
+  return found ? found.icon : AlertCircle;
 }
 
 function getBlockLabel(type: CheckinStep['type']) {

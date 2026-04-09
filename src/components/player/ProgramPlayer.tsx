@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { EquipProgram, DayContent, Activity, DEFAULT_CHECKIN_CONFIG, resolveInteraction } from '../../lib/equip-admin-types';
 import { BlockRenderer } from './BlockRenderer';
 import { ProgramCheckIn } from '../equip/ProgramCheckIn';

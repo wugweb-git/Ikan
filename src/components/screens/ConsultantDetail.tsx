@@ -1,13 +1,13 @@
 import { useState, useEffect } from 'react';
 import { apiClient } from '../../lib/api-client';
 import { useIsMobile } from '../../hooks/useIsMobile';
-import { toast } from 'sonner@2.0.3';
+import { toast } from 'sonner';
 import { MobileHeader } from '../navigation/MobileHeader';
 import { LoadingSpinner } from '../LoadingSpinner';
 import { BookingModal } from '../blocks/BookingModal';
 import { copyToClipboard } from '../../lib/clipboard';
 import { cn } from '../ui/utils';
-import { Star, MapPin, Clock, Video, Phone, MessageCircle, House, Globe, Check, ChevronRight, Share2, Calendar, Heart, Award, CircleCheck, Quote, ThumbsUp, Users, Play } from 'lucide-react';
+import { Star, MapPin, Clock, Video, Phone, MessageCircle, Home, Globe, Check, ChevronRight, Share2, Calendar, Heart, Award, CircleCheck, Quote, ThumbsUp, Users, Play } from 'lucide-react';
 import { Avatar, AvatarImage, AvatarFallback } from '../ui/avatar';
 import { Badge } from '../ui/badge';
 import { Card, CardContent } from '../ui/card';

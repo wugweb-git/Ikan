@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react';
-import { motion } from 'motion/react';
+import { motion } from 'framer-motion';
 import { Card, CardContent } from '../ui/card';
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
 import { Icon } from '../Icon';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '../ui/dialog';
-import { Clock, FileText, Brain, Shield, Activity, ArrowRight, Play, Lock, CircleHelp } from 'lucide-react';
+import { Clock, FileText, Brain, Shield, Activity, ArrowRight, Play, Lock, HelpCircle } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNotifications } from '../../contexts/NotificationContext';
 import { cn } from '../ui/utils';
@@ -422,7 +422,7 @@ export function Assessments({ className, onNavigate }: AssessmentsProps) {
                        <span className="font-medium" style={{ color: 'var(--color-text-primary)' }}>{selectedAssessment.estimatedTime}</span>
                      </div>
                      <div className="flex items-center gap-2 px-4 py-2 rounded-full" style={{ backgroundColor: 'var(--color-bg-muted)' }}>
-                       <CircleHelp size={18} style={{ color: 'var(--color-primary-default)' }} />
+                       <HelpCircle size={18} style={{ color: 'var(--color-primary-default)' }} />
                        <span className="font-medium" style={{ color: 'var(--color-text-primary)' }}>{selectedAssessment.questionCount} Questions</span>
                      </div>
                    </div>

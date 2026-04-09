@@ -37,10 +37,10 @@
     "clsx": "*",
     "cmdk": "^1.1.1",
     "embla-carousel-react": "^8.6.0",
+    "framer-motion": "^12.23.24",
     "hono": "*",
     "input-otp": "^1.4.2",
     "lucide-react": "^0.487.0",
-    "motion": "*",
     "path": "*",
     "react": "^18.3.1",
     "react-day-picker": "^8.10.1",
@@ -66,6 +66,8 @@
   },
   "scripts": {
     "dev": "vite",
-    "build": "vite build"
+    "build": "vite build",
+    "verify:config": "node scripts/verify-config.mjs",
+    "test:guardrails": "npm run verify:config && npm run build"
   }
 }

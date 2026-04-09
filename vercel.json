@@ -1,9 +1,9 @@
 {
   "buildCommand": "npm run build",
-  "outputDirectory": "build",
+  "outputDirectory": "dist",
   "framework": "vite",
   "rewrites": [
-    { "source": "/((?!api|_next|favicon\\.svg|pwa-.*|apple-touch-icon\\.png|maskable-.*|manifest\\.json|sw\\.js|robots\\.txt|sitemap\\.xml).*)", "destination": "/index.html" }
+    { "source": "/(.*)", "destination": "/index.html" }
   ],
   "headers": [
     {

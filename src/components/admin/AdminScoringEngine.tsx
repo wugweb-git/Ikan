@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import {
-  Calculator, Save, Plus, Trash2, CircleAlert, Info, ArrowUpDown,
+  Calculator, Save, Plus, Trash2, AlertCircle, Info, ArrowUpDown,
   ChevronDown, ChevronUp,
 } from 'lucide-react';
 import { AdminHeader } from './AdminHeader';

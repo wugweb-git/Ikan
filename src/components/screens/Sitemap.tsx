@@ -2,7 +2,7 @@ import React, { useMemo } from 'react';
 import { useIsMobile } from '../../hooks/useIsMobile';
 import { PageHero } from '../ui/PageHero';
 import { usePageContent } from '../../hooks/usePageContent';
-import { House, Info, Mail, ClipboardCheck, BookOpen, Stethoscope, Users, UserCircle, Heart, CircleHelp, Shield, FileText, Ban, RotateCcw } from 'lucide-react';
+import { Home, Info, Mail, ClipboardCheck, BookOpen, Stethoscope, Users, UserCircle, Heart, HelpCircle, Shield, FileText, Ban, RotateCcw } from 'lucide-react';
 
 interface SitemapProps {
   className?: string;
@@ -12,7 +12,7 @@ interface SitemapProps {
 
 // Icon map for rendering from CMS icon names
 const ICON_MAP: Record<string, React.ReactNode> = {
-  house: <House size={18} />,
+  house: <Home size={18} />,
   info: <Info size={18} />,
   mail: <Mail size={18} />,
   'clipboard-check': <ClipboardCheck size={18} />,
@@ -21,7 +21,7 @@ const ICON_MAP: Record<string, React.ReactNode> = {
   users: <Users size={18} />,
   'user-circle': <UserCircle size={18} />,
   heart: <Heart size={18} />,
-  'circle-help': <CircleHelp size={18} />,
+  'circle-help': <HelpCircle size={18} />,
   shield: <Shield size={18} />,
   'file-text': <FileText size={18} />,
   ban: <Ban size={18} />,

@@ -94,7 +94,7 @@ export function Icon({
 
   if (!IconComponent) {
     // Fallback to a default icon if mapping not found
-    const FallbackIcon = (LucideIcons as any).CircleHelp || (LucideIcons as any).HelpCircle;
+    const FallbackIcon = (LucideIcons as any).HelpCircle;
     if (!FallbackIcon) {
       // Ultimate fallback: render nothing rather than crash
       return <span className={cn("inline-block", className)} style={{ width: size, height: size }} {...props} />;

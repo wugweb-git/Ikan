@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { FileText, CircleHelp, Info, ArrowLeft, ChevronRight, Shield, RotateCcw, CircleX } from 'lucide-react';
+import { FileText, HelpCircle, Info, ArrowLeft, ChevronRight, Shield, RotateCcw, CircleX } from 'lucide-react';
 import { AccountPageHeader } from '../../blocks/AccountPageHeader';
 import { useIsMobile } from '../../../hooks/useIsMobile';
 
@@ -25,7 +25,7 @@ const LEGAL_PAGES: LegalPage[] = [
   { id: 'privacy-policy', label: 'Privacy Policy', icon: <Shield size={20} />, color: 'var(--color-status-info)', bg: 'var(--color-status-info-light)', description: 'How we handle your data' },
   { id: 'return-policy', label: 'Return Policy', icon: <RotateCcw size={20} />, color: 'var(--color-status-warning)', bg: 'var(--color-status-warning-light)', description: 'Refund and return guidelines' },
   { id: 'cancellation-policy', label: 'Cancellation Policy', icon: <CircleX size={20} />, color: 'var(--color-status-danger)', bg: 'var(--color-status-danger-light)', description: 'How to cancel subscriptions' },
-  { id: 'faq', label: 'FAQ', icon: <CircleHelp size={20} />, color: '#7C3AED', bg: '#EDE9FE', description: 'Frequently asked questions' },
+  { id: 'faq', label: 'FAQ', icon: <HelpCircle size={20} />, color: '#7C3AED', bg: '#EDE9FE', description: 'Frequently asked questions' },
   { id: 'about', label: 'About iKAN', icon: <Info size={20} />, color: 'var(--color-status-success)', bg: 'var(--color-status-success-light)', description: 'Our mission and story' },
 ];
 

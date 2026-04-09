@@ -2,7 +2,7 @@ import { projectId } from '../../utils/supabase/info';
 import { getAuthHeaders } from '../../lib/supabase-client';
 import { useState, useRef, useEffect } from 'react';
 import {
-  User, Briefcase, Heart, CircleHelp, Users, Clock, FileText,
+  User, Briefcase, Heart, HelpCircle, Users, Clock, FileText,
   Upload, Plus, X, Languages, GraduationCap, Video, Phone, MessageSquare,
   CircleCheck, Sparkles, ArrowLeft, Send, Loader2, Quote
 } from 'lucide-react';
