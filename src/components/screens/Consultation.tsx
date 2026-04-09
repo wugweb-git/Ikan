@@ -13,7 +13,7 @@ import { PageHero } from '../ui/PageHero';
 import { useMetadata } from '../../hooks/useMetadata';
 import { BookingModal } from '../blocks/BookingModal';
 import { useAuth } from '../../contexts/AuthContext';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 // ── Consultant type ─────────────────────────────────────────────
 export interface Consultant {

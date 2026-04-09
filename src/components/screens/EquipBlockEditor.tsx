@@ -32,7 +32,7 @@ import { useMetadata } from '../../hooks/useMetadata';
 import { getPresetForDayType, type DayTypePreset } from '../admin/day-presets';
 import { projectId } from '../../utils/supabase/info';
 import { getAuthHeaders } from '../../lib/supabase-client';
-import { toast } from 'sonner@2.0.3';
+import { toast } from 'sonner';
 
 // Fallback exercise subtypes — used only while MetaManager hasn't loaded
 const FALLBACK_EXERCISE_SUBTYPES = [

@@ -7,7 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 import { Checkbox } from './ui/checkbox';
 import { useAuth } from '../contexts/AuthContext';
 import { User, Mail, Lock, Phone, Heart, Eye, EyeOff } from 'lucide-react';
-import { toast } from 'sonner@2.0.3';
+import { toast } from 'sonner';
 import { authContent } from '../lib/content/auth';
 import { projectId, publicAnonKey } from '../utils/supabase/info';
 import { 

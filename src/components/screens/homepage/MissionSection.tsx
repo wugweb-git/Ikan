@@ -4,14 +4,14 @@ import { useIsMobile } from '../../../hooks/useIsMobile';
 import { usePageContent } from '../../../hooks/usePageContent';
 
 // Client logo imports from Figma
-import imgLogo2 from "figma:asset/1fa377842c0edee2e6d99526877c4abfe5cffba4.png";
-import imgLogo4 from "figma:asset/bed3a7c577bcfb0b6fc0334b0f93d8eddb9275f8.png";
-import imgLogo6 from "figma:asset/e12e76c2f5940d65dbebba2615815d6b5552f1cc.png";
-import imgLogo7 from "figma:asset/d246862ee8771400424ba422593c855cabc9ba4a.png";
-import imgLogo8 from "figma:asset/4d70d16cfc423d83c6ca9941c4d3da923cf039ac.png";
-import imgLogo9 from "figma:asset/17b5fecba5e52eb9055025402d9b0c25a870d0d2.png";
-import imgLogo10 from "figma:asset/7a674497643e29f384a4eaeb5616eeb32e4aa50b.png";
-import imgLogo11 from "figma:asset/ac0292f75b641a157de9af130cc05ecea5dd193f.png";
+import imgLogo2 from "../../../assets/1fa377842c0edee2e6d99526877c4abfe5cffba4.png";
+import imgLogo4 from "../../../assets/bed3a7c577bcfb0b6fc0334b0f93d8eddb9275f8.png";
+import imgLogo6 from "../../../assets/e12e76c2f5940d65dbebba2615815d6b5552f1cc.png";
+import imgLogo7 from "../../../assets/d246862ee8771400424ba422593c855cabc9ba4a.png";
+import imgLogo8 from "../../../assets/4d70d16cfc423d83c6ca9941c4d3da923cf039ac.png";
+import imgLogo9 from "../../../assets/17b5fecba5e52eb9055025402d9b0c25a870d0d2.png";
+import imgLogo10 from "../../../assets/7a674497643e29f384a4eaeb5616eeb32e4aa50b.png";
+import imgLogo11 from "../../../assets/ac0292f75b641a157de9af130cc05ecea5dd193f.png";
 
 const clientLogos = [
   { src: imgLogo2, alt: 'Client logo 1' },

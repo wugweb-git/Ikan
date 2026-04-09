@@ -37,7 +37,7 @@ import {
   Apple,
 } from 'lucide-react';
 import { apiClient } from '../../lib/api-client';
-import { toast } from 'sonner@2.0.3';
+import { toast } from 'sonner';
 import { invalidateMetadataCache } from '../../hooks/useMetadata';
 import { SEED_DATA, METADATA_TYPE_LABELS, METADATA_TYPE_ICONS, METADATA_TYPE_GROUPS, type MetadataType } from '../../lib/metadata-seed';
 import { Skeleton } from '../ui/skeleton-loader';
