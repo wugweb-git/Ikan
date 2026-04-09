@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   CircleCheck, Play, Clock, ChevronLeft, ChevronRight, Lock,
   LogOut,
@@ -9,7 +9,7 @@ import { EquipProgram } from '../../lib/equip-admin-types';
 import { ProgramPlayer } from '../player/ProgramPlayer';
 import { apiClient } from '../../lib/api-client';
 import { useNotifications } from '../../contexts/NotificationContext';
-import { toast } from 'sonner@2.0.3';
+import { toast } from 'sonner';
 import tokens from '../../lib/design-tokens';
 import { LoadingSpinner } from '../LoadingSpinner';
 

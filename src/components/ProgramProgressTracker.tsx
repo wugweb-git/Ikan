@@ -1,4 +1,4 @@
-import { motion } from 'motion/react';
+import { motion } from 'framer-motion';
 import { Play, CheckCircle2, ArrowRight, CalendarCheck, BarChart3 } from 'lucide-react';
 import { HeroStatusCard } from './ui/HeroStatusCard';
 
