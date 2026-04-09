@@ -43,7 +43,7 @@ See [Getting Started](docs/GETTING-STARTED.md) for full setup instructions.
 | Layer | Technology |
 |-------|-----------|
 | Frontend | React 18 + TypeScript + Tailwind CSS v4 + Radix UI |
-| Animation | Motion (motion/react) |
+| Animation | Framer Motion (`framer-motion`) |
 | Backend | Supabase Edge Functions (Deno + Hono) |
 | Database | Supabase Postgres (KV store pattern) |
 | Auth | Supabase Auth (email/password + social login) |
@@ -98,6 +98,22 @@ npm run supabase:logs    # View server logs
 ```
 
 ---
+
+---
+
+## Build & Deployment Safety Checks
+
+Run these before shipping to avoid regressions in responsive styling or SPA rewrites:
+
+```bash
+npm run verify:config
+npm run build
+```
+
+`verify:config` validates:
+- Tailwind Vite plugin presence in root `vite.config.ts`
+- JSON validity and SPA fallback rewrite in both Vercel configs (`vercel.json`, `src/vercel.json`)
+
 
 ## License
 
