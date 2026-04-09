@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { apiClient } from '../../lib/api-client';
 import { useIsMobile } from '../../hooks/useIsMobile';
-import { toast } from 'sonner@2.0.3';
+import { toast } from 'sonner';
 import { MobileHeader } from '../navigation/MobileHeader';
 import { LoadingSpinner } from '../LoadingSpinner';
 import { BookingModal } from '../blocks/BookingModal';

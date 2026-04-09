@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, lazy, Suspense, startTransition } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useTokens } from './lib/react-tokens';
 import { useIsMobile } from './hooks/useIsMobile';
 import { useMobileOptimizations, useMobileViewport, useMobileKeyboard } from './hooks/useMobileOptimizations';

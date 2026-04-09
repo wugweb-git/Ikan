@@ -7,7 +7,7 @@ import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { Switch } from '../ui/switch';
-import { toast } from 'sonner@2.0.3';
+import { toast } from 'sonner';
 import { apiClient } from '../../lib/api-client';
 import { AdminHeader } from './AdminHeader';
 import { AdminLoading } from './AdminLoading';

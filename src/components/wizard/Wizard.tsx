@@ -7,7 +7,7 @@ import { WizardProgress } from './WizardProgress';
 import { Button } from '../ui/button';
 import { X } from 'lucide-react';
 import { cn } from '../ui/utils';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface WizardProps {
   config: WizardConfig;

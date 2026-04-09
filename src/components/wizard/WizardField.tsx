@@ -7,7 +7,7 @@ import { RadioGroup, RadioGroupItem } from '../ui/radio-group';
 import { Checkbox } from '../ui/checkbox';
 import { cn } from '../ui/utils';
 import { Plus, Trash2, Info } from 'lucide-react';
-import { motion } from 'motion/react';
+import { motion } from 'framer-motion';
 
 interface WizardFieldProps {
   field: WizardFieldConfig;

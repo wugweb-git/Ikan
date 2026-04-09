@@ -1,5 +1,5 @@
 import React from 'react';
-import { motion } from 'motion/react';
+import { motion } from 'framer-motion';
 import svgPathsIcon from "../imports/svg-ptmlmkxncr";
 import svgPathsFull from "../imports/svg-epzl744ze1";
 import { usePublicSettings } from '../hooks/usePublicSettings';
