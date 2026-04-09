@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { Button } from '../ui/button';
 import { Icon } from '../Icon';
 import { cn } from '../ui/utils';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface PublicBottomNavMobileProps {
   currentRoute: string;

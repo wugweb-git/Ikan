@@ -1,5 +1,5 @@
 import { cn } from '../ui/utils';
-import { motion } from 'motion/react';
+import { motion } from 'framer-motion';
 
 interface WizardProgressProps {
   currentStep: number;

@@ -48,7 +48,7 @@ export function AdminAssessmentManager({ onBack, className }: AdminAssessmentMan
   const loadAssessments = async () => {
     try {
       setLoading(true);
-      const response = await apiClient.getAssessments();
+      const response = await apiClient.getAdminAssessments();
       const data = Array.isArray(response) ? response : response.assessments || [];
       
       const mappedAssessments = data.map((item: any) => {

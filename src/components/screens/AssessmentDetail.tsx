@@ -12,7 +12,7 @@ import { TopNavBar } from '../navigation/TopNavBar';
 import { useIsMobile } from '../../hooks/useIsMobile';
 import { Skeleton } from '../ui/skeleton-loader';
 import { Button } from '../ui/button';
-import defaultBentoImage from "figma:asset/8ce2a19aab5abaf51a83cb99ea2d61447f96d8b2.png";
+import defaultBentoImage from "../../assets/8ce2a19aab5abaf51a83cb99ea2d61447f96d8b2.png";
 import { ASSESSMENT_CONTENT, NEWSLETTER_CONTENT, ASSESSMENT_FALLBACKS, DEFAULT_METADATA } from '../../lib/constants/content';
 
 interface AssessmentDetailProps {

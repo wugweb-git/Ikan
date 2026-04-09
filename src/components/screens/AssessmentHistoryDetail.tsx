@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { motion } from 'motion/react';
+import { motion } from 'framer-motion';
 import { Card, CardContent } from '../ui/card';
 import { Button } from '../ui/button';
 import { ChevronLeft, TrendingUp, TrendingDown, Minus, Calendar, BarChart3, Eye, Play, Clock, Download } from 'lucide-react';

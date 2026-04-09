@@ -7,7 +7,7 @@ import {
   BookOpen, Calendar, Smile, BarChart3, ChevronDown, ChevronRight,
   FileText, Tag, Zap, Brain, Check, Clock,
 } from 'lucide-react';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 // ── font helper ─────────────────────────────────────────────────
 const f = (size = 'sm', weight: 400 | 500 = 400, color?: string): React.CSSProperties => ({
