@@ -1,5 +1,5 @@
 import { cn } from './ui/utils';
-import { motion } from 'motion/react';
+import { motion } from 'framer-motion';
 import { ArrowRight, Calendar, MessageCircle, ShieldCheck, Video, Phone } from 'lucide-react';
 
 interface ActionBlocksProps {

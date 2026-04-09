@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { motion } from 'motion/react';
+import { motion } from 'framer-motion';
 import { Activity, ExerciseConfig, resolveInteraction } from '../../lib/equip-admin-types';
 import { Label } from '../ui/label';
 import { RadioGroup, RadioGroupItem } from '../ui/radio-group';

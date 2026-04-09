@@ -6,7 +6,7 @@ import { LogoFull } from './Logo';
 import { authContent } from '../lib/content/auth';
 import { Input } from './ui/input';
 import { Mail, Lock, User, Eye, EyeOff, ArrowLeft, Shield, Heart, Users } from 'lucide-react';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface LoginScreenProps {
   onSuccess?: () => void;

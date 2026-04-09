@@ -1,4 +1,4 @@
-import { toast } from 'sonner@2.0.3';
+import { toast } from 'sonner';
 import { useState, useEffect, useCallback } from 'react';
 import {
   Plus, Trash2, Save, X, GripVertical, Copy, Eye, EyeOff,

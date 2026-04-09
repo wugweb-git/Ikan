@@ -1,7 +1,7 @@
 import { projectId } from '../../utils/supabase/info';
 import { getAuthHeaders } from '../../lib/supabase-client';
 import { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '../ui/button';
 import { AssessmentQuestion } from '../organisms/AssessmentQuestion';
 import { Icon } from '../Icon';
