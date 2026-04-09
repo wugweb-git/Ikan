@@ -210,6 +210,10 @@ app.get("/equip/programs/:equipId/days", async (c) => {
 
 app.post("/equip/programs/:equipId/days", requireAuth, async (c) => {
     try {
+        const user = c.get('user');
+        const userProfile = await kv.get(`user:${user.id}`);
+        if (!userProfile?.is_admin) return c.json({ error: 'Admin access required' }, 403);
+
         const equipId = c.req.param('equipId');
         const data = await c.req.json();
         
@@ -230,6 +234,10 @@ app.post("/equip/programs/:equipId/days", requireAuth, async (c) => {
 
 app.put("/equip/days/:dayId", requireAuth, async (c) => {
     try {
+        const user = c.get('user');
+        const userProfile = await kv.get(`user:${user.id}`);
+        if (!userProfile?.is_admin) return c.json({ error: 'Admin access required' }, 403);
+
         const dayId = c.req.param('dayId');
         const updates = await c.req.json();
         const day = await EquipDayService.updateDay(dayId, updates);
@@ -252,6 +260,10 @@ app.get("/equip/days/:dayId/blocks", async (c) => {
 
 app.post("/equip/days/:dayId/blocks", requireAuth, async (c) => {
     try {
+        const user = c.get('user');
+        const userProfile = await kv.get(`user:${user.id}`);
+        if (!userProfile?.is_admin) return c.json({ error: 'Admin access required' }, 403);
+
         const dayId = c.req.param('dayId');
         const data = await c.req.json();
         const block = await EquipBlockService.createBlock({ ...data, equip_day_id: dayId });
@@ -263,6 +275,10 @@ app.post("/equip/days/:dayId/blocks", requireAuth, async (c) => {
 
 app.put("/equip/blocks/:blockId", requireAuth, async (c) => {
     try {
+        const user = c.get('user');
+        const userProfile = await kv.get(`user:${user.id}`);
+        if (!userProfile?.is_admin) return c.json({ error: 'Admin access required' }, 403);
+
         const blockId = c.req.param('blockId');
         const updates = await c.req.json();
         const block = await EquipBlockService.updateBlock(blockId, updates);
@@ -274,6 +290,10 @@ app.put("/equip/blocks/:blockId", requireAuth, async (c) => {
 
 app.delete("/equip/blocks/:blockId", requireAuth, async (c) => {
     try {
+        const user = c.get('user');
+        const userProfile = await kv.get(`user:${user.id}`);
+        if (!userProfile?.is_admin) return c.json({ error: 'Admin access required' }, 403);
+
         const blockId = c.req.param('blockId');
         await EquipBlockService.deleteBlock(blockId);
         return c.json({ success: true });
@@ -284,6 +304,10 @@ app.delete("/equip/blocks/:blockId", requireAuth, async (c) => {
 
 app.post("/equip/days/:dayId/blocks/reorder", requireAuth, async (c) => {
     try {
+        const user = c.get('user');
+        const userProfile = await kv.get(`user:${user.id}`);
+        if (!userProfile?.is_admin) return c.json({ error: 'Admin access required' }, 403);
+
         const { orderedIds } = await c.req.json();
         await EquipBlockService.reorderBlocks(orderedIds);
         return c.json({ success: true });

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useGoogleFit, HealthData } from './GoogleFitContext';
 import { GoogleFitConsentModal } from './GoogleFitConsentModal';
 import { ManualEntryModal } from './ManualEntryModal';

@@ -165,7 +165,7 @@ return isMobile ? (
 - Keep animations purposeful (feedback, not decoration)
 
 ```tsx
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 // Duration guidelines:
 // Fast: 150ms (micro-interactions)
@@ -180,7 +180,7 @@ import { motion, AnimatePresence } from 'motion/react';
 Use sonner v2.0.3:
 
 ```tsx
-import { toast } from 'sonner@2.0.3';
+import { toast } from 'sonner';
 
 toast.success('Saved successfully');
 toast.error('Something went wrong');
