@@ -1,21 +1,32 @@
-# Module: kv audit
+# Module: KV Audit
 
 ## Purpose
+Track changes in key-value storage.
 
 ## Scope
-- Owns:
-- Does NOT own:
+Owns:
+- Change logs
+- Audit trails
 
 ## Key Concepts
+- Key
+- Change
 
 ## Core Flows
+Update → Log → Store
 
 ## Data Flow
+Input: Changes  
+Output: Audit logs
 
 ## Dependencies
+- KV store
 
 ## Consumers
+- Admin
 
-## Edge Cases / Failure States
+## Edge Cases
+- Missing logs
 
 ## Admin / Control
+- Audit view

@@ -1,21 +1,32 @@
-# Module: offline sync
+# Module: Offline Sync
 
 ## Purpose
+Handle offline data and syncing.
 
 ## Scope
-- Owns:
-- Does NOT own:
+Owns:
+- Offline detection
+- Sync logic
 
 ## Key Concepts
+- Sync
+- Queue
 
 ## Core Flows
+Offline → Store → Sync → Update
 
 ## Data Flow
+Input: Local data  
+Output: Synced state
 
 ## Dependencies
+None
 
 ## Consumers
+- All modules
 
-## Edge Cases / Failure States
+## Edge Cases
+- Sync conflicts
 
 ## Admin / Control
+- Sync monitoring

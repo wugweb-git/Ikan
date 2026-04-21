@@ -1,36 +1,32 @@
-# Module: Authentication & Identity
+# Module: Authentication
 
 ## Purpose
-Manages user identity, sessions, and access control.
+Manage identity and access control.
 
 ## Scope
 Owns:
-- Login / signup
-- Session management
-- Role-based access
-
-Does NOT own:
-- User data logic
-- Admin management
+- Login
+- Sessions
 
 ## Key Concepts
 - User
-- Session
 - Token
-- Roles
 
 ## Core Flows
-Login → Authenticate → Session → Access
+Login → Authenticate → Session
+
+## Data Flow
+Input: Credentials  
+Output: Session
 
 ## Dependencies
-- None
+None
 
 ## Consumers
 - All modules
 
 ## Edge Cases
-- Expired sessions
-- Invalid tokens
+- Invalid login
 
 ## Admin / Control
-- Role assignment
+- Role management

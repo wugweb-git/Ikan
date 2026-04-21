@@ -1,21 +1,32 @@
-# Module: backups
+# Module: Backups
 
 ## Purpose
+Ensure data safety and recovery.
 
 ## Scope
-- Owns:
-- Does NOT own:
+Owns:
+- Backup jobs
+- Restore logic
 
 ## Key Concepts
+- Snapshot
+- Restore
 
 ## Core Flows
+Backup → Store → Restore
 
 ## Data Flow
+Input: Data  
+Output: Backup
 
 ## Dependencies
+- Storage
 
 ## Consumers
+- System
 
-## Edge Cases / Failure States
+## Edge Cases
+- Failed backup
 
 ## Admin / Control
+- Backup management

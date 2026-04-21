@@ -1,33 +1,32 @@
 # Module: Design System
 
 ## Purpose
-Defines visual language, components, and UI consistency across the system.
+Define UI consistency and visual language.
 
 ## Scope
 Owns:
-- Design tokens
-- UI components
-- Accessibility rules
-
-Does NOT own:
-- Business logic
+- Tokens
+- Components
 
 ## Key Concepts
-- Tokens (color, spacing, typography)
+- Tokens
 - Components
-- Variants & states
 
-## Component Specifications
-- Button
-- Input
-- Card
-- Modal
+## Core Flows
+Define → Use → Render
+
+## Data Flow
+Input: Design rules  
+Output: UI consistency
 
 ## Dependencies
-- None
+None
 
 ## Consumers
-- All UI modules
+- UI
+
+## Edge Cases
+- Inconsistent usage
 
 ## Admin / Control
-- Managed via design updates
+- Design updates

@@ -1,21 +1,32 @@
-# Module: integrations
+# Module: Integrations
 
 ## Purpose
+Manage external services and APIs.
 
 ## Scope
-- Owns:
-- Does NOT own:
+Owns:
+- Third-party integrations
 
 ## Key Concepts
+- API
+- External service
 
 ## Core Flows
+System → API → Response
 
 ## Data Flow
+Input: Requests  
+Output: External data
 
 ## Dependencies
+- External APIs
 
 ## Consumers
+- Communication
+- Payments
 
-## Edge Cases / Failure States
+## Edge Cases
+- API failure
 
 ## Admin / Control
+- Config

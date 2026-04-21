@@ -1,21 +1,32 @@
-# Module: system health
+# Module: System Health
 
 ## Purpose
+Monitor system performance and availability.
 
 ## Scope
-- Owns:
-- Does NOT own:
+Owns:
+- Health checks
+- Monitoring signals
 
 ## Key Concepts
+- Status
+- Metrics
 
 ## Core Flows
+Collect → Evaluate → Report
 
 ## Data Flow
+Input: System metrics  
+Output: Health status
 
 ## Dependencies
+- Infrastructure
 
 ## Consumers
+- Admin
 
-## Edge Cases / Failure States
+## Edge Cases
+- Missing signals
 
 ## Admin / Control
+- Monitoring dashboard
