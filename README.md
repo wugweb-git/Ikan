@@ -1,11 +1,10 @@
+# Ikan
 
-  # Ikan - App
+## Documentation
 
-  This is a code bundle for Ikan - App. The original project is available at https://www.figma.com/design/7LUoUuChal8qFiK0ylVrcN/Ikan---App.
+All documentation is available in:
 
-  ## Running the code
+/docs
 
-  Run `npm i` to install the dependencies.
-
-  Run `npm run dev` to start the development server.
-  
+Start with:
+- docs/00-system-overview.md
