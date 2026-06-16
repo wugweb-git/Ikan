@@ -3,9 +3,9 @@ export const navigationConfig = {
   "desktop": {
     "top_nav": [
       { "label": "Assessment", "icon": "{icon.checkCircle.outline}", "route": "/assessments" },
-      { "label": "Equip", "icon": "{icon.tools.roundedOutline}", "route": "/equip-programs" },
+      { "label": "Equip", "icon": "{icon.tools.roundedOutline}", "route": "/equip-programs", "badge": "beta" },
       { "label": "Library", "icon": "{icon.library.roundedOutline}", "route": "/library" },
-      { "label": "Consultation", "icon": "{icon.chat.default}", "route": "/consultation" }
+      { "label": "Consultation", "icon": "{icon.chat.default}", "route": "/consultation", "badge": "coming soon" }
     ],
     "profile_dropdown": [{ "label": "Account", "route": "/account" }, { "label": "Settings", "route": "/settings" }, { "label": "Help & Support", "route": "/help" }, { "label": "Logout", "action": "logout" }]
   },

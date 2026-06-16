@@ -319,6 +319,18 @@ export function Footer({ onNavigate, className }: FooterProps) {
           </div>
         </div>
       </div>
+
+      {/* Disclaimer — crisis helplines (ported from main; iKan does not provide emergency support) */}
+      <div className="border-t border-white/10 px-6 py-5">
+        <p className="max-w-[1200px] mx-auto text-[11px] leading-[18px] text-white/55">
+          <strong className="text-white/75 font-medium">Disclaimer:</strong>{' '}
+          We at iKan deeply care about your mental health but we do not provide emergency
+          support. If you or someone you know needs immediate assistance, please reach out to the{' '}
+          <a href="tel:18005990019" className="text-white/75 underline">National Helpline: 1800-599-0019</a>{' '}
+          or the{' '}
+          <a href="tel:915298721" className="text-white/75 underline">iCALL Suicide Prevention Helpline: 915298721</a>.
+        </p>
+      </div>
     </footer>
   );
 }

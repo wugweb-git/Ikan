@@ -115,6 +115,20 @@ export function DesktopTopNav({ currentRoute, onNavigate, className }: DesktopTo
               >
                 <Icon name={name as any} variant={variant} size={16} />
                 {item.label}
+                {(item as any).badge && (
+                  <span
+                    className="uppercase"
+                    style={{
+                      fontSize: '9px', fontWeight: 600, letterSpacing: '0.03em', lineHeight: 1,
+                      padding: '2px 5px', borderRadius: '4px', marginLeft: '4px', color: '#fff',
+                      backgroundColor: (item as any).badge === 'beta'
+                        ? 'var(--color-primary-default, #6941C6)'
+                        : 'var(--color-text-muted, #888)',
+                    }}
+                  >
+                    {(item as any).badge}
+                  </span>
+                )}
               </Button>
             );
           })}
