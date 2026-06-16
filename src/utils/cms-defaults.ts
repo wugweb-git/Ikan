@@ -173,8 +173,8 @@ export const DEFAULT_CMS_CONTENT: { [key: string]: any } = {
           </h3>
           <p class="text-gray-300 mb-4">If you have any questions about this Privacy Policy or how we handle your data, our privacy team is ready to assist you.</p>
           <div class="flex flex-col sm:flex-row gap-4">
-            <a href="mailto:privacy@ikan.health" class="bg-white text-gray-900 px-4 py-2 rounded-lg font-medium hover:bg-gray-100 transition-colors text-center">
-              Email: privacy@ikan.health
+            <a href="mailto:privacy@ikanhealth.in" class="bg-white text-gray-900 px-4 py-2 rounded-lg font-medium hover:bg-gray-100 transition-colors text-center">
+              Email: privacy@ikanhealth.in
             </a>
             <span class="text-gray-400 text-sm self-center">Response within 24 hours</span>
           </div>
@@ -260,7 +260,7 @@ export const DEFAULT_CMS_CONTENT: { [key: string]: any } = {
         <div class="bg-gray-900 text-white p-6 rounded-lg">
           <h3 class="text-lg font-medium mb-3">Questions About These Terms?</h3>
           <p class="text-gray-300 mb-4">Our legal team is available to clarify any aspect of our Terms of Service.</p>
-          <a href="mailto:legal@ikan.health" class="bg-white text-gray-900 px-4 py-2 rounded-lg font-medium hover:bg-gray-100 transition-colors inline-block">
+          <a href="mailto:legal@ikanhealth.in" class="bg-white text-gray-900 px-4 py-2 rounded-lg font-medium hover:bg-gray-100 transition-colors inline-block">
             Contact Legal Team
           </a>
         </div>
@@ -274,7 +274,7 @@ export const DEFAULT_CMS_CONTENT: { [key: string]: any } = {
       <div class="space-y-8">
         <div class="bg-gradient-to-r from-green-50 to-teal-50 p-6 rounded-lg border border-green-100">
           <h2 class="text-xl font-medium text-gray-900 mb-3">❓ Frequently Asked Questions</h2>
-          <p class="text-gray-700 leading-relaxed">Find answers to common questions about iKan's mental health platform. Can't find what you're looking for? <a href="mailto:support@ikan.health" class="text-green-600 font-medium hover:underline">Contact our support team</a>.</p>
+          <p class="text-gray-700 leading-relaxed">Find answers to common questions about iKan's mental health platform. Can't find what you're looking for? <a href="mailto:support@ikanhealth.in" class="text-green-600 font-medium hover:underline">Contact our support team</a>.</p>
         </div>
 
         <div class="space-y-6">
@@ -337,7 +337,7 @@ export const DEFAULT_CMS_CONTENT: { [key: string]: any } = {
                 <div class="space-y-4">
                   <div class="border-l-4 border-orange-400 pl-4">
                     <h4 class="font-medium text-gray-900 mb-2">Contact Support</h4>
-                    <p class="text-gray-700 text-sm">Email us at <a href="mailto:support@ikan.health" class="text-orange-600 font-medium hover:underline">support@ikan.health</a> or use our in-app contact form.</p>
+                    <p class="text-gray-700 text-sm">Email us at <a href="mailto:support@ikanhealth.in" class="text-orange-600 font-medium hover:underline">support@ikanhealth.in</a> or use our in-app contact form.</p>
                   </div>
                   <div class="border-l-4 border-red-400 pl-4">
                     <h4 class="font-medium text-gray-900 mb-2">Crisis Support</h4>
@@ -369,7 +369,7 @@ export const DEFAULT_CMS_CONTENT: { [key: string]: any } = {
           <h2 class="text-xl font-medium text-gray-900 mb-3">💚 Our Satisfaction Guarantee</h2>
           <p class="text-gray-700 leading-relaxed">At iKan, we're committed to your satisfaction. If you're not completely satisfied with your purchase, we offer a comprehensive and fair return policy.</p>
         </div>
-        <p>Please contact billing@ikan.health for all refund requests.</p>
+        <p>Please contact billing@ikanhealth.in for all refund requests.</p>
       </div>
     `,
     lastUpdated: new Date().toISOString()
@@ -417,7 +417,7 @@ export const DEFAULT_CMS_CONTENT: { [key: string]: any } = {
               <div class="bg-teal-50 p-4 rounded-lg border border-teal-200">
                 <h4 class="font-medium text-gray-900 mb-2">General Inquiries</h4>
                 <p class="text-sm text-gray-700">Questions about our platform, services, or how to get started.</p>
-                <a href="mailto:hello@ikan.health" class="text-teal-600 font-medium text-sm hover:underline mt-2 inline-block">hello@ikan.health</a>
+                <a href="mailto:hello@ikanhealth.in" class="text-teal-600 font-medium text-sm hover:underline mt-2 inline-block">hello@ikanhealth.in</a>
               </div>
               <div class="bg-blue-50 p-4 rounded-lg border border-blue-200">
                 <h4 class="font-medium text-gray-900 mb-2">Book a Consultation</h4>
@@ -427,12 +427,12 @@ export const DEFAULT_CMS_CONTENT: { [key: string]: any } = {
               <div class="bg-purple-50 p-4 rounded-lg border border-purple-200">
                 <h4 class="font-medium text-gray-900 mb-2">Partnerships</h4>
                 <p class="text-sm text-gray-700">Interested in partnering with iKan for corporate wellness or research?</p>
-                <a href="mailto:partners@ikan.health" class="text-purple-600 font-medium text-sm hover:underline mt-2 inline-block">partners@ikan.health</a>
+                <a href="mailto:partners@ikanhealth.in" class="text-purple-600 font-medium text-sm hover:underline mt-2 inline-block">partners@ikanhealth.in</a>
               </div>
               <div class="bg-orange-50 p-4 rounded-lg border border-orange-200">
                 <h4 class="font-medium text-gray-900 mb-2">Technical Support</h4>
                 <p class="text-sm text-gray-700">Having trouble with the app? Our support team can help.</p>
-                <a href="mailto:support@ikan.health" class="text-orange-600 font-medium text-sm hover:underline mt-2 inline-block">support@ikan.health</a>
+                <a href="mailto:support@ikanhealth.in" class="text-orange-600 font-medium text-sm hover:underline mt-2 inline-block">support@ikanhealth.in</a>
               </div>
             </div>
           </section>
@@ -989,7 +989,7 @@ export const DEFAULT_CMS_CONTENT: { [key: string]: any } = {
         ]},
         { id: 'trust-safety', title: 'Trust, Safety & Privacy', items: [
           { question: 'Is my data private and secure?', answer: 'Absolutely. All user data is encrypted and treated as highly sensitive. We never share your data with third parties.' },
-          { question: 'What should I do in a mental health emergency?', answer: 'Call your local emergency services (911) or the iCALL Suicide Prevention Helpline at 915298721.' },
+          { question: 'What should I do in a mental health emergency?', answer: 'Call your local emergency services (911) or the iCALL Suicide Prevention Helpline at 9152987821.' },
           { question: 'How are consultants verified?', answer: 'All consultants on iKan are licensed professionals. We verify their credentials and experience before they join.' },
         ]},
       ],
@@ -1002,17 +1002,17 @@ export const DEFAULT_CMS_CONTENT: { [key: string]: any } = {
     content: JSON.stringify({
       heroTitle: "We're Here to Help",
       heroSubtitle: 'Your mental health journey matters to us. Reach out for support, questions, or just to connect.',
-      supportEmail: 'support@ikan.health',
-      crisisPhone: '915298721',
+      supportEmail: 'support@ikanhealth.in',
+      crisisPhone: '9152987821',
       crisisLabel: 'iCALL Suicide Prevention Helpline',
       contactMethods: [
-        { icon: 'mail', title: 'Email Support', description: 'Get help with your account and services', value: 'support@ikan.health', action: 'mailto:support@ikan.health' },
-        { icon: 'phone', title: 'Crisis Support', description: 'iCALL Suicide Prevention Helpline', value: '915298721', action: 'tel:915298721' },
+        { icon: 'mail', title: 'Email Support', description: 'Get help with your account and services', value: 'support@ikanhealth.in', action: 'mailto:support@ikanhealth.in' },
+        { icon: 'phone', title: 'Crisis Support', description: 'iCALL Suicide Prevention Helpline', value: '9152987821', action: 'tel:9152987821' },
         { icon: 'messageCircle', title: 'Live Chat', description: 'Chat with our support team', value: 'Available 9 AM - 6 PM IST', action: '#' },
       ],
       formTitle: 'Send us a Message',
       formSubtitle: 'We typically respond within 24 hours during business days.',
-      crisisCard: { title: 'Need Immediate Help?', description: "If you're having thoughts of self-harm or suicide, please reach out for immediate support.", buttons: [{ label: 'Call iCALL - 915298721', action: 'tel:915298721' }, { label: 'Call 911 - Emergency', action: 'tel:911' }] },
+      crisisCard: { title: 'Need Immediate Help?', description: "If you're having thoughts of self-harm or suicide, please reach out for immediate support.", buttons: [{ label: 'Call iCALL - 9152987821', action: 'tel:9152987821' }, { label: 'Call 911 - Emergency', action: 'tel:911' }] },
       faqCard: { title: 'Looking for Quick Answers?', description: 'Check our FAQ section for instant answers to common questions.', buttonText: 'Visit FAQ Section', buttonRoute: '/faq' },
     }),
     lastUpdated: new Date().toISOString()

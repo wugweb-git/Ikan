@@ -352,7 +352,7 @@ export function AuthForm({ onSuccess, defaultTab = 'signin' }: AuthFormProps) {
                 type="button"
                 onClick={() => {
                   setSignInData({
-                    email: 'demo@ikan.health',
+                    email: 'demo@ikanhealth.in',
                     password: 'password123'
                   });
                 }}

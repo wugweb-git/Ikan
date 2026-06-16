@@ -88,7 +88,7 @@ export async function sendTransactionalEmail(opts: {
     }
   }
   if (!sender) {
-    sender = { name: "iKan Health", email: "noreply@ikan.health" };
+    sender = { name: "iKan Health", email: "noreply@ikanhealth.in" };
   }
 
   const result = await brevoPost("/smtp/email", {

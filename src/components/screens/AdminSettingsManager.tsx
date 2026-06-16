@@ -399,7 +399,7 @@ export function AdminSettingsManager({ onBack, className }: AdminSettingsManager
               type="email"
               value={settings.contactEmail}
               onChange={(e) => update('contactEmail', e.target.value)}
-              placeholder="support@ikan.health"
+              placeholder="support@ikanhealth.in"
             />
           </AdminFormField>
           <AdminFormField label="Contact Phone">
@@ -505,7 +505,7 @@ export function AdminSettingsManager({ onBack, className }: AdminSettingsManager
             </div>
           </AdminFormField>
           <AdminFormField label="From Email" helpText="Verified sender email in Brevo">
-            <Input type="email" value={settings.smtpFromEmail} onChange={(e) => update('smtpFromEmail', e.target.value)} placeholder="support@ikan.health" />
+            <Input type="email" value={settings.smtpFromEmail} onChange={(e) => update('smtpFromEmail', e.target.value)} placeholder="support@ikanhealth.in" />
           </AdminFormField>
           <AdminFormField label="From Name" helpText="Display name for outgoing mail">
             <Input value={settings.smtpFromName} onChange={(e) => update('smtpFromName', e.target.value)} placeholder="iKan Health" />

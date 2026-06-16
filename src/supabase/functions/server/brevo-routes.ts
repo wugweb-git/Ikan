@@ -81,7 +81,7 @@ export function registerBrevoRoutes(app: Hono, requireAdmin: any, requireAuth: a
 
       return c.json({
         config: config || {
-          email: { enabled: false, senderName: "iKan Health", senderEmail: "noreply@ikan.health" },
+          email: { enabled: false, senderName: "iKan Health", senderEmail: "noreply@ikanhealth.in" },
           sms: { enabled: false, senderName: "iKan" },
           whatsapp: { enabled: false, senderNumber: "" },
         },
@@ -175,7 +175,7 @@ export function registerBrevoRoutes(app: Hono, requireAdmin: any, requireAuth: a
         to: payload.to,
         sender: payload.sender || {
           name: senderName || "iKan Health",
-          email: senderEmail || "noreply@ikan.health",
+          email: senderEmail || "noreply@ikanhealth.in",
         },
       };
 
@@ -333,7 +333,7 @@ export function registerBrevoRoutes(app: Hono, requireAdmin: any, requireAuth: a
             to: [{ email: recipient }],
             sender: {
               name: testSenderName || "iKan Health",
-              email: testSenderEmail || "noreply@ikan.health",
+              email: testSenderEmail || "noreply@ikanhealth.in",
             },
             subject: "iKan Communication Test",
             htmlContent: `

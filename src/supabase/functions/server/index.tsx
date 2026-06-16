@@ -2611,7 +2611,7 @@ app.post("/admin/communication/test", requireAdmin, async (c) => {
         headers: { "api-key": apiKey, "Content-Type": "application/json", "Accept": "application/json" },
         body: JSON.stringify({
           to: [{ email: recipient }],
-          sender: { name: emailCfg.senderName || "iKan Health", email: emailCfg.senderEmail || "noreply@ikan.health" },
+          sender: { name: emailCfg.senderName || "iKan Health", email: emailCfg.senderEmail || "noreply@ikanhealth.in" },
           subject: "iKan Communication Test",
           htmlContent: `<div style="font-family:Ubuntu,sans-serif;padding:24px"><h2 style="color:#2A2A2A;font-weight:500">Test Successful</h2><p style="color:#717182">${message || "Your Brevo email integration is working."}</p></div>`,
         }),
@@ -4727,7 +4727,7 @@ app.post("/public/professional-application", async (c) => {
       if (emailConfig?.enabled && emailConfig?.api_key) {
         await kv.set(`email_queue:${notifId}`, {
           id: notifId,
-          to: emailConfig.sender_id || 'admin@ikan.health',
+          to: emailConfig.sender_id || 'admin@ikanhealth.in',
           subject: `[iKan] New Professional Application: ${body.name}`,
           body: `A new professional has applied to join iKan.\n\nName: ${body.name}\nCredentials: ${body.credentials}\nCategory: ${body.category || 'Therapist'}\nLocation: ${body.location || 'Not specified'}\nExperience: ${body.yearsExperience || 0} years\nLanguages: ${(body.languages || []).join(', ') || 'Not specified'}\n\nPlease review in Admin Dashboard > Consultation Manager > Applications tab.`,
           status: 'queued',

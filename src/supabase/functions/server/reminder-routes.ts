@@ -64,7 +64,7 @@ function buildReminderEmail(userName: string, programTitle: string, currentDay: 
       </div>
 
       <!-- CTA -->
-      <a href="https://ikan.health/dashboard" 
+      <a href="https://ikanhealth.in/dashboard" 
          style="display: block; text-align: center; padding: 14px 24px; background: #2A2A2A; color: #FFFFFF; text-decoration: none; border-radius: 12px; font-weight: 500; font-size: 15px;">
         Continue Your Journey
       </a>
@@ -73,7 +73,7 @@ function buildReminderEmail(userName: string, programTitle: string, currentDay: 
     <!-- Footer -->
     <p style="text-align: center; color: #717182; font-size: 12px; margin-top: 24px; line-height: 1.5;">
       You're receiving this because you enrolled in a program on iKan.<br>
-      <a href="https://ikan.health/account" style="color: #717182;">Manage notification preferences</a>
+      <a href="https://ikanhealth.in/account" style="color: #717182;">Manage notification preferences</a>
     </p>
   </div>
 </body>

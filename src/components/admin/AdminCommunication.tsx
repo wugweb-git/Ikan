@@ -89,7 +89,7 @@ const AVAILABLE_VARS: { key: string; label: string; example: string }[] = [
   { key: 'assessment_name', label: 'Assessment Name', example: 'PHQ-9' },
   { key: 'program_name', label: 'Program Name', example: 'Stress Mastery' },
   { key: 'checkin_streak', label: 'Check-in Streak', example: '7 days' },
-  { key: 'support_url', label: 'Support URL', example: 'https://ikan.health/support' },
+  { key: 'support_url', label: 'Support URL', example: 'https://ikanhealth.in/support' },
 ];
 
 const CHANNEL_META: Record<Channel, { label: string; icon: any; color: string; bg: string }> = {

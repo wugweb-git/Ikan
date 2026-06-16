@@ -328,7 +328,7 @@ export function Footer({ onNavigate, className }: FooterProps) {
           support. If you or someone you know needs immediate assistance, please reach out to the{' '}
           <a href="tel:18005990019" className="text-white/75 underline">National Helpline: 1800-599-0019</a>{' '}
           or the{' '}
-          <a href="tel:915298721" className="text-white/75 underline">iCALL Suicide Prevention Helpline: 915298721</a>.
+          <a href="tel:9152987821" className="text-white/75 underline">iCALL Suicide Prevention Helpline: 9152987821</a>.
         </p>
       </div>
     </footer>

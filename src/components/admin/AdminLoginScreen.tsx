@@ -143,7 +143,7 @@ export function AdminLoginScreen({ onNavigate, onLoginSuccess }: AdminLoginScree
               <Input
                 id="admin-email"
                 type="email"
-                placeholder="admin@ikan.health"
+                placeholder="admin@ikanhealth.in"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 disabled={isLoading}

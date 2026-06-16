@@ -61,7 +61,7 @@ interface LogEntry {
 }
 
 const DEFAULT_CONFIG: BrevoConfig = {
-  email: { enabled: false, senderName: 'iKan Health', senderEmail: 'noreply@ikan.health' },
+  email: { enabled: false, senderName: 'iKan Health', senderEmail: 'noreply@ikanhealth.in' },
   sms: { enabled: false, senderName: 'iKan' },
   whatsapp: { enabled: false, senderNumber: '', testTemplateName: '' },
 };
@@ -350,7 +350,7 @@ export function AdminCommunicationAPI() {
                 <Input
                   value={config.email.senderEmail}
                   onChange={(e) => setConfig({ ...config, email: { ...config.email, senderEmail: e.target.value } })}
-                  placeholder="noreply@ikan.health"
+                  placeholder="noreply@ikanhealth.in"
                   style={{ borderRadius: 'var(--radius-md)' }}
                 />
               </div>

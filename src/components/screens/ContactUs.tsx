@@ -70,8 +70,8 @@ export function ContactUs({ className, onNavigate, onBack }: ContactUsProps) {
     }
   };
 
-  const supportEmail = cms?.supportEmail || content?.contactEmail || 'support@ikan.health';
-  const crisisPhone = cms?.crisisPhone || content?.crisisPhone || '915298721';
+  const supportEmail = cms?.supportEmail || content?.contactEmail || 'support@ikanhealth.in';
+  const crisisPhone = cms?.crisisPhone || content?.crisisPhone || '9152987821';
   const crisisLabel = cms?.crisisLabel || content?.crisisLabel || 'iCALL Suicide Prevention Helpline';
 
   const contactMethods = cms?.contactMethods || [
@@ -100,7 +100,7 @@ export function ContactUs({ className, onNavigate, onBack }: ContactUsProps) {
 
   const formTitle = cms?.formTitle || 'Send us a Message';
   const formSubtitle = cms?.formSubtitle || 'We typically respond within 24 hours during business days.';
-  const crisisCard = cms?.crisisCard || { title: 'Need Immediate Help?', description: "If you're having thoughts of self-harm or suicide, please reach out for immediate support.", buttons: [{ label: 'Call iCALL - 915298721', action: 'tel:915298721' }, { label: 'Call 911 - Emergency', action: 'tel:911' }] };
+  const crisisCard = cms?.crisisCard || { title: 'Need Immediate Help?', description: "If you're having thoughts of self-harm or suicide, please reach out for immediate support.", buttons: [{ label: 'Call iCALL - 9152987821', action: 'tel:9152987821' }, { label: 'Call 911 - Emergency', action: 'tel:911' }] };
   const faqCard = cms?.faqCard || { title: 'Looking for Quick Answers?', description: 'Check our FAQ section for instant answers to common questions about assessments, programs, and your account.', buttonText: 'Visit FAQ Section', buttonRoute: '/faq' };
 
   const heroTitle = cms?.heroTitle || content?.title || "We're Here to Help";

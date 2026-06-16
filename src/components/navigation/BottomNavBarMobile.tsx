@@ -61,7 +61,7 @@ export function BottomNavBarMobile({
   const navItems = [
     { label: 'Home', route: '/dashboard', icon: LayoutDashboard },
     { label: 'Journal', route: '/mood-journal', icon: Smile },
-    { label: 'Explore', route: '/equip', icon: Compass },
+    { label: 'Explore', route: '/equip', icon: Compass, badge: 'beta' },
     { label: 'Consult', route: '/consultation', icon: Users },
     { label: 'Profile', route: '/account', icon: User }
   ];
@@ -155,6 +155,20 @@ export function BottomNavBarMobile({
                   >
                     {badgeCount > 99 ? '99+' : badgeCount}
                   </div>
+                )}
+
+                {/* Text badge (e.g. "beta") */}
+                {(item as any).badge && (
+                  <span
+                    className="absolute -top-2 -right-3 uppercase"
+                    style={{
+                      fontSize: '7px', fontWeight: 700, letterSpacing: '0.03em', lineHeight: 1,
+                      padding: '2px 3px', borderRadius: '3px',
+                      backgroundColor: 'var(--color-primary-default, #6941C6)', color: '#fff',
+                    }}
+                  >
+                    {(item as any).badge}
+                  </span>
                 )}
               </div>
               

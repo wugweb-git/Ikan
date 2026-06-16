@@ -53,7 +53,7 @@ export const authContent = {
       processing: "Processing...",
       signingIn: "Signing In...",
       creatingAccount: "Creating Account...",
-      demoAccount: "Use Demo Account (demo@ikan.health / password123)"
+      demoAccount: "Use Demo Account (demo@ikanhealth.in / password123)"
     },
     social: {
       continuePrefix: "Or continue with",

@@ -319,7 +319,7 @@ export function AssessmentHistoryDetail({ assessmentId, onBack, onNavigate }: As
         </div>
 
         <div class="footer">
-          iKan Mental Health — ikan.health — Confidential Personal Report
+          iKan Mental Health — ikanhealth.in — Confidential Personal Report
         </div>
       </body>
       </html>`;

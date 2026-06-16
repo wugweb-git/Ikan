@@ -211,7 +211,7 @@ function buildUserConfirmationHtml(name: string, subject: string): string {
       </p>
       <p style="color: #151515; line-height: 1.6;">
         If your matter is urgent, please don't hesitate to reach out to us directly at
-        <a href="mailto:support@ikan.health" style="color: #2A2A2A; font-weight: 500;">support@ikan.health</a>.
+        <a href="mailto:support@ikanhealth.in" style="color: #2A2A2A; font-weight: 500;">support@ikanhealth.in</a>.
       </p>
       <hr style="border: none; border-top: 1px solid #E9EBEF; margin: 24px 0;" />
       <p style="font-size: 12px; color: #717182;">
