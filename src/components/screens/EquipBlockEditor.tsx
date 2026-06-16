@@ -737,6 +737,83 @@ function EquipBlockEditorInner({
                  </>
                );
              })()}
+
+             {/* ── Repeat / carry-forward ───────────────────────────────── */}
+             <div className="mt-3 pt-3 flex items-center gap-2 flex-wrap" style={{ borderTop: '1px solid var(--color-border-light)' }}>
+               <span style={{ fontSize: '10px', fontWeight: 500, fontFamily: 'var(--font-family-base)', color: 'var(--color-text-muted)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                 Carry forward
+               </span>
+               <button
+                 type="button"
+                 onClick={() => onChange({ repeat: block.repeat ? undefined : { type: 'simple_repeat', onDays: [] } })}
+                 className="h-7 px-2.5 flex items-center gap-1 rounded-md text-[11px] transition-colors"
+                 style={{
+                   fontWeight: 500, fontFamily: 'var(--font-family-base)',
+                   backgroundColor: block.repeat ? 'var(--color-primary-default)' : 'var(--color-bg-card)',
+                   color: block.repeat ? 'var(--color-primary-on)' : 'var(--color-text-muted)',
+                   border: block.repeat ? 'none' : '1px solid var(--color-border-default)',
+                 }}
+               >
+                 Repeat
+               </button>
+
+               {block.repeat && (
+                 <>
+                   <Select value={block.repeat.type} onValueChange={(t: any) => onChange({ repeat: { ...block.repeat!, type: t } })}>
+                     <SelectTrigger className="h-7 w-[150px]" style={{ fontSize: '11px', borderRadius: 'var(--radius-md)' }}>
+                       <SelectValue />
+                     </SelectTrigger>
+                     <SelectContent>
+                       <SelectItem value="simple_repeat">Simple repeat</SelectItem>
+                       <SelectItem value="column_addition">Add columns</SelectItem>
+                       <SelectItem value="on_demand">On demand</SelectItem>
+                     </SelectContent>
+                   </Select>
+
+                   {block.repeat.type === 'on_demand' ? (
+                     <div className="flex items-center gap-1 h-7 px-2 rounded-md" style={{ border: '1px solid var(--color-border-default)', backgroundColor: 'var(--color-bg-card)' }}>
+                       <span style={{ fontSize: '10px', color: 'var(--color-text-muted)' }}>From day</span>
+                       <input
+                         type="number"
+                         className="w-10 h-5 text-[11px] text-center bg-transparent border-none outline-none"
+                         style={{ fontFamily: 'var(--font-family-base)', color: 'var(--color-text-primary)' }}
+                         value={block.repeat.onDemandFromDay ?? ''}
+                         onChange={(e) => onChange({ repeat: { ...block.repeat!, onDemandFromDay: parseInt(e.target.value) || undefined } })}
+                       />
+                     </div>
+                   ) : (
+                     <>
+                       <button
+                         type="button"
+                         onClick={() => onChange({ repeat: { ...block.repeat!, everyDay: !block.repeat!.everyDay } })}
+                         className="h-7 px-2.5 flex items-center rounded-md text-[11px]"
+                         style={{
+                           fontWeight: 500, fontFamily: 'var(--font-family-base)',
+                           backgroundColor: block.repeat.everyDay ? 'var(--color-primary-default)' : 'var(--color-bg-card)',
+                           color: block.repeat.everyDay ? 'var(--color-primary-on)' : 'var(--color-text-muted)',
+                           border: block.repeat.everyDay ? 'none' : '1px solid var(--color-border-default)',
+                         }}
+                       >
+                         Every day
+                       </button>
+                       {!block.repeat.everyDay && (
+                         <div className="flex items-center gap-1 h-7 px-2 rounded-md" style={{ border: '1px solid var(--color-border-default)', backgroundColor: 'var(--color-bg-card)' }}>
+                           <span style={{ fontSize: '10px', color: 'var(--color-text-muted)' }}>On days</span>
+                           <input
+                             type="text"
+                             placeholder="e.g. 10, 25"
+                             className="w-20 h-5 text-[11px] bg-transparent border-none outline-none"
+                             style={{ fontFamily: 'var(--font-family-base)', color: 'var(--color-text-primary)' }}
+                             value={(block.repeat.onDays ?? []).join(', ')}
+                             onChange={(e) => onChange({ repeat: { ...block.repeat!, onDays: e.target.value.split(',').map(s => parseInt(s.trim(), 10)).filter(n => !isNaN(n)) } })}
+                           />
+                         </div>
+                       )}
+                     </>
+                   )}
+                 </>
+               )}
+             </div>
           </div>
 
         </CardContent>

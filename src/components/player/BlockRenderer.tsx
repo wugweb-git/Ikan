@@ -467,7 +467,17 @@ export function BlockRenderer({ block, value, onChange, readOnly = false, equipI
 
   const renderInputTable = (config: ExerciseConfig) => {
     const columns = config.columns || ['Entry'];
-    const currentRows = Array.isArray(value) ? value : [{}]; // Array of row objects
+    // Predefined row labels (e.g. the Sleep Diary questions). When present, the
+    // FIRST column becomes a read-only "row heading" and only the remaining
+    // columns are editable — this is what makes the question labels visible.
+    const predefinedRows = Array.isArray(config.rows) ? config.rows.filter(Boolean) : [];
+    const hasPredefinedRows = predefinedRows.length > 0;
+    const labelCol = columns[0];
+
+    const savedRows: any[] = Array.isArray(value) ? value : [];
+    const currentRows = hasPredefinedRows
+      ? predefinedRows.map((label, i) => ({ ...(savedRows[i] || {}), [labelCol]: label }))
+      : (savedRows.length ? savedRows : [{}]); // Array of row objects
 
     const updateCell = (rowIndex: number, col: string, val: string) => {
       const newRows = [...currentRows];
@@ -483,6 +493,17 @@ export function BlockRenderer({ block, value, onChange, readOnly = false, equipI
     const renderCellContent = (col: string, row: any, rIdx: number) => {
       const lowerCol = col.toLowerCase();
       const value = row[col] || '';
+
+      // Read-only row heading: the predefined question label in the first column.
+      if (hasPredefinedRows && col === labelCol) {
+        return (
+          <div className="min-h-[60px] flex items-start pt-3 pr-2">
+            <span className="text-[15px] font-medium text-[var(--color-text-primary)] leading-relaxed">
+              {predefinedRows[rIdx] ?? value}
+            </span>
+          </div>
+        );
+      }
 
       // Check for specific column types based on header
       if (lowerCol.includes('(yes/no)') || lowerCol.includes('can use device')) {
@@ -596,9 +617,9 @@ export function BlockRenderer({ block, value, onChange, readOnly = false, equipI
             </Table>
           </div>
         </div>
-        {!readOnly && (
-          <Button 
-            variant="outline" 
+        {!readOnly && !hasPredefinedRows && (
+          <Button
+            variant="outline"
             onClick={addRow}
             className="w-full border-dashed border-2 h-12 text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] hover:border-[var(--color-text-primary)]"
           >
@@ -871,11 +892,8 @@ export function BlockRenderer({ block, value, onChange, readOnly = false, equipI
                Question
             </span>
           )}
-          {block.stepGroup && (
-             <span className="px-2 py-0.5 rounded-[4px] bg-[var(--color-bg-input)] text-[13px] font-medium text-[var(--color-text-muted)]">
-               {block.stepGroup}
-             </span>
-          )}
+          {/* NOTE: stepGroup (e.g. "onboarding_core", "baseline_sleep") is internal
+              authoring metadata used for grouping in ProgramPlayer — never shown to users. */}
         </div>
         
         {/* Title - The main question text */}

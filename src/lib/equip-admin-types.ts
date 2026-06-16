@@ -159,6 +159,28 @@ export interface ExerciseConfig {
   maxFileSize?: number;          // in bytes, defaults to 10MB
 }
 
+// ── Carry-forward / repetition ──────────────────────────────────────
+// Lets a single block (one stable `id`) surface on multiple days instead of
+// being copy-pasted (which creates new ids and fragments user data). Because
+// progress.block_responses is keyed by block id, keeping one id makes data
+// carry across days automatically.
+export type RepetitionType =
+  | 'simple_repeat'    // running log: prior days' entries shown read-only + a new entry
+  | 'column_addition'  // prior columns read-only + new columns added on specific days
+  | 'on_demand';       // available any day from a start day (single evolving response)
+
+export interface ActivityRepeat {
+  type: RepetitionType;
+  /** Explicit target days this block also appears on (its home day is implicit). */
+  onDays?: number[];
+  /** Appear on every day after the block's home day. */
+  everyDay?: boolean;
+  /** on_demand: reachable any time from this day onward. */
+  onDemandFromDay?: number;
+  /** column_addition: new columns introduced on a given day number. */
+  columnsByDay?: Record<number, TableColumn[]>;
+}
+
 export interface Activity {
   id: string;
   title: string;
@@ -175,6 +197,24 @@ export interface Activity {
   image_url?: string;
   stepGroup?: string;
   autoAdvance?: boolean;
+  /** Carry-forward / repetition config. Absent = appears only on its home day. */
+  repeat?: ActivityRepeat;
+}
+
+// ── Carry-forward runtime helpers ───────────────────────────────────
+// Resolve which day-numbers a block should appear on, given its home day.
+export function repeatTargetDays(activity: Activity, homeDay: number, totalDays: number): number[] {
+  const r = activity.repeat;
+  if (!r) return [homeDay];
+  const days = new Set<number>([homeDay]);
+  if (r.everyDay) {
+    for (let d = homeDay; d <= totalDays; d++) days.add(d);
+  }
+  if (r.type === 'on_demand' && typeof r.onDemandFromDay === 'number') {
+    for (let d = r.onDemandFromDay; d <= totalDays; d++) days.add(d);
+  }
+  for (const d of r.onDays ?? []) days.add(d);
+  return [...days].sort((a, b) => a - b);
 }
 
 export interface DayContent {

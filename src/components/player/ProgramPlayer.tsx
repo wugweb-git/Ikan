@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { EquipProgram, DayContent, Activity, DEFAULT_CHECKIN_CONFIG, resolveInteraction } from '../../lib/equip-admin-types';
+import { EquipProgram, DayContent, Activity, DEFAULT_CHECKIN_CONFIG, resolveInteraction, repeatTargetDays } from '../../lib/equip-admin-types';
 import { BlockRenderer } from './BlockRenderer';
 import { ProgramCheckIn } from '../equip/ProgramCheckIn';
 import { Button } from '../ui/button';
@@ -165,8 +165,8 @@ export function ProgramPlayer({
   const [isDayComplete, setIsDayComplete] = useState(false);
   const [showCheckIn, setShowCheckIn] = useState(false);
 
-  const activeDay = useMemo(() => 
-    program.daily_content.find(d => d.day === currentDayNum), 
+  const activeDay = useMemo(() =>
+    program.daily_content.find(d => d.day === currentDayNum),
   [program.daily_content, currentDayNum]);
 
   const dayConfig = useMemo(() => {
@@ -174,9 +174,28 @@ export function ProgramPlayer({
     return DAY_TYPE_CONFIG[activeDay.dayType || 'learning'] || DEFAULT_CONFIG;
   }, [activeDay]);
 
-  const steps = useMemo(() => 
-    activeDay ? groupBlocksIntoSteps(activeDay.activities, activeDay.dayType) : [], 
-  [activeDay]);
+  // Carry-forward: a day's blocks = its native blocks PLUS blocks authored on
+  // other days whose `repeat` config targets the current day. The repeated block
+  // keeps its original id, so its response is stored per-day under that id.
+  const activeDayActivities = useMemo<Activity[]>(() => {
+    if (!activeDay) return [];
+    const totalDays = program.daily_content.length;
+    const repeated: Activity[] = [];
+    for (const d of program.daily_content) {
+      if (d.day === currentDayNum) continue;
+      for (const a of d.activities) {
+        if (!a.repeat) continue;
+        if (repeatTargetDays(a, d.day, totalDays).includes(currentDayNum)) {
+          repeated.push(a);
+        }
+      }
+    }
+    return repeated.length ? [...activeDay.activities, ...repeated] : activeDay.activities;
+  }, [activeDay, program.daily_content, currentDayNum]);
+
+  const steps = useMemo(() =>
+    activeDay ? groupBlocksIntoSteps(activeDayActivities, activeDay.dayType) : [],
+  [activeDay, activeDayActivities]);
 
   const activeStep = steps[currentStepIndex];
 
