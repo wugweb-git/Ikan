@@ -18,9 +18,31 @@ interface BlockRendererProps {
   readOnly?: boolean;
   equipId?: string;
   dayNum?: number;
+  /** Carry-forward: this block's responses from earlier days (for repeated blocks). */
+  priorEntries?: { day: number; response: any }[];
 }
 
-export function BlockRenderer({ block, value, onChange, readOnly = false, equipId, dayNum }: BlockRendererProps) {
+// Render a saved response compactly for the read-only running log.
+function summarizePriorResponse(response: any): string {
+  if (response == null) return '';
+  if (typeof response === 'string') return response;
+  if (typeof response === 'number' || typeof response === 'boolean') return String(response);
+  if (Array.isArray(response)) {
+    // Table rows like [{ Question, Response }] → "Question: Response" lines
+    return response
+      .map((row) => (row && typeof row === 'object'
+        ? Object.entries(row).map(([k, v]) => `${k}: ${v}`).join(' · ')
+        : String(row)))
+      .filter(Boolean)
+      .join('\n');
+  }
+  if (typeof response === 'object') {
+    return Object.entries(response).map(([k, v]) => `${k}: ${v}`).join(' · ');
+  }
+  return String(response);
+}
+
+export function BlockRenderer({ block, value, onChange, readOnly = false, equipId, dayNum, priorEntries }: BlockRendererProps) {
   const { type, title, subtitle, content, exerciseConfig } = block;
 
   // --- Upload state (hoisted to top level to comply with Rules of Hooks) ---
@@ -915,6 +937,26 @@ export function BlockRenderer({ block, value, onChange, readOnly = false, equipI
           </p>
         )}
       </div>
+
+      {/* Carry-forward: read-only running log of this block's earlier-day entries */}
+      {priorEntries && priorEntries.length > 0 &&
+       (block.repeat?.type === 'simple_repeat' || block.repeat?.type === 'column_addition') && (
+        <div className="mb-5 rounded-[12px] border" style={{ borderColor: 'var(--color-border-default)', backgroundColor: 'var(--color-bg-input)' }}>
+          <div className="px-4 pt-3 pb-2 text-[13px] font-medium uppercase tracking-wide" style={{ color: 'var(--color-text-muted)' }}>
+            Previous entries
+          </div>
+          <div className="px-4 pb-3 space-y-3">
+            {priorEntries.map((e) => (
+              <div key={e.day} className="text-[14px]">
+                <div className="font-medium text-[var(--color-text-primary)]">Day {e.day}</div>
+                <div className="whitespace-pre-line leading-relaxed" style={{ color: 'var(--grey-6)' }}>
+                  {summarizePriorResponse(e.response)}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Content Area */}
       <div className="w-full">

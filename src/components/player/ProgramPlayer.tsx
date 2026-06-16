@@ -17,6 +17,8 @@ interface ProgramPlayerProps {
   onProgressChange?: (progress: { currentBlockIndex: number, responses: Record<string, any> }) => void;
   onExit: () => void;
   mode?: 'preview' | 'live';
+  /** Carry-forward: responses from earlier days, keyed day → blockId → response. */
+  priorDayResponses?: Record<number, Record<string, any>>;
 }
 
 export interface PlayerResults {
@@ -152,10 +154,11 @@ export function ProgramPlayer({
   program, 
   initialDay = 1, 
   initialResponses = {},
-  onComplete, 
+  onComplete,
   onProgressChange,
   onExit,
-  mode = 'live' 
+  mode = 'live',
+  priorDayResponses,
 }: ProgramPlayerProps) {
   const { showToast } = useNotifications();
 
@@ -198,6 +201,19 @@ export function ProgramPlayer({
   [activeDay, activeDayActivities]);
 
   const activeStep = steps[currentStepIndex];
+
+  // Carry-forward: collect a repeated block's responses from earlier days.
+  const priorEntriesFor = (block: Activity): { day: number; response: any }[] => {
+    if (!block.repeat || !priorDayResponses) return [];
+    const out: { day: number; response: any }[] = [];
+    for (const [dayStr, byBlock] of Object.entries(priorDayResponses)) {
+      const day = Number(dayStr);
+      if (!Number.isFinite(day) || day >= currentDayNum) continue;
+      const r = byBlock?.[block.id];
+      if (r !== undefined && r !== null && r !== '') out.push({ day, response: r });
+    }
+    return out.sort((a, b) => a.day - b.day);
+  };
 
   const progressPercent = steps.length > 0 ? ((currentStepIndex) / steps.length) * 100 : 0;
   const progressText = `${currentStepIndex + 1} of ${steps.length}`;
@@ -549,6 +565,7 @@ export function ProgramPlayer({
                        readOnly={mode === 'preview'}
                        equipId={program.id}
                        dayNum={activeDay?.day}
+                       priorEntries={priorEntriesFor(block)}
                      />
                    ))}
                  </motion.div>

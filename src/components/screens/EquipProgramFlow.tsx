@@ -571,9 +571,10 @@ interface DaySessionScreenProps {
   onProgress: (progress: { currentBlockIndex: number, responses: Record<string, any> }) => void;
   onExit: () => void;
   mode?: 'live' | 'preview';
+  priorDayResponses?: Record<number, Record<string, any>>;
 }
 
-function DaySessionScreen({ program, dayNumber, initialResponses, onCompleteDay, onProgress, onExit, mode = 'live' }: DaySessionScreenProps) {
+function DaySessionScreen({ program, dayNumber, initialResponses, onCompleteDay, onProgress, onExit, mode = 'live', priorDayResponses }: DaySessionScreenProps) {
   return (
     <div className="fixed inset-0 z-50" style={{ backgroundColor: 'var(--color-bg-card)' }}>
        <ProgramPlayer
@@ -584,6 +585,7 @@ function DaySessionScreen({ program, dayNumber, initialResponses, onCompleteDay,
          onProgressChange={onProgress}
          onExit={onExit}
          mode={mode}
+         priorDayResponses={priorDayResponses}
        />
     </div>
   );
@@ -823,6 +825,11 @@ export function EquipProgramFlow({ programId, enrollmentId, onBack, onComplete, 
            onCompleteDay={handleCompleteDay}
            onProgress={handleProgress}
            onExit={() => setView('home')}
+           priorDayResponses={Object.fromEntries(
+             Object.entries(progress.completedDays).map(
+               ([d, v]: [string, any]) => [Number(d), v?.responses || {}]
+             )
+           )}
         />
       )}
 
