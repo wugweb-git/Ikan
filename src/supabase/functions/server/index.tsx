@@ -151,11 +151,13 @@ const supabase = createClient(
 // Enable logger
 app.use('*', logger(console.log));
 
-// Enable CORS for all routes and methods
+// Enable CORS for all routes and methods.
+// Locks to ALLOWED_ORIGIN when set (ported from main's security audit), else "*"
+// to preserve current behavior until the origin is configured in edge secrets.
 app.use(
   "/*",
   cors({
-    origin: "*",
+    origin: Deno.env.get("ALLOWED_ORIGIN") ?? "*",
     allowHeaders: ["Content-Type", "Authorization"],
     allowMethods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     exposeHeaders: ["Content-Length"],
