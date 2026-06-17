@@ -62,7 +62,7 @@ export function BottomNavBarMobile({
     { label: 'Home', route: '/dashboard', icon: LayoutDashboard },
     { label: 'Journal', route: '/mood-journal', icon: Smile },
     { label: 'Explore', route: '/equip', icon: Compass, badge: 'beta' },
-    { label: 'Consult', route: '/consultation', icon: Users },
+    { label: 'Consult', route: '/consultation', icon: Users, badge: 'coming soon' },
     { label: 'Profile', route: '/account', icon: User }
   ];
 

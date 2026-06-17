@@ -1,6 +1,7 @@
 import { cn } from './ui/utils';
 import { Mail, Phone, Facebook, Instagram, Linkedin, Youtube } from 'lucide-react';
 import { LogoFull } from './Logo';
+import { NavBadge } from './navigation/NavBadge';
 import { ImageWithFallback } from './figma/ImageWithFallback';
 import { useSiteSettings } from '../hooks/useSiteSettings';
 
@@ -83,9 +84,9 @@ export function Footer({ onNavigate, className }: FooterProps) {
   const quickLinks = [
     { name: 'Home', path: '/' },
     { name: 'Assessment', path: '/assessments' },
-    { name: 'Programs', path: '/equip-programs' },
+    { name: 'Programs', path: '/equip-programs', badge: 'beta' },
     { name: 'Library', path: '/library' },
-    { name: 'Consultation', path: '/consultation' },
+    { name: 'Consultation', path: '/consultation', badge: 'coming soon' },
   ];
 
   const supportLinks = [
@@ -186,6 +187,7 @@ export function Footer({ onNavigate, className }: FooterProps) {
                       className="text-sm font-medium hover:text-white text-white/80 transition-colors text-left"
                     >
                       {link.name}
+                      <NavBadge label={(link as any).badge} />
                     </button>
                   </li>
                 ))}

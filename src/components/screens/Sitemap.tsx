@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react';
 import { useIsMobile } from '../../hooks/useIsMobile';
 import { PageHero } from '../ui/PageHero';
+import { NavBadge } from '../navigation/NavBadge';
 import { usePageContent } from '../../hooks/usePageContent';
 import { House, Info, Mail, ClipboardCheck, BookOpen, Stethoscope, Users, UserCircle, Heart, CircleHelp, Shield, FileText, Ban, RotateCcw } from 'lucide-react';
 
@@ -41,8 +42,8 @@ const DEFAULT_GROUPS = [
     title: 'Mental Health Services',
     links: [
       { label: 'Assessments', route: '/assessment', icon: 'clipboard-check', description: 'Clinically validated mental health screenings' },
-      { label: 'Equip Programs', route: '/equip', icon: 'book-open', description: 'Self-paced CBT-based wellness programs' },
-      { label: 'Consultation', route: '/consultation', icon: 'stethoscope', description: 'Book sessions with licensed professionals' },
+      { label: 'Equip Programs', route: '/equip', icon: 'book-open', description: 'Self-paced CBT-based wellness programs', badge: 'beta' },
+      { label: 'Consultation', route: '/consultation', icon: 'stethoscope', description: 'Book sessions with licensed professionals', badge: 'coming soon' },
       { label: 'Resources', route: '/resource', icon: 'users', description: 'Articles, guides, and mental health tools' },
     ],
   },
@@ -173,6 +174,7 @@ export function Sitemap({ className, onNavigate, onBack }: SitemapProps) {
                         }}
                       >
                         {link.label}
+                        <NavBadge label={(link as any).badge} />
                       </p>
                       <p
                         style={{
