@@ -22,9 +22,9 @@ export function PublicNavBar({ currentRoute, onNavigate, onSignIn, className }: 
   const publicNavItems = [
     { path: '/', label: 'Home' },
     { path: '/assessment', label: 'Assessment' },
-    { path: '/equip', label: 'Equip' },
+    { path: '/equip', label: 'Equip', badge: 'beta' },
     { path: '/resource', label: 'Resource' },
-    { path: '/consultation', label: 'Consultation' },
+    { path: '/consultation', label: 'Consultation', badge: 'coming soon' },
     { path: '/about', label: 'About Us' }
   ];
 
@@ -118,6 +118,21 @@ export function PublicNavBar({ currentRoute, onNavigate, onSignIn, className }: 
               }}
             >
               {item.label}
+              {(item as any).badge && (
+                <span
+                  className="uppercase"
+                  style={{
+                    fontSize: '9px', fontWeight: 600, letterSpacing: '0.03em', lineHeight: 1,
+                    padding: '2px 5px', borderRadius: '4px', marginLeft: '5px', color: '#fff',
+                    backgroundColor: (item as any).badge === 'beta'
+                      ? 'var(--color-primary-default, #6941C6)'
+                      : 'var(--color-text-muted, #888)',
+                    verticalAlign: 'middle',
+                  }}
+                >
+                  {(item as any).badge}
+                </span>
+              )}
             </Button>
           );
         })}
@@ -179,6 +194,20 @@ export function PublicNavBar({ currentRoute, onNavigate, onSignIn, className }: 
                     }}
                   >
                     {item.label}
+                    {(item as any).badge && (
+                      <span
+                        className="uppercase"
+                        style={{
+                          fontSize: '9px', fontWeight: 600, letterSpacing: '0.03em', lineHeight: 1,
+                          padding: '2px 5px', borderRadius: '4px', marginLeft: '8px', color: '#fff',
+                          backgroundColor: (item as any).badge === 'beta'
+                            ? 'var(--color-primary-default, #6941C6)'
+                            : 'var(--color-text-muted, #888)',
+                        }}
+                      >
+                        {(item as any).badge}
+                      </span>
+                    )}
                   </Button>
                 ))}
               </div>

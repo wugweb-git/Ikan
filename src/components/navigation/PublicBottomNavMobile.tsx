@@ -16,7 +16,7 @@ export function PublicBottomNavMobile({ currentRoute, onNavigate, onSignIn, clas
   const publicNavItems = [
     { path: '/', label: 'Home', icon: 'home' },
     { path: '/assessment', label: 'Assessment', icon: 'assignment' },
-    { path: '/equip', label: 'Equip', icon: 'tools' },
+    { path: '/equip', label: 'Equip', icon: 'tools', badge: 'beta' },
     { path: '/resource', label: 'Resource', icon: 'library' }
   ];
 
@@ -272,6 +272,18 @@ export function PublicBottomNavMobile({ currentRoute, onNavigate, onSignIn, clas
                                 }}
                               />
                               {item.label}
+                              {(item as any).badge && (
+                                <span
+                                  className="uppercase"
+                                  style={{
+                                    fontSize: '7px', fontWeight: 700, letterSpacing: '0.02em', lineHeight: 1,
+                                    padding: '1px 3px', borderRadius: '3px', marginLeft: '3px', color: '#fff',
+                                    backgroundColor: 'var(--color-primary-default, #6941C6)',
+                                  }}
+                                >
+                                  {(item as any).badge}
+                                </span>
+                              )}
                             </motion.button>
                           );
                         })}
@@ -329,6 +341,18 @@ export function PublicBottomNavMobile({ currentRoute, onNavigate, onSignIn, clas
                                 }}
                               />
                               {item.label}
+                              {(item as any).badge && (
+                                <span
+                                  className="uppercase"
+                                  style={{
+                                    fontSize: '7px', fontWeight: 700, letterSpacing: '0.02em', lineHeight: 1,
+                                    padding: '1px 3px', borderRadius: '3px', marginLeft: '3px', color: '#fff',
+                                    backgroundColor: 'var(--color-primary-default, #6941C6)',
+                                  }}
+                                >
+                                  {(item as any).badge}
+                                </span>
+                              )}
                             </motion.button>
                           );
                         })}
