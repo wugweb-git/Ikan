@@ -2,6 +2,10 @@ import { createContext, useContext, useState, useEffect, useCallback, ReactNode 
 import { useNotifications } from '../../contexts/NotificationContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { apiClient } from '../../lib/api-client';
+import { supabase } from '../../lib/supabase-client';
+import { fetchGoogleFitData, GOOGLE_FIT_SCOPES } from '../../lib/google-fit';
+
+const GFIT_PENDING_KEY = 'ikan-gfit-connecting';
 
 // ──────────────────────────────────────────────────────────────────
 // Types — kept identical so ActivityCard / WellnessScoreCard work
@@ -88,6 +92,7 @@ interface HealthConnectContextType {
   data: HealthData | null;
   lastSyncAt: string | null;
   connect: (provider?: FitnessProvider) => Promise<void>;
+  connectGoogleFit: () => Promise<void>;
   disconnect: () => Promise<void>;
   sync: () => Promise<void>;
   submitManualEntry: (entry: Partial<HealthData>) => Promise<void>;
@@ -196,6 +201,67 @@ export function GoogleFitProvider({ children }: { children: ReactNode }) {
     }
   }, [fetchFromServer, showToast]);
 
+  // ── Connect Google Fit (web OAuth) ─────────────────────────
+  // Starts a Google OAuth flow with Fitness scopes. The browser redirects to
+  // Google; on return, the effect below reads `provider_token` and syncs.
+  const connectGoogleFit = useCallback(async () => {
+    try {
+      setIsSyncing(true);
+      localStorage.setItem(GFIT_PENDING_KEY, '1');
+      const options = {
+        scopes: GOOGLE_FIT_SCOPES,
+        redirectTo: `${window.location.origin}/dashboard`,
+        queryParams: { access_type: 'offline', prompt: 'consent' },
+      };
+      // Prefer linkIdentity (keeps the current account); fall back to OAuth sign-in.
+      const supaAuth = supabase.auth as any;
+      const { error } = typeof supaAuth.linkIdentity === 'function'
+        ? await supaAuth.linkIdentity({ provider: 'google', options })
+        : await supabase.auth.signInWithOAuth({ provider: 'google', options });
+      if (error) {
+        localStorage.removeItem(GFIT_PENDING_KEY);
+        throw error;
+      }
+      // Browser redirects to Google now.
+    } catch (err: any) {
+      console.error('Google Fit connect error:', err);
+      showToast('error', 'Google Fit', err?.message || 'Could not start the Google Fit connection.');
+      setIsSyncing(false);
+    }
+  }, [showToast]);
+
+  // After the Google OAuth redirect returns, import the data once.
+  useEffect(() => {
+    if (!user) return;
+    if (typeof localStorage === 'undefined' || localStorage.getItem(GFIT_PENDING_KEY) !== '1') return;
+    let cancelled = false;
+    (async () => {
+      try {
+        setIsSyncing(true);
+        const { data: sess } = await supabase.auth.getSession();
+        const token = (sess.session as any)?.provider_token;
+        if (!token) {
+          showToast('error', 'Google Fit', 'Google did not return access — please reconnect and grant the fitness permissions.');
+          return;
+        }
+        const payload = await fetchGoogleFitData(token);
+        await apiClient.post('/health-connect/connect', { deviceName: 'Google Fit' });
+        await apiClient.post('/health-connect/data', payload);
+        if (!cancelled) {
+          await fetchFromServer(true);
+          showToast('success', 'Google Fit synced', 'Your fitness data has been imported.');
+        }
+      } catch (err: any) {
+        console.error('Google Fit sync error:', err);
+        showToast('error', 'Google Fit sync failed', err?.message || 'Could not import your data.');
+      } finally {
+        localStorage.removeItem(GFIT_PENDING_KEY);
+        if (!cancelled) setIsSyncing(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [user, fetchFromServer, showToast]);
+
   // ── Disconnect ─────────────────────────────────────────────
   const disconnect = useCallback(async () => {
     try {
@@ -255,6 +321,7 @@ export function GoogleFitProvider({ children }: { children: ReactNode }) {
     data,
     lastSyncAt,
     connect,
+    connectGoogleFit,
     disconnect,
     sync,
     submitManualEntry,

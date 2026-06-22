@@ -231,6 +231,16 @@ export const routes: RouteConfig[] = [
     description: 'User login and authentication'
   },
   {
+    path: '/reset-password',
+    label: 'Reset Password',
+    isPublic: true,
+    requiresAuth: false,
+    showInNavigation: false,
+    showInPublicNav: false,
+    showInPrivateNav: false,
+    description: 'Set a new password from a recovery link'
+  },
+  {
     path: '/admin/login',
     label: 'Admin Sign In',
     isPublic: true,

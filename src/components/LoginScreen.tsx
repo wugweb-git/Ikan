@@ -159,8 +159,12 @@ function AuthForm({ mode, onSuccess, onModeChange }: {
         await signUp(formData.email, formData.password, formData.fullName);
         showToast('success', authContent.messages.success.accountCreated.title, authContent.messages.success.accountCreated.description);
         onSuccess?.();
-      } catch (error) {
+      } catch (error: any) {
         console.error('Sign up error:', error);
+        if (error?.needsConfirmation) {
+          showToast('info', 'Verify your email', error.message || 'Check your inbox to confirm your account, then sign in.');
+          return;
+        }
         showToast('error', authContent.messages.error.signUpFailed.title, error instanceof Error ? error.message : authContent.messages.error.signUpFailed.description);
       }
     } else {

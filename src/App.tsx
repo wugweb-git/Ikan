@@ -66,6 +66,7 @@ const Dashboard = lazy(() => lazyRetry(() => import('./components/screens/Dashbo
 const Homepage = lazy(() => lazyRetry(() => import('./components/screens/Homepage').then(m => ({ default: m.Homepage })), 'Homepage'));
 const NotFound = lazy(() => lazyRetry(() => import('./components/screens/NotFound').then(m => ({ default: m.NotFound })), 'NotFound'));
 const LoginScreen = lazy(() => lazyRetry(() => import('./components/LoginScreen').then(m => ({ default: m.default || m.LoginScreen })), 'LoginScreen'));
+const ResetPassword = lazy(() => lazyRetry(() => import('./components/screens/ResetPassword').then(m => ({ default: m.default || m.ResetPassword })), 'ResetPassword'));
 
 // --- Lazy loaded screens (split by category) ---
 
@@ -223,7 +224,7 @@ function AppContent() {
         '/', '/dashboard', '/mood-journal', '/assessment', '/assessment-landing', '/assessment-detail', '/assessment-flow', '/assessment-results', '/assessment-history-detail',
         '/equip', '/equip-programs-landing', '/equip-detail', '/equip-program-onboarding', '/equip-program-flow', '/equip-program-completion',
         '/consultation', '/consultation-detail', '/resource', '/resource-detail', '/account', 
-        '/about', '/faq', '/privacy', '/privacy-policy', '/terms', '/contact', '/return-policy', '/cancellation-policy', '/sitemap', '/login',
+        '/about', '/faq', '/privacy', '/privacy-policy', '/terms', '/contact', '/return-policy', '/cancellation-policy', '/sitemap', '/login', '/reset-password',
         '/admin', '/admin/login', '/admin/resources', '/admin/equip', '/admin/users', '/admin/consultants', '/admin/assessments', '/admin/analytics', '/admin/settings', '/admin/pages', '/admin/media', '/admin/crud', '/admin/contact-newsletter',
         '/join/professional',
         '/timeline',
@@ -570,6 +571,8 @@ function AppContent() {
           return withSuspense(<Sitemap onNavigate={handleNavigate} />);
         case '/login':
           return withSuspense(<LoginScreen onNavigate={handleNavigate} onSuccess={() => handleNavigate('/dashboard')} />);
+        case '/reset-password':
+          return withSuspense(<ResetPassword onNavigate={handleNavigate} />);
         case '/join/professional':
           return withSuspense(<ProfessionalApplication onNavigate={handleNavigate} />);
         case '/timeline':

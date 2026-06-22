@@ -331,8 +331,9 @@ app.post("/auth/signup", async (c) => {
       email,
       password,
       user_metadata: { name, phone, corporate_user: corporate_user || false },
-      // Automatically confirm the user's email since an email server hasn't been configured
-      email_confirm: true
+      // Create the user UNCONFIRMED so the project's "Confirm email" setting governs
+      // verification. The client triggers the native confirmation email when needed.
+      email_confirm: false
     });
 
     if (error) {

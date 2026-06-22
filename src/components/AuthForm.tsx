@@ -135,8 +135,15 @@ export function AuthForm({ onSuccess, defaultTab = 'signin' }: AuthFormProps) {
         description: authContent.messages.success.accountCreated.descriptionAlt
       });
       onSuccess?.();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Sign up error:', error);
+      // Account created but email needs verifying — not an error state.
+      if (error?.needsConfirmation) {
+        toast.info('Verify your email', {
+          description: error.message || 'Check your inbox to confirm your account, then sign in.'
+        });
+        return;
+      }
       toast.error(authContent.messages.error.signUpFailed.title, {
         description: error instanceof Error ? error.message : 'Please try again.'
       });

@@ -191,7 +191,7 @@ function HydrationBar({ current, goal }: { current: number; goal: number }) {
 // ═════════════════════════════════════════════════════════════════
 
 export function ActivityCard({ className }: { className?: string }) {
-  const { isConnected, isSyncing, data, connect, sync, submitManualEntry } = useGoogleFit();
+  const { isConnected, isSyncing, data, connect, connectGoogleFit, sync, submitManualEntry } = useGoogleFit();
   const [showConsent, setShowConsent] = useState(false);
   const [showManualEntry, setShowManualEntry] = useState(false);
   const [activeTab, setActiveTab] = useState<TabKey>('activity');
@@ -219,27 +219,51 @@ export function ActivityCard({ className }: { className?: string }) {
             With Health Connect, you can sync your favorite fitness apps to see calories, heart rate, and more from your runs. Set it up today.
           </p>
 
-          {/* Single CTA button */}
-          <button
-            onClick={() => setShowConsent(true)}
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              padding: '12px 24px',
-              borderRadius: 'var(--radius-md)',
-              border: 'none',
-              backgroundColor: 'var(--color-primary-default)',
-              color: 'var(--color-text-inverse)',
-              fontSize: 'var(--text-sm)',
-              fontWeight: 500,
-              fontFamily: 'var(--font-family-base)',
-              cursor: 'pointer',
-              transition: 'opacity 0.15s',
-            }}
-          >
-            Sync with Health Connect
-          </button>
+          {/* CTA buttons */}
+          <div className="flex flex-wrap" style={{ gap: 10 }}>
+            <button
+              onClick={() => connectGoogleFit()}
+              disabled={isSyncing}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                padding: '12px 24px',
+                borderRadius: 'var(--radius-md)',
+                border: 'none',
+                backgroundColor: 'var(--color-primary-default)',
+                color: 'var(--color-text-inverse)',
+                fontSize: 'var(--text-sm)',
+                fontWeight: 500,
+                fontFamily: 'var(--font-family-base)',
+                cursor: isSyncing ? 'not-allowed' : 'pointer',
+                opacity: isSyncing ? 0.7 : 1,
+                transition: 'opacity 0.15s',
+              }}
+            >
+              Connect Google Fit
+            </button>
+            <button
+              onClick={() => setShowConsent(true)}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                padding: '12px 24px',
+                borderRadius: 'var(--radius-md)',
+                border: '1px solid var(--color-border-default)',
+                backgroundColor: 'var(--color-bg-card)',
+                color: 'var(--color-text-primary)',
+                fontSize: 'var(--text-sm)',
+                fontWeight: 500,
+                fontFamily: 'var(--font-family-base)',
+                cursor: 'pointer',
+                transition: 'opacity 0.15s',
+              }}
+            >
+              Health Connect (Android)
+            </button>
+          </div>
         </div>
 
         <GoogleFitConsentModal isOpen={showConsent} onClose={() => setShowConsent(false)}

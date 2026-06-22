@@ -222,57 +222,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       });
       
       if (error) {
-        // Auto-create user for ANY failed login in this environment (Prototyping Friendliness)
-        // This avoids "Invalid login credentials" blocking the user flow
-        if (error.message?.includes('Invalid login credentials')) {
-          console.log(`⚠️ User ${email} not found or wrong password. Auto-creating/updating for prototype...`);
-          
-          try {
-            // Generate a name from email if not provided
-            const name = email.split('@')[0].split(/[._]/).map(s => s.charAt(0).toUpperCase() + s.slice(1)).join(' ');
-            
-            console.log(`Creating/updating user: ${name} (${email})`);
-            await apiClient.signUp(email, password, name);
-            
-            // Wait for Supabase auth propagation (password updates may take slightly longer)
-            await new Promise(resolve => setTimeout(resolve, 1200));
-            
-            // Retry sign-in
-            const { data: retryData, error: retryError } = await supabase.auth.signInWithPassword({
-              email,
-              password,
-            });
-            
-            if (retryError) {
-              console.error('Retry login after auto-create/update failed:', retryError);
-              throw retryError;
-            }
-            
-            // Success! Set session
-            if (retryData.session && retryData.user) {
-              setSession(retryData.session);
-              setUser({
-                user_id: retryData.user.id,
-                email: retryData.user.email || email,
-                name: retryData.user.user_metadata?.name || name,
-                phone: retryData.user.user_metadata?.phone,
-                corporate_user: false
-              });
-              
-              console.log('✅ Account automatically created/updated for prototype testing');
-              return;
-            }
-          } catch (createError) {
-             console.error('Auto-creation/update failed:', createError);
-             // Fall through to throw original error
-          }
-        }
-
-        // Improve error message for demo users if auto-creation failed
-        if (email === 'demo@ikan.com' && password !== 'demo123') {
-          throw new Error('Demo password is "demo123". Please use the correct demo credentials.');
-        }
-        
+        // Production behaviour: a failed login returns the real error.
+        // (Removed the prototype "auto-create account on any failed login" path.)
         throw new Error(error.message || 'Invalid email or password');
       }
       
@@ -321,10 +272,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signUp = async (email: string, password: string, name: string, phone?: string) => {
     try {
       setLoading(true);
-      
+
+      // Edge endpoint creates the auth user (unconfirmed) + the KV profile.
       await apiClient.signUp(email, password, name, phone);
-      // After signup, automatically sign in
-      await signIn(email, password);
+
+      // Try to sign in. If the project requires email confirmation, this fails
+      // with "Email not confirmed" — in that case send the verification email
+      // and surface a needs-confirmation signal instead of logging in.
+      try {
+        await signIn(email, password);
+      } catch (e: any) {
+        if (/not confirmed|confirm your email|email not confirmed/i.test(e?.message || '')) {
+          await supabase.auth.resend({
+            type: 'signup',
+            email,
+            options: { emailRedirectTo: `${window.location.origin}/login` },
+          }).catch(() => {});
+          const err: any = new Error('Almost there! Check your email to verify your account, then sign in.');
+          err.needsConfirmation = true;
+          throw err;
+        }
+        throw e;
+      }
     } catch (error) {
       console.error('Sign up error:', error);
       throw error;

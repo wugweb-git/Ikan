@@ -75,7 +75,7 @@ The "Validation Error" / "Please fix the errors" toast was too vague — users c
 
 ### Direct URL Navigation — Cold Load 404 Fix
 **Status**: FIXED
-`currentRoute` was initialized as `DEFAULT_PUBLIC_ROUTE` (`/`) on every cold load, ignoring `window.location.pathname`. This meant any direct URL navigation (e.g. `https://ikan.health/join/professional`) would render the Homepage instead of the target page, producing a 404 on Vercel because the SPA never matched the correct route. Fixed by initializing `currentRoute` from `window.location.pathname` via a lazy initializer in `useState`. This also fixes direct navigation to all other routes (`/about`, `/assessment`, `/consultation`, `/admin`, etc.).
+`currentRoute` was initialized as `DEFAULT_PUBLIC_ROUTE` (`/`) on every cold load, ignoring `window.location.pathname`. This meant any direct URL navigation (e.g. `https://ikanhealth.in/join/professional`) would render the Homepage instead of the target page, producing a 404 on Vercel because the SPA never matched the correct route. Fixed by initializing `currentRoute` from `window.location.pathname` via a lazy initializer in `useState`. This also fixes direct navigation to all other routes (`/about`, `/assessment`, `/consultation`, `/admin`, etc.).
 
 ### Session 8 Items Still Pending Deployment
 **Status**: PENDING DEPLOYMENT
@@ -87,7 +87,7 @@ iKAN Score 5-bug-fix and MoodJournal chunk-loading defenses remain code-verified
 
 ### Professional Application Link — Production URL Hardcoding
 **Status**: FIXED
-`AdminConsultationManager.tsx` used `window.location.origin` for the consultant onboarding link, which resolved to the Figma preview domain in sandboxed environments. Changed to the hardcoded production URL `https://ikan.health/join/professional`.
+`AdminConsultationManager.tsx` used `window.location.origin` for the consultant onboarding link, which resolved to the Figma preview domain in sandboxed environments. Changed to the hardcoded production URL `https://ikanhealth.in/join/professional`.
 
 ### Shared Clipboard Utility — Sandboxed iframe Support
 **Status**: FIXED
