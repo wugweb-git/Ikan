@@ -628,7 +628,7 @@ export function BlockRenderer({ block, value, onChange, readOnly = false, equipI
         <Textarea
           value={value}
           onChange={(e) => updateCell(rIdx, col, e.target.value)}
-          placeholder="..."
+          placeholder={`Type your ${col.toLowerCase()}…`}
           disabled={readOnly}
           rows={2}
           className="min-h-[60px] resize-none focus:bg-white transition-colors text-[15px] pt-4"

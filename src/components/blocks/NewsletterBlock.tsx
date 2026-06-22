@@ -59,7 +59,7 @@ export function NewsletterBlock({
     >
       <div
         style={{
-          maxWidth: '1100px',
+          maxWidth: '980px',
           margin: '0 auto',
         }}
       >
@@ -68,15 +68,15 @@ export function NewsletterBlock({
           style={{
             backgroundColor: 'var(--grey-10)',
             borderRadius: isMobile ? '24px' : '28px',
-            padding: isMobile ? '36px 24px' : '56px 56px',
+            padding: isMobile ? '36px 24px' : '48px 48px',
             display: 'flex',
             flexDirection: isMobile ? 'column' : 'row',
-            alignItems: isMobile ? 'stretch' : 'flex-start',
+            alignItems: 'center',
             justifyContent: 'space-between',
-            gap: isMobile ? '32px' : '56px',
+            gap: isMobile ? '28px' : '40px',
           }}
         >
-          {/* Left — heading + description + privacy */}
+          {/* Left — heading + description */}
           <div
             style={{
               display: 'flex',
@@ -117,22 +117,6 @@ export function NewsletterBlock({
             >
               {(benefits && benefits[0]) ||
                 'Stay informed about mental health tips, new programs, and community updates.'}
-            </p>
-
-            {/* Privacy text */}
-            <p
-              style={{
-                fontFamily: 'var(--font-family-base)',
-                fontWeight: 'var(--font-weight-regular)',
-                fontSize: '12px',
-                lineHeight: '1.6',
-                color: 'rgba(255,255,255,0.4)',
-                margin: isMobile ? '4px 0 0' : '12px 0 0',
-              }}
-            >
-              Privacy:{' '}
-              {privacyText ||
-                'We store and process your personal data based on our privacy policy. You can unsubscribe at any time.'}
             </p>
           </div>
 

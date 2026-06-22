@@ -177,11 +177,8 @@ const DraggableBlock = memo(function DraggableBlock({ block, index, isSelected, 
           <span className="text-[9px] px-1 py-0 uppercase tracking-wider" style={{ color: 'var(--color-text-muted)', fontWeight: 500, fontFamily: 'var(--font-family-base)' }}>
             {safeType}
           </span>
-          {block.stepGroup && (
-            <span className="text-[8px] px-1 py-0" style={{ color: 'var(--color-text-muted)', opacity: 0.6 }}>
-              {block.stepGroup}
-            </span>
-          )}
+          {/* stepGroup is internal authoring metadata — not surfaced in the block list.
+              It remains editable in the block detail editor. */}
           {block.autoAdvance && (
             <FastForward size={8} style={{ color: 'var(--color-info-default)', opacity: 0.6 }} />
           )}

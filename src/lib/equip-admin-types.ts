@@ -251,7 +251,9 @@ export interface CheckInConfig {
 }
 
 export const DEFAULT_CHECKIN_CONFIG: CheckInConfig = {
-  enabled: true,
+  // Disabled by default — the milestone check-in popup is turned off site-wide.
+  // Re-enable per-program via the program's checkInConfig when desired.
+  enabled: false,
   triggerDays: [7, 14, 30],
   triggerOnLastDay: true,
 };
