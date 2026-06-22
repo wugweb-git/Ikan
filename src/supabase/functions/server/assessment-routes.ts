@@ -71,7 +71,15 @@ export function registerAssessmentRoutes(app: Hono, requireAuth: any) {
     app.get("/assessments/:id", async (c) => {
         try {
             const id = c.req.param("id");
-            const assessment = await kv.get(`assessment_def:${id}`);
+            let assessment = await kv.get(`assessment_def:${id}`);
+
+            // Fallback: the param may be a slug (e.g. /assessment/feeling-worried-and-stressed)
+            if (!assessment) {
+                const realId = await kv.get(`assessment_slug:${id}`);
+                if (realId) {
+                    assessment = await kv.get(`assessment_def:${realId}`);
+                }
+            }
 
             if (!assessment || assessment.deleted) {
                 return c.json({ error: "Assessment not found" }, 404);

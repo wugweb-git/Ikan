@@ -10,6 +10,7 @@ import { ResourcePost } from '../blocks/ResourceCard';
 import { MobileHeader } from '../navigation/MobileHeader';
 import { TopNavBar } from '../navigation/TopNavBar';
 import { useIsMobile } from '../../hooks/useIsMobile';
+import { useSeo } from '../../hooks/useSeo';
 import { Skeleton } from '../ui/skeleton-loader';
 import { Button } from '../ui/button';
 import defaultBentoImage from "../../assets/8ce2a19aab5abaf51a83cb99ea2d61447f96d8b2.png";
@@ -119,24 +120,34 @@ export function AssessmentDetail({ assessmentId = 'anxiety', onNavigate }: Asses
     const controller = new AbortController();
     const fetchAssessmentData = async () => {
       try {
-        // Fetch main assessment data
+        // Fetch main assessment data (works for both id and slug — backend resolves either)
+        const apiBase = `https://${projectId}.supabase.co/functions/v1/make-server-cc205da9`;
+        const headers = await getAuthHeaders();
         const response = await fetch(
-          `https://${projectId}.supabase.co/functions/v1/make-server-cc205da9/assessments/${assessmentId}?t=${Date.now()}`,
-          {
-            signal: controller.signal,
-            headers: await getAuthHeaders()
-          }
+          `${apiBase}/assessments/${assessmentId}?t=${Date.now()}`,
+          { signal: controller.signal, headers }
         );
-        
-        if (!response.ok) {
-          throw new Error('API Error');
+
+        let rawAssessment: any = null;
+        if (response.ok) {
+          rawAssessment = (await response.json()).assessment;
+        } else {
+          // Fallback (deploy-safe): older backend may not resolve slugs — match from the list
+          const listRes = await fetch(`${apiBase}/assessments?t=${Date.now()}`, { signal: controller.signal, headers });
+          if (listRes.ok) {
+            const body = await listRes.json();
+            const all = Array.isArray(body) ? body : (body.assessments || []);
+            rawAssessment = all.find((a: any) => a.slug === assessmentId || a.id === assessmentId) || null;
+          }
         }
 
-        const data = await response.json();
-        const rawAssessment = data.assessment;
+        if (!rawAssessment) {
+          throw new Error('API Error');
+        }
         
         setAssessmentData({
           title: rawAssessment.title || "",
+          slug: rawAssessment.slug || "",
           description: rawAssessment.description || "",
           hero_image: rawAssessment.hero_image || rawAssessment.image_url || rawAssessment.thumbnail_url || rawAssessment.thumbnail || "",
           cta_button_text: rawAssessment.cta_button_text || "Start Assessment",
@@ -195,6 +206,23 @@ export function AssessmentDetail({ assessmentId = 'anxiety', onNavigate }: Asses
     return () => { controller.abort(); };
   }, [assessmentId]);
 
+  useSeo({
+    enabled: !!assessmentData,
+    title: assessmentData?.title,
+    description: assessmentData?.description,
+    image: assessmentData?.hero_image,
+    canonicalPath: assessmentData ? `/assessment/${assessmentData.slug || assessmentId}` : undefined,
+    type: 'article',
+    jsonLd: assessmentData ? {
+      '@context': 'https://schema.org',
+      '@type': 'WebPage',
+      name: assessmentData.title,
+      description: assessmentData.description,
+      url: `https://ikanhealth.in/assessment/${assessmentData.slug || assessmentId}`,
+      isPartOf: { '@type': 'WebSite', name: 'iKan Health', url: 'https://ikanhealth.in' },
+    } : null,
+  });
+
   if (isLoading) {
     return (
       <div className="w-full min-h-screen p-6 space-y-8" style={{ backgroundColor: 'var(--color-bg-page)' }}>
@@ -238,7 +266,7 @@ export function AssessmentDetail({ assessmentId = 'anxiety', onNavigate }: Asses
         questionCount: a.questions?.length || a.metadata?.question_count || 10, // Get question count
         duration: a.duration || a.metadata?.estimated_minutes || 5, // Get duration
         info: `${a.questions?.length || a.metadata?.question_count || 10} Questions • ${a.duration || a.metadata?.estimated_minutes || 5} min`, // Combine both
-        link: `/assessment-detail?id=${a.slug || a.id}`
+        link: a.slug ? `/assessment/${a.slug}` : `/assessment-detail?id=${a.id}`
       }))
     : [];
 

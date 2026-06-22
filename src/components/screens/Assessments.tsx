@@ -305,7 +305,7 @@ export function Assessments({ className, onNavigate }: AssessmentsProps) {
     }
     
     if (onNavigate) {
-      onNavigate(`/assessment-detail?id=${assessment.id || assessment.slug}`);
+      onNavigate(assessment.slug ? `/assessment/${assessment.slug}` : `/assessment-detail?id=${assessment.id}`);
     } else {
       setCurrentView('landing');
     }

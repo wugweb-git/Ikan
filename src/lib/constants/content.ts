@@ -59,7 +59,7 @@ export const NEWSLETTER_CONTENT = {
     imageAlt: "Mental wellness newsletter subscription",
     ctaText: "Subscribe Now",
   },
-  PRIVACY_TEXT: "Privacy: We store and process your personal data based on our privacy policy. You can unsubscribe at any time.",
+  PRIVACY_TEXT: "We store and process your personal data based on our privacy policy. You can unsubscribe at any time.",
 } as const;
 
 // LEGACY IDS TO FILTER

@@ -52,8 +52,13 @@ export function BlockRenderer({ block, value, onChange, readOnly = false, equipI
 
   // --- HELPERS ---
   const cleanOptionLabel = (text: string) => {
-    // Strips "0 - ", "1 - " prefixes used for scoring
-    return text.replace(/^\d+\s*-\s*/, '');
+    // Strips leading prefixes that aren't part of the answer text:
+    //  - "0 - ", "1 - " scoring prefixes, and "1. " / "2) " list markers
+    //  - bare index prefixes like "1 0-15 minutes" -> "0-15 minutes"
+    // The marker forms require trailing whitespace so decimals (e.g. "1.5 hours") are preserved.
+    return text
+      .replace(/^\s*\d+\s*[-.)]\s+/, '')
+      .replace(/^\s*\d+\s+(?=\S)/, '');
   };
 
   const isVideo = block.image_url && (
@@ -153,9 +158,30 @@ export function BlockRenderer({ block, value, onChange, readOnly = false, equipI
                  padding-left: 1.5rem;
                  margin-bottom: 1.5rem;
                }
-               .lesson-content li { 
+               .lesson-content li {
                  margin-bottom: 0.5rem;
                  color: var(--grey-8);
+               }
+               /* Normalize quote/closing blocks (e.g. "That will be all for today")
+                  so their font + background match the rest of the lesson. */
+               .lesson-content blockquote {
+                 font-size: 1.125rem;
+                 line-height: 1.7;
+                 font-style: normal;
+                 font-weight: 400;
+                 color: var(--grey-8);
+                 background: var(--color-bg-input);
+                 border-left: 3px solid var(--color-border-default);
+                 border-radius: 8px;
+                 padding: 1rem 1.25rem;
+                 margin-bottom: 1.5rem;
+               }
+               .lesson-content blockquote p {
+                 margin-bottom: 0;
+                 color: var(--grey-8);
+               }
+               .lesson-content blockquote p + p {
+                 margin-top: 0.75rem;
                }
              `}</style>
              <div className="lesson-content" dangerouslySetInnerHTML={{ __html: content }} />

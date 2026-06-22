@@ -283,7 +283,10 @@ export function ProgramPlayer({
       const config = program.checkInConfig ?? DEFAULT_CHECKIN_CONFIG;
       const isLastDay = program.daily_content.length === currentDayNum;
 
-      const shouldCheckIn = config.enabled && (
+      // Never show the "compared to when you started" check-in on day 1 — there is
+      // no baseline to compare against yet (e.g. single-day programs where day 1 is
+      // also the last day). It should only appear after the program is underway.
+      const shouldCheckIn = config.enabled && currentDayNum > 1 && (
         config.triggerDays.includes(currentDayNum) ||
         (config.triggerOnLastDay && isLastDay)
       );

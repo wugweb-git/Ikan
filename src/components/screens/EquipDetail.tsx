@@ -11,6 +11,7 @@ import { NewsletterBlock } from '../blocks/NewsletterBlock';
 import { ResourcePost } from '../blocks/ResourceCard';
 import { MobileHeader } from '../navigation/MobileHeader';
 import { useIsMobile } from '../../hooks/useIsMobile';
+import { useSeo } from '../../hooks/useSeo';
 import { EmptyState } from '../ui/empty-state';
 import { Skeleton } from '../ui/skeleton-loader';
 import { EQUIP_CONTENT, NEWSLETTER_CONTENT, LEGACY_PROGRAM_IDS } from '../../lib/constants/content';
@@ -160,10 +161,15 @@ export function EquipDetail({ equipId = 'sleep-tight-9', onNavigate }: EquipDeta
             throw new Error('Program not available');
         }
 
+        // Pick the first usable image, preferring stable public URLs over
+        // expiring Supabase Storage signed URLs (`/object/sign/`).
+        const imageCandidates = [program.hero_image, program.image_url, program.cover_image, program.thumbnail]
+          .filter((u: any): u is string => typeof u === 'string' && u.trim() !== '');
+        const heroImage = imageCandidates.find((u) => !u.includes('/object/sign/')) || imageCandidates[0] || '';
+
         setEquipData({
           ...program,
-          // Use hero_image if available, otherwise fallback to cover_image or thumbnail
-          hero_image: program.hero_image || program.cover_image || program.thumbnail || '',
+          hero_image: heroImage,
           cta_button_link: program.cta_button_link || `/equip-program-onboarding?id=${equipId}`,
         });
 
@@ -216,6 +222,23 @@ export function EquipDetail({ equipId = 'sleep-tight-9', onNavigate }: EquipDeta
       checkPurchase();
     }
   }, [user, equipId, equipData, isLoading]);
+
+  useSeo({
+    enabled: !!equipData,
+    title: equipData?.title,
+    description: equipData?.description,
+    image: equipData?.hero_image,
+    canonicalPath: equipData ? `/equip/${equipData.slug || equipId}` : undefined,
+    type: 'article',
+    jsonLd: equipData ? {
+      '@context': 'https://schema.org',
+      '@type': 'Course',
+      name: equipData.title,
+      description: equipData.description,
+      provider: { '@type': 'Organization', name: 'iKan Health', url: 'https://ikanhealth.in' },
+      url: `https://ikanhealth.in/equip/${equipData.slug || equipId}`,
+    } : null,
+  });
 
   // Loading state
   if (isLoading) {
@@ -286,7 +309,7 @@ export function EquipDetail({ equipId = 'sleep-tight-9', onNavigate }: EquipDeta
         image: p.thumbnail || p.thumbnail_url || p.image_url || p.hero_image || p.image || p.cover_image || p.metadata?.image || p.metadata?.thumbnail || '',
         duration: p.duration_days ? `${p.duration_days} days` : '',
         activities: 'Self-paced modules',
-        link: `/equip-detail?id=${p.equip_id || p.id}`
+        link: p.slug ? `/equip/${p.slug}` : `/equip-detail?id=${p.equip_id || p.id}`
       }));
 
   // Parse Benefits from Strings if needed (e.g. "Title | Description")
@@ -361,26 +384,7 @@ export function EquipDetail({ equipId = 'sleep-tight-9', onNavigate }: EquipDeta
                     : `One-time payment of ${priceDisplay} for full access`}
                 </p>
               </div>
-              {!hasPurchased && (
-                <button
-                  onClick={handleCtaClick}
-                  style={{
-                    backgroundColor: 'var(--color-primary-default)',
-                    color: 'var(--color-text-inverse)',
-                    border: 'none',
-                    borderRadius: 'var(--radius-md)',
-                    padding: 'var(--spacing-2) var(--spacing-5)',
-                    fontSize: 'var(--text-sm)',
-                    fontWeight: 500,
-                    fontFamily: 'var(--font-family-base)',
-                    cursor: 'pointer',
-                    whiteSpace: 'nowrap' as const,
-                    minHeight: 'var(--ikan-touch-target-min, 44px)',
-                  }}
-                >
-                  {ctaButtonText}
-                </button>
-              )}
+              {/* Pay button intentionally removed — the hero CTA is the single pay action */}
             </div>
           </div>
         )}

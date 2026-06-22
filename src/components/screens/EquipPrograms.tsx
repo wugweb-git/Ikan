@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { apiClient } from '../../lib/api-client';
+import { equipUrl } from '../../lib/slug';
 import { PageHero } from '../ui/PageHero';
 import { ContentImage } from '../ui/ContentImage';
 import { useNotifications } from '../../contexts/NotificationContext';
@@ -63,9 +64,9 @@ export function EquipPrograms({ onNavigate }: EquipProgramsProps) {
     }
   };
 
-  const handleViewProgram = async (equipId: string) => {
+  const handleViewProgram = async (program: any) => {
     if (onNavigate) {
-      onNavigate(`/equip-detail?id=${equipId}`);
+      onNavigate(equipUrl(program));
     }
   };
 
@@ -153,7 +154,7 @@ export function EquipPrograms({ onNavigate }: EquipProgramsProps) {
               return (
                 <div
                   key={equipId}
-                  onClick={() => handleViewProgram(equipId)}
+                  onClick={() => handleViewProgram(program)}
                   style={{
                     borderRadius: 'var(--radius-lg)',
                     overflow: 'hidden',

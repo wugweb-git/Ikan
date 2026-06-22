@@ -171,6 +171,9 @@ function AppContent() {
       if (path.startsWith('/consultation/') && path !== '/consultation/') {
         return '/consultation-detail';
       }
+      // Slug detail routes map to the existing detail screens
+      if (path.startsWith('/assessment/') && path !== '/assessment/') return '/assessment-detail';
+      if (path.startsWith('/equip/') && path !== '/equip/') return '/equip-detail';
       if (path && path !== '/') return path;
     }
     return DEFAULT_PUBLIC_ROUTE;
@@ -182,6 +185,21 @@ function AppContent() {
       if (path.startsWith('/consultation/') && path !== '/consultation/') {
         return path.split('/consultation/')[1];
       }
+    }
+    return null;
+  });
+  // Slug captured from /assessment/<slug> and /equip/<slug> URLs (back-compat: ?id= still works)
+  const [assessmentSlug, setAssessmentSlug] = useState<string | null>(() => {
+    if (typeof window !== 'undefined') {
+      const p = window.location.pathname;
+      if (p.startsWith('/assessment/') && p !== '/assessment/') return p.split('/assessment/')[1];
+    }
+    return null;
+  });
+  const [equipSlug, setEquipSlug] = useState<string | null>(() => {
+    if (typeof window !== 'undefined') {
+      const p = window.location.pathname;
+      if (p.startsWith('/equip/') && p !== '/equip/') return p.split('/equip/')[1];
     }
     return null;
   });
@@ -222,6 +240,25 @@ function AppContent() {
         }
         return;
       }
+
+      // Slug detail routes: /assessment/<slug> and /equip/<slug>
+      if (path.startsWith('/assessment/') && path !== '/assessment/') {
+        const slug = path.split('/assessment/')[1];
+        setAssessmentSlug(slug);
+        startTransition(() => setCurrentRoute('/assessment-detail'));
+        if (typeof window !== 'undefined') window.history.pushState({}, '', route);
+        return;
+      }
+      if (path.startsWith('/equip/') && path !== '/equip/') {
+        const slug = path.split('/equip/')[1];
+        setEquipSlug(slug);
+        startTransition(() => setCurrentRoute('/equip-detail'));
+        if (typeof window !== 'undefined') window.history.pushState({}, '', route);
+        return;
+      }
+      // Any other navigation clears stale detail slugs so legacy ?id= links resolve correctly
+      setAssessmentSlug(null);
+      setEquipSlug(null);
       
       if (!validRoutes.includes(path)) {
         // Allow CMS page routes (e.g. /page/some-slug) through
@@ -357,7 +394,15 @@ function AppContent() {
         const id = path.split('/consultation/')[1];
         setConsultantId(id);
         startTransition(() => setCurrentRoute('/consultation-detail'));
+      } else if (path.startsWith('/assessment/') && path !== '/assessment/') {
+        setAssessmentSlug(path.split('/assessment/')[1]);
+        startTransition(() => setCurrentRoute('/assessment-detail'));
+      } else if (path.startsWith('/equip/') && path !== '/equip/') {
+        setEquipSlug(path.split('/equip/')[1]);
+        startTransition(() => setCurrentRoute('/equip-detail'));
       } else {
+        setAssessmentSlug(null);
+        setEquipSlug(null);
         startTransition(() => setCurrentRoute(path || DEFAULT_PUBLIC_ROUTE));
       }
       window.scrollTo({ top: 0 });
@@ -468,7 +513,7 @@ function AppContent() {
         case '/assessment-landing':
           return withSuspense(<AssessmentLandingNew onNavigate={handleNavigate} />);
         case '/assessment-detail':
-          return withSuspense(<AssessmentDetail assessmentId={queryParams.id || queryParams.type} onNavigate={handleNavigate} />);
+          return withSuspense(<AssessmentDetail assessmentId={assessmentSlug || queryParams.id || queryParams.type} onNavigate={handleNavigate} />);
         case '/assessment-flow':
           return withSuspense(<AssessmentFlow assessmentId={queryParams.id || queryParams.type} onNavigate={handleNavigate} />);
         case '/assessment-results':
@@ -479,7 +524,7 @@ function AppContent() {
         case '/equip-programs-landing':
           return withSuspense(<EquipPrograms onNavigate={handleNavigate} />);
         case '/equip-detail':
-          return withSuspense(<EquipDetail equipId={queryParams.id} onNavigate={handleNavigate} />);
+          return withSuspense(<EquipDetail equipId={equipSlug || queryParams.id} onNavigate={handleNavigate} />);
         case '/equip-program-onboarding':
           return withSuspense(<EquipOnboarding programId={queryParams.id} onNavigate={handleNavigate} />);
         case '/equip-program-flow':
@@ -556,10 +601,10 @@ function AppContent() {
     !currentRoute.startsWith('/assessment-flow') &&
     !currentRoute.startsWith('/equip-program-flow') &&
     !currentRoute.startsWith('/equip-program-onboarding');
-  const shouldShowFooter = currentRoute === '/' || 
-                           currentRoute === '/about' || 
-                           currentRoute === '/contact' || 
-                           currentRoute === '/terms' || 
+  const shouldShowFooter = currentRoute === '/' ||
+                           currentRoute === '/about' ||
+                           currentRoute === '/contact' ||
+                           currentRoute === '/terms' ||
                            currentRoute === '/privacy' ||
                            currentRoute === '/privacy-policy' ||
                            currentRoute === '/return-policy' ||
@@ -567,6 +612,8 @@ function AppContent() {
                            currentRoute === '/faq' ||
                            currentRoute === '/sitemap' ||
                            currentRoute === '/resource' ||
+                           currentRoute === '/assessment-detail' ||
+                           currentRoute === '/equip-detail' ||
                            currentRoute.startsWith('/page/');
 
   const isFullScreenFlow = currentRoute.startsWith('/assessment-flow') ||

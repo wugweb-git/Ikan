@@ -247,9 +247,9 @@ export const DEFAULT_CMS_CONTENT: { [key: string]: any } = {
               <div class="bg-gray-900 text-white p-4 rounded-lg">
                 <p class="font-medium mb-2">🚨 Crisis Resources:</p>
                 <div class="grid sm:grid-cols-2 gap-2 text-sm">
-                  <p>• National: 988 Suicide & Crisis Lifeline</p>
-                  <p>• Text: HOME to 741741</p>
-                  <p>• Emergency: 911</p>
+                  <p>• KIRAN Mental Health Helpline: 1800-599-0019 (24x7)</p>
+                  <p>• iCALL Psychosocial Helpline: 9152987821</p>
+                  <p>• Emergency: 112</p>
                   <p>• International: befrienders.org</p>
                 </div>
               </div>
@@ -444,9 +444,9 @@ export const DEFAULT_CMS_CONTENT: { [key: string]: any } = {
             <div class="bg-white p-4 rounded-lg border border-red-200">
               <p class="text-red-800 font-medium mb-2">If you or someone you know is in immediate danger, please reach out now:</p>
               <div class="grid sm:grid-cols-2 gap-2 text-sm text-red-700">
-                <p>• National: 988 Suicide & Crisis Lifeline</p>
-                <p>• Text: HOME to 741741</p>
-                <p>• Emergency: 911</p>
+                <p>• KIRAN Mental Health Helpline: 1800-599-0019 (24x7)</p>
+                <p>• iCALL Psychosocial Helpline: 9152987821</p>
+                <p>• Emergency: 112</p>
                 <p>• International: befrienders.org</p>
               </div>
             </div>
@@ -862,7 +862,7 @@ export const DEFAULT_CMS_CONTENT: { [key: string]: any } = {
           'At some point everyone has struggled. Decades old friends Sachin, Vedanshu and Kartik have also faced their share of struggles, each one of us embarking on a personal journey to understand what we were going through. All of us witnessed first hand the barriers and gaps in mental healthcare in India and realised that the system is broken.',
           'Conversations with people who had struggled and therapists who had learned mental healthcare is inaccessible, costly, episodic, fragmented and needs to be fixed. We realised mental healthcare needs to stop being treated as a blackbox. The only way forward is by bringing people and technology together while being open and transparent. So we created <iKan>.',
         ],
-        image: 'https://images.unsplash.com/photo-1667351326034-c6d733c57dc9?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxncm91cCUyMGZyaWVuZHMlMjBjb2xsYWJvcmF0aW9uJTIwc3RhcnR1cCUyMGluZGlhfGVufDF8fHx8MTc3MTkxMjE1OXww&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral',
+        image: 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080',
         imageAlt: 'Founders collaborating on iKan',
       },
       mission: {
@@ -909,13 +909,13 @@ export const DEFAULT_CMS_CONTENT: { [key: string]: any } = {
           name: 'Kartik Chandra',
           role: 'Co-Founder and CEO',
           bio: 'Kartik has a decade long experience in general and health insurance and health tech across various functions. He brings his experience and learnings from his personal journey to positioning iKan for growth and long term success.',
-          image: 'https://images.unsplash.com/photo-1649433658557-54cf58577c68?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxpbmRpYW4lMjBtYW4lMjBwcm9mZXNzaW9uYWwlMjBoZWFkc2hvdCUyMHBvcnRyYWl0fGVufDF8fHx8MTc3MTkxMjE1Nnww&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral',
+          image: '/team/kartik.jpg',
         },
         {
           name: 'Vedanshu Srivastava',
           role: 'Co-Founder and Product Head',
           bio: 'Vedanshu has a decade long experience in general and health insurance and health tech across various functions. He brings his experience and learnings from his personal journey to positioning iKan for growth and long term success.',
-          image: 'https://images.unsplash.com/photo-1720167300687-5e1a11ea955d?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxpbmRpYW4lMjBtYWxlJTIwZW50cmVwcmVuZXVyJTIwcG9ydHJhaXQlMjBidXNpbmVzc3xlbnwxfHx8fDE3NzE5MTIxNTd8MA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral',
+          image: '/team/vedanshu.jpg',
         },
         {
           name: 'Sachin Vaishampayan',
@@ -928,17 +928,17 @@ export const DEFAULT_CMS_CONTENT: { [key: string]: any } = {
         {
           name: 'Vaibhav Shukla',
           role: 'System Architect',
-          image: 'https://images.unsplash.com/photo-1681165232934-c09dfa5ee694?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxpbmRpYW4lMjBtYWxlJTIwc29mdHdhcmUlMjBlbmdpbmVlciUyMHBvcnRyYWl0fGVufDF8fHx8MTc3MTkxMjE1OHww&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral',
+          image: '/team/vaibhav.jpg',
         },
         {
           name: 'Amitabh Bhatnagar',
           role: 'Dev Engineer',
-          image: 'https://images.unsplash.com/photo-1764312386450-5d39879fb715?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxpbmRpYW4lMjBtYWxlJTIwZGV2ZWxvcGVyJTIwcG9ydHJhaXQlMjBjYXN1YWx8ZW58MXx8fHwxNzcxOTEyMTU4fDA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral',
+          image: '/team/amitabh.jpg',
         },
         {
           name: 'Divyanshu Pundir',
           role: 'UX Designer',
-          image: 'https://images.unsplash.com/photo-1662302392561-b1deecd3579d?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxpbmRpYW4lMjBtYW4lMjBjcmVhdGl2ZSUyMHByb2Zlc3Npb25hbCUyMHNtaWxpbmd8ZW58MXx8fHwxNzcxOTEyMTYyfDA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral',
+          image: '/team/divyanshu.jpg',
         },
       ],
     }),
@@ -1008,11 +1008,10 @@ export const DEFAULT_CMS_CONTENT: { [key: string]: any } = {
       contactMethods: [
         { icon: 'mail', title: 'Email Support', description: 'Get help with your account and services', value: 'support@ikanhealth.in', action: 'mailto:support@ikanhealth.in' },
         { icon: 'phone', title: 'Crisis Support', description: 'iCALL Suicide Prevention Helpline', value: '9152987821', action: 'tel:9152987821' },
-        { icon: 'messageCircle', title: 'Live Chat', description: 'Chat with our support team', value: 'Available 9 AM - 6 PM IST', action: '#' },
       ],
       formTitle: 'Send us a Message',
       formSubtitle: 'We typically respond within 24 hours during business days.',
-      crisisCard: { title: 'Need Immediate Help?', description: "If you're having thoughts of self-harm or suicide, please reach out for immediate support.", buttons: [{ label: 'Call iCALL - 9152987821', action: 'tel:9152987821' }, { label: 'Call 911 - Emergency', action: 'tel:911' }] },
+      crisisCard: { title: 'Need Immediate Help?', description: "If you're having thoughts of self-harm or suicide, please reach out for immediate support.", buttons: [{ label: 'Call iCALL - 9152987821', action: 'tel:9152987821' }] },
       faqCard: { title: 'Looking for Quick Answers?', description: 'Check our FAQ section for instant answers to common questions.', buttonText: 'Visit FAQ Section', buttonRoute: '/faq' },
     }),
     lastUpdated: new Date().toISOString()

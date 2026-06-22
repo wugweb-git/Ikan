@@ -210,7 +210,7 @@ export function ActivityCard({ className }: { className?: string }) {
           <div className="flex items-start" style={{ gap: 12, marginBottom: 12 }}>
             <HealthConnectLogo size={28} />
             <h3 style={{ ...f('base', 500), margin: 0, lineHeight: 1.3 }}>
-              Want more detailed workout data?
+              Want more detailed activity data?
             </h3>
           </div>
 

@@ -158,7 +158,7 @@ export function AssessmentBentoGrid({
                     {section2.title || "What is this assessment?"}
                   </h2>
                   <div className="flex flex-col gap-[16px]">
-                    {section2.content ? section2.content.split('\n').map((p, i) => (
+                    {typeof section2.content === 'string' ? section2.content.split('\n').map((p, i) => (
                       <p 
                         key={i} 
                         style={{
@@ -193,7 +193,7 @@ export function AssessmentBentoGrid({
                     {section3.title || "What it measures"}
                   </h3>
                   <div className="flex flex-col lg:flex-row gap-[16px] lg:gap-[18px]">
-                    {section2.bullets && section2.bullets.slice(0, 3).map((bullet, idx) => {
+                    {Array.isArray(section2.bullets) && section2.bullets.slice(0, 3).map((bullet, idx) => {
                       const Icon = measureIcons[idx % 3];
                       return (
                         <div 
@@ -219,7 +219,7 @@ export function AssessmentBentoGrid({
                               margin: 0
                             }}
                           >
-                            {bullet}
+                            {typeof bullet === 'string' ? bullet : ((bullet as any)?.text || (bullet as any)?.title || '')}
                           </p>
                         </div>
                       );
@@ -253,7 +253,7 @@ export function AssessmentBentoGrid({
                 {section4.notesTitle || "Things to Remember Before You Start"}
               </h3>
               <div className="flex flex-col lg:flex-row gap-[12px] lg:gap-[9px]">
-                {(section4.notes || []).map((note, idx) => (
+                {(Array.isArray(section4.notes) ? section4.notes : []).map((note, idx) => (
                   <div key={idx} className="flex items-start gap-[12px] flex-1">
                     <div className="shrink-0 mt-[2px]">
                       <CheckIcon />
@@ -268,7 +268,7 @@ export function AssessmentBentoGrid({
                         color: 'var(--color-text-primary)'
                       }}
                     >
-                      {note.title}
+                      {typeof note === 'string' ? note : ((note as any)?.title || (note as any)?.text || '')}
                     </p>
                   </div>
                 ))}

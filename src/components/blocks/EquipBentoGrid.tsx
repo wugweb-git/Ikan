@@ -138,8 +138,8 @@ export function EquipBentoGrid({
     { icon: FlaskConical, text: "Evidence-based techniques and exercises" }
   ];
 
-  const resolvedRightItems = rightColumnItems
-    ? rightColumnItems.map(item => ({ icon: Clock, text: item.text }))
+  const resolvedRightItems = Array.isArray(rightColumnItems) && rightColumnItems.length > 0
+    ? rightColumnItems.map((item: any) => ({ icon: Clock, text: typeof item === 'string' ? item : (item?.text ?? '') }))
     : defaultRightItems;
 
   // How it works steps
@@ -154,6 +154,11 @@ export function EquipBentoGrid({
   } else if (!Array.isArray(howItWorksSteps)) {
     howItWorksSteps = [];
   }
+
+  // Coerce any block value to a safe string so a stray object never renders as
+  // "[object Object]" or crashes React with "Objects are not valid as a child".
+  const asText = (v: any): string =>
+    typeof v === 'string' ? v : (v?.text ?? v?.title ?? v?.description ?? '');
 
   return (
     <section 
@@ -205,7 +210,7 @@ export function EquipBentoGrid({
                           margin: 0
                         }}
                       >
-                        {p}
+                        {asText(p)}
                       </p>
                     ))}
                   </div>
@@ -230,7 +235,7 @@ export function EquipBentoGrid({
                           <CheckIcon />
                         </div>
                         <p style={{ fontFamily: 'var(--font-family-base)', fontWeight: 'var(--font-weight-regular)', fontSize: 'var(--text-sm)', lineHeight: '21px', color: 'var(--color-text-primary)' }}>
-                          {point}
+                          {asText(point)}
                         </p>
                       </div>
                     ))}
@@ -279,10 +284,10 @@ export function EquipBentoGrid({
                       </div>
                       <div className="flex flex-col justify-center h-[100px]">
                         <p style={{ fontFamily: 'var(--font-family-base)', fontWeight: 'var(--font-weight-medium)', fontSize: 'var(--text-base)', lineHeight: '24px', color: 'var(--color-text-muted)', marginBottom: 0 }}>
-                          {tile.title}
+                          {asText(tile.title)}
                         </p>
                         <p style={{ fontFamily: 'var(--font-family-base)', fontWeight: 'var(--font-weight-regular)', fontSize: 'var(--text-base)', lineHeight: '24px', color: 'var(--color-text-muted)' }}>
-                          {tile.subtitle}
+                          {asText(tile.subtitle)}
                         </p>
                       </div>
                     </div>
@@ -307,7 +312,7 @@ export function EquipBentoGrid({
                     </div>
                     <div className="flex flex-col justify-center min-h-[48px]">
                       <p style={{ fontFamily: 'var(--font-family-base)', fontWeight: 'var(--font-weight-regular)', fontSize: 'var(--text-sm)', lineHeight: '21px', color: 'var(--color-text-primary)' }}>
-                        {item.text}
+                        {asText(item.text)}
                       </p>
                     </div>
                   </div>
@@ -340,7 +345,7 @@ export function EquipBentoGrid({
                 <div className="flex flex-col gap-[13px] items-center text-center py-2">
                   {howItWorksSteps.map((step, i) => (
                     <p key={i} style={{ fontFamily: 'var(--font-family-base)', fontWeight: 'var(--font-weight-regular)', fontSize: 'var(--text-xs)', lineHeight: '18px', color: 'var(--color-text-primary)', width: '100%' }}>
-                      {step}
+                      {asText(step)}
                     </p>
                   ))}
                 </div>

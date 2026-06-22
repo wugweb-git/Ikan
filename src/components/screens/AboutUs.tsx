@@ -65,7 +65,7 @@ export function AboutUs({ onNavigate, className }: AboutUsProps) {
   const heroImage = heroBanner?.image_url || undefined;
 
   const storyLabel = cms?.story?.label || 'Our Story';
-  const storyImage = cms?.story?.image || 'https://images.unsplash.com/photo-1667351326034-c6d733c57dc9?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxncm91cCUyMGZyaWVuZHMlMjBjb2xsYWJvcmF0aW9uJTIwc3RhcnR1cCUyMGluZGlhfGVufDF8fHx8MTc3MTkxMjE1OXww&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral';
+  const storyImage = cms?.story?.image || 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080';
   const storyImageAlt = cms?.story?.imageAlt || 'Founders collaborating on iKan';
 
   const missionLabel = cms?.mission?.label || 'Mission';
@@ -91,15 +91,15 @@ export function AboutUs({ onNavigate, className }: AboutUsProps) {
   }, [cms]);
 
   const founders: TeamMember[] = cms?.founders || [
-    { name: 'Kartik Chandra', role: 'Co-Founder and CEO', bio: 'Kartik has a decade long experience in general and health insurance and health tech across various functions.', image: 'https://images.unsplash.com/photo-1649433658557-54cf58577c68?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxpbmRpYW4lMjBtYW4lMjBwcm9mZXNzaW9uYWwlMjBoZWFkc2hvdCUyMHBvcnRyYWl0fGVufDF8fHx8MTc3MTkxMjE1Nnww&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral' },
-    { name: 'Vedanshu Srivastava', role: 'Co-Founder and Product Head', bio: 'Vedanshu has a decade long experience in general and health insurance and health tech across various functions.', image: 'https://images.unsplash.com/photo-1720167300687-5e1a11ea955d?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxpbmRpYW4lMjBtYWxlJTIwZW50cmVwcmVuZXVyJTIwcG9ydHJhaXQlMjBidXNpbmVzc3xlbnwxfHx8fDE3NzE5MTIxNTd8MA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral' },
+    { name: 'Kartik Chandra', role: 'Co-Founder and CEO', bio: 'Kartik has a decade long experience in general and health insurance and health tech across various functions.', image: '/team/kartik.jpg' },
+    { name: 'Vedanshu Srivastava', role: 'Co-Founder and Product Head', bio: 'Vedanshu has a decade long experience in general and health insurance and health tech across various functions.', image: '/team/vedanshu.jpg' },
     { name: 'Sachin Vaishampayan', role: 'Co-Founder and CTO', bio: 'Sachin has worked in research and education for over a decade.', image: 'https://images.unsplash.com/photo-1739249432260-0bcfdc382e5c?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxpbmRpYW4lMjBtYW4lMjB0ZWNobm9sb2d5JTIwcHJvZmVzc2lvbmFsJTIwaGVhZHNob3R8ZW58MXx8fHwxNzcxOTEyMTU3fDA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral' },
   ];
 
   const team: TeamMember[] = cms?.team || [
-    { name: 'Vaibhav Shukla', role: 'System Architect', image: 'https://images.unsplash.com/photo-1681165232934-c09dfa5ee694?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxpbmRpYW4lMjBtYWxlJTIwc29mdHdhcmUlMjBlbmdpbmVlciUyMHBvcnRyYWl0fGVufDF8fHx8MTc3MTkxMjE1OHww&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral' },
-    { name: 'Amitabh Bhatnagar', role: 'Dev Engineer', image: 'https://images.unsplash.com/photo-1764312386450-5d39879fb715?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxpbmRpYW4lMjBtYWxlJTIwZGV2ZWxvcGVyJTIwcG9ydHJhaXQlMjBjYXN1YWx8ZW58MXx8fHwxNzcxOTEyMTU4fDA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral' },
-    { name: 'Divyanshu Pundir', role: 'UX Designer', image: 'https://images.unsplash.com/photo-1662302392561-b1deecd3579d?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxpbmRpYW4lMjBtYW4lMjBjcmVhdGl2ZSUyMHByb2Zlc3Npb25hbCUyMHNtaWxpbmd8ZW58MXx8fHwxNzcxOTEyMTYyfDA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral' },
+    { name: 'Vaibhav Shukla', role: 'System Architect', image: '/team/vaibhav.jpg' },
+    { name: 'Amitabh Bhatnagar', role: 'Dev Engineer', image: '/team/amitabh.jpg' },
+    { name: 'Divyanshu Pundir', role: 'UX Designer', image: '/team/divyanshu.jpg' },
   ];
 
   const [resources, setResources] = useState<ResourcePost[]>([]);
@@ -433,6 +433,17 @@ export function AboutUs({ onNavigate, className }: AboutUsProps) {
           7. OUR TEAM
       ═══════════════════════════════════════════════ */}
       <section style={{ backgroundColor: 'var(--color-bg-page)', padding: sectionPadding }}>
+        {/* Team photos: desaturated by default, full colour on hover */}
+        <style>{`
+          .ikan-team-photo img {
+            filter: grayscale(1);
+            transition: filter 0.4s ease, transform 0.4s ease;
+          }
+          .ikan-team-photo:hover img {
+            filter: grayscale(0) saturate(1.05);
+            transform: scale(1.03);
+          }
+        `}</style>
         <div style={containerStyle}>
           {/* Section Header */}
           <div style={{ textAlign: 'center', marginBottom: isMobile ? '32px' : '48px' }}>
@@ -582,7 +593,7 @@ function FounderCard({ member, isMobile }: { member: TeamMember; isMobile: boole
       }}
     >
       {/* Photo */}
-      <div style={{ height: isMobile ? '220px' : '240px', overflow: 'hidden' }}>
+      <div className="ikan-team-photo" style={{ height: isMobile ? '220px' : '240px', overflow: 'hidden' }}>
         <ContentImage
           src={member.image}
           alt={member.name}
@@ -653,7 +664,7 @@ function TeamCard({ member, isMobile }: { member: TeamMember; isMobile: boolean 
       }}
     >
       {/* Avatar */}
-      <div style={{ height: isMobile ? '160px' : '180px', overflow: 'hidden' }}>
+      <div className="ikan-team-photo" style={{ height: isMobile ? '160px' : '180px', overflow: 'hidden' }}>
         <ContentImage
           src={member.image}
           alt={member.name}

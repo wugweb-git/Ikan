@@ -88,19 +88,12 @@ export function ContactUs({ className, onNavigate, onBack }: ContactUsProps) {
       description: crisisLabel,
       value: crisisPhone,
       action: `tel:${crisisPhone}`
-    },
-    {
-      icon: 'messageCircle',
-      title: 'Live Chat',
-      description: 'Chat with our support team',
-      value: 'Available 9 AM - 6 PM IST',
-      action: '#'
     }
   ];
 
   const formTitle = cms?.formTitle || 'Send us a Message';
   const formSubtitle = cms?.formSubtitle || 'We typically respond within 24 hours during business days.';
-  const crisisCard = cms?.crisisCard || { title: 'Need Immediate Help?', description: "If you're having thoughts of self-harm or suicide, please reach out for immediate support.", buttons: [{ label: 'Call iCALL - 9152987821', action: 'tel:9152987821' }, { label: 'Call 911 - Emergency', action: 'tel:911' }] };
+  const crisisCard = cms?.crisisCard || { title: 'Need Immediate Help?', description: "If you're having thoughts of self-harm or suicide, please reach out for immediate support.", buttons: [{ label: 'Call iCALL - 9152987821', action: 'tel:9152987821' }] };
   const faqCard = cms?.faqCard || { title: 'Looking for Quick Answers?', description: 'Check our FAQ section for instant answers to common questions about assessments, programs, and your account.', buttonText: 'Visit FAQ Section', buttonRoute: '/faq' };
 
   const heroTitle = cms?.heroTitle || content?.title || "We're Here to Help";

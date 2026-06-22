@@ -1,6 +1,10 @@
 import { cn } from '../ui/utils';
 import { Button } from "../ui/button";
 
+/** Shown if a hero image URL fails to load (e.g. dead/expired source). */
+const DEFAULT_HERO_IMAGE =
+  'https://images.unsplash.com/photo-1506126613408-eca07ce68773?auto=format&fit=crop&w=1600&q=80';
+
 /**
  * SectionHero - Unified hero component for landing pages.
  * Replaces the formerly-duplicate AssessmentHero and EquipHero components.
@@ -50,6 +54,10 @@ export function SectionHero({
             alt={backgroundAlt}
             className="w-full h-full object-cover object-center"
             src={backgroundImage}
+            onError={(e) => {
+              const img = e.currentTarget;
+              if (img.src !== DEFAULT_HERO_IMAGE) img.src = DEFAULT_HERO_IMAGE;
+            }}
           />
           {/* Gradient overlay for text readability */}
           <div 

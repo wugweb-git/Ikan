@@ -394,7 +394,7 @@ export function AssessmentResults({
         {/* ── Footer ── */}
         <div className="flex items-center justify-center" style={{ paddingTop: 16, paddingBottom: 24 }}>
           <button
-            onClick={onReturnToDashboard}
+            onClick={onReturnToDashboard || (() => onNavigate?.('/dashboard'))}
             style={{
               background: 'none',
               border: 'none',

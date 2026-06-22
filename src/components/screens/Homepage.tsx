@@ -77,7 +77,7 @@ export function Homepage({ onNavigate, onGetStarted }: HomepageProps) {
                questionCount: a.questions?.length || a.metadata?.question_count || 10,
                duration: a.duration || a.metadata?.estimated_minutes || 5,
                info: `${a.questions?.length || a.metadata?.question_count || 10} Questions • ${a.duration || a.metadata?.estimated_minutes || 5} min`,
-               link: `/assessment-detail?id=${a.slug || a.id}`
+               link: a.slug ? `/assessment/${a.slug}` : `/assessment-detail?id=${a.id}`
             }));
             if (!signal.aborted) setAssessments(mappedAssessments.slice(0, 3));
           } else {
@@ -101,7 +101,7 @@ export function Homepage({ onNavigate, onGetStarted }: HomepageProps) {
               description: e.summary || e.description || 'Mental wellness program',
               duration: e.duration_days ? `${e.duration_days} days` : '18 days',
               activities: 'Self-paced modules',
-              link: `/equip-detail?id=${e.equip_id || e.id}`,
+              link: e.slug ? `/equip/${e.slug}` : `/equip-detail?id=${e.equip_id || e.id}`,
               image: e.thumbnail || e.hero_image || ''
             }));
             if (!signal.aborted) setEquipPrograms(mappedEquip.slice(0, 3));

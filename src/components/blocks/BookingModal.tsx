@@ -60,6 +60,23 @@ export function BookingModal({
   const dates = getAvailableDates();
   const timeSlots = getTimeSlots();
 
+  // True when the slot's start time is already in the past — only applies to
+  // today's date; future dates keep all slots available.
+  const isSlotInPast = (slot: string): boolean => {
+    if (!selectedDate) return false;
+    const todayStr = new Date().toISOString().split('T')[0];
+    if (selectedDate !== todayStr) return false;
+    const match = slot.match(/^(\d+):(\d+)\s*(AM|PM)$/i);
+    if (!match) return false;
+    let hour = parseInt(match[1], 10);
+    const min = parseInt(match[2], 10);
+    if (match[3].toUpperCase() === 'PM' && hour !== 12) hour += 12;
+    if (match[3].toUpperCase() === 'AM' && hour === 12) hour = 0;
+    const slotDate = new Date();
+    slotDate.setHours(hour, min, 0, 0);
+    return slotDate.getTime() <= Date.now();
+  };
+
   // Auto-select today on open
   useEffect(() => {
     if (isOpen && !selectedDate) {
@@ -249,10 +266,13 @@ export function BookingModal({
                 Select Time
               </p>
               <div className="grid grid-cols-4 gap-2">
-                {timeSlots.map(slot => (
+                {timeSlots.map(slot => {
+                  const past = isSlotInPast(slot);
+                  return (
                   <button
                     key={slot}
-                    onClick={() => setSelectedTime(slot)}
+                    onClick={() => !past && setSelectedTime(slot)}
+                    disabled={past}
                     className="transition-all"
                     style={{
                       padding: '10px 4px',
@@ -263,11 +283,14 @@ export function BookingModal({
                       backgroundColor: selectedTime === slot ? 'var(--color-primary-default)' : 'var(--color-bg-card)',
                       color: selectedTime === slot ? 'var(--color-text-inverse)' : 'var(--color-text-primary)',
                       whiteSpace: 'nowrap',
+                      opacity: past ? 0.4 : 1,
+                      cursor: past ? 'not-allowed' : 'pointer',
                     }}
                   >
                     {slot}
                   </button>
-                ))}
+                  );
+                })}
               </div>
             </div>
           )}

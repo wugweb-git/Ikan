@@ -1,0 +1,27 @@
+# iKan Health
+
+> iKan Health (ikanhealth.in) is an India-based mental wellness platform offering self-guided mental health assessments, structured "Equip" programs, mood journaling, and access to professional consultations. Our mission is to make mental healthcare accessible, affordable, and transparent.
+
+## About
+- [About iKan](https://ikanhealth.in/about): Our story, mission, and team.
+- [Contact](https://ikanhealth.in/contact): Support email support@ikanhealth.in, phone 8527545503.
+
+## Assessments
+Self-guided, evidence-informed screeners that help users understand how they're feeling.
+- [Feeling worried and stressed](https://ikanhealth.in/assessment/feeling-worried-and-stressed)
+- [Feeling overwhelmed and anxious](https://ikanhealth.in/assessment/feeling-overwhelmed-and-anxious)
+- [Feeling depressed and hopeless](https://ikanhealth.in/assessment/feeling-depressed-and-hopeless)
+- [Feeling drained and burned out](https://ikanhealth.in/assessment/feeling-drained-and-burned-out)
+- [Struggling with quality sleep](https://ikanhealth.in/assessment/struggling-with-quality-sleep)
+- [Struggling to balance life](https://ikanhealth.in/assessment/struggling-to-balance-life)
+- [Unsure or general concern](https://ikanhealth.in/assessment/unsure-or-general-concern)
+
+## Equip programs
+Structured, self-paced programs with daily modules, exercises, and progress tracking.
+- [Sleep Tight](https://ikanhealth.in/equip/sleep-tight)
+- [Productivity Reset](https://ikanhealth.in/equip/productivity-reset)
+- [Stress Buster](https://ikanhealth.in/equip/stress-buster)
+- [Unburn (burnout recovery)](https://ikanhealth.in/equip/burnout-reset)
+
+## Notes
+- iKan is not an emergency service. In a crisis in India, contact the KIRAN Mental Health Helpline 1800-599-0019 (24x7), iCALL 9152987821, or emergency services on 112.
