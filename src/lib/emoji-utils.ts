@@ -62,6 +62,7 @@ let _cachedStress: ScaleOption[] | null = null;
 let _cachedTags: ContextTag[] | null = null;
 let _cachedSleep: ScaleOption[] | null = null;
 let _cachedPain: ScaleOption[] | null = null;
+let _cachedCustomScales: Map<string, { name: string; emoji: string; count: number; items: ScaleOption[] }> = new Map();
 let _loadPromise: Promise<void> | null = null;
 
 /**
@@ -148,6 +149,33 @@ export async function loadCustomScales(apiBase: string, anonKey: string): Promis
           });
       }
 
+      // Load custom scales from /scales/list
+      const listRes = await fetch(`${apiBase}/scales/list`, { headers }).then(r => r.ok ? r.json() : null).catch(() => null);
+      if (listRes?.scales && Array.isArray(listRes.scales)) {
+        const customScaleMetas = listRes.scales.filter((s: any) => s.isCustom);
+        // Fetch items for each custom scale in parallel
+        const customFetches = await Promise.all(
+          customScaleMetas.map((meta: any) =>
+            fetch(`${apiBase}/scales/custom/${meta.key}`, { headers })
+              .then(r => r.ok ? r.json() : null)
+              .catch(() => null)
+          )
+        );
+        _cachedCustomScales = new Map();
+        customScaleMetas.forEach((meta: any, i: number) => {
+          const data = customFetches[i];
+          const items: ScaleOption[] = (data?.items || []).map((item: any, idx: number) => ({
+            value: item.value ?? (idx + 1),
+            id: item.id || `${meta.key}_${idx}`,
+            label: item.label || '',
+            emoji: item.emoji || '⭐',
+            color: item.color || 'var(--color-neutral-500)',
+            bg: item.bg || 'var(--color-neutral-100)',
+          }));
+          _cachedCustomScales.set(meta.key, { name: meta.name, emoji: meta.emoji || '⭐', count: items.length, items });
+        });
+      }
+
       console.log('Custom check-in scales loaded from server');
     } catch (e) {
       console.warn('Could not load custom scales from server:', e);
@@ -167,6 +195,7 @@ export function clearScaleCache(): void {
   _cachedTags = null;
   _cachedSleep = null;
   _cachedPain = null;
+  _cachedCustomScales = new Map();
   _loadPromise = null;
 }
 
@@ -354,21 +383,32 @@ export function getScaleByKey(key: string): ScaleOption[] {
     case 'stress':  return getStressOptions();
     case 'sleep':   return getSleepOptions();
     case 'pain':    return getPainOptions();
-    default:        return [];
+    default: {
+      const custom = _cachedCustomScales.get(key);
+      return custom?.items || [];
+    }
   }
 }
 
 /**
  * Get all available scale keys with metadata — used by the admin builder dropdown
  */
-export function getAvailableScaleKeys(): { value: string; label: string; emoji: string; count: number }[] {
-  return [
+export function getAvailableScaleKeys(): { value: string; label: string; emoji: string; count: number; isCustom?: boolean }[] {
+  const builtIn = [
     { value: 'mood',    label: 'Mood',    emoji: getMoodOptions()[0]?.emoji || '🤔', count: getMoodOptions().length },
     { value: 'energy',  label: 'Energy',  emoji: getEnergyOptions()[0]?.emoji || '⚡', count: getEnergyOptions().length },
     { value: 'stress',  label: 'Stress',  emoji: getStressOptions()[0]?.emoji || '😌', count: getStressOptions().length },
     { value: 'sleep',   label: 'Sleep',   emoji: getSleepOptions()[0]?.emoji || '🌙', count: getSleepOptions().length },
     { value: 'pain',    label: 'Pain',    emoji: getPainOptions()[0]?.emoji || '💊', count: getPainOptions().length },
   ];
+  const custom = Array.from(_cachedCustomScales.entries()).map(([key, meta]) => ({
+    value: key,
+    label: meta.name,
+    emoji: meta.emoji,
+    count: meta.count,
+    isCustom: true,
+  }));
+  return [...builtIn, ...custom];
 }
 
 export default {

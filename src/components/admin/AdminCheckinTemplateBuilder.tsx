@@ -14,7 +14,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Switch } from '../ui/switch';
 import { apiClient } from '../../lib/api-client';
 import tokens from '../../lib/design-tokens';
-import { getScaleByKey, getAvailableScaleKeys, getContextTags, loadCustomScales } from '../../lib/emoji-utils';
+import { getScaleByKey, getAvailableScaleKeys, getContextTags, loadCustomScales, clearScaleCache } from '../../lib/emoji-utils';
 import { AdminHeader } from './AdminHeader';
 import { AdminLoading } from './AdminLoading';
 import { useMetadata } from '../../hooks/useMetadata';
@@ -97,6 +97,158 @@ const EMOJI_PICKS = [
   '☀️', '🌧️', '🫁', '🚶', '🧘‍♀️', '📝', '⏰', '🎧', '📖', '🤝',
 ];
 
+// ═══════════════════════════════════════════════════════════════════
+// ADD NEW SCALE MODAL
+// ═══════════════════════════════════════════════════════════════════
+function slugify(name: string): string {
+  return name.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '');
+}
+
+const DEFAULT_SCALE_ITEMS = [
+  { value: 1, id: '', emoji: '😢', label: 'Very Low' },
+  { value: 2, id: '', emoji: '😟', label: 'Low' },
+  { value: 3, id: '', emoji: '😐', label: 'Moderate' },
+  { value: 4, id: '', emoji: '😊', label: 'High' },
+  { value: 5, id: '', emoji: '😄', label: 'Very High' },
+];
+
+function AddNewScaleModal({
+  onClose,
+  onCreated,
+}: {
+  onClose: () => void;
+  onCreated: (key: string) => void;
+}) {
+  const [name, setName] = useState('');
+  const [items, setItems] = useState(DEFAULT_SCALE_ITEMS.map(i => ({ ...i })));
+  const [saving, setSaving] = useState(false);
+
+  const key = slugify(name);
+
+  const updateItem = (idx: number, field: 'emoji' | 'label', value: string) => {
+    setItems(prev => prev.map((item, i) => i === idx ? { ...item, [field]: value } : item));
+  };
+
+  const handleCreate = async () => {
+    if (!name.trim() || !key) { toast.error('Scale name is required'); return; }
+    if (items.some(i => !i.label.trim())) { toast.error('All 5 labels are required'); return; }
+    setSaving(true);
+    try {
+      const payload = items.map((item, idx) => ({
+        id: `${key}_${idx + 1}`,
+        value: item.value,
+        order: item.value,
+        emoji: item.emoji,
+        label: item.label.trim(),
+        is_active: true,
+        color: 'var(--color-neutral-500)',
+        bg: 'var(--color-neutral-100)',
+      }));
+      await apiClient.createCustomScale(key, name.trim(), payload);
+      toast.success(`Scale "${name}" created`);
+      onCreated(key);
+    } catch (e: any) {
+      toast.error(e?.message || 'Failed to create scale');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div
+      style={{
+        position: 'fixed', inset: 0, zIndex: 9999,
+        backgroundColor: 'rgba(0,0,0,0.45)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        padding: '16px',
+      }}
+      onClick={e => { if (e.target === e.currentTarget) onClose(); }}
+    >
+      <div style={{
+        backgroundColor: B.bgCard, borderRadius: 'var(--radius-xl)',
+        width: '100%', maxWidth: 440,
+        boxShadow: '0 20px 60px rgba(0,0,0,0.2)',
+        overflow: 'hidden',
+      }}>
+        {/* Header */}
+        <div style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          padding: '16px 20px', borderBottom: `1px solid ${B.border}`,
+        }}>
+          <span style={{ ...f('base', 600) }}>Add New Scale</span>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4 }}>
+            <X size={18} style={{ color: B.muted }} />
+          </button>
+        </div>
+
+        {/* Body */}
+        <div style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          {/* Name */}
+          <div>
+            <Label style={{ ...f('xs', 500, B.muted), marginBottom: 4, display: 'block' }}>Scale Name</Label>
+            <Input
+              value={name}
+              onChange={e => setName(e.target.value)}
+              placeholder="e.g. Motivation, Appetite"
+              style={{ borderRadius: 'var(--radius-md)', border: `1.5px solid ${B.border}`, backgroundColor: B.bgInput, ...f('sm') }}
+              autoFocus
+            />
+            {key && (
+              <span style={{ ...f('xs', 400, B.muted), marginTop: 4, display: 'block' }}>
+                Key: <code style={{ fontFamily: 'monospace' }}>{key}</code>
+              </span>
+            )}
+          </div>
+
+          {/* 5 items */}
+          <div>
+            <Label style={{ ...f('xs', 500, B.muted), marginBottom: 8, display: 'block' }}>5-Point Scale (low → high)</Label>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {items.map((item, idx) => (
+                <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <span style={{ ...f('xs', 400, B.muted), minWidth: 16, textAlign: 'center' }}>{item.value}</span>
+                  <Input
+                    value={item.emoji}
+                    onChange={e => updateItem(idx, 'emoji', e.target.value)}
+                    style={{
+                      width: 52, textAlign: 'center',
+                      borderRadius: 'var(--radius-md)', border: `1.5px solid ${B.border}`,
+                      backgroundColor: B.bgInput, fontSize: '1.2rem', padding: '4px 8px',
+                    }}
+                  />
+                  <Input
+                    value={item.label}
+                    onChange={e => updateItem(idx, 'label', e.target.value)}
+                    placeholder={`Label for ${item.value}`}
+                    style={{ flex: 1, borderRadius: 'var(--radius-md)', border: `1.5px solid ${B.border}`, backgroundColor: B.bgInput, ...f('sm') }}
+                  />
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div style={{
+          padding: '12px 20px', borderTop: `1px solid ${B.border}`,
+          display: 'flex', justifyContent: 'flex-end', gap: 8,
+        }}>
+          <Button variant="outline" onClick={onClose} style={{ borderRadius: 'var(--radius-md)' }}>
+            Cancel
+          </Button>
+          <Button
+            onClick={handleCreate}
+            disabled={saving || !name.trim()}
+            style={{ borderRadius: 'var(--radius-md)', backgroundColor: B.primary, color: B.primaryOn }}
+          >
+            {saving ? 'Creating…' : 'Create Scale'}
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function getBlockIcon(type: CheckinStep['type']) {
   const found = BLOCK_TYPES.find(b => b.value === type);
   return found ? found.icon : CircleAlert;
@@ -121,6 +273,7 @@ function StepEditorCard({
   onDuplicate,
   onDelete,
   emaCategories,
+  onAddScale,
 }: {
   step: CheckinStep;
   index: number;
@@ -133,8 +286,10 @@ function StepEditorCard({
   onDuplicate: () => void;
   onDelete: () => void;
   emaCategories: string[];
+  onAddScale?: (newKey: string) => void;
 }) {
   const Icon = getBlockIcon(step.type);
+  const [showAddScaleModal, setShowAddScaleModal] = useState(false);
 
   return (
     <div>
@@ -237,7 +392,25 @@ function StepEditorCard({
 
                   {(step.type === 'emoji_scale' || step.type === 'multi_select') && (
                     <div>
-                      <Label style={{ ...f('xs', 500, B.muted), marginBottom: 4, display: 'block' }}>Scale / Source</Label>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
+                        <Label style={{ ...f('xs', 500, B.muted) }}>Scale / Source</Label>
+                        {step.type === 'emoji_scale' && (
+                          <button
+                            onClick={() => setShowAddScaleModal(true)}
+                            title="Add new scale"
+                            style={{
+                              display: 'flex', alignItems: 'center', gap: 4,
+                              background: 'none', border: `1px solid ${B.border}`,
+                              borderRadius: 'var(--radius-pill)',
+                              padding: '2px 8px', cursor: 'pointer',
+                              ...f('xs', 500, B.primary),
+                            }}
+                          >
+                            <Plus size={11} />
+                            New
+                          </button>
+                        )}
+                      </div>
                       <select
                         value={step.scale_key || ''}
                         onChange={e => onChange({ scale_key: e.target.value || undefined })}
@@ -250,13 +423,25 @@ function StepEditorCard({
                         <option value="">Select scale...</option>
                         {step.type === 'emoji_scale' ? (
                           getAvailableScaleKeys().map(sk => (
-                            <option key={sk.value} value={sk.value}>{sk.emoji} {sk.label} ({sk.count})</option>
+                            <option key={sk.value} value={sk.value}>
+                              {sk.emoji} {sk.label} ({sk.count}){sk.isCustom ? ' ✦' : ''}
+                            </option>
                           ))
                         ) : (
                           <option value="context_tags">Context Tags</option>
                         )}
                       </select>
                     </div>
+                  )}
+                  {showAddScaleModal && (
+                    <AddNewScaleModal
+                      onClose={() => setShowAddScaleModal(false)}
+                      onCreated={(newKey) => {
+                        setShowAddScaleModal(false);
+                        if (onAddScale) onAddScale(newKey);
+                        onChange({ scale_key: newKey });
+                      }}
+                    />
                   )}
                 </div>
 
@@ -499,9 +684,17 @@ export function AdminCheckinTemplateBuilder({ onBack }: AdminCheckinTemplateBuil
   // Load custom scales from KV so the Scale/Source dropdown reflects
   // admin-managed overrides (not just design-token defaults)
   const [scalesLoaded, setScalesLoaded] = useState(false);
+  const [scalesVersion, setScalesVersion] = useState(0);
   useEffect(() => {
     const apiBase = `https://${projectId}.supabase.co/functions/v1/make-server-cc205da9`;
     loadCustomScales(apiBase, publicAnonKey).then(() => setScalesLoaded(true)).catch(() => setScalesLoaded(true));
+  }, [scalesVersion]);
+
+  const handleScaleCreated = useCallback((_newKey: string) => {
+    const apiBase = `https://${projectId}.supabase.co/functions/v1/make-server-cc205da9`;
+    clearScaleCache();
+    setScalesLoaded(false);
+    loadCustomScales(apiBase, publicAnonKey).then(() => setScalesVersion(v => v + 1)).catch(() => {});
   }, []);
 
   // ── Template mutations ────────────────────────────────────────
@@ -848,6 +1041,7 @@ export function AdminCheckinTemplateBuilder({ onBack }: AdminCheckinTemplateBuil
                     onDuplicate={() => duplicateStep(index)}
                     onDelete={() => deleteStep(index)}
                     emaCategories={emaCategoryLabels}
+                    onAddScale={handleScaleCreated}
                   />
                 ))}
 

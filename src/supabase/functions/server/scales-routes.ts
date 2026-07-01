@@ -284,7 +284,6 @@ export function registerScalesRoutes(app: any, middleware: any) {
       };
       const key = keyMap[type];
       if (type === "moods") {
-        // Delete all mood:* keys
         const existing = await kv.getByPrefix("mood:");
         for (const m of (existing || [])) {
           if (m?.id) await kv.del(`mood:${m.id}`);
@@ -299,6 +298,116 @@ export function registerScalesRoutes(app: any, middleware: any) {
     } catch (e) {
       console.log("Error deleting scale:", e);
       return c.json({ error: "Failed to delete scale" }, 500);
+    }
+  });
+
+  // ── GET /scales/list ─────────────────────────────────────────
+  // Returns metadata for all scales (built-in + custom) — public
+  app.get("/scales/list", async (c: any) => {
+    try {
+      const [energy, stress, sleep, pain, moods] = await Promise.all([
+        getOrInit(KV_KEY_ENERGY, DEFAULT_ENERGY),
+        getOrInit(KV_KEY_STRESS, DEFAULT_STRESS),
+        getOrInit(KV_KEY_SLEEP, DEFAULT_SLEEP),
+        getOrInit(KV_KEY_PAIN, DEFAULT_PAIN),
+        getOrInitMoods(),
+      ]);
+      const builtIn = [
+        { key: "mood",   name: "Mood",   emoji: moods[0]?.emoji  || "🤔", count: moods.length,   isCustom: false },
+        { key: "energy", name: "Energy", emoji: energy[0]?.emoji || "⚡", count: energy.length,  isCustom: false },
+        { key: "stress", name: "Stress", emoji: stress[0]?.emoji || "😌", count: stress.length,  isCustom: false },
+        { key: "sleep",  name: "Sleep",  emoji: sleep[0]?.emoji  || "🌙", count: sleep.length,   isCustom: false },
+        { key: "pain",   name: "Pain",   emoji: pain[0]?.emoji   || "💊", count: pain.length,    isCustom: false },
+      ];
+      const customKV = await kv.getKeyValuesByPrefix("checkin_scale:custom:");
+      const custom = (customKV || []).map((row: { key: string; value: any }) => {
+        const v = row.value || {};
+        return {
+          key: v.key || row.key.replace("checkin_scale:custom:", ""),
+          name: v.name || v.key || "Custom",
+          emoji: v.items?.[0]?.emoji || "⭐",
+          count: v.items?.length || 0,
+          isCustom: true,
+        };
+      });
+      return c.json({ scales: [...builtIn, ...custom] });
+    } catch (e) {
+      console.log("Error listing scales:", e);
+      return c.json({ error: "Failed to list scales" }, 500);
+    }
+  });
+
+  // ── GET /scales/custom/:key ───────────────────────────────────
+  // Returns items for a custom scale — public
+  app.get("/scales/custom/:key", async (c: any) => {
+    try {
+      const key = c.req.param("key");
+      const data = await kv.get(`checkin_scale:custom:${key}`);
+      if (!data) return c.json({ error: "Custom scale not found" }, 404);
+      return c.json({ items: data.items || [], name: data.name, key: data.key });
+    } catch (e) {
+      console.log("Error getting custom scale:", e);
+      return c.json({ error: "Failed to get custom scale" }, 500);
+    }
+  });
+
+  // ── POST /scales/custom ────────────────────────────────────────
+  // Creates a new custom scale — admin only
+  app.post("/scales/custom", middleware, async (c: any) => {
+    try {
+      const body = await c.req.json();
+      const { key, name, items } = body;
+      if (!key || !name || !Array.isArray(items) || items.length === 0) {
+        return c.json({ error: "key, name, and items[] are required" }, 400);
+      }
+      // Validate key format: lowercase letters, digits, underscores only
+      if (!/^[a-z0-9_]+$/.test(key)) {
+        return c.json({ error: "key must be lowercase letters, digits, and underscores only" }, 400);
+      }
+      // Check uniqueness
+      const existing = await kv.get(`checkin_scale:custom:${key}`);
+      if (existing) {
+        return c.json({ error: `Scale with key "${key}" already exists` }, 409);
+      }
+      const payload = { key, name, items, created_at: new Date().toISOString(), updated_at: new Date().toISOString() };
+      await kv.set(`checkin_scale:custom:${key}`, payload);
+      return c.json({ success: true, scale: payload });
+    } catch (e) {
+      console.log("Error creating custom scale:", e);
+      return c.json({ error: "Failed to create custom scale" }, 500);
+    }
+  });
+
+  // ── PUT /scales/custom/:key ────────────────────────────────────
+  // Updates a custom scale — admin only
+  app.put("/scales/custom/:key", middleware, async (c: any) => {
+    try {
+      const key = c.req.param("key");
+      const body = await c.req.json();
+      const { name, items } = body;
+      const existing = await kv.get(`checkin_scale:custom:${key}`);
+      if (!existing) return c.json({ error: "Custom scale not found" }, 404);
+      const payload = { ...existing, name: name || existing.name, items: items || existing.items, updated_at: new Date().toISOString() };
+      await kv.set(`checkin_scale:custom:${key}`, payload);
+      return c.json({ success: true, scale: payload });
+    } catch (e) {
+      console.log("Error updating custom scale:", e);
+      return c.json({ error: "Failed to update custom scale" }, 500);
+    }
+  });
+
+  // ── DELETE /scales/custom/:key ────────────────────────────────
+  // Deletes a custom scale — admin only
+  app.delete("/scales/custom/:key", middleware, async (c: any) => {
+    try {
+      const key = c.req.param("key");
+      const existing = await kv.get(`checkin_scale:custom:${key}`);
+      if (!existing) return c.json({ error: "Custom scale not found" }, 404);
+      await kv.del(`checkin_scale:custom:${key}`);
+      return c.json({ success: true, message: `Custom scale "${key}" deleted` });
+    } catch (e) {
+      console.log("Error deleting custom scale:", e);
+      return c.json({ error: "Failed to delete custom scale" }, 500);
     }
   });
 }

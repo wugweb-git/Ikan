@@ -1360,6 +1360,17 @@ class ApiClient {
     }, true);
   }
 
+  async createCustomScale(key: string, name: string, items: any[]) {
+    return this.request('/scales/custom', {
+      method: 'POST',
+      body: JSON.stringify({ key, name, items })
+    }, true);
+  }
+
+  async deleteCustomScale(key: string) {
+    return this.request(`/scales/custom/${key}`, { method: 'DELETE' }, true);
+  }
+
   // Brevo Communication
   async testBrevoChannel(channel: string, recipient: string) {
     return this.request('/brevo/test', {
