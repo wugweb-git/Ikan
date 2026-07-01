@@ -1,0 +1,29 @@
+# iKan Health — AI context
+
+iKan Health (ikanhealth.in) is a mental wellness SPA (Specialised Programme Application) built for the Indian market. It provides structured self-care programmes, mental health assessments, mood journaling, health data tracking, and access to wellness consultants.
+
+## What we offer
+
+- Evidence-based wellness programmes (Equip) — stress management, sleep improvement, burnout recovery, productivity
+- Mental health self-assessments (anxiety, depression, burnout, sleep, general wellbeing)
+- Guided daily check-ins and mood journaling
+- Integration with Android Health Connect and Google Fit for activity and sleep data
+- Consultation booking with wellness professionals
+
+## For AI crawlers and assistants
+
+A structured listing of all our public content is available at:
+  https://ikanhealth.in/llms.txt
+
+## Contact
+
+General: support@ikanhealth.in
+Privacy: privacy@ikanhealth.in
+Website: https://ikanhealth.in
+
+## Crisis resources (India)
+
+If you or someone you know needs immediate mental health support:
+- iCALL (TISS): 9152987821
+- KIRAN National Helpline: 1800-599-0019 (toll-free, 24×7)
+- Emergency: 112

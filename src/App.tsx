@@ -1,4 +1,6 @@
 import React, { useState, useEffect, useCallback, lazy, Suspense, startTransition } from 'react';
+import { Analytics } from '@vercel/analytics/react';
+import { SpeedInsights } from '@vercel/speed-insights/react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTokens } from './lib/react-tokens';
 import { useIsMobile } from './hooks/useIsMobile';
@@ -787,6 +789,8 @@ export default function App() {
               <GoogleFitProvider>
                 <SecurityProvider>
                   <AppContent />
+                  <Analytics />
+                  <SpeedInsights />
                 </SecurityProvider>
               </GoogleFitProvider>
             </JourneyProvider>

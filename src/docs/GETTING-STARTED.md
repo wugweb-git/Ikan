@@ -1,149 +1,73 @@
-# iKan PWA - Getting Started
+# iKan Health — Getting Started
 
-> **Last updated**: March 17, 2026
+> **Last updated**: July 2026
 > **Audience**: New developers joining the project
 
 ---
 
 ## Prerequisites
 
-| Tool | Minimum Version | Check Command |
-|------|----------------|---------------|
-| Node.js | 18.0.0 | `node -v` |
-| npm | 9.x | `npm -v` |
+| Tool | Minimum Version | Check |
+|------|----------------|-------|
+| Node.js | 20.x | `node -v` |
+| npm | 10.x | `npm -v` |
 | Supabase CLI | Latest | `supabase --version` |
+| Vercel CLI | Latest | `npx vercel --version` |
 | Git | Any recent | `git --version` |
 
 ---
 
-## Quick Start
+## Quick start
 
 ```bash
-# 1. Clone the repository
-git clone https://github.com/your-username/ikan-mental-health-pwa.git
-cd ikan-mental-health-pwa
+# 1. Clone
+git clone https://github.com/wugweb-git/Ikan.git
+cd Ikan
 
-# 2. Install dependencies
+# 2. Install
 npm install
 
-# 3. Start the dev server
+# 3. Dev server
 npm run dev
-# App runs at http://localhost:3000
+# → http://localhost:5173
 ```
 
-> **Note**: The app reads Supabase credentials from `/utils/supabase/info.tsx` (hardcoded project ID and anon key). There is no `.env` file for Supabase config.
+The app connects to the **production Supabase project** even in dev (project `jpfvoevxegnknxoqmwye`, Mumbai). The anon key is committed in `src/lib/supabase-client.ts` — this is intentional (it's a public-facing key, not a secret).
 
 ---
 
-## Environment Setup
+## Branch model
 
-### Supabase Connection
+**The live production site deploys from `equip-carry-forward`**, not `main`. `main` has diverged and is not used for production deploys. See `BUILD.md` for the deploy process.
 
-The Supabase project ID and anon key are committed in `/utils/supabase/info.tsx`. This is intentional - the anon key is safe for public use (it's a public API key, not the service role key).
+---
 
-### Backend (Edge Functions)
+## Key files to read first
 
-The Hono server runs as a Supabase Edge Function. To deploy:
+1. `/CLAUDE.md` — AI and developer quick-reference for the whole repo
+2. `src/App.tsx` — the single routing hub (no React Router)
+3. `src/utils/cms-defaults.ts` — all CMS-backed content defaults
+4. `src/supabase/functions/server/index.tsx` — edge function entry and route mounting
+5. `BUILD.md` — how to build, deploy, and run migrations
+
+---
+
+## Admin access
+
+The admin panel is gated by `is_admin: true` in the user's KV profile (`user:{userId}`). Set this in Supabase → Table Editor → `kv_store_cc205da9` to test admin flows locally.
+
+---
+
+## Useful local commands
 
 ```bash
-# Deploy the edge function
-npm run supabase:deploy
-# OR
-supabase functions deploy server --no-verify-jwt
-
-# Check server health
-npm run health:check
+npm run build      # TypeScript check + bundle (must pass before deploying)
+npm run lint       # ESLint
+npm run preview    # Serve dist/ locally
 ```
 
-### Environment Secrets (Server-Side)
-
-These are configured in the Supabase dashboard under Edge Function secrets:
-
-| Secret | Purpose |
-|--------|---------|
-| `SUPABASE_URL` | Auto-injected by Supabase |
-| `SUPABASE_ANON_KEY` | Auto-injected by Supabase |
-| `SUPABASE_SERVICE_ROLE_KEY` | Auto-injected by Supabase |
-| `SUPABASE_DB_URL` | Direct database connection |
-| `RAZORPAY_KEY_SECRET` | Payment gateway |
-| `GOOGLE_FIT_CLIENT_ID` | Google Fit integration |
-| `BREVO_API_KEY` | Transactional email (Brevo/Sendinblue) |
-
 ---
 
-## Available Scripts
+## Where things live
 
-### Development
-
-| Command | Description |
-|---------|------------|
-| `npm run dev` | Start Vite dev server (port 3000) |
-| `npm run build` | TypeScript check + Vite production build |
-| `npm run preview` | Preview production build locally |
-| `npm run type-check` | TypeScript type checking only (no emit) |
-
-### Supabase
-
-| Command | Description |
-|---------|------------|
-| `npm run supabase:start` | Start local Supabase stack |
-| `npm run supabase:stop` | Stop local Supabase stack |
-| `npm run supabase:deploy` | Deploy edge function to remote |
-| `npm run supabase:logs` | View edge function logs |
-
-### Quality
-
-| Command | Description |
-|---------|------------|
-| `npm run lint` | ESLint with zero-warning policy |
-| `npm run type-check` | TypeScript strict mode check |
-| `npm run audit:accessibility` | Run accessibility audit script |
-| `npm run audit:imports` | Check for unused imports |
-
-### Deployment
-
-| Command | Description |
-|---------|------------|
-| `npm run deploy` | Build + deploy edge function |
-| `npm run setup:complete` | Full setup: install, deploy backend, seed data |
-
----
-
-## Project Configuration Files
-
-| File | Purpose |
-|------|---------|
-| `tsconfig.json` | TypeScript config (strict mode, `noUnusedLocals: true`) |
-| `tsconfig.node.json` | TypeScript config for Node.js tooling |
-| `vite.config.ts` | Vite + PWA + path aliases |
-| `postcss.config.js` | PostCSS for Tailwind |
-| `vercel.json` | Vercel deployment + headers + rewrites |
-| `supabase/config.toml` | Supabase project configuration |
-| `lighthouserc.json` | Lighthouse CI thresholds |
-| `netlify.toml` | Netlify config (alternative deployment) |
-
----
-
-## Path Aliases
-
-Configured in both `tsconfig.json` and `vite.config.ts`:
-
-| Alias | Maps To |
-|-------|---------|
-| `@/*` | `./*` (project root) |
-| `@components/*` | `./components/*` |
-| `@lib/*` | `./lib/*` |
-| `@utils/*` | `./utils/*` |
-| `@contexts/*` | `./contexts/*` |
-| `@hooks/*` | `./hooks/*` |
-
----
-
-## First Steps for New Developers
-
-1. **Read the architecture docs**: Start with `docs/ARCHITECTURE.md` to understand the full system
-2. **Review the design system**: Read `/guidelines/Guidelines.md` for UI/UX rules
-3. **Explore the route config**: Check `/lib/route-config.ts` to see all available screens
-4. **Run the app**: `npm run dev` and click through the public and authenticated flows
-5. **Check the admin panel**: Sign in as an admin user and explore `/admin`
-6. **Read the contributing guide**: See `docs/CONTRIBUTING.md` before making changes
+See `src/docs/PROJECT-STRUCTURE.md` for a full directory map and `src/docs/ARCHITECTURE.md` for the system design.

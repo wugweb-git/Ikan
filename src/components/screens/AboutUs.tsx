@@ -93,7 +93,7 @@ export function AboutUs({ onNavigate, className }: AboutUsProps) {
   const founders: TeamMember[] = cms?.founders || [
     { name: 'Kartik Chandra', role: 'Co-Founder and CEO', bio: 'Kartik has a decade long experience in general and health insurance and health tech across various functions.', image: '/team/kartik.jpg' },
     { name: 'Vedanshu Srivastava', role: 'Co-Founder and Product Head', bio: 'Vedanshu has a decade long experience in general and health insurance and health tech across various functions.', image: '/team/vedanshu.jpg' },
-    { name: 'Sachin Vaishampayan', role: 'Co-Founder and CTO', bio: 'Sachin has worked in research and education for over a decade.', image: 'https://images.unsplash.com/photo-1739249432260-0bcfdc382e5c?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxpbmRpYW4lMjBtYW4lMjB0ZWNobm9sb2d5JTIwcHJvZmVzc2lvbmFsJTIwaGVhZHNob3R8ZW58MXx8fHwxNzcxOTEyMTU3fDA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral' },
+    { name: 'Sachin Vaishampayan', role: 'Co-Founder and CTO', bio: 'Sachin has worked in research and education for over a decade.', image: '/team/sachin.jpg' },
   ];
 
   const team: TeamMember[] = cms?.team || [

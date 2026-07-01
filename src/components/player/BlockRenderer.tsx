@@ -162,15 +162,28 @@ export function BlockRenderer({ block, value, onChange, readOnly = false, equipI
                  margin-bottom: 0.5rem;
                  color: var(--grey-8);
                }
-               /* Normalize quote/closing blocks (e.g. "That will be all for today")
-                  so their font + background match the rest of the lesson. */
+               /* Strip any rogue backgrounds from rich-text-editor wrappers (div, section, etc.)
+                  so closing notes don't get an unexpected grey box. */
+               .lesson-content > *:not(blockquote) {
+                 background-color: transparent;
+                 font-family: var(--font-family-base);
+               }
+               .lesson-content > div,
+               .lesson-content > section,
+               .lesson-content > figure {
+                 font-size: 1.125rem;
+                 line-height: 1.7;
+                 color: var(--grey-8);
+                 margin-bottom: 1.5rem;
+               }
+               /* Intentional blockquote styling */
                .lesson-content blockquote {
                  font-size: 1.125rem;
                  line-height: 1.7;
                  font-style: normal;
                  font-weight: 400;
                  color: var(--grey-8);
-                 background: var(--color-bg-input);
+                 background: var(--color-bg-muted);
                  border-left: 3px solid var(--color-border-default);
                  border-radius: 8px;
                  padding: 1rem 1.25rem;
@@ -933,17 +946,11 @@ export function BlockRenderer({ block, value, onChange, readOnly = false, equipI
     <div className="w-full max-w-xl mx-auto">
       {/* Block Header/Title */}
       <div className="mb-6 space-y-3 text-left">
-        <div className="flex items-center gap-2">
-          {/* Badge: QUESTION */}
-          {(type === 'exercise' || type === 'clinical_instrument') && (
-            <span className="text-[13px] font-medium text-[var(--color-text-muted)] uppercase tracking-wide">
-               Question
-            </span>
-          )}
-          {/* NOTE: stepGroup (e.g. "onboarding_core", "baseline_sleep") is internal
-              authoring metadata used for grouping in ProgramPlayer — never shown to users. */}
-        </div>
-        
+        {/* NOTE: stepGroup (e.g. "onboarding_core", "baseline_sleep") is internal
+            authoring metadata used for grouping in ProgramPlayer — never shown to users.
+            The "Question" badge that used to render here duplicated the title below and
+            was removed. */}
+
         {/* Title - The main question text */}
         <h2 className="text-[22px] md:text-[26px] font-medium text-[var(--color-text-primary)] leading-snug tracking-tight">
           {displayTitle}

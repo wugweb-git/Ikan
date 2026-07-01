@@ -93,6 +93,8 @@ const BLOCK_TYPES: { value: CheckinStep['type']; label: string; icon: any; descr
 const EMOJI_PICKS = [
   '🤔', '⚡', '😌', '🌙', '💊', '🏃', '✏️', '🏷️', '😊', '🧠', '❤️',
   '🔥', '💪', '🌟', '🎯', '📊', '💭', '🍽️', '🧘', '👥', '🎵',
+  '😴', '😰', '😔', '😡', '🥰', '🙂', '😢', '🥱', '💚', '🌿',
+  '☀️', '🌧️', '🫁', '🚶', '🧘‍♀️', '📝', '⏰', '🎧', '📖', '🤝',
 ];
 
 function getBlockIcon(type: CheckinStep['type']) {
@@ -310,6 +312,22 @@ function StepEditorCard({
                         </button>
                       ))}
                     </div>
+                    {/* Custom emoji: paste/type any emoji not in the curated list above */}
+                    <Input
+                      value={step.hero_emoji && !EMOJI_PICKS.includes(step.hero_emoji) ? step.hero_emoji : ''}
+                      onChange={e => {
+                        // Take only the first grapheme so a pasted sentence doesn't overwrite it
+                        const v = Array.from(e.target.value.trim())[0] || '';
+                        onChange({ hero_emoji: v || undefined });
+                      }}
+                      placeholder="Or paste a custom emoji"
+                      maxLength={8}
+                      style={{
+                        marginTop: 4, borderRadius: 'var(--radius-md)',
+                        border: `1.5px solid ${B.border}`, backgroundColor: B.bgInput,
+                        ...f('sm'),
+                      }}
+                    />
                   </div>
                   <div>
                     <Label style={{ ...f('xs', 500, B.muted), marginBottom: 4, display: 'block' }}>EMA Category</Label>

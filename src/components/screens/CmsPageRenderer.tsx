@@ -224,7 +224,7 @@ export function CmsPageRenderer({ slug, onNavigate, className }: CmsPageRenderer
           background: var(--color-bg-muted);
           border-radius: 0 var(--radius-md) var(--radius-md) 0;
           color: var(--color-text-muted);
-          font-style: italic;
+          font-style: normal;
         }
         .cms-content table { width: 100%; border-collapse: collapse; margin: 1em 0; }
         .cms-content th, .cms-content td { padding: 8px 12px; border: 1px solid var(--color-border-default); text-align: left; }

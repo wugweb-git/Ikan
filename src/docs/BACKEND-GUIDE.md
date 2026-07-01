@@ -1,259 +1,202 @@
-# iKan PWA - Backend Guide
+# iKan Health — Backend Guide & API Reference
 
-> **Last updated**: March 17, 2026
+> **Last updated**: July 2026
 > **Audience**: Backend and full-stack developers
+> **Base URL**: `https://jpfvoevxegnknxoqmwye.supabase.co/functions/v1/make-server-cc205da9`
+
+For deploy instructions see `BUILD.md`. For the nested backend CLAUDE.md see `src/supabase/functions/server/CLAUDE.md`.
 
 ---
 
 ## Overview
 
-The backend is a single **Hono web server** running as a **Supabase Edge Function** on Deno. All routes are prefixed with `/make-server-cc205da9`.
+All API routes run inside one Deno/Hono function: **`make-server-cc205da9`**. Source files are in `src/supabase/functions/server/` (25 `.ts`/`.tsx` files). `index.tsx` is the entry point; it imports and mounts every route module.
 
-- **Entry point**: `/supabase/functions/server/index.tsx`
-- **Route modules**: Split into separate files (e.g., `admin-routes.ts`, `assessment-routes.ts`)
-- **Data store**: Single KV table (`kv_store_cc205da9`) with `key TEXT` / `value JSONB`
-- **File store**: Supabase Storage with private buckets prefixed `make-cc205da9`
+Auth: `Authorization: Bearer <jwt>`. Use user JWT for authenticated routes; Supabase anon key for public routes (`verify_jwt: true` is set globally on the function — all requests must carry a valid JWT).
 
 ---
 
-## Server Architecture
-
-### Startup Flow
+## Auth middleware
 
 ```
-index.tsx
-  |-- Creates Hono app with basePath '/make-server-cc205da9'
-  |-- Configures CORS (all origins, GET/POST/PUT/PATCH/DELETE/OPTIONS)
-  |-- Configures logger
-  |-- Defines requireAuth / requireAdmin middleware
-  |-- Registers all route modules
-  |-- Starts with Deno.serve(app.fetch)
+requireAuth   →  validates user JWT; sets c.get('user')
+requireAdmin  →  same + checks user KV profile for is_admin: true
 ```
-
-### Error Handling Layers
-
-The server has 4 layers of error handling to deal with Deno's connection-closed errors:
-
-1. **Console filter** - Suppresses `name: "Http"` errors from stderr
-2. **Global `unhandledrejection` listener** - Catches post-response disconnections
-3. **Global `error` listener** - Catches uncaught exceptions
-4. **Hono `app.onError`** - Returns 499 for client disconnections, 500 for real errors
-
-> These layers exist because Deno logs connection-closed errors to stderr even though they're non-fatal. This is expected behavior when clients navigate away mid-response.
 
 ---
 
-## Authentication Middleware
+## Error format
 
-### `requireAuth(c, next)`
+```json
+{ "error": "Human-readable message" }
+```
 
-Validates the JWT from the `Authorization` header:
+HTTP codes: `400` bad request · `401` unauthorized · `403` forbidden · `404` not found · `409` conflict · `499` client disconnected · `500` server error
+
+---
+
+## Route reference
+
+### Health
+
+| Method | Path | Auth | Description |
+|--------|------|------|-------------|
+| GET | `/health` | None | Server health. Returns `{ status, timestamp, version }` |
+
+---
+
+### Auth & signup
+
+| Method | Path | Auth | Description |
+|--------|------|------|-------------|
+| POST | `/auth/signup` | None | Create user account (triggers native Supabase confirmation email) |
+
+Sign-in and sign-out are handled **client-side** via `supabase.auth.signInWithPassword()` / `signOut()`.
+
+---
+
+### User profile
+
+| Method | Path | Auth | Description |
+|--------|------|------|-------------|
+| GET | `/users/profile` | requireAuth | Get current user profile |
+| PUT | `/users/profile` | requireAuth | Update profile (name, phone, bio, preferences, notification_settings, privacy_settings) |
+| PUT | `/users/password` | requireAuth | Change password |
+| POST | `/users/email/request-change` | requireAuth | Request email change |
+| POST | `/users/email/verify-change` | None | Verify email change token |
+| POST | `/users/avatar/upload` | requireAuth | Upload avatar (multipart/form-data) |
+| POST | `/users/export-data` | requireAuth | GDPR data export |
+| DELETE | `/users/me` | requireAuth | Delete account + all data |
+| GET | `/users/payments` | requireAuth | Payment history |
+| POST | `/users/payments` | requireAuth | Record payment |
+
+---
+
+### Assessments
+
+| Method | Path | Auth | Description |
+|--------|------|------|-------------|
+| GET | `/api/assessments` | None | List all assessments (merges KV + defaults) |
+| GET | `/api/assessments/:id` | None | Get by ID or slug (`assessment_def:` → `assessment_slug:` fallback) |
+| POST | `/api/assessments` | requireAuth | Create |
+| PUT | `/api/assessments/:id` | requireAuth | Update |
+| DELETE | `/api/assessments/:id` | requireAuth | Delete (dual-prefix cleanup) |
+| POST | `/assessments/:id/responses` | requireAuth | Submit responses |
+| GET | `/assessments/responses/user` | requireAuth | All user responses |
+
+---
+
+### Equip programs
+
+| Method | Path | Auth | Description |
+|--------|------|------|-------------|
+| GET | `/equip/programs` | None | List programs |
+| GET | `/equip/programs/:id` | None | Get program by ID or slug |
+| GET | `/equip/programs/:id/days` | None | List days for program |
+| GET | `/equip/days/:dayId/blocks` | None | List blocks for a day |
+| POST | `/equip/purchase/:equipId` | requireAuth | Purchase & enroll |
+| POST | `/equip/programs` | requireAuth | Create program (admin) |
+| POST | `/equip/days/:dayId/blocks` | requireAuth | Add block to day |
+| PUT | `/equip/blocks/:blockId` | requireAuth | Update block |
+| DELETE | `/equip/blocks/:blockId` | requireAuth | Delete block |
+
+---
+
+### CMS pages
+
+| Method | Path | Auth | Description |
+|--------|------|------|-------------|
+| GET | `/cms/pages/:slug` | None | Get CMS page by slug |
+| PUT | `/cms/pages/:slug` | requireAdmin | Update page content |
+
+Known slugs: `about`, `privacy`, `terms`, `faq`, `contact`, `return-policy`, `homepage-hero`, `homepage-newsletter`, etc.
+
+---
+
+### Mood journal
+
+| Method | Path | Auth | Description |
+|--------|------|------|-------------|
+| POST | `/journal/entries` | requireAuth | Create entry |
+| GET | `/journal/entries` | requireAuth | List entries (supports `startDate`, `endDate`, `limit`) |
+| GET | `/journal/entries/:date` | requireAuth | Get entry for date |
+
+---
+
+### Check-in scales
+
+| Method | Path | Auth | Description |
+|--------|------|------|-------------|
+| GET | `/scales/moods` | None | Mood scale emoji set |
+| GET | `/scales/energy` | None | Energy scale |
+| GET | `/scales/stress` | None | Stress scale |
+| GET | `/scales/sleep` | None | Sleep scale |
+| GET | `/scales/pain` | None | Pain scale |
+
+---
+
+### Health Connect / Google Fit
+
+| Method | Path | Auth | Description |
+|--------|------|------|-------------|
+| GET | `/health-connect/status` | requireAuth | Connection status |
+| GET | `/health-connect/data` | requireAuth | Latest health data |
+| POST | `/health-connect/connect` | requireAuth | Register connection |
+| POST | `/health-connect/data` | requireAuth | Push health data |
+| POST | `/health-connect/disconnect` | requireAuth | Unlink |
+| POST | `/health-connect/manual-entry` | requireAuth | Manual data entry |
+
+---
+
+### Progress
+
+Progress tracking, day completion, streak management — `progress-routes.ts`.
+
+---
+
+### Admin
+
+| Method | Path | Auth | Description |
+|--------|------|------|-------------|
+| GET | `/admin/settings` | requireAdmin | Site settings |
+| PUT | `/admin/settings` | requireAdmin | Update settings |
+| GET | `/admin/users` | requireAdmin | List users |
+| GET | `/admin/payment/config` | requireAdmin | Payment gateway config |
+| POST | `/admin/payment/config` | requireAdmin | Save gateway config |
+| GET | `/admin/payment/transactions` | requireAdmin | Transactions |
+| POST | `/admin/equip/cleanup-zombies` | requireAdmin | Remove orphaned equip KV entries |
+
+---
+
+### Other modules
+
+| Module | Routes for |
+|--------|-----------|
+| `newsletter-routes.ts` | Newsletter subscriptions |
+| `contact-routes.ts` | Contact form submissions |
+| `brevo-routes.ts` | Transactional email (Brevo) |
+| `corporate-routes.ts` | Corporate wellness programs |
+| `hero-banner-routes.ts` | Hero banner CMS |
+| `checkin-template-routes.ts` | Check-in template CRUD |
+| `kv-audit-routes.ts` | KV store browsing / debugging |
+| `recommendation-routes.ts` | Personalised recommendations |
+| `reminder-routes.ts` | Push reminder management |
+| `resource-routes.ts` | Library resources |
+| `ikan-score-routes.ts` | iKan wellness score |
+
+---
+
+## Making API calls (frontend)
 
 ```typescript
-const accessToken = c.req.header('Authorization')?.split(' ')[1];
-const { data: { user }, error } = await supabase.auth.getUser(accessToken);
-// Sets c.userId and c.user, then calls next()
+// Authenticated — via ApiClient (preferred)
+import { apiClient } from '../lib/api-client';
+const data = await apiClient.get('/users/profile');
+await apiClient.post('/health-connect/data', payload);
+
+// Public — anon key is the bearer token
+const ANON = 'eyJhbGc...';  // from src/lib/supabase-client.ts
+const res = await fetch(`${BASE_URL}/api/assessments`, {
+  headers: { Authorization: `Bearer ${ANON}` },
+});
 ```
-
-### `requireAdmin(c, next)`
-
-Same as `requireAuth` plus checks the user's KV profile:
-
-```typescript
-const userProfile = await kv.get(`user:${user.id}`);
-if (!userProfile?.is_admin) {
-  return c.json({ error: 'Admin access required' }, 403);
-}
-```
-
----
-
-## KV Store Usage
-
-The KV store (`/supabase/functions/server/kv_store.tsx`) provides:
-
-| Function | Signature | Description |
-|----------|-----------|------------|
-| `get` | `(key: string) => Promise<any>` | Get single value |
-| `set` | `(key: string, value: any) => Promise<void>` | Set single value |
-| `del` | `(key: string) => Promise<void>` | Delete single key |
-| `mget` | `(keys: string[]) => Promise<any[]>` | Get multiple values |
-| `mset` | `(entries: {key, value}[]) => Promise<void>` | Set multiple values |
-| `mdel` | `(keys: string[]) => Promise<void>` | Delete multiple keys |
-| `getByPrefix` | `(prefix: string) => Promise<any[]>` | Get all values with key prefix |
-
-> **WARNING**: There is no `list` function. Use `getByPrefix` to query by prefix.
-
-> **WARNING**: `kv_store.tsx` is autogenerated. DO NOT edit it.
-
-### KV Naming Conventions
-
-```
-entity_type:entity_id          # Primary pattern
-entity_type:parent_id:child_id # Hierarchical pattern
-
-# Examples:
-user:abc123
-assessment_def:phq9
-resource:article-001
-mood:user123:2026-03-12
-settings:site
-```
-
----
-
-## Route Module Pattern
-
-Each route module exports a `register*Routes` function:
-
-```typescript
-// example-routes.ts
-import { Hono } from 'npm:hono';
-import * as kv from './kv_store.tsx';
-
-export function registerExampleRoutes(
-  app: Hono,
-  requireAuth: any,
-  requireAdmin: any
-) {
-  app.get("/examples", async (c) => {
-    const items = await kv.getByPrefix('example:');
-    return c.json({ items });
-  });
-
-  app.post("/examples", requireAdmin, async (c) => {
-    const body = await c.req.json();
-    await kv.set(`example:${body.id}`, body);
-    return c.json({ success: true });
-  });
-}
-```
-
-Then registered in `index.tsx`:
-
-```typescript
-registerExampleRoutes(app, requireAuth, requireAdmin);
-```
-
----
-
-## Assessment Routes - Known Architecture Issue
-
-Assessment data has a dual-prefix situation:
-
-- **`assessment-routes.ts`** reads from `assessment_def:` prefix AND merges with `DEFAULT_ASSESSMENTS` from `default-assessments.ts`
-- **`index.tsx`** has duplicate inline assessment routes (~lines 1227-1280) reading from the `assessment:` prefix
-
-**What actually happens**: Hono uses first-registered-match routing, so `assessment-routes.ts` wins. The inline routes in `index.tsx` are effectively dead code.
-
-**Current workaround**: Create/update operations dual-write to both `assessment_def:` and `assessment:` prefixes. Delete operations hard-delete from both.
-
-**TODO**: Clean up the dead inline routes in `index.tsx`.
-
----
-
-## Adding a New Route Module
-
-1. Create `/supabase/functions/server/my-feature-routes.ts`
-2. Export a `registerMyFeatureRoutes(app, requireAuth, requireAdmin)` function
-3. Define routes using `app.get()`, `app.post()`, `app.put()`, `app.patch()`, `app.delete()`
-4. Import and register in `index.tsx`:
-   ```typescript
-   import { registerMyFeatureRoutes } from './my-feature-routes.ts';
-   // ... after middleware setup:
-   registerMyFeatureRoutes(app, requireAuth, requireAdmin);
-   ```
-5. Deploy: `npm run supabase:deploy`
-
-### Route Naming Conventions
-
-```
-GET    /entities          # List all
-GET    /entities/:id      # Get one
-POST   /entities          # Create
-PUT    /entities/:id      # Full update
-PATCH  /entities/:id      # Partial update
-DELETE /entities/:id      # Delete
-
-# Admin routes:
-GET    /admin/entities    # Admin list (with extra metadata)
-```
-
----
-
-## External API Integrations
-
-| Service | Secret | Route Module |
-|---------|--------|-------------|
-| Razorpay | `RAZORPAY_KEY_SECRET` | Payment routes in `admin-routes.ts` |
-| Google Fit | `GOOGLE_FIT_CLIENT_ID` | `health-connect-routes.ts` |
-| Brevo (email) | `BREVO_API_KEY` | `brevo-routes.ts` + `brevo-helpers.ts` |
-
-### Accessing Secrets
-
-```typescript
-const apiKey = Deno.env.get('MY_SECRET_KEY');
-```
-
-> All secrets are configured in the Supabase dashboard under Edge Function settings.
-
----
-
-## Supabase Storage
-
-For file uploads, the server manages private buckets:
-
-```typescript
-// Idempotent bucket creation on startup
-const { data: buckets } = await supabase.storage.listBuckets();
-const bucketExists = buckets?.some(b => b.name === bucketName);
-if (!bucketExists) {
-  await supabase.storage.createBucket(bucketName);
-}
-```
-
-Files are served to the frontend via **signed URLs** (buckets are private):
-
-```typescript
-const { data } = await supabase.storage
-  .from(bucketName)
-  .createSignedUrl(filePath, 3600); // 1 hour expiry
-```
-
----
-
-## Debugging
-
-### Server Logs
-
-```bash
-# View live logs
-npm run supabase:logs
-
-# Or via Supabase CLI
-supabase functions logs server --tail
-```
-
-### KV Audit
-
-The admin panel includes a KV Audit tool (`/admin` > KV Audit tab) that lets you browse and inspect KV store entries by prefix.
-
-### Health Check
-
-```bash
-# Quick health check
-curl https://<projectId>.supabase.co/functions/v1/make-server-cc205da9/health
-# Expected: {"status":"ok","timestamp":"...","version":"2.1"}
-```
-
----
-
-## Important Constraints
-
-1. **Deno runtime**: Server code uses Deno, not Node.js. Import Node built-ins with `node:` prefix
-2. **No file system writes**: Only `/tmp` is writable
-3. **Package imports**: Use `npm:` or `jsr:` prefixes for external packages
-4. **Single function**: All routes live in one Supabase Edge Function (`server`)
-5. **CORS**: Must be explicitly configured (no automatic CORS from Supabase for Edge Functions)
-6. **No migrations**: Cannot run DDL/migration scripts. Schema changes must be done via Supabase UI
-7. **KV only**: The app uses a single KV table. Do not create additional tables without understanding the implications for the Figma Make build system
