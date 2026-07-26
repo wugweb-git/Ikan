@@ -64,9 +64,43 @@ export const ProgressService = {
   },
 
   async getUserEnrollments(userId: string): Promise<UserEnrollment[]> {
-    const all = await kv.getByPrefix(`enrollment:${userId}:`);
-    // Filter out withdrawn enrollments so they don't show on the user's dashboard
-    return (all || []).filter((e: any) => e.status !== 'withdrawn');
+    // Two enrollment shapes exist, both created on 2025-12-30:
+    //   A. index.tsx POST /equip/purchase writes `enrollment:{enrollmentId}`
+    //      as { enrollmentId, userId, programId, currentDay, status }.
+    //   B. this service writes `enrollment:{userId}:{equipId}`
+    //      as { user_id, equip_id, current_day_number }.
+    // Only shape A has ever been written (52 records vs 0), so the previous
+    // `enrollment:${userId}:` prefix scan matched nothing and this returned []
+    // for every user — which is why the dashboard's "continue your program"
+    // card never appeared and it always offered to start a new one.
+    //
+    // Scan the whole prefix and match on either field, then normalise to the
+    // shape callers expect (equip_id / current_day_number).
+    const all = await kv.getByPrefix('enrollment:');
+
+    const mine = (all || []).filter((e: any) =>
+      e && (e.userId === userId || e.user_id === userId) && e.status !== 'withdrawn'
+    );
+
+    const normalised = mine.map((e: any) => ({
+      ...e,
+      user_id: e.user_id ?? e.userId,
+      equip_id: e.equip_id ?? e.programId,
+      current_day_number: e.current_day_number ?? e.currentDay ?? 1,
+    }));
+
+    // The same user+program can hold several enrollment records (52 records
+    // across only 10 distinct user+program pairs), which would render the same
+    // programme repeatedly. Keep the most recently touched one per programme.
+    const latest = new Map<string, any>();
+    for (const e of normalised) {
+      if (!e.equip_id) continue;
+      const prev = latest.get(e.equip_id);
+      const stamp = (x: any) => x?.updated_at ?? x?.created_at ?? x?.startDate ?? '';
+      if (!prev || stamp(e) >= stamp(prev)) latest.set(e.equip_id, e);
+    }
+
+    return [...latest.values()];
   },
 
   async getEnrollment(userId: string, equipId: string): Promise<UserEnrollment | null> {
@@ -76,15 +110,33 @@ export const ProgressService = {
   // UNENROLL — Soft-delete by setting status to 'withdrawn'
   // Preserves progress data so user can re-enroll later if desired
   async unenrollUser(userId: string, equipId: string): Promise<void> {
-    const key = `enrollment:${userId}:${equipId}`;
-    const existing = await kv.get(key);
-    if (!existing) return;
+    // Same shape mismatch as getUserEnrollments: the real records live under
+    // `enrollment:{enrollmentId}`, so the old `enrollment:{userId}:{equipId}`
+    // lookup never found anything and unenrolling silently did nothing.
+    // Locate every matching record and withdraw each under its own key —
+    // a user+programme pair can legitimately have more than one.
+    const all = await kv.getByPrefix('enrollment:');
+    const now = new Date().toISOString();
+    let found = false;
 
-    await kv.set(key, {
-      ...existing,
-      status: 'withdrawn',
-      withdrawn_at: new Date().toISOString(),
-    });
+    for (const e of all || []) {
+      if (!e) continue;
+      const owner = e.userId ?? e.user_id;
+      const prog  = e.equip_id ?? e.programId;
+      if (owner !== userId || prog !== equipId) continue;
+
+      // Write back to the key this record actually came from.
+      const key = e.enrollmentId
+        ? `enrollment:${e.enrollmentId}`
+        : `enrollment:${userId}:${equipId}`;
+
+      await kv.set(key, { ...e, status: 'withdrawn', withdrawn_at: now });
+      found = true;
+    }
+
+    if (!found) {
+      console.log(`unenrollUser: no enrollment found for ${userId} / ${equipId}`);
+    }
   },
 
   // DAY PROGRESS
