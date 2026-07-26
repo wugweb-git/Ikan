@@ -3,6 +3,7 @@ import { cors } from "npm:hono/cors";
 import { logger } from "npm:hono/logger";
 import { createClient } from "jsr:@supabase/supabase-js@2";
 import * as kv from "./kv_dual_write.ts";
+import { mirrorJournalEntryToTable } from "./journal-mirror.ts";
 
 // Import monitoring utilities
 import { getAPILogs } from "./logging.tsx";
@@ -1266,7 +1267,12 @@ app.post("/journal/entries", requireAuth, async (c) => {
 
     await kv.set(`journal:${entryId}`, entry);
     await kv.set(`journal_by_user:${userId}:${date}`, entry);
-    
+
+    // Second journal write path — must mirror to user_journal_entries too,
+    // otherwise entries created here only reach the table via the self-heal
+    // on GET /user/journal. Best-effort: KV above stays the source of truth.
+    await mirrorJournalEntryToTable(entry, `journal:${entryId}`);
+
     return c.json({ entry });
   } catch (error) {
     console.log('Create journal entry error:', error);
