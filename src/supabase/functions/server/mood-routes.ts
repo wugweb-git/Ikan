@@ -1,5 +1,56 @@
 import { Hono } from "npm:hono";
 import * as kv from "./kv_dual_write.ts";
+import { createClient } from "jsr:@supabase/supabase-js@2";
+
+const supabase = () =>
+  createClient(
+    Deno.env.get("SUPABASE_URL")!,
+    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
+  );
+
+/**
+ * Phase-2 migration shim: mirror a journal entry into the real
+ * `user_journal_entries` table alongside the KV write.
+ *
+ * KV is still the source of truth and reads still come from it, so a failure
+ * here must never break saving a journal entry — it is logged and swallowed.
+ * Once reads move to the table this becomes the primary write and the error
+ * handling has to become strict.
+ */
+async function mirrorJournalEntryToTable(entry: any, kvKey: string) {
+  try {
+    const num = (v: unknown) =>
+      v === null || v === undefined || v === "" ? null : Number(v);
+
+    const { error } = await supabase()
+      .from("user_journal_entries")
+      .upsert({
+        id: entry.id,
+        user_id: entry.user_id,
+        entry_date: entry.date ?? null,
+        mood: entry.mood ?? null,
+        mood_rating: num(entry.mood_rating),
+        mood_score: num(entry.mood_score),
+        energy: num(entry.energy),
+        stress_level: num(entry.stress_level),
+        sleep_quality: num(entry.sleep_quality),
+        pain_level: num(entry.pain_level),
+        content: entry.content ?? entry.freehand_text_content ?? null,
+        emotions: entry.emotions ?? null,
+        context_tags: entry.context_tags ?? null,
+        created_at: entry.created_at ?? null,
+        updated_at: entry.updated_at ?? null,
+        data: entry,
+        kv_key: kvKey,
+      }, { onConflict: "id" });
+
+    if (error) {
+      console.log(`journal mirror failed for ${entry.id}: ${error.message}`);
+    }
+  } catch (err) {
+    console.log(`journal mirror threw for ${entry?.id}: ${err}`);
+  }
+}
 
 export function registerMoodRoutes(app: Hono, middleware: any) {
   // GET /moods - returns KV-stored moods or defaults
@@ -147,7 +198,11 @@ export function registerMoodRoutes(app: Hono, middleware: any) {
         // Store by User+Date+ID to allow multiple entries per day
         // Previously used `journal_by_user:${userId}:${date}` which overwrote on same date
         await kv.set(`journal_by_user:${userId}:${date}:${id}`, entry);
-        
+
+        // Migration phase 2: also mirror into user_journal_entries. Best-effort —
+        // KV above remains the source of truth for reads.
+        await mirrorJournalEntryToTable(entry, `journal:${id}`);
+
         return c.json({ entry });
     } catch (error) {
         console.error("Error creating journal entry:", error);
