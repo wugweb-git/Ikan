@@ -73,6 +73,28 @@ Everything lives in one Postgres table `kv_store_cc205da9` with RLS enabled and 
 
 ---
 
+## Migration in progress: user data → real tables
+
+User data is being moved out of the KV blob into real Postgres tables. **Phase 1 (shadow copy) is done; the app has NOT been cut over.**
+
+| Table | Rows | Source prefix |
+|-------|------|---------------|
+| `user_assessment_results` | 93 | `assessment_result:` |
+| `user_enrollments` | 51 | `enrollment:` |
+| `user_program_progress` | 86 | `progress:` |
+| `user_journal_entries` | 23 | `journal:` |
+| `user_ikan_scores` | 53 | `ikan_score:` |
+
+- **KV is still the source of truth.** These tables are populated copies; nothing reads them yet. The edge function is unchanged.
+- Every row keeps its original KV record verbatim in a `data jsonb` column, so the migration is lossless and reversible (`DROP TABLE` returns you to the previous state).
+- All five have **RLS with `auth.uid() = user_id`** — verified by impersonation test: a user sees only their own rows, service role sees all. The edge function uses the service role and so bypasses RLS.
+- `kv_key` on each row links back to the originating KV key.
+- Helper casts `try_numeric()` / `try_timestamptz()` exist because KV is untyped; EXECUTE is revoked from `anon`/`authenticated`.
+
+**Next phase** (not started): switch edge-function reads to these tables, then writes, then retire the KV prefixes. Do this one entity at a time with dual-write, not big-bang.
+
+Known data notes: `assessment_result:` stores each result twice in KV (canonical `…:{resultId}` plus a `…:{assessmentId}:latest` copy) — the tables hold 93 de-duplicated logical results, no data lost. `assessment_id` has no FK because it legitimately holds synthetic check-in ids (`checkin_{equipId}_day_N`).
+
 ## CMS content architecture
 
 `usePageContent` (`src/hooks/usePageContent.ts`) fetches from `/cms/pages/{pageId}` with stale-while-revalidate. The code defaults in `src/utils/cms-defaults.ts` render immediately; live KV data overrides them.
