@@ -33,19 +33,24 @@ export const ProgressService = {
   
   // ENROLLMENT
   async enrollUser(userId: string, equipId: string): Promise<UserEnrollment> {
-    const key = `enrollment:${userId}:${equipId}`;
-    const existing = await kv.get(key);
-    if (existing) {
-      // If previously withdrawn, re-activate the enrollment (preserving progress)
+    // Look for an existing enrollment in EITHER shape. The old check only
+    // looked under `enrollment:{userId}:{equipId}`, so a user who already had
+    // an enrollment from POST /equip/purchase (shape A) was not found here and
+    // got a second, duplicate record.
+    const found = await this.findEnrollmentAnyStatus(userId, equipId);
+    if (found) {
+      const existing = found.record;
+      // If previously withdrawn, re-activate (preserving progress)
       if (existing.status === 'withdrawn') {
-        existing.status = 'active';
-        delete existing.withdrawn_at;
-        existing.last_activity_at = new Date().toISOString();
-        await kv.set(key, existing);
+        const reactivated = { ...existing, status: 'active', last_activity_at: new Date().toISOString() };
+        delete reactivated.withdrawn_at;
+        await kv.set(found.key, reactivated);
+        return reactivated as UserEnrollment;
       }
-      return existing;
+      return existing as UserEnrollment;
     }
 
+    const key = `enrollment:${userId}:${equipId}`;
     const enrollment: UserEnrollment = {
       user_id: userId,
       equip_id: equipId,
@@ -56,10 +61,6 @@ export const ProgressService = {
     };
 
     await kv.set(key, enrollment);
-    
-    // Add to user's enrollment list index if needed, or just scan prefix
-    // Prefix scan `enrollment:{userId}:` works.
-    
     return enrollment;
   },
 
@@ -103,8 +104,57 @@ export const ProgressService = {
     return [...latest.values()];
   },
 
+  /**
+   * Locate the real enrollment record for a user+programme, together with the
+   * key it must be written back to.
+   *
+   * See getUserEnrollments for why two shapes exist. getByPrefix returns values
+   * only, not keys, so the key is reconstructed: shape A records carry
+   * enrollmentId, shape B records are addressed by user+programme.
+   */
+  async findEnrollmentAnyStatus(
+    userId: string,
+    equipId: string,
+  ): Promise<{ key: string; record: any } | null> {
+    const all = await kv.getByPrefix('enrollment:');
+
+    const record = (all || []).find((e: any) =>
+      e &&
+      (e.userId === userId || e.user_id === userId) &&
+      (e.programId === equipId || e.equip_id === equipId)
+    );
+    if (!record) return null;
+
+    return {
+      key: record.enrollmentId
+        ? `enrollment:${record.enrollmentId}`
+        : `enrollment:${userId}:${equipId}`,
+      record,
+    };
+  },
+
+  /** As findEnrollmentAnyStatus, but ignores withdrawn enrollments. */
+  async findEnrollment(
+    userId: string,
+    equipId: string,
+  ): Promise<{ key: string; record: any } | null> {
+    const found = await this.findEnrollmentAnyStatus(userId, equipId);
+    return found && found.record.status !== 'withdrawn' ? found : null;
+  },
+
   async getEnrollment(userId: string, equipId: string): Promise<UserEnrollment | null> {
-    return await kv.get(`enrollment:${userId}:${equipId}`);
+    const found = await this.findEnrollment(userId, equipId);
+    if (!found) return null;
+
+    const e = found.record;
+    // Normalise so callers can rely on equip_id / current_day_number
+    // regardless of which shape the record was written in.
+    return {
+      ...e,
+      user_id: e.user_id ?? e.userId,
+      equip_id: e.equip_id ?? e.programId,
+      current_day_number: e.current_day_number ?? e.currentDay ?? 1,
+    } as UserEnrollment;
   },
 
   // UNENROLL — Soft-delete by setting status to 'withdrawn'
@@ -175,11 +225,15 @@ export const ProgressService = {
     
     await kv.set(key, progress);
     
-    // Update enrollment last activity
-    const enrollment = await this.getEnrollment(userId, equipId);
-    if (enrollment) {
-      enrollment.last_activity_at = new Date().toISOString();
-      await kv.set(`enrollment:${userId}:${equipId}`, enrollment);
+    // Update enrollment last activity. Write back to the key the record
+    // actually lives under — the old hardcoded `enrollment:{userId}:{equipId}`
+    // never matched a real record, so this silently did nothing.
+    const found = await this.findEnrollment(userId, equipId);
+    if (found) {
+      await kv.set(found.key, {
+        ...found.record,
+        last_activity_at: new Date().toISOString(),
+      });
     }
   },
 
@@ -196,33 +250,41 @@ export const ProgressService = {
     progress.completed_at = new Date().toISOString();
     await kv.set(key, progress);
 
-    // Advance Enrollment
-    const enrollment = await this.getEnrollment(userId, equipId);
-    if (enrollment) {
-      // Only advance if this was the current day
-      if (enrollment.current_day_number === dayNumber) {
-        // Check if there is a next day
-        // We need total days. We can check if day (N+1) exists in Equip schema?
-        // Or just blindly increment. The UI handles "End of Program".
-        // Let's verify max days to be safe.
-        const equip = await EquipService.getEquip(equipId);
-        if (equip) {
-          // Determine total days: prefer blob daily_content length, then duration_days
-          let totalDays = equip.duration_days || 0;
-          if (Array.isArray(equip.daily_content) && equip.daily_content.length > 0) {
-            // Count only regular days (exclude Day 0 onboarding)
-            totalDays = equip.daily_content.filter((d: any) => (d.day ?? d.day_number) !== 0).length;
-          }
-          if (dayNumber < totalDays) {
-             enrollment.current_day_number = dayNumber + 1;
-          } else {
-             enrollment.status = 'completed';
-          }
-        }
-        enrollment.last_activity_at = new Date().toISOString();
-        await kv.set(`enrollment:${userId}:${equipId}`, enrollment);
+    // Advance Enrollment.
+    // Previously read and wrote `enrollment:{userId}:{equipId}`, which never
+    // matched a real record, so no enrollment ever advanced past day 1.
+    const found = await this.findEnrollment(userId, equipId);
+    if (!found) return;
+
+    const rec = found.record;
+    const currentDay = rec.current_day_number ?? rec.currentDay ?? 1;
+
+    // Only advance if this was the current day
+    if (Number(currentDay) !== Number(dayNumber)) return;
+
+    const updated: any = { ...rec, last_activity_at: new Date().toISOString() };
+
+    const equip = await EquipService.getEquip(equipId);
+    if (equip) {
+      // Determine total days: prefer blob daily_content length, then duration_days
+      let totalDays = equip.duration_days || 0;
+      if (Array.isArray(equip.daily_content) && equip.daily_content.length > 0) {
+        // Count only regular days (exclude Day 0 onboarding)
+        totalDays = equip.daily_content.filter((d: any) => (d.day ?? d.day_number) !== 0).length;
+      }
+      if (totalDays > 0 && dayNumber >= totalDays) {
+        updated.status = 'completed';
+        updated.completed_at = new Date().toISOString();
+      } else {
+        // Keep both field names in step: shape A records are read as
+        // `currentDay` elsewhere (index.tsx, admin), shape B as
+        // `current_day_number`. Writing only one would desync the record.
+        updated.current_day_number = dayNumber + 1;
+        updated.currentDay = dayNumber + 1;
       }
     }
+
+    await kv.set(found.key, updated);
   },
 
   // FULL PROGRESS
