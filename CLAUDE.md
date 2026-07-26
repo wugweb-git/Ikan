@@ -105,7 +105,8 @@ Everything lives in one Postgres table `kv_store_cc205da9` with RLS enabled and 
 - **Don't blindly bump major dependency versions.** React 18→19, Vite 6→8, Tailwind 4→next, etc. are breaking changes that need a dedicated session with full test coverage.
 - **Don't enable `email_confirm: false` in the edge function signup path.** That backdoor was removed in Batch 4. Users must verify their email.
 - **Don't add `EXECUTE` grants on `kv_store_row_count()` or `rls_auto_enable()` to `anon`/`authenticated`/`PUBLIC`.** These SECURITY DEFINER functions are locked down intentionally.
-- **Don't delete `wrappers_fdw_stats`** — it's extension-owned and cannot have RLS enabled; this is expected.
+- **Don't delete `wrappers_fdw_stats`** — it's extension-owned. It shows as a `rls_disabled_in_public` ERROR in the security advisor; RLS **can** be enabled on it, but only from the Supabase dashboard ("Resolve issue"), because the table is owned by `supabase_admin` and `ALTER TABLE` from a migration fails with `42501: must be owner of table`.
+- **Don't purge KV by prefix without checking `KV_SCHEMA`** (`server/kv-audit-routes.ts`). Reverse-index keys (`assessment_slug:`, `equip_slug:`, `page_slug:`, `idx_*`) look like orphans but are load-bearing — purging `assessment_slug:` once broke every `/assessment/<slug>` URL site-wide. The purge endpoint now refuses protected prefixes and requires `force` for registered ones. **Any new KV prefix must be added to `KV_SCHEMA`**, or the auditor will report it as uncategorized.
 - **Don't store secrets in code.** `SUPABASE_SERVICE_ROLE_KEY` lives only in Vercel env + the edge function runtime. The anon key in `src/lib/supabase-client.ts` is public by design.
 
 ---

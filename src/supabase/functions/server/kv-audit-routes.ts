@@ -67,7 +67,8 @@ const KV_SCHEMA: KVKeyDef[] = [
   { prefix: "dataset_key:", description: "Dataset key->ID lookup", owner: "admin-routes.ts", consumers: [], scoped: "entity", category: "dataset", orphanRisk: "medium" },
 
   // ── ASSESSMENTS ─────────────────────────────────────────────
-  { prefix: "assessment_def:", description: "Assessment definition (admin)", owner: "admin-routes.ts", consumers: ["admin-routes.ts","assessment-routes.ts"], scoped: "entity", category: "assessment", orphanRisk: "medium" },
+  { prefix: "assessment_def:", description: "Assessment definition (admin)", owner: "admin-routes.ts", consumers: ["admin-routes.ts","assessment-routes.ts"], scoped: "entity", category: "assessment", linkedPrefixes: ["assessment_slug:"], orphanRisk: "medium" },
+  { prefix: "assessment_slug:", description: "Assessment slug->ID lookup", owner: "admin-routes.ts", consumers: ["assessment-routes.ts"], scoped: "entity", category: "assessment", orphanRisk: "medium", notes: "Required for /assessment/<slug> URLs — never purge" },
   { prefix: "assessment:", description: "Assessment (user-facing)", owner: "index.tsx", consumers: ["index.tsx"], scoped: "entity", category: "assessment", orphanRisk: "high" },
   { prefix: "assessment_result:", description: "Assessment result (underscore)", owner: "assessment-routes.ts", consumers: ["assessment-routes.ts"], scoped: "user", category: "assessment", orphanRisk: "medium" },
   { prefix: "assessment-result:", description: "Assessment result (hyphen - legacy)", owner: "index.tsx (data export)", consumers: ["index.tsx (data export)"], scoped: "user", category: "assessment", orphanRisk: "high", notes: "Naming mismatch: hyphen vs underscore" },
@@ -164,6 +165,9 @@ const KV_SCHEMA: KVKeyDef[] = [
   // ── SYSTEM ──────────────────────────────────────────────────
   { prefix: "sys_backups", description: "Backup metadata list", owner: "admin-routes.ts", consumers: ["admin-routes.ts"], scoped: "global", category: "system", orphanRisk: "none" },
   { prefix: "backup:", description: "Backup data snapshot", owner: "admin-routes.ts", consumers: ["admin-routes.ts"], scoped: "global", category: "system", orphanRisk: "low" },
+  { prefix: "backup_", description: "Full KV snapshot (underscore form)", owner: "admin-routes.ts", consumers: ["admin-routes.ts"], scoped: "global", category: "system", orphanRisk: "none", notes: "Point-in-time restore snapshots — never purge" },
+  { prefix: "analytics:", description: "Aggregated analytics counters", owner: "index.tsx", consumers: ["index.tsx"], scoped: "global", category: "monitoring", orphanRisk: "low" },
+  { prefix: "checkin_template_active:", description: "Active check-in template pointer", owner: "checkin-template-routes.ts", consumers: ["checkin-template-routes.ts"], scoped: "global", category: "scales", orphanRisk: "none" },
 
   // ── NEWSLETTER ──────────────────────────────────────────────
   { prefix: "newsletter:", description: "Newsletter subscriptions", owner: "newsletter-routes.ts", consumers: ["newsletter-routes.ts"], scoped: "entity", category: "newsletter", orphanRisk: "low" },
@@ -791,9 +795,45 @@ export function registerKVAuditRoutes(app: Hono, requireAuth: any) {
         return c.json({ error: "Admin access required" }, 403);
       }
 
-      const { prefix, dryRun } = await c.req.json();
+      const { prefix, dryRun, force } = await c.req.json();
       if (!prefix || prefix.length < 2) {
         return c.json({ error: "Prefix must be at least 2 characters" }, 400);
+      }
+
+      // ── Guardrail ────────────────────────────────────────────────
+      // A purge of `assessment_slug:` once wiped every slug->id lookup and
+      // broke /assessment/<slug> site-wide. Reverse-index and snapshot keys
+      // look like junk (short values, no obvious owner) but are load-bearing,
+      // so they can never be purged by prefix. Delete the parent entity
+      // instead — its CRUD handler cleans up the matching index key.
+      const PROTECTED_PREFIXES = [
+        "assessment_slug:", "equip_slug:", "page_slug:", "content_slug:",
+        "dataset_key:", "equip_program_by_slug:",
+        "idx_equip_days:", "idx_day_blocks:",
+        "backup_", "backup:", "sys_backups",
+      ];
+      const protectedHit = PROTECTED_PREFIXES.find(
+        p => prefix.startsWith(p) || p.startsWith(prefix)
+      );
+      if (protectedHit) {
+        return c.json({
+          error: `Refusing to purge "${prefix}" — it overlaps the protected prefix "${protectedHit}". ` +
+                 `These are reverse-index or backup keys that the app depends on. ` +
+                 `Delete the parent record instead; its CRUD handler removes the index entry.`,
+          protectedPrefix: protectedHit,
+        }, 400);
+      }
+
+      // Purging a registered prefix means deleting live, owned data — require
+      // an explicit force flag so it can't happen from a stray click.
+      const registered = KV_SCHEMA.find(e => e.prefix === prefix);
+      if (registered && dryRun === false && force !== true) {
+        return c.json({
+          error: `"${prefix}" is a registered, in-use prefix (${registered.description}, owner: ${registered.owner}). ` +
+                 `Re-send with force=true if you really mean to delete this live data.`,
+          requiresForce: true,
+          registered,
+        }, 409);
       }
 
       // Get all keys with this prefix

@@ -174,7 +174,13 @@ app.post("/admin/assessments", requireAdmin, async (c) => {
     // Write to BOTH prefixes so admin edits are immediately visible to public endpoint
     await kv.set(`assessment_def:${id}`, assessment);
     await kv.set(`assessment:${id}`, assessment);
-    
+
+    // Maintain the slug->id reverse index that /assessments/:id falls back to.
+    // Mirrors the equip pattern in program-service.ts.
+    if (assessment.slug) {
+      await kv.set(`assessment_slug:${assessment.slug}`, id);
+    }
+
     return c.json({ assessment });
   } catch (error) {
     console.error('Create assessment error:', error);
@@ -202,7 +208,16 @@ app.put("/admin/assessments/:id", requireAdmin, async (c) => {
     // Write to BOTH prefixes
     await kv.set(`assessment_def:${id}`, assessment);
     await kv.set(`assessment:${id}`, assessment);
-    
+
+    // Keep the slug->id reverse index in sync: drop the stale alias when the
+    // slug changed, then (re)write the current one.
+    if (existing?.slug && existing.slug !== assessment.slug) {
+      await kv.del(`assessment_slug:${existing.slug}`);
+    }
+    if (assessment.slug) {
+      await kv.set(`assessment_slug:${assessment.slug}`, id);
+    }
+
     return c.json({ assessment });
   } catch (error) {
     console.error('Update assessment error:', error);
@@ -239,9 +254,13 @@ app.delete("/admin/assessments/:id", requireAdmin, async (c) => {
     console.log(`✅ Assessment hard-deleted: ${id} (${keysToClean.length} keys removed)`);
     
     // Also clean up any slug-based alias not caught by substring search
-    if (existing?.slug && existing.slug !== id) {
-      await kv.del(`assessment:${existing.slug}`);
-      await kv.del(`assessment_def:${existing.slug}`);
+    if (existing?.slug) {
+      // The reverse index is keyed by slug — this is the one that matters.
+      await kv.del(`assessment_slug:${existing.slug}`);
+      if (existing.slug !== id) {
+        await kv.del(`assessment:${existing.slug}`);
+        await kv.del(`assessment_def:${existing.slug}`);
+      }
       console.log(`   Also cleaned slug alias: ${existing.slug}`);
     }
     

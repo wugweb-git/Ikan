@@ -59,6 +59,89 @@ import { ProgramPlayer, PlayerResults } from '../player/ProgramPlayer';
 import { adaptAssessmentToProgram } from '../../lib/assessment-adapter';
 import { evaluateAssessment, loadScoringProfiles, loadAdminRules } from '../../lib/recommendation-engine';
 
+/**
+ * Full-screen error card shown when an assessment can't be loaded or built.
+ * Offers a retry (most failures here are transient network/lookup errors)
+ * alongside the way back out.
+ */
+function AssessmentErrorScreen({
+  title,
+  message,
+  onRetry,
+  onBack,
+  backLabel = 'Go back',
+}: {
+  title: string;
+  message: string;
+  onRetry?: () => void;
+  onBack: () => void;
+  backLabel?: string;
+}) {
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-6"
+      style={{ backgroundColor: 'var(--color-bg-page)' }}
+    >
+      <div
+        className="w-full max-w-md p-8 text-center"
+        style={{
+          backgroundColor: 'var(--color-bg-card)',
+          borderRadius: 'var(--radius-lg)',
+          border: '1px solid var(--color-border-default)',
+        }}
+      >
+        <div
+          className="mx-auto mb-5 flex items-center justify-center"
+          style={{
+            width: 56,
+            height: 56,
+            borderRadius: 'var(--radius-pill)',
+            backgroundColor: 'var(--color-bg-muted)',
+          }}
+        >
+          <Icon name="alertCircle" size={28} className="text-[var(--color-text-muted)]" />
+        </div>
+
+        <h2
+          style={{
+            fontFamily: 'var(--font-family-base)',
+            fontSize: 'var(--text-xl)',
+            fontWeight: 'var(--font-weight-medium)',
+            color: 'var(--color-text-primary)',
+            margin: 0,
+          }}
+        >
+          {title}
+        </h2>
+
+        <p
+          className="mt-2"
+          style={{
+            fontFamily: 'var(--font-family-base)',
+            fontSize: 'var(--text-sm)',
+            lineHeight: 1.6,
+            color: 'var(--color-text-muted)',
+            margin: '8px 0 0',
+          }}
+        >
+          {message}
+        </p>
+
+        <div className="mt-6 flex flex-col sm:flex-row gap-3 sm:justify-center">
+          {onRetry && (
+            <Button onClick={onRetry} className="sm:min-w-[130px]">
+              Try again
+            </Button>
+          )}
+          <Button variant="outline" onClick={onBack} className="sm:min-w-[130px]">
+            {backLabel}
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function AssessmentFlow({  
   assessmentId,
   assessment: initialAssessment, 
@@ -81,6 +164,8 @@ export function AssessmentFlow({
   });
   const [loading, setLoading] = useState(!initialAssessment);
   const [error, setError] = useState<string | null>(null);
+  // Bumped by the error screen's Retry button to re-run the fetch effect
+  const [retryNonce, setRetryNonce] = useState(0);
 
   // New state for handling local results display
   const [showResults, setShowResults] = useState(false);
@@ -288,6 +373,7 @@ export function AssessmentFlow({
     const fetchAssessment = async () => {
       try {
         setLoading(true);
+        setError(null);
 
         // Add timestamp to prevent caching
         const response = await fetch(
@@ -406,7 +492,7 @@ export function AssessmentFlow({
     fetchAssessment();
 
     return () => { controller.abort(); };
-  }, [assessmentId, initialAssessment]);
+  }, [assessmentId, initialAssessment, retryNonce]);
 
   // Handle results view
   if (showResults && calculatedResults) {
@@ -435,28 +521,26 @@ export function AssessmentFlow({
   // Error state
   if (error) {
     return (
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-6" style={{ backgroundColor: 'var(--color-bg-card)' }}>
-        <div className="max-w-md w-full text-center space-y-4">
-          <Icon name="alertCircle" size={48} className="text-[var(--color-status-error)] mx-auto" />
-          <h2 className="text-xl font-medium">Unable to Load</h2>
-          <p className="text-[var(--color-text-muted)]">{error}</p>
-          <Button onClick={onBack || (() => onNavigate?.('/assessment'))}>Go Back</Button>
-        </div>
-      </div>
+      <AssessmentErrorScreen
+        title="We couldn't open this assessment"
+        message={error}
+        onRetry={() => setRetryNonce(n => n + 1)}
+        onBack={onBack || (() => onNavigate?.('/assessment'))}
+        backLabel="Back to assessments"
+      />
     );
   }
 
   // Ensure program exists before rendering player
   if (!equipProgram) {
     return (
-       <div className="fixed inset-0 z-50 flex items-center justify-center p-6" style={{ backgroundColor: 'var(--color-bg-card)' }}>
-        <div className="max-w-md w-full text-center space-y-4">
-          <Icon name="alertCircle" size={48} className="text-[var(--color-status-error)] mx-auto" />
-          <h2 className="text-xl font-medium">Assessment Not Found</h2>
-          <p className="text-[var(--color-text-muted)]">The assessment data could not be initialized.</p>
-          <Button onClick={onBack || (() => onNavigate?.('/assessment'))}>Return to List</Button>
-        </div>
-      </div>
+      <AssessmentErrorScreen
+        title="Assessment not available"
+        message="We couldn't set up this assessment. It may have been moved or unpublished."
+        onRetry={assessmentId ? () => setRetryNonce(n => n + 1) : undefined}
+        onBack={onBack || (() => onNavigate?.('/assessment'))}
+        backLabel="Back to assessments"
+      />
     );
   }
 
