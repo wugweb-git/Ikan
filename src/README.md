@@ -29,11 +29,11 @@ See [Getting Started](docs/GETTING-STARTED.md) for full setup instructions.
 | [Architecture](docs/ARCHITECTURE.md) | Tech stack, three-tier architecture, data flow, auth, routing, PWA |
 | [Getting Started](docs/GETTING-STARTED.md) | Prerequisites, setup, environment config, available scripts |
 | [Project Structure](docs/PROJECT-STRUCTURE.md) | Complete directory layout with every component, hook, and module |
-| [Backend Guide](docs/BACKEND-GUIDE.md) | Hono server, KV store, auth middleware, route modules, debugging |
-| [API Reference](docs/API-REFERENCE.md) | Full route-by-route API documentation with request/response formats |
+| [Backend Guide](docs/BACKEND-GUIDE.md) | Hono server, KV store, auth middleware, route modules, debugging, full route-by-route API reference |
 | [Contributing](docs/CONTRIBUTING.md) | Code conventions, branch strategy, auth patterns, pre-push checklist |
 | [Deployment](docs/DEPLOYMENT.md) | Vercel + Supabase deployment, CI/CD pipeline, rollback, monitoring |
-| [Known Issues](docs/KNOWN-ISSUES.md) | Active issues, tech debt tracker, resolved issues log |
+| [Changelog](../CHANGELOG.md) | Dated record of what shipped |
+| [Pending](../PENDING.md) | Outstanding work, known defects, items blocked on you |
 | [Design System](guidelines/Guidelines.md) | Colors, typography, spacing, component guidelines, accessibility |
 
 ---
