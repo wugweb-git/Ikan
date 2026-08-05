@@ -28,6 +28,33 @@ interface AuditData {
   totalUsers: number;
 }
 
+interface SchemaData {
+  schema: {
+    prefix: string;
+    description: string;
+    owner: string;
+    consumers: string[];
+    category: string;
+    orphanRisk: string;
+    notes?: string;
+  }[];
+  totalPrefixes: number;
+  relations: {
+    label: string;
+    child: string;
+    parent: string;
+    joinFields: string[];
+    childCount: number;
+    parentCount: number;
+    missingRef: number;
+    exempt: number;
+    dangling: number;
+    healthy: boolean;
+  }[];
+  liveCounts: Record<string, number>;
+  unregisteredPrefixes: { prefix: string; count: number }[];
+}
+
 interface AdminKVAuditProps {
   onBack?: () => void;
 }
@@ -110,6 +137,8 @@ export function AdminKVAudit({ onBack }: AdminKVAuditProps) {
   const [loading, setLoading] = useState(false);
   const [audit, setAudit] = useState<AuditData | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [schema, setSchema] = useState<SchemaData | null>(null);
+  const [schemaLoading, setSchemaLoading] = useState(false);
   const [selectedOrphans, setSelectedOrphans] = useState<Set<string>>(new Set());
   const [cleanupLoading, setCleanupLoading] = useState(false);
   const [cleanupResult, setCleanupResult] = useState<string | null>(null);
@@ -154,9 +183,24 @@ export function AdminKVAudit({ onBack }: AdminKVAuditProps) {
     }
   }, []);
 
+  // Schema + live relation health. Loaded alongside the audit so the mapping is
+  // inspectable in the UI rather than only via SQL.
+  const loadSchema = useCallback(async () => {
+    setSchemaLoading(true);
+    try {
+      const res = await apiClient.getKVSchema();
+      setSchema(res as SchemaData);
+    } catch (err: any) {
+      console.error('KV schema error:', err);
+    } finally {
+      setSchemaLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
     runAudit();
-  }, [runAudit]);
+    loadSchema();
+  }, [runAudit, loadSchema]);
 
   const toggleOrphan = (key: string) => {
     setSelectedOrphans(prev => {
@@ -301,6 +345,136 @@ export function AdminKVAudit({ onBack }: AdminKVAuditProps) {
       }}>
         Last scanned: {new Date(audit.timestamp).toLocaleString()}
       </p>
+
+      {/* ─── Schema & Relations ─────────────────────────────── */}
+      <AuditSection
+        title="Schema & Relations"
+        icon={Database}
+        count={schema?.totalPrefixes ?? 0}
+        variant={
+          schema?.relations.some(r => !r.healthy) || (schema?.unregisteredPrefixes.length ?? 0) > 0
+            ? 'warning'
+            : 'success'
+        }
+      >
+        {schemaLoading && !schema ? (
+          <div className="flex items-center gap-2" style={{ color: 'var(--color-text-muted)' }}>
+            <Loader2 className="w-4 h-4 animate-spin" />
+            <span style={{ fontFamily: 'var(--font-family-base)', fontSize: 'var(--text-sm)' }}>Loading schema…</span>
+          </div>
+        ) : !schema ? (
+          <p style={{ fontFamily: 'var(--font-family-base)', fontSize: 'var(--text-sm)', color: 'var(--color-text-muted)' }}>
+            Schema unavailable.
+          </p>
+        ) : (
+          <div className="space-y-6">
+
+            {/* Relations — how records actually link, and whether they hold */}
+            <div>
+              <p style={{ fontFamily: 'var(--font-family-base)', fontSize: 'var(--text-sm)', fontWeight: 600, marginBottom: 4 }}>
+                Parent → child relations
+              </p>
+              <p style={{ fontFamily: 'var(--font-family-base)', fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)', marginBottom: 12 }}>
+                Joined on value fields, not key structure. "Exempt" are references that legitimately have no parent record.
+              </p>
+              <div className="overflow-x-auto">
+                <table className="w-full" style={{ fontFamily: 'var(--font-family-base)', fontSize: 'var(--text-xs)', borderCollapse: 'collapse' }}>
+                  <thead>
+                    <tr style={{ borderBottom: '1px solid var(--color-border-default)' }}>
+                      {['Relation', 'Join field', 'Children', 'Parents', 'No ref', 'Exempt', 'Dangling'].map(h => (
+                        <th key={h} style={{ textAlign: h === 'Relation' || h === 'Join field' ? 'left' : 'right', padding: '8px 10px', color: 'var(--color-text-muted)', whiteSpace: 'nowrap' }}>{h}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {schema.relations.map(r => (
+                      <tr key={r.label} style={{ borderBottom: '1px solid var(--color-bg-muted)' }}>
+                        <td style={{ padding: '8px 10px', whiteSpace: 'nowrap' }}>
+                          <span className="inline-flex items-center gap-1.5">
+                            {r.healthy
+                              ? <CircleCheck className="w-3 h-3" style={{ color: 'var(--color-status-success)' }} />
+                              : <CircleX className="w-3 h-3" style={{ color: 'var(--color-status-danger)' }} />}
+                            {r.label}
+                          </span>
+                        </td>
+                        <td style={{ padding: '8px 10px', color: 'var(--color-text-muted)', fontFamily: 'monospace' }}>{r.joinFields[0]}</td>
+                        <td style={{ padding: '8px 10px', textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>{r.childCount}</td>
+                        <td style={{ padding: '8px 10px', textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>{r.parentCount}</td>
+                        <td style={{ padding: '8px 10px', textAlign: 'right', fontVariantNumeric: 'tabular-nums', color: r.missingRef ? 'var(--color-status-warning)' : 'inherit' }}>{r.missingRef}</td>
+                        <td style={{ padding: '8px 10px', textAlign: 'right', fontVariantNumeric: 'tabular-nums', color: 'var(--color-text-muted)' }}>{r.exempt}</td>
+                        <td style={{ padding: '8px 10px', textAlign: 'right', fontVariantNumeric: 'tabular-nums', fontWeight: r.dangling ? 600 : 400, color: r.dangling ? 'var(--color-status-danger)' : 'inherit' }}>{r.dangling}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {/* Unregistered prefixes — the exact condition that caused the purge incident */}
+            {schema.unregisteredPrefixes.length > 0 && (
+              <div style={{ padding: 12, borderRadius: 'var(--radius-md)', backgroundColor: 'var(--color-status-warning-light)' }}>
+                <p style={{ fontFamily: 'var(--font-family-base)', fontSize: 'var(--text-sm)', fontWeight: 600, color: 'var(--color-status-warning)', marginBottom: 6 }}>
+                  {schema.unregisteredPrefixes.length} unregistered prefix{schema.unregisteredPrefixes.length === 1 ? '' : 'es'}
+                </p>
+                <p style={{ fontFamily: 'var(--font-family-base)', fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)', marginBottom: 8 }}>
+                  Live keys with no KEY_REGISTRY entry. Register each one — unregistered prefixes are what the purge tool
+                  offers to delete as "uncategorised", which is how the assessment slug index was lost.
+                </p>
+                <div className="flex flex-wrap gap-1.5">
+                  {schema.unregisteredPrefixes.map(u => (
+                    <span key={u.prefix} style={{ fontFamily: 'monospace', fontSize: 'var(--text-xs)', padding: '2px 8px', borderRadius: 'var(--radius-pill)', backgroundColor: 'var(--color-bg-card)' }}>
+                      {u.prefix} ({u.count})
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Registry */}
+            <div>
+              <p style={{ fontFamily: 'var(--font-family-base)', fontSize: 'var(--text-sm)', fontWeight: 600, marginBottom: 12 }}>
+                Registry ({schema.totalPrefixes} prefixes)
+              </p>
+              <div className="overflow-x-auto" style={{ maxHeight: 420, overflowY: 'auto' }}>
+                <table className="w-full" style={{ fontFamily: 'var(--font-family-base)', fontSize: 'var(--text-xs)', borderCollapse: 'collapse' }}>
+                  <thead style={{ position: 'sticky', top: 0, backgroundColor: 'var(--color-bg-card)' }}>
+                    <tr style={{ borderBottom: '1px solid var(--color-border-default)' }}>
+                      {['Prefix', 'Live', 'Category', 'Owner', 'Risk'].map(h => (
+                        <th key={h} style={{ textAlign: h === 'Live' ? 'right' : 'left', padding: '8px 10px', color: 'var(--color-text-muted)', whiteSpace: 'nowrap' }}>{h}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {schema.schema.map(s => (
+                      <tr key={s.prefix} style={{ borderBottom: '1px solid var(--color-bg-muted)' }}>
+                        <td style={{ padding: '8px 10px', fontFamily: 'monospace', whiteSpace: 'nowrap' }}>{s.prefix}</td>
+                        <td style={{ padding: '8px 10px', textAlign: 'right', fontVariantNumeric: 'tabular-nums', color: (schema.liveCounts[s.prefix] ?? 0) === 0 ? 'var(--color-text-muted)' : 'inherit' }}>
+                          {schema.liveCounts[s.prefix] ?? 0}
+                        </td>
+                        <td style={{ padding: '8px 10px', color: 'var(--color-text-muted)' }}>{s.category}</td>
+                        <td style={{ padding: '8px 10px', color: 'var(--color-text-muted)', whiteSpace: 'nowrap' }}>{s.owner}</td>
+                        <td style={{ padding: '8px 10px' }}>
+                          <span style={{
+                            fontSize: 'var(--text-xs)', padding: '2px 8px', borderRadius: 'var(--radius-pill)',
+                            backgroundColor: s.orphanRisk === 'high' ? 'var(--color-status-danger-light)'
+                              : s.orphanRisk === 'medium' ? 'var(--color-status-warning-light)'
+                              : 'var(--color-bg-muted)',
+                            color: s.orphanRisk === 'high' ? 'var(--color-status-danger)'
+                              : s.orphanRisk === 'medium' ? 'var(--color-status-warning)'
+                              : 'var(--color-text-muted)',
+                          }}>
+                            {s.orphanRisk}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        )}
+      </AuditSection>
 
       {/* ─── Orphans ────────────────────────────────────────── */}
       <AuditSection

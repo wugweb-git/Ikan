@@ -263,8 +263,30 @@ app.delete("/admin/assessments/:id", requireAdmin, async (c) => {
       }
       console.log(`   Also cleaned slug alias: ${existing.slug}`);
     }
-    
-    return c.json({ success: true, keysRemoved: keysToClean.length });
+
+    // Flag dependent results rather than deleting them. These are the user's
+    // own assessment history and must survive the definition being removed —
+    // but without a marker they read as orphans pointing at a missing parent.
+    let flagged = 0;
+    try {
+      const results = await kv.getKeyValuesByPrefix('assessment_result:');
+      for (const { key, value } of results) {
+        if (value?.assessment_id === id && !value.assessment_deleted) {
+          await kv.set(key, {
+            ...value,
+            assessment_deleted: true,
+            assessment_deleted_at: new Date().toISOString(),
+            assessment_title_snapshot: existing?.title ?? null,
+          });
+          flagged++;
+        }
+      }
+    } catch (e) {
+      console.error('Failed to flag dependent assessment results:', e);
+    }
+    if (flagged) console.log(`   Flagged ${flagged} dependent result(s) as assessment_deleted`);
+
+    return c.json({ success: true, keysRemoved: keysToClean.length, resultsFlagged: flagged });
   } catch (error) {
     console.error('Delete assessment error:', error);
     return c.json({ error: 'Failed to delete assessment' }, 500);
@@ -327,10 +349,8 @@ app.put("/admin/resources/:id", requireAdmin, async (c) => {
 app.delete("/admin/resources/:id", requireAdmin, async (c) => {
   try {
     const id = c.req.param("id");
-    // Clean BOTH prefixes — resources may exist under resource: or library:resource:
     await kv.del(`resource:${id}`);
-    await kv.del(`library:resource:${id}`);
-    console.log(`✅ Resource deleted from both prefixes: ${id}`);
+    console.log(`Resource deleted: ${id}`);
     return c.json({ success: true });
   } catch (error) {
     return c.json({ error: "Failed to delete resource" }, 500);
@@ -1386,19 +1406,9 @@ app.post("/admin/kv-audit/sync-prefixes", requireAdmin, async (c) => {
       }
     }
 
-    // ── Sync resource: → library:resource: ────────────────
-    const resources = await kv.getByPrefix("resource:");
-    for (const res of resources) {
-      if (!res || !res.id) continue;
-      const existingLib = await kv.get(`library:resource:${res.id}`);
-      if (!existingLib) {
-        actions.push(`SYNC resource:${res.id} → library:resource:${res.id}`);
-        if (!dryRun) {
-          await kv.set(`library:resource:${res.id}`, res);
-        }
-        synced++;
-      }
-    }
+    // resource: → library:resource: sync removed.
+    // The mirror was written only by delete, never by create or update, so it
+    // drifted into stale snapshots. Readers now use resource: directly.
 
     console.log(`${dryRun ? "DRY RUN" : "EXECUTED"}: Synced ${synced} records across prefixes`);
 

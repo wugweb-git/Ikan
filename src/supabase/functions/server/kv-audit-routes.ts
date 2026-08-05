@@ -78,7 +78,7 @@ const KV_SCHEMA: KVKeyDef[] = [
   // ── JOURNALS / MOOD ─────────────────────────────────────────
   { prefix: "journal:", description: "Journal entry by ID", owner: "index.tsx,mood-routes.ts", consumers: ["index.tsx"], scoped: "entity", category: "journal", orphanRisk: "medium" },
   { prefix: "journal_by_user:", description: "Journal user-date index", owner: "index.tsx,mood-routes.ts", consumers: ["index.tsx,mood-routes.ts"], scoped: "user", category: "journal", orphanRisk: "medium" },
-  { prefix: "mood:", description: "Mood entry record", owner: "mood-routes.ts", consumers: ["mood-routes.ts"], scoped: "user", category: "journal", orphanRisk: "low", notes: "Individual mood log entries" },
+  { prefix: "mood:", description: "Mood log entries AND mood-type definitions (two shapes share this prefix)", owner: "mood-routes.ts,scales-routes.ts,index.tsx", consumers: ["mood-routes.ts","scales-routes.ts","index.tsx"], scoped: "user", category: "journal", orphanRisk: "low", notes: "Collision: per-user log entries and global mood-type config both live here, written by three different files. mood_type: holds a third copy of the type config. Editing via one admin screen will not reflect in another." },
   { prefix: "mood_type:", description: "Mood type definition", owner: "mood-routes.ts", consumers: ["mood-routes.ts"], scoped: "global", category: "journal", orphanRisk: "none", notes: "Configurable mood types" },
 
   // ── ENROLLMENT & PROGRESS ───────────────────────────────────
@@ -88,11 +88,12 @@ const KV_SCHEMA: KVKeyDef[] = [
   { prefix: "program-progress:", description: "Program progress (hyphen - legacy)", owner: "unknown", consumers: ["index.tsx (data export)"], scoped: "user", category: "enrollment", orphanRisk: "high" },
 
   // ── RESOURCES / LIBRARY ─────────────────────────────────────
-  { prefix: "resource:", description: "Resource (admin)", owner: "admin-routes.ts,resource-routes.ts", consumers: ["admin-routes.ts","resource-routes.ts","index.tsx (fallback)"], scoped: "entity", category: "resource", orphanRisk: "low" },
-  { prefix: "library:resource:", description: "Resource (library prefix)", owner: "index.tsx", consumers: ["index.tsx"], scoped: "entity", category: "resource", orphanRisk: "medium" },
+  { prefix: "resource:", description: "Resource (canonical)", owner: "admin-routes.ts,resource-routes.ts", consumers: ["admin-routes.ts","resource-routes.ts","index.tsx"], scoped: "entity", category: "resource", orphanRisk: "low" },
+  { prefix: "resource_view:", description: "Resource view tracking", owner: "resource-routes.ts", consumers: ["resource-routes.ts","index.tsx"], scoped: "user", category: "resource", orphanRisk: "low", notes: "Append-only view log; grows unbounded" },
+  { prefix: "library:resource:", description: "DEPRECATED mirror of resource: — no longer written; readers fall back to resource:", owner: "(none)", consumers: [], scoped: "entity", category: "resource", orphanRisk: "medium", notes: "Only delete maintained it, so mirrors were stale snapshots. Any key appearing here now is a regression." },
 
   // ── CATEGORIES ──────────────────────────────────────────────
-  { prefix: "category:", description: "Category", owner: "admin-routes.ts", consumers: ["admin-routes.ts","resource-routes.ts"], scoped: "entity", category: "category", orphanRisk: "low" },
+  { prefix: "category:", description: "Category / generic taxonomy (~15 enum types keyed by a `type` field: expertise_category, interaction_type, therapeutic_approach, language, …)", owner: "index.tsx", consumers: ["index.tsx","admin-routes.ts","resource-routes.ts"], scoped: "entity", category: "category", orphanRisk: "low", notes: "index.tsx owns /categories CRUD; admin-routes.ts has a parallel /admin/categories set" },
 
   // ── MEDIA ───────────────────────────────────────────────────
   { prefix: "media:", description: "Media file metadata", owner: "admin-routes.ts", consumers: ["admin-routes.ts"], scoped: "entity", category: "media", orphanRisk: "low" },
@@ -136,7 +137,7 @@ const KV_SCHEMA: KVKeyDef[] = [
   { prefix: "admin_notification:", description: "Admin notification", owner: "index.tsx", consumers: ["index.tsx"], scoped: "global", category: "admin", orphanRisk: "medium" },
 
   // ── SITE SETTINGS ───────────────────────────────────────────
-  { prefix: "settings:site", description: "Site settings (singleton)", owner: "index.tsx", consumers: ["index.tsx"], scoped: "global", category: "settings", orphanRisk: "none" },
+  { prefix: "settings:site", description: "Site settings (singleton)", owner: "index.tsx,admin-routes.ts", consumers: ["index.tsx","admin-routes.ts"], scoped: "global", category: "settings", orphanRisk: "none", notes: "Two writers: PUT /admin/settings merges, PUT /settings overwrites wholesale. Admin UI uses the merging one; the overwrite path would silently drop omitted fields." },
 
   // ── COMMUNICATION / BREVO ───────────────────────────────────
   { prefix: "comm-config:", description: "Communication channel config", owner: "index.tsx", consumers: ["index.tsx"], scoped: "global", category: "communication", orphanRisk: "low" },
@@ -253,6 +254,64 @@ function extractUserId(key: string): string | null {
   return match ? match[0] : null;
 }
 
+// ── Parent → child relations ────────────────────────────────────────
+// Records in this store relate through FIELDS INSIDE THE VALUE, not through
+// key structure. Checking key shape (or the idx_* index keys) reports records
+// as orphaned when they are correctly linked: every day: carries equip_id and
+// every block: carries equip_day_id, and none of them dangle — but the
+// idx_equip_days:/idx_day_blocks: keys those checks looked for do not exist in
+// this database and never did, because program content lives in the
+// equip.daily_content blob instead.
+//
+// Declare the real relations here and join on them. Anything added to the
+// store should gain an entry, so the auditor keeps describing the actual schema.
+interface Relation {
+  child: string;            // child key prefix
+  parent: string;           // parent key prefix
+  fields: string[];         // candidate fields on the child holding the parent reference
+  label: string;
+  /**
+   * By default the child's reference is the parent's id, resolved as
+   * `${parent}${id}`. When set, the reference instead matches one of these
+   * FIELDS on the parent record — resource.category holds a slug like
+   * "mental-health", not a category id, so it resolves against category.slug.
+   */
+  parentMatchFields?: string[];
+  /** References that legitimately have no parent record. */
+  exempt?: (id: string, value: any) => boolean;
+}
+
+const RELATIONS: Relation[] = [
+  { child: "day:",                 parent: "equip:",          fields: ["equip_id", "equipId"],            label: "day → equip" },
+  { child: "block:",               parent: "day:",            fields: ["equip_day_id", "day_id", "dayId"], label: "block → day" },
+  { child: "progress:",            parent: "equip:",          fields: ["equip_id", "equipId"],            label: "progress → equip" },
+  { child: "enrollment:",          parent: "equip:",          fields: ["programId", "equip_id"],          label: "enrollment → equip" },
+  { child: "recommendation_rule:", parent: "equip:",          fields: ["equip_id", "programId"],          label: "rule → equip" },
+  {
+    child: "resource:", parent: "category:", fields: ["category", "category_id", "categoryId"],
+    label: "resource → category",
+    parentMatchFields: ["slug", "name"],
+  },
+  {
+    child: "assessment_result:", parent: "assessment_def:", fields: ["assessment_id"],
+    label: "result → assessment",
+    // Check-ins reuse this field with a synthetic id that has no definition,
+    // and results whose assessment was deliberately deleted are kept as user
+    // history and flagged at delete time — neither is an orphan.
+    exempt: (id, value) => id.startsWith("checkin") || value?.assessment_deleted === true,
+  },
+];
+
+/** Resolve the parent id a child record points at, if any. */
+function parentIdFor(rel: Relation, value: any): string | null {
+  if (!value || typeof value !== "object") return null;
+  for (const f of rel.fields) {
+    const v = value[f];
+    if (typeof v === "string" && v !== "") return v;
+  }
+  return null;
+}
+
 // ── Route registration ────────────────────────────────────────
 
 export function registerKVAuditRoutes(app: Hono, requireAuth: any) {
@@ -279,6 +338,45 @@ export function registerKVAuditRoutes(app: Hono, requireAuth: any) {
 
       // Index of all keys for orphan detection
       const allKeySet = new Set(allRows.map(r => r.key));
+
+      // Owner set for user-data orphan checks. auth.users is authoritative —
+      // the `user:` KV records are stale copies (13 of them for 6 real
+      // accounts), so keying off those both missed real orphans and risked
+      // flagging live users. If the lookup fails, leave this null and skip the
+      // owner checks entirely rather than report every record as orphaned.
+      let authUserIds: Set<string> | null = null;
+      try {
+        const { data, error } = await supabase().auth.admin.listUsers({ perPage: 1000 });
+        if (error) {
+          console.log(`kv-audit: auth user list failed, skipping owner checks: ${error.message}`);
+        } else {
+          authUserIds = new Set((data?.users ?? []).map((u: any) => u.id));
+        }
+      } catch (err) {
+        console.log(`kv-audit: auth user list threw, skipping owner checks: ${err}`);
+      }
+
+      // Lazily-built index of parent field values, for relations that match a
+      // field on the parent (resource.category -> category.slug) rather than
+      // the parent's id. Built once per relation, not per row.
+      const parentFieldCache = new Map<string, Set<string>>();
+      const parentFieldIndex = (rel: Relation): Set<string> => {
+        const cacheKey = `${rel.child}->${rel.parent}`;
+        const cached = parentFieldCache.get(cacheKey);
+        if (cached) return cached;
+
+        const idx = new Set<string>();
+        for (const r of allRows) {
+          if (!r.key.startsWith(rel.parent)) continue;
+          if (!r.value || typeof r.value !== "object") continue;
+          for (const f of rel.parentMatchFields ?? []) {
+            const v = (r.value as any)[f];
+            if (typeof v === "string" && v !== "") idx.add(v);
+          }
+        }
+        parentFieldCache.set(cacheKey, idx);
+        return idx;
+      };
 
       for (const row of allRows) {
         const def = classifyKey(row.key);
@@ -349,26 +447,58 @@ export function registerKVAuditRoutes(app: Hono, requireAuth: any) {
           }
         }
 
-        // index records pointing to nonexistent parents
-        if (row.key.startsWith("idx_equip_days:")) {
-          const equipId = row.key.replace("idx_equip_days:", "");
-          if (!allKeySet.has(`equip:${equipId}`)) {
-            orphans.push({ key: row.key, reason: `Parent equip:${equipId} missing`, category: "index-dangling" });
+        // Parent references, joined on VALUE FIELDS.
+        // The previous checks here looked for idx_equip_days:/idx_day_blocks:
+        // index keys. Those do not exist in this database and never have, so
+        // the checks were dead while the records they were meant to validate
+        // (day:, block:) went unchecked. RELATIONS describes how records
+        // actually link; see the comment on that table.
+        for (const rel of RELATIONS) {
+          if (!row.key.startsWith(rel.child)) continue;
+
+          const ref = parentIdFor(rel, row.value);
+          if (!ref) {
+            orphans.push({
+              key: row.key,
+              reason: `${rel.label}: no parent reference (expected one of ${rel.fields.join(", ")})`,
+              category: "missing-parent-ref",
+            });
+            break;
           }
-        }
-        if (row.key.startsWith("idx_day_blocks:")) {
-          const dayId = row.key.replace("idx_day_blocks:", "");
-          if (!allKeySet.has(`day:${dayId}`)) {
-            orphans.push({ key: row.key, reason: `Parent day:${dayId} missing`, category: "index-dangling" });
+
+          if (rel.exempt?.(ref, row.value)) break;
+
+          const exists = rel.parentMatchFields
+            ? parentFieldIndex(rel).has(ref)
+            : allKeySet.has(`${rel.parent}${ref}`);
+
+          if (!exists) {
+            orphans.push({
+              key: row.key,
+              reason: `${rel.label}: parent "${ref}" not found`,
+              category: "parent-dangling",
+            });
           }
+          break;
         }
 
-        // user-scoped data for deleted users
+        // user-scoped data whose owner no longer exists.
+        // Checked against auth.users, not `user:{uid}` KV records: those are
+        // stale copies (13 exist for 6 real accounts), so keying off them both
+        // missed genuine orphans and could flag live users.
         if (row.key.startsWith("enrollment:") || row.key.startsWith("user_enrollment:") ||
-            row.key.startsWith("assessment_response_by_user:") || row.key.startsWith("journal_by_user:")) {
-          const uid = extractUserId(row.key);
-          if (uid && !allKeySet.has(`user:${uid}`)) {
-            orphans.push({ key: row.key, reason: `User ${uid.slice(0, 8)}... deleted`, category: "user-data-orphan" });
+            row.key.startsWith("assessment_response_by_user:") || row.key.startsWith("journal_by_user:") ||
+            row.key.startsWith("assessment_result:") || row.key.startsWith("journal:") ||
+            row.key.startsWith("progress:") || row.key.startsWith("ikan_score:") ||
+            row.key.startsWith("payment:")) {
+          const uid = extractUserId(row.key) ??
+            (typeof row.value === "object" ? (row.value?.user_id ?? row.value?.userId ?? null) : null);
+          if (uid && authUserIds && !authUserIds.has(uid)) {
+            orphans.push({
+              key: row.key,
+              reason: `Owner ${String(uid).slice(0, 8)}… no longer in auth.users`,
+              category: "user-data-orphan",
+            });
           }
         }
       }
@@ -756,19 +886,9 @@ export function registerKVAuditRoutes(app: Hono, requireAuth: any) {
         }
       }
 
-      // Sync resource: -> library:resource:
-      const resources = await kv.getByPrefix("resource:");
-      for (const res of resources) {
-        if (!res || !res.id) continue;
-        const existing = await kv.get(`library:resource:${res.id}`);
-        if (!existing) {
-          actions.push(`SYNC resource:${res.id} -> library:resource:${res.id}`);
-          if (!dryRun) {
-            await kv.set(`library:resource:${res.id}`, res);
-          }
-          synced++;
-        }
-      }
+      // resource: -> library:resource: sync removed.
+      // The mirror was written only by delete, never by create or update, so it
+      // drifted into stale snapshots. Readers now use resource: directly.
 
       console.log(`${dryRun ? "DRY RUN" : "EXECUTED"}: Synced ${synced} records`);
 
@@ -888,14 +1008,73 @@ export function registerKVAuditRoutes(app: Hono, requireAuth: any) {
         return c.json({ error: "Admin access required" }, 403);
       }
 
+      // Live relation health. The registry alone only says how things are
+      // *meant* to link; these counts say whether they actually do. Computed
+      // from a full scan, same source of truth the audit itself uses.
+      const allRows = await fullDatabaseScan();
+      const keySet = new Set(allRows.map(r => r.key));
+      const liveCounts: Record<string, number> = {};
+      for (const row of allRows) {
+        const p = row.key.indexOf(":") > 0 ? row.key.slice(0, row.key.indexOf(":") + 1) : row.key;
+        liveCounts[p] = (liveCounts[p] || 0) + 1;
+      }
+
+      // Same parent-field index the audit scan uses, rebuilt here because that
+      // one is scoped to its own handler. Built once per relation, not per row.
+      const parentFieldIndex = (rel: Relation): Set<string> => {
+        const idx = new Set<string>();
+        for (const r of allRows) {
+          if (!r.key.startsWith(rel.parent)) continue;
+          if (!r.value || typeof r.value !== "object") continue;
+          for (const f of rel.parentMatchFields ?? []) {
+            const v = (r.value as any)[f];
+            if (typeof v === "string" && v !== "") idx.add(v);
+          }
+        }
+        return idx;
+      };
+
+      const relationHealth = RELATIONS.map(rel => {
+        const children = allRows.filter(r => r.key.startsWith(rel.child));
+        const parentIdx = rel.parentMatchFields ? parentFieldIndex(rel) : null;
+        let missingRef = 0;
+        let dangling = 0;
+        let exempt = 0;
+
+        for (const child of children) {
+          const ref = parentIdFor(rel, child.value);
+          if (!ref) { missingRef++; continue; }
+          if (rel.exempt?.(ref, child.value)) { exempt++; continue; }
+          const exists = parentIdx ? parentIdx.has(ref) : keySet.has(`${rel.parent}${ref}`);
+          if (!exists) dangling++;
+        }
+
+        return {
+          label: rel.label,
+          child: rel.child,
+          parent: rel.parent,
+          joinFields: rel.fields,
+          childCount: children.length,
+          parentCount: liveCounts[rel.parent] ?? 0,
+          missingRef,
+          exempt,
+          dangling,
+          healthy: missingRef === 0 && dangling === 0,
+        };
+      });
+
       return c.json({
         schema: KV_SCHEMA,
         totalPrefixes: KV_SCHEMA.length,
         categories: [...new Set(KV_SCHEMA.map(s => s.category))],
+        relations: relationHealth,
+        liveCounts,
+        unregisteredPrefixes: Object.keys(liveCounts)
+          .filter(p => !p.startsWith("backup_") && !KV_SCHEMA.some(s => p.startsWith(s.prefix) || s.prefix.startsWith(p)))
+          .map(p => ({ prefix: p, count: liveCounts[p] })),
         criticalMismatches: [
           { admin: "equip:{id}", user: "equip_program:{id}", fix: "POST /admin/kv-audit/sync-prefixes" },
           { admin: "assessment_def:{id}", user: "assessment:{id}", fix: "POST /admin/kv-audit/sync-prefixes" },
-          { admin: "resource:{id}", user: "library:resource:{id}", fix: "POST /admin/kv-audit/sync-prefixes (or user code has fallback)" },
         ],
         writeOnlyPrefixes: KV_SCHEMA.filter(s => s.consumers.length === 0).map(s => s.prefix),
         neverWrittenPrefixes: KV_SCHEMA.filter(s => s.owner === "unknown" || s.owner.includes("seeded")).map(s => ({

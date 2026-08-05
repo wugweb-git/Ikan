@@ -92,12 +92,21 @@ export const EquipService = {
     // 1. Delete Slug Index
     await kv.del(`equip_slug:${equip.slug}`);
     
-    // 2. Delete Days (and their blocks)
-    const dayIds = await kv.get(`idx_equip_days:${id}`) || [];
+    // 2. Delete Days (and their blocks).
+    // Same problem as deleteDay: idx_equip_days: is empty in this database, so
+    // relying on it left every day and block behind on delete — the main source
+    // of orphan accumulation. Days carry equip_id, so match on that.
+    const indexedDayIds: string[] = (await kv.get(`idx_equip_days:${id}`)) || [];
+    const scannedDays = await kv.getByPrefix('day:');
+    const dayIds = new Set<string>(indexedDayIds);
+    for (const d of scannedDays) {
+      if (d?.id && (d.equip_id === id || d.equipId === id)) dayIds.add(d.id);
+    }
+
     for (const dayId of dayIds) {
       await EquipDayService.deleteDay(dayId); // This handles blocks
     }
-    
+
     // 3. Delete Index
     await kv.del(`idx_equip_days:${id}`);
     
@@ -122,6 +131,19 @@ export const EquipService = {
         }
     } catch (e) {
         console.error("Failed to cleanup enrollments during deleteEquip", e);
+    }
+
+    // 6. Cleanup per-day progress. Previously left behind entirely, so every
+    // deleted programme stranded its users' progress rows.
+    try {
+        const allProgress = await kv.getKeyValuesByPrefix('progress:');
+        for (const { key, value } of allProgress) {
+            if (value && (value.equip_id === id || value.equipId === id)) {
+                await kv.del(key);
+            }
+        }
+    } catch (e) {
+        console.error("Failed to cleanup progress during deleteEquip", e);
     }
   },
 
@@ -238,8 +260,21 @@ export const EquipDayService = {
     const day = await kv.get(`day:${id}`);
     if (!day) return;
 
-    // 1. Delete Blocks
-    const blockIds = await kv.get(`idx_day_blocks:${id}`) || [];
+    // 1. Delete Blocks.
+    // The idx_day_blocks: index is empty in this database (program content
+    // lives in the equip.daily_content blob, so the index was never written),
+    // which meant blocks were never cleaned up here and accumulated as
+    // orphans. Blocks carry equip_day_id, so match on that; still consult the
+    // index first in case it is populated in some environment.
+    const indexedBlockIds: string[] = (await kv.get(`idx_day_blocks:${id}`)) || [];
+    const scannedBlocks = await kv.getByPrefix('block:');
+    const blockIds = new Set<string>(indexedBlockIds);
+    for (const b of scannedBlocks) {
+      if (b?.id && (b.equip_day_id === id || b.day_id === id || b.dayId === id)) {
+        blockIds.add(b.id);
+      }
+    }
+
     for (const blockId of blockIds) {
       await EquipBlockService.deleteBlock(blockId);
     }

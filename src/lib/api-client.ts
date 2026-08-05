@@ -1278,6 +1278,10 @@ class ApiClient {
     return this.request('/admin/kv-audit', { method: 'GET' }, true);
   }
 
+  async getKVSchema() {
+    return this.request('/admin/kv-schema', { method: 'GET' }, true);
+  }
+
   async cleanupKVKeys(keys: string[], dryRun = true) {
     return this.request('/admin/kv-audit/cleanup', {
       method: 'POST',

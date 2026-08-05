@@ -2039,12 +2039,23 @@ app.put("/admin/professionals/:professionalId", requireAdmin, async (c) => {
     const professionalId = c.req.param('professionalId');
     
     const updates = await c.req.json();
-    const existingProfessional = await kv.get(`professional:${professionalId}`);
-    
-    if (!existingProfessional) {
+
+    // Records exist under professional: OR the legacy consultant: prefix, and
+    // the public read paths merge both. Looking only at professional: here made
+    // consultant:-only records publicly visible but impossible to edit.
+    // Write back to whichever key the record actually came from.
+    const key = (await kv.get(`professional:${professionalId}`))
+      ? `professional:${professionalId}`
+      : (await kv.get(`consultant:${professionalId}`))
+        ? `consultant:${professionalId}`
+        : null;
+
+    if (!key) {
       return c.json({ error: 'Professional not found' }, 404);
     }
-    
+
+    const existingProfessional = await kv.get(key);
+
     const updatedProfessional = {
       ...existingProfessional,
       ...updates,
@@ -2052,9 +2063,9 @@ app.put("/admin/professionals/:professionalId", requireAdmin, async (c) => {
       professional_id: professionalId,
       updated_at: new Date().toISOString()
     };
-    
-    await kv.set(`professional:${professionalId}`, updatedProfessional);
-    
+
+    await kv.set(key, updatedProfessional);
+
     console.log(`✅ Professional updated: ${professionalId}`);
     return c.json({ professional: updatedProfessional });
   } catch (error) {
@@ -2067,13 +2078,20 @@ app.delete("/admin/professionals/:professionalId", requireAdmin, async (c) => {
   try {
     const professionalId = c.req.param('professionalId');
     
-    const existingProfessional = await kv.get(`professional:${professionalId}`);
-    if (!existingProfessional) {
+    // Same dual-prefix handling as the update path above: consultant:-only
+    // records were previously undeletable.
+    const keys = [`professional:${professionalId}`, `consultant:${professionalId}`];
+    const present = [];
+    for (const k of keys) {
+      if (await kv.get(k)) present.push(k);
+    }
+
+    if (present.length === 0) {
       return c.json({ error: 'Professional not found' }, 404);
     }
-    
-    await kv.del(`professional:${professionalId}`);
-    
+
+    for (const k of present) await kv.del(k);
+
     console.log(`✅ Professional deleted: ${professionalId}`);
     return c.json({ success: true, message: 'Professional deleted successfully' });
   } catch (error) {
@@ -3326,8 +3344,26 @@ app.delete("/categories/:categoryId", requireAuth, async (c) => {
       return c.json({ error: 'Category not found' }, 404);
     }
     
+    // Refuse if resources still reference this category. They store the
+    // category's slug/name rather than its id, so match on those. Deleting
+    // anyway would leave those resources pointing at nothing.
+    const refValues = [existingCategory.slug, existingCategory.name].filter(Boolean);
+    if (refValues.length > 0) {
+      const resources = await kv.getByPrefix('resource:');
+      const referencing = resources.filter((r: any) =>
+        r && refValues.includes(r.category)
+      );
+      if (referencing.length > 0) {
+        return c.json({
+          error: 'Category is in use',
+          detail: `${referencing.length} resource(s) still reference "${existingCategory.slug ?? existingCategory.name}". Reassign them before deleting.`,
+          resources: referencing.slice(0, 20).map((r: any) => ({ id: r.id, title: r.title })),
+        }, 409);
+      }
+    }
+
     await kv.del(`category:${categoryId}`);
-    console.log(`✅ Category deleted: ${categoryId}`);
+    console.log(`Category deleted: ${categoryId}`);
     return c.json({ success: true });
   } catch (error) {
     console.error('Delete category error:', error);
@@ -3638,10 +3674,11 @@ app.get("/user-activity/history", requireAuth, async (c) => {
     // We need to fetch the actual resource titles/images
     const hydratedHistory = [];
     for (const view of uniqueViews) {
-      // Try library prefix first, then legacy
-      let resource = await kv.get(`library:resource:${view.resourceId}`);
-      if (!resource) resource = await kv.get(`resource:${view.resourceId}`);
-      
+      // resource: is canonical. The old library:resource: mirror was only
+      // maintained on delete — never on create or update — so reading it first
+      // served pre-edit snapshots here.
+      const resource = await kv.get(`resource:${view.resourceId}`);
+
       // If found, add to list
       if (resource) {
         hydratedHistory.push({
