@@ -8,6 +8,8 @@ import { Icon } from '../Icon';
 import { useNotifications } from '../../contexts/NotificationContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { apiClient } from '../../lib/api-client';
+import { computeSectionScores } from '../../lib/assessment-sections';
+import { SECTION_PRESETS } from '../../lib/assessment-section-presets';
 import { ProgressIndicator } from '../ui/progress-indicator';
 import { AssessmentResults } from './AssessmentResults';
 import { useOfflineSync } from '../../hooks/useOfflineSync';
@@ -274,6 +276,16 @@ export function AssessmentFlow({
          (assessment as any).scoring_profile_id || (assessment as any).scoringProfileId
       );
 
+      // Per-scale breakdown, when this assessment declares sections. Falls back
+      // to the presets keyed by slug until sections are authored in admin.
+      // Returns { sectioned: false } for ordinary single-score assessments, so
+      // the existing presentation is untouched for those.
+      const sectionConfig =
+        (assessment as any).sections
+          ? assessment
+          : { ...assessment, ...(SECTION_PRESETS[(assessment as any).slug] ?? {}) };
+      const sectionScores = computeSectionScores(sectionConfig as any, responses);
+
       // Construct Results Object
       results = {
         assessmentId: assessment.id,
@@ -288,7 +300,10 @@ export function AssessmentFlow({
         },
         responses,
         completedAt: new Date().toISOString(),
-        recommendation // Include full engine result
+        recommendation, // Include full engine result
+        // Must be JSON-serialisable: the standalone /assessment-results route
+        // hydrates only from the sessionStorage blob written below.
+        sectionScores: sectionScores.sectioned ? sectionScores : undefined
       };
 
       // 2. Set State to Show Results Immediately (Optimistic UI)
@@ -318,7 +333,8 @@ export function AssessmentFlow({
                 score,
                 interpretation,
                 interpretation.label,
-                maxScore
+                maxScore,
+                sectionScores.sectioned ? sectionScores : undefined
                );
              } else {
                // B. Queue for offline sync
@@ -327,8 +343,10 @@ export function AssessmentFlow({
                  responses,
                  status: 'completed',
                  score,
+                 maxScore,
                  interpretation,
-                 severityHint: interpretation.label
+                 severityHint: interpretation.label,
+                 sectionScores: sectionScores.sectioned ? sectionScores : undefined
                });
                showToast('info', 'Saved Locally', 'Your results will sync when you are back online.');
              }
@@ -340,8 +358,10 @@ export function AssessmentFlow({
               responses,
               status: 'completed',
               score,
+              maxScore,
               interpretation,
-              severityHint: interpretation.label
+              severityHint: interpretation.label,
+              sectionScores: sectionScores.sectioned ? sectionScores : undefined
             });
             showToast('warning', 'Saved Locally', 'Your results are saved locally and will sync later.');
           }

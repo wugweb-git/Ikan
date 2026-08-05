@@ -834,15 +834,16 @@ class ApiClient {
   }
 
   async saveAssessmentResponse(
-    assessmentId: string, 
-    responses: AssessmentResponses, 
-    status: string, 
-    score: number, 
-    interpretation: AssessmentInterpretation, 
+    assessmentId: string,
+    responses: AssessmentResponses,
+    status: string,
+    score: number,
+    interpretation: AssessmentInterpretation,
     severityHint?: string,
-    maxScore?: number
+    maxScore?: number,
+    sectionScores?: unknown
   ) {
-    return this.request('/user/assessments', { 
+    return this.request('/user/assessments', {
       method: 'POST',
       body: JSON.stringify({
         assessmentId,
@@ -851,7 +852,8 @@ class ApiClient {
         score,
         maxScore,
         interpretation,
-        severityHint
+        severityHint,
+        sectionScores
       })
     }, true);
   }

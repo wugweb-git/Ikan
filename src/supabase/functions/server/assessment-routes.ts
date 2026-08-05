@@ -108,6 +108,12 @@ export function registerAssessmentRoutes(app: Hono, requireAuth: any) {
                 interpretation: data.interpretation,
                 responses: data.responses,
                 severity_hint: data.severityHint,
+                // Per-scale breakdown for multi-instrument assessments (the
+                // General questionnaire and Burnout). Null for single-score
+                // assessments. score/max_score above stay populated either way:
+                // ikan-score-routes aggregates wellness from those two fields
+                // alone, so dropping them would silently break the iKAN score.
+                section_scores: data.sectionScores ?? null,
                 completed_at: new Date().toISOString()
             };
             
