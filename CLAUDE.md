@@ -2,6 +2,8 @@
 
 This file is read by AI coding assistants. It documents the conventions, architecture decisions, and sharp edges that aren't obvious from reading the code.
 
+**Also read:** [`GOVERNANCE.md`](GOVERNANCE.md) (process rules — each one traces to a real incident), [`PENDING.md`](PENDING.md) (outstanding work, updated per deploy), [`CHANGELOG.md`](CHANGELOG.md) (dated record of what shipped).
+
 ---
 
 ## Stack (current)
@@ -52,7 +54,11 @@ All API routes live in one Deno/Hono function: **`make-server-cc205da9`**.
 
 ## KV store model
 
-Everything lives in one Postgres table `kv_store_cc205da9` with RLS enabled and **no policies** (service-role-only access via the edge function). Key prefixes:
+Everything lives in one Postgres table `kv_store_cc205da9` with RLS enabled and **no policies** (service-role-only access via the edge function).
+
+**Records relate to each other through fields inside the value, not through key structure.** This has bitten the codebase twice: an orphan-detector once checked for `idx_equip_days:`/`idx_day_blocks:` index keys to validate day/block records — those index prefixes don't exist and never have, so 328 correctly-linked records were reported as orphaned while the actual `equip_id`/`equip_day_id` fields went unchecked. Separately, a `resource → category` relation check assumed a `category_id` field when every resource actually stores a plain `category` string. Before writing a relation check, a cascade, or a migration, read a live record and confirm the field name — don't assume it matches a similarly-named entity.
+
+Key prefixes:
 
 | Prefix | Content |
 |--------|---------|
@@ -60,10 +66,8 @@ Everything lives in one Postgres table `kv_store_cc205da9` with RLS enabled and 
 | `assessment_slug:{slug}` | → assessment id (slug index) |
 | `equip:{id}` | Equip program metadata |
 | `equip_slug:{slug}` | → equip id (slug index) |
-| `day:{id}` | Program day |
-| `idx_equip_days:{equipId}` | List of day IDs for a program |
-| `idx_day_blocks:{dayId}` | List of block IDs for a day |
-| `block:{id}` | Individual content block |
+| `day:{id}` | Program day — related to its equip via a `equip_id` field on the value, not a key convention |
+| `block:{id}` | Individual content block — related to its day via `equip_day_id` on the value |
 | `cms_page:{pageId}` | CMS page content (overrides code defaults) |
 | `settings:site` | Global site settings (phone, email, etc.) |
 | `checkin_scale:{key}` | Custom check-in scale (emoji set + labels) |
@@ -75,23 +79,22 @@ Everything lives in one Postgres table `kv_store_cc205da9` with RLS enabled and 
 
 ## Migration in progress: user data → real tables
 
-User data is being moved out of the KV blob into real Postgres tables. **Phase 1 (shadow copy) is done; the app has NOT been cut over.**
+User data is being moved out of the KV blob into real Postgres tables, one entity at a time: **shadow tables + RLS → dual-write → cut over reads → retire the KV prefix.** Row counts change as usage continues; see `PENDING.md` §D for current status, not this file.
 
-| Table | Rows | Source prefix |
-|-------|------|---------------|
-| `user_assessment_results` | 93 | `assessment_result:` |
-| `user_enrollments` | 51 | `enrollment:` |
-| `user_program_progress` | 86 | `progress:` |
-| `user_journal_entries` | 23 | `journal:` |
-| `user_ikan_scores` | 53 | `ikan_score:` |
+| Table | Source prefix | Status |
+|-------|---------------|--------|
+| `user_journal_entries` | `journal:` | Dual-writing (both write paths covered); reads still KV |
+| `user_enrollments` | `enrollment:` | Shadow copy only |
+| `user_program_progress` | `progress:` | Shadow copy only |
+| `user_assessment_results` | `assessment_result:` | Shadow copy only |
+| `user_ikan_scores` | `ikan_score:` | Shadow copy only |
 
-- **KV is still the source of truth.** These tables are populated copies; nothing reads them yet. The edge function is unchanged.
+- **KV is still the source of truth for every entity.** The edge function's read path is unchanged until an entity explicitly cuts over.
 - Every row keeps its original KV record verbatim in a `data jsonb` column, so the migration is lossless and reversible (`DROP TABLE` returns you to the previous state).
 - All five have **RLS with `auth.uid() = user_id`** — verified by impersonation test: a user sees only their own rows, service role sees all. The edge function uses the service role and so bypasses RLS.
 - `kv_key` on each row links back to the originating KV key.
 - Helper casts `try_numeric()` / `try_timestamptz()` exist because KV is untyped; EXECUTE is revoked from `anon`/`authenticated`.
-
-**Next phase** (not started): switch edge-function reads to these tables, then writes, then retire the KV prefixes. Do this one entity at a time with dual-write, not big-bang.
+- **There are two incompatible enrollment shapes in KV**, both introduced the same day: `enrollment:{enrollmentId}` (the real one, used everywhere) and `enrollment:{userId}:{equipId}` (defined in `progress-service.ts` but never actually written). Code that reads/writes enrollments must resolve by scanning `enrollment:` and matching `userId`/`programId` fields — not by constructing the composite key.
 
 Known data notes: `assessment_result:` stores each result twice in KV (canonical `…:{resultId}` plus a `…:{assessmentId}:latest` copy) — the tables hold 93 de-duplicated logical results, no data lost. `assessment_id` has no FK because it legitimately holds synthetic check-in ids (`checkin_{equipId}_day_N`).
 
@@ -116,7 +119,7 @@ Known data notes: `assessment_result:` stores each result twice in KV (canonical
 - Email confirmation is ON. New users get a Supabase native confirmation email.
 - `/reset-password` route exists (`src/components/screens/ResetPassword.tsx`).
 - Auto-create-on-failed-login has been **removed** from `AuthContext.tsx`.
-- Leaked-password protection is enabled.
+- Leaked-password protection is **not** enabled yet — this needs to be turned on from the Supabase dashboard (Auth → Providers). See `PENDING.md` §A.
 - Supabase OAuth provider: Google (for Google Fit linking via `linkIdentity`).
 
 ---
@@ -128,7 +131,7 @@ Known data notes: `assessment_result:` stores each result twice in KV (canonical
 - **Don't enable `email_confirm: false` in the edge function signup path.** That backdoor was removed in Batch 4. Users must verify their email.
 - **Don't add `EXECUTE` grants on `kv_store_row_count()` or `rls_auto_enable()` to `anon`/`authenticated`/`PUBLIC`.** These SECURITY DEFINER functions are locked down intentionally.
 - **Don't delete `wrappers_fdw_stats`** — it's extension-owned. It shows as a `rls_disabled_in_public` ERROR in the security advisor; RLS **can** be enabled on it, but only from the Supabase dashboard ("Resolve issue"), because the table is owned by `supabase_admin` and `ALTER TABLE` from a migration fails with `42501: must be owner of table`.
-- **Don't purge KV by prefix without checking `KV_SCHEMA`** (`server/kv-audit-routes.ts`). Reverse-index keys (`assessment_slug:`, `equip_slug:`, `page_slug:`, `idx_*`) look like orphans but are load-bearing — purging `assessment_slug:` once broke every `/assessment/<slug>` URL site-wide. The purge endpoint now refuses protected prefixes and requires `force` for registered ones. **Any new KV prefix must be added to `KV_SCHEMA`**, or the auditor will report it as uncategorized.
+- **Don't purge KV by prefix without checking `KEY_REGISTRY`** (`server/kv-audit-routes.ts`). Reverse-index keys (`assessment_slug:`, `equip_slug:`, `page_slug:`) look like orphans but are load-bearing — purging `assessment_slug:` once broke every `/assessment/<slug>` URL site-wide. The purge endpoint now refuses protected prefixes and requires `force` for registered ones. **Any new KV prefix must be added to `KEY_REGISTRY` in the same commit that introduces it** — see `GOVERNANCE.md` Rule 2 for why this is non-negotiable, not just tidy.
 - **Don't store secrets in code.** `SUPABASE_SERVICE_ROLE_KEY` lives only in Vercel env + the edge function runtime. The anon key in `src/lib/supabase-client.ts` is public by design.
 
 ---
