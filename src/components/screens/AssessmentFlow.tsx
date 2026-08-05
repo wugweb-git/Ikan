@@ -519,6 +519,7 @@ export function AssessmentFlow({
     return (
       <AssessmentResults 
          assessmentId={calculatedResults.assessmentId}
+       sectionScores={calculatedResults.sectionScores}
          score={calculatedResults.score}
          maxScore={calculatedResults.maxScore}
          recommendation={calculatedResults.recommendation}

@@ -8,12 +8,15 @@ import { EngineResult, SeverityLevel, getSeverityBandFromProfile } from '../../l
 import { apiClient } from '../../lib/api-client';
 import { ContentImage } from '../ui/ContentImage';
 import { ArrowRight } from 'lucide-react';
+import { SectionReportCard } from '../blocks/SectionReportCard';
+import type { SectionScoreResult } from '../../lib/assessment-sections';
 
 interface AssessmentResultsProps {
   assessmentId?: string;
   score?: number;
   maxScore?: number;
   recommendation?: EngineResult;
+  sectionScores?: SectionScoreResult;
   onNavigate?: (route: string) => void;
   onReturnToDashboard?: () => void;
   onRetake?: () => void;
@@ -79,7 +82,7 @@ function ScoreRing({ score, maxScore, color, size = 140 }: { score: number; maxS
 }
 
 export function AssessmentResults({ 
-  assessmentId, score, maxScore, recommendation,
+  assessmentId, score, maxScore, recommendation, sectionScores,
   onNavigate, onReturnToDashboard, onRetake, className 
 }: AssessmentResultsProps) {
   
@@ -98,7 +101,10 @@ export function AssessmentResults({
     assessmentId: assessmentId || hydratedData?.assessmentId,
     score: score ?? hydratedData?.score,
     maxScore: maxScore ?? hydratedData?.maxScore,
-    recommendation: recommendation || hydratedData?.recommendation as EngineResult | undefined
+    recommendation: recommendation || hydratedData?.recommendation as EngineResult | undefined,
+    // Present only for multi-instrument assessments. Arrives via prop in the
+    // in-flow render and via the sessionStorage blob on the standalone route.
+    sectionScores: (sectionScores ?? hydratedData?.sectionScores) as SectionScoreResult | undefined
   };
 
   if (!activeData.recommendation) {
@@ -134,6 +140,8 @@ export function AssessmentResults({
   }
 
   const { recommendation: rec, score: activeScore, maxScore: activeMax } = activeData;
+  const sections = activeData.sectionScores;
+  const isSectioned = !!sections?.sectioned && sections.sections.length > 0;
 
   const getSeverityColor = (severity: SeverityLevel) => {
     // Try to get color from scoring profile band first
@@ -174,30 +182,40 @@ export function AssessmentResults({
         className="flex flex-col items-center"
         style={{ gap: 32 }}
       >
-        {/* ── Score Ring ── */}
-        <div className="flex flex-col items-center" style={{ gap: 16, paddingTop: 16 }}>
-          <ScoreRing
-            score={activeScore || 0}
-            maxScore={activeMax || 1}
-            color={severityColor}
-            size={140}
-          />
-          
-          {/* Severity badge */}
-          <span style={{
-            display: 'inline-block',
-            fontSize: 'var(--text-sm)',
-            fontWeight: 500,
-            fontFamily: 'var(--font-family-base)',
-            color: severityColor,
-            backgroundColor: `color-mix(in srgb, ${severityColor} 10%, transparent)`,
-            padding: '6px 16px',
-            borderRadius: 'var(--radius-pill)',
-            textTransform: 'capitalize',
-          }}>
-            {rec.severity} severity
-          </span>
-        </div>
+        {/* ── Score ──
+            Multi-instrument assessments show a per-scale breakdown instead of
+            one ring: a single total across GAD-2, WHO-5, resilience etc. mixes
+            scales with different ranges and opposite directions, so it is not
+            a meaningful number. */}
+        {isSectioned ? (
+          <div className="w-full" style={{ paddingTop: 8 }}>
+            <SectionReportCard result={sections!} />
+          </div>
+        ) : (
+          <div className="flex flex-col items-center" style={{ gap: 16, paddingTop: 16 }}>
+            <ScoreRing
+              score={activeScore || 0}
+              maxScore={activeMax || 1}
+              color={severityColor}
+              size={140}
+            />
+
+            {/* Severity badge */}
+            <span style={{
+              display: 'inline-block',
+              fontSize: 'var(--text-sm)',
+              fontWeight: 500,
+              fontFamily: 'var(--font-family-base)',
+              color: severityColor,
+              backgroundColor: `color-mix(in srgb, ${severityColor} 10%, transparent)`,
+              padding: '6px 16px',
+              borderRadius: 'var(--radius-pill)',
+              textTransform: 'capitalize',
+            }}>
+              {rec.severity} severity
+            </span>
+          </div>
+        )}
 
         {/* ── Message ── */}
         <div className="text-center" style={{ maxWidth: 440 }}>

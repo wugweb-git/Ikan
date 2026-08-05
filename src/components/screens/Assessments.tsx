@@ -847,6 +847,7 @@ export function Assessments({ className, onNavigate }: AssessmentsProps) {
         
         <AssessmentResults
           assessmentId={selectedAssessment.id}
+                sectionScores={assessmentResults.sectionScores}
           score={assessmentResults.score}
           maxScore={assessmentResults.maxScore}
           recommendation={assessmentResults.recommendation}
