@@ -58,59 +58,83 @@ export const RecommendationRuleService = {
 export const RecommendationService = {
   
   async getRecommendations(userId: string): Promise<RecommendationResult[]> {
-    // 1. Fetch User Assessments
-    // We fetch all responses for the user
-    const responses = await kv.getByPrefix(`assessment_response_by_user:${userId}`);
-    if (!responses || responses.length === 0) {
-      return [];
-    }
+    // Fixed 2026-08-06 — this function was live (called by Dashboard.tsx and
+    // EquipProgramCompletion.tsx via GET /recommendations) but had returned
+    // an empty list for every user since it was written, for three stacked
+    // reasons: (1) it read `assessment_response_by_user:`, whose `severity`/
+    // `interpretation` fields are null on every real record — severity
+    // always fell through to the hardcoded 'low' default; (2) it matched
+    // rules by `latestAssessments.get(rule.assessment_category)` where the
+    // map was keyed by the raw `assessment_id` (e.g. `asm_1767...`), which
+    // never equals a rule's `assessment_category` (e.g. "Anxiety") — the
+    // category was never actually resolved; (3) even a matched equip's name
+    // was read from `equip.name`, a field that doesn't exist on real equip
+    // records (they use `title`). Fixed by reading real score/max_score from
+    // `assessment_result:`, resolving category via each result's
+    // `assessment_def.category` field, and computing severity from the
+    // score percentage instead of trusting fields that are never populated.
 
-    // 2. Fetch All Rules
+    const results = await kv.getByPrefix(`assessment_result:${userId}:`);
+    const realResults = (results || []).filter((r: any) =>
+      r?.assessment_id &&
+      !String(r.assessment_id).startsWith('checkin_') &&
+      typeof r.score === 'number' &&
+      typeof r.max_score === 'number' &&
+      r.max_score > 0
+    );
+    if (realResults.length === 0) return [];
+
     const rules = await RecommendationRuleService.listRules();
     if (rules.length === 0) return [];
 
-    // 3. Process Assessments (Latest per category)
-    const latestAssessments = new Map<string, any>(); // category -> assessment
-    
-    // Sort by date desc
-    const sortedResponses = responses.sort((a: any, b: any) => 
-      new Date(b.completed_at || b.started_at).getTime() - new Date(a.completed_at || a.started_at).getTime()
-    );
-
-    for (const resp of sortedResponses) {
-        // Infer category from assessment_id (slug) or explicit field
-        const category = resp.assessment_id; 
-        
-        if (!latestAssessments.has(category)) {
-            latestAssessments.set(category, resp);
-        }
+    // Resolve each result's category via its assessment definition — rules
+    // key on assessment_category (e.g. "Anxiety"); assessment_def.category
+    // is lowercase (e.g. "anxiety"), so match case-insensitively.
+    const assessmentIds = [...new Set(realResults.map((r: any) => r.assessment_id))];
+    const categoryByAssessmentId = new Map<string, string>();
+    for (const id of assessmentIds) {
+      const def = await kv.get(`assessment_def:${id}`);
+      if (def?.category) categoryByAssessmentId.set(id, String(def.category).toLowerCase());
     }
 
-    // 4. Evaluate Rules & Deduplicate (Highest Priority Wins)
+    // Latest real result per category
+    const sorted = [...realResults].sort((a: any, b: any) =>
+      new Date(b.completed_at || 0).getTime() - new Date(a.completed_at || 0).getTime()
+    );
+    const latestByCategory = new Map<string, any>();
+    for (const r of sorted) {
+      const category = categoryByAssessmentId.get(r.assessment_id);
+      if (category && !latestByCategory.has(category)) {
+        latestByCategory.set(category, r);
+      }
+    }
+
+    // Evaluate Rules & Deduplicate (Highest Priority Wins)
     const candidateMap = new Map<string, { rec: RecommendationResult, priority: number }>();
 
     for (const rule of rules) {
-        const assessment = latestAssessments.get(rule.assessment_category);
+        const assessment = latestByCategory.get(String(rule.assessment_category || '').toLowerCase());
         if (!assessment) continue;
 
-        const userSeverity = normalizeSeverity(assessment);
-        
+        const userSeverity = severityFromScore(assessment.score, assessment.max_score);
+        const equipId = rule.target_id || rule.equip_id;
+        if (!equipId) continue;
+
         if (compareSeverity(userSeverity, rule.min_severity) >= 0) {
-            const existing = candidateMap.get(rule.equip_id);
-            
+            const existing = candidateMap.get(equipId);
+
             // If we already have a candidate for this equip, only replace if this rule is higher priority (lower val)
             if (existing && existing.priority <= rule.priority) {
-                continue; 
+                continue;
             }
 
-            // Fetch equip details
-            const equip = await EquipService.getEquip(rule.equip_id);
+            const equip = await EquipService.getEquip(equipId);
             if (!equip) continue;
 
-            candidateMap.set(rule.equip_id, {
+            candidateMap.set(equipId, {
                 rec: {
                     equip_id: equip.id,
-                    equip_name: equip.name,
+                    equip_name: equip.title,
                     category: equip.category,
                     confidence: 'high',
                     reason: rule.rationale
@@ -133,30 +157,15 @@ export const RecommendationService = {
 // HELPERS
 // ------------------------------------------------------------------
 
-function normalizeSeverity(assessment: any): SeverityLevel {
-    // 1. Check explicit severity field
-    if (assessment.severity) {
-        const s = assessment.severity.toLowerCase();
-        if (['low', 'mild', 'moderate', 'high'].includes(s)) return s as SeverityLevel;
-    }
-
-    // 2. Check interpretation label
-    if (assessment.interpretation) {
-        const label = typeof assessment.interpretation === 'string' 
-            ? assessment.interpretation 
-            : assessment.interpretation.label;
-        
-        if (label) {
-            const l = label.toLowerCase();
-            if (l.includes('severe') || l.includes('high')) return 'high';
-            if (l.includes('moderate')) return 'moderate';
-            if (l.includes('mild')) return 'mild';
-            if (l.includes('low') || l.includes('minimal') || l.includes('none')) return 'low';
-        }
-    }
-
-    // 3. Fallback
-    return 'low';
+// Real assessment_result: records never carry severity/interpretation, only
+// score/max_score — derive a 4-tier severity from the raw percentage instead
+// of trusting fields that are always null.
+function severityFromScore(score: number, maxScore: number): SeverityLevel {
+    const pct = maxScore > 0 ? (score / maxScore) * 100 : 0;
+    if (pct <= 25) return 'low';
+    if (pct <= 50) return 'mild';
+    if (pct <= 75) return 'moderate';
+    return 'high';
 }
 
 const SEVERITY_RANK = {

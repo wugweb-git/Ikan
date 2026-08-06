@@ -3269,107 +3269,16 @@ app.get("/categories", async (c) => {
   }
 });
 
-app.post("/categories", requireAuth, async (c) => {
-  try {
-    const user = c.get('user');
-    const userProfile = await kv.get(`user:${user.id}`);
-    if (!userProfile?.is_admin) {
-      return c.json({ error: 'Admin access required' }, 403);
-    }
-    
-    const categoryData = await c.req.json();
-    const categoryId = categoryData.id || `cat-${Date.now()}`;
-    
-    const newCategory = {
-      ...categoryData,
-      id: categoryId,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
-    };
-    
-    await kv.set(`category:${categoryId}`, newCategory);
-    console.log(`✅ Category created: ${categoryId}`);
-    return c.json({ category: newCategory });
-  } catch (error) {
-    console.error('Create category error:', error);
-    return c.json({ error: 'Failed to create category' }, 500);
-  }
-});
-
-app.put("/categories/:categoryId", requireAuth, async (c) => {
-  try {
-    const user = c.get('user');
-    const categoryId = c.req.param('categoryId');
-    
-    const userProfile = await kv.get(`user:${user.id}`);
-    if (!userProfile?.is_admin) {
-      return c.json({ error: 'Admin access required' }, 403);
-    }
-    
-    const updates = await c.req.json();
-    const existingCategory = await kv.get(`category:${categoryId}`);
-    
-    if (!existingCategory) {
-      return c.json({ error: 'Category not found' }, 404);
-    }
-    
-    const updatedCategory = {
-      ...existingCategory,
-      ...updates,
-      id: categoryId,
-      updated_at: new Date().toISOString()
-    };
-    
-    await kv.set(`category:${categoryId}`, updatedCategory);
-    console.log(`✅ Category updated: ${categoryId}`);
-    return c.json({ category: updatedCategory });
-  } catch (error) {
-    console.error('Update category error:', error);
-    return c.json({ error: 'Failed to update category' }, 500);
-  }
-});
-
-app.delete("/categories/:categoryId", requireAuth, async (c) => {
-  try {
-    const user = c.get('user');
-    const categoryId = c.req.param('categoryId');
-    
-    const userProfile = await kv.get(`user:${user.id}`);
-    if (!userProfile?.is_admin) {
-      return c.json({ error: 'Admin access required' }, 403);
-    }
-    
-    const existingCategory = await kv.get(`category:${categoryId}`);
-    if (!existingCategory) {
-      return c.json({ error: 'Category not found' }, 404);
-    }
-    
-    // Refuse if resources still reference this category. They store the
-    // category's slug/name rather than its id, so match on those. Deleting
-    // anyway would leave those resources pointing at nothing.
-    const refValues = [existingCategory.slug, existingCategory.name].filter(Boolean);
-    if (refValues.length > 0) {
-      const resources = await kv.getByPrefix('resource:');
-      const referencing = resources.filter((r: any) =>
-        r && refValues.includes(r.category)
-      );
-      if (referencing.length > 0) {
-        return c.json({
-          error: 'Category is in use',
-          detail: `${referencing.length} resource(s) still reference "${existingCategory.slug ?? existingCategory.name}". Reassign them before deleting.`,
-          resources: referencing.slice(0, 20).map((r: any) => ({ id: r.id, title: r.title })),
-        }, 409);
-      }
-    }
-
-    await kv.del(`category:${categoryId}`);
-    console.log(`Category deleted: ${categoryId}`);
-    return c.json({ success: true });
-  } catch (error) {
-    console.error('Delete category error:', error);
-    return c.json({ error: 'Failed to delete category' }, 500);
-  }
-});
+// POST/PUT/DELETE for /categories used to be duplicated here — this file had
+// its own admin-checked create/update/delete for `category:` records,
+// entirely separate from admin-routes.ts's /admin/categories trio. Removed
+// 2026-08-06: api-client.ts only ever called /admin/categories for writes,
+// so this copy was live, correctly implemented, and reachable by nothing in
+// the app. Its resource-in-use delete guard (the one real thing it had that
+// the live endpoint didn't) was ported into admin-routes.ts's DELETE
+// /admin/categories/:id before removal, rather than lost. GET /categories
+// (above) and POST /categories/sync (below) are real, still-used endpoints —
+// only the write trio was dead.
 
 // Bulk sync metadata items (admin-initiated, idempotent – skips items whose slug+type already exist)
 app.post("/categories/sync", requireAuth, async (c) => {
@@ -4500,67 +4409,12 @@ app.get('/moods/:id', async (c) => {
   }
 });
 
-// Create mood (admin only)
-app.post('/moods', requireAdmin, async (c) => {
-  try {
-    const data = await c.req.json();
-    const id = data.id || `mood-${Date.now()}`;
-    
-    const mood = {
-      ...data,
-      id,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
-    };
-    
-    await kv.set(`mood:${id}`, mood);
-    console.log(`✅ Mood created: ${id}`);
-    return c.json(mood, 201);
-  } catch (error) {
-    console.error('Create mood error:', error);
-    return c.json({ error: 'Failed to create mood' }, 500);
-  }
-});
-
-// Update mood (admin only)
-app.put('/moods/:id', requireAdmin, async (c) => {
-  try {
-    const id = c.req.param('id');
-    const updates = await c.req.json();
-    const existing = await kv.get(`mood:${id}`);
-    
-    if (!existing) {
-      return c.json({ error: 'Mood not found' }, 404);
-    }
-    
-    const mood = {
-      ...existing,
-      ...updates,
-      id,
-      updated_at: new Date().toISOString()
-    };
-    
-    await kv.set(`mood:${id}`, mood);
-    console.log(`✅ Mood updated: ${id}`);
-    return c.json(mood);
-  } catch (error) {
-    console.error('Update mood error:', error);
-    return c.json({ error: 'Failed to update mood' }, 500);
-  }
-});
-
-// Delete mood (admin only)
-app.delete('/moods/:id', requireAdmin, async (c) => {
-  try {
-    const id = c.req.param('id');
-    await kv.del(`mood:${id}`);
-    console.log(`✅ Mood deleted: ${id}`);
-    return c.json({ success: true });
-  } catch (error) {
-    console.error('Delete mood error:', error);
-    return c.json({ error: 'Failed to delete mood' }, 500);
-  }
-});
+// POST/PUT/DELETE /moods — REMOVED duplicate 2026-08-06 (both sets correctly
+// used `mood:{id}`, unlike the separate mood_type: bug fixed the same day —
+// this was pure code duplication, not a data bug). The GET duplicate here was
+// already deduped by an earlier pass (see comment above); canonical
+// POST/PUT/DELETE handlers are in the MOOD TYPE MANAGEMENT section above
+// (~line 3996-4088), first-registered and reachable — these were dead code.
 
 // ============================================================================
 // CONTENT API (PHASE 1)

@@ -114,7 +114,7 @@ const KV_SCHEMA: KVKeyDef[] = [
 
   // ── RECOMMENDATIONS ─────────────────────────────────────────
   { prefix: "recommendation_rule:", description: "Recommendation rule", owner: "recommendation-service.ts", consumers: ["recommendation-service.ts"], scoped: "entity", category: "recommendation", orphanRisk: "low" },
-  { prefix: "recommendation_rules", description: "Recommendation rules (singleton)", owner: "admin-routes.ts", consumers: ["admin-routes.ts"], scoped: "global", category: "recommendation", orphanRisk: "none" },
+  { prefix: "recommendation_rules", description: "Recommendation rules (singleton)", owner: "admin-routes.ts", consumers: ["admin-routes.ts"], scoped: "global", category: "recommendation", orphanRisk: "none", notes: "Vestigial — predates the real recommendation_rule:{id} design (with an 's', no colon). Only ever written by backup/restore, not a live write path. Kept registered for backup/restore compatibility, not an active feature." },
 
   // ── HEALTH CONNECT ──────────────────────────────────────────
   { prefix: "hc_status:", description: "Health Connect connection status", owner: "health-connect-routes.ts", consumers: ["health-connect-routes.ts"], scoped: "user", category: "health", orphanRisk: "low" },
@@ -131,6 +131,7 @@ const KV_SCHEMA: KVKeyDef[] = [
   // ── ACTIVITY TRACKING ───────────────────────────────────────
   { prefix: "activity:read:", description: "Read activity record", owner: "index.tsx", consumers: [], scoped: "entity", category: "activity", orphanRisk: "high", notes: "Write-only; never cleaned" },
   { prefix: "activity:user:", description: "User's read activity ID list", owner: "index.tsx", consumers: ["index.tsx"], scoped: "user", category: "activity", orphanRisk: "medium" },
+  { prefix: "activity:daily:", description: "Global activity feed, bucketed by day (one array per calendar date)", owner: "index.tsx", consumers: ["index.tsx"], scoped: "global", category: "activity", orphanRisk: "low", notes: "Merge target of POST /admin/purge-activity-keys, which folds legacy per-event activity:{timestamp}:{userId} keys in here. Unlike user_activity: (capped at USER_ACTIVITY_CAP), this bucket has no size cap — appends forever per day. Found unregistered 2026-08-06; one live key (2025-12-29) already held 1,357 events / ~300KB." },
   { prefix: "user_activity:", description: "User activity log", owner: "index.tsx", consumers: ["index.tsx"], scoped: "user", category: "activity", orphanRisk: "high" },
 
   // ── ADMIN NOTIFICATIONS ─────────────────────────────────────
@@ -287,6 +288,7 @@ const RELATIONS: Relation[] = [
   { child: "progress:",            parent: "equip:",          fields: ["equip_id", "equipId"],            label: "progress → equip" },
   { child: "enrollment:",          parent: "equip:",          fields: ["programId", "equip_id"],          label: "enrollment → equip" },
   { child: "recommendation_rule:", parent: "equip:",          fields: ["equip_id", "programId"],          label: "rule → equip" },
+  { child: "activity_log:",        parent: "user:",           fields: ["user_id", "userId"],              label: "activity log → user" },
   {
     child: "resource:", parent: "category:", fields: ["category", "category_id", "categoryId"],
     label: "resource → category",

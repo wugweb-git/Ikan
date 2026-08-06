@@ -118,12 +118,29 @@ export const ProgressService = {
   ): Promise<{ key: string; record: any } | null> {
     const all = await kv.getByPrefix('enrollment:');
 
-    const record = (all || []).find((e: any) =>
+    const matches = (all || []).filter((e: any) =>
       e &&
       (e.userId === userId || e.user_id === userId) &&
       (e.programId === equipId || e.equip_id === equipId)
     );
-    if (!record) return null;
+    if (matches.length === 0) return null;
+
+    // A user can accumulate several enrollment records for the same
+    // programme (re-enrollment, double-submits, the old vs. new key-shape
+    // migration). Taking the first array match here — rather than the most
+    // recently touched one, as getUserEnrollments already does for display —
+    // meant completeDay's advancement could silently write to a stale
+    // duplicate: current_day_number/completedDays on the record the user
+    // actually sees would never move even though the underlying progress:
+    // records were correct. Prefer active status, then most recent activity.
+    const stamp = (e: any) => e.last_activity_at ?? e.updated_at ?? e.created_at ?? e.startDate ?? '';
+    const record = matches.reduce((best: any, e: any) => {
+      if (!best) return e;
+      const bestActive = best.status !== 'withdrawn';
+      const eActive = e.status !== 'withdrawn';
+      if (eActive !== bestActive) return eActive ? e : best;
+      return stamp(e) > stamp(best) ? e : best;
+    }, null);
 
     return {
       key: record.enrollmentId

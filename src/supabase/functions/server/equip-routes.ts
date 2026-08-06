@@ -189,132 +189,16 @@ app.delete("/equip/programs/:equipId", requireAuth, async (c) => {
   }
 });
 
-// DAYS
-app.get("/equip/programs/:equipId/days", async (c) => {
-    try {
-        const equipId = c.req.param('equipId');
-        let targetId = equipId;
-        // Resolve slug
-        const existing = await EquipService.getEquip(equipId);
-        if (!existing) {
-             const bySlug = await EquipService.getEquipBySlug(equipId);
-             if (bySlug) targetId = bySlug.id;
-        }
-
-        const days = await EquipDayService.listDaysForEquip(targetId);
-        return c.json({ days });
-    } catch (error) {
-        return c.json({ error: 'Failed to list days' }, 500);
-    }
-});
-
-app.post("/equip/programs/:equipId/days", requireAuth, async (c) => {
-    try {
-        const user = c.get('user');
-        const userProfile = await kv.get(`user:${user.id}`);
-        if (!userProfile?.is_admin) return c.json({ error: 'Admin access required' }, 403);
-
-        const equipId = c.req.param('equipId');
-        const data = await c.req.json();
-        
-        // Resolve slug
-        let targetId = equipId;
-        const existing = await EquipService.getEquip(equipId);
-        if (!existing) {
-             const bySlug = await EquipService.getEquipBySlug(equipId);
-             if (bySlug) targetId = bySlug.id;
-        }
-
-        const day = await EquipDayService.createDay({ ...data, equip_id: targetId });
-        return c.json({ day });
-    } catch (error) {
-        return c.json({ error: 'Failed to create day' }, 500);
-    }
-});
-
-app.put("/equip/days/:dayId", requireAuth, async (c) => {
-    try {
-        const user = c.get('user');
-        const userProfile = await kv.get(`user:${user.id}`);
-        if (!userProfile?.is_admin) return c.json({ error: 'Admin access required' }, 403);
-
-        const dayId = c.req.param('dayId');
-        const updates = await c.req.json();
-        const day = await EquipDayService.updateDay(dayId, updates);
-        return c.json({ day });
-    } catch (error) {
-        return c.json({ error: 'Failed to update day' }, 500);
-    }
-});
-
-// BLOCKS
-app.get("/equip/days/:dayId/blocks", async (c) => {
-    try {
-        const dayId = c.req.param('dayId');
-        const blocks = await EquipBlockService.listBlocksForDay(dayId);
-        return c.json({ blocks });
-    } catch (error) {
-        return c.json({ error: 'Failed to list blocks' }, 500);
-    }
-});
-
-app.post("/equip/days/:dayId/blocks", requireAuth, async (c) => {
-    try {
-        const user = c.get('user');
-        const userProfile = await kv.get(`user:${user.id}`);
-        if (!userProfile?.is_admin) return c.json({ error: 'Admin access required' }, 403);
-
-        const dayId = c.req.param('dayId');
-        const data = await c.req.json();
-        const block = await EquipBlockService.createBlock({ ...data, equip_day_id: dayId });
-        return c.json({ block });
-    } catch (error) {
-        return c.json({ error: 'Failed to create block' }, 500);
-    }
-});
-
-app.put("/equip/blocks/:blockId", requireAuth, async (c) => {
-    try {
-        const user = c.get('user');
-        const userProfile = await kv.get(`user:${user.id}`);
-        if (!userProfile?.is_admin) return c.json({ error: 'Admin access required' }, 403);
-
-        const blockId = c.req.param('blockId');
-        const updates = await c.req.json();
-        const block = await EquipBlockService.updateBlock(blockId, updates);
-        return c.json({ block });
-    } catch (error) {
-        return c.json({ error: 'Failed to update block' }, 500);
-    }
-});
-
-app.delete("/equip/blocks/:blockId", requireAuth, async (c) => {
-    try {
-        const user = c.get('user');
-        const userProfile = await kv.get(`user:${user.id}`);
-        if (!userProfile?.is_admin) return c.json({ error: 'Admin access required' }, 403);
-
-        const blockId = c.req.param('blockId');
-        await EquipBlockService.deleteBlock(blockId);
-        return c.json({ success: true });
-    } catch (error) {
-        return c.json({ error: 'Failed to delete block' }, 500);
-    }
-});
-
-app.post("/equip/days/:dayId/blocks/reorder", requireAuth, async (c) => {
-    try {
-        const user = c.get('user');
-        const userProfile = await kv.get(`user:${user.id}`);
-        if (!userProfile?.is_admin) return c.json({ error: 'Admin access required' }, 403);
-
-        const { orderedIds } = await c.req.json();
-        await EquipBlockService.reorderBlocks(orderedIds);
-        return c.json({ success: true });
-    } catch (error) {
-        return c.json({ error: 'Failed to reorder blocks' }, 500);
-    }
-});
+// The legacy day:/block: REST surface (GET/POST/PUT/DELETE on
+// /equip/programs/:equipId/days, /equip/days/:dayId, /equip/days/:dayId/blocks,
+// /equip/blocks/:blockId) was removed 2026-08-06. It predates the current
+// content model — the admin editor (EquipDailyEditor.tsx) has always saved a
+// program's entire day/block tree as one inline `daily_content` array via
+// apiClient.updateEquipProgram(), and nothing in this codebase's frontend
+// ever called these routes. Left live, they could write orphan day:/block:
+// records nobody reads. EquipDayService/EquipBlockService themselves are
+// untouched — deleteEquip's cascade cleanup still calls deleteDay/deleteBlock
+// to clear out legacy records when a program is deleted.
 
 // ADMIN UTILS
 app.post("/admin/equip/cleanup-zombies", requireAuth, async (c) => {

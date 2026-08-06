@@ -10,9 +10,11 @@ This nested CLAUDE.md covers the backend-specific conventions for `src/supabase/
 - **Runtime**: Deno (Supabase Edge Functions)
 - **Framework**: Hono
 - **Entry point**: `index.tsx` (this directory)
-- **Source files**: 25 `.ts`/`.tsx` files — all compiled and deployed as one unit
+- **Source files**: 33 `.ts`/`.tsx` files — all compiled and deployed as one unit
 
-The 25 route modules are imported into `index.tsx`. There is no separate function per route; everything is one deployed function.
+18 of those files are `*-routes.ts` route modules, imported into `index.tsx`; the rest are shared
+services/types/middleware. There is no separate function per route; everything is one deployed
+function.
 
 ---
 

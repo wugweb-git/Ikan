@@ -46,7 +46,17 @@ export const EquipService = {
   },
 
   async getEquip(id: string): Promise<Equip | null> {
-    return await kv.get(`equip:${id}`);
+    // Unlike getEquipBySlug() and every read-path endpoint, this used to be a
+    // plain kv.get with no slug fallback — the canonical /equip/<slug> route
+    // passes the raw slug all the way into ProgressService (enrollment,
+    // day-advancement, today's-content) with no resolution, so progress and
+    // enrollment created via a slug URL got keyed by the slug string, and a
+    // plain id lookup here returned null, silently breaking day-advancement.
+    // Root cause of two separate users' orphaned sleep-tight progress records
+    // found and manually migrated this session before this fix landed.
+    const byId = await kv.get(`equip:${id}`);
+    if (byId) return byId;
+    return await this.getEquipBySlug(id);
   },
 
   async getEquipBySlug(slug: string): Promise<Equip | null> {

@@ -155,6 +155,30 @@ app.post("/admin/equip/add-default-onboarding", requireAdmin, async (c) => {
 // ADMIN - ASSESSMENT MANAGEMENT
 // ========================================
 
+// The player reads `scoring.ranges`; the admin wizard only ever writes
+// `resultCategories`. That mismatch left scoring.ranges permanently null on
+// every assessment ever saved through admin, so the player fell through to
+// a generic "Assessment completed" message regardless of what the admin
+// authored. Derive ranges from resultCategories on every save so new
+// content and edits stay correct without relying on a code-side preset.
+// Band order is assumed low-to-high severity (true for every assessment
+// audited so far), so the first band maps to 'success' and the last to
+// 'error'.
+function deriveScoringRanges(assessment: any): any {
+  const categories = assessment.resultCategories;
+  if (!Array.isArray(categories) || categories.length === 0) return assessment;
+
+  const ranges = categories.map((cat: any, i: number) => ({
+    min: cat.min,
+    max: cat.max,
+    label: cat.label,
+    interpretation: cat.description || cat.label,
+    icon: i === 0 ? 'success' : i === categories.length - 1 ? 'error' : 'warning',
+  }));
+
+  return { ...assessment, scoring: { ...(assessment.scoring || {}), ranges } };
+}
+
 // Create Assessment
 app.post("/admin/assessments", requireAdmin, async (c) => {
   try {
@@ -163,14 +187,14 @@ app.post("/admin/assessments", requireAdmin, async (c) => {
     // Generate ID if not present
     const id = data.id || crypto.randomUUID();
     
-    const assessment = {
+    const assessment = deriveScoringRanges({
       ...data,
       id,
       assessment_id: id,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
-    };
-    
+    });
+
     // Write to BOTH prefixes so admin edits are immediately visible to public endpoint
     await kv.set(`assessment_def:${id}`, assessment);
     await kv.set(`assessment:${id}`, assessment);
@@ -197,14 +221,14 @@ app.put("/admin/assessments/:id", requireAdmin, async (c) => {
     // Get existing from either prefix
     const existing = await kv.get(`assessment_def:${id}`) || await kv.get(`assessment:${id}`);
     
-    const assessment = {
+    const assessment = deriveScoringRanges({
       ...(existing || {}),
       ...updates,
       id,
       assessment_id: id,
       updated_at: new Date().toISOString()
-    };
-    
+    });
+
     // Write to BOTH prefixes
     await kv.set(`assessment_def:${id}`, assessment);
     await kv.set(`assessment:${id}`, assessment);
@@ -414,6 +438,25 @@ app.put("/admin/categories/:id", requireAdmin, async (c) => {
 app.delete("/admin/categories/:id", requireAdmin, async (c) => {
   try {
     const id = c.req.param("id");
+    const existing = await kv.get(`category:${id}`);
+    if (!existing) return c.json({ error: "Category not found" }, 404);
+
+    // Refuse if resources still reference this category. They store the
+    // category's slug/name rather than its id, so match on those — deleting
+    // anyway would leave those resources pointing at nothing.
+    const refValues = [existing.slug, existing.name].filter(Boolean);
+    if (refValues.length > 0) {
+      const resources = await kv.getByPrefix('resource:');
+      const referencing = resources.filter((r: any) => r && refValues.includes(r.category));
+      if (referencing.length > 0) {
+        return c.json({
+          error: 'Category is in use',
+          detail: `${referencing.length} resource(s) still reference "${existing.slug ?? existing.name}". Reassign them before deleting.`,
+          resources: referencing.slice(0, 20).map((r: any) => ({ id: r.id, title: r.title })),
+        }, 409);
+      }
+    }
+
     await kv.del(`category:${id}`);
     return c.json({ success: true });
   } catch (error) {

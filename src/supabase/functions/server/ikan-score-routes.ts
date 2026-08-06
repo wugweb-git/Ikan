@@ -220,41 +220,38 @@ async function computeIkanScore(userId: string): Promise<IkanScoreResult> {
   }
 
   // ── 3. Fetch enrollments (program progress) ───────────────────
-  // Query BOTH enrollment prefixes and merge (different modules write to different keys)
-  const [enrollmentsByProgress, enrollmentsByCreation] = await Promise.all([
-    kv.getByPrefix(`enrollment:${userId}:`),         // progress-service writes here
-    kv.getByPrefix(`user_enrollment:${userId}:`),    // index.tsx writes here at creation
-  ]);
+  // Fixed 2026-08-06 — this used to prefix-scan `enrollment:${userId}:` and
+  // `user_enrollment:${userId}:`. Neither matches real data: the real
+  // enrollment key shape is `enrollment:{enrollmentId}` (an opaque id, not
+  // userId-prefixed — confirmed 0 matches on a real user with 34 real
+  // enrollments), and `user_enrollment:{userId}:{equipId}` is a separate,
+  // narrower legacy mirror (4 of that same user's 34 real enrollments,
+  // themselves permanently stale on currentDay/completedDays — the same
+  // "enrollment never reflects real progress" bug documented in PENDING.md).
+  // Scan the whole enrollment: prefix and filter by value, matching the
+  // already-correct pattern in progress-service.ts's getUserEnrollments().
+  const allEnrollmentRecords = await kv.getByPrefix('enrollment:');
+  const userEnrollmentRecords = (allEnrollmentRecords || []).filter((e: any) =>
+    e && (e.userId === userId || e.user_id === userId) && e.status !== 'withdrawn'
+  );
 
-  // Merge + deduplicate by program ID
+  // Deduplicate by equip id, keeping the most recently touched record —
+  // users routinely have several enrollment records for the same program.
   const enrollmentMap = new Map<string, any>();
-
-  // Index.tsx enrollments use: programId, currentDay, status
-  for (const e of (enrollmentsByCreation || [])) {
-    if (!e) continue;
+  for (const e of userEnrollmentRecords) {
     const progId = e.programId || e.equip_id || e.program_id;
     if (!progId) continue;
-    enrollmentMap.set(progId, {
+    const candidate = {
       equip_id: progId,
       status: e.status || 'active',
       current_day_number: e.current_day_number || e.currentDay || 1,
       last_activity_at: e.last_activity_at || e.updated_at || e.started_at || e.created_at,
       started_at: e.started_at || e.startDate || e.created_at,
-    });
-  }
-
-  // Progress-service enrollments override (more up-to-date): user_id, equip_id, current_day_number, status
-  for (const e of (enrollmentsByProgress || [])) {
-    if (!e) continue;
-    const progId = e.equip_id || e.programId || e.program_id;
-    if (!progId) continue;
-    enrollmentMap.set(progId, {
-      equip_id: progId,
-      status: e.status || 'active',
-      current_day_number: e.current_day_number || e.currentDay || 1,
-      last_activity_at: e.last_activity_at || e.updated_at,
-      started_at: e.started_at || e.startDate,
-    });
+    };
+    const existing = enrollmentMap.get(progId);
+    if (!existing || new Date(candidate.last_activity_at || 0).getTime() > new Date(existing.last_activity_at || 0).getTime()) {
+      enrollmentMap.set(progId, candidate);
+    }
   }
 
   const allEnrollments = Array.from(enrollmentMap.values());
