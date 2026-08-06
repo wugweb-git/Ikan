@@ -9,6 +9,37 @@ undated under their original session number.
 
 ---
 
+## 2026-08-07 (continued)
+
+**Hero Banners merged into Pages, per direct request.** `AdminHeroBannerManager` is now a tab inside
+`AdminPageManager` (`/admin/pages`) instead of a standalone `/admin/hero-banner` screen — a hero
+banner is page-level content, so this cuts a separate admin concept. KV models deliberately left
+separate (`page:`/`cms_page:` vs `hero_banner:`) — navigation merge, not a data-model merge.
+Confirmed at the build level: no separate JS chunk for the hero banner manager anymore, it's bundled
+with Pages.
+
+**Admin landing view's URL is now `/admin/reporting`**, matching its "Reporting" label (bare
+`/admin` kept as a working alias so nothing that already links there breaks).
+
+**New `src/docs/systems/url-map.md`** — every route in the app, public/auth/private/admin, in one
+table. `public/sitemap.xml` and the HTML `/sitemap` page both updated with routes that were missing
+(`/join/professional`, `/sitemap` itself, `/dashboard`, `/timeline`, `/learning-diary`). Confirmed
+`/admin/equip` and `/admin/assessments` are both real, KV-driven, not hardcoded. Confirmed
+`/reset-password` is the real "forgot password" flow with its own working URL — contrary to the
+question that prompted the check.
+
+**§18 gained a personas/ecosystem-mapping section**, evidence-based from the live schema: Visitor,
+Registered User, Corporate User (flag-based, `user_employer:` linkage registered but 0 live rows —
+a ready extension point, not a gap), Admin (same profile shape, `is_admin` flag only — not a
+separate account system), and Professional/Consultant (confirmed via live query to have **no
+`user_id` field at all** — a directory entity admins manage, not a login-backed persona;
+`/join/professional` creates a `professional_application:` record for review, not an automatic
+account). Ties directly into the wellness-score v2 proposal's "user personal info" input.
+
+**`/dashboard/<username>` — not implemented.** There's no username/handle field in the `user:`
+schema to build a per-user URL on; needs that field added first. Noted for the future taxonomy work
+alongside the "we need taxonomy" and "separate admin code from product code" notes already tracked.
+
 ## 2026-08-07
 
 **§18 User & Accounts audited — 2 fake security features found and removed from the live UI.** New

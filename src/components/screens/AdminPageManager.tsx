@@ -3,6 +3,7 @@ import { FileText, Pencil, Plus, MoreHorizontal, Eye, EyeOff, Trash2, ExternalLi
 import { useNotifications } from '../../contexts/NotificationContext';
 import { apiClient } from '../../lib/api-client';
 import { AdminHeader } from '../admin/AdminHeader';
+import { AdminHeroBannerManager } from '../admin/AdminHeroBannerManager';
 import { useIsMobile } from '../../hooks/useIsMobile';
 import { Button } from '../ui/button';
 import { AdminStatusBadge } from '../admin/AdminStatusBadge';
@@ -39,6 +40,7 @@ export function AdminPageManager({ onBack, className }: AdminPageManagerProps) {
   const [viewMode, setViewMode] = useState<ViewMode>('list');
   const [selectedPageId, setSelectedPageId] = useState<string | undefined>();
   const [syncing, setSyncing] = useState(false);
+  const [activeTab, setActiveTab] = useState<'pages' | 'hero-banners'>('pages');
 
   // Default hero image used across all system pages (same as PageHero fallback)
   const DEFAULT_HERO_IMAGE = 'https://images.unsplash.com/photo-1650046825506-8901c4b837b1?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxtZW50YWwlMjBoZWFsdGglMjBhc3Nlc3NtZW50JTIwcXVlc3Rpb25uYWlyZSUyMHRoZXJhcHl8ZW58MXx8fHwxNzczMzIxNTcyfDA&ixlib=rb-4.1.0&q=80&w=1080';
@@ -376,6 +378,46 @@ export function AdminPageManager({ onBack, className }: AdminPageManagerProps) {
     </div>
   );
 
+  // Merged 2026-08-07: Hero Banners now lives under Pages, as a tab, rather than its own
+  // top-level admin section — hero banners are page-level content (one per system page,
+  // hero_banner:{page_key}), so this cuts down a separate nav concept. The underlying KV
+  // models stay separate (page:/cms_page: vs hero_banner:) — this is a navigation/UX merge,
+  // not a data-model merge, which would be a much larger, riskier change.
+  const tabSwitcher = (
+    <div className="flex gap-1 p-1 rounded-lg w-fit" style={{ backgroundColor: 'var(--color-bg-muted)' }}>
+      {(['pages', 'hero-banners'] as const).map((tab) => (
+        <button
+          key={tab}
+          onClick={() => setActiveTab(tab)}
+          className="transition-colors"
+          style={{
+            padding: '6px 14px',
+            borderRadius: 'var(--radius-md)',
+            fontSize: 'var(--text-sm)',
+            fontWeight: 'var(--font-weight-medium)',
+            fontFamily: 'var(--font-family-base)',
+            border: 'none',
+            cursor: 'pointer',
+            backgroundColor: activeTab === tab ? 'var(--color-bg-card)' : 'transparent',
+            color: activeTab === tab ? 'var(--color-text-primary)' : 'var(--color-text-muted)',
+            boxShadow: activeTab === tab ? '0 1px 2px rgba(0,0,0,0.06)' : 'none',
+          }}
+        >
+          {tab === 'pages' ? 'Pages' : 'Hero Banners'}
+        </button>
+      ))}
+    </div>
+  );
+
+  if (activeTab === 'hero-banners') {
+    return (
+      <div className="max-w-7xl mx-auto space-y-6">
+        {tabSwitcher}
+        <AdminHeroBannerManager onBack={() => setActiveTab('pages')} />
+      </div>
+    );
+  }
+
   if (viewMode === 'edit' || viewMode === 'create') {
     return <PageEditPage pageId={selectedPageId} onBack={handleBackToList} onSave={handleBackToList} />;
   }
@@ -383,6 +425,7 @@ export function AdminPageManager({ onBack, className }: AdminPageManagerProps) {
   if (loading) {
     return (
       <div className="max-w-7xl mx-auto space-y-6">
+        {tabSwitcher}
         <AdminHeader
           title="Page Manager (CMS)"
           description="Loading pages..."
@@ -396,6 +439,7 @@ export function AdminPageManager({ onBack, className }: AdminPageManagerProps) {
   if (error) {
     return (
       <div className="max-w-7xl mx-auto space-y-6">
+        {tabSwitcher}
         <AdminHeader
           title="Page Manager (CMS)"
           description="Manage website content pages"
@@ -415,6 +459,7 @@ export function AdminPageManager({ onBack, className }: AdminPageManagerProps) {
   if (pages.length === 0) {
     return (
       <div className="max-w-7xl mx-auto space-y-6">
+        {tabSwitcher}
         <AdminHeader
           title="Page Manager (CMS)"
           description="Manage website content pages"
@@ -433,6 +478,7 @@ export function AdminPageManager({ onBack, className }: AdminPageManagerProps) {
 
   return (
     <div className="max-w-7xl mx-auto space-y-6">
+      {tabSwitcher}
       <AdminHeader
         title="Page Manager (CMS)"
         description="Manage website content pages"

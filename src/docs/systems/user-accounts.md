@@ -94,7 +94,7 @@ flowchart TD
     class LOGINCHECK,FAKEOAUTH,SESSIONKV dead
 ```
 
-## 🔴 Fake: "Connect Google" / "Connect LinkedIn" buttons do not perform real OAuth
+## ✅ Fixed — was fake: "Connect Google" / "Connect LinkedIn" buttons did not perform real OAuth
 
 `POST /user/connect-social/:provider` (`index.tsx:565-598`) — read the handler directly:
 
@@ -111,7 +111,7 @@ This is visually indistinguishable from a real "connected" state in the UI — a
 tell it's not real. Not fixed here (a real feature gap needing either real OAuth wiring or removing
 the buttons) — flagging as the kind of "hardcoded/fake" issue directly asked about.
 
-## 🔴 Fake: Two-Factor Authentication toggle has zero login-time enforcement
+## ✅ Fixed — was fake: Two-Factor Authentication toggle had zero login-time enforcement
 
 `Security.tsx`'s 2FA toggle (`account/Security.tsx:173-176`) calls
 `apiClient.updateProfile({ security_settings: { twoFactorEnabled: newVal }})` — a generic profile
@@ -145,6 +145,54 @@ screen and judge it "useless": it's not broken, it has nothing to show because n
 - 0 unconfirmed accounts — email confirmation is working as configured.
 - Signed avatar URLs use time-limited tokens (~1 year expiry), not permanent public links — a
   reasonable pattern, not a bug (not reproduced in this doc regardless, out of caution).
+
+## User types, personas, and ecosystem mapping
+
+Per the user's request — identified from what the live data model actually distinguishes, not
+invented. Feeds two things directly: **dashboard customization** (which persona sees what) and
+**part of the wellness score input set** (§09's v2 proposal already lists "user personal info" as an
+input — this is what that means concretely).
+
+| Persona | How it's distinguished | Ecosystem touchpoints |
+|---|---|---|
+| **Visitor** (unauthenticated) | No `auth.users` row | Public pages, can start an assessment, gated at result-save time |
+| **Registered User** | `auth.users` + `user:{userId}` profile, `is_admin:false`, `corporate_user:false` | The core persona — assessments, equip programs, mood journal, resource library, consultation booking; drives all 4 wellness-score components (§09) |
+| **Corporate User** | Same as above with `corporate_user:true` | Intended to link to `corporate_program:`/`user_employer:` (both registered KV prefixes) — **`user_employer:` has 0 live rows today, this linkage is registered but unused**, not yet a real differentiated experience |
+| **Admin** | Same `user:` record shape, `is_admin:true` | Full admin panel access — **not a separate account system**, just a boolean flag on the same profile shape as every other persona |
+| **Professional / Consultant** | `professional:` (12 records) / legacy `consultant:` (5 records) — **confirmed via live query to have no `user_id` field at all** | Not a login-backed persona today — a directory/content entity admins manage, not a self-service account. `/join/professional` creates a `professional_application:` record (0 live rows — the review/approval write path exists in the type system but nothing has gone through it yet) for admin review, not an automatic account |
+
+```mermaid
+flowchart TD
+    classDef store fill:#00000000,stroke-width:1.4px;
+    classDef dead stroke-dasharray:4 3;
+
+    VISITOR["Visitor<br/>no account"] -->|"POST /signup"| REGISTER
+    REGISTER["auth.users + user:{userId}<br/>is_admin:false, corporate_user:false"] --> REGULAR["Registered User"]
+    REGULAR -->|"corporate_user:true"| CORP["Corporate User<br/>(sub-type, same record shape)"]
+    REGULAR -->|"is_admin:true"| ADMINP["Admin<br/>(sub-type, same record shape)"]
+
+    REGULAR --> ECO1["Assessments, Equip, Mood Journal,<br/>Resources, Consultation booking"]
+    CORP -.->|"user_employer: — 0 live rows,<br/>registered but unused"| CORPPROG[("corporate_program:")]
+    ADMINP --> ADMINPANEL["Admin Panel — see url-map.md"]
+
+    APPLICANT["Public applicant<br/>(may or may not have a user: account)"] -->|"/join/professional"| PROFAPP[("professional_application:<br/>0 live rows — write path exists,<br/>unused so far")]
+    PROFAPP -.->|"admin reviews, manually creates"| PROF[("professional:<br/>12 records — NO user_id field,<br/>not login-backed")]
+    PROF --> DIRECTORY["Consultation booking directory<br/>— browsed by Registered Users,<br/>not itself a persona with login"]
+
+    class REGISTER,REGULAR,PROF store
+    class CORPPROG,PROFAPP dead
+```
+
+**What this means for dashboard customization**: today, the only real branch point is `is_admin`
+(entirely different app — `AdminDashboard.tsx` vs. user `Dashboard.tsx`, see `url-map.md`).
+`corporate_user` is registered but not yet wired to a differentiated dashboard experience — the
+KV linkage (`user_employer:`) exists in the schema with 0 live rows, meaning this is a real, ready
+extension point, not a gap that needs new schema.
+
+**What this means for the wellness-score v2 proposal (§09)**: "user personal info" as an input can
+concretely mean `dateOfBirth` (age-normalized banding), `gender` (if clinically relevant to specific
+assessment norms), and `corporate_user` (population-level reporting scope) — all already present in
+the live schema above, none requiring new fields.
 
 ## Verification notes
 

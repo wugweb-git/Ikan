@@ -45,13 +45,17 @@ const DEFAULT_GROUPS = [
       { label: 'Equip Programs', route: '/equip', icon: 'book-open', description: 'Self-paced CBT-based wellness programs', badge: 'beta' },
       { label: 'Consultation', route: '/consultation', icon: 'stethoscope', description: 'Book sessions with licensed professionals', badge: 'coming soon' },
       { label: 'Resources', route: '/resource', icon: 'users', description: 'Articles, guides, and mental health tools' },
+      { label: 'Join as a Professional', route: '/join/professional', icon: 'stethoscope', description: 'Apply to join iKan as a consultant' },
     ],
   },
   {
     title: 'Your Account',
     links: [
+      { label: 'Dashboard', route: '/dashboard', icon: 'house', description: 'Your personalized home after signing in' },
       { label: 'My Account', route: '/account', icon: 'user-circle', description: 'Profile, settings, and payment history' },
       { label: 'Mood Journal', route: '/mood-journal', icon: 'heart', description: 'Track your daily mood and emotions' },
+      { label: 'Timeline', route: '/timeline', icon: 'house', description: 'Your activity and progress over time' },
+      { label: 'Learning Diary', route: '/learning-diary', icon: 'book-open', description: 'Notes and reflections from your programs' },
     ],
   },
   {

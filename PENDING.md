@@ -138,7 +138,18 @@ take one **General** and one **Burnout** assessment on production and confirm:
   browser URL on click (`onNavigate('/admin/{id}')`, matching the pattern already used for
   `/admin/block-type-viewer`) and has a matching `validRoutes` entry, so every admin section is now
   directly bookmarkable/linkable, not just the ones that happened to have both pieces wired
-  already. Previously only about half of ~20 admin sections had a working direct URL.
+  already. Previously only about half of ~20 admin sections had a working direct URL. Landing view's
+  URL is now `/admin/reporting` (bare `/admin` kept working as an alias).
+- **Hero Banners merged under Pages, per direct request.** `AdminHeroBannerManager` is no longer a
+  standalone `/admin/hero-banner` screen — it's a tab inside `AdminPageManager` (`/admin/pages`),
+  since a hero banner is page-level content. KV models stay separate (`page:`/`cms_page:` vs
+  `hero_banner:`) — a navigation merge, not a data-model merge. Confirmed at the bundler level: no
+  separate JS chunk for the hero banner manager anymore.
+- **Full public/auth/private/admin URL map written** — new `src/docs/systems/url-map.md`.
+  `public/sitemap.xml` and the HTML `/sitemap` page both gained the routes that were missing
+  (`/join/professional`, `/sitemap` itself, `/dashboard`, `/timeline`, `/learning-diary`).
+  `/dashboard/<username>` is **not implemented** — there's no `username`/handle field in the `user:`
+  schema to build it on; needs that field added first, noted for the future taxonomy work.
 
 ## D. Migration — user data out of the KV blob into real tables
 

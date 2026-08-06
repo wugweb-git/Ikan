@@ -20,7 +20,6 @@ import {
   Image,
   Sparkles,
   CreditCard,
-  Palette,
   Zap,
   Inbox,
   Menu,
@@ -59,7 +58,6 @@ const L = {
   CheckinScalesManager: lazy(() => import('../admin/AdminCheckinScalesManager').then(m => ({ default: m.AdminCheckinScalesManager }))),
   RecommendationRules: lazy(() => import('../admin/recommendations/RecommendationRulesManager').then(m => ({ default: m.RecommendationRulesManager }))),
   CheckinBuilder: lazy(() => import('../admin/AdminCheckinTemplateBuilder').then(m => ({ default: m.AdminCheckinTemplateBuilder }))),
-  HeroBannerManager: lazy(() => import('../admin/AdminHeroBannerManager').then(m => ({ default: m.AdminHeroBannerManager }))),
   KVAudit: lazy(() => import('../admin/AdminKVAudit').then(m => ({ default: m.AdminKVAudit }))),
   ContactSubmissions: lazy(() => import('../admin/AdminContactSubmissions').then(m => ({ default: m.AdminContactSubmissions }))),
   BlockTypeViewer: lazy(() => import('../admin/AdminBlockTypeViewer').then(m => ({ default: m.AdminBlockTypeViewer }))),
@@ -136,7 +134,6 @@ type ViewType =
   | 'kv-audit'
   | 'contact-newsletter'
   | 'checkin-builder'
-  | 'hero-banner'
   | 'block-type-viewer'
   | 'scoring-engine';
 
@@ -178,7 +175,6 @@ export function AdminDashboard({ onNavigate, initialView }: AdminDashboardProps)
       { id: 'consultants', label: 'Consultants', group: 'Content', keywords: 'consultant therapist professional doctor' },
       { id: 'pages', label: 'Pages', group: 'Content', keywords: 'page cms content privacy terms faq' },
       { id: 'media', label: 'Media Library', group: 'Content', keywords: 'media image upload file photo' },
-      { id: 'hero-banner', label: 'Hero Banners', group: 'Content', keywords: 'hero banner header image' },
       { id: 'categories', label: 'Meta Manager', group: 'Config', keywords: 'category tag label metadata type mood' },
       { id: 'checkin-scales', label: 'Check-in Scales', group: 'Config', keywords: 'scale checkin energy stress sleep' },
       { id: 'recommendations', label: 'Rules Engine', group: 'Config', keywords: 'recommendation rule engine severity' },
@@ -216,7 +212,6 @@ export function AdminDashboard({ onNavigate, initialView }: AdminDashboardProps)
         { id: 'consultants', label: 'Consultants', icon: Stethoscope },
         { id: 'pages', label: 'Pages', icon: FileText },
         { id: 'media', label: 'Media Library', icon: Image },
-        { id: 'hero-banner', label: 'Hero Banners', icon: Palette },
       ]
     },
     {
@@ -250,14 +245,14 @@ export function AdminDashboard({ onNavigate, initialView }: AdminDashboardProps)
       isActive: currentView === item.id,
       onClick: () => {
         startTransition(() => setCurrentView(item.id as ViewType));
-        onNavigate(item.id === 'dashboard' ? '/admin' : `/admin/${item.id}`);
+        onNavigate(item.id === 'dashboard' ? '/admin/reporting' : `/admin/${item.id}`);
         window.scrollTo(0,0);
         if (isMobile) setSidebarOpen(false);
       }
     }))
   })), [currentView, isMobile, onNavigate]);
   
-  const goBack = useCallback(() => { startTransition(() => setCurrentView('dashboard')); onNavigate('/admin'); }, [onNavigate]);
+  const goBack = useCallback(() => { startTransition(() => setCurrentView('dashboard')); onNavigate('/admin/reporting'); }, [onNavigate]);
   
   const renderContent = () => {
     // Don't render lazy components until after mount to avoid synchronous suspension
@@ -310,7 +305,6 @@ export function AdminDashboard({ onNavigate, initialView }: AdminDashboardProps)
       case 'payment-gateway': return <SuspenseScreen><L.PaymentGateway /></SuspenseScreen>;
       case 'contact-newsletter': return <SuspenseScreen><L.ContactSubmissions onBack={goBack} /></SuspenseScreen>;
       case 'checkin-builder': return <SuspenseScreen><L.CheckinBuilder onBack={goBack} /></SuspenseScreen>;
-      case 'hero-banner': return <SuspenseScreen><L.HeroBannerManager onBack={goBack} /></SuspenseScreen>;
       case 'block-type-viewer': return <SuspenseScreen><L.BlockTypeViewer onBack={goBack} /></SuspenseScreen>;
       case 'scoring-engine': return <SuspenseScreen><L.ScoringEngine onBack={goBack} /></SuspenseScreen>;
       default: return <div>View not found</div>;
@@ -340,7 +334,7 @@ export function AdminDashboard({ onNavigate, initialView }: AdminDashboardProps)
       >
           {/* Sidebar Logo Area */}
           <div className="h-[64px] lg:h-[72px] flex items-center px-4 border-b border-[var(--grey-2)] justify-between">
-              <div className="flex items-center gap-3 cursor-pointer min-w-0" onClick={() => { startTransition(() => setCurrentView('dashboard')); onNavigate('/admin'); }}>
+              <div className="flex items-center gap-3 cursor-pointer min-w-0" onClick={() => { startTransition(() => setCurrentView('dashboard')); onNavigate('/admin/reporting'); }}>
                 <div className="shrink-0 flex items-center justify-center" style={{ width: isMobile ? 36 : 40, height: isMobile ? 36 : 40 }}>
                   {siteSettings.logoIconUrl ? (
                     <img src={siteSettings.logoIconUrl} alt={siteSettings.siteName || 'iKan'} className="w-full h-full object-contain" />
@@ -435,7 +429,7 @@ export function AdminDashboard({ onNavigate, initialView }: AdminDashboardProps)
                           style={{ fontFamily: 'var(--font-family-base)' }}
                           onMouseOver={(e) => e.currentTarget.style.backgroundColor = 'var(--color-bg-muted)'}
                           onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
-                          onClick={() => { startTransition(() => setCurrentView(item.id)); onNavigate(item.id === 'dashboard' ? '/admin' : `/admin/${item.id}`); setSearchQuery(''); setSearchResults([]); }}
+                          onClick={() => { startTransition(() => setCurrentView(item.id)); onNavigate(item.id === 'dashboard' ? '/admin/reporting' : `/admin/${item.id}`); setSearchQuery(''); setSearchResults([]); }}
                         >
                           <span style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--font-weight-medium)', color: 'var(--color-text-primary)' }}>{item.label}</span>
                           <span style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}>{item.group}</span>
