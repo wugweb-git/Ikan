@@ -5,14 +5,36 @@ answer to "no KV issues, no hardcoded issues?" — **mostly clean, but two real,
 findings**: the Google/LinkedIn "Connect" buttons and the Two-Factor Authentication toggle on the
 Account page are both fully decorative — neither does what it visually claims to do.
 
+## ✅ Fixed 2026-08-07: both fake security features removed from the live UI
+
+Per a product decision: real OAuth (needs actual Google/LinkedIn provider credentials) and real
+TOTP-based 2FA (needs a verification library + login-flow UI) are genuine feature builds, not
+same-session fixes — so the misleading UI was removed until real versions exist, rather than left
+live giving false confidence:
+
+- **`account/Security.tsx`**: the "Two-Factor Authentication" toggle row removed entirely (state,
+  handler, and UI). `security_settings.twoFactorEnabled` may still exist on old profile records;
+  nothing reads it anymore.
+- **`account/Integration.tsx`**: the "Connected Accounts" card (Google/LinkedIn/Apple) removed.
+  **One nuance found while removing it**: `handleSocialToggle()` actually attempted the **real**
+  Supabase `linkIdentity()` flow first, and only fell back to the fake
+  `POST /user/connect-social` simulation when the real call threw — meaning a real OAuth failure
+  was silently masked as a fake success. This is worse than a purely decorative toggle, and is
+  exactly why removing it (rather than leaving the real-attempt/fake-fallback in place) was the
+  right call. **The Health Connect card on the same page is untouched** — confirmed separately
+  real, no fake fallback, see §16.
+- Backend routes (`POST /user/connect-social/:provider`, `/disconnect-social/:provider`) and the
+  KV fields themselves were left in place, unused — no data migration needed, and real
+  implementations can reuse the same profile fields later.
+
 ## Status
 
 | Area | Status |
 |---|---|
 | `user:` KV schema consistency | ✅ Clean — all live-written records use the current `user_id`/`name` shape; the one exception is the already-flagged legacy ghost record (§12) |
 | `user:` ↔ `auth.users` | ✅ Clean — 8 KV rows, 6 match real accounts (post-cleanup, §12); 6 real `auth.users`, 0 unconfirmed |
-| `googleConnected`/`linkedinConnected` (social "connect" toggles) | 🔴 **Fake — no real OAuth, confirmed in the code's own comment** |
-| `security_settings.twoFactorEnabled` (2FA toggle) | 🔴 **Fake — a database flag with zero login-time enforcement anywhere** |
+| `googleConnected`/`linkedinConnected` (social "connect" toggles) | ✅ **Fixed 2026-08-07** — UI removed (real-attempt/fake-fallback was masking real OAuth failures) |
+| `security_settings.twoFactorEnabled` (2FA toggle) | ✅ **Fixed 2026-08-07** — UI removed (was a database flag with zero login-time enforcement) |
 | `session:`/`failed-login:`/`rate-limit:` (security.tsx) | 🟡 Half-built — admin read/management functions exist and are wired in; the write-side that would ever populate these was never built (0 live rows, correctly, not a bug) |
 | `professional:`/`consultant:` legacy split | 🟡 Known, pre-existing — 12 `professional:` (active) + 5 `consultant:` (legacy) records coexist |
 | `user_employer:` (corporate linkage) | Registered, 0 live rows — unused feature, not a bug |

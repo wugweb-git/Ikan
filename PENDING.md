@@ -3,10 +3,10 @@
 Single source of truth for outstanding work across sessions. Update this file whenever you deploy
 something that changes what's here — see `GOVERNANCE.md` for the rule.
 
-*Last updated: 2026-08-06, after a fix pass: 3 confirmed-dead files removed (organisms/,
-programService.ts, ReassessmentPrompt.tsx), the demo-credentials button gated to dev-only, 3 live
-CMS records' stale US crisis-line numbers corrected to India numbers, `validRoutes`/`RELATIONS`/the
-Admin/User Prefix Sync tile all fixed — see `CHANGELOG.md` for full detail.*
+*Last updated: 2026-08-07, after §18 User & Accounts (2 fake security features removed from the
+live UI), an Admin Panel cleanup (System Health/Backups/Analytics removed from nav, landing page
+renamed "Reporting"), and admin URL routing fixed across all ~20 sections — see `CHANGELOG.md` for
+full detail. All work through this point is committed and pushed to `origin/equip-carry-forward`.*
 
 ---
 
@@ -114,18 +114,31 @@ take one **General** and one **Burnout** assessment on production and confirm:
   respectively, never fixed. Content decisions (what the real day content should say), not mechanical
   fixes — see `repo-hygiene-audit.md`'s "recurring/extra equip content" section for the full list.
 
-- 🔴 **"Connect Google"/"Connect LinkedIn" buttons on the Account page perform no real OAuth.**
-  `POST /user/connect-social/:provider` (`index.tsx:565-598`) — the handler's own comment says "In a
-  real implementation, this would initiate OAuth flow / For now, we'll simulate a successful
-  connection." Sets `googleConnected:true` and copies the user's own primary email into
-  `googleEmail`, with zero Google/LinkedIn verification. Visually indistinguishable from a real
-  connection. Needs either real OAuth wiring or removing the buttons — see `user-accounts.md` (§18).
-- 🔴 **Two-Factor Authentication toggle has zero login-time enforcement — higher severity than the
-  above, it's a security feature.** `account/Security.tsx`'s toggle writes
-  `security_settings.twoFactorEnabled` via a generic profile update; nothing in the login flow
-  anywhere checks this field — no TOTP, no verification prompt. The live admin account currently has
-  this set to `true`, believing 2FA is active. Needs a real implementation or the toggle removed
-  until one exists — see `user-accounts.md` (§18).
+- ~~"Connect Google"/"Connect LinkedIn" buttons performed no real OAuth~~ **UI removed 2026-08-07**
+  — `account/Integration.tsx`'s "Connected Accounts" card deleted. Found while removing it: the
+  handler tried real Supabase `linkIdentity()` first and only faked success on failure, silently
+  masking real OAuth errors — worse than pure decoration. Backend routes/KV fields left in place,
+  unused, ready for a real implementation later. **Real OAuth wiring itself is still not built** —
+  needs actual Google/LinkedIn provider credentials, out of scope for a code fix. See
+  `user-accounts.md` (§18).
+- ~~Two-Factor Authentication toggle had zero login-time enforcement~~ **UI removed 2026-08-07** —
+  `account/Security.tsx`'s toggle (state, handler, row) deleted; the live admin account had this set
+  to `true` with no real protection behind it. **Real TOTP 2FA is still not built** — needs a
+  verification-code library and login-flow UI, out of scope for a code fix. See `user-accounts.md`
+  (§18).
+- **Admin Panel cleanup, per direct request**: "System Health" (a raw KV CRUD-testing tool, not
+  actually a health dashboard — the label was misleading), "Backups" (real, functional
+  checkpoint/restore — removed from nav per instruction, not because it was broken; underlying
+  `AdminBackupManager.tsx`/backend routes/KV data all untouched, easily re-added), and the standalone
+  "Analytics" page (redundant with the same component already embedded on the Reporting landing page)
+  all removed from `AdminDashboard.tsx`'s nav + routing. The landing view (`'dashboard'`) renamed to
+  "Reporting" in the UI (URL unchanged, still `/admin`) to stop colliding with the user-facing
+  "Dashboard" name.
+- **Admin URL routing gap — fixed for every section.** Every admin sidebar item now updates the
+  browser URL on click (`onNavigate('/admin/{id}')`, matching the pattern already used for
+  `/admin/block-type-viewer`) and has a matching `validRoutes` entry, so every admin section is now
+  directly bookmarkable/linkable, not just the ones that happened to have both pieces wired
+  already. Previously only about half of ~20 admin sections had a working direct URL.
 
 ## D. Migration — user data out of the KV blob into real tables
 

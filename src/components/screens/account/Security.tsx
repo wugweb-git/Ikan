@@ -6,8 +6,7 @@ import { useIsMobile } from '../../../hooks/useIsMobile';
 import { cn } from '../../ui/utils';
 import { validatePassword, isCommonPassword, validateEmail } from '../../../lib/validation';
 import { PasswordStrength } from '../../ui/password-strength';
-import { ToggleSwitch } from '../../ui/toggle-switch';
-import { Key, Mail, Shield, Monitor, ChevronDown, ChevronUp, X } from 'lucide-react';
+import { Key, Mail, Monitor, ChevronDown, ChevronUp, X } from 'lucide-react';
 
 // ─── Font helper ──────────────────────────────────────────────
 const f = (size: string, weight: number = 400, color: string = 'var(--color-text-primary)') => ({
@@ -64,15 +63,6 @@ export function Security() {
   const [emailForm, setEmailForm] = useState({ newEmail: '', password: '', token: '' });
   const [emailStep, setEmailStep] = useState<'request' | 'verify'>('request');
   const [changingEmail, setChangingEmail] = useState(false);
-
-  // ─── 2FA ──────────────────────────────────────
-  const [twoFactorEnabled, setTwoFactorEnabled] = useState(false);
-
-  useEffect(() => {
-    if (user?.security_settings?.twoFactorEnabled) {
-      setTwoFactorEnabled(true);
-    }
-  }, [user]);
 
   // Computed "last changed" text
   const formatLastChanged = (isoDate?: string) => {
@@ -166,20 +156,6 @@ export function Security() {
       showToast('error', 'Error', err.message || 'Failed to verify');
     } finally {
       setChangingEmail(false);
-    }
-  };
-
-  const handleToggle2FA = async () => {
-    const newVal = !twoFactorEnabled;
-    setTwoFactorEnabled(newVal);
-    try {
-      await apiClient.updateProfile({ security_settings: { twoFactorEnabled: newVal } } as any);
-      await refreshProfile();
-      showToast('success', newVal ? '2FA Enabled' : '2FA Disabled',
-        newVal ? 'Two-factor authentication is now active' : 'Two-factor authentication has been disabled');
-    } catch {
-      setTwoFactorEnabled(!newVal);
-      showToast('error', 'Error', 'Failed to update 2FA setting');
     }
   };
 
@@ -308,38 +284,6 @@ export function Security() {
                 )}
               </div>
             )}
-          </div>
-
-          {/* ── 2FA Row ── */}
-          <div style={{ padding: '16px 20px' }}>
-            <div className="flex items-center justify-between" style={{ gap: 16 }}>
-              <div className="flex items-center" style={{ gap: 12 }}>
-                <div style={{
-                  width: 36, height: 36, borderRadius: 10,
-                  backgroundColor: twoFactorEnabled ? 'var(--color-status-success-light)' : 'var(--color-bg-muted)',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  color: twoFactorEnabled ? 'var(--color-status-success)' : 'var(--color-text-primary)', flexShrink: 0,
-                }}>
-                  <Shield size={18} />
-                </div>
-                <div>
-                  <div className="flex items-center" style={{ gap: 8 }}>
-                    <span style={f('sm', 500)}>Two-Factor Authentication</span>
-                    {twoFactorEnabled && (
-                      <span style={{
-                        ...f('xs', 500, 'var(--color-status-success)'),
-                        backgroundColor: 'var(--color-status-success-light)',
-                        padding: '2px 8px', borderRadius: 'var(--radius-pill)',
-                      }}>Active</span>
-                    )}
-                  </div>
-                  <div style={{ ...f('xs', 400, 'var(--color-text-muted)'), marginTop: 2 }}>
-                    Extra layer of security for your account
-                  </div>
-                </div>
-              </div>
-              <ToggleSwitch enabled={twoFactorEnabled} onChange={handleToggle2FA} />
-            </div>
           </div>
         </div>
       </section>

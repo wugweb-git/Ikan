@@ -9,6 +9,54 @@ undated under their original session number.
 
 ---
 
+## 2026-08-07
+
+**§18 User & Accounts audited — 2 fake security features found and removed from the live UI.** New
+`src/docs/systems/user-accounts.md` + artifact §18. Found: "Connect Google/LinkedIn"
+(`account/Integration.tsx`) actually attempted real Supabase `linkIdentity()` first, but silently
+fell back to a fake simulated connection on any failure — masking real OAuth errors as success,
+worse than pure decoration. The Two-Factor Authentication toggle (`account/Security.tsx`) wrote a
+database flag nothing in the login flow ever checked; the live admin account had it set to `true`
+with zero real protection. Per a product decision, both were removed from the UI (state, handlers,
+rows) rather than left live — real OAuth/TOTP implementations need external provider setup, out of
+scope for this pass. Backend routes and KV fields left untouched for future reuse. Health Connect,
+on the same Integration page, is unaffected — confirmed separately real, no fake fallback (§16).
+
+**Admin Panel cleanup, per direct request.** Removed 3 nav sections from `AdminDashboard.tsx`:
+"System Health" (actually a raw KV CRUD-testing tool, mislabeled — not a health dashboard),
+"Backups" (real, functional checkpoint/restore — removed from nav only; `AdminBackupManager.tsx`,
+its backend routes, and `sys_backups`/`backup:` KV data are untouched, easily re-added), and the
+standalone "Analytics" page (redundant — the same component was already embedded on the landing
+page). The landing view itself renamed "Reporting" in the UI (URL unchanged, `/admin`) so it stops
+sharing a name with the user-facing Dashboard.
+
+**Admin URL routing fixed across the board.** Every admin sidebar item, not just
+`/admin/block-type-viewer`, now updates the browser URL on click and has a matching `validRoutes`
+entry — previously only about half of ~20 admin sections had a working direct URL; the rest were
+click-only with no way to bookmark or deep-link. `App.tsx`'s `validRoutes` gained 9 missing entries;
+`AdminDashboard.tsx`'s sidebar/search-result/logo/back-button click handlers all now call
+`onNavigate()` alongside the existing internal view-state update.
+
+**Git hygiene**: found the entire prior session's work (everything since commit `58f2a2ef`) had
+never been committed. Split into 4 logical commits (backend fixes, frontend fixes + dead-code
+removal, documentation, §18) and pushed to `origin/equip-carry-forward`. Also removed a stray
+shell-escaping artifact file from the repo root and added `.claude/`/`supabase/.temp/` to
+`.gitignore` (local tooling state, not app config).
+
+**Dead code removed** (each confirmed zero-reference before deletion): `organisms/AssessmentQuestion.tsx`,
+`services/programService.ts`, `assessments/ReassessmentPrompt.tsx`. **Confirmed real, not removed**:
+`components/payments/` (production-grade Razorpay integration, unplugged pending a pricing launch).
+**Confirmed clean, no action**: `player/`, `figma/ImageWithFallback.tsx`, `LearningDiary.tsx` (fully
+functional), `lib/content/`, `constants/content.ts`, `blocks/` vs `homepage/` (different purposes),
+`AboutUs.tsx` vs `Account.tsx` (unrelated screens), old `ikan.health` domain.
+
+**Fixed a real hardcoded-content bug found in 3 separate live places**: stale US crisis-line numbers
+("988"/"911") in `cms-defaults.ts`'s FAQ default and 2 duplicate/drifted live CMS records, corrected
+to India numbers (KIRAN 1800-599-0019, iCALL 9152987821, Emergency 112).
+
+**New `src/docs/README.md`** — an index of every doc under `src/docs/`, so nothing from this
+multi-day audit gets lost or re-derived from scratch; linked from the artifact.
+
 ## 2026-08-06 (continued VII)
 
 **Fix pass: dead code removed, 2 real hardcoded-content bugs fixed, safe registry/UI fixes shipped,

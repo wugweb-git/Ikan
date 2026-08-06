@@ -1,19 +1,17 @@
 import { useState, useEffect, lazy, Suspense, useMemo, useCallback, useRef, startTransition, useDeferredValue } from 'react';
 import { useNotifications } from '../../contexts/NotificationContext';
 import { useAuth } from '../../contexts/AuthContext';
-import { 
-  LayoutDashboard, 
-  BarChart, 
-  Users, 
-  ClipboardList, 
-  Table, 
-  BookOpen, 
-  Tag, 
-  Smile, 
-  Settings, 
-  Database, 
-  FileText, 
-  MessageSquare, 
+import {
+  LayoutDashboard,
+  Users,
+  ClipboardList,
+  Table,
+  BookOpen,
+  Tag,
+  Smile,
+  Settings,
+  FileText,
+  MessageSquare,
   Search,
   Bell,
   User,
@@ -22,7 +20,6 @@ import {
   Image,
   Sparkles,
   CreditCard,
-  HeartPulse,
   Palette,
   Zap,
   Inbox,
@@ -61,11 +58,9 @@ const L = {
   CategoryManager: lazy(() => import('../admin/AdminCategoryManager').then(m => ({ default: m.AdminCategoryManager }))),
   CheckinScalesManager: lazy(() => import('../admin/AdminCheckinScalesManager').then(m => ({ default: m.AdminCheckinScalesManager }))),
   RecommendationRules: lazy(() => import('../admin/recommendations/RecommendationRulesManager').then(m => ({ default: m.RecommendationRulesManager }))),
-  BackupManager: lazy(() => import('../admin/AdminBackupManager').then(m => ({ default: m.AdminBackupManager }))),
   CheckinBuilder: lazy(() => import('../admin/AdminCheckinTemplateBuilder').then(m => ({ default: m.AdminCheckinTemplateBuilder }))),
   HeroBannerManager: lazy(() => import('../admin/AdminHeroBannerManager').then(m => ({ default: m.AdminHeroBannerManager }))),
   KVAudit: lazy(() => import('../admin/AdminKVAudit').then(m => ({ default: m.AdminKVAudit }))),
-  CRUDTesting: lazy(() => import('../admin/AdminCRUDTesting').then(m => ({ default: m.AdminCRUDTesting }))),
   ContactSubmissions: lazy(() => import('../admin/AdminContactSubmissions').then(m => ({ default: m.AdminContactSubmissions }))),
   BlockTypeViewer: lazy(() => import('../admin/AdminBlockTypeViewer').then(m => ({ default: m.AdminBlockTypeViewer }))),
   ScoringEngine: lazy(() => import('../admin/AdminScoringEngine').then(m => ({ default: m.AdminScoringEngine }))),
@@ -122,9 +117,8 @@ interface AdminDashboardProps {
   initialView?: string;
 }
 
-type ViewType = 
+type ViewType =
   | 'dashboard'
-  | 'analytics'
   | 'users'
   | 'consultants'
   | 'resources'
@@ -137,10 +131,8 @@ type ViewType =
   | 'checkin-scales'
   | 'recommendations'
   | 'settings'
-  | 'crud'
   | 'communication'
   | 'payment-gateway'
-  | 'backup'
   | 'kv-audit'
   | 'contact-newsletter'
   | 'checkin-builder'
@@ -177,8 +169,7 @@ export function AdminDashboard({ onNavigate, initialView }: AdminDashboardProps)
     }
     const q = searchQuery.toLowerCase();
     const allItems: { id: ViewType; label: string; group: string; keywords: string }[] = [
-      { id: 'dashboard', label: 'Dashboard', group: 'Overview', keywords: 'home overview' },
-      { id: 'analytics', label: 'Analytics', group: 'Overview', keywords: 'charts graphs stats metrics' },
+      { id: 'dashboard', label: 'Reporting', group: 'Overview', keywords: 'home overview reporting analytics charts graphs stats metrics' },
       { id: 'users', label: 'Users & Accounts', group: 'Overview', keywords: 'user account member role admin' },
       { id: 'equip', label: 'Equip Programs', group: 'Content', keywords: 'program course equip module day block' },
       { id: 'assessments', label: 'Assessments', group: 'Content', keywords: 'assessment quiz test survey' },
@@ -197,8 +188,6 @@ export function AdminDashboard({ onNavigate, initialView }: AdminDashboardProps)
       { id: 'communication', label: 'Communication', group: 'System', keywords: 'email notification message brevo' },
       { id: 'contact-newsletter', label: 'Contact & Newsletter', group: 'System', keywords: 'contact newsletter subscription' },
       { id: 'payment-gateway', label: 'Payments', group: 'System', keywords: 'payment razorpay gateway transaction' },
-      { id: 'crud', label: 'System Health', group: 'System', keywords: 'health status api endpoint crud' },
-      { id: 'backup', label: 'Backups', group: 'System', keywords: 'backup restore checkpoint' },
       { id: 'kv-audit', label: 'KV Audit', group: 'System', keywords: 'kv audit database key value prefix' },
     ];
     const matches = allItems.filter(item =>
@@ -212,8 +201,7 @@ export function AdminDashboard({ onNavigate, initialView }: AdminDashboardProps)
       id: 'main',
       title: 'Overview',
       items: [
-        { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
-        { id: 'analytics', label: 'Analytics', icon: BarChart },
+        { id: 'dashboard', label: 'Reporting', icon: LayoutDashboard },
         { id: 'users', label: 'Users & Accounts', icon: Users },
       ]
     },
@@ -250,8 +238,6 @@ export function AdminDashboard({ onNavigate, initialView }: AdminDashboardProps)
         { id: 'communication', label: 'Communication', icon: MessageSquare },
         { id: 'contact-newsletter', label: 'Contact & Newsletter', icon: Inbox },
         { id: 'payment-gateway', label: 'Payments', icon: CreditCard },
-        { id: 'crud', label: 'System Health', icon: HeartPulse },
-        { id: 'backup', label: 'Backups', icon: Database },
         { id: 'kv-audit', label: 'KV Audit', icon: Search },
       ]
     }
@@ -264,13 +250,14 @@ export function AdminDashboard({ onNavigate, initialView }: AdminDashboardProps)
       isActive: currentView === item.id,
       onClick: () => {
         startTransition(() => setCurrentView(item.id as ViewType));
+        onNavigate(item.id === 'dashboard' ? '/admin' : `/admin/${item.id}`);
         window.scrollTo(0,0);
         if (isMobile) setSidebarOpen(false);
       }
     }))
-  })), [currentView, isMobile]);
+  })), [currentView, isMobile, onNavigate]);
   
-  const goBack = useCallback(() => startTransition(() => setCurrentView('dashboard')), []);
+  const goBack = useCallback(() => { startTransition(() => setCurrentView('dashboard')); onNavigate('/admin'); }, [onNavigate]);
   
   const renderContent = () => {
     // Don't render lazy components until after mount to avoid synchronous suspension
@@ -292,7 +279,7 @@ export function AdminDashboard({ onNavigate, initialView }: AdminDashboardProps)
                 color: 'var(--color-text-primary)',
                 marginBottom: 'var(--spacing-2)'
               }}>
-                Admin Dashboard
+                Reporting
               </h1>
               <p style={{ 
                 fontSize: 'var(--text-base)', 
@@ -306,7 +293,6 @@ export function AdminDashboard({ onNavigate, initialView }: AdminDashboardProps)
             <SuspenseScreen><L.Analytics embedded /></SuspenseScreen>
           </div>
         );
-      case 'analytics': return <SuspenseScreen><L.Analytics onBack={goBack} /></SuspenseScreen>;
       case 'users': return <SuspenseScreen><L.UserManager onBack={goBack} /></SuspenseScreen>;
       case 'consultants': return <SuspenseScreen><L.ConsultationManager onBack={goBack} onNavigate={onNavigate} /></SuspenseScreen>;
       case 'resources': return <SuspenseScreen><L.ResourceManager onBack={goBack} /></SuspenseScreen>;
@@ -319,8 +305,6 @@ export function AdminDashboard({ onNavigate, initialView }: AdminDashboardProps)
       case 'checkin-scales': return <SuspenseScreen><L.CheckinScalesManager onBack={goBack} /></SuspenseScreen>;
       case 'recommendations': return <SuspenseScreen><L.RecommendationRules onBack={goBack} /></SuspenseScreen>;
       case 'settings': return <SuspenseScreen><L.SettingsManager onBack={goBack} /></SuspenseScreen>;
-      case 'crud': return <SuspenseScreen><L.CRUDTesting onBack={goBack} /></SuspenseScreen>;
-      case 'backup': return <SuspenseScreen><L.BackupManager onBack={goBack} /></SuspenseScreen>;
       case 'kv-audit': return <SuspenseScreen><L.KVAudit onBack={goBack} /></SuspenseScreen>;
       case 'communication': return <SuspenseScreen><L.Communication onBack={goBack} /></SuspenseScreen>;
       case 'payment-gateway': return <SuspenseScreen><L.PaymentGateway /></SuspenseScreen>;
@@ -356,7 +340,7 @@ export function AdminDashboard({ onNavigate, initialView }: AdminDashboardProps)
       >
           {/* Sidebar Logo Area */}
           <div className="h-[64px] lg:h-[72px] flex items-center px-4 border-b border-[var(--grey-2)] justify-between">
-              <div className="flex items-center gap-3 cursor-pointer min-w-0" onClick={() => startTransition(() => setCurrentView('dashboard'))}>
+              <div className="flex items-center gap-3 cursor-pointer min-w-0" onClick={() => { startTransition(() => setCurrentView('dashboard')); onNavigate('/admin'); }}>
                 <div className="shrink-0 flex items-center justify-center" style={{ width: isMobile ? 36 : 40, height: isMobile ? 36 : 40 }}>
                   {siteSettings.logoIconUrl ? (
                     <img src={siteSettings.logoIconUrl} alt={siteSettings.siteName || 'iKan'} className="w-full h-full object-contain" />
@@ -451,7 +435,7 @@ export function AdminDashboard({ onNavigate, initialView }: AdminDashboardProps)
                           style={{ fontFamily: 'var(--font-family-base)' }}
                           onMouseOver={(e) => e.currentTarget.style.backgroundColor = 'var(--color-bg-muted)'}
                           onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
-                          onClick={() => { startTransition(() => setCurrentView(item.id)); setSearchQuery(''); setSearchResults([]); }}
+                          onClick={() => { startTransition(() => setCurrentView(item.id)); onNavigate(item.id === 'dashboard' ? '/admin' : `/admin/${item.id}`); setSearchQuery(''); setSearchResults([]); }}
                         >
                           <span style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--font-weight-medium)', color: 'var(--color-text-primary)' }}>{item.label}</span>
                           <span style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}>{item.group}</span>
