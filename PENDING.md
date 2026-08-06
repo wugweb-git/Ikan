@@ -114,6 +114,19 @@ take one **General** and one **Burnout** assessment on production and confirm:
   respectively, never fixed. Content decisions (what the real day content should say), not mechanical
   fixes — see `repo-hygiene-audit.md`'s "recurring/extra equip content" section for the full list.
 
+- 🔴 **"Connect Google"/"Connect LinkedIn" buttons on the Account page perform no real OAuth.**
+  `POST /user/connect-social/:provider` (`index.tsx:565-598`) — the handler's own comment says "In a
+  real implementation, this would initiate OAuth flow / For now, we'll simulate a successful
+  connection." Sets `googleConnected:true` and copies the user's own primary email into
+  `googleEmail`, with zero Google/LinkedIn verification. Visually indistinguishable from a real
+  connection. Needs either real OAuth wiring or removing the buttons — see `user-accounts.md` (§18).
+- 🔴 **Two-Factor Authentication toggle has zero login-time enforcement — higher severity than the
+  above, it's a security feature.** `account/Security.tsx`'s toggle writes
+  `security_settings.twoFactorEnabled` via a generic profile update; nothing in the login flow
+  anywhere checks this field — no TOTP, no verification prompt. The live admin account currently has
+  this set to `true`, believing 2FA is active. Needs a real implementation or the toggle removed
+  until one exists — see `user-accounts.md` (§18).
+
 ## D. Migration — user data out of the KV blob into real tables
 
 **Done:** Phase 1 (5 tables + RLS + backfill, verified by impersonation test) and Phase 2 (journal
