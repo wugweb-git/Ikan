@@ -141,7 +141,11 @@ export function AssessmentResults({
 
   const { recommendation: rec, score: activeScore, maxScore: activeMax } = activeData;
   const sections = activeData.sectionScores;
-  const isSectioned = !!sections?.sectioned && sections.sections.length > 0;
+  // >= 2 named sections only: General (5) and Burnout (4) get the report
+  // card. Anxiety/Depression/Stress/Sleep/Balance declare zero named
+  // sections (just an overall) so their corrected score renders through the
+  // single-ring path below, fed by AssessmentFlow's overall-score override.
+  const isSectioned = !!sections?.sectioned && sections.sections.length >= 2;
 
   const getSeverityColor = (severity: SeverityLevel) => {
     // Try to get color from scoring profile band first

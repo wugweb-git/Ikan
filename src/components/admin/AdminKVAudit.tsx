@@ -720,17 +720,27 @@ export function AdminKVAudit({ onBack }: AdminKVAuditProps) {
         )}
       </AuditSection>
 
-      {/* ─── Multi-Tenant Prefix Sync ──────────────────────────── */}
+      {/* ─── Admin/User Prefix Sync ──────────────────────────── */}
+      {(() => {
+        const liveCounts = schema?.liveCounts || {};
+        const equipDrift = Math.max(0, (liveCounts['equip:'] || 0) - (liveCounts['equip_program:'] || 0));
+        const assessmentDrift = Math.max(0, (liveCounts['assessment_def:'] || 0) - (liveCounts['assessment:'] || 0));
+        const syncDrift = equipDrift + assessmentDrift;
+        return (
       <AuditSection
-        title="Multi-Tenant Prefix Sync"
+        title="Admin/User Prefix Sync"
         icon={ArrowRightLeft}
-        count={audit.growthWarnings.filter(w => w.warning.includes('CRITICAL')).length}
-        variant={audit.growthWarnings.some(w => w.warning.includes('CRITICAL')) ? 'danger' : 'success'}
-        defaultOpen={audit.growthWarnings.some(w => w.warning.includes('CRITICAL'))}
+        count={syncDrift}
+        variant={syncDrift > 0 ? 'warning' : 'success'}
+        defaultOpen={syncDrift > 0}
       >
         <div className="space-y-4">
           <p style={{ fontFamily: 'var(--font-family-base)', fontSize: 'var(--text-sm)', color: 'var(--color-text-muted)' }}>
-            In iKan's multi-tenant architecture, admin creates content with one prefix (e.g. <KeyBadge keyName="equip:" />) but users read from another (e.g. <KeyBadge keyName="equip_program:" />). This tool copies admin records to user-facing prefixes so content becomes visible.
+            Admin creates content under one prefix (e.g. <KeyBadge keyName="equip:" />) but users read
+            from a separate mirror prefix (e.g. <KeyBadge keyName="equip_program:" />) — a single-tenant
+            app's admin-write/user-read split, not multi-tenancy. This tool copies admin records to the
+            user-facing prefixes so content becomes visible. Count above is the raw record-count gap
+            between each pair (approximate — a real sync check would compare ids, not just counts).
           </p>
           <div className="p-3 rounded-lg" style={{
             backgroundColor: 'var(--color-bg-muted)',
@@ -740,9 +750,8 @@ export function AdminKVAudit({ onBack }: AdminKVAuditProps) {
             color: 'var(--color-text-muted)'
           }}>
             <div className="space-y-1">
-              <div className="flex items-center gap-2"><KeyBadge keyName="equip:" /> → <KeyBadge keyName="equip_program:" /> (Programs)</div>
-              <div className="flex items-center gap-2"><KeyBadge keyName="assessment_def:" /> → <KeyBadge keyName="assessment:" /> (Assessments)</div>
-              <div className="flex items-center gap-2"><KeyBadge keyName="resource:" /> → <KeyBadge keyName="library:resource:" /> (Library)</div>
+              <div className="flex items-center gap-2"><KeyBadge keyName="equip:" /> → <KeyBadge keyName="equip_program:" /> (Programs){equipDrift > 0 && <span style={{ color: 'var(--color-status-warning)' }}> — {equipDrift} gap</span>}</div>
+              <div className="flex items-center gap-2"><KeyBadge keyName="assessment_def:" /> → <KeyBadge keyName="assessment:" /> (Assessments){assessmentDrift > 0 && <span style={{ color: 'var(--color-status-warning)' }}> — {assessmentDrift} gap</span>}</div>
             </div>
           </div>
           <div className="flex items-center gap-3 flex-wrap">
@@ -796,6 +805,8 @@ export function AdminKVAudit({ onBack }: AdminKVAuditProps) {
           )}
         </div>
       </AuditSection>
+        );
+      })()}
 
       {/* ─── Key Categories (Inventory) ─────────────────────── */}
       <AuditSection

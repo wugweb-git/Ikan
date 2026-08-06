@@ -3,12 +3,11 @@ import { getAuthHeaders } from '../../lib/supabase-client';
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '../ui/button';
-import { AssessmentQuestion } from '../organisms/AssessmentQuestion';
 import { Icon } from '../Icon';
 import { useNotifications } from '../../contexts/NotificationContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { apiClient } from '../../lib/api-client';
-import { computeSectionScores } from '../../lib/assessment-sections';
+import { computeSectionScores, severityForSection } from '../../lib/assessment-sections';
 import { SECTION_PRESETS } from '../../lib/assessment-section-presets';
 import { ProgressIndicator } from '../ui/progress-indicator';
 import { AssessmentResults } from './AssessmentResults';
@@ -238,12 +237,12 @@ export function AssessmentFlow({
       }
       
       // Fallback if interpretation finding fails
-      const interpretation = assessment.scoring.ranges.find(range => 
+      let interpretation = assessment.scoring.ranges.find(range =>
         score >= range.min && score <= range.max
-      ) || assessment.scoring.ranges[0] || { 
-         label: 'Complete', 
-         interpretation: 'Assessment completed.', 
-         icon: 'success' 
+      ) || assessment.scoring.ranges[0] || {
+         label: 'Complete',
+         interpretation: 'Assessment completed.',
+         icon: 'success'
       };
       
       // Compute maxScore from questions: sum of highest option value per question
@@ -264,10 +263,46 @@ export function AssessmentFlow({
       }
       
       // Use computed max from questions if available, otherwise fall back to scoring range max
-      const maxScore = computedMaxScore > 0 
-        ? computedMaxScore 
+      let maxScore = computedMaxScore > 0
+        ? computedMaxScore
         : (assessment.scoring.ranges[assessment.scoring.ranges.length - 1]?.max || 21);
-      
+
+      // Per-scale breakdown, when this assessment declares sections or has a
+      // corrected-scoring preset. Falls back to the presets keyed by slug until
+      // sections/overrides are authored directly in admin. Returns
+      // { sectioned: false } for ordinary single-score assessments with no
+      // preset at all, so the existing presentation is untouched for those.
+      const sectionConfig =
+        (assessment as any).sections
+          ? assessment
+          : { ...assessment, ...(SECTION_PRESETS[(assessment as any).slug] ?? {}) };
+      const sectionScores = computeSectionScores(sectionConfig as any, responses);
+
+      // Five assessments (Anxiety, Depression, Stress, Sleep, Balance) aren't
+      // multi-scale bundles — they're single instruments whose stored
+      // scoring.ranges is null and whose real result was never shown at all
+      // (the player fell through to the generic "Assessment completed"
+      // fallback above). Their presets declare zero named sections but do
+      // declare an overall: scope the sum to only the clinically-scored
+      // items, apply reversal where the scale mixes wording direction (see
+      // Balance), and use real bands. Report-card assessments (General: 5
+      // sections; Burnout: 4) are untouched here — sections.length >= 2 for
+      // both, so this never fires for them, and their score/maxScore stay the
+      // existing flat legacy sum used for iKAN aggregation, unchanged.
+      if (sectionScores.sectioned && sectionScores.sections.length < 2 && sectionScores.overall) {
+        const o = sectionScores.overall;
+        score = o.value;
+        maxScore = o.max;
+        if (o.band) {
+          const sev = severityForSection(o);
+          interpretation = {
+            label: o.band.label,
+            interpretation: o.band.description ?? `${o.label}: ${o.band.label}.`,
+            icon: sev === 'low' ? 'success' : sev === 'moderate' ? 'warning' : 'error',
+          };
+        }
+      }
+
       // Run Recommendation Engine — pass scoring profile if assessment has one linked
       const recommendation = evaluateAssessment(
          assessment.id,
@@ -275,16 +310,6 @@ export function AssessmentFlow({
          maxScore,
          (assessment as any).scoring_profile_id || (assessment as any).scoringProfileId
       );
-
-      // Per-scale breakdown, when this assessment declares sections. Falls back
-      // to the presets keyed by slug until sections are authored in admin.
-      // Returns { sectioned: false } for ordinary single-score assessments, so
-      // the existing presentation is untouched for those.
-      const sectionConfig =
-        (assessment as any).sections
-          ? assessment
-          : { ...assessment, ...(SECTION_PRESETS[(assessment as any).slug] ?? {}) };
-      const sectionScores = computeSectionScores(sectionConfig as any, responses);
 
       // Construct Results Object
       results = {

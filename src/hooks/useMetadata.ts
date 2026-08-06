@@ -12,7 +12,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { apiClient } from '../lib/api-client';
-import type { MetadataType } from '../lib/metadata-seed';
+import type { MetadataType } from '../lib/metadata-catalog';
 
 export interface MetadataOption {
   label: string;
@@ -37,7 +37,6 @@ interface MetadataBucket {
   sessionFormats: MetadataOption[];
   assessmentTypes: MetadataOption[];
   mediaTypes: MetadataOption[];
-  moodTypes: MetadataOption[];
   emaCategories: MetadataOption[];
   scoringMethods: MetadataOption[];
   severityLevels: MetadataOption[];
@@ -67,7 +66,6 @@ const EMPTY_BUCKET: MetadataBucket = {
   sessionFormats: [],
   assessmentTypes: [],
   mediaTypes: [],
-  moodTypes: [],
   emaCategories: [],
   scoringMethods: [],
   severityLevels: [],
@@ -93,7 +91,6 @@ const TYPE_TO_BUCKET: Record<string, keyof MetadataBucket> = {
   session_format: 'sessionFormats',
   assessment_type: 'assessmentTypes',
   media_type: 'mediaTypes',
-  mood_type: 'moodTypes',
   ema_category: 'emaCategories',
   scoring_method: 'scoringMethods',
   severity_level: 'severityLevels',
@@ -147,7 +144,6 @@ async function fetchAllMetadata(): Promise<MetadataBucket> {
       sessionFormats: [],
       assessmentTypes: [],
       mediaTypes: [],
-      moodTypes: [],
       emaCategories: [],
       scoringMethods: [],
       severityLevels: [],

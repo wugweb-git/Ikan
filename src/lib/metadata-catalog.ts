@@ -1,16 +1,17 @@
 /**
- * Metadata Seed Data
+ * Metadata Catalog
  *
- * This file is the CANONICAL list of all metadata items that should exist in KV.
- * Used by the "Sync All Metadata" button in AdminCategoryManager to populate KV
- * with all known metadata types (admin-initiated, not auto-seeding).
+ * Renamed from metadata-seed.ts (2026-08-06) — "seed" implied something that
+ * runs automatically; it doesn't. This is the CANONICAL catalog of every
+ * admin-configurable metadata type (labels, icons, groupings, and reference
+ * values), read only when an admin explicitly clicks "Sync All" in
+ * AdminCategoryManager and confirms a dialog. Nothing here executes on page
+ * load, app start, or build.
  *
- * Once synced, KV is the single source of truth. This file is only referenced
- * during the sync action — components MUST use the useMetadata() hook.
- *
- * Mood types: The Meta Manager embeds AdminMoodManager inline for the mood_type
- * tab (emoji-based CRUD at /moods API with specialized fields).
- * The seed entries below are simple reference tags only.
+ * Once synced, KV (`category:` records) is the single source of truth —
+ * components read live data via the useMetadata() hook, never this file
+ * directly, except AdminCategoryManager itself (labels/icons/groups for the
+ * tab UI) and the sync action.
  */
 
 export type MetadataType =
@@ -28,7 +29,6 @@ export type MetadataType =
   | 'session_format'
   | 'assessment_type'
   | 'media_type'
-  | 'mood_type'
   | 'ema_category'
   | 'scoring_method'
   | 'severity_level'
@@ -82,8 +82,8 @@ export const METADATA_TYPE_GROUPS: MetadataGroup[] = [
     key: 'users',
     label: 'Users & Accounts',
     icon: 'users',
-    description: 'Account types and mood tracking',
-    types: ['account_type', 'mood_type'],
+    description: 'Account types',
+    types: ['account_type'],
   },
 ];
 
@@ -105,7 +105,6 @@ export const METADATA_TYPE_LABELS: Record<MetadataType, string> = {
   session_format: 'Session Formats',
   assessment_type: 'Assessment Types',
   media_type: 'Media Types',
-  mood_type: 'Mood Types',
   ema_category: 'Check-in Categories',
   scoring_method: 'Scoring Methods',
   severity_level: 'Severity Levels',
@@ -130,7 +129,6 @@ export const METADATA_TYPE_ICONS: Record<MetadataType, string> = {
   session_format: 'video',
   assessment_type: 'clipboard-list',
   media_type: 'image',
-  mood_type: 'smile',
   ema_category: 'activity',
   scoring_method: 'bar-chart',
   severity_level: 'signal',
@@ -190,7 +188,7 @@ function s(name: string, type: MetadataType, slug?: string, extra?: Partial<Seed
   };
 }
 
-export const SEED_DATA: SeedItem[] = [
+export const METADATA_CATALOG_ITEMS: SeedItem[] = [
   // ── Topic Categories ──────────────────────────────────────────
   s('General',       'category', 'general',       { icon: 'folder',          color: '#2A2A2A' }),
   s('Anxiety',       'category', 'anxiety',       { icon: 'cloud-lightning', color: '#EAB308' }),
@@ -351,16 +349,6 @@ export const SEED_DATA: SeedItem[] = [
   s('Audio',    'media_type', 'audio',    { icon: 'headphones' }),
   s('Document', 'media_type', 'document', { icon: 'file-text' }),
   s('PDF',      'media_type', 'pdf',      { icon: 'file-check' }),
-
-  // ── Mood Types (reference tags — AdminMoodManager has full emoji CRUD) ─
-  s('Happy',    'mood_type', 'happy',    { icon: 'smile',  color: '#22C55E' }),
-  s('Calm',     'mood_type', 'calm',     { icon: 'sun',    color: '#3B82F6' }),
-  s('Sad',      'mood_type', 'sad',      { icon: 'frown',  color: '#6366F1' }),
-  s('Anxious',  'mood_type', 'anxious',  { icon: 'cloud-lightning', color: '#EAB308' }),
-  s('Angry',    'mood_type', 'angry',    { icon: 'angry',  color: '#EF4444' }),
-  s('Stressed', 'mood_type', 'stressed', { icon: 'flame',  color: '#F97316' }),
-  s('Tired',    'mood_type', 'tired',    { icon: 'moon',   color: '#8B5CF6' }),
-  s('Grateful', 'mood_type', 'grateful', { icon: 'heart',  color: '#EC4899' }),
 
   // ── EMA / Check-in Categories ─────────────────────────────────
   s('Mood',            'ema_category', 'mood',            { icon: 'smile',               description: 'Emotional state tracking' }),

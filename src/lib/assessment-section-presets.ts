@@ -39,11 +39,11 @@ export const GENERAL_SECTIONS: AssessmentSectionPreset = {
       id: 'anxiety',
       label: 'Anxiety',
       instrument: 'GAD-2',
-      // Only the first GAD-2 item exists in the bank. The second
-      // ("Not being able to stop or control worrying") has never been authored,
-      // so expectedItems keeps this honest instead of presenting a one-item
-      // score as a GAD-2.
-      questionIds: ['gen-q1'],
+      // Second item ("Not being able to stop or control worrying") copied in
+      // verbatim from the standalone Anxiety assessment's anxiety-q2, as
+      // gen-anxiety-q2 — no new authoring needed, GAD-2 was already fully
+      // written elsewhere in the bank.
+      questionIds: ['gen-q1', 'gen-anxiety-q2'],
       expectedItems: 2,
       calc: 'sum',
       direction: 'higher-is-distress',
@@ -56,11 +56,12 @@ export const GENERAL_SECTIONS: AssessmentSectionPreset = {
       id: 'depression',
       label: 'Depression',
       instrument: 'PHQ-2',
-      // Deliberately empty. The spec maps this to q3-q4, but those are
-      // "How would you rate your overall mental health?" and "I feel optimistic
-      // about my future" — neither is a PHQ-2 item. Scoring them would report a
-      // depression screen that was never administered.
-      questionIds: [],
+      // The spec maps this to q3-q4, but those are "How would you rate your
+      // overall mental health?" and "I feel optimistic about my future" —
+      // neither is a real PHQ-2 item, so this section stayed empty. Both real
+      // PHQ-2 items now exist as gen-dep-q1/gen-dep-q2, copied in verbatim
+      // from the standalone Depression assessment's dep-q1/dep-q2.
+      questionIds: ['gen-dep-q1', 'gen-dep-q2'],
       expectedItems: 2,
       calc: 'sum',
       direction: 'higher-is-distress',
@@ -136,8 +137,7 @@ export const GENERAL_SECTIONS: AssessmentSectionPreset = {
     },
   ],
   notes: [
-    'Depression (PHQ-2) has no mapped items — both PHQ-2 questions need authoring.',
-    'Anxiety (GAD-2) is missing its second item ("Not being able to stop or control worrying").',
+    'Anxiety (GAD-2) and Depression (PHQ-2) are now both complete: gen-anxiety-q2, gen-dep-q1 and gen-dep-q2 were copied in verbatim from the standalone Anxiety/Depression assessments (no new authoring) and appended to the General question bank.',
     'gen-q2 / gen-q3 / gen-q4 (physical health, mental health, optimism) belong to no scale and are unscored.',
   ],
 };
@@ -240,8 +240,159 @@ function BAT_BANDS() {
   ];
 }
 
+// ── Flat, single-instrument assessments ──────────────────────────────────────
+// These aren't bundles like General/Burnout — each is genuinely one scale. They
+// still need this config because the stored `scoring.ranges` is null on all of
+// them, and the field the admin wizard actually writes (`resultCategories`) is
+// never read by the player. Rather than patch the dead-field wiring per
+// assessment, each gets zero named `sections` (so no report card renders) plus
+// an `overallCalc` that drives the existing single-ring result — but computed
+// correctly: only the clinically-scored items counted, reversal applied where
+// the scale mixes wording direction, bands matched to the true achievable max.
+
+// ── Anxiety — GAD-7 ──────────────────────────────────────────────────────────
+// Clinical GAD-7 scoring sums ONLY the 7 core items (anxiety-q1..q7). Item 8
+// is the standard functional-impairment add-on question and is NOT part of the
+// score under the published instrument; items 9-10 are an embedded PHQ-2
+// screen for a different condition. Summing all 10 (as the old flat-sum
+// fallback did) would silently inflate the total past the clinical 0-21 range.
+export const ANXIETY_SCORING: AssessmentSectionPreset = {
+  sections: [],
+  hasOverallScore: true,
+  overallCalc: {
+    label: 'Anxiety (GAD-7)',
+    calc: 'sum',
+    questionIds: ['anxiety-q1', 'anxiety-q2', 'anxiety-q3', 'anxiety-q4', 'anxiety-q5', 'anxiety-q6', 'anxiety-q7'],
+    direction: 'higher-is-distress',
+    bands: [
+      { min: 0, max: 4, label: 'Minimal', description: 'Minimal anxiety symptoms.' },
+      { min: 5, max: 9, label: 'Mild', description: 'Mild anxiety symptoms.' },
+      { min: 10, max: 14, label: 'Moderate', description: 'Moderate anxiety symptoms — consider our Stress or Mindfulness programs.' },
+      { min: 15, max: 21, label: 'Severe', description: 'Severe anxiety symptoms detected. We recommend speaking with a professional.' },
+    ],
+  },
+  notes: [
+    'resultCategories previously stored one single "Scoring Range 0-21" band — every score produced the identical label. Replaced with standard GAD-7 cutoffs.',
+    'Items 8-10 (impairment + embedded PHQ-2) are intentionally excluded from the score, matching published GAD-7 convention.',
+  ],
+};
+
+// ── Depression — PHQ-9 ───────────────────────────────────────────────────────
+// Sums ONLY the 9 core items. Item 10 is the standard impairment add-on; items
+// 11-12 are an embedded GAD-2 screen. Same exclusion logic as Anxiety above.
+export const DEPRESSION_SCORING: AssessmentSectionPreset = {
+  sections: [],
+  hasOverallScore: true,
+  overallCalc: {
+    label: 'Depression (PHQ-9)',
+    calc: 'sum',
+    questionIds: ['dep-q1', 'dep-q2', 'dep-q3', 'dep-q4', 'dep-q5', 'dep-q6', 'dep-q7', 'dep-q8', 'dep-q9'],
+    direction: 'higher-is-distress',
+    bands: [
+      { min: 0, max: 4, label: 'Minimal', description: 'Minimal depressive symptoms.' },
+      { min: 5, max: 9, label: 'Mild', description: 'Mild depressive symptoms.' },
+      { min: 10, max: 14, label: 'Moderate', description: 'Moderate depressive symptoms — consider speaking with someone you trust.' },
+      { min: 15, max: 19, label: 'Moderately severe', description: 'Moderately severe symptoms — professional support is recommended.' },
+      { min: 20, max: 27, label: 'Severe', description: 'Severe depressive symptoms detected. We recommend speaking with a professional soon.' },
+    ],
+  },
+  notes: [
+    'resultCategories previously stored one single "Score range: 0-27" band. Replaced with standard PHQ-9 cutoffs.',
+    "dep-q9 (\"Feeling that life is meaningless\") is a softened rewrite of the standard PHQ-9 item 9, which is normally about self-harm/suicidal ideation. Flagged separately in src/docs/assessments/depression.md — confirm this rewording was a deliberate safety decision.",
+  ],
+};
+
+// ── Stress ───────────────────────────────────────────────────────────────────
+// Content and direction were already correct; only the band ceiling was wrong.
+// 7 items x max option value 4 = 28 is the true max, not the stored 40. Bands
+// rescaled proportionally from the original 10/25/40 split, same descriptions.
+export const STRESS_SCORING: AssessmentSectionPreset = {
+  sections: [],
+  hasOverallScore: true,
+  overallCalc: {
+    label: 'Stress',
+    calc: 'sum',
+    questionIds: ['stress-q4', 'stress-q5', 'stress-q6', 'stress-q7', 'stress-q8', 'stress-q9', 'stress-q10'],
+    direction: 'higher-is-distress',
+    bands: [
+      { min: 0, max: 7, label: 'Low Stress', description: 'You are managing stress well.' },
+      { min: 8, max: 18, label: 'Moderate Stress', description: 'Stress is starting to affect your life. Consider our Stress program.' },
+      { min: 19, max: 28, label: 'High Stress', description: 'High stress levels detected. We recommend immediate attention.' },
+    ],
+  },
+  notes: [
+    'resultCategories previously set the top band to 26-40; the real ceiling is 28, so scores above it could never occur. Rebalanced to the true 0-28 range, same labels/descriptions.',
+  ],
+};
+
+// ── Sleep ────────────────────────────────────────────────────────────────────
+// Every item scores 0 for the best answer, 4 for the worst (verified against
+// live options) — so a LOW total means good sleep. The stored resultCategories
+// had "Poor Sleep" at 0-16 and "Healthy Sleep" at 17-32: backwards. Numbers
+// were otherwise correctly calibrated (8 x 4 = 32 matches the stored max) —
+// only the labels needed to swap.
+export const SLEEP_SCORING: AssessmentSectionPreset = {
+  sections: [],
+  hasOverallScore: true,
+  overallCalc: {
+    label: 'Sleep',
+    calc: 'sum',
+    questionIds: ['sleep-q1', 'sleep-q2', 'sleep-q3', 'sleep-q4', 'sleep-q5', 'sleep-q6', 'sleep-q7', 'sleep-q8'],
+    direction: 'higher-is-distress',
+    bands: [
+      { min: 0, max: 16, label: 'Healthy Sleep', description: 'Your sleep patterns are normal.' },
+      { min: 17, max: 32, label: 'Poor Sleep', description: 'Your sleep patterns indicate possible insomnia.' },
+    ],
+  },
+  notes: [
+    'Stored resultCategories had the labels inverted: "Poor Sleep" was assigned to the LOW-score band (good answers) and "Healthy Sleep" to the HIGH-score band (worst answers). Every item scores worst-answer=4, best-answer=0, verified directly against live options, so low total = good sleep. Labels corrected here; numeric ranges were already right.',
+    'Typo in stored content: sleep-q4 option 4 reads "Pooo" instead of "Poor" — fixed directly in the KV record, not just here.',
+  ],
+};
+
+// ── Balance ──────────────────────────────────────────────────────────────────
+// Mixed-direction scale: 5 positively-worded items, 3 negatively-worded, summed
+// with no reversal in the original config — a genuinely well-balanced person
+// scored inside the "Imbalanced" band.
+//
+// The total is meant to read as "how much strain", higher = worse, matching
+// every other assessment in this bank and the existing band labels (Balanced
+// = low, Imbalanced = high). That means the 5 POSITIVELY-worded items must be
+// reversed (a good answer should contribute LOW strain), not the 3 negative
+// ones — reversing the negative items instead flips the total the other way
+// (higher = MORE balanced), which would leave the band labels backwards even
+// though the arithmetic runs. Verified by test: reversing the positives gives
+// a well-balanced response (max on positives, min on negatives) a value of 0
+// -> "Balanced"; reversing the negatives instead gave that same response 32
+// -> "Imbalanced", the wrong answer with technically-working reversal code.
+export const BALANCE_SCORING: AssessmentSectionPreset = {
+  sections: [],
+  hasOverallScore: true,
+  overallCalc: {
+    label: 'Balance',
+    calc: 'sum',
+    questionIds: ['bal-q1', 'bal-q2', 'bal-q3', 'bal-q4', 'bal-q5', 'bal-q6', 'bal-q7', 'bal-q8'],
+    reverseQuestionIds: ['bal-q1', 'bal-q3', 'bal-q4', 'bal-q5', 'bal-q7'],
+    direction: 'higher-is-distress',
+    bands: [
+      { min: 0, max: 10, label: 'Balanced', description: 'Your work-life balance is healthy.' },
+      { min: 11, max: 19, label: 'Strained', description: 'You are struggling to maintain balance.' },
+      { min: 20, max: 32, label: 'Imbalanced', description: 'Your life feels out of balance.' },
+    ],
+  },
+  notes: [
+    'bal-q2 ("My work drains most of my energy"), bal-q6 ("I feel guilty when I take breaks"), and bal-q8 ("I feel constantly on") are negatively worded against the other 5 positive items and were summed raw with no reversal. Verified: a consistently well-balanced response (max on positives, min on negatives) scored 28/32 -- inside "Imbalanced" -- before this fix. Do not trust any historical Balance result computed before this change.',
+    'Bands rescaled from the stored 12/24/40 split to the true post-reversal 0-32 max.',
+  ],
+};
+
 /** Preset lookup by assessment slug. */
 export const SECTION_PRESETS: Record<string, AssessmentSectionPreset> = {
   'unsure-or-general-concern': GENERAL_SECTIONS,
   'feeling-drained-and-burned-out': BURNOUT_SECTIONS,
+  'feeling-overwhelmed-and-anxious': ANXIETY_SCORING,
+  'feeling-depressed-and-hopeless': DEPRESSION_SCORING,
+  'feeling-worried-and-stressed': STRESS_SCORING,
+  'struggling-with-quality-sleep': SLEEP_SCORING,
+  'struggling-to-balance-life': BALANCE_SCORING,
 };

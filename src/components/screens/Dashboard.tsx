@@ -5,7 +5,6 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useNotifications } from '../../contexts/NotificationContext';
 import { ArrowRight, Activity, Smile, Check, BarChart3, ClipboardList, Play, TrendingUp, Brain, Compass, BookOpen, Calendar, ChevronRight } from 'lucide-react';
 import { SPECIAL_PROGRAM_IDS } from '../../lib/constants/content';
-import { ReassessmentPrompt } from '../assessments/ReassessmentPrompt';
 import { checkReassessmentTriggers, ReassessmentReason } from '../../lib/reassessment-triggers';
 import { ActivityCard } from '../integrations/ActivityCard';
 import { useGoogleFit } from '../integrations/GoogleFitContext';
@@ -869,9 +868,6 @@ export function Dashboard({ className, onNavigate }: DashboardProps) {
         </motion.section>
 
       </div>
-
-      {/* Reassessment Prompt - Manual Only */}
-      <ReassessmentPrompt isOpen={reassessment.isOpen && reassessment.reason === 'manual'} onClose={handleReassessmentClose} onConfirm={handleReassessmentConfirm} />
     </div>
   );
 }

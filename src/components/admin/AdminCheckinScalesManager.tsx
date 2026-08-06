@@ -40,6 +40,7 @@ interface AdminCheckinScalesManagerProps {
 
 // ── Scale types config ─────────────────────────────────────────────
 const SCALE_TYPES: ScaleType[] = [
+  { key: 'moods', label: 'Mood', icon: Smile, description: 'Overall mood scale — used by the Mood Journal and every check-in flow\'s "mood" step', endpoint: '/scales/moods' },
   { key: 'energy', label: 'Energy', icon: Zap, description: 'Energy level assessment scale', endpoint: '/scales/energy' },
   { key: 'stress', label: 'Stress', icon: Flame, description: 'Stress level tracking scale', endpoint: '/scales/stress' },
   { key: 'sleep', label: 'Sleep', icon: Moon, description: 'Sleep quality assessment scale', endpoint: '/scales/sleep' },

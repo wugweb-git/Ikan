@@ -341,7 +341,7 @@ export const DEFAULT_CMS_CONTENT: { [key: string]: any } = {
                   </div>
                   <div class="border-l-4 border-red-400 pl-4">
                     <h4 class="font-medium text-gray-900 mb-2">Crisis Support</h4>
-                    <p class="text-gray-700 text-sm">For mental health emergencies, contact your local emergency services or call 988.</p>
+                    <p class="text-gray-700 text-sm">For mental health emergencies, contact your local emergency services (112) or the KIRAN Mental Health Helpline (1800-599-0019, 24x7) or iCALL Psychosocial Helpline (9152987821).</p>
                   </div>
                 </div>
               </div>
@@ -989,7 +989,7 @@ export const DEFAULT_CMS_CONTENT: { [key: string]: any } = {
         ]},
         { id: 'trust-safety', title: 'Trust, Safety & Privacy', items: [
           { question: 'Is my data private and secure?', answer: 'Absolutely. All user data is encrypted and treated as highly sensitive. We never share your data with third parties.' },
-          { question: 'What should I do in a mental health emergency?', answer: 'Call your local emergency services (911) or the iCALL Suicide Prevention Helpline at 9152987821.' },
+          { question: 'What should I do in a mental health emergency?', answer: 'Call your local emergency services (112) or the iCALL Psychosocial Helpline at 9152987821.' },
           { question: 'How are consultants verified?', answer: 'All consultants on iKan are licensed professionals. We verify their credentials and experience before they join.' },
         ]},
       ],

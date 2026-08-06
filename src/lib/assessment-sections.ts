@@ -23,6 +23,7 @@ export interface ScoreBand {
   min: number;
   max: number;
   label: string;
+  description?: string;
   color?: string;
 }
 
@@ -87,6 +88,8 @@ export interface OverallConfig {
   calc: 'sum' | 'average';
   /** Which questions feed the overall. Defaults to the union of all sections. */
   questionIds?: string[];
+  /** Same meaning as SectionConfig.reverseQuestionIds — see there. */
+  reverseQuestionIds?: string[];
   multiplier?: number;
   offset?: number;
   direction?: SectionDirection;
@@ -251,15 +254,22 @@ function scoreOne(
 /**
  * Compute every section score for an assessment.
  *
- * Returns `sectioned: false` when the definition declares no sections, letting
- * callers fall back to the existing single-score presentation.
+ * Returns `sectioned: false` only when the definition has neither named
+ * sections nor an overall config — i.e. genuinely nothing to compute. An
+ * assessment with zero named sections but an `overallCalc` (Anxiety,
+ * Depression, Stress, Sleep, Balance: single-instrument assessments that
+ * still need correctly-scoped scoring, reversal, or real bands) still runs
+ * through here — callers tell sections.length to decide whether to render a
+ * multi-row report card or a single corrected score.
  */
 export function computeSectionScores(
   assessment: { questions?: AnyQuestion[]; sections?: SectionConfig[]; overallCalc?: OverallConfig; hasOverallScore?: boolean },
   responses: Record<string, unknown>,
 ): SectionScoreResult {
   const sections = assessment.sections ?? [];
-  if (sections.length === 0) return { sections: [], sectioned: false };
+  if (sections.length === 0 && !(assessment.hasOverallScore && assessment.overallCalc)) {
+    return { sections: [], sectioned: false };
+  }
 
   const byId = new Map<string, AnyQuestion>();
   for (const q of assessment.questions ?? []) {

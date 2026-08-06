@@ -92,6 +92,23 @@ export interface EscalationRule {
   alsoRecommend: string[];
 }
 
+// Short category tokens used throughout this file's default rules/overlap
+// map ('stress', 'burnout', 'sleep') aren't real equip identifiers — the
+// actual equip slugs are 'stress-buster', 'burnout-reset', 'sleep-tight'.
+// Only 'sleep' happened to collide with a real id ('sleep-tight' was already
+// spelled out at some call sites but not others), so every program-id
+// lookup must resolve through this map before being used to fetch/link an
+// equip, or 'stress'/'burnout' silently 404 against a nonexistent program.
+const PROGRAM_SLUG_ALIASES: Record<string, string> = {
+  sleep: 'sleep-tight',
+  stress: 'stress-buster',
+  burnout: 'burnout-reset',
+};
+
+function resolveProgramSlug(id: string): string {
+  return PROGRAM_SLUG_ALIASES[id] ?? id;
+}
+
 const DEFAULT_ESCALATION_RULES: EscalationRule[] = [
   {
     if: { assessment: 'sleep', severity: 'high' },
@@ -141,6 +158,19 @@ async function loadEngineConfig(): Promise<EngineConfig> {
         const escalationRules: EscalationRule[] = [...DEFAULT_ESCALATION_RULES];
         const severityBands: SeverityBand[] = [...DEFAULT_SEVERITY_BANDS];
 
+        // Real recommendation_rule: records (see RecommendationRulesManager /
+        // admin-routes.ts) only ever carry {assessment_category, min_severity,
+        // equip_id, priority, rationale} — the per-category equip targeting
+        // consumed separately by loadAdminRules()/findMatchingAdminRules().
+        // None of them have ever had .severity/.message/.severity_bands/
+        // .overlap_map/.escalation_rules, so this loop was always a no-op in
+        // production while still reporting loadedFromBackend: true — a false
+        // positive that made it look like admin-configured global severity
+        // bands/messaging were live when nothing had ever actually overridden
+        // the defaults. Track whether anything was really applied instead of
+        // inferring it from "the KV scan returned rows".
+        let appliedAnyOverride = false;
+
         for (const rule of backendRules) {
           // Admin rules may have various shapes — adapt to our interface
           if (rule.severity && rule.message) {
@@ -154,28 +184,34 @@ async function loadEngineConfig(): Promise<EngineConfig> {
                 message: rule.message || rulesMap[severity]?.recommend.message || '',
               }
             };
+            appliedAnyOverride = true;
           }
 
           // Severity bands override
           if (rule.severity_bands && Array.isArray(rule.severity_bands)) {
             severityBands.length = 0;
             severityBands.push(...rule.severity_bands);
+            appliedAnyOverride = true;
           }
 
           // Overlap map override
           if (rule.overlap_map && typeof rule.overlap_map === 'object') {
             Object.assign(overlapMap, rule.overlap_map);
+            appliedAnyOverride = true;
           }
 
           // Escalation rules override
           if (rule.escalation_rules && Array.isArray(rule.escalation_rules)) {
             escalationRules.length = 0;
             escalationRules.push(...rule.escalation_rules);
+            appliedAnyOverride = true;
           }
         }
 
-        _cachedConfig = { rules: rulesMap, overlapMap, escalationRules, severityBands, loadedFromBackend: true };
-        console.log(`[RecommendationEngine] Loaded ${backendRules.length} rules from backend KV`);
+        _cachedConfig = { rules: rulesMap, overlapMap, escalationRules, severityBands, loadedFromBackend: appliedAnyOverride };
+        console.log(appliedAnyOverride
+          ? `[RecommendationEngine] Applied global overrides from ${backendRules.length} backend rule(s)`
+          : `[RecommendationEngine] ${backendRules.length} backend rule(s) found, but none carry global-override fields (severity/message/severity_bands/overlap_map/escalation_rules) — using built-in defaults. Per-category equip targeting still works via loadAdminRules().`);
       } else {
         // No admin rules configured — use defaults
         _cachedConfig = {
@@ -432,6 +468,7 @@ export function evaluateAssessment(assessmentSlug: string, score: number, maxSco
   if (!targetProgramId && rule.recommend.primary.includes('equip_program')) {
      targetProgramId = rule.recommend.equipIds?.[0] || '';
   }
+  if (targetProgramId) targetProgramId = resolveProgramSlug(targetProgramId);
 
   // Cross-Program Overlap (Add to secondary)
   const relatedPrograms: string[] = [];
@@ -490,8 +527,8 @@ export function evaluateAssessment(assessmentSlug: string, score: number, maxSco
   // Add Secondary Recommendations
   // 1. Related Programs (from Overlap)
   relatedPrograms.forEach(progId => {
-      if (progId !== targetProgramId) { 
-          const normalizedId = progId === 'sleep' ? 'sleep-tight' : progId;
+      if (progId !== targetProgramId) {
+          const normalizedId = resolveProgramSlug(progId);
           
           result.secondaryActions.push({
             type: 'related_program',

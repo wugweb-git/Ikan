@@ -354,20 +354,22 @@ export function AuthForm({ onSuccess, defaultTab = 'signin' }: AuthFormProps) {
                 )}
               </Button>
 
-              {/* Demo Credentials Helper */}
-              <button
-                type="button"
-                onClick={() => {
-                  setSignInData({
-                    email: 'demo@ikanhealth.in',
-                    password: 'password123'
-                  });
-                }}
-                className="w-full text-xs text-center hover:underline opacity-70 mt-2"
-                style={{ color: 'var(--color-text-muted)' }}
-              >
-                {authContent.form.buttons.demoAccount}
-              </button>
+              {/* Demo Credentials Helper — dev/staging only, never shown to real production visitors */}
+              {import.meta.env.DEV && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSignInData({
+                      email: 'demo@ikanhealth.in',
+                      password: 'password123'
+                    });
+                  }}
+                  className="w-full text-xs text-center hover:underline opacity-70 mt-2"
+                  style={{ color: 'var(--color-text-muted)' }}
+                >
+                  {authContent.form.buttons.demoAccount}
+                </button>
+              )}
             </form>
 
             {/* Social Sign-In Options */}

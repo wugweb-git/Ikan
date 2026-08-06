@@ -39,9 +39,8 @@ import {
 import { apiClient } from '../../lib/api-client';
 import { toast } from 'sonner';
 import { invalidateMetadataCache } from '../../hooks/useMetadata';
-import { SEED_DATA, METADATA_TYPE_LABELS, METADATA_TYPE_ICONS, METADATA_TYPE_GROUPS, type MetadataType } from '../../lib/metadata-seed';
+import { METADATA_CATALOG_ITEMS, METADATA_TYPE_LABELS, METADATA_TYPE_ICONS, METADATA_TYPE_GROUPS, type MetadataType } from '../../lib/metadata-catalog';
 import { Skeleton } from '../ui/skeleton-loader';
-import { AdminMoodManager } from './AdminMoodManager';
 
 export interface AdminCategoryManagerProps {
   onBack: () => void;
@@ -163,7 +162,10 @@ const COLOR_PRESETS = [
   { value: '#6366F1', label: 'Indigo' },
 ];
 
-// All metadata types — mood_type embeds AdminMoodManager inline
+// All metadata types. Mood types are managed in Check-in Scales (a "Mood" tab
+// there, alongside Energy/Stress/Sleep/Pain), not here — this screen used to
+// embed AdminMoodManager for a mood_type tab that edited a KV prefix
+// (mood_type:) nothing in the live app ever read; retired 2026-08-06.
 const ALL_TYPES: MetadataType[] = [
   'category',
   'content_type',
@@ -185,7 +187,6 @@ const ALL_TYPES: MetadataType[] = [
   'expertise_category',
   'session_format',
   'account_type',
-  'mood_type',
   'checkin_block_type',
 ];
 
@@ -307,7 +308,7 @@ export function AdminCategoryManager({ onBack }: AdminCategoryManagerProps) {
 
   const handleSyncAll = async () => {
     if (!confirm(
-      `This will sync ${SEED_DATA.length} metadata items to KV.\n\nNew items will be created and existing items will have their icons/colors updated.\n\nProceed?`
+      `This will sync ${METADATA_CATALOG_ITEMS.length} metadata items to KV.\n\nNew items will be created and existing items will have their icons/colors updated.\n\nProceed?`
     )) return;
 
     setIsSyncing(true);
@@ -315,7 +316,7 @@ export function AdminCategoryManager({ onBack }: AdminCategoryManagerProps) {
       const response = await apiClient.request('/categories/sync', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ items: SEED_DATA, updateExisting: true }),
+        body: JSON.stringify({ items: METADATA_CATALOG_ITEMS, updateExisting: true }),
       }, true);
       
       const msg = response.updated
@@ -338,9 +339,6 @@ export function AdminCategoryManager({ onBack }: AdminCategoryManagerProps) {
   const filteredItems = searchQuery
     ? items.filter(i => i.name.toLowerCase().includes(searchQuery.toLowerCase()) || i.slug.includes(searchQuery.toLowerCase()))
     : items;
-
-  // Check if mood_type tab is active — render AdminMoodManager inline
-  const isMoodTab = activeTab === 'mood_type';
 
   return (
     <div className="max-w-7xl mx-auto space-y-6">
@@ -456,23 +454,7 @@ export function AdminCategoryManager({ onBack }: AdminCategoryManagerProps) {
 
         {/* ── Right Content ── */}
         <div className="flex-1 min-w-0 space-y-4">
-          {isMoodTab ? (
-            /* ── Mood Types: Embed AdminMoodManager ── */
-            <div className="space-y-4">
-              <div className="flex items-center gap-3">
-                <div className="flex-1">
-                  <p style={{ fontWeight: 'var(--font-weight-medium)', fontFamily: 'var(--font-family-base)', fontSize: 'var(--text-base)' }}>
-                    Mood Types
-                  </p>
-                  <p style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-muted)', fontFamily: 'var(--font-family-base)' }}>
-                    Emoji-based mood types used in journal check-ins. Managed separately with emoji picker, numeric values, and active/inactive states.
-                  </p>
-                </div>
-              </div>
-              <AdminMoodManager embedded />
-            </div>
-          ) : (
-            <>
+          <>
               {/* Toolbar */}
               <div className="flex items-center gap-3">
                 <div className="relative flex-1">
@@ -719,7 +701,6 @@ export function AdminCategoryManager({ onBack }: AdminCategoryManagerProps) {
                 </CardContent>
               </Card>
             </>
-          )}
         </div>
       </div>
     </div>
