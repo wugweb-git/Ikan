@@ -1,6 +1,12 @@
 # Burnout — "Feeling drained and burned out"
 
-Pulled live from `assessment_def:asm_1767129964930_bv8cqgm16` on 2026-08-05.
+Pulled live from `assessment_def:asm_1767129964930_bv8cqgm16` on 2026-08-05, **re-verified in full
+2026-08-06**. **The 2026-08-05 audit was incomplete here too**: it documented 22 questions (the
+ones grouped into the 4 BAT sections) and missed that the assessment actually has 23 —
+`burnout-q1`'s stored text is the literal placeholder word `"test"`, shown to every user as the
+very first question. Caught 2026-08-06 the same way as Stress's gap: re-checking the doc's question
+count against a fresh query instead of trusting the original table. Not yet fixed — see
+Verification notes.
 
 ## Meta
 
@@ -10,7 +16,7 @@ Pulled live from `assessment_def:asm_1767129964930_bv8cqgm16` on 2026-08-05.
 | slug | `feeling-drained-and-burned-out` |
 | category | `burnout` |
 | duration | 10 |
-| question count | 22 |
+| question count | 23 (was documented as 22 until 2026-08-06 — see note 4) |
 
 ## Description
 
@@ -30,8 +36,13 @@ Pulled live from `assessment_def:asm_1767129964930_bv8cqgm16` on 2026-08-05.
 
 ## Questions, in order (grouped by section, not stored order)
 
-All 22 questions use the same 5-point scale, options `1`–`5` (scored 0–4 by array index, +1 offset
+All 23 questions use the same 5-point scale, options `1`–`5` (scored 0–4 by array index, +1 offset
 applied during scoring to express the standard 1–5 BAT mean).
+
+**Not in any section — shown to users but not scored**
+| id | Text |
+|---|---|
+| `burnout-q1` | 🔴 `"test"` — literal placeholder text, stored position 1 (first question shown) |
 
 **Exhaustion**
 | id | Text |
@@ -79,13 +90,20 @@ applied during scoring to express the standard 1–5 BAT mean).
    fields are misleading if anyone reads the assessment definition directly expecting them to be
    authoritative — worth either deleting the stale `resultCategories`/`scoring` from the KV record
    or annotating in admin that "Sections" governs this assessment instead.
-2. **22 items, not 23.** BAT-23 (the published instrument this is modeled on) defines 23 items —
-   8 Exhaustion + 5 each for the other three. Here Exhaustion has 6 and Mental distancing has 6,
-   grouped by what each question actually asks rather than forced into the published item counts.
-   Means stay interpretable on their own terms, but scores are **not** strictly comparable to
-   published BAT-23 norms. If clinical comparability matters, the missing item needs authoring;
-   if not, this is fine as a house-adapted instrument and should just be labeled as such rather
-   than implying it's a faithful BAT-23.
-3. No mixed-direction items detected in this set (unlike Balance, see [`balance.md`](balance.md))
-   — all 22 questions are worded in the same "more of this = worse" direction, so no reversal is
-   needed here and none is applied.
+2. **22 scored items, not the published BAT-23's 23.** BAT-23 defines 8 Exhaustion + 5 each for the
+   other three. Here Exhaustion has 6 and Mental distancing has 6, grouped by what each question
+   actually asks rather than forced into the published item counts. Means stay interpretable on
+   their own terms, but scores are **not** strictly comparable to published BAT-23 norms. Separate
+   from note 4 below — this is about the 22 *real* items, not the 23rd placeholder one.
+3. No mixed-direction items detected in the 22 scored questions (unlike Balance, see
+   [`balance.md`](balance.md)) — all worded in the same "more of this = worse" direction, so no
+   reversal is needed and none is applied.
+4. 🔴 **`burnout-q1` is literal placeholder text ("test"), shown to every user as the first question
+   — still open, not fixed.** Same root cause as Stress's 3 broken questions: `AssessmentFlow.tsx`'s
+   `normalizeAssessment()` renders every entry in `assessment.questions` regardless of whether
+   `BURNOUT_SECTIONS` scores it, so a leftover test record from authoring is live in production.
+   **The original 2026-08-05 audit missed this** — it only listed the 22 items grouped into the 4
+   BAT sections and never checked that count against the assessment's actual `questions` array
+   length (23). Fix is a product decision: delete `burnout-q1` outright (cleanest, since it's pure
+   placeholder with no salvageable content), or replace its text with a real question and decide
+   which section it belongs to.

@@ -1,6 +1,7 @@
 # Sleep — "Struggling with quality sleep"
 
-Pulled live from `assessment_def:asm_1767130007889_mewy939gi` on 2026-08-05.
+Pulled live from `assessment_def:asm_1767130007889_mewy939gi` on 2026-08-05. **Inverted labels and
+the "Pooo" typo fixed 2026-08-06** — see below.
 
 ## Meta
 
@@ -17,12 +18,19 @@ Pulled live from `assessment_def:asm_1767130007889_mewy939gi` on 2026-08-05.
 > An 8-question assessment to understand sleep quality, night-time patterns, and possible
 > insomnia symptoms.
 
-## Scoring — as stored
+## Scoring — as of 2026-08-06
 
-- `scoring.ranges`: **null**.
-- `resultCategories`: 2 bands — `Poor Sleep 0–16`, `Healthy Sleep 17–32`. Max (32) correctly
-  matches the actual achievable score (8 × max value 4 = 32) — this one's calibration is right.
-- Not sectioned; falls through to the generic completion message in the player today.
+- Sums all 8 items via `SLEEP_SCORING` in `assessment-section-presets.ts`; max (32) was already
+  correct and is unchanged.
+- **Labels were inverted and are now corrected**: every item scores worst-answer=4, best-answer=0
+  (verified directly against live options), so a *low* total means *good* sleep. The stored bands
+  had `Poor Sleep` on the low-score (good) band and `Healthy Sleep` on the high-score (bad) band —
+  exactly backwards. Now `Healthy Sleep 0–16`, `Poor Sleep 17–32` — numeric ranges unchanged, labels
+  swapped to match reality.
+- `sleep-q4` option 4 typo ("Pooo" → "Poor") fixed directly in KV, both `assessment_def:` and
+  `assessment:` mirrors.
+- `resultCategories` and `scoring.ranges` (KV) rewritten to the corrected labels.
+- Single-score assessment, not in the sections/report-card system by design.
 
 ## Questions, in order
 
@@ -39,15 +47,17 @@ Pulled live from `assessment_def:asm_1767130007889_mewy939gi` on 2026-08-05.
 
 ## Verification notes
 
-1. 🟡 **Typo**: `sleep-q4` option 4 reads **"Pooo"** instead of "Poor". Cosmetic but user-visible —
-   straightforward fix in admin.
-2. **Question 2's wording is fragmentary** ("…if you then wake up during the night … how long are
+1. ~~Typo: `sleep-q4` option 4 reads "Pooo".~~ **Fixed 2026-08-06.**
+2. ~~Result labels inverted.~~ **Fixed 2026-08-06** — see Scoring above. This was found during the
+   fix pass, not the original 2026-08-05 audit — the original note below (max score correct) was
+   right, but didn't catch that the labels on that correct scale were backwards.
+3. **Question 2's wording is fragmentary** ("…if you then wake up during the night … how long are
    you awake for in total?") — reads like it's missing a lead-in clause, possibly truncated during
-   editing. Worth a copy pass.
-3. Content maps reasonably to Insomnia Severity Index (ISI) themes (sleep-onset latency,
+   editing. Worth a copy pass. Still open — content issue, not scoring.
+4. Content maps reasonably to Insomnia Severity Index (ISI) themes (sleep-onset latency,
    wake-after-sleep-onset, dissatisfaction, daytime impact, distress, duration of the problem) —
-   good instrument design overall, and the only one of the 5 non-sectioned assessments where the
-   stored max score is actually correct.
-4. Only 2 result bands (no "moderate" middle ground) — a binary Poor/Healthy split is coarser than
+   good instrument design overall.
+5. Only 2 result bands (no "moderate" middle ground) — a binary Poor/Healthy split is coarser than
    the content deserves given 8 well-differentiated questions; consider a 3-band split matching
-   ISI convention (none/subthreshold/moderate/severe) if finer feedback is wanted.
+   ISI convention (none/subthreshold/moderate/severe) if finer feedback is wanted. Still open — a
+   content decision, not a bug.

@@ -22,3 +22,9 @@ pnpm-debug.log*
 .vscode/
 .idea/
 .vercel
+
+# Local Claude Code tooling (not app config)
+.claude/
+
+# Supabase CLI local cache
+supabase/.temp/

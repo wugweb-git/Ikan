@@ -1,6 +1,7 @@
 # Anxiety — "Feeling overwhelmed and anxious"
 
-Pulled live from `assessment_def:asm_1767129765741_wse9aeprv` on 2026-08-05.
+Pulled live from `assessment_def:asm_1767129765741_wse9aeprv` on 2026-08-05. **Scoring fixed
+2026-08-06** — see below; this file originally documented the pre-fix bug.
 
 ## Meta
 
@@ -17,15 +18,19 @@ Pulled live from `assessment_def:asm_1767129765741_wse9aeprv` on 2026-08-05.
 > Measure how often anxiety symptoms have affected you over the last two weeks to better
 > understand your current stress response.
 
-## Scoring — as stored
+## Scoring — as of 2026-08-06
 
-- `scoring.ranges`: **null**.
-- `resultCategories`: **one single band** — `{min:0, max:21, label:"Scoring Range", description:""}`.
-  This is not a real severity scale: every possible score from 0 to 21 produces the identical
-  label. There is no low/moderate/high distinction authored at all.
-- Not sectioned (no entry in `assessment-section-presets.ts`); scoring falls through to the
-  generic "Assessment completed" interpretation regardless of the band above, since the player
-  reads `scoring.ranges` (null), not `resultCategories`.
+- Scoped correctly to the 7 real GAD-7 items only (`anxiety-q1`..`anxiety-q7`) via
+  `ANXIETY_SCORING` in `assessment-section-presets.ts` — item 8 (functional impairment) and items
+  9–10 (embedded PHQ-2) are excluded from the score, confirming the max is the standard clinical 21,
+  not 24.
+- Real bands, standard GAD-7 cutoffs: `0–4 Minimal`, `5–9 Mild`, `10–14 Moderate`, `15–21 Severe`.
+- `resultCategories` (KV) and `scoring.ranges` (KV) were both rewritten to match the bands above —
+  previously `resultCategories` held one placeholder band (`"Scoring Range", 0–21`, no description)
+  and `scoring.ranges` was null. Both are now populated and consistent with the code-side preset.
+- Still not in the sections/report-card system — this is a single-score assessment by design (one
+  instrument, one result), rendered via the normal single-ring result screen, not
+  `SectionReportCard`.
 
 ## Questions, in order
 
@@ -49,16 +54,11 @@ half the days · 4 Nearly every day`.
 
 1. **This is a genuine, correctly-formed GAD-7** (items 1–7) plus its standard functional-
    impairment question (item 8), with PHQ-2 embedded as a secondary screen (items 9–10) — a
-   legitimate clinical pattern (catching co-occurring depression during an anxiety screen). Content
-   is sound; only the *result band* is broken.
-2. **Single-band result categories mean this assessment currently gives no real feedback.** Fix:
-   author real GAD-7 bands, e.g. 0–4 Minimal / 5–9 Mild / 10–14 Moderate / 15–21 Severe (standard
-   GAD-7 cutoffs), and wire `resultCategories` → `scoring.ranges` so the player actually reads them
-   — or add this to the sections system the way General/Burnout now work.
-3. Max achievable score if all 8 core+impairment items scored 0–3: 8 × 3 = 24, not 21 as stored —
-   worth confirming whether item 8 (impairment) should count toward the total at all under standard
-   GAD-7 scoring (usually it does not; only items 1–7 sum to the clinical 0–21 range). If item 8 is
-   excluded from scoring, 21 is correct and this is fine — flagging because the current `scoring`
-   field is null and can't confirm which convention is intended.
-4. Items 9–10 (PHQ-2) are the exact content General's Depression section needs — see
-   [`general.md`](general.md) note 3.
+   legitimate clinical pattern (catching co-occurring depression during an anxiety screen).
+2. ~~Single-band result categories mean this assessment currently gives no real feedback.~~
+   **Fixed 2026-08-06** — see Scoring above.
+3. Confirmed: item 8 (impairment) and items 9–10 (embedded PHQ-2) are excluded from scoring by
+   `questionIds` scoping — the max is the clinical 21, not 24. Verified via test before shipping.
+4. Items 9–10 (PHQ-2) were the exact content General's Depression section needed —
+   **copied into General as `gen-dep-q1`/`gen-dep-q2` 2026-08-06** (new ids, same text); General's
+   Depression section is now complete. See [`general.md`](general.md).

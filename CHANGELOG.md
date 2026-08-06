@@ -9,6 +9,320 @@ undated under their original session number.
 
 ---
 
+## 2026-08-06 (continued VII)
+
+**Fix pass: dead code removed, 2 real hardcoded-content bugs fixed, safe registry/UI fixes shipped,
+several files audited on the user's request.** Per the user's explicit decision this turn ("small
+fixes stay on `equip-carry-forward`"), everything below is a small, low-risk, "doesn't change basic
+function" fix committed and deployed directly, not routed to a separate branch.
+
+**Dead code deleted** (each confirmed zero-reference via full-repo grep before removal):
+- `src/components/organisms/AssessmentQuestion.tsx` — imported but never rendered; `AssessmentFlow.tsx`
+  actually renders `ProgramPlayer`. Dead import removed, file + empty `organisms/` dir deleted.
+- `src/services/programService.ts` — placeholder Supabase credentials, zero importers, an abandoned
+  early scaffold targeting a table schema the real KV backend doesn't use.
+- `src/components/assessments/ReassessmentPrompt.tsx` — structurally unreachable: rendered in
+  `Dashboard.tsx` gated on `reason === 'manual'`, but `checkReassessmentTriggers()` never returns
+  `'manual'` (only `'time'`/`'mood'`/`'program'`/`null`). The real, working reassessment prompt was a
+  separate inline JSX block already in the same file, kept untouched. Another instance of this
+  session's recurring "two representations, only one live" pattern.
+
+**Hardcoded-content bugs fixed, code + all live KV copies together:**
+- **Demo-credentials button** shown unconditionally in production sign-in (`AuthForm.tsx`) — gated
+  behind `import.meta.env.DEV`. Checked first: `demo@ikanhealth.in` isn't a real account, so this was
+  a broken button for real visitors, not a live-account exposure.
+- **Stale US crisis-line numbers ("988", "911", "Text HOME to 741741") found in 3 separate live
+  places** — `cms-defaults.ts`'s FAQ default, and live KV in **both** `cms_page:faq` and a
+  byte-identical `page:page_...` FAQ record (confirming the "two parallel CMS systems" finding with
+  real duplicated content), plus a separate `page:` Terms record that had drifted independently since
+  its Dec 2025 seed. All fixed to the correct India numbers (KIRAN 1800-599-0019, iCALL 9152987821,
+  Emergency 112) already used correctly elsewhere in the same file.
+
+**Safe registry/UI fixes:**
+- `App.tsx`: added `/admin/block-type-viewer` to `validRoutes`.
+- `kv-audit-routes.ts`: added `activity_log: → user:` as the 7th declared `RELATIONS` entry; added a
+  registry note marking `recommendation_rules` (no colon) as vestigial/backup-restore-only.
+- `AdminKVAudit.tsx`: renamed "Multi-Tenant Prefix Sync" to "Admin/User Prefix Sync" (the
+  "multi-tenant" label was a misnomer), fixed its count to reflect actual `equip:`/`equip_program:`
+  and `assessment_def:`/`assessment:` record-count drift instead of an unrelated critical-warnings
+  count, and removed the stale `resource: → library:resource:` row from its description (the backend
+  route had already correctly dropped this sync target, with its own explanatory comment — only the
+  frontend copy hadn't caught up).
+- Fixed a 6th location of the stale "25 route modules" count, found while re-touching the backend:
+  `src/supabase/functions/server/CLAUDE.md`.
+
+**Audited on request, confirmed clean, no change needed:** `src/components/player/` (the one real
+renderer, no hardcoded/stale version), `src/components/figma/ImageWithFallback.tsx` (9 real
+importers), `LearningDiary.tsx` (fully functional, real route/API/entry-point), `src/lib/content/`
+(only `auth.ts`, already covered), `src/lib/constants/content.ts` (legitimate, not CMS-redundant),
+`src/components/blocks/` vs. `src/components/screens/homepage/` (different purposes, zero overlap —
+not duplicative), `AboutUs.tsx` vs. `Account.tsx` (unrelated screens, not "2 About pages"), old
+`ikan.health` domain (clean — only mentioned inside `BRAND.md`'s own retirement notice).
+
+**Confirmed real but intentionally not touched:** `src/components/payments/` — genuine,
+production-grade Razorpay integration, unplugged because no live equip is currently priced. Not dead
+scaffolding like the files removed above; kept pending a pricing-launch decision.
+
+**Doc enrichment**: `builder-editor-architecture.md` now explicitly confirms the render tier
+(`ProgramPlayer.tsx`/`BlockRenderer.tsx`) as part of the Builder pipeline, backed by the player/
+audit above. `ikan-wellness-score.md` gained a "proposed v2" structure sketch (program data +
+assessment scores + mood journal + Health Connect data + user info + activity/frequency, routed
+through the 3 engines instead of the current 4th independent mechanism) — explicitly a sketch for a
+future session, nothing built. `repo-hygiene-audit.md` gained full writeups of everything above, plus
+a direct answer to "recurring/extra equip & assessment content": zero duplicate *records* today, but
+duplicate *content within* Sleep Tight and Burnout Reset, still open and unfixed (content decisions).
+
+## 2026-08-06 (continued VI)
+
+**Admin KV Audit dashboard was showing stale numbers — traced to deployed-function drift, fixed by
+redeploying.** User caught this live, comparing the dashboard's "Uncategorized Keys: ~595" and
+"Schema & Relations: 94" tiles against what the code should produce. Simulated `classifyKey()`'s
+exact logic against live data: genuinely 1 uncategorized key (not ~595), and `KV_SCHEMA.length` is
+96 in source (not 94) — both dashboard values are computed live at request time, not hardcoded or
+frontend-cached, so the mismatch meant the deployed edge function was behind the current source.
+Redeployed `make-server-cc205da9`; reload the admin page to confirm.
+
+**Found, not fixed: "Multi-Tenant Prefix Sync" tile's count is mislabeled, and one of its 3 sync
+targets would create the exact regression the registry warns against.** The tile's displayed count
+(`AdminKVAudit.tsx:727`) is actually the count of critical growth warnings, unrelated to sync status.
+Its `resource: → library:resource:` target (`AdminKVAudit.tsx:745`) syncs into a prefix `KV_SCHEMA`
+explicitly documents as a deprecated mirror that should stay empty — running this sync as built would
+create a real regression. Also: "multi-tenant" mischaracterizes what this is (a single-tenant app's
+admin-write/user-read prefix split, not multiple customer orgs). See `PENDING.md`.
+
+**Live ghost-user cleanup: 5 of 7 orphaned `user:` KV rows deleted.** `user:` KV vs. `auth.users`:
+13 rows, 6 real, 7 ghost. 2 had zero downstream references and were plain orphans; 3 more were
+keyed by email instead of UUID (a distinct key-shape bug, same family as `enrollment:`'s two-shape
+problem) — all 5 deleted via one verified `DELETE ... WHERE key IN (...)`. The remaining 2 have real
+data attached elsewhere (7 journal entries; an enrollment + ikan_score record) and were deliberately
+left — see `schema-relations.md`.
+
+**New docs: `block-architecture.md` expanded (full 18-row type/subtype inventory, all 10
+`day-presets.ts` presets, the cross-system "what feeds what" map, the full `Activity` field schema
+including carry-forward/step-groups), `schema-relations.md` rehauled (fresh live orphan re-check —
+0 real orphans across all 6 relations — ghost users, inventories by category with `orphanRisk`,
+consolidated known-structural-issues list, artifact appendix), `recommendation-frontend-vs-backend.md`
+(§14 — `evaluateAssessment()` is not redundant, but `Dashboard.tsx` fetches a backend result it never
+renders), `repo-hygiene-audit.md` (the `src/contexts`/`config`/`assets`/`imports`/`sample-data`
+audit — 2 of the 5 don't exist on this branch at all, confirming `main` has diverged further than
+previously noted), `health-connect.md` (Google Fit/Health Connect integration, correctly wired,
+zero data, like the Scoring Engine).**
+
+**Fixed: the stale "25 route modules" count**, corrected to 33 files / 18 route modules in
+`CLAUDE.md`, `README.md`, and 3 `src/docs/*.md` files.
+
+**Found, not fixed (real code issues, explicitly scoped as docs-only this pass):**
+`Dashboard.tsx` fetches `GET /recommendations` into state that's never rendered;
+`/admin/block-type-viewer` is reachable by direct URL but missing from `validRoutes`, so the URL and
+sidebar nav disagree; `day-presets.ts`'s `allowedBlocks` enforcement is computed and then silently
+discarded (`blockedComponents` alone is enforced); a 4th block vocabulary
+(`mcq_single`/`table_input`/etc.) bridges to `block_type`/`exercise_subtype` only via hardcoded
+string matching. All precisely written up in `PENDING.md` for a future pass.
+
+## 2026-08-06 (continued V)
+
+**New: `src/docs/systems/block-architecture.md` (§13) + `resources.md` (§15) — Block formalized as
+the shared primitive under Builder, Check-in's own builder concept retired.** Following the
+session's direction that Check-in shouldn't be a third builder to reconcile but should collapse
+into Blocks (the same primitive Equip/Assessment already share), traced the full schema: a Block
+(`Activity`) resolves through three tiers — **type/subtype** (authored, KV-backed via `block_type`
+(7) / `exercise_subtype` (11), real consumers) → **interaction** (the unified answer-shape,
+`resolveInteraction()`, a hardcoded switch — its 12-record KV mirror `interaction_type` is read only
+by a reference viewer, not the resolver) → **render** (`BlockRenderer.tsx`, the actual front-end
+dispatch — answers this session's open "does rendering belong to Block?" question: yes, it's tier
+3). Reclassified `interaction_type` and `day_config_type` alongside the already-known
+`checkin_block_type` as decorative Metadata Catalog types (3 of 21, not 2) — each read only by
+`AdminBlockTypeViewer.tsx`, an existing accurate reference screen, never by an authoring or
+rendering path. Found `day_config_type`'s 11 KV values disagree three ways with code (`dayType`'s
+7-value TS union, `day-presets.ts`'s actual 9 presets) — 4 KV values exist in no code path at all.
+
+**Found and corrected: `mood-checkin.md`/§04 wrongly claimed `equip.checkInConfig` links to
+`checkin_template:` via a `scale_key` field.** It doesn't — `scale_key` exists only on
+`checkin_template:` steps. `checkInConfig` actually triggers `ProgramCheckIn.tsx`, a **separate**
+milestone check-in modal (day 7/14/30 or last day) with 4 fully hardcoded questions, no KV
+involvement, and no relation to Scales/Blocks/templates at all — a third, previously undocumented
+"check-in"-named system, found and corrected while re-verifying this for §13.
+
+**New: `src/docs/systems/resources.md` (§15).** Plain CRUD article library, 9 real records, all
+clean — 0 of 9 `resource:`→`category:` orphans, `resource_view:` and the deprecated
+`library:resource:` mirror both empty (real, wired, just unused / correctly retired). One minor,
+not-fixed observation: `GET /library/resources/:id` has no `published` check, so the one unpublished
+resource is correctly list-hidden but still reachable by direct id — no live exposure path today
+since nothing generates such a link.
+
+## 2026-08-06 (continued IV)
+
+**Correction: builder/editor architecture is 1 shared builder + 1 outlier, not 3 independent
+systems.** The "(continued III)" entry below is superseded — its first-pass check only looked at
+whether each wizard calls `useMetadata()` directly, and missed that `AssessmentEditPageWizard.tsx`
+literally imports and renders `EquipDailyEditor`/`EquipBlockEditor` (Equip's editor) via a
+`convertQuestionsToDay()` adapter. Re-verified by reading the actual render tree. Corrected finding:
+Equip and Assessment already share one real builder correctly; `AdminCheckinTemplateBuilder.tsx` is
+the one genuine outlier, with its own hardcoded `BLOCK_TYPES` disconnected from the shared
+`exercise_subtype`/`interaction_type` taxonomy. Built the concrete type-mapping table showing 4 of
+Check-in's 6 types are the same underlying concept, just named differently — not implemented as a
+fix (changes a live admin screen's behavior), flagged for a decision. See
+`src/docs/systems/builder-editor-architecture.md`.
+
+**New: `src/docs/systems/schema-relations.md` + artifact §12 — the full KV registry, relations, and
+tight-vs-loose audit.** Read `KV_SCHEMA` (96 registered prefixes) and `RELATIONS` (5 declared
+parent-child links) from `kv-audit-routes.ts` and cross-checked every live prefix in
+`kv_store_cc205da9` against it. Found and fixed one gap: `activity:daily:{date}` — the real merge
+target of `POST /admin/purge-activity-keys` — was live (one key already 1,357 events / ~300KB) and
+unregistered. Registered it (`orphanRisk: low`) and deployed; its missing size cap (unlike
+`user_activity:`'s) is flagged, not fixed — a retention decision, not a correctness bug. Documented
+the 6 real parent-child relations, the 5 Postgres shadow tables' `kv_key` back-references, and the
+"side mapping" pattern underneath the Builder conversation: Check-in Scales (`checkin_scale:`) and
+Blocks (Metadata Catalog's `exercise_subtype`/`interaction_type`) are the same *kind* of thing — a
+vocabulary a builder renders from and a user answers into — just unconsolidated. Classified every
+relation as tight (written once, never re-resolved — slug indices, shadow-table `kv_key`) or loose
+(a value that can drift after the reference was created); every relation in the loose category
+traces to a bug already found and fixed this session (`getEquip()`'s slug fallback, the
+double-shaped `enrollment:` key, `resource`/`category`'s slug match).
+
+## 2026-08-06 (continued III)
+
+**iKan Wellness Score audited — confirmed independent of the Scoring/Rule engines, one bug fixed.**
+The Programs component (25% of the score) queried two wrong enrollment key shapes, silently
+computing from roughly 1 in 8 of a user's real enrollments (verified: 0 matches on one prefix, 4 of
+34 real enrollments on the other). Fixed to full-scan and filter by value, matching the pattern
+already proven correct elsewhere in the codebase. Also found and documented, not fixed: General's
+flat score mixes higher-is-distress and higher-is-better sub-scales before the wellness formula
+inverts the whole sum — a design-level gap, not a one-line patch.
+
+**Builder/editor architecture mapped — three independent systems confirmed, not one.** Equip,
+Assessment, and Check-in each maintain their own block/question/step-type picker; only Equip's
+inner exercise-subtype tier is genuinely driven by the Metadata Catalog. Equip's outer block
+palette is hardcoded to 4 types while its own catalog has 7; Assessment's question-type picker
+isn't KV-driven at all; Check-in's hardcoded picker doesn't match its own catalog's string format.
+Nothing fixed — a mapping exercise per direction, parked alongside the still-deferred
+wizard/builder/editor naming question.
+
+## 2026-08-06 (continued II)
+
+**Backend Recommendation Engine fixed — completely broken since it was written, live on two real
+screens.** `RecommendationService.getRecommendations()` (`GET /recommendations`, called by
+`Dashboard.tsx` and `EquipProgramCompletion.tsx`) stacked three independent bugs: it read
+`assessment_response_by_user:` records whose `severity`/`interpretation` fields are always null;
+it matched admin rules by looking up a category name in a map keyed by the raw assessment id
+(never equal); and it read `equip.name`, a field that doesn't exist (real records use `title`).
+Net effect: this function has returned empty results for every user, always, since it shipped.
+Fixed to read `assessment_result:` (real score/max_score), resolve category via each result's
+`assessment_def.category` field, compute severity from score percentage, and read `equip.title`.
+Documented alongside the Scoring Engine (wired, empty, reserved for the future iKan Score) and
+Rule Engine (18 real rules, some real coverage gaps) as three separate systems, each with a full
+content doc and ER diagram under `src/docs/systems/`.
+
+**`getEquip()`'s missing slug fallback finally fixed at the root, not just the data.** The same
+orphaned-progress pattern already patched once this session (7 records, 1 user) recurred on a
+second user — because only the data was fixed the first time, not the code.
+`EquipService.getEquip(id)` now falls back to slug resolution on an id miss. Also: a full sweep of
+every equip-related KV prefix against the final equip list found and fixed 4 stale Postgres
+shadow-table rows (their KV originals had already been deleted in an earlier cleanup — confirmed
+expected, not a new sync bug, since those two tables are genuinely shadow-copy-only with no live
+write path in the current code).
+
+**CBT and Mindfulness deleted — both were empty pricing stubs that never launched.** Zero
+enrollments, zero day content, confirmed before deleting. 4 real equip programs remain: Sleep
+Tight, Unburn, Stress Buster, Productivity Reset — every one of the original 7 had at least one
+real issue; none were clean.
+
+## 2026-08-06 (continued)
+
+**Mood Journal admin editing fixed — real screen, real users, silently broken.**
+`AdminMoodManager.tsx` called `/moods`, backed by `mood_type:` — zero records, always falling back
+to a hardcoded mood set different from the real one. The live app read the real 5 records from
+`mood:` via a completely different endpoint (`/scales/moods`). Fixed by folding mood editing into
+`AdminCheckinScalesManager.tsx` as a "Mood" tab (it's already generic and data-driven — one config
+entry, not new logic), deleting `AdminMoodManager.tsx`, and removing the dead `/moods` handlers.
+Also found and removed while verifying: `index.tsx` had its own 3rd/4th duplicate set of `/moods`
+routes (correct data, pure dead code from Hono's first-match routing). `metadata-seed.ts` renamed
+to `metadata-catalog.ts` — "seed" implied automatic; it only ever runs on an explicit admin
+"Sync All" click plus a confirm dialog.
+
+**Metadata Catalog audited end-to-end — 2 real bugs found and fixed, plus an 8-record postscript.**
+All 21 admin-configurable taxonomy types (content type, block type, consultant type, etc.) checked:
+22 legacy `category:` records with no `type` field were silently polluting the Topic Categories
+dropdown for ~9 consumers including public `Library.tsx` — an unordered KV scan meant which
+duplicate won client-side dedup was non-deterministic. 21 were pure duplicates (deleted); the 1
+genuinely unique record was retyped and kept. Separately, 6 `interaction_type` records were
+mistyped duplicates of `checkin_block_type` entries (deleted). While fixing, found 8 more orphaned
+`category:cat-mood_type-*` records — leftovers from a "Sync All" run before `mood_type`'s
+retirement above — deleted, and the last residual wiring removed from `useMetadata.ts`. Two lower-
+severity items (`media_type`, `checkin_block_type` — both correctly synced, zero real consumers)
+left open as product decisions, not fixed.
+
+**One equip program was live and broken.** `equip:73034a14-...`, an abandoned early duplicate of
+Unburn with every content field empty and `title`/`slug` both blanked, was still `published: true`
+— and the public `/equip/programs` endpoint doesn't check for a non-empty title/slug, so it was
+actively serving an untitled, unusable card on the live program list. Confirmed zero enrollments,
+then deleted both the record and its stale `equip_slug:` index entry.
+
+**Remaining 3 equip programs audited, completing all 7.** Productivity Reset's day content is
+clean but the program is `published:false` despite real enrollment activity, with 4 placeholder
+`"yes"` metadata fields. CBT and Mindfulness are both empty pricing stubs — priced and slugged but
+zero day content and zero enrollments, predating the UUID-id convention. Every one of the 7 equip
+programs audited this session had at least one real content or data issue — none were clean.
+
+## 2026-08-06
+
+**Five previously-unscored assessments now produce a real result.** Anxiety, Depression, Stress,
+Sleep, and Balance all had `scoring.ranges: null` and stored `resultCategories` that the player
+never read, so every completion fell through to a generic "Assessment completed" message. Added
+`overallCalc` presets for all five in `assessment-section-presets.ts`, verified against 19
+hand-computed test cases: GAD-7/PHQ-9 now score only their real 7/9 clinical items instead of every
+question on the page; Balance's mixed-direction scale (5 positive + 3 negative items) is reversed
+correctly, so a genuinely well-balanced person no longer scores as "Imbalanced"; Stress and Balance
+bands were rebalanced to their true achievable max (28 and 32, not the stored 40); Sleep's stored
+result labels turned out to be inverted ("Poor"/"Healthy" swapped) and are now corrected, plus its
+`sleep-q4` "Pooo" typo fixed directly in KV. `AssessmentFlow.tsx` overrides score/maxScore/
+interpretation with the corrected values (and re-derives severity for the recommendation engine)
+whenever an assessment has an overall but fewer than 2 named sections; `AssessmentResults.tsx`'s
+report-card threshold moved to `sections.length >= 2` so only General/Burnout get the multi-scale
+card. `admin-routes.ts` now derives `scoring.ranges` from `resultCategories` on every assessment
+save, closing this dead-field bug class for future content edits. Separately, General's Anxiety and
+Depression sections are now fully populated — `gen-anxiety-q2`, `gen-dep-q1`, `gen-dep-q2` copied in
+verbatim from the standalone Anxiety/Depression assessments (no new authoring needed) and wired into
+`GENERAL_SECTIONS`.
+
+**Rule Engine found half-dead on inspection, not by report — then fixed.** The 18 real
+`recommendation_rule:*` records are served to two frontend consumers by the same backend function.
+Per-category equip targeting (`loadAdminRules`/`findMatchingAdminRules`) works correctly. The global
+severity-band/messaging path (`loadEngineConfig`, via `/recommendations/engine-config`) did not — it
+only extracts data from a rule when `.severity`/`.message` fields are present, which no real rule has,
+so it silently fell back to hardcoded defaults while still reporting `loadedFromBackend: true`. Fixed
+by tracking whether anything was actually applied instead of inferring it from row count, rather than
+inventing a schema nothing authors against yet.
+
+**Recommendation engine's hardcoded program-slug fallback fixed.** `'stress'` and `'burnout'` were
+used as equip identifiers in the no-admin-rule fallback path — the real slugs are `stress-buster` and
+`burnout-reset`; only `sleep-tight` happened to already be correct. Added a single
+`resolveProgramSlug()` alias map applied everywhere a program id is resolved.
+
+**Enrollment day-advancement fixed for users with multiple enrollment records.** Users routinely
+accumulate several enrollment records per program (re-enrollment, double-submits — confirmed across
+all three equips audited this session). `findEnrollmentAnyStatus` picked the first unordered array
+match, so `completeDay`'s advancement could silently target a stale duplicate while the enrollment
+record actually shown to the user stayed on `currentDay: 1` forever, even with correct underlying
+`progress:` records. Now prefers active status, then most-recently-touched — the same logic
+`getUserEnrollments` already used for display, just not previously applied to the write path.
+
+**Two dead-but-live API surfaces removed.** `equip-routes.ts`'s day/block CRUD routes were fully
+implemented and callable but never used by the frontend, which saves a program's entire day/block
+tree as one inline `daily_content` array instead — left alone, they could write orphan `day:`/`block:`
+records. `index.tsx` independently reimplemented `/categories` POST/PUT/DELETE alongside
+`admin-routes.ts`'s `/admin/categories`, with the frontend only ever calling the latter — removed the
+dead copy, but first ported its one real advantage (a resource-in-use delete guard) into the live
+endpoint, which had been deleting categories unconditionally.
+
+**Three full equip content-backup audits.** `src/docs/equips/{sleep-tight,burnout-reset,stress-buster}.md`
+— verbatim landing/onboarding/day/block content plus enrollment/progress cross-checks against the real
+tables. Found a literal build instruction shipped as live user-facing copy across 12 days of Sleep
+Tight, a missing Day 28 in Unburn, out-of-range progress data on Stress Buster, and the
+enrollment/progress disconnect above independently in all three.
+
+**Edge function + frontend redeployed** to ship everything above — smoke-tested and confirmed live.
+
 ## 2026-08-05
 
 **Sectioned assessment scoring (General & Burnout report cards).** Both assessments bundle several

@@ -42,9 +42,9 @@ npx vercel@latest deploy --prod --yes
 
 All API routes live in one Deno/Hono function: **`make-server-cc205da9`**.
 
-- Source: `src/supabase/functions/server/` (25 `.ts` files)
+- Source: `src/supabase/functions/server/` (33 `.ts`/`.tsx` files, 18 of them `*-routes.ts` route modules)
 - Entry point: `index.tsx` in that directory
-- Routes: admin, assessment, brevo, checkin-template, contact, corporate, equip, health-connect, hero-banner, ikan-score, kv-audit, mood, newsletter, progress, recommendation, reminder, resource, scales (25 files total)
+- Routes: admin, assessment, brevo, checkin-template, contact, corporate, equip, health-connect, hero-banner, ikan-score, kv-audit, mood, newsletter, progress, recommendation, reminder, resource, scales (18 route modules; 33 files total in the directory, including shared services/types/middleware)
 - Auth: `verify_jwt: true`. Routes use `requireAuth` (user JWT) or `requireAdmin` (admin JWT) middleware.
 - Deploy: see `BUILD.md` — requires a staging directory trick because the Supabase CLI needs a project directory, not a subdirectory.
 

@@ -10,7 +10,7 @@ For deploy instructions see `BUILD.md`. For the nested backend CLAUDE.md see `sr
 
 ## Overview
 
-All API routes run inside one Deno/Hono function: **`make-server-cc205da9`**. Source files are in `src/supabase/functions/server/` (25 `.ts`/`.tsx` files). `index.tsx` is the entry point; it imports and mounts every route module.
+All API routes run inside one Deno/Hono function: **`make-server-cc205da9`**. Source files are in `src/supabase/functions/server/` (33 `.ts`/`.tsx` files, 18 of them `*-routes.ts` route modules). `index.tsx` is the entry point; it imports and mounts every route module.
 
 Auth: `Authorization: Bearer <jwt>`. Use user JWT for authenticated routes; Supabase anon key for public routes (`verify_jwt: true` is set globally on the function — all requests must carry a valid JWT).
 

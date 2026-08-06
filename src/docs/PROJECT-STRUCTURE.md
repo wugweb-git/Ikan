@@ -50,7 +50,7 @@ src/
 ├── styles/                # globals.css (design tokens, component defaults)
 ├── guidelines/            # Design system doc (Guidelines.md)
 ├── docs/                  # Developer docs (this folder)
-├── supabase/functions/server/  # Edge function source (25 route modules)
+├── supabase/functions/server/  # Edge function source (18 route modules, 33 files total)
 ├── assets/                # Bundled images/fonts
 ├── imports/               # Figma-generated SVG components
 └── services/              # API service layer (thin wrappers around apiClient)
@@ -69,7 +69,6 @@ src/
 | Folder | Contents |
 |--------|---------|
 | `admin/` | Admin panel components (RBAC-gated) |
-| `assessments/` | Assessment-specific components (ReassessmentPrompt) |
 | `blocks/` | Reusable content blocks (SectionHero, BookingModal, NewsletterBlock, BentoGrids, …) |
 | `equip/` | Equip program-specific UI (ProgramCheckIn) |
 | `figma/` | Figma-generated components (ImageWithFallback) |
@@ -102,6 +101,6 @@ src/
 
 ## `src/supabase/functions/server/`
 
-25 `.ts`/`.tsx` files making up the single edge function. See `src/supabase/functions/server/CLAUDE.md` for the full guide and deploy steps.
+33 `.ts`/`.tsx` files (18 of them `*-routes.ts` route modules) making up the single edge function. See `src/supabase/functions/server/CLAUDE.md` for the full guide and deploy steps.
 
 Key files: `index.tsx` (entry), `program-service.ts` (equip/day/block CRUD), `content-service.ts` (KV wrapper), `shared-types.ts` (shared TypeScript types).

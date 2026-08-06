@@ -1,6 +1,7 @@
 # Depression — "Feeling depressed and hopeless"
 
-Pulled live from `assessment_def:asm_1767129862254_frzeigbdb` on 2026-08-05.
+Pulled live from `assessment_def:asm_1767129862254_frzeigbdb` on 2026-08-05. **Scoring fixed
+2026-08-06** — see below. Note 1's clinical wording concern is still open.
 
 ## Meta
 
@@ -17,13 +18,16 @@ Pulled live from `assessment_def:asm_1767129862254_frzeigbdb` on 2026-08-05.
 > Reflect on how frequently depressive symptoms have impacted your mood, energy, and daily
 > functioning recently.
 
-## Scoring — as stored
+## Scoring — as of 2026-08-06
 
-- `scoring.ranges`: **null**.
-- `resultCategories`: **one single band** — `{min:0, max:27, label:"Score range: 0–27",
-  description:"Score range: 0–27"}`. Same dead-end pattern as Anxiety: no real severity
-  distinction exists in the stored config.
-- Not sectioned; falls through to the generic completion message in the player today.
+- Scoped correctly to the 9 real PHQ-9 items only (`dep-q1`..`dep-q9`) via `DEPRESSION_SCORING` in
+  `assessment-section-presets.ts` — the impairment add-on and embedded GAD-2 items (10–12) are
+  excluded, confirming the max is the standard clinical 27.
+- Real bands, standard PHQ-9 cutoffs: `0–4 Minimal`, `5–9 Mild`, `10–14 Moderate`,
+  `15–19 Moderately severe`, `20–27 Severe`.
+- `resultCategories` and `scoring.ranges` (KV) rewritten to match — previously `resultCategories`
+  held one placeholder band and `scoring.ranges` was null.
+- Single-score assessment, not in the sections/report-card system by design.
 
 ## Questions, in order
 
@@ -55,11 +59,10 @@ days · 4 Nearly every day`.
    deliberate clinical/safety decision**, not an accidental content edit; if PHQ-9's exact wording
    is wanted for scoring validity, the real item plus a proper crisis-resource trigger (like
    General's separate risk indicator) should be used instead.
-2. **Single-band result categories** — identical problem to Anxiety. Standard PHQ-9 cutoffs are
-   0–4 Minimal / 5–9 Mild / 10–14 Moderate / 15–19 Moderately severe / 20–27 Severe; none of this
-   is currently authored.
-3. Items 11–12 (GAD-2) are the exact content General's Anxiety section is missing its second item
-   for — see [`general.md`](general.md) note 3.
+2. ~~Single-band result categories~~ **fixed 2026-08-06** — see Scoring above.
+3. Item 12 (GAD-2's second item) was the exact content General's Anxiety section was missing —
+   **copied into General as `gen-anxiety-q2` 2026-08-06** (new id, same text). General's Anxiety
+   section is now complete. See [`general.md`](general.md).
 4. This is a genuine, correctly-formed **PHQ-9** otherwise — 9 core items + impairment question,
    same embedded-cross-screen pattern as Anxiety's PHQ-2. Content quality is good; only the result
    bands and item 9's wording need attention.

@@ -1,6 +1,9 @@
 # Balance — "Struggling to balance life"
 
-Pulled live from `assessment_def:asm_1767130043662_wc4qpivfl` on 2026-08-05.
+Pulled live from `assessment_def:asm_1767130043662_wc4qpivfl` on 2026-08-05. **Reversal and
+max-score bugs fixed 2026-08-06** — see below. Also found: 2 of 3 real historical results were
+recorded against a 10-question version of this assessment that no longer exists (see note 4) — a
+separate, unrelated data-integrity issue.
 
 ## Meta
 
@@ -17,11 +20,20 @@ Pulled live from `assessment_def:asm_1767130043662_wc4qpivfl` on 2026-08-05.
 > Pinpoint workplace stressors like workload, support, and control that may be disrupting
 > work-life balance.
 
-## Scoring — as stored
+## Scoring — as of 2026-08-06
 
-- `scoring.ranges`: **null**.
-- `resultCategories`: 3 bands — `Balanced 0–12`, `Strained 13–24`, `Imbalanced 25–40`.
-- Not sectioned; falls through to the generic completion message in the player today.
+- `BALANCE_SCORING` in `assessment-section-presets.ts` reverses the 5 positively-worded items
+  (`bal-q1`, `bal-q3`, `bal-q4`, `bal-q5`, `bal-q7`) before summing, so a well-balanced response now
+  correctly lands near 0, not near the max.
+- Bands rebalanced to the real 0–32 ceiling: `Balanced 0–10`, `Strained 11–19`,
+  `Imbalanced 20–32` (previously 0–12 / 13–24 / 25–40, with 25–40 partly unreachable at a true max
+  of 32).
+- `resultCategories` and `scoring.ranges` (KV) rewritten to the corrected bands.
+- Single-score assessment, not in the sections/report-card system by design.
+- One real historical result (of 3) uses this current 8-question scale and was re-scored for
+  comparison: stored `13/32` ("Strained", no reversal applied) → corrected `19/32` ("Strained" —
+  same label this time, but the underlying score moved 46%). See note 4 for the other two results,
+  which can't be re-scored at all.
 
 ## Questions, in order
 
@@ -40,28 +52,25 @@ All 8 use the same 5-point scale: `1 Never · 2 Rarely · 3 Sometimes · 4 Often
 
 ## Verification notes
 
-1. 🔴 **Mixed-direction scale scored with no reversal — this currently mis-scores anyone who isn't
-   at an extreme.** 5 of the 8 items are positively worded (a *high* answer means things are
-   *good* — "I feel supported," "I have time for relationships"), while 3 are negatively worded (a
-   *high* answer means things are *bad* — "My work drains most of my energy," "I feel constantly
-   on"). Nothing in the current pipeline reverses the 3 negative items before summing.
-
-   Concretely: a genuinely well-balanced person answers "Very Often" (5) to the 5 positive items
-   and "Never" (1) to the 3 negative items. Raw sum: `5×5 + 3×1 = 28` — squarely inside the
-   "Imbalanced" band (25–40), the *opposite* of the truth. Someone who is actually struggling
-   (low on positives, high on negatives) scores `5×1 + 3×5 = 20` — "Strained," milder than the
-   well-balanced person's result. **The instrument's total score is currently inverted for anyone
-   who answers consistently.**
-
-   Fix: apply the same reversal pattern already built and verified for the Brief Resilience Scale
-   in General (`reverseQuestionIds` in `assessment-sections.ts`) to `bal-q2`, `bal-q6`, `bal-q8`
-   before this assessment can be trusted — either by adding this assessment to the sections system,
-   or by reversing those three items' stored values directly if it stays a flat-sum assessment.
-
-2. 🔴 **Max-score mismatch, same class of bug as Stress.** 8 questions × max option value 4
-   (0-indexed) = **32** is the real ceiling. `resultCategories` sets "Imbalanced" at 25–40 — scores
-   above 32 can never occur. Rebalance to a 0–32 scale once issue 1 is fixed (the correct bands
-   depend on the corrected, reversed scoring).
-3. Because of issue 1, **do not trust any historical results from this assessment** without
-   re-deriving them from raw responses using corrected reversal — the stored `score`/`severity_hint`
-   on past completions reflect the same inverted logic.
+1. ~~Mixed-direction scale scored with no reversal.~~ **Fixed 2026-08-06.** 5 of the 8 items are
+   positively worded (a *high* answer means things are *good*), 3 are negatively worded. Verified
+   before shipping: a well-balanced response (max on positives, min on negatives) scored 28/32 under
+   the old logic — squarely "Imbalanced," the opposite of true. `reverseQuestionIds` now reverses the
+   5 positive items (`bal-q1`, `bal-q3`, `bal-q4`, `bal-q5`, `bal-q7`) — reversing the positives
+   rather than the 3 negatives was the correct direction, confirmed by testing both ways: reversing
+   the negatives instead makes the total read "how balanced" (higher = better), which contradicts
+   every other assessment's higher-is-worse convention and the band labels below it.
+2. ~~Max-score mismatch.~~ **Fixed 2026-08-06** — see Scoring above.
+3. ~~Do not trust historical results.~~ **Superseded by note 4** — one of the three real results
+   uses the current question set and has been re-scored (see Scoring above); the other two turned
+   out to be un-rescoreable for an unrelated reason.
+4. 🔴 **New finding (2026-08-06): 2 of 3 real historical results reference a question set that no
+   longer exists.** Their stored responses use ids `bal-q1`–`bal-q10` plus `bal-intro`, with
+   agree/disagree options ("1 - Disagree", "0 - Strongly Disagree") — not the current 8-item
+   frequency scale ("1 Never" … "5 Very Often"). At some point Balance's questions were replaced
+   wholesale with no versioning and no migration of already-collected responses. These two results
+   (raw scores 18/100 and 12/null) cannot be meaningfully reinterpreted against today's bands —
+   the content the math was based on is gone. This is a distinct problem from the reversal bug
+   above: even a mathematically perfect scorer can't recover a result whose underlying instrument
+   was silently swapped out from under it. No action taken on these two records; flagging for
+   awareness rather than attempting a fix that would have to guess at intent.

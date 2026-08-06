@@ -11,7 +11,7 @@ assessments, structured "Equip" programs, mood journaling, and professional cons
 | Layer | Technology |
 |---|---|
 | Frontend | React + TypeScript, Vite, Tailwind CSS v4 + Radix UI |
-| Backend | Supabase Edge Function (Deno + Hono) — one function, 25 route modules |
+| Backend | Supabase Edge Function (Deno + Hono) — one function, 18 route modules (33 files total) |
 | Database | Supabase Postgres — a KV table today, with 5 entities mid-migration to real tables |
 | Auth | Supabase Auth v2, email confirmation on |
 | Deployment | Vercel (frontend), Supabase CLI (edge function) |

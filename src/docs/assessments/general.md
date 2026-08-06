@@ -1,6 +1,7 @@
 # General — "Unsure or general concern"
 
-Pulled live from `assessment_def:asm_1767129718791_zj1t8hx3c` on 2026-08-05.
+Pulled live from `assessment_def:asm_1767129718791_zj1t8hx3c` on 2026-08-05. **GAD-2/PHQ-2 gaps
+closed 2026-08-06** — see below; question count is now 27, not 24.
 
 ## Meta
 
@@ -11,7 +12,7 @@ Pulled live from `assessment_def:asm_1767129718791_zj1t8hx3c` on 2026-08-05.
 | category | `general` |
 | duration | 3 (minutes, as authored) |
 | featured | false |
-| question count | 24 |
+| question count | 27 (was 24 as of 2026-08-05) |
 
 ## Description
 
@@ -56,21 +57,22 @@ Pulled live from `assessment_def:asm_1767129718791_zj1t8hx3c` on 2026-08-05.
 | 22 | `block-1773736163250` | It is hard for me to snap back when something hard happens | (5-pt) | Resilience — **reverse-scored** |
 | 23 | `block-1773736165457` | I usually come through difficult times with little trouble | (5-pt) | Resilience |
 | 24 | `block-1773736175000` | I tend to take a long time to get over set-backs in my life | (5-pt) | Resilience — **reverse-scored** |
+| 25 | `gen-anxiety-q2` | Not being able to stop or control worrying | 1 Not at all · 2 Several days · 3 More than half the days · 4 Nearly every day | Anxiety (added 2026-08-06, copied verbatim from `anxiety-q2`) |
+| 26 | `gen-dep-q1` | Little interest or pleasure in doing things | (same 4-point scale) | Depression (added 2026-08-06, copied verbatim from `dep-q1`) |
+| 27 | `gen-dep-q2` | Feeling down, depressed, or hopeless | (same 4-point scale) | Depression (added 2026-08-06, copied verbatim from `dep-q2`) |
 
 ## Verification notes
 
-1. **Depression section is empty** — 0 of its expected 2 items are mapped. q2/q3/q4 ("rate your
-   mental health", "I feel optimistic") are *not* PHQ-2 items and are correctly excluded, not
-   miscategorized.
-2. **Anxiety section has 1 of 2 expected items** — only `gen-q1` (GAD-2 item 1) exists here.
-3. **Fix available without new authoring**: the missing content already exists elsewhere in the
-   bank. Copy these two questions (verbatim, new ids) into this assessment's `questions` array:
-   - GAD-2 item 2 — `"Not being able to stop or control worrying"` (currently `anxiety-q2` in the
-     Anxiety assessment)
-   - PHQ-2 both items — `"Little interest or pleasure in doing things"` and `"Feeling down,
-     depressed, or hopeless"` (currently `block-1773677757396` / `block-1773677760521` in the
-     Anxiety assessment, and `dep-q1` / `dep-q2` in the Depression assessment)
-   Then add their ids to `GENERAL_SECTIONS.sections[anxiety|depression].questionIds` in
+1. ~~Depression section is empty.~~ **Fixed 2026-08-06** — `gen-dep-q1`/`gen-dep-q2` added (items
+   26–27 above). q2/q3/q4 ("rate your mental health", "I feel optimistic") remain correctly excluded
+   — they were never PHQ-2 items, just unscored filler.
+2. ~~Anxiety section has 1 of 2 expected items.~~ **Fixed 2026-08-06** — `gen-anxiety-q2` added
+   (item 25 above). GAD-2 in General is now a complete 2-item screen.
+3. **How it was fixed**: no new authoring — the content already existed verbatim in the standalone
+   Anxiety/Depression assessments (`anxiety-q2`, `dep-q1`, `dep-q2`). Copied into this assessment's
+   `questions` array under new ids (`gen-anxiety-q2`, `gen-dep-q1`, `gen-dep-q2`, appended rather
+   than inserted in the middle, so existing question ids/positions are untouched), and wired into
+   `GENERAL_SECTIONS.sections[anxiety|depression].questionIds` in
    `src/lib/assessment-section-presets.ts`.
 4. **Reverse-scored resilience items are working as intended** — verified in code with 35 passing
    assertions (see `src/lib/assessment-sections.ts`). Listed here so a future content edit doesn't

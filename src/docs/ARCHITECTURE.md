@@ -29,7 +29,7 @@ Browser (React SPA / PWA)
     |  HTTPS — Authorization: Bearer <jwt>
     v
 Supabase Edge Function  (make-server-cc205da9)
-  Deno runtime, Hono router, 25 route modules
+  Deno runtime, Hono router, 18 route modules (33 files total)
     |
     |  Supabase client (service-role key)
     v
@@ -60,7 +60,7 @@ Supabase Postgres  (kv_store_cc205da9 table)
 
 ## Backend Architecture
 
-One deployed Supabase Edge Function (`make-server-cc205da9`) handles all 25 route modules. See `src/supabase/functions/server/CLAUDE.md` for the full backend guide.
+One deployed Supabase Edge Function (`make-server-cc205da9`) handles all 18 route modules (33 files total). See `src/supabase/functions/server/CLAUDE.md` for the full backend guide.
 
 ### KV key prefixes
 
