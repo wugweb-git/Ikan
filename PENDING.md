@@ -3,10 +3,12 @@
 Single source of truth for outstanding work across sessions. Update this file whenever you deploy
 something that changes what's here — see `GOVERNANCE.md` for the rule.
 
-*Last updated: 2026-08-07, after fixing a real production bug (General assessment's admin builder
-was 3 questions behind what live users saw, root-caused to a stale `daily_content` cache) and finding
-the admin notification bell is unwired from real data. See `CHANGELOG.md` for full detail. All work
-through this point is committed and pushed to `origin/equip-carry-forward`.*
+*Last updated: 2026-08-07, after removing 7 dead/placeholder questions across General, Burnout, and
+Stress (found via a systematic live-vs-scoring-config check run across all 7 assessments after a
+user screenshot caught General's), a real production bug fix (General's admin builder was behind
+what live users saw, root-caused to a stale `daily_content` cache), and finding the admin
+notification bell is unwired from real data. See `CHANGELOG.md` for full detail. All work through
+this point is committed and pushed to `origin/equip-carry-forward`.*
 
 ---
 
@@ -18,8 +20,10 @@ through this point is committed and pushed to `origin/equip-carry-forward`.*
   issue" emails (Jul 20 / Jul 26 / Aug 3 are the same weekly digest re-reporting one finding, not
   three escalating ones).
 - **Leaked-password protection** → Supabase → Auth → Providers → enable HaveIBeenPwned check.
-- **Burnout has 22 items; BAT-23 defines 23.** Still undecided — author the missing item, or treat 22
-  as intentional (current code treats 22 as complete and correct). Not blocking anything.
+- **Burnout has 22 real items; BAT-23 defines 23.** Still undecided — author a genuine 23rd clinical
+  item, or treat 22 as intentional (current code treats 22 as complete and correct). Not the same
+  question as the removed `burnout-q1` placeholder (2026-08-07 — that was pure dead "test" text with
+  no clinical content, unrelated to this gap). Not blocking anything.
 - **Wellness score (iKAN) aggregation logic** — the per-assessment scoring fixed this session (see
   "Verified fixed" below) is upstream of it, not it. Revisiting how the overall iKAN wellness score
   is computed from per-assessment results is **explicitly deferred to a later session** (confirmed
@@ -281,17 +285,20 @@ already exists in `mood-routes.ts`) and Phase 4 (repeat dual-write for the remai
   admin-routes.ts derivation (`C3` above) only fires on a new save, so without this backfill the raw
   KV records would have kept showing the old wrong bands to anyone reading them directly (admin
   screens, this audit) even though the player itself was already fixed via the code preset.
-- 🔴 **Two live content bugs found 2026-08-06 by re-verifying doc question counts against the DB —
-  neither fixed.** Both the original 2026-08-05 audit and the 2026-08-06 scoring fixes checked only
-  the *scored* subset of each assessment's questions, never the doc's stated question count against
-  `jsonb_array_length(value->'questions')`. That gap hid two real bugs through two review passes:
-  - **Stress**: `stress-q1`–`stress-q3` have broken, truncated text (`"How often have you felt "`,
-    `"How often have you"`, `"How often have you f"`) and are shown to every user as the first 3
-    questions, before the real 7 scored ones. Not excluded from *display*, only from scoring.
-  - **Burnout**: `burnout-q1`'s stored text is the literal placeholder `"test"`, shown as the very
-    first question. Not excluded from display, only from scoring.
-  Both need a product decision, not a code fix: author real replacement text (unknown for Stress's
-  fragments) or delete the 4 records outright. Full detail in `stress.md`/`burnout.md`.
+- ~~Two live content bugs found 2026-08-06 (Stress's 3 truncated questions, Burnout's "test"
+  placeholder), neither fixed~~ **fixed 2026-08-07, live-confirmed via a user screenshot of General
+  showing the same pattern.** Ran a systematic check across all 7 assessments: every live
+  `questions[]` id cross-referenced against every id referenced anywhere in that assessment's own
+  `assessment-section-presets.ts` scoring config. Anything present in the data but referenced by no
+  section and no risk indicator is either intentionally-unscored-but-real (verified case by case —
+  Anxiety's/Depression's excluded impairment+embedded-screen items are genuine, kept) or dead
+  weight. Found and removed 7 dead questions total: **General** (`gen-q2`/`q3`/`q4` — confirmed
+  placeholder stand-ins for content later replaced by `gen-dep-q1`/`q2`, per this repo's own prior
+  comment, never cleaned up), **Burnout** (`burnout-q1`, literal `"test"`), **Stress**
+  (`stress-q1`–`q3`, truncated mid-sentence, no recoverable intended text). All 3 assessments' stale
+  `daily_content` admin-builder caches cleared afterward so the builder shows the corrected counts.
+  Full detail in `general.md`/`burnout.md`/`stress.md`. Sleep and Balance were checked the same way
+  and are clean — every live question is referenced by their scoring config, no orphans.
 - ✅ **Mood Journal, Check-in Scales, and Check-in Builder — audited AND fixed 2026-08-06.**
   `AdminMoodManager.tsx` called `/moods` (`mood-routes.ts`, backed by `mood_type:` — 0 records,
   always falling back to a hardcoded, wrong mood set) while the real app read from `/scales/moods`

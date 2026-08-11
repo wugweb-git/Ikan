@@ -9,6 +9,38 @@ undated under their original session number.
 
 ---
 
+## 2026-08-07 (continued III)
+
+**Full data-integrity audit: 20 new systems docs, root docs corrected — see below. Also: 7 dead
+placeholder questions removed across 3 assessments, closing out two previously-flagged "product
+decision" content bugs instead of re-flagging them.** Prompted directly by a user screenshot of
+General showing a nonsense question in production. Investigation found `gen-q2`/`q3`/`q4`
+("physical health" / "mental health" / "I feel optimistic") were explicitly documented as dead —
+`assessment-section-presets.ts`'s own comment (written earlier this session) says they were
+placeholder stand-ins for content later replaced by `gen-dep-q1`/`q2`, and were simply never
+removed once the real replacements landed. That gap — writing down a known-dead-and-fixable finding
+without acting on it — is a real process failure, not new codebase debt.
+
+Ran a systematic check across **all 7 assessments** to make sure this wasn't isolated: every live
+`questions[]` id cross-referenced against every id referenced anywhere in that assessment's own
+scoring config (`assessment-section-presets.ts`). Anything unreferenced is either
+intentionally-unscored-but-real (verified individually — Anxiety's and Depression's excluded
+impairment/embedded-screen items are genuine clinical content, confirmed and kept) or dead weight.
+Found and removed:
+- **General**: `gen-q2`/`q3`/`q4` (dead placeholders, see above) — 27 → 24 questions.
+- **Burnout**: `burnout-q1`, literal placeholder text `"test"`, previously flagged 2026-08-06 as
+  "needs a product decision" — the decision was already obvious (no real content existed to
+  author-around), just never executed. 23 → 22 questions.
+- **Stress**: `stress-q1`–`q3`, truncated mid-sentence (`"How often have you felt "`, `"How often
+  have you"`, `"How often have you f"`), also previously flagged 2026-08-06 — deleted rather than
+  guessed-at, since the fragments didn't imply one clear intended completion. 10 → 7 questions.
+
+Sleep and Balance checked the same way and confirmed clean — every live question in both is
+referenced by their scoring config. All fixes applied to both `assessment_def:` and the `assessment:`
+mirror; each assessment's stale `daily_content` admin-builder cache was cleared afterward (same
+mechanism as the General builder-sync bug fixed earlier the same day) so the builder shows the
+corrected counts, not another stale snapshot.
+
 ## 2026-08-07 (continued II)
 
 **Fixed a real, screenshot-confirmed production bug: General assessment's admin builder was showing

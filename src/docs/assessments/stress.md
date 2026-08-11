@@ -1,12 +1,21 @@
 # Stress — "Feeling worried and stressed"
 
-Pulled live from `assessment_def:asm_1767129926263_ru3v6dozh` on 2026-08-05, **re-verified in full
-2026-08-06**. Max-score mismatch fixed 2026-08-06 (see Scoring below). **The 2026-08-05 audit was
-incomplete**: it only listed the 7 questions used in scoring and missed that the assessment
-actually has 10 questions total — the other 3 (`stress-q1`–`q3`) are broken, truncated content
-shown to every user before the real 7. Caught 2026-08-06 by re-verifying the doc's question count
-against a fresh `jsonb_array_length` query rather than trusting the original table. Not yet fixed —
-see Verification notes 2. 38 real completions exist for this assessment, the most of any of the 7.
+Pulled live from `assessment_def:asm_1767129926263_ru3v6dozh` on 2026-08-05, **content-corrected
+2026-08-07**. Max-score mismatch fixed 2026-08-06 (see Scoring below). The 3 broken, truncated
+questions (`stress-q1`–`q3`) that used to be shown before the real 7 have been **removed** — see
+below. Question count is now **7**, matching the scored items exactly. 38 real completions exist
+for this assessment, the most of any of the 7 — meaning every one of those users saw 3 broken
+questions before this fix.
+
+## ✅ Fixed 2026-08-07: `stress-q1`–`q3` removed (truncated, unrecoverable text)
+
+Found via the same systematic check as General/Burnout. Unlike Burnout's single placeholder, these
+3 were truncated **mid-sentence** (`"How often have you felt "`, `"How often have you"`, `"How
+often have you f"`) — there was no way to recover or guess the intended real question with
+confidence (multiple equally-plausible completions), so authoring replacement text wasn't a
+responsible option. Removed from `questions[]` on both `assessment_def:` and the `assessment:`
+mirror; the stale `daily_content` builder cache was cleared so the admin builder regenerates
+correctly from the corrected 7.
 
 ## Meta
 
@@ -16,7 +25,7 @@ see Verification notes 2. 38 real completions exist for this assessment, the mos
 | slug | `feeling-worried-and-stressed` |
 | category | `stress` |
 | duration | 4 |
-| question count | 10 (was documented as 7 until 2026-08-06 — see note 2) |
+| question count | **7** (real, scored items only, as of 2026-08-07) |
 
 ## Description
 
@@ -35,15 +44,13 @@ see Verification notes 2. 38 real completions exist for this assessment, the mos
 
 ## Questions, in order
 
-All 10 use the same 5-point scale, options `0 - Never · 1 - Almost Never · 2 - Sometimes ·
-3 - Fairly Often · 4 - Very Often` (all 10 questions carry this exact 5-option set, including the
-3 broken ones — verified, not assumed).
+All 7 use the same 5-point scale, options `0 - Never · 1 - Almost Never · 2 - Sometimes ·
+3 - Fairly Often · 4 - Very Often`. `stress-q1`–`q3` (truncated, unscored) removed 2026-08-07 — see
+above; ids below keep their original `qN` numbers rather than being renumbered, to match what's
+still in the live KV record.
 
 | # | id | Text | Scored? |
 |---|---|---|---|
-| 1 | `stress-q1` | 🔴 `"How often have you felt "` — **truncated, trailing space, sentence never finishes** | No |
-| 2 | `stress-q2` | 🔴 `"How often have you"` — **truncated mid-sentence** | No |
-| 3 | `stress-q3` | 🔴 `"How often have you f"` — **truncated mid-word** | No |
 | 4 | `stress-q4` | How often has stress affected your sleep? | Yes |
 | 5 | `stress-q5` | How often has stress affected your focus? | Yes |
 | 6 | `stress-q6` | How often have you felt physically tense? | Yes |
@@ -55,19 +62,12 @@ All 10 use the same 5-point scale, options `0 - Never · 1 - Almost Never · 2 -
 ## Verification notes
 
 1. ~~Max-score mismatch.~~ **Fixed 2026-08-06** — see Scoring above.
-2. 🔴 **`stress-q1`–`stress-q3` have broken, truncated text and are shown to every user before the
-   real 7 questions — still open, not fixed.** Confirmed live in `AssessmentFlow.tsx`'s
-   `normalizeAssessment()`: it maps over every entry in `assessment.questions` with no filtering by
-   scoring relevance, so these 3 render in the player exactly as stored. `STRESS_SCORING`'s
-   `questionIds` correctly excludes them from scoring (that part isn't broken), but nothing stops
-   them from being *asked*. **The original 2026-08-05 audit's note here — "ids start at q4,
-   possibly deleted" — was wrong**, written without checking the actual `questions` array length
-   against the table below it; the ids aren't missing, the questions exist and are broken.
-   Two ways to fix, a product decision not made here: author the real text (unknown — the sentence
-   fragments don't clearly imply a specific completion, e.g. "How often have you felt overwhelmed?"
-   is one guess among several equally plausible ones) and add them to `STRESS_SCORING` if they're
-   meant to count, or delete the 3 records from the `questions` array entirely if they were leftover
-   drafts (they're currently scored, functional dead weight even at their best).
+2. ✅ **Fixed 2026-08-07: `stress-q1`–`stress-q3` (broken, truncated text) removed.** Confirmed live
+   in `AssessmentFlow.tsx`'s `normalizeAssessment()`: it maps over every entry in
+   `assessment.questions` with no filtering by scoring relevance, so these 3 rendered in the player
+   exactly as stored, for all 38 real completions to date. `STRESS_SCORING`'s `questionIds` already
+   correctly excluded them from scoring. Deleted rather than authored-around — the truncated
+   fragments didn't clearly imply one specific intended completion.
 3. Options use a proper 0-indexed scale (`0 - Never` … `4 - Very Often`) — unlike most other
    assessments in this bank, which display `1 …` but still score from index 0. This one's display
    text and scored value actually agree, which is good, but means it's the odd one out stylistically.

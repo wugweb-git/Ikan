@@ -1,7 +1,25 @@
 # General — "Unsure or general concern"
 
-Pulled live from `assessment_def:asm_1767129718791_zj1t8hx3c` on 2026-08-05. **GAD-2/PHQ-2 gaps
-closed 2026-08-06** — see below; question count is now 27, not 24.
+Pulled live from `assessment_def:asm_1767129718791_zj1t8hx3c` on 2026-08-05, **content-corrected
+2026-08-07**. Question count is now **24**, all 24 real and scored/risk-relevant — not 27, and not
+the 24-that-was-actually-27-minus-a-stale-cache from 2026-08-06.
+
+## ✅ Fixed 2026-08-07: 3 dead placeholder questions removed, live-confirmed via screenshot
+
+`gen-q2`/`gen-q3`/`gen-q4` ("How would you rate your overall physical health?" / "...overall mental
+health?" / "I feel optimistic about my future") were shown to every real user (`required: true`, no
+skip) despite being **known, documented dead weight since 2026-08-06** —
+`assessment-section-presets.ts`'s own comment says they were placeholder stand-ins for what became
+`gen-dep-q1`/`gen-dep-q2`, and were never removed once the real replacements were added. Caught when
+a user screenshotted them live in production. Removed from `questions[]` on both `assessment_def:`
+and the `assessment:` mirror; the stale `daily_content` builder cache (a separate bug fixed earlier
+the same day — see `PENDING.md`) was cleared again since this edit changed `questions[]` again.
+
+This was found by systematically checking every assessment's live `questions[]` against every
+question id referenced by its own scoring preset in `assessment-section-presets.ts` — any question
+present in the data but referenced by no section and no risk indicator is either intentionally
+unscored-but-real (verified case by case) or dead weight. The same pass found and fixed the same
+issue in Burnout and Stress — see those docs.
 
 ## Meta
 
@@ -12,7 +30,7 @@ closed 2026-08-06** — see below; question count is now 27, not 24.
 | category | `general` |
 | duration | 3 (minutes, as authored) |
 | featured | false |
-| question count | 27 (was 24 as of 2026-08-05) |
+| question count | **24** (real, scored/risk-relevant items only, as of 2026-08-07) |
 
 ## Description
 
@@ -34,9 +52,9 @@ closed 2026-08-06** — see below; question count is now 27, not 24.
 | # | id | Text | Options | Section |
 |---|---|---|---|---|
 | 1 | `gen-q1` | Feeling nervous, anxious or on edge | 1 Not at all · 2 Several days · 3 More than half the days · 4 Nearly every day | Anxiety |
-| 2 | `gen-q2` | How would you rate your overall physical health? | (same 4-point scale) | *unscored* |
-| 3 | `gen-q3` | How would you rate your overall mental health? | (same 4-point scale) | *unscored* |
-| 4 | `gen-q4` | I feel optimistic about my future | (same 4-point scale) | *unscored* |
+| ~~2~~ | ~~`gen-q2`~~ | ~~How would you rate your overall physical health?~~ | — | **removed 2026-08-07 — dead placeholder, see above** |
+| ~~3~~ | ~~`gen-q3`~~ | ~~How would you rate your overall mental health?~~ | — | **removed 2026-08-07 — dead placeholder, see above** |
+| ~~4~~ | ~~`gen-q4`~~ | ~~I feel optimistic about my future~~ | — | **removed 2026-08-07 — dead placeholder, see above** |
 | 5 | `block-1773736126142` | Thoughts that you would be better off dead or of hurting yourself in some way | (same 4-point scale) | Risk indicator only — never folded into a section score |
 | 6 | `block-1773736128273` | I have felt cheerful in good spirits | 1 At no time … 6 All of the time (6-pt) | Wellbeing (WHO-5) |
 | 7 | `block-1773736130158` | I have felt calm and relaxed | (6-pt) | Wellbeing |

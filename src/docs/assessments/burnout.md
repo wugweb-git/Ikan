@@ -1,12 +1,18 @@
 # Burnout — "Feeling drained and burned out"
 
-Pulled live from `assessment_def:asm_1767129964930_bv8cqgm16` on 2026-08-05, **re-verified in full
-2026-08-06**. **The 2026-08-05 audit was incomplete here too**: it documented 22 questions (the
-ones grouped into the 4 BAT sections) and missed that the assessment actually has 23 —
-`burnout-q1`'s stored text is the literal placeholder word `"test"`, shown to every user as the
-very first question. Caught 2026-08-06 the same way as Stress's gap: re-checking the doc's question
-count against a fresh query instead of trusting the original table. Not yet fixed — see
-Verification notes.
+Pulled live from `assessment_def:asm_1767129964930_bv8cqgm16` on 2026-08-05, **content-corrected
+2026-08-07**. `burnout-q1` (literal placeholder text `"test"`, shown as the very first question to
+every user) has been **removed** — see below. Question count is now 22, matching the 4 BAT
+sections exactly.
+
+## ✅ Fixed 2026-08-07: `burnout-q1` ("test") removed
+
+Same fix pattern as General (§ that doc) — found via a systematic check of every assessment's live
+`questions[]` against every id referenced by its own scoring preset. `burnout-q1` was referenced by
+no section (confirmed in `assessment-section-presets.ts`), and its stored text was the literal word
+`"test"` — no real content to preserve, so removed rather than authored-around. Removed from
+`questions[]` on both `assessment_def:` and the `assessment:` mirror; the stale `daily_content`
+builder cache was cleared so the admin builder regenerates correctly from the corrected 22.
 
 ## Meta
 
@@ -16,7 +22,7 @@ Verification notes.
 | slug | `feeling-drained-and-burned-out` |
 | category | `burnout` |
 | duration | 10 |
-| question count | 23 (was documented as 22 until 2026-08-06 — see note 4) |
+| question count | **22** (real, scored items only, as of 2026-08-07) |
 
 ## Description
 
@@ -36,13 +42,9 @@ Verification notes.
 
 ## Questions, in order (grouped by section, not stored order)
 
-All 23 questions use the same 5-point scale, options `1`–`5` (scored 0–4 by array index, +1 offset
-applied during scoring to express the standard 1–5 BAT mean).
-
-**Not in any section — shown to users but not scored**
-| id | Text |
-|---|---|
-| `burnout-q1` | 🔴 `"test"` — literal placeholder text, stored position 1 (first question shown) |
+All 22 questions use the same 5-point scale, options `1`–`5` (scored 0–4 by array index, +1 offset
+applied during scoring to express the standard 1–5 BAT mean). `burnout-q1` (`"test"` placeholder,
+unscored) removed 2026-08-07 — see above.
 
 **Exhaustion**
 | id | Text |
@@ -98,12 +100,8 @@ applied during scoring to express the standard 1–5 BAT mean).
 3. No mixed-direction items detected in the 22 scored questions (unlike Balance, see
    [`balance.md`](balance.md)) — all worded in the same "more of this = worse" direction, so no
    reversal is needed and none is applied.
-4. 🔴 **`burnout-q1` is literal placeholder text ("test"), shown to every user as the first question
-   — still open, not fixed.** Same root cause as Stress's 3 broken questions: `AssessmentFlow.tsx`'s
-   `normalizeAssessment()` renders every entry in `assessment.questions` regardless of whether
-   `BURNOUT_SECTIONS` scores it, so a leftover test record from authoring is live in production.
-   **The original 2026-08-05 audit missed this** — it only listed the 22 items grouped into the 4
-   BAT sections and never checked that count against the assessment's actual `questions` array
-   length (23). Fix is a product decision: delete `burnout-q1` outright (cleanest, since it's pure
-   placeholder with no salvageable content), or replace its text with a real question and decide
-   which section it belongs to.
+4. ✅ **Fixed 2026-08-07: `burnout-q1` (literal placeholder text "test") removed.** Same root cause
+   as Stress's 3 broken questions: `AssessmentFlow.tsx`'s `normalizeAssessment()` renders every
+   entry in `assessment.questions` regardless of whether `BURNOUT_SECTIONS` scores it, so a leftover
+   test record from authoring was live in production. Deleted outright (no salvageable content) —
+   see the fix note at the top of this doc.
