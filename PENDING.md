@@ -3,10 +3,10 @@
 Single source of truth for outstanding work across sessions. Update this file whenever you deploy
 something that changes what's here — see `GOVERNANCE.md` for the rule.
 
-*Last updated: 2026-08-07, after §18 User & Accounts (2 fake security features removed from the
-live UI), an Admin Panel cleanup (System Health/Backups/Analytics removed from nav, landing page
-renamed "Reporting"), and admin URL routing fixed across all ~20 sections — see `CHANGELOG.md` for
-full detail. All work through this point is committed and pushed to `origin/equip-carry-forward`.*
+*Last updated: 2026-08-07, after fixing a real production bug (General assessment's admin builder
+was 3 questions behind what live users saw, root-caused to a stale `daily_content` cache) and finding
+the admin notification bell is unwired from real data. See `CHANGELOG.md` for full detail. All work
+through this point is committed and pushed to `origin/equip-carry-forward`.*
 
 ---
 
@@ -150,6 +150,34 @@ take one **General** and one **Burnout** assessment on production and confirm:
   (`/join/professional`, `/sitemap` itself, `/dashboard`, `/timeline`, `/learning-diary`).
   `/dashboard/<username>` is **not implemented** — there's no `username`/handle field in the `user:`
   schema to build it on; needs that field added first, noted for the future taxonomy work.
+
+- ~~General assessment: admin builder showed 24 questions, live players saw 27~~ **fixed 2026-08-07**
+  — confirmed via screenshot from production. `AssessmentEditPageWizard.tsx` prefers a cached
+  `daily_content` snapshot over regenerating from `questions[]` (`AssessmentEditPageWizard.tsx:291`,
+  `if (!data.daily_content && ...)`), so when this session's earlier GAD-2/PHQ-2 fix edited
+  `questions[]` directly via SQL (not through the builder), the cached `daily_content` — generated
+  before that fix, frozen at 24 items — silently fell out of sync. The live player
+  (`AssessmentFlow.tsx`) only ever reads `questions[]`, confirmed by grep (zero `daily_content`
+  references) — so real users always saw the correct 27, only the admin builder was blind to the
+  last 3. **Checked all 7 assessments — only General was affected** (the only one whose `questions[]`
+  length changed via direct SQL this session; the other 6 have matching counts). Fixed by clearing
+  the stale `daily_content` field on both `assessment_def:asm_1767129718791_zj1t8hx3c` and its
+  `assessment:` mirror — the app's own existing logic regenerates it correctly from `questions[]`
+  the next time an admin opens the builder, no code change needed for this instance.
+- 🟡 **The underlying pattern that caused the above is still live — will recur on the next direct-SQL
+  edit to any assessment's `questions[]`.** `AssessmentEditPageWizard.tsx:291`'s "only regenerate
+  `daily_content` if absent" logic has no staleness detection — any future edit to `questions[]`
+  outside the builder (SQL, a migration script, etc.) will silently desync the two again with no
+  warning to the admin. A real fix needs either: comparing `questions[]`'s content hash against what
+  `daily_content` was generated from and warning/re-deriving on mismatch, or a decision to make one
+  of the two fields authoritative and stop maintaining both. Not fixed this pass — a real
+  architecture decision, not a one-line patch.
+- 🟡 **Admin panel notification bell is not wired to real data.** `NotificationContext.tsx`'s
+  `unreadCount` is computed only from a client-side, in-session `notifications` array — `grep`
+  confirms `setNotifications` is never called from any API fetch, only from local push/dismiss
+  actions (toasts). The real `admin_notification:` KV prefix (registered, real backend write paths
+  exist) is never fetched into this context. Same shape as §18's session-tracking half-built
+  feature — the write-side may exist, the read/display-side was never wired in. Not fixed this pass.
 
 ## D. Migration — user data out of the KV blob into real tables
 

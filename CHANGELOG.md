@@ -9,6 +9,32 @@ undated under their original session number.
 
 ---
 
+## 2026-08-07 (continued II)
+
+**Fixed a real, screenshot-confirmed production bug: General assessment's admin builder was showing
+24 questions while live users saw 27.** Root cause: `AssessmentEditPageWizard.tsx` caches a
+`daily_content` snapshot and only regenerates it from `questions[]` if absent
+(`AssessmentEditPageWizard.tsx:291`) — this session's earlier GAD-2/PHQ-2 fix edited `questions[]`
+directly via SQL, bypassing the builder, so the cached snapshot (frozen at 24) silently fell out of
+sync with the canonical 27. Confirmed the live player (`AssessmentFlow.tsx`) only ever reads
+`questions[]`, never `daily_content` — real users were never affected, only the admin's view of what
+they were editing. Checked all 7 assessments — only General was affected. Fixed by clearing the
+stale `daily_content` field on both the `assessment_def:` record and its `assessment:` mirror; the
+app's existing logic regenerates it correctly next time the builder opens. **The underlying pattern
+(no staleness detection between the two fields) is still live and will recur on the next
+direct-SQL edit** — flagged as a real architecture decision, not fixed at the code level this pass.
+
+**Found: the admin notification bell is not wired to real data.** `NotificationContext.tsx`'s
+`unreadCount` is computed only from a client-side, in-session array — never fetched from the real
+`admin_notification:` KV prefix, which has real backend write paths. Same "half-built, write-side
+exists, read-side was never wired in" shape as §18's session-tracking finding.
+
+**Confirmed not bugs, just correct**: `equip:`/`equip_program:`/`equip_slug:` all being 4 is the
+expected 1:1:1 mirroring for the 4 live equip programs. `category:` at 190 matches the documented
+Metadata Catalog count exactly. `activity_log:` fluctuating around 580-615 across this session is
+organic traffic, not runaway growth — the *lack of a size cap* (already flagged, §12) is the real
+concern, not the current count itself.
+
 ## 2026-08-07 (continued)
 
 **Hero Banners merged into Pages, per direct request.** `AdminHeroBannerManager` is now a tab inside
