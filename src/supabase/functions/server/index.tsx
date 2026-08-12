@@ -2252,7 +2252,7 @@ app.post("/activity-log", requireAuth, async (c) => {
     const now = timestamp || new Date().toISOString();
     const logId = `actlog_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`;
     const record = { id: logId, user_id: userId, action, metadata, created_at: now };
-    await kv.set(`activity_log:${logId}`, JSON.stringify(record));
+    await kv.set(`activity_log:${logId}`, record);
     return c.json({ success: true });
   } catch (error) {
     console.log('Activity log error:', error);

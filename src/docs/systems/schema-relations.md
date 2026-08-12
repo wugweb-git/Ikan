@@ -179,7 +179,7 @@ prefixes total):
 | `assessment` | `assessment_def:`, `assessment_slug:`, `assessment:`, `assessment_result:`, `assessment-result:`, `assessment_response:`, `assessment_response_by_user:` | `assessment:` (user-facing mirror), `assessment-result:` (hyphen legacy, naming mismatch vs. the real underscore prefix) |
 | `journal` | `journal:`, `journal_by_user:`, `mood:`, `mood_type:` | `mood:` was `high`-risk pre-fix (3-writer collision); now clean, see `mood-checkin.md` |
 | `enrollment` | `enrollment:`, `user_enrollment:`, `progress:`, `program-progress:` | `enrollment:` and `program-progress:` (both — the two-shape problem and the hyphen-legacy mirror) |
-| `activity` | `activity:read:`, `activity:user:`, `activity:daily:`, `activity_log:`, `user_activity:` | `activity:read:` (write-only, never cleaned), `activity_log:` (write-heavy, unbounded) — **and no `RELATIONS` entry at all for `activity_log: → user:`, a coverage gap found this turn (live data currently clean — see below), not yet a registered relation** |
+| `activity` | `activity:read:`, `activity:user:`, `activity:daily:`, `activity_log:`, `user_activity:` | `activity:read:` (write-only, never cleaned), `activity_log:` (write-heavy, unbounded; **was double-JSON-encoded, fixed 2026-08-12 — see below**) |
 | `content` / `resource` / `cms` | `content:`, `content_slug:`, `content_item:`, `resource:`, `resource_view:`, `library:resource:`, `page:`, `page_slug:`, `cms_page:` | `content_item:` (unknown owner), `library:resource:` (deprecated mirror — any key here is a regression) |
 | `category` / `scoring` / `recommendation` | `category:`, `scoring-profile:`, `recommendation_rule:`, `recommendation_rules`, `ikan_score:` | none flagged high |
 | `scales` (Check-in) | `checkin_scale:`, `checkin_template:`, `checkin_template_active:` | none flagged high |
@@ -187,15 +187,79 @@ prefixes total):
 | `legacy` / `system` / `monitoring` / `security` | `tracker:`, `sys_backups`, `backup:`, `backup_`, `analytics:`, `api-log:`, `metrics:`, `session:`, `alert:`, `failed-login:`, `rate-limit:` | `tracker:` (unknown owner, only read by data export) |
 | everything else (`user`, `audit`, `media`, `health`, `admin`, `settings`, `communication`, `newsletter`, `contact`, `booking`) | remaining ~30 prefixes | `email-change:` (should be cleaned up after approval/rejection) |
 
-### 🟡 Coverage gap found this turn: `activity_log:` has no `RELATIONS` entry, checked ad hoc instead
+### 🔴 Found + fixed: `activity_log:` was double-JSON-encoded — the earlier "0 orphaned" check on it was vacuous
 
-The user flagged sample `activity_log:` rows and asked directly whether they're orphaned. Checked
-live: **578 total rows, 0 with a `user_id` that doesn't match a real `auth.users` id** — the specific
-ids in the sample (including one already known from this session's `getEquip()` fix, a real active
-user) are not orphaned. But this check exists only because it was asked for by hand — `activity_log:
-→ user:` isn't one of the 6 declared `RELATIONS`, so nothing catches it automatically today. Adding
-it as a 7th relation is a real, low-risk registry improvement (not done in this pass — see "Known
-structural issues").
+The first pass at checking `activity_log: → user:` (above, in an earlier revision of this doc)
+reported "0 orphaned" — but that check never actually ran. Root cause: `index.tsx`'s
+`POST /activity-log` handler called `kv.set(key, JSON.stringify(record))` — passing an
+already-stringified value to a `set()` that itself upserts whatever value it's given straight into
+a `jsonb` column (confirmed by reading both `kv.set()` implementations, `kv_store.tsx:30` and
+`kv_dual_write.ts:159` — neither serializes; Supabase-js does that once, automatically, based on
+the JS value's type). The result: every `activity_log:` row's `value` column held a **JSON string**,
+not an object (`jsonb_typeof(value) = 'string'`, confirmed unique to this one prefix — `user:`,
+`equip:`, `category:`, `journal:` all correctly show `'object'`). Plain field access
+(`value['user_id']`) on a JS string returns `undefined`, not an error — so the orphan-check code,
+and anything else reading these records via normal field access, silently found nothing to check
+and reported clean by default, not by verification.
+
+**Same bug, 2 more places**, found by grepping every `JSON.stringify(` immediately preceding a
+`kv.set(` call repo-wide: `corporate-routes.ts:157` (`corporate_program:`) and
+`corporate-routes.ts:189` (`user_employer:`). Both prefixes currently have **0 live rows** — the
+corporate-enrollment feature has never actually been used in production — so this was a dormant
+landmine, not live corruption, but it had no defensive read-side workaround at all (unlike
+`activity_log:`'s `GET /admin/activity-logs`, which happened to add `typeof r === 'string' ?
+JSON.parse(r) : r` as a defensive read fix without anyone diagnosing the write-side cause).
+
+**Fixed 2026-08-12**: removed the redundant `JSON.stringify()` at all 3 call sites (`index.tsx:2255`,
+`corporate-routes.ts:157`, `corporate-routes.ts:189`) — future writes now match every other prefix
+in the codebase. The 604 existing `activity_log:` rows were migrated in place
+(`update ... set value = (value #>> '{}')::jsonb where jsonb_typeof(value) = 'string'`), verified
+after: all 604 now `jsonb_typeof = 'object'` with `action`/`user_id` readable directly. No
+`corporate_program:`/`user_employer:` migration was needed (0 rows).
+
+**Re-checked for real this time**: 604/604 `activity_log:` rows resolve to a real `auth.users` id —
+**0 orphaned**, now an actual verified result, not a false-clean no-op. The `RELATIONS` entry added
+earlier this session (`activity_log: → user:`, `kv-audit-routes.ts`) was inert until this fix and
+will now function correctly on every future audit run without special-casing.
+
+#### What's actually in `activity_log:` — the "~615 keys, why?" mapping
+
+604 rows, only **2 distinct actions ever logged**: `login` (603) and `resource_view` (1) — this
+prefix has never captured anything but sign-in events, despite `logActivity()` in `api-client.ts`
+being a generic helper any screen could call.
+
+| Who | Rows | % |
+|---|---|---|
+| `kartikchaturvedi0991@protonmail.com` | 313 | 52% |
+| `admin@wugweb.com` | 273 | 45% |
+| `kartikchaturvedi91@gmail.com` | 12 | 2% |
+| `vedanshu.srivastava@gmail.com` | 6 | 1% |
+
+**All 4 users are internal/team accounts — zero real end-users have ever triggered this prefix.**
+The volume isn't hidden production traffic; it's this session's (and prior dev/QA sessions')
+sign-in activity. 498 of the 604 rows (82%) landed on a single day, 2026-07-21 — consistent with
+Supabase JS's `onAuthStateChange` firing a `SIGNED_IN` event on more than just a fresh login (tab
+refresh/focus/multi-tab session restore can also fire it in some client versions/configs), logged
+every time by `AuthContext.tsx:164`'s unconditional `apiClient.logActivity('login')` inside that
+event handler. **Flagged, not changed**: de-duplicating repeated `SIGNED_IN` fires (e.g. only log
+if the same user's last login-log is older than N minutes) would shrink this table's growth rate,
+but it touches the auth event listener — a behavior change to core session handling, not a safe
+mechanical fix, so it's left for a deliberate decision rather than patched under this pass.
+`activity:daily:`'s existing `orphanRisk: low`/unbounded-growth note (above) already covers the
+general "this prefix has no cap" pattern; the same applies here.
+
+#### Re-confirmed, written up (not just answered in chat): `equip:`/`equip_program:`/`equip_slug:`/`category:` counts
+
+| Prefix | Count | Why |
+|---|---|---|
+| `equip:` | 4 | Canonical program records — 1 per live Equip program |
+| `equip_program:` | 4 | Admin-facing mirror, written alongside `equip:` — see the split-write risk noted in the inventory table above; **count matching `equip:` 1:1 is correct and expected**, not a duplication bug |
+| `equip_slug:` | 4 | Reverse slug index, 1 per `equip:` record, purge-protected | 
+| `category:` | 190 | Matches the documented live count elsewhere in this audit — no drift found |
+
+All 4 numbers are correct 1:1:1:(expected) mirrors of the same 4 programs and the existing category
+set — re-verified live against `kv_store_cc205da9` directly for this write-up, not carried forward
+from an earlier answer.
 
 ## Tables & structures
 
@@ -269,7 +333,7 @@ orphans/mismatches likely if untouched. Each links to its full write-up rather t
 | 3 of 21 Metadata Catalog types are decorative | `interaction_type`, `checkin_block_type`, `day_config_type` — read only by `AdminBlockTypeViewer.tsx`'s reference screen | Found this turn — `block-architecture.md` |
 | Check-in's step-type system is fully disconnected from Blocks | `AdminCheckinTemplateBuilder.tsx`'s own hardcoded list, different string format than its own KV mirror | `builder-editor-architecture.md`, restated `block-architecture.md` |
 | Global recommendation severity/messaging content is permanently hardcoded | `DEFAULT_RECOMMENDATION_RULES`/`OVERLAP_MAP`/`ESCALATION_RULES` — no `recommendation_rule:` field has ever populated the override path | `recommendation-frontend-vs-backend.md`, `rule-engine.md` |
-| `activity_log: → user:` has no `RELATIONS` entry | Live data checked clean this turn, but nothing catches it automatically | Found this turn, above |
+| `activity_log:`, `corporate_program:`, `user_employer:` were double-JSON-encoded at write time | `JSON.stringify()` passed into `kv.set()`, which serializes itself | **Fixed 2026-08-12** — 3 call sites corrected, 604 existing `activity_log:` rows migrated in place, above |
 | `activity:daily:` has no size cap | Unlike `user_activity:`; unbounded growth per purge run | Registered, cap not added |
 | 2 ghost `user:` rows have real data attached elsewhere | `00000000...a001` (7 journal entries), `107e08ee...` (enrollment + ikan_score) | Found this turn, above — needs a product decision |
 | `Dashboard.tsx` fetches a backend result it never renders | `recData`/`topRecDetails`, dead in the render tree | `recommendation-frontend-vs-backend.md`, `PENDING.md` |

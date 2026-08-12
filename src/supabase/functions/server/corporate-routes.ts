@@ -154,7 +154,7 @@ export function registerCorporateRoutes(app: Hono) {
         last_updated: new Date().toISOString(),
       };
 
-      await kv.set(`corporate_program:${employer_id}`, JSON.stringify(programData));
+      await kv.set(`corporate_program:${employer_id}`, programData);
       return c.json({ success: true, program: programData });
     } catch (err) {
       console.log("Error updating corporate program:", err);
@@ -186,7 +186,7 @@ export function registerCorporateRoutes(app: Hono) {
         status: "active",
       };
 
-      await kv.set(`user_employer:${user_id}`, JSON.stringify(linkage));
+      await kv.set(`user_employer:${user_id}`, linkage);
       return c.json({ success: true, linkage });
     } catch (err) {
       console.log("Error enrolling user in corporate program:", err);

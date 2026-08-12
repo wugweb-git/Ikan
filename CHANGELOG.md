@@ -9,6 +9,53 @@ undated under their original session number.
 
 ---
 
+## 2026-08-12
+
+**Found and fixed a double-JSON-encoding bug affecting 3 KV prefixes; re-verified an orphan check
+that had been silently vacuous because of it.** Prompted by the user's repeated question ("~615
+`activity_log:` keys, help — why this many?") — a deeper investigation than the earlier chat-only
+answer.
+
+Root cause: `index.tsx`'s `POST /activity-log` handler called `kv.set(key, JSON.stringify(record))`.
+`kv.set()` (both implementations — `kv_store.tsx:30`, `kv_dual_write.ts:159` — read to confirm) never
+serializes its input itself; it hands the raw JS value straight to Supabase-js, which serializes it
+once for the `jsonb` column. Passing an already-stringified value meant the column held a **JSON
+string**, not an object — confirmed with `jsonb_typeof(value) = 'string'`, unique to this prefix
+versus `user:`/`equip:`/`category:`/`journal:`, which all correctly show `'object'`.
+
+This silently broke more than the raw data: plain field access (`value['user_id']`) on a JS string
+returns `undefined`, not an error, so the `activity_log: → user:` orphan check added earlier this
+session (`kv-audit-routes.ts`'s `RELATIONS`) had been reporting "0 orphaned" without ever actually
+reading a `user_id` — a false-clean result, not a verified one.
+
+A repo-wide grep for `JSON.stringify(` immediately preceding a `kv.set(` call found **2 more
+instances**: `corporate-routes.ts:157` (`corporate_program:`) and `corporate-routes.ts:189`
+(`user_employer:`). Both prefixes have 0 live rows — the corporate-enrollment feature has never
+fired in production — so this was a dormant landmine, not live corruption, and unlike
+`activity_log:` (which happened to get a defensive `JSON.parse()` workaround on its one read path,
+`GET /admin/activity-logs`, without anyone diagnosing the write-side cause), these two had **no**
+compensating read-side fix at all.
+
+**Fixed**: removed the redundant `JSON.stringify()` at all 3 call sites. Migrated the 604 existing
+`activity_log:` rows in place (`update ... set value = (value #>> '{}')::jsonb where
+jsonb_typeof(value) = 'string'`), verified after: all 604 now proper objects with `action`/`user_id`
+readable directly. No migration needed for the other two prefixes (0 rows). Re-ran the
+`activity_log: → user:` orphan check for real this time: 604/604 resolve to a real `auth.users` id,
+0 orphaned — now an actual verified result.
+
+**The "~615 keys, why?" mapping, now written up** (not just answered in chat): 604 rows, only 2
+action types ever logged (`login` 603, `resource_view` 1). All 604 belong to exactly 4 users, and
+all 4 are internal/team accounts (Kartik's two emails, Vedanshu's, `admin@wugweb.com`) — **zero
+real end-users have ever triggered this prefix**. 82% of rows (498) landed on one day
+(2026-07-21), consistent with Supabase's `onAuthStateChange` firing `SIGNED_IN` on more than just a
+fresh login (tab refresh/multi-tab restore can also trigger it), logged unconditionally by
+`AuthContext.tsx:164`. Flagged as a possible dedup improvement, not changed — it touches the core
+auth listener, not a mechanical fix. Also re-confirmed and written up: `equip:`/`equip_program:`/
+`equip_slug:` all being 4, and `category:` being 190, are correct 1:1:1 mirrors, re-verified live
+rather than repeated from an earlier chat answer. Full detail: `src/docs/systems/schema-relations.md`.
+
+---
+
 ## 2026-08-07 (continued III)
 
 **Full data-integrity audit: 20 new systems docs, root docs corrected — see below. Also: 7 dead
