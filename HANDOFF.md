@@ -29,13 +29,40 @@ During the repair I saw Sleep's stored builder weights were `[4,3,2,1,0]` and Ba
 
 The stored weights for those two are stale legacy values predating the 2026-08-06 scoring rewrite. **Check the presets file before trusting any stored weight.**
 
-## State
+## State — updated 2026-09-01 16:xx
 
-- Branch `equip-carry-forward` @ `f2ef3f20`, in sync with origin.
-- **Production is serving `7c21cd02` from 2026-08-07 — 25 days stale.** Git-triggered builds are disabled at the Vercel project level *by design*, so every push since produced a CANCELED preview. The only deploy path is `npx vercel@latest deploy --prod --yes`. Do not run it yet.
-- The Supabase edge function IS current. Frontend and backend disagree about what is live.
-- **Uncommitted, from 2026-08-16:** `AssessmentEditPageWizard.tsx`, `useOfflineSync.ts`. Untracked: `AGENTS.md`, the two audit docs, `src/tsconfig.check.json`.
-- Supabase `jpfvoevxegnknxoqmwye`. 2,001 KV rows, 133 assessment results, 32 journal entries, 8 user profiles.
+- Branch `equip-carry-forward` @ **`8e05bbfb`, 5 commits ahead of origin, none pushed.** Tasks 1
+  and 4–7 below are **done and committed**; see "Task status" immediately after this list.
+- **Production is serving `7c21cd02` from 2026-08-07.** Git-triggered builds are disabled at the
+  Vercel project level *by design*, so every push since produced a CANCELED preview. The only
+  deploy path is `npx vercel@latest deploy --prod --yes`.
+- The Supabase edge function IS current — **but it does not contain the S1/S4/S12 fixes**, which
+  are committed locally and undeployed. It is staged ready at `/tmp/ikan-fn`.
+- **Working tree is clean.** The two 2026-08-16 files are committed; `src/tsconfig.check.json` was
+  removed once `tsconfig.node.json` was fixed so `tsc -p src/tsconfig.json` loads.
+- Supabase `jpfvoevxegnknxoqmwye`. 2,001 KV rows, 133 assessment results (93 real + 40 synthetic
+  `checkin_*`), 32 journal entries, 8 user profiles.
+
+### Task status
+
+| Task | State |
+|---|---|
+| 1 build gate | Done. **223 errors / 76 files.** `tsc` could not run at all before: `typescript` and `@types/react` are not dependencies, and `tsconfig.node.json` set `composite` + `noEmit`, which TypeScript rejects for a referenced project. Config fixed in `6fcb496e`; the `typecheck` script is proposed, not applied. |
+| 2 scoring repair | Applied — but see the corrections below; the named backup does not exist and repair 2 had been reverted before being re-applied. |
+| 3 Sleep/Balance | Option 2 chosen and implemented. Note **option 1 is a database write**, which hard rule 2 forbids. |
+| 4 editor + offline sync | Done, `5d60a9b3`. All three guards plus the `mood_entry` rest-spread. |
+| 5 security chain | Done, `5d60a9b3`. All five. |
+| 6 privacy controls | Done, `5d60a9b3`. Worse than described: **all four** export prefixes were wrong, and the output field mappings too. |
+| 7 section scores in history | Done, `5d60a9b3` — **renders nothing**, because no stored result has a populated breakdown. See the §2.6 finding in `MASTER-PENDING-2026-09-01.md`. |
+
+### Two corrections to Task 2 below
+
+1. **`backup_pre_scoring_repair_2026-09-01` does not exist** — absent from
+   `information_schema.tables`. The only snapshot is `kv_backup_scoring_20260901` (14 rows,
+   128 kB), taken 10:05, *after* repair 1 and *before* repair 2 was re-applied.
+2. **Repair 2's effect was absent at 10:05** — Burnout, Stress and General still held
+   `weights: []`. Re-running it changed exactly 6 records. Repair 1 was already in place
+   (`questions_identical = true` on all 14 records), so re-running it was a no-op.
 
 ---
 

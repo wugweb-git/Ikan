@@ -9,7 +9,25 @@
 > **Two exceptions, both safe and both urgent — neither ships code:** rotate the SMTP password (§1), and run the scoring repair SQL (§2.5).
 
 > ## ⚠️ Fixed ≠ live — read this before trusting any status below
-> As of 2026-09-01 10:20, **seven items are fixed in the working tree and nothing is committed or deployed.** Production still serves `7c21cd02` from 2026-08-07 with every one of those holes open.
+> **Updated 2026-09-01 16:xx.** The seven items below are now **committed** — five commits on
+> `equip-carry-forward`, `5d60a9b3` through `8e05bbfb` — and **still not pushed and not deployed.**
+> Production continues to serve `7c21cd02` from 2026-08-07 with every one of those holes open.
+> Committed is not shipped; nothing on this list is live except the database repair.
+>
+> **Two corrections to the row below, both from live data:**
+>
+> 1. **The backup named below does not exist.** `backup_pre_scoring_repair_2026-09-01` is absent
+>    from `information_schema.tables`. The only snapshot in the database is
+>    `kv_backup_scoring_20260901` (14 rows, 128 kB), taken at 10:05 — *after* repair 1 and
+>    *before* repair 2 was re-applied. It is not a pre-everything backup.
+> 2. **Repair 2 had been reverted and was re-applied.** At 10:05 Burnout, Stress and General still
+>    held `weights: []` (22, 7 and 24 activities empty, plus one Burnout activity with no weights
+>    key). Re-running it changed exactly those 6 records. Repair 1, by contrast, was already in
+>    place — a snapshot-vs-current diff returns `questions_identical = true` on all 14 records.
+>
+> **And a correction to §2.6 made in error, now withdrawn:** an earlier pass reported
+> `section_scores` as "present on 10 of 133, not zero". That counted *key presence*. The value is
+> `null` in all ten. **Populated breakdowns: zero.** §2.6 as originally written is correct.
 >
 > | Item | State | Verified |
 > |---|---|---|
@@ -20,7 +38,8 @@
 > | S12 `set-admin` bootstrap | Fixed — `requireAdmin` unconditional | ✅ |
 > | P1 fake delete/export | Fixed — paths corrected, failures surface | ✅ |
 > | D1 editor wipes scoring | Fixed — all three guards: shared `normalizeOptions` on load *and* save, `weights.length === options.length`, id-by-id cache reconciliation | ✅ |
-> | Scoring data repair | **LIVE in production** — 92/92 questions, backup at `backup_pre_scoring_repair_2026-09-01` | ✅ |
+> | Scoring data repair | **LIVE in production** — 92/92 questions. Backup is `kv_backup_scoring_20260901`, not the name previously given here — see the corrections above | ✅ |
+| Section preset lookup | Fixed — resolves by `slug \|\| slugify(title)` and warns when no preset resolves. **Not verified at runtime** | ⚠️ |
 >
 > S3's fix is better than what this document originally proposed. It kept the guard and changed what it protects, preserving the "don't lock everyone out" property that simply deleting the check would have discarded.
 >
@@ -39,7 +58,10 @@
 
 **Stack:** Vite + React 18 + TypeScript, Tailwind v4, Supabase (Postgres 17 + edge functions + storage), Vercel, Razorpay, Brevo.
 
-**Git:** branch `equip-carry-forward` @ `f2ef3f20`, in sync with origin.
+**Git:** branch `equip-carry-forward` @ `8e05bbfb` — **5 commits ahead of origin, none pushed.**
+(`5d60a9b3` security + privacy + editor guards + section scores in history · `ffd0005c` four stale
+equip docs removed · `6fcb496e` tsconfig made loadable so `tsc` can run · `0f306a97` section preset
+slug fallback · `8e05bbfb` this doc and the audit docs tracked.)
 
 **Deployment [VERIFIED via Vercel API]:** production is serving `7c21cd02` from **2026-08-07**. Three commits have never reached production:
 
@@ -230,12 +252,13 @@ WHERE k.value->>'title' IN ('Feeling worried and stressed','Feeling drained and 
 
 ### 2.6 Score breakdown does not survive into history
 
-`section_scores` is null on every sampled `assessment_result:`, including one from the day before the 2026-08-16 audit. Two separate causes:
+`section_scores` is null on every `assessment_result:` — **all 133, verified 2026-09-01, not merely sampled.** Two separate causes were originally identified; a third, and the real one, has since been found.
 
-- **`useOfflineSync.ts`** destructured six of eight fields and silently dropped `maxScore` and `sectionScores` on every response synced through the queue. Fixed in code, uncommitted.
-- **`AssessmentHistoryDetail.tsx`** has **zero references** to `section_scores` / `sectionScores` anywhere in the file, and its `AssessmentAttempt` type does not declare the field. `AssessmentResults.tsx` — the immediate post-completion screen — *does* render a per-scale report card, correctly gated on `sections.length >= 2` (General 5 rows, Burnout 4). Whoever built the history screen never wired the same data in. **A breakdown that exists and renders once, immediately after finishing, disappears the moment the user looks at history.** Not fixed.
+- **`useOfflineSync.ts`** destructured six of eight fields and silently dropped `maxScore` and `sectionScores` on every response synced through the queue. **Fixed and committed** (`5d60a9b3`).
+- **`AssessmentHistoryDetail.tsx`** had **zero references** to `section_scores` / `sectionScores`, and its `AssessmentAttempt` type did not declare the field. **Fixed and committed** (`5d60a9b3`) — it now renders `SectionReportCard` behind the same `sections.length >= 2` gate as `AssessmentResults`. **It displays nothing today**, because no stored result has a populated breakdown.
+- **[NEW, and the actual cause] The preset lookup misses, so nothing is ever sent to save.** `f132be3a` ("persist section_scores end-to-end") is an ancestor of production `7c21cd02`, so the write path has been live since 2026-08-07 — and the data shows it firing: **exactly 10 results exist after 2026-08-07 and all 10 carry the `section_scores` key; the 123 older ones have no key at all.** The key appears precisely when the code went live. Every value is `null`, and the backend writes `data.sectionScores ?? null`, so the client is sending nothing — meaning `sectionScores.sectioned` is false, meaning `SECTION_PRESETS[assessment.slug]` misses. Two candidates were ruled out live: stored slugs match the preset keys exactly, and stored response keys match their definitions' question ids exactly (`gen-q1`, `burnout-q2`, …). What remains is an absent `slug` on the assessment object in that scope. `0f306a97` resolves the preset by `slug || slugify(title)` and warns loudly naming any key that fails to resolve. **Not verified at runtime** — the preview server cannot start on this machine.
 
-Separately: 133 already-saved results carry no section breakdown at all. Backfilling means re-scoring stored `responses` against the current section presets — a separate, lower-urgency job that should wait until the repair has landed and been verified.
+**This reorders the work.** Backfilling the 133 historical results is not the blocker people assumed; *saving a breakdown at all* is. Until a newly-completed assessment writes a populated `section_scores`, the history UI has nothing to show and a backfill has no live counterpart to validate against. Deploy, take one General assessment, and check whether the new warning fires — that is the next step, not the backfill.
 
 ### 2.7 Balance scoring is still mathematically wrong
 
