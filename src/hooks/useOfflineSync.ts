@@ -54,14 +54,22 @@ async function executeSync(item: SyncItem): Promise<boolean> {
   try {
     switch (item.type) {
       case 'mood_entry': {
-        const { date, mood, note, emotions, energy, stress, contextTags } = item.payload;
-        await apiClient.createJournalEntry(date, mood, note, emotions, energy, stress, contextTags);
+        // MoodJournal queues `{...payload, ...extraFields}` flattened, so every
+        // custom check-in template answer arrives as a top-level key. Destructuring
+        // a fixed set dropped all of them on any entry that synced through the
+        // queue — the same class of bug as the assessment_response case below.
+        const { date, mood, note, emotions, energy, stress, contextTags, ...extraFields } = item.payload;
+        await apiClient.createJournalEntry(date, mood, note, emotions, energy, stress, contextTags, extraFields);
         return true;
       }
 
       case 'assessment_response': {
-        const { assessmentId, responses, status, score, interpretation, severityHint } = item.payload;
-        await apiClient.saveAssessmentResponse(assessmentId, responses, status, score, interpretation, severityHint);
+        // maxScore/sectionScores used to be silently dropped here even though
+        // the queued payload carries them (see AssessmentFlow.tsx's queueItem
+        // calls) — any response that synced through this path instead of the
+        // direct online call permanently lost its score breakdown.
+        const { assessmentId, responses, status, score, interpretation, severityHint, maxScore, sectionScores } = item.payload;
+        await apiClient.saveAssessmentResponse(assessmentId, responses, status, score, interpretation, severityHint, maxScore, sectionScores);
         return true;
       }
 

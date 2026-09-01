@@ -8,6 +8,8 @@ import { apiClient } from '../../lib/api-client';
 import { LoadingSpinner } from '../LoadingSpinner';
 import { Skeleton } from '../ui/skeleton-loader';
 import { cn } from '../ui/utils';
+import { SectionReportCard } from '../blocks/SectionReportCard';
+import type { SectionScoreResult } from '../../lib/assessment-sections';
 
 // ── Design tokens ──
 const f = (size: string, weight: number = 400, color: string = 'var(--color-text-primary)') => ({
@@ -27,6 +29,11 @@ interface AssessmentAttempt {
   interpretation?: any;
   completedAt: string;
   responses?: Record<string, any>;
+  // The per-scale breakdown. AssessmentResults renders this immediately after
+  // completion; this screen never declared the field, so the breakdown
+  // vanished the moment a user looked back at it. Stored as snake_case
+  // `section_scores` in KV, camelCase through the offline-sync path.
+  sectionScores?: SectionScoreResult;
 }
 
 interface AssessmentHistoryDetailProps {
@@ -177,6 +184,7 @@ export function AssessmentHistoryDetail({ assessmentId, onBack, onNavigate }: As
                 interpretation: entry.interpretation,
                 completedAt: entry.completed_at || entry.completedAt || new Date().toISOString(),
                 responses: entry.responses,
+                sectionScores: entry.section_scores ?? entry.sectionScores ?? undefined,
               });
             }
           });
@@ -724,6 +732,20 @@ export function AssessmentHistoryDetail({ assessmentId, onBack, onNavigate }: As
                             )}
                           </div>
                         )}
+
+                        {/* Per-scale breakdown. Same component and the same
+                            >= 2 named-section gate AssessmentResults uses, so
+                            history and the post-completion screen agree rather
+                            than growing two formats. Most stored results
+                            predate section scoring and carry none — 10 of 133
+                            at the time of writing — so this is absent far more
+                            often than it is present. */}
+                        {attempt.sectionScores?.sectioned &&
+                          attempt.sectionScores.sections.length >= 2 && (
+                            <div style={{ marginBottom: 12 }}>
+                              <SectionReportCard result={attempt.sectionScores} />
+                            </div>
+                          )}
 
                         {/* Response count */}
                         {attempt.responses && (

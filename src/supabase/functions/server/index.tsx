@@ -203,25 +203,13 @@ async function requireAdmin(c: any, next: any) {
   // Check if user is admin
   const userProfile = await kv.get(`user:${user.id}`);
 
-  // Super-admin override: admin@wugweb.com is ALWAYS admin (top of chain)
-  const SUPER_ADMIN_EMAIL = 'admin@wugweb.com';
-  const isSuperAdmin = user.email?.toLowerCase() === SUPER_ADMIN_EMAIL;
-
-  if (isSuperAdmin && (!userProfile || !userProfile.is_admin)) {
-    // Auto-repair: ensure super admin always has the flag set in KV
-    const repaired = {
-      ...(userProfile || {}),
-      user_id: user.id,
-      email: user.email,
-      is_admin: true,
-      is_super_admin: true,
-      updated_at: new Date().toISOString(),
-    };
-    await kv.set(`user:${user.id}`, repaired);
-    console.log(`🔧 Auto-repaired super admin flag for ${SUPER_ADMIN_EMAIL}`);
-  }
-
-  if (!isSuperAdmin && !userProfile?.is_admin) {
+  // REMOVED 2026-09-01 (S3): a hardcoded SUPER_ADMIN_EMAIL ('admin@wugweb.com')
+  // granted admin unconditionally on email match, and auto-created/repaired the
+  // KV admin profile as a side effect of any admin request. Anyone able to
+  // register or take over that address — see S1, which made exactly that
+  // possible from an unauthenticated route — became a permanent super admin.
+  // Admin now derives solely from the is_admin flag on the stored profile.
+  if (!userProfile?.is_admin) {
     console.log(`🚫 Non-admin user ${user.id} attempted to access admin endpoint`);
     return c.json({ error: 'Admin access required' }, 403);
   }
@@ -338,67 +326,17 @@ app.post("/auth/signup", async (c) => {
     });
 
     if (error) {
-      // Handle "already registered" — update the existing user's password instead of failing.
-      // This keeps the prototype-friendly behavior where any email + password combination works.
+      // FIXED 2026-09-01 (S1). This branch used to call
+      // supabase.auth.admin.updateUserById() with the CALLER's password when the
+      // email already existed — an unauthenticated public route, running under
+      // the service-role key, that reset any known account's password on demand.
+      // That is full account takeover of any address an attacker can guess, and
+      // it was described as "prototype-friendly behavior".
+      //
+      // Return 409 and do not touch the existing account. Password changes go
+      // through the authenticated reset flow (/reset-password), never signup.
       if (error.message?.includes('already been registered')) {
-        console.log(`User ${email} already exists — updating password for prototype access`);
-        try {
-          // Find the existing user by email
-          const { data: listData, error: listError } = await supabase.auth.admin.listUsers();
-          if (listError) throw listError;
-          const existingUser = listData.users.find(
-            (u: any) => u.email?.toLowerCase() === email.toLowerCase()
-          );
-          if (!existingUser) {
-            console.log(`Could not find existing user ${email} to update`);
-            return c.json({ error: 'User exists but could not be resolved' }, 400);
-          }
-
-          // Update the user's password
-          const { data: updatedData, error: updateError } = await supabase.auth.admin.updateUserById(
-            existingUser.id,
-            { password, user_metadata: { name, phone, corporate_user: corporate_user || false } }
-          );
-          if (updateError) {
-            console.log(`Failed to update password for ${email}:`, updateError);
-            return c.json({ error: updateError.message }, 400);
-          }
-
-          // Ensure KV profile exists
-          const existingProfile = await kv.get(`user:${existingUser.id}`);
-          if (!existingProfile) {
-            await kv.set(`user:${existingUser.id}`, {
-              user_id: existingUser.id,
-              email,
-              name,
-              phone: phone || null,
-              avatar_url: null,
-              corporate_user: corporate_user || false,
-              bio: null,
-              dateOfBirth: null,
-              gender: null,
-              location: null,
-              emergencyContactName: null,
-              emergencyContactPhone: null,
-              emergencyContactRelationship: null,
-              googleConnected: false,
-              googleEmail: null,
-              googleConnectedAt: null,
-              linkedinConnected: false,
-              linkedinEmail: null,
-              linkedinConnectedAt: null,
-              is_admin: false,
-              created_at: new Date().toISOString(),
-              updated_at: new Date().toISOString()
-            });
-          }
-
-          console.log(`✅ Password updated for ${email} — prototype auto-fix`);
-          return c.json({ user: updatedData.user });
-        } catch (upsertError) {
-          console.log('Upsert fallback failed:', upsertError);
-          return c.json({ error: 'User already exists and password update failed' }, 400);
-        }
+        return c.json({ error: 'An account with this email already exists. Please sign in, or use "Forgot password" to reset it.' }, 409);
       }
 
       console.log('Signup error:', error);
@@ -818,17 +756,31 @@ app.post("/users/export-data", requireAuth, async (c) => {
       return c.json({ error: 'Profile not found' }, 404);
     }
     
-    // Get journal entries
-    const journalEntries = await kv.getByPrefix(`journal:${userId}:`);
-    
-    // Get tracker entries
-    const trackerEntries = await kv.getByPrefix(`tracker:${userId}:`);
-    
-    // Get assessment results
-    const assessmentResults = await kv.getByPrefix(`assessment-result:${userId}:`);
-    
-    // Get program progress
-    const programProgress = await kv.getByPrefix(`program-progress:${userId}:`);
+    // Every prefix below was previously wrong, so this endpoint returned a
+    // profile and four empty arrays while reporting success — a DPDP §11
+    // access/portability failure, not a cosmetic one. Key shapes verified
+    // against live data 2026-09-01:
+    //   journal_by_user:{userId}:{date}:{id}   (the `journal:` rows are keyed
+    //                                           by entry id, NOT by user)
+    //   progress:{userId}:{equipId}:{dayNum}
+    //   assessment_result:{userId}:{resultId}  (verified user-scoped on all
+    //                                           133 live rows)
+    // `tracker:` has never existed in the store and is dropped.
+    const journalEntries = await kv.getByPrefix(`journal_by_user:${userId}:`);
+
+    // Program progress
+    const programProgress = await kv.getByPrefix(`progress:${userId}:`);
+
+    // Results are stored twice — the canonical `…:{resultId}` and a
+    // `…:{assessmentId}:latest` copy of the same record — so de-duplicate by
+    // id, exactly as GET /user/assessments/history already does. Without this
+    // the export would hand the user duplicate rows.
+    const rawAssessmentResults = await kv.getByPrefix(`assessment_result:${userId}:`);
+    const byId = new Map<string, any>();
+    for (const r of rawAssessmentResults || []) {
+      if (r && r.id && !byId.has(r.id)) byId.set(r.id, r);
+    }
+    const assessmentResults = Array.from(byId.values());
     
     // Build export data
     const exportData = {
@@ -842,31 +794,42 @@ app.post("/users/export-data", requireAuth, async (c) => {
         location: profile.location,
         createdAt: profile.created_at
       },
+      // Two journal shapes coexist under this prefix (see the `mood:` collision
+      // in PENDING.md): {date, mood_rating, freehand_text_content} and
+      // {entry_date, mood_score|mood, content}. Cover both, and carry
+      // extra_responses — the custom check-in template answers — which a
+      // portability export must not silently drop.
       journalEntries: journalEntries.map((entry: any) => ({
-        date: entry.date,
-        mood: entry.mood_rating,
-        content: entry.freehand_text_content,
-        createdAt: entry.created_at
-      })),
-      trackerEntries: trackerEntries.map((entry: any) => ({
-        date: entry.date,
-        moodRating: entry.mood_rating,
+        date: entry.date ?? entry.entry_date,
+        mood: entry.mood_rating ?? entry.mood_score ?? entry.mood,
+        content: entry.freehand_text_content ?? entry.content,
+        emotions: entry.emotions,
+        energy: entry.energy,
         stressLevel: entry.stress_level,
-        sleepHours: entry.sleep_hours,
-        exerciseMinutes: entry.exercise_minutes,
+        contextTags: entry.context_tags,
+        extraResponses: entry.extra_responses,
         createdAt: entry.created_at
       })),
       assessmentResults: assessmentResults.map((result: any) => ({
         assessmentId: result.assessment_id,
         completedAt: result.completed_at,
         score: result.score,
-        severity: result.severity
+        maxScore: result.max_score,
+        interpretation: result.interpretation,
+        sectionScores: result.section_scores,
+        severity: result.severity_hint ?? result.severity,
+        responses: result.responses
       })),
+      // Field names verified against live `progress:` records 2026-09-01. The
+      // previous mapping read program_id/current_day/completed_days/started_at,
+      // none of which exist on these records — every field exported as undefined.
       programProgress: programProgress.map((progress: any) => ({
-        programId: progress.program_id,
-        currentDay: progress.current_day,
-        completedDays: progress.completed_days,
-        startedAt: progress.started_at
+        equipId: progress.equip_id,
+        dayNumber: progress.day_number,
+        completed: progress.completed,
+        blockResponses: progress.block_responses,
+        completedAt: progress.completed_at,
+        lastUpdated: progress.last_updated
       })),
       exportedAt: new Date().toISOString()
     };
@@ -1547,22 +1510,16 @@ app.get("/bookings", requireAuth, async (c) => {
 // ────────────────────────────────────────────────────────────────
 
 // Set user as admin endpoint (for initial admin setup)
-app.post("/admin/set-admin/:userId", requireAuth, async (c) => {
+// FIXED 2026-09-01 (S12): this ran behind `requireAuth` with a bootstrap escape
+// hatch — "allow first admin setup if no admins exist yet" — so any
+// authenticated user could grant admin to anyone, including themselves, the
+// moment the admin count reached zero. Bootstrapping the first admin is a
+// one-time operational task, not a permanent public code path; do it directly
+// in the KV store. Now requires an existing admin unconditionally.
+app.post("/admin/set-admin/:userId", requireAdmin, async (c) => {
   try {
-    const requestingUser = c.get('user');
     const targetUserId = c.req.param('userId');
-    
-    // Check if requesting user is already admin or is setting themselves as first admin
-    const requestingProfile = await kv.get(`user:${requestingUser.id}`);
-    
-    // Allow first admin setup if no admins exist yet
-    const allUsers = await kv.getByPrefix('user:');
-    const hasAdmins = allUsers.some(u => u.is_admin);
-    
-    if (!requestingProfile?.is_admin && hasAdmins) {
-      return c.json({ error: 'Admin access required' }, 403);
-    }
-    
+
     const targetProfile = await kv.get(`user:${targetUserId}`);
     if (!targetProfile) {
       return c.json({ error: 'User not found' }, 404);
@@ -1606,42 +1563,8 @@ app.get("/admin/debug/check-status", requireAuth, async (c) => {
   }
 });
 
-app.post("/admin/debug/make-admin", requireAuth, async (c) => {
-  try {
-    const user = c.get('user');
-    let userProfile = await kv.get(`user:${user.id}`);
-    
-    if (!userProfile) {
-      // Create profile if it doesn't exist
-      userProfile = {
-        user_id: user.id,
-        email: user.email,
-        name: user.email.split('@')[0],
-        is_admin: true,
-        corporate_user: false,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      };
-    } else {
-      // Update existing profile
-      userProfile.is_admin = true;
-      userProfile.updated_at = new Date().toISOString();
-    }
-    
-    await kv.set(`user:${user.id}`, userProfile);
-    
-    console.log(`✅ User ${user.id} promoted to admin`);
-    
-    return c.json({ 
-      success: true,
-      message: 'User promoted to admin successfully',
-      profile: userProfile
-    });
-  } catch (error) {
-    console.error('Make admin error:', error);
-    return c.json({ error: 'Failed to promote user to admin' }, 500);
-  }
-});
+// REMOVED 2026-09-01 (S2): POST /admin/debug/make-admin — see the note in
+// admin-routes.ts. This was the shadowed duplicate; both are gone.
 
 // Admin User Management Endpoints
 app.get("/admin/users", requireAdmin, async (c) => {
@@ -1757,25 +1680,28 @@ app.put("/admin/users/:userId", requireAuth, async (c) => {
       return c.json({ error: 'User not found' }, 404);
     }
     
-    // Protect super admin from demotion
-    const SUPER_ADMIN_EMAIL = 'admin@wugweb.com';
-    if (currentProfile.email?.toLowerCase() === SUPER_ADMIN_EMAIL && updates.is_admin === false) {
-      return c.json({ error: 'Cannot demote the system super admin (admin@wugweb.com)' }, 403);
+    // CHANGED 2026-09-01 (S3): this used to protect a hardcoded address
+    // ('admin@wugweb.com') from demotion AND re-assert is_admin/is_super_admin
+    // on it during any profile update — an identity-based privilege grant that
+    // turned control of one email address into permanent super admin.
+    //
+    // The property actually worth protecting is "don't lock everyone out", so
+    // guard the LAST remaining admin instead of a specific person.
+    if (currentProfile.is_admin && updates.is_admin === false) {
+      const allProfiles = await kv.getByPrefix('user:');
+      const adminCount = (allProfiles || []).filter((p: any) => p?.is_admin).length;
+      if (adminCount <= 1) {
+        return c.json({ error: 'Cannot demote the last remaining admin. Promote another admin first.' }, 409);
+      }
     }
-    
+
     const updatedProfile = {
       ...currentProfile,
       ...updates,
       user_id: userId, // Prevent changing user ID
       updated_at: new Date().toISOString()
     };
-    
-    // Ensure super admin always keeps admin + super_admin flags
-    if (currentProfile.email?.toLowerCase() === SUPER_ADMIN_EMAIL) {
-      updatedProfile.is_admin = true;
-      updatedProfile.is_super_admin = true;
-    }
-    
+
     await kv.set(`user:${userId}`, updatedProfile);
     return c.json({ profile: updatedProfile });
   } catch (error) {
@@ -3229,11 +3155,44 @@ app.patch("/media/:id", requireAdmin, async (c) => {
 // ============================================================================
 
 // Get site settings
+// FIXED 2026-09-01 (S4). This route is public and unauthenticated, and it used
+// to return the entire `settings:site` record verbatim — including a populated
+// `smtpPassword`, `smtpUser` and `smtpHost`. Anyone who called it got working
+// mail credentials.
+//
+// This is an ALLOWLIST, deliberately, not a denylist: any field added to
+// settings:site in future is private until someone explicitly publishes it.
+// Admins read the full record through the authenticated /admin/settings route.
+//
+// NOTE: the leaked SMTP password must still be rotated and treated as
+// compromised — removing it from the response does not un-disclose it.
+const PUBLIC_SETTINGS_FIELDS = [
+  'siteName', 'siteDescription', 'companyDescription',
+  'contactEmail', 'contactPhone', 'contactWhatsapp', 'contactAddress',
+  'logoUrl', 'logoIconUrl', 'logoFullLightUrl', 'logoFullDarkUrl',
+  'brandLogoUrl', 'faviconUrl', 'metaImageUrl', 'ogImage',
+  'primaryColor', 'accentColor',
+  'seoTitle', 'seoDescription', 'seoKeywords', 'twitterCard',
+  'facebookUrl', 'instagramUrl', 'linkedinUrl', 'twitterUrl', 'xUrl', 'youtubeUrl',
+  'newsletterEnabled', 'newsletterTitle', 'newsletterDescription', 'newsletterImageUrl',
+  'exploreCardAssessmentsImage', 'exploreCardProgramsImage',
+  'enableAnalytics', 'enableComments', 'enableNotifications', 'enableUserRegistration',
+  'googleAnalyticsId', 'facebookPixelId',
+  'customCss', 'customJs',
+  'certifications', 'maintenanceMode', 'updated_at',
+] as const;
+
 app.get("/settings", async (c) => {
   try {
     const settings = await kv.get('settings:site');
-    console.log('⚙️ Fetched site settings');
-    return c.json({ settings: settings || {} });
+    const publicSettings: Record<string, unknown> = {};
+    if (settings) {
+      for (const field of PUBLIC_SETTINGS_FIELDS) {
+        if (field in settings) publicSettings[field] = (settings as any)[field];
+      }
+    }
+    console.log('⚙️ Fetched site settings (public fields only)');
+    return c.json({ settings: publicSettings });
   } catch (error) {
     console.error('Get settings error:', error);
     return c.json({ error: 'Failed to retrieve settings' }, 500);

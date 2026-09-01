@@ -51,6 +51,7 @@ export function Privacy() {
   const [exporting, setExporting] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleteText, setDeleteText] = useState('');
+  const [deleting, setDeleting] = useState(false);
 
   // Load from user profile — KV is sole source of truth
   useEffect(() => {
@@ -80,14 +81,18 @@ export function Privacy() {
     }
   };
 
+  // Both handlers previously called routes that do not exist (`/user/export`,
+  // `/user/delete-account`) and swallowed the resulting 404 with `.catch()`,
+  // so the toast reported success while nothing happened. These are DPDP
+  // §11/§12 obligations — a silent failure here is a compliance failure, not a
+  // cosmetic one. Use the real endpoints and let failures surface.
   const handleExportData = async () => {
     try {
       setExporting(true);
-      const data = await apiClient.request('/user/export', { method: 'GET' }, true)
-        .catch(() => ({ message: 'Export not yet available. Your data will be emailed when ready.' }));
+      const data: any = await apiClient.exportUserData();
       showToast('success', 'Export Requested', data?.message || 'Your data export is being prepared.');
     } catch (err) {
-      showToast('error', 'Export Failed', 'Unable to export your data at this time.');
+      showToast('error', 'Export Failed', 'Unable to export your data at this time. Please try again or contact support.');
       console.error('Data export error:', err);
     } finally {
       setExporting(false);
@@ -97,13 +102,15 @@ export function Privacy() {
   const handleDeleteAccount = async () => {
     if (deleteText !== 'DELETE') return;
     try {
-      await apiClient.request('/user/delete-account', { method: 'POST' }, true)
-        .catch(() => null);
-      showToast('info', 'Account Deletion', 'Your account deletion request has been submitted.');
+      setDeleting(true);
+      await apiClient.deleteAccount();
+      showToast('info', 'Account Deleted', 'Your account has been deleted.');
       await signOut();
     } catch (err) {
       showToast('error', 'Error', 'Failed to delete account. Please contact support.');
       console.error('Account deletion error:', err);
+    } finally {
+      setDeleting(false);
     }
   };
 

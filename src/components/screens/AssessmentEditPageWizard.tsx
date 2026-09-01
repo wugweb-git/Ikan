@@ -27,6 +27,22 @@ import { EquipDailyEditor as DailyBuilder } from './EquipDailyEditor';
 import { DayContent, Activity, resolveInteraction } from '../../lib/equip-admin-types';
 import { AdminLoading } from '../admin/AdminLoading';
 
+// Normalize options to plain strings so the scoring-map key lookup matches
+// regardless of whether the option was authored as a string or an
+// {label,value} object.
+//
+// This MUST be applied on both sides of the round-trip. The load path used to
+// normalize while the save path read `exerciseConfig.options` raw, so an
+// object-shaped option stringified to the single key "[object Object]" — every
+// option on that question collapsing onto one entry and the rest scoring 0 via
+// the adapter's `q.scoring?.[opt] || 0` fallback.
+export const normalizeOptions = (raw: any): string[] =>
+  Array.isArray(raw)
+    ? raw.map((opt: any) =>
+        typeof opt === 'string' ? opt : String(opt?.label ?? opt?.text ?? opt?.value ?? opt)
+      )
+    : [];
+
 // Adapter to convert legacy Question[] to Block[] (Activity[])
 const convertQuestionsToDay = (questions: any[]): DayContent => {
   return {
@@ -34,12 +50,25 @@ const convertQuestionsToDay = (questions: any[]): DayContent => {
     title: 'Assessment Content',
     dayType: 'assessment',
     activities: questions.map((q, idx) => {
-      // Determine interaction + subtype from legacy question type
-      let subtype: string = 'mcq';
+      const options: string[] = normalizeOptions(q.options);
+
+      // Determine interaction + subtype from legacy question type. 'mcq' and
+      // 'single-select' only differ in whether scoring is on — decide from
+      // whether the question actually carries scoring data instead of
+      // defaulting every unrecognized type to 'mcq' (which silently relabeled
+      // single-choice questions and made them look scored when they weren't).
+      const hasScoring = !!q.scoring && Object.keys(q.scoring).length > 0;
+      let subtype: string = 'single-select';
       let interaction: string = 'select-one';
       if (q.type === 'multiple-choice') { subtype = 'multi-select'; interaction = 'select-many'; }
       else if (q.type === 'scale') { subtype = 'rating_scale'; interaction = 'rate'; }
       else if (q.type === 'text' || q.type === 'textarea') { subtype = 'ephemeral-journal'; interaction = 'write'; }
+      else if (hasScoring) { subtype = 'mcq'; }
+
+      // Carry real per-option weights forward instead of wiping them. This
+      // used to hardcode weights: [], which is why scoring vanished every
+      // time an existing question was opened in the editor.
+      const weights = hasScoring ? options.map((opt) => q.scoring?.[opt] ?? 0) : [];
 
       return {
         id: q.id || `block-${idx}`,
@@ -56,10 +85,10 @@ const convertQuestionsToDay = (questions: any[]): DayContent => {
         exerciseConfig: {
           subtype: subtype as any,
           prompt: q.text,
-          options: q.options || [],
+          options,
           scoring: {
-            enabled: true,
-            weights: [],
+            enabled: hasScoring,
+            weights,
           }
         }
       };
@@ -288,14 +317,62 @@ export function AssessmentEditPageWizard({ assessmentId, onBack, onSave }: Asses
       const data = await apiClient.getAssessment(localAssessmentId!);
       if (data && typeof data === 'object') {
         // CONVERSION LOGIC: Legacy Questions -> Daily Content
-        if (!data.daily_content && data.questions && data.questions.length > 0) {
-            data.daily_content = [convertQuestionsToDay(data.questions)];
+        //
+        // `questions[]` is the canonical field: the backend serves it and the
+        // player reads it through assessment-adapter. `daily_content` is the
+        // builder's cache of it. This used to regenerate the cache only when it
+        // was ENTIRELY absent, while persistWizard unconditionally rewrote
+        // questions[] from it — so any edit made to questions[] outside this
+        // wizard was silently reverted on the next autosave. Reconcile the two
+        // on load and rebuild the cache from questions[] whenever they disagree.
+        const questions: any[] = Array.isArray(data.questions) ? data.questions : [];
+        const cachedActivities = data.daily_content?.[0]?.activities;
+
+        if (questions.length > 0) {
+          const questionIds = questions.map((q: any, idx: number) => q.id || `block-${idx}`);
+          const cachedIds = Array.isArray(cachedActivities)
+            ? cachedActivities.map((a: Activity) => a.id)
+            : null;
+          // Matching ids are NOT sufficient. Sleep and Balance both hold stale
+          // pre-2026-08-06 `daily_content` weights — Sleep inverted, Balance
+          // 1-based — while their ids and length match perfectly. An id-only
+          // check leaves that cache in place, and the next save pushes the wrong
+          // weights back over the repaired questions[].scoring: the exact
+          // round-trip that caused the original corruption.
+          //
+          // So compare the weights too, against those derived from
+          // questions[].scoring — the repaired, presets-validated source of
+          // truth. Any disagreement rebuilds the cache from questions[].
+          const derived = convertQuestionsToDay(questions).activities;
+          const weightsOf = (a: any): string =>
+            JSON.stringify(a?.exerciseConfig?.scoring?.weights ?? null);
+
+          const inSync =
+            cachedIds !== null &&
+            cachedIds.length === questionIds.length &&
+            cachedIds.every((id, i) => id === questionIds[i]) &&
+            cachedActivities.every(
+              (a: Activity, i: number) => weightsOf(a) === weightsOf(derived[i])
+            );
+
+          if (!inSync) {
+            // Only warn when a cache actually existed and diverged; a missing
+            // cache is the ordinary first-open case, not a conflict.
+            if (cachedIds !== null) {
+              showToast(
+                'warning',
+                'Rebuilt from saved questions',
+                'The builder view disagreed with this assessment\'s saved questions — in ids, count or per-option weights — and has been rebuilt from them, which is the scored source of truth. Unsaved builder-only changes were discarded.'
+              );
+            }
+            data.daily_content = [convertQuestionsToDay(questions)];
+          }
         } else if (!data.daily_content) {
             data.daily_content = [{
-                day: 1, 
-                title: 'Assessment', 
-                description: 'Generated Day', 
-                dayType: 'lesson', 
+                day: 1,
+                title: 'Assessment',
+                description: 'Generated Day',
+                dayType: 'lesson',
                 activities: []
             }];
         }
@@ -316,23 +393,74 @@ export function AssessmentEditPageWizard({ assessmentId, onBack, onSave }: Asses
     setSaving(true);
     try {
       // SYNC BACK: Map daily_content blocks -> legacy questions for backward compat
+      const scoringErrors: string[] = [];
       if (currentData.daily_content && currentData.daily_content.length > 0) {
           currentData.questions = currentData.daily_content[0].activities.map(block => {
+              const subtype = block.exerciseConfig?.subtype;
               const interaction = resolveInteraction(block);
-              // Map interaction back to legacy question type
-              const legacyType = interaction === 'select-many' ? 'multiple-choice'
+              // Map back to legacy question type. Prefer subtype (finer-grained)
+              // over interaction, which collapses mcq/single-select/clinical/etc.
+              // into one 'select-one' bucket and was relabeling every single-select
+              // question as generic 'single-choice' with no scoring distinction.
+              const legacyType = subtype === 'multi-select' ? 'multiple-choice'
+                : subtype === 'rating_scale' ? 'scale'
+                : subtype === 'ephemeral-journal' ? 'text'
+                : interaction === 'select-many' ? 'multiple-choice'
                 : interaction === 'rate' ? 'scale'
                 : interaction === 'write' ? 'text'
-                : 'single-choice'; // select-one, clinical, etc.
+                : 'single-choice'; // mcq, single-select, clinical, etc.
+
+              // Rebuild the legacy scoring map (option label -> weight) from the
+              // block's weights array instead of dropping it. This used to write
+              // questions back with no `scoring` field at all, which is why
+              // saved scoring vanished even when it survived the load step.
+              // Normalize on save exactly as on load, so the keys written here
+              // are the same strings the player will look up.
+              const options: string[] = normalizeOptions(block.exerciseConfig?.options);
+              const weights = block.exerciseConfig?.scoring?.weights;
+
+              // A partial weights array is worse than none. Writing a scoring
+              // map flips the player from its safe 0-based-index fallback to a
+              // trusted lookup (`q.scoring?.[opt] || 0`), so any option without
+              // a key silently scores 0. Typing "0,1" into the free-text weights
+              // field for a 5-option question previously passed the old
+              // `weights.length > 0` check and zero-scored options 3-5.
+              // Require a weight for every option, or write no map at all.
+              let scoring: Record<string, number> | undefined = undefined;
+              if (block.exerciseConfig?.scoring?.enabled && Array.isArray(weights) && weights.length > 0) {
+                if (weights.length === options.length) {
+                  scoring = options.reduce((acc: Record<string, number>, opt: string, i: number) => {
+                    acc[opt] = weights[i] ?? 0;
+                    return acc;
+                  }, {} as Record<string, number>);
+                } else {
+                  scoringErrors.push(
+                    `"${block.exerciseConfig?.prompt || block.title || block.id}" — ${options.length} option(s) but ${weights.length} weight(s)`
+                  );
+                }
+              }
+
               return {
                 id: block.id,
                 text: block.exerciseConfig?.prompt || block.title,
                 type: legacyType,
-                options: block.exerciseConfig?.options || [],
+                options,
+                scoring,
                 required: block.required,
                 timeLimit: block.duration
               };
           });
+      }
+
+      // Surface dropped scoring even on autosave — silently saving an
+      // assessment whose scoring just stopped being written is the exact
+      // failure mode this editor already caused once.
+      if (scoringErrors.length > 0) {
+        showToast(
+          'error',
+          'Scoring not saved',
+          `${scoringErrors.length} question(s) have a weight count that does not match their options, so their scoring was left off: ${scoringErrors.slice(0, 3).join('; ')}${scoringErrors.length > 3 ? '; …' : ''}`
+        );
       }
 
       let result;

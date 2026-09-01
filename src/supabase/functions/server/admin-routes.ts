@@ -2,8 +2,8 @@ import { EquipService } from './program-service.ts';
 import { createClient } from "jsr:@supabase/supabase-js@2";
 import * as kv from "./kv_dual_write.ts";
 
-// Super-admin email
-const SUPER_ADMIN_EMAIL = 'admin@wugweb.com';
+// REMOVED 2026-09-01 (S3): hardcoded SUPER_ADMIN_EMAIL. It was already unused
+// in this file; admin status derives solely from the is_admin profile flag.
 
 export function registerAdminRoutes(app: Hono, requireAuth: any, requireAdmin: any) {
 
@@ -55,30 +55,12 @@ app.get("/admin/debug/check-status", requireAuth, async (c) => {
   }
 });
 
-app.post("/admin/debug/make-admin", requireAuth, async (c) => {
-  try {
-    const user = c.get('user');
-    const existing = await kv.get(`user:${user.id}`);
-    
-    const updated = {
-      ...(existing || {}),
-      id: user.id,
-      email: user.email,
-      is_admin: true,
-      updated_at: new Date().toISOString()
-    };
-    
-    await kv.set(`user:${user.id}`, updated);
-    
-    return c.json({ 
-      success: true, 
-      message: 'User promoted to admin successfully',
-      user: updated
-    });
-  } catch (error) {
-    return c.json({ error: 'Failed to make admin' }, 500);
-  }
-});
+// REMOVED 2026-09-01 (S2): POST /admin/debug/make-admin promoted the *calling*
+// user to admin behind `requireAuth` only — any authenticated user could grant
+// themselves the admin flag in one request. A duplicate of this route also
+// existed in index.tsx and has been removed with it. Do not reintroduce a
+// self-promotion endpoint; use POST /admin/set-admin/:userId, which requires an
+// existing admin.
 
 // ========================================
 // ADMIN - ADD DEFAULT ONBOARDING TO PROGRAMS
