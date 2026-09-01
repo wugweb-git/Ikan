@@ -44,6 +44,11 @@
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true
   },
+  // No `references` here. tsconfig.node.json previously declared both
+  // `composite: true` and `noEmit: true`, which TypeScript rejects for a
+  // referenced project (TS6310) — so `tsc -p src/tsconfig.json` could not load
+  // at all, and no type check has ever run against this repo. Dropping the
+  // reference and the `composite` flag makes both configs load standalone.
   "include": [
     "./App.tsx",
     "./components/**/*.ts",
@@ -69,8 +74,5 @@
     "**/*.test.tsx",
     "**/*.spec.ts",
     "**/*.spec.tsx"
-  ],
-  "references": [
-    { "path": "./tsconfig.node.json" }
   ]
 }

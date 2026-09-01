@@ -1,6 +1,5 @@
 {
   "compilerOptions": {
-    "composite": true,
     "skipLibCheck": true,
     "module": "ESNext",
     "moduleResolution": "bundler",
@@ -10,7 +9,7 @@
     "types": ["node"]
   },
   "include": [
-    "vite.config.ts",
+    "../vite.config.ts",
     "postcss.config.js"
   ]
 }
