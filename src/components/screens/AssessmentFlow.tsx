@@ -9,6 +9,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { apiClient } from '../../lib/api-client';
 import { computeSectionScores, severityForSection } from '../../lib/assessment-sections';
 import { SECTION_PRESETS } from '../../lib/assessment-section-presets';
+import { slugify } from '../../lib/slug';
 import { ProgressIndicator } from '../ui/progress-indicator';
 import { AssessmentResults } from './AssessmentResults';
 import { useOfflineSync } from '../../hooks/useOfflineSync';
@@ -272,11 +273,33 @@ export function AssessmentFlow({
       // sections/overrides are authored directly in admin. Returns
       // { sectioned: false } for ordinary single-score assessments with no
       // preset at all, so the existing presentation is untouched for those.
+      // Resolve the preset by slug, falling back to the slugified title.
+      //
+      // Why the fallback: every result saved since this shipped (2026-08-07)
+      // carries `section_scores` as a KEY with a NULL value — 10 of them, and
+      // none populated. The backend writes `data.sectionScores ?? null`, so a
+      // null value means the client sent nothing, which means `sectioned` was
+      // false, which means this lookup missed. The stored slugs do match the
+      // SECTION_PRESETS keys exactly, so the miss is an absent `slug` on the
+      // assessment object reaching this scope, not a wrong one. Deriving it
+      // from the title costs nothing and closes that hole; if slug is present
+      // the fallback never fires.
+      const presetKey =
+        (assessment as any).slug || slugify((assessment as any).title || '');
       const sectionConfig =
         (assessment as any).sections
           ? assessment
-          : { ...assessment, ...(SECTION_PRESETS[(assessment as any).slug] ?? {}) };
+          : { ...assessment, ...(SECTION_PRESETS[presetKey] ?? {}) };
       const sectionScores = computeSectionScores(sectionConfig as any, responses);
+
+      if (!sectionScores.sectioned) {
+        // Loud, because a silent miss here is what produced 133 results with
+        // no breakdown and no signal that anything was wrong.
+        console.warn(
+          `[assessment] No section preset resolved for "${presetKey}" — ` +
+          `section_scores will be saved as null for this result.`
+        );
+      }
 
       // Five assessments (Anxiety, Depression, Stress, Sleep, Balance) aren't
       // multi-scale bundles — they're single instruments whose stored
