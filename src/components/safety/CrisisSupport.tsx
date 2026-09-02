@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
@@ -15,46 +15,67 @@ export function CrisisSupport({ isVisible, onClose, triggerReason = 'user_reques
   const isMobile = useIsMobile();
   const [hasInteracted, setHasInteracted] = useState(false);
 
+  // Localised to India 2026-09-01. These were US numbers (988 Lifeline,
+  // 741741 Crisis Text Line, 911) on an India-facing product — dialling any of
+  // them from an Indian handset reaches nobody.
+  //
+  // Tele-MANAS is the Government of India's national mental-health helpline
+  // (24/7, multilingual, free). iCALL is TISS's counselling line. AASRA is a
+  // 24/7 suicide-prevention line. 112 is India's single emergency number.
+  //
+  // VERIFY THESE BEFORE EACH RELEASE — helpline numbers change, and a dead
+  // number in a crisis panel is worse than no panel.
   const crisisResources = [
     {
-      name: 'National Suicide Prevention Lifeline',
-      phone: '988',
-      description: 'Free, confidential support 24/7',
+      name: 'Tele-MANAS',
+      phone: '14416',
+      description: 'Government of India mental health helpline — 24/7, free, multilingual',
       action: () => {
         setHasInteracted(true);
-        window.open('tel:988', '_self');
+        window.open('tel:14416', '_self');
       },
       icon: Phone,
       priority: 'high'
     },
     {
-      name: 'Crisis Text Line',
-      phone: '741741',
-      description: 'Text HOME to 741741',
+      name: 'iCALL',
+      phone: '9152987821',
+      description: 'TISS counselling helpline — Mon to Sat, 10am to 8pm',
       action: () => {
         setHasInteracted(true);
-        window.open('sms:741741?body=HOME', '_self');
+        window.open('tel:9152987821', '_self');
+      },
+      icon: Phone,
+      priority: 'high'
+    },
+    {
+      name: 'AASRA',
+      phone: '9820466726',
+      description: 'Suicide prevention helpline — 24/7, confidential',
+      action: () => {
+        setHasInteracted(true);
+        window.open('tel:9820466726', '_self');
       },
       icon: MessageSquare,
       priority: 'high'
     },
     {
-      name: 'International Crisis Lines',
-      description: 'Find help in your country',
+      name: 'Find a helpline near you',
+      description: 'Verified helplines by country and region',
       action: () => {
         setHasInteracted(true);
-        window.open('https://findahelpline.com', '_blank', 'noopener,noreferrer');
+        window.open('https://findahelpline.com/in', '_blank', 'noopener,noreferrer');
       },
       icon: ExternalLink,
       priority: 'medium'
     },
     {
       name: 'Emergency Services',
-      phone: '911',
-      description: 'For immediate medical emergencies',
+      phone: '112',
+      description: "India's emergency number — for immediate medical emergencies",
       action: () => {
         setHasInteracted(true);
-        window.open('tel:911', '_self');
+        window.open('tel:112', '_self');
       },
       icon: AlertTriangle,
       priority: 'emergency'
@@ -219,7 +240,7 @@ export function CrisisSupport({ isVisible, onClose, triggerReason = 'user_reques
                 <Button
                   onClick={() => {
                     setHasInteracted(true);
-                    window.open('tel:988', '_self');
+                    window.open('tel:14416', '_self');
                   }}
                   className="flex-1"
                   style={{
@@ -230,7 +251,7 @@ export function CrisisSupport({ isVisible, onClose, triggerReason = 'user_reques
                   }}
                 >
                   <Phone size={16} />
-                  Call 988
+                  Call 14416
                 </Button>
               </div>
             </CardContent>
@@ -241,18 +262,57 @@ export function CrisisSupport({ isVisible, onClose, triggerReason = 'user_reques
   );
 }
 
+export type CrisisReason = 'keywords' | 'user_request' | 'assessment_score';
+
+/**
+ * Module-level trigger.
+ *
+ * The panel's state lives in App.tsx via useCrisisSupport(), but the places
+ * that can detect distress — the mood-journal note, a free-text assessment
+ * block, a severe assessment band — are many levels down the tree. Rather than
+ * thread a callback through every intermediate component or add another
+ * provider around the app, the mounted hook registers its setter here and any
+ * module can call triggerCrisisSupport().
+ *
+ * Before 2026-09-01 nothing called showCrisisSupport at all: App.tsx
+ * destructured every other value from the hook and omitted it, and
+ * detectCrisisKeywords had zero call sites, so the panel could not be opened by
+ * any input method.
+ */
+let activeCrisisTrigger: ((reason?: CrisisReason) => void) | null = null;
+
+/** Open the crisis panel from anywhere. No-ops if the hook is not mounted. */
+export function triggerCrisisSupport(reason: CrisisReason = 'user_request'): void {
+  if (activeCrisisTrigger) {
+    activeCrisisTrigger(reason);
+  } else {
+    // Loud on purpose: a silently missing crisis panel is how this went
+    // unnoticed for as long as it did.
+    console.warn('[crisis] triggerCrisisSupport called but no CrisisSupport host is mounted');
+  }
+}
+
 // Hook to manage crisis support display
 export function useCrisisSupport() {
   const [isVisible, setIsVisible] = useState(false);
-  const [triggerReason, setTriggerReason] = useState<'keywords' | 'user_request' | 'assessment_score'>('user_request');
+  const [triggerReason, setTriggerReason] = useState<CrisisReason>('user_request');
 
-  const showCrisisSupport = (reason: 'keywords' | 'user_request' | 'assessment_score' = 'user_request') => {
+  const showCrisisSupport = useCallback((reason: CrisisReason = 'user_request') => {
     setTriggerReason(reason);
     setIsVisible(true);
-    
-    // Log crisis support activation (anonymized)
+
+    // Log crisis support activation (anonymized — never log the text that
+    // triggered it).
     console.log(`Crisis support activated: ${reason}`);
-  };
+  }, []);
+
+  // Register this instance as the app-wide trigger for as long as it is mounted.
+  useEffect(() => {
+    activeCrisisTrigger = showCrisisSupport;
+    return () => {
+      if (activeCrisisTrigger === showCrisisSupport) activeCrisisTrigger = null;
+    };
+  }, [showCrisisSupport]);
 
   const hideCrisisSupport = () => {
     setIsVisible(false);

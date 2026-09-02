@@ -21,6 +21,8 @@ import {
 } from '../../lib/emoji-utils';
 import tokens from '../../lib/design-tokens';
 import { projectId, publicAnonKey } from '../../utils/supabase/info';
+import { detectCrisisKeywords } from '../security/SecurityProvider';
+import { triggerCrisisSupport } from '../safety/CrisisSupport';
 
 // ─────────────────────────────────────────────────────────────────
 // Types & Constants
@@ -333,6 +335,16 @@ export function MoodJournal({ onNavigate: _onNavigate }: { onNavigate?: (path: s
       emotions: tags, energy: energy || 3,
       stress, contextTags: tags,
     };
+
+    // Crisis check on the free-text note. Runs on submit rather than per
+    // keystroke so it cannot fire on a partial word or interrupt typing.
+    //
+    // The entry still saves — the panel is offered alongside, never instead of,
+    // the user's own record. The matched text is deliberately never logged.
+    if (typeof note === 'string' && note.trim() && detectCrisisKeywords(note)) {
+      triggerCrisisSupport('keywords');
+    }
+
     setIsSubmitting(true);
     try {
       if (isOnline) {

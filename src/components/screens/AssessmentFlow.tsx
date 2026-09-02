@@ -7,7 +7,8 @@ import { Icon } from '../Icon';
 import { useNotifications } from '../../contexts/NotificationContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { apiClient } from '../../lib/api-client';
-import { computeSectionScores, severityForSection } from '../../lib/assessment-sections';
+import { computeSectionScores, severityForSection, resolveAnswerValue } from '../../lib/assessment-sections';
+import { triggerCrisisSupport } from '../safety/CrisisSupport';
 import { SECTION_PRESETS } from '../../lib/assessment-section-presets';
 import { slugify } from '../../lib/slug';
 import { ProgressIndicator } from '../ui/progress-indicator';
@@ -291,6 +292,30 @@ export function AssessmentFlow({
           ? assessment
           : { ...assessment, ...(SECTION_PRESETS[presetKey] ?? {}) };
       const sectionScores = computeSectionScores(sectionConfig as any, responses);
+
+      // Risk indicator. The presets declare `riskIndicatorQuestionIds` — for the
+      // General questionnaire that is block-1773736126142, PHQ-9 item 9,
+      // "Thoughts that you would be better off dead or of hurting yourself".
+      // The field was declared and then never read anywhere: assessment-sections.ts
+      // has no reference to it, so a non-zero answer to the single most
+      // clinically urgent question in the product did nothing at all.
+      //
+      // Any answer above the lowest option offers the crisis panel. Scoring and
+      // saving continue unchanged — this is offered alongside the result, never
+      // instead of it.
+      try {
+        const riskIds: string[] = (sectionConfig as any).riskIndicatorQuestionIds ?? [];
+        const flagged = riskIds.some((qid) => {
+          const q = (assessment.questions as any[]).find((x) => x.id === qid);
+          if (!q) return false;
+          const v = resolveAnswerValue(q as any, responses[qid]);
+          return typeof v === 'number' && v > 0;
+        });
+        if (flagged) triggerCrisisSupport('assessment_score');
+      } catch (e) {
+        // Never let the risk check break scoring.
+        console.warn('[crisis] risk-indicator check failed', e);
+      }
 
       if (!sectionScores.sectioned) {
         // Loud, because a silent miss here is what produced 133 results with
