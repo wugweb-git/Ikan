@@ -317,6 +317,8 @@ function parentIdFor(rel: Relation, value: any): string | null {
 // ── Route registration ────────────────────────────────────────
 
 export function registerKVAuditRoutes(app: Hono, requireAuth: any) {
+  // NOTE: index.tsx now passes requireAdmin here. The parameter name is kept to
+  // avoid churning 9 call sites; the guard it carries is admin-level.
 
   // ── GET /admin/kv-audit — Full KV audit (full DB scan) ──────
   app.get("/admin/kv-audit", requireAuth, async (c) => {

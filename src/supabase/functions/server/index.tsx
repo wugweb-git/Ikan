@@ -249,12 +249,27 @@ registerAssessmentRoutes(app, requireAuth);
 registerMoodRoutes(app, requireAuth);
 registerNewsletterRoutes(app, requireAdmin);
 registerContactRoutes(app, requireAdmin);
-registerResourceRoutes(app, requireAuth);
+// FIXED 2026-09-01: was requireAuth. Every route this module guards with the
+// passed middleware is an /admin/* route (resources CRUD + /admin/categories),
+// so requireAuth was simply too weak. admin-routes.ts registers competing
+// copies with requireAdmin and wins on Hono first-match today, which masked it
+// — but a reorder of these registration lines would have silently downgraded
+// all five.
+registerResourceRoutes(app, requireAdmin);
 registerScalesRoutes(app, requireAdmin);
 registerHealthConnectRoutes(app, requireAuth);
 registerBrevoRoutes(app, requireAdmin, requireAuth);
 registerCorporateRoutes(app);
-registerKVAuditRoutes(app, requireAuth);
+// FIXED 2026-09-01: was requireAuth on all nine /admin/kv-audit* routes.
+// Eight are shadowed by requireAdmin copies in admin-routes.ts and so were
+// safe by registration order alone — including POST /admin/kv-audit/purge-prefix,
+// the endpoint that once deleted every assessment_slug: row and broke every
+// /assessment/<slug> URL site-wide. Depending on line order for that is not a
+// guard.
+//
+// GET /admin/kv-schema (kv-audit-routes.ts:1005) has NO competing copy, so it
+// was genuinely reachable by any authenticated user, not merely fragile.
+registerKVAuditRoutes(app, requireAdmin);
 registerCheckinTemplateRoutes(app, requireAuth);
 // FIXED 2026-09-01 (S11): was requireAuth, so any signed-in account could
 // rewrite the homepage headline, image and call-to-action link — a phishing

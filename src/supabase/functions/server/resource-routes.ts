@@ -1,6 +1,8 @@
 import * as kv from "./kv_dual_write.ts";
 
 export function registerResourceRoutes(app: Hono, middleware: any) {
+  // NOTE: index.tsx now passes requireAdmin. Every route below using `middleware`
+  // is an /admin/* route, so admin-level is the correct guard.
   
   // Helper to check admin status
   const ensureAdmin = async (c: any) => {
