@@ -75,6 +75,9 @@ const KV_SCHEMA: KVKeyDef[] = [
   { prefix: "assessment_response:", description: "Assessment response by ID", owner: "index.tsx", consumers: ["index.tsx"], scoped: "user", category: "assessment", orphanRisk: "medium" },
   { prefix: "assessment_response_by_user:", description: "Assessment response (user index)", owner: "index.tsx,assessment-routes.ts", consumers: ["index.tsx","assessment-routes.ts","recommendation-service.ts"], scoped: "user", category: "assessment", orphanRisk: "low" },
 
+  // ── SECURITY ────────────────────────────────────────────────
+  { prefix: "security_event:", description: "Security events by day (failed logins, suspicious activity)", owner: "index.tsx", consumers: ["index.tsx"], scoped: "global", category: "security", orphanRisk: "none", notes: "Added 2026-09-02 with POST /security/events, per GOVERNANCE Rule 2 — registered in the same commit that introduced the prefix. Day-bucketed as security_event:{YYYY-MM-DD}, capped at 5000 events per day. Public write by design: the events most worth capturing happen before sign-in. user_id comes from a verified token when present, never from the request body. Safe to prune on a retention schedule; not user-scoped, so it is NOT part of account erasure." },
+
   // ── JOURNALS / MOOD ─────────────────────────────────────────
   { prefix: "journal:", description: "Journal entry by ID", owner: "index.tsx,mood-routes.ts", consumers: ["index.tsx"], scoped: "entity", category: "journal", orphanRisk: "medium" },
   { prefix: "journal_by_user:", description: "Journal user-date index", owner: "index.tsx,mood-routes.ts", consumers: ["index.tsx,mood-routes.ts"], scoped: "user", category: "journal", orphanRisk: "medium" },

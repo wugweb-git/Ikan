@@ -1,6 +1,8 @@
 import React, { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNotifications } from '../../contexts/NotificationContext';
+import { projectId } from '../../utils/supabase/info';
+import { getAuthHeaders } from '../../lib/supabase-client';
 
 interface SecurityContextType {
   isSecureConnection: boolean;
@@ -56,23 +58,27 @@ export function SecurityProvider({ children }: SecurityProviderProps) {
       details: details || {}
     };
 
-    // There is NO server-side sink for these events.
+    // Sink added 2026-09-02: POST /security/events on the edge function, with
+    // its `security_event:` prefix registered in KEY_REGISTRY in the same
+    // change (GOVERNANCE Rule 2).
     //
-    // This used to POST to `/api/security-log`. That endpoint does not exist —
-    // and worse, vercel.json rewrites `/(.*)` to `/index.html`, so the request
-    // returned 200 with an HTML body. The `.catch` never fired, nothing was
-    // ever stored, and the code read as though security logging worked. The
-    // edge function has logAudit() and createSecurityAlert() in security.tsx
-    // but neither is exposed over HTTP, and the `alert:` / `api-log:` KV
-    // prefixes hold zero rows.
+    // This previously POSTed to `/api/security-log`, which does not exist — and
+    // vercel.json rewrites /(.*) to /index.html, so it returned 200 with an HTML
+    // body and the .catch never fired. Nothing was recorded and nothing said so.
     //
-    // Logging to the console in every environment is deliberately less
-    // impressive and actually true. To make this real, add a route on the edge
-    // function, register its KV prefix in KEY_REGISTRY in the same commit (see
-    // GOVERNANCE.md Rule 2), and post there — do not reinstate a fetch to a
-    // path that the SPA rewrite will swallow.
+    // Fire-and-forget by design: a security log must never block or break the
+    // user action that produced it. But failures are now surfaced in the console
+    // rather than swallowed, so a broken sink is visible instead of silent.
     if (typeof window !== 'undefined') {
-      console.log('🔒 Security Event (not persisted — no server sink):', securityLog);
+      const url = `https://${projectId}.supabase.co/functions/v1/make-server-cc205da9/security/events`;
+      getAuthHeaders(true)
+        .then((headers) =>
+          fetch(url, { method: 'POST', headers, body: JSON.stringify(securityLog) })
+        )
+        .then((res) => {
+          if (!res.ok) console.warn(`[security] event not recorded (HTTP ${res.status}):`, securityLog.event);
+        })
+        .catch((err) => console.warn('[security] event not recorded:', securityLog.event, err?.message));
     }
   };
 

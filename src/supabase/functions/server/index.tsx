@@ -2349,6 +2349,74 @@ app.get("/badge-counts", requireAuth, async (c) => {
  * Track user engagement analytics
  * Stores analytics data for resource interactions (views, reads, shares, etc.)
  */
+/**
+ * Security event sink.
+ *
+ * Before this existed, SecurityProvider POSTed to `/api/security-log` — a path
+ * that does not exist, and which vercel.json rewrote to /index.html, so the
+ * request returned 200 with an HTML body and the client's .catch never fired.
+ * Nothing was ever recorded and nothing said so.
+ *
+ * Deliberately unauthenticated: the events worth capturing most (failed logins,
+ * suspicious activity before sign-in) happen when there is no session. That
+ * makes it a public write, so it is shaped the same way /analytics/engagement
+ * is — a field allowlist rather than spreading the body, no caller-supplied
+ * identity, and a hard cap on the daily bucket so it cannot be used to fill the
+ * store.
+ *
+ * The user id comes from the verified session when one exists, NEVER from the
+ * body: a caller must not be able to attribute an event to someone else.
+ */
+const SECURITY_EVENT_DAILY_CAP = 5000;
+
+app.post("/security/events", async (c) => {
+  try {
+    const body = await c.req.json();
+    if (!body?.event || typeof body.event !== 'string') {
+      return c.json({ error: 'event is required' }, 400);
+    }
+
+    // Resolve identity from the token if present; anonymous otherwise.
+    let userId = 'anonymous';
+    try {
+      const token = c.req.header('Authorization')?.split(' ')[1];
+      if (token) {
+        const { data } = await supabase.auth.getUser(token);
+        if (data?.user?.id) userId = data.user.id;
+      }
+    } catch { /* stays anonymous */ }
+
+    const now = new Date();
+    const dateKey = now.toISOString().split('T')[0];
+    const record = {
+      id: `sec_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
+      event: String(body.event).slice(0, 120),
+      user_id: userId,
+      url: typeof body.url === 'string' ? body.url.slice(0, 500) : null,
+      user_agent: typeof body.userAgent === 'string' ? body.userAgent.slice(0, 300) : null,
+      // Details are caller-supplied, so they are stringified and truncated
+      // rather than stored as arbitrary structure.
+      details: body.details ? JSON.stringify(body.details).slice(0, 1000) : null,
+      logged_at: now.toISOString(),
+    };
+
+    const key = `security_event:${dateKey}`;
+    const bucket: any[] = (await kv.get(key)) || [];
+    if (bucket.length >= SECURITY_EVENT_DAILY_CAP) {
+      console.warn(`security_event:${dateKey} at cap (${SECURITY_EVENT_DAILY_CAP}); event dropped`);
+      return c.json({ success: false, message: 'daily cap reached' }, 200);
+    }
+    bucket.push(record);
+    await kv.set(key, bucket);
+
+    return c.json({ success: true, id: record.id });
+  } catch (error) {
+    console.error('Security event logging error:', error);
+    // Never fail the caller's flow over a log write.
+    return c.json({ success: false }, 200);
+  }
+});
+
 app.post("/analytics/engagement", async (c) => {
   try {
     const analyticsData = await c.req.json();
@@ -4865,7 +4933,17 @@ function safeSegment(raw: string, fallback: string): string {
 app.post("/upload/professional-file", async (c) => {
   try {
     await ensureBucket();
-    const formData = await c.req.formData();
+
+    // Parse separately from the rest: a request with no body, or one that is
+    // not multipart, throws inside formData() and previously fell through to
+    // the catch-all 500. A malformed request is the caller's error, not ours.
+    let formData: FormData;
+    try {
+      formData = await c.req.formData();
+    } catch {
+      return c.json({ error: 'Expected a multipart/form-data body with a "file" field.' }, 400);
+    }
+
     const file = formData.get('file') as File;
 
     if (!file) return c.json({ error: 'No file provided' }, 400);
