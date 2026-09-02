@@ -26,6 +26,8 @@ export interface OfflineSyncState {
 }
 
 const SYNC_QUEUE_KEY = 'ikan-offline-sync-queue';
+/** Items that exhausted their retries. Kept so user data is recoverable rather than dropped. */
+const DEAD_LETTER_KEY = 'ikan-offline-sync-dead-letter';
 const LAST_SYNCED_KEY = 'ikan-last-synced';
 const MAX_RETRIES = 3;
 
@@ -212,6 +214,7 @@ export function useOfflineSync(): OfflineSyncState & {
 
     const currentQueue = loadQueue();
     const failed: SyncItem[] = [];
+    const exhausted: SyncItem[] = [];
 
     for (const item of currentQueue) {
       const ok = await executeSync(item);
@@ -219,13 +222,37 @@ export function useOfflineSync(): OfflineSyncState & {
         if (item.retries < MAX_RETRIES) {
           failed.push({ ...item, retries: item.retries + 1 });
         } else {
-          console.warn(`Dropping sync item after ${MAX_RETRIES} retries:`, item.id);
+          // Previously this dropped the item with a console.warn and the user's
+          // entry was gone. Park it instead so it is recoverable.
+          exhausted.push(item);
         }
       }
     }
 
-    saveQueue(failed);
-    setQueue(failed);
+    // Re-read at write time. This used to `saveQueue(failed)` against the
+    // snapshot taken before the awaits above, so anything queued WHILE the sync
+    // was running — a journal entry written on a slow connection, say — was
+    // silently overwritten and lost. Keep whatever arrived in the meantime.
+    const processedIds = new Set(currentQueue.map((i) => i.id));
+    const arrivedDuringSync = loadQueue().filter((i) => !processedIds.has(i.id));
+    const nextQueue = [...failed, ...arrivedDuringSync];
+
+    if (exhausted.length > 0) {
+      // Dead-letter store: out of the retry loop so it cannot block the queue,
+      // but still on disk so nothing the user wrote is destroyed outright.
+      try {
+        const prior: SyncItem[] = JSON.parse(localStorage.getItem(DEAD_LETTER_KEY) || '[]');
+        localStorage.setItem(DEAD_LETTER_KEY, JSON.stringify([...prior, ...exhausted]));
+      } catch {
+        console.warn('Failed to park exhausted sync items');
+      }
+      console.warn(
+        `${exhausted.length} sync item(s) exceeded ${MAX_RETRIES} retries and were moved to ${DEAD_LETTER_KEY}`
+      );
+    }
+
+    saveQueue(nextQueue);
+    setQueue(nextQueue);
 
     const now = Date.now();
     setLastSyncedAt(now);
