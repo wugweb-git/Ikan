@@ -56,24 +56,23 @@ export function SecurityProvider({ children }: SecurityProviderProps) {
       details: details || {}
     };
 
-    // Log to console in development
-    if (typeof window !== 'undefined' && window.location.hostname === 'localhost') {
-      console.log('🔒 Security Event:', securityLog);
-    }
-
-    // In production, send to monitoring service
-    if (typeof window !== 'undefined' && window.location.hostname !== 'localhost') {
-      // Send to your monitoring service (e.g., Sentry, LogRocket)
-      try {
-        // Example: Analytics or monitoring service
-        fetch('/api/security-log', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(securityLog)
-        }).catch(err => console.warn('Security logging failed:', err));
-      } catch (error) {
-        console.warn('Security logging error:', error);
-      }
+    // There is NO server-side sink for these events.
+    //
+    // This used to POST to `/api/security-log`. That endpoint does not exist —
+    // and worse, vercel.json rewrites `/(.*)` to `/index.html`, so the request
+    // returned 200 with an HTML body. The `.catch` never fired, nothing was
+    // ever stored, and the code read as though security logging worked. The
+    // edge function has logAudit() and createSecurityAlert() in security.tsx
+    // but neither is exposed over HTTP, and the `alert:` / `api-log:` KV
+    // prefixes hold zero rows.
+    //
+    // Logging to the console in every environment is deliberately less
+    // impressive and actually true. To make this real, add a route on the edge
+    // function, register its KV prefix in KEY_REGISTRY in the same commit (see
+    // GOVERNANCE.md Rule 2), and post there — do not reinstate a fetch to a
+    // path that the SPA rewrite will swallow.
+    if (typeof window !== 'undefined') {
+      console.log('🔒 Security Event (not persisted — no server sink):', securityLog);
     }
   };
 

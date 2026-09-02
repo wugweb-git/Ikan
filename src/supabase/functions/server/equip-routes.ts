@@ -2,7 +2,7 @@ import { Hono } from 'npm:hono';
 import * as kv from './kv_dual_write.ts';
 import { EquipService, EquipDayService, EquipBlockService } from './program-service.ts';
 
-export function registerEquipRoutes(app: Hono, requireAuth: any) {
+export function registerEquipRoutes(app: Hono, requireAuth: any, isAdminRequest: (c: any) => Promise<boolean>) {
 
 // ========================================
 // EQUIP PROGRAM ENDPOINTS (NEW SCHEMA)
@@ -82,6 +82,20 @@ app.get("/equip/programs/:equipId", async (c) => {
     if (!program) {
       return c.json({ error: 'Program not found' }, 404);
     }
+
+    // FIXED 2026-09-01. Unpublished programs were hidden client-side only
+    // (EquipDetail.tsx checks `published === false`), so calling this endpoint
+    // directly returned unreleased content in full — days, blocks and all — to
+    // anyone with the anon key. The sibling list route already filters
+    // correctly; this one never did.
+    //
+    // 404 rather than 403: an unpublished program should not confirm it exists.
+    // Admins still get it, because this same route backs the admin editor via
+    // apiClient.getEquipProgram.
+    if (program.published === false && !(await isAdminRequest(c))) {
+      return c.json({ error: 'Program not found' }, 404);
+    }
+
     return c.json({ program });
   } catch (error) {
     console.log('Get equip program error:', error);

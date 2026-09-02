@@ -187,6 +187,26 @@ async function requireAuth(c: any, next: any) {
   await next();
 }
 
+/**
+ * Non-blocking admin check for routes that must stay public but need to reveal
+ * more to an admin — e.g. the single-equip route, which serves both the public
+ * detail page and the admin editor through the same api-client method.
+ *
+ * Returns false for anonymous callers instead of rejecting them.
+ */
+export async function isAdminRequest(c: any): Promise<boolean> {
+  try {
+    const accessToken = c.req.header('Authorization')?.split(' ')[1];
+    if (!accessToken) return false;
+    const { data: { user }, error } = await supabase.auth.getUser(accessToken);
+    if (error || !user?.id) return false;
+    const profile = await kv.get(`user:${user.id}`);
+    return profile?.is_admin === true;
+  } catch {
+    return false;
+  }
+}
+
 // Admin middleware for admin-only routes
 async function requireAdmin(c: any, next: any) {
   const accessToken = c.req.header('Authorization')?.split(' ')[1];
@@ -221,7 +241,7 @@ async function requireAdmin(c: any, next: any) {
 }
 
 // Register modules
-registerEquipRoutes(app, requireAuth);
+registerEquipRoutes(app, requireAuth, isAdminRequest);
 registerProgressRoutes(app, requireAuth);
 registerRecommendationRoutes(app, requireAuth);
 registerAdminRoutes(app, requireAuth, requireAdmin);
