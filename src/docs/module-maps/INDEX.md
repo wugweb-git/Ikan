@@ -11,9 +11,8 @@ Generated 2026-09-02 from read-only SQL against `kv_store_cc205da9` (project `jp
 | `assessments.md` | 1 · Assessments | [iKan Assessment Instruments](https://claude.ai/code/artifact/23700259-b08e-4e64-935a-1a53a9e1b458) | 19 sections — full pass complete |
 | `equip.md` | 2 · Equip programs | [iKan Equip Programs](https://claude.ai/code/artifact/f79384a2-adce-4011-8c7f-2dbb00831e6d) | survey pass |
 | `mood.md` | 3 · Mood journal | [iKan Mood Journal](https://claude.ai/code/artifact/89c27b61-925d-4acc-9ea8-cdb4feee8895) | survey pass |
-| `blocks.md` | 4 · Block system | [iKan Blocks & Builders](https://claude.ai/code/artifact/1070a012-f399-46f6-9782-e40d8373f43f) | survey pass |
-| `meta.md` | 5 · Metadata catalog | [iKan Metadata Catalog](https://claude.ai/code/artifact/21991ea3-abc9-40a2-85b6-17f1bed76618) | survey pass |
-| `taxonomy.md` | cross-module | [iKan Block Taxonomy](https://claude.ai/code/artifact/6f482a79-6bf6-4b29-9ae2-91596d94f689) | **standardisation pass — reconciliation + edit list** |
+| `blocks.md` | 4 · Block system | [iKan Blocks & Builders](https://claude.ai/code/artifact/1070a012-f399-46f6-9782-e40d8373f43f) | **15 sections — full pass + block taxonomy reconciliation** |
+| `meta.md` | 5 · Metadata catalog | [iKan Metadata Catalog](https://claude.ai/code/artifact/21991ea3-abc9-40a2-85b6-17f1bed76618) | **9 sections — full 21-vocabulary audit** |
 | — | 6 · Engines | not started | scoring · rule · recommendation · wellness score |
 
 ## The section template
@@ -39,6 +38,15 @@ Module 1 established the structure the others are being brought up to:
 17. Target schema — relational, on Supabase
 18. Standing open
 19. Change brief
+
+## Where taxonomy lives
+
+One vocabulary, two owners, no overlap:
+
+- **Blocks & Builders** owns the block half — the six competing vocabularies for the block primitive, the resolver, the 23-string day-presets palette, assessments' legacy question types, and the term-by-term reconciliation against 498 live blocks.
+- **Metadata Catalog** owns the registry — all 21 vocabularies, their consumers, and the audit of every term against the records it is meant to describe.
+
+The standalone taxonomy artifact that briefly existed has been folded into both and deleted.
 
 ## The pattern that runs through all five
 
