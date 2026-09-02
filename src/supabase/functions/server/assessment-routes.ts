@@ -179,14 +179,26 @@ export function registerAssessmentRoutes(app: Hono, requireAuth: any) {
                 const def = aId ? defMap.get(aId) : null;
                 if (def) {
                   // Resolve max_score: prefer computed from questions, fallback to scoring ranges
+                  const computedMax = maxScoreFromDefinition(def) || maxScoreFromBands(def);
+
                   if (!r.max_score) {
-                    // 1. Compute from questions (sum of highest option value per question)
-                    let computedMax = maxScoreFromDefinition(def);
-                    // 2. Fallback to scoring range max
-                    if (computedMax === 0) {
-                      computedMax = maxScoreFromBands(def);
-                    }
                     if (computedMax > 0) r.max_score = computedMax;
+                  } else if (r.max_score === 100 && computedMax > 0 && computedMax !== 100) {
+                    // A stored 100 is the client's old hardcoded fallback firing, not a
+                    // real denominator — it appeared whenever the maximum could not be
+                    // resolved. It is badly wrong for short instruments: Stress results
+                    // sit at /100 against a real max of 28, so 20/28 (high stress)
+                    // displayed as 20%.
+                    //
+                    // Deliberately narrow: ONLY the literal 100 is corrected. Other
+                    // stored values that differ from today's definition are usually
+                    // legitimate history — Burnout's 88 is from when it had 22 items —
+                    // and overwriting those would falsify a real past score.
+                    console.warn(
+                      `[assessment] result ${r.id}: stored max_score 100 replaced with ${computedMax} ` +
+                      `for "${def.title ?? aId}" (display only; the stored record is unchanged)`
+                    );
+                    r.max_score = computedMax;
                   }
                   // Resolve assessment name if missing
                   if (!r.assessment_name) {
