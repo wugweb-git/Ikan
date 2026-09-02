@@ -314,7 +314,9 @@ export function AssessmentEditPageWizard({ assessmentId, onBack, onSave }: Asses
   const loadAssessment = async () => {
     try {
       setLoading(true);
-      const data = await apiClient.getAssessment(localAssessmentId!);
+      // No cache fallback in the editor: whatever loads here is autosaved back,
+      // so a stale copy would overwrite newer server state.
+      const data = await apiClient.getAssessment(localAssessmentId!, { allowCache: false });
       if (data && typeof data === 'object') {
         // CONVERSION LOGIC: Legacy Questions -> Daily Content
         //
@@ -491,7 +493,9 @@ export function AssessmentEditPageWizard({ assessmentId, onBack, onSave }: Asses
     setSaving(true);
     try {
         // 1. Fetch latest server state (Rely on persisted state)
-        const serverData = await apiClient.getAssessment(localAssessmentId);
+        // Must be genuinely current — the whole object is spread into the
+        // PUT payload below, so a 24-hour-old cache would revert live edits.
+        const serverData = await apiClient.getAssessment(localAssessmentId, { allowCache: false });
         
         // Validation for Publish — check daily_content blocks (source of truth)
         if (!serverData.published) {

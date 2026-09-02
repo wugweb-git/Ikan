@@ -877,13 +877,28 @@ class ApiClient {
     return res.assessments || [];
   }
 
-  async getAssessment(id: string) {
+  /**
+   * Fetch one assessment.
+   *
+   * `allowCache` defaults to true so user-facing screens keep working offline.
+   * Callers that intend to WRITE the result back must pass false: the cache is
+   * up to 24 hours old and returning it silently on any network error means an
+   * admin can load a stale copy and PUT it over newer server state, reverting
+   * everyone else's edits. That is a real path — handlePublishToggle spreads
+   * this exact object back into its payload.
+   */
+  async getAssessment(id: string, opts?: { allowCache?: boolean }) {
+    const allowCache = opts?.allowCache !== false;
     try {
       const res = await this.request(`/assessments/${id}?t=${Date.now()}`, { method: 'GET' }, true);
       cacheForOffline(`assessment-${id}`, res.assessment);
       return res.assessment;
     } catch (e: any) {
       if (e?.name === 'AbortError') throw e;
+      if (!allowCache) {
+        console.warn(`Failed to fetch assessment ${id}; refusing stale cache because the caller intends to write it back.`);
+        throw e;
+      }
       console.warn(`Failed to fetch assessment ${id}, attempting offline cache fallback:`, e?.message);
       const cached = readOfflineCache<any>(`assessment-${id}`);
       if (cached) return cached;
