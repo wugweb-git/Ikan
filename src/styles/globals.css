@@ -62,7 +62,21 @@
 
   /* Colors - Text */
   --color-text-primary: #151515;
-  --color-text-muted: #717182;
+  /* WCAG AA. Measured, not guessed: the previous #717182 was 4.79:1 on a white
+     card but only 4.39:1 on the #F5F5F5 page background — a fail. #6B6B7B is
+     4.80 on page / 5.23 on card and keeps the same violet cast.
+     The dark theme overrides this below; a single shared value cannot pass on
+     both grounds. */
+  --color-text-muted: #6B6B7B;
+  /* Perceivable boundary for form controls. --color-border-default is
+     #0000001A — 10% black, ~1.1:1 — so an unchecked switch or an empty input
+     has no visible edge. 4.54:1 on white, 4.17:1 on the page background. */
+  --color-border-control: #767676;
+  /* Text colours for alert bodies. The status hues below are tuned for fills
+     and icons, not for type: #22C55E on its own wash is 2.07:1 and #EAB308 is
+     1.78:1. These are the AA-passing equivalents at 6.49:1 and 6.37:1. */
+  --color-status-success-text: #166534;
+  --color-status-warning-text: #854D0E;
   --color-text-inverse: #FFFFFF;
 
   /* Colors - Border */
@@ -443,6 +457,14 @@
 }
 
 .dark {
+  /* Contrast overrides. #717182 was already failing in dark mode at 3.64:1 on
+     the #1A1A1A card — darkening it for the light theme would have made that
+     worse, so each theme carries its own value. #9A9AAB is 6.29:1 on card. */
+  --color-text-muted: #9A9AAB;
+  --color-border-control: #8A8A8A;
+  --color-status-success-text: #4ADE80;
+  --color-status-warning-text: #FCD34D;
+
   /* 1. Base Layers */
   --background: var(--grey-10);      /* #0D0D0D - The floor */
   --color-bg-page: var(--grey-10);

@@ -12,9 +12,9 @@ const alertVariants = cva(
         destructive:
           "text-destructive border-destructive/50 dark:border-destructive [&>svg]:text-destructive",
         success:
-          "text-[var(--color-status-success)] border-[var(--color-status-success)]/50 [&>svg]:text-[var(--color-status-success)] bg-[var(--color-status-success-light)]",
+          "text-[var(--color-status-success-text)] border-[var(--color-status-success)] [&>svg]:text-[var(--color-status-success-text)] bg-[var(--color-status-success-light)]",
         warning:
-          "text-[var(--color-status-warning)] border-[var(--color-status-warning)]/50 [&>svg]:text-[var(--color-status-warning)] bg-[var(--color-status-warning-light)]",
+          "text-[var(--color-status-warning-text)] border-[var(--color-status-warning)] [&>svg]:text-[var(--color-status-warning-text)] bg-[var(--color-status-warning-light)]",
         info:
           "text-[var(--color-status-info)] border-[var(--color-status-info)]/50 [&>svg]:text-[var(--color-status-info)] bg-[var(--color-status-info-light)]",
       },

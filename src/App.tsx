@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, lazy, Suspense, startTransition } from 'react';
 import { Analytics } from '@vercel/analytics/react';
 import { SpeedInsights } from '@vercel/speed-insights/react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, MotionConfig } from 'framer-motion';
 import { useTokens } from './lib/react-tokens';
 import { useIsMobile } from './hooks/useIsMobile';
 import { useMobileOptimizations, useMobileViewport, useMobileKeyboard } from './hooks/useMobileOptimizations';
@@ -859,6 +859,13 @@ export default function App() {
 
   return (
     <ErrorBoundary>
+      {/* Honour the OS "reduce motion" setting across every framer-motion
+          animation in the app. The CSS `prefers-reduced-motion` block in
+          globals.css only reaches CSS transitions — it has no effect on
+          framer-motion, which animates via JS. One wrapper covers the lot;
+          without it, users who asked the system for less motion still got all
+          of it. */}
+      <MotionConfig reducedMotion="user">
       <AuthProvider>
         <NotificationProvider>
           <PaymentProvider>
@@ -874,6 +881,7 @@ export default function App() {
           </PaymentProvider>
         </NotificationProvider>
       </AuthProvider>
+      </MotionConfig>
     </ErrorBoundary>
   );
 }
