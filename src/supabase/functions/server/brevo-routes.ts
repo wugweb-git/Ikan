@@ -146,7 +146,11 @@ export function registerBrevoRoutes(app: Hono, requireAdmin: any, requireAuth: a
   // SEND: Transactional Email
   // ════════════════════════════════════════════════════════════════
 
-  app.post("/brevo/send/email", requireAuth, async (c) => {
+  // FIXED 2026-09-01 (S7): these three were requireAuth, so any registered
+  // account could send mail, SMS and WhatsApp from the iKan sender identity
+  // and spend the message balance. No frontend calls them; they are operator
+  // tools, so they are admin-only now.
+  app.post("/brevo/send/email", requireAdmin, async (c) => {
     try {
       const payload: EmailPayload = await c.req.json();
 
@@ -173,7 +177,10 @@ export function registerBrevoRoutes(app: Hono, requireAdmin: any, requireAuth: a
 
       const emailBody: Record<string, unknown> = {
         to: payload.to,
-        sender: payload.sender || {
+        // Sender is NOT caller-controlled. `payload.sender` used to win here,
+        // which let the request body choose what address the mail appeared to
+        // come from — the definition of an open relay on a trusted domain.
+        sender: {
           name: senderName || "iKan Health",
           email: senderEmail || "noreply@ikanhealth.in",
         },
@@ -213,7 +220,7 @@ export function registerBrevoRoutes(app: Hono, requireAdmin: any, requireAuth: a
   // SEND: Transactional SMS
   // ════════════════════════════════════════════════════════════════
 
-  app.post("/brevo/send/sms", requireAuth, async (c) => {
+  app.post("/brevo/send/sms", requireAdmin, async (c) => {
     try {
       const payload: SmsPayload = await c.req.json();
 
@@ -257,7 +264,7 @@ export function registerBrevoRoutes(app: Hono, requireAdmin: any, requireAuth: a
   // SEND: WhatsApp Message (template-based)
   // ════════════════════════════════════════════════════════════════
 
-  app.post("/brevo/send/whatsapp", requireAuth, async (c) => {
+  app.post("/brevo/send/whatsapp", requireAdmin, async (c) => {
     try {
       const payload: WhatsAppPayload = await c.req.json();
 

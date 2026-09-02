@@ -236,7 +236,11 @@ registerBrevoRoutes(app, requireAdmin, requireAuth);
 registerCorporateRoutes(app);
 registerKVAuditRoutes(app, requireAuth);
 registerCheckinTemplateRoutes(app, requireAuth);
-registerHeroBannerRoutes(app, requireAuth);
+// FIXED 2026-09-01 (S11): was requireAuth, so any signed-in account could
+// rewrite the homepage headline, image and call-to-action link — a phishing
+// funnel on the site's most trusted surface. Only the two write routes take
+// this middleware; both GETs stay public, as banners are public content.
+registerHeroBannerRoutes(app, requireAdmin);
 registerIkanScoreRoutes(app, requireAuth);
 registerReminderRoutes(app, requireAuth, requireAdmin, supabase);
 
@@ -1096,14 +1100,20 @@ app.post("/users/payments", requireAuth, async (c) => {
       amount, 
       currency = 'INR', 
       paymentMethod, 
-      transactionId, 
-      status = 'completed',
-      description 
+      transactionId,
+      description
     } = await c.req.json();
-    
+
     if (!amount || !programId) {
       return c.json({ error: 'Amount and Program ID are required' }, 400);
     }
+
+    // FIXED 2026-09-01 (S8). `status` used to be read from the request body and
+    // defaulted to 'completed'. GET /users/entitlement grants access on exactly
+    // that value, so a client could POST itself a completed payment and unlock
+    // a paid program. Status is no longer caller-controlled: a record created
+    // here is always 'pending' until a verified gateway callback promotes it.
+    const status = 'pending';
     
     const id = `pay_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
     const payment = {
@@ -1150,7 +1160,25 @@ app.post("/equip/purchase/:equipId", requireAuth, async (c) => {
     }
     
     const programId = program.id || program.equip_id;
-    
+
+    // FIXED 2026-09-01 (S8). This route enrolled the caller AND wrote a payment
+    // with `status: 'completed'` and no gateway involved. The entitlement check
+    // at GET /users/entitlement looks for exactly that — a payment with
+    // status 'completed' for the programId — so any authenticated user could
+    // grant themselves a paid program by calling this endpoint.
+    //
+    // Verified against live data 2026-09-01: `is_paid` is the authoritative
+    // flag and is false on all three published programs (Sleep Tight and Unburn
+    // carry a legacy `price` of 499 but is_paid false). Only the unpublished
+    // Productivity Reset is genuinely paid, so this gate changes nothing that
+    // is live today — it closes the hole before a program is actually sold.
+    const isPaidProgram = program.is_paid === true && Number(program.price ?? 0) > 0;
+    if (isPaidProgram) {
+      return c.json({
+        error: 'This program requires payment. Complete checkout through the payment gateway; enrolment is granted once the payment is verified.',
+      }, 402);
+    }
+
     // 2. Create Enrollment
     const enrollmentId = `enrollment-${userId}-${programId}-${Date.now()}`;
     const enrollment = {
@@ -1179,7 +1207,10 @@ app.post("/equip/purchase/:equipId", requireAuth, async (c) => {
       type: 'purchase',
       programId,
       programTitle: program.title,
-      amount: program.price || 49900, // Default to 499.00 if no price
+      // This path is now free-programs-only (see the is_paid gate above), so
+      // the amount is 0. It previously defaulted to 49900 — inventing a ₹499
+      // charge for any program with no price set.
+      amount: 0,
       currency: program.currency || 'INR',
       status: 'completed',
       paymentMethod: payment_method || 'Credit Card',
@@ -2062,7 +2093,10 @@ app.get("/cms/pages", requireAuth, async (c) => {
 
 
 // Create new page
-app.post("/cms/pages", requireAuth, async (c) => {
+// FIXED 2026-09-01 (S9): CMS page create/update/delete checked only that the
+// caller was authenticated, so any signed-in account could rewrite public site
+// content. PUT also creates a page on an arbitrary id.
+app.post("/cms/pages", requireAdmin, async (c) => {
   try {
     const data = await c.req.json();
     console.log('📄 Create page request received:', { slug: data.slug, name: data.name, title: data.title });
@@ -2123,7 +2157,7 @@ app.post("/cms/pages", requireAuth, async (c) => {
 });
 
 // Update existing page
-app.put("/cms/pages/:pageId", requireAuth, async (c) => {
+app.put("/cms/pages/:pageId", requireAdmin, async (c) => {
   try {
     const pageId = c.req.param('pageId');
     const updates = await c.req.json();
@@ -2148,7 +2182,7 @@ app.put("/cms/pages/:pageId", requireAuth, async (c) => {
 });
 
 // Delete page
-app.delete("/cms/pages/:pageId", requireAuth, async (c) => {
+app.delete("/cms/pages/:pageId", requireAdmin, async (c) => {
   try {
     const pageId = c.req.param('pageId');
     await kv.del(`cms_page:${pageId}`);
@@ -2186,7 +2220,9 @@ app.post("/activity-log", requireAuth, async (c) => {
   }
 });
 
-app.get("/admin/activity-logs", requireAuth, async (c) => {
+// FIXED 2026-09-01 (S10): an /admin/ route behind requireAuth only — any
+// signed-in account could read the full activity log.
+app.get("/admin/activity-logs", requireAdmin, async (c) => {
   try {
     const raw = await kv.getByPrefix('activity_log:');
     const logs = raw
@@ -2274,18 +2310,36 @@ app.post("/analytics/engagement", async (c) => {
     const now = new Date();
     const dateKey = now.toISOString().split('T')[0];
     const analyticsId = `eng_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`;
-    
-    // Store analytics data in daily bucket (not individual keys)
+
+    // HARDENED 2026-09-01 (S13). Left public deliberately — engagement fires
+    // from resource pages that signed-out visitors can read, so requiring auth
+    // would simply stop recording most of the traffic this is for. Two things
+    // that made an unauthenticated write dangerous are fixed instead:
+    //
+    // 1. The whole request body used to be spread into the stored record, so a
+    //    caller could attach arbitrary fields — including a `user_id` — and
+    //    attribute activity to someone else. Only known fields are kept now.
+    // 2. The daily bucket grew without limit on an endpoint anyone could call
+    //    in a loop. One key had already reached 1,357 events (~300 KB), and
+    //    every append rewrites the whole array.
     const analyticsRecord = {
-      ...analyticsData,
+      resource_id: String(analyticsData.resource_id).slice(0, 200),
+      action: String(analyticsData.action).slice(0, 64),
       tracked_at: now.toISOString(),
       id: analyticsId
     };
 
+    const DAILY_BUCKET_CAP = 2000;
     const dailyKey = `analytics:daily:${dateKey}`;
     const dailyBucket: any[] = (await kv.get(dailyKey)) || [];
-    dailyBucket.push(analyticsRecord);
-    await kv.set(dailyKey, dailyBucket);
+    if (dailyBucket.length < DAILY_BUCKET_CAP) {
+      dailyBucket.push(analyticsRecord);
+      await kv.set(dailyKey, dailyBucket);
+    } else {
+      // Counters below still increment, so totals stay correct even once the
+      // per-event log for the day stops growing.
+      console.warn(`analytics:daily:${dateKey} at cap (${DAILY_BUCKET_CAP}); event logged to counters only`);
+    }
     
     // Update per-resource counter (lightweight — just a count + last action)
     const resourceCounterKey = `analytics:counter:${analyticsData.resource_id}`;
@@ -2319,10 +2373,16 @@ app.post("/analytics/engagement", async (c) => {
  * Mark resource as read by user
  * Tracks user reading activity for personalization and progress
  */
-app.post("/user-activity/mark-read", async (c) => {
+// FIXED 2026-09-01 (S13). This was unauthenticated and wrote into
+// `activity:user:${readData.user_id}:reads` using a user id taken straight from
+// the request body — anyone could append to any user's reading history, or
+// invent user namespaces at will. Now requires a session and derives the
+// subject from it; the body's user_id is ignored entirely.
+app.post("/user-activity/mark-read", requireAuth, async (c) => {
   try {
     const readData = await c.req.json();
-    
+    const sessionUserId = c.get('userId');
+
     // Validate required fields
     if (!readData.resource_id) {
       return c.json({ error: 'resource_id is required' }, 400);
@@ -2334,20 +2394,20 @@ app.post("/user-activity/mark-read", async (c) => {
     // Store read activity with timestamp
     const activityRecord = {
       ...readData,
+      // Spread first, then overwrite: a body-supplied user_id must never win.
+      user_id: sessionUserId,
       activity_type: 'read',
       tracked_at: new Date().toISOString(),
       id: activityId
     };
 
     await kv.set(activityId, activityRecord);
-    
-    // Also store by user ID if available for easy querying
-    if (readData.user_id) {
-      const userActivityKey = `activity:user:${readData.user_id}:reads`;
-      const existingReads = await kv.get(userActivityKey) || [];
-      existingReads.push(activityId);
-      await kv.set(userActivityKey, existingReads);
-    }
+
+    // Index under the SESSION's user, never the body's.
+    const userActivityKey = `activity:user:${sessionUserId}:reads`;
+    const existingReads = await kv.get(userActivityKey) || [];
+    existingReads.push(activityId);
+    await kv.set(userActivityKey, existingReads);
     
     console.log(`📖 Read activity tracked: resource ${readData.resource_id}`);
     
@@ -4715,28 +4775,68 @@ async function ensureBucket() {
   }
 }
 
+// HARDENED 2026-09-01 (S6). This route is deliberately still public: the
+// practitioner application form (ProfessionalApplication.tsx) is reachable
+// signed-out, and getAuthHeaders() falls back to the anon key there, so adding
+// requireAuth would break people applying to join. Instead, remove what made an
+// unauthenticated upload dangerous.
+//
+// Content types accepted. Credential documents and profile photos only —
+// notably NOT text/html or SVG, which would otherwise let anyone host active
+// content on the project's own storage domain.
+const UPLOAD_ALLOWED_TYPES = new Set([
+  'image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/heic',
+  'application/pdf',
+]);
+const UPLOAD_EXT_FOR_TYPE: Record<string, string> = {
+  'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp',
+  'image/gif': 'gif', 'image/heic': 'heic', 'application/pdf': 'pdf',
+};
+
+/** Reduce a caller-supplied path segment to something that cannot escape its
+ *  directory or invent structure: lowercase alphanumerics, dash, underscore. */
+function safeSegment(raw: string, fallback: string): string {
+  const cleaned = (raw || '').toLowerCase().replace(/[^a-z0-9_-]/g, '').slice(0, 40);
+  return cleaned.length > 0 ? cleaned : fallback;
+}
+
 app.post("/upload/professional-file", async (c) => {
   try {
     await ensureBucket();
     const formData = await c.req.formData();
     const file = formData.get('file') as File;
-    const category = formData.get('category') as string || 'general';
-    const professionalId = formData.get('professionalId') as string || 'unknown';
 
     if (!file) return c.json({ error: 'No file provided' }, 400);
     if (file.size > 10 * 1024 * 1024) return c.json({ error: 'File too large. Maximum 10MB.' }, 400);
 
-    const ext = file.name.split('.').pop() || 'bin';
-    const filePath = `${category}/${professionalId}/${Date.now()}-${Math.random().toString(36).substr(2, 6)}.${ext}`;
+    // Trust the declared type only far enough to reject it. The extension is
+    // derived from the allowlist, never from the caller's filename, so a
+    // ".html" or ".svg" name cannot survive.
+    if (!UPLOAD_ALLOWED_TYPES.has(file.type)) {
+      return c.json({
+        error: 'Unsupported file type. Upload a JPG, PNG, WebP, GIF, HEIC or PDF.',
+      }, 415);
+    }
+
+    // Both segments used to be attacker-controlled and interpolated straight
+    // into the storage path, so `../` or a nested path could place a file
+    // anywhere in the bucket.
+    const category = safeSegment(formData.get('category') as string, 'general');
+    const professionalId = safeSegment(formData.get('professionalId') as string, 'unknown');
+    const ext = UPLOAD_EXT_FOR_TYPE[file.type] ?? 'bin';
+
+    const filePath = `${category}/${professionalId}/${Date.now()}-${crypto.randomUUID()}.${ext}`;
     const arrayBuffer = await file.arrayBuffer();
 
     const { data, error } = await supabase.storage.from(UPLOAD_BUCKET).upload(filePath, arrayBuffer, { contentType: file.type, upsert: false });
     if (error) { console.error('Upload error:', error); return c.json({ error: `Upload failed: ${error.message}` }, 500); }
 
-    const { data: signedData, error: signedError } = await supabase.storage.from(UPLOAD_BUCKET).createSignedUrl(filePath, 7 * 24 * 60 * 60);
+    // 24 hours, not 7 days. An anonymous caller has no reason to hold a
+    // week-long readable URL into a private bucket.
+    const { data: signedData, error: signedError } = await supabase.storage.from(UPLOAD_BUCKET).createSignedUrl(filePath, 24 * 60 * 60);
     if (signedError) return c.json({ error: 'Uploaded but failed to create URL' }, 500);
 
-    console.log(`📎 File uploaded: ${filePath} (${file.size} bytes)`);
+    console.log(`📎 File uploaded: ${filePath} (${file.size} bytes, ${file.type})`);
     return c.json({ success: true, url: signedData.signedUrl, path: filePath, fileName: file.name, size: file.size });
   } catch (error) {
     console.error('File upload error:', error);
@@ -4744,11 +4844,19 @@ app.post("/upload/professional-file", async (c) => {
   }
 });
 
-app.post("/upload/refresh-url", async (c) => {
+// FIXED 2026-09-01 (S5). This had no auth at all and minted a 7-day signed URL
+// for ANY path the caller named inside the private uploads bucket — arbitrary
+// read of practitioners' credential documents by anyone who could guess or
+// enumerate a path. It has no caller anywhere in the frontend, so requiring
+// admin breaks nothing that exists today.
+app.post("/upload/refresh-url", requireAdmin, async (c) => {
   try {
     const { path: filePath } = await c.req.json();
     if (!filePath) return c.json({ error: 'path is required' }, 400);
-    const { data, error } = await supabase.storage.from(UPLOAD_BUCKET).createSignedUrl(filePath, 7 * 24 * 60 * 60);
+    if (typeof filePath !== 'string' || filePath.includes('..')) {
+      return c.json({ error: 'Invalid path' }, 400);
+    }
+    const { data, error } = await supabase.storage.from(UPLOAD_BUCKET).createSignedUrl(filePath, 24 * 60 * 60);
     if (error) return c.json({ error: error.message }, 500);
     return c.json({ url: data.signedUrl });
   } catch (error) {
