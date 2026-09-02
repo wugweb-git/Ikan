@@ -496,3 +496,58 @@ needed.
 Batch 6 (assessment slug breakage after a KV purge, deep Supabase audit) is **fully resolved** —
 slug indexes rebuilt, purge tool hardened, icons fixed, error screen redesigned. The two items it
 left open (CMS page CRUD slug maintenance, 3 equips missing user copies) are folded into §C above.
+
+---
+
+## Session closeout — 2026-09-02
+
+### Shipped and verified live
+
+- **Catalog reconciled.** `block_type` +`quiz` −`sleep-diary` (7 rows), `exercise_subtype`
+  +`number` (12 rows), in **both** KV and `metadata-catalog.ts` — `POST /categories/sync`
+  upserts from seed and never deletes, so a KV-only change does not survive a Sync All.
+  Backup: `backup_pre_block_vocab_2026-09-02` (18 rows).
+- **Block census baseline** at `src/docs/module-maps/census/`. There is no test
+  infrastructure in this repo — no test files, no test deps, no CI — so this is the
+  substitute. Diff against it after every content change.
+- **Four subtypes mapped** in `resolveInteraction()` (`matrix`, `scale`, `row_list`,
+  `text_list`); `ExerciseConfig.subtype` widened to the terms live content actually uses.
+  Typecheck 220 → 216.
+- **`slug` now carried through** in `AssessmentFlow.mappedAssessment`. The local `Assessment`
+  interface never declared it, so `SECTION_PRESETS` lookup had been running entirely on the
+  `slugify(title)` fallback — which breaks silently the moment anyone renames an assessment.
+- **Security**: event sink live (`security_event:` day-bucketed, capped, identity from token
+  never body); malformed upload returns 400 not 500; route guards no longer order-dependent.
+- **Privacy overclaims removed** from `cms-defaults.ts` and the published `cms_page:privacy`
+  record that was overriding it. **Replacement wording is defensible, not cited — needs a
+  legal read.**
+- Edge function v313, frontend live at `ikanhealth.in`, all on `equip-carry-forward`.
+
+### Deliberately NOT done — each needs a human decision
+
+- **Burnout items 9/10.** Every doc said "delete the duplicate". The two ids are scored as
+  **different** BAT items, so deleting one drops Mental Distancing from 5 scored items to 4.
+  Three sources disagree on the correct text. **Blocked on the BAT-23 instrument** — see §A.
+- **`exerciseConfig.key` on the 308 keyless equip blocks.** Prerequisite for any cross-day
+  chart, but naming 308 response keys is content authoring, not a mechanical fill.
+- **The 105 `day:` and 223 `block:` dead records.** Nothing reads them
+  (`equip-routes.ts:210-214`). Deleting 328 rows is destructive and this repo has a history of
+  false-orphan reports, so it wants an explicit decision, not a tidy-up.
+- **The alias field.** The 11 remaining `UNDECLARED_SUBTYPE` rows are alias spellings
+  (`matrix`→`comparison-matrix`, `scale`→`rating-scale`, `row_list`/`text_list`→
+  `structured-list`). Code already resolves them; the catalog does not yet declare them. The
+  fix is an `aliases[]` field on the term shape plus a reader change.
+
+### A number of mine that was wrong
+
+I reported the render bug as "57 blocks, not 9" and published it in four places. It was
+counted from the **dead** `block:` rows. Live is 12 undeclared subtypes, of which the fix
+addresses 11. The original "9" was closer than my correction. `CLAUDE.md` documented both
+prefixes as live, which is what led me there — now corrected.
+
+### Still blocked on the account holder
+
+Delete two artifacts (no delete action in tooling) · BAT-23 instrument · SMTP rotation ·
+leaked-password protection and `wrappers_fdw_stats` RLS (dashboard) · legal read of the privacy
+copy · **one General assessment on production** to confirm `section_scores` writes, which is the
+only thing gating the 137-result backfill.

@@ -58,16 +58,25 @@ Everything lives in one Postgres table `kv_store_cc205da9` with RLS enabled and 
 
 **Records relate to each other through fields inside the value, not through key structure.** This has bitten the codebase twice: an orphan-detector once checked for `idx_equip_days:`/`idx_day_blocks:` index keys to validate day/block records — those index prefixes don't exist and never have, so 328 correctly-linked records were reported as orphaned while the actual `equip_id`/`equip_day_id` fields went unchecked. Separately, a `resource → category` relation check assumed a `category_id` field when every resource actually stores a plain `category` string. Before writing a relation check, a cascade, or a migration, read a live record and confirm the field name — don't assume it matches a similarly-named entity.
 
+**And confirm which of two representations is live before counting anything.** Equip content
+exists twice: the inline `daily_content` array on the `equip:` record, which is what
+`ProgramPlayer` and the admin editor actually read, and the standalone `day:`/`block:` rows,
+whose REST surface was removed 2026-08-06 (`equip-routes.ts:210-214`) and which nothing reads.
+The two disagree — 406 live blocks vs 223 dead ones, with different subtype values. Counting the
+dead set produced a published figure that was wrong by 5x. The live census lives in
+`src/docs/module-maps/census/`; diff against it rather than writing a fresh count.
+
 Key prefixes:
 
 | Prefix | Content |
 |--------|---------|
 | `assessment_def:{id}` | Assessment definition JSON |
 | `assessment_slug:{slug}` | → assessment id (slug index) |
-| `equip:{id}` | Equip program metadata |
+| `equip:{id}` | Equip program metadata **and the live content tree** — the whole day/block structure is one inline `daily_content` array on this record |
 | `equip_slug:{slug}` | → equip id (slug index) |
-| `day:{id}` | Program day — related to its equip via a `equip_id` field on the value, not a key convention |
-| `block:{id}` | Individual content block — related to its day via `equip_day_id` on the value |
+| `day:{id}` | **DEAD — nothing reads these.** Legacy program day (105 rows). Related to its equip via an `equip_id` field, not a key convention |
+| `block:{id}` | **DEAD — nothing reads these.** Legacy content block (223 rows). Related to its day via `equip_day_id` |
+| `security_event:{YYYY-MM-DD}` | Day-bucketed security events, capped at 5000/day. Public write; identity comes from a verified token, never the request body |
 | `cms_page:{pageId}` | CMS page content (overrides code defaults) |
 | `settings:site` | Global site settings (phone, email, etc.) |
 | `checkin_scale:{key}` | Custom check-in scale (emoji set + labels) |

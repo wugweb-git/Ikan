@@ -33,6 +33,12 @@ interface Question {
 
 interface Assessment {
   id: string;
+  /**
+   * Slug from the backend. SECTION_PRESETS is keyed by it, so if this is not
+   * carried through, sectioned scoring silently falls back to deriving it from
+   * the title — which breaks the moment anyone renames an assessment.
+   */
+  slug?: string;
   title: string;
   description: string;
   subtitle?: string;
@@ -285,8 +291,7 @@ export function AssessmentFlow({
       // assessment object reaching this scope, not a wrong one. Deriving it
       // from the title costs nothing and closes that hole; if slug is present
       // the fallback never fires.
-      const presetKey =
-        (assessment as any).slug || slugify((assessment as any).title || '');
+      const presetKey = assessment.slug || slugify(assessment.title || '');
       const sectionConfig =
         (assessment as any).sections
           ? assessment
@@ -557,6 +562,7 @@ export function AssessmentFlow({
 
         const mappedAssessment: Assessment = {
           id: fetchedAssessment.id,
+          slug: fetchedAssessment.slug,
           title: fetchedAssessment.title,
           description: fetchedAssessment.description || '',
           subtitle: fetchedAssessment.subtitle || fetchedAssessment.sub_title || '',
