@@ -450,16 +450,24 @@ judgement call**; picking a winner would mean authoring clinical content. Max sc
 ## Also fixed this pass — the block render bug
 
 `blocks.md` (formerly `taxonomy.md`, folded in 2a7f9c9f) item 1 flagged four authored subtypes falling through `resolveInteraction()` to a
-free-text box. **It scoped this at 9 blocks; live data says 57.** None of the 58 affected rows carries
-`options`, so every one hit `return 'write'`:
+free-text box. **[CORRECTED 2026-09-02] The doc said 9; I said 57; the true live figure is 12.** I counted the
+standalone `block:` rows — which are **dead**. `equip-routes.ts:210-214` records that the
+`day:`/`block:` REST surface was removed 2026-08-06, that the editor has always saved the whole
+tree as one inline `daily_content` array, and that these rows are "orphan day:/block: records
+nobody reads". `ProgramPlayer.tsx:172` reads only `program.daily_content`, and `api-client.ts`
+has no day/block routes. Live undeclared subtypes, from `daily_content`:
 
-| subtype | blocks | now maps to |
-|---|---|---|
-| `matrix` | 21 | `input-table` |
-| `text_list` | 21 | `check` |
-| `scale` | 14 | `rate` |
-| `row_list` | 1 | `check` |
-| `number` | 1 | *left unmapped — no numeric interaction exists; the new warning surfaces it* |
+| subtype | live blocks | dead `block:` rows | now maps to |
+|---|---|---|---|
+| `matrix` | **8** | 21 | `input-table` |
+| `text_list` | **1** | 21 | `check` |
+| `scale` | **1** | 14 | `rate` |
+| `row_list` | **1** | 1 | `check` |
+| `number` | **1** | 1 | *left unmapped — no numeric interaction exists; the new warning surfaces it* |
+
+**11 live blocks fixed**, not 57. The fix itself is still correct — the resolver maps whatever
+flows through it — but its scope was overstated by 5x, by me, in the direction of false
+importance. The original "9" was closer than my correction.
 
 `ExerciseConfig.subtype` declared 12 terms and live content uses 6 it had never heard of. `'rating-scale'`
 and `'clinical-instrument'` were **already** unreachable `TS2678` cases before this change — two of the
@@ -469,6 +477,6 @@ live content, and the default case logs the subtype and block id instead of sile
 Typecheck **220 → 216**. Build passes.
 
 > **Note on the numbers in this file.** Two counts corrected today: this pass found 137 results where
-> §2.6 says 133, and the block bug is 57 blocks where `blocks.md` (formerly `taxonomy.md`, folded in 2a7f9c9f) says 9. Both earlier figures were
+> §2.6 says 133, and the block bug is 11 live blocks where `blocks.md` (formerly `taxonomy.md`, folded in 2a7f9c9f) says 9. Both earlier figures were
 > honest counts taken at an earlier date against a smaller dataset — but re-count before acting on any
 > figure here rather than quoting it.
