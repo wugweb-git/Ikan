@@ -31,9 +31,14 @@ const KNOWN_MAX_SCORES: Record<string, number> = {
 // genuine distress items, so it is a MIXED instrument — inverting it wholesale
 // is as wrong as not inverting it. Its direction is resolved per-section by
 // `reverseQuestionIds` / `overallCalc` in assessment-section-presets.ts, and
-// the right fix is for this file to consume that corrected section score once
-// results carry `section_scores`. Adding it to this Set would silently flip
-// the 5 distress items. Do not do it without that preset-aware path.
+// adding it to this Set would silently flip the 5 distress items.
+//
+// RESOLVED: wellnessFromSectionScores() below now consumes the stored
+// per-section breakdown, converting each scale by its own `direction`. Any
+// result carrying section_scores never reaches this Set at all, so General is
+// handled correctly without a whole-assessment flag. This Set now only serves
+// older results that predate section_scores, and genuinely single-scale
+// instruments. Still do not add General to it.
 const HIGHER_IS_BETTER = new Set(['who5', 'who-5']);
 
 /**
@@ -57,6 +62,40 @@ function candidateKeys(result: any, fallbackId?: string): string[] {
 
 // ─── Severity → Wellness mapping ────────────────────────────────
 // Standard: higher score = MORE distress → invert for wellness
+/**
+ * Wellness from a stored per-section breakdown, when the result has one.
+ *
+ * This is the correct path for mixed instruments and it removes the need to
+ * guess a whole-assessment direction. The General questionnaire is the case
+ * that forced it: GENERAL_SECTIONS declares `hasOverallScore: false` ("Overall
+ * Score: NIL — five independent scales") and its five scales do not share a
+ * direction, so there is no single General score to invert. Inverting it and
+ * not inverting it are both wrong.
+ *
+ * Each section already carries its own `direction`, so convert per section and
+ * average — the same orientation rule as severityForSection() on the client.
+ * Returns null when the result has no usable breakdown, so callers fall back
+ * to the whole-assessment path for genuinely single-scale instruments.
+ */
+function wellnessFromSectionScores(sectionScores: any): number | null {
+  const toWellness = (s: any): number | null => {
+    const pct = typeof s?.percent === 'number' ? s.percent : null;
+    if (pct === null) return null;
+    const w = s.direction === 'higher-is-better' ? pct : 100 - pct;
+    return Math.max(0, Math.min(100, Math.round(w)));
+  };
+
+  const sections = Array.isArray(sectionScores?.sections) ? sectionScores.sections : [];
+  const scored = sections.map(toWellness).filter((v: number | null) => v !== null) as number[];
+  if (scored.length > 0) {
+    return Math.round(scored.reduce((a, b) => a + b, 0) / scored.length);
+  }
+
+  // No named sections, but a corrected overall (the flat single-instrument
+  // presets) — use it, since it already carries the right orientation.
+  return toWellness(sectionScores?.overall);
+}
+
 function assessmentScoreToWellness(score: number, maxScore: number, keys: string[]): number {
   if (!maxScore || maxScore <= 0) return 50; // neutral default
   const pct = (score / maxScore) * 100;
@@ -201,7 +240,13 @@ async function computeIkanScore(userId: string): Promise<IkanScoreResult> {
   for (const [id, r] of latestByType) {
     if (r.score === undefined || r.score === null) continue;
     const maxScore = await resolveMaxScore(r);
-    const wellness = assessmentScoreToWellness(r.score, maxScore, candidateKeys(r, id));
+    // Prefer the stored per-section breakdown when the result has one; it is
+    // orientation-aware per scale. Falls through for older results, which
+    // carry no section_scores at all.
+    const fromSections = wellnessFromSectionScores(r.section_scores ?? r.sectionScores);
+    const wellness = fromSections !== null
+      ? fromSections
+      : assessmentScoreToWellness(r.score, maxScore, candidateKeys(r, id));
     const name = await resolveAssessmentName(id);
     assessmentDetails.push({ id, name, wellness });
     assessmentWellnessSum += wellness;
