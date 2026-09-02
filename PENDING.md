@@ -551,3 +551,65 @@ Delete two artifacts (no delete action in tooling) · BAT-23 instrument · SMTP 
 leaked-password protection and `wrappers_fdw_stats` RLS (dashboard) · legal read of the privacy
 copy · **one General assessment on production** to confirm `section_scores` writes, which is the
 only thing gating the 137-result backfill.
+
+---
+
+## Bug-brief pass — 2026-09-02 (later same day)
+
+Two handoffs and a 20-item bug brief, all verified against live data before acting.
+Frontend live at `ikanhealth.in`; edge function **v315**. Typecheck **216 → 211**.
+
+### Shipped
+
+| Commit | What |
+|---|---|
+| `9251d21a` | **Block census baseline**, 498 rows, at `src/docs/module-maps/census/`. There is no test infrastructure in this repo — no test files, no test deps, no CI — so this is the substitute. Diff against it after every content change |
+| `8633b97d` | **Catalog reconciled** — `block_type` +`quiz` −`sleep-diary`, `exercise_subtype` +`number`, in **both** KV and `metadata-catalog.ts` (`/categories/sync` upserts from seed and never deletes). `UNDECLARED_TYPE` 12→0 |
+| `f3e732f7` | **`slug` carried through** in `AssessmentFlow` — the interface never declared it, so preset lookup ran entirely on the `slugify(title)` fallback |
+| `dc430d64` | **Group B**, 10 code fixes — B1, B2, B4, B6, B7, B8, B9, B13 |
+| `1fa60d19` | **Group A**, 7 data fixes — all finding queries now read 0 |
+| `a33ebb4d` | **Wellness computed from per-section direction** |
+
+`/assessments` dropped **132,694 → 115,715 B** — 17 KB of chat paste artefacts removed from
+every public payload.
+
+### The two that mattered most
+
+**B6 — `slug` on the result record.** `SectionReportCard` is built, wired into two screens and
+has never rendered; its gate is `section_scores`, null on all 137 results. `slug` now flows
+through all five places it must, including the `useOfflineSync` destructure, which silently
+drops any field not named in it.
+
+**General's wellness contribution.** It could not be fixed by adding it to `HIGHER_IS_BETTER`:
+`GENERAL_SECTIONS` declares `hasOverallScore: false` — *"per spec: Overall Score: NIL — five
+independent scales"* — and those scales do not share a direction. There is no single General
+score, so inverting it and not inverting it are both wrong. `wellnessFromSectionScores()` now
+converts each scale by its own stored `direction`. Older results fall through unchanged.
+
+### Corrections made while applying — each avoided damage
+
+- **The brief's row counts included `backup_*` snapshots.** Rewriting those would have
+  corrupted the rollback path. Live counts are lower than stated.
+- **A4**: 13 of 15 matching rows are `progress:` records where the string is a **key inside
+  stored user answers**. Only the 2 content rows were changed.
+- **A6**: 4 of 10 orphans carried `:latest`. Deleted separately after confirming no code reads
+  that form; the live `:latest` convention is on `assessment_result:` (42 rows, untouched).
+- **A crash introduced earlier in the day was caught**: nulling General's placeholder bands left
+  `scoring.ranges` null while `AssessmentFlow` called `.find()` on it directly — completing the
+  General assessment would have thrown. Every other reader already used optional chaining.
+
+### Not done, deliberately
+
+- **B3 is refuted.** Zero blocks carry `correctAnswer`/`allCorrect`, and `correctAnswer` **is**
+  read at `ProgramPlayer.tsx:327`. The 12 `quiz` blocks are Occupation, Therapy History,
+  Pre-existing Conditions, Sleep Duration, Expectations — **8 of 12 sit on day 0**. They are
+  intake questions, not knowledge checks. Grading is not broken; these were never quizzes.
+  **Open question: they are probably mistyped, and `8633b97d` legitimised `quiz` in the
+  catalog on the strength of their count.**
+- Already fixed, not redone: **B5, B10, B11, B12**.
+
+### The one unverified link
+
+**Complete one General assessment on production** and confirm `section_scores` and `slug` write
+non-null. That is the end-to-end proof B6 exists for, and both the section breakdown and the new
+wellness path stay theoretical until it happens. The 137-result backfill sits behind it.
