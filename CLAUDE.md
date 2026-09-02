@@ -71,7 +71,7 @@ Key prefixes:
 | `cms_page:{pageId}` | CMS page content (overrides code defaults) |
 | `settings:site` | Global site settings (phone, email, etc.) |
 | `checkin_scale:{key}` | Custom check-in scale (emoji set + labels) |
-| `mood:{userId}:{date}` | Mood journal entry |
+| `mood:{moodId}` | Mood-scale definition (emoji, label, colour, order) — **global config, not user data**. Verified live 2026-09-01: 5 rows, none user-scoped. Journal entries live under `journal:` / `journal_by_user:`. |
 | `hc_data:{userId}` | Health Connect / Google Fit data |
 | `user:{userId}` | User profile KV record |
 

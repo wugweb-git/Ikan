@@ -1021,48 +1021,67 @@ app.delete("/users/me", requireAuth, async (c) => {
     // Delete profile
     await kv.del(`user:${userId}`);
     
-    // Delete journal entries
-    const journalEntries = await kv.getByPrefix(`journal_by_user:${userId}`);
-    for (const entry of journalEntries) {
-      if (entry.journal_entry_id) {
-        await kv.del(`journal:${entry.journal_entry_id}`);
+    // FIXED 2026-09-01 (C2). Every block below used to read values with
+    // getByPrefix and then RECONSTRUCT the key to delete from fields on the
+    // value. Reconstruction is guesswork, and it was wrong: this deleted
+    // `journal_by_user:{userId}:{date}` while mood-routes.ts:131 writes
+    // `journal_by_user:{userId}:{date}:{id}`, so every index row survived an
+    // account deletion. The same fragility applied to enrollments, responses,
+    // scores and payments — any writer changing its key shape silently breaks
+    // erasure, with no error.
+    //
+    // Delete by the ACTUAL key instead. getKeyValuesByPrefix returns
+    // {key, value} pairs, so nothing has to be guessed.
+    //
+    // Right to erasure is a DPDP §12 / GDPR 17 obligation; a delete that
+    // silently leaves rows behind is a compliance failure, not a tidiness one.
+    const deleteByPrefix = async (prefix: string): Promise<number> => {
+      const rows = await kv.getKeyValuesByPrefix(prefix);
+      for (const row of rows) {
+        await kv.del(row.key);
       }
-      await kv.del(`journal_by_user:${userId}:${entry.date}`);
-    }
-    
-    // Delete enrollments
-    const enrollments = await kv.getByPrefix(`user_enrollment:${userId}`);
-    for (const enrollment of enrollments) {
-      if (enrollment.enrollmentId) {
-        await kv.del(`enrollment:${enrollment.enrollmentId}`);
-      }
-      await kv.del(`user_enrollment:${userId}:${enrollment.programId}`);
-    }
-    
-    // Delete assessment responses
-    const assessmentResponses = await kv.getByPrefix(`assessment_response_by_user:${userId}`);
-    // Note: We might want to keep these for research, but anonymized. For now, we delete.
-    for (const response of assessmentResponses) {
-      if (response.response_id) {
-         await kv.del(`assessment_response:${response.response_id}`);
-      }
-    }
-    // Also delete the "latest" keys which are not in the list returned by getByPrefix on the user prefix if strict
-    // But our structure is `assessment_response_by_user:${userId}:${assessmentId}:latest` so they should be included
-    
-    // Delete iKAN score snapshots
-    const ikanScores = await kv.getByPrefix(`ikan_score:${userId}:`);
-    for (const s of ikanScores) {
-      if (s?.date) await kv.del(`ikan_score:${userId}:${s.date}`);
+      return rows.length;
+    };
+
+    // Journal: the index rows are user-scoped; the canonical `journal:{id}`
+    // rows are not, so those still have to be resolved from the value.
+    const journalIndexRows = await kv.getKeyValuesByPrefix(`journal_by_user:${userId}:`);
+    for (const row of journalIndexRows) {
+      const entryId = row.value?.journal_entry_id ?? row.value?.id;
+      if (entryId) await kv.del(`journal:${entryId}`);
+      await kv.del(row.key);
     }
 
-    // Delete payments/transactions
-    const payments = await kv.getByPrefix(`payment:${userId}`);
-    for (const payment of payments) {
-      if (payment.id) {
-         await kv.del(`payment:${userId}:${payment.id}`);
-      }
+    // Enrollments: same shape — a user-scoped index plus a global record.
+    const enrollmentRows = await kv.getKeyValuesByPrefix(`user_enrollment:${userId}:`);
+    for (const row of enrollmentRows) {
+      if (row.value?.enrollmentId) await kv.del(`enrollment:${row.value.enrollmentId}`);
+      await kv.del(row.key);
     }
+
+    // Assessment responses: index rows plus the global response records.
+    const responseRows = await kv.getKeyValuesByPrefix(`assessment_response_by_user:${userId}:`);
+    for (const row of responseRows) {
+      const rid = row.value?.response_id;
+      if (rid) await kv.del(`assessment_response:${rid}`);
+      await kv.del(row.key);
+    }
+
+    // Purely user-scoped prefixes — delete every key under them.
+    const removed = {
+      journalIndex: journalIndexRows.length,
+      enrollments: enrollmentRows.length,
+      responses: responseRows.length,
+      results: await deleteByPrefix(`assessment_result:${userId}:`),
+      ikanScores: await deleteByPrefix(`ikan_score:${userId}:`),
+      payments: await deleteByPrefix(`payment:${userId}:`),
+      progress: await deleteByPrefix(`progress:${userId}:`),
+      activity: await deleteByPrefix(`activity:user:${userId}:`),
+      health: await deleteByPrefix(`hc_data:${userId}`),
+      healthStatus: await deleteByPrefix(`hc_status:${userId}`),
+      healthHistory: await deleteByPrefix(`hc_history:${userId}`),
+    };
+    console.log(`🗑️ Erasure for ${userId}:`, removed);
 
     // 3. Delete from Supabase Auth (Admin only can do this usually, but we have service role key)
     const { error: authDeleteError } = await supabase.auth.admin.deleteUser(userId);
