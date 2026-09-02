@@ -16,6 +16,7 @@ import {
   validateName, 
   validatePhone 
 } from '../lib/validation';
+import { usePublicSettings } from '../hooks/usePublicSettings';
 
 interface AuthFormProps {
   onSuccess?: () => void;
@@ -25,6 +26,12 @@ interface AuthFormProps {
 export function AuthForm({ onSuccess, defaultTab = 'signin' }: AuthFormProps) {
   const { signIn, signUp, signInWithProvider, loading } = useAuth();
   const [activeTab, setActiveTab] = useState(defaultTab);
+  // Feature toggle. The admin 'User Registration' switch persisted to
+  // settings:site and nothing read it, so turning registration off changed
+  // nothing. Fails OPEN (default true) so a settings fetch failure can never
+  // lock people out of signing up.
+  const { settings: publicSettings } = usePublicSettings();
+  const registrationEnabled = publicSettings?.enableUserRegistration !== false;
   
   // Sign In Form State
   const [signInData, setSignInData] = useState({
@@ -233,10 +240,15 @@ export function AuthForm({ onSuccess, defaultTab = 'signin' }: AuthFormProps) {
       </CardHeader>
 
       <CardContent>
-        <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as 'signin' | 'signup')}>
-          <TabsList className="grid w-full grid-cols-2 mb-6">
+        <Tabs
+          value={registrationEnabled ? activeTab : 'signin'}
+          onValueChange={(value) => setActiveTab(value as 'signin' | 'signup')}
+        >
+          <TabsList className={registrationEnabled ? "grid w-full grid-cols-2 mb-6" : "grid w-full grid-cols-1 mb-6"}>
             <TabsTrigger value="signin">{authContent.tabs.signIn}</TabsTrigger>
-            <TabsTrigger value="signup">{authContent.tabs.signUp}</TabsTrigger>
+            {registrationEnabled && (
+              <TabsTrigger value="signup">{authContent.tabs.signUp}</TabsTrigger>
+            )}
           </TabsList>
 
           <TabsContent value="signin" className="space-y-4">
@@ -432,19 +444,21 @@ export function AuthForm({ onSuccess, defaultTab = 'signin' }: AuthFormProps) {
               </div>
             </div>
 
-            <div className="text-center">
-              <button
-                type="button"
-                onClick={() => setActiveTab('signup')}
-                style={{ 
-                  fontSize: 'var(--text-sm)', 
-                  color: 'var(--color-primary-default)'
-                }}
-                className="hover:underline"
-              >
-                {authContent.messages.switch.toSignup}
-              </button>
-            </div>
+            {registrationEnabled && (
+              <div className="text-center">
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('signup')}
+                  style={{ 
+                    fontSize: 'var(--text-sm)', 
+                    color: 'var(--color-primary-default)'
+                  }}
+                  className="hover:underline"
+                >
+                  {authContent.messages.switch.toSignup}
+                </button>
+              </div>
+            )}
           </TabsContent>
 
           <TabsContent value="signup" className="space-y-4">

@@ -120,6 +120,7 @@ import { Footer } from './components/Footer';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { ChunkErrorBoundary } from './components/ChunkErrorBoundary';
 import { SecurityProvider } from './components/security/SecurityProvider';
+import { usePublicSettings } from './hooks/usePublicSettings';
 import { CrisisSupport, useCrisisSupport } from './components/safety/CrisisSupport';
 import { SafePerformanceMonitor } from './components/monitoring/SafePerformanceMonitor';
 import { SkipToMainContent, useReducedMotion } from './components/ui/accessibility-helpers';
@@ -139,9 +140,64 @@ function LazyFallback() {
   return <LoadingSpinner fullScreen message="Loading..." />;
 }
 
+/**
+ * Shown to non-admins while Maintenance Mode is on.
+ * Deliberately plain: no data fetching, no auth dependency, nothing that can
+ * fail while the site is meant to be down.
+ */
+function MaintenanceScreen({ siteName }: { siteName?: string }) {
+  return (
+    <div
+      className="flex min-h-[100dvh] flex-col items-center justify-center px-6 text-center"
+      style={{ backgroundColor: 'var(--color-bg-page)' }}
+    >
+      <div style={{ maxWidth: '32rem' }}>
+        <h1
+          style={{
+            fontFamily: 'var(--font-family-base)',
+            fontSize: 'var(--text-2xl)',
+            fontWeight: 'var(--font-weight-medium)',
+            color: 'var(--color-text-primary)',
+            margin: 0,
+          }}
+        >
+          {siteName || 'iKan'} is down for maintenance
+        </h1>
+        <p
+          style={{
+            fontFamily: 'var(--font-family-base)',
+            fontSize: 'var(--text-base)',
+            lineHeight: 1.6,
+            color: 'var(--color-text-muted)',
+            margin: '12px 0 0',
+          }}
+        >
+          We are making some improvements and will be back shortly. Thank you for
+          your patience.
+        </p>
+        <p
+          style={{
+            fontFamily: 'var(--font-family-base)',
+            fontSize: 'var(--text-sm)',
+            color: 'var(--color-text-muted)',
+            margin: '24px 0 0',
+          }}
+        >
+          If you need urgent mental health support right now, call{' '}
+          <a href="tel:14416" style={{ color: 'var(--color-primary-default)', fontWeight: 500 }}>
+            Tele-MANAS 14416
+          </a>{' '}
+          — free, 24/7.
+        </p>
+      </div>
+    </div>
+  );
+}
+
 function AppContent() {
   // ✅ ALL HOOKS MUST BE CALLED FIRST - BEFORE ANY CONDITIONAL LOGIC OR EARLY RETURNS
   const { user, isInitialized } = useAuth();
+  const { settings: publicSettings } = usePublicSettings();
   const { showToast } = useNotifications();
   const { shouldShowPrompt } = usePushPermissionPrompt();
   const { isVisible: isCrisisVisible, triggerReason, hideCrisisSupport } = useCrisisSupport();
@@ -641,6 +697,24 @@ function AppContent() {
                       currentRoute === '/equip-programs-landing' ||
                       currentRoute === '/assessment-landing' ||
                       isFullScreenFlow;
+
+  // Maintenance mode. The admin Feature Toggles wrote `maintenanceMode` to
+  // settings:site and NOTHING read it — an admin could flip "Temporarily
+  // disable site access", see it save, and the site stayed fully up. Admins are
+  // exempt so whoever enabled it can still reach the admin panel to turn it off,
+  // and /admin stays reachable so they are never locked out by their own toggle.
+  //
+  // This is a front-of-house gate, not a security control: the API stays open
+  // and anyone can still call it directly. It is what the toggle's own
+  // description promises, and no more.
+  const inMaintenance =
+    publicSettings?.maintenanceMode === true &&
+    !user?.is_admin &&
+    !currentRoute.startsWith('/admin');
+
+  if (inMaintenance) {
+    return <MaintenanceScreen siteName={publicSettings?.siteName} />;
+  }
 
   return (
     <div className={cn(
