@@ -70,8 +70,8 @@ async function executeSync(item: SyncItem): Promise<boolean> {
         // the queued payload carries them (see AssessmentFlow.tsx's queueItem
         // calls) — any response that synced through this path instead of the
         // direct online call permanently lost its score breakdown.
-        const { assessmentId, responses, status, score, interpretation, severityHint, maxScore, sectionScores } = item.payload;
-        await apiClient.saveAssessmentResponse(assessmentId, responses, status, score, interpretation, severityHint, maxScore, sectionScores);
+        const { assessmentId, responses, status, score, interpretation, severityHint, maxScore, sectionScores, slug } = item.payload;
+        await apiClient.saveAssessmentResponse(assessmentId, responses, status, score, interpretation, severityHint, maxScore, sectionScores, slug);
         return true;
       }
 

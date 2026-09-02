@@ -4,6 +4,7 @@
 
 import { Hono } from 'npm:hono';
 import * as kv from './kv_dual_write.ts';
+import { maxScoreFromDefinition, maxScoreFromBands } from './scoring-utils.ts';
 
 // ─── Known assessment max scores ────────────────────────────────
 // Fallback when max_score is not stored with the result.
@@ -23,17 +24,44 @@ const KNOWN_MAX_SCORES: Record<string, number> = {
   'who5': 25, 'who-5': 25,
 };
 
-// Assessments where higher score = BETTER wellness (not more distress)
+// Assessments where higher score = BETTER wellness (not more distress).
+//
+// NOTE on the General questionnaire ('unsure-or-general-concern'): it is NOT
+// listed here on purpose. 19 of its 24 items are higher-is-better and 5 are
+// genuine distress items, so it is a MIXED instrument — inverting it wholesale
+// is as wrong as not inverting it. Its direction is resolved per-section by
+// `reverseQuestionIds` / `overallCalc` in assessment-section-presets.ts, and
+// the right fix is for this file to consume that corrected section score once
+// results carry `section_scores`. Adding it to this Set would silently flip
+// the 5 distress items. Do not do it without that preset-aware path.
 const HIGHER_IS_BETTER = new Set(['who5', 'who-5']);
+
+/**
+ * Every lookup in this file used to be keyed on `result.assessment_id`, which
+ * holds an `asm_…` id, while the tables above are keyed on clinical
+ * shortnames. No entry had ever matched. Results now also store `slug`, so
+ * build the list of names a result might legitimately be known by and try
+ * each. Lower-cased; duplicates and blanks dropped.
+ */
+function candidateKeys(result: any, fallbackId?: string): string[] {
+  const raw = [result?.slug, result?.assessment_slug, result?.assessment_id, result?.assessmentId, fallbackId];
+  const out: string[] = [];
+  for (const v of raw) {
+    if (typeof v === 'string' && v.trim()) {
+      const k = v.trim().toLowerCase();
+      if (!out.includes(k)) out.push(k);
+    }
+  }
+  return out;
+}
 
 // ─── Severity → Wellness mapping ────────────────────────────────
 // Standard: higher score = MORE distress → invert for wellness
-function assessmentScoreToWellness(score: number, maxScore: number, assessmentId: string): number {
+function assessmentScoreToWellness(score: number, maxScore: number, keys: string[]): number {
   if (!maxScore || maxScore <= 0) return 50; // neutral default
   const pct = (score / maxScore) * 100;
 
-  const idLower = (assessmentId || '').toLowerCase();
-  if (HIGHER_IS_BETTER.has(idLower)) {
+  if (keys.some((k) => HIGHER_IS_BETTER.has(k))) {
     // WHO-5 etc: higher score = better wellness
     return Math.max(0, Math.min(100, Math.round(pct)));
   }
@@ -60,8 +88,9 @@ async function resolveMaxScore(result: any): Promise<number> {
   if (result.maxScore && result.maxScore > 0) return result.maxScore;
 
   // 2. Known clinical assessment lookup
-  const id = (result.assessment_id || '').toLowerCase();
-  if (KNOWN_MAX_SCORES[id]) return KNOWN_MAX_SCORES[id];
+  for (const k of candidateKeys(result)) {
+    if (KNOWN_MAX_SCORES[k]) return KNOWN_MAX_SCORES[k];
+  }
 
   // 3. Try to infer from scoring ranges in interpretation
   if (result.interpretation?.ranges) {
@@ -78,26 +107,11 @@ async function resolveMaxScore(result: any): Promise<number> {
     try {
       const def = await kv.get(`assessment_def:${assessmentId}`);
       if (def) {
-        // Compute from questions (sum of highest option value per question)
-        let computedMax = 0;
-        if (def.questions && Array.isArray(def.questions) && def.questions.length > 0) {
-          for (const q of def.questions) {
-            if (q.options && Array.isArray(q.options)) {
-              let maxVal = 0;
-              for (const opt of q.options) {
-                const v = typeof opt === 'object' ? (opt.value ?? opt.score ?? 0) : 0;
-                if (typeof v === 'number' && v > maxVal) maxVal = v;
-              }
-              computedMax += maxVal;
-            }
-          }
-        }
+        const computedMax = maxScoreFromDefinition(def);
         if (computedMax > 0) return computedMax;
         // Fallback to scoring ranges from definition
-        if (def.scoring?.ranges?.length > 0) {
-          const rangeMax = def.scoring.ranges[def.scoring.ranges.length - 1]?.max;
-          if (rangeMax && rangeMax > 0) return rangeMax;
-        }
+        const rangeMax = maxScoreFromBands(def);
+        if (rangeMax > 0) return rangeMax;
       }
     } catch { /* non-critical */ }
   }
@@ -187,7 +201,7 @@ async function computeIkanScore(userId: string): Promise<IkanScoreResult> {
   for (const [id, r] of latestByType) {
     if (r.score === undefined || r.score === null) continue;
     const maxScore = await resolveMaxScore(r);
-    const wellness = assessmentScoreToWellness(r.score, maxScore, id);
+    const wellness = assessmentScoreToWellness(r.score, maxScore, candidateKeys(r, id));
     const name = await resolveAssessmentName(id);
     assessmentDetails.push({ id, name, wellness });
     assessmentWellnessSum += wellness;

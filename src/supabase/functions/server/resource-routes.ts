@@ -135,14 +135,8 @@ export function registerResourceRoutes(app: Hono, middleware: any) {
     }
   });
 
-  // Categories
-  app.get("/admin/categories", middleware, async (c) => {
-    try {
-        await ensureAdmin(c);
-        const categories = await kv.getByPrefix("category:");
-        return c.json({ categories });
-    } catch (e) {
-        return c.json({ error: "Unauthorized" }, 403);
-    }
-  });
+  // GET /admin/categories deliberately lives in admin-routes.ts, not here.
+  // registerAdminRoutes runs before registerResourceRoutes in index.tsx, so
+  // Hono's first-match routing meant the copy that used to sit here never
+  // served a request. Removed rather than left as a decoy.
 }

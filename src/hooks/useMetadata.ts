@@ -175,9 +175,17 @@ async function fetchAllMetadata(): Promise<MetadataBucket> {
     return bucket;
   } catch (error) {
     console.error('useMetadata: Failed to fetch metadata from API:', error);
+    // Signalled rather than swallowed. Returning EMPTY_BUCKET silently made
+    // every editor fall back to its own hardcoded vocabulary with no
+    // indication to the admin that the catalog had not loaded — so a metadata
+    // outage looked identical to a catalog that genuinely had no terms.
+    _lastFetchError = error instanceof Error ? error.message : String(error);
     return { ...EMPTY_BUCKET };
   }
 }
+
+/** Set by fetchAllMetadata when a fetch fails; cleared on the next success. */
+let _lastFetchError: string | null = null;
 
 function bucketToState(b: MetadataBucket, loading: boolean, error: string | null): MetadataState {
   return { ...b, loading, error };
@@ -205,8 +213,12 @@ export function useMetadata() {
 
     // Deduplicate in-flight requests
     if (!_fetchPromise || force) {
+      _lastFetchError = null;
       _fetchPromise = fetchAllMetadata().then((result) => {
-        _cache = result;
+        // Only cache a genuine success. Caching the empty bucket from a failed
+        // fetch pinned every consumer to empty dropdowns until someone called
+        // refresh(), long after the transient error had passed.
+        if (!_lastFetchError) _cache = result;
         _fetchPromise = null;
       });
     }
@@ -214,8 +226,8 @@ export function useMetadata() {
     setState((prev) => ({ ...prev, loading: true }));
     await _fetchPromise;
 
-    if (mountedRef.current && _cache) {
-      setState(bucketToState(_cache, false, null));
+    if (mountedRef.current) {
+      setState(bucketToState(_cache || EMPTY_BUCKET, false, _lastFetchError));
     }
   }, []);
 

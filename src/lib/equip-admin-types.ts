@@ -243,7 +243,9 @@ export interface DayContent {
   description: string;
   activities: Activity[];
   image_url?: string;
-  dayType?: 'assessment' | 'assessment-lite' | 'learning' | 'practice' | 'workshop' | 'tracker' | 'reflection';
+  /** Must stay in sync with DAY_TYPE_PRESETS in components/admin/day-presets.ts. */
+  dayType?: 'assessment' | 'assessment-lite' | 'learning' | 'practice' | 'workshop' | 'tracker' | 'reflection'
+    | 'check-in' | 'rest' | 'quiz';
 }
 
 export interface WeekStructure {

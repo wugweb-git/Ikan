@@ -841,12 +841,17 @@ class ApiClient {
     interpretation: AssessmentInterpretation,
     severityHint?: string,
     maxScore?: number,
-    sectionScores?: unknown
+    sectionScores?: unknown,
+    slug?: string
   ) {
     return this.request('/user/assessments', {
       method: 'POST',
       body: JSON.stringify({
         assessmentId,
+        // The engines key on slug or a clinical shortname; a result that stores
+        // only the asm_… id can never match any of them. See ikan-score-routes
+        // (KNOWN_MAX_SCORES, HIGHER_IS_BETTER) and recommendation-engine.
+        slug,
         responses,
         status,
         score,

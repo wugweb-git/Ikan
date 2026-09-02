@@ -244,10 +244,28 @@ export function AssessmentFlow({
         score = score / count;
       }
       
-      // Fallback if interpretation finding fails
-      let interpretation = assessment.scoring.ranges.find(range =>
+      // `ranges` is legitimately null on assessments that declare no bands —
+      // the General questionnaire is one — so this must not assume an array.
+      const bands: any[] = Array.isArray(assessment.scoring?.ranges)
+        ? [...assessment.scoring.ranges].sort((a: any, b: any) => a.min - b.min)
+        : [];
+
+      let interpretation = bands.find(range =>
         score >= range.min && score <= range.max
-      ) || assessment.scoring.ranges[0] || {
+      );
+
+      if (!interpretation && bands.length > 0) {
+        // Out of range. Clamping to the NEAREST band matters: falling back to
+        // bands[0] reported the mildest band for most instruments, so an
+        // above-maximum score was shown to the user as the least severe result.
+        interpretation = score < bands[0].min ? bands[0] : bands[bands.length - 1];
+        console.warn(
+          `[assessment] score ${score} falls outside every band for "${assessment.title}" ` +
+          `(${bands[0].min}-${bands[bands.length - 1].max}); clamped to "${interpretation.label}"`
+        );
+      }
+
+      interpretation = interpretation || {
          label: 'Complete',
          interpretation: 'Assessment completed.',
          icon: 'success'
@@ -259,12 +277,25 @@ export function AssessmentFlow({
       if (assessment.questions && assessment.questions.length > 0) {
         assessment.questions.forEach((q: any) => {
           if (q.options && Array.isArray(q.options) && q.options.length > 0) {
+            // `q.scoring` is an option-text -> weight map and is the
+            // authoritative source; it is populated on all live questions.
+            // `opt.value` only exists on object-shaped options, and every
+            // option in this database is a plain string — so reading it alone
+            // always produced 0 and the denominator fell through to a band
+            // ceiling (or the literal 21 below).
             let maxVal = 0;
-            q.options.forEach((opt: any) => {
-              if (typeof opt === 'object' && typeof opt.value === 'number') {
-                maxVal = Math.max(maxVal, opt.value);
+            if (q.scoring && typeof q.scoring === 'object') {
+              for (const w of Object.values(q.scoring)) {
+                if (typeof w === 'number') maxVal = Math.max(maxVal, w);
               }
-            });
+            }
+            if (maxVal === 0) {
+              q.options.forEach((opt: any) => {
+                if (typeof opt === 'object' && typeof opt.value === 'number') {
+                  maxVal = Math.max(maxVal, opt.value);
+                }
+              });
+            }
             computedMaxScore += maxVal;
           }
         });
@@ -273,7 +304,7 @@ export function AssessmentFlow({
       // Use computed max from questions if available, otherwise fall back to scoring range max
       let maxScore = computedMaxScore > 0
         ? computedMaxScore
-        : (assessment.scoring.ranges[assessment.scoring.ranges.length - 1]?.max || 21);
+        : (bands[bands.length - 1]?.max || 21);
 
       // Per-scale breakdown, when this assessment declares sections or has a
       // corrected-scoring preset. Falls back to the presets keyed by slug until
@@ -412,7 +443,8 @@ export function AssessmentFlow({
                 interpretation,
                 interpretation.label,
                 maxScore,
-                sectionScores.sectioned ? sectionScores : undefined
+                sectionScores.sectioned ? sectionScores : undefined,
+                assessment.slug
                );
              } else {
                // B. Queue for offline sync
@@ -424,7 +456,8 @@ export function AssessmentFlow({
                  maxScore,
                  interpretation,
                  severityHint: interpretation.label,
-                 sectionScores: sectionScores.sectioned ? sectionScores : undefined
+                 sectionScores: sectionScores.sectioned ? sectionScores : undefined,
+                 slug: assessment.slug
                });
                showToast('info', 'Saved Locally', 'Your results will sync when you are back online.');
              }
@@ -439,7 +472,8 @@ export function AssessmentFlow({
               maxScore,
               interpretation,
               severityHint: interpretation.label,
-              sectionScores: sectionScores.sectioned ? sectionScores : undefined
+              sectionScores: sectionScores.sectioned ? sectionScores : undefined,
+              slug: assessment.slug
             });
             showToast('warning', 'Saved Locally', 'Your results are saved locally and will sync later.');
           }
