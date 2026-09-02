@@ -426,7 +426,7 @@ rather than accurate-by-citation, and **should get a legal read** before it is t
 - *"`dayType` null on all 105"* — the key is absent from all 105 rows in **both** spellings
   (`dayType` and `day_type`), so nothing was nulled out. `progress-service.ts:399` already reads
   `day.dayType || day.day_type || 'learning'`. Assigning real day types is still worthwhile
-  (`taxonomy.md` items 8–9) but it is a content-quality improvement, not a defect.
+  (`blocks.md` (formerly `taxonomy.md`, folded in 2a7f9c9f) items 8–9) but it is a content-quality improvement, not a defect.
 
 ## Blocked — and the approved fix was unsafe
 
@@ -449,7 +449,7 @@ judgement call**; picking a winner would mean authoring clinical content. Max sc
 
 ## Also fixed this pass — the block render bug
 
-`taxonomy.md` item 1 flagged four authored subtypes falling through `resolveInteraction()` to a
+`blocks.md` (formerly `taxonomy.md`, folded in 2a7f9c9f) item 1 flagged four authored subtypes falling through `resolveInteraction()` to a
 free-text box. **It scoped this at 9 blocks; live data says 57.** None of the 58 affected rows carries
 `options`, so every one hit `return 'write'`:
 
@@ -469,6 +469,6 @@ live content, and the default case logs the subtype and block id instead of sile
 Typecheck **220 → 216**. Build passes.
 
 > **Note on the numbers in this file.** Two counts corrected today: this pass found 137 results where
-> §2.6 says 133, and the block bug is 57 blocks where `taxonomy.md` says 9. Both earlier figures were
+> §2.6 says 133, and the block bug is 57 blocks where `blocks.md` (formerly `taxonomy.md`, folded in 2a7f9c9f) says 9. Both earlier figures were
 > honest counts taken at an earlier date against a smaller dataset — but re-count before acting on any
 > figure here rather than quoting it.
