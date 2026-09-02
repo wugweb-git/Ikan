@@ -4,7 +4,7 @@
  * Shared, templatised building blocks for block editor UIs.
  * Used by:
  *   - AdminBlockTypeViewer (EditorPreview mocks)
- *   - EquipBlockEditor (actual Equip block editing forms)
+ *   - BlockEditor (actual Equip block editing forms)
  *   - AdminCheckinTemplateBuilder (actual check-in step editing)
  * 
  * Purpose: visual consistency between preview & real admin forms.

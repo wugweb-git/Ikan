@@ -60,7 +60,7 @@ const FALLBACK_BLOCK_TYPES = [
   { value: 'sleep-diary', label: '🌙 Sleep Diary (Track)' },
 ];
 
-interface EquipBlockEditorProps {
+interface BlockEditorProps {
   block: Activity;
   onChange: (updates: Partial<Activity>) => void;
   onDelete: () => void;
@@ -75,7 +75,7 @@ interface EquipBlockEditorProps {
   dayType?: string; // Pass the parent day's type for preset-awareness
 }
 
-function EquipBlockEditorInner({ 
+function BlockEditorInner({ 
   block, 
   onChange, 
   onDelete, 
@@ -88,7 +88,7 @@ function EquipBlockEditorInner({
   hideHeader,
   isAssessment,
   dayType
-}: EquipBlockEditorProps) {
+}: BlockEditorProps) {
   
   const imageInputRef = useRef<HTMLInputElement>(null);
   
@@ -823,7 +823,7 @@ function EquipBlockEditorInner({
 }
 
 // Memoize to prevent re-renders when sibling blocks change
-export const EquipBlockEditor = memo(EquipBlockEditorInner, (prev, next) => {
+export const BlockEditor = memo(BlockEditorInner, (prev, next) => {
   // Only re-render if this block's own data changed
   return (
     prev.block === next.block &&

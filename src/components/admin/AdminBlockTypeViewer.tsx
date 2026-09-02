@@ -12,7 +12,7 @@ import { Button } from '../ui/button';
 import { AdminStatusBadge } from './AdminStatusBadge';
 import { INTERACTION_META, type InteractionType } from '../../lib/equip-admin-types';
 import { useMetadata } from '../../hooks/useMetadata';
-// Template building blocks shared with actual editors (EquipBlockEditor, CheckinTemplateBuilder)
+// Template building blocks shared with actual editors (BlockEditor, CheckinTemplateBuilder)
 import {
   blockFormStyles,
   BlockHeaderBar,
@@ -214,7 +214,7 @@ export function AdminBlockTypeViewer({ onBack }: AdminBlockTypeViewerProps) {
 
   const blocks = activeTab === 'checkin' ? CHECKIN_BLOCK_TYPES : activeTab === 'equip' ? EQUIP_BLOCK_TYPES : [];
 
-  // Exercise subtypes: all selectable types appear in EquipBlockEditor dropdown
+  // Exercise subtypes: all selectable types appear in BlockEditor dropdown
   const EXERCISE_SUBTYPES = [
     { value: 'mcq', label: 'Multiple Choice Question', description: 'Standard MCQ with single correct answer and scoring support.', selectable: true },
     { value: 'single-select', label: 'Single Select List', description: 'Pick one option from a vertical list (no scoring).', selectable: true },
@@ -479,7 +479,7 @@ export function AdminBlockTypeViewer({ onBack }: AdminBlockTypeViewerProps) {
       {activeTab === 'subtypes' && (
         <div className="space-y-3">
           <p style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-muted)', fontFamily: 'var(--font-family-base)' }}>
-            Exercise subtypes define the interaction style inside an Exercise block. Source of truth: <code style={{ fontSize: 'var(--text-xs)', backgroundColor: 'var(--color-bg-muted)', padding: '1px 4px', borderRadius: '4px' }}>EquipBlockEditor.tsx</code> dropdown (8 selectable), <code style={{ fontSize: 'var(--text-xs)', backgroundColor: 'var(--color-bg-muted)', padding: '1px 4px', borderRadius: '4px' }}>BlockRenderer.tsx</code> (aliases), <code style={{ fontSize: 'var(--text-xs)', backgroundColor: 'var(--color-bg-muted)', padding: '1px 4px', borderRadius: '4px' }}>day-presets.ts</code> (preset-only).
+            Exercise subtypes define the interaction style inside an Exercise block. Source of truth: <code style={{ fontSize: 'var(--text-xs)', backgroundColor: 'var(--color-bg-muted)', padding: '1px 4px', borderRadius: '4px' }}>BlockEditor.tsx</code> dropdown (8 selectable), <code style={{ fontSize: 'var(--text-xs)', backgroundColor: 'var(--color-bg-muted)', padding: '1px 4px', borderRadius: '4px' }}>BlockRenderer.tsx</code> (aliases), <code style={{ fontSize: 'var(--text-xs)', backgroundColor: 'var(--color-bg-muted)', padding: '1px 4px', borderRadius: '4px' }}>day-presets.ts</code> (preset-only).
           </p>
           {EXERCISE_SUBTYPES.map((st) => (
             <Card key={st.value} style={{ border: '1px solid var(--color-border-default)', borderRadius: 'var(--radius-lg)', opacity: st.selectable ? 1 : 0.75 }}>
@@ -1150,14 +1150,14 @@ function EditorPreview({ block }: { block: BlockTypeInfo }) {
   if (isEquip) {
     return (
       <div style={blockFormStyles.wrap}>
-        {/* Equip editor header — matches EquipBlockEditor card header */}
+        {/* Equip editor header — matches BlockEditor card header */}
         <BlockHeaderBar
           icon={<Icon size={12} style={{ color: 'var(--color-primary-default)' }} />}
           typeBadge={block.value}
           title={`Sample ${block.label}`}
         />
         <div style={blockFormStyles.body}>
-          {/* Title + Type row — matches EquipBlockEditor grid */}
+          {/* Title + Type row — matches BlockEditor grid */}
           <FieldGrid>
             <div>
               <FieldLabel>Block Title</FieldLabel>
@@ -1175,7 +1175,7 @@ function EditorPreview({ block }: { block: BlockTypeInfo }) {
             <MockInput>Understanding your sleep patterns</MockInput>
           </div>
 
-          {/* Content / Prompt — matches EquipBlockEditor content section */}
+          {/* Content / Prompt — matches BlockEditor content section */}
           {['lesson', 'journal', 'reflection', 'conclude', 'sleep-diary'].includes(block.value) && (
             <div>
               <FieldLabel>
@@ -1193,7 +1193,7 @@ function EditorPreview({ block }: { block: BlockTypeInfo }) {
             </div>
           )}
 
-          {/* Exercise config — matches EquipBlockEditor exercise section */}
+          {/* Exercise config — matches BlockEditor exercise section */}
           {block.value === 'exercise' && (
             <IndentedSection>
               <div>
@@ -1211,7 +1211,7 @@ function EditorPreview({ block }: { block: BlockTypeInfo }) {
             </IndentedSection>
           )}
 
-          {/* Checklist items — matches EquipBlockEditor checklist section */}
+          {/* Checklist items — matches BlockEditor checklist section */}
           {block.value === 'checklist' && (
             <div>
               <FieldLabel>Checklist Items (One per line)</FieldLabel>
@@ -1219,14 +1219,14 @@ function EditorPreview({ block }: { block: BlockTypeInfo }) {
             </div>
           )}
 
-          {/* Wizard Flow — matches EquipBlockEditor autoAdvance / required */}
+          {/* Wizard Flow — matches BlockEditor autoAdvance / required */}
           <SectionDivider label="Wizard Flow" icon={<Layers size={10} style={{ color: 'var(--color-primary-default)' }} />} />
           <FieldGrid>
             <MockCheckbox label="Auto-Advance" checked />
             <MockCheckbox label="Required" />
           </FieldGrid>
 
-          {/* Media — matches EquipBlockEditor image_url section */}
+          {/* Media — matches BlockEditor image_url section */}
           <MockMediaUpload />
         </div>
       </div>

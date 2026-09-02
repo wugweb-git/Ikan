@@ -206,7 +206,7 @@ app.delete("/equip/programs/:equipId", requireAuth, async (c) => {
 // The legacy day:/block: REST surface (GET/POST/PUT/DELETE on
 // /equip/programs/:equipId/days, /equip/days/:dayId, /equip/days/:dayId/blocks,
 // /equip/blocks/:blockId) was removed 2026-08-06. It predates the current
-// content model — the admin editor (EquipDailyEditor.tsx) has always saved a
+// content model — the admin editor (DayEditor.tsx) has always saved a
 // program's entire day/block tree as one inline `daily_content` array via
 // apiClient.updateEquipProgram(), and nothing in this codebase's frontend
 // ever called these routes. Left live, they could write orphan day:/block:

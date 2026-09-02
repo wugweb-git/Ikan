@@ -8,7 +8,7 @@ import { EngineResult, SeverityLevel, getSeverityBandFromProfile } from '../../l
 import { apiClient } from '../../lib/api-client';
 import { ContentImage } from '../ui/ContentImage';
 import { ArrowRight } from 'lucide-react';
-import { SectionReportCard } from '../blocks/SectionReportCard';
+import { SectionReportCard } from '../player/SectionReportCard';
 import type { SectionScoreResult } from '../../lib/assessment-sections';
 
 interface AssessmentResultsProps {

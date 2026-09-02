@@ -10,13 +10,13 @@ import { resolveImageUrl } from '../../utils/image-utils';
 import { copyToClipboard } from '../../lib/clipboard';
 
 // Import dynamic UI blocks
-import { ResourceHero } from '../blocks/ResourceHero';
-import { ResourceContent } from '../blocks/ResourceContent';
-import { ResourceBlock } from '../blocks/ResourceBlock';
-import { ResourceAuthor } from '../blocks/ResourceAuthor';
-import { ResourceCategory } from '../blocks/ResourceCategory';
-import { ResourceTypeLabel } from '../blocks/ResourceTypeLabel';
-import { ResourceTags } from '../blocks/ResourceTags';
+import { ResourceHero } from '../page-blocks/ResourceHero';
+import { ResourceContent } from '../page-blocks/ResourceContent';
+import { ResourceBlock } from '../page-blocks/ResourceBlock';
+import { ResourceAuthor } from '../page-blocks/ResourceAuthor';
+import { ResourceCategory } from '../page-blocks/ResourceCategory';
+import { ResourceTypeLabel } from '../page-blocks/ResourceTypeLabel';
+import { ResourceTags } from '../page-blocks/ResourceTags';
 
 interface ResourceDetailProps {
   resourceId: string;

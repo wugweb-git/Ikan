@@ -13,7 +13,7 @@ import { Card, CardContent } from '../ui/card';
 import { Badge } from '../ui/badge';
 import { AdminFormField } from '../admin/AdminFormField';
 import { DayContent, Activity } from '../../lib/equip-admin-types';
-import { EquipBlockEditor } from './EquipBlockEditor';
+import { BlockEditor } from './BlockEditor';
 import { DAY_TYPE_PRESETS, getPresetForDayType } from '../admin/day-presets';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '../ui/dropdown-menu';
 import { cn } from '../ui/utils';
@@ -273,7 +273,7 @@ function BlockPaletteMenu({ onSelect, dayType }: { onSelect: (type: string, subt
 }
 
 // --- MAIN EDITOR COMPONENT ---
-export function EquipDailyEditor({ 
+export function DayEditor({ 
   program, 
   mode, 
   singleDayMode, 
@@ -930,7 +930,7 @@ export function EquipDailyEditor({
                   ) : activeBlock ? (
                     // --- BLOCK EDITOR ---
                     <div className="animate-in fade-in duration-300">
-                      <EquipBlockEditor
+                      <BlockEditor
                         key={activeBlock.id}
                         block={activeBlock}
                         onChange={updates => updateBlock(activeBlock.id, updates)}

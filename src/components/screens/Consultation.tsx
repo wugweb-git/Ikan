@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo, useCallback } from 'react';
 import { cn } from '../ui/utils';
 import { Search, X, LayoutGrid, List, Sparkles, SlidersHorizontal } from 'lucide-react';
 import { apiClient } from '../../lib/api-client';
-import { ConsultantCard } from '../blocks/ConsultantCard';
+import { ConsultantCard } from '../page-blocks/ConsultantCard';
 import { Button } from '../ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '../ui/sheet';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
@@ -11,7 +11,7 @@ import { useIsMobile } from '../../hooks/useIsMobile';
 import { Skeleton } from '../ui/skeleton-loader';
 import { PageHero } from '../ui/PageHero';
 import { useMetadata } from '../../hooks/useMetadata';
-import { BookingModal } from '../blocks/BookingModal';
+import { BookingModal } from '../page-blocks/BookingModal';
 import { useAuth } from '../../contexts/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
 

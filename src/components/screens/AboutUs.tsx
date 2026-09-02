@@ -1,9 +1,9 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { ContentImage } from '../ui/ContentImage';
 import { useIsMobile } from '../../hooks/useIsMobile';
-import { ResourceBlock } from '../blocks/ResourceBlock';
-import { NewsletterBlock } from '../blocks/NewsletterBlock';
-import { ResourcePost } from '../blocks/ResourceCard';
+import { ResourceBlock } from '../page-blocks/ResourceBlock';
+import { NewsletterBlock } from '../page-blocks/NewsletterBlock';
+import { ResourcePost } from '../page-blocks/ResourceCard';
 import { apiClient } from '../../lib/api-client';
 import {
   Heart,

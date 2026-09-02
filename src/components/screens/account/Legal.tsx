@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { FileText, CircleHelp, Info, ArrowLeft, ChevronRight, Shield, RotateCcw, CircleX } from 'lucide-react';
-import { AccountPageHeader } from '../../blocks/AccountPageHeader';
+import { AccountPageHeader } from '../../page-blocks/AccountPageHeader';
 import { useIsMobile } from '../../../hooks/useIsMobile';
 
 // ─── Font helper ──────────────────────────────────────────────

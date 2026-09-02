@@ -1,14 +1,14 @@
 import React, { useState, useEffect, lazy, Suspense } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { AuthForm } from '../AuthForm';
-import { AccountDetailsSection } from '../blocks/AccountDetailsSection';
+import { AccountDetailsSection } from '../page-blocks/AccountDetailsSection';
 import { SideNavAccount } from '../navigation/SideNavAccount';
 import { cn } from '../ui/utils';
 import { useNotifications } from '../../contexts/NotificationContext';
 import { apiClient } from '../../lib/api-client';
 import { useIsMobile } from '../../hooks/useIsMobile';
 import { validateProfile } from '../../lib/validation';
-import { AccountPageHeader } from '../blocks/AccountPageHeader';
+import { AccountPageHeader } from '../page-blocks/AccountPageHeader';
 
 // Lazy-load all account sub-screens so only the active tab loads
 const PaymentHistory = lazy(() => import('./PaymentHistory').then(m => ({ default: m.PaymentHistory })));

@@ -23,7 +23,7 @@ import { UnsavedChangesDialog } from '../ui/unsaved-changes-dialog';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '../ui/dialog';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
-import { EquipDailyEditor as DailyBuilder } from './EquipDailyEditor';
+import { DayEditor as DailyBuilder } from './DayEditor';
 import { DayContent, Activity, resolveInteraction } from '../../lib/equip-admin-types';
 import { AdminLoading } from '../admin/AdminLoading';
 

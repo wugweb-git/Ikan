@@ -3,7 +3,7 @@ import { useIsMobile } from '../../hooks/useIsMobile';
 import { useMetadata } from '../../hooks/useMetadata';
 import { cn } from '../ui/utils';
 import { Search, BookOpen, Video, Headphones, FileText, Image as ImageIcon } from 'lucide-react';
-import { ResourcePost } from '../blocks/ResourceCard';
+import { ResourcePost } from '../page-blocks/ResourceCard';
 import { apiClient } from '../../lib/api-client';
 import { logger } from '../../lib/logger';
 import { PullToRefresh } from '../ui/touch-feedback';

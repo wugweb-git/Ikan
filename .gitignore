@@ -28,3 +28,6 @@ pnpm-debug.log*
 
 # Supabase CLI local cache
 supabase/.temp/
+
+# FUSE mount artefacts
+.fuse_hidden*

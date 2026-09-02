@@ -32,9 +32,9 @@ import {
   DEFAULT_CHECKIN_CONFIG,
   type CheckInConfig,
 } from '../../lib/equip-admin-types';
-import { EquipBlockEditor } from './EquipBlockEditor';
+import { BlockEditor } from './BlockEditor';
 import { EquipLandingPageRichTextEditor } from './EquipLandingPageRichTextEditor';
-import { EquipDailyEditor as DailyBuilder } from './EquipDailyEditor';
+import { DayEditor as DailyBuilder } from './DayEditor';
 import { UnifiedBasicInfoForm } from '../admin/UnifiedBasicInfoForm';
 import { useMetadata } from '../../hooks/useMetadata';
 import { ProgramPlayer } from '../player/ProgramPlayer';

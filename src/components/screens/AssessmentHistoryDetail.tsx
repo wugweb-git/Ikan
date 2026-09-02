@@ -8,7 +8,7 @@ import { apiClient } from '../../lib/api-client';
 import { LoadingSpinner } from '../LoadingSpinner';
 import { Skeleton } from '../ui/skeleton-loader';
 import { cn } from '../ui/utils';
-import { SectionReportCard } from '../blocks/SectionReportCard';
+import { SectionReportCard } from '../player/SectionReportCard';
 import type { SectionScoreResult } from '../../lib/assessment-sections';
 
 // ── Design tokens ──

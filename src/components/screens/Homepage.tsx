@@ -12,11 +12,11 @@ import { HowItWorksSection } from './homepage/HowItWorksSection';
 import { ReviewsSection } from './homepage/ReviewsSection';
 
 // Import RECYCLED Blocks
-import { AssessmentBlock, AssessmentProgram } from '../blocks/AssessmentBlock';
-import { EquipBlock, EquipProgram } from '../blocks/EquipBlock';
-import { ResourceBlock } from '../blocks/ResourceBlock';
-import { NewsletterBlock } from '../blocks/NewsletterBlock';
-import { ResourcePost } from '../blocks/ResourceCard';
+import { AssessmentBlock, AssessmentProgram } from '../page-blocks/AssessmentBlock';
+import { EquipBlock, EquipProgram } from '../page-blocks/EquipBlock';
+import { ResourceBlock } from '../page-blocks/ResourceBlock';
+import { NewsletterBlock } from '../page-blocks/NewsletterBlock';
+import { ResourcePost } from '../page-blocks/ResourceCard';
 
 import { apiClient } from '../../lib/api-client';
 import { usePageContent } from '../../hooks/usePageContent';

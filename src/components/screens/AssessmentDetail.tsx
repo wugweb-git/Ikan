@@ -1,12 +1,12 @@
 import { useState, useEffect } from 'react';
 import { projectId } from '../../utils/supabase/info';
 import { getAuthHeaders } from '../../lib/supabase-client';
-import { AssessmentHero } from '../blocks/AssessmentHero';
-import { AssessmentBentoGrid } from '../blocks/AssessmentBentoGrid';
-import { AssessmentBlock } from '../blocks/AssessmentBlock';
-import { ResourceBlock } from '../blocks/ResourceBlock';
-import { NewsletterBlock } from '../blocks/NewsletterBlock';
-import { ResourcePost } from '../blocks/ResourceCard';
+import { AssessmentHero } from '../page-blocks/AssessmentHero';
+import { AssessmentBentoGrid } from '../page-blocks/AssessmentBentoGrid';
+import { AssessmentBlock } from '../page-blocks/AssessmentBlock';
+import { ResourceBlock } from '../page-blocks/ResourceBlock';
+import { NewsletterBlock } from '../page-blocks/NewsletterBlock';
+import { ResourcePost } from '../page-blocks/ResourceCard';
 import { MobileHeader } from '../navigation/MobileHeader';
 import { TopNavBar } from '../navigation/TopNavBar';
 import { useIsMobile } from '../../hooks/useIsMobile';

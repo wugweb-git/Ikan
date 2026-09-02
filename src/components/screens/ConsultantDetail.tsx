@@ -4,7 +4,7 @@ import { useIsMobile } from '../../hooks/useIsMobile';
 import { toast } from 'sonner';
 import { MobileHeader } from '../navigation/MobileHeader';
 import { LoadingSpinner } from '../LoadingSpinner';
-import { BookingModal } from '../blocks/BookingModal';
+import { BookingModal } from '../page-blocks/BookingModal';
 import { copyToClipboard } from '../../lib/clipboard';
 import { cn } from '../ui/utils';
 import { Star, MapPin, Clock, Video, Phone, MessageCircle, House, Globe, Check, ChevronRight, Share2, Calendar, Heart, Award, CircleCheck, Quote, ThumbsUp, Users, Play } from 'lucide-react';
