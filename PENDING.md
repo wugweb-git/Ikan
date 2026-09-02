@@ -23,10 +23,18 @@ committed and pushed to `origin/equip-carry-forward`.*
   issue" emails (Jul 20 / Jul 26 / Aug 3 are the same weekly digest re-reporting one finding, not
   three escalating ones).
 - **Leaked-password protection** → Supabase → Auth → Providers → enable HaveIBeenPwned check.
-- **Burnout has 22 real items; BAT-23 defines 23.** Still undecided — author a genuine 23rd clinical
-  item, or treat 22 as intentional (current code treats 22 as complete and correct). Not the same
-  question as the removed `burnout-q1` placeholder (2026-08-07 — that was pure dead "test" text with
-  no clinical content, unrelated to this gap). Not blocking anything.
+- **Burnout: 23 items live, one of them corrupt — do NOT "delete the duplicate".** [CORRECTED
+  2026-09-02] This was previously framed as "22 real items, BAT-23 defines 23, author a 23rd or
+  accept 22". That framing is wrong and the fix it implies is destructive. Items 9 and 10 carry
+  *identical* text, but `assessment-section-presets.ts:174-175` scores them as two **different**
+  Mental Distancing items — so `block-1773730438342`'s text was overwritten, not duplicated.
+  Deleting it would drop Mental Distancing from 5 scored items to 4 and silently bias every future
+  Burnout score. Three sources disagree on the correct text (presets say "strong aversion towards my
+  job", `daily_content` says "I struggle to find any enthusiasm for my work", `questions[]` repeats
+  the autopilot item). **Blocked on the BAT-23 instrument** — this is a text restoration, not a row
+  deletion, and not a judgement call. Max score stays 92. Not the same question as the removed
+  `burnout-q1` placeholder (2026-08-07 — pure dead "test" text, unrelated). See
+  `MASTER-PENDING-2026-09-01.md` § "Closeout pass — 2026-09-02".
 - **Wellness score (iKAN) aggregation logic** — the per-assessment scoring fixed this session (see
   "Verified fixed" below) is upstream of it, not it. Revisiting how the overall iKAN wellness score
   is computed from per-assessment results is **explicitly deferred to a later session** (confirmed

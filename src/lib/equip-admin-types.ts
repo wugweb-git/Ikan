@@ -81,12 +81,16 @@ export function resolveInteraction(activity: Activity): InteractionType {
       case 'input-table':
       case 'comparison_matrix':
       case 'comparison-matrix':
+      case 'matrix':
         return 'input-table';
       case 'structured-list':
+      case 'row_list':
+      case 'text_list':
         return 'check';
       case 'rating_scale':
       case 'rating-scale':
       case 'likert':
+      case 'scale':
         return 'rate';
       case 'clinical_instrument':
       case 'clinical-instrument':
@@ -100,6 +104,11 @@ export function resolveInteraction(activity: Activity): InteractionType {
       default:
         // Exercise with options but no subtype → select-one
         if (exerciseConfig?.options && exerciseConfig.options.length > 0) return 'select-one';
+        if (subtype) {
+          console.warn(
+            `[blocks] unmapped exercise subtype "${subtype}" on block ${activity.id} — rendering a free-text box`
+          );
+        }
         return 'write';
     }
   }
@@ -136,7 +145,17 @@ export const INTERACTION_META: Record<InteractionType, { label: string; verb: st
 };
 
 export interface ExerciseConfig {
-  subtype?: 'multi-select' | 'single-select' | 'mcq' | 'table' | 'input-table' | 'ephemeral-journal' | 'structured-list' | 'clinical_instrument' | 'rating_scale' | 'likert' | 'comparison_matrix' | 'comparison-matrix' | 'upload';
+  /**
+   * Authored subtype. Both snake_case and kebab-case spellings of the same term are
+   * present in live content, so both are declared here and mapped in resolveInteraction().
+   * 'number' has no interaction of its own yet and falls back to a free-text box.
+   */
+  subtype?: 'multi-select' | 'single-select' | 'mcq' | 'table' | 'input-table' | 'ephemeral-journal'
+    | 'structured-list' | 'row_list' | 'text_list'
+    | 'clinical_instrument' | 'clinical-instrument'
+    | 'rating_scale' | 'rating-scale' | 'likert' | 'scale'
+    | 'comparison_matrix' | 'comparison-matrix' | 'matrix'
+    | 'number' | 'upload';
   prompt?: string;
   options?: string[];
   questions?: string[]; // For clinical instruments

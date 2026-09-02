@@ -2,7 +2,9 @@
 
 Markdown mirrors of the five module survey artifacts. These are the **working log**: the artifacts are the browsable version, these are the greppable one, and they are what the mapping work reads from.
 
-Generated 2026-09-02 from read-only SQL against `kv_store_cc205da9` (project `jpfvoevxegnknxoqmwye`) and the local working tree at `equip-carry-forward @ d2ac376c`. **No writes were made and nothing was deployed.**
+Generated 2026-09-02 from read-only SQL against `kv_store_cc205da9` (project `jpfvoevxegnknxoqmwye`) and the local working tree at `equip-carry-forward @ 4423f72f`. **No writes were made and nothing was deployed.**
+
+> **Stamp correction, 2026-09-02.** The module artifacts were written against `d2ac376c` and state "7 commits unpushed". The tree has since moved to **`4423f72f`**, pushed to origin at 11:22 IST, **12 commits** ahead of `d2ac376c`. The assessments module's central defect — the preset never running — is **closed on that HEAD** by a `slugify(title)` fallback at `AssessmentFlow.tsx:289`; `mappedAssessment` still does not copy `slug`, so renaming any assessment title silently re-breaks it.
 
 | File | Module | Artifact | State |
 |---|---|---|---|
@@ -11,6 +13,7 @@ Generated 2026-09-02 from read-only SQL against `kv_store_cc205da9` (project `jp
 | `mood.md` | 3 · Mood journal | [iKan Mood Journal](https://claude.ai/code/artifact/89c27b61-925d-4acc-9ea8-cdb4feee8895) | survey pass |
 | `blocks.md` | 4 · Block system | [iKan Blocks & Builders](https://claude.ai/code/artifact/1070a012-f399-46f6-9782-e40d8373f43f) | survey pass |
 | `meta.md` | 5 · Metadata catalog | [iKan Metadata Catalog](https://claude.ai/code/artifact/21991ea3-abc9-40a2-85b6-17f1bed76618) | survey pass |
+| `taxonomy.md` | cross-module | [iKan Block Taxonomy](https://claude.ai/code/artifact/6f482a79-6bf6-4b29-9ae2-91596d94f689) | **standardisation pass — reconciliation + edit list** |
 | — | 6 · Engines | not started | scoring · rule · recommendation · wellness score |
 
 ## The section template

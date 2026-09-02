@@ -132,15 +132,15 @@ export const DEFAULT_CMS_CONTENT: { [key: string]: any } = {
             <div class="grid md:grid-cols-2 gap-4 text-gray-700">
               <div class="bg-gray-50 p-4 rounded-lg">
                 <h4 class="font-medium text-gray-900 mb-2">Encryption</h4>
-                <p class="text-sm">End-to-end encryption for all sensitive data transmission and storage.</p>
+                <p class="text-sm">Your data is sent over an encrypted connection and stored in an encrypted, access-controlled database.</p>
               </div>
               <div class="bg-gray-50 p-4 rounded-lg">
                 <h4 class="font-medium text-gray-900 mb-2">Access Control</h4>
-                <p class="text-sm">Strict access controls with multi-factor authentication for all team members.</p>
+                <p class="text-sm">Access to production data is restricted to authorised team members.</p>
               </div>
               <div class="bg-gray-50 p-4 rounded-lg">
-                <h4 class="font-medium text-gray-900 mb-2">Regular Audits</h4>
-                <p class="text-sm">Third-party security audits and compliance with healthcare data standards.</p>
+                <h4 class="font-medium text-gray-900 mb-2">Ongoing Review</h4>
+                <p class="text-sm">We review our security configuration on an ongoing basis and act on advisories from our infrastructure provider.</p>
               </div>
               <div class="bg-gray-50 p-4 rounded-lg">
                 <h4 class="font-medium text-gray-900 mb-2">Data Minimization</h4>

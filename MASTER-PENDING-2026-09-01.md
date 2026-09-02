@@ -390,3 +390,85 @@ Everything below is code and review only, except steps 2 and 3 — neither ships
 **[read]** everything else — from source reading, not runtime confirmation.
 
 **Not done, deliberately:** no live endpoint was called; no writes to Supabase; no deploy; no git commit or push; secret values were never selected (the SMTP password was confirmed by length and non-emptiness only).
+
+---
+
+# Closeout pass — 2026-09-02
+
+Five database items were authorised (`kv_backup_closeout_20260902`, 136 rows). Two were applied,
+two turned out to be non-findings, and one is now **blocked on a source document** because the
+prescribed fix would have destroyed live clinical content. Every claim below was checked against a
+live record before acting, per `GOVERNANCE.md`.
+
+## Applied
+
+| # | Change | Evidence |
+|---|---|---|
+| C-2 | **General's placeholder bands removed.** `scoring.ranges` set `null` on `assessment_def:` and `assessment:` per `general.md:41-44` ("Overall Score: NIL"). 24 questions intact on both. | verified post-write |
+| C-3 | **Privacy overclaims corrected in both places.** `cms_page:privacy` was published and overriding the code default. | all three strings now absent from KV and from `cms-defaults.ts` |
+
+Three claims were removed, not one: *"End-to-end encryption for all sensitive data transmission and
+storage"*, *"multi-factor authentication for all team members"*, and *"Third-party security audits and
+compliance with healthcare data standards"*. **The C6 correction had only ever landed on the two FAQ
+answers (`cms-defaults.ts:806,991`); the privacy page's own security block at line 135 still carried the
+original wording.** The replacement text is not from a source document — it is written to be defensible
+rather than accurate-by-citation, and **should get a legal read** before it is treated as final.
+
+## Non-findings — no write made
+
+**C-4 is wrong on both halves.**
+
+- *"10 more `day:` rows than embedded `daily_content`"* — there is nothing to compare against. All four
+  equip records carry `days: []`; days live only as standalone rows. The counts reconcile exactly:
+  8 + 33 + 33 + 31 = **105**, matching the 105 `day:` rows. Zero rows have a missing or dangling
+  `equip_id`. This is the same class of error as the 328-false-orphan and `resource → category`
+  incidents: a relation checked against the wrong entity.
+- *"`dayType` null on all 105"* — the key is absent from all 105 rows in **both** spellings
+  (`dayType` and `day_type`), so nothing was nulled out. `progress-service.ts:399` already reads
+  `day.dayType || day.day_type || 'learning'`. Assigning real day types is still worthwhile
+  (`taxonomy.md` items 8–9) but it is a content-quality improvement, not a defect.
+
+## Blocked — and the approved fix was unsafe
+
+**C-1 / §2.2 Burnout must not be actioned as written.** The plan, this document, `burnout.md:5,25`
+and `PENDING.md` §A all prescribe deleting one of items 9/10 as a duplicate. Deleting a row would
+**destroy a real BAT item** and drop Mental Distancing from 5 scored items to 4.
+
+The two ids are referenced in `assessment-section-presets.ts:174-175` as *different* items. Three
+sources disagree about which text belongs to which id:
+
+| Source | `block-…36410` | `block-…38342` |
+|---|---|---|
+| `assessment-section-presets.ts` | autopilot | "strong aversion towards my job" |
+| live `questions[]` | autopilot | **autopilot** ← the corruption |
+| live `daily_content` | "I struggle to find any enthusiasm for my work" | autopilot |
+
+Every other Mental Distancing item holds its own distinct text, so exactly one field is corrupt —
+but no two sources agree on its correct value. **Resolving this needs the BAT-23 instrument, not a
+judgement call**; picking a winner would mean authoring clinical content. Max score stays 92, not 88.
+
+## Also fixed this pass — the block render bug
+
+`taxonomy.md` item 1 flagged four authored subtypes falling through `resolveInteraction()` to a
+free-text box. **It scoped this at 9 blocks; live data says 57.** None of the 58 affected rows carries
+`options`, so every one hit `return 'write'`:
+
+| subtype | blocks | now maps to |
+|---|---|---|
+| `matrix` | 21 | `input-table` |
+| `text_list` | 21 | `check` |
+| `scale` | 14 | `rate` |
+| `row_list` | 1 | `check` |
+| `number` | 1 | *left unmapped — no numeric interaction exists; the new warning surfaces it* |
+
+`ExerciseConfig.subtype` declared 12 terms and live content uses 6 it had never heard of. `'rating-scale'`
+and `'clinical-instrument'` were **already** unreachable `TS2678` cases before this change — two of the
+long-standing 220 errors were this same bug, sitting in the switch doing nothing. The union now matches
+live content, and the default case logs the subtype and block id instead of silently degrading.
+
+Typecheck **220 → 216**. Build passes.
+
+> **Note on the numbers in this file.** Two counts corrected today: this pass found 137 results where
+> §2.6 says 133, and the block bug is 57 blocks where `taxonomy.md` says 9. Both earlier figures were
+> honest counts taken at an earlier date against a smaller dataset — but re-count before acting on any
+> figure here rather than quoting it.
