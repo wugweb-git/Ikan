@@ -4,6 +4,7 @@ import { Button } from '../ui/button';
 import { useIsMobile } from '../../hooks/useIsMobile';
 import { useNotifications } from '../../contexts/NotificationContext';
 import { useAuth } from '../../contexts/AuthContext';
+import { hasAnalyticsConsent } from '../../lib/analytics-consent';
 import { apiClient } from '../../lib/api-client';
 import { resolveImageUrl } from '../../utils/image-utils';
 import { copyToClipboard } from '../../lib/clipboard';
@@ -212,7 +213,14 @@ export function ResourceDetail({ resourceId, onBack, onNavigate, onResourceSelec
       }
 
       // Sync offline analytics
-      const offlineAnalytics = JSON.parse(localStorage.getItem('ikan-offline-analytics') || '[]');
+      // Queued events are also gated: consent can be withdrawn between capture
+      // and sync, and withdrawing it must stop the backlog going out too.
+      const offlineAnalytics = hasAnalyticsConsent(user)
+        ? JSON.parse(localStorage.getItem('ikan-offline-analytics') || '[]')
+        : [];
+      if (!hasAnalyticsConsent(user)) {
+        try { localStorage.removeItem('ikan-offline-analytics'); } catch { /* ignore */ }
+      }
       if (offlineAnalytics.length > 0) {
         for (const analyticsData of offlineAnalytics) {
           try {
@@ -645,6 +653,13 @@ export function ResourceDetail({ resourceId, onBack, onNavigate, onResourceSelec
           ...data
         }
       };
+
+      // DPDP §6: only send if the user actually consented. The Privacy screen's
+      // "Usage Analytics" toggle was previously written and never read, so these
+      // events fired whatever the user chose.
+      if (!hasAnalyticsConsent(user)) {
+        return;
+      }
 
       // Try to send analytics to backend
       await retryWithBackoff(async () => {

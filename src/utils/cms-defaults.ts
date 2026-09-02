@@ -803,7 +803,7 @@ export const DEFAULT_CMS_CONTENT: { [key: string]: any } = {
         },
         {
           question: 'Is my data private and secure on iKan?',
-          answer: 'Absolutely. All user data is encrypted and treated as highly sensitive. We follow strict privacy guidelines, and our designs are intentionally subtle so you can use the app comfortably in any setting.',
+          answer: 'Your data is treated as highly sensitive. It is sent over an encrypted connection and stored in an access-controlled database, and we follow strict privacy guidelines. Our designs are intentionally subtle so you can use the app comfortably in any setting.',
         },
         {
           question: 'What mental health assessments are available?',
@@ -988,7 +988,7 @@ export const DEFAULT_CMS_CONTENT: { [key: string]: any } = {
           { question: 'How does mood journaling work?', answer: 'The Mood Journal lets you log your mood daily with a rating, emotions, energy level, and free-text reflections.' },
         ]},
         { id: 'trust-safety', title: 'Trust, Safety & Privacy', items: [
-          { question: 'Is my data private and secure?', answer: 'Absolutely. All user data is encrypted and treated as highly sensitive. We never share your data with third parties.' },
+          { question: 'Is my data private and secure?', answer: 'Your data is treated as highly sensitive. It is sent over an encrypted connection and stored in an access-controlled database, and we never share it with third parties.' },
           { question: 'What should I do in a mental health emergency?', answer: 'Call your local emergency services (112) or the iCALL Psychosocial Helpline at 9152987821.' },
           { question: 'How are consultants verified?', answer: 'All consultants on iKan are licensed professionals. We verify their credentials and experience before they join.' },
         ]},

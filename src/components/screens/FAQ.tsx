@@ -136,7 +136,7 @@ export function FAQ({ className, onNavigate }: FAQProps) {
       items: [
         {
           question: 'Is my data private and secure?',
-          answer: 'Absolutely. All user data is encrypted and treated as highly sensitive. We follow strict privacy guidelines and never share your data with third parties. Our designs are intentionally subtle so you can use the app comfortably in any setting.',
+          answer: 'Your data is treated as highly sensitive. It is sent over an encrypted connection and stored in an access-controlled database, we follow strict privacy guidelines, and we never share it with third parties. Note that some content is cached on your own device so the app works offline — sign out on a shared device to clear it. Our designs are intentionally subtle so you can use the app comfortably in any setting.',
         },
         {
           question: 'What should I do in a mental health emergency?',

@@ -570,7 +570,7 @@ export function Assessments({ className, onNavigate }: AssessmentsProps) {
                   <Icon name="lock" size={20} className="mt-0.5" style={{ color: 'var(--color-status-success)' }} />
                   <div>
                     <h4 className="text-base font-medium">Privacy Protected</h4>
-                    <p className="text-sm" style={{ color: 'var(--color-text-muted)' }}>All responses are encrypted and stored securely.</p>
+                    <p className="text-sm" style={{ color: 'var(--color-text-muted)' }}>Your responses are sent over an encrypted connection and stored in an access-controlled database.</p>
                   </div>
                 </div>
               </div>
@@ -615,7 +615,7 @@ export function Assessments({ className, onNavigate }: AssessmentsProps) {
              },
              {
                title: "Private & Secure",
-               desc: "Your results are encrypted and strictly confidential.",
+               desc: "Your results are private to your account and never shared with third parties.",
                icon: Shield,
                color: "var(--color-status-success)",
                bg: "var(--color-status-success-light)"

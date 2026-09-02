@@ -33,7 +33,7 @@ const DEFAULT_FAQ_ITEMS = [
   {
     question: 'Is my data private and secure on iKan?',
     answer:
-      'Absolutely. All user data is encrypted and treated as highly sensitive. We follow strict privacy guidelines, and our designs are intentionally subtle so you can use the app comfortably in any setting.',
+      'Your data is treated as highly sensitive. It is sent over an encrypted connection and stored in an access-controlled database, and we follow strict privacy guidelines. Our designs are intentionally subtle so you can use the app comfortably in any setting.',
   },
   {
     question: 'What mental health assessments are available?',

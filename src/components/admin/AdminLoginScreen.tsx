@@ -269,7 +269,7 @@ export function AdminLoginScreen({ onNavigate, onLoginSuccess }: AdminLoginScree
           }}
         >
           <CircleAlert className="w-4 h-4 shrink-0" />
-          <span>Authorized personnel only. All activities are logged.</span>
+          <span>Authorized personnel only.</span>
         </div>
       </div>
     </div>

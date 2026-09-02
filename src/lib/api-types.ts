@@ -49,6 +49,8 @@ export interface UserProfile {
   emergencyContactName?: string;
   emergencyContactPhone?: string;
   emergencyContactRelationship?: string;
+  /** Consent flags. Written by the Privacy screen; read by hasAnalyticsConsent(). */
+  privacy_settings?: PrivacySettings;
   [key: string]: unknown;
 }
 
