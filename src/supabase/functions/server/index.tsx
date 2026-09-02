@@ -418,18 +418,15 @@ app.get("/users/profile", requireAuth, async (c) => {
 });
 
 // Admin Get All Users
-app.get("/admin/users", requireAuth, async (c) => {
-  try {
-    const user = c.get('user');
-    const userProfile = await kv.get(`user:${user.id}`);
-    if (!userProfile?.is_admin) return c.json({ error: 'Admin access required' }, 403);
-    
-    const users = await kv.getByPrefix('user:');
-    return c.json({ users });
-  } catch (error) {
-    return c.json({ error: 'Failed to list users' }, 500);
-  }
-});
+// REMOVED 2026-09-01: a duplicate GET /admin/users was registered here with
+// requireAuth plus an inline is_admin check. Hono matches first-registered, so
+// THIS one served every request and the richer requireAdmin handler further
+// down the file was dead code.
+//
+// Auth was not actually weaker — the inline check returns 403 the same way — but
+// having two handlers for one path meant edits landed in whichever copy the
+// author found first. The surviving handler also filters null rows and sorts by
+// created_at, which this one did not.
 
 // Update user profile
 app.put("/users/profile", requireAuth, async (c) => {

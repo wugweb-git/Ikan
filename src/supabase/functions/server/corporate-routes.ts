@@ -8,7 +8,17 @@ import * as kv from "./kv_dual_write.ts";
 // company_resources:{employer_id}      → [{ company_item_id, item_type, title, description, content_url, start_date, end_date, location, contact_info, status }]
 // daycare_providers:{employer_id}      → [{ provider_id, name, description, address, contact_information, hours_of_operation, age_ranges_served, special_programs, pricing_summary, employer_specific_notes, availability_status_summary }]
 
-const PREFIX = "/make-server-cc205da9";
+// FIXED 2026-09-01. This prepended "/make-server-cc205da9" to every route
+// below — but index.tsx already creates the app with
+// `new Hono().basePath('/make-server-cc205da9')`, so each route registered at
+// /make-server-cc205da9/make-server-cc205da9/corporate/... and nothing could
+// ever reach it.
+//
+// These were filed as dead code to delete. They are not: CorporateProgramCard
+// and account/Corporate both call /corporate/my-program, so the corporate
+// feature has been 404ing in production rather than being unused. Removing the
+// doubled prefix makes it work as intended.
+const PREFIX = "";
 
 export function registerCorporateRoutes(app: Hono) {
   const supabase = createClient(
