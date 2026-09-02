@@ -252,7 +252,7 @@ export const METADATA_CATALOG_ITEMS: SeedItem[] = [
   s('Checklist',   'block_type', 'checklist',   { icon: 'list-checks', description: 'Task checklist block' }),
   s('Reflection',  'block_type', 'reflection',  { icon: 'brain',       description: 'Guided reflection prompt' }),
   s('Conclude',    'block_type', 'conclude',    { icon: 'flag',        description: 'Session conclusion / summary' }),
-  s('Sleep Diary', 'block_type', 'sleep-diary', { icon: 'moon',        description: 'Sleep tracking diary entry' }),
+  s('Quiz',        'block_type', 'quiz',        { icon: 'circle-check', description: 'Knowledge check with scoring' }),
 
   // ── Difficulty Levels ─────────────────────────────────────────
   s('Beginner',     'difficulty_level', 'beginner',     { icon: 'signal',       color: '#22C55E' }),
@@ -410,6 +410,7 @@ export const METADATA_CATALOG_ITEMS: SeedItem[] = [
   s('File Upload',         'exercise_subtype', 'upload',              { icon: 'image',              description: 'User uploads a file (document, image, audio)' }),
   s('Ephemeral Journal',   'exercise_subtype', 'ephemeral-journal',   { icon: 'notebook',           description: 'Session-scoped journal not persisted long-term. Selectable in editor.' }),
   s('Comparison Matrix',   'exercise_subtype', 'comparison-matrix',   { icon: 'layout-grid',        description: 'Side-by-side comparison table. Alias for input-table with comparison layout.' }),
+  s('Number',              'exercise_subtype', 'number',              { icon: 'hash',               description: 'Single numeric value entry' }),
 
   // ── Check-in Block Types (widget types for check-in flow steps) ─
   s('Emoji Scale',   'checkin_block_type', 'emoji-scale',   { icon: 'smile',               description: 'User picks from emoji options representing mood, energy, etc.' }),
