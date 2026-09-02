@@ -3277,12 +3277,23 @@ app.get("/settings", async (c) => {
 });
 
 // Update site settings — admin only
+// FIXED 2026-09-01. This wrote `kv.set('settings:site', body)` — a full
+// overwrite — while PUT /admin/settings merges into the same key. Two routes,
+// one record, opposite semantics. A partial payload here destroyed every field
+// it omitted, all 51 of them, including smtpUser/smtpHost and every CMS-backed
+// contact detail.
+//
+// Nothing calls it (api-client only GETs /settings), so this was a loaded gun
+// rather than an active bug. Now merges identically to /admin/settings, so it
+// no longer matters which of the two a future caller reaches for.
 app.put("/settings", requireAdmin, async (c) => {
   try {
     const body = await c.req.json();
-    await kv.set('settings:site', body);
-    console.log('⚙️ Updated site settings');
-    return c.json({ success: true, settings: body });
+    const existing = await kv.get('settings:site') || {};
+    const merged = { ...existing, ...body, updated_at: new Date().toISOString() };
+    await kv.set('settings:site', merged);
+    console.log('⚙️ Updated site settings (merge)');
+    return c.json({ success: true, settings: merged });
   } catch (error) {
     console.error('Update settings error:', error);
     return c.json({ error: 'Failed to update settings' }, 500);
