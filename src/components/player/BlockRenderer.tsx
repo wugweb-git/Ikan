@@ -339,6 +339,18 @@ export function BlockRenderer({ block, value, onChange, readOnly = false, equipI
         {items.map((item, index) => {
           const isChecked = currentValues.includes(item);
           return (
+            // FIXED 2026-09-01 (a11y). This row was a motion.div with onClick, a
+            // styled <div> standing in for the checkbox, and a <Label htmlFor=
+            // "check-..."> pointing at an id that did not exist. There was no
+            // input element at all, so the control was unreachable by keyboard
+            // and announced nothing to a screen reader — a checklist exercise
+            // simply could not be completed without a mouse.
+            //
+            // Now uses the same real <Checkbox> + matching id the multi-select
+            // block above already uses, keeping the round tick and strike-through
+            // styling. The row's onClick is retained for the click-anywhere
+            // affordance; it is idempotent with onCheckedChange because both
+            // derive from the same currentValues snapshot within one event.
             <motion.div 
               key={index} 
               initial={{ opacity: 0, x: -10 }}
@@ -351,14 +363,19 @@ export function BlockRenderer({ block, value, onChange, readOnly = false, equipI
               style={{ borderRadius: 'var(--radius-md)' }}
               onClick={() => !readOnly && toggleValue(item)}
             >
-              <div className={cn(
-                "w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors",
-                isChecked ? "text-white" : ""
-              )}
-              style={isChecked ? { borderColor: 'var(--color-status-success)', backgroundColor: 'var(--color-status-success)' } : { borderColor: 'var(--color-border-default)' }}
-              >
-                 {isChecked && <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>}
-              </div>
+              <Checkbox
+                id={`check-${block.id}-${index}`}
+                checked={isChecked}
+                onCheckedChange={() => !readOnly && toggleValue(item)}
+                disabled={readOnly}
+                className={cn(
+                  "w-6 h-6 rounded-full border-2 shrink-0",
+                  "data-[state=checked]:bg-[var(--color-status-success)]",
+                  "data-[state=checked]:border-[var(--color-status-success)]",
+                  "data-[state=checked]:text-white",
+                  "border-[var(--color-border-default)]"
+                )}
+              />
               <Label 
                 htmlFor={`check-${block.id}-${index}`} 
                 className={cn(
