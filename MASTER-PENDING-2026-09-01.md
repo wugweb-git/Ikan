@@ -480,3 +480,11 @@ Typecheck **220 → 216**. Build passes.
 > §2.6 says 133, and the block bug is 11 live blocks where `blocks.md` (formerly `taxonomy.md`, folded in 2a7f9c9f) says 9. Both earlier figures were
 > honest counts taken at an earlier date against a smaller dataset — but re-count before acting on any
 > figure here rather than quoting it.
+
+---
+
+> **This file stops here.** A further pass the same day — two handoffs plus a 20-item bug brief
+> — shipped the block census baseline, the catalog reconciliation, and 17 code and data fixes
+> (`9251d21a` … `a33ebb4d`). It is recorded in **`PENDING.md` § "Bug-brief pass — 2026-09-02"**,
+> not here, because that is the file kept current per deploy. Do not treat the sections above as
+> the live backlog.
