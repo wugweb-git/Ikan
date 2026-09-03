@@ -1,3 +1,13 @@
+// ⚠️ NOT DEPLOYED. Verified 2026-09-03: Vite's publicDir is the project-root
+// `public/`, which contains no sw.js, so this file is never copied into dist.
+// `https://ikanhealth.in/sw.js` returns the SPA HTML with a 200 — the worker
+// has never installed in production. The root `index.html` (Vite's entry)
+// registers no worker either; the registration lives in `src/index.html`,
+// which is likewise not the file Vite builds.
+//
+// Wire it up or delete it. Leaving it here reads as live caching behaviour
+// that does not exist, and this session lost time diagnosing a cache-poisoning
+// path through code that never runs.
 // Service Worker for iKan Mental Health PWA
 /**
  * Cache names carry a version. `activate` deletes every cache whose name is not
