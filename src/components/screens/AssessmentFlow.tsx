@@ -427,20 +427,38 @@ export function AssessmentFlow({
       // Rules match on the assessment's CATEGORY slug. This used to pass
       // `assessment.id` as the first argument, which was then lower-cased and
       // compared against a rule's category — an `asm_…` id never matches one.
+      /**
+       * Report the spec's own overall, not the legacy flat sum.
+       *
+       * These are two different numbers whenever a profile does not band in
+       * raw-sum space. Burnout's bands are 1-5 means; its legacy sum was
+       * 60/115. The result showed four "Low" bands and a mean of 2.61 while
+       * the engine was handed 60, found no band, and fell through to a 52%
+       * guess reading "Some areas need attention". One result, two numbers.
+       */
+      const specOverall = sectionScores?.overall;
+      const reportedScore = specOverall ? specOverall.value : score;
+      const reportedMax = specOverall ? specOverall.max : maxScore;
+
       const recommendation = evaluateAssessment({
         slug: (assessment as any).slug,
         category: (assessment as any).category,
-        score,
-        maxScore,
-        scoringProfileId: (assessment as any).scoring_profile_id || (assessment as any).scoringProfileId,
+        score: reportedScore,
+        maxScore: reportedMax,
+        // The severity from the band the user is actually shown, so the
+        // recommendation cannot disagree with the result. `scoring_profile_id`
+        // is deliberately not passed: re-deriving from it needs the score and
+        // the bands to be in the same units, which is the assumption that
+        // broke here.
+        severityLevel: (specOverall?.band as any)?.severity_ref ?? null,
       });
 
       // Construct Results Object
       results = {
         assessmentId: assessment.id,
         assessmentTitle: assessment.title,
-        score,
-        maxScore,
+        score: reportedScore,
+        maxScore: reportedMax,
         interpretation: {
           label: interpretation.label,
           description: interpretation.interpretation,
@@ -479,10 +497,10 @@ export function AssessmentFlow({
                 assessment.id,
                 responses,
                 'completed',
-                score,
+                reportedScore,
                 interpretation,
                 interpretation.label,
-                maxScore,
+                reportedMax,
                 sectionScores.sectioned ? sectionScores : undefined,
                 assessment.slug,
                 // The full engine result. Without this the stored record keeps
@@ -504,8 +522,8 @@ export function AssessmentFlow({
                  assessmentId: assessment.id,
                  responses,
                  status: 'completed',
-                 score,
-                 maxScore,
+                 score: reportedScore,
+                 maxScore: reportedMax,
                  interpretation,
                  severityHint: interpretation.label,
                  sectionScores: sectionScores.sectioned ? sectionScores : undefined,
@@ -521,8 +539,8 @@ export function AssessmentFlow({
               assessmentId: assessment.id,
               responses,
               status: 'completed',
-              score,
-              maxScore,
+              score: reportedScore,
+              maxScore: reportedMax,
               interpretation,
               severityHint: interpretation.label,
               sectionScores: sectionScores.sectioned ? sectionScores : undefined,

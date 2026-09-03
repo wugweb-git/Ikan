@@ -231,7 +231,16 @@ export function toSectionScoreResult(results: ScoreResult[]): {
     complete: r.complete,
     // Absent when the score is unbanded or invalid — the report card renders
     // "Not banded" rather than inventing a label.
-    band: r.band ? { min: r.band.min, max: r.band.max, label: r.band.label, description: r.band.interpretation } : undefined,
+    // severity_ref is carried, not dropped. It is the clinical term the
+    // recommendation engine matches on; discarding it here forced the engine
+    // to re-derive severity from a profile id and a score, which is how a
+    // Burnout mean of 2.61 got looked up as 60 against 1-5 bands and resolved
+    // to null.
+    band: r.band
+      ? { min: r.band.min, max: r.band.max, label: r.band.label,
+          description: r.band.interpretation, severity_ref: r.band.severity_ref }
+      : undefined,
+    severity: r.severity,
   });
 
   if (results.length === 0) return { sectioned: false, sections: [] };

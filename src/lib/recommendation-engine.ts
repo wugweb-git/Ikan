@@ -508,6 +508,18 @@ export interface EvaluateInput {
   category?: string;
   score: number;
   maxScore: number;
+  /**
+   * Clinical severity already resolved by `computeScores` from the band the
+   * score actually fell in. Prefer this: it is the same band the user is
+   * shown, so the recommendation cannot disagree with the result.
+   */
+  severityLevel?: ClinicalSeverity | null;
+  /**
+   * @deprecated Re-derives severity from a profile id and a raw score. Those
+   * two are only in the same units when the profile bands happen to be in
+   * raw-sum space — true for Sleep, false for Burnout, whose bands are 1-5
+   * means. Pass `severityLevel` instead.
+   */
   scoringProfileId?: string;
 }
 
@@ -528,14 +540,27 @@ export function evaluateAssessment(input: EvaluateInput): EngineResult {
    * in which case no rule can match, rather than a severity being invented.
    */
   const severityLevel: ClinicalSeverity | null =
-    scoringProfileId ? getSeverityFromProfile(score, scoringProfileId) : null;
+    input.severityLevel ?? (scoringProfileId ? getSeverityFromProfile(score, scoringProfileId) : null);
 
   /**
    * Response tier — what copy and tone branch on. Derived from the clinical
    * severity when there is one; otherwise the legacy percentage bands, so an
    * assessment without a spec still renders something.
    */
-  const tier: ResponseTier = severityLevel ? tierFor(severityLevel) : getSeverity(score, maxScore);
+  /**
+   * Tone only. Every assessment carries a spec now, so a null severity means
+   * something upstream failed — the old `getSeverity(score, maxScore)`
+   * percentage fallback hid exactly that, turning a Burnout result whose four
+   * bands all read "Low" into "Some areas need attention" from a 52% guess.
+   * Default to the lowest tier and say so, rather than inventing a level.
+   */
+  const tier: ResponseTier = severityLevel ? tierFor(severityLevel) : 'low';
+  if (!severityLevel) {
+    console.warn(
+      `[RecommendationEngine] No clinical severity resolved for "${category ?? slug ?? 'unknown'}" — ` +
+      `no rule can match and no copy will be shown. Expected only where an assessment has no overall score.`
+    );
+  }
   const rule = config.rules[tier] || DEFAULT_RECOMMENDATION_RULES[tier];
 
   // ── Admin rules ─────────────────────────────────────────────────
