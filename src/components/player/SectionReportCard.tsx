@@ -1,6 +1,7 @@
 import { motion } from 'framer-motion';
 import type { SectionScore, SectionScoreResult } from '../../lib/assessment-sections';
 import { severityForSection } from '../../lib/assessment-sections';
+import { severityPresentation, tierPresentation } from '../../lib/severity-presentation';
 
 /**
  * Per-scale breakdown for assessments that bundle several instruments.
@@ -10,11 +11,16 @@ import { severityForSection } from '../../lib/assessment-sections';
  * risk index).
  */
 
-const SEVERITY_COLOR: Record<string, string> = {
-  low: 'var(--color-status-success)',
-  moderate: 'var(--color-status-warning)',
-  high: 'var(--color-status-danger)',
-};
+/**
+ * Colour for a scale, from the strongest thing available.
+ *
+ * The band's own `severity_ref` first: that is the clinical term the
+ * instrument's author assigned to this range, and it is what the rules matched
+ * on, so using it keeps the colour and the recommendation in agreement.
+ * `severityForSection` is the fallback — it derives a coarse tier from the
+ * percentage, which is fine for a scale that declares no band but disagrees
+ * with the instrument wherever the bands are unevenly spaced.
+ */
 
 /** Inline style helper matching the convention used across the results screens. */
 const f = (size: string, weight = 400, color = 'var(--color-text-primary)') => ({
@@ -25,7 +31,10 @@ const f = (size: string, weight = 400, color = 'var(--color-text-primary)') => (
 });
 
 function sectionColor(section: SectionScore): string {
-  return SEVERITY_COLOR[severityForSection(section)] ?? 'var(--color-primary-default)';
+  const ref = (section as any)?.band?.severity_ref;
+  const declared = severityPresentation(ref);
+  if (declared.severity) return declared.color;
+  return tierPresentation(severityForSection(section)).color;
 }
 
 /** Score formatted for its scale: means get a decimal, sums stay whole. */

@@ -526,12 +526,12 @@ export function Dashboard({ className, onNavigate }: DashboardProps) {
 
                 const iconBg = isAssessment ? 'var(--color-status-info-light)'
                   : (isProgram || isCompleted) ? 'var(--color-accent-default)'
-                  : isResource ? 'rgba(124,58,237,0.1)'
+                  : isResource ? 'var(--color-viz-purple-light)'
                   : isMood ? 'var(--color-status-success-light)'
                   : 'var(--color-bg-muted)';
                 const iconColor = isAssessment ? 'var(--color-status-info)'
                   : (isProgram || isCompleted) ? 'var(--color-primary-default)'
-                  : isResource ? '#7C3AED'
+                  : isResource ? 'var(--color-viz-purple)'
                   : isMood ? 'var(--color-status-success)'
                   : 'var(--color-text-muted)';
                 const IconComp = isAssessment ? BarChart3
@@ -650,8 +650,8 @@ export function Dashboard({ className, onNavigate }: DashboardProps) {
                 cursor: 'pointer',
                 overflow: 'hidden',
                 // Colour comes from one place, in tokens. These were six raw
-                // hex stops and three rgba() literals duplicating the tier ->
-                // colour mapping that four other files also had a copy of.
+                // hex stops and three translucent literals duplicating the
+                // tier -> colour map that four other files also had a copy of.
                 border: `1px solid ${engineResult ? tierPresentation(engineResult.tier).background : 'var(--color-border-default)'}`,
                 background: engineResult ? tierPresentation(engineResult.tier).gradient : 'var(--color-bg-card)',
               }}
@@ -712,10 +712,10 @@ export function Dashboard({ className, onNavigate }: DashboardProps) {
               onClick={() => onNavigate?.('/equip')}
               whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.98 }}
               style={{
-                background: publicSettings.exploreCardProgramsImage ? 'none' : 'linear-gradient(135deg, #F5F3FF 0%, #EDE9FE 50%, #DDD6FE 100%)',
+                background: publicSettings.exploreCardProgramsImage ? 'none' : 'linear-gradient(135deg, color-mix(in srgb, var(--color-viz-purple) 4%, var(--color-bg-card)) 0%, var(--color-viz-purple-light) 50%, color-mix(in srgb, var(--color-viz-purple) 22%, var(--color-bg-card)) 100%)',
                 borderRadius: 'var(--radius-lg)',
                 boxShadow: 'var(--shadow-sm)',
-                border: publicSettings.exploreCardProgramsImage ? '1px solid var(--color-border-default)' : '1px solid #DDD6FE',
+                border: publicSettings.exploreCardProgramsImage ? '1px solid var(--color-border-default)' : '1px solid color-mix(in srgb, var(--color-viz-purple) 22%, var(--color-bg-card))',
                 cursor: 'pointer',
                 textAlign: 'center' as const,
                 position: 'relative',
@@ -739,9 +739,9 @@ export function Dashboard({ className, onNavigate }: DashboardProps) {
                 </>
               ) : (
                 <>
-                  <div style={{ position: 'absolute', top: -20, right: -20, width: 80, height: 80, borderRadius: '50%', background: 'rgba(124,58,237,0.06)' }} />
+                  <div style={{ position: 'absolute', top: -20, right: -20, width: 80, height: 80, borderRadius: '50%', background: 'color-mix(in srgb, var(--color-viz-purple) 8%, transparent)' }} />
                   <div style={{ position: 'relative', zIndex: 1 }}>
-                    <div style={{ width: 52, height: 52, borderRadius: 16, backgroundColor: 'rgba(124,58,237,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 12px', color: '#7C3AED' }}>
+                    <div style={{ width: 52, height: 52, borderRadius: 16, backgroundColor: 'var(--color-viz-purple-light)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 12px', color: 'var(--color-viz-purple)' }}>
                       <Brain size={24} />
                     </div>
                     <h3 style={{ ...f('sm', 500), margin: 0 }}>Programs</h3>
@@ -756,10 +756,10 @@ export function Dashboard({ className, onNavigate }: DashboardProps) {
               onClick={() => onNavigate?.('/assessment')}
               whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.98 }}
               style={{
-                background: publicSettings.exploreCardAssessmentsImage ? 'none' : 'linear-gradient(135deg, #F0F9FF 0%, #E0F2FE 50%, #BAE6FD 100%)',
+                background: publicSettings.exploreCardAssessmentsImage ? 'none' : 'linear-gradient(135deg, color-mix(in srgb, var(--color-viz-blue) 4%, var(--color-bg-card)) 0%, var(--color-viz-blue-light) 50%, color-mix(in srgb, var(--color-viz-blue) 22%, var(--color-bg-card)) 100%)',
                 borderRadius: 'var(--radius-lg)',
                 boxShadow: 'var(--shadow-sm)',
-                border: publicSettings.exploreCardAssessmentsImage ? '1px solid var(--color-border-default)' : '1px solid #BAE6FD',
+                border: publicSettings.exploreCardAssessmentsImage ? '1px solid var(--color-border-default)' : '1px solid color-mix(in srgb, var(--color-viz-blue) 22%, var(--color-bg-card))',
                 cursor: 'pointer',
                 textAlign: 'center' as const,
                 position: 'relative',
@@ -783,9 +783,9 @@ export function Dashboard({ className, onNavigate }: DashboardProps) {
                 </>
               ) : (
                 <>
-                  <div style={{ position: 'absolute', top: -20, right: -20, width: 80, height: 80, borderRadius: '50%', background: 'rgba(14,165,233,0.06)' }} />
+                  <div style={{ position: 'absolute', top: -20, right: -20, width: 80, height: 80, borderRadius: '50%', background: 'color-mix(in srgb, var(--color-viz-blue) 8%, transparent)' }} />
                   <div style={{ position: 'relative', zIndex: 1 }}>
-                    <div style={{ width: 52, height: 52, borderRadius: 16, backgroundColor: 'rgba(14,165,233,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 12px', color: '#0EA5E9' }}>
+                    <div style={{ width: 52, height: 52, borderRadius: 16, backgroundColor: 'var(--color-viz-blue-light)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 12px', color: 'var(--color-viz-blue)' }}>
                       <Compass size={24} />
                     </div>
                     <h3 style={{ ...f('sm', 500), margin: 0 }}>Assessments</h3>

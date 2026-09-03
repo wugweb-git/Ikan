@@ -19,6 +19,7 @@ import {
   PenLine,
 } from 'lucide-react';
 import type { EngineResult, ResponseTier } from '../lib/recommendation-engine';
+import { tierPresentation } from '../lib/severity-presentation';
 
 interface RecommendationCardsProps {
   engineResult: EngineResult;
@@ -26,33 +27,37 @@ interface RecommendationCardsProps {
   className?: string;
 }
 
+/**
+ * Tier -> presentation. Colour and gradient come from `tierPresentation`; only
+ * the label and the icon are this file's own, because they are copy.
+ *
+ * The six raw hex gradient stops that used to live here were a fifth private
+ * copy of the tier colour map, and they drifted: `#FBE9E7` is a deep-orange
+ * tint, not the danger red the `color` beside it resolved to.
+ */
 const SEVERITY_CONFIG: Record<ResponseTier, {
-  color: string; bg: string; label: string; icon: React.ReactNode;
-  gradientFrom: string; gradientTo: string;
+  color: string; bg: string; label: string; icon: React.ReactNode; gradient: string;
 }> = {
   low: {
-    color: 'var(--color-status-success)',
-    bg: 'var(--color-status-success-light)',
+    color: tierPresentation('low').color,
+    bg: tierPresentation('low').background,
     label: 'You\'re doing well',
     icon: <TrendingUp size={18} />,
-    gradientFrom: '#E8F5E9',
-    gradientTo: '#C8E6C9',
+    gradient: tierPresentation('low').gradient,
   },
   moderate: {
-    color: 'var(--color-status-warning)',
-    bg: 'var(--color-status-warning-light)',
+    color: tierPresentation('moderate').color,
+    bg: tierPresentation('moderate').background,
     label: 'Room to grow',
     icon: <Lightbulb size={18} />,
-    gradientFrom: '#FFF8E1',
-    gradientTo: '#FFECB3',
+    gradient: tierPresentation('moderate').gradient,
   },
   high: {
-    color: 'var(--color-status-danger)',
-    bg: 'var(--color-status-danger-light)',
+    color: tierPresentation('high').color,
+    bg: tierPresentation('high').background,
     label: 'Needs attention',
     icon: <Shield size={18} />,
-    gradientFrom: '#FBE9E7',
-    gradientTo: '#FFCCBC',
+    gradient: tierPresentation('high').gradient,
   },
 };
 
@@ -171,7 +176,7 @@ function SeverityCard({ engineResult, config }: { engineResult: EngineResult; co
   return (
     <div
       style={{
-        background: `linear-gradient(135deg, ${config.gradientFrom} 0%, ${config.gradientTo} 100%)`,
+        background: config.gradient,
         borderRadius: 'var(--radius-lg)',
         padding: '20px',
         fontFamily: 'var(--font-family-base)',

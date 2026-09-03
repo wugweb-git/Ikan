@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { isProgramCheckIn } from '../../lib/assessment-record';
+import { severityPresentation, severityOfResult } from '../../lib/severity-presentation';
 import { motion } from 'framer-motion';
 import { ArrowLeft, BarChart3, Smile, Play, Activity, Check, Heart, Calendar, TrendingUp, ChevronRight } from 'lucide-react';
 import { apiClient } from '../../lib/api-client';
@@ -45,10 +46,11 @@ function getEventIcon(type: string) {
 
 function getEventColors(type: string, severity?: string) {
   if (type === 'assessment' && severity) {
-    return {
-      bg: severity === 'low' ? 'var(--color-status-success-light)' : severity === 'moderate' ? 'var(--color-status-warning-light)' : 'var(--color-status-danger-light)',
-      fg: severity === 'low' ? 'var(--color-status-success)' : severity === 'moderate' ? 'var(--color-status-warning)' : 'var(--color-status-danger)',
-    };
+    // One map, on the 5-term clinical vocabulary. The ternary pair this
+    // replaces spoke the retired 3 terms with no else-branch but danger, so
+    // `minimal` and `mild` — the two reassuring results — rendered red.
+    const p = severityPresentation(severity);
+    return { bg: p.background, fg: p.color };
   }
   switch (type) {
     case 'mood': return { bg: 'var(--color-status-success-light)', fg: 'var(--color-status-success)' };
@@ -136,8 +138,25 @@ export function WellnessTimeline({ onNavigate }: WellnessTimelineProps) {
             // Skip check-ins
             if (isProgramCheckIn(r)) continue;
             
-            const maxScore = r.max_score || r.maxScore || assessmentMaxScoreMap?.get(id) || 100;
-            const severity = r.score <= maxScore * 0.33 ? 'low' : r.score <= maxScore * 0.66 ? 'moderate' : 'high';
+            /**
+             * Denominator from the record, or none.
+             *
+             * `|| 100` was the hardcoded fallback that made a Stress result of
+             * 20/28 read as 20%. The history endpoint now enriches `max_score`
+             * from the definition, so the local map below is a fourth
+             * computation of a number the server already resolved; it is kept
+             * only as a last resort and no longer invents one.
+             */
+            const resolvedMax = r.max_score || r.maxScore || assessmentMaxScoreMap?.get(id) || null;
+            /**
+             * Severity is the band the score actually fell in — the same band
+             * the user was shown on their result. It used to be re-derived here
+             * from a 33/66 split of the percentage, which is a fourth scoring
+             * path and disagreed with the result page whenever the instrument's
+             * own bands were not evenly spaced. Null renders no badge rather
+             * than a guess.
+             */
+            const severity = severityOfResult(r) ?? undefined;
             const rawName = r.assessment_name || r.assessmentName || r.title || id;
             const name = resolveAssessmentName(id, rawName);
 
@@ -145,13 +164,15 @@ export function WellnessTimeline({ onNavigate }: WellnessTimelineProps) {
               id: r.id || `assessment-${Date.now()}-${Math.random()}`,
               type: 'assessment',
               title: name,
-              detail: `${maxScore > 0 ? Math.round((r.score / maxScore) * 100) : 0}% (${r.score}/${maxScore})`,
+              detail: resolvedMax
+                ? `${Math.round((r.score / resolvedMax) * 100)}% (${r.score}/${resolvedMax})`
+                : `Score ${r.score}`,
               date: r.completed_at || r.created_at || '',
               ts: new Date(r.completed_at || r.created_at || 0).getTime(),
               route: '/assessment',
               severity,
               score: r.score,
-              maxScore,
+              maxScore: resolvedMax ?? undefined,
             });
           }
         }

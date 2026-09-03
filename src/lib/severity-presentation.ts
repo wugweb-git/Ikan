@@ -35,6 +35,12 @@ export interface SeverityPresentation {
   background: string;
   /** Coarse tone, for callers that only need three states. */
   tone: 'success' | 'warning' | 'danger' | 'neutral';
+  /**
+   * Icon key for `<Icon name=…>`. Part of the presentation because the five
+   * call sites picked their own and two of them disagreed about which way up
+   * the scale ran — one showed a rising arrow for `severe`.
+   */
+  icon: string;
 }
 
 const LABELS: Record<SeverityLevel, string> = {
@@ -45,12 +51,12 @@ const LABELS: Record<SeverityLevel, string> = {
   severe: 'Severe',
 };
 
-const TOKENS: Record<SeverityLevel, { color: string; background: string; tone: SeverityPresentation['tone'] }> = {
-  minimal: { color: 'var(--color-status-success)', background: 'var(--color-status-success-light)', tone: 'success' },
-  mild: { color: 'var(--color-status-info)', background: 'var(--color-info-light)', tone: 'success' },
-  moderate: { color: 'var(--color-status-warning)', background: 'var(--color-status-warning-light)', tone: 'warning' },
-  'moderately-severe': { color: 'var(--color-status-warning)', background: 'var(--color-status-warning-light)', tone: 'warning' },
-  severe: { color: 'var(--color-status-danger)', background: 'var(--color-status-danger-light)', tone: 'danger' },
+const TOKENS: Record<SeverityLevel, Omit<SeverityPresentation, 'severity' | 'label'>> = {
+  minimal: { color: 'var(--color-status-success)', background: 'var(--color-status-success-light)', tone: 'success', icon: 'checkCircle' },
+  mild: { color: 'var(--color-status-info)', background: 'var(--color-status-info-light)', tone: 'success', icon: 'checkCircle' },
+  moderate: { color: 'var(--color-status-warning)', background: 'var(--color-status-warning-light)', tone: 'warning', icon: 'info' },
+  'moderately-severe': { color: 'var(--color-status-warning)', background: 'var(--color-status-warning-light)', tone: 'warning', icon: 'info' },
+  severe: { color: 'var(--color-status-danger)', background: 'var(--color-status-danger-light)', tone: 'danger', icon: 'warning' },
 };
 
 /**
@@ -66,6 +72,7 @@ const UNRESOLVED: SeverityPresentation = {
   color: 'var(--color-text-muted)',
   background: 'var(--color-bg-muted)',
   tone: 'neutral',
+  icon: 'clipboard',
 };
 
 /**
@@ -89,6 +96,7 @@ export function severityPresentation(
     color: fromCatalog || base.color,
     background: fromCatalog ? `color-mix(in srgb, ${fromCatalog} 15%, transparent)` : base.background,
     tone: base.tone,
+    icon: base.icon,
   };
 }
 

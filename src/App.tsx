@@ -74,7 +74,6 @@ const ResetPassword = lazy(() => lazyRetry(() => import('./components/screens/Re
 
 // Assessment screens
 const Assessments = lazy(() => lazyRetry(() => import('./components/screens/Assessments').then(m => ({ default: m.Assessments })), 'Assessments'));
-const AssessmentLandingNew = lazy(() => lazyRetry(() => import('./components/screens/AssessmentLandingNew').then(m => ({ default: m.AssessmentLandingNew })), 'AssessmentLandingNew'));
 const AssessmentDetail = lazy(() => lazyRetry(() => import('./components/screens/AssessmentDetail').then(m => ({ default: m.AssessmentDetail })), 'AssessmentDetail'));
 const AssessmentFlow = lazy(() => lazyRetry(() => import('./components/screens/AssessmentFlow').then(m => ({ default: m.AssessmentFlow })), 'AssessmentFlow'));
 const AssessmentResults = lazy(() => lazyRetry(() => import('./components/screens/AssessmentResults').then(m => ({ default: m.AssessmentResults })), 'AssessmentResults'));
@@ -573,7 +572,18 @@ function AppContent() {
         case '/assessment':
           return withSuspense(<Assessments onNavigate={handleNavigate} />);
         case '/assessment-landing':
-          return withSuspense(<AssessmentLandingNew onNavigate={handleNavigate} />);
+          /**
+           * Same screen as `/assessment-detail`, same params.
+           *
+           * `AssessmentLandingNew` used to render here: a static object with
+           * a hardcoded anxiety title, `'5 minutes'`, `'10 questions'` and an
+           * instruction promising "You can pause and resume the assessment
+           * later" at a time when no draft could be saved at all. It took no
+           * id, so it could never show any assessment but the one typed into
+           * it. Nothing in the app linked to this route; it stays mapped only
+           * so an existing bookmark still lands somewhere real.
+           */
+          return withSuspense(<AssessmentDetail assessmentId={assessmentSlug || queryParams.id || queryParams.type} onNavigate={handleNavigate} />);
         case '/assessment-detail':
           return withSuspense(<AssessmentDetail assessmentId={assessmentSlug || queryParams.id || queryParams.type} onNavigate={handleNavigate} />);
         case '/assessment-flow':

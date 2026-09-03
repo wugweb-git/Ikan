@@ -1,6 +1,5 @@
 import { useEffect, useState, useMemo } from 'react';
-import { motion } from 'framer-motion';
-import { Card, CardContent } from '../ui/card';
+import { motion, useReducedMotion } from 'framer-motion';
 import { Button } from '../ui/button';
 import { Icon } from '../Icon';
 import { cn } from '../ui/utils';
@@ -9,7 +8,17 @@ import { apiClient } from '../../lib/api-client';
 import { ContentImage } from '../ui/ContentImage';
 import { ArrowRight } from 'lucide-react';
 import { SectionReportCard } from '../player/SectionReportCard';
+import { AssessmentCard } from '../assessment/AssessmentCard';
+import { severityPresentation, severityOfResult } from '../../lib/severity-presentation';
 import type { SectionScoreResult } from '../../lib/assessment-sections';
+
+/** Inline style helper, matching the convention across the results screens. */
+const f = (size: string, weight = 400, color = 'var(--color-text-primary)') => ({
+  fontFamily: 'var(--font-family-base)',
+  fontSize: `var(--text-${size})`,
+  fontWeight: weight,
+  color,
+});
 
 interface AssessmentResultsProps {
   /**
@@ -34,10 +43,15 @@ export function AssessmentResults({
   onNavigate, onReturnToDashboard, onRetake, className 
 }: AssessmentResultsProps) {
   
+  const reduceMotion = useReducedMotion();
   const [hydratedData, setHydratedData] = useState<any>(null);
   const [loadingRecord, setLoadingRecord] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [programDetails, setProgramDetails] = useState<any>(null);
+  /** The assessment record, for the result header and the context line. */
+  const [assessmentDef, setAssessmentDef] = useState<any>(null);
+  /** Records for the adjacent programmes, so a card can show a real name. */
+  const [relatedDetails, setRelatedDetails] = useState<any[]>([]);
 
   /**
    * Resolve the result id this screen is showing.
@@ -123,6 +137,8 @@ export function AssessmentResults({
      * Sleep"), not a severity term — the two are different fields.
      */
     interpretation: hydratedData?.interpretation as { label?: string; description?: string } | undefined,
+    /** ISO timestamp off the stored record. Hydrated already; never was shown. */
+    completedAt: hydratedData?.completedAt as string | undefined,
   };
 
   const primaryProgramId = activeData.recommendation?.primaryAction?.type === 'equip_program'
@@ -147,6 +163,56 @@ export function AssessmentResults({
     })();
     return () => { cancelled = true; };
   }, [primaryProgramId]);
+
+  /**
+   * The assessment this result is of.
+   *
+   * Nothing on the page used to say. That was survivable while the only way
+   * here was straight out of the flow — the user knew what they had just
+   * answered — but a result is addressable by `?id=` now. Opened tomorrow, or
+   * sent to someone, the page was a number with no subject: no instrument
+   * name, no date, no description of what was measured, while `completed_at`
+   * sat hydrated and unrendered.
+   */
+  const activeAssessmentId = assessmentId || hydratedData?.assessmentId;
+  useEffect(() => {
+    if (!activeAssessmentId) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const def = await apiClient.getAssessment(activeAssessmentId);
+        if (def && !cancelled) setAssessmentDef(def);
+      } catch { /* the header degrades to whatever the record carries */ }
+    })();
+    return () => { cancelled = true; };
+  }, [activeAssessmentId]);
+
+  /**
+   * Records for the adjacent programmes.
+   *
+   * The engine hands over ids, never labels. The label used to be manufactured
+   * from the slug by string manipulation — which is where "Explore Stress" came
+   * from — so a card showed a truncated slug where a programme's real name
+   * belongs. Fetching the records is the same call the primary action already
+   * makes; mapped over the ids it yields a title, an image and a length.
+   */
+  const relatedIds = (activeData.recommendation?.relatedPrograms ?? []).slice(0, 4);
+  const relatedKey = relatedIds.join(',');
+  useEffect(() => {
+    if (!relatedKey) { setRelatedDetails([]); return; }
+    let cancelled = false;
+    (async () => {
+      const rows = await Promise.all(
+        relatedKey.split(',').map(async (id) => {
+          try { return await apiClient.getEquipProgram(id); } catch { return null; }
+        }),
+      );
+      // A programme that failed to load is dropped, not rendered as an empty
+      // card — an unnamed recommendation is worse than one fewer.
+      if (!cancelled) setRelatedDetails(rows.filter(Boolean));
+    })();
+    return () => { cancelled = true; };
+  }, [relatedKey]);
 
   // Still fetching the stored record — distinct from "nothing to show", which
   // is what the empty state below means.
@@ -272,239 +338,366 @@ export function AssessmentResults({
   })();
 
 
+
+  // ── Header facts ───────────────────────────────────────────────────────────
+  // Every one of these already existed on the record and none of them was
+  // rendered. Each is null-checked separately rather than assembled into one
+  // interpolated string, so a missing field drops a line instead of printing
+  // "undefined questions".
+  const def = assessmentDef;
+  const title: string | null = def?.title ?? rec.assessmentName ?? null;
+  const category: string | null = def?.category ?? rec.category ?? null;
+  const description: string | null = def?.description ?? null;
+  const questionCount: number | null = Array.isArray(def?.questions) && def.questions.length > 0
+    ? def.questions.length : null;
+  /**
+   * Scales actually scored. A single-score assessment reports none: telling
+   * someone their result covers "1 scale" is noise, not information.
+   */
+  const scaleCount: number | null = (() => {
+    const n = sections?.sections?.length ?? (Array.isArray(def?.scores) ? def.scores.length : 0);
+    return n > 1 ? n : null;
+  })();
+
+  const completedLabel: string | null = (() => {
+    if (!activeData.completedAt) return null;
+    const d = new Date(activeData.completedAt);
+    if (Number.isNaN(d.getTime())) return null;
+    return `${d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}, ` +
+           `${d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}`;
+  })();
+
+  // The band the score landed in, for the header's accent rule. Structure
+  // carrying meaning rather than decoration — and neutral when unresolved,
+  // never the most severe.
+  const sev = severityPresentation(severityOfResult({ sectionScores: sections }) ?? rec.severityLevel ?? null);
+
+  /**
+   * The programme's real length, off its own record.
+   *
+   * Both halves are null-checked: a programme with no authored duration shows
+   * no duration, rather than the "30 days" that would otherwise be typed in
+   * here once and then be wrong for six of them.
+   */
+  const programMeta: string | null = (() => {
+    if (!programDetails) return null;
+    const days = typeof programDetails.duration_days === 'number' && programDetails.duration_days > 0
+      ? programDetails.duration_days : null;
+    const content = Array.isArray(programDetails.daily_content) ? programDetails.daily_content : [];
+    const activities = content.reduce(
+      (n: number, day: any) => n + (Array.isArray(day?.blocks) ? day.blocks.length : 0), 0);
+    const parts = [
+      days !== null ? `${days} days` : null,
+      activities > 0 ? `${activities} activities` : null,
+    ].filter(Boolean);
+    return parts.length ? parts.join(' \u00b7 ') : null;
+  })();
+
+  const hasPrimary = rec.primaryAction.type === 'equip_program';
+  const hasRelated = relatedDetails.length > 0;
+
+  const reveal = reduceMotion
+    ? {}
+    : {
+        initial: { opacity: 0, y: 12 },
+        whileInView: { opacity: 1, y: 0 },
+        viewport: { once: true, margin: '-40px' },
+        transition: { duration: 0.4, ease: [0.33, 1, 0.68, 1] as const },
+      };
+
+  /** Section eyebrow. Says what a group is; claims nothing about it. */
+  const Eyebrow = ({ children }: { children: React.ReactNode }) => (
+    <p style={{
+      ...f('xs', 500, 'var(--color-text-muted)'),
+      textTransform: 'uppercase',
+      letterSpacing: '0.08em',
+      margin: '0 0 12px',
+    }}>{children}</p>
+  );
+
   return (
-    <div className={cn("w-full max-w-2xl mx-auto p-4 md:p-6", className)}>
-      <motion.div
-        initial={{ opacity: 0, y: 16 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-        className="flex flex-col items-center"
-        style={{ gap: 32 }}
-      >
+    <div className={cn('mx-auto w-full max-w-2xl px-4 pb-10 pt-4 sm:px-6', className)}>
+      <div className="flex flex-col" style={{ gap: 28 }}>
+
+        {/* ── Result header ──
+            The page's subject line. Without it a linked result is a number
+            with nothing attached to it. */}
+        <motion.header
+          initial={reduceMotion ? false : { opacity: 0, y: -8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, ease: [0.33, 1, 0.68, 1] }}
+          style={{
+            borderLeft: `3px solid ${sev.color}`,
+            paddingLeft: 16,
+          }}
+        >
+          {(category || completedLabel) && (
+            <p className="flex flex-wrap items-center" style={{
+              ...f('xs', 500, 'var(--color-text-muted)'),
+              gap: 8, margin: '0 0 6px',
+              textTransform: 'uppercase', letterSpacing: '0.08em',
+            }}>
+              {category && <span>{category}</span>}
+              {category && completedLabel && (
+                <span aria-hidden="true" style={{
+                  width: 3, height: 3, borderRadius: '50%',
+                  backgroundColor: 'var(--color-border-default)',
+                }} />
+              )}
+              {completedLabel && <span style={{ textTransform: 'none', letterSpacing: 0 }}>{completedLabel}</span>}
+            </p>
+          )}
+
+          {title && (
+            <h1 style={{ ...f('2xl', 500), lineHeight: 1.2, margin: 0 }}>{title}</h1>
+          )}
+
+          {/* Two labelled facts, not one run-on. The middot is an element, so
+              a language that separates differently can restyle it without
+              re-translating a sentence. */}
+          {(questionCount !== null || scaleCount !== null) && (
+            <p className="flex flex-wrap items-center" style={{
+              ...f('sm', 400, 'var(--color-text-muted)'), gap: 8, margin: '8px 0 0',
+            }}>
+              {questionCount !== null && <span>{questionCount} questions</span>}
+              {questionCount !== null && scaleCount !== null && (
+                <span aria-hidden="true" style={{
+                  width: 3, height: 3, borderRadius: '50%',
+                  backgroundColor: 'var(--color-border-default)',
+                }} />
+              )}
+              {scaleCount !== null && <span>{scaleCount} scales</span>}
+            </p>
+          )}
+        </motion.header>
+
         {/* ── Score ──
             Multi-instrument assessments show a per-scale breakdown instead of
             one ring: a single total across GAD-2, WHO-5, resilience etc. mixes
             scales with different ranges and opposite directions, so it is not
             a meaningful number. */}
         {unified && (
-          <div className="w-full" style={{ paddingTop: 8 }}>
+          <motion.div {...reveal} className="w-full">
             <SectionReportCard result={unified} />
-          </div>
+          </motion.div>
         )}
 
-        {/* ── Message ── Only when a rule authored one. */}
-        {rec.severityMessage && (
-          <div className="text-center" style={{ maxWidth: 440 }}>
-            <p style={{
-              fontSize: 'var(--text-base)',
-              fontWeight: 400,
-              fontFamily: 'var(--font-family-base)',
-              color: 'var(--color-text-primary)',
-              lineHeight: 1.6,
-            }}>
-              {rec.severityMessage}
+        {/* ── What this measured ──
+            The assessment's own description, verbatim. Not a summary of it,
+            and not written here. */}
+        {description && (
+          <motion.section {...reveal}>
+            <Eyebrow>What this measured</Eyebrow>
+            <p style={{ ...f('base', 400, 'var(--color-text-muted)'), lineHeight: 1.6, margin: 0 }}>
+              {description}
             </p>
-          </div>
+          </motion.section>
         )}
 
-        <div style={{
-          width: '100%', height: 1,
-          backgroundColor: 'var(--color-border-default)',
-        }} />
+        {/* ── Message ── Only when a rule authored one. Never a stand-in. */}
+        {rec.severityMessage && (
+          <motion.p {...reveal} style={{
+            ...f('base', 400), lineHeight: 1.6, margin: 0,
+            backgroundColor: sev.background,
+            borderRadius: 'var(--radius-lg)',
+            padding: 16,
+          }}>
+            {rec.severityMessage}
+          </motion.p>
+        )}
 
-        {/* ── Primary Recommendation ── */}
-        {rec.primaryAction.type === 'equip_program' && (
-          <div style={{ width: '100%' }}>
-            <span style={{
-              display: 'block',
-              fontSize: 'var(--text-xs)',
-              fontWeight: 500,
-              fontFamily: 'var(--font-family-base)',
-              color: 'var(--color-text-muted)',
-              textTransform: 'uppercase',
-              letterSpacing: '0.04em',
-              marginBottom: 12,
+        {/* ── Tier 1 · the recommendation ──
+            The heaviest element after the score, and the only thing on this
+            page that was chosen for this person. It used to render in the same
+            box as "go to the list of everything", which threw that away. */}
+        {hasPrimary && (
+          <motion.section {...reveal}>
+            <Eyebrow>Recommended for you</Eyebrow>
+            <div style={{
+              backgroundColor: 'var(--color-bg-card)',
+              borderRadius: 'var(--radius-lg)',
+              boxShadow: 'var(--shadow-sm)',
+              border: '1px solid var(--color-border-default)',
+              overflow: 'hidden',
             }}>
-              Recommended for you
-            </span>
-
-            <div
-              style={{
-                backgroundColor: 'var(--color-bg-card)',
-                borderRadius: 'var(--radius-lg)',
-                boxShadow: 'var(--shadow-sm)',
-                overflow: 'hidden',
-                border: '1px solid var(--color-border-default)',
-              }}
-            >
-              <div className="flex flex-col md:flex-row">
-                {/* Image */}
-                <div className="w-full md:w-2/5 relative overflow-hidden" style={{ minHeight: 180, backgroundColor: 'var(--color-bg-muted)' }}>
+              <div className="flex flex-col sm:flex-row">
+                <div
+                  className="relative w-full overflow-hidden sm:w-2/5"
+                  style={{ minHeight: 160, backgroundColor: 'var(--color-bg-muted)' }}
+                >
                   <ContentImage
                     src={programDetails?.thumbnail || programDetails?.cover_image || ''}
-                    alt="Program"
-                    className="w-full h-full object-cover"
+                    alt=""
+                    className="h-full w-full object-cover"
                     style={{ position: 'absolute', inset: 0 }}
                   />
                 </div>
 
-                {/* Content */}
-                <div className="flex-1 flex flex-col justify-center" style={{ padding: 24, gap: 12 }}>
-                  <h4 style={{
-                    fontSize: 'var(--text-lg)',
-                    fontWeight: 500,
-                    fontFamily: 'var(--font-family-base)',
-                    color: 'var(--color-text-primary)',
-                    margin: 0,
-                  }}>
-                    {rec.primaryAction.title}
-                  </h4>
-                  <p style={{
-                    fontSize: 'var(--text-sm)',
-                    fontWeight: 400,
-                    fontFamily: 'var(--font-family-base)',
-                    color: 'var(--color-text-muted)',
-                    lineHeight: 1.5,
-                    margin: 0,
-                  }}>
-                    {rec.primaryAction.body}
-                  </p>
-                  <button
-                    onClick={() => onNavigate && rec.primaryAction.programId && onNavigate(`/equip-program-onboarding?id=${rec.primaryAction.programId}`)}
-                    style={{
-                      marginTop: 4,
-                      padding: '12px 24px',
-                      borderRadius: 'var(--radius-pill)',
-                      backgroundColor: 'var(--color-primary-default)',
-                      color: 'var(--color-text-inverse)',
-                      border: 'none',
-                      cursor: 'pointer',
-                      fontSize: 'var(--text-base)',
-                      fontWeight: 500,
-                      fontFamily: 'var(--font-family-base)',
-                      width: 'fit-content',
-                    }}
-                  >
-                    {rec.primaryAction.cta}
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
+                <div className="flex flex-1 flex-col justify-center" style={{ padding: 20, gap: 10 }}>
+                  <h2 style={{ ...f('lg', 500), margin: 0, lineHeight: 1.25 }}>
+                    {rec.primaryAction.title || programDetails?.title}
+                  </h2>
 
-        {/* ── Secondary Recommendations ── */}
-        {rec.secondaryActions.length > 0 && (
-          <div style={{ width: '100%' }}>
-            <div className="grid grid-cols-1 md:grid-cols-2" style={{ gap: 12 }}>
-              {rec.secondaryActions.map((action, idx) => (
-                <div
-                  key={idx}
-                  onClick={() => onNavigate && action.route && onNavigate(action.route)}
-                  style={{
-                    backgroundColor: 'var(--color-bg-card)',
-                    borderRadius: 'var(--radius-lg)',
-                    boxShadow: 'var(--shadow-xs)',
-                    border: '1px solid var(--color-border-default)',
-                    padding: 20,
-                    cursor: action.route ? 'pointer' : 'default',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    justifyContent: 'space-between',
-                    gap: 12,
-                    transition: 'box-shadow 0.15s',
-                  }}
-                >
-                  <div>
-                    <span style={{
-                      fontSize: 'var(--text-xs)',
-                      fontWeight: 500,
-                      fontFamily: 'var(--font-family-base)',
-                      color: 'var(--color-text-muted)',
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.03em',
-                    }}>
-                      {action.title}
-                    </span>
-                    <p style={{
-                      fontSize: 'var(--text-base)',
-                      fontWeight: 500,
-                      fontFamily: 'var(--font-family-base)',
-                      color: 'var(--color-text-primary)',
-                      margin: '6px 0 0',
-                    }}>
-                      {action.label}
+                  {/* The programme's real length, from its own record. */}
+                  {programMeta && (
+                    <p style={{ ...f('sm', 400, 'var(--color-text-muted)'), margin: 0 }}>{programMeta}</p>
+                  )}
+
+                  {rec.primaryAction.body && (
+                    <p style={{ ...f('sm', 400, 'var(--color-text-muted)'), lineHeight: 1.5, margin: 0 }}>
+                      {rec.primaryAction.body}
                     </p>
-                  </div>
-                  {action.route && (
-                    <span className="flex items-center" style={{
-                      fontSize: 'var(--text-sm)',
-                      fontWeight: 500,
-                      fontFamily: 'var(--font-family-base)',
-                      color: 'var(--color-text-muted)',
-                      gap: 4,
-                    }}>
-                      Explore <ArrowRight size={14} />
-                    </span>
+                  )}
+
+                  {rec.primaryAction.cta && (
+                    <button
+                      onClick={() => onNavigate && rec.primaryAction.programId &&
+                        onNavigate(`/equip-program-onboarding?id=${rec.primaryAction.programId}`)}
+                      className="w-full sm:w-fit"
+                      style={{
+                        marginTop: 4, padding: '12px 24px',
+                        borderRadius: 'var(--radius-pill)',
+                        backgroundColor: 'var(--color-primary-default)',
+                        border: 'none', cursor: 'pointer',
+                        ...f('base', 500, 'var(--color-text-inverse)'),
+                      }}
+                    >
+                      {rec.primaryAction.cta}
+                    </button>
                   )}
                 </div>
+              </div>
+            </div>
+          </motion.section>
+        )}
+
+        {/* ── Tier 2 · adjacent programmes ──
+            One eyebrow above the pair, not a label repeated on every card.
+            "Related" is what the overlap map actually knows; it does not claim
+            these were picked for this person, because they weren't. */}
+        {hasRelated && (
+          <motion.section {...reveal}>
+            <Eyebrow>Related programs</Eyebrow>
+            <div className="grid grid-cols-2" style={{ gap: 12 }}>
+              {relatedDetails.map((p, i) => (
+                <AssessmentCard
+                  key={p.id ?? i}
+                  variant="compact"
+                  index={i}
+                  item={{
+                    id: p.id,
+                    title: p.title ?? p.name ?? '',
+                    image: p.thumbnail ?? p.cover_image ?? p.hero_image ?? null,
+                    durationLabel: typeof p.duration_days === 'number' && p.duration_days > 0
+                      ? `${p.duration_days} days` : null,
+                    countLabel: null,
+                  }}
+                  onSelect={(id) => onNavigate?.(`/equip-program-onboarding?id=${id}`)}
+                />
               ))}
             </div>
-          </div>
+          </motion.section>
         )}
 
-        {/* ── Professional Support Note ── */}
-        {rec.showProfessionalSupportNote && (
-          <div style={{
-            width: '100%',
-            backgroundColor: 'var(--color-status-info-light)',
-            borderRadius: 'var(--radius-lg)',
-            padding: 16,
-            border: '1px solid var(--color-border-default)',
-          }}>
-            <div className="flex items-start" style={{ gap: 12 }}>
-              <div style={{
-                width: 28, height: 28, borderRadius: '50%',
-                backgroundColor: 'var(--color-status-info)',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                flexShrink: 0,
-                color: 'var(--color-text-inverse)',
-              }}>
-                <Icon name="info" size={14} />
-              </div>
-              <p style={{
-                fontSize: 'var(--text-sm)',
-                fontWeight: 400,
-                fontFamily: 'var(--font-family-base)',
-                color: 'var(--color-text-primary)',
-                lineHeight: 1.5,
-                margin: 0,
-              }}>
-                If things feel overwhelming, professional support can make a real difference. You're not alone in this.
-              </p>
-            </div>
-          </div>
+        {/* ── Secondary rule-authored actions ──
+            Resource and assessment rules, when an admin wrote one. Distinct
+            from the nav row below: these are authored, that is chrome. */}
+        {rec.secondaryActions.length > 0 && (
+          <motion.section {...reveal} className="flex flex-col" style={{ gap: 8 }}>
+            {rec.secondaryActions.map((action, idx) => (
+              <button
+                key={idx}
+                onClick={() => action.route && onNavigate?.(action.route)}
+                className="flex w-full items-center justify-between text-left"
+                style={{
+                  backgroundColor: 'var(--color-bg-card)',
+                  border: '1px solid var(--color-border-default)',
+                  borderRadius: 'var(--radius-lg)',
+                  padding: 16, gap: 12, cursor: action.route ? 'pointer' : 'default',
+                }}
+              >
+                <span>
+                  {action.title && (
+                    <span style={{ ...f('xs', 500, 'var(--color-text-muted)'), display: 'block', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                      {action.title}
+                    </span>
+                  )}
+                  <span style={{ ...f('base', 500), display: 'block', marginTop: 4 }}>{action.label}</span>
+                </span>
+                {action.route && <ArrowRight size={16} style={{ color: 'var(--color-text-muted)', flexShrink: 0 }} />}
+              </button>
+            ))}
+          </motion.section>
         )}
+
+        {/* ── Professional support ── */}
+        {rec.showProfessionalSupportNote && (
+          <motion.aside {...reveal} className="flex items-start" style={{
+            gap: 12, padding: 16,
+            backgroundColor: 'var(--color-status-info-light)',
+            border: '1px solid var(--color-border-default)',
+            borderRadius: 'var(--radius-lg)',
+          }}>
+            <span style={{
+              width: 28, height: 28, borderRadius: '50%', flexShrink: 0,
+              backgroundColor: 'var(--color-status-info)',
+              color: 'var(--color-text-inverse)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+            }}>
+              <Icon name="info" size={14} />
+            </span>
+            <p style={{ ...f('sm', 400), lineHeight: 1.5, margin: 0 }}>
+              If things feel overwhelming, professional support can make a real difference. You're not alone in this.
+            </p>
+          </motion.aside>
+        )}
+
+        {/* ── Tier 3 · keep going ──
+            App navigation, and drawn as such. These were two cards identical to
+            the recommendation above, which made "Explore" mean nothing and put
+            a link to the full catalogue at the same weight as the one thing
+            chosen for this person. */}
+        <motion.nav {...reveal} style={{
+          borderTop: '1px solid var(--color-border-default)',
+          paddingTop: 20,
+        }}>
+          <Eyebrow>Keep going</Eyebrow>
+          <div className="flex flex-col sm:flex-row" style={{ gap: 4 }}>
+            {[
+              { label: 'Your assessments', route: '/assessment' },
+              { label: 'Your journal', route: '/mood-journal' },
+            ].map((link) => (
+              <button
+                key={link.route}
+                onClick={() => onNavigate?.(link.route)}
+                className="flex items-center justify-between sm:justify-start"
+                style={{
+                  background: 'none', border: 'none', cursor: 'pointer',
+                  padding: '10px 12px 10px 0', gap: 6,
+                  ...f('base', 500, 'var(--color-primary-default)'),
+                }}
+              >
+                {link.label}
+                <ArrowRight size={15} />
+              </button>
+            ))}
+          </div>
+        </motion.nav>
 
         {/* ── Footer ── */}
-        <div className="flex items-center justify-center" style={{ paddingTop: 16, paddingBottom: 24 }}>
+        <div className="flex items-center justify-center">
           <button
             onClick={onReturnToDashboard || (() => onNavigate?.('/dashboard'))}
             style={{
-              background: 'none',
-              border: 'none',
-              cursor: 'pointer',
-              fontSize: 'var(--text-sm)',
-              fontWeight: 500,
-              fontFamily: 'var(--font-family-base)',
-              color: 'var(--color-text-muted)',
+              background: 'none', border: 'none', cursor: 'pointer',
               padding: '8px 16px',
+              ...f('sm', 500, 'var(--color-text-muted)'),
             }}
           >
             Return to Home
           </button>
         </div>
-      </motion.div>
+      </div>
     </div>
   );
 }

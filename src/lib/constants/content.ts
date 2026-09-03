@@ -70,61 +70,25 @@ export const LEGACY_PROGRAM_IDS = [
   'productivity-challenge-7'
 ] as const;
 
-// ASSESSMENT FALLBACK DATA
-export const ASSESSMENT_FALLBACKS = {
-  ANXIETY: {
-    title: "Anxiety Assessment (GAD-7)",
-    description: "A clinical tool to help you understand your anxiety symptoms.",
-    hero_image: FALLBACK_IMAGES.ANXIETY_ASSESSMENT,
-    cta_button_text: "Start Assessment",
-    cta_button_link: `/assessment-flow?type=gad-7`,
-    section1_title: "How it works",
-    section1_eligibility_title: "Simple process:",
-    section1_eligibility_points: ["7 questions", "Takes ~3 minutes", "Instant results"],
-    section1_who_title: "Who is this for?",
-    section1_who_content: "Anyone experiencing worry or nervousness.",
-    section2_title: "About GAD-7",
-    section2_content: "The Generalized Anxiety Disorder 7-item scale is a validated screening tool.",
-    section2_bullets: ["Screening only", "Takes ~5 minutes", "Private"],
-    section3_title: "What you'll learn",
-    section3_subtitle: "Gain clarity on your symptoms",
-    section3_content: ["Severity of anxiety", "Recommended next steps", "Tracking over time"],
-    section4_notes_title: "Important Notes",
-    section4_notes: [{ title: "Screening only", description: "Not a medical diagnosis." }]
-  },
-  DEPRESSION: {
-    title: "Depression Assessment",
-    description: "Understand your mood and energy levels with this standard screening tool.",
-    hero_image: FALLBACK_IMAGES.DEPRESSION_ASSESSMENT,
-    cta_button_text: "Start Assessment",
-    cta_button_link: `/assessment-flow?type=phq-9`,
-    section1_title: "How it works",
-    section1_eligibility_title: "Simple process:",
-    section1_eligibility_points: ["9 questions", "Takes ~5 minutes", "Instant results"],
-    section1_who_title: "Who is this for?",
-    section1_who_content: "Anyone feeling down, hopeless, or tired.",
-    section2_title: "About this assessment",
-    section2_content: "A nine-item screening questionnaire covering mood, interest, sleep, energy and concentration over the past two weeks.",
-    section2_bullets: ["Screening only", "Takes ~5 minutes", "Private"],
-    section3_title: "What you'll learn",
-    section3_subtitle: "Understand your mood",
-    section3_content: ["Severity of depression", "Impact on daily life", "Tracking over time"],
-    section4_notes_title: "Important Notes",
-    section4_notes: [{ title: "Screening only", description: "Not a medical diagnosis." }]
-  }
-} as const;
-
-// DEFAULT METADATA
-export const DEFAULT_METADATA = {
-  ASSESSMENT: {
-    duration: 5,
-    difficulty: 'Beginner',
-    questionCount: 10,
-  },
-  EQUIP: {
-    duration_days: 18,
-  }
-} as const;
+/**
+ * Deleted 2026-09-03: `ASSESSMENT_FALLBACKS` and `DEFAULT_METADATA`.
+ *
+ * `ASSESSMENT_FALLBACKS` was a complete, fabricated assessment page for two
+ * instruments — title, description, "About GAD-7", "What you'll learn", four
+ * sections of invented copy, and a CTA pointing at `?type=phq-9`. Nothing
+ * imported it by the time it was removed, and it must not come back as an
+ * error path: a failed fetch rendering invented clinical content is the worst
+ * form of the seeded-content pattern this codebase has spent its time
+ * removing. It also named an instrument the product does not administer — the
+ * depression assessment is PHQ-9-*derived*, with softened local wording on item
+ * 9, and is not PHQ-9.
+ *
+ * `DEFAULT_METADATA` held `duration: 5, questionCount: 10, difficulty:
+ * 'Beginner'` — the same three invented facts the assessment surfaces were
+ * defaulting to independently. Both facts now come from
+ * `src/lib/assessment-meta.ts`, which returns null rather than a number when a
+ * record has not authored one.
+ */
 
 // SPECIAL PROGRAM IDS (For linking from Dashboard/Menu)
 // Special program IDs used for linking from Dashboard/Menu

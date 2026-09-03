@@ -20,14 +20,18 @@ interface Assessment {
   slug: string;
   title: string;
   description: string;
-  estimatedTime: string;
-  questionCount: number;
+  /** Authored minutes, or null. `estimatedTime` (a pre-formatted string) is
+   *  gone: it forced every consumer to parse English back out of it. */
+  durationMinutes: number | null;
+  /** Item count from `questions.length`, or null. */
+  questionCount: number | null;
   status: 'available' | 'in-progress' | 'completed';
   lastCompletedDate?: string;
   category: string;
   metadata?: any;
   questions?: any[];
-  imageUrl?: string;
+  /** Authored image, or null. `getAssessmentImage` decides the last resort. */
+  imageUrl?: string | null;
   processSteps?: string[];
   safetyNote?: string;
   resultDescription?: string;
@@ -82,14 +86,18 @@ const transformAssessmentData = (data: any, userHistory?: Record<string, any>): 
     slug: data.slug || assessmentId,
     title: data.title,
     description: data.description,
-    estimatedTime: `${data.duration || data.metadata?.estimated_minutes || 3} minutes`,
-    questionCount: questions.length || data.questions?.length || 0,
+    // One source for both, and no defaults. This used to read
+    // `duration || estimated_minutes || 3`, so an assessment with no authored
+    // duration advertised "3 minutes" here and "5 minutes" on its own detail
+    // page. `estimated_minutes` is null on all seven records and always was.
+    durationMinutes: assessmentMeta({ questions, duration: data.duration }).minutes,
+    questionCount: assessmentMeta({ questions, duration: data.duration }).count,
     status,
     lastCompletedDate,
     category: data.category || data.metadata?.category || 'wellness',
     metadata: data.metadata,
     questions: questions,
-    imageUrl: data.hero_image || data.image_url || data.thumbnail || data.metadata?.hero_image || data.metadata?.thumbnail,
+    imageUrl: assessmentImage(data),
     processSteps,
     safetyNote,
     resultDescription,
@@ -111,7 +119,7 @@ type ViewState = 'list' | 'landing' | 'flow' | 'results';
 type TabState = 'catalogue' | 'history';
 
 // Helper to get Unsplash images
-const getAssessmentImage = (category?: string, customImage?: string) => {
+const getAssessmentImage = (category?: string, customImage?: string | null) => {
   if (customImage) return customImage;
 
   const normalizedCategory = (category || 'wellness').toLowerCase();
@@ -128,6 +136,8 @@ const getAssessmentImage = (category?: string, customImage?: string) => {
 };
 
 import { PageHero } from '../ui/PageHero';
+import { AssessmentCard } from '../assessment/AssessmentCard';
+import { assessmentMeta, assessmentImage } from '../../lib/assessment-meta';
 
 interface HeroBanner {
   title: string;
@@ -375,7 +385,7 @@ export function Assessments({ className, onNavigate }: AssessmentsProps) {
 
   // Assessment Landing Page View
   if (currentView === 'landing' && selectedAssessment) {
-    const imageUrl = getAssessmentImage(selectedAssessment.category);
+    const imageUrl = getAssessmentImage(selectedAssessment.category, selectedAssessment.imageUrl);
     
     return (
       <>
@@ -419,14 +429,18 @@ export function Assessments({ className, onNavigate }: AssessmentsProps) {
                    </div>
                    
                    <div className="flex flex-wrap gap-4 pt-2">
-                     <div className="flex items-center gap-2 px-4 py-2 rounded-full" style={{ backgroundColor: 'var(--color-bg-muted)' }}>
-                       <Clock size={18} style={{ color: 'var(--color-primary-default)' }} />
-                       <span className="font-medium" style={{ color: 'var(--color-text-primary)' }}>{selectedAssessment.estimatedTime}</span>
-                     </div>
-                     <div className="flex items-center gap-2 px-4 py-2 rounded-full" style={{ backgroundColor: 'var(--color-bg-muted)' }}>
-                       <CircleHelp size={18} style={{ color: 'var(--color-primary-default)' }} />
-                       <span className="font-medium" style={{ color: 'var(--color-text-primary)' }}>{selectedAssessment.questionCount} Questions</span>
-                     </div>
+                     {selectedAssessment.durationMinutes !== null && (
+                       <div className="flex items-center gap-2 px-4 py-2 rounded-full" style={{ backgroundColor: 'var(--color-bg-muted)' }}>
+                         <Clock size={18} style={{ color: 'var(--color-primary-default)' }} />
+                         <span className="font-medium" style={{ color: 'var(--color-text-primary)' }}>{selectedAssessment.durationMinutes} minutes</span>
+                       </div>
+                     )}
+                     {selectedAssessment.questionCount !== null && (
+                       <div className="flex items-center gap-2 px-4 py-2 rounded-full" style={{ backgroundColor: 'var(--color-bg-muted)' }}>
+                         <CircleHelp size={18} style={{ color: 'var(--color-primary-default)' }} />
+                         <span className="font-medium" style={{ color: 'var(--color-text-primary)' }}>{selectedAssessment.questionCount} Questions</span>
+                       </div>
+                     )}
                    </div>
                  </div>
                )}
@@ -696,82 +710,41 @@ export function Assessments({ className, onNavigate }: AssessmentsProps) {
                 return true;
               }).map((assessment, index) => {
                 const isCompleted = assessment.status === 'completed' && userAssessmentHistory[assessment.id];
-                const imageUrl = getAssessmentImage(assessment.category);
+                // Authored image first. Every one of the seven live records carries
+                // a thumbnail, and this call passed none — so the catalogue showed a
+                // category-keyed stock photo for all of them.
+                const imageUrl = getAssessmentImage(assessment.category, assessment.imageUrl);
 
                 return (
-                  <motion.div
+                  <AssessmentCard
                     key={assessment.id || index}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: index * 0.05 }}
-                    whileHover={{ y: -4 }}
-                    className="h-full"
-                  >
-                    <Card 
-                      className="h-full border-none shadow-sm hover:shadow-lg transition-all duration-300 rounded-[var(--radius-lg)] overflow-hidden cursor-pointer group flex flex-col"
-                      style={{ backgroundColor: 'var(--color-bg-card)' }}
-                      onClick={() => {
-                        if (currentTab === 'history' && assessment.status === 'completed') {
-                          onNavigate?.(`/assessment-history-detail?id=${assessment.id}`);
-                        } else {
-                          handleStartAssessment(assessment);
-                        }
-                      }}
-                    >
-                      {/* Image Header */}
-                      <div className="relative h-48 overflow-hidden">
-                        <img 
-                          src={imageUrl} 
-                          alt={assessment.title}
-                          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                        />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-60" />
-                        
-                        {/* Status Badge */}
-                        {isCompleted && (
-                           <div className="absolute top-4 right-4 text-xs font-medium px-2 py-1 rounded-full shadow-sm flex items-center gap-1" style={{ backgroundColor: 'var(--color-status-success)', color: 'var(--color-text-inverse)' }}>
-                             <Activity size={12} /> Completed
-                           </div>
-                        )}
-                        
-                        {/* Title Overlay */}
-                        <div className="absolute bottom-4 left-4 right-4">
-                          <p className="text-white/90 text-xs font-medium uppercase tracking-wider mb-1">
-                            {assessment.category}
-                          </p>
-                          <h3 className="text-white text-xl font-medium leading-tight">
-                            {assessment.title}
-                          </h3>
-                        </div>
-                      </div>
-
-                      <CardContent className="p-5 flex flex-col flex-grow gap-4">
-                        <p className="text-sm text-[var(--color-text-muted)] line-clamp-2 flex-grow">
-                          {assessment.description}
-                        </p>
-
-                        <div className="flex items-center gap-4 text-xs text-[var(--color-text-muted)] font-medium">
-                          <div className="flex items-center gap-1.5 px-2 py-1 rounded-md" style={{ backgroundColor: 'var(--color-bg-muted)' }}>
-                            <Clock size={14} className="text-[var(--color-primary-default)]" />
-                            {assessment.estimatedTime}
-                          </div>
-                          <div className="flex items-center gap-1.5 px-2 py-1 rounded-md" style={{ backgroundColor: 'var(--color-bg-muted)' }}>
-                            <FileText size={14} className="text-[var(--color-primary-default)]" />
-                            {assessment.questionCount} Questions
-                          </div>
-                        </div>
-
-                        <Button 
-                          className="w-full mt-2 text-[var(--color-text-primary)] hover:bg-[var(--color-primary-default)] hover:text-[var(--color-text-inverse)] border-none group-hover:bg-[var(--color-primary-default)] group-hover:text-[var(--color-text-inverse)] transition-colors"
-                          style={{ backgroundColor: 'var(--color-bg-muted)' }}
-                          variant="outline"
-                        >
-                          {currentTab === 'history' && isCompleted ? 'View History' : isCompleted ? 'Retake Assessment' : 'Start Assessment'}
-                          <ArrowRight size={16} className="ml-2" />
-                        </Button>
-                      </CardContent>
-                    </Card>
-                  </motion.div>
+                    index={index}
+                    variant="full"
+                    item={{
+                      id: assessment.id,
+                      title: assessment.title,
+                      description: assessment.description,
+                      eyebrow: assessment.category,
+                      image: imageUrl,
+                      // Null renders no chip. An assessment that has not said
+                      // how long it takes does not get a number invented for it.
+                      durationLabel: assessment.durationMinutes !== null
+                        ? `${assessment.durationMinutes} min` : null,
+                      countLabel: assessment.questionCount !== null
+                        ? `${assessment.questionCount} questions` : null,
+                      completed: !!isCompleted,
+                      cta: currentTab === 'history' && isCompleted
+                        ? 'View history'
+                        : isCompleted ? 'Retake assessment' : 'Start assessment',
+                    }}
+                    onSelect={() => {
+                      if (currentTab === 'history' && assessment.status === 'completed') {
+                        onNavigate?.(`/assessment-history-detail?id=${assessment.id}`);
+                      } else {
+                        handleStartAssessment(assessment);
+                      }
+                    }}
+                  />
                 );
               })}
             </div>

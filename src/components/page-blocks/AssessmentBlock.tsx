@@ -9,8 +9,10 @@ export interface AssessmentProgram {
   description: string;
   image: string;
   category?: string;
-  questionCount?: number;
-  duration?: number;
+  /** Item count, or null when the record has not authored one. */
+  questionCount?: number | null;
+  /** Authored minutes, or null. Never defaulted — see lib/assessment-meta.ts. */
+  duration?: number | null;
   info: string;
   link: string;
   id?: string;

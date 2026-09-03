@@ -21,7 +21,7 @@ export function PublicNavBar({ currentRoute, onNavigate, onSignIn, className }: 
   // Fixed navigation items as specified
   const publicNavItems = [
     { path: '/', label: 'Home' },
-    { path: '/assessment', label: 'Assessment' },
+    { path: '/assessment', label: 'Assessments' },
     { path: '/equip', label: 'Equip', badge: 'beta' },
     { path: '/resource', label: 'Resource' },
     { path: '/consultation', label: 'Consultation', badge: 'coming soon' },

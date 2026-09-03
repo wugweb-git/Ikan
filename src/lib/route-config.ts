@@ -28,7 +28,7 @@ export const routes: RouteConfig[] = [
   },
   {
     path: '/assessment',
-    label: 'Assessment',
+    label: 'Assessments',
     isPublic: true,
     requiresAuth: false,
     showInNavigation: true,
@@ -172,7 +172,7 @@ export const routes: RouteConfig[] = [
   },
   {
     path: '/assessment-landing',
-    label: 'Assessment Landing',
+    label: 'Assessment Details (alias)',
     isPublic: true,
     requiresAuth: false,
     showInNavigation: false,

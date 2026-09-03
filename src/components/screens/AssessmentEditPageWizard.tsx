@@ -1,5 +1,6 @@
+import { durationLooksImplausible } from '../../lib/assessment-meta';
 import { useState, useEffect, useRef, useMemo } from 'react';
-import { Save, Trash2, ClipboardList, CircleHelp, Eye, Plus, GripVertical, X, Upload, EyeOff } from 'lucide-react';
+import { Save, Trash2, ClipboardList, CircleHelp, Eye, Plus, GripVertical, X, Upload, EyeOff, AlertTriangle } from 'lucide-react';
 import { useNotifications } from '../../contexts/NotificationContext';
 import { apiClient } from '../../lib/api-client';
 import { AdminFormField } from '../admin/AdminFormField';
@@ -853,12 +854,46 @@ export function AssessmentEditPageWizard({ assessmentId, onBack, onSave }: Asses
         {/* Step 0: Basic Info */}
         {currentStep === 0 && (
           <div>
+            {/* Duration plausibility — flag, never block.
+                `duration` is hand-authored and nothing else can tell you a
+                number is merely implausible: the live records had the 24-item
+                General questionnaire at 3 minutes and the 8-item Sleep scale
+                at 10, which cannot both be right. Same shape as the coverage
+                meter — it says so and stays out of the way. */}
+            {(() => {
+              const warning = durationLooksImplausible({
+                questions: formData.questions,
+                duration: formData.duration,
+              });
+              if (!warning) return null;
+              return (
+                <div
+                  className="mb-4 flex items-start gap-3 rounded-[var(--radius-lg)] p-3"
+                  style={{
+                    backgroundColor: 'var(--color-status-warning-light)',
+                    border: '1px solid var(--color-border-default)',
+                  }}
+                >
+                  <AlertTriangle size={16} style={{ color: 'var(--color-status-warning)', flexShrink: 0, marginTop: 2 }} />
+                  <p style={{
+                    fontFamily: 'var(--font-family-base)',
+                    fontSize: 'var(--text-sm)',
+                    color: 'var(--color-text-primary)',
+                    margin: 0, lineHeight: 1.5,
+                  }}>
+                    {warning} Saving is not blocked — check the number is what you meant.
+                  </p>
+                </div>
+              );
+            })()}
             <UnifiedBasicInfoForm
               title={formData.title || ''}
               description={formData.description || ''}
               category={formData.category || ''}
               difficulty={formData.difficulty || ''}
-              duration={formData.duration || 5}
+              // No default. Showing 5 in an empty field is how an unauthored
+              // duration becomes an authored one the first time anybody saves.
+              duration={formData.duration ?? 0}
               isPremium={formData.is_premium || false}
               price={formData.price || 0}
               onTitleChange={(value) => setFormData(prev => ({ ...prev, title: value }))}

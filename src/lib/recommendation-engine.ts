@@ -503,6 +503,20 @@ export interface EngineResult {
   severityLevel?: ClinicalSeverity | null;
   /** Category slug the rules matched on. */
   category?: string;
+  /**
+   * Programme ids from the overlap/escalation map — adjacent, not prescribed.
+   *
+   * This was computed and then dropped on the floor, which is why the results
+   * page had no real related programmes and rendered a label manufactured from
+   * the slug ("Explore Stress") instead. Ids only: the page fetches the records
+   * so a card can show the programme's actual name, image and length, and a
+   * name is never derived from its own slug again.
+   *
+   * These are NOT the primary recommendation. The primary comes from a matched
+   * rule; these come from a category overlap map, and the page must not present
+   * the two at the same weight.
+   */
+  relatedPrograms: string[];
 }
 
 export interface EvaluateInput {
@@ -632,6 +646,12 @@ export function evaluateAssessment(input: EvaluateInput): EngineResult {
       cta: adminEquipRule?.cta || ''
     },
     secondaryActions: [],
+    // Resolved through the same slug->id lookup the primary uses, and
+    // de-duplicated against it: recommending a programme twice, once as "start
+    // this" and once as "you may also like", reads as two findings.
+    relatedPrograms: Array.from(new Set(
+      relatedPrograms.map(p => resolveProgramSlug(p)).filter(p => p && p !== targetProgramId)
+    )),
     showProfessionalSupportNote: tier === 'high'
   };
 

@@ -12,7 +12,7 @@ const ROUTE_TITLES: Record<string, string> = {
   '/dashboard': 'Home',
   '/mood-journal': 'Mood Journal',
   '/assessment': 'Assessments',
-  '/assessment-landing': 'Assessment',
+  '/assessment-landing': 'Assessment Details',
   '/assessment-detail': 'Assessment Details',
   '/assessment-flow': 'Assessment',
   '/assessment-results': 'Results',

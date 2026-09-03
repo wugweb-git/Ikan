@@ -43,9 +43,12 @@ interface AssessmentBentoGridProps {
   section2: BentoSection2; 
   section3: BentoSection3; 
   section4: BentoSection4; 
-  questionCount?: number;
-  duration?: number;
-  difficulty?: string;
+  /** Item count. Null renders no tile — never a stand-in number. */
+  questionCount?: number | null;
+  /** Authored minutes. Null renders no tile. */
+  duration?: number | null;
+  /** Authored difficulty. Null renders no tile. */
+  difficulty?: string | null;
   importantNote1?: string;
   importantNote2?: string;
   className?: string;
@@ -88,9 +91,12 @@ export function AssessmentBentoGrid({
   section2,
   section3,
   section4,
-  questionCount = 10,
-  duration = 5,
-  difficulty = 'Beginner',
+  // No defaults. These three used to be 10 / 5 / 'Beginner', which every
+  // assessment page printed as fact regardless of what its record said —
+  // and `difficulty` has never been authored on any of them at all.
+  questionCount = null,
+  duration = null,
+  difficulty = null,
   importantNote1,
   importantNote2,
   className
@@ -266,6 +272,7 @@ export function AssessmentBentoGrid({
 
             {/* STATS ROW (Container20) - Order 2 on Mobile */}
             <div className="flex flex-row lg:flex-col gap-[16px] order-2">
+              {questionCount !== null && (<>
               {/* Task */}
               <div 
                 className="grow basis-0 flex flex-col lg:flex-row items-center justify-center lg:justify-start gap-[10px] lg:gap-[12px] p-[16px] lg:p-[20px]"
@@ -286,7 +293,9 @@ export function AssessmentBentoGrid({
                   <p style={{ fontFamily: 'var(--font-family-base)', fontWeight: 'var(--font-weight-regular)', fontSize: 'var(--text-sm)', lineHeight: '24px', letterSpacing: '-0.313px', color: 'var(--color-text-muted)', whiteSpace: 'nowrap' }} className="lg:text-[16px]">{questionCount} Qs</p>
                 </div>
               </div>
+              </>)}
 
+              {duration !== null && (<>
               {/* Time */}
               <div 
                 className="grow basis-0 flex flex-col lg:flex-row items-center justify-center lg:justify-start gap-[10px] lg:gap-[12px] p-[16px] lg:p-[20px]"
@@ -307,7 +316,9 @@ export function AssessmentBentoGrid({
                   <p style={{ fontFamily: 'var(--font-family-base)', fontWeight: 'var(--font-weight-regular)', fontSize: 'var(--text-sm)', lineHeight: '24px', letterSpacing: '-0.313px', color: 'var(--color-text-muted)', whiteSpace: 'nowrap' }} className="lg:text-[16px]">{duration} min</p>
                 </div>
               </div>
+              </>)}
 
+              {difficulty !== null && (<>
               {/* Level */}
               <div 
                 className="grow basis-0 flex flex-col lg:flex-row items-center justify-center lg:justify-start gap-[10px] lg:gap-[12px] p-[16px] lg:p-[20px]"
@@ -330,6 +341,7 @@ export function AssessmentBentoGrid({
                   <p style={{ fontFamily: 'var(--font-family-base)', fontWeight: 'var(--font-weight-regular)', fontSize: 'var(--text-sm)', lineHeight: '24px', letterSpacing: '-0.313px', color: 'var(--color-text-muted)', whiteSpace: 'nowrap' }} className="lg:text-[16px]">{difficulty}</p>
                 </div>
               </div>
+              </>)}
             </div>
 
             {/* IMPORTANT FOOTER - Order 4 on Mobile */}

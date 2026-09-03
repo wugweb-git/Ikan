@@ -15,7 +15,7 @@ export function PublicBottomNavMobile({ currentRoute, onNavigate, onSignIn, clas
   // Fixed navigation items for mobile (showing 4 most important)
   const publicNavItems = [
     { path: '/', label: 'Home', icon: 'home' },
-    { path: '/assessment', label: 'Assessment', icon: 'assignment' },
+    { path: '/assessment', label: 'Assessments', icon: 'assignment' },
     { path: '/equip', label: 'Equip', icon: 'tools', badge: 'beta' },
     { path: '/resource', label: 'Resource', icon: 'library' }
   ];

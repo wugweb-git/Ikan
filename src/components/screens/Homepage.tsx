@@ -18,6 +18,7 @@ import { ResourceBlock } from '../page-blocks/ResourceBlock';
 import { NewsletterBlock } from '../page-blocks/NewsletterBlock';
 import { ResourcePost } from '../page-blocks/ResourceCard';
 
+import { assessmentMeta, assessmentImage } from '../../lib/assessment-meta';
 import { apiClient } from '../../lib/api-client';
 import { usePageContent } from '../../hooks/usePageContent';
 import { NEWSLETTER_CONTENT } from '../../lib/constants/content';
@@ -69,16 +70,26 @@ export function Homepage({ onNavigate, onGetStarted }: HomepageProps) {
           const assessmentsData = await apiClient.request('/assessments', { method: 'GET', signal }, false);
           
           if (assessmentsData.assessments && assessmentsData.assessments.length > 0) {
-            const mappedAssessments = assessmentsData.assessments.map((a: any) => ({
-               title: a.title,
-               description: a.description,
-               image: a.thumbnail || a.image || a.hero_image || a.image_url || a.thumbnail_url || "https://images.unsplash.com/photo-1527137342181-19aab11a8ee8?auto=format&fit=crop&q=80&w=1000",
-               category: a.category || 'Assessment',
-               questionCount: a.questions?.length || a.metadata?.question_count || 10,
-               duration: a.duration || a.metadata?.estimated_minutes || 5,
-               info: `${a.questions?.length || a.metadata?.question_count || 10} Questions • ${a.duration || a.metadata?.estimated_minutes || 5} min`,
-               link: a.slug ? `/assessment/${a.slug}` : `/assessment-detail?id=${a.id}`
-            }));
+            // The homepage was a fifth surface defaulting these two facts —
+            // "10 Questions • 5 min" for anything unauthored — so an assessment
+            // could advertise a different length here, in the catalogue and on
+            // its own detail page. One source now, and null renders nothing.
+            const mappedAssessments = assessmentsData.assessments.map((a: any) => {
+               const { count, minutes } = assessmentMeta(a);
+               return {
+                 title: a.title,
+                 description: a.description,
+                 image: assessmentImage(a) ?? "https://images.unsplash.com/photo-1527137342181-19aab11a8ee8?auto=format&fit=crop&q=80&w=1000",
+                 category: a.category || 'Assessment',
+                 questionCount: count,
+                 duration: minutes,
+                 info: [
+                   count !== null ? `${count} Questions` : null,
+                   minutes !== null ? `${minutes} min` : null,
+                 ].filter(Boolean).join(' • '),
+                 link: a.slug ? `/assessment/${a.slug}` : `/assessment-detail?id=${a.id}`,
+               };
+            });
             if (!signal.aborted) setAssessments(mappedAssessments.slice(0, 3));
           } else {
             if (!signal.aborted) setAssessments([]);

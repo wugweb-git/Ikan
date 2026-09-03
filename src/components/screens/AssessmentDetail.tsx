@@ -14,7 +14,8 @@ import { useSeo } from '../../hooks/useSeo';
 import { Skeleton } from '../ui/skeleton-loader';
 import { Button } from '../ui/button';
 import defaultBentoImage from "../../assets/8ce2a19aab5abaf51a83cb99ea2d61447f96d8b2.png";
-import { ASSESSMENT_CONTENT, NEWSLETTER_CONTENT, ASSESSMENT_FALLBACKS, DEFAULT_METADATA } from '../../lib/constants/content';
+import { ASSESSMENT_CONTENT, NEWSLETTER_CONTENT } from '../../lib/constants/content';
+import { assessmentMeta, assessmentImage } from '../../lib/assessment-meta';
 
 interface AssessmentDetailProps {
   assessmentId?: string;
@@ -100,7 +101,16 @@ function ResourceSection({ onNavigate }: ResourceSectionProps) {
   );
 }
 
-export function AssessmentDetail({ assessmentId = 'anxiety', onNavigate }: AssessmentDetailProps) {
+/**
+ * @param assessmentId id or slug. There is deliberately NO default.
+ *
+ * It used to default to `'anxiety'`, so `/assessment-detail` with no id
+ * rendered the anxiety assessment — hero, description, question count, start
+ * button — presented as though it were the one that had been asked for. A page
+ * that answers a question nobody asked is worse than a page that says it
+ * cannot find what you wanted.
+ */
+export function AssessmentDetail({ assessmentId, onNavigate }: AssessmentDetailProps) {
   const [assessmentData, setAssessmentData] = useState<any>(null);
   const [relatedAssessments, setRelatedAssessments] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -117,6 +127,9 @@ export function AssessmentDetail({ assessmentId = 'anxiety', onNavigate }: Asses
 
   // Fetch assessment data from backend
   useEffect(() => {
+    // No id means nothing to fetch. Falling through would leave isLoading true
+    // forever and hold the skeleton on screen.
+    if (!assessmentId) { setIsLoading(false); return; }
     const controller = new AbortController();
     const fetchAssessmentData = async () => {
       try {
@@ -155,7 +168,9 @@ export function AssessmentDetail({ assessmentId = 'anxiety', onNavigate }: Asses
           
           // Basic Info for Tile 2 (Stats)
           questions: rawAssessment.questions || [],
-          duration: rawAssessment.duration || 5,
+          // Authored or absent. A default here is a number the user reads
+          // as a promise about their own time.
+          duration: typeof rawAssessment.duration === 'number' && rawAssessment.duration > 0 ? rawAssessment.duration : null,
           difficulty: rawAssessment.difficulty ? rawAssessment.difficulty.charAt(0).toUpperCase() + rawAssessment.difficulty.slice(1) : 'Beginner',
           metadata: rawAssessment.metadata || {},
           
@@ -190,7 +205,19 @@ export function AssessmentDetail({ assessmentId = 'anxiety', onNavigate }: Asses
         
         if (relatedResponse.ok) {
           const relatedData = await relatedResponse.json();
-          if (!controller.signal.aborted) setRelatedAssessments(relatedData.assessments || []);
+          /**
+           * Exclude the assessment being viewed.
+           *
+           * `?limit=3` is not a parameter this endpoint implements, so the
+           * fetch returned all seven and the first three were taken — which
+           * put "you might also like" under an assessment's own page,
+           * recommending itself. Matched on id AND slug because the route
+           * accepts either, so the param may be either.
+           */
+          const all = (relatedData.assessments || []).filter(
+            (a: any) => a?.id !== assessmentId && a?.slug !== assessmentId
+          );
+          if (!controller.signal.aborted) setRelatedAssessments(all);
         }
         
       } catch (err: any) {
@@ -258,16 +285,25 @@ export function AssessmentDetail({ assessmentId = 'anxiety', onNavigate }: Asses
   }
 
   const assessmentPrograms = relatedAssessments.length > 0 
-    ? relatedAssessments.slice(0, 3).map((a: any) => ({
-        title: a.title || a.name,
-        description: a.description || a.short_description || 'Mental health assessment',
-        image: a.image_url || a.thumbnail_url || a.hero_image || a.image || a.thumbnail || a.cover_image || a.metadata?.image || a.metadata?.thumbnail || '',
-        category: a.category || 'Assessment', // Use actual category from database
-        questionCount: a.questions?.length || a.metadata?.question_count || 10, // Get question count
-        duration: a.duration || a.metadata?.estimated_minutes || 5, // Get duration
-        info: `${a.questions?.length || a.metadata?.question_count || 10} Questions • ${a.duration || a.metadata?.estimated_minutes || 5} min`, // Combine both
-        link: a.slug ? `/assessment/${a.slug}` : `/assessment-detail?id=${a.id}`
-      }))
+    ? relatedAssessments.slice(0, 3).map((a: any) => {
+        // One source for both facts, and no defaults: this used to claim
+        // "10 Questions • 5 min" for anything that had not authored them.
+        const { count, minutes } = assessmentMeta(a);
+        const info = [
+          count !== null ? `${count} Questions` : null,
+          minutes !== null ? `${minutes} min` : null,
+        ].filter(Boolean).join(' • ');
+        return {
+          title: a.title || a.name,
+          description: a.description || a.short_description || '',
+          image: assessmentImage(a) ?? '',
+          category: a.category || 'Assessment',
+          questionCount: count,
+          duration: minutes,
+          info,
+          link: a.slug ? `/assessment/${a.slug}` : `/assessment-detail?id=${a.id}`,
+        };
+      })
     : [];
 
   return (
@@ -316,8 +352,8 @@ export function AssessmentDetail({ assessmentId = 'anxiety', onNavigate }: Asses
              notesTitle: assessmentData.section4_notes_title,
              notes: assessmentData.section4_notes
           }}
-          questionCount={assessmentData.questions?.length || 10}
-          duration={assessmentData.duration || 5}
+          questionCount={assessmentMeta(assessmentData).count}
+          duration={assessmentMeta(assessmentData).minutes}
           difficulty={assessmentData.difficulty || 'Beginner'}
           importantNote1={assessmentData.metadata?.important_note_1}
           importantNote2={assessmentData.metadata?.important_note_2}
