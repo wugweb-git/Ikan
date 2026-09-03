@@ -18,7 +18,7 @@ import {
   ClipboardList,
   PenLine,
 } from 'lucide-react';
-import type { EngineResult, SeverityLevel } from '../lib/recommendation-engine';
+import type { EngineResult, ResponseTier } from '../lib/recommendation-engine';
 
 interface RecommendationCardsProps {
   engineResult: EngineResult;
@@ -26,7 +26,7 @@ interface RecommendationCardsProps {
   className?: string;
 }
 
-const SEVERITY_CONFIG: Record<SeverityLevel, {
+const SEVERITY_CONFIG: Record<ResponseTier, {
   color: string; bg: string; label: string; icon: React.ReactNode;
   gradientFrom: string; gradientTo: string;
 }> = {
@@ -91,8 +91,8 @@ const FALLBACK_META = {
 };
 
 export function RecommendationCards({ engineResult, onNavigate, className }: RecommendationCardsProps) {
-  const { severity, primaryAction, secondaryActions, showProfessionalSupportNote } = engineResult;
-  const config = SEVERITY_CONFIG[severity];
+  const { tier, primaryAction, secondaryActions, showProfessionalSupportNote } = engineResult;
+  const config = SEVERITY_CONFIG[tier];
   const isMobile = useIsMobile();
 
   const hasPrimary = primaryAction.type === 'equip_program' && !!primaryAction.programId;
@@ -167,7 +167,7 @@ export function RecommendationCards({ engineResult, onNavigate, className }: Rec
    Sub-components
    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
 
-function SeverityCard({ engineResult, config }: { engineResult: EngineResult; config: typeof SEVERITY_CONFIG[SeverityLevel] }) {
+function SeverityCard({ engineResult, config }: { engineResult: EngineResult; config: typeof SEVERITY_CONFIG[ResponseTier] }) {
   return (
     <div
       style={{

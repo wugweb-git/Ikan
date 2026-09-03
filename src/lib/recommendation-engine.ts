@@ -8,22 +8,26 @@ import {
 } from './scoring-engine';
 
 /**
- * The engine's three-way level is the **response tier**, not a severity.
+ * NOTE: this module deliberately does **not** export a `SeverityLevel`.
  *
- * It was declared here as `SeverityLevel = 'low' | 'moderate' | 'high'` while
- * the catalog carried seven `severity_level` terms, and a hand-written
- * `SEVERITY_ORDER` forced all seven onto one line — asserting that `low` sits
- * between `minimal` and `mild`, and `high` between `moderately-severe` and
- * `severe`. Nobody decided that; it fell out of writing a lookup table.
+ * It used to export one as an alias of `ResponseTier` (3 terms) while
+ * `scoring-engine.ts` exports a different `SeverityLevel` (5 clinical terms).
+ * Two types, one name, different domains — and an auditor reading this file's
+ * `severity` field reasonably concluded the Dashboard's three-way branches were
+ * dropping `minimal` and `mild` into a danger branch. They were not: the field
+ * only ever held a tier. The name was the defect.
  *
- * The two vocabularies are separate (scoring-engine.ts):
- *   - clinical severity, 5 ordered terms — what **rules** match on
- *   - response tier, 3 ordered terms — what **copy and tone** branch on
+ * `scoring-engine.ts` owns `SeverityLevel` (clinical, 5 terms). This module
+ * re-exports `ResponseTier` and names its field `tier`, so neither can be
+ * mistaken for the other.
  *
- * This alias keeps existing consumers compiling; it is a historical spelling
- * of `ResponseTier`.
+ * A third one still exists server-side: `shared-types.ts` declares
+ * `SeverityLevel = 'low' | 'mild' | 'moderate' | 'high'` — four terms, a fourth
+ * vocabulary — and types `min_severity` with it even though live rules hold
+ * `moderately-severe`, which is not in that union. It belongs to the parallel
+ * backend recommendation service; see PENDING.md.
  */
-export type SeverityLevel = ResponseTier;
+export type { ResponseTier };
 
 /** @deprecated `low`/`high` are tiers, not severities. Use ClinicalSeverity. */
 export type ExtendedSeverityLevel = ClinicalSeverity | 'low' | 'high';
@@ -31,7 +35,7 @@ export type ExtendedSeverityLevel = ClinicalSeverity | 'low' | 'high';
 export type { ClinicalSeverity };
 
 export interface SeverityBand {
-  key: SeverityLevel;
+  key: ResponseTier;
   min: number;
   max: number;
 }
@@ -44,7 +48,7 @@ const DEFAULT_SEVERITY_BANDS: SeverityBand[] = [
 ];
 
 export interface RecommendationRule {
-  if: { severity: SeverityLevel };
+  if: { tier: ResponseTier };
   recommend: {
     primary: string[];
     equipIds?: string[];
@@ -53,9 +57,9 @@ export interface RecommendationRule {
   };
 }
 
-const DEFAULT_RECOMMENDATION_RULES: Record<SeverityLevel, RecommendationRule> = {
+const DEFAULT_RECOMMENDATION_RULES: Record<ResponseTier, RecommendationRule> = {
   low: {
-    if: { severity: 'low' },
+    if: { tier: 'low' },
     recommend: {
       primary: [],
       secondary: ['resources', 'trackers'],
@@ -63,7 +67,7 @@ const DEFAULT_RECOMMENDATION_RULES: Record<SeverityLevel, RecommendationRule> = 
     }
   },
   moderate: {
-    if: { severity: 'moderate' },
+    if: { tier: 'moderate' },
     recommend: {
       primary: ['equip_program'],
       equipIds: ['stress', 'sleep-tight'],
@@ -72,7 +76,7 @@ const DEFAULT_RECOMMENDATION_RULES: Record<SeverityLevel, RecommendationRule> = 
     }
   },
   high: {
-    if: { severity: 'high' },
+    if: { tier: 'high' },
     recommend: {
       primary: ['equip_program'],
       equipIds: ['burnout', 'stress'],
@@ -91,7 +95,8 @@ const DEFAULT_OVERLAP_MAP: Record<string, string[]> = {
 export interface EscalationRule {
   if: {
     assessment: string;
-    severity: SeverityLevel;
+    /** Response tier — tone and copy branch on this. NOT a clinical severity. */
+  tier: ResponseTier;
   };
   alsoRecommend: string[];
 }
@@ -115,11 +120,11 @@ function resolveProgramSlug(id: string): string {
 
 const DEFAULT_ESCALATION_RULES: EscalationRule[] = [
   {
-    if: { assessment: 'sleep', severity: 'high' },
+    if: { assessment: 'sleep', tier: 'high' },
     alsoRecommend: ['stress']
   },
   {
-    if: { assessment: 'stress', severity: 'high' },
+    if: { assessment: 'stress', tier: 'high' },
     alsoRecommend: ['burnout', 'sleep']
   }
 ];
@@ -129,7 +134,7 @@ const DEFAULT_ESCALATION_RULES: EscalationRule[] = [
 // ══════════════════════════════════════════════════════════════════
 
 interface EngineConfig {
-  rules: Record<SeverityLevel, RecommendationRule>;
+  rules: Record<ResponseTier, RecommendationRule>;
   overlapMap: Record<string, string[]>;
   escalationRules: EscalationRule[];
   severityBands: SeverityBand[];
@@ -157,7 +162,7 @@ async function loadEngineConfig(): Promise<EngineConfig> {
 
       if (Array.isArray(backendRules) && backendRules.length > 0) {
         // Convert backend rules array to severity-keyed lookup
-        const rulesMap: Record<SeverityLevel, RecommendationRule> = { ...DEFAULT_RECOMMENDATION_RULES };
+        const rulesMap: Record<ResponseTier, RecommendationRule> = { ...DEFAULT_RECOMMENDATION_RULES };
         const overlapMap: Record<string, string[]> = { ...DEFAULT_OVERLAP_MAP };
         const escalationRules: EscalationRule[] = [...DEFAULT_ESCALATION_RULES];
         const severityBands: SeverityBand[] = [...DEFAULT_SEVERITY_BANDS];
@@ -178,14 +183,16 @@ async function loadEngineConfig(): Promise<EngineConfig> {
         for (const rule of backendRules) {
           // Admin rules may have various shapes — adapt to our interface
           if (rule.severity && rule.message) {
-            const severity = rule.severity as SeverityLevel;
-            rulesMap[severity] = {
-              if: { severity },
+            // `rule.severity` is the backend config's key for a TIER, not a
+            // clinical severity — the two vocabularies again, in stored data.
+            const tier = rule.severity as ResponseTier;
+            rulesMap[tier] = {
+              if: { tier },
               recommend: {
-                primary: rule.primary_actions || rule.primary || rulesMap[severity]?.recommend.primary || [],
-                equipIds: rule.equip_ids || rule.equipIds || rulesMap[severity]?.recommend.equipIds,
-                secondary: rule.secondary_actions || rule.secondary || rulesMap[severity]?.recommend.secondary || [],
-                message: rule.message || rulesMap[severity]?.recommend.message || '',
+                primary: rule.primary_actions || rule.primary || rulesMap[tier]?.recommend.primary || [],
+                equipIds: rule.equip_ids || rule.equipIds || rulesMap[tier]?.recommend.equipIds,
+                secondary: rule.secondary_actions || rule.secondary || rulesMap[tier]?.recommend.secondary || [],
+                message: rule.message || rulesMap[tier]?.recommend.message || '',
               }
             };
             appliedAnyOverride = true;
@@ -451,7 +458,7 @@ export const OVERLAP_MAP = DEFAULT_OVERLAP_MAP;
 export const ESCALATION_RULES = DEFAULT_ESCALATION_RULES;
 
 // Helper to determine severity
-export function getSeverity(score: number, maxScore: number): SeverityLevel {
+export function getSeverity(score: number, maxScore: number): ResponseTier {
   const percentage = maxScore > 0 ? (score / maxScore) * 100 : 0;
   
   // Use cached bands if available
@@ -467,7 +474,8 @@ export function getSeverity(score: number, maxScore: number): SeverityLevel {
 
 // Result Interface
 export interface EngineResult {
-  severity: SeverityLevel;
+  /** Response tier — tone and copy branch on this. NOT a clinical severity. */
+  tier: ResponseTier;
   assessmentSlug?: string;
   assessmentName?: string;
   score?: number;
@@ -588,7 +596,7 @@ export function evaluateAssessment(input: EvaluateInput): EngineResult {
   const relatedPrograms: string[] = [];
   const cat = (category ?? '').trim().toLowerCase();
   const escalation = cat
-    ? config.escalationRules.find(r => r.if.assessment === cat && r.if.severity === tier)
+    ? config.escalationRules.find(r => r.if.assessment === cat && r.if.tier === tier)
     : undefined;
   if (escalation) {
     relatedPrograms.push(...escalation.alsoRecommend);
@@ -598,7 +606,7 @@ export function evaluateAssessment(input: EvaluateInput): EngineResult {
 
   // Build the result object
   const result: EngineResult = {
-    severity: tier,
+    tier,
     /** The 5-term clinical severity. Null when the score is unbanded. */
     severityLevel,
     assessmentSlug: slug || undefined,
@@ -647,48 +655,29 @@ export function evaluateAssessment(input: EvaluateInput): EngineResult {
     });
   });
 
-  // Add Secondary Recommendations
-  // 1. Related Programs (from Overlap)
-  relatedPrograms.forEach(progId => {
-      if (progId !== targetProgramId) {
-          const normalizedId = resolveProgramSlug(progId);
-          
-          result.secondaryActions.push({
-            type: 'related_program',
-            title: 'You may also find this helpful',
-            label: `Explore ${progId.charAt(0).toUpperCase() + progId.slice(1).replace('-', ' ')}`, 
-            route: `/equip-program-flow?id=${normalizedId}` 
-          });
-      }
-  });
-  
-  // 2. Generic Secondaries (Resources, Trackers)
-  rule.recommend.secondary.forEach(action => {
-    if (action === 'professional_support') {
-       // Handled by showProfessionalSupportNote
-    } else if (action === 'resources') {
-      result.secondaryActions.push({
-        type: 'resources',
-        title: 'You may also find this helpful',
-        label: 'Explore Equip',
-        route: '/equip'
-      });
-    } else if (action === 'trackers') {
-      result.secondaryActions.push({
-        type: 'trackers',
-        title: 'Track your progress',
-        label: 'Explore Assessment',
-        route: '/assessment'
-      });
-    } else if (action === 'journaling') {
-      result.secondaryActions.push({
-        type: 'journaling',
-        title: 'Reflect on your journey',
-        label: 'Open Journal',
-        route: '/mood-journal'
-      });
-    }
-  });
+  /**
+   * Removed 2026-09-03 — the other half of "no matching rule renders nothing".
+   *
+   * Two builders used to run here and neither consulted a rule:
+   *
+   *  - **Related programs**, with the literal title "You may also find this
+   *    helpful" and a label generated from the programme slug by string
+   *    manipulation (`slug.replace('-', ' ')` replaces only the FIRST hyphen,
+   *    so a three-word slug kept its second one). That is where "Explore
+   *    Stress" came from on a Burnout result.
+   *  - **Generic secondaries**, three literal blocks driven by
+   *    `rule.recommend.secondary` — from DEFAULT_RECOMMENDATION_RULES, the same
+   *    constant `severityMessage` was just weaned off. "Track your progress",
+   *    "Reflect on your journey".
+   *
+   * With the primary action and the message correctly going quiet when no rule
+   * matched, these four cards kept talking — so the page read MORE confident
+   * the less the engine actually knew. `secondaryActions` now comes only from
+   * admin resource and assessment rules, and is empty when none match.
+   *
+   * If "explore the journal" is worth recommending it is a rule row; if it is
+   * permanent chrome it belongs in the page layout, not in an EngineResult.
+   */
 
   return result;
 }

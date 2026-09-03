@@ -10,6 +10,18 @@ import { Skeleton } from '../ui/skeleton-loader';
 import { cn } from '../ui/utils';
 import { SectionReportCard } from '../player/SectionReportCard';
 import type { SectionScoreResult } from '../../lib/assessment-sections';
+import { severityPresentation, severityOfResult } from '../../lib/severity-presentation';
+
+/**
+ * Percentage of the achievable range, or null when there is no real maximum.
+ *
+ * Null is the whole point: 42 of 101 stored results have no `max_score`, and
+ * the previous code substituted 21 (GAD-7's maximum) for all of them. Callers
+ * render a dash rather than a number computed against a denominator that was
+ * never this instrument's.
+ */
+const pctOf = (score: number, maxScore: number | null): number | null =>
+  maxScore && maxScore > 0 ? Math.round((score / maxScore) * 100) : null;
 
 // ── Design tokens ──
 const f = (size: string, weight: number = 400, color: string = 'var(--color-text-primary)') => ({
@@ -24,8 +36,12 @@ interface AssessmentAttempt {
   assessmentId: string;
   assessmentName?: string;
   score: number;
-  maxScore: number;
+  /** Null when no real maximum resolved — do not substitute one. */
+  maxScore: number | null;
+  /** Clinical severity term, or undefined. Never a band label. */
   severity?: string;
+  /** Instrument copy for the band — "Poor Sleep". Display only. */
+  bandLabel?: string;
   interpretation?: any;
   completedAt: string;
   responses?: Record<string, any>;
@@ -49,23 +65,11 @@ interface AssessmentHistoryDetailProps {
   onNavigate?: (route: string) => void;
 }
 
-const getSeverityColor = (severity?: string) => {
-  switch (severity) {
-    case 'low': return 'var(--color-status-success)';
-    case 'moderate': return 'var(--color-status-warning)';
-    case 'high': return 'var(--color-status-danger)';
-    default: return 'var(--color-primary-default)';
-  }
-};
-
-const getSeverityBg = (severity?: string) => {
-  switch (severity) {
-    case 'low': return 'var(--color-status-success-light)';
-    case 'moderate': return 'var(--color-status-warning-light)';
-    case 'high': return 'var(--color-status-danger-light)';
-    default: return 'var(--color-bg-muted)';
-  }
-};
+// Both maps spoke the retired 3-term vocabulary, so `minimal`, `mild`,
+// `moderately-severe` and `severe` — four of the five real terms — fell to the
+// default. Colour and label now come from one helper shared with the dashboard.
+const getSeverityColor = (severity?: string) => severityPresentation(severity).color;
+const getSeverityBg = (severity?: string) => severityPresentation(severity).background;
 
 /**
  * Compares **percentage of the achievable range**, not raw score, and only
@@ -80,9 +84,9 @@ const getSeverityBg = (severity?: string) => {
  * an overall score. General has no overall, so it never reaches here.
  */
 const getTrend = (attempts: AssessmentAttempt[]) => {
-  const comparable = attempts.filter(a => !a.excludedFromTrends && a.maxScore > 0);
+  const comparable = attempts.filter(a => !a.excludedFromTrends && pctOf(a.score, a.maxScore) !== null);
   if (comparable.length < 2) return 'stable';
-  const pct = (a: AssessmentAttempt) => (a.score / a.maxScore) * 100;
+  const pct = (a: AssessmentAttempt) => pctOf(a.score, a.maxScore)!;
   const latest = pct(comparable[0]);
   const previous = pct(comparable[1]);
   if (latest < previous) return 'improving';
@@ -200,8 +204,18 @@ export function AssessmentHistoryDetail({ assessmentId, onBack, onNavigate }: As
                 assessmentId: entryId,
                 assessmentName: entry.assessmentTitle || entry.assessment_title || metaRes?.title || 'Assessment',
                 score: entry.score ?? entry.calculated_score ?? 0,
-                maxScore: entry.maxScore ?? entry.max_score ?? (defMaxScore > 0 ? defMaxScore : 21),
-                severity: entry.severityHint || entry.severity_hint || entry.interpretation?.label?.toLowerCase() || undefined,
+                // No invented denominator. `?? 21` was GAD-7's maximum applied
+                // to everything — 42 of 101 stored results have no max_score,
+                // so Burnout's 115 was being divided by 21. A percentage
+                // without a real max is not a smaller number, it is a wrong
+                // one; callers must handle null and refuse to render.
+                maxScore: entry.maxScore ?? entry.max_score ?? (defMaxScore > 0 ? defMaxScore : null),
+                // The clinical severity, from the band the score fell in.
+                // `severity_hint` is the BAND LABEL ("Poor Sleep", "Completed")
+                // — 76 of 101 results carry one that is not a severity term, so
+                // lower-casing it produced `poor-sleep` and coloured by default.
+                severity: severityOfResult(entry) ?? undefined,
+                bandLabel: entry.severityHint || entry.severity_hint || entry.interpretation?.label || undefined,
                 interpretation: entry.interpretation,
                 completedAt: entry.completed_at || entry.completedAt || new Date().toISOString(),
                 responses: entry.responses,
@@ -236,12 +250,12 @@ export function AssessmentHistoryDetail({ assessmentId, onBack, onNavigate }: As
     // move the line. Incomparable results are dropped rather than plotted on a
     // scale they were never scored against.
     return [...attempts]
-      .filter(a => !a.excludedFromTrends && a.maxScore > 0)
+      .filter(a => !a.excludedFromTrends && pctOf(a.score, a.maxScore) !== null)
       .reverse().map((a, i) => ({
       index: i,
       score: a.score,
       maxScore: a.maxScore,
-      percent: Math.round((a.score / a.maxScore) * 100),
+      percent: pctOf(a.score, a.maxScore)!,
       severity: a.severity,
       dateLabel: new Date(a.completedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: '2-digit' }),
       dateShort: new Date(a.completedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
@@ -262,7 +276,7 @@ export function AssessmentHistoryDetail({ assessmentId, onBack, onNavigate }: As
     const attemptRows = attempts
       .map(
         (a, i) => {
-          const aPct = a.maxScore > 0 ? Math.round((a.score / a.maxScore) * 100) : 0;
+          const aPct = pctOf(a.score, a.maxScore);
           return `
         <tr>
           <td style="padding:10px 14px;border-bottom:1px solid #E9EBEF;">${i === 0 ? 'Latest' : `#${attempts.length - i}`}</td>
@@ -319,7 +333,7 @@ export function AssessmentHistoryDetail({ assessmentId, onBack, onNavigate }: As
         <div class="summary">
           <div class="stat">
             <div class="stat-label">Latest Score</div>
-            <div class="stat-value">${latest.maxScore > 0 ? Math.round((latest.score / latest.maxScore) * 100) : 0}%<span style="font-size:14px;color:#717182;font-weight:400"> (${latest.score}/${latest.maxScore})</span></div>
+            <div class="stat-value">${pctOf(latest.score, latest.maxScore) ?? '—'}%<span style="font-size:14px;color:#717182;font-weight:400"> (${latest.score}/${latest.maxScore ?? '—'})</span></div>
             ${latest.severity ? `<div class="stat-sub" style="text-transform:capitalize">${latest.severity}</div>` : ''}
           </div>
           <div class="stat">
@@ -503,13 +517,15 @@ export function AssessmentHistoryDetail({ assessmentId, onBack, onNavigate }: As
                       strokeWidth={8}
                       strokeLinecap="round"
                       strokeDasharray={2 * Math.PI * 34}
-                      strokeDashoffset={2 * Math.PI * 34 * (1 - (latest.maxScore > 0 ? latest.score / latest.maxScore : 0))}
+                      strokeDashoffset={2 * Math.PI * 34 * (1 - (pctOf(latest.score, latest.maxScore) ?? 0) / 100)}
                       style={{ transform: 'rotate(-90deg)', transformOrigin: 'center' }}
                     />
                   </svg>
                   <div className="absolute inset-0 flex flex-col items-center justify-center">
-                    <span style={f('xl', 500)}>{latest.maxScore > 0 ? Math.round((latest.score / latest.maxScore) * 100) : 0}%</span>
-                    <span style={f('xs', 400, 'var(--color-text-muted)')}>{latest.score} / {latest.maxScore}</span>
+                    {/* A dash, not 0%. Without a real maximum there is no
+                        percentage — showing 0% reads as a perfect score. */}
+                    <span style={f('xl', 500)}>{pctOf(latest.score, latest.maxScore) !== null ? `${pctOf(latest.score, latest.maxScore)}%` : '—'}</span>
+                    <span style={f('xs', 400, 'var(--color-text-muted)')}>{latest.score} / {latest.maxScore ?? '—'}</span>
                   </div>
                 </div>
 
@@ -632,7 +648,7 @@ export function AssessmentHistoryDetail({ assessmentId, onBack, onNavigate }: As
                 hour: 'numeric',
                 minute: '2-digit',
               });
-              const pct = attempt.maxScore > 0 ? (attempt.score / attempt.maxScore) * 100 : 0;
+              const pct = pctOf(attempt.score, attempt.maxScore);
 
               return (
                 <Card
@@ -691,8 +707,8 @@ export function AssessmentHistoryDetail({ assessmentId, onBack, onNavigate }: As
 
                       {/* Score */}
                       <div className="text-right">
-                        <span style={f('lg', 500)}>{Math.round(pct)}%</span>
-                        <span style={f('xs', 400, 'var(--color-text-muted)')}> ({attempt.score}/{attempt.maxScore})</span>
+                        <span style={f('lg', 500)}>{pct !== null ? `${Math.round(pct)}%` : '—'}</span>
+                        <span style={f('xs', 400, 'var(--color-text-muted)')}> ({attempt.score}/{attempt.maxScore ?? '—'})</span>
                         {attempt.severity && (
                           <div
                             style={{
@@ -726,7 +742,7 @@ export function AssessmentHistoryDetail({ assessmentId, onBack, onNavigate }: As
                         <div className="space-y-2" style={{ marginBottom: 16 }}>
                           <div className="flex justify-between">
                             <span style={f('xs', 400, 'var(--color-text-muted)')}>Score</span>
-                            <span style={f('xs', 500)}>{pct.toFixed(0)}%</span>
+                            <span style={f('xs', 500)}>{pct !== null ? `${pct.toFixed(0)}%` : '—'}</span>
                           </div>
                           <div style={{ height: 6, borderRadius: 3, backgroundColor: 'var(--color-bg-muted)', overflow: 'hidden' }}>
                             <div

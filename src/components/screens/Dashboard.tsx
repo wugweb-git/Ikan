@@ -31,7 +31,8 @@ interface AssessmentScore {
   assessmentId: string;
   assessmentName: string;
   score: number;
-  maxScore: number;
+  /** Null when no real maximum resolved. Never substitute one. */
+  maxScore: number | null;
   severity: string;
   completedAt: string;
 }
@@ -333,10 +334,14 @@ export function Dashboard({ className, onNavigate }: DashboardProps) {
             .map(([id, r]) => {
             const resolvedMax = r.max_score || r.maxScore || assessmentMaxScoreMap?.get(id);
             if (!resolvedMax) console.warn(`[Dashboard] No maxScore resolved for assessment "${id}", score=${r.score}. Backend enrichment may have failed.`);
-            const maxScore = resolvedMax || r.score || 1; // Worst case: use score itself to avoid inflated percentages
+            // No invented denominator. `|| r.score || 1` rendered a missing
+            // maximum as a full bar (score/score = 100%) or as score x 100%.
+            // A percentage without a real max is a wrong number, not a smaller
+            // one; skip the row instead.
+            const maxScore: number | null = typeof resolvedMax === 'number' && resolvedMax > 0 ? resolvedMax : null;
             const meta = assessmentMetaMap?.get(id);
             const result = evaluateAssessment({
-              slug: id, category: meta?.category, score: r.score || 0, maxScore,
+              slug: id, category: meta?.category, score: r.score || 0, maxScore: maxScore ?? 0,
               scoringProfileId: meta?.profileId,
             });
             const rawName = r.assessment_name || r.assessmentName || r.title || id;
@@ -345,7 +350,7 @@ export function Dashboard({ className, onNavigate }: DashboardProps) {
               assessmentName: cleanAssessmentName(id, rawName, assessmentNameMap),
               score: r.score || 0,
               maxScore,
-              severity: result.severity,
+              severity: result.tier,
               completedAt: r.completed_at || r.created_at || '',
             };
           });
@@ -361,7 +366,7 @@ export function Dashboard({ className, onNavigate }: DashboardProps) {
               slug,
               category: latestMeta?.category,
               score: latest.score || 0,
-              maxScore: latest.max_score || latest.maxScore || assessmentMaxScoreMap?.get(slug) || latest.score || 1,
+              maxScore: latest.max_score ?? latest.maxScore ?? assessmentMaxScoreMap?.get(slug) ?? 0,
               scoringProfileId: latestMeta?.profileId,
             });
             // Attach assessment name for display in RecommendationCards
@@ -436,10 +441,12 @@ export function Dashboard({ className, onNavigate }: DashboardProps) {
 
     // 2. In-memory enrichments (these may duplicate server data but dedup handles it)
     for (const score of assessmentScores) {
-      const pctVal = score.maxScore > 0 ? Math.round((score.score / score.maxScore) * 100) : 0;
+      const pctVal = score.maxScore && score.maxScore > 0 ? Math.round((score.score / score.maxScore) * 100) : null;
       candidates.push({
         type: 'assessment', label: score.assessmentName,
-        detail: `${pctVal}% (${score.score}/${score.maxScore}) · ${score.severity}`,
+        detail: pctVal !== null
+          ? `${pctVal}% (${score.score}/${score.maxScore}) · ${score.severity}`
+          : `${score.score} · ${score.severity} (no comparable maximum)`,
         date: score.completedAt, ts: score.completedAt ? new Date(score.completedAt).getTime() : 0,
         route: '/assessment',
       });
@@ -642,12 +649,12 @@ export function Dashboard({ className, onNavigate }: DashboardProps) {
                 cursor: 'pointer',
                 overflow: 'hidden',
                 border: engineResult
-                  ? `1px solid ${engineResult.severity === 'low' ? 'var(--color-status-success-light)' : engineResult.severity === 'moderate' ? 'var(--color-status-warning-light)' : 'var(--color-status-danger-light)'}`
+                  ? `1px solid ${engineResult.tier === 'low' ? 'var(--color-status-success-light)' : engineResult.tier === 'moderate' ? 'var(--color-status-warning-light)' : 'var(--color-status-danger-light)'}`
                   : '1px solid var(--color-border-default)',
                 background: engineResult
-                  ? (engineResult.severity === 'low'
+                  ? (engineResult.tier === 'low'
                     ? 'linear-gradient(135deg, #F0FDF4 0%, #DCFCE7 100%)'
-                    : engineResult.severity === 'moderate'
+                    : engineResult.tier === 'moderate'
                     ? 'linear-gradient(135deg, #FFFBEB 0%, #FEF3C7 100%)'
                     : 'linear-gradient(135deg, #FEF2F2 0%, #FEE2E2 100%)')
                   : 'var(--color-bg-card)',
@@ -656,24 +663,24 @@ export function Dashboard({ className, onNavigate }: DashboardProps) {
               <div className="flex items-center" style={{ padding: 'var(--spacing-4) var(--spacing-5)', gap: 'var(--spacing-4)' }}>
                 <div style={{
                   width: 48, height: 48, borderRadius: 'var(--radius-md)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-                  backgroundColor: engineResult ? (engineResult.severity === 'low' ? 'rgba(34,197,94,0.15)' : engineResult.severity === 'moderate' ? 'rgba(245,158,11,0.15)' : 'rgba(239,68,68,0.15)') : 'var(--color-bg-muted)',
-                  color: engineResult ? (engineResult.severity === 'low' ? 'var(--color-status-success)' : engineResult.severity === 'moderate' ? 'var(--color-status-warning)' : 'var(--color-status-danger)') : 'var(--color-text-muted)',
+                  backgroundColor: engineResult ? (engineResult.tier === 'low' ? 'rgba(34,197,94,0.15)' : engineResult.tier === 'moderate' ? 'rgba(245,158,11,0.15)' : 'rgba(239,68,68,0.15)') : 'var(--color-bg-muted)',
+                  color: engineResult ? (engineResult.tier === 'low' ? 'var(--color-status-success)' : engineResult.tier === 'moderate' ? 'var(--color-status-warning)' : 'var(--color-status-danger)') : 'var(--color-text-muted)',
                 }}>
                   {engineResult
-                    ? (engineResult.severity === 'low' ? <Check size={22} strokeWidth={2.5} /> : engineResult.severity === 'moderate' ? <Activity size={22} /> : <Brain size={22} />)
+                    ? (engineResult.tier === 'low' ? <Check size={22} strokeWidth={2.5} /> : engineResult.tier === 'moderate' ? <Activity size={22} /> : <Brain size={22} />)
                     : <TrendingUp size={22} />
                   }
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <h3 style={{ ...f('sm', 500), margin: 0 }}>
                     {engineResult
-                      ? (engineResult.severity === 'low' ? 'Looking good' : engineResult.severity === 'moderate' ? 'Needs attention' : 'Let\'s talk about it')
+                      ? (engineResult.tier === 'low' ? 'Looking good' : engineResult.tier === 'moderate' ? 'Needs attention' : 'Let\'s talk about it')
                       : 'Wellness Insight'
                     }
                   </h3>
                   <p style={{ ...f('xs', 400, 'var(--color-text-muted)'), margin: '2px 0 0', lineHeight: 1.4 }}>
                     {engineResult
-                      ? (engineResult.severity === 'low' ? "You're doing well. Keep up the positive habits." : engineResult.severity === 'moderate' ? 'A few areas could use some care. Explore your recommendations.' : 'Your well-being needs support. We\'re here for you.')
+                      ? (engineResult.tier === 'low' ? "You're doing well. Keep up the positive habits." : engineResult.tier === 'moderate' ? 'A few areas could use some care. Explore your recommendations.' : 'Your well-being needs support. We\'re here for you.')
                       : 'Complete an assessment to see your wellness insights.'}
                   </p>
                 </div>
@@ -810,7 +817,7 @@ export function Dashboard({ className, onNavigate }: DashboardProps) {
                 {assessmentScores.slice(0, 5).map((s, i) => {
                   const severityColor = s.severity === 'low' ? 'var(--color-status-success)' : s.severity === 'moderate' ? 'var(--color-status-warning)' : 'var(--color-status-danger)';
                   const severityBg = s.severity === 'low' ? 'var(--color-status-success-light)' : s.severity === 'moderate' ? 'var(--color-status-warning-light)' : 'var(--color-status-danger-light)';
-                  const pct = s.maxScore > 0 ? Math.round((s.score / s.maxScore) * 100) : 0;
+                  const pct = s.maxScore && s.maxScore > 0 ? Math.round((s.score / s.maxScore) * 100) : null;
                   return (
                     <div key={`${s.assessmentId}-${i}`} onClick={() => onNavigate?.(`/assessment-history-detail?id=${s.assessmentId}`)}
                       className="active:bg-black/[0.03] transition-colors"
@@ -827,7 +834,7 @@ export function Dashboard({ className, onNavigate }: DashboardProps) {
                             <circle cx={20} cy={20} r={16} fill="none" stroke={severityColor} strokeWidth={3}
                               strokeLinecap="round"
                               strokeDasharray={`${2 * Math.PI * 16}`}
-                              strokeDashoffset={`${2 * Math.PI * 16 * (1 - pct / 100)}`}
+                              strokeDashoffset={`${2 * Math.PI * 16 * (1 - (pct ?? 0) / 100)}`}
                               style={{ transform: 'rotate(-90deg)', transformOrigin: 'center' }}
                             />
                           </svg>
@@ -835,14 +842,14 @@ export function Dashboard({ className, onNavigate }: DashboardProps) {
                             position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
                             fontSize: 10, fontWeight: 500, fontFamily: 'var(--font-family-base)', color: severityColor,
                           }}>
-                            {pct}%
+                            {pct !== null ? `${pct}%` : '—'}
                           </span>
                         </div>
 
                         <div style={{ flex: 1, minWidth: 0 }}>
                           <span style={{ ...f('sm', 500), display: 'block', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{s.assessmentName}</span>
                           <p style={{ ...f('xs', 400, 'var(--color-text-muted)'), margin: '1px 0 0' }}>
-                            {s.completedAt ? new Date(s.completedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'Recent'} · {s.score}/{s.maxScore}
+                            {s.completedAt ? new Date(s.completedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'Recent'} · {s.score}/{s.maxScore ?? '—'}
                           </p>
                         </div>
 

@@ -322,20 +322,32 @@ async function computeIkanScore(userId: string): Promise<IkanScoreResult> {
 
   if (totalPrograms > 0) {
     let progressSum = 0;
+    // Enrollments whose programme length cannot be established are skipped, so
+    // the denominator has to shrink with them rather than counting them at 0.
+    let counted = completedEnrollments.length;
 
     for (const e of activeEnrollments) {
       // Try to get the program to know total days
       const program = await kv.get(`equip_program:${e.equip_id}`).catch(() => null)
         || await kv.get(`equip:${e.equip_id}`).catch(() => null);
-      const totalDays = program?.daily_content?.length || program?.days?.length || program?.duration_days || program?.total_days || 30;
+      // Was `|| 30` — a hardcoded programme length applied to every programme
+      // whose real length could not be read. Now null, and an enrollment with
+      // no known length is EXCLUDED: dividing by null gives Infinity, which
+      // clamps to 100 and would have scored every unknown programme complete.
+      const totalDays = program?.daily_content?.length || program?.days?.length
+        || program?.duration_days || program?.total_days || null;
+      if (!totalDays || totalDays <= 0) {
+        console.warn(`[ikan-score] enrollment ${e.id ?? ''} skipped: no programme length for equip ${e.equip_id}`);
+        continue;
+      }
       const currentDay = e.current_day_number || 1;
-      const progress = Math.min(100, Math.round((currentDay / totalDays) * 100));
-      progressSum += progress;
+      progressSum += Math.min(100, Math.round((currentDay / totalDays) * 100));
+      counted++;
     }
 
     // Completed programs count as 100%
     progressSum += completedEnrollments.length * 100;
-    programAvg = Math.round(progressSum / totalPrograms);
+    programAvg = counted > 0 ? Math.round(progressSum / counted) : 0;
   }
 
   // ── 4. Engagement score (recent activity) ─────────────────────

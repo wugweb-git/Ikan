@@ -79,12 +79,12 @@ export function ProgramProgressTracker({
           <div className="flex items-center" style={{ gap: 12 }}>
             <div style={{
               width: 36, height: 36, borderRadius: 10,
-              backgroundColor: engineResult.severity === 'low' ? 'var(--color-status-success-light)'
-                : engineResult.severity === 'moderate' ? 'var(--color-status-warning-light)'
+              backgroundColor: engineResult.tier === 'low' ? 'var(--color-status-success-light)'
+                : engineResult.tier === 'moderate' ? 'var(--color-status-warning-light)'
                 : 'var(--color-status-danger-light)',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              color: engineResult.severity === 'low' ? 'var(--color-status-success)'
-                : engineResult.severity === 'moderate' ? 'var(--color-status-warning)'
+              color: engineResult.tier === 'low' ? 'var(--color-status-success)'
+                : engineResult.tier === 'moderate' ? 'var(--color-status-warning)'
                 : 'var(--color-status-danger)',
               flexShrink: 0,
             }}>
@@ -95,16 +95,16 @@ export function ProgramProgressTracker({
                 <span style={f('sm', 500)}>Assessment</span>
                 <span style={{
                   fontSize: 10, fontWeight: 500, fontFamily: 'var(--font-family-base)',
-                  color: engineResult.severity === 'low' ? 'var(--color-status-success)'
-                    : engineResult.severity === 'moderate' ? 'var(--color-status-warning)'
+                  color: engineResult.tier === 'low' ? 'var(--color-status-success)'
+                    : engineResult.tier === 'moderate' ? 'var(--color-status-warning)'
                     : 'var(--color-status-danger)',
-                  backgroundColor: engineResult.severity === 'low' ? 'var(--color-status-success-light)'
-                    : engineResult.severity === 'moderate' ? 'var(--color-status-warning-light)'
+                  backgroundColor: engineResult.tier === 'low' ? 'var(--color-status-success-light)'
+                    : engineResult.tier === 'moderate' ? 'var(--color-status-warning-light)'
                     : 'var(--color-status-danger-light)',
                   padding: '2px 7px', borderRadius: 'var(--radius-pill)',
                   textTransform: 'capitalize' as const,
                 }}>
-                  {engineResult.severity}
+                  {engineResult.tier}
                 </span>
               </div>
               <p style={{ ...f('xs', 400, 'var(--color-text-muted)'), margin: '2px 0 0' }}>

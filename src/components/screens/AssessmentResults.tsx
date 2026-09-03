@@ -88,7 +88,11 @@ export function AssessmentResults({
           // The full EngineResult, persisted at submit. Without it only a
           // flattened interpretation survived and this screen could not be
           // rebuilt from the record.
-          recommendation: record.engine_result,
+          // Records written before the rename carry `severity` where the
+          // engine now emits `tier`. Map on read rather than dual-writing.
+          recommendation: record.engine_result
+            ? { ...record.engine_result, tier: record.engine_result.tier ?? record.engine_result.severity }
+            : record.engine_result,
           sectionScores: record.section_scores ?? undefined,
           invalidReason: record.invalid_reason ?? null,
           completedAt: record.completed_at,
