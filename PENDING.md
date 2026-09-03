@@ -777,3 +777,69 @@ Burnout and General end-to-end runs; `GET /user/assessments/results/:id`;
 `invalid_reason` on a deliberately incomplete run; profile validation refusing a
 gapped band set; the locked/DELETE refusals; Guardrail 11 (renaming a question
 id that a saved score references).
+
+---
+
+## Session closeout — 2026-09-03 (conversion-surface pass)
+
+Commit `33d51ccf`, deployed and verified by behaviour: the live `AssessmentResults`
+chunk contains `Related programs`, `Keep going`, `What this measured`,
+`Your assessments`, `Your journal`; `About GAD-7` and
+`You may also find this helpful` are both absent. No edge-function change, so no
+redeploy. Typecheck holds at the 207 baseline.
+
+### Shipped
+Results page rebuilt as three tiers (matched programme · related programmes ·
+a quiet nav row) with a result header carrying category, date, title and counts —
+every field already on the record and none of it rendered. `relatedPrograms` was
+computed by the engine and dropped; it is on `EngineResult` now, ids only.
+AD1 (the `'anxiety'` default), AD2 (`ASSESSMENT_FALLBACKS` + `DEFAULT_METADATA`),
+AD4 (the detail page recommending itself), AD6 (six image ladders → one helper),
+item 5 (`assessment-meta.ts`), item 7 (six severity maps → two helpers), item 8,
+W1, W2, and D3 finished. `AssessmentLandingNew` retired; `/assessment-landing`
+now renders `AssessmentDetail`.
+
+### Duration values — owner decision, partly taken
+`duration` is authored and was inconsistent. With one source now reading it,
+every surface agrees, which makes a wrong value *more* visible, not less.
+
+Sleep and Balance were both 10 min for 8 questions while General asked 24
+questions in 3. Both were set to **3 min**, derived from the rate the
+unflagged records were already authored at (Anxiety 10q/4min = 0.4 min/item;
+8 × 0.4 ≈ 3), not from a formula invented here. Backup:
+`backup_pre_duration_fix_2026_09_03` (2 rows). The other five were left as
+authored — overwriting a number someone chose is not a fix.
+
+**Still needs your number: `unsure-or-general-concern` — 24 questions in 3
+minutes, 7.5 seconds per item.** It is the one remaining value that reads
+wrong. It does not trip the wizard's plausibility warning, and the threshold
+was deliberately not tightened to force it to: tuning a check until it produces
+the answer you wanted is how a check stops meaning anything.
+
+| | questions | duration | min/item |
+|---|---|---|---|
+| depression | 12 | 3 | 0.25 |
+| burnout | 23 | 10 | 0.43 |
+| anxiety | 10 | 4 | 0.40 |
+| stress | 7 | 4 | 0.57 |
+| balance | 8 | **3** | 0.38 |
+| sleep | 8 | **3** | 0.38 |
+| general | 24 | 3 | **0.13** ← |
+
+`durationLooksImplausible()` now warns in the wizard when an authored duration
+is more than 2.5× or less than 0.4× what the item count implies. It blocks
+nothing, same as the coverage meter.
+
+### Deferred, deliberately
+`AdminScoringEngine`'s `FALLBACK_SEVERITY_COLORS` is the one remaining raw-hex
+severity map and stays: it seeds the admin colour pickers, whose inputs need
+literal hex values, and every entry is overridden by the `severity_level`
+catalog rows when they load. It is keyed on the correct 5-term vocabulary.
+
+`DayEditor`'s `block.duration || 5` is the same defect in the equip blocks
+module, which this pass deliberately did not touch.
+
+### Carried forward from the previous closeout
+R1 (the `?id=` fallback can render a different result), R2 (95 of 101 results
+render "Not banded"), S3 (the three-key `max_score` ladder), Audit #1 (one
+exported `Assessment` type), and the server's third four-term `SeverityLevel`.
