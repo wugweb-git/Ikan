@@ -256,6 +256,22 @@ question's **own lowest option value**, not zero. Option values are no longer al
 1-5 scale `v > 0` is true for every possible answer, which would have fired the crisis panel on
 "Never". `general-q5` is the only flagged question live, and its scale is 0-3.
 
+### Question text is mutable — and now recorded
+
+Guardrail 11 protects **identity**, not content. `burnout-q9`'s clobber passed every guard it
+defines: the id survived, only the text changed. Nothing wrote down what a question used to say,
+so recovering the original wording meant tracing six backups across two representations.
+
+Each write path now diffs question text against the saved record and appends
+`{from, to, at, by}` to that question's **`text_history`** (capped at 20, oldest dropped first;
+the backups remain the long-tail record). It blocks nothing — text must stay editable — it makes
+the change legible. Check `text_history` before reaching for a backup.
+
+The three asymmetric `assessment:` writers, at current line numbers: **`admin-routes.ts:816`**
+writes `assessment_def:` only (bulk import), **`admin-routes.ts:1534`** and
+**`kv-audit-routes.ts:890`** write the mirror only (the syncs). Lines **264-265, 321-322, 364-365**
+write both. All six must be dealt with when retiring the mirror.
+
 ### Guardrail 11 — question ids are immutable once scored
 
 Once a **saved** scoring spec references a `question.id`, that id is fixed for the life of the

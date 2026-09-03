@@ -1,7 +1,7 @@
 import { EquipService } from './program-service.ts';
 import { createClient } from "jsr:@supabase/supabase-js@2";
 import * as kv from "./kv_dual_write.ts";
-import { validateScoringProfile, projectBandsToClosedRanges, validateQuestionIdImmutability, validateAssessmentScores } from "./scoring-validation.ts";
+import { validateScoringProfile, projectBandsToClosedRanges, validateQuestionIdImmutability, validateAssessmentScores, diffQuestionText, applyTextHistory } from "./scoring-validation.ts";
 
 // REMOVED 2026-09-01 (S3): hardcoded SUPER_ADMIN_EMAIL. It was already unused
 // in this file; admin status derives solely from the is_admin profile flag.
@@ -252,6 +252,13 @@ app.post("/admin/assessments", requireAdmin, async (c) => {
       return c.json({ error: "Invalid scores[]", issues: scoreCheckCreate.errors }, 400);
     }
 
+    const textChangesCreate = diffQuestionText(priorForCreate, data);
+    if (textChangesCreate.length > 0 && Array.isArray(data.questions)) {
+      const actor = (c.get('admin') as any)?.email || (c.get('userId') as any) || 'admin';
+      data.questions = applyTextHistory(data.questions, textChangesCreate, String(actor));
+      console.log(`[assessment ${id}] ${textChangesCreate.length} question text change(s) on create-overwrite`);
+    }
+
     const assessment = await deriveScoringRanges({
       ...data,
       id,
@@ -300,6 +307,17 @@ app.put("/admin/assessments/:id", requireAdmin, async (c) => {
     const scoreCheck = validateAssessmentScores(merged?.scores, await knownProfileIds());
     if (!scoreCheck.ok) {
       return c.json({ error: "Invalid scores[]", issues: scoreCheck.errors }, 400);
+    }
+
+    // Record question-text changes. Guardrail 11 permits them — content is
+    // mutable — but nothing used to write down what a question previously said,
+    // which is why recovering burnout-q9's wording meant tracing six backups.
+    const textChanges = diffQuestionText(existing, merged);
+    if (textChanges.length > 0 && Array.isArray((updates as any).questions)) {
+      const actor = (c.get('admin') as any)?.email || (c.get('userId') as any) || 'admin';
+      (updates as any).questions = applyTextHistory((updates as any).questions, textChanges, String(actor));
+      console.log(`[assessment ${id}] ${textChanges.length} question text change(s): ` +
+        textChanges.map((t) => t.question_id).join(', '));
     }
     if (immutability.newlyRetired.length > 0) {
       const prior: string[] = Array.isArray((existing as any)?.retired_question_ids)

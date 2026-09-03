@@ -412,3 +412,73 @@ export function validateAssessmentScores(
 
   return { ok: errors.length === 0, errors, warnings };
 }
+
+export interface TextChange {
+  question_id: string;
+  from: string;
+  to: string;
+}
+
+/**
+ * Question texts that differ between the saved record and an incoming save.
+ *
+ * Guardrail 11 protects **identity**: an id referenced by a score cannot be
+ * renamed or deleted. It deliberately permits content edits, and it walks both
+ * question sets to do that — then discards the diff. That gap is exactly the
+ * `burnout-q9` failure: its id survived and only its text changed, so every
+ * guard passed while the original wording was lost. Recovering it meant tracing
+ * six backups across two representations, because nothing had written down what
+ * the question used to say.
+ *
+ * This does not block anything. Text must stay editable. It exists so the
+ * change is *recorded*.
+ */
+export function diffQuestionText(existing: any, incoming: any): TextChange[] {
+  const before = new Map<string, string>();
+  for (const q of Array.isArray(existing?.questions) ? existing.questions : []) {
+    if (q?.id) before.set(q.id, String(q.text ?? ""));
+  }
+
+  const changes: TextChange[] = [];
+  for (const q of Array.isArray(incoming?.questions) ? incoming.questions : []) {
+    if (!q?.id || !before.has(q.id)) continue; // a new question has no prior text
+    const from = before.get(q.id)!;
+    const to = String(q.text ?? "");
+    if (from !== to) changes.push({ question_id: q.id, from, to });
+  }
+  return changes;
+}
+
+/**
+ * Append each text change to its question's `text_history`.
+ *
+ * Additive and schema-free: an array of `{from, to, at, by}` on the question
+ * itself. It turns "what did this question used to say" from an archaeology
+ * exercise across backups into a field lookup. Capped so a record cannot grow
+ * without bound; the oldest entries drop first, and the backups remain the
+ * long-tail record.
+ *
+ * Returns a new questions array — the caller decides whether to use it.
+ */
+export function applyTextHistory(
+  questions: any[],
+  changes: TextChange[],
+  actor: string,
+  cap = 20,
+): any[] {
+  if (!Array.isArray(questions) || changes.length === 0) return questions;
+  const byId = new Map(changes.map((c) => [c.question_id, c]));
+
+  return questions.map((q: any) => {
+    const change = q?.id ? byId.get(q.id) : undefined;
+    if (!change) return q;
+    const prior = Array.isArray(q.text_history) ? q.text_history : [];
+    return {
+      ...q,
+      text_history: [
+        ...prior,
+        { from: change.from, to: change.to, at: new Date().toISOString(), by: actor },
+      ].slice(-cap),
+    };
+  });
+}
