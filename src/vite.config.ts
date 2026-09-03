@@ -145,3 +145,19 @@ export default defineConfig({
     global: 'globalThis'
   }
 })
+/*
+ * ⚠️ NOT THE BUILD CONFIG. Verified 2026-09-03.
+ *
+ * Vite's root is the project root, so the config that actually builds is
+ * `/vite.config.ts` — which loads no PWA plugin. This file, `/src/package.json`,
+ * `/src/index.html` and `/src/public/sw.js` are a complete duplicate build
+ * setup that nothing runs.
+ *
+ * That is why no service worker has ever installed: `/sw.js` on production
+ * returns the SPA HTML with a 200, because the file only exists under `src/`
+ * and the real publicDir is `/public`. A session was spent hardening the
+ * caching behaviour in code that never executes.
+ *
+ * Wire this up or delete the four files. Leaving them reads as live build
+ * configuration, and the next person will debug the wrong one.
+ */
