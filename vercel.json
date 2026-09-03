@@ -72,7 +72,7 @@
   ],
   "git": {
     "deploymentEnabled": {
-      "equip-carry-forward": false
+      "equip-carry-forward": true
     }
   },
   "github": {

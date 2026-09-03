@@ -7,9 +7,8 @@ import { Icon } from '../Icon';
 import { useNotifications } from '../../contexts/NotificationContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { apiClient } from '../../lib/api-client';
-import { computeSectionScores, severityForSection, resolveAnswerValue } from '../../lib/assessment-sections';
+import { severityForSection, resolveAnswerValue } from '../../lib/assessment-sections';
 import { triggerCrisisSupport } from '../safety/CrisisSupport';
-import { SECTION_PRESETS } from '../../lib/assessment-section-presets';
 import { buildScoringContext, toSectionScoreResult } from '../../lib/scoring-context';
 import { computeScores } from '../../lib/scoring-engine';
 import { slugify } from '../../lib/slug';
@@ -36,7 +35,7 @@ interface Question {
 interface Assessment {
   id: string;
   /**
-   * Slug from the backend. SECTION_PRESETS is keyed by it, so if this is not
+   * Slug from the backend. Used for provenance and logging; scoring keys on
    * carried through, sectioned scoring silently falls back to deriving it from
    * the title — which breaks the moment anyone renames an assessment.
    */
@@ -308,35 +307,21 @@ export function AssessmentFlow({
         ? computedMaxScore
         : (bands[bands.length - 1]?.max || 21);
 
-      // Per-scale breakdown, when this assessment declares sections or has a
-      // corrected-scoring preset. Falls back to the presets keyed by slug until
-      // sections/overrides are authored directly in admin. Returns
-      // { sectioned: false } for ordinary single-score assessments with no
-      // preset at all, so the existing presentation is untouched for those.
-      // Resolve the preset by slug, falling back to the slugified title.
-      //
-      // Why the fallback: every result saved since this shipped (2026-08-07)
-      // carries `section_scores` as a KEY with a NULL value — 10 of them, and
-      // none populated. The backend writes `data.sectionScores ?? null`, so a
-      // null value means the client sent nothing, which means `sectioned` was
-      // false, which means this lookup missed. The stored slugs do match the
-      // SECTION_PRESETS keys exactly, so the miss is an absent `slug` on the
-      // assessment object reaching this scope, not a wrong one. Deriving it
-      // from the title costs nothing and closes that hole; if slug is present
-      // the fallback never fires.
+      // Per-scale breakdown, computed from the assessment's own `scores[]`
+      // spec. There is one scoring path: spec or nothing. The SECTION_PRESETS
+      // fallback and the file behind it were deleted 2026-09-03 — it carried
+      // pre-rescale bands, and falling back to it mis-banded a live Sleep
+      // result of 18 as "Poor Sleep" when both live sources say "Healthy".
       const presetKey = assessment.slug || slugify(assessment.title || '');
 
       /**
        * Score from the assessment's own `scores[]` spec when one exists and its
        * profiles have loaded; otherwise from the code presets.
        *
-       * The spec is the source of truth — it carries declared option values,
-       * explicit reverse flags and `severity_ref` on every band, none of which
-       * the presets have. The preset path is a **transitional fallback**: it
-       * exists only because `GET /scoring-profiles` is not deployed yet, so a
-       * non-admin cannot fetch profiles and would otherwise get no score at all.
-       * Delete this branch, `SECTION_PRESETS` and `computeSectionScores` once
-       * that route is live — see PENDING.md §C1.
+       * The spec is the source of truth: it carries declared option values,
+       * explicit reverse flags and a `severity_ref` on every band. If its
+       * profiles cannot be resolved, no breakdown is produced — a wrong
+       * breakdown is worse than none, which is what the old fallback proved.
        */
       const spec = Array.isArray((assessment as any).scores) ? (assessment as any).scores : null;
       const loadedProfiles = getLoadedScoringProfiles();
@@ -352,17 +337,17 @@ export function AssessmentFlow({
         });
         sectionScores = toSectionScoreResult(computeScores(built.ctx, responses));
       } else {
-        if (spec && spec.length > 0) {
-          console.warn(
-            `[assessment] "${presetKey}" has a scores[] spec but its profiles did not load — ` +
-            `falling back to SECTION_PRESETS. Expected until GET /scoring-profiles ships.`
-          );
-        }
-        const sectionConfig =
-          (assessment as any).sections
-            ? assessment
-            : { ...assessment, ...(SECTION_PRESETS[presetKey] ?? {}) };
-        sectionScores = computeSectionScores(sectionConfig as any, responses);
+        // The SECTION_PRESETS fallback is gone (2026-09-03) along with the file
+        // that held it. There is one scoring path now: the assessment's own
+        // scores[] spec. When it cannot run, produce NO breakdown rather than a
+        // wrong one — the presets carried pre-rescale bands, and falling back to
+        // them is what mis-banded a live Sleep result as "Poor Sleep" at 18.
+        console.error(
+          `[assessment] "${presetKey}" cannot be scored from its spec: ` +
+          `${!spec ? 'no scores[] on the record' : !loadedProfiles ? 'scoring profiles did not load' : 'a referenced profile is missing'}. ` +
+          `No section breakdown will be produced.`
+        );
+        sectionScores = { sectioned: false, sections: [] };
       }
 
       // Risk indicator. The presets declare `riskIndicatorQuestionIds` — for the
@@ -376,13 +361,12 @@ export function AssessmentFlow({
       // saving continue unchanged — this is offered alongside the result, never
       // instead of it.
       try {
-        // Read from both sources so this works on either scoring path: the
-        // question's own `is_risk_indicator` flag (set on the spec) and the
-        // preset's `riskIndicatorQuestionIds`.
+        // The question's own `is_risk_indicator` flag. The preset's
+        // `riskIndicatorQuestionIds` was the other source; it went with the
+        // presets file, so the flag must be set on the question itself.
         const questions = (assessment.questions as any[]) ?? [];
         const riskIds = new Set<string>([
           ...questions.filter((q) => q?.is_risk_indicator === true).map((q) => q.id),
-          ...((SECTION_PRESETS[presetKey] as any)?.riskIndicatorQuestionIds ?? []),
         ]);
 
         const flagged = [...riskIds].some((qid) => {

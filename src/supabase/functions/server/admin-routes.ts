@@ -238,7 +238,7 @@ app.post("/admin/assessments", requireAdmin, async (c) => {
     // A POST carrying an existing id overwrites that record, so guardrail 11
     // applies here too — this path used never to read the existing row at all.
     const priorForCreate = data.id
-      ? (await kv.get(`assessment_def:${id}`)) || (await kv.get(`assessment:${id}`))
+      ? await kv.get(`assessment_def:${id}`)
       : null;
     const immutabilityCreate = validateQuestionIdImmutability(priorForCreate, data);
     if (!immutabilityCreate.ok) {
@@ -269,7 +269,6 @@ app.post("/admin/assessments", requireAdmin, async (c) => {
 
     // Write to BOTH prefixes so admin edits are immediately visible to public endpoint
     await kv.set(`assessment_def:${id}`, assessment);
-    await kv.set(`assessment:${id}`, assessment);
 
     // Maintain the slug->id reverse index that /assessments/:id falls back to.
     // Mirrors the equip pattern in program-service.ts.
@@ -291,7 +290,7 @@ app.put("/admin/assessments/:id", requireAdmin, async (c) => {
     const updates = await c.req.json();
     
     // Get existing from either prefix
-    const existing = await kv.get(`assessment_def:${id}`) || await kv.get(`assessment:${id}`);
+    const existing = await kv.get(`assessment_def:${id}`);
 
     // Guardrail 11 — question-id immutability. Enforced here, at the assessment
     // save, because this is where an id can actually disappear. Content is
@@ -337,7 +336,6 @@ app.put("/admin/assessments/:id", requireAdmin, async (c) => {
 
     // Write to BOTH prefixes
     await kv.set(`assessment_def:${id}`, assessment);
-    await kv.set(`assessment:${id}`, assessment);
 
     // Keep the slug->id reverse index in sync: drop the stale alias when the
     // slug changed, then (re)write the current one.
@@ -362,7 +360,7 @@ app.delete("/admin/assessments/:id", requireAdmin, async (c) => {
     console.log(`🗑️  DELETE assessment requested: "${id}"`);
     
     // Fetch data BEFORE deleting so we can clean up slug aliases
-    const existing = await kv.get(`assessment_def:${id}`) || await kv.get(`assessment:${id}`);
+    const existing = await kv.get(`assessment_def:${id}`);
     
     // ── Aggressive cleanup: find ALL KV keys that reference this assessment ──
     const strayKeys = await kv.findKeysBySubstring(id);
@@ -380,7 +378,6 @@ app.delete("/admin/assessments/:id", requireAdmin, async (c) => {
     }
     // Ensure canonical keys are deleted even if not found by scan
     await kv.del(`assessment_def:${id}`);
-    await kv.del(`assessment:${id}`);
     console.log(`✅ Assessment hard-deleted: ${id} (${keysToClean.length} keys removed)`);
     
     // Also clean up any slug-based alias not caught by substring search
@@ -388,7 +385,6 @@ app.delete("/admin/assessments/:id", requireAdmin, async (c) => {
       // The reverse index is keyed by slug — this is the one that matters.
       await kv.del(`assessment_slug:${existing.slug}`);
       if (existing.slug !== id) {
-        await kv.del(`assessment:${existing.slug}`);
         await kv.del(`assessment_def:${existing.slug}`);
       }
       console.log(`   Also cleaned slug alias: ${existing.slug}`);
@@ -1541,19 +1537,13 @@ app.post("/admin/kv-audit/sync-prefixes", requireAdmin, async (c) => {
       }
     }
 
-    // ── Sync assessment_def: → assessment: ────────────────
-    const assessmentDefs = await kv.getByPrefix("assessment_def:");
-    for (const def of assessmentDefs) {
-      if (!def || !def.id || def.deleted) continue;
-      const existingAssessment = await kv.get(`assessment:${def.id}`);
-      if (!existingAssessment) {
-        actions.push(`SYNC assessment_def:${def.id} → assessment:${def.id}`);
-        if (!dryRun) {
-          await kv.set(`assessment:${def.id}`, def);
-        }
-        synced++;
-      }
-    }
+    // assessment_def: → assessment: sync removed 2026-09-03.
+    // `assessment:` was a write-only mirror — read in two places, both of them
+    // this sync checking its own output. It could not self-heal either: the
+    // guard was `if (!existing)`, so it created a missing mirror and never
+    // refreshed a stale one, while a bulk import wrote assessment_def: alone.
+    // A sync that cannot re-sync is how day:/block: died. Readers use
+    // assessment_def: directly.
 
     // resource: → library:resource: sync removed.
     // The mirror was written only by delete, never by create or update, so it

@@ -71,7 +71,7 @@ Key prefixes:
 | Prefix | Content |
 |--------|---------|
 | `assessment_def:{id}` | Assessment definition JSON |
-| `assessment:{id}` | **DEAD for reads — nothing in the product reads this.** A write-only mirror of `assessment_def:{id}`. See the note below before touching it |
+| ~~`assessment:{id}`~~ | **RETIRED 2026-09-03.** Was a write-only mirror of `assessment_def:{id}`. All six writers and both syncs removed, rows deleted. Do not reintroduce |
 | `assessment_slug:{slug}` | → assessment id (slug index) |
 | `equip:{id}` | Equip program metadata **and the live content tree** — the whole day/block structure is one inline `daily_content` array on this record |
 | `equip_slug:{slug}` | → equip id (slug index) |
@@ -229,7 +229,22 @@ the fallback here would have produced a plausible, wrong number — so Balance i
 
 The fix for all of it is to store the option's value or a stable option id alongside the label.
 
-### The player scores from the spec, with a transitional fallback
+### The player scores from the spec — there is no fallback
+
+`AssessmentFlow` computes from the assessment's own `scores[]` via
+`buildScoringContext` → `computeScores` → `toSectionScoreResult`. If the spec is absent or a
+profile fails to resolve it logs an error and produces **no breakdown**.
+
+`assessment-section-presets.ts` was deleted 2026-09-03. Its bands predated the Step 4 rescale, and
+falling back to them mis-banded a live Sleep result of 18 as "Poor Sleep" when both live sources
+say "Healthy Sleep" — a wrong breakdown is worse than none. `assessment-sections.ts` stays: it
+still supplies `SectionScoreResult`/`SectionScore` types, `severityForSection` and
+`resolveAnswerValue` to the report card and the risk check.
+
+Risk indicators now come **only** from a question's own `is_risk_indicator` flag, since the
+presets' `riskIndicatorQuestionIds` went with the file.
+
+### (superseded) The player scores from the spec, with a transitional fallback
 
 `AssessmentFlow` computes from the assessment's own `scores[]` when the spec exists **and** its
 profiles have loaded, via `buildScoringContext` → `computeScores` → `toSectionScoreResult`.

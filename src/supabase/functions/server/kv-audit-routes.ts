@@ -69,7 +69,7 @@ const KV_SCHEMA: KVKeyDef[] = [
   // ── ASSESSMENTS ─────────────────────────────────────────────
   { prefix: "assessment_def:", description: "Assessment definition (admin)", owner: "admin-routes.ts", consumers: ["admin-routes.ts","assessment-routes.ts"], scoped: "entity", category: "assessment", linkedPrefixes: ["assessment_slug:"], orphanRisk: "medium" },
   { prefix: "assessment_slug:", description: "Assessment slug->ID lookup", owner: "admin-routes.ts", consumers: ["assessment-routes.ts"], scoped: "entity", category: "assessment", orphanRisk: "medium", notes: "Required for /assessment/<slug> URLs — never purge" },
-  { prefix: "assessment:", description: "Assessment (user-facing)", owner: "index.tsx", consumers: ["index.tsx"], scoped: "entity", category: "assessment", orphanRisk: "high" },
+  { prefix: "assessment:", description: "RETIRED 2026-09-03 — write-only mirror of assessment_def:, read by nothing. Rows deleted; the writers and the sync that maintained it are gone. Registered so the prefix stays known if a row reappears.", owner: "(retired)", consumers: [], scoped: "entity", category: "assessment", orphanRisk: "low", notes: "Do not reintroduce. assessment_def: is canonical and is what the player reads." },
   { prefix: "assessment_result:", description: "Assessment result (underscore)", owner: "assessment-routes.ts", consumers: ["assessment-routes.ts"], scoped: "user", category: "assessment", orphanRisk: "medium" },
   { prefix: "assessment-result:", description: "Assessment result (hyphen - legacy)", owner: "index.tsx (data export)", consumers: ["index.tsx (data export)"], scoped: "user", category: "assessment", orphanRisk: "high", notes: "Naming mismatch: hyphen vs underscore" },
   { prefix: "assessment_response:", description: "Assessment response by ID", owner: "index.tsx", consumers: ["index.tsx"], scoped: "user", category: "assessment", orphanRisk: "medium" },
@@ -547,15 +547,11 @@ export function registerKVAuditRoutes(app: Hono, requireAuth: any) {
         });
       }
 
-      const assessmentDefCount = categorized["assessment_def:"]?.count || 0;
-      const assessmentCount = categorized["assessment:"]?.count || 0;
-      if (assessmentDefCount > 0 && assessmentCount === 0) {
-        growthWarnings.push({
-          prefix: "assessment:",
-          count: 0,
-          warning: `CRITICAL: Admin has ${assessmentDefCount} assessment definitions but user-facing prefix has 0. Users cannot see assessments.`
-        });
-      }
+      // The assessment_def: → assessment: parity check is gone with the mirror.
+      // It asserted that an empty `assessment:` meant users could not see
+      // assessments, which was never true — the player reads assessment_def:
+      // directly. Left in place it would fire a permanent false CRITICAL the
+      // moment the retired rows were deleted.
 
       // Audit logs growing
       let auditTotal = 0;
@@ -879,19 +875,13 @@ export function registerKVAuditRoutes(app: Hono, requireAuth: any) {
         }
       }
 
-      // Sync assessment_def: -> assessment:
-      const assessmentDefs = await kv.getByPrefix("assessment_def:");
-      for (const def of assessmentDefs) {
-        if (!def || !def.id || def.deleted) continue;
-        const existing = await kv.get(`assessment:${def.id}`);
-        if (!existing) {
-          actions.push(`SYNC assessment_def:${def.id} -> assessment:${def.id}`);
-          if (!dryRun) {
-            await kv.set(`assessment:${def.id}`, def);
-          }
-          synced++;
-        }
-      }
+      // assessment_def: → assessment: sync removed 2026-09-03.
+      // `assessment:` was a write-only mirror — read in two places, both of them
+      // this sync checking its own output. It could not self-heal either: the
+      // guard was `if (!existing)`, so it created a missing mirror and never
+      // refreshed a stale one, while a bulk import wrote assessment_def: alone.
+      // A sync that cannot re-sync is how day:/block: died. Readers use
+      // assessment_def: directly.
 
       // resource: -> library:resource: sync removed.
       // The mirror was written only by delete, never by create or update, so it
