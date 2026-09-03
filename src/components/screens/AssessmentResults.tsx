@@ -288,18 +288,20 @@ export function AssessmentResults({
           </div>
         )}
 
-        {/* ── Message ── */}
-        <div className="text-center" style={{ maxWidth: 440 }}>
-          <p style={{
-            fontSize: 'var(--text-base)',
-            fontWeight: 400,
-            fontFamily: 'var(--font-family-base)',
-            color: 'var(--color-text-primary)',
-            lineHeight: 1.6,
-          }}>
-            {rec.severityMessage}
-          </p>
-        </div>
+        {/* ── Message ── Only when a rule authored one. */}
+        {rec.severityMessage && (
+          <div className="text-center" style={{ maxWidth: 440 }}>
+            <p style={{
+              fontSize: 'var(--text-base)',
+              fontWeight: 400,
+              fontFamily: 'var(--font-family-base)',
+              color: 'var(--color-text-primary)',
+              lineHeight: 1.6,
+            }}>
+              {rec.severityMessage}
+            </p>
+          </div>
+        )}
 
         <div style={{
           width: '100%', height: 1,

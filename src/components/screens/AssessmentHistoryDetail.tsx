@@ -34,6 +34,13 @@ interface AssessmentAttempt {
   // vanished the moment a user looked back at it. Stored as snake_case
   // `section_scores` in KV, camelCase through the offline-sync path.
   sectionScores?: SectionScoreResult;
+  /**
+   * Set on results that cannot be compared to current ones — they were scored
+   * against a different item set or a different option scale, and carry
+   * `scoring_provenance.excluded_from_trends`. They are still listed; they are
+   * kept out of the chart and the trend.
+   */
+  excludedFromTrends?: boolean;
 }
 
 interface AssessmentHistoryDetailProps {
@@ -60,11 +67,25 @@ const getSeverityBg = (severity?: string) => {
   }
 };
 
+/**
+ * Compares **percentage of the achievable range**, not raw score, and only
+ * across comparable results.
+ *
+ * Raw scores are not comparable across a rescale: Sleep moved from 0-32 to 8-40
+ * when its option values were declared, so a raw 18 means different things
+ * either side of that. Results scored against a different item set are stamped
+ * `excluded_from_trends` and are skipped entirely.
+ *
+ * Still assumes lower = better, which holds for every assessment that produces
+ * an overall score. General has no overall, so it never reaches here.
+ */
 const getTrend = (attempts: AssessmentAttempt[]) => {
-  if (attempts.length < 2) return 'stable';
-  const latest = attempts[0].score;
-  const previous = attempts[1].score;
-  if (latest < previous) return 'improving'; // Lower score = less severity
+  const comparable = attempts.filter(a => !a.excludedFromTrends && a.maxScore > 0);
+  if (comparable.length < 2) return 'stable';
+  const pct = (a: AssessmentAttempt) => (a.score / a.maxScore) * 100;
+  const latest = pct(comparable[0]);
+  const previous = pct(comparable[1]);
+  if (latest < previous) return 'improving';
   if (latest > previous) return 'worsening';
   return 'stable';
 };
@@ -185,6 +206,7 @@ export function AssessmentHistoryDetail({ assessmentId, onBack, onNavigate }: As
                 completedAt: entry.completed_at || entry.completedAt || new Date().toISOString(),
                 responses: entry.responses,
                 sectionScores: entry.section_scores ?? entry.sectionScores ?? undefined,
+                excludedFromTrends: entry.scoring_provenance?.excluded_from_trends === true,
               });
             }
           });
@@ -210,10 +232,16 @@ export function AssessmentHistoryDetail({ assessmentId, onBack, onNavigate }: As
 
   // Chart data (chronological order)
   const chartData = useMemo(() => {
-    return [...attempts].reverse().map((a, i) => ({
+    // Percentage of each result's OWN achievable range, so a rescale does not
+    // move the line. Incomparable results are dropped rather than plotted on a
+    // scale they were never scored against.
+    return [...attempts]
+      .filter(a => !a.excludedFromTrends && a.maxScore > 0)
+      .reverse().map((a, i) => ({
       index: i,
       score: a.score,
       maxScore: a.maxScore,
+      percent: Math.round((a.score / a.maxScore) * 100),
       severity: a.severity,
       dateLabel: new Date(a.completedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: '2-digit' }),
       dateShort: new Date(a.completedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
@@ -553,7 +581,8 @@ export function AssessmentHistoryDetail({ assessmentId, onBack, onNavigate }: As
                         tickLine={false}
                       />
                       <YAxis
-                        domain={[0, chartData[0]?.maxScore || 21]}
+                        domain={[0, 100]}
+                        tickFormatter={(v: number) => `${v}%`}
                         tick={{ fontSize: 11, fill: 'var(--color-text-muted)' }}
                         axisLine={false}
                         tickLine={false}
@@ -561,7 +590,7 @@ export function AssessmentHistoryDetail({ assessmentId, onBack, onNavigate }: As
                       <Tooltip content={<ChartTooltip />} />
                       <Area
                         type="monotone"
-                        dataKey="score"
+                        dataKey="percent"
                         stroke="var(--color-primary-default)"
                         strokeWidth={2.5}
                         fill="url(#scoreGradient)"
@@ -733,19 +762,23 @@ export function AssessmentHistoryDetail({ assessmentId, onBack, onNavigate }: As
                           </div>
                         )}
 
-                        {/* Per-scale breakdown. Same component and the same
-                            >= 2 named-section gate AssessmentResults uses, so
-                            history and the post-completion screen agree rather
-                            than growing two formats. Most stored results
-                            predate section scoring and carry none — 10 of 133
-                            at the time of writing — so this is absent far more
-                            often than it is present. */}
-                        {attempt.sectionScores?.sectioned &&
-                          attempt.sectionScores.sections.length >= 2 && (
-                            <div style={{ marginBottom: 12 }}>
-                              <SectionReportCard result={attempt.sectionScores} />
-                            </div>
-                          )}
+                        {/* Per-scale breakdown, same component as the
+                            post-completion screen so the two agree.
+
+                            The `sections.length >= 2` gate is gone: it was the
+                            old fork condition, removed from AssessmentResults
+                            in the results rework but left here. A single-score
+                            assessment stores `sections: []` with an `overall`,
+                            so that gate hid the breakdown for Sleep, Stress and
+                            Balance — the majority of stored results — on the
+                            one screen whose job is showing them again.
+                            SectionReportCard returns null when there is nothing
+                            to render, so it needs no gate of its own. */}
+                        {attempt.sectionScores?.sectioned && (
+                          <div style={{ marginBottom: 12 }}>
+                            <SectionReportCard result={attempt.sectionScores} />
+                          </div>
+                        )}
 
                         {/* Response count */}
                         {attempt.responses && (

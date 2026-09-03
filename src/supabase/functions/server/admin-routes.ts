@@ -1005,7 +1005,11 @@ app.get("/admin/kv-audit", requireAdmin, async (c) => {
       'content_slug:', 'recommendation_rule:', 'newsletter:', 'contact_submission:',
       'contact_submissions:',
       // User-facing entity copies (multi-tenant sync)
-      'equip_program:', 'equip_program_by_slug:', 'assessment:', 'library:resource:',
+      'equip_program:', 'equip_program_by_slug:', 'library:resource:',
+      // Retired 2026-09-03: `assessment:` was a write-only mirror of
+      // assessment_def:, read by nothing. Rows deleted, writers and syncs
+      // removed. Listed so the prefix stays known if a row ever reappears.
+      'assessment:',
       // User-scoped
       'user:', 'journal:', 'journal_by_user:', 'tracker:', 'enrollment:',
       'user_enrollment:', 'progress:', 'assessment_result:', 'assessment-result:',
@@ -1242,11 +1246,13 @@ app.get("/admin/kv-audit", requireAdmin, async (c) => {
       growthWarnings.push({ prefix: 'equip_program:', count: 0, warning: `⚠️ CRITICAL: ${equipAdminCount} admin programs (equip:) exist but 0 user-facing copies (equip_program:). Users cannot see any programs. Run "Sync Prefixes" to fix.` });
     }
 
-    const assessmentDefCount = allRows.filter(r => r.key.startsWith('assessment_def:')).length;
-    const assessmentUserCount = allRows.filter(r => r.key.startsWith('assessment:') && !r.key.startsWith('assessment_')).length;
-    if (assessmentDefCount > 0 && assessmentUserCount === 0) {
-      growthWarnings.push({ prefix: 'assessment:', count: 0, warning: `⚠️ CRITICAL: ${assessmentDefCount} admin assessment defs (assessment_def:) exist but 0 user-facing copies (assessment:). Run "Sync Prefixes" to fix.` });
-    }
+    // The assessment_def: → assessment: parity check is gone with the mirror
+    // (2026-09-03). It asserted that an empty `assessment:` meant users could
+    // not see assessments — never true, since the player reads assessment_def:
+    // directly — and told the admin to run a "Sync Prefixes" that no longer
+    // exists. This was a twin of the check in kv-audit-routes.ts; both are
+    // removed. The equip: → equip_program: check above is a DIFFERENT mirror
+    // that is still live, so it stays.
 
     // ─── 6. User data summary (multi-tenant) ──────────────
     const userKeys = allRows.filter(r => r.key.startsWith('user:'));

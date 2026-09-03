@@ -228,15 +228,20 @@ function SeverityCard({ engineResult, config }: { engineResult: EngineResult; co
               {engineResult.score !== undefined && engineResult.maxScore ? ` (${engineResult.score}/${engineResult.maxScore})` : ''}
             </p>
           )}
-          <p style={{
-            fontSize: 'var(--text-sm)',
-            fontWeight: 400,
-            color: 'var(--color-text-primary)',
-            lineHeight: 'var(--line-height-md)',
-            margin: 0,
-          }}>
-            {engineResult.severityMessage || 'Your assessment results have been analyzed.'}
-          </p>
+          {/* No authored copy means none is shown. The former fallback,
+              "Your assessment results have been analyzed.", said nothing and
+              read as though something had been decided. */}
+          {engineResult.severityMessage && (
+            <p style={{
+              fontSize: 'var(--text-sm)',
+              fontWeight: 400,
+              color: 'var(--color-text-primary)',
+              lineHeight: 'var(--line-height-md)',
+              margin: 0,
+            }}>
+              {engineResult.severityMessage}
+            </p>
+          )}
         </div>
       </div>
     </div>

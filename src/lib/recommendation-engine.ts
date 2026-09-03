@@ -580,7 +580,12 @@ export function evaluateAssessment(input: EvaluateInput): EngineResult {
     category: category || undefined,
     score,
     maxScore,
-    severityMessage: adminEquipRule?.rationale || rule.recommend.message,
+    // Empty when no rule matched. Step 3 removed the fabricated primary
+    // ACTION but left this fabricating the COPY, so the results page printed
+    // "You're doing relatively well…" from DEFAULT_RECOMMENDATION_RULES under
+    // an action that was correctly empty. Copy is authored on the rule or it
+    // is not shown.
+    severityMessage: adminEquipRule?.rationale || '',
     primaryAction: {
       // No matching rule means no primary action. It used to claim
       // 'equip_program' whenever the tier's default mentioned one, and then
