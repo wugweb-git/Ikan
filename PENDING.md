@@ -857,3 +857,74 @@ module, which this pass deliberately did not touch.
 R1 (the `?id=` fallback can render a different result), R2 (95 of 101 results
 render "Not banded"), S3 (the three-key `max_score` ladder), Audit #1 (one
 exported `Assessment` type), and the server's third four-term `SeverityLevel`.
+
+---
+
+## Session closeout — 2026-09-03 (B-tier, F-tier, Mood Journal)
+
+Commits `71576688` and the follow-up log fix, plus `314205ca` (result view
+model) and the two `/mood-journal` deploy fixes. Edge function and frontend
+both deployed; `/health`, `/assessments`, `/equip/programs`, `/scales/moods`
+all 200.
+
+### The severity change is not cosmetic — every live result moved
+
+Replaying the old percentage derivation against the new band lookup over the
+seven live latest-per-category results:
+
+| category | raw | old (percentage) | new (banded) |
+|---|---|---|---|
+| anxiety | 4/21 | low | minimal |
+| balance | 27/40 | moderate | mild |
+| **burnout** | 60/115 | moderate | **null — units mismatch** |
+| depression | 12/27 | mild | **moderate** |
+| general | 46/96 | mild | null (correct: no overall score) |
+| **sleep** | 24/40 | moderate | **minimal** |
+| stress | 8/28 | mild | **moderate** |
+
+Six of seven differ. Sleep is the one to look at first: 24/40 is inside
+`Healthy Sleep` (8-25), and the old code called it "moderate" — a healthy
+sleeper was being told they had a moderate problem and offered a sleep
+programme for it. Depression and stress moved the other way, having been
+under-reported.
+
+### Burnout cannot currently be banded — needs a decision
+
+`60/115` is a raw sum. `bat-mean`'s bands are 1-5 **means** with decimal edges,
+so no band can contain 60. Severity is therefore null and no burnout rule
+matches. That is the correct behaviour — banding a sum against a mean produces
+a confident wrong answer — but it means burnout users get no recommendation
+until one of two things happens:
+
+1. store the mean alongside the sum on burnout results, or
+2. give `bat-mean` a second band set in sum units.
+
+A warning naming the profile and the band span is logged on every occurrence.
+
+### Also shipped
+B1 (five rules gated at `moderately-severe` had never fired — `SEVERITY_RANK`
+had four keys and that was not one), B2/B3, B4, F1 (assessments ran as
+`practice` days), F2 (dashboard re-derived severity; ring and percentage
+removed, band label promoted), F3, F4, F7, D2, D13 (a second scorer whose zero
+beat the real one on a `typeof` check), F9 (drafts had no entry surface).
+
+`/mood-journal`: the SPA rewrite served 200 text/html for missing chunks, both
+retry paths could not recover, and the boundary covered one route. All fixed
+and verified live — a missing asset now 404s.
+
+### Open
+- **Step 2 of the result view model.** `resolveResultPresentation` is built and
+  tested (21 tests) but no surface renders it, because **no band carries a
+  `tone` yet** — every band would resolve neutral. The seven need backfilling
+  before any surface migrates. Note the profiles already carry a `tone` field
+  in a *different* vocabulary (`success`/`warning`/`error`); decide whether to
+  reuse it or add the four-term one.
+- **0 of 104 results carry `severity_ref`.** 89 of 104 have a band label that
+  is a placeholder (`Completed`, `Complete`, `New Category`). The history and
+  dashboard pills now agree, but on a placeholder for most rows.
+- **Only 6 of 104 carry `engine_result`**, so 98 stored results cannot rebuild
+  the full results screen on the `?id=` route.
+- D11 (three `Assessment` interfaces; AssessmentFlow still holds 17 `as any`),
+  D10 (results renders in place so chrome is suppressed by route name),
+  the 40 `program_checkin` rows sharing the `assessment_result:` prefix.
+- `src/public/sw.js` and `src/index.html` are both dead files. Wire or delete.
