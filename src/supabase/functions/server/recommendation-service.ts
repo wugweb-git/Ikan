@@ -220,6 +220,23 @@ async function severityForResult(result: any, def: any): Promise<SeverityLevel |
         const hit = last ? score >= min && score <= max : score >= min && score < max;
         if (hit) return isSeverityLevel(b?.severity_ref) ? b.severity_ref : null;
     }
+
+    /**
+     * The score fell outside every band, which almost always means the stored
+     * score and the profile's bands are in different units.
+     *
+     * Live example on 2026-09-03: Burnout results are stored as a raw sum
+     * (60/115) while `bat-mean` bands are 1-5 means with decimal edges, so no
+     * band can contain 60. That is a real data problem and it is logged rather
+     * than papered over — banding a sum against a mean would produce a
+     * confident, wrong severity, which is the failure this whole function was
+     * rewritten to stop.
+     */
+    console.warn(
+        `[recommendations] Score ${score} fell in no band of profile "${profileId}" ` +
+        `(bands span ${bands[0]?.min}-${bands[bands.length - 1]?.max}). ` +
+        `Likely a units mismatch between the stored score and the profile. No severity, so no rule matches.`
+    );
     return null;
 }
 
