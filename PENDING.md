@@ -1006,3 +1006,59 @@ Two fixes reported green this session were disproved by measurement: the
 `/assets` passthrough (still served 200 HTML after deploying) and the Burnout
 units mismatch (never landed). "Verified by behaviour" has to cover the stored
 data, not only the deployed bundle.
+
+---
+
+## Session closeout — 2026-09-03 (surface migration, item 3)
+
+Deployed and verified: live index chunk hash matches the local build exactly,
+`Not banded` and the integrity note both present in the live Dashboard chunk,
+all four server endpoints 200.
+
+### Item 3 answered without a content write
+
+It was framed as "either those results get real bands, or the UI says not
+banded". Neither: **most of them can be banded**. The score and the profile are
+both present, so placing 8/28 against `stress-severity` yields "Moderate
+Stress" regardless of what string the record holds.
+
+`resolveResultPresentation` no longer falls back to the stored label at all. A
+band is what the score was PLACED in; what the record claims moved to
+`storedLabel`, which is provenance and never renders as an outcome. The 89
+`Completed` / `Complete` / `New Category` rows are either placed properly or
+read "Not banded", which is true.
+
+### Two surfaces migrated
+Dashboard and AssessmentHistoryDetail compute from the same module with the
+same inputs, so the disagreement between them is structurally impossible rather
+than fixed twice. Colour comes from the band's authored tone via
+`tonePresentation` — the third and last vocabulary helper, and the only one
+written on the data itself.
+
+D4 closed: 31 `excluded_from_trends` rows now say "scored under an older
+version" instead of sitting silently in a list that implies comparability.
+F9 and A1 closed.
+
+### A deploy failed and reported nothing
+
+`npx vercel deploy --prod` printed a deployment URL and exited 0 while the
+build had **errored**. The site stayed on the previous bundle. It was caught
+only because the behaviour markers were missing from the live chunk.
+
+Cause was mine: I pinned `vite-plugin-pwa` to `^0.19.2` to close the
+unpinned-dependency item, and that version's peer range is vite ^3/^4/^5 while
+this project is on vite 6, so `npm install` failed with ERESOLVE. `"*"` had
+been resolving to a current version that does support vite 6, so pinning was
+strictly worse than leaving it alone. The dependency is now removed — nothing
+imports it from the config that actually builds.
+
+**Add to the deploy check: `vercel ls --prod` must show `● Ready`.** A returned
+URL is not a successful deploy.
+
+### Still open
+- **Yours:** the re-scored clinical outcomes; whether the 104 old-algorithm
+  results are re-scored or marked `pre-spec`; W1-W4 website content.
+- **Ours:** two remaining surface migrations (AssessmentResults, the catalogue
+  card) · A2-A7 admin · F10 three `Assessment` interfaces and 17 `as any` ·
+  D1 98 of 104 carry no `engine_result` · D3 the 40 `program_checkin` rows ·
+  W5-W7.
