@@ -5,7 +5,11 @@ interface Props {
   children: ReactNode;
   /** Human-readable name of the screen, shown in the retry message */
   chunkName?: string;
-  /** Called when the user taps "Retry" — typically triggers a navigation or re-render */
+  /**
+   * Fallback for the second attempt only. The first tap always does a full
+   * document reload, because that is the only thing that recovers a chunk
+   * error; a re-render or a client-side navigation cannot.
+   */
   onRetry?: () => void;
 }
 
@@ -45,11 +49,38 @@ export class ChunkErrorBoundary extends Component<Props, State> {
     );
   }
 
+  /**
+   * Recover by reloading the document, not by re-rendering.
+   *
+   * This used to call `props.onRetry`, which on the one route that had a
+   * boundary was `handleNavigate('/mood-journal')` — a client-side navigation
+   * against the same stale module graph that just failed. It could not
+   * possibly work: React would re-run the identical `import()`, the browser
+   * would ask for the identical missing hash, and the same card would come
+   * straight back.
+   *
+   * A chunk error means the page is running JavaScript from a build that no
+   * longer exists on the origin. The only thing that fixes it is fetching a
+   * fresh `index.html`, which needs a real document load.
+   *
+   * Guarded against a reload loop with a session flag: if a reload has already
+   * been attempted for this route and the chunk still will not load, the
+   * failure is not staleness and looping would leave the user staring at a
+   * flashing page. The second press falls back to `onRetry`.
+   */
   handleRetry = () => {
-    this.setState({ hasChunkError: false, error: null });
-    if (this.props.onRetry) {
-      this.props.onRetry();
+    const key = `ikan-chunk-reload:${typeof window !== 'undefined' ? window.location.pathname : ''}`;
+    let alreadyReloaded = false;
+    try { alreadyReloaded = sessionStorage.getItem(key) === '1'; } catch { /* private mode */ }
+
+    if (!alreadyReloaded && typeof window !== 'undefined') {
+      try { sessionStorage.setItem(key, '1'); } catch { /* private mode */ }
+      window.location.reload();
+      return;
     }
+
+    this.setState({ hasChunkError: false, error: null });
+    this.props.onRetry?.();
   };
 
   render() {

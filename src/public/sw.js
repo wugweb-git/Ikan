@@ -1,7 +1,18 @@
 // Service Worker for iKan Mental Health PWA
-const CACHE_NAME = 'ikan-v1.0.0';
-const STATIC_CACHE_NAME = 'ikan-static-v1.0.0';
-const API_CACHE_NAME = 'ikan-api-v1.0.0';
+/**
+ * Cache names carry a version. `activate` deletes every cache whose name is not
+ * one of these three, so bumping the version is how a poisoned cache is purged.
+ *
+ * Bumped to 1.1.0 on 2026-09-03 to drop caches poisoned by the SPA rewrite:
+ * a missing hashed chunk used to be served `index.html` with a 200, and
+ * `handleStaticResource` cached anything with `response.ok` — so HTML was
+ * stored permanently under `/assets/Something-<hash>.js`. Once that happened no
+ * reload could recover the route, because the service worker answered from
+ * cache before the network was consulted.
+ */
+const CACHE_NAME = 'ikan-v1.1.0';
+const STATIC_CACHE_NAME = 'ikan-static-v1.1.0';
+const API_CACHE_NAME = 'ikan-api-v1.1.0';
 
 // Global error handling to prevent service worker crashes
 self.addEventListener('error', (event) => {
@@ -326,19 +337,39 @@ async function handleApiRequest(request) {
   }
 }
 
+/**
+ * True when a response is HTML but the request asked for a script or a
+ * stylesheet. That is the SPA-rewrite signature: the origin could not find the
+ * file and returned `index.html` instead, with a 200.
+ *
+ * It must never be cached and must never be served. Caching it under a chunk
+ * URL is what turned a one-deploy hiccup into a permanently broken route.
+ */
+function isRewrittenHtml(request, response) {
+  const type = response.headers.get('content-type') || '';
+  if (!type.includes('text/html')) return false;
+  return /\.(js|mjs|css)$/.test(new URL(request.url).pathname);
+}
+
 async function handleStaticResource(request) {
   const cache = await caches.open(STATIC_CACHE_NAME);
   
   // Try cache first
   const cachedResponse = await cache.match(request);
   if (cachedResponse) {
-    return cachedResponse;
+    // A previously poisoned entry. Drop it and fall through to the network
+    // rather than handing the page HTML it will refuse to parse.
+    if (isRewrittenHtml(request, cachedResponse)) {
+      await cache.delete(request);
+    } else {
+      return cachedResponse;
+    }
   }
   
   // Try network and cache
   try {
     const networkResponse = await fetch(request);
-    if (networkResponse.ok) {
+    if (networkResponse.ok && !isRewrittenHtml(request, networkResponse)) {
       cache.put(request, networkResponse.clone());
     }
     return networkResponse;

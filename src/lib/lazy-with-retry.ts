@@ -1,8 +1,16 @@
 /**
- * Utility to wrap dynamic imports with retry logic.
- * If a chunk fails to load (e.g. due to a network hiccup or a deploy
- * that invalidated old hashes), this retries up to `maxRetries` times
- * with an exponential back-off before giving up.
+ * Wrap a dynamic import so a transient failure gets one more chance.
+ *
+ * **One retry, not three.** The original retried the identical import three
+ * times with exponential backoff — 1s, 2s, 4s. A dynamic import resolves to a
+ * bundler-fixed URL, so there is nothing to vary between attempts: if the
+ * chunk hash no longer exists on the origin, every retry asks for the same
+ * missing file and the only effect is seven seconds of spinner before the
+ * error screen. That is the *common* case after a deploy, not the rare one.
+ *
+ * A genuine network blip is real too, so one short retry stays. Past that the
+ * failure is structural and the recovery is a full document reload, which the
+ * error boundary does — not another fetch of a URL that is gone.
  *
  * Usage:
  *   const MyScreen = lazy(() => lazyRetry(() => import('./screens/MyScreen'), 'MyScreen'));
@@ -11,8 +19,8 @@
 export function lazyRetry<T>(
   importFn: () => Promise<T>,
   chunkName: string,
-  maxRetries = 3,
-  baseDelayMs = 1000,
+  maxRetries = 1,
+  baseDelayMs = 400,
 ): Promise<T> {
   return new Promise<T>((resolve, reject) => {
     const attempt = (retryCount: number) => {

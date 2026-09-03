@@ -497,9 +497,23 @@ function AppContent() {
   // Render function
   const renderScreen = () => {
     // Define withSuspense OUTSIDE try/catch so the catch block can use it
-    const withSuspense = (component: React.ReactNode) => (
+    /**
+     * Every lazy route, wrapped once.
+     *
+     * `ChunkErrorBoundary` used to be applied to `/mood-journal` alone, so a
+     * chunk-load failure on any of the other ~30 lazy routes fell through to
+     * the generic crash screen — the same failure, with worse copy and no way
+     * back. There is nothing about the mood journal that makes it more prone
+     * to this; it was simply the route where somebody hit it first.
+     *
+     * The boundary rethrows anything that is not a chunk error, so the outer
+     * ErrorBoundary still handles real crashes.
+     */
+    const withSuspense = (component: React.ReactNode, chunkName?: string) => (
       <ErrorBoundary>
-        <Suspense fallback={<LazyFallback />}>{component}</Suspense>
+        <ChunkErrorBoundary chunkName={chunkName}>
+          <Suspense fallback={<LazyFallback />}>{component}</Suspense>
+        </ChunkErrorBoundary>
       </ErrorBoundary>
     );
 
@@ -614,15 +628,7 @@ function AppContent() {
         case '/account':
           return withSuspense(<Account onNavigate={handleNavigate} />);
         case '/mood-journal':
-          return (
-            <ErrorBoundary>
-              <ChunkErrorBoundary chunkName="Mood Journal" onRetry={() => handleNavigate('/mood-journal')}>
-                <Suspense fallback={<LazyFallback />}>
-                  <MoodJournal onNavigate={handleNavigate} />
-                </Suspense>
-              </ChunkErrorBoundary>
-            </ErrorBoundary>
-          );
+          return withSuspense(<MoodJournal onNavigate={handleNavigate} />, 'Mood Journal');
         case '/about':
           return withSuspense(<AboutUs onNavigate={handleNavigate} />);
         case '/faq':
