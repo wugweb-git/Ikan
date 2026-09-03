@@ -68,7 +68,17 @@ supabase functions deploy make-server-cc205da9 \
 curl https://jpfvoevxegnknxoqmwye.supabase.co/functions/v1/make-server-cc205da9/health
 ```
 
-After deploy always verify: `/health`, `/assessments`, `/equip/programs`, `/scales/moods`.
+After deploy always verify: `/health`, `/assessments`, `/equip/programs`, `/scales/moods`,
+`/scoring-profiles`, `/user/assessments/results/:id`.
+
+**Run the assessment checks as a NON-ADMIN.** `/scoring-profiles` exists because the admin-only
+route cannot serve the player; an admin session passes even when the read route is broken, because
+the admin route covers for it. That false green is the same shape as the slug bug that went
+unnoticed for months. Specifically confirm, signed in as an ordinary user:
+
+- a new completion writes `engine_result` onto the stored result
+- `/assessment-results?id=<id>` loads from the record, not from sessionStorage
+- a recommendation appears (proves the category join resolves a severity from a profile)
 
 ---
 

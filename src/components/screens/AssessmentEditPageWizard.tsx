@@ -188,6 +188,23 @@ export function AssessmentEditPageWizard({ assessmentId, onBack, onSave }: Asses
 
   // Scoring profiles from backend
   const [scoringProfiles, setScoringProfiles] = useState<ScoringProfile[]>([]);
+  /**
+   * Set when the builder cache and `questions[]` disagree on load.
+   *
+   * This used to rebuild the cache from `questions[]` and show a toast. That is
+   * how `burnout-q9`'s item text was lost: the original survived only as the
+   * `title` on the cached block, and a rebuild would have overwritten it from
+   * the clobbered `questions[]` entry — silently, because the toast is
+   * dismissible and the data is gone either way.
+   *
+   * Two representations, one wins, no error is the pattern behind most of the
+   * defects in this module. So the rebuild now refuses: editing is blocked, the
+   * divergence is shown field by field, and a human chooses.
+   */
+  const [contentConflict, setContentConflict] = useState<
+    { field: string; questionId: string; inQuestions: string; inBuilder: string }[] | null
+  >(null);
+  const [pendingRebuild, setPendingRebuild] = useState<any>(null);
   useEffect(() => {
     apiClient.request('/admin/scoring-profiles', { method: 'GET' }, true, 0)
       .then((data: any) => {
@@ -361,25 +378,52 @@ export function AssessmentEditPageWizard({ assessmentId, onBack, onSave }: Asses
           const weightsOf = (a: any): string =>
             JSON.stringify(a?.exerciseConfig?.scoring?.weights ?? null);
 
-          const inSync =
+          // Text is compared as well as ids and weights. It was not before,
+          // which is why the burnout-q9 divergence — a TEXT difference between
+          // the cached title and questions[].text — would have gone undetected
+          // while the rebuild destroyed the only surviving copy.
+          const textOf = (a: any): string => String(a?.title ?? '').trim();
+
+          const idsMatch =
             cachedIds !== null &&
             cachedIds.length === questionIds.length &&
-            cachedIds.every((id, i) => id === questionIds[i]) &&
-            cachedActivities.every(
-              (a: Activity, i: number) => weightsOf(a) === weightsOf(derived[i])
-            );
+            cachedIds.every((id, i) => id === questionIds[i]);
 
-          if (!inSync) {
-            // Only warn when a cache actually existed and diverged; a missing
-            // cache is the ordinary first-open case, not a conflict.
-            if (cachedIds !== null) {
-              showToast(
-                'warning',
-                'Rebuilt from saved questions',
-                'The builder view disagreed with this assessment\'s saved questions — in ids, count or per-option weights — and has been rebuilt from them, which is the scored source of truth. Unsaved builder-only changes were discarded.'
-              );
+          const differences: { field: string; questionId: string; inQuestions: string; inBuilder: string }[] = [];
+          if (cachedIds !== null) {
+            if (!idsMatch) {
+              differences.push({
+                field: 'question ids / count',
+                questionId: '—',
+                inQuestions: `${questionIds.length} items: ${questionIds.slice(0, 4).join(', ')}${questionIds.length > 4 ? '…' : ''}`,
+                inBuilder: `${cachedIds.length} items: ${cachedIds.slice(0, 4).join(', ')}${cachedIds.length > 4 ? '…' : ''}`,
+              });
+            } else {
+              cachedActivities.forEach((a: Activity, i: number) => {
+                if (textOf(a) !== textOf(derived[i])) {
+                  differences.push({
+                    field: 'question text', questionId: questionIds[i],
+                    inQuestions: textOf(derived[i]), inBuilder: textOf(a),
+                  });
+                }
+                if (weightsOf(a) !== weightsOf(derived[i])) {
+                  differences.push({
+                    field: 'option weights', questionId: questionIds[i],
+                    inQuestions: weightsOf(derived[i]), inBuilder: weightsOf(a),
+                  });
+                }
+              });
             }
+          }
+
+          if (cachedIds === null) {
+            // No cache at all — the ordinary first-open case, not a conflict.
             data.daily_content = [convertQuestionsToDay(questions)];
+          } else if (differences.length > 0) {
+            // Refuse. Nothing is overwritten and nothing is saved until a human
+            // resolves it; `data` is left exactly as the server returned it.
+            setContentConflict(differences);
+            setPendingRebuild(convertQuestionsToDay(questions));
           }
         } else if (!data.daily_content) {
             data.daily_content = [{
@@ -404,6 +448,15 @@ export function AssessmentEditPageWizard({ assessmentId, onBack, onSave }: Asses
 
   // Navigation saves progress. Save preserves state. Publish changes lifecycle.
   const persistWizard = async (currentData: Partial<Assessment>, isAutoSave = false) => {
+    // A save maps daily_content back over questions[], so saving while the two
+    // disagree is exactly the overwrite the conflict screen exists to prevent.
+    if (contentConflict) {
+      if (!isAutoSave) {
+        showToast('error', 'Resolve the content conflict first',
+          'This assessment\'s builder view and its saved questions disagree. Saving now would overwrite one with the other.');
+      }
+      return;
+    }
     setSaving(true);
     try {
       // SYNC BACK: Map daily_content blocks -> legacy questions for backward compat
@@ -643,6 +696,69 @@ export function AssessmentEditPageWizard({ assessmentId, onBack, onSave }: Asses
     return (
       <div className="flex items-center justify-center h-screen" style={{ backgroundColor: 'var(--color-bg-page)' }}>
         <AdminLoading message="Loading assessment..." />
+      </div>
+    );
+  }
+
+  if (contentConflict) {
+    return (
+      <div className="min-h-screen p-6" style={{ backgroundColor: 'var(--color-bg-page)' }}>
+        <div className="max-w-3xl mx-auto space-y-4">
+          <h1 style={{ fontFamily: 'var(--font-family-base)', fontSize: 'var(--text-xl)', fontWeight: 500, color: 'var(--color-text-primary)' }}>
+            Content conflict — editing is blocked
+          </h1>
+          <p style={{ fontFamily: 'var(--font-family-base)', fontSize: 'var(--text-sm)', color: 'var(--color-text-muted)', lineHeight: 1.6 }}>
+            This assessment's saved questions and its builder view disagree. They are two
+            representations of the same content, and opening the editor would previously have
+            rebuilt the builder view from the questions, discarding whatever only the builder
+            held. That is how one question's original wording was lost once already, so nothing
+            is written until you choose.
+          </p>
+
+          <div className="rounded-lg overflow-hidden" style={{ border: '1px solid var(--color-status-warning)' }}>
+            <table className="w-full" style={{ fontFamily: 'var(--font-family-base)', fontSize: 'var(--text-xs)' }}>
+              <thead>
+                <tr style={{ backgroundColor: 'var(--color-status-warning-light)' }}>
+                  <th className="text-left p-2">Question</th>
+                  <th className="text-left p-2">Field</th>
+                  <th className="text-left p-2">Saved questions</th>
+                  <th className="text-left p-2">Builder view</th>
+                </tr>
+              </thead>
+              <tbody>
+                {contentConflict.map((d, i) => (
+                  <tr key={i} style={{ borderTop: '1px solid var(--color-border-default)' }}>
+                    <td className="p-2"><code>{d.questionId}</code></td>
+                    <td className="p-2">{d.field}</td>
+                    <td className="p-2">{d.inQuestions || <em>(empty)</em>}</td>
+                    <td className="p-2">{d.inBuilder || <em>(empty)</em>}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          <p style={{ fontFamily: 'var(--font-family-base)', fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)', lineHeight: 1.6 }}>
+            <strong>Saved questions</strong> is what the player reads and what scoring uses.
+            <strong> Builder view</strong> is the editor's cache. If the builder column holds text
+            the questions column has lost, copy it out before rebuilding — rebuilding discards it.
+          </p>
+
+          <div className="flex gap-3 pt-2">
+            <Button
+              onClick={() => {
+                setFormData(prev => ({ ...prev, daily_content: [pendingRebuild] }));
+                setContentConflict(null);
+                showToast('warning', 'Builder view rebuilt',
+                  'The builder view was rebuilt from the saved questions. Anything only it held is gone.');
+              }}
+              style={{ backgroundColor: 'var(--color-status-danger)', color: '#fff' }}
+            >
+              Rebuild builder view from saved questions
+            </Button>
+            <Button variant="outline" onClick={onBack}>Leave without changing anything</Button>
+          </div>
+        </div>
       </div>
     );
   }
