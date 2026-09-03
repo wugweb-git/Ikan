@@ -175,7 +175,7 @@ export function AssessmentCard({ item, variant = 'full', index = 0, onSelect, cl
         )}
 
         {!compact && item.description && (
-          <p className="line-clamp-2 flex-grow" style={font('sm', 400, 'var(--color-text-muted)')}>
+          <p className="line-clamp-3 flex-grow" style={font('sm', 400, 'var(--color-text-muted)')}>
             {item.description}
           </p>
         )}

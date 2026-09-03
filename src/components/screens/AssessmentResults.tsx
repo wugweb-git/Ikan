@@ -10,6 +10,8 @@ import { ArrowRight } from 'lucide-react';
 import { SectionReportCard } from '../player/SectionReportCard';
 import { AssessmentCard } from '../assessment/AssessmentCard';
 import { severityPresentation, severityOfResult } from '../../lib/severity-presentation';
+import { resolveResultPresentation } from '../../lib/result-presentation';
+import { getLoadedScoringProfiles, loadScoringProfiles } from '../../lib/recommendation-engine';
 import type { SectionScoreResult } from '../../lib/assessment-sections';
 
 /** Inline style helper, matching the convention across the results screens. */
@@ -155,6 +157,24 @@ export function AssessmentResults({
     completedAt: hydratedData?.completedAt as string | undefined,
   };
 
+  /**
+   * The band this result actually falls in, resolved by the one module all
+   * three result surfaces share. Computed here rather than at the render site
+   * so it sits above the early returns with the other derived values.
+   */
+  const placed = resolveResultPresentation(
+    {
+      assessment_id: activeData.assessmentId,
+      score: activeData.score,
+      max_score: activeData.maxScore,
+      section_scores: activeData.sectionScores,
+      interpretation: activeData.interpretation,
+      completed_at: activeData.completedAt,
+    },
+    assessmentDef,
+    getLoadedScoringProfiles() ?? {},
+  );
+
   const primaryProgramId = activeData.recommendation?.primaryAction?.type === 'equip_program'
     ? activeData.recommendation.primaryAction.programId
     : undefined;
@@ -194,6 +214,10 @@ export function AssessmentResults({
     let cancelled = false;
     (async () => {
       try {
+        // Bands live on scoring-profile records, not on the definition, and
+        // the standalone /assessment-results route does not go through the
+        // dashboard's engine init.
+        await loadScoringProfiles().catch(() => { /* renders unbanded */ });
         const def = await apiClient.getAssessment(activeAssessmentId);
         if (def && !cancelled) setAssessmentDef(def);
       } catch { /* the header degrades to whatever the record carries */ }
@@ -328,13 +352,14 @@ export function AssessmentResults({
     if (sections?.sectioned && (sections.sections.length > 0 || sections.overall)) return sections;
     if (typeof activeScore !== 'number') return null;
 
+
     const max = typeof activeMax === 'number' && activeMax > 0 ? activeMax : 0;
     return {
       sectioned: true,
       sections: [],
       overall: {
         id: 'overall',
-        label: activeData.interpretation?.label ? 'Your score' : 'Score',
+        label: placed.band ? 'Your score' : 'Score',
         direction: 'higher-is-distress',
         value: activeScore,
         max,
@@ -342,10 +367,24 @@ export function AssessmentResults({
         answered: 0,
         expected: 0,
         complete: true,
-        // Present only when the record actually carries one. An absent band
-        // renders as "Not banded" rather than as a fabricated label.
-        band: activeData.interpretation?.label
-          ? { min: 0, max, label: activeData.interpretation.label, description: activeData.interpretation.description }
+        /**
+         * The band the score was PLACED in, from the same module the dashboard
+         * and the history screen use.
+         *
+         * This used to build a band straight out of `interpretation.label`,
+         * which is a placeholder on 89 of 104 live records — so a completed
+         * assessment rendered a band reading "Completed", with `min: 0, max`
+         * invented around it to make it look like a range. Both parts were
+         * fabricated: the label was a status word and the range was never
+         * authored anywhere.
+         */
+        band: placed.band
+          ? {
+              min: 0,
+              max,
+              label: placed.band.label,
+              description: activeData.interpretation?.description,
+            }
           : undefined,
       },
     };

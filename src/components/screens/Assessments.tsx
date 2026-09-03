@@ -709,7 +709,7 @@ export function Assessments({ className, onNavigate }: AssessmentsProps) {
               </CardContent>
             </Card>
           ) : loading ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
               {[1, 2, 3, 4, 5, 6].map((i) => (
                 <Skeleton key={i} variant="rectangular" height="320px" className="rounded-[var(--radius-lg)]" />
               ))}
@@ -725,7 +725,7 @@ export function Assessments({ className, onNavigate }: AssessmentsProps) {
               </CardContent>
             </Card>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
               {assessments.filter(assessment => {
                 const hasHistory = userAssessmentHistory[assessment.id];
                 if (currentTab === 'history' && !hasHistory) return false;

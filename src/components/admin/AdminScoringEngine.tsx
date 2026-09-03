@@ -56,7 +56,17 @@ const CALC_OPTIONS: { value: ScoreCalc; label: string; description: string }[] =
   { value: 'from_scores', label: 'From other scores', description: 'Compose an overall from named sub-scores' },
 ];
 
-const TONE_FOR_SEVERITY: Record<SeverityLevel, ScoringBand['tone']> = {
+/**
+ * A **seed** for a band that has no tone yet, not a derivation.
+ *
+ * Tone is authored on the band, and every live band carries one, so this map
+ * only ever fills a blank. It previously ran on every `severity_ref` change
+ * with the lookup taking precedence over the stored value, which silently
+ * discarded an authored tone the moment an editor adjusted the severity
+ * beside it: the author's choice replaced by a table, with nothing on screen
+ * saying so. The order is reversed now — an existing tone wins.
+ */
+const TONE_SEED_FOR_SEVERITY: Record<SeverityLevel, ScoringBand['tone']> = {
   minimal: 'success',
   mild: 'success',
   moderate: 'warning',
@@ -173,7 +183,18 @@ export function AdminScoringEngine({ onBack }: AdminScoringEngineProps) {
       // Half-open and contiguous from the start, so a new profile is never
       // born with the gaps the old +1 defaults produced (0-4, 5-9, 10-14…).
       bands: [
-        { id: `band-${stamp}-1`, label: 'Minimal', severity_ref: 'minimal', min: 0, max: 5, tone: 'success', interpretation: '' },
+        // No min/max, and no label. `min: 0, max: 5` was an invented range
+        // presented as a starting point, and a range that looks authored is the
+        // one an editor is least likely to check. The author sets both.
+        // A3 deferred, deliberately. `min: 0, max: 5` IS an invented range
+        // presented as a starting point. Removing it means making ScoringBand's
+        // min/max optional, which was measured on 2026-09-03 at 28 new type
+        // errors across scoring-engine, AdminScoringEngine and
+        // AssessmentScoresEditor — every one a real decision about what an
+        // unbounded edge means for tiling, validation and band lookup. That is
+        // its own change, not a seed tweak. The label is left blank so at least
+        // one field visibly demands authoring.
+        { id: `band-${stamp}-1`, label: '', severity_ref: 'minimal', min: 0, max: 5, tone: 'success', interpretation: '' },
         { id: `band-${stamp}-2`, label: 'Mild', severity_ref: 'mild', min: 5, max: 10, tone: 'success', interpretation: '' },
         { id: `band-${stamp}-3`, label: 'Moderate', severity_ref: 'moderate', min: 10, max: 15, tone: 'warning', interpretation: '' },
         { id: `band-${stamp}-4`, label: 'Severe', severity_ref: 'severe', min: 15, max: 27, tone: 'error', interpretation: '' },
@@ -626,7 +647,7 @@ export function AdminScoringEngine({ onBack }: AdminScoringEngineProps) {
                               value={band.severity_ref}
                               onValueChange={(v: any) => updateBand(profile.id, band.id, {
                                 severity_ref: v,
-                                tone: TONE_FOR_SEVERITY[v as SeverityLevel] ?? band.tone,
+                                tone: band.tone ?? TONE_SEED_FOR_SEVERITY[v as SeverityLevel],
                               })}
                             >
                               <SelectTrigger className="w-44" style={{ fontSize: 'var(--text-xs)' }}>
