@@ -1062,3 +1062,61 @@ URL is not a successful deploy.
   card) · A2-A7 admin · F10 three `Assessment` interfaces and 17 `as any` ·
   D1 98 of 104 carry no `engine_result` · D3 the 40 `program_checkin` rows ·
   W5-W7.
+
+---
+
+## Final deployment — 2026-09-03
+
+`● Ready`. Live bundle hash matches the local build exactly. Six routes serve
+the app shell, a missing asset 404s, all four edge endpoints 200, behaviour
+markers present in the live Dashboard chunk. Typecheck 207 (baseline), 31 tests
+pass, working tree clean and pushed.
+
+### Owner decisions taken
+- **Clinical sign-off given** on the re-scored outcomes (sleep moderate →
+  minimal, depression and stress mild → moderate).
+- **The 104 stored results: leave as they are.** Measured while recording this,
+  and the premise behind the question was wrong: **67 are already `rescored`,
+  31 are already `pre-spec` AND `excluded_from_trends`, 6 carry no provenance
+  stamp.** 98 of 104 were already handled in an earlier pass. The 6 unstamped
+  rows are the only loose end, and they are not a mixed-generation risk on
+  screen because all three surfaces now recompute the band from the current
+  profile at render time — the stale stored labels are inert.
+
+### Closed this session (final)
+B1-B4 · F1-F4, F7, F9 · D2, D13 · I1-I3 · AD1, AD2, D5 · the `assessment:`
+mirror · drafts and their entry surface · `record_type` · the four
+`result-presentation` corrections · **all three result surfaces on one view
+model** · placeholder labels never render as results · D4 · A1, A2 · W5, W6, W7
+· the `/mood-journal` chunk-load failure.
+
+### Still open
+**Yours:** W1-W4, website content (the `/assessment` hero photograph, the
+shared General/Balance stock image, Burnout's silhouette, the seven identical
+"Completed" badges).
+
+**Ours:**
+- **A3** — deferred with the cost measured, not asserted: removing the invented
+  `min: 0, max: 5` seed requires `ScoringBand.min/max` to be optional, which is
+  **28 new type errors** across `scoring-engine`, `AdminScoringEngine` and
+  `AssessmentScoresEditor`, each a real decision about what an unbounded edge
+  means for tiling, validation and band lookup. Its own change.
+- A4-A7 · F10 (three `Assessment` interfaces, 17 `as any` in `AssessmentFlow`)
+- D1 (98 of 104 carry no `engine_result`, so the `?id=` route cannot rebuild a
+  recommendation for them — by design, it renders nothing rather than
+  fabricating one) · D3 (40 `program_checkin` rows share the
+  `assessment_result:` prefix; `record_type` separates them cleanly, moving
+  them is a data migration and an owner call)
+- The catalogue card is not a result surface, so the fourth "migration" on the
+  old list does not exist as described.
+
+### Deploy checklist, as amended this session
+1. `npm run typecheck` — diff against the 207 baseline, not the count alone.
+2. `npm test`.
+3. `npm run build`.
+4. Deploy. **Then `npx vercel ls --prod` must read `● Ready`** — the CLI prints
+   a URL and exits 0 on a failed build.
+5. Live index chunk hash must equal the local `dist/assets/index-*.js`.
+6. Grep the live chunk for a string only the new code contains.
+7. Server changed? Redeploy the function and smoke `/health`, `/assessments`,
+   `/equip/programs`, `/scales/moods`.
