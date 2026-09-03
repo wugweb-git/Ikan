@@ -347,7 +347,7 @@ Backups: `backup_pre_sleep_scale_2026-09-02` (17 rows), `backup_pre_stress_scale
 | bands | 2 → **3** | 3 | 3, +8 | 4 | **5** |
 | severity refs | minimal·moderate·severe | minimal·moderate·mod-severe | minimal·mild·moderate | minimal·mild·moderate·severe | all five |
 | reversed items | — | — | **5 of 8** | — | — |
-| scores | 1 | 1 | 1 | **2** (GAD-7 + PHQ-2) | **2** (PHQ-9 + GAD-2) |
+| scores | 1 | 1 | 1 | **2** (GAD-7 + PHQ-2) | **2** (PHQ-9-derived + GAD-2) |
 | excluded items | — | — | — | `anxiety-q8` | `depression-q10` |
 | re-scored | 7 | 27 (73 answers by digit) | 1 (exact only) | 4 (exact only) | 2 (exact only) |
 | stamped `pre-spec` | 3 | 11 | 2 | 1 | 1 |
@@ -358,6 +358,11 @@ Burnout: 5 scores, 23/23 coverage, 1 re-scored (overall mean 3.61 → "Normal"),
 carry answers from a former 0-4 frequency scale. Burnout is the sharpest case: the old labels
 *collide* with the current BAT ones at a different value — old `"3 - Often"` was 3, current
 `"4 - Often"` is 4 — so a digit-based recovery would silently shift every such answer one point.
+
+**The depression assessment is not PHQ-9 and must not be described as it.** Its item 9 carries
+softened local wording in place of PHQ-9's validated item, so the 0-27 range and the 5/10/15/20
+edges are PHQ-9-*derived*, not validated cut-offs. GAD-7 and the embedded GAD-2/PHQ-2 screens are
+unmodified and may be named as such.
 
 `depression-q9` ("Feeling that life is meaningless") stays **scored and unflagged** — decided
 2026-09-03. The crisis pathway (`triggerCrisisSupport` in `AssessmentFlow.tsx`) therefore fires

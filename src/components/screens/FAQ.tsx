@@ -122,7 +122,7 @@ export function FAQ({ className, onNavigate }: FAQProps) {
         },
         {
           question: 'What mental health assessments are available?',
-          answer: 'iKan offers clinically validated screening tools including the PHQ-9 (depression), GAD-7 (anxiety), PSS (stress), and more. These assessments provide instant insights into your mental well-being and can help guide conversations with a professional.',
+          answer: 'iKan offers screening tools for depression, anxiety (GAD-7), stress, well-being and more. These assessments provide instant insights into your mental well-being and can help guide conversations with a professional. They are screening tools, not diagnoses.',
         },
         {
           question: 'How does mood journaling work?',

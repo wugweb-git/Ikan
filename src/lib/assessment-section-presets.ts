@@ -314,7 +314,7 @@ export const DEPRESSION_SCORING: AssessmentSectionPreset = {
   sections: [],
   hasOverallScore: true,
   overallCalc: {
-    label: 'Depression (PHQ-9)',
+    label: 'Depression',
     calc: 'sum',
     questionIds: ['depression-q1', 'depression-q2', 'depression-q3', 'depression-q4', 'depression-q5', 'depression-q6', 'depression-q7', 'depression-q8', 'depression-q9'],
     direction: 'higher-is-distress',

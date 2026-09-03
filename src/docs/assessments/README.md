@@ -30,7 +30,7 @@ sentences) or deleting the records, both product decisions, not made unilaterall
 |---|---|---|---|---|
 | [`general.md`](general.md) | Unsure or general concern | general | 27 (was 24) | ✅ Sectioned; GAD-2/PHQ-2 gaps closed 2026-08-06 |
 | [`anxiety.md`](anxiety.md) | Feeling overwhelmed and anxious | anxiety | 10 | ✅ Real GAD-7 bands, scoped to the 7 clinical items — fixed 2026-08-06 |
-| [`depression.md`](depression.md) | Feeling depressed and hopeless | depression | 12 | ✅ Real PHQ-9 bands, scoped to the 9 clinical items — fixed 2026-08-06. Item 9's softened wording is still an open clinical-review question. |
+| [`depression.md`](depression.md) | Feeling depressed and hopeless | depression | 12 | ✅ PHQ-9-**derived** bands, scoped to the 9 items. Item 9 carries softened local wording, so the cut-offs are inherited, not validated. Do not describe as PHQ-9. |
 | [`stress.md`](stress.md) | Feeling worried and stressed | stress | 10 (was documented as 7) | ✅ Max-score fixed. 🔴 3 broken/truncated questions shown to users, found 2026-08-06 during doc re-verification, not yet fixed |
 | [`burnout.md`](burnout.md) | Feeling drained and burned out | burnout | 23 (was documented as 22) | ⚠️ Sectioned, scoring unaffected. 🔴 1 placeholder ("test") question shown to users, found 2026-08-06, not yet fixed |
 | [`sleep.md`](sleep.md) | Struggling with quality sleep | sleep | 8 | ✅ Inverted labels + typo fixed 2026-08-06. Question 2's wording and 2-band granularity still open. |

@@ -55,7 +55,7 @@ See [Getting Started](docs/GETTING-STARTED.md) for full setup instructions.
 
 ## Key Features
 
-- **Assessments** - Validated mental health screening tools (PHQ-9, GAD-7, etc.)
+- **Assessments** - Mental health screening tools. GAD-7 and the GAD-2/PHQ-2 screens are used unmodified; the depression assessment is PHQ-9-*derived* — its item 9 carries softened wording, so its cut-offs are not validated thresholds. See `src/docs/assessments/depression.md`.
 - **Equip Programs** - Structured multi-day wellness programs with progress tracking
 - **Mood Journal** - Daily mood logging with emotion tracking
 - **Resource Library** - Curated mental health articles and resources

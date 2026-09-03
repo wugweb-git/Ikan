@@ -52,8 +52,8 @@ function cleanAssessmentName(id: string, rawName: string, nameMap?: Map<string, 
 
   // 2. Map known well-known IDs to readable names
   const wellKnown: Record<string, string> = {
-    'phq-9': 'Depression (PHQ-9)',
-    'phq9': 'Depression (PHQ-9)',
+    'phq-9': 'Depression',
+    'phq9': 'Depression',
     'gad-7': 'Anxiety (GAD-7)',
     'gad7': 'Anxiety (GAD-7)',
     'pss': 'Perceived Stress',

@@ -984,7 +984,7 @@ export const DEFAULT_CMS_CONTENT: { [key: string]: any } = {
         { id: 'sessions', title: 'Sessions & Programs', items: [
           { question: 'How do I book a consultation with a therapist?', answer: 'Navigate to the Consultation page, browse our verified professionals by category, and select a time slot.' },
           { question: 'Are the Equip programs self-paced?', answer: 'Yes. Equip programs are structured into daily modules you can complete at your own pace.' },
-          { question: 'What mental health assessments are available?', answer: 'We offer clinically validated assessments for anxiety (GAD-7), depression (PHQ-9), stress, well-being, and more.' },
+          { question: 'What mental health assessments are available?', answer: 'We offer assessments for anxiety (GAD-7), depression, stress, well-being, and more.' },
           { question: 'How does mood journaling work?', answer: 'The Mood Journal lets you log your mood daily with a rating, emotions, energy level, and free-text reflections.' },
         ]},
         { id: 'trust-safety', title: 'Trust, Safety & Privacy', items: [

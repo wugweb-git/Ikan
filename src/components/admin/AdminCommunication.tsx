@@ -86,7 +86,7 @@ const AVAILABLE_VARS: { key: string; label: string; example: string }[] = [
   { key: 'user_email', label: 'User Email', example: 'jane@example.com' },
   { key: 'app_name', label: 'App Name', example: 'iKan Health' },
   { key: 'date', label: 'Date', example: new Date().toLocaleDateString() },
-  { key: 'assessment_name', label: 'Assessment Name', example: 'PHQ-9' },
+  { key: 'assessment_name', label: 'Assessment Name', example: 'GAD-7' },
   { key: 'program_name', label: 'Program Name', example: 'Stress Mastery' },
   { key: 'checkin_streak', label: 'Check-in Streak', example: '7 days' },
   { key: 'support_url', label: 'Support URL', example: 'https://ikanhealth.in/support' },
