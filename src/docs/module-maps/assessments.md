@@ -1,13 +1,66 @@
 # Assessment instruments, as they actually exist
 
-*Module 1 of 5 · single source of truth · read-only survey · live database 2026-09-02*
+*Module 1 of 5 · single source of truth · surveyed 2026-09-02 · **status refreshed same day***
 
 Seven instruments, 92 items, 12 option scales, 70 real completions — plus the schema of each instrument, the payload a result emits, the four engines that read it, every fallback the chain takes when something is missing, and a 16-table relational target for Supabase. Read directly from the database and checked line by line against the scoring code, the engines and the original product spec. Nothing here was changed.
 
-`db **jpfvoevxegnknxoqmwye** | branch **equip-carry-forward** @ **d2ac376c** | deployed **7c21cd02** · 2026-08-07 | 7 commits **unpushed**`
+`db **jpfvoevxegnknxoqmwye** | surveyed at **d2ac376c** | now **340de905** · **17 commits later** | in sync with origin`
+
+This page was surveyed against `d2ac376c`. The tree is now `340de905` — **17 commits later** — and a great deal has landed since, including work derived from this page's own change brief. Rather than silently rewrite the findings, the status of every one is recorded below and the sections themselves are left as the survey found them. **Read the survey as "how it got this way", and this block as "where it stands".**
+
+## 00 · What has changed since this survey
+*verified against code and live data*
+
+- **Change-brief items closed: 13** — of 31
+- **Content bugs remaining live: 0** — every hit is now inside a backup row
+- **Results with a breakdown: 0** — of 95 — the code is fixed, nothing has run it
+- **Completions since 2026-09-01: 0** — 13:04 is still the latest
+
+### Closed — verified in code
+
+*Each checked directly, not inferred from a commit message*
+
+| Was | Now | Where |
+|---|---|---|
+| **§01's headline: the preset never runs.** `mappedAssessment` never copied `slug`, so `SECTION_PRESETS[undefined]` = `{}` | **Fixed properly.** `slug: fetchedAssessment.slug` is in the mapping. A `slugify(title)` guard sits behind it | AssessmentFlow.tsx:599 |
+| The result record stored only `asm_…`, so no engine lookup could resolve | **`slug` is now persisted on the result** | assessment-routes.ts:108 |
+| `KNOWN_MAX_SCORES` keyed on `phq9`/`gad7` against a stored `asm_…` id — never matched | **`candidateKeys()`** tries slug, assessment_slug, assessment_id and assessmentId, lower-cased | ikan-score-routes.ts:51 |
+| **The wellness score inverted General** — 19 of 24 higher-is-better items read as distress inside 40% of the composite | **Fixed, and better than this page proposed.** A result carrying `section_scores` now computes wellness *per section* and never reaches the whole-assessment flag at all. The comment says so: *"General is handled correctly without a whole-assessment flag… Still do not add General to it"* | ikan-score-routes.ts:66–105 |
+| `max_score` computed from `opt.value` on options that are all plain strings → always 0 | Gone. No `opt.value ?? opt.score` remains in the scoring path | 3 files |
+| Out-of-range score returned `ranges[0]` — the mildest band | Gone. No `ranges[0]` in the flow | AssessmentFlow.tsx |
+| `syncNow` called `saveQueue(failed)` against a stale snapshot, erasing anything queued during the sync | Re-reads at write time. The old behaviour is documented in a comment at the fix site | useOfflineSync.ts:232 |
+| `getAssessment` returned a 24-hour cached copy on any error and Publish PUT it back | Fixed | 563510d3 |
+| **The risk indicator did nothing.** `riskIndicatorQuestionIds` was declared and read by nothing — the most clinically urgent question in the product had no effect | **Any non-zero answer now offers the crisis panel**, alongside the result, never instead of it. Scoring and saving continue unchanged | AssessmentFlow.tsx:319 |
+| Crisis support could not be opened — `showCrisisSupport` had no call sites, and the numbers were US | Reachable and localised to India | 1d5b0ab3 |
+| **9 orphan rows** in `assessment_response_by_user:` — 105 index rows against 95 results | **95 and 95.** Exact match | live data |
+| `"Pooo"` · `"auti fill "` · chat paste artefacts · `"Sleep DIary"` | **All gone from live records.** Every remaining match is inside a backup row — including a new `backup_pre_content_fixes_2026-09-02` | live data |
+| 7 commits unpushed, origin 3 weeks stale | `equip-carry-forward` in sync with origin at `340de905` | git |
+
+> **[WARNING] The code is fixed and the data has not yet felt it.**
+>
+> **0 of 95 stored results carry a `slug`, and 0 carry `section_scores`** — because the latest completion in the database is still `2026-09-01T13:04`. Nothing has run the corrected path.
+>
+> So `SectionReportCard` still has not rendered, the history chart still plots raw scores across unstable maxima, and the wellness score's new per-section path has no result to use it on. **The first real completion after this is the test** — and it is worth doing deliberately rather than waiting for one.
+
+### Still open
+
+| # | Open | Kind |
+|---|---|---|
+| 1 | **Depression has no risk indicator.** `riskIndicatorQuestionIds` is declared on `GENERAL_SECTIONS` and nowhere else — so the instrument named *Feeling depressed and hopeless* does not flag. And its item 9, `dep-q9`, is the softened *"Feeling that life is meaningless"* rewrite of PHQ-9's self-harm item. **It under-detects and it does not flag; those compound** | safety |
+| 2 | **The risk check fires at submit, not at answer.** Someone endorsing item 9 at question 6 of 24 answers eighteen more before anything appears. *Alongside the result* and *at the moment of the answer* are not in conflict — offer at both | safety |
+| 3 | **The 70 historical results.** Re-score from stored responses, or stamp a `provenance` and exclude from trends? Balance's three cannot be re-scored honestly either way — its items changed with no versioning | decision |
+| 4 | **13 `progress:` rows still carry the developer instruction** — *"Show all activities from day 17 and 18…"* — as stored user *answers* from Sleep Tight days 18–30. The content is fixed; these are historical responses to it | data |
+| 5 | `correctAnswer` / `allCorrect` authored and never rendered — quiz blocks grade nothing | bug |
+| 6 | Two `GET /admin/categories` handlers; the second never executes | bug |
+| 7 | The clinical decisions: `dep-q9` wording · Burnout's duplicate item · Burnout's and General's stored bands · NGSE/BRS 8/6 vs the spec's 7/7 · BAT-23 or accept 22 · equip check-ins sharing the assessment prefix | decision |
+
+> **[NOTE] What this changes about how to read the rest of the page.**
+>
+> Sections **01**, **10**, **11**, **12** and **13** describe a chain that no longer breaks where they say it breaks. They remain accurate as an account of *how the module reached this state* and of the mechanisms involved — the fallback ladders, the silent defaults, the two representations — all of which still exist. Sections **02**–**09** (the instruments, the content, the schemas, the admin fields, the taxonomy) are unaffected and current. Section **17**'s target schema is unaffected: none of the fixes above changes the storage model.
 
 ## Contents
 
+- **00** What has changed since this survey
 - **01** Module flow, end to end
 - **02** The item model
 - **03** The twelve option scales
@@ -27,6 +80,7 @@ Seven instruments, 92 items, 12 option scales, 70 real completions — plus the 
 - **17** Target schema — relational
 - **18** Standing open
 - **19** Change brief
+- **20** Beyond bug-fixing — what to build
 
 ## 01 · Module flow
 *author → play → score → store → consume*
@@ -1102,9 +1156,74 @@ Items 1–22 make the current model correct. §17 proposes what replaces it: 16 
 >
 > **Items 1 and 2 before anything in the scoring section**, and **item 3 before any admin touches the editor**. Deploying the wizard fix without the slug fixes means correctly-preserved scoring that still never reaches a stored result, and still never reaches an engine. Re-scoring history without them means backfilling data the next completion won't match.
 
+## 20 · Beyond bug-fixing — what to build
+*proposal · ranked*
+
+§19 is repair. This is the shorter list of things that would make the module **better** rather than correct — and two of them are already half-built in the database, which is why they lead.
+
+### 1 · Give Depression a risk indicator
+
+> **[CRITICAL] The instrument most likely to surface risk is the one that does not flag.**
+>
+> `riskIndicatorQuestionIds` is declared on `GENERAL_SECTIONS` and nowhere else. `DEPRESSION_SCORING`, `ANXIETY_SCORING` and the rest have none. So the General questionnaire — 8 stored results — offers the crisis panel, and *Feeling depressed and hopeless* does not.
+>
+> Compounding it: `dep-q9` is *"Feeling that life is meaningless"*, a softened rewrite of PHQ-9's self-harm item. **It under-detects, and it does not flag.** Two lines of config, plus the wording decision you already hold. Worth also checking whether Anxiety's embedded PHQ-2 (`anxiety-q9` / `q10`) deserves one.
+
+### 2 · Two-stage screening — both halves already exist
+
+> **[NOTE] You have a GAD-2 and a PHQ-2 sitting inside General, copied verbatim from the full instruments.**
+>
+> `assessment-section-presets.ts` states it outright: `gen-anxiety-q2`, `gen-dep-q1` and `gen-dep-q2` were *copied in verbatim* from the standalone Anxiety and Depression instruments — which hold the full GAD-7 and PHQ-9.
+>
+> That is the standard two-step screen, in your database, unwired. A positive **GAD-2** routes to the full **GAD-7**; a positive **PHQ-2** to **PHQ-9**. It shortens the funnel for most users, follows clinical convention, and gives General a reason to exist other than being a 24-item wall. **No new content required** — only routing.
+
+### 3 · Partial save and resume
+
+Twenty-four items live in React state. Close the tab at question 6 and everything is gone. The `Assessments` screen already renders an `'in-progress'` card that **nothing can write**, in two places. This is the single largest completion-rate lever available, and the UI half is done.
+
+What it needs: a draft record keyed per user per assessment version, holding the partial `responses` map and a cursor; a real status enum (`draft · in_progress · completed · abandoned`) with `completed_at` set only on completion; and a resume entry point on the card that already exists.
+
+### 4 · The section breakdown — nearly free
+
+> **[NOTE] Built, wired into two screens, and one completion away.**
+>
+> `SectionReportCard` renders General's five scales and Burnout's four sub-scales. It is imported by the results screen *and* the history screen. Its gate is `sectionScores.sectioned && sections.length >= 2`, and `section_scores` is null on all 95 results — **because no assessment has been completed since the slug fix landed.**
+>
+> Nothing needs designing. One deliberate completion of General or Burnout on the fixed code is the whole task, and it doubles as the verification that §00's fixes actually work end to end.
+
+### 5 · Trend against last attempt
+
+`AssessmentHistoryDetail` already draws a recharts line — of **raw score**, across maxima that vary within a single instrument (Stress has stored 100, 28 and 40). Now that the denominator is stable, plot percentage or band and the chart becomes true rather than decorative. Two-point trend (`getTrend`) can become a real series.
+
+### 6 · Re-assessment cadence
+
+`lastCompletedDate` is computed and displayed on every assessment card. Nothing ever prompts a re-take. A screening instrument's entire value is repeat measurement, and the live distribution is exactly what that absence produces: **70 completions across 5 users, 38 of them on one instrument** — people who took something once.
+
+### 7 · Result → professional
+
+There are **12 `professional:` records** and nothing routes a high-severity result to booking one. Severity is already computed at submit. If consultations are the revenue path, this is the missing join — and it is a routing rule, not a feature.
+
+### 8 · Norms
+
+"Your score is 12" carries no information for a user. *"12 — moderate. Most people completing this score 8"* does. You do not have the sample for your own norms, but published norms exist for GAD-7, PHQ-9, WHO-5, PSS and the BRS, and the bands are already keyed to those instruments.
+
+> **[WARNING] A constraint, not a task: localisation is a clinical problem here.**
+>
+> The catalog declares **12 languages** and every instrument is English-only. For validated instruments that is not a translation job — GAD-7 and PHQ-9 have *officially validated* translations, and an unvalidated rendering invalidates the scoring and the bands with it. Worth knowing before anyone scopes localisation as a content task.
+
+> **[CRITICAL] And one thing to argue against: do not add instruments yet.**
+>
+> Seven is more than enough for five users. Every additional instrument multiplies the scoring, banding, routing and translation work that this module is currently trying to centralise, and none of the seven you have is yet fully wired end to end.
+
+> **[NOTE] If two things get done after §19.**
+>
+> **Item 1**, because a screener that does not flag on its depression instrument is a safety gap, not a backlog item. And **item 4**, because it is already built, costs one deliberate completion, and proves the whole §00 fix chain works — which nothing has yet.
+
 ---
 
-**Method.** Every count, item, option, band, field value and block shape comes from read-only SQL against `kv_store_cc205da9` on 2026-09-02, including a field-by-field distinct-value scan across all seven records to establish which landing copy is shared. Cross-checked against `assessment-section-presets.ts`, `assessment-sections.ts`, `assessment-adapter.ts`, `recommendation-engine.ts`, `ikan-score-routes.ts`, `AssessmentFlow.tsx`, `AssessmentResults.tsx`, `AssessmentHistoryDetail.tsx`, `Dashboard.tsx`, `WellnessTimeline.tsx`, `IkanScoreCard.tsx`, `AssessmentEditPageWizard.tsx`, `ProgramPlayer.tsx`, `useMetadata.ts`, `useOfflineSync.ts`, `api-client.ts` and `assessment-routes.ts` in the local working tree at `d2ac376c`. Field-consumer claims are repo-wide greps, not inference from names. No writes were made and nothing was deployed.
+**Status refresh, 2026-09-02.** §00 was added after the survey and every claim in it was checked directly — the code at `340de905` and the live database, not commit messages. Where a fix landed, the section it contradicts is left as written rather than silently edited, so the survey stays readable as an account of how the module reached this state. §20 was added from a separate discussion and is proposal, not survey.
+
+**Method.** Every count, item, option, band, field value and block shape comes from read-only SQL against `kv_store_cc205da9` on 2026-09-02, including a field-by-field distinct-value scan across all seven records to establish which landing copy is shared. Cross-checked against `assessment-section-presets.ts`, `assessment-sections.ts`, `assessment-adapter.ts`, `recommendation-engine.ts`, `ikan-score-routes.ts`, `AssessmentFlow.tsx`, `AssessmentResults.tsx`, `AssessmentHistoryDetail.tsx`, `Dashboard.tsx`, `WellnessTimeline.tsx`, `IkanScoreCard.tsx`, `AssessmentEditPageWizard.tsx`, `ProgramPlayer.tsx`, `useMetadata.ts`, `useOfflineSync.ts`, `api-client.ts` and `assessment-routes.ts` in the local working tree at `d2ac376c` (survey) and `340de905` (refresh). Field-consumer claims are repo-wide greps, not inference from names. No writes were made and nothing was deployed.
 
 **A correction to the earlier version of this page.** It reported **137 stored results**. 137 is the number of *keys* under the `assessment_result:` prefix: **95 records plus 42 `:latest` duplicates**. Of the 95, **70** are real assessment completions and **25** are equip check-ins. Every count on this page now uses 95 / 70 / 25.
 

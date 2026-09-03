@@ -23,29 +23,28 @@ committed and pushed to `origin/equip-carry-forward`.*
   issue" emails (Jul 20 / Jul 26 / Aug 3 are the same weekly digest re-reporting one finding, not
   three escalating ones).
 - **Leaked-password protection** → Supabase → Auth → Providers → enable HaveIBeenPwned check.
-- **Burnout: 23 items live, one of them corrupt — do NOT "delete the duplicate".** [CORRECTED
-  2026-09-02] This was previously framed as "22 real items, BAT-23 defines 23, author a 23rd or
-  accept 22". That framing is wrong and the fix it implies is destructive. Items 9 and 10 carry
-  *identical* text, but `assessment-section-presets.ts:174-175` scores them as two **different**
-  Mental Distancing items — so `block-1773730438342`'s text was overwritten, not duplicated.
-  Deleting it would drop Mental Distancing from 5 scored items to 4 and silently bias every future
-  Burnout score. Three sources disagree on the correct text (presets say "strong aversion towards my
-  job", `daily_content` says "I struggle to find any enthusiasm for my work", `questions[]` repeats
-  the autopilot item). **Blocked on the BAT-23 instrument** — this is a text restoration, not a row
-  deletion, and not a judgement call. Max score stays 92. Not the same question as the removed
-  `burnout-q1` placeholder (2026-08-07 — pure dead "test" text, unrelated). See
-  `MASTER-PENDING-2026-09-01.md` § "Closeout pass — 2026-09-02".
+- ~~**Burnout: 23 items live, one of them corrupt.**~~ **RESOLVED 2026-09-03.** `burnout-q9` was
+  never a duplicate of q10 — its `questions[]` text had been overwritten with q10's autopilot
+  wording, while the original ("I struggle to find any enthusiasm for my work") survived as the
+  `title` on the same block in `daily_content`. Confirmed against the owner's BAT-23 reading.
+  Text restored, item un-retired, returned to `bat-mental-distance` and `bat-overall`:
+  **23 items, 8/5/5/5**, zero duplicate texts, `retired_question_ids` empty.
+  The three stored q9 answers predate the restore (given while the autopilot text was displayed)
+  and are excluded from scoring; the raw answers are retained and those results carry
+  `answered: 22, expected: 23, complete: false`. 2 further results answer an earlier 8-item
+  version on a former 0-4 scale and remain `pre-spec`.
+  Backups: `backup_pre_burnout_dedup_2026-09-03`, `backup_pre_burnout_q9_restore_2026-09-03`.
+
 - **Wellness score (iKAN) aggregation logic** — the per-assessment scoring fixed this session (see
   "Verified fixed" below) is upstream of it, not it. Revisiting how the overall iKAN wellness score
   is computed from per-assessment results is **explicitly deferred to a later session** (confirmed
   2026-08-06) — don't start on it opportunistically.
-- 🟡 **Scoring Engine is empty, not broken.** `select count(*) from kv where key like
-  'scoring-profile:%'` = 0, no assessment has a `scoring_profile_id` set. The
-  `AdminScoringEngine.tsx` CRUD and `getSeverityFromProfile` evaluation code are correctly wired
-  end-to-end; nobody has ever authored a profile. This is why the per-assessment bands had to be
-  hand-written into `assessment-section-presets.ts` as code instead of living in a scoring profile —
-  there's currently no content-authored path for them. Not a code fix — needs someone to actually
-  use the screen, or a decision to retire it.
+- ~~🟡 **Scoring Engine is empty, not broken.**~~ **No longer true as of 2026-09-03.** Three v2
+  profiles are authored and linked (`sleep-severity`, `stress-severity`, `balance-severity`), and
+  those three assessments carry a `scores[]` spec. Four remain: Anxiety, Depression, Burnout,
+  General. `AdminScoringEngine.tsx` has been rebuilt for the v2 schema and will **reject** a v1
+  profile (`method`/`severity_bands`/`normalize_to_100`). The per-assessment bands in
+  `assessment-section-presets.ts` are still the code-side seed for the four unauthored ones.
 - **Enrollment/progress reconciliation and rule-engine schema mismatch, equip day/block dead API,
   and duplicate category CRUD — all fixed 2026-08-06.** See "Verified fixed" below for detail on
   each; this section previously described them as open.
@@ -204,6 +203,112 @@ byproduct).
 **Not started:** Phase 3 (cut journal reads over to the table — the dual-read/self-heal groundwork
 already exists in `mood-routes.ts`) and Phase 4 (repeat dual-write for the remaining four entities:
 `user_enrollments`, `user_program_progress`, `user_assessment_results`, `user_ikan_scores`).
+
+## C0. Answers are stored as display text — rewording an option orphans history
+
+`assessment_result.responses` stores the option's **label**, not its value or a stable option id.
+Reword an option and every stored answer to it detaches silently: the response key still resolves
+to a live question, so nothing errors and nothing is reported.
+
+Measured on Stress while authoring its spec: `"3 - Often"` (43 answers) and `"1 - Rarely"` (29)
+matched no current option — they had been reworded to `"3 - Fairly Often"` and
+`"1 - Almost Never"`. Exact-text matching recovered 10 of 38 results; a leading-digit fallback
+recovered 27, and 73 individual answers were recovered that way.
+
+Balance is worse and shows the limit: its answers come from **two different instruments** — a
+former 0-4 *agreement* scale (`"0 - Strongly Disagree"`…) replaced by a 1-5 *frequency* scale
+(`"1 Never"`…). `"2 - Neutral"` and `"2 Rarely"` share a digit and mean nothing alike, so the
+fallback would have produced a plausible wrong number. Balance was re-scored on exact match only:
+1 of 3 results survived.
+
+**That fallback is a recovery, not a fix, and it is not generally safe** — it works only where the
+leading digit equals the declared option value, which is true for Stress (0-based, 0-4) and not
+guaranteed elsewhere. Five assessments are still to be authored; each will hit this.
+
+The fix: store `{option_id | value, label}` on write, and resolve by value with the label kept
+only for display. Until then, every option rewording is a silent data loss event, and
+`scoring_provenance.answers_recovered_by_leading_digit` records where the fallback was relied on.
+
+---
+
+## C1. Queued behind the deploy hold — none of this is live
+
+Written and unrun. The edge function has not been deployed, so **no server-side refusal in
+this list currently exists in production**. Do not count them as guardrails.
+
+1. `scoring-validation.ts` + `POST /admin/scoring-profiles` — schema validation, server-owned
+   `version`, refusal to edit a `locked` profile.
+2. `DELETE /admin/scoring-profiles/:id` — refusal while an assessment still references it.
+3. `POST /user/assessments` — persists `engine_result` and `result_version`.
+4. `GET /user/assessments/results/:id` — backs the linkable `/assessment-results?id=` route.
+   Until this ships the route finds nothing and falls back to sessionStorage.
+5. ~~`POST /admin/assessments` does not validate `scores[]`.~~ **Done 2026-09-03.**
+   `validateAssessmentScores` now runs on both the create and update paths (400 with the specific
+   issues): every score needs a `profile_id` resolving to a saved profile, needs items **or**
+   `from_scores` but not both and not neither, ids must be unique, no self-composition, and
+   `weight`/`reverse` must be the right types.
+6. **Guardrail 11 — question-id immutability.** `validateQuestionIdImmutability` on both write
+   paths, 409 with the blocking score names. Blocks renaming or deleting an id a saved score
+   references, reusing a retired id, duplicate ids, and a score pointing at an unknown question.
+   Allows text/options/`scale_ref` edits, flag toggles and reordering. Retire-don't-delete is the
+   escape hatch: drop the id from every score and list it in `retired_question_ids`, which the
+   server then only ever appends to. **The `POST` path previously never read the existing record
+   at all**, so a POST carrying an existing id bypassed every check — it now reads and validates.
+
+7. **`GET /scoring-profiles` (requireAuth).** New read-only route. `/admin/scoring-profiles` is
+   `requireAdmin`, but `AssessmentFlow` calls `loadScoringProfiles()` for every user taking an
+   assessment — so a non-admin got a 403, the profile cache stayed null, no clinical severity was
+   resolved, and **no recommendation rule could match for anyone but an admin**. The engine now
+   tries the read route first and falls back to the admin one. Until this ships, the Step 3 join
+   works only for admins.
+
+---
+
+### Also outstanding, and NOT blocked by the hold
+
+**The player does not read the scoring specs.** `AssessmentFlow.tsx:329` still computes from
+`SECTION_PRESETS` in `assessment-section-presets.ts`, not from `assessment.scores[]`. All seven
+assessments now carry a live spec and there are 11 profiles in KV, so the two are a **seventh
+two-representations-of-one-entity** — and they are kept in step only by hand (both were edited
+together for Burnout's 8/5/5/5 and General's 7/7).
+
+Pointing the player at `scores[]` via `scoring-engine.ts` retires `assessment-section-presets.ts`
+and `assessment-sections.ts` together. It is frontend-only and can be done before the deploy, but
+it needs item 7 above to be live first or the player will have specs it cannot resolve profiles
+for.
+
+---
+
+Deploy per `BUILD.md`, then smoke-test `/health`, `/assessments`, `/equip/programs`,
+`/scales/moods` **plus** the two new endpoints above.
+
+---
+
+## C2. Frontend typecheck debt — 208 errors, and that is a baseline not a clean bill
+
+`npm run typecheck` reports **208 errors** (was 211 before 2026-09-02; defining the
+missing `SeedItem` interface in `metadata-catalog.ts` cleared 3). Every one predates the
+scoring-engine work, and none is in a file touched by it.
+
+**This number is dangerous precisely because it is stable.** "Unchanged, before and after"
+is the right thing to verify when making a change, but if 208 is the figure everyone works
+against, nobody will ever notice the 209th. A new error introduced by a future change is
+invisible against this floor.
+
+Two things are needed, neither urgent but both real:
+
+1. **Ratchet it.** Fail CI if the count rises above the recorded baseline. That makes the
+   floor useful instead of merely tolerated, and costs one script.
+2. **Drain the obvious clusters.** They are not scattered — `WizardField.tsx` alone
+   accounts for 8 (`Cannot find name 'Button'` — a missing import), `metadata-catalog.ts`
+   had 3, and `logger.ts` has 2 (`ImportMeta.env`, a missing `vite/client` type reference).
+   A handful of imports and one type reference would take a visible bite out of it.
+
+Note also that **`src/tsconfig.json` excludes `supabase`**, so none of the edge-function
+code is typechecked at all. `scoring-validation.ts` and the `admin-routes.ts` scoring
+changes are covered only by the scratch harness and by review — see the deploy hold.
+
+---
 
 ## E. Deferred (no urgency)
 
