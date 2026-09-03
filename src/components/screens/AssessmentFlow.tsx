@@ -566,6 +566,12 @@ export function AssessmentFlow({
     }
 
     if (!assessmentId) {
+      // Was: bail with both equipProgram and error null, which is the ONE
+      // combination that renders a blank card with no explanation. A caller
+      // reaching the player without a target is a bug in the caller, and it
+      // should say so rather than look like an empty assessment.
+      console.warn('[assessment] AssessmentFlow reached with no assessmentId — check the navigation that produced this URL.');
+      setError('No assessment was specified. Please pick one from the assessments list.');
       setLoading(false);
       return;
     }
@@ -664,7 +670,20 @@ export function AssessmentFlow({
           };
         });
 
+        // Spread first, then override only what needs mapping.
+        //
+        // This literal used to hand-list its fields, and every field added to
+        // the schema since has been silently dropped here by omission — first
+        // `slug`, then `scoring_profile_id`, then `scores` and `category`.
+        // Each failure looked like something else: no sectioned breakdown, no
+        // severity, no recommendation. Nothing errors, because an absent field
+        // is indistinguishable from an unset one.
+        //
+        // `category` and `scoring_profile_id` are what the recommendation join
+        // and the band lookup key on; `scores` is the scoring spec. Listing
+        // fields by hand is what broke them, so do not go back to it.
         const mappedAssessment: Assessment = {
+          ...fetchedAssessment,
           id: fetchedAssessment.id,
           slug: fetchedAssessment.slug,
           title: fetchedAssessment.title,
@@ -678,6 +697,17 @@ export function AssessmentFlow({
             ]
           }
         };
+
+        // Loud, because the whole scoring rollout is inert without these and
+        // the failure is otherwise invisible — it just quietly scores the old way.
+        if (!Array.isArray((mappedAssessment as any).scores) || !(mappedAssessment as any).category) {
+          console.warn(
+            `[assessment] "${mappedAssessment.slug}" reached the player without ` +
+            `${!Array.isArray((mappedAssessment as any).scores) ? 'scores[] ' : ''}` +
+            `${!(mappedAssessment as any).category ? 'category ' : ''}` +
+            `— scoring falls back to presets and no recommendation rule can match.`
+          );
+        }
 
         setAssessment(mappedAssessment);
         // Convert to Unified Program

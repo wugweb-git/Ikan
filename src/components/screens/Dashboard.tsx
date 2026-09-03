@@ -179,7 +179,10 @@ export function Dashboard({ className, onNavigate }: DashboardProps) {
 
   const handleReassessmentConfirm = () => {
     setReassessment({ ...reassessment, isOpen: false });
-    onNavigate?.(`/assessment-flow?reason=${reassessment.reason}`);
+    // The list, not the player: checkReassessmentTriggers returns only a
+    // reason, never an assessment id, so `/assessment-flow?reason=…` reached
+    // the player with no target and rendered a blank card.
+    onNavigate?.(`/assessment?reason=${reassessment.reason}`);
   };
 
   const handleReassessmentClose = () => {
