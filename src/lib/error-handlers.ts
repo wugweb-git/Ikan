@@ -70,6 +70,10 @@ function matchesPattern(str: string, patterns: string[]): boolean {
 function setOfflineMode(value: boolean) {
   try {
     if (typeof window !== 'undefined') {
+      // Written and never read: grep finds no consumer of this key anywhere in
+      // the app. Kept because it costs nothing and is genuine diagnostic state
+      // in devtools, but nothing renders from it — the offline banner reads
+      // `navigator.onLine`. Do not add a reader without deciding how it clears.
       localStorage.setItem('ikan-offline-mode', value.toString());
     }
   } catch {
@@ -104,15 +108,27 @@ export function setupGlobalErrorHandlers({ showToast }: ErrorHandlerCallbacks): 
         const msg = error instanceof Error ? error.message : String(error);
         const lower = msg.toLowerCase();
 
+        /**
+         * `error.name === 'TypeError'` is gone from this test.
+         *
+         * Every aborted request, every CORS rejection and every chunk-load
+         * failure is a TypeError, so this branch fired on things that had
+         * nothing to do with connectivity — including the missing-chunk error
+         * this app was showing on /mood-journal — and told the user they were
+         * offline when they were not.
+         *
+         * The toast is gone too. `App.tsx` already renders `OfflineBanner`
+         * from `navigator.onLine`, which is a real signal; this one guessed
+         * from a message string and could not clear itself, so a single failed
+         * request left "Working offline" standing over a working app.
+         */
         if (
           lower.includes('failed to fetch') ||
           lower.includes('network error') ||
-          lower.includes('connection refused') ||
-          error.name === 'TypeError'
+          lower.includes('connection refused')
         ) {
-          logger.log('Global fetch error intercepted - enabling offline mode:', msg);
+          logger.log('Global fetch error intercepted:', msg);
           setOfflineMode(true);
-          showToast?.('info', 'Working offline', 'Some features may be limited until connection is restored');
         }
         throw error;
       }
@@ -130,9 +146,8 @@ export function setupGlobalErrorHandlers({ showToast }: ErrorHandlerCallbacks): 
 
     if (matchesPattern(lower, NETWORK_ERROR_PATTERNS)) {
       event.preventDefault();
-      console.log('Network connectivity issue - switching to offline mode:', msg);
+      console.log('Network connectivity issue:', msg);
       setOfflineMode(true);
-      showToast?.('info', 'Working offline', 'Some features may be limited until connection is restored');
       return;
     }
     if (matchesPattern(lower, BACKGROUND_ERROR_PATTERNS)) {

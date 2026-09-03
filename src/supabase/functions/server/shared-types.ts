@@ -94,7 +94,20 @@ export type DatasetType =
   | 'journal'       // legacy alias
   | 'checklist';    // legacy alias
 
-export type SeverityLevel = 'low' | 'mild' | 'moderate' | 'high';
+/**
+ * The five-term clinical vocabulary. Must stay in step with `SEVERITY_LEVELS`
+ * in `src/lib/scoring-engine.ts` — the edge function is deployed as a flat
+ * directory copy and cannot import across it, so this is a deliberate
+ * duplicate rather than a second opinion.
+ *
+ * It used to read `'low' | 'mild' | 'moderate' | 'high'`. Two of those are
+ * response tiers from a different vocabulary, and the two real terms it was
+ * missing — `minimal` and `moderately-severe` — are both live in the data.
+ * Five recommendation rules are gated at `moderately-severe`; because this
+ * type did not admit the term, nothing flagged that the rank table had no
+ * entry for it, and those five rules silently never fired.
+ */
+export type SeverityLevel = 'minimal' | 'mild' | 'moderate' | 'moderately-severe' | 'severe';
 
 export interface Equip {
   id: string;

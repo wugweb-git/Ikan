@@ -92,9 +92,14 @@ export const RecommendationService = {
     // is lowercase (e.g. "anxiety"), so match case-insensitively.
     const assessmentIds = [...new Set(realResults.map((r: any) => r.assessment_id))];
     const categoryByAssessmentId = new Map<string, string>();
+    // Kept, not discarded: the band lookup below needs the same records, and
+    // re-fetching them per rule would be a KV read per rule per user.
+    const defByAssessmentId = new Map<string, any>();
     for (const id of assessmentIds) {
       const def = await kv.get(`assessment_def:${id}`);
-      if (def?.category) categoryByAssessmentId.set(id, String(def.category).toLowerCase());
+      if (!def) continue;
+      defByAssessmentId.set(id, def);
+      if (def.category) categoryByAssessmentId.set(id, String(def.category).toLowerCase());
     }
 
     // Latest real result per category
@@ -116,7 +121,12 @@ export const RecommendationService = {
         const assessment = latestByCategory.get(String(rule.assessment_category || '').toLowerCase());
         if (!assessment) continue;
 
-        const userSeverity = severityFromScore(assessment.score, assessment.max_score);
+        // Banded against the instrument's own profile. Null means the score
+        // could not be placed, and an unplaced score matches nothing — it is
+        // not evidence of a low severity.
+        const userSeverity = await severityForResult(assessment, defByAssessmentId.get(assessment.assessment_id));
+        if (!userSeverity) continue;
+
         const equipId = rule.target_id || rule.equip_id;
         if (!equipId) continue;
 
@@ -157,24 +167,99 @@ export const RecommendationService = {
 // HELPERS
 // ------------------------------------------------------------------
 
-// Real assessment_result: records never carry severity/interpretation, only
-// score/max_score — derive a 4-tier severity from the raw percentage instead
-// of trusting fields that are always null.
-function severityFromScore(score: number, maxScore: number): SeverityLevel {
-    const pct = maxScore > 0 ? (score / maxScore) * 100 : 0;
-    if (pct <= 25) return 'low';
-    if (pct <= 50) return 'mild';
-    if (pct <= 75) return 'moderate';
-    return 'high';
+/**
+ * Severity for a stored result, from the instrument's own band cut points.
+ *
+ * ## What this replaces, and why the old comment was wrong
+ *
+ * `severityFromScore` banded the raw percentage at fixed 25/50/75 thresholds.
+ * Two things were broken:
+ *
+ * 1. **It was direction-blind.** Three live profiles are `higher_is_better`
+ *    (`who5`, `ngse`, `brs`). A person scoring 90% on WHO-5 wellbeing came out
+ *    `'high'` severity — the worst tier — for being well.
+ * 2. **A percentage is not a cut point.** Sleep's own bands are 8-25 / 25-33 /
+ *    33-40 on an 8-40 scale, so its "moderate" starts at 42% of range, not
+ *    50%. Every instrument has its own edges, which is exactly what the bands
+ *    are; a flat percentage overrides all seven with one guess.
+ *
+ * The comment above it claimed "Real assessment_result: records never carry
+ * severity/interpretation". Measured 2026-09-03: all 104 carry
+ * `interpretation.label`, but **89 of those are `Completed`, `Complete` or
+ * `New Category`** — placeholders, not bands — and **0 of 104 carry a
+ * `severity_ref` anywhere**. So the fields genuinely cannot be trusted, but
+ * the conclusion drawn from that was wrong: the fix is not to invent a
+ * severity from a percentage, it is to band the stored score against the
+ * profile the assessment already declares.
+ *
+ * Returns null when the assessment declares no profile, the score falls in no
+ * band, or the band names no severity. Null means **no rule matches**, which
+ * is correct: General deliberately has no overall score (five independent
+ * scales), so a single severity for it would be a fiction.
+ */
+async function severityForResult(result: any, def: any): Promise<SeverityLevel | null> {
+    const profileId = def?.scoring_profile_id
+        ?? (Array.isArray(def?.scores) && def.scores.length === 1 ? def.scores[0]?.profile_id : null);
+    if (!profileId) return null;
+
+    const profile = await kv.get(`scoring-profile:${profileId}`);
+    const bands = Array.isArray(profile?.bands) ? profile.bands : [];
+    if (bands.length === 0) return null;
+
+    const score = result?.score;
+    if (typeof score !== 'number') return null;
+
+    // Half-open [min, max) with the last band closed, matching the client's
+    // `bandForValue`. A closed reader would put a value on a shared edge in
+    // the lower band, which is the opposite of what the authoring means.
+    for (let i = 0; i < bands.length; i++) {
+        const b = bands[i];
+        const min = typeof b?.min === 'number' ? b.min : -Infinity;
+        const max = typeof b?.max === 'number' ? b.max : Infinity;
+        const last = i === bands.length - 1;
+        const hit = last ? score >= min && score <= max : score >= min && score < max;
+        if (hit) return isSeverityLevel(b?.severity_ref) ? b.severity_ref : null;
+    }
+    return null;
 }
 
-const SEVERITY_RANK = {
-    'low': 1,
+/**
+ * The five-term clinical vocabulary, in order.
+ *
+ * This table used to hold four keys — `low`, `mild`, `moderate`, `high` — and
+ * **five of the eighteen live rules are gated at `moderately-severe`**, which
+ * was not one of them. `SEVERITY_RANK['moderately-severe']` was `undefined`,
+ * so `compareSeverity` returned `NaN`, `NaN >= 0` is false, and those five
+ * rules had never fired in production. `low` and `high` are response tiers,
+ * not clinical severities; they moved to their own vocabulary on 2026-09-02
+ * and should never have been ranked here alongside the other three.
+ */
+const SEVERITY_RANK: Record<SeverityLevel, number> = {
+    'minimal': 1,
     'mild': 2,
     'moderate': 3,
-    'high': 4
+    'moderately-severe': 4,
+    'severe': 5,
 };
 
+export function isSeverityLevel(v: unknown): v is SeverityLevel {
+    return typeof v === 'string' && Object.prototype.hasOwnProperty.call(SEVERITY_RANK, v);
+}
+
+/**
+ * Positive when the user's severity meets or exceeds the rule's threshold.
+ *
+ * An unrecognised term on either side means **no match**, rather than the
+ * arithmetic silently producing `NaN`. A typo'd threshold now fails closed and
+ * visibly, instead of quietly disabling a rule for four months.
+ */
 function compareSeverity(user: SeverityLevel, rule: SeverityLevel): number {
+    if (!isSeverityLevel(user) || !isSeverityLevel(rule)) {
+        console.warn(
+            `[recommendations] Unrecognised severity in comparison: user="${user}", rule="${rule}". ` +
+            `Valid terms are ${Object.keys(SEVERITY_RANK).join(', ')}. No match.`
+        );
+        return -1;
+    }
     return SEVERITY_RANK[user] - SEVERITY_RANK[rule];
 }

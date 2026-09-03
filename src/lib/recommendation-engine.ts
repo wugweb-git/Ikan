@@ -272,6 +272,8 @@ export async function initEngineConfig(): Promise<void> {
 // ══════════════════════════════════════════════════════════════════
 
 interface AdminRule {
+  /** Optional copy for the professional-support note. Empty renders nothing. */
+  professional_support_note?: string;
   id: string;
   /** Category slug, lower-cased on read so the join cannot fail on casing. */
   assessment_category: string;
@@ -496,6 +498,14 @@ export interface EngineResult {
   severityMessage: string;
   showProfessionalSupportNote: boolean;
   /**
+   * Copy for the professional-support note, authored on the matching rule.
+   *
+   * Empty renders nothing. The note used to carry a sentence written into the
+   * results component, which meant the one piece of advice on the page that
+   * touches clinical ground was the one piece nobody could edit.
+   */
+  professionalSupportNote: string;
+  /**
    * Clinical severity (5 terms). Null when the assessment has no scoring
    * profile or the band declares no `severity_ref`. `severity` above is the
    * 3-term response tier derived from this — the two are different vocabularies.
@@ -646,6 +656,7 @@ export function evaluateAssessment(input: EvaluateInput): EngineResult {
       cta: adminEquipRule?.cta || ''
     },
     secondaryActions: [],
+    professionalSupportNote: adminEquipRule?.professional_support_note || '',
     // Resolved through the same slug->id lookup the primary uses, and
     // de-duplicated against it: recommending a programme twice, once as "start
     // this" and once as "you may also like", reads as two findings.

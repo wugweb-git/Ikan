@@ -82,10 +82,24 @@ export function AssessmentResults({
   useEffect(() => {
     let cancelled = false;
 
+    /**
+     * The paint-now blob, used only when nothing else addresses a result.
+     *
+     * It used to load whenever `assessmentId` or `recommendation` was absent,
+     * without ever checking which result it held. So `/assessment-results?id=B`
+     * whose fetch failed rendered result A — someone else's numbers under B's
+     * URL, with nothing on screen saying so. The id is compared now, and a
+     * mismatch leaves the screen empty for the fetch to fill.
+     */
     if (!assessmentId || !recommendation) {
       try {
         const stored = sessionStorage.getItem('lastAssessmentResults');
-        if (stored) setHydratedData(JSON.parse(stored));
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          const blobId = parsed?.resultId ?? parsed?.id ?? null;
+          const addressesThisResult = !resultId || (blobId != null && String(blobId) === String(resultId));
+          if (addressesThisResult) setHydratedData(parsed);
+        }
       } catch { /* ignore */ }
     }
 
@@ -631,7 +645,11 @@ export function AssessmentResults({
         )}
 
         {/* ── Professional support ── */}
-        {rec.showProfessionalSupportNote && (
+        {/* Authored on the rule, or absent. This block used to carry its own
+            sentence — the last hardcoded copy on a page whose whole point is
+            that a recommendation says what a rule authored, or says nothing.
+            `severityMessage` two sections up already works this way. */}
+        {rec.showProfessionalSupportNote && rec.professionalSupportNote && (
           <motion.aside {...reveal} className="flex items-start" style={{
             gap: 12, padding: 16,
             backgroundColor: 'var(--color-status-info-light)',
@@ -647,7 +665,7 @@ export function AssessmentResults({
               <Icon name="info" size={14} />
             </span>
             <p style={{ ...f('sm', 400), lineHeight: 1.5, margin: 0 }}>
-              If things feel overwhelming, professional support can make a real difference. You're not alone in this.
+              {rec.professionalSupportNote}
             </p>
           </motion.aside>
         )}

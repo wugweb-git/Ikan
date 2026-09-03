@@ -9,7 +9,8 @@ import { checkReassessmentTriggers, ReassessmentReason } from '../../lib/reasses
 import { ActivityCard } from '../integrations/ActivityCard';
 import { useGoogleFit } from '../integrations/GoogleFitContext';
 import { cn } from '../ui/utils';
-import { tierPresentation } from '../../lib/severity-presentation';
+import type { SeverityLevel } from '../../lib/scoring-engine';
+import { severityPresentation, severityOfResult, tierPresentation } from '../../lib/severity-presentation';
 import { isProgramCheckIn } from '../../lib/assessment-record';
 import { evaluateAssessment, EngineResult, initEngineConfig } from '../../lib/recommendation-engine';
 import { RecommendationCards } from '../RecommendationCards';
@@ -35,7 +36,16 @@ interface AssessmentScore {
   score: number;
   /** Null when no real maximum resolved. Never substitute one. */
   maxScore: number | null;
-  severity: string;
+  /**
+   * The band the instrument itself assigned, verbatim, or null.
+   *
+   * Read from the record — the same field the history screen reads — never
+   * recomputed. Null renders no pill: a missing band is missing information,
+   * not a reason to invent one.
+   */
+  bandLabel: string | null;
+  /** The 5-term clinical severity when the band declares one. Colour only. */
+  severity: SeverityLevel | null;
   completedAt: string;
 }
 
@@ -340,18 +350,30 @@ export function Dashboard({ className, onNavigate }: DashboardProps) {
             // A percentage without a real max is a wrong number, not a smaller
             // one; skip the row instead.
             const maxScore: number | null = typeof resolvedMax === 'number' && resolvedMax > 0 ? resolvedMax : null;
-            const meta = assessmentMetaMap?.get(id);
-            const result = evaluateAssessment({
-              slug: id, category: meta?.category, score: r.score || 0, maxScore: maxScore ?? 0,
-              scoringProfileId: meta?.profileId,
-            });
             const rawName = r.assessment_name || r.assessmentName || r.title || id;
+            /**
+             * Read, never re-derived.
+             *
+             * This called `evaluateAssessment` per historical row and took its
+             * `tier` — a 3-term response tier computed back out of score and
+             * max. The history screen reads the band the scoring spec
+             * authored, so the two screens were not merely disagreeing, they
+             * were speaking different vocabularies. Measured on production
+             * 3 Sep: Burnout 60/115 read "Low" green here and "Moderate"
+             * yellow one tap later; General 46/96 did the same.
+             *
+             * `evaluateAssessment` still runs below for the engineResult path,
+             * where it is genuinely producing a recommendation rather than
+             * relabelling a stored one.
+             */
+            const bandLabel = r.severityHint || r.severity_hint || r.interpretation?.label || null;
             return {
               assessmentId: id,
               assessmentName: cleanAssessmentName(id, rawName, assessmentNameMap),
               score: r.score || 0,
               maxScore,
-              severity: result.tier,
+              bandLabel: typeof bandLabel === 'string' && bandLabel.trim() ? bandLabel.trim() : null,
+              severity: severityOfResult(r),
               completedAt: r.completed_at || r.created_at || '',
             };
           });
@@ -811,9 +833,9 @@ export function Dashboard({ className, onNavigate }: DashboardProps) {
             {assessmentScores.length > 0 ? (
               <div style={{ display: 'flex', flexDirection: 'column' }}>
                 {assessmentScores.slice(0, 5).map((s, i) => {
-                  const severityColor = tierPresentation(s.severity as any).color;
-                  const severityBg = tierPresentation(s.severity as any).background;
-                  const pct = s.maxScore && s.maxScore > 0 ? Math.round((s.score / s.maxScore) * 100) : null;
+                  // Neutral when the band names no severity, never the most
+                  // severe presentation.
+                  const band = severityPresentation(s.severity);
                   return (
                     <div key={`${s.assessmentId}-${i}`} onClick={() => onNavigate?.(`/assessment-history-detail?id=${s.assessmentId}`)}
                       className="active:bg-black/[0.03] transition-colors"
@@ -822,41 +844,43 @@ export function Dashboard({ className, onNavigate }: DashboardProps) {
                         borderBottom: i < Math.min(assessmentScores.length, 5) - 1 ? '1px solid var(--color-border-default)' : 'none',
                       }}
                     >
-                      <div className="flex items-center" style={{ gap: 12 }}>
-                        {/* Mini progress ring */}
-                        <div style={{ position: 'relative', width: 40, height: 40, flexShrink: 0 }}>
-                          <svg viewBox="0 0 40 40" width={40} height={40}>
-                            <circle cx={20} cy={20} r={16} fill="none" stroke="var(--color-bg-muted)" strokeWidth={3} />
-                            <circle cx={20} cy={20} r={16} fill="none" stroke={severityColor} strokeWidth={3}
-                              strokeLinecap="round"
-                              strokeDasharray={`${2 * Math.PI * 16}`}
-                              strokeDashoffset={`${2 * Math.PI * 16 * (1 - (pct ?? 0) / 100)}`}
-                              style={{ transform: 'rotate(-90deg)', transformOrigin: 'center' }}
-                            />
-                          </svg>
-                          <span style={{
-                            position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
-                            fontSize: 10, fontWeight: 500, fontFamily: 'var(--font-family-base)', color: severityColor,
-                          }}>
-                            {pct !== null ? `${pct}%` : '—'}
-                          </span>
-                        </div>
+                      {/* The band label leads.
+                          It is the only thing on this row that is
+                          direction-correct, scale-free and safe to read across
+                          instruments, and it was the smallest, palest element,
+                          parked far right where it is read last.
 
+                          The ring and the percentage are gone. The ring
+                          encodes magnitude, magnitude is direction-dependent,
+                          and the row never said which way an instrument runs:
+                          burnout at 52% and sleep at 60% drew a FULLER ring on
+                          the healthier result. And 52% of a burnout scale is
+                          not the same quantity as 60% of a sleep scale, so
+                          putting both in one column invited a comparison that
+                          is not valid. The raw fraction stays, worded so it
+                          reads as a score and not a proportion. */}
+                      <div className="flex items-center" style={{ gap: 12 }}>
                         <div style={{ flex: 1, minWidth: 0 }}>
-                          <span style={{ ...f('sm', 500), display: 'block', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{s.assessmentName}</span>
-                          <p style={{ ...f('xs', 400, 'var(--color-text-muted)'), margin: '1px 0 0' }}>
-                            {s.completedAt ? new Date(s.completedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'Recent'} · {s.score}/{s.maxScore ?? '—'}
+                          {s.bandLabel && (
+                            <span style={{
+                              ...f('base', 500, band.color),
+                              display: 'block', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+                            }}>
+                              {s.bandLabel}
+                            </span>
+                          )}
+                          <span style={{
+                            ...f('sm', 400, s.bandLabel ? 'var(--color-text-muted)' : 'var(--color-text-primary)'),
+                            display: 'block', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+                            marginTop: s.bandLabel ? 2 : 0,
+                          }}>
+                            {s.assessmentName}
+                          </span>
+                          <p style={{ ...f('xs', 400, 'var(--color-text-muted)'), margin: '2px 0 0' }}>
+                            {s.completedAt ? new Date(s.completedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'Recent'}
+                            {s.maxScore !== null && ` · ${s.score} of ${s.maxScore}`}
                           </p>
                         </div>
-
-                        <span style={{
-                          fontSize: 10, fontWeight: 500, fontFamily: 'var(--font-family-base)',
-                          color: severityColor, backgroundColor: severityBg,
-                          padding: '3px 10px', borderRadius: 'var(--radius-pill)',
-                          textTransform: 'capitalize' as const, flexShrink: 0,
-                        }}>
-                          {s.severity}
-                        </span>
                         <ChevronRight size={16} style={{ color: 'var(--color-text-muted)', flexShrink: 0, opacity: 0.4 }} />
                       </div>
                     </div>

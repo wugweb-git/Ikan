@@ -115,7 +115,20 @@ export function adaptAssessmentToProgram(assessment: LegacyAssessment): EquipPro
     subtitle: assessment.subtitle || undefined,
     description: assessment.description,
     activities,
-    dayType: 'practice'
+    /**
+     * `'assessment'`, not `'practice'`.
+     *
+     * A purpose-built assessment config has existed in `DAY_TYPE_CONFIG` the
+     * whole time and was never reached, so every assessment ran with the
+     * practice affordances: `autoAdvance` off, so answering took two taps per
+     * question; a back button; a percentage bar on a stepped flow; and a final
+     * button reading "Done for Today" on a questionnaire.
+     *
+     * This could not be flipped on its own — two strings in ProgramPlayer read
+     * `dayType === 'practice'` directly and would have changed meaning with
+     * it. They are fields on the config now, so the three move together.
+     */
+    dayType: 'assessment'
   };
 
   return {

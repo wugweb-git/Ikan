@@ -42,6 +42,16 @@ interface DayTypeConfig {
   autoAdvance: boolean;
   progressStyle: 'percentage' | 'steps' | 'none';
   primaryButtonText: (isLast: boolean) => string;
+  /**
+   * Heading on the completion screen. Folded in here because two call sites
+   * read `dayType === 'practice'` directly, which meant the adapter could not
+   * be corrected without silently changing this copy — the reason assessments
+   * were still running as `practice` months after an `assessment` config was
+   * written for them.
+   */
+  completionTitle: string;
+  /** Fallback header when neither the program nor the day names itself. */
+  fallbackTitle: (dayNum: number) => string;
   singlePage?: boolean;
   bgColor?: string;
 }
@@ -53,7 +63,9 @@ const DAY_TYPE_CONFIG: Record<string, DayTypeConfig> = {
     autoAdvance: true,
     progressStyle: 'steps',
     primaryButtonText: (last) => last ? 'Complete' : 'Continue',
-    bgColor: 'bg-[var(--color-bg-page)]'
+    bgColor: 'bg-[var(--color-bg-page)]',
+    completionTitle: 'All Done!',
+    fallbackTitle: () => 'Assessment',
   },
   'assessment-lite': {
     layout: 'card',
@@ -61,7 +73,9 @@ const DAY_TYPE_CONFIG: Record<string, DayTypeConfig> = {
     autoAdvance: true,
     progressStyle: 'percentage',
     primaryButtonText: (last) => last ? 'Complete' : 'Next',
-    bgColor: 'bg-[var(--color-bg-card)]'
+    bgColor: 'bg-[var(--color-bg-card)]',
+    completionTitle: 'All Done!',
+    fallbackTitle: () => 'Assessment',
   },
   'learning': {
     layout: 'scrollable',
@@ -69,7 +83,9 @@ const DAY_TYPE_CONFIG: Record<string, DayTypeConfig> = {
     autoAdvance: false,
     progressStyle: 'percentage',
     primaryButtonText: (last) => 'Continue',
-    bgColor: 'bg-[var(--color-bg-page)]'
+    bgColor: 'bg-[var(--color-bg-page)]',
+    completionTitle: 'Session Complete',
+    fallbackTitle: (n: number) => `Day ${n}`,
   },
   'practice': {
     layout: 'scrollable',
@@ -77,7 +93,9 @@ const DAY_TYPE_CONFIG: Record<string, DayTypeConfig> = {
     autoAdvance: false,
     progressStyle: 'percentage',
     primaryButtonText: (last) => last ? 'Done for Today' : 'Next',
-    bgColor: 'bg-[var(--color-bg-page)]'
+    bgColor: 'bg-[var(--color-bg-page)]',
+    completionTitle: 'All Done!',
+    fallbackTitle: () => 'Assessment',
   },
   'workshop': {
     layout: 'step-focus',
@@ -85,7 +103,9 @@ const DAY_TYPE_CONFIG: Record<string, DayTypeConfig> = {
     autoAdvance: false,
     progressStyle: 'steps',
     primaryButtonText: (last) => last ? 'Finish' : 'Continue',
-    bgColor: 'bg-[var(--color-bg-card)]'
+    bgColor: 'bg-[var(--color-bg-card)]',
+    completionTitle: 'Session Complete',
+    fallbackTitle: (n: number) => `Day ${n}`,
   },
   'tracker': {
     layout: 'compact',
@@ -94,7 +114,9 @@ const DAY_TYPE_CONFIG: Record<string, DayTypeConfig> = {
     progressStyle: 'none',
     primaryButtonText: (last) => 'Save',
     singlePage: true,
-    bgColor: 'bg-[var(--color-bg-page)]'
+    bgColor: 'bg-[var(--color-bg-page)]',
+    completionTitle: 'Session Complete',
+    fallbackTitle: (n: number) => `Day ${n}`,
   },
   'reflection': {
     layout: 'scrollable',
@@ -102,7 +124,9 @@ const DAY_TYPE_CONFIG: Record<string, DayTypeConfig> = {
     autoAdvance: false,
     progressStyle: 'none',
     primaryButtonText: (last) => 'Complete Reflection',
-    bgColor: 'bg-[var(--color-bg-page)]'
+    bgColor: 'bg-[var(--color-bg-page)]',
+    completionTitle: 'Session Complete',
+    fallbackTitle: (n: number) => `Day ${n}`,
   }
 };
 
@@ -215,7 +239,10 @@ export function ProgramPlayer({
     return out.sort((a, b) => a.day - b.day);
   };
 
-  const progressPercent = steps.length > 0 ? ((currentStepIndex) / steps.length) * 100 : 0;
+  // Both readings describe the same thing: which step you are on. They used
+  // to disagree by one — the bar divided by `currentStepIndex` while the text
+  // added 1 — so the last step of eight read "8 of 8" beside a bar at 87.5%.
+  const progressPercent = steps.length > 0 ? ((currentStepIndex + 1) / steps.length) * 100 : 0;
   const progressText = `${currentStepIndex + 1} of ${steps.length}`;
 
   const isStepValid = useMemo(() => {
@@ -315,45 +342,29 @@ export function ProgramPlayer({
       completedAt: new Date().toISOString()
     };
 
-    if (program.daily_content.length === 1 && activeDay?.activities.some(b => b.exerciseConfig?.scoring?.enabled)) {
-      let totalScore = 0;
-      const scores: Record<string, number> = {};
-      
-      activeDay.activities.forEach(block => {
-        const config = block.exerciseConfig;
-        const answer = responses[block.id];
-        
-        if (config?.scoring?.enabled && answer) {
-           if (config.correctAnswer && answer === config.correctAnswer) {
-             const points = config.scoring.maxScore || 1;
-             scores[block.id] = points;
-             totalScore += points;
-           }
-           else if (config.scoring.weights && config.options) {
-             if (Array.isArray(answer)) {
-               answer.forEach((ans: string) => {
-                 const idx = config.options!.indexOf(ans);
-                 if (idx !== -1 && typeof config.scoring!.weights![idx] === 'number') {
-                   const points = config.scoring!.weights![idx];
-                   scores[block.id] = (scores[block.id] || 0) + points;
-                   totalScore += points;
-                 }
-               });
-             } else {
-               const optionIndex = config.options.indexOf(answer);
-               if (optionIndex !== -1 && typeof config.scoring.weights[optionIndex] === 'number') {
-                 const points = config.scoring.weights[optionIndex];
-                 scores[block.id] = points;
-                 totalScore += points;
-               }
-             }
-           }
-        }
-      });
-      results.scores = scores;
-      results.totalScore = totalScore;
-    }
-
+    /**
+     * Removed 2026-09-03: a second scorer.
+     *
+     * It summed `config.scoring.weights[config.options.indexOf(answer)]` over
+     * the day's blocks, gated on `daily_content.length === 1` — which is only
+     * ever true for an assessment, since the adapter builds a one-day program.
+     * So the player was scoring assessments in parallel with the real engine.
+     *
+     * It was not dead code. `AssessmentFlow` preferred its output over
+     * everything else:
+     *
+     *     if (typeof playerResults.totalScore === 'number') score = ...
+     *
+     * and `0` is a number. An assessment whose questions carry no legacy
+     * `scoring` map produces all-zero weights, so a complete set of answers
+     * scored **0**, and that zero silently beat the fallback path that reads
+     * each option's declared `value` correctly. Two scorers, and the weaker
+     * one won on a type check.
+     *
+     * `results.scores` / `results.totalScore` are now never set here, so
+     * AssessmentFlow falls through to the declared option values — the same
+     * source `resolveAnswerValue` and the scoring specs use.
+     */
     onComplete(results);
   };
 
@@ -397,7 +408,7 @@ export function ProgramPlayer({
                 transition={{ delay: 0.3 }}
                 style={{ ...f('2xl', 500), letterSpacing: '-0.01em' }}
               >
-                {activeDay.dayType === 'practice' ? 'All Done!' : 'Session Complete'}
+                {dayConfig.completionTitle}
               </motion.h2>
               <motion.p 
                 initial={{ opacity: 0 }}
@@ -434,7 +445,7 @@ export function ProgramPlayer({
   }
 
   // Determine title
-  const displayTitle = program.title || activeDay.title || (activeDay.dayType === 'practice' ? 'Assessment' : `Day ${currentDayNum}`);
+  const displayTitle = program.title || activeDay.title || dayConfig.fallbackTitle(currentDayNum);
   const displaySubtitle = activeDay.subtitle || null;
   const canGoBack = dayConfig.showBack && currentStepIndex > 0;
 

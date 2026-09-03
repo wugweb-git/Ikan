@@ -157,10 +157,36 @@ export function Assessments({ className, onNavigate }: AssessmentsProps) {
   const [loading, setLoading] = useState(true);
   const [showDisclaimerModal, setShowDisclaimerModal] = useState(false);
   const [userAssessmentHistory, setUserAssessmentHistory] = useState<Record<string, any>>({});
+  /**
+   * Runs saved but not finished, keyed by assessment id.
+   *
+   * Partial save has worked since B5 and there was no way to find out: the
+   * draft was written and read only inside the player, so the one place a user
+   * could have resumed from was the one place they could not get to without
+   * starting again. A feature nobody can see is a feature nobody has.
+   */
+  const [drafts, setDrafts] = useState<Record<string, any>>({});
   const [currentTab, setCurrentTab] = useState<TabState>('catalogue');
   const [heroBanner, setHeroBanner] = useState<HeroBanner | null>(null);
 
   // Load hero banner from admin config
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const rows = await apiClient.getAssessmentDrafts().catch(() => []);
+      if (cancelled) return;
+      const byId: Record<string, any> = {};
+      for (const d of rows) {
+        const answered = d?.responses ? Object.keys(d.responses).length : 0;
+        // A draft with no answers is not a run in progress, it is a page that
+        // was opened. Offering to resume it would be noise.
+        if (d?.assessment_id && answered > 0) byId[d.assessment_id] = { ...d, answered };
+      }
+      setDrafts(byId);
+    })();
+    return () => { cancelled = true; };
+  }, []);
+
   useEffect(() => {
     let isMounted = true;
     apiClient.getHeroBanner('assessments').then(res => {
@@ -710,6 +736,7 @@ export function Assessments({ className, onNavigate }: AssessmentsProps) {
                 return true;
               }).map((assessment, index) => {
                 const isCompleted = assessment.status === 'completed' && userAssessmentHistory[assessment.id];
+                const draft = drafts[assessment.id];
                 // Authored image first. Every one of the seven live records carries
                 // a thumbnail, and this call passed none — so the catalogue showed a
                 // category-keyed stock photo for all of them.
@@ -733,9 +760,13 @@ export function Assessments({ className, onNavigate }: AssessmentsProps) {
                       countLabel: assessment.questionCount !== null
                         ? `${assessment.questionCount} questions` : null,
                       completed: !!isCompleted,
-                      cta: currentTab === 'history' && isCompleted
-                        ? 'View history'
-                        : isCompleted ? 'Retake assessment' : 'Start assessment',
+                      // An unfinished run outranks both other states: it is the
+                      // only one where the user has work to lose.
+                      cta: draft && currentTab !== 'history'
+                        ? `Resume · ${draft.answered} answered`
+                        : currentTab === 'history' && isCompleted
+                          ? 'View history'
+                          : isCompleted ? 'Retake assessment' : 'Start assessment',
                     }}
                     onSelect={() => {
                       if (currentTab === 'history' && assessment.status === 'completed') {
