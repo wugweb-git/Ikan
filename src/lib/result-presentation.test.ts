@@ -101,8 +101,31 @@ test('a multi-score assessment with no primary resolves no profile', () => {
 
 test('without the profiles map no band can be placed', () => {
   const p = resolveResultPresentation(result(), sleepSpec, null);
-  assert.equal(p.band?.index, -1, 'definitions carry no bands, so nothing can be placed');
-  assert.equal(p.band?.of, 0);
+  assert.equal(p.band, null, 'definitions carry no bands, so nothing can be placed');
+  assert.equal(p.storedLabel, 'Completed', 'what the record claims is kept, separately');
+});
+
+test('a status word never renders as a band', () => {
+  // 89 of 104 live results hold Completed / Complete / New Category in the
+  // label slot. Rendering one where the outcome goes tells the user their
+  // assessment came out "Completed".
+  for (const junk of ['Completed', 'Complete', 'New Category']) {
+    const p = resolveResultPresentation(
+      { assessment_id: 'x', score: 999, max_score: 40, interpretation: { label: junk } },
+      sleepSpec, profiles);
+    assert.equal(p.band, null, junk + ' must not become a band');
+    assert.equal(p.storedLabel, junk, junk + ' is still readable as provenance');
+  }
+});
+
+test('a placeable score gets a real band even when the record stored a placeholder', () => {
+  // This is the 89: the placeholder is irrelevant once the score is placed
+  // against the profile.
+  const p = resolveResultPresentation(
+    { assessment_id: 'x', score: 30, max_score: 40, interpretation: { label: 'Completed' } },
+    sleepSpec, profiles);
+  assert.equal(p.band?.label, 'Poor Sleep');
+  assert.equal(p.storedLabel, 'Completed');
 });
 
 test('band edges are half-open, with the last band closed', () => {
@@ -134,15 +157,17 @@ test('an unknown direction defaults to distress rather than throwing', () => {
 
 // ── 4 · a score outside every band (the live Burnout case) ──────────────────
 
-test('a score in the wrong units keeps its label and loses the track', () => {
-  // Burnout stores 60/115 (a raw sum) against bat-mean's 1-5 bands.
+test('a score in the wrong units produces no band at all', () => {
+  // A raw sum against a 1-5 mean profile places nowhere. The record's own
+  // label is not a substitute: it was written by the generation that produced
+  // the mismatched units, so it is the least trustworthy thing on the row.
   const p = resolveResultPresentation(
-    result({ score: 60, max_score: 115, interpretation: { label: 'Low Burnout Risk' } }),
+    result({ score: 999, max_score: 115, section_scores: undefined,
+             interpretation: { label: 'Low Burnout Risk' } }),
     sleepSpec, profiles,
   );
-  assert.equal(p.band?.label, 'Low Burnout Risk', 'the stored label still renders');
-  assert.equal(p.band?.index, -1, 'but it was not placed, so no band track');
-  assert.equal(p.band?.tone, null, 'and no tone is guessed for it');
+  assert.equal(p.band, null);
+  assert.equal(p.storedLabel, 'Low Burnout Risk', 'kept as provenance only');
 });
 
 // ── 5 · raw ─────────────────────────────────────────────────────────────────
@@ -189,6 +214,7 @@ test('a complete run is ok', () => {
 const row = (over: Partial<ResultPresentation>): ResultPresentation => ({
   instrument: { id: 'asm_sleep', name: 'Sleep', categoryLabel: 'sleep' },
   band: { label: 'Poor Sleep', tone: 'warning', index: 1, of: 3 },
+  storedLabel: 'Poor Sleep',
   direction: 'higher-is-distress',
   raw: { score: 28, max: 40 },
   completedAt: '2026-09-02T10:00:00.000Z',
@@ -256,12 +282,12 @@ test('two instruments never compare to each other', () => {
   assert.equal(rows[1].change, null);
 });
 
-test('an unplaced band produces no change verdict', () => {
+test('a row with no band produces no change verdict', () => {
   const rows = withChange([
-    row({ completedAt: '2026-08-01T00:00:00Z', band: { label: 'Completed', tone: null, index: -1, of: 3 } }),
+    row({ completedAt: '2026-08-01T00:00:00Z', band: null }),
     row({ completedAt: '2026-09-01T00:00:00Z' }),
   ]);
-  assert.equal(rows[1].change, null, 'an index of -1 cannot be ordered against anything');
+  assert.equal(rows[1].change, null, 'a missing band cannot be ordered against anything');
 });
 
 test('input order is preserved regardless of dates', () => {

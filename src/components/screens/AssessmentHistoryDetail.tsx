@@ -10,7 +10,9 @@ import { Skeleton } from '../ui/skeleton-loader';
 import { cn } from '../ui/utils';
 import { SectionReportCard } from '../player/SectionReportCard';
 import type { SectionScoreResult } from '../../lib/assessment-sections';
-import { severityPresentation, severityOfResult } from '../../lib/severity-presentation';
+import { severityPresentation, severityOfResult, tonePresentation } from '../../lib/severity-presentation';
+import { resolveResultPresentation, type Tone } from '../../lib/result-presentation';
+import { loadScoringProfiles, getLoadedScoringProfiles } from '../../lib/recommendation-engine';
 
 /**
  * Percentage of the achievable range, or null when there is no real maximum.
@@ -41,7 +43,16 @@ interface AssessmentAttempt {
   /** Clinical severity term, or undefined. Never a band label. */
   severity?: string;
   /** Instrument copy for the band — "Poor Sleep". Display only. */
+  /**
+   * The band the score was PLACED in. Undefined renders "Not banded".
+   *
+   * Never the label the record carries: 89 of 104 hold `Completed`,
+   * `Complete` or `New Category` there, and showing one of those where the
+   * outcome belongs reads as a finding.
+   */
   bandLabel?: string;
+  /** Authored on the band. Drives colour; undefined renders neutral. */
+  tone?: Tone;
   interpretation?: any;
   completedAt: string;
   responses?: Record<string, any>;
@@ -65,11 +76,13 @@ interface AssessmentHistoryDetailProps {
   onNavigate?: (route: string) => void;
 }
 
-// Both maps spoke the retired 3-term vocabulary, so `minimal`, `mild`,
-// `moderately-severe` and `severe` — four of the five real terms — fell to the
-// default. Colour and label now come from one helper shared with the dashboard.
-const getSeverityColor = (severity?: string) => severityPresentation(severity).color;
-const getSeverityBg = (severity?: string) => severityPresentation(severity).background;
+// Colour comes from the band's authored tone, via the same helper the
+// dashboard uses. Both maps here previously spoke the retired 3-term
+// vocabulary, so four of the five real terms fell to a default; then they
+// spoke the 5-term clinical one, which no stored result actually carries.
+// `tone` is the vocabulary that is written on the data.
+const getSeverityColor = (tone?: Tone) => tonePresentation(tone).color;
+const getSeverityBg = (tone?: Tone) => tonePresentation(tone).background;
 
 /**
  * Compares **percentage of the achievable range**, not raw score, and only
@@ -120,8 +133,8 @@ function ChartTooltip({ active, payload, label }: any) {
             marginTop: 4,
             padding: '2px 8px',
             borderRadius: 'var(--radius-pill)',
-            backgroundColor: getSeverityBg(data.severity),
-            color: getSeverityColor(data.severity),
+            backgroundColor: getSeverityBg(data.tone),
+            color: getSeverityColor(data.tone),
             ...f('xs', 500),
             textTransform: 'capitalize',
           }}
@@ -162,6 +175,11 @@ export function AssessmentHistoryDetail({ assessmentId, onBack, onNavigate }: As
         setLoading(true);
 
         // Fetch assessment metadata + user history in parallel
+        // The module places a score against the instrument's own bands, which
+        // live on scoring-profile records rather than on the definition.
+        await loadScoringProfiles().catch(() => { /* rows render unbanded */ });
+        const scoringProfiles = getLoadedScoringProfiles() ?? {};
+
         const [metaRes, historyRes] = await Promise.all([
           apiClient.getAssessment(resolvedId).catch(() => null),
           apiClient.getUserAssessmentResponses().catch(() => ({ history: [] })),
@@ -215,7 +233,10 @@ export function AssessmentHistoryDetail({ assessmentId, onBack, onNavigate }: As
                 // — 76 of 101 results carry one that is not a severity term, so
                 // lower-casing it produced `poor-sleep` and coloured by default.
                 severity: severityOfResult(entry) ?? undefined,
-                bandLabel: entry.severityHint || entry.severity_hint || entry.interpretation?.label || undefined,
+                // One view model, shared with the dashboard, so the two screens
+                // cannot disagree about the same result again.
+                bandLabel: resolveResultPresentation(entry, metaRes, scoringProfiles).band?.label ?? undefined,
+                tone: resolveResultPresentation(entry, metaRes, scoringProfiles).band?.tone ?? undefined,
                 interpretation: entry.interpretation,
                 completedAt: entry.completed_at || entry.completedAt || new Date().toISOString(),
                 responses: entry.responses,
@@ -513,7 +534,7 @@ export function AssessmentHistoryDetail({ assessmentId, onBack, onNavigate }: As
                     <circle
                       cx={40} cy={40} r={34}
                       fill="none"
-                      stroke={getSeverityColor(latest.severity)}
+                      stroke={getSeverityColor(latest.tone)}
                       strokeWidth={8}
                       strokeLinecap="round"
                       strokeDasharray={2 * Math.PI * 34}
@@ -538,8 +559,8 @@ export function AssessmentHistoryDetail({ assessmentId, onBack, onNavigate }: As
                         display: 'inline-block',
                         padding: '3px 12px',
                         borderRadius: 'var(--radius-pill)',
-                        backgroundColor: getSeverityBg(latest.severity),
-                        color: getSeverityColor(latest.severity),
+                        backgroundColor: getSeverityBg(latest.tone),
+                        color: getSeverityColor(latest.tone),
                         ...f('sm', 500),
                         textTransform: 'capitalize',
                         marginTop: 4,
@@ -675,10 +696,10 @@ export function AssessmentHistoryDetail({ assessmentId, onBack, onNavigate }: As
                       <div
                         className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0"
                         style={{
-                          backgroundColor: index === 0 ? getSeverityBg(attempt.severity) : 'var(--color-bg-muted)',
+                          backgroundColor: index === 0 ? getSeverityBg(attempt.tone) : 'var(--color-bg-muted)',
                         }}
                       >
-                        <span style={f('xs', 500, index === 0 ? getSeverityColor(attempt.severity) : 'var(--color-text-muted)')}>
+                        <span style={f('xs', 500, index === 0 ? getSeverityColor(attempt.tone) : 'var(--color-text-muted)')}>
                           #{attempts.length - index}
                         </span>
                       </div>
@@ -709,14 +730,14 @@ export function AssessmentHistoryDetail({ assessmentId, onBack, onNavigate }: As
                       <div className="text-right">
                         <span style={f('lg', 500)}>{pct !== null ? `${Math.round(pct)}%` : '—'}</span>
                         <span style={f('xs', 400, 'var(--color-text-muted)')}> ({attempt.score}/{attempt.maxScore ?? '—'})</span>
-                        {attempt.severity && (
+                        {attempt.bandLabel && (
                           <div
                             style={{
                               marginTop: 2,
                               padding: '1px 8px',
                               borderRadius: 'var(--radius-pill)',
-                              backgroundColor: getSeverityBg(attempt.severity),
-                              color: getSeverityColor(attempt.severity),
+                              backgroundColor: getSeverityBg(attempt.tone),
+                              color: getSeverityColor(attempt.tone),
                               ...f('xs', 500),
                               textTransform: 'capitalize',
                               display: 'inline-block',
@@ -750,7 +771,7 @@ export function AssessmentHistoryDetail({ assessmentId, onBack, onNavigate }: As
                                 height: '100%',
                                 width: `${pct}%`,
                                 borderRadius: 3,
-                                backgroundColor: getSeverityColor(attempt.severity),
+                                backgroundColor: getSeverityColor(attempt.tone),
                                 transition: 'width 0.3s',
                               }}
                             />

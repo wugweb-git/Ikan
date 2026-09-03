@@ -10,9 +10,10 @@ import { ActivityCard } from '../integrations/ActivityCard';
 import { useGoogleFit } from '../integrations/GoogleFitContext';
 import { cn } from '../ui/utils';
 import type { SeverityLevel } from '../../lib/scoring-engine';
-import { severityPresentation, severityOfResult, tierPresentation } from '../../lib/severity-presentation';
+import { tierPresentation, tonePresentation } from '../../lib/severity-presentation';
 import { isProgramCheckIn } from '../../lib/assessment-record';
-import { evaluateAssessment, EngineResult, initEngineConfig } from '../../lib/recommendation-engine';
+import { evaluateAssessment, EngineResult, initEngineConfig, getLoadedScoringProfiles } from '../../lib/recommendation-engine';
+import { resolveResultPresentation, type Tone, type Integrity } from '../../lib/result-presentation';
 import { RecommendationCards } from '../RecommendationCards';
 import { ResourceBlock } from '../page-blocks/ResourceBlock';
 import { ResourcePost } from '../page-blocks/ResourceCard';
@@ -37,15 +38,18 @@ interface AssessmentScore {
   /** Null when no real maximum resolved. Never substitute one. */
   maxScore: number | null;
   /**
-   * The band the instrument itself assigned, verbatim, or null.
+   * The band the score was PLACED in, against the instrument's own cut points.
    *
-   * Read from the record — the same field the history screen reads — never
-   * recomputed. Null renders no pill: a missing band is missing information,
-   * not a reason to invent one.
+   * Null renders no pill. There is deliberately no fallback to the label the
+   * record carries: 89 of 104 live results hold `Completed`, `Complete` or
+   * `New Category` there, and rendering one of those where the outcome goes
+   * tells a user their assessment came out "Completed".
    */
   bandLabel: string | null;
-  /** The 5-term clinical severity when the band declares one. Colour only. */
-  severity: SeverityLevel | null;
+  /** Authored on the band. Drives colour; null renders neutral. */
+  tone: Tone | null;
+  /** Not comparable to the others, and the row should say so. */
+  integrity: Integrity;
   completedAt: string;
 }
 
@@ -340,6 +344,10 @@ export function Dashboard({ className, onNavigate }: DashboardProps) {
             }
           } catch { /* non-critical — skip if defs unavailable */ }
 
+          // Loaded by `initEngineConfig()` above, which this component already
+          // awaits before calling `loadDashboardData`.
+          const scoringProfiles = getLoadedScoringProfiles() ?? {};
+
           const scores: AssessmentScore[] = Array.from(latestByType.entries())
             .filter(([_, r]) => r.score !== undefined && r.score !== null)
             .map(([id, r]) => {
@@ -352,28 +360,36 @@ export function Dashboard({ className, onNavigate }: DashboardProps) {
             const maxScore: number | null = typeof resolvedMax === 'number' && resolvedMax > 0 ? resolvedMax : null;
             const rawName = r.assessment_name || r.assessmentName || r.title || id;
             /**
-             * Read, never re-derived.
+             * One view model, shared with the history screen.
              *
-             * This called `evaluateAssessment` per historical row and took its
+             * This used to call `evaluateAssessment` per row and take its
              * `tier` — a 3-term response tier computed back out of score and
-             * max. The history screen reads the band the scoring spec
-             * authored, so the two screens were not merely disagreeing, they
-             * were speaking different vocabularies. Measured on production
-             * 3 Sep: Burnout 60/115 read "Low" green here and "Moderate"
-             * yellow one tap later; General 46/96 did the same.
+             * max — while the history screen read the authored band. The two
+             * screens were not merely disagreeing; they were answering
+             * different questions. Measured on production 3 Sep: Burnout
+             * 60/115 read "Low" green here and "Moderate" yellow one tap
+             * later.
              *
-             * `evaluateAssessment` still runs below for the engineResult path,
-             * where it is genuinely producing a recommendation rather than
-             * relabelling a stored one.
+             * `resolveResultPresentation` places the score against the
+             * instrument's own bands, so both screens now compute the same
+             * thing from the same input. `evaluateAssessment` still runs below
+             * for the engineResult path, where it genuinely produces a
+             * recommendation rather than relabelling a stored one.
              */
-            const bandLabel = r.severityHint || r.severity_hint || r.interpretation?.label || null;
+            const meta = assessmentMetaMap?.get(id);
+            const view = resolveResultPresentation(
+              r,
+              { id, title: rawName, category: meta?.category, scoring_profile_id: meta?.profileId },
+              scoringProfiles,
+            );
             return {
               assessmentId: id,
               assessmentName: cleanAssessmentName(id, rawName, assessmentNameMap),
               score: r.score || 0,
               maxScore,
-              bandLabel: typeof bandLabel === 'string' && bandLabel.trim() ? bandLabel.trim() : null,
-              severity: severityOfResult(r),
+              bandLabel: view.band?.label ?? null,
+              tone: view.band?.tone ?? null,
+              integrity: view.integrity,
               completedAt: r.completed_at || r.created_at || '',
             };
           });
@@ -464,12 +480,15 @@ export function Dashboard({ className, onNavigate }: DashboardProps) {
 
     // 2. In-memory enrichments (these may duplicate server data but dedup handles it)
     for (const score of assessmentScores) {
-      const pctVal = score.maxScore && score.maxScore > 0 ? Math.round((score.score / score.maxScore) * 100) : null;
+      // Same reasoning as the history row: no percentage. It encodes magnitude,
+      // magnitude is direction-dependent, and this line never says which way
+      // the instrument runs. The band is the part that carries meaning.
       candidates.push({
         type: 'assessment', label: score.assessmentName,
-        detail: pctVal !== null
-          ? `${pctVal}% (${score.score}/${score.maxScore}) · ${score.severity}`
-          : `${score.score} · ${score.severity} (no comparable maximum)`,
+        detail: [
+          score.bandLabel ?? 'Not banded',
+          score.maxScore !== null ? `${score.score} of ${score.maxScore}` : null,
+        ].filter(Boolean).join(' · '),
         date: score.completedAt, ts: score.completedAt ? new Date(score.completedAt).getTime() : 0,
         route: '/assessment',
       });
@@ -833,9 +852,9 @@ export function Dashboard({ className, onNavigate }: DashboardProps) {
             {assessmentScores.length > 0 ? (
               <div style={{ display: 'flex', flexDirection: 'column' }}>
                 {assessmentScores.slice(0, 5).map((s, i) => {
-                  // Neutral when the band names no severity, never the most
-                  // severe presentation.
-                  const band = severityPresentation(s.severity);
+                  // Colour from the band's authored tone. Neutral when the
+                  // score could not be placed — never the most severe.
+                  const band = tonePresentation(s.tone);
                   return (
                     <div key={`${s.assessmentId}-${i}`} onClick={() => onNavigate?.(`/assessment-history-detail?id=${s.assessmentId}`)}
                       className="active:bg-black/[0.03] transition-colors"
@@ -861,14 +880,17 @@ export function Dashboard({ className, onNavigate }: DashboardProps) {
                           reads as a score and not a proportion. */}
                       <div className="flex items-center" style={{ gap: 12 }}>
                         <div style={{ flex: 1, minWidth: 0 }}>
-                          {s.bandLabel && (
-                            <span style={{
-                              ...f('base', 500, band.color),
-                              display: 'block', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
-                            }}>
-                              {s.bandLabel}
-                            </span>
-                          )}
+                          <span style={{
+                            ...f('base', 500, s.bandLabel ? band.color : 'var(--color-text-muted)'),
+                            display: 'block', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+                          }}>
+                            {/* "Not banded" is the honest reading when a score
+                                cannot be placed against its instrument. The
+                                alternative was rendering the record's stored
+                                label, which for most rows is the word
+                                "Completed" sitting where the result goes. */}
+                            {s.bandLabel ?? 'Not banded'}
+                          </span>
                           <span style={{
                             ...f('sm', 400, s.bandLabel ? 'var(--color-text-muted)' : 'var(--color-text-primary)'),
                             display: 'block', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
@@ -879,6 +901,12 @@ export function Dashboard({ className, onNavigate }: DashboardProps) {
                           <p style={{ ...f('xs', 400, 'var(--color-text-muted)'), margin: '2px 0 0' }}>
                             {s.completedAt ? new Date(s.completedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'Recent'}
                             {s.maxScore !== null && ` · ${s.score} of ${s.maxScore}`}
+                            {/* 31 stored results are flagged excluded_from_trends
+                                and nothing said so. A row that cannot be
+                                compared to the others should admit it rather
+                                than sit silently in a list that implies it can. */}
+                            {(s.integrity === 'excluded' || s.integrity === 'pre-spec') && ' · scored under an older version'}
+                            {s.integrity === 'partial' && ' · partly answered'}
                           </p>
                         </div>
                         <ChevronRight size={16} style={{ color: 'var(--color-text-muted)', flexShrink: 0, opacity: 0.4 }} />

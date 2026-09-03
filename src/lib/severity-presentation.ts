@@ -152,3 +152,30 @@ export function tierPresentation(tier: ResponseTier | null | undefined) {
     ? TIER_TOKENS[tier]
     : { color: 'var(--color-text-muted)', background: 'var(--color-bg-muted)', gradient: 'var(--color-bg-card)' };
 }
+
+// ── Band tone ────────────────────────────────────────────────────────────────
+
+/**
+ * Presentation for a band's **authored tone** — the third and last vocabulary
+ * on this page, and the only one that is written down on the data itself.
+ *
+ * `severityPresentation` maps the 5-term clinical severity; `tierPresentation`
+ * maps the 3-term response tier; this maps `success | warning | error`, which
+ * is what every band in every live scoring profile carries. They live in one
+ * file so that a screen branching on the wrong one is visible in review.
+ *
+ * Null is neutral, never the most severe. A score that could not be placed is
+ * missing information, not a bad result.
+ */
+const TONE_TOKENS: Record<'success' | 'warning' | 'error', { color: string; background: string }> = {
+  success: { color: 'var(--color-status-success)', background: 'var(--color-status-success-light)' },
+  warning: { color: 'var(--color-status-warning)', background: 'var(--color-status-warning-light)' },
+  error: { color: 'var(--color-status-danger)', background: 'var(--color-status-danger-light)' },
+};
+
+export function tonePresentation(tone: 'success' | 'warning' | 'error' | null | undefined) {
+  return (tone && TONE_TOKENS[tone]) || {
+    color: 'var(--color-text-muted)',
+    background: 'var(--color-bg-muted)',
+  };
+}

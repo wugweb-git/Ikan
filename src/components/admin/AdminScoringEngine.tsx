@@ -64,12 +64,48 @@ const TONE_FOR_SEVERITY: Record<SeverityLevel, ScoringBand['tone']> = {
   severe: 'error',
 };
 
-const FALLBACK_SEVERITY_COLORS: Record<SeverityLevel, string> = {
+/**
+ * Seed colours for the severity pickers, resolved from the design tokens.
+ *
+ * A colour input needs a literal hex, which is why five were typed in here —
+ * the last hardcoded palette in the admin tree, and one that had already
+ * drifted from the tokens the app renders with. Reading the tokens at runtime
+ * keeps the picker working and removes the second copy: change a token and the
+ * admin default follows.
+ *
+ * The literals remain as the last resort only. `getComputedStyle` returns ''
+ * for an undefined property, and in a non-browser context there is no
+ * document at all.
+ */
+const SEVERITY_COLOR_TOKENS: Record<SeverityLevel, string> = {
+  minimal: '--color-status-success',
+  mild: '--color-status-info',
+  moderate: '--color-status-warning',
+  'moderately-severe': '--color-status-warning',
+  severe: '--color-status-danger',
+};
+
+const SEVERITY_COLOR_LAST_RESORT: Record<SeverityLevel, string> = {
   minimal: '#22C55E',
   mild: '#3B82F6',
   moderate: '#EAB308',
   'moderately-severe': '#F97316',
   severe: '#D4183D',
+};
+
+function resolveTokenColor(level: SeverityLevel): string {
+  if (typeof document === 'undefined') return SEVERITY_COLOR_LAST_RESORT[level];
+  const v = getComputedStyle(document.documentElement)
+    .getPropertyValue(SEVERITY_COLOR_TOKENS[level]).trim();
+  return v || SEVERITY_COLOR_LAST_RESORT[level];
+}
+
+const FALLBACK_SEVERITY_COLORS: Record<SeverityLevel, string> = {
+  minimal: resolveTokenColor('minimal'),
+  mild: resolveTokenColor('mild'),
+  moderate: resolveTokenColor('moderate'),
+  'moderately-severe': resolveTokenColor('moderately-severe'),
+  severe: resolveTokenColor('severe'),
 };
 
 /** A row saved under the v1 schema, which the server validator now rejects. */

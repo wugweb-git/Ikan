@@ -73,14 +73,29 @@ export type Integrity = 'ok' | 'pre-spec' | 'excluded' | 'partial';
 export interface ResultPresentation {
   instrument: { id: string; name: string; categoryLabel: string };
   /**
-   * The band this score fell in. Null means it could not be placed — render
-   * nothing rather than a guess.
+   * The band this score fell in, **placed against the instrument's own cut
+   * points**. Null means it could not be placed, and a caller renders "Not
+   * banded" rather than something that looks like a finding.
    *
-   * `of === 0` means the profile declares no bands, so no band track can be
-   * drawn. `index === -1` means the score sits outside every band, which in
-   * practice means the stored score and the profile are in different units.
+   * There is deliberately no fallback to whatever string the record happens to
+   * carry. 89 of 104 live results hold `Completed`, `Complete` or
+   * `New Category` in that slot — those are status words that leaked into a
+   * band field, and rendering one in the position where a result goes tells
+   * the user their assessment came out "Completed". Whatever is stored is on
+   * `storedLabel` instead, where nothing can mistake it for an outcome.
+   *
+   * When it is non-null, `index` is always a real position and `of` the band
+   * count, so a band track can always be drawn from it.
    */
   band: { label: string; tone: Tone | null; index: number; of: number } | null;
+  /**
+   * The label the record carries, unverified. Provenance, never a result.
+   *
+   * Useful for diagnosing which generation a row came from — a real band label
+   * like "Poor Sleep" means it was scored under a spec, a status word means it
+   * was not. It is not for rendering as an outcome.
+   */
+  storedLabel: string | null;
   direction: Direction;
   /** Null whenever `max_score` is absent. Never defaulted. */
   raw: { score: number; max: number } | null;
@@ -246,19 +261,9 @@ export function resolveResultPresentation(
         break;
       }
     }
-    if (!band) {
-      // Outside every band. Almost always a units mismatch — Burnout stores a
-      // raw sum against `bat-mean`'s 1-5 mean bands, so nothing contains 60.
-      // A label may still exist on the record; it renders, the track does not.
-      const fallbackLabel = storedLabel(result);
-      if (fallbackLabel) band = { label: fallbackLabel, tone: null, index: -1, of: bands.length };
-    }
-  } else {
-    // No profile to place against. The stored label is all there is, and 89 of
-    // 104 live records hold a placeholder there ("Completed", "New Category"),
-    // so a caller should treat an unplaced band as weak evidence.
-    const fallbackLabel = storedLabel(result);
-    if (fallbackLabel) band = { label: fallbackLabel, tone: null, index: -1, of: bands.length };
+    // Falling out of the loop means the score sits outside every band, which in
+    // practice is a units mismatch. That is a null band, not a reason to reach
+    // for whatever string the record carries.
   }
 
   const { integrity, partial } = integrityOf(result);
@@ -270,6 +275,7 @@ export function resolveResultPresentation(
       categoryLabel: spec?.category ?? result?.category ?? '',
     },
     band,
+    storedLabel: storedLabel(result),
     direction: directionOf(profile),
     raw,
     completedAt: result?.completed_at ?? result?.completedAt ?? '',

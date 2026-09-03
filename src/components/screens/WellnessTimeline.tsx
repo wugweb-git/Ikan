@@ -287,21 +287,21 @@ export function WellnessTimeline({ onNavigate }: WellnessTimelineProps) {
         </svg>
         <div className="flex items-center justify-between" style={{ position: 'relative', zIndex: 1 }}>
           <div>
-            <p style={{ ...f('xs', 500, 'rgba(255,255,255,0.5)'), margin: 0, textTransform: 'uppercase' as const, letterSpacing: '0.04em' }}>Total Events</p>
+            <p style={{ ...f('xs', 500, 'color-mix(in srgb, var(--color-text-inverse) 60%, transparent)'), margin: 0, textTransform: 'uppercase' as const, letterSpacing: '0.04em' }}>Total Events</p>
             <h2 style={{ ...f('3xl', 500, 'var(--color-text-inverse)'), margin: '4px 0 0' }}>{events.length}</h2>
           </div>
           <div className="flex" style={{ gap: 16 }}>
             <div style={{ textAlign: 'center' as const }}>
               <p style={{ ...f('lg', 500, 'var(--color-text-inverse)'), margin: 0 }}>{events.filter(e => e.type === 'assessment').length}</p>
-              <p style={{ ...f('xs', 400, 'rgba(255,255,255,0.5)'), margin: '2px 0 0' }}>Assessments</p>
+              <p style={{ ...f('xs', 400, 'color-mix(in srgb, var(--color-text-inverse) 60%, transparent)'), margin: '2px 0 0' }}>Assessments</p>
             </div>
             <div style={{ textAlign: 'center' as const }}>
               <p style={{ ...f('lg', 500, 'var(--color-text-inverse)'), margin: 0 }}>{events.filter(e => e.type === 'mood').length}</p>
-              <p style={{ ...f('xs', 400, 'rgba(255,255,255,0.5)'), margin: '2px 0 0' }}>Moods</p>
+              <p style={{ ...f('xs', 400, 'color-mix(in srgb, var(--color-text-inverse) 60%, transparent)'), margin: '2px 0 0' }}>Moods</p>
             </div>
             <div style={{ textAlign: 'center' as const }}>
               <p style={{ ...f('lg', 500, 'var(--color-text-inverse)'), margin: 0 }}>{events.filter(e => e.type === 'program' || e.type === 'milestone').length}</p>
-              <p style={{ ...f('xs', 400, 'rgba(255,255,255,0.5)'), margin: '2px 0 0' }}>Programs</p>
+              <p style={{ ...f('xs', 400, 'color-mix(in srgb, var(--color-text-inverse) 60%, transparent)'), margin: '2px 0 0' }}>Programs</p>
             </div>
           </div>
         </div>
