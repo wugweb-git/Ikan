@@ -718,3 +718,62 @@ converts each scale by its own stored `direction`. Older results fall through un
 **Complete one General assessment on production** and confirm `section_scores` and `slug` write
 non-null. That is the end-to-end proof B6 exists for, and both the section breakdown and the new
 wellness path stay theoretical until it happens. The 137-result backfill sits behind it.
+
+---
+
+## Session closeout — 2026-09-03 (B1 / B5 / C1 / D3)
+
+### Shipped and verified live
+Commit `6c0412ab`, pushed to `equip-carry-forward`. Edge function redeployed
+(`/health`, `/assessments`, `/equip/programs`, `/scales/moods` all 200;
+`/user/assessments/drafts` 401 = route mounted behind `requireAuth`; an unknown
+sibling path 404s, so the 401 is the route and not a catch-all). Frontend
+deployed via Vercel CLI — the live `AssessmentFlow` chunk hash is identical to
+the local build's, and `user/assessments/drafts` appears in the shipped index
+chunk. Behaviour confirmed, not just deploy status.
+
+- **B1** — the risk check now runs on every answer, not only at submit.
+  Endorsing the flagged item at question 6 of 24 used to mean answering
+  eighteen more before anything happened. The submit-time check is kept as a
+  backstop (an answer-time check alone is missable if an earlier answer is
+  edited), and a ref keeps the crisis pathway to once per run.
+- **B5** — partial runs persist under `assessment_draft:{userId}:{assessmentId}`
+  (registered in `KEY_REGISTRY` in the same commit, per GOVERNANCE Rule 2).
+  Debounced on write because the player emits progress per keystroke; deleted on
+  completion so a finished run stops offering to resume. A draft is deliberately
+  not an `assessment_result` — no score, no bands, no `completed_at` — so result
+  counts stay honest. The player reads `initialResponses` on mount only, so the
+  run is gated on the draft lookup settling; without that gate a resumable run
+  silently restarted at question one.
+- **C1** — check-in records carry `record_type`, stamped on write. Six
+  independent `startsWith('checkin_')` tests (two of which also checked
+  `responses.type`, four of which did not) collapse to one predicate per side,
+  duplicated across client and server because the edge function cannot import
+  across its directory.
+- **D3** — the severity card's six raw hex stops and three `rgba()` literals are
+  gone. The explore-card gradients are left as-is: brand decoration in colours
+  the token system does not define, so tokenising them is a design decision.
+
+### Still open, in priority order
+1. **R1** — the `?id=` results route can render a *different* result if the
+   fetch fails: it falls back to the sessionStorage blob without checking that
+   blob's id against the requested one.
+2. **R2** — 95 of 101 stored results have no `interpretation`, so the history
+   detail renders "Not banded". They predate the scoring specs; they need a
+   rescore pass writing `scoring_provenance: 'rescored'`, or to be marked
+   `pre-spec` + `excluded_from_trends`.
+3. **S3 → D5/H8** — the history endpoint returns one key shape but both the
+   Dashboard and the history screen still walk a three-key ladder
+   (`max_score`/`maxScore`/`max`). Normalise server-side, delete both ladders.
+4. **Audit #1** — one exported `Assessment` type. The repeated field drops
+   (`slug`, `maxScore`, `sectionScores`, `engineResult`) all trace to each
+   layer redeclaring its own shape.
+5. **Server `shared-types.ts`** still exports a third `SeverityLevel` — four
+   terms — typing `min_severity`. The client-side collision is fixed; this one
+   is not.
+
+### Needs your pass, not more code
+Burnout and General end-to-end runs; `GET /user/assessments/results/:id`;
+`invalid_reason` on a deliberately incomplete run; profile validation refusing a
+gapped band set; the locked/DELETE refusals; Guardrail 11 (renaming a question
+id that a saved score references).
