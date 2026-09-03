@@ -928,3 +928,81 @@ and verified live — a missing asset now 404s.
   D10 (results renders in place so chrome is suppressed by route name),
   the 40 `program_checkin` rows sharing the `assessment_result:` prefix.
 - `src/public/sw.js` and `src/index.html` are both dead files. Wire or delete.
+
+---
+
+## Session closeout — 2026-09-03 (result-presentation corrections)
+
+Commits `71576688`, `095e488f`, and the corrections above. Both halves
+deployed and verified: all four server smoke endpoints 200; every real route
+(`/`, `/assessment`, `/mood-journal`, `/equip`, `/dashboard`, a slug route,
+`/assessment-results`) returns 200 with the app shell; a missing asset 404s.
+
+### Four corrections to `result-presentation.ts`, all self-inflicted
+
+1. **The tone vocabulary was invented.** `'good'|'watch'|'concern'|'urgent'`
+   against a store where every band carries `success|warning|error`. The guard
+   rejected every real value, and that was reported as "no band carries a tone,
+   seven records need backfilling" — a content write that was never needed.
+2. **It read bands from `spec.scores[].bands`.** Live `assessment_def.scores[]`
+   entries carry `id, items, label, profile_id` and no bands. Bands live on
+   `scoring-profile:{id}`. Now resolved through `scoring_profile_id`.
+3. **Direction matched hyphens; the store writes underscores.** `who5`, `ngse`
+   and `brs` are all `higher_is_better` and would have read backwards.
+4. **The tests proved self-consistency, not correctness.** All 21 passed
+   because the fixtures encoded the same three assumptions. Fixtures are now
+   copied from live records. 29 tests.
+
+### Burnout needed no owner decision
+
+The mean is already stored. The live record holds `score: 60, max_score: 115`
+at the top level and `section_scores.overall.value: 2.608696, max: 5` in its
+breakdown, against `bat-mean` bands running 1-5. Both the client module and the
+server now band `section_scores.overall.value` and fall back to the top-level
+score. The raw sum stays — `ikan-score-routes` aggregates from it.
+
+**That record's `interpretation.label` reads "High" while its own
+`section_scores` band reads "Low".** Two representations of one result,
+disagreeing, live right now. The label lookup is ordered so the computed
+breakdown wins.
+
+### A whole duplicate build setup exists and never runs
+`/src/vite.config.ts`, `/src/package.json`, `/src/index.html` and
+`/src/public/sw.js`. Vite's root is the project root. This is why `/sw.js`
+returns SPA HTML with a 200 and no service worker has ever installed, and why a
+caching fix was written this session for code that never executes.
+`vite-plugin-pwa` is pinned; the four files are marked, not deleted.
+
+### Still open, and what each needs
+
+**Needs you (content or clinical):**
+- The re-scored outcomes: sleep moderate → minimal, depression mild →
+  moderate, stress mild → moderate. Someone owning the clinical framing should
+  see these before users do.
+- The 104 stored results were scored by the old algorithm. Re-score, or mark
+  `pre-spec` + `excluded_from_trends`? Leaving them mixes two scoring
+  generations in one history list with nothing saying so.
+- 89 of 104 band labels are placeholders (`Completed`, `New Category`). The
+  dashboard and history pills now agree — on a placeholder, for most rows.
+
+**Code, unblocked:**
+- Surface migration onto `resolveResultPresentation` (history, dashboard,
+  results, catalogue) — one per commit. No longer blocked on anything.
+- A1-A7 admin: `FALLBACK_SEVERITY_COLORS` (five raw hex),
+  `TONE_FOR_SEVERITY` deriving what is now known to be authored,
+  a seeded `min: 0, max: 5` band, `AdminCheckinScalesManager`'s seventh
+  severity vocabulary, no monotonic-ramp validation.
+- F10: three `Assessment` interfaces; `AssessmentFlow` holds 17 `as any`.
+- F9: four `rgba(255,255,255,0.5)` in `WellnessTimeline` needing a token.
+- D1 98 of 104 carry no `engine_result`; D2 93 carry no `section_scores`;
+  D3 40 `program_checkin` rows share the `assessment_result:` prefix;
+  D4 31 `excluded_from_trends` with no UI surfacing it.
+- W1-W6 website: the `/assessment` hero image, shared stock photos,
+  undifferentiated badges and CTAs, mid-sentence truncation, the stranded
+  seventh card.
+
+### Method note
+Two fixes reported green this session were disproved by measurement: the
+`/assets` passthrough (still served 200 HTML after deploying) and the Burnout
+units mismatch (never landed). "Verified by behaviour" has to cover the stored
+data, not only the deployed bundle.
