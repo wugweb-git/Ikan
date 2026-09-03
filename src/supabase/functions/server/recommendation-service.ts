@@ -206,7 +206,19 @@ async function severityForResult(result: any, def: any): Promise<SeverityLevel |
     const bands = Array.isArray(profile?.bands) ? profile.bands : [];
     if (bands.length === 0) return null;
 
-    const score = result?.score;
+    /**
+     * Band the value the client computed, not the legacy raw sum.
+     *
+     * `section_scores.overall.value` is in the profile's own units. The
+     * top-level `score` is a raw sum kept for the iKAN aggregate, and for a
+     * `calc: mean` profile they are different quantities: the live Burnout
+     * record holds `score: 60, max_score: 115` next to `overall.value:
+     * 2.6087, max: 5`, against bands running 1-5. Banding 60 places it
+     * nowhere and the user gets no recommendation; banding 2.6087 places it
+     * in "Low", agreeing with what that record's own breakdown already says.
+     */
+    const overall = result?.section_scores?.overall ?? result?.sectionScores?.overall ?? null;
+    const score = typeof overall?.value === 'number' ? overall.value : result?.score;
     if (typeof score !== 'number') return null;
 
     // Half-open [min, max) with the last band closed, matching the client's

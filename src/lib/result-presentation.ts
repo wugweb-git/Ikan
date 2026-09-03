@@ -2,48 +2,62 @@
  * One view model for an assessment result, computed once.
  *
  * Production renders the same result with different severities on two screens.
- * Measured on 3 Sep: Burnout 60/115 reads "Low" green on the dashboard and
- * "Moderate" yellow one tap later in history; General 46/96 does the same.
- * The dashboard calls `evaluateAssessment` per historical row and re-derives a
- * tier from score and max; the history screen reads the band the scoring spec
- * authored. Two sources, two answers, and the user is the one who has to
- * reconcile them.
- *
- * The fix is not to patch the dashboard. Every card defect found this month has
- * the same shape — a surface handed data it cannot render honestly, then
- * improvising — so this module is the single place that decides, and the
- * surfaces render what it returns.
+ * The dashboard used to re-derive a tier from score and max; the history screen
+ * reads the band the scoring spec authored. Two sources, two answers, and the
+ * user is the one who has to reconcile them.
  *
  * ## What this will not do
  *
- * - **Never re-derive a band.** The band comes from the stored record or it is
- *   null, and null renders nothing. There is no fallback tier. A percentage
- *   cannot produce one honestly: it needs the instrument's own cut points,
- *   which is exactly what the band already is.
+ * - **Never re-derive a band.** The band comes from the instrument's own cut
+ *   points or it is null, and null renders nothing. There is no fallback tier.
  * - **Never invent a denominator.** `raw` is null when `max_score` is absent.
- *   Not `score/score`, not 100, not 21.
- * - **Never infer direction.** It is declared on the spec. Half these
- *   instruments are higher-is-better and nothing on a result record says so.
+ * - **Never infer direction.** It is declared on the profile.
  *
- * `change` deliberately is not computed here: one result cannot know what came
- * before it. `withChange` fills it given the list.
+ * ## Corrected 2026-09-03, after the first version shipped wrong three ways
+ *
+ * The first cut of this module was written against a spec shape I assumed
+ * rather than measured, and every one of the three mistakes was invisible
+ * because the tests encoded the same assumptions:
+ *
+ * 1. It declared its own four-term tone vocabulary (`good | watch | concern |
+ *    urgent`). Every authored band has always used `success | warning | error`,
+ *    which `scoring-engine.ts` declares. So the tone guard rejected every real
+ *    value and nulled all of them — and that was read as "no band carries a
+ *    tone yet, someone must backfill seven records". There was nothing to
+ *    backfill. The data was right and the type was wrong.
+ * 2. It read bands from `spec.scores[].bands`. Live `assessment_def.scores[]`
+ *    entries carry exactly four keys — `id, items, label, profile_id` — and no
+ *    bands at all. Bands live on `scoring-profile:{id}` records. So `of` was
+ *    always 0 and `index` always -1, and no band track could ever be drawn.
+ * 3. It matched `direction` as `higher-is-better` with hyphens. The data says
+ *    `higher_is_better` with underscores, so every wellbeing instrument would
+ *    have fallen through to distress and read backwards — the precise bug this
+ *    module exists to prevent. It did not bite only because the sampled
+ *    profiles were all distress.
+ *
+ * The lesson worth keeping: a test that builds its fixture from the same
+ * assumption as the code under test proves the code is self-consistent, not
+ * that it is right. The fixtures below are copied from live records.
  */
 
 /**
  * How a band should read, authored on the band itself.
  *
- * NOT a lookup from the severity word. There are four live severity
- * vocabularies — 5 clinical terms in `scoring-engine.ts`, 3 response tiers, a
- * 4-term one in the server's `shared-types.ts`, and band labels like "Poor
- * Sleep" and "Completed" that belong to no vocabulary at all. Every colour bug
- * this month came from a word-to-colour map falling through to a default.
+ * These three terms, not a fourth set: `scoring-engine.ts` declares them, the
+ * admin editor writes them, and every live band carries one. Reusing them
+ * costs no content write; inventing a vocabulary cost a false blocker.
+ *
+ * NOT a lookup from the severity word. Four severity vocabularies are live —
+ * 5 clinical terms, 3 response tiers, a 4-term one server-side, plus band
+ * labels like "Poor Sleep" and "Completed" belonging to none of them — and
+ * every colour bug this month was a word-to-colour map falling to a default.
  */
-export type Tone = 'good' | 'watch' | 'concern' | 'urgent';
+export type Tone = 'success' | 'warning' | 'error';
 
-export const TONE_ORDER: Tone[] = ['good', 'watch', 'concern', 'urgent'];
+export const TONE_ORDER: Tone[] = ['success', 'warning', 'error'];
 
 export function isTone(v: unknown): v is Tone {
-  return typeof v === 'string' && (TONE_ORDER as string[]).includes(v);
+  return v === 'success' || v === 'warning' || v === 'error';
 }
 
 export type Direction = 'higher-is-distress' | 'higher-is-wellbeing';
@@ -51,28 +65,20 @@ export type Direction = 'higher-is-distress' | 'higher-is-wellbeing';
 /**
  * Why a result may not be comparable to the others.
  *
- * - `ok`        — scored under the current spec, complete.
- * - `pre-spec`  — predates the spec and could not be re-scored honestly. Its
- *                 stored score is untouched and it carries
- *                 `excluded_from_trends`, so it is checked BEFORE `excluded`:
- *                 it is the more specific statement of the same fact.
- * - `excluded`  — kept out of trends for some other reason.
- * - `partial`   — fewer items answered than the instrument expects.
+ * `pre-spec` is checked before `excluded` because a pre-spec row carries
+ * `excluded_from_trends` too, and reporting only "excluded" loses the reason.
  */
 export type Integrity = 'ok' | 'pre-spec' | 'excluded' | 'partial';
 
 export interface ResultPresentation {
   instrument: { id: string; name: string; categoryLabel: string };
   /**
-   * The stored band. Null means the record carries none — render nothing.
+   * The band this score fell in. Null means it could not be placed — render
+   * nothing rather than a guess.
    *
-   * `tone` is null when the band has not been authored with one yet; a caller
-   * renders that neutral. It is deliberately nullable rather than defaulted:
-   * guessing a tone from the label is the bug this type exists to prevent.
-   *
-   * `of === 0` means the spec declares no bands, so no band track can be drawn.
-   * `index === -1` means the stored label is not in the spec's band list — the
-   * label still renders, the track does not.
+   * `of === 0` means the profile declares no bands, so no band track can be
+   * drawn. `index === -1` means the score sits outside every band, which in
+   * practice means the stored score and the profile are in different units.
    */
   band: { label: string; tone: Tone | null; index: number; of: number } | null;
   direction: Direction;
@@ -85,52 +91,74 @@ export interface ResultPresentation {
   partial?: { answered: number; expected: number };
 }
 
-/** The shape this reads off an assessment definition. Structural on purpose. */
+/** A `scoring-profile:{id}` record. This is where bands actually live. */
+export interface ProfileLike {
+  id?: string;
+  /** `higher_is_distress` or `higher_is_better`, underscored, as stored. */
+  direction?: string;
+  calc?: string;
+  bands?: {
+    label?: string;
+    min?: number;
+    max?: number;
+    severity_ref?: string;
+    tone?: string;
+    interpretation?: string;
+  }[];
+}
+
+/** An `assessment_def:{id}` record. Note: its `scores[]` carry NO bands. */
 export interface SpecLike {
   id?: string;
   title?: string;
   name?: string;
   category?: string;
-  scores?: {
-    id?: string;
-    direction?: string;
-    bands?: { label?: string; severity_ref?: string; tone?: string }[];
-  }[];
-}
-
-function firstScore(spec: SpecLike | null | undefined) {
-  return Array.isArray(spec?.scores) && spec.scores.length > 0 ? spec.scores[0] : null;
+  /** The primary profile. Absent on General, which has no overall score. */
+  scoring_profile_id?: string;
+  scores?: { id?: string; label?: string; profile_id?: string; items?: unknown[] }[];
 }
 
 /**
- * Direction, declared or defaulted to distress.
+ * The profile a result's overall score belongs to.
  *
- * The default is not a guess about the instrument — it is the safer of the two
- * when a spec has not said. Distress framing under-claims improvement rather
- * than over-claiming it, and `withChange` refuses to compare rows whose
- * direction was never declared anyway.
+ * `scoring_profile_id` first, then a lone `scores[0].profile_id`. A multi-score
+ * assessment with no declared primary resolves to none, which is correct:
+ * General bundles five independent scales and has no overall score, so a
+ * single band for it would be a fiction.
  */
-function directionOf(spec: SpecLike | null | undefined): Direction {
-  const d = firstScore(spec)?.direction;
+export function profileIdFor(spec: SpecLike | null | undefined): string | null {
+  if (spec?.scoring_profile_id) return spec.scoring_profile_id;
+  const scores = Array.isArray(spec?.scores) ? spec.scores : [];
+  if (scores.length === 1 && scores[0]?.profile_id) return scores[0].profile_id;
+  return null;
+}
+
+/**
+ * Direction, declared on the profile.
+ *
+ * Separator-insensitive on purpose. The store writes `higher_is_distress`; this
+ * module's own type uses hyphens; the client's scoring engine has used both at
+ * different times. Normalising is one line and the alternative is an instrument
+ * silently reading backwards.
+ */
+function directionOf(profile: ProfileLike | null | undefined): Direction {
+  const d = String(profile?.direction ?? '').toLowerCase().replace(/_/g, '-');
   return d === 'higher-is-better' || d === 'higher-is-wellbeing'
     ? 'higher-is-wellbeing'
     : 'higher-is-distress';
 }
 
 /** The stored band label, from wherever the record actually put it. */
-function storedBand(result: any): { label: string; severityRef: string | null } | null {
+function storedLabel(result: any): string | null {
   const candidates = [
-    result?.section_scores?.overall?.band,
-    result?.sectionScores?.overall?.band,
-    result?.interpretation,
-    result?.engine_result?.band,
+    result?.section_scores?.overall?.band?.label,
+    result?.sectionScores?.overall?.band?.label,
+    result?.interpretation?.label,
+    result?.severity_hint,
+    result?.severityHint,
   ];
   for (const c of candidates) {
-    const label = typeof c?.label === 'string' ? c.label.trim() : '';
-    if (label) {
-      const ref = typeof c?.severity_ref === 'string' ? c.severity_ref : null;
-      return { label, severityRef: ref };
-    }
+    if (typeof c === 'string' && c.trim()) return c.trim();
   }
   return null;
 }
@@ -138,8 +166,6 @@ function storedBand(result: any): { label: string; severityRef: string | null } 
 function integrityOf(result: any): { integrity: Integrity; partial?: { answered: number; expected: number } } {
   const prov = result?.scoring_provenance ?? result?.scoringProvenance ?? null;
 
-  // pre-spec before excluded: a pre-spec row also carries excluded_from_trends,
-  // and reporting it as merely "excluded" loses the reason.
   if (prov?.state === 'pre-spec') return { integrity: 'pre-spec' };
   if (prov?.excluded_from_trends === true || result?.excluded_from_trends === true) {
     return { integrity: 'excluded' };
@@ -155,34 +181,85 @@ function integrityOf(result: any): { integrity: Integrity; partial?: { answered:
   return { integrity: 'ok' };
 }
 
-export function resolveResultPresentation(result: any, spec?: SpecLike | null): ResultPresentation {
-  const bands = firstScore(spec)?.bands ?? [];
-  const stored = storedBand(result);
+/**
+ * @param result a stored `assessment_result:` record.
+ * @param spec   the `assessment_def:` record, for names and the profile link.
+ * @param profiles `scoring-profile:` records by id, as the client already
+ *   loads them. Without them no band can be placed, because the definition
+ *   does not carry any.
+ */
+export function resolveResultPresentation(
+  result: any,
+  spec?: SpecLike | null,
+  profiles?: Record<string, ProfileLike> | null,
+): ResultPresentation {
+  const profileId = profileIdFor(spec);
+  const profile = profileId ? profiles?.[profileId] ?? null : null;
+  const bands = Array.isArray(profile?.bands) ? profile!.bands! : [];
 
-  let band: ResultPresentation['band'] = null;
-  if (stored) {
-    // Placed by severity_ref first — that is the field the rules matched on and
-    // it survives a label rewording. Falls back to an exact label match.
-    let index = stored.severityRef
-      ? bands.findIndex((b) => b?.severity_ref === stored.severityRef)
-      : -1;
-    if (index < 0) index = bands.findIndex((b) => b?.label === stored.label);
-
-    const authored = index >= 0 ? bands[index]?.tone : undefined;
-    band = {
-      label: stored.label,
-      tone: isTone(authored) ? authored : null,
-      index,
-      of: bands.length,
-    };
-  }
-
-  const score = result?.score;
+  /**
+   * The value to band, which is NOT always `result.score`.
+   *
+   * `section_scores.overall.value` is what the client computed against this
+   * profile, in the profile's own units. The top-level `score` is a legacy
+   * raw sum kept for the iKAN aggregate, and for a `calc: mean` profile the
+   * two are in different units entirely: the live Burnout record stores
+   * `score: 60, max_score: 115` alongside `overall.value: 2.6087, max: 5`,
+   * and `bat-mean`'s bands run 1-5. Banding 60 against those places it
+   * nowhere; banding 2.6087 places it in "Low", which is what that record's
+   * own `section_scores` already says.
+   *
+   * The record also shows why this ordering matters beyond units: its
+   * `interpretation.label` reads "High" while its `section_scores` band reads
+   * "Low". Two representations of one result, disagreeing. The computed one
+   * is the one that matches the score.
+   */
+  const overall = result?.section_scores?.overall ?? result?.sectionScores?.overall ?? null;
+  const score = typeof overall?.value === 'number' ? overall.value : result?.score;
   const max = result?.max_score ?? result?.maxScore;
   const raw =
     typeof score === 'number' && typeof max === 'number' && max > 0
       ? { score, max }
       : null;
+
+  /**
+   * Place the score in the profile's own bands.
+   *
+   * Half-open `[min, max)` with the last band closed, matching
+   * `bandForValue`: a closed reader puts a value on a shared edge in the lower
+   * band, the opposite of what the authoring means.
+   */
+  let band: ResultPresentation['band'] = null;
+  if (typeof score === 'number' && bands.length > 0) {
+    for (let i = 0; i < bands.length; i++) {
+      const b = bands[i];
+      const lo = typeof b?.min === 'number' ? b.min : -Infinity;
+      const hi = typeof b?.max === 'number' ? b.max : Infinity;
+      const last = i === bands.length - 1;
+      if (last ? score >= lo && score <= hi : score >= lo && score < hi) {
+        band = {
+          label: typeof b?.label === 'string' && b.label.trim() ? b.label.trim() : '',
+          tone: isTone(b?.tone) ? b.tone : null,
+          index: i,
+          of: bands.length,
+        };
+        break;
+      }
+    }
+    if (!band) {
+      // Outside every band. Almost always a units mismatch — Burnout stores a
+      // raw sum against `bat-mean`'s 1-5 mean bands, so nothing contains 60.
+      // A label may still exist on the record; it renders, the track does not.
+      const fallbackLabel = storedLabel(result);
+      if (fallbackLabel) band = { label: fallbackLabel, tone: null, index: -1, of: bands.length };
+    }
+  } else {
+    // No profile to place against. The stored label is all there is, and 89 of
+    // 104 live records hold a placeholder there ("Completed", "New Category"),
+    // so a caller should treat an unplaced band as weak evidence.
+    const fallbackLabel = storedLabel(result);
+    if (fallbackLabel) band = { label: fallbackLabel, tone: null, index: -1, of: bands.length };
+  }
 
   const { integrity, partial } = integrityOf(result);
 
@@ -193,7 +270,7 @@ export function resolveResultPresentation(result: any, spec?: SpecLike | null): 
       categoryLabel: spec?.category ?? result?.category ?? '',
     },
     band,
-    direction: directionOf(spec),
+    direction: directionOf(profile),
     raw,
     completedAt: result?.completed_at ?? result?.completedAt ?? '',
     change: null,
@@ -204,17 +281,17 @@ export function resolveResultPresentation(result: any, spec?: SpecLike | null): 
 }
 
 /**
- * Fill `change` on each row by comparing it to the previous comparable run of
- * the same instrument.
+ * Fill `change` by comparing each row to the previous comparable run of the
+ * same instrument.
  *
  * Rows whose integrity is `excluded` or `pre-spec` are **skipped, not compared
- * through**: they were scored against a different item set or a different
- * option scale, so a delta against one is arithmetic on two different
- * instruments. A skipped row still appears in the output with `change: null`;
- * the row after it compares to the last comparable run before it.
+ * through**: they were scored against a different item set or option scale, so
+ * a delta against one is arithmetic across two different instruments. A
+ * skipped row still appears with `change: null`; the row after it compares to
+ * the last comparable run before it.
  *
- * Grouped by `instrument.id` rather than slug. 92 question ids were renamed
- * once already and slugs are not stable; the definition id is.
+ * Grouped by `instrument.id`, never slug. 92 question ids were renamed once
+ * already and slugs are not stable; the definition id is.
  */
 export function withChange(list: ResultPresentation[]): ResultPresentation[] {
   const byInstrument = new Map<string, ResultPresentation[]>();
@@ -227,8 +304,6 @@ export function withChange(list: ResultPresentation[]): ResultPresentation[] {
   const change = new Map<ResultPresentation, ResultPresentation['change']>();
 
   for (const rows of byInstrument.values()) {
-    // Oldest first, so "the previous comparable run" is simply the last one
-    // kept. Ties keep their input order.
     const ordered = [...rows].sort(
       (a, b) => new Date(a.completedAt).getTime() - new Date(b.completedAt).getTime(),
     );
