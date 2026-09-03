@@ -8,13 +8,13 @@
  * `minimal | mild | moderate | moderately-severe | severe`, so three of the
  * five fell through whatever each file used as its default.
  *
- * Dashboard's was the worst: nine ternaries of the shape
- *
- *     severity === 'low' ? ok : severity === 'moderate' ? warn : danger
- *
- * with no default, so the **else branch is the most severe presentation**.
- * `minimal` — the most common result there is — is not `'low'`, so the
- * calmest possible result rendered red under "Let's talk about it".
+ * Dashboard's nine three-way ternaries were initially read as a defect on the
+ * same grounds — no default, so the else branch is the most severe
+ * presentation. That reading was WRONG and is recorded here so it is not made
+ * again: those branches key on `EngineResult.tier`, whose domain is exactly
+ * `low | moderate | high`, so they are exhaustive. The misreading came from two
+ * modules exporting a type called `SeverityLevel` with different domains. That
+ * collision is gone; the field is now named `tier`.
  *
  * This is the presentation counterpart to `tierFor`, which did the same
  * consolidation for the logic side. Colours come from the `severity_level`
@@ -22,7 +22,7 @@
  * to design tokens — never to a raw hex in a component.
  */
 
-import { isSeverityLevel, type SeverityLevel } from './scoring-engine';
+import { isSeverityLevel, type SeverityLevel, type ResponseTier } from './scoring-engine';
 
 export interface SeverityPresentation {
   /** The severity this describes, or null when nothing resolved. */
@@ -96,7 +96,7 @@ export function severityPresentation(
  * Severity for a stored result, read from the band the score actually fell in.
  *
  * `severity_hint` on a result is the **band label** — "Poor Sleep",
- * "Healthy Sleep", "Completed" — not a severity. 76 of 101 stored results carry
+ * "Healthy Sleep", "Completed" — not a severity. 68 of 102 stored results carry
  * one that is not a severity term, so lower-casing it (which is what the
  * screens did) produced `poor-sleep` and fell through to a default.
  */
@@ -108,4 +108,39 @@ export function severityOfResult(result: any): SeverityLevel | null {
     result?.engineResult?.severityLevel ??
     null;
   return isSeverityLevel(ref) ? ref : null;
+}
+
+// ── Response tier ────────────────────────────────────────────────────────────
+
+/**
+ * Presentation for a **response tier** (3 terms), as distinct from a clinical
+ * severity (5). `EngineResult.tier` carries this one.
+ *
+ * Kept beside `severityPresentation` on purpose: the two vocabularies map to
+ * colour independently, and having them in one file is what stops a screen
+ * quietly branching on the wrong one — which is the mistake the type collision
+ * in `recommendation-engine` used to invite.
+ */
+const TIER_TOKENS: Record<ResponseTier, { color: string; background: string; gradient: string }> = {
+  low: {
+    color: 'var(--color-status-success)',
+    background: 'var(--color-status-success-light)',
+    gradient: 'linear-gradient(135deg, var(--color-status-success-light) 0%, var(--color-bg-card) 100%)',
+  },
+  moderate: {
+    color: 'var(--color-status-warning)',
+    background: 'var(--color-status-warning-light)',
+    gradient: 'linear-gradient(135deg, var(--color-status-warning-light) 0%, var(--color-bg-card) 100%)',
+  },
+  high: {
+    color: 'var(--color-status-danger)',
+    background: 'var(--color-status-danger-light)',
+    gradient: 'linear-gradient(135deg, var(--color-status-danger-light) 0%, var(--color-bg-card) 100%)',
+  },
+};
+
+export function tierPresentation(tier: ResponseTier | null | undefined) {
+  return tier && TIER_TOKENS[tier]
+    ? TIER_TOKENS[tier]
+    : { color: 'var(--color-text-muted)', background: 'var(--color-bg-muted)', gradient: 'var(--color-bg-card)' };
 }

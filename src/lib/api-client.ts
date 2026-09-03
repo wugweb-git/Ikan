@@ -877,6 +877,26 @@ class ApiClient {
    * an optimisation for the instant after submit; when an id resolves, the
    * stored record wins.
    */
+  /** Save a partial run. Overwrites the single draft for this assessment. */
+  async saveAssessmentDraft(assessmentId: string, data: { responses: Record<string, unknown>; currentBlockIndex: number }) {
+    return this.request(`/user/assessments/drafts/${encodeURIComponent(assessmentId)}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    }, true, 0);
+  }
+
+  /** Every in-progress run for the signed-in user. */
+  async getAssessmentDrafts() {
+    const res = await this.request('/user/assessments/drafts', { method: 'GET' }, true, 0).catch(() => null);
+    return Array.isArray(res?.drafts) ? res.drafts : [];
+  }
+
+  /** Discard a draft. Called on completion so a finished run stops resuming. */
+  async deleteAssessmentDraft(assessmentId: string) {
+    return this.request(`/user/assessments/drafts/${encodeURIComponent(assessmentId)}`, { method: 'DELETE' }, true, 0)
+      .catch(() => null);
+  }
+
   async getAssessmentResult(resultId: string) {
     const res = await this.request(`/user/assessments/results/${encodeURIComponent(resultId)}`, { method: 'GET' }, true);
     return res?.result ?? null;

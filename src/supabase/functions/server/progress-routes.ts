@@ -1,4 +1,5 @@
 import { Hono } from 'npm:hono';
+import { isProgramCheckIn } from './assessment-record.ts';
 import * as kv from './kv_dual_write.ts';
 import { ProgressService } from './progress-service.ts';
 
@@ -305,7 +306,7 @@ app.get("/user/equip/:equipId/diary", requireAuth, async (c) => {
       const ts = new Date(r.completed_at || r.created_at || 0).getTime();
       if (ts >= periodStart && ts <= periodEnd) {
         const aId = r.assessment_id || r.assessmentId;
-        if (aId?.startsWith('checkin_') || aId?.startsWith('checkin-')) continue;
+        if (isProgramCheckIn(r)) continue;
         const maxScore = r.max_score || asmMaxMap.get(aId) || null;
         assessmentEntries.push({
           type: 'assessment',

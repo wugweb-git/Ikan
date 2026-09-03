@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { isProgramCheckIn } from '../../lib/assessment-record';
 import { motion } from 'framer-motion';
 import { ArrowLeft, BarChart3, Smile, Play, Activity, Check, Heart, Calendar, TrendingUp, ChevronRight } from 'lucide-react';
 import { apiClient } from '../../lib/api-client';
@@ -133,7 +134,7 @@ export function WellnessTimeline({ onNavigate }: WellnessTimelineProps) {
             if (r.status !== 'completed' || !r.score) continue;
             const id = r.assessment_id || r.assessmentId || 'general';
             // Skip check-ins
-            if (id.startsWith('checkin_') || id.startsWith('checkin-')) continue;
+            if (isProgramCheckIn(r)) continue;
             
             const maxScore = r.max_score || r.maxScore || assessmentMaxScoreMap?.get(id) || 100;
             const severity = r.score <= maxScore * 0.33 ? 'low' : r.score <= maxScore * 0.66 ? 'moderate' : 'high';

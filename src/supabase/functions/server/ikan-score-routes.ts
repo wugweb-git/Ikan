@@ -3,6 +3,7 @@
 // Computes a 0-100 wellness score and stores daily snapshots for trends.
 
 import { Hono } from 'npm:hono';
+import { isProgramCheckIn } from './assessment-record.ts';
 import * as kv from './kv_dual_write.ts';
 import { maxScoreFromDefinition, maxScoreFromBands } from './scoring-utils.ts';
 
@@ -218,9 +219,8 @@ async function computeIkanScore(userId: string): Promise<IkanScoreResult> {
   const completedAssessments = Array.from(uniqueAssessments.values()).filter(r => {
     if (r.status !== 'completed') return false;
     const id = (r.assessment_id || '').toLowerCase();
-    if (id.startsWith('checkin_') || id.startsWith('checkin-')) return false;
+    if (isProgramCheckIn(r)) return false;
     if (id.startsWith('asm_') || id.startsWith('asm-')) return false;
-    if (r.score === 0 && r.responses?.type === 'program_checkin') return false;
     return true;
   });
 

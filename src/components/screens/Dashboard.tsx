@@ -9,6 +9,8 @@ import { checkReassessmentTriggers, ReassessmentReason } from '../../lib/reasses
 import { ActivityCard } from '../integrations/ActivityCard';
 import { useGoogleFit } from '../integrations/GoogleFitContext';
 import { cn } from '../ui/utils';
+import { tierPresentation } from '../../lib/severity-presentation';
+import { isProgramCheckIn } from '../../lib/assessment-record';
 import { evaluateAssessment, EngineResult, initEngineConfig } from '../../lib/recommendation-engine';
 import { RecommendationCards } from '../RecommendationCards';
 import { ResourceBlock } from '../page-blocks/ResourceBlock';
@@ -41,9 +43,8 @@ interface AssessmentScore {
 function isRealAssessment(r: any): boolean {
   const id = (r.assessment_id || r.assessmentId || '').toLowerCase();
   // Skip program check-ins stored as assessments
-  if (id.startsWith('checkin_') || id.startsWith('checkin-')) return false;
+  if (isProgramCheckIn(r)) return false;
   // Skip explicitly zero-score completed check-ins (program check-ins use score: 0)
-  if (r.score === 0 && r.responses?.type === 'program_checkin') return false;
   return true;
 }
 
@@ -648,23 +649,18 @@ export function Dashboard({ className, onNavigate }: DashboardProps) {
                 boxShadow: 'var(--shadow-sm)',
                 cursor: 'pointer',
                 overflow: 'hidden',
-                border: engineResult
-                  ? `1px solid ${engineResult.tier === 'low' ? 'var(--color-status-success-light)' : engineResult.tier === 'moderate' ? 'var(--color-status-warning-light)' : 'var(--color-status-danger-light)'}`
-                  : '1px solid var(--color-border-default)',
-                background: engineResult
-                  ? (engineResult.tier === 'low'
-                    ? 'linear-gradient(135deg, #F0FDF4 0%, #DCFCE7 100%)'
-                    : engineResult.tier === 'moderate'
-                    ? 'linear-gradient(135deg, #FFFBEB 0%, #FEF3C7 100%)'
-                    : 'linear-gradient(135deg, #FEF2F2 0%, #FEE2E2 100%)')
-                  : 'var(--color-bg-card)',
+                // Colour comes from one place, in tokens. These were six raw
+                // hex stops and three rgba() literals duplicating the tier ->
+                // colour mapping that four other files also had a copy of.
+                border: `1px solid ${engineResult ? tierPresentation(engineResult.tier).background : 'var(--color-border-default)'}`,
+                background: engineResult ? tierPresentation(engineResult.tier).gradient : 'var(--color-bg-card)',
               }}
             >
               <div className="flex items-center" style={{ padding: 'var(--spacing-4) var(--spacing-5)', gap: 'var(--spacing-4)' }}>
                 <div style={{
                   width: 48, height: 48, borderRadius: 'var(--radius-md)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-                  backgroundColor: engineResult ? (engineResult.tier === 'low' ? 'rgba(34,197,94,0.15)' : engineResult.tier === 'moderate' ? 'rgba(245,158,11,0.15)' : 'rgba(239,68,68,0.15)') : 'var(--color-bg-muted)',
-                  color: engineResult ? (engineResult.tier === 'low' ? 'var(--color-status-success)' : engineResult.tier === 'moderate' ? 'var(--color-status-warning)' : 'var(--color-status-danger)') : 'var(--color-text-muted)',
+                  backgroundColor: tierPresentation(engineResult?.tier).background,
+                  color: tierPresentation(engineResult?.tier).color,
                 }}>
                   {engineResult
                     ? (engineResult.tier === 'low' ? <Check size={22} strokeWidth={2.5} /> : engineResult.tier === 'moderate' ? <Activity size={22} /> : <Brain size={22} />)
@@ -815,8 +811,8 @@ export function Dashboard({ className, onNavigate }: DashboardProps) {
             {assessmentScores.length > 0 ? (
               <div style={{ display: 'flex', flexDirection: 'column' }}>
                 {assessmentScores.slice(0, 5).map((s, i) => {
-                  const severityColor = s.severity === 'low' ? 'var(--color-status-success)' : s.severity === 'moderate' ? 'var(--color-status-warning)' : 'var(--color-status-danger)';
-                  const severityBg = s.severity === 'low' ? 'var(--color-status-success-light)' : s.severity === 'moderate' ? 'var(--color-status-warning-light)' : 'var(--color-status-danger-light)';
+                  const severityColor = tierPresentation(s.severity as any).color;
+                  const severityBg = tierPresentation(s.severity as any).background;
                   const pct = s.maxScore && s.maxScore > 0 ? Math.round((s.score / s.maxScore) * 100) : null;
                   return (
                     <div key={`${s.assessmentId}-${i}`} onClick={() => onNavigate?.(`/assessment-history-detail?id=${s.assessmentId}`)}

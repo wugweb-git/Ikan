@@ -1,6 +1,7 @@
 import { Hono } from 'npm:hono';
 import * as kv from './kv_dual_write.ts';
 import { maxScoreFromDefinition, maxScoreFromBands } from './scoring-utils.ts';
+import { recordTypeOf } from './assessment-record.ts';
 
 export function registerAssessmentRoutes(app: Hono, requireAuth: any) {
     // Admin list (includes unpublished)
@@ -112,6 +113,10 @@ export function registerAssessmentRoutes(app: Hono, requireAuth: any) {
                 interpretation: data.interpretation,
                 responses: data.responses,
                 severity_hint: data.severityHint,
+                // Declared, not inferred. Every consumer used to detect check-ins
+                // with its own startsWith('checkin_') test — six copies, two of
+                // which also checked responses.type and four of which did not.
+                record_type: recordTypeOf({ assessment_id: data.assessmentId, responses: data.responses }),
                 /**
                  * The full EngineResult, stored verbatim.
                  *
@@ -187,6 +192,62 @@ export function registerAssessmentRoutes(app: Hono, requireAuth: any) {
         } catch (error) {
             console.error('Get assessment result error:', error);
             return c.json({ error: 'Failed to load result' }, 500);
+        }
+    });
+
+    /**
+     * Draft (partial) runs.
+     *
+     * One draft per user per assessment, overwritten as they go. Answers used
+     * to live only in React state, so closing the tab at question 6 of 24 lost
+     * everything and the 'in-progress' card the dashboard renders had nothing
+     * that could ever write it.
+     *
+     * A draft is deliberately NOT an assessment_result: it has no score, no
+     * bands and no completed_at, and a profile with `on_missing: invalidate`
+     * would refuse to score it anyway. Keeping it in its own prefix means the
+     * result counts stay honest.
+     */
+    app.put("/user/assessments/drafts/:assessmentId", requireAuth, async (c) => {
+        try {
+            const userId = c.get('userId');
+            const assessmentId = c.req.param("assessmentId");
+            const body = await c.req.json();
+            const draft = {
+                user_id: userId,
+                assessment_id: assessmentId,
+                status: 'in_progress',
+                responses: body?.responses ?? {},
+                current_block_index: body?.currentBlockIndex ?? 0,
+                updated_at: new Date().toISOString(),
+            };
+            await kv.set(`assessment_draft:${userId}:${assessmentId}`, draft);
+            return c.json({ draft });
+        } catch (error) {
+            console.error('Save assessment draft error:', error);
+            return c.json({ error: 'Failed to save draft' }, 500);
+        }
+    });
+
+    app.get("/user/assessments/drafts", requireAuth, async (c) => {
+        try {
+            const userId = c.get('userId');
+            const rows = await kv.getByPrefix(`assessment_draft:${userId}:`);
+            return c.json({ drafts: Array.isArray(rows) ? rows : [] });
+        } catch (error) {
+            console.error('List assessment drafts error:', error);
+            return c.json({ drafts: [] });
+        }
+    });
+
+    app.delete("/user/assessments/drafts/:assessmentId", requireAuth, async (c) => {
+        try {
+            const userId = c.get('userId');
+            await kv.del(`assessment_draft:${userId}:${c.req.param("assessmentId")}`);
+            return c.json({ success: true });
+        } catch (error) {
+            console.error('Delete assessment draft error:', error);
+            return c.json({ error: 'Failed to delete draft' }, 500);
         }
     });
 

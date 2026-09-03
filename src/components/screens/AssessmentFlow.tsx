@@ -1,6 +1,6 @@
 import { projectId } from '../../utils/supabase/info';
 import { getAuthHeaders } from '../../lib/supabase-client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '../ui/button';
 import { Icon } from '../Icon';
@@ -194,6 +194,93 @@ export function AssessmentFlow({
     setCalculatedResults(null);
   };
 
+  /**
+   * Fires the crisis pathway once per run when a risk-indicator question is
+   * answered above its own lowest option.
+   *
+   * Guarded by a ref rather than state: this is called on every answer, and
+   * re-offering the panel each time someone touches a later question would be
+   * worse than not offering it at all.
+   */
+  /** A partial run to resume, loaded once the assessment id is known. */
+  const [draft, setDraft] = useState<{ responses: Record<string, any>; current_block_index: number } | null>(null);
+  const [draftChecked, setDraftChecked] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    if (!user || !assessment?.id) { setDraftChecked(true); return; }
+    (async () => {
+      const drafts = await apiClient.getAssessmentDrafts();
+      if (cancelled) return;
+      const mine = drafts.find((d: any) => d?.assessment_id === assessment.id);
+      setDraft(mine ? { responses: mine.responses ?? {}, current_block_index: mine.current_block_index ?? 0 } : null);
+      setDraftChecked(true);
+    })();
+    return () => { cancelled = true; };
+  }, [user, assessment?.id]);
+
+  const riskFiredRef = useRef(false);
+  const evaluateRisk = useCallback((responses: Record<string, any>) => {
+    if (riskFiredRef.current) return;
+    try {
+      const questions = ((assessment?.questions as any[]) ?? []);
+      const flagged = questions
+        .filter((q) => q?.is_risk_indicator === true)
+        .some((q) => {
+          const v = resolveAnswerValue(q as any, responses[q.id]);
+          if (typeof v !== 'number') return false;
+          // Above the question's OWN lowest option, not above zero: option
+          // values are declared per assessment and are not all 0-based, so on a
+          // 1-5 scale `v > 0` is true for every possible answer.
+          const optionValues = (Array.isArray(q.options) ? q.options : [])
+            .map((o: any, i: number) => (o && typeof o === 'object' && typeof o.value === 'number' ? o.value : i));
+          const floor = optionValues.length > 0 ? Math.min(...optionValues) : 0;
+          return v > floor;
+        });
+      if (flagged) {
+        riskFiredRef.current = true;
+        triggerCrisisSupport('assessment_score');
+      }
+    } catch (e) {
+      // Never let the risk check break the run.
+      console.warn('[crisis] risk-indicator check failed', e);
+    }
+  }, [assessment]);
+
+  /**
+   * Called by the player on every answer.
+   *
+   * Two jobs, both of which need the partial responses: evaluate risk
+   * indicators immediately rather than at submit, and keep a draft so closing
+   * the tab at question 6 of 24 does not lose the run.
+   *
+   * The draft write is debounced — the player emits this per keystroke on
+   * free-text blocks, and a request per character would be worse than no
+   * draft at all.
+   */
+  const draftTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const handleProgressChange = useCallback(
+    ({ currentBlockIndex, responses }: { currentBlockIndex: number; responses: Record<string, any> }) => {
+      evaluateRisk(responses);
+
+      if (!user || !assessment?.id) return;
+      if (draftTimerRef.current) clearTimeout(draftTimerRef.current);
+      draftTimerRef.current = setTimeout(() => {
+        apiClient
+          .saveAssessmentDraft(assessment.id, { responses, currentBlockIndex })
+          .catch(() => {
+            // A failed draft save must never interrupt the run; the answers are
+            // still in memory and the submit path is unaffected.
+          });
+      }, 1200);
+    },
+    [assessment, user, evaluateRisk],
+  );
+
+  useEffect(() => () => {
+    if (draftTimerRef.current) clearTimeout(draftTimerRef.current);
+  }, []);
+
   const handlePlayerComplete = async (playerResults: PlayerResults) => {
     // 1. Calculate Results Immediately (Synchronous)
     let results: any = null;
@@ -350,44 +437,12 @@ export function AssessmentFlow({
         sectionScores = { sectioned: false, sections: [] };
       }
 
-      // Risk indicator. The presets declare `riskIndicatorQuestionIds` — for the
-      // General questionnaire that is block-1773736126142, PHQ-9 item 9,
-      // "Thoughts that you would be better off dead or of hurting yourself".
-      // The field was declared and then never read anywhere: assessment-sections.ts
-      // has no reference to it, so a non-zero answer to the single most
-      // clinically urgent question in the product did nothing at all.
-      //
-      // Any answer above the lowest option offers the crisis panel. Scoring and
-      // saving continue unchanged — this is offered alongside the result, never
-      // instead of it.
-      try {
-        // The question's own `is_risk_indicator` flag. The preset's
-        // `riskIndicatorQuestionIds` was the other source; it went with the
-        // presets file, so the flag must be set on the question itself.
-        const questions = (assessment.questions as any[]) ?? [];
-        const riskIds = new Set<string>([
-          ...questions.filter((q) => q?.is_risk_indicator === true).map((q) => q.id),
-        ]);
-
-        const flagged = [...riskIds].some((qid) => {
-          const q = questions.find((x) => x?.id === qid);
-          if (!q) return false;
-          const v = resolveAnswerValue(q as any, responses[qid]);
-          if (typeof v !== 'number') return false;
-          // Above the question's OWN lowest option, not above zero. Option
-          // values are declared per assessment now and are not all 0-based —
-          // on a 1-5 scale `v > 0` is true for every possible answer, which
-          // would fire the crisis panel on "Never".
-          const optionValues = (Array.isArray(q.options) ? q.options : [])
-            .map((o: any, i: number) => (o && typeof o === 'object' && typeof o.value === 'number' ? o.value : i));
-          const floor = optionValues.length > 0 ? Math.min(...optionValues) : 0;
-          return v > floor;
-        });
-        if (flagged) triggerCrisisSupport('assessment_score');
-      } catch (e) {
-        // Never let the risk check break scoring.
-        console.warn('[crisis] risk-indicator check failed', e);
-      }
+      // Risk indicator, at submit. Also evaluated at answer time — see
+      // `evaluateRiskAt` — so endorsing the flagged item at question 6 of 24
+      // does not wait for eighteen more answers before anything happens.
+      // Both, not either: an answer-time check can be missed if a user edits a
+      // previous answer, and the submit check is the backstop.
+      evaluateRisk(responses);
 
       if (!sectionScores.sectioned) {
         // Loud, because a silent miss here is what produced 133 results with
@@ -512,6 +567,9 @@ export function AssessmentFlow({
                // result becomes linkable and survives a refresh. sessionStorage
                // is now only an optimisation for the moment after submit — if
                // this id resolves, the stored record wins.
+               // The run is stored; the draft must not survive it or the card
+               // would offer to resume a completed assessment.
+               apiClient.deleteAssessmentDraft(assessment.id);
                const savedId = (saved as any)?.result?.id;
                if (savedId) {
                  try { sessionStorage.setItem('lastAssessmentResultId', savedId); } catch { /* ignore */ }
@@ -780,12 +838,27 @@ export function AssessmentFlow({
     );
   }
 
+  // The player reads `initialResponses` on mount only, so it must not render
+  // until the draft lookup has settled — otherwise a resumable run silently
+  // starts from question one.
+  if (!draftChecked) {
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ backgroundColor: 'var(--color-bg-card)' }}>
+        <p style={{ fontFamily: 'var(--font-family-base)', fontSize: 'var(--text-sm)', color: 'var(--color-text-muted)' }}>
+          Loading…
+        </p>
+      </div>
+    );
+  }
+
   return (
     <div className="fixed inset-0 z-50" style={{ backgroundColor: 'var(--color-bg-card)' }}>
        <ProgramPlayer
          program={equipProgram}
          initialDay={1}
+         initialResponses={draft?.responses}
          onComplete={handlePlayerComplete}
+         onProgressChange={handleProgressChange}
          onExit={onBack || (() => {})}
          mode="live"
        />
