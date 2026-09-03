@@ -842,7 +842,13 @@ class ApiClient {
     severityHint?: string,
     maxScore?: number,
     sectionScores?: unknown,
-    slug?: string
+    slug?: string,
+    /**
+     * The full EngineResult. Persisting it is what lets a result be re-read
+     * later — without it only the flattened interpretation survives, and the
+     * result page can never be rebuilt from the record.
+     */
+    engineResult?: unknown
   ) {
     return this.request('/user/assessments', {
       method: 'POST',
@@ -858,9 +864,22 @@ class ApiClient {
         maxScore,
         interpretation,
         severityHint,
-        sectionScores
+        sectionScores,
+        engineResult
       })
     }, true);
+  }
+
+  /**
+   * One stored assessment result by id.
+   *
+   * Backs the linkable `/assessment-results?id=…` route. sessionStorage is only
+   * an optimisation for the instant after submit; when an id resolves, the
+   * stored record wins.
+   */
+  async getAssessmentResult(resultId: string) {
+    const res = await this.request(`/user/assessments/results/${encodeURIComponent(resultId)}`, { method: 'GET' }, true);
+    return res?.result ?? null;
   }
 
   async getAssessments() {

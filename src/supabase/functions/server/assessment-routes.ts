@@ -112,6 +112,23 @@ export function registerAssessmentRoutes(app: Hono, requireAuth: any) {
                 interpretation: data.interpretation,
                 responses: data.responses,
                 severity_hint: data.severityHint,
+                /**
+                 * The full EngineResult, stored verbatim.
+                 *
+                 * Previously this was computed in the browser and thrown away:
+                 * only a flattened `interpretation` string survived, so a result
+                 * could never be re-read, re-rendered or explained after the tab
+                 * closed. Persisting it is what makes a result a record rather
+                 * than a screen.
+                 *
+                 * Note `severity_hint` above stores the *band label* ("Poor
+                 * Sleep", "Completed"), never a severity term — the label and
+                 * the clinical term are different fields. Read severity from
+                 * here, not from that.
+                 */
+                engine_result: data.engineResult ?? data.recommendation ?? null,
+                /** Bumped when the shape of engine_result changes. */
+                result_version: 2,
                 // Per-scale breakdown for multi-instrument assessments (the
                 // General questionnaire and Burnout). Null for single-score
                 // assessments. score/max_score above stay populated either way:
@@ -138,6 +155,38 @@ export function registerAssessmentRoutes(app: Hono, requireAuth: any) {
         } catch (error) {
             console.error('Save assessment error:', error);
             return c.json({ error: 'Failed to save assessment' }, 500);
+        }
+    });
+
+    /**
+     * One stored result by id.
+     *
+     * This is what makes a result linkable and refreshable: the standalone
+     * results route reads it instead of depending on a sessionStorage blob that
+     * dies with the tab. Scoped to the caller's own user id — a result id is a
+     * UUID, but guessability is not an access model.
+     */
+    app.get("/user/assessments/results/:id", requireAuth, async (c) => {
+        try {
+            const userId = c.get('userId');
+            const id = c.req.param("id");
+
+            let result = await kv.get(`assessment_result:${userId}:${id}`);
+
+            // `:latest` copies are stored under the assessment id rather than
+            // the result id, so a caller holding a result id would otherwise
+            // miss a result that exists. Fall back to a scan of this user's
+            // results only.
+            if (!result) {
+                const all = await kv.getByPrefix(`assessment_result:${userId}:`);
+                result = (Array.isArray(all) ? all : []).find((r: any) => r?.id === id) ?? null;
+            }
+
+            if (!result) return c.json({ error: 'Result not found' }, 404);
+            return c.json({ result });
+        } catch (error) {
+            console.error('Get assessment result error:', error);
+            return c.json({ error: 'Failed to load result' }, 500);
         }
     });
 

@@ -1,6 +1,7 @@
 import { EquipService } from './program-service.ts';
 import { createClient } from "jsr:@supabase/supabase-js@2";
 import * as kv from "./kv_dual_write.ts";
+import { validateScoringProfile, projectBandsToClosedRanges, validateQuestionIdImmutability, validateAssessmentScores } from "./scoring-validation.ts";
 
 // REMOVED 2026-09-01 (S3): hardcoded SUPER_ADMIN_EMAIL. It was already unused
 // in this file; admin status derives solely from the is_admin profile flag.
@@ -146,7 +147,72 @@ app.post("/admin/equip/add-default-onboarding", requireAdmin, async (c) => {
 // Band order is assumed low-to-high severity (true for every assessment
 // audited so far), so the first band maps to 'success' and the last to
 // 'error'.
-function deriveScoringRanges(assessment: any): any {
+/**
+ * Project the v2 spec's bands down into the legacy `scoring.ranges` the player
+ * still reads.
+ *
+ * `scoring.ranges` is **generated, never maintained**. Sleep briefly carried
+ * two hand-written band sets with different interval semantics — profile bands
+ * half-open (8-25, 25-33, 33-40) and `scoring.ranges` closed (8-24, 25-32,
+ * 33-40). Both were correct and they looked wrong beside each other, which is
+ * exactly how someone "fixes" one and silently breaks it. Deriving one from the
+ * other leaves a single authority, and the derivation deletes itself when the
+ * player learns to read `scores[]`.
+ *
+ * The conversion is mechanical, and it is the same rule every legacy band set
+ * in this product needs, because they were all authored closed:
+ *
+ *     [a, b)  ->  [a, b-1]   for every band except the last
+ *     [a, b]  ->  [a, b]     the last band keeps its ceiling
+ *
+ * Only applied to integer band edges. A `mean` score has decimal edges, and a
+ * closed reader cannot express a half-open boundary at a decimal — the legacy
+ * lookup takes the first matching band, so a value sitting exactly on an edge
+ * would resolve to the lower band, the opposite of what half-open asserts.
+ * Rather than emit a set that is wrong at one point, no projection is made.
+ */
+/** Ids of every saved scoring profile, for the score reference check. */
+async function knownProfileIds(): Promise<Set<string> | null> {
+  try {
+    const rows = await kv.getByPrefix("scoring-profile:");
+    return new Set((Array.isArray(rows) ? rows : []).map((p: any) => p?.id).filter(Boolean));
+  } catch {
+    return null; // Skip the reference check rather than reject on a read failure.
+  }
+}
+
+async function deriveScoringRanges(assessment: any): Promise<any> {
+  const scores = Array.isArray(assessment.scores) ? assessment.scores : [];
+  const primary = scores.find((sc: any) => sc?.profile_id) ?? null;
+
+  if (primary) {
+    let profile: any = null;
+    try {
+      profile = await kv.get(`scoring-profile:${primary.profile_id}`);
+    } catch { /* fall through to the legacy path */ }
+
+    const bands = Array.isArray(profile?.bands) ? profile.bands : null;
+    if (bands && bands.length > 0) {
+      const ranges = projectBandsToClosedRanges(bands);
+      if (ranges) {
+        return {
+          ...assessment,
+          scoring: {
+            ...(assessment.scoring || {}),
+            ranges,
+            // Marks this list as output. Editing it by hand is pointless — the
+            // next save overwrites it from the bands.
+            derived_from: `scoring-profile:${primary.profile_id}`,
+          },
+        };
+      }
+      // Decimal edges: projectBandsToClosedRanges returned null. Leave
+      // whatever is there rather than emit a set that misbands the boundary.
+      return assessment;
+    }
+  }
+
+  // Legacy path, for assessments with no v2 spec yet.
   const categories = assessment.resultCategories;
   if (!Array.isArray(categories) || categories.length === 0) return assessment;
 
@@ -168,8 +234,25 @@ app.post("/admin/assessments", requireAdmin, async (c) => {
     
     // Generate ID if not present
     const id = data.id || crypto.randomUUID();
-    
-    const assessment = deriveScoringRanges({
+
+    // A POST carrying an existing id overwrites that record, so guardrail 11
+    // applies here too — this path used never to read the existing row at all.
+    const priorForCreate = data.id
+      ? (await kv.get(`assessment_def:${id}`)) || (await kv.get(`assessment:${id}`))
+      : null;
+    const immutabilityCreate = validateQuestionIdImmutability(priorForCreate, data);
+    if (!immutabilityCreate.ok) {
+      return c.json({
+        error: "Question ids referenced by a saved score cannot be renamed or deleted",
+        issues: immutabilityCreate.errors,
+      }, 409);
+    }
+    const scoreCheckCreate = validateAssessmentScores(data?.scores, await knownProfileIds());
+    if (!scoreCheckCreate.ok) {
+      return c.json({ error: "Invalid scores[]", issues: scoreCheckCreate.errors }, 400);
+    }
+
+    const assessment = await deriveScoringRanges({
       ...data,
       id,
       assessment_id: id,
@@ -202,8 +285,31 @@ app.put("/admin/assessments/:id", requireAdmin, async (c) => {
     
     // Get existing from either prefix
     const existing = await kv.get(`assessment_def:${id}`) || await kv.get(`assessment:${id}`);
-    
-    const assessment = deriveScoringRanges({
+
+    // Guardrail 11 — question-id immutability. Enforced here, at the assessment
+    // save, because this is where an id can actually disappear. Content is
+    // mutable; identity is not.
+    const merged: any = { ...(existing || {}), ...updates };
+    const immutability = validateQuestionIdImmutability(existing, merged);
+    if (!immutability.ok) {
+      return c.json({
+        error: "Question ids referenced by a saved score cannot be renamed or deleted",
+        issues: immutability.errors,
+      }, 409);
+    }
+    const scoreCheck = validateAssessmentScores(merged?.scores, await knownProfileIds());
+    if (!scoreCheck.ok) {
+      return c.json({ error: "Invalid scores[]", issues: scoreCheck.errors }, 400);
+    }
+    if (immutability.newlyRetired.length > 0) {
+      const prior: string[] = Array.isArray((existing as any)?.retired_question_ids)
+        ? (existing as any).retired_question_ids : [];
+      // The ledger only grows. A retired id stays listed forever so it can
+      // never be reused, keeping the stored responses keyed to it resolvable.
+      (updates as any).retired_question_ids = [...new Set([...prior, ...immutability.newlyRetired])];
+    }
+
+    const assessment = await deriveScoringRanges({
       ...(existing || {}),
       ...updates,
       id,
@@ -1525,6 +1631,29 @@ app.post("/admin/kv-audit/purge-prefix", requireAdmin, async (c) => {
 // ADMIN - SCORING ENGINE PROFILES
 // ========================================
 
+/**
+ * Scoring profiles, readable by any signed-in user.
+ *
+ * The player needs these: `AssessmentFlow` calls `loadScoringProfiles()` on
+ * every run, and without them `getSeverityFromProfile` returns null, no
+ * clinical severity is resolved, and **no recommendation rule can match** — the
+ * exact failure the category-join fix was meant to end. The admin-only route
+ * below stays for the authoring screen; this one is read-only and carries no
+ * authoring surface.
+ *
+ * Profiles are configuration, not user data: calc, direction, bands and their
+ * severity terms. Nothing here is personal.
+ */
+app.get("/scoring-profiles", requireAuth, async (c) => {
+  try {
+    const rows = await kv.getByPrefix("scoring-profile:");
+    return c.json({ profiles: Array.isArray(rows) ? rows : [] });
+  } catch (error) {
+    console.error("Failed to load scoring profiles (read):", error);
+    return c.json({ profiles: [] });
+  }
+});
+
 app.get("/admin/scoring-profiles", requireAdmin, async (c) => {
   try {
     const profileKeys = await kv.getByPrefix("scoring-profile:");
@@ -1538,14 +1667,39 @@ app.get("/admin/scoring-profiles", requireAdmin, async (c) => {
 
 app.post("/admin/scoring-profiles", requireAdmin, async (c) => {
   try {
-    const { profile } = await c.req.json();
+    const body = await c.req.json();
+    const profile = body?.profile;
     if (!profile || !profile.id) {
       return c.json({ error: "Profile with id is required" }, 400);
     }
-    profile.updated_at = new Date().toISOString();
-    if (!profile.created_at) profile.created_at = profile.updated_at;
+
+    // Validate before touching KV. The admin UI is not the only writer — a
+    // restored backup or a direct write would otherwise install overlapping
+    // bands, and overlap makes severity depend on lookup order.
+    const check = validateScoringProfile(profile);
+    if (!check.ok) {
+      return c.json({ error: "Invalid scoring profile", issues: check.errors, warnings: check.warnings }, 400);
+    }
+
+    const existing: any = await kv.get(`scoring-profile:${profile.id}`);
+
+    // A locked profile is in use by authored specs. Unlock it deliberately
+    // before editing, so a band edit can never silently re-band stored results.
+    if (existing?.locked && profile.locked !== false) {
+      return c.json({
+        error: `Scoring profile "${existing.name}" is locked. Unlock it explicitly before editing — ` +
+               `changing bands on a profile in use re-bands every result scored against it.`,
+      }, 409);
+    }
+
+    const now = new Date().toISOString();
+    profile.created_at = existing?.created_at ?? profile.created_at ?? now;
+    profile.updated_at = now;
+    // Version is server-owned so a stale client cannot roll it backwards.
+    profile.version = Number.isFinite(existing?.version) ? existing.version + 1 : 1;
+
     await kv.set(`scoring-profile:${profile.id}`, profile);
-    return c.json({ profile });
+    return c.json({ profile, warnings: check.warnings });
   } catch (error) {
     console.error("Failed to save scoring profile:", error);
     return c.json({ error: `Failed to save scoring profile: ${error}` }, 500);
@@ -1555,6 +1709,25 @@ app.post("/admin/scoring-profiles", requireAdmin, async (c) => {
 app.delete("/admin/scoring-profiles/:id", requireAdmin, async (c) => {
   try {
     const id = c.req.param("id");
+
+    // Refuse while any assessment still scores against it. Deleting a
+    // referenced profile leaves scores pointing at nothing, which the coverage
+    // meter reports as red but which would already have broken the result page.
+    const defs = await kv.getByPrefix("assessment_def:");
+    const users: string[] = [];
+    for (const def of (Array.isArray(defs) ? defs : []) as any[]) {
+      const scores = Array.isArray(def?.scores) ? def.scores : [];
+      if (scores.some((s: any) => s?.profile_id === id) || def?.scoring_profile_id === id) {
+        users.push(def?.slug || def?.id);
+      }
+    }
+    if (users.length > 0) {
+      return c.json({
+        error: `Scoring profile ${id} is referenced by: ${users.join(", ")}. ` +
+               `Remove it from those scores first.`,
+      }, 409);
+    }
+
     await kv.del(`scoring-profile:${id}`);
     return c.json({ success: true });
   } catch (error) {

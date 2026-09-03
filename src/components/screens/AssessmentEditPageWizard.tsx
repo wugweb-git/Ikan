@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { Save, Trash2, ClipboardList, CircleHelp, Eye, Plus, GripVertical, X, Upload, EyeOff } from 'lucide-react';
 import { useNotifications } from '../../contexts/NotificationContext';
 import { apiClient } from '../../lib/api-client';
@@ -13,6 +13,9 @@ import { Card, CardContent } from '../ui/card';
 import { ImageUpload } from '../ui/image-upload';
 import { WizardLayout } from '../ui/wizard-layout';
 import { WizardStep } from '../ui/wizard-stepper';
+import { AssessmentScoresEditor } from '../admin/AssessmentScoresEditor';
+import { buildScoringContext } from '../../lib/scoring-context';
+import { computeCoverage, type AssessmentScore, type ScoringProfile } from '../../lib/scoring-engine';
 import { AssessmentLandingPageRichTextEditor } from './AssessmentLandingPageRichTextEditor';
 import { UnifiedBasicInfoForm } from '../admin/UnifiedBasicInfoForm';
 import { useFormValidation, ValidationSchema } from '../../hooks/useFormValidation';
@@ -113,6 +116,12 @@ export interface Assessment {
   daily_content?: DayContent[]; // New unified field
   scoringMethod?: 'sum' | 'average' | 'custom';
   scoring_profile_id?: string;
+  /**
+   * v2 scoring specs. One entry per score; a single-instrument assessment has
+   * one, a sectioned one has several plus an overall. Items reference questions
+   * by id, never by position. See wizard step 5.
+   */
+  scores?: AssessmentScore[];
   resultCategories?: Array<{ min: number; max: number; label: string; description: string }>;
   published: boolean;
   published_at?: string;
@@ -178,12 +187,15 @@ export function AssessmentEditPageWizard({ assessmentId, onBack, onSave }: Asses
   const { categories: metaCategories, difficultyLevels: metaDifficulty, scoringMethods: metaScoringMethods } = useMetadata();
 
   // Scoring profiles from backend
-  const [scoringProfiles, setScoringProfiles] = useState<Array<{ id: string; name: string }>>([]);
+  const [scoringProfiles, setScoringProfiles] = useState<ScoringProfile[]>([]);
   useEffect(() => {
     apiClient.request('/admin/scoring-profiles', { method: 'GET' }, true, 0)
       .then((data: any) => {
         if (data?.profiles && Array.isArray(data.profiles)) {
-          setScoringProfiles(data.profiles.map((p: any) => ({ id: p.id, name: p.name || p.id })));
+          // Full records: step 5 needs each profile's calc, direction, basis and
+          // bands to compute the achievable range and check band tiling. Mapping
+          // to {id, name} here is what limited step 4 to a bare dropdown.
+          setScoringProfiles(data.profiles);
         }
       })
       .catch(() => {});
@@ -557,6 +569,43 @@ export function AssessmentEditPageWizard({ assessmentId, onBack, onSave }: Asses
     }));
   };
 
+  // Live coverage summary for the step 5 chip. Cheap to recompute and it means
+  // the stepper says whether scoring is actually complete rather than just
+  // whether the step was visited.
+  const scoresState = useMemo(() => {
+    const questions = Array.isArray(formData.questions) ? formData.questions : [];
+    const scores = formData.scores ?? [];
+    if (questions.length === 0) return null;
+    const built = buildScoringContext({
+      questions,
+      scores,
+      profiles: Object.fromEntries(scoringProfiles.map(p => [p.id, p])),
+    });
+    const assigned = new Set(scores.flatMap(sc => (sc.items ?? []).map(i => i.question_id)));
+    return {
+      coverage: computeCoverage(built.ctx),
+      // A spec may not be saved against an inferred scale — see
+      // BuiltContext.derivedScale. Only items actually used by a score count.
+      blockedItems: built.derivedScale.filter(id => assigned.has(id)),
+      hasScores: scores.length > 0,
+    };
+  }, [formData.questions, formData.scores, scoringProfiles]);
+
+  const scoresCoverage = scoresState?.coverage ?? null;
+
+  /**
+   * Blocks Next/Finish while a score references a question with no declared
+   * scale. Only bites once someone actually authors a score, so an assessment
+   * with no scoring spec still saves normally.
+   */
+  const scoringBlocked = !!scoresState?.hasScores && (scoresState?.blockedItems.length ?? 0) > 0;
+
+  const scoresSubtitle = !scoresCoverage
+    ? 'No questions yet'
+    : scoresCoverage.status === 'green'
+      ? `${scoresCoverage.numerator}/${scoresCoverage.denominator} assigned`
+      : `${scoresCoverage.numerator}/${scoresCoverage.denominator} assigned — ${scoresCoverage.status === 'red' ? 'invalid' : 'incomplete'}`;
+
   const wizardSteps: WizardStep[] = [
     {
       id: 'basic',
@@ -579,8 +628,14 @@ export function AssessmentEditPageWizard({ assessmentId, onBack, onSave }: Asses
     {
       id: 'scoring',
       title: 'Scoring & Results',
-      subtitle: currentStep === 3 ? 'Final step' : currentStep > 3 ? 'Finished' : 'Waiting',
+      subtitle: currentStep === 3 ? 'In progress' : currentStep > 3 ? 'Finished' : 'Waiting',
       status: currentStep === 3 ? 'current' : currentStep > 3 ? 'completed' : 'upcoming'
+    },
+    {
+      id: 'scores',
+      title: 'Scoring Configuration',
+      subtitle: scoresSubtitle,
+      status: currentStep === 4 ? 'current' : currentStep > 4 ? 'completed' : 'upcoming'
     }
   ];
 
@@ -615,9 +670,13 @@ export function AssessmentEditPageWizard({ assessmentId, onBack, onSave }: Asses
         }}
         onSaveDraft={() => persistWizard(formDataRef.current)}
         onNext={async () => {
+          if (scoringBlocked) {
+            showToast('error', 'Scoring not saveable', `${scoresState!.blockedItems.length} scored item(s) have no declared scale. Give them a scale_ref before saving a spec.`);
+            return;
+          }
           if (validateForm(formDataRef.current)) {
              await persistWizard(formDataRef.current, true);
-             setCurrentStep(s => Math.min(s + 1, 3));
+             setCurrentStep(s => Math.min(s + 1, 4));
           } else {
              showToast('error', 'Validation Error', 'Please complete required fields');
           }
@@ -627,6 +686,10 @@ export function AssessmentEditPageWizard({ assessmentId, onBack, onSave }: Asses
            setCurrentStep(s => Math.max(s - 1, 0));
         }}
         onFinish={async () => {
+           if (scoringBlocked) {
+             showToast('error', 'Scoring not saveable', `${scoresState!.blockedItems.length} scored item(s) have no declared scale. Give them a scale_ref before saving a spec.`);
+             return;
+           }
            await persistWizard(formDataRef.current);
            onSave();
         }}
@@ -889,6 +952,27 @@ export function AssessmentEditPageWizard({ assessmentId, onBack, onSave }: Asses
                   )}
                 </div>
               </div>
+            </div>
+          </div>
+        )}
+
+        {currentStep === 4 && (
+          <div className="space-y-6">
+            <div className="p-6 rounded-xl" style={{ backgroundColor: 'var(--color-bg-card)', border: '1px solid var(--color-border-default)' }}>
+              <h3 className="text-lg font-medium border-b pb-2 mb-4">Scoring Configuration</h3>
+              <AssessmentScoresEditor
+                questions={Array.isArray(formData.questions) ? formData.questions : []}
+                scores={formData.scores ?? []}
+                profiles={scoringProfiles}
+                onScoresChange={(scores) => setFormData(prev => ({ ...prev, scores }))}
+                onQuestionChange={(questionId, patch) => setFormData(prev => ({
+                  ...prev,
+                  // questions[] is canonical; daily_content is a cache rebuilt
+                  // from it on load, so writing here is sufficient.
+                  questions: (Array.isArray(prev.questions) ? prev.questions : [])
+                    .map((q: any) => (q?.id === questionId ? { ...q, ...patch } : q)),
+                }))}
+              />
             </div>
           </div>
         )}

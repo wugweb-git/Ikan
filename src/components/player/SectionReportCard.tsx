@@ -126,7 +126,11 @@ export function SectionReportCard({
   result: SectionScoreResult;
   title?: string;
 }) {
-  if (!result.sectioned || result.sections.length === 0) return null;
+  // Renders whenever there is anything to show. Previously this bailed unless
+  // there were named sections, which forced single-score assessments down a
+  // parallel rendering branch with its own spacing and its own severity badge.
+  // A single-score assessment is one score, not a different screen.
+  if (!result.sectioned || (result.sections.length === 0 && !result.overall)) return null;
 
   const overall = result.overall;
   const overallColor = overall ? sectionColor(overall) : undefined;
@@ -156,9 +160,12 @@ export function SectionReportCard({
             <span style={f('xs', 500, 'var(--color-text-muted)')}>
               {overall.label.toUpperCase()}
             </span>
-            {overall.band && (
-              <span style={f('xl', 500, overallColor)}>{overall.band.label}</span>
-            )}
+            {/* An unbanded score says so. Falling back to a placeholder word
+                — or rendering nothing at all, as this did — presents a missing
+                band as if it were a result. */}
+            <span style={f('xl', 500, overall.band ? overallColor : 'var(--color-text-muted)')}>
+              {overall.band ? overall.band.label : 'Not banded'}
+            </span>
           </div>
           <div className="text-right shrink-0">
             <div style={{ ...f('2xl', 500, overallColor), fontVariantNumeric: 'tabular-nums' }}>

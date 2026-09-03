@@ -70,8 +70,11 @@ async function executeSync(item: SyncItem): Promise<boolean> {
         // the queued payload carries them (see AssessmentFlow.tsx's queueItem
         // calls) — any response that synced through this path instead of the
         // direct online call permanently lost its score breakdown.
-        const { assessmentId, responses, status, score, interpretation, severityHint, maxScore, sectionScores, slug } = item.payload;
-        await apiClient.saveAssessmentResponse(assessmentId, responses, status, score, interpretation, severityHint, maxScore, sectionScores, slug);
+        // `engineResult` joins that list for the same reason: AssessmentFlow
+        // queues it, and a field destructured here but not forwarded is lost
+        // permanently for anything that syncs offline rather than online.
+        const { assessmentId, responses, status, score, interpretation, severityHint, maxScore, sectionScores, slug, engineResult } = item.payload;
+        await apiClient.saveAssessmentResponse(assessmentId, responses, status, score, interpretation, severityHint, maxScore, sectionScores, slug, engineResult);
         return true;
       }
 

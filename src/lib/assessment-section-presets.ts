@@ -33,7 +33,7 @@ export interface AssessmentSectionPreset {
 // Anxiety and depression are not: see `notes`.
 export const GENERAL_SECTIONS: AssessmentSectionPreset = {
   hasOverallScore: false, // per spec: "Overall Score: NIL" — five independent scales
-  riskIndicatorQuestionIds: ['block-1773736126142'], // "Thoughts that you would be better off dead…"
+  riskIndicatorQuestionIds: ['general-q5'], // "Thoughts that you would be better off dead…"
   sections: [
     {
       id: 'anxiety',
@@ -41,9 +41,9 @@ export const GENERAL_SECTIONS: AssessmentSectionPreset = {
       instrument: 'GAD-2',
       // Second item ("Not being able to stop or control worrying") copied in
       // verbatim from the standalone Anxiety assessment's anxiety-q2, as
-      // gen-anxiety-q2 — no new authoring needed, GAD-2 was already fully
+      // general-q2 — no new authoring needed, GAD-2 was already fully
       // written elsewhere in the bank.
-      questionIds: ['gen-q1', 'gen-anxiety-q2'],
+      questionIds: ['general-q1', 'general-q2'],
       expectedItems: 2,
       calc: 'sum',
       direction: 'higher-is-distress',
@@ -59,9 +59,9 @@ export const GENERAL_SECTIONS: AssessmentSectionPreset = {
       // The spec maps this to q3-q4, but those are "How would you rate your
       // overall mental health?" and "I feel optimistic about my future" —
       // neither is a real PHQ-2 item, so this section stayed empty. Both real
-      // PHQ-2 items now exist as gen-dep-q1/gen-dep-q2, copied in verbatim
-      // from the standalone Depression assessment's dep-q1/dep-q2.
-      questionIds: ['gen-dep-q1', 'gen-dep-q2'],
+      // PHQ-2 items now exist as general-q3/general-q4, copied in verbatim
+      // from the standalone Depression assessment's depression-q1/depression-q2.
+      questionIds: ['general-q3', 'general-q4'],
       expectedItems: 2,
       calc: 'sum',
       direction: 'higher-is-distress',
@@ -75,11 +75,11 @@ export const GENERAL_SECTIONS: AssessmentSectionPreset = {
       label: 'Wellbeing',
       instrument: 'WHO-5',
       questionIds: [
-        'block-1773736128273', // cheerful and in good spirits
-        'block-1773736130158', // calm and relaxed
-        'block-1773736132052', // active and vigorous
-        'block-1773736134105', // woke up feeling fresh and rested
-        'block-1773736136122', // daily life filled with things that interest me
+        'general-q6', // cheerful and in good spirits
+        'general-q7', // calm and relaxed
+        'general-q8', // active and vigorous
+        'general-q9', // woke up feeling fresh and rested
+        'general-q10', // daily life filled with things that interest me
       ],
       calc: 'sum',
       multiplier: 4, // 0-25 raw → 0-100, the standard WHO-5 percentage
@@ -93,52 +93,64 @@ export const GENERAL_SECTIONS: AssessmentSectionPreset = {
     {
       id: 'self-efficacy',
       label: 'Self-efficacy',
-      instrument: 'NGSE',
+      // Split at q17/q18 per the scoring sheet: "Self efficacy — add all
+      // scores for q11-17", "Resilience — add all scores for q18-24". 7/7.
+      // This overrides the note at the top of this file, which argued for the
+      // published NGSE (8 items) and BRS (6 items) instead. Decided 2026-09-03
+      // from the source spec; the live record uses the same split.
       questionIds: [
-        'block-1773736138170',
-        'block-1773736140137',
-        'block-1773736142436',
-        'block-1773736145417',
-        'block-1773736147587',
-        'block-1773736149658',
-        'block-1773736151870',
-        'block-1773736154075',
+        'general-q11',
+        'general-q12',
+        'general-q13',
+        'general-q14',
+        'general-q15',
+        'general-q16',
+        'general-q17',
       ],
       calc: 'sum',
       direction: 'higher-is-better',
+      bands: [
+        { min: 7, max: 20, label: 'Low' },
+        { min: 21, max: 29, label: 'Normal' },
+        { min: 30, max: 35, label: 'High' },
+      ],
     },
     {
       id: 'resilience',
       label: 'Resilience',
       instrument: 'BRS',
       questionIds: [
-        'block-1773736156172', // bounce back quickly
-        'block-1773736158289', // hard time making it through          (reverse)
-        'block-1773736161020', // does not take me long to recover
-        'block-1773736163250', // hard to snap back                    (reverse)
-        'block-1773736165457', // come through with little trouble
-        'block-1773736175000', // long time to get over set-backs      (reverse)
+        'general-q18', // even when things are tough, I perform well
+        'general-q19', // bounce back quickly
+        'general-q20', // hard time making it through          (reverse)
+        'general-q21', // does not take me long to recover
+        'general-q22', // hard to snap back                    (reverse)
+        'general-q23', // come through with little trouble
+        'general-q24', // long time to get over set-backs      (reverse)
       ],
       // The BRS alternates positive and negative wording. Without reversing the
       // negative items the two halves cancel and every respondent lands mid-scale.
       reverseQuestionIds: [
-        'block-1773736158289',
-        'block-1773736163250',
-        'block-1773736175000',
+        'general-q20',
+        'general-q22',
+        'general-q24',
       ],
-      calc: 'average', // BRS is reported as a 1-5 mean
-      offset: 1,       // option values are 0-4; BRS norms are stated on 1-5
+      // "Resilience — add all scores for q18-24": a sum of 7 items, not the
+      // published BRS 1-5 mean. `offset: 1` removed — the General options now
+      // carry explicit values (q11-q24 are 1-5), so there is no 0-based index
+      // to push back onto the scale.
+      calc: 'sum',
       direction: 'higher-is-better',
       bands: [
-        { min: 1, max: 2.99, label: 'Low' },
-        { min: 3, max: 4.3, label: 'Normal' },
-        { min: 4.31, max: 5, label: 'High' },
+        { min: 7, max: 20, label: 'Low' },
+        { min: 21, max: 29, label: 'Normal' },
+        { min: 30, max: 35, label: 'High' },
       ],
     },
   ],
   notes: [
-    'Anxiety (GAD-2) and Depression (PHQ-2) are now both complete: gen-anxiety-q2, gen-dep-q1 and gen-dep-q2 were copied in verbatim from the standalone Anxiety/Depression assessments (no new authoring) and appended to the General question bank.',
-    'gen-q2 / gen-q3 / gen-q4 (physical health, mental health, optimism) belong to no scale and are unscored.',
+    'Anxiety (GAD-2) and Depression (PHQ-2) are now both complete: general-q2, general-q3 and general-q4 were copied in verbatim from the standalone Anxiety/Depression assessments (no new authoring) and appended to the General question bank.',
+    'The old gen-q2 / gen-q3 / gen-q4 (physical health, mental health, optimism) belonged to no scale and have since been removed from the question bank. They are unrelated to the current general-q2/q3/q4 above, which are the GAD-2/PHQ-2 items. Historical answers to the removed items survive on stored results under `_legacy:gen-q2` etc.',
   ],
 };
 
@@ -151,16 +163,25 @@ export const BURNOUT_SECTIONS: AssessmentSectionPreset = {
       id: 'exhaustion',
       label: 'Exhaustion',
       instrument: 'BAT',
+      // BAT-23 allocation, 8/5/5/5, decided 2026-09-03. Exhaustion is q1-q8 by
+      // the published item order. Note this deliberately overrides the grouping
+      // comment at the top of this file: q1 ("detached from my work") and q2
+      // ("cynical about responsibilities") read as mental-distance items but
+      // are placed here to match BAT-23's structure. The live spec on the
+      // assessment record uses the same allocation — keep the two in step.
       questionIds: [
-        'burnout-q5',  // mentally drained
-        'burnout-q6',  // physically tired
-        'burnout-q7',  // unmotivated
-        'burnout-q8',  // overwhelmed by workload
-        'burnout-q9',  // under-appreciated
-        'burnout-q10', // need a long break
+        'burnout-q1',  // detached from my work
+        'burnout-q2',  // cynical about responsibilities
+        'burnout-q3',  // mentally drained
+        'burnout-q4',  // physically tired
+        'burnout-q5',  // unmotivated
+        'burnout-q6',  // overwhelmed by workload
+        'burnout-q7',  // under-appreciated
+        'burnout-q8',  // need a long break
       ],
       calc: 'average',
-      offset: 1,
+      // `offset: 1` removed 2026-09-03: the Burnout options now carry explicit
+      // values 1-5, so there is no 0-based index to push back onto the scale.
       direction: 'higher-is-distress',
       bands: BAT_BANDS(),
     },
@@ -168,16 +189,23 @@ export const BURNOUT_SECTIONS: AssessmentSectionPreset = {
       id: 'mental-distancing',
       label: 'Mental distancing',
       instrument: 'BAT',
+      // `burnout-q9` was briefly retired as a duplicate of q10 and then
+      // RESTORED 2026-09-03. It was never a duplicate: its text in
+      // `questions[]` had been overwritten with q10's autopilot wording, while
+      // the original survived as the `title` on the same block in
+      // `daily_content`. Restoring that text makes Burnout 23 items again.
+      // Do not "de-duplicate" these two on the strength of matching text —
+      // check `daily_content` first.
       questionIds: [
-        'burnout-q2',           // detached from my work
-        'burnout-q4',           // cynical about responsibilities
-        'block-1773730436410',  // functioning on autopilot
-        'block-1773730438342',  // strong aversion towards my job
-        'block-1773730440488',  // indifferent about my job
-        'block-1773730442601',  // cynical about what my work means
+        'burnout-q9',   // struggle to find any enthusiasm for my work (restored)
+        'burnout-q10',  // functioning on autopilot
+        'burnout-q11',  // strong aversion towards my job — previously scored by nothing
+        'burnout-q12',  // indifferent about my job
+        'burnout-q13',  // cynical about what my work means
       ],
       calc: 'average',
-      offset: 1,
+      // `offset: 1` removed 2026-09-03: the Burnout options now carry explicit
+      // values 1-5, so there is no 0-based index to push back onto the scale.
       direction: 'higher-is-distress',
       bands: BAT_BANDS(),
     },
@@ -186,14 +214,15 @@ export const BURNOUT_SECTIONS: AssessmentSectionPreset = {
       label: 'Cognitive impairment',
       instrument: 'BAT',
       questionIds: [
-        'block-1773730444594', // trouble staying focused
-        'block-1773730446622', // struggle to think clearly
-        'block-1773730448735', // forgetful and distracted
-        'block-1773730450593', // trouble concentrating
-        'block-1773730452581', // mistakes because mind elsewhere
+        'burnout-q14', // trouble staying focused
+        'burnout-q15', // struggle to think clearly
+        'burnout-q16', // forgetful and distracted
+        'burnout-q17', // trouble concentrating
+        'burnout-q18', // mistakes because mind elsewhere
       ],
       calc: 'average',
-      offset: 1,
+      // `offset: 1` removed 2026-09-03: the Burnout options now carry explicit
+      // values 1-5, so there is no 0-based index to push back onto the scale.
       direction: 'higher-is-distress',
       bands: BAT_BANDS(),
     },
@@ -202,14 +231,15 @@ export const BURNOUT_SECTIONS: AssessmentSectionPreset = {
       label: 'Emotional impairment',
       instrument: 'BAT',
       questionIds: [
-        'block-1773730454685', // unable to control emotion
-        'block-1773730456837', // do not recognise my emotional reactions
-        'block-1773730459006', // irritable when things do not go my way
-        'block-1773730461022', // upset or sad without knowing why
-        'block-1773732058231', // overreact unintentionally
+        'burnout-q19', // unable to control emotion
+        'burnout-q20', // do not recognise my emotional reactions
+        'burnout-q21', // irritable when things do not go my way
+        'burnout-q22', // upset or sad without knowing why
+        'burnout-q23', // overreact unintentionally
       ],
       calc: 'average',
-      offset: 1,
+      // `offset: 1` removed 2026-09-03: the Burnout options now carry explicit
+      // values 1-5, so there is no 0-based index to push back onto the scale.
       direction: 'higher-is-distress',
       bands: BAT_BANDS(),
     },
@@ -217,7 +247,7 @@ export const BURNOUT_SECTIONS: AssessmentSectionPreset = {
   overallCalc: {
     label: 'Overall burnout risk',
     calc: 'average', // mean across all core items, per the spec
-    offset: 1,
+    // `offset: 1` removed 2026-09-03 — see the section comment above.
     direction: 'higher-is-distress',
     bands: BAT_BANDS(),
   },
@@ -286,7 +316,7 @@ export const DEPRESSION_SCORING: AssessmentSectionPreset = {
   overallCalc: {
     label: 'Depression (PHQ-9)',
     calc: 'sum',
-    questionIds: ['dep-q1', 'dep-q2', 'dep-q3', 'dep-q4', 'dep-q5', 'dep-q6', 'dep-q7', 'dep-q8', 'dep-q9'],
+    questionIds: ['depression-q1', 'depression-q2', 'depression-q3', 'depression-q4', 'depression-q5', 'depression-q6', 'depression-q7', 'depression-q8', 'depression-q9'],
     direction: 'higher-is-distress',
     bands: [
       { min: 0, max: 4, label: 'Minimal', description: 'Minimal depressive symptoms.' },
@@ -298,7 +328,7 @@ export const DEPRESSION_SCORING: AssessmentSectionPreset = {
   },
   notes: [
     'resultCategories previously stored one single "Score range: 0-27" band. Replaced with standard PHQ-9 cutoffs.',
-    "dep-q9 (\"Feeling that life is meaningless\") is a softened rewrite of the standard PHQ-9 item 9, which is normally about self-harm/suicidal ideation. Flagged separately in src/docs/assessments/depression.md — confirm this rewording was a deliberate safety decision.",
+    "depression-q9 (\"Feeling that life is meaningless\") is a softened rewrite of the standard PHQ-9 item 9, which is normally about self-harm/suicidal ideation. Flagged separately in src/docs/assessments/depression.md — confirm this rewording was a deliberate safety decision.",
   ],
 };
 
@@ -312,7 +342,7 @@ export const STRESS_SCORING: AssessmentSectionPreset = {
   overallCalc: {
     label: 'Stress',
     calc: 'sum',
-    questionIds: ['stress-q4', 'stress-q5', 'stress-q6', 'stress-q7', 'stress-q8', 'stress-q9', 'stress-q10'],
+    questionIds: ['stress-q1', 'stress-q2', 'stress-q3', 'stress-q4', 'stress-q5', 'stress-q6', 'stress-q7'],
     direction: 'higher-is-distress',
     bands: [
       { min: 0, max: 7, label: 'Low Stress', description: 'You are managing stress well.' },
@@ -371,8 +401,8 @@ export const BALANCE_SCORING: AssessmentSectionPreset = {
   overallCalc: {
     label: 'Balance',
     calc: 'sum',
-    questionIds: ['bal-q1', 'bal-q2', 'bal-q3', 'bal-q4', 'bal-q5', 'bal-q6', 'bal-q7', 'bal-q8'],
-    reverseQuestionIds: ['bal-q1', 'bal-q3', 'bal-q4', 'bal-q5', 'bal-q7'],
+    questionIds: ['balance-q1', 'balance-q2', 'balance-q3', 'balance-q4', 'balance-q5', 'balance-q6', 'balance-q7', 'balance-q8'],
+    reverseQuestionIds: ['balance-q1', 'balance-q3', 'balance-q4', 'balance-q5', 'balance-q7'],
     direction: 'higher-is-distress',
     bands: [
       { min: 0, max: 10, label: 'Balanced', description: 'Your work-life balance is healthy.' },
@@ -381,7 +411,7 @@ export const BALANCE_SCORING: AssessmentSectionPreset = {
     ],
   },
   notes: [
-    'bal-q2 ("My work drains most of my energy"), bal-q6 ("I feel guilty when I take breaks"), and bal-q8 ("I feel constantly on") are negatively worded against the other 5 positive items and were summed raw with no reversal. Verified: a consistently well-balanced response (max on positives, min on negatives) scored 28/32 -- inside "Imbalanced" -- before this fix. Do not trust any historical Balance result computed before this change.',
+    'balance-q2 ("My work drains most of my energy"), balance-q6 ("I feel guilty when I take breaks"), and balance-q8 ("I feel constantly on") are negatively worded against the other 5 positive items and were summed raw with no reversal. Verified: a consistently well-balanced response (max on positives, min on negatives) scored 28/32 -- inside "Imbalanced" -- before this fix. Do not trust any historical Balance result computed before this change.',
     'Bands rescaled from the stored 12/24/40 split to the true post-reversal 0-32 max.',
   ],
 };

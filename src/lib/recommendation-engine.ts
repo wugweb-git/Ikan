@@ -2,29 +2,33 @@
 // falls back to built-in defaults only when no admin rules exist.
 
 import { apiClient } from './api-client';
+import {
+  compareSeverity, tierFor, isSeverityLevel,
+  type SeverityLevel as ClinicalSeverity, type ResponseTier,
+} from './scoring-engine';
 
-export type SeverityLevel = 'low' | 'moderate' | 'high';
+/**
+ * The engine's three-way level is the **response tier**, not a severity.
+ *
+ * It was declared here as `SeverityLevel = 'low' | 'moderate' | 'high'` while
+ * the catalog carried seven `severity_level` terms, and a hand-written
+ * `SEVERITY_ORDER` forced all seven onto one line — asserting that `low` sits
+ * between `minimal` and `mild`, and `high` between `moderately-severe` and
+ * `severe`. Nobody decided that; it fell out of writing a lookup table.
+ *
+ * The two vocabularies are separate (scoring-engine.ts):
+ *   - clinical severity, 5 ordered terms — what **rules** match on
+ *   - response tier, 3 ordered terms — what **copy and tone** branch on
+ *
+ * This alias keeps existing consumers compiling; it is a historical spelling
+ * of `ResponseTier`.
+ */
+export type SeverityLevel = ResponseTier;
 
-// Extended severity mapping from scoring profiles
-export type ExtendedSeverityLevel = 'minimal' | 'low' | 'mild' | 'moderate' | 'moderately-severe' | 'high' | 'severe';
+/** @deprecated `low`/`high` are tiers, not severities. Use ClinicalSeverity. */
+export type ExtendedSeverityLevel = ClinicalSeverity | 'low' | 'high';
 
-/** Map extended severity → engine's 3-tier severity for rule matching */
-function normalizeToEngineSeverity(extended: string): SeverityLevel {
-  switch (extended) {
-    case 'minimal':
-    case 'low':
-      return 'low';
-    case 'mild':
-    case 'moderate':
-      return 'moderate';
-    case 'moderately-severe':
-    case 'high':
-    case 'severe':
-      return 'high';
-    default:
-      return 'moderate';
-  }
-}
+export type { ClinicalSeverity };
 
 export interface SeverityBand {
   key: SeverityLevel;
@@ -262,12 +266,21 @@ export async function initEngineConfig(): Promise<void> {
 
 interface AdminRule {
   id: string;
+  /** Category slug, lower-cased on read so the join cannot fail on casing. */
   assessment_category: string;
   min_severity: string;
   recommendation_type: 'equip' | 'resource' | 'assessment';
   target_id: string;
   priority: number;
   rationale: string;
+  /**
+   * Copy, authored on the rule. Empty means render nothing — the engine no
+   * longer substitutes a slogan ("A guided program that can help right now",
+   * "Recommended reading", "Track your progress") for missing content.
+   */
+  title: string;
+  body: string;
+  cta: string;
 }
 
 let _adminRulesCache: AdminRule[] | null = null;
@@ -279,41 +292,53 @@ export async function loadAdminRules(): Promise<void> {
     if (data?.rules && Array.isArray(data.rules)) {
       _adminRulesCache = data.rules.map((r: any) => ({
         id: r.id,
-        assessment_category: r.assessment_category || '',
+        assessment_category: String(r.assessment_category || '').trim().toLowerCase(),
         min_severity: r.min_severity || 'moderate',
         recommendation_type: r.recommendation_type || 'equip',
         target_id: r.target_id || r.equip_id || '',
         priority: r.priority || 10,
         rationale: r.rationale || '',
+        title: r.title || '',
+        body: r.body || '',
+        cta: r.cta || '',
       }));
-      console.log(`[RecommendationEngine] Loaded ${_adminRulesCache.length} admin rules`);
+      console.log(`[RecommendationEngine] Loaded ${_adminRulesCache?.length ?? 0} admin rules`);
     }
   } catch {
     // Admin rules not available
   }
 }
 
-/** Severity ordering for comparison */
-const SEVERITY_ORDER: Record<string, number> = {
-  'minimal': 0, 'low': 1, 'mild': 2, 'moderate': 3,
-  'moderately-severe': 4, 'high': 5, 'severe': 6,
-};
-
-/** Check if actual severity meets or exceeds the rule's min_severity threshold */
+/**
+ * Does the measured severity meet the rule's threshold?
+ *
+ * Both sides are clinical severity (5 ordered terms). An unrecognised value on
+ * either side means no match — previously both defaulted to `moderate`, so a
+ * typo'd threshold silently became a live one.
+ */
 function severityMeetsThreshold(actual: string, minRequired: string): boolean {
-  const actualOrder = SEVERITY_ORDER[actual] ?? 3;
-  const requiredOrder = SEVERITY_ORDER[minRequired] ?? 3;
-  return actualOrder >= requiredOrder;
+  if (!isSeverityLevel(actual) || !isSeverityLevel(minRequired)) return false;
+  return compareSeverity(actual, minRequired) >= 0;
 }
 
-/** Find admin rules matching a category and severity */
-function findMatchingAdminRules(category: string, severity: SeverityLevel): AdminRule[] {
+/**
+ * Rules matching this assessment's category and severity.
+ *
+ * The join key is the assessment's **category slug** (`anxiety`, `burnout`, …),
+ * which both sides genuinely hold: `assessment_def.category` and
+ * `recommendation_rule.assessment_category`. It used to compare a capitalised
+ * display word ("Anxiety") against an assessment id, so no rule had ever
+ * matched anything — every recommendation in the product came from a hardcoded
+ * default.
+ */
+function findMatchingAdminRules(category: string, severity: ClinicalSeverity | null): AdminRule[] {
   if (!_adminRulesCache || _adminRulesCache.length === 0) return [];
-  const normalizedSeverity = severity as string;
+  if (!category || !severity) return [];
+  const key = category.trim().toLowerCase();
   return _adminRulesCache
     .filter(rule =>
-      rule.assessment_category === category &&
-      severityMeetsThreshold(normalizedSeverity, rule.min_severity)
+      rule.assessment_category === key &&
+      severityMeetsThreshold(severity, rule.min_severity)
     )
     .sort((a, b) => a.priority - b.priority);
 }
@@ -330,13 +355,40 @@ interface ScoringProfileBand {
   max: number;
   color?: string;
   description?: string;
+  /** v2: the clinical term the system reasons on, separate from `label`. */
+  severity_ref?: string;
+  tone?: string;
 }
 
 interface ScoringProfile {
   id: string;
-  method: string;
-  severity_bands: ScoringProfileBand[];
+  method?: string;
+  /** v2 field. */
+  bands?: ScoringProfileBand[];
+  /** v1 field, kept so an un-migrated profile still resolves. */
+  severity_bands?: ScoringProfileBand[];
   normalize_to_100?: boolean;
+}
+
+/** v2 `bands` if present, else v1 `severity_bands`. */
+function bandsOf(profile: ScoringProfile): ScoringProfileBand[] {
+  return profile.bands ?? profile.severity_bands ?? [];
+}
+
+/**
+ * Band containing `score`, half-open: [min, max), last band closed.
+ * Matches scoring-engine's bandForValue so the engine and the result page
+ * cannot disagree about which band a boundary score falls in.
+ */
+function bandAt(profile: ScoringProfile, score: number): ScoringProfileBand | null {
+  const sorted = [...bandsOf(profile)].sort((a, b) => a.min - b.min);
+  if (sorted.length === 0) return null;
+  const last = sorted[sorted.length - 1];
+  for (const b of sorted) {
+    if (b === last) { if (score >= b.min && score <= b.max) return b; }
+    else if (score >= b.min && score < b.max) return b;
+  }
+  return null;
 }
 
 let _scoringProfilesCache: Record<string, ScoringProfile> | null = null;
@@ -344,7 +396,12 @@ let _scoringProfilesCache: Record<string, ScoringProfile> | null = null;
 /** Pre-load scoring profiles from backend for score→severity mapping */
 export async function loadScoringProfiles(): Promise<void> {
   try {
-    const data = await apiClient.request('/admin/scoring-profiles', { method: 'GET' }, true, 0).catch(() => null);
+    // Read path first: the admin route is requireAdmin, so a normal user taking
+    // an assessment got a 403 here and the cache stayed null — which meant no
+    // clinical severity and therefore no rule match, for everyone but admins.
+    const data =
+      await apiClient.request('/scoring-profiles', { method: 'GET' }, true, 0).catch(() => null)
+      ?? await apiClient.request('/admin/scoring-profiles', { method: 'GET' }, true, 0).catch(() => null);
     if (data?.profiles && Array.isArray(data.profiles)) {
       _scoringProfilesCache = {};
       for (const profile of data.profiles) {
@@ -356,27 +413,30 @@ export async function loadScoringProfiles(): Promise<void> {
   }
 }
 
+/**
+ * Profiles loaded by `loadScoringProfiles()`, or null if that has not run or
+ * failed. The player needs these to score against a spec.
+ */
+export function getLoadedScoringProfiles(): Record<string, any> | null {
+  return _scoringProfilesCache;
+}
+
 /** Get severity from a scoring profile's bands (raw score, not percentage) */
-export function getSeverityFromProfile(score: number, profileId: string): SeverityLevel {
-  if (!_scoringProfilesCache || !_scoringProfilesCache[profileId]) {
-    // Fallback to percentage-based
-    return getSeverity(score, 100);
-  }
-  const profile = _scoringProfilesCache[profileId];
-  for (const band of profile.severity_bands) {
-    if (score >= band.min && score <= band.max) {
-      return normalizeToEngineSeverity(band.label.toLowerCase().replace(/\s+/g, '-'));
-    }
-  }
-  // Fallback: if score exceeds all bands, treat as highest severity
-  return 'high';
+export function getSeverityFromProfile(score: number, profileId: string): ClinicalSeverity | null {
+  const profile = _scoringProfilesCache?.[profileId];
+  if (!profile) return null;
+  const band = bandAt(profile, score);
+  // The clinical term is a field on the band. It used to be derived by
+  // lower-casing and hyphenating the *user-facing label*, which resolved
+  // "Moderately severe" by luck and turned "Poor Sleep" into `poor-sleep` —
+  // not a severity at all. A band declaring none is unbanded, not "high".
+  return isSeverityLevel(band?.severity_ref) ? band!.severity_ref as ClinicalSeverity : null;
 }
 
 /** Get the detailed severity band info from a scoring profile */
 export function getSeverityBandFromProfile(score: number, profileId: string): ScoringProfileBand | null {
-  if (!_scoringProfilesCache || !_scoringProfilesCache[profileId]) return null;
-  const profile = _scoringProfilesCache[profileId];
-  return profile.severity_bands.find(band => score >= band.min && score <= band.max) || null;
+  const profile = _scoringProfilesCache?.[profileId];
+  return profile ? bandAt(profile, score) : null;
 }
 
 // ══════════════════════════════════════════════════════════════════
@@ -427,10 +487,33 @@ export interface EngineResult {
   }[];
   severityMessage: string;
   showProfessionalSupportNote: boolean;
+  /**
+   * Clinical severity (5 terms). Null when the assessment has no scoring
+   * profile or the band declares no `severity_ref`. `severity` above is the
+   * 3-term response tier derived from this — the two are different vocabularies.
+   */
+  severityLevel?: ClinicalSeverity | null;
+  /** Category slug the rules matched on. */
+  category?: string;
+}
+
+export interface EvaluateInput {
+  /** Assessment slug. Display/provenance only — never a matching key. */
+  slug?: string;
+  /**
+   * The assessment's category slug (`anxiety`, `burnout`, …). This is the
+   * rule-matching key, and it must be passed: without it no admin rule can
+   * match, which is the state the product was in.
+   */
+  category?: string;
+  score: number;
+  maxScore: number;
+  scoringProfileId?: string;
 }
 
 // Main Evaluation Function — uses cached config from backend
-export function evaluateAssessment(assessmentSlug: string, score: number, maxScore: number, scoringProfileId?: string): EngineResult {
+export function evaluateAssessment(input: EvaluateInput): EngineResult {
+  const { slug, category, score, maxScore, scoringProfileId } = input;
   const config = _cachedConfig || {
     rules: DEFAULT_RECOMMENDATION_RULES,
     overlapMap: DEFAULT_OVERLAP_MAP,
@@ -439,77 +522,87 @@ export function evaluateAssessment(assessmentSlug: string, score: number, maxSco
     loadedFromBackend: false,
   };
 
-  const severity = scoringProfileId
-    ? getSeverityFromProfile(score, scoringProfileId)
-    : getSeverity(score, maxScore);
-  const rule = config.rules[severity] || DEFAULT_RECOMMENDATION_RULES[severity];
-  
-  // ── Admin Rules Integration ────────────────────────────────────
-  // Check if admin-configured rules exist for this assessment's category
-  const lowerSlug = (assessmentSlug || '').toLowerCase();
-  const matchingAdminRules = findMatchingAdminRules(lowerSlug, severity);
-  
-  // Find primary equip recommendation from admin rules
+  /**
+   * Clinical severity, from the band the score actually falls in. Null when the
+   * assessment has no scoring profile, or the band declares no severity_ref —
+   * in which case no rule can match, rather than a severity being invented.
+   */
+  const severityLevel: ClinicalSeverity | null =
+    scoringProfileId ? getSeverityFromProfile(score, scoringProfileId) : null;
+
+  /**
+   * Response tier — what copy and tone branch on. Derived from the clinical
+   * severity when there is one; otherwise the legacy percentage bands, so an
+   * assessment without a spec still renders something.
+   */
+  const tier: ResponseTier = severityLevel ? tierFor(severityLevel) : getSeverity(score, maxScore);
+  const rule = config.rules[tier] || DEFAULT_RECOMMENDATION_RULES[tier];
+
+  // ── Admin rules ─────────────────────────────────────────────────
+  // Matched on the category slug and the 5-term clinical severity. The old
+  // code compared a capitalised display word against an assessment id, so no
+  // rule ever matched and every recommendation came from a hardcoded default.
+  const matchingAdminRules = findMatchingAdminRules(category ?? '', severityLevel);
+
   const adminEquipRule = matchingAdminRules.find(r => r.recommendation_type === 'equip');
   const adminResourceRules = matchingAdminRules.filter(r => r.recommendation_type === 'resource');
   const adminAssessmentRules = matchingAdminRules.filter(r => r.recommendation_type === 'assessment');
 
-  // Determine relevant program — prefer admin rule, then slug-based, then default
+  /**
+   * Target program comes from a matching rule, or nowhere.
+   *
+   * Removed: a slug substring sniff (`slug.includes('sleep')` → 'sleep-tight')
+   * and a fall-through to `rule.recommend.equipIds[0]`. Between them they meant
+   * every user got a hardcoded program keyed only on a coarse tier, dressed up
+   * as a recommendation. No matching rule now means no primary action.
+   */
   let targetProgramId = adminEquipRule?.target_id || '';
-  
-  if (!targetProgramId) {
-    // Fallback: slug-based matching
-    if (lowerSlug.includes('sleep')) targetProgramId = 'sleep-tight';
-    else if (lowerSlug.includes('stress') || lowerSlug.includes('anxiety')) targetProgramId = 'stress';
-    else if (lowerSlug.includes('burnout')) targetProgramId = 'burnout';
-  }
-  
-  // If specific program not found but rule suggests equip_program, pick from admin-configured equipIds
-  if (!targetProgramId && rule.recommend.primary.includes('equip_program')) {
-     targetProgramId = rule.recommend.equipIds?.[0] || '';
-  }
   if (targetProgramId) targetProgramId = resolveProgramSlug(targetProgramId);
 
-  // Cross-Program Overlap (Add to secondary)
+  // Cross-program overlap, keyed on category rather than a substring of the slug.
   const relatedPrograms: string[] = [];
-  // 1. Check strict escalation rules
-  const escalation = config.escalationRules.find(r => 
-    (lowerSlug.includes(r.if.assessment)) && r.if.severity === severity
-  );
+  const cat = (category ?? '').trim().toLowerCase();
+  const escalation = cat
+    ? config.escalationRules.find(r => r.if.assessment === cat && r.if.severity === tier)
+    : undefined;
   if (escalation) {
     relatedPrograms.push(...escalation.alsoRecommend);
-  } else {
-    // 2. Fallback to overlap map
-    const genericOverlap = Object.entries(config.overlapMap).find(([key]) => lowerSlug.includes(key));
-    if (genericOverlap && severity !== 'low') {
-       relatedPrograms.push(...genericOverlap[1]);
-    }
+  } else if (cat && config.overlapMap[cat] && tier !== 'low') {
+    relatedPrograms.push(...config.overlapMap[cat]);
   }
 
   // Build the result object
   const result: EngineResult = {
-    severity,
-    assessmentSlug: assessmentSlug || undefined,
+    severity: tier,
+    /** The 5-term clinical severity. Null when the score is unbanded. */
+    severityLevel,
+    assessmentSlug: slug || undefined,
+    category: category || undefined,
     score,
     maxScore,
     severityMessage: adminEquipRule?.rationale || rule.recommend.message,
     primaryAction: {
-      type: (targetProgramId || rule.recommend.primary.includes('equip_program')) ? 'equip_program' : 'none',
+      // No matching rule means no primary action. It used to claim
+      // 'equip_program' whenever the tier's default mentioned one, and then
+      // fill in a hardcoded programme.
+      type: targetProgramId ? 'equip_program' : 'none',
       programId: targetProgramId,
-      title: "A guided program that can help right now",
-      body: adminEquipRule?.rationale || "Based on your responses, this program focuses on skills that can help reduce what you're experiencing.",
-      cta: "Start program"
+      // Copy is authored on the rule. Empty renders nothing rather than the
+      // former hardcoded "A guided program that can help right now".
+      title: adminEquipRule?.title || '',
+      body: adminEquipRule?.body || adminEquipRule?.rationale || '',
+      cta: adminEquipRule?.cta || ''
     },
     secondaryActions: [],
-    showProfessionalSupportNote: severity === 'high'
+    showProfessionalSupportNote: tier === 'high'
   };
 
   // Add admin-configured resource recommendations
   adminResourceRules.forEach(rule => {
     result.secondaryActions.push({
       type: 'resource',
-      title: 'Recommended reading',
-      label: rule.rationale || 'View Resource',
+      title: rule.title || '',
+      label: rule.rationale || '',
       route: `/resource/${rule.target_id}`,
     });
   });
@@ -518,8 +611,8 @@ export function evaluateAssessment(assessmentSlug: string, score: number, maxSco
   adminAssessmentRules.forEach(rule => {
     result.secondaryActions.push({
       type: 'assessment',
-      title: 'Follow-up assessment',
-      label: rule.rationale || 'Take Assessment',
+      title: rule.title || '',
+      label: rule.rationale || '',
       route: `/assessment-flow?id=${rule.target_id}`,
     });
   });

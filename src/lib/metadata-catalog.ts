@@ -31,7 +31,17 @@ export type MetadataType =
   | 'media_type'
   | 'ema_category'
   | 'scoring_method'
+  /**
+   * Clinical severity, 5 ordered terms (PHQ-9/GAD-7 convention).
+   * `low` and `high` used to live here too; they are a different, coarser
+   * family and now live in `response_tier`. They were never a single scale:
+   * `minimal` and `low` shared both colour and icon because they were one
+   * tier under two names, and no row carried an `order`, so the seven-way
+   * ordering existed only as a lookup table in recommendation-engine.ts.
+   */
   | 'severity_level'
+  /** What the product does about a score. Drives tone and copy, 3 ordered. */
+  | 'response_tier'
   | 'account_type'
   | 'day_config_type'
   | 'exercise_subtype'
@@ -69,7 +79,7 @@ export const METADATA_TYPE_GROUPS: MetadataGroup[] = [
     label: 'Assessments & Scoring',
     icon: 'clipboard-list',
     description: 'Assessment types, scoring methods, severity levels, and check-in categories',
-    types: ['assessment_type', 'scoring_method', 'severity_level', 'ema_category', 'checkin_block_type'],
+    types: ['assessment_type', 'scoring_method', 'severity_level', 'response_tier', 'ema_category', 'checkin_block_type'],
   },
   {
     key: 'consultants',
@@ -108,6 +118,7 @@ export const METADATA_TYPE_LABELS: Record<MetadataType, string> = {
   ema_category: 'Check-in Categories',
   scoring_method: 'Scoring Methods',
   severity_level: 'Severity Levels',
+  response_tier: 'Response Tiers',
   account_type: 'Account Types',
   day_config_type: 'Day Config Types',
   exercise_subtype: 'Exercise Subtypes',
@@ -132,6 +143,7 @@ export const METADATA_TYPE_ICONS: Record<MetadataType, string> = {
   ema_category: 'activity',
   scoring_method: 'bar-chart',
   severity_level: 'signal',
+  response_tier: 'trending-up',
   account_type: 'user-check',
   day_config_type: 'calendar',
   exercise_subtype: 'pen-tool',
@@ -178,6 +190,28 @@ export const ALL_ICON_KEYS = [
 // Seed data — consolidated from all previously hardcoded values
 // Every item has an icon assigned for admin UI rendering
 // ═══════════════════════════════════════════════════════════════
+
+export interface SeedItem {
+  name: string;
+  slug: string;
+  type: MetadataType;
+  icon?: string;
+  color?: string;
+  description?: string;
+  /**
+   * Rank within its type, low to high. Required on ordered vocabularies
+   * (`severity_level`, `response_tier`) so the ordering lives in the catalog
+   * rather than in a lookup table someone wrote by hand.
+   */
+  order?: number;
+  /**
+   * For `severity_level` rows only: which `response_tier` this severity maps
+   * to. The authoritative severity -> tier map, held as data so it is visible
+   * and editable in the catalog UI. A scoring profile may override it per
+   * instrument via `tier_map`.
+   */
+  tier?: string;
+}
 
 function s(name: string, type: MetadataType, slug?: string, extra?: Partial<SeedItem>): SeedItem {
   return {
@@ -370,13 +404,20 @@ export const METADATA_CATALOG_ITEMS: SeedItem[] = [
   s('Custom',   'scoring_method', 'custom',   { icon: 'sparkles',    description: 'Custom scoring logic per assessment' }),
 
   // ── Severity Levels ────────────────────────────────────────────
-  s('Minimal',           'severity_level', 'minimal',           { icon: 'circle-check',    color: '#22C55E', description: 'No significant concerns' }),
-  s('Low',               'severity_level', 'low',               { icon: 'circle-check',    color: '#22C55E', description: 'Minor concerns, self-monitoring suggested' }),
-  s('Mild',              'severity_level', 'mild',              { icon: 'activity',        color: '#3B82F6', description: 'Mild symptoms present' }),
-  s('Moderate',          'severity_level', 'moderate',          { icon: 'alert-triangle',  color: '#EAB308', description: 'Moderate symptoms — consider guided support' }),
-  s('Moderately Severe', 'severity_level', 'moderately-severe', { icon: 'alert-triangle',  color: '#F97316', description: 'Significant symptoms — guided program recommended' }),
-  s('High',              'severity_level', 'high',              { icon: 'alert-circle',    color: '#EF4444', description: 'High distress — structured support recommended' }),
-  s('Severe',            'severity_level', 'severe',            { icon: 'shield-alert',    color: '#D4183D', description: 'Severe symptoms — professional help strongly recommended' }),
+  // Clinical severity — 5 terms, ordered. A band's `severity_ref` points here.
+  s('Minimal',           'severity_level', 'minimal',           { tier: 'low', order: 0, icon: 'circle-check',    color: '#22C55E', description: 'No significant concerns' }),
+  s('Mild',              'severity_level', 'mild',              { tier: 'low', order: 1, icon: 'activity',        color: '#3B82F6', description: 'Mild symptoms present' }),
+  s('Moderate',          'severity_level', 'moderate',          { tier: 'moderate', order: 2, icon: 'alert-triangle',  color: '#EAB308', description: 'Moderate symptoms — consider guided support' }),
+  s('Moderately Severe', 'severity_level', 'moderately-severe', { tier: 'high', order: 3, icon: 'alert-triangle',  color: '#F97316', description: 'Significant symptoms — guided program recommended' }),
+  s('Severe',            'severity_level', 'severe',            { tier: 'high', order: 4, icon: 'shield-alert',    color: '#D4183D', description: 'Severe symptoms — professional help strongly recommended' }),
+
+  // Response tier — 3 terms, ordered. Derived from severity via the tier map
+  // (default in scoring-engine.ts, overridable per scoring profile). `low` and
+  // `high` moved here out of severity_level; `moderate` exists in both, which
+  // is fine — they are different types.
+  s('Low',               'response_tier',  'low',               { order: 0, icon: 'circle-check',    color: '#22C55E', description: 'Self-monitoring suggested' }),
+  s('Moderate',          'response_tier',  'moderate',          { order: 1, icon: 'alert-triangle',  color: '#EAB308', description: 'Guided support suggested' }),
+  s('High',              'response_tier',  'high',              { order: 2, icon: 'alert-circle',    color: '#EF4444', description: 'Structured support recommended' }),
 
   // ── Account Types ──────────────────────────────────────────────
   s('User',       'account_type', 'user',       { icon: 'user',       color: '#22C55E', description: 'Standard user account' }),

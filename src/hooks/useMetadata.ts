@@ -20,6 +20,15 @@ export interface MetadataOption {
   icon?: string;
   color?: string;
   description?: string;
+  /** Rank within an ordered vocabulary (severity_level, response_tier). */
+  order?: number;
+  /**
+   * `severity_level` rows only: the response_tier this severity maps to.
+   * This is the authoritative severity -> tier map; scoring-engine's
+   * DEFAULT_TIER_MAP is only a fallback for before the catalog loads, so
+   * dropping this field here silently reverts the map to code.
+   */
+  tier?: string;
 }
 
 interface MetadataBucket {
@@ -40,6 +49,8 @@ interface MetadataBucket {
   emaCategories: MetadataOption[];
   scoringMethods: MetadataOption[];
   severityLevels: MetadataOption[];
+  /** Response tiers (low/moderate/high) — derived from severity via tier_map. */
+  responseTiers: MetadataOption[];
   accountTypes: MetadataOption[];
   dayConfigTypes: MetadataOption[];
   exerciseSubtypes: MetadataOption[];
@@ -69,6 +80,7 @@ const EMPTY_BUCKET: MetadataBucket = {
   emaCategories: [],
   scoringMethods: [],
   severityLevels: [],
+  responseTiers: [],
   accountTypes: [],
   dayConfigTypes: [],
   exerciseSubtypes: [],
@@ -94,6 +106,7 @@ const TYPE_TO_BUCKET: Record<string, keyof MetadataBucket> = {
   ema_category: 'emaCategories',
   scoring_method: 'scoringMethods',
   severity_level: 'severityLevels',
+  response_tier: 'responseTiers',
   account_type: 'accountTypes',
   day_config_type: 'dayConfigTypes',
   exercise_subtype: 'exerciseSubtypes',
@@ -104,13 +117,24 @@ const TYPE_TO_BUCKET: Record<string, keyof MetadataBucket> = {
 let _cache: MetadataBucket | null = null;
 let _fetchPromise: Promise<void> | null = null;
 
-function mapItem(item: any): MetadataOption {
+/**
+ * KV `category:` row → MetadataOption.
+ *
+ * Exported for the drift assertion in the scoring verification harness: a
+ * field the catalog defines but this function forgets to copy is invisible at
+ * runtime and silently reverts behaviour to a code fallback. That is exactly
+ * how `tier` was dropped once, quietly turning the severity -> tier map back
+ * into DEFAULT_TIER_MAP after it had been moved into data.
+ */
+export function mapItem(item: any): MetadataOption {
   return {
     label: item.name || item.label || '',
     value: item.slug || item.value || (item.name || '').toLowerCase().replace(/\s+/g, '-'),
     icon: item.icon,
     color: item.color,
     description: item.description,
+    order: typeof item.order === 'number' ? item.order : undefined,
+    tier: typeof item.tier === 'string' ? item.tier : undefined,
   };
 }
 
@@ -147,6 +171,7 @@ async function fetchAllMetadata(): Promise<MetadataBucket> {
       emaCategories: [],
       scoringMethods: [],
       severityLevels: [],
+      responseTiers: [],
       accountTypes: [],
       dayConfigTypes: [],
       exerciseSubtypes: [],

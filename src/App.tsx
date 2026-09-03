@@ -579,7 +579,7 @@ function AppContent() {
         case '/assessment-flow':
           return withSuspense(<AssessmentFlow assessmentId={queryParams.id || queryParams.type} onNavigate={handleNavigate} />);
         case '/assessment-results':
-          return withSuspense(<AssessmentResults onNavigate={handleNavigate} />);
+          return withSuspense(<AssessmentResults resultId={queryParams.id} onNavigate={handleNavigate} />);
         case '/assessment-history-detail':
           return withSuspense(<AssessmentHistoryDetail onNavigate={handleNavigate} />);
         case '/equip':

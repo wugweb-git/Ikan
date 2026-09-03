@@ -10,6 +10,8 @@ import { apiClient } from '../../lib/api-client';
 import { computeSectionScores, severityForSection, resolveAnswerValue } from '../../lib/assessment-sections';
 import { triggerCrisisSupport } from '../safety/CrisisSupport';
 import { SECTION_PRESETS } from '../../lib/assessment-section-presets';
+import { buildScoringContext, toSectionScoreResult } from '../../lib/scoring-context';
+import { computeScores } from '../../lib/scoring-engine';
 import { slugify } from '../../lib/slug';
 import { ProgressIndicator } from '../ui/progress-indicator';
 import { AssessmentResults } from './AssessmentResults';
@@ -66,7 +68,7 @@ interface AssessmentFlowProps {
 
 import { ProgramPlayer, PlayerResults } from '../player/ProgramPlayer';
 import { adaptAssessmentToProgram } from '../../lib/assessment-adapter';
-import { evaluateAssessment, loadScoringProfiles, loadAdminRules } from '../../lib/recommendation-engine';
+import { evaluateAssessment, loadScoringProfiles, loadAdminRules, getLoadedScoringProfiles } from '../../lib/recommendation-engine';
 
 /**
  * Full-screen error card shown when an assessment can't be loaded or built.
@@ -323,11 +325,45 @@ export function AssessmentFlow({
       // from the title costs nothing and closes that hole; if slug is present
       // the fallback never fires.
       const presetKey = assessment.slug || slugify(assessment.title || '');
-      const sectionConfig =
-        (assessment as any).sections
-          ? assessment
-          : { ...assessment, ...(SECTION_PRESETS[presetKey] ?? {}) };
-      const sectionScores = computeSectionScores(sectionConfig as any, responses);
+
+      /**
+       * Score from the assessment's own `scores[]` spec when one exists and its
+       * profiles have loaded; otherwise from the code presets.
+       *
+       * The spec is the source of truth — it carries declared option values,
+       * explicit reverse flags and `severity_ref` on every band, none of which
+       * the presets have. The preset path is a **transitional fallback**: it
+       * exists only because `GET /scoring-profiles` is not deployed yet, so a
+       * non-admin cannot fetch profiles and would otherwise get no score at all.
+       * Delete this branch, `SECTION_PRESETS` and `computeSectionScores` once
+       * that route is live — see PENDING.md §C1.
+       */
+      const spec = Array.isArray((assessment as any).scores) ? (assessment as any).scores : null;
+      const loadedProfiles = getLoadedScoringProfiles();
+      const specProfilesResolve = !!spec && spec.length > 0 && !!loadedProfiles
+        && spec.every((sc: any) => sc?.profile_id && loadedProfiles[sc.profile_id]);
+
+      let sectionScores: any;
+      if (specProfilesResolve) {
+        const built = buildScoringContext({
+          questions: (assessment.questions as any[]) ?? [],
+          scores: spec,
+          profiles: loadedProfiles as any,
+        });
+        sectionScores = toSectionScoreResult(computeScores(built.ctx, responses));
+      } else {
+        if (spec && spec.length > 0) {
+          console.warn(
+            `[assessment] "${presetKey}" has a scores[] spec but its profiles did not load — ` +
+            `falling back to SECTION_PRESETS. Expected until GET /scoring-profiles ships.`
+          );
+        }
+        const sectionConfig =
+          (assessment as any).sections
+            ? assessment
+            : { ...assessment, ...(SECTION_PRESETS[presetKey] ?? {}) };
+        sectionScores = computeSectionScores(sectionConfig as any, responses);
+      }
 
       // Risk indicator. The presets declare `riskIndicatorQuestionIds` — for the
       // General questionnaire that is block-1773736126142, PHQ-9 item 9,
@@ -340,12 +376,28 @@ export function AssessmentFlow({
       // saving continue unchanged — this is offered alongside the result, never
       // instead of it.
       try {
-        const riskIds: string[] = (sectionConfig as any).riskIndicatorQuestionIds ?? [];
-        const flagged = riskIds.some((qid) => {
-          const q = (assessment.questions as any[]).find((x) => x.id === qid);
+        // Read from both sources so this works on either scoring path: the
+        // question's own `is_risk_indicator` flag (set on the spec) and the
+        // preset's `riskIndicatorQuestionIds`.
+        const questions = (assessment.questions as any[]) ?? [];
+        const riskIds = new Set<string>([
+          ...questions.filter((q) => q?.is_risk_indicator === true).map((q) => q.id),
+          ...((SECTION_PRESETS[presetKey] as any)?.riskIndicatorQuestionIds ?? []),
+        ]);
+
+        const flagged = [...riskIds].some((qid) => {
+          const q = questions.find((x) => x?.id === qid);
           if (!q) return false;
           const v = resolveAnswerValue(q as any, responses[qid]);
-          return typeof v === 'number' && v > 0;
+          if (typeof v !== 'number') return false;
+          // Above the question's OWN lowest option, not above zero. Option
+          // values are declared per assessment now and are not all 0-based —
+          // on a 1-5 scale `v > 0` is true for every possible answer, which
+          // would fire the crisis panel on "Never".
+          const optionValues = (Array.isArray(q.options) ? q.options : [])
+            .map((o: any, i: number) => (o && typeof o === 'object' && typeof o.value === 'number' ? o.value : i));
+          const floor = optionValues.length > 0 ? Math.min(...optionValues) : 0;
+          return v > floor;
         });
         if (flagged) triggerCrisisSupport('assessment_score');
       } catch (e) {
@@ -388,12 +440,16 @@ export function AssessmentFlow({
       }
 
       // Run Recommendation Engine — pass scoring profile if assessment has one linked
-      const recommendation = evaluateAssessment(
-         assessment.id,
-         score,
-         maxScore,
-         (assessment as any).scoring_profile_id || (assessment as any).scoringProfileId
-      );
+      // Rules match on the assessment's CATEGORY slug. This used to pass
+      // `assessment.id` as the first argument, which was then lower-cased and
+      // compared against a rule's category — an `asm_…` id never matches one.
+      const recommendation = evaluateAssessment({
+        slug: (assessment as any).slug,
+        category: (assessment as any).category,
+        score,
+        maxScore,
+        scoringProfileId: (assessment as any).scoring_profile_id || (assessment as any).scoringProfileId,
+      });
 
       // Construct Results Object
       results = {
@@ -435,7 +491,7 @@ export function AssessmentFlow({
           try {
              if (isOnline) {
                // A. Save Response directly
-               await apiClient.saveAssessmentResponse(
+               const saved = await apiClient.saveAssessmentResponse(
                 assessment.id,
                 responses,
                 'completed',
@@ -444,8 +500,20 @@ export function AssessmentFlow({
                 interpretation.label,
                 maxScore,
                 sectionScores.sectioned ? sectionScores : undefined,
-                assessment.slug
+                assessment.slug,
+                // The full engine result. Without this the stored record keeps
+                // only a flattened interpretation string and the result can
+                // never be rebuilt after the tab closes.
+                recommendation
                );
+               // Remember which record this screen corresponds to, so the
+               // result becomes linkable and survives a refresh. sessionStorage
+               // is now only an optimisation for the moment after submit — if
+               // this id resolves, the stored record wins.
+               const savedId = (saved as any)?.result?.id;
+               if (savedId) {
+                 try { sessionStorage.setItem('lastAssessmentResultId', savedId); } catch { /* ignore */ }
+               }
              } else {
                // B. Queue for offline sync
                queueItem('assessment_response', {
@@ -457,7 +525,8 @@ export function AssessmentFlow({
                  interpretation,
                  severityHint: interpretation.label,
                  sectionScores: sectionScores.sectioned ? sectionScores : undefined,
-                 slug: assessment.slug
+                 slug: assessment.slug,
+                 engineResult: recommendation
                });
                showToast('info', 'Saved Locally', 'Your results will sync when you are back online.');
              }
@@ -473,7 +542,8 @@ export function AssessmentFlow({
               interpretation,
               severityHint: interpretation.label,
               sectionScores: sectionScores.sectioned ? sectionScores : undefined,
-              slug: assessment.slug
+              slug: assessment.slug,
+              engineResult: recommendation
             });
             showToast('warning', 'Saved Locally', 'Your results are saved locally and will sync later.');
           }

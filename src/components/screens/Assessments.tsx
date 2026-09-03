@@ -325,11 +325,13 @@ export function Assessments({ className, onNavigate }: AssessmentsProps) {
     const score = results.score || 0;
     const maxScore = results.maxScore || 0;
     
-    const recommendation = evaluateAssessment(
-       selectedAssessment?.slug || selectedAssessment?.id || '',
-       score,
-       maxScore
-    );
+    const recommendation = evaluateAssessment({
+      slug: selectedAssessment?.slug || selectedAssessment?.id || '',
+      category: (selectedAssessment as any)?.category,
+      score,
+      maxScore,
+      scoringProfileId: (selectedAssessment as any)?.scoring_profile_id,
+    });
     
     setAssessmentResults({ ...results, recommendation });
     setCurrentView('results');

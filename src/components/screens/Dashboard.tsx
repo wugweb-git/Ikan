@@ -275,18 +275,28 @@ export function Dashboard({ className, onNavigate }: DashboardProps) {
           // Fetch available assessment definitions to build name lookup
           let assessmentNameMap: Map<string, string> | undefined;
           let assessmentMaxScoreMap: Map<string, number> | undefined;
+          // Rules match on the assessment's category slug, and the profile
+          // supplies the band a score falls in. Without both, evaluateAssessment
+          // can only produce a tier-level default and no rule can ever match.
+          let assessmentMetaMap: Map<string, { category?: string; profileId?: string }> | undefined;
           try {
             const assessmentDefs = await apiClient.request('/assessments', { method: 'GET' }, false);
             const defs = assessmentDefs?.assessments || assessmentDefs || [];
             if (Array.isArray(defs) && defs.length > 0) {
               assessmentNameMap = new Map<string, string>();
               assessmentMaxScoreMap = new Map<string, number>();
+              assessmentMetaMap = new Map<string, { category?: string; profileId?: string }>();
               for (const d of defs) {
                 const defId = d.id || d.slug;
                 const defTitle = d.title || d.name;
                 if (defId && defTitle) {
                   assessmentNameMap.set(defId, defTitle);
                   if (d.slug && d.id !== d.slug) assessmentNameMap.set(d.slug, defTitle);
+                }
+                if (defId) {
+                  const meta = { category: d.category, profileId: d.scoring_profile_id };
+                  assessmentMetaMap.set(defId, meta);
+                  if (d.slug && d.id !== d.slug) assessmentMetaMap.set(d.slug, meta);
                 }
                 // Compute max score from questions (sum of highest option value per question)
                 let computedMax = 0;
@@ -321,7 +331,11 @@ export function Dashboard({ className, onNavigate }: DashboardProps) {
             const resolvedMax = r.max_score || r.maxScore || assessmentMaxScoreMap?.get(id);
             if (!resolvedMax) console.warn(`[Dashboard] No maxScore resolved for assessment "${id}", score=${r.score}. Backend enrichment may have failed.`);
             const maxScore = resolvedMax || r.score || 1; // Worst case: use score itself to avoid inflated percentages
-            const result = evaluateAssessment(id, r.score || 0, maxScore);
+            const meta = assessmentMetaMap?.get(id);
+            const result = evaluateAssessment({
+              slug: id, category: meta?.category, score: r.score || 0, maxScore,
+              scoringProfileId: meta?.profileId,
+            });
             const rawName = r.assessment_name || r.assessmentName || r.title || id;
             return {
               assessmentId: id,
@@ -339,7 +353,14 @@ export function Dashboard({ className, onNavigate }: DashboardProps) {
           if (completedResponses.length > 0) {
             const latest = completedResponses.find((r: any) => (r.score || 0) > 0) || completedResponses[0];
             const slug = latest.assessment_id || latest.assessmentId || 'general';
-            const result = evaluateAssessment(slug, latest.score || 0, latest.max_score || latest.maxScore || assessmentMaxScoreMap?.get(slug) || latest.score || 1);
+            const latestMeta = assessmentMetaMap?.get(slug);
+            const result = evaluateAssessment({
+              slug,
+              category: latestMeta?.category,
+              score: latest.score || 0,
+              maxScore: latest.max_score || latest.maxScore || assessmentMaxScoreMap?.get(slug) || latest.score || 1,
+              scoringProfileId: latestMeta?.profileId,
+            });
             // Attach assessment name for display in RecommendationCards
             result.assessmentName = cleanAssessmentName(slug, latest.assessment_name || latest.assessmentName || latest.title || slug, assessmentNameMap);
             setEngineResult(result);
