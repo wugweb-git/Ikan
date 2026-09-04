@@ -95,7 +95,7 @@ const mapBlockToQuestion = (b: Activity): OnboardingQuestion => {
   // Determine type
   let type: OnboardingQuestion['type'] = 'single_select';
   let questionText = b.title;
-  let options = b.activityConfig?.options || [];
+  const options = b.activityConfig?.options || [];
 
   if (b.type === 'journal') {
     type = 'textarea';

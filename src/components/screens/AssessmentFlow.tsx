@@ -853,7 +853,7 @@ function normalizeAssessment(assessment: Assessment): Assessment {
     ...assessment,
     questions: assessment.questions.map(q => {
       // Resolve options to ensure all have numeric values
-      let rawOptions = q.options || [];
+      const rawOptions = q.options || [];
 
       // Handle raw string arrays (from KV)
       const options = (rawOptions as any[]).map((opt: any, idx: number) => {

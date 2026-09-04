@@ -172,7 +172,7 @@ export function PageEditPage({ pageId, onBack, onSave }: PageEditPageProps) {
   useKeyboardShortcuts(
     {
       'ctrl+s': (e) => { e.preventDefault(); handleSave(); },
-      escape: () => { hasUnsavedChanges ? setShowWarning(true) : onBack(); }
+      escape: () => { if (hasUnsavedChanges) setShowWarning(true); else onBack(); }
     },
     [formData, hasUnsavedChanges]
   );

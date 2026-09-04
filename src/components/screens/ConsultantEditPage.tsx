@@ -248,7 +248,7 @@ export function ConsultantEditPage({ consultantId, onBack, onSave }: ConsultantE
 
   useKeyboardShortcuts({
     'ctrl+s': (e) => { e.preventDefault(); handleSave(); },
-    'escape': () => { hasUnsavedChanges ? setShowWarning(true) : onBack(); }
+    'escape': () => { if (hasUnsavedChanges) setShowWarning(true); else onBack(); }
   }, [formData, hasUnsavedChanges]);
 
   // ── Helper: toggle in array ──

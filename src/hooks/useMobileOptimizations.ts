@@ -61,79 +61,15 @@ export function useMobileOptimizations() {
       (window as any).hapticFeedback(patterns[type]);
     }
   }, [isMobile]);
-
-  // Swipe gesture detection
-  const useSwipeGestures = useCallback((element: HTMLElement | null, handlers: MobileGestureHandlers) => {
-    useEffect(() => {
-      if (!isMobile || !element) return;
-
-      let startX = 0;
-      let startY = 0;
-      let endX = 0;
-      let endY = 0;
-      let lastTap = 0;
-
-      const minSwipeDistance = 50;
-      const maxSwipeTime = 300;
-      let startTime = 0;
-
-      const handleTouchStart = (e: TouchEvent) => {
-        const touch = e.touches[0];
-        startX = touch.clientX;
-        startY = touch.clientY;
-        startTime = Date.now();
-      };
-
-      const handleTouchEnd = (e: TouchEvent) => {
-        const touch = e.changedTouches[0];
-        endX = touch.clientX;
-        endY = touch.clientY;
-        const endTime = Date.now();
-
-        // Double tap detection
-        const currentTime = Date.now();
-        const tapLength = currentTime - lastTap;
-        if (tapLength < 500 && tapLength > 0) {
-          handlers.onDoubleTab?.();
-          triggerHapticFeedback('medium');
-        }
-        lastTap = currentTime;
-
-        // Swipe detection
-        if (endTime - startTime > maxSwipeTime) return;
-
-        const deltaX = endX - startX;
-        const deltaY = endY - startY;
-        const absDeltaX = Math.abs(deltaX);
-        const absDeltaY = Math.abs(deltaY);
-
-        // Determine swipe direction
-        if (absDeltaX > minSwipeDistance && absDeltaX > absDeltaY) {
-          if (deltaX > 0) {
-            handlers.onSwipeRight?.();
-          } else {
-            handlers.onSwipeLeft?.();
-          }
-          triggerHapticFeedback('light');
-        } else if (absDeltaY > minSwipeDistance && absDeltaY > absDeltaX) {
-          if (deltaY > 0) {
-            handlers.onSwipeDown?.();
-          } else {
-            handlers.onSwipeUp?.();
-          }
-          triggerHapticFeedback('light');
-        }
-      };
-
-      element.addEventListener('touchstart', handleTouchStart, { passive: true });
-      element.addEventListener('touchend', handleTouchEnd, { passive: true });
-
-      return () => {
-        element.removeEventListener('touchstart', handleTouchStart);
-        element.removeEventListener('touchend', handleTouchEnd);
-      };
-    }, [element, handlers, isMobile, triggerHapticFeedback]);
-  }, [isMobile, triggerHapticFeedback]);
+  // `useSwipeGestures` was REMOVED 2026-09-04.
+  //
+  // It was a `useCallback` that called `useEffect` inside itself — a React
+  // hooks violation (hooks cannot be called from a callback), which is why it
+  // could never have worked: the effect would have been registered on whichever
+  // render happened to invoke the callback, or not at all.
+  //
+  // Deleted rather than restructured into a real custom hook, because it had
+  // ZERO consumers. Found by the linter on its first run.
 
   // Optimize images for mobile
   const optimizeImageLoading = useCallback(() => {
@@ -182,7 +118,6 @@ export function useMobileOptimizations() {
     isMobile,
     connectionType,
     triggerHapticFeedback,
-    useSwipeGestures,
     optimizeImageLoading
   };
 }
@@ -219,7 +154,7 @@ export function useMobileKeyboard() {
   useEffect(() => {
     if (!isMobile || typeof window === 'undefined') return;
 
-    let initialViewportHeight = window.innerHeight;
+    const initialViewportHeight = window.innerHeight;
 
     const handleResize = () => {
       const currentHeight = window.innerHeight;

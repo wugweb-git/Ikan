@@ -79,7 +79,7 @@ const transformAssessmentData = (data: any, userHistory?: Record<string, any>): 
                             "Upon completion, you'll receive a detailed breakdown of your results.";
 
   // Fallback for missing questions on known assessments (Critical for demo stability)
-  let questions = data.questions || [];
+  const questions = data.questions || [];
   
   return {
     id: assessmentId,

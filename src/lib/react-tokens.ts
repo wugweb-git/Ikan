@@ -64,12 +64,17 @@ export function useTokens(): void {
 export const injectTokensToRoot = injectTokens;
 
 // Helper functions to access token values programmatically
+/** Safe own-property check: `val.hasOwnProperty` breaks on a null-prototype
+ *  object and can be shadowed by a key literally named `hasOwnProperty`. */
+const has = (o: unknown, k: string): boolean =>
+  Object.prototype.hasOwnProperty.call(o, k);
+
 function flattenTokens(obj: Record<string, any>, prefix = ""): Record<string, string> {
   const out: Record<string, string> = {};
   for (const k in obj) {
     const val = obj[k];
     const name = prefix ? `${prefix}.${k}` : k;
-    if (val && typeof val === "object" && !Array.isArray(val) && !(val.hasOwnProperty && val.hasOwnProperty('char') && val.hasOwnProperty('label'))) {
+    if (val && typeof val === "object" && !Array.isArray(val) && !(has(val, 'char') && has(val, 'label'))) {
       Object.assign(out, flattenTokens(val, name));
     } else {
       out[name] = typeof val === "string" ? val : JSON.stringify(val);

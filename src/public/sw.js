@@ -429,7 +429,7 @@ async function handleHtmlRequest(request) {
     // Try network first
     const networkResponse = await fetch(request);
     return networkResponse;
-  } catch (error) {
+  } catch {
     // Return cached index.html as fallback for SPA routing
     const cache = await caches.open(STATIC_CACHE_NAME);
     const cachedIndex = await cache.match('/index.html') || await cache.match('/');

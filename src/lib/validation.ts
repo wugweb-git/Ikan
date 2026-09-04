@@ -83,7 +83,7 @@ export const getPasswordStrength = (password: string): {
   // Complexity
   if (/[a-z]/.test(password) && /[A-Z]/.test(password)) score++;
   if (/\d/.test(password)) score++;
-  if (/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)) score++;
+  if (/[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/.test(password)) score++;
   
   // Normalize to 0-4 scale
   const normalizedScore = Math.min(Math.floor(score / 1.25), 4);
