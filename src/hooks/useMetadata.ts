@@ -29,6 +29,16 @@ export interface MetadataOption {
    * dropping this field here silently reverts the map to code.
    */
   tier?: string;
+  /**
+   * `block_type` rows only: this row is a CONTAINER — a stage that holds blocks
+   * (learning, practice, workshop…) — not a block you can place inside one.
+   *
+   * It exists because the block_type and day_config_type vocabularies are being
+   * merged into one list (blocks.md §18 Phase 1). Until that merge completes,
+   * consumers that offer a block type to an author must exclude these, or the
+   * picker starts offering `learning` as a kind of block.
+   */
+  can_hold?: boolean;
 }
 
 interface MetadataBucket {
@@ -135,6 +145,7 @@ export function mapItem(item: any): MetadataOption {
     description: item.description,
     order: typeof item.order === 'number' ? item.order : undefined,
     tier: typeof item.tier === 'string' ? item.tier : undefined,
+    can_hold: item.can_hold === true ? true : undefined,
   };
 }
 

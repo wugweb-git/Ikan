@@ -105,7 +105,15 @@ function BlockEditorInner({
   // failed fetch silently offered the admin the wrong list with no way to tell.
   // Empty now means empty, and the editor says so rather than inventing terms.
   const exerciseSubtypeOptions = kvExerciseSubtypes.map(s => ({ value: s.value, label: s.label }));
-  const blockTypeOptions = kvBlockTypes.map(s => ({ value: s.value, label: s.label }));
+  // Container rows (`can_hold`) are stages, not blocks. They live in the same
+  // catalog bucket because block_type and day_config_type are being merged into
+  // one list (blocks.md §18 Phase 1), but a block can never BE one, so they must
+  // not reach this picker. Without this filter, seeding the merged vocabulary
+  // puts `learning`, `practice`, `workshop`… into the author's block type
+  // dropdown the instant the rows are written.
+  const blockTypeOptions = kvBlockTypes
+    .filter(s => !s.can_hold)
+    .map(s => ({ value: s.value, label: s.label }));
   const vocabularyUnavailable = !metaLoading && (kvBlockTypes.length === 0 || kvExerciseSubtypes.length === 0);
   if (vocabularyUnavailable) {
     warnFallback(
