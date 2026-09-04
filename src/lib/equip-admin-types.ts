@@ -130,12 +130,44 @@ export type DayType = typeof DAY_TYPES[number];
 // terms, mistyped days and a disabled guardrail coexisted in production without
 // a single error. These warns turn a silent substitution into a searchable one.
 // Deduped by key: several of these sites run on every render.
+//
+// The dedupe is per browser tab and never resets, which is what makes these
+// cheap enough to call during render — and also means a fallback that fires
+// once early stays quiet for the rest of the session.
+//
+// REPORTING (added 2026-09-04). Until now this wrote to `console.warn` and
+// nowhere else: no Sentry, no analytics event, no server write. Every one of
+// these signals — an undeclared subtype in live content, a day whose type
+// matches no preset and therefore skips ALL validation — was observable only by
+// a developer with devtools open on the exact tab where it fired. Telemetry
+// built to make silent failure visible was itself invisible.
+//
+// It is best-effort by construction: fire-and-forget, failures swallowed, and
+// deduped by the same key as the console line, so a render loop cannot turn
+// into a request loop. A diagnostic must never break the thing it observes.
 const _warnedFallbacks = new Set<string>();
+
+// Injected rather than imported. This module is the block MODEL — it must stay
+// dependency-free so it can be unit-tested under `node --test` with no app
+// config, no bundler and no network. Importing the Supabase constants here
+// broke every test the moment it was tried (node cannot load a `.tsx` file).
+// The app wires the real reporter once at startup; everywhere else this is a
+// no-op and the console line still happens.
+export type FallbackReporter = (e: { site: string; detail: string; term?: string }) => void;
+let _reporter: FallbackReporter | null = null;
+
+/** Wire fallback telemetry to a real sink. Called once, from the app entry. */
+export function setFallbackReporter(fn: FallbackReporter | null): void {
+  _reporter = fn;
+}
+
 export function warnFallback(site: string, detail: string, key?: string): void {
   const k = site + '::' + (key ?? detail);
   if (_warnedFallbacks.has(k)) return;
   _warnedFallbacks.add(k);
   console.warn('[blocks:fallback] ' + site + ' - ' + detail);
+  // Never let a diagnostic break the thing it observes.
+  try { _reporter?.({ site, detail, term: key }); } catch { /* swallowed */ }
 }
 
 // Maps legacy type + subtype → unified interaction. Used by BlockRenderer at runtime.

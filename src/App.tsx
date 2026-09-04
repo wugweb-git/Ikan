@@ -125,6 +125,7 @@ import { SafePerformanceMonitor } from './components/monitoring/SafePerformanceM
 import { SkipToMainContent, useReducedMotion } from './components/ui/accessibility-helpers';
 import { OfflineBanner } from './components/OfflineBanner';
 import { useOfflineSync } from './hooks/useOfflineSync';
+import { installBlocksFallbackReporter } from './lib/blocks-fallback-reporter';
 import { usePullToRefresh } from './hooks/usePullToRefresh';
 
 // --- Suspense fallback ---
@@ -869,6 +870,12 @@ function AppContent() {
     </div>
   );
 }
+
+// Wire block fallback telemetry to its sink, once, at module load. Before this
+// every `warnFallback` — an undeclared subtype in live content, a day whose type
+// matches no preset and so skips ALL validation — went to console.warn and
+// nowhere else, visible only to a developer with devtools open on that exact tab.
+installBlocksFallbackReporter();
 
 export default function App() {
   useTokens();

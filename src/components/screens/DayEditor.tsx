@@ -532,7 +532,10 @@ export function DayEditor({
       type: type as any,
       content: '',
       duration: 5,
-      required: preset?.autoConfig.scoringEnabled ? true : true, // always default required
+      // Was `preset?.autoConfig.scoringEnabled ? true : true` — identical
+      // branches, so the condition never mattered. Found by the linter within
+      // minutes of it existing, which is the argument for having one.
+      required: true,
       autoAdvance: preset?.autoConfig.autoAdvance ?? false,
       order: activeDay.activities.length,
       exerciseConfig: subtype ? { subtype: subtype as any } : undefined

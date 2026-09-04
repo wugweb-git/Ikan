@@ -2452,6 +2452,70 @@ app.post("/security/events", async (c) => {
   }
 });
 
+/**
+ * Blocks fallback telemetry.
+ *
+ * `warnFallback` (src/lib/equip-admin-types.ts) marks every point where the
+ * block system silently substitutes something: a type overruled by its subtype,
+ * an unknown subtype rendered as free text, a dayType matching no preset so ALL
+ * validation is skipped, a renderer with no case for an interaction. Seven such
+ * points exist and every one of them wrote to `console.warn` and nowhere else —
+ * telemetry built to make silent failures visible, itself invisible.
+ *
+ * Same shape as /security/events above: public write (a fallback can fire before
+ * or without sign-in), identity from a verified token only, day-bucketed,
+ * capped, and it never fails the caller's flow.
+ *
+ * RETENTION: capped at 500/day and safe to prune after 30 days. It is
+ * diagnostic, not user data — not user-scoped, so NOT part of account erasure.
+ * An unbounded telemetry prefix is how `day:`/`block:` accumulated.
+ */
+const BLOCKS_FALLBACK_DAILY_CAP = 500;
+
+app.post("/blocks/fallback", async (c) => {
+  try {
+    const body = await c.req.json();
+    if (!body?.site || typeof body.site !== 'string') {
+      return c.json({ error: 'site is required' }, 400);
+    }
+
+    let userId = 'anonymous';
+    try {
+      const token = c.req.header('Authorization')?.split(' ')[1];
+      if (token) {
+        const { data } = await supabase.auth.getUser(token);
+        if (data?.user?.id) userId = data.user.id;
+      }
+    } catch { /* stays anonymous */ }
+
+    const now = new Date();
+    const dateKey = now.toISOString().split('T')[0];
+    const record = {
+      id: `bf_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
+      site: String(body.site).slice(0, 120),
+      detail: typeof body.detail === 'string' ? body.detail.slice(0, 500) : null,
+      term: typeof body.term === 'string' ? body.term.slice(0, 120) : null,
+      url: typeof body.url === 'string' ? body.url.slice(0, 500) : null,
+      user_id: userId,
+      logged_at: now.toISOString(),
+    };
+
+    const key = `blocks_fallback:${dateKey}`;
+    const bucket: any[] = (await kv.get(key)) || [];
+    if (bucket.length >= BLOCKS_FALLBACK_DAILY_CAP) {
+      return c.json({ success: false, message: 'daily cap reached' }, 200);
+    }
+    bucket.push(record);
+    await kv.set(key, bucket);
+
+    return c.json({ success: true, id: record.id });
+  } catch (error) {
+    console.error('Blocks fallback logging error:', error);
+    // Never fail a render over a diagnostic write.
+    return c.json({ success: false }, 200);
+  }
+});
+
 app.post("/analytics/engagement", async (c) => {
   try {
     const analyticsData = await c.req.json();

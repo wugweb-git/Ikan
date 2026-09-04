@@ -59,19 +59,26 @@
     "vaul": "^1.1.2"
   },
   "devDependencies": {
+    "@eslint/js": "^9.39.5",
     "@tailwindcss/vite": "4.1.12",
     "@types/node": "^20.10.0",
     "@types/react": "^18.3.31",
     "@types/react-dom": "^18.3.7",
     "@vitejs/plugin-react": "^4.7.0",
+    "eslint": "^9.39.5",
+    "eslint-plugin-react-hooks": "^5.2.0",
+    "eslint-plugin-react-refresh": "^0.4.26",
     "tailwindcss": "4.1.12",
     "typescript": "^5.9.3",
+    "typescript-eslint": "^8.69.0",
     "vite": "^6.4.3"
   },
   "scripts": {
     "dev": "vite",
     "build": "vite build",
     "typecheck": "tsc --noEmit -p src/tsconfig.json",
-    "test": "node --test \"src/**/*.test.ts\""
+    "test": "node --test \"src/**/*.test.ts\"",
+    "lint": "eslint .",
+    "lint:ratchet": "bash scripts/lint-ratchet.sh"
   }
 }

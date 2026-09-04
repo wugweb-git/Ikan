@@ -1,0 +1,43 @@
+# CI, added 2026-09-04.
+#
+# Until now `.github/` held only `dependabot.yml`: `typecheck` and `test`
+# existed as npm scripts and had never run anywhere but a developer's machine.
+# Nothing verified a pull request.
+#
+# All three gates are RATCHETS or pass/fail on their own terms — none demands a
+# clean slate, because the repo starts from 193 typecheck errors and 1104 lint
+# problems and a gate nobody can pass is a gate people switch off.
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [equip-carry-forward, main]
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+
+      # Tests are pure functions over a live census of block data — they need
+      # no browser and no network. Node 24 strips the TypeScript natively.
+      - name: Tests
+        run: npm test
+
+      # Fails only if the error count RISES above .typecheck-baseline.
+      - name: Typecheck (ratchet)
+        run: bash scripts/typecheck-ratchet.sh
+
+      # Fails only if the problem count RISES above .lint-baseline.
+      - name: Lint (ratchet)
+        run: npm run lint:ratchet
+
+      # A broken build is the one thing that must never merge.
+      - name: Build
+        run: npm run build
