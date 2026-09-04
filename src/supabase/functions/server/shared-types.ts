@@ -1,7 +1,21 @@
 /**
- * SHARED TYPES FOR SERVER
- * Copied from lib/cms-types.ts and lib/program-types.ts
- * to satisfy the "no external imports" constraint for Edge Functions.
+ * SERVER TYPES — owned here.
+ *
+ * The header used to read "Copied from lib/cms-types.ts and lib/program-types.ts".
+ * **Both of those files are gone** (checked 2026-09-04), so this stopped being a
+ * copy some time ago and became the only definition — while still describing
+ * itself as a duplicate of something that no longer exists. A file that claims
+ * to be a copy invites someone to "resync" it with a source that isn't there.
+ *
+ * OWNERSHIP: this file owns the CMS and programme types used by the edge
+ * function. Nothing outside `server/` defines them.
+ *
+ * The constraint that produced it is still real, and is the reason to keep
+ * server-side types here rather than in `src/lib/`: the function is deployed by
+ * copying `src/supabase/functions/server/*` into a staging directory (BUILD.md),
+ * so anything it imports from outside that directory is simply not deployed.
+ * `validation-core.ts` is the companion case — shared with the browser, and
+ * placed under `server/` for exactly this reason.
  */
 
 // ==================================================================
@@ -106,6 +120,12 @@ export type DatasetType =
  * Five recommendation rules are gated at `moderately-severe`; because this
  * type did not admit the term, nothing flagged that the rank table had no
  * entry for it, and those five rules silently never fired.
+ */
+/**
+ * The clinical vocabulary, 5 ordered terms — the same list as
+ * `SEVERITY_LEVELS` in `src/lib/scoring-engine.ts`. Verified identical
+ * 2026-09-04. It is duplicated rather than imported because of the deploy
+ * constraint described in the file header, so if one changes the other must.
  */
 export type SeverityLevel = 'minimal' | 'mild' | 'moderate' | 'moderately-severe' | 'severe';
 

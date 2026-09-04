@@ -8,7 +8,6 @@ import { ResourceBlock } from '../page-blocks/ResourceBlock';
 import { NewsletterBlock } from '../page-blocks/NewsletterBlock';
 import { ResourcePost } from '../page-blocks/ResourceCard';
 import { MobileHeader } from '../navigation/MobileHeader';
-import { TopNavBar } from '../navigation/TopNavBar';
 import { useIsMobile } from '../../hooks/useIsMobile';
 import { useSeo } from '../../hooks/useSeo';
 import { Skeleton } from '../ui/skeleton-loader';

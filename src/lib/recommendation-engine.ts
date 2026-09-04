@@ -21,11 +21,13 @@ import {
  * re-exports `ResponseTier` and names its field `tier`, so neither can be
  * mistaken for the other.
  *
- * A third one still exists server-side: `shared-types.ts` declares
- * `SeverityLevel = 'low' | 'mild' | 'moderate' | 'high'` — four terms, a fourth
- * vocabulary — and types `min_severity` with it even though live rules hold
- * `moderately-severe`, which is not in that union. It belongs to the parallel
- * backend recommendation service; see PENDING.md.
+ * The server's copy in `shared-types.ts` was a FOURTH vocabulary
+ * (`'low' | 'mild' | 'moderate' | 'high'`), which typed `min_severity` with a
+ * union that could not express `moderately-severe` — a term live rules actually
+ * hold. **Re-checked 2026-09-04: it has since been corrected** and now declares
+ * the same 5 clinical terms as `SEVERITY_LEVELS` here. It stays duplicated
+ * rather than imported because the edge function only deploys what sits under
+ * `server/`, so if one list changes the other must.
  */
 export type { ResponseTier };
 

@@ -12,8 +12,7 @@ export {
   type ValidationError, type ValidationResult,
 } from '../supabase/functions/server/validation-core';
 import {
-  sanitizeString, validateName, validateEmail, validatePassword,
-  validatePhone, validateBio, validateDateOfBirth,
+  sanitizeString, validateName, validateEmail, validatePhone, validateBio, validateDateOfBirth,
   type ValidationError, type ValidationResult,
 } from '../supabase/functions/server/validation-core';
 

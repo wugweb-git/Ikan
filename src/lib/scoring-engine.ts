@@ -40,33 +40,23 @@
  * only in a lookup table in `recommendation-engine.ts` — it asserted that
  * `low` sits between `minimal` and `mild`, which nobody decided.
  */
-export const SEVERITY_LEVELS = [
-  'minimal',
-  'mild',
-  'moderate',
-  'moderately-severe',
-  'severe',
-] as const;
-export type SeverityLevel = (typeof SEVERITY_LEVELS)[number];
-
-/** What the product does about a score, ordered. Drives tone and copy. */
-export const RESPONSE_TIERS = ['low', 'moderate', 'high'] as const;
-export type ResponseTier = (typeof RESPONSE_TIERS)[number];
+// The vocabulary and its comparison now live in ONE place — see
+// `scoring-vocabulary.ts`. They were defined in four, and while the VALUES
+// agreed, the two `compareSeverity` implementations did not: this copy read
+// `SEVERITY_LEVELS.indexOf(a) - SEVERITY_LEVELS.indexOf(b)`, and `indexOf`
+// returns -1 for an unknown term, so `compareSeverity('severe', 'typo')` was
+// 4 - (-1) = 5 — an unrecognised threshold that every user cleared.
+export {
+  SEVERITY_LEVELS, RESPONSE_TIERS, isSeverityLevel, compareSeverity,
+  type SeverityLevel, type ResponseTier,
+} from '../supabase/functions/server/scoring-vocabulary';
+import { RESPONSE_TIERS, type SeverityLevel, type ResponseTier } from '../supabase/functions/server/scoring-vocabulary';
 
 /**
- * Last-resort severity → tier mapping.
- *
- * The authoritative map is **data**: each `severity_level` catalog row carries
- * a `tier` field, so the mapping is visible and editable in the catalog UI
- * rather than being a seed in code that data cannot override. This constant is
- * only the fallback for when the catalog has not loaded.
- *
- * Resolution order is: profile override → catalog row → this.
- *
- * It is a map rather than a derivation from ordinal position because a
- * clinician may want `mild → moderate` for a depression instrument and not for
- * a sleep one — and deriving it from position is exactly how the old seven-term
- * ordering came to assert things nobody decided.
+ * Severity -> tier, the FALLBACK only. The authoritative map is data: each
+ * `severity_level` catalog row carries a `tier`, and resolution order is
+ * profile `tier_map` -> catalog row -> this. Dropping the catalog's `tier`
+ * field silently reverts the map to these values.
  */
 export const DEFAULT_TIER_MAP: Record<SeverityLevel, ResponseTier> = {
   minimal: 'low',
@@ -75,15 +65,6 @@ export const DEFAULT_TIER_MAP: Record<SeverityLevel, ResponseTier> = {
   'moderately-severe': 'high',
   severe: 'high',
 };
-
-export function isSeverityLevel(v: unknown): v is SeverityLevel {
-  return typeof v === 'string' && (SEVERITY_LEVELS as readonly string[]).includes(v);
-}
-
-/** Negative / zero / positive, for threshold comparisons. */
-export function compareSeverity(a: SeverityLevel, b: SeverityLevel): number {
-  return SEVERITY_LEVELS.indexOf(a) - SEVERITY_LEVELS.indexOf(b);
-}
 
 /**
  * Resolve a severity to its response tier.
