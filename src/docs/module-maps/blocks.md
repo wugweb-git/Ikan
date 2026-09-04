@@ -985,6 +985,38 @@ The core change, and the one the seam was built for.
 | 6.1 | **Set a real `dayType` on the 4 days typed `lesson`** | A block type used as a day type. `validateBlockForDayType()` finds no preset and returns `allowed: true` immediately, so those days skip even the blocked-list check |
 | 6.2 | **Assign real presets across all 97 equip days** | `onboarding` for day 0, `tracker` for Sleep Tight 18–30, `reflection` where it applies. **Nine of eleven presets have never been used** — which is why 84 blocks are typed `conclude`, day structure leaking into block types |
 | 6.3 | **Audit what the allow-lists would reject**, then decide per preset | Dry run first. Workshop's blocked list is empty, so Workshop currently accepts anything |
+
+> **[CRITICAL, 2026-09-04] Before enforcement is turned on: the presets fail their own seed content.**
+>
+> Running every preset's `defaultBlocks` through `validateBlockForDayType` against that same preset's
+> rules produces **8 violations across 5 presets**. Pinned as a test in
+> `src/components/admin/day-presets.test.ts`, which fails on any new one.
+>
+> | preset | seed | resolves to | verdict |
+> |---|---|---|---|
+> | assessment | `lesson`, `conclude` | `read`, `complete` | both rejected |
+> | assessment-lite | `lesson` | `read` | rejected |
+> | practice | `lesson`, `conclude` | `read`, `complete` | both rejected |
+> | check-in | `conclude` | `complete` | rejected |
+> | quiz | `lesson`, `conclude` | `read`, `complete` | both rejected |
+>
+> **Turn enforcement on as written and an author's day fails the moment they pick a preset**, before
+> they have authored anything. It is the first thing they would see.
+>
+> The fault is in the allow-lists, not the seeds. 131 `lesson` and 84 `conclude` blocks are live;
+> nearly every authored day opens with one and closes with the other. `read` and `complete` are
+> missing from the presets that lack them.
+>
+> **This is not only about `conclude`.** Four presets also seed a `lesson` their own rules reject —
+> the same defect, on the more common block. Any framing of this as a `Conclude` decision is treating
+> a symptom.
+>
+> Separately, `allowedBlocks` and `allowedInteractions` **contradict each other on three presets**:
+> `learning` and `rest` permit the `complete` interaction while their palette carries no
+> conclude-shaped block, and `reflection` is exactly inverted — its palette carries `summary` while
+> its interaction list forbids `complete`. Two fields in one object, answering the same question
+> differently, so a validator reading one disagrees with a validator reading the other. Reconcile
+> before enforcing, not after.
 | 6.4 | **Uncomment the rejection** | One line. decision — it will start rejecting content authored against no constraint for months |
 | 6.5 | **Delete the 23-string palette and the stale `dayType` union** | The palette is bridged to real names by nine hardcoded `if`s inside the validator. The union declares 7 day types against 11 real presets |
 

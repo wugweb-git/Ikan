@@ -1,7 +1,8 @@
 import {
-  Activity, ExerciseConfig, warnFallback, resolveInteraction,
+  warnFallback, resolveInteraction,
+  type Activity, type ExerciseConfig,
   type DayType, type InteractionType,
-} from '../../lib/equip-admin-types';
+} from '../../lib/equip-admin-types.ts';
 
 export interface DayTypePreset {
   label: string;
