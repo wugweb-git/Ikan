@@ -1037,6 +1037,50 @@ The core change, and the one the seam was built for.
 > drift and is not — the two numbers are counting different things by design. That stat row was
 > already the plan's example of reporting drift as a statistic; it is now actively misleading.
 
+> **[DONE 2026-09-04] Phase 3.3 + the flip — 58 blocks re-typed, `quiz`/`reflection` are now containers.**
+>
+> The schema-invalid set is **58 = 37 typed `quiz`/`reflection` ∪ 44 whose type is overruled by a
+> subtype, overlap 23.** A `lesson · multi-select` was already rendering as a multi-select, so its
+> declared type was a lie; the retype makes the record honest. 44 → `exercise`, 14 → `journal`.
+>
+> **Interaction-neutral, verified.** Every subtype bucket is byte-identical before and after — only
+> `type` moved — and the resolved-interaction distribution is unchanged on both prefixes:
+> `check 6 · complete 85 · input-table 144 · number 1 · rate 1 · read 118 · select-many 17 ·
+> select-one 18 · write 17`, 407 total. The player renders exactly what it rendered before, and the
+> 44 stop firing `resolveInteraction`'s type-overrule warning.
+>
+> Every changed block carries **`retyped_from {type, at, by}`**. Write provenance on every data
+> migration in this module: within two minutes of adding it, it was what made a bad write precisely
+> correctable instead of a restore.
+>
+> **THE MISTAKE WORTH KEEPING: block content lives under FOUR prefixes, and the retype first went to
+> one.**
+>
+> | prefix | blocks | role |
+> |---|---:|---|
+> | `equip:` | 407 | admin/editor |
+> | `equip_program:` | 407 | **user-facing** — `index.tsx:1203` reads this FIRST |
+> | `equip_program_by_slug:` | 223 | stale older snapshot; write target of Sync Prefixes, never a source |
+> | `assessment_def:` | 92 | assessments — different vocabulary, unaffected |
+>
+> `program-service.ts:40,88` dual-writes `equip:` and `equip_program:` on every save, so a direct SQL
+> migration is the one path that bypasses the dual write. Writing one prefix made the change
+> **invisible to every user** while looking complete from the admin side. Replayed independently
+> against `equip_program:` — *not* copied from `equip:`, which is the slug-mirror trap.
+>
+> `equip_program_by_slug:` still holds **149 schema-invalid blocks** and is deliberately left alone:
+> nothing reads it for content, it is a write *target* of Sync Prefixes rather than a source, so
+> stale schema cannot propagate back — and it holds the 8 tail days that exist nowhere else.
+>
+> **The flip.** With zero blocks carrying either type, `quiz` and `reflection` became containers:
+> **11 containers + 5 leaves = 16.** `quiz` holds lesson·exercise·conclude; `reflection` holds
+> lesson·exercise·journal·conclude. Both were removed from every other container's `can_hold` —
+> nothing nests a stage inside a stage, and a test now asserts it.
+>
+> The invariant test **asserts zero** rather than pinning, which is what a pin with a defined closure
+> is supposed to become. The palette gap narrowed from `checklist · quiz · reflection` to
+> **`checklist` alone**.
+
 > **[DONE 2026-09-04] Coverage fix — the allow-lists now cover what authors place, not what presets seed.**
 >
 > Phase 0 widened `allowedInteractions` only far enough to cover each preset's **own seed blocks**.

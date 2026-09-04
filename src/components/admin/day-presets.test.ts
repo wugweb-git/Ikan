@@ -105,6 +105,11 @@ test('the seed file defines every container row, not just KV', () => {
 /**
  * INVARIANT: `can_hold` non-empty  <=>  a preset exists for this slug.
  *
+ * CLOSED 2026-09-04. `quiz` and `reflection` were flipped to containers once
+ * the 58 schema-invalid blocks were re-typed and zero blocks carried either
+ * type. 11 containers + 5 leaves = 16. The pin below is gone and this asserts
+ * zero, which is what a pin with a defined closure is supposed to become.
+ *
  *   rules but holds nothing  -> nav/save/layout/step rules govern nothing
  *   holds something, no rules -> the player has no behaviour for it
  *
@@ -116,16 +121,28 @@ test('the seed file defines every container row, not just KV', () => {
  * and Phase 3.3 re-types those first. At step 5 they flip to containers and
  * this list goes to []. It is a TODO with teeth, not a snapshot.
  */
-const KNOWN_INVARIANT_VIOLATIONS = ['quiz', 'reflection'];
-
 test('can_hold non-empty <=> the row has a preset', () => {
   const violations = seedBlockTypes
     .filter(r => ((r.can_hold?.length ?? 0) > 0) !== (r.slug in DAY_TYPE_PRESETS))
     .map(r => r.slug).sort();
   assert.deepEqual(
-    violations, KNOWN_INVARIANT_VIOLATIONS.slice().sort(),
-    'A block_type row either holds blocks AND has preset rules, or neither.',
+    violations, [],
+    'A block_type row either holds blocks AND has preset rules, or neither. ' +
+    'Rules with nothing to govern, or containment with no behaviour, are both errors.',
   );
+});
+
+test('the vocabulary is 11 containers and 5 leaves', () => {
+  const containers = seedBlockTypes.filter(r => (r.can_hold?.length ?? 0) > 0).map(r => r.slug).sort();
+  const leaves     = seedBlockTypes.filter(r => (r.can_hold?.length ?? 0) === 0).map(r => r.slug).sort();
+  assert.deepEqual(leaves, ['checklist', 'conclude', 'exercise', 'journal', 'lesson']);
+  assert.equal(containers.length, 11);
+  // A container is never holdable: nothing nests a stage inside a stage.
+  for (const r of seedBlockTypes) {
+    for (const held of r.can_hold ?? []) {
+      assert.ok(leaves.includes(held), `${r.slug} can_hold includes '${held}', which is a container`);
+    }
+  }
 });
 
 /**
@@ -147,9 +164,9 @@ test('every block type a stage can hold is offerable by the DayEditor palette', 
     for (const held of row.can_hold ?? []) if (!offerable.has(held)) gaps.add(held);
   }
   assert.deepEqual(
-    [...gaps].sort(), ['checklist', 'quiz', 'reflection'],
-    'The DayEditor palette offers 4 of 7 leaf block types. Types a stage may ' +
-    'hold but the palette cannot create are unreachable for authors — 45 live ' +
-    'blocks are of such types. Closing this is Phase 4.2/4.3.',
+    [...gaps].sort(), ['checklist'],
+    'The DayEditor palette offers 4 of the 5 leaf block types — `checklist` has ' +
+    'no entry, so a stage may permit it while the editor cannot create it. ' +
+    'Narrowed from 3 gaps to 1 by the quiz/reflection flip. Closing it is Phase 4.',
   );
 });
