@@ -1,4 +1,3 @@
-import { cn } from '@/lib/utils';
 import { getPasswordStrength } from '../../lib/validation';
 
 interface PasswordStrengthProps {

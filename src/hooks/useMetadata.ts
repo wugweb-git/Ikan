@@ -12,7 +12,6 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { apiClient } from '../lib/api-client';
-import type { MetadataType } from '../lib/metadata-catalog';
 
 export interface MetadataOption {
   label: string;

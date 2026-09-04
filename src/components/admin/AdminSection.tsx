@@ -1,5 +1,5 @@
 import React from 'react';
-import { Card, CardHeader, CardTitle, CardContent } from '../ui/card';
+import { Card, CardContent } from '../ui/card';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 
 interface AdminSectionProps {

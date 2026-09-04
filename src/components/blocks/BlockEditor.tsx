@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback, useMemo, memo } from 'react';
+import { useRef, memo } from 'react';
 import { 
   BookOpen, 
   PenTool, 
@@ -27,12 +27,12 @@ import { Checkbox } from '../ui/checkbox';
 import { Label } from '../ui/label';
 import { Card, CardContent } from '../ui/card';
 import { RichTextEditor } from '../ui/rich-text-editor';
-import { Activity, resolveInteraction, INTERACTION_META, warnFallback, type InteractionType } from '../../lib/blocks/block-model';
+import { Activity, resolveInteraction, INTERACTION_META, warnFallback } from '../../lib/blocks/block-model';
 import { useMetadata, isContainerRow } from '../../hooks/useMetadata';
 import { validateBlock } from '../../lib/blocks/block-validation';
 import { hasContentField, contentLabelFor, contentPlaceholderFor } from '../../lib/blocks/block-fields';
 import { validateBlockForDayType } from '../../lib/blocks/block-type-rules';
-import { getPresetForDayType, type DayTypePreset } from '../../lib/blocks/block-type-rules';
+import { getPresetForDayType } from '../../lib/blocks/block-type-rules';
 import { projectId } from '../../utils/supabase/info';
 import { getAuthHeaders } from '../../lib/supabase-client';
 import { toast } from 'sonner';

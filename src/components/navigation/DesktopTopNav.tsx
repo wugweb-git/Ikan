@@ -1,4 +1,3 @@
-import { useState, useEffect } from 'react';
 import { Icon, AccountIcon, MoreIcon } from '../Icon';
 import { navigationConfig } from '../../lib/navigation';
 import { Button } from '../ui/button';

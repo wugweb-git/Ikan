@@ -2,15 +2,13 @@ import { useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { Card, CardContent } from '../ui/card';
 import { Button } from '../ui/button';
-import { ChevronLeft, TrendingUp, TrendingDown, Minus, Calendar, BarChart3, Eye, Play, Clock, Download } from 'lucide-react';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine, Area, AreaChart } from 'recharts';
+import { ChevronLeft, TrendingUp, TrendingDown, Minus, BarChart3, Play, Clock, Download } from 'lucide-react';
+import { XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Area, AreaChart } from 'recharts';
 import { apiClient } from '../../lib/api-client';
 import { LoadingSpinner } from '../LoadingSpinner';
-import { Skeleton } from '../ui/skeleton-loader';
-import { cn } from '../ui/utils';
 import { SectionReportCard } from '../player/SectionReportCard';
 import type { SectionScoreResult } from '../../lib/assessment-sections';
-import { severityPresentation, severityOfResult, tonePresentation } from '../../lib/severity-presentation';
+import { severityOfResult, tonePresentation } from '../../lib/severity-presentation';
 import { resolveResultPresentation, type Tone } from '../../lib/result-presentation';
 import { loadScoringProfiles, getLoadedScoringProfiles } from '../../lib/recommendation-engine';
 

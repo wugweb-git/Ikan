@@ -1,8 +1,25 @@
 import { useState, useEffect } from 'react';
 import {
-  Save, Trash2, Eye, User, Briefcase, MapPin, DollarSign, Star,
-  Video, Phone, MessageSquare, Languages, GraduationCap,
-  Heart, CircleHelp, Users, Clock, FileText, Upload, Plus, X, Quote, Sparkles
+  Save,
+  Trash2,
+  User,
+  Briefcase,
+  MapPin,
+  Video,
+  Phone,
+  MessageSquare,
+  Languages,
+  GraduationCap,
+  Heart,
+  CircleHelp,
+  Users,
+  Clock,
+  FileText,
+  Upload,
+  Plus,
+  X,
+  Quote,
+  Sparkles,
 } from 'lucide-react';
 import { useNotifications } from '../../contexts/NotificationContext';
 import { apiClient } from '../../lib/api-client';

@@ -1,4 +1,3 @@
-import { cn } from '../../ui/utils';
 import { useMemo } from 'react';
 import { ErrorBoundary } from '../../ErrorBoundary';
 import { ImageWithFallback } from '../../figma/ImageWithFallback';

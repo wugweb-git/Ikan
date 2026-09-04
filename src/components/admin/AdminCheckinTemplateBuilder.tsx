@@ -1,16 +1,32 @@
 import { toast } from 'sonner';
 import { useState, useEffect, useCallback } from 'react';
 import {
-  Plus, Trash2, Save, X, GripVertical, Copy, Eye, EyeOff,
-  ChevronDown, ChevronUp, RotateCcw, ShieldCheck, AlertTriangle, Check,
-  Smile, Type, Tag, List, SlidersHorizontal, ToggleLeft,
-  CircleAlert, ArrowUp, ArrowDown, Pencil,
+  Plus,
+  Trash2,
+  Save,
+  X,
+  GripVertical,
+  Copy,
+  Eye,
+  EyeOff,
+  ChevronDown,
+  ChevronUp,
+  Check,
+  Smile,
+  Type,
+  Tag,
+  List,
+  SlidersHorizontal,
+  ToggleLeft,
+  CircleAlert,
+  ArrowUp,
+  ArrowDown,
+  Pencil,
 } from 'lucide-react';
 import { Card, CardContent } from '../ui/card';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Switch } from '../ui/switch';
 import { apiClient } from '../../lib/api-client';
 import tokens from '../../lib/design-tokens';

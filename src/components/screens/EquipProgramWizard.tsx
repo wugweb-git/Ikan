@@ -1,21 +1,16 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
-import { 
-  Save, Trash2, Eye, Plus, X, EyeOff, Upload, GripVertical, ArrowUp, ArrowDown, AlertCircle
-} from 'lucide-react';
+import { Save, Trash2, Eye, X, Upload, AlertCircle } from 'lucide-react';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import { useNotifications } from '../../contexts/NotificationContext';
 import { apiClient } from '../../lib/api-client';
 import { AdminFormField } from '../admin/AdminFormField';
 import { Input } from '../ui/input';
-import { Textarea } from '../ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Checkbox } from '../ui/checkbox';
 import { Label } from '../ui/label';
 import { Button } from '../ui/button';
 import { Card, CardContent } from '../ui/card';
 import { ImageUpload } from '../ui/image-upload';
-import { RichTextEditor } from '../ui/rich-text-editor';
 import { WizardLayout } from '../ui/wizard-layout';
 import { WizardStep } from '../ui/wizard-stepper';
 import { useFormValidation, ValidationSchema } from '../../hooks/useFormValidation';
@@ -23,16 +18,7 @@ import { validateUrl } from '../../lib/validation';
 import { useUnsavedChanges } from '../../hooks/useUnsavedChanges';
 import { UnsavedChangesDialog } from '../ui/unsaved-changes-dialog';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '../ui/dialog';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '../ui/dropdown-menu';
-import { 
-  EquipProgram,
-  OnboardingQuestion,
-  Activity,
-  DayContent,
-  DEFAULT_CHECKIN_CONFIG,
-  type CheckInConfig,
-} from '../../lib/blocks/block-model';
-import { BlockEditor } from '../blocks/BlockEditor';
+import { EquipProgram, OnboardingQuestion, Activity, DayContent, DEFAULT_CHECKIN_CONFIG } from '../../lib/blocks/block-model';
 import { EquipLandingPageRichTextEditor } from './EquipLandingPageRichTextEditor';
 import { DayEditor as DailyBuilder } from '../blocks/DayComposer';
 import { UnifiedBasicInfoForm } from '../admin/UnifiedBasicInfoForm';

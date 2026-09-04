@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { TrendingUp, Users, BookOpen, Activity, CircleCheck, X, Target, Calendar, Clock, Award } from 'lucide-react';
+import { Users, Activity, CircleCheck, X, Target } from 'lucide-react';
 import { useNotifications } from '../../contexts/NotificationContext';
 import { apiClient } from '../../lib/api-client';
 import { AdminHeader } from '../admin/AdminHeader';

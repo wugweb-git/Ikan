@@ -1,14 +1,11 @@
 import { useState, useEffect } from 'react';
 import { Badge } from '../ui/badge';
-import { Separator } from '../ui/separator';
 import { apiClient } from '../../lib/api-client';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNotifications } from '../../contexts/NotificationContext';
 import { useIsMobile } from '../../hooks/useIsMobile';
 import { cn } from '../ui/utils';
-import {
-  CreditCard, Receipt, Check, Clock, X, RotateCcw, Download, ChevronDown, ChevronUp, Inbox,
-} from 'lucide-react';
+import { Receipt, Check, Clock, X, RotateCcw, Download, ChevronDown, ChevronUp, Inbox } from 'lucide-react';
 
 // ─── Font helper ──────────────────────────────────────────────
 const f = (size: string, weight: number = 400, color: string = 'var(--color-text-primary)') => ({

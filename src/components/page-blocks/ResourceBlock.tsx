@@ -4,7 +4,7 @@ import { ContentImage } from '../ui/ContentImage';
 import { Skeleton } from '../ui/skeleton-loader';
 import type { ResourcePost } from './ResourceCard';
 import { resolveImageUrl } from '../../utils/image-utils';
-import { ChevronLeft, ChevronRight, ArrowRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useIsMobile } from '../../hooks/useIsMobile';
 
 export type { ResourcePost };

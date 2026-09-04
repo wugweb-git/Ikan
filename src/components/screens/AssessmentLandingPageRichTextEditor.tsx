@@ -1,9 +1,7 @@
-import { LayoutTemplate, Plus, X } from 'lucide-react';
+import { LayoutTemplate } from 'lucide-react';
 import { Assessment } from './AssessmentEditPageWizard';
 import { AdminFormField } from '../admin/AdminFormField';
-import { Input } from '../ui/input';
 import { Textarea } from '../ui/textarea';
-import { Button } from '../ui/button';
 
 interface AssessmentLandingPageRichTextEditorProps {
   data: Partial<Assessment>;

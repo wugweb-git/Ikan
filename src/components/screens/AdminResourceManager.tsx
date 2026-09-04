@@ -12,7 +12,7 @@ import { ImageWithFallback } from '../figma/ImageWithFallback';
 import { ErrorState } from '../ui/error-state';
 import { EmptyState } from '../ui/empty-state';
 import { SkeletonTable } from '../ui/skeleton-loader';
-import { useMetadata, invalidateMetadataCache } from '../../hooks/useMetadata';
+import { useMetadata } from '../../hooks/useMetadata';
 import {
   DropdownMenu,
   DropdownMenuContent,

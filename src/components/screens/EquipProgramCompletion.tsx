@@ -4,7 +4,7 @@ import { useIsMobile } from '../../hooks/useIsMobile';
 import { Button } from '../ui/button';
 import { Card, CardContent } from '../ui/card';
 import { Progress } from '../ui/progress';
-import { CircleCheck, Trophy, Calendar, Target, ArrowRight, Star, BookOpen, Clock, BarChart3, Sparkles } from 'lucide-react';
+import { CircleCheck, Trophy, Calendar, ArrowRight, Star, BookOpen, BarChart3, Sparkles } from 'lucide-react';
 import { apiClient } from '../../lib/api-client';
 import { EquipProgram } from '../../lib/blocks/block-model';
 import { LoadingSpinner } from '../LoadingSpinner';

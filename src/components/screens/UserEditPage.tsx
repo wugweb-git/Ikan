@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Save, Trash2, User, Shield, Building, Mail, Phone, MapPin, Calendar, Link as LinkIcon } from 'lucide-react';
+import { Save, Trash2, User, Shield, Building, Mail, Phone, Calendar, Link as LinkIcon } from 'lucide-react';
 import { useNotifications } from '../../contexts/NotificationContext';
 import { apiClient } from '../../lib/api-client';
 import { AdminPageLayout } from '../admin/AdminPageLayout';

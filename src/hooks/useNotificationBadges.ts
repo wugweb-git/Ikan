@@ -3,7 +3,7 @@
  * Returns a Record<string, number> mapping routes to badge counts.
  */
 import { useState, useEffect, useRef } from 'react';
-import { projectId, publicAnonKey } from '../utils/supabase/info';
+import { projectId } from '../utils/supabase/info';
 import { useAuth } from '../contexts/AuthContext';
 
 const API_BASE = `https://${projectId}.supabase.co/functions/v1/make-server-cc205da9`;

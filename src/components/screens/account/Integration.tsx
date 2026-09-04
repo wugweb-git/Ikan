@@ -1,8 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Card, CardContent } from '../../ui/card';
 import { useAuth } from '../../../contexts/AuthContext';
 import { useNotifications } from '../../../contexts/NotificationContext';
-import { apiClient } from '../../../lib/api-client';
 import { useGoogleFit } from '../../integrations/GoogleFitContext';
 import { Activity } from 'lucide-react';
 

@@ -8,8 +8,6 @@ import { motion } from 'framer-motion';
 import { apiClient } from '../../lib/api-client';
 import { usePublicSettings } from '../../hooks/usePublicSettings';
 import { ContentImage } from '../ui/ContentImage';
-import { Button } from '../ui/button';
-import { ArrowLeft } from 'lucide-react';
 
 interface CmsPage {
   id: string;

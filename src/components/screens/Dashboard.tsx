@@ -9,7 +9,6 @@ import { checkReassessmentTriggers, ReassessmentReason } from '../../lib/reasses
 import { ActivityCard } from '../integrations/ActivityCard';
 import { useGoogleFit } from '../integrations/GoogleFitContext';
 import { cn } from '../ui/utils';
-import type { SeverityLevel } from '../../lib/scoring-engine';
 import { tierPresentation, tonePresentation } from '../../lib/severity-presentation';
 import { isProgramCheckIn } from '../../lib/assessment-record';
 import { evaluateAssessment, EngineResult, initEngineConfig, getLoadedScoringProfiles } from '../../lib/recommendation-engine';

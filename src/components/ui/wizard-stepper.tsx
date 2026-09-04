@@ -1,5 +1,5 @@
 import React from 'react';
-import { Check, Circle, Loader2 } from 'lucide-react';
+import { Check } from 'lucide-react';
 import { cn } from './utils';
 
 export interface WizardStep {

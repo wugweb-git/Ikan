@@ -1,7 +1,6 @@
 import { projectId } from '../../utils/supabase/info';
 import { getAuthHeaders } from '../../lib/supabase-client';
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '../ui/button';
 import { Icon } from '../Icon';
 import { useNotifications } from '../../contexts/NotificationContext';
@@ -12,7 +11,6 @@ import { triggerCrisisSupport } from '../safety/CrisisSupport';
 import { buildScoringContext, toSectionScoreResult } from '../../lib/scoring-context';
 import { computeScores } from '../../lib/scoring-engine';
 import { slugify } from '../../lib/slug';
-import { ProgressIndicator } from '../ui/progress-indicator';
 import { AssessmentResults } from './AssessmentResults';
 import { useOfflineSync } from '../../hooks/useOfflineSync';
 import { LoadingSpinner } from '../LoadingSpinner';

@@ -1,13 +1,12 @@
 import { durationLooksImplausible } from '../../lib/assessment-meta';
 import { useState, useEffect, useRef, useMemo } from 'react';
-import { Save, Trash2, ClipboardList, CircleHelp, Eye, Plus, GripVertical, X, Upload, EyeOff, AlertTriangle } from 'lucide-react';
+import { Save, Trash2, Plus, X, Upload, AlertTriangle } from 'lucide-react';
 import { useNotifications } from '../../contexts/NotificationContext';
 import { apiClient } from '../../lib/api-client';
 import { AdminFormField } from '../admin/AdminFormField';
 import { Input } from '../ui/input';
 import { Textarea } from '../ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
-import { Checkbox } from '../ui/checkbox';
 import { Label } from '../ui/label';
 import { Button } from '../ui/button';
 import { Card, CardContent } from '../ui/card';

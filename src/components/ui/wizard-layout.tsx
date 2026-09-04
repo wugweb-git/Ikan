@@ -1,6 +1,6 @@
 import type React from 'react';
 import { cn } from './utils';
-import { ChevronLeft, ChevronRight, X, Save, Eye, Trash2, ArrowRight, Check } from 'lucide-react';
+import { ChevronLeft, X, Eye, ArrowRight, Check } from 'lucide-react';
 import { Button } from './button';
 import { Badge } from './badge';
 import { WizardStepper, WizardStep } from './wizard-stepper';

@@ -5,7 +5,6 @@ import { AccountDetailsSection } from '../page-blocks/AccountDetailsSection';
 import { SideNavAccount } from '../navigation/SideNavAccount';
 import { cn } from '../ui/utils';
 import { useNotifications } from '../../contexts/NotificationContext';
-import { apiClient } from '../../lib/api-client';
 import { useIsMobile } from '../../hooks/useIsMobile';
 import { validateProfile } from '../../lib/validation';
 import { AccountPageHeader } from '../page-blocks/AccountPageHeader';

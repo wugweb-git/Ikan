@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { Activity, ActivityConfig, resolveInteraction, warnFallback, configOf } from '../../lib/blocks/block-model';
 import { Label } from '../ui/label';

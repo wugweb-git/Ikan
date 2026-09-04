@@ -1,9 +1,23 @@
 import React, { useState, useEffect } from 'react';
 import {
-  Users, Download, Plus, Star, MapPin, Calendar as CalendarIcon,
-  MoreHorizontal, ShieldCheck, FileText, CircleCheck, CircleX,
-  Eye, Clock, Briefcase, Languages, Link2, Copy, ExternalLink,
-  Pencil
+  Users,
+  Download,
+  Plus,
+  Star,
+  MapPin,
+  Calendar as CalendarIcon,
+  MoreHorizontal,
+  FileText,
+  CircleCheck,
+  CircleX,
+  Eye,
+  Clock,
+  Briefcase,
+  Languages,
+  Link2,
+  Copy,
+  ExternalLink,
+  Pencil,
 } from 'lucide-react';
 import { useNotifications } from '../../contexts/NotificationContext';
 import { apiClient } from '../../lib/api-client';
@@ -23,8 +37,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
 import { Textarea } from '../ui/textarea';
 import { Label } from '../ui/label';
 import {
-  DropdownMenu, DropdownMenuContent, DropdownMenuItem,
-  DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger,
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
 } from "../ui/dropdown-menu";
 import { projectId, publicAnonKey } from '../../utils/supabase/info';
 import { supabase } from '../../lib/supabase-client';

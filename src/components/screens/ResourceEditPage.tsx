@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Save, Trash2, FileText, BookOpen, Download, Globe, Eye, Tag, Link as LinkIcon, Upload, EyeOff, X } from 'lucide-react';
+import { Save, Trash2, FileText, BookOpen, Download, Globe, Link as LinkIcon, Upload, EyeOff, X } from 'lucide-react';
 import { useNotifications } from '../../contexts/NotificationContext';
 import { apiClient } from '../../lib/api-client';
 import { AdminPageLayout } from '../admin/AdminPageLayout';
@@ -8,8 +8,6 @@ import { AdminFormField } from '../admin/AdminFormField';
 import { Input } from '../ui/input';
 import { Textarea } from '../ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
-import { Checkbox } from '../ui/checkbox';
-import { Label } from '../ui/label';
 import { ImageUpload } from '../ui/image-upload';
 import { TagInput } from '../ui/tag-input';
 import { RichTextEditor } from '../ui/rich-text-editor';

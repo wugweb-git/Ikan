@@ -2,9 +2,22 @@ import { projectId } from '../../utils/supabase/info';
 import { getAuthHeaders } from '../../lib/supabase-client';
 import { useState, useRef, useEffect } from 'react';
 import {
-  User, Briefcase, Heart, CircleHelp, Users, Clock, FileText,
-  Upload, Plus, X, Languages, GraduationCap, Video, Phone, MessageSquare,
-  CircleCheck, Sparkles, ArrowLeft, Send, Loader2, Quote
+  User,
+  Briefcase,
+  Heart,
+  Clock,
+  FileText,
+  Upload,
+  Plus,
+  X,
+  Video,
+  Phone,
+  MessageSquare,
+  CircleCheck,
+  Sparkles,
+  ArrowLeft,
+  Send,
+  Loader2,
 } from 'lucide-react';
 import { Card, CardContent } from '../ui/card';
 import { Button } from '../ui/button';

@@ -1,8 +1,20 @@
 import React, { useState, useEffect } from 'react';
 import {
-  Plus, Trash2, Pencil, Save, X, Zap, Brain, Tag,
-  GripVertical, Moon, Flame, Heart, Smile,
-  ChevronDown, ChevronUp, ToggleLeft, ToggleRight
+  Plus,
+  Trash2,
+  Pencil,
+  Save,
+  X,
+  Zap,
+  Tag,
+  Moon,
+  Flame,
+  Heart,
+  Smile,
+  ChevronDown,
+  ChevronUp,
+  ToggleLeft,
+  ToggleRight,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';

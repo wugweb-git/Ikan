@@ -6,7 +6,7 @@ import { useIsMobile } from '../../../hooks/useIsMobile';
 import { cn } from '../../ui/utils';
 import { validatePassword, isCommonPassword, validateEmail } from '../../../lib/validation';
 import { PasswordStrength } from '../../ui/password-strength';
-import { Key, Mail, Monitor, ChevronDown, ChevronUp, X } from 'lucide-react';
+import { Key, Mail, Monitor, ChevronDown, ChevronUp } from 'lucide-react';
 
 // ─── Font helper ──────────────────────────────────────────────
 const f = (size: string, weight: number = 400, color: string = 'var(--color-text-primary)') => ({

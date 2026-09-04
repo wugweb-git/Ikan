@@ -3,8 +3,7 @@
  * Displays pending sync count and syncing state.
  * Follows iKan design tokens and accessibility guidelines.
  */
-import { WifiOff, RefreshCw, Check } from 'lucide-react';
-import { cn } from './ui/utils';
+import { WifiOff, RefreshCw } from 'lucide-react';
 
 interface OfflineBannerProps {
   isOnline: boolean;

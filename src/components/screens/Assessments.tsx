@@ -5,7 +5,7 @@ import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
 import { Icon } from '../Icon';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '../ui/dialog';
-import { Clock, FileText, Brain, Shield, Activity, ArrowRight, Play, Lock, CircleHelp } from 'lucide-react';
+import { Clock, FileText, Brain, Shield, Activity, Play, Lock, CircleHelp } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNotifications } from '../../contexts/NotificationContext';
 import { cn } from '../ui/utils';

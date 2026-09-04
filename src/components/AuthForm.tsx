@@ -9,7 +9,6 @@ import { useAuth } from '../contexts/AuthContext';
 import { User, Mail, Lock, Phone, Heart, Eye, EyeOff } from 'lucide-react';
 import { toast } from 'sonner';
 import { authContent } from '../lib/content/auth';
-import { projectId, publicAnonKey } from '../utils/supabase/info';
 import { 
   validateEmail, 
   validatePassword, 

@@ -30,7 +30,6 @@ import {
 } from 'lucide-react';
 import { cn } from '../ui/utils';
 import { Button } from '../ui/button';
-import { Card } from '../ui/card';
 import { Input } from '../ui/input';
 import { SideNav, SideNavGroup } from '../navigation/SideNav';
 import { LogoIcon } from '../Logo';

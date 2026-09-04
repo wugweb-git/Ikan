@@ -1,6 +1,5 @@
-import { cn } from './ui/utils';
 import { motion } from 'framer-motion';
-import { ArrowRight, Calendar, MessageCircle, ShieldCheck, Video, Phone } from 'lucide-react';
+import { ArrowRight, MessageCircle, ShieldCheck, Video, Phone } from 'lucide-react';
 
 interface ActionBlocksProps {
   onNavigate?: (route: string) => void;

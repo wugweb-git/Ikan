@@ -14,7 +14,7 @@ import { useIsMobile } from '../../hooks/useIsMobile';
 import { useSeo } from '../../hooks/useSeo';
 import { EmptyState } from '../ui/empty-state';
 import { Skeleton } from '../ui/skeleton-loader';
-import { EQUIP_CONTENT, NEWSLETTER_CONTENT, LEGACY_PROGRAM_IDS } from '../../lib/constants/content';
+import { NEWSLETTER_CONTENT, LEGACY_PROGRAM_IDS } from '../../lib/constants/content';
 
 interface EquipDetailProps {
   equipId?: string;

@@ -1,20 +1,31 @@
-import { useState, useEffect, useRef, useCallback, memo } from 'react';
-import { 
-  Plus, Trash2, GripVertical, Settings, MoreHorizontal, 
-  Copy, ChevronRight, BookOpen, Clock, Calendar, FastForward,
-  PenTool, MessageCircle, Target, AlertTriangle, Info, Layers, Zap,
-  RotateCcw, Repeat
+import { useState, useEffect, useRef, memo } from 'react';
+import {
+  Plus,
+  Trash2,
+  GripVertical,
+  Settings,
+  Copy,
+  ChevronRight,
+  BookOpen,
+  Calendar,
+  FastForward,
+  PenTool,
+  MessageCircle,
+  Target,
+  AlertTriangle,
+  Info,
+  Zap,
+  RotateCcw,
+  Repeat,
 } from 'lucide-react';
 import { useDrag, useDrop } from 'react-dnd';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Card, CardContent } from '../ui/card';
-import { Badge } from '../ui/badge';
-import { AdminFormField } from '../admin/AdminFormField';
 import { DayContent, Activity } from '../../lib/blocks/block-model';
 import { BlockEditor } from './BlockEditor';
-import { DAY_TYPE_PRESETS, PALETTE_BLOCK_TYPES, getPresetForDayType } from '../../lib/blocks/block-type-rules';
+import { PALETTE_BLOCK_TYPES, getPresetForDayType } from '../../lib/blocks/block-type-rules';
 import { METADATA_CATALOG_ITEMS } from '../../lib/metadata-catalog';
 import { stageColour } from '../../lib/blocks/block-fields';
 import { useMetadata, isContainerRow } from '../../hooks/useMetadata';
@@ -335,6 +346,12 @@ export function DayEditor({
          setSelectedDayNum(day1 ? 1 : days[0].day);
        }
     }
+    // `dayNumbers` is a joined string of day numbers, computed at :309 precisely
+    // so this runs when the SET of days changes rather than on every render.
+    // `days` is a fresh array each render, and this effect calls
+    // `handleDaysChange`, so adding it as the linter suggests is an infinite
+    // loop. Suppressed deliberately rather than silenced by habit.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dayNumbers, singleDayMode]);
 
   const activeDay = days.find(d => d.day === selectedDayNum);
@@ -346,6 +363,9 @@ export function DayEditor({
     if (selectedBlockId && activeDay && !activeDay.activities.some(b => b.id === selectedBlockId)) {
       setSelectedBlockId(null);
     }
+    // Same reason: `activeBlockIds` is the stable joined-id string standing in
+    // for `activeDay`, which is a new object every render.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedBlockId, activeBlockIds]);
 
   const moveDay = (dragIndex: number, hoverIndex: number) => {

@@ -3,10 +3,7 @@ import { apiClient } from '../../lib/api-client';
 import { useIsMobile } from '../../hooks/useIsMobile';
 import { MobileHeader } from '../navigation/MobileHeader';
 import { LoadingSpinner } from '../LoadingSpinner';
-import {
-  BookOpen, Calendar, Smile, BarChart3, ChevronDown, ChevronRight,
-  FileText, Tag, Zap, Brain, Check, Clock,
-} from 'lucide-react';
+import { BookOpen, Smile, BarChart3, ChevronDown, ChevronRight, FileText, Tag, Zap, Brain, Check, Clock } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 // ── font helper ─────────────────────────────────────────────────

@@ -1,4 +1,3 @@
-import { cn } from './utils';
 import { Trash2, X, Save, Upload, Eye } from 'lucide-react';
 import { Button } from './button';
 

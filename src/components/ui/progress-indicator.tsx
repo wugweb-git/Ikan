@@ -1,5 +1,5 @@
 import { cn } from './utils';
-import { CircleCheck, Circle } from 'lucide-react';
+import { CircleCheck } from 'lucide-react';
 
 interface ProgressIndicatorProps {
   steps: string[];

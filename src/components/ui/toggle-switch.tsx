@@ -1,4 +1,3 @@
-import { cn } from './utils';
 
 interface ToggleSwitchProps {
   enabled: boolean;
