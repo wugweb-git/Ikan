@@ -67,7 +67,7 @@ export type InteractionType =
 // that the editor, the catalog and any migration could not read. These are the
 // canonical terms and every non-canonical spelling that reaches them.
 
-/** The canonical exercise subtypes. Mirrors the `exercise_subtype` catalog bucket (12 rows). */
+/** The canonical activities. Mirrors the `activity` catalog bucket (12 rows, renamed from `exercise_subtype` 2026-09-04). */
 export const EXERCISE_SUBTYPES = [
   'mcq', 'single-select', 'multi-select', 'table', 'input-table', 'structured-list',
   'rating-scale', 'clinical-instrument', 'upload', 'ephemeral-journal',

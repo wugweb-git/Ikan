@@ -118,7 +118,7 @@ function BlockEditorInner({
   if (vocabularyUnavailable) {
     warnFallback(
       'BlockEditor',
-      `catalog unavailable (block_type ${kvBlockTypes.length} rows, exercise_subtype ${kvExerciseSubtypes.length} rows)` +
+      `catalog unavailable (block_type ${kvBlockTypes.length} rows, activity ${kvExerciseSubtypes.length} rows)` +
         (metaError ? ` — ${metaError}` : '')
     );
   }

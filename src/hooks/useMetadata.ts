@@ -119,12 +119,10 @@ const TYPE_TO_BUCKET: Record<string, keyof MetadataBucket> = {
   response_tier: 'responseTiers',
   account_type: 'accountTypes',
   day_config_type: 'dayConfigTypes',
-  exercise_subtype: 'exerciseSubtypes',
-  // Same bucket, deliberately. `exercise_subtype` is being renamed to
-  // `activity`; during the rename rows exist under BOTH names and must land
-  // together — `dedup` below collapses any overlap by value. Dropping
-  // `exercise_subtype` before every row is flipped empties the bucket, which
-  // trips BlockEditor's `vocabularyUnavailable` and offers the author nothing.
+  // Renamed from `exercise_subtype` 2026-09-04, in three deploys: accept both
+  // names -> flip the 12 rows -> drop the old name. Rolling the FRONTEND back
+  // past the first of those breaks this bucket, because the rows now carry a
+  // name that build does not know.
   activity: 'exerciseSubtypes',
   checkin_block_type: 'checkinBlockTypes',
 };

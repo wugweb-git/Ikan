@@ -173,7 +173,6 @@ const ALL_TYPES: MetadataType[] = [
   'media_type',
   'block_type',
   'interaction_type',
-  'exercise_subtype',
   'activity',
   'day_config_type',
   'difficulty_level',

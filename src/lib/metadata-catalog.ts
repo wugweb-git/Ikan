@@ -44,14 +44,11 @@ export type MetadataType =
   | 'response_tier'
   | 'account_type'
   | 'day_config_type'
-  | 'exercise_subtype'
   /**
-   * The new name for `exercise_subtype` — what the user DOES in a block.
-   * Both names are live during the rename (blocks.md §18 Phase 1.2): code
-   * accepts either, the 12 rows are flipped to `activity`, then
-   * `exercise_subtype` is dropped. Never remove one before the other has
-   * shipped, or `exerciseSubtypes` is briefly empty and BlockEditor offers
-   * the author no subtypes at all.
+   * What the user DOES in a block. Renamed from `exercise_subtype` on
+   * 2026-09-04 (blocks.md §18 Phase 1.2) — a subtype named a shape, an
+   * activity names an action. All 12 rows carry this name; zero carry the old
+   * one.
    */
   | 'activity'
   | 'checkin_block_type';
@@ -80,8 +77,8 @@ export const METADATA_TYPE_GROUPS: MetadataGroup[] = [
     key: 'programs',
     label: 'Programs & Blocks',
     icon: 'blocks',
-    description: 'Block types, interactions, exercise subtypes, and day configurations',
-    types: ['block_type', 'interaction_type', 'exercise_subtype', 'activity', 'day_config_type', 'difficulty_level'],
+    description: 'Block types, interactions, activities, and day configurations',
+    types: ['block_type', 'interaction_type', 'activity', 'day_config_type', 'difficulty_level'],
   },
   {
     key: 'assessments',
@@ -130,7 +127,6 @@ export const METADATA_TYPE_LABELS: Record<MetadataType, string> = {
   response_tier: 'Response Tiers',
   account_type: 'Account Types',
   day_config_type: 'Day Config Types',
-  exercise_subtype: 'Exercise Subtypes',
   activity: 'Activities',
   checkin_block_type: 'Check-in Block Types',
 };
@@ -156,7 +152,6 @@ export const METADATA_TYPE_ICONS: Record<MetadataType, string> = {
   response_tier: 'trending-up',
   account_type: 'user-check',
   day_config_type: 'calendar',
-  exercise_subtype: 'pen-tool',
   activity: 'pen-tool',
   checkin_block_type: 'smile',
 };
@@ -451,18 +446,18 @@ export const METADATA_CATALOG_ITEMS: SeedItem[] = [
   s('Workshop',       'day_config_type', 'workshop',       { icon: 'blocks',          color: '#6366F1', description: 'Multi-step thinking (ideation, evaluation)' }),
 
   // ── Exercise Subtypes ──────────────────────────────────────────
-  s('MCQ',                  'exercise_subtype', 'mcq',                  { icon: 'circle-check',       description: 'Standard MCQ with single correct answer' }),
-  s('Single Select',       'exercise_subtype', 'single-select',       { icon: 'list',               description: 'Pick one option from a vertical list' }),
-  s('Multi Select',        'exercise_subtype', 'multi-select',        { icon: 'list-checks',        description: 'Pick multiple options from a vertical list' }),
-  s('Checklist Table',     'exercise_subtype', 'table',               { icon: 'toggle-left',        description: 'Grid of items with yes/no toggle per row' }),
-  s('Input Table',         'exercise_subtype', 'input-table',         { icon: 'layout-grid',        description: 'Grid with text input cells for structured data' }),
-  s('Structured List',     'exercise_subtype', 'structured-list',     { icon: 'list',               description: 'Ordered list items with user input' }),
-  s('Rating Scale',        'exercise_subtype', 'rating-scale',        { icon: 'sliders-horizontal', description: 'Numeric rating scale (1–5, 1–10)' }),
-  s('Clinical Instrument', 'exercise_subtype', 'clinical-instrument', { icon: 'clipboard-list',     description: 'Validated instruments with scored Likert scales' }),
-  s('File Upload',         'exercise_subtype', 'upload',              { icon: 'image',              description: 'User uploads a file (document, image, audio)' }),
-  s('Ephemeral Journal',   'exercise_subtype', 'ephemeral-journal',   { icon: 'notebook',           description: 'Session-scoped journal not persisted long-term. Selectable in editor.' }),
-  s('Comparison Matrix',   'exercise_subtype', 'comparison-matrix',   { icon: 'layout-grid',        description: 'Side-by-side comparison table. Alias for input-table with comparison layout.' }),
-  s('Number',              'exercise_subtype', 'number',              { icon: 'hash',               description: 'Single numeric value entry' }),
+  s('MCQ',                  'activity', 'mcq',                  { icon: 'circle-check',       description: 'Standard MCQ with single correct answer' }),
+  s('Single Select',       'activity', 'single-select',       { icon: 'list',               description: 'Pick one option from a vertical list' }),
+  s('Multi Select',        'activity', 'multi-select',        { icon: 'list-checks',        description: 'Pick multiple options from a vertical list' }),
+  s('Checklist Table',     'activity', 'table',               { icon: 'toggle-left',        description: 'Grid of items with yes/no toggle per row' }),
+  s('Input Table',         'activity', 'input-table',         { icon: 'layout-grid',        description: 'Grid with text input cells for structured data' }),
+  s('Structured List',     'activity', 'structured-list',     { icon: 'list',               description: 'Ordered list items with user input' }),
+  s('Rating Scale',        'activity', 'rating-scale',        { icon: 'sliders-horizontal', description: 'Numeric rating scale (1–5, 1–10)' }),
+  s('Clinical Instrument', 'activity', 'clinical-instrument', { icon: 'clipboard-list',     description: 'Validated instruments with scored Likert scales' }),
+  s('File Upload',         'activity', 'upload',              { icon: 'image',              description: 'User uploads a file (document, image, audio)' }),
+  s('Ephemeral Journal',   'activity', 'ephemeral-journal',   { icon: 'notebook',           description: 'Session-scoped journal not persisted long-term. Selectable in editor.' }),
+  s('Comparison Matrix',   'activity', 'comparison-matrix',   { icon: 'layout-grid',        description: 'Side-by-side comparison table. Alias for input-table with comparison layout.' }),
+  s('Number',              'activity', 'number',              { icon: 'hash',               description: 'Single numeric value entry' }),
 
   // ── Check-in Block Types (widget types for check-in flow steps) ─
   s('Emoji Scale',   'checkin_block_type', 'emoji-scale',   { icon: 'smile',               description: 'User picks from emoji options representing mood, energy, etc.' }),
