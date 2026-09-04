@@ -986,6 +986,33 @@ The core change, and the one the seam was built for.
 | 6.2 | **Assign real presets across all 97 equip days** | `onboarding` for day 0, `tracker` for Sleep Tight 18–30, `reflection` where it applies. **Nine of eleven presets have never been used** — which is why 84 blocks are typed `conclude`, day structure leaking into block types |
 | 6.3 | **Audit what the allow-lists would reject**, then decide per preset | Dry run first. Workshop's blocked list is empty, so Workshop currently accepts anything |
 
+> **[DONE 2026-09-04] Phase 1.1 — the merged `block_type` vocabulary is seeded. 16 rows, live.**
+>
+> 7 leaf rows (`checklist · conclude · exercise · journal · lesson · quiz · reflection`) + **9 new
+> container rows** carrying `can_hold: true` (`onboarding · assessment · assessment-lite · learning ·
+> practice · workshop · tracker · check-in · rest`). Verified through the live `/categories` API.
+>
+> **It is 16, not 17.** 7 + 11 − 2 overlapping (`quiz`, `reflection`) = 16. Reaching 17 required
+> counting `sleep-diary`, which the catalog deliberately retired the same day.
+>
+> **`can_hold` had to ship before the rows, not with them.** `BlockEditor.tsx:108` built the author's
+> block-type dropdown from *every* `block_type` row, unfiltered, and production reads the live
+> catalog — so writing the rows would have put `learning`, `practice`, `workshop`… into the picker as
+> kinds of block, immediately, before any deploy. The plan called Phase 1 "additive, nothing reads the
+> new rows yet"; `BlockEditor` reads all of them. Order was: add `can_hold` + the filter → **deploy** →
+> seed. A seed cannot precede the deploy that makes it safe.
+>
+> **`quiz` and `reflection` are deliberately NOT containers yet**, though the merged model says they
+> are. 37 live blocks still carry those types and Phase 3.3 is what re-types them; marking them now
+> would delete a type the editor must still offer. They get `can_hold` after 3.3 and the picker drops
+> 7 → 5.
+>
+> Backup: `backup_pre_blocktype_seed_2026_09_04` (192 `category:` rows).
+>
+> **Side effect to fix in 4.1:** `AdminBlockTypeViewer` now reports `7 / 16 in KV`, which reads as
+> drift and is not — the two numbers are counting different things by design. That stat row was
+> already the plan's example of reporting drift as a statistic; it is now actively misleading.
+
 > **[RESOLVED 2026-09-04] The presets used to fail their own seed content. Fixed as Phase 0.**
 >
 > Running every preset's `defaultBlocks` through `validateBlockForDayType` against that same preset's
