@@ -314,15 +314,47 @@ export function AdminBlockTypeViewer({ onBack }: AdminBlockTypeViewerProps) {
 
   const interactionTypes = Object.keys(INTERACTION_META) as InteractionType[];
 
+  /**
+   * Like-for-like, or it cries wolf.
+   *
+   * This row used to print `code count / raw KV row count`, which compared a
+   * DERIVED number against a RAW one — so correct behaviour rendered exactly
+   * like drift. After the block_type/day_config_type merge it read `7 / 16`
+   * (16 rows, 9 of them containers the picker correctly hides) and `26 / 12`
+   * (12 canonical terms plus 14 aliases, both derived). Two of five lines were
+   * false alarms, on the one screen whose entire job is reporting drift.
+   *
+   * So each line now compares the code vocabulary against the catalog rows that
+   * actually correspond to it, and says DRIFT only when those two disagree.
+   * Counts that are expected to differ — containers, aliases — are shown as
+   * their own figure, never as the denominator of a ratio.
+   */
+  const compare = (code: number, catalog: number, aside?: string) => {
+    const suffix = aside ? ` · ${aside}` : '';
+    if (catalog === 0) return `${code}${suffix}`;           // catalog not loaded
+    if (code === catalog) return `${code}${suffix}`;
+    return `${code} / ${catalog} in catalog · DRIFT${suffix}`;
+  };
+
+  const pickableBlockTypes = kvBlockTypes.filter((t) => !t.can_hold);
+  const containerBlockTypes = kvBlockTypes.filter((t) => t.can_hold);
+  const aliasCount = exerciseSubtypes.length - CANONICAL_SUBTYPES.length;
+
   const stats = [
     {
       label: 'Interaction Types',
-      value: `${interactionTypes.length}${kvInteractionTypes.length ? ` / ${kvInteractionTypes.length} in KV` : ''}`,
+      value: compare(interactionTypes.length, kvInteractionTypes.length),
       icon: <Zap className="w-4 h-4" style={{ color: 'var(--color-status-danger)' }} />,
     },
     {
+      // Code list vs the catalog rows a block may actually BE. Container rows
+      // are stages, counted separately — they are not missing block types.
       label: 'Equip Block Types',
-      value: `${EQUIP_BLOCK_TYPES.length}${kvBlockTypes.length ? ` / ${kvBlockTypes.length} in KV` : ''}`,
+      value: compare(
+        EQUIP_BLOCK_TYPES.length,
+        pickableBlockTypes.length,
+        containerBlockTypes.length ? `${containerBlockTypes.length} containers` : undefined,
+      ),
       icon: <BookOpen className="w-4 h-4" style={{ color: 'var(--color-primary-default)' }} />,
     },
     {
@@ -331,13 +363,19 @@ export function AdminBlockTypeViewer({ onBack }: AdminBlockTypeViewerProps) {
       icon: <Smile className="w-4 h-4" style={{ color: 'var(--color-status-info)' }} />,
     },
     {
-      label: 'Exercise Subtypes',
-      value: `${exerciseSubtypes.length}${kvExerciseSubtypes.length ? ` / ${kvExerciseSubtypes.length} in KV` : ''}`,
+      // Canonical terms vs catalog rows. The displayed list is longer because
+      // it also renders aliases, which have no catalog row by design.
+      label: 'Activities',
+      value: compare(
+        CANONICAL_SUBTYPES.length,
+        kvExerciseSubtypes.length,
+        aliasCount > 0 ? `${aliasCount} aliases` : undefined,
+      ),
       icon: <PenTool className="w-4 h-4" style={{ color: 'var(--color-status-warning)' }} />,
     },
     {
       label: 'Day Config Presets',
-      value: `${DAY_CONFIG_PRESETS.length}${kvDayConfigTypes.length ? ` / ${kvDayConfigTypes.length} in KV` : ''}`,
+      value: compare(DAY_CONFIG_PRESETS.length, kvDayConfigTypes.length),
       icon: <Calendar className="w-4 h-4" style={{ color: 'var(--color-status-success)' }} />,
     },
   ];
