@@ -1,8 +1,9 @@
 import {
-  warnFallback, resolveInteraction,
+  warnFallback, resolveInteraction, normalizeSubtype,
   type Activity, type ExerciseConfig,
   type DayType, type InteractionType,
 } from '../../lib/equip-admin-types.ts';
+import { METADATA_CATALOG_ITEMS } from '../../lib/metadata-catalog.ts';
 
 export interface DayTypePreset {
   label: string;
@@ -15,9 +16,6 @@ export interface DayTypePreset {
    * hardcoded `if`s inside the validator below.
    */
   allowedInteractions: InteractionType[];
-  /** Legacy 23-string palette. Still drives DayEditor's block palette and the reference screen. */
-  allowedBlocks: string[];
-  blockedComponents: string[];
   autoConfig: {
     autoAdvance?: boolean;
     navigationBack?: boolean;
@@ -72,8 +70,6 @@ export const DAY_TYPE_PRESETS: Record<DayType, DayTypePreset> = {
       }
     ],
     allowedInteractions: ['read', 'select-one', 'select-many', 'write', 'complete'],
-    allowedBlocks: ['lesson', 'mcq_single', 'mcq_multi', 'short_text', 'long_text'],
-    blockedComponents: ['table', 'clinical', 'checklist'],
     autoConfig: {
       autoAdvance: true,
       navigationBack: false,
@@ -110,8 +106,6 @@ export const DAY_TYPE_PRESETS: Record<DayType, DayTypePreset> = {
     ],
     // + read/complete 2026-09-04: this preset seeds a `lesson` and a `conclude`.
     allowedInteractions: ['read', 'clinical', 'select-one', 'complete'],
-    allowedBlocks: ['mcq_single', 'mcq_multi', 'rating_scale', 'likert', 'boolean', 'short_text'],
-    blockedComponents: ['journal', 'table', 'checklist', 'rich_lesson'],
     autoConfig: {
       autoAdvance: true, // for MCQs
       navigationBack: false,
@@ -145,8 +139,6 @@ export const DAY_TYPE_PRESETS: Record<DayType, DayTypePreset> = {
     ],
     // + read 2026-09-04: this preset seeds a `lesson`.
     allowedInteractions: ['read', 'select-one', 'rate', 'write', 'complete'],
-    allowedBlocks: ['mcq_single', 'mcq_multi', 'rating_scale', 'short_text', 'lesson'],
-    blockedComponents: [],
     autoConfig: {
       autoAdvance: true,
       navigationBack: true,
@@ -174,8 +166,6 @@ export const DAY_TYPE_PRESETS: Record<DayType, DayTypePreset> = {
       }
     ],
     allowedInteractions: ['read', 'watch', 'complete', 'select-one'],
-    allowedBlocks: ['lesson', 'media', 'mcq_single', 'callout', 'short_text'],
-    blockedComponents: [],
     autoConfig: {
       autoAdvance: false,
       navigationBack: true
@@ -203,8 +193,6 @@ export const DAY_TYPE_PRESETS: Record<DayType, DayTypePreset> = {
     ],
     // + read/complete 2026-09-04: this preset seeds a `lesson` and a `conclude`.
     allowedInteractions: ['read', 'write', 'input-table', 'check', 'select-many', 'number', 'upload', 'complete'],
-    allowedBlocks: ['journal', 'long_text', 'table_input', 'checklist', 'date_time', 'lesson'],
-    blockedComponents: [],
     autoConfig: {
       autoAdvance: false,
       navigationBack: true,
@@ -224,8 +212,6 @@ export const DAY_TYPE_PRESETS: Record<DayType, DayTypePreset> = {
       // Preset fills these but UI logic will handle StepGroups
     ],
     allowedInteractions: ['read', 'input-table', 'write', 'select-many', 'upload', 'complete'],
-    allowedBlocks: ['lesson', 'mcq_multi', 'rtf_list', 'table_input', 'comparison_matrix'],
-    blockedComponents: [],
     autoConfig: {
       autoAdvance: false,
       navigationBack: true
@@ -256,8 +242,6 @@ export const DAY_TYPE_PRESETS: Record<DayType, DayTypePreset> = {
       }
     ],
     allowedInteractions: ['read', 'track-table', 'input-table', 'check', 'rate', 'number', 'complete'],
-    allowedBlocks: ['checklist', 'rating_scale', 'boolean', 'journal_short'],
-    blockedComponents: [],
     autoConfig: {
       autoAdvance: false,
       saveOnToggle: true
@@ -273,7 +257,12 @@ export const DAY_TYPE_PRESETS: Record<DayType, DayTypePreset> = {
     label: 'Reflection',
     description: 'Closure, sense-making, review.',
     defaultBlocks: [
-      { type: 'reflection', content: 'Summary', autoAdvance: false },
+      // Was `type: 'reflection'`. `reflection` became a CONTAINER when quiz and
+      // reflection were flipped (Phase 3.3), so this seeded a stage inside a
+      // stage — nothing nests. It is a written summary, which is a `journal`.
+      // The preset's own defaultBlocks were not updated with the flip; the
+      // containment check caught it the moment it started running.
+      { type: 'journal', content: 'Summary', autoAdvance: false },
       { 
         type: 'exercise', 
         content: 'How do you feel now?', 
@@ -283,8 +272,6 @@ export const DAY_TYPE_PRESETS: Record<DayType, DayTypePreset> = {
       { type: 'journal', content: 'Final thoughts', required: false }
     ],
     allowedInteractions: ['read', 'write', 'rate', 'select-one', 'complete'],
-    allowedBlocks: ['summary', 'rating_scale', 'journal', 'table_review'],
-    blockedComponents: [],
     autoConfig: {
       autoAdvance: false,
       navigationBack: false
@@ -319,8 +306,6 @@ export const DAY_TYPE_PRESETS: Record<DayType, DayTypePreset> = {
     ],
     // + complete 2026-09-04: this preset seeds a `conclude`.
     allowedInteractions: ['read', 'rate', 'select-one', 'select-many', 'write', 'complete'],
-    allowedBlocks: ['rating_scale', 'mcq_single', 'journal', 'lesson', 'boolean'],
-    blockedComponents: ['table', 'checklist', 'clinical'],
     autoConfig: {
       autoAdvance: true,
       navigationBack: false,
@@ -355,8 +340,6 @@ export const DAY_TYPE_PRESETS: Record<DayType, DayTypePreset> = {
       }
     ],
     allowedInteractions: ['read', 'complete'],
-    allowedBlocks: ['lesson'],
-    blockedComponents: ['exercise', 'journal', 'checklist', 'table'],
     autoConfig: {
       autoAdvance: false,
       navigationBack: false
@@ -393,8 +376,6 @@ export const DAY_TYPE_PRESETS: Record<DayType, DayTypePreset> = {
     ],
     // + read/complete 2026-09-04: this preset seeds a `lesson` and a `conclude`.
     allowedInteractions: ['read', 'select-one', 'select-many', 'rate', 'complete'],
-    allowedBlocks: ['mcq_single', 'mcq_multi', 'rating_scale', 'boolean', 'lesson'],
-    blockedComponents: ['journal', 'table', 'checklist'],
     autoConfig: {
       autoAdvance: true,
       navigationBack: false,
@@ -474,15 +455,41 @@ export function validateBlockForDayType(
     ...(subtype ? { exerciseConfig: { subtype } as ExerciseConfig } : {}),
   } as Activity);
 
-  // The blocked list is the half that has always fired. Kept, and still on the
-  // legacy palette strings, because that is what the preset data holds.
-  const key = subtype ? `${blockType}_${subtype}` : blockType;
-  const blocked = preset.blockedComponents.find(b => key.includes(b) || blockType === b);
-  if (blocked) {
+  // CONTAINMENT, from the catalog seed (2026-09-04).
+  //
+  // This used to consult `blockedComponents`, a list of snake_case strings from
+  // a phantom palette that exists in no store and no type union, matched by
+  // SUBSTRING — so `'table'` blocked `input-table` and `track-table` too, and
+  // eight of the palette's nineteen entries granted nothing at all.
+  //
+  // The real rule is `can_hold` on the stage's catalog row, which says which
+  // block types the stage accepts. Read from the seed file rather than live KV
+  // so this stays a pure function.
+  const stageRow = METADATA_CATALOG_ITEMS.find(
+    r => r.type === 'block_type' && r.slug === dayType,
+  );
+  const canHold = stageRow?.can_hold ?? [];
+  if (canHold.length > 0 && !canHold.includes(blockType)) {
     return {
-      allowed: false,
+      allowed: true,           // reported, not enforced — see the note below
       wouldReject: true,
-      reason: `'${blocked}' is blocked on ${preset.label} days.`,
+      reason: `${preset.label} days hold ${canHold.join(', ')} — this block is a '${blockType}'.`,
+    };
+  }
+
+  // The stage's activity list, same source.
+  //
+  // Compare the NORMALISED subtype: the catalog stores canonical terms
+  // (`rating-scale`) while authored content and these presets carry aliases
+  // (`rating_scale`). Comparing raw spellings reported three false violations
+  // on the presets' own seed content.
+  const activities = stageRow?.activities ?? [];
+  const canonicalSubtype = normalizeSubtype(subtype);
+  if (canonicalSubtype && activities.length > 0 && !activities.includes(canonicalSubtype)) {
+    return {
+      allowed: true,
+      wouldReject: true,
+      reason: `${preset.label} days use ${activities.join(', ')} — this block is a '${canonicalSubtype}'.`,
     };
   }
 

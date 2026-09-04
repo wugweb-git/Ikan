@@ -41,34 +41,38 @@ function block(type: string, subtype?: string, extra: Record<string, unknown> = 
   } as Activity;
 }
 
-// ── The live census: every type x subtype in the store, 2026-09-04 ──────────
+// ── The live census: every type x subtype in the store ─────────────────────
+//
+// RE-TAKEN 2026-09-04, after Phase 3.3 re-typed the 58 schema-invalid blocks
+// and the `|| subtype` overrule was removed from the resolver.
+//
+// The previous census listed 23 combinations because a block's declared type
+// and its subtype could disagree — `checklist · multi-select`, `lesson · matrix`,
+// `quiz · scale`. The retype made every declared type match what the block
+// actually does, so the store now holds 14 combinations and every subtype sits
+// on an `exercise`. That is the whole point of the retype, visible as a shrinking
+// table.
+//
+// This is still a behaviour-preservation test: every interaction below is what
+// the resolver produced BEFORE the overrule clause was removed, because the
+// retype was proved interaction-neutral against a backup on both prefixes.
+//
 // [ type, subtype, expected interaction, live block count ]
 const LIVE: Array<[string, string | undefined, InteractionType, number]> = [
-  ['exercise',   'input-table',       'input-table', 126],
+  ['exercise',   'input-table',       'input-table', 127],
   ['lesson',     undefined,           'read',        118],
-  ['conclude',   undefined,           'complete',     84],
-  ['reflection', undefined,           'write',        14],
+  ['conclude',   undefined,           'complete',     85],
+  ['journal',    undefined,           'write',        17],
+  ['exercise',   'multi-select',      'select-many',  17],
+  ['exercise',   'single-select',     'select-one',   15],
   ['exercise',   'comparison-matrix', 'input-table',   9],
-  ['checklist',  'multi-select',      'select-many',   8],
-  ['exercise',   'single-select',     'select-one',    7],
-  ['lesson',     'multi-select',      'select-many',   6],
-  ['quiz',       'single-select',     'select-one',    6],
-  ['lesson',     'matrix',            'input-table',   4],
-  ['reflection', 'matrix',            'input-table',   4],
-  ['quiz',       'mcq',               'select-one',    3],
-  ['journal',    undefined,           'write',         3],
-  ['reflection', 'structured-list',   'check',         3],
-  ['quiz',       'multi-select',      'select-many',   2],
-  ['lesson',     'single-select',     'select-one',    2],
-  ['lesson',     'input-table',       'input-table',   1],
-  ['reflection', 'multi-select',      'select-many',   1],
-  ['reflection', 'row_list',          'check',         1],
-  ['quiz',       'scale',             'rate',          1],
-  ['exercise',   'structured-list',   'check',         1],
-  ['reflection', 'text_list',         'check',         1],
-  // CHANGED 2026-09-04: was 'write' via the default branch — a numeric field
-  // drawn as a textarea. `number` is a declared subtype and now has an interaction.
-  ['reflection', 'number',            'number',        1],
+  ['exercise',   'matrix',            'input-table',   8],
+  ['exercise',   'structured-list',   'check',         4],
+  ['exercise',   'mcq',               'select-one',    3],
+  ['exercise',   'number',            'number',        1],
+  ['exercise',   'row_list',          'check',         1],
+  ['exercise',   'scale',             'rate',          1],
+  ['exercise',   'text_list',         'check',         1],
 ];
 
 test('every live type x subtype resolves to the interaction it did before', () => {
@@ -81,8 +85,11 @@ test('every live type x subtype resolves to the interaction it did before', () =
   }
 });
 
-test('the census covers all 406 stored equip blocks', () => {
-  assert.equal(LIVE.reduce((n, row) => n + row[3], 0), 406);
+test('the census covers all 407 stored equip blocks', () => {
+  // 406 -> 407: burnout-reset gained a day 28, which had been a dead end in the
+  // player. The count is asserted so the census cannot quietly go stale — which
+  // is what it just caught.
+  assert.equal(LIVE.reduce((n, row) => n + row[3], 0), 407);
 });
 
 /**

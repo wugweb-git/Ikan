@@ -52,8 +52,6 @@ interface DayConfigPresetInfo {
   value: string;
   label: string;
   description: string;
-  allowedBlocks: string[];
-  blockedComponents: string[];
   autoConfig: string;
   stepGroupRules: string;
   playerLayout: string;

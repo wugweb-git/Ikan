@@ -181,19 +181,33 @@ export function resolveInteraction(activity: Activity): InteractionType {
   // canonical vocabulary and nothing else. See SUBTYPE_ALIASES.
   const subtype = normalizeSubtype(rawSubtype);
 
-  // Exercise with subtype → map subtype.
-  // NOTE the `|| subtype`: ANY block carrying a subtype takes this path, whatever
-  // its type says. That is how `lesson · multi-select` renders as a question and
-  // how the once-undeclared `quiz` type worked at all. Legal, but it is type
-  // being overruled by accident of a boolean, so it is recorded.
-  if (type === 'exercise' || subtype) {
-    if (type !== 'exercise' && rawSubtype) {
-      warnFallback(
-        'resolveInteraction',
-        `type "${type}" overruled by subtype "${rawSubtype}" on block ${activity.id}`,
-        `${type}/${rawSubtype}`
-      );
-    }
+  // TYPE IS AUTHORITATIVE (2026-09-04).
+  //
+  // This used to read `if (type === 'exercise' || subtype)`, so ANY block
+  // carrying a subtype took the subtype path whatever its type said. That is
+  // how `lesson · multi-select` rendered as a question and how the once-
+  // undeclared `quiz` type worked at all — type overruled by accident of a
+  // boolean, on 44 live blocks.
+  //
+  // Phase 3.3 re-typed those 44 to `exercise`, which made their declared type
+  // match what they already did. Verified before removing the clause: **zero**
+  // blocks across `equip:`, `equip_program:` and `assessment_def:` are now a
+  // non-exercise type carrying a subtype. So the clause protects nothing, and
+  // keeping it would let the same disagreement be authored back in silently.
+  //
+  // If one appears anyway it is a data error, not a rendering mode: the type
+  // wins, and the fallback sink hears about it. That sink is real now — see
+  // warnFallback above.
+  if (type !== 'exercise' && rawSubtype) {
+    warnFallback(
+      'resolveInteraction',
+      `block ${activity.id} is type "${type}" but carries subtype "${rawSubtype}" — ` +
+      `the subtype is ignored and the type decides. One of the two is wrong.`,
+      `${type}/${rawSubtype}`
+    );
+  }
+
+  if (type === 'exercise') {
     switch (subtype) {
       case 'mcq':
       case 'single-select':

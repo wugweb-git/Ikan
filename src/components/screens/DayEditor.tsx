@@ -15,6 +15,7 @@ import { AdminFormField } from '../admin/AdminFormField';
 import { DayContent, Activity } from '../../lib/equip-admin-types';
 import { BlockEditor } from './BlockEditor';
 import { DAY_TYPE_PRESETS, PALETTE_BLOCK_TYPES, getPresetForDayType } from '../admin/day-presets';
+import { METADATA_CATALOG_ITEMS } from '../../lib/metadata-catalog';
 import { useMetadata, isContainerRow } from '../../hooks/useMetadata';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '../ui/dropdown-menu';
 import { cn } from '../ui/utils';
@@ -227,8 +228,6 @@ function generateBlockId(): string {
 
 // --- HELPER COMPONENTS ---
 function BlockPaletteMenu({ onSelect, dayType }: { onSelect: (type: string, subtype?: string) => void; dayType?: string }) {
-   const preset = dayType ? getPresetForDayType(dayType) : undefined;
-   
    // Block type definitions with their allowed-block keys for matching
    // Definition lives in day-presets.ts so it can be asserted against `can_hold`
    // — see PALETTE_BLOCK_TYPES. Icons stay here; they are presentation.
@@ -240,17 +239,17 @@ function BlockPaletteMenu({ onSelect, dayType }: { onSelect: (type: string, subt
    };
    const blockTypes = PALETTE_BLOCK_TYPES.map(b => ({ ...b, icon: ICONS[b.type] }));
    
-   // Filter by preset if available
-   const filtered = preset
-     ? blockTypes.filter(bt => {
-         // Always allow if any of the block's keys overlap with preset allowedBlocks
-         // Also allow if it's not explicitly blocked
-         const isBlocked = preset.blockedComponents.some(bc => bt.keys.some(k => k.includes(bc)) || bt.type.includes(bc));
-         if (isBlocked) return false;
-         // If preset has allowedBlocks, check overlap
-         const hasOverlap = bt.keys.some(k => preset.allowedBlocks.includes(k)) || preset.allowedBlocks.includes(bt.type);
-         return hasOverlap;
-       })
+   // Filter by what the stage can actually hold (2026-09-04).
+   //
+   // This used to reason over `allowedBlocks` — a 23-string snake_case palette
+   // that existed in no store and no type union, matched by substring, and
+   // whose entries granted nothing on 8 of 19. `can_hold` on the stage's
+   // catalog row is the real rule and says exactly which block types belong.
+   const canHold = dayType
+     ? METADATA_CATALOG_ITEMS.find(r => r.type === 'block_type' && r.slug === dayType)?.can_hold
+     : undefined;
+   const filtered = canHold?.length
+     ? blockTypes.filter(bt => canHold.includes(bt.type))
      : blockTypes;
 
    return (
@@ -966,7 +965,7 @@ export function DayEditor({
                                     Allowed Block Types
                                   </p>
                                   <div className="flex flex-wrap gap-1">
-                                    {preset.allowedBlocks.map(b => (
+                                    {(METADATA_CATALOG_ITEMS.find(r => r.type === 'block_type' && r.slug === activeDay.dayType)?.can_hold ?? []).map(b => (
                                       <span key={b} style={{ fontSize: '10px', fontFamily: 'monospace', padding: '1px 6px', borderRadius: 4, backgroundColor: 'var(--color-bg-muted)', color: 'var(--color-text-muted)', border: '1px solid var(--color-border-default)' }}>
                                         {b}
                                       </span>
