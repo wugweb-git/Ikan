@@ -255,3 +255,36 @@ test('a passive block needs no key', () => {
   const lesson: HBlock = { id: 'b3', interaction: 'read', position: 0, required: false };
   assert.deepEqual(missingRequirements(lesson), []);
 });
+
+// ── The seed file must cover the code's vocabularies ────────────────
+// `number` was added to InteractionType earlier on 2026-09-04 and never seeded,
+// so the catalog held 12 rows against the code's 13. Nothing failed — the only
+// symptom was the Block Type Viewer quietly printing `13 / 12 in KV`, i.e.
+// reporting drift as a statistic. These two tests are what turns that into a
+// failure instead.
+
+import { METADATA_CATALOG_ITEMS } from './metadata-catalog.ts';
+
+const seedSlugs = (type: string) =>
+  METADATA_CATALOG_ITEMS.filter(i => i.type === type).map(i => i.slug).sort();
+
+test('every interaction in the code has an `interaction_type` seed row', () => {
+  assert.deepEqual(
+    seedSlugs('interaction_type'),
+    (Object.keys(INTERACTION_META) as InteractionType[]).slice().sort(),
+    'INTERACTION_META and the interaction_type seed rows disagree. Adding an ' +
+    'interaction to the union without seeding it leaves the catalog one row ' +
+    'short, and the only symptom is a mismatched count in the admin viewer.',
+  );
+});
+
+test('every canonical subtype has an `activity` seed row', () => {
+  // The bucket was renamed `exercise_subtype` -> `activity` on 2026-09-04
+  // (blocks.md §18 Phase 1.2). This asserts the seed file was renamed with it:
+  // had step C been missed, this list would be empty.
+  assert.deepEqual(
+    seedSlugs('activity'),
+    EXERCISE_SUBTYPES.slice().sort(),
+    'EXERCISE_SUBTYPES and the `activity` seed rows disagree.',
+  );
+});

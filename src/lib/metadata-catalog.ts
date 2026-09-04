@@ -283,6 +283,7 @@ export const METADATA_CATALOG_ITEMS: SeedItem[] = [
   s('Input (Table)',  'interaction_type', 'input-table', { icon: 'layout-grid',        description: 'User fills data into table cells' }),
   s('Clinical Scale', 'interaction_type', 'clinical',    { icon: 'clipboard-list',     description: 'User answers scored clinical instrument' }),
   s('Upload',         'interaction_type', 'upload',      { icon: 'image',              description: 'User uploads a file (document, image, audio)' }),
+  s('Number',         'interaction_type', 'number',      { icon: 'hash',               description: 'User enters a single numeric value' }),
   s('Complete',       'interaction_type', 'complete',    { icon: 'circle-check',       description: 'Day-ending summary or conclusion' }),
 
   // ── Block Types (Equip/Program) ───────────────────────────────
