@@ -1,4 +1,4 @@
-import { Activity, ExerciseConfig } from '../../lib/equip-admin-types';
+import { Activity, ExerciseConfig, warnFallback } from '../../lib/equip-admin-types';
 
 export interface DayTypePreset {
   label: string;
@@ -331,7 +331,16 @@ export function getPresetForDayType(dayType: string): DayTypePreset | undefined 
 
 export function validateBlockForDayType(blockType: string, subtype: string | undefined, dayType: string): { allowed: boolean; reason?: string } {
   const preset = DAY_TYPE_PRESETS[dayType];
-  if (!preset) return { allowed: true }; // No restrictions if no preset
+  if (!preset) {
+    // No preset means this day skips even the blocked-list check below.
+    // Live, 8 days are typed `lesson` — a BLOCK type used as a day type.
+    warnFallback(
+      'validateBlockForDayType',
+      `no preset for dayType "${dayType}" — all validation skipped for this day`,
+      dayType
+    );
+    return { allowed: true };
+  }
 
   // Map internal component types to "Block Palette" names loosely
   // This mapping needs to be robust. 

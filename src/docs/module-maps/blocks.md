@@ -6,6 +6,8 @@ Everything a user reads, answers, rates or writes in this app is the same object
 
 `db **jpfvoevxegnknxoqmwye** | branch **equip-carry-forward** @ **4423f72f** | **498** live blocks · 406 equip · 92 assessments | read-only · **no writes made**`
 
+> **[NOTE] Re-verified 2026-09-04 against `a67e17da`, and four claims have changed.** Each is corrected in place below and marked *(2026-09-04)*. The third writer is **found** (§05, §17, §18 0.2). Catalog reconciliation **1.2 has landed** in both the live KV and the seed file (§05, §18). The typecheck baseline is **207**, not 216 (§18 0.4). And there is a **fifth content store**, not four (§17). The live census was re-run the same day: 406 equip blocks, `interaction` present on **0**, `role` on **0**, a response key on **0**.
+
 Six vocabularies describe one object: `block_type`, `exercise_subtype`, `interaction_type`, the 23-string palette inside `day-presets.ts`, assessments’ own seven-value question union with its eleven-entry alias map, and check-in’s six snake_case step types. Only two of the six have real consumers. The one the renderer actually reads — `interaction` — is present on 53 of 498 blocks, so 445 go through a switch statement with a default case, and that default case is where the eight authored tables and one rating scale end up.
 
 ## Contents
@@ -181,6 +183,8 @@ Plus `everyDay` and an explicit `onDays` list; `repeatTargetDays()` resolves the
 
 `sleep-diary` describes exactly what Sleep Tight's 126 `exercise · input-table` blocks already are. Declaring it as a type puts one program's content pattern into the product's primitive vocabulary — the same category error as `conclude` and as `lesson` being used as a day type on eight days. Let subtype carry the meaning.
 
+> **[OK] (2026-09-04) Both changes have landed.** The live `block_type` bucket now reads `checklist · conclude · exercise · journal · lesson · quiz · reflection` — `quiz` added, `sleep-diary` retired — and `metadata-catalog.ts:289` seeds `quiz` to match. For this bucket, §18 item 1.2 is closed.
+
 ### exercise_subtype — 11 declared, 11 in use, 6 in common
 
 *The widest divergence in the product, and the one that costs users something*
@@ -199,7 +203,7 @@ Plus `everyDay` and an explicit `onDays` list; `repeatTargetDays()` resolves the
 | **scale** | NO | 1 | 0 | **write** wrong | **ALIAS → rating-scale** |
 | **row_list** | NO | 1 | 0 | write | **ALIAS → structured-list** |
 | **text_list** | NO | 1 | 0 | write | **ALIAS → structured-list** |
-| **number** | NO | 1 | 0 | write | ADD, or alias to a numeric subtype |
+| **number** | ~~NO~~ **yes** *(2026-09-04)* | 1 | 0 | write | **ADDED** — live `exercise_subtype` now holds 12 rows including `number`, seeded at `metadata-catalog.ts:454`. It still resolves to `write`: declaring the term did not give it an interaction. That is §18 1.3 |
 | **Declared, never used — 5 terms, and all five sit in BlockEditor's fallback list** | | | | | |
 | table | yes | 0 | 0 | track-table | keep — the only route to `track-table` |
 | rating-scale | yes | 0 | 0 | rate | keep — `scale` should alias here |
@@ -211,7 +215,11 @@ Plus `everyDay` and an explicit `onDays` list; `repeatTargetDays()` resolves the
 >
 > This is the correction that narrows the problem. `BlockEditor.tsx` **does** read the catalog — `kvBlockTypes` and `kvExerciseSubtypes` from `useMetadata` — and only uses its hardcoded arrays at lines 38 and 53 when the catalog has not loaded. And those fallback arrays contain `table`, `rating-scale`, `clinical-instrument`, `upload` and `ephemeral-journal` — precisely the five declared-but-unused terms.
 >
-> So `matrix`, `scale`, `number`, `row_list` and `text_list` appear in **neither the dropdown nor the fallback**. They were written into the data by some path that is not this editor. The casing gives it away — `row_list` and `text_list` are snake_case where every catalog term and every fallback entry is kebab-case. **A third writer exists and has not been found.**
+> So `matrix`, `scale`, `number`, `row_list` and `text_list` appear in **neither the dropdown nor the fallback**. They were written into the data by some path that is not this editor. The casing gives it away — `row_list` and `text_list` are snake_case where every catalog term and every fallback entry is kebab-case.
+>
+> **[FOUND — 2026-09-04] `src/components/wizard/types.ts`, the `FieldType` union.** Thirteen values — `boolean · single_select · multi_select · number · time · text · long_text · text_list · row_list · matrix · scale · info` — carrying **all five** undeclared subtypes, exact strings, in one file. `git log --follow` gives it two commits, both titled *"Update files from Figma Make"*. It is a **seventh** vocabulary for this primitive.
+>
+> **It reads `daily_content`; it never writes it.** No `fetch`/POST/PUT anywhere in `src/components/wizard/`, and no server route writes `subtype` at all — the edge function stores the blob verbatim. Its only importer is `EquipProgramOnboarding.tsx` → `TypeformWizard`. **So no live code path can re-pollute the catalog, and Phase 1 is unblocked.** The twelve affected blocks were authored against this union by a path that no longer runs.
 
 > **[WARNING] The alias problem is already half-solved, in the wrong place.**
 >
@@ -469,6 +477,19 @@ Three of the seven are declared and unreachable — the save path collapses ever
 > An unknown subtype gets a plausible interaction. An unknown day type gets full permission. A failed catalog fetch gets a different vocabulary. A missing `order` gets array position. **In every case a missing value is replaced by a working one, and nothing records that a substitution happened.** That is why six undeclared terms, eight mistyped days and a commented-out guardrail have all coexisted in production without a single error.
 >
 > The cheapest structural fix is not to remove the fallbacks — several are load-bearing — but to make each one `console.warn` with the value it could not resolve. That turns four silent classes of defect into four searchable ones, and it is a handful of lines.
+
+> **[OK] (2026-09-04) This landed.** `warnFallback(site, detail, key)` in `equip-admin-types.ts` — a deduped `console.warn` under a single `[blocks:fallback]` prefix, so a site that runs on every render warns once per distinct value rather than once per frame. Six call sites:
+>
+> | Site | Warns when |
+> |---|---|
+> | `resolveInteraction` default | a subtype matches no case *(was already warning since `16f8aefd`; now deduped)* |
+> | `resolveInteraction` `\|\| subtype` | a non-`exercise` type is overruled by its subtype — the 21 blocks |
+> | `validateBlockForDayType` | no preset for the dayType, so **all** validation is skipped — the 8 days typed `lesson` |
+> | `BlockEditor` ×2 | a catalog bucket is empty and the hardcoded fallback vocabulary is being offered instead |
+> | `convertDayToQuestions` | a subtype is collapsed onto legacy `single-choice` |
+> | `BlockRenderer` default | an `interaction` exists that the 12-case switch has no case for |
+>
+> Typecheck unchanged at **207**. Nothing is rejected and no behaviour changes — every fallback still fires, it just says so now. Grep production consoles for `[blocks:fallback]`.
 
 > **[WARNING] The one that is not a fallback but reads like one.**
 >
@@ -758,8 +779,10 @@ The presets themselves are good — they were carefully designed and they descri
 
 - **Check-in is not using the Block system**, despite five of its six step types already existing as subtypes and the sixth being a two-option MCQ. Its builder imports neither Equip component, its steps never become an `Activity`, and its renderer is a separate six-case switch inside `MoodJournal.tsx`.
 - **The two lists don't share a string format.** Underscores in the builder, hyphens in the catalog. Wiring them together needs a normalisation pass first.
-- **Five vocabularies for one primitive** — block types, exercise subtypes, interaction types, `day-presets.ts`'s 23 palette names, and assessments' own 7-value question type union with its 11-entry alias map. Six if you count `TableColumn.type`.
-- **The stored data uses names none of them declare.** `quiz` as a block type; `matrix`, `row_list`, `text_list`, `number` and `scale` as subtypes. All fall through to a default branch and render as whatever the fallback picks.
+- **Seven vocabularies for one primitive** — block types, exercise subtypes, interaction types, `day-presets.ts`'s 23 palette names, and assessments' own 7-value question type union with its 11-entry alias map. Seven if you count `TableColumn.type`.
+- **(2026-09-04) The seventh is `src/components/wizard/types.ts` — `FieldType`, 13 values, a Figma Make import.** It is where `matrix`, `row_list`, `text_list`, `number` and `scale` come from. It reads content and never writes it, so it cannot re-pollute the catalog — but it is a live parallel field vocabulary rendered by `WizardField.tsx` on program onboarding.
+- **(2026-09-04) There is a fifth content store, not four.** `EquipProgramOnboarding.tsx:103` reads `program.onboarding.questions[]` into an `OnboardingQuestionSet` — a third question shape alongside `daily_content[].activities[]` and assessments’ `questions[]`. §14 lists four storage models; it should list five.
+- **The stored data uses names none of them declare.** `quiz` as a block type; `matrix`, `row_list`, `text_list`, `number` and `scale` as subtypes. All fall through to a default branch and render as whatever the fallback picks. **(2026-09-04: `quiz` and `number` are now declared; the resolver maps `matrix`, `row_list`, `text_list` and `scale` since `16f8aefd`. The stored values are unchanged — nothing has been backfilled.)**
 - **The `\\\|\\\| subtype`** clause in the resolver overrides type entirely. Any block carrying a subtype takes the subtype path no matter what its type says — which is why lessons render as questions and an undeclared `quiz` type works at all.
 - **Carry-forward is used by zero of 406 blocks**, while Sleep Tight holds sixteen copy-pasted duplicate days — the exact problem it was built to solve.
 - **Three of the catalog's types are decorative.** `interaction_type` and `day_config_type` are read only by a reference screen; `checkin_block_type` and `media_type` are read by nothing at all.
@@ -787,7 +810,7 @@ The presets themselves are good — they were carefully designed and they descri
 | Commit | What |
 |---|---|
 | 0340aa21 | **Naming and folders.** `BlockEditor`, `DayEditor`, `page-blocks/`, `SectionReportCard` moved to `player/`. Merged to `equip-carry-forward` and pushed |
-| f06daef1 | **A `typecheck` script.** 216 pre-existing errors; 12 module-resolution errors, none from the rename |
+| f06daef1 | **A `typecheck` script.** 216 pre-existing errors at the time; 12 module-resolution errors, none from the rename. **(2026-09-04: re-run on `a67e17da` gives 207 — this is the baseline.)** |
 | 16f8aefd | **The nine mis-rendering blocks.** Four resolver cases plus a warn on the default. §07's defect is closed in code |
 
 ### Does not wait for any of this
@@ -808,9 +831,9 @@ These are live defects with no dependency on the content model. Parking them beh
 | # | Do | Why | Blocked by |
 |---|---|---|---|
 | 0.1 | **Build the fixture set.** One collection of each kind; **every one of the 12 interactions authored exactly once**; a rendered snapshot of each | There is **no test file, no test dependency and no CI** in this repo. "Migrate post testing" currently means "post looking at it". This is the safety net and it doubles as the spec — if all 12 render from fixtures, the model is right | — |
-| 0.2 | **Find the third writer.** `matrix`, `scale`, `number`, `row_list`, `text_list` are in neither the editor's catalog dropdown nor its fallback array | Until it is found, the catalog can be made true and go stale again the next time that path runs. **Everything in Phase 1 is provisional without this** | — |
+| 0.2 | ~~**Find the third writer.**~~ **CLOSED 2026-09-04** | It is `src/components/wizard/types.ts` — the `FieldType` union, a Figma Make import, holding all five strings. It reads content and never writes it, and no server route writes `subtype`. **Phase 1 is no longer provisional** | done |
 | 0.3 | **Survey the engines.** Scoring, rule, recommendation, wellness score — module 6, unsurveyed | They consume the content model, so this plan changes them. It is the only part whose size I cannot currently estimate | — |
-| 0.4 | Run `npm run build` once and record the baseline error count | 216 typecheck errors exist. Without a baseline, nobody can tell whether a later change added one | — |
+| 0.4 | ~~Run `npm run build` once and record the baseline error count~~ **CLOSED 2026-09-04** | `npm run typecheck` on `a67e17da` → **207 errors**, exit 0. That is the number a later change must not raise. `npm run build` still unrun. Test infra: **one** test file exists (`src/lib/result-presentation.test.ts`); the `test` script globs `src/**/*.test.ts` | done |
 
 ### Phase 1 · Make the catalog able to say what it means
 
@@ -819,7 +842,7 @@ The reason `interaction_type` and `day_config_type` are decorative is not neglec
 | # | Do | Detail | Reversible |
 |---|---|---|---|
 | 1.1 | **Split the term model into four kinds** | **catalog_term** — identity: slug · name · icon · position · active · **aliases[]** — **scale_option** — + value · severity · emoji — **interaction_spec** — + requires_scale · produces · config_fields — **stage_preset** — + allowed_interactions[] · nav · save · step_rule | additive |
-| 1.2 | **Reconcile the two block vocabularies** | ADD `block_type · quiz` (12 blocks use it) · ADD `exercise_subtype · number` · RETIRE `block_type · sleep-diary` (0 blocks — it is an `exercise · input-table`) | one retirement, empty |
+| 1.2 | ~~**Reconcile the two block vocabularies**~~ **DONE — verified live 2026-09-04** | `block_type` is 7 rows with `quiz` in and `sleep-diary` out; `exercise_subtype` is 12 rows with `number` in. Both the live KV and `metadata-catalog.ts` agree. Nothing left to do here | landed |
 | 1.3 | **Move the 11 aliases out of the switch statement** into `aliases[]` | matrix · comparison_matrix → comparison-matrix · scale · rating_scale · likert → rating-scale · row_list · text_list → structured-list · clinical_instrument → clinical-instrument · emoji_scale · free_text · multi_select → their kebab forms | yes |
 | 1.4 | **Move `INTERACTION_META` into `interaction_spec` rows** | 12 rows. The labels, verbs and icons already exist and are correct — this adds what each interaction *requires* and *produces* (§13), which is what lets an editor show only the right fields | yes |
 | 1.5 | **Move `DAY_TYPE_PRESETS` into `stage_preset` rows** | 11 rows, restated against interactions (§16). **Do not enable enforcement yet** — that is Phase 6 | yes |

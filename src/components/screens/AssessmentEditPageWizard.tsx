@@ -28,7 +28,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogD
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import { DayEditor as DailyBuilder } from './DayEditor';
-import { DayContent, Activity, resolveInteraction } from '../../lib/equip-admin-types';
+import { DayContent, Activity, resolveInteraction, warnFallback } from '../../lib/equip-admin-types';
 import { AdminLoading } from '../admin/AdminLoading';
 
 // Normalize options to plain strings so the scoring-map key lookup matches
@@ -477,6 +477,17 @@ export function AssessmentEditPageWizard({ assessmentId, onBack, onSave }: Asses
                 : interaction === 'rate' ? 'scale'
                 : interaction === 'write' ? 'text'
                 : 'single-choice'; // mcq, single-select, clinical, etc.
+
+              // 3 of the 7 declared LegacyQuestion types (dropdown, mcq-icons,
+              // true-false) can never be emitted by this path. Anything that is
+              // not one of the four above lands on 'single-choice' silently.
+              if (legacyType === 'single-choice' && subtype && subtype !== 'mcq' && subtype !== 'single-select') {
+                warnFallback(
+                  'convertDayToQuestions',
+                  `subtype "${subtype}" collapsed to legacy type "single-choice"`,
+                  subtype
+                );
+              }
 
               // Rebuild the legacy scoring map (option label -> weight) from the
               // block's weights array instead of dropping it. This used to write

@@ -60,6 +60,20 @@ export type InteractionType =
   | 'upload'        // File upload — user uploads a document, image, or audio file
   | 'complete';     // Conclude/summary — day-ending content block
 
+// ── Fallback telemetry ──────────────────────────────────────────────
+// Every default in the author -> store -> resolve -> render chain replaces a
+// missing value with a working one and records nothing. That is why undeclared
+// terms, mistyped days and a disabled guardrail coexisted in production without
+// a single error. These warns turn a silent substitution into a searchable one.
+// Deduped by key: several of these sites run on every render.
+const _warnedFallbacks = new Set<string>();
+export function warnFallback(site: string, detail: string, key?: string): void {
+  const k = site + '::' + (key ?? detail);
+  if (_warnedFallbacks.has(k)) return;
+  _warnedFallbacks.add(k);
+  console.warn('[blocks:fallback] ' + site + ' - ' + detail);
+}
+
 // Maps legacy type + subtype → unified interaction. Used by BlockRenderer at runtime.
 export function resolveInteraction(activity: Activity): InteractionType {
   // Prefer explicit interaction field if set
@@ -68,8 +82,19 @@ export function resolveInteraction(activity: Activity): InteractionType {
   const { type, exerciseConfig } = activity;
   const subtype = exerciseConfig?.subtype;
 
-  // Exercise with subtype → map subtype
+  // Exercise with subtype → map subtype.
+  // NOTE the `|| subtype`: ANY block carrying a subtype takes this path, whatever
+  // its type says. That is how `lesson · multi-select` renders as a question and
+  // how the once-undeclared `quiz` type worked at all. Legal, but it is type
+  // being overruled by accident of a boolean, so it is recorded.
   if (type === 'exercise' || subtype) {
+    if (type !== 'exercise' && subtype) {
+      warnFallback(
+        'resolveInteraction',
+        `type "${type}" overruled by subtype "${subtype}" on block ${activity.id}`,
+        `${type}/${subtype}`
+      );
+    }
     switch (subtype) {
       case 'mcq':
       case 'single-select':
@@ -105,8 +130,10 @@ export function resolveInteraction(activity: Activity): InteractionType {
         // Exercise with options but no subtype → select-one
         if (exerciseConfig?.options && exerciseConfig.options.length > 0) return 'select-one';
         if (subtype) {
-          console.warn(
-            `[blocks] unmapped exercise subtype "${subtype}" on block ${activity.id} — rendering a free-text box`
+          warnFallback(
+            'resolveInteraction',
+            `unmapped exercise subtype "${subtype}" on block ${activity.id} — rendering a free-text box`,
+            subtype
           );
         }
         return 'write';

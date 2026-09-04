@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { motion } from 'framer-motion';
-import { Activity, ExerciseConfig, resolveInteraction } from '../../lib/equip-admin-types';
+import { Activity, ExerciseConfig, resolveInteraction, warnFallback } from '../../lib/equip-admin-types';
 import { Label } from '../ui/label';
 import { RadioGroup, RadioGroupItem } from '../ui/radio-group';
 import { Checkbox } from '../ui/checkbox';
@@ -943,7 +943,14 @@ export function BlockRenderer({ block, value, onChange, readOnly = false, equipI
         return renderFileUpload(config);
 
       default:
-        // Final fallback: render as lesson
+        // Final fallback: render as lesson. Reaching here means an interaction
+        // exists that this switch has no case for — the renderer and the
+        // interaction vocabulary have drifted apart.
+        warnFallback(
+          'BlockRenderer',
+          `no case for interaction "${interaction}" — rendering as a lesson`,
+          String(interaction)
+        );
         return renderLesson();
     }
   };

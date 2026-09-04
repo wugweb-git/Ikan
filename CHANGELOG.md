@@ -9,6 +9,50 @@ undated under their original session number.
 
 ---
 
+## 2026-09-04
+
+**Made every silent fallback in the block chain say so, and closed two Phase 0 items on the blocks
+survey.** No behaviour changes — every fallback still fires exactly as before.
+
+`blocks.md` §11 records ten defaults in the author -> store -> resolve -> render chain, four of which
+are the same bug at four levels: an unknown subtype gets a plausible interaction, an unknown day type
+gets full permission, a failed catalog fetch gets a different vocabulary, a missing `order` gets array
+position. In every case a missing value is replaced by a working one and nothing records the
+substitution. That is why six undeclared terms, eight mistyped days and a commented-out guardrail all
+coexisted in production without a single error.
+
+Added `warnFallback(site, detail, key)` to `equip-admin-types.ts` — a `console.warn` under one
+`[blocks:fallback]` prefix, deduped by key because several of these sites run on every render. Six
+call sites: `resolveInteraction`'s default (already warning since `16f8aefd`, now deduped) and its
+`|| subtype` clause (the 21 blocks whose type is silently overruled), `validateBlockForDayType`'s
+no-preset early return (the 8 days typed `lesson`, which skip validation entirely),
+`BlockEditor`'s two catalog-empty fallbacks, `convertDayToQuestions`'s collapse onto legacy
+`single-choice`, and `BlockRenderer`'s final default case.
+
+Typecheck: **207 before, 207 after**. That 207 is also now the recorded baseline — `blocks.md` §18
+said 216, measured at `4423f72f`.
+
+Two Phase 0 items closed in the same pass, both verified rather than inferred:
+
+- **0.2, the third writer, is found.** `src/components/wizard/types.ts` — the `FieldType` union, 13
+  values, carrying all five undeclared subtypes (`matrix`, `row_list`, `text_list`, `number`,
+  `scale`) as exact strings. `git log --follow` gives it two commits, both "Update files from Figma
+  Make". It **reads** `daily_content` and never writes it; no server route writes `subtype` at all.
+  So no live path can re-pollute the catalog, and Phase 1 is no longer provisional.
+- **0.4, the baseline, is recorded.** 207 typecheck errors, exit 0. `npm run build` still unrun.
+
+Also corrected in `blocks.md` against the live DB: §18 item **1.2 has already landed** — `block_type`
+is 7 rows with `quiz` in and `sleep-diary` out, `exercise_subtype` is 12 rows with `number` in, and
+`metadata-catalog.ts` agrees with both. And there is a **fifth content store**, not four:
+`EquipProgramOnboarding.tsx:103` reads `program.onboarding.questions[]` into an
+`OnboardingQuestionSet`, a third question shape alongside `daily_content[].activities[]` and
+assessments' `questions[]`.
+
+Live census re-run the same day: 406 equip blocks, `interaction` on **0**, `role` on 0, a response
+key on 0. The nine mis-rendering blocks are fixed in the resolver; the stored data is untouched.
+
+---
+
 ## 2026-08-12
 
 **Found and fixed a double-JSON-encoding bug affecting 3 KV prefixes; re-verified an orphan check

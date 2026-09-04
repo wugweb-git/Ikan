@@ -27,7 +27,7 @@ import { Checkbox } from '../ui/checkbox';
 import { Label } from '../ui/label';
 import { Card, CardContent } from '../ui/card';
 import { RichTextEditor } from '../ui/rich-text-editor';
-import { Activity, resolveInteraction, INTERACTION_META, type InteractionType } from '../../lib/equip-admin-types';
+import { Activity, resolveInteraction, INTERACTION_META, warnFallback, type InteractionType } from '../../lib/equip-admin-types';
 import { useMetadata } from '../../hooks/useMetadata';
 import { getPresetForDayType, type DayTypePreset } from '../admin/day-presets';
 import { projectId } from '../../utils/supabase/info';
@@ -120,12 +120,23 @@ function BlockEditorInner({
   
   // MetaManager — exercise subtypes from KV
   const { exerciseSubtypes: kvExerciseSubtypes, blockTypes: kvBlockTypes } = useMetadata();
-  const exerciseSubtypeOptions = kvExerciseSubtypes.length > 0
-    ? kvExerciseSubtypes.map(s => ({ value: s.value, label: s.label }))
-    : FALLBACK_EXERCISE_SUBTYPES;
-  const blockTypeOptions = kvBlockTypes.length > 0
-    ? kvBlockTypes.map(s => ({ value: s.value, label: s.label }))
-    : FALLBACK_BLOCK_TYPES;
+  // useMetadata returns empty buckets on a throw, so an empty bucket here is
+  // indistinguishable from "still loading" — and the admin is quietly handed a
+  // DIFFERENT vocabulary than the one the catalog holds, with no way to tell.
+  const usingSubtypeFallback = kvExerciseSubtypes.length === 0;
+  const usingBlockTypeFallback = kvBlockTypes.length === 0;
+  if (usingSubtypeFallback) {
+    warnFallback('BlockEditor', 'exercise_subtype catalog empty — offering the hardcoded fallback list');
+  }
+  if (usingBlockTypeFallback) {
+    warnFallback('BlockEditor', 'block_type catalog empty — offering the hardcoded fallback list');
+  }
+  const exerciseSubtypeOptions = usingSubtypeFallback
+    ? FALLBACK_EXERCISE_SUBTYPES
+    : kvExerciseSubtypes.map(s => ({ value: s.value, label: s.label }));
+  const blockTypeOptions = usingBlockTypeFallback
+    ? FALLBACK_BLOCK_TYPES
+    : kvBlockTypes.map(s => ({ value: s.value, label: s.label }));
 
   // Resolve the current interaction for display
   const currentInteraction = resolveInteraction(block);
