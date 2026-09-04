@@ -32,11 +32,12 @@ export function normaliseBlock(block: any) {
     duration: block.duration || estimated_time_minutes || 5,
     required: block.required !== undefined ? block.required
             : (is_required !== undefined ? is_required : true),
-    // Both names populated during the rename, from whichever is stored, so any
-    // block loaded through here is safe under either. Dropped when the old name
-    // goes. See `configOf` in block-model.ts.
+    // Reads either stored name, writes only the new one. It populated BOTH
+    // during the migration; that had to stop before the old field could be
+    // dropped from the store, because a load-then-save cycle would otherwise
+    // put it straight back. Reading the old name is still supported — see
+    // `configOf` — so a block stored under it alone still renders.
     activityConfig: block.activityConfig || block.exerciseConfig || exercise_config || {},
-    exerciseConfig: block.activityConfig || block.exerciseConfig || exercise_config || {},
     stepGroup: block.stepGroup || step_group_id,
     autoAdvance: block.autoAdvance || auto_advance || false,
     image_url: block.image_url,
