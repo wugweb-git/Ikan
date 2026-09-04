@@ -399,7 +399,12 @@ export function DayEditor({
         title: `Day ${newDayNum}`,
         description: '',
         activities: [],
-        dayType: 'lesson'
+        // Was 'lesson' — a BLOCK type used as a day type. It matches no preset,
+        // so validateBlockForDayType() found none and returned early, and every
+        // day created here skipped validation entirely. 8 such days are live.
+        // 'learning' is the preset for concept introduction, which is what 93
+        // of the 97 real days already use.
+        dayType: 'learning'
       };
       
       setSelectedDayNum(newDayNum);

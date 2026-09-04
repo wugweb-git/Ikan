@@ -9,6 +9,36 @@ undated under their original session number.
 
 ---
 
+## 2026-09-04 (3)
+
+**Restated the day-type validator against interactions, gave it a dry-run, and fixed the editor line
+that was minting invalid day types.** Typecheck 206 -> **205**. Tests still 41, passing.
+
+`validateBlockForDayType()` judged a block by a 23-string palette that exists in no store and no type
+union, bridged to real names by nine hardcoded `if`s inside the function itself — comparing
+`subtype === 'rating_scale'` and `subtype === 'textarea'` against values the editor does not write.
+It now resolves the block to its **interaction** and checks that against a new
+`allowedInteractions` field on every preset, populated for all eleven from blocks.md §16. The nine
+`if`s are gone. `allowedBlocks` stays for now because DayEditor's block palette and the reference
+screen still read it.
+
+**The allow-list still does not reject** — that is §18 6.4 and it is a content decision, not a code
+one: nine of eleven presets have never been assigned to a day, so switching it on today would reject
+correct content. Instead the function returns `{ allowed, wouldReject, reason }`. `allowed` is exactly
+what it was (only the blocked list can make it false); `wouldReject` is what enforcement would do.
+That is what makes the §18 6.3 audit runnable before the switch is thrown.
+
+**Bug fixed, and the type system found it.** Typing `DAY_TYPE_PRESETS` as `Record<DayType, ...>` in the
+previous commit made `DayEditor.tsx:402` a compile error: `handleAddDay` set `dayType: 'lesson'` on
+every new day — a BLOCK type used as a day type. It matches no preset, so the validator found none and
+returned early, meaning **every day created through the editor skipped validation entirely**. That is
+the source of the 8 live days typed `lesson` recorded in blocks.md §11. Now `'learning'`, the preset
+93 of the 97 real days already use.
+
+Logged, not fixed: `AdminBlockTypeViewer.tsx:243-305` hardcodes its own copy of seven day presets with
+their own allowedBlocks/blockedComponents rather than importing `DAY_TYPE_PRESETS`. The one screen
+whose job is to document the vocabulary is displaying a second, stale set of it.
+
 ## 2026-09-04 (2)
 
 **Centralised the block vocabulary: one alias map, one day-type union, one legacy-question map, and

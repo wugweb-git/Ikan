@@ -1,9 +1,20 @@
-import { Activity, ExerciseConfig, warnFallback, type DayType } from '../../lib/equip-admin-types';
+import {
+  Activity, ExerciseConfig, warnFallback, resolveInteraction,
+  type DayType, type InteractionType,
+} from '../../lib/equip-admin-types';
 
 export interface DayTypePreset {
   label: string;
   description: string;
   defaultBlocks: Partial<Activity>[];
+  /**
+   * What a user may be asked to DO on this stage — the vocabulary the renderer
+   * actually obeys. Replaces reasoning over `allowedBlocks`, whose 23 strings
+   * appear in no store and no type union and were bridged to real names by nine
+   * hardcoded `if`s inside the validator below.
+   */
+  allowedInteractions: InteractionType[];
+  /** Legacy 23-string palette. Still drives DayEditor's block palette and the reference screen. */
   allowedBlocks: string[];
   blockedComponents: string[];
   autoConfig: {
@@ -42,6 +53,7 @@ export const DAY_TYPE_PRESETS: Record<DayType, DayTypePreset> = {
         exerciseConfig: { subtype: 'single-select' }
       }
     ],
+    allowedInteractions: ['read', 'select-one', 'select-many', 'write'],
     allowedBlocks: ['lesson', 'mcq_single', 'mcq_multi', 'short_text', 'long_text'],
     blockedComponents: ['table', 'clinical', 'checklist'],
     autoConfig: {
@@ -78,6 +90,7 @@ export const DAY_TYPE_PRESETS: Record<DayType, DayTypePreset> = {
       },
       { type: 'conclude', content: 'Continue', autoAdvance: false }
     ],
+    allowedInteractions: ['clinical', 'select-one'],
     allowedBlocks: ['mcq_single', 'mcq_multi', 'rating_scale', 'likert', 'boolean', 'short_text'],
     blockedComponents: ['journal', 'table', 'checklist', 'rich_lesson'],
     autoConfig: {
@@ -111,6 +124,7 @@ export const DAY_TYPE_PRESETS: Record<DayType, DayTypePreset> = {
         exerciseConfig: { subtype: 'rating_scale' } 
       }
     ],
+    allowedInteractions: ['select-one', 'rate', 'write'],
     allowedBlocks: ['mcq_single', 'mcq_multi', 'rating_scale', 'short_text', 'lesson'],
     blockedComponents: [],
     autoConfig: {
@@ -139,6 +153,7 @@ export const DAY_TYPE_PRESETS: Record<DayType, DayTypePreset> = {
         exerciseConfig: { subtype: 'mcq' } 
       }
     ],
+    allowedInteractions: ['read', 'watch', 'complete', 'select-one'],
     allowedBlocks: ['lesson', 'media', 'mcq_single', 'callout', 'short_text'],
     blockedComponents: [],
     autoConfig: {
@@ -166,6 +181,7 @@ export const DAY_TYPE_PRESETS: Record<DayType, DayTypePreset> = {
       },
       { type: 'conclude', content: 'Done for today', autoAdvance: false }
     ],
+    allowedInteractions: ['write', 'input-table', 'check', 'select-many'],
     allowedBlocks: ['journal', 'long_text', 'table_input', 'checklist', 'date_time', 'lesson'],
     blockedComponents: [],
     autoConfig: {
@@ -186,6 +202,7 @@ export const DAY_TYPE_PRESETS: Record<DayType, DayTypePreset> = {
     defaultBlocks: [
       // Preset fills these but UI logic will handle StepGroups
     ],
+    allowedInteractions: ['input-table', 'write', 'select-many', 'read'],
     allowedBlocks: ['lesson', 'mcq_multi', 'rtf_list', 'table_input', 'comparison_matrix'],
     blockedComponents: [],
     autoConfig: {
@@ -217,6 +234,7 @@ export const DAY_TYPE_PRESETS: Record<DayType, DayTypePreset> = {
         exerciseConfig: { subtype: 'rating_scale' }
       }
     ],
+    allowedInteractions: ['track-table', 'input-table', 'check', 'rate'],
     allowedBlocks: ['checklist', 'rating_scale', 'boolean', 'journal_short'],
     blockedComponents: [],
     autoConfig: {
@@ -243,6 +261,7 @@ export const DAY_TYPE_PRESETS: Record<DayType, DayTypePreset> = {
       },
       { type: 'journal', content: 'Final thoughts', required: false }
     ],
+    allowedInteractions: ['write', 'rate', 'select-one'],
     allowedBlocks: ['summary', 'rating_scale', 'journal', 'table_review'],
     blockedComponents: [],
     autoConfig: {
@@ -277,6 +296,7 @@ export const DAY_TYPE_PRESETS: Record<DayType, DayTypePreset> = {
       },
       { type: 'conclude', title: 'Done', content: 'Thanks for checking in!', autoAdvance: false }
     ],
+    allowedInteractions: ['rate', 'select-one', 'select-many', 'write'],
     allowedBlocks: ['rating_scale', 'mcq_single', 'journal', 'lesson', 'boolean'],
     blockedComponents: ['table', 'checklist', 'clinical'],
     autoConfig: {
@@ -304,6 +324,7 @@ export const DAY_TYPE_PRESETS: Record<DayType, DayTypePreset> = {
         autoAdvance: false
       }
     ],
+    allowedInteractions: ['read', 'complete'],
     allowedBlocks: ['lesson'],
     blockedComponents: ['exercise', 'journal', 'checklist', 'table'],
     autoConfig: {
@@ -340,6 +361,7 @@ export const DAY_TYPE_PRESETS: Record<DayType, DayTypePreset> = {
       },
       { type: 'conclude', title: 'Results', content: 'Here\'s how you did.', autoAdvance: false }
     ],
+    allowedInteractions: ['select-one', 'select-many', 'rate'],
     allowedBlocks: ['mcq_single', 'mcq_multi', 'rating_scale', 'boolean', 'lesson'],
     blockedComponents: ['journal', 'table', 'checklist'],
     autoConfig: {
@@ -366,61 +388,80 @@ export function getPresetForDayType(dayType: string): DayTypePreset | undefined 
   return isDayType(dayType) ? DAY_TYPE_PRESETS[dayType] : undefined;
 }
 
-export function validateBlockForDayType(blockType: string, subtype: string | undefined, dayType: string): { allowed: boolean; reason?: string } {
+export interface BlockDayTypeVerdict {
+  /** What the editor enforces TODAY. Only the blocked list can make this false. */
+  allowed: boolean;
+  /**
+   * What composition enforcement WOULD reject if it were on.
+   *
+   * The allow-list has never run: the rejecting line was commented out, so the
+   * computed result was discarded and `allowed: true` always won. Restoring it
+   * is one line (blocks.md §18 6.4) — but the moment it runs, content authored
+   * against no constraint for months starts failing, and nine of eleven presets
+   * have never even been assigned to a day. So this reports instead of rejects,
+   * which is what makes the §18 6.3 audit runnable before the switch is thrown.
+   */
+  wouldReject: boolean;
+  reason?: string;
+}
+
+/**
+ * Does this block belong on this stage?
+ *
+ * Judged on the block's INTERACTION, not on the 23-string palette. That palette
+ * exists in no store and no type union, and was bridged to real block names by
+ * nine hardcoded `if`s right here — comparing `subtype === 'rating_scale'` and
+ * `subtype === 'textarea'` against values the editor does not write.
+ */
+export function validateBlockForDayType(
+  blockType: string,
+  subtype: string | undefined,
+  dayType: string
+): BlockDayTypeVerdict {
   const preset = getPresetForDayType(dayType);
   if (!preset) {
-    // No preset means this day skips even the blocked-list check below.
-    // Live, 8 days are typed `lesson` — a BLOCK type used as a day type.
+    // No preset means this day skips every check below, allow-list and blocked
+    // list alike. Live, 8 days are typed `lesson` — a BLOCK type used as a day type.
     warnFallback(
       'validateBlockForDayType',
       `no preset for dayType "${dayType}" — all validation skipped for this day`,
       dayType
     );
-    return { allowed: true };
+    return { allowed: true, wouldReject: false };
   }
 
-  // Map internal component types to "Block Palette" names loosely
-  // This mapping needs to be robust. 
-  // blockType: 'lesson' | 'exercise' | 'journal' | ...
-  // subtype: 'mcq' | 'table' | ...
-  
-  // Construct a "key" to check against allowedBlocks
-  // e.g. 'mcq_single', 'mcq_multi', 'lesson', 'journal'
-  
-  let key = blockType;
-  if (blockType === 'exercise' && subtype) {
-    if (subtype === 'mcq') key = 'mcq_single'; // Default to single, handled by logic
-    if (subtype === 'multi-select') key = 'mcq_multi';
-    if (subtype === 'single-select') key = 'mcq_single';
-    if (subtype === 'table') key = 'table_input';
+  const interaction = resolveInteraction({
+    id: 'validate',
+    title: '',
+    type: blockType as Activity['type'],
+    content: '',
+    duration: 0,
+    required: false,
+    order: 0,
+    ...(subtype ? { exerciseConfig: { subtype } as ExerciseConfig } : {}),
+  } as Activity);
+
+  // The blocked list is the half that has always fired. Kept, and still on the
+  // legacy palette strings, because that is what the preset data holds.
+  const key = subtype ? `${blockType}_${subtype}` : blockType;
+  const blocked = preset.blockedComponents.find(b => key.includes(b) || blockType === b);
+  if (blocked) {
+    return {
+      allowed: false,
+      wouldReject: true,
+      reason: `'${blocked}' is blocked on ${preset.label} days.`,
+    };
   }
-  
-  // Check if explicitly blocked
-  if (preset.blockedComponents.some(b => key.includes(b))) {
-     return { allowed: false, reason: `Component '${key}' is blocked in ${preset.label} days.` };
+
+  // The half that has never fired. Reported, not enforced.
+  const permitted = preset.allowedInteractions.includes(interaction);
+  if (!permitted) {
+    return {
+      allowed: true,
+      wouldReject: true,
+      reason: `${preset.label} days allow ${preset.allowedInteractions.join(', ')} — this block is '${interaction}'.`,
+    };
   }
 
-  // Check if in allowed list (if allowed list is strict)
-  // For now we use the allowedBlocks as a "Guide" but maybe strict?
-  // The spec says "Block Palette (Enabled)". Implies others are disabled.
-  
-  // Fuzzy match against allowedBlocks
-  const isAllowed = preset.allowedBlocks.some(allowed => {
-      if (allowed === key) return true;
-      if (allowed === 'media' && (blockType === 'image' || blockType === 'video')) return true;
-      if (allowed === 'boolean' && subtype === 'boolean') return true;
-      if (allowed === 'rating_scale' && subtype === 'rating_scale') return true;
-      if (allowed === 'likert' && subtype === 'likert') return true;
-      if (allowed === 'short_text' && subtype === 'text') return true;
-      if (allowed === 'long_text' && subtype === 'textarea') return true;
-      if (allowed === 'journal' && blockType === 'journal') return true;
-      if (allowed === 'checklist' && blockType === 'checklist') return true;
-      if (allowed === 'summary' && blockType === 'reflection') return true;
-      return false;
-  });
-
-  // If strict enforcement is desired:
-  // if (!isAllowed) return { allowed: false, reason: `Component '${key}' is not in the allowed palette for ${preset.label}.` };
-
-  return { allowed: true };
+  return { allowed: true, wouldReject: false };
 }
