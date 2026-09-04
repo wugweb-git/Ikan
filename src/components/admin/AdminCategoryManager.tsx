@@ -174,6 +174,7 @@ const ALL_TYPES: MetadataType[] = [
   'block_type',
   'interaction_type',
   'exercise_subtype',
+  'activity',
   'day_config_type',
   'difficulty_level',
   'assessment_type',

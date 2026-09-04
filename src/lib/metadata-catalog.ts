@@ -45,6 +45,15 @@ export type MetadataType =
   | 'account_type'
   | 'day_config_type'
   | 'exercise_subtype'
+  /**
+   * The new name for `exercise_subtype` — what the user DOES in a block.
+   * Both names are live during the rename (blocks.md §18 Phase 1.2): code
+   * accepts either, the 12 rows are flipped to `activity`, then
+   * `exercise_subtype` is dropped. Never remove one before the other has
+   * shipped, or `exerciseSubtypes` is briefly empty and BlockEditor offers
+   * the author no subtypes at all.
+   */
+  | 'activity'
   | 'checkin_block_type';
 
 // ═══════════════════════════════════════════════════════════════
@@ -72,7 +81,7 @@ export const METADATA_TYPE_GROUPS: MetadataGroup[] = [
     label: 'Programs & Blocks',
     icon: 'blocks',
     description: 'Block types, interactions, exercise subtypes, and day configurations',
-    types: ['block_type', 'interaction_type', 'exercise_subtype', 'day_config_type', 'difficulty_level'],
+    types: ['block_type', 'interaction_type', 'exercise_subtype', 'activity', 'day_config_type', 'difficulty_level'],
   },
   {
     key: 'assessments',
@@ -122,6 +131,7 @@ export const METADATA_TYPE_LABELS: Record<MetadataType, string> = {
   account_type: 'Account Types',
   day_config_type: 'Day Config Types',
   exercise_subtype: 'Exercise Subtypes',
+  activity: 'Activities',
   checkin_block_type: 'Check-in Block Types',
 };
 
@@ -147,6 +157,7 @@ export const METADATA_TYPE_ICONS: Record<MetadataType, string> = {
   account_type: 'user-check',
   day_config_type: 'calendar',
   exercise_subtype: 'pen-tool',
+  activity: 'pen-tool',
   checkin_block_type: 'smile',
 };
 

@@ -120,6 +120,12 @@ const TYPE_TO_BUCKET: Record<string, keyof MetadataBucket> = {
   account_type: 'accountTypes',
   day_config_type: 'dayConfigTypes',
   exercise_subtype: 'exerciseSubtypes',
+  // Same bucket, deliberately. `exercise_subtype` is being renamed to
+  // `activity`; during the rename rows exist under BOTH names and must land
+  // together — `dedup` below collapses any overlap by value. Dropping
+  // `exercise_subtype` before every row is flipped empties the bucket, which
+  // trips BlockEditor's `vocabularyUnavailable` and offers the author nothing.
+  activity: 'exerciseSubtypes',
   checkin_block_type: 'checkinBlockTypes',
 };
 
