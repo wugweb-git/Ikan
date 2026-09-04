@@ -236,14 +236,24 @@ app.get("/user/equip/:equipId/diary", requireAuth, async (c) => {
     for (const dp of (allProgress || [])) {
       if (!dp) continue;
       const dayNum = dp.day_number;
-      const dayDef = dailyContent[dayNum - 1] || {};
+      // FIXED 2026-09-04 — TWO bugs on these two lines, and they compounded.
+      //
+      // 1. `dailyContent[dayNum - 1]` indexed POSITIONALLY into an array whose
+      //    element 0 is **day 0** (Onboarding) on all four programmes. So day 1
+      //    resolved to day 0's definition, day 2 to day 1's, and so on: every
+      //    response in every export was attributed to the previous day's title.
+      //    Look the day up by its own `day` field instead.
+      //
+      // 2. `dayDef.blocks` — days written as the inline `daily_content` blob,
+      //    which is every live day, carry `activities`. `blocks` is the shape
+      //    of the retired `day:`/`block:` records. So `blockDef` was always
+      //    `{}` and every response was reported as `blockType: 'unknown'` with
+      //    the raw id as its title.
+      //
+      // Together: the wrong day, and no block metadata from it either.
+      const dayDef = dailyContent.find((d: any) => d?.day === dayNum)
+                  ?? {};
       const dayTitle = dayDef.title || `Day ${dayNum}`;
-      // FIXED 2026-09-04. This read `dayDef.blocks` only. Days written as the
-      // inline `daily_content` blob — which is every live day — carry
-      // `activities`; `blocks` is the shape of the retired `day:`/`block:`
-      // records. So `blockDef` was always `{}` and EVERY response in this
-      // export was reported as `blockType: 'unknown'` with the raw id as its
-      // title. `activities` first, `blocks` kept for the legacy shape.
       const blocks = dayDef.activities || dayDef.blocks || [];
 
       // Map block responses to include block metadata

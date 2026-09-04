@@ -119,7 +119,14 @@ export class ErrorBoundary extends Component<Props, State> {
                 fontWeight: 'var(--font-weight-regular)',
                 lineHeight: 'var(--line-height-md)'
               }}>
-                We encountered an unexpected error. This has been logged and we'll look into it.
+                {/* Was: "This has been logged and we'll look into it." Nothing
+                    logged it — componentDidCatch writes to console.error and
+                    there is no sink (no Sentry, no analytics event, no
+                    security_event write). Telling a user their problem has been
+                    reported when it has not is a correctness bug, not copy.
+                    Restore the original sentence once a sink exists. */}
+                We encountered an unexpected error. Reloading usually fixes it — if it
+                keeps happening, please tell us what you were doing at the time.
               </p>
               
               {/* Show error details in development */}

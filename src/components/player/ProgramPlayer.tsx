@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { EquipProgram, DayContent, Activity, resolveInteraction, repeatTargetDays, warnFallback, type DayType } from '../../lib/equip-admin-types';
+import { ErrorBoundary } from '../ErrorBoundary';
 import { BlockRenderer } from './BlockRenderer';
 import { Button } from '../ui/button';
 import { Progress } from '../ui/progress';
@@ -627,17 +628,45 @@ export function ProgramPlayer({
                    )}
                    style={dayConfig.layout === 'card' ? { backgroundColor: 'var(--color-bg-card)', border: '1px solid var(--color-border-default)' } : undefined}
                  >
+                   {/* Per-block boundary. Without it the nearest boundary is the
+                       ROUTE (App.tsx:512), so one malformed block — a clinical
+                       item with no scale_ref, an input-table with no columns —
+                       unmounted the whole player and discarded every response
+                       the user had typed on the day. The rest of the app is
+                       already this granular; Homepage wraps each section
+                       individually. The player, the only surface where a user
+                       does real work, was the least granular. */}
                    {activeStep && activeStep.blocks.map(block => (
-                     <BlockRenderer 
+                     <ErrorBoundary
                        key={block.id}
-                       block={block}
-                       value={responses[block.id]}
-                       onChange={(val) => handleBlockChange(block.id, val)}
-                       readOnly={mode === 'preview'}
-                       equipId={program.id}
-                       dayNum={activeDay?.day}
-                       priorEntries={priorEntriesFor(block)}
-                     />
+                       fallback={
+                         <div
+                           className="p-4 rounded-xl"
+                           style={{
+                             backgroundColor: 'var(--color-bg-card)',
+                             border: '1px dashed var(--color-status-danger)',
+                           }}
+                         >
+                           <p style={{ fontSize: 'var(--text-sm)', fontWeight: 500 }}>
+                             This step couldn’t be displayed
+                           </p>
+                           <p style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)', marginTop: 4 }}>
+                             The rest of the day still works, and anything you’ve already
+                             entered has been kept. You can continue past this one.
+                           </p>
+                         </div>
+                       }
+                     >
+                       <BlockRenderer 
+                         block={block}
+                         value={responses[block.id]}
+                         onChange={(val) => handleBlockChange(block.id, val)}
+                         readOnly={mode === 'preview'}
+                         equipId={program.id}
+                         dayNum={activeDay?.day}
+                         priorEntries={priorEntriesFor(block)}
+                       />
+                     </ErrorBoundary>
                    ))}
                  </motion.div>
                </AnimatePresence>

@@ -1157,9 +1157,20 @@ The core change, and the one the seam was built for.
 > with the mirror as a loudly-warned last resort. Both sync handlers now refresh rather than create,
 > and both stopped writing this prefix.
 >
-> It still holds **149 schema-invalid blocks** and is still left alone for content, for one reason
-> that survives: it is an older, larger snapshot holding the **8 tail days and 18 blocks that exist
-> in no other record**. Overwriting it destroys the only copy.
+> It still holds **149 schema-invalid blocks** and is still left alone for content. Two reasons, and
+> the first is a stronger guarantee than "nothing reads it":
+>
+> 1. **The one path that reads this prefix never touches `daily_content`.** It reads
+>    `program.id || program.equip_id`, `is_paid`, `price`, `title` and `currency` — metadata only.
+>    So the 149 blocks are unreachable *by construction*, not by absence of a reader. **That is the
+>    statement to check against in future**: the guarantee breaks the moment any new caller reads
+>    *content* through this fallback, not merely when a new reader appears.
+> 2. It is an older, larger snapshot holding the **8 tail days and 18 blocks that exist in no other
+>    record**. Overwriting it destroys the only copy.
+>
+> The mirror also disagrees with live on more than money: it carries `published: true` where the
+> live records say `false`, and titles burnout-reset **"Burnout Reset"** where both live records say
+> **"Unburn"**.
 >
 > **The flip.** With zero blocks carrying either type, `quiz` and `reflection` became containers:
 > **11 containers + 5 leaves = 16.** `quiz` holds lesson·exercise·conclude; `reflection` holds
