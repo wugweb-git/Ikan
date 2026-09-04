@@ -349,7 +349,10 @@ export function AdminBlockTypeViewer({ onBack }: AdminBlockTypeViewerProps) {
     {
       // Code list vs the catalog rows a block may actually BE. Container rows
       // are stages, counted separately — they are not missing block types.
-      label: 'Equip Block Types',
+      // "Equip Block Types" -> "Block Types": since the block_type and
+      // day_config_type vocabularies were merged (Phase 1.1) this is the one
+      // block-type list, not an Equip-specific one.
+      label: 'Block Types',
       value: compare(
         EQUIP_BLOCK_TYPES.length,
         pickableBlockTypes.length,
