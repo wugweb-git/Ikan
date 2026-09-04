@@ -91,7 +91,8 @@ export const DAY_TYPE_PRESETS: Record<DayType, DayTypePreset> = {
       },
       { type: 'conclude', content: 'Continue', autoAdvance: false }
     ],
-    allowedInteractions: ['clinical', 'select-one'],
+    // + read/complete 2026-09-04: this preset seeds a `lesson` and a `conclude`.
+    allowedInteractions: ['read', 'clinical', 'select-one', 'complete'],
     allowedBlocks: ['mcq_single', 'mcq_multi', 'rating_scale', 'likert', 'boolean', 'short_text'],
     blockedComponents: ['journal', 'table', 'checklist', 'rich_lesson'],
     autoConfig: {
@@ -125,7 +126,8 @@ export const DAY_TYPE_PRESETS: Record<DayType, DayTypePreset> = {
         exerciseConfig: { subtype: 'rating_scale' } 
       }
     ],
-    allowedInteractions: ['select-one', 'rate', 'write'],
+    // + read 2026-09-04: this preset seeds a `lesson`.
+    allowedInteractions: ['read', 'select-one', 'rate', 'write'],
     allowedBlocks: ['mcq_single', 'mcq_multi', 'rating_scale', 'short_text', 'lesson'],
     blockedComponents: [],
     autoConfig: {
@@ -182,7 +184,8 @@ export const DAY_TYPE_PRESETS: Record<DayType, DayTypePreset> = {
       },
       { type: 'conclude', content: 'Done for today', autoAdvance: false }
     ],
-    allowedInteractions: ['write', 'input-table', 'check', 'select-many'],
+    // + read/complete 2026-09-04: this preset seeds a `lesson` and a `conclude`.
+    allowedInteractions: ['read', 'write', 'input-table', 'check', 'select-many', 'complete'],
     allowedBlocks: ['journal', 'long_text', 'table_input', 'checklist', 'date_time', 'lesson'],
     blockedComponents: [],
     autoConfig: {
@@ -297,7 +300,8 @@ export const DAY_TYPE_PRESETS: Record<DayType, DayTypePreset> = {
       },
       { type: 'conclude', title: 'Done', content: 'Thanks for checking in!', autoAdvance: false }
     ],
-    allowedInteractions: ['rate', 'select-one', 'select-many', 'write'],
+    // + complete 2026-09-04: this preset seeds a `conclude`.
+    allowedInteractions: ['rate', 'select-one', 'select-many', 'write', 'complete'],
     allowedBlocks: ['rating_scale', 'mcq_single', 'journal', 'lesson', 'boolean'],
     blockedComponents: ['table', 'checklist', 'clinical'],
     autoConfig: {
@@ -362,7 +366,8 @@ export const DAY_TYPE_PRESETS: Record<DayType, DayTypePreset> = {
       },
       { type: 'conclude', title: 'Results', content: 'Here\'s how you did.', autoAdvance: false }
     ],
-    allowedInteractions: ['select-one', 'select-many', 'rate'],
+    // + read/complete 2026-09-04: this preset seeds a `lesson` and a `conclude`.
+    allowedInteractions: ['read', 'select-one', 'select-many', 'rate', 'complete'],
     allowedBlocks: ['mcq_single', 'mcq_multi', 'rating_scale', 'boolean', 'lesson'],
     blockedComponents: ['journal', 'table', 'checklist'],
     autoConfig: {

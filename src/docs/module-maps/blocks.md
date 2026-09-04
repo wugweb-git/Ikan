@@ -986,7 +986,7 @@ The core change, and the one the seam was built for.
 | 6.2 | **Assign real presets across all 97 equip days** | `onboarding` for day 0, `tracker` for Sleep Tight 18–30, `reflection` where it applies. **Nine of eleven presets have never been used** — which is why 84 blocks are typed `conclude`, day structure leaking into block types |
 | 6.3 | **Audit what the allow-lists would reject**, then decide per preset | Dry run first. Workshop's blocked list is empty, so Workshop currently accepts anything |
 
-> **[CRITICAL, 2026-09-04] Before enforcement is turned on: the presets fail their own seed content.**
+> **[RESOLVED 2026-09-04] The presets used to fail their own seed content. Fixed as Phase 0.**
 >
 > Running every preset's `defaultBlocks` through `validateBlockForDayType` against that same preset's
 > rules produces **8 violations across 5 presets**. Pinned as a test in
@@ -1000,8 +1000,22 @@ The core change, and the one the seam was built for.
 > | check-in | `conclude` | `complete` | rejected |
 > | quiz | `lesson`, `conclude` | `read`, `complete` | both rejected |
 >
-> **Turn enforcement on as written and an author's day fails the moment they pick a preset**, before
-> they have authored anything. It is the first thing they would see.
+> **Turn enforcement on as written and an author's day would have failed the moment they picked a
+> preset**, before they had authored anything — the first thing they would see.
+>
+> **Fixed by adding `read` and `complete` to the five presets whose seeds need them**, which clears
+> all 8. Done *before* Phase 1 deliberately: 2.1 derives the new catalog's `can_hold`/`activities`
+> from these same lists, so seeding first would have copied a known-broken rule set into the new
+> model and required fixing it twice. The test now asserts **zero**.
+>
+> **This also answers 2.3.** It was never a `Conclude` decision. `read` and `complete` were simply
+> absent from presets that seed blocks needing them; `Conclude` was one of two symptoms and `lesson`
+> was the more common one.
+>
+> **Expected side effect:** the `allowedBlocks`/`allowedInteractions` contradiction count grows
+> **3 → 7**, because adding `complete` to four presets whose palette carries no conclude-shaped
+> block necessarily widens the disagreement. That is §18 2.4 work, pinned in the test, not a
+> regression.
 >
 > The fault is in the allow-lists, not the seeds. 131 `lesson` and 84 `conclude` blocks are live;
 > nearly every authored day opens with one and closes with the other. `read` and `complete` are

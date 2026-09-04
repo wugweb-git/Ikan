@@ -9,14 +9,16 @@
  * forbids conclude-shaped blocks in the other, so a validator reading one gets
  * a different answer than one reading the other.
  *
- * The consequence is not theoretical. Five presets seed default content that
- * their own allow-list rejects — which means turning enforcement on (blocks.md
- * §18 5.2) would fail an author's day at the moment they pick a preset, before
- * they have authored anything. That is the first thing they would see.
+ * **Fixed 2026-09-04.** Five presets used to seed default content their own
+ * allow-list rejected — 8 violations — so turning enforcement on would have
+ * failed an author's day at the moment they picked a preset, before they had
+ * authored anything. `read` and `complete` were added to the five presets whose
+ * seeds need them. The first test now asserts **zero**, and is the gate that
+ * keeps it that way.
  *
- * So this test does NOT assert zero violations. It pins the exact known set, so
- * that a new one fails loudly and fixing an existing one is a deliberate edit
- * here rather than a silent drift.
+ * The second test is still pinned rather than zeroed, because reconciling
+ * `allowedBlocks` against `allowedInteractions` is a separate decision
+ * (blocks.md §18 2.4) and not a cleanup.
  */
 
 import { test } from 'node:test';
@@ -44,42 +46,12 @@ function seedViolations(): string[] {
   return out.sort();
 }
 
-/**
- * The 8 known violations, 2026-09-04. Two shapes, and BOTH are structural:
- *
- *   `lesson`   → resolves to `read`,     absent from 4 presets' allowedInteractions
- *   `conclude` → resolves to `complete`, absent from 4 presets' allowedInteractions
- *
- * Nearly every authored day opens with a lesson and closes with a conclude —
- * 131 `lesson` and 84 `conclude` blocks live — so the omission is in the
- * allow-lists, not in the seeds. `read` and `complete` are almost certainly
- * missing from every preset that lacks them.
- */
-const KNOWN_SEED_VIOLATIONS = [
-  'assessment-lite[0] lesson',
-  'assessment[0] lesson',
-  'assessment[3] conclude',
-  'check-in[2] conclude',
-  'practice[0] lesson',
-  'practice[2] conclude',
-  'quiz[0] lesson',
-  'quiz[3] conclude',
-].sort();
-
-test('no preset seeds default content its own rules reject, beyond the known set', () => {
-  const actual = seedViolations();
-
-  const introduced = actual.filter(v => !KNOWN_SEED_VIOLATIONS.includes(v));
+test('no preset seeds default content its own rules reject', () => {
   assert.deepEqual(
-    introduced, [],
-    `A preset now seeds a default block its own allow-list rejects:\n  ${introduced.join('\n  ')}\n` +
-    'Either add the interaction to that preset\'s allowedInteractions, or change the seed.',
-  );
-
-  const fixed = KNOWN_SEED_VIOLATIONS.filter(v => !actual.includes(v));
-  assert.deepEqual(
-    fixed, [],
-    `These known violations are fixed — remove them from KNOWN_SEED_VIOLATIONS:\n  ${fixed.join('\n  ')}`,
+    seedViolations(), [],
+    'A preset seeds a default block its own allow-list rejects. Either add the ' +
+    "interaction to that preset's allowedInteractions, or change the seed. " +
+    'Leaving it means enforcement fails the day an author picks this preset.',
   );
 });
 
@@ -97,20 +69,26 @@ test('allowedBlocks and allowedInteractions do not contradict each other on conc
       );
     }
   }
-  // Pinned, not asserted to zero — see the file header. Reconciling the two
-  // fields is blocks.md §18 2.3/2.4, and is a decision, not a cleanup.
+  // Pinned, not asserted to zero — see the file header.
   //
-  // The three, 2026-09-04:
-  //   learning    permits `complete`, palette has no conclude-shaped block
-  //   rest        permits `complete`, palette has no conclude-shaped block
-  //   reflection  forbids `complete`, palette DOES carry `summary`
+  // This grew from 3 to 7 when the allow-lists were fixed above, and that is
+  // expected, not a regression: adding `complete` to four presets whose palette
+  // carries no conclude-shaped block necessarily widens the disagreement. The
+  // fix cleared the violations that block enforcement; it did not reconcile the
+  // two fields, which is §18 2.4.
   //
-  // `reflection` is the interesting one: it is the only preset whose palette
-  // permits a conclude-shaped block, and its interaction list forbids it. The
-  // two fields are exactly inverted there.
+  //   assessment · practice · check-in · quiz   permit `complete` (added 2026-09-04),
+  //                                             palette has no conclude-shaped block
+  //   learning · rest                           same shape, pre-existing
+  //   reflection                                exactly inverted — palette carries
+  //                                             `summary`, interaction list forbids `complete`
+  //
+  // `reflection` is the one to look at first: it is the only preset whose
+  // palette permits a conclude-shaped block, and the only one whose interaction
+  // list forbids it.
   assert.deepEqual(
     contradictions.map(c => c.split(':')[0]).sort(),
-    ['learning', 'reflection', 'rest'],
+    ['assessment', 'check-in', 'learning', 'practice', 'quiz', 'reflection', 'rest'],
     `The allowedBlocks/allowedInteractions contradictions changed:\n  ${contradictions.join('\n  ')}`,
   );
 });
