@@ -34,32 +34,6 @@ import { projectId } from '../../utils/supabase/info';
 import { getAuthHeaders } from '../../lib/supabase-client';
 import { toast } from 'sonner';
 
-// Fallback exercise subtypes — used only while MetaManager hasn't loaded
-const FALLBACK_EXERCISE_SUBTYPES = [
-  { value: 'mcq', label: 'Multiple Choice Question' },
-  { value: 'single-select', label: 'Single Select List' },
-  { value: 'multi-select', label: 'Multi Select List' },
-  { value: 'table', label: 'Checklist Table (Yes/No)' },
-  { value: 'input-table', label: 'Input Table (Data Entry)' },
-  { value: 'structured-list', label: 'Structured List' },
-  { value: 'rating-scale', label: 'Rating Scale' },
-  { value: 'clinical-instrument', label: 'Clinical Instrument (GAD-7, PHQ-9)' },
-  { value: 'upload', label: 'File Upload' },
-  { value: 'ephemeral-journal', label: 'Ephemeral Journal' },
-  { value: 'comparison-matrix', label: 'Comparison Matrix' },
-];
-
-// Fallback block types — used only while MetaManager hasn't loaded
-const FALLBACK_BLOCK_TYPES = [
-  { value: 'lesson', label: '📚 Lesson (Read)' },
-  { value: 'exercise', label: '✏️ Exercise (Interact)' },
-  { value: 'journal', label: '📝 Journal (Write)' },
-  { value: 'checklist', label: '☑️ Checklist (Track)' },
-  { value: 'reflection', label: '💭 Reflection (Think)' },
-  { value: 'conclude', label: '🎯 Conclude (Finish)' },
-  { value: 'sleep-diary', label: '🌙 Sleep Diary (Track)' },
-];
-
 interface BlockEditorProps {
   block: Activity;
   onChange: (updates: Partial<Activity>) => void;
@@ -119,24 +93,27 @@ function BlockEditorInner({
   };
   
   // MetaManager — exercise subtypes from KV
-  const { exerciseSubtypes: kvExerciseSubtypes, blockTypes: kvBlockTypes } = useMetadata();
-  // useMetadata returns empty buckets on a throw, so an empty bucket here is
-  // indistinguishable from "still loading" — and the admin is quietly handed a
-  // DIFFERENT vocabulary than the one the catalog holds, with no way to tell.
-  const usingSubtypeFallback = kvExerciseSubtypes.length === 0;
-  const usingBlockTypeFallback = kvBlockTypes.length === 0;
-  if (usingSubtypeFallback) {
-    warnFallback('BlockEditor', 'exercise_subtype catalog empty — offering the hardcoded fallback list');
+  const {
+    exerciseSubtypes: kvExerciseSubtypes,
+    blockTypes: kvBlockTypes,
+    loading: metaLoading,
+    error: metaError,
+  } = useMetadata();
+  // The catalog is the only vocabulary. The two hardcoded fallback arrays that
+  // used to stand in here held DIFFERENT terms than the catalog does — and since
+  // useMetadata returns empty buckets on a throw as well as while loading, a
+  // failed fetch silently offered the admin the wrong list with no way to tell.
+  // Empty now means empty, and the editor says so rather than inventing terms.
+  const exerciseSubtypeOptions = kvExerciseSubtypes.map(s => ({ value: s.value, label: s.label }));
+  const blockTypeOptions = kvBlockTypes.map(s => ({ value: s.value, label: s.label }));
+  const vocabularyUnavailable = !metaLoading && (kvBlockTypes.length === 0 || kvExerciseSubtypes.length === 0);
+  if (vocabularyUnavailable) {
+    warnFallback(
+      'BlockEditor',
+      `catalog unavailable (block_type ${kvBlockTypes.length} rows, exercise_subtype ${kvExerciseSubtypes.length} rows)` +
+        (metaError ? ` — ${metaError}` : '')
+    );
   }
-  if (usingBlockTypeFallback) {
-    warnFallback('BlockEditor', 'block_type catalog empty — offering the hardcoded fallback list');
-  }
-  const exerciseSubtypeOptions = usingSubtypeFallback
-    ? FALLBACK_EXERCISE_SUBTYPES
-    : kvExerciseSubtypes.map(s => ({ value: s.value, label: s.label }));
-  const blockTypeOptions = usingBlockTypeFallback
-    ? FALLBACK_BLOCK_TYPES
-    : kvBlockTypes.map(s => ({ value: s.value, label: s.label }));
 
   // Resolve the current interaction for display
   const currentInteraction = resolveInteraction(block);

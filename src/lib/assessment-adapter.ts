@@ -1,5 +1,35 @@
 import { EquipProgram, DayContent, Activity, ExerciseConfig, InteractionType } from './equip-admin-types';
 
+/**
+ * Inbound spellings of a legacy assessment question type -> the four the save
+ * path can actually emit. Lived as two hand-kept copies, in AssessmentFlow.tsx
+ * (twice) and this module's sibling wizard; one drifting from the other would
+ * change how a stored question is read without changing how it is written.
+ *
+ * Note this maps 11 spellings onto 4 outputs. `dropdown`, `mcq-icons` and
+ * `true-false` are declared on LegacyQuestion.type and cannot be produced by
+ * any path — see blocks.md §10.
+ */
+export const LEGACY_QUESTION_TYPE_ALIASES: Record<string, LegacyQuestion['type']> = {
+  multiple_choice: 'multiple-choice',
+  multiselect:     'multiple-choice',
+  single_choice:   'single-choice',
+  select:          'single-choice',
+  radio:           'single-choice',
+  mcq:             'single-choice',
+  rating:          'scale',
+  scale:           'scale',
+  text:            'text',
+  input:           'text',
+  textarea:        'text',
+};
+
+/** Resolve any inbound spelling to a canonical legacy question type. Unknown values pass through. */
+export function normalizeLegacyQuestionType(raw: string): string {
+  return LEGACY_QUESTION_TYPE_ALIASES[raw] ?? raw;
+}
+
+
 // Legacy Types
 interface LegacyQuestion {
   id: string;

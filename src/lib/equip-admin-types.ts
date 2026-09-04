@@ -58,7 +58,71 @@ export type InteractionType =
   | 'input-table'   // Input table, comparison matrix — fill data cells
   | 'clinical'      // Clinical instrument (GAD-7, PHQ-9) — scored Likert grid
   | 'upload'        // File upload — user uploads a document, image, or audio file
+  | 'number'        // Single numeric value — declared as a subtype since 2026-09-04
   | 'complete';     // Conclude/summary — day-ending content block
+
+// ── The vocabulary, in one place ────────────────────────────────────
+// Before this, the alias list lived as extra `case` labels inside
+// resolveInteraction's switch — which meant the renderer obeyed a vocabulary
+// that the editor, the catalog and any migration could not read. These are the
+// canonical terms and every non-canonical spelling that reaches them.
+
+/** The canonical exercise subtypes. Mirrors the `exercise_subtype` catalog bucket (12 rows). */
+export const EXERCISE_SUBTYPES = [
+  'mcq', 'single-select', 'multi-select', 'table', 'input-table', 'structured-list',
+  'rating-scale', 'clinical-instrument', 'upload', 'ephemeral-journal',
+  'comparison-matrix', 'number',
+] as const;
+export type ExerciseSubtype = typeof EXERCISE_SUBTYPES[number];
+
+/**
+ * Every non-canonical spelling -> its canonical term.
+ *
+ * Group 1 is live in stored content: `matrix` (8 blocks), `row_list`, `text_list`
+ * and `scale` (1 each) came from `components/wizard/types.ts`'s FieldType union,
+ * a Figma Make import that reads content and never writes it.
+ * Group 2 is snake_case spellings the resolver already accepted.
+ * Group 3 is check-in's step vocabulary, which is four of these terms under
+ * other names — declared here so Phase 5 has one list to read, not two.
+ */
+export const SUBTYPE_ALIASES: Record<string, ExerciseSubtype> = {
+  // 1 · in live data, from the Figma Make wizard
+  matrix:              'comparison-matrix',
+  row_list:            'structured-list',
+  text_list:           'structured-list',
+  scale:               'rating-scale',
+  // 2 · snake_case and legacy spellings
+  comparison_matrix:   'comparison-matrix',
+  rating_scale:        'rating-scale',
+  clinical_instrument: 'clinical-instrument',
+  likert:              'rating-scale',
+  // 3 · check-in step types
+  emoji_scale:         'rating-scale',
+  slider:              'rating-scale',
+  free_text:           'ephemeral-journal',
+  multi_select:        'multi-select',
+  single_choice:       'single-select',
+  yes_no:              'mcq',
+};
+
+const _CANONICAL = new Set<string>(EXERCISE_SUBTYPES);
+
+/**
+ * Resolve any stored spelling to a canonical subtype.
+ * Returns undefined for a term in neither list — the caller decides what that means.
+ */
+export function normalizeSubtype(raw: string | undefined | null): ExerciseSubtype | undefined {
+  if (!raw) return undefined;
+  if (_CANONICAL.has(raw)) return raw as ExerciseSubtype;
+  return SUBTYPE_ALIASES[raw];
+}
+
+/** The day types that have a preset. `DAY_TYPE_PRESETS` is typed against this, so the two cannot drift. */
+export const DAY_TYPES = [
+  'onboarding', 'learning', 'practice', 'workshop', 'tracker', 'reflection',
+  'quiz', 'check-in', 'assessment', 'assessment-lite', 'rest',
+] as const;
+export type DayType = typeof DAY_TYPES[number];
 
 // ── Fallback telemetry ──────────────────────────────────────────────
 // Every default in the author -> store -> resolve -> render chain replaces a
@@ -80,7 +144,10 @@ export function resolveInteraction(activity: Activity): InteractionType {
   if (activity.interaction) return activity.interaction;
 
   const { type, exerciseConfig } = activity;
-  const subtype = exerciseConfig?.subtype;
+  const rawSubtype = exerciseConfig?.subtype;
+  // Aliases are resolved BEFORE the switch, so the switch below is the
+  // canonical vocabulary and nothing else. See SUBTYPE_ALIASES.
+  const subtype = normalizeSubtype(rawSubtype);
 
   // Exercise with subtype → map subtype.
   // NOTE the `|| subtype`: ANY block carrying a subtype takes this path, whatever
@@ -88,11 +155,11 @@ export function resolveInteraction(activity: Activity): InteractionType {
   // how the once-undeclared `quiz` type worked at all. Legal, but it is type
   // being overruled by accident of a boolean, so it is recorded.
   if (type === 'exercise' || subtype) {
-    if (type !== 'exercise' && subtype) {
+    if (type !== 'exercise' && rawSubtype) {
       warnFallback(
         'resolveInteraction',
-        `type "${type}" overruled by subtype "${subtype}" on block ${activity.id}`,
-        `${type}/${subtype}`
+        `type "${type}" overruled by subtype "${rawSubtype}" on block ${activity.id}`,
+        `${type}/${rawSubtype}`
       );
     }
     switch (subtype) {
@@ -104,24 +171,18 @@ export function resolveInteraction(activity: Activity): InteractionType {
       case 'table':
         return 'track-table';
       case 'input-table':
-      case 'comparison_matrix':
       case 'comparison-matrix':
-      case 'matrix':
         return 'input-table';
       case 'structured-list':
-      case 'row_list':
-      case 'text_list':
         return 'check';
-      case 'rating_scale':
       case 'rating-scale':
-      case 'likert':
-      case 'scale':
         return 'rate';
-      case 'clinical_instrument':
       case 'clinical-instrument':
         return 'clinical';
       case 'upload':
         return 'upload';
+      case 'number':
+        return 'number';
       case 'ephemeral-journal':
         // If it has options, it's really a select-one (data inconsistency fix)
         if (exerciseConfig?.options && exerciseConfig.options.length > 0) return 'select-one';
@@ -129,11 +190,11 @@ export function resolveInteraction(activity: Activity): InteractionType {
       default:
         // Exercise with options but no subtype → select-one
         if (exerciseConfig?.options && exerciseConfig.options.length > 0) return 'select-one';
-        if (subtype) {
+        if (rawSubtype) {
           warnFallback(
             'resolveInteraction',
-            `unmapped exercise subtype "${subtype}" on block ${activity.id} — rendering a free-text box`,
-            subtype
+            `subtype "${rawSubtype}" is in neither EXERCISE_SUBTYPES nor SUBTYPE_ALIASES on block ${activity.id} — rendering a free-text box`,
+            rawSubtype
           );
         }
         return 'write';
@@ -168,6 +229,7 @@ export const INTERACTION_META: Record<InteractionType, { label: string; verb: st
   'input-table': { label: 'Input (Table)',   verb: 'Enters',   icon: 'grid-3x3',       description: 'User fills data into table cells' },
   'clinical':    { label: 'Clinical Scale',  verb: 'Answers',  icon: 'clipboard-list', description: 'User answers scored clinical instrument' },
   'upload':      { label: 'Upload',          verb: 'Uploads',  icon: 'upload',         description: 'User uploads a file (document, image, audio)' },
+  'number':      { label: 'Number',          verb: 'Enters',   icon: 'hash',           description: 'User enters a single numeric value' },
   'complete':    { label: 'Complete',        verb: 'Finishes', icon: 'flag',           description: 'Day-ending summary or conclusion' },
 };
 
@@ -177,12 +239,7 @@ export interface ExerciseConfig {
    * present in live content, so both are declared here and mapped in resolveInteraction().
    * 'number' has no interaction of its own yet and falls back to a free-text box.
    */
-  subtype?: 'multi-select' | 'single-select' | 'mcq' | 'table' | 'input-table' | 'ephemeral-journal'
-    | 'structured-list' | 'row_list' | 'text_list'
-    | 'clinical_instrument' | 'clinical-instrument'
-    | 'rating_scale' | 'rating-scale' | 'likert' | 'scale'
-    | 'comparison_matrix' | 'comparison-matrix' | 'matrix'
-    | 'number' | 'upload';
+  subtype?: ExerciseSubtype | keyof typeof SUBTYPE_ALIASES;
   prompt?: string;
   options?: string[];
   questions?: string[]; // For clinical instruments
@@ -270,9 +327,8 @@ export interface DayContent {
   description: string;
   activities: Activity[];
   image_url?: string;
-  /** Must stay in sync with DAY_TYPE_PRESETS in components/admin/day-presets.ts. */
-  dayType?: 'assessment' | 'assessment-lite' | 'learning' | 'practice' | 'workshop' | 'tracker' | 'reflection'
-    | 'check-in' | 'rest' | 'quiz';
+  /** DAY_TYPE_PRESETS is typed `Record<DayType, ...>`, so this cannot drift from it. */
+  dayType?: DayType;
 }
 
 export interface WeekStructure {

@@ -66,7 +66,7 @@ interface AssessmentFlowProps {
 }
 
 import { ProgramPlayer, PlayerResults } from '../player/ProgramPlayer';
-import { adaptAssessmentToProgram } from '../../lib/assessment-adapter';
+import { adaptAssessmentToProgram, normalizeLegacyQuestionType } from '../../lib/assessment-adapter';
 import { evaluateAssessment, loadScoringProfiles, loadAdminRules, getLoadedScoringProfiles } from '../../lib/recommendation-engine';
 
 /**
@@ -701,26 +701,8 @@ export function AssessmentFlow({
             };
           });
 
-          // 3. Normalize Type
-          let type = q.type;
-          // Map backend specific types to our internal types
-          const typeMap: Record<string, string> = {
-            'multiple_choice': 'multiple-choice',
-            'multiselect': 'multiple-choice',
-            'single_choice': 'single-choice',
-            'select': 'single-choice',
-            'radio': 'single-choice',
-            'mcq': 'single-choice',
-            'rating': 'scale',
-            'scale': 'scale',
-            'text': 'text',
-            'input': 'text',
-            'textarea': 'text'
-          };
-          
-          if (typeMap[type]) {
-            type = typeMap[type];
-          }
+          // 3. Normalize Type — one shared map, see assessment-adapter.ts
+          const type = normalizeLegacyQuestionType(q.type);
 
           return {
             ...q,
@@ -885,15 +867,8 @@ function normalizeAssessment(assessment: Assessment): Assessment {
         };
       });
 
-      // Normalize type
-      const typeMap: Record<string, string> = {
-        'multiple_choice': 'multiple-choice', 'multiselect': 'multiple-choice',
-        'single_choice': 'single-choice', 'select': 'single-choice',
-        'radio': 'single-choice', 'mcq': 'single-choice',
-        'rating': 'scale', 'scale': 'scale',
-        'text': 'text', 'input': 'text', 'textarea': 'text'
-      };
-      const type = (typeMap[q.type] || q.type) as Question['type'];
+      // Normalize type — the same shared map as above
+      const type = normalizeLegacyQuestionType(q.type) as Question['type'];
 
       return { ...q, text: q.text || (q as any).question_text || (q as any).title || 'Untitled', type, options };
     })

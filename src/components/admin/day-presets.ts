@@ -1,4 +1,4 @@
-import { Activity, ExerciseConfig, warnFallback } from '../../lib/equip-admin-types';
+import { Activity, ExerciseConfig, warnFallback, type DayType } from '../../lib/equip-admin-types';
 
 export interface DayTypePreset {
   label: string;
@@ -24,7 +24,39 @@ export interface DayTypePreset {
   errors: string[];
 }
 
-export const DAY_TYPE_PRESETS: Record<string, DayTypePreset> = {
+export const DAY_TYPE_PRESETS: Record<DayType, DayTypePreset> = {
+  // `onboarding` had a `day_config_type` catalog row and no code path at all, so
+  // an admin picking it in Meta Manager silently got nothing. Typing this record
+  // as Record<DayType, ...> is what forced it to exist.
+  'onboarding': {
+    label: 'Onboarding',
+    description: 'Day 0. First-time intro, consent, and orientation before the programme starts.',
+    defaultBlocks: [
+      { type: 'lesson', title: 'Welcome', content: '', autoAdvance: false },
+      {
+        type: 'exercise',
+        title: 'What brings you here?',
+        content: '',
+        required: true,
+        autoAdvance: true,
+        exerciseConfig: { subtype: 'single-select' }
+      }
+    ],
+    allowedBlocks: ['lesson', 'mcq_single', 'mcq_multi', 'short_text', 'long_text'],
+    blockedComponents: ['table', 'clinical', 'checklist'],
+    autoConfig: {
+      autoAdvance: true,
+      navigationBack: false,
+      scoringEnabled: false
+    },
+    stepGroupRules: {
+      allowed: true,
+      required: false,
+      oneBlockPerStep: true
+    },
+    warnings: ['Onboarding runs once, before day 1. Answers are profile data, not programme progress.'],
+    errors: []
+  },
   'assessment': {
     label: 'Assessment',
     description: 'Baseline measurement, severity scoring, recommendations.',
@@ -325,12 +357,17 @@ export const DAY_TYPE_PRESETS: Record<string, DayTypePreset> = {
   }
 };
 
+/** True for a string that names a real preset. The only way into DAY_TYPE_PRESETS. */
+export function isDayType(dayType: string | undefined | null): dayType is DayType {
+  return !!dayType && Object.prototype.hasOwnProperty.call(DAY_TYPE_PRESETS, dayType);
+}
+
 export function getPresetForDayType(dayType: string): DayTypePreset | undefined {
-  return DAY_TYPE_PRESETS[dayType];
+  return isDayType(dayType) ? DAY_TYPE_PRESETS[dayType] : undefined;
 }
 
 export function validateBlockForDayType(blockType: string, subtype: string | undefined, dayType: string): { allowed: boolean; reason?: string } {
-  const preset = DAY_TYPE_PRESETS[dayType];
+  const preset = getPresetForDayType(dayType);
   if (!preset) {
     // No preset means this day skips even the blocked-list check below.
     // Live, 8 days are typed `lesson` — a BLOCK type used as a day type.

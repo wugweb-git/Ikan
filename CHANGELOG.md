@@ -9,6 +9,54 @@ undated under their original session number.
 
 ---
 
+## 2026-09-04 (2)
+
+**Centralised the block vocabulary: one alias map, one day-type union, one legacy-question map, and
+the editor's competing fallback vocabulary deleted.** Behaviour-preserving except one named bug fix.
+Typecheck 207 -> **206**. Tests 31 -> **41**, all passing.
+
+The alias list lived as ten extra `case` labels inside `resolveInteraction`'s switch, which meant the
+renderer obeyed a vocabulary the editor, the catalog and any migration could not read. Extracted to
+`EXERCISE_SUBTYPES` (the 12 canonical terms, mirroring the catalog bucket) plus `SUBTYPE_ALIASES` and
+`normalizeSubtype()`, all exported from `equip-admin-types.ts`. Aliases now resolve *before* the
+switch, so the switch is the canonical vocabulary and nothing else. The alias table is grouped by
+where each spelling came from — the four in live data are attributed to `wizard/types.ts`'s
+`FieldType`, and check-in's six step types are declared alongside so Phase 5 has one list to read.
+
+**Bug fixed: `number` drew a textarea.** It was a declared subtype (added to the catalog earlier) with
+no interaction, so its one live block fell through the default branch to `write`. Added a `number`
+interaction, its `INTERACTION_META` entry, and `renderNumberResponse` in `BlockRenderer` — a numeric
+input instead of a six-row textarea.
+
+**`DayContent.dayType` no longer drifts.** It was a hand-maintained 10-value union with a comment
+asking the next person to keep it in sync with `DAY_TYPE_PRESETS`. Now `DAY_TYPES` is declared once in
+`equip-admin-types.ts` and the presets are typed `Record<DayType, DayTypePreset>`, so a mismatch is a
+compile error. That immediately caught the missing eleventh: **`onboarding` had a `day_config_type`
+catalog row and no preset at all**, so an admin picking it in Meta Manager silently got nothing. Added
+the preset per blocks.md §16. `DAY_TYPE_PRESETS` is no longer indexable by arbitrary strings —
+`isDayType()` is the only way in, and `getPresetForDayType` goes through it.
+
+**The 11-entry legacy-question alias map had two copies** — twice in `AssessmentFlow.tsx` and once in
+the wizard's inverse direction. One drifting from the other would change how a stored question is read
+without changing how it is written. Now `LEGACY_QUESTION_TYPE_ALIASES` +
+`normalizeLegacyQuestionType()` in `assessment-adapter.ts`, imported by both call sites.
+
+**Deleted `FALLBACK_EXERCISE_SUBTYPES` and `FALLBACK_BLOCK_TYPES`** (blocks.md §18 1.6, unblocked now
+that 1.2 has landed). They held *different* terms than the catalog does, and `useMetadata` returns
+empty buckets on a throw as well as while loading — so a failed fetch silently offered the admin the
+wrong vocabulary with no way to tell. The editor now reads the catalog only and warns through
+`warnFallback` when a bucket is empty after loading, carrying the hook's `error` string.
+
+New test file `src/lib/blocks-vocabulary.test.ts` — 10 tests. The core one is the **live census**:
+all 23 `type x subtype` combinations found in the store on 2026-09-04, with their block counts, each
+asserted against the interaction the resolver produced *before* this refactor. One row is marked as a
+deliberate change (`reflection · number`). A second test asserts every canonical subtype maps to an
+explicit expected interaction, so a term added to the catalog without a `case` fails here instead of
+silently landing on the default branch — which is exactly how `matrix`, `scale`, `row_list`,
+`text_list` and `number` reached production. The counts sum to 406, which is asserted too.
+
+This is the first piece of the blocks.md §18 item 0.1 fixture set.
+
 ## 2026-09-04
 
 **Made every silent fallback in the block chain say so, and closed two Phase 0 items on the blocks

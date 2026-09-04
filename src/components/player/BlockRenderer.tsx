@@ -419,6 +419,30 @@ export function BlockRenderer({ block, value, onChange, readOnly = false, equipI
     );
   };
 
+  // `number` was a declared subtype with no interaction, so its one live block
+  // resolved through the default branch to `write` and drew a textarea.
+  const renderNumberResponse = (config: ExerciseConfig) => {
+    return (
+      <div className="space-y-3">
+        <Input
+          type="number"
+          inputMode="decimal"
+          placeholder={config.prompt || 'Enter a number'}
+          value={value ?? ''}
+          onChange={(e) => onChange(e.target.value === '' ? '' : Number(e.target.value))}
+          disabled={readOnly}
+          className="
+             text-[17px] p-6 h-auto rounded-[20px]
+             border-0 bg-white shadow-[0_2px_16px_rgba(0,0,0,0.04)]
+             focus:ring-2 focus:ring-[var(--color-primary-default)] focus:shadow-lg
+             placeholder:text-[var(--grey-4)]
+             transition-all
+          "
+        />
+      </div>
+    );
+  };
+
   const renderClinicalInstrument = (config: ExerciseConfig) => {
     // Table of questions with same scale
     const questions = config.questions || [];
@@ -941,6 +965,9 @@ export function BlockRenderer({ block, value, onChange, readOnly = false, equipI
 
       case 'upload':
         return renderFileUpload(config);
+
+      case 'number':
+        return renderNumberResponse(config);
 
       default:
         // Final fallback: render as lesson. Reaching here means an interaction
