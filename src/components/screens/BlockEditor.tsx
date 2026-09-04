@@ -29,6 +29,8 @@ import { Card, CardContent } from '../ui/card';
 import { RichTextEditor } from '../ui/rich-text-editor';
 import { Activity, resolveInteraction, INTERACTION_META, warnFallback, type InteractionType } from '../../lib/equip-admin-types';
 import { useMetadata, isContainerRow } from '../../hooks/useMetadata';
+import { validateBlock } from '../../lib/block-validation';
+import { validateBlockForDayType } from '../admin/day-presets';
 import { getPresetForDayType, type DayTypePreset } from '../admin/day-presets';
 import { projectId } from '../../utils/supabase/info';
 import { getAuthHeaders } from '../../lib/supabase-client';
@@ -144,6 +146,23 @@ function BlockEditorInner({
         (metaError ? ` — ${metaError}` : '')
     );
   }
+
+  // What is wrong with this block, on its own terms. Reporting only — nothing
+  // blocks a save yet (blocks.md §18 2b: report first, enforce once the 27
+  // undetermined day types are assigned). Calibrated against live content: 401
+  // of 407 stored blocks raise nothing, so a message here means something.
+  const blockIssues = validateBlock(block);
+
+  // 2b — the preset allow-list, finally reaching a user. `validateBlockForDayType`
+  // has existed since the presets did and had ZERO production callers: its only
+  // caller was its own test, and its allow-list branch returns `allowed: true`
+  // unconditionally, so `wouldReject` was computed and discarded. Surfaced here
+  // as advice, not a block: enforcement waits until the 27 undetermined day
+  // types are assigned (blocks.md §18 6.3), because on today's content it would
+  // reject 182 of 407 blocks — mislabelled days, not bad content.
+  const presetVerdict = dayType
+    ? validateBlockForDayType(block.type, block.exerciseConfig?.subtype, dayType)
+    : undefined;
 
   // Resolve the current interaction for display
   const currentInteraction = resolveInteraction(block);
@@ -284,6 +303,45 @@ function BlockEditorInner({
               </Select>
             </div>
           </div>
+
+          {presetVerdict?.wouldReject && presetVerdict.reason && (
+            <div
+              className="flex items-start gap-2 px-2.5 py-1.5 rounded-md"
+              style={{
+                marginTop: 8, fontSize: 'var(--text-xs)',
+                backgroundColor: 'var(--color-bg-muted)',
+                borderLeft: '2px solid var(--color-status-info)',
+              }}
+            >
+              <span style={{ color: 'var(--color-status-info)' }}>i</span>
+              <span style={{ color: 'var(--color-text-muted)' }}>
+                {presetVerdict.reason} <em>Not enforced — this is what the day’s preset expects.</em>
+              </span>
+            </div>
+          )}
+
+          {blockIssues.length > 0 && (
+            <div className="space-y-1" style={{ marginTop: 8 }}>
+              {blockIssues.map((issue, i) => (
+                <div
+                  key={i}
+                  className="flex items-start gap-2 px-2.5 py-1.5 rounded-md"
+                  style={{
+                    fontSize: 'var(--text-xs)',
+                    backgroundColor: 'var(--color-bg-muted)',
+                    borderLeft: `2px solid ${issue.level === 'error'
+                      ? 'var(--color-status-danger)' : 'var(--color-status-warning)'}`,
+                  }}
+                >
+                  <span style={{ color: issue.level === 'error'
+                    ? 'var(--color-status-danger)' : 'var(--color-status-warning)' }}>
+                    {issue.level === 'error' ? '✕' : '⚠'}
+                  </span>
+                  <span style={{ color: 'var(--color-text-muted)' }}>{issue.message}</span>
+                </div>
+              ))}
+            </div>
+          )}
 
           {/* ── SECONDARY ROW: Subtitle ── */}
           <Input 

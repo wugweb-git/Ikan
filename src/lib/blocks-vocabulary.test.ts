@@ -335,3 +335,86 @@ test('normaliseBlock still normalises snake_case and drops the aliases', () => {
     assert.ok(!(k in out), `snake_case alias "${k}" leaked through`);
   }
 });
+
+// ── Block validation ───────────────────────────────────────────────
+// Nothing validated block content at any layer before 2026-09-04: a day could
+// be published with zero blocks, a select with no options, a clinical item with
+// no scale. `validateBlockForDayType` looked like the guardrail but had zero
+// production callers and returned `allowed: true` unconditionally.
+
+import { validateBlock, validateDay, hasBlockingIssues } from './block-validation.ts';
+
+const act = (o: Record<string, unknown>): Activity => ({
+  id: 'b1', title: 'T', type: 'exercise', content: '', duration: 5,
+  required: true, order: 0, ...o,
+} as Activity);
+
+test('a select with no options is an error, with options is clean', () => {
+  const empty = validateBlock(act({ exerciseConfig: { subtype: 'single-select' } }));
+  assert.equal(empty.filter(i => i.level === 'error').length, 1);
+  assert.equal(empty[0].code, 'no-options');
+
+  const filled = validateBlock(act({ exerciseConfig: { subtype: 'single-select', options: ['a', 'b'] } }));
+  assert.deepEqual(filled.filter(i => i.level === 'error'), []);
+});
+
+test('a table with no columns is an error — it renders one blank cell', () => {
+  const issues = validateBlock(act({ exerciseConfig: { subtype: 'input-table' } }));
+  assert.equal(issues.find(i => i.code === 'no-columns')?.level, 'error');
+});
+
+test('a rating with no scale is NOT an error — the renderer defaults to 1-5', () => {
+  // Calibration finding: flagging this as an error was a false positive on live
+  // content. renderRatingScale defaults the range and the labels.
+  const issues = validateBlock(act({ exerciseConfig: { subtype: 'rating-scale' } }));
+  assert.deepEqual(issues.filter(i => i.level === 'error'), []);
+  assert.ok(issues.some(i => i.code === 'default-scale' && i.level === 'warning'));
+});
+
+test('a list with only `rows` is still empty — the renderer does not read rows', () => {
+  const issues = validateBlock(act({ exerciseConfig: { subtype: 'row_list', rows: ['a', 'b'] } }));
+  assert.ok(issues.some(i => i.code === 'no-items' && i.level === 'error'));
+});
+
+test('a clinical instrument missing its scale cannot be scored', () => {
+  const issues = validateBlock(act({ exerciseConfig: { subtype: 'clinical-instrument', questions: ['q'] } }));
+  assert.ok(issues.some(i => i.code === 'no-scale' && i.level === 'error'));
+});
+
+test('a lesson with no content and no media is an empty card', () => {
+  assert.ok(validateBlock(act({ type: 'lesson', exerciseConfig: undefined }))
+    .some(i => i.code === 'no-content'));
+  assert.ok(!validateBlock(act({ type: 'lesson', content: '<p>real</p>' }))
+    .some(i => i.code === 'no-content'));
+});
+
+test('an untitled block warns but does not block a publish', () => {
+  const issues = validateBlock(act({ title: '', type: 'lesson', content: 'x' }));
+  const t = issues.find(i => i.code === 'no-title');
+  assert.equal(t?.level, 'warning');
+});
+
+test('an empty day is an error, and duplicate block ids are an error', () => {
+  assert.ok(validateDay([]).dayIssues.some(i => i.code === 'empty-day'));
+
+  const dup = validateDay([
+    act({ id: 'same', type: 'lesson', content: 'a' }),
+    act({ id: 'same', type: 'lesson', content: 'b' }),
+  ]);
+  assert.ok(dup.dayIssues.some(i => i.code === 'duplicate-block-id'));
+  assert.ok(hasBlockingIssues(dup));
+});
+
+test('a well-formed day has nothing blocking', () => {
+  const ok = validateDay([
+    act({ id: 'a', type: 'lesson', content: '<p>Intro</p>' }),
+    act({ id: 'b', exerciseConfig: { subtype: 'input-table', columns: ['Mon'] } }),
+    act({ id: 'c', type: 'conclude', content: 'Done' }),
+  ]);
+  assert.equal(hasBlockingIssues(ok), false);
+});
+
+test('validateBlock never throws on a malformed block', () => {
+  assert.doesNotThrow(() => validateBlock(undefined as unknown as Activity));
+  assert.doesNotThrow(() => validateBlock({ id: 'x' } as Activity));
+});
