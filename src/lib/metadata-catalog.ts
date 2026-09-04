@@ -304,6 +304,13 @@ export const METADATA_CATALOG_ITEMS: SeedItem[] = [
   s('Reflection',  'block_type', 'reflection',  { icon: 'brain',       description: 'Guided reflection prompt', can_hold: ['lesson', 'exercise', 'journal', 'conclude'], activities: ['mcq', 'single-select', 'rating-scale', 'ephemeral-journal'] }),
   s('Conclude',    'block_type', 'conclude',    { icon: 'flag',        description: 'Session conclusion / summary', can_hold: [] }),
   s('Quiz',        'block_type', 'quiz',        { icon: 'circle-check', description: 'Knowledge check with scoring', can_hold: ['lesson', 'exercise', 'conclude'], activities: ['mcq', 'single-select', 'multi-select', 'rating-scale'] }),
+  // Retained by decision 2026-09-04 rather than retired. It had been dropped
+  // from the catalog while surviving in the code union, so it was unreachable
+  // in the editor — a declared type nobody could pick. Restored, and retargeted
+  // from `track-table` to `input-table` so the name matches what Sleep Tight's
+  // 126 real diary blocks actually do.
+  s('Sleep Diary', 'block_type', 'sleep-diary', { icon: 'moon', description: 'A day-by-day diary grid the user fills in with text', can_hold: [] }),
+
   // ── Container rows: stages that HOLD blocks ─────────────────────
   // Merged in from `day_config_type` (blocks.md §18 Phase 1.1). These live
   // in the same bucket as leaf block types and are told apart by a non-empty
@@ -314,9 +321,9 @@ export const METADATA_CATALOG_ITEMS: SeedItem[] = [
   s('Assessment', 'block_type', 'assessment', { icon: 'clipboard-list', description: 'Baseline measurement, severity scoring, recommendations.', can_hold: ['lesson', 'exercise', 'conclude'], activities: ['mcq', 'single-select', 'clinical-instrument'] }),
   s('Assessment Lite', 'block_type', 'assessment-lite', { icon: 'clipboard', description: 'Awareness, reflection, non-scored check-ins.', can_hold: ['lesson', 'exercise', 'journal', 'conclude'], activities: ['mcq', 'single-select', 'rating-scale', 'ephemeral-journal'] }),
   s('Learning', 'block_type', 'learning', { icon: 'book-open', description: 'Concept introduction and understanding.', can_hold: ['lesson', 'exercise', 'conclude'], activities: ['mcq', 'single-select'] }),
-  s('Practice', 'block_type', 'practice', { icon: 'pen-tool', description: 'User data capture, reflection, application.', can_hold: ['lesson', 'exercise', 'journal', 'checklist', 'conclude'], activities: ['multi-select', 'input-table', 'structured-list', 'upload', 'ephemeral-journal', 'comparison-matrix', 'number'] }),
-  s('Workshop', 'block_type', 'workshop', { icon: 'hammer', description: 'Multi-step thinking (ideation, evaluation, rituals).', can_hold: ['lesson', 'exercise', 'journal', 'conclude'], activities: ['multi-select', 'input-table', 'upload', 'ephemeral-journal', 'comparison-matrix'] }),
-  s('Tracker', 'block_type', 'tracker', { icon: 'table', description: 'Daily repetition, habits, streaks.', can_hold: ['lesson', 'exercise', 'checklist', 'conclude'], activities: ['table', 'input-table', 'structured-list', 'rating-scale', 'comparison-matrix', 'number'] }),
+  s('Practice', 'block_type', 'practice', { icon: 'pen-tool', description: 'User data capture, reflection, application.', can_hold: ['lesson', 'exercise', 'journal', 'checklist', 'conclude', 'sleep-diary'], activities: ['multi-select', 'input-table', 'structured-list', 'upload', 'ephemeral-journal', 'comparison-matrix', 'number'] }),
+  s('Workshop', 'block_type', 'workshop', { icon: 'hammer', description: 'Multi-step thinking (ideation, evaluation, rituals).', can_hold: ['lesson', 'exercise', 'journal', 'conclude', 'sleep-diary'], activities: ['multi-select', 'input-table', 'upload', 'ephemeral-journal', 'comparison-matrix'] }),
+  s('Tracker', 'block_type', 'tracker', { icon: 'table', description: 'Daily repetition, habits, streaks.', can_hold: ['lesson', 'exercise', 'checklist', 'conclude', 'sleep-diary'], activities: ['table', 'input-table', 'structured-list', 'rating-scale', 'comparison-matrix', 'number'] }),
   s('Check-In', 'block_type', 'check-in', { icon: 'smile', description: 'Quick daily mood/wellness check. 1-3 questions, no scoring.', can_hold: ['lesson', 'exercise', 'journal', 'conclude'], activities: ['mcq', 'single-select', 'multi-select', 'rating-scale', 'ephemeral-journal'] }),
   s('Rest Day', 'block_type', 'rest', { icon: 'moon', description: 'No active tasks. Optional motivation or gentle prompt.', can_hold: ['lesson', 'conclude'], activities: [] }),
 

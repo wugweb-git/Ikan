@@ -94,7 +94,8 @@ const seedBlockTypes = METADATA_CATALOG_ITEMS.filter(i => i.type === 'block_type
 
 test('the seed file defines every container row, not just KV', () => {
   const seeded = seedBlockTypes.map(r => r.slug).sort();
-  const expected = [...Object.keys(DAY_TYPE_PRESETS), 'lesson', 'exercise', 'journal', 'checklist', 'conclude']
+  const expected = [...Object.keys(DAY_TYPE_PRESETS),
+                    'lesson', 'exercise', 'journal', 'checklist', 'conclude', 'sleep-diary']
     .filter((v, i, a) => a.indexOf(v) === i).sort();
   assert.deepEqual(
     seeded, expected,
@@ -132,10 +133,12 @@ test('can_hold non-empty <=> the row has a preset', () => {
   );
 });
 
-test('the vocabulary is 11 containers and 5 leaves', () => {
+test('the vocabulary is 11 containers and 6 leaves', () => {
   const containers = seedBlockTypes.filter(r => (r.can_hold?.length ?? 0) > 0).map(r => r.slug).sort();
   const leaves     = seedBlockTypes.filter(r => (r.can_hold?.length ?? 0) === 0).map(r => r.slug).sort();
-  assert.deepEqual(leaves, ['checklist', 'conclude', 'exercise', 'journal', 'lesson']);
+  // `sleep-diary` retained by decision 2026-09-04 and restored to the catalog,
+  // so the leaf set is 6.
+  assert.deepEqual(leaves, ['checklist', 'conclude', 'exercise', 'journal', 'lesson', 'sleep-diary']);
   assert.equal(containers.length, 11);
   // A container is never holdable: nothing nests a stage inside a stage.
   for (const r of seedBlockTypes) {
@@ -164,9 +167,9 @@ test('every block type a stage can hold is offerable by the DayEditor palette', 
     for (const held of row.can_hold ?? []) if (!offerable.has(held)) gaps.add(held);
   }
   assert.deepEqual(
-    [...gaps].sort(), ['checklist'],
-    'The DayEditor palette offers 4 of the 5 leaf block types — `checklist` has ' +
-    'no entry, so a stage may permit it while the editor cannot create it. ' +
-    'Narrowed from 3 gaps to 1 by the quiz/reflection flip. Closing it is Phase 4.',
+    [...gaps].sort(), [],
+    'CLOSED 2026-09-04. Every leaf block type the catalog defines now has a ' +
+    'palette entry, so a stage can no longer permit a type the editor cannot ' +
+    'create. This asserts zero — it was pinned at 3 gaps, then 1, now none.',
   );
 });

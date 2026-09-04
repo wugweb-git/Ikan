@@ -260,18 +260,18 @@ export function resolveInteraction(activity: Activity): InteractionType {
     // A quiz with no subtype is still a question. Without this it fell to
     // `default: 'read'` and rendered as reading content.
     case 'quiz':         return 'select-one';
-    // `sleep-diary` is DEPRECATED and retired from the block_type catalog
-    // (2026-09-04), so it cannot be chosen in the editor. It stays in the code
-    // union so any stored block still carrying it resolves rather than falling
-    // to `default: 'read'`. Zero live blocks carry it.
+    // `sleep-diary` — RETAINED and RETARGETED 2026-09-04.
     //
-    // TRAP, recorded deliberately: this resolves to `track-table` (a yes/no
-    // grid), but Sleep Tight's 126 actual diary blocks are `input-table` (a text
-    // grid). The name suggests Sleep Tight's behaviour; the resolution is not
-    // it. Left as-is rather than retargeted, because changing a deprecated
-    // type's behaviour with no live users is churn — but do not reach for
-    // `sleep-diary` expecting a Sleep Tight diary.
-    case 'sleep-diary':  return 'track-table';
+    // It resolved to `track-table` (a yes/no grid) while Sleep Tight's 126 real
+    // diary blocks are `input-table` (a text grid). The type was named after a
+    // programme whose behaviour it did not reproduce, which made the name a
+    // second lie: pick `sleep-diary` expecting Sleep Tight and you got a
+    // different widget.
+    //
+    // The decision was to keep the type rather than retire it, so it is pointed
+    // at what a sleep diary actually is. Zero stored blocks carry this type, so
+    // the retarget changes no live content — it changes what a NEW one does.
+    case 'sleep-diary':  return 'input-table';
     default:             return 'read';
   }
 }

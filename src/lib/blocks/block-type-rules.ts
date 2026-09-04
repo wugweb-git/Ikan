@@ -514,14 +514,18 @@ export function validateBlockForDayType(
  * validator permitting a block type the editor cannot create is a present-tense
  * authoring gap — an author who deletes a seeded block cannot add it back.
  *
- * NOTE this list is FOUR of the seven leaf block types. `checklist`, `quiz` and
- * `reflection` have no palette entry, so 45 live blocks are of types the day
- * palette cannot create. Closing that is §18 Phase 4.2/4.3; the test pins the
- * gap until then.
+ * Complete as of 2026-09-04: every leaf block type the catalog defines has an
+ * entry, so a stage can no longer permit a type the editor cannot create.
  */
 export const PALETTE_BLOCK_TYPES: { type: string; label: string; keys: string[] }[] = [
   { type: 'lesson',   label: 'Lesson',     keys: ['lesson'] },
   { type: 'exercise', label: 'Exercise',   keys: ['mcq_single', 'mcq_multi', 'rating_scale', 'likert', 'boolean', 'short_text', 'long_text'] },
   { type: 'journal',  label: 'Journal',    keys: ['journal', 'journal_short'] },
   { type: 'conclude', label: 'Conclusion', keys: ['summary', 'conclude'] },
+  // Added 2026-09-04, closing the gap this file's own comment recorded: the
+  // palette offered 4 of the leaf types, so a stage could permit `checklist`
+  // while the editor had no way to create one. `sleep-diary` is retained per
+  // decision and needs an entry for the same reason.
+  { type: 'checklist',   label: 'Checklist',   keys: ['checklist', 'journal_short'] },
+  { type: 'sleep-diary', label: 'Sleep Diary', keys: ['table_input', 'input-table'] },
 ];

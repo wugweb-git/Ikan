@@ -168,7 +168,10 @@ test('an unknown subtype still falls back to a text box rather than throwing', (
 
 test('type-only blocks resolve without a subtype', () => {
   assert.equal(resolveInteraction(block('checklist')), 'check');
-  assert.equal(resolveInteraction(block('sleep-diary')), 'track-table');
+  // Retargeted 2026-09-04: `sleep-diary` used to resolve to `track-table`, a
+  // yes/no grid, while Sleep Tight's 126 real diary blocks are `input-table`.
+  // The type was named after a programme whose behaviour it did not reproduce.
+  assert.equal(resolveInteraction(block('sleep-diary')), 'input-table');
   assert.equal(resolveInteraction(block('unknown-type')), 'read');
 });
 
