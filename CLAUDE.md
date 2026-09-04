@@ -550,6 +550,16 @@ Known data notes: `assessment_result:` stores each result twice in KV (canonical
 - **Don't delete `wrappers_fdw_stats`** — it's extension-owned. It shows as a `rls_disabled_in_public` ERROR in the security advisor; RLS **can** be enabled on it, but only from the Supabase dashboard ("Resolve issue"), because the table is owned by `supabase_admin` and `ALTER TABLE` from a migration fails with `42501: must be owner of table`.
 - **Don't purge KV by prefix without checking `KEY_REGISTRY`** (`server/kv-audit-routes.ts`). Reverse-index keys (`assessment_slug:`, `equip_slug:`, `page_slug:`) look like orphans but are load-bearing — purging `assessment_slug:` once broke every `/assessment/<slug>` URL site-wide. The purge endpoint now refuses protected prefixes and requires `force` for registered ones. **Any new KV prefix must be added to `KEY_REGISTRY` in the same commit that introduces it** — see `GOVERNANCE.md` Rule 2 for why this is non-negotiable, not just tidy.
 - **Don't store secrets in code.** `SUPABASE_SERVICE_ROLE_KEY` lives only in Vercel env + the edge function runtime. The anon key in `src/lib/supabase-client.ts` is public by design.
+- **Don't roll the frontend back past `cc70ac96` (2026-09-04) without rolling the catalog back too.** Two live couplings were created that day where **KV data depends on deployed code**, and a frontend-only rollback breaks both silently:
+
+| rollback past | what breaks | how to tell | fix |
+|---|---|---|---|
+| `cc70ac96` | The 12 catalog rows carry `type: "activity"`; older builds only map `exercise_subtype`, so `exerciseSubtypes` is **empty** | BlockEditor offers the author **no activity/subtype options** and logs `catalog unavailable` | roll forward, or set those 12 rows' `type` back to `exercise_subtype` |
+| `cdda2dbf` | 9 `block_type` rows carry `can_hold: true`; older builds have no filter | the admin block-type picker offers `learning`, `practice`, `workshop`… **as kinds of block** | roll forward, or delete the 9 container rows |
+
+  Backup of all 192 `category:` rows as they were before both: `backup_pre_blocktype_seed_2026_09_04`.
+
+  **The general rule this is an instance of:** when a catalog rename or a new catalog field needs code to read it, the code must be **deployed and verified `● Ready`** before the data is written — and until the old data shape is gone, the deploy is a floor you cannot roll back beneath. Detail in `src/docs/module-maps/blocks.md` §18 Phase 1.
 
 ---
 
