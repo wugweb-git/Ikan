@@ -9,6 +9,48 @@ undated under their original session number.
 
 ---
 
+## 2026-09-04 (7)
+
+**A live paywall bypass, found by auditing a claim I had made and published.** Edge function
+deployed and smoke-tested; frontend deployed. Typecheck 193, tests 58 passing.
+
+### The bypass
+
+`/equip/purchase/:equipId` resolved `equip_program:{id}` and fell back to
+`equip_program_by_slug:{id}`. `equip_program:` is keyed by **id**; the only live caller passes a
+**slug**. So the primary lookup never matched and the fallback was the path — and that prefix is
+written only by two create-only sync handlers, i.e. written once and never refreshed.
+
+The 402 paid-programme gate read `is_paid`/`price` off that stale object:
+
+| | `equip:` / `equip_program:` | `equip_program_by_slug:` |
+|---|---|---|
+| productivity-reset | `is_paid: true`, `price: 50` | `is_paid: false`, `price: 0` |
+
+The gate computed `false` and did not fire. Any authenticated caller could enrol in a paid
+programme for free — the exact hole the 2026-09-01 gate was added to close. It closed it on a path
+nobody takes. Contained only because that programme is unpublished.
+
+Resolution now runs through live records; the mirror is a warned last resort.
+
+### Three more, same family
+
+- **Every response in the progress export was `blockType: 'unknown'`.** The exporter read
+  `dayDef.blocks`; every live day carries `activities`.
+- **Restore-checkpoint wrote `equip:` only**, leaving the copy the player reads pointing at
+  pre-restore content — a restore rolled back the admin's view and not the user's.
+- **Both sync handlers were create-only**, four lines above a comment stating that a sync which
+  cannot re-sync is how `assessment:` and `day:`/`block:` died. Both now refresh.
+
+### What I got wrong
+
+`blocks.md` said this prefix had no content reader and was "never a source". I wrote that, from a
+grep, and used it to justify leaving it alone. The reader was a fallback branch inside a route
+whose primary lookup silently never matches. **A fallback that always fires is not a fallback; it
+is the path.** Corrected in place rather than quietly amended.
+
+---
+
 ## 2026-09-04 (6)
 
 **The blocks module: one merged vocabulary, 58 blocks re-typed, and a lossy reader that had been

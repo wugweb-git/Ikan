@@ -1127,9 +1127,39 @@ The core change, and the one the seam was built for.
 > **invisible to every user** while looking complete from the admin side. Replayed independently
 > against `equip_program:` — *not* copied from `equip:`, which is the slug-mirror trap.
 >
-> `equip_program_by_slug:` still holds **149 schema-invalid blocks** and is deliberately left alone:
-> nothing reads it for content, it is a write *target* of Sync Prefixes rather than a source, so
-> stale schema cannot propagate back — and it holds the 8 tail days that exist nowhere else.
+> **[CORRECTION 2026-09-04] The claim that followed here was wrong, and it was mine.**
+>
+> I wrote that `equip_program_by_slug:` has no content reader and is "never a source". It **is**
+> read — `index.tsx:1206` — and it was the **only live enrolment path**, because
+> `equip_program:` is keyed by id while the sole caller (`EquipProgramOnboarding.tsx:281`) passes a
+> **slug**. The id lookup therefore always missed and the fallback always fired.
+>
+> It is not a content source — `daily_content` is never read there — but it is worse than an
+> existence check: `index.tsx:1226` read **`is_paid` and `price`** off that object to decide a 402.
+> The prefix is written only by the two create-only Sync Prefixes handlers, so it is written once
+> and never refreshed. Live data at the time of the fix:
+>
+> | | `equip:` / `equip_program:` | `equip_program_by_slug:` |
+> |---|---|---|
+> | productivity-reset | `is_paid: true`, `price: 50` | `is_paid: false`, `price: 0` |
+>
+> So the gate computed `isPaidProgram = false` and did not fire. **Any authenticated caller could
+> enrol in a paid programme for free** — the precise hole the 2026-09-01 comment above that gate
+> says it closed. It closed it on a path nobody takes. Contained only because the affected
+> programme is unpublished.
+>
+> **The lesson is not "check for readers" — I did check, and concluded wrongly from a grep.** The
+> reader was a fallback branch inside a route whose primary lookup silently never matches. A
+> fallback that always fires is not a fallback; it is the path. Read the caller before calling a
+> branch dead.
+>
+> Fixed: resolution now goes `equip_program:` by id → `equip_slug:` → id → `equip_program:`/`equip:`,
+> with the mirror as a loudly-warned last resort. Both sync handlers now refresh rather than create,
+> and both stopped writing this prefix.
+>
+> It still holds **149 schema-invalid blocks** and is still left alone for content, for one reason
+> that survives: it is an older, larger snapshot holding the **8 tail days and 18 blocks that exist
+> in no other record**. Overwriting it destroys the only copy.
 >
 > **The flip.** With zero blocks carrying either type, `quiz` and `reflection` became containers:
 > **11 containers + 5 leaves = 16.** `quiz` holds lesson·exercise·conclude; `reflection` holds
