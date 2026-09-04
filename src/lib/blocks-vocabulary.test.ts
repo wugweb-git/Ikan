@@ -288,3 +288,50 @@ test('every canonical subtype has an `activity` seed row', () => {
     'EXERCISE_SUBTYPES and the `activity` seed rows disagree.',
   );
 });
+
+// ── The block reader must not silently drop fields ─────────────────
+// `api-client`'s mapper enumerated eleven fields and returned a fresh object,
+// so everything else was discarded on EVERY load. That is why `ActivityRepeat`
+// is fully built, has a working editor control, and is used by zero of 407
+// stored blocks: the editor wrote `repeat`, the next load threw it away.
+//
+// It also dropped `interaction` — the field the whole block model migrates TO —
+// so the strangler seam could never take hold, and any provenance a migration
+// wrote (`retyped_from`) would vanish on the next editor save.
+
+import { normaliseBlock } from './block-normalise.ts';
+
+test('normaliseBlock preserves every field it does not normalise', () => {
+  const stored = {
+    id: 'b1', title: 'T', type: 'exercise', content: '', duration: 5, required: true,
+    exerciseConfig: { subtype: 'input-table' }, order: 3,
+    // none of these are normalised, and all were previously lost:
+    interaction: 'input-table',
+    repeat: { type: 'simple_repeat', onDays: [2, 3] },
+    subtitle: 'sub',
+    data_id: 'd1',
+    retyped_from: { type: 'reflection', at: '2026-09-04T00:00:00.000Z' },
+  };
+  const out = normaliseBlock(stored) as Record<string, unknown>;
+  for (const k of ['interaction', 'repeat', 'subtitle', 'data_id', 'retyped_from']) {
+    assert.deepEqual(out[k], (stored as Record<string, unknown>)[k], `normaliseBlock dropped "${k}"`);
+  }
+});
+
+test('normaliseBlock still normalises snake_case and drops the aliases', () => {
+  const out = normaliseBlock({
+    id: 'b2', block_type: 'lesson', exercise_config: { subtype: 'mcq' },
+    estimated_time_minutes: 9, is_required: false, step_group_id: 'sg', auto_advance: true,
+  }) as Record<string, unknown>;
+  assert.equal(out.type, 'lesson');
+  assert.deepEqual(out.exerciseConfig, { subtype: 'mcq' });
+  assert.equal(out.duration, 9);
+  assert.equal(out.required, false);
+  assert.equal(out.stepGroup, 'sg');
+  assert.equal(out.autoAdvance, true);
+  // the snake_case originals must not survive alongside their camelCase form
+  for (const k of ['block_type', 'exercise_config', 'estimated_time_minutes',
+                   'is_required', 'step_group_id', 'auto_advance']) {
+    assert.ok(!(k in out), `snake_case alias "${k}" leaked through`);
+  }
+});

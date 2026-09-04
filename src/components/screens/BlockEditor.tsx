@@ -104,16 +104,38 @@ function BlockEditorInner({
   // useMetadata returns empty buckets on a throw as well as while loading, a
   // failed fetch silently offered the admin the wrong list with no way to tell.
   // Empty now means empty, and the editor says so rather than inventing terms.
-  const exerciseSubtypeOptions = kvExerciseSubtypes.map(s => ({ value: s.value, label: s.label }));
-  // Container rows (`can_hold`) are stages, not blocks. They live in the same
-  // catalog bucket because block_type and day_config_type are being merged into
-  // one list (blocks.md §18 Phase 1), but a block can never BE one, so they must
-  // not reach this picker. Without this filter, seeding the merged vocabulary
-  // puts `learning`, `practice`, `workshop`… into the author's block type
-  // dropdown the instant the rows are written.
-  const blockTypeOptions = kvBlockTypes
-    .filter(s => !isContainerRow(s))
+  // ── The stage this block sits in ─────────────────────────────────
+  // Its catalog row carries `can_hold` (which block types it accepts) and
+  // `activities` (which activities those blocks may use). Those two lists are
+  // the guardrail; before Phase 4 they existed in data and nothing read them.
+  //
+  // NOTE `can_hold` barely discriminates — every stage holds lesson, exercise
+  // and conclude — so filtering the block-type picker changes little. The teeth
+  // are in `activities`, which varies from 0 to 7 across stages. That is the
+  // filter an author actually feels.
+  const stageRow = dayType ? kvBlockTypes.find(r => r.value === dayType) : undefined;
+  const stageCanHold = stageRow?.can_hold;
+  const stageActivities = stageRow?.activities;
+
+  // Container rows (`can_hold`) are stages, not blocks — a block can never BE
+  // one, so they never reach this picker.
+  const leafRows = kvBlockTypes.filter(s => !isContainerRow(s));
+  const blockTypeOptions = leafRows
+    .filter(s => !stageCanHold?.length || stageCanHold.includes(s.value))
     .map(s => ({ value: s.value, label: s.label }));
+
+  // An activity the stage does not permit is still SHOWN when the block already
+  // uses it — hiding the current value would silently rewrite existing content
+  // on the next save. It is marked instead.
+  const exerciseSubtypeOptions = kvExerciseSubtypes
+    .filter(s => !stageActivities?.length
+                 || stageActivities.includes(s.value)
+                 || s.value === block.exerciseConfig?.subtype)
+    .map(s => ({
+      value: s.value,
+      label: s.label,
+      offPreset: !!stageActivities?.length && !stageActivities.includes(s.value),
+    }));
   const vocabularyUnavailable = !metaLoading && (kvBlockTypes.length === 0 || kvExerciseSubtypes.length === 0);
   if (vocabularyUnavailable) {
     warnFallback(
@@ -317,7 +339,17 @@ function BlockEditorInner({
           {block.type === 'exercise' && (
             <div className="space-y-4 border-l-2 pl-4" style={{ borderColor: 'var(--color-accent-default)' }}>
               <div className="space-y-1">
-                <Label className="text-xs">Interaction Type</Label>
+                {/* Mislabelled since it was written: this list is fed by the
+                    `activity` catalog bucket (renamed from `exercise_subtype`
+                    in Phase 1.2), not by InteractionType. */}
+                <Label className="text-xs">
+                  Activity
+                  {stageRow && (
+                    <span style={{ color: 'var(--color-text-muted)', fontWeight: 400 }}>
+                      {' '}— {stageActivities?.length ?? 0} allowed on a {stageRow.label} day
+                    </span>
+                  )}
+                </Label>
                 <Select 
                   value={block.exerciseConfig?.subtype || 'mcq'} 
                   onValueChange={(val: any) => onChange({ 
@@ -329,7 +361,14 @@ function BlockEditorInner({
                   </SelectTrigger>
                   <SelectContent>
                     {exerciseSubtypeOptions.map((subtype) => (
-                      <SelectItem key={subtype.value} value={subtype.value}>{subtype.label}</SelectItem>
+                      <SelectItem key={subtype.value} value={subtype.value}>
+                        {subtype.label}
+                        {subtype.offPreset && (
+                          <span style={{ color: 'var(--color-status-warning)' }}>
+                            {' '}· not usually on this day
+                          </span>
+                        )}
+                      </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>

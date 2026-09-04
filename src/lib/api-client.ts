@@ -22,6 +22,7 @@ import type {
 
 export type { UserProfile as User };
 
+import { normaliseBlock } from './block-normalise';
 import { projectId, publicAnonKey } from '../utils/supabase/info';
 import { cacheForOffline, readOfflineCache, invalidateOfflineCache } from '../hooks/useOfflineSync';
 
@@ -438,19 +439,7 @@ class ApiClient {
         image_url: day.image_url,
         dayType: day.dayType || day.day_type || 'learning',
         subtitle: day.subtitle || '',
-        activities: (day.activities || day.blocks || []).map((block: any) => ({
-          id: block.id,
-          title: block.title || 'Untitled Block',
-          type: block.type || block.block_type || 'lesson',
-          content: block.content || '',
-          duration: block.duration || block.estimated_time_minutes || 5,
-          required: block.required !== undefined ? block.required : (block.is_required !== undefined ? block.is_required : true),
-          exerciseConfig: block.exerciseConfig || block.exercise_config || {},
-          stepGroup: block.stepGroup || block.step_group_id,
-          autoAdvance: block.autoAdvance || block.auto_advance || false,
-          image_url: block.image_url,
-          order: block.order
-        }))
+        activities: (day.activities || day.blocks || []).map(normaliseBlock)
       }));
     } else if (hasSeparateDays) {
       // Fallback: Normalized format from legacy separate day/block entities
@@ -485,18 +474,7 @@ class ApiClient {
           }
 
           // Standard mapping
-          return {
-            id: block.id,
-            title: block.title || 'Untitled Block',
-            type: block.block_type || block.type || 'lesson',
-            content: block.content || '',
-            duration: block.estimated_time_minutes || 5,
-            required: block.is_required !== undefined ? block.is_required : true,
-            exerciseConfig: block.exercise_config || block.exerciseConfig || {},
-            stepGroup: block.step_group_id || block.stepGroup,
-            autoAdvance: block.auto_advance || block.autoAdvance,
-            image_url: block.image_url
-          };
+          return normaliseBlock(block);
         })
       }));
     } else {

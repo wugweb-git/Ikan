@@ -1037,6 +1037,35 @@ The core change, and the one the seam was built for.
 > drift and is not — the two numbers are counting different things by design. That stat row was
 > already the plan's example of reporting drift as a statistic; it is now actively misleading.
 
+> **[CRITICAL, FIXED 2026-09-04] The block reader was lossy, and that is why carry-forward has zero users.**
+>
+> `api-client.ts`'s day mapper enumerated eleven fields and returned a **fresh object**, so every
+> other field was discarded on **every load**. Not on save — on load, which is worse, because the
+> next save then writes the truncated block back.
+>
+> | dropped | consequence |
+> |---|---|
+> | `interaction` | the field the whole model migrates **to**. `resolveInteraction` prefers it, but an authored `interaction` did not survive one load/save cycle — **the strangler seam could never take hold** |
+> | `repeat` | carry-forward. `ActivityRepeat`, `repeatTargetDays()` and a complete editor control all exist and work. This is why **0 of 407** blocks use it: the editor wrote it and the next load threw it away |
+> | `subtitle` · `data_id` | authored copy and block↔data linkage |
+> | anything new | including `retyped_from`, the provenance just written to 58 blocks × 2 prefixes |
+>
+> So "carry-forward is built end to end, only the editor writer is missing" was wrong in an
+> instructive way: **the writer exists and always did. The reader was eating it.**
+>
+> Fixed by spreading first and normalising second (`block-normalise.ts`), so a field added to the
+> model later is carried by default rather than depending on someone remembering this function.
+> Two tests assert it: unknown fields survive, and snake_case aliases are still normalised and do
+> not leak through alongside their camelCase form.
+>
+> **Look for this shape elsewhere.** Any mapper that builds a fresh object from a stored record is a
+> silent field-dropper the moment the model grows.
+>
+> *(Also noted: `checklist` is now a leaf type with **zero** live blocks — the 8 became `exercise` in
+> the retype. It is still catalogued and still offered by Practice and Tracker. Same shape as
+> `sleep-diary`: a declared type nothing instantiates. The palette gap measured for it is therefore a
+> gap for a type with no precedent in the data. No action.)*
+
 > **[DONE 2026-09-04] Phase 3.3 + the flip — 58 blocks re-typed, `quiz`/`reflection` are now containers.**
 >
 > The schema-invalid set is **58 = 37 typed `quiz`/`reflection` ∪ 44 whose type is overruled by a
