@@ -9,6 +9,62 @@ undated under their original session number.
 
 ---
 
+## 2026-09-04 (6)
+
+**The blocks module: one merged vocabulary, 58 blocks re-typed, and a lossy reader that had been
+eating the migration's own fields.** Typecheck 204 -> **194**. Tests 47 -> **58**, passing. Eight
+production deploys, each verified `● Ready` via `vercel ls --prod` rather than the returned URL.
+
+### The vocabulary merged: 16 rows, 11 stages + 5 blocks
+
+`block_type` and `day_config_type` were one thing described twice. They are now one 16-row catalog
+where a row that **holds** block types is a stage and carries preset rules, and a row that holds
+nothing is a block. `can_hold` non-empty ⟺ it has a preset — asserted as an invariant, not a
+convention. `exercise_subtype` became `activity` (a subtype named a shape; an activity names an
+action).
+
+**Every catalog change needed code deployed BEFORE the data.** `useMetadata` maps the stored `type`
+string to a bucket, and `BlockEditor` built its picker from every `block_type` row unfiltered — so
+writing rows first would have put `learning`, `practice`, `workshop` into the author's block-type
+dropdown, and renaming rows first would have emptied the activity list entirely. Both were done as
+accept-both → deploy → migrate → drop-old. **That deploy is now a floor the frontend cannot roll
+back beneath**; see the Don'ts in `CLAUDE.md`.
+
+### 58 schema-invalid blocks re-typed, interaction-neutral
+
+58 = 37 typed `quiz`/`reflection` ∪ 44 whose type was overruled by a subtype (overlap 23). A
+`lesson · multi-select` already rendered as a multi-select, so its declared type was a lie. 44 →
+`exercise`, 14 → `journal`, every one carrying `retyped_from` provenance. Verified interaction-neutral
+against backups on both prefixes: every subtype bucket identical, only `type` moved.
+
+**Block content lives under four prefixes and the first write went to one.** `equip_program:` is the
+user-facing copy (`index.txs:1203` reads it first); `equip:` is admin. `program-service.ts:40,88`
+dual-writes them on every save, so a direct SQL migration is the single path that bypasses that. The
+retype was invisible to every user until it was replayed — independently, not copied — against the
+second prefix.
+
+### The reader was eating the model
+
+`api-client`'s day mapper enumerated eleven fields and returned a fresh object, discarding everything
+else **on every load**. It dropped `interaction` — the field the whole model migrates to, which is
+why the strangler seam never took hold — and `repeat`, which is why `ActivityRepeat` is fully built,
+has a working editor control, and was used by **zero of 407** blocks. The editor wrote it; the next
+load threw it away. Fixed by spreading first and normalising second, with tests.
+
+### Guardrails that fail instead of reporting
+
+Five presets seeded default content their own allow-lists rejected, so enforcement would have failed
+an author's day the moment they picked a preset. The allow-lists also could not express what authors
+actually build: three stages could not open with a lesson, five could not close with a conclude, and
+`upload`/`number` were authorable nowhere — against 215 of 407 live blocks being lessons and
+concludes. Fixed, and pinned by tests that assert zero.
+
+**Measured, not assumed:** enforcement today would still reject **182 of 407** live blocks (143 of
+them input-tables on `learning` days). Those are mislabelled days, not bad content — 93 of 97 days
+sit on the default type. That retyping pass gates enforcement and is not started.
+
+---
+
 ## 2026-09-04 (5)
 
 **Deleted the hardcoded copies of the vocabulary, and typing the last one found a live player bug.**

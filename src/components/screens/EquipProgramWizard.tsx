@@ -325,7 +325,12 @@ export function EquipProgramWizard({ programId, onBack, onSave }: EquipProgramWi
         const onboardingBlocks = (currentData.onboarding_questions || []).map(mapQuestionToBlock);
         const onboardingDay: DayContent = {
           day: 0, title: 'Onboarding', description: 'Initial assessment',
-          dayType: 'lesson', activities: onboardingBlocks
+          // FIXED 2026-09-04. This wrote `lesson` — a BLOCK type used as a day
+          // type. `getPresetForDayType('lesson')` finds nothing, so
+          // `validateBlockForDayType` returns early and the day skips every
+          // content check. The same defect was fixed in `DayEditor` and lived
+          // on here, in the Day-0 save path. `onboarding` is the stage this is.
+          dayType: 'onboarding', activities: onboardingBlocks
         };
         unifiedDailyContent = [onboardingDay, ...dailyContent];
       }

@@ -773,6 +773,14 @@ app.post("/admin/backup/restore-checkpoint", requireAdmin, async (c) => {
         for (const item of equips) {
             if (item.id) {
                 await kv.set(`equip:${item.id}`, item);
+                // FIXED 2026-09-04. This wrote `equip:` only, leaving
+                // `equip_program:` — the copy the PLAYER reads
+                // (`index.tsx:1203`, `ikan-score-routes.ts:331`,
+                // `reminder-routes.ts:149`) — pointing at pre-restore content.
+                // `program-service.ts:87-88` dual-writes both on every normal
+                // save; a restore is the path that bypassed it, so a restore
+                // silently rolled back the admin's view and not the user's.
+                await kv.set(`equip_program:${item.id}`, item);
                 if (item.slug) await kv.set(`equip_slug:${item.slug}`, item.id);
                 // Reset index
                 await kv.set(`idx_equip_days:${item.id}`, []);
@@ -1526,22 +1534,44 @@ app.post("/admin/kv-audit/sync-prefixes", requireAdmin, async (c) => {
     let synced = 0;
 
     // ── Sync equip: → equip_program: ──────────────────────
+    //
+    // FIXED 2026-09-04, and note the irony: the comment immediately below
+    // records that `assessment:` died of a `if (!existing)` guard — "a sync
+    // that cannot re-sync is how day:/block: died" — while this loop, four
+    // lines above it, had exactly the same defect. It created a missing mirror
+    // and never refreshed a stale one, so `equip_program:` could drift from
+    // `equip:` forever and this endpoint would report nothing to do.
+    //
+    // Now it compares and refreshes. `equip_program:` is the copy the player
+    // reads, so it must equal `equip:`, always.
     const equips = await kv.getByPrefix("equip:");
     for (const equip of equips) {
       if (!equip || !equip.id) continue;
       const existingProgram = await kv.get(`equip_program:${equip.id}`);
-      if (!existingProgram) {
-        actions.push(`SYNC equip:${equip.id} → equip_program:${equip.id}`);
-        if (!dryRun) {
-          await kv.set(`equip_program:${equip.id}`, equip);
-          if (equip.slug) {
-            await kv.set(`equip_program_by_slug:${equip.slug}`, equip);
-            actions.push(`SYNC equip_slug:${equip.slug} → equip_program_by_slug:${equip.slug}`);
-          }
-        }
+      const stale = existingProgram &&
+        JSON.stringify(existingProgram) !== JSON.stringify(equip);
+      if (!existingProgram || stale) {
+        actions.push(
+          `${existingProgram ? 'REFRESH stale' : 'CREATE missing'} ` +
+          `equip_program:${equip.id} from equip:${equip.id}`
+        );
+        if (!dryRun) await kv.set(`equip_program:${equip.id}`, equip);
         synced++;
       }
     }
+
+    // `equip_program_by_slug:` is deliberately NOT written here any more.
+    //
+    // It was a full programme copy maintained to answer a lookup that
+    // `equip_slug:` already answers, and its only reader (`index.tsx`, the
+    // enrolment route) now resolves through `equip_slug:` first and treats this
+    // prefix as a loudly-warned last resort.
+    //
+    // It must also not be refreshed from `equip:` wholesale: it is an OLDER,
+    // LARGER snapshot holding 8 tail days and 18 blocks that exist in no other
+    // record (burnout-reset 30-32, sleep-tight 31-32, stress-buster 28-30).
+    // Overwriting it destroys the only copy. Decide whether that content is
+    // wanted before retiring the prefix — see blocks.md.
 
     // assessment_def: → assessment: sync removed 2026-09-03.
     // `assessment:` was a write-only mirror — read in two places, both of them

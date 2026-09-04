@@ -1199,13 +1199,48 @@ app.post("/equip/purchase/:equipId", requireAuth, async (c) => {
     const equipId = c.req.param('equipId');
     const { onboarding_data, payment_method } = await c.req.json();
     
-    // 1. Verify program exists
+    // 1. Verify program exists.
+    //
+    // FIXED 2026-09-04. This resolved `equip_program:{equipId}` and, on a miss,
+    // fell through to `equip_program_by_slug:{equipId}`. The miss was not the
+    // edge case — `equip_program:` is keyed by ID, and the only live caller
+    // (`EquipProgramOnboarding.tsx:281`) passes a SLUG. So every real enrolment
+    // took the fallback.
+    //
+    // That matters because `equip_program_by_slug:` is written by nothing but
+    // the two Sync Prefixes handlers, both of which are create-only
+    // (`if (!existingProgram)`), so the record is written once and NEVER
+    // refreshed. `program-service.ts:87-88` dual-writes `equip:` and
+    // `equip_program:` on every save and does not touch it.
+    //
+    // The paywall gate below reads `is_paid` and `price` off this object. An
+    // admin marking a programme paid therefore did NOT close the 402 gate on
+    // the live path, because the gate was reading a snapshot from whenever the
+    // mirror was first created.
+    //
+    // Resolve through the live records instead: `equip_program:` by id, then
+    // `equip_slug:` -> id -> `equip_program:`. Both are written on every save.
     let program = await kv.get(`equip_program:${equipId}`);
     if (!program) {
-       // Try by slug
-       program = await kv.get(`equip_program_by_slug:${equipId}`);
+      const idFromSlug = await kv.get(`equip_slug:${equipId}`);
+      if (idFromSlug) {
+        program = await kv.get(`equip_program:${idFromSlug}`)
+               ?? await kv.get(`equip:${idFromSlug}`);
+      }
     }
-    
+    if (!program) {
+      // Last resort only, and loudly. Reaching this means the slug index and
+      // both live prefixes missed, so whatever comes back is a stale mirror
+      // and its `is_paid`/`price` cannot be trusted for the gate below.
+      program = await kv.get(`equip_program_by_slug:${equipId}`);
+      if (program) {
+        console.warn(
+          `[equip/purchase] resolved "${equipId}" only from the stale ` +
+          `equip_program_by_slug: mirror — is_paid/price may be out of date`
+        );
+      }
+    }
+
     if (!program) {
       return c.json({ error: 'Program not found' }, 404);
     }

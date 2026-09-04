@@ -238,7 +238,13 @@ app.get("/user/equip/:equipId/diary", requireAuth, async (c) => {
       const dayNum = dp.day_number;
       const dayDef = dailyContent[dayNum - 1] || {};
       const dayTitle = dayDef.title || `Day ${dayNum}`;
-      const blocks = dayDef.blocks || [];
+      // FIXED 2026-09-04. This read `dayDef.blocks` only. Days written as the
+      // inline `daily_content` blob — which is every live day — carry
+      // `activities`; `blocks` is the shape of the retired `day:`/`block:`
+      // records. So `blockDef` was always `{}` and EVERY response in this
+      // export was reported as `blockType: 'unknown'` with the raw id as its
+      // title. `activities` first, `blocks` kept for the legacy shape.
+      const blocks = dayDef.activities || dayDef.blocks || [];
 
       // Map block responses to include block metadata
       const responses: any[] = [];

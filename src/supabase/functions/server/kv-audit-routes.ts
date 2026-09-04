@@ -859,19 +859,29 @@ export function registerKVAuditRoutes(app: Hono, requireAuth: any) {
       const actions: string[] = [];
       let synced = 0;
 
-      // Sync equip: -> equip_program:
+      // ── SHADOWED ROUTE ────────────────────────────────────────────
+      // `admin-routes.ts:1529` registers this exact path, and index.tsx calls
+      // `registerAdminRoutes` (:247) before `registerKVAuditRoutes` (:272), so
+      // Hono matches that one and this body never runs.
+      //
+      // It is kept in step rather than left to rot: it previously carried the
+      // create-only `if (!existing)` guard, so re-ordering the two registration
+      // calls would have silently restored a sync that cannot re-sync — the
+      // defect this file's own comment (below) says killed `assessment:`.
+      //
+      // Same semantics as the live one: refresh when stale, and do not touch
+      // `equip_program_by_slug:`, which is an older snapshot holding content
+      // that exists nowhere else.
       const equips = await kv.getByPrefix("equip:");
       for (const equip of equips) {
         if (!equip || !equip.id) continue;
         const existing = await kv.get(`equip_program:${equip.id}`);
-        if (!existing) {
-          actions.push(`SYNC equip:${equip.id} -> equip_program:${equip.id}`);
-          if (!dryRun) {
-            await kv.set(`equip_program:${equip.id}`, equip);
-            if (equip.slug) {
-              await kv.set(`equip_program_by_slug:${equip.slug}`, equip);
-            }
-          }
+        const stale = existing && JSON.stringify(existing) !== JSON.stringify(equip);
+        if (!existing || stale) {
+          actions.push(
+            `${existing ? 'REFRESH stale' : 'CREATE missing'} equip_program:${equip.id}`
+          );
+          if (!dryRun) await kv.set(`equip_program:${equip.id}`, equip);
           synced++;
         }
       }
