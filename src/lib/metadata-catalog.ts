@@ -211,6 +211,16 @@ export interface SeedItem {
    */
   order?: number;
   /**
+   * `block_type` rows: which block types this row can CONTAIN.
+   *   []            this row is a block
+   *   ['lesson',…]  this row is a stage, holding those
+   * Derived from each preset's `allowedInteractions` — never from the legacy
+   * `allowedBlocks` palette, 8 of whose entries grant nothing.
+   */
+  can_hold?: string[];
+  /** `block_type` container rows: which activities its blocks may use. */
+  activities?: string[];
+  /**
    * For `severity_level` rows only: which `response_tier` this severity maps
    * to. The authoritative severity -> tier map, held as data so it is visible
    * and editable in the catalog UI. A scoring profile may override it per
@@ -287,13 +297,28 @@ export const METADATA_CATALOG_ITEMS: SeedItem[] = [
   s('Complete',       'interaction_type', 'complete',    { icon: 'circle-check',       description: 'Day-ending summary or conclusion' }),
 
   // ── Block Types (Equip/Program) ───────────────────────────────
-  s('Lesson',      'block_type', 'lesson',      { icon: 'book-open',   description: 'Informational content block' }),
-  s('Exercise',    'block_type', 'exercise',    { icon: 'activity',    description: 'Interactive exercise block' }),
-  s('Journal',     'block_type', 'journal',     { icon: 'notebook',    description: 'Journaling / free-write prompt' }),
-  s('Checklist',   'block_type', 'checklist',   { icon: 'list-checks', description: 'Task checklist block' }),
-  s('Reflection',  'block_type', 'reflection',  { icon: 'brain',       description: 'Guided reflection prompt' }),
-  s('Conclude',    'block_type', 'conclude',    { icon: 'flag',        description: 'Session conclusion / summary' }),
-  s('Quiz',        'block_type', 'quiz',        { icon: 'circle-check', description: 'Knowledge check with scoring' }),
+  s('Lesson',      'block_type', 'lesson',      { icon: 'book-open',   description: 'Informational content block', can_hold: [] }),
+  s('Exercise',    'block_type', 'exercise',    { icon: 'activity',    description: 'Interactive exercise block', can_hold: [] }),
+  s('Journal',     'block_type', 'journal',     { icon: 'notebook',    description: 'Journaling / free-write prompt', can_hold: [] }),
+  s('Checklist',   'block_type', 'checklist',   { icon: 'list-checks', description: 'Task checklist block', can_hold: [] }),
+  s('Reflection',  'block_type', 'reflection',  { icon: 'brain',       description: 'Guided reflection prompt', can_hold: [] }),
+  s('Conclude',    'block_type', 'conclude',    { icon: 'flag',        description: 'Session conclusion / summary', can_hold: [] }),
+  s('Quiz',        'block_type', 'quiz',        { icon: 'circle-check', description: 'Knowledge check with scoring', can_hold: [] }),
+  // ── Container rows: stages that HOLD blocks ─────────────────────
+  // Merged in from `day_config_type` (blocks.md §18 Phase 1.1). These live
+  // in the same bucket as leaf block types and are told apart by a non-empty
+  // `can_hold`. They must be in THIS file, not only in KV: the seed is the
+  // definition, KV is the deployment, and a re-seed from a file without them
+  // silently wipes Phases 1.1 and 2.1.
+  s('Onboarding', 'block_type', 'onboarding', { icon: 'flag', description: 'Day 0. First-time intro, consent, and orientation before the programme starts.', can_hold: ['lesson', 'exercise', 'journal', 'conclude', 'quiz', 'reflection'], activities: ['mcq', 'single-select', 'multi-select', 'ephemeral-journal'] }),
+  s('Assessment', 'block_type', 'assessment', { icon: 'clipboard-list', description: 'Baseline measurement, severity scoring, recommendations.', can_hold: ['lesson', 'exercise', 'conclude', 'quiz'], activities: ['mcq', 'single-select', 'clinical-instrument'] }),
+  s('Assessment Lite', 'block_type', 'assessment-lite', { icon: 'clipboard', description: 'Awareness, reflection, non-scored check-ins.', can_hold: ['lesson', 'exercise', 'journal', 'conclude', 'quiz', 'reflection'], activities: ['mcq', 'single-select', 'rating-scale', 'ephemeral-journal'] }),
+  s('Learning', 'block_type', 'learning', { icon: 'book-open', description: 'Concept introduction and understanding.', can_hold: ['lesson', 'exercise', 'conclude', 'quiz'], activities: ['mcq', 'single-select'] }),
+  s('Practice', 'block_type', 'practice', { icon: 'pen-tool', description: 'User data capture, reflection, application.', can_hold: ['lesson', 'exercise', 'journal', 'checklist', 'conclude', 'reflection'], activities: ['multi-select', 'input-table', 'structured-list', 'upload', 'ephemeral-journal', 'comparison-matrix', 'number'] }),
+  s('Workshop', 'block_type', 'workshop', { icon: 'hammer', description: 'Multi-step thinking (ideation, evaluation, rituals).', can_hold: ['lesson', 'exercise', 'journal', 'conclude', 'reflection'], activities: ['multi-select', 'input-table', 'upload', 'ephemeral-journal', 'comparison-matrix'] }),
+  s('Tracker', 'block_type', 'tracker', { icon: 'table', description: 'Daily repetition, habits, streaks.', can_hold: ['lesson', 'exercise', 'checklist', 'conclude'], activities: ['table', 'input-table', 'structured-list', 'rating-scale', 'comparison-matrix', 'number'] }),
+  s('Check-In', 'block_type', 'check-in', { icon: 'smile', description: 'Quick daily mood/wellness check. 1-3 questions, no scoring.', can_hold: ['lesson', 'exercise', 'journal', 'conclude', 'quiz', 'reflection'], activities: ['mcq', 'single-select', 'multi-select', 'rating-scale', 'ephemeral-journal'] }),
+  s('Rest Day', 'block_type', 'rest', { icon: 'moon', description: 'No active tasks. Optional motivation or gentle prompt.', can_hold: ['lesson', 'conclude'], activities: [] }),
 
   // ── Difficulty Levels ─────────────────────────────────────────
   s('Beginner',     'difficulty_level', 'beginner',     { icon: 'signal',       color: '#22C55E' }),

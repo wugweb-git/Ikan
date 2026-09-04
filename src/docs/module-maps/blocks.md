@@ -1037,6 +1037,51 @@ The core change, and the one the seam was built for.
 > drift and is not — the two numbers are counting different things by design. That stat row was
 > already the plan's example of reporting drift as a statistic; it is now actively misleading.
 
+> **[DONE 2026-09-04] Coverage fix — the allow-lists now cover what authors place, not what presets seed.**
+>
+> Phase 0 widened `allowedInteractions` only far enough to cover each preset's **own seed blocks**.
+> The audit found that left far more than the two gaps first named:
+>
+> | gap | presets | |
+> |---|---|---|
+> | cannot open with a lesson (no `read`) | tracker · reflection · check-in | **3** |
+> | cannot close with a conclude (no `complete`) | onboarding · assessment-lite · workshop · tracker · reflection | **5** |
+> | allowed by no preset at all | `upload` · `number` | authorable **nowhere** |
+>
+> `lesson` + `conclude` are **215 of 406 live blocks — 53% of the catalogue**. A stage forbidding
+> either was wrong about the product, not about the content.
+>
+> **`read` and `complete` are structural, not content.** Every stage can have a beginning and an end;
+> that is categorically different from permitting `input-table` on an assessment day, which is a
+> statement about what that stage is *for*. So a uniform structural minimum does not erode the
+> guardrail — it separates "can this stage begin and end" from "what work happens in it."
+>
+> One deliberate exception to the sweep: **`check-in`**, whose stated constraint is brevity. `read`
+> was added anyway, because permitting is not requiring, and a second **warning** was added to the
+> preset instead. The allow-list is the wrong instrument for "this is usually a bad idea."
+>
+> `upload` → practice · workshop. `number` → tracker · practice. A judgement call, and the cheapest
+> thing here to revise: **0 live blocks use `upload`, 1 uses `number`.**
+>
+> **`can_hold` now discriminates very little — and that matters for Phase 4.** With `read` and
+> `complete` everywhere, all 9 containers hold `lesson` and `conclude`, and 8 of 9 hold `exercise`:
+>
+> | | spread across the 9 stages |
+> |---|---|
+> | `can_hold` | 2,4,4,4,5,6,6,6,6 — and 3 of every list is the invariant lesson/conclude/exercise |
+> | `activities` | 0,2,3,4,4,5,5,6,7 |
+>
+> Only `journal`, `checklist`, `quiz` and `reflection` vary. **The teeth are in `activities`, not
+> `can_hold`.** Filtering the block-type picker by `can_hold` will barely filter anything; filtering
+> the *activity* picker by `activities` is where an author will actually feel the rules. Worth
+> knowing before 4.2 builds a picker around the wrong one.
+>
+> **The seed file is the definition; KV is the deployment.** The 9 container rows and every
+> `can_hold` list existed in KV *only* — one re-seed from a 7-row seed file would have wiped Phases
+> 1.1 and 2.1 in a single action. Both are now in `metadata-catalog.ts`, and the tests assert against
+> the **seed file**, not live KV: a test that checks only the deployment passes while the definition
+> regresses.
+
 > **[DONE 2026-09-04] Phase 2.1 — `can_hold` and `activities` are on the rows. 16 rows, live.**
 >
 > `can_hold` is a **list**, not a flag. Container-ness is derivable from it, because what marks a

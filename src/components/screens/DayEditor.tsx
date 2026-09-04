@@ -14,7 +14,7 @@ import { Badge } from '../ui/badge';
 import { AdminFormField } from '../admin/AdminFormField';
 import { DayContent, Activity } from '../../lib/equip-admin-types';
 import { BlockEditor } from './BlockEditor';
-import { DAY_TYPE_PRESETS, getPresetForDayType } from '../admin/day-presets';
+import { DAY_TYPE_PRESETS, PALETTE_BLOCK_TYPES, getPresetForDayType } from '../admin/day-presets';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '../ui/dropdown-menu';
 import { cn } from '../ui/utils';
 import { Textarea } from '../ui/textarea';
@@ -229,12 +229,15 @@ function BlockPaletteMenu({ onSelect, dayType }: { onSelect: (type: string, subt
    const preset = dayType ? getPresetForDayType(dayType) : undefined;
    
    // Block type definitions with their allowed-block keys for matching
-   const blockTypes = [
-     { type: 'lesson', label: 'Lesson', icon: <BookOpen size={14} className="mr-2" />, keys: ['lesson'] },
-     { type: 'exercise', label: 'Exercise', icon: <PenTool size={14} className="mr-2" />, keys: ['mcq_single', 'mcq_multi', 'rating_scale', 'likert', 'boolean', 'short_text', 'long_text'] },
-     { type: 'journal', label: 'Journal', icon: <MessageCircle size={14} className="mr-2" />, keys: ['journal', 'journal_short'] },
-     { type: 'conclude', label: 'Conclusion', icon: <Target size={14} className="mr-2" />, keys: ['summary', 'conclude'] },
-   ];
+   // Definition lives in day-presets.ts so it can be asserted against `can_hold`
+   // — see PALETTE_BLOCK_TYPES. Icons stay here; they are presentation.
+   const ICONS: Record<string, JSX.Element> = {
+     lesson:   <BookOpen size={14} className="mr-2" />,
+     exercise: <PenTool size={14} className="mr-2" />,
+     journal:  <MessageCircle size={14} className="mr-2" />,
+     conclude: <Target size={14} className="mr-2" />,
+   };
+   const blockTypes = PALETTE_BLOCK_TYPES.map(b => ({ ...b, icon: ICONS[b.type] }));
    
    // Filter by preset if available
    const filtered = preset

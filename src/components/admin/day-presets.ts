@@ -36,6 +36,23 @@ export interface DayTypePreset {
   errors: string[];
 }
 
+/**
+ * `allowedInteractions` coverage, corrected 2026-09-04 (blocks.md §18 step 2).
+ *
+ * Phase 0 widened these only far enough to cover each preset's OWN seed blocks.
+ * That left them describing something no author actually builds:
+ *
+ *   - 3 presets could not open with a lesson (no `read`)
+ *   - 5 presets could not close with a conclude (no `complete`)
+ *   - `upload` and `number` were allowed by NO preset, so those two activities
+ *     were authorable nowhere at all
+ *
+ * `lesson` + `conclude` are 215 of 406 live blocks — 53% of the catalogue — so a
+ * stage forbidding either was wrong about the product, not about the content.
+ * Every container now allows `read` and `complete`; `upload` and `number` were
+ * given the homes where they make sense (practice/workshop, tracker/practice).
+ * That last pair is a judgement call and is the one part here worth revisiting.
+ */
 export const DAY_TYPE_PRESETS: Record<DayType, DayTypePreset> = {
   // `onboarding` had a `day_config_type` catalog row and no code path at all, so
   // an admin picking it in Meta Manager silently got nothing. Typing this record
@@ -54,7 +71,7 @@ export const DAY_TYPE_PRESETS: Record<DayType, DayTypePreset> = {
         exerciseConfig: { subtype: 'single-select' }
       }
     ],
-    allowedInteractions: ['read', 'select-one', 'select-many', 'write'],
+    allowedInteractions: ['read', 'select-one', 'select-many', 'write', 'complete'],
     allowedBlocks: ['lesson', 'mcq_single', 'mcq_multi', 'short_text', 'long_text'],
     blockedComponents: ['table', 'clinical', 'checklist'],
     autoConfig: {
@@ -127,7 +144,7 @@ export const DAY_TYPE_PRESETS: Record<DayType, DayTypePreset> = {
       }
     ],
     // + read 2026-09-04: this preset seeds a `lesson`.
-    allowedInteractions: ['read', 'select-one', 'rate', 'write'],
+    allowedInteractions: ['read', 'select-one', 'rate', 'write', 'complete'],
     allowedBlocks: ['mcq_single', 'mcq_multi', 'rating_scale', 'short_text', 'lesson'],
     blockedComponents: [],
     autoConfig: {
@@ -185,7 +202,7 @@ export const DAY_TYPE_PRESETS: Record<DayType, DayTypePreset> = {
       { type: 'conclude', content: 'Done for today', autoAdvance: false }
     ],
     // + read/complete 2026-09-04: this preset seeds a `lesson` and a `conclude`.
-    allowedInteractions: ['read', 'write', 'input-table', 'check', 'select-many', 'complete'],
+    allowedInteractions: ['read', 'write', 'input-table', 'check', 'select-many', 'number', 'upload', 'complete'],
     allowedBlocks: ['journal', 'long_text', 'table_input', 'checklist', 'date_time', 'lesson'],
     blockedComponents: [],
     autoConfig: {
@@ -206,7 +223,7 @@ export const DAY_TYPE_PRESETS: Record<DayType, DayTypePreset> = {
     defaultBlocks: [
       // Preset fills these but UI logic will handle StepGroups
     ],
-    allowedInteractions: ['input-table', 'write', 'select-many', 'read'],
+    allowedInteractions: ['read', 'input-table', 'write', 'select-many', 'upload', 'complete'],
     allowedBlocks: ['lesson', 'mcq_multi', 'rtf_list', 'table_input', 'comparison_matrix'],
     blockedComponents: [],
     autoConfig: {
@@ -238,7 +255,7 @@ export const DAY_TYPE_PRESETS: Record<DayType, DayTypePreset> = {
         exerciseConfig: { subtype: 'rating_scale' }
       }
     ],
-    allowedInteractions: ['track-table', 'input-table', 'check', 'rate'],
+    allowedInteractions: ['read', 'track-table', 'input-table', 'check', 'rate', 'number', 'complete'],
     allowedBlocks: ['checklist', 'rating_scale', 'boolean', 'journal_short'],
     blockedComponents: [],
     autoConfig: {
@@ -265,7 +282,7 @@ export const DAY_TYPE_PRESETS: Record<DayType, DayTypePreset> = {
       },
       { type: 'journal', content: 'Final thoughts', required: false }
     ],
-    allowedInteractions: ['write', 'rate', 'select-one'],
+    allowedInteractions: ['read', 'write', 'rate', 'select-one', 'complete'],
     allowedBlocks: ['summary', 'rating_scale', 'journal', 'table_review'],
     blockedComponents: [],
     autoConfig: {
@@ -301,7 +318,7 @@ export const DAY_TYPE_PRESETS: Record<DayType, DayTypePreset> = {
       { type: 'conclude', title: 'Done', content: 'Thanks for checking in!', autoAdvance: false }
     ],
     // + complete 2026-09-04: this preset seeds a `conclude`.
-    allowedInteractions: ['rate', 'select-one', 'select-many', 'write', 'complete'],
+    allowedInteractions: ['read', 'rate', 'select-one', 'select-many', 'write', 'complete'],
     allowedBlocks: ['rating_scale', 'mcq_single', 'journal', 'lesson', 'boolean'],
     blockedComponents: ['table', 'checklist', 'clinical'],
     autoConfig: {
@@ -315,7 +332,15 @@ export const DAY_TYPE_PRESETS: Record<DayType, DayTypePreset> = {
       required: false,
       oneBlockPerStep: true
     },
-    warnings: ['Keep check-ins under 2 minutes for best completion rates.'],
+    warnings: [
+      'Keep check-ins under 2 minutes for best completion rates.',
+      // `read` was added here as part of the uniform structural minimum
+      // (2026-09-04), which lets an author place a lesson in a check-in. That
+      // pushes against this stage's stated purpose, so it is DELIBERATELY a
+      // warning rather than a prohibition: permitting is not requiring, and the
+      // allow-list is the wrong instrument for "this is usually a bad idea".
+      'A check-in can hold a lesson, but rarely should — brevity is the point of this stage.',
+    ],
     errors: []
   },
   'rest': {
@@ -473,3 +498,23 @@ export function validateBlockForDayType(
 
   return { allowed: true, wouldReject: false };
 }
+
+/**
+ * The block types `DayEditor`'s palette can actually OFFER an author, with the
+ * legacy `allowedBlocks` key each one matches on.
+ *
+ * Extracted from `DayEditor.tsx` so it can be asserted against `can_hold`: the
+ * validator permitting a block type the editor cannot create is a present-tense
+ * authoring gap — an author who deletes a seeded block cannot add it back.
+ *
+ * NOTE this list is FOUR of the seven leaf block types. `checklist`, `quiz` and
+ * `reflection` have no palette entry, so 45 live blocks are of types the day
+ * palette cannot create. Closing that is §18 Phase 4.2/4.3; the test pins the
+ * gap until then.
+ */
+export const PALETTE_BLOCK_TYPES: { type: string; label: string; keys: string[] }[] = [
+  { type: 'lesson',   label: 'Lesson',     keys: ['lesson'] },
+  { type: 'exercise', label: 'Exercise',   keys: ['mcq_single', 'mcq_multi', 'rating_scale', 'likert', 'boolean', 'short_text', 'long_text'] },
+  { type: 'journal',  label: 'Journal',    keys: ['journal', 'journal_short'] },
+  { type: 'conclude', label: 'Conclusion', keys: ['summary', 'conclude'] },
+];

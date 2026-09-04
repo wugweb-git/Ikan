@@ -23,8 +23,9 @@
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { DAY_TYPE_PRESETS, validateBlockForDayType } from './day-presets.ts';
-import type { Activity } from '../../lib/equip-admin-types.ts';
+import { DAY_TYPE_PRESETS, PALETTE_BLOCK_TYPES, validateBlockForDayType } from './day-presets.ts';
+import { METADATA_CATALOG_ITEMS } from '../../lib/metadata-catalog.ts';
+import { INTERACTION_META, type Activity, type InteractionType } from '../../lib/equip-admin-types.ts';
 
 interface SeedBlock {
   type?: Activity['type'];
@@ -55,40 +56,100 @@ test('no preset seeds default content its own rules reject', () => {
   );
 });
 
-test('allowedBlocks and allowedInteractions do not contradict each other on conclude', () => {
-  // `summary` is the palette's name for a conclude-shaped block. A preset that
-  // permits the `complete` interaction but has no conclude-shaped entry in its
-  // palette is telling two different stories about the same block.
-  const contradictions: string[] = [];
-  for (const [dayType, preset] of Object.entries(DAY_TYPE_PRESETS)) {
-    const byInteraction = preset.allowedInteractions.includes('complete');
-    const byPalette = preset.allowedBlocks.some(b => b === 'summary' || b === 'conclude');
-    if (byInteraction !== byPalette) {
-      contradictions.push(
-        `${dayType}: allowedInteractions says ${byInteraction}, allowedBlocks says ${byPalette}`,
-      );
-    }
-  }
-  // Pinned, not asserted to zero — see the file header.
-  //
-  // This grew from 3 to 7 when the allow-lists were fixed above, and that is
-  // expected, not a regression: adding `complete` to four presets whose palette
-  // carries no conclude-shaped block necessarily widens the disagreement. The
-  // fix cleared the violations that block enforcement; it did not reconcile the
-  // two fields, which is §18 2.4.
-  //
-  //   assessment · practice · check-in · quiz   permit `complete` (added 2026-09-04),
-  //                                             palette has no conclude-shaped block
-  //   learning · rest                           same shape, pre-existing
-  //   reflection                                exactly inverted — palette carries
-  //                                             `summary`, interaction list forbids `complete`
-  //
-  // `reflection` is the one to look at first: it is the only preset whose
-  // palette permits a conclude-shaped block, and the only one whose interaction
-  // list forbids it.
+test('every preset can open with a lesson and close with a conclude', () => {
+  // 131 `lesson` + 84 `conclude` = 215 of 406 live blocks, 53% of the
+  // catalogue. A stage forbidding either was describing something no author
+  // builds — which is what Phase 0 left behind by widening the lists only far
+  // enough to cover each preset's own seeds.
+  const cannotOpen = Object.entries(DAY_TYPE_PRESETS)
+    .filter(([, p]) => !p.allowedInteractions.includes('read')).map(([d]) => d);
+  const cannotClose = Object.entries(DAY_TYPE_PRESETS)
+    .filter(([, p]) => !p.allowedInteractions.includes('complete')).map(([d]) => d);
+  assert.deepEqual(cannotOpen, [], `presets that cannot open with a lesson: ${cannotOpen.join(', ')}`);
+  assert.deepEqual(cannotClose, [], `presets that cannot close with a conclude: ${cannotClose.join(', ')}`);
+});
+
+test('every interaction is reachable from at least one preset', () => {
+  // `upload` and `number` were allowed by no preset at all, so those two
+  // activities could be authored nowhere. One live block (`reflection ·
+  // number`) sat in the enforcement rejection list for exactly that reason.
+  const reachable = new Set(
+    Object.values(DAY_TYPE_PRESETS).flatMap(p => p.allowedInteractions as string[]),
+  );
+  const orphans = (Object.keys(INTERACTION_META) as InteractionType[]).filter(i => !reachable.has(i));
   assert.deepEqual(
-    contradictions.map(c => c.split(':')[0]).sort(),
-    ['assessment', 'check-in', 'learning', 'practice', 'quiz', 'reflection', 'rest'],
-    `The allowedBlocks/allowedInteractions contradictions changed:\n  ${contradictions.join('\n  ')}`,
+    orphans, [],
+    `no preset allows: ${orphans.join(', ')} — those activities are authorable nowhere`,
+  );
+});
+
+// ── Seed-file assertions ───────────────────────────────────────────
+// The seed file is the DEFINITION; KV is the deployment. A test that only
+// checks KV passes while the seed quietly regresses — which is exactly how the
+// 9 container rows and every `can_hold` list came to exist in KV alone, one
+// re-seed away from being wiped. Anything the seed can regenerate is asserted
+// about the seed.
+
+const seedBlockTypes = METADATA_CATALOG_ITEMS.filter(i => i.type === 'block_type');
+
+test('the seed file defines every container row, not just KV', () => {
+  const seeded = seedBlockTypes.map(r => r.slug).sort();
+  const expected = [...Object.keys(DAY_TYPE_PRESETS), 'lesson', 'exercise', 'journal', 'checklist', 'conclude']
+    .filter((v, i, a) => a.indexOf(v) === i).sort();
+  assert.deepEqual(
+    seeded, expected,
+    'The merged block_type vocabulary must be reproducible from this file alone.',
+  );
+});
+
+/**
+ * INVARIANT: `can_hold` non-empty  <=>  a preset exists for this slug.
+ *
+ *   rules but holds nothing  -> nav/save/layout/step rules govern nothing
+ *   holds something, no rules -> the player has no behaviour for it
+ *
+ * Neither side is a preference; an entry violating it is an error.
+ *
+ * PINNED, WITH A DEFINED CLOSURE — which is what makes this pin legitimate
+ * where the deleted `allowedBlocks` one was not. `quiz` and `reflection` carry
+ * presets while still being leaves, because 37 live blocks are typed with them
+ * and Phase 3.3 re-types those first. At step 5 they flip to containers and
+ * this list goes to []. It is a TODO with teeth, not a snapshot.
+ */
+const KNOWN_INVARIANT_VIOLATIONS = ['quiz', 'reflection'];
+
+test('can_hold non-empty <=> the row has a preset', () => {
+  const violations = seedBlockTypes
+    .filter(r => ((r.can_hold?.length ?? 0) > 0) !== (r.slug in DAY_TYPE_PRESETS))
+    .map(r => r.slug).sort();
+  assert.deepEqual(
+    violations, KNOWN_INVARIANT_VIOLATIONS.slice().sort(),
+    'A block_type row either holds blocks AND has preset rules, or neither.',
+  );
+});
+
+/**
+ * DIRECTION A: the validator permits a block type the editor cannot create.
+ *
+ * A present-tense authoring gap — an author who deletes a seeded block cannot
+ * add it back. Pinned at what it is today and closed in Phase 4.2/4.3, when the
+ * picker is rebuilt off `can_hold`; it converts cleanly into a
+ * can_hold-vs-picker test then.
+ *
+ * The opposite direction — palette offers what the interactions forbid — is
+ * deliberately NOT tested: it is a property of `allowedBlocks`, which Phase 4
+ * deletes, and pinning a field that is being removed only records its drift.
+ */
+test('every block type a stage can hold is offerable by the DayEditor palette', () => {
+  const offerable = new Set(PALETTE_BLOCK_TYPES.map(b => b.type));
+  const gaps = new Set<string>();
+  for (const row of seedBlockTypes) {
+    for (const held of row.can_hold ?? []) if (!offerable.has(held)) gaps.add(held);
+  }
+  assert.deepEqual(
+    [...gaps].sort(), ['checklist', 'quiz', 'reflection'],
+    'The DayEditor palette offers 4 of 7 leaf block types. Types a stage may ' +
+    'hold but the palette cannot create are unreachable for authors — 45 live ' +
+    'blocks are of such types. Closing this is Phase 4.2/4.3.',
   );
 });
