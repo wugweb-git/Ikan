@@ -1037,6 +1037,47 @@ The core change, and the one the seam was built for.
 > drift and is not — the two numbers are counting different things by design. That stat row was
 > already the plan's example of reporting drift as a statistic; it is now actively misleading.
 
+> **[DONE 2026-09-04] Phase 2.1 — `can_hold` and `activities` are on the rows. 16 rows, live.**
+>
+> `can_hold` is a **list**, not a flag. Container-ness is derivable from it, because what marks a
+> container is what it can hold:
+>
+>     can_hold: []            this row is a block
+>     can_hold: ['lesson',…]  this row is a stage, holding those
+>
+> All 7 leaf rows carry an explicit `[]` rather than omitting the field, so "this is a block" is
+> stated rather than inferred from absence.
+>
+> | stage | can_hold | activities |
+> |---|---|---:|
+> | practice | lesson · exercise · journal · checklist · conclude · reflection | 5 |
+> | onboarding | lesson · exercise · journal · quiz · reflection | 4 |
+> | assessment-lite | lesson · exercise · journal · quiz · reflection | 4 |
+> | check-in | exercise · journal · conclude · quiz · reflection | 5 |
+> | assessment | lesson · exercise · conclude · quiz | 3 |
+> | learning | lesson · exercise · conclude · quiz | 2 |
+> | workshop | lesson · exercise · journal · reflection | 4 |
+> | rest | lesson · conclude | 0 |
+> | tracker | exercise · checklist | 5 |
+>
+> **Derived from `allowedInteractions` (post-`4370f59f`), never from `allowedBlocks`.** The 23-string
+> palette grants nothing on 8 of its 19 entries; deriving from it would have copied that defect into
+> the new model — the same trap avoided at Phase 0.
+>
+> Same three-step discipline as 1.2, because the rows were seeded as booleans in 1.1: accept both
+> shapes → **deploy** → rewrite the 16 rows → drop the boolean path → deploy. During the rewrite the
+> test had to be `isContainerRow()`, since `can_hold?.length` is wrong against a boolean and
+> `!can_hold` is wrong against `[]`.
+>
+> **Two things the derivation exposes, both real:**
+>
+> - **`tracker` cannot hold a `lesson` or a `conclude`** — its `allowedInteractions` carry neither
+>   `read` nor `complete`. Phase 0 added those only where a preset's own *seed* needed them, and
+>   tracker seeds neither. Correct by construction, probably wrong for authoring.
+> - **`upload` and `number` are unreachable on every day type.** No preset allows either
+>   interaction, so those two activities can be authored nowhere. One live block (`reflection ·
+>   number`) is among the 182 rejections for exactly this reason.
+
 > **[MEASURED 2026-09-04] Enforcement today would reject 182 of 406 live blocks — 45%.**
 >
 > Dry run: every live equip block through `validateBlockForDayType` against its own day's preset.

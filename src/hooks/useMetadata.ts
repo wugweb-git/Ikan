@@ -38,26 +38,18 @@ export interface MetadataOption {
    * Container-ness is derivable from the list rather than flagged beside it —
    * what marks a container is what it can hold.
    *
-   * TRANSITIONAL (blocks.md §18 Phase 2.1): the 9 rows seeded in Phase 1.1
-   * carry the boolean `true` instead, so both shapes are accepted until they
-   * are rewritten. Use `isContainerRow` rather than testing this directly —
-   * `can_hold?.length` is WRONG against the boolean, and `!can_hold` is wrong
-   * against `[]`.
+   * Every one of the 16 `block_type` rows carries an explicit list — the 7 leaf
+   * rows carry `[]` rather than omitting the field, so "this is a block" is
+   * stated rather than inferred from absence.
    */
-  can_hold?: string[] | true;
+  can_hold?: string[];
   /** `block_type` container rows: which activities its blocks may use. */
   activities?: string[];
 }
 
-/**
- * Does this catalog row hold blocks (a stage), rather than being one?
- *
- * Handles both `can_hold` shapes during the Phase 2.1 rewrite. Once every row
- * carries a list this collapses to `(row.can_hold?.length ?? 0) > 0`.
- */
-export function isContainerRow(row: { can_hold?: string[] | true }): boolean {
-  if (row.can_hold === true) return true;
-  return Array.isArray(row.can_hold) && row.can_hold.length > 0;
+/** Does this catalog row hold blocks (a stage), rather than being one? */
+export function isContainerRow(row: { can_hold?: string[] }): boolean {
+  return (row.can_hold?.length ?? 0) > 0;
 }
 
 interface MetadataBucket {
@@ -168,11 +160,7 @@ export function mapItem(item: any): MetadataOption {
     description: item.description,
     order: typeof item.order === 'number' ? item.order : undefined,
     tier: typeof item.tier === 'string' ? item.tier : undefined,
-    // Both shapes, deliberately — see MetadataOption.can_hold. Copying only
-    // one would silently drop the other, which is the `tier` hazard above.
-    can_hold: Array.isArray(item.can_hold) ? item.can_hold
-            : item.can_hold === true ? true
-            : undefined,
+    can_hold: Array.isArray(item.can_hold) ? item.can_hold : undefined,
     activities: Array.isArray(item.activities) ? item.activities : undefined,
   };
 }
