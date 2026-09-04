@@ -62,128 +62,7 @@ interface DayConfigPresetInfo {
   errors?: string[];
 }
 
-const CHECKIN_BLOCK_TYPES: BlockTypeInfo[] = [
-  {
-    value: 'emoji_scale',
-    label: 'Emoji Scale',
-    icon: Smile,
-    description: 'User picks from emoji options representing mood, energy, etc.',
-    category: 'checkin',
-    fields: ['question', 'subtitle', 'hero_emoji', 'scale_key', 'ema_category', 'save_as'],
-    previewHint: 'Displays a row of emoji faces (e.g. 😢 😐 🙂 😊 🤩) with labels',
-  },
-  {
-    value: 'free_text',
-    label: 'Free Text',
-    icon: Type,
-    description: 'Open-ended text input for journaling or notes.',
-    category: 'checkin',
-    fields: ['question', 'subtitle', 'hero_emoji', 'ema_category', 'save_as'],
-    previewHint: 'Multi-line textarea for free-form responses',
-  },
-  {
-    value: 'multi_select',
-    label: 'Multi Select',
-    icon: Tag,
-    description: 'User picks multiple tags/options from a set.',
-    category: 'checkin',
-    fields: ['question', 'subtitle', 'hero_emoji', 'options', 'ema_category', 'save_as'],
-    previewHint: 'Chip/tag grid where multiple items can be selected',
-  },
-  {
-    value: 'single_choice',
-    label: 'Single Choice',
-    icon: List,
-    description: 'User picks one option from a list.',
-    category: 'checkin',
-    fields: ['question', 'subtitle', 'hero_emoji', 'options', 'ema_category', 'save_as'],
-    previewHint: 'Radio button list — only one option can be selected',
-  },
-  {
-    value: 'slider',
-    label: 'Slider',
-    icon: SlidersHorizontal,
-    description: 'Numeric slider with min/max values and labels.',
-    category: 'checkin',
-    fields: ['question', 'subtitle', 'hero_emoji', 'slider_min', 'slider_max', 'slider_labels', 'ema_category', 'save_as'],
-    previewHint: 'Horizontal slider with numeric range and endpoint labels',
-  },
-  {
-    value: 'yes_no',
-    label: 'Yes / No',
-    icon: ToggleLeft,
-    description: 'Simple binary question — yes or no.',
-    category: 'checkin',
-    fields: ['question', 'subtitle', 'hero_emoji', 'ema_category', 'save_as'],
-    previewHint: 'Two large toggle buttons: Yes and No',
-  },
-];
 
-const EQUIP_BLOCK_TYPES: BlockTypeInfo[] = [
-  {
-    value: 'lesson',
-    label: 'Lesson (Read)',
-    icon: BookOpen,
-    description: 'Rich text content block for educational material, articles, and explanations.',
-    category: 'equip',
-    fields: ['title', 'subtitle', 'content (rich text)', 'image_url', 'video_url'],
-    previewHint: 'Formatted prose with optional media — the primary learning block',
-  },
-  {
-    value: 'exercise',
-    label: 'Exercise (Interact)',
-    icon: PenTool,
-    description: 'Interactive block with MCQ, multi-select, text input, matching, or fill-in-the-blank.',
-    category: 'equip',
-    fields: ['title', 'subtitle', 'exerciseConfig (type, options, correctAnswer, scoring)'],
-    previewHint: 'Quiz-style interaction with scoring support and feedback',
-  },
-  {
-    value: 'journal',
-    label: 'Journal (Write)',
-    icon: MessageCircle,
-    description: 'Guided journaling prompt for therapeutic reflection and self-expression.',
-    category: 'equip',
-    fields: ['title', 'subtitle', 'content (prompt)', 'image_url'],
-    previewHint: 'Prompt text followed by a large textarea for writing',
-  },
-  {
-    value: 'checklist',
-    label: 'Checklist (Track)',
-    icon: CheckSquare,
-    description: 'Trackable list of items to complete — for habits, exercises, or daily tasks.',
-    category: 'equip',
-    fields: ['title', 'subtitle', 'exerciseConfig.options (checklist items)'],
-    previewHint: 'List of checkboxes that users tick off as they complete',
-  },
-  {
-    value: 'reflection',
-    label: 'Reflection (Think)',
-    icon: Lightbulb,
-    description: 'Guided reflection with prompt text for deeper thinking and mindfulness.',
-    category: 'equip',
-    fields: ['title', 'subtitle', 'content (reflection prompt)', 'image_url'],
-    previewHint: 'Meditative prompt with optional image and text response area',
-  },
-  {
-    value: 'conclude',
-    label: 'Conclude (Finish)',
-    icon: Target,
-    description: 'Day-ending summary block with takeaways, affirmations, or next steps.',
-    category: 'equip',
-    fields: ['title', 'subtitle', 'content (closing text)'],
-    previewHint: 'Summary card with motivational closing content',
-  },
-  {
-    value: 'sleep-diary',
-    label: 'Sleep Diary (Track)',
-    icon: Moon,
-    description: 'Sleep tracking diary entry for recording bedtime, wake time, quality, and sleep hygiene notes.',
-    category: 'equip',
-    fields: ['title', 'subtitle', 'content (instructions)', 'image_url'],
-    previewHint: 'Form-like entry capturing sleep metrics and quality data',
-  },
-];
 
 interface AdminBlockTypeViewerProps {
   onBack?: () => void;
@@ -235,7 +114,6 @@ export function AdminBlockTypeViewer({ onBack }: AdminBlockTypeViewerProps) {
   // Legacy → Interaction mapping (kept only until the backfill; the retype
   // completed it, so the alias table is now history rather than a live map).
   const [activeTab, setActiveTab] = useState<'blocktypes' | 'activities'>('blocktypes');
-  const [selectedBlock, setSelectedBlock] = useState<BlockTypeInfo | null>(null);
   const { blockTypes: kvBlockTypes, exerciseSubtypes: kvExerciseSubtypes, dayConfigTypes: kvDayConfigTypes, interactionTypes: kvInteractionTypes } = useMetadata();
 
 
@@ -282,107 +160,52 @@ export function AdminBlockTypeViewer({ onBack }: AdminBlockTypeViewerProps) {
   // day-presets.ts. Both halves now come from the real sources: composition and
   // rules from DAY_TYPE_PRESETS, player layout and progress from
   // ProgramPlayer's DAY_TYPE_CONFIG.
-  const DAY_CONFIG_PRESETS: DayConfigPresetInfo[] = useMemo(() => {
-    const describeAuto = (c: Record<string, unknown>) =>
-      Object.entries(c).map(([k, v]) => `${k}: ${v}`).join(', ') || 'none';
-    const describeSteps = (r: {
-      allowed: boolean; required: boolean; maxBlocksPerStep?: number;
-      oneBlockPerStep?: boolean; oneStepPerLesson?: boolean;
-    }) => {
-      if (!r.allowed) return 'Step groups disallowed';
-      const parts = [r.required ? 'required' : 'allowed, not required'];
-      if (r.oneBlockPerStep) parts.push('one block per step');
-      if (r.oneStepPerLesson) parts.push('one step per lesson');
-      if (r.maxBlocksPerStep) parts.push(`max ${r.maxBlocksPerStep} per step`);
-      return parts.join(' · ');
-    };
-    return (Object.keys(DAY_TYPE_PRESETS) as DayType[]).map((value) => {
-      const preset = DAY_TYPE_PRESETS[value];
-      const player = DAY_TYPE_CONFIG[value];
-      return {
-        value,
-        label: preset.label,
-        description: preset.description,
-        allowedBlocks: preset.allowedInteractions,
-        blockedComponents: preset.blockedComponents,
-        autoConfig: describeAuto(preset.autoConfig as Record<string, unknown>),
-        stepGroupRules: describeSteps(preset.stepGroupRules),
-        playerLayout: player?.layout ?? '—',
-        playerProgress: player?.progressStyle ?? '—',
-        warnings: preset.warnings,
-        errors: preset.errors,
-      };
-    });
-  }, []);
-
 
   const interactionTypes = Object.keys(INTERACTION_META) as InteractionType[];
+  const pickableBlockTypes  = kvBlockTypes.filter((t) => !isContainerRow(t));
+  const containerBlockTypes = kvBlockTypes.filter((t) => isContainerRow(t));
+  const aliasCount = exerciseSubtypes.length - CANONICAL_SUBTYPES.length;
 
   /**
    * Like-for-like, or it cries wolf.
    *
-   * This row used to print `code count / raw KV row count`, which compared a
-   * DERIVED number against a RAW one — so correct behaviour rendered exactly
-   * like drift. After the block_type/day_config_type merge it read `7 / 16`
-   * (16 rows, 9 of them containers the picker correctly hides) and `26 / 12`
-   * (12 canonical terms plus 14 aliases, both derived). Two of five lines were
-   * false alarms, on the one screen whose entire job is reporting drift.
+   * This row used to print `code count / raw KV row count`, comparing a DERIVED
+   * number against a RAW one, so correct behaviour rendered exactly like drift.
+   * Worse, it compared the catalog against a hardcoded 7-entry block-type array
+   * this screen kept — after the quiz/reflection flip that read
+   * `7 / 5 · DRIFT`, blaming the data for a stale constant. The array is gone.
    *
-   * So each line now compares the code vocabulary against the catalog rows that
-   * actually correspond to it, and says DRIFT only when those two disagree.
-   * Counts that are expected to differ — containers, aliases — are shown as
-   * their own figure, never as the denominator of a ratio.
+   * Counts expected to differ — stages, blocks, aliases — are their own figure,
+   * never the denominator of a ratio. DRIFT means DRIFT.
    */
   const compare = (code: number, catalog: number, aside?: string) => {
     const suffix = aside ? ` · ${aside}` : '';
-    if (catalog === 0) return `${code}${suffix}`;           // catalog not loaded
+    if (catalog === 0) return `${code}${suffix}`;          // catalog not loaded
     if (code === catalog) return `${code}${suffix}`;
     return `${code} / ${catalog} in catalog · DRIFT${suffix}`;
   };
 
-  const pickableBlockTypes = kvBlockTypes.filter((t) => !isContainerRow(t));
-  const containerBlockTypes = kvBlockTypes.filter((t) => isContainerRow(t));
-  const aliasCount = exerciseSubtypes.length - CANONICAL_SUBTYPES.length;
-
   const stats = [
+    {
+      label: 'Block Types',
+      value: `${kvBlockTypes.length} · ${containerBlockTypes.length} stages · ${pickableBlockTypes.length} blocks`,
+      icon: <BookOpen className="w-4 h-4" style={{ color: 'var(--color-primary-default)' }} />,
+    },
+    {
+      label: 'Activities',
+      value: compare(CANONICAL_SUBTYPES.length, kvExerciseSubtypes.length,
+                     aliasCount > 0 ? `${aliasCount} aliases` : undefined),
+      icon: <PenTool className="w-4 h-4" style={{ color: 'var(--color-status-warning)' }} />,
+    },
     {
       label: 'Interaction Types',
       value: compare(interactionTypes.length, kvInteractionTypes.length),
       icon: <Zap className="w-4 h-4" style={{ color: 'var(--color-status-danger)' }} />,
     },
     {
-      // Code list vs the catalog rows a block may actually BE. Container rows
-      // are stages, counted separately — they are not missing block types.
-      // "Equip Block Types" -> "Block Types": since the block_type and
-      // day_config_type vocabularies were merged (Phase 1.1) this is the one
-      // block-type list, not an Equip-specific one.
-      label: 'Block Types',
-      value: compare(
-        EQUIP_BLOCK_TYPES.length,
-        pickableBlockTypes.length,
-        containerBlockTypes.length ? `${containerBlockTypes.length} containers` : undefined,
-      ),
-      icon: <BookOpen className="w-4 h-4" style={{ color: 'var(--color-primary-default)' }} />,
-    },
-    {
-      label: 'Check-in Block Types',
-      value: CHECKIN_BLOCK_TYPES.length,
-      icon: <Smile className="w-4 h-4" style={{ color: 'var(--color-status-info)' }} />,
-    },
-    {
-      // Canonical terms vs catalog rows. The displayed list is longer because
-      // it also renders aliases, which have no catalog row by design.
-      label: 'Activities',
-      value: compare(
-        CANONICAL_SUBTYPES.length,
-        kvExerciseSubtypes.length,
-        aliasCount > 0 ? `${aliasCount} aliases` : undefined,
-      ),
-      icon: <PenTool className="w-4 h-4" style={{ color: 'var(--color-status-warning)' }} />,
-    },
-    {
-      label: 'Day Config Presets',
-      value: compare(DAY_CONFIG_PRESETS.length, kvDayConfigTypes.length),
+      // The invariant as a number: `can_hold` non-empty <=> a preset exists.
+      label: 'Stages with rules',
+      value: compare(Object.keys(DAY_TYPE_PRESETS).length, containerBlockTypes.length),
       icon: <Calendar className="w-4 h-4" style={{ color: 'var(--color-status-success)' }} />,
     },
   ];
@@ -399,7 +222,7 @@ export function AdminBlockTypeViewer({ onBack }: AdminBlockTypeViewerProps) {
       <div className="flex gap-2 flex-wrap">
         <Button
           variant={activeTab === 'blocktypes' ? 'default' : 'outline'}
-          onClick={() => { setActiveTab('blocktypes'); setSelectedBlock(null); }}
+          onClick={() => { setActiveTab('blocktypes'); }}
           className="gap-2"
           style={activeTab === 'blocktypes' ? { backgroundColor: 'var(--color-primary-default)', color: 'var(--color-primary-on)' } : undefined}
         >
@@ -407,7 +230,7 @@ export function AdminBlockTypeViewer({ onBack }: AdminBlockTypeViewerProps) {
         </Button>
         <Button
           variant={activeTab === 'activities' ? 'default' : 'outline'}
-          onClick={() => { setActiveTab('activities'); setSelectedBlock(null); }}
+          onClick={() => { setActiveTab('activities'); }}
           className="gap-2"
           style={activeTab === 'activities' ? { backgroundColor: 'var(--color-primary-default)', color: 'var(--color-primary-on)' } : undefined}
         >
