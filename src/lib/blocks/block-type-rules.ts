@@ -1,6 +1,6 @@
 import {
   warnFallback, resolveInteraction, normalizeSubtype,
-  type Activity, type ExerciseConfig,
+  type Activity, type ActivityConfig,
   type DayType, type InteractionType,
 } from './block-model.ts';
 import { METADATA_CATALOG_ITEMS } from '../metadata-catalog.ts';
@@ -66,7 +66,7 @@ export const DAY_TYPE_PRESETS: Record<DayType, DayTypePreset> = {
         content: '',
         required: true,
         autoAdvance: true,
-        exerciseConfig: { subtype: 'single-select' }
+        activityConfig: { subtype: 'single-select' }
       }
     ],
     allowedInteractions: ['read', 'select-one', 'select-many', 'write', 'complete'],
@@ -93,14 +93,14 @@ export const DAY_TYPE_PRESETS: Record<DayType, DayTypePreset> = {
         content: 'Question 1', 
         required: true,
         autoAdvance: true,
-        exerciseConfig: { subtype: 'mcq', scoring: { enabled: true } } 
+        activityConfig: { subtype: 'mcq', scoring: { enabled: true } } 
       },
       { 
         type: 'exercise', 
         content: 'Question 2', 
         required: true, 
         autoAdvance: true,
-        exerciseConfig: { subtype: 'mcq', scoring: { enabled: true } } 
+        activityConfig: { subtype: 'mcq', scoring: { enabled: true } } 
       },
       { type: 'conclude', content: 'Continue', autoAdvance: false }
     ],
@@ -128,13 +128,13 @@ export const DAY_TYPE_PRESETS: Record<DayType, DayTypePreset> = {
         type: 'exercise', 
         content: 'How are you feeling?', 
         required: true,
-        exerciseConfig: { subtype: 'mcq', scoring: { enabled: false } } // non-evaluative
+        activityConfig: { subtype: 'mcq', scoring: { enabled: false } } // non-evaluative
       },
       { 
         type: 'exercise', 
         content: 'Rate your day', 
         required: true,
-        exerciseConfig: { subtype: 'rating_scale' } 
+        activityConfig: { subtype: 'rating_scale' } 
       }
     ],
     // + read 2026-09-04: this preset seeds a `lesson`.
@@ -162,7 +162,7 @@ export const DAY_TYPE_PRESETS: Record<DayType, DayTypePreset> = {
         type: 'exercise', 
         content: 'Knowledge Check', 
         required: false,
-        exerciseConfig: { subtype: 'mcq' } 
+        activityConfig: { subtype: 'mcq' } 
       }
     ],
     allowedInteractions: ['read', 'watch', 'complete', 'select-one'],
@@ -187,7 +187,7 @@ export const DAY_TYPE_PRESETS: Record<DayType, DayTypePreset> = {
         type: 'journal', 
         content: 'Journal Entry', 
         required: true,
-        exerciseConfig: { subtype: 'ephemeral-journal' }
+        activityConfig: { subtype: 'ephemeral-journal' }
       },
       { type: 'conclude', content: 'Done for today', autoAdvance: false }
     ],
@@ -232,13 +232,13 @@ export const DAY_TYPE_PRESETS: Record<DayType, DayTypePreset> = {
         type: 'checklist', 
         content: 'Daily Habits', 
         required: false,
-        exerciseConfig: { subtype: 'structured-list' }
+        activityConfig: { subtype: 'structured-list' }
       },
       { 
         type: 'exercise', 
         content: 'Rate today', 
         required: true,
-        exerciseConfig: { subtype: 'rating_scale' }
+        activityConfig: { subtype: 'rating_scale' }
       }
     ],
     allowedInteractions: ['read', 'track-table', 'input-table', 'check', 'rate', 'number', 'complete'],
@@ -267,7 +267,7 @@ export const DAY_TYPE_PRESETS: Record<DayType, DayTypePreset> = {
         type: 'exercise', 
         content: 'How do you feel now?', 
         required: true,
-        exerciseConfig: { subtype: 'rating_scale' }
+        activityConfig: { subtype: 'rating_scale' }
       },
       { type: 'journal', content: 'Final thoughts', required: false }
     ],
@@ -293,7 +293,7 @@ export const DAY_TYPE_PRESETS: Record<DayType, DayTypePreset> = {
         content: 'Rate your mood right now.',
         required: true,
         autoAdvance: true,
-        exerciseConfig: { subtype: 'rating-scale', slider_min: 1, slider_max: 5, slider_labels: ['Awful', 'Bad', 'Okay', 'Good', 'Great'] }
+        activityConfig: { subtype: 'rating-scale', slider_min: 1, slider_max: 5, slider_labels: ['Awful', 'Bad', 'Okay', 'Good', 'Great'] }
       },
       {
         type: 'journal',
@@ -362,7 +362,7 @@ export const DAY_TYPE_PRESETS: Record<DayType, DayTypePreset> = {
         content: '',
         required: true,
         autoAdvance: true,
-        exerciseConfig: { subtype: 'mcq', scoring: { enabled: true, maxScore: 1 } }
+        activityConfig: { subtype: 'mcq', scoring: { enabled: true, maxScore: 1 } }
       },
       {
         type: 'exercise',
@@ -370,7 +370,7 @@ export const DAY_TYPE_PRESETS: Record<DayType, DayTypePreset> = {
         content: '',
         required: true,
         autoAdvance: true,
-        exerciseConfig: { subtype: 'mcq', scoring: { enabled: true, maxScore: 1 } }
+        activityConfig: { subtype: 'mcq', scoring: { enabled: true, maxScore: 1 } }
       },
       { type: 'conclude', title: 'Results', content: 'Here\'s how you did.', autoAdvance: false }
     ],
@@ -452,7 +452,7 @@ export function validateBlockForDayType(
     duration: 0,
     required: false,
     order: 0,
-    ...(subtype ? { exerciseConfig: { subtype } as ExerciseConfig } : {}),
+    ...(subtype ? { activityConfig: { subtype } as ActivityConfig } : {}),
   } as Activity);
 
   // CONTAINMENT, from the catalog seed (2026-09-04).

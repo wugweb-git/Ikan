@@ -39,7 +39,7 @@ function seedViolations(): string[] {
     const seeds = (preset as unknown as { defaultBlocks?: SeedBlock[] }).defaultBlocks ?? [];
     seeds.forEach((b, i) => {
       const verdict = validateBlockForDayType(
-        String(b.type), b.exerciseConfig?.subtype, dayType,
+        String(b.type), b.activityConfig?.subtype, dayType,
       );
       if (!verdict.allowed || verdict.wouldReject) out.push(`${dayType}[${i}] ${String(b.type)}`);
     });

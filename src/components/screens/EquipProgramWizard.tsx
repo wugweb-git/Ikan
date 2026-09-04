@@ -80,7 +80,7 @@ const mapQuestionToBlock = (q: OnboardingQuestion): Activity => {
     order: q.order,
     autoAdvance: false, 
     stepGroup: undefined,
-    exerciseConfig: {
+    activityConfig: {
       // Map legacy types to exercise subtypes
       subtype: q.type === 'single_select' ? 'single-select' : 
                q.type === 'multi_select' ? 'multi-select' : 
@@ -95,16 +95,16 @@ const mapBlockToQuestion = (b: Activity): OnboardingQuestion => {
   // Determine type
   let type: OnboardingQuestion['type'] = 'single_select';
   let questionText = b.title;
-  let options = b.exerciseConfig?.options || [];
+  let options = b.activityConfig?.options || [];
 
   if (b.type === 'journal') {
     type = 'textarea';
     questionText = b.title; // For journal, title is the question
   } else if (b.type === 'exercise') {
-     const subtype = b.exerciseConfig?.subtype;
+     const subtype = b.activityConfig?.subtype;
      if (subtype === 'multi-select') type = 'multi_select';
      else if (subtype === 'single-select') type = 'single_select';
-     questionText = b.exerciseConfig?.prompt || b.title;
+     questionText = b.activityConfig?.prompt || b.title;
   }
 
   return {

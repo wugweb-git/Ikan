@@ -460,7 +460,7 @@ class ApiClient {
               content: block.content || '',
               duration: block.estimated_time_minutes || 5,
               required: block.is_required !== false,
-              exerciseConfig: {
+              activityConfig: {
                 subtype: 'input-table',
                 prompt: block.description || 'Please record your sleep details below.',
                 columns: ['Bed Time', 'Wake Time', 'Quality (1-5)', 'Notes'],

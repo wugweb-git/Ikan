@@ -132,7 +132,7 @@ function BlockEditorInner({
   const exerciseSubtypeOptions = kvExerciseSubtypes
     .filter(s => !stageActivities?.length
                  || stageActivities.includes(s.value)
-                 || s.value === block.exerciseConfig?.subtype)
+                 || s.value === block.activityConfig?.subtype)
     .map(s => ({
       value: s.value,
       label: s.label,
@@ -161,7 +161,7 @@ function BlockEditorInner({
   // types are assigned (blocks.md §18 6.3), because on today's content it would
   // reject 182 of 407 blocks — mislabelled days, not bad content.
   const presetVerdict = dayType
-    ? validateBlockForDayType(block.type, block.exerciseConfig?.subtype, dayType)
+    ? validateBlockForDayType(block.type, block.activityConfig?.subtype, dayType)
     : undefined;
 
   // Resolve the current interaction for display
@@ -409,9 +409,9 @@ function BlockEditorInner({
                   )}
                 </Label>
                 <Select 
-                  value={block.exerciseConfig?.subtype || 'mcq'} 
+                  value={block.activityConfig?.subtype || 'mcq'} 
                   onValueChange={(val: any) => onChange({ 
-                    exerciseConfig: { ...block.exerciseConfig, subtype: val } 
+                    activityConfig: { ...block.activityConfig, subtype: val } 
                   })}
                 >
                   <SelectTrigger>
@@ -435,32 +435,32 @@ function BlockEditorInner({
               <div className="space-y-1">
                 <Label className="text-xs">Prompt / Question</Label>
                 <Input 
-                  value={block.exerciseConfig?.prompt || ''} 
+                  value={block.activityConfig?.prompt || ''} 
                   onChange={(e) => onChange({ 
-                    exerciseConfig: { ...block.exerciseConfig, prompt: e.target.value } 
+                    activityConfig: { ...block.activityConfig, prompt: e.target.value } 
                   })}
                   placeholder="e.g. Which of these habits do you do?"
                 />
               </div>
 
               {/* Options Editor for MCQ/Select/Structured List */}
-              {['mcq', 'single-select', 'multi-select', 'structured-list'].includes(block.exerciseConfig?.subtype || '') && (
+              {['mcq', 'single-select', 'multi-select', 'structured-list'].includes(block.activityConfig?.subtype || '') && (
                 <div className="space-y-1">
                   <Label className="text-xs">
-                    {block.exerciseConfig?.subtype === 'structured-list' ? 'List Items' : 'Options'} (One per line)
+                    {block.activityConfig?.subtype === 'structured-list' ? 'List Items' : 'Options'} (One per line)
                   </Label>
                   <Textarea 
                     value={(
-                      block.exerciseConfig?.subtype === 'structured-list' 
-                        ? (block.exerciseConfig?.listItems || []) 
-                        : (block.exerciseConfig?.options || [])
+                      block.activityConfig?.subtype === 'structured-list' 
+                        ? (block.activityConfig?.listItems || []) 
+                        : (block.activityConfig?.options || [])
                     ).join('\n')}
                     onChange={(e) => {
                       const lines = e.target.value.split('\n').filter(l => l);
-                      const isList = block.exerciseConfig?.subtype === 'structured-list';
+                      const isList = block.activityConfig?.subtype === 'structured-list';
                       onChange({ 
-                        exerciseConfig: { 
-                          ...block.exerciseConfig, 
+                        activityConfig: { 
+                          ...block.activityConfig, 
                           options: isList ? undefined : lines,
                           listItems: isList ? lines : undefined
                         } 
@@ -473,15 +473,15 @@ function BlockEditorInner({
               )}
 
               {/* Clinical Instrument Config */}
-              {block.exerciseConfig?.subtype === 'clinical-instrument' && (
+              {block.activityConfig?.subtype === 'clinical-instrument' && (
                 <div className="space-y-4 pt-2 border-t border-dashed">
                   <div className="space-y-1">
                     <Label className="text-xs">Questions (One per line)</Label>
                     <Textarea 
-                      value={(block.exerciseConfig?.questions || []).join('\n')}
+                      value={(block.activityConfig?.questions || []).join('\n')}
                       onChange={(e) => onChange({ 
-                        exerciseConfig: { 
-                          ...block.exerciseConfig, 
+                        activityConfig: { 
+                          ...block.activityConfig, 
                           questions: e.target.value.split('\n').filter(l => l) 
                         } 
                       })}
@@ -492,14 +492,14 @@ function BlockEditorInner({
                   <div className="space-y-1">
                      <Label className="text-xs">Scale (Label : Value per line)</Label>
                      <Textarea
-                       value={(block.exerciseConfig?.scale || []).map(s => `${s.label}:${s.value}`).join('\n')}
+                       value={(block.activityConfig?.scale || []).map(s => `${s.label}:${s.value}`).join('\n')}
                        onChange={(e) => {
                          const scale = e.target.value.split('\n').map(line => {
                            const [label, val] = line.split(':');
                            return { label: label?.trim() || '', value: parseInt(val?.trim() || '0') };
                          }).filter(s => s.label);
                          onChange({ 
-                           exerciseConfig: { ...block.exerciseConfig, scale } 
+                           activityConfig: { ...block.activityConfig, scale } 
                          });
                        }}
                        placeholder="Not at all : 0&#10;Several days : 1&#10;More than half the days : 2&#10;Nearly every day : 3"
@@ -510,16 +510,16 @@ function BlockEditorInner({
               )}
 
               {/* Rating Scale Config */}
-              {block.exerciseConfig?.subtype === 'rating-scale' && (
+              {block.activityConfig?.subtype === 'rating-scale' && (
                 <div className="space-y-4 pt-2 border-t border-dashed">
                   <div className="grid grid-cols-2 gap-3">
                     <div className="space-y-1">
                       <Label className="text-xs">Min Value</Label>
                       <Input
                         type="number"
-                        value={block.exerciseConfig?.slider_min ?? 0}
+                        value={block.activityConfig?.slider_min ?? 0}
                         onChange={(e) => onChange({
-                          exerciseConfig: { ...block.exerciseConfig, slider_min: parseInt(e.target.value) || 0 }
+                          activityConfig: { ...block.activityConfig, slider_min: parseInt(e.target.value) || 0 }
                         })}
                         placeholder="0"
                         className="h-8 text-xs"
@@ -529,9 +529,9 @@ function BlockEditorInner({
                       <Label className="text-xs">Max Value</Label>
                       <Input
                         type="number"
-                        value={block.exerciseConfig?.slider_max ?? 10}
+                        value={block.activityConfig?.slider_max ?? 10}
                         onChange={(e) => onChange({
-                          exerciseConfig: { ...block.exerciseConfig, slider_max: parseInt(e.target.value) || 10 }
+                          activityConfig: { ...block.activityConfig, slider_max: parseInt(e.target.value) || 10 }
                         })}
                         placeholder="10"
                         className="h-8 text-xs"
@@ -541,10 +541,10 @@ function BlockEditorInner({
                   <div className="space-y-1">
                     <Label className="text-xs">Scale Labels (comma separated, e.g. "Very Low, Low, Moderate, High, Very High")</Label>
                     <Input
-                      value={(block.exerciseConfig?.slider_labels || []).join(', ')}
+                      value={(block.activityConfig?.slider_labels || []).join(', ')}
                       onChange={(e) => onChange({
-                        exerciseConfig: {
-                          ...block.exerciseConfig,
+                        activityConfig: {
+                          ...block.activityConfig,
                           slider_labels: e.target.value.split(',').map(s => s.trim()).filter(Boolean)
                         }
                       })}
@@ -556,15 +556,15 @@ function BlockEditorInner({
               )}
 
               {/* Table Config */}
-              {(block.exerciseConfig?.subtype === 'table' || block.exerciseConfig?.subtype === 'input-table' || block.exerciseConfig?.subtype === 'comparison-matrix' || block.exerciseConfig?.subtype === 'comparison_matrix') && (
+              {(block.activityConfig?.subtype === 'table' || block.activityConfig?.subtype === 'input-table' || block.activityConfig?.subtype === 'comparison-matrix' || block.activityConfig?.subtype === 'comparison_matrix') && (
                 <div className="space-y-4 pt-2 border-t border-dashed">
                   <div className="space-y-1">
                     <Label className="text-xs">Column Headers (One per line)</Label>
                     <Textarea 
-                      value={(block.exerciseConfig?.columns || []).join('\n')}
+                      value={(block.activityConfig?.columns || []).join('\n')}
                       onChange={(e) => onChange({ 
-                        exerciseConfig: { 
-                          ...block.exerciseConfig, 
+                        activityConfig: { 
+                          ...block.activityConfig, 
                           columns: e.target.value.split('\n').filter(l => l) 
                         } 
                       })}
@@ -576,10 +576,10 @@ function BlockEditorInner({
                   <div className="space-y-1">
                     <Label className="text-xs">Row Headers (Optional - for Fixed Grid)</Label>
                     <Textarea 
-                      value={(block.exerciseConfig?.rows || []).join('\n')}
+                      value={(block.activityConfig?.rows || []).join('\n')}
                       onChange={(e) => onChange({ 
-                        exerciseConfig: { 
-                          ...block.exerciseConfig, 
+                        activityConfig: { 
+                          ...block.activityConfig, 
                           rows: e.target.value.split('\n').filter(l => l) 
                         } 
                       })}
@@ -591,9 +591,9 @@ function BlockEditorInner({
                   <div className="flex items-center gap-2">
                      <Checkbox 
                        id="allow_add_rows"
-                       checked={block.exerciseConfig?.allow_add_rows}
+                       checked={block.activityConfig?.allow_add_rows}
                        onCheckedChange={(c) => onChange({
-                          exerciseConfig: { ...block.exerciseConfig, allow_add_rows: !!c }
+                          activityConfig: { ...block.activityConfig, allow_add_rows: !!c }
                        })}
                      />
                      <Label htmlFor="allow_add_rows" className="text-xs font-normal">Allow user to add rows</Label>
@@ -602,7 +602,7 @@ function BlockEditorInner({
               )}
 
               {/* Upload Config */}
-              {block.exerciseConfig?.subtype === 'upload' && (
+              {block.activityConfig?.subtype === 'upload' && (
                 <div className="space-y-4 pt-2 border-t border-dashed">
                   <div className="flex items-center gap-2 mb-1">
                     <Upload size={14} style={{ color: 'var(--color-primary-default)' }} />
@@ -612,10 +612,10 @@ function BlockEditorInner({
                   <div className="space-y-1">
                     <Label className="text-xs">Accepted File Types (comma separated)</Label>
                     <Input
-                      value={(block.exerciseConfig?.acceptedFileTypes || []).join(', ')}
+                      value={(block.activityConfig?.acceptedFileTypes || []).join(', ')}
                       onChange={(e) => onChange({
-                        exerciseConfig: {
-                          ...block.exerciseConfig,
+                        activityConfig: {
+                          ...block.activityConfig,
                           acceptedFileTypes: e.target.value.split(',').map(s => s.trim()).filter(Boolean)
                         }
                       })}
@@ -631,10 +631,10 @@ function BlockEditorInner({
                     <Label className="text-xs">Max File Size (MB)</Label>
                     <Input
                       type="number"
-                      value={Math.round((block.exerciseConfig?.maxFileSize || 10485760) / (1024 * 1024))}
+                      value={Math.round((block.activityConfig?.maxFileSize || 10485760) / (1024 * 1024))}
                       onChange={(e) => onChange({
-                        exerciseConfig: {
-                          ...block.exerciseConfig,
+                        activityConfig: {
+                          ...block.activityConfig,
                           maxFileSize: (parseInt(e.target.value) || 10) * 1024 * 1024
                         }
                       })}
@@ -663,10 +663,10 @@ function BlockEditorInner({
             <div className="space-y-2">
                <Label className="text-xs">Checklist Items (One per line)</Label>
                <Textarea
-                 value={(block.exerciseConfig?.options || []).join('\n')}
+                 value={(block.activityConfig?.options || []).join('\n')}
                  onChange={(e) => onChange({ 
-                    exerciseConfig: { 
-                      ...block.exerciseConfig, 
+                    activityConfig: { 
+                      ...block.activityConfig, 
                       subtype: 'multi-select', // Checklist is effectively multi-select
                       options: e.target.value.split('\n').filter(l => l) 
                     } 
@@ -678,7 +678,7 @@ function BlockEditorInner({
           )}
 
           {/* SCORING SECTION (Assessment Only) */}
-          {(isAssessment || block.exerciseConfig?.scoring?.enabled) && block.type === 'exercise' && (
+          {(isAssessment || block.activityConfig?.scoring?.enabled) && block.type === 'exercise' && (
              <div className="pt-2 border-t p-3 rounded-md" style={{ backgroundColor: 'var(--color-status-warning-light)' }}>
                <div className="flex items-center justify-between mb-2">
                  <Label className="flex items-center gap-1" style={{ fontSize: 'var(--text-xs)', fontWeight: 'var(--font-weight-medium)', color: 'var(--color-status-warning)' }}>
@@ -686,11 +686,11 @@ function BlockEditorInner({
                  </Label>
                  <div className="flex items-center gap-2">
                     <Checkbox 
-                      checked={block.exerciseConfig?.scoring?.enabled}
+                      checked={block.activityConfig?.scoring?.enabled}
                       onCheckedChange={(c) => onChange({
-                        exerciseConfig: {
-                          ...block.exerciseConfig,
-                          scoring: { ...block.exerciseConfig?.scoring, enabled: !!c }
+                        activityConfig: {
+                          ...block.activityConfig,
+                          scoring: { ...block.activityConfig?.scoring, enabled: !!c }
                         }
                       })}
                     />
@@ -698,21 +698,21 @@ function BlockEditorInner({
                  </div>
                </div>
 
-               {block.exerciseConfig?.scoring?.enabled && (
+               {block.activityConfig?.scoring?.enabled && (
                  <div className="space-y-3">
-                    {['mcq', 'single-select', 'multi-select'].includes(block.exerciseConfig?.subtype || '') && (
+                    {['mcq', 'single-select', 'multi-select'].includes(block.activityConfig?.subtype || '') && (
                       <div className="space-y-1">
                         <Label style={{ fontSize: 'var(--text-xs)', color: 'var(--color-status-warning)' }}>
                           Option Weights (Comma separated, order matches options)
                         </Label>
                         <Input 
-                          value={(block.exerciseConfig?.scoring?.weights || []).join(', ')}
+                          value={(block.activityConfig?.scoring?.weights || []).join(', ')}
                           onChange={(e) => {
                             const weights = e.target.value.split(',').map(w => parseInt(w.trim()) || 0);
                             onChange({
-                              exerciseConfig: {
-                                ...block.exerciseConfig,
-                                scoring: { ...block.exerciseConfig?.scoring, weights }
+                              activityConfig: {
+                                ...block.activityConfig,
+                                scoring: { ...block.activityConfig?.scoring, weights }
                               }
                             });
                           }}
@@ -727,11 +727,11 @@ function BlockEditorInner({
                       <Label style={{ fontSize: 'var(--text-xs)', color: 'var(--color-status-warning)' }}>Max Score</Label>
                       <Input 
                         type="number"
-                        value={block.exerciseConfig?.scoring?.maxScore || 1}
+                        value={block.activityConfig?.scoring?.maxScore || 1}
                         onChange={(e) => onChange({
-                          exerciseConfig: {
-                            ...block.exerciseConfig,
-                            scoring: { ...block.exerciseConfig?.scoring, maxScore: parseInt(e.target.value) }
+                          activityConfig: {
+                            ...block.activityConfig,
+                            scoring: { ...block.activityConfig?.scoring, maxScore: parseInt(e.target.value) }
                           }
                         })}
                         className="w-16 h-7 text-xs" style={{ backgroundColor: 'var(--color-bg-card)' }}

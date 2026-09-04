@@ -84,7 +84,7 @@ const probe = (type: string, subtype?: string): InteractionType =>
   resolveInteraction({
     id: 'probe', title: '', type: type as Activity['type'], content: '',
     duration: 0, required: false, order: 0,
-    ...(subtype ? { exerciseConfig: { subtype: subtype as never } } : {}),
+    ...(subtype ? { activityConfig: { subtype: subtype as never } } : {}),
   } as Activity);
 
 const LEGACY_MAPPING: { legacy: string; interaction: InteractionType; note: string }[] = [

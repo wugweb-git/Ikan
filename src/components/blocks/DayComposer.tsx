@@ -537,7 +537,7 @@ export function DayEditor({
       required: true,
       autoAdvance: preset?.autoConfig.autoAdvance ?? false,
       order: activeDay.activities.length,
-      exerciseConfig: subtype ? { subtype: subtype as any } : undefined
+      activityConfig: subtype ? { subtype: subtype as any } : undefined
     };
     handleDaysChange((currentDays) => currentDays.map(d => 
       d.day === activeDay.day ? { ...d, activities: [...d.activities, { ...newBlock, order: d.activities.length }] } : d

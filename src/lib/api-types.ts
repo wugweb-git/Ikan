@@ -111,8 +111,8 @@ export interface EquipProgramBlock {
   content?: string;
   estimated_time_minutes?: number;
   is_required?: boolean;
-  exercise_config?: ExerciseConfig;
-  exerciseConfig?: ExerciseConfig;
+  exercise_config?: ActivityConfig;
+  exerciseConfig?: ActivityConfig;
   step_group_id?: string;
   stepGroup?: string;
   auto_advance?: boolean;
@@ -156,7 +156,7 @@ export interface EquipProgramData {
   [key: string]: unknown;
 }
 
-export interface ExerciseConfig {
+export interface ActivityConfig {
   subtype?: string;
   prompt?: string;
   options?: string[];

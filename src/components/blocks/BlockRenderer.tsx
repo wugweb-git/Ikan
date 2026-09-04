@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { motion } from 'framer-motion';
-import { Activity, ExerciseConfig, resolveInteraction, warnFallback } from '../../lib/blocks/block-model';
+import { Activity, ActivityConfig, resolveInteraction, warnFallback, configOf } from '../../lib/blocks/block-model';
 import { Label } from '../ui/label';
 import { RadioGroup, RadioGroupItem } from '../ui/radio-group';
 import { Checkbox } from '../ui/checkbox';
@@ -43,7 +43,12 @@ function summarizePriorResponse(response: any): string {
 }
 
 export function BlockRenderer({ block, value, onChange, readOnly = false, equipId, dayNum, priorEntries }: BlockRendererProps) {
-  const { type, title, subtitle, content, exerciseConfig } = block;
+  const { type, title, subtitle, content } = block;
+  // Via the accessor, not a destructured field: during the rename a block may
+  // carry `activityConfig`, `exerciseConfig`, or both. A destructuring binding
+  // reads one name only, which is how this was missed by a bulk rename that
+  // matched `.exerciseConfig` and `exerciseConfig:` but not `{ exerciseConfig }`.
+  const exerciseConfig = configOf(block);
 
   // --- Upload state (hoisted to top level to comply with Rules of Hooks) ---
   const [uploading, setUploading] = useState(false);
@@ -211,7 +216,7 @@ export function BlockRenderer({ block, value, onChange, readOnly = false, equipI
     );
   };
 
-  const renderMCQ = (config: ExerciseConfig) => {
+  const renderMCQ = (config: ActivityConfig) => {
     const options = config.options || [];
     
     if (options.length === 0) {
@@ -266,7 +271,7 @@ export function BlockRenderer({ block, value, onChange, readOnly = false, equipI
     );
   };
 
-  const renderMultiSelect = (config: ExerciseConfig) => {
+  const renderMultiSelect = (config: ActivityConfig) => {
     const options = config.options || [];
     const currentValues = Array.isArray(value) ? value : [];
 
@@ -322,7 +327,7 @@ export function BlockRenderer({ block, value, onChange, readOnly = false, equipI
     );
   };
 
-  const renderChecklist = (config: ExerciseConfig) => {
+  const renderChecklist = (config: ActivityConfig) => {
     const items = config.listItems || config.options || [];
     const currentValues = Array.isArray(value) ? value : [];
 
@@ -393,7 +398,7 @@ export function BlockRenderer({ block, value, onChange, readOnly = false, equipI
     );
   };
 
-  const renderTextResponse = (config: ExerciseConfig) => {
+  const renderTextResponse = (config: ActivityConfig) => {
     return (
       <div className="space-y-3">
         <Textarea 
@@ -421,7 +426,7 @@ export function BlockRenderer({ block, value, onChange, readOnly = false, equipI
 
   // `number` was a declared subtype with no interaction, so its one live block
   // resolved through the default branch to `write` and drew a textarea.
-  const renderNumberResponse = (config: ExerciseConfig) => {
+  const renderNumberResponse = (config: ActivityConfig) => {
     return (
       <div className="space-y-3">
         <Input
@@ -443,7 +448,7 @@ export function BlockRenderer({ block, value, onChange, readOnly = false, equipI
     );
   };
 
-  const renderClinicalInstrument = (config: ExerciseConfig) => {
+  const renderClinicalInstrument = (config: ActivityConfig) => {
     // Table of questions with same scale
     const questions = config.questions || [];
     const scale = config.scale || [
@@ -504,7 +509,7 @@ export function BlockRenderer({ block, value, onChange, readOnly = false, equipI
     );
   };
 
-  const renderTableChecklist = (config: ExerciseConfig) => {
+  const renderTableChecklist = (config: ActivityConfig) => {
     const columns = config.columns || [];
     const rows = config.rows || ['Status']; // Default to single row if none provided
     const currentValues = value || {}; // Record<"row::col", boolean>
@@ -567,7 +572,7 @@ export function BlockRenderer({ block, value, onChange, readOnly = false, equipI
     );
   };
 
-  const renderInputTable = (config: ExerciseConfig) => {
+  const renderInputTable = (config: ActivityConfig) => {
     const columns = config.columns || ['Entry'];
     // Predefined row labels (e.g. the Sleep Diary questions). When present, the
     // FIRST column becomes a read-only "row heading" and only the remaining
@@ -732,7 +737,7 @@ export function BlockRenderer({ block, value, onChange, readOnly = false, equipI
     );
   };
 
-  const renderRatingScale = (config: ExerciseConfig) => {
+  const renderRatingScale = (config: ActivityConfig) => {
     // Default to 1-5
     const max = config.scale?.length || 5;
     const range = Array.from({ length: max }, (_, i) => i + 1);
@@ -769,7 +774,7 @@ export function BlockRenderer({ block, value, onChange, readOnly = false, equipI
     );
   };
 
-  const renderFileUpload = (config: ExerciseConfig) => {
+  const renderFileUpload = (config: ActivityConfig) => {
     const accepted = config.acceptedFileTypes || ['image/*', '.pdf', '.doc', '.docx', 'audio/*'];
     const maxSize = config.maxFileSize || 10 * 1024 * 1024; // 10MB default
 

@@ -1,4 +1,4 @@
-import { EquipProgram, DayContent, Activity, ExerciseConfig, InteractionType } from './blocks/block-model';
+import { EquipProgram, DayContent, Activity, ActivityConfig, InteractionType } from './blocks/block-model';
 
 /**
  * Inbound spellings of a legacy assessment question type -> the four the save
@@ -57,7 +57,7 @@ interface LegacyAssessment {
 export function adaptAssessmentToProgram(assessment: LegacyAssessment): EquipProgram {
   const activities: Activity[] = assessment.questions.map((q, index) => {
     // Determine subtype and options
-    let subtype: ExerciseConfig['subtype'] = 'mcq';
+    let subtype: ActivityConfig['subtype'] = 'mcq';
     let options: string[] = [];
     let weights: number[] | undefined = undefined;
 
@@ -106,7 +106,7 @@ export function adaptAssessmentToProgram(assessment: LegacyAssessment): EquipPro
     }
 
     // Create config
-    const config: ExerciseConfig = {
+    const config: ActivityConfig = {
       subtype,
       prompt: q.text,
       options,
@@ -133,7 +133,7 @@ export function adaptAssessmentToProgram(assessment: LegacyAssessment): EquipPro
       duration: 1,
       required: q.required ?? true,
       order: index,
-      exerciseConfig: config,
+      activityConfig: config,
       stepGroup: q.stepGroup,
       autoAdvance: q.autoAdvance
     };

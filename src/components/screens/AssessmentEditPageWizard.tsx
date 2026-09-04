@@ -53,6 +53,9 @@ const convertQuestionsToDay = (questions: any[]): DayContent => {
     day: 1,
     title: 'Assessment Content',
     dayType: 'assessment',
+    // Required by DayContent and absent since this function was written — the
+    // old `exerciseConfig` type error masked it until the rename cleared that.
+    description: '',
     activities: questions.map((q, idx) => {
       const options: string[] = normalizeOptions(q.options);
 
@@ -86,7 +89,7 @@ const convertQuestionsToDay = (questions: any[]): DayContent => {
         image_url: q.icon || q.imageUrl,
         content: '',
         order: idx,
-        exerciseConfig: {
+        activityConfig: {
           subtype: subtype as any,
           prompt: q.text,
           options,
@@ -377,7 +380,7 @@ export function AssessmentEditPageWizard({ assessmentId, onBack, onSave }: Asses
           // truth. Any disagreement rebuilds the cache from questions[].
           const derived = convertQuestionsToDay(questions).activities;
           const weightsOf = (a: any): string =>
-            JSON.stringify(a?.exerciseConfig?.scoring?.weights ?? null);
+            JSON.stringify(a?.activityConfig?.scoring?.weights ?? null);
 
           // Text is compared as well as ids and weights. It was not before,
           // which is why the burnout-q9 divergence — a TEXT difference between
@@ -464,7 +467,7 @@ export function AssessmentEditPageWizard({ assessmentId, onBack, onSave }: Asses
       const scoringErrors: string[] = [];
       if (currentData.daily_content && currentData.daily_content.length > 0) {
           currentData.questions = currentData.daily_content[0].activities.map(block => {
-              const subtype = block.exerciseConfig?.subtype;
+              const subtype = block.activityConfig?.subtype;
               const interaction = resolveInteraction(block);
               // Map back to legacy question type. Prefer subtype (finer-grained)
               // over interaction, which collapses mcq/single-select/clinical/etc.
@@ -495,8 +498,8 @@ export function AssessmentEditPageWizard({ assessmentId, onBack, onSave }: Asses
               // saved scoring vanished even when it survived the load step.
               // Normalize on save exactly as on load, so the keys written here
               // are the same strings the player will look up.
-              const options: string[] = normalizeOptions(block.exerciseConfig?.options);
-              const weights = block.exerciseConfig?.scoring?.weights;
+              const options: string[] = normalizeOptions(block.activityConfig?.options);
+              const weights = block.activityConfig?.scoring?.weights;
 
               // A partial weights array is worse than none. Writing a scoring
               // map flips the player from its safe 0-based-index fallback to a
@@ -506,7 +509,7 @@ export function AssessmentEditPageWizard({ assessmentId, onBack, onSave }: Asses
               // `weights.length > 0` check and zero-scored options 3-5.
               // Require a weight for every option, or write no map at all.
               let scoring: Record<string, number> | undefined = undefined;
-              if (block.exerciseConfig?.scoring?.enabled && Array.isArray(weights) && weights.length > 0) {
+              if (block.activityConfig?.scoring?.enabled && Array.isArray(weights) && weights.length > 0) {
                 if (weights.length === options.length) {
                   scoring = options.reduce((acc: Record<string, number>, opt: string, i: number) => {
                     acc[opt] = weights[i] ?? 0;
@@ -514,14 +517,14 @@ export function AssessmentEditPageWizard({ assessmentId, onBack, onSave }: Asses
                   }, {} as Record<string, number>);
                 } else {
                   scoringErrors.push(
-                    `"${block.exerciseConfig?.prompt || block.title || block.id}" — ${options.length} option(s) but ${weights.length} weight(s)`
+                    `"${block.activityConfig?.prompt || block.title || block.id}" — ${options.length} option(s) but ${weights.length} weight(s)`
                   );
                 }
               }
 
               return {
                 id: block.id,
-                text: block.exerciseConfig?.prompt || block.title,
+                text: block.activityConfig?.prompt || block.title,
                 type: legacyType,
                 options,
                 scoring,
