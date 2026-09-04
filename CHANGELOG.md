@@ -9,6 +9,53 @@ undated under their original session number.
 
 ---
 
+## 2026-09-04 (5)
+
+**Deleted the hardcoded copies of the vocabulary, and typing the last one found a live player bug.**
+Typecheck 205 -> **204**. Tests 47, passing.
+
+### `AdminBlockTypeViewer` was a third copy of everything, and it had drifted
+
+The one screen whose entire job is to document the block vocabulary was hardcoding its own version of
+it — and showing the drift as a feature, printing "12 / 12 in KV" counters while displaying its own
+list as the truth. Three of its lists are now derived:
+
+- **Exercise subtypes.** Its 12-entry list presented `rating_scale`, `clinical_instrument` and
+  `comparison_matrix` — aliases — as the canonical terms, listed `likert` as a subtype, and had no
+  entry for `number`. It had no row for any of `matrix`, `row_list`, `text_list` or `scale`, which are
+  the four actually present in live content. Now built from `EXERCISE_SUBTYPES` and `SUBTYPE_ALIASES`
+  with labels and descriptions from the live catalog, and a third group for anything the catalog holds
+  that code does not know — which should always be empty, and now shows if it is not.
+- **Day config presets.** A hand-copied **seven** against the real eleven, with their own
+  `allowedBlocks`/`blockedComponents` drifted from `day-presets.ts`. Now read from `DAY_TYPE_PRESETS`
+  (composition, rules) and `DAY_TYPE_CONFIG` (layout, progress), and the panel shows
+  `allowedInteractions` rather than the legacy palette strings.
+- **The legacy mapping table.** Hand-transcribed from the resolver's switch and stale in the same way.
+  Now derived by *calling* `resolveInteraction` on a probe block for every canonical term and every
+  alias, so it cannot describe behaviour the resolver does not have.
+
+Also fixed `INTERACTION_ICON_MAP`, which was missing `number` — an error introduced by the earlier
+commit today that added the thirteenth interaction, and the one place `Record<InteractionType, …>`
+caught it.
+
+### `ProgramPlayer.DAY_TYPE_CONFIG` held 7 of 11 day types
+
+Typed `Record<string, DayTypeConfig>` with a `|| DEFAULT_CONFIG` fallback, so **`onboarding`, `quiz`,
+`check-in` and `rest` days all played as learning days** — back-navigation on, percentage progress,
+"Continue" — with nothing logged. A rest day with no active task and a forward-only quiz both rendered
+as a scrollable lesson. Now `Record<DayType, DayTypeConfig>`, with the four missing configs authored
+from blocks.md §16, and `getDayTypeConfig()` as the only way in: it still falls back, but warns through
+`warnFallback` with the dayType it could not resolve. Exported so the viewer reads it instead of
+transcribing it.
+
+### Still hardcoded, and deliberately left for now
+
+`EQUIP_BLOCK_TYPES` and `CHECKIN_BLOCK_TYPES` in the same file carry `fields` and `previewHint` —
+editorial UI copy that exists nowhere else, so they are not simply duplicates of a catalog bucket. They
+need splitting into catalog-driven vocabulary plus a code-side annotation map, not deleting.
+`AdminCheckinTemplateBuilder`'s six-value step list, `ProgramCheckIn`'s four hardcoded questions,
+`MoodJournal`'s hardcoded mood-scale branch and `wizard/types.ts`'s `FieldType` are all Phase 5.
+
 ## 2026-09-04 (4)
 
 **Declared the content hierarchy — collection / stage / step / block — as types, with a completeness

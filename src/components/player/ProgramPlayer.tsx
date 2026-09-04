@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { EquipProgram, DayContent, Activity, DEFAULT_CHECKIN_CONFIG, resolveInteraction, repeatTargetDays } from '../../lib/equip-admin-types';
+import { EquipProgram, DayContent, Activity, DEFAULT_CHECKIN_CONFIG, resolveInteraction, repeatTargetDays, warnFallback, type DayType } from '../../lib/equip-admin-types';
 import { BlockRenderer } from './BlockRenderer';
 import { ProgramCheckIn } from '../equip/ProgramCheckIn';
 import { Button } from '../ui/button';
@@ -56,7 +56,59 @@ interface DayTypeConfig {
   bgColor?: string;
 }
 
-const DAY_TYPE_CONFIG: Record<string, DayTypeConfig> = {
+/**
+ * How the player behaves on each stage type. Exported so AdminBlockTypeViewer
+ * reads it instead of transcribing it — that screen held a hand-copied version.
+ *
+ * Typed `Record<DayType, ...>` as of 2026-09-04. It previously held **7** of the
+ * 11 day types against `Record<string, ...>`, so `onboarding`, `quiz`,
+ * `check-in` and `rest` fell to DEFAULT_CONFIG and played as **learning days** —
+ * back-navigation on, percentage progress, "Continue". A rest day with no
+ * active task and a forward-only quiz both rendered as a scrollable lesson.
+ * The four below are authored from blocks.md §16.
+ */
+export const DAY_TYPE_CONFIG: Record<DayType, DayTypeConfig> = {
+  'onboarding': {
+    layout: 'step-focus',
+    showBack: false,
+    autoAdvance: true,
+    progressStyle: 'steps',
+    primaryButtonText: (last) => last ? 'Start Programme' : 'Continue',
+    bgColor: 'bg-[var(--color-bg-page)]',
+    completionTitle: "You're all set",
+    fallbackTitle: () => 'Getting started',
+  },
+  'quiz': {
+    layout: 'centered',
+    showBack: false,
+    autoAdvance: true,
+    progressStyle: 'steps',
+    primaryButtonText: (last) => last ? 'See Results' : 'Next',
+    bgColor: 'bg-[var(--color-bg-page)]',
+    completionTitle: 'Quiz Complete',
+    fallbackTitle: (n: number) => `Day ${n}`,
+  },
+  'check-in': {
+    layout: 'compact',
+    showBack: false,
+    autoAdvance: true,
+    progressStyle: 'steps',
+    primaryButtonText: (last) => last ? 'Done' : 'Next',
+    bgColor: 'bg-[var(--color-bg-page)]',
+    completionTitle: 'Checked in',
+    fallbackTitle: (n: number) => `Day ${n}`,
+  },
+  'rest': {
+    layout: 'scrollable',
+    showBack: true,
+    autoAdvance: false,
+    progressStyle: 'none',
+    primaryButtonText: (last) => 'Done',
+    singlePage: true,
+    bgColor: 'bg-[var(--color-bg-page)]',
+    completionTitle: 'Rest Day',
+    fallbackTitle: (n: number) => `Day ${n}`,
+  },
   'assessment': {
     layout: 'centered',
     showBack: false,
@@ -140,8 +192,23 @@ const f = (size: string, weight: number = 400, color: string = 'var(--color-text
   color,
 });
 
+/** The only way into DAY_TYPE_CONFIG. An unknown dayType falls back, and says so. */
+export const getDayTypeConfig = (dayType: string | undefined): DayTypeConfig => {
+  if (dayType && Object.prototype.hasOwnProperty.call(DAY_TYPE_CONFIG, dayType)) {
+    return DAY_TYPE_CONFIG[dayType as DayType];
+  }
+  if (dayType) {
+    warnFallback(
+      'ProgramPlayer',
+      `no player config for dayType "${dayType}" — playing it as a learning day`,
+      dayType
+    );
+  }
+  return DEFAULT_CONFIG;
+};
+
 const groupBlocksIntoSteps = (activities: Activity[], dayType: string = 'learning'): Step[] => {
-  const config = DAY_TYPE_CONFIG[dayType] || DEFAULT_CONFIG;
+  const config = getDayTypeConfig(dayType);
   
   if (config.singlePage) {
     return [{ id: 'single-page', blocks: activities }];
@@ -198,7 +265,7 @@ export function ProgramPlayer({
 
   const dayConfig = useMemo(() => {
     if (!activeDay) return DEFAULT_CONFIG;
-    return DAY_TYPE_CONFIG[activeDay.dayType || 'learning'] || DEFAULT_CONFIG;
+    return getDayTypeConfig(activeDay.dayType);
   }, [activeDay]);
 
   // Carry-forward: a day's blocks = its native blocks PLUS blocks authored on

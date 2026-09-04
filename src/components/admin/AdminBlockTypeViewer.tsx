@@ -1,16 +1,23 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   BookOpen, PenTool, MessageCircle, CheckSquare, Lightbulb, Target,
   Smile, Type, Tag, List, SlidersHorizontal, ToggleLeft,
   Eye, Layers, Moon, Calendar, Beaker, GraduationCap, Wrench, BarChart3, Repeat,
   Monitor, Smartphone, Settings2, GripVertical, ChevronDown, Image as ImageIcon,
   Zap, PlayCircle, CircleDot, ListChecks, Star, Table2, Grid3x3, ClipboardList, Flag, PenLine, Upload,
+  Hash,
 } from 'lucide-react';
 import { AdminHeader } from './AdminHeader';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
 import { AdminStatusBadge } from './AdminStatusBadge';
-import { INTERACTION_META, type InteractionType } from '../../lib/equip-admin-types';
+import {
+  INTERACTION_META, resolveInteraction,
+  EXERCISE_SUBTYPES as CANONICAL_SUBTYPES, SUBTYPE_ALIASES,
+  type InteractionType, type Activity, type DayType,
+} from '../../lib/equip-admin-types';
+import { DAY_TYPE_PRESETS } from './day-presets';
+import { DAY_TYPE_CONFIG } from '../player/ProgramPlayer';
 import { useMetadata } from '../../hooks/useMetadata';
 // Template building blocks shared with actual editors (BlockEditor, CheckinTemplateBuilder)
 import {
@@ -187,24 +194,38 @@ const INTERACTION_ICON_MAP: Record<InteractionType, any> = {
   'read': BookOpen, 'watch': PlayCircle, 'select-one': CircleDot, 'select-many': CheckSquare,
   'write': PenLine, 'rate': Star, 'check': ListChecks, 'track-table': Table2,
   'input-table': Grid3x3, 'clinical': ClipboardList, 'upload': Upload, 'complete': Flag,
+  'number': Hash,
 };
 
-// ── Legacy mapping table (for reference) ────────────────────────
+// ── Legacy mapping table ────────────────────────────────────────
+// Derived by CALLING resolveInteraction, not transcribed from it. The previous
+// version was a hand-written table that had gone stale: it listed
+// `comparison_matrix`, `rating_scale` and `clinical_instrument` as the terms and
+// had no row for `matrix`, `row_list`, `text_list`, `scale` or `number` — the
+// five that were actually in live content.
+const probe = (type: string, subtype?: string): InteractionType =>
+  resolveInteraction({
+    id: 'probe', title: '', type: type as Activity['type'], content: '',
+    duration: 0, required: false, order: 0,
+    ...(subtype ? { exerciseConfig: { subtype: subtype as never } } : {}),
+  } as Activity);
+
 const LEGACY_MAPPING: { legacy: string; interaction: InteractionType; note: string }[] = [
-  { legacy: 'type: lesson', interaction: 'read', note: 'Direct map' },
-  { legacy: 'type: conclude', interaction: 'complete', note: 'Direct map' },
-  { legacy: 'type: journal / reflection', interaction: 'write', note: 'Unless has options → select-one' },
-  { legacy: 'type: checklist', interaction: 'check', note: 'Direct map' },
-  { legacy: 'type: sleep-diary', interaction: 'track-table', note: 'Specialized tracker' },
-  { legacy: 'subtype: mcq / single-select', interaction: 'select-one', note: 'Pick one' },
-  { legacy: 'subtype: multi-select', interaction: 'select-many', note: 'Pick many' },
-  { legacy: 'subtype: table', interaction: 'track-table', note: 'Yes/No grid' },
-  { legacy: 'subtype: input-table / comparison_matrix', interaction: 'input-table', note: 'Data entry grid' },
-  { legacy: 'subtype: structured-list', interaction: 'check', note: 'Ordered checklist' },
-  { legacy: 'subtype: rating_scale / likert', interaction: 'rate', note: 'Number scale' },
-  { legacy: 'subtype: clinical_instrument', interaction: 'clinical', note: 'Scored Likert' },
-  { legacy: 'subtype: ephemeral-journal', interaction: 'write', note: 'Unless has options → select-one' },
-  { legacy: 'subtype: upload', interaction: 'upload', note: 'File upload block (new)' },
+  ...['lesson', 'conclude', 'journal', 'reflection', 'checklist', 'sleep-diary'].map((t) => ({
+    legacy: `type: ${t}`,
+    interaction: probe(t),
+    note: t === 'journal' || t === 'reflection' ? 'Unless it has options → select-one' : 'Direct map',
+  })),
+  ...CANONICAL_SUBTYPES.map((st) => ({
+    legacy: `subtype: ${st}`,
+    interaction: probe('exercise', st),
+    note: 'Canonical',
+  })),
+  ...Object.entries(SUBTYPE_ALIASES).map(([alias, canonical]) => ({
+    legacy: `subtype: ${alias}`,
+    interaction: probe('exercise', alias),
+    note: `Alias → ${canonical}`,
+  })),
 ];
 
 export function AdminBlockTypeViewer({ onBack }: AdminBlockTypeViewerProps) {
@@ -214,101 +235,82 @@ export function AdminBlockTypeViewer({ onBack }: AdminBlockTypeViewerProps) {
 
   const blocks = activeTab === 'checkin' ? CHECKIN_BLOCK_TYPES : activeTab === 'equip' ? EQUIP_BLOCK_TYPES : [];
 
-  // Exercise subtypes: all selectable types appear in BlockEditor dropdown
-  const EXERCISE_SUBTYPES = [
-    { value: 'mcq', label: 'Multiple Choice Question', description: 'Standard MCQ with single correct answer and scoring support.', selectable: true },
-    { value: 'single-select', label: 'Single Select List', description: 'Pick one option from a vertical list (no scoring).', selectable: true },
-    { value: 'multi-select', label: 'Multi Select List', description: 'Pick multiple options from a vertical list.', selectable: true },
-    { value: 'table', label: 'Checklist Table (Yes/No)', description: 'Grid of items with yes/no toggle per row.', selectable: true },
-    { value: 'input-table', label: 'Input Table (Data Entry)', description: 'Grid with text input cells for structured data capture.', selectable: true },
-    { value: 'structured-list', label: 'Structured List', description: 'Ordered list items with user input.', selectable: true },
-    { value: 'rating_scale', label: 'Rating Scale', description: 'Numeric rating scale used in assessment-lite, tracker, and reflection presets.', selectable: true },
-    { value: 'clinical_instrument', label: 'Clinical Instrument (GAD-7, PHQ-9)', description: 'Validated instruments with scored Likert scales, questions array, and scale config.', selectable: true },
-    { value: 'upload', label: 'File Upload', description: 'User uploads a file (document, image, audio). Configurable accepted types and max size.', selectable: true },
-    { value: 'ephemeral-journal', label: 'Ephemeral Journal', description: 'Session-scoped journal not persisted long-term. Selectable in editor for practice and journaling days.', selectable: true },
-    { value: 'likert', label: 'Likert (alias)', description: 'BlockRenderer alias rendered identically to rating_scale. Not in editor dropdown.', selectable: false },
-    { value: 'comparison_matrix', label: 'Comparison Matrix', description: 'Side-by-side comparison table. Alias for input-table. Selectable in editor for workshop days.', selectable: true },
-  ];
+  // ── Exercise subtypes — derived, not declared ──────────────────
+  // This screen used to hardcode its own 12-entry list, a third copy alongside
+  // the catalog and the code. It had drifted from both: it presented
+  // `rating_scale`, `clinical_instrument` and `comparison_matrix` (aliases) as
+  // the canonical terms, listed `likert` as a subtype, and had no entry for
+  // `number` — while missing every term actually found in live content.
+  // Canonical terms come from code, labels and descriptions from the catalog,
+  // and aliases are listed as aliases.
+  const exerciseSubtypes = useMemo(() => {
+    const row = (v: string) => kvExerciseSubtypes.find((r) => r.value === v);
+    const canonical = CANONICAL_SUBTYPES.map((value) => ({
+      value,
+      label: row(value)?.label ?? value,
+      description: row(value)?.description ?? 'No catalog description.',
+      selectable: true,
+      inCatalog: !!row(value),
+    }));
+    const aliases = Object.entries(SUBTYPE_ALIASES).map(([value, canonicalTerm]) => ({
+      value,
+      label: value,
+      description: `Alias — normalises to ${canonicalTerm} before the resolver sees it.`,
+      selectable: false,
+      inCatalog: !!row(value),
+    }));
+    // Anything the catalog holds that code knows nothing about. Should be empty.
+    const unknown = kvExerciseSubtypes
+      .filter((r) => !(CANONICAL_SUBTYPES as readonly string[]).includes(r.value) && !(r.value in SUBTYPE_ALIASES))
+      .map((r) => ({
+        value: r.value,
+        label: r.label,
+        description: 'In the catalog, but in neither EXERCISE_SUBTYPES nor SUBTYPE_ALIASES — it will hit the resolver default.',
+        selectable: false,
+        inCatalog: true,
+      }));
+    return [...canonical, ...aliases, ...unknown];
+  }, [kvExerciseSubtypes]);
 
-  // CLEAN_JUNK_AFTER_HERE, description: 'Numeric rating scale (1–5, 1–10) used in assessment-lite, tracker, and reflection presets. Selectable in editor.', selectable: true },
-    // JUNK_BLOCK_2_REMOVED — CLEANED_LINE_DONE
-  // JUNK_LINES_CLEANED_SUCCESSFULLY — REMOVE_THIS_LINE — rendered identically to input-table. Referenced in workshop allowedBlocks. Not in editor dropdown.', selectable: false },
+  // ── Day config presets — derived, not declared ─────────────────
+  // This held a hand-copied set of SEVEN presets against the real eleven, with
+  // its own allowedBlocks and blockedComponents that had drifted from
+  // day-presets.ts. Both halves now come from the real sources: composition and
+  // rules from DAY_TYPE_PRESETS, player layout and progress from
+  // ProgramPlayer's DAY_TYPE_CONFIG.
+  const DAY_CONFIG_PRESETS: DayConfigPresetInfo[] = useMemo(() => {
+    const describeAuto = (c: Record<string, unknown>) =>
+      Object.entries(c).map(([k, v]) => `${k}: ${v}`).join(', ') || 'none';
+    const describeSteps = (r: {
+      allowed: boolean; required: boolean; maxBlocksPerStep?: number;
+      oneBlockPerStep?: boolean; oneStepPerLesson?: boolean;
+    }) => {
+      if (!r.allowed) return 'Step groups disallowed';
+      const parts = [r.required ? 'required' : 'allowed, not required'];
+      if (r.oneBlockPerStep) parts.push('one block per step');
+      if (r.oneStepPerLesson) parts.push('one step per lesson');
+      if (r.maxBlocksPerStep) parts.push(`max ${r.maxBlocksPerStep} per step`);
+      return parts.join(' · ');
+    };
+    return (Object.keys(DAY_TYPE_PRESETS) as DayType[]).map((value) => {
+      const preset = DAY_TYPE_PRESETS[value];
+      const player = DAY_TYPE_CONFIG[value];
+      return {
+        value,
+        label: preset.label,
+        description: preset.description,
+        allowedBlocks: preset.allowedInteractions,
+        blockedComponents: preset.blockedComponents,
+        autoConfig: describeAuto(preset.autoConfig as Record<string, unknown>),
+        stepGroupRules: describeSteps(preset.stepGroupRules),
+        playerLayout: player?.layout ?? '—',
+        playerProgress: player?.progressStyle ?? '—',
+        warnings: preset.warnings,
+        errors: preset.errors,
+      };
+    });
+  }, []);
 
-  // Day config presets — sourced from /components/admin/day-presets.ts (DAY_TYPE_PRESETS)
-  // and /components/player/ProgramPlayer.tsx (DAY_TYPE_CONFIG for layout/progress)
-  const DAY_CONFIG_PRESETS: DayConfigPresetInfo[] = [
-    {
-      value: 'assessment', label: 'Assessment',
-      description: 'Baseline measurement, severity scoring, recommendations.',
-      allowedBlocks: ['mcq_single', 'mcq_multi', 'rating_scale', 'likert', 'boolean', 'short_text'],
-      blockedComponents: ['journal', 'table', 'checklist', 'rich_lesson'],
-      autoConfig: 'autoAdvance: true, navigationBack: false, scoringEnabled: true',
-      stepGroupRules: 'Not allowed; one block per step',
-      playerLayout: 'centered', playerProgress: 'steps',
-      warnings: ['Assessments should be fast. Long inputs reduce completion.'],
-    },
-    {
-      value: 'assessment-lite', label: 'Assessment Lite',
-      description: 'Awareness, reflection, non-scored check-ins.',
-      allowedBlocks: ['mcq_single', 'mcq_multi', 'rating_scale', 'short_text', 'lesson'],
-      blockedComponents: [],
-      autoConfig: 'autoAdvance: true, navigationBack: true, scoringEnabled: false',
-      stepGroupRules: 'Allowed, not required; max 2 blocks per step',
-      playerLayout: 'card', playerProgress: 'percentage',
-      warnings: [],
-    },
-    {
-      value: 'learning', label: 'Learning',
-      description: 'Concept introduction and understanding.',
-      allowedBlocks: ['lesson', 'media', 'mcq_single', 'callout', 'short_text'],
-      blockedComponents: [],
-      autoConfig: 'autoAdvance: false, navigationBack: true',
-      stepGroupRules: 'Allowed & required; one step per lesson',
-      playerLayout: 'scrollable', playerProgress: 'percentage',
-      warnings: ['Learning days must include at least one interaction.'],
-    },
-    {
-      value: 'practice', label: 'Practice',
-      description: 'User data capture, reflection, application.',
-      allowedBlocks: ['journal', 'long_text', 'table_input', 'checklist', 'date_time', 'lesson'],
-      blockedComponents: [],
-      autoConfig: 'autoAdvance: false, navigationBack: true, saveOnExit: true',
-      stepGroupRules: 'Allowed, not required',
-      playerLayout: 'scrollable', playerProgress: 'percentage',
-      warnings: ['Clearly state whether responses are stored or private.'],
-    },
-    {
-      value: 'workshop', label: 'Workshop',
-      description: 'Multi-step thinking (ideation, evaluation, rituals).',
-      allowedBlocks: ['lesson', 'mcq_multi', 'rtf_list', 'table_input', 'comparison_matrix'],
-      blockedComponents: [],
-      autoConfig: 'autoAdvance: false, navigationBack: true',
-      stepGroupRules: 'Allowed & required; max 3 blocks per step',
-      playerLayout: 'step-focus', playerProgress: 'steps',
-      warnings: [],
-      errors: ['Workshop day without StepGroups', '>3 blocks in a StepGroup', 'Mixed intent blocks in same StepGroup'],
-    },
-    {
-      value: 'tracker', label: 'Tracker',
-      description: 'Daily repetition, habits, streaks.',
-      allowedBlocks: ['checklist', 'rating_scale', 'boolean', 'journal_short'],
-      blockedComponents: [],
-      autoConfig: 'autoAdvance: false, saveOnToggle: true',
-      stepGroupRules: 'Not allowed',
-      playerLayout: 'compact (single page)', playerProgress: 'none',
-      warnings: ['Trackers should stay identical across days.'],
-    },
-    {
-      value: 'reflection', label: 'Reflection',
-      description: 'Closure, sense-making, review.',
-      allowedBlocks: ['summary', 'rating_scale', 'journal', 'table_review'],
-      blockedComponents: [],
-      autoConfig: 'autoAdvance: false, navigationBack: false',
-      stepGroupRules: 'Not allowed',
-      playerLayout: 'scrollable', playerProgress: 'none',
-      warnings: [],
-    },
-  ];
 
   const interactionTypes = Object.keys(INTERACTION_META) as InteractionType[];
 
@@ -330,7 +332,7 @@ export function AdminBlockTypeViewer({ onBack }: AdminBlockTypeViewerProps) {
     },
     {
       label: 'Exercise Subtypes',
-      value: `${EXERCISE_SUBTYPES.length}${kvExerciseSubtypes.length ? ` / ${kvExerciseSubtypes.length} in KV` : ''}`,
+      value: `${exerciseSubtypes.length}${kvExerciseSubtypes.length ? ` / ${kvExerciseSubtypes.length} in KV` : ''}`,
       icon: <PenTool className="w-4 h-4" style={{ color: 'var(--color-status-warning)' }} />,
     },
     {
@@ -380,7 +382,7 @@ export function AdminBlockTypeViewer({ onBack }: AdminBlockTypeViewerProps) {
           className="gap-2"
           style={activeTab === 'subtypes' ? { backgroundColor: 'var(--color-primary-default)', color: 'var(--color-primary-on)' } : undefined}
         >
-          <PenTool className="w-4 h-4" /> Exercise Subtypes ({EXERCISE_SUBTYPES.length})
+          <PenTool className="w-4 h-4" /> Exercise Subtypes ({exerciseSubtypes.length})
         </Button>
         <Button
           variant={activeTab === 'dayconfig' ? 'default' : 'outline'}
@@ -479,9 +481,9 @@ export function AdminBlockTypeViewer({ onBack }: AdminBlockTypeViewerProps) {
       {activeTab === 'subtypes' && (
         <div className="space-y-3">
           <p style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-muted)', fontFamily: 'var(--font-family-base)' }}>
-            Exercise subtypes define the interaction style inside an Exercise block. Source of truth: <code style={{ fontSize: 'var(--text-xs)', backgroundColor: 'var(--color-bg-muted)', padding: '1px 4px', borderRadius: '4px' }}>BlockEditor.tsx</code> dropdown (8 selectable), <code style={{ fontSize: 'var(--text-xs)', backgroundColor: 'var(--color-bg-muted)', padding: '1px 4px', borderRadius: '4px' }}>BlockRenderer.tsx</code> (aliases), <code style={{ fontSize: 'var(--text-xs)', backgroundColor: 'var(--color-bg-muted)', padding: '1px 4px', borderRadius: '4px' }}>day-presets.ts</code> (preset-only).
+            Exercise subtypes define the interaction style inside an Exercise block. This list is derived, not declared here: canonical terms from <code style={{ fontSize: 'var(--text-xs)', backgroundColor: 'var(--color-bg-muted)', padding: '1px 4px', borderRadius: '4px' }}>EXERCISE_SUBTYPES</code>, aliases from <code style={{ fontSize: 'var(--text-xs)', backgroundColor: 'var(--color-bg-muted)', padding: '1px 4px', borderRadius: '4px' }}>SUBTYPE_ALIASES</code> (both in equip-admin-types.ts), labels and descriptions from the live catalog.
           </p>
-          {EXERCISE_SUBTYPES.map((st) => (
+          {exerciseSubtypes.map((st) => (
             <Card key={st.value} style={{ border: '1px solid var(--color-border-default)', borderRadius: 'var(--radius-lg)', opacity: st.selectable ? 1 : 0.75 }}>
               <CardContent className="p-4">
                 <div className="flex items-start gap-3">
@@ -514,7 +516,7 @@ export function AdminBlockTypeViewer({ onBack }: AdminBlockTypeViewerProps) {
       {activeTab === 'dayconfig' && (
         <div className="space-y-4">
           <p style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-muted)', fontFamily: 'var(--font-family-base)' }}>
-            Day config presets define the structure and rules for each day type in an Equip program. Source of truth: <code style={{ fontSize: 'var(--text-xs)', backgroundColor: 'var(--color-bg-muted)', padding: '1px 4px', borderRadius: '4px' }}>day-presets.ts</code> (DAY_TYPE_PRESETS) and <code style={{ fontSize: 'var(--text-xs)', backgroundColor: 'var(--color-bg-muted)', padding: '1px 4px', borderRadius: '4px' }}>ProgramPlayer.tsx</code> (DAY_TYPE_CONFIG for player layout/progress).
+            Day config presets define the structure and rules for each day type in an Equip program. Read directly from <code style={{ fontSize: 'var(--text-xs)', backgroundColor: 'var(--color-bg-muted)', padding: '1px 4px', borderRadius: '4px' }}>DAY_TYPE_PRESETS</code> (composition and rules) and <code style={{ fontSize: 'var(--text-xs)', backgroundColor: 'var(--color-bg-muted)', padding: '1px 4px', borderRadius: '4px' }}>DAY_TYPE_CONFIG</code> (player layout and progress) — not copied.
           </p>
           {DAY_CONFIG_PRESETS.map((preset) => (
             <Card key={preset.value} style={{ border: '1px solid var(--color-border-default)', borderRadius: 'var(--radius-lg)' }}>
@@ -541,7 +543,7 @@ export function AdminBlockTypeViewer({ onBack }: AdminBlockTypeViewerProps) {
                   {/* Allowed Blocks */}
                   <div>
                     <span style={{ fontFamily: 'var(--font-family-base)', fontSize: '10px', fontWeight: 'var(--font-weight-medium)', color: 'var(--color-text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: '4px' }}>
-                      Allowed Blocks
+                      Allowed Interactions
                     </span>
                     <div className="flex flex-wrap gap-1">
                       {preset.allowedBlocks.map((b) => (
