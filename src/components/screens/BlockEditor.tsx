@@ -28,7 +28,7 @@ import { Label } from '../ui/label';
 import { Card, CardContent } from '../ui/card';
 import { RichTextEditor } from '../ui/rich-text-editor';
 import { Activity, resolveInteraction, INTERACTION_META, warnFallback, type InteractionType } from '../../lib/equip-admin-types';
-import { useMetadata } from '../../hooks/useMetadata';
+import { useMetadata, isContainerRow } from '../../hooks/useMetadata';
 import { getPresetForDayType, type DayTypePreset } from '../admin/day-presets';
 import { projectId } from '../../utils/supabase/info';
 import { getAuthHeaders } from '../../lib/supabase-client';
@@ -112,7 +112,7 @@ function BlockEditorInner({
   // puts `learning`, `practice`, `workshop`… into the author's block type
   // dropdown the instant the rows are written.
   const blockTypeOptions = kvBlockTypes
-    .filter(s => !s.can_hold)
+    .filter(s => !isContainerRow(s))
     .map(s => ({ value: s.value, label: s.label }));
   const vocabularyUnavailable = !metaLoading && (kvBlockTypes.length === 0 || kvExerciseSubtypes.length === 0);
   if (vocabularyUnavailable) {

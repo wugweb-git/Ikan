@@ -18,7 +18,7 @@ import {
 } from '../../lib/equip-admin-types';
 import { DAY_TYPE_PRESETS } from './day-presets';
 import { DAY_TYPE_CONFIG } from '../player/ProgramPlayer';
-import { useMetadata } from '../../hooks/useMetadata';
+import { useMetadata, isContainerRow } from '../../hooks/useMetadata';
 // Template building blocks shared with actual editors (BlockEditor, CheckinTemplateBuilder)
 import {
   blockFormStyles,
@@ -336,8 +336,8 @@ export function AdminBlockTypeViewer({ onBack }: AdminBlockTypeViewerProps) {
     return `${code} / ${catalog} in catalog · DRIFT${suffix}`;
   };
 
-  const pickableBlockTypes = kvBlockTypes.filter((t) => !t.can_hold);
-  const containerBlockTypes = kvBlockTypes.filter((t) => t.can_hold);
+  const pickableBlockTypes = kvBlockTypes.filter((t) => !isContainerRow(t));
+  const containerBlockTypes = kvBlockTypes.filter((t) => isContainerRow(t));
   const aliasCount = exerciseSubtypes.length - CANONICAL_SUBTYPES.length;
 
   const stats = [

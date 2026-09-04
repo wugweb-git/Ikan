@@ -30,15 +30,34 @@ export interface MetadataOption {
    */
   tier?: string;
   /**
-   * `block_type` rows only: this row is a CONTAINER — a stage that holds blocks
-   * (learning, practice, workshop…) — not a block you can place inside one.
+   * `block_type` rows only: which block types this row can CONTAIN.
    *
-   * It exists because the block_type and day_config_type vocabularies are being
-   * merged into one list (blocks.md §18 Phase 1). Until that merge completes,
-   * consumers that offer a block type to an author must exclude these, or the
-   * picker starts offering `learning` as a kind of block.
+   *     can_hold: []            this row is a block
+   *     can_hold: ['lesson',…]  this row is a stage, holding those
+   *
+   * Container-ness is derivable from the list rather than flagged beside it —
+   * what marks a container is what it can hold.
+   *
+   * TRANSITIONAL (blocks.md §18 Phase 2.1): the 9 rows seeded in Phase 1.1
+   * carry the boolean `true` instead, so both shapes are accepted until they
+   * are rewritten. Use `isContainerRow` rather than testing this directly —
+   * `can_hold?.length` is WRONG against the boolean, and `!can_hold` is wrong
+   * against `[]`.
    */
-  can_hold?: boolean;
+  can_hold?: string[] | true;
+  /** `block_type` container rows: which activities its blocks may use. */
+  activities?: string[];
+}
+
+/**
+ * Does this catalog row hold blocks (a stage), rather than being one?
+ *
+ * Handles both `can_hold` shapes during the Phase 2.1 rewrite. Once every row
+ * carries a list this collapses to `(row.can_hold?.length ?? 0) > 0`.
+ */
+export function isContainerRow(row: { can_hold?: string[] | true }): boolean {
+  if (row.can_hold === true) return true;
+  return Array.isArray(row.can_hold) && row.can_hold.length > 0;
 }
 
 interface MetadataBucket {
@@ -149,7 +168,12 @@ export function mapItem(item: any): MetadataOption {
     description: item.description,
     order: typeof item.order === 'number' ? item.order : undefined,
     tier: typeof item.tier === 'string' ? item.tier : undefined,
-    can_hold: item.can_hold === true ? true : undefined,
+    // Both shapes, deliberately — see MetadataOption.can_hold. Copying only
+    // one would silently drop the other, which is the `tier` hazard above.
+    can_hold: Array.isArray(item.can_hold) ? item.can_hold
+            : item.can_hold === true ? true
+            : undefined,
+    activities: Array.isArray(item.activities) ? item.activities : undefined,
   };
 }
 
