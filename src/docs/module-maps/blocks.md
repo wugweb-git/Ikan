@@ -1037,6 +1037,36 @@ The core change, and the one the seam was built for.
 > drift and is not — the two numbers are counting different things by design. That stat row was
 > already the plan's example of reporting drift as a statistic; it is now actively misleading.
 
+> **[DONE 2026-09-04] Phase 4 — the model reaches the surfaces authors use.**
+>
+> **4.1 Viewer — five tabs became two.** `Block Types (16)` renders one merged list, split into
+> *stages that hold blocks* and *blocks held by stages*, each container showing `can_hold`,
+> `activities`, allowed interactions, step rules, warnings and errors. `Activities (12)` is the
+> renamed subtype list. Retired: **Interactions** (it *is* the activity list), **Check-in Blocks**
+> (bucket has no reader), **Day Config Presets** (merged by Phase 1.1), and the **Legacy →
+> Interaction mapping** — the retype completed the backfill, so that table is history, not a live map.
+> The panel renders the invariant directly: a row holding blocks with no preset, or a leaf carrying
+> preset rules, prints as an error rather than being silently fine.
+>
+> **4.2 BlockEditor** — block-type picker filtered by the stage's `can_hold`, activity picker by its
+> `activities` and labelled with the count. `Interaction Type` → **`Activity`**, which is what it
+> always showed. An activity the stage disallows is still *shown* when the block already uses it,
+> marked *"not usually on this day"* — hiding a current value silently rewrites content on the next
+> save, which is the same class of bug as the lossy reader above.
+>
+> **4.3 DayEditor day type** — now sourced from the catalog's container rows rather than a code enum,
+> so adding a stage is a data change. Defaulted to `learning` and labelled as defaulted: 93 of 97
+> days sit on the default and **all four manual picks were wrong**, one of them `lesson` — a leaf
+> type that matched no preset and therefore skipped every content check. A day whose type is not a
+> stage now says so inline instead of failing silently.
+>
+> **4.4 The destructive row** — the copy and trash icons sit in a row labelled *"Metadata & Goals"*
+> and act on the whole day. Delete now confirms, naming the day and its block count. And the missing
+> non-destructive sibling exists: **Repeat this day**, which copies the day **keeping every block
+> id**, so responses continue one thread. That is what the authors of Sleep Tight 19-25 were reaching
+> for when they duplicated and renamed to "(Continued)" — duplication mints new ids, so each of those
+> days produced an unrelated response set.
+
 > **[CRITICAL, FIXED 2026-09-04] The block reader was lossy, and that is why carry-forward has zero users.**
 >
 > `api-client.ts`'s day mapper enumerated eleven fields and returned a **fresh object**, so every

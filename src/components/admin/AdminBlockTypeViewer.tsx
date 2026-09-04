@@ -229,11 +229,15 @@ const LEGACY_MAPPING: { legacy: string; interaction: InteractionType; note: stri
 ];
 
 export function AdminBlockTypeViewer({ onBack }: AdminBlockTypeViewerProps) {
-  const [activeTab, setActiveTab] = useState<'checkin' | 'equip' | 'subtypes' | 'dayconfig' | 'interactions'>('interactions');
+  // Five tabs became two (blocks.md §18 Phase 4.1). Retired: Interactions (it
+  // IS the activity list), Check-in Blocks (its catalog bucket has no reader),
+  // Day Config Presets (merged into block_type by Phase 1.1), and the
+  // Legacy → Interaction mapping (kept only until the backfill; the retype
+  // completed it, so the alias table is now history rather than a live map).
+  const [activeTab, setActiveTab] = useState<'blocktypes' | 'activities'>('blocktypes');
   const [selectedBlock, setSelectedBlock] = useState<BlockTypeInfo | null>(null);
   const { blockTypes: kvBlockTypes, exerciseSubtypes: kvExerciseSubtypes, dayConfigTypes: kvDayConfigTypes, interactionTypes: kvInteractionTypes } = useMetadata();
 
-  const blocks = activeTab === 'checkin' ? CHECKIN_BLOCK_TYPES : activeTab === 'equip' ? EQUIP_BLOCK_TYPES : [];
 
   // ── Exercise subtypes — derived, not declared ──────────────────
   // This screen used to hardcode its own 12-entry list, a third copy alongside
@@ -391,135 +395,95 @@ export function AdminBlockTypeViewer({ onBack }: AdminBlockTypeViewerProps) {
         stats={stats}
       />
 
-      {/* Tab Switcher */}
+      {/* Tab Switcher — two tabs. See the note on `activeTab` above. */}
       <div className="flex gap-2 flex-wrap">
         <Button
-          variant={activeTab === 'interactions' ? 'default' : 'outline'}
-          onClick={() => { setActiveTab('interactions'); setSelectedBlock(null); }}
+          variant={activeTab === 'blocktypes' ? 'default' : 'outline'}
+          onClick={() => { setActiveTab('blocktypes'); setSelectedBlock(null); }}
           className="gap-2"
-          style={activeTab === 'interactions' ? { backgroundColor: 'var(--color-status-danger)', color: 'var(--color-primary-on)' } : undefined}
+          style={activeTab === 'blocktypes' ? { backgroundColor: 'var(--color-primary-default)', color: 'var(--color-primary-on)' } : undefined}
         >
-          <Zap className="w-4 h-4" /> Interactions ({interactionTypes.length})
+          <BookOpen className="w-4 h-4" /> Block Types ({kvBlockTypes.length})
         </Button>
         <Button
-          variant={activeTab === 'equip' ? 'default' : 'outline'}
-          onClick={() => { setActiveTab('equip'); setSelectedBlock(null); }}
+          variant={activeTab === 'activities' ? 'default' : 'outline'}
+          onClick={() => { setActiveTab('activities'); setSelectedBlock(null); }}
           className="gap-2"
-          style={activeTab === 'equip' ? { backgroundColor: 'var(--color-primary-default)', color: 'var(--color-primary-on)' } : undefined}
+          style={activeTab === 'activities' ? { backgroundColor: 'var(--color-primary-default)', color: 'var(--color-primary-on)' } : undefined}
         >
-          <BookOpen className="w-4 h-4" /> Equip Blocks ({EQUIP_BLOCK_TYPES.length})
-        </Button>
-        <Button
-          variant={activeTab === 'checkin' ? 'default' : 'outline'}
-          onClick={() => { setActiveTab('checkin'); setSelectedBlock(null); }}
-          className="gap-2"
-          style={activeTab === 'checkin' ? { backgroundColor: 'var(--color-primary-default)', color: 'var(--color-primary-on)' } : undefined}
-        >
-          <Smile className="w-4 h-4" /> Check-in Blocks ({CHECKIN_BLOCK_TYPES.length})
-        </Button>
-        <Button
-          variant={activeTab === 'subtypes' ? 'default' : 'outline'}
-          onClick={() => { setActiveTab('subtypes'); setSelectedBlock(null); }}
-          className="gap-2"
-          style={activeTab === 'subtypes' ? { backgroundColor: 'var(--color-primary-default)', color: 'var(--color-primary-on)' } : undefined}
-        >
-          <PenTool className="w-4 h-4" /> Exercise Subtypes ({exerciseSubtypes.length})
-        </Button>
-        <Button
-          variant={activeTab === 'dayconfig' ? 'default' : 'outline'}
-          onClick={() => { setActiveTab('dayconfig'); setSelectedBlock(null); }}
-          className="gap-2"
-          style={activeTab === 'dayconfig' ? { backgroundColor: 'var(--color-primary-default)', color: 'var(--color-primary-on)' } : undefined}
-        >
-          <Calendar className="w-4 h-4" /> Day Config Presets ({DAY_CONFIG_PRESETS.length})
+          <PenTool className="w-4 h-4" /> Activities ({kvExerciseSubtypes.length})
         </Button>
       </div>
 
-      {/* Unified Interactions Tab */}
-      {activeTab === 'interactions' && (
-        <div className="space-y-6">
-          <div style={{ padding: '16px 20px', backgroundColor: 'var(--color-bg-card)', borderRadius: 'var(--radius-lg)', border: '1px solid var(--color-border-default)' }}>
-            <h3 style={{ fontFamily: 'var(--font-family-base)', fontWeight: 500, fontSize: 'var(--text-base)', color: 'var(--color-text-primary)', marginBottom: 8 }}>
-              Unified Interaction Taxonomy
-            </h3>
-            <p style={{ fontFamily: 'var(--font-family-base)', fontSize: 'var(--text-sm)', color: 'var(--color-text-muted)', lineHeight: 1.6, marginBottom: 0 }}>
-              Every block is an <span style={{ fontWeight: 'var(--font-weight-medium)' }}>interaction</span>. The <code style={{ fontSize: 'var(--text-xs)', backgroundColor: 'var(--color-bg-muted)', padding: '1px 4px', borderRadius: 4 }}>interaction</code> field on Activity replaces the split between <code style={{ fontSize: 'var(--text-xs)', backgroundColor: 'var(--color-bg-muted)', padding: '1px 4px', borderRadius: 4 }}>type</code> + <code style={{ fontSize: 'var(--text-xs)', backgroundColor: 'var(--color-bg-muted)', padding: '1px 4px', borderRadius: 4 }}>exerciseConfig.subtype</code>. Old programs are auto-mapped via <code style={{ fontSize: 'var(--text-xs)', backgroundColor: 'var(--color-bg-muted)', padding: '1px 4px', borderRadius: 4 }}>resolveInteraction()</code>.
-            </p>
-          </div>
-
-          {/* Interaction type cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {interactionTypes.map((key) => {
-              const meta = INTERACTION_META[key];
-              const IconComp = INTERACTION_ICON_MAP[key] || Zap;
-              return (
-                <Card key={key} style={{ border: '1px solid var(--color-border-default)', borderRadius: 'var(--radius-lg)' }}>
-                  <CardContent className="p-4">
-                    <div className="flex items-start gap-3">
-                      <div className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0" style={{ backgroundColor: 'var(--color-bg-muted)' }}>
-                        <IconComp className="w-5 h-5" style={{ color: 'var(--color-primary-default)' }} />
+      {/* ── BLOCK TYPES — one list, containers and leaves together ────── */}
+      {activeTab === 'blocktypes' && (
+        <div className="space-y-3">
+          <p style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-muted)' }}>
+            One merged vocabulary. A row that <strong>holds</strong> block types is a stage and
+            carries preset rules; a row that holds nothing is a block. That is the whole distinction —
+            <code style={{ fontSize: 'var(--text-xs)' }}> can_hold </code> non-empty ⟺ it has a preset.
+          </p>
+          {['container', 'leaf'].map((kind) => {
+            const rows = kvBlockTypes.filter((r) => (kind === 'container') === isContainerRow(r));
+            if (!rows.length) return null;
+            return (
+              <div key={kind} className="space-y-2">
+                <div style={{ fontSize: 'var(--text-xs)', textTransform: 'uppercase', letterSpacing: '0.04em', color: 'var(--color-text-muted)', fontWeight: 500 }}>
+                  {kind === 'container' ? `Stages — hold blocks (${rows.length})` : `Blocks — held by stages (${rows.length})`}
+                </div>
+                {rows.map((row) => {
+                  const preset = DAY_TYPE_PRESETS[row.value as keyof typeof DAY_TYPE_PRESETS];
+                  return (
+                    <div key={row.value} className="p-3 rounded-lg" style={{ backgroundColor: 'var(--color-bg-card)', border: '1px solid var(--color-border-default)' }}>
+                      <div className="flex items-baseline gap-2 flex-wrap">
+                        <span style={{ fontWeight: 500 }}>{row.label}</span>
+                        <code style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}>{row.value}</code>
                       </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-1 flex-wrap">
-                          <h4 style={{ fontFamily: 'var(--font-family-base)', fontWeight: 500, fontSize: 'var(--text-base)', color: 'var(--color-text-primary)' }}>
-                            {meta.label}
-                          </h4>
-                          <AdminStatusBadge status="neutral" label={key} />
-                          <span style={{ fontSize: 10, fontWeight: 500, fontFamily: 'var(--font-family-base)', color: 'var(--color-status-info)', backgroundColor: 'var(--color-status-info-light)', padding: '1px 6px', borderRadius: 'var(--radius-pill)' }}>
-                            {meta.verb}
-                          </span>
+                      {row.description && (
+                        <p style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)', marginTop: 4 }}>{row.description}</p>
+                      )}
+                      {isContainerRow(row) && (
+                        <div className="mt-2 space-y-1" style={{ fontSize: 'var(--text-xs)' }}>
+                          <div><span style={{ color: 'var(--color-text-muted)' }}>holds: </span>{(row.can_hold ?? []).join(' · ') || '—'}</div>
+                          <div><span style={{ color: 'var(--color-text-muted)' }}>activities ({(row.activities ?? []).length}): </span>{(row.activities ?? []).join(' · ') || '—'}</div>
+                          {preset && (
+                            <>
+                              <div><span style={{ color: 'var(--color-text-muted)' }}>interactions: </span>{preset.allowedInteractions.join(' · ')}</div>
+                              <div><span style={{ color: 'var(--color-text-muted)' }}>steps: </span>
+                                {preset.stepGroupRules.allowed ? 'allowed' : 'not allowed'}
+                                {preset.stepGroupRules.required ? ', required' : ''}
+                                {preset.stepGroupRules.oneBlockPerStep ? ', one block per step' : ''}
+                              </div>
+                              {preset.warnings.map((w, n) => (
+                                <div key={n} style={{ color: 'var(--color-status-warning)' }}>⚠ {w}</div>
+                              ))}
+                              {preset.errors.map((e, n) => (
+                                <div key={n} style={{ color: 'var(--color-status-danger)' }}>✕ {e}</div>
+                              ))}
+                            </>
+                          )}
+                          {!preset && (
+                            <div style={{ color: 'var(--color-status-danger)' }}>
+                              ✕ holds blocks but has no preset — nav, save and step rules have nothing to govern
+                            </div>
+                          )}
                         </div>
-                        <p style={{ fontFamily: 'var(--font-family-base)', fontSize: 'var(--text-sm)', color: 'var(--color-text-muted)', lineHeight: 1.5 }}>
-                          {meta.description}
-                        </p>
-                      </div>
+                      )}
+                      {!isContainerRow(row) && preset && (
+                        <div className="mt-2" style={{ fontSize: 'var(--text-xs)', color: 'var(--color-status-danger)' }}>
+                          ✕ has preset rules but holds nothing
+                        </div>
+                      )}
                     </div>
-                  </CardContent>
-                </Card>
-              );
-            })}
-          </div>
-
-          {/* Legacy mapping table */}
-          <div style={{ backgroundColor: 'var(--color-bg-card)', borderRadius: 'var(--radius-lg)', border: '1px solid var(--color-border-default)', overflow: 'hidden' }}>
-            <div style={{ padding: '12px 16px', borderBottom: '1px solid var(--color-border-default)', backgroundColor: 'var(--color-bg-muted)' }}>
-              <h4 style={{ fontFamily: 'var(--font-family-base)', fontWeight: 500, fontSize: 'var(--text-sm)', color: 'var(--color-text-primary)', margin: 0 }}>
-                Legacy → Interaction Mapping
-              </h4>
-              <p style={{ fontFamily: 'var(--font-family-base)', fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)', margin: '2px 0 0' }}>
-                How old type + subtype values are resolved at runtime
-              </p>
-            </div>
-            <div style={{ overflowX: 'auto' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse', fontFamily: 'var(--font-family-base)', fontSize: 'var(--text-sm)' }}>
-                <thead>
-                  <tr style={{ borderBottom: '1px solid var(--color-border-default)' }}>
-                    <th style={{ textAlign: 'left', padding: '8px 12px', fontWeight: 500, color: 'var(--color-text-muted)', fontSize: 'var(--text-xs)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Legacy Field</th>
-                    <th style={{ textAlign: 'left', padding: '8px 12px', fontWeight: 500, color: 'var(--color-text-muted)', fontSize: 'var(--text-xs)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>→ Interaction</th>
-                    <th style={{ textAlign: 'left', padding: '8px 12px', fontWeight: 500, color: 'var(--color-text-muted)', fontSize: 'var(--text-xs)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Note</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {LEGACY_MAPPING.map((row, i) => (
-                    <tr key={i} style={{ borderBottom: '1px solid var(--color-border-default)' }}>
-                      <td style={{ padding: '6px 12px' }}>
-                        <code style={{ fontSize: 'var(--text-xs)', backgroundColor: 'var(--color-bg-muted)', padding: '1px 4px', borderRadius: 4 }}>{row.legacy}</code>
-                      </td>
-                      <td style={{ padding: '6px 12px' }}>
-                        <AdminStatusBadge status="published" label={row.interaction} />
-                      </td>
-                      <td style={{ padding: '6px 12px', color: 'var(--color-text-muted)', fontSize: 'var(--text-xs)' }}>{row.note}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
+                  );
+                })}
+              </div>
+            );
+          })}
         </div>
       )}
 
-      {/* Exercise Subtypes Tab */}
-      {activeTab === 'subtypes' && (
+      {activeTab === 'activities' && (
         <div className="space-y-3">
           <p style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-muted)', fontFamily: 'var(--font-family-base)' }}>
             Exercise subtypes define the interaction style inside an Exercise block. This list is derived, not declared here: canonical terms from <code style={{ fontSize: 'var(--text-xs)', backgroundColor: 'var(--color-bg-muted)', padding: '1px 4px', borderRadius: '4px' }}>EXERCISE_SUBTYPES</code>, aliases from <code style={{ fontSize: 'var(--text-xs)', backgroundColor: 'var(--color-bg-muted)', padding: '1px 4px', borderRadius: '4px' }}>SUBTYPE_ALIASES</code> (both in equip-admin-types.ts), labels and descriptions from the live catalog.
@@ -554,196 +518,8 @@ export function AdminBlockTypeViewer({ onBack }: AdminBlockTypeViewerProps) {
       )}
 
       {/* Day Config Presets Tab */}
-      {activeTab === 'dayconfig' && (
-        <div className="space-y-4">
-          <p style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-muted)', fontFamily: 'var(--font-family-base)' }}>
-            Day config presets define the structure and rules for each day type in an Equip program. Read directly from <code style={{ fontSize: 'var(--text-xs)', backgroundColor: 'var(--color-bg-muted)', padding: '1px 4px', borderRadius: '4px' }}>DAY_TYPE_PRESETS</code> (composition and rules) and <code style={{ fontSize: 'var(--text-xs)', backgroundColor: 'var(--color-bg-muted)', padding: '1px 4px', borderRadius: '4px' }}>DAY_TYPE_CONFIG</code> (player layout and progress) — not copied.
-          </p>
-          {DAY_CONFIG_PRESETS.map((preset) => (
-            <Card key={preset.value} style={{ border: '1px solid var(--color-border-default)', borderRadius: 'var(--radius-lg)' }}>
-              <CardContent className="p-4 space-y-3">
-                <div className="flex items-start gap-3">
-                  <div className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0" style={{ backgroundColor: 'var(--color-bg-muted)' }}>
-                    <Calendar className="w-5 h-5" style={{ color: 'var(--color-status-success)' }} />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1 flex-wrap">
-                      <h4 style={{ fontFamily: 'var(--font-family-base)', fontWeight: 'var(--font-weight-medium)', fontSize: 'var(--text-base)', color: 'var(--color-text-primary)' }}>
-                        {preset.label}
-                      </h4>
-                      <AdminStatusBadge status="neutral" label={preset.value} />
-                    </div>
-                    <p style={{ fontFamily: 'var(--font-family-base)', fontSize: 'var(--text-sm)', color: 'var(--color-text-muted)', lineHeight: '1.5' }}>
-                      {preset.description}
-                    </p>
-                  </div>
-                </div>
-
-                {/* Detail grid */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2" style={{ borderTop: '1px solid var(--color-border-default)' }}>
-                  {/* Allowed Blocks */}
-                  <div>
-                    <span style={{ fontFamily: 'var(--font-family-base)', fontSize: '10px', fontWeight: 'var(--font-weight-medium)', color: 'var(--color-text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: '4px' }}>
-                      Allowed Interactions
-                    </span>
-                    <div className="flex flex-wrap gap-1">
-                      {preset.allowedBlocks.map((b) => (
-                        <span key={b} className="px-1.5 py-0.5 rounded" style={{ fontSize: '10px', fontFamily: 'monospace', backgroundColor: 'var(--color-bg-muted)', color: 'var(--color-text-muted)', border: '1px solid var(--color-border-default)' }}>
-                          {b}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Blocked Components */}
-                  {preset.blockedComponents.length > 0 && (
-                    <div>
-                      <span style={{ fontFamily: 'var(--font-family-base)', fontSize: '10px', fontWeight: 'var(--font-weight-medium)', color: 'var(--color-status-danger)', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: '4px' }}>
-                        Blocked
-                      </span>
-                      <div className="flex flex-wrap gap-1">
-                        {preset.blockedComponents.map((b) => (
-                          <span key={b} className="px-1.5 py-0.5 rounded" style={{ fontSize: '10px', fontFamily: 'monospace', backgroundColor: 'var(--color-danger-light, #FEE2E2)', color: 'var(--color-status-danger)', border: '1px solid var(--color-status-danger)' }}>
-                            {b}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Auto Config */}
-                  <div>
-                    <span style={{ fontFamily: 'var(--font-family-base)', fontSize: '10px', fontWeight: 'var(--font-weight-medium)', color: 'var(--color-text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: '4px' }}>
-                      Auto Config
-                    </span>
-                    <span style={{ fontSize: 'var(--text-xs)', fontFamily: 'monospace', color: 'var(--color-text-muted)' }}>
-                      {preset.autoConfig}
-                    </span>
-                  </div>
-
-                  {/* Step Group Rules */}
-                  <div>
-                    <span style={{ fontFamily: 'var(--font-family-base)', fontSize: '10px', fontWeight: 'var(--font-weight-medium)', color: 'var(--color-text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: '4px' }}>
-                      Step Groups
-                    </span>
-                    <span style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}>
-                      {preset.stepGroupRules}
-                    </span>
-                  </div>
-
-                  {/* Player Layout */}
-                  <div>
-                    <span style={{ fontFamily: 'var(--font-family-base)', fontSize: '10px', fontWeight: 'var(--font-weight-medium)', color: 'var(--color-text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: '4px' }}>
-                      Player Layout
-                    </span>
-                    <span className="px-1.5 py-0.5 rounded" style={{ fontSize: '10px', fontFamily: 'monospace', backgroundColor: 'var(--color-bg-muted)', color: 'var(--color-text-primary)', border: '1px solid var(--color-border-default)' }}>
-                      {preset.playerLayout}
-                    </span>
-                    <span className="px-1.5 py-0.5 rounded ml-1" style={{ fontSize: '10px', fontFamily: 'monospace', backgroundColor: 'var(--color-bg-muted)', color: 'var(--color-text-primary)', border: '1px solid var(--color-border-default)' }}>
-                      progress: {preset.playerProgress}
-                    </span>
-                  </div>
-                </div>
-
-                {/* Warnings & Errors */}
-                {(preset.warnings.length > 0 || (preset.errors && preset.errors.length > 0)) && (
-                  <div className="space-y-1 pt-2" style={{ borderTop: '1px solid var(--color-border-default)' }}>
-                    {preset.warnings.map((w, i) => (
-                      <p key={`w-${i}`} style={{ fontSize: 'var(--text-xs)', color: 'var(--color-status-warning)', fontFamily: 'var(--font-family-base)' }}>
-                        ⚠ {w}
-                      </p>
-                    ))}
-                    {preset.errors?.map((e, i) => (
-                      <p key={`e-${i}`} style={{ fontSize: 'var(--text-xs)', color: 'var(--color-status-danger)', fontFamily: 'var(--font-family-base)' }}>
-                        ✕ {e}
-                      </p>
-                    ))}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      )}
 
       {/* Block Type Grid for equip/checkin tabs */}
-      {(activeTab === 'equip' || activeTab === 'checkin') && (
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Block Type List */}
-        <div className="lg:col-span-2 space-y-3">
-          {blocks.map((block) => {
-            const Icon = block.icon;
-            const isSelected = selectedBlock?.value === block.value;
-            return (
-              <Card
-                key={block.value}
-                className="cursor-pointer transition-all"
-                style={{
-                  border: isSelected ? '2px solid var(--color-primary-default)' : '1px solid var(--color-border-default)',
-                  borderRadius: 'var(--radius-lg)',
-                }}
-                onClick={() => setSelectedBlock(block)}
-              >
-                <CardContent className="p-4">
-                  <div className="flex items-start gap-4">
-                    <div
-                      className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0"
-                      style={{ backgroundColor: 'var(--color-bg-muted)' }}
-                    >
-                      <Icon className="w-5 h-5" style={{ color: 'var(--color-primary-default)' }} />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1">
-                        <h4
-                          style={{
-                            fontFamily: 'var(--font-family-base)',
-                            fontWeight: 'var(--font-weight-medium)',
-                            fontSize: 'var(--text-base)',
-                            color: 'var(--color-text-primary)',
-                          }}
-                        >
-                          {block.label}
-                        </h4>
-                        <AdminStatusBadge status="neutral" label={block.value} />
-                      </div>
-                      <p
-                        style={{
-                          fontFamily: 'var(--font-family-base)',
-                          fontSize: 'var(--text-sm)',
-                          color: 'var(--color-text-muted)',
-                          lineHeight: '1.5',
-                        }}
-                      >
-                        {block.description}
-                      </p>
-                    </div>
-                    <Button variant="ghost" size="sm" className="shrink-0 gap-1" onClick={(e) => { e.stopPropagation(); setSelectedBlock(block); }}>
-                      <Eye className="w-4 h-4" /> View
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            );
-          })}
-        </div>
-
-        {/* Detail / Preview Panel */}
-        <div className="lg:col-span-1">
-          {selectedBlock ? (
-            <BlockDetailPanel block={selectedBlock} />
-          ) : (
-            <Card style={{ borderRadius: 'var(--radius-lg)', border: '1px dashed var(--color-border-default)' }}>
-              <CardContent className="p-8 text-center">
-                <Layers className="w-10 h-10 mx-auto mb-3" style={{ color: 'var(--color-text-muted)', opacity: 0.5 }} />
-                <p style={{ fontFamily: 'var(--font-family-base)', fontSize: 'var(--text-sm)', color: 'var(--color-text-muted)' }}>
-                  Select a block type to see its details, fields, and preview
-                </p>
-              </CardContent>
-            </Card>
-          )}
-        </div>
-      </div>
-      )}
     </div>
   );
 }

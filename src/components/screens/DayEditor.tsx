@@ -3,7 +3,7 @@ import {
   Plus, Trash2, GripVertical, Settings, MoreHorizontal, 
   Copy, ChevronRight, BookOpen, Clock, Calendar, FastForward,
   PenTool, MessageCircle, Target, AlertTriangle, Info, Layers, Zap,
-  RotateCcw
+  RotateCcw, Repeat
 } from 'lucide-react';
 import { useDrag, useDrop } from 'react-dnd';
 import { Button } from '../ui/button';
@@ -15,6 +15,7 @@ import { AdminFormField } from '../admin/AdminFormField';
 import { DayContent, Activity } from '../../lib/equip-admin-types';
 import { BlockEditor } from './BlockEditor';
 import { DAY_TYPE_PRESETS, PALETTE_BLOCK_TYPES, getPresetForDayType } from '../admin/day-presets';
+import { useMetadata, isContainerRow } from '../../hooks/useMetadata';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '../ui/dropdown-menu';
 import { cn } from '../ui/utils';
 import { Textarea } from '../ui/textarea';
@@ -286,6 +287,12 @@ export function DayEditor({
 }: DailyBuilderProps) {
   
   const days = program.daily_content || [];
+  // The stages a day may be. Container rows of the merged `block_type`
+  // vocabulary — `can_hold` non-empty — read from the catalog rather than from
+  // a code enum, so adding a stage is a data change.
+  const { blockTypes: kvBlockTypes } = useMetadata();
+  const stageRows = kvBlockTypes.filter(isContainerRow);
+
   const [selectedDayNum, setSelectedDayNum] = useState<number | null>(() => {
     if (days.length === 0) return null;
     // Prefer day 1 if it exists, otherwise first available day
@@ -431,6 +438,34 @@ export function DayEditor({
       }
       
       return day0 ? [day0, ...renumbered] : renumbered;
+    });
+  };
+
+  /**
+   * Repeat a day, **keeping every block id**.
+   *
+   * The sibling of `handleDuplicateDay`, and the one that was missing. Because
+   * ids are preserved, a response on day 20 and one on day 21 belong to the
+   * same thread — which is what the authors of Sleep Tight 19-25 were reaching
+   * for when they duplicated a day and renamed it "(Continued)". Duplicating
+   * mints new ids, so each of those days produced an unrelated response set.
+   *
+   * This is the day-level affordance. The per-block equivalent is
+   * `ActivityRepeat`, whose editor control exists and which no stored block
+   * used because the reader was dropping the field (see block-normalise.ts).
+   */
+  const handleRepeatDay = (dayToRepeat: DayContent) => {
+    if (singleDayMode || readOnly) return;
+    handleDaysChange((currentDays) => {
+      const newDayNum = currentDays.length + 1;
+      const newDay: DayContent = {
+        ...dayToRepeat,
+        day: newDayNum,
+        title: `${dayToRepeat.title} (Continued)`,
+        activities: dayToRepeat.activities.map(a => ({ ...a })),  // SAME ids, deliberately
+      };
+      setSelectedDayNum(newDayNum);
+      return [...currentDays, newDay];
     });
   };
 
@@ -628,14 +663,29 @@ export function DayEditor({
                     <p style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--font-weight-medium)', color: 'var(--color-text-primary)' }}>Day Configuration</p>
                     <p style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}>Metadata & Goals</p>
                   </div>
-                  {/* Day actions — Duplicate / Delete */}
+                  {/* Day actions — Repeat / Duplicate / Delete.
+                      These sit in a row labelled "Metadata & Goals" and act on
+                      the WHOLE day. The prominent one used to be the
+                      destructive pair with no confirm and no non-destructive
+                      sibling; "Repeat" is that missing sibling. */}
                   <div className="flex items-center gap-0.5 shrink-0" onClick={(e) => e.stopPropagation()}>
                     <Button
                       variant="ghost"
                       size="icon"
                       className="h-7 w-7"
                       style={{ color: 'var(--color-text-muted)' }}
-                      title="Duplicate Day"
+                      title="Repeat this day — same block ids, so responses continue one thread"
+                      onClick={() => activeDay && handleRepeatDay(activeDay)}
+                      disabled={readOnly}
+                    >
+                      <Repeat size={13} />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7"
+                      style={{ color: 'var(--color-text-muted)' }}
+                      title="Duplicate as a copy — new block ids, responses start fresh"
                       onClick={() => activeDay && handleDuplicateDay(activeDay)}
                       disabled={readOnly}
                     >
@@ -738,23 +788,41 @@ export function DayEditor({
                             />
                           </div>
                           <div>
-                            <label style={{ fontSize: '10px', fontWeight: 500, fontFamily: 'var(--font-family-base)', color: 'var(--color-text-muted)', display: 'block', marginBottom: 2 }}>Day Type</label>
+                            {/* Day type is a BLOCK TYPE that holds blocks — the two
+                                vocabularies merged in Phase 1.1, so this list is the
+                                catalog's container rows, not a separate enum.
+                                Defaulted rather than required: live, 93 of 97 days sit
+                                on the default and all 4 manual picks were wrong — one of
+                                them `lesson`, a leaf type, which matched no preset and so
+                                skipped validation entirely. */}
+                            <label style={{ fontSize: '10px', fontWeight: 500, fontFamily: 'var(--font-family-base)', color: 'var(--color-text-muted)', display: 'block', marginBottom: 2 }}>
+                              Day Type <span style={{ fontWeight: 400 }}>— defaults to Learning</span>
+                            </label>
                             <Select 
-                              value={activeDay.dayType || 'lesson'} 
+                              value={activeDay.dayType || 'learning'} 
                               onValueChange={(v: any) => handleUpdateDay(activeDay.day, { dayType: v })}
                               disabled={readOnly}
                             >
                               <SelectTrigger className="h-9" style={{ fontSize: '12px', borderRadius: 'var(--radius-md)' }}><SelectValue /></SelectTrigger>
                               <SelectContent>
-                                {Object.entries(DAY_TYPE_PRESETS).map(([key, preset]) => (
-                                  <SelectItem key={key} value={key}>
+                                {stageRows.map((row) => (
+                                  <SelectItem key={row.value} value={row.value}>
                                     <div className="flex items-center gap-2">
-                                      <span>{preset.label}</span>
+                                      <span>{row.label}</span>
+                                      <span style={{ fontSize: '10px', color: 'var(--color-text-muted)' }}>
+                                        {(row.activities ?? []).length} activities
+                                      </span>
                                     </div>
                                   </SelectItem>
                                 ))}
                               </SelectContent>
                             </Select>
+                            {activeDay.dayType && !stageRows.some(r => r.value === activeDay.dayType) && (
+                              <p style={{ fontSize: '10px', color: 'var(--color-status-warning)', marginTop: 3 }}>
+                                “{activeDay.dayType}” is not a stage, so this day matches no preset
+                                and skips every content check. Pick one above.
+                              </p>
+                            )}
                           </div>
                         </div>
 
