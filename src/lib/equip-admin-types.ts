@@ -211,6 +211,20 @@ export function resolveInteraction(activity: Activity): InteractionType {
       if (exerciseConfig?.options && exerciseConfig.options.length > 0) return 'select-one';
       return 'write';
     case 'checklist':    return 'check';
+    // A quiz with no subtype is still a question. Without this it fell to
+    // `default: 'read'` and rendered as reading content.
+    case 'quiz':         return 'select-one';
+    // `sleep-diary` is DEPRECATED and retired from the block_type catalog
+    // (2026-09-04), so it cannot be chosen in the editor. It stays in the code
+    // union so any stored block still carrying it resolves rather than falling
+    // to `default: 'read'`. Zero live blocks carry it.
+    //
+    // TRAP, recorded deliberately: this resolves to `track-table` (a yes/no
+    // grid), but Sleep Tight's 126 actual diary blocks are `input-table` (a text
+    // grid). The name suggests Sleep Tight's behaviour; the resolution is not
+    // it. Left as-is rather than retargeted, because changing a deprecated
+    // type's behaviour with no live users is churn — but do not reach for
+    // `sleep-diary` expecting a Sleep Tight diary.
     case 'sleep-diary':  return 'track-table';
     default:             return 'read';
   }
@@ -288,7 +302,15 @@ export interface Activity {
   id: string;
   title: string;
   subtitle?: string;
-  type: 'lesson' | 'exercise' | 'journal' | 'checklist' | 'reflection' | 'conclude' | 'sleep-diary';
+  /**
+   * `quiz` joined the union 2026-09-04. Twelve live blocks already carry it and
+   * the catalog has the row; it was missing here and from `resolveInteraction`'s
+   * direct-type switch. All twelve also carry a subtype, so they resolve through
+   * the `|| subtype` clause and render correctly today — the gap is latent, not
+   * live. A `quiz` block authored WITHOUT a subtype would have fallen to
+   * `default: 'read'` and rendered as reading content.
+   */
+  type: 'lesson' | 'exercise' | 'journal' | 'checklist' | 'reflection' | 'conclude' | 'sleep-diary' | 'quiz';
   /** Unified interaction type. Preferred over type+subtype when present. */
   interaction?: InteractionType;
   content: string;

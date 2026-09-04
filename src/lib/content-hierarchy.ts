@@ -165,7 +165,11 @@ export const INTERACTION_REQUIREMENTS: Record<InteractionType, InteractionRequir
   'clinical':    { requires: ['scale_ref', 'instrument_ref'], optional: ['reverse', 'section_ref'],         produces: 'option_id' },
   // Structured — the block defines its own shape
   'check':       { requires: ['items'],                       optional: ['min_required'],                   produces: 'item_id[]' },
-  'input-table': { requires: ['columns', 'rows'],             optional: ['allow_add_rows', 'column_types'], produces: 'cell map' },
+  // `rows` is NOT required: BlockRenderer.renderInputTable treats predefined rows
+  // as opt-in — absent, the table is free-form add-a-row. All 144 live blocks that
+  // resolve to this interaction carry columns and no rows, so requiring it here
+  // would report every one of them as incomplete.
+  'input-table': { requires: ['columns'],                     optional: ['rows', 'allow_add_rows', 'column_types'], produces: 'cell map' },
   'track-table': { requires: ['columns', 'rows'],             optional: [],                                 produces: 'boolean map' },
   'write':       { requires: ['prompt'],                      optional: ['max_length', 'ephemeral'],        produces: 'text' },
   'number':      { requires: ['prompt'],                      optional: ['min', 'max', 'unit'],             produces: 'number' },

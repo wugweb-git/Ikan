@@ -794,36 +794,6 @@ class ApiClient {
     }, true);
   }
 
-  async saveProgramCheckIn(data: {
-    programId: string;
-    day: number;
-    perceivedChange: 'better' | 'same' | 'worse';
-    confidenceLevel: number;
-    continuationIntent: 'continue' | 'pause' | 'stop';
-    feedback: string;
-  }) {
-    // We use the assessments endpoint to store this data structure
-    // ID Format: checkin_{programId}_day_{day}
-    const checkInId = `checkin_${data.programId}_day_${data.day}`;
-    
-    return this.request('/user/assessments', { 
-      method: 'POST',
-      body: JSON.stringify({
-        assessmentId: checkInId,
-        responses: {
-          type: 'program_checkin',
-          ...data
-        },
-        status: 'completed',
-        score: 0, // No scoring
-        interpretation: {
-          label: data.continuationIntent,
-          description: `User feels ${data.perceivedChange} with ${data.confidenceLevel}/5 confidence.`
-        }
-      })
-    }, true);
-  }
-
   // Assessments
   async getUserAssessmentResponses(userId?: string) {
     // If userId is provided, we use the admin endpoint (if it exists) or fallback to user endpoint if self

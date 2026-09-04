@@ -421,7 +421,9 @@ export function validateBlockForDayType(
   const preset = getPresetForDayType(dayType);
   if (!preset) {
     // No preset means this day skips every check below, allow-list and blocked
-    // list alike. Live, 8 days are typed `lesson` — a BLOCK type used as a day type.
+    // list alike. Live, 4 days are typed `lesson` — a BLOCK type used as a day
+    // type (Unburn 26, 27, 29, 30). Recounted 2026-09-04 from the census; the
+    // earlier figure of 8 was wrong, and summed to 104 against a 97-day catalog.
     warnFallback(
       'validateBlockForDayType',
       `no preset for dayType "${dayType}" — all validation skipped for this day`,

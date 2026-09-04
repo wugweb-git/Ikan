@@ -6,7 +6,27 @@ Everything a user reads, answers, rates or writes in this app is the same object
 
 `db **jpfvoevxegnknxoqmwye** | branch **equip-carry-forward** @ **4423f72f** | **498** live blocks · 406 equip · 92 assessments | read-only · **no writes made**`
 
-> **[NOTE] Re-verified 2026-09-04 against `a67e17da`, and four claims have changed.** Each is corrected in place below and marked *(2026-09-04)*. The third writer is **found** (§05, §17, §18 0.2). Catalog reconciliation **1.2 has landed** in both the live KV and the seed file (§05, §18). The typecheck baseline is **207**, not 216 (§18 0.4). And there is a **fifth content store**, not four (§17). The live census was re-run the same day: 406 equip blocks, `interaction` present on **0**, `role` on **0**, a response key on **0**.
+> **[NOTE] Re-verified 2026-09-04 against `a67e17da`, and four claims have changed.** Each is corrected in place below and marked *(2026-09-04)*. The third writer is **found** (§05, §17, §18 0.2). Catalog reconciliation **1.2 has landed** in both the live KV and the seed file (§05, §18). The typecheck baseline is **207**, not 216 (§18 0.4). And there is a **fifth content store**, not four (§17). The live census was re-run the same day: 406 equip blocks, `interaction` present on **0**, `role` on **0**.
+>
+> **[CORRECTION 2026-09-04] The response key is NOT on 0 — it is on 98 of 406.** The earlier reading tested
+> `activity.key` and `save_as` at the top level and never looked inside **`exerciseConfig.key`**, which is
+> where the convention actually lives. The census CSV in `census/` had it right all along: its `response_key`
+> column is populated on 98 rows and its `NO_KEY` flag is on 400 of 498. Verified against both the CSV and
+> live KV:
+>
+> | collection | blocks | with `exerciseConfig.key` | distinct keys |
+> |---|---:|---:|---:|
+> | Sleep Tight | 155 | 24 | 13 |
+> | Stress Buster | 116 | 35 | 18 |
+> | Unburn | 111 | 23 | 18 |
+> | Productivity Reset | 24 | 16 | 16 |
+> | **total** | **406** | **98** | |
+>
+> This makes the response-key work (§18 P6) **smaller and better defined**, not larger. A naming convention
+> already exists — `three_good`, `brain_dump`, `sleep_commitment`, `program_reflection` — and keys already
+> repeat across days within a programme, which is precisely the cross-day matching that was going to be
+> invented from scratch. It is ~24% applied. The real gap is narrower: **of 127 `input-table` blocks, only 28
+> carry a key**, and those 99 are where the charting problem actually lives.
 
 Six vocabularies describe one object: `block_type`, `exercise_subtype`, `interaction_type`, the 23-string palette inside `day-presets.ts`, assessments’ own seven-value question union with its eleven-entry alias map, and check-in’s six snake_case step types. Only two of the six have real consumers. The one the renderer actually reads — `interaction` — is present on 53 of 498 blocks, so 445 go through a switch statement with a default case, and that default case is where the eight authored tables and one rating scale end up.
 
@@ -181,9 +201,20 @@ Plus `everyDay` and an explicit `onDays` list; `repeatTargetDays()` resolves the
 | **journal** | yes | 3 | 0 | 3 | keep |
 | **sleep-diary** | yes | 0 | 0 | 0 | **RETIRE** — it is an `exercise · input-table` |
 
-`sleep-diary` describes exactly what Sleep Tight's 126 `exercise · input-table` blocks already are. Declaring it as a type puts one program's content pattern into the product's primitive vocabulary — the same category error as `conclude` and as `lesson` being used as a day type on eight days. Let subtype carry the meaning.
+`sleep-diary` describes exactly what Sleep Tight's 126 `exercise · input-table` blocks already are. Declaring it as a type puts one program's content pattern into the product's primitive vocabulary — the same category error as `conclude` and as `lesson` being used as a day type on four days. Let subtype carry the meaning.
 
 > **[OK] (2026-09-04) Both changes have landed.** The live `block_type` bucket now reads `checklist · conclude · exercise · journal · lesson · quiz · reflection` — `quiz` added, `sleep-diary` retired — and `metadata-catalog.ts:289` seeds `quiz` to match. For this bucket, §18 item 1.2 is closed.
+>
+> **[2026-09-04, follow-up] `sleep-diary` — the drift is now deliberate, and it carries a trap.**
+> The catalog has **7** block types; the `Activity.type` union in code has **8**, because it keeps
+> `sleep-diary` so that any stored block still carrying it resolves instead of falling to
+> `default: 'read'`. Zero live blocks carry it, and it cannot be chosen in the editor.
+>
+> The trap: `sleep-diary` resolves to **`track-table`** — a yes/no grid — while Sleep Tight's
+> **126 real diary blocks are `input-table`**, a text grid. The type is named after a programme
+> whose behaviour it does not reproduce. Recorded rather than retargeted: changing a deprecated
+> type with no live users is churn. If `sleep-diary` is ever revived, retarget it to `input-table`
+> in the same change, and re-add the catalog row.
 
 ### exercise_subtype — 11 declared, 11 in use, 6 in common
 
@@ -273,7 +304,7 @@ The taxonomy above is what the system says a Block may be. This is what the four
 
 > **[CRITICAL] `quiz` is a live block type that does not exist.**
 >
-> Twelve blocks carry `type: "quiz"`. It is not in the `Activity.type` union, not one of the seven `block_type` rows, and has no case in `resolveInteraction`'s direct-type switch. It survives only because those blocks also carry a subtype — and the resolver's first condition is `type === 'exercise' **\\\|\\\| subtype**`, so anything with a subtype takes the subtype path regardless of its type. `quiz` is a *day preset* name that got written into a block's type field.
+> Twelve blocks carry `type: "quiz"`. It is not in the `Activity.type` union, not one of the seven `block_type` rows, and has no case in `resolveInteraction`'s direct-type switch. All twelve carry a subtype (single-select ×6, mcq ×3, multi-select ×2, scale ×1), and it survives only because of that — and the resolver's first condition is `type === 'exercise' **\\\|\\\| subtype**`, so anything with a subtype takes the subtype path regardless of its type. `quiz` is a *day preset* name that got written into a block's type field.
 >
 > The same clause is why `lesson` + `multi-select` renders as a multi-select question rather than as reading content. Nine blocks are lessons that ask you something.
 
@@ -283,7 +314,7 @@ The taxonomy above is what the system says a Block may be. This is what the four
 
 > **[WARNING] Carry-forward is built, wired into the editor, and used by nothing.**
 >
-> `ActivityRepeat`, its three modes and `repeatTargetDays()` are all real code, and the editor renders a Carry forward section. **Zero of 406 stored blocks carry a `repeat` field.** Sleep Tight's sixteen duplicated days are exactly what this feature exists to prevent, and they were authored by copy-paste instead.
+> `ActivityRepeat`, its three modes and `repeatTargetDays()` are all real code, and the editor renders a Carry forward section. **Zero of 406 stored blocks carry a `repeat` field.** The **30 redundant days** across the catalog (see §18 4.2) are exactly what this feature exists to prevent, and they were authored by copy-paste instead.
 
 ## 07 · The resolver, and the nine blocks it renders wrong
 *verified, not inferred*
@@ -333,7 +364,7 @@ Two outcomes: a block with options becomes a single-select question; a block wit
 >
 > The resolver's first condition is `if (type === 'exercise' \\|\\| subtype)` — so **any** block carrying a subtype takes the subtype path regardless of its type. That is why `lesson · multi-select` (6 blocks) and `lesson · single-select` (2) render as questions rather than as reading content, and why the undeclared `quiz` type works at all despite having no case anywhere.
 >
-> This is not obviously wrong — a lesson that ends in a question is a reasonable thing to author. But it is happening by accident of a boolean, not by design, and **type is being silently overruled on 21 blocks.**
+> This is not obviously wrong — a lesson that ends in a question is a reasonable thing to author. But it is happening by accident of a boolean, not by design, and **type is being silently overruled on 44 blocks.**
 
 ## 08 · Check-in scales, read as Blocks
 *6 step types · 6 mappings*
@@ -462,9 +493,9 @@ Three of the seven are declared and unreachable — the save path collapses ever
 | Where | Fallback | Fires when | What you get |
 |---|---|---|---|
 | resolveInteraction() default | options ? 'select-one' : 'write' | subtype matches no case — **12 blocks** | A textarea where a table was authored. **9 blocks wrong today** (§07) |
-| resolveInteraction() first condition | type === 'exercise' **\\|\\|** subtype | any block with a subtype — **21 blocks whose type is not exercise** | Type silently overruled. Lessons render as questions; the undeclared `quiz` type works |
+| resolveInteraction() first condition | type === 'exercise' **\\|\\|** subtype | any block with a subtype — **44 blocks whose type is not exercise** | Type silently overruled. Lessons render as questions; the undeclared `quiz` type works |
 | validateBlockForDayType() | return { allowed: true } | **always** — the rejecting line is commented out | Any block on any day. Workshop's blocked list is empty, so Workshop accepts everything |
-| validateBlockForDayType() | no preset found → allowed | dayType matches no preset — **8 days** typed `lesson` | Even the blocked-list check is skipped on those days |
+| validateBlockForDayType() | no preset found → allowed | dayType matches no preset — **4 days** typed `lesson` | Even the blocked-list check is skipped on those days |
 | BlockEditor.tsx ~38, ~53 | FALLBACK_EXERCISE_SUBTYPES · FALLBACK_BLOCK_TYPES | catalog not yet loaded, or the fetch failed | The admin is offered a **different vocabulary** and cannot tell. `useMetadata` returns empty buckets on a throw |
 | block ordering | array position when `order` is absent | **160 of 406 equip blocks** | Stable until anything rewrites the array — and the editor rewrites the whole blob on every save |
 | convertQuestionsToDay() | defaults to `single-choice` | any legacy question type the save path cannot emit — 3 of 7 declared | Three declared question types are unreachable. Live, all 92 are `single-choice` |
@@ -483,8 +514,8 @@ Three of the seven are declared and unreachable — the save path collapses ever
 > | Site | Warns when |
 > |---|---|
 > | `resolveInteraction` default | a subtype matches no case *(was already warning since `16f8aefd`; now deduped)* |
-> | `resolveInteraction` `\|\| subtype` | a non-`exercise` type is overruled by its subtype — the 21 blocks |
-> | `validateBlockForDayType` | no preset for the dayType, so **all** validation is skipped — the 8 days typed `lesson` |
+> | `resolveInteraction` `\|\| subtype` | a non-`exercise` type is overruled by its subtype — the 44 blocks |
+> | `validateBlockForDayType` | no preset for the dayType, so **all** validation is skipped — the 4 days typed `lesson` |
 > | `BlockEditor` ×2 | a catalog bucket is empty and the hardcoded fallback vocabulary is being offered instead |
 > | `convertDayToQuestions` | a subtype is collapsed onto legacy `single-choice` |
 > | `BlockRenderer` default | an `interaction` exists that the 12-case switch has no case for |
@@ -671,7 +702,7 @@ This is the answer to "why four builders". **There is one flow.** What differs b
 | 1 | **Picks an interaction** — one list of 12, each with its verb and icon from `INTERACTION_META`: "Reads", "Selects", "Rates", "Tracks"… | Filters the list to what the stage preset allows | Picks a **type**, then a **subtype** — two lists, overlapping, and neither is what the renderer reads |
 | 2 | Writes the prompt or content | — | same |
 | 3 | **If the interaction is scale-backed: picks a scale from the catalog.** Or creates one, in the catalog, from here | Renders a live preview of the options with their values | **Types the options into the block.** This is why the PHQ/GAD scale exists 27 times |
-| 4 | **Sets the response key.** Pre-filled from the prompt; editable | Checks it is unique within the collection | **Does not exist.** Answers file under block id — 98 input-tables have no key |
+| 4 | **Sets the response key.** Pre-filled from the prompt; editable | Checks it is unique within the collection | **Partly exists.** `exerciseConfig.key` is set on 98 of 406 blocks, but nothing checks uniqueness and no editor field exposes it — 99 of 127 input-tables have no key |
 | 5 | Fills only the config this interaction needs — columns for a table, items for a checklist, accepted types for an upload | Shows nothing else | One `exerciseConfig` with 20 optional fields, most irrelevant to any given block |
 | 6 | Optionally sets a **role** — lesson, practice, reflection, quiz, conclude | Defaults it from the stage preset | Conflated into `type` |
 | 7 | Saves | **Validates against the preset and rejects loudly.** Writes `interaction` to the record | Validation returns `allowed: true` always — the rejecting line is commented out. Nothing writes `interaction` |
@@ -760,7 +791,11 @@ The presets themselves are good — they were carefully designed and they descri
 
 > **[CRITICAL] Nine of eleven presets have never been assigned, and that is why structure leaked into block types.**
 >
-> Live: `learning` on 93 days, `assessment` on 3, and `lesson` — a block type — on 8. `tracker`, `reflection`, `practice`, `rest`, `check-in`, `quiz`, `workshop`, `onboarding` and `assessment-lite`: zero.
+> Live: `learning` on 93 days and `lesson` — a block type — on 4 (Unburn 26, 27, 29, 30). That is all 97 days.
+> `assessment`, `tracker`, `reflection`, `practice`, `rest`, `check-in`, `quiz`, `workshop`, `onboarding` and `assessment-lite`: zero.
+>
+> *(Corrected 2026-09-04 from `census/blocks-2026-09-02-post-content-fixes.csv`. The previous
+> reading — 93 + 3 + 8 — summed to 104 against a 97-day census.)*
 >
 > So the day-level vocabulary is complete and correct and unused, and meanwhile **84 blocks are typed `conclude`** — a day-position concept expressed at block level because the stage level was never used. The leak runs both ways at once, and §13's role field plus a real preset assignment closes both directions.
 
@@ -784,7 +819,7 @@ The presets themselves are good — they were carefully designed and they descri
 - **(2026-09-04) There is a fifth content store, not four.** `EquipProgramOnboarding.tsx:103` reads `program.onboarding.questions[]` into an `OnboardingQuestionSet` — a third question shape alongside `daily_content[].activities[]` and assessments’ `questions[]`. §14 lists four storage models; it should list five.
 - **The stored data uses names none of them declare.** `quiz` as a block type; `matrix`, `row_list`, `text_list`, `number` and `scale` as subtypes. All fall through to a default branch and render as whatever the fallback picks. **(2026-09-04: `quiz` and `number` are now declared; the resolver maps `matrix`, `row_list`, `text_list` and `scale` since `16f8aefd`. The stored values are unchanged — nothing has been backfilled.)**
 - **The `\\\|\\\| subtype`** clause in the resolver overrides type entirely. Any block carrying a subtype takes the subtype path no matter what its type says — which is why lessons render as questions and an undeclared `quiz` type works at all.
-- **Carry-forward is used by zero of 406 blocks**, while Sleep Tight holds sixteen copy-pasted duplicate days — the exact problem it was built to solve.
+- **Carry-forward is used by zero of 406 blocks**, while the catalog holds 30 copy-pasted redundant days (110 blocks, strict signature) — the exact problem it was built to solve.
 - **Three of the catalog's types are decorative.** `interaction_type` and `day_config_type` are read only by a reference screen; `checkin_block_type` and `media_type` are read by nothing at all.
 - **The allow-list guardrail is commented out.** Only the blocked list fires, and Workshop's is empty.
 - **day_config_type carries an `onboarding` value with no code path.** Picking it in Meta Manager silently does nothing.
@@ -880,7 +915,41 @@ The core change, and the one the seam was built for.
 
 > **[CRITICAL] You already have templating. The data shows it did the wrong job.**
 >
-> `DayEditor.tsx:429` `handleDuplicateDay` copies a day, titles it `"(Copy)"`, and at line 438 **mints new block ids**. Live, six clusters — **22 days, 16 of them duplicates** — every one renamed from "(Copy)" to **"(Continued)"**, and every one a **consecutive run**: Sleep Tight 2–7 and 20–25 and 27–29, Stress Buster 13–14 and 18–20, Unburn 5–6.
+> `DayEditor.tsx:429` `handleDuplicateDay` copies a day, titles it `"(Copy)"`, and at line 438 **mints new block ids**.
+>
+> **Recounted 2026-09-04**, then **re-reconciled** against `census/blocks-2026-09-02-post-content-fixes.csv`,
+> clustering days within a single programme whose block list is identical in array order. **11 clusters.**
+>
+> Two signatures, and the difference matters:
+>
+> | signature | clusters | days | redundant days | redundant blocks |
+> |---|---:|---:|---:|---:|
+> | `(type, subtype, title)` — strict | 11 | 41 | **30** | **110** |
+> | `title` only — looser | 11 | 42 | 31 | 113 |
+>
+> They differ on **Unburn day 3**, whose block *titles* match days 5–7 but whose types/subtypes do not.
+> Use the **strict** figure to plan a carry-forward conversion (those days are the same block-for-block);
+> the looser one is the better signal for "an author copy-pasted this".
+>
+> | collection | days | blocks/day |
+> |---|---|---|
+> | Sleep Tight | 19–25 | 4 |
+> | Sleep Tight | 2–7 | 3 |
+> | Sleep Tight | 26–30 | 6 |
+> | Stress Buster | 12–15 | 3 |
+> | Stress Buster | 18–21 | 3 |
+> | Stress Buster | 22–24 | 3 |
+> | Stress Buster | 26–27 | 5 |
+> | Unburn | 5–7 | 3 |
+> | Unburn | 18–20 | 3 |
+> | Unburn | 10–11 | 3 |
+> | Unburn | 29–30 | 3 |
+>
+> **Two earlier readings were wrong, in different ways.** "Six clusters, 22 days, 16 duplicates" detected
+> duplicates by the **"(Continued)" title** left by `handleDuplicateDay` — a narrower test that misses
+> retitled copies. And a first recount of "10 clusters / 41 days / 113 blocks" failed to **scope clusters by
+> programme**, so it merged Stress Buster 5–7 with Unburn 5–7 into one phantom cluster spanning two
+> programmes. Cluster on `(collection, signature)`, never on signature alone.
 >
 > Consecutive runs named "Continued" are not sloppy copy-paste. They are *"this activity repeats daily for a week"* — which is `ActivityRepeat`'s exact purpose, and `ActivityRepeat` is used by **0 of 406 blocks**. The product shipped the wrong affordance prominently and the right one invisibly, and a user filling the sleep diary on days 20–25 produces six unrelated response sets.
 
@@ -895,7 +964,7 @@ The core change, and the one the seam was built for.
 | # | Do | Detail |
 |---|---|---|
 | 4.1 | **Make the editor offer both, named for what they do** | "Repeat this day" → carry-forward, same ids. "Duplicate as a copy" → new ids. Today only the second exists and it is labelled just "Duplicate" |
-| 4.2 | **Convert the 16 duplicated days to carry-forward** | Six clusters. Response threads become continuous, which is what the authors were reaching for when they typed "(Continued)" |
+| 4.2 | **Convert the 30 redundant days to carry-forward** | Eleven clusters, 110 blocks (strict signature). Response threads become continuous, which is what the authors were reaching for when they typed "(Continued)" |
 | 4.3 | **Fix Sleep Tight 18–30** | Thirteen days render *"Show all activities from day 17 and 18 and get the user to tick them off"* — a brief to a developer, shipped as an input-table column header. It describes carry-forward. Implement it, delete the string |
 | 4.4 | **Save-as-template at every level** | Collection, stage, step, block. One mechanism, four entry points — cheap once the hierarchy in Phase 3 exists |
 
@@ -905,7 +974,7 @@ The core change, and the one the seam was built for.
 |---|---|---|
 | 5.1 | **Check-in keeps its container editor, loses its step editor and its scale editor** | A linear five-question flow is a genuinely different *container* and forcing it into a day grid would be a worse product. But its six step types are **three interactions** (§15), and `createCustomScale` is a second scale model. **1,290 lines today → a few hundred** |
 | 5.2 | **Move the mood scale into the catalog** | It lives under `mood:{id}` and needs a hardcoded branch at `MoodJournal.tsx:438`. Four scales go through one resolver; the fifth — the required, primary one — needs a string comparison against a literal |
-| 5.3 | **ProgramCheckIn: give it an authoring surface, or delete it** | decision 345 lines, four questions hardcoded in JSX, no store, a `customQuestions // (future)` never built — and it writes into `assessment_result:` with a synthetic id and score 0. Those are the 25 rows polluting every assessment query. `checkInConfig` is `enabled: false` on the two programs that have it and absent on the other two, **so it should not be reachable and 25 rows exist** |
+| 5.3 | **ProgramCheckIn: give it an authoring surface, or delete it** | decision 345 lines, four questions hardcoded in JSX, no store, a `customQuestions // (future)` never built — and it writes into `assessment_result:` with a synthetic id and score 0. Those are **25 logical results stored as 40 KV rows** (15 are `…:latest` mirrors) polluting every assessment query — all 40 carry score 0. `checkInConfig` is `enabled: false` on the two programs that have it and absent on the other two, **so it should not be reachable and the rows exist**. Verified 2026-09-04; a purge must target 40 rows, a de-duplicated count 25 |
 
 ### Phase 6 · Turn the guardrails on
 
@@ -913,7 +982,7 @@ The core change, and the one the seam was built for.
 
 | # | Do | Detail |
 |---|---|---|
-| 6.1 | **Set a real `dayType` on the 8 days typed `lesson`** | A block type used as a day type. `validateBlockForDayType()` finds no preset and returns `allowed: true` immediately, so those days skip even the blocked-list check |
+| 6.1 | **Set a real `dayType` on the 4 days typed `lesson`** | A block type used as a day type. `validateBlockForDayType()` finds no preset and returns `allowed: true` immediately, so those days skip even the blocked-list check |
 | 6.2 | **Assign real presets across all 97 equip days** | `onboarding` for day 0, `tracker` for Sleep Tight 18–30, `reflection` where it applies. **Nine of eleven presets have never been used** — which is why 84 blocks are typed `conclude`, day structure leaking into block types |
 | 6.3 | **Audit what the allow-lists would reject**, then decide per preset | Dry run first. Workshop's blocked list is empty, so Workshop currently accepts anything |
 | 6.4 | **Uncomment the rejection** | One line. decision — it will start rejecting content authored against no constraint for months |
@@ -926,7 +995,7 @@ The core change, and the one the seam was built for.
 - **Block editors: 2 → 1** — ~900 lines out of the check-in builder
 - **Scale models: 3 → 1** — 27 inline copies become one row
 
-Also gone: `resolveInteraction()` and its default case · the `\\|\\| subtype` clause that overrules type on 21 blocks · `convertQuestionsToDay()` and the `daily_content` mirror · `LegacyQuestion.type` and its 11-entry alias map duplicated in two files · the `day-presets.ts` palette · check-in's six-value step array and `createCustomScale` · the hardcoded mood-scale branch.
+Also gone: `resolveInteraction()` and its default case · the `\\|\\| subtype` clause that overrules type on 44 blocks · `convertQuestionsToDay()` and the `daily_content` mirror · `LegacyQuestion.type` and its 11-entry alias map duplicated in two files · the `day-presets.ts` palette · check-in's six-value step array and `createCustomScale` · the hardcoded mood-scale branch.
 
 > **[CRITICAL] Two constraints worth stating once.**
 >

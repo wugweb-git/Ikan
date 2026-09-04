@@ -7,7 +7,6 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useNotifications } from '../../contexts/NotificationContext';
 import { OnboardingData } from '../../lib/equip-types';
 import { OnboardingQuestionSet } from '../../lib/equip-onboarding-types';
-import { TypeformWizard } from '../wizard/TypeformWizard';
 import { Icon } from '../Icon';
 import { ProgramPlayer } from '../player/ProgramPlayer';
 import { EquipProgram } from '../../lib/equip-admin-types';
@@ -375,96 +374,37 @@ export function EquipOnboarding({ programId: propProgramId, onComplete, onBack, 
     );
   }
 
-  // Convert to Typeform format
-  console.log('📊 Converting onboarding to Typeform format...');
-  
-  const typeformSteps = [
-    // Intro step
-    {
-      id: 'intro',
-      type: 'intro' as const,
-      title: questionSet.title,
-      description: questionSet.description
-    },
-    // Question steps
-    ...questionSet.questions.map((q: any, index: number) => {
-      console.log(`🔍 Onboarding Question ${index + 1}:`, {
-        id: q.id,
-        text: q.text,
-        type: q.type,
-        options: q.options
-      });
-
-      // Map question type
-      let questionType: 'single_select' | 'multi_select' | 'text' | 'long_text' | 'scale' = 'text';
-      let options = undefined;
-
-      if (q.type === 'scale') {
-        questionType = 'scale';
-      } else if (q.type === 'single-choice' || q.type === 'single_select') {
-        questionType = 'single_select';
-        // Convert options - handle both string[] and object[]
-        options = q.options?.map((opt: any, idx: number) => {
-          if (typeof opt === 'string') {
-            return { id: `opt_${idx}`, label: opt, value: opt };
-          }
-          return {
-            id: opt.id || `opt_${idx}`,
-            label: opt.text || opt.label || opt,
-            value: opt.value !== undefined ? opt.value : opt
-          };
-        });
-      } else if (q.type === 'multiple-choice' || q.type === 'multi_select') {
-        questionType = 'multi_select';
-        options = q.options?.map((opt: any, idx: number) => {
-          if (typeof opt === 'string') {
-            return { id: `opt_${idx}`, label: opt, value: opt };
-          }
-          return {
-            id: opt.id || `opt_${idx}`,
-            label: opt.text || opt.label || opt,
-            value: opt.value !== undefined ? opt.value : opt
-          };
-        });
-      } else if (q.type === 'text' || q.type === 'long_text') {
-        questionType = 'long_text';
-      }
-
-      console.log(`✅ Mapped onboarding question ${index + 1}:`, { questionType, optionsCount: options?.length });
-
-      return {
-        id: `q_${index}`,
-        type: 'question' as const,
-        title: '',
-        question: {
-          id: q.id,
-          text: q.text,
-          type: questionType,
-          options,
-          placeholder: q.type === 'text' || q.type === 'long_text' ? 'Type your answer...' : undefined,
-          required: q.required !== false,
-          scaleMin: q.scaleMin,
-          scaleMax: q.scaleMax,
-          scaleLabels: q.scaleLabels
-        }
-      };
-    }),
-    // Outro step
-    {
-      id: 'outro',
-      type: 'outro' as const,
-      title: "You're all set!",
-      description: "Your program is being personalized based on your responses..."
-    }
-  ];
-
-  console.log('🎨 Typeform onboarding steps created:', typeformSteps.length);
+  // ── No Day 0 ────────────────────────────────────────────────────
+  // Reaching here means the programme loaded and has onboarding questions, but
+  // carries no Day 0 in `daily_content`, so ProgramPlayer cannot render it.
+  //
+  // This used to fall back to `components/wizard/` (TypeformWizard), a parallel
+  // 13-value `FieldType` vocabulary imported from Figma Make and rendered only
+  // here. It was deleted 2026-09-04: every live programme has a Day 0 (verified
+  // against `equip:` in KV) and the admin auto-creates one at
+  // `EquipProgramWizard.tsx:315`, so this branch is unreachable in practice.
+  //
+  // This is a knowingly accepted regression: a programme authored without Day 0
+  // now shows an error instead of a working fallback. If that ever fires, the
+  // fix is to give the programme a Day 0, not to restore the wizard.
+  console.error(
+    '[EquipProgramOnboarding] Programme has onboarding questions but no Day 0 — ' +
+    'cannot render. Add a Day 0 to its daily_content.',
+    { programId, title: unifiedProgram?.title }
+  );
 
   return (
-    <TypeformWizard
-      steps={typeformSteps}
-      onComplete={submitOnboarding}
-      onExit={onBack}
-    />
+    <div className="min-h-screen bg-[var(--color-bg-page)] flex items-center justify-center p-6">
+      <div className="flex flex-col items-center space-y-4 text-center max-w-md">
+        <Icon name="error" size={48} style={{ color: 'var(--color-status-danger)' }} />
+        <h3 className="text-xl font-medium">Unable to Load Program Setup</h3>
+        <p style={{ color: 'var(--color-text-muted)' }}>
+          This program is missing its first day and cannot be started yet.
+        </p>
+        <Button onClick={onBack} variant="outline" className="mt-4">
+          Go Back
+        </Button>
+      </div>
+    </div>
   );
 }

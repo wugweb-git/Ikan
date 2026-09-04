@@ -1,8 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { EquipProgram, DayContent, Activity, DEFAULT_CHECKIN_CONFIG, resolveInteraction, repeatTargetDays, warnFallback, type DayType } from '../../lib/equip-admin-types';
+import { EquipProgram, DayContent, Activity, resolveInteraction, repeatTargetDays, warnFallback, type DayType } from '../../lib/equip-admin-types';
 import { BlockRenderer } from './BlockRenderer';
-import { ProgramCheckIn } from '../equip/ProgramCheckIn';
 import { Button } from '../ui/button';
 import { Progress } from '../ui/progress';
 import { ChevronLeft, Check, X } from 'lucide-react';
@@ -257,7 +256,6 @@ export function ProgramPlayer({
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
   const [responses, setResponses] = useState<Record<string, any>>(initialResponses);
   const [isDayComplete, setIsDayComplete] = useState(false);
-  const [showCheckIn, setShowCheckIn] = useState(false);
 
   const activeDay = useMemo(() =>
     program.daily_content.find(d => d.day === currentDayNum),
@@ -373,23 +371,15 @@ export function ProgramPlayer({
       setCurrentStepIndex(nextIndex);
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } else {
-      // Determine check-in trigger from program config (or legacy defaults)
-      const config = program.checkInConfig ?? DEFAULT_CHECKIN_CONFIG;
-      const isLastDay = program.daily_content.length === currentDayNum;
-
-      // Never show the "compared to when you started" check-in on day 1 — there is
-      // no baseline to compare against yet (e.g. single-day programs where day 1 is
-      // also the last day). It should only appear after the program is underway.
-      const shouldCheckIn = config.enabled && currentDayNum > 1 && (
-        config.triggerDays.includes(currentDayNum) ||
-        (config.triggerOnLastDay && isLastDay)
-      );
-
-      if (shouldCheckIn && !showCheckIn) {
-        setShowCheckIn(true);
-      } else {
-        setIsDayComplete(true);
-      }
+      // The milestone check-in popup (`ProgramCheckIn`) was deleted 2026-09-04.
+      // It had four questions hardcoded in JSX, no store and no authoring
+      // surface, and wrote score-0 rows into `assessment_result:` under a
+      // synthetic `checkin_{programId}_day_{n}` id that polluted every
+      // assessment query. It was unreachable — `enabled` was false on every
+      // live programme and false by default — so this is a no-op in practice.
+      // `program.checkInConfig` is retained on the record but no longer read
+      // here; see blocks.md §18 5.3.
+      setIsDayComplete(true);
     }
   };
 
@@ -690,17 +680,6 @@ export function ProgramPlayer({
           </div>
         </footer>
       </div>
-
-      <ProgramCheckIn
-        programId={program.id}
-        programTitle={program.checkInConfig?.customTitle || program.title}
-        currentDay={currentDayNum}
-        isOpen={showCheckIn}
-        onClose={() => {
-          setShowCheckIn(false);
-          setIsDayComplete(true);
-        }}
-      />
     </>
   );
 }
