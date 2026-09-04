@@ -9,7 +9,7 @@ import { OnboardingData } from '../../lib/equip-types';
 import { OnboardingQuestionSet } from '../../lib/equip-onboarding-types';
 import { Icon } from '../Icon';
 import { ProgramPlayer } from '../player/ProgramPlayer';
-import { EquipProgram } from '../../lib/equip-admin-types';
+import { EquipProgram } from '../../lib/blocks/block-model';
 import { LoadingSpinner } from '../LoadingSpinner';
 
 interface EquipOnboardingProps {

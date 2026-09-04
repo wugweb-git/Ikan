@@ -2455,7 +2455,7 @@ app.post("/security/events", async (c) => {
 /**
  * Blocks fallback telemetry.
  *
- * `warnFallback` (src/lib/equip-admin-types.ts) marks every point where the
+ * `warnFallback` (src/lib/blocks/block-model.ts) marks every point where the
  * block system silently substitutes something: a type overruled by its subtype,
  * an unknown subtype rendered as free text, a dayType matching no preset so ALL
  * validation is skipped, a renderer with no case for an interaction. Seven such

@@ -7,16 +7,16 @@ import {
   Zap, PlayCircle, CircleDot, ListChecks, Star, Table2, Grid3x3, ClipboardList, Flag, PenLine, Upload,
   Hash,
 } from 'lucide-react';
-import { AdminHeader } from './AdminHeader';
+import { AdminHeader } from '../admin/AdminHeader';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
-import { AdminStatusBadge } from './AdminStatusBadge';
+import { AdminStatusBadge } from '../admin/AdminStatusBadge';
 import {
   INTERACTION_META, resolveInteraction,
   EXERCISE_SUBTYPES as CANONICAL_SUBTYPES, SUBTYPE_ALIASES,
   type InteractionType, type Activity, type DayType,
-} from '../../lib/equip-admin-types';
-import { DAY_TYPE_PRESETS } from './day-presets';
+} from '../../lib/blocks/block-model';
+import { DAY_TYPE_PRESETS } from '../../lib/blocks/block-type-rules';
 import { DAY_TYPE_CONFIG } from '../player/ProgramPlayer';
 import { useMetadata, isContainerRow } from '../../hooks/useMetadata';
 // Template building blocks shared with actual editors (BlockEditor, CheckinTemplateBuilder)
@@ -32,7 +32,7 @@ import {
   SectionDivider,
   MockMediaUpload,
   IndentedSection,
-} from './AdminBlockFormTemplate';
+} from '../admin/AdminBlockFormTemplate';
 
 // ── Block type definitions ──────────────────────────────────────
 // These are structural — they drive editor UI behavior and rendering logic.
@@ -155,7 +155,7 @@ export function AdminBlockTypeViewer({ onBack }: AdminBlockTypeViewerProps) {
   // ── Day config presets — derived, not declared ─────────────────
   // This held a hand-copied set of SEVEN presets against the real eleven, with
   // its own allowedBlocks and blockedComponents that had drifted from
-  // day-presets.ts. Both halves now come from the real sources: composition and
+  // block-type-rules.ts. Both halves now come from the real sources: composition and
   // rules from DAY_TYPE_PRESETS, player layout and progress from
   // ProgramPlayer's DAY_TYPE_CONFIG.
 
@@ -307,7 +307,7 @@ export function AdminBlockTypeViewer({ onBack }: AdminBlockTypeViewerProps) {
       {activeTab === 'activities' && (
         <div className="space-y-3">
           <p style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-muted)', fontFamily: 'var(--font-family-base)' }}>
-            Exercise subtypes define the interaction style inside an Exercise block. This list is derived, not declared here: canonical terms from <code style={{ fontSize: 'var(--text-xs)', backgroundColor: 'var(--color-bg-muted)', padding: '1px 4px', borderRadius: '4px' }}>EXERCISE_SUBTYPES</code>, aliases from <code style={{ fontSize: 'var(--text-xs)', backgroundColor: 'var(--color-bg-muted)', padding: '1px 4px', borderRadius: '4px' }}>SUBTYPE_ALIASES</code> (both in equip-admin-types.ts), labels and descriptions from the live catalog.
+            Exercise subtypes define the interaction style inside an Exercise block. This list is derived, not declared here: canonical terms from <code style={{ fontSize: 'var(--text-xs)', backgroundColor: 'var(--color-bg-muted)', padding: '1px 4px', borderRadius: '4px' }}>EXERCISE_SUBTYPES</code>, aliases from <code style={{ fontSize: 'var(--text-xs)', backgroundColor: 'var(--color-bg-muted)', padding: '1px 4px', borderRadius: '4px' }}>SUBTYPE_ALIASES</code> (both in block-model.ts), labels and descriptions from the live catalog.
           </p>
           {exerciseSubtypes.map((st) => (
             <Card key={st.value} style={{ border: '1px solid var(--color-border-default)', borderRadius: 'var(--radius-lg)', opacity: st.selectable ? 1 : 0.75 }}>

@@ -7,7 +7,7 @@ import { AdminStatusBadge } from '../admin/AdminStatusBadge';
 import { useIsMobile } from '../../hooks/useIsMobile';
 import { Button } from '../ui/button';
 import { EquipProgramWizard } from './EquipProgramWizard';
-import { EquipProgram } from '../../lib/equip-admin-types';
+import { EquipProgram } from '../../lib/blocks/block-model';
 import { AdminDataTable, Column, FilterOption } from '../admin/AdminDataTable';
 import { Skeleton } from '../ui/skeleton-loader';
 import { ImageWithFallback } from '../figma/ImageWithFallback';

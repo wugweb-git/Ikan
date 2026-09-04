@@ -281,7 +281,7 @@ export const METADATA_CATALOG_ITEMS: SeedItem[] = [
   s('Course',   'filter_type', 'course',   { icon: 'graduation-cap' }),
 
   // ── Interaction Types ─────────────────────────────────────────
-  // Must match all 12 InteractionType values from equip-admin-types.ts
+  // Must match all 12 InteractionType values from blocks/block-model.ts
   s('Read',           'interaction_type', 'read',        { icon: 'book-open',          description: 'User reads/scrolls through content' }),
   s('Watch',          'interaction_type', 'watch',       { icon: 'film',               description: 'User watches embedded video or media' }),
   s('Select One',     'interaction_type', 'select-one',  { icon: 'circle-check',       description: 'User picks one option from a list' }),
@@ -458,7 +458,7 @@ export const METADATA_CATALOG_ITEMS: SeedItem[] = [
   s('Premium',    'account_type', 'premium',    { icon: 'sparkles',   color: '#8B5CF6', description: 'Premium subscription user' }),
 
   // ── Day Config Types ───────────────────────────────────────────
-  // Must match all 10+ DAY_TYPE_PRESETS from day-presets.ts
+  // Must match all 10+ DAY_TYPE_PRESETS from blocks/block-type-rules.ts
   s('Onboarding',     'day_config_type', 'onboarding',     { icon: 'zap',             color: '#F59E0B', description: 'First-time intro, consent, and orientation' }),
   s('Assessment',     'day_config_type', 'assessment',     { icon: 'clipboard-list',  color: '#8B5CF6', description: 'Baseline measurement, severity scoring' }),
   s('Assessment Lite','day_config_type', 'assessment-lite',{ icon: 'clipboard-check', color: '#A78BFA', description: 'Awareness, non-scored check-ins' }),

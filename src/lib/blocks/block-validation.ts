@@ -5,7 +5,7 @@
  * saved and published with zero blocks, a select with no options, a clinical
  * item with no scale, or an input-table with no columns, and the only signal was
  * a deduped `console.warn` that reached nobody. `validateBlockForDayType` in
- * `day-presets.ts` looked like the guardrail but had **zero production callers**
+ * `block-type-rules.ts` looked like the guardrail but had **zero production callers**
  * and its allow-list branch returned `allowed: true` unconditionally.
  *
  * This checks the LIVE shape — `exerciseConfig` — rather than the target model's
@@ -15,7 +15,7 @@
  *
  * Dependency-free on purpose: it must run under `node --test`.
  */
-import { resolveInteraction, type Activity, type InteractionType } from './equip-admin-types.ts';
+import { resolveInteraction, type Activity, type InteractionType } from './block-model.ts';
 
 export interface BlockIssue {
   /** `error` blocks a publish; `warning` is authored-content advice. */

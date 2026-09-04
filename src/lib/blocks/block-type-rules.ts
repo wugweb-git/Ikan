@@ -2,8 +2,8 @@ import {
   warnFallback, resolveInteraction, normalizeSubtype,
   type Activity, type ExerciseConfig,
   type DayType, type InteractionType,
-} from '../../lib/equip-admin-types.ts';
-import { METADATA_CATALOG_ITEMS } from '../../lib/metadata-catalog.ts';
+} from './block-model.ts';
+import { METADATA_CATALOG_ITEMS } from '../metadata-catalog.ts';
 
 export interface DayTypePreset {
   label: string;

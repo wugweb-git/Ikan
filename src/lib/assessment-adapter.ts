@@ -1,4 +1,4 @@
-import { EquipProgram, DayContent, Activity, ExerciseConfig, InteractionType } from './equip-admin-types';
+import { EquipProgram, DayContent, Activity, ExerciseConfig, InteractionType } from './blocks/block-model';
 
 /**
  * Inbound spellings of a legacy assessment question type -> the four the save

@@ -125,7 +125,7 @@ import { SafePerformanceMonitor } from './components/monitoring/SafePerformanceM
 import { SkipToMainContent, useReducedMotion } from './components/ui/accessibility-helpers';
 import { OfflineBanner } from './components/OfflineBanner';
 import { useOfflineSync } from './hooks/useOfflineSync';
-import { installBlocksFallbackReporter } from './lib/blocks-fallback-reporter';
+import { installBlocksFallbackReporter } from './lib/blocks/block-fallback-reporter';
 import { usePullToRefresh } from './hooks/usePullToRefresh';
 
 // --- Suspense fallback ---

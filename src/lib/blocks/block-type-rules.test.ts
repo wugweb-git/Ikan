@@ -23,9 +23,9 @@
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { DAY_TYPE_PRESETS, PALETTE_BLOCK_TYPES, validateBlockForDayType } from './day-presets.ts';
-import { METADATA_CATALOG_ITEMS } from '../../lib/metadata-catalog.ts';
-import { INTERACTION_META, type Activity, type InteractionType } from '../../lib/equip-admin-types.ts';
+import { DAY_TYPE_PRESETS, PALETTE_BLOCK_TYPES, validateBlockForDayType } from './block-type-rules.ts';
+import { METADATA_CATALOG_ITEMS } from '../metadata-catalog.ts';
+import { INTERACTION_META, type Activity, type InteractionType } from './block-model.ts';
 
 interface SeedBlock {
   type?: Activity['type'];

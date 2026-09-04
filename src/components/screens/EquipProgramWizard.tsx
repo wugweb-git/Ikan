@@ -31,10 +31,10 @@ import {
   DayContent,
   DEFAULT_CHECKIN_CONFIG,
   type CheckInConfig,
-} from '../../lib/equip-admin-types';
-import { BlockEditor } from './BlockEditor';
+} from '../../lib/blocks/block-model';
+import { BlockEditor } from '../blocks/BlockEditor';
 import { EquipLandingPageRichTextEditor } from './EquipLandingPageRichTextEditor';
-import { DayEditor as DailyBuilder } from './DayEditor';
+import { DayEditor as DailyBuilder } from '../blocks/DayComposer';
 import { UnifiedBasicInfoForm } from '../admin/UnifiedBasicInfoForm';
 import { useMetadata } from '../../hooks/useMetadata';
 import { ProgramPlayer } from '../player/ProgramPlayer';

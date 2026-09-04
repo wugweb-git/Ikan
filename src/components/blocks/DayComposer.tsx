@@ -12,9 +12,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Card, CardContent } from '../ui/card';
 import { Badge } from '../ui/badge';
 import { AdminFormField } from '../admin/AdminFormField';
-import { DayContent, Activity } from '../../lib/equip-admin-types';
+import { DayContent, Activity } from '../../lib/blocks/block-model';
 import { BlockEditor } from './BlockEditor';
-import { DAY_TYPE_PRESETS, PALETTE_BLOCK_TYPES, getPresetForDayType } from '../admin/day-presets';
+import { DAY_TYPE_PRESETS, PALETTE_BLOCK_TYPES, getPresetForDayType } from '../../lib/blocks/block-type-rules';
 import { METADATA_CATALOG_ITEMS } from '../../lib/metadata-catalog';
 import { useMetadata, isContainerRow } from '../../hooks/useMetadata';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '../ui/dropdown-menu';
@@ -229,7 +229,7 @@ function generateBlockId(): string {
 // --- HELPER COMPONENTS ---
 function BlockPaletteMenu({ onSelect, dayType }: { onSelect: (type: string, subtype?: string) => void; dayType?: string }) {
    // Block type definitions with their allowed-block keys for matching
-   // Definition lives in day-presets.ts so it can be asserted against `can_hold`
+   // Definition lives in block-type-rules.ts so it can be asserted against `can_hold`
    // — see PALETTE_BLOCK_TYPES. Icons stay here; they are presentation.
    const ICONS: Record<string, JSX.Element> = {
      lesson:   <BookOpen size={14} className="mr-2" />,

@@ -1,8 +1,8 @@
 import { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { EquipProgram, DayContent, Activity, resolveInteraction, repeatTargetDays, warnFallback, type DayType } from '../../lib/equip-admin-types';
+import { EquipProgram, DayContent, Activity, resolveInteraction, repeatTargetDays, warnFallback, type DayType } from '../../lib/blocks/block-model';
 import { ErrorBoundary } from '../ErrorBoundary';
-import { BlockRenderer } from './BlockRenderer';
+import { BlockRenderer } from '../blocks/BlockRenderer';
 import { Button } from '../ui/button';
 import { Progress } from '../ui/progress';
 import { ChevronLeft, Check, X } from 'lucide-react';

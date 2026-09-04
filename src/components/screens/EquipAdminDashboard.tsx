@@ -15,7 +15,7 @@ import {
   DropdownMenuTrigger,
 } from '../ui/dropdown-menu';
 import { apiClient } from '../../lib/api-client';
-import { EquipProgram } from '../../lib/equip-admin-types';
+import { EquipProgram } from '../../lib/blocks/block-model';
 import { useNotifications } from '../../contexts/NotificationContext';
 import { EquipProgramWizard } from './EquipProgramWizard';
 import { AdminHeader } from '../admin/AdminHeader';

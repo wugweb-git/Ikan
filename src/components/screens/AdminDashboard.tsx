@@ -60,7 +60,7 @@ const L = {
   CheckinBuilder: lazy(() => import('../admin/AdminCheckinTemplateBuilder').then(m => ({ default: m.AdminCheckinTemplateBuilder }))),
   KVAudit: lazy(() => import('../admin/AdminKVAudit').then(m => ({ default: m.AdminKVAudit }))),
   ContactSubmissions: lazy(() => import('../admin/AdminContactSubmissions').then(m => ({ default: m.AdminContactSubmissions }))),
-  BlockTypeViewer: lazy(() => import('../admin/AdminBlockTypeViewer').then(m => ({ default: m.AdminBlockTypeViewer }))),
+  BlockTypeViewer: lazy(() => import('../blocks/BlockTypeViewer').then(m => ({ default: m.AdminBlockTypeViewer }))),
   ScoringEngine: lazy(() => import('../admin/AdminScoringEngine').then(m => ({ default: m.AdminScoringEngine }))),
 };
 

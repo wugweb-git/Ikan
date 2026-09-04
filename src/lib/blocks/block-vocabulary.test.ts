@@ -24,7 +24,7 @@ import {
   resolveInteraction, normalizeSubtype, SUBTYPE_ALIASES, EXERCISE_SUBTYPES,
   INTERACTION_META, DAY_TYPES,
   type Activity, type InteractionType, type ExerciseSubtype,
-} from './equip-admin-types.ts';
+} from './block-model.ts';
 
 /** Minimal Activity — only the fields resolveInteraction reads. */
 function block(type: string, subtype?: string, extra: Record<string, unknown> = {}): Activity {
@@ -187,8 +187,8 @@ test('INTERACTION_META covers every interaction the resolver can return', () => 
 test('DAY_TYPES is the full preset vocabulary', () => {
   // Drift between DAY_TYPES and DAY_TYPE_PRESETS is a *compile* error — the
   // presets are declared `Record<DayType, DayTypePreset>` — which is stronger
-  // than anything assertable here. (A runtime import of day-presets.ts fails
-  // under node's native type stripping: it imports '../../lib/equip-admin-types'
+  // than anything assertable here. (A runtime import of block-type-rules.ts fails
+  // under node's native type stripping: it imports './block-model'
   // with no file extension, which ESM resolution requires.)
   assert.equal(DAY_TYPES.length, 11);
   assert.ok(DAY_TYPES.includes('onboarding'), 'onboarding had a catalog row and no preset until 2026-09-04');
@@ -270,7 +270,7 @@ test('a passive block needs no key', () => {
 // reporting drift as a statistic. These two tests are what turns that into a
 // failure instead.
 
-import { METADATA_CATALOG_ITEMS } from './metadata-catalog.ts';
+import { METADATA_CATALOG_ITEMS } from '../metadata-catalog.ts';
 
 const seedSlugs = (type: string) =>
   METADATA_CATALOG_ITEMS.filter(i => i.type === type).map(i => i.slug).sort();

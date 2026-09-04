@@ -27,8 +27,8 @@ import { UnsavedChangesDialog } from '../ui/unsaved-changes-dialog';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '../ui/dialog';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
-import { DayEditor as DailyBuilder } from './DayEditor';
-import { DayContent, Activity, resolveInteraction, warnFallback } from '../../lib/equip-admin-types';
+import { DayEditor as DailyBuilder } from '../blocks/DayComposer';
+import { DayContent, Activity, resolveInteraction, warnFallback } from '../../lib/blocks/block-model';
 import { AdminLoading } from '../admin/AdminLoading';
 
 // Normalize options to plain strings so the scoring-map key lookup matches

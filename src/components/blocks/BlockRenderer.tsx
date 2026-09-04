@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { motion } from 'framer-motion';
-import { Activity, ExerciseConfig, resolveInteraction, warnFallback } from '../../lib/equip-admin-types';
+import { Activity, ExerciseConfig, resolveInteraction, warnFallback } from '../../lib/blocks/block-model';
 import { Label } from '../ui/label';
 import { RadioGroup, RadioGroupItem } from '../ui/radio-group';
 import { Checkbox } from '../ui/checkbox';

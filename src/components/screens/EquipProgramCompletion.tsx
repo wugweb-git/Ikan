@@ -6,7 +6,7 @@ import { Card, CardContent } from '../ui/card';
 import { Progress } from '../ui/progress';
 import { CircleCheck, Trophy, Calendar, Target, ArrowRight, Star, BookOpen, Clock, BarChart3, Sparkles } from 'lucide-react';
 import { apiClient } from '../../lib/api-client';
-import { EquipProgram } from '../../lib/equip-admin-types';
+import { EquipProgram } from '../../lib/blocks/block-model';
 import { LoadingSpinner } from '../LoadingSpinner';
 
 // ── Design token font helper ──────────────────────────────────

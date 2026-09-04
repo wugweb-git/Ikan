@@ -1,7 +1,7 @@
 /**
  * The real sink for `warnFallback`, wired once from the app entry.
  *
- * Kept out of `equip-admin-types.ts` deliberately: that file is the block model
+ * Kept out of `block-model.ts` deliberately: that file is the block model
  * and must stay dependency-free so it can be unit-tested under `node --test`
  * with no app config, no bundler and no network.
  *
@@ -10,8 +10,8 @@
  * `warnFallback` already dedupes by key, so a render loop cannot become a
  * request loop.
  */
-import { projectId, publicAnonKey } from '../utils/supabase/info';
-import { setFallbackReporter } from './equip-admin-types';
+import { projectId, publicAnonKey } from '../../utils/supabase/info';
+import { setFallbackReporter } from './block-model';
 
 export function installBlocksFallbackReporter(): void {
   if (typeof window === 'undefined' || typeof fetch !== 'function') return;

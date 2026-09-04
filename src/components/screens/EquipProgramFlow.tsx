@@ -5,7 +5,7 @@ import {
   LogOut,
 } from 'lucide-react';
 import { Button } from '../ui/button';
-import { EquipProgram } from '../../lib/equip-admin-types';
+import { EquipProgram } from '../../lib/blocks/block-model';
 import { ProgramPlayer } from '../player/ProgramPlayer';
 import { apiClient } from '../../lib/api-client';
 import { useNotifications } from '../../contexts/NotificationContext';

@@ -45,7 +45,7 @@
  *   which nothing else says. Splitting them makes `lesson · multi-select`
  *   sayable instead of accidental.
  */
-import type { InteractionType, DayType } from './equip-admin-types';
+import type { InteractionType, DayType } from './block-model';
 
 /** Why a block is here. Editorial, open, catalog-backed — as against `interaction`, which is closed. */
 export type BlockRole =
