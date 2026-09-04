@@ -428,3 +428,39 @@ test('validateBlock never throws on a malformed block', () => {
   assert.doesNotThrow(() => validateBlock(undefined as unknown as Activity));
   assert.doesNotThrow(() => validateBlock({ id: 'x' } as Activity));
 });
+
+// ── The exerciseConfig -> activityConfig rename ────────────────────
+// Three steps: ship the accessor, migrate 906 stored blocks across three
+// prefixes, drop the old name. Until the last step a block may be stored under
+// either, and everything reading config must survive both.
+import { configOf } from './block-model.ts';
+
+test('configOf reads either name, preferring the new one', () => {
+  const cfg = { subtype: 'input-table', columns: ['Mon'] };
+  assert.deepEqual(configOf({ exerciseConfig: cfg } as never), cfg, 'old name');
+  assert.deepEqual(configOf({ activityConfig: cfg } as never), cfg, 'new name');
+  assert.deepEqual(
+    configOf({ activityConfig: cfg, exerciseConfig: { subtype: 'mcq' } } as never), cfg,
+    'both present — the new name wins',
+  );
+  assert.equal(configOf(undefined), undefined);
+  assert.equal(configOf({} as never), undefined);
+});
+
+test('a block resolves identically under either config name', () => {
+  // The property the migration rests on: while the store is half-migrated, the
+  // same block must render the same way whichever name it arrived under.
+  const shapes: Array<[string, string]> = [
+    ['exercise', 'input-table'], ['exercise', 'single-select'],
+    ['exercise', 'multi-select'], ['exercise', 'structured-list'],
+    ['exercise', 'scale'],       ['exercise', 'number'],
+  ];
+  for (const [type, subtype] of shapes) {
+    const legacy = { id: 'a', title: '', type, content: '', duration: 0, required: false,
+                     order: 0, exerciseConfig: { subtype } } as unknown as Activity;
+    const renamed = { id: 'a', title: '', type, content: '', duration: 0, required: false,
+                      order: 0, activityConfig: { subtype } } as unknown as Activity;
+    assert.equal(resolveInteraction(renamed), resolveInteraction(legacy),
+      `${type} · ${subtype} must resolve the same under either name`);
+  }
+});

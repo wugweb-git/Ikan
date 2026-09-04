@@ -32,7 +32,11 @@ export function normaliseBlock(block: any) {
     duration: block.duration || estimated_time_minutes || 5,
     required: block.required !== undefined ? block.required
             : (is_required !== undefined ? is_required : true),
-    exerciseConfig: block.exerciseConfig || exercise_config || {},
+    // Both names populated during the rename, from whichever is stored, so any
+    // block loaded through here is safe under either. Dropped when the old name
+    // goes. See `configOf` in block-model.ts.
+    activityConfig: block.activityConfig || block.exerciseConfig || exercise_config || {},
+    exerciseConfig: block.activityConfig || block.exerciseConfig || exercise_config || {},
     stepGroup: block.stepGroup || step_group_id,
     autoAdvance: block.autoAdvance || auto_advance || false,
     image_url: block.image_url,

@@ -175,7 +175,9 @@ export function resolveInteraction(activity: Activity): InteractionType {
   // Prefer explicit interaction field if set
   if (activity.interaction) return activity.interaction;
 
-  const { type, exerciseConfig } = activity;
+  const { type } = activity;
+  // Via the accessor: during the rename a block may be stored under either name.
+  const exerciseConfig = configOf(activity);
   const rawSubtype = exerciseConfig?.subtype;
   // Aliases are resolved BEFORE the switch, so the switch below is the
   // canonical vocabulary and nothing else. See SUBTYPE_ALIASES.
@@ -293,7 +295,14 @@ export const INTERACTION_META: Record<InteractionType, { label: string; verb: st
   'complete':    { label: 'Complete',        verb: 'Finishes', icon: 'flag',           description: 'Day-ending summary or conclusion' },
 };
 
-export interface ExerciseConfig {
+/**
+ * What a block needs to do its job — options, columns, prompt, scale.
+ *
+ * Renamed from `ExerciseConfig` 2026-09-04: it is carried by every block type,
+ * not only `exercise` — a `lesson` and a `conclude` hold one too — so the name
+ * described one case out of six.
+ */
+export interface ActivityConfig {
   /**
    * Authored subtype. Both snake_case and kebab-case spellings of the same term are
    * present in live content, so both are declared here and mapped in resolveInteraction().
@@ -344,6 +353,9 @@ export interface ActivityRepeat {
   columnsByDay?: Record<number, TableColumn[]>;
 }
 
+/** @deprecated Use `ActivityConfig`. Kept so the 22 existing type references keep compiling. */
+export type ExerciseConfig = ActivityConfig;
+
 export interface Activity {
   id: string;
   title: string;
@@ -364,7 +376,18 @@ export interface Activity {
   required: boolean;
   data_id?: string;
   order: number;
-  exerciseConfig?: ExerciseConfig;
+  /**
+   * The block's configuration. `activityConfig` is the name; `exerciseConfig`
+   * is what 906 live blocks are stored under and is being migrated away.
+   *
+   * READ NEITHER DIRECTLY during the migration — use `configOf(block)`, which
+   * prefers the new name and falls back to the old. `normaliseBlock` populates
+   * both on load, so a block loaded through it is safe either way; server code
+   * that reads raw KV is not.
+   */
+  activityConfig?: ActivityConfig;
+  /** @deprecated The stored name. Being migrated to `activityConfig`. */
+  exerciseConfig?: ActivityConfig;
   image_url?: string;
   stepGroup?: string;
   autoAdvance?: boolean;
@@ -471,4 +494,17 @@ export interface EquipProgram {
 
   created_at: string;
   updated_at: string;
+}
+
+/**
+ * The block's config, whichever name it is stored under.
+ *
+ * `exerciseConfig` -> `activityConfig` is a three-step migration: ship this
+ * accessor, migrate the 906 stored blocks across three prefixes, then drop the
+ * old name. Until the last step, anything reading the config must come through
+ * here — a direct `.exerciseConfig` read breaks on a migrated block and a
+ * direct `.activityConfig` read breaks on one that has not been migrated yet.
+ */
+export function configOf(block: Pick<Activity, 'activityConfig' | 'exerciseConfig'> | undefined | null): ActivityConfig | undefined {
+  return block?.activityConfig ?? block?.exerciseConfig;
 }

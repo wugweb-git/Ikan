@@ -381,7 +381,10 @@ export const ProgressService = {
         content: b.content || '',
         duration: b.duration || b.estimated_time_minutes || 5,
         required: b.required !== undefined ? b.required : true,
-        exerciseConfig: b.exerciseConfig || b.exercise_config || {},
+        // Both names during the rename — this reads raw KV and so does not go
+        // through `normaliseBlock`. See `configOf` in lib/blocks/block-model.ts.
+        activityConfig: b.activityConfig || b.exerciseConfig || b.exercise_config || {},
+        exerciseConfig: b.activityConfig || b.exerciseConfig || b.exercise_config || {},
         stepGroup: b.stepGroup || b.step_group_id,
         autoAdvance: b.autoAdvance || b.auto_advance || false,
         image_url: b.image_url,

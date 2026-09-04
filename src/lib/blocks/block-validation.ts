@@ -15,7 +15,7 @@
  *
  * Dependency-free on purpose: it must run under `node --test`.
  */
-import { resolveInteraction, type Activity, type InteractionType } from './block-model.ts';
+import { resolveInteraction, configOf, type Activity, type InteractionType } from './block-model.ts';
 
 export interface BlockIssue {
   /** `error` blocks a publish; `warning` is authored-content advice. */
@@ -83,13 +83,13 @@ export function validateBlock(block: Activity): BlockIssue[] {
   }
 
   for (const rule of REQUIRED[interaction] ?? []) {
-    if (!rule.check(block.exerciseConfig, block)) {
+    if (!rule.check(configOf(block), block)) {
       issues.push({ level: 'error', code: rule.code, message: rule.message });
     }
   }
 
   // Advisory, not an error — the block renders, it just renders a default.
-  if (interaction === 'rate' && !nonEmpty(block.exerciseConfig?.scale)) {
+  if (interaction === 'rate' && !nonEmpty(configOf(block)?.scale)) {
     issues.push({ level: 'warning', code: 'default-scale',
                   message: 'No scale declared, so this uses the default 1–5 with generic labels.' });
   }
