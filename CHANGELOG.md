@@ -9,6 +9,41 @@ undated under their original session number.
 
 ---
 
+## 2026-09-04 (4)
+
+**Declared the content hierarchy — collection / stage / step / block — as types, with a completeness
+check.** `src/lib/content-hierarchy.ts`. Purely additive: **nothing reads it and nothing has migrated.**
+This is blocks.md §14 and §18 Phase 3.1-3.2 at type level, so the migration can be a strangler rather
+than a cutover. The seam already works — `resolveInteraction()` prefers an explicit `interaction`, so a
+block written in this shape is understood by today's player.
+
+Four levels, and only the top two differ between the three features: an equip programme is 31 stages,
+an assessment is 1, a check-in template is 1; they differ further only in which preset the stage
+carries and where answers land (a progress row, a result row, a journal row). Steps and blocks are
+identical in all three. That is the whole claim, and writing it down is what makes "three builders"
+into "one block editor and three thin container editors".
+
+The `Block` type carries the three fields the current model cannot express:
+
+- **`key`** — where the answer goes. Ten of the thirteen interactions produce a response and not one
+  stored block names its destination, so answers file under a block id and day 3's "hours slept" and
+  day 17's are unrelated facts. Check-in already solved this with `save_as`; this adopts check-in's
+  idea rather than the block model's absence of one.
+- **`scale_ref`** — the shared option set. Assessments inline the PHQ/GAD scale 27 separate times.
+- **`role`** — why the block is there, split from `interaction`, which says what the user does. This
+  is what makes `lesson · multi-select` sayable instead of accidental.
+
+`INTERACTION_REQUIREMENTS` states what each of the thirteen interactions requires, what config is
+optional, and what shape of answer it produces. `INTERACTION_META` already carried a label, verb, icon
+and description; what it lacked was this, which is what lets an editor show only the relevant fields
+instead of one `exerciseConfig` with 20 optional ones. `missingRequirements(block)` returns what a
+block is missing.
+
+Six more tests, and one of them found a real inconsistency while being written: `number` was added as a
+thirteenth interaction earlier today but had been left out of `RESPONSE_PRODUCING`, so a numeric block
+would not have been required to name its answer. Fixed in the source. 47 tests, all passing. Typecheck
+unchanged at 205.
+
 ## 2026-09-04 (3)
 
 **Restated the day-type validator against interactions, gave it a dry-run, and fixed the editor line

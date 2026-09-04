@@ -186,3 +186,72 @@ test('DAY_TYPES is the full preset vocabulary', () => {
   assert.equal(DAY_TYPES.length, 11);
   assert.ok(DAY_TYPES.includes('onboarding'), 'onboarding had a catalog row and no preset until 2026-09-04');
 });
+
+// ── The target hierarchy (blocks.md §14) — types only, nothing migrated ──────
+
+import {
+  INTERACTION_REQUIREMENTS, RESPONSE_PRODUCING, SCALE_BACKED, missingRequirements,
+  type Block as HBlock,
+} from './content-hierarchy.ts';
+
+test('every interaction has a requirement spec', () => {
+  for (const interaction of Object.keys(INTERACTION_META) as InteractionType[]) {
+    assert.ok(
+      INTERACTION_REQUIREMENTS[interaction],
+      `interaction "${interaction}" has INTERACTION_META but no requirement spec`
+    );
+  }
+  assert.equal(
+    Object.keys(INTERACTION_REQUIREMENTS).length,
+    Object.keys(INTERACTION_META).length
+  );
+});
+
+test('exactly the response-producing interactions produce something', () => {
+  for (const [interaction, spec] of Object.entries(INTERACTION_REQUIREMENTS)) {
+    const produces = spec.produces !== null;
+    assert.equal(
+      produces,
+      RESPONSE_PRODUCING.includes(interaction as InteractionType),
+      `"${interaction}" produces ${spec.produces} but RESPONSE_PRODUCING says otherwise`
+    );
+  }
+  // read / watch / complete are the three passive ones.
+  assert.equal(RESPONSE_PRODUCING.length, Object.keys(INTERACTION_REQUIREMENTS).length - 3);
+});
+
+test('every scale-backed interaction requires a scale_ref, and only those', () => {
+  for (const [interaction, spec] of Object.entries(INTERACTION_REQUIREMENTS)) {
+    assert.equal(
+      spec.requires.includes('scale_ref'),
+      SCALE_BACKED.includes(interaction as InteractionType),
+      `"${interaction}" disagrees with SCALE_BACKED about needing a scale`
+    );
+  }
+});
+
+test('a response-producing block with no key is incomplete', () => {
+  // This is the defect the hierarchy exists to make unrepresentable: 98 of Sleep
+  // Tight's input-tables have nowhere to file an answer, so a 31-day diary
+  // produces 98 unrelated facts instead of a diary.
+  const keyless: HBlock = {
+    id: 'b1', interaction: 'input-table', position: 0, required: true,
+    config: { columns: ['Mon'], rows: ['Hours slept'] },
+  };
+  assert.deepEqual(missingRequirements(keyless), ['key']);
+  assert.deepEqual(missingRequirements({ ...keyless, key: 'hours_slept' }), []);
+});
+
+test('a scale-backed block with inline options instead of a scale_ref is incomplete', () => {
+  // 27 inline copies of the PHQ/GAD scale is what this refuses.
+  const inlined: HBlock = {
+    id: 'b2', interaction: 'select-one', position: 0, required: true,
+    key: 'phq9_1', config: { options: ['Not at all', 'Several days'] },
+  };
+  assert.deepEqual(missingRequirements(inlined), ['scale_ref']);
+});
+
+test('a passive block needs no key', () => {
+  const lesson: HBlock = { id: 'b3', interaction: 'read', position: 0, required: false };
+  assert.deepEqual(missingRequirements(lesson), []);
+});
