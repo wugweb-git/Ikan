@@ -1,170 +1,30 @@
 /**
+ * Edge-function validation. The rules shared with the browser live in ONE place
+ * — see `validation-core.ts`. This file keeps only what is server-only:
+ * password hashing, and the profile/programme shaping that writes to KV.
+ */
+export {
+  sanitizeString, validateName, validateEmail, validatePassword,
+  validatePhone, validateBio, validateDateOfBirth,
+  type ValidationError, type ValidationResult,
+} from './validation-core.ts';
+import {
+  sanitizeString, validateName, validateEmail, validatePassword,
+  validatePhone, validateBio, validateDateOfBirth,
+  type ValidationError,
+} from './validation-core.ts';
+
+/**
  * Backend validation utilities for iKan server
  * Mirrors frontend validation but runs server-side for security
  */
 
-export interface ValidationError {
-  field: string;
-  message: string;
-}
 
-export interface ValidationResult {
-  isValid: boolean;
-  errors: ValidationError[];
-}
 
-/**
- * Sanitize string to prevent XSS
- */
-export const sanitizeString = (input: string): string => {
-  if (!input) return '';
-  
-  return String(input)
-    .trim()
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#x27;')
-    .replace(/\//g, '&#x2F;');
-};
 
-/**
- * Validate name
- */
-export const validateName = (name: string): ValidationError | null => {
-  if (!name || typeof name !== 'string' || name.trim().length === 0) {
-    return { field: 'name', message: 'Name is required' };
-  }
-  
-  if (name.trim().length < 2) {
-    return { field: 'name', message: 'Name must be at least 2 characters' };
-  }
-  
-  if (name.trim().length > 100) {
-    return { field: 'name', message: 'Name must be less than 100 characters' };
-  }
-  
-  const nameRegex = /^[a-zA-Z\s\-']+$/;
-  if (!nameRegex.test(name.trim())) {
-    return { field: 'name', message: 'Name contains invalid characters' };
-  }
-  
-  return null;
-};
 
-/**
- * Validate email
- */
-export const validateEmail = (email: string): ValidationError | null => {
-  if (!email || typeof email !== 'string' || email.trim().length === 0) {
-    return { field: 'email', message: 'Email is required' };
-  }
-  
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  if (!emailRegex.test(email.trim())) {
-    return { field: 'email', message: 'Invalid email format' };
-  }
-  
-  if (email.length > 254) {
-    return { field: 'email', message: 'Email is too long' };
-  }
-  
-  return null;
-};
 
-/**
- * Validate phone
- */
-export const validatePhone = (phone: string): ValidationError | null => {
-  if (!phone || typeof phone !== 'string') {
-    return null; // Phone is optional
-  }
-  
-  const digitsOnly = phone.replace(/\D/g, '');
-  
-  if (digitsOnly.length < 10 || digitsOnly.length > 15) {
-    return { field: 'phone', message: 'Invalid phone number length' };
-  }
-  
-  return null;
-};
 
-/**
- * Validate bio
- */
-export const validateBio = (bio: string): ValidationError | null => {
-  if (!bio || typeof bio !== 'string') {
-    return null; // Bio is optional
-  }
-  
-  if (bio.trim().length > 500) {
-    return { field: 'bio', message: 'Bio must be less than 500 characters' };
-  }
-  
-  return null;
-};
-
-/**
- * Validate date of birth
- */
-export const validateDateOfBirth = (dateOfBirth: string): ValidationError | null => {
-  if (!dateOfBirth || typeof dateOfBirth !== 'string') {
-    return null; // Optional
-  }
-  
-  const date = new Date(dateOfBirth);
-  
-  if (isNaN(date.getTime())) {
-    return { field: 'dateOfBirth', message: 'Invalid date format' };
-  }
-  
-  if (date > new Date()) {
-    return { field: 'dateOfBirth', message: 'Date cannot be in the future' };
-  }
-  
-  const minDate = new Date();
-  minDate.setFullYear(minDate.getFullYear() - 13);
-  if (date > minDate) {
-    return { field: 'dateOfBirth', message: 'Must be at least 13 years old' };
-  }
-  
-  return null;
-};
-
-/**
- * Validate password
- */
-export const validatePassword = (password: string): ValidationError | null => {
-  if (!password || typeof password !== 'string') {
-    return { field: 'password', message: 'Password is required' };
-  }
-  
-  if (password.length < 8) {
-    return { field: 'password', message: 'Password must be at least 8 characters' };
-  }
-  
-  if (password.length > 128) {
-    return { field: 'password', message: 'Password is too long' };
-  }
-  
-  if (!/[A-Z]/.test(password)) {
-    return { field: 'password', message: 'Password must contain uppercase letter' };
-  }
-  
-  if (!/[a-z]/.test(password)) {
-    return { field: 'password', message: 'Password must contain lowercase letter' };
-  }
-  
-  if (!/\d/.test(password)) {
-    return { field: 'password', message: 'Password must contain a number' };
-  }
-  
-  if (!/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)) {
-    return { field: 'password', message: 'Password must contain special character' };
-  }
-  
-  return null;
-};
 
 /**
  * Validate profile update data

@@ -1,143 +1,31 @@
 /**
+ * Browser validation. The rules shared with the edge function live in ONE place
+ * — see `validation-core.ts`. They used to be duplicated here and all seven had
+ * drifted: this copy lacked the `typeof x !== 'string'` guards, so every one of
+ * them threw on non-string input instead of returning an error.
+ *
+ * Everything below is browser-only: password strength UI, profile shaping.
+ */
+export {
+  sanitizeString, validateName, validateEmail, validatePassword,
+  validatePhone, validateBio, validateDateOfBirth,
+  type ValidationError, type ValidationResult,
+} from '../supabase/functions/server/validation-core';
+import {
+  sanitizeString, validateName, validateEmail, validatePassword,
+  validatePhone, validateBio, validateDateOfBirth,
+  type ValidationError, type ValidationResult,
+} from '../supabase/functions/server/validation-core';
+
+/**
  * Validation utilities for iKan Mental Health PWA
  * Provides comprehensive validation for user inputs
  */
 
-export interface ValidationError {
-  field: string;
-  message: string;
-}
 
-export interface ValidationResult {
-  isValid: boolean;
-  errors: ValidationError[];
-}
 
-/**
- * Name validation
- */
-export const validateName = (name: string): ValidationError | null => {
-  if (!name || name.trim().length === 0) {
-    return { field: 'name', message: 'Name is required' };
-  }
-  
-  if (name.trim().length < 2) {
-    return { field: 'name', message: 'Name must be at least 2 characters' };
-  }
-  
-  if (name.trim().length > 100) {
-    return { field: 'name', message: 'Name must be less than 100 characters' };
-  }
-  
-  // Check for invalid characters (allow letters, spaces, hyphens, apostrophes)
-  const nameRegex = /^[a-zA-Z\s\-']+$/;
-  if (!nameRegex.test(name.trim())) {
-    return { field: 'name', message: 'Name can only contain letters, spaces, hyphens, and apostrophes' };
-  }
-  
-  return null;
-};
 
-/**
- * Email validation
- */
-export const validateEmail = (email: string): ValidationError | null => {
-  if (!email || email.trim().length === 0) {
-    return { field: 'email', message: 'Email is required' };
-  }
-  
-  // RFC 5322 compliant email regex (simplified)
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  if (!emailRegex.test(email.trim())) {
-    return { field: 'email', message: 'Please enter a valid email address' };
-  }
-  
-  if (email.length > 254) {
-    return { field: 'email', message: 'Email is too long' };
-  }
-  
-  return null;
-};
 
-/**
- * Phone number validation (supports international formats)
- */
-export const validatePhone = (phone: string): ValidationError | null => {
-  if (!phone || phone.trim().length === 0) {
-    return null; // Phone is optional
-  }
-  
-  // Remove all non-digit characters for validation
-  const digitsOnly = phone.replace(/\D/g, '');
-  
-  if (digitsOnly.length < 10) {
-    return { field: 'phone', message: 'Phone number must be at least 10 digits' };
-  }
-  
-  if (digitsOnly.length > 15) {
-    return { field: 'phone', message: 'Phone number is too long' };
-  }
-  
-  // Check for valid phone format (allows +, spaces, hyphens, parentheses)
-  const phoneRegex = /^[\+]?[(]?[0-9]{1,4}[)]?[-\s\.]?[(]?[0-9]{1,4}[)]?[-\s\.]?[0-9]{1,5}[-\s\.]?[0-9]{1,5}$/;
-  if (!phoneRegex.test(phone.trim())) {
-    return { field: 'phone', message: 'Please enter a valid phone number' };
-  }
-  
-  return null;
-};
-
-/**
- * Bio validation
- */
-export const validateBio = (bio: string): ValidationError | null => {
-  if (!bio || bio.trim().length === 0) {
-    return null; // Bio is optional
-  }
-  
-  if (bio.trim().length > 500) {
-    return { field: 'bio', message: 'Bio must be less than 500 characters' };
-  }
-  
-  return null;
-};
-
-/**
- * Date of birth validation
- */
-export const validateDateOfBirth = (dateOfBirth: string): ValidationError | null => {
-  if (!dateOfBirth || dateOfBirth.trim().length === 0) {
-    return null; // Date of birth is optional
-  }
-  
-  const date = new Date(dateOfBirth);
-  
-  // Check if valid date
-  if (isNaN(date.getTime())) {
-    return { field: 'dateOfBirth', message: 'Please enter a valid date' };
-  }
-  
-  // Check if date is in the future
-  if (date > new Date()) {
-    return { field: 'dateOfBirth', message: 'Date of birth cannot be in the future' };
-  }
-  
-  // Check minimum age (13 years for mental health app)
-  const minDate = new Date();
-  minDate.setFullYear(minDate.getFullYear() - 13);
-  if (date > minDate) {
-    return { field: 'dateOfBirth', message: 'You must be at least 13 years old' };
-  }
-  
-  // Check maximum age (150 years - reasonable limit)
-  const maxDate = new Date();
-  maxDate.setFullYear(maxDate.getFullYear() - 150);
-  if (date < maxDate) {
-    return { field: 'dateOfBirth', message: 'Please enter a valid date of birth' };
-  }
-  
-  return null;
-};
 
 /**
  * Gender validation
@@ -174,44 +62,6 @@ export const validateLocation = (location: string): ValidationError | null => {
   return null;
 };
 
-/**
- * Password validation
- */
-export const validatePassword = (password: string): ValidationError | null => {
-  if (!password || password.length === 0) {
-    return { field: 'password', message: 'Password is required' };
-  }
-  
-  if (password.length < 8) {
-    return { field: 'password', message: 'Password must be at least 8 characters' };
-  }
-  
-  if (password.length > 128) {
-    return { field: 'password', message: 'Password is too long' };
-  }
-  
-  // Check for at least one uppercase letter
-  if (!/[A-Z]/.test(password)) {
-    return { field: 'password', message: 'Password must contain at least one uppercase letter' };
-  }
-  
-  // Check for at least one lowercase letter
-  if (!/[a-z]/.test(password)) {
-    return { field: 'password', message: 'Password must contain at least one lowercase letter' };
-  }
-  
-  // Check for at least one number
-  if (!/\d/.test(password)) {
-    return { field: 'password', message: 'Password must contain at least one number' };
-  }
-  
-  // Check for at least one special character
-  if (!/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)) {
-    return { field: 'password', message: 'Password must contain at least one special character' };
-  }
-  
-  return null;
-};
 
 /**
  * Calculate password strength
@@ -365,20 +215,6 @@ export const validateProfile = (profile: {
   };
 };
 
-/**
- * Sanitize string input
- */
-export const sanitizeString = (input: string): string => {
-  if (!input) return '';
-  
-  return input
-    .trim()
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#x27;')
-    .replace(/\//g, '&#x2F;');
-};
 
 /**
  * Sanitize profile data
