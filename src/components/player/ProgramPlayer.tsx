@@ -273,17 +273,36 @@ export function ProgramPlayer({
   const activeDayActivities = useMemo<Activity[]>(() => {
     if (!activeDay) return [];
     const totalDays = program.daily_content.length;
+    // Blocks carried forward from other days onto this one.
+    //
+    // DE-DUPLICATED BY ID (2026-09-04). This used to push every match, and
+    // `handleRepeatDay` deliberately preserves block ids across days — so a
+    // repeated day whose block also carried a `repeat` pushed the SAME id more
+    // than once. Two renderers then bound to `responses[block.id]`, React saw a
+    // duplicate `key`, and `groupBlocksIntoSteps` emitted two steps with the
+    // same id. A block appears at most once on a day.
+    const seen = new Set(activeDay.activities.map(a => a.id));
     const repeated: Activity[] = [];
     for (const d of program.daily_content) {
       if (d.day === currentDayNum) continue;
       for (const a of d.activities) {
-        if (!a.repeat) continue;
+        if (!a.repeat || seen.has(a.id)) continue;
         if (repeatTargetDays(a, d.day, totalDays).includes(currentDayNum)) {
+          seen.add(a.id);
           repeated.push(a);
         }
       }
     }
-    return repeated.length ? [...activeDay.activities, ...repeated] : activeDay.activities;
+    if (!repeated.length) return activeDay.activities;
+
+    // ORDER IS HONOURED (2026-09-04). Carried blocks used to be appended, so a
+    // daily tracker always landed at the bottom of the day whatever its `order`
+    // said. Sort the merged list by `order`, keeping the authored sequence for
+    // blocks that declare none.
+    const merged = [...activeDay.activities, ...repeated];
+    return merged.every(a => typeof a.order === 'number')
+      ? [...merged].sort((x, y) => (x.order ?? 0) - (y.order ?? 0))
+      : merged;
   }, [activeDay, program.daily_content, currentDayNum]);
 
   const steps = useMemo(() =>

@@ -13,6 +13,7 @@ Generated 2026-09-02 from read-only SQL against `kv_store_cc205da9` (project `jp
 | `mood.md` | 3 · Mood journal | [iKan Mood Journal](https://claude.ai/code/artifact/89c27b61-925d-4acc-9ea8-cdb4feee8895) | survey pass |
 | `blocks.md` | 4 · Block system | [iKan Blocks & Builders](https://claude.ai/code/artifact/1070a012-f399-46f6-9782-e40d8373f43f) | **15 sections — full pass + block taxonomy reconciliation** |
 | `blocks-dependency-map.md` | 4 · Block system | — | **Traced 2026-09-04** — every producer and reader of block shape, and which prefix each writes. Read before any rename or migration |
+| `blocks-response-identity.md` | 4 · Block system | — | **Specification, 2026-09-04** — what identifies a response today, why a 31-day diary produces 98 unrelated facts, and what to add. Nothing built |
 | `meta.md` | 5 · Metadata catalog | [iKan Metadata Catalog](https://claude.ai/code/artifact/21991ea3-abc9-40a2-85b6-17f1bed76618) | **9 sections — full 21-vocabulary audit** |
 | — | 6 · Engines | not started | scoring · rule · recommendation · wellness score |
 
