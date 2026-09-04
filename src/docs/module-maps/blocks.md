@@ -986,6 +986,30 @@ The core change, and the one the seam was built for.
 | 6.2 | **Assign real presets across all 97 equip days** | `onboarding` for day 0, `tracker` for Sleep Tight 18–30, `reflection` where it applies. **Nine of eleven presets have never been used** — which is why 84 blocks are typed `conclude`, day structure leaking into block types |
 | 6.3 | **Audit what the allow-lists would reject**, then decide per preset | Dry run first. Workshop's blocked list is empty, so Workshop currently accepts anything |
 
+> **[DONE 2026-09-04] Phase 1.2 — `exercise_subtype` is now `activity`. 12 rows, live.**
+>
+> A subtype named a *shape*; an activity names an *action*. Contents unchanged, 12 rows,
+> zero remaining under the old name — verified through the live API.
+>
+> **It took three steps and two deploys, and the order is the whole point.** `useMetadata`'s
+> `TYPE_TO_BUCKET` maps the stored `type` string to a bucket, so flipping the rows before the code
+> that reads the new name is deployed leaves `exerciseSubtypes` **empty** — which trips
+> `BlockEditor`'s `vocabularyUnavailable` and offers the author no subtypes at all. That is a live
+> authoring outage, not a cosmetic window.
+>
+> | step | what | where |
+> |---|---|---|
+> | A | code accepts **both** names, mapped to one bucket; `dedup` collapses overlap | deploy |
+> | B | flip the 12 rows to `activity` | data |
+> | C | drop `exercise_subtype` from the union, maps, seed list and admin list | deploy |
+>
+> **Rollback hazard, now live.** The rows carry a name no frontend build older than step A maps.
+> Rolling the frontend back past step A empties the bucket. Roll the data back with it (set `type`
+> to `exercise_subtype`) or roll forward. Backup: `backup_pre_blocktype_seed_2026_09_04`, 192 rows.
+>
+> This is **only the catalog bucket**. `exerciseConfig.subtype` on the 406 stored blocks is a
+> different and much larger job — see Phase 1.3, moved to the end.
+
 > **[DONE 2026-09-04] Phase 1.1 — the merged `block_type` vocabulary is seeded. 16 rows, live.**
 >
 > 7 leaf rows (`checklist · conclude · exercise · journal · lesson · quiz · reflection`) + **9 new
