@@ -1037,6 +1037,49 @@ The core change, and the one the seam was built for.
 > drift and is not — the two numbers are counting different things by design. That stat row was
 > already the plan's example of reporting drift as a statistic; it is now actively misleading.
 
+> **[MEASURED 2026-09-04] Enforcement today would reject 182 of 406 live blocks — 45%.**
+>
+> Dry run: every live equip block through `validateBlockForDayType` against its own day's preset.
+>
+> | day type | blocks | would reject |
+> |---|---:|---:|
+> | `learning` | 394 | **182** |
+> | `lesson` | 12 | 0 |
+>
+> The 12 that pass do so because `lesson` **has no preset**, so validation is skipped entirely. The
+> only content that survives enforcement is the content nothing checks.
+>
+> The rejections are concentrated: **125 are `exercise · input-table`** on learning days, against a
+> `learning` preset that allows `read · watch · complete · select-one`. This is the "93 of 97 days
+> are on the default" problem arriving — content was authored under no constraint, and the default
+> preset's allow-list describes a lesson day, not the practice/tracker work actually sitting there.
+>
+> **So 5.2's prerequisite is real and it is the whole job**: assign honest block types across the 97
+> days *first*. Enforcement is not a switch to flip — on today's data it fails nearly half the
+> catalogue.
+>
+> **[MEASURED 2026-09-04] 2.2 is mis-scoped: 8 palette strings grant nothing, not 3 — and `boolean`
+> is not one of them.**
+>
+> `DayEditor`'s `BlockPaletteMenu` matches a preset's `allowedBlocks` against four key sets. Every
+> string, and what it actually grants:
+>
+> | grants something | grants **nothing** |
+> |---|---|
+> | `boolean` `likert` `mcq_multi` `mcq_single` `rating_scale` `short_text` `long_text` → exercise · `journal` `journal_short` → journal · `lesson` → lesson · `summary` → conclude | `callout` · `checklist` · `comparison_matrix` · `date_time` · `media` · `rtf_list` · `table_input` · `table_review` |
+>
+> - **`boolean` is load-bearing**, not an orphan — it is one of the keys that makes Exercise
+>   available, on 4 presets.
+> - **`table_input` grants nothing**, on `practice` and `workshop` — the two presets whose whole
+>   point is table work, and 125 live input-tables are exactly what it was meant to permit.
+> - **`checklist` grants nothing** despite `checklist` being a real, live block type.
+>
+> **The cause is upstream of the allow-lists.** `DayEditor.tsx:232`'s palette offers only **four**
+> block types — lesson, exercise, journal, conclude — out of the seven that exist. `checklist`,
+> `reflection` and `quiz` have no palette entry, so **45 live blocks are of types the day palette
+> cannot create.** Fixing 2.2 by editing allow-lists treats the symptom; the palette is three
+> entries short.
+
 > **[RESOLVED 2026-09-04] The presets used to fail their own seed content. Fixed as Phase 0.**
 >
 > Running every preset's `defaultBlocks` through `validateBlockForDayType` against that same preset's
