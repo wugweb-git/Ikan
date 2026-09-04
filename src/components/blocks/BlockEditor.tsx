@@ -30,6 +30,7 @@ import { RichTextEditor } from '../ui/rich-text-editor';
 import { Activity, resolveInteraction, INTERACTION_META, warnFallback, type InteractionType } from '../../lib/blocks/block-model';
 import { useMetadata, isContainerRow } from '../../hooks/useMetadata';
 import { validateBlock } from '../../lib/blocks/block-validation';
+import { hasContentField, contentLabelFor, contentPlaceholderFor } from '../../lib/blocks/block-fields';
 import { validateBlockForDayType } from '../../lib/blocks/block-type-rules';
 import { getPresetForDayType, type DayTypePreset } from '../../lib/blocks/block-type-rules';
 import { projectId } from '../../utils/supabase/info';
@@ -374,20 +375,18 @@ function BlockEditorInner({
 
           {/* DYNAMIC FIELDS BASED ON TYPE */}
           
-          {/* 1. CONTENT / PROMPT SECTION (Lesson, Journal, Reflection, Conclude, Sleep Diary) */}
-          {['lesson', 'journal', 'reflection', 'conclude', 'sleep-diary'].includes(block.type) && (
+          {/* 1. CONTENT / PROMPT SECTION — which types, what label and what
+              placeholder all come from `block-fields.ts`, shared with the
+              viewer's preview so the two cannot drift. */}
+          {hasContentField(block.type) && (
             <div className="space-y-1">
               <Label style={{ fontSize: '10px', fontWeight: 500, fontFamily: 'var(--font-family-base)', color: 'var(--color-text-muted)' }}>
-                {block.type === 'lesson' || block.type === 'conclude' ? 'Content' 
-                  : block.type === 'sleep-diary' ? 'Sleep Diary Instructions'
-                  : 'Prompt / Instructions'}
+                {contentLabelFor(block.type)}
               </Label>
               <RichTextEditor
                 value={block.content}
                 onChange={(val) => onChange({ content: val })}
-                placeholder={block.type === 'lesson' ? "Write educational content..." 
-                  : block.type === 'sleep-diary' ? "Instructions for the sleep diary entry..."
-                  : "Write the prompt for the user..."}
+                placeholder={contentPlaceholderFor(block.type)}
                 minHeight="80px"
               />
             </div>

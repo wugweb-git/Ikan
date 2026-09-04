@@ -467,3 +467,39 @@ test('a block resolves identically under either config name', () => {
       `${type} · ${subtype} must resolve the same under either name`);
   }
 });
+
+// ── Shared field vocabulary ────────────────────────────────────────
+// These decisions lived twice — in BlockEditor (the form) and BlockTypeViewer
+// (the preview that documents the form). The preview had fallen behind.
+import { hasContentField, contentLabelFor, contentPlaceholderFor, stageColour } from './block-fields.ts';
+
+test('only prose block types get a content field — and reflection is not one', () => {
+  for (const t of ['lesson', 'journal', 'conclude', 'sleep-diary']) {
+    assert.equal(hasContentField(t), true, t);
+  }
+  assert.equal(hasContentField('exercise'), false);
+  assert.equal(hasContentField('checklist'), false);
+  // Both copies still listed `reflection`, which became a CONTAINER in the flip
+  // and so can never be a block type at all.
+  assert.equal(hasContentField('reflection'), false);
+});
+
+test('the content field is labelled by what the block is', () => {
+  assert.equal(contentLabelFor('lesson'), 'Content');
+  assert.equal(contentLabelFor('conclude'), 'Content');
+  assert.equal(contentLabelFor('sleep-diary'), 'Sleep Diary Instructions');
+  assert.equal(contentLabelFor('journal'), 'Prompt / Instructions');
+  assert.match(contentPlaceholderFor('lesson'), /educational/);
+  assert.match(contentPlaceholderFor('sleep-diary'), /sleep diary/);
+});
+
+test('stage colour prefers the catalog, ignores the seeded placeholder', () => {
+  assert.equal(stageColour('tracker'), '#10B981');
+  assert.equal(stageColour('tracker', '#ABCDEF'), '#ABCDEF', 'catalog wins');
+  // Every catalog row carries #2A2A2A as a seeded default — not a real choice,
+  // so it must not override the map.
+  assert.equal(stageColour('tracker', '#2A2A2A'), '#10B981');
+  // `learning` is 93 of 98 days and used to fall through to the default.
+  assert.equal(stageColour('learning'), 'var(--color-primary-default)');
+  assert.equal(stageColour(undefined), 'var(--color-primary-default)');
+});

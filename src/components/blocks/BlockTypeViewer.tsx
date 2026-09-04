@@ -19,6 +19,7 @@ import {
 import { DAY_TYPE_PRESETS } from '../../lib/blocks/block-type-rules';
 import { DAY_TYPE_CONFIG } from '../player/ProgramPlayer';
 import { useMetadata, isContainerRow } from '../../hooks/useMetadata';
+import { hasContentField, contentLabelFor, contentPlaceholderFor } from '../../lib/blocks/block-fields';
 // Template building blocks shared with actual editors (BlockEditor, CheckinTemplateBuilder)
 import {
   blockFormStyles,
@@ -816,18 +817,14 @@ function EditorPreview({ block }: { block: BlockTypeInfo }) {
           </div>
 
           {/* Content / Prompt — matches BlockEditor content section */}
-          {['lesson', 'journal', 'reflection', 'conclude', 'sleep-diary'].includes(block.value) && (
+          {hasContentField(block.value) && (
             <div>
               <FieldLabel>
-                {block.value === 'lesson' || block.value === 'conclude' ? 'Content'
-                  : block.value === 'sleep-diary' ? 'Sleep Diary Instructions'
-                  : 'Prompt / Instructions'}
+                {contentLabelFor(block.value)}
               </FieldLabel>
               <MockTextarea height="56px">
                 <span style={{ opacity: 0.5 }}>
-                  {block.value === 'lesson' ? 'Write educational content...'
-                    : block.value === 'sleep-diary' ? 'Instructions for the sleep diary entry...'
-                    : 'Write the prompt for the user...'}
+                  {contentPlaceholderFor(block.value)}
                 </span>
               </MockTextarea>
             </div>
@@ -837,7 +834,7 @@ function EditorPreview({ block }: { block: BlockTypeInfo }) {
           {block.value === 'exercise' && (
             <IndentedSection>
               <div>
-                <FieldLabel>Interaction Type</FieldLabel>
+                <FieldLabel>Activity</FieldLabel>
                 <MockSelect>Multiple Choice Question</MockSelect>
               </div>
               <div>

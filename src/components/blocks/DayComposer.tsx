@@ -16,6 +16,7 @@ import { DayContent, Activity } from '../../lib/blocks/block-model';
 import { BlockEditor } from './BlockEditor';
 import { DAY_TYPE_PRESETS, PALETTE_BLOCK_TYPES, getPresetForDayType } from '../../lib/blocks/block-type-rules';
 import { METADATA_CATALOG_ITEMS } from '../../lib/metadata-catalog';
+import { stageColour } from '../../lib/blocks/block-fields';
 import { useMetadata, isContainerRow } from '../../hooks/useMetadata';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '../ui/dropdown-menu';
 import { cn } from '../ui/utils';
@@ -68,18 +69,12 @@ const DraggableDay = memo(function DraggableDay({ day, index, isSelected, onSele
   drag(drop(ref));
 
   const isOnboarding = day.day === 0;
-  // Color-code by day type
-  const typeColor = isOnboarding ? '#E5A100'
-    : day.dayType === 'assessment' ? '#7C3AED'
-    : day.dayType === 'assessment-lite' ? '#8B5CF6'
-    : day.dayType === 'practice' ? '#059669'
-    : day.dayType === 'reflection' ? '#0284C7'
-    : day.dayType === 'rest' ? '#64748B'
-    : day.dayType === 'quiz' ? '#D97706'
-    : day.dayType === 'check-in' ? '#EC4899'
-    : day.dayType === 'tracker' ? '#10B981'
-    : day.dayType === 'workshop' ? '#6366F1'
-    : 'var(--color-primary-default)';
+  // Colour comes from `block-fields.ts`, which prefers the stage's catalog
+  // `color` and falls back to a code map. This was a ten-branch ternary of raw
+  // hex — the only hardcoded colours in a file that otherwise uses tokens — and
+  // it covered 9 of 11 stage types, so `learning`, the type 93 of 98 days use,
+  // fell through to the default.
+  const typeColor = isOnboarding ? stageColour('onboarding') : stageColour(day.dayType);
 
   return (
     <div
