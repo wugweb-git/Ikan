@@ -12,6 +12,7 @@ Generated 2026-09-02 from read-only SQL against `kv_store_cc205da9` (project `jp
 | `equip.md` | 2 · Equip programs | [iKan Equip Programs](https://claude.ai/code/artifact/f79384a2-adce-4011-8c7f-2dbb00831e6d) | survey pass |
 | `mood.md` | 3 · Mood journal | [iKan Mood Journal](https://claude.ai/code/artifact/89c27b61-925d-4acc-9ea8-cdb4feee8895) | survey pass |
 | `blocks.md` | 4 · Block system | [iKan Blocks & Builders](https://claude.ai/code/artifact/1070a012-f399-46f6-9782-e40d8373f43f) | **15 sections — full pass + block taxonomy reconciliation** |
+| `blocks-dependency-map.md` | 4 · Block system | — | **Traced 2026-09-04** — every producer and reader of block shape, and which prefix each writes. Read before any rename or migration |
 | `meta.md` | 5 · Metadata catalog | [iKan Metadata Catalog](https://claude.ai/code/artifact/21991ea3-abc9-40a2-85b6-17f1bed76618) | **9 sections — full 21-vocabulary audit** |
 | — | 6 · Engines | not started | scoring · rule · recommendation · wellness score |
 
