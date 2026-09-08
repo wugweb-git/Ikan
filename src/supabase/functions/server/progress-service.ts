@@ -398,7 +398,12 @@ export const ProgressService = {
           day_number: day.day ?? day.day_number,
           title: day.title || `Day ${dayNum}`,
           description: day.description || '',
-          dayType: day.dayType || day.day_type || 'learning',
+          // A day has no type since §19 step 3. This projected a `dayType`,
+          // inventing `'learning'` when absent, and dropped the `policy` and
+          // `layout` the day actually carries — so a client reading THIS shape
+          // rather than the record got a phantom type and no behaviour.
+          policy: day.policy,
+          layout: day.layout,
           subtitle: day.subtitle || '',
         },
         blocks,

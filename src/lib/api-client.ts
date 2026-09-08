@@ -432,15 +432,33 @@ class ApiClient {
     if (hasBlobContent) {
       // Blob format: daily_content was stored directly by PUT route — ALWAYS prefer this
       // Already in frontend format — just ensure field consistency
-      dailyContent = raw.daily_content.map((day: any) => ({
-        day: day.day ?? day.day_number ?? 0,
-        title: day.title || '',
-        description: day.description || '',
-        image_url: day.image_url,
-        dayType: day.dayType || day.day_type || 'learning',
-        subtitle: day.subtitle || '',
-        activities: (day.activities || day.blocks || []).map(normaliseBlock)
-      }));
+      /*
+        SPREAD THE DAY, then normalise. Do not rebuild it from a field list.
+
+        This listed seven fields and rebuilt each day from them, so anything the
+        list did not name was DROPPED on every load — and since the editor saves
+        what it loaded, a single open-and-save silently reverted it.
+
+        That is how 134 days lost the `policy` and `layout` written by §19 step 2
+        and regained a `dayType` this line invents (`|| 'learning'`) for a field
+        that no longer exists. Nothing looked broken because every one of them
+        was a learning day anyway, so the fallback produced the same rendering.
+
+        Same defect shape as the catalog sync's field allow-list, fixed the same
+        day: a new field can never reach a reader through a writer that only
+        knows the old ones.
+      */
+      dailyContent = raw.daily_content.map((day: any) => {
+        const { day_type: _legacyDayType, dayType: _dayType, blocks: _blocks, ...rest } = day;
+        return {
+          ...rest,
+          day: day.day ?? day.day_number ?? 0,
+          title: day.title || '',
+          description: day.description || '',
+          subtitle: day.subtitle || '',
+          activities: (day.activities || day.blocks || []).map(normaliseBlock),
+        };
+      });
     } else if (hasSeparateDays) {
       // Fallback: Normalized format from legacy separate day/block entities
       dailyContent = raw.days.map((day: EquipProgramDay) => ({
@@ -448,7 +466,9 @@ class ApiClient {
         title: day.title,
         description: day.description || '',
         image_url: day.image_url,
-        dayType: day.day_type || day.dayType || 'learning',
+        // No `dayType` — a day has no type since §19 step 3. This branch reads
+        // the legacy separate `day:`/`block:` rows, which nothing has written
+        // since 2026-08-06, so it carries no policy or layout to preserve.
         subtitle: day.subtitle || '',
         activities: (day.blocks || []).map((block: EquipProgramBlock) => {
           // Fix for legacy 'sleep_diary' block type
