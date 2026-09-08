@@ -9,7 +9,8 @@ import { ContentImage } from '../ui/ContentImage';
 import { ArrowRight } from 'lucide-react';
 import { SectionReportCard } from '../player/SectionReportCard';
 import { AssessmentCard } from '../assessment/AssessmentCard';
-import { ResourceCard } from '../page-blocks/ResourceCard';
+import { LibraryResourceCard } from '../page-blocks/LibraryResourceCard';
+import { EquipProgramCard } from '../page-blocks/EquipProgramCard';
 import { toResourcePost, isPublished, articleTime } from '../../lib/resource-presentation';
 import {
   Carousel, CarouselContent, CarouselItem, CarouselPrevious, CarouselNext,
@@ -19,6 +20,52 @@ import { equipMeta } from '../../lib/equip-meta';
 import { resolveResultPresentation, percentOfRange } from '../../lib/result-presentation';
 import { getLoadedScoringProfiles, loadScoringProfiles } from '../../lib/recommendation-engine';
 import type { SectionScoreResult } from '../../lib/assessment-sections';
+
+/**
+ * A recommendation row: static up to two items, a carousel above that.
+ *
+ * One component so the two rows cannot drift on the threshold — the article
+ * row already carouselled at three while the programme row was a fixed grid
+ * at any length, which is the same content rule expressed twice and only
+ * half applied.
+ *
+ * The carousel is `ui/carousel.tsx`, the embla wrapper already in the repo.
+ */
+function RecommendationRow<T>({ items, render }: {
+  items: T[];
+  render: (item: T, index: number) => React.ReactNode;
+}) {
+  if (items.length === 0) return null;
+
+  if (items.length <= 2) {
+    return (
+      <div
+        className="grid"
+        style={{
+          gap: 12,
+          gridTemplateColumns: items.length === 1 ? '1fr' : 'repeat(2, 1fr)',
+        }}
+      >
+        {items.map((item, i) => <div key={i}>{render(item, i)}</div>)}
+      </div>
+    );
+  }
+
+  return (
+    <Carousel opts={{ align: 'start' }} className="w-full">
+      <CarouselContent>
+        {items.map((item, i) => (
+          <CarouselItem key={i} className="basis-4/5 sm:basis-1/2 lg:basis-1/3">
+            {render(item, i)}
+          </CarouselItem>
+        ))}
+      </CarouselContent>
+      {/* Hidden on touch, where the swipe is the affordance. */}
+      <CarouselPrevious className="hidden sm:flex" />
+      <CarouselNext className="hidden sm:flex" />
+    </Carousel>
+  );
+}
 
 /** Inline style helper, matching the convention across the results screens. */
 const f = (size: string, weight = 400, color = 'var(--color-text-primary)') => ({
@@ -263,6 +310,9 @@ export function AssessmentResults({
           const days = equipMeta(p).days;
           return {
             kind: 'equip' as const,
+            // The record itself, because the shared card resolves its own
+            // thumbnail, price and category from it.
+            record: p,
             id: p.id ?? id,
             // The record's own words. A rule may override them; none does today.
             title: p.title ?? p.name ?? '',
@@ -279,6 +329,7 @@ export function AssessmentResults({
           if (!a) return null;
           return {
             kind: 'assessment' as const,
+            record: a,
             id: a.id ?? id,
             title: a.title ?? a.name ?? '',
             description: a.description ?? a.subtitle ?? null,
@@ -296,9 +347,14 @@ export function AssessmentResults({
       // A rule's authored copy overrides the record's, when there is any.
       const withOverrides = rows.map(r => {
         const o = overrideById.get(r.id);
-        return o?.title?.trim() || o?.body?.trim()
-          ? { ...r, title: o.title?.trim() || r.title, description: o.body?.trim() || r.description }
-          : r;
+        if (!(o?.title?.trim() || o?.body?.trim())) return r;
+        const title = o.title?.trim() || r.title;
+        const description = o.body?.trim() || r.description;
+        // The override has to reach the record too: the equip card reads its
+        // own fields, so patching only the flattened copy would leave the
+        // card showing the programme's words under an overridden heading.
+        return { ...r, title, description,
+                 record: { ...r.record, title, description } };
       });
       if (!cancelled) setRecommended(withOverrides);
     })();
@@ -658,28 +714,30 @@ export function AssessmentResults({
         {recommended.length > 0 && (
           <motion.section {...reveal}>
             <Eyebrow>Recommended</Eyebrow>
-            <div className="grid grid-cols-1 sm:grid-cols-2" style={{ gap: 12 }}>
-              {recommended.map((r, i) => (
+            <RecommendationRow
+              items={recommended}
+              render={(r) => r.kind === 'equip' ? (
+                <EquipProgramCard
+                  program={r.record}
+                  durationLabel={r.durationLabel ?? ''}
+                  onClick={() => onNavigate?.(`/equip-program-onboarding?id=${r.id}`)}
+                />
+              ) : (
                 <AssessmentCard
-                  key={`${r.kind}-${r.id ?? i}`}
                   variant="full"
-                  index={i}
                   item={{
                     id: r.id,
                     title: r.title,
                     description: r.description,
-                    eyebrow: r.kind === 'equip' ? 'Program' : 'Assessment',
+                    eyebrow: r.record?.category ?? null,
                     image: r.image,
                     durationLabel: r.durationLabel,
                     countLabel: null,
-                    cta: r.cta,
                   }}
-                  onSelect={(id) => onNavigate?.(r.kind === 'equip'
-                    ? `/equip-program-onboarding?id=${id}`
-                    : `/assessment-flow?id=${id}`)}
+                  onSelect={(id) => onNavigate?.(`/assessment-flow?id=${id}`)}
                 />
-              ))}
-            </div>
+              )}
+            />
           </motion.section>
         )}
 
@@ -696,39 +754,15 @@ export function AssessmentResults({
         {articles.length > 0 && (
           <motion.section {...reveal}>
             <Eyebrow>Related articles</Eyebrow>
-            {articles.length < 3 ? (
-              <div
-                className="grid"
-                style={{
-                  gap: 12,
-                  gridTemplateColumns: articles.length === 1 ? '1fr' : 'repeat(2, 1fr)',
-                }}
-              >
-                {articles.map((r, i) => (
-                  <ResourceCard
-                    key={r.id ?? i}
-                    post={toResourcePost(r)}
-                    onClick={() => onNavigate?.(`/resource-detail?id=${r.id}`)}
-                  />
-                ))}
-              </div>
-            ) : (
-              <Carousel opts={{ align: 'start' }} className="w-full">
-                <CarouselContent>
-                  {articles.map((r, i) => (
-                    <CarouselItem key={r.id ?? i} className="basis-4/5 sm:basis-1/2 lg:basis-1/3">
-                      <ResourceCard
-                        post={toResourcePost(r)}
-                        onClick={() => onNavigate?.(`/resource-detail?id=${r.id}`)}
-                      />
-                    </CarouselItem>
-                  ))}
-                </CarouselContent>
-                {/* Hidden on touch, where the swipe is the affordance. */}
-                <CarouselPrevious className="hidden sm:flex" />
-                <CarouselNext className="hidden sm:flex" />
-              </Carousel>
-            )}
+            <RecommendationRow
+              items={articles}
+              render={(r) => (
+                <LibraryResourceCard
+                  resource={toResourcePost(r)}
+                  onClick={() => onNavigate?.(`/resource-detail?id=${r.id}`)}
+                />
+              )}
+            />
           </motion.section>
         )}
 

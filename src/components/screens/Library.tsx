@@ -5,6 +5,7 @@ import { cn } from '../ui/utils';
 import { Search, BookOpen, Video, Headphones, FileText, Image as ImageIcon } from 'lucide-react';
 import { ResourcePost } from '../page-blocks/ResourceCard';
 import { toResourcePost } from '../../lib/resource-presentation';
+import { LibraryResourceCard } from '../page-blocks/LibraryResourceCard';
 import { apiClient } from '../../lib/api-client';
 import { logger } from '../../lib/logger';
 import { PullToRefresh } from '../ui/touch-feedback';
@@ -35,98 +36,6 @@ const CONTENT_TYPES = [
   { value: 'infographic', label: 'Infographics', icon: ImageIcon },
 ];
 
-/* ─── Shared Blog Card Component ─── */
-function BlogCard({ resource, onClick, size = 'default' }: { resource: Resource; onClick: () => void; size?: 'default' | 'small' }) {
-  const isSmall = size === 'small';
-  return (
-    <div
-      className="group cursor-pointer flex flex-col overflow-hidden"
-      onClick={onClick}
-      style={{
-        backgroundColor: 'var(--color-bg-card)',
-        borderRadius: 'var(--radius-lg)',
-        border: '1px solid var(--color-border-default)',
-        transition: 'box-shadow 0.25s ease, transform 0.25s ease',
-      }}
-      onMouseEnter={(e) => { e.currentTarget.style.boxShadow = '0 8px 24px rgba(0,0,0,0.08)'; e.currentTarget.style.transform = 'translateY(-2px)'; }}
-      onMouseLeave={(e) => { e.currentTarget.style.boxShadow = 'none'; e.currentTarget.style.transform = 'translateY(0)'; }}
-    >
-      {/* Image with category pill overlay */}
-      <div
-        className="relative overflow-hidden w-full"
-        style={{
-          aspectRatio: isSmall ? '16/10' : '4/3',
-          backgroundColor: 'var(--color-bg-muted)',
-        }}
-      >
-        <ContentImage
-          src={resolveImageUrl(resource.image)}
-          alt={resource.title}
-          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-          loading="lazy"
-        />
-        {/* Category pill overlay */}
-        {resource.category && (
-          <div
-            className="absolute top-3 left-3"
-            style={{
-              backgroundColor: 'rgba(0,0,0,0.65)',
-              borderRadius: 'var(--radius-pill, 999px)',
-              padding: '4px 12px',
-              backdropFilter: 'blur(4px)',
-            }}
-          >
-            <span
-              style={{
-                fontSize: '11px',
-                fontWeight: 'var(--font-weight-medium)',
-                fontFamily: 'var(--font-family-base)',
-                color: '#FFFFFF',
-                textTransform: 'uppercase',
-                letterSpacing: '0.6px',
-              }}
-            >
-              {resource.category}
-            </span>
-          </div>
-        )}
-      </div>
-
-      {/* Text content */}
-      <div style={{ padding: isSmall ? '12px 14px 14px' : 'var(--spacing-4)', display: 'flex', flexDirection: 'column', gap: '6px' }}>
-        {/* Date + Read time */}
-        <div className="flex items-center" style={{ gap: '6px' }}>
-          <span style={{ fontSize: 'var(--text-xs)', fontWeight: 400, fontFamily: 'var(--font-family-base)', color: 'var(--color-text-muted)' }}>
-            {resource.date}
-          </span>
-          {resource.readTime && (
-            <>
-              <span style={{ color: 'var(--color-text-muted)', fontSize: '10px' }}>•</span>
-              <span style={{ fontSize: 'var(--text-xs)', fontWeight: 400, fontFamily: 'var(--font-family-base)', color: 'var(--color-text-muted)' }}>
-                {resource.readTime}
-              </span>
-            </>
-          )}
-        </div>
-
-        {/* Title */}
-        <h3
-          className="line-clamp-2"
-          style={{
-            fontSize: isSmall ? 'var(--text-sm)' : 'var(--text-base)',
-            fontWeight: 'var(--font-weight-medium)',
-            fontFamily: 'var(--font-family-base)',
-            color: 'var(--color-text-primary)',
-            lineHeight: '1.4',
-            margin: 0,
-          }}
-        >
-          {resource.title}
-        </h3>
-      </div>
-    </div>
-  );
-}
 
 export function Library({ onResourceSelect, onNavigate, className }: LibraryProps) {
   const isMobile = useIsMobile();
@@ -528,7 +437,7 @@ export function Library({ onResourceSelect, onNavigate, className }: LibraryProp
                 }}
               >
                 {featuredResources.slice(1, 5).map((resource) => (
-                  <BlogCard
+                  <LibraryResourceCard
                     key={`featured-${resource.id}`}
                     resource={resource}
                     onClick={() => onNavigate?.(`/resource-detail?id=${resource.id}`)}
@@ -567,7 +476,7 @@ export function Library({ onResourceSelect, onNavigate, className }: LibraryProp
             ))
           ) : filteredResources.length > 0 ? (
             filteredResources.map((resource) => (
-              <BlogCard
+              <LibraryResourceCard
                 key={resource.id}
                 resource={resource}
                 onClick={() => onNavigate?.(`/resource-detail?id=${resource.id}`)}
