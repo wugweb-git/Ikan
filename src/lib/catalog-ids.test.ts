@@ -65,20 +65,27 @@ test('interaction_type ids are frozen — 13 of them', () => {
   ]);
 });
 
-test('activity ids are frozen — 12 of them', () => {
+/**
+ * These read `cat-exercise_subtype-*` on purpose. The type was renamed to
+ * `activity` on 2026-09-04; the rows keep the id they were created under,
+ * because that is what an identifier surviving a rename looks like. Verified
+ * against live KV 2026-09-08: 12 rows, every key `cat-exercise_subtype-<slug>`,
+ * every `value.id` equal to its key.
+ */
+test('activity ids are frozen — 12 of them, under the name they were minted with', () => {
   assert.deepEqual(idsOf('activity'), [
-    'cat-activity-mcq',
-    'cat-activity-single-select',
-    'cat-activity-multi-select',
-    'cat-activity-table',
-    'cat-activity-input-table',
-    'cat-activity-structured-list',
-    'cat-activity-rating-scale',
-    'cat-activity-clinical-instrument',
-    'cat-activity-upload',
-    'cat-activity-ephemeral-journal',
-    'cat-activity-comparison-matrix',
-    'cat-activity-number',
+    'cat-exercise_subtype-mcq',
+    'cat-exercise_subtype-single-select',
+    'cat-exercise_subtype-multi-select',
+    'cat-exercise_subtype-table',
+    'cat-exercise_subtype-input-table',
+    'cat-exercise_subtype-structured-list',
+    'cat-exercise_subtype-rating-scale',
+    'cat-exercise_subtype-clinical-instrument',
+    'cat-exercise_subtype-upload',
+    'cat-exercise_subtype-ephemeral-journal',
+    'cat-exercise_subtype-comparison-matrix',
+    'cat-exercise_subtype-number',
   ]);
 });
 

@@ -722,13 +722,27 @@ class ApiClient {
     }
   }
 
-  async getAdminCategories() {
+  /**
+   * The catalog, for Meta Manager. **Returns `null` on failure, never `[]`.**
+   *
+   * It used to swallow every error and return an empty array, which made a 401,
+   * a 500 and a genuinely empty KV store indistinguishable to the caller. The
+   * consequence was not cosmetic: Meta Manager rendered a failed load as a
+   * SUCCESSFUL, EMPTY page — header "0 total items", every tab badge 0, and an
+   * empty state reading "use Sync All Metadata to populate" — with Sync
+   * enabled, offering a 200-row write against a store whose contents had never
+   * been read.
+   *
+   * Same rule, same reason as `getBlockUsage` above: a page must be able to say
+   * "I cannot tell you" instead of printing a confident zero.
+   */
+  async getAdminCategories(): Promise<unknown[] | null> {
     try {
       const res = await this.request('/admin/categories', { method: 'GET' }, true);
       return res.categories || [];
     } catch (e) {
-      console.warn('Failed to fetch admin categories, returning empty list');
-      return [];
+      console.warn('[catalog] admin categories unavailable:', e);
+      return null;
     }
   }
 

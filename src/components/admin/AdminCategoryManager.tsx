@@ -111,33 +111,19 @@ const COLOR_PRESETS = [
   { value: '#6366F1', label: 'Indigo' },
 ];
 
-// All metadata types. Mood types are managed in Check-in Scales (a "Mood" tab
-// there, alongside Energy/Stress/Sleep/Pain), not here — this screen used to
-// embed AdminMoodManager for a mood_type tab that edited a KV prefix
-// (mood_type:) nothing in the live app ever read; retired 2026-08-06.
-const ALL_TYPES: MetadataType[] = [
-  'category',
-  'content_type',
-  'filter_type',
-  'media_type',
-  'block_type',
-  'interaction_type',
-  'activity',
-  'day_config_type',
-  'difficulty_level',
-  'assessment_type',
-  'scoring_method',
-  'severity_level',
-  'ema_category',
-  'consultant_type',
-  'language',
-  'therapeutic_approach',
-  'demographic_specialty',
-  'expertise_category',
-  'session_format',
-  'account_type',
-  'checkin_block_type',
-];
+/*
+  `ALL_TYPES` was here — a 21-entry list used in exactly ONE place, the header's
+  denominator, while the sidebar rendered `METADATA_TYPE_GROUPS` (22 types). The
+  page therefore said "21 types" above 22 tabs, and `response_tier` — 3 live
+  rows, in the `MetadataType` union and in the groups — had no tab because it
+  was absent from this list and nothing else consulted it.
+
+  Deleted rather than corrected: a second list of the same thing is what let
+  them disagree. `shownTypes` below derives from the groups, so the count and
+  the tabs come from one source. Mood types remain out of scope — they are
+  managed in Check-in Scales, and the `mood_type` branches further down are dead
+  because the groups never yield it.
+*/
 
 /**
  * Vocabularies this screen still edits that nothing reads. Audited 2026-09-08.
@@ -197,6 +183,14 @@ export function AdminCategoryManager({ onBack }: AdminCategoryManagerProps) {
   const [items, setItems] = useState<CategoryItem[]>([]);
   const [allItems, setAllItems] = useState<CategoryItem[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  /**
+   * Whether the catalog was actually READ.
+   *
+   * `isLoading` alone cannot express this: a failed fetch and an empty store
+   * both ended as `isLoading: false` with `allItems: []`, so the page rendered
+   * a failure as a successful empty catalog and invited a reseed to fix it.
+   */
+  const [loadState, setLoadState] = useState<'loading' | 'ok' | 'failed'>('loading');
   const [isCreating, setIsCreating] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [isSyncing, setIsSyncing] = useState(false);
@@ -265,9 +259,15 @@ export function AdminCategoryManager({ onBack }: AdminCategoryManagerProps) {
     setIsLoading(true);
     try {
       const allCategories = await apiClient.getAdminCategories();
-      const raw = (Array.isArray(allCategories) ? allCategories : allCategories.categories || []).filter(
-        (item: CategoryItem) => item && item.id
-      );
+      // `null` is "could not read", distinct from an empty catalog. Bail before
+      // touching `allItems`, so the last good data stays on screen rather than
+      // being replaced by an empty list that looks authoritative.
+      if (allCategories === null) {
+        setLoadState('failed');
+        toast.error('Could not read the catalog — counts and Sync are unavailable');
+        return;
+      }
+      const raw = (allCategories as CategoryItem[]).filter((item) => item && item.id);
       // Dedup by type::slug to prevent repeated entries from multiple syncs
       const seen = new Set<string>();
       const valid = raw.filter((item: CategoryItem) => {
@@ -277,7 +277,9 @@ export function AdminCategoryManager({ onBack }: AdminCategoryManagerProps) {
         return true;
       });
       setAllItems(valid);
+      setLoadState('ok');
     } catch (error) {
+      setLoadState('failed');
       toast.error('Failed to load metadata items');
       console.error(error);
     } finally {
@@ -351,7 +353,10 @@ export function AdminCategoryManager({ onBack }: AdminCategoryManagerProps) {
 
   const handleSyncAll = async () => {
     if (!confirm(
-      `This will sync ${METADATA_CATALOG_ITEMS.length} metadata items to KV.\n\nNew items will be created and existing items will have their icons/colors updated.\n\nProceed?`
+      `This will sync ${METADATA_CATALOG_ITEMS.length} catalog items to KV.\n\n` +
+      `New items are created. Existing items keep their id, can_hold and activities, ` +
+      `but have their icon, colour, description and display order OVERWRITTEN from the ` +
+      `catalog file — any edit made here to those four fields is lost.\n\nNothing is deleted.\n\nProceed?`
     )) return;
 
     setIsSyncing(true);
@@ -377,7 +382,25 @@ export function AdminCategoryManager({ onBack }: AdminCategoryManagerProps) {
   };
 
   const getTabLabel = (tab: MetadataType) => METADATA_TYPE_LABELS[tab] || tab;
-  const countByType = (type: MetadataType) => allItems.filter(i => i.type === type).length;
+  /**
+   * `null` when the catalog could not be read. Rendered as "—", never 0 — a
+   * confident zero here is what made a failed load look like an empty store
+   * and put a reseed button beside it.
+   */
+  const countByType = (type: MetadataType): number | null =>
+    loadState === 'failed' ? null : allItems.filter(i => i.type === type).length;
+
+  /**
+   * Every type the page actually shows, derived from the groups the sidebar
+   * iterates rather than from a second hand-kept list.
+   *
+   * `ALL_TYPES` was a 21-entry array used in exactly one place — this header —
+   * while the sidebar rendered `METADATA_TYPE_GROUPS`, which totals 22. So the
+   * page said "21 types" above 22 tabs, and `response_tier` (3 live rows, in
+   * the union, in the groups) had no tab at all. One source now, so they cannot
+   * disagree again.
+   */
+  const shownTypes = METADATA_TYPE_GROUPS.flatMap((g) => g.types);
 
   const filteredItems = searchQuery
     ? items.filter(i => i.name.toLowerCase().includes(searchQuery.toLowerCase()) || i.slug.includes(searchQuery.toLowerCase()))
@@ -387,13 +410,26 @@ export function AdminCategoryManager({ onBack }: AdminCategoryManagerProps) {
     <div className="max-w-7xl mx-auto space-y-6">
       <AdminHeader
         title="Meta Manager"
-        description={`Manage all metadata types (${allItems.length} total items across ${ALL_TYPES.length} types)`}
+        description={loadState === 'failed'
+          ? `Catalog unavailable — could not read the store. Counts show “—”; they are not zero.`
+          : `Manage all metadata types (${allItems.length} total items across ${shownTypes.length} types)`}
         actions={
           <div className="flex gap-2">
             <Button
               variant="outline"
               onClick={handleSyncAll}
-              disabled={isSyncing}
+              /*
+                Sync posts all catalog items with `updateExisting: true`. It is
+                not destructive — the server merges over the existing row and
+                never deletes — but it overwrites icon, colour, description and
+                sort_order on every matched row. Offering that while the page
+                has not read the store is offering a write against data nobody
+                has seen.
+              */
+              disabled={isSyncing || loadState !== 'ok'}
+              title={loadState !== 'ok'
+                ? 'Unavailable until the catalog has been read — Sync writes against the live store'
+                : undefined}
               className="gap-2"
               style={{
                 borderRadius: 'var(--ikan-component-border-radius)',
@@ -470,7 +506,7 @@ export function AdminCategoryManager({ onBack }: AdminCategoryManagerProps) {
                             color: isActive ? 'white' : 'var(--color-text-muted)',
                           }}
                         >
-                          {count}
+                          {count === null ? '—' : count}
                         </span>
                       )}
                       {type === 'mood_type' && (
@@ -512,6 +548,8 @@ export function AdminCategoryManager({ onBack }: AdminCategoryManagerProps) {
                 </div>
                 <Button
                   onClick={() => { resetForm(); setIsCreating(true); }}
+                  disabled={!!DEPRECATED_TYPES[activeTab]}
+                  title={DEPRECATED_TYPES[activeTab] ? 'This vocabulary has no reader — adding a row would change nothing' : undefined}
                   className="gap-2 shrink-0"
                   style={{
                     borderRadius: 'var(--ikan-component-border-radius)',
@@ -700,7 +738,15 @@ export function AdminCategoryManager({ onBack }: AdminCategoryManagerProps) {
                       <p style={{ color: 'var(--color-text-muted)', fontFamily: 'var(--font-family-base)' }}>
                         {searchQuery
                           ? `No results for "${searchQuery}"`
-                          : `No ${getTabLabel(activeTab).toLowerCase()} found. Click "Add" to create one, or use "Sync All Metadata" to populate.`
+                          : loadState === 'failed'
+                            /*
+                              The old copy said "…or use Sync All Metadata to
+                              populate" in BOTH cases, so a failed read told the
+                              operator the fix was a 200-row write against a
+                              store the page had never opened.
+                            */
+                            ? 'The catalog could not be read, so this list is unknown rather than empty. Reload, or check that you are still signed in — do not sync.'
+                            : `No ${getTabLabel(activeTab).toLowerCase()} found. Click "Add" to create one, or use "Sync All Metadata" to populate.`
                         }
                       </p>
                     </div>
@@ -800,10 +846,21 @@ export function AdminCategoryManager({ onBack }: AdminCategoryManagerProps) {
                               </div>
                             </div>
                             <div className="flex items-center gap-2 shrink-0 ml-2">
-                              <Button variant="outline" size="sm" onClick={() => startEdit(item)} style={{ borderRadius: 'var(--radius-md)' }}>
+                              {/*
+                                A deprecated vocabulary stays visible and
+                                readable — the standing rule — but is not
+                                offered for editing, because an edit here has no
+                                effect anywhere in the product and pretending
+                                otherwise is the same lie as a confident zero.
+                              */}
+                              <Button variant="outline" size="sm" disabled={!!DEPRECATED_TYPES[activeTab]}
+                                      title={DEPRECATED_TYPES[activeTab] ? 'Read-only — nothing reads this vocabulary' : undefined}
+                                      onClick={() => startEdit(item)} style={{ borderRadius: 'var(--radius-md)' }}>
                                 <Pencil className="w-4 h-4" />
                               </Button>
-                              <Button variant="outline" size="sm" onClick={() => handleDelete(item.id)} style={{ borderRadius: 'var(--radius-md)' }}>
+                              <Button variant="outline" size="sm" disabled={!!DEPRECATED_TYPES[activeTab]}
+                                      title={DEPRECATED_TYPES[activeTab] ? 'Read-only — deprecated, but kept rather than deleted' : undefined}
+                                      onClick={() => handleDelete(item.id)} style={{ borderRadius: 'var(--radius-md)' }}>
                                 <Trash2 className="w-4 h-4" style={{ color: 'var(--color-status-danger)' }} />
                               </Button>
                             </div>

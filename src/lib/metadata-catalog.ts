@@ -228,6 +228,12 @@ export interface SeedItem {
    */
   tier?: string;
   /**
+   * This vocabulary has been superseded and nothing reads it. Kept — a term
+   * that is editable but dead must SAY so rather than be deleted — and carried
+   * into KV so any reader, not just Meta Manager, can tell.
+   */
+  deprecated?: boolean;
+  /**
    * The row's PERMANENT identifier. See `catalogId` below — an id is minted once
    * from the slug and then never regenerated, so this is what a rename must not
    * touch.
@@ -332,7 +338,9 @@ export const METADATA_CATALOG_ITEMS: SeedItem[] = [
   s('Course',   'filter_type', 'course',   { icon: 'graduation-cap' }),
 
   // ── Interaction Types ─────────────────────────────────────────
-  // Must match all 12 InteractionType values from blocks/block-model.ts
+  // Must match all 13 InteractionType values from blocks/block-model.ts
+  // (was "12" — stale since `number` joined the union 2026-09-04. The DATA was
+  // always right: 13 rows here, 13 values there. Only the comment lied.)
   s('Read',           'interaction_type', 'read',        { icon: 'book-open',          description: 'User reads/scrolls through content' }),
   s('Watch',          'interaction_type', 'watch',       { icon: 'film',               description: 'User watches embedded video or media' }),
   s('Select One',     'interaction_type', 'select-one',  { icon: 'circle-check',       description: 'User picks one option from a list' }),
@@ -517,41 +525,56 @@ export const METADATA_CATALOG_ITEMS: SeedItem[] = [
 
   // ── Day Config Types ───────────────────────────────────────────
   // Must match all 10+ DAY_TYPE_PRESETS from blocks/block-type-rules.ts
-  s('Onboarding',     'day_config_type', 'onboarding',     { icon: 'zap',             color: '#F59E0B', description: 'First-time intro, consent, and orientation' }),
-  s('Assessment',     'day_config_type', 'assessment',     { icon: 'clipboard-list',  color: '#8B5CF6', description: 'Baseline measurement, severity scoring' }),
-  s('Assessment Lite','day_config_type', 'assessment-lite',{ icon: 'clipboard-check', color: '#A78BFA', description: 'Awareness, non-scored check-ins' }),
-  s('Learning',       'day_config_type', 'learning',       { icon: 'book-open',       color: '#2A2A2A', description: 'Concept introduction and understanding' }),
-  s('Practice',       'day_config_type', 'practice',       { icon: 'pen-tool',        color: '#22C55E', description: 'User data capture, reflection, application' }),
-  s('Reflection',     'day_config_type', 'reflection',     { icon: 'brain',           color: '#3B82F6', description: 'Closure, sense-making, review' }),
-  s('Rest',           'day_config_type', 'rest',           { icon: 'moon',            color: '#9CA3AF', description: 'No active tasks, optional motivation' }),
-  s('Quiz',           'day_config_type', 'quiz',           { icon: 'circle-check',    color: '#F59E0B', description: 'Knowledge check with scoring, tests retention' }),
-  s('Check-In',       'day_config_type', 'check-in',       { icon: 'heart-pulse',     color: '#EC4899', description: 'Quick mood/wellness check with rating' }),
-  s('Tracker',        'day_config_type', 'tracker',        { icon: 'repeat',          color: '#10B981', description: 'Daily repetition, habits, streaks' }),
-  s('Workshop',       'day_config_type', 'workshop',       { icon: 'blocks',          color: '#6366F1', description: 'Multi-step thinking (ideation, evaluation)' }),
+  s('Onboarding',     'day_config_type', 'onboarding',     { deprecated: true, icon: 'zap',             color: '#F59E0B', description: 'First-time intro, consent, and orientation' }),
+  s('Assessment',     'day_config_type', 'assessment',     { deprecated: true, icon: 'clipboard-list',  color: '#8B5CF6', description: 'Baseline measurement, severity scoring' }),
+  s('Assessment Lite','day_config_type', 'assessment-lite',{ deprecated: true, icon: 'clipboard-check', color: '#A78BFA', description: 'Awareness, non-scored check-ins' }),
+  s('Learning',       'day_config_type', 'learning',       { deprecated: true, icon: 'book-open',       color: '#2A2A2A', description: 'Concept introduction and understanding' }),
+  s('Practice',       'day_config_type', 'practice',       { deprecated: true, icon: 'pen-tool',        color: '#22C55E', description: 'User data capture, reflection, application' }),
+  s('Reflection',     'day_config_type', 'reflection',     { deprecated: true, icon: 'brain',           color: '#3B82F6', description: 'Closure, sense-making, review' }),
+  s('Rest',           'day_config_type', 'rest',           { deprecated: true, icon: 'moon',            color: '#9CA3AF', description: 'No active tasks, optional motivation' }),
+  s('Quiz',           'day_config_type', 'quiz',           { deprecated: true, icon: 'circle-check',    color: '#F59E0B', description: 'Knowledge check with scoring, tests retention' }),
+  s('Check-In',       'day_config_type', 'check-in',       { deprecated: true, icon: 'heart-pulse',     color: '#EC4899', description: 'Quick mood/wellness check with rating' }),
+  s('Tracker',        'day_config_type', 'tracker',        { deprecated: true, icon: 'repeat',          color: '#10B981', description: 'Daily repetition, habits, streaks' }),
+  s('Workshop',       'day_config_type', 'workshop',       { deprecated: true, icon: 'blocks',          color: '#6366F1', description: 'Multi-step thinking (ideation, evaluation)' }),
 
   // ── Activities ─────────────────────────────────────────────────
   // Renamed from "Exercise Subtypes" 2026-09-04; the type is `activity` and the
   // label is "Activities" everywhere. This heading was the last place the old
   // name survived, which is how a reader ends up believing there are two lists.
-  s('MCQ',                  'activity', 'mcq',                  { icon: 'circle-check',       description: 'Standard MCQ with single correct answer' }),
-  s('Single Select',       'activity', 'single-select',       { icon: 'list',               description: 'Pick one option from a vertical list' }),
-  s('Multi Select',        'activity', 'multi-select',        { icon: 'list-checks',        description: 'Pick multiple options from a vertical list' }),
-  s('Checklist Table',     'activity', 'table',               { icon: 'toggle-left',        description: 'Grid of items with yes/no toggle per row' }),
-  s('Input Table',         'activity', 'input-table',         { icon: 'layout-grid',        description: 'Grid with text input cells for structured data' }),
-  s('Structured List',     'activity', 'structured-list',     { icon: 'list',               description: 'Ordered list items with user input' }),
-  s('Rating Scale',        'activity', 'rating-scale',        { icon: 'sliders-horizontal', description: 'Numeric rating scale (1–5, 1–10)' }),
-  s('Clinical Instrument', 'activity', 'clinical-instrument', { icon: 'clipboard-list',     description: 'Validated instruments with scored Likert scales' }),
-  s('File Upload',         'activity', 'upload',              { icon: 'image',              description: 'User uploads a file (document, image, audio)' }),
-  s('Ephemeral Journal',   'activity', 'ephemeral-journal',   { icon: 'notebook',           description: 'Session-scoped journal not persisted long-term. Selectable in editor.' }),
-  s('Comparison Matrix',   'activity', 'comparison-matrix',   { icon: 'layout-grid',        description: 'Side-by-side comparison table. Alias for input-table with comparison layout.' }),
-  s('Number',              'activity', 'number',              { icon: 'hash',               description: 'Single numeric value entry' }),
+  //
+  // THE IDS STILL READ `cat-exercise_subtype-*`, AND THAT IS CORRECT.
+  //
+  // All 12 live rows carry `type: 'activity'` with these slugs, so the sync's
+  // `type::slug` lookup matches every one and updates it — nothing forks, and
+  // no second vocabulary exists. Only the KEY kept the name the rows were
+  // created under.
+  //
+  // Which is the rule working, not a leftover: an id is minted once and must
+  // survive a rename, exactly as `activityConfig.key` gives an answer an
+  // identity independent of the block that asked it. Declaring
+  // `cat-activity-mcq` here — as this file briefly did — described rows that do
+  // not exist, and on the create path would mint a duplicate under a second id.
+  //
+  // Do not "tidy" these to match the type. `catalog-ids.test.ts` pins them.
+  s('MCQ',                  'activity', 'mcq',                  { id: 'cat-exercise_subtype-mcq', icon: 'circle-check',       description: 'Standard MCQ with single correct answer' }),
+  s('Single Select',       'activity', 'single-select',       { id: 'cat-exercise_subtype-single-select', icon: 'list',               description: 'Pick one option from a vertical list' }),
+  s('Multi Select',        'activity', 'multi-select',        { id: 'cat-exercise_subtype-multi-select', icon: 'list-checks',        description: 'Pick multiple options from a vertical list' }),
+  s('Checklist Table',     'activity', 'table',               { id: 'cat-exercise_subtype-table', icon: 'toggle-left',        description: 'Grid of items with yes/no toggle per row' }),
+  s('Input Table',         'activity', 'input-table',         { id: 'cat-exercise_subtype-input-table', icon: 'layout-grid',        description: 'Grid with text input cells for structured data' }),
+  s('Structured List',     'activity', 'structured-list',     { id: 'cat-exercise_subtype-structured-list', icon: 'list',               description: 'Ordered list items with user input' }),
+  s('Rating Scale',        'activity', 'rating-scale',        { id: 'cat-exercise_subtype-rating-scale', icon: 'sliders-horizontal', description: 'Numeric rating scale (1–5, 1–10)' }),
+  s('Clinical Instrument', 'activity', 'clinical-instrument', { id: 'cat-exercise_subtype-clinical-instrument', icon: 'clipboard-list',     description: 'Validated instruments with scored Likert scales' }),
+  s('File Upload',         'activity', 'upload',              { id: 'cat-exercise_subtype-upload', icon: 'image',              description: 'User uploads a file (document, image, audio)' }),
+  s('Ephemeral Journal',   'activity', 'ephemeral-journal',   { id: 'cat-exercise_subtype-ephemeral-journal', icon: 'notebook',           description: 'Session-scoped journal not persisted long-term. Selectable in editor.' }),
+  s('Comparison Matrix',   'activity', 'comparison-matrix',   { id: 'cat-exercise_subtype-comparison-matrix', icon: 'layout-grid',        description: 'Side-by-side comparison table. Alias for input-table with comparison layout.' }),
+  s('Number',              'activity', 'number',              { id: 'cat-exercise_subtype-number', icon: 'hash',               description: 'Single numeric value entry' }),
 
   // ── Check-in Block Types (widget types for check-in flow steps) ─
-  s('Emoji Scale',   'checkin_block_type', 'emoji-scale',   { icon: 'smile',               description: 'User picks from emoji options representing mood, energy, etc.' }),
-  s('Free Text',     'checkin_block_type', 'free-text',     { icon: 'pen-tool',            description: 'Open-ended text input for journaling or notes' }),
-  s('Multi Select',  'checkin_block_type', 'multi-select',  { icon: 'list-checks',         description: 'User picks multiple tags/options from a set' }),
-  s('Single Choice', 'checkin_block_type', 'single-choice', { icon: 'circle-check',        description: 'User picks one option from a list' }),
-  s('Slider',        'checkin_block_type', 'slider',        { icon: 'sliders-horizontal',  description: 'Numeric slider with min/max values and labels' }),
-  s('Yes / No',      'checkin_block_type', 'yes-no',        { icon: 'toggle-left',         description: 'Simple binary question — yes or no' }),
-  s('Context Tags',  'checkin_block_type', 'context-tags',  { icon: 'tag',                 description: 'Contextual tags for situational tracking' }),
+  s('Emoji Scale',   'checkin_block_type', 'emoji-scale',   { deprecated: true, icon: 'smile',               description: 'User picks from emoji options representing mood, energy, etc.' }),
+  s('Free Text',     'checkin_block_type', 'free-text',     { deprecated: true, icon: 'pen-tool',            description: 'Open-ended text input for journaling or notes' }),
+  s('Multi Select',  'checkin_block_type', 'multi-select',  { deprecated: true, icon: 'list-checks',         description: 'User picks multiple tags/options from a set' }),
+  s('Single Choice', 'checkin_block_type', 'single-choice', { deprecated: true, icon: 'circle-check',        description: 'User picks one option from a list' }),
+  s('Slider',        'checkin_block_type', 'slider',        { deprecated: true, icon: 'sliders-horizontal',  description: 'Numeric slider with min/max values and labels' }),
+  s('Yes / No',      'checkin_block_type', 'yes-no',        { deprecated: true, icon: 'toggle-left',         description: 'Simple binary question — yes or no' }),
+  s('Context Tags',  'checkin_block_type', 'context-tags',  { deprecated: true, icon: 'tag',                 description: 'Contextual tags for situational tracking' }),
 ];

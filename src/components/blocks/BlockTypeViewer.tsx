@@ -146,10 +146,27 @@ const LEGACY_MAPPING: { legacy: string; interaction: InteractionType; note: stri
  * page, and `ResponseIdentityPanel` needs it too.
  */
 type TermStatus = 'live' | 'wired-unused' | 'declared-unread' | 'orphan';
-const statusOf = (opts: { readByCode: boolean; declared: boolean; count: number | null }): TermStatus => {
+
+/**
+ * `null` means UNKNOWN, and unknown is not unused.
+ *
+ * This returned `(opts.count ?? 0) > 0 ? 'live' : 'wired-unused'`, so with the
+ * usage feed down every row printed "Wired, unused" — a confident claim of
+ * non-use derived from a count the page had just declared it did not have. The
+ * banner one column to the left says exactly that ("they are not zero; this
+ * page just cannot tell you"), which is what makes it the worse error: the page
+ * stated the caveat and then ignored it.
+ *
+ * Note which branches survive a dead feed. `orphan` and `declared-unread` are
+ * facts about CODE — is the term declared, does anything read it — and are
+ * knowable with no live data at all, so they must keep rendering. Only the
+ * live-vs-unused split needs a count, and only that split goes unknown.
+ */
+const statusOf = (opts: { readByCode: boolean; declared: boolean; count: number | null }): TermStatus | null => {
   if (!opts.declared) return 'orphan';           // in the catalog, unknown to code
   if (!opts.readByCode) return 'declared-unread'; // declared, but nothing reads it
-  return (opts.count ?? 0) > 0 ? 'live' : 'wired-unused';
+  if (opts.count === null) return null;           // the feed is down — say so
+  return opts.count > 0 ? 'live' : 'wired-unused';
 };
 const STATUS_LABEL: Record<TermStatus, string> = {
   'live':            'Live',
@@ -381,7 +398,7 @@ export function AdminBlockTypeViewer({ onBack }: AdminBlockTypeViewerProps) {
 
   /** The shared four-column row tail: live count, what it draws, status. */
   const RowMeta = ({ count, rendersAs, status }: {
-    count: number | null; rendersAs: string; status: TermStatus;
+    count: number | null; rendersAs: string; status: TermStatus | null;
   }) => (
     <div className="flex items-start gap-3 flex-wrap mt-2" style={{ fontSize: 'var(--text-xs)' }}>
       <span style={{ color: 'var(--color-text-muted)' }}>
@@ -391,7 +408,12 @@ export function AdminBlockTypeViewer({ onBack }: AdminBlockTypeViewerProps) {
         </strong>
       </span>
       <span style={{ color: 'var(--color-text-muted)', flex: '1 1 240px' }}>{rendersAs}</span>
-      <span style={{ color: STATUS_COLOUR[status], fontWeight: 500 }}>{STATUS_LABEL[status]}</span>
+      <span
+        title={status ? undefined : 'The usage feed is unavailable, so whether anything uses this is unknown — not zero'}
+        style={{ color: status ? STATUS_COLOUR[status] : 'var(--color-text-muted)', fontWeight: 500 }}
+      >
+        {status ? STATUS_LABEL[status] : '—'}
+      </span>
     </div>
   );
   const { blockTypes: kvBlockTypes, exerciseSubtypes: kvExerciseSubtypes, dayConfigTypes: kvDayConfigTypes, interactionTypes: kvInteractionTypes } = useMetadata();
