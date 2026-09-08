@@ -411,20 +411,6 @@ export function getSeverityBandFromProfile(score: number, profileId: string): Sc
 export const SEVERITY_BANDS = DEFAULT_SEVERITY_BANDS;
 export const RECOMMENDATION_RULES = DEFAULT_RECOMMENDATION_RULES;
 
-// Helper to determine severity
-export function getSeverity(score: number, maxScore: number): ResponseTier {
-  const percentage = maxScore > 0 ? (score / maxScore) * 100 : 0;
-  
-  // Use cached bands if available
-  const bands = _cachedConfig?.severityBands || DEFAULT_SEVERITY_BANDS;
-  for (const band of bands) {
-    if (percentage >= band.min && percentage <= band.max) return band.key;
-  }
-  
-  if (percentage <= 30) return 'low';
-  if (percentage <= 60) return 'moderate';
-  return 'high';
-}
 
 // Result Interface
 export interface EngineResult {

@@ -230,42 +230,6 @@ export function calculateMoodTrend(
   };
 }
 
-// Format utilities for the mental health context
-export const formatters = {
-  // Format assessment scores with context
-  assessmentScore: (score: number, maxScore: number): string => {
-    const percentage = Math.round((score / maxScore) * 100);
-    return `${score}/${maxScore} (${percentage}%)`;
-  },
-
-  // Format mood scores for display
-  moodScore: (score: number): string => {
-    if (score >= 8) return 'Excellent';
-    if (score >= 6) return 'Good';
-    if (score >= 4) return 'Okay';
-    if (score >= 2) return 'Difficult';
-    return 'Struggling';
-  },
-
-  // Format time durations for programs
-  programDuration: (days: number): string => {
-    if (days < 7) return `${days} day${days !== 1 ? 's' : ''}`;
-    const weeks = Math.floor(days / 7);
-    const remainingDays = days % 7;
-    
-    let result = `${weeks} week${weeks !== 1 ? 's' : ''}`;
-    if (remainingDays > 0) {
-      result += ` ${remainingDays} day${remainingDays !== 1 ? 's' : ''}`;
-    }
-    return result;
-  },
-
-  // Format progress percentages
-  progress: (completed: number, total: number): string => {
-    const percentage = Math.round((completed / total) * 100);
-    return `${completed}/${total} (${percentage}%)`;
-  }
-};
 
 // Validation utilities
 export const validators = {
@@ -407,7 +371,6 @@ export default {
   calcAssessmentScore,
   interpretAssessmentScore,
   calculateMoodTrend,
-  formatters,
   validators,
   dateUtils,
   errorHandlers
