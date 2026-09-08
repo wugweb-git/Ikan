@@ -21,7 +21,7 @@ import {
   type Activity,
 } from '../../lib/blocks/block-model';
 import { DAY_TYPE_PRESETS } from '../../lib/blocks/block-type-rules';
-import { useMetadata, isContainerRow } from '../../hooks/useMetadata';
+import { useMetadata } from '../../hooks/useMetadata';
 import { hasContentField, contentLabelFor, contentPlaceholderFor } from '../../lib/blocks/block-fields';
 // Template building blocks shared with actual editors (BlockEditor, CheckinTemplateBuilder)
 import {
@@ -848,7 +848,7 @@ export function AdminBlockTypeViewer({ onBack }: AdminBlockTypeViewerProps) {
             decision editable in Meta Manager rather than a sort in this file.
           */}
           {[{ rows: byLiveCount(kvBlockTypes, (r) =>
-              isContainerRow(r) ? countOf('dayTypes', r.value) : countOf('blockTypes', r.value)) }].map(({ rows }) => {
+              countOf('blockTypes', r.value)) }].map(({ rows }) => {
             return (
               <div className="space-y-2">
                 {rows.map((row) => {
@@ -859,19 +859,8 @@ export function AdminBlockTypeViewer({ onBack }: AdminBlockTypeViewerProps) {
                         <RowIcon icon={row.icon} />
                         <span style={{ fontWeight: 500 }}>{row.label}</span>
                         <code style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}>{row.value}</code>
-                        {/* The whole stage/block distinction, as one word. */}
-                        <span
-                          title={isContainerRow(row)
-                            ? 'can_hold is non-empty — it holds block types and carries preset rules'
-                            : 'can_hold is empty — it holds nothing and is placed inside a stage'}
-                          style={{
-                            fontSize: '10px', borderRadius: 4, padding: '0 4px',
-                            border: '1px solid var(--color-border-default)',
-                            color: 'var(--color-text-muted)',
-                          }}
-                        >
-                          {isContainerRow(row) ? 'stage' : 'block'}
-                        </span>
+                        {/* The stage/block badge was here. No block holds
+                            another, so there is no distinction left to badge. */}
                       </div>
                       {row.description && (
                         <p style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)', marginTop: 4 }}>{row.description}</p>
@@ -882,81 +871,45 @@ export function AdminBlockTypeViewer({ onBack }: AdminBlockTypeViewerProps) {
                         // unused. Stages are counted by the days that use them
                         // — which this feed does not carry — so they show "—"
                         // and say why, rather than a misleading 0.
-                        const isStage = isContainerRow(row);
                         const known = (BLOCK_TYPE_VOCABULARY as string[]).includes(row.value);
                         // A stage is counted by the DAYS that carry it; a leaf by
                         // the blocks that are it. Counting blocks against a stage
                         // would always read zero and libel it as unused.
-                        const count = isStage
-                          ? countOf('dayTypes', row.value)
-                          : countOf('blockTypes', row.value);
+                        // Counted by the blocks that ARE it. The stage branch
+                        // is gone: a day has no type, so `dayTypes` counts nothing.
+                        const count = countOf('blockTypes', row.value);
                         return (
                           <RowMeta
                             count={count}
-                            rendersAs={isStage
-                              ? `A stage — ${count ?? '—'} day${count === 1 ? '' : 's'} carry this type`
-                              : (LEAF_HINTS[row.value] ?? 'No preview description recorded')}
+                            rendersAs={LEAF_HINTS[row.value] ?? 'No preview description recorded'}
                             status={statusOf({ readByCode: known, declared: true, count })}
                           />
                         );
                       })()}
-                      {isContainerRow(row) && (
-                        <div className="mt-2 space-y-1" style={{ fontSize: 'var(--text-xs)' }}>
-                          <div><span style={{ color: 'var(--color-text-muted)' }}>holds: </span>{(row.can_hold ?? []).join(' · ') || '—'}</div>
-                          <div><span style={{ color: 'var(--color-text-muted)' }}>activities ({(row.activities ?? []).length}): </span>{(row.activities ?? []).join(' · ') || '—'}</div>
-                          {preset && (
-                            <>
-                              <div><span style={{ color: 'var(--color-text-muted)' }}>interactions: </span>{preset.allowedInteractions.join(' · ')}</div>
-                              <div><span style={{ color: 'var(--color-text-muted)' }}>steps: </span>
-                                {preset.stepGroupRules.allowed ? 'allowed' : 'not allowed'}
-                                {preset.stepGroupRules.required ? ', required' : ''}
-                                {preset.stepGroupRules.oneBlockPerStep ? ', one block per step' : ''}
-                              </div>
-                              {/*
-                                `autoConfig` is the stage's nav and save policy.
-                                `autoAdvance` was read; `saveOnExit` and
-                                `saveOnToggle` were not, until the player began
-                                flushing on exit for the stages that promise it.
-                                Printed here with the day count above it, so a
-                                policy governing nothing cannot look like one in
-                                force.
-                              */}
-                              <div><span style={{ color: 'var(--color-text-muted)' }}>policy: </span>
-                                {Object.entries(preset.autoConfig).length
-                                  ? Object.entries(preset.autoConfig)
-                                      .map(([k, v]) => `${k}: ${v}`).join(' · ')
-                                  : 'none declared'}
-                                {preset.autoConfig.saveOnExit && (
-                                  <span style={{ color: 'var(--color-text-muted)' }}>
-                                    {' '}— the player flushes before leaving a day of this type
-                                  </span>
-                                )}
-                                {preset.autoConfig.saveOnToggle && (
-                                  <span style={{ color: 'var(--color-text-muted)' }}>
-                                    {' '}— every change is committed as it happens, so no exit flush
-                                  </span>
-                                )}
-                              </div>
-                              {preset.warnings.map((w, n) => (
-                                <div key={n} style={{ color: 'var(--color-status-warning)' }}>⚠ {w}</div>
-                              ))}
-                              {preset.errors.map((e, n) => (
-                                <div key={n} style={{ color: 'var(--color-status-danger)' }}>✕ {e}</div>
-                              ))}
-                            </>
-                          )}
-                          {!preset && (
-                            <div style={{ color: 'var(--color-status-danger)' }}>
-                              ✕ holds blocks but has no preset — nav, save and step rules have nothing to govern
+                      {/* `holds:` was the first line here. No block holds another,
+                          so what a type permits — `activities` — is the whole story. */}
+                      <div className="mt-2 space-y-1" style={{ fontSize: 'var(--text-xs)' }}>
+                        <div><span style={{ color: 'var(--color-text-muted)' }}>activities ({(row.activities ?? []).length}): </span>{(row.activities ?? []).join(' · ') || '—'}</div>
+                        {preset && (
+                          <>
+                            <div><span style={{ color: 'var(--color-text-muted)' }}>interactions: </span>{preset.allowedInteractions.join(' · ')}</div>
+                            <div><span style={{ color: 'var(--color-text-muted)' }}>steps: </span>
+                              {preset.stepGroupRules.allowed ? 'allowed' : 'not allowed'}
+                              {preset.stepGroupRules.required ? ', required' : ''}
+                              {preset.stepGroupRules.oneBlockPerStep ? ', one block per step' : ''}
                             </div>
-                          )}
-                        </div>
-                      )}
-                      {!isContainerRow(row) && preset && (
-                        <div className="mt-2" style={{ fontSize: 'var(--text-xs)', color: 'var(--color-status-danger)' }}>
-                          ✕ has preset rules but holds nothing
-                        </div>
-                      )}
+                            <div><span style={{ color: 'var(--color-text-muted)' }}>policy: </span>
+                              {Object.entries(preset.autoConfig).map(([k, v]) => `${k}: ${v}`).join(' · ') || 'none declared'}
+                            </div>
+                            {preset.warnings.map((w, n) => (
+                              <div key={n} style={{ color: 'var(--color-status-warning)' }}>⚠ {w}</div>
+                            ))}
+                            {preset.errors.map((e, n) => (
+                              <div key={n} style={{ color: 'var(--color-status-danger)' }}>✕ {e}</div>
+                            ))}
+                          </>
+                        )}
+                      </div>
                       {/*
                         EVERY block type has a preview now.
 
@@ -975,36 +928,11 @@ export function AdminBlockTypeViewer({ onBack }: AdminBlockTypeViewerProps) {
                       */}
                       <div className="mt-2">{previewToggle(`b:${row.value}`)}</div>
                       {openPreview === `b:${row.value}` && (
-                        isContainerRow(row) ? (
-                          <CompositePreview
-                            activities={row.activities ?? []}
-                            resolve={resolveSubtypeInteraction}
-                            note={`What this type permits, drawn. Its ${(row.activities ?? []).length} activities come from the catalog row.`}
-                          />
-                        ) : row.value === 'exercise' ? (
-                          <CompositePreview
-                            activities={[...CANONICAL_SUBTYPES]}
-                            resolve={resolveSubtypeInteraction}
-                            note={
-                              'Derived, not declared: no `activities` list exists on `exercise` in the catalog. ' +
-                              'Every activity in live use sits inside an exercise and nowhere else, so the canonical ' +
-                              'twelve are what it can draw.'
-                            }
-                          />
-                        ) : (
-                          <PreviewPanel
-                            interaction={probe(row.value)}
-                            blockType={{
-                              value: row.value,
-                              label: row.label,
-                              icon: BookOpen,
-                              description: row.description ?? '',
-                              category: 'equip',
-                              fields: [],
-                              previewHint: LEAF_HINTS[row.value] ?? '',
-                            }}
-                          />
-                        )
+                        <CompositePreview
+                          activities={row.activities ?? []}
+                          resolve={resolveSubtypeInteraction}
+                          note={`What this type permits, drawn — its ${(row.activities ?? []).length} activities, from its own catalog row.`}
+                        />
                       )}
                     </div>
                   );

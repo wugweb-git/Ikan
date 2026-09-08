@@ -28,20 +28,11 @@ export interface MetadataOption {
    * dropping this field here silently reverts the map to code.
    */
   tier?: string;
-  /**
-   * `block_type` rows only: which block types this row can CONTAIN.
-   *
-   *     can_hold: []            this row is a block
-   *     can_hold: ['lesson',…]  this row is a stage, holding those
-   *
-   * Container-ness is derivable from the list rather than flagged beside it —
-   * what marks a container is what it can hold.
-   *
-   * Every one of the 16 `block_type` rows carries an explicit list — the 7 leaf
-   * rows carry `[]` rather than omitting the field, so "this is a block" is
-   * stated rather than inferred from absence.
-   */
-  can_hold?: string[];
+  /*
+    `can_hold` was here, with `isContainerRow` beside it. Both gone 2026-09-08 —
+    no block holds another block, so there is no container/leaf distinction left
+    to express. What a block type permits is `activities`, which all 17 carry.
+  */
   /** `block_type` container rows: which activities its blocks may use. */
   activities?: string[];
   /**
@@ -76,10 +67,6 @@ export function sortByOrder(rows: MetadataOption[]): MetadataOption[] {
   return [...ordered, ...rest];
 }
 
-/** Does this catalog row hold blocks (a stage), rather than being one? */
-export function isContainerRow(row: { can_hold?: string[] }): boolean {
-  return (row.can_hold?.length ?? 0) > 0;
-}
 
 interface MetadataBucket {
   categories: MetadataOption[];
@@ -189,7 +176,6 @@ export function mapItem(item: any): MetadataOption {
     description: item.description,
     order: typeof item.order === 'number' ? item.order : undefined,
     tier: typeof item.tier === 'string' ? item.tier : undefined,
-    can_hold: Array.isArray(item.can_hold) ? item.can_hold : undefined,
     activities: Array.isArray(item.activities) ? item.activities : undefined,
     id: typeof item.id === 'string' ? item.id : undefined,
     sort_order: typeof item.sort_order === 'number' ? item.sort_order : undefined,

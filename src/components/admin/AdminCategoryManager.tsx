@@ -32,7 +32,6 @@ export interface CategoryItem {
    * means it is a STAGE, which changes how its live count must be read — a
    * stage is counted by the days that carry it, never by blocks.
    */
-  can_hold?: string[];
   /** Display rank, low to high. Absent means "keep the existing position". */
   sort_order?: number;
 }
@@ -136,9 +135,9 @@ const DEPRECATED_TYPES: Partial<Record<MetadataType, { rows: number; why: string
   day_config_type: {
     rows: 11,
     why: 'Day types merged into `block_type` (blocks.md §18 Phase 1.1). The eleven stages now live '
-       + 'there, carrying `can_hold` and the preset rules, and that is what DayComposer, BlockEditor '
-       + 'and the player read. The only remaining consumer of this bucket is `useMetadata` filling it.',
-    instead: 'block_type — the eleven rows whose `can_hold` is non-empty',
+       + 'there with the preset rules, and that is what DayComposer and the player read. The only '
+       + 'remaining consumer of this bucket is `useMetadata` filling it.',
+    instead: 'block_type — and the day templates in DAY_TYPE_PRESETS',
   },
   checkin_block_type: {
     rows: 7,
@@ -220,10 +219,9 @@ export function AdminCategoryManager({ onBack }: AdminCategoryManagerProps) {
     if (usageState !== 'ok' || !usage) return null;
     // A block_type row that HOLDS blocks is a stage: counted by the days that
     // carry it, never by blocks, which would always read zero.
-    if (type === 'block_type') {
-      const isStage = (item.can_hold?.length ?? 0) > 0;
-      return (isStage ? usage.dayTypes : usage.blockTypes)[item.slug] ?? 0;
-    }
+    // Counted by the blocks that ARE it. The stage branch is gone: no block
+    // holds another, and a day no longer has a type for `dayTypes` to count.
+    if (type === 'block_type') return usage.blockTypes[item.slug] ?? 0;
     const dim = USAGE_DIMENSION[type];
     return dim ? (usage[dim][item.slug] ?? 0) : null;
   };

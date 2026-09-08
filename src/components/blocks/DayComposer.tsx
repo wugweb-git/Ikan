@@ -24,10 +24,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Card, CardContent } from '../ui/card';
 import { DayContent, Activity } from '../../lib/blocks/block-model';
 import { BlockEditor } from './BlockEditor';
-import { PALETTE_BLOCK_TYPES, getPresetForDayType } from '../../lib/blocks/block-type-rules';
+import { PALETTE_BLOCK_TYPES, getPresetForDayType, DAY_TYPE_PRESETS } from '../../lib/blocks/block-type-rules';
 import { validateDay, hasBlockingIssues } from '../../lib/blocks/block-validation';
 import { stageColour } from '../../lib/blocks/block-fields';
-import { useMetadata, isContainerRow } from '../../hooks/useMetadata';
+/* `useMetadata` is no longer needed here: the composer's only catalog read was
+   the container rows behind the day-type picker, and the picker now lists the
+   TEMPLATES from DAY_TYPE_PRESETS. Block types are the BlockEditor's business. */
 import { seedDayFromTemplate, policyOf } from '../../lib/blocks/day-policy';
 import { layoutOf } from '../../lib/blocks/day-layout';
 import type { DayType, ExerciseSubtype } from '../../lib/blocks/block-model';
@@ -302,10 +304,18 @@ export function DayEditor({
   
   const days = program.daily_content || [];
   // The stages a day may be. Container rows of the merged `block_type`
-  // vocabulary — `can_hold` non-empty — read from the catalog rather than from
-  // a code enum, so adding a stage is a data change.
-  const { blockTypes: kvBlockTypes } = useMetadata();
-  const stageRows = kvBlockTypes.filter(isContainerRow);
+  /*
+    The templates a day can be seeded from — the presets themselves, named from
+    a closed union. This filtered catalog rows by `can_hold`, which no longer
+    exists: a block type does not hold anything, and the list of TEMPLATES was
+    never the same list as the block types anyway. They coincided only because
+    the two vocabularies had been merged.
+  */
+  const stageRows = (Object.keys(DAY_TYPE_PRESETS) as DayType[]).map((slug) => ({
+    value: slug,
+    label: DAY_TYPE_PRESETS[slug].label,
+    activities: DAY_TYPE_PRESETS[slug].allowedInteractions,
+  }));
 
   const [selectedDayNum, setSelectedDayNum] = useState<number | null>(() => {
     if (days.length === 0) return null;

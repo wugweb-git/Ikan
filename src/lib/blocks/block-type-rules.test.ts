@@ -98,49 +98,34 @@ test('the seed file defines every container row, not just KV', () => {
   );
 });
 
-/**
- * INVARIANT: `can_hold` non-empty  <=>  a preset exists for this slug.
- *
- * CLOSED 2026-09-04. `quiz` and `reflection` were flipped to containers once
- * the 58 schema-invalid blocks were re-typed and zero blocks carried either
- * type. 11 containers + 5 leaves = 16. The pin below is gone and this asserts
- * zero, which is what a pin with a defined closure is supposed to become.
- *
- *   rules but holds nothing  -> nav/save/layout/step rules govern nothing
- *   holds something, no rules -> the player has no behaviour for it
- *
- * Neither side is a preference; an entry violating it is an error.
- *
- * PINNED, WITH A DEFINED CLOSURE — which is what makes this pin legitimate
- * where the deleted `allowedBlocks` one was not. `quiz` and `reflection` carry
- * presets while still being leaves, because 37 live blocks are typed with them
- * and Phase 3.3 re-types those first. At step 5 they flip to containers and
- * this list goes to []. It is a TODO with teeth, not a snapshot.
- */
-test('can_hold non-empty <=> the row has a preset', () => {
-  const violations = seedBlockTypes
-    .filter(r => ((r.can_hold?.length ?? 0) > 0) !== (r.slug in DAY_TYPE_PRESETS))
-    .map(r => r.slug).sort();
-  assert.deepEqual(
-    violations, [],
-    'A block_type row either holds blocks AND has preset rules, or neither. ' +
-    'Rules with nothing to govern, or containment with no behaviour, are both errors.',
-  );
-});
+/*
+  Two tests were here and are retired with `can_hold` (2026-09-08):
 
-test('the vocabulary is 11 containers and 6 leaves', () => {
-  const containers = seedBlockTypes.filter(r => (r.can_hold?.length ?? 0) > 0).map(r => r.slug).sort();
-  const leaves     = seedBlockTypes.filter(r => (r.can_hold?.length ?? 0) === 0).map(r => r.slug).sort();
-  // `sleep-diary` retained by decision 2026-09-04 and restored to the catalog,
-  // so the leaf set is 6.
-  assert.deepEqual(leaves, ['checklist', 'conclude', 'exercise', 'journal', 'lesson', 'sleep-diary']);
-  assert.equal(containers.length, 11);
-  // A container is never holdable: nothing nests a stage inside a stage.
-  for (const r of seedBlockTypes) {
-    for (const held of r.can_hold ?? []) {
-      assert.ok(leaves.includes(held), `${r.slug} can_hold includes '${held}', which is a container`);
-    }
-  }
+    · "can_hold non-empty <=> the row has a preset"
+    · "the vocabulary is 11 containers and 6 leaves"
+
+  Both asserted a containment relationship that no longer exists — no block
+  holds another block, so there are no containers and no leaves, only 17 block
+  types. The relationship they policed had never existed in CONTENT either: all
+  11 holder types had zero blocks.
+
+  What a block type permits is `activities`, which all 17 rows now carry, and
+  the assertion below covers it.
+*/
+
+test('every block type declares the activities it permits', () => {
+  const rows = METADATA_CATALOG_ITEMS.filter(r => r.type === 'block_type');
+  assert.equal(rows.length, 17);
+  const missing = rows.filter(r => !Array.isArray(r.activities)).map(r => r.slug);
+  assert.deepEqual(
+    missing, [],
+    'A block type with no `activities` list permits nothing and can hold no ' +
+    'authored content — and the six leaves were exactly this until 2026-09-08, ' +
+    'which is why the store and the seed disagreed.',
+  );
+  // `rest` permits nothing BY DESIGN — a day with no task. Asserted so that an
+  // empty list reads as a decision rather than an omission.
+  assert.deepEqual(rows.find(r => r.slug === 'rest')?.activities, []);
 });
 
 /**

@@ -28,7 +28,7 @@ import { Label } from '../ui/label';
 import { Card, CardContent } from '../ui/card';
 import { RichTextEditor } from '../ui/rich-text-editor';
 import { Activity, resolveInteraction, INTERACTION_META, AUTHORABLE_SUBTYPES, warnFallback } from '../../lib/blocks/block-model';
-import { useMetadata, isContainerRow } from '../../hooks/useMetadata';
+import { useMetadata } from '../../hooks/useMetadata';
 import { validateBlock } from '../../lib/blocks/block-validation';
 import { hasContentField, contentLabelFor, contentPlaceholderFor } from '../../lib/blocks/block-fields';
 import { getPresetForDayType } from '../../lib/blocks/block-type-rules';
@@ -107,28 +107,18 @@ function BlockEditorInner({
   // failed fetch silently offered the admin the wrong list with no way to tell.
   // Empty now means empty, and the editor says so rather than inventing terms.
   // ── The stage this block sits in ─────────────────────────────────
-  // Its catalog row carries `can_hold` (which block types it accepts) and
-  // `activities` (which activities those blocks may use). Those two lists are
-  // the guardrail; before Phase 4 they existed in data and nothing read them.
-  //
-  // NOTE `can_hold` barely discriminates — every stage holds lesson, exercise
-  // and conclude — so filtering the block-type picker changes little. The teeth
-  // are in `activities`, which varies from 0 to 7 across stages. That is the
-  // filter an author actually feels.
-  const stageRow = dayType ? kvBlockTypes.find(r => r.value === dayType) : undefined;
-  const stageCanHold = stageRow?.can_hold;
-  const stageActivities = stageRow?.activities;
+  /*
+    Every catalog row is a block type an author may pick. This split them into
+    "stages" and "leaves" by `can_hold`, and narrowed the type list to the
+    leaves; no block holds another, so there is no split and nothing to narrow.
+  */
+  const leafRows = kvBlockTypes;
+  const blockTypeOptions = leafRows.map(s => ({ value: s.value, label: s.label }));
 
-  // Container rows (`can_hold`) are stages, not blocks — a block can never BE
-  // one, so they never reach this picker.
-  const leafRows = kvBlockTypes.filter(s => !isContainerRow(s));
-  const blockTypeOptions = leafRows
-    .filter(s => !stageCanHold?.length || stageCanHold.includes(s.value))
-    .map(s => ({ value: s.value, label: s.label }));
-
-  // An activity the stage does not permit is still SHOWN when the block already
-  // uses it — hiding the current value would silently rewrite existing content
-  // on the next save. It is marked instead.
+  // The activity list is no longer narrowed by the day either: a day has no
+  // type, so there is no stage whose permitted set could narrow it. What a
+  // BLOCK TYPE permits is `activities` on its own catalog row — a separate
+  // constraint, and one this editor does not yet apply.
   const exerciseSubtypeOptions = kvExerciseSubtypes
     /*
       Declared, not offered.
@@ -146,14 +136,7 @@ function BlockEditorInner({
     */
     .filter(s => (AUTHORABLE_SUBTYPES as readonly string[]).includes(s.value)
                  || s.value === block.activityConfig?.subtype)
-    .filter(s => !stageActivities?.length
-                 || stageActivities.includes(s.value)
-                 || s.value === block.activityConfig?.subtype)
-    .map(s => ({
-      value: s.value,
-      label: s.label,
-      offPreset: !!stageActivities?.length && !stageActivities.includes(s.value),
-    }));
+    .map(s => ({ value: s.value, label: s.label, offPreset: false }));
   const vocabularyUnavailable = !metaLoading && (kvBlockTypes.length === 0 || kvExerciseSubtypes.length === 0);
   if (vocabularyUnavailable) {
     warnFallback(
@@ -395,14 +378,9 @@ function BlockEditorInner({
                 {/* Mislabelled since it was written: this list is fed by the
                     `activity` catalog bucket (renamed from `exercise_subtype`
                     in Phase 1.2), not by InteractionType. */}
-                <Label className="text-xs">
-                  Activity
-                  {stageRow && (
-                    <span style={{ color: 'var(--color-text-muted)', fontWeight: 400 }}>
-                      {' '}— {stageActivities?.length ?? 0} allowed on a {stageRow.label} day
-                    </span>
-                  )}
-                </Label>
+                {/* "N allowed on a <stage> day" was here. A day has no type,
+                    so there is no such sentence to write. */}
+                <Label className="text-xs">Activity</Label>
                 <Select 
                   value={block.activityConfig?.subtype || 'mcq'} 
                   onValueChange={(val: any) => onChange({ 
