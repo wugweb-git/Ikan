@@ -531,6 +531,41 @@ progress, exactly as before — but now resolved from `day.layout` rather than f
 `dayType` is deliberately still present on all 196 days. Removing it is step 3, and it is only safe
 now that every day answers for itself.
 
+### §19 step 3 — a day no longer has a type, and no block holds another
+
+**Code.** `dayType` is gone from `DayContent`. A day carries its own `policy` and `layout`, and
+nothing is derived from a type string any more. `DayType` survives as the name of a TEMPLATE, which
+is all it ever honestly was.
+
+The Day Type select is now *Apply a template*: it writes policy and layout once and seeds blocks if
+the day has none, and shows no current selection — there is nothing to select, because a day is not
+"a learning day", it is a day made from the learning template that has been its own thing since. The
+panel beside it reads **this day's** behaviour and its provenance stamp.
+
+`validateBlockForDayType`, `BlockDayTypeVerdict` and `wouldReject` are deleted. They judged a block
+against the day's type; there is nothing left to judge against, and it was never enforcement — the
+rejecting line was commented out, so the verdict was computed and discarded. `validateBlock` is
+untouched: it asks whether a block can render at all, which is a question about the block.
+
+The palette is unfiltered, and nothing was given up — all 11 holder types had zero blocks, so
+`can_hold` described a containment relationship no content has ever used.
+
+`EquipProgramWizard` wrote `dayType: 'lesson'` — a BLOCK type as a day type, matching no preset and
+skipping every check. Fixed in DayComposer months ago, still live here. It cannot recur.
+
+**Data.** `dayType` removed from all 196 days, both prefixes. Backup
+`backup_pre_daytype_removal_2026_09_08`: 814 blocks before and after, zero interaction drift, 196/196
+still carrying policy and layout, zero days lost a title.
+
+`can_hold` removed from all 11 block-type catalog rows — the reference states plainly that no block
+holds another. Backup `backup_pre_canhold_removal_2026_09_08` (215 rows). `activities` is populated
+on all 17, matching the reference table.
+
+Verified by rendering after each half: the player draws `Continue` with percentage progress,
+identical to before, from `day.layout` alone.
+
+Typecheck baseline 183 → 181.
+
 ### The stat tile that could not report drift
 
 `Block Types` printed a hardcoded `17 · 11 stages · 6 blocks`. It is now
