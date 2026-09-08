@@ -7,13 +7,15 @@ import { Button } from '../ui/button';
 import { ChevronLeft, Check, X } from 'lucide-react';
 import { useNotifications } from '../../contexts/NotificationContext';
 import { cn } from '../ui/utils';
+import { DAY_TYPE_PRESETS } from '../../lib/blocks/block-type-rules';
 
 interface ProgramPlayerProps {
   program: EquipProgram;
   initialDay?: number;
   initialResponses?: Record<string, any>;
   onComplete: (results: PlayerResults) => void;
-  onProgressChange?: (progress: { currentBlockIndex: number, responses: Record<string, any> }) => void;
+  /** May be async — `handleExit` awaits it when the stage promises a save on exit. */
+  onProgressChange?: (progress: { currentBlockIndex: number, responses: Record<string, any> }) => void | Promise<void>;
   onExit: () => void;
   mode?: 'preview' | 'live';
   /** Carry-forward: responses from earlier days, keyed day → blockId → response. */
@@ -321,6 +323,34 @@ export function ProgramPlayer({
     return m;
   }, [program.daily_content]);
 
+  /**
+   * The stage's save policy, declared in `DAY_TYPE_PRESETS[...].autoConfig` and
+   * read by nothing until 2026-09-08.
+   *
+   * `saveOnToggle` (tracker) says every change is committed as it happens —
+   * which is what `handleBlockChange` does for every stage, so such a stage
+   * needs nothing on the way out. `saveOnExit` (reflection, check-in) is a
+   * promise that leaving the day does not lose work, and there was no flush on
+   * exit at all: `onExit` set the view and returned, so a sync still in flight
+   * or one that had failed took the last answer with it.
+   *
+   * Neither governs a live day today — no programme types a day `reflection`,
+   * `tracker` or `check-in` — which the Block Type Viewer now says out loud.
+   */
+  const savePolicy = DAY_TYPE_PRESETS[activeDay?.dayType as keyof typeof DAY_TYPE_PRESETS]?.autoConfig ?? {};
+
+  const handleExit = async () => {
+    if (savePolicy.saveOnExit && !savePolicy.saveOnToggle) {
+      try {
+        await onProgressChange?.({ currentBlockIndex: currentStepIndex, responses });
+      } catch (e) {
+        // Leaving is the user's decision; a failed flush must not trap them.
+        console.error('[player] save-on-exit flush failed', e);
+      }
+    }
+    onExit();
+  };
+
   // Carry-forward: collect a block's responses to the SAME QUESTION on earlier
   // days.
   //
@@ -478,7 +508,7 @@ export function ProgramPlayer({
     return (
       <div className="flex flex-col items-center justify-center min-h-screen text-center p-8">
         <h2 style={{ ...f('xl', 500), marginBottom: 8 }}>Day {currentDayNum} Not Found</h2>
-        <Button onClick={onExit} variant="outline">Back to Home</Button>
+        <Button onClick={handleExit} variant="outline">Back to Home</Button>
       </div>
     );
   }
@@ -592,7 +622,7 @@ export function ProgramPlayer({
             ) : (
               <motion.button
                 whileTap={{ scale: 0.9 }}
-                onClick={onExit}
+                onClick={handleExit}
                 className="flex items-center justify-center"
                 style={{
                   width: 36, height: 36, borderRadius: 18,

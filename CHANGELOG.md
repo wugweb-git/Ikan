@@ -104,6 +104,21 @@ What that immediately reported, all of it true:
 all inline their options. So every scale-backed block reporting it missing is the
 27-copies-of-one-scale problem stated as a number.
 
+### `saveOnExit` / `saveOnToggle` are read (task 6.3)
+
+Both were declared in `DAY_TYPE_PRESETS[...].autoConfig` — `saveOnExit` on `reflection` and
+`check-in`, `saveOnToggle` on `tracker` — and read by nothing.
+
+`onExit` set the view and returned, so there was **no flush on leaving a day at all**: a sync still
+in flight, or one that had failed, took the last answer with it. `ProgramPlayer.handleExit` now
+awaits a final `onProgressChange` for stages that promise a save on exit, and skips it for
+`saveOnToggle` stages, which have already committed every change as it happened. `onProgressChange`
+is typed `void | Promise<void>` so the flush can be awaited.
+
+The live count is the honest part: **no live day is typed `reflection`, `tracker` or `check-in`**,
+so neither policy governs anything today. Every stage's policy is now printed on the Block Type
+Viewer directly under its day count, so a policy governing zero days cannot look like one in force.
+
 ### The stat tile that could not report drift
 
 `Block Types` printed a hardcoded `17 · 11 stages · 6 blocks`. It is now

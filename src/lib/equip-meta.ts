@@ -66,7 +66,10 @@ export function equipMeta(p: EquipMetaSource | null | undefined): EquipMeta {
 
   let activities = 0;
   for (const d of arr) {
-    const blocks = (d as any)?.blocks ?? (d as any)?.activities;
+    // Two stored spellings of one thing: `activities` on the live blob,
+    // `blocks` on the legacy day rows. Narrow once rather than casting twice.
+    const day = d as { blocks?: unknown; activities?: unknown } | null | undefined;
+    const blocks = day?.blocks ?? day?.activities;
     if (Array.isArray(blocks)) activities += blocks.length;
   }
 

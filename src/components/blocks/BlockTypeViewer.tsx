@@ -649,6 +649,31 @@ export function AdminBlockTypeViewer({ onBack }: AdminBlockTypeViewerProps) {
                                 {preset.stepGroupRules.required ? ', required' : ''}
                                 {preset.stepGroupRules.oneBlockPerStep ? ', one block per step' : ''}
                               </div>
+                              {/*
+                                `autoConfig` is the stage's nav and save policy.
+                                `autoAdvance` was read; `saveOnExit` and
+                                `saveOnToggle` were not, until the player began
+                                flushing on exit for the stages that promise it.
+                                Printed here with the day count above it, so a
+                                policy governing nothing cannot look like one in
+                                force.
+                              */}
+                              <div><span style={{ color: 'var(--color-text-muted)' }}>policy: </span>
+                                {Object.entries(preset.autoConfig).length
+                                  ? Object.entries(preset.autoConfig)
+                                      .map(([k, v]) => `${k}: ${v}`).join(' · ')
+                                  : 'none declared'}
+                                {preset.autoConfig.saveOnExit && (
+                                  <span style={{ color: 'var(--color-text-muted)' }}>
+                                    {' '}— the player flushes before leaving a day of this type
+                                  </span>
+                                )}
+                                {preset.autoConfig.saveOnToggle && (
+                                  <span style={{ color: 'var(--color-text-muted)' }}>
+                                    {' '}— every change is committed as it happens, so no exit flush
+                                  </span>
+                                )}
+                              </div>
                               {preset.warnings.map((w, n) => (
                                 <div key={n} style={{ color: 'var(--color-status-warning)' }}>⚠ {w}</div>
                               ))}
