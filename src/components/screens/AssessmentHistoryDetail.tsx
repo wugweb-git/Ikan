@@ -745,25 +745,23 @@ export function AssessmentHistoryDetail({ assessmentId, onBack, onNavigate }: As
               <CardContent style={{ padding: '20px 16px' }}>
                 <h3 style={{ ...f('sm', 500), margin: '0 0 6px' }}>Score over time</h3>
                 <p style={{ ...f('sm', 400, 'var(--color-text-muted)'), margin: 0, lineHeight: 1.5 }}>
+                  {/* FINAL COPY, Assessment Instruments page, approved 8 Sep
+                      2026. Shipped as written. The two excluded cases are
+                      authored as plurals; a single excluded result therefore
+                      reads "1 of your results were". Raised, not edited —
+                      wording is the owner's. */}
                   {chartAbsence.olderVersion > 0 ? (
-                    <>
-                      {/* Never "earlier": when the newest result is excluded too,
-                          nothing here is earlier than anything. */}
-                      {chartAbsence.olderVersion === chartAbsence.total
-                        ? (chartAbsence.total === 1
-                            ? 'Your result was'
-                            : `All ${chartAbsence.total} of your results were`)
-                        : (chartAbsence.olderVersion === 1
-                            ? 'One of your results was'
-                            : `${chartAbsence.olderVersion} of your results were`)}
-                      {' '}scored under an older version of this assessment, so
-                      {chartAbsence.olderVersion === 1 ? ' it cannot' : ' they cannot'} be compared with each other.
-                      {' '}{chartAbsence.olderVersion === 1 ? 'It is' : 'They are'} still listed below.
-                    </>
+                    chartAbsence.olderVersion === chartAbsence.total ? (
+                      <>These results were scored on an earlier version of this assessment, so they can't be compared on one chart. They're all listed below.</>
+                    ) : (
+                      <>{chartAbsence.olderVersion} of your results were scored on an earlier version, so they're not shown here. They're listed below.</>
+                    )
                   ) : chartAbsence.noDenominator > 0 ? (
+                    /* Not covered by FINAL COPY — that section names three
+                       cases and this is a fourth. Left as shipped. */
                     <>Your earlier results did not record a comparable maximum, so they cannot be plotted on one scale. They are still listed below.</>
                   ) : (
-                    <>The chart appears once you have two comparable results.</>
+                    <>Take this assessment again to see how your results change over time.</>
                   )}
                 </p>
               </CardContent>
