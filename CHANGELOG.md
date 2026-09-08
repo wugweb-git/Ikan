@@ -9,6 +9,47 @@ undated under their original session number.
 
 ---
 
+## 2026-09-08 (both rows verified live; one article vocabulary)
+
+**Verified on production, logged in.** A stress result renders **RECOMMENDED**
+(Sleep Tight and Unburn, each with the programme record's own title, its own
+description and a real duration) and **RELATED ARTICLES** (1 stress article). A
+sleep result renders 3 articles and no Recommended row, correctly — that stored
+result carries no recommendation.
+
+> **Row 1 on a stored result renders the `engine_result` captured at
+> completion.** Re-enabling the 18 rules changes what a NEW assessment
+> produces, not what an old record replays. The two programmes above came from
+> the overlap map that was live when that result was written.
+
+### Found while verifying: sorted by one date, displayed by another
+
+Row 2 sorts by `published_at` and the card rendered `created_at`. The GAD-7
+article was created 2025-12-20 and published 2026-03-19, so a correctly ordered
+list read as broken — it sat second while its card showed 2025, between an
+April and a March card. Both now read one candidate list.
+
+### One vocabulary, constrained at the source
+
+The two `mental-health` articles are retagged `general` (backup
+`backup_pre_article_retag_2026_09_08`); `BLOG_CATEGORY_TO_ASSESSMENT` is
+deleted and categories match directly.
+
+**The picker is why it happened.** `ResourceEditPage`'s Topic Category offered
+all **19** `category:` rows, only seven of which name an assessment —
+`confidence`, `energy`, `focus`, `habits`, `mental-health` and the rest match
+nothing, so an article tagged with one can never appear on any result screen.
+Now filtered to the seven, the way the rules manager filters severities, and
+for the same reason: the catalog is admin-editable, so constraining only the
+fallback leaves the hole open one edit away.
+
+**The count did not move: general was 4 published and is 4 published.** The
+mapping had already been surfacing both articles, so this made the stored data
+agree with the behaviour and let the layer go — it did not add anything. Live:
+general 4 · sleep 3 · stress 1 · depression, anxiety, burnout, balance 0.
+
+---
+
 ## 2026-09-08 (two rows, and the rules go live)
 
 **Copy stopped being a precondition, and all 18 rules were re-enabled.**
