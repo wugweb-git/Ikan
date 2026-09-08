@@ -1213,3 +1213,110 @@ production content"**. Nothing was lost; it is filed under a blocks message.
 **Two agents sharing one working tree is not safe.** Serialise them, or give
 each a worktree. This pass avoided damage only by committing within seconds of
 each change and never staging a file the other session had open.
+
+---
+
+## Phase A complete — content revision + scoring migration, 2026-09-08
+
+All data. No code changed, so no frontend deploy was required; the edge function
+reads `assessment_def:` / `scoring-profile:` from KV directly. All four smoke
+endpoints 200 afterwards.
+
+Backups, both Postgres **tables** (a `kv_store` key search will not find them):
+`backup_pre_content_revision_2026_09_08` (173 rows: 7 defs, 11 profiles, 113
+canonical results, 42 `:latest`) and `backup_pre_a5_rescore_2026_09_08`.
+
+### Method — staged, gated, then applied
+A2 and A3 were built into `migration_stage_2026_09_08` and A4 was run against
+the **post-migration** state before anything touched a live record. Only after
+4/4 passed was staging copied across.
+
+| A4 check | result |
+|---|---|
+| 1 tiling | 0 failures, 458 achievable values enumerated |
+| 1b `bat-mean` partial sets | 0 failures, 1,127 means across item counts 1-23 |
+| 2 vocabulary | 0 |
+| 3 answerability | 0 — `brs` now 6-required on 6 items |
+| 4 derived scale | 0 |
+
+Live after: 7 defs, 11 profiles, **95 questions** (was 92), **36 bands**,
+exactly 18 rows differing from the backup. All 42 `:latest` twins remain
+byte-identical.
+
+### Two bugs caught before execution
+- **`depression-q10` appeared in two `CASE` arms** — the risk flag and the
+  Scale F relabel. SQL takes the first match, so the relabel would have been
+  **silently dropped**: a question asking "how difficult" still answering
+  "Several days", carrying a crisis flag. No test would have caught it.
+- A literal-quoting bug emitting `'"sleep-q8"`. Both found by reading the
+  generated SQL rather than running it.
+
+The payload's claim that burnout's 23 questions share one options array and one
+scoring map was **verified, not trusted**: 1 distinct of each, values 1-5.
+
+### Deviation from the admin write path
+Writing by SQL bypasses `applyTextHistory`, so it was replicated — all **30**
+rewrites carry a `{from, to, at, by}` entry (5+9+7+8+1 across depression,
+burnout, stress, balance, sleep). That ledger exists because recovering
+`burnout-q9`'s wording once meant tracing six backups.
+
+`scoring.ranges` and `resultCategories` are left stale. Confirmed safe: both
+appear **only in docs**, with no live code reading either.
+
+### A5 — strict rule, on the owner's call
+**77 of 88 canonical results excluded (88%); 11 retained** — general 6,
+anxiety 5, the two instruments whose item text was not replaced.
+
+Both source documents undercounted. The brief's "72" omits the 5 already
+`pre-spec` rows in general and anxiety, which stay excluded either way; Notion's
+"57" measures as 56. Measured figures above.
+
+Two method corrections were required:
+- **Test 2 must be scored-items-only.** Applied to all responses it disqualified
+  anxiety and depression outright, because the Scale F relabel deliberately
+  orphans `depression-q10` / `anxiety-q8` — both `is_scored: false` and in no
+  score.
+- A first pass reported 76 rows, not 88: an inner lateral join over `responses`
+  silently dropped results that had none.
+
+**General rescored, all 6 rows** — mandatory, not optional. `brs` moved
+`sum` → `mean`, so stored resilience sums (19-26 of 35) would have fallen
+outside every band and rendered **blank**:
+
+| row | self-efficacy | resilience |
+|---|---|---|
+| 642fe267 | 7/35 → **8/40** | 19/35 Low → **3.00/5 Normal** |
+| 83259ce3 | 16/35 → **19/40** | 26/35 Normal → **3.83/5 Normal** |
+| aeef2056 | (none) → 25/40 | (none) → 2.67/5 Low |
+| c07428fe | 13/35 → **17/40** | 21/35 Normal → **2.83/5 Low** |
+| f9659be2 | 7/35 → **8/40** | 19/35 Low → **3.00/5 Normal** |
+| 6fdc3afe | 20/35 → **23/40** | 20/35 Low → **2.83/5 Low** |
+
+Anxiety, depression and wellbeing were unchanged on every row, as expected.
+
+### A6 verify — all named probes land in exactly one band
+sleep 32 and 40 → Very Poor Sleep · gad7 7 Mild / 9 Moderate / 14 Moderately
+severe · stress 13 Low / 26 Moderate / 40 High · brs 2.67 Low / 3.83 Normal ·
+ngse 8 Low / 40 High · who5 51 Good. Live API confirms 95 questions, burnout
+115/115 object options, 30 `text_history` entries.
+
+### OWNER DECISION on the record — crisis flag
+Confirmed twice, deliberately, shipped as authored. **`depression-q10`** (the
+functional-impairment item, Scale F, floor 0) carries `is_risk_indicator`, so
+`AssessmentFlow.evaluateRisk` fires `triggerCrisisSupport` on any answer above
+"Not difficult at all" — i.e. "Somewhat difficult" opens the crisis panel.
+**`depression-q9`**, now *"Thoughts that you would be better off dead or of
+hurting yourself in some way"* — the identical sentence to `general-q5`, which
+does carry the flag — is **not** flagged, so endorsing it triggers nothing.
+
+This is a deliberate owner decision, not a defect. Do not "fix" it without
+asking.
+
+### The stress chart
+All 41 stress results are now `pre-spec`, and the history chart already honours
+`excluded_from_trends`. The owner's own 15-point stress chart is now empty.
+Correct behaviour — PSS-10 asks three questions nobody was ever asked — and it
+will read as data loss. Decide what the screen says in place of the chart.
+
+### Next: Phase B
+B6 shipped early (`1e781990`). B1 is unblocked now A6 has passed.
