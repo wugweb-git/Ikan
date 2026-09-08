@@ -755,13 +755,19 @@ wellness path stay theoretical until it happens. The 137-result backfill sits be
   instruments by ~10 points. Needs a presentation resolved on that screen.
 
 ### Open — content, blocked on Kartik
-- Copy (`title`, `body`, `cta`) for all 18 rules. They are disabled and
-  double-guarded; nothing renders until this lands, and landing it is what
-  makes the new slots and the "Recommended Program" fix observable.
+- ~~Copy for all 18 rules~~ **no longer blocking, 2026-09-08.** Copy is an
+  optional override; a card renders the target record's own title and
+  description. All 18 rules are enabled and live.
 - Seven interpretation sentences; empty-chart copy; stress-chart messaging.
-- **Article re-tagging.** No article is tagged `depression`, `anxiety`,
-  `burnout` or `balance`, and `mental-health` matches no assessment — so four
-  of seven assessments have no article to show even once rules carry copy.
+- **Article tagging.** Four of seven assessments (`depression`, `anxiety`,
+  `burnout`, `balance`) have no article, so their Related articles row renders
+  nothing. Tagging is now self-service: an article tagged with an assessment
+  category appears on that result screen with no code change, newest first.
+  A blog label that is not an assessment category needs one line in
+  `BLOG_CATEGORY_TO_ASSESSMENT` (`resource-presentation.ts`).
+- **The GAD-7 article** (*"Beyond the 'Worry Loop'"*) is tagged `sleep` while
+  its title names the anxiety instrument. Raised 2026-09-08, not changed —
+  content call, still open.
 - **`Productivity Reset` is targeted by no rule** and can never be recommended.
 - **Balance and General can reach severities above their highest rule's gate**,
   so their top bands recommend nothing.

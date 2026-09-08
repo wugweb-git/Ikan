@@ -9,6 +9,39 @@ undated under their original session number.
 
 ---
 
+## 2026-09-08 (two rows, and the rules go live)
+
+**Copy stopped being a precondition, and all 18 rules were re-enabled.**
+`hasRenderableCopy` required `title`, `body` and `cta`; no live rule has any, so
+requiring them made authored copy a gate and nothing could match. The guard is
+now `hasResolvableTarget` — a rule must name something — with the other half
+enforced where the record is fetched, which drops a target that fails to load.
+The admin save guard dropped the same requirement.
+
+**Row 1 — Recommended.** Every matching `equip` and `assessment` rule in one
+row, rendering the target record's own title and description. A programme is
+already named and described; a rule may override that, and none does today.
+Replaces three sections that were the same idea three times.
+
+**Row 2 — Related articles.** The article's own category matched against the
+assessment's, at render time, published only, **no rule records** — both sides
+already state the topic, so a rule per article would be a second place to
+maintain one fact. Stacked at 1-2, carousel at 3+. Nothing renders when a
+category has no articles: no empty state, no fallback.
+
+`blogCategoryToAssessmentCategory` is a **map**, not an assumed equality —
+`mental-health` (2 articles, no assessment) reads as `general`. Adding a label
+there points a new blog category at an assessment without re-tagging articles.
+Sorted newest first, `published_at` over `created_at`; an undated article sorts
+last, since `new Date(undefined)` is NaN and `new Date(0)` is 1970.
+
+Live today: general 4 · sleep 3 · stress 1 · depression, anxiety, burnout,
+balance 0. The zeroes fill in as articles are tagged.
+
+Row 3 (consultation) deliberately not built — it comes with its own module.
+
+---
+
 ## 2026-09-08 (percentages and the history axis)
 
 Two live numeric defects, both diagnosed earlier and left as "report, do not
