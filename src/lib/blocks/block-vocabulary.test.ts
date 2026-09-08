@@ -22,7 +22,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
   resolveInteraction, normalizeSubtype, SUBTYPE_ALIASES, EXERCISE_SUBTYPES, responseKeyOf,
-  INTERACTIONS_WITHOUT_RENDERER, AUTHORABLE_SUBTYPES, SUBTYPE_INTERACTION,
+  INTERACTIONS_WITHOUT_RENDERER, AUTHORABLE_SUBTYPES, SUBTYPE_INTERACTION, activityOf,
   INTERACTION_META, DAY_TYPES,
   type Activity, type InteractionType, type ExerciseSubtype,
 } from './block-model.ts';
@@ -688,4 +688,77 @@ test('the closing block must be last, and there must be exactly one', () => {
   assert.ok(validateDay([lesson, { ...end, id: 'c2' }, end] as never).dayIssues.some(i => i.code === 'multiple-concludes'));
   assert.deepEqual(validateDay([lesson, end] as never).dayIssues, [],
     'a lesson then a conclude is a well-formed day');
+});
+
+test('needing a key is derived from what the block draws, not from a list of types', () => {
+  /*
+    A hardcoded type list missed 67 keyless blocks the day the remap moved
+    content onto `tracker` and `workshop`. A block on ANY type that produces a
+    response must be reported.
+  */
+  const trackerTable = validateBlock({
+    id: 'b', title: 'Habit grid', type: 'tracker', content: '',
+    duration: 0, required: true, order: 0,
+    activityConfig: { subtype: 'input-table', columns: ['Mon'] },
+  } as never);
+  assert.ok(trackerTable.some(i => i.code === 'no-response-key'),
+    'a keyless tracker produces answers and must be reported');
+
+  const passive = validateBlock({
+    id: 'b', title: 'Intro', type: 'lesson', content: 'Read this.',
+    duration: 0, required: false, order: 0,
+  } as never);
+  assert.equal(passive.find(i => i.code === 'no-response-key'), undefined,
+    'a lesson produces nothing and needs no key, whatever its type');
+});
+
+/**
+ * The activity lives in two places since the 2026-09-08 remap: a top-level
+ * `activity` on all 407 blocks, and `activityConfig.subtype` on 187. Reading
+ * only the second was blind to 220 blocks.
+ */
+test('the activity is found wherever it is stored', () => {
+  assert.equal(activityOf({ activity: 'input-table' } as never), 'input-table');
+  assert.equal(activityOf({ activityConfig: { subtype: 'mcq' } } as never), 'mcq');
+  // Top level wins: the remap canonicalised it, so `matrix` there is already
+  // `comparison-matrix`. The 11 blocks carrying both differ only by alias.
+  assert.equal(
+    activityOf({ activity: 'comparison-matrix', activityConfig: { subtype: 'matrix' } } as never),
+    'comparison-matrix',
+  );
+  assert.equal(activityOf({} as never), undefined);
+  assert.equal(activityOf(undefined), undefined);
+});
+
+test('a block resolves from its activity whatever its type — all 407 live shapes', () => {
+  /*
+    Every (type, activity) pair in production, with the interaction stored on
+    those blocks. Verified 2026-09-08: the resolver reproduces the stored value
+    on 407 of 407 from the ACTIVITY ALONE, which is what makes build-order
+    step 5 — dropping the stored `interaction` — safe rather than a guess.
+
+    `tracker` and `workshop` are the ones that matter: neither has a case in the
+    type switch, so under "type decides" they resolved to `read`.
+  */
+  const live: [string, string, string][] = [
+    ['lesson', 'read', 'read'], ['conclude', 'complete', 'complete'],
+    ['tracker', 'input-table', 'input-table'], ['tracker', 'comparison-matrix', 'input-table'],
+    ['sleep-diary', 'input-table', 'input-table'],
+    ['workshop', 'comparison-matrix', 'input-table'], ['workshop', 'input-table', 'input-table'],
+    ['journal', 'ephemeral-journal', 'write'], ['onboarding', 'ephemeral-journal', 'write'],
+    ['onboarding', 'single-select', 'select-one'], ['onboarding', 'mcq', 'select-one'],
+    ['onboarding', 'multi-select', 'select-many'],
+    ['checklist', 'structured-list', 'check'],
+    ['exercise', 'single-select', 'select-one'], ['exercise', 'mcq', 'select-one'],
+    ['exercise', 'multi-select', 'select-many'], ['exercise', 'input-table', 'input-table'],
+    ['exercise', 'comparison-matrix', 'input-table'], ['exercise', 'rating-scale', 'rate'],
+    ['exercise', 'number', 'number'],
+  ];
+  for (const [type, activity, expected] of live) {
+    assert.equal(
+      resolveInteraction({ id: 'p', title: 't', type, content: '', duration: 0, required: true, order: 0, activity } as never),
+      expected,
+      `${type} · ${activity} must resolve to ${expected}`,
+    );
+  }
 });

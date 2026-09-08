@@ -16,7 +16,7 @@
  * Dependency-free on purpose: it must run under `node --test`.
  */
 import { resolveInteraction, configOf, type Activity, type InteractionType } from './block-model.ts';
-import { SCALE_BACKED } from './content-hierarchy.ts';
+import { SCALE_BACKED, RESPONSE_PRODUCING } from './content-hierarchy.ts';
 
 export interface BlockIssue {
   /** `error` blocks a publish; `warning` is authored-content advice. */
@@ -125,11 +125,25 @@ function validateBlockTypeRules(block: Activity, interaction: InteractionType): 
   const out: BlockIssue[] = [];
   const cfg = configOf(block);
   const key = cfg?.key;
-  const needsKey = ['exercise', 'journal', 'checklist', 'sleep-diary'].includes(block.type);
+  /*
+    DERIVED, NOT LISTED.
+
+    This was a hardcoded `['exercise','journal','checklist','sleep-diary']`, and
+    it was wrong within the day: the block remap moved live content onto
+    `tracker` (82 blocks) and `workshop` (5), neither of which was in the list,
+    so 67 keyless blocks that DO produce an answer were invisible to the check
+    that exists to find them.
+
+    Whether a block needs a key is not a fact about its type at all — it is
+    whether the thing it draws produces a response, which `RESPONSE_PRODUCING`
+    already states. A type added or a block retyped cannot slip past a derived
+    rule the way it slipped past a list.
+  */
+  const needsKey = RESPONSE_PRODUCING.includes(interaction);
 
   if (needsKey && !(typeof key === 'string' && key.trim())) {
     out.push({ level: 'warning', code: 'no-response-key',
-               message: `A ${block.type} answers something, and nothing says where the answer goes. `
+               message: `This block answers something (${interaction}), and nothing says where the answer goes. `
                       + 'Without a key its answers file under this block id, so the same question '
                       + 'asked on two days becomes two unrelated facts.' });
   }

@@ -325,35 +325,35 @@ export function resolveInteraction(activity: Activity): InteractionType {
   const { type } = activity;
   // Via the accessor: during the rename a block may be stored under either name.
   const exerciseConfig = configOf(activity);
-  const rawSubtype = exerciseConfig?.subtype;
+  const rawSubtype = activityOf(activity);
   // Aliases are resolved BEFORE the switch, so the switch below is the
   // canonical vocabulary and nothing else. See SUBTYPE_ALIASES.
   const subtype = normalizeSubtype(rawSubtype);
 
-  // TYPE IS AUTHORITATIVE (2026-09-04).
-  //
-  // This used to read `if (type === 'exercise' || subtype)`, so ANY block
-  // carrying a subtype took the subtype path whatever its type said. That is
-  // how `lesson · multi-select` rendered as a question and how the once-
-  // undeclared `quiz` type worked at all — type overruled by accident of a
-  // boolean, on 44 live blocks.
-  //
-  // Phase 3.3 re-typed those 44 to `exercise`, which made their declared type
-  // match what they already did. Verified before removing the clause: **zero**
-  // blocks across `equip:`, `equip_program:` and `assessment_def:` are now a
-  // non-exercise type carrying a subtype. So the clause protects nothing, and
-  // keeping it would let the same disagreement be authored back in silently.
-  //
-  // If one appears anyway it is a data error, not a rendering mode: the type
-  // wins, and the fallback sink hears about it. That sink is real now — see
-  // warnFallback above.
-  if (type !== 'exercise' && rawSubtype) {
-    warnFallback(
-      'resolveInteraction',
-      `block ${activity.id} is type "${type}" but carries subtype "${rawSubtype}" — ` +
-      `the subtype is ignored and the type decides. One of the two is wrong.`,
-      `${type}/${rawSubtype}`
-    );
+  /*
+    THE ACTIVITY DECIDES (2026-09-08). Superseding "type is authoritative".
+
+    That rule was written when the only type carrying an activity was
+    `exercise`: 44 blocks had been retyped to make their declared type match
+    what they drew, and the check confirmed zero non-exercise blocks carried a
+    subtype. Both were true then.
+
+    The block remap made them false. 82 blocks are now `tracker` and 5
+    `workshop`, each carrying a real activity — and under "type decides" a
+    `tracker · input-table` resolved to **`read`**, because `tracker` has no
+    case in the switch below. It warned and discarded the activity. Nothing
+    mis-rendered only because every block also carries an explicit
+    `interaction` and this function returns before reaching here.
+
+    That is a trap with a date on it: build-order step 5 stops writing
+    `interaction`, and on the day it lands 87 blocks would draw reading content.
+
+    The settled model says `interaction = f(activity)`, block type not involved.
+    So an activity, wherever it sits, decides — which is also what makes the
+    gated collapse of this function a deletion rather than a rewrite.
+  */
+  if (subtype && subtype in SUBTYPE_INTERACTION) {
+    return SUBTYPE_INTERACTION[subtype as ExerciseSubtype];
   }
 
   if (type === 'exercise') {
@@ -590,6 +590,18 @@ export interface Activity {
   type: BlockType;
   /** Unified interaction type. Preferred over type+subtype when present. */
   interaction?: InteractionType;
+  /**
+   * WHAT THE USER DOES — the activity, at block level.
+   *
+   * Written onto all 407 live blocks by the 2026-09-08 remap, canonicalised
+   * (`matrix` became `comparison-matrix`, `scale` became `rating-scale`). The
+   * older location is `activityConfig.subtype`, which only 187 carry.
+   *
+   * READ NEITHER DIRECTLY — use `activityOf(block)`. 220 blocks carry the
+   * activity ONLY here, so a direct `activityConfig.subtype` read is blind to
+   * more than half the corpus.
+   */
+  activity?: ExerciseSubtype | keyof typeof SUBTYPE_ALIASES;
   content: string;
   duration: number; // in minutes
   required: boolean;
@@ -758,6 +770,30 @@ export function configOf(block: Pick<Activity, 'activityConfig' | 'exerciseConfi
  *
  * Total by construction, so a caller never has to branch on presence.
  */
+/**
+ * The block's activity, from either place it is stored.
+ *
+ * A seventh two-representations-of-one-entity, created 2026-09-08: the block
+ * remap wrote a top-level `activity` on all 407 blocks while
+ * `activityConfig.subtype` — the only field `resolveInteraction` read — remained
+ * on 187. So **220 blocks carried an activity the resolver could not see**.
+ *
+ * Nothing mis-rendered, because every block also carries an explicit
+ * `interaction` and the resolver returns on that first. It is a trap with a
+ * date on it: build-order step 5 stops writing `interaction`, and on that day
+ * those 220 would resolve from their type alone.
+ *
+ * The two never actually conflict. All 11 rows where both are present and
+ * differ are alias-versus-canonical — `matrix`/`comparison-matrix`,
+ * `row_list`/`structured-list`, `scale`/`rating-scale` — and normalise to the
+ * same term. Top level wins because the remap canonicalised it.
+ */
+export function activityOf(
+  block: Pick<Activity, 'activity' | 'activityConfig' | 'exerciseConfig'> | undefined | null,
+): string | undefined {
+  return block?.activity ?? configOf(block ?? undefined)?.subtype;
+}
+
 export function responseKeyOf(block: Pick<Activity, 'id' | 'activityConfig' | 'exerciseConfig'>): string {
   const k = configOf(block)?.key;
   return typeof k === 'string' && k.trim() ? k.trim() : block.id;
