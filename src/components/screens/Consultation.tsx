@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo, useCallback } from 'react';
 import { cn } from '../ui/utils';
 import { Search, X, LayoutGrid, List, Sparkles, SlidersHorizontal } from 'lucide-react';
 import { apiClient } from '../../lib/api-client';
+import { percentOfRange } from '../../lib/result-presentation';
 import { ConsultantCard } from '../page-blocks/ConsultantCard';
 import { Button } from '../ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '../ui/sheet';
@@ -146,8 +147,29 @@ export function Consultation({ className, onNavigate }: ConsultationProps) {
           .sort((a: any, b: any) => new Date(b.completed_at).getTime() - new Date(a.completed_at).getTime());
         if (sorted.length === 0) return;
         const latest = sorted[0];
-        const maxScore = latest.max_score || latest.maxScore || 100;
-        const pct = maxScore > 0 ? (latest.score / maxScore) : 0;
+        /**
+         * No invented denominator.
+         *
+         * `|| 100` gave every result without a `max_score` a made-up maximum —
+         * the same defect as the `?? 21` that once divided Burnout's 115 by
+         * GAD-7's ceiling. A result that cannot be placed is now skipped
+         * rather than guessed at, because this gates a suggestion about who to
+         * talk to. It also prefers the computed overall, so a `calc: mean`
+         * result is not read in the legacy sum's units.
+         *
+         * The floor is still unknown here: this screen loads no scoring
+         * profile, so `percentOfRange` falls back to `value / max`. That
+         * overstates the 1-5 instruments by roughly ten points, same as
+         * everywhere else that lacks a profile. Fixing it means resolving a
+         * presentation here too.
+         */
+        const overall = latest.section_scores?.overall ?? latest.sectionScores?.overall ?? null;
+        const value = typeof overall?.value === 'number' ? overall.value : latest.score;
+        const maxScore = (typeof overall?.max === 'number' && overall.max > 0)
+          ? overall.max
+          : (latest.max_score || latest.maxScore || 0);
+        if (typeof value !== 'number' || maxScore <= 0) return;
+        const pct = percentOfRange(value, maxScore) / 100;
         // If moderate/high severity, derive recommended expertise areas
         if (pct > 0.33) {
           const interpretation = latest.interpretation;
