@@ -7,7 +7,6 @@ import { cn } from '../ui/utils';
 import { EngineResult } from '../../lib/recommendation-engine';
 import { apiClient } from '../../lib/api-client';
 import { ContentImage } from '../ui/ContentImage';
-import { ArrowRight } from 'lucide-react';
 import { SectionReportCard } from '../player/SectionReportCard';
 import { AssessmentCard } from '../assessment/AssessmentCard';
 import { LibraryResourceCard } from '../page-blocks/LibraryResourceCard';
@@ -39,13 +38,13 @@ function RecommendationRow<T>({ items, render }: {
   if (items.length === 0) return null;
 
   if (items.length <= 2) {
+    // Mobile first: one column, two from `sm`. Two cards side by side at
+    // 375px leaves each about 170px wide, which crushes the image and wraps
+    // every title — the row was previously two-up at every width.
     return (
       <div
-        className="grid"
-        style={{
-          gap: 12,
-          gridTemplateColumns: items.length === 1 ? '1fr' : 'repeat(2, 1fr)',
-        }}
+        className={items.length === 1 ? 'grid grid-cols-1' : 'grid grid-cols-1 sm:grid-cols-2'}
+        style={{ gap: 12 }}
       >
         {items.map((item, i) => <div key={i}>{render(item, i)}</div>)}
       </div>
@@ -812,6 +811,7 @@ export function AssessmentResults({
               render={(r) => (
                 <LibraryResourceCard
                   resource={toResourcePost(r)}
+                  imageAspect="16/9"
                   onClick={() => onNavigate?.(`/resource-detail?id=${r.id}`)}
                 />
               )}
@@ -845,39 +845,7 @@ export function AssessmentResults({
           </motion.aside>
         )}
 
-        {/* ── Tier 3 · keep going ──
-            App navigation, and drawn as such. These were two cards identical to
-            the recommendation above, which made "Explore" mean nothing and put
-            a link to the full catalogue at the same weight as the one thing
-            chosen for this person. */}
-        <motion.nav {...reveal} style={{
-          borderTop: '1px solid var(--color-border-default)',
-          paddingTop: 20,
-        }}>
-          <Eyebrow>Keep going</Eyebrow>
-          <div className="flex flex-col sm:flex-row" style={{ gap: 4 }}>
-            {[
-              { label: 'Your assessments', route: '/assessment' },
-              { label: 'Your journal', route: '/mood-journal' },
-            ].map((link) => (
-              <button
-                key={link.route}
-                onClick={() => onNavigate?.(link.route)}
-                className="flex items-center justify-between sm:justify-start"
-                style={{
-                  background: 'none', border: 'none', cursor: 'pointer',
-                  padding: '10px 12px 10px 0', gap: 6,
-                  ...f('base', 500, 'var(--color-primary-default)'),
-                }}
-              >
-                {link.label}
-                <ArrowRight size={15} />
-              </button>
-            ))}
-          </div>
-        </motion.nav>
-
-        {/* ── Footer ── */}
+                {/* ── Footer ── */}
         <div className="flex items-center justify-center">
           <button
             onClick={onReturnToDashboard || (() => onNavigate?.('/dashboard'))}

@@ -29,9 +29,17 @@ export interface LibraryResourceCardProps {
   onClick: () => void;
   /** `small` is the denser variant the Library already uses for its sidebar. */
   size?: 'default' | 'small';
+  /**
+   * Image box aspect. Default `4/3` is the Library's own catalogue density,
+   * where the article IS the page. Beside programme cards — which are `16/9` —
+   * that extra height makes an article read as the more important of the two,
+   * so the result screen passes `16/9` to put them at the same weight.
+   * Image geometry only: nothing else about the card changes.
+   */
+  imageAspect?: string;
 }
 
-export function LibraryResourceCard({ resource, onClick, size = 'default' }: LibraryResourceCardProps) {
+export function LibraryResourceCard({ resource, onClick, size = 'default', imageAspect }: LibraryResourceCardProps) {
   const isSmall = size === 'small';
   return (
     <div
@@ -50,7 +58,7 @@ export function LibraryResourceCard({ resource, onClick, size = 'default' }: Lib
       <div
         className="relative overflow-hidden w-full"
         style={{
-          aspectRatio: isSmall ? '16/10' : '4/3',
+          aspectRatio: imageAspect ?? (isSmall ? '16/10' : '4/3'),
           backgroundColor: 'var(--color-bg-muted)',
         }}
       >
