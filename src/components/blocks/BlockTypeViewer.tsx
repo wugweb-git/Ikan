@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   BookOpen,
   PenTool,
@@ -22,11 +22,13 @@ import {
   Hash,
 } from 'lucide-react';
 import { AdminHeader } from '../admin/AdminHeader';
+import { apiClient } from '../../lib/api-client';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
 import { AdminStatusBadge } from '../admin/AdminStatusBadge';
 import {
   INTERACTION_META,
+  LEAF_BLOCK_TYPES,
   resolveInteraction,
   EXERCISE_SUBTYPES as CANONICAL_SUBTYPES,
   SUBTYPE_ALIASES,
@@ -128,7 +130,73 @@ export function AdminBlockTypeViewer({ onBack }: AdminBlockTypeViewerProps) {
   // Day Config Presets (merged into block_type by Phase 1.1), and the
   // Legacy → Interaction mapping (kept only until the backfill; the retype
   // completed it, so the alias table is now history rather than a live map).
-  const [activeTab, setActiveTab] = useState<'blocktypes' | 'activities'>('blocktypes');
+  // `interactions` is the landing view again. It was the default
+  // (`useState<...>('interactions')`) before the five-tabs-to-two change
+  // removed it, while its render code survived and went on printing
+  // `block.previewHint` against a source that no longer existed.
+  const [activeTab, setActiveTab] = useState<'interactions' | 'blocktypes' | 'activities'>('interactions');
+
+  // Live usage, counted over `equip:` server-side. `null` means the feed failed
+  // — which must NOT read as "everything is unused", so every count renders as
+  // "—" rather than 0 until it arrives.
+  const [usage, setUsage] = useState<Awaited<ReturnType<typeof apiClient.getBlockUsage>>>(null);
+  const [usageState, setUsageState] = useState<'loading' | 'ok' | 'failed'>('loading');
+  useEffect(() => {
+    let alive = true;
+    apiClient.getBlockUsage().then((u) => {
+      if (!alive) return;
+      setUsage(u);
+      setUsageState(u ? 'ok' : 'failed');
+    });
+    return () => { alive = false; };
+  }, []);
+
+  /** Live count for a term, or null when the feed has not arrived. */
+  const countOf = (dim: 'interactions' | 'blockTypes' | 'activities' | 'dayTypes', term: string): number | null =>
+    usage ? (usage[dim][term] ?? 0) : null;
+
+  /**
+   * The four states this page exists to separate.
+   *
+   * A reference count alone does not tell you whether a thing is displayed,
+   * promised or specified — three things in this module were deleted as unused
+   * and turned out to be load-bearing. So "nothing reads it" is a status shown
+   * on the page, not a reason to remove something.
+   */
+  type TermStatus = 'live' | 'wired-unused' | 'declared-unread' | 'orphan';
+  const statusOf = (opts: { readByCode: boolean; declared: boolean; count: number | null }): TermStatus => {
+    if (!opts.declared) return 'orphan';           // in the catalog, unknown to code
+    if (!opts.readByCode) return 'declared-unread'; // declared, but nothing reads it
+    return (opts.count ?? 0) > 0 ? 'live' : 'wired-unused';
+  };
+  const STATUS_LABEL: Record<TermStatus, string> = {
+    'live':            'Live',
+    'wired-unused':    'Wired, unused',
+    'declared-unread': 'Declared, unread',
+    'orphan':          'Orphan',
+  };
+  const STATUS_COLOUR: Record<TermStatus, string> = {
+    'live':            'var(--color-status-success)',
+    'wired-unused':    'var(--color-text-muted)',
+    'declared-unread': 'var(--color-status-warning)',
+    'orphan':          'var(--color-status-danger)',
+  };
+
+  /** The shared four-column row tail: live count, what it draws, status. */
+  const RowMeta = ({ count, rendersAs, status }: {
+    count: number | null; rendersAs: string; status: TermStatus;
+  }) => (
+    <div className="flex items-start gap-3 flex-wrap mt-2" style={{ fontSize: 'var(--text-xs)' }}>
+      <span style={{ color: 'var(--color-text-muted)' }}>
+        live:{' '}
+        <strong style={{ color: count && count > 0 ? 'var(--color-text-primary)' : 'var(--color-text-muted)' }}>
+          {count === null ? '—' : count}
+        </strong>
+      </span>
+      <span style={{ color: 'var(--color-text-muted)', flex: '1 1 240px' }}>{rendersAs}</span>
+      <span style={{ color: STATUS_COLOUR[status], fontWeight: 500 }}>{STATUS_LABEL[status]}</span>
+    </div>
+  );
   const { blockTypes: kvBlockTypes, exerciseSubtypes: kvExerciseSubtypes, dayConfigTypes: kvDayConfigTypes, interactionTypes: kvInteractionTypes } = useMetadata();
 
 
@@ -177,6 +245,45 @@ export function AdminBlockTypeViewer({ onBack }: AdminBlockTypeViewerProps) {
   // ProgramPlayer's DAY_TYPE_CONFIG.
 
   const interactionTypes = Object.keys(INTERACTION_META) as InteractionType[];
+
+  // The block-type vocabulary AS CODE KNOWS IT: the stages that have presets,
+  // plus the leaf types a block may be. This is what the catalog is compared
+  // against, so a row in one and not the other shows as DRIFT rather than
+  // being silently absorbed.
+  /** What an activity draws, via the real resolver rather than a second table. */
+  const resolveSubtypeInteraction = (subtype: string): InteractionType =>
+    resolveInteraction({
+      id: 'probe', title: '', type: 'exercise', content: '',
+      duration: 0, required: false, order: 0,
+      activityConfig: { subtype },
+    } as never);
+
+  /**
+   * Leaf block types draw whatever their bare type resolves to.
+   *
+   * `exercise` is the exception and must be stated, not derived: a bare
+   * `exercise` with no activity resolves to `write`, so deriving its hint made
+   * the page claim all 187 exercise blocks draw a textarea. They draw nine
+   * different widgets — the activity decides, which is the whole point of the
+   * Activities tab.
+   */
+  const LEAF_HINTS: Record<string, string> = Object.fromEntries(
+    LEAF_BLOCK_TYPES.map((t) => {
+      if (t === 'exercise') {
+        return [t, 'Depends entirely on its activity — see the Activities tab'];
+      }
+      const i = resolveInteraction({
+        id: 'probe', title: '', type: t, content: '',
+        duration: 0, required: false, order: 0,
+      } as never);
+      return [t, INTERACTION_META[i]?.previewHint ?? 'No preview description recorded'];
+    }),
+  );
+
+  const BLOCK_TYPE_VOCABULARY = [
+    ...Object.keys(DAY_TYPE_PRESETS),
+    ...LEAF_BLOCK_TYPES,
+  ].filter((v, i, a) => a.indexOf(v) === i);
   const pickableBlockTypes  = kvBlockTypes.filter((t) => !isContainerRow(t));
   const containerBlockTypes = kvBlockTypes.filter((t) => isContainerRow(t));
   const aliasCount = exerciseSubtypes.length - CANONICAL_SUBTYPES.length;
@@ -202,8 +309,12 @@ export function AdminBlockTypeViewer({ onBack }: AdminBlockTypeViewerProps) {
 
   const stats = [
     {
+      // The stage/block split is the section headings below, so repeating it
+      // here made this the only one of four tiles that could not report DRIFT —
+      // it had no comparison to fail. Now it compares the code's leaf+container
+      // vocabulary against the catalog's, like the other three.
       label: 'Block Types',
-      value: `${kvBlockTypes.length} · ${containerBlockTypes.length} stages · ${pickableBlockTypes.length} blocks`,
+      value: compare(BLOCK_TYPE_VOCABULARY.length, kvBlockTypes.length),
       icon: <BookOpen className="w-4 h-4" style={{ color: 'var(--color-primary-default)' }} />,
     },
     {
@@ -236,6 +347,14 @@ export function AdminBlockTypeViewer({ onBack }: AdminBlockTypeViewerProps) {
       {/* Tab Switcher — two tabs. See the note on `activeTab` above. */}
       <div className="flex gap-2 flex-wrap">
         <Button
+          variant={activeTab === 'interactions' ? 'default' : 'outline'}
+          onClick={() => setActiveTab('interactions')}
+          className="gap-2"
+          style={activeTab === 'interactions' ? { backgroundColor: 'var(--color-status-danger)', color: 'var(--color-primary-on)' } : undefined}
+        >
+          <Zap className="w-4 h-4" /> Interactions ({interactionTypes.length})
+        </Button>
+        <Button
           variant={activeTab === 'blocktypes' ? 'default' : 'outline'}
           onClick={() => { setActiveTab('blocktypes'); }}
           className="gap-2"
@@ -254,6 +373,51 @@ export function AdminBlockTypeViewer({ onBack }: AdminBlockTypeViewerProps) {
       </div>
 
       {/* ── BLOCK TYPES — one list, containers and leaves together ────── */}
+      {/* ── INTERACTIONS — what a block DOES, and what it draws ───────── */}
+      {activeTab === 'interactions' && (
+        <div className="space-y-3">
+          <p style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-muted)' }}>
+            The thirteen things a user can do. Every block resolves to exactly one — since the
+            backfill, each of the {usage?.totalBlocks ?? 407} live blocks carries its
+            <code style={{ fontSize: 'var(--text-xs)' }}> interaction </code> explicitly rather
+            than having it inferred from type + activity.
+          </p>
+
+          {usageState === 'failed' && (
+            <div className="p-3 rounded-lg" style={{ backgroundColor: 'var(--color-bg-muted)', borderLeft: '2px solid var(--color-status-warning)', fontSize: 'var(--text-xs)' }}>
+              Usage feed unavailable — live counts show as “—”. They are not zero; this page just
+              cannot tell you. A confident zero here would be indistinguishable from genuinely
+              unused, which is the mistake this feed exists to prevent.
+            </div>
+          )}
+
+          {interactionTypes.map((key) => {
+            const meta = INTERACTION_META[key];
+            const count = countOf('interactions', key);
+            // Every interaction has a `case` in BlockRenderer's dispatch, so all
+            // thirteen are read by code. None is "declared, unread".
+            const status = statusOf({ readByCode: true, declared: true, count });
+            return (
+              <div key={key} className="p-3 rounded-lg" style={{ backgroundColor: 'var(--color-bg-card)', border: '1px solid var(--color-border-default)' }}>
+                <div className="flex items-baseline gap-2 flex-wrap">
+                  <span style={{ fontWeight: 500 }}>{meta.label}</span>
+                  <code style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}>{key}</code>
+                  <span style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}>{meta.verb}</span>
+                  {meta.hintSource === 'written' && (
+                    <span title="Read off BlockRenderer — no recovered string described this one"
+                          style={{ fontSize: '10px', color: 'var(--color-text-muted)', border: '1px solid var(--color-border-default)', borderRadius: 4, padding: '0 4px' }}>
+                      hint written
+                    </span>
+                  )}
+                </div>
+                <p style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)', marginTop: 4 }}>{meta.description}</p>
+                <RowMeta count={count} rendersAs={meta.previewHint} status={status} />
+              </div>
+            );
+          })}
+        </div>
+      )}
+
       {activeTab === 'blocktypes' && (
         <div className="space-y-3">
           <p style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-muted)' }}>
@@ -262,7 +426,7 @@ export function AdminBlockTypeViewer({ onBack }: AdminBlockTypeViewerProps) {
             <code style={{ fontSize: 'var(--text-xs)' }}> can_hold </code> non-empty ⟺ it has a preset.
           </p>
           {['container', 'leaf'].map((kind) => {
-            const rows = kvBlockTypes.filter((r) => (kind === 'container') === isContainerRow(r));
+            const rows = kind === 'container' ? containerBlockTypes : pickableBlockTypes;
             if (!rows.length) return null;
             return (
               <div key={kind} className="space-y-2">
@@ -280,6 +444,30 @@ export function AdminBlockTypeViewer({ onBack }: AdminBlockTypeViewerProps) {
                       {row.description && (
                         <p style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)', marginTop: 4 }}>{row.description}</p>
                       )}
+                      {(() => {
+                        // A stage is never a block's type, so counting live
+                        // blocks against it would always read zero and look
+                        // unused. Stages are counted by the days that use them
+                        // — which this feed does not carry — so they show "—"
+                        // and say why, rather than a misleading 0.
+                        const isStage = isContainerRow(row);
+                        const known = (BLOCK_TYPE_VOCABULARY as string[]).includes(row.value);
+                        // A stage is counted by the DAYS that carry it; a leaf by
+                        // the blocks that are it. Counting blocks against a stage
+                        // would always read zero and libel it as unused.
+                        const count = isStage
+                          ? countOf('dayTypes', row.value)
+                          : countOf('blockTypes', row.value);
+                        return (
+                          <RowMeta
+                            count={count}
+                            rendersAs={isStage
+                              ? `A stage — ${count ?? '—'} day${count === 1 ? '' : 's'} carry this type`
+                              : (LEAF_HINTS[row.value] ?? 'No preview description recorded')}
+                            status={statusOf({ readByCode: known, declared: true, count })}
+                          />
+                        );
+                      })()}
                       {isContainerRow(row) && (
                         <div className="mt-2 space-y-1" style={{ fontSize: 'var(--text-xs)' }}>
                           <div><span style={{ color: 'var(--color-text-muted)' }}>holds: </span>{(row.can_hold ?? []).join(' · ') || '—'}</div>
@@ -347,6 +535,24 @@ export function AdminBlockTypeViewer({ onBack }: AdminBlockTypeViewerProps) {
                     <p style={{ fontFamily: 'var(--font-family-base)', fontSize: 'var(--text-sm)', color: 'var(--color-text-muted)', lineHeight: '1.5' }}>
                       {st.description}
                     </p>
+                    {(() => {
+                      const count = countOf('activities', st.value);
+                      // `inCatalog` is false for an alias — aliases are code-only
+                      // by design and normalise before the resolver sees them, so
+                      // that is not drift. A term in the catalog that is in
+                      // neither list IS an orphan, and `st.selectable` is false
+                      // for exactly that case too, hence the explicit check.
+                      const known = st.selectable || (SUBTYPE_ALIASES as Record<string, string>)[st.value] !== undefined;
+                      const rendersAs = INTERACTION_META[resolveSubtypeInteraction(st.value)]?.previewHint
+                        ?? 'Resolves to no interaction';
+                      return (
+                        <RowMeta
+                          count={count}
+                          rendersAs={rendersAs}
+                          status={statusOf({ readByCode: known, declared: true, count })}
+                        />
+                      );
+                    })()}
                   </div>
                 </div>
               </CardContent>

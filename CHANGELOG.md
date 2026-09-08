@@ -9,6 +9,62 @@ undated under their original session number.
 
 ---
 
+## 2026-09-08
+
+**The Block Type Viewer became the blocks module's source of truth.** It read the catalog and
+nothing else, so every declared term looked equally alive. It now maps each one against the 407
+live blocks in `equip:`. Edge function deployed and smoke-tested; frontend deployed. Typecheck 183,
+lint 914, tests 81 passing. Verified by rendering the page, not by typecheck.
+
+### A usage feed
+
+`GET /blocks/usage` (`requireAdmin`, read-only) counts `type`, `activityConfig.subtype` and
+`interaction` across `equip:` — the representation the editor and player actually read. It also
+counts **`dayType`**, because a stage is never a block's `type`: counting blocks against
+`learning` reads zero and libels the stage as unused. A stage's usage is the days that carry it.
+
+`getBlockUsage()` returns `null` rather than an empty shape on failure. The viewer must be able to
+say *usage unavailable* instead of printing a confident zero next to every term, which is
+indistinguishable from genuinely unused and is the exact mistake this feed exists to stop.
+
+### Four columns, four statuses
+
+Every row on all three lists now reads **Declared · Live count · Renders as · Status**:
+
+| status | meaning |
+|---|---|
+| Live | declared, read by code, and blocks carry it |
+| Wired, unused | declared and read, but zero blocks carry it |
+| Declared, unread | in the catalog; no code reads it |
+| Orphan | code reads it; not declared |
+
+The page's purpose is that nothing hides in the last three. Two things surfaced immediately:
+ten of eleven stages read `0 days` (only `learning` is assigned), and `watch` has no renderer —
+`BlockRenderer` falls it through to the lesson view.
+
+### The interactions tab is back
+
+It was the **default** landing view, not a secondary tab; its render code survived a deletion and
+sat orphaned. Re-attached rather than rebuilt.
+
+`previewHint` — the only written record of what each interaction draws — was recovered from
+`040a4cfe^` and re-hung off `INTERACTION_META`, keyed on the interaction instead of the hardcoded
+block list it used to duplicate. Seven strings recovered cleanly; the other six had no recovered
+documentation, so they were written from `BlockRenderer` and carry `hintSource: 'written'` —
+the page badges which is which rather than passing invention off as recovery.
+
+`exercise` is special-cased: derived through the resolver it claimed all 187 exercise blocks draw
+a textarea, because a bare `exercise` with no activity resolves to `write`. It now says its
+appearance depends entirely on its activity.
+
+### The stat tile that could not report drift
+
+`Block Types` printed a hardcoded `17 · 11 stages · 6 blocks`. It is now
+`compare(BLOCK_TYPE_VOCABULARY.length, kvBlockTypes.length)` — derived on both sides, so it is the
+fourth of four tiles that can say DRIFT.
+
+---
+
 ## 2026-09-04 (7)
 
 **A live paywall bypass, found by auditing a claim I had made and published.** Edge function

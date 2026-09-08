@@ -67,6 +67,19 @@ export type InteractionType =
 // that the editor, the catalog and any migration could not read. These are the
 // canonical terms and every non-canonical spelling that reaches them.
 
+/**
+ * The block types a block may actually BE — the leaf half of the merged
+ * vocabulary. `quiz` and `reflection` are deliberately absent: the flip made
+ * them containers (stages), so nothing can be one.
+ *
+ * Exported so the Block Type Viewer can compare the code's vocabulary against
+ * the catalog's and report DRIFT, rather than deriving one from the other and
+ * proving nothing.
+ */
+export const LEAF_BLOCK_TYPES = [
+  'lesson', 'exercise', 'journal', 'checklist', 'conclude', 'sleep-diary',
+] as const;
+
 /** The canonical activities. Mirrors the `activity` catalog bucket (12 rows, renamed from `exercise_subtype` 2026-09-04). */
 export const EXERCISE_SUBTYPES = [
   'mcq', 'single-select', 'multi-select', 'table', 'input-table', 'structured-list',
@@ -279,20 +292,55 @@ export function resolveInteraction(activity: Activity): InteractionType {
 }
 
 // ── Interaction metadata (for admin UIs) ────────────────────────────
-export const INTERACTION_META: Record<InteractionType, { label: string; verb: string; icon: string; description: string }> = {
-  'read':        { label: 'Read',           verb: 'Reads',    icon: 'book-open',      description: 'User reads/scrolls through content' },
-  'watch':       { label: 'Watch',          verb: 'Watches',  icon: 'play-circle',    description: 'User watches embedded video or media' },
-  'select-one':  { label: 'Select One',     verb: 'Selects',  icon: 'circle-dot',     description: 'User picks one option from a list' },
-  'select-many': { label: 'Select Many',    verb: 'Selects',  icon: 'check-square',   description: 'User picks multiple options' },
-  'write':       { label: 'Write',          verb: 'Writes',   icon: 'pen-line',       description: 'User types free-form text response' },
-  'rate':        { label: 'Rate',           verb: 'Rates',    icon: 'star',           description: 'User picks a number on a scale' },
-  'check':       { label: 'Check Off',      verb: 'Checks',   icon: 'list-checks',    description: 'User toggles items in a checklist' },
-  'track-table': { label: 'Track (Table)',   verb: 'Tracks',   icon: 'table',          description: 'User fills yes/no grid or diary' },
-  'input-table': { label: 'Input (Table)',   verb: 'Enters',   icon: 'grid-3x3',       description: 'User fills data into table cells' },
-  'clinical':    { label: 'Clinical Scale',  verb: 'Answers',  icon: 'clipboard-list', description: 'User answers scored clinical instrument' },
-  'upload':      { label: 'Upload',          verb: 'Uploads',  icon: 'upload',         description: 'User uploads a file (document, image, audio)' },
-  'number':      { label: 'Number',          verb: 'Enters',   icon: 'hash',           description: 'User enters a single numeric value' },
-  'complete':    { label: 'Complete',        verb: 'Finishes', icon: 'flag',           description: 'Day-ending summary or conclusion' },
+/**
+ * What each interaction IS, and what it DRAWS.
+ *
+ * `previewHint` describes the rendered widget. Those strings were the only
+ * documentation of what an interaction actually looks like, and they were lost
+ * when `EQUIP_BLOCK_TYPES` / `CHECKIN_BLOCK_TYPES` were deleted from the viewer
+ * — the render sites survived and went on printing `block.previewHint` against
+ * nothing. Recovered from `040a4cfe^` and re-hung here, where they belong: on
+ * the interaction, not on a hardcoded copy of the block list.
+ *
+ * Each is marked with its provenance. `recovered` is verbatim from the deleted
+ * arrays; `written` was read off `BlockRenderer` because no recovered string
+ * described that interaction — those six had no documentation to lose.
+ */
+export const INTERACTION_META: Record<InteractionType, {
+  label: string; verb: string; icon: string; description: string;
+  /** What the user sees on screen. */
+  previewHint: string;
+  /** Where `previewHint` came from, so a reader knows what it is worth. */
+  hintSource: 'recovered' | 'written';
+}> = {
+  'read':        { label: 'Read',           verb: 'Reads',    icon: 'book-open',      description: 'User reads/scrolls through content',
+                   previewHint: 'Formatted prose with optional media — the primary learning block', hintSource: 'recovered' },
+  'watch':       { label: 'Watch',          verb: 'Watches',  icon: 'play-circle',    description: 'User watches embedded video or media',
+                   // BlockRenderer: `case 'watch': return renderLesson()`. There is no
+                   // watch renderer; it draws the lesson view. Worth saying on the page.
+                   previewHint: 'No renderer of its own — falls through to the lesson view', hintSource: 'written' },
+  'select-one':  { label: 'Select One',     verb: 'Selects',  icon: 'circle-dot',     description: 'User picks one option from a list',
+                   previewHint: 'Radio button list — only one option can be selected', hintSource: 'recovered' },
+  'select-many': { label: 'Select Many',    verb: 'Selects',  icon: 'check-square',   description: 'User picks multiple options',
+                   previewHint: 'Chip/tag grid where multiple items can be selected', hintSource: 'recovered' },
+  'write':       { label: 'Write',          verb: 'Writes',   icon: 'pen-line',       description: 'User types free-form text response',
+                   previewHint: 'Multi-line textarea for free-form responses', hintSource: 'recovered' },
+  'rate':        { label: 'Rate',           verb: 'Rates',    icon: 'star',           description: 'User picks a number on a scale',
+                   previewHint: 'Horizontal slider with numeric range and endpoint labels', hintSource: 'recovered' },
+  'check':       { label: 'Check Off',      verb: 'Checks',   icon: 'list-checks',    description: 'User toggles items in a checklist',
+                   previewHint: 'List of checkboxes that users tick off as they complete', hintSource: 'recovered' },
+  'track-table': { label: 'Track (Table)',   verb: 'Tracks',   icon: 'table',          description: 'User fills yes/no grid or diary',
+                   previewHint: 'Grid with a labelled first column and a yes/no toggle per cell', hintSource: 'written' },
+  'input-table': { label: 'Input (Table)',   verb: 'Enters',   icon: 'grid-3x3',       description: 'User fills data into table cells',
+                   previewHint: 'Grid of text cells; predefined row labels make the first column read-only', hintSource: 'written' },
+  'clinical':    { label: 'Clinical Scale',  verb: 'Answers',  icon: 'clipboard-list', description: 'User answers scored clinical instrument',
+                   previewHint: 'Scored Likert rows — defaults to Not at all / Several days / More than half / Nearly every day', hintSource: 'written' },
+  'upload':      { label: 'Upload',          verb: 'Uploads',  icon: 'upload',         description: 'User uploads a file (document, image, audio)',
+                   previewHint: 'File picker accepting images, PDF, documents and audio', hintSource: 'written' },
+  'number':      { label: 'Number',          verb: 'Enters',   icon: 'hash',           description: 'User enters a single numeric value',
+                   previewHint: 'Single numeric input, using the prompt as its placeholder', hintSource: 'written' },
+  'complete':    { label: 'Complete',        verb: 'Finishes', icon: 'flag',           description: 'Day-ending summary or conclusion',
+                   previewHint: 'Summary card with motivational closing content', hintSource: 'recovered' },
 };
 
 /**

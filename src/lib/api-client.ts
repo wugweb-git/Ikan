@@ -674,6 +674,30 @@ class ApiClient {
     }
   }
 
+  /**
+   * Live block usage, counted over `equip:` on the server.
+   *
+   * Returns null rather than an empty shape on failure: the Block Type Viewer
+   * must be able to say "usage unavailable" instead of showing every declared
+   * term with a confident zero, which is indistinguishable from genuinely
+   * unused and is the exact mistake this feed exists to stop.
+   */
+  async getBlockUsage(): Promise<{
+    source: string; generated_at: string;
+    programmes: number; totalDays: number; totalBlocks: number;
+    interactions: Record<string, number>;
+    blockTypes: Record<string, number>;
+    activities: Record<string, number>;
+    dayTypes: Record<string, number>;
+  } | null> {
+    try {
+      return await this.request('/blocks/usage', { method: 'GET' }, true);
+    } catch (e) {
+      console.warn('[blocks] usage feed unavailable:', e);
+      return null;
+    }
+  }
+
   async getAdminCategories() {
     try {
       const res = await this.request('/admin/categories', { method: 'GET' }, true);

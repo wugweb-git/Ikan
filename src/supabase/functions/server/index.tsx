@@ -3505,6 +3505,71 @@ app.put("/settings", requireAdmin, async (c) => {
 // CATEGORY MANAGEMENT ENDPOINTS
 // ========================================
 
+/**
+ * Block usage — what the catalog DECLARES, counted against what production
+ * actually holds.
+ *
+ * The Block Type Viewer reads `useMetadata()` only, so it can show the catalog
+ * and knows nothing about usage. That is how a declared term with zero blocks
+ * and a declared term used 144 times looked identical on the page, and how
+ * things stayed listed long after nothing referenced them.
+ *
+ * Counted over `equip:` — the admin/editor copy, and the one the census and
+ * every audit in blocks.md is stated against. `equip_program:` is byte-identical
+ * on these fields; `equip_program_by_slug:` is an older snapshot and is
+ * deliberately not counted.
+ *
+ * Read-only. Admin-gated because it exposes the shape of live content.
+ */
+app.get("/blocks/usage", requireAdmin, async (c) => {
+  try {
+    const equips = await kv.getByPrefix('equip:');
+
+    const interactions: Record<string, number> = {};
+    const blockTypes: Record<string, number> = {};
+    const activities: Record<string, number> = {};
+    // Stages are never a block's type, so counting blocks against them always
+    // reads zero and looks unused. A stage's usage is the DAYS that carry it.
+    const dayTypes: Record<string, number> = {};
+    let totalBlocks = 0;
+    let totalDays = 0;
+
+    const bump = (m: Record<string, number>, k: string) => { m[k] = (m[k] ?? 0) + 1; };
+
+    for (const equip of equips) {
+      for (const day of (equip?.daily_content ?? [])) {
+        totalDays++;
+        bump(dayTypes, day?.dayType ?? '(absent)');
+        for (const block of (day?.activities ?? [])) {
+          totalBlocks++;
+          bump(blockTypes,  block?.type ?? '(absent)');
+          // `(absent)` rather than 0 so a block with NO interaction is visible
+          // as a gap instead of vanishing from the tally.
+          bump(interactions, block?.interaction ?? '(absent)');
+          bump(activities,   block?.activityConfig?.subtype
+                          ?? block?.exerciseConfig?.subtype
+                          ?? '(none)');
+        }
+      }
+    }
+
+    return c.json({
+      source: 'equip:',
+      generated_at: new Date().toISOString(),
+      programmes: equips.length,
+      totalDays,
+      totalBlocks,
+      interactions,
+      blockTypes,
+      activities,
+      dayTypes,
+    });
+  } catch (error) {
+    console.error('Block usage error:', error);
+    return c.json({ error: 'Failed to compute block usage' }, 500);
+  }
+});
+
 app.get("/categories", async (c) => {
   try {
     const categories = await kv.getByPrefix('category:');
