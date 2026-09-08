@@ -1120,3 +1120,96 @@ shared General/Balance stock image, Burnout's silhouette, the seven identical
 6. Grep the live chunk for a string only the new code contains.
 7. Server changed? Redeploy the function and smoke `/health`, `/assessments`,
    `/equip/programs`, `/scales/moods`.
+
+---
+
+## Assessment module pass — 2026-09-08 (W1–W4)
+
+Deployed and verified: `● Ready`, live index hash matches the local build, all
+four smoke endpoints 200, `/user/assessments/drafts` 401 (mounted), a missing
+asset 404s.
+
+### W1 — burnout rescore. DONE, scope was 1 result not a class
+
+Backup: `backup_pre_burnout_rescore_2026_09_08` (2 rows). The brief scoped this
+as "all burnout results whose `overall.max` is 4"; measured, that is **one
+logical result and its `:latest` twin**. Every other burnout row was either
+already correct or correctly stamped `pre-spec`.
+
+Row `6ea6d58f-667f-4a46-a44d-c29c8217bda7`, completed 2026-09-03T10:28:46.827Z:
+
+| scale | stored | rescored |
+|---|---|---|
+| Exhaustion | 1.5 / 4 Low | **2.5 / 5 Low** |
+| Mental distance | 2.4 / 4 Low | **3.4 / 5 Normal** |
+| Cognitive impairment | 2.4 / 4 Low | **3.4 / 5 Normal** |
+| Emotional impairment | 2.0 / 4 Low | **3.0 / 5 Normal** |
+| Overall | 2.0 / 4 Low | **3.0 / 5 Normal** |
+
+23/23 answers resolved by exact option text. Both rows stamped
+`scoring_provenance.state = 'rescored'`; twins verified byte-identical; zero
+`max: 4` rows remain anywhere.
+
+**Cross-check worth keeping:** `percent` was already correct (37.5 / 60 / 60 /
+50 / 50) and is unchanged, because `(2.5−1)/4 = 1.5/4`. Only `value` and `max`
+were wrong — the exact signature of a 0-4 map read against 1-5 bands.
+
+### Three corrections to the brief
+
+1. **Burnout's options are bare strings, not `{text, value}`** — the only one of
+   seven. Its 1-5 values live in the per-question `scoring` map, and
+   `deriveScale` falls back to it, so burnout *does* score correctly today.
+   Consequence: the authoring guard the brief asks for **cannot be written as
+   specified**. It must validate the *derived* scale (option value → question
+   map → index) or burnout fails a guard it actually passes. **Guard not
+   written** — it needs that redesign.
+2. **The 3 `pre-spec` burnout rows are unrecoverable by design.** Their answers
+   are `0 - Never` / `3 - Often` from the replaced 0-4 scale, colliding with
+   current labels at different values. Correctly skipped, not "failed to match".
+3. **`excluded_from_trends` claim:** 24 rows carry `pre-spec`, which per
+   CLAUDE.md implies exclusion. `integrityOf` checks `pre-spec` first, so the
+   `'excluded'` branch is unreachable for a different reason than stated.
+
+### W2 — active time on task. DONE
+Owner chose active time. `lib/active-time.ts` counts only while visible AND
+focused; a resumed run seeds from the draft's banked seconds, so two sittings
+of two minutes are four minutes. Stopped before scoring and the network write.
+Absent stays absent all the way to the record — no `?? 0`. `useOfflineSync`
+forwards both fields explicitly. 9 tests.
+
+Known limit, deliberate: someone who walks away with the tab focused is
+over-counted. Any idle cutoff is a guess about how long a person may sit with a
+question, so the field is `duration_seconds` — a duration, not a claim about
+attention.
+
+### W3 — equip duration. DONE
+`lib/equip-meta.ts`. Days resolve from `daily_content.length`;
+`duration_days` agrees with it on **one of four** live programmes.
+`equipDurationLooksImplausible()` reports the disagreement rather than hiding
+it. Three call sites repointed — and `EquipPrograms:150` read `total_days ||
+duration`, **neither of which exists on any live record**, so that listing had
+never rendered a duration badge. 14 tests, fixtures from the live four.
+
+### W4 — partial
+EquipBlock's `title` and `programLabel` are guarded (an empty `title` left an
+empty `<h2>` plus its 32px margin). **The swap itself is not done:** the
+results page's card sits inside a section with its own eyebrow and the brief
+forbids changing the results-screen visual style, so it needs a rendered
+before/after, not a blind substitution.
+
+### W5, W6, W7 — not started
+W5 (recommendations firing), W6 (Rules Engine fields), W7 (results UI) are
+untouched. W5 alone needs rule-table schema changes, a `primary` flag on
+`scores[]`, and a priority-convention migration across 18 rows.
+
+### ⚠ Concurrent sessions are writing this repo
+
+A second Claude session was committing throughout this pass. It ran a broad
+`git add` and swept part of W2 — `active-time.ts`, its test,
+`assessment-routes.ts`, `useOfflineSync.ts` and the `api-client` timing
+parameter — into **667cba1e, "feat(blocks): the requirements table runs against
+production content"**. Nothing was lost; it is filed under a blocks message.
+
+**Two agents sharing one working tree is not safe.** Serialise them, or give
+each a worktree. This pass avoided damage only by committing within seconds of
+each change and never staging a file the other session had open.
