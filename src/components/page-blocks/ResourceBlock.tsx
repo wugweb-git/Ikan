@@ -33,6 +33,8 @@ function SliderResourceCard({ post, onClick, isMobile }: { post: ResourcePost; o
       className="flex-shrink-0 cursor-pointer group flex flex-col overflow-hidden"
       onClick={onClick}
       style={{
+          // Each card is a snap point for the row's `x proximity` snapping.
+          scrollSnapAlign: 'start',
         width: isMobile ? 'calc(100vw - 48px)' : '300px',
         maxWidth: isMobile ? '340px' : '300px',
         borderRadius: 'var(--radius-lg)',

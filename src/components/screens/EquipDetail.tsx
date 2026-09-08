@@ -4,7 +4,7 @@ import { projectId } from '../../utils/supabase/info';
 import { getAuthHeaders } from '../../lib/supabase-client';
 import { apiClient } from '../../lib/api-client';
 import { useAuth } from '../../contexts/AuthContext';
-import { EquipHero } from '../page-blocks/EquipHero';
+import { SectionHero } from '../page-blocks/SectionHero';
 import { EquipBentoGrid } from '../page-blocks/EquipBentoGrid';
 import { EquipBlock } from '../page-blocks/EquipBlock';
 import { ResourceBlock } from '../page-blocks/ResourceBlock';
@@ -339,7 +339,7 @@ export function EquipDetail({ equipId = 'sleep-tight-9', onNavigate }: EquipDeta
 
       <div className="w-full">
         {/* HERO SECTION */}
-        <EquipHero
+        <SectionHero
           title={equipData.title}
           description={equipData.description}
           buttonText={ctaButtonText}

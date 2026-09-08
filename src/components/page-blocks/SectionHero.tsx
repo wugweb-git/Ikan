@@ -1,9 +1,18 @@
 import { cn } from '../ui/utils';
 import { Button } from "../ui/button";
+import { ContentImage } from '../ui/ContentImage';
 
-/** Shown if a hero image URL fails to load (e.g. dead/expired source). */
-const DEFAULT_HERO_IMAGE =
-  'https://images.unsplash.com/photo-1506126613408-eca07ce68773?auto=format&fit=crop&w=1600&q=80';
+/*
+ * There is deliberately no fallback image any more.
+ *
+ * This used to swap in a hardcoded Unsplash photo on any load error. Every
+ * hero in the store is a SIGNED Supabase URL with an expiry — the seven
+ * `assessment_def:` heroes all expire on the same day — so on that day the
+ * heroes would not have broken, they would all silently have become one
+ * stock photo of somebody else's, with nothing in the UI or the logs saying
+ * so. `ContentImage` renders its neutral local placeholder instead, and the
+ * failure is logged so it can be seen.
+ */
 
 /**
  * SectionHero - Unified hero component for landing pages.
@@ -31,12 +40,18 @@ export function SectionHero({
   backgroundAlt = "Hero background",
   className = ""
 }: SectionHeroProps) {
-  const handleClick = () => {
+  /*
+   * `window.location.href` was a full document reload inside the SPA —
+   * every route, every context and the whole bundle re-fetched to move one
+   * screen. The anchor below carries the real href so the link is a link;
+   * this handler keeps the in-app navigation for a plain left click.
+   */
+  const handleClick = (e?: React.MouseEvent) => {
     if (onButtonClick) {
+      e?.preventDefault();
       onButtonClick();
-    } else if (buttonLink) {
-      window.location.href = buttonLink;
     }
+    // With no handler the anchor's own href does the work.
   };
 
   return (
@@ -50,20 +65,37 @@ export function SectionHero({
       {/* Background Image */}
       {backgroundImage && (
         <div className="absolute inset-0 w-full h-full z-0">
-          <img
-            alt={backgroundAlt}
-            className="w-full h-full object-cover object-center"
+          {/* The LCP element. `ContentImage` is the primitive ResourceHero
+              already uses; `fetchPriority` and eager loading stop the browser
+              deprioritising the one image that decides the paint. It is
+              decorative — the headline beside it carries the meaning — so it
+              is hidden from assistive tech rather than described. */}
+          <ContentImage
             src={backgroundImage}
-            onError={(e) => {
-              const img = e.currentTarget;
-              if (img.src !== DEFAULT_HERO_IMAGE) img.src = DEFAULT_HERO_IMAGE;
+            alt=""
+            aria-hidden="true"
+            className="w-full h-full object-cover object-center"
+            loading="eager"
+            fetchPriority="high"
+            decoding="async"
+            sizes="100vw"
+            onError={() => {
+              console.warn('[SectionHero] hero image failed to load:', backgroundImage);
             }}
           />
-          {/* Gradient overlay for text readability */}
-          <div 
-            className="absolute inset-0 z-10 lg:w-2/3"
+          {/*
+            One scrim geometry at every width.
+            It used to be `inset-0 lg:w-2/3`: below `lg` it covered the whole
+            image and washed it out, and the text is near-black with no shadow,
+            so legibility depended on the photo happening to be light on the
+            left. Now the gradient runs the same direction everywhere and the
+            left third is opaque page colour, which guarantees contrast under
+            the headline whatever the image is.
+          */}
+          <div
+            className="absolute inset-0 z-10"
             style={{
-              background: 'linear-gradient(to right, var(--color-bg-page), color-mix(in srgb, var(--color-bg-page) 80%, transparent), transparent)',
+              background: 'linear-gradient(to right, var(--color-bg-page) 0%, var(--color-bg-page) 30%, color-mix(in srgb, var(--color-bg-page) 70%, transparent) 55%, transparent 85%)',
             }}
           />
         </div>
@@ -99,9 +131,16 @@ export function SectionHero({
             {description}
           </p>
 
-          {/* CTA Button */}
+          {/* CTA — a real link when it goes to a URL.
+              `asChild` renders the Button's styling onto the anchor, so this
+              keeps open-in-new-tab, middle-click, copy-link-address, keyboard
+              focus and the internal link graph, while the click handler still
+              does the in-app navigation. Nothing about the appearance changes.
+              With no `buttonLink` there is nowhere to go, so it stays a
+              button. */}
           <Button
-            onClick={handleClick}
+            {...(buttonLink ? { asChild: true } : {})}
+            onClick={buttonLink ? undefined : handleClick}
             style={{
               backgroundColor: 'var(--color-primary-default)',
               color: 'var(--color-primary-on)',
@@ -113,7 +152,9 @@ export function SectionHero({
               fontWeight: 'var(--font-weight-medium)',
             }}
           >
-            {buttonText}
+            {buttonLink
+              ? <a href={buttonLink} onClick={handleClick}>{buttonText}</a>
+              : buttonText}
           </Button>
         </div>
       </div>

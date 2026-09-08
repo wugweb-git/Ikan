@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { projectId } from '../../utils/supabase/info';
 import { getAuthHeaders } from '../../lib/supabase-client';
-import { AssessmentHero } from '../page-blocks/AssessmentHero';
+import { SectionHero } from '../page-blocks/SectionHero';
 import { AssessmentBentoGrid } from '../page-blocks/AssessmentBentoGrid';
 import { AssessmentBlock } from '../page-blocks/AssessmentBlock';
 import { ResourceBlock } from '../page-blocks/ResourceBlock';
@@ -317,7 +317,7 @@ export function AssessmentDetail({ assessmentId, onNavigate }: AssessmentDetailP
       
       <div className="w-full">
         {/* HERO SECTION */}
-        <AssessmentHero
+        <SectionHero
           title={assessmentData.title}
           description={assessmentData.description}
           buttonText={assessmentData.cta_button_text}

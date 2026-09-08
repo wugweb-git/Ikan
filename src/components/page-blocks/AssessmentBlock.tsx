@@ -1,4 +1,5 @@
 import { cn } from '../ui/utils';
+import { useIsMobile } from '../../hooks/useIsMobile';
 import { ContentImage } from '../ui/ContentImage';
 import { Skeleton } from '../ui/skeleton-loader';
 import { resolveImageUrl } from '../../utils/image-utils';
@@ -132,6 +133,7 @@ export function AssessmentBlock({
   onNavigate,
   className
 }: AssessmentBlockProps) {
+  const isMobile = useIsMobile();
   /**
    * `subtitle`, `seeMoreText` and `seeMoreRoute` were declared on the props and
    * never destructured, so passing any of them did nothing — silently, since
@@ -180,27 +182,33 @@ export function AssessmentBlock({
           </p>
         )}
         
-        {/* Mobile Layout */}
-        <div className="flex flex-col gap-[16px] w-full max-w-md mx-auto md:hidden">
-          {programs.map((program, index) => (
-            <MobileAssessmentCard
-              key={program.id || index}
-              program={program}
-              onClick={() => handleProgramClick(program)}
-            />
-          ))}
-        </div>
-
-        {/* Desktop Layout */}
-        <div className="hidden md:grid md:grid-cols-3 gap-[24px] w-full">
-          {programs.map((program, index) => (
-            <DesktopAssessmentCard
-              key={program.id || index}
-              program={program}
-              onClick={() => handleProgramClick(program)}
-            />
-          ))}
-        </div>
+          {/* One tree, switched on the breakpoint rather than hidden with CSS.
+              Both layouts used to render for every programme, with `md:hidden`
+              and `hidden md:grid` hiding one — so every card image was
+              requested twice at every viewport, on Homepage and
+              AssessmentDetail alike. `display:none` does not stop a download.
+              `useIsMobile` reads the same 768px md breakpoint the classes did. */}
+          {isMobile ? (
+            <div className="flex flex-col gap-[16px] w-full max-w-md mx-auto">
+              {programs.map((program, index) => (
+                <MobileAssessmentCard
+                  key={program.id || index}
+                  program={program}
+                  onClick={() => handleProgramClick(program)}
+                />
+              ))}
+            </div>
+          ) : (
+            <div className="grid md:grid-cols-3 gap-[24px] w-full">
+              {programs.map((program, index) => (
+                <DesktopAssessmentCard
+                  key={program.id || index}
+                  program={program}
+                  onClick={() => handleProgramClick(program)}
+                />
+              ))}
+            </div>
+          )}
 
         {/* CTA — View All Assessments */}
         <button
