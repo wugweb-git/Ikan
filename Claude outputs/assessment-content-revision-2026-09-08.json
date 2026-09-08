@@ -1,759 +1,876 @@
 {
-  "meta": {
-    "name": "assessment-content-revision-2026-09-08",
-    "author": "Kartik (content), arithmetic normalised",
-    "accepted_by": "Vedanshu",
-    "accepted_on": "2026-09-08",
-    "project": "jpfvoevxegnknxoqmwye",
-    "table": "kv_store_cc205da9",
-    "band_convention": "half-open [min, max); the LAST band in each list is closed at max",
-    "severity_vocabulary": [
-      "minimal",
-      "mild",
-      "moderate",
-      "moderately-severe",
-      "severe"
-    ],
-    "notes": [
-      "Patch format. Only the listed fields change; every other field on the record is preserved.",
-      "No option label or option weight changes anywhere. Do not touch options[] or scoring{}.",
-      "interpretation == '__NEEDS_COPY__' means Kartik must supply the string. Do not invent it, do not ship the placeholder."
-    ]
-  },
-  "assessment_defs": [
-    {
-      "key": "assessment_def:asm_1767129862254_frzeigbdb",
-      "slug": "feeling-depressed-and-hopeless",
-      "question_text": {
-        "depression-q3": "Trouble falling or staying asleep or sleeping too much",
-        "depression-q6": "Feeling bad about yourself-or that you’re a failure or have let yourself or your family down",
-        "depression-q7": "Trouble concentrating on things, such as reading the newspaper or watching television",
-        "depression-q8": "Moving or speaking so slowly that other people could have noticed. Or, the opposite - being so fidgety or restless that you have been moving around a lot more than usual",
-        "depression-q9": "Thoughts that you would be better off dead or of hurting yourself in some way"
-      },
-      "new_questions": [],
-      "question_flags": {
-        "depression-q10": {
-          "is_risk_indicator": true
-        }
-      },
-      "scores": {}
-    },
-    {
-      "key": "assessment_def:asm_1767129765741_wse9aeprv",
-      "slug": "feeling-overwhelmed-and-anxious",
-      "question_text": {},
-      "new_questions": [],
-      "question_flags": {},
-      "scores": {}
-    },
-    {
-      "key": "assessment_def:asm_1767129926263_ru3v6dozh",
-      "slug": "feeling-worried-and-stressed",
-      "question_text": {
-        "stress-q1": "In the last month, how often have you been upset because of something that happened unexpectedly?",
-        "stress-q2": "In the last month, how often have you felt that you were unable to control the important things in your life?",
-        "stress-q3": "In the last month, how often have you felt nervous and stressed?",
-        "stress-q4": "In the last month, how often have you felt confident about your ability to handle your personal problems?",
-        "stress-q5": "In the last month, how often have you felt that things were going your way?",
-        "stress-q6": "In the last month, how often have you found that you could not cope with all the things that you had to do?",
-        "stress-q7": "In the last month, how often have you been able to control irritations in your life?"
-      },
-      "new_questions": [
-        {
-          "id": "stress-q8",
-          "text": "In the last month, how often have you felt that you were on top of things?",
-          "type": "single-choice",
-          "options": [
-            {
-              "text": "0 - Never",
-              "value": 0
-            },
-            {
-              "text": "1 - Almost Never",
-              "value": 1
-            },
-            {
-              "text": "2 - Sometimes",
-              "value": 2
-            },
-            {
-              "text": "3 - Fairly Often",
-              "value": 3
-            },
-            {
-              "text": "4 - Very Often",
-              "value": 4
-            }
-          ],
-          "scoring": {
-            "0 - Never": 0,
-            "1 - Almost Never": 1,
-            "2 - Sometimes": 2,
-            "3 - Fairly Often": 3,
-            "4 - Very Often": 4
-          },
-          "required": true,
-          "timeLimit": 1,
-          "interaction": "select-one"
-        },
-        {
-          "id": "stress-q9",
-          "text": "In the last month, how often have you been angered because of things that happened that were outside of your control?",
-          "type": "single-choice",
-          "options": [
-            {
-              "text": "0 - Never",
-              "value": 0
-            },
-            {
-              "text": "1 - Almost Never",
-              "value": 1
-            },
-            {
-              "text": "2 - Sometimes",
-              "value": 2
-            },
-            {
-              "text": "3 - Fairly Often",
-              "value": 3
-            },
-            {
-              "text": "4 - Very Often",
-              "value": 4
-            }
-          ],
-          "scoring": {
-            "0 - Never": 0,
-            "1 - Almost Never": 1,
-            "2 - Sometimes": 2,
-            "3 - Fairly Often": 3,
-            "4 - Very Often": 4
-          },
-          "required": true,
-          "timeLimit": 1,
-          "interaction": "select-one"
-        },
-        {
-          "id": "stress-q10",
-          "text": "In the last month, how often have you felt difficulties were piling up so high that you could not overcome them?",
-          "type": "single-choice",
-          "options": [
-            {
-              "text": "0 - Never",
-              "value": 0
-            },
-            {
-              "text": "1 - Almost Never",
-              "value": 1
-            },
-            {
-              "text": "2 - Sometimes",
-              "value": 2
-            },
-            {
-              "text": "3 - Fairly Often",
-              "value": 3
-            },
-            {
-              "text": "4 - Very Often",
-              "value": 4
-            }
-          ],
-          "scoring": {
-            "0 - Never": 0,
-            "1 - Almost Never": 1,
-            "2 - Sometimes": 2,
-            "3 - Fairly Often": 3,
-            "4 - Very Often": 4
-          },
-          "required": true,
-          "timeLimit": 1,
-          "interaction": "select-one"
-        }
-      ],
-      "question_flags": {},
-      "scores": {
-        "stress-total": {
-          "items": [
-            {
-              "question_id": "stress-q1",
-              "reverse": false
-            },
-            {
-              "question_id": "stress-q2",
-              "reverse": false
-            },
-            {
-              "question_id": "stress-q3",
-              "reverse": false
-            },
-            {
-              "question_id": "stress-q4",
-              "reverse": true
-            },
-            {
-              "question_id": "stress-q5",
-              "reverse": true
-            },
-            {
-              "question_id": "stress-q6",
-              "reverse": false
-            },
-            {
-              "question_id": "stress-q7",
-              "reverse": true
-            },
-            {
-              "question_id": "stress-q8",
-              "reverse": true
-            },
-            {
-              "question_id": "stress-q9",
-              "reverse": false
-            },
-            {
-              "question_id": "stress-q10",
-              "reverse": false
-            }
-          ]
-        }
-      }
-    },
-    {
-      "key": "assessment_def:asm_1767130007889_mewy939gi",
-      "slug": "struggling-with-quality-sleep",
-      "question_text": {
-        "sleep-q8": "Finally how long have you had a problem with your sleep?"
-      },
-      "new_questions": [],
-      "question_flags": {},
-      "scores": {}
-    },
-    {
-      "key": "assessment_def:asm_1767130043662_wc4qpivfl",
-      "slug": "struggling-to-balance-life",
-      "question_text": {
-        "balance-q1": "Conditions at work are unpleasant or sometimes even unsafe.",
-        "balance-q2": "I feel that my job is negatively affecting my physical or emotional well-being.",
-        "balance-q3": "I have too much work to do an/or too many unreasonable deadlines.",
-        "balance-q4": "I find it difficult to express my opinions or feelings about my job conditions to my superiors.",
-        "balance-q5": "I feel that job pressures interfere with my family or personal life.",
-        "balance-q6": "I feel that I have inadequate control or input over my work duties.",
-        "balance-q7": "I receive inadequate recognition or rewards for good performance.",
-        "balance-q8": "I am unable to fully utilize my skills and talents at work."
-      },
-      "new_questions": [],
-      "question_flags": {},
-      "scores": {
-        "balance-total": {
-          "items": [
-            {
-              "question_id": "balance-q1",
-              "reverse": false
-            },
-            {
-              "question_id": "balance-q2",
-              "reverse": false
-            },
-            {
-              "question_id": "balance-q3",
-              "reverse": false
-            },
-            {
-              "question_id": "balance-q4",
-              "reverse": false
-            },
-            {
-              "question_id": "balance-q5",
-              "reverse": false
-            },
-            {
-              "question_id": "balance-q6",
-              "reverse": false
-            },
-            {
-              "question_id": "balance-q7",
-              "reverse": false
-            },
-            {
-              "question_id": "balance-q8",
-              "reverse": false
-            }
-          ]
-        }
-      }
-    },
-    {
-      "key": "assessment_def:asm_1767129964930_bv8cqgm16",
-      "slug": "feeling-drained-and-burned-out",
-      "question_text": {
-        "burnout-q1": "At work, I feel mentally exhausted",
-        "burnout-q2": "Everything I do at work requires a great deal of effort",
-        "burnout-q3": "After a day at work, I find it hard to recover my energy",
-        "burnout-q4": "At work, I feel physically exhausted",
-        "burnout-q5": "When I get up in the morning, I lack the energy to start a new day at work",
-        "burnout-q6": "I want to be active at work, but somehow I am unable to manage",
-        "burnout-q7": "When I exert myself at work, I quickly get tired",
-        "burnout-q8": "At the end of my working day, I feel mentally exhausted and drained",
-        "burnout-q19": "At work, I feel unable to control my emotions"
-      },
-      "new_questions": [],
-      "question_flags": {},
-      "scores": {}
-    },
-    {
-      "key": "assessment_def:asm_1767129718791_zj1t8hx3c",
-      "slug": "unsure-or-general-concern",
-      "question_text": {},
-      "new_questions": [],
-      "question_flags": {},
-      "scores": {
-        "gen-self-efficacy": {
-          "items": [
-            {
-              "question_id": "general-q11",
-              "reverse": false
-            },
-            {
-              "question_id": "general-q12",
-              "reverse": false
-            },
-            {
-              "question_id": "general-q13",
-              "reverse": false
-            },
-            {
-              "question_id": "general-q14",
-              "reverse": false
-            },
-            {
-              "question_id": "general-q15",
-              "reverse": false
-            },
-            {
-              "question_id": "general-q16",
-              "reverse": false
-            },
-            {
-              "question_id": "general-q17",
-              "reverse": false
-            },
-            {
-              "question_id": "general-q18",
-              "reverse": false
-            }
-          ]
-        },
-        "gen-resilience": {
-          "items": [
-            {
-              "question_id": "general-q19",
-              "reverse": false
-            },
-            {
-              "question_id": "general-q20",
-              "reverse": true
-            },
-            {
-              "question_id": "general-q21",
-              "reverse": false
-            },
-            {
-              "question_id": "general-q22",
-              "reverse": true
-            },
-            {
-              "question_id": "general-q23",
-              "reverse": false
-            },
-            {
-              "question_id": "general-q24",
-              "reverse": true
-            }
-          ]
-        }
-      }
-    }
+ "meta": {
+  "name": "assessment-content-revision-2026-09-08",
+  "author": "Kartik (content), arithmetic normalised",
+  "accepted_by": "Vedanshu",
+  "accepted_on": "2026-09-08",
+  "project": "jpfvoevxegnknxoqmwye",
+  "table": "kv_store_cc205da9",
+  "band_convention": "half-open [min, max); the LAST band in each list is closed at max",
+  "severity_vocabulary": [
+   "minimal",
+   "mild",
+   "moderate",
+   "moderately-severe",
+   "severe"
   ],
-  "scoring_profiles": [
-    {
-      "key": "scoring-profile:phq9",
-      "unchanged_bands": true,
-      "set": {
-        "description": "Nine items scored 0-3, range 0-27, band edges 5/10/15/20. Item 9 now carries the published PHQ-9 wording (revision 2026-09-08); the previous softened local wording is retired."
-      }
-    },
-    {
-      "key": "scoring-profile:gad2-screen",
-      "set": {},
-      "bands": [
-        {
-          "id": "gad2-neg",
-          "label": "Minimal or no anxiety symptoms",
-          "min": 0,
-          "max": 3,
-          "severity_ref": "minimal",
-          "tone": "success",
-          "interpretation": "This brief screen did not indicate anxiety symptoms."
-        },
-        {
-          "id": "gad2-pos",
-          "label": "Potential anxiety symptoms",
-          "min": 3,
-          "max": 6,
-          "severity_ref": "moderate",
-          "tone": "warning",
-          "interpretation": "This brief screen suggests it is worth looking at anxiety as well."
-        }
-      ]
-    },
-    {
-      "key": "scoring-profile:phq2-screen",
-      "set": {},
-      "bands": [
-        {
-          "id": "phq2-neg",
-          "label": "Minimal or no depression risk",
-          "min": 0,
-          "max": 3,
-          "severity_ref": "minimal",
-          "tone": "success",
-          "interpretation": "This brief screen did not indicate depressive symptoms."
-        },
-        {
-          "id": "phq2-pos",
-          "label": "Major depressive disorder is likely",
-          "min": 3,
-          "max": 6,
-          "severity_ref": "moderate",
-          "tone": "warning",
-          "interpretation": "This brief screen suggests it is worth looking at depression as well."
-        }
-      ]
-    },
-    {
-      "key": "scoring-profile:gad7",
-      "set": {},
-      "bands": [
-        {
-          "id": "gad-min",
-          "label": "Minimal",
-          "min": 0,
-          "max": 5,
-          "severity_ref": "minimal",
-          "tone": "success",
-          "interpretation": "Minimal anxiety symptoms."
-        },
-        {
-          "id": "gad-mild",
-          "label": "Mild",
-          "min": 5,
-          "max": 8,
-          "severity_ref": "mild",
-          "tone": "warning",
-          "interpretation": "Mild anxiety symptoms."
-        },
-        {
-          "id": "gad-mod",
-          "label": "Moderate",
-          "min": 8,
-          "max": 10,
-          "severity_ref": "moderate",
-          "tone": "warning",
-          "interpretation": "Moderate anxiety symptoms."
-        },
-        {
-          "id": "gad-modsev",
-          "label": "Moderately severe",
-          "min": 10,
-          "max": 15,
-          "severity_ref": "moderately-severe",
-          "tone": "warning",
-          "interpretation": "__NEEDS_COPY__"
-        },
-        {
-          "id": "gad-sev",
-          "label": "Severe",
-          "min": 15,
-          "max": 21,
-          "severity_ref": "severe",
-          "tone": "error",
-          "interpretation": "Severe anxiety symptoms detected. We recommend speaking with a professional."
-        }
-      ]
-    },
-    {
-      "key": "scoring-profile:stress-severity",
-      "set": {
-        "name": "Stress (10 items, 0-4)",
-        "missing": {
-          "on_missing": "invalidate",
-          "min_answered": 10
-        },
-        "description": "Perceived Stress Scale, ten items each scored 0-4, four reversed (q4, q5, q7, q8). Higher total means more stress. Achievable range 0-40."
-      },
-      "bands": [
-        {
-          "id": "stress-band-low",
-          "label": "Low Stress",
-          "min": 0,
-          "max": 14,
-          "severity_ref": "minimal",
-          "tone": "success",
-          "interpretation": "You are managing stress well."
-        },
-        {
-          "id": "stress-band-moderate",
-          "label": "Moderate Stress",
-          "min": 14,
-          "max": 27,
-          "severity_ref": "moderate",
-          "tone": "warning",
-          "interpretation": "Stress is starting to affect your life."
-        },
-        {
-          "id": "stress-band-high",
-          "label": "High Stress",
-          "min": 27,
-          "max": 40,
-          "severity_ref": "moderately-severe",
-          "tone": "error",
-          "interpretation": "High stress levels. We recommend giving this attention."
-        }
-      ]
-    },
-    {
-      "key": "scoring-profile:sleep-severity",
-      "set": {},
-      "bands": [
-        {
-          "id": "sleep-band-healthy",
-          "label": "Healthy Sleep",
-          "min": 8,
-          "max": 17,
-          "severity_ref": "minimal",
-          "tone": "success",
-          "interpretation": "Your sleep patterns look healthy overall."
-        },
-        {
-          "id": "sleep-band-poor",
-          "label": "Poor Sleep",
-          "min": 17,
-          "max": 32,
-          "severity_ref": "moderate",
-          "tone": "warning",
-          "interpretation": "Your sleep is disturbed often enough to be affecting your days."
-        },
-        {
-          "id": "sleep-band-very-poor",
-          "label": "Very Poor Sleep",
-          "min": 32,
-          "max": 40,
-          "severity_ref": "severe",
-          "tone": "error",
-          "interpretation": "Your sleep is substantially disrupted. Structured support is recommended."
-        }
-      ]
-    },
-    {
-      "key": "scoring-profile:balance-severity",
-      "set": {
-        "description": "Eight workplace-strain items each scored 1-5, none reversed (all items are negatively worded from the 2026-09-08 revision). Higher total means more strain. Achievable range 8-40."
-      },
-      "retire_band_ids": [
-        "bal-band-balanced",
-        "bal-band-strained",
-        "bal-band-imbalanced"
-      ],
-      "bands": [
-        {
-          "id": "bal-band-nil",
-          "label": "Nil",
-          "min": 8,
-          "max": 16,
-          "severity_ref": "minimal",
-          "tone": "success",
-          "interpretation": "__NEEDS_COPY__"
-        },
-        {
-          "id": "bal-band-fairly-low",
-          "label": "Fairly Low",
-          "min": 16,
-          "max": 21,
-          "severity_ref": "mild",
-          "tone": "warning",
-          "interpretation": "__NEEDS_COPY__"
-        },
-        {
-          "id": "bal-band-moderate",
-          "label": "Moderate",
-          "min": 21,
-          "max": 26,
-          "severity_ref": "moderate",
-          "tone": "warning",
-          "interpretation": "__NEEDS_COPY__"
-        },
-        {
-          "id": "bal-band-severe",
-          "label": "Severe",
-          "min": 26,
-          "max": 31,
-          "severity_ref": "moderately-severe",
-          "tone": "error",
-          "interpretation": "__NEEDS_COPY__"
-        },
-        {
-          "id": "bal-band-dangerous",
-          "label": "Potentially Dangerous",
-          "min": 31,
-          "max": 40,
-          "severity_ref": "severe",
-          "tone": "error",
-          "interpretation": "__NEEDS_COPY__"
-        }
-      ]
-    },
-    {
-      "key": "scoring-profile:bat-mean",
-      "set": {},
-      "bands": [
-        {
-          "id": "bat-low",
-          "label": "Low",
-          "min": 1,
-          "max": 2.59,
-          "severity_ref": "minimal",
-          "tone": "success",
-          "interpretation": "Low burnout risk."
-        },
-        {
-          "id": "bat-normal",
-          "label": "Normal",
-          "min": 2.59,
-          "max": 3.02,
-          "severity_ref": "mild",
-          "tone": "warning",
-          "interpretation": "Within the normal range, with some signs worth watching."
-        },
-        {
-          "id": "bat-high",
-          "label": "High",
-          "min": 3.02,
-          "max": 5,
-          "severity_ref": "moderately-severe",
-          "tone": "error",
-          "interpretation": "High burnout risk."
-        }
-      ]
-    },
-    {
-      "key": "scoring-profile:who5",
-      "set": {},
-      "retire_band_ids": [
-        "who5-below"
-      ],
-      "bands": [
-        {
-          "id": "who5-poor",
-          "label": "Poor",
-          "min": 0,
-          "max": 51,
-          "severity_ref": "moderately-severe",
-          "tone": "error",
-          "interpretation": "__NEEDS_COPY__"
-        },
-        {
-          "id": "who5-good",
-          "label": "Good",
-          "min": 51,
-          "max": 100,
-          "severity_ref": "minimal",
-          "tone": "success",
-          "interpretation": "Good wellbeing."
-        }
-      ]
-    },
-    {
-      "key": "scoring-profile:ngse",
-      "set": {
-        "name": "Self-efficacy (8 items, sum)",
-        "missing": {
-          "on_missing": "invalidate",
-          "min_answered": 8
-        },
-        "description": "New General Self-Efficacy scale, eight items scored 1-5, summed 8-40. Higher is better."
-      },
-      "bands": [
-        {
-          "id": "se-low",
-          "label": "Low",
-          "min": 8,
-          "max": 30,
-          "severity_ref": "moderate",
-          "tone": "error",
-          "interpretation": "Low self-efficacy."
-        },
-        {
-          "id": "se-normal",
-          "label": "Normal",
-          "min": 30,
-          "max": 35,
-          "severity_ref": "mild",
-          "tone": "warning",
-          "interpretation": "Normal self-efficacy."
-        },
-        {
-          "id": "se-high",
-          "label": "High",
-          "min": 35,
-          "max": 40,
-          "severity_ref": "minimal",
-          "tone": "success",
-          "interpretation": "High self-efficacy."
-        }
-      ]
-    },
-    {
-      "key": "scoring-profile:brs",
-      "set": {
-        "name": "Resilience (6 items, mean)",
-        "calc": "mean",
-        "missing": {
-          "on_missing": "invalidate",
-          "min_answered": 6
-        },
-        "description": "Brief Resilience Scale, six items scored 1-5, three reversed (q20, q22, q24). Value is the mean, range 1-5. Higher is better."
-      },
-      "bands": [
-        {
-          "id": "res-low",
-          "label": "Low",
-          "min": 1,
-          "max": 3,
-          "severity_ref": "moderate",
-          "tone": "error",
-          "interpretation": "Low resilience."
-        },
-        {
-          "id": "res-normal",
-          "label": "Normal",
-          "min": 3,
-          "max": 4.31,
-          "severity_ref": "mild",
-          "tone": "warning",
-          "interpretation": "Normal resilience."
-        },
-        {
-          "id": "res-high",
-          "label": "High",
-          "min": 4.31,
-          "max": 5,
-          "severity_ref": "minimal",
-          "tone": "success",
-          "interpretation": "High resilience."
-        }
-      ]
+  "notes": [
+   "Patch format. Only the listed fields change; every other field on the record is preserved.",
+   "No option label or option weight changes anywhere. Do not touch options[] or scoring{}.",
+   "normalise_options on burnout adds value to each option object. It does NOT change any label text and does NOT touch scoring{}. This is the one exception to the 'no option changes' rule and it is shape-only.",
+   "All interpretation strings are now populated. Zero placeholders remain in the payload.",
+   "question_options relabels depression-q10 and anxiety-q8 in place. Question ids are NOT changed and the 4-point 0-3 scale shape is NOT changed - only the four label strings and the scoring map keys. This is permitted because both items are is_scored:false and belong to no score."
+  ],
+  "interpretation_copy": "All 7 __NEEDS_COPY__ strings drafted by Claude on 2026-09-08 at Vedanshu's instruction. Kartik has not signed off on them."
+ },
+ "assessment_defs": [
+  {
+   "key": "assessment_def:asm_1767129862254_frzeigbdb",
+   "slug": "feeling-depressed-and-hopeless",
+   "question_text": {
+    "depression-q3": "Trouble falling or staying asleep or sleeping too much",
+    "depression-q6": "Feeling bad about yourself-or that you’re a failure or have let yourself or your family down",
+    "depression-q7": "Trouble concentrating on things, such as reading the newspaper or watching television",
+    "depression-q8": "Moving or speaking so slowly that other people could have noticed. Or, the opposite - being so fidgety or restless that you have been moving around a lot more than usual",
+    "depression-q9": "Thoughts that you would be better off dead or of hurting yourself in some way"
+   },
+   "new_questions": [],
+   "question_flags": {
+    "depression-q10": {
+     "is_risk_indicator": true
     }
-  ]
+   },
+   "scores": {},
+   "question_options": {
+    "depression-q10": {
+     "reason": "The item asks 'How difficult have the above problems made it...' but offers the frequency scale, so the only possible answers are 'Not at all / Several days / More than half the days / Nearly every day'. Live today; required:true, so every respondent is forced through it.",
+     "question_id_unchanged": true,
+     "scale_shape_unchanged": "4 options, weights 0-3, same order, same numeric prefixes",
+     "from_options": [
+      "1 Not at all",
+      "2 Several days",
+      "3 More than half the days",
+      "4 Nearly every day"
+     ],
+     "to_options": [
+      {
+       "text": "1 Not difficult at all",
+       "value": 0
+      },
+      {
+       "text": "2 Somewhat difficult",
+       "value": 1
+      },
+      {
+       "text": "3 Very difficult",
+       "value": 2
+      },
+      {
+       "text": "4 Extremely difficult",
+       "value": 3
+      }
+     ],
+     "to_scoring": {
+      "1 Not difficult at all": 0,
+      "2 Somewhat difficult": 1,
+      "3 Very difficult": 2,
+      "4 Extremely difficult": 3
+     },
+     "safe_because": "this question is is_scored:false and appears in no score's items[], so no value is ever derived from it. Relabelling cannot move any score, past or future.",
+     "known_effect": "stored responses for this question still hold the old frequency string. Nothing scores them, so no number changes; a raw-answer view would show a string that no longer matches an option."
+    }
+   }
+  },
+  {
+   "key": "assessment_def:asm_1767129765741_wse9aeprv",
+   "slug": "feeling-overwhelmed-and-anxious",
+   "question_text": {},
+   "new_questions": [],
+   "question_flags": {},
+   "scores": {},
+   "question_options": {
+    "anxiety-q8": {
+     "reason": "The item asks 'How difficult have the above problems made it...' but offers the frequency scale, so the only possible answers are 'Not at all / Several days / More than half the days / Nearly every day'. Live today; required:true, so every respondent is forced through it.",
+     "question_id_unchanged": true,
+     "scale_shape_unchanged": "4 options, weights 0-3, same order, same numeric prefixes",
+     "from_options": [
+      "1 Not at all",
+      "2 Several days",
+      "3 More than half the days",
+      "4 Nearly every day"
+     ],
+     "to_options": [
+      {
+       "text": "1 Not difficult at all",
+       "value": 0
+      },
+      {
+       "text": "2 Somewhat difficult",
+       "value": 1
+      },
+      {
+       "text": "3 Very difficult",
+       "value": 2
+      },
+      {
+       "text": "4 Extremely difficult",
+       "value": 3
+      }
+     ],
+     "to_scoring": {
+      "1 Not difficult at all": 0,
+      "2 Somewhat difficult": 1,
+      "3 Very difficult": 2,
+      "4 Extremely difficult": 3
+     },
+     "safe_because": "this question is is_scored:false and appears in no score's items[], so no value is ever derived from it. Relabelling cannot move any score, past or future.",
+     "known_effect": "stored responses for this question still hold the old frequency string. Nothing scores them, so no number changes; a raw-answer view would show a string that no longer matches an option."
+    }
+   }
+  },
+  {
+   "key": "assessment_def:asm_1767129926263_ru3v6dozh",
+   "slug": "feeling-worried-and-stressed",
+   "question_text": {
+    "stress-q1": "In the last month, how often have you been upset because of something that happened unexpectedly?",
+    "stress-q2": "In the last month, how often have you felt that you were unable to control the important things in your life?",
+    "stress-q3": "In the last month, how often have you felt nervous and stressed?",
+    "stress-q4": "In the last month, how often have you felt confident about your ability to handle your personal problems?",
+    "stress-q5": "In the last month, how often have you felt that things were going your way?",
+    "stress-q6": "In the last month, how often have you found that you could not cope with all the things that you had to do?",
+    "stress-q7": "In the last month, how often have you been able to control irritations in your life?"
+   },
+   "new_questions": [
+    {
+     "id": "stress-q8",
+     "text": "In the last month, how often have you felt that you were on top of things?",
+     "type": "single-choice",
+     "options": [
+      {
+       "text": "0 - Never",
+       "value": 0
+      },
+      {
+       "text": "1 - Almost Never",
+       "value": 1
+      },
+      {
+       "text": "2 - Sometimes",
+       "value": 2
+      },
+      {
+       "text": "3 - Fairly Often",
+       "value": 3
+      },
+      {
+       "text": "4 - Very Often",
+       "value": 4
+      }
+     ],
+     "scoring": {
+      "0 - Never": 0,
+      "1 - Almost Never": 1,
+      "2 - Sometimes": 2,
+      "3 - Fairly Often": 3,
+      "4 - Very Often": 4
+     },
+     "required": true,
+     "timeLimit": 1,
+     "interaction": "select-one"
+    },
+    {
+     "id": "stress-q9",
+     "text": "In the last month, how often have you been angered because of things that happened that were outside of your control?",
+     "type": "single-choice",
+     "options": [
+      {
+       "text": "0 - Never",
+       "value": 0
+      },
+      {
+       "text": "1 - Almost Never",
+       "value": 1
+      },
+      {
+       "text": "2 - Sometimes",
+       "value": 2
+      },
+      {
+       "text": "3 - Fairly Often",
+       "value": 3
+      },
+      {
+       "text": "4 - Very Often",
+       "value": 4
+      }
+     ],
+     "scoring": {
+      "0 - Never": 0,
+      "1 - Almost Never": 1,
+      "2 - Sometimes": 2,
+      "3 - Fairly Often": 3,
+      "4 - Very Often": 4
+     },
+     "required": true,
+     "timeLimit": 1,
+     "interaction": "select-one"
+    },
+    {
+     "id": "stress-q10",
+     "text": "In the last month, how often have you felt difficulties were piling up so high that you could not overcome them?",
+     "type": "single-choice",
+     "options": [
+      {
+       "text": "0 - Never",
+       "value": 0
+      },
+      {
+       "text": "1 - Almost Never",
+       "value": 1
+      },
+      {
+       "text": "2 - Sometimes",
+       "value": 2
+      },
+      {
+       "text": "3 - Fairly Often",
+       "value": 3
+      },
+      {
+       "text": "4 - Very Often",
+       "value": 4
+      }
+     ],
+     "scoring": {
+      "0 - Never": 0,
+      "1 - Almost Never": 1,
+      "2 - Sometimes": 2,
+      "3 - Fairly Often": 3,
+      "4 - Very Often": 4
+     },
+     "required": true,
+     "timeLimit": 1,
+     "interaction": "select-one"
+    }
+   ],
+   "question_flags": {},
+   "scores": {
+    "stress-total": {
+     "items": [
+      {
+       "question_id": "stress-q1",
+       "reverse": false
+      },
+      {
+       "question_id": "stress-q2",
+       "reverse": false
+      },
+      {
+       "question_id": "stress-q3",
+       "reverse": false
+      },
+      {
+       "question_id": "stress-q4",
+       "reverse": true
+      },
+      {
+       "question_id": "stress-q5",
+       "reverse": true
+      },
+      {
+       "question_id": "stress-q6",
+       "reverse": false
+      },
+      {
+       "question_id": "stress-q7",
+       "reverse": true
+      },
+      {
+       "question_id": "stress-q8",
+       "reverse": true
+      },
+      {
+       "question_id": "stress-q9",
+       "reverse": false
+      },
+      {
+       "question_id": "stress-q10",
+       "reverse": false
+      }
+     ]
+    }
+   }
+  },
+  {
+   "key": "assessment_def:asm_1767130007889_mewy939gi",
+   "slug": "struggling-with-quality-sleep",
+   "question_text": {
+    "sleep-q8": "Finally how long have you had a problem with your sleep?"
+   },
+   "new_questions": [],
+   "question_flags": {},
+   "scores": {}
+  },
+  {
+   "key": "assessment_def:asm_1767130043662_wc4qpivfl",
+   "slug": "struggling-to-balance-life",
+   "question_text": {
+    "balance-q1": "Conditions at work are unpleasant or sometimes even unsafe.",
+    "balance-q2": "I feel that my job is negatively affecting my physical or emotional well-being.",
+    "balance-q3": "I have too much work to do an/or too many unreasonable deadlines.",
+    "balance-q4": "I find it difficult to express my opinions or feelings about my job conditions to my superiors.",
+    "balance-q5": "I feel that job pressures interfere with my family or personal life.",
+    "balance-q6": "I feel that I have inadequate control or input over my work duties.",
+    "balance-q7": "I receive inadequate recognition or rewards for good performance.",
+    "balance-q8": "I am unable to fully utilize my skills and talents at work."
+   },
+   "new_questions": [],
+   "question_flags": {},
+   "scores": {
+    "balance-total": {
+     "items": [
+      {
+       "question_id": "balance-q1",
+       "reverse": false
+      },
+      {
+       "question_id": "balance-q2",
+       "reverse": false
+      },
+      {
+       "question_id": "balance-q3",
+       "reverse": false
+      },
+      {
+       "question_id": "balance-q4",
+       "reverse": false
+      },
+      {
+       "question_id": "balance-q5",
+       "reverse": false
+      },
+      {
+       "question_id": "balance-q6",
+       "reverse": false
+      },
+      {
+       "question_id": "balance-q7",
+       "reverse": false
+      },
+      {
+       "question_id": "balance-q8",
+       "reverse": false
+      }
+     ]
+    }
+   }
+  },
+  {
+   "key": "assessment_def:asm_1767129964930_bv8cqgm16",
+   "slug": "feeling-drained-and-burned-out",
+   "question_text": {
+    "burnout-q1": "At work, I feel mentally exhausted",
+    "burnout-q2": "Everything I do at work requires a great deal of effort",
+    "burnout-q3": "After a day at work, I find it hard to recover my energy",
+    "burnout-q4": "At work, I feel physically exhausted",
+    "burnout-q5": "When I get up in the morning, I lack the energy to start a new day at work",
+    "burnout-q6": "I want to be active at work, but somehow I am unable to manage",
+    "burnout-q7": "When I exert myself at work, I quickly get tired",
+    "burnout-q8": "At the end of my working day, I feel mentally exhausted and drained",
+    "burnout-q19": "At work, I feel unable to control my emotions"
+   },
+   "new_questions": [],
+   "question_flags": {},
+   "scores": {},
+   "normalise_options": {
+    "applies_to": "all 23 questions",
+    "reason": "burnout is the only assessment whose options[] are bare strings; every other assessment stores [{text,value}]. deriveScale() therefore falls back to the per-question scoring map for this one instrument only.",
+    "operation": "replace each question's options[] with the object form below. Label text is byte-identical to the existing string, so no stored response is orphaned. Values are copied from that question's own scoring map (all 23 maps are identical - verified).",
+    "from": [
+     "1 - Never",
+     "2 - Rarely",
+     "3 - Sometimes",
+     "4 - Often",
+     "5 - Always"
+    ],
+    "to": [
+     {
+      "text": "1 - Never",
+      "value": 1
+     },
+     {
+      "text": "2 - Rarely",
+      "value": 2
+     },
+     {
+      "text": "3 - Sometimes",
+      "value": 3
+     },
+     {
+      "text": "4 - Often",
+      "value": 4
+     },
+     {
+      "text": "5 - Always",
+      "value": 5
+     }
+    ],
+    "scoring_map_unchanged": true,
+    "postcondition": "after this, option.value is populated on all 7 assessments, so a validation guard may be written against option.value uniformly and deriveScale()'s array-index fallback becomes unreachable."
+   }
+  },
+  {
+   "key": "assessment_def:asm_1767129718791_zj1t8hx3c",
+   "slug": "unsure-or-general-concern",
+   "question_text": {},
+   "new_questions": [],
+   "question_flags": {},
+   "scores": {
+    "gen-self-efficacy": {
+     "items": [
+      {
+       "question_id": "general-q11",
+       "reverse": false
+      },
+      {
+       "question_id": "general-q12",
+       "reverse": false
+      },
+      {
+       "question_id": "general-q13",
+       "reverse": false
+      },
+      {
+       "question_id": "general-q14",
+       "reverse": false
+      },
+      {
+       "question_id": "general-q15",
+       "reverse": false
+      },
+      {
+       "question_id": "general-q16",
+       "reverse": false
+      },
+      {
+       "question_id": "general-q17",
+       "reverse": false
+      },
+      {
+       "question_id": "general-q18",
+       "reverse": false
+      }
+     ]
+    },
+    "gen-resilience": {
+     "items": [
+      {
+       "question_id": "general-q19",
+       "reverse": false
+      },
+      {
+       "question_id": "general-q20",
+       "reverse": true
+      },
+      {
+       "question_id": "general-q21",
+       "reverse": false
+      },
+      {
+       "question_id": "general-q22",
+       "reverse": true
+      },
+      {
+       "question_id": "general-q23",
+       "reverse": false
+      },
+      {
+       "question_id": "general-q24",
+       "reverse": true
+      }
+     ]
+    }
+   }
+  }
+ ],
+ "scoring_profiles": [
+  {
+   "key": "scoring-profile:phq9",
+   "unchanged_bands": true,
+   "set": {
+    "description": "Nine items scored 0-3, range 0-27, band edges 5/10/15/20. Item 9 now carries the published PHQ-9 wording (revision 2026-09-08); the previous softened local wording is retired."
+   }
+  },
+  {
+   "key": "scoring-profile:gad2-screen",
+   "set": {},
+   "bands": [
+    {
+     "id": "gad2-neg",
+     "label": "Minimal or no anxiety symptoms",
+     "min": 0,
+     "max": 3,
+     "severity_ref": "minimal",
+     "tone": "success",
+     "interpretation": "This brief screen did not indicate anxiety symptoms."
+    },
+    {
+     "id": "gad2-pos",
+     "label": "Potential anxiety symptoms",
+     "min": 3,
+     "max": 6,
+     "severity_ref": "moderate",
+     "tone": "warning",
+     "interpretation": "This brief screen suggests it is worth looking at anxiety as well."
+    }
+   ]
+  },
+  {
+   "key": "scoring-profile:phq2-screen",
+   "set": {},
+   "bands": [
+    {
+     "id": "phq2-neg",
+     "label": "Minimal or no depression risk",
+     "min": 0,
+     "max": 3,
+     "severity_ref": "minimal",
+     "tone": "success",
+     "interpretation": "This brief screen did not indicate depressive symptoms."
+    },
+    {
+     "id": "phq2-pos",
+     "label": "Major depressive disorder is likely",
+     "min": 3,
+     "max": 6,
+     "severity_ref": "moderate",
+     "tone": "warning",
+     "interpretation": "This brief screen suggests it is worth looking at depression as well."
+    }
+   ]
+  },
+  {
+   "key": "scoring-profile:gad7",
+   "set": {},
+   "bands": [
+    {
+     "id": "gad-min",
+     "label": "Minimal",
+     "min": 0,
+     "max": 5,
+     "severity_ref": "minimal",
+     "tone": "success",
+     "interpretation": "Minimal anxiety symptoms."
+    },
+    {
+     "id": "gad-mild",
+     "label": "Mild",
+     "min": 5,
+     "max": 8,
+     "severity_ref": "mild",
+     "tone": "warning",
+     "interpretation": "Mild anxiety symptoms."
+    },
+    {
+     "id": "gad-mod",
+     "label": "Moderate",
+     "min": 8,
+     "max": 10,
+     "severity_ref": "moderate",
+     "tone": "warning",
+     "interpretation": "Moderate anxiety symptoms."
+    },
+    {
+     "id": "gad-modsev",
+     "label": "Moderately severe",
+     "min": 10,
+     "max": 15,
+     "severity_ref": "moderately-severe",
+     "tone": "warning",
+     "interpretation": "Moderately severe anxiety symptoms. This is worth discussing with a professional."
+    },
+    {
+     "id": "gad-sev",
+     "label": "Severe",
+     "min": 15,
+     "max": 21,
+     "severity_ref": "severe",
+     "tone": "error",
+     "interpretation": "Severe anxiety symptoms detected. We recommend speaking with a professional."
+    }
+   ]
+  },
+  {
+   "key": "scoring-profile:stress-severity",
+   "set": {
+    "name": "Stress (10 items, 0-4)",
+    "missing": {
+     "on_missing": "invalidate",
+     "min_answered": 10
+    },
+    "description": "Perceived Stress Scale, ten items each scored 0-4, four reversed (q4, q5, q7, q8). Higher total means more stress. Achievable range 0-40."
+   },
+   "bands": [
+    {
+     "id": "stress-band-low",
+     "label": "Low Stress",
+     "min": 0,
+     "max": 14,
+     "severity_ref": "minimal",
+     "tone": "success",
+     "interpretation": "You are managing stress well."
+    },
+    {
+     "id": "stress-band-moderate",
+     "label": "Moderate Stress",
+     "min": 14,
+     "max": 27,
+     "severity_ref": "moderate",
+     "tone": "warning",
+     "interpretation": "Stress is starting to affect your life."
+    },
+    {
+     "id": "stress-band-high",
+     "label": "High Stress",
+     "min": 27,
+     "max": 40,
+     "severity_ref": "moderately-severe",
+     "tone": "error",
+     "interpretation": "High stress levels. We recommend giving this attention."
+    }
+   ]
+  },
+  {
+   "key": "scoring-profile:sleep-severity",
+   "set": {},
+   "bands": [
+    {
+     "id": "sleep-band-healthy",
+     "label": "Healthy Sleep",
+     "min": 8,
+     "max": 17,
+     "severity_ref": "minimal",
+     "tone": "success",
+     "interpretation": "Your sleep patterns look healthy overall."
+    },
+    {
+     "id": "sleep-band-poor",
+     "label": "Poor Sleep",
+     "min": 17,
+     "max": 32,
+     "severity_ref": "moderate",
+     "tone": "warning",
+     "interpretation": "Your sleep is disturbed often enough to be affecting your days."
+    },
+    {
+     "id": "sleep-band-very-poor",
+     "label": "Very Poor Sleep",
+     "min": 32,
+     "max": 40,
+     "severity_ref": "severe",
+     "tone": "error",
+     "interpretation": "Your sleep is substantially disrupted. Structured support is recommended."
+    }
+   ]
+  },
+  {
+   "key": "scoring-profile:balance-severity",
+   "set": {
+    "description": "Eight workplace-strain items each scored 1-5, none reversed (all items are negatively worded from the 2026-09-08 revision). Higher total means more strain. Achievable range 8-40."
+   },
+   "retire_band_ids": [
+    "bal-band-balanced",
+    "bal-band-strained",
+    "bal-band-imbalanced"
+   ],
+   "bands": [
+    {
+     "id": "bal-band-nil",
+     "label": "Nil",
+     "min": 8,
+     "max": 16,
+     "severity_ref": "minimal",
+     "tone": "success",
+     "interpretation": "Your work conditions are not putting meaningful strain on you right now."
+    },
+    {
+     "id": "bal-band-fairly-low",
+     "label": "Fairly Low",
+     "min": 16,
+     "max": 21,
+     "severity_ref": "mild",
+     "tone": "warning",
+     "interpretation": "There is some strain at work, but it is within a range most people manage."
+    },
+    {
+     "id": "bal-band-moderate",
+     "label": "Moderate",
+     "min": 21,
+     "max": 26,
+     "severity_ref": "moderate",
+     "tone": "warning",
+     "interpretation": "Work is putting real strain on you. Worth addressing before it builds further."
+    },
+    {
+     "id": "bal-band-severe",
+     "label": "Severe",
+     "min": 26,
+     "max": 31,
+     "severity_ref": "moderately-severe",
+     "tone": "error",
+     "interpretation": "Your work conditions are placing heavy strain on you. We recommend giving this attention."
+    },
+    {
+     "id": "bal-band-dangerous",
+     "label": "Potentially Dangerous",
+     "min": 31,
+     "max": 40,
+     "severity_ref": "severe",
+     "tone": "error",
+     "interpretation": "Your work conditions are placing serious strain on your wellbeing. We recommend speaking with a professional."
+    }
+   ]
+  },
+  {
+   "key": "scoring-profile:bat-mean",
+   "set": {},
+   "bands": [
+    {
+     "id": "bat-low",
+     "label": "Low",
+     "min": 1,
+     "max": 2.59,
+     "severity_ref": "minimal",
+     "tone": "success",
+     "interpretation": "Low burnout risk."
+    },
+    {
+     "id": "bat-normal",
+     "label": "Normal",
+     "min": 2.59,
+     "max": 3.02,
+     "severity_ref": "mild",
+     "tone": "warning",
+     "interpretation": "Within the normal range, with some signs worth watching."
+    },
+    {
+     "id": "bat-high",
+     "label": "High",
+     "min": 3.02,
+     "max": 5,
+     "severity_ref": "moderately-severe",
+     "tone": "error",
+     "interpretation": "High burnout risk."
+    }
+   ]
+  },
+  {
+   "key": "scoring-profile:who5",
+   "set": {},
+   "retire_band_ids": [
+    "who5-below"
+   ],
+   "bands": [
+    {
+     "id": "who5-poor",
+     "label": "Poor",
+     "min": 0,
+     "max": 51,
+     "severity_ref": "moderately-severe",
+     "tone": "error",
+     "interpretation": "Your wellbeing has been low. We recommend giving this attention."
+    },
+    {
+     "id": "who5-good",
+     "label": "Good",
+     "min": 51,
+     "max": 100,
+     "severity_ref": "minimal",
+     "tone": "success",
+     "interpretation": "Good wellbeing."
+    }
+   ]
+  },
+  {
+   "key": "scoring-profile:ngse",
+   "set": {
+    "name": "Self-efficacy (8 items, sum)",
+    "missing": {
+     "on_missing": "invalidate",
+     "min_answered": 8
+    },
+    "description": "New General Self-Efficacy scale, eight items scored 1-5, summed 8-40. Higher is better."
+   },
+   "bands": [
+    {
+     "id": "se-low",
+     "label": "Low",
+     "min": 8,
+     "max": 30,
+     "severity_ref": "moderate",
+     "tone": "error",
+     "interpretation": "Low self-efficacy."
+    },
+    {
+     "id": "se-normal",
+     "label": "Normal",
+     "min": 30,
+     "max": 35,
+     "severity_ref": "mild",
+     "tone": "warning",
+     "interpretation": "Normal self-efficacy."
+    },
+    {
+     "id": "se-high",
+     "label": "High",
+     "min": 35,
+     "max": 40,
+     "severity_ref": "minimal",
+     "tone": "success",
+     "interpretation": "High self-efficacy."
+    }
+   ]
+  },
+  {
+   "key": "scoring-profile:brs",
+   "set": {
+    "name": "Resilience (6 items, mean)",
+    "calc": "mean",
+    "missing": {
+     "on_missing": "invalidate",
+     "min_answered": 6
+    },
+    "description": "Brief Resilience Scale, six items scored 1-5, three reversed (q20, q22, q24). Value is the mean, range 1-5. Higher is better."
+   },
+   "bands": [
+    {
+     "id": "res-low",
+     "label": "Low",
+     "min": 1,
+     "max": 3,
+     "severity_ref": "moderate",
+     "tone": "error",
+     "interpretation": "Low resilience."
+    },
+    {
+     "id": "res-normal",
+     "label": "Normal",
+     "min": 3,
+     "max": 4.31,
+     "severity_ref": "mild",
+     "tone": "warning",
+     "interpretation": "Normal resilience."
+    },
+    {
+     "id": "res-high",
+     "label": "High",
+     "min": 4.31,
+     "max": 5,
+     "severity_ref": "minimal",
+     "tone": "success",
+     "interpretation": "High resilience."
+    }
+   ]
+  }
+ ]
 }

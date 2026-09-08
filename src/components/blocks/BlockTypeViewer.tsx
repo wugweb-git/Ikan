@@ -24,7 +24,7 @@ import {
 import { AdminHeader } from '../admin/AdminHeader';
 import { apiClient } from '../../lib/api-client';
 import { INTERACTION_REQUIREMENTS, missingRequirements, blockOf } from '../../lib/blocks/content-hierarchy';
-import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
+import { Card, CardContent } from '../ui/card';
 import { Button } from '../ui/button';
 import { AdminStatusBadge } from '../admin/AdminStatusBadge';
 import {
@@ -291,6 +291,24 @@ export function AdminBlockTypeViewer({ onBack }: AdminBlockTypeViewerProps) {
   // removed it, while its render code survived and went on printing
   // `block.previewHint` against a source that no longer existed.
   const [activeTab, setActiveTab] = useState<'interactions' | 'blocktypes' | 'activities'>('interactions');
+
+  /**
+   * Which row has its preview open. One at a time — the previews are large, and
+   * the point of the page is comparison across rows, not a wall of mocks.
+   */
+  const [openPreview, setOpenPreview] = useState<string | null>(null);
+  const previewToggle = (id: string, label = 'Preview') => (
+    <button
+      onClick={() => setOpenPreview(openPreview === id ? null : id)}
+      style={{
+        fontSize: 'var(--text-xs)', fontFamily: 'var(--font-family-base)',
+        color: 'var(--color-primary-default)', background: 'none', border: 'none',
+        cursor: 'pointer', padding: 0,
+      }}
+    >
+      {openPreview === id ? `Hide ${label.toLowerCase()}` : label}
+    </button>
+  );
 
   // Live usage, counted over `equip:` server-side. `null` means the feed failed
   // — which must NOT read as "everything is unused", so every count renders as
@@ -590,27 +608,72 @@ export function AdminBlockTypeViewer({ onBack }: AdminBlockTypeViewerProps) {
                 <p style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)', marginTop: 4 }}>{meta.description}</p>
                 <RowMeta count={count} rendersAs={meta.previewHint} status={status} />
                 <RequirementLine interaction={key} gap={requirementGaps[key]} usageState={usageState} />
+                <div className="mt-2">{previewToggle(`i:${key}`)}</div>
+                {openPreview === `i:${key}` && <PreviewPanel interaction={key} />}
               </div>
             );
           })}
+
+          {/*
+            LEGACY -> INTERACTION (restored 2026-09-08).
+
+            `LEGACY_MAPPING` was declared and read by nothing. It was retired
+            from the page on the grounds that the backfill had completed, which
+            confused two different things: the backfill settled what the DATA
+            says, and this table is how a reader understands old data and old
+            code. Every `equip_program_by_slug:` snapshot, every stored block
+            written before the backfill, and every `type + subtype` still in the
+            editor is read through exactly this map.
+
+            It is derived, not written — each row runs the real
+            `resolveInteraction`, so it cannot drift from the resolver the way a
+            hand-kept table would.
+          */}
+          <details className="p-3 rounded-lg" style={{ backgroundColor: 'var(--color-bg-card)', border: '1px solid var(--color-border-default)' }}>
+            <summary style={{ cursor: 'pointer', fontWeight: 500, fontSize: 'var(--text-sm)' }}>
+              Legacy → interaction ({LEGACY_MAPPING.length} terms)
+            </summary>
+            <p style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)', margin: '6px 0 10px' }}>
+              How a stored <code>type</code> or <code>activityConfig.subtype</code> resolves. Every
+              row is computed by running <code>resolveInteraction()</code>, so this cannot drift
+              from the resolver. The backfill wrote <code>interaction</code> onto live blocks; it did
+              not make old records or the editor&apos;s own vocabulary readable without this.
+            </p>
+            <div className="space-y-1">
+              {LEGACY_MAPPING.map((m) => (
+                <div key={m.legacy} className="flex items-baseline gap-2 flex-wrap" style={{ fontSize: 'var(--text-xs)' }}>
+                  <code style={{ minWidth: 210, color: 'var(--color-text-primary)' }}>{m.legacy}</code>
+                  <span style={{ color: 'var(--color-text-muted)' }}>→</span>
+                  <code style={{ color: 'var(--color-primary-default)' }}>{m.interaction}</code>
+                  <span style={{ color: 'var(--color-text-muted)' }}>{m.note}</span>
+                </div>
+              ))}
+            </div>
+          </details>
         </div>
       )}
 
       {activeTab === 'blocktypes' && (
         <div className="space-y-3">
-          <p style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-muted)' }}>
-            One merged vocabulary. A row that <strong>holds</strong> block types is a stage and
-            carries preset rules; a row that holds nothing is a block. That is the whole distinction —
-            <code style={{ fontSize: 'var(--text-xs)' }}> can_hold </code> non-empty ⟺ it has a preset.
-          </p>
-          {['container', 'leaf'].map((kind) => {
-            const rows = kind === 'container' ? containerBlockTypes : pickableBlockTypes;
-            if (!rows.length) return null;
+          {/*
+            ONE FLAT LIST OF 17 (2026-09-08). This was split into
+            "Stages — hold blocks (11)" and "Blocks — held by stages (6)" under a
+            paragraph explaining `can_hold`. The split made the page argue for a
+            distinction instead of showing a vocabulary: the stat tile says 17
+            and the list said 11 and 6. Stage vs block is now a badge on the row,
+            which is where a per-row fact belongs. `containerBlockTypes` and
+            `pickableBlockTypes` still exist — the "Stages with rules" tile
+            compares one of them against DAY_TYPE_PRESETS.
+          */}
+          {/*
+            Flat, but ordered: stages first, then blocks. The badge says which is
+            which; the order stops the two kinds interleaving by catalog
+            accident. Both halves are still named here, which is also what keeps
+            the "Stages with rules" tile honest.
+          */}
+          {[{ rows: [...containerBlockTypes, ...pickableBlockTypes] }].map(({ rows }) => {
             return (
-              <div key={kind} className="space-y-2">
-                <div style={{ fontSize: 'var(--text-xs)', textTransform: 'uppercase', letterSpacing: '0.04em', color: 'var(--color-text-muted)', fontWeight: 500 }}>
-                  {kind === 'container' ? `Stages — hold blocks (${rows.length})` : `Blocks — held by stages (${rows.length})`}
-                </div>
+              <div className="space-y-2">
                 {rows.map((row) => {
                   const preset = DAY_TYPE_PRESETS[row.value as keyof typeof DAY_TYPE_PRESETS];
                   return (
@@ -618,6 +681,19 @@ export function AdminBlockTypeViewer({ onBack }: AdminBlockTypeViewerProps) {
                       <div className="flex items-baseline gap-2 flex-wrap">
                         <span style={{ fontWeight: 500 }}>{row.label}</span>
                         <code style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}>{row.value}</code>
+                        {/* The whole stage/block distinction, as one word. */}
+                        <span
+                          title={isContainerRow(row)
+                            ? 'can_hold is non-empty — it holds block types and carries preset rules'
+                            : 'can_hold is empty — it holds nothing and is placed inside a stage'}
+                          style={{
+                            fontSize: '10px', borderRadius: 4, padding: '0 4px',
+                            border: '1px solid var(--color-border-default)',
+                            color: 'var(--color-text-muted)',
+                          }}
+                        >
+                          {isContainerRow(row) ? 'stage' : 'block'}
+                        </span>
                       </div>
                       {row.description && (
                         <p style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)', marginTop: 4 }}>{row.description}</p>
@@ -703,6 +779,35 @@ export function AdminBlockTypeViewer({ onBack }: AdminBlockTypeViewerProps) {
                           ✕ has preset rules but holds nothing
                         </div>
                       )}
+                      {/*
+                        A stage gets no preview, and that is not an omission: a
+                        stage is a DAY, and what a day draws is the blocks on it.
+                        Inventing a mock for `learning` would be the one thing
+                        this page must not do.
+                      */}
+                      {isContainerRow(row) ? (
+                        <div className="mt-2" style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}>
+                          No preview — a stage is a day, not a block. What it draws is the blocks it holds.
+                        </div>
+                      ) : (
+                        <>
+                          <div className="mt-2">{previewToggle(`b:${row.value}`)}</div>
+                          {openPreview === `b:${row.value}` && (
+                            <PreviewPanel
+                              interaction={probe(row.value)}
+                              blockType={{
+                                value: row.value,
+                                label: row.label,
+                                icon: BookOpen,
+                                description: row.description ?? '',
+                                category: 'equip',
+                                fields: [],
+                                previewHint: LEAF_HINTS[row.value] ?? '',
+                              }}
+                            />
+                          )}
+                        </>
+                      )}
                     </div>
                   );
                 })}
@@ -772,125 +877,104 @@ export function AdminBlockTypeViewer({ onBack }: AdminBlockTypeViewerProps) {
 }
 
 // ── Detail Panel ────────────────────────────────────────────────
-function BlockDetailPanel({ block }: { block: BlockTypeInfo }) {
-  const Icon = block.icon;
+/**
+ * The preview panel a row opens.
+ *
+ * This was `BlockDetailPanel`, a sticky right-hand pane of a master/detail
+ * layout that no longer exists — so nothing rendered it, and with it went the
+ * User/Editor toggle and every mock behind it. What the page could say about
+ * appearance was one line of prose per row.
+ *
+ * Restored as a per-row panel rather than a sidebar. Its duplicate info card is
+ * gone: the row above already carries the label, the code, the description and
+ * the live count, and repeating them was what made this a whole second column.
+ *
+ * The toggle appears only where both halves exist. `BlockPreview` is keyed on
+ * INTERACTION — what the player draws — and `EditorPreview` on BLOCK TYPE —
+ * what the author fills in. An interaction row has no block type, so it shows
+ * the user-facing half alone rather than an empty editor.
+ */
+function PreviewPanel({ interaction, blockType }: {
+  interaction: InteractionType;
+  blockType?: BlockTypeInfo;
+}) {
   const [previewMode, setPreviewMode] = useState<'user' | 'editor'>('user');
+  const mode = blockType ? previewMode : 'user';
+
+  const tabStyle = (active: boolean) => ({
+    fontSize: 'var(--text-xs)',
+    fontFamily: 'var(--font-family-base)',
+    fontWeight: 'var(--font-weight-medium)' as any,
+    backgroundColor: active ? 'var(--color-primary-default)' : 'var(--color-bg-card)',
+    color: active ? 'var(--color-primary-on)' : 'var(--color-text-muted)',
+    border: 'none',
+    cursor: 'pointer',
+  });
 
   return (
-    <div className="space-y-4 sticky top-4">
-      {/* Info Card */}
-      <Card style={{ borderRadius: 'var(--radius-lg)', border: '1px solid var(--color-border-default)' }}>
-        <CardHeader className="pb-3">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ backgroundColor: 'var(--color-bg-muted)' }}>
-              <Icon className="w-5 h-5" style={{ color: 'var(--color-primary-default)' }} />
-            </div>
-            <div>
-              <CardTitle style={{ fontFamily: 'var(--font-family-base)', fontWeight: 'var(--font-weight-medium)', fontSize: 'var(--text-lg)' }}>
-                {block.label}
-              </CardTitle>
-              <span style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)', fontFamily: 'monospace' }}>
-                type: "{block.value}"
-              </span>
-            </div>
+    <div className="mt-3">
+      <div className="flex items-center justify-between mb-2">
+        <span style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)', fontFamily: 'var(--font-family-base)' }}>
+          {mode === 'user' ? 'User-facing preview' : 'Editor / wizard preview'}
+          {' · '}
+          <code>{interaction}</code>
+        </span>
+        {blockType && (
+          <div className="flex rounded-lg overflow-hidden" style={{ border: '1px solid var(--color-border-default)' }}>
+            <button
+              onClick={() => setPreviewMode('user')}
+              className="flex items-center gap-1 px-2.5 py-1 transition-colors"
+              style={tabStyle(previewMode === 'user')}
+            >
+              <Smartphone size={12} /> User
+            </button>
+            <button
+              onClick={() => setPreviewMode('editor')}
+              className="flex items-center gap-1 px-2.5 py-1 transition-colors"
+              style={{ ...tabStyle(previewMode === 'editor'), borderLeft: '1px solid var(--color-border-default)' }}
+            >
+              <Settings2 size={12} /> Editor
+            </button>
           </div>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <p style={{ fontFamily: 'var(--font-family-base)', fontSize: 'var(--text-sm)', color: 'var(--color-text-muted)', lineHeight: '1.5' }}>
-            {block.description}
-          </p>
-
-          {/* Fields */}
-          <div>
-            <h5 style={{ fontFamily: 'var(--font-family-base)', fontWeight: 'var(--font-weight-medium)', fontSize: 'var(--text-sm)', color: 'var(--color-text-primary)', marginBottom: 'var(--spacing-2)' }}>
-              Available Fields
-            </h5>
-            <div className="flex flex-wrap gap-1.5">
-              {block.fields.map((field) => (
-                <span
-                  key={field}
-                  className="px-2 py-0.5 rounded-md"
-                  style={{
-                    fontSize: 'var(--text-xs)',
-                    fontFamily: 'monospace',
-                    backgroundColor: 'var(--color-bg-muted)',
-                    color: 'var(--color-text-muted)',
-                    border: '1px solid var(--color-border-default)',
-                  }}
-                >
-                  {field}
-                </span>
-              ))}
-            </div>
-          </div>
-
-          {/* Category */}
-          <div className="flex items-center gap-2">
-            <span style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)', fontFamily: 'var(--font-family-base)' }}>Used in:</span>
-            <AdminStatusBadge
-              status={block.category === 'equip' ? 'published' : 'info'}
-              label={block.category === 'equip' ? 'Equip Programs' : 'Daily Check-ins'}
-            />
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Preview Card with Mode Toggle */}
-      <Card style={{ borderRadius: 'var(--radius-lg)', border: '1px solid var(--color-border-default)' }}>
-        <CardHeader className="pb-2">
-          <div className="flex items-center justify-between">
-            <CardTitle style={{ fontFamily: 'var(--font-family-base)', fontWeight: 'var(--font-weight-medium)', fontSize: 'var(--text-sm)' }}>
-              {previewMode === 'user' ? 'User-Facing Preview' : 'Editor / Wizard Preview'}
-            </CardTitle>
-            <div className="flex rounded-lg overflow-hidden" style={{ border: '1px solid var(--color-border-default)' }}>
-              <button
-                onClick={() => setPreviewMode('user')}
-                className="flex items-center gap-1 px-2.5 py-1 transition-colors"
-                style={{
-                  fontSize: 'var(--text-xs)',
-                  fontFamily: 'var(--font-family-base)',
-                  fontWeight: 'var(--font-weight-medium)' as any,
-                  backgroundColor: previewMode === 'user' ? 'var(--color-primary-default)' : 'var(--color-bg-card)',
-                  color: previewMode === 'user' ? 'var(--color-primary-on)' : 'var(--color-text-muted)',
-                  border: 'none',
-                  cursor: 'pointer',
-                }}
-              >
-                <Smartphone size={12} /> User
-              </button>
-              <button
-                onClick={() => setPreviewMode('editor')}
-                className="flex items-center gap-1 px-2.5 py-1 transition-colors"
-                style={{
-                  fontSize: 'var(--text-xs)',
-                  fontFamily: 'var(--font-family-base)',
-                  fontWeight: 'var(--font-weight-medium)' as any,
-                  backgroundColor: previewMode === 'editor' ? 'var(--color-primary-default)' : 'var(--color-bg-card)',
-                  color: previewMode === 'editor' ? 'var(--color-primary-on)' : 'var(--color-text-muted)',
-                  border: 'none',
-                  cursor: 'pointer',
-                  borderLeft: '1px solid var(--color-border-default)',
-                }}
-              >
-                <Settings2 size={12} /> Editor
-              </button>
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent>
-          {previewMode === 'user' ? (
-            <BlockPreview block={block} />
-          ) : (
-            <EditorPreview block={block} />
-          )}
-        </CardContent>
-      </Card>
+        )}
+      </div>
+      {mode === 'user' || !blockType
+        ? <BlockPreview interaction={interaction} />
+        : <EditorPreview block={blockType} />}
     </div>
   );
 }
 
 // ── Mini Preview Renderer ───────────────────────────────────────
-function BlockPreview({ block }: { block: BlockTypeInfo }) {
+/**
+ * What each interaction actually draws.
+ *
+ * **Re-keyed from block type to interaction, 2026-09-08.** These mocks were
+ * written against the legacy check-in and equip type strings — `emoji_scale`,
+ * `free_text`, `single_choice`, `lesson`, `journal` — and the component that
+ * rendered them was orphaned, so the only thing this page said about
+ * appearance was one line of `previewHint` prose. The interaction is what
+ * `BlockRenderer` switches on, so the drawing belongs to the interaction.
+ *
+ * Thirteen previews, one per interaction. Seven are the original mocks
+ * re-keyed; six are new and were read off `BlockRenderer`, not invented — the
+ * source line is named on each.
+ *
+ * Five legacy mocks did not survive the re-key, and the reason is in each case
+ * that they drew something the renderer does not:
+ *
+ * | legacy mock | why it is gone |
+ * |---|---|
+ * | `emoji_scale` | `rate` draws `renderRatingScale` — a slider, not an emoji row |
+ * | `yes_no` | a yes/no question is `select-one` with two options; the renderer draws radios |
+ * | `exercise` | an MCQ with a correct-answer highlight — a variant of `select-one`, not its general shape |
+ * | `journal` | a prompt above a textarea, which is `write` |
+ * | `reflection` | centred prose, which is `read` |
+ *
+ * Keeping any of them would have shown an author a widget the player never
+ * builds, which is worse than showing nothing.
+ */
+function BlockPreview({ interaction }: { interaction: InteractionType }) {
   const previewStyle = {
     borderRadius: 'var(--radius-lg)',
     backgroundColor: 'var(--color-bg-page)',
@@ -915,70 +999,48 @@ function BlockPreview({ block }: { block: BlockTypeInfo }) {
     marginTop: 'var(--spacing-2)',
   };
 
-  // Render different previews based on block type
-  switch (block.value) {
-    case 'emoji_scale':
+  const hint = INTERACTION_META[interaction]?.previewHint ?? '';
+  const cellStyle = {
+    border: '1px solid var(--color-border-default)',
+    padding: '4px 8px',
+    fontSize: 'var(--text-xs)',
+    fontFamily: 'var(--font-family-base)',
+  };
+
+  // The lesson view — `read` draws it, and so does `watch`, which has no
+  // renderer of its own (`BlockRenderer`: `case 'watch': return renderLesson()`).
+  const lessonBody = (
+    <div className="space-y-2">
+      <div className="w-full h-16 rounded-lg" style={{ background: 'linear-gradient(135deg, var(--color-bg-muted), var(--color-accent-default))', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <span style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}>📷 Media Placeholder</span>
+      </div>
+      <div className="space-y-1">
+        <div className="h-3 rounded w-3/4" style={{ backgroundColor: 'var(--color-text-primary)', opacity: 0.2 }} />
+        <div className="h-2 rounded w-full" style={{ backgroundColor: 'var(--color-text-muted)', opacity: 0.15 }} />
+        <div className="h-2 rounded w-5/6" style={{ backgroundColor: 'var(--color-text-muted)', opacity: 0.15 }} />
+        <div className="h-2 rounded w-2/3" style={{ backgroundColor: 'var(--color-text-muted)', opacity: 0.15 }} />
+      </div>
+    </div>
+  );
+
+  switch (interaction) {
+    // was `lesson`
+    case 'read':
+      return <div style={previewStyle}>{lessonBody}<p style={hintStyle}>{hint}</p></div>;
+
+    // No renderer of its own. Showing the same drawing is the point.
+    case 'watch':
       return (
         <div style={previewStyle}>
-          <span style={labelStyle}>How are you feeling today?</span>
-          <div className="flex justify-between gap-1">
-            {['😢', '😐', '🙂', '😊', '🤩'].map((emoji, i) => (
-              <div
-                key={i}
-                className="flex flex-col items-center gap-1 flex-1 py-2 rounded-lg cursor-pointer transition-all hover:scale-105"
-                style={{
-                  backgroundColor: i === 3 ? 'var(--color-bg-input)' : 'var(--color-bg-card)',
-                  border: i === 3 ? '2px solid var(--color-primary-default)' : '1px solid var(--color-border-default)',
-                }}
-              >
-                <span className="text-xl">{emoji}</span>
-                <span style={{ fontSize: '10px', color: 'var(--color-text-muted)' }}>{['Bad', 'Low', 'OK', 'Good', 'Great'][i]}</span>
-              </div>
-            ))}
-          </div>
-          <p style={hintStyle}>{block.previewHint}</p>
+          {lessonBody}
+          <p style={{ ...hintStyle, color: 'var(--color-status-warning)' }}>
+            Identical to the lesson view on purpose — `BlockRenderer` has no watch case and falls through to it.
+          </p>
         </div>
       );
 
-    case 'free_text':
-      return (
-        <div style={previewStyle}>
-          <span style={labelStyle}>What's on your mind?</span>
-          <div
-            className="w-full h-20 rounded-lg"
-            style={{ backgroundColor: 'var(--color-bg-input)', border: '1px solid var(--color-border-default)', padding: 'var(--spacing-3)' }}
-          >
-            <span style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-muted)' }}>Type your thoughts here...</span>
-          </div>
-          <p style={hintStyle}>{block.previewHint}</p>
-        </div>
-      );
-
-    case 'multi_select':
-      return (
-        <div style={previewStyle}>
-          <span style={labelStyle}>What activities did you do today?</span>
-          <div className="flex flex-wrap gap-2">
-            {['🏃 Exercise', '📚 Reading', '🧘 Meditation', '🎵 Music', '👥 Social'].map((tag, i) => (
-              <span
-                key={i}
-                className="px-3 py-1.5 rounded-full text-xs"
-                style={{
-                  fontFamily: 'var(--font-family-base)',
-                  backgroundColor: [0, 2].includes(i) ? 'var(--color-primary-default)' : 'var(--color-bg-card)',
-                  color: [0, 2].includes(i) ? 'var(--color-primary-on)' : 'var(--color-text-primary)',
-                  border: '1px solid var(--color-border-default)',
-                }}
-              >
-                {tag}
-              </span>
-            ))}
-          </div>
-          <p style={hintStyle}>{block.previewHint}</p>
-        </div>
-      );
-
-    case 'single_choice':
+    // was `single_choice` — BlockRenderer: renderMCQ
+    case 'select-one':
       return (
         <div style={previewStyle}>
           <span style={labelStyle}>How did you sleep last night?</span>
@@ -1002,11 +1064,52 @@ function BlockPreview({ block }: { block: BlockTypeInfo }) {
               </div>
             ))}
           </div>
-          <p style={hintStyle}>{block.previewHint}</p>
+          <p style={hintStyle}>{hint}</p>
         </div>
       );
 
-    case 'slider':
+    // was `multi_select` — BlockRenderer: renderMultiSelect
+    case 'select-many':
+      return (
+        <div style={previewStyle}>
+          <span style={labelStyle}>What activities did you do today?</span>
+          <div className="flex flex-wrap gap-2">
+            {['🏃 Exercise', '📚 Reading', '🧘 Meditation', '🎵 Music', '👥 Social'].map((tag, i) => (
+              <span
+                key={i}
+                className="px-3 py-1.5 rounded-full text-xs"
+                style={{
+                  fontFamily: 'var(--font-family-base)',
+                  backgroundColor: [0, 2].includes(i) ? 'var(--color-primary-default)' : 'var(--color-bg-card)',
+                  color: [0, 2].includes(i) ? 'var(--color-primary-on)' : 'var(--color-text-primary)',
+                  border: '1px solid var(--color-border-default)',
+                }}
+              >
+                {tag}
+              </span>
+            ))}
+          </div>
+          <p style={hintStyle}>{hint}</p>
+        </div>
+      );
+
+    // was `free_text` — BlockRenderer: renderTextResponse
+    case 'write':
+      return (
+        <div style={previewStyle}>
+          <span style={labelStyle}>What&apos;s on your mind?</span>
+          <div
+            className="w-full h-20 rounded-lg"
+            style={{ backgroundColor: 'var(--color-bg-input)', border: '1px solid var(--color-border-default)', padding: 'var(--spacing-3)' }}
+          >
+            <span style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-muted)' }}>Type your thoughts here...</span>
+          </div>
+          <p style={hintStyle}>{hint}</p>
+        </div>
+      );
+
+    // was `slider` — BlockRenderer: renderRatingScale
+    case 'rate':
       return (
         <div style={previewStyle}>
           <span style={labelStyle}>Rate your stress level</span>
@@ -1024,103 +1127,15 @@ function BlockPreview({ block }: { block: BlockTypeInfo }) {
               <span style={{ fontSize: '10px', color: 'var(--color-text-muted)' }}>10 (Extreme)</span>
             </div>
           </div>
-          <p style={hintStyle}>{block.previewHint}</p>
+          <p style={hintStyle}>{hint}</p>
         </div>
       );
 
-    case 'yes_no':
+    // was `checklist` — BlockRenderer: renderChecklist
+    case 'check':
       return (
         <div style={previewStyle}>
-          <span style={labelStyle}>Did you take your medication today?</span>
-          <div className="flex gap-3">
-            <div
-              className="flex-1 py-3 rounded-lg text-center text-sm"
-              style={{
-                fontFamily: 'var(--font-family-base)',
-                fontWeight: 'var(--font-weight-medium)' as any,
-                backgroundColor: 'var(--color-primary-default)',
-                color: 'var(--color-primary-on)',
-              }}
-            >
-              ✓ Yes
-            </div>
-            <div
-              className="flex-1 py-3 rounded-lg text-center text-sm"
-              style={{
-                fontFamily: 'var(--font-family-base)',
-                backgroundColor: 'var(--color-bg-card)',
-                color: 'var(--color-text-primary)',
-                border: '1px solid var(--color-border-default)',
-              }}
-            >
-              ✗ No
-            </div>
-          </div>
-          <p style={hintStyle}>{block.previewHint}</p>
-        </div>
-      );
-
-    // Equip block previews
-    case 'lesson':
-      return (
-        <div style={previewStyle}>
-          <div className="space-y-2">
-            <div className="w-full h-16 rounded-lg" style={{ background: 'linear-gradient(135deg, var(--color-bg-muted), var(--color-accent-default))', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <span style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}>📷 Media Placeholder</span>
-            </div>
-            <div className="space-y-1">
-              <div className="h-3 rounded w-3/4" style={{ backgroundColor: 'var(--color-text-primary)', opacity: 0.2 }} />
-              <div className="h-2 rounded w-full" style={{ backgroundColor: 'var(--color-text-muted)', opacity: 0.15 }} />
-              <div className="h-2 rounded w-5/6" style={{ backgroundColor: 'var(--color-text-muted)', opacity: 0.15 }} />
-              <div className="h-2 rounded w-2/3" style={{ backgroundColor: 'var(--color-text-muted)', opacity: 0.15 }} />
-            </div>
-          </div>
-          <p style={hintStyle}>{block.previewHint}</p>
-        </div>
-      );
-
-    case 'exercise':
-      return (
-        <div style={previewStyle}>
-          <span style={labelStyle}>What is cognitive restructuring?</span>
-          <div className="space-y-2">
-            {['Changing thoughts', 'Physical therapy', 'Meditation only'].map((opt, i) => (
-              <div
-                key={i}
-                className="flex items-center gap-2 p-2.5 rounded-lg text-xs"
-                style={{
-                  fontFamily: 'var(--font-family-base)',
-                  backgroundColor: i === 0 ? 'var(--color-status-success-light)' : 'var(--color-bg-card)',
-                  border: i === 0 ? '2px solid var(--color-status-success)' : '1px solid var(--color-border-default)',
-                  color: 'var(--color-text-primary)',
-                }}
-              >
-                {i === 0 ? '✓' : '○'} {opt}
-              </div>
-            ))}
-          </div>
-          <p style={hintStyle}>{block.previewHint}</p>
-        </div>
-      );
-
-    case 'journal':
-      return (
-        <div style={previewStyle}>
-          <span style={labelStyle}>📝 Reflect on today's lesson</span>
-          <p style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)', marginBottom: 'var(--spacing-2)' }}>
-            Write about a situation where you noticed automatic thoughts...
-          </p>
-          <div className="w-full h-16 rounded-lg" style={{ backgroundColor: 'var(--color-bg-input)', border: '1px solid var(--color-border-default)', padding: 'var(--spacing-2)' }}>
-            <span style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)', opacity: 0.5 }}>Start writing...</span>
-          </div>
-          <p style={hintStyle}>{block.previewHint}</p>
-        </div>
-      );
-
-    case 'checklist':
-      return (
-        <div style={previewStyle}>
-          <span style={labelStyle}>☑️ Today's Self-Care Tasks</span>
+          <span style={labelStyle}>☑️ Today&apos;s Self-Care Tasks</span>
           <div className="space-y-2">
             {['Drink 8 glasses of water', '10 min mindful breathing', 'Go for a walk', 'Write 3 gratitudes'].map((item, i) => (
               <div key={i} className="flex items-center gap-2 text-xs" style={{ fontFamily: 'var(--font-family-base)' }}>
@@ -1141,25 +1156,12 @@ function BlockPreview({ block }: { block: BlockTypeInfo }) {
               </div>
             ))}
           </div>
-          <p style={hintStyle}>{block.previewHint}</p>
+          <p style={hintStyle}>{hint}</p>
         </div>
       );
 
-    case 'reflection':
-      return (
-        <div style={previewStyle}>
-          <div className="text-center space-y-2 py-2">
-            <span className="text-2xl">💭</span>
-            <span style={{ ...labelStyle, textAlign: 'center' }}>Take a moment to reflect</span>
-            <p style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)', lineHeight: '1.5' }}>
-              Think about what you've learned today. How does it relate to your own experiences?
-            </p>
-          </div>
-          <p style={hintStyle}>{block.previewHint}</p>
-        </div>
-      );
-
-    case 'conclude':
+    // was `conclude` — BlockRenderer: the completion card
+    case 'complete':
       return (
         <div style={previewStyle}>
           <div className="text-center space-y-2 py-2">
@@ -1172,37 +1174,171 @@ function BlockPreview({ block }: { block: BlockTypeInfo }) {
               Continue Tomorrow →
             </div>
           </div>
-          <p style={hintStyle}>{block.previewHint}</p>
+          <p style={hintStyle}>{hint}</p>
         </div>
       );
 
-    case 'sleep-diary':
+    /*
+      NEW — read off `BlockRenderer.renderInputTable` (:575). Columns come from
+      `config.columns`; when `config.rows` is present the FIRST column becomes a
+      read-only row heading and only the rest are editable. That is the shape of
+      a sleep diary, and it is why 144 live blocks draw this.
+    */
+    case 'input-table':
       return (
         <div style={previewStyle}>
-          <span style={labelStyle}>🌙 Sleep Diary Entry</span>
-          <div className="space-y-2">
-            {[
-              { label: 'Bedtime', value: '10:30 PM' },
-              { label: 'Wake time', value: '6:45 AM' },
-              { label: 'Quality', value: '⭐⭐⭐⭐' },
-            ].map((field, i) => (
-              <div key={i} className="flex items-center justify-between p-2 rounded-lg" style={{ backgroundColor: 'var(--color-bg-card)', border: '1px solid var(--color-border-default)' }}>
-                <span style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}>{field.label}</span>
-                <span style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-primary)', fontWeight: 'var(--font-weight-medium)' as any }}>{field.value}</span>
+          <span style={labelStyle}>🌙 Sleep Diary</span>
+          <div className="overflow-x-auto">
+            <table style={{ borderCollapse: 'collapse', width: '100%' }}>
+              <thead>
+                <tr>
+                  {['Question', 'Mon', 'Tue', 'Wed'].map((c) => (
+                    <th key={c} style={{ ...cellStyle, backgroundColor: 'var(--color-bg-input)', fontWeight: 500, textAlign: 'left' }}>{c}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {['Bedtime', 'Wake time', 'Times awake'].map((row, i) => (
+                  <tr key={row}>
+                    <td style={{ ...cellStyle, backgroundColor: 'var(--color-bg-muted)', fontWeight: 500 }}>{row}</td>
+                    {['10:30 PM', '6:45 AM', '2'].map((v, j) => (
+                      <td key={j} style={{ ...cellStyle, backgroundColor: 'var(--color-bg-input)', color: i === 0 && j === 0 ? 'var(--color-text-primary)' : 'var(--color-text-muted)' }}>
+                        {i === 0 && j === 0 ? v : ''}
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <p style={hintStyle}>{hint}</p>
+        </div>
+      );
+
+    /*
+      NEW — read off `BlockRenderer.renderTableChecklist` (:512). The first
+      column is headed "Activity" by the renderer, not by config, and every
+      other cell is a yes/no toggle.
+    */
+    case 'track-table':
+      return (
+        <div style={previewStyle}>
+          <span style={labelStyle}>Weekly Habit Tracker</span>
+          <div className="overflow-x-auto">
+            <table style={{ borderCollapse: 'collapse', width: '100%' }}>
+              <thead>
+                <tr>
+                  {['Activity', 'Mon', 'Tue', 'Wed'].map((c) => (
+                    <th key={c} style={{ ...cellStyle, backgroundColor: 'var(--color-bg-input)', fontWeight: 500, textAlign: c === 'Activity' ? 'left' : 'center' }}>{c}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {['Morning walk', 'No screens after 9'].map((row, i) => (
+                  <tr key={row}>
+                    <td style={{ ...cellStyle, fontWeight: 500 }}>{row}</td>
+                    {[0, 1, 2].map((j) => (
+                      <td key={j} style={{ ...cellStyle, textAlign: 'center' }}>
+                        <span style={{ color: (i + j) % 2 === 0 ? 'var(--color-primary-default)' : 'var(--color-border-default)' }}>
+                          {(i + j) % 2 === 0 ? '✓' : '○'}
+                        </span>
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <p style={hintStyle}>{hint}</p>
+        </div>
+      );
+
+    /*
+      NEW — read off `BlockRenderer.renderClinicalInstrument` (:451). One row per
+      question, one shared scale, and the default scale when none is declared is
+      the four PHQ/GAD steps written out here.
+    */
+    case 'clinical':
+      return (
+        <div style={previewStyle}>
+          <span style={labelStyle}>Over the last 2 weeks, how often have you been bothered by…</span>
+          <div className="space-y-3">
+            {['Little interest or pleasure in doing things', 'Feeling down, hopeless'].map((q, qi) => (
+              <div key={q}>
+                <p style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-primary)', marginBottom: 4 }}>{q}</p>
+                <div className="flex gap-1 flex-wrap">
+                  {['Not at all', 'Several days', 'More than half', 'Nearly every day'].map((opt, oi) => (
+                    <span
+                      key={opt}
+                      className="px-2 py-1 rounded-md"
+                      style={{
+                        fontSize: '10px',
+                        fontFamily: 'var(--font-family-base)',
+                        backgroundColor: oi === qi + 1 ? 'var(--color-primary-default)' : 'var(--color-bg-card)',
+                        color: oi === qi + 1 ? 'var(--color-primary-on)' : 'var(--color-text-muted)',
+                        border: '1px solid var(--color-border-default)',
+                      }}
+                    >
+                      {opt}
+                    </span>
+                  ))}
+                </div>
               </div>
             ))}
-            <div className="w-full h-10 rounded-lg" style={{ backgroundColor: 'var(--color-bg-input)', border: '1px solid var(--color-border-default)', padding: 'var(--spacing-2)' }}>
-              <span style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)', opacity: 0.5 }}>Notes about sleep...</span>
-            </div>
           </div>
-          <p style={hintStyle}>{block.previewHint}</p>
+          <p style={hintStyle}>{hint}</p>
+        </div>
+      );
+
+    /*
+      NEW — read off `BlockRenderer.renderFileUpload` (:777). The accepted types
+      shown are the renderer's own defaults when the block declares none, and
+      10MB is its default cap.
+    */
+    case 'upload':
+      return (
+        <div style={previewStyle}>
+          <span style={labelStyle}>Add a photo of your sleep log</span>
+          <div
+            className="w-full rounded-lg flex flex-col items-center justify-center gap-1 py-6"
+            style={{ border: '2px dashed var(--color-border-default)', backgroundColor: 'var(--color-bg-card)' }}
+          >
+            <span className="text-xl">📎</span>
+            <span style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-primary)', fontFamily: 'var(--font-family-base)' }}>Choose a file</span>
+            <span style={{ fontSize: '10px', color: 'var(--color-text-muted)' }}>Images, PDF, documents, audio · up to 10MB</span>
+          </div>
+          <p style={hintStyle}>{hint}</p>
+        </div>
+      );
+
+    /*
+      NEW — read off `BlockRenderer.renderNumberResponse` (:429). One input, and
+      the block's own prompt is used as the PLACEHOLDER, not as a label above
+      it — which is why an unprompted number block shows an empty box.
+    */
+    case 'number':
+      return (
+        <div style={previewStyle}>
+          <div
+            className="w-full rounded-[20px] px-4 py-4"
+            style={{ backgroundColor: 'var(--color-bg-card)', boxShadow: '0 2px 16px rgba(0,0,0,0.04)' }}
+          >
+            <span style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-muted)', fontFamily: 'var(--font-family-base)' }}>
+              How many hours did you sleep?
+            </span>
+          </div>
+          <p style={hintStyle}>{hint}</p>
         </div>
       );
 
     default:
+      // Unreachable while the switch covers InteractionType exhaustively — kept
+      // so a new interaction shows a gap rather than a blank card.
       return (
         <div style={previewStyle}>
-          <p style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-muted)' }}>No preview available for this block type.</p>
+          <p style={{ fontSize: 'var(--text-sm)', color: 'var(--color-status-warning)' }}>
+            No preview written for “{interaction}”. Add one from what BlockRenderer draws.
+          </p>
         </div>
       );
   }

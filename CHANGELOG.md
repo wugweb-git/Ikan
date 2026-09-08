@@ -169,6 +169,47 @@ app, where a session left open on a borrowed device exposes someone's mental-hea
 not carry to the CMS: an author reading a long day of content, or waiting on a deploy, is not idle,
 and losing an edit is the cost. **Admins are exempt; the patient-facing timeout is unchanged.**
 
+### The previews are back, keyed on interaction
+
+Three things were declared and unrendered, not dead. All three are on the page.
+
+**`BlockPreview` and the User/Editor toggle.** `BlockDetailPanel` was the sticky right-hand pane of
+a master/detail layout that no longer exists, so nothing rendered it — and the mocks behind it, real
+drawn widgets rather than descriptions, went with it. Restored as a per-row panel: every row on the
+Interactions tab and every block row on the 17-list opens one. The duplicate info card is gone; the
+row already carries the label, code, description and live count.
+
+**Re-keyed from block type to interaction.** The mocks were written against legacy type strings —
+`emoji_scale`, `free_text`, `single_choice`, `lesson`. The interaction is what `BlockRenderer`
+switches on, so the drawing belongs to it. Thirteen previews: seven re-keyed, six new and read off
+`BlockRenderer` with the source line named (`input-table`, `track-table`, `clinical`, `upload`,
+`number`, and `watch`, which shows the lesson view *because that is what it draws*).
+
+Five legacy mocks did not survive, each for the same reason — they drew something the renderer does
+not: `emoji_scale` (rate draws a slider), `yes_no` (that is select-one with two options),
+`exercise` (a select-one variant), `journal` (write), `reflection` (read). Showing an author a
+widget the player never builds is worse than showing nothing.
+
+The toggle appears only where both halves exist: `BlockPreview` is keyed on interaction (what the
+player draws), `EditorPreview` on block type (what the author fills in). An interaction row has no
+block type, so it shows the user half alone. A **stage** gets no preview at all and says why — a
+stage is a day, and what it draws is the blocks it holds.
+
+**`LEGACY_MAPPING` is back**, 32 terms. It was retired on the grounds that the backfill had
+completed, which confused two things: the backfill settled what the *data* says; this table is how a
+reader understands old data and old code. Every pre-backfill record and the editor's own
+`type + subtype` vocabulary is read through it. Each row runs the real `resolveInteraction()`, so it
+cannot drift from the resolver.
+
+### One flat list of 17
+
+The Block Types tab split into "Stages — hold blocks (11)" and "Blocks — held by stages (6)" under a
+paragraph explaining `can_hold`. The stat tile said 17 and the list said 11 and 6, so the page
+argued for a distinction instead of showing a vocabulary. One list now, ordered stages-then-blocks,
+with stage/block as a badge on the row — which is where a per-row fact belongs.
+
+Lint baseline 913 → 908; the retired detail panel took two unused imports with it.
+
 ### The stat tile that could not report drift
 
 `Block Types` printed a hardcoded `17 · 11 stages · 6 blocks`. It is now
