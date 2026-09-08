@@ -263,6 +263,22 @@ export function AssessmentHistoryDetail({ assessmentId, onBack, onNavigate }: As
     return () => { isMounted = false; };
   }, [resolvedId]);
 
+  /**
+   * Why the chart is not showing, when it is not showing.
+   *
+   * The card was gated on `chartData.length >= 2` and simply disappeared
+   * otherwise, while the list beneath it went on saying "15 attempts". After
+   * the 2026-09-08 revision every stress result is `pre-spec`, so the account
+   * with the richest history in the product lost its chart with nothing on
+   * screen accounting for it. A chart that quietly shows less than the list
+   * below it is the same defect as a band that quietly shows a status word.
+   */
+  const chartAbsence = useMemo(() => {
+    const olderVersion = attempts.filter(a => a.excludedFromTrends).length;
+    const noDenominator = attempts.filter(a => !a.excludedFromTrends && pctOf(a.score, a.maxScore) === null).length;
+    return { olderVersion, noDenominator, total: attempts.length };
+  }, [attempts]);
+
   // Chart data (chronological order)
   const chartData = useMemo(() => {
     // Percentage of each result's OWN achievable range, so a rescale does not
@@ -645,6 +661,32 @@ export function AssessmentHistoryDetail({ assessmentId, onBack, onNavigate }: As
                     </AreaChart>
                   </ResponsiveContainer>
                 </div>
+              </CardContent>
+            </Card>
+          </motion.div>
+        )}
+
+        {/* Why there is no chart. Rendered only when there are attempts to
+            account for — a first-ever result needs no explanation. */}
+        {chartData.length < 2 && attempts.length > 0 && (chartAbsence.olderVersion > 0 || attempts.length > 1) && (
+          <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
+            <Card style={{ borderRadius: 'var(--radius-lg)', border: '1px solid var(--color-border-default)' }}>
+              <CardContent style={{ padding: '20px 16px' }}>
+                <h3 style={{ ...f('sm', 500), margin: '0 0 6px' }}>Score over time</h3>
+                <p style={{ ...f('sm', 400, 'var(--color-text-muted)'), margin: 0, lineHeight: 1.5 }}>
+                  {chartAbsence.olderVersion > 0 ? (
+                    <>
+                      {chartAbsence.olderVersion === 1 ? 'One earlier result was' : `${chartAbsence.olderVersion} earlier results were`}
+                      {' '}scored under an older version of this assessment, so
+                      {chartAbsence.olderVersion === 1 ? ' it cannot' : ' they cannot'} be compared to a new one.
+                      {' '}They are still listed below. Take this assessment again to start a new trend.
+                    </>
+                  ) : chartAbsence.noDenominator > 0 ? (
+                    <>Your earlier results did not record a comparable maximum, so they cannot be plotted on one scale. They are still listed below.</>
+                  ) : (
+                    <>The chart appears once you have two comparable results.</>
+                  )}
+                </p>
               </CardContent>
             </Card>
           </motion.div>
