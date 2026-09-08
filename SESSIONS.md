@@ -34,6 +34,14 @@ the ASSESSMENT session reports a rise rather than editing the file.
 
 ## Rules
 
+**Never run bare `git add -A` or `git add .`.** Stage explicit paths, always. On
+2026-09-08 a broad `git add -A` swept five of the assessment session's in-flight
+files into a blocks commit (`667cba1e`), filed under a message describing
+something else. Nothing was lost and the history was not rewritten — rewriting
+pushed history is worse than the mislabelling — but the commit is wrong and it
+happened two hours after this file was written. This rule was the gap: the stash
+hazard was covered, the staging hazard was not.
+
 **Never run bare `git stash`.** It takes the other session's uncommitted work with
 it. Always scope it:
 
