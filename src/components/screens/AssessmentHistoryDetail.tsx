@@ -232,17 +232,38 @@ export function AssessmentHistoryDetail({ assessmentId, onBack, onNavigate }: As
               // band label and once for the tone, doing the same profile
               // lookup and band placement both times.
               const placement = resolveResultPresentation(entry, metaRes, scoringProfiles);
+              const overall = entry.section_scores?.overall ?? entry.sectionScores?.overall ?? null;
+              const overallScore = typeof overall?.value === 'number' ? overall.value : null;
+              // Floor and ceiling always come from the same scale as the value.
+              const scale = overallScore !== null ? placement.scale : null;
+              const overallMax = scale?.max
+                ?? (typeof overall?.max === 'number' && overall.max > 0 ? overall.max : null);
               relevantAttempts.push({
                 id: entry.id || `${entryId}-${entry.completed_at || entry.completedAt || Date.now()}`,
                 assessmentId: entryId,
                 assessmentName: entry.assessmentTitle || entry.assessment_title || metaRes?.title || 'Assessment',
-                score: entry.score ?? entry.calculated_score ?? 0,
+                /**
+                 * The COMPUTED overall wins over the top-level pair.
+                 *
+                 * `score`/`max_score` are a legacy raw sum kept for the iKAN
+                 * aggregate, and for a `calc: mean` profile they are in
+                 * different units entirely. Live Burnout rows store
+                 * `60/115` and `2/4` on the same instrument, while their
+                 * computed overall is `2.61/5` and `3.0/5` — two denominators
+                 * for one scale, drawn on one axis as if comparable. A live
+                 * Sleep row stores `25/40` against a computed `17/32`.
+                 *
+                 * This is the same ordering `result-presentation.ts` already
+                 * applies when placing a band; the history screen was reading
+                 * the other half of the same record.
+                 */
+                score: overallScore ?? entry.score ?? entry.calculated_score ?? 0,
                 // No invented denominator. `?? 21` was GAD-7's maximum applied
                 // to everything — 42 of 101 stored results have no max_score,
                 // so Burnout's 115 was being divided by 21. A percentage
                 // without a real max is not a smaller number, it is a wrong
                 // one; callers must handle null and refuse to render.
-                maxScore: entry.maxScore ?? entry.max_score ?? (defMaxScore > 0 ? defMaxScore : null),
+                maxScore: overallMax ?? entry.maxScore ?? entry.max_score ?? (defMaxScore > 0 ? defMaxScore : null),
                 // The clinical severity, from the band the score fell in.
                 // `severity_hint` is the BAND LABEL ("Poor Sleep", "Completed")
                 // — 76 of 101 results carry one that is not a severity term, so
@@ -252,9 +273,7 @@ export function AssessmentHistoryDetail({ assessmentId, onBack, onNavigate }: As
                 // cannot disagree about the same result again.
                 bandLabel: placement.band?.label ?? undefined,
                 tone: placement.band?.tone ?? undefined,
-                // The profile's own floor. Its bands tile the whole achievable
-                // range, so the lowest edge is the minimum a person can score.
-                scaleMin: placement.scale?.min,
+                scaleMin: scale?.min,
                 interpretation: entry.interpretation,
                 completedAt: entry.completed_at || entry.completedAt || new Date().toISOString(),
                 responses: entry.responses,
