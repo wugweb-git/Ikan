@@ -702,7 +702,7 @@ This is the answer to "why four builders". **There is one flow.** What differs b
 | 1 | **Picks an interaction** — one list of 12, each with its verb and icon from `INTERACTION_META`: "Reads", "Selects", "Rates", "Tracks"… | Filters the list to what the stage preset allows | Picks a **type**, then a **subtype** — two lists, overlapping, and neither is what the renderer reads |
 | 2 | Writes the prompt or content | — | same |
 | 3 | **If the interaction is scale-backed: picks a scale from the catalog.** Or creates one, in the catalog, from here | Renders a live preview of the options with their values | **Types the options into the block.** This is why the PHQ/GAD scale exists 27 times |
-| 4 | **Sets the response key.** Pre-filled from the prompt; editable | Checks it is unique within the collection | **Partly exists.** `exerciseConfig.key` is set on 98 of 406 blocks, but nothing checks uniqueness and no editor field exposes it — 99 of 127 input-tables have no key |
+| 4 | **Sets the response key.** Pre-filled from the prompt; editable | Checks it is unique within the collection | **Read since 2026-09-08.** `activityConfig.key` is set on 98 of 407 blocks, is declared on `ActivityConfig`, and `responseKeyOf()` is the one definition of a block's response identity — the player threads a keyed block's earlier days through it. Still missing: no editor field exposes it, nothing checks uniqueness, and 99 of 127 input-tables have no key |
 | 5 | Fills only the config this interaction needs — columns for a table, items for a checklist, accepted types for an upload | Shows nothing else | One `exerciseConfig` with 20 optional fields, most irrelevant to any given block |
 | 6 | Optionally sets a **role** — lesson, practice, reflection, quiz, conclude | Defaults it from the stage preset | Conflated into `type` |
 | 7 | Saves | **Validates against the preset and rejects loudly.** Writes `interaction` to the record | Validation returns `allowed: true` always — the rejecting line is commented out. Nothing writes `interaction` |
@@ -710,6 +710,16 @@ This is the answer to "why four builders". **There is one flow.** What differs b
 > **[CRITICAL] Steps 3, 4 and 7 do not exist today, and they are the three that matter.**
 >
 > **3 · scale by reference** ends the duplication — 27 copies of one scale in assessments, per-block options in equip. **4 · the response key** is what makes a 31-day sleep diary produce a diary instead of 98 unrelated answers. **7 · loud validation** is what stops the next undeclared value reaching production silently. Steps 1, 2, 5 and 6 are refinements of what the editor already does well.
+>
+> **[UPDATE 2026-09-08] Step 4's reader is built.** The field was on 98 blocks and read by nothing, so 14
+> keys shared across 51 blocks — `sleep_quality_day1` on days 1-7 of Sleep Tight, under seven ids — were
+> being split into unrelated per-day answers. `responseKeyOf(block)` now resolves identity (`key`, else the
+> block id) and `ProgramPlayer.priorEntriesFor` matches on it. The authoring half of step 4 is still absent.
+>
+> This also settled a question about `repeat`: **zero of 407 live blocks declare one.** `simple_repeat`,
+> `column_addition`, `on_demand` and `columnsByDay` have never run on production content, and a shared key
+> is the only way repetition is actually expressed in this database. Both figures are on
+> `/admin/block-type-viewer`.
 
 ### Creating a check-in, in full
 

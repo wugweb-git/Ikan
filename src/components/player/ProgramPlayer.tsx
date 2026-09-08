@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { EquipProgram, Activity, resolveInteraction, repeatTargetDays, warnFallback, type DayType } from '../../lib/blocks/block-model';
+import { EquipProgram, Activity, resolveInteraction, repeatTargetDays, responseKeyOf, warnFallback, type DayType } from '../../lib/blocks/block-model';
 import { ErrorBoundary } from '../ErrorBoundary';
 import { BlockRenderer } from '../blocks/BlockRenderer';
 import { Button } from '../ui/button';
@@ -310,15 +310,43 @@ export function ProgramPlayer({
 
   const activeStep = steps[currentStepIndex];
 
-  // Carry-forward: collect a repeated block's responses from earlier days.
+  // Every block id in the programme, mapped to its response identity, so a
+  // stored response (filed under a block id) can be matched to the question it
+  // answered rather than to the occurrence that asked it.
+  const identityByBlockId = useMemo(() => {
+    const m: Record<string, string> = {};
+    for (const d of program.daily_content) {
+      for (const a of d.activities ?? []) m[a.id] = responseKeyOf(a);
+    }
+    return m;
+  }, [program.daily_content]);
+
+  // Carry-forward: collect a block's responses to the SAME QUESTION on earlier
+  // days.
+  //
+  // This used to require `block.repeat` and match on `block.id`. Nothing in
+  // production carries `repeat` — not one block of 407 — so the whole path was
+  // unreachable, while 98 blocks declared repetition the other way, by giving
+  // each occurrence the same `activityConfig.key`. Sleep Tight asks the same
+  // sleep-quality table on days 1-7 under seven ids and one key; every night's
+  // entry was invisible to the next.
+  //
+  // A key therefore stands in for `repeat` as a declaration of a series. A
+  // block with no key resolves to its own id and still needs `repeat`, which
+  // is exactly the previous behaviour for all 309 of them.
   const priorEntriesFor = (block: Activity): { day: number; response: any }[] => {
-    if (!block.repeat || !priorDayResponses) return [];
+    if (!priorDayResponses) return [];
+    const identity = responseKeyOf(block);
+    const declaredSeries = identity !== block.id;
+    if (!declaredSeries && !block.repeat) return [];
     const out: { day: number; response: any }[] = [];
     for (const [dayStr, byBlock] of Object.entries(priorDayResponses)) {
       const day = Number(dayStr);
       if (!Number.isFinite(day) || day >= currentDayNum) continue;
-      const r = byBlock?.[block.id];
-      if (r !== undefined && r !== null && r !== '') out.push({ day, response: r });
+      for (const [blockId, r] of Object.entries(byBlock ?? {})) {
+        if ((identityByBlockId[blockId] ?? blockId) !== identity) continue;
+        if (r !== undefined && r !== null && r !== '') out.push({ day, response: r });
+      }
     }
     return out.sort((a, b) => a.day - b.day);
   };

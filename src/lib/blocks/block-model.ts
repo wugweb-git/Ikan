@@ -352,6 +352,22 @@ export const INTERACTION_META: Record<InteractionType, {
  */
 export interface ActivityConfig {
   /**
+   * The block's RESPONSE IDENTITY, declared by the author.
+   *
+   * A block's answers file under its `id`, so the same question asked on seven
+   * days is seven ids and seven unrelated answers. 98 live blocks say otherwise
+   * here — 61 distinct keys, 14 of them carried by more than one block (51
+   * blocks in all), e.g.
+   * `sleep_quality_day1` on days 1-7 of Sleep Tight under seven different ids.
+   * The field was undeclared and read by no code, so every one of those series
+   * was silently broken apart.
+   *
+   * Read it through `responseKeyOf(block)`, never directly: identity must have
+   * one definition, and for the 309 blocks with no key that definition is the
+   * block id, exactly as before.
+   */
+  key?: string;
+  /**
    * Authored subtype. Both snake_case and kebab-case spellings of the same term are
    * present in live content, so both are declared here and mapped in resolveInteraction().
    * 'number' has no interaction of its own yet and falls back to a free-text box.
@@ -555,4 +571,20 @@ export interface EquipProgram {
  */
 export function configOf(block: Pick<Activity, 'activityConfig' | 'exerciseConfig'> | undefined | null): ActivityConfig | undefined {
   return block?.activityConfig ?? block?.exerciseConfig;
+}
+
+/**
+ * What a block's response is filed under, logically.
+ *
+ * The stored map is still keyed by block id — this does not change where an
+ * answer is written. It is the answer to a different question: *which other
+ * blocks are the same question as this one*. An author who repeats a question
+ * across days gives each occurrence the same `activityConfig.key`; without a
+ * key a block is only ever itself, which is every block's behaviour today.
+ *
+ * Total by construction, so a caller never has to branch on presence.
+ */
+export function responseKeyOf(block: Pick<Activity, 'id' | 'activityConfig' | 'exerciseConfig'>): string {
+  const k = configOf(block)?.key;
+  return typeof k === 'string' && k.trim() ? k.trim() : block.id;
 }

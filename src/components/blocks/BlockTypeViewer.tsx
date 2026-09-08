@@ -124,6 +124,118 @@ const LEGACY_MAPPING: { legacy: string; interaction: InteractionType; note: stri
   })),
 ];
 
+/**
+ * The four states this page exists to separate.
+ *
+ * A reference count alone does not tell you whether a thing is displayed,
+ * promised or specified — three things in this module were deleted as unused
+ * and turned out to be load-bearing. So "nothing reads it" is a status shown
+ * on the page, not a reason to remove something.
+ *
+ * Module scope, not component scope: the status vocabulary is a fact about the
+ * page, and `ResponseIdentityPanel` needs it too.
+ */
+type TermStatus = 'live' | 'wired-unused' | 'declared-unread' | 'orphan';
+const statusOf = (opts: { readByCode: boolean; declared: boolean; count: number | null }): TermStatus => {
+  if (!opts.declared) return 'orphan';           // in the catalog, unknown to code
+  if (!opts.readByCode) return 'declared-unread'; // declared, but nothing reads it
+  return (opts.count ?? 0) > 0 ? 'live' : 'wired-unused';
+};
+const STATUS_LABEL: Record<TermStatus, string> = {
+  'live':            'Live',
+  'wired-unused':    'Wired, unused',
+  'declared-unread': 'Declared, unread',
+  'orphan':          'Orphan',
+};
+const STATUS_COLOUR: Record<TermStatus, string> = {
+  'live':            'var(--color-status-success)',
+  'wired-unused':    'var(--color-text-muted)',
+  'declared-unread': 'var(--color-status-warning)',
+  'orphan':          'var(--color-status-danger)',
+};
+
+/**
+ * Response identity, as live counts.
+ *
+ * `activityConfig.key` sat on 98 live blocks with no declaration on the type
+ * and no reader anywhere in the codebase. It is the author saying "this block
+ * and that block are the same question" — the only expression of a repeated
+ * question that exists in production content, since `repeat` is on zero blocks
+ * of 407. Until it was read, every declared series was split into unrelated
+ * per-day answers.
+ *
+ * It is on this page because a field with no reader must not be able to look
+ * like a field in use.
+ */
+function ResponseIdentityPanel({ usage, usageState }: {
+  usage: Awaited<ReturnType<typeof apiClient.getBlockUsage>>;
+  usageState: 'loading' | 'ok' | 'failed';
+}) {
+  const ri = usage?.responseIdentity;
+  const num = (n: number | undefined) => (usageState !== 'ok' || n === undefined ? '—' : String(n));
+
+  const figures: { label: string; value: string; note: string; alarm?: boolean }[] = [
+    {
+      label: 'Blocks declaring a key',
+      value: num(ri?.blocksWithKey),
+      note: `of ${usage?.totalBlocks ?? '—'} live blocks`,
+    },
+    {
+      label: 'Distinct keys',
+      value: num(ri?.distinctKeys),
+      note: 'one per logical question',
+    },
+    {
+      label: 'Keys used more than once',
+      value: num(ri?.sharedKeys),
+      note: ri ? `${ri.blocksInSharedKeys} blocks — a series the author declared` : 'a series the author declared',
+    },
+    {
+      label: 'Blocks declaring repeat',
+      value: num(ri?.blocksWithRepeat),
+      note: 'the other way to declare a series',
+      alarm: usageState === 'ok' && (ri?.blocksWithRepeat ?? 0) === 0,
+    },
+  ];
+
+  return (
+    <div className="p-4 rounded-lg" style={{ backgroundColor: 'var(--color-bg-card)', border: '1px solid var(--color-border-default)' }}>
+      <div className="flex items-baseline gap-2 flex-wrap mb-1">
+        <strong style={{ fontSize: 'var(--text-sm)' }}>Response identity</strong>
+        <code style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}>activityConfig.key</code>
+        <span style={{ fontSize: 'var(--text-xs)', color: STATUS_COLOUR.live, fontWeight: 500 }}>
+          {STATUS_LABEL.live}
+        </span>
+      </div>
+      <p style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)', marginBottom: '0.75rem' }}>
+        Answers are stored under a block <em>id</em>, so the same question asked on seven days is
+        seven unrelated answers. A shared <code>key</code> is the author saying those blocks are one
+        question; <code>responseKeyOf()</code> is now the single definition of that identity, and the
+        player threads a keyed block&apos;s earlier days through it.
+      </p>
+      <div className="grid gap-3" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))' }}>
+        {figures.map((f) => (
+          <div key={f.label}>
+            <div style={{ fontSize: 'var(--text-lg)', fontWeight: 600, color: f.alarm ? 'var(--color-status-warning)' : 'var(--color-text-primary)' }}>
+              {f.value}
+            </div>
+            <div style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-primary)' }}>{f.label}</div>
+            <div style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}>{f.note}</div>
+          </div>
+        ))}
+      </div>
+      {usageState === 'ok' && (usage?.responseIdentity?.blocksWithRepeat ?? 0) === 0 && (
+        <p style={{ fontSize: 'var(--text-xs)', color: 'var(--color-status-warning)', marginTop: '0.75rem' }}>
+          No live block declares <code>repeat</code>, so <code>simple_repeat</code>,
+          {' '}<code>column_addition</code> and <code>on_demand</code> — and{' '}
+          <code>columnsByDay</code> with them — have never run on production content.
+          Keys are how repetition is actually declared here.
+        </p>
+      )}
+    </div>
+  );
+}
+
 export function AdminBlockTypeViewer({ onBack }: AdminBlockTypeViewerProps) {
   // Five tabs became two (blocks.md §18 Phase 4.1). Retired: Interactions (it
   // IS the activity list), Check-in Blocks (its catalog bucket has no reader),
@@ -154,33 +266,6 @@ export function AdminBlockTypeViewer({ onBack }: AdminBlockTypeViewerProps) {
   /** Live count for a term, or null when the feed has not arrived. */
   const countOf = (dim: 'interactions' | 'blockTypes' | 'activities' | 'dayTypes', term: string): number | null =>
     usage ? (usage[dim][term] ?? 0) : null;
-
-  /**
-   * The four states this page exists to separate.
-   *
-   * A reference count alone does not tell you whether a thing is displayed,
-   * promised or specified — three things in this module were deleted as unused
-   * and turned out to be load-bearing. So "nothing reads it" is a status shown
-   * on the page, not a reason to remove something.
-   */
-  type TermStatus = 'live' | 'wired-unused' | 'declared-unread' | 'orphan';
-  const statusOf = (opts: { readByCode: boolean; declared: boolean; count: number | null }): TermStatus => {
-    if (!opts.declared) return 'orphan';           // in the catalog, unknown to code
-    if (!opts.readByCode) return 'declared-unread'; // declared, but nothing reads it
-    return (opts.count ?? 0) > 0 ? 'live' : 'wired-unused';
-  };
-  const STATUS_LABEL: Record<TermStatus, string> = {
-    'live':            'Live',
-    'wired-unused':    'Wired, unused',
-    'declared-unread': 'Declared, unread',
-    'orphan':          'Orphan',
-  };
-  const STATUS_COLOUR: Record<TermStatus, string> = {
-    'live':            'var(--color-status-success)',
-    'wired-unused':    'var(--color-text-muted)',
-    'declared-unread': 'var(--color-status-warning)',
-    'orphan':          'var(--color-status-danger)',
-  };
 
   /** The shared four-column row tail: live count, what it draws, status. */
   const RowMeta = ({ count, rendersAs, status }: {
@@ -343,6 +428,13 @@ export function AdminBlockTypeViewer({ onBack }: AdminBlockTypeViewerProps) {
         description="Read-only reference of all available content block types used across check-ins and programs"
         stats={stats}
       />
+
+      {/*
+        Response identity — cross-cutting, so it sits above the tabs rather than
+        inside one. Every figure here is live; the page exists so that a thing
+        with no reader cannot look the same as a thing in daily use.
+      */}
+      <ResponseIdentityPanel usage={usage} usageState={usageState} />
 
       {/* Tab Switcher — two tabs. See the note on `activeTab` above. */}
       <div className="flex gap-2 flex-wrap">

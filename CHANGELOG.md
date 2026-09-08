@@ -57,6 +57,25 @@ the page badges which is which rather than passing invention off as recovery.
 a textarea, because a bare `exercise` with no activity resolves to `write`. It now says its
 appearance depends entirely on its activity.
 
+### `activityConfig.key` is read (task 6.1)
+
+98 live blocks carried a response key. It was **undeclared on the type and read by no code** — so 14
+keys shared across 51 blocks, e.g. `sleep_quality_day1` on days 1-7 of Sleep Tight under seven
+different block ids, were being split into unrelated per-day answers.
+
+- Declared on `ActivityConfig`, through `configOf` so the 906 blocks still stored under
+  `exerciseConfig` keep their identity.
+- `responseKeyOf(block)` is the single definition of response identity: the key if there is one,
+  otherwise the block id. Total by construction, so no caller branches on presence.
+- `ProgramPlayer.priorEntriesFor` matches prior days on identity instead of block id, and a shared
+  key now stands in for `repeat` as the declaration of a series. Blocks with no key keep the exact
+  previous behaviour.
+
+It landed on the viewer with its live counts, which is where the second finding showed up:
+**no live block declares `repeat` — zero of 407.** `simple_repeat`, `column_addition`, `on_demand`
+and `columnsByDay` have never run on production content. A shared key is how repetition is actually
+expressed in this database, so the path that was unreachable now has one that is not.
+
 ### The stat tile that could not report drift
 
 `Block Types` printed a hardcoded `17 · 11 stages · 6 blocks`. It is now

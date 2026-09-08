@@ -21,7 +21,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  resolveInteraction, normalizeSubtype, SUBTYPE_ALIASES, EXERCISE_SUBTYPES,
+  resolveInteraction, normalizeSubtype, SUBTYPE_ALIASES, EXERCISE_SUBTYPES, responseKeyOf,
   INTERACTION_META, DAY_TYPES,
   type Activity, type InteractionType, type ExerciseSubtype,
 } from './block-model.ts';
@@ -502,4 +502,30 @@ test('stage colour prefers the catalog, ignores the seeded placeholder', () => {
   // `learning` is 93 of 98 days and used to fall through to the default.
   assert.equal(stageColour('learning'), 'var(--color-primary-default)');
   assert.equal(stageColour(undefined), 'var(--color-primary-default)');
+});
+
+/**
+ * Response identity. The live shape this pins, queried 2026-09-08: 98 of 407
+ * blocks carry `activityConfig.key`, 61 keys are distinct, and 14 keys are
+ * carried by more than one block (51 blocks in all) — `sleep_quality_day1` is on days 1-7 of
+ * Sleep Tight under seven different ids. Zero blocks carry `repeat`.
+ */
+test('a block with no key is only ever itself', () => {
+  assert.equal(responseKeyOf({ id: 'block-1' }), 'block-1');
+  assert.equal(responseKeyOf({ id: 'block-1', activityConfig: {} }), 'block-1');
+  // Whitespace is not a declaration.
+  assert.equal(responseKeyOf({ id: 'block-1', activityConfig: { key: '   ' } }), 'block-1');
+});
+
+test('a shared key makes two blocks one question', () => {
+  const dayOne = { id: 'block-1773', activityConfig: { key: 'sleep_quality_day1' } };
+  const daySeven = { id: 'block-9912', activityConfig: { key: 'sleep_quality_day1' } };
+  assert.equal(responseKeyOf(dayOne), responseKeyOf(daySeven));
+  assert.notEqual(dayOne.id, daySeven.id);
+});
+
+test('the key is read through the migration accessor, not activityConfig alone', () => {
+  // 906 live blocks are still stored under the old name; a direct
+  // `.activityConfig.key` read would drop the identity of every one of them.
+  assert.equal(responseKeyOf({ id: 'b', exerciseConfig: { key: 'tf_thoughts' } }), 'tf_thoughts');
 });

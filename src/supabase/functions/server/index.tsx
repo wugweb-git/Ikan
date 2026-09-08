@@ -3531,6 +3531,15 @@ app.get("/blocks/usage", requireAdmin, async (c) => {
     // Stages are never a block's type, so counting blocks against them always
     // reads zero and looks unused. A stage's usage is the DAYS that carry it.
     const dayTypes: Record<string, number> = {};
+    // Response identity. A block's answers file under its `id`, so two blocks
+    // asking the same question on two days produce two unrelated answers. The
+    // authors said otherwise in `activityConfig.key` — and nothing read it.
+    // `keyUses` maps key -> how many blocks declare it, so a key on more than
+    // one block is a series the author declared and the product never threaded.
+    const keyUses: Record<string, number> = {};
+    const repeatTypes: Record<string, number> = {};
+    let blocksWithKey = 0;
+    let blocksWithRepeat = 0;
     let totalBlocks = 0;
     let totalDays = 0;
 
@@ -3549,6 +3558,10 @@ app.get("/blocks/usage", requireAdmin, async (c) => {
           bump(activities,   block?.activityConfig?.subtype
                           ?? block?.exerciseConfig?.subtype
                           ?? '(none)');
+
+          const cfgKey = block?.activityConfig?.key ?? block?.exerciseConfig?.key;
+          if (typeof cfgKey === 'string' && cfgKey) { blocksWithKey++; bump(keyUses, cfgKey); }
+          if (block?.repeat?.type) { blocksWithRepeat++; bump(repeatTypes, block.repeat.type); }
         }
       }
     }
@@ -3563,6 +3576,16 @@ app.get("/blocks/usage", requireAdmin, async (c) => {
       blockTypes,
       activities,
       dayTypes,
+      responseIdentity: {
+        blocksWithKey,
+        distinctKeys: Object.keys(keyUses).length,
+        // Keys carried by more than one block: the author declared a series.
+        sharedKeys: Object.values(keyUses).filter((n) => n > 1).length,
+        blocksInSharedKeys: Object.values(keyUses).filter((n) => n > 1)
+          .reduce((a, n) => a + n, 0),
+        blocksWithRepeat,
+        repeatTypes,
+      },
     });
   } catch (error) {
     console.error('Block usage error:', error);

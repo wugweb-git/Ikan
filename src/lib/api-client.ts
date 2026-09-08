@@ -689,6 +689,14 @@ class ApiClient {
     blockTypes: Record<string, number>;
     activities: Record<string, number>;
     dayTypes: Record<string, number>;
+    responseIdentity?: {
+      blocksWithKey: number;
+      distinctKeys: number;
+      sharedKeys: number;
+      blocksInSharedKeys: number;
+      blocksWithRepeat: number;
+      repeatTypes: Record<string, number>;
+    };
   } | null> {
     try {
       return await this.request('/blocks/usage', { method: 'GET' }, true);
