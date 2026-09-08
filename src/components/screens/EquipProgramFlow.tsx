@@ -295,7 +295,6 @@ function EquipProgramHome({ program, progress, onStartSession, onSelectDay, onRe
     (program.daily_content || []).map(d => ({
       day: d.day,
       title: d.title,
-      dayType: d.dayType,
     })),
     [program.daily_content]
   );

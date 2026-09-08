@@ -1,13 +1,13 @@
 import { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { EquipProgram, Activity, resolveInteraction, repeatTargetDays, responseKeyOf, warnFallback, type DayType, type DayContent } from '../../lib/blocks/block-model';
+import { EquipProgram, Activity, resolveInteraction, repeatTargetDays, responseKeyOf, type DayContent } from '../../lib/blocks/block-model';
 import { ErrorBoundary } from '../ErrorBoundary';
 import { BlockRenderer } from '../blocks/BlockRenderer';
 import { Button } from '../ui/button';
 import { ChevronLeft, Check, X } from 'lucide-react';
 import { useNotifications } from '../../contexts/NotificationContext';
 import { cn } from '../ui/utils';
-import { DAY_TYPE_LAYOUTS, DEFAULT_DAY_LAYOUT, layoutOf, primaryButtonFor, fallbackTitleFor, type DayLayout } from '../../lib/blocks/day-layout';
+import { DEFAULT_DAY_LAYOUT, layoutOf, primaryButtonFor, fallbackTitleFor, type DayLayout } from '../../lib/blocks/day-layout';
 import { policyOf } from '../../lib/blocks/day-policy';
 
 interface ProgramPlayerProps {
@@ -64,25 +64,15 @@ const f = (size: string, weight: number = 400, color: string = 'var(--color-text
 });
 
 /**
- * A day's layout. Kept as the single entry point, now over `layoutOf`.
+ * A day's layout. Its own, or the learning default.
  *
- * The warning still fires for a dayType nothing knows — that is a real signal
- * and predates §19. It cannot fire once a day carries its own layout, which is
- * the point: the day answers, instead of being looked up.
+ * The `dayType` warning that lived here is gone with §19 step 3: a day cannot
+ * carry an unknown type any more, because it carries no type at all.
  */
-export const getDayLayout = (day: DayContent | undefined): DayLayout => {
-  if (!day?.layout && day?.dayType && !Object.prototype.hasOwnProperty.call(DAY_TYPE_LAYOUTS, day.dayType)) {
-    warnFallback(
-      'ProgramPlayer',
-      `no player layout for dayType "${day.dayType}" — playing it as a learning day`,
-      day.dayType
-    );
-  }
-  return layoutOf(day);
-};
+export const getDayLayout = (day: DayContent | undefined): DayLayout => layoutOf(day);
 
-const groupBlocksIntoSteps = (activities: Activity[], dayType: string = 'learning'): Step[] => {
-  const config = layoutOf({ dayType: dayType as DayType });
+const groupBlocksIntoSteps = (activities: Activity[], layout: DayLayout = DEFAULT_DAY_LAYOUT): Step[] => {
+  const config = layout;
   
   if (config.singlePage) {
     return [{ id: 'single-page', blocks: activities }];
@@ -180,8 +170,8 @@ export function ProgramPlayer({
   }, [activeDay, program.daily_content, currentDayNum]);
 
   const steps = useMemo(() =>
-    activeDay ? groupBlocksIntoSteps(activeDayActivities, activeDay.dayType) : [],
-  [activeDay, activeDayActivities]);
+    activeDay ? groupBlocksIntoSteps(activeDayActivities, dayConfig) : [],
+  [activeDay, activeDayActivities, dayConfig]);
 
   const activeStep = steps[currentStepIndex];
 

@@ -1,9 +1,6 @@
 import {
-  warnFallback, resolveInteraction, normalizeSubtype,
-  type Activity, type ActivityConfig,
-  type DayType, type InteractionType,
+  type Activity, type DayType, type InteractionType,
 } from './block-model.ts';
-import { METADATA_CATALOG_ITEMS } from '../metadata-catalog.ts';
 
 export interface DayTypePreset {
   label: string;
@@ -400,111 +397,30 @@ export function getPresetForDayType(dayType: string): DayTypePreset | undefined 
   return isDayType(dayType) ? DAY_TYPE_PRESETS[dayType] : undefined;
 }
 
-export interface BlockDayTypeVerdict {
-  /** What the editor enforces TODAY. Only the blocked list can make this false. */
-  allowed: boolean;
-  /**
-   * What composition enforcement WOULD reject if it were on.
-   *
-   * The allow-list has never run: the rejecting line was commented out, so the
-   * computed result was discarded and `allowed: true` always won. Restoring it
-   * is one line (blocks.md §18 6.4) — but the moment it runs, content authored
-   * against no constraint for months starts failing, and nine of eleven presets
-   * have never even been assigned to a day. So this reports instead of rejects,
-   * which is what makes the §18 6.3 audit runnable before the switch is thrown.
-   */
-  wouldReject: boolean;
-  reason?: string;
-}
+/*
+  `BlockDayTypeVerdict`, `validateBlockForDayType` and `wouldReject` were here.
+  Deleted 2026-09-08, §19 step 3.
 
-/**
- * Does this block belong on this stage?
- *
- * Judged on the block's INTERACTION, not on the 23-string palette. That palette
- * exists in no store and no type union, and was bridged to real block names by
- * nine hardcoded `if`s right here — comparing `subtype === 'rating_scale'` and
- * `subtype === 'textarea'` against values the editor does not write.
- */
-export function validateBlockForDayType(
-  blockType: string,
-  subtype: string | undefined,
-  dayType: string
-): BlockDayTypeVerdict {
-  const preset = getPresetForDayType(dayType);
-  if (!preset) {
-    // No preset means this day skips every check below, allow-list and blocked
-    // list alike. Live, 4 days are typed `lesson` — a BLOCK type used as a day
-    // type (Unburn 26, 27, 29, 30). Recounted 2026-09-04 from the census; the
-    // earlier figure of 8 was wrong, and summed to 104 against a 97-day catalog.
-    warnFallback(
-      'validateBlockForDayType',
-      `no preset for dayType "${dayType}" — all validation skipped for this day`,
-      dayType
-    );
-    return { allowed: true, wouldReject: false };
-  }
+  They judged a block against the DAY'S TYPE — its `can_hold` list, its
+  `activities` list, its `allowedInteractions`. A day no longer has a type, so
+  there is nothing left to judge against, and the function had no honest input.
 
-  const interaction = resolveInteraction({
-    id: 'validate',
-    title: '',
-    type: blockType as Activity['type'],
-    content: '',
-    duration: 0,
-    required: false,
-    order: 0,
-    ...(subtype ? { activityConfig: { subtype } as ActivityConfig } : {}),
-  } as Activity);
+  It was never enforcement in any case: the rejecting line was commented out, so
+  `allowed: true` always won and the computed verdict was discarded. Restoring
+  it was described for months as "one line". Deleting it is the right end,
+  because the constraint it encoded is the one the settled model drops — a
+  template SEEDS a day and then has no further say. `DAY_TYPE_PRESETS` remains,
+  as seeding information; `seedDayFromTemplate` below is the only thing that
+  reads it now.
 
-  // CONTAINMENT, from the catalog seed (2026-09-04).
-  //
-  // This used to consult `blockedComponents`, a list of snake_case strings from
-  // a phantom palette that exists in no store and no type union, matched by
-  // SUBSTRING — so `'table'` blocked `input-table` and `track-table` too, and
-  // eight of the palette's nineteen entries granted nothing at all.
-  //
-  // The real rule is `can_hold` on the stage's catalog row, which says which
-  // block types the stage accepts. Read from the seed file rather than live KV
-  // so this stays a pure function.
-  const stageRow = METADATA_CATALOG_ITEMS.find(
-    r => r.type === 'block_type' && r.slug === dayType,
-  );
-  const canHold = stageRow?.can_hold ?? [];
-  if (canHold.length > 0 && !canHold.includes(blockType)) {
-    return {
-      allowed: true,           // reported, not enforced — see the note below
-      wouldReject: true,
-      reason: `${preset.label} days hold ${canHold.join(', ')} — this block is a '${blockType}'.`,
-    };
-  }
+  Block-level validity is untouched and still runs: `validateBlock` in
+  `block-validation.ts` asks whether a block can render at all, which is a
+  question about the block, not about where it sits.
+*/
 
-  // The stage's activity list, same source.
-  //
-  // Compare the NORMALISED subtype: the catalog stores canonical terms
-  // (`rating-scale`) while authored content and these presets carry aliases
-  // (`rating_scale`). Comparing raw spellings reported three false violations
-  // on the presets' own seed content.
-  const activities = stageRow?.activities ?? [];
-  const canonicalSubtype = normalizeSubtype(subtype);
-  if (canonicalSubtype && activities.length > 0 && !activities.includes(canonicalSubtype)) {
-    return {
-      allowed: true,
-      wouldReject: true,
-      reason: `${preset.label} days use ${activities.join(', ')} — this block is a '${canonicalSubtype}'.`,
-    };
-  }
-
-  // The half that has never fired. Reported, not enforced.
-  const permitted = preset.allowedInteractions.includes(interaction);
-  if (!permitted) {
-    return {
-      allowed: true,
-      wouldReject: true,
-      reason: `${preset.label} days allow ${preset.allowedInteractions.join(', ')} — this block is '${interaction}'.`,
-    };
-  }
-
-  return { allowed: true, wouldReject: false };
-}
+/* `seedDayFromTemplate` lives in `day-policy.ts` — it needs both the policy
+   and the layout tables, and importing the layout table here would close a
+   cycle through `day-policy.ts`, which already reads DAY_TYPE_PRESETS. */
 
 /**
  * The block types `DayEditor`'s palette can actually OFFER an author, with the

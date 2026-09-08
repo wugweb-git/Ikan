@@ -1,4 +1,5 @@
 import { EquipProgram, DayContent, Activity, ActivityConfig, InteractionType } from './blocks/block-model';
+import { seedDayFromTemplate } from './blocks/day-policy.ts';
 
 /**
  * Inbound spellings of a legacy assessment question type -> the four the save
@@ -158,7 +159,7 @@ export function adaptAssessmentToProgram(assessment: LegacyAssessment): EquipPro
      * `dayType === 'practice'` directly and would have changed meaning with
      * it. They are fields on the config now, so the three move together.
      */
-    dayType: 'assessment'
+    ...seedDayFromTemplate('assessment')
   };
 
   return {

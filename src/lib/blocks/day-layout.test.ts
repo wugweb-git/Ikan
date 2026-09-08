@@ -53,25 +53,21 @@ test('every stage type has a layout, and the set matches the presets', () => {
   );
 });
 
-test('a day with no layout of its own falls back to its type — every live day, today', () => {
-  // All 98 live days carry `dayType: "learning"` and no `layout`, so this is
-  // the path the whole database takes until the migration runs.
-  assert.equal(layoutOf({ dayType: 'learning' }), DAY_TYPE_LAYOUTS['learning']);
-  assert.equal(layoutOf({ dayType: 'tracker' }), DAY_TYPE_LAYOUTS['tracker']);
-  // An unknown type, and no type at all, both land on learning rather than throwing.
-  assert.equal(layoutOf({ dayType: 'nonsense' as never }), DEFAULT_DAY_LAYOUT);
+test('a day answers with its own layout, and the default when it has none', () => {
+  /*
+    §19 step 3 removed the `dayType` fallback — there is no type to fall back
+    to. All 196 live days carry their own layout from the step-2 migration; a
+    day without one predates templates and gets the learning default rather
+    than throwing.
+  */
+  const own = { ...DAY_TYPE_LAYOUTS['tracker'] };
+  assert.equal(layoutOf({ layout: own }), own);
+  assert.equal(layoutOf({}), DEFAULT_DAY_LAYOUT);
   assert.equal(layoutOf(undefined), DEFAULT_DAY_LAYOUT);
 });
 
-test('a day that carries its own layout ignores its type entirely', () => {
-  // The point of the whole step: after the migration a day answers for itself,
-  // and `dayType` can be removed without changing anything.
-  const own = { ...DAY_TYPE_LAYOUTS['tracker'] };
-  assert.equal(layoutOf({ dayType: 'learning', layout: own }), own);
-});
-
 test('policy resolves the same way, and carries the save behaviour', () => {
-  assert.equal(policyOf({ dayType: 'learning' }), DAY_TYPE_POLICIES['learning']);
+  assert.equal(policyOf({}), DAY_TYPE_POLICIES['learning'], 'the default is the learning policy');
   /*
     The two fields ProgramPlayer.handleExit reads, asserted as SETS rather than
     spot-checked — I wrote `reflection` here from memory and it does not carry
@@ -84,7 +80,7 @@ test('policy resolves the same way, and carries the save behaviour', () => {
   assert.deepEqual(withExit, ['check-in', 'practice']);
   assert.deepEqual(withToggle, ['tracker']);
   const own = { stepGroupRules: { allowed: false, required: false }, saveOnExit: true };
-  assert.equal(policyOf({ dayType: 'learning', policy: own }), own);
+  assert.equal(policyOf({ policy: own }), own);
 });
 
 test('policies are derived from the presets, not restated beside them', () => {

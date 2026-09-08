@@ -16,6 +16,7 @@
  * not police. It stays on the preset as seeding information.
  */
 import { DAY_TYPE_PRESETS } from './block-type-rules.ts';
+import { DAY_TYPE_LAYOUTS, type DayLayout } from './day-layout.ts';
 import type { DayType, DayContent } from './block-model.ts';
 
 /** What a day obeys. Serialisable, so it can be stored on the day. */
@@ -53,9 +54,20 @@ export const DEFAULT_DAY_POLICY = DAY_TYPE_POLICIES['learning'];
  * that call site went through `DAY_TYPE_PRESETS[activeDay.dayType]` directly
  * until now, and is one of the two the migration has to move.
  */
-export function policyOf(day: Pick<DayContent, 'policy' | 'dayType'> | undefined | null): DayPolicy {
-  if (day?.policy) return day.policy;
-  const t = day?.dayType;
-  if (t && Object.prototype.hasOwnProperty.call(DAY_TYPE_POLICIES, t)) return DAY_TYPE_POLICIES[t];
-  return DEFAULT_DAY_POLICY;
+export function policyOf(day: Pick<DayContent, 'policy'> | undefined | null): DayPolicy {
+  // No `dayType` fallback since §19 step 3 — see `layoutOf` for why.
+  return day?.policy ?? DEFAULT_DAY_POLICY;
+}
+
+/**
+ * What a template writes onto a new day.
+ *
+ * The whole of the day-type relationship, reduced to one act. A template is
+ * applied ONCE, at creation; from then on the day owns these values and editing
+ * the template no longer reaches it. That is what makes it a template rather
+ * than a type, and it is the consequence most likely to surprise someone who
+ * expects the old behaviour.
+ */
+export function seedDayFromTemplate(template: DayType): { policy: DayPolicy; layout: DayLayout } {
+  return { policy: DAY_TYPE_POLICIES[template], layout: DAY_TYPE_LAYOUTS[template] };
 }

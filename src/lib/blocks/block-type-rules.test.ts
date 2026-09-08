@@ -23,38 +23,24 @@
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { DAY_TYPE_PRESETS, PALETTE_BLOCK_TYPES, validateBlockForDayType } from './block-type-rules.ts';
+import { DAY_TYPE_PRESETS, PALETTE_BLOCK_TYPES } from './block-type-rules.ts';
 import { METADATA_CATALOG_ITEMS } from '../metadata-catalog.ts';
-import { INTERACTION_META, INTERACTIONS_WITHOUT_RENDERER, type Activity, type InteractionType } from './block-model.ts';
+import { INTERACTION_META, INTERACTIONS_WITHOUT_RENDERER, type InteractionType } from './block-model.ts';
 
-interface SeedBlock {
-  type?: Activity['type'];
-  exerciseConfig?: { subtype?: string };
-}
+/*
+  `seedViolations` and "no preset seeds default content its own rules reject"
+  were here. Retired with §19 step 3, along with `validateBlockForDayType`.
 
-/** Every seeded default block that its own preset's rules reject, as `dayType[index] type`. */
-function seedViolations(): string[] {
-  const out: string[] = [];
-  for (const [dayType, preset] of Object.entries(DAY_TYPE_PRESETS)) {
-    const seeds = (preset as unknown as { defaultBlocks?: SeedBlock[] }).defaultBlocks ?? [];
-    seeds.forEach((b, i) => {
-      const verdict = validateBlockForDayType(
-        String(b.type), b.activityConfig?.subtype, dayType,
-      );
-      if (!verdict.allowed || verdict.wouldReject) out.push(`${dayType}[${i}] ${String(b.type)}`);
-    });
-  }
-  return out.sort();
-}
+  Both asked the same question: does a preset seed a block its own allow-list
+  would reject? A day no longer has a type, so a preset no longer constrains
+  anything — it seeds a day and has no further say. There is no allow-list left
+  for a seed to violate.
 
-test('no preset seeds default content its own rules reject', () => {
-  assert.deepEqual(
-    seedViolations(), [],
-    'A preset seeds a default block its own allow-list rejects. Either add the ' +
-    "interaction to that preset's allowedInteractions, or change the seed. " +
-    'Leaving it means enforcement fails the day an author picks this preset.',
-  );
-});
+  What replaced the guarantee: `validateBlock` (block-validation.ts) still runs
+  on every block and still asks whether it can render at all, which is the half
+  that was ever enforced. The half that never fired is gone rather than left
+  computed and discarded.
+*/
 
 test('every preset can open with a lesson and close with a conclude', () => {
   // 131 `lesson` + 84 `conclude` = 215 of 406 live blocks, 53% of the

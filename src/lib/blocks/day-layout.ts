@@ -129,15 +129,17 @@ export const DEFAULT_DAY_LAYOUT = DAY_TYPE_LAYOUTS['learning'];
 /**
  * A day's layout: **its own first, the type lookup only as a fallback.**
  *
- * Until the migration writes `layout` onto all 98 live days, every one of them
- * takes the fallback, which is why this step is a no-op in behaviour. After it,
- * the day answers for itself and `dayType` can go.
+ * The day answers for itself. Anything with no layout of its own predates
+ * templates entirely and gets the learning default.
  */
-export function layoutOf(day: Pick<DayContent, 'layout' | 'dayType'> | undefined | null): DayLayout {
-  if (day?.layout) return day.layout;
-  const t = day?.dayType;
-  if (t && Object.prototype.hasOwnProperty.call(DAY_TYPE_LAYOUTS, t)) return DAY_TYPE_LAYOUTS[t];
-  return DEFAULT_DAY_LAYOUT;
+export function layoutOf(day: Pick<DayContent, 'layout'> | undefined | null): DayLayout {
+  /*
+    The `dayType` fallback is gone with §19 step 3 — there is no type to fall
+    back TO. Every one of the 196 live days carries its own layout, written by
+    the step-2 migration, so this returns the day's own answer or the learning
+    default for a day made before templates existed.
+  */
+  return day?.layout ?? DEFAULT_DAY_LAYOUT;
 }
 
 /** The primary button's label. Replaces `config.primaryButtonText(isLast)`. */

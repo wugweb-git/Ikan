@@ -31,7 +31,6 @@ import { Activity, resolveInteraction, INTERACTION_META, AUTHORABLE_SUBTYPES, wa
 import { useMetadata, isContainerRow } from '../../hooks/useMetadata';
 import { validateBlock } from '../../lib/blocks/block-validation';
 import { hasContentField, contentLabelFor, contentPlaceholderFor } from '../../lib/blocks/block-fields';
-import { validateBlockForDayType } from '../../lib/blocks/block-type-rules';
 import { getPresetForDayType } from '../../lib/blocks/block-type-rules';
 import { projectId } from '../../utils/supabase/info';
 import { getAuthHeaders } from '../../lib/supabase-client';
@@ -170,16 +169,12 @@ function BlockEditorInner({
   // of 407 stored blocks raise nothing, so a message here means something.
   const blockIssues = validateBlock(block);
 
-  // 2b — the preset allow-list, finally reaching a user. `validateBlockForDayType`
-  // has existed since the presets did and had ZERO production callers: its only
-  // caller was its own test, and its allow-list branch returns `allowed: true`
-  // unconditionally, so `wouldReject` was computed and discarded. Surfaced here
-  // as advice, not a block: enforcement waits until the 27 undetermined day
-  // types are assigned (blocks.md §18 6.3), because on today's content it would
-  // reject 182 of 407 blocks — mislabelled days, not bad content.
-  const presetVerdict = dayType
-    ? validateBlockForDayType(block.type, block.activityConfig?.subtype, dayType)
-    : undefined;
+  /*
+    The preset allow-list verdict was computed here and rendered as advice.
+    Gone with §19 step 3: it judged this block against the DAY'S TYPE, and a day
+    no longer has one. `validateBlock` above is untouched — it asks whether the
+    block can render at all, which is a question about the block itself.
+  */
 
   // Resolve the current interaction for display
   const currentInteraction = resolveInteraction(block);
@@ -321,21 +316,6 @@ function BlockEditorInner({
             </div>
           </div>
 
-          {presetVerdict?.wouldReject && presetVerdict.reason && (
-            <div
-              className="flex items-start gap-2 px-2.5 py-1.5 rounded-md"
-              style={{
-                marginTop: 8, fontSize: 'var(--text-xs)',
-                backgroundColor: 'var(--color-bg-muted)',
-                borderLeft: '2px solid var(--color-status-info)',
-              }}
-            >
-              <span style={{ color: 'var(--color-status-info)' }}>i</span>
-              <span style={{ color: 'var(--color-text-muted)' }}>
-                {presetVerdict.reason} <em>Not enforced — this is what the day’s preset expects.</em>
-              </span>
-            </div>
-          )}
 
           {blockIssues.length > 0 && (
             <div className="space-y-1" style={{ marginTop: 8 }}>

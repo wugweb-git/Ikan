@@ -29,6 +29,7 @@ import { HTML5Backend } from 'react-dnd-html5-backend';
 import { DayEditor as DailyBuilder } from '../blocks/DayComposer';
 import { DayContent, Activity, resolveInteraction, warnFallback } from '../../lib/blocks/block-model';
 import { AdminLoading } from '../admin/AdminLoading';
+import { seedDayFromTemplate } from '../../lib/blocks/day-policy';
 
 // Normalize options to plain strings so the scoring-map key lookup matches
 // regardless of whether the option was authored as a string or an
@@ -51,7 +52,7 @@ const convertQuestionsToDay = (questions: any[]): DayContent => {
   return {
     day: 1,
     title: 'Assessment Content',
-    dayType: 'assessment',
+    ...seedDayFromTemplate('assessment'),
     // Required by DayContent and absent since this function was written — the
     // old `exerciseConfig` type error masked it until the rename cleared that.
     description: '',

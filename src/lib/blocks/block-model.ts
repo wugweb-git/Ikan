@@ -618,13 +618,17 @@ export interface DayContent {
   description: string;
   activities: Activity[];
   image_url?: string;
-  /**
-   * @deprecated §19 — a day is moving to carrying its own `policy` and
-   * `layout`, seeded by a template rather than derived from a type. Still the
-   * only source for all 98 live days, and the fallback both resolvers use;
-   * removed once the migration has written both onto every day.
-   */
-  dayType?: DayType;
+  /*
+    `dayType` was here. Removed 2026-09-08, §19 step 3.
+
+    A day no longer has a type. It carries `policy` and `layout` of its own,
+    written by whichever template seeded it, and nothing is derived from a type
+    string any more — not the player's layout, not its save behaviour, not what
+    the block palette offers.
+
+    `DayType` itself survives as the name of a TEMPLATE (`DAY_TYPE_PRESETS`,
+    `DAY_TYPE_LAYOUTS`, `DAY_TYPE_POLICIES`), which is all it ever honestly was.
+  */
   /**
    * What this day OBEYS — autoAdvance, navigation, save behaviour, step rules.
    * Absent means "resolve from `dayType`"; `policyOf(day)` is the only reader.

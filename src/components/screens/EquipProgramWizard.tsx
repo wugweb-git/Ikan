@@ -24,6 +24,7 @@ import { DayEditor as DailyBuilder } from '../blocks/DayComposer';
 import { UnifiedBasicInfoForm } from '../admin/UnifiedBasicInfoForm';
 import { useMetadata } from '../../hooks/useMetadata';
 import { ProgramPlayer } from '../player/ProgramPlayer';
+import { seedDayFromTemplate } from '../../lib/blocks/day-policy';
 
 interface EquipProgramWizardProps {
   programId?: string;
@@ -316,7 +317,7 @@ export function EquipProgramWizard({ programId, onBack, onSave }: EquipProgramWi
           // `validateBlockForDayType` returns early and the day skips every
           // content check. The same defect was fixed in `DayEditor` and lived
           // on here, in the Day-0 save path. `onboarding` is the stage this is.
-          dayType: 'onboarding', activities: onboardingBlocks
+          ...seedDayFromTemplate('onboarding'), activities: onboardingBlocks
         };
         unifiedDailyContent = [onboardingDay, ...dailyContent];
       }
@@ -411,7 +412,13 @@ export function EquipProgramWizard({ programId, onBack, onSave }: EquipProgramWi
       day: 0,
       title: 'Onboarding',
       description: 'Initial assessment',
-      dayType: 'lesson',
+      /*
+        This wrote `dayType: 'lesson'` — a BLOCK type used as a day type, which
+        matched no preset and so skipped every check. The same defect was fixed
+        in DayComposer months ago and lived on here. It cannot recur: a day has
+        no type, and a template is named from the same closed union.
+      */
+      ...seedDayFromTemplate('learning'),
       activities: onboardingBlocks
     };
   }, [formData.daily_content, formData.onboarding_questions]);

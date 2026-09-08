@@ -13,7 +13,6 @@ import {
   MessageCircle,
   Target,
   AlertTriangle,
-  Info,
   Zap,
   RotateCcw,
   Repeat,
@@ -27,9 +26,11 @@ import { DayContent, Activity } from '../../lib/blocks/block-model';
 import { BlockEditor } from './BlockEditor';
 import { PALETTE_BLOCK_TYPES, getPresetForDayType } from '../../lib/blocks/block-type-rules';
 import { validateDay, hasBlockingIssues } from '../../lib/blocks/block-validation';
-import { METADATA_CATALOG_ITEMS } from '../../lib/metadata-catalog';
 import { stageColour } from '../../lib/blocks/block-fields';
 import { useMetadata, isContainerRow } from '../../hooks/useMetadata';
+import { seedDayFromTemplate, policyOf } from '../../lib/blocks/day-policy';
+import { layoutOf } from '../../lib/blocks/day-layout';
+import type { DayType, ExerciseSubtype } from '../../lib/blocks/block-model';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '../ui/dropdown-menu';
 import { cn } from '../ui/utils';
 import { Textarea } from '../ui/textarea';
@@ -86,7 +87,9 @@ const DraggableDay = memo(function DraggableDay({ day, index, isSelected, onSele
   // hex — the only hardcoded colours in a file that otherwise uses tokens — and
   // it covered 9 of 11 stage types, so `learning`, the type 93 of 98 days use,
   // fell through to the default.
-  const typeColor = isOnboarding ? stageColour('onboarding') : stageColour(day.dayType);
+  // A day has no type to colour by since §19 step 3. Day 0 keeps its onboarding
+  // tint because it is identified by its NUMBER, not by a type string.
+  const typeColor = isOnboarding ? stageColour('onboarding') : stageColour(undefined);
 
   return (
     <div
@@ -234,7 +237,7 @@ function generateBlockId(): string {
 }
 
 // --- HELPER COMPONENTS ---
-function BlockPaletteMenu({ onSelect, dayType }: { onSelect: (type: string, subtype?: string) => void; dayType?: string }) {
+function BlockPaletteMenu({ onSelect }: { onSelect: (type: string, subtype?: string) => void }) {
    // Block type definitions with their allowed-block keys for matching
    // Definition lives in block-type-rules.ts so it can be asserted against `can_hold`
    // — see PALETTE_BLOCK_TYPES. Icons stay here; they are presentation.
@@ -252,12 +255,17 @@ function BlockPaletteMenu({ onSelect, dayType }: { onSelect: (type: string, subt
    // that existed in no store and no type union, matched by substring, and
    // whose entries granted nothing on 8 of 19. `can_hold` on the stage's
    // catalog row is the real rule and says exactly which block types belong.
-   const canHold = dayType
-     ? METADATA_CATALOG_ITEMS.find(r => r.type === 'block_type' && r.slug === dayType)?.can_hold
-     : undefined;
-   const filtered = canHold?.length
-     ? blockTypes.filter(bt => canHold.includes(bt.type))
-     : blockTypes;
+   /*
+     UNFILTERED (§19 step 3). This narrowed the palette to the stage's
+     `can_hold` list. A day has no type to look one up from, and the settled
+     model drops composition constraint anyway — a template seeds a day, it does
+     not police what may go on it afterwards. Every block type, anywhere.
+
+     Worth recording what was given up: nothing. All 11 holder types had zero
+     blocks, so `can_hold` described a containment relationship no content has
+     ever used.
+   */
+   const filtered = blockTypes;
 
    return (
       <DropdownMenu>
@@ -329,7 +337,7 @@ export function DayEditor({
           title: mode === 'assessment' ? 'Assessment Content' : 'Content',
           description: '',
           activities: [],
-          dayType: mode === 'assessment' ? 'assessment' : 'practice'
+          ...seedDayFromTemplate(mode === 'assessment' ? 'assessment' : 'practice')
         };
         handleDaysChange([implicitDay]);
       } else if (days.length > 1) {
@@ -442,7 +450,7 @@ export function DayEditor({
         // day created here skipped validation entirely. 8 such days are live.
         // 'learning' is the preset for concept introduction, which is what 93
         // of the 97 real days already use.
-        dayType: 'learning'
+        ...seedDayFromTemplate('learning')
       };
       
       setSelectedDayNum(newDayNum);
@@ -521,9 +529,23 @@ export function DayEditor({
       const currentDay = currentDays.find(d => d.day === dayNum);
       const updatesToApply = { ...updates };
       
-      if (updatesToApply.dayType && currentDay && updatesToApply.dayType !== currentDay.dayType) {
+      /*
+        APPLYING A TEMPLATE, not setting a type (§19 step 3).
+
+        `applyTemplate` arrives on the update instead of `dayType`. It writes
+        the template's policy and layout onto the day and seeds its blocks, and
+        is then discarded — the day owns those values from that moment and
+        editing the template never reaches it again. That is the difference
+        between a template and a type, and it is the consequence most likely to
+        surprise: changing `learning` no longer changes the 98 days that were
+        made from it.
+      */
+      const template = (updatesToApply as { applyTemplate?: DayType }).applyTemplate;
+      delete (updatesToApply as { applyTemplate?: DayType }).applyTemplate;
+      if (template && currentDay) {
+         Object.assign(updatesToApply, seedDayFromTemplate(template));
          if (currentDay.activities.length === 0) {
-            const preset = getPresetForDayType(updatesToApply.dayType);
+            const preset = getPresetForDayType(template);
             if (preset && preset.defaultBlocks) {
                const newBlocks = preset.defaultBlocks.map((b, i) => ({
                   ...b,
@@ -552,12 +574,13 @@ export function DayEditor({
     if (!activeDay || readOnly) return;
     
     // Get preset config for auto-setting block properties
-    const preset = activeDay.dayType ? getPresetForDayType(activeDay.dayType) : undefined;
+    // No day type to read a preset from; a block's defaults are its own.
+    const preset = undefined as ReturnType<typeof getPresetForDayType>;
     
     const newBlock: Activity = {
       id: generateBlockId(),
       title: type === 'lesson' ? 'New Lesson' : 'New Activity',
-      type: type as any,
+      type: type as Activity['type'],
       content: '',
       duration: 5,
       // Was `preset?.autoConfig.scoringEnabled ? true : true` — identical
@@ -566,7 +589,7 @@ export function DayEditor({
       required: true,
       autoAdvance: preset?.autoConfig.autoAdvance ?? false,
       order: activeDay.activities.length,
-      activityConfig: subtype ? { subtype: subtype as any } : undefined
+      activityConfig: subtype ? { subtype: subtype as ExerciseSubtype } : undefined
     };
     handleDaysChange((currentDays) => currentDays.map(d => 
       d.day === activeDay.day ? { ...d, activities: [...d.activities, { ...newBlock, order: d.activities.length }] } : d
@@ -670,7 +693,7 @@ export function DayEditor({
                    </p>
                 </div>
                 {!readOnly && (
-                  <BlockPaletteMenu onSelect={addBlock} dayType={activeDay.dayType} />
+                  <BlockPaletteMenu onSelect={addBlock} />
                 )}
               </div>
 
@@ -846,22 +869,29 @@ export function DayEditor({
                             />
                           </div>
                           <div>
-                            {/* Day type is a BLOCK TYPE that holds blocks — the two
-                                vocabularies merged in Phase 1.1, so this list is the
-                                catalog's container rows, not a separate enum.
-                                Defaulted rather than required: live, 93 of 97 days sit
-                                on the default and all 4 manual picks were wrong — one of
-                                them `lesson`, a leaf type, which matched no preset and so
-                                skipped validation entirely. */}
+                            {/*
+                              APPLY A TEMPLATE — not set a type (§19 step 3).
+
+                              This was a Day Type select whose value was stored on
+                              the day and everything else derived from. A day now
+                              carries its own `policy` and `layout`; picking here
+                              WRITES them and seeds the blocks, once. The control
+                              therefore has no current value to show — nothing to
+                              select, because the day is not "a learning day", it is
+                              a day that was made from the learning template and has
+                              been its own thing since.
+                            */}
                             <label style={{ fontSize: '10px', fontWeight: 500, fontFamily: 'var(--font-family-base)', color: 'var(--color-text-muted)', display: 'block', marginBottom: 2 }}>
-                              Day Type <span style={{ fontWeight: 400 }}>— defaults to Learning</span>
+                              Apply a template <span style={{ fontWeight: 400 }}>— writes this day&apos;s behaviour and appearance, once</span>
                             </label>
-                            <Select 
-                              value={activeDay.dayType || 'learning'} 
-                              onValueChange={(v: any) => handleUpdateDay(activeDay.day, { dayType: v })}
+                            <Select
+                              value=""
+                              onValueChange={(v: string) => handleUpdateDay(activeDay.day, { applyTemplate: v as DayType } as Partial<DayContent>)}
                               disabled={readOnly}
                             >
-                              <SelectTrigger className="h-9" style={{ fontSize: '12px', borderRadius: 'var(--radius-md)' }}><SelectValue /></SelectTrigger>
+                              <SelectTrigger className="h-9" style={{ fontSize: '12px', borderRadius: 'var(--radius-md)' }}>
+                                <SelectValue placeholder="Choose a template…" />
+                              </SelectTrigger>
                               <SelectContent>
                                 {stageRows.map((row) => (
                                   <SelectItem key={row.value} value={row.value}>
@@ -875,12 +905,11 @@ export function DayEditor({
                                 ))}
                               </SelectContent>
                             </Select>
-                            {activeDay.dayType && !stageRows.some(r => r.value === activeDay.dayType) && (
-                              <p style={{ fontSize: '10px', color: 'var(--color-status-warning)', marginTop: 3 }}>
-                                “{activeDay.dayType}” is not a stage, so this day matches no preset
-                                and skips every content check. Pick one above.
-                              </p>
-                            )}
+                            <p style={{ fontSize: '10px', color: 'var(--color-text-muted)', marginTop: 3 }}>
+                              Applying one overwrites this day&apos;s policy and layout, and seeds
+                              blocks if it has none. Editing the template later will not change
+                              this day.
+                            </p>
                           </div>
                         </div>
 
@@ -911,151 +940,53 @@ export function DayEditor({
                         </div>
                       </div>
 
-                      {/* ── DAY TYPE PRESET DETAILS ── */}
+                      {/* ── THIS DAY'S OWN POLICY AND LAYOUT ── */}
+                      {/*
+                        Was "DAY TYPE PRESET DETAILS" — a read-only view of the
+                        preset the day's type pointed at, including its
+                        `can_hold` allow-list. All of that described a template,
+                        not this day. Since §19 step 3 the day carries its own
+                        policy and layout, so this shows what THIS day actually
+                        obeys, and the provenance stamp saying which template
+                        wrote it and when.
+                      */}
                       {(() => {
-                        const preset = getPresetForDayType(activeDay.dayType || 'learning');
-                        if (!preset) return null;
+                        const policy = policyOf(activeDay);
+                        const layout = layoutOf(activeDay);
+                        const source = (activeDay as { policy_source?: string }).policy_source;
+                        const rows: [string, string][] = [
+                          ['Auto-advance', String(policy.autoAdvance ?? false)],
+                          ['Navigation back', String(policy.navigationBack ?? false)],
+                          ['Scoring', String(policy.scoringEnabled ?? false)],
+                          ['Save on exit', String(policy.saveOnExit ?? false)],
+                          ['Save on toggle', String(policy.saveOnToggle ?? false)],
+                          ['Steps', policy.stepGroupRules.allowed
+                            ? (policy.stepGroupRules.required ? 'allowed, required' : 'allowed')
+                            : 'not allowed'],
+                          ['Layout', layout.layout],
+                          ['Progress', layout.progressStyle],
+                          ['Primary button', layout.primaryButtonText.last === layout.primaryButtonText.otherwise
+                            ? layout.primaryButtonText.last
+                            : `${layout.primaryButtonText.otherwise} / ${layout.primaryButtonText.last} on the last step`],
+                          ['Completion title', layout.completionTitle],
+                        ];
                         return (
                           <Card style={{ border: '1px solid var(--color-border-default)' }}>
-                            <CardContent className="p-0">
-                              {/* Preset header */}
-                              <div className="px-5 py-3 flex items-center gap-3" style={{ borderBottom: '1px solid var(--color-border-default)', backgroundColor: 'var(--color-bg-muted)' }}>
-                                <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: 'var(--color-primary-default)', opacity: 0.1 }}>
-                                  <Zap size={14} style={{ color: 'var(--color-primary-default)' }} />
+                            <CardContent className="p-3 space-y-1">
+                              <p className="uppercase tracking-wider mb-1" style={{ fontSize: '10px', fontWeight: 500, fontFamily: 'var(--font-family-base)', color: 'var(--color-text-muted)' }}>
+                                This day&apos;s behaviour
+                              </p>
+                              {rows.map(([k, v]) => (
+                                <div key={k} className="flex items-baseline justify-between gap-2" style={{ fontSize: '11px', fontFamily: 'var(--font-family-base)' }}>
+                                  <span style={{ color: 'var(--color-text-muted)' }}>{k}</span>
+                                  <span style={{ color: 'var(--color-text-primary)' }}>{v}</span>
                                 </div>
-                                <div className="flex-1">
-                                  <p style={{ fontSize: 'var(--text-sm)', fontWeight: 500, fontFamily: 'var(--font-family-base)', color: 'var(--color-text-primary)' }}>
-                                    {preset.label} Preset
-                                  </p>
-                                  <p style={{ fontSize: 'var(--text-xs)', fontFamily: 'var(--font-family-base)', color: 'var(--color-text-muted)' }}>
-                                    {preset.description}
-                                  </p>
-                                </div>
-                                {/* Reset to preset defaults */}
-                                {!readOnly && activeDay.activities.length > 0 && (
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    className="gap-1 h-7 px-2 shrink-0"
-                                    style={{ fontSize: '10px', color: 'var(--color-status-warning)', fontWeight: 500 }}
-                                    title="Replace all blocks with preset defaults"
-                                    onClick={() => {
-                                      if (!confirm(`Reset Day ${activeDay.day} blocks to ${preset.label} defaults? This will replace all existing blocks.`)) return;
-                                      const newBlocks = preset.defaultBlocks.map((b, i) => ({
-                                        ...b,
-                                        id: generateBlockId(),
-                                        order: i,
-                                        required: b.required ?? false,
-                                        title: b.title || 'Untitled Block'
-                                      })) as Activity[];
-                                      handleUpdateDay(activeDay.day, { activities: newBlocks });
-                                      setSelectedBlockId(null);
-                                      setTimeout(() => {
-                                        if (newBlocks.length > 0) setSelectedBlockId(newBlocks[0].id);
-                                      }, 100);
-                                    }}
-                                  >
-                                    <RotateCcw size={11} /> Reset blocks
-                                  </Button>
-                                )}
-                              </div>
-
-                              <div className="p-5 space-y-4">
-                                {/* Auto-config grid */}
-                                <div>
-                                  <p className="uppercase tracking-wider mb-2" style={{ fontSize: '10px', fontWeight: 500, fontFamily: 'var(--font-family-base)', color: 'var(--color-text-muted)' }}>
-                                    Player Behavior
-                                  </p>
-                                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                                    {Object.entries(preset.autoConfig).map(([key, val]) => (
-                                      <div key={key} className="flex items-center gap-2 p-2 rounded-md" style={{ backgroundColor: 'var(--color-bg-muted)', border: '1px solid var(--color-border-default)' }}>
-                                        <div className="w-4 h-4 rounded-full flex items-center justify-center shrink-0" style={{ 
-                                          backgroundColor: val ? 'var(--color-status-success-light)' : 'var(--color-bg-muted)',
-                                          border: val ? 'none' : '1px solid var(--color-border-default)'
-                                        }}>
-                                          {val && <div className="w-2 h-2 rounded-full" style={{ backgroundColor: 'var(--color-status-success)' }} />}
-                                        </div>
-                                        <span style={{ fontSize: '10px', fontWeight: 500, fontFamily: 'var(--font-family-base)', color: val ? 'var(--color-text-primary)' : 'var(--color-text-muted)' }}>
-                                          {key.replace(/([A-Z])/g, ' $1').replace(/^./, s => s.toUpperCase())}
-                                        </span>
-                                      </div>
-                                    ))}
-                                  </div>
-                                </div>
-
-                                {/* Step Group Rules */}
-                                <div>
-                                  <p className="uppercase tracking-wider mb-2" style={{ fontSize: '10px', fontWeight: 500, fontFamily: 'var(--font-family-base)', color: 'var(--color-text-muted)' }}>
-                                    Step Groups
-                                  </p>
-                                  <div className="flex flex-wrap gap-1.5">
-                                    <span style={{
-                                      fontSize: '10px', fontWeight: 500, fontFamily: 'var(--font-family-base)',
-                                      padding: '2px 8px', borderRadius: 'var(--radius-pill)',
-                                      backgroundColor: preset.stepGroupRules.allowed ? 'var(--color-status-success-light)' : 'var(--color-status-danger-light)',
-                                      color: preset.stepGroupRules.allowed ? 'var(--color-status-success)' : 'var(--color-status-danger)',
-                                    }}>
-                                      {preset.stepGroupRules.allowed ? 'Allowed' : 'Not Allowed'}
-                                    </span>
-                                    {preset.stepGroupRules.required && (
-                                      <span style={{ fontSize: '10px', fontWeight: 500, fontFamily: 'var(--font-family-base)', padding: '2px 8px', borderRadius: 'var(--radius-pill)', backgroundColor: 'var(--color-status-warning-light)', color: 'var(--color-status-warning)' }}>
-                                        Required
-                                      </span>
-                                    )}
-                                    {preset.stepGroupRules.maxBlocksPerStep && (
-                                      <span style={{ fontSize: '10px', fontWeight: 500, fontFamily: 'var(--font-family-base)', padding: '2px 8px', borderRadius: 'var(--radius-pill)', backgroundColor: 'var(--color-bg-muted)', color: 'var(--color-text-muted)', border: '1px solid var(--color-border-default)' }}>
-                                        Max {preset.stepGroupRules.maxBlocksPerStep}/step
-                                      </span>
-                                    )}
-                                    {preset.stepGroupRules.oneBlockPerStep && (
-                                      <span style={{ fontSize: '10px', fontWeight: 500, fontFamily: 'var(--font-family-base)', padding: '2px 8px', borderRadius: 'var(--radius-pill)', backgroundColor: 'var(--color-bg-muted)', color: 'var(--color-text-muted)', border: '1px solid var(--color-border-default)' }}>
-                                        1 block/step
-                                      </span>
-                                    )}
-                                  </div>
-                                </div>
-
-                                {/* Allowed Blocks */}
-                                <div>
-                                  <p className="uppercase tracking-wider mb-2" style={{ fontSize: '10px', fontWeight: 500, fontFamily: 'var(--font-family-base)', color: 'var(--color-text-muted)' }}>
-                                    Allowed Block Types
-                                  </p>
-                                  <div className="flex flex-wrap gap-1">
-                                    {(METADATA_CATALOG_ITEMS.find(r => r.type === 'block_type' && r.slug === activeDay.dayType)?.can_hold ?? []).map(b => (
-                                      <span key={b} style={{ fontSize: '10px', fontFamily: 'monospace', padding: '1px 6px', borderRadius: 4, backgroundColor: 'var(--color-bg-muted)', color: 'var(--color-text-muted)', border: '1px solid var(--color-border-default)' }}>
-                                        {b}
-                                      </span>
-                                    ))}
-                                  </div>
-                                </div>
-
-                                {/* Warnings */}
-                                {preset.warnings.length > 0 && (
-                                  <div className="space-y-1">
-                                    {preset.warnings.map((w, i) => (
-                                      <div key={i} className="flex items-start gap-2 p-2 rounded-md" style={{ backgroundColor: 'var(--color-status-warning-light)' }}>
-                                        <AlertTriangle size={12} className="mt-0.5 shrink-0" style={{ color: 'var(--color-status-warning)' }} />
-                                        <span style={{ fontSize: 'var(--text-xs)', fontFamily: 'var(--font-family-base)', color: 'var(--color-status-warning)', lineHeight: 1.4 }}>{w}</span>
-                                      </div>
-                                    ))}
-                                  </div>
-                                )}
-
-                                {/* Errors / Validation rules */}
-                                {preset.errors.length > 0 && (
-                                  <div className="space-y-1">
-                                    <p className="uppercase tracking-wider mb-1" style={{ fontSize: '10px', fontWeight: 500, fontFamily: 'var(--font-family-base)', color: 'var(--color-status-danger)' }}>
-                                      Validation Rules
-                                    </p>
-                                    {preset.errors.map((e, i) => (
-                                      <div key={i} className="flex items-start gap-2 p-2 rounded-md" style={{ backgroundColor: 'var(--color-status-danger-light)' }}>
-                                        <Info size={12} className="mt-0.5 shrink-0" style={{ color: 'var(--color-status-danger)' }} />
-                                        <span style={{ fontSize: 'var(--text-xs)', fontFamily: 'var(--font-family-base)', color: 'var(--color-status-danger)', lineHeight: 1.4 }}>{e}</span>
-                                      </div>
-                                    ))}
-                                  </div>
-                                )}
-                              </div>
+                              ))}
+                              <p style={{ fontSize: '10px', color: 'var(--color-text-muted)', marginTop: 6 }}>
+                                {source
+                                  ? `Seeded from ${source}. Editing that template will not change this day.`
+                                  : 'This day owns these values; no template has been applied to it.'}
+                              </p>
                             </CardContent>
                           </Card>
                         );
@@ -1075,7 +1006,6 @@ export function DayEditor({
                         moveDown={undefined}
                         hideHeader={true}
                         isAssessment={mode === 'assessment'}
-                        dayType={activeDay?.dayType}
                       />
                     </div>
                   ) : (
