@@ -176,7 +176,7 @@ export function AdminDashboard({ onNavigate, initialView }: AdminDashboardProps)
       { id: 'media', label: 'Media Library', group: 'Content', keywords: 'media image upload file photo' },
       { id: 'categories', label: 'Meta Manager', group: 'Config', keywords: 'category tag label metadata type mood' },
       { id: 'checkin-scales', label: 'Check-in Scales', group: 'Config', keywords: 'scale checkin energy stress sleep' },
-      { id: 'recommendations', label: 'Rules Engine', group: 'Config', keywords: 'recommendation rule engine severity' },
+      { id: 'recommendations', label: 'Recommendations', group: 'Config', keywords: 'recommendation rule engine severity rules' },
       { id: 'scoring-engine', label: 'Scoring Engine', group: 'Config', keywords: 'scoring engine' },
       { id: 'block-type-viewer', label: 'Block Types', group: 'Config', keywords: 'block type viewer' },
       { id: 'settings', label: 'Global Settings', group: 'Config', keywords: 'settings config configuration' },
