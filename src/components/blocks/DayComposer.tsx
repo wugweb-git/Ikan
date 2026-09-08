@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, memo } from 'react';
+import { useState, useEffect, useMemo, useRef, memo } from 'react';
 import {
   Plus,
   Trash2,
@@ -26,6 +26,7 @@ import { Card, CardContent } from '../ui/card';
 import { DayContent, Activity } from '../../lib/blocks/block-model';
 import { BlockEditor } from './BlockEditor';
 import { PALETTE_BLOCK_TYPES, getPresetForDayType } from '../../lib/blocks/block-type-rules';
+import { validateDay, hasBlockingIssues } from '../../lib/blocks/block-validation';
 import { METADATA_CATALOG_ITEMS } from '../../lib/metadata-catalog';
 import { stageColour } from '../../lib/blocks/block-fields';
 import { useMetadata, isContainerRow } from '../../hooks/useMetadata';
@@ -355,6 +356,19 @@ export function DayEditor({
   }, [dayNumbers, singleDayMode]);
 
   const activeDay = days.find(d => d.day === selectedDayNum);
+
+  /**
+   * `validationMode` was a prop with a default that no caller passed and no line
+   * read — and `block-validation.ts`, which it selects the strictness of, was
+   * imported by its own test and nothing else. Both are alive from 2026-09-08.
+   *
+   * `draft` reports; `publish` blocks. The wizard passes `publish` once a
+   * programme is published, because at that point the content is what a user
+   * reaches. Nothing here prevents a save — an author must be able to leave work
+   * half-finished — it states plainly what a reader would hit.
+   */
+  const dayVerdict = useMemo(() => validateDay(activeDay?.activities), [activeDay]);
+  const dayBlocks = hasBlockingIssues(dayVerdict);
   const activeBlock = activeDay?.activities.find(b => b.id === selectedBlockId);
 
   // If selected block no longer exists (deleted/changed), reset
@@ -732,6 +746,33 @@ export function DayEditor({
                     BLOCKS
                   </span>
                 </div>
+                )}
+
+                {(dayVerdict.dayIssues.length > 0 || dayVerdict.blockIssues.size > 0) && (
+                  <div className="mb-2 p-2 rounded-lg" style={{
+                    backgroundColor: 'var(--color-bg-muted)',
+                    borderLeft: `2px solid ${validationMode === 'publish' && dayBlocks ? 'var(--color-status-danger)' : 'var(--color-status-warning)'}`,
+                    fontSize: 'var(--text-xs)',
+                  }}>
+                    <div style={{ fontWeight: 500, marginBottom: 2 }}>
+                      {validationMode === 'publish' && dayBlocks
+                        ? 'This day is published and would not pass a content check'
+                        : 'Content check'}
+                    </div>
+                    {dayVerdict.dayIssues.map((i, n) => (
+                      <div key={`d${n}`} style={{ color: i.level === 'error' && validationMode === 'publish' ? 'var(--color-status-danger)' : 'var(--color-text-muted)' }}>
+                        {i.level === 'error' ? '✕' : '⚠'} {i.message}
+                      </div>
+                    ))}
+                    {[...dayVerdict.blockIssues.entries()].map(([blockId, issues]) => {
+                      const title = activeDay.activities.find(b => b.id === blockId)?.title || blockId;
+                      return issues.map((i, n) => (
+                        <div key={`${blockId}-${n}`} style={{ color: i.level === 'error' && validationMode === 'publish' ? 'var(--color-status-danger)' : 'var(--color-text-muted)' }}>
+                          {i.level === 'error' ? '✕' : '⚠'} <strong>{title}</strong> — {i.message}
+                        </div>
+                      ));
+                    })}
+                  </div>
                 )}
 
                 {/* 2. Draggable Blocks */}

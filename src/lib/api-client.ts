@@ -711,6 +711,8 @@ class ApiClient {
       /** Has an image_url. */      im: boolean;
       /** Blocks sharing this signature. */ n: number;
     }[];
+    /** The two day-level facts `validateDay` reasons about, counted live. */
+    dayIntegrity?: { emptyDays: number; daysWithDuplicateBlockIds: number };
   } | null> {
     try {
       return await this.request('/blocks/usage', { method: 'GET' }, true);

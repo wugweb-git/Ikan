@@ -741,6 +741,12 @@ export function EquipProgramWizard({ programId, onBack, onSave }: EquipProgramWi
             mode="equip"
             singleDayMode={false}
             onProgramChange={handleBuilderChange}
+            /*
+              `validationMode` was a prop with a default that nobody passed. A
+              published programme is what a user actually reaches, so its content
+              is held to the publish standard; a draft is advised, not policed.
+            */
+            validationMode={formData.published ? 'publish' : 'draft'}
           />
         )}
       </WizardLayout>

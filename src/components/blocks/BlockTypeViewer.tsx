@@ -259,6 +259,15 @@ function ResponseIdentityPanel({ usage, usageState }: {
           </div>
         ))}
       </div>
+      {usageState === 'ok' && usage?.dayIntegrity && (
+        <p style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)', marginTop: '0.75rem' }}>
+          Day integrity, by the same feed: <strong>{usage.dayIntegrity.emptyDays}</strong> live day
+          {usage.dayIntegrity.emptyDays === 1 ? '' : 's'} hold no blocks and{' '}
+          <strong>{usage.dayIntegrity.daysWithDuplicateBlockIds}</strong> carry a repeated block id.
+          Both are errors under <code>validateDay()</code>, which the day composer now runs —
+          reporting on a draft, blocking on a published programme (<code>validationMode</code>).
+        </p>
+      )}
       {usageState === 'ok' && (usage?.responseIdentity?.blocksWithRepeat ?? 0) === 0 && (
         <p style={{ fontSize: 'var(--text-xs)', color: 'var(--color-status-warning)', marginTop: '0.75rem' }}>
           No live block declares <code>repeat</code>, so <code>simple_repeat</code>,

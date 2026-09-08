@@ -3557,11 +3557,21 @@ app.get("/blocks/usage", requireAdmin, async (c) => {
 
     const bump = (m: Record<string, number>, k: string) => { m[k] = (m[k] ?? 0) + 1; };
 
+    // The two day-level facts `validateDay` reasons about. Facts, not verdicts —
+    // the rule that calls an empty day unpublishable lives in
+    // `block-validation.ts`, which this function cannot import.
+    let emptyDays = 0;
+    let daysWithDuplicateBlockIds = 0;
+
     for (const equip of equips) {
       for (const day of (equip?.daily_content ?? [])) {
         totalDays++;
         bump(dayTypes, day?.dayType ?? '(absent)');
-        for (const block of (day?.activities ?? [])) {
+        const dayBlocks = day?.activities ?? [];
+        if (dayBlocks.length === 0) emptyDays++;
+        const ids = dayBlocks.map((b: any) => b?.id).filter(Boolean);
+        if (new Set(ids).size !== ids.length) daysWithDuplicateBlockIds++;
+        for (const block of dayBlocks) {
           totalBlocks++;
           bump(blockTypes,  block?.type ?? '(absent)');
           // `(absent)` rather than 0 so a block with NO interaction is visible
@@ -3619,6 +3629,7 @@ app.get("/blocks/usage", requireAdmin, async (c) => {
         repeatTypes,
       },
       blockProbes: [...probes.values()],
+      dayIntegrity: { emptyDays, daysWithDuplicateBlockIds },
     });
   } catch (error) {
     console.error('Block usage error:', error);

@@ -119,6 +119,34 @@ The live count is the honest part: **no live day is typed `reflection`, `tracker
 so neither policy governs anything today. Every stage's policy is now printed on the Block Type
 Viewer directly under its day count, so a policy governing zero days cannot look like one in force.
 
+### `validationMode` and `block-validation.ts` are read (task 6.4)
+
+`validationMode` was a prop on `DayEditor` with a default that no caller passed and no line read.
+`block-validation.ts` — `validateDay`, `hasBlockingIssues` — was imported by its own test and
+nothing else. They are two halves of one thing, so they were wired together.
+
+The day composer now runs `validateDay` on the selected day and shows the verdict above the block
+list. `draft` reports; `publish` marks blocking issues as errors. `EquipProgramWizard` passes
+`publish` once the programme is published, because at that point the content is what a user
+reaches. Nothing prevents a save — an author must be able to leave work half-finished.
+
+The two day-level checks are also counted live and shown on the Block Type Viewer:
+**0 empty days and 0 days with a repeated block id, of 98.** Both clean, which is worth stating
+rather than assuming.
+
+### One production incident, self-inflicted and reverted
+
+While verifying, every admin call started returning 401. The edge function was pinned to
+`supabase-js@2.49.8` on a diagnosis that a floating `jsr:@supabase/supabase-js@2` had pulled a
+breaking auth-js. **That diagnosis was wrong.** GoTrue's own logs say `session_not_found`: the
+browser session had been revoked, and the token — unexpired, correctly signed — referenced a
+session that no longer existed. No user was affected; the only failing session was the one being
+used to verify.
+
+The pin was reverted and the function redeployed at its original versions. Pinning the major is
+still the right thing to do, but it is a deliberate change with its own testing, not a side effect
+of a misdiagnosis.
+
 ### The stat tile that could not report drift
 
 `Block Types` printed a hardcoded `17 · 11 stages · 6 blocks`. It is now
