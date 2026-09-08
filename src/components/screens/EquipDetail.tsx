@@ -1,3 +1,4 @@
+import { equipMeta } from '../../lib/equip-meta';
 import { useState, useEffect } from 'react';
 import { projectId } from '../../utils/supabase/info';
 import { getAuthHeaders } from '../../lib/supabase-client';
@@ -307,8 +308,13 @@ export function EquipDetail({ equipId = 'sleep-tight-9', onNavigate }: EquipDeta
         title: p.title || p.name,
         description: p.summary || p.description || '',
         image: p.thumbnail || p.thumbnail_url || p.image_url || p.hero_image || p.image || p.cover_image || p.metadata?.image || p.metadata?.thumbnail || '',
-        duration: p.duration_days ? `${p.duration_days} days` : '',
-        activities: 'Self-paced modules',
+        // From the programme's own content, not the authored field: the two
+        // agree on exactly one of four live records. `''` renders no badge.
+        duration: equipMeta(p).days !== null ? `${equipMeta(p).days} days` : '',
+        // Was the literal string "Self-paced modules" on every card. The real
+        // activity count is in the content and now gets counted; absent stays
+        // absent rather than falling back to a phrase that says nothing.
+        activities: equipMeta(p).activities !== null ? `${equipMeta(p).activities} activities` : '',
         link: p.slug ? `/equip/${p.slug}` : `/equip-detail?id=${p.equip_id || p.id}`
       }));
 

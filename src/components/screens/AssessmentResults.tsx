@@ -10,6 +10,7 @@ import { ArrowRight } from 'lucide-react';
 import { SectionReportCard } from '../player/SectionReportCard';
 import { AssessmentCard } from '../assessment/AssessmentCard';
 import { severityPresentation, severityOfResult } from '../../lib/severity-presentation';
+import { equipMeta } from '../../lib/equip-meta';
 import { resolveResultPresentation } from '../../lib/result-presentation';
 import { getLoadedScoringProfiles, loadScoringProfiles } from '../../lib/recommendation-engine';
 import type { SectionScoreResult } from '../../lib/assessment-sections';
@@ -434,8 +435,9 @@ export function AssessmentResults({
    */
   const programMeta: string | null = (() => {
     if (!programDetails) return null;
-    const days = typeof programDetails.duration_days === 'number' && programDetails.duration_days > 0
-      ? programDetails.duration_days : null;
+    // The programme's real length, from its content. `duration_days` disagrees
+    // with `daily_content` on three of four live records.
+    const days = equipMeta(programDetails).days;
     const content = Array.isArray(programDetails.daily_content) ? programDetails.daily_content : [];
     const activities = content.reduce(
       (n: number, day: any) => n + (Array.isArray(day?.blocks) ? day.blocks.length : 0), 0);
@@ -641,8 +643,7 @@ export function AssessmentResults({
                     id: p.id,
                     title: p.title ?? p.name ?? '',
                     image: p.thumbnail ?? p.cover_image ?? p.hero_image ?? null,
-                    durationLabel: typeof p.duration_days === 'number' && p.duration_days > 0
-                      ? `${p.duration_days} days` : null,
+                    durationLabel: equipMeta(p).days !== null ? `${equipMeta(p).days} days` : null,
                     countLabel: null,
                   }}
                   onSelect={(id) => onNavigate?.(`/equip-program-onboarding?id=${id}`)}

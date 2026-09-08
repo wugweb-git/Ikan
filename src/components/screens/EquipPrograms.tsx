@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { equipMeta } from '../../lib/equip-meta';
 import { apiClient } from '../../lib/api-client';
 import { equipUrl } from '../../lib/slug';
 import { PageHero } from '../ui/PageHero';
@@ -147,9 +148,11 @@ export function EquipPrograms({ onNavigate }: EquipProgramsProps) {
               const thumbnail = program.thumbnail || program.hero_image || '';
               const title = program.title || program.name || 'Untitled Program';
               const description = program.description || program.short_description || '';
-              const duration = program.duration || program.total_days
-                ? `${program.total_days || program.duration} days`
-                : '';
+              // `total_days` and `duration` are null on all four live
+              // programmes, so this rendered no badge at all — the listing has
+              // never shown a duration. Resolved from the content instead.
+              const equipDays = equipMeta(program).days;
+              const duration = equipDays !== null ? `${equipDays} days` : '';
 
               return (
                 <div
