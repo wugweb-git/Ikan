@@ -15,6 +15,7 @@ import {
   resolveInteraction,
   EXERCISE_SUBTYPES as CANONICAL_SUBTYPES,
   SUBTYPE_ALIASES,
+  normalizeSubtype,
   type InteractionType,
   type Activity,
 } from '../../lib/blocks/block-model';
@@ -211,6 +212,63 @@ function RequirementLine({ interaction, gap, usageState }: {
           <span style={{ color: 'var(--color-status-success)' }}> · live content complete</span>
         )
       )}
+    </div>
+  );
+}
+
+/**
+ * A preview for a row whose answer is a SET of interactions, not one.
+ *
+ * `exercise` draws nine different widgets depending on its activity, and each
+ * of the eleven holder types permits a handful. Showing one mock for either
+ * would be a lie of exactly the kind this page exists to stop — it is why the
+ * `exercise` row once claimed all 187 of its blocks draw a textarea.
+ *
+ * Nothing new is drawn. Each permitted activity is resolved through the real
+ * resolver, the results are grouped, and one existing `BlockPreview` is shown
+ * per DISTINCT interaction, captioned with the activities that produce it. So
+ * `tracker` showing one input-table preview captioned "input-table,
+ * comparison-matrix" is the honest statement that those two activities draw the
+ * same thing.
+ */
+function CompositePreview({ activities, resolve, note }: {
+  activities: string[];
+  resolve: (activity: string) => InteractionType;
+  note?: string;
+}) {
+  const groups = new Map<InteractionType, string[]>();
+  for (const a of activities) {
+    const i = resolve(a);
+    if (!groups.has(i)) groups.set(i, []);
+    groups.get(i)!.push(a);
+  }
+
+  if (!groups.size) {
+    return (
+      <div className="mt-3 p-3 rounded-lg" style={{ backgroundColor: 'var(--color-bg-muted)', fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}>
+        Permits no activities, so there is nothing for it to draw.
+      </div>
+    );
+  }
+
+  return (
+    <div className="mt-3 space-y-3">
+      {note && (
+        <p style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}>{note}</p>
+      )}
+      <p style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}>
+        {activities.length} activit{activities.length === 1 ? 'y' : 'ies'} ·{' '}
+        {groups.size} distinct interaction{groups.size === 1 ? '' : 's'}
+      </p>
+      {[...groups.entries()].map(([interaction, produced]) => (
+        <div key={interaction}>
+          <div className="flex items-baseline gap-2 flex-wrap" style={{ fontSize: 'var(--text-xs)', marginBottom: 4 }}>
+            <code style={{ color: 'var(--color-primary-default)' }}>{interaction}</code>
+            <span style={{ color: 'var(--color-text-muted)' }}>← {produced.join(' · ')}</span>
+          </div>
+          <BlockPreview interaction={interaction} />
+        </div>
+      ))}
     </div>
   );
 }
@@ -476,6 +534,23 @@ export function AdminBlockTypeViewer({ onBack }: AdminBlockTypeViewerProps) {
   // against, so a row in one and not the other shows as DRIFT rather than
   // being silently absorbed.
   /** What an activity draws, via the real resolver rather than a second table. */
+  /**
+   * Most-used first, unused last, declaration order within a tie.
+   *
+   * The page listed every vocabulary in catalog order, which gave a term nobody
+   * has ever used the same prominence as one carried by 187 blocks. Ranking is
+   * the cheapest way to make the shape of the data visible: on every tab the
+   * handful of real values now sit at the top and the long tail reads as a tail.
+   *
+   * With the feed down the order is left ALONE — `null` sorts as a tie, so the
+   * list keeps catalog order rather than inventing a ranking out of unknowns.
+   */
+  const byLiveCount = <T,>(rows: T[], countFor: (row: T) => number | null): T[] =>
+    rows
+      .map((row, i) => ({ row, i, n: countFor(row) ?? 0 }))
+      .sort((a, b) => (b.n - a.n) || (a.i - b.i))
+      .map((x) => x.row);
+
   const resolveSubtypeInteraction = (subtype: string): InteractionType =>
     resolveInteraction({
       id: 'probe', title: '', type: 'exercise', content: '',
@@ -524,7 +599,17 @@ export function AdminBlockTypeViewer({ onBack }: AdminBlockTypeViewerProps) {
     and that comparison is the one place the `can_hold` ⟺ preset invariant is
     checked mechanically.
   */
-  const containerBlockTypes = kvBlockTypes.filter((t) => isContainerRow(t));
+  /*
+    `containerBlockTypes` is gone with the "Stages with rules" tile it fed, and
+    this is the reason rather than a silent delete.
+
+    Its only job was that tile's comparison — `DAY_TYPE_PRESETS` against the
+    catalog rows whose `can_hold` is non-empty. That invariant is not lost: it
+    is asserted at `block-type-rules.test.ts:125` ("can_hold non-empty <=> the
+    row has a preset"), where a break fails the build instead of waiting to be
+    noticed on a page. Per-row containment is still shown, from
+    `isContainerRow(row)` directly, which is where a per-row fact belongs.
+  */
   const aliasCount = exerciseSubtypes.length - CANONICAL_SUBTYPES.length;
 
   /**
@@ -569,17 +654,26 @@ export function AdminBlockTypeViewer({ onBack }: AdminBlockTypeViewerProps) {
     },
     {
       /*
-        The invariant as a number: `can_hold` non-empty <=> a preset exists.
+        WAS "Stages with rules 11" — DAY_TYPE_PRESETS against catalog containers.
+        Two facts made it the wrong tile to keep. It restated a per-row badge, and
+        it presented containment as the page's headline structural fact when no
+        block in production has ever been held by anything: all 11 holder types
+        have zero blocks.
 
-        CHECKED 2026-09-08: this compares DAY_TYPE_PRESETS against the
-        `block_type` rows whose `can_hold` is non-empty — `containerBlockTypes`
-        comes from `kvBlockTypes`, the block_type bucket. It is NOT the eleven
-        `day_config_type` rows, which are a deprecated duplicate vocabulary that
-        also happens to number eleven. Two unrelated elevens meeting in one tile
-        is a coincidence that would read as agreement, so it is written down.
+        What the page could not say, and now does: how much of each declared
+        vocabulary anything actually uses. 4 of 17 block types, 9 of 13
+        interactions, 11 of 12 activities — measured, not asserted, and "—" when
+        the feed is down.
+
+        The `can_hold` invariant is still checked, in `block-type-rules.test.ts`,
+        where a broken invariant fails a build instead of being read off a tile.
       */
-      label: 'Stages with rules',
-      value: compare(Object.keys(DAY_TYPE_PRESETS).length, containerBlockTypes.length),
+      label: 'In use',
+      value: usageState !== 'ok'
+        ? '—'
+        : `${BLOCK_TYPE_VOCABULARY.filter((t) => (countOf('blockTypes', t) ?? 0) > 0 || (countOf('dayTypes', t) ?? 0) > 0).length}` +
+          ` of ${kvBlockTypes.length} types · ` +
+          `${interactionTypes.filter((i) => (countOf('interactions', i) ?? 0) > 0).length} of ${interactionTypes.length} interactions`,
       icon: <Calendar className="w-4 h-4" style={{ color: 'var(--color-status-success)' }} />,
     },
   ];
@@ -632,10 +726,14 @@ export function AdminBlockTypeViewer({ onBack }: AdminBlockTypeViewerProps) {
       {activeTab === 'interactions' && (
         <div className="space-y-3">
           <p style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-muted)' }}>
-            The thirteen things a user can do. Every block resolves to exactly one — since the
-            backfill, each of the {usage?.totalBlocks ?? 407} live blocks carries its
-            <code style={{ fontSize: 'var(--text-xs)' }}> interaction </code> explicitly rather
-            than having it inferred from type + activity.
+            Thirteen are declared. <strong>Nine have ever been done</strong> — no live block has
+            ever been a <code style={{ fontSize: 'var(--text-xs)' }}>watch</code>,{' '}
+            <code style={{ fontSize: 'var(--text-xs)' }}>track-table</code>,{' '}
+            <code style={{ fontSize: 'var(--text-xs)' }}>clinical</code> or{' '}
+            <code style={{ fontSize: 'var(--text-xs)' }}>upload</code>. Every block resolves to
+            exactly one, and since the backfill each of the {usage?.totalBlocks ?? 407} live blocks
+            carries its <code style={{ fontSize: 'var(--text-xs)' }}>interaction</code> explicitly
+            rather than having it inferred from type + activity.
           </p>
 
           {usageState === 'failed' && (
@@ -646,7 +744,7 @@ export function AdminBlockTypeViewer({ onBack }: AdminBlockTypeViewerProps) {
             </div>
           )}
 
-          {interactionTypes.map((key) => {
+          {byLiveCount(interactionTypes, (k) => countOf('interactions', k)).map((key) => {
             const meta = INTERACTION_META[key];
             const count = countOf('interactions', key);
             // The catalog row behind this interaction, for its icon. `key` is
@@ -736,7 +834,8 @@ export function AdminBlockTypeViewer({ onBack }: AdminBlockTypeViewerProps) {
             `useMetadata` sorts every bucket once, so ordering is a data
             decision editable in Meta Manager rather than a sort in this file.
           */}
-          {[{ rows: kvBlockTypes }].map(({ rows }) => {
+          {[{ rows: byLiveCount(kvBlockTypes, (r) =>
+              isContainerRow(r) ? countOf('dayTypes', r.value) : countOf('blockTypes', r.value)) }].map(({ rows }) => {
             return (
               <div className="space-y-2">
                 {rows.map((row) => {
@@ -846,33 +945,53 @@ export function AdminBlockTypeViewer({ onBack }: AdminBlockTypeViewerProps) {
                         </div>
                       )}
                       {/*
-                        A stage gets no preview, and that is not an omission: a
-                        stage is a DAY, and what a day draws is the blocks on it.
-                        Inventing a mock for `learning` would be the one thing
-                        this page must not do.
+                        EVERY block type has a preview now.
+
+                        The two exemptions here were both dishonest in the same
+                        direction. A holder said "no preview — a stage is a day",
+                        which was true while a stage WAS a day; under the settled
+                        model a block type constrains what a block may DO, so its
+                        preview is what its permitted activities draw. And
+                        `exercise` showed a single mock through `probe()`, which
+                        resolves a bare `exercise` to `write` — the claim that
+                        all 187 of them draw a textarea.
+
+                        Both are the same shape: a set of activities, resolved
+                        through the real resolver, one existing preview per
+                        distinct interaction. Nothing is invented.
                       */}
-                      {isContainerRow(row) ? (
-                        <div className="mt-2" style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}>
-                          No preview — a stage is a day, not a block. What it draws is the blocks it holds.
-                        </div>
-                      ) : (
-                        <>
-                          <div className="mt-2">{previewToggle(`b:${row.value}`)}</div>
-                          {openPreview === `b:${row.value}` && (
-                            <PreviewPanel
-                              interaction={probe(row.value)}
-                              blockType={{
-                                value: row.value,
-                                label: row.label,
-                                icon: BookOpen,
-                                description: row.description ?? '',
-                                category: 'equip',
-                                fields: [],
-                                previewHint: LEAF_HINTS[row.value] ?? '',
-                              }}
-                            />
-                          )}
-                        </>
+                      <div className="mt-2">{previewToggle(`b:${row.value}`)}</div>
+                      {openPreview === `b:${row.value}` && (
+                        isContainerRow(row) ? (
+                          <CompositePreview
+                            activities={row.activities ?? []}
+                            resolve={resolveSubtypeInteraction}
+                            note={`What this type permits, drawn. Its ${(row.activities ?? []).length} activities come from the catalog row.`}
+                          />
+                        ) : row.value === 'exercise' ? (
+                          <CompositePreview
+                            activities={[...CANONICAL_SUBTYPES]}
+                            resolve={resolveSubtypeInteraction}
+                            note={
+                              'Derived, not declared: no `activities` list exists on `exercise` in the catalog. ' +
+                              'Every activity in live use sits inside an exercise and nowhere else, so the canonical ' +
+                              'twelve are what it can draw.'
+                            }
+                          />
+                        ) : (
+                          <PreviewPanel
+                            interaction={probe(row.value)}
+                            blockType={{
+                              value: row.value,
+                              label: row.label,
+                              icon: BookOpen,
+                              description: row.description ?? '',
+                              category: 'equip',
+                              fields: [],
+                              previewHint: LEAF_HINTS[row.value] ?? '',
+                            }}
+                          />
+                        )
                       )}
                     </div>
                   );
@@ -888,7 +1007,7 @@ export function AdminBlockTypeViewer({ onBack }: AdminBlockTypeViewerProps) {
           <p style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-muted)', fontFamily: 'var(--font-family-base)' }}>
             Exercise subtypes define the interaction style inside an Exercise block. This list is derived, not declared here: canonical terms from <code style={{ fontSize: 'var(--text-xs)', backgroundColor: 'var(--color-bg-muted)', padding: '1px 4px', borderRadius: '4px' }}>EXERCISE_SUBTYPES</code>, aliases from <code style={{ fontSize: 'var(--text-xs)', backgroundColor: 'var(--color-bg-muted)', padding: '1px 4px', borderRadius: '4px' }}>SUBTYPE_ALIASES</code> (both in block-model.ts), labels and descriptions from the live catalog.
           </p>
-          {exerciseSubtypes.map((st) => (
+          {byLiveCount(exerciseSubtypes, (st) => countOf('activities', st.value)).map((st) => (
             <Card key={st.value} style={{ border: '1px solid var(--color-border-default)', borderRadius: 'var(--radius-lg)', opacity: st.selectable ? 1 : 0.75 }}>
               <CardContent className="p-4">
                 <div className="flex items-start gap-3">
@@ -901,9 +1020,20 @@ export function AdminBlockTypeViewer({ onBack }: AdminBlockTypeViewerProps) {
                         {st.label}
                       </h4>
                       <AdminStatusBadge status="neutral" label={st.value} />
+                      {/*
+                        "Alias / Preset-only" read as "nothing uses this" on
+                        three terms that ten live blocks carry — `matrix` (8),
+                        `text_list` (1), `row_list` (1). An alias not offered in
+                        the editor can still be the stored value, and saying so
+                        is the difference between unselectable and unused.
+                      */}
                       <AdminStatusBadge
-                        status={st.selectable ? 'published' : 'draft'}
-                        label={st.selectable ? 'In Editor' : 'Alias / Preset-only'}
+                        status={st.selectable ? 'published' : (countOf('activities', st.value) ?? 0) > 0 ? 'published' : 'draft'}
+                        label={st.selectable
+                          ? 'In Editor'
+                          : (countOf('activities', st.value) ?? 0) > 0
+                            ? `Alias — in use (${countOf('activities', st.value)})`
+                            : 'Alias / Preset-only'}
                       />
                     </div>
                     <p style={{ fontFamily: 'var(--font-family-base)', fontSize: 'var(--text-sm)', color: 'var(--color-text-muted)', lineHeight: '1.5' }}>
@@ -919,12 +1049,27 @@ export function AdminBlockTypeViewer({ onBack }: AdminBlockTypeViewerProps) {
                       const known = st.selectable || (SUBTYPE_ALIASES as Record<string, string>)[st.value] !== undefined;
                       const rendersAs = INTERACTION_META[resolveSubtypeInteraction(st.value)]?.previewHint
                         ?? 'Resolves to no interaction';
+                      const interaction = resolveSubtypeInteraction(st.value);
                       return (
-                        <RowMeta
-                          count={count}
-                          rendersAs={rendersAs}
-                          status={statusOf({ readByCode: known, declared: true, count })}
-                        />
+                        <>
+                          <RowMeta
+                            count={count}
+                            rendersAs={rendersAs}
+                            status={statusOf({ readByCode: known, declared: true, count })}
+                          />
+                          <div className="mt-2">{previewToggle(`a:${st.value}`)}</div>
+                          {openPreview === `a:${st.value}` && (
+                            <>
+                              {!st.selectable && (
+                                <p style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)', marginTop: 8 }}>
+                                  An alias — it normalises to <code>{normalizeSubtype(st.value)}</code>{' '}
+                                  before the resolver sees it, so this is that term&apos;s preview.
+                                </p>
+                              )}
+                              <PreviewPanel interaction={interaction} />
+                            </>
+                          )}
+                        </>
                       );
                     })()}
                   </div>
