@@ -504,6 +504,33 @@ compared icon, colour and description, so a new field could never reach an alrea
 rename, nothing renames types today, and it is a 407-block migration. Freezing the ids now is what
 lets it land later without drift having happened in between.
 
+### §19 step 2 — every day now carries its own policy and layout
+
+The migration behind the step-1 reader. 196 days across both prefixes gained `policy`, `layout` and
+a `policy_source` stamp. No code changed: the reader shipped first precisely so this could be a
+data-only step.
+
+**Replayed, not copied.** Each prefix derived its values from its *own* `dayType`, from the same
+template table exported by `day-layout.ts` / `day-policy.ts` — so the written values cannot diverge
+from what the code fallback produces, and `equip_program:` is not a transcription of `equip:`.
+
+Backup `backup_pre_day_policy_2026_09_08`. Interaction-neutrality proved against it:
+
+| | |
+|---|---|
+| blocks | 814 before, 814 after |
+| interaction distribution | **0 drift** |
+| block-type distribution | **0 drift** |
+| activity distribution | **0 drift** |
+| days carrying policy + layout + provenance | **196 of 196** |
+
+Verified by rendering as well as by SQL: the player preview draws `Continue` with percentage
+progress, exactly as before — but now resolved from `day.layout` rather than from
+`DAY_TYPE_LAYOUTS[day.dayType]`. Same output, different path, which is the whole proof.
+
+`dayType` is deliberately still present on all 196 days. Removing it is step 3, and it is only safe
+now that every day answers for itself.
+
 ### The stat tile that could not report drift
 
 `Block Types` printed a hardcoded `17 · 11 stages · 6 blocks`. It is now
