@@ -9,6 +9,55 @@ undated under their original session number.
 
 ---
 
+## 2026-09-08 (percentages and the history axis)
+
+Two live numeric defects, both diagnosed earlier and left as "report, do not
+act". Both are numbers shown to a person about their own result.
+
+### A percentage is a position in a range
+
+Every score percentage used `value / max`, which treats the floor as earned.
+Sleep runs 8-40 — eight items whose lowest option is worth 1 — so answering
+"never" to everything scores 8, not 0. Measured across the 21 stored results
+carrying a computed overall:
+
+| instrument | range | value | was | is |
+|---|---|---|---|---|
+| Sleep | 8-40 | 24 | 60% | **50%** |
+| Sleep | 8-40 | 15 | 38% | **22%** |
+| Balance | 8-40 | 26 | 65% | **56%** |
+| Burnout | 1-5 | 2.61 | 52% | **40%** |
+| Stress | 0-40 | 19 | 48% | 48% |
+| Depression | 0-27 | 12 | 44% | 44% |
+
+15 of 21 move. The six that do not are the 0-floor instruments — Stress, the
+PHQ and GAD screens — which is why it survived: invisible on the instruments
+it gets checked against, wrong on every 1-5 Likert.
+
+`percentOfRange(value, max, min)` is one tested helper, and it clamps — a value
+outside its own range is a units mismatch, not a 140% result. The floor is not
+on a stored result (`max_score` was kept, the minimum thrown away), so
+`resolveResultPresentation` derives it from the profile's band set, which tiles
+the achievable range and therefore states it. **The scoring engine was always
+right**; this is the display path catching up.
+
+### The history chart drew two scales as one
+
+It read `score`/`max_score`, the legacy raw pair kept for the iKAN aggregate.
+For a `calc: mean` profile that pair is in different units from the result:
+
+| Burnout attempt | legacy pair | computed overall |
+|---|---|---|
+| 06:34 | 60 / 115 | 2.61 / 5 |
+| 10:28 | **2 / 4** | 3.0 / 5 |
+
+115 and 4, on one axis, for one instrument. It now prefers
+`section_scores.overall` — the same ordering `result-presentation.ts` already
+applied when placing the band, so the screen had been reading the other half of
+the record its own band label came from.
+
+---
+
 ## 2026-09-08 (later)
 
 **The results page got real slots, and the last two hardcoded recommendation
