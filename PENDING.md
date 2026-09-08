@@ -3,7 +3,8 @@
 Single source of truth for outstanding work across sessions. Update this file whenever you deploy
 something that changes what's here — see `GOVERNANCE.md` for the rule.
 
-*Last updated: 2026-08-12, after finding and fixing a double-JSON-encoding bug affecting
+*Last updated: 2026-09-08 — blocks module section added at the top; §19 (a day carries its own
+policy and layout, not a type) completed and deployed. Previously: 2026-08-12, after finding and fixing a double-JSON-encoding bug affecting
 `activity_log:` (604 rows, migrated in place) and 2 dormant call sites (`corporate_program:`,
 `user_employer:`, 0 live rows) — see `src/docs/systems/schema-relations.md` for the full write-up.
 Previously: 2026-08-07, removing 7 dead/placeholder questions across General, Burnout, and Stress
@@ -12,6 +13,62 @@ screenshot caught General's), a real production bug fix (General's admin builder
 live users saw, root-caused to a stale `daily_content` cache), and finding the admin notification
 bell is unwired from real data. See `CHANGELOG.md` for full detail. All work through this point is
 committed and pushed to `origin/equip-carry-forward`.*
+
+---
+
+## Blocks module — pending, as of 2026-09-08
+
+The blocks module is **not closeable yet**, and the gap is narrow. Everything below is either a
+decision only the owner can make, or a build that has no content to justify it yet.
+
+### Content decisions — the module cannot close without these
+
+| | |
+|---|---|
+| **122 keyless blocks** | Every block that produces a response and does not say where the answer goes. Reported in the editor since 2026-09-08 and now fixable there — the `key` field exists. **~28 decisions, not 122**: the keyless blocks collapse to 28 clusters on `(programme, title, type, activity, columns)`, because the duplicates are the same instrument repeated |
+| **35 blocks with no `scale_ref`** | Every scale-backed block inlines its options. Reported, but **not actionable until scale-by-reference is built** — no block has ever referenced a shared scale |
+| **13 days with no closing block** | `productivity-reset` on all 8 of its days, plus 2 · 2 · 1 elsewhere. The reference says a `conclude` is mandatory and last |
+| **5 block types with no content** | `reflection`, `learning`, `practice` need hand assignment. `quiz` and `rest` **cannot be assigned** — 0 of 407 blocks carry any scoring marker, and `rest` declares `activities: []`, so no block can be one |
+
+### Open modelling question — raised 2026-09-08, undecided
+
+**If `view` is an interaction, is `video-player` the activity? If `listen` is an interaction, is
+`audio-player` the activity? If `read` is an interaction, are `long-form-text` and `pdf` the
+activity types?**
+
+The observation behind it is real and measurable. Every other activity is **many-to-one** with its
+interaction — `mcq` and `single-select` both draw `select-one`; `input-table` and
+`comparison-matrix` both draw `input-table`; `ephemeral-journal` and `short-text` both draw
+`write`. The four passive ones are **one-to-one with identical names** (`read`→`read`,
+`listen`→`listen`, `view`→`view`, `complete`→`complete`), which means one of the two carries no
+information.
+
+What deciding it would buy, concretely: **`read` cannot currently distinguish prose from a PDF**,
+and `view` cannot distinguish an uploaded file from an embed. Naming the activity after the
+artefact rather than the act would make both authorable without adding an interaction.
+
+Not urgent, and not a bug. It is a vocabulary change touching the seed, the resolver table and 236
+live blocks, and nothing is broken while it is undecided.
+
+### Builds with no content to justify them yet
+
+- **Scale by reference** — the `scale_ref` warning is unactionable until this exists. The
+  duplication it would end is real and measured: the PHQ/GAD scale is inlined 27 times in
+  assessments and per-block in equip.
+- **`column_addition` and `on_demand`** — recycling modes. **Zero of 407 blocks declare `repeat`**,
+  so there is no content to exercise either. What actually expresses repetition here is a shared
+  response key: 14 keys across 51 blocks, which arrived by copy-paste rather than by design.
+- **Content pointing at catalog ids** — blocks store the slug (`type: "tracker"`), not the id. The
+  ids are frozen and tested, so this can land any time; it buys nothing until something renames a
+  type, and it is a 407-block migration across two prefixes.
+
+### Closed this session, for reference — do not re-investigate
+
+`can_hold` (removed everywhere: no block holds another) · `dayType` (removed from the type and all
+196 days; a day carries its own `policy` and `layout`) · `validateBlockForDayType` and `wouldReject`
+(deleted — they judged a block against a day type that no longer exists) · the four rendererless
+interactions (`listen`, `pick-date`, `review-table`, `rank` all built) · `view` (drew the prose
+layout for its whole life; now plays the video).
 
 ---
 

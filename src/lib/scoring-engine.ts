@@ -199,8 +199,22 @@ export interface ScoringContext {
 
 // ── Achievable range ─────────────────────────────────────────────────────────
 
+/**
+ * Two decimal places.
+ *
+ * Was 1e6 — six places — which is float-noise suppression, not a presentation
+ * decision, and it showed: a `mean` over 23 BAT items produced values like
+ * 3.6086956521739131 rounded to 3.608696, printed to a clinician as though the
+ * fourth decimal meant something. No instrument here is precise past two, and a
+ * score is read by a person.
+ *
+ * Applied at the point of computation rather than in a formatter, so every
+ * reader — report card, stored result, trend, export — gets the same number.
+ * A stored score and a displayed score that differ is how two representations
+ * of one value start.
+ */
 function round(n: number): number {
-  return Math.round(n * 1e6) / 1e6;
+  return Math.round(n * 100) / 100;
 }
 
 /**

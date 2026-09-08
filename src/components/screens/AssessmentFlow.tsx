@@ -8,6 +8,24 @@ import { useAuth } from '../../contexts/AuthContext';
 import { apiClient } from '../../lib/api-client';
 import { severityForSection, resolveAnswerValue } from '../../lib/assessment-sections';
 import { triggerCrisisSupport } from '../safety/CrisisSupport';
+
+/**
+ * The crisis panel no longer opens from an answer. Turned off sitewide
+ * 2026-09-08, by decision.
+ *
+ * Kept as a switch rather than deleted, because the machinery behind it is
+ * correct and hard-won: `is_risk_indicator` is read from the question itself,
+ * and the threshold is the question's OWN lowest option value rather than zero
+ * — without which a 1-5 scale fires the panel on "Never". Deleting that would
+ * mean rediscovering it.
+ *
+ * `general-q5` is the only flagged question live, so this switch is the whole
+ * behaviour. The keyword trigger in `MoodJournal.tsx:345` is a separate path,
+ * driven by journal text rather than by a question, and is untouched.
+ *
+ * Module scope so it is a constant, not a value the effect has to depend on.
+ */
+const CRISIS_ON_ANSWER_ENABLED = false;
 import { buildScoringContext, toSectionScoreResult } from '../../lib/scoring-context';
 import { computeScores } from '../../lib/scoring-engine';
 import { createActiveTimer, type ActiveTimer } from '../../lib/active-time';
@@ -255,6 +273,7 @@ export function AssessmentFlow({
 
   const riskFiredRef = useRef(false);
   const evaluateRisk = useCallback((responses: Record<string, any>) => {
+    if (!CRISIS_ON_ANSWER_ENABLED) return;
     if (riskFiredRef.current) return;
     try {
       const questions = ((assessment?.questions as any[]) ?? []);
