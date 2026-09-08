@@ -141,3 +141,13 @@ test('an article with no usable date sorts last, not first', () => {
   assert.equal(articleTime({}), -Infinity);
   assert.equal(articleTime({ created_at: 'not-a-date' }), -Infinity);
 });
+
+test('the displayed date and the sort date are the same field', () => {
+  // The GAD-7 article was created 2025-12-20 and published 2026-03-19. Sorting
+  // by publication put it second while its card showed 2025, so a correctly
+  // ordered list read as broken. Display and ordering must agree.
+  const r = { id: 'x', created_at: '2025-12-20T13:27:50.444Z',
+              published_at: '2026-03-19T10:32:53.897Z' };
+  assert.match(toResourcePost(r).date, /2026/);
+  assert.equal(articleTime(r), new Date('2026-03-19T10:32:53.897Z').getTime());
+});

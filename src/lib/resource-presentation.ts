@@ -45,6 +45,7 @@ export interface ResourceRecord {
   date?: string;
   publishedDate?: string;
   published?: boolean;
+  published_at?: string;
   featured?: boolean;
 }
 
@@ -84,9 +85,24 @@ export function resourceReadTime(r: ResourceRecord): string {
   return /^\d+$/.test(raw) ? `${raw} min read` : raw;
 }
 
+/**
+ * The candidate dates for an article, in the order they should be trusted.
+ *
+ * `published_at` is the editorial date; `created_at` is when the row was
+ * written, which can be months earlier — the GAD-7 article was created
+ * 2025-12-20 and published 2026-03-19. Ordering and display MUST read the same
+ * field or a correctly sorted list looks broken: sorted by publication it sat
+ * second, while its card showed the 2025 creation date and so appeared out of
+ * sequence.
+ */
+function dateCandidates(r: ResourceRecord): (string | undefined)[] {
+  return [r.published_at, r.created_at, r.date, r.publishedDate];
+}
+
 function resourceDate(r: ResourceRecord): string {
-  if (r.created_at) {
-    const d = new Date(r.created_at);
+  for (const raw of dateCandidates(r)) {
+    if (!raw) continue;
+    const d = new Date(raw);
     if (!Number.isNaN(d.getTime())) {
       return d.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
     }
@@ -153,8 +169,8 @@ export function blogCategoryToAssessmentCategory(category: unknown): string {
  * was written. An unparseable or absent date sorts last rather than to the
  * epoch-adjacent top, which is where `new Date(undefined)` would put it.
  */
-export function articleTime(r: ResourceRecord & { published_at?: string }): number {
-  for (const raw of [r.published_at, r.created_at, r.date]) {
+export function articleTime(r: ResourceRecord): number {
+  for (const raw of dateCandidates(r)) {
     if (!raw) continue;
     const t = new Date(raw).getTime();
     if (!Number.isNaN(t)) return t;
