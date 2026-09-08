@@ -202,6 +202,7 @@ test('DAY_TYPES is the full preset vocabulary', () => {
 import {
   INTERACTION_REQUIREMENTS, RESPONSE_PRODUCING, SCALE_BACKED, missingRequirements,
   type Block as HBlock,
+  blockOf,
 } from './content-hierarchy.ts';
 
 test('every interaction has a requirement spec', () => {
@@ -528,4 +529,47 @@ test('the key is read through the migration accessor, not activityConfig alone',
   // 906 live blocks are still stored under the old name; a direct
   // `.activityConfig.key` read would drop the identity of every one of them.
   assert.equal(responseKeyOf({ id: 'b', exerciseConfig: { key: 'tf_thoughts' } }), 'tf_thoughts');
+});
+
+/**
+ * `blockOf` is the strangler seam: the live shape read as the target shape.
+ * These pin the three mappings that decide what live content reports.
+ */
+test('blockOf carries every stored spelling of a table under the target name', () => {
+  const b = blockOf({
+    id: 'b1', title: 'Sleep log', type: 'exercise', interaction: 'input-table',
+    content: '', duration: 0, required: true, order: 3,
+    activityConfig: { tableColumns: [{ key: 'hours', label: 'Hours' }], prompt: 'Log it' },
+  } as never);
+  assert.equal(b.interaction, 'input-table');
+  assert.equal(b.prompt, 'Log it');
+  assert.deepEqual(missingRequirements(b), ['key'], 'columns are satisfied by tableColumns');
+});
+
+test('blockOf never invents a scale_ref, so scale-backed blocks report the real gap', () => {
+  // No stored block references a shared scale — they all inline their options.
+  const b = blockOf({
+    id: 'b2', title: '', type: 'exercise', interaction: 'select-one',
+    content: '', duration: 0, required: true, order: 0,
+    activityConfig: { options: ['Yes', 'No'], key: 'therapy_history' },
+  } as never);
+  assert.equal(b.scale_ref, undefined);
+  assert.deepEqual(missingRequirements(b), ['scale_ref']);
+});
+
+test('a passive block with content is complete, and needs no key', () => {
+  const b = blockOf({
+    id: 'b3', title: '', type: 'conclude', interaction: 'complete',
+    content: 'Well done.', duration: 0, required: false, order: 0,
+  } as never);
+  assert.deepEqual(missingRequirements(b), []);
+});
+
+test('an unnamed response-producing block is reported incomplete', () => {
+  const b = blockOf({
+    id: 'b4', title: '', type: 'journal', interaction: 'write',
+    content: '', duration: 0, required: true, order: 0,
+    activityConfig: { prompt: 'What happened?' },
+  } as never);
+  assert.deepEqual(missingRequirements(b), ['key']);
 });

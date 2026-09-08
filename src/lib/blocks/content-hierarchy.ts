@@ -1,12 +1,17 @@
 /**
  * The content hierarchy — collection / stage / step / block.
  *
- * **Nothing reads these yet.** This is blocks.md §14 and §18 Phase 3.1-3.2 at
- * type level only: the target shape, declared alongside the four storage models
- * that exist today, so migration is a strangler rather than a cutover. The seam
- * already works — `resolveInteraction()` opens with
- * `if (activity.interaction) return activity.interaction`, so a block written in
- * this shape is already understood by today's player.
+ * This is blocks.md §14 and §18 Phase 3.1-3.2: the target shape, declared
+ * alongside the storage model that exists today, so migration is a strangler
+ * rather than a cutover. The seam already works — `resolveInteraction()` opens
+ * with `if (activity.interaction) return activity.interaction`, so a block
+ * written in this shape is already understood by today's player.
+ *
+ * **The file was imported by its own test and nothing else** until 2026-09-08.
+ * `blockOf()` below is the strangler seam actually being crossed: it reads a
+ * live `Activity` as a `Block`, so `missingRequirements` — the one place that
+ * states what each interaction needs — can run against production content. The
+ * Block Type Viewer counts what it reports; the editor shows it per block.
  *
  * ## Why one shape
  *
@@ -45,7 +50,8 @@
  *   which nothing else says. Splitting them makes `lesson · multi-select`
  *   sayable instead of accidental.
  */
-import type { InteractionType, DayType } from './block-model';
+import type { InteractionType, DayType, Activity } from './block-model.ts';
+import { configOf, resolveInteraction } from './block-model.ts';
 
 /** Why a block is here. Editorial, open, catalog-backed — as against `interaction`, which is closed. */
 export type BlockRole =
@@ -192,4 +198,53 @@ export function missingRequirements(b: Block): string[] {
   }
   if (RESPONSE_PRODUCING.includes(b.interaction) && !b.key) missing.push('key');
   return missing;
+}
+
+
+/**
+ * Read a live `Activity` in the target shape.
+ *
+ * This is the strangler seam. The stored model spreads one interaction's inputs
+ * across `content`, `image_url` and twenty optional `activityConfig` fields;
+ * the target model names them. Mapping is one-way and lossy on purpose — only
+ * the fields `INTERACTION_REQUIREMENTS` reasons about are carried.
+ *
+ * Two mappings are worth stating because they make live content report as
+ * incomplete, correctly:
+ *
+ * - **`scale_ref` is never populated.** No stored block references a shared
+ *   scale; they all inline their options. Every select-one / select-many /
+ *   rate / clinical block therefore reports `scale_ref` missing, which is the
+ *   27-copies-of-one-scale problem stated as a number rather than a paragraph.
+ * - **`key` comes from `activityConfig.key` alone**, not from `responseKeyOf`.
+ *   The id fallback is what makes a block resolvable; it is not the author
+ *   having named where the answer goes, and this check is about the naming.
+ */
+export function blockOf(activity: Activity, position?: number): Block {
+  const cfg = configOf(activity) ?? {};
+  const config: Record<string, unknown> = {
+    // Target name on the left, every stored spelling on the right.
+    columns:        cfg.columns ?? cfg.tableColumns,
+    rows:           cfg.rows ?? cfg.tableRows,
+    items:          cfg.listItems ?? cfg.options,
+    accepted_types: cfg.acceptedFileTypes,
+    options:        cfg.options,
+  };
+  for (const k of Object.keys(config)) if (config[k] === undefined) delete config[k];
+
+  return {
+    id: activity.id,
+    interaction: resolveInteraction(activity),
+    title: activity.title,
+    prompt: cfg.prompt,
+    content: activity.content,
+    key: typeof cfg.key === 'string' && cfg.key.trim() ? cfg.key.trim() : undefined,
+    // Deliberately absent — see the note above.
+    scale_ref: undefined,
+    config,
+    position: position ?? activity.order ?? 0,
+    required: !!activity.required,
+    duration: activity.duration,
+    media_ref: activity.image_url,
+  };
 }

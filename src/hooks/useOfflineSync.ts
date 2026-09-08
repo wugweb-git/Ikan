@@ -73,8 +73,13 @@ async function executeSync(item: SyncItem): Promise<boolean> {
         // `engineResult` joins that list for the same reason: AssessmentFlow
         // queues it, and a field destructured here but not forwarded is lost
         // permanently for anything that syncs offline rather than online.
-        const { assessmentId, responses, status, score, interpretation, severityHint, maxScore, sectionScores, slug, engineResult } = item.payload;
-        await apiClient.saveAssessmentResponse(assessmentId, responses, status, score, interpretation, severityHint, maxScore, sectionScores, slug, engineResult);
+        // `startedAt`/`durationSeconds` join the list for the same reason as
+        // `engineResult` before them: a field destructured here but not
+        // forwarded is lost permanently for anything that syncs offline. A run
+        // completed on a train would keep its answers and silently lose its
+        // timing.
+        const { assessmentId, responses, status, score, interpretation, severityHint, maxScore, sectionScores, slug, engineResult, startedAt, durationSeconds } = item.payload;
+        await apiClient.saveAssessmentResponse(assessmentId, responses, status, score, interpretation, severityHint, maxScore, sectionScores, slug, engineResult, { startedAt, durationSeconds });
         return true;
       }
 

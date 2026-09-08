@@ -76,6 +76,34 @@ It landed on the viewer with its live counts, which is where the second finding 
 and `columnsByDay` have never run on production content. A shared key is how repetition is actually
 expressed in this database, so the path that was unreachable now has one that is not.
 
+### `content-hierarchy.ts` is read by production code (task 6.2)
+
+The target model — `INTERACTION_REQUIREMENTS`, `missingRequirements`, the `Block` shape — was
+imported by its own test and nothing else. It is the module's only written statement of what each
+interaction needs, so rather than restate it in an editor it now runs against production content.
+
+- **`blockOf(activity)`** is the strangler seam actually being crossed: it reads a live `Activity`
+  in the target shape, mapping every stored spelling (`tableColumns` → `columns`, `listItems` →
+  `items`, `acceptedFileTypes` → `accepted_types`) in one place.
+- `/blocks/usage` sends **field-presence facts only** — which config keys carry a value — grouped
+  by signature. The edge function is deployed from a copied directory and cannot import the
+  requirements table; copying it there is how two vocabularies become six.
+- Each interaction row now prints what it requires, what it produces, and how many live blocks
+  fall short of it.
+
+What that immediately reported, all of it true:
+
+| interaction | live blocks short |
+|---|---|
+| `input-table` | 107 have no `key` |
+| `select-one` | 18 have no `scale_ref`, 6 no `key` |
+| `select-many` | 17 have no `scale_ref`, 4 no `key` |
+| `check` | 5 have no `items` |
+
+`blockOf` deliberately never populates `scale_ref`: no stored block references a shared scale, they
+all inline their options. So every scale-backed block reporting it missing is the
+27-copies-of-one-scale problem stated as a number.
+
 ### The stat tile that could not report drift
 
 `Block Types` printed a hardcoded `17 · 11 stages · 6 blocks`. It is now

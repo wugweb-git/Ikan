@@ -3543,6 +3543,18 @@ app.get("/blocks/usage", requireAdmin, async (c) => {
     let totalBlocks = 0;
     let totalDays = 0;
 
+    // Requirement probes. `INTERACTION_REQUIREMENTS` and `missingRequirements`
+    // live in `src/lib/blocks/content-hierarchy.ts`, which this function cannot
+    // import — the edge function is deployed from a copied directory. So the
+    // server states FACTS ONLY and does no renaming: which config keys a block
+    // carries a non-empty value for, and whether it has content or an image.
+    // The client rebuilds a probe block and runs the one requirements table
+    // over it. Copying the table here is how two vocabularies become six.
+    //
+    // Probes are grouped by signature — 407 blocks collapse to a few dozen
+    // distinct shapes — so this stays a few KB.
+    const probes = new Map<string, { t: string; i: string | null; s: string | null; c: string[]; ct: boolean; im: boolean; n: number }>();
+
     const bump = (m: Record<string, number>, k: string) => { m[k] = (m[k] ?? 0) + 1; };
 
     for (const equip of equips) {
@@ -3559,9 +3571,29 @@ app.get("/blocks/usage", requireAdmin, async (c) => {
                           ?? block?.exerciseConfig?.subtype
                           ?? '(none)');
 
-          const cfgKey = block?.activityConfig?.key ?? block?.exerciseConfig?.key;
+          const cfg = block?.activityConfig ?? block?.exerciseConfig ?? {};
+          const cfgKey = cfg?.key;
           if (typeof cfgKey === 'string' && cfgKey) { blocksWithKey++; bump(keyUses, cfgKey); }
           if (block?.repeat?.type) { blocksWithRepeat++; bump(repeatTypes, block.repeat.type); }
+
+          const present = Object.keys(cfg).filter((k) => {
+            const v = cfg[k];
+            if (v === undefined || v === null || v === '') return false;
+            if (Array.isArray(v)) return v.length > 0;
+            return true;
+          }).sort();
+          const probe = {
+            t: block?.type ?? '(absent)',
+            i: block?.interaction ?? null,
+            s: typeof cfg.subtype === 'string' ? cfg.subtype : null,
+            c: present,
+            ct: !!(block?.content && String(block.content).trim()),
+            im: !!block?.image_url,
+            n: 0,
+          };
+          const sig = JSON.stringify([probe.t, probe.i, probe.s, probe.c, probe.ct, probe.im]);
+          const seen = probes.get(sig);
+          if (seen) seen.n++; else probes.set(sig, { ...probe, n: 1 });
         }
       }
     }
@@ -3586,6 +3618,7 @@ app.get("/blocks/usage", requireAdmin, async (c) => {
         blocksWithRepeat,
         repeatTypes,
       },
+      blockProbes: [...probes.values()],
     });
   } catch (error) {
     console.error('Block usage error:', error);

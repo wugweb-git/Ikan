@@ -140,6 +140,23 @@ export function registerAssessmentRoutes(app: Hono, requireAuth: any) {
                 // ikan-score-routes aggregates wellness from those two fields
                 // alone, so dropping them would silently break the iKAN score.
                 section_scores: data.sectionScores ?? null,
+                /**
+                 * Time on task, when the run was timed.
+                 *
+                 * Both are written only when present — no `?? null`, no `?? 0`.
+                 * Every result before 2026-09-08 was untimed, and a stored zero
+                 * would be indistinguishable from an instant completion, which
+                 * is the kind of number a screen renders without questioning.
+                 * Absent means absent: `undefined` keys are dropped by
+                 * JSON.stringify on the way into KV.
+                 *
+                 * `duration_seconds` is FOREGROUNDED time, accumulated across
+                 * every sitting of a resumed run — not wall-clock, and not a
+                 * claim about attention. See `lib/active-time.ts`.
+                 */
+                ...(typeof data.startedAt === 'string' ? { started_at: data.startedAt } : {}),
+                ...(typeof data.durationSeconds === 'number' && data.durationSeconds >= 0
+                    ? { duration_seconds: data.durationSeconds } : {}),
                 completed_at: new Date().toISOString()
             };
             
@@ -219,6 +236,11 @@ export function registerAssessmentRoutes(app: Hono, requireAuth: any) {
                 status: 'in_progress',
                 responses: body?.responses ?? {},
                 current_block_index: body?.currentBlockIndex ?? 0,
+                // Banked so a run resumed tomorrow reports the total active
+                // time across both sittings rather than just the second one.
+                ...(typeof body?.activeSeconds === 'number' && body.activeSeconds >= 0
+                    ? { active_seconds: body.activeSeconds } : {}),
+                ...(typeof body?.startedAt === 'string' ? { started_at: body.startedAt } : {}),
                 updated_at: new Date().toISOString(),
             };
             await kv.set(`assessment_draft:${userId}:${assessmentId}`, draft);

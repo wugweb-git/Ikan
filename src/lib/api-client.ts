@@ -697,6 +697,20 @@ class ApiClient {
       blocksWithRepeat: number;
       repeatTypes: Record<string, number>;
     };
+    /**
+     * Field-presence facts for every live block, grouped by signature. Facts
+     * only — the requirements table that interprets them is
+     * `content-hierarchy.ts`, which the edge function cannot import.
+     */
+    blockProbes?: {
+      /** Block type. */            t: string;
+      /** Explicit interaction. */  i: string | null;
+      /** activityConfig.subtype */ s: string | null;
+      /** Config keys with a non-empty value. */ c: string[];
+      /** Has non-empty content. */ ct: boolean;
+      /** Has an image_url. */      im: boolean;
+      /** Blocks sharing this signature. */ n: number;
+    }[];
   } | null> {
     try {
       return await this.request('/blocks/usage', { method: 'GET' }, true);
@@ -828,7 +842,17 @@ class ApiClient {
      * later — without it only the flattened interpretation survives, and the
      * result page can never be rebuilt from the record.
      */
-    engineResult?: unknown
+    engineResult?: unknown,
+    /**
+     * Time on task. An object rather than two more positional parameters —
+     * this signature is already ten deep, and the offline-sync path forwards
+     * it by position, which is exactly how `maxScore` and `sectionScores` were
+     * silently dropped once before.
+     *
+     * Omitted entirely when the run was untimed. The route writes neither
+     * field in that case; it never stores a zero.
+     */
+    timing?: { startedAt?: string; durationSeconds?: number }
   ) {
     return this.request('/user/assessments', {
       method: 'POST',
@@ -845,7 +869,9 @@ class ApiClient {
         interpretation,
         severityHint,
         sectionScores,
-        engineResult
+        engineResult,
+        startedAt: timing?.startedAt,
+        durationSeconds: timing?.durationSeconds
       })
     }, true);
   }
@@ -858,7 +884,14 @@ class ApiClient {
    * stored record wins.
    */
   /** Save a partial run. Overwrites the single draft for this assessment. */
-  async saveAssessmentDraft(assessmentId: string, data: { responses: Record<string, unknown>; currentBlockIndex: number }) {
+  async saveAssessmentDraft(assessmentId: string, data: {
+    responses: Record<string, unknown>;
+    currentBlockIndex: number;
+    /** Foregrounded seconds banked so far. Omitted when the run is untimed. */
+    activeSeconds?: number;
+    /** ISO start of the first sitting, so a resume keeps the original. */
+    startedAt?: string;
+  }) {
     return this.request(`/user/assessments/drafts/${encodeURIComponent(assessmentId)}`, {
       method: 'PUT',
       body: JSON.stringify(data),

@@ -23,6 +23,7 @@ import {
 } from 'lucide-react';
 import { AdminHeader } from '../admin/AdminHeader';
 import { apiClient } from '../../lib/api-client';
+import { INTERACTION_REQUIREMENTS, missingRequirements, blockOf } from '../../lib/blocks/content-hierarchy';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
 import { AdminStatusBadge } from '../admin/AdminStatusBadge';
@@ -155,6 +156,40 @@ const STATUS_COLOUR: Record<TermStatus, string> = {
 };
 
 /**
+ * What this interaction needs, and how much live content is short of it.
+ *
+ * `requires` is stated once, in `INTERACTION_REQUIREMENTS`. Printing it here is
+ * how the reader learns that `select-one` wants a `scale_ref` — and that not one
+ * live block has one, because every scale in this database is inlined per block.
+ * A requirement nothing satisfies is a real finding, not a rendering bug.
+ */
+function RequirementLine({ interaction, gap, usageState }: {
+  interaction: InteractionType;
+  gap?: { blocks: number; fields: Record<string, number> };
+  usageState: 'loading' | 'ok' | 'failed';
+}) {
+  const spec = INTERACTION_REQUIREMENTS[interaction];
+  if (!spec) return null;
+  const requires = spec.requires.length ? spec.requires.join(', ') : 'nothing';
+  const fields = Object.entries(gap?.fields ?? {}).sort((a, b) => b[1] - a[1]);
+  return (
+    <div style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)', marginTop: 4 }}>
+      <span>requires: <code>{requires}</code> · produces: <code>{spec.produces ?? 'no response'}</code></span>
+      {usageState === 'ok' && (
+        fields.length ? (
+          <span style={{ color: 'var(--color-status-warning)' }}>
+            {' '}· {gap?.blocks} live block{gap?.blocks === 1 ? '' : 's'} incomplete:{' '}
+            {fields.map(([f, n]) => `${f} (${n})`).join(', ')}
+          </span>
+        ) : (
+          <span style={{ color: 'var(--color-status-success)' }}> · live content complete</span>
+        )
+      )}
+    </div>
+  );
+}
+
+/**
  * Response identity, as live counts.
  *
  * `activityConfig.key` sat on 98 live blocks with no declaration on the type
@@ -266,6 +301,47 @@ export function AdminBlockTypeViewer({ onBack }: AdminBlockTypeViewerProps) {
   /** Live count for a term, or null when the feed has not arrived. */
   const countOf = (dim: 'interactions' | 'blockTypes' | 'activities' | 'dayTypes', term: string): number | null =>
     usage ? (usage[dim][term] ?? 0) : null;
+
+  /**
+   * What live content is missing, per interaction, judged by the one table that
+   * says what each interaction needs.
+   *
+   * `INTERACTION_REQUIREMENTS` and `missingRequirements` were imported by their
+   * own test and nothing else. They are the module's only written statement of
+   * what a block of each kind requires — so rather than restate it in an
+   * editor, this runs it over production content and reports the answer.
+   *
+   * The server sends FACTS (which config keys carry a value), never the target
+   * field names; the mapping between the two is `blockOf`, and it exists once.
+   * The probe block below is reconstituted from those facts: every present key
+   * gets a truthy stand-in, except `subtype`, which needs its real value for
+   * the resolver, and `key`, which must be a non-empty string.
+   */
+  const requirementGaps = useMemo(() => {
+    const out: Record<string, { blocks: number; fields: Record<string, number> }> = {};
+    for (const p of usage?.blockProbes ?? []) {
+      const cfg: Record<string, unknown> = {};
+      for (const k of p.c) cfg[k] = k === 'subtype' ? (p.s ?? true) : k === 'key' ? 'named' : true;
+      const missing = missingRequirements(blockOf({
+        id: 'probe',
+        title: '',
+        type: p.t as never,
+        interaction: (p.i ?? undefined) as never,
+        content: p.ct ? 'x' : '',
+        duration: 0,
+        required: false,
+        order: 0,
+        activityConfig: cfg,
+        image_url: p.im ? 'x' : undefined,
+      }));
+      if (!missing.length) continue;
+      const interaction = p.i ?? 'unknown';
+      const bucket = (out[interaction] ??= { blocks: 0, fields: {} });
+      bucket.blocks += p.n;
+      for (const f of missing) bucket.fields[f] = (bucket.fields[f] ?? 0) + p.n;
+    }
+    return out;
+  }, [usage]);
 
   /** The shared four-column row tail: live count, what it draws, status. */
   const RowMeta = ({ count, rendersAs, status }: {
@@ -504,6 +580,7 @@ export function AdminBlockTypeViewer({ onBack }: AdminBlockTypeViewerProps) {
                 </div>
                 <p style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)', marginTop: 4 }}>{meta.description}</p>
                 <RowMeta count={count} rendersAs={meta.previewHint} status={status} />
+                <RequirementLine interaction={key} gap={requirementGaps[key]} usageState={usageState} />
               </div>
             );
           })}

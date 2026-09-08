@@ -201,7 +201,14 @@ export function AssessmentFlow({
    * worse than not offering it at all.
    */
   /** A partial run to resume, loaded once the assessment id is known. */
-  const [draft, setDraft] = useState<{ responses: Record<string, any>; current_block_index: number } | null>(null);
+  const [draft, setDraft] = useState<{
+    responses: Record<string, any>;
+    current_block_index: number;
+    /** Active seconds banked by earlier sittings of this same run. */
+    active_seconds?: number;
+    /** ISO start of the first sitting, so a resume keeps the original. */
+    started_at?: string;
+  } | null>(null);
   const [draftChecked, setDraftChecked] = useState(false);
 
   useEffect(() => {
@@ -211,11 +218,38 @@ export function AssessmentFlow({
       const drafts = await apiClient.getAssessmentDrafts();
       if (cancelled) return;
       const mine = drafts.find((d: any) => d?.assessment_id === assessment.id);
-      setDraft(mine ? { responses: mine.responses ?? {}, current_block_index: mine.current_block_index ?? 0 } : null);
+      setDraft(mine ? {
+        responses: mine.responses ?? {},
+        current_block_index: mine.current_block_index ?? 0,
+        active_seconds: typeof mine.active_seconds === 'number' ? mine.active_seconds : undefined,
+        started_at: typeof mine.started_at === 'string' ? mine.started_at : undefined,
+      } : null);
       setDraftChecked(true);
     })();
     return () => { cancelled = true; };
   }, [user, assessment?.id]);
+
+  /**
+   * Time on task, counted only while the run is actually in front of someone.
+   *
+   * Started once the draft lookup has settled, because a resumed run must seed
+   * from the seconds already banked — starting before that would reset the
+   * total to this sitting and report four minutes of work as forty seconds.
+   * Nothing is captured for runs that predate this, and absent stays absent:
+   * neither field is written when there is no timer.
+   */
+  const timerRef = useRef<ActiveTimer | null>(null);
+  useEffect(() => {
+    if (!draftChecked || !assessment?.id || timerRef.current) return;
+    timerRef.current = createActiveTimer({
+      seedSeconds: draft?.active_seconds,
+      seedStartedAt: draft?.started_at,
+    });
+    return () => {
+      timerRef.current?.stop();
+      timerRef.current = null;
+    };
+  }, [draftChecked, assessment?.id, draft?.active_seconds, draft?.started_at]);
 
   const riskFiredRef = useRef(false);
   const evaluateRisk = useCallback((responses: Record<string, any>) => {
@@ -265,7 +299,14 @@ export function AssessmentFlow({
       if (draftTimerRef.current) clearTimeout(draftTimerRef.current);
       draftTimerRef.current = setTimeout(() => {
         apiClient
-          .saveAssessmentDraft(assessment.id, { responses, currentBlockIndex })
+          .saveAssessmentDraft(assessment.id, {
+            responses,
+            currentBlockIndex,
+            // Banked on every draft write, so a run abandoned mid-way still has
+            // an honest figure when it is resumed.
+            activeSeconds: timerRef.current?.elapsedSeconds(),
+            startedAt: timerRef.current?.startedAt(),
+          })
           .catch(() => {
             // A failed draft save must never interrupt the run; the answers are
             // still in memory and the submit path is unaffected.
@@ -280,6 +321,21 @@ export function AssessmentFlow({
   }, []);
 
   const handlePlayerComplete = async (playerResults: PlayerResults) => {
+    /**
+     * Freeze the clock before anything else in this handler.
+     *
+     * Scoring, the engine call and the network write all happen after this
+     * point, and none of them is time the person spent answering. Reading the
+     * timer at the end of the handler would fold a slow round-trip into the
+     * reported duration.
+     *
+     * Both fields are undefined for a run with no timer, and stay undefined
+     * all the way to the record — never 0.
+     */
+    timerRef.current?.stop();
+    const startedAt = timerRef.current?.startedAt();
+    const durationSeconds = timerRef.current?.elapsedSeconds();
+
     // 1. Calculate Results Immediately (Synchronous)
     let results: any = null;
     try {
@@ -559,7 +615,10 @@ export function AssessmentFlow({
                 // The full engine result. Without this the stored record keeps
                 // only a flattened interpretation string and the result can
                 // never be rebuilt after the tab closes.
-                recommendation
+                recommendation,
+                // Time on task. Undefined when untimed — the route omits the
+                // fields entirely rather than storing a zero.
+                { startedAt, durationSeconds }
                );
                // Remember which record this screen corresponds to, so the
                // result becomes linkable and survives a refresh. sessionStorage
@@ -584,7 +643,9 @@ export function AssessmentFlow({
                  severityHint: interpretation.label,
                  sectionScores: sectionScores.sectioned ? sectionScores : undefined,
                  slug: assessment.slug,
-                 engineResult: recommendation
+                 engineResult: recommendation,
+                 startedAt,
+                 durationSeconds
                });
                showToast('info', 'Saved Locally', 'Your results will sync when you are back online.');
              }
@@ -601,7 +662,9 @@ export function AssessmentFlow({
               severityHint: interpretation.label,
               sectionScores: sectionScores.sectioned ? sectionScores : undefined,
               slug: assessment.slug,
-              engineResult: recommendation
+              engineResult: recommendation,
+              startedAt,
+              durationSeconds
             });
             showToast('warning', 'Saved Locally', 'Your results are saved locally and will sync later.');
           }
