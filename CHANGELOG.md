@@ -147,6 +147,28 @@ The pin was reverted and the function redeployed at its original versions. Pinni
 still the right thing to do, but it is a deliberate change with its own testing, not a side effect
 of a misdiagnosis.
 
+### Admin login now survives the computer
+
+Reported as "admin login should remember the computer and keep the saved login". The client was
+already `persistSession: true` / `autoRefreshToken: true`, and the database confirms nothing
+server-side expires anything — no session carries a timebox and the oldest live session dates from
+March. The sign-outs were self-inflicted, in two compounding ways.
+
+**`signOut()` defaults to `scope: 'global'`.** All eleven call sites used the default, and nine are
+defensive — they fire when a refresh token looks broken or a session check fails and all they mean
+to do is clear local state. Instead each revoked the user's session on every device. A tab that
+still held an unexpired, correctly-signed JWT then got `session_not_found` from GoTrue, which looks
+exactly like a broken auth library and is not one. This is what killed the admin session used to
+verify the blocks work earlier today, and it is the reason that incident was misdiagnosed as a
+dependency problem. All eleven now go through `signOutLocal()`, which is local by default;
+`'global'` has to be asked for and nothing asks.
+
+**`SecurityProvider` signed everyone out after 30 minutes of no mouse or keyboard activity** — and,
+through the above, out of every other device at the same time. That rule is for the patient-facing
+app, where a session left open on a borrowed device exposes someone's mental-health data. It does
+not carry to the CMS: an author reading a long day of content, or waiting on a deploy, is not idle,
+and losing an edit is the cost. **Admins are exempt; the patient-facing timeout is unchanged.**
+
 ### The stat tile that could not report drift
 
 `Block Types` printed a hardcoded `17 · 11 stages · 6 blocks`. It is now

@@ -46,6 +46,23 @@ export function SecurityProvider({ children }: SecurityProviderProps) {
   const SESSION_TIMEOUT = 30 * 60 * 1000; // 30 minutes
   const WARNING_TIME = 5 * 60 * 1000; // 5 minutes before timeout
 
+  /**
+   * Admins are exempt from the idle sign-out.
+   *
+   * The 30-minute rule exists for the patient-facing app, where a session left
+   * open on a shared or borrowed device exposes someone's mental-health data.
+   * That reasoning does not carry to the CMS: an author reading a long day of
+   * content, or waiting on a deploy, is not idle in any meaningful sense, and
+   * being signed out mid-edit loses work. Until 2026-09-08 this fired for
+   * everyone, and because `signOut()` defaulted to GLOBAL scope it revoked the
+   * admin's session on every other device at the same time — one forgotten tab
+   * logged you out everywhere, and the tab you were working in then got
+   * `session_not_found` for a token that had not expired.
+   *
+   * The patient-facing timeout is unchanged.
+   */
+  const exemptFromIdleSignOut = !!user?.is_admin;
+
   // Security event logging
   const logSecurityEvent = (event: string, details?: any) => {
     const timestamp = new Date().toISOString();
@@ -136,7 +153,7 @@ export function SecurityProvider({ children }: SecurityProviderProps) {
 
   // Session timeout management
   useEffect(() => {
-    if (!user || !lastActivity) return;
+    if (!user || !lastActivity || exemptFromIdleSignOut) return;
 
     const checkSession = () => {
       const now = new Date();
@@ -164,7 +181,7 @@ export function SecurityProvider({ children }: SecurityProviderProps) {
 
     const interval = setInterval(checkSession, 60000); // Check every minute
     return () => clearInterval(interval);
-  }, [user, lastActivity, sessionTimeoutWarning, signOut, showToast]);
+  }, [user, lastActivity, sessionTimeoutWarning, signOut, showToast, exemptFromIdleSignOut]);
 
   // Content Security Policy violation handler
   useEffect(() => {

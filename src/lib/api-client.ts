@@ -1,4 +1,4 @@
-import { supabase } from './supabase-client';
+import { supabase, signOutLocal } from './supabase-client';
 
 import type {
   PageData,
@@ -67,7 +67,7 @@ class ApiClient {
             return null;
           }
           console.warn('Auth: Invalid refresh token detected in getToken, signing out');
-          await supabase.auth.signOut().catch(() => {});
+          await signOutLocal().catch(() => {});
           return null;
         }
         console.warn('Auth: getSession error:', error.message);
@@ -270,7 +270,7 @@ class ApiClient {
   }
 
   async signOut() {
-    return supabase.auth.signOut();
+    return signOutLocal();
   }
 
   // User Profile

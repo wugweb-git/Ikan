@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { apiClient, User } from '../lib/api-client';
-import { supabase } from '../lib/supabase-client'; // Use singleton client
+import { supabase, signOutLocal } from '../lib/supabase-client'; // Use singleton client
 import type { Session } from '@supabase/supabase-js';
 
 interface AuthContextType {
@@ -135,7 +135,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               error.message.includes('not found')
             )) {
               console.log('🔄 Detected invalid refresh token, clearing session...');
-              await supabase.auth.signOut().catch(() => {});
+              await signOutLocal().catch(() => {});
               setSession(null);
               setUser(null);
               return;
@@ -153,7 +153,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             // If token is expired, clear it
             if (expiresAt <= now) {
               console.log('🔄 Session expired during background check, clearing...');
-              await supabase.auth.signOut();
+              await signOutLocal();
               return;
             }
             
@@ -535,14 +535,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           sessionError.message.includes('Refresh Token Not Found')
         )) {
           console.log('🔄 Invalid refresh token during recovery, forcing signout');
-          await supabase.auth.signOut().catch(() => {});
+          await signOutLocal().catch(() => {});
           setSession(null);
           setUser(null);
           return false;
         }
 
         console.log('❌ Session check error during recovery:', sessionError);
-        await supabase.auth.signOut();
+        await signOutLocal();
         setSession(null);
         setUser(null);
         return false;
@@ -566,7 +566,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           
           if (refreshError || !refreshedSession) {
             console.log('❌ Session refresh failed during recovery:', refreshError);
-            await supabase.auth.signOut();
+            await signOutLocal();
             setSession(null);
             setUser(null);
             return false;
@@ -590,7 +590,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           }
         } catch (refreshError) {
           console.log('❌ Session refresh error during recovery:', refreshError);
-          await supabase.auth.signOut();
+          await signOutLocal();
           setSession(null);
           setUser(null);
           return false;
@@ -619,7 +619,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       console.log('❌ Session recovery error:', error);
       // Clear everything on error
       try {
-        await supabase.auth.signOut();
+        await signOutLocal();
       } catch (signOutError) {
         console.warn('Error during cleanup signout:', signOutError);
       }

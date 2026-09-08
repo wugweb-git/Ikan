@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { supabase } from '../../lib/supabase-client';
+import { supabase, signOutLocal } from '../../lib/supabase-client';
 
 interface ResetPasswordProps {
   onNavigate?: (route: string) => void;
@@ -58,7 +58,7 @@ export function ResetPassword({ onNavigate }: ResetPasswordProps) {
       if (updErr) throw updErr;
       setDone(true);
       // Sign out the temporary recovery session and send them to login.
-      await supabase.auth.signOut().catch(() => {});
+      await signOutLocal().catch(() => {});
       setTimeout(() => onNavigate?.('/login'), 1800);
     } catch (err: any) {
       setError(err?.message || 'Could not update your password. The link may have expired — request a new one.');

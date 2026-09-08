@@ -549,6 +549,15 @@ Known data notes: `assessment_result:` stores each result twice in KV (canonical
 - **Don't add `EXECUTE` grants on `kv_store_row_count()` or `rls_auto_enable()` to `anon`/`authenticated`/`PUBLIC`.** These SECURITY DEFINER functions are locked down intentionally.
 - **Don't delete `wrappers_fdw_stats`** — it's extension-owned. It shows as a `rls_disabled_in_public` ERROR in the security advisor; RLS **can** be enabled on it, but only from the Supabase dashboard ("Resolve issue"), because the table is owned by `supabase_admin` and `ALTER TABLE` from a migration fails with `42501: must be owner of table`.
 - **Don't purge KV by prefix without checking `KEY_REGISTRY`** (`server/kv-audit-routes.ts`). Reverse-index keys (`assessment_slug:`, `equip_slug:`, `page_slug:`) look like orphans but are load-bearing — purging `assessment_slug:` once broke every `/assessment/<slug>` URL site-wide. The purge endpoint now refuses protected prefixes and requires `force` for registered ones. **Any new KV prefix must be added to `KEY_REGISTRY` in the same commit that introduces it** — see `GOVERNANCE.md` Rule 2 for why this is non-negotiable, not just tidy.
+- **Don't call `supabase.auth.signOut()` without a scope.** Its default is `scope: 'global'`, which
+  revokes that user's session on **every device**. Eleven call sites used the default, nine of them
+  defensive (a refresh token looked broken, a session check failed) — so one transient error in one
+  tab logged the user out of their phone, and the tab still holding an unexpired JWT then got
+  `session_not_found` from GoTrue, which reads like a library fault and is not one. Use
+  `signOutLocal()` from `src/lib/supabase-client.ts`; pass `'global'` only for a deliberate
+  "sign out everywhere". Related: `SecurityProvider`'s 30-minute idle sign-out is for the
+  patient-facing app and **exempts admins** — an author reading a long day of content is not idle,
+  and being signed out mid-edit loses work.
 - **Don't store secrets in code.** `SUPABASE_SERVICE_ROLE_KEY` lives only in Vercel env + the edge function runtime. The anon key in `src/lib/supabase-client.ts` is public by design.
 - **Don't roll the frontend back past `cc70ac96` (2026-09-04) without rolling the catalog back too.** Two live couplings were created that day where **KV data depends on deployed code**, and a frontend-only rollback breaks both silently:
 
