@@ -648,6 +648,19 @@ export function AssessmentResults({
     <div className={cn('mx-auto w-full max-w-2xl px-4 pb-10 pt-4 sm:px-6', className)}>
       <div className="flex flex-col" style={{ gap: 28 }}>
 
+        {/* ── Brand lockup ──
+            `LogoFull` from `components/Logo` — the same component the public
+            nav, the login screen and the footer render. Nothing drawn and
+            nothing recoloured: it inherits the page's colour and honours an
+            admin-uploaded logo through `usePublicSettings`, as it does
+            everywhere else.
+
+            A result is the screen a person screenshots, and it carried no
+            mark at all. */}
+        <div className="flex items-center" style={{ margin: '0 0 4px' }}>
+          <LogoFull height={26} />
+        </div>
+
         {/* ── Result header ──
             The page's subject line. Without it a linked result is a number
             with nothing attached to it. */}
@@ -684,7 +697,7 @@ export function AssessmentResults({
           {/* Two labelled facts, not one run-on. The middot is an element, so
               a language that separates differently can restyle it without
               re-translating a sentence. */}
-          {(questionCount !== null || scaleCount !== null) && (
+          {(questionCount !== null || scaleCount !== null || durationLabel !== null) && (
             <p className="flex flex-wrap items-center" style={{
               ...f('sm', 400, 'var(--color-text-muted)'), gap: 8, margin: '8px 0 0',
             }}>
@@ -696,6 +709,15 @@ export function AssessmentResults({
                 }} />
               )}
               {scaleCount !== null && <span>{scaleCount} scales</span>}
+              {/* Time on task. Omitted entirely when unmeasured — no dash,
+                  no zero, nothing derived from page-mount time. */}
+              {durationLabel !== null && (questionCount !== null || scaleCount !== null) && (
+                <span aria-hidden="true" style={{
+                  width: 3, height: 3, borderRadius: '50%',
+                  backgroundColor: 'var(--color-border-default)',
+                }} />
+              )}
+              {durationLabel !== null && <span>{durationLabel}</span>}
             </p>
           )}
         </motion.header>
