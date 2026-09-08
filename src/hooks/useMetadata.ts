@@ -51,6 +51,8 @@ export interface MetadataOption {
    * that wants identity should not have to refetch to get it.
    */
   id?: string;
+  /** This vocabulary is superseded and nothing reads it. Kept, and labelled. */
+  deprecated?: boolean;
   /**
    * Display rank, low to high. Absent on a row seeded before 2026-09-08;
    * `sortByOrder` below leaves those in store order rather than sinking them.
@@ -191,6 +193,7 @@ export function mapItem(item: any): MetadataOption {
     activities: Array.isArray(item.activities) ? item.activities : undefined,
     id: typeof item.id === 'string' ? item.id : undefined,
     sort_order: typeof item.sort_order === 'number' ? item.sort_order : undefined,
+    deprecated: item.deprecated === true,
   };
 }
 

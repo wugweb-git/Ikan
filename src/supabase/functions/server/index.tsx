@@ -3706,7 +3706,12 @@ app.post("/categories/sync", requireAuth, async (c) => {
             // reach an EXISTING row: the sync only ever compared icon, colour
             // and description, so a new field on a seeded row was unreachable
             // by the only writer that seeds it.
-            (typeof item.sort_order === 'number' && existingEntry.sort_order !== item.sort_order);
+            (typeof item.sort_order === 'number' && existingEntry.sort_order !== item.sort_order) ||
+            // Added in the same pass as `deprecated` reached the seed. Without a
+            // clause here the field was declared on 18 rows and could never land
+            // on an existing one — a catalog field with no reader, which is the
+            // exact defect this sync keeps being extended to avoid.
+            (!!item.deprecated !== !!existingEntry.deprecated);
 
           if (needsUpdate) {
             const merged = {
@@ -3719,6 +3724,9 @@ app.post("/categories/sync", requireAuth, async (c) => {
               // `item.id` here would let a rename in the catalog file repoint an
               // existing row, which is the exact failure the freeze prevents.
               sort_order: typeof item.sort_order === 'number' ? item.sort_order : existingEntry.sort_order,
+              // Superseded vocabularies carry this so any reader — not just Meta
+              // Manager's local list — can tell a live term from a dead one.
+              deprecated: !!item.deprecated,
               updated_at: now,
             };
             await kv.set(`category:${existingEntry.id}`, merged);
@@ -3750,6 +3758,7 @@ app.post("/categories/sync", requireAuth, async (c) => {
         color: item.color || '#2A2A2A',
         description: item.description || '',
         ...(typeof item.sort_order === 'number' ? { sort_order: item.sort_order } : {}),
+        ...(item.deprecated ? { deprecated: true } : {}),
         created_at: now,
         updated_at: now,
       };
