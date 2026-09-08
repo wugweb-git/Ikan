@@ -25,7 +25,6 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { DAY_TYPE_PRESETS, PALETTE_BLOCK_TYPES } from './block-type-rules.ts';
 import { METADATA_CATALOG_ITEMS } from '../metadata-catalog.ts';
-import { INTERACTION_META, INTERACTIONS_WITHOUT_RENDERER, type InteractionType } from './block-model.ts';
 
 /*
   `seedViolations` and "no preset seeds default content its own rules reject"
@@ -55,28 +54,21 @@ test('every preset can open with a lesson and close with a conclude', () => {
   assert.deepEqual(cannotClose, [], `presets that cannot close with a conclude: ${cannotClose.join(', ')}`);
 });
 
-test('every interaction is reachable from at least one preset', () => {
-  // `upload` and `number` were allowed by no preset at all, so those two
-  // activities could be authored nowhere. One live block (`reflection ·
-  // number`) sat in the enforcement rejection list for exactly that reason.
-  const reachable = new Set(
-    Object.values(DAY_TYPE_PRESETS).flatMap(p => p.allowedInteractions as string[]),
-  );
-  /*
-    An interaction with no renderer is exempt. Four were declared 2026-09-08
-    ahead of the renderers that will draw them, and requiring a preset to allow
-    one would be requiring that it be authorable — which is exactly what
-    `INTERACTIONS_WITHOUT_RENDERER` exists to prevent until step 7. The list
-    empties as the renderers land, and each term then has to earn a preset here.
-  */
-  const orphans = (Object.keys(INTERACTION_META) as InteractionType[])
-    .filter(i => !INTERACTIONS_WITHOUT_RENDERER.includes(i))
-    .filter(i => !reachable.has(i));
-  assert.deepEqual(
-    orphans, [],
-    `no preset allows: ${orphans.join(', ')} — those activities are authorable nowhere`,
-  );
-});
+/*
+  "every interaction is reachable from at least one preset" was here. Retired
+  2026-09-08.
+
+  It existed because `upload` and `number` were allowed by no preset, so those
+  activities could be authored NOWHERE — the preset's `allowedInteractions`
+  gated the palette. §19 step 3 unfiltered the palette: a day has no type, so
+  no preset gates anything and `allowedInteractions` is seeding information.
+
+  An interaction reachable from no preset is now an ordinary fact, not a bug —
+  `listen`, `rank`, `review-table` and `pick-date` are in exactly that position
+  and are fully authorable. What replaced the guarantee is
+  `INTERACTIONS_WITHOUT_RENDERER`, which asks the question that still matters:
+  can the player DRAW it.
+*/
 
 // ── Seed-file assertions ───────────────────────────────────────────
 // The seed file is the DEFINITION; KV is the deployment. A test that only

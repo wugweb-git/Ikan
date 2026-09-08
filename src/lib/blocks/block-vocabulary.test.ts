@@ -605,17 +605,25 @@ test('an unnamed response-producing block is reported incomplete', () => {
  * pin the guard that makes it a known gap rather than a trap.
  */
 test('nothing without a renderer is authorable', () => {
+  /*
+    The list is EMPTY as of 2026-09-08 — step 7 built all four renderers, so
+    every activity is offerable. The assertion is kept and inverted rather than
+    deleted: it is what makes declaring a vocabulary ahead of its renderers
+    safe, and the next interaction added before its renderer must appear in the
+    list on the day it is declared. `watch` sat unauthorable for months because
+    there was nowhere to say this.
+  */
   for (const i of INTERACTIONS_WITHOUT_RENDERER) {
     assert.ok(INTERACTION_META[i], `"${i}" is guarded but not declared`);
   }
-  // No authorable activity may resolve to one of them.
   for (const subtype of AUTHORABLE_SUBTYPES) {
     assert.ok(
       !INTERACTIONS_WITHOUT_RENDERER.includes(SUBTYPE_INTERACTION[subtype]),
       `activity "${subtype}" is offered to authors but resolves to "${SUBTYPE_INTERACTION[subtype]}", which has no renderer`,
     );
   }
-  assert.equal(AUTHORABLE_SUBTYPES.length, EXERCISE_SUBTYPES.length - 4);
+  assert.equal(AUTHORABLE_SUBTYPES.length, EXERCISE_SUBTYPES.length,
+    'every activity is authorable now that every interaction can be drawn');
 });
 
 test('the activity table agrees with the resolver, for every activity', () => {

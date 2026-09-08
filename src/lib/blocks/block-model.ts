@@ -80,7 +80,18 @@ export type InteractionType =
  * difference between a known gap and a trap.
  */
 export const INTERACTIONS_WITHOUT_RENDERER: readonly InteractionType[] = [
-  'listen', 'rank', 'review-table', 'pick-date',
+  /*
+    EMPTY as of 2026-09-08 — build-order step 7 built all four.
+    `BlockRenderer` now has a case for `listen`, `rank`, `review-table` and
+    `pick-date`, so the four activities behind them (`listen`, `ranking`,
+    `table-review`, `date-time`) are authorable and this list stops filtering
+    the picker.
+
+    Kept, not deleted: it is the mechanism that made declaring a vocabulary
+    ahead of its renderers safe, and the next interaction added before its
+    renderer belongs here on the same day it is declared. `watch` sat
+    unauthorable for months precisely because there was nowhere to say this.
+  */
 ];
 
 /** Interactions an author may actually pick — everything the player can draw. */
@@ -461,19 +472,19 @@ export const INTERACTION_META: Record<InteractionType, {
   'read':        { label: 'Read',           verb: 'Reads',    icon: 'book-open',      description: 'User reads/scrolls through content',
                    previewHint: 'Formatted prose with optional media — the primary learning block', hintSource: 'recovered' },
   'view':        { label: 'View',           verb: 'Views',    icon: 'film',           description: 'User watches embedded video or media',
-                   // Renamed from `watch` 2026-09-08 — 0 live blocks carried it, so
-                   // the rename was free in data. The renderer gap is NOT fixed by
-                   // the rename: `case 'view'` still returns renderLesson(), so it
-                   // draws reading content. Said here rather than discovered again.
-                   previewHint: 'No renderer of its own — falls through to the lesson view', hintSource: 'written' },
+                   // Renamed from `watch` 2026-09-08, and given a renderer the same
+                   // day. It returned renderLesson() for as long as it existed, so a
+                   // video block drew the PROSE layout — which is why this hint used
+                   // to read "no renderer of its own".
+                   previewHint: 'The video, played inline, with any content below it as a caption', hintSource: 'written' },
   'listen':      { label: 'Listen',         verb: 'Listens',  icon: 'headphones',     description: 'User plays an audio track',
-                   previewHint: 'No renderer yet — declared so it can be authored once one exists', hintSource: 'written' },
+                   previewHint: 'An audio player, with an optional transcript folded beneath it', hintSource: 'written' },
   'rank':        { label: 'Rank',           verb: 'Ranks',    icon: 'list',           description: 'User puts a list in order of preference',
-                   previewHint: 'No renderer yet — declared so it can be authored once one exists', hintSource: 'written' },
+                   previewHint: 'A numbered list, reordered with up and down controls', hintSource: 'written' },
   'review-table':{ label: 'Review Table',   verb: 'Reviews',  icon: 'table',          description: 'Read-back of earlier days\u2019 table entries — the carry-forward view',
                    previewHint: 'No renderer yet — declared so it can be authored once one exists', hintSource: 'written' },
   'pick-date':   { label: 'Pick a Date',    verb: 'Picks',    icon: 'calendar',       description: 'User chooses a date or a time',
-                   previewHint: 'No renderer yet — declared so it can be authored once one exists', hintSource: 'written' },
+                   previewHint: 'A native date control, or date-and-time when the block asks for both', hintSource: 'written' },
   'select-one':  { label: 'Select One',     verb: 'Selects',  icon: 'circle-dot',     description: 'User picks one option from a list',
                    previewHint: 'Radio button list — only one option can be selected', hintSource: 'recovered' },
   'select-many': { label: 'Select Many',    verb: 'Selects',  icon: 'check-square',   description: 'User picks multiple options',
@@ -548,6 +559,16 @@ export interface ActivityConfig {
   // Upload block config
   acceptedFileTypes?: string[];  // e.g. ['image/*', '.pdf', 'audio/*']
   maxFileSize?: number;          // in bytes, defaults to 10MB
+  /* ── The four interactions built 2026-09-08 (build-order step 7) ────── */
+  /** `listen`: an optional transcript, shown under the player. */
+  transcript?: string;
+  /** `pick-date`: ask for a time as well as a date. */
+  time?: boolean;
+  /** `pick-date`: bounds, as ISO dates. */
+  minDate?: string;
+  maxDate?: string;
+  /** `review-table`: which response series to read back — a `key` from another block. */
+  source_key?: string;
 }
 
 // ── Carry-forward / repetition ──────────────────────────────────────

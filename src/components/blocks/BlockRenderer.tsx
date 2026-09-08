@@ -426,6 +426,172 @@ export function BlockRenderer({ block, value, onChange, readOnly = false, equipI
 
   // `number` was a declared subtype with no interaction, so its one live block
   // resolved through the default branch to `write` and drew a textarea.
+  /*
+    ── The four interactions declared 2026-09-08, built here (step 7) ──────
+
+    Until now these had no case at all, so a block carrying one fell to
+    `default: renderLesson()` and drew reading content — the `view` defect,
+    which is the reason they shipped declared-but-not-offered. This closes that:
+    `INTERACTIONS_WITHOUT_RENDERER` empties and the four activities behind them
+    (`listen`, `date-time`, `table-review`, `ranking`) become authorable.
+  */
+
+  /**
+   * `listen` — an audio track.
+   *
+   * `view` embeds video and `read` sets prose; neither plays audio, so a
+   * listening block has never been authorable. Transcript is optional and shown
+   * beneath, because audio with no text alternative is unusable to anyone who
+   * cannot hear it.
+   */
+  const renderListen = (config: ActivityConfig) => (
+    <div className="space-y-6 py-2 md:py-6">
+      {block.image_url ? (
+        <audio src={block.image_url} controls className="w-full" style={{ minHeight: 44 }} />
+      ) : (
+        <div className="rounded-2xl p-6 text-center" style={{ backgroundColor: 'var(--color-bg-muted)', color: 'var(--color-text-muted)' }}>
+          No audio attached to this block.
+        </div>
+      )}
+      {config.transcript && (
+        <details>
+          <summary style={{ cursor: 'pointer', fontSize: 'var(--text-sm)', color: 'var(--color-text-muted)' }}>Transcript</summary>
+          <p style={{ fontSize: 'var(--text-sm)', lineHeight: 1.6, marginTop: 8 }}>{config.transcript}</p>
+        </details>
+      )}
+    </div>
+  );
+
+  /**
+   * `view` — a video, first.
+   *
+   * This returned `renderLesson()`, so a video block drew the PROSE layout with
+   * the media above it — which is why the Block Type Viewer had to describe it
+   * as "no renderer of its own". A watching block leads with the video and
+   * treats content as a caption, which is the opposite emphasis.
+   */
+  const renderView = () => (
+    <div className="space-y-6 py-2 md:py-6">
+      {renderMedia()}
+      {block.content && (
+        <div
+          className="prose max-w-none"
+          style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-muted)' }}
+          dangerouslySetInnerHTML={{ __html: block.content }}
+        />
+      )}
+    </div>
+  );
+
+  /**
+   * `pick-date` — a date, and optionally a time.
+   *
+   * Its own control rather than a text box: a typed date is unparseable half
+   * the time and unsortable always, and the whole point of capturing one is to
+   * put entries in order.
+   */
+  const renderPickDate = (config: ActivityConfig) => (
+    <div className="space-y-3">
+      <input
+        type={config.time ? 'datetime-local' : 'date'}
+        value={typeof value === 'string' ? value : ''}
+        min={config.minDate}
+        max={config.maxDate}
+        disabled={readOnly}
+        onChange={(e) => onChange(e.target.value)}
+        className="text-[17px] p-5 h-auto rounded-[20px] border-0 bg-white shadow-[0_2px_16px_rgba(0,0,0,0.04)] w-full"
+        style={{ fontFamily: 'var(--font-family-base)', color: 'var(--color-text-primary)' }}
+      />
+      {config.prompt && (
+        <p style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}>{config.prompt}</p>
+      )}
+    </div>
+  );
+
+  /**
+   * `rank` — put a list in order.
+   *
+   * Move-up / move-down rather than drag: a drag surface is unusable by
+   * keyboard and unreliable on touch, and the stored answer is the ORDER, which
+   * buttons express exactly.
+   */
+  const renderRank = (config: ActivityConfig) => {
+    const items: string[] = config.listItems ?? config.options ?? [];
+    const order: string[] = Array.isArray(value) && value.length ? value : items;
+    const move = (from: number, to: number) => {
+      if (readOnly || to < 0 || to >= order.length) return;
+      const next = [...order];
+      const [x] = next.splice(from, 1);
+      next.splice(to, 0, x);
+      onChange(next);
+    };
+    if (!items.length) {
+      return <div style={{ color: 'var(--color-text-muted)', fontSize: 'var(--text-sm)' }}>Nothing to rank — this block declares no items.</div>;
+    }
+    return (
+      <div className="space-y-2">
+        {order.map((item, i) => (
+          <div key={item} className="flex items-center gap-3 p-3 rounded-xl"
+               style={{ backgroundColor: 'var(--color-bg-card)', border: '1px solid var(--color-border-default)' }}>
+            <span style={{ fontVariantNumeric: 'tabular-nums', color: 'var(--color-text-muted)', minWidth: 20 }}>{i + 1}</span>
+            <span className="flex-1" style={{ fontSize: 'var(--text-sm)' }}>{item}</span>
+            <button type="button" onClick={() => move(i, i - 1)} disabled={readOnly || i === 0}
+                    aria-label={`Move ${item} up`} style={{ background: 'none', border: 'none', cursor: 'pointer', opacity: i === 0 ? 0.3 : 1 }}>↑</button>
+            <button type="button" onClick={() => move(i, i + 1)} disabled={readOnly || i === order.length - 1}
+                    aria-label={`Move ${item} down`} style={{ background: 'none', border: 'none', cursor: 'pointer', opacity: i === order.length - 1 ? 0.3 : 1 }}>↓</button>
+          </div>
+        ))}
+      </div>
+    );
+  };
+
+  /**
+   * `review-table` — read back what earlier days recorded.
+   *
+   * Captures nothing itself; that is what separates it from `input-table` and
+   * why it is one of the two passive response-producing-looking interactions.
+   * It reads `priorEntries`, the same carry-forward channel a repeated block
+   * uses — so a sleep diary can finally show the week rather than one night.
+   */
+  const renderReviewTable = (config: ActivityConfig) => {
+    const entries = priorEntries ?? [];
+    if (!entries.length) {
+      return (
+        <div className="rounded-2xl p-6 text-center" style={{ backgroundColor: 'var(--color-bg-muted)', color: 'var(--color-text-muted)', fontSize: 'var(--text-sm)' }}>
+          Nothing recorded yet — entries appear here as you fill this in on later days.
+        </div>
+      );
+    }
+    const cols = config.columns ?? [];
+    return (
+      <div className="overflow-x-auto rounded-xl border" style={{ borderColor: 'var(--color-border-default)' }}>
+        <table style={{ borderCollapse: 'collapse', width: '100%', fontSize: 'var(--text-sm)' }}>
+          <thead>
+            <tr style={{ backgroundColor: 'var(--color-bg-input)' }}>
+              <th style={{ textAlign: 'left', padding: '8px 12px' }}>Day</th>
+              {cols.map((c) => <th key={c} style={{ textAlign: 'left', padding: '8px 12px' }}>{c}</th>)}
+              {!cols.length && <th style={{ textAlign: 'left', padding: '8px 12px' }}>Entry</th>}
+            </tr>
+          </thead>
+          <tbody>
+            {entries.map((e) => (
+              <tr key={e.day} style={{ borderTop: '1px solid var(--color-border-default)' }}>
+                <td style={{ padding: '8px 12px', color: 'var(--color-text-muted)' }}>Day {e.day}</td>
+                {cols.length
+                  ? cols.map((c) => (
+                      <td key={c} style={{ padding: '8px 12px' }}>
+                        {typeof e.response === 'object' && e.response ? String((e.response as Record<string, unknown>)[c] ?? '') : ''}
+                      </td>
+                    ))
+                  : <td style={{ padding: '8px 12px' }}>{typeof e.response === 'string' ? e.response : JSON.stringify(e.response)}</td>}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    );
+  };
+
   const renderNumberResponse = (config: ActivityConfig) => {
     return (
       <div className="space-y-3">
@@ -942,7 +1108,19 @@ export function BlockRenderer({ block, value, onChange, readOnly = false, equipI
       case 'read':
       case 'complete':
       case 'view':
-        return renderLesson();
+        return renderView();
+
+      case 'listen':
+        return renderListen(config);
+
+      case 'pick-date':
+        return renderPickDate(config);
+
+      case 'rank':
+        return renderRank(config);
+
+      case 'review-table':
+        return renderReviewTable(config);
 
       case 'clinical':
         return renderClinicalInstrument(config);
