@@ -102,3 +102,12 @@ test('a read time that already reads as a phrase is left alone', () => {
   assert.equal(resourceReadTime({ readTime: '6 min read' }), '6 min read');
   assert.equal(resourceReadTime({ readTime: 'about an hour' }), 'about an hour');
 });
+
+test('a numeric readTime does not crash the mapping', () => {
+  // Regression: every live record stores readTime as the NUMBER 5, not "5".
+  // Calling .trim() on it threw, and Library rendered "0 resources found".
+  // SQL's `value->>'readTime'` renders it as text, which hides the type.
+  assert.equal(resourceReadTime({ readTime: 5 as never }), '5 min read');
+  assert.equal(resourceReadTime({ read_time: 12 as never }), '12 min read');
+  assert.equal(toResourcePost({ id: 'x', readTime: 5 as never }).readTime, '5 min read');
+});

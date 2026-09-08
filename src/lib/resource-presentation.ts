@@ -37,8 +37,9 @@ export interface ResourceRecord {
   thumbnail?: string;
   image?: string;
   image_url?: string;
-  readTime?: string;
-  read_time?: string;
+  /** Stored as a NUMBER on all 9 live records, despite the name. */
+  readTime?: string | number;
+  read_time?: string | number;
   read_time_minutes?: number;
   created_at?: string;
   date?: string;
@@ -75,7 +76,10 @@ export function resourceReadTime(r: ResourceRecord): string {
   if (typeof r.read_time_minutes === 'number' && r.read_time_minutes > 0) {
     return `${r.read_time_minutes} min read`;
   }
-  const raw = (r.readTime || r.read_time || '').trim();
+  // KV is untyped and this field is a NUMBER on every live record, so it is
+  // coerced before anything string-shaped is done to it. `value->>'readTime'`
+  // in SQL renders it as text, which hides the distinction completely.
+  const raw = String(r.readTime ?? r.read_time ?? '').trim();
   if (!raw) return '5 min read';
   return /^\d+$/.test(raw) ? `${raw} min read` : raw;
 }
