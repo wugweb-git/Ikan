@@ -11,6 +11,69 @@ undated under their original session number.
 
 ## 2026-09-08
 
+**Recommendation rules stopped showing users the author's private notes, and the two engines
+became one.** Both halves deployed and verified; edge function v342, all 39 files byte-identical
+to HEAD. Typecheck 183, tests 138, build clean.
+
+### `rationale` was never copy
+
+A rule carries a `rationale` — the author's note to another clinician. The live rows hold
+"Awareness of overload" and "Work-life recalibration". Four `|| rule.rationale` fallbacks were
+substituting it into user-facing slots: `severityMessage`, `primaryAction.body` and both
+secondary-action labels on the client, plus `reason` over the API on the server. The sentence a
+person read after finishing a mental-health assessment was a memo addressed to someone else.
+
+All five removed. `rationale` is stored and shown in admin; it is no longer rendered anywhere.
+Two stored results carried it and were nulled (4 KV rows with their `:latest` twins) — backup
+`backup_pre_rationale_null_2026_09_08`.
+
+### A rule with nothing to say cannot match
+
+`hasRenderableCopy` requires `title`, `body` and `cta`. This guards the **read** path, so a row
+written by a bulk import or a direct KV write cannot leak a blank-headed card with an unlabelled
+button either. All 18 rules were disabled pending copy — backup
+`backup_pre_rule_disable_2026_09_08`.
+
+### One matching module, because the copies disagreed
+
+The client and server engines each had their own matching, and they read `priority` in opposite
+directions: the client ranks DESCENDING (a bigger number is stronger, which is how all 18 rows are
+written), the server sorted ASCENDING and its own comment called the lower number "higher
+priority". Same field, same data, opposite meanings, both live.
+
+Deleting the server copy was not available — `GET /recommendations` has two consumers, Dashboard
+and EquipProgramCompletion. `recommendation-ranking.ts` moved to
+`server/recommendation-matching.ts` and gained `eligibleRules` + `hasRenderableCopy`.
+
+**It lives under `server/` for a deployment reason.** The edge function ships by
+`cp src/supabase/functions/server/*` — a flat copy of one directory — so a shared module anywhere
+else builds fine locally and is *absent at runtime*, failing inside a deployed function rather
+than in the build. The client reaches in, the direction `scoring-vocabulary.ts` already set.
+
+Three more live defects the extraction surfaced:
+
+- **The server never honoured `enabled`.** The word does not appear in the file. Disabling all 18
+  rules silenced the results screen while this endpoint went on serving them to the dashboard and
+  the completion screen. Eligibility now lives in the shared module, so neither engine can miss it.
+- **`recommendation_type` was ignored** and every `target_id` treated as an equip id, so the first
+  resource or assessment rule anyone wrote would have rendered a dead card.
+- **`equip_name` vs `title`/`name`.** `EquipProgramCompletion` reads keys the endpoint never sent,
+  so every card on that screen has always read "Recommended Program" with no description — a plain
+  field-name mismatch, unrelated to rules, predating all of this work.
+
+Also dropped the server's second `SEVERITY_RANK`/`compareSeverity`/`isSeverityLevel`, and taught
+`shared-types` the copy fields it never knew existed.
+
+> **Verification note.** "18 of 18 disabled" was confirmed from the KV rows and from the client,
+> and reported as the leak being closed. It wasn't: the server engine ignores `enabled`, on a path
+> already recorded as having two live consumers. Confirming a state is not confirming a behaviour.
+> `scoring-vocabulary.ts` had also sat in the repo undeployed since before v341 — nothing imported
+> it, so it was inert, but the repo and the deployed function had quietly diverged.
+
+---
+
+## 2026-09-08
+
 **The Block Type Viewer became the blocks module's source of truth.** It read the catalog and
 nothing else, so every declared term looked equally alive. It now maps each one against the 407
 live blocks in `equip:`. Edge function deployed and smoke-tested; frontend deployed. Typecheck 183,
