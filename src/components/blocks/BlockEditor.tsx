@@ -153,6 +153,16 @@ function BlockEditorInner({
   const blockIssues = validateBlock(block);
 
   /*
+    A suggested key, from the prompt or the title — offered, never written.
+    Auto-filling would give 407 blocks machine-made names that look deliberate,
+    and the whole value of a key is that the SAME question carries the same one
+    across days, which only an author knows.
+  */
+  const suggestedKey = (block.activityConfig?.prompt || block.title || '')
+    .toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '').split('_').slice(0, 4).join('_')
+    || undefined;
+
+  /*
     The preset allow-list verdict was computed here and rendered as advice.
     Gone with §19 step 3: it judged this block against the DAY'S TYPE, and a day
     no longer has one. `validateBlock` above is untouched — it asks whether the
@@ -368,6 +378,56 @@ function BlockEditorInner({
                 placeholder={contentPlaceholderFor(block.type)}
                 minHeight="80px"
               />
+            </div>
+          )}
+
+          {/*
+            RESPONSE KEY — where this block's answers go.
+
+            The field has never existed. `activityConfig.key` was on 98 blocks
+            and read by no code until this week, and 107 input-tables have none
+            because an author was never asked: the 37 that do have one inherited
+            it by copy-paste, which is why 14 keys are shared across 51 blocks.
+            The validator now reports the gap; without this field there was no
+            way to act on the report.
+
+            Shown only for the four types that produce an answer. A `lesson` or
+            a `conclude` has nothing to file.
+          */}
+          {['exercise', 'journal', 'checklist', 'sleep-diary'].includes(block.type) && (
+            <div className="space-y-1">
+              <Label style={{ fontSize: '10px', fontWeight: 500, fontFamily: 'var(--font-family-base)', color: 'var(--color-text-muted)' }}>
+                Response key
+              </Label>
+              <div className="flex gap-2">
+                <Input
+                  value={block.activityConfig?.key || ''}
+                  onChange={(e) => onChange({
+                    activityConfig: { ...block.activityConfig, key: e.target.value.trim() },
+                  })}
+                  placeholder="e.g. sleep_quality"
+                  style={{ fontFamily: 'monospace', fontSize: '12px' }}
+                />
+                {!block.activityConfig?.key && suggestedKey && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => onChange({
+                      activityConfig: { ...block.activityConfig, key: suggestedKey },
+                    })}
+                    style={{ fontFamily: 'monospace', fontSize: '11px', whiteSpace: 'nowrap' }}
+                  >
+                    use {suggestedKey}
+                  </Button>
+                )}
+              </div>
+              <p style={{ fontSize: '10px', color: 'var(--color-text-muted)' }}>
+                Answers file under this name instead of the block id. Give the SAME key to the same
+                question on other days and its entries become one series — that is what turns seven
+                nights of a sleep diary into a diary. Leave it blank and each day is a separate,
+                unrelated answer.
+              </p>
             </div>
           )}
 
