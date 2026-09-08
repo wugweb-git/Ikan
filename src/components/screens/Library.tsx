@@ -4,6 +4,7 @@ import { useMetadata } from '../../hooks/useMetadata';
 import { cn } from '../ui/utils';
 import { Search, BookOpen, Video, Headphones, FileText, Image as ImageIcon } from 'lucide-react';
 import { ResourcePost } from '../page-blocks/ResourceCard';
+import { toResourcePost } from '../../lib/resource-presentation';
 import { apiClient } from '../../lib/api-client';
 import { logger } from '../../lib/logger';
 import { PullToRefresh } from '../ui/touch-feedback';
@@ -170,25 +171,14 @@ export function Library({ onResourceSelect, onNavigate, className }: LibraryProp
             };
 
             return {
-              id: resource.id || resource.resource_id || `resource-${Math.random().toString(36).substr(2, 9)}`,
-              title: resource.title || 'Untitled Resource',
-              description: resource.description || resource.excerpt || '',
-              category: resource.category || 'General',
+              // The record -> card mapping lives in `resource-presentation`,
+              // because the stored field names are not the ones the card
+              // declares (`thumbnail`, not `image`), and a second copy of that
+              // knowledge is how one screen ends up with an empty image well
+              // while another renders fine. `type` stays here: it depends on
+              // `kvFilterTypes`, which is this screen's own fetched state.
+              ...toResourcePost(resource),
               type: getResourceType(resource.contentType, resource.category),
-              readTime: resource.read_time_minutes 
-                ? `${resource.read_time_minutes} min read` 
-                : (resource.readTime || '5 min read'),
-              date: resource.created_at 
-                ? new Date(resource.created_at).toLocaleDateString('en-US', { 
-                    year: 'numeric', 
-                    month: 'short', 
-                    day: 'numeric' 
-                  })
-                : (resource.date || resource.publishedDate || 'Recently'),
-              image: resource.thumbnail || resource.image || resource.image_url || '',
-              slug: resource.id,
-              published: resource.published !== false,
-              featured: resource.featured === true
             };
           })
           .filter((resource: any) => resource.published !== false)

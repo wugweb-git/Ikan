@@ -89,21 +89,6 @@ const DEFAULT_RECOMMENDATION_RULES: Record<ResponseTier, RecommendationRule> = {
   }
 };
 
-const DEFAULT_OVERLAP_MAP: Record<string, string[]> = {
-  "sleep": ["stress"],
-  "stress": ["sleep", "burnout"],
-  "burnout": ["stress", "sleep"]
-};
-
-export interface EscalationRule {
-  if: {
-    assessment: string;
-    /** Response tier — tone and copy branch on this. NOT a clinical severity. */
-  tier: ResponseTier;
-  };
-  alsoRecommend: string[];
-}
-
 // Short category tokens used throughout this file's default rules/overlap
 // map ('stress', 'burnout', 'sleep') aren't real equip identifiers — the
 // actual equip slugs are 'stress-buster', 'burnout-reset', 'sleep-tight'.
@@ -121,25 +106,12 @@ function resolveProgramSlug(id: string): string {
   return PROGRAM_SLUG_ALIASES[id] ?? id;
 }
 
-const DEFAULT_ESCALATION_RULES: EscalationRule[] = [
-  {
-    if: { assessment: 'sleep', tier: 'high' },
-    alsoRecommend: ['stress']
-  },
-  {
-    if: { assessment: 'stress', tier: 'high' },
-    alsoRecommend: ['burnout', 'sleep']
-  }
-];
-
 // ══════════════════════════════════════════════════════════════════
 // CACHED ENGINE CONFIG — fetched from backend on first use
 // ══════════════════════════════════════════════════════════════════
 
 interface EngineConfig {
   rules: Record<ResponseTier, RecommendationRule>;
-  overlapMap: Record<string, string[]>;
-  escalationRules: EscalationRule[];
   severityBands: SeverityBand[];
   loadedFromBackend: boolean;
 }
@@ -166,8 +138,6 @@ async function loadEngineConfig(): Promise<EngineConfig> {
       if (Array.isArray(backendRules) && backendRules.length > 0) {
         // Convert backend rules array to severity-keyed lookup
         const rulesMap: Record<ResponseTier, RecommendationRule> = { ...DEFAULT_RECOMMENDATION_RULES };
-        const overlapMap: Record<string, string[]> = { ...DEFAULT_OVERLAP_MAP };
-        const escalationRules: EscalationRule[] = [...DEFAULT_ESCALATION_RULES];
         const severityBands: SeverityBand[] = [...DEFAULT_SEVERITY_BANDS];
 
         // Real recommendation_rule: records (see RecommendationRulesManager /
@@ -208,30 +178,16 @@ async function loadEngineConfig(): Promise<EngineConfig> {
             appliedAnyOverride = true;
           }
 
-          // Overlap map override
-          if (rule.overlap_map && typeof rule.overlap_map === 'object') {
-            Object.assign(overlapMap, rule.overlap_map);
-            appliedAnyOverride = true;
-          }
-
-          // Escalation rules override
-          if (rule.escalation_rules && Array.isArray(rule.escalation_rules)) {
-            escalationRules.length = 0;
-            escalationRules.push(...rule.escalation_rules);
-            appliedAnyOverride = true;
-          }
         }
 
-        _cachedConfig = { rules: rulesMap, overlapMap, escalationRules, severityBands, loadedFromBackend: appliedAnyOverride };
+        _cachedConfig = { rules: rulesMap, severityBands, loadedFromBackend: appliedAnyOverride };
         console.log(appliedAnyOverride
           ? `[RecommendationEngine] Applied global overrides from ${backendRules.length} backend rule(s)`
-          : `[RecommendationEngine] ${backendRules.length} backend rule(s) found, but none carry global-override fields (severity/message/severity_bands/overlap_map/escalation_rules) — using built-in defaults. Per-category equip targeting still works via loadAdminRules().`);
+          : `[RecommendationEngine] ${backendRules.length} backend rule(s) found, but none carry global-override fields (severity/message/severity_bands) — using built-in defaults. Per-category equip targeting still works via loadAdminRules().`);
       } else {
         // No admin rules configured — use defaults
         _cachedConfig = {
           rules: DEFAULT_RECOMMENDATION_RULES,
-          overlapMap: DEFAULT_OVERLAP_MAP,
-          escalationRules: DEFAULT_ESCALATION_RULES,
           severityBands: DEFAULT_SEVERITY_BANDS,
           loadedFromBackend: false,
         };
@@ -241,8 +197,6 @@ async function loadEngineConfig(): Promise<EngineConfig> {
       console.warn('[RecommendationEngine] Failed to load backend rules, using defaults:', err);
       _cachedConfig = {
         rules: DEFAULT_RECOMMENDATION_RULES,
-        overlapMap: DEFAULT_OVERLAP_MAP,
-        escalationRules: DEFAULT_ESCALATION_RULES,
         severityBands: DEFAULT_SEVERITY_BANDS,
         loadedFromBackend: false,
       };
@@ -456,8 +410,6 @@ export function getSeverityBandFromProfile(score: number, profileId: string): Sc
 // but the engine itself uses the cached/loaded versions.
 export const SEVERITY_BANDS = DEFAULT_SEVERITY_BANDS;
 export const RECOMMENDATION_RULES = DEFAULT_RECOMMENDATION_RULES;
-export const OVERLAP_MAP = DEFAULT_OVERLAP_MAP;
-export const ESCALATION_RULES = DEFAULT_ESCALATION_RULES;
 
 // Helper to determine severity
 export function getSeverity(score: number, maxScore: number): ResponseTier {
@@ -490,9 +442,18 @@ export interface EngineResult {
     cta: string;
   };
   secondaryActions: {
+    /** `resource` or `assessment` — the slot this belongs in. */
     type: string;
     title: string;
     label?: string;
+    /** Authored sentence. Never `rationale`. Empty renders nothing. */
+    body?: string;
+    /**
+     * The recommended record's id, so the screen can fetch it and render a
+     * real card. Without it the route was the only handle, and a route is not
+     * a title — which is how a card ends up captioned with its own slug.
+     */
+    targetId?: string;
     route?: string;
   }[];
   severityMessage: string;
@@ -560,8 +521,6 @@ export function evaluateAssessment(input: EvaluateInput): EngineResult {
   const { slug, category, score, maxScore, scoringProfileId } = input;
   const config = _cachedConfig || {
     rules: DEFAULT_RECOMMENDATION_RULES,
-    overlapMap: DEFAULT_OVERLAP_MAP,
-    escalationRules: DEFAULT_ESCALATION_RULES,
     severityBands: DEFAULT_SEVERITY_BANDS,
     loadedFromBackend: false,
   };
@@ -601,7 +560,10 @@ export function evaluateAssessment(input: EvaluateInput): EngineResult {
   // rule ever matched and every recommendation came from a hardcoded default.
   const matchingAdminRules = findMatchingAdminRules(category ?? '', severityLevel);
 
-  const adminEquipRule = matchingAdminRules.find(r => r.recommendation_type === 'equip');
+  // Already ranked strongest-first (specificity, then priority descending), so
+  // the first equip rule is the primary and the rest are the adjacent ones.
+  const adminEquipRules = matchingAdminRules.filter(r => r.recommendation_type === 'equip');
+  const adminEquipRule = adminEquipRules[0];
   const adminResourceRules = matchingAdminRules.filter(r => r.recommendation_type === 'resource');
   const adminAssessmentRules = matchingAdminRules.filter(r => r.recommendation_type === 'assessment');
 
@@ -616,17 +578,22 @@ export function evaluateAssessment(input: EvaluateInput): EngineResult {
   let targetProgramId = adminEquipRule?.target_id || '';
   if (targetProgramId) targetProgramId = resolveProgramSlug(targetProgramId);
 
-  // Cross-program overlap, keyed on category rather than a substring of the slug.
-  const relatedPrograms: string[] = [];
-  const cat = (category ?? '').trim().toLowerCase();
-  const escalation = cat
-    ? config.escalationRules.find(r => r.if.assessment === cat && r.if.tier === tier)
-    : undefined;
-  if (escalation) {
-    relatedPrograms.push(...escalation.alsoRecommend);
-  } else if (cat && config.overlapMap[cat] && tier !== 'low') {
-    relatedPrograms.push(...config.overlapMap[cat]);
-  }
+  /**
+   * Adjacent programmes: every other equip rule that matched, below the primary.
+   *
+   * This replaces `DEFAULT_OVERLAP_MAP` and `DEFAULT_ESCALATION_RULES`, two
+   * tables compiled into this file. They were never authored for a person and
+   * covered three categories of seven — sleep, stress and burnout — so anxiety,
+   * depression, balance and general could not show an adjacent programme at any
+   * score, and no admin could give them one. Both were seeded from constants
+   * and never overridden: the backend `overlap_map` / `escalation_rules` fields
+   * they read for do not exist on any rule record and never have.
+   *
+   * Deriving them from the rules instead means the same sentence covers the
+   * whole product: a recommendation is something an author wrote, or it is not
+   * shown. An empty list here is correct, not a gap.
+   */
+  const relatedPrograms: string[] = adminEquipRules.slice(1).map(r => r.target_id || '');
 
   // Build the result object
   const result: EngineResult = {
@@ -674,6 +641,8 @@ export function evaluateAssessment(input: EvaluateInput): EngineResult {
       type: 'resource',
       title: rule.title || '',
       label: rule.title || '',
+      body: rule.body || '',
+      targetId: rule.target_id || '',
       route: `/resource/${rule.target_id}`,
     });
   });
@@ -684,6 +653,8 @@ export function evaluateAssessment(input: EvaluateInput): EngineResult {
       type: 'assessment',
       title: rule.title || '',
       label: rule.title || '',
+      body: rule.body || '',
+      targetId: rule.target_id || '',
       route: `/assessment-flow?id=${rule.target_id}`,
     });
   });

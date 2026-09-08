@@ -34,7 +34,13 @@ export function EquipBlock({
   onNavigate,
   className
 }: EquipBlockProps) {
-  
+  /**
+   * A default only fires on `undefined`, so an explicit `buttonText=""` — which
+   * is what a CMS field left blank sends — reached the button and rendered an
+   * arrow with no words next to it. Blank is treated as unset.
+   */
+  const cta = buttonText?.trim() || "LEARN MORE";
+
   const handleProgramClick = (program: EquipProgram) => {
     if (onProgramClick) {
       onProgramClick(program);
@@ -259,7 +265,7 @@ export function EquipBlock({
                         gap: '4px',
                       }}
                     >
-                      {buttonText}
+                      {cta}
                       <ArrowRight style={{ width: '14px', height: '14px' }} />
                     </span>
                   </div>

@@ -9,6 +9,11 @@ import { ContentImage } from '../ui/ContentImage';
 import { ArrowRight } from 'lucide-react';
 import { SectionReportCard } from '../player/SectionReportCard';
 import { AssessmentCard } from '../assessment/AssessmentCard';
+import { ResourceCard } from '../page-blocks/ResourceCard';
+import { toResourcePost, isPublished } from '../../lib/resource-presentation';
+import {
+  Carousel, CarouselContent, CarouselItem, CarouselPrevious, CarouselNext,
+} from '../ui/carousel';
 import { severityPresentation, severityOfResult } from '../../lib/severity-presentation';
 import { equipMeta } from '../../lib/equip-meta';
 import { resolveResultPresentation } from '../../lib/result-presentation';
@@ -55,6 +60,8 @@ export function AssessmentResults({
   const [assessmentDef, setAssessmentDef] = useState<any>(null);
   /** Records for the adjacent programmes, so a card can show a real name. */
   const [relatedDetails, setRelatedDetails] = useState<any[]>([]);
+  const [articleDetails, setArticleDetails] = useState<any[]>([]);
+  const [followUpDetails, setFollowUpDetails] = useState<any[]>([]);
 
   /**
    * Resolve the result id this screen is showing.
@@ -252,6 +259,50 @@ export function AssessmentResults({
     })();
     return () => { cancelled = true; };
   }, [relatedKey]);
+
+  /**
+   * Records behind the rule-authored secondary slots.
+   *
+   * A rule stores a target id, never a label, so a card built from the rule
+   * alone can only caption itself with its own route. Fetching the record is
+   * what turns "/resource/a5bef353…" into an article with a title, an image
+   * and a reading time.
+   *
+   * Split by `recommendation_type` rather than rendered as one list: an
+   * article and a follow-up assessment are different offers and read as
+   * different cards. They shared a generic button before, and that button
+   * printed the rule's title twice — once as its own eyebrow, once as its
+   * body — because the engine set `title` and `label` to the same string.
+   */
+  const articleIds = (activeData.recommendation?.secondaryActions ?? [])
+    .filter(a => a.type === 'resource').map(a => a.targetId).filter(Boolean).join(',');
+  useEffect(() => {
+    if (!articleIds) { setArticleDetails([]); return; }
+    let cancelled = false;
+    (async () => {
+      const rows = await Promise.all(articleIds.split(',').map(async (id) => {
+        try { return await apiClient.getResource(id); } catch { return null; }
+      }));
+      // An article that failed to load, or was unpublished after the rule was
+      // written, is dropped rather than rendered as an empty card.
+      if (!cancelled) setArticleDetails(rows.filter(r => r && isPublished(r)));
+    })();
+    return () => { cancelled = true; };
+  }, [articleIds]);
+
+  const followUpIds = (activeData.recommendation?.secondaryActions ?? [])
+    .filter(a => a.type === 'assessment').map(a => a.targetId).filter(Boolean).join(',');
+  useEffect(() => {
+    if (!followUpIds) { setFollowUpDetails([]); return; }
+    let cancelled = false;
+    (async () => {
+      const rows = await Promise.all(followUpIds.split(',').map(async (id) => {
+        try { return await apiClient.getAssessment(id); } catch { return null; }
+      }));
+      if (!cancelled) setFollowUpDetails(rows.filter(Boolean));
+    })();
+    return () => { cancelled = true; };
+  }, [followUpIds]);
 
   // Still fetching the stored record — distinct from "nothing to show", which
   // is what the empty state below means.
@@ -653,34 +704,76 @@ export function AssessmentResults({
           </motion.section>
         )}
 
-        {/* ── Secondary rule-authored actions ──
-            Resource and assessment rules, when an admin wrote one. Distinct
-            from the nav row below: these are authored, that is chrome. */}
-        {rec.secondaryActions.length > 0 && (
-          <motion.section {...reveal} className="flex flex-col" style={{ gap: 8 }}>
-            {rec.secondaryActions.map((action, idx) => (
-              <button
-                key={idx}
-                onClick={() => action.route && onNavigate?.(action.route)}
-                className="flex w-full items-center justify-between text-left"
+        {/* ── Tier 3 · follow-up assessments ──
+            An `assessment` rule points at another instrument to take next.
+            A real card, not a row: it is the same offer the catalogue makes,
+            so it should look like it. A rule may never target its own
+            assessment — enforced at save, in RecommendationRulesManager. */}
+        {followUpDetails.length > 0 && (
+          <motion.section {...reveal}>
+            <Eyebrow>Suggested next</Eyebrow>
+            <div className="grid grid-cols-2" style={{ gap: 12 }}>
+              {followUpDetails.map((a, i) => (
+                <AssessmentCard
+                  key={a.id ?? i}
+                  variant="compact"
+                  index={i}
+                  item={{
+                    id: a.id,
+                    title: a.title ?? a.name ?? '',
+                    image: a.thumbnail ?? a.image ?? null,
+                    durationLabel: Array.isArray(a.questions) && a.questions.length
+                      ? `${a.questions.length} questions` : null,
+                    countLabel: null,
+                  }}
+                  onSelect={(id) => onNavigate?.(`/assessment-flow?id=${id}`)}
+                />
+              ))}
+            </div>
+          </motion.section>
+        )}
+
+        {/* ── Tier 4 · articles ──
+            Stacked at one or two, a carousel at three or more. The carousel is
+            `ui/carousel.tsx`, a generic embla wrapper that has been in the repo
+            unused; ResourceBlock's hand-rolled slider is bound to its own post
+            type and hardcodes a 300px card, so it does not generalise here. */}
+        {articleDetails.length > 0 && (
+          <motion.section {...reveal}>
+            <Eyebrow>Worth reading</Eyebrow>
+            {articleDetails.length < 3 ? (
+              <div
+                className="grid"
                 style={{
-                  backgroundColor: 'var(--color-bg-card)',
-                  border: '1px solid var(--color-border-default)',
-                  borderRadius: 'var(--radius-lg)',
-                  padding: 16, gap: 12, cursor: action.route ? 'pointer' : 'default',
+                  gap: 12,
+                  gridTemplateColumns: articleDetails.length === 1 ? '1fr' : 'repeat(2, 1fr)',
                 }}
               >
-                <span>
-                  {action.title && (
-                    <span style={{ ...f('xs', 500, 'var(--color-text-muted)'), display: 'block', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-                      {action.title}
-                    </span>
-                  )}
-                  <span style={{ ...f('base', 500), display: 'block', marginTop: 4 }}>{action.label}</span>
-                </span>
-                {action.route && <ArrowRight size={16} style={{ color: 'var(--color-text-muted)', flexShrink: 0 }} />}
-              </button>
-            ))}
+                {articleDetails.map((r, i) => (
+                  <ResourceCard
+                    key={r.id ?? i}
+                    post={toResourcePost(r)}
+                    onClick={() => onNavigate?.(`/resource/${r.id}`)}
+                  />
+                ))}
+              </div>
+            ) : (
+              <Carousel opts={{ align: 'start' }} className="w-full">
+                <CarouselContent>
+                  {articleDetails.map((r, i) => (
+                    <CarouselItem key={r.id ?? i} className="basis-4/5 sm:basis-1/2 lg:basis-1/3">
+                      <ResourceCard
+                        post={toResourcePost(r)}
+                        onClick={() => onNavigate?.(`/resource/${r.id}`)}
+                      />
+                    </CarouselItem>
+                  ))}
+                </CarouselContent>
+                {/* Hidden on touch, where the swipe is the affordance. */}
+                <CarouselPrevious className="hidden sm:flex" />
+                <CarouselNext className="hidden sm:flex" />
+              </Carousel>
+            )}
           </motion.section>
         )}
 

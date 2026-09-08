@@ -1,0 +1,113 @@
+/**
+ * One mapping from a stored `resource:` record to the shape `ResourceCard`
+ * renders.
+ *
+ * It is a module rather than a function inside a screen because the mapping is
+ * not obvious and getting it wrong is silent. The stored record does **not**
+ * carry the field names the card expects:
+ *
+ * | card wants | record actually has | on |
+ * |---|---|---|
+ * | `image`    | `thumbnail`         | 9 of 9 |
+ * |            | `image_url`         | 2 of 9 |
+ * | `readTime` | `readTime`          | 9 of 9 |
+ * |            | `read_time`         | 2 of 9 |
+ *
+ * Measured across all 9 live records 2026-09-08. Reading `record.image`
+ * directly yields `undefined` on every one of them and renders a card with an
+ * empty image well — no error, no warning, just a hole. This is the same class
+ * of defect as `equip_name` vs `title` on the recommendations endpoint, and as
+ * the `category_id` / `category` mismatch in CLAUDE.md's relation-check note:
+ * a field name assumed to match a similarly-named entity.
+ *
+ * `Library.tsx` worked out the correct chain already; this is that chain,
+ * extracted so a second reader cannot get a different answer.
+ */
+import type { ResourcePost } from '../components/page-blocks/ResourceCard';
+
+/** A stored `resource:` record. Untyped in KV, so every field is optional. */
+export interface ResourceRecord {
+  id?: string;
+  resource_id?: string;
+  title?: string;
+  description?: string;
+  excerpt?: string;
+  category?: string;
+  contentType?: string;
+  thumbnail?: string;
+  image?: string;
+  image_url?: string;
+  readTime?: string;
+  read_time?: string;
+  read_time_minutes?: number;
+  created_at?: string;
+  date?: string;
+  publishedDate?: string;
+  published?: boolean;
+  featured?: boolean;
+}
+
+export interface PresentedResource extends ResourcePost {
+  published: boolean;
+  featured: boolean;
+}
+
+/**
+ * The image, or an empty string.
+ *
+ * Order matters: `thumbnail` is the field every live record carries, so it is
+ * tried first. `image` is included only because a future record might use the
+ * name the card's own type declares.
+ */
+export function resourceImage(r: ResourceRecord): string {
+  return r.thumbnail || r.image || r.image_url || '';
+}
+
+/** Reading time as a display string, however the record spells it. */
+export function resourceReadTime(r: ResourceRecord): string {
+  if (typeof r.read_time_minutes === 'number' && r.read_time_minutes > 0) {
+    return `${r.read_time_minutes} min read`;
+  }
+  return r.readTime || r.read_time || '5 min read';
+}
+
+function resourceDate(r: ResourceRecord): string {
+  if (r.created_at) {
+    const d = new Date(r.created_at);
+    if (!Number.isNaN(d.getTime())) {
+      return d.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+    }
+  }
+  return r.date || r.publishedDate || 'Recently';
+}
+
+/**
+ * `published` is absent on some records and means published when it is.
+ * Defaulting the other way would hide live articles.
+ */
+export function isPublished(r: ResourceRecord): boolean {
+  return r.published !== false;
+}
+
+/**
+ * One deliberate difference from the mapping this replaces: a record with no
+ * id gets `''`, where `Library.tsx` minted `resource-${Math.random()}`. A
+ * random id is a fresh value on every render, so it defeats React's key
+ * reconciliation and the id-based de-duplication immediately below its own
+ * call site. All 9 live records carry an id, so nothing observable changes;
+ * `''` is the honest answer to "what is this record's id".
+ */
+export function toResourcePost(r: ResourceRecord): PresentedResource {
+  return {
+    id: r.id || r.resource_id || '',
+    title: r.title || 'Untitled Resource',
+    description: r.description || r.excerpt || '',
+    category: r.category || 'General',
+    readTime: resourceReadTime(r),
+    date: resourceDate(r),
+    image: resourceImage(r),
+    slug: r.id || r.resource_id || '',
+    published: isPublished(r),
+    featured: r.featured === true,
+  };
+}

@@ -21,8 +21,12 @@ export interface AssessmentProgram {
 export interface AssessmentBlockProps {
   title?: string;
   subtitle?: string;
+  /** Words on each card's action. */
   buttonText?: string;
+  /** Words on the block's own trailing action. */
   seeMoreText?: string;
+  /** Where that trailing action goes. Was hardcoded to `/assessments`. */
+  seeMoreRoute?: string;
   programs: AssessmentProgram[];
   loading?: boolean;
   onProgramClick?: (program: AssessmentProgram) => void;
@@ -119,12 +123,23 @@ function DesktopAssessmentCard({ program, onClick }: { program: AssessmentProgra
 
 export function AssessmentBlock({ 
   title = "More assessments",
+  subtitle,
+  seeMoreText = "View All Assessments",
+  seeMoreRoute = "/assessments",
   programs = [],
   loading = false,
   onProgramClick,
   onNavigate,
   className
 }: AssessmentBlockProps) {
+  /**
+   * `subtitle`, `seeMoreText` and `seeMoreRoute` were declared on the props and
+   * never destructured, so passing any of them did nothing — silently, since
+   * an ignored prop is not a type error. `buttonText` is still unused here:
+   * the cards render their own action, so the prop is declared by
+   * `EquipBlock`'s shape rather than this one's. Left in place rather than
+   * removed, because deleting a public prop is a breaking change for callers.
+   */
   
   const handleProgramClick = (program: AssessmentProgram) => {
     if (onProgramClick) {
@@ -154,9 +169,16 @@ export function AssessmentBlock({
   return (
     <div className={cn("py-[24px] lg:py-[48px] px-[20px] relative w-full", className)} style={{ backgroundColor: 'var(--color-primary-default)' }}>
       <div className="flex flex-col items-center justify-center size-full gap-[32px] max-w-7xl mx-auto">
-        <h2 className="font-medium leading-[48px] text-[32px] text-center w-full" style={{ color: 'var(--color-primary-on)' }}>
-          {title}
-        </h2>
+        {title?.trim() && (
+          <h2 className="font-medium leading-[48px] text-[32px] text-center w-full" style={{ color: 'var(--color-primary-on)' }}>
+            {title}
+          </h2>
+        )}
+        {subtitle?.trim() && (
+          <p className="text-center w-full" style={{ color: 'var(--color-primary-on)', opacity: 0.85, marginTop: -16 }}>
+            {subtitle}
+          </p>
+        )}
         
         {/* Mobile Layout */}
         <div className="flex flex-col gap-[16px] w-full max-w-md mx-auto md:hidden">
@@ -182,7 +204,7 @@ export function AssessmentBlock({
 
         {/* CTA — View All Assessments */}
         <button
-          onClick={() => onNavigate?.('/assessments')}
+          onClick={() => onNavigate?.(seeMoreRoute)}
           className="flex items-center justify-center cursor-pointer border-none transition-all hover:opacity-90"
           style={{
             gap: '8px',
@@ -195,7 +217,7 @@ export function AssessmentBlock({
             fontSize: 'var(--text-base)',
           }}
         >
-          View All Assessments
+          {seeMoreText}
           <ArrowRight size={18} />
         </button>
       </div>
