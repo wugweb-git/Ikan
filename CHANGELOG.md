@@ -9,6 +9,61 @@ undated under their original session number.
 
 ---
 
+## 2026-09-08 (later)
+
+**The results page got real slots, and the last two hardcoded recommendation
+tables went.** B3, B4 and B5. Frontend deployed and verified; typecheck 183,
+tests 152, build clean.
+
+### Articles and follow-up assessments are different offers
+
+Every rule-authored secondary rendered as one generic button row, and each row
+printed the rule's title **twice** — once as its own uppercase eyebrow, once as
+its body — because the engine set `title` and `label` to the same string. They
+now split by `recommendation_type`: follow-ups render as `AssessmentCard`,
+articles as `ResourceCard`, stacked at one or two and a carousel at three or
+more. The carousel is `ui/carousel.tsx`, a generic embla wrapper that had been
+in the repo imported by nothing.
+
+### Adjacent programmes come from rules now
+
+`DEFAULT_OVERLAP_MAP` and `DEFAULT_ESCALATION_RULES` are deleted. They covered
+three categories of seven, so anxiety, depression, balance and general could
+never show an adjacent programme at any score and no admin could give them one.
+Both were seeded from constants and **never once overridden**: the
+`overlap_map` / `escalation_rules` fields their loader read for do not exist on
+any rule record and never have. Adjacent programmes are now the equip rules
+ranked below the primary.
+
+### `resource-presentation.ts`
+
+The stored record does not use the field names the card declares — it carries
+`thumbnail`, not `image`, on 9 of 9 rows — so reading `record.image` yields
+undefined and renders an empty image well, silently. `Library.tsx` had worked
+the chain out already; it is now extracted, tested and shared rather than
+copied. Same class of defect as `equip_name` vs `title`.
+
+> **A regression I shipped, live for one deploy.** Fixing the "5" read-time
+> display, I wrote `.trim()` on `readTime` — which is stored as the **number**
+> 5, not the string. Library threw and rendered "0 resources found". I had read
+> the field through SQL's `value->>'readTime'`, which renders it as text and
+> hides the type completely, then wrote the test with a string, so it passed.
+> Caught by loading the page. Coerced with `String()`, regression test added.
+> The lesson is the day's lesson again, one level down: `->>` is a cast, so
+> reading a KV field through it tells you nothing about the type the code sees.
+
+Also from B3's guard list: `EquipBlock` treats an explicit `buttonText=""` as
+unset (a default only fires on `undefined`, so a blank CMS field rendered an
+arrow with no words), and `AssessmentBlock` finally destructures `subtitle`,
+`seeMoreText` and a new `seeMoreRoute` — all declared on its props and silently
+ignored, its trailing CTA hardcoded to `/assessments`.
+
+**Still content, not code:** `Productivity Reset` is targeted by none of the 18
+rules, and no article is tagged `depression`, `anxiety`, `burnout` or `balance`,
+so those four assessments have no article to show even once rules carry copy.
+
+---
+
 ## 2026-09-08
 
 **Recommendation rules stopped showing users the author's private notes, and the two engines
