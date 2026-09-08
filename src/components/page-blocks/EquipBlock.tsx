@@ -63,7 +63,13 @@ export function EquipBlock({
             padding: '0 24px',
           }}
         >
-          {/* Section Header */}
+          {/* Section Header
+              Guarded so the block can be embedded inside a page that already
+              has its own heading. `footerText` was already guarded; `title` was
+              not, so `title=""` left an empty <h2> and its 32px margin —
+              invisible in isolation and a gap nobody could account for once the
+              block sat inside another section. */}
+          {(title || onNavigate) && (
           <div
             style={{
               display: 'flex',
@@ -72,6 +78,7 @@ export function EquipBlock({
               marginBottom: '32px',
             }}
           >
+            {title ? (
             <h2
               style={{
                 fontFamily: 'var(--font-family-base)',
@@ -84,6 +91,7 @@ export function EquipBlock({
             >
               {title}
             </h2>
+            ) : <span />}
             {onNavigate && (
               <button
                 onClick={() => onNavigate('/equip')}
@@ -106,6 +114,7 @@ export function EquipBlock({
               </button>
             )}
           </div>
+          )}
 
           {/* Program Cards Grid */}
           <div
@@ -153,7 +162,9 @@ export function EquipBlock({
 
                 {/* Card Content */}
                 <div style={{ padding: '20px' }}>
-                  {/* Label */}
+                  {/* Label. Guarded for the same reason as the section title:
+                      `programLabel=""` left an empty <p> and its 8px margin. */}
+                  {programLabel && (
                   <p
                     style={{
                       fontFamily: 'var(--font-family-base)',
@@ -167,6 +178,7 @@ export function EquipBlock({
                   >
                     {programLabel}
                   </p>
+                  )}
 
                   {/* Title */}
                   <h3
