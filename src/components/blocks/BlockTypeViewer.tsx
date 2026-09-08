@@ -5,6 +5,7 @@ import {
 import { AdminHeader } from '../admin/AdminHeader';
 import { apiClient } from '../../lib/api-client';
 import { getIconComponent, iconResolves } from '../../lib/catalog-icons';
+import { AUTHORABLE_SUBTYPES } from '../../lib/blocks/block-model';
 import { INTERACTION_REQUIREMENTS, missingRequirements, blockOf } from '../../lib/blocks/content-hierarchy';
 import { Card, CardContent } from '../ui/card';
 import { Button } from '../ui/button';
@@ -494,7 +495,17 @@ export function AdminBlockTypeViewer({ onBack }: AdminBlockTypeViewerProps) {
       // The row's own icon. Every activity row declares one; this screen drew
       // a hardcoded PenTool on all twelve.
       icon: row(value)?.icon,
-      selectable: true,
+      /*
+        `selectable` is what the badge reads, so it must mean what BlockEditor
+        does — not "is canonical". It said `true` for all twenty, which put "In
+        Editor" on `listen`, `date-time`, `table-review` and `ranking`: the four
+        the editor deliberately filters out because their interaction has no
+        renderer. The page was contradicting the guard it exists to report on.
+
+        One source: `AUTHORABLE_SUBTYPES` is the same list the editor filters by,
+        so the badge cannot drift from the picker again.
+      */
+      selectable: (AUTHORABLE_SUBTYPES as readonly string[]).includes(value),
       inCatalog: !!row(value),
     }));
     const aliases = Object.entries(SUBTYPE_ALIASES).map(([value, canonicalTerm]) => ({
@@ -717,7 +728,9 @@ export function AdminBlockTypeViewer({ onBack }: AdminBlockTypeViewerProps) {
           className="gap-2"
           style={activeTab === 'activities' ? { backgroundColor: 'var(--color-primary-default)', color: 'var(--color-primary-on)' } : undefined}
         >
-          <PenTool className="w-4 h-4" /> Activities ({kvExerciseSubtypes.length})
+          {/* Counts what the tab RENDERS. It read the catalog row count (20) above
+              a list of 49, because aliases are code-only and never in the catalog. */}
+          <PenTool className="w-4 h-4" /> Activities ({exerciseSubtypes.length})
         </Button>
       </div>
 
@@ -1027,14 +1040,23 @@ export function AdminBlockTypeViewer({ onBack }: AdminBlockTypeViewerProps) {
                         the editor can still be the stored value, and saying so
                         is the difference between unselectable and unused.
                       */}
-                      <AdminStatusBadge
-                        status={st.selectable ? 'published' : (countOf('activities', st.value) ?? 0) > 0 ? 'published' : 'draft'}
-                        label={st.selectable
-                          ? 'In Editor'
-                          : (countOf('activities', st.value) ?? 0) > 0
-                            ? `Alias — in use (${countOf('activities', st.value)})`
-                            : 'Alias / Preset-only'}
-                      />
+                      {(() => {
+                        /*
+                          Three reasons a term is not offered, and they are not
+                          the same thing:
+                            · canonical, but no renderer yet   -> awaiting a renderer
+                            · an alias live content carries    -> in use
+                            · an alias nothing is known to use -> preset-only
+                          Collapsing them into "Alias / Preset-only" is what made
+                          `matrix` (8 blocks) read as unused.
+                        */
+                        const n = countOf('activities', st.value) ?? 0;
+                        const isCanonical = (CANONICAL_SUBTYPES as readonly string[]).includes(st.value);
+                        if (st.selectable) return <AdminStatusBadge status="published" label="In Editor" />;
+                        if (isCanonical) return <AdminStatusBadge status="draft" label="Declared — awaiting a renderer" />;
+                        if (n > 0) return <AdminStatusBadge status="published" label={`Alias — in use (${n})`} />;
+                        return <AdminStatusBadge status="draft" label="Alias / Preset-only" />;
+                      })()}
                     </div>
                     <p style={{ fontFamily: 'var(--font-family-base)', fontSize: 'var(--text-sm)', color: 'var(--color-text-muted)', lineHeight: '1.5' }}>
                       {st.description}

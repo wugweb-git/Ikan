@@ -3694,41 +3694,53 @@ app.post("/categories/sync", requireAuth, async (c) => {
       const existingEntry = existingMap.get(key);
 
       if (existingEntry) {
-        // If updateExisting flag is set, update icon/color/description on existing items
-        if (updateExisting) {
-          const needsUpdate =
-            (item.icon && existingEntry.icon !== item.icon) ||
-            (item.color && existingEntry.color !== item.color) ||
-            (item.description && !existingEntry.description && item.description) ||
-            // Added 2026-09-08. No catalog row carried a sort_order, so display
-            // order was whatever the store returned and every screen that cared
-            // had to re-sort in code. Without this clause the field could never
-            // reach an EXISTING row: the sync only ever compared icon, colour
-            // and description, so a new field on a seeded row was unreachable
-            // by the only writer that seeds it.
-            (typeof item.sort_order === 'number' && existingEntry.sort_order !== item.sort_order) ||
-            // Added in the same pass as `deprecated` reached the seed. Without a
-            // clause here the field was declared on 18 rows and could never land
-            // on an existing one — a catalog field with no reader, which is the
-            // exact defect this sync keeps being extended to avoid.
-            (!!item.deprecated !== !!existingEntry.deprecated);
+        /*
+          UPDATE THE WHOLE ITEM, not an allow-list of fields.
 
-          if (needsUpdate) {
-            const merged = {
-              ...existingEntry,
-              icon: item.icon || existingEntry.icon || 'tag',
-              color: item.color || existingEntry.color || '#2A2A2A',
-              description: item.description || existingEntry.description || '',
-              // The row's `id` is deliberately NOT touched. An id is minted once
-              // and frozen; `catalog-ids.test.ts` is what enforces that. Writing
-              // `item.id` here would let a rename in the catalog file repoint an
-              // existing row, which is the exact failure the freeze prevents.
-              sort_order: typeof item.sort_order === 'number' ? item.sort_order : existingEntry.sort_order,
-              // Superseded vocabularies carry this so any reader — not just Meta
-              // Manager's local list — can tell a live term from a dead one.
-              deprecated: !!item.deprecated,
-              updated_at: now,
-            };
+          This compared and copied a fixed list — icon, colour, description —
+          and was extended twice, for `sort_order` and then `deprecated`. Both
+          times the symptom was identical and silent: the field was declared on
+          the seed rows, the sync reported "unchanged", and the field could
+          never reach an already-seeded row. A catalog field with no reader is
+          the defect this whole module keeps being audited for, and the sync was
+          manufacturing one per new field.
+
+          So the allow-list is gone. Everything the catalog declares is written;
+          only the fields KV owns are protected:
+
+            · `id`         — minted once and frozen. Writing `item.id` here
+                             would let a rename in the catalog file repoint an
+                             existing row, which is exactly what the freeze and
+                             `catalog-ids.test.ts` exist to prevent.
+            · `created_at` — when the row was made, not when it was last synced.
+            · `can_hold` / `activities` — authored in KV on some rows and absent
+                             from the seed; spreading `item` must not erase them,
+                             so an undefined seed value never overwrites a
+                             present stored one.
+
+          A field added to `SeedItem` from here on lands with no code change,
+          which is the point.
+        */
+        if (updateExisting) {
+          const PROTECTED = new Set(['id', 'created_at']);
+          const merged: Record<string, unknown> = { ...existingEntry };
+          let changed = false;
+          for (const [k, v] of Object.entries(item)) {
+            if (PROTECTED.has(k)) continue;
+            // An absent seed value is "no opinion", never "clear it" — several
+            // rows carry `can_hold`/`activities` that the seed does not declare.
+            if (v === undefined || v === null) continue;
+            if (JSON.stringify(existingEntry[k]) !== JSON.stringify(v)) {
+              merged[k] = v;
+              changed = true;
+            }
+          }
+          // Defaults for rows that predate a field entirely.
+          if (!merged.icon)  { merged.icon = 'tag'; changed = true; }
+          if (!merged.color) { merged.color = '#2A2A2A'; changed = true; }
+
+          if (changed) {
+            merged.updated_at = now;
             await kv.set(`category:${existingEntry.id}`, merged);
             updated++;
             continue;
