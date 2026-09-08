@@ -10,6 +10,7 @@ import { severityForSection, resolveAnswerValue } from '../../lib/assessment-sec
 import { triggerCrisisSupport } from '../safety/CrisisSupport';
 import { buildScoringContext, toSectionScoreResult } from '../../lib/scoring-context';
 import { computeScores } from '../../lib/scoring-engine';
+import { createActiveTimer, type ActiveTimer } from '../../lib/active-time';
 import { slugify } from '../../lib/slug';
 import { AssessmentResults } from './AssessmentResults';
 import { useOfflineSync } from '../../hooks/useOfflineSync';
