@@ -25,7 +25,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { DAY_TYPE_PRESETS, PALETTE_BLOCK_TYPES, validateBlockForDayType } from './block-type-rules.ts';
 import { METADATA_CATALOG_ITEMS } from '../metadata-catalog.ts';
-import { INTERACTION_META, type Activity, type InteractionType } from './block-model.ts';
+import { INTERACTION_META, INTERACTIONS_WITHOUT_RENDERER, type Activity, type InteractionType } from './block-model.ts';
 
 interface SeedBlock {
   type?: Activity['type'];
@@ -76,7 +76,16 @@ test('every interaction is reachable from at least one preset', () => {
   const reachable = new Set(
     Object.values(DAY_TYPE_PRESETS).flatMap(p => p.allowedInteractions as string[]),
   );
-  const orphans = (Object.keys(INTERACTION_META) as InteractionType[]).filter(i => !reachable.has(i));
+  /*
+    An interaction with no renderer is exempt. Four were declared 2026-09-08
+    ahead of the renderers that will draw them, and requiring a preset to allow
+    one would be requiring that it be authorable — which is exactly what
+    `INTERACTIONS_WITHOUT_RENDERER` exists to prevent until step 7. The list
+    empties as the renderers land, and each term then has to earn a preset here.
+  */
+  const orphans = (Object.keys(INTERACTION_META) as InteractionType[])
+    .filter(i => !INTERACTIONS_WITHOUT_RENDERER.includes(i))
+    .filter(i => !reachable.has(i));
   assert.deepEqual(
     orphans, [],
     `no preset allows: ${orphans.join(', ')} — those activities are authorable nowhere`,

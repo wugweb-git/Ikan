@@ -165,7 +165,7 @@ export const DAY_TYPE_PRESETS: Record<DayType, DayTypePreset> = {
         activityConfig: { subtype: 'mcq' } 
       }
     ],
-    allowedInteractions: ['read', 'watch', 'complete', 'select-one'],
+    allowedInteractions: ['read', 'view', 'complete', 'select-one'],
     autoConfig: {
       autoAdvance: false,
       navigationBack: true

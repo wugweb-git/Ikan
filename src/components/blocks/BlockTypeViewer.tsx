@@ -1240,7 +1240,7 @@ function BlockPreview({ interaction }: { interaction: InteractionType }) {
       return <div style={previewStyle}>{lessonBody}<p style={hintStyle}>{hint}</p></div>;
 
     // No renderer of its own. Showing the same drawing is the point.
-    case 'watch':
+    case 'view':
       return (
         <div style={previewStyle}>
           {lessonBody}
@@ -1539,6 +1539,29 @@ function BlockPreview({ interaction }: { interaction: InteractionType }) {
             </span>
           </div>
           <p style={hintStyle}>{hint}</p>
+        </div>
+      );
+
+    /*
+      Declared, no renderer. `BlockRenderer` has no case for these four, so a
+      block carrying one would draw reading content — the `view` defect exactly.
+      They show a marked gap: inventing a mock for a widget the player cannot
+      build is the one thing this page must not do, and a mock here would make
+      the gap invisible to the person deciding whether to author one.
+    */
+    case 'listen':
+    case 'rank':
+    case 'review-table':
+    case 'pick-date':
+      return (
+        <div style={{ ...previewStyle, borderStyle: 'dashed' }}>
+          <p style={{ fontSize: 'var(--text-sm)', color: 'var(--color-status-warning)', margin: 0 }}>
+            No renderer yet — <code>{interaction}</code> is declared so it can be authored the day
+            one exists. It is kept out of every editor picker until then.
+          </p>
+          <p style={hintStyle}>
+            Requires: {INTERACTION_REQUIREMENTS[interaction]?.requires.join(', ') || 'nothing'}
+          </p>
         </div>
       );
 

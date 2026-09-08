@@ -342,7 +342,14 @@ export const METADATA_CATALOG_ITEMS: SeedItem[] = [
   // (was "12" — stale since `number` joined the union 2026-09-04. The DATA was
   // always right: 13 rows here, 13 values there. Only the comment lied.)
   s('Read',           'interaction_type', 'read',        { icon: 'book-open',          description: 'User reads/scrolls through content' }),
-  s('Watch',          'interaction_type', 'watch',       { icon: 'film',               description: 'User watches embedded video or media' }),
+  /*
+    THE ID STAYS `cat-interaction_type-watch`. Renamed from Watch 2026-09-08;
+    the row is the same row. This is the first real exercise of the freeze, and
+    it caught itself: without the explicit id, `catalogId()` would have minted
+    `cat-interaction_type-view`, the sync's `type::slug` lookup would have
+    missed the live `watch` row, and a SECOND row would have appeared beside it.
+  */
+  s('View',           'interaction_type', 'view',        { id: 'cat-interaction_type-watch', icon: 'film', description: 'User watches embedded video or media' }),
   s('Select One',     'interaction_type', 'select-one',  { icon: 'circle-check',       description: 'User picks one option from a list' }),
   s('Select Many',    'interaction_type', 'select-many', { icon: 'list-checks',        description: 'User picks multiple options' }),
   s('Write',          'interaction_type', 'write',       { icon: 'pen-tool',           description: 'User types free-form text response' }),
@@ -354,6 +361,15 @@ export const METADATA_CATALOG_ITEMS: SeedItem[] = [
   s('Upload',         'interaction_type', 'upload',      { icon: 'image',              description: 'User uploads a file (document, image, audio)' }),
   s('Number',         'interaction_type', 'number',      { icon: 'hash',               description: 'User enters a single numeric value' }),
   s('Complete',       'interaction_type', 'complete',    { icon: 'circle-check',       description: 'Day-ending summary or conclusion' }),
+  // ── Added 2026-09-08 with the four new interactions ─────────────
+  // Declared ahead of their renderers on purpose. `BlockRenderer` has no case
+  // for any of these, so nothing may be authored with one yet —
+  // INTERACTIONS_WITHOUT_RENDERER in block-model.ts is what enforces that, and
+  // the Block Type Viewer shows them as "Declared, unread" rather than usable.
+  s('Listen',        'interaction_type', 'listen',       { icon: 'headphones', description: 'User plays an audio track' }),
+  s('Rank',          'interaction_type', 'rank',         { icon: 'list',       description: 'User puts a list in order of preference' }),
+  s('Review Table',  'interaction_type', 'review-table', { icon: 'table',      description: 'Read-back of earlier days\u2019 table entries — the carry-forward view' }),
+  s('Pick a Date',   'interaction_type', 'pick-date',    { icon: 'calendar',   description: 'User chooses a date or a time' }),
 
   // ── Block Types (Equip/Program) ───────────────────────────────
   s('Lesson',      'block_type', 'lesson',      { icon: 'book-open',   description: 'Informational content block', can_hold: [] }),
@@ -568,6 +584,20 @@ export const METADATA_CATALOG_ITEMS: SeedItem[] = [
   s('Ephemeral Journal',   'activity', 'ephemeral-journal',   { id: 'cat-exercise_subtype-ephemeral-journal', icon: 'notebook',           description: 'Session-scoped journal not persisted long-term. Selectable in editor.' }),
   s('Comparison Matrix',   'activity', 'comparison-matrix',   { id: 'cat-exercise_subtype-comparison-matrix', icon: 'layout-grid',        description: 'Side-by-side comparison table. Alias for input-table with comparison layout.' }),
   s('Number',              'activity', 'number',              { id: 'cat-exercise_subtype-number', icon: 'hash',               description: 'Single numeric value entry' }),
+  // ── Added 2026-09-08 with the eight new activities ──────────────
+  // `read`, `listen`, `view` and `complete` were never activities — they were
+  // resolved from the block TYPE, which is why a video has never been
+  // authorable. The other four are recovered from the deleted `allowedBlocks`
+  // palette. Four of the eight resolve to interactions with no renderer and are
+  // therefore declared, not offered — see AUTHORABLE_SUBTYPES.
+  s('Read',            'activity', 'read',         { icon: 'book-open',  description: 'Formatted prose with optional media' }),
+  s('Listen',          'activity', 'listen',       { icon: 'headphones', description: 'An audio track. No renderer yet.' }),
+  s('View',            'activity', 'view',         { icon: 'film',       description: 'Embedded video or media' }),
+  s('Complete',        'activity', 'complete',     { icon: 'flag',       description: 'A closing summary card' }),
+  s('Date / Time',     'activity', 'date-time',    { icon: 'calendar',   description: 'Pick a date or a time. No renderer yet.' }),
+  s('Table Review',    'activity', 'table-review', { icon: 'table',      description: 'Read back earlier days\u2019 entries. No renderer yet.' }),
+  s('Ranking',         'activity', 'ranking',      { icon: 'list',       description: 'Order a list by preference. No renderer yet.' }),
+  s('Short Text',      'activity', 'short-text',   { icon: 'pen-tool',   description: 'A one-line free-text answer' }),
 
   // ── Check-in Block Types (widget types for check-in flow steps) ─
   s('Emoji Scale',   'checkin_block_type', 'emoji-scale',   { deprecated: true, icon: 'smile',               description: 'User picks from emoji options representing mood, energy, etc.' }),

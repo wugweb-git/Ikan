@@ -27,7 +27,7 @@ import { Checkbox } from '../ui/checkbox';
 import { Label } from '../ui/label';
 import { Card, CardContent } from '../ui/card';
 import { RichTextEditor } from '../ui/rich-text-editor';
-import { Activity, resolveInteraction, INTERACTION_META, warnFallback } from '../../lib/blocks/block-model';
+import { Activity, resolveInteraction, INTERACTION_META, AUTHORABLE_SUBTYPES, warnFallback } from '../../lib/blocks/block-model';
 import { useMetadata, isContainerRow } from '../../hooks/useMetadata';
 import { validateBlock } from '../../lib/blocks/block-validation';
 import { hasContentField, contentLabelFor, contentPlaceholderFor } from '../../lib/blocks/block-fields';
@@ -131,6 +131,22 @@ function BlockEditorInner({
   // uses it — hiding the current value would silently rewrite existing content
   // on the next save. It is marked instead.
   const exerciseSubtypeOptions = kvExerciseSubtypes
+    /*
+      Declared, not offered.
+
+      Four activities added 2026-09-08 — `listen`, `date-time`, `table-review`,
+      `ranking` — resolve to interactions `BlockRenderer` has no case for, so a
+      block carrying one would fall to `default: renderLesson()` and draw
+      reading content. That is the `watch` defect, and declaring the vocabulary
+      ahead of the renderers is only safe while nothing can pick one.
+
+      `AUTHORABLE_SUBTYPES` is the single list of what can actually be drawn; it
+      empties this filter as each renderer lands. A block that somehow already
+      carries one still shows it (the last clause), so the editor never silently
+      drops an author's stored value.
+    */
+    .filter(s => (AUTHORABLE_SUBTYPES as readonly string[]).includes(s.value)
+                 || s.value === block.activityConfig?.subtype)
     .filter(s => !stageActivities?.length
                  || stageActivities.includes(s.value)
                  || s.value === block.activityConfig?.subtype)

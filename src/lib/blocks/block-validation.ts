@@ -65,7 +65,7 @@ const REQUIRED: Partial<Record<InteractionType, { check: (c: any, b: Activity) =
                     message: 'An upload needs its accepted file types.' }],
   'read':        [{ check: (c, b) => nonEmpty(b.content) || nonEmpty(b.image_url), code: 'no-content',
                     message: 'A lesson with no content and no media renders as an empty card.' }],
-  'watch':       [{ check: (c, b) => nonEmpty(b.image_url), code: 'no-media',
+  'view':        [{ check: (c, b) => nonEmpty(b.image_url), code: 'no-media',
                     message: 'A watch block needs media to play.' }],
 };
 

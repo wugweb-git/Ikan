@@ -22,6 +22,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
   resolveInteraction, normalizeSubtype, SUBTYPE_ALIASES, EXERCISE_SUBTYPES, responseKeyOf,
+  INTERACTIONS_WITHOUT_RENDERER, AUTHORABLE_SUBTYPES, SUBTYPE_INTERACTION,
   INTERACTION_META, DAY_TYPES,
   type Activity, type InteractionType, type ExerciseSubtype,
 } from './block-model.ts';
@@ -115,6 +116,16 @@ const CANONICAL_INTERACTION: Record<ExerciseSubtype, InteractionType> = {
   'upload':              'upload',
   'number':              'number',
   'ephemeral-journal':   'write',
+  // The eight added 2026-09-08. Four resolve to interactions with no renderer;
+  // they are declared and kept out of every picker, not offered.
+  'read':                'read',
+  'listen':              'listen',
+  'view':                'view',
+  'complete':            'complete',
+  'date-time':           'pick-date',
+  'table-review':        'review-table',
+  'ranking':             'rank',
+  'short-text':          'write',
 };
 
 test('every canonical subtype and every alias resolves to a real interaction', () => {
@@ -227,8 +238,20 @@ test('exactly the response-producing interactions produce something', () => {
       `"${interaction}" produces ${spec.produces} but RESPONSE_PRODUCING says otherwise`
     );
   }
-  // read / watch / complete are the three passive ones.
-  assert.equal(RESPONSE_PRODUCING.length, Object.keys(INTERACTION_REQUIREMENTS).length - 3);
+  /*
+    Name the passive ones rather than counting them. This asserted
+    `length - 3` — read, watch, complete — which stopped being a claim about
+    the vocabulary and became a claim about its size: adding `listen` and
+    `review-table` (both passive) broke it without anything being wrong.
+    Listing them means a NEW interaction has to be classified deliberately.
+
+    `review-table` is the interesting one: it reads back earlier days' entries
+    and captures nothing, which is what distinguishes it from `input-table`.
+  */
+  const passive = (Object.keys(INTERACTION_REQUIREMENTS) as InteractionType[])
+    .filter((i) => !RESPONSE_PRODUCING.includes(i))
+    .sort();
+  assert.deepEqual(passive, ['complete', 'listen', 'read', 'review-table', 'view']);
 });
 
 test('every scale-backed interaction requires a scale_ref, and only those', () => {
@@ -572,4 +595,46 @@ test('an unnamed response-producing block is reported incomplete', () => {
     activityConfig: { prompt: 'What happened?' },
   } as never);
   assert.deepEqual(missingRequirements(b), ['key']);
+});
+
+/**
+ * The four interactions declared 2026-09-08 ahead of their renderers.
+ *
+ * Declaring an interaction the player cannot draw recreates the `watch` defect
+ * on purpose — a block carrying one falls to `default: renderLesson()`. These
+ * pin the guard that makes it a known gap rather than a trap.
+ */
+test('nothing without a renderer is authorable', () => {
+  for (const i of INTERACTIONS_WITHOUT_RENDERER) {
+    assert.ok(INTERACTION_META[i], `"${i}" is guarded but not declared`);
+  }
+  // No authorable activity may resolve to one of them.
+  for (const subtype of AUTHORABLE_SUBTYPES) {
+    assert.ok(
+      !INTERACTIONS_WITHOUT_RENDERER.includes(SUBTYPE_INTERACTION[subtype]),
+      `activity "${subtype}" is offered to authors but resolves to "${SUBTYPE_INTERACTION[subtype]}", which has no renderer`,
+    );
+  }
+  assert.equal(AUTHORABLE_SUBTYPES.length, EXERCISE_SUBTYPES.length - 4);
+});
+
+test('the activity table agrees with the resolver, for every activity', () => {
+  // Two mappings exist while the resolver keeps its switch: the switch's cases
+  // and SUBTYPE_INTERACTION. They must not drift, and the gated collapse
+  // deletes the switch — leaving the table as the only one.
+  for (const subtype of EXERCISE_SUBTYPES) {
+    if (subtype === 'ephemeral-journal') continue; // options-dependent, asserted separately
+    assert.equal(
+      resolveInteraction(block('exercise', subtype)),
+      SUBTYPE_INTERACTION[subtype],
+      `the switch and SUBTYPE_INTERACTION disagree on "${subtype}"`,
+    );
+  }
+});
+
+test('watch still resolves, under its new name', () => {
+  // 0 live blocks carried it, which is what made the rename free — but a stored
+  // value must never stop resolving just because a term was renamed.
+  assert.equal(normalizeSubtype('watch'), 'view');
+  assert.equal(SUBTYPE_INTERACTION['view'], 'view');
 });

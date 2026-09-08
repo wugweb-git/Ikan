@@ -47,9 +47,15 @@ test('block_type ids are frozen — 17 of them', () => {
   ]);
 });
 
-test('interaction_type ids are frozen — 13 of them', () => {
+test('interaction_type ids are frozen — 17 of them', () => {
   assert.deepEqual(idsOf('interaction_type'), [
     'cat-interaction_type-read',
+    // `view`, renamed from `watch` 2026-09-08. THE ID DID NOT FOLLOW THE NAME,
+    // and this line is the whole reason the freeze exists: without the explicit
+    // id in the seed, `catalogId()` mints `cat-interaction_type-view`, the
+    // sync's type::slug lookup misses the live `watch` row, and a second row
+    // appears beside the first. This test caught exactly that, on the first
+    // real rename after the freeze was written.
     'cat-interaction_type-watch',
     'cat-interaction_type-select-one',
     'cat-interaction_type-select-many',
@@ -62,17 +68,28 @@ test('interaction_type ids are frozen — 13 of them', () => {
     'cat-interaction_type-upload',
     'cat-interaction_type-number',
     'cat-interaction_type-complete',
+    // Added 2026-09-08. New rows, so new ids under the current type name.
+    'cat-interaction_type-listen',
+    'cat-interaction_type-rank',
+    'cat-interaction_type-review-table',
+    'cat-interaction_type-pick-date',
   ]);
 });
 
 /**
- * These read `cat-exercise_subtype-*` on purpose. The type was renamed to
- * `activity` on 2026-09-04; the rows keep the id they were created under,
- * because that is what an identifier surviving a rename looks like. Verified
- * against live KV 2026-09-08: 12 rows, every key `cat-exercise_subtype-<slug>`,
- * every `value.id` equal to its key.
+ * **Two prefixes here, on purpose.**
+ *
+ * The first twelve read `cat-exercise_subtype-*`: the type was renamed to
+ * `activity` on 2026-09-04 and the rows kept the id they were minted with,
+ * which is what an identifier surviving a rename looks like. Verified against
+ * live KV 2026-09-08 — 12 rows, every key `cat-exercise_subtype-<slug>`, every
+ * `value.id` equal to its key.
+ *
+ * The last eight were created 2026-09-08 and so carry `cat-activity-*`. Each id
+ * records when its row was minted, not what the bucket is called today. Do not
+ * "harmonise" them.
  */
-test('activity ids are frozen — 12 of them, under the name they were minted with', () => {
+test('activity ids are frozen — 20 of them, each under the name it was minted with', () => {
   assert.deepEqual(idsOf('activity'), [
     'cat-exercise_subtype-mcq',
     'cat-exercise_subtype-single-select',
@@ -86,6 +103,14 @@ test('activity ids are frozen — 12 of them, under the name they were minted wi
     'cat-exercise_subtype-ephemeral-journal',
     'cat-exercise_subtype-comparison-matrix',
     'cat-exercise_subtype-number',
+    'cat-activity-read',
+    'cat-activity-listen',
+    'cat-activity-view',
+    'cat-activity-complete',
+    'cat-activity-date-time',
+    'cat-activity-table-review',
+    'cat-activity-ranking',
+    'cat-activity-short-text',
   ]);
 });
 

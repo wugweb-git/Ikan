@@ -137,6 +137,11 @@ export interface Block {
 export const RESPONSE_PRODUCING: readonly InteractionType[] = [
   'select-one', 'select-many', 'rate', 'clinical',
   'check', 'input-table', 'track-table', 'write', 'number', 'upload',
+  // Added 2026-09-08. `rank` stores an ordering and `pick-date` a date, so both
+  // need a key like any other answer. `listen` and `view` are passive, and
+  // `review-table` READS BACK earlier days rather than capturing anything —
+  // which is the whole point of it, and why it produces null.
+  'rank', 'pick-date',
 ];
 
 /** The four whose option set comes from the catalog rather than from the block. */
@@ -162,7 +167,14 @@ export interface InteractionRequirement {
 export const INTERACTION_REQUIREMENTS: Record<InteractionType, InteractionRequirement> = {
   // Passive — no response, completion only
   'read':        { requires: [],                              optional: ['media_ref'],                      produces: null },
-  'watch':       { requires: ['media_ref'],                   optional: ['content'],                        produces: null },
+  'view':        { requires: ['media_ref'],                   optional: ['content'],                        produces: null },
+  // Declared 2026-09-08 with the four new interactions. `requires` is the
+  // authored config each will need; none has a renderer yet, so no live block
+  // can carry one and these lines report on nothing until the renderers land.
+  'listen':      { requires: ['media_ref'],                   optional: ['content', 'transcript'],          produces: null },
+  'rank':        { requires: ['items'],                       optional: ['min', 'max'],                     produces: 'item_id[]' },
+  'review-table':{ requires: ['columns'],                     optional: ['rows', 'source_key'],             produces: null },
+  'pick-date':   { requires: ['prompt'],                      optional: ['min', 'max', 'time'],             produces: 'iso_date' },
   'complete':    { requires: ['content'],                     optional: [],                                 produces: null },
   // Scale-backed — the option set comes from the catalog, never inline
   'select-one':  { requires: ['scale_ref'],                   optional: ['correct_option'],                 produces: 'option_id' },

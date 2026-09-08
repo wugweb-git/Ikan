@@ -392,7 +392,7 @@ export function ProgramPlayer({
     return activeStep.blocks.every(block => {
       const interaction = resolveInteraction(block);
       // Content/read blocks are always valid (no user input needed)
-      if (['read', 'complete', 'watch'].includes(interaction)) {
+      if (['read', 'complete', 'view'].includes(interaction)) {
         return true;
       }
       if (!block.required) return true;

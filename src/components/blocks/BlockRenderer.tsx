@@ -941,7 +941,7 @@ export function BlockRenderer({ block, value, onChange, readOnly = false, equipI
     switch (interaction) {
       case 'read':
       case 'complete':
-      case 'watch':
+      case 'view':
         return renderLesson();
 
       case 'clinical':

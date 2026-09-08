@@ -48,18 +48,45 @@ export interface ScoringConfig {
 // Old programs without `interaction` are mapped via resolveInteraction() at runtime.
 export type InteractionType =
   | 'read'          // Lesson, conclude — user reads/scrolls content
-  | 'watch'         // Video/media — user watches embedded media
+  | 'view'          // Video/media — renamed from `watch` 2026-09-08 (0 live blocks)
+  | 'listen'        // Audio — NO RENDERER YET, see below
   | 'select-one'    // MCQ, single-select — pick one option
   | 'select-many'   // Multi-select — pick multiple options
   | 'write'         // Journal, reflection, ephemeral-journal — free text entry
   | 'rate'          // Rating scale, likert — pick a number on a scale
+  | 'rank'          // Ordering a list by preference — NO RENDERER YET
   | 'check'         // Checklist, structured-list — toggle items
   | 'track-table'   // Table checklist (yes/no grid)
   | 'input-table'   // Input table, comparison matrix — fill data cells
+  | 'review-table'  // Read-back of earlier days' table entries — NO RENDERER YET
   | 'clinical'      // Clinical instrument (GAD-7, PHQ-9) — scored Likert grid
   | 'upload'        // File upload — user uploads a document, image, or audio file
+  | 'pick-date'     // A date or time — NO RENDERER YET
   | 'number'        // Single numeric value — declared as a subtype since 2026-09-04
   | 'complete';     // Conclude/summary — day-ending content block
+
+/**
+ * Interactions declared here that `BlockRenderer` has no case for.
+ *
+ * **This is the `watch` defect, created deliberately and on the record.** A
+ * block carrying one of these falls to `default: renderLesson()` and draws
+ * reading content — which is precisely what `watch` has always done, and what
+ * the Block Type Viewer had to discover by reading the renderer.
+ *
+ * So they are declared and NOT OFFERED. `authorableInteractions()` below is
+ * what every picker must filter through, the viewer marks them
+ * "Declared, unread", and `BlockPreview` shows a marked gap rather than a mock.
+ * The list empties when the four renderers are built; until then it is the
+ * difference between a known gap and a trap.
+ */
+export const INTERACTIONS_WITHOUT_RENDERER: readonly InteractionType[] = [
+  'listen', 'rank', 'review-table', 'pick-date',
+];
+
+/** Interactions an author may actually pick — everything the player can draw. */
+export function authorableInteractions(all: readonly InteractionType[]): InteractionType[] {
+  return all.filter((i) => !INTERACTIONS_WITHOUT_RENDERER.includes(i));
+}
 
 // ── The vocabulary, in one place ────────────────────────────────────
 // Before this, the alias list lived as extra `case` labels inside
@@ -85,7 +112,67 @@ export const EXERCISE_SUBTYPES = [
   'mcq', 'single-select', 'multi-select', 'table', 'input-table', 'structured-list',
   'rating-scale', 'clinical-instrument', 'upload', 'ephemeral-journal',
   'comparison-matrix', 'number',
+  /*
+    +8 on 2026-09-08.
+
+    `read`, `listen`, `view` and `complete` were never activities — they were
+    resolved from the BLOCK TYPE, which is why `resolveInteraction` needs a type
+    switch at all and why a video has never been authorable. Naming them as
+    activities is what lets that switch become one lookup.
+
+    `date-time`, `table-review`, `ranking` and `short-text` are recovered from
+    the deleted `allowedBlocks` palette.
+
+    Four of these resolve to interactions with no renderer — see
+    INTERACTIONS_WITHOUT_RENDERER — so they are declared and not offered.
+    `read`, `complete`, `short-text` and `view` are safe today.
+  */
+  'read', 'listen', 'view', 'complete',
+  'date-time', 'table-review', 'ranking', 'short-text',
 ] as const;
+
+/**
+ * **Activity -> interaction. Total both ways.**
+ *
+ * Every activity resolves to exactly one interaction, and every interaction has
+ * at least one activity. Typed `Record<ExerciseSubtype, InteractionType>`, so
+ * an activity added without a mapping fails the build rather than falling
+ * through the resolver's `default` to a free-text box — which is how nine live
+ * blocks came to render as textareas.
+ *
+ * This is the model's central claim written down: the block TYPE is not
+ * involved. `resolveInteraction` still consults its type switch for blocks that
+ * carry no activity, and collapsing that away is a separate, gated step; this
+ * table is what makes the collapse possible rather than a rewrite.
+ */
+export const SUBTYPE_INTERACTION: Record<ExerciseSubtype, InteractionType> = {
+  'mcq':                 'select-one',
+  'single-select':       'select-one',
+  'multi-select':        'select-many',
+  'table':               'track-table',
+  'input-table':         'input-table',
+  'comparison-matrix':   'input-table',
+  'structured-list':     'check',
+  'rating-scale':        'rate',
+  'clinical-instrument': 'clinical',
+  'upload':              'upload',
+  'ephemeral-journal':   'write',
+  'number':              'number',
+  // Added 2026-09-08 with the eight new activities.
+  'read':                'read',
+  'listen':              'listen',
+  'view':                'view',
+  'complete':            'complete',
+  'date-time':           'pick-date',
+  'table-review':        'review-table',
+  'ranking':             'rank',
+  'short-text':          'write',
+};
+
+/** The activities an author may pick — those whose interaction can be drawn. */
+export const AUTHORABLE_SUBTYPES: readonly ExerciseSubtype[] = EXERCISE_SUBTYPES.filter(
+  (s) => !INTERACTIONS_WITHOUT_RENDERER.includes(SUBTYPE_INTERACTION[s]),
+);
 export type ExerciseSubtype = typeof EXERCISE_SUBTYPES[number];
 
 /**
@@ -116,6 +203,34 @@ export const SUBTYPE_ALIASES: Record<string, ExerciseSubtype> = {
   multi_select:        'multi-select',
   single_choice:       'single-select',
   yes_no:              'mcq',
+  /*
+    4 · recovered from the deleted `allowedBlocks` palette, 2026-09-08.
+
+    Added so the deletion cannot repeat. `allowedBlocks` was a 23-string list
+    that existed in no store and no type union, and deleting it took the only
+    written record of these spellings with it — twice now this module has had to
+    recover a vocabulary from a git history rather than read it. Declared here,
+    a term survives its own removal.
+
+    None of these is known to be in live content; they are the spellings this
+    codebase has answered to, kept so that a stored one resolves instead of
+    hitting the resolver default and drawing a free-text box.
+  */
+  watch:               'view',
+  boolean:             'mcq',
+  mcq_single:          'mcq',
+  mcq_multi:           'multi-select',
+  rtf_list:            'structured-list',
+  journal_short:       'ephemeral-journal',
+  long_text:           'ephemeral-journal',
+  rich_lesson:         'read',
+  callout:             'read',
+  media:               'view',
+  summary:             'complete',
+  table_input:         'input-table',
+  table_review:        'table-review',
+  date_time:           'date-time',
+  short_text:          'short-text',
 };
 
 const _CANONICAL = new Set<string>(EXERCISE_SUBTYPES);
@@ -249,6 +364,17 @@ export function resolveInteraction(activity: Activity): InteractionType {
         if (exerciseConfig?.options && exerciseConfig.options.length > 0) return 'select-one';
         return 'write';
       default:
+        /*
+          Everything above is a `case` this switch has carried since before
+          `SUBTYPE_INTERACTION` existed, and every one of them agrees with the
+          table — asserted in block-vocabulary.test.ts, so they cannot drift
+          while both exist. The eight activities added 2026-09-08 have no case
+          and resolve here, through the table, which is the single mapping the
+          gated collapse will leave standing.
+        */
+        if (subtype && subtype in SUBTYPE_INTERACTION) {
+          return SUBTYPE_INTERACTION[subtype as ExerciseSubtype];
+        }
         // Exercise with options but no subtype → select-one
         if (exerciseConfig?.options && exerciseConfig.options.length > 0) return 'select-one';
         if (rawSubtype) {
@@ -315,10 +441,20 @@ export const INTERACTION_META: Record<InteractionType, {
 }> = {
   'read':        { label: 'Read',           verb: 'Reads',    icon: 'book-open',      description: 'User reads/scrolls through content',
                    previewHint: 'Formatted prose with optional media — the primary learning block', hintSource: 'recovered' },
-  'watch':       { label: 'Watch',          verb: 'Watches',  icon: 'play-circle',    description: 'User watches embedded video or media',
-                   // BlockRenderer: `case 'watch': return renderLesson()`. There is no
-                   // watch renderer; it draws the lesson view. Worth saying on the page.
+  'view':        { label: 'View',           verb: 'Views',    icon: 'film',           description: 'User watches embedded video or media',
+                   // Renamed from `watch` 2026-09-08 — 0 live blocks carried it, so
+                   // the rename was free in data. The renderer gap is NOT fixed by
+                   // the rename: `case 'view'` still returns renderLesson(), so it
+                   // draws reading content. Said here rather than discovered again.
                    previewHint: 'No renderer of its own — falls through to the lesson view', hintSource: 'written' },
+  'listen':      { label: 'Listen',         verb: 'Listens',  icon: 'headphones',     description: 'User plays an audio track',
+                   previewHint: 'No renderer yet — declared so it can be authored once one exists', hintSource: 'written' },
+  'rank':        { label: 'Rank',           verb: 'Ranks',    icon: 'list',           description: 'User puts a list in order of preference',
+                   previewHint: 'No renderer yet — declared so it can be authored once one exists', hintSource: 'written' },
+  'review-table':{ label: 'Review Table',   verb: 'Reviews',  icon: 'table',          description: 'Read-back of earlier days\u2019 table entries — the carry-forward view',
+                   previewHint: 'No renderer yet — declared so it can be authored once one exists', hintSource: 'written' },
+  'pick-date':   { label: 'Pick a Date',    verb: 'Picks',    icon: 'calendar',       description: 'User chooses a date or a time',
+                   previewHint: 'No renderer yet — declared so it can be authored once one exists', hintSource: 'written' },
   'select-one':  { label: 'Select One',     verb: 'Selects',  icon: 'circle-dot',     description: 'User picks one option from a list',
                    previewHint: 'Radio button list — only one option can be selected', hintSource: 'recovered' },
   'select-many': { label: 'Select Many',    verb: 'Selects',  icon: 'check-square',   description: 'User picks multiple options',
