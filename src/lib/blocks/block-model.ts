@@ -105,7 +105,26 @@ export function authorableInteractions(all: readonly InteractionType[]): Interac
  */
 export const LEAF_BLOCK_TYPES = [
   'lesson', 'exercise', 'journal', 'checklist', 'conclude', 'sleep-diary',
+  /*
+    All 17 as of 2026-09-08, and the name is now a leftover — there are no
+    non-leaves. No block holds another, so every catalog `block_type` row is a
+    type a block may BE.
+
+    The eleven below were day types before the vocabularies merged, and the
+    remap that assigned live content to them made the gap real: 82 blocks are
+    `tracker`, 13 `onboarding`, 5 `workshop` — 100 blocks carrying a type the
+    union did not contain. Exactly the `quiz` situation this file already
+    documents, and latent for the same reason: every block carries an explicit
+    `interaction`, so `resolveInteraction` returns before the type switch and
+    nothing mis-renders. Latent, not harmless — a NEW block of one of these
+    types authored without an interaction would fall to the default.
+  */
+  'onboarding', 'assessment', 'assessment-lite', 'learning', 'practice',
+  'reflection', 'rest', 'quiz', 'workshop', 'tracker', 'check-in',
 ] as const;
+
+/** What a block may BE — all 17, since no block holds another. */
+export type BlockType = typeof LEAF_BLOCK_TYPES[number];
 
 /** The canonical activities. Mirrors the `activity` catalog bucket (12 rows, renamed from `exercise_subtype` 2026-09-04). */
 export const EXERCISE_SUBTYPES = [
@@ -568,7 +587,7 @@ export interface Activity {
    * live. A `quiz` block authored WITHOUT a subtype would have fallen to
    * `default: 'read'` and rendered as reading content.
    */
-  type: 'lesson' | 'exercise' | 'journal' | 'checklist' | 'reflection' | 'conclude' | 'sleep-diary' | 'quiz';
+  type: BlockType;
   /** Unified interaction type. Preferred over type+subtype when present. */
   interaction?: InteractionType;
   content: string;
