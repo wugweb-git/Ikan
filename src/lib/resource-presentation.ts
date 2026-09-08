@@ -124,3 +124,40 @@ export function toResourcePost(r: ResourceRecord): PresentedResource {
     featured: r.featured === true,
   };
 }
+
+/**
+ * A blog category expressed as an assessment category.
+ *
+ * The two vocabularies overlap but are not the same list: articles are tagged
+ * with blog labels, and only some of those name an assessment. Measured on the
+ * 9 live records, the only label that is not an assessment category is
+ * `mental-health` (2 articles), which is general-interest material — so it
+ * reads as `general`. Everything else passes through unchanged.
+ *
+ * This is a map, not a rename: adding a label here is how a new blog category
+ * is pointed at an existing assessment, without re-tagging the articles.
+ */
+const BLOG_CATEGORY_TO_ASSESSMENT: Record<string, string> = {
+  'mental-health': 'general',
+};
+
+export function blogCategoryToAssessmentCategory(category: unknown): string {
+  const v = String(category ?? '').trim().toLowerCase();
+  return BLOG_CATEGORY_TO_ASSESSMENT[v] ?? v;
+}
+
+/**
+ * A sortable timestamp for an article, newest first.
+ *
+ * `published_at` is the editorial date and wins; `created_at` is when the row
+ * was written. An unparseable or absent date sorts last rather than to the
+ * epoch-adjacent top, which is where `new Date(undefined)` would put it.
+ */
+export function articleTime(r: ResourceRecord & { published_at?: string }): number {
+  for (const raw of [r.published_at, r.created_at, r.date]) {
+    if (!raw) continue;
+    const t = new Date(raw).getTime();
+    if (!Number.isNaN(t)) return t;
+  }
+  return -Infinity;
+}

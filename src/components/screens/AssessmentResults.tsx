@@ -10,7 +10,9 @@ import { ArrowRight } from 'lucide-react';
 import { SectionReportCard } from '../player/SectionReportCard';
 import { AssessmentCard } from '../assessment/AssessmentCard';
 import { ResourceCard } from '../page-blocks/ResourceCard';
-import { toResourcePost, isPublished } from '../../lib/resource-presentation';
+import {
+  toResourcePost, isPublished, blogCategoryToAssessmentCategory, articleTime,
+} from '../../lib/resource-presentation';
 import {
   Carousel, CarouselContent, CarouselItem, CarouselPrevious, CarouselNext,
 } from '../ui/carousel';
@@ -306,11 +308,18 @@ export function AssessmentResults({
   }, [recKey]);
 
   /**
-   * Articles whose own category matches this assessment's.
+   * Articles whose own category matches this assessment's, newest first.
    *
-   * `mental-health` is not an assessment category — it is how two articles
-   * were tagged — so it is read as `general`. Unpublished articles are
-   * excluded. No match renders nothing at all.
+   * The two vocabularies are mapped rather than assumed equal: an article's
+   * category is a blog label, and only some of those are assessment
+   * categories. `mental-health` is the one live case — two articles carry it
+   * and no assessment does — so it reads as `general`. Anything already
+   * matching an assessment category passes through unchanged, which is why
+   * this is a map and not a rename.
+   *
+   * Sorted newest first so a freshly uploaded article is the one that
+   * surfaces, rather than whatever order the store happened to return.
+   * Unpublished articles are excluded, and no match renders nothing at all.
    */
   const articleCategory = (activeData.recommendation?.category
     ?? placed.instrument.categoryLabel ?? '').trim().toLowerCase();
@@ -320,13 +329,10 @@ export function AssessmentResults({
     (async () => {
       try {
         const all = await apiClient.getResources();
-        const norm = (c: unknown) => {
-          const v = String(c ?? '').trim().toLowerCase();
-          return v === 'mental-health' ? 'general' : v;
-        };
-        const want = norm(articleCategory);
+        const want = blogCategoryToAssessmentCategory(articleCategory);
         const matched = (Array.isArray(all) ? all : [])
-          .filter(r => isPublished(r) && norm(r?.category) === want);
+          .filter(r => isPublished(r) && blogCategoryToAssessmentCategory(r?.category) === want)
+          .sort((a, b) => articleTime(b) - articleTime(a));
         if (!cancelled) setArticles(matched);
       } catch { if (!cancelled) setArticles([]); }
     })();

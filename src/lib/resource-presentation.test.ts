@@ -9,6 +9,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
   toResourcePost, resourceImage, resourceReadTime, isPublished,
+  blogCategoryToAssessmentCategory, articleTime,
 } from './resource-presentation.ts';
 
 /** Shaped like a live record: thumbnail, not image; readTime, not read_time. */
@@ -110,4 +111,33 @@ test('a numeric readTime does not crash the mapping', () => {
   assert.equal(resourceReadTime({ readTime: 5 as never }), '5 min read');
   assert.equal(resourceReadTime({ read_time: 12 as never }), '12 min read');
   assert.equal(toResourcePost({ id: 'x', readTime: 5 as never }).readTime, '5 min read');
+});
+
+test('blog categories map onto assessment categories', () => {
+  // `mental-health` is the one live label that names no assessment.
+  assert.equal(blogCategoryToAssessmentCategory('mental-health'), 'general');
+  assert.equal(blogCategoryToAssessmentCategory('Mental-Health'), 'general');
+  // Everything that already names an assessment passes through.
+  for (const c of ['sleep', 'stress', 'general', 'anxiety', 'burnout', 'balance', 'depression']) {
+    assert.equal(blogCategoryToAssessmentCategory(c), c);
+  }
+  assert.equal(blogCategoryToAssessmentCategory(undefined), '');
+});
+
+test('articles sort newest first, with published_at winning', () => {
+  const older = { created_at: '2025-12-20T00:00:00.000Z' };
+  const newer = { created_at: '2026-04-01T00:00:00.000Z' };
+  assert.ok(articleTime(newer) > articleTime(older));
+  // The editorial date wins over the row's write date.
+  assert.equal(
+    articleTime({ published_at: '2026-05-01T00:00:00.000Z', created_at: '2020-01-01T00:00:00.000Z' }),
+    new Date('2026-05-01T00:00:00.000Z').getTime(),
+  );
+});
+
+test('an article with no usable date sorts last, not first', () => {
+  // `new Date(undefined)` is NaN and `new Date(0)` is 1970 — either would put
+  // an undated article at one end by accident rather than by decision.
+  assert.equal(articleTime({}), -Infinity);
+  assert.equal(articleTime({ created_at: 'not-a-date' }), -Infinity);
 });
