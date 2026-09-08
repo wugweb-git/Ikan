@@ -35,12 +35,23 @@ export interface AssessmentBlockProps {
   className?: string;
 }
 
-function MobileAssessmentCard({ program, onClick }: { program: AssessmentProgram; onClick: () => void }) {
+/*
+ * The card is an <a href>, not a div with a click handler.
+ *
+ * It navigates to a URL, so it should be a link: that restores
+ * open-in-new-tab, middle-click, copy-link-address, keyboard focus and Enter,
+ * and puts the assessment back in the internal link graph. `onClick`
+ * preventDefaults and keeps the existing SPA navigation for a plain left
+ * click; a modified click falls through to the browser. Presentation is
+ * unchanged — the anchor carries the same classes the div did.
+ */
+function MobileAssessmentCard({ program, onClick }: { program: AssessmentProgram; onClick: (e: React.MouseEvent) => void }) {
   const imageSrc = resolveImageUrl(program.image);
 
   return (
-    <div 
-      className="relative shrink-0 w-full cursor-pointer transition-transform active:scale-[0.98]" 
+    <a
+      href={program.link}
+      className="relative shrink-0 w-full cursor-pointer transition-transform active:scale-[0.98] block no-underline text-inherit"
       style={{ backgroundColor: 'var(--color-bg-card)', borderRadius: 'var(--radius-lg)' }}
       onClick={onClick}
     >
@@ -77,16 +88,17 @@ function MobileAssessmentCard({ program, onClick }: { program: AssessmentProgram
           </div>
         </div>
       </div>
-    </div>
+    </a>
   );
 }
 
-function DesktopAssessmentCard({ program, onClick }: { program: AssessmentProgram; onClick: () => void }) {
+function DesktopAssessmentCard({ program, onClick }: { program: AssessmentProgram; onClick: (e: React.MouseEvent) => void }) {
   const imageSrc = resolveImageUrl(program.image);
 
   return (
-    <div 
-      className="flex flex-col h-full cursor-pointer transition-all hover:shadow-lg overflow-hidden" 
+    <a
+      href={program.link}
+      className="flex flex-col h-full cursor-pointer transition-all hover:shadow-lg overflow-hidden no-underline text-inherit"
       style={{ backgroundColor: 'var(--color-bg-card)', borderRadius: 'var(--radius-lg)', border: '1px solid var(--color-border-default)' }}
       onClick={onClick}
     >
@@ -118,7 +130,7 @@ function DesktopAssessmentCard({ program, onClick }: { program: AssessmentProgra
           </p>
         )}
       </div>
-    </div>
+    </a>
   );
 }
 
@@ -143,10 +155,18 @@ export function AssessmentBlock({
    * removed, because deleting a public prop is a breaking change for callers.
    */
   
-  const handleProgramClick = (program: AssessmentProgram) => {
+  /*
+   * A modified click — new tab, new window, middle button — is left to the
+   * browser so the anchor behaves like a link. Everything else is handled
+   * in-app exactly as before.
+   */
+  const handleProgramClick = (program: AssessmentProgram, e: React.MouseEvent) => {
+    if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
     if (onProgramClick) {
+      e.preventDefault();
       onProgramClick(program);
     } else if (onNavigate) {
+      e.preventDefault();
       onNavigate(program.link);
     }
   };
@@ -194,7 +214,7 @@ export function AssessmentBlock({
                 <MobileAssessmentCard
                   key={program.id || index}
                   program={program}
-                  onClick={() => handleProgramClick(program)}
+                  onClick={(e) => handleProgramClick(program, e)}
                 />
               ))}
             </div>
@@ -204,16 +224,21 @@ export function AssessmentBlock({
                 <DesktopAssessmentCard
                   key={program.id || index}
                   program={program}
-                  onClick={() => handleProgramClick(program)}
+                  onClick={(e) => handleProgramClick(program, e)}
                 />
               ))}
             </div>
           )}
 
         {/* CTA — View All Assessments */}
-        <button
-          onClick={() => onNavigate?.(seeMoreRoute)}
-          className="flex items-center justify-center cursor-pointer border-none transition-all hover:opacity-90"
+        {/* Also a link — it goes to a URL. Same classes, same appearance. */}
+        <a
+          href={seeMoreRoute}
+          onClick={(e) => {
+            if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+            if (onNavigate) { e.preventDefault(); onNavigate(seeMoreRoute); }
+          }}
+          className="flex items-center justify-center cursor-pointer border-none transition-all hover:opacity-90 no-underline"
           style={{
             gap: '8px',
             backgroundColor: 'var(--color-bg-card)',
@@ -227,7 +252,7 @@ export function AssessmentBlock({
         >
           {seeMoreText}
           <ArrowRight size={18} />
-        </button>
+        </a>
       </div>
     </div>
   );
