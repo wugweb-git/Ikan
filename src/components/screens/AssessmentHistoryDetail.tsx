@@ -94,9 +94,12 @@ const getSeverityBg = (tone?: Tone) => tonePresentation(tone).background;
  * Still assumes lower = better, which holds for every assessment that produces
  * an overall score. General has no overall, so it never reaches here.
  */
-const getTrend = (attempts: AssessmentAttempt[]) => {
+const getTrend = (attempts: AssessmentAttempt[]): 'improving' | 'worsening' | 'stable' | null => {
   const comparable = attempts.filter(a => !a.excludedFromTrends && pctOf(a.score, a.maxScore) !== null);
-  if (comparable.length < 2) return 'stable';
+  // NOT 'stable'. Fewer than two comparable results means there is no trend to
+  // report, and "Stable" is a claim about change over a set the page has just
+  // said cannot be compared. Null renders no trend row at all.
+  if (comparable.length < 2) return null;
   const pct = (a: AssessmentAttempt) => pctOf(a.score, a.maxScore)!;
   const latest = pct(comparable[0]);
   const previous = pct(comparable[1]);
@@ -299,6 +302,17 @@ export function AssessmentHistoryDetail({ assessmentId, onBack, onNavigate }: As
 
   const trend = getTrend(attempts);
   const latest = attempts[0];
+  /**
+   * The newest result is not necessarily a current one.
+   *
+   * After the 2026-09-08 revision every stress result is `pre-spec`, including
+   * the most recent. The header was still rendering it as "Latest Score" with a
+   * percentage, a progress ring and a severity chip — and that chip comes from
+   * the retired band table, on an instrument that no longer exists at that
+   * length. A 14/28 on a 7-item stress scale presented as current, four lines
+   * above a card explaining it cannot be compared to anything.
+   */
+  const latestIsStale = !!latest?.excludedFromTrends;
   const assessmentTitle = latest?.assessmentName || assessmentMeta?.title || 'Assessment';
 
   // ── PDF Export ──
@@ -323,7 +337,11 @@ export function AssessmentHistoryDetail({ assessmentId, onBack, onNavigate }: As
       )
       .join('');
 
-    const trendLabel = trend === 'improving' ? 'Improving ↓' : trend === 'worsening' ? 'Increasing ↑' : 'Stable →';
+    // Null trend prints a dash, not "Stable" — the export must not assert a
+    // comparison the page itself refuses to make.
+    const trendLabel = trend === 'improving' ? 'Improving ↓'
+      : trend === 'worsening' ? 'Increasing ↑'
+      : trend === 'stable' ? 'Stable →' : '—';
 
     const html = `
       <!DOCTYPE html>
@@ -367,14 +385,16 @@ export function AssessmentHistoryDetail({ assessmentId, onBack, onNavigate }: As
 
         <div class="summary">
           <div class="stat">
-            <div class="stat-label">Latest Score</div>
+            <div class="stat-label">${latestIsStale ? 'Most recent result' : 'Latest Score'}</div>
             <div class="stat-value">${pctOf(latest.score, latest.maxScore) ?? '—'}%<span style="font-size:14px;color:#717182;font-weight:400"> (${latest.score}/${latest.maxScore ?? '—'})</span></div>
-            ${latest.severity ? `<div class="stat-sub" style="text-transform:capitalize">${latest.severity}</div>` : ''}
+            ${latestIsStale
+              ? `<div class="stat-sub">Scored under an older version</div>`
+              : (latest.severity ? `<div class="stat-sub" style="text-transform:capitalize">${latest.severity}</div>` : '')}
           </div>
           <div class="stat">
             <div class="stat-label">Trend</div>
             <div class="stat-value" style="font-size:18px">${trendLabel}</div>
-            <div class="stat-sub">vs. previous attempt</div>
+            <div class="stat-sub">${trend ? 'vs. previous attempt' : 'no comparable attempts'}</div>
           </div>
           <div class="stat">
             <div class="stat-label">First Taken</div>
@@ -548,7 +568,7 @@ export function AssessmentHistoryDetail({ assessmentId, onBack, onNavigate }: As
                     <circle
                       cx={40} cy={40} r={34}
                       fill="none"
-                      stroke={getSeverityColor(latest.tone)}
+                      stroke={latestIsStale ? 'var(--color-text-muted)' : getSeverityColor(latest.tone)}
                       strokeWidth={8}
                       strokeLinecap="round"
                       strokeDasharray={2 * Math.PI * 34}
@@ -566,8 +586,23 @@ export function AssessmentHistoryDetail({ assessmentId, onBack, onNavigate }: As
 
                 {/* Info */}
                 <div className="flex-1 min-w-0">
-                  <p style={f('xs', 400, 'var(--color-text-muted)')}>Latest Score</p>
-                  {latest.severity && (
+                  <p style={f('xs', 400, 'var(--color-text-muted)')}>
+                    {latestIsStale ? 'Most recent result' : 'Latest Score'}
+                  </p>
+                  {latestIsStale && (
+                    <span
+                      style={{
+                        display: 'inline-block', padding: '3px 12px',
+                        borderRadius: 'var(--radius-pill)',
+                        backgroundColor: 'var(--color-bg-muted)',
+                        ...f('sm', 500, 'var(--color-text-muted)'),
+                        marginTop: 4,
+                      }}
+                    >
+                      Scored under an older version
+                    </span>
+                  )}
+                  {!latestIsStale && latest.severity && (
                     <span
                       style={{
                         display: 'inline-block',
@@ -676,10 +711,18 @@ export function AssessmentHistoryDetail({ assessmentId, onBack, onNavigate }: As
                 <p style={{ ...f('sm', 400, 'var(--color-text-muted)'), margin: 0, lineHeight: 1.5 }}>
                   {chartAbsence.olderVersion > 0 ? (
                     <>
-                      {chartAbsence.olderVersion === 1 ? 'One earlier result was' : `${chartAbsence.olderVersion} earlier results were`}
+                      {/* Never "earlier": when the newest result is excluded too,
+                          nothing here is earlier than anything. */}
+                      {chartAbsence.olderVersion === chartAbsence.total
+                        ? (chartAbsence.total === 1
+                            ? 'Your result was'
+                            : `All ${chartAbsence.total} of your results were`)
+                        : (chartAbsence.olderVersion === 1
+                            ? 'One of your results was'
+                            : `${chartAbsence.olderVersion} of your results were`)}
                       {' '}scored under an older version of this assessment, so
-                      {chartAbsence.olderVersion === 1 ? ' it cannot' : ' they cannot'} be compared to a new one.
-                      {' '}They are still listed below. Take this assessment again to start a new trend.
+                      {chartAbsence.olderVersion === 1 ? ' it cannot' : ' they cannot'} be compared with each other.
+                      {' '}{chartAbsence.olderVersion === 1 ? 'It is' : 'They are'} still listed below.
                     </>
                   ) : chartAbsence.noDenominator > 0 ? (
                     <>Your earlier results did not record a comparable maximum, so they cannot be plotted on one scale. They are still listed below.</>
