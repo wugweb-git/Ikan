@@ -2,6 +2,7 @@ import { useEffect, useState, useMemo } from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
 import { Button } from '../ui/button';
 import { Icon } from '../Icon';
+import { LogoFull } from '../Logo';
 import { cn } from '../ui/utils';
 import { EngineResult } from '../../lib/recommendation-engine';
 import { apiClient } from '../../lib/api-client';
@@ -86,6 +87,15 @@ interface AssessmentResultsProps {
   score?: number;
   maxScore?: number;
   recommendation?: EngineResult;
+  /**
+   * Completion time and time on task for the just-submitted run.
+   *
+   * Both were only ever read off a stored record, so the screen shown
+   * immediately after finishing an assessment — the one everybody sees —
+   * had no timestamp and no duration at all.
+   */
+  completedAt?: string;
+  durationSeconds?: number;
   sectionScores?: SectionScoreResult;
   onNavigate?: (route: string) => void;
   onReturnToDashboard?: () => void;
@@ -95,6 +105,7 @@ interface AssessmentResultsProps {
 
 export function AssessmentResults({ 
   resultId: resultIdProp, assessmentId, score, maxScore, recommendation, sectionScores,
+  completedAt, durationSeconds,
   onNavigate, onReturnToDashboard, onRetake, className 
 }: AssessmentResultsProps) {
   
@@ -180,6 +191,7 @@ export function AssessmentResults({
           sectionScores: record.section_scores ?? undefined,
           invalidReason: record.invalid_reason ?? null,
           completedAt: record.completed_at,
+          durationSeconds: record.duration_seconds,
           fromRecord: true,
         });
       } catch (e: any) {
@@ -208,7 +220,8 @@ export function AssessmentResults({
      */
     interpretation: hydratedData?.interpretation as { label?: string; description?: string } | undefined,
     /** ISO timestamp off the stored record. Hydrated already; never was shown. */
-    completedAt: hydratedData?.completedAt as string | undefined,
+    completedAt: (hydratedData?.completedAt as string | undefined) ?? completedAt,
+    durationSeconds: (hydratedData?.durationSeconds as number | undefined) ?? durationSeconds,
   };
 
   /**
@@ -556,6 +569,24 @@ export function AssessmentResults({
   const scaleCount: number | null = (() => {
     const n = sections?.sections?.length ?? (Array.isArray(def?.scores) ? def.scores.length : 0);
     return n > 1 ? n : null;
+  })();
+
+  /**
+   * Time on task, formatted.
+   *
+   * Under a minute reads as seconds; above it as minutes and seconds, with the
+   * seconds dropped when they are zero — "3 min 0 sec" is not how anyone says
+   * it. Absent stays absent: there is no dash, no zero and nothing derived
+   * from when the page happened to mount, because a duration nobody measured
+   * is not a short one.
+   */
+  const durationLabel: string | null = (() => {
+    const secs = activeData.durationSeconds;
+    if (typeof secs !== 'number' || !Number.isFinite(secs) || secs < 0) return null;
+    if (secs < 60) return `${Math.round(secs)} sec`;
+    const mins = Math.floor(secs / 60);
+    const rest = Math.round(secs % 60);
+    return rest === 0 ? `${mins} min` : `${mins} min ${rest} sec`;
   })();
 
   const completedLabel: string | null = (() => {

@@ -582,6 +582,10 @@ export function AssessmentFlow({
         },
         responses,
         completedAt: new Date().toISOString(),
+        // Time on task, so the screen shown straight after submitting can
+        // report it. It was already being written to the record and then not
+        // handed to the view that renders immediately afterwards.
+        durationSeconds,
         recommendation, // Include full engine result
         // Must be JSON-serialisable: the standalone /assessment-results route
         // hydrates only from the sessionStorage blob written below.
