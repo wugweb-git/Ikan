@@ -3699,7 +3699,14 @@ app.post("/categories/sync", requireAuth, async (c) => {
           const needsUpdate =
             (item.icon && existingEntry.icon !== item.icon) ||
             (item.color && existingEntry.color !== item.color) ||
-            (item.description && !existingEntry.description && item.description);
+            (item.description && !existingEntry.description && item.description) ||
+            // Added 2026-09-08. No catalog row carried a sort_order, so display
+            // order was whatever the store returned and every screen that cared
+            // had to re-sort in code. Without this clause the field could never
+            // reach an EXISTING row: the sync only ever compared icon, colour
+            // and description, so a new field on a seeded row was unreachable
+            // by the only writer that seeds it.
+            (typeof item.sort_order === 'number' && existingEntry.sort_order !== item.sort_order);
 
           if (needsUpdate) {
             const merged = {
@@ -3707,6 +3714,11 @@ app.post("/categories/sync", requireAuth, async (c) => {
               icon: item.icon || existingEntry.icon || 'tag',
               color: item.color || existingEntry.color || '#2A2A2A',
               description: item.description || existingEntry.description || '',
+              // The row's `id` is deliberately NOT touched. An id is minted once
+              // and frozen; `catalog-ids.test.ts` is what enforces that. Writing
+              // `item.id` here would let a rename in the catalog file repoint an
+              // existing row, which is the exact failure the freeze prevents.
+              sort_order: typeof item.sort_order === 'number' ? item.sort_order : existingEntry.sort_order,
               updated_at: now,
             };
             await kv.set(`category:${existingEntry.id}`, merged);
@@ -3718,6 +3730,16 @@ app.post("/categories/sync", requireAuth, async (c) => {
         continue;
       }
 
+      /*
+        `item.id` first, and the catalog now always declares one.
+
+        The fallback derives an id from the slug, which is how a slug rename
+        could MINT A NEW ROW and orphan the old one — the lookup above is on
+        `type::slug`, so a renamed slug misses and falls through to here. That
+        is silent, because live content stores the slug, not the id. Keeping the
+        fallback for hand-posted items is fine; the guarantee is that the
+        catalog never relies on it. See `catalog-ids.test.ts`.
+      */
       const id = item.id || `cat-${item.type}-${slug}`;
       const entry = {
         id,
@@ -3727,6 +3749,7 @@ app.post("/categories/sync", requireAuth, async (c) => {
         icon: item.icon || 'tag',
         color: item.color || '#2A2A2A',
         description: item.description || '',
+        ...(typeof item.sort_order === 'number' ? { sort_order: item.sort_order } : {}),
         created_at: now,
         updated_at: now,
       };

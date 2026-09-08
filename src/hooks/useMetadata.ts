@@ -44,6 +44,34 @@ export interface MetadataOption {
   can_hold?: string[];
   /** `block_type` container rows: which activities its blocks may use. */
   activities?: string[];
+  /**
+   * The row's permanent identifier. Carried so a screen can key on identity
+   * rather than on `value` (the slug), which is a NAME and may be renamed.
+   * Nothing stores it yet — 407 live blocks reference the slug — but a reader
+   * that wants identity should not have to refetch to get it.
+   */
+  id?: string;
+  /**
+   * Display rank, low to high. Absent on a row seeded before 2026-09-08;
+   * `sortByOrder` below leaves those in store order rather than sinking them.
+   */
+  sort_order?: number;
+}
+
+/**
+ * Catalog display order.
+ *
+ * Rows that declare a `sort_order` come first, in that order; rows that do not
+ * keep their existing relative position after them. That matters because the
+ * field is new: until the catalog is re-synced most rows carry none, and a
+ * naive `?? 0` or `?? Infinity` would reorder every screen on deploy rather
+ * than on the data change.
+ */
+export function sortByOrder(rows: MetadataOption[]): MetadataOption[] {
+  const ordered = rows.filter((r) => typeof r.sort_order === 'number')
+    .sort((a, b) => (a.sort_order as number) - (b.sort_order as number));
+  const rest = rows.filter((r) => typeof r.sort_order !== 'number');
+  return [...ordered, ...rest];
 }
 
 /** Does this catalog row hold blocks (a stage), rather than being one? */
@@ -161,6 +189,8 @@ export function mapItem(item: any): MetadataOption {
     tier: typeof item.tier === 'string' ? item.tier : undefined,
     can_hold: Array.isArray(item.can_hold) ? item.can_hold : undefined,
     activities: Array.isArray(item.activities) ? item.activities : undefined,
+    id: typeof item.id === 'string' ? item.id : undefined,
+    sort_order: typeof item.sort_order === 'number' ? item.sort_order : undefined,
   };
 }
 
@@ -218,9 +248,14 @@ async function fetchAllMetadata(): Promise<MetadataBucket> {
       }
     }
 
-    // Dedup each bucket
+    // Dedup each bucket, then put it in catalog order.
+    //
+    // Order happens ONCE, here, rather than in each screen. Until 2026-09-08 no
+    // row carried a `sort_order` at all, so every consumer got whatever order
+    // the store returned and the Block Type Viewer had to re-sort
+    // stages-then-blocks itself.
     for (const key of Object.keys(bucket) as (keyof MetadataBucket)[]) {
-      bucket[key] = dedup(bucket[key]);
+      bucket[key] = sortByOrder(dedup(bucket[key]));
     }
 
     return bucket;

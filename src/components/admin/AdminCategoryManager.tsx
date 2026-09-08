@@ -6,41 +6,14 @@ import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import {
-  Plus, X, Save, FolderOpen, Pencil, Trash2, FileText, Tag, Filter, Type, Sparkles, ShieldCheck,
-  RefreshCw, Download, Search, Folder,
-  Heart, HeartHandshake, HeartPulse,
-  Brain, Activity, Zap, Flame, Sun, Moon, Cloud, CloudLightning,
-  Target, Compass, Scale,
-  Smile, Frown, Meh, Angry,
-  Eye,
-  User, Users, UserCheck, Baby, GraduationCap,
-  Briefcase,
-  Stethoscope, Thermometer,
-  Globe, MapPin,
-  Video, Phone, MessageSquare, MessageCircle,
-  Mic, Headphones,
-  Book, BookOpen, Notebook, Library,
-  Image, Film,
-  Clipboard, ClipboardList, ClipboardCheck,
-  List, ListChecks, CircleCheck,
-  SlidersHorizontal, ToggleLeft,
-  MousePointerClick,
-  LayoutGrid, Blocks,
-  Signal, BarChart, TrendingUp,
-  Link,
-  AlertTriangle, CircleAlert,
-  Repeat,
-  Wrench, Settings,
-  Palette, PenTool, Calendar,
-  FileCheck, Flag, Tags,
-  ShieldAlert, Shield,
-  Apple,
+  Plus, X, Save, FolderOpen, Pencil, Trash2, RefreshCw, Download, Search,
 } from 'lucide-react';
 import { apiClient } from '../../lib/api-client';
 import { toast } from 'sonner';
 import { invalidateMetadataCache } from '../../hooks/useMetadata';
 import { METADATA_CATALOG_ITEMS, METADATA_TYPE_LABELS, METADATA_TYPE_ICONS, METADATA_TYPE_GROUPS, type MetadataType } from '../../lib/metadata-catalog';
 import { Skeleton } from '../ui/skeleton-loader';
+import { getIconComponent as sharedGetIconComponent } from '../../lib/catalog-icons';
 
 export interface AdminCategoryManagerProps {
   onBack: () => void;
@@ -54,50 +27,26 @@ export interface CategoryItem {
   icon?: string;
   color?: string;
   description?: string;
+  /**
+   * `block_type` rows only: which block types this row can contain. Non-empty
+   * means it is a STAGE, which changes how its live count must be read — a
+   * stage is counted by the days that carry it, never by blocks.
+   */
+  can_hold?: string[];
+  /** Display rank, low to high. Absent means "keep the existing position". */
+  sort_order?: number;
 }
 
-// ── Icon Registry ──────────────────────────────────────────────────
-const ICON_MAP: Record<string, any> = {
-  'folder': Folder, 'folder-open': FolderOpen, 'file-text': FileText, 'file': FileText, 'file-check': FileCheck,
-  'tag': Tag, 'tags': Tags, 'filter': Filter, 'type': Type, 'sparkles': Sparkles,
-  'shield': Shield, 'shield-check': ShieldCheck, 'shield-alert': ShieldAlert,
-  'heart': Heart, 'heart-handshake': HeartHandshake, 'heart-pulse': HeartPulse,
-  'brain': Brain, 'activity': Activity, 'zap': Zap, 'flame': Flame, 'sun': Sun, 'moon': Moon, 'cloud': Cloud, 'cloud-lightning': CloudLightning,
-  'target': Target, 'compass': Compass, 'scale': Scale,
-  'smile': Smile, 'frown': Frown, 'meh': Meh, 'angry': Angry,
-  'eye': Eye,
-  'user': User, 'users': Users, 'user-check': UserCheck, 'baby': Baby, 'graduation-cap': GraduationCap,
-  'briefcase': Briefcase,
-  'stethoscope': Stethoscope, 'thermometer': Thermometer,
-  'globe': Globe, 'map-pin': MapPin,
-  'video': Video, 'phone': Phone, 'message-square': MessageSquare, 'message-circle': MessageCircle,
-  'mic': Mic, 'headphones': Headphones,
-  'book': Book, 'book-open': BookOpen, 'notebook': Notebook, 'library': Library,
-  'image': Image, 'film': Film,
-  'clipboard': Clipboard, 'clipboard-list': ClipboardList, 'clipboard-check': ClipboardCheck,
-  'list': List, 'list-checks': ListChecks, 'circle-check': CircleCheck,
-  'sliders-horizontal': SlidersHorizontal, 'toggle-left': ToggleLeft,
-  'mouse-pointer-click': MousePointerClick,
-  'layout-grid': LayoutGrid, 'blocks': Blocks,
-  'signal': Signal, 'bar-chart': BarChart, 'trending-up': TrendingUp,
-  'link': Link,
-  'alert-triangle': AlertTriangle, 'alert-circle': CircleAlert,
-  'refresh-cw': RefreshCw, 'repeat': Repeat,
-  'tool': Wrench, 'wrench': Wrench, 'settings': Settings,
-  'palette': Palette, 'pen-tool': PenTool, 'calendar': Calendar,
-  'flag': Flag,
-  'apple': Apple,
-};
-
+/*
+  The icon registry moved to `src/lib/catalog-icons.ts` (2026-09-08) so the
+  Block Type Viewer can read the same map. It had been local to this file, which
+  is why that screen grew its own thirteen-entry copy for interactions and drew
+  nothing at all for block types and activities — every one of which carries an
+  icon in the catalog.
+*/
 /** Resolves icon component: item.icon → ICON_MAP, falls back to type-default, then Tag */
 function getIconComponent(iconKey?: string, metadataType?: MetadataType): any {
-  if (iconKey && ICON_MAP[iconKey]) return ICON_MAP[iconKey];
-  // Type-specific fallback
-  if (metadataType) {
-    const typeDefault = METADATA_TYPE_ICONS[metadataType];
-    if (typeDefault && ICON_MAP[typeDefault]) return ICON_MAP[typeDefault];
-  }
-  return Tag;
+  return sharedGetIconComponent(iconKey, metadataType ? METADATA_TYPE_ICONS[metadataType] : undefined);
 }
 
 // Curated picker options (grouped for the dropdown)
@@ -190,6 +139,59 @@ const ALL_TYPES: MetadataType[] = [
   'checkin_block_type',
 ];
 
+/**
+ * Vocabularies this screen still edits that nothing reads. Audited 2026-09-08.
+ *
+ * Neither is deleted — a row that is editable but dead must SAY so, which is
+ * the whole standing rule. Both keep their tab, their rows and their edit
+ * buttons; the page states what an edit will and will not affect.
+ */
+const DEPRECATED_TYPES: Partial<Record<MetadataType, { rows: number; why: string; instead: string }>> = {
+  day_config_type: {
+    rows: 11,
+    why: 'Day types merged into `block_type` (blocks.md §18 Phase 1.1). The eleven stages now live '
+       + 'there, carrying `can_hold` and the preset rules, and that is what DayComposer, BlockEditor '
+       + 'and the player read. The only remaining consumer of this bucket is `useMetadata` filling it.',
+    instead: 'block_type — the eleven rows whose `can_hold` is non-empty',
+  },
+  checkin_block_type: {
+    rows: 7,
+    why: 'The Check-in Builder is live, but it reads its own hardcoded `BLOCK_TYPES` array '
+       + '(AdminCheckinTemplateBuilder.tsx:98) — six SNAKE_case values. These rows are seven '
+       + 'KEBAB-case ones, so the two could never match even by accident, and `context-tags` exists '
+       + 'here and nowhere else. Editing a row here changes nothing the builder offers.',
+    instead: 'AdminCheckinTemplateBuilder.tsx:98, until that array is replaced by this bucket',
+  },
+};
+
+/**
+ * Which live-usage dimension answers "is this term actually used?".
+ *
+ * Only four of the twenty-one vocabularies have an answer, because
+ * `/blocks/usage` counts block content. A type absent from this map shows no
+ * count rather than a zero — the same rule the Block Type Viewer follows, for
+ * the same reason: a confident zero is indistinguishable from genuinely unused.
+ */
+const USAGE_DIMENSION: Partial<Record<MetadataType, 'interactions' | 'blockTypes' | 'activities' | 'dayTypes'>> = {
+  interaction_type: 'interactions',
+  activity: 'activities',
+  // A stage is never a block's type; its usage is the DAYS that carry it, so a
+  // block_type row is counted one way if it is a stage and another if it is a
+  // block. Resolved per row below.
+  block_type: 'blockTypes',
+  day_config_type: 'dayTypes',
+};
+
+type TermStatus = 'live' | 'wired-unused' | 'declared-unread' | 'orphan';
+const STATUS_LABEL: Record<TermStatus, string> = {
+  'live': 'Live', 'wired-unused': 'Wired, unused',
+  'declared-unread': 'Declared, unread', 'orphan': 'Orphan',
+};
+const STATUS_COLOUR: Record<TermStatus, string> = {
+  'live': 'var(--color-status-success)', 'wired-unused': 'var(--color-text-muted)',
+  'declared-unread': 'var(--color-status-warning)', 'orphan': 'var(--color-status-danger)',
+};
+
 export function AdminCategoryManager({ onBack }: AdminCategoryManagerProps) {
   const [activeTab, setActiveTab] = useState<MetadataType>('category');
   const [items, setItems] = useState<CategoryItem[]>([]);
@@ -199,6 +201,47 @@ export function AdminCategoryManager({ onBack }: AdminCategoryManagerProps) {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [isSyncing, setIsSyncing] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+
+  /**
+   * Live usage, from the same `/blocks/usage` feed the Block Type Viewer reads.
+   * `null` means the feed failed — every count then renders as "—", never 0,
+   * because a confident zero beside an editable row is indistinguishable from
+   * genuinely unused and would invite exactly the deletion this page exists to
+   * prevent.
+   */
+  const [usage, setUsage] = useState<Awaited<ReturnType<typeof apiClient.getBlockUsage>>>(null);
+  const [usageState, setUsageState] = useState<'loading' | 'ok' | 'failed'>('loading');
+  useEffect(() => {
+    let alive = true;
+    apiClient.getBlockUsage().then((u) => {
+      if (!alive) return;
+      setUsage(u);
+      setUsageState(u ? 'ok' : 'failed');
+    });
+    return () => { alive = false; };
+  }, []);
+
+  /** How many live blocks (or days) carry this term, or null if we cannot say. */
+  const liveCountFor = (type: MetadataType, item: CategoryItem): number | null => {
+    if (usageState !== 'ok' || !usage) return null;
+    // A block_type row that HOLDS blocks is a stage: counted by the days that
+    // carry it, never by blocks, which would always read zero.
+    if (type === 'block_type') {
+      const isStage = (item.can_hold?.length ?? 0) > 0;
+      return (isStage ? usage.dayTypes : usage.blockTypes)[item.slug] ?? 0;
+    }
+    const dim = USAGE_DIMENSION[type];
+    return dim ? (usage[dim][item.slug] ?? 0) : null;
+  };
+
+  const statusFor = (type: MetadataType, item: CategoryItem): TermStatus | null => {
+    // A vocabulary nothing reads: every row in it is declared and unread,
+    // however many blocks happen to carry the string.
+    if (DEPRECATED_TYPES[type]) return 'declared-unread';
+    const count = liveCountFor(type, item);
+    if (count === null) return null;
+    return count > 0 ? 'live' : 'wired-unused';
+  };
   
   const [formData, setFormData] = useState<Partial<CategoryItem>>({
     name: '',
@@ -591,6 +634,26 @@ export function AdminCategoryManager({ onBack }: AdminCategoryManagerProps) {
                           style={{ borderRadius: 'var(--ikan-component-border-radius)' }}
                         />
                       </div>
+                      <div className="space-y-2">
+                        <Label style={{ fontFamily: 'var(--font-family-base)', fontWeight: 'var(--font-weight-medium)' }}>Display order</Label>
+                        <Input
+                          type="number"
+                          value={formData.sort_order ?? ''}
+                          onChange={(e) => setFormData(prev => ({
+                            ...prev,
+                            sort_order: e.target.value === '' ? undefined : Number(e.target.value),
+                          }))}
+                          placeholder="e.g. 120 — lower comes first"
+                          className="bg-[var(--color-bg-input)]"
+                          style={{ borderRadius: 'var(--ikan-component-border-radius)' }}
+                        />
+                        <p style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}>
+                          Lower sorts first. Rows without one keep their existing position, after the
+                          ordered ones — so leaving this blank changes nothing rather than sending the
+                          row to the top or the bottom. Catalog rows are seeded in tens, leaving room
+                          to insert.
+                        </p>
+                      </div>
                     </div>
 
                     <div className="flex gap-2 justify-end">
@@ -643,10 +706,45 @@ export function AdminCategoryManager({ onBack }: AdminCategoryManagerProps) {
                     </div>
                   ) : (
                     <div className="space-y-2">
+                      {/*
+                        A vocabulary that is editable but unread says so, rather
+                        than looking like every other tab. Not deleted — three
+                        things in this codebase were deleted as unused and turned
+                        out to be load-bearing.
+                      */}
+                      {DEPRECATED_TYPES[activeTab] && (
+                        <div
+                          className="p-3 rounded-lg"
+                          style={{
+                            backgroundColor: 'var(--color-bg-muted)',
+                            borderLeft: '2px solid var(--color-status-warning)',
+                            fontSize: 'var(--text-xs)',
+                            fontFamily: 'var(--font-family-base)',
+                          }}
+                        >
+                          <div style={{ fontWeight: 'var(--font-weight-medium)', marginBottom: 4 }}>
+                            Deprecated — {DEPRECATED_TYPES[activeTab]!.rows} rows, no reader.
+                            Editing one changes nothing in the product.
+                          </div>
+                          <div style={{ color: 'var(--color-text-muted)' }}>
+                            {DEPRECATED_TYPES[activeTab]!.why}
+                          </div>
+                          <div style={{ color: 'var(--color-text-muted)', marginTop: 4 }}>
+                            Use instead: <strong>{DEPRECATED_TYPES[activeTab]!.instead}</strong>
+                          </div>
+                        </div>
+                      )}
+                      {usageState === 'failed' && USAGE_DIMENSION[activeTab] && (
+                        <div className="p-3 rounded-lg" style={{ backgroundColor: 'var(--color-bg-muted)', borderLeft: '2px solid var(--color-status-warning)', fontSize: 'var(--text-xs)' }}>
+                          Usage feed unavailable — live counts read “—”. They are not zero.
+                        </div>
+                      )}
                       {filteredItems.map(item => {
                         const ItemIcon = getIconComponent(item.icon, activeTab);
                         const isEditing = editingId === item.id;
-                        
+                        const liveCount = liveCountFor(activeTab, item);
+                        const status = statusFor(activeTab, item);
+
                         return (
                           <div
                             key={item.id}
@@ -682,6 +780,22 @@ export function AdminCategoryManager({ onBack }: AdminCategoryManagerProps) {
                                   <p className="truncate" style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-muted)', marginTop: 'var(--spacing-1)' }}>
                                     {item.description}
                                   </p>
+                                )}
+                                {/* Same four-status model as the Block Type Viewer, same feed. */}
+                                {status && (
+                                  <div className="flex items-center gap-3 flex-wrap" style={{ fontSize: 'var(--text-xs)', marginTop: 'var(--spacing-1)' }}>
+                                    {USAGE_DIMENSION[activeTab] && (
+                                      <span style={{ color: 'var(--color-text-muted)' }}>
+                                        live:{' '}
+                                        <strong style={{ color: (liveCount ?? 0) > 0 ? 'var(--color-text-primary)' : 'var(--color-text-muted)' }}>
+                                          {liveCount === null ? '—' : liveCount}
+                                        </strong>
+                                      </span>
+                                    )}
+                                    <span style={{ color: STATUS_COLOUR[status], fontWeight: 'var(--font-weight-medium)' }}>
+                                      {STATUS_LABEL[status]}
+                                    </span>
+                                  </div>
                                 )}
                               </div>
                             </div>

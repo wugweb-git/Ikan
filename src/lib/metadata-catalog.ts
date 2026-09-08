@@ -227,13 +227,64 @@ export interface SeedItem {
    * instrument via `tier_map`.
    */
   tier?: string;
+  /**
+   * The row's PERMANENT identifier. See `catalogId` below — an id is minted once
+   * from the slug and then never regenerated, so this is what a rename must not
+   * touch.
+   */
+  id: string;
+  /**
+   * Display rank within its type, low to high.
+   *
+   * Added 2026-09-08. No catalog row carried one, so display order was whatever
+   * the store returned, which is why the Block Type Viewer had to sort
+   * stages-then-blocks in code. Seeded here from the order these rows are
+   * written in, which is the order the screens already showed.
+   */
+  sort_order: number;
 }
 
-function s(name: string, type: MetadataType, slug?: string, extra?: Partial<SeedItem>): SeedItem {
+/**
+ * **A catalog id is minted once and then frozen. It is never regenerated.**
+ *
+ * Every row's id reads like its slug — `cat-block_type-tracker` — and that is
+ * cosmetic and irrelevant. What matters is that the id is the row's identity
+ * and the slug is its name. Rename `tracker` and `slug`/`name` change; the id
+ * stays `cat-block_type-tracker` forever.
+ *
+ * This is the same distinction settled for block responses on 2026-09-08:
+ * `activityConfig.key` gave an answer an identity independent of the block that
+ * asked it. An id gives a type an identity independent of what it is called.
+ *
+ * It matters because the sync endpoint derives an id from the slug when an item
+ * carries none (`index.tsx:3721`) and matches existing rows on `type::slug`. So
+ * a slug rename in this file, with no id declared, would MINT A NEW ROW and
+ * orphan the old one — silently, because 407 live blocks store the slug, not
+ * the id, and nothing would report a break. Declaring the id here means the
+ * sync uses it and the derivation never runs.
+ *
+ * `catalog-ids.test.ts` asserts the block_type / interaction_type / activity ids
+ * exactly. Any future edit that would regenerate one fails there instead of
+ * repointing content in production.
+ */
+function catalogId(type: MetadataType, slug: string): string {
+  return `cat-${type}-${slug}`;
+}
+
+let _seq = 0;
+function s(name: string, type: MetadataType, slug?: string, extra?: Partial<Omit<SeedItem, 'id' | 'sort_order'>> & { id?: string }): SeedItem {
+  const resolvedSlug = slug || name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
   return {
     name,
-    slug: slug || name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, ''),
+    slug: resolvedSlug,
     type,
+    // Frozen at first mint. `extra.id` is how a row whose slug has since been
+    // renamed keeps the id it was created with.
+    id: extra?.id ?? catalogId(type, resolvedSlug),
+    // Declaration order is the display order. Global rather than per-type
+    // because it only ever has to be stable, and a global counter cannot
+    // silently collide when a row moves between types.
+    sort_order: (_seq += 10),
     ...extra,
   };
 }
@@ -478,7 +529,10 @@ export const METADATA_CATALOG_ITEMS: SeedItem[] = [
   s('Tracker',        'day_config_type', 'tracker',        { icon: 'repeat',          color: '#10B981', description: 'Daily repetition, habits, streaks' }),
   s('Workshop',       'day_config_type', 'workshop',       { icon: 'blocks',          color: '#6366F1', description: 'Multi-step thinking (ideation, evaluation)' }),
 
-  // ── Exercise Subtypes ──────────────────────────────────────────
+  // ── Activities ─────────────────────────────────────────────────
+  // Renamed from "Exercise Subtypes" 2026-09-04; the type is `activity` and the
+  // label is "Activities" everywhere. This heading was the last place the old
+  // name survived, which is how a reader ends up believing there are two lists.
   s('MCQ',                  'activity', 'mcq',                  { icon: 'circle-check',       description: 'Standard MCQ with single correct answer' }),
   s('Single Select',       'activity', 'single-select',       { icon: 'list',               description: 'Pick one option from a vertical list' }),
   s('Multi Select',        'activity', 'multi-select',        { icon: 'list-checks',        description: 'Pick multiple options from a vertical list' }),

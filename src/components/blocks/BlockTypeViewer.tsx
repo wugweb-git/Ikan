@@ -1,28 +1,10 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import {
-  BookOpen,
-  PenTool,
-  CheckSquare,
-  Layers,
-  Calendar,
-  Smartphone,
-  Settings2,
-  Image as ImageIcon,
-  Zap,
-  PlayCircle,
-  CircleDot,
-  ListChecks,
-  Star,
-  Table2,
-  Grid3x3,
-  ClipboardList,
-  Flag,
-  PenLine,
-  Upload,
-  Hash,
+  BookOpen, PenTool, Layers, Calendar, Smartphone, Settings2, Zap,
 } from 'lucide-react';
 import { AdminHeader } from '../admin/AdminHeader';
 import { apiClient } from '../../lib/api-client';
+import { getIconComponent, iconResolves } from '../../lib/catalog-icons';
 import { INTERACTION_REQUIREMENTS, missingRequirements, blockOf } from '../../lib/blocks/content-hierarchy';
 import { Card, CardContent } from '../ui/card';
 import { Button } from '../ui/button';
@@ -86,13 +68,40 @@ interface AdminBlockTypeViewerProps {
   onBack?: () => void;
 }
 
-// ── Interaction icon map ────────────────────────────────────────
-const INTERACTION_ICON_MAP: Record<InteractionType, any> = {
-  'read': BookOpen, 'watch': PlayCircle, 'select-one': CircleDot, 'select-many': CheckSquare,
-  'write': PenLine, 'rate': Star, 'check': ListChecks, 'track-table': Table2,
-  'input-table': Grid3x3, 'clinical': ClipboardList, 'upload': Upload, 'complete': Flag,
-  'number': Hash,
-};
+/*
+  `INTERACTION_ICON_MAP` was here — thirteen interaction → lucide-component
+  entries, hardcoded. Deleted 2026-09-08: all 60 catalog rows already carry an
+  `icon`, so this was a second copy of catalog data kept by hand, and the same
+  pattern this module has now removed three times (the 12-entry subtype list,
+  the 7-entry block-type array, the legacy mapping table). Worse, it covered
+  only interactions — block types and activities rendered no icon at all while
+  every one of their rows declared one.
+
+  Icons now come from the row, resolved through the one registry in
+  `src/lib/catalog-icons.ts`. A name the registry does not know renders a
+  visible hole, not a silent `Tag`.
+*/
+
+/** One row's icon, or a marked gap. Never a plausible-looking substitute. */
+function RowIcon({ icon }: { icon?: string }) {
+  if (iconResolves(icon)) {
+    const Ic = getIconComponent(icon);
+    return <Ic className="w-4 h-4 shrink-0" style={{ color: 'var(--color-text-muted)' }} aria-hidden />;
+  }
+  return (
+    <span
+      title={icon ? `Catalog icon "${icon}" is not in the registry` : 'This catalog row declares no icon'}
+      className="shrink-0 inline-flex items-center justify-center"
+      style={{
+        width: 16, height: 16, borderRadius: 4, fontSize: 10, lineHeight: 1,
+        border: '1px dashed var(--color-status-warning)',
+        color: 'var(--color-status-warning)',
+      }}
+    >
+      ?
+    </span>
+  );
+}
 
 // ── Legacy mapping table ────────────────────────────────────────
 // Derived by CALLING resolveInteraction, not transcribed from it. The previous
@@ -402,6 +411,9 @@ export function AdminBlockTypeViewer({ onBack }: AdminBlockTypeViewerProps) {
       value,
       label: row(value)?.label ?? value,
       description: row(value)?.description ?? 'No catalog description.',
+      // The row's own icon. Every activity row declares one; this screen drew
+      // a hardcoded PenTool on all twelve.
+      icon: row(value)?.icon,
       selectable: true,
       inCatalog: !!row(value),
     }));
@@ -409,6 +421,8 @@ export function AdminBlockTypeViewer({ onBack }: AdminBlockTypeViewerProps) {
       value,
       label: value,
       description: `Alias — normalises to ${canonicalTerm} before the resolver sees it.`,
+      // An alias resolves to its canonical term, so it wears that term's icon.
+      icon: row(value)?.icon ?? row(canonicalTerm)?.icon,
       selectable: false,
       inCatalog: !!row(value),
     }));
@@ -419,6 +433,7 @@ export function AdminBlockTypeViewer({ onBack }: AdminBlockTypeViewerProps) {
         value: r.value,
         label: r.label,
         description: 'In the catalog, but in neither EXERCISE_SUBTYPES nor SUBTYPE_ALIASES — it will hit the resolver default.',
+        icon: r.icon,
         selectable: false,
         inCatalog: true,
       }));
@@ -472,7 +487,21 @@ export function AdminBlockTypeViewer({ onBack }: AdminBlockTypeViewerProps) {
     ...Object.keys(DAY_TYPE_PRESETS),
     ...LEAF_BLOCK_TYPES,
   ].filter((v, i, a) => a.indexOf(v) === i);
-  const pickableBlockTypes  = kvBlockTypes.filter((t) => !isContainerRow(t));
+  /*
+    `pickableBlockTypes` — the leaf half — was removed 2026-09-08, and this is
+    the reason rather than a silent delete.
+
+    It existed to build the "Blocks — held by stages (6)" section of a split
+    list. Flattening that list made leaf-vs-stage a BADGE on each row, so the
+    one fact it carried is now stated seventeen times, once per row, from
+    `isContainerRow` directly. It was not unrendered code that turned out to be
+    load-bearing; it was a derivation whose only consumer was a page structure
+    that no longer exists.
+
+    `containerBlockTypes` stays: the "Stages with rules" tile needs the count,
+    and that comparison is the one place the `can_hold` ⟺ preset invariant is
+    checked mechanically.
+  */
   const containerBlockTypes = kvBlockTypes.filter((t) => isContainerRow(t));
   const aliasCount = exerciseSubtypes.length - CANONICAL_SUBTYPES.length;
 
@@ -517,7 +546,16 @@ export function AdminBlockTypeViewer({ onBack }: AdminBlockTypeViewerProps) {
       icon: <Zap className="w-4 h-4" style={{ color: 'var(--color-status-danger)' }} />,
     },
     {
-      // The invariant as a number: `can_hold` non-empty <=> a preset exists.
+      /*
+        The invariant as a number: `can_hold` non-empty <=> a preset exists.
+
+        CHECKED 2026-09-08: this compares DAY_TYPE_PRESETS against the
+        `block_type` rows whose `can_hold` is non-empty — `containerBlockTypes`
+        comes from `kvBlockTypes`, the block_type bucket. It is NOT the eleven
+        `day_config_type` rows, which are a deprecated duplicate vocabulary that
+        also happens to number eleven. Two unrelated elevens meeting in one tile
+        is a coincidence that would read as agreement, so it is written down.
+      */
       label: 'Stages with rules',
       value: compare(Object.keys(DAY_TYPE_PRESETS).length, containerBlockTypes.length),
       icon: <Calendar className="w-4 h-4" style={{ color: 'var(--color-status-success)' }} />,
@@ -589,12 +627,16 @@ export function AdminBlockTypeViewer({ onBack }: AdminBlockTypeViewerProps) {
           {interactionTypes.map((key) => {
             const meta = INTERACTION_META[key];
             const count = countOf('interactions', key);
+            // The catalog row behind this interaction, for its icon. `key` is
+            // the slug; the row is what declares how it is drawn.
+            const catalogRow = kvInteractionTypes.find((r) => r.value === key);
             // Every interaction has a `case` in BlockRenderer's dispatch, so all
             // thirteen are read by code. None is "declared, unread".
             const status = statusOf({ readByCode: true, declared: true, count });
             return (
               <div key={key} className="p-3 rounded-lg" style={{ backgroundColor: 'var(--color-bg-card)', border: '1px solid var(--color-border-default)' }}>
-                <div className="flex items-baseline gap-2 flex-wrap">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <RowIcon icon={catalogRow?.icon} />
                   <span style={{ fontWeight: 500 }}>{meta.label}</span>
                   <code style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}>{key}</code>
                   <span style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}>{meta.verb}</span>
@@ -666,19 +708,21 @@ export function AdminBlockTypeViewer({ onBack }: AdminBlockTypeViewerProps) {
             compares one of them against DAY_TYPE_PRESETS.
           */}
           {/*
-            Flat, but ordered: stages first, then blocks. The badge says which is
-            which; the order stops the two kinds interleaving by catalog
-            accident. Both halves are still named here, which is also what keeps
-            the "Stages with rules" tile honest.
+            Flat and in CATALOG ORDER. This used to concatenate the two halves to
+            get a stable order, because no catalog row carried a `sort_order` and
+            the store's order was arbitrary. Rows now declare one and
+            `useMetadata` sorts every bucket once, so ordering is a data
+            decision editable in Meta Manager rather than a sort in this file.
           */}
-          {[{ rows: [...containerBlockTypes, ...pickableBlockTypes] }].map(({ rows }) => {
+          {[{ rows: kvBlockTypes }].map(({ rows }) => {
             return (
               <div className="space-y-2">
                 {rows.map((row) => {
                   const preset = DAY_TYPE_PRESETS[row.value as keyof typeof DAY_TYPE_PRESETS];
                   return (
                     <div key={row.value} className="p-3 rounded-lg" style={{ backgroundColor: 'var(--color-bg-card)', border: '1px solid var(--color-border-default)' }}>
-                      <div className="flex items-baseline gap-2 flex-wrap">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <RowIcon icon={row.icon} />
                         <span style={{ fontWeight: 500 }}>{row.label}</span>
                         <code style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}>{row.value}</code>
                         {/* The whole stage/block distinction, as one word. */}
@@ -827,7 +871,7 @@ export function AdminBlockTypeViewer({ onBack }: AdminBlockTypeViewerProps) {
               <CardContent className="p-4">
                 <div className="flex items-start gap-3">
                   <div className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0" style={{ backgroundColor: 'var(--color-bg-muted)' }}>
-                    <PenTool className="w-5 h-5" style={{ color: st.selectable ? 'var(--color-status-warning)' : 'var(--color-text-muted)' }} />
+                    <RowIcon icon={st.icon} />
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1 flex-wrap">

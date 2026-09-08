@@ -210,6 +210,59 @@ with stage/block as a badge on the row — which is where a per-row fact belongs
 
 Lint baseline 913 → 908; the retired detail panel took two unused imports with it.
 
+### Icons come from the catalog, through one registry
+
+All 60 `category:` rows carry an `icon`, and `AdminCategoryManager` had the only map that turned one
+into a component — locked inside that file. So the Block Type Viewer had grown
+`INTERACTION_ICON_MAP`, thirteen hardcoded entries restating what the catalog already said, and
+covering only interactions: block types and activities rendered no icon at all while every one of
+their rows declared one.
+
+The registry moved to `src/lib/catalog-icons.ts` and both screens read it. `INTERACTION_ICON_MAP` is
+deleted — a second hand-kept copy of catalog data, the same pattern removed three times before. Four
+icon names carried by live rows had no registry entry and were silently resolving to the generic
+`Tag`: `hash` (2 rows), `table`, `hammer`, `check-square`. All four added; an unknown name now
+renders a dashed `?` naming the missing key, because a plausible substitute is how a hole stays
+hidden. The four stat tiles keep their hardcoded icons — they label the tile, not a catalog row.
+
+### Meta Manager: two dead vocabularies, named on the page
+
+Audited, not deleted. Both keep their tab and their rows; the page now says what an edit affects.
+
+| type | rows | reader |
+|---|---|---|
+| `day_config_type` | 11 | **none.** Day types merged into `block_type`; the eleven stages live there with `can_hold` and the presets. The only consumer left is `useMetadata` filling the bucket |
+| `checkin_block_type` | 7 | **none.** The Check-in Builder is live but reads its own hardcoded `BLOCK_TYPES` (`AdminCheckinTemplateBuilder.tsx:98`) — six *snake_case* values against these seven *kebab-case* ones, so they could never match. `context-tags` exists here and nowhere else |
+
+Meta Manager also shows the same live count and four-status model as the Block Type Viewer, from the
+same feed, on the four vocabularies the feed can answer for. A `block_type` row that holds blocks is
+counted by the DAYS that carry it, never by blocks — counting a stage by blocks always reads zero.
+
+**Checked, since two elevens meeting in one tile would read as agreement:** the "Stages with rules 11"
+tile compares `DAY_TYPE_PRESETS` against `block_type` rows with a non-empty `can_hold`. It is not
+comparing against the eleven `day_config_type` rows. Written down in the tile.
+
+### Catalog ids are frozen, and rows carry a display order
+
+**Step 1 — the freeze.** An id is minted once from the slug and then never regenerated. The hazard
+is specific: the sync endpoint matches existing rows on `type::slug` and derives an id when the item
+carries none, so renaming a slug would MINT A NEW ROW and orphan the old one — silently, because all
+407 live blocks store the slug, not the id. Every catalog item now declares its `id`, and
+`catalog-ids.test.ts` asserts the 17 block types, 13 interactions and 12 activities exactly. Any
+future edit that would regenerate one fails there instead of repointing content in production. The
+sync deliberately does **not** write `item.id` onto an existing row.
+
+**Step 2 — `sort_order`.** No row carried one, so display order was whatever the store returned and
+the Block Type Viewer had to sort stages-then-blocks itself. Rows are seeded in tens in declaration
+order, `useMetadata` sorts every bucket once, and Meta Manager can edit it. Rows without one keep
+their existing position *after* the ordered ones — so the field arriving does not reshuffle every
+screen before the data lands. The sync's update check had to learn about it too: it only ever
+compared icon, colour and description, so a new field could never reach an already-seeded row.
+
+**Step 3 — content pointing at ids — is deliberately not done.** Its only benefit is surviving a
+rename, nothing renames types today, and it is a 407-block migration. Freezing the ids now is what
+lets it land later without drift having happened in between.
+
 ### The stat tile that could not report drift
 
 `Block Types` printed a hardcoded `17 · 11 stages · 6 blocks`. It is now
