@@ -219,7 +219,7 @@ export function AdminDashboard({ onNavigate, initialView }: AdminDashboardProps)
       items: [
         { id: 'categories', label: 'Meta Manager', icon: Tag },
         { id: 'checkin-scales', label: 'Check-in Scales', icon: Zap },
-        { id: 'recommendations', label: 'Rules Engine', icon: Sparkles },
+        { id: 'recommendations', label: 'Recommendation Rules', icon: Sparkles },
         { id: 'scoring-engine', label: 'Scoring Engine', icon: Calculator },
         { id: 'block-type-viewer', label: 'Block Types', icon: Blocks },
         { id: 'settings', label: 'Global Settings', icon: Settings },
