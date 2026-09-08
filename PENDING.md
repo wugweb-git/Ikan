@@ -721,6 +721,58 @@ wellness path stay theoretical until it happens. The 137-result backfill sits be
 
 ---
 
+## Session closeout — 2026-09-08 (recommendations, slots, percentages)
+
+### Shipped and verified live
+- **The `rationale` leak, both paths.** Four client fallbacks and the server's
+  `reason` were rendering the rule author's private note to users. Removed;
+  `hasRenderableCopy` now guards the read path so a rule with no copy cannot
+  match regardless of `enabled`.
+- **One matching module for both engines** (B8). The copies read `priority` in
+  opposite directions. It surfaced that the server never honoured `enabled` at
+  all, that it ignored `recommendation_type`, and that
+  `EquipProgramCompletion` has always shown "Recommended Program" because the
+  endpoint sends `equip_name` and the screen reads `title`/`name`.
+- **B3/B4/B5** — typed slots, articles by id with a carousel at 3+, adjacent
+  programmes from rules instead of two hardcoded tables that covered 3 of 7
+  categories and were never once overridden.
+- **Percentages honour the floor.** 15 of 21 stored results moved; Sleep 24/40
+  now reads 50%, not 60%.
+- **The history chart plots the computed score**, not the legacy sum beside it
+  (Burnout had 115 and 4 as denominators on one axis).
+- **Consultation stops inventing a denominator** (`|| 100`) to decide which
+  practitioner to suggest.
+
+### Open — code, small, not blocked
+- **Three dead exports**, each called by nothing: `getSeverity`
+  (`recommendation-engine.ts`, replaced by band-derived severity),
+  `computeSectionScores` (`assessment-sections.ts`), and the whole `formatters`
+  object (`utils.ts`). All three contain the floor-blind percentage; deleting
+  them removes the last copies. Left because deleting public exports is a
+  separate, deliberate change.
+- **`Consultation.tsx` still has no floor** — it loads no scoring profile, so
+  its percentage falls back to `value / max` and overstates the 1-5
+  instruments by ~10 points. Needs a presentation resolved on that screen.
+
+### Open — content, blocked on Kartik
+- Copy (`title`, `body`, `cta`) for all 18 rules. They are disabled and
+  double-guarded; nothing renders until this lands, and landing it is what
+  makes the new slots and the "Recommended Program" fix observable.
+- Seven interpretation sentences; empty-chart copy; stress-chart messaging.
+- **Article re-tagging.** No article is tagged `depression`, `anxiety`,
+  `burnout` or `balance`, and `mental-health` matches no assessment — so four
+  of seven assessments have no article to show even once rules carry copy.
+- **`Productivity Reset` is targeted by no rule** and can never be recommended.
+- **Balance and General can reach severities above their highest rule's gate**,
+  so their top bands recommend nothing.
+
+### Blocked, not startable
+- **B7 consultants.** 5 `consultant:` rows on placeholder UUIDs; 9 of 12
+  `professional:` rows are "Dr. Test Professional 1/2/3" tripled. Needs real
+  records before the slot or the picker is worth building.
+
+---
+
 ## Session closeout — 2026-09-03 (B1 / B5 / C1 / D3)
 
 ### Shipped and verified live
