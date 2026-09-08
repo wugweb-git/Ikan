@@ -746,6 +746,36 @@ Nothing in this module is in progress.
   AssessmentBlock and ResourceBlock cards, one banner landmark, opaque nav
   band + scroll-padding, gear clear of the footer, slider snap.
 
+### CI — was red, now green (resolved 2026-09-08)
+
+The lint ratchet failed on every push during this module's work: 917 problems
+against a baseline of 905, including **2 errors**. Tests (160), the typecheck
+ratchet (183) and the build passed throughout — only lint failed, and it had
+been failing since `a156cd9c`, not just the final push.
+
+The 2 errors were a real crash, not style noise. The gear-button footer fix
+(`842de494`) put `useState` and `useEffect` **below** `AdminWidget`'s
+`if (!user || !user.is_admin) return null`, so a non-admin render ran zero hooks
+and an admin render ran two. When `is_admin` changed inside a mounted session —
+signing in, or auth resolving from `undefined` — React threw *"Rendered more
+hooks than during the previous render"* and took the tree down.
+
+**Fixed in `0f035d83`** ("AdminWidget crashed the page whenever is_admin
+changed"), by another session. CI has been green for the last five runs.
+
+Two notes for the record:
+
+- **`.lint-baseline` was raised, 905 → 911.** The plan written at the time
+  (`src/docs/ci-lint-ratchet-plan.md`) argued against this: the ratchet's own
+  comment says lower it when problems clear and never raise it silently. It was
+  raised anyway. Not re-litigating it here — recording that the line moved, so
+  the next person knows 911 is not a historic floor.
+- The warnings that pushed the count up were mostly mine and are still there:
+  an unused `ContentImage` import and an unused `programMeta` in
+  `AssessmentResults.tsx`, `useState<any[]>` for `recommended` / `articles`,
+  and an unused `backgroundAlt` on `SectionHero`. Clearing those is the honest
+  way back down; the plan document lists them file by file.
+
 ### Open — owner decisions, not work in progress
 - **Public bucket.** 8 `assessment_def` signed URLs expire together on
   **2026-12-30**; all seven assessment heroes go at once. The silent Unsplash
