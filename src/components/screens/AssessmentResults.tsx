@@ -16,7 +16,7 @@ import {
 } from '../ui/carousel';
 import { severityPresentation, severityOfResult } from '../../lib/severity-presentation';
 import { equipMeta } from '../../lib/equip-meta';
-import { resolveResultPresentation } from '../../lib/result-presentation';
+import { resolveResultPresentation, percentOfRange } from '../../lib/result-presentation';
 import { getLoadedScoringProfiles, loadScoringProfiles } from '../../lib/recommendation-engine';
 import type { SectionScoreResult } from '../../lib/assessment-sections';
 
@@ -415,7 +415,13 @@ export function AssessmentResults({
         direction: 'higher-is-distress',
         value: activeScore,
         max,
-        percent: max > 0 ? Math.round((activeScore / max) * 100) : 0,
+        /**
+         * Position within the instrument's own range, floor included.
+         * `placed.scale` comes from the profile's band set, because a stored
+         * result kept `max_score` and threw the floor away. Sleep 24/40 reads
+         * 50%, not the 60% that treating 8 as earned produced.
+         */
+        percent: percentOfRange(activeScore, placed.scale?.max ?? max, placed.scale?.min ?? 0),
         answered: 0,
         expected: 0,
         complete: true,

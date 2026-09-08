@@ -339,3 +339,35 @@ test('a sum-calc result with no breakdown still bands its top-level score', () =
     { assessment_id: 'asm_sleep', score: 30, max_score: 40 }, sleepSpec, profiles);
   assert.equal(p.band?.label, 'Poor Sleep');
 });
+
+import { percentOfRange } from './result-presentation.ts';
+
+test('percentOfRange measures position within the range, not against the ceiling', () => {
+  // Sleep runs 8-40, because eight items whose lowest option is worth 1 give a
+  // floor of 8 for answering "never" to everything. A 24 is halfway, not 60%.
+  assert.equal(percentOfRange(24, 40, 8), 50);
+  assert.equal(percentOfRange(8, 40, 8), 0);
+  assert.equal(percentOfRange(40, 40, 8), 100);
+});
+
+test('percentOfRange agrees with value/max when the floor is zero', () => {
+  // Stress (0-28) and GAD-7 (0-21) are unaffected, which is why this went
+  // unnoticed: the instruments it gets checked against are the 0-based ones.
+  assert.equal(percentOfRange(14, 28, 0), 50);
+  assert.equal(percentOfRange(14, 28), 50);
+});
+
+test('percentOfRange falls back to value/max when no floor is known', () => {
+  assert.equal(percentOfRange(30, 40), 75);
+});
+
+test('percentOfRange clamps a value outside its own range', () => {
+  // Outside its own range means a units mismatch, not a 140% result.
+  assert.equal(percentOfRange(60, 40, 8), 100);
+  assert.equal(percentOfRange(2, 40, 8), 0);
+});
+
+test('percentOfRange returns 0 for a degenerate range rather than dividing by zero', () => {
+  assert.equal(percentOfRange(5, 8, 8), 0);
+  assert.equal(percentOfRange(5, 0, 0), 0);
+});

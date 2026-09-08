@@ -9,7 +9,7 @@ import { LoadingSpinner } from '../LoadingSpinner';
 import { SectionReportCard } from '../player/SectionReportCard';
 import type { SectionScoreResult } from '../../lib/assessment-sections';
 import { severityOfResult, tonePresentation } from '../../lib/severity-presentation';
-import { resolveResultPresentation, type Tone } from '../../lib/result-presentation';
+import { resolveResultPresentation, percentOfRange, type Tone } from '../../lib/result-presentation';
 import { loadScoringProfiles, getLoadedScoringProfiles } from '../../lib/recommendation-engine';
 
 /**
@@ -20,8 +20,12 @@ import { loadScoringProfiles, getLoadedScoringProfiles } from '../../lib/recomme
  * render a dash rather than a number computed against a denominator that was
  * never this instrument's.
  */
-const pctOf = (score: number, maxScore: number | null): number | null =>
-  maxScore && maxScore > 0 ? Math.round((score / maxScore) * 100) : null;
+const pctOf = (score: number, maxScore: number | null, scaleMin = 0): number | null =>
+  maxScore && maxScore > 0 ? percentOfRange(score, maxScore, scaleMin) : null;
+
+/** Same, straight off an attempt, so the floor cannot be forgotten at a call site. */
+const pctOfAttempt = (a: { score: number; maxScore: number | null; scaleMin?: number }) =>
+  pctOf(a.score, a.maxScore, a.scaleMin ?? 0);
 
 // ── Design tokens ──
 const f = (size: string, weight: number = 400, color: string = 'var(--color-text-primary)') => ({
@@ -38,6 +42,12 @@ interface AssessmentAttempt {
   score: number;
   /** Null when no real maximum resolved — do not substitute one. */
   maxScore: number | null;
+  /**
+   * The instrument's floor, from the profile that banded it. A stored result
+   * keeps `max_score` and never recorded a minimum, so without this a Sleep
+   * 24 of 8-40 reads 60% instead of 50%.
+   */
+  scaleMin?: number;
   /** Clinical severity term, or undefined. Never a band label. */
   severity?: string;
   /** Instrument copy for the band — "Poor Sleep". Display only. */
@@ -95,12 +105,12 @@ const getSeverityBg = (tone?: Tone) => tonePresentation(tone).background;
  * an overall score. General has no overall, so it never reaches here.
  */
 const getTrend = (attempts: AssessmentAttempt[]): 'improving' | 'worsening' | 'stable' | null => {
-  const comparable = attempts.filter(a => !a.excludedFromTrends && pctOf(a.score, a.maxScore) !== null);
+  const comparable = attempts.filter(a => !a.excludedFromTrends && pctOfAttempt(a) !== null);
   // NOT 'stable'. Fewer than two comparable results means there is no trend to
   // report, and "Stable" is a claim about change over a set the page has just
   // said cannot be compared. Null renders no trend row at all.
   if (comparable.length < 2) return null;
-  const pct = (a: AssessmentAttempt) => pctOf(a.score, a.maxScore)!;
+  const pct = (a: AssessmentAttempt) => pctOfAttempt(a)!;
   const latest = pct(comparable[0]);
   const previous = pct(comparable[1]);
   if (latest < previous) return 'improving';
@@ -218,6 +228,10 @@ export function AssessmentHistoryDetail({ assessmentId, onBack, onNavigate }: As
           allHistory.forEach((entry: any) => {
             const entryId = entry.assessmentId || entry.assessment_id;
             if (entryId === resolvedId) {
+              // Resolved once. It was called twice per entry, once for the
+              // band label and once for the tone, doing the same profile
+              // lookup and band placement both times.
+              const placement = resolveResultPresentation(entry, metaRes, scoringProfiles);
               relevantAttempts.push({
                 id: entry.id || `${entryId}-${entry.completed_at || entry.completedAt || Date.now()}`,
                 assessmentId: entryId,
@@ -236,8 +250,11 @@ export function AssessmentHistoryDetail({ assessmentId, onBack, onNavigate }: As
                 severity: severityOfResult(entry) ?? undefined,
                 // One view model, shared with the dashboard, so the two screens
                 // cannot disagree about the same result again.
-                bandLabel: resolveResultPresentation(entry, metaRes, scoringProfiles).band?.label ?? undefined,
-                tone: resolveResultPresentation(entry, metaRes, scoringProfiles).band?.tone ?? undefined,
+                bandLabel: placement.band?.label ?? undefined,
+                tone: placement.band?.tone ?? undefined,
+                // The profile's own floor. Its bands tile the whole achievable
+                // range, so the lowest edge is the minimum a person can score.
+                scaleMin: placement.scale?.min,
                 interpretation: entry.interpretation,
                 completedAt: entry.completed_at || entry.completedAt || new Date().toISOString(),
                 responses: entry.responses,
@@ -278,7 +295,7 @@ export function AssessmentHistoryDetail({ assessmentId, onBack, onNavigate }: As
    */
   const chartAbsence = useMemo(() => {
     const olderVersion = attempts.filter(a => a.excludedFromTrends).length;
-    const noDenominator = attempts.filter(a => !a.excludedFromTrends && pctOf(a.score, a.maxScore) === null).length;
+    const noDenominator = attempts.filter(a => !a.excludedFromTrends && pctOfAttempt(a) === null).length;
     return { olderVersion, noDenominator, total: attempts.length };
   }, [attempts]);
 
@@ -288,12 +305,12 @@ export function AssessmentHistoryDetail({ assessmentId, onBack, onNavigate }: As
     // move the line. Incomparable results are dropped rather than plotted on a
     // scale they were never scored against.
     return [...attempts]
-      .filter(a => !a.excludedFromTrends && pctOf(a.score, a.maxScore) !== null)
+      .filter(a => !a.excludedFromTrends && pctOfAttempt(a) !== null)
       .reverse().map((a, i) => ({
       index: i,
       score: a.score,
       maxScore: a.maxScore,
-      percent: pctOf(a.score, a.maxScore)!,
+      percent: pctOfAttempt(a)!,
       severity: a.severity,
       dateLabel: new Date(a.completedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: '2-digit' }),
       dateShort: new Date(a.completedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
@@ -325,7 +342,7 @@ export function AssessmentHistoryDetail({ assessmentId, onBack, onNavigate }: As
     const attemptRows = attempts
       .map(
         (a, i) => {
-          const aPct = pctOf(a.score, a.maxScore);
+          const aPct = pctOfAttempt(a);
           return `
         <tr>
           <td style="padding:10px 14px;border-bottom:1px solid #E9EBEF;">${i === 0 ? 'Latest' : `#${attempts.length - i}`}</td>
@@ -386,7 +403,7 @@ export function AssessmentHistoryDetail({ assessmentId, onBack, onNavigate }: As
         <div class="summary">
           <div class="stat">
             <div class="stat-label">${latestIsStale ? 'Most recent result' : 'Latest Score'}</div>
-            <div class="stat-value">${pctOf(latest.score, latest.maxScore) ?? '—'}%<span style="font-size:14px;color:#717182;font-weight:400"> (${latest.score}/${latest.maxScore ?? '—'})</span></div>
+            <div class="stat-value">${pctOfAttempt(latest) ?? '—'}%<span style="font-size:14px;color:#717182;font-weight:400"> (${latest.score}/${latest.maxScore ?? '—'})</span></div>
             ${latestIsStale
               ? `<div class="stat-sub">Scored under an older version</div>`
               : (latest.severity ? `<div class="stat-sub" style="text-transform:capitalize">${latest.severity}</div>` : '')}
@@ -572,14 +589,14 @@ export function AssessmentHistoryDetail({ assessmentId, onBack, onNavigate }: As
                       strokeWidth={8}
                       strokeLinecap="round"
                       strokeDasharray={2 * Math.PI * 34}
-                      strokeDashoffset={2 * Math.PI * 34 * (1 - (pctOf(latest.score, latest.maxScore) ?? 0) / 100)}
+                      strokeDashoffset={2 * Math.PI * 34 * (1 - (pctOfAttempt(latest) ?? 0) / 100)}
                       style={{ transform: 'rotate(-90deg)', transformOrigin: 'center' }}
                     />
                   </svg>
                   <div className="absolute inset-0 flex flex-col items-center justify-center">
                     {/* A dash, not 0%. Without a real maximum there is no
                         percentage — showing 0% reads as a perfect score. */}
-                    <span style={f('xl', 500)}>{pctOf(latest.score, latest.maxScore) !== null ? `${pctOf(latest.score, latest.maxScore)}%` : '—'}</span>
+                    <span style={f('xl', 500)}>{pctOfAttempt(latest) !== null ? `${pctOfAttempt(latest)}%` : '—'}</span>
                     <span style={f('xs', 400, 'var(--color-text-muted)')}>{latest.score} / {latest.maxScore ?? '—'}</span>
                   </div>
                 </div>
@@ -752,7 +769,7 @@ export function AssessmentHistoryDetail({ assessmentId, onBack, onNavigate }: As
                 hour: 'numeric',
                 minute: '2-digit',
               });
-              const pct = pctOf(attempt.score, attempt.maxScore);
+              const pct = pctOfAttempt(attempt);
 
               return (
                 <Card

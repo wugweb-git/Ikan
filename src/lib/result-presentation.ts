@@ -89,6 +89,24 @@ export interface ResultPresentation {
    */
   band: { label: string; tone: Tone | null; index: number; of: number } | null;
   /**
+   * The instrument's achievable range, from its own band set.
+   *
+   * Needed because a percentage is a position **within** a range, and a score
+   * does not start at zero. Sleep runs 8-40: eight items whose lowest option
+   * is worth 1, so 8 is the floor a person gets for answering "never" to
+   * everything. Reading 24/40 as 60% treats that floor as if it were earned,
+   * where the honest figure is (24-8)/32 = 50%. Every 1-5 Likert instrument
+   * here overstates by roughly ten points that way; the 0-based ones agree
+   * either way, which is why it went unnoticed.
+   *
+   * Derived from the resolved bands because a stored result does not carry the
+   * floor — `max_score` was kept and `min` thrown away on the way in — while
+   * the profile that banded it tiles the whole range and therefore states it.
+   * Null when no profile resolved, and a caller then has nothing better than
+   * `value / max`.
+   */
+  scale: { min: number; max: number } | null;
+  /**
    * The label the record carries, unverified. Provenance, never a result.
    *
    * Useful for diagnosing which generation a row came from — a real band label
@@ -203,6 +221,26 @@ function integrityOf(result: any): { integrity: Integrity; partial?: { answered:
  *   loads them. Without them no band can be placed, because the definition
  *   does not carry any.
  */
+/**
+ * A score's position within its achievable range, 0-100.
+ *
+ * `(value - min) / (max - min)`, not `value / max`. The two agree only when
+ * the floor is zero, which is true of Stress, GAD-7 and the PHQ screens and
+ * false of Sleep, Balance and Burnout — so the bug is invisible on exactly the
+ * instruments people check it against.
+ *
+ * Falls back to `value / max` when no floor is known, which is the honest
+ * limit of a stored record that never recorded one. Callers should pass a
+ * `scale` from `resolveResultPresentation` where they have it.
+ */
+export function percentOfRange(value: number, max: number, min = 0): number {
+  const span = max - min;
+  if (!Number.isFinite(span) || span <= 0) return 0;
+  const pct = ((value - min) / span) * 100;
+  // A value outside its own range is a units mismatch, not a 140% result.
+  return Math.round(Math.min(100, Math.max(0, pct)));
+}
+
 export function resolveResultPresentation(
   result: any,
   spec?: SpecLike | null,
@@ -266,6 +304,18 @@ export function resolveResultPresentation(
     // for whatever string the record carries.
   }
 
+  /**
+   * The floor and ceiling the bands themselves tile, rather than `bands[0]`
+   * and `bands[n-1]` positionally: nothing guarantees the stored order is
+   * ascending, and a mis-ordered set would otherwise invert the range.
+   */
+  const edges = bands
+    .flatMap(b => [b?.min, b?.max])
+    .filter((n): n is number => typeof n === 'number' && Number.isFinite(n));
+  const scale = edges.length >= 2
+    ? { min: Math.min(...edges), max: Math.max(...edges) }
+    : null;
+
   const { integrity, partial } = integrityOf(result);
 
   const out: ResultPresentation = {
@@ -275,6 +325,7 @@ export function resolveResultPresentation(
       categoryLabel: spec?.category ?? result?.category ?? '',
     },
     band,
+    scale,
     storedLabel: storedLabel(result),
     direction: directionOf(profile),
     raw,
