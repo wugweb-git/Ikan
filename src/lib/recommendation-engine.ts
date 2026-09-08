@@ -286,6 +286,12 @@ interface AdminRule {
   priority: number;
   rationale: string;
   /**
+   * A parked rule. **Absent means enabled** — the 18 rows predating the field
+   * were all live, so only an explicit `false` withholds one. Without this a
+   * rule the author had deliberately switched off went on matching.
+   */
+  enabled?: boolean;
+  /**
    * Copy, authored on the rule. Empty means render nothing — the engine no
    * longer substitutes a slogan ("A guided program that can help right now",
    * "Recommended reading", "Track your progress") for missing content.
@@ -313,6 +319,7 @@ export async function loadAdminRules(): Promise<void> {
         title: r.title || '',
         body: r.body || '',
         cta: r.cta || '',
+        enabled: r.enabled !== false,
       }));
       console.log(`[RecommendationEngine] Loaded ${_adminRulesCache?.length ?? 0} admin rules`);
     }
@@ -343,7 +350,7 @@ function findMatchingAdminRules(category: string, severity: ClinicalSeverity | n
   if (!category || !severity) return [];
   const key = category.trim().toLowerCase();
   return rankMatchingRules(
-    _adminRulesCache.filter(rule => rule.assessment_category === key),
+    _adminRulesCache.filter(rule => rule.assessment_category === key && rule.enabled !== false),
     severity,
   );
 }

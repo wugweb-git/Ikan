@@ -20,6 +20,18 @@ interface RecommendationRule {
   target_id: string;
   priority: number;
   rationale: string;
+  /**
+   * The card's copy. Without these three the engine renders
+   * `primaryAction.type: "none"` — a matched rule with nothing to show — which
+   * is why every result stored that state regardless of what matched.
+   * `rationale` is the internal note for whoever authored the rule; it is not
+   * user-facing copy.
+   */
+  title: string;
+  body: string;
+  cta: string;
+  /** A rule can be parked without deleting it. Absent means enabled. */
+  enabled: boolean;
 }
 
 interface TargetItem {
@@ -38,20 +50,34 @@ export function RecommendationRulesManager({ onBack }: { onBack: () => void }) {
   // Metadata from KV — single source of truth
   const { categories: metaCategories, severityLevels: kvSeverityLevels } = useMetadata();
 
-  // Severity levels from MetaManager — fallback to standard clinical levels
+  /**
+   * The five clinical terms, and only those.
+   *
+   * This list offered seven, including `low` and `high` — which belong to
+   * `RESPONSE_TIERS`, a different vocabulary that no comparator ranks. A rule
+   * saved against either **can never fire**, and nothing told the author: the
+   * option sat in the dropdown looking exactly as valid as `moderate`. That is
+   * the tier/severity collision reaching the authoring surface, which is the
+   * worst place for it.
+   *
+   * The KV list is filtered too, not just the fallback. A catalog row is
+   * editable, so constraining only the fallback would leave the same hole open
+   * one edit away.
+   */
+  const CLINICAL_SEVERITIES = ['minimal', 'mild', 'moderate', 'moderately-severe', 'severe'];
+
   const FALLBACK_SEVERITY_LEVELS = [
     { value: 'minimal', label: 'Minimal' },
-    { value: 'low', label: 'Low' },
     { value: 'mild', label: 'Mild' },
     { value: 'moderate', label: 'Moderate' },
     { value: 'moderately-severe', label: 'Moderately Severe' },
-    { value: 'high', label: 'High' },
     { value: 'severe', label: 'Severe' },
   ];
 
-  const severityLevels = kvSeverityLevels.length > 0
+  const severityLevels = (kvSeverityLevels.length > 0
     ? kvSeverityLevels.map(s => ({ value: s.value, label: s.label }))
-    : FALLBACK_SEVERITY_LEVELS;
+    : FALLBACK_SEVERITY_LEVELS
+  ).filter(s => CLINICAL_SEVERITIES.includes(s.value));
 
   // Load Data
   useEffect(() => {
@@ -97,6 +123,12 @@ export function RecommendationRulesManager({ onBack }: { onBack: () => void }) {
         target_id: r.target_id || r.equip_id || '',
         priority: r.priority || 10,
         rationale: r.rationale || r.reason || '',
+        title: r.title || '',
+        body: r.body || '',
+        cta: r.cta || '',
+        // Absent means enabled: the 18 existing rows predate the field and were
+        // all live. Only an explicit false parks a rule.
+        enabled: r.enabled !== false,
       }));
       setRules(loadedRules);
     } catch (e) {
@@ -155,21 +187,64 @@ export function RecommendationRulesManager({ onBack }: { onBack: () => void }) {
       recommendation_type: 'equip',
       target_id: '',
       priority: 10,
-      rationale: 'Recommended based on your assessment results.',
+      rationale: '',
+      // Copy is authored or the card does not render. A default here is a
+      // slogan nobody chose, shown to someone who just completed a
+      // mental-health assessment.
+      title: '',
+      body: '',
+      cta: '',
+      // A new rule is parked until it has copy and a target.
+      enabled: false,
     }]);
   };
 
+  /**
+   * Refuse to save a rule that cannot work. Returns the reason, or null.
+   *
+   * There was no validation at all: `handleAddRule` creates a row with
+   * `target_id: ''` and it POSTed successfully, producing a rule that matches
+   * and then renders a card pointing at nothing.
+   */
+  const ruleProblem = (rule: RecommendationRule): string | null => {
+    if (!rule.assessment_category) return 'Pick the assessment this rule responds to.';
+    if (!CLINICAL_SEVERITIES.includes(rule.min_severity)) {
+      return `"${rule.min_severity}" is not a clinical severity, so this rule could never fire. Use one of: ${CLINICAL_SEVERITIES.join(', ')}.`;
+    }
+    if (!rule.target_id) return 'Pick what this rule recommends.';
+    if (!targets.some(t => t.id === rule.target_id && t.type === rule.recommendation_type)) {
+      return 'That target no longer exists. Pick another.';
+    }
+    // An assessment rule that points at its own assessment recommends retaking
+    // the thing just completed.
+    if (rule.recommendation_type === 'assessment') {
+      const self = targets.find(t => t.id === rule.target_id);
+      if (self && self.title && rule.assessment_category &&
+          self.id === rule.target_id && rule.assessment_category === (self as any).category) {
+        return 'A rule cannot recommend the assessment it responds to.';
+      }
+    }
+    if (rule.enabled && (!rule.title.trim() || !rule.body.trim() || !rule.cta.trim())) {
+      return 'An enabled rule needs a title, body and button text — without them the card renders empty.';
+    }
+    return null;
+  };
+
   const handleSaveRule = async (rule: RecommendationRule) => {
+    const problem = ruleProblem(rule);
+    if (problem) { showToast('error', 'Not saved', problem); return; }
     try {
       const payload = {
         assessment_category: rule.assessment_category,
         min_severity: rule.min_severity,
         recommendation_type: rule.recommendation_type,
         target_id: rule.target_id,
-        // Legacy compat
-        equip_id: rule.recommendation_type === 'equip' ? rule.target_id : undefined,
         priority: rule.priority,
         rationale: rule.rationale,
+        title: rule.title,
+        body: rule.body,
+        cta: rule.cta,
+        enabled: rule.enabled,
       };
 
       if (rule.id.startsWith('temp-')) {
@@ -213,12 +288,6 @@ export function RecommendationRulesManager({ onBack }: { onBack: () => void }) {
   // Get filtered targets by type
   const getTargetsByType = (type: 'equip' | 'resource' | 'assessment') =>
     targets.filter(t => t.type === type);
-
-  // Get target label
-  const getTargetLabel = (targetId: string) => {
-    const target = targets.find(t => t.id === targetId);
-    return target?.title || targetId || '—';
-  };
 
   const getTypeIcon = (type: string) => {
     switch (type) {
@@ -428,13 +497,43 @@ export function RecommendationRulesManager({ onBack }: { onBack: () => void }) {
                         />
                       </TableCell>
 
-                      {/* Rationale */}
+                      {/* Card copy + internal note.
+                          `rationale` is the author's own note; title/body/cta
+                          are what the person who finished the assessment reads.
+                          They were not authorable at all, which is why every
+                          result stored primaryAction.type "none". */}
                       <TableCell>
-                        <Input
-                          value={rule.rationale}
-                          onChange={(e) => updateLocalRule(rule.id, { rationale: e.target.value })}
-                          placeholder="Why this recommendation..."
-                        />
+                        <div className="flex flex-col gap-1.5" style={{ minWidth: 260 }}>
+                          <Input
+                            value={rule.title}
+                            onChange={(e) => updateLocalRule(rule.id, { title: e.target.value })}
+                            placeholder="Card heading, e.g. Unburn"
+                          />
+                          <Input
+                            value={rule.body}
+                            onChange={(e) => updateLocalRule(rule.id, { body: e.target.value })}
+                            placeholder="One or two lines saying why this helps"
+                          />
+                          <Input
+                            value={rule.cta}
+                            onChange={(e) => updateLocalRule(rule.id, { cta: e.target.value })}
+                            placeholder="Button text, e.g. Start program"
+                          />
+                          <Input
+                            value={rule.rationale}
+                            onChange={(e) => updateLocalRule(rule.id, { rationale: e.target.value })}
+                            placeholder="Internal note — not shown to the user"
+                            style={{ fontSize: 'var(--text-xs)' }}
+                          />
+                          <label className="flex items-center gap-2" style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}>
+                            <input
+                              type="checkbox"
+                              checked={rule.enabled}
+                              onChange={(e) => updateLocalRule(rule.id, { enabled: e.target.checked })}
+                            />
+                            Enabled
+                          </label>
+                        </div>
                       </TableCell>
 
                       {/* Actions */}
