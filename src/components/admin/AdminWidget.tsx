@@ -10,10 +10,24 @@ interface AdminWidgetProps {
 export function AdminWidget({ onNavigate }: AdminWidgetProps) {
   const { user } = useAuth();
 
-  // Only show the admin widget if the user has admin privileges
-  if (!user || !user.is_admin) {
-    return null;
-  }
+  /*
+   * EVERY HOOK RUNS BEFORE THE EARLY RETURN.
+   *
+   * The `if (!user?.is_admin) return null` used to sit above the `useState`
+   * and `useEffect` below, so this component ran ONE hook for a non-admin and
+   * THREE for an admin. React counts hooks per render and compares: the moment
+   * `is_admin` changed in a mounted session it threw "Rendered more hooks than
+   * during the previous render" and took the page down.
+   *
+   * That is not a rare path. It fires on sign-in, and again whenever auth
+   * resolves from `undefined` to a profile — which is every first load for an
+   * admin. Introduced by the footer fix in 842de494, which added the two hooks
+   * beneath a return that had been harmless while there were none.
+   *
+   * The guard is now a render-time branch (`isAdmin` below), not a control-flow
+   * one. Hooks are unconditional; only the output is conditional.
+   */
+  const isAdmin = !!user?.is_admin;
 
   const handleClick = () => {
     if (onNavigate) {
@@ -40,6 +54,10 @@ export function AdminWidget({ onNavigate }: AdminWidgetProps) {
     io.observe(footer);
     return () => io.disconnect();
   }, []);
+
+  // Only show the admin widget if the user has admin privileges. AFTER the
+  // hooks, never before — see the note above.
+  if (!isAdmin) return null;
 
   return (
     <div
