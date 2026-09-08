@@ -63,12 +63,21 @@ export function resourceImage(r: ResourceRecord): string {
   return r.thumbnail || r.image || r.image_url || '';
 }
 
-/** Reading time as a display string, however the record spells it. */
+/**
+ * Reading time as a display string, however the record spells it.
+ *
+ * All 9 live records store `readTime: "5"` — a bare number, not a phrase — so
+ * the card rendered "Mar 11, 2026 · 5". A numeric value is given its unit
+ * rather than passed through; a value that already reads as a phrase
+ * ("6 min read") is left alone.
+ */
 export function resourceReadTime(r: ResourceRecord): string {
   if (typeof r.read_time_minutes === 'number' && r.read_time_minutes > 0) {
     return `${r.read_time_minutes} min read`;
   }
-  return r.readTime || r.read_time || '5 min read';
+  const raw = (r.readTime || r.read_time || '').trim();
+  if (!raw) return '5 min read';
+  return /^\d+$/.test(raw) ? `${raw} min read` : raw;
 }
 
 function resourceDate(r: ResourceRecord): string {

@@ -91,3 +91,14 @@ test('resource_id is accepted where id is absent', () => {
   assert.equal(toResourcePost({ resource_id: 'r1' }).id, 'r1');
   assert.equal(toResourcePost({ resource_id: 'r1' }).slug, 'r1');
 });
+
+test('a bare numeric read time is given its unit', () => {
+  // Every live record stores "5", which rendered as "Mar 11, 2026 · 5".
+  assert.equal(resourceReadTime({ readTime: '5' }), '5 min read');
+  assert.equal(resourceReadTime({ readTime: ' 12 ' }), '12 min read');
+});
+
+test('a read time that already reads as a phrase is left alone', () => {
+  assert.equal(resourceReadTime({ readTime: '6 min read' }), '6 min read');
+  assert.equal(resourceReadTime({ readTime: 'about an hour' }), 'about an hour');
+});
