@@ -6,7 +6,7 @@
  */
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { rankMatchingRules } from './recommendation-ranking.ts';
+import { rankMatchingRules } from './recommendation-matching.ts';
 
 /** The four live burnout rules, in creation order. */
 const burnout = [
@@ -77,7 +77,7 @@ test('ordering is stable enough to be deterministic for identical rules', () => 
 
 // ── severityForMatching ─────────────────────────────────────────────────────
 
-import { severityForMatching } from './recommendation-ranking.ts';
+import { severityForMatching } from './recommendation-matching.ts';
 
 const band = (ref: string | null) => ({ band: ref === null ? null : { severity_ref: ref } });
 
@@ -119,4 +119,52 @@ test('an unrecognised severity term is ignored rather than ranked', () => {
 test('an overall with an unusable band falls through to the sections', () => {
   assert.equal(severityForMatching({ overall: band('not-a-term'), sections: [band('moderate')] }),
     'moderate');
+});
+
+
+import { eligibleRules, hasRenderableCopy } from './recommendation-matching.ts';
+
+const copy = { title: 'T', body: 'B', cta: 'C' };
+const rule = (over: Record<string, unknown> = {}) => ({
+  assessment_category: 'burnout', min_severity: 'mild', priority: 5, ...copy, ...over,
+});
+
+test('renderable copy requires all three of title, body and cta', () => {
+  assert.equal(hasRenderableCopy(rule()), true);
+  for (const field of ['title', 'body', 'cta']) {
+    assert.equal(hasRenderableCopy(rule({ [field]: '' })), false, `empty ${field}`);
+    assert.equal(hasRenderableCopy(rule({ [field]: '   ' })), false, `whitespace ${field}`);
+    assert.equal(hasRenderableCopy(rule({ [field]: undefined })), false, `absent ${field}`);
+  }
+});
+
+test('rationale is not copy', () => {
+  // Every live row is in exactly this shape: a rationale and no copy.
+  // Substituting it showed the author's note ("Awareness of overload") to the
+  // person who had just taken a mental-health assessment.
+  assert.equal(hasRenderableCopy({
+    min_severity: 'mild', priority: 5, rationale: 'Awareness of overload',
+  } as never), false);
+});
+
+test('a disabled rule is not eligible', () => {
+  assert.deepEqual(eligibleRules([rule({ enabled: false })], 'burnout'), []);
+  assert.equal(eligibleRules([rule({ enabled: true })], 'burnout').length, 1);
+});
+
+test('an absent enabled flag means enabled', () => {
+  assert.equal(eligibleRules([rule()], 'burnout').length, 1);
+});
+
+test('an enabled rule with no copy is still not eligible', () => {
+  assert.deepEqual(eligibleRules([rule({ enabled: true, body: '' })], 'burnout'), []);
+});
+
+test('category matching ignores case and surrounding space', () => {
+  assert.equal(eligibleRules([rule({ assessment_category: 'Burnout' })], ' BURNOUT ').length, 1);
+});
+
+test('an empty category matches nothing rather than everything', () => {
+  assert.deepEqual(eligibleRules([rule()], ''), []);
+  assert.deepEqual(eligibleRules([rule()], '   '), []);
 });

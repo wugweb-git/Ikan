@@ -2,7 +2,7 @@
 // falls back to built-in defaults only when no admin rules exist.
 
 import { apiClient } from './api-client';
-import { rankMatchingRules } from './recommendation-ranking';
+import { rankMatchingRules, eligibleRules } from '../supabase/functions/server/recommendation-matching.ts';
 import {
   compareSeverity, tierFor, isSeverityLevel,
   type SeverityLevel as ClinicalSeverity, type ResponseTier,
@@ -336,25 +336,6 @@ export async function loadAdminRules(): Promise<void> {
  * typo'd threshold silently became a live one.
  */
 /**
- * A rule with nothing to say must not match.
- *
- * B2 guards the save path, but a row written any other way — a bulk import, a
- * direct KV write, or the 18 rows that predate the fields — would still match
- * and then render a card with a blank heading and an unlabelled button. This
- * guards the read path, so neither route can leak one.
- *
- * `rationale` deliberately does NOT satisfy this, and is no longer substituted
- * anywhere. It is the author's internal note: the live rows hold "Awareness of
- * overload" and "Work-life recalibration", clinician shorthand that was
- * reaching `severityMessage`, `primaryAction.body` and both secondary-action
- * labels through `|| rule.rationale`. The message a person read after
- * finishing a mental-health assessment was a memo written to somebody else.
- */
-function hasRenderableCopy(rule: AdminRule): boolean {
-  return !!(rule.title?.trim() && rule.body?.trim() && rule.cta?.trim());
-}
-
-/**
  * Rules matching this assessment's category and severity.
  *
  * The join key is the assessment's **category slug** (`anxiety`, `burnout`, …),
@@ -367,14 +348,7 @@ function hasRenderableCopy(rule: AdminRule): boolean {
 function findMatchingAdminRules(category: string, severity: ClinicalSeverity | null): AdminRule[] {
   if (!_adminRulesCache || _adminRulesCache.length === 0) return [];
   if (!category || !severity) return [];
-  const key = category.trim().toLowerCase();
-  return rankMatchingRules(
-    _adminRulesCache.filter(rule =>
-      rule.assessment_category === key &&
-      rule.enabled !== false &&
-      hasRenderableCopy(rule)),
-    severity,
-  );
+  return rankMatchingRules(eligibleRules(_adminRulesCache, category), severity);
 }
 
 

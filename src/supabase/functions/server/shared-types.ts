@@ -210,7 +210,18 @@ export interface RecommendationRule {
   recommendation_type?: 'equip' | 'resource' | 'assessment';
   target_id?: string;
   priority: number;
+  /**
+   * The author's internal note. **Never rendered to a user** — the live rows
+   * hold clinician shorthand ("Awareness of overload"). Use `body`.
+   */
   rationale: string;
+  /** Authored copy. A rule missing any of the three cannot match — see
+   *  `hasRenderableCopy` in `recommendation-matching.ts`. */
+  title?: string;
+  body?: string;
+  cta?: string;
+  /** Absent means enabled. Honoured by both engines via `eligibleRules`. */
+  enabled?: boolean;
   created_at: string;
   updated_at?: string;
 }
@@ -225,8 +236,19 @@ export interface EquipDayWithBlocks extends EquipDay {
 
 export interface RecommendationResult {
   equip_id: string;
+  /**
+   * The programme's name, under three keys, because the two consumers read
+   * different ones: the dashboard re-fetches by `equip_id` and ignores this,
+   * while `EquipProgramCompletion` reads `title`/`name` and so displayed the
+   * literal "Recommended Program" on every card for as long as this endpoint
+   * has returned only `equip_name`.
+   */
   equip_name: string;
+  title: string;
+  name: string;
   category: string;
   confidence: 'high' | 'medium' | 'low';
+  /** Authored copy from the rule's `body`, never its `rationale`. */
+  description: string;
   reason: string;
 }

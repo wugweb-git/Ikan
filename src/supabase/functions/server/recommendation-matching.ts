@@ -1,6 +1,22 @@
 /**
  * Which recommendation rule wins, for a user at a given severity.
  *
+ * **The single matching path for both engines.** The client
+ * (`src/lib/recommendation-engine.ts`) and the server
+ * (`./recommendation-service.ts`) each used to carry their own copy, and the
+ * copies disagreed on the thing that matters most: the client ranks priority
+ * DESCENDING (a bigger number is a stronger rule, which is how the 18 rows are
+ * written), the server sorted ASCENDING and its own comment called the lower
+ * number "higher priority". One field, two opposite meanings, both live.
+ *
+ * It lives under `server/` and not `src/lib/` for a deployment reason: the
+ * edge function is shipped by `cp src/supabase/functions/server/*` into a
+ * staging directory (BUILD.md), a flat non-recursive copy of this one folder.
+ * A shared module anywhere else is simply absent at runtime, and the failure
+ * is a resolution error inside a deployed function rather than a build error
+ * here. The client reaches in the other way, which is already the established
+ * direction — see `scoring-vocabulary.ts`.
+ *
  * Its own module rather than a function inside `recommendation-engine`, because
  * that file imports the API client and so cannot be loaded by a unit test —
  * and this is the piece of the engine most worth testing directly.
@@ -31,8 +47,9 @@
  * Priority is the tie-break within a threshold and reads the way the data is
  * written: higher wins. No migration of the 18 rows is needed.
  */
-// Imported from the vocabulary module directly, with an explicit extension,
-// rather than via `scoring-engine`.
+// Imported with an explicit extension: required by Deno at runtime, and by
+// Node's TypeScript stripping under `node --test`, which does not resolve
+// extensionless relative specifiers.
 //
 // `scoring-engine` re-exports these, but it also pulls in modules that reach
 // `api-client`, and an extensionless specifier anywhere in that chain makes the
@@ -42,7 +59,7 @@
 // this is the shortest path to it and not a second copy.
 import {
   compareSeverity, isSeverityLevel, type SeverityLevel,
-} from '../supabase/functions/server/scoring-vocabulary.ts';
+} from './scoring-vocabulary.ts';
 
 /** True when the user is at least as severe as the rule requires. */
 export function severityMeetsThreshold(actual: string, minRequired: string): boolean {
@@ -53,6 +70,46 @@ export function severityMeetsThreshold(actual: string, minRequired: string): boo
 export interface RankableRule {
   min_severity: string;
   priority: number;
+}
+
+export interface EligibleRule extends RankableRule {
+  assessment_category?: string;
+  enabled?: boolean;
+  title?: string;
+  body?: string;
+  cta?: string;
+}
+
+/**
+ * A rule with nothing to say must not match.
+ *
+ * The save path guards this too, but a row written any other way — a bulk
+ * import, a direct KV write, or the 18 rows that predate the copy fields —
+ * would still match and render a card with a blank heading and an unlabelled
+ * button. `rationale` deliberately does NOT satisfy it: that field is the
+ * author's internal note ("Awareness of overload"), and substituting it showed
+ * a memo written to a clinician to the person who took the assessment.
+ */
+export function hasRenderableCopy(rule: EligibleRule): boolean {
+  return !!(rule.title?.trim() && rule.body?.trim() && rule.cta?.trim());
+}
+
+/**
+ * The rules that may be considered at all, before severity is looked at.
+ *
+ * `enabled` is honoured HERE rather than in each engine, which is the defect
+ * this module exists to end: the client honoured it and the server did not, so
+ * disabling all 18 rules silenced the results screen while `GET
+ * /recommendations` — the dashboard and the programme-completion screen — went
+ * on serving them.
+ */
+export function eligibleRules<T extends EligibleRule>(rules: T[], category: string): T[] {
+  const key = category.trim().toLowerCase();
+  if (!key) return [];
+  return rules.filter(rule =>
+    String(rule.assessment_category ?? '').trim().toLowerCase() === key &&
+    rule.enabled !== false &&
+    hasRenderableCopy(rule));
 }
 
 /** Rules the user qualifies for, strongest first. */

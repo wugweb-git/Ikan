@@ -11,7 +11,7 @@ import { triggerCrisisSupport } from '../safety/CrisisSupport';
 import { buildScoringContext, toSectionScoreResult } from '../../lib/scoring-context';
 import { computeScores } from '../../lib/scoring-engine';
 import { createActiveTimer, type ActiveTimer } from '../../lib/active-time';
-import { severityForMatching } from '../../lib/recommendation-ranking';
+import { severityForMatching } from '../../supabase/functions/server/recommendation-matching.ts';
 import { slugify } from '../../lib/slug';
 import { AssessmentResults } from './AssessmentResults';
 import { useOfflineSync } from '../../hooks/useOfflineSync';

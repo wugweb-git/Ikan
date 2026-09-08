@@ -5,6 +5,10 @@ import {
   SeverityLevel 
 } from './shared-types.ts';
 import { EquipService } from './program-service.ts';
+import { eligibleRules, rankMatchingRules } from './recommendation-matching.ts';
+import { compareSeverity, isSeverityLevel } from './scoring-vocabulary.ts';
+
+export { isSeverityLevel };
 
 const generateId = () => crypto.randomUUID();
 
@@ -117,26 +121,30 @@ export const RecommendationService = {
     // Evaluate Rules & Deduplicate (Highest Priority Wins)
     const candidateMap = new Map<string, { rec: RecommendationResult, priority: number }>();
 
-    for (const rule of rules) {
-        const assessment = latestByCategory.get(String(rule.assessment_category || '').toLowerCase());
-        if (!assessment) continue;
+    for (const [category, assessment] of latestByCategory) {
+      // Eligibility and ordering both come from the shared module, so this
+      // path can no longer drift from the client's. Notably it now honours
+      // `enabled`, which it never did: disabling all 18 rules silenced the
+      // results screen while this endpoint went on serving them.
+      const userSeverityForCategory = await severityForResult(
+        assessment, defByAssessmentId.get(assessment.assessment_id));
+      if (!userSeverityForCategory) continue;
 
-        // Banded against the instrument's own profile. Null means the score
-        // could not be placed, and an unplaced score matches nothing — it is
-        // not evidence of a low severity.
-        const userSeverity = await severityForResult(assessment, defByAssessmentId.get(assessment.assessment_id));
-        if (!userSeverity) continue;
+      for (const rule of rankMatchingRules(eligibleRules(rules, category), userSeverityForCategory)) {
+
+        // `recommendation_type` is honoured: a `resource`, `assessment` or
+        // `consultant` rule's target is not an equip id, and treating it as
+        // one is how the first non-equip rule anyone writes would render a
+        // dead card. Unset means equip, matching how the 18 rows were seeded.
+        if ((rule.recommendation_type ?? 'equip') !== 'equip') continue;
 
         const equipId = rule.target_id || rule.equip_id;
         if (!equipId) continue;
 
-        if (compareSeverity(userSeverity, rule.min_severity) >= 0) {
-            const existing = candidateMap.get(equipId);
-
-            // If we already have a candidate for this equip, only replace if this rule is higher priority (lower val)
-            if (existing && existing.priority <= rule.priority) {
-                continue;
-            }
+        {
+            // Already ordered strongest-first by the shared ranking, so the
+            // first rule to claim an equip is the winning one.
+            if (candidateMap.has(equipId)) continue;
 
             const equip = await EquipService.getEquip(equipId);
             if (!equip) continue;
@@ -145,21 +153,31 @@ export const RecommendationService = {
                 rec: {
                     equip_id: equip.id,
                     equip_name: equip.title,
+                    // Both spellings, because the two consumers read different
+                    // ones: EquipProgramCompletion reads `title`/`name` and so
+                    // showed the literal "Recommended Program" on every card
+                    // for as long as this endpoint has returned `equip_name`.
+                    title: equip.title,
+                    name: equip.title,
                     category: equip.category,
                     confidence: 'high',
-                    reason: rule.rationale
+                    // Authored copy, never `rationale` — that is the rule
+                    // author's internal note, addressed to a clinician.
+                    description: rule.body ?? '',
+                    reason: rule.body ?? ''
                 },
                 priority: rule.priority
             });
         }
+      }
     }
 
-    // Convert to array and sort by priority
-    const finalRecs = Array.from(candidateMap.values())
-        .sort((a, b) => a.priority - b.priority)
-        .map(x => x.rec);
-
-    return finalRecs;
+    // Insertion order is already strongest-first per category, from the shared
+    // ranking. The previous `.sort((a, b) => a.priority - b.priority)` undid
+    // it: it ranked the LOWEST priority number first, the exact inversion the
+    // client had already been fixed for, so the two engines disagreed about
+    // which rule wins for the same user.
+    return Array.from(candidateMap.values()).map(x => x.rec);
   }
 };
 
@@ -263,32 +281,6 @@ async function severityForResult(result: any, def: any): Promise<SeverityLevel |
  * not clinical severities; they moved to their own vocabulary on 2026-09-02
  * and should never have been ranked here alongside the other three.
  */
-const SEVERITY_RANK: Record<SeverityLevel, number> = {
-    'minimal': 1,
-    'mild': 2,
-    'moderate': 3,
-    'moderately-severe': 4,
-    'severe': 5,
-};
-
-export function isSeverityLevel(v: unknown): v is SeverityLevel {
-    return typeof v === 'string' && Object.prototype.hasOwnProperty.call(SEVERITY_RANK, v);
-}
-
-/**
- * Positive when the user's severity meets or exceeds the rule's threshold.
- *
- * An unrecognised term on either side means **no match**, rather than the
- * arithmetic silently producing `NaN`. A typo'd threshold now fails closed and
- * visibly, instead of quietly disabling a rule for four months.
- */
-function compareSeverity(user: SeverityLevel, rule: SeverityLevel): number {
-    if (!isSeverityLevel(user) || !isSeverityLevel(rule)) {
-        console.warn(
-            `[recommendations] Unrecognised severity in comparison: user="${user}", rule="${rule}". ` +
-            `Valid terms are ${Object.keys(SEVERITY_RANK).join(', ')}. No match.`
-        );
-        return -1;
-    }
-    return SEVERITY_RANK[user] - SEVERITY_RANK[rule];
-}
+// `SEVERITY_RANK`, `isSeverityLevel` and `compareSeverity` used to be defined
+// here as a second copy of the five-term ordering. They now come from
+// `scoring-vocabulary.ts`, the single definition both engines read.
