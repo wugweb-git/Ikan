@@ -16,6 +16,7 @@
  * Dependency-free on purpose: it must run under `node --test`.
  */
 import { resolveInteraction, configOf, type Activity, type InteractionType } from './block-model.ts';
+import { SCALE_BACKED } from './content-hierarchy.ts';
 
 export interface BlockIssue {
   /** `error` blocks a publish; `warning` is authored-content advice. */
@@ -99,7 +100,76 @@ export function validateBlock(block: Activity): BlockIssue[] {
                   message: 'Untitled. The player falls back to the prompt, which is usually not a heading.' });
   }
 
+  issues.push(...validateBlockTypeRules(block, interaction));
+
   return issues;
+}
+
+/**
+ * The per-BLOCK-TYPE rules from the block type reference.
+ *
+ * `REQUIRED` above keys on INTERACTION — "can this widget draw at all". These
+ * key on TYPE — what the reference says a block of this kind must carry, which
+ * is a different and stricter question. An `input-table` draws fine with no
+ * `key`; a `sleep-diary` with no key produces no diary, which is the entire
+ * reason the type exists.
+ *
+ * Reported, never blocking. On today's content this fires on **107 keyless
+ * input-tables, 35 scale-backed blocks with no `scale_ref` and 5 checklists
+ * with no items** — none of which is bad authoring, because the editor has
+ * never had a field for `key` and no block has ever referenced a shared scale.
+ * Turning these into errors before those two things exist would fail content
+ * for lacking something it was never possible to give.
+ */
+function validateBlockTypeRules(block: Activity, interaction: InteractionType): BlockIssue[] {
+  const out: BlockIssue[] = [];
+  const cfg = configOf(block);
+  const key = cfg?.key;
+  const needsKey = ['exercise', 'journal', 'checklist', 'sleep-diary'].includes(block.type);
+
+  if (needsKey && !(typeof key === 'string' && key.trim())) {
+    out.push({ level: 'warning', code: 'no-response-key',
+               message: `A ${block.type} answers something, and nothing says where the answer goes. `
+                      + 'Without a key its answers file under this block id, so the same question '
+                      + 'asked on two days becomes two unrelated facts.' });
+  }
+
+  switch (block.type) {
+    case 'exercise':
+      if (!cfg?.subtype) {
+        out.push({ level: 'error', code: 'no-activity',
+                   message: 'An exercise with no activity has nothing for the user to do — it '
+                          + 'falls through to a free-text box.' });
+      }
+      // Scale-backed: the option set should come from the catalog, not be inlined.
+      if (SCALE_BACKED.includes(interaction) && !(block as { scale_ref?: string }).scale_ref) {
+        out.push({ level: 'warning', code: 'no-scale-ref',
+                   message: `A ${interaction} takes its options from a shared scale. This one `
+                          + 'inlines them, so the same scale is re-typed per block and cannot be '
+                          + 'corrected in one place.' });
+      }
+      break;
+
+    case 'journal':
+      if (!nonEmpty(cfg?.prompt)) {
+        out.push({ level: 'warning', code: 'no-prompt',
+                   message: 'A journal is a prompt and a box. With no prompt it is just a box.' });
+      }
+      break;
+
+    case 'sleep-diary':
+      if (!nonEmpty(cfg?.columns) && !nonEmpty(cfg?.tableColumns)) {
+        out.push({ level: 'error', code: 'no-columns',
+                   message: 'A sleep diary needs its columns — bedtime, wake time, quality. With '
+                          + 'none it renders one unlabelled cell.' });
+      }
+      break;
+
+    default:
+      break;
+  }
+
+  return out;
 }
 
 /** Day-level roll-up. A day with no blocks is publishable today; it should not be. */
@@ -113,6 +183,29 @@ export function validateDay(
   if (list.length === 0) {
     dayIssues.push({ level: 'error', code: 'empty-day',
                      message: 'This day has no blocks. A user reaching it sees an empty screen.' });
+  }
+
+  /*
+    `conclude` closes the day — the reference says "always last". Both halves of
+    that are day-level facts a single block cannot see.
+
+    Live, 13 days have no closing card at all: productivity-reset has none on
+    any of its 8 days, and sleep-tight, stress-buster and burnout-reset have 2,
+    2 and 1. Reported so an author sees it while editing rather than in a census.
+  */
+  const concludes = list.filter(b => b?.type === 'conclude');
+  if (list.length > 0 && concludes.length === 0) {
+    dayIssues.push({ level: 'warning', code: 'no-conclude',
+                     message: 'This day has no closing block, so it ends on whatever came last '
+                            + 'with no sign it is finished.' });
+  }
+  if (concludes.length > 1) {
+    dayIssues.push({ level: 'error', code: 'multiple-concludes',
+                     message: `${concludes.length} closing blocks on one day — only the last can be the end.` });
+  }
+  if (concludes.length === 1 && list[list.length - 1]?.type !== 'conclude') {
+    dayIssues.push({ level: 'error', code: 'conclude-not-last',
+                     message: 'The closing block is not last, so content follows the end of the day.' });
   }
 
   const seen = new Set<string>();

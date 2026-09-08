@@ -638,3 +638,54 @@ test('watch still resolves, under its new name', () => {
   assert.equal(normalizeSubtype('watch'), 'view');
   assert.equal(SUBTYPE_INTERACTION['view'], 'view');
 });
+
+/**
+ * The per-block-type rules from the block type reference.
+ *
+ * Calibrated against live content, which is what stops them being noise: they
+ * fire on 107 keyless input-tables, 35 scale-backed blocks with no `scale_ref`
+ * and 5 checklists with no items — none of which is bad authoring, because the
+ * editor has never had a `key` field and no block has ever referenced a shared
+ * scale. Hence warnings, not errors, for exactly those two.
+ */
+test('a response-producing block with no key is reported, not blocked', () => {
+  const issues = validateBlock({
+    id: 'b', title: 'Sleep log', type: 'exercise', content: '',
+    duration: 0, required: true, order: 0,
+    activityConfig: { subtype: 'input-table', columns: ['Hours'] },
+  } as never);
+  const key = issues.find(i => i.code === 'no-response-key');
+  assert.ok(key, 'a keyless exercise should be reported');
+  assert.equal(key!.level, 'warning', 'the editor has never had a key field — blocking is unfair');
+});
+
+test('a block that produces nothing needs no key', () => {
+  const issues = validateBlock({
+    id: 'b', title: 'Well done', type: 'conclude', content: 'Nice work.',
+    duration: 0, required: false, order: 0,
+  } as never);
+  assert.equal(issues.find(i => i.code === 'no-response-key'), undefined);
+});
+
+test('an exercise with no activity is an error — it has nothing for the user to do', () => {
+  const issues = validateBlock({
+    id: 'b', title: 'Exercise', type: 'exercise', content: '',
+    duration: 0, required: true, order: 0, activityConfig: { key: 'k' },
+  } as never);
+  const a = issues.find(i => i.code === 'no-activity');
+  assert.ok(a);
+  assert.equal(a!.level, 'error');
+});
+
+test('the closing block must be last, and there must be exactly one', () => {
+  const lesson = { id: 'l', title: 'L', type: 'lesson', content: 'x', duration: 0, required: false, order: 0 };
+  const end    = { id: 'c', title: 'C', type: 'conclude', content: 'done', duration: 0, required: false, order: 1 };
+
+  assert.ok(validateDay([lesson] as never).dayIssues.some(i => i.code === 'no-conclude'),
+    'a day with no closing block ends on whatever came last');
+  assert.ok(validateDay([end, lesson] as never).dayIssues.some(i => i.code === 'conclude-not-last'),
+    'content after the end of the day');
+  assert.ok(validateDay([lesson, { ...end, id: 'c2' }, end] as never).dayIssues.some(i => i.code === 'multiple-concludes'));
+  assert.deepEqual(validateDay([lesson, end] as never).dayIssues, [],
+    'a lesson then a conclude is a well-formed day');
+});
