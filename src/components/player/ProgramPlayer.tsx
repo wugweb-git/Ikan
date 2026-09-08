@@ -1,13 +1,14 @@
 import { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { EquipProgram, Activity, resolveInteraction, repeatTargetDays, responseKeyOf, warnFallback, type DayType } from '../../lib/blocks/block-model';
+import { EquipProgram, Activity, resolveInteraction, repeatTargetDays, responseKeyOf, warnFallback, type DayType, type DayContent } from '../../lib/blocks/block-model';
 import { ErrorBoundary } from '../ErrorBoundary';
 import { BlockRenderer } from '../blocks/BlockRenderer';
 import { Button } from '../ui/button';
 import { ChevronLeft, Check, X } from 'lucide-react';
 import { useNotifications } from '../../contexts/NotificationContext';
 import { cn } from '../ui/utils';
-import { DAY_TYPE_PRESETS } from '../../lib/blocks/block-type-rules';
+import { DAY_TYPE_LAYOUTS, DEFAULT_DAY_LAYOUT, layoutOf, primaryButtonFor, fallbackTitleFor, type DayLayout } from '../../lib/blocks/day-layout';
+import { policyOf } from '../../lib/blocks/day-policy';
 
 interface ProgramPlayerProps {
   program: EquipProgram;
@@ -37,153 +38,22 @@ interface Step {
 }
 
 // --- AFFORDANCE CONFIGURATION ---
-interface DayTypeConfig {
-  layout: 'centered' | 'card' | 'scrollable' | 'compact' | 'step-focus';
-  showBack: boolean;
-  autoAdvance: boolean;
-  progressStyle: 'percentage' | 'steps' | 'none';
-  primaryButtonText: (isLast: boolean) => string;
-  /**
-   * Heading on the completion screen. Folded in here because two call sites
-   * read `dayType === 'practice'` directly, which meant the adapter could not
-   * be corrected without silently changing this copy — the reason assessments
-   * were still running as `practice` months after an `assessment` config was
-   * written for them.
-   */
-  completionTitle: string;
-  /** Fallback header when neither the program nor the day names itself. */
-  fallbackTitle: (dayNum: number) => string;
-  singlePage?: boolean;
-  bgColor?: string;
-}
 
-/**
- * How the player behaves on each stage type. Exported so AdminBlockTypeViewer
- * reads it instead of transcribing it — that screen held a hand-copied version.
- *
- * Typed `Record<DayType, ...>` as of 2026-09-04. It previously held **7** of the
- * 11 day types against `Record<string, ...>`, so `onboarding`, `quiz`,
- * `check-in` and `rest` fell to DEFAULT_CONFIG and played as **learning days** —
- * back-navigation on, percentage progress, "Continue". A rest day with no
- * active task and a forward-only quiz both rendered as a scrollable lesson.
- * The four below are authored from blocks.md §16.
- */
-export const DAY_TYPE_CONFIG: Record<DayType, DayTypeConfig> = {
-  'onboarding': {
-    layout: 'step-focus',
-    showBack: false,
-    autoAdvance: true,
-    progressStyle: 'steps',
-    primaryButtonText: (last) => last ? 'Start Programme' : 'Continue',
-    bgColor: 'bg-[var(--color-bg-page)]',
-    completionTitle: "You're all set",
-    fallbackTitle: () => 'Getting started',
-  },
-  'quiz': {
-    layout: 'centered',
-    showBack: false,
-    autoAdvance: true,
-    progressStyle: 'steps',
-    primaryButtonText: (last) => last ? 'See Results' : 'Next',
-    bgColor: 'bg-[var(--color-bg-page)]',
-    completionTitle: 'Quiz Complete',
-    fallbackTitle: (n: number) => `Day ${n}`,
-  },
-  'check-in': {
-    layout: 'compact',
-    showBack: false,
-    autoAdvance: true,
-    progressStyle: 'steps',
-    primaryButtonText: (last) => last ? 'Done' : 'Next',
-    bgColor: 'bg-[var(--color-bg-page)]',
-    completionTitle: 'Checked in',
-    fallbackTitle: (n: number) => `Day ${n}`,
-  },
-  'rest': {
-    layout: 'scrollable',
-    showBack: true,
-    autoAdvance: false,
-    progressStyle: 'none',
-    primaryButtonText: (last) => 'Done',
-    singlePage: true,
-    bgColor: 'bg-[var(--color-bg-page)]',
-    completionTitle: 'Rest Day',
-    fallbackTitle: (n: number) => `Day ${n}`,
-  },
-  'assessment': {
-    layout: 'centered',
-    showBack: false,
-    autoAdvance: true,
-    progressStyle: 'steps',
-    primaryButtonText: (last) => last ? 'Complete' : 'Continue',
-    bgColor: 'bg-[var(--color-bg-page)]',
-    completionTitle: 'All Done!',
-    fallbackTitle: () => 'Assessment',
-  },
-  'assessment-lite': {
-    layout: 'card',
-    showBack: true,
-    autoAdvance: true,
-    progressStyle: 'percentage',
-    primaryButtonText: (last) => last ? 'Complete' : 'Next',
-    bgColor: 'bg-[var(--color-bg-card)]',
-    completionTitle: 'All Done!',
-    fallbackTitle: () => 'Assessment',
-  },
-  'learning': {
-    layout: 'scrollable',
-    showBack: true,
-    autoAdvance: false,
-    progressStyle: 'percentage',
-    primaryButtonText: (last) => 'Continue',
-    bgColor: 'bg-[var(--color-bg-page)]',
-    completionTitle: 'Session Complete',
-    fallbackTitle: (n: number) => `Day ${n}`,
-  },
-  'practice': {
-    layout: 'scrollable',
-    showBack: true,
-    autoAdvance: false,
-    progressStyle: 'percentage',
-    primaryButtonText: (last) => last ? 'Done for Today' : 'Next',
-    bgColor: 'bg-[var(--color-bg-page)]',
-    completionTitle: 'All Done!',
-    fallbackTitle: () => 'Assessment',
-  },
-  'workshop': {
-    layout: 'step-focus',
-    showBack: true,
-    autoAdvance: false,
-    progressStyle: 'steps',
-    primaryButtonText: (last) => last ? 'Finish' : 'Continue',
-    bgColor: 'bg-[var(--color-bg-card)]',
-    completionTitle: 'Session Complete',
-    fallbackTitle: (n: number) => `Day ${n}`,
-  },
-  'tracker': {
-    layout: 'compact',
-    showBack: false,
-    autoAdvance: false,
-    progressStyle: 'none',
-    primaryButtonText: (last) => 'Save',
-    singlePage: true,
-    bgColor: 'bg-[var(--color-bg-page)]',
-    completionTitle: 'Session Complete',
-    fallbackTitle: (n: number) => `Day ${n}`,
-  },
-  'reflection': {
-    layout: 'scrollable',
-    showBack: true,
-    autoAdvance: false,
-    progressStyle: 'none',
-    primaryButtonText: (last) => 'Complete Reflection',
-    bgColor: 'bg-[var(--color-bg-page)]',
-    completionTitle: 'Session Complete',
-    fallbackTitle: (n: number) => `Day ${n}`,
-  }
-};
+/*
+  `DAY_TYPE_CONFIG` and `DayTypeConfig` lived here and are now
+  `DAY_TYPE_LAYOUTS` / `DayLayout` in `src/lib/blocks/day-layout.ts`.
 
-const DEFAULT_CONFIG = DAY_TYPE_CONFIG['learning'];
+  Two reasons, both §19 step 1. Its `primaryButtonText` and `fallbackTitle` were
+  FUNCTIONS, which cannot be written to KV — denormalising the map as written
+  would have stored `undefined` for both and left every day without a primary
+  button label. And it lived in a `.tsx`, which Node's type stripper cannot
+  load, so the migration script that has to read these values could never have
+  imported them.
+
+  Values are unchanged; `day-layout.test.ts` asserts all eleven against the
+  originals. The player now asks the DAY for its layout — `layoutOf(day)` —
+  which falls back to the type lookup while no day carries one of its own.
+*/
 
 // ── Font helper ─────────────────────────────────────────────────
 const f = (size: string, weight: number = 400, color: string = 'var(--color-text-primary)') => ({
@@ -193,23 +63,26 @@ const f = (size: string, weight: number = 400, color: string = 'var(--color-text
   color,
 });
 
-/** The only way into DAY_TYPE_CONFIG. An unknown dayType falls back, and says so. */
-export const getDayTypeConfig = (dayType: string | undefined): DayTypeConfig => {
-  if (dayType && Object.prototype.hasOwnProperty.call(DAY_TYPE_CONFIG, dayType)) {
-    return DAY_TYPE_CONFIG[dayType as DayType];
-  }
-  if (dayType) {
+/**
+ * A day's layout. Kept as the single entry point, now over `layoutOf`.
+ *
+ * The warning still fires for a dayType nothing knows — that is a real signal
+ * and predates §19. It cannot fire once a day carries its own layout, which is
+ * the point: the day answers, instead of being looked up.
+ */
+export const getDayLayout = (day: DayContent | undefined): DayLayout => {
+  if (!day?.layout && day?.dayType && !Object.prototype.hasOwnProperty.call(DAY_TYPE_LAYOUTS, day.dayType)) {
     warnFallback(
       'ProgramPlayer',
-      `no player config for dayType "${dayType}" — playing it as a learning day`,
-      dayType
+      `no player layout for dayType "${day.dayType}" — playing it as a learning day`,
+      day.dayType
     );
   }
-  return DEFAULT_CONFIG;
+  return layoutOf(day);
 };
 
 const groupBlocksIntoSteps = (activities: Activity[], dayType: string = 'learning'): Step[] => {
-  const config = getDayTypeConfig(dayType);
+  const config = layoutOf({ dayType: dayType as DayType });
   
   if (config.singlePage) {
     return [{ id: 'single-page', blocks: activities }];
@@ -264,8 +137,8 @@ export function ProgramPlayer({
   [program.daily_content, currentDayNum]);
 
   const dayConfig = useMemo(() => {
-    if (!activeDay) return DEFAULT_CONFIG;
-    return getDayTypeConfig(activeDay.dayType);
+    if (!activeDay) return DEFAULT_DAY_LAYOUT;
+    return getDayLayout(activeDay);
   }, [activeDay]);
 
   // Carry-forward: a day's blocks = its native blocks PLUS blocks authored on
@@ -337,7 +210,7 @@ export function ProgramPlayer({
    * Neither governs a live day today — no programme types a day `reflection`,
    * `tracker` or `check-in` — which the Block Type Viewer now says out loud.
    */
-  const savePolicy = DAY_TYPE_PRESETS[activeDay?.dayType as keyof typeof DAY_TYPE_PRESETS]?.autoConfig ?? {};
+  const savePolicy = policyOf(activeDay);
 
   const handleExit = async () => {
     if (savePolicy.saveOnExit && !savePolicy.saveOnToggle) {
@@ -579,7 +452,7 @@ export function ProgramPlayer({
   }
 
   // Determine title
-  const displayTitle = program.title || activeDay.title || dayConfig.fallbackTitle(currentDayNum);
+  const displayTitle = program.title || activeDay.title || fallbackTitleFor(dayConfig, currentDayNum);
   const displaySubtitle = activeDay.subtitle || null;
   const canGoBack = dayConfig.showBack && currentStepIndex > 0;
 
@@ -780,7 +653,7 @@ export function ProgramPlayer({
                 opacity: isStepValid ? 1 : 0.6,
               }}
             >
-              {dayConfig.primaryButtonText(currentStepIndex === steps.length - 1)}
+              {primaryButtonFor(dayConfig, currentStepIndex === steps.length - 1)}
             </motion.button>
           </div>
         </footer>

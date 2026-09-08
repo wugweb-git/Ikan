@@ -618,8 +618,23 @@ export interface DayContent {
   description: string;
   activities: Activity[];
   image_url?: string;
-  /** DAY_TYPE_PRESETS is typed `Record<DayType, ...>`, so this cannot drift from it. */
+  /**
+   * @deprecated §19 — a day is moving to carrying its own `policy` and
+   * `layout`, seeded by a template rather than derived from a type. Still the
+   * only source for all 98 live days, and the fallback both resolvers use;
+   * removed once the migration has written both onto every day.
+   */
   dayType?: DayType;
+  /**
+   * What this day OBEYS — autoAdvance, navigation, save behaviour, step rules.
+   * Absent means "resolve from `dayType`"; `policyOf(day)` is the only reader.
+   */
+  policy?: import('./day-policy.ts').DayPolicy;
+  /**
+   * What this day LOOKS LIKE — layout, progress style, button labels, headings.
+   * Absent means "resolve from `dayType`"; `layoutOf(day)` is the only reader.
+   */
+  layout?: import('./day-layout.ts').DayLayout;
 }
 
 export interface WeekStructure {
