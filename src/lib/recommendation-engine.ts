@@ -2,6 +2,7 @@
 // falls back to built-in defaults only when no admin rules exist.
 
 import { apiClient } from './api-client';
+import { rankMatchingRules } from './recommendation-ranking';
 import {
   compareSeverity, tierFor, isSeverityLevel,
   type SeverityLevel as ClinicalSeverity, type ResponseTier,
@@ -327,11 +328,6 @@ export async function loadAdminRules(): Promise<void> {
  * either side means no match — previously both defaulted to `moderate`, so a
  * typo'd threshold silently became a live one.
  */
-function severityMeetsThreshold(actual: string, minRequired: string): boolean {
-  if (!isSeverityLevel(actual) || !isSeverityLevel(minRequired)) return false;
-  return compareSeverity(actual, minRequired) >= 0;
-}
-
 /**
  * Rules matching this assessment's category and severity.
  *
@@ -346,13 +342,12 @@ function findMatchingAdminRules(category: string, severity: ClinicalSeverity | n
   if (!_adminRulesCache || _adminRulesCache.length === 0) return [];
   if (!category || !severity) return [];
   const key = category.trim().toLowerCase();
-  return _adminRulesCache
-    .filter(rule =>
-      rule.assessment_category === key &&
-      severityMeetsThreshold(severity, rule.min_severity)
-    )
-    .sort((a, b) => a.priority - b.priority);
+  return rankMatchingRules(
+    _adminRulesCache.filter(rule => rule.assessment_category === key),
+    severity,
+  );
 }
+
 
 // ══════════════════════════════════════════════════════════════════
 // SCORING PROFILE INTEGRATION
