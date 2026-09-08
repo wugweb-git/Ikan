@@ -76,8 +76,14 @@ export function MobileHeader({
   const isTransparent = transparent ?? TRANSPARENT_ROUTES.has(currentRoute);
   const isTopLevel = TOP_LEVEL_ROUTES.has(currentRoute);
 
+  /*
+   * A div, not a <header>. `Navigation` already renders the page's banner
+   * landmark; this is an in-page bar nested inside it, so a second <header>
+   * gave the page two banner landmarks and a screen-reader user two "header"
+   * destinations for one page. Presentation is unchanged.
+   */
   return (
-    <header
+    <div
       className={cn(
         'flex items-center gap-2 w-full',
         isTransparent ? 'absolute top-0 left-0 z-10' : 'sticky top-0 z-10',
@@ -174,7 +180,7 @@ export function MobileHeader({
           </Button>
         )}
       </div>
-    </header>
+    </div>
   );
 }
 

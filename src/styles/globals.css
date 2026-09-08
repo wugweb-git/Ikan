@@ -1300,7 +1300,29 @@ html {
   display: flex;
   justify-content: center;
   padding: 16px 40px;
+    /*
+     * The band is 112px tall and was fully transparent while the pill inside
+     * it is opaque, so page content scrolled through the gaps either side of
+     * the pill and vanished behind nothing. A blur keeps the pill floating
+     * rather than boxing it in; the translucent wash is the fallback where
+     * backdrop-filter is unsupported.
+     */
+    background: color-mix(in srgb, var(--color-bg-page) 72%, transparent);
+    -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(12px);
 }
+
+  /*
+   * In-page anchors landed underneath the fixed band because scroll-padding
+   * was `auto`. Reserve the band's own height; the mobile band is shorter.
+   */
+  html {
+    scroll-padding-top: 112px;
+  }
+
+  @media (max-width: 768px) {
+    html { scroll-padding-top: 84px; }
+  }
 
 @media (max-width: 768px) {
   .nav-fixed-wrapper {
