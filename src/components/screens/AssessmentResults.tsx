@@ -59,9 +59,8 @@ export function AssessmentResults({
   /** The assessment record, for the result header and the context line. */
   const [assessmentDef, setAssessmentDef] = useState<any>(null);
   /** Records for the adjacent programmes, so a card can show a real name. */
-  const [relatedDetails, setRelatedDetails] = useState<any[]>([]);
-  const [articleDetails, setArticleDetails] = useState<any[]>([]);
-  const [followUpDetails, setFollowUpDetails] = useState<any[]>([]);
+  const [recommended, setRecommended] = useState<any[]>([]);
+  const [articles, setArticles] = useState<any[]>([]);
 
   /**
    * Resolve the result id this screen is showing.
@@ -234,75 +233,105 @@ export function AssessmentResults({
   }, [activeAssessmentId]);
 
   /**
-   * Records for the adjacent programmes.
+   * The records behind Row 1 and Row 2.
    *
-   * The engine hands over ids, never labels. The label used to be manufactured
-   * from the slug by string manipulation — which is where "Explore Stress" came
-   * from — so a card showed a truncated slug where a programme's real name
-   * belongs. Fetching the records is the same call the primary action already
-   * makes; mapped over the ids it yields a title, an image and a length.
+   * A rule stores a target id, never a label, so the record is what carries a
+   * title and a description. Row 2 needs no rules at all: an article states
+   * its own category and so does the assessment, so the match is a direct one
+   * at render time.
    */
-  const relatedIds = (activeData.recommendation?.relatedPrograms ?? []).slice(0, 4);
-  const relatedKey = relatedIds.join(',');
+  const rec0 = activeData.recommendation;
+  const equipIds = [
+    rec0?.primaryAction?.type === 'equip_program' ? rec0.primaryAction.programId : null,
+    ...(rec0?.relatedPrograms ?? []),
+  ].filter((x): x is string => !!x);
+  const assessmentIds = (rec0?.secondaryActions ?? [])
+    .filter(a => a.type === 'assessment').map(a => a.targetId).filter((x): x is string => !!x);
+  const overrideById = new Map(
+    (rec0?.secondaryActions ?? []).filter(a => a.targetId).map(a => [a.targetId!, a]),
+  );
+  const recKey = [...equipIds, '|', ...assessmentIds].join(',');
+
   useEffect(() => {
-    if (!relatedKey) { setRelatedDetails([]); return; }
+    if (!recKey.replace(/[|,]/g, '')) { setRecommended([]); return; }
     let cancelled = false;
     (async () => {
-      const rows = await Promise.all(
-        relatedKey.split(',').map(async (id) => {
-          try { return await apiClient.getEquipProgram(id); } catch { return null; }
-        }),
-      );
-      // A programme that failed to load is dropped, not rendered as an empty
-      // card — an unnamed recommendation is worse than one fewer.
-      if (!cancelled) setRelatedDetails(rows.filter(Boolean));
+      const equips = await Promise.all(Array.from(new Set(equipIds)).map(async (id) => {
+        try {
+          const p = await apiClient.getEquipProgram(id);
+          if (!p) return null;
+          const days = equipMeta(p).days;
+          return {
+            kind: 'equip' as const,
+            id: p.id ?? id,
+            // The record's own words. A rule may override them; none does today.
+            title: p.title ?? p.name ?? '',
+            description: p.description ?? p.summary ?? null,
+            image: p.thumbnail ?? p.cover_image ?? p.hero_image ?? null,
+            durationLabel: days !== null ? `${days} days` : null,
+            cta: 'Start program',
+          };
+        } catch { return null; }
+      }));
+      const assessments = await Promise.all(Array.from(new Set(assessmentIds)).map(async (id) => {
+        try {
+          const a = await apiClient.getAssessment(id);
+          if (!a) return null;
+          return {
+            kind: 'assessment' as const,
+            id: a.id ?? id,
+            title: a.title ?? a.name ?? '',
+            description: a.description ?? a.subtitle ?? null,
+            image: a.thumbnail ?? a.image ?? null,
+            durationLabel: Array.isArray(a.questions) && a.questions.length
+              ? `${a.questions.length} questions` : null,
+            cta: 'Take assessment',
+          };
+        } catch { return null; }
+      }));
+      // A target that does not resolve is dropped. This is the other half of
+      // the eligibility guard: the engine checks a rule names something, and
+      // this checks the something exists.
+      const rows = [...equips, ...assessments].filter(Boolean) as NonNullable<typeof equips[number]>[];
+      // A rule's authored copy overrides the record's, when there is any.
+      const withOverrides = rows.map(r => {
+        const o = overrideById.get(r.id);
+        return o?.title?.trim() || o?.body?.trim()
+          ? { ...r, title: o.title?.trim() || r.title, description: o.body?.trim() || r.description }
+          : r;
+      });
+      if (!cancelled) setRecommended(withOverrides);
     })();
     return () => { cancelled = true; };
-  }, [relatedKey]);
+  }, [recKey]);
 
   /**
-   * Records behind the rule-authored secondary slots.
+   * Articles whose own category matches this assessment's.
    *
-   * A rule stores a target id, never a label, so a card built from the rule
-   * alone can only caption itself with its own route. Fetching the record is
-   * what turns "/resource/a5bef353…" into an article with a title, an image
-   * and a reading time.
-   *
-   * Split by `recommendation_type` rather than rendered as one list: an
-   * article and a follow-up assessment are different offers and read as
-   * different cards. They shared a generic button before, and that button
-   * printed the rule's title twice — once as its own eyebrow, once as its
-   * body — because the engine set `title` and `label` to the same string.
+   * `mental-health` is not an assessment category — it is how two articles
+   * were tagged — so it is read as `general`. Unpublished articles are
+   * excluded. No match renders nothing at all.
    */
-  const articleIds = (activeData.recommendation?.secondaryActions ?? [])
-    .filter(a => a.type === 'resource').map(a => a.targetId).filter(Boolean).join(',');
+  const articleCategory = (activeData.recommendation?.category
+    ?? placed.instrument.categoryLabel ?? '').trim().toLowerCase();
   useEffect(() => {
-    if (!articleIds) { setArticleDetails([]); return; }
+    if (!articleCategory) { setArticles([]); return; }
     let cancelled = false;
     (async () => {
-      const rows = await Promise.all(articleIds.split(',').map(async (id) => {
-        try { return await apiClient.getResource(id); } catch { return null; }
-      }));
-      // An article that failed to load, or was unpublished after the rule was
-      // written, is dropped rather than rendered as an empty card.
-      if (!cancelled) setArticleDetails(rows.filter(r => r && isPublished(r)));
+      try {
+        const all = await apiClient.getResources();
+        const norm = (c: unknown) => {
+          const v = String(c ?? '').trim().toLowerCase();
+          return v === 'mental-health' ? 'general' : v;
+        };
+        const want = norm(articleCategory);
+        const matched = (Array.isArray(all) ? all : [])
+          .filter(r => isPublished(r) && norm(r?.category) === want);
+        if (!cancelled) setArticles(matched);
+      } catch { if (!cancelled) setArticles([]); }
     })();
     return () => { cancelled = true; };
-  }, [articleIds]);
-
-  const followUpIds = (activeData.recommendation?.secondaryActions ?? [])
-    .filter(a => a.type === 'assessment').map(a => a.targetId).filter(Boolean).join(',');
-  useEffect(() => {
-    if (!followUpIds) { setFollowUpDetails([]); return; }
-    let cancelled = false;
-    (async () => {
-      const rows = await Promise.all(followUpIds.split(',').map(async (id) => {
-        try { return await apiClient.getAssessment(id); } catch { return null; }
-      }));
-      if (!cancelled) setFollowUpDetails(rows.filter(Boolean));
-    })();
-    return () => { cancelled = true; };
-  }, [followUpIds]);
+  }, [articleCategory]);
 
   // Still fetching the stored record — distinct from "nothing to show", which
   // is what the empty state below means.
@@ -505,8 +534,6 @@ export function AssessmentResults({
     return parts.length ? parts.join(' \u00b7 ') : null;
   })();
 
-  const hasPrimary = rec.primaryAction.type === 'equip_program';
-  const hasRelated = relatedDetails.length > 0;
 
   const reveal = reduceMotion
     ? {}
@@ -618,159 +645,78 @@ export function AssessmentResults({
           </motion.p>
         )}
 
-        {/* ── Tier 1 · the recommendation ──
-            The heaviest element after the score, and the only thing on this
-            page that was chosen for this person. It used to render in the same
-            box as "go to the list of everything", which threw that away. */}
-        {hasPrimary && (
+        {/* ── Row 1 · Recommended ──
+            Every matching `equip` and `assessment` rule, as one row. The card
+            shows the TARGET RECORD's own title and description — a programme
+            is already named and described, so a rule does not need to restate
+            it. A rule's `title`/`body` override that when an author writes
+            one; absent, the record speaks for itself. This is why copy is no
+            longer a precondition for matching. */}
+        {recommended.length > 0 && (
           <motion.section {...reveal}>
-            <Eyebrow>Recommended for you</Eyebrow>
-            <div style={{
-              backgroundColor: 'var(--color-bg-card)',
-              borderRadius: 'var(--radius-lg)',
-              boxShadow: 'var(--shadow-sm)',
-              border: '1px solid var(--color-border-default)',
-              overflow: 'hidden',
-            }}>
-              <div className="flex flex-col sm:flex-row">
-                <div
-                  className="relative w-full overflow-hidden sm:w-2/5"
-                  style={{ minHeight: 160, backgroundColor: 'var(--color-bg-muted)' }}
-                >
-                  <ContentImage
-                    src={programDetails?.thumbnail || programDetails?.cover_image || ''}
-                    alt=""
-                    className="h-full w-full object-cover"
-                    style={{ position: 'absolute', inset: 0 }}
-                  />
-                </div>
-
-                <div className="flex flex-1 flex-col justify-center" style={{ padding: 20, gap: 10 }}>
-                  <h2 style={{ ...f('lg', 500), margin: 0, lineHeight: 1.25 }}>
-                    {rec.primaryAction.title || programDetails?.title}
-                  </h2>
-
-                  {/* The programme's real length, from its own record. */}
-                  {programMeta && (
-                    <p style={{ ...f('sm', 400, 'var(--color-text-muted)'), margin: 0 }}>{programMeta}</p>
-                  )}
-
-                  {rec.primaryAction.body && (
-                    <p style={{ ...f('sm', 400, 'var(--color-text-muted)'), lineHeight: 1.5, margin: 0 }}>
-                      {rec.primaryAction.body}
-                    </p>
-                  )}
-
-                  {rec.primaryAction.cta && (
-                    <button
-                      onClick={() => onNavigate && rec.primaryAction.programId &&
-                        onNavigate(`/equip-program-onboarding?id=${rec.primaryAction.programId}`)}
-                      className="w-full sm:w-fit"
-                      style={{
-                        marginTop: 4, padding: '12px 24px',
-                        borderRadius: 'var(--radius-pill)',
-                        backgroundColor: 'var(--color-primary-default)',
-                        border: 'none', cursor: 'pointer',
-                        ...f('base', 500, 'var(--color-text-inverse)'),
-                      }}
-                    >
-                      {rec.primaryAction.cta}
-                    </button>
-                  )}
-                </div>
-              </div>
-            </div>
-          </motion.section>
-        )}
-
-        {/* ── Tier 2 · adjacent programmes ──
-            One eyebrow above the pair, not a label repeated on every card.
-            "Related" is what the overlap map actually knows; it does not claim
-            these were picked for this person, because they weren't. */}
-        {hasRelated && (
-          <motion.section {...reveal}>
-            <Eyebrow>Related programs</Eyebrow>
-            <div className="grid grid-cols-2" style={{ gap: 12 }}>
-              {relatedDetails.map((p, i) => (
+            <Eyebrow>Recommended</Eyebrow>
+            <div className="grid grid-cols-1 sm:grid-cols-2" style={{ gap: 12 }}>
+              {recommended.map((r, i) => (
                 <AssessmentCard
-                  key={p.id ?? i}
-                  variant="compact"
+                  key={`${r.kind}-${r.id ?? i}`}
+                  variant="full"
                   index={i}
                   item={{
-                    id: p.id,
-                    title: p.title ?? p.name ?? '',
-                    image: p.thumbnail ?? p.cover_image ?? p.hero_image ?? null,
-                    durationLabel: equipMeta(p).days !== null ? `${equipMeta(p).days} days` : null,
+                    id: r.id,
+                    title: r.title,
+                    description: r.description,
+                    eyebrow: r.kind === 'equip' ? 'Program' : 'Assessment',
+                    image: r.image,
+                    durationLabel: r.durationLabel,
                     countLabel: null,
+                    cta: r.cta,
                   }}
-                  onSelect={(id) => onNavigate?.(`/equip-program-onboarding?id=${id}`)}
+                  onSelect={(id) => onNavigate?.(r.kind === 'equip'
+                    ? `/equip-program-onboarding?id=${id}`
+                    : `/assessment-flow?id=${id}`)}
                 />
               ))}
             </div>
           </motion.section>
         )}
 
-        {/* ── Tier 3 · follow-up assessments ──
-            An `assessment` rule points at another instrument to take next.
-            A real card, not a row: it is the same offer the catalogue makes,
-            so it should look like it. A rule may never target its own
-            assessment — enforced at save, in RecommendationRulesManager. */}
-        {followUpDetails.length > 0 && (
-          <motion.section {...reveal}>
-            <Eyebrow>Suggested next</Eyebrow>
-            <div className="grid grid-cols-2" style={{ gap: 12 }}>
-              {followUpDetails.map((a, i) => (
-                <AssessmentCard
-                  key={a.id ?? i}
-                  variant="compact"
-                  index={i}
-                  item={{
-                    id: a.id,
-                    title: a.title ?? a.name ?? '',
-                    image: a.thumbnail ?? a.image ?? null,
-                    durationLabel: Array.isArray(a.questions) && a.questions.length
-                      ? `${a.questions.length} questions` : null,
-                    countLabel: null,
-                  }}
-                  onSelect={(id) => onNavigate?.(`/assessment-flow?id=${id}`)}
-                />
-              ))}
-            </div>
-          </motion.section>
-        )}
+        {/* ── Row 2 · Related articles ──
+            Matched on the article's own `category` against this assessment's,
+            at render time. No rule records: an article is related to a topic,
+            which both sides already state, and a rule per article would be a
+            second place to maintain the same fact.
 
-        {/* ── Tier 4 · articles ──
-            Stacked at one or two, a carousel at three or more. The carousel is
-            `ui/carousel.tsx`, a generic embla wrapper that has been in the repo
-            unused; ResourceBlock's hand-rolled slider is bound to its own post
-            type and hardcodes a 300px card, so it does not generalise here. */}
-        {articleDetails.length > 0 && (
+            Nothing renders when a category has no articles — no empty state
+            and no fallback, because "here is something unrelated" is worse
+            than silence. Four categories have none today and will fill in as
+            articles are tagged. */}
+        {articles.length > 0 && (
           <motion.section {...reveal}>
-            <Eyebrow>Worth reading</Eyebrow>
-            {articleDetails.length < 3 ? (
+            <Eyebrow>Related articles</Eyebrow>
+            {articles.length < 3 ? (
               <div
                 className="grid"
                 style={{
                   gap: 12,
-                  gridTemplateColumns: articleDetails.length === 1 ? '1fr' : 'repeat(2, 1fr)',
+                  gridTemplateColumns: articles.length === 1 ? '1fr' : 'repeat(2, 1fr)',
                 }}
               >
-                {articleDetails.map((r, i) => (
+                {articles.map((r, i) => (
                   <ResourceCard
                     key={r.id ?? i}
                     post={toResourcePost(r)}
-                    onClick={() => onNavigate?.(`/resource/${r.id}`)}
+                    onClick={() => onNavigate?.(`/resource-detail?id=${r.id}`)}
                   />
                 ))}
               </div>
             ) : (
               <Carousel opts={{ align: 'start' }} className="w-full">
                 <CarouselContent>
-                  {articleDetails.map((r, i) => (
+                  {articles.map((r, i) => (
                     <CarouselItem key={r.id ?? i} className="basis-4/5 sm:basis-1/2 lg:basis-1/3">
                       <ResourceCard
                         post={toResourcePost(r)}
-                        onClick={() => onNavigate?.(`/resource/${r.id}`)}
+                        onClick={() => onNavigate?.(`/resource-detail?id=${r.id}`)}
                       />
                     </CarouselItem>
                   ))}

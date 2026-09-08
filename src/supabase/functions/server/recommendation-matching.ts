@@ -75,23 +75,31 @@ export interface RankableRule {
 export interface EligibleRule extends RankableRule {
   assessment_category?: string;
   enabled?: boolean;
+  target_id?: string;
+  /** Optional override for the target record's own copy. */
   title?: string;
   body?: string;
   cta?: string;
 }
 
 /**
- * A rule with nothing to say must not match.
+ * A rule must point at something. That is the whole precondition.
  *
- * The save path guards this too, but a row written any other way — a bulk
- * import, a direct KV write, or the 18 rows that predate the copy fields —
- * would still match and render a card with a blank heading and an unlabelled
- * button. `rationale` deliberately does NOT satisfy it: that field is the
- * author's internal note ("Awareness of overload"), and substituting it showed
- * a memo written to a clinician to the person who took the assessment.
+ * It used to require `title`, `body` and `cta`, which made authored copy a
+ * gate: all 18 live rules carry none, so none could match and the product
+ * recommended nothing. Copy is an **optional override** — a card renders the
+ * target record's own title and description, and a rule may replace them.
+ *
+ * What must hold is that the target resolves. This is the half that can be
+ * checked without fetching: a rule with no `target_id` names nothing. The
+ * other half — that the id resolves to a live record — is enforced where the
+ * record is fetched, which drops anything that fails to load rather than
+ * rendering an empty card.
+ *
+ * `rationale` is still never rendered. It is the author's internal note.
  */
-export function hasRenderableCopy(rule: EligibleRule): boolean {
-  return !!(rule.title?.trim() && rule.body?.trim() && rule.cta?.trim());
+export function hasResolvableTarget(rule: EligibleRule): boolean {
+  return !!rule.target_id?.trim();
 }
 
 /**
@@ -109,7 +117,7 @@ export function eligibleRules<T extends EligibleRule>(rules: T[], category: stri
   return rules.filter(rule =>
     String(rule.assessment_category ?? '').trim().toLowerCase() === key &&
     rule.enabled !== false &&
-    hasRenderableCopy(rule));
+    hasResolvableTarget(rule));
 }
 
 /** Rules the user qualifies for, strongest first. */

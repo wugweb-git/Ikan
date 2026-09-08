@@ -216,7 +216,7 @@ export interface RecommendationRule {
    */
   rationale: string;
   /** Authored copy. A rule missing any of the three cannot match — see
-   *  `hasRenderableCopy` in `recommendation-matching.ts`. */
+   *  `hasResolvableTarget` in `recommendation-matching.ts`. */
   title?: string;
   body?: string;
   cta?: string;

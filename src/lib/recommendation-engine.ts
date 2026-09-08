@@ -609,7 +609,7 @@ export function evaluateAssessment(input: EvaluateInput): EngineResult {
     // "You're doing relatively well…" from DEFAULT_RECOMMENDATION_RULES under
     // an action that was correctly empty. Copy is authored on the rule or it
     // is not shown.
-    // NOT `rationale` — see hasRenderableCopy. This is the sentence shown
+    // NOT `rationale` — the author's internal note. This is the sentence shown
     // after an assessment; it comes from authored copy or it is not shown.
     severityMessage: adminEquipRule?.body || '',
     primaryAction: {

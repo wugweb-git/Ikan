@@ -122,32 +122,29 @@ test('an overall with an unusable band falls through to the sections', () => {
 });
 
 
-import { eligibleRules, hasRenderableCopy } from './recommendation-matching.ts';
+import { eligibleRules, hasResolvableTarget } from './recommendation-matching.ts';
 
-const copy = { title: 'T', body: 'B', cta: 'C' };
 const rule = (over: Record<string, unknown> = {}) => ({
-  assessment_category: 'burnout', min_severity: 'mild', priority: 5, ...copy, ...over,
+  assessment_category: 'burnout', min_severity: 'mild', priority: 5,
+  target_id: 'equip-1', ...over,
 });
 
-test('renderable copy requires all three of title, body and cta', () => {
-  assert.equal(hasRenderableCopy(rule()), true);
-  for (const field of ['title', 'body', 'cta']) {
-    assert.equal(hasRenderableCopy(rule({ [field]: '' })), false, `empty ${field}`);
-    assert.equal(hasRenderableCopy(rule({ [field]: '   ' })), false, `whitespace ${field}`);
-    assert.equal(hasRenderableCopy(rule({ [field]: undefined })), false, `absent ${field}`);
-  }
+test('a rule must point at something', () => {
+  assert.equal(hasResolvableTarget(rule()), true);
+  assert.equal(hasResolvableTarget(rule({ target_id: '' })), false);
+  assert.equal(hasResolvableTarget(rule({ target_id: '   ' })), false);
+  assert.equal(hasResolvableTarget(rule({ target_id: undefined })), false);
 });
 
-test('rationale is not copy', () => {
-  // Every live row is in exactly this shape: a rationale and no copy.
-  // Substituting it showed the author's note ("Awareness of overload") to the
-  // person who had just taken a mental-health assessment.
-  assert.equal(hasRenderableCopy({
-    min_severity: 'mild', priority: 5, rationale: 'Awareness of overload',
-  } as never), false);
+test('copy is an optional override, not a precondition', () => {
+  // All 18 live rules carry no title/body/cta. Requiring them made authored
+  // copy a gate, so nothing could ever match and the product recommended
+  // nothing. A card renders the target record's own title and description.
+  assert.equal(hasResolvableTarget(rule({ title: '', body: '', cta: '' })), true);
+  assert.equal(eligibleRules([rule()], 'burnout').length, 1);
 });
 
-test('a disabled rule is not eligible', () => {
+test('a disabled rule is still not eligible', () => {
   assert.deepEqual(eligibleRules([rule({ enabled: false })], 'burnout'), []);
   assert.equal(eligibleRules([rule({ enabled: true })], 'burnout').length, 1);
 });
@@ -156,8 +153,8 @@ test('an absent enabled flag means enabled', () => {
   assert.equal(eligibleRules([rule()], 'burnout').length, 1);
 });
 
-test('an enabled rule with no copy is still not eligible', () => {
-  assert.deepEqual(eligibleRules([rule({ enabled: true, body: '' })], 'burnout'), []);
+test('a rule with no target is not eligible even when enabled', () => {
+  assert.deepEqual(eligibleRules([rule({ enabled: true, target_id: '' })], 'burnout'), []);
 });
 
 test('category matching ignores case and surrounding space', () => {

@@ -224,9 +224,10 @@ export function RecommendationRulesManager({ onBack }: { onBack: () => void }) {
         return 'A rule cannot recommend the assessment it responds to.';
       }
     }
-    if (rule.enabled && (!rule.title.trim() || !rule.body.trim() || !rule.cta.trim())) {
-      return 'An enabled rule needs a title, body and button text — without them the card renders empty.';
-    }
+    // Copy is NOT required. A card renders the target record's own title and
+    // description; `title`/`body`/`cta` override them when an author wants
+    // different words for this particular result. Requiring them made copy a
+    // precondition for matching, which is why all 18 rules were dead.
     return null;
   };
 
