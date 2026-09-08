@@ -721,6 +721,58 @@ wellness path stay theoretical until it happens. The 137-result backfill sits be
 
 ---
 
+## Module closeout — Assessments, 2026-09-08
+
+Closed. Everything below is live on `equip-carry-forward`, deployed and pushed.
+Nothing in this module is in progress.
+
+### Shipped
+- **Phase A** — content revision, 11 scoring profiles, 36 band rows, 0 bands
+  outside the 5-term vocabulary, strict rescore (15 rescored / 98 excluded).
+- **Phase B** — B1 severity resolution, B2 rule record, B3 slots, B4 adjacent
+  programmes from rules, B5 articles, B6 priority direction, B8 one shared
+  matching module, B9 the rename.
+- **The `rationale` leak**, closed on both engines. Copy became an optional
+  override, not a precondition, and all 18 rules are enabled and live.
+- **Result screen** — two rows (Recommended, Related articles), the same cards
+  the rest of the app renders, timestamp + time on task, brand lockup,
+  "Keep going" removed, mobile-first rows.
+- **Numbers** — percentages honour the instrument's floor (15 of 21 stored
+  results moved); the history chart plots the computed score, not the legacy
+  sum; Consultation stopped inventing a denominator.
+- **FINAL COPY** — 7 band interpretations, 3 empty-chart strings.
+- **Audit** — single card tree (images were downloading twice site-wide), hero
+  image primitive + scrim + decorative alt, real links on the hero CTA,
+  AssessmentBlock and ResourceBlock cards, one banner landmark, opaque nav
+  band + scroll-padding, gear clear of the footer, slider snap.
+
+### Open — owner decisions, not work in progress
+- **Public bucket.** 8 `assessment_def` signed URLs expire together on
+  **2026-12-30**; all seven assessment heroes go at once. The silent Unsplash
+  fallback is gone, so they will degrade visibly rather than becoming one
+  stock photo — but they will still all break that day.
+- **2d — Navigation anchors.** Held deliberately: `Navigation.tsx` is used by
+  `App.tsx` and 10+ screens, and the instruction was to report before starting.
+- **#9 srcset site-wide** — queued, not started.
+- **#12 / #14** — merge plans for the two heroes and the three resource-card
+  implementations. Written plans owed; no code.
+- **B7 consultants** — not blocked, just later. Same shape as Row 1 once real
+  practitioner records exist. Row 3 comes with its own module.
+- **Content** — interpretation sentences beyond the seven shipped, stress-chart
+  messaging. Article tagging is now self-service: an article tagged with an
+  assessment category appears on that result screen with no code change.
+- **Rule coverage** — `Productivity Reset` is targeted by no rule; Balance and
+  General can reach severities above their highest rule's gate.
+
+### Standing rule adopted this session
+Typecheck, tests and a clean build do **not** prove a UI change shipped: an
+unused const is not a type error and gets tree-shaken silently, which is how
+`" sec"` ended up in no chunk at all while the suite was green. For every UI
+change, grep the SERVED chunk for a string the feature must contain and report
+that grep beside the test result.
+
+---
+
 ## Session closeout — 2026-09-08 (recommendations, slots, percentages)
 
 ### Shipped and verified live
