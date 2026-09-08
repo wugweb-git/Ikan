@@ -25,10 +25,10 @@ decision only the owner can make, or a build that has no content to justify it y
 
 | | |
 |---|---|
-| **122 keyless blocks** | Every block that produces a response and does not say where the answer goes. Reported in the editor since 2026-09-08 and now fixable there — the `key` field exists. **~28 decisions, not 122**: the keyless blocks collapse to 28 clusters on `(programme, title, type, activity, columns)`, because the duplicates are the same instrument repeated |
+| ~~122 keyless blocks~~ | **DONE 2026-09-08.** Zero keyless blocks remain: 440 keyed across both prefixes, 111 distinct keys per programme, derived from each block's own title and stamped `key_source`. One collision handled — `tracking` in sleep-tight carried two different activities under one title, so those keys carry the activity too. Backup `backup_pre_key_backfill_2026_09_08` |
 | **35 blocks with no `scale_ref`** | Every scale-backed block inlines its options. Reported, but **not actionable until scale-by-reference is built** — no block has ever referenced a shared scale |
-| **13 days with no closing block** | `productivity-reset` on all 8 of its days, plus 2 · 2 · 1 elsewhere. The reference says a `conclude` is mandatory and last |
-| **5 block types with no content** | `reflection`, `learning`, `practice` need hand assignment. `quiz` and `rest` **cannot be assigned** — 0 of 407 blocks carry any scoring marker, and `rest` declares `activities: []`, so no block can be one |
+| ~~13 days with no closing block~~ | **DONE 2026-09-08** for the 9 that are day 1+. Every one now ends with exactly one `conclude`, and it is last. Content is a marked placeholder — the close needs the day's own words. **The 4 remaining are Day 0 onboarding**, left deliberately: an onboarding day ends by starting the programme, and its last control already reads "Start Programme". Say if it should carry one anyway. Backup `backup_pre_conclude_fill_2026_09_08` |
+| **`practice` still has no content** | `reflection` (8) and `learning` (9) were assigned 2026-09-08 by structural rule, each stamped `mapped_from`: reflection is the last block that WRITES on a day, before the closing card; learning is a single-choice check immediately after a lesson. Both match their reference descriptions. **`practice` has no structural rule** — its permitted activities are a strict subset of `exercise`'s, so nothing distinguishes the two without reading the wording. **`quiz` and `rest` cannot be assigned at all** — 0 blocks carry any scoring marker, and `rest` declares `activities: []`. Backup `backup_pre_type_assign_2026_09_08` |
 
 ### Open modelling question — raised 2026-09-08, undecided
 
