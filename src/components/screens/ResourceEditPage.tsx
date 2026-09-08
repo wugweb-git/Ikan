@@ -55,6 +55,35 @@ interface ResourceEditPageProps {
 export function ResourceEditPage({ resourceId, onBack, onSave }: ResourceEditPageProps) {
   const { showToast } = useNotifications();
   const { categories: kvCategories, filterTypes: kvFilterTypes, difficultyLevels: kvDifficultyLevels } = useMetadata();
+
+  /**
+   * An article's category IS an assessment category — it is the whole join
+   * between an article and the result screen it appears on. A tag outside this
+   * list means the article can never surface anywhere.
+   *
+   * The `category:` catalog holds 19 rows, only seven of which name an
+   * assessment: `confidence`, `energy`, `focus`, `habits`, `mental-health` and
+   * others are content labels that match nothing. Two articles were tagged
+   * `mental-health` and were invisible until a mapping layer was added for
+   * them; they were retagged `general` on 2026-09-08 and the layer deleted.
+   * Constraining the picker is what stops that recurring.
+   *
+   * Filtered like `RecommendationRulesManager` filters its severity list, and
+   * for the same reason: the catalog is admin-editable, so constraining only
+   * the fallback would leave the hole open one edit away.
+   */
+  const ASSESSMENT_CATEGORIES = [
+    'anxiety', 'balance', 'burnout', 'depression', 'general', 'sleep', 'stress',
+  ];
+
+  const FALLBACK_CATEGORIES = ASSESSMENT_CATEGORIES.map(v => ({
+    value: v, label: v.charAt(0).toUpperCase() + v.slice(1),
+  }));
+
+  const categoryOptions = (kvCategories.length > 0
+    ? kvCategories.map(c => ({ value: c.value, label: c.label }))
+    : FALLBACK_CATEGORIES
+  ).filter(c => ASSESSMENT_CATEGORIES.includes(c.value));
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -377,7 +406,7 @@ export function ResourceEditPage({ resourceId, onBack, onSave }: ResourceEditPag
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {kvCategories.map((opt) => (
+                  {categoryOptions.map((opt) => (
                     <SelectItem key={opt.value} value={opt.value}>
                       {opt.label}
                     </SelectItem>

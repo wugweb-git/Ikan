@@ -9,7 +9,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
   toResourcePost, resourceImage, resourceReadTime, isPublished,
-  blogCategoryToAssessmentCategory, articleTime,
+  articleTime,
 } from './resource-presentation.ts';
 
 /** Shaped like a live record: thumbnail, not image; readTime, not read_time. */
@@ -113,16 +113,6 @@ test('a numeric readTime does not crash the mapping', () => {
   assert.equal(toResourcePost({ id: 'x', readTime: 5 as never }).readTime, '5 min read');
 });
 
-test('blog categories map onto assessment categories', () => {
-  // `mental-health` is the one live label that names no assessment.
-  assert.equal(blogCategoryToAssessmentCategory('mental-health'), 'general');
-  assert.equal(blogCategoryToAssessmentCategory('Mental-Health'), 'general');
-  // Everything that already names an assessment passes through.
-  for (const c of ['sleep', 'stress', 'general', 'anxiety', 'burnout', 'balance', 'depression']) {
-    assert.equal(blogCategoryToAssessmentCategory(c), c);
-  }
-  assert.equal(blogCategoryToAssessmentCategory(undefined), '');
-});
 
 test('articles sort newest first, with published_at winning', () => {
   const older = { created_at: '2025-12-20T00:00:00.000Z' };

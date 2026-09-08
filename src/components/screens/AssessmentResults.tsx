@@ -10,9 +10,7 @@ import { ArrowRight } from 'lucide-react';
 import { SectionReportCard } from '../player/SectionReportCard';
 import { AssessmentCard } from '../assessment/AssessmentCard';
 import { ResourceCard } from '../page-blocks/ResourceCard';
-import {
-  toResourcePost, isPublished, blogCategoryToAssessmentCategory, articleTime,
-} from '../../lib/resource-presentation';
+import { toResourcePost, isPublished, articleTime } from '../../lib/resource-presentation';
 import {
   Carousel, CarouselContent, CarouselItem, CarouselPrevious, CarouselNext,
 } from '../ui/carousel';
@@ -310,12 +308,10 @@ export function AssessmentResults({
   /**
    * Articles whose own category matches this assessment's, newest first.
    *
-   * The two vocabularies are mapped rather than assumed equal: an article's
-   * category is a blog label, and only some of those are assessment
-   * categories. `mental-health` is the one live case — two articles carry it
-   * and no assessment does — so it reads as `general`. Anything already
-   * matching an assessment category passes through unchanged, which is why
-   * this is a map and not a rename.
+   * Matched directly: an article's `category` IS an assessment category. A
+   * mapping layer existed for two rows tagged `mental-health`; those were
+   * retagged `general` on 2026-09-08 and the layer deleted, so there is one
+   * vocabulary and the admin form constrains new articles to it.
    *
    * Sorted newest first so a freshly uploaded article is the one that
    * surfaces, rather than whatever order the store happened to return.
@@ -329,9 +325,10 @@ export function AssessmentResults({
     (async () => {
       try {
         const all = await apiClient.getResources();
-        const want = blogCategoryToAssessmentCategory(articleCategory);
+        const norm = (c: unknown) => String(c ?? '').trim().toLowerCase();
+        const want = norm(articleCategory);
         const matched = (Array.isArray(all) ? all : [])
-          .filter(r => isPublished(r) && blogCategoryToAssessmentCategory(r?.category) === want)
+          .filter(r => isPublished(r) && norm(r?.category) === want)
           .sort((a, b) => articleTime(b) - articleTime(a));
         if (!cancelled) setArticles(matched);
       } catch { if (!cancelled) setArticles([]); }
