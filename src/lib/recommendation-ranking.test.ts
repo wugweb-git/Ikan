@@ -74,3 +74,49 @@ test('ordering is stable enough to be deterministic for identical rules', () => 
   ];
   assert.deepEqual(rankMatchingRules(rules, 'mild').map(r => r.id), ['first', 'second']);
 });
+
+// ── severityForMatching ─────────────────────────────────────────────────────
+
+import { severityForMatching } from './recommendation-ranking.ts';
+
+const band = (ref: string | null) => ({ band: ref === null ? null : { severity_ref: ref } });
+
+test('an overall band wins when the instrument declares one', () => {
+  assert.equal(severityForMatching({
+    overall: band('mild'), sections: [band('severe')],
+  }), 'mild', 'a declared headline is not overridden by a worse section');
+});
+
+test('General resolves the worst of its five domains', () => {
+  // GAD-2 minimal, PHQ-2 moderate, WHO-5 moderately-severe, NGSE mild, BRS mild.
+  // Without this it resolved null and never reached the rule table.
+  assert.equal(severityForMatching({ sections: [
+    band('minimal'), band('moderate'), band('moderately-severe'), band('mild'), band('mild'),
+  ]}), 'moderately-severe');
+});
+
+test('a low wellbeing score raises severity with no direction special-case', () => {
+  // who5's "Poor" band IS moderately-severe, so a higher-is-better scale
+  // contributes correctly just by being read.
+  assert.equal(severityForMatching({ sections: [band('minimal'), band('moderately-severe')] }),
+    'moderately-severe');
+});
+
+test('all-minimal returns minimal, which matches no rule', () => {
+  assert.equal(severityForMatching({ sections: [band('minimal'), band('minimal')] }), 'minimal');
+});
+
+test('no placeable band returns null, not a guess', () => {
+  assert.equal(severityForMatching({ sections: [band(null), band(null)] }), null);
+  assert.equal(severityForMatching({ sections: [] }), null);
+  assert.equal(severityForMatching(null), null);
+});
+
+test('an unrecognised severity term is ignored rather than ranked', () => {
+  assert.equal(severityForMatching({ sections: [band('catastrophic'), band('mild')] }), 'mild');
+});
+
+test('an overall with an unusable band falls through to the sections', () => {
+  assert.equal(severityForMatching({ overall: band('not-a-term'), sections: [band('moderate')] }),
+    'moderate');
+});

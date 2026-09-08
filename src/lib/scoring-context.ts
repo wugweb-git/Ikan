@@ -248,7 +248,13 @@ export function toSectionScoreResult(results: ScoreResult[]): {
     return { sectioned: true, sections: [], overall: toSection(results[0]) };
   }
 
-  const overallIdx = results.findIndex(r => r.id === 'overall' || r.id.endsWith('-overall'));
+  // A declared `primary` wins over the id convention. The convention alone
+  // matched burnout's `bat-overall` but not depression's `phq9-total` or
+  // anxiety's `gad7-total`, so those two had no overall at all.
+  const primaryIdx = results.findIndex(r => (r as any).primary === true);
+  const overallIdx = primaryIdx >= 0
+    ? primaryIdx
+    : results.findIndex(r => r.id === 'overall' || r.id.endsWith('-overall'));
   const overall = overallIdx >= 0 ? toSection(results[overallIdx]) : undefined;
   const sections = results.filter((_, i) => i !== overallIdx).map(toSection);
   return { sectioned: true, sections, overall };

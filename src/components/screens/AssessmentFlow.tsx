@@ -11,6 +11,7 @@ import { triggerCrisisSupport } from '../safety/CrisisSupport';
 import { buildScoringContext, toSectionScoreResult } from '../../lib/scoring-context';
 import { computeScores } from '../../lib/scoring-engine';
 import { createActiveTimer, type ActiveTimer } from '../../lib/active-time';
+import { severityForMatching } from '../../lib/recommendation-ranking';
 import { slugify } from '../../lib/slug';
 import { AssessmentResults } from './AssessmentResults';
 import { useOfflineSync } from '../../hooks/useOfflineSync';
@@ -560,7 +561,11 @@ export function AssessmentFlow({
         // is deliberately not passed: re-deriving from it needs the score and
         // the bands to be in the same units, which is the assumption that
         // broke here.
-        severityLevel: (specOverall?.band as any)?.severity_ref ?? null,
+        // The overall band when the instrument declares one, else the worst of
+        // its sections. General has five independent scales and no overall, so
+        // it resolved null here and never reached the rule table at all —
+        // three of seven assessments were in that state.
+        severityLevel: severityForMatching(sectionScores as any),
       });
 
       // Construct Results Object

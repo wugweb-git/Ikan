@@ -68,3 +68,46 @@ export function rankMatchingRules<T extends RankableRule>(rules: T[], severity: 
       return (b.priority ?? 0) - (a.priority ?? 0);
     });
 }
+
+
+/**
+ * The severity a recommendation rule matches on, for one completed assessment.
+ *
+ * `findMatchingAdminRules` returns `[]` at its null guard, so an assessment that
+ * resolves no severity never reaches the rule table at all. Three of the seven
+ * were in that state: depression, anxiety and general each run more than one
+ * instrument, and only some of them declare a single headline score.
+ *
+ * ## Why General takes the worst of five rather than a nominated headline
+ *
+ * General runs GAD-2, PHQ-2, WHO-5, NGSE and BRS — two distress screens, a
+ * wellbeing index and two strengths measures. It is the triage instrument:
+ * someone picks it precisely because they do not know which domain is the
+ * problem. Nominating any one of the five as primary goes blind to the other
+ * four, so a healthy WHO-5 sitting beside a positive PHQ-2 would read as
+ * "fine". The worst domain is the one worth acting on.
+ *
+ * **Direction needs no special case.** A band's `severity_ref` already encodes
+ * it: `who5`'s "Poor" band is `moderately-severe` and its "Good" band is
+ * `minimal`, so a low wellbeing score contributes a high severity on its own.
+ * Taking the maximum works identically for higher-is-distress and
+ * higher-is-better scales.
+ *
+ * All-minimal returns `minimal`, which matches no rule — correct, not a gap.
+ * No section carrying a placeable band returns null, and null means no
+ * recommendation rather than a guessed one.
+ */
+export function severityForMatching(sectionScores: {
+  overall?: { band?: { severity_ref?: unknown } | null } | null;
+  sections?: { band?: { severity_ref?: unknown } | null }[] | null;
+} | null | undefined): SeverityLevel | null {
+  const overall = sectionScores?.overall?.band?.severity_ref;
+  if (isSeverityLevel(overall)) return overall;
+
+  const refs = (Array.isArray(sectionScores?.sections) ? sectionScores.sections : [])
+    .map(s => s?.band?.severity_ref)
+    .filter(isSeverityLevel);
+  if (refs.length === 0) return null;
+
+  return refs.reduce((worst, r) => (compareSeverity(r, worst) > 0 ? r : worst));
+}

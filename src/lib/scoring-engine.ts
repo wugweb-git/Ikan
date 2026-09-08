@@ -120,6 +120,22 @@ export interface AssessmentScore {
   items?: ScoreItem[];
   /** Present for from_scores — ids of other scores on the same assessment. */
   from_scores?: string[];
+  /**
+   * This score is the assessment's headline — the one a recommendation rule
+   * matches on.
+   *
+   * Declared rather than inferred. `toSectionScoreResult` previously picked the
+   * overall by id convention (`overall` or `*-overall`), which burnout's
+   * `bat-overall` satisfies but depression's `phq9-total` and anxiety's
+   * `gad7-total` do not. Without it those two resolved as the worst of their
+   * sections, so a positive GAD-2 screen could outrank a minimal PHQ-9 and
+   * drive the recommendation from the embedded screen rather than the
+   * instrument.
+   *
+   * General deliberately declares none: it runs five independent scales and
+   * genuinely has no headline, so it falls through to the worst domain.
+   */
+  primary?: boolean;
 }
 
 export interface ScoringBand {
@@ -689,6 +705,8 @@ export interface ScoreResult {
   tier?: ResponseTier;
   /** Set when the score is deliberately not produced. Never a fabricated band. */
   invalidReason?: string;
+  /** Mirrors `AssessmentScore.primary`; the headline for rule matching. */
+  primary?: boolean;
 }
 
 function aggregate(values: number[], profile: ScoringProfile): number {
@@ -720,7 +738,7 @@ export function computeScores(
     const profile = ctx.profiles[score.profile_id];
     const { range, unresolved } = achievableRange(score.id, ctx);
     const base = {
-      id: score.id, label: score.label, range,
+      id: score.id, label: score.label, range, primary: score.primary === true,
       direction: profile?.direction ?? 'higher_is_distress',
     };
 
