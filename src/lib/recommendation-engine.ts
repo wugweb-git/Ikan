@@ -336,6 +336,25 @@ export async function loadAdminRules(): Promise<void> {
  * typo'd threshold silently became a live one.
  */
 /**
+ * A rule with nothing to say must not match.
+ *
+ * B2 guards the save path, but a row written any other way — a bulk import, a
+ * direct KV write, or the 18 rows that predate the fields — would still match
+ * and then render a card with a blank heading and an unlabelled button. This
+ * guards the read path, so neither route can leak one.
+ *
+ * `rationale` deliberately does NOT satisfy this, and is no longer substituted
+ * anywhere. It is the author's internal note: the live rows hold "Awareness of
+ * overload" and "Work-life recalibration", clinician shorthand that was
+ * reaching `severityMessage`, `primaryAction.body` and both secondary-action
+ * labels through `|| rule.rationale`. The message a person read after
+ * finishing a mental-health assessment was a memo written to somebody else.
+ */
+function hasRenderableCopy(rule: AdminRule): boolean {
+  return !!(rule.title?.trim() && rule.body?.trim() && rule.cta?.trim());
+}
+
+/**
  * Rules matching this assessment's category and severity.
  *
  * The join key is the assessment's **category slug** (`anxiety`, `burnout`, …),
@@ -350,7 +369,10 @@ function findMatchingAdminRules(category: string, severity: ClinicalSeverity | n
   if (!category || !severity) return [];
   const key = category.trim().toLowerCase();
   return rankMatchingRules(
-    _adminRulesCache.filter(rule => rule.assessment_category === key && rule.enabled !== false),
+    _adminRulesCache.filter(rule =>
+      rule.assessment_category === key &&
+      rule.enabled !== false &&
+      hasRenderableCopy(rule)),
     severity,
   );
 }
@@ -646,7 +668,9 @@ export function evaluateAssessment(input: EvaluateInput): EngineResult {
     // "You're doing relatively well…" from DEFAULT_RECOMMENDATION_RULES under
     // an action that was correctly empty. Copy is authored on the rule or it
     // is not shown.
-    severityMessage: adminEquipRule?.rationale || '',
+    // NOT `rationale` — see hasRenderableCopy. This is the sentence shown
+    // after an assessment; it comes from authored copy or it is not shown.
+    severityMessage: adminEquipRule?.body || '',
     primaryAction: {
       // No matching rule means no primary action. It used to claim
       // 'equip_program' whenever the tier's default mentioned one, and then
@@ -656,7 +680,7 @@ export function evaluateAssessment(input: EvaluateInput): EngineResult {
       // Copy is authored on the rule. Empty renders nothing rather than the
       // former hardcoded "A guided program that can help right now".
       title: adminEquipRule?.title || '',
-      body: adminEquipRule?.body || adminEquipRule?.rationale || '',
+      body: adminEquipRule?.body || '',
       cta: adminEquipRule?.cta || ''
     },
     secondaryActions: [],
@@ -675,7 +699,7 @@ export function evaluateAssessment(input: EvaluateInput): EngineResult {
     result.secondaryActions.push({
       type: 'resource',
       title: rule.title || '',
-      label: rule.rationale || '',
+      label: rule.title || '',
       route: `/resource/${rule.target_id}`,
     });
   });
@@ -685,7 +709,7 @@ export function evaluateAssessment(input: EvaluateInput): EngineResult {
     result.secondaryActions.push({
       type: 'assessment',
       title: rule.title || '',
-      label: rule.rationale || '',
+      label: rule.title || '',
       route: `/assessment-flow?id=${rule.target_id}`,
     });
   });
