@@ -25,16 +25,25 @@ export interface ResourceBlockProps {
 }
 
 /** Resource slider card — prominent image + category + title (no description) */
-function SliderResourceCard({ post, onClick, isMobile }: { post: ResourcePost; onClick: () => void; isMobile?: boolean }) {
+/*
+ * The card is an <a href>, not a div with a click handler — it goes to a URL.
+ * The href is derived from the post rather than passed in, because every
+ * caller already routes to the same place (`/resource-detail?id=<id>`); the
+ * click handler still does the in-app navigation, and a modified click is
+ * left to the browser. The scroll arrows below stay buttons: they act on the
+ * page, they do not navigate.
+ */
+function SliderResourceCard({ post, onClick, isMobile }: { post: ResourcePost; onClick: (e: React.MouseEvent) => void; isMobile?: boolean }) {
   const imageSrc = resolveImageUrl(post.image);
 
   return (
-    <div
-      className="flex-shrink-0 cursor-pointer group flex flex-col overflow-hidden"
+    <a
+      href={`/resource-detail?id=${post.id}`}
+      className="flex-shrink-0 cursor-pointer group flex flex-col overflow-hidden no-underline text-inherit"
       onClick={onClick}
       style={{
-          // Each card is a snap point for the row's `x proximity` snapping.
-          scrollSnapAlign: 'start',
+        // Each card is a snap point for the row's `x proximity` snapping.
+        scrollSnapAlign: 'start',
         width: isMobile ? 'calc(100vw - 48px)' : '300px',
         maxWidth: isMobile ? '340px' : '300px',
         borderRadius: 'var(--radius-lg)',
@@ -143,7 +152,7 @@ function SliderResourceCard({ post, onClick, isMobile }: { post: ResourcePost; o
           {post.title}
         </h3>
       </div>
-    </div>
+    </a>
   );
 }
 
@@ -320,7 +329,10 @@ export function ResourceBlock({
             <SliderResourceCard
               key={post.id || index}
               post={post}
-              onClick={() => onPostClick?.(post)}
+              onClick={(e) => {
+                if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+                if (onPostClick) { e.preventDefault(); onPostClick(post); }
+              }}
               isMobile={isMobile}
             />
           ))}

@@ -27,6 +27,19 @@ const pctOf = (score: number, maxScore: number | null, scaleMin = 0): number | n
 const pctOfAttempt = (a: { score: number; maxScore: number | null; scaleMin?: number }) =>
   pctOf(a.score, a.maxScore, a.scaleMin ?? 0);
 
+/**
+ * Time on task, formatted exactly as the result screen formats it — under a
+ * minute in seconds, above it minutes and seconds, seconds dropped when zero.
+ * Absent stays absent: no dash, no zero.
+ */
+const durationOf = (secs?: number): string | null => {
+  if (typeof secs !== 'number' || !Number.isFinite(secs) || secs < 0) return null;
+  if (secs < 60) return `${Math.round(secs)} sec`;
+  const mins = Math.floor(secs / 60);
+  const rest = Math.round(secs % 60);
+  return rest === 0 ? `${mins} min` : `${mins} min ${rest} sec`;
+};
+
 // ── Design tokens ──
 const f = (size: string, weight: number = 400, color: string = 'var(--color-text-primary)') => ({
   fontSize: `var(--text-${size})`,
@@ -48,6 +61,8 @@ interface AssessmentAttempt {
    * 24 of 8-40 reads 60% instead of 50%.
    */
   scaleMin?: number;
+  /** Time on task, when the run was timed. Absent on every pre-feature row. */
+  durationSeconds?: number;
   /** Clinical severity term, or undefined. Never a band label. */
   severity?: string;
   /** Instrument copy for the band — "Poor Sleep". Display only. */
@@ -274,6 +289,10 @@ export function AssessmentHistoryDetail({ assessmentId, onBack, onNavigate }: As
                 bandLabel: placement.band?.label ?? undefined,
                 tone: placement.band?.tone ?? undefined,
                 scaleMin: scale?.min,
+                // Same field the result screen reports. Absent on the 152 rows
+                // written before timing existed, and absent renders nothing.
+                durationSeconds: typeof entry.duration_seconds === 'number'
+                  ? entry.duration_seconds : undefined,
                 interpretation: entry.interpretation,
                 completedAt: entry.completed_at || entry.completedAt || new Date().toISOString(),
                 responses: entry.responses,
@@ -840,6 +859,7 @@ export function AssessmentHistoryDetail({ assessmentId, onBack, onNavigate }: As
                         </div>
                         <p style={{ ...f('xs', 400, 'var(--color-text-muted)'), marginTop: 1 }}>
                           <Clock size={10} className="inline mr-1" />{timeStr}
+                          {durationOf(attempt.durationSeconds) && ` · ${durationOf(attempt.durationSeconds)}`}
                         </p>
                       </div>
 
