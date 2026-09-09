@@ -27,7 +27,8 @@ import { Checkbox } from '../ui/checkbox';
 import { Label } from '../ui/label';
 import { Card, CardContent } from '../ui/card';
 import { RichTextEditor } from '../ui/rich-text-editor';
-import { Activity, resolveInteraction, INTERACTION_META, AUTHORABLE_SUBTYPES, warnFallback } from '../../lib/blocks/block-model';
+import { Activity, resolveInteraction, INTERACTION_META, AUTHORABLE_SUBTYPES, warnFallback, activityOf, normalizeSubtype } from '../../lib/blocks/block-model';
+import { getIconComponent, iconResolves } from '../../lib/catalog-icons';
 import { useMetadata } from '../../hooks/useMetadata';
 import { validateBlock } from '../../lib/blocks/block-validation';
 import { hasContentField, contentLabelFor, contentPlaceholderFor } from '../../lib/blocks/block-fields';
@@ -119,6 +120,19 @@ function BlockEditorInner({
   // type, so there is no stage whose permitted set could narrow it. What a
   // BLOCK TYPE permits is `activities` on its own catalog row — a separate
   // constraint, and one this editor does not yet apply.
+  /*
+    THE ACTIVITY THIS BLOCK CARRIES — §21 item 2.
+
+    Read through `activityOf`, not `activityConfig.subtype`. 220 of 420 live
+    blocks carry the activity ONLY at block level, so the old read showed them
+    all as `mcq` (the select's default) and a save then wrote that default into
+    `subtype` — an activity silently replaced by opening the block.
+  */
+  const currentActivity = normalizeSubtype(activityOf(block)) ?? activityOf(block);
+  const activityRow = kvExerciseSubtypes.find(a => a.value === currentActivity);
+  const ActivityIcon = getIconComponent(activityRow?.icon);
+  const hasActivityIcon = iconResolves(activityRow?.icon);
+
   const exerciseSubtypeOptions = kvExerciseSubtypes
     /*
       Declared, not offered.
@@ -135,8 +149,8 @@ function BlockEditorInner({
       drops an author's stored value.
     */
     .filter(s => (AUTHORABLE_SUBTYPES as readonly string[]).includes(s.value)
-                 || s.value === block.activityConfig?.subtype)
-    .map(s => ({ value: s.value, label: s.label, offPreset: false }));
+                 || s.value === currentActivity)
+    .map(s => ({ value: s.value, label: s.label, icon: s.icon, offPreset: false }));
   const vocabularyUnavailable = !metaLoading && (kvBlockTypes.length === 0 || kvExerciseSubtypes.length === 0);
   if (vocabularyUnavailable) {
     warnFallback(
@@ -237,13 +251,23 @@ function BlockEditorInner({
           
           {/* ── HEADER ROW: Block label + interaction badges + media icons ── */}
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-1.5">
-              {getIcon()}
-              <span style={{ fontSize: '12px', fontWeight: 500, fontFamily: 'var(--font-family-base)', color: 'var(--color-text-primary)' }}>
-                Interactive Block
+            {/* The header names what this block IS — its type and its activity —
+                with the activity's own catalog icon. It used to read
+                "Interactive Block", which is true of every block and therefore
+                says nothing. */}
+            <div className="flex items-center gap-1.5 min-w-0">
+              <span
+                className="shrink-0 flex items-center justify-center"
+                style={{ width: 26, height: 26, borderRadius: 'var(--radius-sm)', backgroundColor: 'var(--color-bg-muted)', color: 'var(--color-primary-default)' }}
+              >
+                {hasActivityIcon ? <ActivityIcon size={14} /> : getIcon()}
               </span>
-              <span style={{ fontSize: '9px', fontWeight: 500, fontFamily: 'var(--font-family-base)', color: 'var(--color-text-muted)', backgroundColor: 'var(--color-bg-muted)', padding: '1px 6px', borderRadius: 'var(--radius-pill)' }}>
-                {block.type}/{currentInteraction}
+              <span className="truncate" style={{ fontSize: '13px', fontWeight: 600, fontFamily: 'var(--font-family-base)', color: 'var(--color-text-primary)' }}>
+                {safeBlockType.charAt(0).toUpperCase() + safeBlockType.slice(1)}
+                {activityRow ? <span style={{ fontWeight: 400, color: 'var(--color-text-muted)' }}> — {activityRow.label.toLowerCase()}</span> : null}
+              </span>
+              <span className="shrink-0" style={{ fontSize: '9px', fontWeight: 500, fontFamily: 'var(--font-family-base)', color: 'var(--color-text-muted)', backgroundColor: 'var(--color-bg-muted)', padding: '1px 6px', borderRadius: 'var(--radius-pill)' }}>
+                {currentInteraction}
               </span>
             </div>
             <div className="flex items-center gap-1">
@@ -442,25 +466,44 @@ function BlockEditorInner({
                     so there is no such sentence to write. */}
                 <Label className="text-xs">Activity</Label>
                 <Select 
-                  value={block.activityConfig?.subtype || 'mcq'} 
-                  onValueChange={(val: any) => onChange({ 
-                    activityConfig: { ...block.activityConfig, subtype: val } 
+                  value={currentActivity || 'mcq'} 
+                  /*
+                    Writes the block-level `activity` — the field `activityOf`
+                    prefers and 420 of 420 blocks carry — and keeps
+                    `activityConfig.subtype` in step ONLY where it already
+                    exists. Writing both unconditionally would put the old
+                    field back onto the 220 blocks the remap cleared, which is
+                    the two-representations failure this module keeps paying for.
+                  */
+                  onValueChange={(val: any) => onChange({
+                    activity: val,
+                    ...(block.activityConfig?.subtype
+                      ? { activityConfig: { ...block.activityConfig, subtype: val } }
+                      : {}),
                   })}
                 >
+                  {/* No icon of its own here: `SelectValue` renders the chosen
+                      item's children, icon included, so adding one drew it twice. */}
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {exerciseSubtypeOptions.map((subtype) => (
-                      <SelectItem key={subtype.value} value={subtype.value}>
-                        {subtype.label}
-                        {subtype.offPreset && (
-                          <span style={{ color: 'var(--color-status-warning)' }}>
-                            {' '}· not usually on this day
+                    {exerciseSubtypeOptions.map((subtype) => {
+                      const Icon = getIconComponent(subtype.icon);
+                      return (
+                        <SelectItem key={subtype.value} value={subtype.value}>
+                          <span className="flex items-center gap-2">
+                            {iconResolves(subtype.icon) && <Icon size={14} style={{ color: 'var(--color-text-muted)' }} />}
+                            {subtype.label}
                           </span>
-                        )}
-                      </SelectItem>
-                    ))}
+                          {subtype.offPreset && (
+                            <span style={{ color: 'var(--color-status-warning)' }}>
+                              {' '}· not usually on this day
+                            </span>
+                          )}
+                        </SelectItem>
+                      );
+                    })}
                   </SelectContent>
                 </Select>
               </div>

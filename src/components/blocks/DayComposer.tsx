@@ -24,7 +24,9 @@ import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Card, CardContent } from '../ui/card';
-import { DayContent, Activity, repeatSummary } from '../../lib/blocks/block-model';
+import { DayContent, Activity, repeatSummary, activityOf, normalizeSubtype } from '../../lib/blocks/block-model';
+import { getIconComponent, iconResolves } from '../../lib/catalog-icons';
+import { useMetadata } from '../../hooks/useMetadata';
 import { BlockEditor } from './BlockEditor';
 import { PALETTE_BLOCK_TYPES, getPresetForDayType, DAY_TYPE_PRESETS } from '../../lib/blocks/block-type-rules';
 import { validateDay, hasBlockingIssues } from '../../lib/blocks/block-validation';
@@ -138,9 +140,13 @@ interface DraggableBlockProps {
       where a repeat actually lands. */
   dayNumber: number;
   totalDays: number;
+  /** The activity's catalog row, resolved once by the day and passed down as
+      plain strings so the row stays memoisable. */
+  activityLabel?: string;
+  activityIcon?: string;
 }
 
-const DraggableBlock = memo(function DraggableBlock({ block, index, isSelected, onSelect, moveBlock, onDelete, dayNumber, totalDays }: DraggableBlockProps) {
+const DraggableBlock = memo(function DraggableBlock({ block, index, isSelected, onSelect, moveBlock, onDelete, dayNumber, totalDays, activityLabel, activityIcon }: DraggableBlockProps) {
   const ref = useRef<HTMLDivElement>(null);
 
   const [{ handlerId }, drop] = useDrop({
@@ -182,6 +188,12 @@ const DraggableBlock = memo(function DraggableBlock({ block, index, isSelected, 
      author already named. */
   const step = typeof block.stepGroup === 'string' && block.stepGroup.trim() ? block.stepGroup.trim() : null;
 
+  /* THE ACTIVITY'S OWN ICON, not the block type's — §21 item 2. All 20 activity
+     catalog rows already carry one; nothing read it, so two Lessons that do
+     completely different things (read, view) drew the same tile. */
+  const ActivityIcon = getIconComponent(activityIcon);
+  const hasActivityIcon = iconResolves(activityIcon);
+
   return (
     <div 
       ref={ref}
@@ -201,10 +213,29 @@ const DraggableBlock = memo(function DraggableBlock({ block, index, isSelected, 
       <div className="cursor-grab" style={{ color: 'var(--color-text-muted)', opacity: 0.4 }}>
         <GripVertical size={12} />
       </div>
+      <div
+        className="shrink-0 flex items-center justify-center self-start"
+        title={activityLabel ? `${safeType} · ${activityLabel}` : safeType}
+        style={{
+          width: 24, height: 24, marginTop: 1, borderRadius: 'var(--radius-sm)',
+          backgroundColor: isSelected ? 'var(--color-primary-default)' : 'var(--color-bg-muted)',
+          color: isSelected ? 'var(--color-primary-on)' : 'var(--color-text-muted)',
+        }}
+      >
+        {hasActivityIcon
+          ? <ActivityIcon size={13} />
+          /* An activity the catalog does not name gets a dash, not a stand-in
+             icon — a wrong icon reads as a deliberate choice. */
+          : <span style={{ fontSize: '11px', opacity: 0.6 }}>—</span>}
+      </div>
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-1">
-          <span className="text-[9px] px-1 py-0 uppercase tracking-wider" style={{ color: 'var(--color-text-muted)', fontWeight: 500, fontFamily: 'var(--font-family-base)' }}>
-            {safeType}
+          {/* `Lesson · read`, not `LESSON · READ`: all-caps with letter-spacing
+              cost about a third of the line, and the activity is the half that
+              was being truncated away. */}
+          <span className="truncate" style={{ fontSize: '10px', color: 'var(--color-text-muted)', fontWeight: 600, fontFamily: 'var(--font-family-base)' }}>
+            {safeType.charAt(0).toUpperCase() + safeType.slice(1)}
+            {activityLabel ? ` · ${activityLabel.toLowerCase()}` : ''}
           </span>
           {/* stepGroup is internal authoring metadata — not surfaced in the block list.
               It remains editable in the block detail editor. */}
@@ -263,7 +294,8 @@ const DraggableBlock = memo(function DraggableBlock({ block, index, isSelected, 
   );
 }, (prev, next) => {
   return prev.block === next.block && prev.index === next.index && prev.isSelected === next.isSelected
-    && prev.dayNumber === next.dayNumber && prev.totalDays === next.totalDays;
+    && prev.dayNumber === next.dayNumber && prev.totalDays === next.totalDays
+    && prev.activityLabel === next.activityLabel && prev.activityIcon === next.activityIcon;
 });
 
 export interface DailyBuilderProps {
@@ -359,6 +391,24 @@ export function DayEditor({
     label: DAY_TYPE_PRESETS[slug].label,
     activities: DAY_TYPE_PRESETS[slug].allowedInteractions,
   }));
+
+  /*
+    The activity catalog, read once for the whole day list. Rows carry `icon`
+    and `label`; the block row and the editor both draw from these, so an icon
+    changed in Meta Manager changes everywhere at once. Aliases are resolved
+    through `normalizeSubtype` first — a block storing `matrix` gets the
+    `comparison-matrix` row rather than no row.
+  */
+  const { exerciseSubtypes: activityRows } = useMetadata();
+  const activityMeta = useMemo(() => {
+    const byValue: Record<string, { label: string; icon?: string }> = {};
+    for (const row of activityRows) byValue[row.value] = { label: row.label, icon: row.icon };
+    return byValue;
+  }, [activityRows]);
+  const activityFor = (block: Activity) => {
+    const raw = activityOf(block);
+    return activityMeta[normalizeSubtype(raw) ?? raw ?? ''] ?? undefined;
+  };
 
   const [selectedDayNum, setSelectedDayNum] = useState<number | null>(() => {
     if (days.length === 0) return null;
@@ -863,6 +913,8 @@ export function DayEditor({
                     onDelete={() => deleteBlock(block.id)}
                     dayNumber={activeDay.day}
                     totalDays={days.length > 0 ? days[days.length - 1].day : activeDay.day}
+                    activityLabel={activityFor(block)?.label}
+                    activityIcon={activityFor(block)?.icon}
                   />
                 ))}
 
