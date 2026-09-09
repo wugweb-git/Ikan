@@ -663,6 +663,49 @@ export function repeatTargetDays(activity: Activity, homeDay: number, totalDays:
   return [...days].sort((a, b) => a - b);
 }
 
+/**
+ * A block row's repeat, in words. Display only — `repeatTargetDays` remains the
+ * authority on where a block actually appears.
+ *
+ * `targetsNone` is the case worth showing rather than hiding: the editor writes
+ * `{type: 'simple_repeat', onDays: []}` the moment the toggle is turned on, so a
+ * block whose author never picked a day carries a repeat that repeats nothing.
+ * Four live blocks are in exactly that state. Rendering nothing for them would
+ * make the row agree with the player and disagree with the editor, which is how
+ * an author loses an unfinished setting without ever being told.
+ */
+export interface RepeatSummary {
+  label: string;
+  targetsNone: boolean;
+}
+
+export function repeatSummary(
+  activity: Pick<Activity, 'repeat'>,
+  homeDay: number,
+  totalDays: number,
+): RepeatSummary | null {
+  const r = activity.repeat;
+  if (!r) return null;
+
+  const targets = repeatTargetDays(activity as Activity, homeDay, totalDays)
+    .filter((d) => d !== homeDay);
+  if (targets.length === 0) return { label: 'no days set', targetsNone: true };
+
+  if (r.everyDay) return { label: 'every day', targetsNone: false };
+  if (r.type === 'on_demand' && typeof r.onDemandFromDay === 'number') {
+    return { label: `from day ${r.onDemandFromDay}`, targetsNone: false };
+  }
+  if (targets.length === 1) return { label: `day ${targets[0]}`, targetsNone: false };
+
+  const contiguous = targets.every((d, i) => i === 0 || d === targets[i - 1] + 1);
+  if (contiguous) {
+    return { label: `days ${targets[0]}\u2013${targets[targets.length - 1]}`, targetsNone: false };
+  }
+  const shown = targets.slice(0, 3).join(', ');
+  const rest = targets.length - 3;
+  return { label: `days ${shown}${rest > 0 ? ` +${rest}` : ''}`, targetsNone: false };
+}
+
 export interface DayContent {
   day: number;
   title: string;

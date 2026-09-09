@@ -16,13 +16,15 @@ import {
   Zap,
   RotateCcw,
   Repeat,
+  Clock,
+  Hash,
 } from 'lucide-react';
 import { useDrag, useDrop } from 'react-dnd';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Card, CardContent } from '../ui/card';
-import { DayContent, Activity } from '../../lib/blocks/block-model';
+import { DayContent, Activity, repeatSummary } from '../../lib/blocks/block-model';
 import { BlockEditor } from './BlockEditor';
 import { PALETTE_BLOCK_TYPES, getPresetForDayType, DAY_TYPE_PRESETS } from '../../lib/blocks/block-type-rules';
 import { validateDay, hasBlockingIssues } from '../../lib/blocks/block-validation';
@@ -132,9 +134,13 @@ interface DraggableBlockProps {
   onSelect: () => void;
   moveBlock: (dragIndex: number, hoverIndex: number) => void;
   onDelete: () => void;
+  /** The day this row sits on, and the programme's length — both needed to say
+      where a repeat actually lands. */
+  dayNumber: number;
+  totalDays: number;
 }
 
-const DraggableBlock = memo(function DraggableBlock({ block, index, isSelected, onSelect, moveBlock, onDelete }: DraggableBlockProps) {
+const DraggableBlock = memo(function DraggableBlock({ block, index, isSelected, onSelect, moveBlock, onDelete, dayNumber, totalDays }: DraggableBlockProps) {
   const ref = useRef<HTMLDivElement>(null);
 
   const [{ handlerId }, drop] = useDrop({
@@ -166,6 +172,15 @@ const DraggableBlock = memo(function DraggableBlock({ block, index, isSelected, 
 
   // Safety guard: block.type might be corrupted (e.g., event object stored as type)
   const safeType = typeof block.type === 'string' ? block.type : 'lesson';
+
+  // Row meta — step, duration, repeat. Display only; nothing here writes.
+  const repeat = repeatSummary(block, dayNumber, totalDays);
+  /* The step is the block's own `stepGroup` slug, not a synthesised `s1`.
+     392 of 420 live blocks carry none and the 28 that do carry authored names
+     (`daily_reflection`, `tf_identification`). Numbering them would print a
+     label the store does not hold, on rows whose group is the one thing the
+     author already named. */
+  const step = typeof block.stepGroup === 'string' && block.stepGroup.trim() ? block.stepGroup.trim() : null;
 
   return (
     <div 
@@ -206,10 +221,37 @@ const DraggableBlock = memo(function DraggableBlock({ block, index, isSelected, 
         }}>
           {block.title || '(Untitled)'}
         </p>
+        <div className="flex items-center gap-2 mt-0.5" style={{ fontSize: '9.5px', color: 'var(--color-text-muted)', lineHeight: 1.4 }}>
+          {step && (
+            <span className="inline-flex items-center gap-0.5 min-w-0 flex-1" title={`Step group: ${step}`}>
+              <Hash size={8} className="shrink-0" />
+              {/* The step takes whatever room is left and truncates first; duration
+                  and repeat are `shrink-0` because a row that hides a repeat is a
+                  row that lies about where the block appears. */}
+              <span className="truncate" style={{ fontFamily: 'var(--font-family-mono)' }}>{step}</span>
+            </span>
+          )}
+          <span className="inline-flex items-center gap-0.5 shrink-0" title="Duration">
+            <Clock size={8} />
+            {block.duration || 5}m
+          </span>
+          {repeat && (
+            <span
+              className="inline-flex items-center gap-0.5 shrink-0"
+              style={{
+                color: repeat.targetsNone ? 'var(--color-status-warning-text)' : 'var(--color-primary-default)',
+                fontWeight: 500,
+              }}
+              title={repeat.targetsNone
+                ? 'Carry forward is on but no day was chosen — this block appears on its own day only'
+                : `Carry forward: ${repeat.label}`}
+            >
+              <Repeat size={8} />
+              {repeat.label}
+            </span>
+          )}
+        </div>
       </div>
-      <span style={{ fontSize: '9px', color: 'var(--color-text-muted)', opacity: 0.5, whiteSpace: 'nowrap' }}>
-        {block.duration || 5}m
-      </span>
       <Button 
         variant="ghost" size="icon" className="h-5 w-5 opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
         style={{ color: 'var(--color-text-muted)' }}
@@ -220,7 +262,8 @@ const DraggableBlock = memo(function DraggableBlock({ block, index, isSelected, 
     </div>
   );
 }, (prev, next) => {
-  return prev.block === next.block && prev.index === next.index && prev.isSelected === next.isSelected;
+  return prev.block === next.block && prev.index === next.index && prev.isSelected === next.isSelected
+    && prev.dayNumber === next.dayNumber && prev.totalDays === next.totalDays;
 });
 
 export interface DailyBuilderProps {
@@ -818,6 +861,8 @@ export function DayEditor({
                     onSelect={() => setSelectedBlockId(block.id)}
                     moveBlock={moveBlock}
                     onDelete={() => deleteBlock(block.id)}
+                    dayNumber={activeDay.day}
+                    totalDays={days.length > 0 ? days[days.length - 1].day : activeDay.day}
                   />
                 ))}
 
