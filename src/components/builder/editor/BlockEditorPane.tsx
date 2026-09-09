@@ -36,6 +36,8 @@ import { getAuthHeaders } from '../../../lib/supabase-client';
 import { BlockFieldSections, ActivityPicker } from './BlockFieldSections';
 import { BlockFlowFooter } from './BlockFlowFooter';
 import { BlockTypePicker } from './BlockTypePicker';
+import { retype } from '../../../lib/blocks/block-retype';
+import type { ActivityName } from '../../../lib/blocks/vocabulary';
 import type { DayPolicy } from '../../../lib/blocks/day-policy';
 
 export interface BlockEditorPaneProps {
@@ -46,9 +48,11 @@ export interface BlockEditorPaneProps {
   /** The day this block sits on — its step rules govern the Step control. */
   dayPolicy?: DayPolicy;
   readOnly?: boolean;
+  /** Bumped by the row kebab to open the type picker. */
+  openTypePickerAt?: number;
 }
 
-export function BlockEditorPane({ block, onChange, onDelete, isAssessment, dayPolicy, readOnly }: BlockEditorPaneProps) {
+export function BlockEditorPane({ block, onChange, onDelete, isAssessment, dayPolicy, readOnly, openTypePickerAt }: BlockEditorPaneProps) {
   const imageInputRef = useRef<HTMLInputElement>(null);
   const { exerciseSubtypes: kvExerciseSubtypes, blockTypes: kvBlockTypes } = useMetadata();
 
@@ -111,13 +115,22 @@ export function BlockEditorPane({ block, onChange, onDelete, isAssessment, dayPo
         style={{ backgroundColor: 'var(--color-bg-card)', borderBottom: '1px solid var(--color-border-default)' }}
       >
         <BlockTypePicker
+          block={block}
           type={safeBlockType}
+          activity={currentActivity as ActivityName | undefined}
           activityLabel={activityRow?.label}
           activityIcon={activityRow?.icon}
           options={kvBlockTypes.map(t => ({ value: t.value, label: t.label, icon: t.icon, activities: t.activities }))}
-          onPick={(type) => onChange({ type: type as Activity['type'] })}
+          /*
+            The retype is applied by `retype()`, not by writing `type` — it drops
+            exactly the fields the picker just said it would and stamps
+            `retyped_from`. Writing the type alone is what left a block reading
+            "Conclude — input table".
+          */
+          onPick={(type, activity) => onChange(retype(block, activity, type))}
           vocabularyUnavailable={kvBlockTypes.length === 0}
           disabled={readOnly}
+          openAt={openTypePickerAt}
         />
         {currentInteractions.map((i) => (
           <span

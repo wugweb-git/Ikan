@@ -6,6 +6,7 @@ import { Card, CardContent } from '../ui/card';
 import { Progress } from '../ui/progress';
 import { CircleCheck, Trophy, Calendar, ArrowRight, Star, BookOpen, BarChart3, Sparkles } from 'lucide-react';
 import { apiClient } from '../../lib/api-client';
+import { equipDiaryUrl } from '../../lib/slug';
 import { EquipProgram } from '../../lib/blocks/block-model';
 import { LoadingSpinner } from '../LoadingSpinner';
 
@@ -95,10 +96,19 @@ export function EquipProgramCompletion({ programId, onContinue, onBackToDashboar
       try {
         setLoading(true);
 
+        /*
+          `resolvedId` may be a SLUG now that this page lives at
+          /equip/<slug>/result. `getEquipProgram` resolves either, and everything
+          after it uses the id the record came back with — the progress endpoint
+          takes an id only.
+        */
+        const programFirst = await apiClient.getEquipProgram(resolvedId);
+        const realId: string = programFirst?.id || resolvedId;
+
         // Fetch program + progress in parallel
         const [programData, progressData] = await Promise.all([
-          apiClient.getEquipProgram(resolvedId),
-          apiClient.getEnrollmentProgress(resolvedId).catch(() => null),
+          Promise.resolve(programFirst),
+          apiClient.getEnrollmentProgress(realId).catch(() => null),
         ]);
 
         if (!isMounted) return;
@@ -429,7 +439,7 @@ export function EquipProgramCompletion({ programId, onContinue, onBackToDashboar
           {resolvedId && onNavigate && (
             <Button
               variant="outline"
-              onClick={() => onNavigate(`/learning-diary?id=${resolvedId}`)}
+              onClick={() => onNavigate(equipDiaryUrl(program ?? { id: resolvedId }))}
               className="gap-2"
               style={{ borderRadius: 'var(--radius-md)', height: 48, ...f('sm', 500) }}
             >

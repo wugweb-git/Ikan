@@ -23,6 +23,7 @@ import { setupGlobalErrorHandlers } from './lib/error-handlers';
 import { LoadingSpinner } from './components/LoadingSpinner';
 import { useNotificationBadges } from './hooks/useNotificationBadges';
 import { lazyRetry } from './lib/lazy-with-retry';
+import { equipSubPage } from './lib/slug';
 
 // ── DIAGNOSTIC: Global error handler fires before React mounts ──
 // This ensures ANY crash (module eval, React mount, etc.) shows something.
@@ -232,7 +233,15 @@ function AppContent() {
       }
       // Slug detail routes map to the existing detail screens
       if (path.startsWith('/assessment/') && path !== '/assessment/') return '/assessment-detail';
-      if (path.startsWith('/equip/') && path !== '/equip/') return '/equip-detail';
+      /* A programme's own pages live under it — /equip/<slug>/result and
+         /equip/<slug>/diary. Checked BEFORE the bare slug, or `sleep-tight/diary`
+         would be read as a slug. */
+      {
+        const sub = equipSubPage(path);
+        if (sub?.page === 'result') return '/equip-program-completion';
+        if (sub?.page === 'diary') return '/learning-diary';
+        if (sub) return '/equip-detail';
+      }
       if (path && path !== '/') return path;
     }
     return DEFAULT_PUBLIC_ROUTE;
@@ -256,10 +265,7 @@ function AppContent() {
     return null;
   });
   const [equipSlug, setEquipSlug] = useState<string | null>(() => {
-    if (typeof window !== 'undefined') {
-      const p = window.location.pathname;
-      if (p.startsWith('/equip/') && p !== '/equip/') return p.split('/equip/')[1];
-    }
+    if (typeof window !== 'undefined') return equipSubPage(window.location.pathname)?.slug ?? null;
     return null;
   });
 
@@ -309,12 +315,18 @@ function AppContent() {
         if (typeof window !== 'undefined') window.history.pushState({}, '', route);
         return;
       }
-      if (path.startsWith('/equip/') && path !== '/equip/') {
-        const slug = path.split('/equip/')[1];
-        setEquipSlug(slug);
-        startTransition(() => setCurrentRoute('/equip-detail'));
-        if (typeof window !== 'undefined') window.history.pushState({}, '', route);
-        return;
+      {
+        const sub = equipSubPage(path);
+        if (sub) {
+          setEquipSlug(sub.slug);
+          startTransition(() => setCurrentRoute(
+            sub.page === 'result' ? '/equip-program-completion'
+            : sub.page === 'diary' ? '/learning-diary'
+            : '/equip-detail',
+          ));
+          if (typeof window !== 'undefined') window.history.pushState({}, '', route);
+          return;
+        }
       }
       // Any other navigation clears stale detail slugs so legacy ?id= links resolve correctly
       setAssessmentSlug(null);
@@ -457,8 +469,8 @@ function AppContent() {
       } else if (path.startsWith('/assessment/') && path !== '/assessment/') {
         setAssessmentSlug(path.split('/assessment/')[1]);
         startTransition(() => setCurrentRoute('/assessment-detail'));
-      } else if (path.startsWith('/equip/') && path !== '/equip/') {
-        setEquipSlug(path.split('/equip/')[1]);
+      } else if (equipSubPage(path)) {
+        setEquipSlug(equipSubPage(path)!.slug);
         startTransition(() => setCurrentRoute('/equip-detail'));
       } else {
         setAssessmentSlug(null);
@@ -617,7 +629,7 @@ function AppContent() {
         case '/equip-program-flow':
           return withSuspense(<EquipProgramFlow programId={queryParams.id} onNavigate={handleNavigate} />);
         case '/equip-program-completion':
-          return withSuspense(<EquipProgramCompletion programId={queryParams.id} onNavigate={handleNavigate} />);
+          return withSuspense(<EquipProgramCompletion programId={equipSlug || queryParams.id} onNavigate={handleNavigate} />);
         case '/consultation':
           return withSuspense(<Consultation onNavigate={handleNavigate} />);
         case '/consultation-detail':
@@ -656,7 +668,7 @@ function AppContent() {
         case '/timeline':
           return withSuspense(<WellnessTimeline onNavigate={handleNavigate} />);
         case '/learning-diary':
-          return withSuspense(<LearningDiary equipId={queryParams.id} onNavigate={handleNavigate} />);
+          return withSuspense(<LearningDiary equipId={equipSlug || queryParams.id} onNavigate={handleNavigate} />);
         default: {
           // Try CMS page rendering for /page/:slug routes
           if (currentRoute.startsWith('/page/')) {

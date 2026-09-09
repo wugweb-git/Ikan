@@ -204,7 +204,17 @@ export function LearningDiary({ equipId, onNavigate }: LearningDiaryProps) {
     let m = true;
     (async () => {
       try {
-        const res = await apiClient.request(`/user/equip/${equipId}/diary`, { method: 'GET' }, true);
+        /*
+          `equipId` may be a SLUG now that the diary lives at /equip/<slug>/diary.
+          The diary endpoint takes an id, so a slug is resolved through the
+          programme first — the same record the page needs anyway. A UUID is
+          passed straight through, so the legacy `?id=` link costs nothing extra.
+        */
+        const looksLikeId = /^[0-9a-f]{8}-[0-9a-f]{4}-/i.test(equipId);
+        const realId = looksLikeId
+          ? equipId
+          : ((await apiClient.getEquipProgram(equipId).catch(() => null))?.id ?? equipId);
+        const res = await apiClient.request(`/user/equip/${realId}/diary`, { method: 'GET' }, true);
         if (m && res?.diary) setDiary(res.diary);
       } catch (err) {
         console.error('Failed to load learning diary:', err);

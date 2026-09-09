@@ -33,13 +33,15 @@ interface DraggableBlockProps {
   activityLabel?: string;
   activityIcon?: string;
   onDuplicate: () => void;
+  /** Selects this block and opens the editor's type picker. §21 item 4. */
+  onChangeType: () => void;
   /** Every other day this block could move to, in day order. */
   otherDays: { day: number; title: string }[];
   onMoveToDay: (day: number) => void;
   readOnly?: boolean;
 }
 
-export const DraggableBlock = memo(function DraggableBlock({ block, index, isSelected, onSelect, moveBlock, onDelete, dayNumber, totalDays, activityLabel, activityIcon, onDuplicate, otherDays, onMoveToDay, readOnly }: DraggableBlockProps) {
+export const DraggableBlock = memo(function DraggableBlock({ block, index, isSelected, onSelect, moveBlock, onDelete, dayNumber, totalDays, activityLabel, activityIcon, onDuplicate, onChangeType, otherDays, onMoveToDay, readOnly }: DraggableBlockProps) {
   const ref = useRef<HTMLDivElement>(null);
 
   const [{ handlerId }, drop] = useDrop({
@@ -176,10 +178,10 @@ export const DraggableBlock = memo(function DraggableBlock({ block, index, isSel
           )}
         </div>
       </div>
-      {/* Row menu — §21 item 3. The row used to carry a bare trash icon: the
-          only correction available on a block was to destroy it. "Change block
-          type" is deliberately NOT here yet; it lands with item 4, which states
-          what a retype drops before it commits. */}
+      {/* Row menu — §21 items 3 and 4. The row used to carry a bare trash icon:
+          the only correction available on a block was to destroy it. "Change
+          block type" waited for item 4 rather than shipping early, because a
+          retype that does not say what it costs is worse than no retype. */}
       {!readOnly && (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -194,6 +196,9 @@ export const DraggableBlock = memo(function DraggableBlock({ block, index, isSel
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
+            <DropdownMenuItem onClick={onChangeType}>
+              <Repeat size={13} className="mr-2" /> Change block type
+            </DropdownMenuItem>
             <DropdownMenuItem onClick={onDuplicate}>
               <Copy size={13} className="mr-2" /> Duplicate
             </DropdownMenuItem>

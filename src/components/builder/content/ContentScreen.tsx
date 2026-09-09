@@ -61,6 +61,9 @@ export function ContentScreen({
 
   /* Which face column 1 is showing: the day's blocks, or every day. */
   const [calendarExpanded, setCalendarExpanded] = useState(false);
+  /* Bumped by the row kebab's "Change block type" so the editor opens its type
+     picker. A counter rather than a boolean: asking twice must open it twice. */
+  const [openTypePickerAt, setOpenTypePickerAt] = useState(0);
   
   /* Memoised because `|| []` mints a new array on every render, and the row
      list's `otherDays` memo keys on it — without this the memoised block rows
@@ -554,6 +557,7 @@ export function ContentScreen({
                     activityLabel={activityFor(block)?.label}
                     activityIcon={activityFor(block)?.icon}
                     onDuplicate={() => duplicateBlock(block.id)}
+                    onChangeType={() => { setSelectedBlockId(block.id); setOpenTypePickerAt(n => n + 1); }}
                     otherDays={otherDays}
                     onMoveToDay={(d) => moveBlockToDay(block.id, d)}
                     readOnly={readOnly}
@@ -613,6 +617,7 @@ export function ContentScreen({
               isAssessment={mode === 'assessment'}
               dayPolicy={activeDay ? policyOf(activeDay) : undefined}
               readOnly={readOnly}
+              openTypePickerAt={openTypePickerAt}
             />
           ) : (
             <div className="flex-1 flex flex-col items-center justify-center p-8 text-center" style={{ color: 'var(--color-text-muted)' }}>
