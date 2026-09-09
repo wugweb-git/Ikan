@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
-import { Save, Trash2, Eye, X, Upload, AlertCircle } from 'lucide-react';
+import { X, AlertCircle } from 'lucide-react';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import { useNotifications } from '../../contexts/NotificationContext';
@@ -11,8 +11,6 @@ import { Label } from '../ui/label';
 import { Button } from '../ui/button';
 import { Card, CardContent } from '../ui/card';
 import { ImageUpload } from '../ui/image-upload';
-import { WizardLayout } from '../ui/wizard-layout';
-import { WizardStep } from '../ui/wizard-stepper';
 import { useFormValidation, ValidationSchema } from '../../hooks/useFormValidation';
 import { validateUrl } from '../../lib/validation';
 import { useUnsavedChanges } from '../../hooks/useUnsavedChanges';
@@ -25,6 +23,14 @@ import { UnifiedBasicInfoForm } from '../admin/UnifiedBasicInfoForm';
 import { useMetadata } from '../../hooks/useMetadata';
 import { ProgramPlayer } from '../player/ProgramPlayer';
 import { seedDayFromTemplate } from '../../lib/blocks/day-policy';
+/* §21 item 5 (2026-09-09): the wizard's stepper chrome became a two-screen
+   builder shell. The record logic below — persistWizard, handlePublishToggle,
+   the Day 0 reconciliation, the crash-recovery backup — is untouched. */
+import { BuilderShell } from '../builder/BuilderShell';
+import { BuilderTopBar } from '../builder/BuilderTopBar';
+import { SetupScreen } from '../builder/setup/SetupScreen';
+import { LandingPreviewCard } from '../builder/setup/LandingPreviewCard';
+import type { BuilderScreen } from '../builder/builder-types';
 
 interface EquipProgramWizardProps {
   programId?: string;
@@ -117,7 +123,7 @@ export function EquipProgramWizard({ programId, onBack, onSave }: EquipProgramWi
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [currentStep, setCurrentStep] = useState(0);
+  const [screen, setScreen] = useState<BuilderScreen>('setup');
   const [selectedQuestion, setSelectedQuestion] = useState<OnboardingQuestion | null>(null);
   const [showPlayerPreview, setShowPlayerPreview] = useState(false);
 
@@ -267,28 +273,17 @@ export function EquipProgramWizard({ programId, onBack, onSave }: EquipProgramWi
     setFormData(prev => ({ ...prev, daily_content: days }));
   };
 
-  // Steps Configuration — 3 steps (Onboarding merged into Daily Builder as Day 0)
-  const totalSteps = 2; // 0-indexed max
-  const wizardSteps: WizardStep[] = [
-    {
-      id: 'basic',
-      title: 'Basic Info',
-      status: currentStep === 0 ? 'current' : currentStep > 0 ? 'completed' : 'upcoming',
-      metadata: 'Metadata & Cover'
-    },
-    {
-      id: 'landing',
-      title: 'Landing Page',
-      status: currentStep === 1 ? 'current' : currentStep > 1 ? 'completed' : 'upcoming',
-      metadata: '6 Bento Tiles'
-    },
-    {
-      id: 'daily',
-      title: 'Content Builder',
-      status: currentStep === 2 ? 'current' : currentStep > 2 ? 'completed' : 'upcoming',
-      metadata: `${(formData.daily_content || []).length} Days (incl. Day 0 Onboarding)`
-    }
-  ];
+  /*
+    THE STEPPER IS GONE (§21 item 5, 2026-09-09). Three wizard steps — Basic Info,
+    Landing Page, Content Builder — became two SCREENS: Setup (the first two,
+    merged: both describe the record and neither needs the other finished) and
+    Content. A stepper turns a pair of editable things into a sequence you have to
+    walk, and the builder is not a sequence.
+
+    The step metadata that was worth keeping did not vanish: the day count that
+    read "N Days (incl. Day 0 Onboarding)" is now the calendar overlay's header,
+    and the step titles are the Setup screen's section headings.
+  */
 
   // Navigation saves progress. Save preserves state. Publish changes lifecycle.
   const persistWizard = async (currentData: any, isAutoSave = false) => {
@@ -451,105 +446,51 @@ export function EquipProgramWizard({ programId, onBack, onSave }: EquipProgramWi
   return (
     <DndProvider backend={HTML5Backend}>
     <>
-      <WizardLayout
-        title={formData.title || 'Untitled Program'}
-        status={formData.published ? 'published' : 'draft'}
-        steps={wizardSteps}
-        currentStep={currentStep}
-        fullWidth={currentStep === 2} // Use full width for builder
-        onStepChange={(newStep) => {
-          if (newStep > currentStep) {
-            if (validateForm(formData)) setCurrentStep(newStep);
-            else showToast('error', 'Validation Error', 'Please correct the errors before proceeding');
-          } else {
-            setCurrentStep(newStep);
-          }
-        }}
-        onExit={() => {
-          if (hasUnsavedChanges) setShowWarning(true);
-          else onBack();
-        }}
-        onSaveDraft={() => persistWizard(formDataRef.current)}
-        onNext={async () => {
-          if (validateForm(formDataRef.current)) {
-            const saved = await persistWizard(formDataRef.current, true); // Auto-save on continue
-            if (saved) {
-              setCurrentStep(s => Math.min(s + 1, totalSteps));
-            }
-          } else {
-            showToast('error', 'Validation Error', 'Please correct the errors before proceeding');
-          }
-        }}
-        onPrevious={async () => {
-           const saved = await persistWizard(formDataRef.current, true); // Auto-save on back
-           if (saved) {
-             setCurrentStep(s => Math.max(s - 1, 0));
-           }
-        }}
-        onFinish={async () => {
-           const saved = await persistWizard(formDataRef.current);
-           if (saved) {
-             onSave();
-           }
-        }}
-        isLoading={saving}
-        finishButtonText={localProgramId ? 'Save & Close' : 'Create Program'}
-        stepTitle={wizardSteps[currentStep].title}
-        stepDescription={
-          currentStep === 2 
-            ? "Build your program content. Day 0 = Onboarding, Day 1+ = Daily sessions." 
-            : "Configure program details."
+      <BuilderShell
+        topBar={
+          <BuilderTopBar
+            record={{ id: localProgramId ?? undefined, name: formData.title || 'Untitled Program', published: !!formData.published }}
+            backLabel="Programmes"
+            screen={screen}
+            /*
+              Screen changes carry the autosave the wizard's `onNext`/`onPrevious`
+              did — validate then save going forward, save going back. Neither
+              `persistWizard` nor `handlePublishToggle` was touched.
+            */
+            onScreenChange={async (next) => {
+              if (next === 'content') {
+                if (!validateForm(formDataRef.current)) {
+                  showToast('error', 'Validation Error', 'Please correct the errors before proceeding');
+                  return;
+                }
+                const saved = await persistWizard(formDataRef.current, true);
+                if (saved) setScreen('content');
+                return;
+              }
+              const saved = await persistWizard(formDataRef.current, true);
+              if (saved) setScreen('setup');
+            }}
+            saving={saving}
+            canPreview={(formData.daily_content || []).some(d => d.activities?.length > 0)}
+            onPreview={() => setShowPlayerPreview(true)}
+            onSave={() => persistWizard(formDataRef.current)}
+            onPublishToggle={handlePublishToggle}
+            onSaveAndClose={async () => {
+              const saved = await persistWizard(formDataRef.current);
+              if (saved) onSave();
+            }}
+            saveAndCloseLabel={localProgramId ? 'Save & Close' : 'Create Program'}
+            onDelete={localProgramId ? () => setIsDeleteDialogOpen(true) : undefined}
+            onExit={() => {
+              if (hasUnsavedChanges) setShowWarning(true);
+              else onBack();
+            }}
+          />
         }
-        footerLeftContent={
-          localProgramId ? (
-            <Button
-              variant="destructive"
-              onClick={() => setIsDeleteDialogOpen(true)}
-              className="h-8 w-8 p-0 border-none shadow-none"
-              style={{ backgroundColor: 'var(--color-status-danger-light)', color: 'var(--color-status-danger)' }}
-              title="Delete Program"
-            >
-              <Trash2 size={16} />
-            </Button>
-          ) : null
-        }
-        footerRightContent={
-          <div className="flex items-center gap-2">
-            {/* Preview Player button */}
-            {(formData.daily_content || []).some(d => d.activities?.length > 0) && (
-              <Button
-                variant="outline"
-                onClick={() => setShowPlayerPreview(true)}
-                className="h-8 px-3 gap-1.5"
-                title="Preview Program Player"
-              >
-                <Eye size={14} />
-                <span className="text-xs font-medium hidden sm:inline">Preview</span>
-              </Button>
-            )}
-            <Button
-              variant="outline"
-              onClick={() => persistWizard(formDataRef.current)}
-              disabled={saving}
-              className="h-8 w-8 p-0"
-              title="Save Progress"
-            >
-              <Save size={16} />
-            </Button>
-            <Button
-              onClick={handlePublishToggle}
-              disabled={saving || !localProgramId}
-              className={`h-8 px-3 gap-2 ${formData.published ? 'bg-amber-600 hover:bg-amber-700' : 'bg-cyan-600 hover:bg-cyan-700'}`}
-              title={formData.published ? 'Unpublish' : 'Publish'}
-            >
-              <Upload size={16} />
-              <span className="text-xs font-medium">{formData.published ? 'Unpublish' : 'Publish'}</span>
-            </Button>
-          </div>
-        }
-      >
-        {/* ── Save Error Banner ── */}
-        {saveError && (
+        banner={
+          /* The save-error strip. Autosave failures set it instead of toasting,
+             which is why it has to live somewhere permanent. */
+          saveError ? (
           <div
             className="flex items-center gap-3"
             style={{
@@ -579,10 +520,11 @@ export function EquipProgramWizard({ programId, onBack, onSave }: EquipProgramWi
               <X size={14} />
             </button>
           </div>
-        )}
-
-        {/* STEP 0: BASIC INFO */}
-        {currentStep === 0 && (
+          ) : undefined
+        }
+      >
+        {screen === 'setup' ? (
+          <SetupScreen preview={<LandingPreviewCard data={formData} />}>
           <div>
             <UnifiedBasicInfoForm
               title={formData.title || ''}
@@ -731,18 +673,15 @@ export function EquipProgramWizard({ programId, onBack, onSave }: EquipProgramWi
               </CardContent>
             </Card>
           </div>
-        )}
 
-        {/* STEP 1: LANDING PAGE (Bento) */}
-        {currentStep === 1 && (
+          {/* LANDING PAGE — the second half of Setup, unchanged. */}
           <EquipLandingPageRichTextEditor 
             data={formData}
             onChange={(updates) => setFormData(prev => ({ ...prev, ...updates }))}
           />
-        )}
-
-        {/* STEP 2: CONTENT BUILDER (Day 0 = Onboarding, Day 1+ = Daily Sessions) */}
-        {currentStep === 2 && (
+          </SetupScreen>
+        ) : (
+          /* CONTENT — Day 0 = Onboarding, Day 1+ = daily sessions. */
           <DailyBuilder
             program={builderProgram}
             mode="equip"
@@ -754,9 +693,10 @@ export function EquipProgramWizard({ programId, onBack, onSave }: EquipProgramWi
               is held to the publish standard; a draft is advised, not policed.
             */
             validationMode={formData.published ? 'publish' : 'draft'}
+            heightMode="fill"
           />
         )}
-      </WizardLayout>
+      </BuilderShell>
 
       {/* ── Player Preview Dialog ── */}
       {showPlayerPreview && (

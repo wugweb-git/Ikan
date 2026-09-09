@@ -21,10 +21,17 @@ export interface DailyBuilderProps {
   onProgramChange: (updates: Partial<{ daily_content: DayContent[] } & Record<string, any>>) => void;
   validationMode?: 'draft' | 'publish';
   readOnly?: boolean;
+  /**
+   * `fill` takes the parent's height — what the builder shell gives it. Defaults
+   * to `embedded`, the old `h-[calc(100vh-250px)]` guess, which is still what the
+   * assessment wizard needs while it sits inside `WizardLayout`'s scrolling main.
+   */
+  heightMode?: 'fill' | 'embedded';
 }
 
 export function DayEditor({
   program, mode, singleDayMode, onProgramChange, validationMode = 'draft', readOnly = false,
+  heightMode = 'embedded',
 }: DailyBuilderProps) {
   return (
     <ContentScreen
@@ -35,10 +42,7 @@ export function DayEditor({
       enforceSingleDay={singleDayMode}
       validationMode={validationMode}
       readOnly={readOnly}
-      /* The wizards still render this inside a scrolling `main` with a stepper
-         above it, so it keeps its own height until phase 5 gives the builder a
-         full-height shell of its own. */
-      heightMode="embedded"
+      heightMode={heightMode}
     />
   );
 }

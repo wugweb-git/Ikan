@@ -13,6 +13,8 @@ import { createRoot } from 'react-dom/client';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import { DayEditor } from '../components/blocks/DayComposer';
+import { BuilderShell } from '../components/builder/BuilderShell';
+import { BuilderTopBar } from '../components/builder/BuilderTopBar';
 import type { DayContent } from '../lib/blocks/block-model';
 import '../index.css';
 
@@ -42,28 +44,65 @@ const program: Prog = {
   ],
 };
 
+/* `?shell=1` renders the Content screen inside the real builder chrome at full
+   height — the composition `EquipProgramWizard` produces, without its save. */
+const SHELL = typeof location !== 'undefined' && location.search.includes('shell');
+
 function Harness() {
   // Stateful, so Duplicate / Move / Delete actually change what renders — the
   // whole point of looking at them.
   const [prog, setProg] = useState(program);
+  const editor = (
+    <DayEditor
+      program={prog}
+      mode="equip"
+      singleDayMode={false}
+      /* `DayEditor` calls this with either a patch or an updater function;
+         its declared prop type only admits the patch, hence the cast. */
+      onProgramChange={(updates) =>
+        setProg((prev) => ({
+          ...prev,
+          ...(typeof updates === 'function'
+            ? (updates as unknown as (p: Prog) => Partial<Prog>)(prev)
+            : (updates as Partial<Prog>)),
+        }))}
+      validationMode="draft"
+      heightMode={SHELL ? 'fill' : 'embedded'}
+    />
+  );
+
+  if (SHELL) {
+    return (
+      <DndProvider backend={HTML5Backend}>
+        <BuilderShell
+          topBar={
+            <BuilderTopBar
+              record={{ id: 'harness', name: 'Unburn', published: true }}
+              backLabel="Programmes"
+              screen="content"
+              onScreenChange={() => {}}
+              saving={false}
+              canPreview
+              onPreview={() => {}}
+              onSave={() => {}}
+              onPublishToggle={() => {}}
+              onSaveAndClose={() => {}}
+              saveAndCloseLabel="Save & Close"
+              onDelete={() => {}}
+              onExit={() => {}}
+            />
+          }
+        >
+          {editor}
+        </BuilderShell>
+      </DndProvider>
+    );
+  }
+
   return (
     <DndProvider backend={HTML5Backend}>
       <div style={{ height: '100vh', display: 'flex', flexDirection: 'column' }}>
-        <DayEditor
-          program={prog}
-          mode="equip"
-          singleDayMode={false}
-          /* `DayEditor` calls this with either a patch or an updater function;
-             its declared prop type only admits the patch, hence the cast. */
-          onProgramChange={(updates) =>
-            setProg((prev) => ({
-              ...prev,
-              ...(typeof updates === 'function'
-                ? (updates as unknown as (p: Prog) => Partial<Prog>)(prev)
-                : (updates as Partial<Prog>)),
-            }))}
-          validationMode="draft"
-        />
+        {editor}
       </div>
     </DndProvider>
   );
