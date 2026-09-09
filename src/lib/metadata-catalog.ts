@@ -353,8 +353,8 @@ export const METADATA_CATALOG_ITEMS: SeedItem[] = [
     a new "interaction". These name what the USER is doing, and an activity
     carries one or more of them.
 
-    Every old row is retired. `catalog-ids.test.ts` freezes the ids these mint;
-    the seventeen they replace are listed in `RETIRED_TERMS`.
+    Every old row is retired and deleted from the store. `catalog-ids.test.ts`
+    freezes the ids these mint.
   */
   s('Observe',  'interaction_type', 'observe',  { icon: 'eye',                 description: 'Taking content in — reading, listening, watching' }),
   s('Choose',   'interaction_type', 'choose',   { icon: 'list-checks',         description: 'Picking from what the app offers' }),

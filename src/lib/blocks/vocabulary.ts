@@ -194,65 +194,19 @@ export const ACTIVITY_HINTS: Record<string, string> = {
   record:                'A record button with a maximum duration. No renderer yet.',
 };
 
-/**
- * RETIRED TERMS — every spelling this codebase has answered to, and what §26
- * replaced it with.
- *
- * This is a RECORD, not a resolver. `SUBTYPE_ALIASES` used to sit in
- * `block-model.ts` and silently rewrite a stored term on every read, which meant
- * live content could carry a retired spelling for years and nobody would see it:
- * the page looked right. The map is kept because a term that is deleted without
- * a record has to be recovered from git the next time somebody meets it in the
- * data — this module has done that twice — but nothing reads it at runtime.
- *
- * A block carrying one of these is now visibly wrong, which is the point: it
- * gets retyped, once, and then the term is gone from the store as well as the
- * code.
- */
-export const RETIRED_TERMS: Record<string, { now: string; note: string }> = {
-  // The seventeen interaction names §26 replaced
-  'select-one':      { now: 'single-select', note: 'named a widget, not what the user does' },
-  'select-many':     { now: 'multi-select',  note: 'named a widget, not what the user does' },
-  'track-table':     { now: 'check-grid',    note: 'a grid of ticks — renamed for what it is' },
-  'review-table':    { now: 'table-review',  note: 'reads an earlier series back' },
-  'pick-date':       { now: 'date · time · date-time', note: 'one term for three outputs; §26 splits it' },
-  rank:              { now: 'ranking',       note: 'the activity, not the verb' },
-  write:             { now: 'text',          note: 'share is the interaction; text is the activity' },
-  check:             { now: 'structured-list', note: 'a list of items to tick' },
-  clinical:          { now: 'clinical-instrument', note: 'the instrument is the activity' },
-  watch:             { now: 'view',          note: 'renamed 2026-09-08, 0 live blocks' },
+/*
+  `RETIRED_TERMS` was here — thirty-nine old spellings and what each became.
 
-  // Activity spellings that predate the canonical list
-  matrix:            { now: 'input-table',   note: 'a table with columns — the layout was never a separate activity' },
-  'comparison-matrix': { now: 'input-table', note: 'retired §27 step 6 — the comparison was a layout label' },
-  comparison_matrix: { now: 'input-table',   note: 'snake_case of the same' },
-  row_list:          { now: 'structured-list', note: 'from the Figma Make wizard' },
-  text_list:         { now: 'structured-list', note: 'from the Figma Make wizard' },
-  scale:             { now: 'rating-scale · slider', note: 'a bounded scale is a rating; an unbounded one is a slider' },
-  rating_scale:      { now: 'rating-scale',  note: 'snake_case' },
-  clinical_instrument: { now: 'clinical-instrument', note: 'snake_case' },
-  likert:            { now: 'rating-scale',  note: 'a rating scale by another name' },
-  emoji_scale:       { now: 'rating-scale + display: emoji', note: 'the emoji is a label, not an activity' },
-  free_text:         { now: 'ephemeral-journal', note: 'check-in step vocabulary' },
-  multi_select:      { now: 'multi-select',  note: 'snake_case' },
-  single_choice:     { now: 'single-select', note: 'snake_case' },
-  yes_no:            { now: 'boolean',       note: 'produces a bool, not an option_id' },
-  table:             { now: 'check-grid',    note: 'renamed §27 step 3' },
-  mcq_single:        { now: 'mcq',           note: 'from the deleted allowedBlocks palette' },
-  mcq_multi:         { now: 'multi-select',  note: 'from the deleted allowedBlocks palette' },
-  rtf_list:          { now: 'structured-list', note: 'from the deleted allowedBlocks palette' },
-  journal_short:     { now: 'ephemeral-journal', note: 'from the deleted allowedBlocks palette' },
-  long_text:         { now: 'text',          note: 'from the deleted allowedBlocks palette' },
-  rich_lesson:       { now: 'read',          note: 'from the deleted allowedBlocks palette' },
-  callout:           { now: 'read',          note: 'from the deleted allowedBlocks palette' },
-  media:             { now: 'view',          note: 'from the deleted allowedBlocks palette' },
-  summary:           { now: 'complete',      note: 'from the deleted allowedBlocks palette' },
-  table_input:       { now: 'input-table',   note: 'snake_case' },
-  table_review:      { now: 'table-review',  note: 'snake_case' },
-  date_time:         { now: 'date-time',     note: 'snake_case' },
-  short_text:        { now: 'short-text',    note: 'snake_case' },
-  boolean_field:     { now: 'boolean',       note: 'snake_case' },
-};
+  Deleted 2026-09-09. It was already inert (nothing resolved through it), but a
+  list of dead terms on the reference page is still a list of dead terms: the
+  Activities tab showed 29 live rows and 39 retired ones, and the tile beside it
+  read "29 · 39 retired". Keeping a record inside the product made the product
+  about its own history.
+
+  The mapping is not lost — it is in the commit that removed it, and in this
+  module's git history. Nothing in the store carries one of these terms: 840 of
+  840 blocks resolve to one of the twenty-nine, verified before the deletion.
+*/
 
 /** Is this one of the twenty-nine? Nothing is rewritten — it either is or it is not. */
 export function isActivity(raw: string | undefined | null): raw is ActivityName {

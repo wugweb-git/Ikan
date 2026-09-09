@@ -119,7 +119,7 @@ export type BlockType = typeof LEAF_BLOCK_TYPES[number];
  * `ExerciseSubtype` keeps its name as an alias only because `ActivityConfig` and
  * a dozen call sites are typed against it; it IS `ActivityName`.
  */
-export { ACTIVITY_SPECS, interactionsOf, requiresOf, activitiesFor, LABELS, TWO_INTERACTIONS, RETIRED_TERMS, ACTIVITY_HINTS, isActivity } from './vocabulary.ts';
+export { ACTIVITY_SPECS, interactionsOf, requiresOf, activitiesFor, LABELS, TWO_INTERACTIONS, ACTIVITY_HINTS, isActivity } from './vocabulary.ts';
 export { ACTIVITIES };
 export type { Interaction, ActivityName };
 export const EXERCISE_SUBTYPES = ACTIVITIES;
@@ -150,9 +150,10 @@ export const AUTHORABLE_SUBTYPES: readonly ActivityName[] =
   would look correct, because the read fixed it every time and nothing fixed the
   store. Seventeen blocks did exactly that.
 
-  The spellings are not lost — `RETIRED_TERMS` in `vocabulary.ts` records every
-  one and what replaced it, and the reference page prints the table. It is read
-  by people, not by the renderer.
+  The record of what each spelling became lives in the commits that removed
+  them, not in the product: a list of dead terms shipped inside the app is still
+  a list of dead terms. Nothing in the store carries one — 840 of 840 blocks
+  resolve to one of the twenty-nine.
 */
 
 /**

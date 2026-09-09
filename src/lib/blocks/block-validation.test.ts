@@ -69,7 +69,7 @@ test('normaliseBlock still normalises snake_case and drops the aliases', () => {
 
 import { validateBlock, validateDay, hasBlockingIssues } from './block-validation.ts';
 import {
-  DEFAULT_ACTIVITY_FOR_TYPE, ACTIVITIES, ACTIVITY_SPECS, RETIRED_TERMS,
+  DEFAULT_ACTIVITY_FOR_TYPE, ACTIVITIES, ACTIVITY_SPECS,
 } from './vocabulary.ts';
 import {
   ACTIVITIES_WITHOUT_RENDERER, AUTHORABLE_SUBTYPES, normalizeSubtype,
@@ -365,13 +365,16 @@ test('nothing without a renderer is authorable', () => {
   );
 });
 
-test('a retired term resolves to nothing, and is recorded', () => {
-  // The alias table used to rewrite these on every read, which is how live
-  // content carried `comparison-matrix` for a year and looked correct.
-  assert.equal(normalizeSubtype('comparison-matrix'), undefined);
-  assert.equal(normalizeSubtype('watch'), undefined);
-  assert.equal(RETIRED_TERMS['watch'].now, 'view');
-  assert.equal(RETIRED_TERMS['comparison-matrix'].now, 'input-table');
+test('a retired term resolves to nothing', () => {
+  /*
+    The alias table used to rewrite these on every read, which is how live
+    content carried `comparison-matrix` for a year and still looked correct.
+    Nothing rewrites them now, and nothing in the store carries one — 840 of 840
+    blocks resolve to one of the twenty-nine.
+  */
+  for (const dead of ['comparison-matrix', 'watch', 'select-one', 'track-table', 'yes_no', 'table']) {
+    assert.equal(normalizeSubtype(dead), undefined, `"${dead}" must not resolve`);
+  }
 });
 
 /**

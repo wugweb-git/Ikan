@@ -23,7 +23,7 @@ import {
 */
 import {
   INTERACTIONS, INTERACTION_META, ACTIVITIES as CANONICAL_SUBTYPES, ACTIVITY_SPECS,
-  ACTIVITY_HINTS, LABELS, TWO_INTERACTIONS, RETIRED_TERMS, interactionsOf, activitiesFor,
+  ACTIVITY_HINTS, LABELS, TWO_INTERACTIONS, interactionsOf, activitiesFor,
   requiresOf, type Interaction, type ActivityName,
 } from '../../lib/blocks/vocabulary';
 import { DAY_TYPE_PRESETS } from '../../lib/blocks/block-type-rules';
@@ -111,20 +111,16 @@ function RowIcon({ icon }: { icon?: string }) {
   );
 }
 
-// ── Retired terms ───────────────────────────────────────────────
 /*
-  `LEGACY_MAPPING` was here: it PROBED the resolver with every legacy spelling
-  and printed what came back, which was honest while an alias table existed to
-  rewrite them.
+  A "Legacy → interaction" table lived here, then a "Retired terms" record after
+  the aliases were deleted. Both are gone (2026-09-09).
 
-  The alias table is gone (§26). A retired spelling no longer resolves to
-  anything, so there is nothing to probe — the record of what each one BECAME is
-  the whole remaining value, and it lives in `RETIRED_TERMS` where the vocabulary
-  is. This page prints it.
+  This page states what the vocabulary IS. A list of what it used to be belongs
+  in the history, not on the reference: the Activities tab was showing 29 live
+  terms and 39 dead ones, and the tile beside it read "29 · 39 retired", which is
+  a page mostly about its own past. Nothing in the store carries a retired term —
+  840 of 840 blocks resolve to one of the twenty-nine.
 */
-const RETIRED_ROWS = Object.entries(RETIRED_TERMS)
-  .map(([term, { now, note }]) => ({ term, now, note }))
-  .sort((a, b) => a.term.localeCompare(b.term));
 
 type TermStatus = 'live' | 'wired-unused' | 'declared-unread' | 'orphan';
 
@@ -496,33 +492,18 @@ export function AdminBlockTypeViewer({ onBack }: AdminBlockTypeViewerProps) {
       selectable: (AUTHORABLE_SUBTYPES as readonly string[]).includes(value),
       inCatalog: !!row(value),
     }));
-    /*
-      RETIRED, not aliased. These used to be listed as living terms that
-      "normalise before the resolver sees it" — which was true and was the
-      problem: a block could carry one indefinitely and look correct. Nothing
-      resolves them now, so they are listed as what they are, with what replaced
-      each one.
-    */
-    const retired = Object.entries(RETIRED_TERMS).map(([value, { now }]) => ({
-      value,
-      label: value,
-      description: `Retired — ${now}. Nothing resolves it; a block carrying it draws nothing until it is retyped.`,
-      icon: row(now)?.icon,
-      selectable: false,
-      inCatalog: !!row(value),
-    }));
     // Anything the catalog holds that code knows nothing about. Should be empty.
     const unknown = kvExerciseSubtypes
-      .filter((r) => !(CANONICAL_SUBTYPES as readonly string[]).includes(r.value) && !(r.value in RETIRED_TERMS))
+      .filter((r) => !(CANONICAL_SUBTYPES as readonly string[]).includes(r.value))
       .map((r) => ({
         value: r.value,
         label: r.label,
-        description: 'In the catalog, but in neither the twenty-nine nor the retired list — nothing will draw it.',
+        description: 'In the catalog but not in the twenty-nine — nothing will draw it.',
         icon: r.icon,
         selectable: false,
         inCatalog: true,
       }));
-    return [...canonical, ...retired, ...unknown];
+    return [...canonical, ...unknown];
   }, [kvExerciseSubtypes]);
 
   // ── Day config presets — derived, not declared ─────────────────
@@ -583,10 +564,19 @@ export function AdminBlockTypeViewer({ onBack }: AdminBlockTypeViewerProps) {
     }),
   );
 
-  const BLOCK_TYPE_VOCABULARY = [
-    ...Object.keys(DAY_TYPE_PRESETS),
-    ...LEAF_BLOCK_TYPES,
-  ].filter((v, i, a) => a.indexOf(v) === i);
+  /*
+    THE BLOCK TYPES, and only those — `LEAF_BLOCK_TYPES`.
+
+    This unioned the day TEMPLATES into the list, which was right while the two
+    vocabularies were one and wrong the moment §27 step 6 separated them: `rest`
+    and `assessment-lite` are templates and no longer block types, so the union
+    counted 17 against a store holding 15 and reported DRIFT on a catalog that
+    was correct. A tile that cries wolf is worse than no tile.
+
+    The templates are not lost from the page — each block type's row still shows
+    its preset where it has one, and the day-template list is its own thing.
+  */
+  const BLOCK_TYPE_VOCABULARY = [...LEAF_BLOCK_TYPES];
   /*
     `pickableBlockTypes` — the leaf half — was removed 2026-09-08, and this is
     the reason rather than a silent delete.
@@ -613,11 +603,9 @@ export function AdminBlockTypeViewer({ onBack }: AdminBlockTypeViewerProps) {
     noticed on a page. Per-row containment is still shown, from
     `isContainerRow(row)` directly, which is where a per-row fact belongs.
   */
-  /* Rows on the Activities tab that are NOT one of the twenty-nine: every one is
-     a retired term or an orphan, and both are things to fix rather than to count
-     as vocabulary. It read "N aliases", which described them as a working part
-     of the system. */
-  const retiredShown = exerciseSubtypes.length - CANONICAL_SUBTYPES.length;
+  /* Rows the catalog holds that are not one of the twenty-nine. Should be zero;
+     each one is an orphan to delete, not vocabulary to count. */
+  const orphanRows = exerciseSubtypes.length - CANONICAL_SUBTYPES.length;
 
   /**
    * Like-for-like, or it cries wolf.
@@ -651,7 +639,7 @@ export function AdminBlockTypeViewer({ onBack }: AdminBlockTypeViewerProps) {
     {
       label: 'Activities',
       value: compare(CANONICAL_SUBTYPES.length, kvExerciseSubtypes.length,
-                     retiredShown > 0 ? `${retiredShown} retired` : undefined),
+                     orphanRows > 0 ? `${orphanRows} orphaned` : undefined),
       icon: <PenTool className="w-4 h-4" style={{ color: 'var(--color-status-warning)' }} />,
     },
     {
@@ -745,8 +733,8 @@ export function AdminBlockTypeViewer({ onBack }: AdminBlockTypeViewerProps) {
           {/* Counts what the tab RENDERS. It read the catalog row count (20) above
               a list of 49, because aliases are code-only and never in the catalog. */}
           {/* The VOCABULARY's count, not the row count. The tab listed 68 —
-              twenty-nine activities plus thirty-nine retired terms — which made
-              the page contradict its own tile. */}
+              twenty-nine activities plus the retired list — which made the page
+              contradict its own tile. */}
           <PenTool className="w-4 h-4" /> Activities ({CANONICAL_SUBTYPES.length})
         </Button>
       </div>
@@ -823,35 +811,6 @@ export function AdminBlockTypeViewer({ onBack }: AdminBlockTypeViewerProps) {
             );
           })}
 
-          {/*
-            RETIRED TERMS (§26, 2026-09-09).
-
-            This was "Legacy → interaction", computed by running the resolver
-            over every alias. There is no alias table any more, so there is
-            nothing to run: what remains is the record of what each retired
-            spelling BECAME, which is the half a reader actually needs when they
-            meet one in an old snapshot.
-          */}
-          <details className="p-3 rounded-lg" style={{ backgroundColor: 'var(--color-bg-card)', border: '1px solid var(--color-border-default)' }}>
-            <summary style={{ cursor: 'pointer', fontWeight: 500, fontSize: 'var(--text-sm)' }}>
-              Retired terms ({RETIRED_ROWS.length})
-            </summary>
-            <p style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)', margin: '6px 0 10px' }}>
-              Every spelling this codebase has answered to, and what replaced it. Nothing
-              resolves these at runtime — a stored block carrying one draws nothing until it is
-              retyped, which is the point: an alias table made stale data invisible.
-            </p>
-            <div className="space-y-1">
-              {RETIRED_ROWS.map((m) => (
-                <div key={m.term} className="flex items-baseline gap-2 flex-wrap" style={{ fontSize: 'var(--text-xs)' }}>
-                  <code style={{ minWidth: 190, color: 'var(--color-text-primary)' }}>{m.term}</code>
-                  <span style={{ color: 'var(--color-text-muted)' }}>→</span>
-                  <code style={{ color: 'var(--color-primary-default)' }}>{m.now}</code>
-                  <span style={{ color: 'var(--color-text-muted)' }}>{m.note}</span>
-        </div>
-              ))}
-            </div>
-          </details>
         </div>
       )}
 
@@ -1020,7 +979,7 @@ export function AdminBlockTypeViewer({ onBack }: AdminBlockTypeViewerProps) {
                       // A retired term is known — it is recorded, and what it
                       // became is printed. A catalog row that is in neither the
                       // twenty-nine nor the retired list is an orphan.
-                      const known = st.selectable || st.value in RETIRED_TERMS;
+                      const known = st.selectable;
                       const canonical = normalizeSubtype(st.value);
                       const rendersAs = canonical
                         ? (ACTIVITY_HINTS[canonical] ?? 'No preview recorded')
@@ -1062,12 +1021,6 @@ export function AdminBlockTypeViewer({ onBack }: AdminBlockTypeViewerProps) {
                           <div className="mt-2">{previewToggle(`a:${st.value}`)}</div>
                           {openPreview === `a:${st.value}` && (
                             <>
-                              {!st.selectable && st.value in RETIRED_TERMS && (
-                                <p style={{ fontSize: 'var(--text-xs)', color: 'var(--color-status-warning)', marginTop: 8 }}>
-                                  Retired — it became <code>{RETIRED_TERMS[st.value].now}</code>. Nothing
-                                  resolves it, so a block still carrying it draws nothing.
-                                </p>
-                              )}
                               <PreviewPanel activity={canonical} />
                             </>
                           )}
