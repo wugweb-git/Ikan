@@ -439,6 +439,34 @@ test('an empty day is an error, and duplicate block ids are an error', () => {
   assert.ok(hasBlockingIssues(dup));
 });
 
+test('two blocks answering under the same key on one day is reported', () => {
+  // Duplicate (§21 item 3) keeps the copy's response key, which is right across
+  // days and wrong on one: the second answer overwrites the first.
+  const clash = validateDay([
+    act({ id: 'a', activityConfig: { subtype: 'input-table', columns: ['Mon'], key: 'sleep_quality' } }),
+    act({ id: 'b', activityConfig: { subtype: 'input-table', columns: ['Mon'], key: 'sleep_quality' } }),
+  ]);
+  const issue = clash.dayIssues.find(i => i.code === 'duplicate-response-key');
+  assert.ok(issue);
+  // A warning, not an error: four days of live content already collide, and an
+  // error would have made them unpublishable on a rule nobody had been told of.
+  assert.equal(issue?.level, 'warning');
+
+  // Different keys, and a keyless pair, are both fine — the fallback identity
+  // is the block id, which is already checked separately.
+  const distinct = validateDay([
+    act({ id: 'a', activityConfig: { subtype: 'input-table', columns: ['Mon'], key: 'sleep_quality' } }),
+    act({ id: 'b', activityConfig: { subtype: 'input-table', columns: ['Mon'], key: 'sleep_latency' } }),
+  ]);
+  assert.equal(distinct.dayIssues.some(i => i.code === 'duplicate-response-key'), false);
+
+  const keyless = validateDay([
+    act({ id: 'a', activityConfig: { subtype: 'input-table', columns: ['Mon'] } }),
+    act({ id: 'b', activityConfig: { subtype: 'input-table', columns: ['Mon'] } }),
+  ]);
+  assert.equal(keyless.dayIssues.some(i => i.code === 'duplicate-response-key'), false);
+});
+
 test('a well-formed day has nothing blocking', () => {
   const ok = validateDay([
     act({ id: 'a', type: 'lesson', content: '<p>Intro</p>' }),

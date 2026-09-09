@@ -299,6 +299,19 @@ function BlockEditorInner({
               >
                 <Video size={13} style={{ color: isVideo ? 'var(--color-primary-default)' : 'var(--color-text-muted)' }} />
               </button>
+              {/* Delete, in the editor — §21 item 3. The day builder mounts this
+                  with `hideHeader`, which hid the only delete the editor had, so
+                  a block could be removed from the row list and nowhere else. */}
+              {hideHeader && onDelete && (
+                <button
+                  type="button"
+                  onClick={onDelete}
+                  className="h-6 w-6 flex items-center justify-center rounded transition-colors hover:bg-[var(--color-accent-default)]"
+                  title="Delete block"
+                >
+                  <Trash2 size={13} style={{ color: 'var(--color-status-danger)' }} />
+                </button>
+              )}
             </div>
           </div>
 

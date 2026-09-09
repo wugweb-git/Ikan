@@ -223,6 +223,14 @@ export function validateDay(
   }
 
   const seen = new Set<string>();
+  /*
+    Two blocks on one day sharing a RESPONSE KEY collide exactly as two sharing
+    an id do — `responseKeyOf` is what an answer files under, and the id is only
+    its fallback. The id check has been here since the beginning; the key check
+    had not, and Duplicate (§21 item 3) makes the collision one click away: the
+    copy keeps the original's key, which is right across days and wrong on one.
+  */
+  const keySeen = new Map<string, string>();
   for (const b of list) {
     if (b?.id) {
       if (seen.has(b.id)) {
@@ -230,6 +238,28 @@ export function validateDay(
                          message: `Two blocks on this day share the id "${b.id}" — they would write to the same answer.` });
       }
       seen.add(b.id);
+    }
+    const declaredKey = configOf(b)?.key;
+    if (typeof declaredKey === 'string' && declaredKey.trim()) {
+      const key = declaredKey.trim();
+      const firstTitle = keySeen.get(key);
+      if (firstTitle !== undefined) {
+        /*
+          WARNING, not error, and the difference is calibration rather than
+          principle: four days of live content already do this — burnout-reset
+          day 2 and sleep-tight day 9 (`small_task` ×4), stress-buster day 11
+          (`thoughts_and_feelings` ×4), sleep-tight day 13 (`ideating_solutions`
+          ×2). Shipping it as an error would have made four existing days
+          unpublishable on a rule nobody had been told about. Report first,
+          enforce once the content is fixed — the same order §18 2b used.
+        */
+        dayIssues.push({ level: 'warning', code: 'duplicate-response-key',
+                         message: `"${b?.title || b?.id}" and "${firstTitle}" both answer under the key "${key}" on this day — `
+                                + 'the second answer overwrites the first. Give one of them its own key, '
+                                + 'or move it to another day.' });
+      } else {
+        keySeen.set(key, b?.title || b?.id || key);
+      }
     }
     const issues = validateBlock(b);
     if (issues.length) blockIssues.set(b?.id ?? '(no id)', issues);

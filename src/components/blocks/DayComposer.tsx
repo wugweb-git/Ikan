@@ -18,6 +18,8 @@ import {
   Repeat,
   Clock,
   Hash,
+  MoreVertical,
+  ArrowRightLeft,
 } from 'lucide-react';
 import { useDrag, useDrop } from 'react-dnd';
 import { Button } from '../ui/button';
@@ -37,7 +39,7 @@ import { stageColour } from '../../lib/blocks/block-fields';
 import { seedDayFromTemplate, policyOf } from '../../lib/blocks/day-policy';
 import { layoutOf } from '../../lib/blocks/day-layout';
 import type { DayType, ExerciseSubtype } from '../../lib/blocks/block-model';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '../ui/dropdown-menu';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSub, DropdownMenuSubTrigger, DropdownMenuSubContent, DropdownMenuSeparator } from '../ui/dropdown-menu';
 import { cn } from '../ui/utils';
 import { Textarea } from '../ui/textarea';
 
@@ -144,9 +146,14 @@ interface DraggableBlockProps {
       plain strings so the row stays memoisable. */
   activityLabel?: string;
   activityIcon?: string;
+  onDuplicate: () => void;
+  /** Every other day this block could move to, in day order. */
+  otherDays: { day: number; title: string }[];
+  onMoveToDay: (day: number) => void;
+  readOnly?: boolean;
 }
 
-const DraggableBlock = memo(function DraggableBlock({ block, index, isSelected, onSelect, moveBlock, onDelete, dayNumber, totalDays, activityLabel, activityIcon }: DraggableBlockProps) {
+const DraggableBlock = memo(function DraggableBlock({ block, index, isSelected, onSelect, moveBlock, onDelete, dayNumber, totalDays, activityLabel, activityIcon, onDuplicate, otherDays, onMoveToDay, readOnly }: DraggableBlockProps) {
   const ref = useRef<HTMLDivElement>(null);
 
   const [{ handlerId }, drop] = useDrop({
@@ -283,19 +290,60 @@ const DraggableBlock = memo(function DraggableBlock({ block, index, isSelected, 
           )}
         </div>
       </div>
-      <Button 
-        variant="ghost" size="icon" className="h-5 w-5 opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
-        style={{ color: 'var(--color-text-muted)' }}
-        onClick={(e) => { e.stopPropagation(); onDelete(); }}
-      >
-        <Trash2 size={10} />
-      </Button>
+      {/* Row menu — §21 item 3. The row used to carry a bare trash icon: the
+          only correction available on a block was to destroy it. "Change block
+          type" is deliberately NOT here yet; it lands with item 4, which states
+          what a retype drops before it commits. */}
+      {!readOnly && (
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant="ghost" size="icon"
+              className="h-5 w-5 opacity-0 group-hover:opacity-100 data-[state=open]:opacity-100 transition-opacity shrink-0 self-start"
+              style={{ color: 'var(--color-text-muted)', marginTop: 1 }}
+              title="Block options"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <MoreVertical size={12} />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
+            <DropdownMenuItem onClick={onDuplicate}>
+              <Copy size={13} className="mr-2" /> Duplicate
+            </DropdownMenuItem>
+            {otherDays.length > 0 ? (
+              <DropdownMenuSub>
+                <DropdownMenuSubTrigger>
+                  <ArrowRightLeft size={13} className="mr-2" /> Move to another day
+                </DropdownMenuSubTrigger>
+                <DropdownMenuSubContent className="max-h-[280px] overflow-auto">
+                  {otherDays.map(d => (
+                    <DropdownMenuItem key={d.day} onClick={() => onMoveToDay(d.day)}>
+                      <span className="tabular-nums" style={{ minWidth: 22, color: 'var(--color-text-muted)' }}>{d.day}</span>
+                      <span className="truncate" style={{ maxWidth: 180 }}>{d.title || '(Untitled)'}</span>
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuSubContent>
+              </DropdownMenuSub>
+            ) : (
+              <DropdownMenuItem disabled>
+                <ArrowRightLeft size={13} className="mr-2" /> No other day to move to
+              </DropdownMenuItem>
+            )}
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={onDelete} style={{ color: 'var(--color-status-danger)' }}>
+              <Trash2 size={13} className="mr-2" /> Delete block
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      )}
     </div>
   );
 }, (prev, next) => {
   return prev.block === next.block && prev.index === next.index && prev.isSelected === next.isSelected
     && prev.dayNumber === next.dayNumber && prev.totalDays === next.totalDays
-    && prev.activityLabel === next.activityLabel && prev.activityIcon === next.activityIcon;
+    && prev.activityLabel === next.activityLabel && prev.activityIcon === next.activityIcon
+    && prev.otherDays === next.otherDays && prev.readOnly === next.readOnly;
 });
 
 export interface DailyBuilderProps {
@@ -377,7 +425,10 @@ export function DayEditor({
   readOnly = false 
 }: DailyBuilderProps) {
   
-  const days = program.daily_content || [];
+  /* Memoised because `|| []` mints a new array on every render, and the row
+     list's `otherDays` memo keys on it — without this the memoised block rows
+     re-render on every keystroke in the editor. */
+  const days = useMemo(() => program.daily_content || [], [program.daily_content]);
   // The stages a day may be. Container rows of the merged `block_type`
   /*
     The templates a day can be seeded from — the presets themselves, named from
@@ -723,6 +774,59 @@ export function DayEditor({
     }
   };
 
+  /*
+    DUPLICATE — §21 item 3.
+
+    The copy keeps everything except its id, INCLUDING its response key. A key
+    is the author's statement that two blocks are the same question; dropping it
+    on a duplicate would quietly answer a question only they can. Two blocks
+    sharing a key on ONE day do collide, so `validateDay` now reports that
+    directly rather than leaving it to be discovered in the data.
+  */
+  const duplicateBlock = (blockId: string) => {
+    if (!activeDay || readOnly) return;
+    handleDaysChange((currentDays) => currentDays.map(d => {
+      if (d.day !== activeDay.day) return d;
+      const i = d.activities.findIndex(b => b.id === blockId);
+      if (i === -1) return d;
+      const copy: Activity = { ...d.activities[i], id: generateBlockId() };
+      const next = [...d.activities];
+      next.splice(i + 1, 0, copy);
+      return { ...d, activities: next.map((b, n) => ({ ...b, order: n })) };
+    }));
+  };
+
+  /*
+    MOVE TO ANOTHER DAY — the block leaves this day and lands at the end of the
+    target. Its id travels with it, so any stored response under that id follows
+    the block rather than being stranded on the day it left.
+  */
+  const moveBlockToDay = (blockId: string, targetDayNum: number) => {
+    if (!activeDay || readOnly || targetDayNum === activeDay.day) return;
+    let moved: Activity | undefined;
+    handleDaysChange((currentDays) => {
+      const stripped = currentDays.map(d => {
+        if (d.day !== activeDay.day) return d;
+        moved = d.activities.find(b => b.id === blockId);
+        return { ...d, activities: d.activities.filter(b => b.id !== blockId).map((b, n) => ({ ...b, order: n })) };
+      });
+      if (!moved) return currentDays;
+      return stripped.map(d =>
+        d.day === targetDayNum
+          ? { ...d, activities: [...d.activities, { ...moved!, order: d.activities.length }] }
+          : d
+      );
+    });
+    if (selectedBlockId === blockId) setSelectedBlockId(null);
+  };
+
+  /* Stable across renders so the memoised rows do not all re-render on every
+     keystroke in the editor. */
+  const otherDays = useMemo(
+    () => days.filter(d => d.day !== activeDay?.day).map(d => ({ day: d.day, title: d.title })),
+    [days, activeDay?.day],
+  );
+
   const getModeLabel = () => {
     switch (mode) {
       case 'assessment': return 'Assessment';
@@ -915,6 +1019,10 @@ export function DayEditor({
                     totalDays={days.length > 0 ? days[days.length - 1].day : activeDay.day}
                     activityLabel={activityFor(block)?.label}
                     activityIcon={activityFor(block)?.icon}
+                    onDuplicate={() => duplicateBlock(block.id)}
+                    otherDays={otherDays}
+                    onMoveToDay={(d) => moveBlockToDay(block.id, d)}
+                    readOnly={readOnly}
                   />
                 ))}
 

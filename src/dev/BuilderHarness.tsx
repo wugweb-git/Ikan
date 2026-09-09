@@ -8,7 +8,7 @@
  * Untracked on purpose: it is scaffolding, not product. Served at
  * /builder-harness.html by `vite` only; `vite build` has one entry (index.html).
  */
-import { StrictMode } from 'react';
+import { StrictMode, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
@@ -16,7 +16,9 @@ import { DayEditor } from '../components/blocks/DayComposer';
 import type { DayContent } from '../lib/blocks/block-model';
 import '../index.css';
 
-const program: { id: string; title: string; daily_content: DayContent[] } = {
+type Prog = { id: string; title: string; daily_content: DayContent[] };
+
+const program: Prog = {
   id: 'harness',
   title: 'Harness',
   daily_content: [
@@ -41,14 +43,25 @@ const program: { id: string; title: string; daily_content: DayContent[] } = {
 };
 
 function Harness() {
+  // Stateful, so Duplicate / Move / Delete actually change what renders — the
+  // whole point of looking at them.
+  const [prog, setProg] = useState(program);
   return (
     <DndProvider backend={HTML5Backend}>
       <div style={{ height: '100vh', display: 'flex', flexDirection: 'column' }}>
         <DayEditor
-          program={program}
+          program={prog}
           mode="equip"
           singleDayMode={false}
-          onProgramChange={() => {}}
+          /* `DayEditor` calls this with either a patch or an updater function;
+             its declared prop type only admits the patch, hence the cast. */
+          onProgramChange={(updates) =>
+            setProg((prev) => ({
+              ...prev,
+              ...(typeof updates === 'function'
+                ? (updates as unknown as (p: Prog) => Partial<Prog>)(prev)
+                : (updates as Partial<Prog>)),
+            }))}
           validationMode="draft"
         />
       </div>
