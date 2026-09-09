@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react';
 import { motion } from 'framer-motion';
-import { Activity, ActivityConfig, resolveInteraction, warnFallback, configOf } from '../../lib/blocks/block-model';
+import { Activity, ActivityConfig, renderActivityOf, warnFallback, configOf } from '../../lib/blocks/block-model';
 import { Label } from '../ui/label';
 import { RadioGroup, RadioGroupItem } from '../ui/radio-group';
 import { Checkbox } from '../ui/checkbox';
@@ -1100,11 +1100,25 @@ export function BlockRenderer({ block, value, onChange, readOnly = false, equipI
   // --- DISPATCHER ---
 
   const renderContent = () => {
-    // Use the unified interaction taxonomy for dispatch
-    const interaction = resolveInteraction(block);
+    /*
+      THE ACTIVITY DRAWS (§26, 2026-09-09).
+
+      This switched on one of seventeen "interactions" — `select-one`,
+      `input-table`, `track-table` — which were widget names wearing the word
+      interaction. Under §26 an interaction is cognitive (`choose`, `share`,
+      `confirm`) and draws nothing at all; six activities carry two of them, so
+      it could not key a switch even in principle. The activity is what has a
+      renderer, so the activity is what this asks for.
+
+      Every case below is the same function the matching interaction called, and
+      alias resolution happens before we get here, so a stored `select-one`
+      lands on `single-select` and draws exactly what it always drew.
+    */
+    const activity = renderActivityOf(block);
     const config = exerciseConfig || {};
 
-    switch (interaction) {
+    switch (activity) {
+      // observe
       case 'read':
       case 'complete':
       case 'view':
@@ -1113,53 +1127,68 @@ export function BlockRenderer({ block, value, onChange, readOnly = false, equipI
       case 'listen':
         return renderListen(config);
 
-      case 'pick-date':
-        return renderPickDate(config);
-
-      case 'rank':
-        return renderRank(config);
-
-      case 'review-table':
+      case 'table-review':
         return renderReviewTable(config);
 
-      case 'clinical':
+      // locate
+      case 'date':
+      case 'time':
+      case 'date-time':
+        return renderPickDate(config);
+
+      // rate · order
+      case 'ranking':
+        return renderRank(config);
+
+      case 'clinical-instrument':
         return renderClinicalInstrument(config);
 
-      case 'rate':
+      case 'rating-scale':
         return renderRatingScale(config);
 
-      case 'track-table':
+      // confirm
+      case 'check-grid':
         return renderTableChecklist(config);
 
+      case 'structured-list':
+        return renderChecklist(config);
+
+      // share
       case 'input-table':
         return renderInputTable(config);
 
-      case 'select-one':
-        return renderMCQ(config);
-
-      case 'select-many':
-        return renderMultiSelect(config);
-
-      case 'check':
-        return renderChecklist(config);
-
-      case 'write':
+      case 'text':
+      case 'short-text':
+      case 'ephemeral-journal':
         return renderTextResponse(config);
-
-      case 'upload':
-        return renderFileUpload(config);
 
       case 'number':
         return renderNumberResponse(config);
 
+      // choose
+      case 'mcq':
+      case 'single-select':
+        return renderMCQ(config);
+
+      case 'multi-select':
+        return renderMultiSelect(config);
+
+      // submit
+      case 'upload':
+        return renderFileUpload(config);
+
       default:
-        // Final fallback: render as lesson. Reaching here means an interaction
-        // exists that this switch has no case for — the renderer and the
-        // interaction vocabulary have drifted apart.
+        /*
+          Reaching here means the block carries an activity with no renderer —
+          one of the eleven §26 declares ahead of the build (`slider`, `boolean`,
+          `consent`, `timer`, `paced-breathing`, `location`, `record`…), or none
+          at all. `ACTIVITIES_WITHOUT_RENDERER` keeps them out of the editor, so
+          this is a stored value, not an authored one.
+        */
         warnFallback(
           'BlockRenderer',
-          `no case for interaction "${interaction}" — rendering as a lesson`,
-          String(interaction)
+          `no renderer for activity "${activity ?? '(none)'}" — rendering as a lesson`,
+          String(activity),
         );
         return renderLesson();
     }

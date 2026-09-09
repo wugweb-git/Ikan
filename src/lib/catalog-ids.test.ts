@@ -47,70 +47,78 @@ test('block_type ids are frozen — 17 of them', () => {
   ]);
 });
 
-test('interaction_type ids are frozen — 17 of them', () => {
+test('interaction_type ids are frozen — the nine', () => {
+  /*
+    §26 REPLACED the seventeen. Only `rate` survives the change with both its
+    slug and its id: `cat-interaction_type-rate` is the same row it always was,
+    and the sync updates it in place. The other eight are new rows.
+
+    The seventeen retired ids are NOT listed here. Their rows are still live and
+    are deleted by §27 step 6, one at a time, each against a fresh backup — this
+    freeze covers what the seed mints, not what the store still holds.
+  */
   assert.deepEqual(idsOf('interaction_type'), [
-    'cat-interaction_type-read',
-    // `view`, renamed from `watch` 2026-09-08. THE ID DID NOT FOLLOW THE NAME,
-    // and this line is the whole reason the freeze exists: without the explicit
-    // id in the seed, `catalogId()` mints `cat-interaction_type-view`, the
-    // sync's type::slug lookup misses the live `watch` row, and a second row
-    // appears beside the first. This test caught exactly that, on the first
-    // real rename after the freeze was written.
-    'cat-interaction_type-watch',
-    'cat-interaction_type-select-one',
-    'cat-interaction_type-select-many',
-    'cat-interaction_type-write',
+    'cat-interaction_type-observe',
+    'cat-interaction_type-choose',
+    'cat-interaction_type-share',
+    'cat-interaction_type-locate',
+    'cat-interaction_type-confirm',
     'cat-interaction_type-rate',
-    'cat-interaction_type-check',
-    'cat-interaction_type-track-table',
-    'cat-interaction_type-input-table',
-    'cat-interaction_type-clinical',
-    'cat-interaction_type-upload',
-    'cat-interaction_type-number',
-    'cat-interaction_type-complete',
-    // Added 2026-09-08. New rows, so new ids under the current type name.
-    'cat-interaction_type-listen',
-    'cat-interaction_type-rank',
-    'cat-interaction_type-review-table',
-    'cat-interaction_type-pick-date',
+    'cat-interaction_type-order',
+    'cat-interaction_type-measure',
+    'cat-interaction_type-submit',
   ]);
 });
 
 /**
  * **Two prefixes here, on purpose.**
  *
- * The first twelve read `cat-exercise_subtype-*`: the type was renamed to
- * `activity` on 2026-09-04 and the rows kept the id they were minted with,
- * which is what an identifier surviving a rename looks like. Verified against
- * live KV 2026-09-08 — 12 rows, every key `cat-exercise_subtype-<slug>`, every
- * `value.id` equal to its key.
+ * `cat-exercise_subtype-*` are the rows minted before the type was renamed to
+ * `activity` on 2026-09-04. They kept the id they were created with, which is
+ * what an identifier surviving a rename looks like. `cat-activity-*` are the
+ * rows created after it. Each id records when its row was minted, not what the
+ * bucket is called today. Do not "harmonise" them.
  *
- * The last eight were created 2026-09-08 and so carry `cat-activity-*`. Each id
- * records when its row was minted, not what the bucket is called today. Do not
- * "harmonise" them.
+ * Two lines carry the §26 renames, and both are renames IN PLACE:
+ *
+ *  - `check-grid` keeps `cat-exercise_subtype-table`. The slug changes, the id
+ *    does not, so the live row is updated rather than a second one appearing
+ *    beside it. Zero live blocks carried `table`, which is what made the rename
+ *    free.
+ *  - `comparison-matrix` is **not here**. It is retired: no seed row, and its
+ *    live row and its 17 blocks are §27 step 6.
  */
-test('activity ids are frozen — 20 of them, each under the name it was minted with', () => {
+test('activity ids are frozen — the twenty-nine, each under the name it was minted with', () => {
   assert.deepEqual(idsOf('activity'), [
-    'cat-exercise_subtype-mcq',
-    'cat-exercise_subtype-single-select',
-    'cat-exercise_subtype-multi-select',
-    'cat-exercise_subtype-table',
-    'cat-exercise_subtype-input-table',
-    'cat-exercise_subtype-structured-list',
-    'cat-exercise_subtype-rating-scale',
-    'cat-exercise_subtype-clinical-instrument',
-    'cat-exercise_subtype-upload',
-    'cat-exercise_subtype-ephemeral-journal',
-    'cat-exercise_subtype-comparison-matrix',
-    'cat-exercise_subtype-number',
     'cat-activity-read',
     'cat-activity-listen',
     'cat-activity-view',
-    'cat-activity-complete',
-    'cat-activity-date-time',
     'cat-activity-table-review',
+    'cat-activity-complete',
+    'cat-activity-paced-breathing',
+    'cat-exercise_subtype-mcq',
+    'cat-exercise_subtype-single-select',
+    'cat-exercise_subtype-multi-select',
+    'cat-activity-boolean',
+    'cat-exercise_subtype-clinical-instrument',
+    'cat-exercise_subtype-rating-scale',
+    'cat-activity-slider',
     'cat-activity-ranking',
+    'cat-exercise_subtype-structured-list',
+    'cat-exercise_subtype-table',
+    'cat-activity-consent',
+    'cat-activity-text',
     'cat-activity-short-text',
+    'cat-exercise_subtype-ephemeral-journal',
+    'cat-exercise_subtype-number',
+    'cat-exercise_subtype-input-table',
+    'cat-activity-date',
+    'cat-activity-time',
+    'cat-activity-date-time',
+    'cat-activity-location',
+    'cat-activity-timer',
+    'cat-exercise_subtype-upload',
+    'cat-activity-record',
   ]);
 });
 

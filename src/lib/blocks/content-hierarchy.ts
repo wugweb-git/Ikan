@@ -50,8 +50,9 @@
  *   which nothing else says. Splitting them makes `lesson · multi-select`
  *   sayable instead of accidental.
  */
-import type { InteractionType, DayType, Activity } from './block-model.ts';
-import { configOf, resolveInteraction } from './block-model.ts';
+import type { DayType, Activity } from './block-model.ts';
+import { configOf, renderActivityOf } from './block-model.ts';
+import { ACTIVITIES, ACTIVITY_SPECS, requiresOf, type ActivityName } from './vocabulary.ts';
 
 /** Why a block is here. Editorial, open, catalog-backed — as against `interaction`, which is closed. */
 export type BlockRole =
@@ -106,7 +107,8 @@ export interface Step {
 export interface Block {
   id: string;
   /** WHAT THE USER DOES. Required, authored, never derived. Replaces type + subtype + the resolver. */
-  interaction: InteractionType;
+  /** WHAT IT IS — the canonical §26 activity. Was `interaction`, one of seventeen. */
+  activity: ActivityName | undefined;
   /** WHY IT IS HERE. Optional; defaults from the stage preset. */
   role?: BlockRole;
   title?: string;
@@ -121,7 +123,7 @@ export interface Block {
   key?: string;
   /** The shared option set, for select-one / select-many / rate / clinical. Never inlined. */
   scale_ref?: string;
-  /** Only the fields this interaction needs — see INTERACTION_REQUIREMENTS. */
+  /** Only the fields this activity needs — see `ACTIVITY_SPECS`. */
   config?: Record<string, unknown>;
   position: number;
   required: boolean;
@@ -130,76 +132,44 @@ export interface Block {
 }
 
 /**
- * The ten interactions that produce a response, and therefore require a `key`.
- * (`number` joined them on 2026-09-04; the other three — read, watch, complete —
- * are passive and produce nothing.)
- */
-export const RESPONSE_PRODUCING: readonly InteractionType[] = [
-  'select-one', 'select-many', 'rate', 'clinical',
-  'check', 'input-table', 'track-table', 'write', 'number', 'upload',
-  // Added 2026-09-08. `rank` stores an ordering and `pick-date` a date, so both
-  // need a key like any other answer. `listen` and `view` are passive, and
-  // `review-table` READS BACK earlier days rather than capturing anything —
-  // which is the whole point of it, and why it produces null.
-  'rank', 'pick-date',
-];
-
-/** The four whose option set comes from the catalog rather than from the block. */
-export const SCALE_BACKED: readonly InteractionType[] = [
-  'select-one', 'select-many', 'rate', 'clinical',
-];
-
-/**
- * What each interaction requires and produces.
+ * The activities that produce a response, and therefore require a `key`.
  *
- * `INTERACTION_META` already carries a label, verb, icon and description for all
- * twelve — that vocabulary exists and is correct. What it lacks is this: a
- * statement of what config each one needs, which is what lets an editor show
- * only the right fields instead of one `exerciseConfig` with 20 optional ones.
+ * Derived, not listed: §26 states what each activity produces, and an activity
+ * that produces nothing cannot need a name for it. The previous version was a
+ * hand-written list of ten interaction names, and it had already gone stale
+ * twice — once when `number` was added, once when `rank` and `pick-date` were.
  */
-export interface InteractionRequirement {
-  requires: readonly string[];
-  optional: readonly string[];
-  /** Shape of the stored answer. `null` = the interaction produces none. */
-  produces: string | null;
+export const RESPONSE_PRODUCING: readonly ActivityName[] =
+  ACTIVITIES.filter((a) => ACTIVITY_SPECS[a].produces !== '');
+
+/** The activities whose option set comes from the catalog rather than the block. */
+export const SCALE_BACKED: readonly ActivityName[] =
+  ACTIVITIES.filter((a) => (ACTIVITY_SPECS[a].requires as readonly string[]).includes('scale_ref'));
+
+/*
+  `INTERACTION_REQUIREMENTS` was here — seventeen rows of requires/optional/
+  produces, keyed by interaction.
+
+  §26 moves all three onto the ACTIVITY, which is the thing that has fields to
+  require and an answer to produce; an interaction is cognitive and has neither.
+  The table now lives in `vocabulary.ts` as `ACTIVITY_SPECS`, and the `optional`
+  column is gone with it: nothing read it, and a list of fields that may or may
+  not appear is not a statement anyone could act on.
+*/
+
+/** What a block of this activity must carry. */
+export function requirementsOf(activity: ActivityName | undefined): readonly string[] {
+  return activity ? requiresOf(activity) : [];
 }
 
-export const INTERACTION_REQUIREMENTS: Record<InteractionType, InteractionRequirement> = {
-  // Passive — no response, completion only
-  'read':        { requires: [],                              optional: ['media_ref'],                      produces: null },
-  'view':        { requires: ['media_ref'],                   optional: ['content'],                        produces: null },
-  // Declared 2026-09-08 with the four new interactions. `requires` is the
-  // authored config each will need; none has a renderer yet, so no live block
-  // can carry one and these lines report on nothing until the renderers land.
-  'listen':      { requires: ['media_ref'],                   optional: ['content', 'transcript'],          produces: null },
-  'rank':        { requires: ['items'],                       optional: ['min', 'max'],                     produces: 'item_id[]' },
-  'review-table':{ requires: ['columns'],                     optional: ['rows', 'source_key'],             produces: null },
-  'pick-date':   { requires: ['prompt'],                      optional: ['min', 'max', 'time'],             produces: 'iso_date' },
-  'complete':    { requires: ['content'],                     optional: [],                                 produces: null },
-  // Scale-backed — the option set comes from the catalog, never inline
-  'select-one':  { requires: ['scale_ref'],                   optional: ['correct_option'],                 produces: 'option_id' },
-  'select-many': { requires: ['scale_ref'],                   optional: ['min', 'max'],                     produces: 'option_id[]' },
-  'rate':        { requires: ['scale_ref'],                   optional: ['display'],                        produces: 'option_id' },
-  'clinical':    { requires: ['scale_ref', 'instrument_ref'], optional: ['reverse', 'section_ref'],         produces: 'option_id' },
-  // Structured — the block defines its own shape
-  'check':       { requires: ['items'],                       optional: ['min_required'],                   produces: 'item_id[]' },
-  // `rows` is NOT required: BlockRenderer.renderInputTable treats predefined rows
-  // as opt-in — absent, the table is free-form add-a-row. All 144 live blocks that
-  // resolve to this interaction carry columns and no rows, so requiring it here
-  // would report every one of them as incomplete.
-  'input-table': { requires: ['columns'],                     optional: ['rows', 'allow_add_rows', 'column_types'], produces: 'cell map' },
-  'track-table': { requires: ['columns', 'rows'],             optional: [],                                 produces: 'boolean map' },
-  'write':       { requires: ['prompt'],                      optional: ['max_length', 'ephemeral'],        produces: 'text' },
-  'number':      { requires: ['prompt'],                      optional: ['min', 'max', 'unit'],             produces: 'number' },
-  'upload':      { requires: ['accepted_types'],              optional: ['max_size'],                       produces: 'file_ref' },
-};
-
-/** A block is complete when its interaction's requirements are met and, if it answers, it is named. */
+/** A block is complete when its activity's requirements are met and, if it answers, it is named. */
 export function missingRequirements(b: Block): string[] {
-  const spec = INTERACTION_REQUIREMENTS[b.interaction];
-  if (!spec) return [`unknown interaction "${b.interaction}"`];
+  const activity = b.activity;
+  if (!activity || !(activity in ACTIVITY_SPECS)) {
+    return [`unknown activity "${activity ?? '(none)'}"`];
+  }
   const missing: string[] = [];
-  for (const field of spec.requires) {
+  for (const field of requiresOf(activity)) {
     const present =
       field === 'scale_ref' ? !!b.scale_ref :
       field === 'media_ref' ? !!b.media_ref :
@@ -208,7 +178,7 @@ export function missingRequirements(b: Block): string[] {
       !!b.config?.[field];
     if (!present) missing.push(field);
   }
-  if (RESPONSE_PRODUCING.includes(b.interaction) && !b.key) missing.push('key');
+  if ((RESPONSE_PRODUCING as readonly string[]).includes(activity) && !b.key) missing.push('key');
   return missing;
 }
 
@@ -246,7 +216,7 @@ export function blockOf(activity: Activity, position?: number): Block {
 
   return {
     id: activity.id,
-    interaction: resolveInteraction(activity),
+    activity: renderActivityOf(activity),
     title: activity.title,
     prompt: cfg.prompt,
     content: activity.content,

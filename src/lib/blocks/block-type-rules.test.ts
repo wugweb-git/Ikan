@@ -3,7 +3,7 @@
  *
  * **Every preset's own `defaultBlocks` validated against its own rules.**
  *
- * This is the check that should have existed before `allowedInteractions` was
+ * This is the check that should have existed before `allowedActivities` was
  * introduced alongside `allowedBlocks`. The two fields sit in the same object
  * and disagree: `learning` permits the `complete` interaction in one and
  * forbids conclude-shaped blocks in the other, so a validator reading one gets
@@ -17,7 +17,7 @@
  * keeps it that way.
  *
  * The second test is still pinned rather than zeroed, because reconciling
- * `allowedBlocks` against `allowedInteractions` is a separate decision
+ * `allowedBlocks` against `allowedActivities` is a separate decision
  * (blocks.md §18 2.4) and not a cleanup.
  */
 
@@ -47,9 +47,9 @@ test('every preset can open with a lesson and close with a conclude', () => {
   // builds — which is what Phase 0 left behind by widening the lists only far
   // enough to cover each preset's own seeds.
   const cannotOpen = Object.entries(DAY_TYPE_PRESETS)
-    .filter(([, p]) => !p.allowedInteractions.includes('read')).map(([d]) => d);
+    .filter(([, p]) => !p.allowedActivities.includes('read')).map(([d]) => d);
   const cannotClose = Object.entries(DAY_TYPE_PRESETS)
-    .filter(([, p]) => !p.allowedInteractions.includes('complete')).map(([d]) => d);
+    .filter(([, p]) => !p.allowedActivities.includes('complete')).map(([d]) => d);
   assert.deepEqual(cannotOpen, [], `presets that cannot open with a lesson: ${cannotOpen.join(', ')}`);
   assert.deepEqual(cannotClose, [], `presets that cannot close with a conclude: ${cannotClose.join(', ')}`);
 });
@@ -59,9 +59,9 @@ test('every preset can open with a lesson and close with a conclude', () => {
   2026-09-08.
 
   It existed because `upload` and `number` were allowed by no preset, so those
-  activities could be authored NOWHERE — the preset's `allowedInteractions`
+  activities could be authored NOWHERE — the preset's `allowedActivities`
   gated the palette. §19 step 3 unfiltered the palette: a day has no type, so
-  no preset gates anything and `allowedInteractions` is seeding information.
+  no preset gates anything and `allowedActivities` is seeding information.
 
   An interaction reachable from no preset is now an ordinary fact, not a bug —
   `listen`, `rank`, `review-table` and `pick-date` are in exactly that position

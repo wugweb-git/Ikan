@@ -1,18 +1,21 @@
 import {
-  type Activity, type DayType, type InteractionType,
+  type Activity, type DayType,
 } from './block-model.ts';
+import type { ActivityName } from './vocabulary.ts';
 
 export interface DayTypePreset {
   label: string;
   description: string;
   defaultBlocks: Partial<Activity>[];
   /**
-   * What a user may be asked to DO on this stage — the vocabulary the renderer
-   * actually obeys. Replaces reasoning over `allowedBlocks`, whose 23 strings
-   * appear in no store and no type union and were bridged to real names by nine
-   * hardcoded `if`s inside the validator below.
+   * What a day made from this template may hold — ACTIVITIES since §26.
+   *
+   * It listed interaction names, which under §26 cannot express this: `mcq`,
+   * `multi-select` and `boolean` all carry `choose`, so permitting `choose`
+   * would permit all three and forbidding it would forbid all three. The
+   * template means the activities, and now says so.
    */
-  allowedInteractions: InteractionType[];
+  allowedActivities: ActivityName[];
   autoConfig: {
     autoAdvance?: boolean;
     navigationBack?: boolean;
@@ -32,7 +35,7 @@ export interface DayTypePreset {
 }
 
 /**
- * `allowedInteractions` coverage, corrected 2026-09-04 (blocks.md §18 step 2).
+ * `allowedActivities` coverage, corrected 2026-09-04 (blocks.md §18 step 2).
  *
  * Phase 0 widened these only far enough to cover each preset's OWN seed blocks.
  * That left them describing something no author actually builds:
@@ -66,7 +69,7 @@ export const DAY_TYPE_PRESETS: Record<DayType, DayTypePreset> = {
         activityConfig: { subtype: 'single-select' }
       }
     ],
-    allowedInteractions: ['read', 'select-one', 'select-many', 'write', 'complete'],
+    allowedActivities: ['read', 'mcq', 'single-select', 'multi-select', 'text', 'ephemeral-journal', 'complete'],
     autoConfig: {
       autoAdvance: true,
       navigationBack: false,
@@ -102,7 +105,7 @@ export const DAY_TYPE_PRESETS: Record<DayType, DayTypePreset> = {
       { type: 'conclude', content: 'Continue', autoAdvance: false }
     ],
     // + read/complete 2026-09-04: this preset seeds a `lesson` and a `conclude`.
-    allowedInteractions: ['read', 'clinical', 'select-one', 'complete'],
+    allowedActivities: ['read', 'clinical-instrument', 'mcq', 'single-select', 'complete'],
     autoConfig: {
       autoAdvance: true, // for MCQs
       navigationBack: false,
@@ -135,7 +138,7 @@ export const DAY_TYPE_PRESETS: Record<DayType, DayTypePreset> = {
       }
     ],
     // + read 2026-09-04: this preset seeds a `lesson`.
-    allowedInteractions: ['read', 'select-one', 'rate', 'write', 'complete'],
+    allowedActivities: ['read', 'mcq', 'single-select', 'rating-scale', 'text', 'ephemeral-journal', 'complete'],
     autoConfig: {
       autoAdvance: true,
       navigationBack: true,
@@ -162,7 +165,7 @@ export const DAY_TYPE_PRESETS: Record<DayType, DayTypePreset> = {
         activityConfig: { subtype: 'mcq' } 
       }
     ],
-    allowedInteractions: ['read', 'view', 'complete', 'select-one'],
+    allowedActivities: ['read', 'view', 'complete', 'mcq', 'single-select'],
     autoConfig: {
       autoAdvance: false,
       navigationBack: true
@@ -189,7 +192,7 @@ export const DAY_TYPE_PRESETS: Record<DayType, DayTypePreset> = {
       { type: 'conclude', content: 'Done for today', autoAdvance: false }
     ],
     // + read/complete 2026-09-04: this preset seeds a `lesson` and a `conclude`.
-    allowedInteractions: ['read', 'write', 'input-table', 'check', 'select-many', 'number', 'upload', 'complete'],
+    allowedActivities: ['read', 'text', 'ephemeral-journal', 'input-table', 'structured-list', 'multi-select', 'number', 'upload', 'complete'],
     autoConfig: {
       autoAdvance: false,
       navigationBack: true,
@@ -208,7 +211,7 @@ export const DAY_TYPE_PRESETS: Record<DayType, DayTypePreset> = {
     defaultBlocks: [
       // Preset fills these but UI logic will handle StepGroups
     ],
-    allowedInteractions: ['read', 'input-table', 'write', 'select-many', 'upload', 'complete'],
+    allowedActivities: ['read', 'input-table', 'text', 'ephemeral-journal', 'multi-select', 'upload', 'complete'],
     autoConfig: {
       autoAdvance: false,
       navigationBack: true
@@ -238,7 +241,7 @@ export const DAY_TYPE_PRESETS: Record<DayType, DayTypePreset> = {
         activityConfig: { subtype: 'rating_scale' }
       }
     ],
-    allowedInteractions: ['read', 'track-table', 'input-table', 'check', 'rate', 'number', 'complete'],
+    allowedActivities: ['read', 'check-grid', 'input-table', 'structured-list', 'rating-scale', 'number', 'complete'],
     autoConfig: {
       autoAdvance: false,
       saveOnToggle: true
@@ -268,7 +271,7 @@ export const DAY_TYPE_PRESETS: Record<DayType, DayTypePreset> = {
       },
       { type: 'journal', content: 'Final thoughts', required: false }
     ],
-    allowedInteractions: ['read', 'write', 'rate', 'select-one', 'complete'],
+    allowedActivities: ['read', 'text', 'ephemeral-journal', 'rating-scale', 'mcq', 'single-select', 'complete'],
     autoConfig: {
       autoAdvance: false,
       navigationBack: false
@@ -302,7 +305,7 @@ export const DAY_TYPE_PRESETS: Record<DayType, DayTypePreset> = {
       { type: 'conclude', title: 'Done', content: 'Thanks for checking in!', autoAdvance: false }
     ],
     // + complete 2026-09-04: this preset seeds a `conclude`.
-    allowedInteractions: ['read', 'rate', 'select-one', 'select-many', 'write', 'complete'],
+    allowedActivities: ['read', 'rating-scale', 'mcq', 'single-select', 'multi-select', 'text', 'ephemeral-journal', 'complete'],
     autoConfig: {
       autoAdvance: true,
       navigationBack: false,
@@ -336,7 +339,7 @@ export const DAY_TYPE_PRESETS: Record<DayType, DayTypePreset> = {
         autoAdvance: false
       }
     ],
-    allowedInteractions: ['read', 'complete'],
+    allowedActivities: ['read', 'complete'],
     autoConfig: {
       autoAdvance: false,
       navigationBack: false
@@ -372,7 +375,7 @@ export const DAY_TYPE_PRESETS: Record<DayType, DayTypePreset> = {
       { type: 'conclude', title: 'Results', content: 'Here\'s how you did.', autoAdvance: false }
     ],
     // + read/complete 2026-09-04: this preset seeds a `lesson` and a `conclude`.
-    allowedInteractions: ['read', 'select-one', 'select-many', 'rate', 'complete'],
+    allowedActivities: ['read', 'mcq', 'single-select', 'multi-select', 'rating-scale', 'complete'],
     autoConfig: {
       autoAdvance: true,
       navigationBack: false,

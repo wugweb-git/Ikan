@@ -345,35 +345,26 @@ export const METADATA_CATALOG_ITEMS: SeedItem[] = [
   // Must match all 13 InteractionType values from blocks/block-model.ts
   // (was "12" — stale since `number` joined the union 2026-09-04. The DATA was
   // always right: 13 rows here, 13 values there. Only the comment lied.)
-  s('Read',           'interaction_type', 'read',        { icon: 'book-open',          description: 'User reads/scrolls through content' }),
   /*
-    THE ID STAYS `cat-interaction_type-watch`. Renamed from Watch 2026-09-08;
-    the row is the same row. This is the first real exercise of the freeze, and
-    it caught itself: without the explicit id, `catalogId()` would have minted
-    `cat-interaction_type-view`, the sync's `type::slug` lookup would have
-    missed the live `watch` row, and a SECOND row would have appeared beside it.
+    THE NINE. §26, 2026-09-09. This list REPLACES the seventeen.
+
+    The old rows named widgets — `select-one`, `input-table`, `track-table` —
+    which is why they kept multiplying: every new way of drawing something became
+    a new "interaction". These name what the USER is doing, and an activity
+    carries one or more of them.
+
+    Every old row is retired. `catalog-ids.test.ts` freezes the ids these mint;
+    the seventeen they replace are listed in `RETIRED_TERMS`.
   */
-  s('View',           'interaction_type', 'view',        { id: 'cat-interaction_type-watch', icon: 'film', description: 'User watches embedded video or media' }),
-  s('Select One',     'interaction_type', 'select-one',  { icon: 'circle-check',       description: 'User picks one option from a list' }),
-  s('Select Many',    'interaction_type', 'select-many', { icon: 'list-checks',        description: 'User picks multiple options' }),
-  s('Write',          'interaction_type', 'write',       { icon: 'pen-tool',           description: 'User types free-form text response' }),
-  s('Rate',           'interaction_type', 'rate',        { icon: 'sliders-horizontal', description: 'User picks a number on a scale' }),
-  s('Check Off',      'interaction_type', 'check',       { icon: 'check-square',       description: 'User toggles items in a checklist' }),
-  s('Track (Table)',  'interaction_type', 'track-table', { icon: 'toggle-left',        description: 'User fills yes/no grid or diary' }),
-  s('Input (Table)',  'interaction_type', 'input-table', { icon: 'layout-grid',        description: 'User fills data into table cells' }),
-  s('Clinical Scale', 'interaction_type', 'clinical',    { icon: 'clipboard-list',     description: 'User answers scored clinical instrument' }),
-  s('Upload',         'interaction_type', 'upload',      { icon: 'image',              description: 'User uploads a file (document, image, audio)' }),
-  s('Number',         'interaction_type', 'number',      { icon: 'hash',               description: 'User enters a single numeric value' }),
-  s('Complete',       'interaction_type', 'complete',    { icon: 'circle-check',       description: 'Day-ending summary or conclusion' }),
-  // ── Added 2026-09-08 with the four new interactions ─────────────
-  // Declared ahead of their renderers on purpose. `BlockRenderer` has no case
-  // for any of these, so nothing may be authored with one yet —
-  // INTERACTIONS_WITHOUT_RENDERER in block-model.ts is what enforces that, and
-  // the Block Type Viewer shows them as "Declared, unread" rather than usable.
-  s('Listen',        'interaction_type', 'listen',       { icon: 'headphones', description: 'User plays an audio track' }),
-  s('Rank',          'interaction_type', 'rank',         { icon: 'list',       description: 'User puts a list in order of preference' }),
-  s('Review Table',  'interaction_type', 'review-table', { icon: 'table',      description: 'Read-back of earlier days\u2019 table entries — the carry-forward view' }),
-  s('Pick a Date',   'interaction_type', 'pick-date',    { icon: 'calendar',   description: 'User chooses a date or a time' }),
+  s('Observe',  'interaction_type', 'observe',  { icon: 'eye',                 description: 'Taking content in — reading, listening, watching' }),
+  s('Choose',   'interaction_type', 'choose',   { icon: 'list-checks',         description: 'Picking from what the app offers' }),
+  s('Share',    'interaction_type', 'share',    { icon: 'pen-tool',            description: 'Giving their own words or figures' }),
+  s('Locate',   'interaction_type', 'locate',   { icon: 'map-pin',             description: 'Naming a real-world point — when, where' }),
+  s('Confirm',  'interaction_type', 'confirm',  { icon: 'circle-check',        description: 'Affirming — that something happened, or that they agree' }),
+  s('Rate',     'interaction_type', 'rate',     { icon: 'sliders-horizontal',  description: 'Placing a value on a range' }),
+  s('Order',    'interaction_type', 'order',    { icon: 'list',                description: 'Putting things in sequence' }),
+  s('Measure',  'interaction_type', 'measure',  { icon: 'timer',               description: 'Bracketing a span the app times' }),
+  s('Submit',   'interaction_type', 'submit',   { icon: 'upload',              description: 'Handing over an artefact — ownership changes' }),
 
   // ── Block Types (Equip/Program) ───────────────────────────────
   s('Lesson',      'block_type', 'lesson',      { icon: 'book-open',   description: 'Informational content block', activities: ['read', 'listen', 'view'] }),
@@ -576,32 +567,42 @@ export const METADATA_CATALOG_ITEMS: SeedItem[] = [
   // not exist, and on the create path would mint a duplicate under a second id.
   //
   // Do not "tidy" these to match the type. `catalog-ids.test.ts` pins them.
-  s('MCQ',                  'activity', 'mcq',                  { id: 'cat-exercise_subtype-mcq', icon: 'circle-check',       description: 'Standard MCQ with single correct answer' }),
-  s('Single Select',       'activity', 'single-select',       { id: 'cat-exercise_subtype-single-select', icon: 'list',               description: 'Pick one option from a vertical list' }),
-  s('Multi Select',        'activity', 'multi-select',        { id: 'cat-exercise_subtype-multi-select', icon: 'list-checks',        description: 'Pick multiple options from a vertical list' }),
-  s('Checklist Table',     'activity', 'table',               { id: 'cat-exercise_subtype-table', icon: 'toggle-left',        description: 'Grid of items with yes/no toggle per row' }),
-  s('Input Table',         'activity', 'input-table',         { id: 'cat-exercise_subtype-input-table', icon: 'layout-grid',        description: 'Grid with text input cells for structured data' }),
-  s('Structured List',     'activity', 'structured-list',     { id: 'cat-exercise_subtype-structured-list', icon: 'list',               description: 'Ordered list items with user input' }),
-  s('Rating Scale',        'activity', 'rating-scale',        { id: 'cat-exercise_subtype-rating-scale', icon: 'sliders-horizontal', description: 'Numeric rating scale (1–5, 1–10)' }),
-  s('Clinical Instrument', 'activity', 'clinical-instrument', { id: 'cat-exercise_subtype-clinical-instrument', icon: 'clipboard-list',     description: 'Validated instruments with scored Likert scales' }),
-  s('File Upload',         'activity', 'upload',              { id: 'cat-exercise_subtype-upload', icon: 'image',              description: 'User uploads a file (document, image, audio)' }),
-  s('Ephemeral Journal',   'activity', 'ephemeral-journal',   { id: 'cat-exercise_subtype-ephemeral-journal', icon: 'notebook',           description: 'Session-scoped journal not persisted long-term. Selectable in editor.' }),
-  s('Comparison Matrix',   'activity', 'comparison-matrix',   { id: 'cat-exercise_subtype-comparison-matrix', icon: 'layout-grid',        description: 'Side-by-side comparison table. Alias for input-table with comparison layout.' }),
-  s('Number',              'activity', 'number',              { id: 'cat-exercise_subtype-number', icon: 'hash',               description: 'Single numeric value entry' }),
-  // ── Added 2026-09-08 with the eight new activities ──────────────
-  // `read`, `listen`, `view` and `complete` were never activities — they were
-  // resolved from the block TYPE, which is why a video has never been
-  // authorable. The other four are recovered from the deleted `allowedBlocks`
-  // palette. Four of the eight resolve to interactions with no renderer and are
-  // therefore declared, not offered — see AUTHORABLE_SUBTYPES.
-  s('Read',            'activity', 'read',         { icon: 'book-open',  description: 'Formatted prose with optional media' }),
-  s('Listen',          'activity', 'listen',       { icon: 'headphones', description: 'An audio track. No renderer yet.' }),
-  s('View',            'activity', 'view',         { icon: 'film',       description: 'Embedded video or media' }),
-  s('Complete',        'activity', 'complete',     { icon: 'flag',       description: 'A closing summary card' }),
-  s('Date / Time',     'activity', 'date-time',    { icon: 'calendar',   description: 'Pick a date or a time. No renderer yet.' }),
-  s('Table Review',    'activity', 'table-review', { icon: 'table',      description: 'Read back earlier days\u2019 entries. No renderer yet.' }),
-  s('Ranking',         'activity', 'ranking',      { icon: 'list',       description: 'Order a list by preference. No renderer yet.' }),
-  s('Short Text',      'activity', 'short-text',   { icon: 'pen-tool',   description: 'A one-line free-text answer' }),
+  s('Read',                 'activity', 'read',                 { icon: 'book-open',           description: 'Formatted prose, optionally above media' }),
+  s('Listen',               'activity', 'listen',               { icon: 'headphones',          description: 'An audio track. No renderer yet.' }),
+  s('View',                 'activity', 'view',                 { icon: 'film',                description: 'Embedded video or image' }),
+  s('Table Review',         'activity', 'table-review',         { icon: 'table',               description: 'Reads an earlier series back. No renderer yet.' }),
+  s('Complete',             'activity', 'complete',             { icon: 'flag',                description: 'A closing card that ends the day' }),
+  s('Paced Breathing',      'activity', 'paced-breathing',      { icon: 'heart-pulse',         description: 'A pacer to breathe along with. No renderer yet.' }),
+
+  s('MCQ',                  'activity', 'mcq',                  { id: 'cat-exercise_subtype-mcq', icon: 'circle-check',       description: 'Options with a correct answer behind them' }),
+  s('Single Select',        'activity', 'single-select',        { id: 'cat-exercise_subtype-single-select', icon: 'list',               description: 'Pick one option from a vertical list' }),
+  s('Multi Select',         'activity', 'multi-select',         { id: 'cat-exercise_subtype-multi-select', icon: 'list-checks',        description: 'Pick any number of options' }),
+  s('Boolean',              'activity', 'boolean',              { icon: 'toggle-left',         description: 'Two labelled sides of one question. No renderer yet.' }),
+  s('Clinical Instrument',  'activity', 'clinical-instrument',  { id: 'cat-exercise_subtype-clinical-instrument', icon: 'clipboard-list',     description: 'A validated instrument on one scored scale' }),
+
+  s('Rating Scale',         'activity', 'rating-scale',         { id: 'cat-exercise_subtype-rating-scale', icon: 'sliders-horizontal', description: 'A point between two labels — produces an option' }),
+  s('Slider',               'activity', 'slider',               { icon: 'sliders-horizontal',  description: 'A continuum the app does not own — produces a number. No renderer yet.' }),
+  s('Ranking',              'activity', 'ranking',              { icon: 'list',                description: 'Order a list by preference. No renderer yet.' }),
+
+  s('Structured List',      'activity', 'structured-list',      { id: 'cat-exercise_subtype-structured-list', icon: 'list',               description: 'Fixed items, each ticked or not' }),
+  s('Check Grid',           'activity', 'check-grid',           { id: 'cat-exercise_subtype-table', icon: 'toggle-left',        description: 'Items against columns, each cell ticked or not' }),
+  s('Consent',              'activity', 'consent',              { icon: 'shield-check',        description: 'A statement to agree to, stored as shown. No renderer yet.' }),
+
+  s('Text',                 'activity', 'text',                 { icon: 'pen-tool',            description: 'A prompt above a text box, kept. No renderer yet.' }),
+  s('Short Text',           'activity', 'short-text',           { icon: 'pen-tool',            description: 'A one-line free-text answer' }),
+  s('Ephemeral Journal',    'activity', 'ephemeral-journal',    { id: 'cat-exercise_subtype-ephemeral-journal', icon: 'notebook',           description: 'A text box whose contents are not kept' }),
+  s('Number',               'activity', 'number',               { id: 'cat-exercise_subtype-number', icon: 'hash',               description: 'A single numeric value' }),
+  s('Input Table',          'activity', 'input-table',          { id: 'cat-exercise_subtype-input-table', icon: 'layout-grid',        description: 'A grid the user types into' }),
+
+  s('Date',                 'activity', 'date',                 { icon: 'calendar',            description: 'A date. No renderer yet.' }),
+  s('Time',                 'activity', 'time',                 { icon: 'clock',               description: 'A time. No renderer yet.' }),
+  s('Date and Time',        'activity', 'date-time',            { icon: 'calendar',            description: 'A date and a time' }),
+  s('Location',             'activity', 'location',             { icon: 'map-pin',             description: 'A place, at a stated precision. No renderer yet.' }),
+
+  s('Timer',                'activity', 'timer',                { icon: 'timer',               description: 'A stopwatch up, or down to a target. No renderer yet.' }),
+
+  s('File Upload',          'activity', 'upload',               { id: 'cat-exercise_subtype-upload', icon: 'image',              description: 'A file the user picks' }),
+  s('Record',               'activity', 'record',               { icon: 'mic',                 description: 'Audio the user captures. No renderer yet.' }),
 
   // ── Check-in Block Types (widget types for check-in flow steps) ─
   s('Emoji Scale',   'checkin_block_type', 'emoji-scale',   { deprecated: true, icon: 'smile',               description: 'User picks from emoji options representing mood, energy, etc.' }),

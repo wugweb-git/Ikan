@@ -26,6 +26,7 @@ import { CalendarOverlay } from './CalendarOverlay';
 import { DayHeader } from './DayHeader';
 import { DayConfigPane } from '../editor/DayConfigPane';
 import { generateBlockId } from './block-id';
+import { DEFAULT_ACTIVITY_FOR_TYPE } from '../../../lib/blocks/vocabulary';
 import { BlockEditorPane } from '../editor/BlockEditorPane';
 
 export interface ContentScreenProps {
@@ -348,7 +349,14 @@ export function ContentScreen({
       required: true,
       autoAdvance: false,
       order: activeDay.activities.length,
-      activityConfig: subtype ? { subtype: subtype as ExerciseSubtype } : undefined
+      /*
+        A NEW BLOCK CARRIES AN ACTIVITY. Under §26 the activity is what draws, so
+        a block created with only a type renders nothing and `validateBlock`
+        errors on it — which is exactly what happened to the three blocks added
+        through this palette on 2026-09-09. The type's default is a starting
+        point, not a constraint: every activity stays available on every type.
+      */
+      activity: subtype ?? DEFAULT_ACTIVITY_FOR_TYPE[type] ?? 'read',
     };
     handleDaysChange((currentDays) => currentDays.map(d => 
       d.day === activeDay.day ? { ...d, activities: [...d.activities, { ...newBlock, order: d.activities.length }] } : d

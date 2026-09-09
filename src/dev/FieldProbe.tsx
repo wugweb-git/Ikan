@@ -1,7 +1,7 @@
 /**
  * Field probe — DEV ONLY, not part of the build.
  *
- * `BlockEditor`'s field sections are gated by ~20 nested conditions on
+ * `BlockEditorPane`'s field sections are gated by ~20 nested conditions on
  * `block.type` and `activityConfig.subtype`. Phase 2 of the §21 port moves them
  * into their own module, and the risk is silently dropping one: a missing branch
  * type-checks perfectly and simply never renders.
@@ -14,7 +14,7 @@
  */
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
-import { BlockEditor } from '../components/blocks/BlockEditor';
+import { BlockEditorPane } from '../components/builder/editor/BlockEditorPane';
 import type { Activity } from '../lib/blocks/block-model';
 import '../index.css';
 
@@ -76,13 +76,10 @@ function Probe() {
     <div id="probe">
       {SPECS.map((spec) => (
         <div key={keyOf(spec)} data-fp={keyOf(spec)}>
-          <BlockEditor
+          <BlockEditorPane
             block={blockFrom(spec)}
             onChange={() => {}}
             onDelete={() => {}}
-            isExpanded
-            onToggleExpand={() => {}}
-            hideHeader
             isAssessment={!!spec.isAssessment}
           />
         </div>

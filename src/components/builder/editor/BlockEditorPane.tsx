@@ -28,7 +28,7 @@ import { Image as ImageIcon, Video, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Input } from '../../ui/input';
 import { Label } from '../../ui/label';
-import { Activity, resolveInteraction, activityOf, normalizeSubtype } from '../../../lib/blocks/block-model';
+import { Activity, interactionsOfBlock, activityOf, normalizeSubtype } from '../../../lib/blocks/block-model';
 import { validateBlock } from '../../../lib/blocks/block-validation';
 import { useMetadata } from '../../../hooks/useMetadata';
 import { projectId } from '../../../utils/supabase/info';
@@ -55,7 +55,8 @@ export function BlockEditorPane({ block, onChange, onDelete, isAssessment, dayPo
   const currentActivity = normalizeSubtype(activityOf(block)) ?? activityOf(block);
   const activityRow = kvExerciseSubtypes.find(a => a.value === currentActivity);
   const safeBlockType = typeof block.type === 'string' ? block.type : 'lesson';
-  const currentInteraction = resolveInteraction(block);
+  /* One or more of the nine — six activities carry two. */
+  const currentInteractions = interactionsOfBlock(block);
   const blockIssues = validateBlock(block);
   const isVideo = !!block.image_url && (block.image_url.includes('youtube') || block.image_url.includes('vimeo') || block.image_url.endsWith('.mp4'));
 
@@ -118,13 +119,16 @@ export function BlockEditorPane({ block, onChange, onDelete, isAssessment, dayPo
           vocabularyUnavailable={kvBlockTypes.length === 0}
           disabled={readOnly}
         />
-        <span
-          className="shrink-0"
-          title="What the user does here — resolved from the activity"
-          style={{ fontSize: '9px', fontWeight: 500, color: 'var(--color-text-muted)', backgroundColor: 'var(--color-bg-muted)', padding: '2px 7px', borderRadius: 'var(--radius-pill)' }}
-        >
-          {currentInteraction}
-        </span>
+        {currentInteractions.map((i) => (
+          <span
+            key={i}
+            className="shrink-0"
+            title="What the user does here — carried by the activity"
+            style={{ fontSize: '9px', fontWeight: 500, color: 'var(--color-text-muted)', backgroundColor: 'var(--color-bg-muted)', padding: '2px 7px', borderRadius: 'var(--radius-pill)' }}
+          >
+            {i}
+          </span>
+        ))}
         <span className="flex-1" />
         <input
           ref={imageInputRef}

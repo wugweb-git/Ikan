@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { EquipProgram, Activity, resolveInteraction, repeatTargetDays, responseKeyOf, type DayContent } from '../../lib/blocks/block-model';
+import { EquipProgram, Activity, renderActivityOf, interactionsOfBlock, repeatTargetDays, responseKeyOf, type DayContent } from '../../lib/blocks/block-model';
 import { ErrorBoundary } from '../ErrorBoundary';
 import { BlockRenderer } from '../blocks/BlockRenderer';
 import { Button } from '../ui/button';
@@ -253,11 +253,14 @@ export function ProgramPlayer({
   const isStepValid = useMemo(() => {
     if (!activeStep) return false;
     return activeStep.blocks.every(block => {
-      const interaction = resolveInteraction(block);
-      // Content/read blocks are always valid (no user input needed)
-      if (['read', 'complete', 'view'].includes(interaction)) {
-        return true;
-      }
+      /*
+        A block that stores nothing cannot be answered, so it cannot be invalid.
+        This listed three interaction names; §26 makes it a property of the
+        activity — the six that produce nothing all carry `observe`, and asking
+        the vocabulary is what stops the list going stale the next time one is
+        added.
+      */
+      if (interactionsOfBlock(block).includes('observe')) return true;
       if (!block.required) return true;
       const value = responses[block.id];
       if (Array.isArray(value)) return value.length > 0;
@@ -282,10 +285,14 @@ export function ProgramPlayer({
       if (dayConfig.autoAdvance) {
         const targetBlock = activeStep?.blocks.find(b => b.id === blockId);
         
-        // Use interaction taxonomy for auto-advance decisions
-        const interaction = targetBlock ? resolveInteraction(targetBlock) : null;
-        const shouldAutoAdvance = targetBlock?.autoAdvance || 
-          interaction === 'select-one';  // single-selection interactions auto-advance
+        /*
+          Picking ONE option advances; picking several cannot, because the user
+          is not finished until they say so. That is a property of the activity,
+          not of `choose` — `multi-select` carries the same interaction.
+        */
+        const activity = targetBlock ? renderActivityOf(targetBlock) : null;
+        const shouldAutoAdvance = targetBlock?.autoAdvance ||
+          activity === 'mcq' || activity === 'single-select';
 
         if (shouldAutoAdvance) {
           const stepValidWithNewValue = activeStep?.blocks.every(block => {

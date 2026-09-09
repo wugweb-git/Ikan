@@ -15,7 +15,8 @@
  *
  * Dependency-free on purpose: it must run under `node --test`.
  */
-import { resolveInteraction, configOf, type Activity, type InteractionType } from './block-model.ts';
+import { renderActivityOf, configOf, type Activity } from './block-model.ts';
+import { interactionsOf, type ActivityName } from './vocabulary.ts';
 import { SCALE_BACKED, RESPONSE_PRODUCING } from './content-hierarchy.ts';
 
 export interface BlockIssue {
@@ -29,45 +30,57 @@ export interface BlockIssue {
 const nonEmpty = (v: unknown): boolean => Array.isArray(v) ? v.length > 0 : !!v;
 
 /**
- * What each interaction needs in `exerciseConfig` to render as anything.
- * Every entry here is a shape that currently renders as an empty widget.
+ * What each ACTIVITY needs in its config to render as anything.
+ *
+ * Keyed by activity since §26 — it was keyed by one of seventeen interactions,
+ * which cannot express this any more: `mcq`, `multi-select` and `boolean` all
+ * carry `choose` and need different things. Every entry is a shape that
+ * currently renders as an empty widget, calibrated against live content.
  */
-const REQUIRED: Partial<Record<InteractionType, { check: (c: any, b: Activity) => boolean; code: string; message: string }[]>> = {
-  'select-one':  [{ check: c => nonEmpty(c?.options), code: 'no-options',
-                    message: 'A single-select needs at least one option — it renders as an empty list.' }],
-  'select-many': [{ check: c => nonEmpty(c?.options), code: 'no-options',
-                    message: 'A multi-select needs at least one option — it renders as an empty list.' }],
-  // NOT an error: `renderRatingScale` (BlockRenderer.tsx:735-742) defaults to a
-  // 1-5 range with "Not at all"/"Very much" labels when no scale is declared, so
-  // the block works. Calibrating against live content caught this as a false
-  // positive on Sleep Tight's "Sleep Duration". A validator that flags working
-  // content teaches authors to ignore it.
-  'rate':        [],
-  'clinical':    [{ check: c => nonEmpty(c?.scale), code: 'no-scale',
-                    message: 'A clinical instrument needs its scale — without one the answers cannot be scored.' },
-                  { check: c => nonEmpty(c?.questions) || nonEmpty(c?.prompt), code: 'no-questions',
-                    message: 'A clinical instrument needs its questions.' }],
-  // Verified against `renderChecklist` (BlockRenderer.tsx:326), which reads
-  // `listItems || options || []` and renders an EMPTY LIST otherwise. Note it
-  // does not read `rows` — a `row_list` carrying only `rows` renders nothing,
-  // which is why one live block is correctly flagged here despite looking
-  // configured.
-  'check':       [{ check: c => nonEmpty(c?.listItems) || nonEmpty(c?.options) || nonEmpty(c?.items), code: 'no-items',
-                    message: 'A checklist needs items in listItems or options — with neither it renders an empty list. (`rows` is not read by the renderer.)' }],
-  'input-table': [{ check: c => nonEmpty(c?.columns) || nonEmpty(c?.tableColumns), code: 'no-columns',
-                    message: 'A table needs columns — with none it renders a single unlabelled cell.' }],
-  'track-table': [{ check: c => nonEmpty(c?.columns) || nonEmpty(c?.tableColumns), code: 'no-columns',
-                    message: 'A tracking grid needs columns.' }],
-  'write':       [{ check: (c, b) => nonEmpty(c?.prompt) || nonEmpty(b.title), code: 'no-prompt',
-                    message: 'A written answer needs a prompt or a title, or the user is given a blank box and no question.' }],
-  'number':      [{ check: (c, b) => nonEmpty(c?.prompt) || nonEmpty(b.title), code: 'no-prompt',
-                    message: 'A number entry needs a prompt saying what to enter.' }],
-  'upload':      [{ check: c => nonEmpty(c?.acceptedFileTypes), code: 'no-file-types',
-                    message: 'An upload needs its accepted file types.' }],
-  'read':        [{ check: (c, b) => nonEmpty(b.content) || nonEmpty(b.image_url), code: 'no-content',
-                    message: 'A lesson with no content and no media renders as an empty card.' }],
-  'view':        [{ check: (c, b) => nonEmpty(b.image_url), code: 'no-media',
-                    message: 'A watch block needs media to play.' }],
+const REQUIRED: Partial<Record<ActivityName, { check: (c: any, b: Activity) => boolean; code: string; message: string }[]>> = {
+  mcq:              [{ check: c => nonEmpty(c?.options), code: 'no-options',
+                       message: 'An MCQ needs at least one option — it renders as an empty list.' }],
+  'single-select':  [{ check: c => nonEmpty(c?.options), code: 'no-options',
+                       message: 'A single-select needs at least one option — it renders as an empty list.' }],
+  'multi-select':   [{ check: c => nonEmpty(c?.options), code: 'no-options',
+                       message: 'A multi-select needs at least one option — it renders as an empty list.' }],
+  // NOT an error: `renderRatingScale` defaults to a 1-5 range with
+  // "Not at all"/"Very much" labels when no scale is declared, so the block
+  // works. Calibrating against live content caught this as a false positive on
+  // Sleep Tight's "Sleep Duration" — which §26 says is a `slider`, not a rating.
+  'rating-scale':   [],
+  'clinical-instrument': [{ check: c => nonEmpty(c?.scale), code: 'no-scale',
+                       message: 'A clinical instrument needs its scale — without one the answers cannot be scored.' },
+                      { check: c => nonEmpty(c?.questions) || nonEmpty(c?.prompt), code: 'no-questions',
+                       message: 'A clinical instrument needs its questions.' }],
+  // Verified against `renderChecklist`, which reads `listItems || options || []`
+  // and renders an EMPTY LIST otherwise. It does not read `rows`.
+  'structured-list':[{ check: c => nonEmpty(c?.listItems) || nonEmpty(c?.options) || nonEmpty(c?.items), code: 'no-items',
+                       message: 'A checklist needs items in listItems or options — with neither it renders an empty list. (`rows` is not read by the renderer.)' }],
+  'input-table':    [{ check: c => nonEmpty(c?.columns) || nonEmpty(c?.tableColumns), code: 'no-columns',
+                       message: 'A table needs columns — with none it renders a single unlabelled cell.' }],
+  'check-grid':     [{ check: c => nonEmpty(c?.columns) || nonEmpty(c?.tableColumns), code: 'no-columns',
+                       message: 'A check grid needs columns.' }],
+  text:             [{ check: (c, b) => nonEmpty(c?.prompt) || nonEmpty(b.title), code: 'no-prompt',
+                       message: 'A written answer needs a prompt or a title, or the user is given a blank box and no question.' }],
+  'short-text':     [{ check: (c, b) => nonEmpty(c?.prompt) || nonEmpty(b.title), code: 'no-prompt',
+                       message: 'A short answer needs a prompt or a title.' }],
+  'ephemeral-journal': [{ check: (c, b) => nonEmpty(c?.prompt) || nonEmpty(b.title), code: 'no-prompt',
+                       message: 'A journal needs a prompt or a title, or the user is given a blank box and no question.' }],
+  number:           [{ check: (c, b) => nonEmpty(c?.prompt) || nonEmpty(b.title), code: 'no-prompt',
+                       message: 'A number entry needs a prompt saying what to enter.' }],
+  upload:           [{ check: c => nonEmpty(c?.acceptedFileTypes), code: 'no-file-types',
+                       message: 'An upload needs its accepted file types.' }],
+  read:             [{ check: (c, b) => nonEmpty(b.content) || nonEmpty(b.image_url), code: 'no-content',
+                       message: 'A lesson with no content and no media renders as an empty card.' }],
+  view:             [{ check: (c, b) => nonEmpty(b.image_url), code: 'no-media',
+                       message: 'A view block needs media to play.' }],
+  listen:           [{ check: (c, b) => nonEmpty(b.image_url), code: 'no-media',
+                       message: 'A listen block needs an audio track.' }],
+  complete:         [{ check: (c, b) => nonEmpty(b.content) || nonEmpty(b.title), code: 'no-content',
+                       message: 'A closing card with nothing on it ends the day silently.' }],
+  slider:           [{ check: c => c?.constraints?.min !== undefined && c?.constraints?.max !== undefined, code: 'no-range',
+                       message: 'A slider needs a minimum and a maximum — a continuum with no ends cannot be drawn.' }],
 };
 
 /** Everything wrong with this block, on its own terms. Never throws. */
@@ -75,22 +88,21 @@ export function validateBlock(block: Activity): BlockIssue[] {
   const issues: BlockIssue[] = [];
   if (!block) return issues;
 
-  let interaction: InteractionType;
-  try {
-    interaction = resolveInteraction(block);
-  } catch {
-    return [{ level: 'error', code: 'unresolvable',
-              message: 'This block’s type and activity could not be resolved to anything renderable.' }];
+  const activity = renderActivityOf(block);
+  if (!activity) {
+    return [{ level: 'error', code: 'no-activity',
+              message: 'This block carries no activity the vocabulary knows, so nothing decides what it draws. '
+                     + 'Pick one — or if it holds a retired term, retype it.' }];
   }
 
-  for (const rule of REQUIRED[interaction] ?? []) {
+  for (const rule of REQUIRED[activity] ?? []) {
     if (!rule.check(configOf(block), block)) {
       issues.push({ level: 'error', code: rule.code, message: rule.message });
     }
   }
 
   // Advisory, not an error — the block renders, it just renders a default.
-  if (interaction === 'rate' && !nonEmpty(configOf(block)?.scale)) {
+  if (activity === 'rating-scale' && !nonEmpty(configOf(block)?.scale)) {
     issues.push({ level: 'warning', code: 'default-scale',
                   message: 'No scale declared, so this uses the default 1–5 with generic labels.' });
   }
@@ -100,7 +112,7 @@ export function validateBlock(block: Activity): BlockIssue[] {
                   message: 'Untitled. The player falls back to the prompt, which is usually not a heading.' });
   }
 
-  issues.push(...validateBlockTypeRules(block, interaction));
+  issues.push(...validateBlockTypeRules(block, activity));
 
   return issues;
 }
@@ -121,7 +133,7 @@ export function validateBlock(block: Activity): BlockIssue[] {
  * Turning these into errors before those two things exist would fail content
  * for lacking something it was never possible to give.
  */
-function validateBlockTypeRules(block: Activity, interaction: InteractionType): BlockIssue[] {
+function validateBlockTypeRules(block: Activity, activity: ActivityName): BlockIssue[] {
   const out: BlockIssue[] = [];
   const cfg = configOf(block);
   const key = cfg?.key;
@@ -139,11 +151,11 @@ function validateBlockTypeRules(block: Activity, interaction: InteractionType): 
     already states. A type added or a block retyped cannot slip past a derived
     rule the way it slipped past a list.
   */
-  const needsKey = RESPONSE_PRODUCING.includes(interaction);
+  const needsKey = (RESPONSE_PRODUCING as readonly string[]).includes(activity);
 
   if (needsKey && !(typeof key === 'string' && key.trim())) {
     out.push({ level: 'warning', code: 'no-response-key',
-               message: `This block answers something (${interaction}), and nothing says where the answer goes. `
+               message: `This block answers something (${activity}), and nothing says where the answer goes. `
                       + 'Without a key its answers file under this block id, so the same question '
                       + 'asked on two days becomes two unrelated facts.' });
   }
@@ -156,9 +168,9 @@ function validateBlockTypeRules(block: Activity, interaction: InteractionType): 
                           + 'falls through to a free-text box.' });
       }
       // Scale-backed: the option set should come from the catalog, not be inlined.
-      if (SCALE_BACKED.includes(interaction) && !(block as { scale_ref?: string }).scale_ref) {
+      if ((SCALE_BACKED as readonly string[]).includes(activity) && !(block as { scale_ref?: string }).scale_ref) {
         out.push({ level: 'warning', code: 'no-scale-ref',
-                   message: `A ${interaction} takes its options from a shared scale. This one `
+                   message: `A ${activity} takes its options from a shared scale. This one `
                           + 'inlines them, so the same scale is re-typed per block and cannot be '
                           + 'corrected in one place.' });
       }

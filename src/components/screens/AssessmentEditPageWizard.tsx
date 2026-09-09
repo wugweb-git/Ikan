@@ -27,7 +27,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogD
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import { DayEditor as DailyBuilder } from '../blocks/DayComposer';
-import { DayContent, Activity, resolveInteraction, warnFallback } from '../../lib/blocks/block-model';
+import { DayContent, Activity, renderActivityOf, warnFallback } from '../../lib/blocks/block-model';
 import { AdminLoading } from '../admin/AdminLoading';
 import { seedDayFromTemplate } from '../../lib/blocks/day-policy';
 
@@ -468,18 +468,18 @@ export function AssessmentEditPageWizard({ assessmentId, onBack, onSave }: Asses
       if (currentData.daily_content && currentData.daily_content.length > 0) {
           currentData.questions = currentData.daily_content[0].activities.map(block => {
               const subtype = block.activityConfig?.subtype;
-              const interaction = resolveInteraction(block);
-              // Map back to legacy question type. Prefer subtype (finer-grained)
-              // over interaction, which collapses mcq/single-select/clinical/etc.
-              // into one 'select-one' bucket and was relabeling every single-select
-              // question as generic 'single-choice' with no scoring distinction.
-              const legacyType = subtype === 'multi-select' ? 'multiple-choice'
-                : subtype === 'rating_scale' ? 'scale'
-                : subtype === 'ephemeral-journal' ? 'text'
-                : interaction === 'select-many' ? 'multiple-choice'
-                : interaction === 'rate' ? 'scale'
-                : interaction === 'write' ? 'text'
-                : 'single-choice'; // mcq, single-select, clinical, etc.
+              /*
+                The activity maps to the legacy question type directly now. It
+                used to fall back on the interaction, which collapsed
+                mcq/single-select/clinical into one `select-one` bucket — and
+                under §26 it would collapse further still, since all three carry
+                `choose`. The activity is the finer-grained fact and always was.
+              */
+              const activity = renderActivityOf(block);
+              const legacyType = activity === 'multi-select' ? 'multiple-choice'
+                : activity === 'rating-scale' || activity === 'slider' ? 'scale'
+                : activity === 'ephemeral-journal' || activity === 'text' || activity === 'short-text' ? 'text'
+                : 'single-choice'; // mcq, single-select, clinical-instrument
 
               // 3 of the 7 declared LegacyQuestion types (dropdown, mcq-icons,
               // true-false) can never be emitted by this path. Anything that is

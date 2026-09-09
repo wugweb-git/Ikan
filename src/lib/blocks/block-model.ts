@@ -1,3 +1,6 @@
+import type { Interaction, ActivityName } from './vocabulary.ts';
+import { ACTIVITIES, interactionsOf, isActivity } from './vocabulary.ts';
+
 export interface ConditionalLogic {
   show_if_question_id: string;
   show_if_answer: string | string[];
@@ -46,74 +49,30 @@ export interface ScoringConfig {
 // Every block — whether "lesson", "exercise", or "journal" — is an interaction.
 // The `interaction` field replaces the split between Activity.type + ExerciseConfig.subtype.
 // Old programs without `interaction` are mapped via resolveInteraction() at runtime.
-export type InteractionType =
-  | 'read'          // Lesson, conclude — user reads/scrolls content
-  | 'view'          // Video/media — renamed from `watch` 2026-09-08 (0 live blocks)
-  | 'listen'        // Audio — NO RENDERER YET, see below
-  | 'select-one'    // MCQ, single-select — pick one option
-  | 'select-many'   // Multi-select — pick multiple options
-  | 'write'         // Journal, reflection, ephemeral-journal — free text entry
-  | 'rate'          // Rating scale, likert — pick a number on a scale
-  | 'rank'          // Ordering a list by preference — NO RENDERER YET
-  | 'check'         // Checklist, structured-list — toggle items
-  | 'track-table'   // Table checklist (yes/no grid)
-  | 'input-table'   // Input table, comparison matrix — fill data cells
-  | 'review-table'  // Read-back of earlier days' table entries — NO RENDERER YET
-  | 'clinical'      // Clinical instrument (GAD-7, PHQ-9) — scored Likert grid
-  | 'upload'        // File upload — user uploads a document, image, or audio file
-  | 'pick-date'     // A date or time — NO RENDERER YET
-  | 'number'        // Single numeric value — declared as a subtype since 2026-09-04
-  | 'complete';     // Conclude/summary — day-ending content block
-
 /**
- * Interactions declared here that `BlockRenderer` has no case for.
+ * INTERACTIONS — the nine. §26, 2026-09-09.
  *
- * **This is the `watch` defect, created deliberately and on the record.** A
- * block carrying one of these falls to `default: renderLesson()` and draws
- * reading content — which is precisely what `watch` has always done, and what
- * the Block Type Viewer had to discover by reading the renderer.
+ * The previous seventeen (`read`, `select-one`, `input-table`, `track-table`…)
+ * are **gone, not deprecated**. They named widgets, which is why they kept
+ * multiplying: every new way of drawing something became a new "interaction".
+ * The nine name what the USER is doing, which is a closed set.
  *
- * So they are declared and NOT OFFERED. `authorableInteractions()` below is
- * what every picker must filter through, the viewer marks them
- * "Declared, unread", and `BlockPreview` shows a marked gap rather than a mock.
- * The list empties when the four renderers are built; until then it is the
- * difference between a known gap and a trap.
+ * The list itself lives in `vocabulary.ts` with the activities that carry it, so
+ * there is one file to read and one file to change.
  */
-export const INTERACTIONS_WITHOUT_RENDERER: readonly InteractionType[] = [
-  /*
-    EMPTY as of 2026-09-08 — build-order step 7 built all four.
-    `BlockRenderer` now has a case for `listen`, `rank`, `review-table` and
-    `pick-date`, so the four activities behind them (`listen`, `ranking`,
-    `table-review`, `date-time`) are authorable and this list stops filtering
-    the picker.
+export type InteractionType = Interaction;
+export { INTERACTIONS } from './vocabulary.ts';
 
-    Kept, not deleted: it is the mechanism that made declaring a vocabulary
-    ahead of its renderers safe, and the next interaction added before its
-    renderer belongs here on the same day it is declared. `watch` sat
-    unauthorable for months precisely because there was nowhere to say this.
-  */
-];
+/*
+  `INTERACTIONS_WITHOUT_RENDERER` and `authorableInteractions()` were here.
 
-/** Interactions an author may actually pick — everything the player can draw. */
-export function authorableInteractions(all: readonly InteractionType[]): InteractionType[] {
-  return all.filter((i) => !INTERACTIONS_WITHOUT_RENDERER.includes(i));
-}
+  They answered "can this be drawn yet", asked of an INTERACTION — which only
+  made sense while an interaction was a widget. Under §26 an interaction is
+  cognitive and never draws anything; the ACTIVITY is drawn. The question moved
+  to `AUTHORABLE_ACTIVITIES` below, which is the same guard asked of the thing
+  that actually has a renderer.
+*/
 
-// ── The vocabulary, in one place ────────────────────────────────────
-// Before this, the alias list lived as extra `case` labels inside
-// resolveInteraction's switch — which meant the renderer obeyed a vocabulary
-// that the editor, the catalog and any migration could not read. These are the
-// canonical terms and every non-canonical spelling that reaches them.
-
-/**
- * The block types a block may actually BE — the leaf half of the merged
- * vocabulary. `quiz` and `reflection` are deliberately absent: the flip made
- * them containers (stages), so nothing can be one.
- *
- * Exported so the Block Type Viewer can compare the code's vocabulary against
- * the catalog's and report DRIFT, rather than deriving one from the other and
- * proving nothing.
- */
 export const LEAF_BLOCK_TYPES = [
   'lesson', 'exercise', 'journal', 'checklist', 'conclude', 'sleep-diary',
   /*
@@ -137,142 +96,63 @@ export const LEAF_BLOCK_TYPES = [
 /** What a block may BE — all 17, since no block holds another. */
 export type BlockType = typeof LEAF_BLOCK_TYPES[number];
 
-/** The canonical activities. Mirrors the `activity` catalog bucket (12 rows, renamed from `exercise_subtype` 2026-09-04). */
-export const EXERCISE_SUBTYPES = [
-  'mcq', 'single-select', 'multi-select', 'table', 'input-table', 'structured-list',
-  'rating-scale', 'clinical-instrument', 'upload', 'ephemeral-journal',
-  'comparison-matrix', 'number',
-  /*
-    +8 on 2026-09-08.
-
-    `read`, `listen`, `view` and `complete` were never activities — they were
-    resolved from the BLOCK TYPE, which is why `resolveInteraction` needs a type
-    switch at all and why a video has never been authorable. Naming them as
-    activities is what lets that switch become one lookup.
-
-    `date-time`, `table-review`, `ranking` and `short-text` are recovered from
-    the deleted `allowedBlocks` palette.
-
-    Four of these resolve to interactions with no renderer — see
-    INTERACTIONS_WITHOUT_RENDERER — so they are declared and not offered.
-    `read`, `complete`, `short-text` and `view` are safe today.
-  */
-  'read', 'listen', 'view', 'complete',
-  'date-time', 'table-review', 'ranking', 'short-text',
-] as const;
+/**
+ * ACTIVITIES — the twenty-nine. §26, 2026-09-09.
+ *
+ * Replaces the twenty. Nine are new (`slider`, `boolean`, `text`, `date`, `time`,
+ * `location`, `record`, `consent`, `timer`, `paced-breathing`), one is renamed
+ * (`table` -> `check-grid`), and `comparison-matrix` is on its way out — it is
+ * not in the list, and until its 17 live blocks are retyped it resolves through
+ * the alias table to `input-table`, which is what it has always drawn.
+ *
+ * `ExerciseSubtype` keeps its name as an alias only because `ActivityConfig` and
+ * a dozen call sites are typed against it; it IS `ActivityName`.
+ */
+export { ACTIVITY_SPECS, interactionsOf, requiresOf, activitiesFor, LABELS, TWO_INTERACTIONS, RETIRED_TERMS, ACTIVITY_HINTS, isActivity } from './vocabulary.ts';
+export { ACTIVITIES };
+export type { Interaction, ActivityName };
+export const EXERCISE_SUBTYPES = ACTIVITIES;
+export type ExerciseSubtype = ActivityName;
 
 /**
- * **Activity -> interaction. Total both ways.**
+ * The activities an author may pick — those with a renderer.
  *
- * Every activity resolves to exactly one interaction, and every interaction has
- * at least one activity. Typed `Record<ExerciseSubtype, InteractionType>`, so
- * an activity added without a mapping fails the build rather than falling
- * through the resolver's `default` to a free-text box — which is how nine live
- * blocks came to render as textareas.
- *
- * This is the model's central claim written down: the block TYPE is not
- * involved. `resolveInteraction` still consults its type switch for blocks that
- * carry no activity, and collapsing that away is a separate, gated step; this
- * table is what makes the collapse possible rather than a rewrite.
+ * Declared, not offered: eleven of the twenty-nine have no case in
+ * `BlockRenderer` yet. A block carrying one would fall to the default and draw
+ * something else, which is the defect `watch` taught this module in 2026-09.
+ * The editor filters against this list; the viewer shows the rest as declared.
  */
-export const SUBTYPE_INTERACTION: Record<ExerciseSubtype, InteractionType> = {
-  'mcq':                 'select-one',
-  'single-select':       'select-one',
-  'multi-select':        'select-many',
-  'table':               'track-table',
-  'input-table':         'input-table',
-  'comparison-matrix':   'input-table',
-  'structured-list':     'check',
-  'rating-scale':        'rate',
-  'clinical-instrument': 'clinical',
-  'upload':              'upload',
-  'ephemeral-journal':   'write',
-  'number':              'number',
-  // Added 2026-09-08 with the eight new activities.
-  'read':                'read',
-  'listen':              'listen',
-  'view':                'view',
-  'complete':            'complete',
-  'date-time':           'pick-date',
-  'table-review':        'review-table',
-  'ranking':             'rank',
-  'short-text':          'write',
-};
+export const ACTIVITIES_WITHOUT_RENDERER: readonly ActivityName[] = [
+  'listen', 'table-review', 'paced-breathing', 'boolean', 'slider', 'ranking',
+  'consent', 'text', 'date', 'time', 'location', 'timer', 'record',
+];
 
-/** The activities an author may pick — those whose interaction can be drawn. */
-export const AUTHORABLE_SUBTYPES: readonly ExerciseSubtype[] = EXERCISE_SUBTYPES.filter(
-  (s) => !INTERACTIONS_WITHOUT_RENDERER.includes(SUBTYPE_INTERACTION[s]),
-);
-export type ExerciseSubtype = typeof EXERCISE_SUBTYPES[number];
+export const AUTHORABLE_SUBTYPES: readonly ActivityName[] =
+  ACTIVITIES.filter((a) => !ACTIVITIES_WITHOUT_RENDERER.includes(a));
+
+/*
+  `SUBTYPE_ALIASES` was here — thirty-odd retired spellings, each silently
+  rewritten to a canonical term on every read.
+
+  Removed 2026-09-09 (§26). An alias table is a resolver that hides its own
+  input: live content could carry `comparison-matrix` for a year and the page
+  would look correct, because the read fixed it every time and nothing fixed the
+  store. Seventeen blocks did exactly that.
+
+  The spellings are not lost — `RETIRED_TERMS` in `vocabulary.ts` records every
+  one and what replaced it, and the reference page prints the table. It is read
+  by people, not by the renderer.
+*/
 
 /**
- * Every non-canonical spelling -> its canonical term.
+ * Canonical or nothing.
  *
- * Group 1 is live in stored content: `matrix` (8 blocks), `row_list`, `text_list`
- * and `scale` (1 each) came from `components/wizard/types.ts`'s FieldType union,
- * a Figma Make import that reads content and never writes it.
- * Group 2 is snake_case spellings the resolver already accepted.
- * Group 3 is check-in's step vocabulary, which is four of these terms under
- * other names — declared here so Phase 5 has one list to read, not two.
+ * Keeps the name `normalizeSubtype` because forty call sites use it; what it no
+ * longer does is normalise. A term is one of the twenty-nine or it is undefined,
+ * and undefined is what makes a stale block visible instead of invisible.
  */
-export const SUBTYPE_ALIASES: Record<string, ExerciseSubtype> = {
-  // 1 · in live data, from the Figma Make wizard
-  matrix:              'comparison-matrix',
-  row_list:            'structured-list',
-  text_list:           'structured-list',
-  scale:               'rating-scale',
-  // 2 · snake_case and legacy spellings
-  comparison_matrix:   'comparison-matrix',
-  rating_scale:        'rating-scale',
-  clinical_instrument: 'clinical-instrument',
-  likert:              'rating-scale',
-  // 3 · check-in step types
-  emoji_scale:         'rating-scale',
-  slider:              'rating-scale',
-  free_text:           'ephemeral-journal',
-  multi_select:        'multi-select',
-  single_choice:       'single-select',
-  yes_no:              'mcq',
-  /*
-    4 · recovered from the deleted `allowedBlocks` palette, 2026-09-08.
-
-    Added so the deletion cannot repeat. `allowedBlocks` was a 23-string list
-    that existed in no store and no type union, and deleting it took the only
-    written record of these spellings with it — twice now this module has had to
-    recover a vocabulary from a git history rather than read it. Declared here,
-    a term survives its own removal.
-
-    None of these is known to be in live content; they are the spellings this
-    codebase has answered to, kept so that a stored one resolves instead of
-    hitting the resolver default and drawing a free-text box.
-  */
-  watch:               'view',
-  boolean:             'mcq',
-  mcq_single:          'mcq',
-  mcq_multi:           'multi-select',
-  rtf_list:            'structured-list',
-  journal_short:       'ephemeral-journal',
-  long_text:           'ephemeral-journal',
-  rich_lesson:         'read',
-  callout:             'read',
-  media:               'view',
-  summary:             'complete',
-  table_input:         'input-table',
-  table_review:        'table-review',
-  date_time:           'date-time',
-  short_text:          'short-text',
-};
-
-const _CANONICAL = new Set<string>(EXERCISE_SUBTYPES);
-
-/**
- * Resolve any stored spelling to a canonical subtype.
- * Returns undefined for a term in neither list — the caller decides what that means.
- */
-export function normalizeSubtype(raw: string | undefined | null): ExerciseSubtype | undefined {
-  if (!raw) return undefined;
-  if (_CANONICAL.has(raw)) return raw as ExerciseSubtype;
-  return SUBTYPE_ALIASES[raw];
+export function normalizeSubtype(raw: string | undefined | null): ActivityName | undefined {
+  return isActivity(raw) ? raw : undefined;
 }
 
 /** The day types that have a preset. `DAY_TYPE_PRESETS` is typed against this, so the two cannot drift. */
@@ -329,193 +209,39 @@ export function warnFallback(site: string, detail: string, key?: string): void {
 }
 
 // Maps legacy type + subtype → unified interaction. Used by BlockRenderer at runtime.
-export function resolveInteraction(activity: Activity): InteractionType {
-  // Prefer explicit interaction field if set
-  if (activity.interaction) return activity.interaction;
-
-  const { type } = activity;
-  // Via the accessor: during the rename a block may be stored under either name.
-  const exerciseConfig = configOf(activity);
-  const rawSubtype = activityOf(activity);
-  // Aliases are resolved BEFORE the switch, so the switch below is the
-  // canonical vocabulary and nothing else. See SUBTYPE_ALIASES.
-  const subtype = normalizeSubtype(rawSubtype);
-
-  /*
-    THE ACTIVITY DECIDES (2026-09-08). Superseding "type is authoritative".
-
-    That rule was written when the only type carrying an activity was
-    `exercise`: 44 blocks had been retyped to make their declared type match
-    what they drew, and the check confirmed zero non-exercise blocks carried a
-    subtype. Both were true then.
-
-    The block remap made them false. 82 blocks are now `tracker` and 5
-    `workshop`, each carrying a real activity — and under "type decides" a
-    `tracker · input-table` resolved to **`read`**, because `tracker` has no
-    case in the switch below. It warned and discarded the activity. Nothing
-    mis-rendered only because every block also carries an explicit
-    `interaction` and this function returns before reaching here.
-
-    That is a trap with a date on it: build-order step 5 stops writing
-    `interaction`, and on the day it lands 87 blocks would draw reading content.
-
-    The settled model says `interaction = f(activity)`, block type not involved.
-    So an activity, wherever it sits, decides — which is also what makes the
-    gated collapse of this function a deletion rather than a rewrite.
-  */
-  if (subtype && subtype in SUBTYPE_INTERACTION) {
-    return SUBTYPE_INTERACTION[subtype as ExerciseSubtype];
-  }
-
-  if (type === 'exercise') {
-    switch (subtype) {
-      case 'mcq':
-      case 'single-select':
-        return 'select-one';
-      case 'multi-select':
-        return 'select-many';
-      case 'table':
-        return 'track-table';
-      case 'input-table':
-      case 'comparison-matrix':
-        return 'input-table';
-      case 'structured-list':
-        return 'check';
-      case 'rating-scale':
-        return 'rate';
-      case 'clinical-instrument':
-        return 'clinical';
-      case 'upload':
-        return 'upload';
-      case 'number':
-        return 'number';
-      case 'ephemeral-journal':
-        // If it has options, it's really a select-one (data inconsistency fix)
-        if (exerciseConfig?.options && exerciseConfig.options.length > 0) return 'select-one';
-        return 'write';
-      default:
-        /*
-          Everything above is a `case` this switch has carried since before
-          `SUBTYPE_INTERACTION` existed, and every one of them agrees with the
-          table — asserted in block-vocabulary.test.ts, so they cannot drift
-          while both exist. The eight activities added 2026-09-08 have no case
-          and resolve here, through the table, which is the single mapping the
-          gated collapse will leave standing.
-        */
-        if (subtype && subtype in SUBTYPE_INTERACTION) {
-          return SUBTYPE_INTERACTION[subtype as ExerciseSubtype];
-        }
-        // Exercise with options but no subtype → select-one
-        if (exerciseConfig?.options && exerciseConfig.options.length > 0) return 'select-one';
-        if (rawSubtype) {
-          warnFallback(
-            'resolveInteraction',
-            `subtype "${rawSubtype}" is in neither EXERCISE_SUBTYPES nor SUBTYPE_ALIASES on block ${activity.id} — rendering a free-text box`,
-            rawSubtype
-          );
-        }
-        return 'write';
-    }
-  }
-
-  // Direct type mapping
-  switch (type) {
-    case 'lesson':       return 'read';
-    case 'conclude':     return 'complete';
-    case 'journal':
-    case 'reflection':
-      // Journal/reflection with options → select-one (data inconsistency)
-      if (exerciseConfig?.options && exerciseConfig.options.length > 0) return 'select-one';
-      return 'write';
-    case 'checklist':    return 'check';
-    // A quiz with no subtype is still a question. Without this it fell to
-    // `default: 'read'` and rendered as reading content.
-    case 'quiz':         return 'select-one';
-    // `sleep-diary` — RETAINED and RETARGETED 2026-09-04.
-    //
-    // It resolved to `track-table` (a yes/no grid) while Sleep Tight's 126 real
-    // diary blocks are `input-table` (a text grid). The type was named after a
-    // programme whose behaviour it did not reproduce, which made the name a
-    // second lie: pick `sleep-diary` expecting Sleep Tight and you got a
-    // different widget.
-    //
-    // The decision was to keep the type rather than retire it, so it is pointed
-    // at what a sleep diary actually is. Zero stored blocks carry this type, so
-    // the retarget changes no live content — it changes what a NEW one does.
-    case 'sleep-diary':  return 'input-table';
-    default:             return 'read';
-  }
+/**
+ * WHAT THIS BLOCK IS DRAWN AS — the canonical activity, or undefined.
+ *
+ * Replaces `resolveInteraction`, which returned one of seventeen widget names
+ * and preferred the block's stored `interaction` field over everything else.
+ * Under §26 an interaction is cognitive and draws nothing, so the question a
+ * renderer asks is "which activity", and the answer comes from the block's own
+ * activity — never from the stored `interaction`, which is now stale metadata on
+ * 420 blocks and names a vocabulary that no longer exists.
+ */
+export function renderActivityOf(block: Activity): ActivityName | undefined {
+  return normalizeSubtype(activityOf(block));
 }
 
-// ── Interaction metadata (for admin UIs) ────────────────────────────
 /**
- * What each interaction IS, and what it DRAWS.
+ * WHAT THE USER IS DOING — one or more of the nine.
  *
- * `previewHint` describes the rendered widget. Those strings were the only
- * documentation of what an interaction actually looks like, and they were lost
- * when `EQUIP_BLOCK_TYPES` / `CHECKIN_BLOCK_TYPES` were deleted from the viewer
- * — the render sites survived and went on printing `block.previewHint` against
- * nothing. Recovered from `040a4cfe^` and re-hung here, where they belong: on
- * the interaction, not on a hardcoded copy of the block list.
- *
- * Each is marked with its provenance. `recovered` is verbatim from the deleted
- * arrays; `written` was read off `BlockRenderer` because no recovered string
- * described that interaction — those six had no documentation to lose.
+ * `interaction = f(activity)` is no longer one-to-one: six activities carry two,
+ * so this returns a set. An unknown activity returns an empty set rather than a
+ * guess; the caller decides what an unrenderable block means.
  */
-export const INTERACTION_META: Record<InteractionType, {
-  label: string; verb: string; icon: string; description: string;
-  /** What the user sees on screen. */
-  previewHint: string;
-  /** Where `previewHint` came from, so a reader knows what it is worth. */
-  hintSource: 'recovered' | 'written';
-}> = {
-  'read':        { label: 'Read',           verb: 'Reads',    icon: 'book-open',      description: 'User reads/scrolls through content',
-                   previewHint: 'Formatted prose with optional media — the primary learning block', hintSource: 'recovered' },
-  'view':        { label: 'View',           verb: 'Views',    icon: 'film',           description: 'User watches embedded video or media',
-                   // Renamed from `watch` 2026-09-08, and given a renderer the same
-                   // day. It returned renderLesson() for as long as it existed, so a
-                   // video block drew the PROSE layout — which is why this hint used
-                   // to read "no renderer of its own".
-                   previewHint: 'The video, played inline, with any content below it as a caption', hintSource: 'written' },
-  'listen':      { label: 'Listen',         verb: 'Listens',  icon: 'headphones',     description: 'User plays an audio track',
-                   previewHint: 'An audio player, with an optional transcript folded beneath it', hintSource: 'written' },
-  'rank':        { label: 'Rank',           verb: 'Ranks',    icon: 'list',           description: 'User puts a list in order of preference',
-                   previewHint: 'A numbered list, reordered with up and down controls', hintSource: 'written' },
-  'review-table':{ label: 'Review Table',   verb: 'Reviews',  icon: 'table',          description: 'Read-back of earlier days\u2019 table entries — the carry-forward view',
-                   previewHint: 'No renderer yet — declared so it can be authored once one exists', hintSource: 'written' },
-  'pick-date':   { label: 'Pick a Date',    verb: 'Picks',    icon: 'calendar',       description: 'User chooses a date or a time',
-                   previewHint: 'A native date control, or date-and-time when the block asks for both', hintSource: 'written' },
-  'select-one':  { label: 'Select One',     verb: 'Selects',  icon: 'circle-dot',     description: 'User picks one option from a list',
-                   previewHint: 'Radio button list — only one option can be selected', hintSource: 'recovered' },
-  'select-many': { label: 'Select Many',    verb: 'Selects',  icon: 'check-square',   description: 'User picks multiple options',
-                   previewHint: 'Chip/tag grid where multiple items can be selected', hintSource: 'recovered' },
-  'write':       { label: 'Write',          verb: 'Writes',   icon: 'pen-line',       description: 'User types free-form text response',
-                   previewHint: 'Multi-line textarea for free-form responses', hintSource: 'recovered' },
-  'rate':        { label: 'Rate',           verb: 'Rates',    icon: 'star',           description: 'User picks a number on a scale',
-                   previewHint: 'Horizontal slider with numeric range and endpoint labels', hintSource: 'recovered' },
-  'check':       { label: 'Check Off',      verb: 'Checks',   icon: 'list-checks',    description: 'User toggles items in a checklist',
-                   previewHint: 'List of checkboxes that users tick off as they complete', hintSource: 'recovered' },
-  'track-table': { label: 'Track (Table)',   verb: 'Tracks',   icon: 'table',          description: 'User fills yes/no grid or diary',
-                   previewHint: 'Grid with a labelled first column and a yes/no toggle per cell', hintSource: 'written' },
-  'input-table': { label: 'Input (Table)',   verb: 'Enters',   icon: 'grid-3x3',       description: 'User fills data into table cells',
-                   previewHint: 'Grid of text cells; predefined row labels make the first column read-only', hintSource: 'written' },
-  'clinical':    { label: 'Clinical Scale',  verb: 'Answers',  icon: 'clipboard-list', description: 'User answers scored clinical instrument',
-                   previewHint: 'Scored Likert rows — defaults to Not at all / Several days / More than half / Nearly every day', hintSource: 'written' },
-  'upload':      { label: 'Upload',          verb: 'Uploads',  icon: 'upload',         description: 'User uploads a file (document, image, audio)',
-                   previewHint: 'File picker accepting images, PDF, documents and audio', hintSource: 'written' },
-  'number':      { label: 'Number',          verb: 'Enters',   icon: 'hash',           description: 'User enters a single numeric value',
-                   previewHint: 'Single numeric input, using the prompt as its placeholder', hintSource: 'written' },
-  'complete':    { label: 'Complete',        verb: 'Finishes', icon: 'flag',           description: 'Day-ending summary or conclusion',
-                   previewHint: 'Summary card with motivational closing content', hintSource: 'recovered' },
-};
+export function interactionsOfBlock(block: Activity): readonly Interaction[] {
+  return interactionsOf(renderActivityOf(block));
+}
 
-/**
- * What a block needs to do its job — options, columns, prompt, scale.
- *
- * Renamed from `ExerciseConfig` 2026-09-04: it is carried by every block type,
- * not only `exercise` — a `lesson` and a `conclude` hold one too — so the name
- * described one case out of six.
- */
+/*
+  `INTERACTION_META` — seventeen entries of label/verb/icon/description plus a
+  `previewHint` describing the widget each one drew — is gone with the seventeen.
+  The nine carry `label` + `doing` + `icon` in `vocabulary.ts`; a preview hint
+  belongs to an ACTIVITY, which is the thing that draws.
+*/
+export { INTERACTION_META } from './vocabulary.ts';
+
 export interface ActivityConfig {
   /**
    * The block's RESPONSE IDENTITY, declared by the author.
@@ -534,11 +260,11 @@ export interface ActivityConfig {
    */
   key?: string;
   /**
-   * Authored subtype. Both snake_case and kebab-case spellings of the same term are
-   * present in live content, so both are declared here and mapped in resolveInteraction().
-   * 'number' has no interaction of its own yet and falls back to a free-text box.
+   * The older of the two places an activity is stored. `string`, not
+   * `ActivityName`, because live content still holds retired spellings — and
+   * they now READ as what they are rather than being rewritten on the way past.
    */
-  subtype?: ExerciseSubtype | keyof typeof SUBTYPE_ALIASES;
+  subtype?: string;
   prompt?: string;
   options?: string[];
   questions?: string[]; // For clinical instruments
@@ -556,6 +282,66 @@ export interface ActivityConfig {
   listItems?: string[];
   editable?: boolean;
   scoring?: ScoringConfig;
+
+  // ── §26 step 2: the seven LABELS ────────────────────────────────
+  /*
+    Device-bound, every one of them. A label changes how something is DRAWN and
+    never what it is — `grid` degrading to `list` on a narrow screen is the same
+    activity, the same interaction and the same stored answer. Declared here so
+    an author can set one; nothing derives an activity from a label.
+  */
+  /** `single` · `list` · `grid`. Any activity. */
+  layout?: 'single' | 'list' | 'grid';
+  /** `emoji` · `nps` · `dropdown` · `image`. Every choose activity and rating-scale. */
+  display?: 'emoji' | 'nps' | 'dropdown' | 'image';
+  /** `email` · `phone` · `url`. `text` only. */
+  format?: 'email' | 'phone' | 'url';
+  /** `one` · `many`. Choose activities. */
+  cardinality?: 'one' | 'many';
+  /** `pick` · `capture`. Submit activities. */
+  source?: 'pick' | 'capture';
+  /** Share activities: whether the answer is kept, and how long it may be. */
+  persist?: boolean;
+  length?: number;
+  /** `up` · `down`. `timer` only. */
+  mode?: 'up' | 'down';
+
+  // ── §26: what the new activities require ────────────────────────
+  /** `slider` — the continuum's ends and its granularity. */
+  min?: number;
+  max?: number;
+  step?: number;
+  /** `table-review` — which earlier series to read back. Not `columns`: a review
+      that declared columns would be a second table, not a view of the first. */
+  source_key?: string;
+  /** `consent` — the statement, stored as shown alongside the answer. */
+  statement?: string;
+  /** `paced-breathing`. */
+  pattern?: string;
+  cycles?: number;
+  /** `ranking` · `structured-list`. */
+  items?: string[];
+  /** `location`. */
+  precision?: string;
+  /** `record`. */
+  max_duration?: number;
+  /** `upload` — the §26 spelling of `acceptedFileTypes`. */
+  accepted_types?: string[];
+  /** Scale-backed activities: the shared option set, rather than inlined options. */
+  scale_ref?: string;
+  /** `clinical-instrument`. */
+  instrument_ref?: string;
+
+  /*
+    STORED SPELLINGS the editor already writes. `slider_min`/`slider_max` were
+    written by the rating-scale fields and were undeclared, so every write to
+    them was a type error the baseline absorbed.
+  */
+  slider_min?: number;
+  slider_max?: number;
+  slider_labels?: string[];
+  constraints?: { min?: number; max?: number };
+
   // Upload block config
   acceptedFileTypes?: string[];  // e.g. ['image/*', '.pdf', 'audio/*']
   maxFileSize?: number;          // in bytes, defaults to 10MB
@@ -622,7 +408,7 @@ export interface Activity {
    * activity ONLY here, so a direct `activityConfig.subtype` read is blind to
    * more than half the corpus.
    */
-  activity?: ExerciseSubtype | keyof typeof SUBTYPE_ALIASES;
+  activity?: string;
   content: string;
   duration: number; // in minutes
   required: boolean;
