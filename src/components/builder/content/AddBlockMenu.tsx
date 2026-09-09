@@ -9,7 +9,11 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { PALETTE_BLOCK_TYPES } from '../../../lib/blocks/block-type-rules';
 
 // --- HELPER COMPONENTS ---
-export function BlockPaletteMenu({ onSelect }: { onSelect: (type: string, subtype?: string) => void }) {
+export function BlockPaletteMenu({ onSelect, trigger = 'compact' }: {
+  onSelect: (type: string, subtype?: string) => void;
+  /** `dashed` is the mockup's full-width "Add block" button under the list. */
+  trigger?: 'compact' | 'dashed';
+}) {
    // Block type definitions with their allowed-block keys for matching
    // Definition lives in block-type-rules.ts so it can be asserted against `can_hold`
    // — see PALETTE_BLOCK_TYPES. Icons stay here; they are presentation.
@@ -42,9 +46,19 @@ export function BlockPaletteMenu({ onSelect }: { onSelect: (type: string, subtyp
    return (
       <DropdownMenu>
          <DropdownMenuTrigger asChild>
-            <Button variant="outline" size="sm" className="gap-1 px-2.5 h-7" style={{ fontSize: '11px', color: 'var(--color-text-muted)', borderColor: 'var(--color-border-default)', borderRadius: 'var(--radius-md)' }}>
-               <Plus size={12} /> Add
-            </Button>
+            {trigger === 'dashed' ? (
+              <Button
+                variant="outline"
+                className="w-full gap-1.5 h-9"
+                style={{ fontSize: '12.5px', color: 'var(--color-text-muted)', borderColor: 'var(--color-border-default)', borderStyle: 'dashed', borderRadius: 'var(--radius-md)', backgroundColor: 'transparent' }}
+              >
+                 <Plus size={13} /> Add block
+              </Button>
+            ) : (
+              <Button variant="outline" size="sm" className="gap-1 px-2.5 h-7" style={{ fontSize: '11px', color: 'var(--color-text-muted)', borderColor: 'var(--color-border-default)', borderRadius: 'var(--radius-md)' }}>
+                 <Plus size={12} /> Add
+              </Button>
+            )}
          </DropdownMenuTrigger>
          <DropdownMenuContent align="end">
             {filtered.map(bt => (

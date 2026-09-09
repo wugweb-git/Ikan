@@ -3,11 +3,11 @@
  * `DayComposer.tsx` 2026-09-09 (§21 layout port, phase 1) — body unchanged, only
  * the imports are new.
  *
- * `onDuplicate` and `onDelete` are accepted and not used here. They were dead on
- * the chip before the move and they stay dead in this phase rather than being
- * deleted: the chip is 34px square with no room for a menu, so both land on the
- * day kebab and the calendar overlay's row menu in phase 4. Removing them now
- * would mean re-deriving them then.
+ * `onDuplicate` and `onDelete` were props here and were never used — the chip is
+ * 34px square with no room for a menu. Removed in phase 4, once the behaviour
+ * they described had somewhere to live: **Duplicate day** and **Delete day** are
+ * now items on the day kebab in `DayHeader`, beside Repeat this day. The props
+ * were dead; the actions are not.
  */
 import { memo, useRef } from 'react';
 import { useDrag, useDrop } from 'react-dnd';
@@ -22,11 +22,9 @@ interface DraggableDayProps {
   isSelected: boolean;
   onSelect: () => void;
   moveDay: (dragIndex: number, hoverIndex: number) => void;
-  onDuplicate: () => void;
-  onDelete: () => void;
 }
 
-export const DraggableDay = memo(function DraggableDay({ day, index, isSelected, onSelect, moveDay, onDuplicate, onDelete }: DraggableDayProps) {
+export const DraggableDay = memo(function DraggableDay({ day, index, isSelected, onSelect, moveDay }: DraggableDayProps) {
   const ref = useRef<HTMLDivElement>(null);
 
   const [{ handlerId }, drop] = useDrop({
