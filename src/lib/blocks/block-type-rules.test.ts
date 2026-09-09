@@ -25,6 +25,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { DAY_TYPE_PRESETS, PALETTE_BLOCK_TYPES } from './block-type-rules.ts';
 import { METADATA_CATALOG_ITEMS } from '../metadata-catalog.ts';
+import { LEAF_BLOCK_TYPES } from './block-model.ts';
 
 /*
   `seedViolations` and "no preset seeds default content its own rules reject"
@@ -79,15 +80,27 @@ test('every preset can open with a lesson and close with a conclude', () => {
 
 const seedBlockTypes = METADATA_CATALOG_ITEMS.filter(i => i.type === 'block_type');
 
-test('the seed file defines every container row, not just KV', () => {
+test('the seed file defines every block type, and only those', () => {
+  /*
+    The two vocabularies parted company on 2026-09-09. This asserted that the
+    block types were exactly the day templates plus the six original leaves —
+    true while the two lists had been merged, and false the moment `rest` and
+    `assessment-lite` were retired as BLOCK types while surviving as TEMPLATES.
+
+    Which is the point of the retirement: a rest day is a day with no task, not
+    a kind of block. The test now pins the block types against `LEAF_BLOCK_TYPES`
+    — the union the renderer and the editor read — rather than against a preset
+    list that answers a different question.
+  */
   const seeded = seedBlockTypes.map(r => r.slug).sort();
-  const expected = [...Object.keys(DAY_TYPE_PRESETS),
-                    'lesson', 'exercise', 'journal', 'checklist', 'conclude', 'sleep-diary']
-    .filter((v, i, a) => a.indexOf(v) === i).sort();
   assert.deepEqual(
-    seeded, expected,
-    'The merged block_type vocabulary must be reproducible from this file alone.',
+    seeded, [...LEAF_BLOCK_TYPES].sort(),
+    'The block_type vocabulary must be reproducible from this file alone.',
   );
+  for (const t of ['rest', 'assessment-lite']) {
+    assert.ok(Object.keys(DAY_TYPE_PRESETS).includes(t), `${t} must survive as a day template`);
+    assert.ok(!(LEAF_BLOCK_TYPES as readonly string[]).includes(t), `${t} must not be a block type`);
+  }
 });
 
 /*
@@ -107,7 +120,7 @@ test('the seed file defines every container row, not just KV', () => {
 
 test('every block type declares the activities it permits', () => {
   const rows = METADATA_CATALOG_ITEMS.filter(r => r.type === 'block_type');
-  assert.equal(rows.length, 17);
+  assert.equal(rows.length, 15);
   const missing = rows.filter(r => !Array.isArray(r.activities)).map(r => r.slug);
   assert.deepEqual(
     missing, [],
@@ -115,9 +128,14 @@ test('every block type declares the activities it permits', () => {
     'authored content — and the six leaves were exactly this until 2026-09-08, ' +
     'which is why the store and the seed disagreed.',
   );
-  // `rest` permits nothing BY DESIGN — a day with no task. Asserted so that an
-  // empty list reads as a decision rather than an omission.
-  assert.deepEqual(rows.find(r => r.slug === 'rest')?.activities, []);
+  /*
+    `rest` used to be asserted here — it permitted nothing by design, a day with
+    no task. It is retired as a BLOCK type (§27 step 6) and survives as a day
+    template, so there is no row to assert. The design it recorded is unchanged:
+    `DAY_TYPE_PRESETS.rest` still permits only `read` and `complete`.
+  */
+  assert.equal(rows.find(r => r.slug === 'rest'), undefined);
+  assert.equal(rows.find(r => r.slug === 'assessment-lite'), undefined);
 });
 
 /**

@@ -89,11 +89,22 @@ export const LEAF_BLOCK_TYPES = [
     nothing mis-renders. Latent, not harmless — a NEW block of one of these
     types authored without an interaction would fall to the default.
   */
-  'onboarding', 'assessment', 'assessment-lite', 'learning', 'practice',
-  'reflection', 'rest', 'quiz', 'workshop', 'tracker', 'check-in',
+  'onboarding', 'assessment', 'learning', 'practice',
+  'reflection', 'quiz', 'workshop', 'tracker', 'check-in',
+  /*
+    `rest` and `assessment-lite` were here and are RETIRED — §27 step 6,
+    2026-09-09. Zero live blocks carried either, counted before the removal.
+
+    Both survive as DAY TEMPLATES (`DAY_TYPES`, `DAY_TYPE_PRESETS`,
+    `DAY_TYPE_LAYOUTS`), which is what they always honestly were: a rest day is
+    a day with no task, not a kind of block, and `assessment-lite` describes how
+    a day is scored rather than what a block does. §19 settled that a template
+    seeds a day and constrains nothing afterwards, which is what makes keeping
+    one and dropping the other coherent rather than half a deletion.
+  */
 ] as const;
 
-/** What a block may BE — all 17, since no block holds another. */
+/** What a block may BE — 15, since no block holds another. */
 export type BlockType = typeof LEAF_BLOCK_TYPES[number];
 
 /**

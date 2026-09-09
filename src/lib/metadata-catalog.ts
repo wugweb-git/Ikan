@@ -389,13 +389,16 @@ export const METADATA_CATALOG_ITEMS: SeedItem[] = [
   // silently wipes Phases 1.1 and 2.1.
   s('Onboarding', 'block_type', 'onboarding', { icon: 'flag', description: 'Day 0. First-time intro, consent, and orientation before the programme starts.', activities: ['mcq', 'single-select', 'multi-select', 'ephemeral-journal'] }),
   s('Assessment', 'block_type', 'assessment', { icon: 'clipboard-list', description: 'Baseline measurement, severity scoring, recommendations.', activities: ['mcq', 'single-select', 'clinical-instrument'] }),
-  s('Assessment Lite', 'block_type', 'assessment-lite', { icon: 'clipboard', description: 'Awareness, reflection, non-scored check-ins.', activities: ['mcq', 'single-select', 'rating-scale', 'ephemeral-journal'] }),
   s('Learning', 'block_type', 'learning', { icon: 'book-open', description: 'Concept introduction and understanding.', activities: ['mcq', 'single-select'] }),
   s('Practice', 'block_type', 'practice', { icon: 'pen-tool', description: 'User data capture, reflection, application.', activities: ['multi-select', 'input-table', 'structured-list', 'upload', 'ephemeral-journal', 'comparison-matrix', 'number'] }),
   s('Workshop', 'block_type', 'workshop', { icon: 'hammer', description: 'Multi-step thinking (ideation, evaluation, rituals).', activities: ['multi-select', 'input-table', 'upload', 'ephemeral-journal', 'comparison-matrix'] }),
   s('Tracker', 'block_type', 'tracker', { icon: 'table', description: 'Daily repetition, habits, streaks.', activities: ['table', 'input-table', 'structured-list', 'rating-scale', 'comparison-matrix', 'number'] }),
   s('Check-In', 'block_type', 'check-in', { icon: 'smile', description: 'Quick daily mood/wellness check. 1-3 questions, no scoring.', activities: ['mcq', 'single-select', 'multi-select', 'rating-scale', 'ephemeral-journal'] }),
-  s('Rest Day', 'block_type', 'rest', { icon: 'moon', description: 'No active tasks. Optional motivation or gentle prompt.', activities: [] }),
+  /*
+    `Rest Day` and `Assessment Lite` were block_type rows and are retired — §27
+    step 6. Zero blocks carried either. Both remain DAY TEMPLATES; a rest day is
+    a day with no task, not a kind of block.
+  */
 
   // ── Difficulty Levels ─────────────────────────────────────────
   s('Beginner',     'difficulty_level', 'beginner',     { icon: 'signal',       color: '#22C55E' }),

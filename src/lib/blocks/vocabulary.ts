@@ -287,6 +287,4 @@ export const DEFAULT_ACTIVITY_FOR_TYPE: Record<string, ActivityName> = {
   learning: 'read',
   onboarding: 'single-select',
   assessment: 'mcq',
-  'assessment-lite': 'rating-scale',
-  rest: 'read',
 };

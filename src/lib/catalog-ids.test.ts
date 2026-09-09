@@ -25,7 +25,10 @@ import { METADATA_CATALOG_ITEMS } from './metadata-catalog.ts';
 const idsOf = (type: string) =>
   METADATA_CATALOG_ITEMS.filter((i) => i.type === type).map((i) => i.id);
 
-test('block_type ids are frozen — 17 of them', () => {
+test('block_type ids are frozen — 15 of them', () => {
+  /* `rest` and `assessment-lite` were retired 2026-09-09 (§27 step 6): zero
+     live blocks carried either, and both survive as day templates. Their rows
+     are deleted from the store in the same pass. */
   assert.deepEqual(idsOf('block_type'), [
     'cat-block_type-lesson',
     'cat-block_type-exercise',
@@ -37,13 +40,11 @@ test('block_type ids are frozen — 17 of them', () => {
     'cat-block_type-sleep-diary',
     'cat-block_type-onboarding',
     'cat-block_type-assessment',
-    'cat-block_type-assessment-lite',
     'cat-block_type-learning',
     'cat-block_type-practice',
     'cat-block_type-workshop',
     'cat-block_type-tracker',
     'cat-block_type-check-in',
-    'cat-block_type-rest',
   ]);
 });
 
