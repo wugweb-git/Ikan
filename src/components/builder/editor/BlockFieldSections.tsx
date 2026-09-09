@@ -45,18 +45,77 @@ export interface BlockFieldSectionsProps {
   block: Activity;
   onChange: (updates: Partial<Activity>) => void;
   isAssessment?: boolean;
+  /** Sections the CHROME renders itself, so this module must not draw them twice. */
+  hoisted?: { activity?: boolean };
 }
 
-export function BlockFieldSections({ block, onChange, isAssessment }: BlockFieldSectionsProps) {
-  /* Derived here rather than passed in, so the sections and their inputs move
-     together. The chrome computes `currentActivity` too, for the header; the
-     duplication lasts until phase 3 makes this the only reader. */
+/**
+ * The activity select, on its own so the new editor chrome can put it beside the
+ * title where the mockup has it. Its `onValueChange` is the reason it is a
+ * component rather than a copied block of JSX: writing `activityConfig.subtype`
+ * unconditionally puts the old field back onto the 220 blocks the remap cleared.
+ */
+export function ActivityPicker({ block, onChange }: { block: Activity; onChange: (u: Partial<Activity>) => void }) {
   const { exerciseSubtypes: kvExerciseSubtypes } = useMetadata();
   const currentActivity = normalizeSubtype(activityOf(block)) ?? activityOf(block);
   const exerciseSubtypeOptions = kvExerciseSubtypes
     .filter(s => (AUTHORABLE_SUBTYPES as readonly string[]).includes(s.value)
                  || s.value === currentActivity)
     .map(s => ({ value: s.value, label: s.label, icon: s.icon, offPreset: false }));
+  return (
+          <div className="space-y-1">
+            {/* Mislabelled since it was written: this list is fed by the
+                `activity` catalog bucket (renamed from `exercise_subtype`
+                in Phase 1.2), not by InteractionType. */}
+            {/* "N allowed on a <stage> day" was here. A day has no type,
+                so there is no such sentence to write. */}
+            <Label className="text-xs">Activity</Label>
+            <Select 
+              value={currentActivity || 'mcq'} 
+              /*
+                Writes the block-level `activity` — the field `activityOf`
+                prefers and 420 of 420 blocks carry — and keeps
+                `activityConfig.subtype` in step ONLY where it already
+                exists. Writing both unconditionally would put the old
+                field back onto the 220 blocks the remap cleared, which is
+                the two-representations failure this module keeps paying for.
+              */
+              onValueChange={(val: any) => onChange({
+                activity: val,
+                ...(block.activityConfig?.subtype
+                  ? { activityConfig: { ...block.activityConfig, subtype: val } }
+                  : {}),
+              })}
+            >
+              {/* No icon of its own here: `SelectValue` renders the chosen
+                  item's children, icon included, so adding one drew it twice. */}
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {exerciseSubtypeOptions.map((subtype) => {
+                  const Icon = getIconComponent(subtype.icon);
+                  return (
+                    <SelectItem key={subtype.value} value={subtype.value}>
+                      <span className="flex items-center gap-2">
+                        {iconResolves(subtype.icon) && <Icon size={14} style={{ color: 'var(--color-text-muted)' }} />}
+                        {subtype.label}
+                      </span>
+                      {subtype.offPreset && (
+                        <span style={{ color: 'var(--color-status-warning)' }}>
+                          {' '}· not usually on this day
+                        </span>
+                      )}
+                    </SelectItem>
+                  );
+                })}
+              </SelectContent>
+            </Select>
+          </div>
+  );
+}
+
+export function BlockFieldSections({ block, onChange, isAssessment, hoisted }: BlockFieldSectionsProps) {
   const suggestedKey = (block.activityConfig?.prompt || block.title || '')
     .toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '').split('_').slice(0, 4).join('_')
     || undefined;
@@ -135,55 +194,7 @@ export function BlockFieldSections({ block, onChange, isAssessment }: BlockField
       {/* 2. EXERCISE BLOCK */}
       {block.type === 'exercise' && (
         <div className="space-y-4 border-l-2 pl-4" style={{ borderColor: 'var(--color-accent-default)' }}>
-          <div className="space-y-1">
-            {/* Mislabelled since it was written: this list is fed by the
-                `activity` catalog bucket (renamed from `exercise_subtype`
-                in Phase 1.2), not by InteractionType. */}
-            {/* "N allowed on a <stage> day" was here. A day has no type,
-                so there is no such sentence to write. */}
-            <Label className="text-xs">Activity</Label>
-            <Select 
-              value={currentActivity || 'mcq'} 
-              /*
-                Writes the block-level `activity` — the field `activityOf`
-                prefers and 420 of 420 blocks carry — and keeps
-                `activityConfig.subtype` in step ONLY where it already
-                exists. Writing both unconditionally would put the old
-                field back onto the 220 blocks the remap cleared, which is
-                the two-representations failure this module keeps paying for.
-              */
-              onValueChange={(val: any) => onChange({
-                activity: val,
-                ...(block.activityConfig?.subtype
-                  ? { activityConfig: { ...block.activityConfig, subtype: val } }
-                  : {}),
-              })}
-            >
-              {/* No icon of its own here: `SelectValue` renders the chosen
-                  item's children, icon included, so adding one drew it twice. */}
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {exerciseSubtypeOptions.map((subtype) => {
-                  const Icon = getIconComponent(subtype.icon);
-                  return (
-                    <SelectItem key={subtype.value} value={subtype.value}>
-                      <span className="flex items-center gap-2">
-                        {iconResolves(subtype.icon) && <Icon size={14} style={{ color: 'var(--color-text-muted)' }} />}
-                        {subtype.label}
-                      </span>
-                      {subtype.offPreset && (
-                        <span style={{ color: 'var(--color-status-warning)' }}>
-                          {' '}· not usually on this day
-                        </span>
-                      )}
-                    </SelectItem>
-                  );
-                })}
-              </SelectContent>
-            </Select>
-          </div>
+          {!hoisted?.activity && <ActivityPicker block={block} onChange={onChange} />}
 
           <div className="space-y-1">
             <Label className="text-xs">Prompt / Question</Label>

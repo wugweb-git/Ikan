@@ -42,7 +42,12 @@ interface BlockEditorProps {
   isLast?: boolean;
   hideHeader?: boolean;
   isAssessment?: boolean;
-  dayType?: string; // Pass the parent day's type for preset-awareness
+  /*
+    `dayType` was here — "pass the parent day's type for preset-awareness". No
+    call site ever passed it, so the preset lookup it fed always returned
+    undefined. Removed in phase 3: what the flow controls actually want is the
+    day's own `stepGroupRules`, which `BlockEditorPane` passes as `dayPolicy`.
+  */
 }
 
 function BlockEditorInner({ 
@@ -57,7 +62,6 @@ function BlockEditorInner({
   isLast,
   hideHeader,
   isAssessment,
-  dayType
 }: BlockEditorProps) {
   
   const imageInputRef = useRef<HTMLInputElement>(null);
@@ -371,7 +375,7 @@ function BlockEditorInner({
 
           <BlockFieldSections block={block} onChange={onChange} isAssessment={isAssessment} />
 
-          <BlockFlowFooter block={block} onChange={onChange} dayType={dayType} />
+          <BlockFlowFooter block={block} onChange={onChange} />
 
         </CardContent>
       )}
@@ -388,7 +392,6 @@ export const BlockEditor = memo(BlockEditorInner, (prev, next) => {
     prev.isFirst === next.isFirst &&
     prev.isLast === next.isLast &&
     prev.hideHeader === next.hideHeader &&
-    prev.isAssessment === next.isAssessment &&
-    prev.dayType === next.dayType
+    prev.isAssessment === next.isAssessment
   );
 });

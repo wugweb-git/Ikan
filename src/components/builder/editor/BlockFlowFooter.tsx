@@ -7,57 +7,58 @@
  * separated from the field sections because none of them is decided by the block
  * TYPE: every block has a step, a duration, and a repeat.
  *
- * `dayType` is still threaded through and is still never passed by the one call
- * site, so `preset` is always undefined and the Step field always renders. That
- * dead branch is not deleted here — phase 3 replaces it with the day's own
- * `policyOf(day).stepGroupRules`, which is the live model's version of the same
- * question.
+ * The `dayType` prop this arrived with was dead: no call site ever passed it, so
+ * the preset lookup behind the Step control always returned undefined. Phase 3
+ * replaced it with the day's own `policyOf(day).stepGroupRules` — the live
+ * model's version of the same question, and one a caller can actually answer.
  */
 import { FastForward, Clock, Layers } from 'lucide-react';
 import { Input } from '../../ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../ui/select';
 import { Activity } from '../../../lib/blocks/block-model';
-import { getPresetForDayType } from '../../../lib/blocks/block-type-rules';
+import type { DayPolicy } from '../../../lib/blocks/day-policy';
 
 export interface BlockFlowFooterProps {
   block: Activity;
   onChange: (updates: Partial<Activity>) => void;
-  /** The parent day's template. Never passed today — see the note above. */
-  dayType?: string;
+  /**
+   * What the DAY this block sits on allows. Replaces the old `dayType` prop,
+   * which no call site ever passed, so `getPresetForDayType` always returned
+   * undefined and the Step control always rendered. A day has no type any more;
+   * it carries its own policy, and `stepGroupRules` is the half of it this
+   * control needs. Absent still means "allowed", so the behaviour is unchanged
+   * wherever nothing is passed.
+   */
+  dayPolicy?: DayPolicy;
+  /** `strip` is the mockup's pinned footer; `section` is the old inline block. */
+  variant?: 'section' | 'strip';
 }
 
-export function BlockFlowFooter({ block, onChange, dayType }: BlockFlowFooterProps) {
+export function BlockFlowFooter({ block, onChange, dayPolicy, variant = 'section' }: BlockFlowFooterProps) {
+  const strip = variant === 'strip';
   return (
     /* WIZARD FLOW & INTERACTION SECTION */
-    <div className="pt-2 mt-2" style={{ borderTop: '1px solid var(--color-border-default)' }}>
+    <div
+      className={strip ? 'px-3 py-2' : 'pt-2 mt-2'}
+      style={strip ? undefined : { borderTop: '1px solid var(--color-border-default)' }}
+    >
        {(() => {
-         const preset = dayType ? getPresetForDayType(dayType) : undefined;
-         const presetManaged = preset && (
-           preset.autoConfig.autoAdvance !== undefined ||
-           preset.autoConfig.scoringEnabled !== undefined ||
-           !preset.stepGroupRules.allowed
-         );
+         const stepsAllowed = dayPolicy?.stepGroupRules?.allowed ?? true;
+         const stepsRequired = dayPolicy?.stepGroupRules?.required ?? false;
 
          return (
            <>
-             <div className="flex items-center gap-1.5 mb-2">
-               <Layers size={11} style={{ color: 'var(--color-text-muted)' }} />
-               <span style={{ fontSize: '10px', fontWeight: 500, fontFamily: 'var(--font-family-base)', color: 'var(--color-text-muted)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Wizard Flow</span>
-               {presetManaged && (
-                 <span style={{
-                   fontSize: '9px', fontWeight: 500, fontFamily: 'var(--font-family-base)',
-                   color: 'var(--color-status-success)', backgroundColor: 'var(--color-status-success-light)',
-                   padding: '1px 5px', borderRadius: 'var(--radius-pill)',
-                 }}>
-                   {preset.label}
-                 </span>
-               )}
-             </div>
+             {!strip && (
+               <div className="flex items-center gap-1.5 mb-2">
+                 <Layers size={11} style={{ color: 'var(--color-text-muted)' }} />
+                 <span style={{ fontSize: '10px', fontWeight: 500, fontFamily: 'var(--font-family-base)', color: 'var(--color-text-muted)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Wizard Flow</span>
+               </div>
+             )}
 
              {/* CONTROL ROW: Single inline row */}
              <div className="flex items-center gap-2 flex-wrap">
                {/* Step Group ID */}
-               {(!preset || preset.stepGroupRules.allowed) && (
+               {stepsAllowed && (
                  <div className="flex items-center gap-1">
                    <Input 
                      value={block.stepGroup || ''}
@@ -66,7 +67,9 @@ export function BlockFlowFooter({ block, onChange, dayType }: BlockFlowFooterPro
                      className="h-7 w-24 text-[11px] font-mono"
                      style={{ borderRadius: 'var(--radius-md)' }}
                    />
-                   <span style={{ fontSize: '9px', color: 'var(--color-text-muted)', fontFamily: 'var(--font-family-base)' }}>Optional</span>
+                   <span style={{ fontSize: '9px', color: 'var(--color-text-muted)', fontFamily: 'var(--font-family-base)' }}>
+                     {stepsRequired ? 'Required on this day' : 'Optional'}
+                   </span>
                  </div>
                )}
 
