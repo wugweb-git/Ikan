@@ -283,3 +283,46 @@ Not touched: `/content`, `/admin/content` (the separate resource/blog CMS —
 different KV prefix, different routes, confirmed by grep before any deletion).
 KV rows (`page:`/`cms_page:`) left in place per the owner's standing
 instruction — only code paths removed, no data deleted.
+
+## Claimed 2026-09-10 — MOBILE FIRST-RUN SCREENS (branch `mobile-firstrun`)
+
+Four genuinely new screens per the mobile prototype's own inventory (no
+existing route/component equivalent anywhere in `src/`): splash, two-panel
+onboarding, verify-email, and a post-first-sign-in "getting started" screen.
+Built against the `iKan Mobile` and `iKan Prototype` Claude artifacts —
+markup, copy and CSS pattern (`.msplash`, `.monboard`, `.mauth`, `.mflowtop`
+etc.) ported faithfully, using the app's own design tokens and lucide icons
+instead of the prototype's inline SVGs.
+
+New: `src/lib/first-run.ts` (localStorage flags, best-effort — a blocked/
+cleared store just repeats the flow), `src/components/screens/onboarding/`
+(`WelcomeSplash`, `MobileOnboarding`, `VerifyEmail`, `GetStarted`).
+
+`App.tsx`: 4 new routes (`/welcome /onboarding /verify-email /get-started`),
+added to `validRoutes` and `route-config.ts` (all public, `showInNavigation:
+false`). Gate effect: a signed-out mobile visitor lands on `/welcome` once
+(until `ikan_onboarding_seen`); a first sign-in on a device goes to
+`/get-started` instead of `/dashboard` (until `ikan_first_run_done`).
+`/login`'s `onSuccess` also checks `hasCompletedFirstRun()`. New routes
+excluded from public/private nav chrome and folded into `isFullScreenFlow`.
+
+The 4 screens are imported **eagerly, not lazy** — small, sit at the app's
+entry point, and (found while testing) lazy-loading them can deadlock the
+`AnimatePresence mode="wait"` route transition if the chunk is still loading
+when the transition starts.
+
+**Verification note:** typecheck/tests/build all green, and all 4 screens
+confirmed correct via direct URL load. The in-app click-driven transition
+*into* these screens could not be exercised in this session's automation
+harness — `document.hidden` is `true` there, so `requestAnimationFrame` never
+fires, which stalls the exit animation `AnimatePresence mode="wait"` waits on
+before mounting the next screen. Traced and confirmed: state *does* update
+correctly (confirmed via instrumentation), it's the harness's animation
+timing that can't be exercised, not app logic. This is the same routing
+mechanism every existing screen already uses — not something specific to
+these 4 — but flagging since it wasn't verified end-to-end with a live click
+in a real browser.
+
+Not built yet, per the inventory: auth-signup (reshape of the `/login` tab),
+more-menu/more-profile/more-settings (reshape of the existing sheet +
+`/account`), `/notifications`, `/content` archive.

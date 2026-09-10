@@ -231,6 +231,46 @@ export const routes: RouteConfig[] = [
     description: 'User login and authentication'
   },
   {
+    path: '/welcome',
+    label: 'Welcome',
+    isPublic: true,
+    requiresAuth: false,
+    showInNavigation: false,
+    showInPublicNav: false,
+    showInPrivateNav: false,
+    description: 'Splash — entry to the onboarding flow'
+  },
+  {
+    path: '/onboarding',
+    label: 'Onboarding',
+    isPublic: true,
+    requiresAuth: false,
+    showInNavigation: false,
+    showInPublicNav: false,
+    showInPrivateNav: false,
+    description: 'First-visit onboarding panels'
+  },
+  {
+    path: '/verify-email',
+    label: 'Verify email',
+    isPublic: true,
+    requiresAuth: false,
+    showInNavigation: false,
+    showInPublicNav: false,
+    showInPrivateNav: false,
+    description: 'Post-signup email verification'
+  },
+  {
+    path: '/get-started',
+    label: 'Getting started',
+    isPublic: true,
+    requiresAuth: false,
+    showInNavigation: false,
+    showInPublicNav: false,
+    showInPrivateNav: false,
+    description: 'First-run setup after first sign-in'
+  },
+  {
     path: '/reset-password',
     label: 'Reset Password',
     isPublic: true,
