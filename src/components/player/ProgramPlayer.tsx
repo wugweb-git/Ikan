@@ -482,7 +482,7 @@ export function ProgramPlayer({
                 onClick={handlePrevious}
                 className="flex items-center justify-center"
                 style={{
-                  width: 40, height: 40, borderRadius: 20,
+                  width: 44, height: 44, borderRadius: 22,
                   background: 'none', border: 'none', cursor: 'pointer',
                   color: 'var(--color-text-primary)',
                 }}
@@ -495,7 +495,7 @@ export function ProgramPlayer({
                 onClick={handleExit}
                 className="flex items-center justify-center"
                 style={{
-                  width: 36, height: 36, borderRadius: 18,
+                  width: 44, height: 44, borderRadius: 22,
                   backgroundColor: 'var(--color-bg-muted)',
                   border: 'none', cursor: 'pointer',
                   color: 'var(--color-text-muted)',

@@ -286,7 +286,7 @@ export function AboutUs({ onNavigate, className }: AboutUsProps) {
                 minHeight: isMobile ? 'auto' : '260px',
               }}
             >
-              <SectionLabel color="var(--ikan-brand-teal-dark)">{visionLabel}</SectionLabel>
+              <SectionLabel color="var(--ikan-teal-on-wash)">{visionLabel}</SectionLabel>
               <h3
                 style={{
                   fontFamily: 'var(--font-family-base)',
@@ -304,7 +304,7 @@ export function AboutUs({ onNavigate, className }: AboutUsProps) {
                   fontFamily: 'var(--font-family-base)',
                   fontSize: 'var(--text-sm)',
                   fontWeight: 'var(--font-weight-regular)',
-                  color: 'var(--ikan-brand-teal-dark)',
+                  color: 'var(--ikan-teal-on-wash)',
                   lineHeight: '1.7',
                   margin: '0',
                 }}

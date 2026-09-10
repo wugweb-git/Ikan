@@ -365,8 +365,6 @@ export interface ActivityConfig {
   /** `pick-date`: bounds, as ISO dates. */
   minDate?: string;
   maxDate?: string;
-  /** `review-table`: which response series to read back — a `key` from another block. */
-  source_key?: string;
 }
 
 // ── Carry-forward / repetition ──────────────────────────────────────

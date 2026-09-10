@@ -1221,14 +1221,14 @@ export function BlockRenderer({ block, value, onChange, readOnly = false, equipI
 
         {/* Subtitle - Always visible when present */}
         {subtitle && (
-          <p className="text-[15px] md:text-[17px] text-[var(--grey-6)] font-normal leading-relaxed">
+          <p className="text-[15px] md:text-[17px] text-[var(--color-text-muted)] font-normal leading-relaxed">
             {subtitle}
           </p>
         )}
         
         {/* Prompt/Description - Only if different from title */}
         {finalShowPrompt && (
-          <p className="text-[17px] text-[var(--grey-6)] font-normal leading-relaxed">
+          <p className="text-[17px] text-[var(--color-text-muted)] font-normal leading-relaxed">
             {exerciseConfig.prompt}
           </p>
         )}
@@ -1245,7 +1245,7 @@ export function BlockRenderer({ block, value, onChange, readOnly = false, equipI
             {priorEntries.map((e) => (
               <div key={e.day} className="text-[14px]">
                 <div className="font-medium text-[var(--color-text-primary)]">Day {e.day}</div>
-                <div className="whitespace-pre-line leading-relaxed" style={{ color: 'var(--grey-6)' }}>
+                <div className="whitespace-pre-line leading-relaxed" style={{ color: 'var(--color-text-muted)' }}>
                   {summarizePriorResponse(e.response)}
                 </div>
               </div>
