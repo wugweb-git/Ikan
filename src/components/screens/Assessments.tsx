@@ -139,14 +139,6 @@ import { PageHero } from '../ui/PageHero';
 import { AssessmentCard } from '../assessment/AssessmentCard';
 import { assessmentMeta, assessmentImage } from '../../lib/assessment-meta';
 
-interface HeroBanner {
-  title: string;
-  subtitle: string;
-  image_url: string;
-  cta_text?: string;
-  cta_link?: string;
-}
-
 export function Assessments({ className, onNavigate }: AssessmentsProps) {
   const { user } = useAuth();
   const { showToast } = useNotifications();
@@ -167,7 +159,6 @@ export function Assessments({ className, onNavigate }: AssessmentsProps) {
    */
   const [drafts, setDrafts] = useState<Record<string, any>>({});
   const [currentTab, setCurrentTab] = useState<TabState>('catalogue');
-  const [heroBanner, setHeroBanner] = useState<HeroBanner | null>(null);
 
   // Load hero banner from admin config
   useEffect(() => {
@@ -185,14 +176,6 @@ export function Assessments({ className, onNavigate }: AssessmentsProps) {
       setDrafts(byId);
     })();
     return () => { cancelled = true; };
-  }, []);
-
-  useEffect(() => {
-    let isMounted = true;
-    apiClient.getHeroBanner('assessments').then(res => {
-      if (isMounted && res?.banner) setHeroBanner(res.banner);
-    }).catch(() => {});
-    return () => { isMounted = false; };
   }, []);
 
   // Handle tab state based on authentication
@@ -632,11 +615,8 @@ export function Assessments({ className, onNavigate }: AssessmentsProps) {
     return (
       <div className={cn("w-full", className)}>
         <PageHero 
-          title={heroBanner?.title || 'Health Assessments'}
-          subtitle={heroBanner?.subtitle || 'Quick, evidence-based screenings to help you understand your mental well-being.'}
-          backgroundImage={heroBanner?.image_url}
-          ctaText={heroBanner?.cta_text}
-          ctaLink={heroBanner?.cta_link}
+          title="Health Assessments"
+          subtitle="Quick, evidence-based screenings to help you understand your mental well-being."
         />
         <div className="max-w-7xl mx-auto p-4 md:p-8 space-y-8">
         
