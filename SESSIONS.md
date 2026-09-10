@@ -63,6 +63,31 @@ Not touched, deliberately:
 - **Radius scale rename** — 154+ call sites.
 
 
+## Claimed 2026-09-10 — MOBILE AUDIT session
+
+Taking `src/components/page-blocks/**` and the two detail screens for the six
+content-drop bugs the SYSTEM MAP session raised and deliberately left
+(`section1`, `section3_content`, `tile4_content`, `tile5_content`, the newsletter
+benefits, the self-recommending related query). They are listed above as
+ASSESSMENT-owned; the work order assigns them here and no assessment session is
+active, so they are claimed rather than taken silently.
+
+| file | change |
+|---|---|
+| `src/components/page-blocks/AssessmentBentoGrid.tsx` | render `section1`; "What it measures" over the bullets; `tile4_content` under "What you'll see"; `tile5_content` in Important |
+| `src/components/page-blocks/EquipBentoGrid.tsx` | split newline-delimited tiles; outcome title/subtitle; "program includes" from `tile2_content` |
+| `src/components/page-blocks/NewsletterBlock.tsx` | render all three benefits and the privacy line |
+| `src/components/screens/EquipDetail.tsx` | hero image ladder; exclude self from related by id AND slug |
+| `src/components/screens/AssessmentDetail.tsx` | hero image ladder; pass the two tile props |
+| `src/lib/cms-content.ts` | new, unowned — the parsing, with tests |
+
+Not touched, deliberately:
+
+- `src/styles/globals.css`, `index.html`, `src/App.tsx` — claimed by the SYSTEM MAP
+  session above. Dark mode, the weight tokens, the radius scale and the remaining
+  contrast pairs are all in those files and wait for that session to hand over.
+- `src/components/blocks/**`, `src/components/player/**` — BLOCKS-owned.
+
 ## The three seams
 
 **1 · `src/components/screens/AssessmentFlow.tsx`** — assessment-owned. Blocks

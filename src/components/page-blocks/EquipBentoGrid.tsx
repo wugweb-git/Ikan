@@ -1,4 +1,5 @@
 import { cn } from '../ui/utils';
+import { cmsLines, splitTitleAndSubtitle } from '../../lib/cms-content';
 import { 
   ListTodo,
   Calendar as CalendarIcon,
@@ -82,14 +83,8 @@ export function EquipBentoGrid({
 
   // Resolve content
   const whatIsTitle = section1?.title || "What is this program about?";
-  let whatIsDescription = tile1Content || section1?.description || [];
-  
-  // Safety check if description comes as string or non-array
-  if (typeof whatIsDescription === 'string') {
-    whatIsDescription = [whatIsDescription];
-  } else if (!Array.isArray(whatIsDescription)) {
-    whatIsDescription = [];
-  }
+  /* `tile1_content` is prose — one paragraph per line, not one blob. */
+  const whatIsDescription = cmsLines(tile1Content ?? section1?.description);
 
   // Eligibility points
   const eligibilityPoints = [
@@ -99,7 +94,18 @@ export function EquipBentoGrid({
     eligibilityPoint4 || section1?.isThisForYou?.points?.[3]
   ].filter(Boolean) as string[];
 
-  // 4 Tiles Data — generic defaults, overridden by section4 or tile4Content
+  /*
+    THE FOUR OUTCOME TILES.
+
+    `tile4Content` is stored as ONE newline-delimited string —
+    "Better Sleep Quality. Fall asleep faster…\nReduced Sleep Anxiety. …" — and
+    this read it with `Array.isArray`, which is false for a string. The override
+    never ran, so all four tiles kept the generic defaults below on all four
+    programmes. A default looks exactly like content, which is why it survived.
+
+    `cmsLines` accepts the string and the array; `splitTitleAndSubtitle` takes
+    the title from before the first period, which is how they are authored.
+  */
   const defaultTiles = [
     { title: "Gain deeper understanding", subtitle: "Identify patterns and triggers", icon: CalendarIcon },
     { title: "Learn practical techniques", subtitle: "Evidence-based strategies you can use", icon: Brain },
@@ -109,19 +115,22 @@ export function EquipBentoGrid({
 
   const tilesData = [...defaultTiles];
 
-  // Override from tile4Content (array of objects with title/description)
-  if (tile4Content && Array.isArray(tile4Content) && tile4Content.length > 0) {
-    tile4Content.slice(0, 4).forEach((p: any, i: number) => {
-      if (i < tilesData.length) {
-        if (typeof p === 'string') {
-          tilesData[i].title = p;
-        } else if (p && typeof p === 'object') {
-          if (p.title) tilesData[i].title = p.title;
-          if (p.description || p.subtitle) tilesData[i].subtitle = p.description || p.subtitle;
-        }
-      }
-    });
-  }
+  // Override from tile4Content — a string of lines, an array of lines, or an
+  // array of {title, description}. All three are what the store has held.
+  const authoredTiles = Array.isArray(tile4Content)
+    ? tile4Content
+    : cmsLines(tile4Content);
+  authoredTiles.slice(0, 4).forEach((p: any, i: number) => {
+    if (i >= tilesData.length) return;
+    if (typeof p === 'string') {
+      const { title, subtitle } = splitTitleAndSubtitle(p);
+      if (title) tilesData[i].title = title;
+      if (subtitle) tilesData[i].subtitle = subtitle;
+    } else if (p && typeof p === 'object') {
+      if (p.title) tilesData[i].title = p.title;
+      if (p.description || p.subtitle) tilesData[i].subtitle = p.description || p.subtitle;
+    }
+  });
 
   // Override from section4 (structured props)
   if (section4?.points && Array.isArray(section4.points) && section4.points.length >= 4) {
@@ -138,22 +147,37 @@ export function EquipBentoGrid({
     { icon: FlaskConical, text: "Evidence-based techniques and exercises" }
   ];
 
-  const resolvedRightItems = Array.isArray(rightColumnItems) && rightColumnItems.length > 0
-    ? rightColumnItems.map((item: any) => ({ icon: Clock, text: typeof item === 'string' ? item : (item?.text ?? '') }))
+  /*
+    WHAT THE PROGRAMME INCLUDES.
+
+    `tile2Content` was destructured and never read — the same drop as the tiles,
+    found while fixing them. It is the "The program includes:" list the landing
+    editor authors (4 lines on Sleep Tight: daily micro-lessons, CBT techniques,
+    progress tracking, a personalised plan), and this column was showing the
+    generic defaults below instead.
+
+    Order is authored-first: `right_column_items` has no editor anywhere, so it
+    is a fallback, not a preference.
+  */
+  const authoredRightItems = cmsLines(tile2Content).length
+    ? cmsLines(tile2Content)
+    : cmsLines(rightColumnItems);
+  const resolvedRightItems = authoredRightItems.length
+    ? authoredRightItems.map((text) => ({ icon: Clock, text }))
     : defaultRightItems;
 
-  // How it works steps
-  let howItWorksSteps = section3?.description || tile3Content || [
+  /*
+    HOW IT WORKS — one step per line.
+
+    `tile3_content` is newline-delimited too, and the string branch below wrapped
+    the whole thing in a single-element array. Four authored steps printed as one
+    run-on paragraph.
+  */
+  const authoredSteps = cmsLines(section3?.description ?? tile3Content);
+  const howItWorksSteps: string[] = authoredSteps.length ? authoredSteps : [
     "You'll start with foundational concepts and guided exercises.",
     "Then you'll build on those skills with daily practice and reflection."
   ];
-
-  // Safety check for howItWorksSteps
-  if (typeof howItWorksSteps === 'string') {
-    howItWorksSteps = [howItWorksSteps];
-  } else if (!Array.isArray(howItWorksSteps)) {
-    howItWorksSteps = [];
-  }
 
   // Coerce any block value to a safe string so a stray object never renders as
   // "[object Object]" or crashes React with "Objects are not valid as a child".

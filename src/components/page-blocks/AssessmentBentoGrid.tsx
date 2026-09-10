@@ -1,4 +1,5 @@
 import { cn } from '../ui/utils';
+import { stripDuplicateHeading } from '../../lib/cms-content';
 import {
   Timer,
   ListTodo,
@@ -51,6 +52,10 @@ interface AssessmentBentoGridProps {
   difficulty?: string | null;
   importantNote1?: string;
   importantNote2?: string;
+  /** `metadata.tile4_content` — the real "What you'll see", authored as HTML. */
+  whatYoullSeeHtml?: string;
+  /** `metadata.tile5_content` — the full Important notes list, authored as HTML. */
+  importantNotesHtml?: string;
   className?: string;
 }
 
@@ -99,6 +104,8 @@ export function AssessmentBentoGrid({
   difficulty = null,
   importantNote1,
   importantNote2,
+  whatYoullSeeHtml,
+  importantNotesHtml,
   className
 }: AssessmentBentoGridProps) {
   
@@ -180,7 +187,16 @@ export function AssessmentBentoGrid({
                       margin: 0
                     }}
                   >
-                    {section3.title || "What it measures"}
+                    {/*
+                      THE BULLETS ARE WHAT IT MEASURES.
+
+                      This printed `section3.title` — "What you'll see" — over
+                      `section2.bullets`, which are what the assessment measures.
+                      One heading sat over another section's content, and the
+                      real "What you'll see" (metadata.tile4_content) rendered
+                      nowhere. Two authored fields lost to one line.
+                    */}
+                    What it measures
                   </h3>
                   <div className="flex flex-col lg:flex-row gap-[16px] lg:gap-[18px]">
                     {Array.isArray(section2.bullets) && section2.bullets.slice(0, 3).map((bullet, idx) => {
@@ -219,6 +235,79 @@ export function AssessmentBentoGrid({
 
               </div>
             </div>
+
+            {/* HOW IT WORKS + WHO IT IS FOR — section1, authored on all seven
+                assessments and rendered by nothing until 2026-09-10. The prop
+                was destructured and never used. */}
+            {(section1.title || (Array.isArray(section1.eligibilityPoints) && section1.eligibilityPoints.length > 0) || section1.whoContent) && (
+              <div
+                className="p-[24px] lg:p-[32px] order-2 lg:order-none"
+                style={{
+                  backgroundColor: 'var(--color-bg-card)',
+                  borderRadius: 'var(--radius-lg)',
+                  border: '1px solid var(--color-border-default)'
+                }}
+              >
+                <h3 style={{ fontFamily: 'var(--font-family-base)', fontWeight: 'var(--font-weight-medium)', fontSize: '20px', lineHeight: '30px', letterSpacing: '-0.95px', color: 'var(--color-text-primary)', margin: 0 }}>
+                  {section1.title || 'How it works'}
+                </h3>
+
+                {Array.isArray(section1.eligibilityPoints) && section1.eligibilityPoints.length > 0 && (
+                  <div className="flex flex-col lg:flex-row gap-[12px] lg:gap-[16px] mt-[16px]">
+                    {section1.eligibilityPoints.map((point, idx) => (
+                      <div
+                        key={idx}
+                        className="flex items-center gap-[12px] flex-1 p-[12px]"
+                        style={{ backgroundColor: 'var(--color-bg-page)', borderRadius: 'var(--radius-md)' }}
+                      >
+                        <div className="shrink-0"><CheckIcon /></div>
+                        <p style={{ fontFamily: 'var(--font-family-base)', fontWeight: 'var(--font-weight-regular)', fontSize: 'var(--text-sm)', lineHeight: '21px', color: 'var(--color-text-primary)', margin: 0 }}>
+                          {typeof point === 'string'
+                            ? point
+                            : ((point as { text?: string; title?: string })?.text
+                               ?? (point as { title?: string })?.title ?? '')}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {section1.whoContent && (
+                  <div className="mt-[20px] pt-[16px]" style={{ borderTop: '1px solid var(--color-border-default)' }}>
+                    <p style={{ fontFamily: 'var(--font-family-base)', fontWeight: 'var(--font-weight-medium)', fontSize: 'var(--text-sm)', lineHeight: '24px', color: 'var(--color-text-primary)', margin: 0 }}>
+                      {section1.whoTitle || 'Who is it for?'}
+                    </p>
+                    <p style={{ fontFamily: 'var(--font-family-base)', fontWeight: 'var(--font-weight-regular)', fontSize: 'var(--text-base)', lineHeight: '26px', color: 'var(--color-text-muted)', margin: '4px 0 0' }}>
+                      {section1.whoContent}
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* WHAT YOU'LL SEE — `section3.title` finally over its own content.
+                `section3_content` is empty on all seven; the text lives in
+                `metadata.tile4_content` and had no reader. */}
+            {whatYoullSeeHtml && (
+              <div
+                className="p-[24px] lg:p-[32px] order-2 lg:order-none"
+                style={{
+                  backgroundColor: 'var(--color-bg-card)',
+                  borderRadius: 'var(--radius-lg)',
+                  border: '1px solid var(--color-border-default)'
+                }}
+              >
+                <h3 style={{ fontFamily: 'var(--font-family-base)', fontWeight: 'var(--font-weight-medium)', fontSize: '20px', lineHeight: '30px', letterSpacing: '-0.95px', color: 'var(--color-text-primary)', margin: '0 0 12px' }}>
+                  {section3.title || "What you'll see"}
+                </h3>
+                {/* Same treatment `Assessments.tsx` already gives these tiles. */}
+                <div
+                  className="prose max-w-none [&_p]:mb-3 [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5 [&_li]:mb-1"
+                  style={{ fontFamily: 'var(--font-family-base)', fontSize: 'var(--text-base)', lineHeight: '26px', color: 'var(--color-text-muted)' }}
+                  dangerouslySetInnerHTML={{ __html: stripDuplicateHeading(whatYoullSeeHtml, section3.title || "What you'll see") }}
+                />
+              </div>
+            )}
 
             {/* THINGS TO REMEMBER - Order 3 on Mobile */}
             <div 
@@ -345,7 +434,12 @@ export function AssessmentBentoGrid({
             </div>
 
             {/* IMPORTANT FOOTER - Order 4 on Mobile */}
-            {(importantNote1 || importantNote2) && (
+            {/* IMPORTANT — `metadata.tile5_content` carries four notes, two of
+                them the ones that matter most ("consider reaching out to a
+                mental health professional", "you may choose to share your
+                results"). This printed only the two short `important_note_*`
+                fields. The pair remain the fallback for a record with no tile. */}
+            {(importantNotesHtml || importantNote1 || importantNote2) && (
               <div 
                 className="p-[20px] shadow-sm order-4"
                 style={{
@@ -360,10 +454,17 @@ export function AssessmentBentoGrid({
                   <span style={{ fontSize: '20px', fontWeight: 'var(--font-weight-medium)', color: 'var(--color-primary-on)', letterSpacing: '-0.9px' }}>Important</span>
                 </div>
                 <div className="space-y-4 pl-1">
-                  {importantNote1 && (
+                  {importantNotesHtml ? (
+                    <div
+                      className="prose max-w-none [&_p]:mb-2 [&_ul]:list-disc [&_ul]:pl-5 [&_li]:mb-1 [&_strong]:font-medium"
+                      style={{ fontSize: '15px', lineHeight: '24px', color: 'var(--color-primary-on)', letterSpacing: '-0.2px', opacity: 0.95 }}
+                      dangerouslySetInnerHTML={{ __html: stripDuplicateHeading(importantNotesHtml, 'Important notes') }}
+                    />
+                  ) : null}
+                  {!importantNotesHtml && importantNote1 && (
                     <p style={{ fontSize: '15px', lineHeight: '24px', color: 'var(--color-primary-on)', letterSpacing: '-0.2px', opacity: 0.95 }}>{importantNote1}</p>
                   )}
-                  {importantNote2 && (
+                  {!importantNotesHtml && importantNote2 && (
                     <p style={{ fontSize: '15px', lineHeight: '24px', color: 'var(--color-primary-on)', letterSpacing: '-0.2px', opacity: 0.95 }}>{importantNote2}</p>
                   )}
                 </div>
