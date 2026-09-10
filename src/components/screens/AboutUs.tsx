@@ -15,7 +15,7 @@ import { NEWSLETTER_CONTENT } from '../../lib/constants/content';
 import { PageHero } from '../ui/PageHero';
 import { HowItWorksSection } from './homepage/HowItWorksSection';
 import { BenefitsSection } from './homepage/BenefitsSection';
-import { usePageContent } from '../../hooks/usePageContent';
+import { DEFAULT_CMS_CONTENT } from '../../utils/cms-defaults';
 
 interface AboutUsProps {
   onNavigate?: (route: string, resourceId?: string) => void;
@@ -44,7 +44,7 @@ export function AboutUs({ onNavigate, className }: AboutUsProps) {
   const isMobile = useIsMobile();
 
   // ── CMS content for the entire About Us page ──
-  const { content: cmsContent } = usePageContent('page-about-us');
+  const cmsContent = DEFAULT_CMS_CONTENT['page-about-us'];
   const cms = useMemo(() => {
     if (!cmsContent?.content) return null;
     try { return JSON.parse(cmsContent.content); } catch { return null; }

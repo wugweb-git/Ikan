@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef } from 'react';
 import { ErrorBoundary } from '../../ErrorBoundary';
 import { useIsMobile } from '../../../hooks/useIsMobile';
-import { usePageContent } from '../../../hooks/usePageContent';
+import { DEFAULT_CMS_CONTENT } from '../../../utils/cms-defaults';
 
 // Client logo imports from Figma
 import imgLogo2 from "../../../assets/1fa377842c0edee2e6d99526877c4abfe5cffba4.png";
@@ -30,7 +30,7 @@ export function MissionSection() {
   const animRef = useRef<number>(0);
 
   // ── CMS content with fallback ──
-  const { content: cmsContent } = usePageContent('homepage-mission-section');
+  const cmsContent = DEFAULT_CMS_CONTENT['homepage-mission-section'];
   const cms = useMemo(() => {
     if (!cmsContent?.content) return null;
     try { return JSON.parse(cmsContent.content); } catch { return null; }

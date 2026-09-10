@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { House, ArrowLeft, Search } from 'lucide-react';
 import { useIsMobile } from '../../hooks/useIsMobile';
-import { usePageContent } from '../../hooks/usePageContent';
+import { DEFAULT_CMS_CONTENT } from '../../utils/cms-defaults';
 import { PageHero } from '../ui/PageHero';
 
 interface NotFoundProps {
@@ -11,7 +11,7 @@ interface NotFoundProps {
 export function NotFound({ onNavigate }: NotFoundProps) {
   const isMobile = useIsMobile();
 
-  const { content: cmsContent } = usePageContent('page-not-found');
+  const cmsContent = DEFAULT_CMS_CONTENT['page-not-found'];
   const cms = useMemo(() => {
     if (!cmsContent?.content) return null;
     try { return JSON.parse(cmsContent.content); } catch { return null; }

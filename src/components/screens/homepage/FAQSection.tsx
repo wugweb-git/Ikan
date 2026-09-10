@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { ErrorBoundary } from '../../ErrorBoundary';
 import { MessageSquare } from 'lucide-react';
 import { useIsMobile } from '../../../hooks/useIsMobile';
-import { usePageContent } from '../../../hooks/usePageContent';
+import { DEFAULT_CMS_CONTENT } from '../../../utils/cms-defaults';
 import {
   Accordion,
   AccordionItem,
@@ -45,7 +45,7 @@ const DEFAULT_FAQ_ITEMS = [
 export function FAQSection({ onNavigate }: FAQSectionProps) {
   const isMobile = useIsMobile();
 
-  const { content: cmsContent } = usePageContent('homepage-faq-section');
+  const cmsContent = DEFAULT_CMS_CONTENT['homepage-faq-section'];
   const cms = useMemo(() => {
     if (!cmsContent?.content) return null;
     try { return JSON.parse(cmsContent.content); } catch { return null; }

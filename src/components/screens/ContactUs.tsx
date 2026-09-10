@@ -5,7 +5,7 @@ import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Textarea } from '../ui/textarea';
 import { Card, CardContent } from '../ui/card';
-import { usePageContent } from '../../hooks/usePageContent';
+import { DEFAULT_CMS_CONTENT } from '../../utils/cms-defaults';
 import { PageHero } from '../ui/PageHero';
 import { apiClient } from '../../lib/api-client';
 import { useNotifications } from '../../contexts/NotificationContext';
@@ -18,11 +18,11 @@ interface ContactUsProps {
 
 export function ContactUs({ className, onNavigate, onBack }: ContactUsProps) {
   const isMobile = useIsMobile();
-  const { content } = usePageContent('contact');
+  const content = DEFAULT_CMS_CONTENT['contact'];
   const { showToast } = useNotifications();
 
   // ── CMS structured content ──
-  const { content: cmsFull } = usePageContent('page-contact');
+  const cmsFull = DEFAULT_CMS_CONTENT['page-contact'];
   const cms = useMemo(() => {
     if (!cmsFull?.content) return null;
     try { return JSON.parse(cmsFull.content); } catch { return null; }

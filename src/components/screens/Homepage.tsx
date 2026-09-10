@@ -20,7 +20,7 @@ import { ResourcePost } from '../page-blocks/ResourceCard';
 
 import { assessmentMeta, assessmentImage } from '../../lib/assessment-meta';
 import { apiClient } from '../../lib/api-client';
-import { usePageContent } from '../../hooks/usePageContent';
+import { DEFAULT_CMS_CONTENT } from '../../utils/cms-defaults';
 import { NEWSLETTER_CONTENT } from '../../lib/constants/content';
 
 interface HomepageProps {
@@ -35,7 +35,7 @@ export function Homepage({ onNavigate, onGetStarted }: HomepageProps) {
   const [loading, setLoading] = useState(true);
   const [equipLoading, setEquipLoading] = useState(true);
   const [resourcesLoading, setResourcesLoading] = useState(true);
-  const { content: equipContent } = usePageContent('homepage-equip-intro');
+  const equipContent = DEFAULT_CMS_CONTENT['homepage-equip-intro'];
 
   const equipIntroData = useMemo(() => {
     if (!equipContent?.content) return null;

@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 import { Search, MessageSquarePlus } from 'lucide-react';
 import { useIsMobile } from '../../hooks/useIsMobile';
-import { usePageContent } from '../../hooks/usePageContent';
+import { DEFAULT_CMS_CONTENT } from '../../utils/cms-defaults';
 import { PageHero } from '../ui/PageHero';
 import {
   Accordion,
@@ -20,7 +20,7 @@ export function FAQ({ className, onNavigate }: FAQProps) {
   const [searchQuery, setSearchQuery] = useState('');
 
   // ── CMS content ──
-  const { content: cmsContent } = usePageContent('page-faq');
+  const cmsContent = DEFAULT_CMS_CONTENT['page-faq'];
   const cms = useMemo(() => {
     if (!cmsContent?.content) return null;
     try { return JSON.parse(cmsContent.content); } catch { return null; }
