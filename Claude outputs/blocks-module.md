@@ -5,7 +5,7 @@ Revised 2026-09-10.
 
 > **Status.** The model is settled. The catalog is mid-migration — §26 landed in `f1600b1b`, the two block-type retirements in `1b22ceaa`. Live counts in §11 are read from `/admin/block-type-viewer`, not from memory.
 
-**15 block types · 29 activities · 9 interactions · 7 labels · 6 policy fields.**
+**16 block types · 30 activities · 10 interactions · 7 labels · 7 policy fields.**
 
 ---
 
@@ -35,7 +35,7 @@ A measured 4:32 is different evidence from a typed "about five minutes". Recorde
 
 ---
 
-## 2 · Interactions — 9
+## 2 · Interactions — 10
 
 Each names what the user is **communicating**, not how they touch the screen.
 
@@ -50,10 +50,13 @@ Each names what the user is **communicating**, not how they touch the screen.
 | `order` | putting things in sequence | 1 |
 | `measure` | bracketing a span the app times | 2 |
 | `submit` | **transferring ownership** of an artefact | 2 |
+| `reach` | **contacting a human outside the app** | 1 |
 
 `observe` is the interaction of every teaching block — `lesson`, `learning`, and the reading half of everything else.
 
 **`submit` is defined by the ownership transfer**, which is what makes it specific rather than generic. Choosing an option or writing a sentence creates a value in place and transfers nothing. Handing over a file, or a recording just made, moves an artefact out of the user's possession into the app's.
+
+**`reach` is the only interaction whose destination is not iKan.** Every other gesture ends in a stored value. This one ends in a phone ringing somewhere else. It was added because the crisis panel had nowhere else to sit — see §10.1.
 
 ### Why these are not each other
 
@@ -63,10 +66,12 @@ Each names what the user is **communicating**, not how they touch the screen.
 | `locate` vs `choose` | The app does not own the option set. A date, a time and a place are real-world coordinates, not a list somebody authored |
 | `measure` vs `share` | The user brackets a span; the **app** produces the value. In `share` the user produces it |
 | `confirm` covers assent | `agree` was retired into `confirm`. Assent is affirming. `consent` stays a separate **activity** because it produces the statement text as shown |
+| `reach` vs `submit` | Both hand something over. `submit` hands an artefact to **the app**; `reach` hands the user to **a person**. Nothing is stored but the fact that they went |
+| `reach` vs `confirm` | Tapping *Call 14416* is not affirming that something happened. It is the thing happening |
 
 ---
 
-## 3 · Activities — 29
+## 3 · Activities — 30
 
 ### `observe` — no stored response
 
@@ -143,7 +148,15 @@ Each names what the user is **communicating**, not how they touch the screen.
 
 `timer` is the definition working literally: start, wait, stop, product is a duration. **Not `number` with a stopwatch skin** — a measured duration and a typed one are different evidence.
 
-### The six that carry two interactions
+### `reach`
+
+| activity | interaction | requires | produces | renderer |
+|---|---|---|---|---|
+| `crisis-contact` | observe · reach | `contacts_ref` | `{ route, at }` — which route was taken, or `dismissed` | **built as a modal, not as a block** — see §10.1 |
+
+It stores no answer. It stores that the user was offered help and what they did with the offer, which is the only thing worth knowing afterwards and the only thing that can be audited. `contacts_ref` points at a catalog set the way `scale_ref` does; today the four numbers are hardcoded in `CrisisSupport.tsx` and cannot be regionalised.
+
+### The seven that carry two interactions
 
 | activity | why |
 |---|---|
@@ -153,8 +166,9 @@ Each names what the user is **communicating**, not how they touch the screen.
 | `boolean` | `choose` when it answers a question, `confirm` when it reports what you did |
 | `clinical-instrument` | `choose` an option that carries a score — the choosing is also a `rate` |
 | `ranking` | Judge each item's value (`rate`) to sequence them (`order`) |
+| `crisis-contact` | Read what is on offer (`observe`), take one of the routes (`reach`) |
 
-**Totals.** Response-producing: **23 of 29**. Scale-backed: **5** — `mcq`, `single-select`, `multi-select`, `rating-scale`, `clinical-instrument`. `slider` and `boolean` are deliberately not scale-backed; that is the point of separating them.
+**Totals.** Response-producing: **24 of 30**. Scale-backed: **5** — `mcq`, `single-select`, `multi-select`, `rating-scale`, `clinical-instrument`. `slider` and `boolean` are deliberately not scale-backed; that is the point of separating them.
 
 ---
 
@@ -189,7 +203,7 @@ Each was asked for by name. Each produces data an existing activity already prod
 
 ---
 
-## 5 · Block types — 15
+## 5 · Block types — 16
 
 Policy columns: `auto` = autoAdvance · `back` = navigationBack · `score` = scoringEnabled · `exit` = saveOnExit · `toggle` = saveOnToggle.
 
@@ -209,6 +223,7 @@ Policy columns: `auto` = autoAdvance · `back` = navigationBack · `score` = sco
 | `practice` | Applying a concept to the user's own situation | Data-capture days. Saves on exit because the user is mid-writing | multi-select · input-table · structured-list · number · timer · text · short-text · record · location · upload · paced-breathing | allowed | auto ✗ · back ✓ · **exit ✓** | ⚠ state whether responses are stored or private |
 | `workshop` | Multi-step structured thinking | Ideation done in stages — where blocks must be grouped, not scrolled | multi-select · input-table · text · ephemeral-journal · ranking · upload | allowed, **required**, max 3 | auto ✗ · back ✓ | ✕ no StepGroups · ✕ >3 per group · ✕ mixed intent in one group |
 | `tracker` | The same instrument, repeated daily | Habits and streaks. Should stay identical day to day so the series is comparable | check-grid · input-table · structured-list · rating-scale · slider · boolean · number · timer | not allowed | auto ✗ · **toggle ✓** | ⚠ should stay identical across days |
+| `support` | A routing card. Names what is on offer and hands the user to a person | Authored at the end of a module on a heavy topic, and fired by policy when a risk indicator trips. **0 live** — it exists today as a modal, not a block | crisis-contact | not allowed | auto ✗ · back ✓ · score ✗ · **risk: surface** | requires `contacts_ref` · always dismissible · never counts toward day completion · **may not be the last block** — `conclude` still closes the day |
 | `check-in` | A one-to-three question daily pulse | Mood sampling. Under two minutes, forward-only, no scoring | mcq · single-select · multi-select · boolean · rating-scale · slider · text · short-text | not allowed, 1 per step | auto ✓ · back ✗ · score ✗ · **exit ✓** | ⚠ under 2 min |
 
 ### Retired
@@ -251,15 +266,26 @@ Policy is **not** authored per block. It belongs to the type, which is the whole
 | `scoringEnabled` | Whether responses roll into a score. `assessment` and `quiz` only |
 | `saveOnExit` | Writes when the user leaves mid-block. For types where they are mid-writing |
 | `saveOnToggle` | Writes on every tap. For grids and checklists |
+| `risk` | Whether the type honours `is_risk_indicator`, and what fires when one trips. `none` · `surface` · `gate` |
 | step rules | `allowed` · `required` · max per group · one per step |
 
-### Risk — the sixth field, and it is missing
+### `risk` — the seventh field, and it does not exist yet
 
-`AssessmentFlow.tsx` reads `q.is_risk_indicator === true` per question and fires a crisis pathway **once per run**. That is policy behaviour, authored on content.
+`AssessmentFlow.tsx` reads `q.is_risk_indicator === true` per question and fires a crisis pathway **once per run**. That is policy behaviour, authored on content, honoured by one screen.
 
-**It is currently disabled sitewide** — `CRISIS_ON_ANSWER_ENABLED` is off, with the comment that re-offering the panel on every later answer was worse than not offering it at all.
+**It is currently disabled sitewide** — `CRISIS_ON_ANSWER_ENABLED` is off, with the comment that re-offering the panel on every later answer was worse than not offering it at all. So `is_risk_indicator` is authored on live content and does nothing.
 
-So `is_risk_indicator` is authored and does nothing. It needs to become a real policy field — which type may carry risk indicators, and what fires when one trips — or be removed. **See §13.**
+`risk` closes that. It is a **type** guarantee, and `is_risk_indicator` stays authored per **question** — the two meet here, which is the whole shape of policy.
+
+| value | what it means | carried by |
+|---|---|---|
+| `none` | The type may not carry risk indicators. An author who sets one on this type gets a validation error, not silence | every type not listed below |
+| `surface` | A tripped indicator surfaces `support` **once per run**, non-blocking. The run continues | `assessment` · `check-in` · `journal` · `reflection` |
+| `gate` | Surfaces `support` and the run does not continue until acknowledged | **nothing.** Named so the field has a top end, and so nobody invents a fourth value later |
+
+**Honestly:** only `assessment` reads the flag today, and `journal` and `reflection` would need a text scan they do not have. Declaring the four is the target, not the state.
+
+**Once per run is the rule, not an implementation detail.** It is the reason the flag was switched off. It belongs in policy where it is enforced for every type at once, not in a per-screen ref.
 
 ---
 
@@ -354,6 +380,48 @@ Three defects follow:
 
 ---
 
+## 10.1 · Crisis support — now in the vocabulary
+
+**It was in this document and not in the vocabulary. That is fixed here.** The objection was that a crisis panel is not something a user *does*, so as an activity an author could drop one into a checklist. The objection was wrong about the first half and right about the second: the user does do something — they place a call — and the way to stop it appearing in a checklist is **policy and type rules**, not omission from the catalog.
+
+So it enters as three things, not one:
+
+| layer | what | where |
+|---|---|---|
+| interaction | `reach` — contacting a human outside the app | §2 |
+| activity | `crisis-contact` — `observe · reach`, requires `contacts_ref`, produces `{ route, at }` | §3 |
+| block type | `support` — never scored, never blocking, always dismissible, `risk: surface` | §5 |
+
+### Two entry points, one renderer
+
+`CrisisSupportProps.triggerReason` is `'keywords' | 'user_request' | 'assessment_score'`. Only two of those are ever a block:
+
+| trigger | becomes |
+|---|---|
+| `assessment_score` | policy — `risk: surface` fires the `support` block once per run |
+| authored | an ordinary `support` block placed by the author at the end of a heavy module |
+| `keywords` | policy — same firing, once a text scan exists. **It does not today** |
+| `user_request` | **stays a modal.** It is a navigation action from the header, not part of any day. Same component, same numbers, no block |
+
+**Do not claim the modal goes away.** It does not. What changes is that the two automatic cases and the authored case stop being a component the author cannot see, and become a block with an id, a response identity, and a place in the day.
+
+### What this buys, stated plainly
+
+1. **The offer is auditable.** `{ route, at }` under a response key answers *was help offered, and did they take it* — today nothing is written at all.
+2. **The numbers can be regionalised.** 14416, 9152987821, 9820466726 and 112 are hardcoded in `CrisisSupport.tsx`. `contacts_ref` makes them a catalog set, like every option list already is.
+3. **`once per run` moves to policy**, which is why the flag was disabled. Fix it there and it is fixed for every type.
+
+### The rules that stop the abuse the objection worried about
+
+- `support` permits exactly one activity, `crisis-contact`, and `crisis-contact` is permitted on no other type.
+- `support` may not be the last block on a day. `conclude` still closes.
+- `support` never counts toward day completion and never scores. A user who dismisses it has completed the day.
+- `support` is always dismissible. There is no authored variant that traps someone.
+
+**Still open, and it is a judgement call, not a build question:** whether a `support` block authored inline should be visible in the day's progress count before it fires. Showing it warns; hiding it surprises. Not decided.
+
+---
+
 ## 11 · Live state — read from the viewer, 2026-09-09
 
 | | |
@@ -425,7 +493,9 @@ These are module-wide, and the audit on 2026-09-09 found live violations of four
 
 ## 14 · Renderers owed
 
-**10 interactions and modes**, of which two are layouts on renderers that already exist and are therefore cheap.
+**11 interactions and modes**, of which two are layouts on renderers that already exist and are therefore cheap.
+
+`crisis-contact` is the eleventh and is a special case: the renderer **exists** as `CrisisSupport.tsx` and is fully built. What is owed is not a renderer but a wrapper — the same component reached as a block, with an id, a response key and `contacts_ref` instead of four hardcoded numbers.
 
 **Build order.** `table-review` first — it is `read` arranged as a grid, the cheapest item on the list and the highest value, because a series nobody ever sees is a series nobody benefits from. Then `layout` properly, including the mobile degrade. Then `paced-breathing` · `timer` · `boolean` · `slider`. Then `time` · `date-time` · `location` · `record` · `consent`.
 
@@ -444,7 +514,7 @@ These are module-wide, and the audit on 2026-09-09 found live violations of four
 | `record` and `timer` at all | Both kept on provenance, not shape. Reject provenance and they collapse into `upload` and `number` **together — one decision, not two** |
 | `consent` scope | Onboarding only, or any block type? A consent record that can appear anywhere is harder to audit |
 | **`sleep-diary`** | Retire into `tracker` with the sleep columns as a template? **Check first whether anything branches on `type === 'sleep-diary'`** in scoring, reporting or the recommendation engine. If it does, this is a refactor, not a retype |
-| **Crisis pathway** | `is_risk_indicator` is authored per question and disabled sitewide. Make it a real policy field, or remove it. **It is not vocabulary** — a crisis panel is not something a user does, and as an activity an author could put one in a checklist |
+| **Crisis pathway** | **Resolved 2026-09-10 — see §10.1.** It is vocabulary: `reach` · `crisis-contact` · `support`, gated by the `risk` policy field. What stays open is narrower — whether an authored `support` block shows in the day's progress count before it fires |
 | `complete` vs `read` | `complete` could be `read` plus a last-block policy on `conclude`. Retained by decision; reopenable |
 | `slider` as a name | A device word. It survives because a continuum the app does not own is genuinely different from `rating-scale`. Accepted as a primitive borrowing |
 
@@ -460,6 +530,6 @@ These are module-wide, and the audit on 2026-09-09 found live violations of four
 6. **Retire the duplicates and the two block types.** Retype live blocks, then prove interaction-neutrality against a fresh backup, both prefixes. `rest` goes inside the §19 day-type removal.
 7. **Make the completion card a `conclude` block**, and delete `completionTitle` from `day-layout.ts` with the day types.
 8. **Renderers**, in the §14 order.
-9. **Decide the crisis pathway.**
+9. **The crisis pathway.** Not a decision any more — a build, and it splits in three. **9a** `contacts_ref` as a catalog set, replacing the hardcoded numbers: standalone, breaks nothing, do it whenever. **9b** the `risk` policy field, which is what lets `CRISIS_ON_ANSWER_ENABLED` come back on, because once-per-run stops being per-screen. **9c** `support` as an authorable block. **9a and 9b are worth doing before 9c** — the flag is off in production today and that is the live gap, not the missing block.
 
 **Steps 1–5 are safe. Steps 6 and 7 change stored data and are the only irreversible ones here.**
