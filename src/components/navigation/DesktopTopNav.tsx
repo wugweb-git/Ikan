@@ -53,11 +53,7 @@ export function DesktopTopNav({ currentRoute, onNavigate, className }: DesktopTo
           tabIndex={0}
           onKeyDown={(e) => { if (e.key === 'Enter') onNavigate('/dashboard'); }}
         >
-          {settings.logoIconUrl ? (
-            <img src={settings.logoIconUrl} alt={siteName} className="h-8 w-8 object-contain" />
-          ) : (
-            <LogoIcon size={28} />
-          )}
+          <LogoIcon size={28} />{/* LogoIcon already renders settings.logoIconUrl when set */}
           <div className="text-xl font-medium text-primary" style={{ fontFamily: 'var(--font-family-base)', fontWeight: 'var(--font-weight-medium)' }}>{siteName}</div>
         </div>
 
