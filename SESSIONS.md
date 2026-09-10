@@ -196,3 +196,25 @@ verbatim — the blocks session's work, not edited. Every script and baseline
 the same as putting the path in git, and a green local run cannot tell the
 difference. Any commit that adds a CI step should check `git ls-files` for
 everything that step executes.
+
+## Claimed 2026-09-10 — HERO BANNER REMOVAL (branch `hero-banner-removal`)
+
+Removing the Hero Banner feature entirely, per work order. Touches five screens
+listed as ASSESSMENT-owned (`Assessments.tsx`, `Equip{Detail,Programs}.tsx` glob
+covers `EquipPrograms.tsx`) — no assessment session active, claimed for this
+narrow, mechanical edit only (delete the `heroBanner` state/fetch/conditional,
+promote the existing fallback copy to the literal value; no other logic touched).
+
+| file | change |
+|---|---|
+| `src/components/screens/{AboutUs,Assessments,EquipPrograms,Library,Consultation}.tsx` | remove `getHeroBanner` call, `heroBanner` state, and the `heroBanner?.x \|\|` conditionals on the hero render — fallback copy becomes the literal value, unchanged |
+| `src/components/admin/AdminHeroBannerManager.tsx` | deleted |
+| `src/components/screens/AdminPageManager.tsx` | remove the "Hero Banners" tab + import (file itself is deleted whole in the Page Manager work order, not yet landed) |
+| `src/lib/api-client.ts` | remove `getHeroBanners`/`getHeroBanner`/`updateHeroBanner`/`resetHeroBanner` |
+| `src/supabase/functions/server/index.tsx` | remove `registerHeroBannerRoutes` import + call |
+| `src/supabase/functions/server/hero-banner-routes.ts` | deleted |
+
+Not touched: `hero_banner:` KV rows (data cleanup is separate, per brief) and its
+`KEY_REGISTRY` entry in `kv-audit-routes.ts` (still protects those rows from
+purge). `/content` and `/admin/content` (resource/blog CMS) — different feature,
+different KV prefix, untouched.

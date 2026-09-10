@@ -9,14 +9,6 @@ import { useIsMobile } from '../../hooks/useIsMobile';
 import { SkeletonCard } from '../ui/skeleton-loader';
 import { EquipProgramCard } from '../page-blocks/EquipProgramCard';
 
-interface HeroBanner {
-  title: string;
-  subtitle: string;
-  image_url: string;
-  cta_text?: string;
-  cta_link?: string;
-}
-
 interface EquipProgramsProps {
   onNavigate?: (path: string) => void;
 }
@@ -24,23 +16,14 @@ interface EquipProgramsProps {
 export function EquipPrograms({ onNavigate }: EquipProgramsProps) {
   const [programs, setPrograms] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [heroBanner, setHeroBanner] = useState<HeroBanner | null>(null);
   const isMobile = useIsMobile();
   const { showToast } = useNotifications();
 
   useEffect(() => {
     let isMounted = true;
     loadPrograms(isMounted);
-    loadHeroBanner(isMounted);
     return () => { isMounted = false; };
   }, []);
-
-  const loadHeroBanner = async (isMounted: boolean = true) => {
-    try {
-      const res = await apiClient.getHeroBanner('equip');
-      if (isMounted && res?.banner) setHeroBanner(res.banner);
-    } catch (_e) { /* use defaults */ }
-  };
 
   const loadPrograms = async (isMounted: boolean = true) => {
     try {
@@ -75,11 +58,8 @@ export function EquipPrograms({ onNavigate }: EquipProgramsProps) {
   return (
     <div>
       <PageHero
-        title={heroBanner?.title || 'Equip Programs'}
-        subtitle={heroBanner?.subtitle || 'Evidence-based programs designed to support your mental health journey.'}
-        backgroundImage={heroBanner?.image_url}
-        ctaText={heroBanner?.cta_text}
-        ctaLink={heroBanner?.cta_link}
+        title="Equip Programs"
+        subtitle="Evidence-based programs designed to support your mental health journey."
       />
 
       <div
