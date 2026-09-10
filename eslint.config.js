@@ -32,6 +32,23 @@ export default tseslint.config(
     rules: { 'no-undef': 'off' },
   },
   {
+    // The build ratchets are Node ESM scripts (`process`, `console`, `URL`,
+    // `import.meta`), not browser or TS code. Without this the linter reported
+    // 37 undefined-variable errors in files that run correctly under Node — the
+    // same false positive the service-worker block above fixes for its context.
+    // These are throwaway CLI tools, so the unused-expression/var rules that a
+    // component must obey do not apply.
+    files: ['scripts/**/*.mjs'],
+    languageOptions: {
+      globals: { process: 'readonly', console: 'readonly', URL: 'readonly' },
+    },
+    rules: {
+      'no-undef': 'off',
+      '@typescript-eslint/no-unused-expressions': 'off',
+      '@typescript-eslint/no-unused-vars': 'off',
+    },
+  },
+  {
     files: ['**/*.{ts,tsx}'],
     languageOptions: {
       ecmaVersion: 2022,
