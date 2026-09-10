@@ -283,3 +283,31 @@ Not touched: `/content`, `/admin/content` (the separate resource/blog CMS —
 different KV prefix, different routes, confirmed by grep before any deletion).
 KV rows (`page:`/`cms_page:`) left in place per the owner's standing
 instruction — only code paths removed, no data deleted.
+
+## Claimed 2026-09-10 — BRAND MARK / ICON UNIFY (branch `icon-unify`)
+
+Single-sourcing the icon-only mark from the owner-supplied `Vector.svg` (58×58,
+1:1) and using it everywhere, per §06d of the system map.
+
+New `src/components/BrandMark.tsx` holds the geometry as `BRAND_MARK_PATH` +
+`BRAND_MARK_VIEWBOX` — the single source of truth. The component is 1:1,
+`fill: currentColor` (colourable), takes a `padding` prop for filled/app-icon
+containers (0.20 = the maskable safe zone), and supports `animation`
+(draw · spin · pulse) plus `revealOnScroll`.
+
+`Logo.tsx` `LogoIcon` now renders `<BrandMark>` instead of an inline SVG, so
+every LogoIcon site (AdminLoginScreen, DesktopTopNav, AdminDashboard, and the
+composed `Logo`/`LogoFull` callers) picks up the new mark with no call-site
+change. Deleted the Figma-hash source `src/imports/svg-ptmlmkxncr.ts` (only
+Logo.tsx used it — the §06d "unfindable filename" finding). Removed the
+redundant `settings.logoIconUrl` branch in `DesktopTopNav` (LogoIcon already
+handles the admin override; it was also the 32-vs-28px size bug).
+
+Regenerated `public/favicon.svg` from the same path, and rasterised the five
+real PWA icons (`pwa-64/192/512`, `apple-touch-icon`, `maskable-icon-512`) from
+it via `sips` — replacing the 153–175-byte text placeholders. Dark #2A2A2A
+tile, white mark; maskable carries 20% safe-zone padding.
+
+Not touched: `LogoFull` geometry (the wordmark lockup, `svg-epzl744ze1.ts`) —
+different asset, out of scope. `faviconUrl` runtime setting still dead (a
+separate wire-or-remove decision).
