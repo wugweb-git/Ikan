@@ -118,6 +118,48 @@ export function NewsletterBlock({
               {(benefits && benefits[0]) ||
                 'Stay informed about mental health tips, new programs, and community updates.'}
             </p>
+
+            {/* THE OTHER TWO BENEFITS. Three are authored in
+                `NEWSLETTER_CONTENT.BENEFITS` and passed in by both detail
+                screens; `benefits[0]` rendered one and dropped the rest. */}
+            {Array.isArray(benefits) && benefits.length > 1 && (
+              <ul style={{ listStyle: 'none', margin: '14px 0 0', padding: 0, display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                {benefits.slice(1).map((benefit, i) => (
+                  <li
+                    key={i}
+                    style={{
+                      fontFamily: 'var(--font-family-base)',
+                      fontWeight: 'var(--font-weight-regular)',
+                      fontSize: isMobile ? '13px' : '14px',
+                      lineHeight: '1.6',
+                      color: 'rgba(255,255,255,0.7)',
+                      display: 'flex', alignItems: 'flex-start', gap: '8px',
+                    }}
+                  >
+                    <span aria-hidden="true" style={{ color: 'rgba(255,255,255,0.45)', lineHeight: '1.6' }}>—</span>
+                    {benefit}
+                  </li>
+                ))}
+              </ul>
+            )}
+
+            {/* The privacy line. Authored as `PRIVACY_TEXT`, passed in, and
+                rendered nowhere — on a form that collects an email address. */}
+            {privacyText && (
+              <p
+                style={{
+                  fontFamily: 'var(--font-family-base)',
+                  fontWeight: 'var(--font-weight-regular)',
+                  fontSize: '12px',
+                  lineHeight: '1.6',
+                  color: 'rgba(255,255,255,0.55)',
+                  margin: '14px 0 0',
+                  maxWidth: '380px',
+                }}
+              >
+                {privacyText}
+              </p>
+            )}
           </div>
 
           {/* Right — form */}

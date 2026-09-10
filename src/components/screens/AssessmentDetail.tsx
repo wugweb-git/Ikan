@@ -323,7 +323,10 @@ export function AssessmentDetail({ assessmentId, onNavigate }: AssessmentDetailP
           buttonText={assessmentData.cta_button_text}
           buttonLink={assessmentData.cta_button_link}
           onButtonClick={() => handleNavigate(assessmentData.cta_button_link || `/assessment-flow?type=${assessmentId}`)}
-          backgroundImage={assessmentData.hero_image}
+          /* Was `hero_image` alone, which the stress assessment does not carry —
+             its hero rendered blank. `assessmentImage` is the same ladder this
+             file already uses for cards. */
+          backgroundImage={assessmentImage(assessmentData) ?? undefined}
           backgroundAlt={`${assessmentData.title} - Assessment landing page`}
         />
         
@@ -356,6 +359,10 @@ export function AssessmentDetail({ assessmentId, onNavigate }: AssessmentDetailP
           difficulty={assessmentData.difficulty || 'Beginner'}
           importantNote1={assessmentData.metadata?.important_note_1}
           importantNote2={assessmentData.metadata?.important_note_2}
+          /* The two tiles the grid had no props for. `section3_content` is empty
+             on all seven assessments — the text has always been in these. */
+          whatYoullSeeHtml={assessmentData.metadata?.tile4_content}
+          importantNotesHtml={assessmentData.metadata?.tile5_content}
         />
         
         {/* RELATED ASSESSMENTS */}

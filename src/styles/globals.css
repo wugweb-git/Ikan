@@ -43,7 +43,14 @@
      size. Use --ikan-teal-on-wash for TEXT on a teal surface; keep
      --ikan-brand-teal-dark for fills, borders and icons.
      5.48:1 on #E8F4F0 · 5.01:1 on #D4EDE5. Measured 2026-09-10, axe-core 4.13. */
-  --ikan-teal-on-wash: #356B5A;
+  /* Single source of truth: this is an ALIAS of --ikan-brand-teal-text, which
+     carries the same #356B5A and belongs to the six-hue -text family below.
+     Two sessions solved this failure independently on 2026-09-10 and landed two
+     names for one value. Both names are kept so neither set of call sites
+     breaks, but the value is defined once. Prefer --ikan-brand-teal-text in new
+     code; --ikan-teal-on-wash reads better where the ground is specifically the
+     teal wash, and the ratios in the comment above are the ones that apply there. */
+  --ikan-teal-on-wash: var(--ikan-brand-teal-text);
   --ikan-brand-teal-bg: #E8F4F0;
   --ikan-brand-teal-bg-end: #D4EDE5;
   --ikan-brand-library-accent: #00A991;

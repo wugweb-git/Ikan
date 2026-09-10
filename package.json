@@ -79,6 +79,10 @@
     "typecheck": "tsc --noEmit -p src/tsconfig.json",
     "test": "node --test \"src/**/*.test.ts\"",
     "lint": "eslint .",
-    "lint:ratchet": "bash scripts/lint-ratchet.sh"
+    "lint:ratchet": "bash scripts/lint-ratchet.sh",
+    "contrast:ratchet": "node scripts/contrast-ratchet.mjs",
+    "lint:rawhex": "node scripts/lint-raw-hex.mjs",
+    "lint:a11y": "node scripts/lint-a11y-static.mjs",
+    "lint:design": "npm run contrast:ratchet && npm run lint:rawhex && npm run lint:a11y"
   }
 }

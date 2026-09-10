@@ -28,6 +28,53 @@ Claiming three unowned files for the design-system + accessibility fixes filed i
 | `src/App.tsx` | remove the focus/blur handlers that re-disable pinch zoom (lines ~398-416) |
 | `src/styles/globals.css` | brand `-text` siblings (additive), 16px font-size floor on form controls |
 
+### 2026-09-10 · second collision — contrast lint, and one finding handed over
+
+Both sessions started a contrast lint within minutes of each other. **The blocks
+session's `scripts/contrast-ratchet.mjs` wins** — it is curated, tested
+(`src/lib/contrast.test.ts`), and already wired into `ci.yml`. The system-map
+session's `scripts/lint-contrast.mjs` is dropped to `_to_delete/`; delete it.
+
+`.contrast-baseline` was briefly set to `16` by the dropped script. **It is now
+`5`, which is what `contrast-ratchet.mjs` actually measures.** Do not raise it.
+
+**Two findings the surviving lint cannot see, handed to the blocks session:**
+
+1. **`.dark` does not redefine `--color-text-primary`.** It redefines
+   `--color-bg-page` and `--color-bg-card` (both to grey-10/grey-9) and
+   `--color-text-muted`, but primary body text keeps `#151515`. In dark mode
+   that is `#151515` on `#0D0D0D` — **1.06:1, invisible**. It has never rendered
+   because nothing adds the `.dark` class, which is the only reason this has not
+   been reported as a bug. Wiring a theme switch before fixing this ships an
+   unreadable app.
+
+2. **All six `-text` brand tokens fail on dark grounds** — 2.5:1 to 3.3:1. They
+   were tuned for `--color-bg-card` and `--color-bg-page` in light and `.dark`
+   does not redefine them.
+
+Neither shows up in `contrast-ratchet.mjs` because it checks curated light-theme
+pairs only. Adding a dark pass and an automatic rule for `*-text` tokens against
+both grounds would catch both. That is the blocks session's file to change.
+
+### 2026-09-10 · collision resolved in `globals.css`
+
+Both sessions fixed the teal-on-wash contrast failure on the same day and landed
+two tokens for one value:
+
+| token | by | value |
+|---|---|---|
+| `--ikan-brand-teal-text` | system-map session, commit `46579165` | `#356B5A` |
+| `--ikan-teal-on-wash` | blocks session, commit `2157e492` | `#356B5A` |
+
+`--ikan-teal-on-wash` is now `var(--ikan-brand-teal-text)`. **Both names still
+resolve, so no call site in either session's work breaks** — `AboutUs.tsx` points
+at `-on-wash`, the other five hues use `-text`. The value is defined once.
+
+This was a shared-file seam that `SESSIONS.md` did not cover: neither session was
+wrong, and neither could have seen the other's token before it landed. If a third
+token for the same job appears, alias it the same way rather than picking a winner
+and rewriting call sites.
+
 Not touched, deliberately:
 
 - `src/components/page-blocks/**` — ASSESSMENT-owned. Holds six content-drop bugs
@@ -43,6 +90,31 @@ Not touched, deliberately:
   decision, not a patch.
 - **Radius scale rename** — 154+ call sites.
 
+
+## Claimed 2026-09-10 — MOBILE AUDIT session
+
+Taking `src/components/page-blocks/**` and the two detail screens for the six
+content-drop bugs the SYSTEM MAP session raised and deliberately left
+(`section1`, `section3_content`, `tile4_content`, `tile5_content`, the newsletter
+benefits, the self-recommending related query). They are listed above as
+ASSESSMENT-owned; the work order assigns them here and no assessment session is
+active, so they are claimed rather than taken silently.
+
+| file | change |
+|---|---|
+| `src/components/page-blocks/AssessmentBentoGrid.tsx` | render `section1`; "What it measures" over the bullets; `tile4_content` under "What you'll see"; `tile5_content` in Important |
+| `src/components/page-blocks/EquipBentoGrid.tsx` | split newline-delimited tiles; outcome title/subtitle; "program includes" from `tile2_content` |
+| `src/components/page-blocks/NewsletterBlock.tsx` | render all three benefits and the privacy line |
+| `src/components/screens/EquipDetail.tsx` | hero image ladder; exclude self from related by id AND slug |
+| `src/components/screens/AssessmentDetail.tsx` | hero image ladder; pass the two tile props |
+| `src/lib/cms-content.ts` | new, unowned — the parsing, with tests |
+
+Not touched, deliberately:
+
+- `src/styles/globals.css`, `index.html`, `src/App.tsx` — claimed by the SYSTEM MAP
+  session above. Dark mode, the weight tokens, the radius scale and the remaining
+  contrast pairs are all in those files and wait for that session to hand over.
+- `src/components/blocks/**`, `src/components/player/**` — BLOCKS-owned.
 
 ## The three seams
 
@@ -105,3 +177,22 @@ Serialize. Say so, finish, hand over. There is no mechanism here that makes two
 agents writing one file safe, and a worktree would not help — the connected
 folder is a single mount, and the real exposure is the shared database, not the
 shared index.
+
+### 2026-09-10 · a CI break this session made, and closed
+
+`d1e81c62` put `contrast:ratchet` in package.json and `4e5bfef6` put a
+"Contrast (ratchet)" step in `ci.yml`. Both point at
+`scripts/contrast-ratchet.mjs`, which was still **untracked** — the blocks
+session had written it but never committed it, and the note above ("already
+wired into ci.yml") described the wiring, not the file. Locally every ratchet
+ran green because the file was on disk. CI clones fresh, so the next push
+would have failed on a missing module.
+
+`2fd814b2` commits `scripts/contrast-ratchet.mjs` and `src/lib/contrast.test.ts`
+verbatim — the blocks session's work, not edited. Every script and baseline
+`ci.yml` reaches is now tracked; checked explicitly, not assumed.
+
+**The general shape of the mistake, worth keeping:** wiring CI to a path is not
+the same as putting the path in git, and a green local run cannot tell the
+difference. Any commit that adds a CI step should check `git ls-files` for
+everything that step executes.

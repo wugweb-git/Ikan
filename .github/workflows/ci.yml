@@ -38,6 +38,22 @@ jobs:
       - name: Lint (ratchet)
         run: npm run lint:ratchet
 
+      # A colour pair that fails AA is unreadable for some of the people using
+      # it, and looks fine to whoever changed the token. Ratcheted like the rest.
+      - name: Contrast (ratchet)
+        run: npm run contrast:ratchet
+
+      # A token that can be bypassed is a suggestion. Counts hardcoded hex and
+      # literal rgb()/hsl() in src/components and fails when the number rises.
+      - name: Raw colour literals (ratchet)
+        run: npm run lint:rawhex
+
+      # Five rules, each matching a defect measured live against production.
+      # Static, because this repo has no DOM test stack and four rules do not
+      # justify standing one up.
+      - name: Static a11y (ratchet)
+        run: npm run lint:a11y
+
       # A broken build is the one thing that must never merge.
       - name: Build
         run: npm run build

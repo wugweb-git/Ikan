@@ -13,6 +13,7 @@ import { ResourcePost } from '../page-blocks/ResourceCard';
 import { MobileHeader } from '../navigation/MobileHeader';
 import { useIsMobile } from '../../hooks/useIsMobile';
 import { useSeo } from '../../hooks/useSeo';
+import { recordImage } from '../../lib/cms-content';
 import { EmptyState } from '../ui/empty-state';
 import { Skeleton } from '../ui/skeleton-loader';
 import { NEWSLETTER_CONTENT, LEGACY_PROGRAM_IDS } from '../../lib/constants/content';
@@ -300,8 +301,21 @@ export function EquipDetail({ equipId = 'sleep-tight-9', onNavigate }: EquipDeta
   };
 
   // Map related programs to EquipBlock format
+  /*
+    EXCLUDE THIS PROGRAMME — by id AND slug.
+
+    `equipId` is the URL parameter, and since the page moved to `/equip/<slug>`
+    that parameter is usually a SLUG. `p.id !== equipId` compares a uuid to
+    "sleep-tight", which is always true, so Sleep Tight's own "More Equip
+    Programs" listed Sleep Tight first. Compare against what the loaded record
+    says it is, not against how it was addressed.
+  */
+  const self = equipData as unknown as { id?: string; slug?: string } | null;
+  const selfKeys = [equipId, self?.id, self?.slug].filter(Boolean) as string[];
+  const isSelf = (p: { id?: string; equip_id?: string; slug?: string }) =>
+    selfKeys.includes(p.id ?? '') || selfKeys.includes(p.equip_id ?? '') || selfKeys.includes(p.slug ?? '');
   const equipPrograms = relatedPrograms
-    .filter(p => p.id !== equipId) // Exclude current program
+    .filter(p => !isSelf(p as { id?: string; equip_id?: string; slug?: string }))
     .filter(p => !legacyIds.includes(p.id || p.equip_id)) // Exclude legacy programs
     .slice(0, 3)
     .map((p: any) => ({
@@ -345,7 +359,9 @@ export function EquipDetail({ equipId = 'sleep-tight-9', onNavigate }: EquipDeta
           buttonText={ctaButtonText}
           buttonLink={equipData.cta_button_link || `/equip-program-onboarding?id=${equipId}`}
           onButtonClick={handleCtaClick}
-          backgroundImage={equipData.hero_image}
+          /* `hero_image` is set on no live programme, so this band was empty on
+             all four. `recordImage` walks the record's own images. */
+          backgroundImage={recordImage(equipData as unknown as Record<string, unknown>)}
           backgroundAlt={`${equipData.title} - Program landing page`}
         />
 

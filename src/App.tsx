@@ -289,7 +289,7 @@ function AppContent() {
         '/equip', '/equip-programs-landing', '/equip-detail', '/equip-program-onboarding', '/equip-program-flow', '/equip-program-completion',
         '/consultation', '/consultation-detail', '/resource', '/resource-detail', '/account', 
         '/about', '/faq', '/privacy', '/privacy-policy', '/terms', '/contact', '/return-policy', '/cancellation-policy', '/sitemap', '/login', '/reset-password',
-        '/admin', '/admin/reporting', '/admin/login', '/admin/resources', '/admin/equip', '/admin/equip-analytics', '/admin/users', '/admin/consultants', '/admin/assessments', '/admin/settings', '/admin/pages', '/admin/media', '/admin/contact-newsletter', '/admin/block-type-viewer',
+        '/admin', '/admin/reporting', '/admin/login', '/admin/resources', '/admin/equip', '/admin/equip-analytics', '/admin/users', '/admin/consultants', '/admin/assessments', '/admin/settings', '/admin/pages', '/admin/media', '/admin/contact-newsletter', '/admin/block-type-viewer', '/admin/block-gallery',
         '/admin/categories', '/admin/checkin-scales', '/admin/recommendations', '/admin/communication', '/admin/payment-gateway', '/admin/kv-audit', '/admin/checkin-builder', '/admin/scoring-engine',
         '/join/professional',
         '/timeline',

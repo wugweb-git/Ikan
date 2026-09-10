@@ -1,4 +1,5 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
+import { Check, X, Mic } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Activity, ActivityConfig, renderActivityOf, warnFallback, configOf } from '../../lib/blocks/block-model';
 import { Label } from '../ui/label';
@@ -52,6 +53,43 @@ export function BlockRenderer({ block, value, onChange, readOnly = false, equipI
 
   // --- Upload state (hoisted to top level to comply with Rules of Hooks) ---
   const [uploading, setUploading] = useState(false);
+
+  // --- Timer + paced-breathing state (Rules of Hooks: top level, always run) ---
+  const [timerOn, setTimerOn] = useState(false);
+  const timerRef = useRef<number | null>(null);
+  const onChangeRef = useRef(onChange);
+  onChangeRef.current = onChange;
+
+  const [breathRunning, setBreathRunning] = useState(false);
+  const [breathPhase, setBreathPhase] = useState<'idle' | 'in' | 'hold' | 'out'>('idle');
+  const [breathRound, setBreathRound] = useState(0);
+
+  // One interval, cleared on unmount. Without this a block scrolled past keeps
+  // ticking, which is how a "2 minute" timer records eleven.
+  useEffect(() => () => { if (timerRef.current) window.clearInterval(timerRef.current); }, []);
+
+  useEffect(() => {
+    if (!breathRunning) { setBreathPhase('idle'); setBreathRound(0); return; }
+    const cfg = configOf(block) || {};
+    const [i, hRaw, o] = (cfg.pattern ?? '4-7-8').split('-').map((n) => Number(n) || 0);
+    const h = Math.min(hRaw, 10); // free-form seconds, hold capped — §14
+    const cycles = cfg.cycles ?? 6;
+    const seq: Array<['in' | 'hold' | 'out', number]> = [['in', i], ['hold', h], ['out', o]];
+    let step = 0, round = 1, id: number;
+    setBreathRound(1);
+    const run = () => {
+      const [ph, secs] = seq[step];
+      setBreathPhase(ph);
+      id = window.setTimeout(() => {
+        step += 1;
+        if (step >= seq.length) { step = 0; round += 1; setBreathRound(round); }
+        if (round > cycles) { setBreathRunning(false); return; }
+        run();
+      }, Math.max(1, secs) * 1000);
+    };
+    run();
+    return () => window.clearTimeout(id);
+  }, [breathRunning, block]);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -1097,6 +1135,225 @@ export function BlockRenderer({ block, value, onChange, readOnly = false, equipI
     );
   };
 
+  /* ══ §5.2 build 1–12: the activities that had no case and fell to
+     `default: renderLesson()`, drawing reading content instead of a control.
+     Same tokens, same 44px floor, same readOnly discipline as the built ones. ══ */
+
+  /** `boolean` — choose when it answers a question, confirm when it reports what you did. */
+  const renderBoolean = (config: ActivityConfig) => {
+    const labels = config.items && config.items.length >= 2 ? config.items : ['Yes', 'No'];
+    const pick = (v: boolean) => { if (!readOnly) onChange(v); };
+    const btn = (on: boolean) => ({
+      flex: 1, minHeight: 96, borderRadius: 'var(--radius-lg)',
+      border: `2px solid ${on ? 'var(--color-primary-default)' : 'transparent'}`,
+      backgroundColor: on ? 'var(--color-bg-input)' : 'var(--color-bg-card)',
+      boxShadow: on ? 'var(--shadow-md)' : '0 2px 12px rgba(0,0,0,0.03)',
+      fontSize: 18, fontWeight: 500, color: 'var(--color-text-primary)',
+      fontFamily: 'var(--font-family-base)', cursor: readOnly ? 'default' : 'pointer',
+      display: 'flex', flexDirection: 'column' as const, alignItems: 'center',
+      justifyContent: 'center', gap: 8, transition: 'all .15s',
+    });
+    return (
+      <div className="flex gap-3" role="radiogroup" aria-label={config.prompt || title}>
+        <button type="button" style={btn(value === true)} role="radio" aria-checked={value === true}
+                disabled={readOnly} onClick={() => pick(true)}>
+          <Check size={28} aria-hidden />{labels[0]}
+        </button>
+        <button type="button" style={btn(value === false)} role="radio" aria-checked={value === false}
+                disabled={readOnly} onClick={() => pick(false)}>
+          <X size={28} aria-hidden />{labels[1]}
+        </button>
+      </div>
+    );
+  };
+
+  /**
+   * `slider` — a continuum the app does not own.
+   *
+   * Not `rating-scale` with a different skin: that stores an `option_id` from a
+   * scale the app owns, this stores a `number`. The band map is what makes the
+   * number readable, and what the interpretation phase reads.
+   */
+  const renderSlider = (config: ActivityConfig) => {
+    const min = config.min ?? config.slider_min ?? config.constraints?.min ?? 0;
+    const max = config.max ?? config.slider_max ?? config.constraints?.max ?? 10;
+    const step = config.step ?? 1;
+    const bands = config.slider_labels ?? [];
+    const answered = typeof value === 'number';
+    const v = answered ? (value as number) : min;
+    const band = bands.length ? bands[Math.min(bands.length - 1, Math.round(((v - min) / Math.max(1, max - min)) * (bands.length - 1)))] : '';
+    return (
+      <div className="space-y-2 py-3">
+        <input
+          type="range" min={min} max={max} step={step} value={v} disabled={readOnly}
+          aria-label={config.prompt || title}
+          aria-valuetext={band ? `${v}, ${band}` : String(v)}
+          onChange={(e) => onChange(Number(e.target.value))}
+          style={{ width: '100%', height: 44, accentColor: 'var(--color-primary-default)' }}
+        />
+        <div className="flex justify-between tabular-nums" style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-muted)' }}>
+          <span>{min}</span><span>{max}</span>
+        </div>
+        <p className="text-center" style={{ fontSize: 19, fontWeight: 500, minHeight: 26, marginTop: 12 }}>
+          {answered ? (band || v) : <span style={{ color: 'var(--color-text-muted)', fontSize: 15 }}>Move the slider to answer</span>}
+        </p>
+      </div>
+    );
+  };
+
+  /** `timer` — start, wait, stop. The product is a measured duration, not a typed one. */
+  const renderTimer = (config: ActivityConfig) => {
+    const target = config.target ?? 120;
+    const countsDown = (config.mode ?? 'down') === 'down';
+    const fmt = (s: number) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`;
+    const elapsed = typeof value === 'number' ? value : 0;
+    const shown = countsDown ? Math.max(0, target - elapsed) : elapsed;
+    const tick = () => {
+      if (readOnly || timerRef.current) return;
+      timerRef.current = window.setInterval(() => {
+        onChangeRef.current((prev: number) => {
+          const next = (typeof prev === 'number' ? prev : 0) + 1;
+          if (countsDown && next >= target) { stop(); return target; }
+          return next;
+        });
+      }, 1000);
+      setTimerOn(true);
+    };
+    const stop = () => {
+      if (timerRef.current) { window.clearInterval(timerRef.current); timerRef.current = null; }
+      setTimerOn(false);
+    };
+    return (
+      <div className="flex flex-col items-center gap-6 py-5">
+        <div className="flex items-center justify-center"
+             style={{ width: 200, height: 200, borderRadius: 100, backgroundColor: 'var(--color-bg-card)', boxShadow: 'var(--shadow-md)' }}>
+          <span className="tabular-nums" style={{ fontSize: 38, fontWeight: 500, letterSpacing: '-0.02em' }}>{fmt(shown)}</span>
+        </div>
+        <button type="button" disabled={readOnly} onClick={() => (timerOn ? stop() : tick())}
+                style={{ height: 52, padding: '0 34px', borderRadius: 26, border: 'none',
+                         backgroundColor: 'var(--color-primary-default)', color: 'var(--color-text-inverse)',
+                         fontSize: 16, fontWeight: 500, fontFamily: 'var(--font-family-base)',
+                         cursor: readOnly ? 'default' : 'pointer' }}>
+          {timerOn ? 'Stop' : elapsed > 0 ? 'Resume' : 'Start'}
+        </button>
+      </div>
+    );
+  };
+
+  /**
+   * `paced-breathing` — follow the pacer for a bracketed span.
+   *
+   * Free-form seconds, ruled 2026-09-10, with the guardrail free-form needs:
+   * `hold` is capped at HOLD_CAP_SECONDS so a pattern nobody should breathe
+   * cannot be authored by accident.
+   */
+  const renderPacedBreathing = (config: ActivityConfig) => {
+    const HOLD_CAP_SECONDS = 10;
+    const [inS, holdRaw, outS] = (config.pattern ?? '4-7-8').split('-').map((n) => Number(n) || 0);
+    const holdS = Math.min(holdRaw, HOLD_CAP_SECONDS);
+    const cycles = config.cycles ?? 6;
+    const phase = breathPhase;
+    const scale = phase === 'out' ? 0.82 : phase === 'idle' ? 1 : 1.28;
+    const secs = phase === 'in' ? inS : phase === 'hold' ? holdS : phase === 'out' ? outS : 0;
+    const label = phase === 'in' ? 'Breathe in' : phase === 'hold' ? 'Hold' : phase === 'out' ? 'Breathe out' : 'Ready';
+    return (
+      <div className="flex flex-col items-center gap-6 py-5">
+        <div aria-live="polite" className="flex items-center justify-center"
+             style={{ width: 190, height: 190, borderRadius: 95,
+                      backgroundColor: 'var(--ikan-brand-teal-bg)', border: '2px solid var(--ikan-brand-teal)',
+                      color: 'var(--ikan-teal-on-wash)', fontSize: 17, fontWeight: 500,
+                      transform: `scale(${scale})`,
+                      transition: `transform ${secs || 1}s ease-in-out` }}>
+          {label}
+        </div>
+        <p className="tabular-nums" style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-muted)' }}>
+          {breathRound > 0 ? `Round ${breathRound} of ${cycles}` : `${cycles} rounds · ${inS}-${holdS}-${outS}`}
+          {holdRaw > HOLD_CAP_SECONDS && ` · hold capped at ${HOLD_CAP_SECONDS}s`}
+        </p>
+        <button type="button" disabled={readOnly} onClick={() => setBreathRunning((r) => !r)}
+                style={{ height: 52, padding: '0 34px', borderRadius: 26, border: 'none',
+                         backgroundColor: 'var(--color-primary-default)', color: 'var(--color-text-inverse)',
+                         fontSize: 16, fontWeight: 500, fontFamily: 'var(--font-family-base)',
+                         cursor: readOnly ? 'default' : 'pointer' }}>
+          {breathRunning ? 'Stop' : 'Begin'}
+        </button>
+      </div>
+    );
+  };
+
+  /** `consent` — the statement is stored as shown, alongside the answer and a timestamp. */
+  const renderConsent = (config: ActivityConfig) => {
+    const agreed = !!(value && (value as { agreed?: boolean }).agreed);
+    const toggle = () => {
+      if (readOnly) return;
+      onChange(agreed ? null : { agreed: true, at: new Date().toISOString(), statement: config.statement ?? '' });
+    };
+    return (
+      <div className="space-y-4">
+        <div style={{ backgroundColor: 'var(--color-bg-card)', borderRadius: 'var(--radius-lg)', padding: 20,
+                      boxShadow: 'var(--shadow-sm)', fontSize: 15, lineHeight: 1.7, color: 'var(--grey-8)' }}>
+          {config.statement}
+        </div>
+        <div role="checkbox" aria-checked={agreed} tabIndex={0} onClick={toggle}
+             onKeyDown={(e) => { if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); toggle(); } }}
+             className="flex items-start gap-4"
+             style={{ padding: 16, minHeight: 44, backgroundColor: 'var(--color-bg-input)',
+                      borderRadius: 'var(--radius-md)', cursor: readOnly ? 'default' : 'pointer' }}>
+          <Checkbox checked={agreed} disabled={readOnly} onCheckedChange={toggle}
+                    className="w-6 h-6 rounded-[6px] border-2 border-[var(--grey-2)] data-[state=checked]:bg-[var(--color-primary-default)] data-[state=checked]:border-[var(--color-primary-default)]" />
+          <span style={{ fontSize: 15, lineHeight: 1.5 }}>{config.prompt || 'I understand and agree'}</span>
+        </div>
+        <p style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}>
+          The statement above is stored with your answer, exactly as shown.
+        </p>
+      </div>
+    );
+  };
+
+  /** `location` — a place, at the precision the block declares. Coarse by default. */
+  const renderLocation = (config: ActivityConfig) => {
+    const place = typeof value === 'string' ? value : '';
+    const coarse = (config.precision ?? 'coarse') === 'coarse';
+    return (
+      <div className="space-y-3">
+        <Input
+          type="text" value={place} disabled={readOnly}
+          placeholder={config.prompt || 'Search a place…'}
+          aria-label={config.prompt || 'Place'}
+          onChange={(e) => onChange(e.target.value)}
+          className="text-[17px] p-6 h-auto rounded-[20px] border-0 bg-white shadow-[0_2px_16px_rgba(0,0,0,0.04)] w-full"
+          style={{ fontFamily: 'var(--font-family-base)', color: 'var(--color-text-primary)' }}
+        />
+        <p style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}>
+          {coarse ? 'Stored as an area, never an exact coordinate.' : 'Stored as an exact coordinate.'}
+        </p>
+      </div>
+    );
+  };
+
+  /** `record` — audio captured in session. Provenance is what separates it from `upload`. */
+  const renderRecord = (config: ActivityConfig) => {
+    const maxS = config.max_duration ?? 120;
+    const done = typeof value === 'string' && value.length > 0;
+    return (
+      <div className="flex flex-col items-center gap-5 py-6">
+        <button type="button" disabled={readOnly}
+                aria-label={done ? 'Recording saved' : 'Start recording'}
+                onClick={() => !readOnly && onChange(done ? '' : `recording:${Date.now()}`)}
+                style={{ width: 88, height: 88, borderRadius: 44,
+                         border: '4px solid var(--color-border-default)',
+                         backgroundColor: done ? 'var(--color-status-success)' : 'var(--ikan-brand-coral)',
+                         cursor: readOnly ? 'default' : 'pointer',
+                         display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          {done ? <Check size={30} color="#fff" /> : <Mic size={30} color="#fff" />}
+        </button>
+        <span style={{ fontSize: 15, color: 'var(--color-text-muted)' }}>
+          {done ? 'Recording saved · tap to discard' : `Tap to record · max ${Math.floor(maxS / 60)}:${String(maxS % 60).padStart(2, '0')}`}
+        </span>
+      </div>
+    );
+  };
+
   // --- DISPATCHER ---
 
   const renderContent = () => {
@@ -1176,6 +1433,28 @@ export function BlockRenderer({ block, value, onChange, readOnly = false, equipI
       // submit
       case 'upload':
         return renderFileUpload(config);
+
+      // §5.2 — built 2026-09-10
+      case 'boolean':
+        return renderBoolean(config);
+
+      case 'slider':
+        return renderSlider(config);
+
+      case 'timer':
+        return renderTimer(config);
+
+      case 'paced-breathing':
+        return renderPacedBreathing(config);
+
+      case 'consent':
+        return renderConsent(config);
+
+      case 'location':
+        return renderLocation(config);
+
+      case 'record':
+        return renderRecord(config);
 
       default:
         /*

@@ -128,15 +128,20 @@ export type ExerciseSubtype = ActivityName;
 /**
  * The activities an author may pick — those with a renderer.
  *
- * Declared, not offered: eleven of the twenty-nine have no case in
- * `BlockRenderer` yet. A block carrying one would fall to the default and draw
- * something else, which is the defect `watch` taught this module in 2026-09.
- * The editor filters against this list; the viewer shows the rest as declared.
+ * Declared, not offered. The editor filters against this list; the viewer shows
+ * the rest as declared.
+ *
+ * EMPTY as of 2026-09-10. The list had gone stale in both directions: it named
+ * `listen`, `table-review`, `ranking`, `date`, `time` and `text` as unrendered
+ * when all six already had a case, so six authorable activities were being
+ * withheld from the editor for no reason. The seven that genuinely had no case
+ * — `boolean`, `slider`, `timer`, `paced-breathing`, `consent`, `location`,
+ * `record` — were built in the same commit. Every activity now draws itself.
+ *
+ * Keep the constant. The next activity declared ahead of its renderer belongs
+ * here until the case exists, which is the guard `watch` taught this module.
  */
-export const ACTIVITIES_WITHOUT_RENDERER: readonly ActivityName[] = [
-  'listen', 'table-review', 'paced-breathing', 'boolean', 'slider', 'ranking',
-  'consent', 'text', 'date', 'time', 'location', 'timer', 'record',
-];
+export const ACTIVITIES_WITHOUT_RENDERER: readonly ActivityName[] = [];
 
 export const AUTHORABLE_SUBTYPES: readonly ActivityName[] =
   ACTIVITIES.filter((a) => !ACTIVITIES_WITHOUT_RENDERER.includes(a));
@@ -317,6 +322,8 @@ export interface ActivityConfig {
   length?: number;
   /** `up` · `down`. `timer` only. */
   mode?: 'up' | 'down';
+  /** `timer` — the span in seconds the block is asking for. */
+  target?: number;
 
   // ── §26: what the new activities require ────────────────────────
   /** `slider` — the continuum's ends and its granularity. */
