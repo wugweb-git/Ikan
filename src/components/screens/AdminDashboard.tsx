@@ -60,6 +60,7 @@ const L = {
   KVAudit: lazy(() => import('../admin/AdminKVAudit').then(m => ({ default: m.AdminKVAudit }))),
   ContactSubmissions: lazy(() => import('../admin/AdminContactSubmissions').then(m => ({ default: m.AdminContactSubmissions }))),
   BlockTypeViewer: lazy(() => import('../blocks/BlockTypeViewer').then(m => ({ default: m.AdminBlockTypeViewer }))),
+  BlockGallery: lazy(() => import('../blocks/BlockGallery').then(m => ({ default: m.AdminBlockGallery }))),
   ScoringEngine: lazy(() => import('../admin/AdminScoringEngine').then(m => ({ default: m.AdminScoringEngine }))),
 };
 
@@ -134,6 +135,7 @@ type ViewType =
   | 'contact-newsletter'
   | 'checkin-builder'
   | 'block-type-viewer'
+  | 'block-gallery'
   | 'scoring-engine';
 
 export function AdminDashboard({ onNavigate, initialView }: AdminDashboardProps) {
@@ -179,6 +181,7 @@ export function AdminDashboard({ onNavigate, initialView }: AdminDashboardProps)
       { id: 'recommendations', label: 'Recommendations', group: 'Config', keywords: 'recommendation rule engine severity rules' },
       { id: 'scoring-engine', label: 'Scoring Engine', group: 'Config', keywords: 'scoring engine' },
       { id: 'block-type-viewer', label: 'Block Types', group: 'Config', keywords: 'block type viewer' },
+      { id: 'block-gallery', label: 'Block Gallery', group: 'Config', keywords: 'block gallery preview render every activity' },
       { id: 'settings', label: 'Global Settings', group: 'Config', keywords: 'settings config configuration' },
       { id: 'communication', label: 'Communication', group: 'System', keywords: 'email notification message brevo' },
       { id: 'contact-newsletter', label: 'Contact & Newsletter', group: 'System', keywords: 'contact newsletter subscription' },
@@ -222,6 +225,7 @@ export function AdminDashboard({ onNavigate, initialView }: AdminDashboardProps)
         { id: 'recommendations', label: 'Recommendation Rules', icon: Sparkles },
         { id: 'scoring-engine', label: 'Scoring Engine', icon: Calculator },
         { id: 'block-type-viewer', label: 'Block Types', icon: Blocks },
+        { id: 'block-gallery', label: 'Block Gallery', icon: Blocks },
         { id: 'settings', label: 'Global Settings', icon: Settings },
       ]
     },
@@ -305,6 +309,7 @@ export function AdminDashboard({ onNavigate, initialView }: AdminDashboardProps)
       case 'contact-newsletter': return <SuspenseScreen><L.ContactSubmissions onBack={goBack} /></SuspenseScreen>;
       case 'checkin-builder': return <SuspenseScreen><L.CheckinBuilder onBack={goBack} /></SuspenseScreen>;
       case 'block-type-viewer': return <SuspenseScreen><L.BlockTypeViewer onBack={goBack} /></SuspenseScreen>;
+      case 'block-gallery': return <SuspenseScreen><L.BlockGallery onBack={goBack} /></SuspenseScreen>;
       case 'scoring-engine': return <SuspenseScreen><L.ScoringEngine onBack={goBack} /></SuspenseScreen>;
       default: return <div>View not found</div>;
     }
