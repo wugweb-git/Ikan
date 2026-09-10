@@ -20,7 +20,8 @@ export function GetStarted({ onNavigate }: GetStartedProps) {
   const toggle = (area: string) => {
     setPicked((prev) => {
       const next = new Set(prev);
-      next.has(area) ? next.delete(area) : next.add(area);
+      if (next.has(area)) next.delete(area);
+      else next.add(area);
       return next;
     });
   };
