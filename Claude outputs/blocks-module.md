@@ -49,13 +49,13 @@ Reference. Tables only. Every figure counted against `kv_store_cc205da9` on 2026
 | `view` | observe | `media_ref` | — | — | built |
 | `complete` | observe · confirm | `content` | — | layout | built |
 | `table-review` | observe · confirm | `source_key` | — | layout | **owed 1** |
-| `paced-breathing` | observe · measure | `pattern` · `cycles` | duration | — | **owed 8** |
+| `paced-breathing` | observe · measure | `in` · `hold` · `out` · `cycles` (free-form seconds) | duration | — | **owed 8** |
 | `mcq` | choose | `scale_ref` | `option_id` | display · cardinality | built |
 | `single-select` | choose | `scale_ref` | `option_id` | display · cardinality | built |
 | `multi-select` | choose | `scale_ref` | `option_id[]` | display · cardinality | built |
 | `boolean` | choose · confirm | `prompt` · labels | `bool` | — | **owed 3** |
 | `clinical-instrument` | choose · rate | `scale_ref` · `instrument_ref` | `option_id` | display | built |
-| `text` | share | `prompt` · `persist` · `length` | `text` | format · persist · length | built |
+| `text` | share | `prompt` · `persist` (default **true**) · `length` | `text` | format · persist · length | built |
 | `short-text` | share | `prompt` | `text` | format · length | built |
 | `ephemeral-journal` | share | `prompt` | `text` | persist: false | built |
 | `number` | share | `prompt` | `number` | length | built |
@@ -137,7 +137,8 @@ Reference. Tables only. Every figure counted against `kv_store_cc205da9` on 2026
 | Retype set | **0.** Of 119 live `lesson` blocks, 27 carry an `image_url` and **none is video or audio**. A still image has no clock |
 | Consequence | **Purely additive. No migration.** |
 | Resolves | `lesson` keeps *no response* honestly; `session` takes the key resume needs |
-| Open | the **name** (`session` also means a therapy appointment) · whether a 40-second explainer video in a teaching day is a `session` or a `lesson` |
+| Name | **`session`, ruled.** The therapy-appointment collision is accepted and disambiguated on the appointment side |
+| Short media | **Duration test wins, ruled.** Any clock is a `session`, however short. A 40-second explainer in a teaching day is a `session`, so teaching days carry two block types and the builder must make that obvious |
 
 ---
 
@@ -160,7 +161,7 @@ Reference. Tables only. Every figure counted against `kv_store_cc205da9` on 2026
 | `learning` | 2 | mcq · single-select |
 | `lesson` · `checklist` · `conclude` · `support` | 1 each | read · structured-list · complete · crisis-contact\* |
 
-**35 of 93 pairs have an activity with no renderer** — those blocks fall to `default: renderLesson()` and draw reading content.
+**33 of 93 pairs have an activity with no renderer** — those blocks fall to `default: renderLesson()` and draw reading content.
 
 **Rule:** every activity must appear in at least one type's permitted list. `list-entry` was in no list until 2026-09-10. `validateDay` must read the permitted lists off the catalog and fail a build that orphans one.
 
@@ -393,7 +394,7 @@ instrument_entry:{id}:{userId}:{n}    one dated run
 | 2 | S | `key` on the 198 without one | Answers land under generated ids |
 | 3 | S | Additive schema | 7 labels on `activityConfig`; `image` on scale options; `icon` on activity rows; `read.requires` → `content` |
 | 4 | S | Catalog rows for declared-unauthorable activities | |
-| 5 | S | **The 12 renderers** | Order in §2. Builds 1–5 unblock 16 of the 35 pairs and need no decision |
+| 5 | S | **The 12 renderers** | Order in §2. Builds 1–5 unblock 16 of the 33 pairs and need no decision |
 | 6 | S | Additive fields | band map (with `slider`), `prompts[]`, `about`, `revisit_when` |
 | 7 | S | `visible_when` · `completion` | New authored rules, scoped to a step |
 | 8 | S | `session` | Retype set is **0**. Purely additive |
@@ -448,15 +449,22 @@ instrument_entry:{id}:{userId}:{n}    one dated run
 
 ## 14 · Open
 
+### Closed 2026-09-10
+
+| | ruling |
+|---|---|
+| `session` name | **`session`.** Collision with therapy appointments accepted, disambiguated on that side |
+| Short media | **Duration test wins.** Any clock is a `session`. Teaching days carry two block types; the builder must make that obvious |
+| `paced-breathing` pattern | **Free-form seconds** — `in` · `hold` · `out` · `cycles`. **Guardrail required, since free-form is the clinically riskier choice: cap `hold` and warn above it.** Set the cap before renderer 8 ships |
+| `text` default `persist` | **`true`.** Writing is kept unless the author opts into ephemeral. Matches every live journal block |
+
+### Still open
+
 | | question | blocks |
 |---|---|---|
-| 1 | **`session` name** — `session` also means a therapy appointment. `guided`? `player`? | §4, naming only |
-| 2 | **Is a 40-second explainer video in a teaching day a `session` or a `lesson`?** By the duration test it is a `session`, which puts two block types on teaching days | §4, builder UX |
-| 3 | **`paced-breathing` pattern** — free-form seconds, or a fixed set (4-7-8, box, coherent)? Free-form is more flexible and easier to get clinically wrong | renderer 8 |
-| 4 | **`text` default `persist`** — `true` or `false`? **0 live blocks** carry `ephemeral-journal`, so it is free to choose *now* and not after | §11 item 3 |
-| 5 | **`location` precision** — coarse or exact? Changes storage, retention and privacy copy | renderer 11 |
-| 6 | **`record` retention** — audio is the largest thing this app would hold | renderer 10 |
-| 7 | **`consent` scope** — onboarding only, or any type? | renderer 9 |
-| 8 | **Retire `sleep-diary` into `tracker`?** Check first whether anything branches on `type === 'sleep-diary'` in scoring, reporting or the recommendation engine. If it does, refactor not retype | §11 item 14 |
-| 9 | **Does an authored `support` block appear in the day's progress count before it fires?** Showing warns; hiding surprises | §11 item 18 |
-| 10 | **`record` and `timer` at all** — both kept on provenance, not shape. Reject provenance and they collapse into `upload` and `number`. One decision, not two | renderers 7, 10 |
+| 1 | **`location` precision** — coarse or exact? Changes storage, retention and privacy copy | renderer 11 |
+| 2 | **`record` retention** — audio is the largest thing this app would hold | renderer 10 |
+| 3 | **`consent` scope** — onboarding only, or any type? | renderer 9 |
+| 4 | **Retire `sleep-diary` into `tracker`?** Check first whether anything branches on `type === 'sleep-diary'` in scoring, reporting or the recommendation engine. If it does, refactor not retype | §11 item 14 |
+| 5 | **Does an authored `support` block appear in the day's progress count before it fires?** Showing warns; hiding surprises | §11 item 18 |
+| 6 | **`record` and `timer` at all** — both kept on provenance, not shape. Reject provenance and they collapse into `upload` and `number`. One decision, not two | renderers 7, 10 |
