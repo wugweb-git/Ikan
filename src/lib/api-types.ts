@@ -12,18 +12,6 @@ export interface ApiRequestOptions {
   signal?: AbortSignal;
 }
 
-// ─── CMS / Pages ─────────────────────────────────────────────────
-
-export interface PageData {
-  title: string;
-  slug: string;
-  content: string;
-  status?: 'draft' | 'published';
-  meta_title?: string;
-  meta_description?: string;
-  [key: string]: unknown;
-}
-
 // ─── User / Profile ──────────────────────────────────────────────
 
 export interface UserPreferences {

@@ -107,7 +107,6 @@ const ContactUs = lazy(() => lazyRetry(() => import('./components/screens/Contac
 const ReturnPolicy = lazy(() => lazyRetry(() => import('./components/screens/ReturnPolicy').then(m => ({ default: m.ReturnPolicy })), 'ReturnPolicy'));
 const CancellationPolicy = lazy(() => lazyRetry(() => import('./components/screens/CancellationPolicy').then(m => ({ default: m.CancellationPolicy })), 'CancellationPolicy'));
 const Sitemap = lazy(() => lazyRetry(() => import('./components/screens/Sitemap').then(m => ({ default: m.Sitemap })), 'Sitemap'));
-const CmsPageRenderer = lazy(() => lazyRetry(() => import('./components/screens/CmsPageRenderer').then(m => ({ default: m.CmsPageRenderer })), 'CmsPageRenderer'));
 
 // Admin screens
 const AdminDashboard = lazy(() => lazyRetry(() => import('./components/screens/AdminDashboard').then(m => ({ default: m.AdminDashboard })), 'AdminDashboard'));
@@ -647,16 +646,8 @@ function AppContent() {
           return withSuspense(<WellnessTimeline onNavigate={handleNavigate} />);
         case '/learning-diary':
           return withSuspense(<LearningDiary equipId={equipSlug || queryParams.id} onNavigate={handleNavigate} />);
-        default: {
-          // Try CMS page rendering for /page/:slug routes
-          if (currentRoute.startsWith('/page/')) {
-            const slug = currentRoute.replace('/page/', '');
-            if (slug) {
-              return withSuspense(<CmsPageRenderer slug={slug} onNavigate={handleNavigate} />);
-            }
-          }
+        default:
           return withSuspense(<NotFound onNavigate={handleNavigate} />);
-        }
       }
     } catch (error) {
       console.error('Error rendering screen:', error);
