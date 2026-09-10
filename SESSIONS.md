@@ -177,3 +177,22 @@ Serialize. Say so, finish, hand over. There is no mechanism here that makes two
 agents writing one file safe, and a worktree would not help — the connected
 folder is a single mount, and the real exposure is the shared database, not the
 shared index.
+
+### 2026-09-10 · a CI break this session made, and closed
+
+`d1e81c62` put `contrast:ratchet` in package.json and `4e5bfef6` put a
+"Contrast (ratchet)" step in `ci.yml`. Both point at
+`scripts/contrast-ratchet.mjs`, which was still **untracked** — the blocks
+session had written it but never committed it, and the note above ("already
+wired into ci.yml") described the wiring, not the file. Locally every ratchet
+ran green because the file was on disk. CI clones fresh, so the next push
+would have failed on a missing module.
+
+`2fd814b2` commits `scripts/contrast-ratchet.mjs` and `src/lib/contrast.test.ts`
+verbatim — the blocks session's work, not edited. Every script and baseline
+`ci.yml` reaches is now tracked; checked explicitly, not assumed.
+
+**The general shape of the mistake, worth keeping:** wiring CI to a path is not
+the same as putting the path in git, and a green local run cannot tell the
+difference. Any commit that adds a CI step should check `git ls-files` for
+everything that step executes.
