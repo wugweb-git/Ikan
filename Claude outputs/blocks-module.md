@@ -435,8 +435,8 @@ instrument_entry:{id}:{userId}:{n}    one dated run
 
 | rule | |
 |---|---|
-| Touch targets ≥ 44px | iKan standard is **48px**, 16px radius. Audit found 34, 38 and 16px |
-| Contrast AA at every size | `--ikan-brand-teal-dark` on its wash is **4.46:1** — fails at 12px, which is what pills use. `--color-status-info` on its wash is **3.84:1**. Both need an on-wash variant |
+| Touch targets ≥ 44px | iKan standard is **48px**, 16px radius. Measured 2026-09-10: the player header's **back button is 40px and its close button 36px** (`ProgramPlayer.tsx:483, 497`), on every screen in the module. Earlier audit found 34, 38 and 16px elsewhere |
+| Contrast AA at every size | Three pairs measured failing, 2026-09-10, axe-core 4.13 · **`--grey-6` on `--color-bg-page` = 4.22:1 at 15px** — the block subtitle, in **every live block** · `--ikan-brand-teal-dark` on its wash = **4.46:1**, fails at the 12px pills use · `--color-status-info` on its wash = **3.84:1**. All three need an on-wash or on-page variant, as `globals.css` already does for muted text |
 | Weights 400 and 500 only | Public UI. Hierarchy from size, colour and space |
 | No component scrolls the page sideways | Wide content scrolls inside its own container |
 | `layout: grid` degrades to `list` | Same stored answer. 136 `input-table` blocks get a mobile form free |
