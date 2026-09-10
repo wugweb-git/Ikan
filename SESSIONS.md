@@ -28,6 +28,25 @@ Claiming three unowned files for the design-system + accessibility fixes filed i
 | `src/App.tsx` | remove the focus/blur handlers that re-disable pinch zoom (lines ~398-416) |
 | `src/styles/globals.css` | brand `-text` siblings (additive), 16px font-size floor on form controls |
 
+### 2026-09-10 · collision resolved in `globals.css`
+
+Both sessions fixed the teal-on-wash contrast failure on the same day and landed
+two tokens for one value:
+
+| token | by | value |
+|---|---|---|
+| `--ikan-brand-teal-text` | system-map session, commit `46579165` | `#356B5A` |
+| `--ikan-teal-on-wash` | blocks session, commit `2157e492` | `#356B5A` |
+
+`--ikan-teal-on-wash` is now `var(--ikan-brand-teal-text)`. **Both names still
+resolve, so no call site in either session's work breaks** — `AboutUs.tsx` points
+at `-on-wash`, the other five hues use `-text`. The value is defined once.
+
+This was a shared-file seam that `SESSIONS.md` did not cover: neither session was
+wrong, and neither could have seen the other's token before it landed. If a third
+token for the same job appears, alias it the same way rather than picking a winner
+and rewriting call sites.
+
 Not touched, deliberately:
 
 - `src/components/page-blocks/**` — ASSESSMENT-owned. Holds six content-drop bugs
