@@ -223,8 +223,8 @@ Policy columns: `auto` = autoAdvance · `back` = navigationBack · `score` = sco
 |---|---|---|---|---|---|---|
 | `lesson` | Formatted content the user **reads**. No clock, no answer | Teaching — the passage before the exercise that applies it. **118 live, an unknown share of which carry `media_ref` and must retype** | read | allowed | auto ✗ · back ✓ | produces no response |
 | `session` | A single timed media practice — audio, video, or a pacer | The practice itself, not the teaching about it. A 13-minute guided imagery. **0 live as a type** | listen · view · paced-breathing | not allowed | auto ✗ · back ✓ · **transport** · **completion** | requires `media_ref` · one activity, no steps · **produces a response** — see §5.1 |
-| `exercise` | The interactive block — everything filled in, picked, ranked or handed over | Any question producing an answer. **187 live.** The workhorse | mcq · single-select · multi-select · boolean · rating-scale · slider · input-table · check-grid · structured-list · number · timer · date · time · date-time · location · ranking · upload | allowed | auto ✗ · back ✓ · toggle ✓ | requires an activity · requires `key` · scale-backed needs `scale_ref` |
-| `journal` | Free-text writing against a prompt | When the value is the writing, not a scoreable answer. **17 live** | text · short-text · ephemeral-journal · record | allowed | auto ✗ · back ✓ · exit ✓ | requires `prompt` · requires `key` |
+| `exercise` | The interactive block — everything filled in, picked, ranked or handed over | Any question producing an answer. **187 live.** The workhorse | mcq · single-select · multi-select · boolean · rating-scale · slider · input-table · check-grid · structured-list · **list-entry** · number · timer · date · time · date-time · location · ranking · upload | allowed | auto ✗ · back ✓ · toggle ✓ | requires an activity · requires `key` · scale-backed needs `scale_ref` |
+| `journal` | Free-text writing against a prompt | When the value is the writing, not a scoreable answer. **17 live** | text · short-text · ephemeral-journal · **list-entry** · record | allowed | auto ✗ · back ✓ · exit ✓ | requires `prompt` · requires `key` |
 | `checklist` | A list of items ticked off | Confirming actions taken, not capturing data | structured-list | allowed | auto ✗ · back ✓ · toggle ✓ | requires `items` · requires `key` |
 | `reflection` | A closing prompt asking the user to look back | End of a session, when a considered answer beats a quick one | mcq · single-select · rating-scale · text · ephemeral-journal · record | not allowed | auto ✗ · back ✗ | — |
 | `conclude` | The day's closing card | Always last. **85 live** | complete | not allowed | auto ✗ · back ✓ | **last block on a day** · produces no response |
@@ -233,8 +233,8 @@ Policy columns: `auto` = autoAdvance · `back` = navigationBack · `score` = sco
 | `onboarding` | Day 0, before the programme starts | Consent, orientation, and the profile questions that shape everything after | mcq · single-select · multi-select · boolean · text · short-text · date · consent | allowed, 1 per step | auto ✓ · back ✗ · score ✗ | ⚠ runs once, before day 1 |
 | `assessment` | Scored baseline using validated clinical instruments | Severity at intake — PHQ/GAD shape. Forward-only so a baseline cannot be revised | mcq · single-select · clinical-instrument | not allowed, 1 per step | auto ✓ · back ✗ · **score ✓** | ⚠ the only type that may hold a `clinical-instrument` |
 | `learning` | Concept introduction | The teaching day — a lesson plus at least one interaction to check it landed | mcq · single-select | allowed, **required**, 1 step per lesson | auto ✗ · back ✓ | ⚠ must include ≥1 interaction |
-| `practice` | Applying a concept to the user's own situation | Data-capture days. Saves on exit because the user is mid-writing | multi-select · input-table · structured-list · number · timer · text · short-text · record · location · upload | allowed | auto ✗ · back ✓ · **exit ✓** | ⚠ state whether responses are stored or private |
-| `workshop` | Multi-step structured thinking | Ideation done in stages — where blocks must be grouped, not scrolled | multi-select · input-table · text · ephemeral-journal · ranking · upload | allowed, **required**, max 3 | auto ✗ · back ✓ | ✕ no StepGroups · ✕ >3 per group · ✕ mixed intent in one group |
+| `practice` | Applying a concept to the user's own situation | Data-capture days. Saves on exit because the user is mid-writing | multi-select · input-table · structured-list · **list-entry** · number · timer · text · short-text · record · location · upload | allowed | auto ✗ · back ✓ · **exit ✓** | ⚠ state whether responses are stored or private |
+| `workshop` | Multi-step structured thinking | Ideation done in stages — where blocks must be grouped, not scrolled | multi-select · input-table · text · ephemeral-journal · **list-entry** · ranking · upload | allowed, **required**, max 3 | auto ✗ · back ✓ | ✕ no StepGroups · ✕ >3 per group · ✕ mixed intent in one group |
 | `tracker` | The same instrument, repeated daily | Habits and streaks. Should stay identical day to day so the series is comparable | check-grid · input-table · structured-list · rating-scale · slider · boolean · number · timer | not allowed | auto ✗ · **toggle ✓** | ⚠ should stay identical across days |
 | `support` | A routing card. Names what is on offer and hands the user to a person | Authored at the end of a module on a heavy topic, and fired by policy when a risk indicator trips. **0 live** — it exists today as a modal, not a block | crisis-contact | not allowed | auto ✗ · back ✓ · score ✗ · **risk: surface** | requires `contacts_ref` · always dismissible · never counts toward day completion · **may not be the last block** — `conclude` still closes the day |
 | `check-in` | A one-to-three question daily pulse | Mood sampling. Under two minutes, forward-only, no scoring | mcq · single-select · multi-select · boolean · rating-scale · slider · text · short-text | not allowed, 1 per step | auto ✓ · back ✗ · score ✗ · **exit ✓** | ⚠ under 2 min |
@@ -271,6 +271,25 @@ Policy columns: `auto` = autoAdvance · `back` = navigationBack · `score` = sco
 **Unknown, and it is the retype set:** how many of the 118 live `lesson` blocks carry a `media_ref`. Not guessed here — it needs a count off live data, which is step 1 of §16 regardless.
 
 **Two things still open.** The **name** — `session` also means a therapy appointment, which this product will eventually have; `guided` and `player` are unoverloaded alternatives. And whether a 40-second explainer video inside a teaching day is a `session` or a `lesson`: by the duration test it is a `session`, which means teaching days carry two block types where they carried one, and the builder has to make that obvious or authors will get it wrong.
+
+---
+
+### 5.2 · The matrix, and one hole it exposed
+
+The model is not 17 screens. It is **93 permitted (block type × activity) pairs**, and rendering every one is what found this:
+
+> **`list-entry` was declared in §3 and permitted by no block type.** An orphan activity — authorable nowhere. Fixed above by adding it to `exercise`, `journal`, `practice` and `workshop`, the four types whose use cases are the reason it was proposed.
+
+**Every activity must appear in at least one type's permitted list.** Nothing enforced that, and nothing will until `validateDay` reads the permitted lists off the catalog rather than out of this document.
+
+| | |
+|---|---|
+| Pairs | **93** |
+| Types carrying the most | `exercise` **18** · `practice` **11** · `tracker` **8** · `onboarding` **8** · `check-in` **8** |
+| Types carrying one | `lesson` · `checklist` · `conclude` · `support` |
+| **Pairs whose activity has no renderer** | **36 of 93** |
+
+Thirty-six of ninety-three pairs cannot be drawn by `BlockRenderer` today — a block carrying one of those activities falls to `default: renderLesson()` and draws reading content. That is the true size of §14, and it is four times what "ten activities owed" sounded like.
 
 ---
 
