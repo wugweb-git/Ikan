@@ -14,6 +14,11 @@ import { BottomNavBarMobile } from './components/navigation/BottomNavBarMobile';
 import { PublicBottomNavMobile } from './components/navigation/PublicBottomNavMobile';
 import { RouteGuard } from './components/RouteGuard';
 import { DEFAULT_PUBLIC_ROUTE, DEFAULT_PRIVATE_ROUTE } from './lib/route-config';
+import { hasSeenOnboarding, hasCompletedFirstRun } from './lib/first-run';
+import { WelcomeSplash } from './components/screens/onboarding/WelcomeSplash';
+import { MobileOnboarding } from './components/screens/onboarding/MobileOnboarding';
+import { VerifyEmail } from './components/screens/onboarding/VerifyEmail';
+import { GetStarted } from './components/screens/onboarding/GetStarted';
 
 import { PushPermissionPrompt, usePushPermissionPrompt } from './components/notifications/PushPermissionPrompt';
 import { Toaster } from './components/ui/sonner';
@@ -70,6 +75,9 @@ const Homepage = lazy(() => lazyRetry(() => import('./components/screens/Homepag
 const NotFound = lazy(() => lazyRetry(() => import('./components/screens/NotFound').then(m => ({ default: m.NotFound })), 'NotFound'));
 const LoginScreen = lazy(() => lazyRetry(() => import('./components/LoginScreen').then(m => ({ default: m.default || m.LoginScreen })), 'LoginScreen'));
 const ResetPassword = lazy(() => lazyRetry(() => import('./components/screens/ResetPassword').then(m => ({ default: m.default || m.ResetPassword })), 'ResetPassword'));
+// Onboarding flow screens are imported eagerly (not lazy): they are small, sit
+// at the entry of the app, and lazy-loading them deadlocks the AnimatePresence
+// `mode="wait"` transition when entering an unloaded chunk.
 
 // --- Lazy loaded screens (split by category) ---
 
@@ -292,7 +300,8 @@ function AppContent() {
         '/admin/categories', '/admin/checkin-scales', '/admin/recommendations', '/admin/communication', '/admin/payment-gateway', '/admin/kv-audit', '/admin/checkin-builder', '/admin/scoring-engine',
         '/join/professional',
         '/timeline',
-        '/learning-diary'
+        '/learning-diary',
+        '/welcome', '/onboarding', '/verify-email', '/get-started'
       ];
       
       // Handle consultant detail route pattern
@@ -353,7 +362,7 @@ function AppContent() {
       // });
       
       startTransition(() => setCurrentRoute(path));
-      
+
       if (typeof window !== 'undefined') {
         window.history.pushState({}, '', route);
       }
@@ -376,14 +385,20 @@ function AppContent() {
 
   // ALL useEffect HOOKS - CALLED CONSISTENTLY ON EVERY RENDER
   
-  // Auth state changes effect
+  // Auth state changes + first-run gate
   useEffect(() => {
-    if (isInitialized) {
-      if (user && currentRoute === '/') {
-        startTransition(() => setCurrentRoute(DEFAULT_PRIVATE_ROUTE));
-      } 
+    if (!isInitialized) return;
+    if (user && currentRoute === '/') {
+      // First sign-in on this device sees the getting-started screen once.
+      const target = hasCompletedFirstRun() ? DEFAULT_PRIVATE_ROUTE : '/get-started';
+      startTransition(() => setCurrentRoute(target));
+      if (typeof window !== 'undefined') window.history.replaceState({}, '', target);
+    } else if (!user && isMobile && currentRoute === '/' && !hasSeenOnboarding()) {
+      // A signed-out first-time visitor on mobile enters through the splash.
+      startTransition(() => setCurrentRoute('/welcome'));
+      if (typeof window !== 'undefined') window.history.replaceState({}, '', '/welcome');
     }
-  }, [user, isInitialized, currentRoute]);
+  }, [user, isInitialized, currentRoute, isMobile]);
 
   // Mobile viewport optimization effect
   useEffect(() => {
@@ -636,8 +651,16 @@ function AppContent() {
           return withSuspense(<CancellationPolicy onNavigate={handleNavigate} />);
         case '/sitemap':
           return withSuspense(<Sitemap onNavigate={handleNavigate} />);
+        case '/welcome':
+          return withSuspense(<WelcomeSplash onNavigate={handleNavigate} />);
+        case '/onboarding':
+          return withSuspense(<MobileOnboarding onNavigate={handleNavigate} />);
+        case '/verify-email':
+          return withSuspense(<VerifyEmail onNavigate={handleNavigate} email={queryParams.email} />);
+        case '/get-started':
+          return withSuspense(<GetStarted onNavigate={handleNavigate} />);
         case '/login':
-          return withSuspense(<LoginScreen onNavigate={handleNavigate} onSuccess={() => handleNavigate('/dashboard')} />);
+          return withSuspense(<LoginScreen onNavigate={handleNavigate} onSuccess={() => handleNavigate(hasCompletedFirstRun() ? '/dashboard' : '/get-started')} />);
         case '/reset-password':
           return withSuspense(<ResetPassword onNavigate={handleNavigate} />);
         case '/join/professional':
@@ -655,14 +678,16 @@ function AppContent() {
     }
   };
 
-  const showPublicNav = (!user || currentRoute === '/') && currentRoute !== '/login' && !currentRoute.startsWith('/admin');
-  const showPrivateNav = !!user && 
-    currentRoute !== '/' && 
-    currentRoute !== '/login' && 
+  const isOnboardingFlow = currentRoute === '/welcome' || currentRoute === '/onboarding' || currentRoute === '/verify-email' || currentRoute === '/get-started';
+  const showPublicNav = (!user || currentRoute === '/') && currentRoute !== '/login' && !currentRoute.startsWith('/admin') && !isOnboardingFlow;
+  const showPrivateNav = !!user &&
+    currentRoute !== '/' &&
+    currentRoute !== '/login' &&
     !currentRoute.startsWith('/admin') &&
     !currentRoute.startsWith('/assessment-flow') &&
     !currentRoute.startsWith('/equip-program-flow') &&
-    !currentRoute.startsWith('/equip-program-onboarding');
+    !currentRoute.startsWith('/equip-program-onboarding') &&
+    !isOnboardingFlow;
   const shouldShowFooter = currentRoute === '/' ||
                            currentRoute === '/about' ||
                            currentRoute === '/contact' ||
@@ -682,7 +707,8 @@ function AppContent() {
                            currentRoute.startsWith('/equip-program-flow') ||
                            currentRoute.startsWith('/equip-program-onboarding') ||
                            currentRoute.startsWith('/equip-program-completion') ||
-                           currentRoute.startsWith('/join/');
+                           currentRoute.startsWith('/join/') ||
+                           isOnboardingFlow;
 
   const isHeroRoute = shouldShowFooter || 
                       currentRoute === '/' || 
