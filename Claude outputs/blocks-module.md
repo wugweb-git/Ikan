@@ -3,13 +3,15 @@
 **The single reference. Supersedes `activities.md` and `vocabulary.md`.**
 Revised 2026-09-10.
 
-> **Status.** The model is settled. The catalog is mid-migration — §26 landed in `f1600b1b`, the two block-type retirements in `1b22ceaa`. Live counts in §11 are read from `/admin/block-type-viewer`, not from memory.
+> **Status.** The model is settled. The catalog is mid-migration — §26 landed in `f1600b1b`, the two block-type retirements in `1b22ceaa`. Live counts in §10 are read from `/admin/block-type-viewer`, not from memory.
 
 **17 block types · 31 activities · 10 interactions · 7 labels · 9 policy fields.**
 
-> **Ruled 2026-09-10.** Media is **not** `lesson`. The test is a clock: *if it has a duration, it is not a lesson.* `lesson` keeps `read`; `listen`, `view` and `paced-breathing` move to a new type — provisionally **`session`**, name not yet ruled. See §5.1.
+**93 permitted (block type × activity) pairs. 36 of them have no renderer.**
+
+> **Ruled 2026-09-10 — nothing below is "proposed" any more.** Media is not `lesson` (§5.1) · the 12 missing renderers are scheduled (§5.2) · `risk` is a real policy field and the crisis flag is switched on (§6) · one flat list of 17 types, no nesting, ever (§7) · aliases classified and counted against live data (§7) · the completion card **is** a `conclude` block (§9) · the crisis **modal goes** — one renderer, one entry point (§9.1) · the instrument is being built (§9.2) · all eight missing fields are in (§9.3).
 >
-> Everything marked **proposed** below came out of the 15-screen competitor audit (`amaha-screen-audit-2026-09-10.md`, commit `3b60bc76`) and is **not ruled**. It is written here so the model is one document, not two.
+> The retained-duplicates section is gone. The fact survives as one line in §7; the argument for it did not need three paragraphs.
 
 ---
 
@@ -60,7 +62,7 @@ Each names what the user is **communicating**, not how they touch the screen.
 
 **`submit` is defined by the ownership transfer**, which is what makes it specific rather than generic. Choosing an option or writing a sentence creates a value in place and transfers nothing. Handing over a file, or a recording just made, moves an artefact out of the user's possession into the app's.
 
-**`reach` is the only interaction whose destination is not iKan.** Every other gesture ends in a stored value. This one ends in a phone ringing somewhere else. It was added because the crisis panel had nowhere else to sit — see §10.1.
+**`reach` is the only interaction whose destination is not iKan.** Every other gesture ends in a stored value. This one ends in a phone ringing somewhere else. It was added because the crisis panel had nowhere else to sit — see §9.1.
 
 ### Why these are not each other
 
@@ -82,13 +84,13 @@ Each names what the user is **communicating**, not how they touch the screen.
 | activity | requires | produces | renderer |
 |---|---|---|---|
 | `read` | `content` | — | built |
-| `listen` | `media_ref` | — | see §14 |
+| `listen` | `media_ref` | — | see §13 |
 | `view` | `media_ref` | — | built |
 | `complete` | `content` | — | built |
 | `table-review` | `source_key` | — | **owed** |
 | `paced-breathing` | `pattern` · `cycles` | — | **owed** |
 
-`read` requires `content`. §6.2 of the old spec recorded `—`, which is wrong: a `read` block with no content renders an empty card. **Corrected.**
+`read` requires `content`. §6.2 of the Notion spec recorded `—`, which is wrong: a `read` block with no content renders an empty card. **Corrected.**
 
 `view` covers watching. There is no separate `watch`.
 
@@ -128,7 +130,7 @@ Each names what the user is **communicating**, not how they touch the screen.
 
 | activity | requires | produces | renderer |
 |---|---|---|---|
-| `date` | `prompt` | `date` | see §14 |
+| `date` | `prompt` | `date` | see §13 |
 | `time` | `prompt` | `time` | **owed** |
 | `date-time` | `prompt` | `datetime` | **owed** |
 | `location` | `prompt` · `precision` | `place` | **owed** |
@@ -151,7 +153,7 @@ Each names what the user is **communicating**, not how they touch the screen.
 |---|---|---|---|---|
 | `rating-scale` | rate | `scale_ref` | `option_id` | built |
 | `slider` | rate | `min` · `max` · `step` | `number` | **owed** |
-| `ranking` | rate · order | `items` | `item_id[]` ordered | see §14 |
+| `ranking` | rate · order | `items` | `item_id[]` ordered | see §13 |
 | `timer` | measure | `mode` · `target` | `duration` | **owed** |
 | `upload` | submit | `accepted_types` · `source: pick` | `file_ref` | built |
 | `record` | submit | `prompt` · `max_duration` · `source: capture` | `audio_ref` | **owed** |
@@ -164,7 +166,7 @@ Each names what the user is **communicating**, not how they touch the screen.
 
 | activity | interaction | requires | produces | renderer |
 |---|---|---|---|---|
-| `crisis-contact` | observe · reach | `contacts_ref` | `{ route, at }` — which route was taken, or `dismissed` | **built as a modal, not as a block** — see §10.1 |
+| `crisis-contact` | observe · reach | `contacts_ref` | `{ route, at }` — which route was taken, or `dismissed` | **built as a modal, not as a block** — see §9.1 |
 
 It stores no answer. It stores that the user was offered help and what they did with the offer, which is the only thing worth knowing afterwards and the only thing that can be audited. `contacts_ref` points at a catalog set the way `scale_ref` does; today the four numbers are hardcoded in `CrisisSupport.tsx` and cannot be regionalised.
 
@@ -260,7 +262,7 @@ Policy columns: `auto` = autoAdvance · `back` = navigationBack · `score` = sco
 | `lesson` | keeps `read`. Loses `listen` · `view` · `paced-breathing` |
 | `session` | takes all three, plus `transport`, `completion` and a response key |
 | `practice` | loses `paced-breathing` — a pacer has a clock, so it goes with the rest |
-| count | 16 → **17**. Back to 16 if `sleep-diary` retires as §16 proposes |
+| count | 16 → **17**. Back to 16 if `sleep-diary` retires as §15 proposes |
 
 **It resolves a contradiction the model already had.** §5 says `lesson` produces no response; a media block that resumes at 2:19 has state, and state needs a response key. Cutting media out lets `lesson` keep *no response* honestly and gives `session` the key that resume, furthest-point and completion threshold all need:
 
@@ -268,7 +270,7 @@ Policy columns: `auto` = autoAdvance · `back` = navigationBack · `score` = sco
 { position, furthest, completed }
 ```
 
-**Unknown, and it is the retype set:** how many of the 118 live `lesson` blocks carry a `media_ref`. Not guessed here — it needs a count off live data, which is step 1 of §16 regardless.
+**Unknown, and it is the retype set:** how many of the 118 live `lesson` blocks carry a `media_ref`. Not guessed here — it needs a count off live data, which is step 1 of §15 regardless.
 
 **Two things still open.** The **name** — `session` also means a therapy appointment, which this product will eventually have; `guided` and `player` are unoverloaded alternatives. And whether a 40-second explainer video inside a teaching day is a `session` or a `lesson`: by the duration test it is a `session`, which means teaching days carry two block types where they carried one, and the builder has to make that obvious or authors will get it wrong.
 
@@ -289,28 +291,32 @@ The model is not 17 screens. It is **93 permitted (block type × activity) pairs
 | Types carrying one | `lesson` · `checklist` · `conclude` · `support` |
 | **Pairs whose activity has no renderer** | **36 of 93** |
 
-Thirty-six of ninety-three pairs cannot be drawn by `BlockRenderer` today — a block carrying one of those activities falls to `default: renderLesson()` and draws reading content. That is the true size of §14, and it is four times what "ten activities owed" sounded like.
+**36 of 93 pairs cannot be drawn today.** A block carrying one of those activities falls to `default: renderLesson()` and draws reading content. That is the true size of §13 — four times what "ten activities owed" sounded like.
+
+**Ruled 2026-09-10: close it.** The 12 missing renderers, in build order, with the pairs each one unblocks:
+
+| # | activity | unblocks | why here |
+|---|---|---|---|
+| 1 | `table-review` | 1 pair — `sleep-diary` | `read` arranged as a grid. Cheapest on the list and the highest value: a series nobody sees is a series nobody benefits from |
+| 2 | `slider` | 4 — `exercise` · `tracker` · `check-in` | Needs the band map with it (§9.3). Without the band a number means nothing |
+| 3 | `boolean` | 5 — `exercise` · `quiz` · `onboarding` · `tracker` · `check-in` | Most pairs unblocked per line of code in the whole list |
+| 4 | `check-grid` | 2 — `exercise` · `tracker` | Renderer exists; what is owed is the `layout` degrade |
+| 5 | `list-entry` | 4 — `exercise` · `journal` · `practice` · `workshop` | The `string[]` shape nothing else produces |
+| 6 | `date` · `time` · `date-time` | 6 — `exercise` · `onboarding` · `sleep-diary` | One control, three configs. Ship together |
+| 7 | `timer` | 3 — `exercise` · `practice` · `tracker` | Produces a measured duration, not a typed one |
+| 8 | `paced-breathing` | 1 — `session` | Pattern + cycles. Settle the pattern set first (§13) |
+| 9 | `consent` | 1 — `onboarding` | Stores the statement as shown. Blocks nothing else, but it is the first thing a user meets |
+| 10 | `record` | 3 — `journal` · `reflection` · `practice` | Answer retention before it is built (§13) |
+| 11 | `location` | 2 — `exercise` · `practice` | Answer precision before it is built (§13) |
+| 12 | `crisis-contact` | 1 — `support` | The component exists; what is owed is the block wrapper and `contacts_ref` (§9.1) |
+
+**`listen` is already built** (`renderListen`, line 420) — the viewer marking it *Wired, unused* was right and §6.0 of the Notion spec was wrong. That resolves the contradiction flagged in §13.
+
+**1–5 are 16 of the 36 pairs and need no decision.** Start there.
 
 ---
 
-## 6 · Retained by decision — and what it costs
-
-Three activities the audit found identical are kept.
-
-| retained | identical to | cost |
-|---|---|---|
-| `mcq` | `single-select` — same interaction, same `scale_ref`, same `option_id` | Two picker entries doing the same thing. Which one an author uses is arbitrary, and the split is permanent in the data |
-| `short-text` · `ephemeral-journal` | `text` — all three are `share` · `prompt` · `text` | Three entries, one behaviour. Free-text reporting must know all three names forever |
-
-**The cost is author confusion and permanently split data, not breakage.** Nothing renders wrong.
-
-**The compensation is not a consolation prize.** These three are what make the interaction layer collapse: **29 → 9**, carried by `observe` (6), `choose` (5), `share` (5), `confirm` (5), `locate` (4). Retire them and two of the collapses shrink. The layer earns its keep because of this decision.
-
-**It also shrinks the migration.** Four alias groups now need nothing at all — only `slider` and `boolean`/`yes_no` remain risky.
-
----
-
-## 7 · Policy — what a block type guarantees
+## 6 · Policy — what a block type guarantees
 
 Policy is **not** authored per block. It belongs to the type, which is the whole reason types exist.
 
@@ -326,11 +332,13 @@ Policy is **not** authored per block. It belongs to the type, which is the whole
 | `completion` | **Proposed.** What counts as done. `any` · `threshold(N%)` · `full` · `all-visited`. Not media-only — a list whose rows must each be opened is `all-visited` |
 | step rules | `allowed` · `required` · max per group · one per step |
 
-### `risk` — the seventh field, and it does not exist yet
+### `risk` — ruled 2026-09-10, and switched on
 
 `AssessmentFlow.tsx` reads `q.is_risk_indicator === true` per question and fires a crisis pathway **once per run**. That is policy behaviour, authored on content, honoured by one screen.
 
-**It is currently disabled sitewide** — `CRISIS_ON_ANSWER_ENABLED` is off, with the comment that re-offering the panel on every later answer was worse than not offering it at all. So `is_risk_indicator` is authored on live content and does nothing.
+`CRISIS_ON_ANSWER_ENABLED` has been off sitewide, with the comment that re-offering the panel on every later answer was worse than not offering it at all — so `is_risk_indicator` sat authored on live content doing nothing.
+
+> **Ruled: `risk` is a real policy field, and the flag is switched on.** The once-per-run rule that caused the flag to be disabled is the field's own guarantee, enforced for every type at once rather than per screen. Turning it on without `risk` reintroduces the original bug; turning it on **with** `risk` is the fix. Ship them in one deploy — never the flag alone.
 
 `risk` closes that. It is a **type** guarantee; the flag itself is authored on content — the two meet here, which is the whole shape of policy.
 
@@ -342,17 +350,26 @@ Policy is **not** authored per block. It belongs to the type, which is the whole
 | `surface` | A tripped indicator surfaces `support` **once per run**, non-blocking. The run continues | `assessment` · `check-in` · `journal` · `reflection` |
 | `gate` | Surfaces `support` and the run does not continue until acknowledged | **nothing.** Named so the field has a top end, and so nobody invents a fourth value later |
 
-**Honestly:** only `assessment` reads the flag today, and `journal` and `reflection` would need a text scan they do not have. Declaring the four is the target, not the state.
+**State, plainly:** only `assessment` reads the flag today. `journal` and `reflection` need a text scan that does not exist, so they carry `risk: surface` in the declaration and honour nothing until that scan ships. `check-in` needs only the option-level read below.
+
+**Enabling order — three steps, in this order, and the flag is last:**
+
+1. `contacts_ref` as a catalog set, replacing the four hardcoded numbers.
+2. `risk` on the type, option-level `is_risk_indicator`, once-per-run enforced centrally, `support` authorable as a block.
+3. **Then** `CRISIS_ON_ANSWER_ENABLED = true`.
 
 **Once per run is the rule, not an implementation detail.** It is the reason the flag was switched off. It belongs in policy where it is enforced for every type at once, not in a per-screen ref.
 
 ---
 
-## 8 · Limits and rules
+## 7 · Limits and rules
 
 | rule | statement |
 |---|---|
 | **Response identity** | `activityConfig.key`, falling back to `block.id`. Read via `responseKeyOf(block)`. Every response-producing activity needs one, or the answer is unreachable |
+| **One flat list** | **Ruled.** A block type cannot hold another block type. There is one flat list of **17** — no stages, no day config, no second class, ever. Behaviour is expressed by **policy** on the type (`autoAdvance`, step rules, `transport`, and the rest), never by nesting one type inside another |
+| **Three duplicate activities are retained** | `mcq` ≡ `single-select`; `short-text` ≡ `ephemeral-journal` ≡ `text`. Retained by ruling. The cost is permanently split data and two picker entries doing one job. Nothing renders wrong |
+| **Every activity must be permitted somewhere** | An activity in no type's permitted list is authorable nowhere. `list-entry` was in that state until §5.2. `validateDay` must read the permitted lists off the catalog and fail a build that orphans one |
 | **Storage shape** | `completedDays[day].responses[identity]` — day first, identity second, so N days give N answers |
 | **Catalog id freeze** | An id is minted once and never regenerated. An id keeping a retired name is the freeze working, not a defect. Proven on `watch → view`: the row is still `cat-interaction_type-watch` |
 | **A block type cannot hold another block type** | There is one flat list of 15. No stages, no day config, no second class |
@@ -362,7 +379,7 @@ Policy is **not** authored per block. It belongs to the type, which is the whole
 | **Proof of neutrality** | Every data change is verified against a fresh backup: activity buckets identical, resolved-interaction distribution unchanged, **both prefixes** |
 | **Never bare `git add`** | Stage explicit paths. On 2026-09-08 a broad `git add -A` swept another session's in-flight files into a blocks commit |
 
-### Alias migration risk
+### Aliases — ruled 2026-09-10, classified and ordered
 
 **An alias that changes the output shape is a migration. An alias that keeps it is a re-point.**
 
@@ -375,11 +392,27 @@ Policy is **not** authored per block. It belongs to the type, which is the whole
 | `free_text` · `journal` · `long_text` | → `ephemeral-journal` | unchanged | none |
 | `matrix` · `comparison_matrix` | → `comparison-matrix` | → `input-table` | re-point |
 
-**It is a migration only if live blocks carry those spellings.** Nobody has counted. That is why counting is step 1.
+**Counted 2026-09-10, read-only, against `kv_store_cc205da9`.** All 420 live equip blocks:
+
+| stored spelling | live | verdict |
+|---|---|---|
+| `matrix` | **8** — 5 `exercise`, 3 `tracker` | **re-point.** Declared nowhere; reaches the resolver's default case. Same columns, same cell map, same output → `input-table`. Do it now |
+| `scale` | **1** — `exercise` | **migration.** Stored as `scale` with `constraints: {min:3, max:9}` and no `scale_ref`. It is already a `slider` in everything but name → `slider`, and the constraint pair becomes `min`/`max`/`step` |
+| `number` | **1** — `exercise` | **re-point.** `number` is a declared activity. The block is correct and the term simply predates the catalog |
+| `slider` · `boolean` · `yes_no` · `emoji_scale` | **0** | **nothing to migrate.** The two rows above them in this table describe a risk that does not exist in live data. They are re-points on an empty set — remove the aliases and move on |
+| `single_choice` · `mcq_single` · `free_text` · `long_text` · `comparison_matrix` | **0** | remove |
+
+**The whole alias question is 10 blocks, and 9 of them are re-points.**
+
+**And one violation the same count exposed:** `checklist` permits `structured-list` only, and **6 live blocks are `checklist × multi-select`** against 1 correct one. Either the permitted list is wrong or the blocks are. Retyping them to `exercise` keeps the render identical; leaving them means the permitted list is decoration.
+
+> **Ruled: do it now.** One migration (`scale` → `slider`, a single block), nine re-points, and every remaining alias deleted from `resolveInteraction()` so the fifth vocabulary living in that switch stops existing.
+
+**One thing this does not cover.** `activity` is **null on all 420 blocks** — the §26 vocabulary is not written to a single one. The aliases above are `subtype` spellings, not activity spellings. Re-pointing them is worth doing and is **not** the backfill; the backfill is still owed and is the larger job.
 
 ---
 
-## 9 · Use cases — which type, and why
+## 8 · Use cases — which type, and why
 
 | the author wants to | type | not |
 |---|---|---|
@@ -388,13 +421,13 @@ Policy is **not** authored per block. It belongs to the type, which is the whole
 | Score comprehension | `quiz` | `exercise` — scoring is a type guarantee, not a toggle |
 | Establish clinical severity | `assessment` | anything else. It is the only type that may hold a `clinical-instrument` |
 | Sample mood daily, briefly | `check-in` | `tracker` — that is the heavy series |
-| Track the same instrument daily | `tracker` | `sleep-diary`, which is a `tracker` with fixed columns (§15) |
+| Track the same instrument daily | `tracker` | `sleep-diary`, which is a `tracker` with fixed columns (§14) |
 | Ask for considered writing | `journal` | `reflection` unless it is looking back |
 | Close a session by looking back | `reflection` | `conclude` — that ends the day, it does not ask |
 | End the day | `conclude` | anything. It is always last |
 | Group thinking into stages | `workshop` | `practice` — that is capture, not staging |
 | Capture the user's own situation | `practice` | `exercise` — that is one question, this is a day |
-| Take consent | `onboarding` | anywhere else, until §16 rules otherwise |
+| Take consent | `onboarding` | anywhere else, until §15 rules otherwise |
 
 ### `sleep-diary` · `tracker` · `reflection` — the confusion, named
 
@@ -411,21 +444,45 @@ Delete one reflection and you lose one answer. Delete one day from a tracker and
 
 Second axis, weight: **heavy series (`tracker`) · light series (`check-in`) · single answer (`reflection`)**.
 
-**`sleep-diary` is `tracker` with fixed columns.** Same instrument daily, series is the value, `saveOnToggle`, no step groups, built on `input-table`. The only structural difference is `table-review`, which `tracker` should have anyway. It is a content instance wearing a block type — the same smell as `mcq` beside `single-select`, one level up. **Proposed retirement in §16.**
+### Is it a label? — no. Answered 2026-09-10
+
+The question that separates `sleep-diary`, `tracker` and `reflection` is *does the value live in the series, or in the single answer* — and that is **not** a label.
+
+A label is device-bound: it changes how something is drawn and never what it is. `grid → list` is a label because the stored answer is byte-identical either way.
+
+*The value lives in the series* changes three things a label cannot touch:
+
+| | |
+|---|---|
+| **The block repeats** | It appears on many days under one stable identity — a `repeat` rule, not a drawing |
+| **It must not change between days** | An author editing the columns on day 9 breaks days 1–8. That is a guarantee the type makes |
+| **The read-back is part of the instrument** | `table-review` reads the series. On a single-answer block there is nothing to read back |
+
+All three are **policy**. So the axis is:
+
+- **`tracker`** — the series is the value. Repeats, identical daily, `saveOnToggle`, carries `table-review`.
+- **`reflection`** — the single answer is the value. Does not repeat, back-navigation off, one considered answer at the end of a session.
+- **`sleep-diary`** — a `tracker` whose columns happen to be sleep questions. **Content wearing a block type**, which is the same smell as `mcq` beside `single-select`, one level up.
+
+**`sleep-diary` is `tracker` with fixed columns.** Same instrument daily, series is the value, `saveOnToggle`, no step groups, built on `input-table`. The only structural difference is `table-review`, which `tracker` should have anyway. It is a content instance wearing a block type — the same smell as `mcq` beside `single-select`, one level up. **Proposed retirement in §15.**
 
 ---
 
-## 10 · Chrome that should be a block — the completion card
+## 9 · The completion card is a block — ruled 2026-09-10
 
-The card at the end of every day is **not a block.** `ProgramPlayer.tsx` renders it after the last block: no id, no activity, no interaction, no response identity. An author cannot edit, reorder or remove it.
+The card at the end of every day is drawn by `ProgramPlayer.tsx` after the last block: no id, no activity, no interaction, no response identity. An author cannot edit, reorder or remove it.
 
-Worse, it is assembled from three sources:
+> **Ruled: it is a `conclude` block and nothing else.** There is no separate ending, no player-owned card, no third thing between the block list and the screen. The player renders the day's blocks; the last one happens to be a `conclude`.
 
-| part | source | dynamic? |
-|---|---|---|
-| Title | `dayConfig.completionTitle` in `day-layout.ts`, **keyed by day type** | By type only, never by author |
-| Body | Hardcoded literal, `ProgramPlayer.tsx:423` | **No.** One string for every type |
-| Button | `program.daily_content.length === 1 ? 'View Results' : 'Continue Journey'` | **On programme length** |
+It is currently assembled from three sources, and each one is replaced:
+
+| part | source today | dynamic? | **replaced by** |
+|---|---|---|---|
+| Title | `dayConfig.completionTitle` in `day-layout.ts`, **keyed by day type** | By type only, never by author | `block.title` |
+| Body | Hardcoded literal, `ProgramPlayer.tsx:423` | **No.** One string for every type | `block.content` |
+| Button | `program.daily_content.length === 1 ? 'View Results' : 'Continue Journey'` | **On programme length** | the day's own CTA, the same rule every other block uses |
+
+**Then delete `completionTitle` from `day-layout.ts`** — it goes with the day types under §19, and the file still carries the retired `assessment-lite` and `rest` keys.
 
 Three defects follow:
 
@@ -433,13 +490,15 @@ Three defects follow:
 2. **It ignores the map built for it.** `DAY_TYPE_LAYOUTS` defines `primaryButtonText: { last, otherwise }` per type — Done/Next, Complete/Continue, Save, Complete Reflection — and the completion button reads none of it.
 3. **`day-layout.ts` is keyed by day type, which §19 removes**, and still contains `assessment-lite` and `rest`, both retired in `1b22ceaa`.
 
-**Where it belongs:** `conclude` · `complete` · `observe · confirm` · `layout: single` · requires `content` · produces nothing. **It is already in the vocabulary.** The screen does by hardcode what a block does by data — and then draws a second, unauthored ending on top of the 85 `conclude` blocks that already exist.
+**The mapping is already in the vocabulary:** `conclude` · `complete` · `observe · confirm` · `layout: single` · requires `content` · produces nothing. The screen does by hardcode what a block does by data — and then draws a second, unauthored ending on top of the **95 `conclude` blocks that already exist**.
 
-**The snag, stated:** some days have no `conclude` authored, which is what the hardcode covers. Fix in the composer — append a default `conclude`, or have `validateDay` require one on published programmes. §5 already says *last block on a day*.
+**The snag, and its fix:** some days have no `conclude` authored, which is what the hardcode covers. `validateDay` requires one on every published day, and the composer appends a default when an author adds a day. §5 already says *last block on a day* — that rule simply has to be enforced instead of worked around.
+
+**One live block to fix while in there:** *"Do continue with the trackers and slep diary"* — Sleep Tight day 30, the final screen of a 30-day programme.
 
 ---
 
-## 10.1 · Crisis support — now in the vocabulary
+## 9.1 · Crisis support — now in the vocabulary
 
 **It was in this document and not in the vocabulary. That is fixed here.** The objection was that a crisis panel is not something a user *does*, so as an activity an author could drop one into a checklist. The objection was wrong about the first half and right about the second: the user does do something — they place a call — and the way to stop it appearing in a checklist is **policy and type rules**, not omission from the catalog.
 
@@ -460,9 +519,13 @@ So it enters as three things, not one:
 | `assessment_score` | policy — `risk: surface` fires the `support` block once per run |
 | authored | an ordinary `support` block placed by the author at the end of a heavy module |
 | `keywords` | policy — same firing, once a text scan exists. **It does not today** |
-| `user_request` | **stays a modal.** It is a navigation action from the header, not part of any day. Same component, same numbers, no block |
+| `user_request` | a `support` block opened as a route, from the header |
 
-**Do not claim the modal goes away.** It does not. What changes is that the two automatic cases and the authored case stop being a component the author cannot see, and become a block with an id, a response identity, and a place in the day.
+> **Ruled 2026-09-10: the modal goes.** I argued it should stay for `user_request` because that entry is a navigation action rather than part of a day. Overruled, and the ruling is better: a second component drawing the same four numbers is a second place for them to drift, a second thing to regionalise, and a second surface where nothing about the offer is recorded.
+
+**One renderer, one entry point.** `CrisisSupport.tsx` becomes the `crisis-contact` renderer and nothing else. `triggerReason` stops being a prop and becomes the block's own provenance — `{ route, at, trigger }` — so *how the offer arrived* is stored alongside *what the user did with it*.
+
+**What that costs, stated:** the header action needs a route that mounts a standalone `support` block outside any day, and it must not write into `completedDays`. That is the one piece of real work the ruling adds, and it is what makes the offer auditable from the header as well as from inside a programme.
 
 ### What this buys, stated plainly
 
@@ -481,7 +544,7 @@ So it enters as three things, not one:
 
 ---
 
-## 10.2 · The instrument — proposed, and it is a data-model change
+## 9.2 · The instrument — ruled 2026-09-10, and it is a data-model change
 
 Four competitor exercises audited on 2026-09-10 run one shape:
 
@@ -496,19 +559,39 @@ Four competitor exercises audited on 2026-09-10 run one shape:
 
 We store **one value per block per day** under `responseKeyOf(block)`. That shape holds N dated entries per instrument, independent of any day — one competitor worksheet held three entries from 05:48, 05:49 and 08:12 on one morning.
 
-**An instrument is not a block.** A day should *reference* one; the instrument owns its own ledger. This is the only item in this document that changes the storage model, and it is the reason five of the seven audit misses collapse into one line.
+**An instrument is not a block.** A day *references* one; the instrument owns its own ledger. This is the only item in this document that changes the storage model, and it is the reason five of the seven audit misses collapse into one line.
+
+> **Ruled: build it.** Not "proposed". Everything in capture → review → interpret → ledger waits on this, and without it four of the app's most valuable exercise shapes cannot exist at all.
+
+**The shape, minimally:**
+
+```
+instrument:{id}          definition — blocks, review spec, interpretation bands
+instrument_entry:{id}:{userId}:{n}   one dated run
+                         { startedAt, completedAt, responses, interpretation }
+```
+
+A day carries `instrument_ref` instead of a copy of the blocks. `completedDays[day]` records *which entry* was created, not the answers — the answers live with the instrument, where the second and third runs can find them.
+
+**Three rules that fall out of it, and they are not optional:**
+
+| | |
+|---|---|
+| An entry is immutable once completed | Editing history is how a clinical log stops being evidence. Corrections create a new entry that references the old one |
+| The instrument's blocks may change; entries keep the version they were captured under | Otherwise adding a column on day 40 rewrites what someone answered on day 3 |
+| `EDIT` on a review reopens the **draft**, never a completed entry | This is the word that is not `navigationBack`, and it applies only before completion |
 
 **Two corollaries, both cheap to state and easy to get wrong:**
 
 - **EDIT is not `navigationBack`.** Back-navigation revises an answer in sequence and is off on every scored type. Reopening a committed draft from a review with every answer loaded is a different act and needs its own word.
-- **`interpretation` is authored content selected by a band, not free prose.** *What you should do* comes out of the slider band. That makes the band map (§10.3) load-bearing, not cosmetic.
+- **`interpretation` is authored content selected by a band, not free prose.** *What you should do* comes out of the slider band. That makes the band map (§9.3) load-bearing, not cosmetic.
 
-## 10.3 · Fields the audit found missing — all proposed
+## 9.3 · Fields the audit found missing — ruled 2026-09-10
 
 | field | on | what it does | why nothing existing covers it |
 |---|---|---|---|
 | `prompts[]` | `journal` · `text` | scrolling scaffold chips above the box — *Where were you? · What were you doing?* | our `prompt` is singular. An empty textarea is the highest-abandonment element in the flow |
-| band map | `slider` · `rating-scale` | value → label → advice. *Calm* at 0, *Slightly Annoyed* at 3 | `scale_ref` maps options; a continuum has none. And §10.2's interpretation reads the band |
+| band map | `slider` · `rating-scale` | value → label → advice. *Calm* at 0, *Slightly Annoyed* at 3 | `scale_ref` maps options; a continuum has none. And §9.2's interpretation reads the band |
 | `visible_when` | any block | `{ key, op, value }` — the symptom checklist does not exist until the slider leaves 0 | a rule between two blocks in a step. Not a label, not a policy, not an activity |
 | `about` | any block | optional supporting content behind a persistent affordance, non-blocking. Their label for it — *How will this help me?* — is better than ours | nothing. And it generalises past media: every exercise could answer *why am I doing this* without spending a step |
 | `revisit_when` | any block | authored re-entry condition — *when you find it hard to fall asleep* | nothing. It is what turns a finished programme into a library navigable by symptom |
@@ -516,11 +599,24 @@ We store **one value per block per day** under `responseKeyOf(block)`. That shap
 | computed ordering | display | *"We've ranked your triggers"* — the app ranked, not the user | `ranking` is `rate · order`, the **user** sequencing. A displayed ordering derived from prior answers is output, not input |
 | content branching | display | which explanation renders is chosen by a prior pick | `source_key` exists on `table-review` only |
 
-**Not carried forward:** a `commitment` block type for user-set cadence and reminders. It was proposed off an earlier screen set and has not been ruled, so it is named here and not counted.
+**All eight are ruled in.** Sequenced by what they block:
+
+| | field | with |
+|---|---|---|
+| 1 | **band map** | ships **with** `slider` (§5.2 item 2). A slider without bands stores a number nobody can read, and §9.2's interpretation phase reads the band |
+| 2 | `prompts[]` | standalone, one field, fixes the blank box |
+| 3 | `about` | standalone. Labelled *How will this help me?*, not a `?` icon — that glyph now means `support` |
+| 4 | `revisit_when` | standalone. What turns a finished programme into a library navigable by symptom |
+| 5 | `visible_when` | scoped to a step; needs `validateDay` to reject a reference to a key outside the step |
+| 6 | `allow_other` | **shape migration.** Sequence with a retype, never alone |
+| 7 | computed ordering | needs §9.2 first — a displayed ordering derived from prior answers is the interpretation phase |
+| 8 | content branching | generalise `source_key` past `table-review` |
+
+**Not carried forward:** a `commitment` block type for user-set cadence and reminders. Proposed off an earlier screen set, never ruled, so it is named here and not counted.
 
 ---
 
-## 11 · Live state — read from the viewer, 2026-09-09
+## 10 · Live state — read from the viewer, 2026-09-09
 
 | | |
 |---|---|
@@ -552,7 +648,7 @@ It is a **content** defect. Nothing in this document caused it and nothing in th
 
 ---
 
-## 12 · Copy rules
+## 11 · Copy rules
 
 Words are design material. Each element does exactly one job.
 
@@ -571,7 +667,7 @@ Words are design material. Each element does exactly one job.
 
 ---
 
-## 13 · UI rules
+## 12 · UI rules
 
 These are module-wide, and the audit on 2026-09-09 found live violations of four of them.
 
@@ -589,7 +685,7 @@ These are module-wide, and the audit on 2026-09-09 found live violations of four
 
 ---
 
-## 14 · Renderers owed
+## 13 · Renderers owed
 
 **11 interactions and modes**, of which two are layouts on renderers that already exist and are therefore cheap.
 
@@ -597,11 +693,11 @@ These are module-wide, and the audit on 2026-09-09 found live violations of four
 
 **Build order.** `table-review` first — it is `read` arranged as a grid, the cheapest item on the list and the highest value, because a series nobody ever sees is a series nobody benefits from. Then `layout` properly, including the mobile degrade. Then `paced-breathing` · `timer` · `boolean` · `slider`. Then `time` · `date-time` · `location` · `record` · `consent`.
 
-**Unresolved, and it changes this list:** the viewer marks only `review-table` as *No renderer yet*; `listen`, `rank` and `pick-date` read *Wired, unused*, implying renderers exist. The old §6.0 says all four lack them. **One of the two is wrong.**
+**Resolved 2026-09-10.** The viewer was right and §6.0 of the Notion spec was wrong: `renderListen` exists at line 420, and `renderRank`, `renderPickDate` and `renderReviewTable` were all added in the same pass. What is actually owed is the **12 renderers in §5.2**, which unblock 36 of the 93 pairs. That list supersedes this one.
 
 ---
 
-## 15 · Open — decisions, not code
+## 14 · Open — decisions, not code
 
 | | |
 |---|---|
@@ -612,27 +708,57 @@ These are module-wide, and the audit on 2026-09-09 found live violations of four
 | `record` and `timer` at all | Both kept on provenance, not shape. Reject provenance and they collapse into `upload` and `number` **together — one decision, not two** |
 | `consent` scope | Onboarding only, or any block type? A consent record that can appear anywhere is harder to audit |
 | **`sleep-diary`** | Retire into `tracker` with the sleep columns as a template? **Check first whether anything branches on `type === 'sleep-diary'`** in scoring, reporting or the recommendation engine. If it does, this is a refactor, not a retype |
-| **Crisis pathway** | **Resolved 2026-09-10 — see §10.1.** It is vocabulary: `reach` · `crisis-contact` · `support`, gated by the `risk` policy field. What stays open is narrower — whether an authored `support` block shows in the day's progress count before it fires |
+| **Crisis pathway** | **Closed 2026-09-10.** Vocabulary (`reach` · `crisis-contact` · `support`), policy (`risk`, ruled on), one renderer, one entry point, flag switched on last. See §6 and §9.1. Only one thing stays open: whether an authored `support` block shows in the day's progress count before it fires |
 | `complete` vs `read` | `complete` could be `read` plus a last-block policy on `conclude`. Retained by decision; reopenable |
 | `slider` as a name | A device word. It survives because a continuum the app does not own is genuinely different from `rating-scale`. Accepted as a primitive borrowing |
 
 ---
 
-## 16 · Order
+## 15 · Order
 
-1. **Count first.** Live blocks spelled `slider`, `boolean`, `yes_no`, `emoji_scale`; blocks carrying `comparison-matrix`; blocks typed `assessment-lite` and `sleep-diary`; days typed `rest`; the overlap between the 144 `input-table` blocks and the 198 with no key. **Nothing below starts without these.**
-2. **Fix the 36 missing `scale_ref` blocks.** Content, not vocabulary. Independent of everything else. **First in wall-clock terms.**
-3. **Additive schema.** `display`, `format` and the rest of the labels on `activityConfig`; `image` on catalog scale options; `icon` on every activity row; correct `read`'s `requires` to `content`. Breaks nothing.
-4. **Rename** `table` → `check-grid`. In place, id frozen.
-5. **Add the new catalog rows** declared but unauthorable until their renderers exist — the way the owed activities are already handled.
-6. **Retire the duplicates and the two block types.** Retype live blocks, then prove interaction-neutrality against a fresh backup, both prefixes. `rest` goes inside the §19 day-type removal.
-7. **Make the completion card a `conclude` block**, and delete `completionTitle` from `day-layout.ts` with the day types.
-8. **Renderers**, in the §14 order.
-8a. **`session`** — split media out of `lesson`, count the `media_ref` blocks first, then retype. Ruled, not yet scheduled.
-8b. **The §10.3 additive fields** — `prompts[]`, band map, `about`, `revisit_when`. None of them break anything.
-8c. **`visible_when`** and **`completion`** — new authored rules, scoped to a step.
-8d. **The instrument** (§10.2). A storage change. Everything in capture/review/interpret/ledger waits on it.
-8e. **`allow_other`** — an output-shape migration; sequence it with a retype, never alone.
-9. **The crisis pathway.** Not a decision any more — a build, and it splits in three. **9a** `contacts_ref` as a catalog set, replacing the hardcoded numbers: standalone, breaks nothing, do it whenever. **9b** the `risk` policy field, which is what lets `CRISIS_ON_ANSWER_ENABLED` come back on, because once-per-run stops being per-screen. **9c** `support` as an authorable block. **9a and 9b are worth doing before 9c** — the flag is off in production today and that is the live gap, not the missing block.
+Counted against live data 2026-09-10, read-only. Nothing below rests on an uncounted assumption.
 
-**Steps 1–5 are safe. Steps 6 and 7 change stored data and are the only irreversible ones here.**
+### Safe — additive, nothing breaks
+
+| | | |
+|---|---|---|
+| 1 | **`scale_ref` on every option-bearing block** | It is on **0 of 420**. Not 36 missing — the field does not exist in live content. Every `mcq`, `single-select`, `multi-select` and `rating-scale` is incomplete. **First in wall-clock terms, independent of everything else** |
+| 2 | **`key` on the 198 blocks without one** | Their answers land under generated block ids and are unreachable by name |
+| 3 | **Additive schema** | The 7 labels on `activityConfig`; `image` on catalog scale options; `icon` on every activity row; `read.requires` corrected to `content` |
+| 4 | **Add the catalog rows** for activities declared but unauthorable until their renderers exist |
+| 5 | **Renderers — the 12 in §5.2**, in that order. Items 1–5 of that list are 16 of the 36 blocked pairs and need no further decision |
+| 6 | **The additive fields** — band map (ships with `slider`), `prompts[]`, `about`, `revisit_when` |
+| 7 | **`visible_when`** and **`completion`** — new authored rules, scoped to a step |
+
+### Changes stored data — prove against a fresh backup, both prefixes
+
+| | | |
+|---|---|---|
+| 8 | **The activity backfill** | `activity` is **null on all 420 blocks**. The §26 vocabulary is not written to a single one; `subtype` and `interaction` are what is stored. This is the largest single job in the document and everything that reads an activity depends on it |
+| 9 | **Re-point 9 alias blocks, migrate 1** | `matrix` ×8 → `input-table` · `number` ×1 unchanged · `scale` ×1 → `slider`. Then delete every alias case from `resolveInteraction()` |
+| 10 | **Retype the 6 `checklist × multi-select` blocks** | Either they become `exercise`, or the permitted list is decoration |
+| 11 | **Rename** `table` → `check-grid` | In place, id frozen |
+| 12 | **`session`** — split media out of `lesson` | Count the `media_ref` blocks first. That count is the retype set and nobody has taken it |
+| 13 | **The completion card becomes a `conclude` block** | `validateDay` requires one per day; `completionTitle` leaves `day-layout.ts` with the day types under §19 |
+| 14 | **Retire the duplicates and `sleep-diary`** | `rest` goes inside the §19 day-type removal |
+| 15 | **The instrument** (§9.2) | A storage change. Everything in capture → review → interpret → ledger waits on it |
+| 16 | **`allow_other`** | An output-shape migration. Sequence with a retype, never alone |
+
+### Changes what a user sees at their worst moment — stage it and watch
+
+| | | |
+|---|---|---|
+| 17a | `contacts_ref` as a catalog set, replacing the four hardcoded numbers | standalone, breaks nothing |
+| 17b | `risk` on the type · option-level `is_risk_indicator` · once-per-run enforced centrally · `support` authorable · the modal deleted | the fix |
+| 17c | **`CRISIS_ON_ANSWER_ENABLED = true`** | **last.** The flag alone reintroduces the bug that caused it to be switched off |
+
+### Content defects, independent of all of the above
+
+Found by reading live data on 2026-09-10, none of them blocked by anything in this document:
+
+- `checklist` options **“item 1” / “item 2” / “item 3”** shipped on Unburn day 27; “item 4” / “item 5” on Productivity Reset day 3.
+- Productivity Reset **day 8** carries `testaxasx`, `New Lessonxdsz` and body `xdz` — and an `onboarding` block on day 8, which that type forbids.
+- **`depression-q9`** — *“Thoughts that you would be better off dead…”* — has `is_risk_indicator` **unset**, while `depression-q10`, a difficulty question, has it **set**. Fix before 17b, or the flag switches on pointing at the wrong item.
+- The **Sleep Diary** captures four clock times, a count, a duration and a 1–5 rating as free text. The series can never be charted.
+- **“slep diary”** on the final screen of Sleep Tight.
+- `lesson`/`learning` share the `book-open` icon; `conclude`/`onboarding` share `flag`.
