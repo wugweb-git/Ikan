@@ -1,7 +1,6 @@
 import { supabase, signOutLocal } from './supabase-client';
 
 import type {
-  PageData,
   UserProfile,
   ProfileUpdateData,
   PrivacySettings,
@@ -214,51 +213,6 @@ class ApiClient {
     } catch {
       return { feed: [] };
     }
-  }
-
-  // CMS
-  async getPage(slug: string) {
-    return this.request(`/cms/pages/${slug}`, { method: 'GET' }, true);
-  }
-
-  // CMS (public — no auth required, used by user-facing CMS page renderer)
-  async getPagePublic(slug: string) {
-    return this.request(`/cms/pages/${slug}`, { method: 'GET' }, false);
-  }
-
-  async getAdminPage(id: string) {
-    const res = await this.request(`/cms/pages/${id}`, { method: 'GET' }, true);
-    return res.page || res;
-  }
-
-  async getPages() {
-    try {
-      const res = await this.request('/cms/pages', { method: 'GET' }, true);
-      return res.pages || [];
-    } catch (e) {
-      console.warn('Failed to fetch pages', e);
-      return [];
-    }
-  }
-
-  async createPage(data: PageData) {
-    const res = await this.request('/cms/pages', { 
-      method: 'POST', 
-      body: JSON.stringify(data)
-    }, true);
-    return res.page || res;
-  }
-
-  async updatePage(id: string, data: PageData) {
-    const res = await this.request(`/cms/pages/${id}`, { 
-      method: 'PUT', 
-      body: JSON.stringify(data)
-    }, true);
-    return res.page || res;
-  }
-
-  async deletePage(id: string) {
-    return this.request(`/cms/pages/${id}`, { method: 'DELETE' }, true);
   }
 
   // Auth

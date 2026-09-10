@@ -243,3 +243,43 @@ Not touched: `screens/AdminPageManager.tsx`, `PageEditPage.tsx`, the
 `AdminDashboard` 'pages' tab/nav, or the backend `/cms/pages*` routes — that is
 Prompt 3, sequenced after this lands (consumers must be gone before the module
 they configure is deleted).
+
+## Claimed 2026-09-10 — PAGE MANAGER ADMIN REMOVAL (branch `page-manager-remove-admin`, branched from `page-manager-unwire`)
+
+Removing the admin Pages module per work order Prompt 3, now that Prompt 2 has
+unwired every consumer. Deleted `screens/AdminPageManager.tsx` and
+`screens/PageEditPage.tsx`. In `AdminDashboard.tsx` removed the 5 sites tied to
+the 'pages' tab: the lazy import, the `ViewType` union member, the
+search-index entry, the sidebar nav entry, and the switch case — plus the now-
+orphaned `FileText` lucide import.
+
+Backend `index.tsx`: removed `GET /cms/pages/:slug` (66 lines, slug-alias
+resolution + KV-prefix-scan fallback) and the `GET/POST/PUT/DELETE /cms/pages`
+block (137 lines, 4 handlers). Also removed a 3-line stale comment left behind
+from an earlier, unrelated deletion (`createDefaultCMSContent removed...`) that
+the route-block removal exposed as now describing nothing.
+
+Orphan sweep after the route removal found `CmsPageRenderer.tsx` — the public-
+facing half of this same feature (renders a page fetched by slug from
+`/cms/pages/:slug`, wired to the `/page/:slug` route in `App.tsx`), now dead
+since its only backend route is gone and there is no longer any way to author
+one of these pages. Deleted it, its `App.tsx` lazy-import and route-switch
+case, and the now-unused `api-client.ts` methods (`getPage`, `getPagePublic`,
+`getAdminPage`, `getPages`, `createPage`, `updatePage`, `deletePage`) plus the
+`PageData` type in `api-types.ts` — verified zero remaining callers of each
+before removing.
+
+**Left alone, deliberately:** four `/page/`-prefix special-cases in
+`App.tsx` (`shouldShowFooter`, the invalid-route bypass) and `route-config.ts`
+(`isPublic`, `requiresAuth`) — these reference a path prefix, not a deleted
+symbol, so they aren't broken imports; they're just no longer meaningfully
+triggered (the route now always falls to `NotFound`). Removing the
+`requiresAuth` one would change auth-gating behavior for old `/page/*` links
+(default-to-`true` for an unmatched path instead of the explicit `false`), which
+is a behavior change beyond "remove orphaned imports." Flagged in the PR for
+a decision, not removed here.
+
+Not touched: `/content`, `/admin/content` (the separate resource/blog CMS —
+different KV prefix, different routes, confirmed by grep before any deletion).
+KV rows (`page:`/`cms_page:`) left in place per the owner's standing
+instruction — only code paths removed, no data deleted.

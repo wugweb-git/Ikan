@@ -10,7 +10,6 @@ import {
   Tag,
   Smile,
   Settings,
-  FileText,
   MessageSquare,
   Search,
   Bell,
@@ -46,7 +45,6 @@ const L = {
   ResourceManager: lazy(() => import('./AdminResourceManager').then(m => ({ default: m.AdminResourceManager }))),
   AssessmentManager: lazy(() => import('./AdminAssessmentManager').then(m => ({ default: m.AdminAssessmentManager }))),
   EquipDashboard: lazy(() => import('./EquipAdminDashboard').then(m => ({ default: m.EquipAdminDashboard }))),
-  PageManager: lazy(() => import('./AdminPageManager').then(m => ({ default: m.AdminPageManager }))),
   MediaManager: lazy(() => import('./AdminMediaManager').then(m => ({ default: m.AdminMediaManager }))),
   SettingsManager: lazy(() => import('./AdminSettingsManager').then(m => ({ default: m.AdminSettingsManager }))),
   Analytics: lazy(() => import('./AdminDashboardAnalytics').then(m => ({ default: m.AdminDashboardAnalytics }))),
@@ -123,7 +121,6 @@ type ViewType =
   | 'assessments'
   | 'equip'
   | 'equip-analytics'
-  | 'pages'
   | 'media'
   | 'categories'
   | 'checkin-scales'
@@ -174,7 +171,6 @@ export function AdminDashboard({ onNavigate, initialView }: AdminDashboardProps)
       { id: 'resources', label: 'Resources', group: 'Content', keywords: 'resource article blog library' },
       { id: 'checkin-builder', label: 'Check-in Builder', group: 'Content', keywords: 'checkin check-in template builder mood' },
       { id: 'consultants', label: 'Consultants', group: 'Content', keywords: 'consultant therapist professional doctor' },
-      { id: 'pages', label: 'Pages', group: 'Content', keywords: 'page cms content privacy terms faq' },
       { id: 'media', label: 'Media Library', group: 'Content', keywords: 'media image upload file photo' },
       { id: 'categories', label: 'Meta Manager', group: 'Config', keywords: 'category tag label metadata type mood' },
       { id: 'checkin-scales', label: 'Check-in Scales', group: 'Config', keywords: 'scale checkin energy stress sleep' },
@@ -212,7 +208,6 @@ export function AdminDashboard({ onNavigate, initialView }: AdminDashboardProps)
         { id: 'resources', label: 'Resources', icon: Table },
         { id: 'checkin-builder', label: 'Check-in Builder', icon: Smile },
         { id: 'consultants', label: 'Consultants', icon: Stethoscope },
-        { id: 'pages', label: 'Pages', icon: FileText },
         { id: 'media', label: 'Media Library', icon: Image },
       ]
     },
@@ -297,7 +292,6 @@ export function AdminDashboard({ onNavigate, initialView }: AdminDashboardProps)
       case 'assessments': return <SuspenseScreen><L.AssessmentManager onBack={goBack} /></SuspenseScreen>;
       case 'equip': return <SuspenseScreen><L.EquipDashboard onBack={goBack} /></SuspenseScreen>;
       case 'equip-analytics': return <SuspenseScreen><L.EquipAnalytics onBack={goBack} /></SuspenseScreen>;
-      case 'pages': return <SuspenseScreen><L.PageManager onBack={goBack} /></SuspenseScreen>;
       case 'media': return <SuspenseScreen><L.MediaManager onBack={goBack} /></SuspenseScreen>;
       case 'categories': return <SuspenseScreen><L.CategoryManager onBack={goBack} /></SuspenseScreen>;
       case 'checkin-scales': return <SuspenseScreen><L.CheckinScalesManager onBack={goBack} /></SuspenseScreen>;
