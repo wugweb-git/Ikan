@@ -3,7 +3,7 @@ import { ErrorBoundary } from '../../ErrorBoundary';
 import { ImageWithFallback } from '../../figma/ImageWithFallback';
 import { ClipboardCheck, Users, Sparkles } from 'lucide-react';
 import { useIsMobile } from '../../../hooks/useIsMobile';
-import { usePageContent } from '../../../hooks/usePageContent';
+import { DEFAULT_CMS_CONTENT } from '../../../utils/cms-defaults';
 
 interface HowItWorksCard {
   step: number;
@@ -70,7 +70,7 @@ function resolveIcon(card: HowItWorksCard): React.ReactNode {
 export function HowItWorksSection({ onNavigate }: HowItWorksSectionProps) {
   const isMobile = useIsMobile();
 
-  const { content: cmsContent } = usePageContent('homepage-howitworks-section');
+  const cmsContent = DEFAULT_CMS_CONTENT['homepage-howitworks-section'];
   const cms = useMemo(() => {
     if (!cmsContent?.content) return null;
     try { return JSON.parse(cmsContent.content); } catch { return null; }

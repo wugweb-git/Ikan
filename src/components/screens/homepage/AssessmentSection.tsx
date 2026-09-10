@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { ErrorBoundary } from '../../ErrorBoundary';
-import { usePageContent } from '../../../hooks/usePageContent';
+import { DEFAULT_CMS_CONTENT } from '../../../utils/cms-defaults';
 import { useIsMobile } from '../../../hooks/useIsMobile';
 import imgPhoneMockup from "../../../assets/25d8d01a36eaa618a0c4fdd22ae73fb856925905.png";
 
@@ -40,7 +40,7 @@ function highlightKeywords(text: string): React.ReactNode[] {
 }
 
 export function AssessmentSection({ onGetStarted }: AssessmentSectionProps) {
-  const { content, loading } = usePageContent('homepage-assessment');
+  const content = DEFAULT_CMS_CONTENT['homepage-assessment'];
   const isMobile = useIsMobile();
 
   const assessmentData = useMemo(() => {
@@ -53,7 +53,7 @@ export function AssessmentSection({ onGetStarted }: AssessmentSectionProps) {
     }
   }, [content]);
 
-  if (loading || !assessmentData) {
+  if (!assessmentData) {
     return (
       <div className="w-full h-96 flex items-center justify-center">
         <div className="animate-spin rounded-full h-8 w-8 border-[3px]" style={{ borderColor: 'var(--color-accent-default)', borderTopColor: 'var(--color-primary-default)' }}></div>

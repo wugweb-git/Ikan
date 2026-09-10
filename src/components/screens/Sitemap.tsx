@@ -2,7 +2,7 @@ import React, { useMemo } from 'react';
 import { useIsMobile } from '../../hooks/useIsMobile';
 import { PageHero } from '../ui/PageHero';
 import { NavBadge } from '../navigation/NavBadge';
-import { usePageContent } from '../../hooks/usePageContent';
+import { DEFAULT_CMS_CONTENT } from '../../utils/cms-defaults';
 import { House, Info, Mail, ClipboardCheck, BookOpen, Stethoscope, Users, UserCircle, Heart, CircleHelp, Shield, FileText, Ban, RotateCcw } from 'lucide-react';
 
 interface SitemapProps {
@@ -73,7 +73,7 @@ const DEFAULT_GROUPS = [
 export function Sitemap({ className, onNavigate, onBack }: SitemapProps) {
   const isMobile = useIsMobile();
 
-  const { content: cmsContent } = usePageContent('page-sitemap');
+  const cmsContent = DEFAULT_CMS_CONTENT['page-sitemap'];
   const cms = useMemo(() => {
     if (!cmsContent?.content) return null;
     try { return JSON.parse(cmsContent.content); } catch { return null; }

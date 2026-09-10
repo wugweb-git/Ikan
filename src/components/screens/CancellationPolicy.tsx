@@ -1,7 +1,6 @@
 import { useIsMobile } from '../../hooks/useIsMobile';
-import { usePageContent } from '../../hooks/usePageContent';
+import { DEFAULT_CMS_CONTENT } from '../../utils/cms-defaults';
 import { PageHero } from '../ui/PageHero';
-import { LoadingSpinner } from '../LoadingSpinner';
 
 interface CancellationPolicyProps {
   className?: string;
@@ -10,7 +9,7 @@ interface CancellationPolicyProps {
 
 export function CancellationPolicy({ className, onNavigate }: CancellationPolicyProps) {
   const isMobile = useIsMobile();
-  const { content, loading } = usePageContent('cancellation-policy');
+  const content = DEFAULT_CMS_CONTENT['cancellation-policy'];
 
   return (
     <div 
@@ -33,24 +32,18 @@ export function CancellationPolicy({ className, onNavigate }: CancellationPolicy
           padding: isMobile ? '24px 16px' : '40px 24px',
         }}
       >
-        {loading ? (
-          <div className="flex items-center justify-center py-12">
-            <LoadingSpinner message="Loading..." size="sm" />
-          </div>
-        ) : (
-          <div 
-            dangerouslySetInnerHTML={{ __html: content?.content || '' }}
-            className="prose max-w-none"
-            style={{
-              backgroundColor: 'var(--color-bg-card)',
-              borderRadius: 'var(--radius-lg)',
-              border: '1px solid var(--color-border-light)',
-              boxShadow: 'var(--shadow-sm)',
-              padding: isMobile ? '24px' : '40px',
-              fontFamily: 'var(--font-family-base)',
-            }}
-          />
-        )}
+        <div 
+          dangerouslySetInnerHTML={{ __html: content?.content || '' }}
+          className="prose max-w-none"
+          style={{
+            backgroundColor: 'var(--color-bg-card)',
+            borderRadius: 'var(--radius-lg)',
+            border: '1px solid var(--color-border-light)',
+            boxShadow: 'var(--shadow-sm)',
+            padding: isMobile ? '24px' : '40px',
+            fontFamily: 'var(--font-family-base)',
+          }}
+        />
       </div>
     </div>
   );

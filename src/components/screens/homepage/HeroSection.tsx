@@ -2,7 +2,7 @@ import type React from 'react';
 import { ErrorBoundary } from '../../ErrorBoundary';
 import { Button } from '../../ui/button';
 import { cn } from '../../ui/utils';
-import { usePageContent } from '../../../hooks/usePageContent';
+import { DEFAULT_CMS_CONTENT } from '../../../utils/cms-defaults';
 import { useMemo, useState, useEffect, useRef } from 'react';
 
 interface HeroSectionProps {
@@ -275,7 +275,7 @@ function MarqueeRow({ statistics, speed = 30 }: { statistics: any[]; speed?: num
 }
 
 export function HeroSection({ onGetStarted }: HeroSectionProps) {
-  const { content, loading } = usePageContent('homepage-hero');
+  const content = DEFAULT_CMS_CONTENT['homepage-hero'];
 
   const heroData = useMemo(() => {
     if (!content?.content) return null;
@@ -287,7 +287,7 @@ export function HeroSection({ onGetStarted }: HeroSectionProps) {
     }
   }, [content]);
 
-  if (loading || !heroData) {
+  if (!heroData) {
     return (
       <div className="w-full h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-10 w-10 border-[3px]" style={{ borderColor: 'var(--color-accent-default)', borderTopColor: 'var(--color-primary-default)' }}></div>

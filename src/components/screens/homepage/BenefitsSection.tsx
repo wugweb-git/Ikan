@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { ErrorBoundary } from '../../ErrorBoundary';
 import { ImageWithFallback } from '../../figma/ImageWithFallback';
 import { useIsMobile } from '../../../hooks/useIsMobile';
-import { usePageContent } from '../../../hooks/usePageContent';
+import { DEFAULT_CMS_CONTENT } from '../../../utils/cms-defaults';
 
 interface AudienceCard {
   title: string;
@@ -51,7 +51,7 @@ interface BenefitsSectionProps {
 export function BenefitsSection({ onNavigate, ctaText = 'Learn more', ctaRoute = '/about' }: BenefitsSectionProps) {
   const isMobile = useIsMobile();
 
-  const { content: cmsContent } = usePageContent('homepage-benefits-section');
+  const cmsContent = DEFAULT_CMS_CONTENT['homepage-benefits-section'];
   const cms = useMemo(() => {
     if (!cmsContent?.content) return null;
     try { return JSON.parse(cmsContent.content); } catch { return null; }

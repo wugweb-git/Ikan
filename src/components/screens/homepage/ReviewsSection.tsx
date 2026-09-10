@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { Star } from 'lucide-react';
 import { useIsMobile } from '../../../hooks/useIsMobile';
 import { ImageWithFallback } from '../../figma/ImageWithFallback';
-import { usePageContent } from '../../../hooks/usePageContent';
+import { DEFAULT_CMS_CONTENT } from '../../../utils/cms-defaults';
 
 /* ─── Data ─── */
 interface Review {
@@ -175,7 +175,7 @@ function MobileReviewCard({ review }: { review: Review }) {
 export function ReviewsSection() {
   const isMobile = useIsMobile();
 
-  const { content: cmsContent } = usePageContent('homepage-reviews-section');
+  const cmsContent = DEFAULT_CMS_CONTENT['homepage-reviews-section'];
   const cms = useMemo(() => {
     if (!cmsContent?.content) return null;
     try { return JSON.parse(cmsContent.content); } catch { return null; }

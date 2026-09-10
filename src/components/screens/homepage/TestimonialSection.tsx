@@ -2,7 +2,7 @@ import React, { useMemo } from 'react';
 import { ErrorBoundary } from '../../ErrorBoundary';
 import { ClipboardCheck, Heart } from 'lucide-react';
 import { useIsMobile } from '../../../hooks/useIsMobile';
-import { usePageContent } from '../../../hooks/usePageContent';
+import { DEFAULT_CMS_CONTENT } from '../../../utils/cms-defaults';
 
 interface StatItem {
   value: string;
@@ -97,7 +97,7 @@ function StatIcon({ type }: { type: StatItem['icon'] }) {
 export function TestimonialSection() {
   const isMobile = useIsMobile();
 
-  const { content: cmsContent } = usePageContent('homepage-stats-section');
+  const cmsContent = DEFAULT_CMS_CONTENT['homepage-stats-section'];
   const cms = useMemo(() => {
     if (!cmsContent?.content) return null;
     try { return JSON.parse(cmsContent.content); } catch { return null; }

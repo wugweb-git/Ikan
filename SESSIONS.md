@@ -196,3 +196,28 @@ verbatim — the blocks session's work, not edited. Every script and baseline
 the same as putting the path in git, and a green local run cannot tell the
 difference. Any commit that adds a CI step should check `git ls-files` for
 everything that step executes.
+
+## Claimed 2026-09-10 — PAGE MANAGER UNWIRE (branch `page-manager-unwire`)
+
+Unwiring every `usePageContent(pageId)` consumer to render its
+`DEFAULT_CMS_CONTENT` entry directly, per work order Prompt 2. No wording
+changed — `DEFAULT_CMS_CONTENT` already held the copy the hook's fallback was
+returning; this makes it the source instead of a fallback. Zero live-fetch
+dependency remains: pages render as static/hardcoded until a different CMS
+replaces this layer, per the owner's standing instruction.
+
+18 consumers (Homepage + 8 homepage/ sections including the inline
+`homepage-equip-intro` call, the 4 legal pages, AboutUs/FAQ/ContactUs/
+Sitemap/NotFound), all now import `DEFAULT_CMS_CONTENT` from
+`utils/cms-defaults` instead of the hook. `account/Legal.tsx` checked — it
+never imported `usePageContent`, nothing to unwire there.
+
+Deleted `hooks/usePageContent.ts` (verified zero remaining call sites in `src/`
+after all 18 edits). `utils/cms-defaults.ts` itself had no fetch path of its
+own to remove — it was always a static object; the fetch lived entirely in the
+now-deleted hook.
+
+Not touched: `screens/AdminPageManager.tsx`, `PageEditPage.tsx`, the
+`AdminDashboard` 'pages' tab/nav, or the backend `/cms/pages*` routes — that is
+Prompt 3, sequenced after this lands (consumers must be gone before the module
+they configure is deleted).
