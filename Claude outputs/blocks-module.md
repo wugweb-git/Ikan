@@ -5,7 +5,11 @@ Revised 2026-09-10.
 
 > **Status.** The model is settled. The catalog is mid-migration — §26 landed in `f1600b1b`, the two block-type retirements in `1b22ceaa`. Live counts in §11 are read from `/admin/block-type-viewer`, not from memory.
 
-**16 block types · 30 activities · 10 interactions · 7 labels · 7 policy fields.**
+**17 block types · 31 activities · 10 interactions · 7 labels · 9 policy fields.**
+
+> **Ruled 2026-09-10.** Media is **not** `lesson`. The test is a clock: *if it has a duration, it is not a lesson.* `lesson` keeps `read`; `listen`, `view` and `paced-breathing` move to a new type — provisionally **`session`**, name not yet ruled. See §5.1.
+>
+> Everything marked **proposed** below came out of the 15-screen competitor audit (`amaha-screen-audit-2026-09-10.md`, commit `3b60bc76`) and is **not ruled**. It is written here so the model is one document, not two.
 
 ---
 
@@ -71,7 +75,7 @@ Each names what the user is **communicating**, not how they touch the screen.
 
 ---
 
-## 3 · Activities — 30
+## 3 · Activities — 31
 
 ### `observe` — no stored response
 
@@ -111,6 +115,14 @@ Each names what the user is **communicating**, not how they touch the screen.
 | `input-table` | `columns` | cell map | built |
 
 `input-table` is the same act, many times, arranged as a grid. **144 live blocks** — more than a third of everything.
+
+### `share` — proposed addition
+
+| activity | interaction | requires | produces | renderer |
+|---|---|---|---|---|
+| `list-entry` | share | `prompt` · `min` · `max` | **`string[]`** | **owed** |
+
+**Proposed.** Type a line, a new empty line appears. Nothing in the catalog produces an unbounded list of the user's own strings — `text` gives one string, `multi-select` gives `option_id[]`, `structured-list` gives fixed authored items ticked, `input-table` gives fixed columns. Gratitude jars, thought records, values lists and goal lists are all this one shape, which makes it the most reusable missing activity found so far.
 
 ### `locate`
 
@@ -203,13 +215,14 @@ Each was asked for by name. Each produces data an existing activity already prod
 
 ---
 
-## 5 · Block types — 16
+## 5 · Block types — 17
 
 Policy columns: `auto` = autoAdvance · `back` = navigationBack · `score` = scoringEnabled · `exit` = saveOnExit · `toggle` = saveOnToggle.
 
 | type | about | use | activities | steps | policy | rules |
 |---|---|---|---|---|---|---|
-| `lesson` | Formatted content the user reads, hears or watches. No answer | Teaching — the passage before the exercise that applies it. **118 live** | read · listen · view · paced-breathing | allowed | auto ✗ · back ✓ | produces no response |
+| `lesson` | Formatted content the user **reads**. No clock, no answer | Teaching — the passage before the exercise that applies it. **118 live, an unknown share of which carry `media_ref` and must retype** | read | allowed | auto ✗ · back ✓ | produces no response |
+| `session` | A single timed media practice — audio, video, or a pacer | The practice itself, not the teaching about it. A 13-minute guided imagery. **0 live as a type** | listen · view · paced-breathing | not allowed | auto ✗ · back ✓ · **transport** · **completion** | requires `media_ref` · one activity, no steps · **produces a response** — see §5.1 |
 | `exercise` | The interactive block — everything filled in, picked, ranked or handed over | Any question producing an answer. **187 live.** The workhorse | mcq · single-select · multi-select · boolean · rating-scale · slider · input-table · check-grid · structured-list · number · timer · date · time · date-time · location · ranking · upload | allowed | auto ✗ · back ✓ · toggle ✓ | requires an activity · requires `key` · scale-backed needs `scale_ref` |
 | `journal` | Free-text writing against a prompt | When the value is the writing, not a scoreable answer. **17 live** | text · short-text · ephemeral-journal · record | allowed | auto ✗ · back ✓ · exit ✓ | requires `prompt` · requires `key` |
 | `checklist` | A list of items ticked off | Confirming actions taken, not capturing data | structured-list | allowed | auto ✗ · back ✓ · toggle ✓ | requires `items` · requires `key` |
@@ -220,7 +233,7 @@ Policy columns: `auto` = autoAdvance · `back` = navigationBack · `score` = sco
 | `onboarding` | Day 0, before the programme starts | Consent, orientation, and the profile questions that shape everything after | mcq · single-select · multi-select · boolean · text · short-text · date · consent | allowed, 1 per step | auto ✓ · back ✗ · score ✗ | ⚠ runs once, before day 1 |
 | `assessment` | Scored baseline using validated clinical instruments | Severity at intake — PHQ/GAD shape. Forward-only so a baseline cannot be revised | mcq · single-select · clinical-instrument | not allowed, 1 per step | auto ✓ · back ✗ · **score ✓** | ⚠ the only type that may hold a `clinical-instrument` |
 | `learning` | Concept introduction | The teaching day — a lesson plus at least one interaction to check it landed | mcq · single-select | allowed, **required**, 1 step per lesson | auto ✗ · back ✓ | ⚠ must include ≥1 interaction |
-| `practice` | Applying a concept to the user's own situation | Data-capture days. Saves on exit because the user is mid-writing | multi-select · input-table · structured-list · number · timer · text · short-text · record · location · upload · paced-breathing | allowed | auto ✗ · back ✓ · **exit ✓** | ⚠ state whether responses are stored or private |
+| `practice` | Applying a concept to the user's own situation | Data-capture days. Saves on exit because the user is mid-writing | multi-select · input-table · structured-list · number · timer · text · short-text · record · location · upload | allowed | auto ✗ · back ✓ · **exit ✓** | ⚠ state whether responses are stored or private |
 | `workshop` | Multi-step structured thinking | Ideation done in stages — where blocks must be grouped, not scrolled | multi-select · input-table · text · ephemeral-journal · ranking · upload | allowed, **required**, max 3 | auto ✗ · back ✓ | ✕ no StepGroups · ✕ >3 per group · ✕ mixed intent in one group |
 | `tracker` | The same instrument, repeated daily | Habits and streaks. Should stay identical day to day so the series is comparable | check-grid · input-table · structured-list · rating-scale · slider · boolean · number · timer | not allowed | auto ✗ · **toggle ✓** | ⚠ should stay identical across days |
 | `support` | A routing card. Names what is on offer and hands the user to a person | Authored at the end of a module on a heavy topic, and fired by policy when a risk indicator trips. **0 live** — it exists today as a modal, not a block | crisis-contact | not allowed | auto ✗ · back ✓ · score ✗ · **risk: surface** | requires `contacts_ref` · always dismissible · never counts toward day completion · **may not be the last block** — `conclude` still closes the day |
@@ -235,6 +248,29 @@ Policy columns: `auto` = autoAdvance · `back` = navigationBack · `score` = sco
 | `comparison-matrix` *(activity)* | Identical to `input-table` — same interaction, same `columns`, same cell map | `input-table` with fixed rows |
 
 **`conclude` stays**, and retiring `rest` *depends* on it: `conclude` is what closes the rest day.
+
+### 5.1 · `session` — the ruling, and what it costs
+
+**Ruled 2026-09-10: media is not `lesson`.** The test that follows is sharper than anything proposed before it:
+
+> **If it has a duration, it is not a lesson.** `lesson` is content with no clock.
+
+| | |
+|---|---|
+| `lesson` | keeps `read`. Loses `listen` · `view` · `paced-breathing` |
+| `session` | takes all three, plus `transport`, `completion` and a response key |
+| `practice` | loses `paced-breathing` — a pacer has a clock, so it goes with the rest |
+| count | 16 → **17**. Back to 16 if `sleep-diary` retires as §16 proposes |
+
+**It resolves a contradiction the model already had.** §5 says `lesson` produces no response; a media block that resumes at 2:19 has state, and state needs a response key. Cutting media out lets `lesson` keep *no response* honestly and gives `session` the key that resume, furthest-point and completion threshold all need:
+
+```
+{ position, furthest, completed }
+```
+
+**Unknown, and it is the retype set:** how many of the 118 live `lesson` blocks carry a `media_ref`. Not guessed here — it needs a count off live data, which is step 1 of §16 regardless.
+
+**Two things still open.** The **name** — `session` also means a therapy appointment, which this product will eventually have; `guided` and `player` are unoverloaded alternatives. And whether a 40-second explainer video inside a teaching day is a `session` or a `lesson`: by the duration test it is a `session`, which means teaching days carry two block types where they carried one, and the builder has to make that obvious or authors will get it wrong.
 
 ---
 
@@ -267,6 +303,8 @@ Policy is **not** authored per block. It belongs to the type, which is the whole
 | `saveOnExit` | Writes when the user leaves mid-block. For types where they are mid-writing |
 | `saveOnToggle` | Writes on every tap. For grids and checklists |
 | `risk` | Whether the type honours `is_risk_indicator`, and what fires when one trips. `none` · `surface` · `gate` |
+| `transport` | **Proposed.** What the user may do to the playhead. `free` · `forward-locked` · `none`. Without it, scrub-to-end is a hole in any gate that waits on a `session` |
+| `completion` | **Proposed.** What counts as done. `any` · `threshold(N%)` · `full` · `all-visited`. Not media-only — a list whose rows must each be opened is `all-visited` |
 | step rules | `allowed` · `required` · max per group · one per step |
 
 ### `risk` — the seventh field, and it does not exist yet
@@ -275,7 +313,9 @@ Policy is **not** authored per block. It belongs to the type, which is the whole
 
 **It is currently disabled sitewide** — `CRISIS_ON_ANSWER_ENABLED` is off, with the comment that re-offering the panel on every later answer was worse than not offering it at all. So `is_risk_indicator` is authored on live content and does nothing.
 
-`risk` closes that. It is a **type** guarantee, and `is_risk_indicator` stays authored per **question** — the two meet here, which is the whole shape of policy.
+`risk` closes that. It is a **type** guarantee; the flag itself is authored on content — the two meet here, which is the whole shape of policy.
+
+> **Corrected 2026-09-10.** This section first said the flag is authored *per question*. That is wrong. In the competitor audit, screen 678 is an `exercise · multi-select` where **one option** — *"Thoughts of hurting someone"* — is the risk, and the flow proceeds. **`is_risk_indicator` must attach to a catalog option, a `scale_ref` row, not only to a question**, or every checklist in the app has that hole. Amend before building step 9b.
 
 | value | what it means | carried by |
 |---|---|---|
@@ -422,6 +462,45 @@ So it enters as three things, not one:
 
 ---
 
+## 10.2 · The instrument — proposed, and it is a data-model change
+
+Four competitor exercises audited on 2026-09-10 run one shape:
+
+**Capture → Review → Interpret → Ledger**
+
+| phase | what | our nearest |
+|---|---|---|
+| Capture | one question per screen | a step. **have** |
+| Review | read-back of everything entered, **EDIT \| SAVE** | `table-review` reads *one* block as a grid. **too narrow** |
+| Interpret | a section the **app** generated from the answers | **nothing** |
+| Ledger | dated entries, reopenable, *Add new* | **nothing** |
+
+We store **one value per block per day** under `responseKeyOf(block)`. That shape holds N dated entries per instrument, independent of any day — one competitor worksheet held three entries from 05:48, 05:49 and 08:12 on one morning.
+
+**An instrument is not a block.** A day should *reference* one; the instrument owns its own ledger. This is the only item in this document that changes the storage model, and it is the reason five of the seven audit misses collapse into one line.
+
+**Two corollaries, both cheap to state and easy to get wrong:**
+
+- **EDIT is not `navigationBack`.** Back-navigation revises an answer in sequence and is off on every scored type. Reopening a committed draft from a review with every answer loaded is a different act and needs its own word.
+- **`interpretation` is authored content selected by a band, not free prose.** *What you should do* comes out of the slider band. That makes the band map (§10.3) load-bearing, not cosmetic.
+
+## 10.3 · Fields the audit found missing — all proposed
+
+| field | on | what it does | why nothing existing covers it |
+|---|---|---|---|
+| `prompts[]` | `journal` · `text` | scrolling scaffold chips above the box — *Where were you? · What were you doing?* | our `prompt` is singular. An empty textarea is the highest-abandonment element in the flow |
+| band map | `slider` · `rating-scale` | value → label → advice. *Calm* at 0, *Slightly Annoyed* at 3 | `scale_ref` maps options; a continuum has none. And §10.2's interpretation reads the band |
+| `visible_when` | any block | `{ key, op, value }` — the symptom checklist does not exist until the slider leaves 0 | a rule between two blocks in a step. Not a label, not a policy, not an activity |
+| `about` | any block | optional supporting content behind a persistent affordance, non-blocking. Their label for it — *How will this help me?* — is better than ours | nothing. And it generalises past media: every exercise could answer *why am I doing this* without spending a step |
+| `revisit_when` | any block | authored re-entry condition — *when you find it hard to fall asleep* | nothing. It is what turns a finished programme into a library navigable by symptom |
+| `allow_other` | `scale_ref` | *Add my own* as the last row of a select | output becomes `option_id \| free_text`. **By our own distinguishing test that is a shape change — a migration, not a flag.** Say so before someone ships it as a boolean |
+| computed ordering | display | *"We've ranked your triggers"* — the app ranked, not the user | `ranking` is `rate · order`, the **user** sequencing. A displayed ordering derived from prior answers is output, not input |
+| content branching | display | which explanation renders is chosen by a prior pick | `source_key` exists on `table-review` only |
+
+**Not carried forward:** a `commitment` block type for user-set cadence and reminders. It was proposed off an earlier screen set and has not been ruled, so it is named here and not counted.
+
+---
+
 ## 11 · Live state — read from the viewer, 2026-09-09
 
 | | |
@@ -530,6 +609,11 @@ These are module-wide, and the audit on 2026-09-09 found live violations of four
 6. **Retire the duplicates and the two block types.** Retype live blocks, then prove interaction-neutrality against a fresh backup, both prefixes. `rest` goes inside the §19 day-type removal.
 7. **Make the completion card a `conclude` block**, and delete `completionTitle` from `day-layout.ts` with the day types.
 8. **Renderers**, in the §14 order.
+8a. **`session`** — split media out of `lesson`, count the `media_ref` blocks first, then retype. Ruled, not yet scheduled.
+8b. **The §10.3 additive fields** — `prompts[]`, band map, `about`, `revisit_when`. None of them break anything.
+8c. **`visible_when`** and **`completion`** — new authored rules, scoped to a step.
+8d. **The instrument** (§10.2). A storage change. Everything in capture/review/interpret/ledger waits on it.
+8e. **`allow_other`** — an output-shape migration; sequence it with a retype, never alone.
 9. **The crisis pathway.** Not a decision any more — a build, and it splits in three. **9a** `contacts_ref` as a catalog set, replacing the hardcoded numbers: standalone, breaks nothing, do it whenever. **9b** the `risk` policy field, which is what lets `CRISIS_ON_ANSWER_ENABLED` come back on, because once-per-run stops being per-screen. **9c** `support` as an authorable block. **9a and 9b are worth doing before 9c** — the flag is off in production today and that is the live gap, not the missing block.
 
 **Steps 1–5 are safe. Steps 6 and 7 change stored data and are the only irreversible ones here.**
