@@ -28,6 +28,34 @@ Claiming three unowned files for the design-system + accessibility fixes filed i
 | `src/App.tsx` | remove the focus/blur handlers that re-disable pinch zoom (lines ~398-416) |
 | `src/styles/globals.css` | brand `-text` siblings (additive), 16px font-size floor on form controls |
 
+### 2026-09-10 · second collision — contrast lint, and one finding handed over
+
+Both sessions started a contrast lint within minutes of each other. **The blocks
+session's `scripts/contrast-ratchet.mjs` wins** — it is curated, tested
+(`src/lib/contrast.test.ts`), and already wired into `ci.yml`. The system-map
+session's `scripts/lint-contrast.mjs` is dropped to `_to_delete/`; delete it.
+
+`.contrast-baseline` was briefly set to `16` by the dropped script. **It is now
+`5`, which is what `contrast-ratchet.mjs` actually measures.** Do not raise it.
+
+**Two findings the surviving lint cannot see, handed to the blocks session:**
+
+1. **`.dark` does not redefine `--color-text-primary`.** It redefines
+   `--color-bg-page` and `--color-bg-card` (both to grey-10/grey-9) and
+   `--color-text-muted`, but primary body text keeps `#151515`. In dark mode
+   that is `#151515` on `#0D0D0D` — **1.06:1, invisible**. It has never rendered
+   because nothing adds the `.dark` class, which is the only reason this has not
+   been reported as a bug. Wiring a theme switch before fixing this ships an
+   unreadable app.
+
+2. **All six `-text` brand tokens fail on dark grounds** — 2.5:1 to 3.3:1. They
+   were tuned for `--color-bg-card` and `--color-bg-page` in light and `.dark`
+   does not redefine them.
+
+Neither shows up in `contrast-ratchet.mjs` because it checks curated light-theme
+pairs only. Adding a dark pass and an automatic rule for `*-text` tokens against
+both grounds would catch both. That is the blocks session's file to change.
+
 ### 2026-09-10 · collision resolved in `globals.css`
 
 Both sessions fixed the teal-on-wash contrast failure on the same day and landed
