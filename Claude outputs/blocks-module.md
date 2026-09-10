@@ -627,14 +627,25 @@ Backed up to `backup_pre_content_fix_2026_09_10` (17 rows) before any write. Bot
 | **Risk flag on the wrong item** | `depression-q9` — *"Thoughts that you would be better off dead…"* — **unset**, while `depression-q10`, a functional-difficulty question, was **set** | q9 **set**, q10 **cleared**. `general-q5` was already correct. **This had to land before §15 item 19**, or the flag switches on pointing at the wrong question |
 | **"slep diary"** | Final screen of Sleep Tight, day 30 | corrected, both prefixes |
 | **Icon collisions** | `lesson`/`learning` both `book-open`; `conclude`/`onboarding` both `flag` | `learning` → `graduation-cap`, `onboarding` → `door-open`. `lesson` keeps `book-open`, `conclude` keeps `flag` |
+| **Placeholder options** | `checklist` blocks whose options were **"item 1" … "item 5"** | **Ruled: replaced with a free-text prompt** rather than invented clinical content. The blocks become `journal` · `text`, keeping their own prompt where they had one. Backed up to `backup_pre_placeholder_fix_2026_09_10` |
 
-**Three remain open, because each needs a content decision rather than a fix:**
+**The placeholder fix reached further than expected, and closed a second defect.** Six blocks carried `"item N"` options, not two — Unburn days **27, 29 and 30**, Productivity Reset days **1 and 3**. And because every one of them was a `checklist` carrying `multi-select`, converting them also emptied the permitted-list violation:
+
+| | before | after |
+|---|---|---|
+| Blocks with `"item N"` options | 6 | **0** |
+| `checklist × multi-select` | 6 | **0** |
+| `checklist` blocks | 7 | **1** — the single legitimate `structured-list` |
+| Total blocks | 420 | **420** — nothing lost |
+
+**§15 item 11 is struck.** The retype it asked for happened here.
+
+**Two remain open, by decision:**
 
 | | |
 |---|---|
-| **Placeholder options shipped** | Unburn day 27 — a `checklist` whose three options are **"item 1", "item 2", "item 3"**; Productivity Reset day 3 — "item 4", "item 5". Day 27 of a 30-day programme. **Nobody can invent the intended items** |
-| **Test blocks in a published programme** | Productivity Reset **day 8** — `testaxasx` (subtitle `"d "`, body `zdxzdc`), `New Lessonxdsz` (body `xghfdx`), and a conclude titled "New Activity" (body `xdz`). The first is an `onboarding` block on **day 8**, which that type forbids outright. Deleting live content needs saying so |
-| **Sleep Diary typing** | Ten clinical rows — four clock times, a count, a duration and a 1–5 rating — all captured as free text, so the series can never be charted. Fixing it means typed columns, which is §15 item 15's shape, not a content edit |
+| **Test blocks in a published programme** | Productivity Reset **day 8** — `testaxasx` (subtitle `"d "`, body `zdxzdc`), `New Lessonxdsz` (body `xghfdx`), and a conclude titled "New Activity" (body `xdz`). The first is an `onboarding` block on **day 8**, which that type forbids outright. **Ruled: leave them, log only.** No writes |
+| **Sleep Diary typing** | Ten clinical rows — four clock times, a count, a duration and a 1–5 rating — all captured as free text, so the series can never be charted. **Ruled: schedule it with the instrument** (§15 item 15). It is the same shape; the content stays as it is until typed columns exist |
 
 ---
 
@@ -754,7 +765,7 @@ One list. Counted against live data 2026-09-10, read-only. Nothing here rests on
 | 8 | **S** | **`session`** — split media out of `lesson` | **Counted: the retype set is 0.** 27 lesson blocks carry an image, none carries video or audio. Purely additive |
 | 9 | **D** | **The activity backfill** | `activity` is **null on all 420 blocks**. The §26 vocabulary is not written to a single one; `subtype` and `interaction` are what is stored. The largest single job in this document, and everything that reads an activity depends on it |
 | 10 | **D** | **Re-point 9 alias blocks, migrate 1** | `matrix` ×8 → `input-table` · `number` ×1 unchanged · `scale` ×1 → `slider`. Then delete every alias case from `resolveInteraction()` |
-| 11 | **D** | **Retype the 6 `checklist × multi-select` blocks** | Either they become `exercise`, or the permitted list is decoration |
+| 11 | ~~D~~ | ~~**Retype the 6 `checklist × multi-select` blocks**~~ | **Done 2026-09-10.** All six were the placeholder blocks; converting them to `journal · text` emptied the violation. §9.4 |
 | 12 | **D** | **Rename** `table` → `check-grid` | In place, id frozen |
 | 13 | **D** | **The completion card becomes a `conclude` block** | `validateDay` requires one per day; `completionTitle` leaves `day-layout.ts` with the day types under §19 |
 | 14 | **D** | **Retire the duplicates and `sleep-diary`** | `rest` goes inside the §19 day-type removal |
