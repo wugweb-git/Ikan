@@ -44,6 +44,18 @@
   --ikan-brand-cta-gradient-start: #FFA07A;
   --ikan-brand-cta-gradient-end: #FFC0CB;
 
+  /* Brand hues, accessible as TEXT (WCAG 2.1 AA, >= 4.5:1 on --bg-card #FFFFFF
+     and --bg-page #F5F5F5). The raw --ikan-brand-* hues above are decoration:
+     fills, borders, illustration. They must not be used as a text colour.
+     This mirrors the pattern --color-status-success-text already established.
+     Ratios on #FFFFFF / #F5F5F5 noted per line. Measured 2026-09-10. */
+  --ikan-brand-teal-text: #356B5A;            /* 6.17 / 5.66 */
+  --ikan-brand-amber-text: #8A5A00;           /* 5.93 / 5.44 */
+  --ikan-brand-coral-text: #A83E38;           /* 6.16 / 5.65 */
+  --ikan-brand-slate-text: #455B9E;           /* 6.48 / 5.94 */
+  --ikan-brand-library-accent-text: #00695C;  /* 6.61 / 6.07 */
+  --color-status-info-text: #6636D6;          /* 6.85 / 6.29 */
+
   /* Colors - Special */
   --color-rating-star: #FFA500;
   --color-rating-star-inactive: var(--grey-3);
@@ -1501,4 +1513,21 @@ html {
 
 .animate-accordion-up {
   animation: accordion-up 200ms ease-out;
+}
+/* ---------------------------------------------------------------------------
+   Form controls: 16px floor.
+
+   iOS Safari auto-zooms the viewport when a focused form control renders below
+   16px. The previous workaround set user-scalable=no on focusin (App.tsx), which
+   disabled pinch-zoom for the whole page while any field was focused - a WCAG
+   1.4.4 failure at exactly the moment a user is most likely to need to zoom.
+
+   Setting the computed font-size floor to 16px removes the auto-zoom trigger at
+   source, so zoom can stay enabled everywhere. Do not reintroduce a viewport
+   rewrite. Added 2026-09-10.
+   --------------------------------------------------------------------------- */
+input:not([type="checkbox"]):not([type="radio"]),
+textarea,
+select {
+  font-size: max(16px, 1em);
 }

@@ -17,6 +17,33 @@ prefix overlap. Everything below exists to protect those three seams.
 
 Anything not listed is unowned. Claim it in this file before writing it.
 
+## Claimed 2026-09-10 — SYSTEM MAP session (Cowork)
+
+Claiming three unowned files for the design-system + accessibility fixes filed in
+`Claude outputs/system-map-2026-09-10/`:
+
+| file | change |
+|---|---|
+| `index.html` | load Inter 400/500/600/700; remove `user-scalable=no` |
+| `src/App.tsx` | remove the focus/blur handlers that re-disable pinch zoom (lines ~398-416) |
+| `src/styles/globals.css` | brand `-text` siblings (additive), 16px font-size floor on form controls |
+
+Not touched, deliberately:
+
+- `src/components/page-blocks/**` — ASSESSMENT-owned. Holds six content-drop bugs
+  (`section1`, `section3_content`, `tile4_content`, `tile5_content`, newsletter
+  benefits, self-recommending related query). Raised, not fixed.
+- **Weight tokens.** `--font-weight-semibold` and `--font-weight-bold` are both 500
+  by an explicit in-file decision ("public UI must only use 400/500"). That is a
+  design constraint, not a bug. Left alone.
+- **Dark mode.** Nothing in `src/` ever adds the `.dark` class — no theme provider,
+  no toggle, no `prefers-color-scheme`. Dark mode is unreachable, so the 43 dark
+  tokens and every `.dark .component` override are dead code. Wiring it on would
+  expose the 286 tokens with no dark value and look worse than light-only. Needs a
+  decision, not a patch.
+- **Radius scale rename** — 154+ call sites.
+
+
 ## The three seams
 
 **1 · `src/components/screens/AssessmentFlow.tsx`** — assessment-owned. Blocks

@@ -389,34 +389,12 @@ function AppContent() {
   // Mobile viewport optimization effect
   useEffect(() => {
     if (isMobile && typeof window !== 'undefined') {
-      const viewport = document.querySelector('meta[name="viewport"]');
-      if (viewport) {
-        viewport.setAttribute('content', 
-          'width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes, viewport-fit=cover'
-        );
-      }
-
-      const addInputListeners = () => {
-        const inputs = document.querySelectorAll('input, textarea, select');
-        inputs.forEach(input => {
-          input.addEventListener('focusin', () => {
-            if (viewport) {
-              viewport.setAttribute('content', 
-                'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover'
-              );
-            }
-          });
-          input.addEventListener('focusout', () => {
-            if (viewport) {
-              viewport.setAttribute('content', 
-                'width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes, viewport-fit=cover'
-              );
-            }
-          });
-        });
-      };
-
-      setTimeout(addInputListeners, 100);
+      // Zoom is enabled in index.html and stays enabled. The viewport meta is not
+      // rewritten here any more: the previous focusin/focusout handlers set
+      // user-scalable=no while any input was focused, which is a WCAG 1.4.4 failure
+      // exactly when a user filling a form is most likely to need to zoom. The iOS
+      // auto-zoom-on-focus that hack was working around is prevented properly by the
+      // 16px font-size floor on form controls in globals.css.
 
       if ('serviceWorker' in navigator && 'PushManager' in window) {
         window.addEventListener('beforeinstallprompt', (e) => {
