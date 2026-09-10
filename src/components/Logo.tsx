@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import svgPathsIcon from "../imports/svg-ptmlmkxncr";
+import { BrandMark } from './BrandMark';
 import svgPathsFull from "../imports/svg-epzl744ze1";
 import { usePublicSettings } from '../hooks/usePublicSettings';
 
@@ -73,36 +73,8 @@ export function LogoIcon({
         transition: { duration: 0.1 }
       } : {}}
     >
-      <motion.svg 
-        className="block size-full" 
-        fill="none" 
-        preserveAspectRatio="xMidYMid meet" 
-        viewBox="0 0 47 47"
-        style={{ color: 'currentColor' }}
-        animate={loading ? {
-          opacity: [1, 0.7, 1]
-        } : {}}
-        transition={loading ? {
-          duration: 1.5,
-          repeat: Infinity,
-          ease: "easeInOut"
-        } : {}}
-      >
-        <g id="Logo">
-          <motion.path 
-            d={svgPathsIcon.p23092d00} 
-            fill="currentColor" 
-            id="Vector"
-            initial={{ pathLength: 0 }}
-            animate={{ pathLength: 1 }}
-            transition={{ 
-              duration: 1.5, 
-              ease: "easeInOut",
-              delay: 0.2
-            }}
-          />
-        </g>
-      </motion.svg>
+      <BrandMark size="100%" animation={loading ? 'pulse' : 'draw'} />
+      {/* geometry lives in BrandMark — the single source of truth for the icon */}
     </motion.div>
   );
 }
