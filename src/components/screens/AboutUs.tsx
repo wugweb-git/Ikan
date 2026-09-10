@@ -50,19 +50,14 @@ export function AboutUs({ onNavigate, className }: AboutUsProps) {
     try { return JSON.parse(cmsContent.content); } catch { return null; }
   }, [cmsContent]);
 
-  // ── Hero banner from the hero banner system ──
-  const [heroBanner, setHeroBanner] = useState<{ title: string; subtitle: string; image_url: string; cta_text: string; cta_link: string } | null>(null);
-
-  useEffect(() => {
-    apiClient.getHeroBanner('about').then(res => {
-      if (res?.banner) setHeroBanner(res.banner);
-    }).catch(() => {});
-  }, []);
-
-  // Resolve all content from CMS with inline defaults
-  const heroTitle = heroBanner?.title || cms?.hero?.title || 'To us, mental health matters.';
-  const heroSubtitle = heroBanner?.subtitle || cms?.hero?.subtitle || 'At iKan, we believe mental health is for everyone.';
-  const heroImage = heroBanner?.image_url || undefined;
+  /*
+    THE HERO BANNER SYSTEM WAS HERE — a per-page override fetched from
+    `getHeroBanner('about')`, layered above the CMS hero and a hardcoded
+    fallback. Removed 2026-09-10: the feature is gone, and the CMS/hardcoded
+    layer beneath it is unchanged.
+  */
+  const heroTitle = cms?.hero?.title || 'To us, mental health matters.';
+  const heroSubtitle = cms?.hero?.subtitle || 'At iKan, we believe mental health is for everyone.';
 
   const storyLabel = cms?.story?.label || 'Our Story';
   const storyImage = cms?.story?.image || 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080';
@@ -154,7 +149,6 @@ export function AboutUs({ onNavigate, className }: AboutUsProps) {
       <PageHero
         title={heroTitle}
         subtitle={heroSubtitle}
-        backgroundImage={heroImage}
       />
 
       {/* ═══════════════════════════════════════════════

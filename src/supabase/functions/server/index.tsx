@@ -44,7 +44,6 @@ import { registerBrevoRoutes } from './brevo-routes.ts';
 import { registerCorporateRoutes } from './corporate-routes.ts';
 import { registerKVAuditRoutes } from './kv-audit-routes.ts';
 import { registerCheckinTemplateRoutes } from './checkin-template-routes.ts';
-import { registerHeroBannerRoutes } from './hero-banner-routes.ts';
 import { registerIkanScoreRoutes } from './ikan-score-routes.ts';
 import { registerReminderRoutes } from './reminder-routes.ts';
 
@@ -271,11 +270,6 @@ registerCorporateRoutes(app);
 // was genuinely reachable by any authenticated user, not merely fragile.
 registerKVAuditRoutes(app, requireAdmin);
 registerCheckinTemplateRoutes(app, requireAuth);
-// FIXED 2026-09-01 (S11): was requireAuth, so any signed-in account could
-// rewrite the homepage headline, image and call-to-action link — a phishing
-// funnel on the site's most trusted surface. Only the two write routes take
-// this middleware; both GETs stay public, as banners are public content.
-registerHeroBannerRoutes(app, requireAdmin);
 registerIkanScoreRoutes(app, requireAuth);
 registerReminderRoutes(app, requireAuth, requireAdmin, supabase);
 

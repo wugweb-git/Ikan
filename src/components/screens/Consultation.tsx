@@ -52,14 +52,6 @@ interface ConsultationProps {
   onNavigate?: (route: string, consultantId?: string) => void;
 }
 
-interface HeroBanner {
-  title: string;
-  subtitle: string;
-  image_url: string;
-  cta_text?: string;
-  cta_link?: string;
-}
-
 type AvailabilityFilter = 'all' | 'today' | 'tomorrow' | 'this-week';
 type SortOption = 'recommended' | 'rating' | 'price-low' | 'price-high' | 'experience' | 'next-available';
 type ViewMode = 'stack' | 'grid';
@@ -86,7 +78,6 @@ export function Consultation({ className, onNavigate }: ConsultationProps) {
   // ── Data state ────────────────────────────────────────────────
   const [consultants, setConsultants] = useState<Consultant[]>([]);
   const [loading, setLoading] = useState(true);
-  const [heroBanner, setHeroBanner] = useState<HeroBanner | null>(null);
   const [recommendedExpertises, setRecommendedExpertises] = useState<string[]>([]);
 
   // ── Filter state ──────────────────────────────────────────────
@@ -102,15 +93,6 @@ export function Consultation({ className, onNavigate }: ConsultationProps) {
 
   // ── Booking modal ─────────────────────────────────────────────
   const [bookingConsultant, setBookingConsultant] = useState<Consultant | null>(null);
-
-  // ── Load hero banner ──────────────────────────────────────────
-  useEffect(() => {
-    let m = true;
-    apiClient.getHeroBanner('consultation').then(res => {
-      if (m && res?.banner) setHeroBanner(res.banner);
-    }).catch(() => {});
-    return () => { m = false; };
-  }, []);
 
   // ── Load consultants ──────────────────────────────────────────
   useEffect(() => {
@@ -541,11 +523,8 @@ export function Consultation({ className, onNavigate }: ConsultationProps) {
     <div className={cn('flex flex-col', className)} style={{ minHeight: '100vh', backgroundColor: 'var(--color-bg-page)' }}>
       {/* ── Hero ────────────────────────────────────────────────── */}
       <PageHero
-        title={heroBanner?.title || 'Find Your Consultant'}
-        subtitle={heroBanner?.subtitle || 'Connect with experienced mental health professionals who understand your needs.'}
-        backgroundImage={heroBanner?.image_url}
-        ctaText={heroBanner?.cta_text}
-        ctaLink={heroBanner?.cta_link}
+        title="Find Your Consultant"
+        subtitle="Connect with experienced mental health professionals who understand your needs."
       />
 
       {/* ── Mobile: Search + Filter bar ─────────────────────────── */}

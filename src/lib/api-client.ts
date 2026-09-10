@@ -1065,34 +1065,6 @@ class ApiClient {
     return this.request(`/checkin-template/${id}/activate`, { method: 'POST' }, true);
   }
 
-  // ── Hero Banners ────────────────────────────────────────────
-  async getHeroBanners() {
-    return this.request('/hero-banners', { method: 'GET' }, false);
-  }
-
-  async getHeroBanner(pageKey: string) {
-    try {
-      const res = await this.request(`/hero-banners/${pageKey}`, { method: 'GET' }, false);
-      cacheForOffline(`hero-banner-${pageKey}`, res);
-      return res;
-    } catch (_e) {
-      const cached = readOfflineCache<any>(`hero-banner-${pageKey}`);
-      if (cached) return cached;
-      return { banner: null };
-    }
-  }
-
-  async updateHeroBanner(pageKey: string, data: { title: string; subtitle: string; image_url: string; cta_text?: string; cta_link?: string }) {
-    return this.request(`/hero-banners/${pageKey}`, {
-      method: 'PUT',
-      body: JSON.stringify(data),
-    }, true);
-  }
-
-  async resetHeroBanner(pageKey: string) {
-    return this.request(`/hero-banners/reset/${pageKey}`, { method: 'POST' }, true);
-  }
-
   // ── iKAN Score ─────────────────────────────────────────────────
   async getIkanScore() {
     return this.request('/user/ikan-score', { method: 'GET' }, true);

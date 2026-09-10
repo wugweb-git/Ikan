@@ -47,16 +47,7 @@ export function Library({ onResourceSelect, onNavigate, className }: LibraryProp
   const [activeContentType, setActiveContentType] = useState('all');
   const [loading, setLoading] = useState(true);
   const [resources, setResources] = useState<Resource[]>([]);
-  const [heroBanner, setHeroBanner] = useState<{ title: string; subtitle: string; image_url: string; cta_text: string; cta_link: string } | null>(null);
-
   const hasLoadedResources = useRef(false);
-
-  // Fetch hero banner for this page
-  useEffect(() => {
-    apiClient.getHeroBanner('resources').then(res => {
-      if (res?.banner) setHeroBanner(res.banner);
-    }).catch(() => {});
-  }, []);
 
   const handleRefresh = () => {
     hasLoadedResources.current = false;
@@ -174,13 +165,9 @@ export function Library({ onResourceSelect, onNavigate, className }: LibraryProp
 
   const content = (
     <div className={cn("w-full min-h-screen", className)} style={{ backgroundColor: 'var(--color-bg-page)' }}>
-      {/* Hero Banner */}
       <PageHero
-        title={heroBanner?.title || LIBRARY_LABELS.PAGE_TITLE}
-        subtitle={heroBanner?.subtitle || LIBRARY_LABELS.PAGE_SUBTITLE}
-        backgroundImage={heroBanner?.image_url}
-        ctaText={heroBanner?.cta_text}
-        ctaLink={heroBanner?.cta_link}
+        title={LIBRARY_LABELS.PAGE_TITLE}
+        subtitle={LIBRARY_LABELS.PAGE_SUBTITLE}
       />
 
       <div className="w-full max-w-[1400px] mx-auto px-4 py-8 md:px-12 md:py-12">
