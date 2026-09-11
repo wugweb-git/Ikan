@@ -586,11 +586,17 @@ export function Dashboard({ className, onNavigate }: DashboardProps) {
                   : '';
 
                 return (
-                  <div key={`${item.type}-${idx}`}
+                  <button type="button" key={`${item.type}-${idx}`}
                     onClick={() => onNavigate?.(item.route)}
                     className="active:bg-black/[0.03] transition-colors"
                     style={{
+                      display: 'block',
+                      width: '100%',
                       padding: '14px 16px',
+                      border: 0,
+                      background: 'none',
+                      font: 'inherit',
+                      textAlign: 'left',
                       cursor: 'pointer',
                       borderBottom: idx < latestActivity.length - 1 ? '1px solid var(--color-border-default)' : 'none',
                     }}
@@ -612,7 +618,7 @@ export function Dashboard({ className, onNavigate }: DashboardProps) {
                       </div>
                       <ChevronRight size={16} style={{ color: 'var(--color-text-muted)', flexShrink: 0, opacity: 0.4 }} />
                     </div>
-                  </div>
+                  </button>
                 );
               })}
             </div>
@@ -660,10 +666,11 @@ export function Dashboard({ className, onNavigate }: DashboardProps) {
           <SectionLabel>Today</SectionLabel>
           <div className="grid grid-cols-1 md:grid-cols-2" style={{ gap: 'var(--spacing-3)' }}>
             {/* Left: Mood Check-in */}
-            <motion.div
+            <motion.button
+              type="button"
               onClick={() => { if (hasLoggedMoodToday) { onNavigate?.('/mood-journal'); } else { onNavigate?.(`/equip-program-flow?id=${SPECIAL_PROGRAM_IDS.DAILY_TRACKER}`); } }}
               whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.99 }}
-              style={{ backgroundColor: 'var(--color-bg-card)', borderRadius: 'var(--radius-lg)', boxShadow: 'var(--shadow-sm)', cursor: 'pointer', overflow: 'hidden', border: hasLoggedMoodToday ? '1px solid var(--color-status-success-light)' : '1px solid var(--color-border-default)' }}
+              style={{ display: 'block', width: '100%', font: 'inherit', textAlign: 'left', backgroundColor: 'var(--color-bg-card)', borderRadius: 'var(--radius-lg)', boxShadow: 'var(--shadow-sm)', cursor: 'pointer', overflow: 'hidden', border: hasLoggedMoodToday ? '1px solid var(--color-status-success-light)' : '1px solid var(--color-border-default)' }}
             >
               <div className="flex items-center" style={{ padding: 'var(--spacing-4) var(--spacing-5)', gap: 'var(--spacing-4)' }}>
                 <div style={{ width: 48, height: 48, borderRadius: 'var(--radius-md)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, backgroundColor: hasLoggedMoodToday ? 'var(--color-status-success)' : 'var(--color-bg-muted)', color: hasLoggedMoodToday ? 'var(--color-text-inverse)' : 'var(--color-text-muted)', transition: 'all 0.25s' }}>
@@ -679,12 +686,17 @@ export function Dashboard({ className, onNavigate }: DashboardProps) {
                   <span style={{ ...f('xs', 500, 'var(--color-status-success)'), backgroundColor: 'var(--color-status-success-light)', padding: '3px 10px', borderRadius: 'var(--radius-pill)', flexShrink: 0 }}>Done</span>
                 )}
               </div>
-            </motion.div>
+            </motion.button>
 
             {/* Right: Wellness Insight */}
-            <div
+            <button
+              type="button"
               onClick={() => onNavigate?.(engineResult ? '/timeline' : '/mood-journal')}
               style={{
+                display: 'block',
+                width: '100%',
+                font: 'inherit',
+                textAlign: 'left',
                 borderRadius: 'var(--radius-lg)',
                 boxShadow: 'var(--shadow-sm)',
                 cursor: 'pointer',
@@ -722,7 +734,7 @@ export function Dashboard({ className, onNavigate }: DashboardProps) {
                 </div>
                 <ArrowRight size={16} style={{ color: 'var(--color-text-muted)', flexShrink: 0 }} />
               </div>
-            </div>
+            </button>
           </div>
 
           {/* Reassessment prompt (conditional) */}
@@ -748,10 +760,14 @@ export function Dashboard({ className, onNavigate }: DashboardProps) {
           <SectionLabel>Explore</SectionLabel>
           <div className="grid grid-cols-2" style={{ gap: 'var(--spacing-3)' }}>
             {/* Programs card — uses admin hero image if configured */}
-            <motion.div
+            <motion.button
+              type="button"
               onClick={() => onNavigate?.('/equip')}
               whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.98 }}
               style={{
+                display: 'block',
+                width: '100%',
+                font: 'inherit',
                 background: publicSettings.exploreCardProgramsImage ? 'none' : 'linear-gradient(135deg, color-mix(in srgb, var(--color-viz-purple) 4%, var(--color-bg-card)) 0%, var(--color-viz-purple-light) 50%, color-mix(in srgb, var(--color-viz-purple) 22%, var(--color-bg-card)) 100%)',
                 borderRadius: 'var(--radius-lg)',
                 boxShadow: 'var(--shadow-sm)',
@@ -789,13 +805,17 @@ export function Dashboard({ className, onNavigate }: DashboardProps) {
                   </div>
                 </>
               )}
-            </motion.div>
+            </motion.button>
 
             {/* Assessments card — uses admin hero image if configured */}
-            <motion.div
+            <motion.button
+              type="button"
               onClick={() => onNavigate?.('/assessment')}
               whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.98 }}
               style={{
+                display: 'block',
+                width: '100%',
+                font: 'inherit',
                 background: publicSettings.exploreCardAssessmentsImage ? 'none' : 'linear-gradient(135deg, color-mix(in srgb, var(--color-viz-blue) 4%, var(--color-bg-card)) 0%, var(--color-viz-blue-light) 50%, color-mix(in srgb, var(--color-viz-blue) 22%, var(--color-bg-card)) 100%)',
                 borderRadius: 'var(--radius-lg)',
                 boxShadow: 'var(--shadow-sm)',
@@ -833,7 +853,7 @@ export function Dashboard({ className, onNavigate }: DashboardProps) {
                   </div>
                 </>
               )}
-            </motion.div>
+            </motion.button>
           </div>
         </motion.section>
 
@@ -855,9 +875,10 @@ export function Dashboard({ className, onNavigate }: DashboardProps) {
                   // score could not be placed — never the most severe.
                   const band = tonePresentation(s.tone);
                   return (
-                    <div key={`${s.assessmentId}-${i}`} onClick={() => onNavigate?.(`/assessment-history-detail?id=${s.assessmentId}`)}
+                    <button type="button" key={`${s.assessmentId}-${i}`} onClick={() => onNavigate?.(`/assessment-history-detail?id=${s.assessmentId}`)}
                       className="active:bg-black/[0.03] transition-colors"
                       style={{
+                        display: 'block', width: '100%', border: 0, background: 'none', font: 'inherit', textAlign: 'left',
                         padding: '14px 16px', cursor: 'pointer',
                         borderBottom: i < Math.min(assessmentScores.length, 5) - 1 ? '1px solid var(--color-border-default)' : 'none',
                       }}
@@ -910,18 +931,18 @@ export function Dashboard({ className, onNavigate }: DashboardProps) {
                         </div>
                         <ChevronRight size={16} style={{ color: 'var(--color-text-muted)', flexShrink: 0, opacity: 0.4 }} />
                       </div>
-                    </div>
+                    </button>
                   );
                 })}
-                <div onClick={() => onNavigate?.('/assessment')}
+                <button type="button" onClick={() => onNavigate?.('/assessment')}
                   className="active:bg-black/[0.03] transition-colors"
-                  style={{ padding: '12px 16px', cursor: 'pointer', borderTop: '1px solid var(--color-border-default)' }}
+                  style={{ display: 'block', width: '100%', border: 0, background: 'none', font: 'inherit', textAlign: 'left', padding: '12px 16px', cursor: 'pointer', borderTop: '1px solid var(--color-border-default)' }}
                 >
                   <div className="flex items-center justify-center" style={{ gap: 8 }}>
                     <ClipboardList size={14} style={{ color: 'var(--color-text-muted)' }} />
                     <span style={f('xs', 500, 'var(--color-text-muted)')}>Take another assessment</span>
                   </div>
-                </div>
+                </button>
               </div>
             ) : (
               <div style={{ padding: '24px 20px', textAlign: 'center' as const }}>
