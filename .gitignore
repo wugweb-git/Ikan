@@ -31,3 +31,6 @@ supabase/.temp/
 
 # FUSE mount artefacts
 .fuse_hidden*
+
+/screens/
+/_to_delete/
