@@ -18,18 +18,43 @@ npm run build >/dev/null 2>&1 || { echo "✗ local build failed" >&2; exit 1; }
 LOCAL_INDEX=$(grep -o 'assets/index-[A-Za-z0-9_-]*\.js' dist/index.html | head -1)
 
 echo "→ deploying"
-npx vercel@latest deploy --prod --yes >/tmp/ikan-vercel-deploy.log 2>&1
-tail -3 /tmp/ikan-vercel-deploy.log
+LOG=$(mktemp /tmp/ikan-vercel-deploy-XXXXXX.log)
+npx vercel@latest deploy --prod --yes >"$LOG" 2>&1
 
-STATE=$(npx vercel@latest ls --prod 2>&1 | grep -m1 -oE '● (Ready|Error|Building|Canceled|Queued)')
+# Track THIS deployment by its own URL, not "the newest in the list". The CLI
+# can return while the build is still running, and with more than one session
+# deploying, the newest row may belong to someone else.
+DEPLOY_URL=$(grep -oE 'https://ikan-[a-z0-9]+-wugweb\.vercel\.app' "$LOG" | head -1)
+if [ -z "$DEPLOY_URL" ]; then
+  echo "✗ no deployment URL in the CLI output — see $LOG" >&2
+  exit 1
+fi
+echo "  deployment: $DEPLOY_URL"
+
+STATE=""
+for _ in $(seq 1 36); do            # up to 6 minutes
+  STATE=$(npx vercel@latest ls --prod 2>&1 | grep -F "$DEPLOY_URL" | grep -m1 -oE '● (Ready|Error|Building|Canceled|Queued|Initializing)')
+  case "$STATE" in
+    "● Ready") break ;;
+    "● Error"|"● Canceled") echo "✗ $DEPLOY_URL ended '$STATE' — see $LOG" >&2; exit 1 ;;
+  esac
+  sleep 10
+done
 if [ "$STATE" != "● Ready" ]; then
-  echo "✗ newest production deployment is '$STATE', not '● Ready'." >&2
+  echo "✗ $DEPLOY_URL still '$STATE' after 6 minutes — see $LOG" >&2
   exit 1
 fi
 
-LIVE_INDEX=$(curl -s https://ikanhealth.in/ | grep -o 'assets/index-[A-Za-z0-9_-]*\.js' | head -1)
+# The alias can lag the deployment by a few seconds.
+LIVE_INDEX=""
+for _ in $(seq 1 12); do
+  LIVE_INDEX=$(curl -s https://ikanhealth.in/ | grep -o 'assets/index-[A-Za-z0-9_-]*\.js' | head -1)
+  [ "$LIVE_INDEX" = "$LOCAL_INDEX" ] && break
+  sleep 5
+done
 if [ "$LIVE_INDEX" != "$LOCAL_INDEX" ]; then
   echo "✗ live serves $LIVE_INDEX but this commit builds $LOCAL_INDEX." >&2
+  echo "  Another deploy may have landed after this one — check before redeploying." >&2
   exit 1
 fi
 
