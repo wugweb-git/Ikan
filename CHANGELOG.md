@@ -39,6 +39,34 @@ function was five days stale, still serving the removed Hero Banner and Page Man
 the frontend had been redeployed without it. The guard was tested against both — the wrong branch,
 and a branch *named* `equip-carry-forward` sitting 27 commits stale. It refused each.
 
+**Avatars are signed when they are read, not when they are uploaded** (PR #26). Profile pictures
+were stored the same broken way — a one-year link in `user:{id}.avatar_url` — so each stopped
+loading a year after it was set. They are user data, so the bucket stays private. `user:` records
+now store `avatar_path`; the nine routes that return a profile sign a 7-day link on the way out and
+strip the path; every route that writes a profile normalises first, because the admin user editor
+and the profile form send the whole profile back, fresh link included.
+
+A privacy hole went with it: `PUT /users/profile` stored any `avatar_url`, and signing on read would
+have served another user's private picture to whoever pointed at it. A path is now accepted only
+inside the record's own folder.
+
+Deployed before the data was touched — the previous function read `avatar_url` and would have lost
+the pictures — then the five `user:` rows migrated (backup `backup_pre_avatar_path_2026_09_15`).
+Verified live, not by construction, through an already-open admin session with no credentials
+handled:
+
+- own profile and `GET /admin/users` (9 users): all 5 avatars return a fresh link expiring in 7.00
+  days, all 5 load with 200, `avatar_path` reaches no client
+- sending the fresh link back through `PUT /users/profile` left the stored path unchanged
+- pointing the avatar at another user's file was refused; the stored path is still the original
+- a real `POST /upload-image` returned a public link with no token that loads with 200 — the
+  content-storage fix, observed rather than inferred. It left one 1×1 test file at
+  `make-cc205da9-images/assessments/1789452396031-rfiouep.png`.
+
+**Merged branches cleared.** 11 remote and 10 local branches deleted, each re-checked at deletion
+time for zero commits missing from production and a merged PR. Kept: `main` (default),
+`legacy-figma-rebuild` (31 commits never merged into production — not a safe delete).
+
 **Also:** the dead `/admin/pages` "Page Manager" entry removed from `App.tsx` and
 `route-config.ts`; the merged `page-manager-remove-admin` branch deleted — its one unmerged commit
 was already in production byte-for-byte via PRs #19 and #21.
