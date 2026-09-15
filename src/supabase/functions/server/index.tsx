@@ -46,7 +46,10 @@ import { registerKVAuditRoutes } from './kv-audit-routes.ts';
 import { registerCheckinTemplateRoutes } from './checkin-template-routes.ts';
 import { registerIkanScoreRoutes } from './ikan-score-routes.ts';
 import { registerReminderRoutes } from './reminder-routes.ts';
-import { isPublicContentBucket, urlForUploadedFile } from './storage-urls.ts';
+import {
+  isPublicContentBucket, urlForUploadedFile,
+  AVATAR_BUCKET, normaliseAvatarForStorage, presentAvatar, presentAvatars,
+} from './storage-urls.ts';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Layer 0: Centralized connection-closed error detection
@@ -148,6 +151,14 @@ const supabase = createClient(
   Deno.env.get('SUPABASE_URL')!,
   Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
 );
+
+/**
+ * Signs avatar links at read time. Every route that hands a `user:` record to a
+ * client passes it through `presentAvatar`, and every route that writes one
+ * passes it through `normaliseAvatarForStorage` — see storage-urls.ts for why a
+ * stored avatar link is a picture with an expiry date.
+ */
+const avatarSigner = () => supabase.storage.from(AVATAR_BUCKET);
 
 // Enable logger
 app.use('*', logger(console.log));
@@ -353,8 +364,8 @@ app.get("/users/profile", requireAuth, async (c) => {
     if (!profile) {
       return c.json({ error: 'Profile not found' }, 404);
     }
-    
-    return c.json({ profile });
+
+    return c.json({ profile: await presentAvatar(profile, avatarSigner()) });
   } catch (error) {
     console.log('Get profile error:', error);
     return c.json({ error: 'Failed to retrieve profile' }, 500);
@@ -444,9 +455,12 @@ app.put("/users/profile", requireAuth, async (c) => {
     if (updates.security_settings !== undefined) {
       updatedProfile.security_settings = updates.security_settings;
     }
-    
-    await kv.set(`user:${userId}`, updatedProfile);
-    
+
+    // The profile form sends back the fresh avatar link it was given; store
+    // the path, never that link.
+    const storedProfile = normaliseAvatarForStorage(updatedProfile, userId);
+    await kv.set(`user:${userId}`, storedProfile);
+
     // Create audit log
     await kv.set(`audit:profile:${userId}:${Date.now()}`, {
       action: 'update_profile',
@@ -454,8 +468,8 @@ app.put("/users/profile", requireAuth, async (c) => {
       timestamp: new Date().toISOString(),
       changes: Object.keys(sanitizedUpdates)
     });
-    
-    return c.json({ profile: updatedProfile });
+
+    return c.json({ profile: await presentAvatar(storedProfile, avatarSigner()) });
   } catch (error) {
     console.log('Update profile error:', error);
     return c.json({ error: 'Failed to update profile' }, 500);
@@ -835,22 +849,25 @@ app.post("/users/avatar", requireAuth, async (c) => {
       return c.json({ error: 'Profile not found' }, 404);
     }
     
-    const updatedProfile = {
+    // An external picture is stored as-is; a link into our bucket is stored as
+    // a path, and only if it is in this user's own folder.
+    const updatedProfile = normaliseAvatarForStorage({
       ...currentProfile,
       avatar_url: avatarUrl,
       updated_at: new Date().toISOString()
-    };
-    
+    }, userId);
+
     await kv.set(`user:${userId}`, updatedProfile);
-    
+
     await kv.set(`audit:avatar:${userId}:${Date.now()}`, {
       action: 'update_avatar',
       userId,
       timestamp: new Date().toISOString()
     });
-    
+
     console.log(`✅ User ${userId} updated avatar`);
-    return c.json({ success: true, avatarUrl, profile: updatedProfile });
+    const presented = await presentAvatar(updatedProfile, avatarSigner());
+    return c.json({ success: true, avatarUrl: presented.avatar_url ?? null, profile: presented });
   } catch (error) {
     console.error('Avatar upload error:', error);
     return c.json({ error: 'Failed to upload avatar' }, 500);
@@ -910,24 +927,16 @@ app.post("/users/avatar/upload", requireAuth, async (c) => {
       return c.json({ error: `Storage upload failed: ${uploadError.message}` }, 500);
     }
 
-    // Generate a signed URL (valid for 1 year)
-    const { data: signedData, error: signedError } = await supabase.storage
-      .from(bucketName)
-      .createSignedUrl(filePath, 365 * 24 * 60 * 60);
-
-    if (signedError) {
-      console.error('Signed URL error:', signedError);
-      return c.json({ error: 'Failed to generate avatar URL' }, 500);
-    }
-
-    const avatarUrl = signedData.signedUrl;
-
-    // Update user profile
+    // Store the PATH, not a link. This used to store a signed URL with a
+    // one-year expiry, so every profile picture stopped loading a year after it
+    // was set. The link a client sees is signed fresh each time the profile is
+    // read (presentAvatar).
     const currentProfile = await kv.get(`user:${userId}`);
+    const { avatar_url: _previousLink, ...rest } = (currentProfile || {}) as Record<string, unknown>;
     const updatedProfile = {
-      ...(currentProfile || {}),
+      ...rest,
       user_id: userId,
-      avatar_url: avatarUrl,
+      avatar_path: filePath,
       updated_at: new Date().toISOString()
     };
 
@@ -942,7 +951,12 @@ app.post("/users/avatar/upload", requireAuth, async (c) => {
     });
 
     console.log(`✅ User ${userId} uploaded avatar: ${filePath} (${file.size} bytes)`);
-    return c.json({ success: true, avatarUrl, profile: updatedProfile });
+    const presented = await presentAvatar(updatedProfile, avatarSigner());
+    if (!presented.avatar_url) {
+      console.error('Avatar stored but could not be signed for the response:', filePath);
+      return c.json({ error: 'Failed to generate avatar URL' }, 500);
+    }
+    return c.json({ success: true, avatarUrl: presented.avatar_url, profile: presented });
   } catch (error) {
     console.error('Avatar file upload error:', error);
     return c.json({ error: `Failed to upload avatar: ${error}` }, 500);
@@ -1571,16 +1585,16 @@ app.post("/admin/set-admin/:userId", requireAdmin, async (c) => {
       return c.json({ error: 'User not found' }, 404);
     }
     
-    const updatedProfile = {
+    const updatedProfile = normaliseAvatarForStorage({
       ...targetProfile,
       is_admin: true,
       admin_since: new Date().toISOString()
-    };
-    
+    }, targetUserId);
+
     await kv.set(`user:${targetUserId}`, updatedProfile);
-    
+
     console.log(`✅ User ${targetUserId} set as admin`);
-    return c.json({ profile: updatedProfile });
+    return c.json({ profile: await presentAvatar(updatedProfile, avatarSigner()) });
   } catch (error) {
     console.log('Set admin error:', error);
     return c.json({ error: 'Failed to set admin status' }, 500);
@@ -1624,11 +1638,11 @@ app.get("/admin/users", requireAdmin, async (c) => {
     console.log(`✅ Admin fetched ${users.length} users`);
     
     // Sort by created_at descending
-    const sortedUsers = users.sort((a: any, b: any) => 
+    const sortedUsers = users.sort((a: any, b: any) =>
       new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime()
     );
-    
-    return c.json({ users: sortedUsers });
+
+    return c.json({ users: await presentAvatars(sortedUsers, avatarSigner()) });
   } catch (error) {
     console.error('❌ Get admin users error:', error);
     return c.json({ error: 'Failed to retrieve users', users: [] }, 500);
@@ -1700,8 +1714,8 @@ app.get("/admin/users/:userId", requireAuth, async (c) => {
     if (!userProfile) {
       return c.json({ error: 'User not found' }, 404);
     }
-    
-    return c.json(userProfile);
+
+    return c.json(await presentAvatar(userProfile, avatarSigner()));
   } catch (error) {
     console.log('Admin get user error:', error);
     return c.json({ error: 'Failed to get user' }, 500);
@@ -1741,15 +1755,19 @@ app.put("/admin/users/:userId", requireAuth, async (c) => {
       }
     }
 
-    const updatedProfile = {
+    // The admin user editor loads a presented profile and sends the whole
+    // form back, fresh avatar link included. Store the path, never that link,
+    // and never an avatar_path supplied by the request.
+    const { avatar_path: _ignored, ...safeUpdates } = (updates || {}) as Record<string, unknown>;
+    const updatedProfile = normaliseAvatarForStorage({
       ...currentProfile,
-      ...updates,
+      ...safeUpdates,
       user_id: userId, // Prevent changing user ID
       updated_at: new Date().toISOString()
-    };
+    }, userId);
 
     await kv.set(`user:${userId}`, updatedProfile);
-    return c.json({ profile: updatedProfile });
+    return c.json({ profile: await presentAvatar(updatedProfile, avatarSigner()) });
   } catch (error) {
     console.log('Admin update user error:', error);
     return c.json({ error: 'Failed to update user' }, 500);

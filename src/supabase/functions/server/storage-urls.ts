@@ -60,3 +60,142 @@ export async function urlForUploadedFile(
   const { data } = await from(bucket).createSignedUrl(path, SIGNED_URL_TTL_SECONDS);
   return data?.signedUrl || null;
 }
+
+// ── Avatars ──────────────────────────────────────────────────────────────────
+//
+// Avatars are user data, so their bucket stays private — but they were stored
+// the same broken way content was: a signed link minted at upload with a
+// one-year life, written into `user:{id}.avatar_url`. Every profile picture
+// stopped loading a year after it was set, and nothing re-signed it.
+//
+// The fix is not a public bucket. It is storing the object PATH and signing a
+// short-lived link each time a profile is handed to a client:
+//
+//   stored   → `avatar_path: "<userId>/avatar-123.png"`, no bucket link at all
+//   returned → `avatar_url: <fresh signed link>`, `avatar_path` stripped
+//
+// `avatar_url` in storage holds only an EXTERNAL picture (a Google photo, say),
+// never a link into our bucket. Two readers make the write side necessary too:
+// the admin user editor and the profile form both send the whole profile back,
+// including the fresh link they were given, and without normalising on write
+// that link would be stored and expire all over again.
+
+export const AVATAR_BUCKET = 'make-cc205da9-avatars';
+
+/**
+ * How long a served avatar link lasts. Long enough to outlive an app session
+ * (the profile is re-fetched whenever the app loads), short enough that a
+ * leaked link stops working on its own.
+ */
+export const AVATAR_URL_TTL_SECONDS = 7 * 24 * 60 * 60;
+
+function escapeRegExp(s: string): string {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+/**
+ * The object path inside the avatar bucket that `url` points at, in any of
+ * Supabase's URL forms — signed, public or authenticated — or null when it
+ * points anywhere else. Expiry is irrelevant: an expired link still names its
+ * file, which is exactly what makes old stored links recoverable.
+ */
+export function avatarPathFromUrl(url: unknown): string | null {
+  if (typeof url !== 'string' || url === '') return null;
+  const re = new RegExp(
+    `/storage/v1/object/(?:sign|public|authenticated)/${escapeRegExp(AVATAR_BUCKET)}/([^?#]+)`,
+  );
+  const m = url.match(re);
+  if (!m) return null;
+  try {
+    return decodeURIComponent(m[1]);
+  } catch {
+    return m[1];
+  }
+}
+
+type AvatarRecord = Record<string, unknown> & {
+  avatar_url?: unknown;
+  avatar_path?: unknown;
+};
+
+/**
+ * The form a user record is STORED in. Apply after merging any update, before
+ * writing.
+ *
+ * - `avatar_url` pointing into our bucket becomes `avatar_path`, and the link is
+ *   dropped — but only if the file is in that user's own folder. Anything else
+ *   is refused: otherwise a user could set their avatar to another user's file
+ *   and the read side would happily sign it for them.
+ * - An external `avatar_url` is kept, and any bucket path is cleared, because
+ *   the newer picture wins.
+ * - `avatar_url: null` or `""` clears the avatar entirely.
+ * - No `avatar_url` key means "no change": an existing `avatar_path` stays.
+ */
+export function normaliseAvatarForStorage<T extends AvatarRecord>(record: T, ownerId: string): T {
+  const r: AvatarRecord = { ...record };
+  if (!('avatar_url' in r) || r.avatar_url === undefined) return r as T;
+
+  if (r.avatar_url === null || r.avatar_url === '') {
+    delete r.avatar_path;
+    r.avatar_url = null;
+    return r as T;
+  }
+
+  const path = avatarPathFromUrl(r.avatar_url);
+  if (path === null) {
+    // External picture.
+    delete r.avatar_path;
+    return r as T;
+  }
+
+  delete r.avatar_url;
+  if (ownerId && path.startsWith(`${ownerId}/`)) {
+    r.avatar_path = path;
+  }
+  // A path in someone else's folder is dropped; the previous avatar_path, if
+  // any, is left exactly as it was.
+  return r as T;
+}
+
+/** The slice of the storage client avatar signing needs. */
+export interface AvatarSigner {
+  createSignedUrl(
+    path: string,
+    expiresIn: number,
+  ): Promise<{ data: { signedUrl: string } | null; error?: unknown }>;
+}
+
+function storedAvatarPath(record: AvatarRecord): string | null {
+  if (typeof record.avatar_path === 'string' && record.avatar_path !== '') return record.avatar_path;
+  // A record written before paths existed still carries the link; recover the
+  // path from it so un-migrated rows present correctly too.
+  return avatarPathFromUrl(record.avatar_url);
+}
+
+/**
+ * The form a user record is RETURNED in. Signs a fresh avatar link from the
+ * stored path and strips the path itself, so a client can never send it back.
+ *
+ * If signing fails the `avatar_url` key is omitted rather than set to null:
+ * the editors send the profile back on save, and a null would be read as
+ * "clear my avatar", deleting it over a transient storage error.
+ */
+export async function presentAvatar<T>(record: T, signer: AvatarSigner): Promise<T> {
+  if (!record || typeof record !== 'object') return record;
+  const r = { ...(record as unknown as AvatarRecord) };
+  const path = storedAvatarPath(r);
+  delete r.avatar_path;
+  if (path === null) return r as unknown as T;
+
+  const { data } = await signer.createSignedUrl(path, AVATAR_URL_TTL_SECONDS);
+  if (data?.signedUrl) {
+    r.avatar_url = data.signedUrl;
+  } else {
+    delete r.avatar_url;
+  }
+  return r as unknown as T;
+}
+
+export async function presentAvatars<T>(records: T[], signer: AvatarSigner): Promise<T[]> {
+  return Promise.all((records || []).map((rec) => presentAvatar(rec, signer)));
+}
