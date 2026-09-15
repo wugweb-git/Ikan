@@ -46,6 +46,13 @@ The backing table is `kv_store_cc205da9` in Supabase Postgres. RLS is enabled wi
 
 ## How to deploy
 
+**Run `bash scripts/deploy-edge.sh` from the repo root.** It refuses unless you are on
+`equip-carry-forward`, level with origin, with a clean server directory and green CI; it downloads
+the live function first so rollback restores what was actually running; and it smoke-tests before
+and after. The frontend and this function deploy independently — on 2026-09-15 the function was
+found five days stale, still serving routes for two features the frontend had removed.
+
+The manual steps below are what the script does, kept for recovery when the script is the problem.
 The Supabase CLI requires a project directory with `supabase/functions/<name>/` layout. Since our source lives in `src/supabase/functions/server/`, use this staging approach:
 
 ```bash
