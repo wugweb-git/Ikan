@@ -393,7 +393,7 @@ export const DEFAULT_CMS_CONTENT: { [key: string]: any } = {
       <ul>
         <li><a href="/">Home</a></li>
         <li><a href="/about">About Us</a></li>
-        <li><a href="/login">Sign In</a></li>
+        <li><a href="https://app.ikanhealth.in/login">Sign In</a></li>
         <li><a href="/faq">FAQ</a></li>
       </ul>
     `,

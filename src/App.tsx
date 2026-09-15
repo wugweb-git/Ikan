@@ -3,6 +3,7 @@ import { Analytics } from '@vercel/analytics/react';
 import { SpeedInsights } from '@vercel/speed-insights/react';
 import { motion, AnimatePresence, MotionConfig } from 'framer-motion';
 import { useTokens } from './lib/react-tokens';
+import { crossHostSignInUrl } from './lib/app-host';
 import { useIsMobile } from './hooks/useIsMobile';
 import { useMobileOptimizations, useMobileViewport, useMobileKeyboard } from './hooks/useMobileOptimizations';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
@@ -277,8 +278,23 @@ function AppContent() {
   });
 
   const handleSignIn = () => {
+    // On the marketing host, sign-in happens on the app host — see app-host.ts.
+    const crossHost = crossHostSignInUrl(window.location.hostname);
+    if (crossHost) {
+      window.location.assign(crossHost);
+      return;
+    }
     startTransition(() => setCurrentRoute('/login'));
   };
+
+  // A direct visit or bookmark to ikanhealth.in/login bypasses both handlers
+  // above, so catch it once on load. replace(), not assign(): the marketing
+  // /login URL should not sit in history for Back to bounce into again.
+  useEffect(() => {
+    if (window.location.pathname !== '/login') return;
+    const crossHost = crossHostSignInUrl(window.location.hostname);
+    if (crossHost) window.location.replace(crossHost + window.location.search);
+  }, []);
 
   const handleNavigate = useCallback((route: string, resourceId?: string) => {
     try {
@@ -290,6 +306,17 @@ function AppContent() {
       }
       
       const [path, search] = route.split('?');
+
+      // Any route into /login from the marketing host leaves for the app host,
+      // so onboarding and password-reset flows land there too, not only the
+      // header button.
+      if (path === '/login') {
+        const crossHost = crossHostSignInUrl(window.location.hostname);
+        if (crossHost) {
+          window.location.assign(crossHost + (search ? `?${search}` : ''));
+          return;
+        }
+      }
       
       const validRoutes = [
         '/', '/dashboard', '/mood-journal', '/assessment', '/assessment-landing', '/assessment-detail', '/assessment-flow', '/assessment-results', '/assessment-history-detail',

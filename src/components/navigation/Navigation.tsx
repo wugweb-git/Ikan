@@ -152,7 +152,7 @@ export function Navigation({ user, onNavigate, onGetStarted, currentRoute }: Nav
                 <MessageCircle size={18} />
                 Let's Talk
               </button>
-              <button onClick={() => onNavigate('/login')} className="btn-nav-primary gap-2">
+              <button onClick={onGetStarted} className="btn-nav-primary gap-2">
                 <LogIn size={18} />
                 Sign in
               </button>
