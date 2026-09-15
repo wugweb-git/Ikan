@@ -1,6 +1,7 @@
 import { EquipService } from './program-service.ts';
 import { createClient } from "jsr:@supabase/supabase-js@2";
 import * as kv from "./kv_dual_write.ts";
+import { isPublicContentBucket, urlForUploadedFile } from "./storage-urls.ts";
 import { validateScoringProfile, projectBandsToClosedRanges, validateQuestionIdImmutability, validateAssessmentScores, diffQuestionText, applyTextHistory } from "./scoring-validation.ts";
 
 // REMOVED 2026-09-01 (S3): hardcoded SUPER_ADMIN_EMAIL. It was already unused
@@ -633,7 +634,7 @@ app.post("/admin/media/upload", requireAdmin, async (c) => {
     if (!bucketExists) {
       console.log(`📦 Creating media bucket: ${bucket}`);
       const { error: bucketError } = await supabase.storage.createBucket(bucket, {
-        public: false,
+        public: isPublicContentBucket(bucket),
         fileSizeLimit: 52428800 // 50MB
       });
       if (bucketError) {
@@ -667,13 +668,12 @@ app.post("/admin/media/upload", requireAdmin, async (c) => {
       return c.json({ error: `Upload failed: ${uploadError.message}` }, 500);
     }
 
-    // Generate signed URL (valid for 1 year)
-    const { data: signedUrlData } = await supabase.storage
-      .from(bucket)
-      .createSignedUrl(filePath, 31536000); // 1 year
+    // Public content buckets get a permanent public URL; anything else keeps a
+    // signed link. See storage-urls.ts.
+    const fileUrl = await urlForUploadedFile((b) => supabase.storage.from(b), bucket, filePath);
 
-    if (!signedUrlData) {
-      console.error('Failed to generate signed URL for uploaded file');
+    if (!fileUrl) {
+      console.error('Failed to generate a URL for uploaded file');
       return c.json({ error: 'File uploaded but failed to generate access URL' }, 500);
     }
 
@@ -685,7 +685,7 @@ app.post("/admin/media/upload", requireAdmin, async (c) => {
       fileType: file.type,
       filePath,
       bucket,
-      url: signedUrlData.signedUrl,
+      url: fileUrl,
       uploadedAt: new Date().toISOString()
     };
 
