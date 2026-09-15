@@ -25,14 +25,27 @@ This file is read by AI coding assistants. It documents the conventions, archite
 
 **The live site deploys from branch `equip-carry-forward`.** `main` has diverged and is not used for production. Never tell the user to push to `main` expecting a production deploy.
 
-### Deploy method — Vercel CLI only
+### Deploy method — the guarded scripts
 
-Git-pushed builds auto-cancel at the project level. The only working deploy path is:
+Git-pushed builds auto-cancel at the project level, so production is deployed from the CLI — but
+**never by running the CLI directly**. Use the scripts:
 
 ```bash
-cd /Users/abcom/Documents/GitHub/ikan
-npx vercel@latest deploy --prod --yes
+bash scripts/deploy-prod.sh    # frontend (Vercel)
+bash scripts/deploy-edge.sh    # edge function — run whenever a merge touches src/supabase/functions/server/
 ```
+
+Both run `scripts/deploy-guard.sh` first, which refuses unless you are on `equip-carry-forward`,
+level with origin, with no uncommitted changes in what ships, and CI is green on that exact commit.
+
+**Why this is not optional.** `vercel deploy --prod` ships whatever branch is checked out, and a
+stale branch builds, passes every ratchet and reports `● Ready`. On 2026-09-15 a session opened on
+`page-manager-remove-admin` — already merged, 19 commits behind — and deploying it would have
+rolled back the brand-mark unification, the mobile onboarding screens, the Hero Banner removal and
+two merged PRs. The same day the edge function was found five days stale: those features had been
+removed and the frontend redeployed, but their backend routes were still live. The two deploy
+independently and nothing links them — `deploy-edge.sh` downloads the live function first, so its
+rollback restores what was actually running rather than a guessed commit.
 
 `.vercel/` is gitignored and holds the local project link. The team is `wugweb` (team ID `team_8QvHezSgBzUD4STdma9lk5UF`).
 
