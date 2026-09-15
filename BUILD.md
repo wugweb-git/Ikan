@@ -46,6 +46,10 @@ After deploy, visit https://ikanhealth.in and smoke-test: homepage, dashboard lo
 
 All API routes live in one function: `make-server-cc205da9`. Source is in `src/supabase/functions/server/`.
 
+**Use `bash scripts/deploy-edge.sh`.** It does everything below, behind the deploy guard, and also
+downloads the live function before deploying so rollback restores what was really running. The
+manual steps are kept for reference and for recovery when the script itself is the problem.
+
 ```bash
 # 1. Stage files (CLI needs a project directory layout)
 mkdir -p /tmp/ikan-fn/supabase/functions/make-server-cc205da9

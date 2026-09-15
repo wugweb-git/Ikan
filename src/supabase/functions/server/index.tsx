@@ -46,6 +46,7 @@ import { registerKVAuditRoutes } from './kv-audit-routes.ts';
 import { registerCheckinTemplateRoutes } from './checkin-template-routes.ts';
 import { registerIkanScoreRoutes } from './ikan-score-routes.ts';
 import { registerReminderRoutes } from './reminder-routes.ts';
+import { isPublicContentBucket, urlForUploadedFile } from './storage-urls.ts';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Layer 0: Centralized connection-closed error detection
@@ -2985,10 +2986,10 @@ app.post("/upload", requireAdmin, async (c) => {
     if (!bucketExists) {
       console.log(`📦 Creating bucket: ${bucket}`);
       const { error: bucketError } = await supabase.storage.createBucket(bucket, {
-        public: false,
+        public: isPublicContentBucket(bucket),
         fileSizeLimit: 52428800 // 50MB
       });
-      
+
       if (bucketError) {
         console.error('Bucket creation error:', bucketError);
         return c.json({ error: 'Failed to create storage bucket' }, 500);
@@ -3019,13 +3020,12 @@ app.post("/upload", requireAdmin, async (c) => {
       return c.json({ error: 'Failed to upload file' }, 500);
     }
 
-    // Generate signed URL (valid for 1 year)
-    const { data: signedUrlData } = await supabase.storage
-      .from(bucket)
-      .createSignedUrl(filePath, 31536000); // 1 year in seconds
+    // Public content buckets get a permanent public URL; anything else keeps a
+    // signed link. A signed link stored here expires, and nothing re-signs it.
+    const fileUrl = await urlForUploadedFile((b) => supabase.storage.from(b), bucket, filePath);
 
-    if (!signedUrlData) {
-      console.error('Failed to generate signed URL');
+    if (!fileUrl) {
+      console.error('Failed to generate file URL');
       return c.json({ error: 'Failed to generate file URL' }, 500);
     }
 
@@ -3037,17 +3037,17 @@ app.post("/upload", requireAdmin, async (c) => {
       fileType: file.type,
       filePath,
       bucket,
-      url: signedUrlData.signedUrl,
+      url: fileUrl,
       uploadedAt: new Date().toISOString()
     };
 
     await kv.set(`media:${fileMetadata.id}`, fileMetadata);
 
     console.log(`📤 File uploaded: ${file.name} (${(file.size / 1024).toFixed(2)} KB)`);
-    
+
     return c.json({
       success: true,
-      url: signedUrlData.signedUrl,
+      url: fileUrl,
       metadata: fileMetadata
     });
   } catch (error) {
@@ -3079,7 +3079,7 @@ app.post("/upload-image", requireAdmin, async (c) => {
     if (!bucketExists) {
       console.log(`📦 Creating image bucket: ${bucket}`);
       const { error: bucketError } = await supabase.storage.createBucket(bucket, {
-        public: false,
+        public: isPublicContentBucket(bucket),
         fileSizeLimit: 10485760 // 10MB for images
       });
       
@@ -3113,21 +3113,21 @@ app.post("/upload-image", requireAdmin, async (c) => {
       return c.json({ error: 'Failed to upload file' }, 500);
     }
 
-    // Generate signed URL (valid for 1 year)
-    const { data: signedUrlData } = await supabase.storage
-      .from(bucket)
-      .createSignedUrl(filePath, 31536000); // 1 year in seconds
+    // Public content buckets get a permanent public URL; anything else keeps a
+    // signed link. See storage-urls.ts for why a stored signed link is a
+    // scheduled outage.
+    const fileUrl = await urlForUploadedFile((b) => supabase.storage.from(b), bucket, filePath);
 
-    if (!signedUrlData) {
-      console.error('Failed to generate signed URL');
+    if (!fileUrl) {
+      console.error('Failed to generate file URL');
       return c.json({ error: 'Failed to generate file URL' }, 500);
     }
 
     console.log(`🖼️  Image uploaded: ${file.name} (${(file.size / 1024).toFixed(2)} KB)`);
-    
+
     return c.json({
       success: true,
-      url: signedUrlData.signedUrl,
+      url: fileUrl,
       fileName: file.name,
       fileSize: file.size,
       filePath

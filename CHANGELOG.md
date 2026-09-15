@@ -9,6 +9,42 @@ undated under their original session number.
 
 ---
 
+## 2026-09-15 — content images stop expiring; production deploys are guarded
+
+**Content images no longer carry an expiry date.** Every content upload was stored as a Supabase
+*signed* URL with a one-year life, minted at upload. The eight `assessment_def:` heroes were
+uploaded together, so all seven assessment heroes would have stopped loading on 2026-12-30, and
+every later upload set its own cliff a year out. Nothing re-signed a stored link.
+
+- `make-cc205da9-images` and `equip-program-images` are now public. `make-cc205da9-media` already
+  was — its 12 links were stored signed anyway.
+- All **50** stored content links across `assessment_def:`, `equip:`, `equip_program:`,
+  `equip_program_by_slug:`, `resource:`, `media:` and `settings:` were rewritten to permanent public
+  URLs. Dry-run first (50 signed → 0, all 36 rows still parse); then every one of the **30**
+  distinct files was fetched back and returned 200. Backup:
+  `backup_pre_public_storage_2026_09_15` (36 rows).
+- The three content upload routes (`/upload`, `/upload-image`, `/admin/media/upload`) now store a
+  public URL through `server/storage-urls.ts`. The bucket name comes from the request, so the list
+  of public buckets is explicit: naming any other bucket still gets a signed link, never a public
+  URL that 400s.
+- **Stays private:** avatars, user uploads and professional uploads. Avatars still expire — see
+  PENDING.
+
+**Production deploys go through a guard.** `scripts/deploy-prod.sh` and `scripts/deploy-edge.sh`
+replace running the CLIs by hand, and `scripts/deploy-guard.sh` refuses unless the tree is on
+`equip-carry-forward`, level with origin, clean in what ships, and green in CI. Two findings from the
+same morning made this necessary: the session opened on a merged branch 19 commits behind
+production, which `vercel deploy --prod` would have shipped with every check green; and the edge
+function was five days stale, still serving the removed Hero Banner and Page Manager routes because
+the frontend had been redeployed without it. The guard was tested against both — the wrong branch,
+and a branch *named* `equip-carry-forward` sitting 27 commits stale. It refused each.
+
+**Also:** the dead `/admin/pages` "Page Manager" entry removed from `App.tsx` and
+`route-config.ts`; the merged `page-manager-remove-admin` branch deleted — its one unmerged commit
+was already in production byte-for-byte via PRs #19 and #21.
+
+---
+
 ## 2026-09-08 (both rows verified live; one article vocabulary)
 
 **Verified on production, logged in.** A stress result renders **RECOMMENDED**

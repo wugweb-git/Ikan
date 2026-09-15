@@ -393,3 +393,37 @@ merge if convenient.
 Not touched: the other 11 items from the same audit (dark-mode text token,
 brand-hue contrast sweep, `InputTable` consolidation, etc.) — each is its own
 follow-on piece of work, not bundled here.
+
+## Claimed 2026-09-15 — PUBLIC CONTENT STORAGE + DEPLOY GUARD (branch `storage-public-content`)
+
+**A repo-wide sweep, named as one.** Stored image links for content were Supabase
+*signed* URLs with a one-year expiry, minted at upload. Eight `assessment_def:`
+heroes expire together on 2026-12-30. This claim makes the two private content
+buckets public, rewrites every stored signed link that points into a content
+bucket, and changes the upload routes so new uploads stop minting expiring links.
+
+**KV prefixes written** (all backed up first in
+`backup_pre_public_storage_2026_09_15`): `assessment_def:`, `equip:`,
+`equip_program:`, `equip_program_by_slug:`, `resource:`, `media:`, `settings:`.
+Only the URL string changes — `/object/sign/<bucket>/<path>?token=…` becomes
+`/object/public/<bucket>/<path>`. `equip:` and `equip_program:` are rewritten in
+the same statement, so the dual-write pair stays in step.
+
+**If you replay a backup taken before 2026-09-15 into any of those prefixes, you
+put the expiring signed links back.** They will work until 2026-12-30 and then
+break.
+
+**Buckets:** `make-cc205da9-images` and `equip-program-images` → public.
+`make-cc205da9-media` was already public. **Not touched:**
+`make-cc205da9-avatars`, `make-cc205da9-user-uploads`,
+`make-cc205da9-professional-uploads` — those hold user data and stay private.
+
+**Files:** `server/storage-urls.ts` (new, with tests), the three content upload
+routes (`index.tsx` `/upload` and `/upload-image`, `admin-routes.ts`
+`/admin/media/upload`), `scripts/deploy-guard.sh`, `scripts/deploy-prod.sh`,
+`scripts/deploy-edge.sh` (new), `src/App.tsx` + `src/lib/route-config.ts` (the
+dead `/admin/pages` entry left by the Page Manager removal), `BUILD.md`,
+`CLAUDE.md`, `PENDING.md`, `CHANGELOG.md`.
+
+`App.tsx` is listed above as SYSTEM MAP-claimed; this touches only one string in
+the valid-routes array, the same list the Page Manager removal already edited.

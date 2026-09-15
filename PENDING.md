@@ -834,10 +834,16 @@ Two notes for the record:
   way back down; the plan document lists them file by file.
 
 ### Open — owner decisions, not work in progress
-- **Public bucket.** 8 `assessment_def` signed URLs expire together on
-  **2026-12-30**; all seven assessment heroes go at once. The silent Unsplash
-  fallback is gone, so they will degrade visibly rather than becoming one
-  stock photo — but they will still all break that day.
+- ~~**Public bucket.**~~ **Resolved 2026-09-15.** The content buckets are public,
+  all 50 stored content links (30 distinct files) were rewritten to permanent
+  public URLs and each was fetched back at 200, and the upload routes now store
+  public URLs. See CHANGELOG 2026-09-15.
+- **Avatars still expire.** 5 `user:` profile pictures in
+  `make-cc205da9-avatars` are stored as signed links expiring between
+  2027-03-10 and 2027-06-25, and `POST /users/avatar/upload` still mints a
+  one-year link each time. This is user data, so the bucket rightly stays
+  private — the fix is to store the object path and sign at read time, not to
+  make it public. Not started.
 - **2d — Navigation anchors.** Held deliberately: `Navigation.tsx` is used by
   `App.tsx` and 10+ screens, and the instruction was to report before starting.
 - **#9 srcset site-wide** — queued, not started.
