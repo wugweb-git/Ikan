@@ -1,16 +1,21 @@
 /**
- * The marketing site and the signed-in app are the same Vercel deployment
- * served on two hosts: `ikanhealth.in` (marketing) and `app.ikanhealth.in`
- * (the app). Sign-in belongs on the app host.
+ * Sign-in on the marketing site goes to the iKAN 2 app.
  *
- * This matters beyond tidiness: Supabase keeps the session in localStorage,
- * which is per-origin. A user who signs in on the marketing host holds a
- * session that `app.ikanhealth.in` cannot see, so they would appear signed
- * out the moment they reach the app. Sending every sign-in to the app host
- * keeps the session where the app reads it.
+ * `ikanhealth.in` is this Vite app on Vercel. `app.ikanhealth.in` is NOT —
+ * its DNS is a CNAME to `ikan2.lovable.app`, a separate Lovable-built app that
+ * shares this Supabase project (it owns the `ikan2-push` edge function and the
+ * `ikan2_push_subscriptions` table). Vercel also lists `app.ikanhealth.in` as
+ * an alias on this project, but DNS decides, and DNS points at Lovable.
  *
- * Only the exact marketing hosts redirect. localhost, Vercel preview URLs and
- * the app host itself keep in-app navigation, so development is unaffected.
+ * So this is a hand-off between two apps, not a hop between hosts of one app:
+ * - the destination's routes belong to iKAN 2. `/login` is verified to exist
+ *   there ("Sign in — iKAN"), but it is not ours to guarantee — if iKAN 2
+ *   renames it, this link breaks without any change in this repo.
+ * - Supabase sessions live in per-origin localStorage, so a session held on
+ *   ikanhealth.in does not carry across; the user signs in on iKAN 2.
+ *
+ * Only the exact marketing hosts redirect. localhost and Vercel preview URLs
+ * keep in-app navigation, so development is unaffected.
  */
 export const APP_ORIGIN = 'https://app.ikanhealth.in';
 
