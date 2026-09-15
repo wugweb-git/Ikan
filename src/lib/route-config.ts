@@ -480,16 +480,6 @@ export const routes: RouteConfig[] = [
     description: 'System settings'
   },
   {
-    path: '/admin/pages',
-    label: 'Page Manager',
-    isPublic: false,
-    requiresAuth: true,
-    showInNavigation: false,
-    showInPublicNav: false,
-    showInPrivateNav: false,
-    description: 'Manage CMS pages'
-  },
-  {
     path: '/admin/media',
     label: 'Media Manager',
     isPublic: false,
