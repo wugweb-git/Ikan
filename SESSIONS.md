@@ -357,3 +357,39 @@ in a real browser.
 Not built yet, per the inventory: auth-signup (reshape of the `/login` tab),
 more-menu/more-profile/more-settings (reshape of the existing sheet +
 `/account`), `/notifications`, `/content` archive.
+
+## Claimed 2026-09-11 — DASHBOARD KEYBOARD ACCESSIBILITY (branch `dashboard-keyboard-fix`)
+
+Fixing the highest-severity item in the "iKan System Map" audit's live pass
+(findings 11/12): every interactive card on `Dashboard.tsx` was a plain
+`<div>`/`<motion.div>` with `onClick` and no `role`, no `tabIndex`, no
+`onKeyDown` — mouse-only, invisible to a screen reader, unreachable by
+keyboard. Confirmed still live on trunk before touching anything (the
+audit's exact `tabIndex` values were imprecise, but the underlying defect
+was real).
+
+7 sites converted from `<div>`/`<motion.div onClick>` to
+`<button type="button">`/`<motion.button type="button">`, each with a
+minimal style reset (`display:block, width:100%, border:0 or kept the
+existing explicit border, background kept as-is (all 7 already had explicit
+background/backgroundColor, so no browser-default button chrome shows),
+font:inherit, textAlign` matching original): the Latest Activity row, the
+Mood Check-in card, the Wellness Insight card, the Programs card, the
+Assessments card, the Assessment History row, and the "Take another
+assessment" row. No layout, animation, or navigation behavior changed —
+only the element type and its native keyboard/AT support.
+
+`.a11y-baseline` lowered 55 → 51 (the static ratchet's own
+`click-on-non-interactive` count dropped by exactly the expected amount).
+`.lint-baseline` unchanged at 884. Typecheck 165/165, 218 tests, build clean.
+
+**Not independently verified live:** no test credentials were available in
+this environment to sign in and keyboard-tab through the authenticated
+`/dashboard` route. Verification relied on the a11y ratchet script itself
+(purpose-built to detect this exact violation class, parses real source) plus
+typecheck/eslint/build. Recommend a quick manual keyboard pass before/after
+merge if convenient.
+
+Not touched: the other 11 items from the same audit (dark-mode text token,
+brand-hue contrast sweep, `InputTable` consolidation, etc.) — each is its own
+follow-on piece of work, not bundled here.
