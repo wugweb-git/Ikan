@@ -427,3 +427,21 @@ dead `/admin/pages` entry left by the Page Manager removal), `BUILD.md`,
 
 `App.tsx` is listed above as SYSTEM MAP-claimed; this touches only one string in
 the valid-routes array, the same list the Page Manager removal already edited.
+
+### 2026-09-15 · addendum — avatars signed on read (branch `avatars-sign-on-read`)
+
+Same claim, second half. Avatars were stored like content — a one-year signed
+link in `user:{id}.avatar_url` — but they are user data, so their bucket stays
+private and the fix is different: `user:` records now store `avatar_path`, and
+the nine routes that return a profile to a client sign a 7-day link on the way
+out (`presentAvatar`). Every route that writes a profile runs
+`normaliseAvatarForStorage`, because the admin user editor and the profile form
+send the fresh link back on save.
+
+**KV prefix written:** `user:` — only after the function is deployed, since the
+live function before this change reads `avatar_url` and would lose the picture.
+Backup `backup_pre_avatar_path_2026_09_15`.
+
+**Privacy fix folded in:** a stored avatar path is accepted only inside that
+user's own folder. Before this, `PUT /users/profile` would store any link, and
+signing on read would have served another user's private picture.
