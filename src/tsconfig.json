@@ -59,6 +59,10 @@
     "./hooks/**/*.tsx",
     "./lib/**/*.ts",
     "./lib/**/*.tsx",
+    "./app/**/*.ts",
+    "./app/**/*.tsx",
+    "./site/**/*.ts",
+    "./site/**/*.tsx",
     "./utils/**/*.ts",
     "./utils/**/*.tsx",
     "./styles/**/*.css"

@@ -78,5 +78,5 @@ let _moodJournalPreloaded = false;
 export function preloadMoodJournal(): void {
   if (_moodJournalPreloaded) return;
   _moodJournalPreloaded = true;
-  preloadChunk(() => import('../components/screens/MoodJournal'));
+  preloadChunk(() => import('../app/screens/MoodJournal'));
 }

@@ -10,18 +10,18 @@ import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { NotificationProvider, useNotifications } from './contexts/NotificationContext';
 import { PaymentProvider } from './contexts/PaymentContext';
 import { JourneyProvider } from './contexts/JourneyContext';
-import { Navigation } from './components/navigation/Navigation';
-import { BottomNavBarMobile } from './components/navigation/BottomNavBarMobile';
-import { PublicBottomNavMobile } from './components/navigation/PublicBottomNavMobile';
+import { Navigation } from './app/shell/navigation/Navigation';
+import { BottomNavBarMobile } from './app/shell/navigation/BottomNavBarMobile';
+import { PublicBottomNavMobile } from './site/ui/PublicBottomNavMobile';
 import { RouteGuard } from './components/RouteGuard';
 import { DEFAULT_PUBLIC_ROUTE, DEFAULT_PRIVATE_ROUTE } from './lib/route-config';
 import { hasSeenOnboarding, hasCompletedFirstRun } from './lib/first-run';
-import { WelcomeSplash } from './components/screens/onboarding/WelcomeSplash';
-import { MobileOnboarding } from './components/screens/onboarding/MobileOnboarding';
-import { VerifyEmail } from './components/screens/onboarding/VerifyEmail';
-import { GetStarted } from './components/screens/onboarding/GetStarted';
+import { WelcomeSplash } from './app/screens/onboarding/WelcomeSplash';
+import { MobileOnboarding } from './app/screens/onboarding/MobileOnboarding';
+import { VerifyEmail } from './app/screens/onboarding/VerifyEmail';
+import { GetStarted } from './app/screens/onboarding/GetStarted';
 
-import { PushPermissionPrompt, usePushPermissionPrompt } from './components/notifications/PushPermissionPrompt';
+import { PushPermissionPrompt, usePushPermissionPrompt } from './app/features/notifications/PushPermissionPrompt';
 import { Toaster } from './components/ui/sonner';
 import { cn } from './components/ui/utils';
 import { logger } from './lib/logger';
@@ -71,11 +71,11 @@ if (typeof window !== 'undefined') {
 
 // --- ALL screens are now lazy-loaded to prevent module-level crashes ---
 // Previously eagerly loaded screens moved to lazy:
-const Dashboard = lazy(() => lazyRetry(() => import('./components/screens/Dashboard').then(m => ({ default: m.Dashboard })), 'Dashboard'));
-const Homepage = lazy(() => lazyRetry(() => import('./components/screens/Homepage').then(m => ({ default: m.Homepage })), 'Homepage'));
-const NotFound = lazy(() => lazyRetry(() => import('./components/screens/NotFound').then(m => ({ default: m.NotFound })), 'NotFound'));
+const Dashboard = lazy(() => lazyRetry(() => import('./app/screens/Dashboard').then(m => ({ default: m.Dashboard })), 'Dashboard'));
+const Homepage = lazy(() => lazyRetry(() => import('./site/pages/Homepage').then(m => ({ default: m.Homepage })), 'Homepage'));
+const NotFound = lazy(() => lazyRetry(() => import('./site/pages/NotFound').then(m => ({ default: m.NotFound })), 'NotFound'));
 const LoginScreen = lazy(() => lazyRetry(() => import('./components/LoginScreen').then(m => ({ default: m.default || m.LoginScreen })), 'LoginScreen'));
-const ResetPassword = lazy(() => lazyRetry(() => import('./components/screens/ResetPassword').then(m => ({ default: m.default || m.ResetPassword })), 'ResetPassword'));
+const ResetPassword = lazy(() => lazyRetry(() => import('./app/screens/ResetPassword').then(m => ({ default: m.default || m.ResetPassword })), 'ResetPassword'));
 // Onboarding flow screens are imported eagerly (not lazy): they are small, sit
 // at the entry of the app, and lazy-loading them deadlocks the AnimatePresence
 // `mode="wait"` transition when entering an unloaded chunk.
@@ -83,39 +83,39 @@ const ResetPassword = lazy(() => lazyRetry(() => import('./components/screens/Re
 // --- Lazy loaded screens (split by category) ---
 
 // Assessment screens
-const Assessments = lazy(() => lazyRetry(() => import('./components/screens/Assessments').then(m => ({ default: m.Assessments })), 'Assessments'));
-const AssessmentDetail = lazy(() => lazyRetry(() => import('./components/screens/AssessmentDetail').then(m => ({ default: m.AssessmentDetail })), 'AssessmentDetail'));
-const AssessmentFlow = lazy(() => lazyRetry(() => import('./components/screens/AssessmentFlow').then(m => ({ default: m.AssessmentFlow })), 'AssessmentFlow'));
-const AssessmentResults = lazy(() => lazyRetry(() => import('./components/screens/AssessmentResults').then(m => ({ default: m.AssessmentResults })), 'AssessmentResults'));
-const AssessmentHistoryDetail = lazy(() => lazyRetry(() => import('./components/screens/AssessmentHistoryDetail').then(m => ({ default: m.AssessmentHistoryDetail })), 'AssessmentHistoryDetail'));
+const Assessments = lazy(() => lazyRetry(() => import('./app/screens/Assessments').then(m => ({ default: m.Assessments })), 'Assessments'));
+const AssessmentDetail = lazy(() => lazyRetry(() => import('./app/screens/AssessmentDetail').then(m => ({ default: m.AssessmentDetail })), 'AssessmentDetail'));
+const AssessmentFlow = lazy(() => lazyRetry(() => import('./app/screens/AssessmentFlow').then(m => ({ default: m.AssessmentFlow })), 'AssessmentFlow'));
+const AssessmentResults = lazy(() => lazyRetry(() => import('./app/screens/AssessmentResults').then(m => ({ default: m.AssessmentResults })), 'AssessmentResults'));
+const AssessmentHistoryDetail = lazy(() => lazyRetry(() => import('./app/screens/AssessmentHistoryDetail').then(m => ({ default: m.AssessmentHistoryDetail })), 'AssessmentHistoryDetail'));
 
 // Equip screens
-const EquipPrograms = lazy(() => lazyRetry(() => import('./components/screens/EquipPrograms').then(m => ({ default: m.EquipPrograms })), 'EquipPrograms'));
-const EquipDetail = lazy(() => lazyRetry(() => import('./components/screens/EquipDetail').then(m => ({ default: m.EquipDetail })), 'EquipDetail'));
-const EquipOnboarding = lazy(() => lazyRetry(() => import('./components/screens/EquipProgramOnboarding').then(m => ({ default: m.EquipOnboarding })), 'EquipOnboarding'));
-const EquipProgramFlow = lazy(() => lazyRetry(() => import('./components/screens/EquipProgramFlow').then(m => ({ default: m.EquipProgramFlow })), 'EquipProgramFlow'));
-const EquipProgramCompletion = lazy(() => lazyRetry(() => import('./components/screens/EquipProgramCompletion').then(m => ({ default: m.EquipProgramCompletion })), 'EquipProgramCompletion'));
+const EquipPrograms = lazy(() => lazyRetry(() => import('./app/screens/EquipPrograms').then(m => ({ default: m.EquipPrograms })), 'EquipPrograms'));
+const EquipDetail = lazy(() => lazyRetry(() => import('./app/screens/EquipDetail').then(m => ({ default: m.EquipDetail })), 'EquipDetail'));
+const EquipOnboarding = lazy(() => lazyRetry(() => import('./app/screens/EquipProgramOnboarding').then(m => ({ default: m.EquipOnboarding })), 'EquipOnboarding'));
+const EquipProgramFlow = lazy(() => lazyRetry(() => import('./app/screens/EquipProgramFlow').then(m => ({ default: m.EquipProgramFlow })), 'EquipProgramFlow'));
+const EquipProgramCompletion = lazy(() => lazyRetry(() => import('./app/screens/EquipProgramCompletion').then(m => ({ default: m.EquipProgramCompletion })), 'EquipProgramCompletion'));
 
 // User screens
-const Consultation = lazy(() => lazyRetry(() => import('./components/screens/Consultation').then(m => ({ default: m.Consultation })), 'Consultation'));
-const ConsultantDetail = lazy(() => lazyRetry(() => import('./components/screens/ConsultantDetail').then(m => ({ default: m.ConsultantDetail })), 'ConsultantDetail'));
-const Library = lazy(() => lazyRetry(() => import('./components/screens/Library').then(m => ({ default: m.Library })), 'Library'));
-const Account = lazy(() => lazyRetry(() => import('./components/screens/Account').then(m => ({ default: m.Account })), 'Account'));
-const MoodJournal = lazy(() => lazyRetry(() => import('./components/screens/MoodJournal').then(m => ({ default: m.MoodJournal })), 'MoodJournal'));
-const ResourceDetail = lazy(() => lazyRetry(() => import('./components/screens/ResourceDetail').then(m => ({ default: m.ResourceDetail })), 'ResourceDetail'));
-const ProfessionalApplication = lazy(() => lazyRetry(() => import('./components/screens/ProfessionalApplication').then(m => ({ default: m.ProfessionalApplication })), 'ProfessionalApplication'));
-const WellnessTimeline = lazy(() => lazyRetry(() => import('./components/screens/WellnessTimeline').then(m => ({ default: m.WellnessTimeline })), 'WellnessTimeline'));
-const LearningDiary = lazy(() => lazyRetry(() => import('./components/screens/LearningDiary').then(m => ({ default: m.LearningDiary })), 'LearningDiary'));
+const Consultation = lazy(() => lazyRetry(() => import('./app/screens/Consultation').then(m => ({ default: m.Consultation })), 'Consultation'));
+const ConsultantDetail = lazy(() => lazyRetry(() => import('./app/screens/ConsultantDetail').then(m => ({ default: m.ConsultantDetail })), 'ConsultantDetail'));
+const Library = lazy(() => lazyRetry(() => import('./app/screens/Library').then(m => ({ default: m.Library })), 'Library'));
+const Account = lazy(() => lazyRetry(() => import('./app/screens/Account').then(m => ({ default: m.Account })), 'Account'));
+const MoodJournal = lazy(() => lazyRetry(() => import('./app/screens/MoodJournal').then(m => ({ default: m.MoodJournal })), 'MoodJournal'));
+const ResourceDetail = lazy(() => lazyRetry(() => import('./app/screens/ResourceDetail').then(m => ({ default: m.ResourceDetail })), 'ResourceDetail'));
+const ProfessionalApplication = lazy(() => lazyRetry(() => import('./site/pages/ProfessionalApplication').then(m => ({ default: m.ProfessionalApplication })), 'ProfessionalApplication'));
+const WellnessTimeline = lazy(() => lazyRetry(() => import('./app/screens/WellnessTimeline').then(m => ({ default: m.WellnessTimeline })), 'WellnessTimeline'));
+const LearningDiary = lazy(() => lazyRetry(() => import('./app/screens/LearningDiary').then(m => ({ default: m.LearningDiary })), 'LearningDiary'));
 
 // Static/legal pages
-const AboutUs = lazy(() => lazyRetry(() => import('./components/screens/AboutUs').then(m => ({ default: m.AboutUs })), 'AboutUs'));
-const FAQ = lazy(() => lazyRetry(() => import('./components/screens/FAQ').then(m => ({ default: m.FAQ })), 'FAQ'));
-const PrivacyPolicy = lazy(() => lazyRetry(() => import('./components/screens/PrivacyPolicy').then(m => ({ default: m.PrivacyPolicy })), 'PrivacyPolicy'));
-const TermsOfUse = lazy(() => lazyRetry(() => import('./components/screens/TermsOfUse').then(m => ({ default: m.TermsOfUse })), 'TermsOfUse'));
-const ContactUs = lazy(() => lazyRetry(() => import('./components/screens/ContactUs').then(m => ({ default: m.ContactUs })), 'ContactUs'));
-const ReturnPolicy = lazy(() => lazyRetry(() => import('./components/screens/ReturnPolicy').then(m => ({ default: m.ReturnPolicy })), 'ReturnPolicy'));
-const CancellationPolicy = lazy(() => lazyRetry(() => import('./components/screens/CancellationPolicy').then(m => ({ default: m.CancellationPolicy })), 'CancellationPolicy'));
-const Sitemap = lazy(() => lazyRetry(() => import('./components/screens/Sitemap').then(m => ({ default: m.Sitemap })), 'Sitemap'));
+const AboutUs = lazy(() => lazyRetry(() => import('./site/pages/AboutUs').then(m => ({ default: m.AboutUs })), 'AboutUs'));
+const FAQ = lazy(() => lazyRetry(() => import('./site/pages/FAQ').then(m => ({ default: m.FAQ })), 'FAQ'));
+const PrivacyPolicy = lazy(() => lazyRetry(() => import('./site/pages/PrivacyPolicy').then(m => ({ default: m.PrivacyPolicy })), 'PrivacyPolicy'));
+const TermsOfUse = lazy(() => lazyRetry(() => import('./site/pages/TermsOfUse').then(m => ({ default: m.TermsOfUse })), 'TermsOfUse'));
+const ContactUs = lazy(() => lazyRetry(() => import('./site/pages/ContactUs').then(m => ({ default: m.ContactUs })), 'ContactUs'));
+const ReturnPolicy = lazy(() => lazyRetry(() => import('./site/pages/ReturnPolicy').then(m => ({ default: m.ReturnPolicy })), 'ReturnPolicy'));
+const CancellationPolicy = lazy(() => lazyRetry(() => import('./site/pages/CancellationPolicy').then(m => ({ default: m.CancellationPolicy })), 'CancellationPolicy'));
+const Sitemap = lazy(() => lazyRetry(() => import('./site/pages/Sitemap').then(m => ({ default: m.Sitemap })), 'Sitemap'));
 
 // Admin screens
 const AdminDashboard = lazy(() => lazyRetry(() => import('./components/screens/AdminDashboard').then(m => ({ default: m.AdminDashboard })), 'AdminDashboard'));
@@ -123,13 +123,13 @@ const AdminLoginScreen = lazy(() => lazyRetry(() => import('./components/admin/A
 
 // --- Eagerly loaded non-screen components ---
 import { AdminWidget } from './components/admin/AdminWidget';
-import { GoogleFitProvider } from './components/integrations/GoogleFitContext';
-import { Footer } from './components/Footer';
+import { GoogleFitProvider } from './app/features/integrations/GoogleFitContext';
+import { Footer } from './site/ui/Footer';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { ChunkErrorBoundary } from './components/ChunkErrorBoundary';
 import { SecurityProvider } from './components/security/SecurityProvider';
 import { usePublicSettings } from './hooks/usePublicSettings';
-import { CrisisSupport, useCrisisSupport } from './components/safety/CrisisSupport';
+import { CrisisSupport, useCrisisSupport } from './app/features/safety/CrisisSupport';
 import { SafePerformanceMonitor } from './components/monitoring/SafePerformanceMonitor';
 import { SkipToMainContent, useReducedMotion } from './components/ui/accessibility-helpers';
 import { OfflineBanner } from './components/OfflineBanner';

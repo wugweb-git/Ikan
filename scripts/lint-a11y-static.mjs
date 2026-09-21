@@ -17,7 +17,8 @@ import { fileURLToPath } from 'node:url';
 import { dirname, join, relative } from 'node:path';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
-const SRC = join(ROOT, 'src/components');
+/* app/ and site/ hold the screens moved out of components/ — scan all three. */
+const SRCS = ['src/components', 'src/app', 'src/site'].map(d => join(ROOT, d));
 const BASELINE_FILE = join(ROOT, '.a11y-baseline');
 const SKIP = /\.(test|spec|stories)\.tsx?$/;
 
@@ -100,12 +101,12 @@ function walk(dir, out = []) {
   return out;
 }
 
-if (!existsSync(SRC)) { console.error(`a11y lint: cannot read ${SRC}`); process.exit(2); }
+for (const d of SRCS) if (!existsSync(d)) { console.error(`a11y lint: cannot read ${d}`); process.exit(2); }
 
 const counts = Object.fromEntries(RULES.map(r => [r.id, []]));
 let total = 0;
 
-for (const file of walk(SRC)) {
+for (const file of SRCS.flatMap(d => walk(d))) {
   const src = readFileSync(file, 'utf8');
   const lines = src.split('\n');
   /* match an opening tag and its attributes, across line breaks */

@@ -13,7 +13,8 @@ import { fileURLToPath } from 'node:url';
 import { dirname, join, relative } from 'node:path';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
-const SRC = join(ROOT, 'src/components');
+/* app/ and site/ hold the screens moved out of components/ — scan all three. */
+const SRCS = ['src/components', 'src/app', 'src/site'].map(d => join(ROOT, d));
 const BASELINE_FILE = join(ROOT, '.rawhex-baseline');
 
 /* globals.css is where literals belong. Tests and stories may pin values. */
@@ -33,9 +34,9 @@ function walk(dir, out = []) {
   return out;
 }
 
-if (!existsSync(SRC)) { console.error(`raw-hex lint: cannot read ${SRC}`); process.exit(2); }
+for (const d of SRCS) if (!existsSync(d)) { console.error(`raw-hex lint: cannot read ${d}`); process.exit(2); }
 
-const files = walk(SRC);
+const files = SRCS.flatMap(d => walk(d));
 const perFile = [];
 let total = 0;
 
@@ -53,7 +54,7 @@ const baseline = existsSync(BASELINE_FILE)
   ? parseInt(readFileSync(BASELINE_FILE, 'utf8').trim(), 10) || 0
   : Number.MAX_SAFE_INTEGER;
 
-console.log(`raw colour literals in src/components: ${total} across ${perFile.length} files (baseline ${baseline === Number.MAX_SAFE_INTEGER ? 'unset' : baseline})`);
+console.log(`raw colour literals in src/{components,app,site}: ${total} across ${perFile.length} files (baseline ${baseline === Number.MAX_SAFE_INTEGER ? 'unset' : baseline})`);
 console.log('');
 for (const [f, n] of perFile.slice(0, 15)) console.log(`  ${String(n).padStart(4)}  ${f}`);
 if (perFile.length > 15) console.log(`  ...and ${perFile.length - 15} more files`);
