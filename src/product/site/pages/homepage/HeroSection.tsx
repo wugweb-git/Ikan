@@ -232,11 +232,11 @@ function MarqueeRow({ statistics, speed = 30 }: { statistics: any[]; speed?: num
         }
         .ikan-marquee-container::before {
           left: 0;
-          background: linear-gradient(to right, var(--color-bg-page, #F5F5F5), transparent);
+          background: linear-gradient(to right, var(--color-bg-page), transparent);
         }
         .ikan-marquee-container::after {
           right: 0;
-          background: linear-gradient(to left, var(--color-bg-page, #F5F5F5), transparent);
+          background: linear-gradient(to left, var(--color-bg-page), transparent);
         }
       `;
       document.head.appendChild(style);

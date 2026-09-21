@@ -1,11 +1,11 @@
 import { motion } from 'framer-motion';
 import { Card, CardContent } from '../ui/card';
 import { FileText, Brain, Shield, Activity } from 'lucide-react';
-import { cn } from '../ui/utils';
 import { PageHero } from '../ui/PageHero';
+import { Container, PageShell } from '../ui/Container';
 import { AssessmentCard } from '../ui/blocks/AssessmentCard';
 import { assessmentImage } from '../content/assessment-meta';
-import { getAssessments, type SiteAssessment } from '../content/catalog';
+import { assessmentMinutes, assessmentUrl, getListedAssessments } from '../content/catalog';
 
 /**
  * The public assessment catalogue — static.
@@ -38,35 +38,16 @@ const getAssessmentImage = (category?: string, customImage?: string | null) => {
   return "https://images.unsplash.com/photo-1758274539447-a675587a2b6c?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxoZWFsdGh5JTIwbGlmZXN0eWxlJTIwYmFsYW5jZSUyMG5hdHVyZXxlbnwxfHx8fDE3NjU0NTkxNjJ8MA&ixlib=rb-4.1.0&q=80&w=1080";
 };
 
-/** Catalogue entries, de-duplicated the way the app screen does it. */
-function catalogue(): SiteAssessment[] {
-  const seen = new Set<string>();
-  const out: SiteAssessment[] = [];
-  for (const a of getAssessments()) {
-    const key = a.slug || a.assessment_id || a.id;
-    if (!key || seen.has(key)) continue;
-    seen.add(key);
-    // Only published assessments are listed.
-    if (a.published === false) continue;
-    out.push(a);
-  }
-  return out;
-}
-
 export function Assessments({ className, onNavigate }: AssessmentsProps) {
-  const assessments = catalogue();
-
-  const openLanding = (a: SiteAssessment) => {
-    onNavigate?.(a.slug ? `/assessment/${a.slug}` : `/assessment-detail?id=${a.id}`);
-  };
+  const assessments = getListedAssessments();
 
   return (
-    <div className={cn("w-full", className)}>
+    <PageShell className={className}>
       <PageHero
         title="Health Assessments"
         subtitle="Quick, evidence-based screenings to help you understand your mental well-being."
       />
-      <div className="max-w-7xl mx-auto p-4 md:p-8 space-y-8">
+      <Container className="py-4 md:py-8 space-y-8">
 
       {/* Feature Cards */}
       <motion.div
@@ -138,7 +119,7 @@ export function Assessments({ className, onNavigate }: AssessmentsProps) {
               const category = assessment.category || assessment.metadata?.category || 'wellness';
               // Authored image first, stock photo by category only as a last resort.
               const imageUrl = getAssessmentImage(category, assessmentImage(assessment));
-              const minutes = typeof assessment.duration === 'number' && assessment.duration > 0 ? assessment.duration : null;
+              const minutes = assessmentMinutes(assessment);
 
               return (
                 <AssessmentCard
@@ -159,15 +140,16 @@ export function Assessments({ className, onNavigate }: AssessmentsProps) {
                     completed: false,
                     cta: 'Start assessment',
                   }}
-                  onSelect={() => openLanding(assessment)}
+                  href={assessmentUrl(assessment)}
+                  onNavigate={onNavigate}
                 />
               );
             })}
           </div>
         )}
       </div>
-    </div>
-    </div>
+    </Container>
+    </PageShell>
   );
 }
 

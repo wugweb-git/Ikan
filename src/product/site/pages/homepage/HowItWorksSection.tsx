@@ -4,6 +4,7 @@ import { ImageWithFallback } from '../../ui/ImageWithFallback';
 import { ClipboardCheck, Users, Sparkles } from 'lucide-react';
 import { useIsMobile } from '../../ui/hooks/useIsMobile';
 import { DEFAULT_CMS_CONTENT } from '../../content/cms-defaults';
+import { CONTENT_MAX } from '../../ui/Container';
 
 interface HowItWorksCard {
   step: number;
@@ -78,7 +79,7 @@ export function HowItWorksSection({ onNavigate }: HowItWorksSectionProps) {
 
   const heading = cms?.heading || 'How it works';
   const ctaText = cms?.ctaText || 'Get Started';
-  const ctaRoute = cms?.ctaRoute || '/assessments';
+  const ctaRoute = cms?.ctaRoute || '/assessment';
 
   const cards: HowItWorksCard[] = useMemo(() => {
     if (!cms?.cards) return DEFAULT_CARDS;
@@ -104,7 +105,7 @@ export function HowItWorksSection({ onNavigate }: HowItWorksSectionProps) {
       >
         <div
           style={{
-            maxWidth: '1100px',
+            maxWidth: CONTENT_MAX,
             margin: '0 auto',
             padding: '0 24px',
           }}
@@ -285,7 +286,7 @@ function DesktopCard({
       <p
         style={{
           fontFamily: 'var(--font-family-base)',
-          fontSize: '14px',
+          fontSize: 'var(--text-sm)',
           fontWeight: 'var(--font-weight-medium)',
           color: isCenter ? '#4A7A6A' : 'var(--color-text-muted)',
           lineHeight: '1.4',
@@ -317,7 +318,7 @@ function DesktopCard({
       <p
         style={{
           fontFamily: 'var(--font-family-base)',
-          fontSize: '14px',
+          fontSize: 'var(--text-sm)',
           fontWeight: 'var(--font-weight-regular)',
           color: 'var(--color-text-primary)',
           lineHeight: '1.65',
@@ -391,7 +392,7 @@ function MobileCard({ card }: { card: HowItWorksCard }) {
         <h3
           style={{
             fontFamily: 'var(--font-family-base)',
-            fontSize: '18px',
+            fontSize: 'var(--text-lg)',
             fontWeight: 'var(--font-weight-medium)',
             color: 'var(--color-text-primary)',
             lineHeight: '1.3',
@@ -417,7 +418,7 @@ function MobileCard({ card }: { card: HowItWorksCard }) {
       <p
         style={{
           fontFamily: 'var(--font-family-base)',
-          fontSize: '14px',
+          fontSize: 'var(--text-sm)',
           fontWeight: 'var(--font-weight-regular)',
           color: 'var(--color-text-primary)',
           lineHeight: '1.6',

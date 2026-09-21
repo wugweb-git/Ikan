@@ -1,4 +1,5 @@
-import { SectionHero } from '../ui/blocks/SectionHero';
+import { PageHero } from '../ui/PageHero';
+import { PageShell } from '../ui/Container';
 import { EquipBentoGrid } from '../ui/blocks/EquipBentoGrid';
 import { EquipBlock } from '../ui/blocks/EquipBlock';
 import { NewsletterBlock } from '../ui/blocks/NewsletterBlock';
@@ -84,40 +85,23 @@ export function EquipDetail({ equipId, onNavigate }: EquipDetailProps) {
   const selfKeys = [equipId, equipData.id, equipData.slug].filter(Boolean) as string[];
   const isSelf = (p: SiteProgram) =>
     selfKeys.includes(p.id ?? '') || selfKeys.includes(p.equip_id ?? '') || selfKeys.includes(p.slug ?? '');
-  const equipPrograms = getPrograms()
+  const related = getPrograms()
     .filter(p => !isSelf(p))
     .filter(p => !(LEGACY_PROGRAM_IDS as readonly string[]).includes(p.id || p.equip_id || '')) // Exclude legacy programs
-    .slice(0, 3)
-    .map((p) => ({
-        title: p.title || p.name || '',
-        description: p.summary || p.description || '',
-        image: p.thumbnail || p.thumbnail_url || p.image_url || p.hero_image || p.image || p.cover_image || p.metadata?.image || p.metadata?.thumbnail || '',
-        // Counted from the programme's content at snapshot time. `''` renders no badge.
-        duration: p.dayCount !== null ? `${p.dayCount} days` : '',
-        activities: p.activityCount !== null ? `${p.activityCount} activities` : '',
-        link: p.slug ? `/equip/${p.slug}` : `/equip-detail?id=${p.equip_id || p.id}`
-      }));
+    .slice(0, 3);
 
   return (
-    <div className="w-full min-h-screen" style={{ backgroundColor: 'var(--color-bg-page)' }}>
-      {/* Mobile Header */}
-      <MobileHeader
-        currentRoute="/equip-detail"
-        title={equipData.title}
-        onBack={() => handleNavigate('/equip')}
-        showShare={false}
-        transparent={true}
-      />
+    <PageShell>
+      <MobileHeader title={equipData.title} onBack={() => handleNavigate('/equip')} />
 
       <div className="w-full">
         {/* HERO SECTION — a full-page link to the member app's sign-in. */}
-        <SectionHero
+        <PageHero
+          variant="split"
           title={equipData.title || ''}
-          description={equipData.description || ''}
-          buttonText={ctaButtonText}
-          buttonLink={APP_LOGIN_URL}
+          subtitle={equipData.description || ''}
+          cta={{ label: ctaButtonText, to: APP_LOGIN_URL }}
           backgroundImage={recordImage(equipData as unknown as Record<string, unknown>)}
-          backgroundAlt={`${equipData.title} - Program landing page`}
         />
 
         {/* PRICING BANNER (for paid programs) */}
@@ -184,14 +168,12 @@ export function EquipDetail({ equipId, onNavigate }: EquipDetailProps) {
         />
 
         {/* BOTTOM SECTION: EQUIP BLOCK - Related Programs */}
-        {equipPrograms.length > 0 && (
-          <EquipBlock
-            title="More Equip Programs"
-            footerText="Explore other programs to support your mental wellness journey"
-            programs={equipPrograms}
-            onNavigate={handleNavigate}
-          />
-        )}
+        <EquipBlock
+          title="More Equip Programs"
+          footerText="Explore other programs to support your mental wellness journey"
+          programs={related}
+          onNavigate={handleNavigate}
+        />
 
         {/* BOTTOM SECTION: NEWSLETTER BLOCK */}
         <NewsletterBlock
@@ -202,7 +184,7 @@ export function EquipDetail({ equipId, onNavigate }: EquipDetailProps) {
           privacyText={NEWSLETTER_CONTENT.PRIVACY_TEXT}
         />
       </div>
-    </div>
+    </PageShell>
   );
 }
 

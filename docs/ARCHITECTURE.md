@@ -60,13 +60,13 @@ Supabase Postgres  (kv_store_cc205da9 table)
 
 ### Content model
 
-Site page copy is code-only: it lives in `src/product/site/lib/cms-defaults.ts` and is not fetched. The Page Manager, `usePageContent` and the `/cms/pages` routes were removed (PR #14); leftover `cms_page:`/`page:` KV rows are dead and nothing reads them. Assessments, equip programs, settings and check-in scales are still dynamic, read from the KV store via the edge function.
+Site page copy is code-only: it lives in `src/product/site/content/cms-defaults.ts` and is not fetched. The marketing site makes no reads beyond the professional-application form's category list: its assessment, equip and consultant pages render the build-time snapshot (`content/catalog.ts`), and the footer's contact details come from `content/site-settings.ts` rather than `/settings`. Its other network calls are the contact form, newsletter and application submissions. The Page Manager, `usePageContent` and the `/cms/pages` routes were removed (PR #14); leftover `cms_page:`/`page:` KV rows are dead and nothing reads them. In the member app, assessments, equip programs, settings and check-in scales are still dynamic, read from the KV store via the edge function.
 
 ### Images / banners
 
 Hero/banner images come from record fields. Two historical data hazards:
 - Assessments referenced the discontinued `source.unsplash.com` (replaced with `images.unsplash.com`).
-- Equip cover images were Supabase Storage **signed URLs** that expire — prefer the public `image_url`; `EquipDetail` skips `/object/sign/` URLs, and `SectionHero` has an `onError` fallback so a banner always renders. Store **public** URLs going forward.
+- Equip cover images were Supabase Storage **signed URLs** that expire — prefer the public `image_url`; `EquipDetail` skips `/object/sign/` URLs, and the hero (`SectionHero` in the app, `PageHero variant="split"` on the site) logs an image failure and shows a neutral plate rather than a stock photo. Store **public** URLs going forward.
 
 Some equip bento sub-blocks (right-column items, "how it works" subtitle/footer) have no CMS data and fall back to generic defaults — populate them from the admin to make them program-specific.
 

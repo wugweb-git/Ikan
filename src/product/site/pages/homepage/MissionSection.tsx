@@ -12,6 +12,7 @@ import imgLogo8 from "../../content/assets/4d70d16cfc423d83c6ca9941c4d3da923cf03
 import imgLogo9 from "../../content/assets/17b5fecba5e52eb9055025402d9b0c25a870d0d2.png";
 import imgLogo10 from "../../content/assets/7a674497643e29f384a4eaeb5616eeb32e4aa50b.png";
 import imgLogo11 from "../../content/assets/ac0292f75b641a157de9af130cc05ecea5dd193f.png";
+import { CONTENT_MAX } from '../../ui/Container';
 
 const clientLogos = [
   { src: imgLogo2, alt: 'Client logo 1' },
@@ -71,7 +72,7 @@ export function MissionSection() {
         {/* ── Mission Statement ── */}
         <div
           style={{
-            maxWidth: '1100px',
+            maxWidth: CONTENT_MAX,
             margin: '0 auto',
             padding: '0 24px',
             textAlign: 'center',
@@ -81,7 +82,7 @@ export function MissionSection() {
           <p
             style={{
               fontFamily: 'var(--font-family-base)',
-              fontSize: isMobile ? '13px' : '14px',
+              fontSize: isMobile ? '13px' : 'var(--text-sm)',
               fontWeight: 'var(--font-weight-medium)',
               color: 'var(--color-text-muted)',
               letterSpacing: '1.5px',

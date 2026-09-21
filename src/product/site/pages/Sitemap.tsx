@@ -1,76 +1,26 @@
-import React, { useMemo } from 'react';
+import { useMemo } from 'react';
 import { useIsMobile } from '../ui/hooks/useIsMobile';
 import { PageHero } from '../ui/PageHero';
+import { Container, PageShell } from '../ui/Container';
 import { NavBadge } from '../ui/NavBadge';
+import { NavIcon } from '../ui/NavIcon';
+import { SiteLink } from '../ui/SiteLink';
 import { DEFAULT_CMS_CONTENT } from '../content/cms-defaults';
-import { House, Info, Mail, ClipboardCheck, BookOpen, Stethoscope, Users, UserCircle, Heart, CircleHelp, Shield, FileText, Ban, RotateCcw } from 'lucide-react';
+import { SITEMAP_SECTIONS } from '../content/nav';
+
+/**
+ * Every page on the site, rendered from content/nav.ts — the same table the
+ * footer and mobile menu read. It used to hold a third hand-written list
+ * (overridden by a fourth in cms-defaults) with member-only screens and a
+ * resources page the site does not have.
+ */
 
 interface SitemapProps {
   className?: string;
   onNavigate?: (route: string) => void;
-  onBack?: () => void;
 }
 
-// Icon map for rendering from CMS icon names
-const ICON_MAP: Record<string, React.ReactNode> = {
-  house: <House size={18} />,
-  info: <Info size={18} />,
-  mail: <Mail size={18} />,
-  'clipboard-check': <ClipboardCheck size={18} />,
-  'book-open': <BookOpen size={18} />,
-  stethoscope: <Stethoscope size={18} />,
-  users: <Users size={18} />,
-  'user-circle': <UserCircle size={18} />,
-  heart: <Heart size={18} />,
-  'circle-help': <CircleHelp size={18} />,
-  shield: <Shield size={18} />,
-  'file-text': <FileText size={18} />,
-  ban: <Ban size={18} />,
-  'rotate-ccw': <RotateCcw size={18} />,
-};
-
-const DEFAULT_GROUPS = [
-  {
-    title: 'Main Pages',
-    links: [
-      { label: 'Home', route: '/', icon: 'house', description: 'Landing page with resources, assessments, and programs' },
-      { label: 'About Us', route: '/about', icon: 'info', description: 'Our mission, values, and what iKan offers' },
-      { label: 'Contact Us', route: '/contact', icon: 'mail', description: 'Get in touch with the iKan team' },
-    ],
-  },
-  {
-    title: 'Mental Health Services',
-    links: [
-      { label: 'Assessments', route: '/assessment', icon: 'clipboard-check', description: 'Clinically validated mental health screenings' },
-      { label: 'Equip Programs', route: '/equip', icon: 'book-open', description: 'Self-paced CBT-based wellness programs', badge: 'beta' },
-      { label: 'Consultation', route: '/consultation', icon: 'stethoscope', description: 'Book sessions with licensed professionals', badge: 'coming soon' },
-      { label: 'Resources', route: '/resource', icon: 'users', description: 'Articles, guides, and mental health tools' },
-      { label: 'Join as a Professional', route: '/join/professional', icon: 'stethoscope', description: 'Apply to join iKan as a consultant' },
-    ],
-  },
-  {
-    title: 'Your Account',
-    links: [
-      { label: 'Dashboard', route: '/dashboard', icon: 'house', description: 'Your personalized home after signing in' },
-      { label: 'My Account', route: '/account', icon: 'user-circle', description: 'Profile, settings, and payment history' },
-      { label: 'Mood Journal', route: '/mood-journal', icon: 'heart', description: 'Track your daily mood and emotions' },
-      { label: 'Timeline', route: '/timeline', icon: 'house', description: 'Your activity and progress over time' },
-      { label: 'Learning Diary', route: '/learning-diary', icon: 'book-open', description: 'Notes and reflections from your programs' },
-    ],
-  },
-  {
-    title: 'Legal & Help',
-    links: [
-      { label: 'FAQ', route: '/faq', icon: 'circle-help', description: 'Frequently asked questions and help center' },
-      { label: 'Privacy Policy', route: '/privacy-policy', icon: 'shield', description: 'How we handle and protect your data' },
-      { label: 'Terms of Service', route: '/terms', icon: 'file-text', description: 'Legal terms governing use of iKan' },
-      { label: 'Cancellation Policy', route: '/cancellation-policy', icon: 'ban', description: 'How to cancel subscriptions and services' },
-      { label: 'Return Policy', route: '/return-policy', icon: 'rotate-ccw', description: 'Our refund and return policy' },
-    ],
-  },
-];
-
-export function Sitemap({ className, onNavigate, onBack }: SitemapProps) {
+export function Sitemap({ className, onNavigate }: SitemapProps) {
   const isMobile = useIsMobile();
 
   const cmsContent = DEFAULT_CMS_CONTENT['page-sitemap'];
@@ -79,37 +29,16 @@ export function Sitemap({ className, onNavigate, onBack }: SitemapProps) {
     try { return JSON.parse(cmsContent.content); } catch { return null; }
   }, [cmsContent]);
 
-  const heroTitle = cmsContent?.heroTitle || cms?.heroTitle || 'Site Navigation';
-  const heroSubtitle = cmsContent?.heroSubtitle || cms?.heroSubtitle || 'Explore all pages and resources available on iKan.';
-  const groups = cms?.groups || DEFAULT_GROUPS;
+  const heroTitle = cms?.heroTitle || 'Site Navigation';
+  const heroSubtitle = cms?.heroSubtitle || 'Explore all pages and resources available on iKan.';
 
   return (
-    <div
-      className={`min-h-screen ${className || ''}`}
-      style={{
-        backgroundColor: 'var(--color-bg-page)',
-        fontFamily: 'var(--font-family-base)',
-      }}
-    >
-      <PageHero title={heroTitle} subtitle={heroSubtitle} backgroundImage={cmsContent?.heroImage} />
+    <PageShell className={className}>
+      <PageHero title={heroTitle} subtitle={heroSubtitle} />
 
-      <div
-        className="w-full mx-auto"
-        style={{
-          maxWidth: 'var(--constraint-content-max)',
-          padding: isMobile
-            ? 'var(--ikan-component-spacing-large) var(--ikan-component-spacing-default)'
-            : 'var(--ikan-component-spacing-large) var(--spacing-12)',
-        }}
-      >
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: isMobile ? '1fr' : 'repeat(2, 1fr)',
-            gap: '24px',
-          }}
-        >
-          {groups.map((group: any) => (
+      <Container className="py-6 md:py-10">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {SITEMAP_SECTIONS.map((group) => (
             <div
               key={group.title}
               style={{
@@ -133,72 +62,51 @@ export function Sitemap({ className, onNavigate, onBack }: SitemapProps) {
                 {group.title}
               </h2>
 
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                {group.links.map((link: any) => (
-                  <button
-                    key={link.route}
-                    onClick={() => onNavigate?.(link.route)}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'flex-start',
-                      gap: '12px',
-                      padding: '12px',
-                      borderRadius: 'var(--radius-md)',
-                      border: 'none',
-                      backgroundColor: 'transparent',
-                      cursor: 'pointer',
-                      textAlign: 'left',
-                      width: '100%',
-                      transition: 'background-color 0.15s ease',
-                      fontFamily: 'var(--font-family-base)',
-                    }}
-                    onMouseEnter={(e) =>
-                      (e.currentTarget.style.backgroundColor = 'var(--color-bg-page)')
-                    }
-                    onMouseLeave={(e) =>
-                      (e.currentTarget.style.backgroundColor = 'transparent')
-                    }
-                  >
-                    <div
-                      style={{
-                        color: 'var(--color-text-muted)',
-                        marginTop: '2px',
-                        flexShrink: 0,
-                      }}
+              <ul style={{ display: 'flex', flexDirection: 'column', gap: '4px', listStyle: 'none', margin: 0, padding: 0 }}>
+                {group.links.map((link) => (
+                  <li key={link.to}>
+                    <SiteLink
+                      to={link.to}
+                      onNavigate={onNavigate}
+                      className="flex items-start gap-3 p-3 w-full text-left no-underline transition-colors hover:bg-[var(--color-bg-page)]"
+                      style={{ borderRadius: 'var(--radius-md)', fontFamily: 'var(--font-family-base)' }}
                     >
-                      {ICON_MAP[link.icon] || <FileText size={18} />}
-                    </div>
-                    <div>
-                      <p
-                        style={{
-                          fontSize: 'var(--text-base)',
-                          fontWeight: 'var(--font-weight-medium)',
-                          color: 'var(--color-text-primary)',
-                          margin: '0 0 2px 0',
-                        }}
-                      >
-                        {link.label}
-                        <NavBadge label={(link as any).badge} />
-                      </p>
-                      <p
-                        style={{
-                          fontSize: 'var(--text-sm)',
-                          fontWeight: 'var(--font-weight-regular)',
-                          color: 'var(--color-text-muted)',
-                          margin: '0',
-                          lineHeight: '1.5',
-                        }}
-                      >
-                        {link.description}
-                      </p>
-                    </div>
-                  </button>
+                      <span style={{ color: 'var(--color-text-muted)', marginTop: '2px', flexShrink: 0 }}>
+                        <NavIcon name={link.icon} />
+                      </span>
+                      <span>
+                        <span
+                          className="block"
+                          style={{
+                            fontSize: 'var(--text-base)',
+                            fontWeight: 'var(--font-weight-medium)',
+                            color: 'var(--color-text-primary)',
+                            margin: '0 0 2px 0',
+                          }}
+                        >
+                          {link.label}
+                          <NavBadge label={link.badge} />
+                        </span>
+                        <span
+                          className="block"
+                          style={{
+                            fontSize: 'var(--text-sm)',
+                            fontWeight: 'var(--font-weight-regular)',
+                            color: 'var(--color-text-muted)',
+                            lineHeight: '1.5',
+                          }}
+                        >
+                          {link.description}
+                        </span>
+                      </span>
+                    </SiteLink>
+                  </li>
                 ))}
-              </div>
+              </ul>
             </div>
           ))}
         </div>
-      </div>
-    </div>
+      </Container>
+    </PageShell>
   );
 }

@@ -3,6 +3,7 @@ import { Star } from 'lucide-react';
 import { useIsMobile } from '../../ui/hooks/useIsMobile';
 import { ImageWithFallback } from '../../ui/ImageWithFallback';
 import { DEFAULT_CMS_CONTENT } from '../../content/cms-defaults';
+import { CONTENT_MAX } from '../../ui/Container';
 
 /* ─── Data ─── */
 interface Review {
@@ -91,7 +92,7 @@ function ReviewCard({ review }: { review: Review }) {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            fontSize: '18px',
+            fontSize: 'var(--text-lg)',
             flexShrink: 0,
           }}
         >
@@ -150,7 +151,7 @@ function MobileReviewCard({ review }: { review: Review }) {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            fontSize: '16px',
+            fontSize: 'var(--text-base)',
             flexShrink: 0,
           }}
         >
@@ -195,7 +196,7 @@ export function ReviewsSection() {
     >
       <div
         style={{
-          maxWidth: '1100px',
+          maxWidth: CONTENT_MAX,
           margin: '0 auto',
           padding: '0 24px',
         }}
@@ -212,7 +213,7 @@ export function ReviewsSection() {
             style={{
               fontFamily: 'var(--font-family-base)',
               fontWeight: 'var(--font-weight-medium)',
-              fontSize: isMobile ? '24px' : '32px',
+              fontSize: isMobile ? 'var(--text-2xl)' : 'var(--text-3xl)',
               color: 'var(--color-text-primary)',
               lineHeight: '1.3',
               letterSpacing: '-0.5px',
@@ -236,7 +237,7 @@ export function ReviewsSection() {
                 width: isMobile ? '18px' : '22px',
                 height: isMobile ? '18px' : '22px',
                 borderRadius: '50%',
-                backgroundColor: '#2A2A2A',
+                backgroundColor: 'var(--color-primary-default)',
               }}
             />
           </div>

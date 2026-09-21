@@ -3,6 +3,10 @@ import { Button } from './button';
 import { Icon } from './Icon';
 import { cn } from './utils';
 import { motion, AnimatePresence } from 'framer-motion';
+import { NavBadge } from './NavBadge';
+import { NavIcon } from './NavIcon';
+import { SiteLink } from './SiteLink';
+import { PRIMARY_NAV, MOBILE_MORE_NAV, type NavLink } from '../content/nav';
 
 interface PublicBottomNavMobileProps {
   currentRoute: string;
@@ -12,29 +16,13 @@ interface PublicBottomNavMobileProps {
 }
 
 export function PublicBottomNavMobile({ currentRoute, onNavigate, onSignIn, className }: PublicBottomNavMobileProps) {
-  // Fixed navigation items for mobile (showing 4 most important)
-  const publicNavItems = [
-    { path: '/', label: 'Home', icon: 'home' },
-    { path: '/assessment', label: 'Assessments', icon: 'assignment' },
-    { path: '/equip', label: 'Equip', icon: 'tools', badge: 'beta' },
-    { path: '/resource', label: 'Resource', icon: 'library' }
-  ];
-
-  // Additional navigation items for dropdown menu
-  const additionalNavItems = [
-    { path: '/about', label: 'About Us', icon: 'info' },
-    { path: '/faq', label: 'FAQ', icon: 'help-circle' },
-    { path: '/contact', label: 'Contact', icon: 'phone' },
-    { path: '/privacy', label: 'Privacy', icon: 'shield' },
-    { path: '/terms', label: 'Terms', icon: 'file-text' }
-  ];
-
+  // Both sections come from content/nav.ts, shared with the footer and sitemap.
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
   // Handle click outside to close menu
   useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
+    const handleClickOutside = (event: Event) => {
       if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
         setIsMenuOpen(false);
       }
@@ -72,9 +60,36 @@ export function PublicBottomNavMobile({ currentRoute, onNavigate, onSignIn, clas
     setIsMenuOpen(!isMenuOpen);
   };
 
-  const handleMenuItemClick = (path: string) => {
-    onNavigate(path);
-    setIsMenuOpen(false);
+  const renderItem = (item: NavLink, emphasis: 'primary' | 'secondary') => {
+    const isActive = currentRoute === item.to;
+    return (
+      <SiteLink
+        key={item.to}
+        to={item.to}
+        onNavigate={onNavigate}
+        onClick={() => setIsMenuOpen(false)}
+        className={cn(
+          'w-full flex items-center gap-3 px-3 py-2 rounded-md transition-colors no-underline',
+          !isActive && 'hover:bg-[var(--color-accent-default)]',
+        )}
+        style={{
+          backgroundColor: isActive ? 'var(--color-primary-default)' : 'transparent',
+          color: isActive ? 'var(--color-primary-on)' : 'var(--color-text-primary)',
+          fontSize: 'var(--text-sm)',
+          fontWeight: emphasis === 'primary' ? 'var(--font-weight-medium)' : 'var(--font-weight-regular)',
+          textAlign: 'left',
+        }}
+        aria-current={isActive ? 'page' : undefined}
+      >
+        <NavIcon
+          name={item.icon}
+          size={16}
+          style={{ color: isActive ? 'var(--color-primary-on)' : 'var(--color-text-muted)' }}
+        />
+        {item.label}
+        <NavBadge label={item.badge} size="xs" />
+      </SiteLink>
+    );
   };
 
   return (
@@ -105,9 +120,11 @@ export function PublicBottomNavMobile({ currentRoute, onNavigate, onSignIn, clas
       >
         <div className="flex items-center justify-between p-4">
           {/* Logo Section */}
-          <div 
-            className="flex items-center gap-2 cursor-pointer touch-target"
-            onClick={() => onNavigate('/')}
+          <SiteLink
+            to="/"
+            onNavigate={onNavigate}
+            aria-label="iKan home"
+            className="flex items-center gap-2 cursor-pointer touch-target no-underline"
             style={{ minHeight: 'var(--ikan-touch-target-min)' }}
           >
             <div 
@@ -147,7 +164,7 @@ export function PublicBottomNavMobile({ currentRoute, onNavigate, onSignIn, clas
             >
               iKan
             </span>
-          </div>
+          </SiteLink>
 
           {/* Navigation Actions */}
           <div className="flex items-center gap-2">
@@ -240,53 +257,7 @@ export function PublicBottomNavMobile({ currentRoute, onNavigate, onSignIn, clas
                         >
                           Main Menu
                         </div>
-                        {publicNavItems.map((item) => {
-                          const isActive = currentRoute === item.path;
-                          return (
-                            <motion.button
-                              key={item.path}
-                              whileHover={{ backgroundColor: 'var(--color-accent-default)' }}
-                              whileTap={{ scale: 0.98 }}
-                              onClick={() => handleMenuItemClick(item.path)}
-                              className="w-full flex items-center gap-3 px-3 py-2 rounded-md transition-colors"
-                              style={{
-                                backgroundColor: isActive 
-                                  ? 'var(--color-primary-default)' 
-                                  : 'transparent',
-                                color: isActive 
-                                  ? 'var(--color-primary-on)' 
-                                  : 'var(--color-text-primary)',
-                                fontSize: 'var(--text-sm)',
-                                fontWeight: 'var(--font-weight-medium)',
-                                textAlign: 'left'
-                              }}
-                            >
-                              <Icon 
-                                name={item.icon as any} 
-                                size={16}
-                                variant={isActive ? 'filled' : 'roundedOutline'}
-                                style={{
-                                  color: isActive 
-                                    ? 'var(--color-primary-on)' 
-                                    : 'var(--color-text-muted)'
-                                }}
-                              />
-                              {item.label}
-                              {(item as any).badge && (
-                                <span
-                                  className="uppercase"
-                                  style={{
-                                    fontSize: '7px', fontWeight: 700, letterSpacing: '0.02em', lineHeight: 1,
-                                    padding: '1px 3px', borderRadius: '3px', marginLeft: '3px', color: 'var(--grey-0)',
-                                    backgroundColor: 'var(--color-primary-default, #6941C6)',
-                                  }}
-                                >
-                                  {(item as any).badge}
-                                </span>
-                              )}
-                            </motion.button>
-                          );
-                        })}
+                        {PRIMARY_NAV.map((item) => renderItem(item, 'primary'))}
                       </div>
 
                       {/* Divider */}
@@ -309,53 +280,7 @@ export function PublicBottomNavMobile({ currentRoute, onNavigate, onSignIn, clas
                         >
                           More
                         </div>
-                        {additionalNavItems.map((item) => {
-                          const isActive = currentRoute === item.path;
-                          return (
-                            <motion.button
-                              key={item.path}
-                              whileHover={{ backgroundColor: 'var(--color-accent-default)' }}
-                              whileTap={{ scale: 0.98 }}
-                              onClick={() => handleMenuItemClick(item.path)}
-                              className="w-full flex items-center gap-3 px-3 py-2 rounded-md transition-colors"
-                              style={{
-                                backgroundColor: isActive 
-                                  ? 'var(--color-primary-default)' 
-                                  : 'transparent',
-                                color: isActive 
-                                  ? 'var(--color-primary-on)' 
-                                  : 'var(--color-text-primary)',
-                                fontSize: 'var(--text-sm)',
-                                fontWeight: 'var(--font-weight-regular)',
-                                textAlign: 'left'
-                              }}
-                            >
-                              <Icon 
-                                name={item.icon as any} 
-                                size={16}
-                                variant="roundedOutline"
-                                style={{
-                                  color: isActive 
-                                    ? 'var(--color-primary-on)' 
-                                    : 'var(--color-text-muted)'
-                                }}
-                              />
-                              {item.label}
-                              {(item as any).badge && (
-                                <span
-                                  className="uppercase"
-                                  style={{
-                                    fontSize: '7px', fontWeight: 700, letterSpacing: '0.02em', lineHeight: 1,
-                                    padding: '1px 3px', borderRadius: '3px', marginLeft: '3px', color: 'var(--grey-0)',
-                                    backgroundColor: 'var(--color-primary-default, #6941C6)',
-                                  }}
-                                >
-                                  {(item as any).badge}
-                                </span>
-                              )}
-                            </motion.button>
-                          );
-                        })}
+                        {MOBILE_MORE_NAV.map((item) => renderItem(item, 'secondary'))}
                       </div>
 
                       {/* Divider */}

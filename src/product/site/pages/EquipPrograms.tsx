@@ -1,7 +1,7 @@
 import { PageHero } from '../ui/PageHero';
-import { useIsMobile } from '../ui/hooks/useIsMobile';
+import { Container, PageShell } from '../ui/Container';
 import { EquipProgramCard } from '../ui/blocks/EquipProgramCard';
-import { getPrograms, type SiteProgram } from '../content/catalog';
+import { equipUrl, getPrograms, programDuration } from '../content/catalog';
 
 /**
  * The public Equip listing — static.
@@ -15,41 +15,19 @@ interface EquipProgramsProps {
   onNavigate?: (path: string) => void;
 }
 
-/** Same rule as the app's `equipUrl`. */
-const equipUrl = (p: SiteProgram) => (p.slug ? `/equip/${p.slug}` : `/equip-detail?id=${p.equip_id ?? p.id ?? ''}`);
-
 export function EquipPrograms({ onNavigate }: EquipProgramsProps) {
   const programs = getPrograms();
-  const isMobile = useIsMobile();
-
-  const handleViewProgram = (program: SiteProgram) => {
-    if (onNavigate) {
-      onNavigate(equipUrl(program));
-    }
-  };
 
   return (
-    <div>
+    <PageShell>
       <PageHero
         title="Equip Programs"
         subtitle="Evidence-based programs designed to support your mental health journey."
       />
 
-      <div
-        style={{
-          maxWidth: '1200px',
-          margin: '0 auto',
-          padding: isMobile ? '24px 16px' : '40px 24px',
-        }}
-      >
+      <Container className="py-6 md:py-10">
         {programs.length === 0 ? (
-          /* Empty state */
-          <div
-            style={{
-              textAlign: 'center',
-              padding: isMobile ? '48px 24px' : '80px 24px',
-            }}
-          >
+          <div className="text-center py-12 md:py-20">
             <div style={{ fontSize: 48, marginBottom: 16 }}>🧘</div>
             <h2
               style={{
@@ -76,32 +54,20 @@ export function EquipPrograms({ onNavigate }: EquipProgramsProps) {
             </p>
           </div>
         ) : (
-          /* Program cards grid */
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fill, minmax(340px, 1fr))',
-              gap: '24px',
-            }}
-          >
-            {programs.map((program) => {
-              const equipId = program.equip_id || program.id;
-              // Day count comes from the programme's content, counted at snapshot time.
-              const duration = program.dayCount !== null ? `${program.dayCount} days` : '';
-
-              return (
-                <EquipProgramCard
-                  key={equipId}
-                  program={program}
-                  durationLabel={duration}
-                  onClick={() => handleViewProgram(program)}
-                />
-              );
-            })}
+          <div className="grid grid-cols-1 md:grid-cols-[repeat(auto-fill,minmax(340px,1fr))] gap-6">
+            {programs.map((program) => (
+              <EquipProgramCard
+                key={program.equip_id || program.id}
+                program={program}
+                href={equipUrl(program)}
+                onNavigate={onNavigate}
+                durationLabel={programDuration(program)}
+              />
+            ))}
           </div>
         )}
-      </div>
-    </div>
+      </Container>
+    </PageShell>
   );
 }
 

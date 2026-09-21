@@ -3,6 +3,7 @@ import { ErrorBoundary } from '../../ui/ErrorBoundary';
 import { ImageWithFallback } from '../../ui/ImageWithFallback';
 import { useIsMobile } from '../../ui/hooks/useIsMobile';
 import { DEFAULT_CMS_CONTENT } from '../../content/cms-defaults';
+import { CONTENT_MAX } from '../../ui/Container';
 
 interface AudienceCard {
   title: string;
@@ -78,7 +79,7 @@ export function BenefitsSection({ onNavigate, ctaText = 'Learn more', ctaRoute =
       >
         <div
           style={{
-            maxWidth: '1100px',
+            maxWidth: CONTENT_MAX,
             margin: '0 auto',
             padding: '0 24px',
           }}
@@ -238,7 +239,7 @@ function FanCard({ card, isCenter }: { card: AudienceCard; isCenter?: boolean })
         borderRadius: '28px',
         overflow: 'hidden',
         background: isCenter
-          ? 'linear-gradient(170deg, #E8F4F0 0%, #B8E0D2 50%, #7CC5B0 100%)'
+          ? 'linear-gradient(170deg, var(--ikan-brand-teal-bg) 0%, #B8E0D2 50%, #7CC5B0 100%)'
           : 'var(--color-bg-card)',
         border: isCenter ? 'none' : '1px solid #EFE8DE',
         boxShadow: isCenter
@@ -255,7 +256,7 @@ function FanCard({ card, isCenter }: { card: AudienceCard; isCenter?: boolean })
       <h3
         style={{
           fontFamily: 'var(--font-family-base)',
-          fontSize: '24px',
+          fontSize: 'var(--text-2xl)',
           fontWeight: 'var(--font-weight-medium)',
           color: 'var(--color-text-primary)',
           lineHeight: '1.25',
@@ -272,7 +273,7 @@ function FanCard({ card, isCenter }: { card: AudienceCard; isCenter?: boolean })
           fontFamily: 'var(--font-family-base)',
           fontSize: '15px',
           fontWeight: 'var(--font-weight-medium)',
-          color: isCenter ? '#3D7A66' : 'var(--color-text-muted)',
+          color: isCenter ? 'var(--ikan-brand-teal-dark)' : 'var(--color-text-muted)',
           lineHeight: '1.4',
           margin: 0,
         }}
@@ -349,7 +350,7 @@ function MobileCard({ card }: { card: AudienceCard }) {
       <h3
         style={{
           fontFamily: 'var(--font-family-base)',
-          fontSize: '20px',
+          fontSize: 'var(--text-xl)',
           fontWeight: 'var(--font-weight-medium)',
           color: 'var(--color-text-primary)',
           lineHeight: '1.25',
@@ -364,7 +365,7 @@ function MobileCard({ card }: { card: AudienceCard }) {
       <p
         style={{
           fontFamily: 'var(--font-family-base)',
-          fontSize: '14px',
+          fontSize: 'var(--text-sm)',
           fontWeight: 'var(--font-weight-medium)',
           color: 'var(--color-text-muted)',
           lineHeight: '1.4',
@@ -378,7 +379,7 @@ function MobileCard({ card }: { card: AudienceCard }) {
       <p
         style={{
           fontFamily: 'var(--font-family-base)',
-          fontSize: '14px',
+          fontSize: 'var(--text-sm)',
           fontWeight: 'var(--font-weight-regular)',
           color: 'var(--color-text-primary)',
           lineHeight: '1.65',

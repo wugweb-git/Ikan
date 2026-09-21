@@ -1,6 +1,7 @@
 import { motion, useReducedMotion } from 'framer-motion';
 import { Clock, FileText, ArrowRight, Check } from 'lucide-react';
 import { cn } from '../utils';
+import { SiteLink } from '../SiteLink';
 
 /**
  * One card for the seven assessments — and for the programs recommended off
@@ -47,7 +48,9 @@ interface AssessmentCardProps {
   variant?: 'full' | 'compact';
   /** Reveal order, for the staggered entrance. */
   index?: number;
-  onSelect?: (id: string) => void;
+  /** Where the card goes. The whole card is one link (see SiteLink). */
+  href?: string;
+  onNavigate?: (route: string) => void;
   className?: string;
 }
 
@@ -70,10 +73,9 @@ function Chip({ icon, label }: { icon: React.ReactNode; label: string }) {
   );
 }
 
-export function AssessmentCard({ item, variant = 'full', index = 0, onSelect, className }: AssessmentCardProps) {
+export function AssessmentCard({ item, variant = 'full', index = 0, href, onNavigate, className }: AssessmentCardProps) {
   const reduce = useReducedMotion();
   const compact = variant === 'compact';
-  const activate = () => onSelect?.(item.id);
 
   const chips = (
     <>
@@ -82,27 +84,20 @@ export function AssessmentCard({ item, variant = 'full', index = 0, onSelect, cl
     </>
   );
 
-  return (
+  // The whole card is the link, so the action below is drawn rather than
+  // nested — an interactive element inside a link is not operable the way it
+  // looks like it should be.
+  const card = (
     <motion.div
-      role={onSelect ? 'button' : undefined}
-      tabIndex={onSelect ? 0 : undefined}
-      onClick={onSelect ? activate : undefined}
-      onKeyDown={onSelect ? (e) => {
-        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); activate(); }
-      } : undefined}
-      // The whole card is the affordance, so the action below is drawn rather
-      // than nested — a <button> inside a role="button" is not operable by
-      // keyboard in the way it looks like it should be.
       initial={reduce ? false : { opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: Math.min(index * 0.05, 0.3), duration: 0.35, ease: [0.33, 1, 0.68, 1] }}
-      whileHover={reduce || !onSelect ? undefined : { y: -4 }}
-      whileTap={reduce || !onSelect ? undefined : { scale: 0.985 }}
+      whileHover={reduce || !href ? undefined : { y: -4 }}
+      whileTap={reduce || !href ? undefined : { scale: 0.985 }}
       className={cn(
         'group flex h-full flex-col overflow-hidden text-left',
-        onSelect && 'cursor-pointer',
-        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary-default)] focus-visible:ring-offset-2',
-        className,
+        href && 'cursor-pointer',
+        !href && className,
       )}
       style={{
         backgroundColor: 'var(--color-bg-card)',
@@ -195,5 +190,20 @@ export function AssessmentCard({ item, variant = 'full', index = 0, onSelect, cl
         )}
       </div>
     </motion.div>
+  );
+
+  if (!href) return card;
+  return (
+    <SiteLink
+      to={href}
+      onNavigate={onNavigate}
+      className={cn(
+        'block h-full no-underline text-inherit rounded-[var(--radius-lg)]',
+        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary-default)] focus-visible:ring-offset-2',
+        className,
+      )}
+    >
+      {card}
+    </SiteLink>
   );
 }

@@ -3,6 +3,7 @@ import { ErrorBoundary } from '../../ui/ErrorBoundary';
 import { DEFAULT_CMS_CONTENT } from '../../content/cms-defaults';
 import { useIsMobile } from '../../ui/hooks/useIsMobile';
 import imgPhoneMockup from "../../content/assets/25d8d01a36eaa618a0c4fdd22ae73fb856925905.png";
+import { CONTENT_MAX } from '../../ui/Container';
 
 interface AssessmentSectionProps {
   onGetStarted: () => void;
@@ -81,7 +82,7 @@ export function AssessmentSection({ onGetStarted }: AssessmentSectionProps) {
       >
         <div
           style={{
-            maxWidth: '1100px',
+            maxWidth: CONTENT_MAX,
             margin: '0 auto',
             padding: '0 24px',
           }}
@@ -145,7 +146,7 @@ export function AssessmentSection({ onGetStarted }: AssessmentSectionProps) {
                 onClick={onGetStarted}
                 style={{
                   fontFamily: 'var(--font-family-base)',
-                  fontSize: '16px',
+                  fontSize: 'var(--text-base)',
                   fontWeight: 'var(--font-weight-medium)',
                   color: 'white',
                   backgroundColor: 'var(--color-primary-default)',
@@ -215,7 +216,7 @@ export function AssessmentSection({ onGetStarted }: AssessmentSectionProps) {
                     borderRadius: '32px',
                     overflow: 'hidden',
                     backgroundColor: 'var(--grey-9)',
-                    border: '6px solid #2A2A2A',
+                    border: '6px solid var(--color-primary-default)',
                     boxShadow: '0 20px 60px rgba(0,0,0,0.15), 0 8px 20px rgba(0,0,0,0.08)',
                   }}
                 >
@@ -235,7 +236,7 @@ export function AssessmentSection({ onGetStarted }: AssessmentSectionProps) {
                       style={{
                         width: '80px',
                         height: '18px',
-                        backgroundColor: '#2A2A2A',
+                        backgroundColor: 'var(--color-primary-default)',
                         borderRadius: '0 0 14px 14px',
                         position: 'absolute',
                         top: 0,
@@ -260,10 +261,10 @@ export function AssessmentSection({ onGetStarted }: AssessmentSectionProps) {
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                       <div>
                         <p style={{ fontFamily: 'var(--font-family-base)', fontSize: '11px', color: '#717182', margin: 0, fontWeight: 400 }}>Good morning</p>
-                        <p style={{ fontFamily: 'var(--font-family-base)', fontSize: '16px', color: '#151515', margin: '2px 0 0', fontWeight: 500 }}>Sarah ☀️</p>
+                        <p style={{ fontFamily: 'var(--font-family-base)', fontSize: 'var(--text-base)', color: 'var(--color-text-primary)', margin: '2px 0 0', fontWeight: 500 }}>Sarah ☀️</p>
                       </div>
-                      <div style={{ width: '32px', height: '32px', borderRadius: '50%', backgroundColor: '#E9EBEF', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                        <span style={{ fontSize: '14px' }}>👤</span>
+                      <div style={{ width: '32px', height: '32px', borderRadius: '50%', backgroundColor: 'var(--color-accent-default)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <span style={{ fontSize: 'var(--text-sm)' }}>👤</span>
                       </div>
                     </div>
 
@@ -278,7 +279,7 @@ export function AssessmentSection({ onGetStarted }: AssessmentSectionProps) {
                         gap: '8px',
                       }}
                     >
-                      <p style={{ fontFamily: 'var(--font-family-base)', fontSize: '12px', fontWeight: 500, color: '#151515', margin: 0 }}>How are you feeling?</p>
+                      <p style={{ fontFamily: 'var(--font-family-base)', fontSize: 'var(--text-xs)', fontWeight: 500, color: 'var(--color-text-primary)', margin: 0 }}>How are you feeling?</p>
                       <div style={{ display: 'flex', gap: '8px', justifyContent: 'space-between' }}>
                         {['😊', '😌', '😐', '😔', '😢'].map((emoji, i) => (
                           <div
@@ -288,11 +289,11 @@ export function AssessmentSection({ onGetStarted }: AssessmentSectionProps) {
                               height: '36px',
                               borderRadius: '10px',
                               backgroundColor: i === 0 ? '#4ABDAC20' : 'var(--grey-1)',
-                              border: i === 0 ? '2px solid #4ABDAC' : '1px solid #EBEBEB',
+                              border: i === 0 ? '2px solid var(--ikan-brand-teal)' : '1px solid #EBEBEB',
                               display: 'flex',
                               alignItems: 'center',
                               justifyContent: 'center',
-                              fontSize: '16px',
+                              fontSize: 'var(--text-base)',
                             }}
                           >
                             {emoji}
@@ -335,7 +336,7 @@ export function AssessmentSection({ onGetStarted }: AssessmentSectionProps) {
                           >
                             {action.icon}
                           </div>
-                          <span style={{ fontFamily: 'var(--font-family-base)', fontSize: '9px', fontWeight: 500, color: '#151515' }}>
+                          <span style={{ fontFamily: 'var(--font-family-base)', fontSize: '9px', fontWeight: 500, color: 'var(--color-text-primary)' }}>
                             {action.label}
                           </span>
                         </div>
@@ -358,17 +359,17 @@ export function AssessmentSection({ onGetStarted }: AssessmentSectionProps) {
                           width: '40px',
                           height: '40px',
                           borderRadius: '10px',
-                          background: 'linear-gradient(135deg, #4ABDAC, #2A8A7E)',
+                          background: 'linear-gradient(135deg, var(--ikan-brand-teal), #2A8A7E)',
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
                           flexShrink: 0,
                         }}
                       >
-                        <span style={{ fontSize: '16px' }}>🧘</span>
+                        <span style={{ fontSize: 'var(--text-base)' }}>🧘</span>
                       </div>
                       <div style={{ flex: 1, minWidth: 0 }}>
-                        <p style={{ fontFamily: 'var(--font-family-base)', fontSize: '11px', fontWeight: 500, color: '#151515', margin: 0 }}>Continue Program</p>
+                        <p style={{ fontFamily: 'var(--font-family-base)', fontSize: '11px', fontWeight: 500, color: 'var(--color-text-primary)', margin: 0 }}>Continue Program</p>
                         <p style={{ fontFamily: 'var(--font-family-base)', fontSize: '9px', color: '#717182', margin: '2px 0 0', fontWeight: 400 }}>Day 3 of 14 • Mindfulness</p>
                       </div>
                       <div
@@ -390,11 +391,11 @@ export function AssessmentSection({ onGetStarted }: AssessmentSectionProps) {
                     {/* Stats row */}
                     <div style={{ display: 'flex', gap: '8px' }}>
                       <div style={{ flex: 1, backgroundColor: 'var(--grey-0)', borderRadius: '12px', padding: '10px', textAlign: 'center' }}>
-                        <p style={{ fontFamily: 'var(--font-family-base)', fontSize: '14px', fontWeight: 500, color: 'var(--ikan-brand-teal)', margin: 0 }}>7</p>
+                        <p style={{ fontFamily: 'var(--font-family-base)', fontSize: 'var(--text-sm)', fontWeight: 500, color: 'var(--ikan-brand-teal)', margin: 0 }}>7</p>
                         <p style={{ fontFamily: 'var(--font-family-base)', fontSize: '8px', color: '#717182', margin: '2px 0 0', fontWeight: 400 }}>Day Streak</p>
                       </div>
                       <div style={{ flex: 1, backgroundColor: 'var(--grey-0)', borderRadius: '12px', padding: '10px', textAlign: 'center' }}>
-                        <p style={{ fontFamily: 'var(--font-family-base)', fontSize: '14px', fontWeight: 500, color: 'var(--ikan-brand-amber)', margin: 0 }}>85%</p>
+                        <p style={{ fontFamily: 'var(--font-family-base)', fontSize: 'var(--text-sm)', fontWeight: 500, color: 'var(--ikan-brand-amber)', margin: 0 }}>85%</p>
                         <p style={{ fontFamily: 'var(--font-family-base)', fontSize: '8px', color: '#717182', margin: '2px 0 0', fontWeight: 400 }}>Well-being</p>
                       </div>
                     </div>
@@ -414,7 +415,7 @@ export function AssessmentSection({ onGetStarted }: AssessmentSectionProps) {
                     borderRadius: '28px',
                     overflow: 'hidden',
                     backgroundColor: 'var(--grey-9)',
-                    border: '5px solid #2A2A2A',
+                    border: '5px solid var(--color-primary-default)',
                     boxShadow: '0 16px 48px rgba(0,0,0,0.12)',
                     zIndex: -1,
                     transform: 'rotate(4deg)',

@@ -150,6 +150,7 @@ const AdminGate = lazy(() => lazyRetry(() => import('./admin/shell/AdminGate').t
 import { AdminWidget } from './admin/shell/AdminWidget';
 import { GoogleFitProvider } from './product/app/integrations/GoogleFitContext';
 import { Footer } from './product/site/ui/Footer';
+
 import { ErrorBoundary } from './product/app/ui/ErrorBoundary';
 import { ChunkErrorBoundary } from './product/app/shell/ChunkErrorBoundary';
 import { SecurityProvider } from './product/app/shell/SecurityProvider';
@@ -161,6 +162,15 @@ import { OfflineBanner } from './product/app/shell/OfflineBanner';
 import { useOfflineSync } from './shared/api/useOfflineSync';
 import { installBlocksFallbackReporter } from './product/app/shell/block-fallback-reporter';
 import { usePullToRefresh } from './product/app/shell/usePullToRefresh';
+
+/** Marketing-site routes (the pages under product/site/pages). */
+const SITE_FOOTER_ROUTES = new Set([
+  '/', '/about', '/faq', '/contact', '/sitemap',
+  '/privacy', '/privacy-policy', '/terms', '/return-policy', '/cancellation-policy',
+  '/assessment', '/assessment-landing', '/assessment-detail',
+  '/equip', '/equip-programs-landing', '/equip-detail',
+  '/consultation', '/join/professional',
+]);
 
 // --- Suspense fallback ---
 // Uses a delayed render so fast-loading chunks don't flash a spinner
@@ -697,15 +707,15 @@ function AppContent() {
           return withSuspense(<FAQ onNavigate={handleNavigate} />);
         case '/privacy':
         case '/privacy-policy':
-          return withSuspense(<PrivacyPolicy onNavigate={handleNavigate} />);
+          return withSuspense(<PrivacyPolicy />);
         case '/terms':
-          return withSuspense(<TermsOfUse onNavigate={handleNavigate} />);
+          return withSuspense(<TermsOfUse />);
         case '/contact':
           return withSuspense(<ContactUs onNavigate={handleNavigate} />);
         case '/return-policy':
-          return withSuspense(<ReturnPolicy onNavigate={handleNavigate} />);
+          return withSuspense(<ReturnPolicy />);
         case '/cancellation-policy':
-          return withSuspense(<CancellationPolicy onNavigate={handleNavigate} />);
+          return withSuspense(<CancellationPolicy />);
         case '/sitemap':
           return withSuspense(<Sitemap onNavigate={handleNavigate} />);
         case '/welcome':
@@ -745,20 +755,9 @@ function AppContent() {
     !currentRoute.startsWith('/equip-program-flow') &&
     !currentRoute.startsWith('/equip-program-onboarding') &&
     !isOnboardingFlow;
-  const shouldShowFooter = currentRoute === '/' ||
-                           currentRoute === '/about' ||
-                           currentRoute === '/contact' ||
-                           currentRoute === '/terms' ||
-                           currentRoute === '/privacy' ||
-                           currentRoute === '/privacy-policy' ||
-                           currentRoute === '/return-policy' ||
-                           currentRoute === '/cancellation-policy' ||
-                           currentRoute === '/faq' ||
-                           currentRoute === '/sitemap' ||
-                           currentRoute === '/resource' ||
-                           currentRoute === '/assessment-detail' ||
-                           currentRoute === '/equip-detail' ||
-                           currentRoute.startsWith('/page/');
+  // The site footer shows on every marketing-site route and on no member or
+  // admin route (App.tsx serves both from one bundle).
+  const shouldShowFooter = SITE_FOOTER_ROUTES.has(currentRoute) || currentRoute.startsWith('/page/');
 
   const isFullScreenFlow = currentRoute.startsWith('/assessment-flow') ||
                            currentRoute.startsWith('/equip-program-flow') ||

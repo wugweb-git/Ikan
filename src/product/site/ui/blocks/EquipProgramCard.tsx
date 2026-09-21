@@ -1,63 +1,45 @@
 /**
- * The programme card the Equip listing renders.
+ * The one programme card: the Equip listing, the homepage strip and the
+ * "More Equip Programs" block on a programme page all render this.
  *
- * Lifted verbatim out of `EquipPrograms.tsx`, where it was inline JSX inside a
- * `.map` and unreachable from anywhere else — which is why the result screen
- * drew a different card for the same programmes. Extracted, not re-authored.
- *
- * `durationLabel` is passed in rather than derived here: `total_days` and
- * `duration` are null on all four live programmes, so the caller resolves it
- * through `equipMeta` from the content instead.
+ * `EquipBlock` used to draw a second, inline card for the same programmes.
+ * The whole card is a link (see SiteLink). The duration is passed in so the
+ * caller decides how it is counted (see `programDuration` in catalog.ts).
  */
+import { ArrowRight } from 'lucide-react';
 import { ContentImage } from '../ContentImage';
+import { SiteLink } from '../SiteLink';
+import type { SiteProgram } from '../../content/catalog';
 
 export interface EquipProgramCardProps {
-  program: {
-    title?: string;
-    name?: string;
-    description?: string;
-    short_description?: string;
-    thumbnail?: string;
-    hero_image?: string;
-    category?: string;
-    is_paid?: boolean;
-    price?: number;
-    currency?: string;
-  };
+  program: Pick<SiteProgram, 'title' | 'name' | 'description' | 'short_description' | 'thumbnail' | 'hero_image' | 'category' | 'is_paid' | 'price' | 'currency'>;
+  href: string;
+  onNavigate?: (route: string) => void;
   /** e.g. "31 days". Empty renders no badge. */
   durationLabel?: string;
-  onClick: () => void;
+  /** Small caps label over the title, e.g. "PROGRAM". */
+  eyebrow?: string;
+  /** Drawn action under the body, e.g. "LEARN MORE". */
+  cta?: string;
 }
 
-export function EquipProgramCard({ program, durationLabel = '', onClick }: EquipProgramCardProps) {
+export function EquipProgramCard({ program, href, onNavigate, durationLabel = '', eyebrow, cta }: EquipProgramCardProps) {
   const thumbnail = program.thumbnail || program.hero_image || '';
   const title = program.title || program.name || 'Untitled Program';
   const description = program.description || program.short_description || '';
-  const duration = durationLabel;
-  // `program` was untyped (`any`) at the original call site, so `price` needed
-  // no guard there. Typing it optional makes the guard explicit; the rendered
-  // result is unchanged.
   const price = program.price ?? 0;
 
   return (
-    <div
-      onClick={onClick}
+    <SiteLink
+      to={href}
+      onNavigate={onNavigate}
+      className="block no-underline text-inherit transition-[transform,box-shadow] duration-200 hover:-translate-y-0.5 hover:shadow-md"
       style={{
         borderRadius: 'var(--radius-lg)',
         overflow: 'hidden',
         backgroundColor: 'var(--color-bg-card)',
         boxShadow: 'var(--shadow-sm)',
-        cursor: 'pointer',
-        transition: 'transform 0.2s, box-shadow 0.2s',
         border: '1px solid var(--color-border-default)',
-      }}
-      onMouseEnter={(e) => {
-        e.currentTarget.style.transform = 'translateY(-2px)';
-        e.currentTarget.style.boxShadow = 'var(--shadow-md, 0 4px 12px rgba(0,0,0,0.1))';
-      }}
-      onMouseLeave={(e) => {
-        e.currentTarget.style.transform = 'translateY(0)';
-        e.currentTarget.style.boxShadow = 'var(--shadow-sm)';
       }}
     >
       {/* Thumbnail */}
@@ -67,7 +49,7 @@ export function EquipProgramCard({ program, durationLabel = '', onClick }: Equip
           alt={title}
           style={{ width: '100%', height: '100%', objectFit: 'cover' }}
         />
-        {duration && (
+        {durationLabel && (
           <span
             style={{
               position: 'absolute',
@@ -82,10 +64,11 @@ export function EquipProgramCard({ program, durationLabel = '', onClick }: Equip
               fontSize: 'var(--text-xs)',
             }}
           >
-            {duration}
+            {durationLabel}
           </span>
         )}
-        {/* Price badge for paid programs */}
+        {/* Price for paid programmes — the warning-surface pair the programme
+            page's pricing banner uses, in place of hand-rolled amber literals. */}
         {program.is_paid && price > 0 && (
           <span
             style={{
@@ -94,12 +77,12 @@ export function EquipProgramCard({ program, durationLabel = '', onClick }: Equip
               right: 10,
               padding: '4px 10px',
               borderRadius: 'var(--radius-pill)',
-              backgroundColor: '#FEF3C7',
-              color: '#92400E',
+              backgroundColor: 'var(--color-status-warning-light)',
+              color: 'var(--color-text-primary)',
               fontFamily: 'var(--font-family-base)',
               fontWeight: 500,
               fontSize: 'var(--text-xs)',
-              border: '1px solid #FDE68A',
+              border: '1px solid var(--color-border-default)',
             }}
           >
             {new Intl.NumberFormat('en-IN', { style: 'currency', currency: program.currency || 'INR', minimumFractionDigits: 0 }).format(price / 100)}
@@ -109,6 +92,21 @@ export function EquipProgramCard({ program, durationLabel = '', onClick }: Equip
 
       {/* Card body */}
       <div style={{ padding: 16 }}>
+        {eyebrow && (
+          <p
+            style={{
+              fontFamily: 'var(--font-family-base)',
+              fontSize: '11px',
+              fontWeight: 'var(--font-weight-medium)',
+              color: 'var(--color-text-muted)',
+              letterSpacing: '1.2px',
+              textTransform: 'uppercase',
+              margin: '0 0 8px 0',
+            }}
+          >
+            {eyebrow}
+          </p>
+        )}
         <h3
           style={{
             fontFamily: 'var(--font-family-base)',
@@ -156,7 +154,24 @@ export function EquipProgramCard({ program, durationLabel = '', onClick }: Equip
             {program.category}
           </span>
         )}
+        {cta && (
+          <span
+            style={{
+              fontFamily: 'var(--font-family-base)',
+              fontSize: '13px',
+              fontWeight: 'var(--font-weight-medium)',
+              color: 'var(--color-text-primary)',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '4px',
+              marginTop: 12,
+            }}
+          >
+            {cta}
+            <ArrowRight style={{ width: '14px', height: '14px' }} aria-hidden="true" />
+          </span>
+        )}
       </div>
-    </div>
+    </SiteLink>
   );
 }

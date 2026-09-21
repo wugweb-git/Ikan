@@ -14,43 +14,20 @@
  * duration chip. It does not show "5 min", because a made-up number is
  * indistinguishable from a real one at the point a user is deciding whether
  * they have time for it.
+ *
+ * On the static site the count is the snapshot's `questionCount` and the
+ * minutes come from `assessmentMinutes` in catalog.ts; this file keeps the
+ * image rule.
  */
 
 /** What a card needs off an assessment record. Deliberately structural. */
 export interface AssessmentMetaSource {
-  questions?: unknown;
-  duration?: unknown;
   thumbnail?: unknown;
   hero_image?: unknown;
   image_url?: unknown;
   thumbnail_url?: unknown;
   cover_image?: unknown;
   metadata?: { thumbnail?: unknown; hero_image?: unknown; image?: unknown } | null;
-}
-
-export interface AssessmentMeta {
-  /** Item count, from `questions.length` alone. Null when there are none. */
-  count: number | null;
-  /** Authored minutes. Null when unauthored — never a default. */
-  minutes: number | null;
-}
-
-/**
- * @param a an assessment record (or the mapped view-model of one).
- *
- * `questions.length` is the ONLY source for the count: not a stored
- * `question_count`, not `metadata.question_count`. Both existed, both were
- * stale on at least one record, and both are derivable from the array that is
- * already loaded.
- *
- * `duration` is the only source for minutes. `metadata.estimated_minutes` was
- * the other branch every screen carried; it is null on all seven live records
- * and always has been, so reading it only ever widened the ladder.
- */
-export function assessmentMeta(a: AssessmentMetaSource | null | undefined): AssessmentMeta {
-  const count = Array.isArray(a?.questions) && a.questions.length > 0 ? a.questions.length : null;
-  const minutes = typeof a?.duration === 'number' && a.duration > 0 ? a.duration : null;
-  return { count, minutes };
 }
 
 /**
@@ -75,51 +52,6 @@ export function assessmentImage(a: AssessmentMetaSource | null | undefined): str
   ];
   for (const c of candidates) {
     if (typeof c === 'string' && c.trim()) return c.trim();
-  }
-  return null;
-}
-
-/**
- * The meta chips as label/value pairs.
- *
- * Two fields rather than one interpolated string. `"8 questions · 10 min"`
- * reads fine in English and badly in most of the twelve catalog languages —
- * the middot is not a separator everywhere, and "questions" is a compound in
- * several. Returning the parts lets a caller lay them out; it does not commit
- * them to a run-on sentence.
- */
-export function assessmentMetaChips(a: AssessmentMetaSource | null | undefined): { key: string; label: string }[] {
-  const { count, minutes } = assessmentMeta(a);
-  const chips: { key: string; label: string }[] = [];
-  if (minutes !== null) chips.push({ key: 'duration', label: `${minutes} min` });
-  if (count !== null) chips.push({ key: 'count', label: `${count} questions` });
-  return chips;
-}
-
-/**
- * Whether an authored duration is plausible for the item count.
- *
- * Not a validator — it blocks nothing, exactly like the coverage meter. It
- * exists because `duration` is hand-authored and drifts: the live records have
- * the 24-item General questionnaire at 3 minutes and the 8-item Sleep scale at
- * 10, which cannot both be right. Surfacing that in the editor is the only
- * thing that keeps the field meaningful, since nothing else can tell you a
- * number is wrong when it is merely implausible.
- *
- * The window is wide on purpose. A short instrument that asks for genuine
- * reflection legitimately takes longer per item than a rapid screener, so this
- * flags the order-of-magnitude mistakes and stays quiet about taste.
- */
-export function durationLooksImplausible(a: AssessmentMetaSource | null | undefined): string | null {
-  const { count, minutes } = assessmentMeta(a);
-  if (count === null || minutes === null) return null;
-  // ~15s/item is the rate the fastest live records were authored at.
-  const implied = count * 0.25;
-  if (minutes > implied * 2.5) {
-    return `${minutes} min is long for ${count} questions (roughly ${Math.max(1, Math.round(implied))} min at a typical pace).`;
-  }
-  if (minutes < implied * 0.4) {
-    return `${minutes} min is short for ${count} questions (roughly ${Math.max(1, Math.round(implied))} min at a typical pace).`;
   }
   return null;
 }

@@ -53,10 +53,12 @@ src/
 │   │   │                      #   security, member navigation, app contexts
 │   │   ├── hooks/ · lib/ · assets/
 │
-│   ├── site/              # MARKETING + policy
-│   │   ├── pages/             # pages + homepage/ sections
-│   │   ├── ui/                # site's own UI (Footer, public nav, primitives, blocks/)
-│   │   ├── hooks/ · lib/ · assets/   # lib/cms-defaults.ts = all site page copy
+│   ├── site/              # MARKETING + policy — static pages
+│   │   ├── pages/             # pages + homepage/ sections; LegalPage renders the 4 policies
+│   │   ├── ui/                # site's own UI (Footer, public nav, PageHero, Container,
+│   │   │                      #   SiteLink, primitives, blocks/, hooks/, lib/, styles/)
+│   │   ├── content/           # cms-defaults.ts = page copy · nav.ts = every nav list ·
+│   │   │                      #   site-settings.ts = footer facts · catalog.ts + data/ = snapshot
 │
 ├── shared/                # NON-UI contract every surface imports
 │   ├── api.ts · api-types.ts · supabase.ts · validation.ts · logger.ts

@@ -7,9 +7,9 @@ import { Textarea } from '../ui/textarea';
 import { Card, CardContent } from '../ui/card';
 import { DEFAULT_CMS_CONTENT } from '../content/cms-defaults';
 import { PageHero } from '../ui/PageHero';
+import { Container, PageShell } from '../ui/Container';
 import { apiClient } from '../../../shared/api/api';
 import { useNotifications } from '../../../shared/state/NotificationContext';
-import { sanitizeHtml } from '../ui/lib/sanitize';
 
 interface ContactUsProps {
   className?: string;
@@ -19,7 +19,6 @@ interface ContactUsProps {
 
 export function ContactUs({ className, onNavigate, onBack }: ContactUsProps) {
   const isMobile = useIsMobile();
-  const content = DEFAULT_CMS_CONTENT['contact'];
   const { showToast } = useNotifications();
 
   // ── CMS structured content ──
@@ -71,9 +70,9 @@ export function ContactUs({ className, onNavigate, onBack }: ContactUsProps) {
     }
   };
 
-  const supportEmail = cms?.supportEmail || content?.contactEmail || 'support@ikanhealth.in';
-  const crisisPhone = cms?.crisisPhone || content?.crisisPhone || '9152987821';
-  const crisisLabel = cms?.crisisLabel || content?.crisisLabel || 'iCALL Suicide Prevention Helpline';
+  const supportEmail = cms?.supportEmail || 'support@ikanhealth.in';
+  const crisisPhone = cms?.crisisPhone || '9152987821';
+  const crisisLabel = cms?.crisisLabel || 'iCALL Suicide Prevention Helpline';
 
   const contactMethods = cms?.contactMethods || [
     {
@@ -97,45 +96,24 @@ export function ContactUs({ className, onNavigate, onBack }: ContactUsProps) {
   const crisisCard = cms?.crisisCard || { title: 'Need Immediate Help?', description: "If you're having thoughts of self-harm or suicide, please reach out for immediate support.", buttons: [{ label: 'Call iCALL - 9152987821', action: 'tel:9152987821' }] };
   const faqCard = cms?.faqCard || { title: 'Looking for Quick Answers?', description: 'Check our FAQ section for instant answers to common questions about assessments, programs, and your account.', buttonText: 'Visit FAQ Section', buttonRoute: '/faq' };
 
-  const heroTitle = cms?.heroTitle || content?.title || "We're Here to Help";
+  const heroTitle = cms?.heroTitle || "We're Here to Help";
+  const heroSubtitle = cms?.heroSubtitle || 'Your mental health journey matters to us. Reach out for support, questions, or just to connect.';
+  const heroNote: string | undefined = cms?.heroNote;
 
   return (
-    <div 
-      className={`min-h-screen ${className || ''}`}
-      style={{
-        backgroundColor: 'var(--color-bg-page)',
-        fontFamily: 'var(--font-family-base)'
-      }}
-    >
+    <PageShell className={className}>
       {/* Hero Section */}
-      <PageHero 
-        title={heroTitle}
-        className="text-[var(--font-family-base)]"
-      >
-        {content?.content ? (
-           <div 
-             dangerouslySetInnerHTML={{ __html: sanitizeHtml(content.content) }}
-             className="prose prose-invert max-w-2xl mx-auto text-lg opacity-90 text-white font-normal"
-             style={{ fontFamily: 'var(--font-family-base)' }}
-           />
-        ) : (
-          <p 
-            className="text-white/90 max-w-2xl text-lg opacity-90 font-normal"
-            style={{ fontFamily: 'var(--font-family-base)' }}
-          >
-            {cms?.heroSubtitle || 'Your mental health journey matters to us. Reach out for support, questions, or just to connect.'}
-          </p>
-        )}
+      <PageHero title={heroTitle}>
+        {/* Subtitle and safety note — was an HTML string in a separate `contact`
+            entry, merged into `page-contact` and rendered as plain text. */}
+        <div className="prose prose-invert max-w-2xl mx-auto text-lg opacity-90 text-white font-normal" style={{ fontFamily: 'var(--font-family-base)' }}>
+          <p>{heroSubtitle}</p>
+          {heroNote && <p><span style={{ fontWeight: 500 }}>Note:</span> {heroNote}</p>}
+        </div>
       </PageHero>
 
       {/* Main Content */}
-      <div 
-        className="w-full mx-auto"
-        style={{
-          maxWidth: 'var(--constraint-content-max)',
-          padding: isMobile ? 'var(--ikan-component-spacing-large) var(--ikan-component-spacing-default)' : 'var(--spacing-12) var(--ikan-component-spacing-large)',
-        }}
-      >
+      <Container className="py-6 md:py-12">
         {/* Contact Methods Grid */}
         <div 
           className="grid gap-6 mb-12"
@@ -519,7 +497,7 @@ export function ContactUs({ className, onNavigate, onBack }: ContactUsProps) {
             </div>
           </CardContent>
         </Card>
-      </div>
-    </div>
+      </Container>
+    </PageShell>
   );
 }

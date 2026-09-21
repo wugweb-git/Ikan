@@ -1,75 +1,4 @@
 export const DEFAULT_CMS_CONTENT: { [key: string]: any } = {
-  'about': {
-    title: 'About iKan',
-    content: `
-      <div class="space-y-8">
-        <div class="bg-gradient-to-r from-indigo-50 to-purple-50 p-6 rounded-lg border border-indigo-100">
-          <h2 class="text-xl font-medium text-gray-900 mb-3">🌟 Our Mission</h2>
-          <p class="text-gray-700 leading-relaxed">At iKan, we believe that everyone deserves access to quality mental health support. We're on a mission to make mental wellness accessible, affordable, and stigma-free.</p>
-        </div>
-
-        <div class="grid gap-6">
-          <section class="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
-            <h3 class="text-lg font-medium text-gray-900 mb-4 flex items-center">
-              <span class="mr-2">💙</span> What We Do
-            </h3>
-            <p class="text-gray-700 leading-relaxed mb-4">
-              iKan is a comprehensive mental health platform that connects you with licensed professionals, evidence-based self-help programs, and a supportive community. Whether you're dealing with stress, anxiety, depression, or just looking to improve your overall well-being, we're here to help.
-            </p>
-            <ul class="space-y-2 text-gray-700 ml-4">
-              <li>• One-on-one consultations with qualified therapists and counselors</li>
-              <li>• Self-paced programs based on cognitive behavioral therapy (CBT)</li>
-              <li>• Mood tracking and personalized insights</li>
-              <li>• Resource library with articles, guides, and tools</li>
-              <li>• 24/7 crisis support and emergency resources</li>
-            </ul>
-          </section>
-
-          <section class="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
-            <h3 class="text-lg font-medium text-gray-900 mb-4 flex items-center">
-              <span class="mr-2">🎯</span> Our Values
-            </h3>
-            <div class="grid md:grid-cols-2 gap-4">
-              <div class="bg-blue-50 p-4 rounded-lg border border-blue-200">
-                <h4 class="font-medium text-gray-900 mb-2">Accessibility</h4>
-                <p class="text-sm text-gray-700">Mental health support should be available to everyone, regardless of location or financial situation.</p>
-              </div>
-              <div class="bg-green-50 p-4 rounded-lg border border-green-200">
-                <h4 class="font-medium text-gray-900 mb-2">Privacy</h4>
-                <p class="text-sm text-gray-700">Your data and conversations are completely confidential and protected with industry-leading security.</p>
-              </div>
-              <div class="bg-purple-50 p-4 rounded-lg border border-purple-200">
-                <h4 class="font-medium text-gray-900 mb-2">Evidence-Based</h4>
-                <p class="text-sm text-gray-700">All our programs and approaches are grounded in scientific research and proven therapeutic methods.</p>
-              </div>
-              <div class="bg-orange-50 p-4 rounded-lg border border-orange-200">
-                <h4 class="font-medium text-gray-900 mb-2">Stigma-Free</h4>
-                <p class="text-sm text-gray-700">We're working to normalize conversations about mental health and create a judgment-free space for healing.</p>
-              </div>
-            </div>
-          </section>
-
-          <section class="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
-            <h3 class="text-lg font-medium text-gray-900 mb-4 flex items-center">
-              <span class="mr-2">👥</span> Our Team
-            </h3>
-            <p class="text-gray-700 leading-relaxed">
-              iKan is built by a diverse team of mental health professionals, technologists, and individuals with lived experience. Our licensed therapists, psychiatrists, and counselors bring decades of combined expertise in various therapeutic modalities and specializations.
-            </p>
-          </section>
-        </div>
-
-        <div class="bg-indigo-900 text-white p-6 rounded-lg">
-          <h3 class="text-lg font-medium mb-3">Ready to Start Your Journey?</h3>
-          <p class="mb-4">Take the first step towards better mental health today. Our team is here to support you every step of the way.</p>
-          <a href="/consultation" class="inline-block bg-white text-indigo-900 px-6 py-3 rounded-lg font-medium hover:bg-indigo-50 transition-colors">
-            Book a Consultation
-          </a>
-        </div>
-      </div>
-    `,
-    lastUpdated: new Date().toISOString()
-  },
   'privacy': {
     title: 'Privacy Policy',
     subtitle: 'Your privacy and data security are fundamental to our mission.',
@@ -268,98 +197,6 @@ export const DEFAULT_CMS_CONTENT: { [key: string]: any } = {
     `,
     lastUpdated: new Date().toISOString()
   },
-  'faq': {
-    title: 'Frequently Asked Questions',
-    content: `
-      <div class="space-y-8">
-        <div class="bg-gradient-to-r from-green-50 to-teal-50 p-6 rounded-lg border border-green-100">
-          <h2 class="text-xl font-medium text-gray-900 mb-3">❓ Frequently Asked Questions</h2>
-          <p class="text-gray-700 leading-relaxed">Find answers to common questions about iKan's mental health platform. Can't find what you're looking for? <a href="mailto:support@ikanhealth.in" class="text-green-600 font-medium hover:underline">Contact our support team</a>.</p>
-        </div>
-
-        <div class="space-y-6">
-          <section class="bg-white rounded-lg shadow-sm border border-gray-100">
-            <div class="bg-gray-50 px-6 py-4 border-b border-gray-100">
-              <h3 class="text-lg font-medium text-gray-900 flex items-center">
-                <span class="mr-2">🌟</span> Getting Started
-              </h3>
-            </div>
-            <div class="p-6 space-y-6">
-              <div class="border-l-4 border-blue-400 pl-4">
-                <h4 class="font-medium text-gray-900 mb-2">What is iKan?</h4>
-                <p class="text-gray-700 text-sm">iKan is a comprehensive mental health platform that provides evidence-based assessments, personalized equip programs, and a curated resource library to support your mental wellness journey.</p>
-              </div>
-              <div class="border-l-4 border-green-400 pl-4">
-                <h4 class="font-medium text-gray-900 mb-2">How do I get started?</h4>
-                <p class="text-gray-700 text-sm mb-3">Getting started is simple:</p>
-                <ol class="text-gray-700 text-sm space-y-1 ml-4">
-                  <li>1. Create your free account</li>
-                  <li>2. Complete our initial assessment (10-15 minutes)</li>
-                  <li>3. Receive personalized recommendations</li>
-                  <li>4. Start your mental wellness journey</li>
-                </ol>
-              </div>
-            </div>
-          </section>
-
-          <section class="bg-white rounded-lg shadow-sm border border-gray-100">
-            <div class="bg-blue-50 px-6 py-4 border-b border-blue-100">
-              <h3 class="text-lg font-medium text-gray-900 flex items-center">
-                <span class="mr-2">📊</span> Assessments
-              </h3>
-            </div>
-            <div class="p-6 space-y-6">
-              <div class="grid md:grid-cols-2 gap-6">
-                <div class="bg-gray-50 p-4 rounded-lg">
-                  <h4 class="font-medium text-gray-900 mb-2 flex items-center">
-                    <span class="text-blue-500 mr-2">⏱️</span> Duration
-                  </h4>
-                  <p class="text-gray-700 text-sm">Most assessments take 10-15 minutes to complete. You can save your progress and return anytime.</p>
-                </div>
-                <div class="bg-gray-50 p-4 rounded-lg">
-                  <h4 class="font-medium text-gray-900 mb-2 flex items-center">
-                    <span class="text-green-500 mr-2">🔄</span> Frequency
-                  </h4>
-                  <p class="text-gray-700 text-sm">We recommend monthly assessments to track your progress and adjust recommendations.</p>
-                </div>
-              </div>
-            </div>
-          </section>
-
-          <section class="bg-white rounded-lg shadow-sm border border-gray-100">
-            <div class="bg-orange-50 px-6 py-4 border-b border-orange-100">
-              <h3 class="text-lg font-medium text-gray-900 flex items-center">
-                <span class="mr-2">🤝</span> Support & Help
-              </h3>
-            </div>
-            <div class="p-6 space-y-4">
-              <div class="grid md:grid-cols-2 gap-6">
-                <div class="space-y-4">
-                  <div class="border-l-4 border-orange-400 pl-4">
-                    <h4 class="font-medium text-gray-900 mb-2">Contact Support</h4>
-                    <p class="text-gray-700 text-sm">Email us at <a href="mailto:support@ikanhealth.in" class="text-orange-600 font-medium hover:underline">support@ikanhealth.in</a> or use our in-app contact form.</p>
-                  </div>
-                  <div class="border-l-4 border-red-400 pl-4">
-                    <h4 class="font-medium text-gray-900 mb-2">Crisis Support</h4>
-                    <p class="text-gray-700 text-sm">For mental health emergencies, contact your local emergency services (112) or the KIRAN Mental Health Helpline (1800-599-0019, 24x7) or iCALL Psychosocial Helpline (9152987821).</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </section>
-        </div>
-      </div>
-    `,
-    lastUpdated: new Date().toISOString()
-  },
-  'contact': {
-    title: "We're Here to Help",
-    content: `
-      <p>Your mental health journey matters to us. Reach out for support, questions, or just to connect.</p>
-      <p><span style="font-weight: 500;">Note:</span> If you are in immediate danger, please call emergency services.</p>
-    `,
-    lastUpdated: new Date().toISOString()
-  },
   'return-policy': {
     title: 'Return Policy',
     subtitle: 'Understanding our refund and return policy for iKan services.',
@@ -382,103 +219,6 @@ export const DEFAULT_CMS_CONTENT: { [key: string]: any } = {
       <p>You may cancel your iKan account at any time.</p>
       <h2>Subscription Cancellation</h2>
       <p>For subscription services, cancel anytime before your next billing date.</p>
-    `,
-    lastUpdated: new Date().toISOString()
-  },
-  'sitemap': {
-    title: 'Sitemap',
-    content: `
-      <h2>Site Navigation</h2>
-      <p>Find all the pages and resources available on the iKan platform.</p>
-      <ul>
-        <li><a href="/">Home</a></li>
-        <li><a href="/about">About Us</a></li>
-        <li><a href="https://app.ikanhealth.in/login">Sign In</a></li>
-        <li><a href="/faq">FAQ</a></li>
-      </ul>
-    `,
-    lastUpdated: new Date().toISOString()
-  },
-  'lets-talk': {
-    title: "Let's Talk",
-    content: `
-      <div class="space-y-8">
-        <div class="bg-gradient-to-r from-teal-50 to-cyan-50 p-6 rounded-lg border border-teal-100">
-          <h2 class="text-xl font-medium text-gray-900 mb-3">💬 Let's Talk</h2>
-          <p class="text-gray-700 leading-relaxed">Taking the first step is often the hardest part. Whether you have questions, need guidance, or are ready to start your mental health journey — we're here to listen.</p>
-        </div>
-
-        <div class="grid gap-6">
-          <section class="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
-            <h3 class="text-lg font-medium text-gray-900 mb-4 flex items-center">
-              <span class="mr-2">🤝</span> How Can We Help?
-            </h3>
-            <div class="grid md:grid-cols-2 gap-4">
-              <div class="bg-teal-50 p-4 rounded-lg border border-teal-200">
-                <h4 class="font-medium text-gray-900 mb-2">General Inquiries</h4>
-                <p class="text-sm text-gray-700">Questions about our platform, services, or how to get started.</p>
-                <a href="mailto:hello@ikanhealth.in" class="text-teal-600 font-medium text-sm hover:underline mt-2 inline-block">hello@ikanhealth.in</a>
-              </div>
-              <div class="bg-blue-50 p-4 rounded-lg border border-blue-200">
-                <h4 class="font-medium text-gray-900 mb-2">Book a Consultation</h4>
-                <p class="text-sm text-gray-700">Ready to speak with a professional? Schedule a consultation today.</p>
-                <a href="/consultation" class="text-blue-600 font-medium text-sm hover:underline mt-2 inline-block">Book Now →</a>
-              </div>
-              <div class="bg-purple-50 p-4 rounded-lg border border-purple-200">
-                <h4 class="font-medium text-gray-900 mb-2">Partnerships</h4>
-                <p class="text-sm text-gray-700">Interested in partnering with iKan for corporate wellness or research?</p>
-                <a href="mailto:partners@ikanhealth.in" class="text-purple-600 font-medium text-sm hover:underline mt-2 inline-block">partners@ikanhealth.in</a>
-              </div>
-              <div class="bg-orange-50 p-4 rounded-lg border border-orange-200">
-                <h4 class="font-medium text-gray-900 mb-2">Technical Support</h4>
-                <p class="text-sm text-gray-700">Having trouble with the app? Our support team can help.</p>
-                <a href="mailto:support@ikanhealth.in" class="text-orange-600 font-medium text-sm hover:underline mt-2 inline-block">support@ikanhealth.in</a>
-              </div>
-            </div>
-          </section>
-
-          <section class="bg-red-50 p-6 rounded-lg border border-red-200">
-            <h3 class="text-lg font-medium text-red-900 mb-4 flex items-center">
-              <span class="mr-2">🚨</span> Crisis Support
-            </h3>
-            <div class="bg-white p-4 rounded-lg border border-red-200">
-              <p class="text-red-800 font-medium mb-2">If you or someone you know is in immediate danger, please reach out now:</p>
-              <div class="grid sm:grid-cols-2 gap-2 text-sm text-red-700">
-                <p>• KIRAN Mental Health Helpline: 1800-599-0019 (24x7)</p>
-                <p>• iCALL Psychosocial Helpline: 9152987821</p>
-                <p>• Emergency: 112</p>
-                <p>• International: befrienders.org</p>
-              </div>
-            </div>
-          </section>
-        </div>
-      </div>
-    `,
-    lastUpdated: new Date().toISOString()
-  },
-  'not-found': {
-    title: 'Page Not Found',
-    content: `
-      <div class="space-y-8 text-center py-8">
-        <div class="text-6xl mb-4">🔍</div>
-        <h2 class="text-2xl font-medium text-gray-900">Oops! Page Not Found</h2>
-        <p class="text-gray-600 max-w-md mx-auto leading-relaxed">The page you're looking for doesn't exist or may have been moved. Don't worry — let's get you back on track.</p>
-
-        <div class="flex flex-col sm:flex-row gap-4 justify-center mt-6">
-          <a href="/" class="inline-block bg-gray-900 text-white px-6 py-3 rounded-lg font-medium hover:bg-gray-800 transition-colors">Go to Homepage</a>
-          <a href="/contact" class="inline-block bg-gray-100 text-gray-900 px-6 py-3 rounded-lg font-medium hover:bg-gray-200 transition-colors">Contact Support</a>
-        </div>
-
-        <div class="mt-8 bg-blue-50 p-6 rounded-lg border border-blue-100 max-w-lg mx-auto text-left">
-          <h3 class="text-lg font-medium text-gray-900 mb-3">Looking for something specific?</h3>
-          <ul class="space-y-2 text-sm text-gray-700">
-            <li>• <a href="/assessments" class="text-blue-600 hover:underline">Take an Assessment</a></li>
-            <li>• <a href="/resources" class="text-blue-600 hover:underline">Browse Resources</a></li>
-            <li>• <a href="/consultation" class="text-blue-600 hover:underline">Book a Consultation</a></li>
-            <li>• <a href="/faq" class="text-blue-600 hover:underline">Frequently Asked Questions</a></li>
-          </ul>
-        </div>
-      </div>
     `,
     lastUpdated: new Date().toISOString()
   },
@@ -551,113 +291,10 @@ export const DEFAULT_CMS_CONTENT: { [key: string]: any } = {
     }),
     lastUpdated: new Date().toISOString()
   },
-  'homepage-mission': {
-    title: 'Homepage Mission',
-    content: JSON.stringify({
-      title: "Our Mission",
-      content: "We believe mental health is for everyone. Our mission is to fix the broken system and democratize mental healthcare by creating an accessible, secure, and people-centric and science-backed platform empowering every individual to achieve lasting well-being.",
-      videoCaption: "Watch the full\\ninterview",
-      image: "https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?w=600&h=400&fit=crop",
-      imageAlt: "Mission interview"
-    }),
-    lastUpdated: new Date().toISOString()
-  },
-  'homepage-testimonial': {
-    title: 'Homepage Testimonial',
-    content: JSON.stringify({
-      testimonial: {
-        name: "Sarah J.",
-        quote: "This platform has transformed how I manage my mental health. The tools are easy to use and the professionals are incredibly supportive.",
-        image: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=800&h=800&fit=crop",
-        imageAlt: "Sarah J. testimonial",
-        course: "Anxiety Management",
-        videoCaption: "Watch Sarah's Story",
-        stats: {
-          value: "94%",
-          label: "Satisfaction Rate"
-        }
-      }
-    }),
-    lastUpdated: new Date().toISOString()
-  },
-  'homepage-benefits': {
-    title: 'Homepage Benefits',
-    content: JSON.stringify({
-      title: "Who is it for?",
-      benefits: [
-        {
-          targetType: 'individuals',
-          title: 'For Individuals',
-          subtitle: 'Find Balance',
-          description: 'Personalized mental health support tailored to your unique journey. Access therapy, tools, and a supportive community.',
-          color: '#E0F2FE',
-          iconColor: '#0284C7'
-        },
-        {
-          targetType: 'employers',
-          title: 'For Employers',
-          subtitle: 'Support Your Team',
-          description: 'Empower your workforce with comprehensive mental wellness programs. Boost productivity and improve team morale.',
-          color: '#F0FDF4',
-          iconColor: '#16A34A'
-        },
-        {
-          targetType: 'professionals',
-          title: 'For Professionals',
-          subtitle: 'Expand Your Reach',
-          description: 'Join our network of certified mental health professionals. Connect with clients and manage your practice efficiently.',
-          color: '#FAF5FF',
-          iconColor: '#9333EA'
-        }
-      ]
-    }),
-    lastUpdated: new Date().toISOString()
-  },
-  'homepage-faq': {
-    title: 'Homepage FAQ',
-    content: JSON.stringify({
-      eyebrow: "Your Course",
-      headline: "Psychological Help for Stress.\\nWhat this course offers you:",
-      description: "Change takes time. Similar to sports or meditation, you won't feel immediate improvement - a clear plan and persistence are the keys to success. That's why our courses are designed for sustainability.",
-      courseTitle: "6 Month Group Course",
-      modules: [
-        "MODULE 1: Start your journey!",
-        "MODULE 2: My symptoms and goals",
-        "MODULE 3: Psychological stress model",
-        "MODULE 4: Resources and resilience",
-        "MODULE 5: Self-worth and personal beliefs",
-        "MODULE 6: Open discussion session",
-        "MODULE 7: Reflection and review"
-      ],
-      cardTitle: "Begin your journey",
-      features: [
-        "1 month risk-free trial",
-        "Self-paced learning modules",
-        "Community support included"
-      ],
-      ctaText: "Get Started"
-    }),
-    lastUpdated: new Date().toISOString()
-  },
-  'homepage-newsletter': {
-    title: 'Homepage Newsletter',
-    content: JSON.stringify({
-      title: "Newsletter Signup",
-      benefits: [
-        "Get weekly mental health tips and insights",
-        "Early access to new features and programs",
-        "Exclusive resources and guided exercises"
-      ],
-      imageUrl: "https://images.unsplash.com/photo-1758273240360-76b908e7582a?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxtZW50YWwlMjBoZWFsdGglMjB3ZWxsbmVzcyUyMHN1cHBvcnR8ZW58MXx8fHwxNzY0OTUxMDY1fDA&ixlib=rb-4.1.0&q=80&w=1080",
-      imageAlt: "Mental health and wellness support",
-      privacyText: "Privacy: We store and process your personal data based on our privacy policy. You can unsubscribe at any time.",
-      ctaText: "Sign up now!"
-    }),
-    lastUpdated: new Date().toISOString()
-  },
   'homepage-equip-intro': {
     title: 'Homepage Equip Intro',
-    content: JSON.stringify({
+    // A plain object — it used to be a JSON string the homepage parsed back.
+    content: {
       title: "Equip Programs",
       subtitle: "PROGRAM",
       features: [
@@ -669,9 +306,10 @@ export const DEFAULT_CMS_CONTENT: { [key: string]: any } = {
       ],
       ctaText: "LEARN MORE",
       footerText: "Supported by leading healthcare providers"
-    }),
+    },
     lastUpdated: new Date().toISOString()
   },
+
 
   // ═══════════════════════════════════════════════════════════════
   // HOMEPAGE SUB-SECTION CMS DEFAULTS (externalized from components)
@@ -731,7 +369,7 @@ export const DEFAULT_CMS_CONTENT: { [key: string]: any } = {
     content: JSON.stringify({
       heading: 'How it works',
       ctaText: 'Get Started',
-      ctaRoute: '/assessments',
+      ctaRoute: '/assessment',
       cards: [
         {
           step: 1,
@@ -1002,6 +640,7 @@ export const DEFAULT_CMS_CONTENT: { [key: string]: any } = {
     content: JSON.stringify({
       heroTitle: "We're Here to Help",
       heroSubtitle: 'Your mental health journey matters to us. Reach out for support, questions, or just to connect.',
+      heroNote: 'If you are in immediate danger, please call emergency services.',
       supportEmail: 'support@ikanhealth.in',
       crisisPhone: '9152987821',
       crisisLabel: 'iCALL Suicide Prevention Helpline',
@@ -1019,36 +658,14 @@ export const DEFAULT_CMS_CONTENT: { [key: string]: any } = {
 
   'page-sitemap': {
     title: 'Site Navigation',
+    // The link groups live in content/nav.ts (SITEMAP_SECTIONS), shared with the footer and mobile menu.
     content: JSON.stringify({
       heroTitle: 'Site Navigation',
       heroSubtitle: 'Explore all pages and resources available on iKan.',
-      groups: [
-        { title: 'Main Pages', links: [
-          { label: 'Home', route: '/', icon: 'house', description: 'Landing page with resources, assessments, and programs' },
-          { label: 'About Us', route: '/about', icon: 'info', description: 'Our mission, values, and what iKan offers' },
-          { label: 'Contact Us', route: '/contact', icon: 'mail', description: 'Get in touch with the iKan team' },
-        ]},
-        { title: 'Mental Health Services', links: [
-          { label: 'Assessments', route: '/assessment', icon: 'clipboard-check', description: 'Clinically validated mental health screenings' },
-          { label: 'Equip Programs', route: '/equip', icon: 'book-open', description: 'Self-paced CBT-based wellness programs' },
-          { label: 'Consultation', route: '/consultation', icon: 'stethoscope', description: 'Book sessions with licensed professionals' },
-          { label: 'Resources', route: '/resource', icon: 'users', description: 'Articles, guides, and mental health tools' },
-        ]},
-        { title: 'Your Account', links: [
-          { label: 'My Account', route: '/account', icon: 'user-circle', description: 'Profile, settings, and payment history' },
-          { label: 'Mood Journal', route: '/mood-journal', icon: 'heart', description: 'Track your daily mood and emotions' },
-        ]},
-        { title: 'Legal & Help', links: [
-          { label: 'FAQ', route: '/faq', icon: 'circle-help', description: 'Frequently asked questions and help center' },
-          { label: 'Privacy Policy', route: '/privacy-policy', icon: 'shield', description: 'How we handle and protect your data' },
-          { label: 'Terms of Service', route: '/terms', icon: 'file-text', description: 'Legal terms governing use of iKan' },
-          { label: 'Cancellation Policy', route: '/cancellation-policy', icon: 'ban', description: 'How to cancel subscriptions and services' },
-          { label: 'Return Policy', route: '/return-policy', icon: 'rotate-ccw', description: 'Our refund and return policy' },
-        ]},
-      ],
     }),
     lastUpdated: new Date().toISOString()
   },
+
 
   'page-not-found': {
     title: 'Page Not Found',

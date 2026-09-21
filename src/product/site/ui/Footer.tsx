@@ -2,8 +2,10 @@ import { cn } from './utils';
 import { Mail, Phone, Facebook, Instagram, Linkedin, Youtube } from 'lucide-react';
 import { LogoFull } from './Logo';
 import { NavBadge } from './NavBadge';
-import { ImageWithFallback } from './ImageWithFallback';
-import { useSiteSettings } from './hooks/useSiteSettings';
+import { SiteLink } from './SiteLink';
+import { CONTENT_MAX } from './Container';
+import { SITE_SETTINGS as settings } from '../content/site-settings';
+import { FOOTER_GROUPS, LEGAL_NAV } from '../content/nav';
 
 import svgPaths from "./svg/svg-ul0k820b9n";
 
@@ -64,53 +66,16 @@ interface FooterProps {
 }
 
 export function Footer({ onNavigate, className }: FooterProps) {
-  const { settings, loading: settingsLoading } = useSiteSettings();
-
-  const handleNavigate = (path: string) => {
-    if (onNavigate) {
-      onNavigate(path);
-    }
-  };
-
-  // Build social links from settings — only show links that have a URL configured
+  // Social links — only those with a URL (see content/site-settings.ts).
   const socialLinks = [
-    settings.facebookUrl && { name: 'Facebook', icon: Facebook, url: settings.facebookUrl },
-    settings.instagramUrl && { name: 'Instagram', icon: Instagram, url: settings.instagramUrl },
-    settings.linkedinUrl && { name: 'LinkedIn', icon: Linkedin, url: settings.linkedinUrl },
-    settings.youtubeUrl && { name: 'YouTube', icon: Youtube, url: settings.youtubeUrl },
-    settings.xUrl && { name: 'X', icon: XIcon, url: settings.xUrl },
-  ].filter(Boolean) as Array<{ name: string; icon: any; url: string }>;
+    { name: 'Facebook', icon: Facebook, url: settings.facebookUrl },
+    { name: 'Instagram', icon: Instagram, url: settings.instagramUrl },
+    { name: 'LinkedIn', icon: Linkedin, url: settings.linkedinUrl },
+    { name: 'YouTube', icon: Youtube, url: settings.youtubeUrl },
+    { name: 'X', icon: XIcon, url: settings.xUrl },
+  ].filter(link => link.url) as Array<{ name: string; icon: React.ComponentType<{ size?: number }>; url: string }>;
 
-  const quickLinks = [
-    { name: 'Home', path: '/' },
-    { name: 'Assessment', path: '/assessments' },
-    { name: 'Programs', path: '/equip-programs', badge: 'beta' },
-    { name: 'Library', path: '/library' },
-    { name: 'Consultation', path: '/consultation', badge: 'coming soon' },
-  ];
-
-  const supportLinks = [
-    { name: 'About us', path: '/about' },
-    { name: 'FAQs', path: '/faq' },
-    { name: "Let's Talk", path: '/contact' },
-  ];
-
-  const legalLinks = [
-    { name: 'Privacy Policy', path: '/privacy' },
-    { name: 'Terms & Condition', path: '/terms' },
-    { name: 'Return Policy', path: '/return-policy' },
-    { name: 'Sitemap', path: '/sitemap' },
-    { name: 'Cancellation Policy', path: '/cancellation-policy' },
-  ];
-
-  // Contact info from settings
-  const contactEmail = settings.contactEmail || '';
-  const contactPhone = settings.contactPhone || '';
-  const contactWhatsapp = settings.contactWhatsapp || '';
-  const companyDescription = settings.companyDescription || '';
-
-  // Certifications from settings
-  const certifications = settings.certifications || [];
+  const { contactEmail, contactPhone, contactWhatsapp } = settings;
 
   return (
     <footer 
@@ -122,20 +87,12 @@ export function Footer({ onNavigate, className }: FooterProps) {
         paddingBottom: 'var(--spacing-8)'
       }}
     >
-      <div 
-        className="max-w-7xl mx-auto px-6"
-        style={{ paddingLeft: 'var(--spacing-6)', paddingRight: 'var(--spacing-6)' }}
-      >
+      <div className="mx-auto w-full px-6" style={{ maxWidth: CONTENT_MAX }}>
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-8 mb-16">
           {/* Brand & Description Column (Span 4) */}
           <div className="lg:col-span-4 space-y-8">
             <div className="space-y-4">
-              {/* Logo: use settings logoFullLightUrl if available, else fallback to component */}
-              {settings.logoFullLightUrl ? (
-                <img src={settings.logoFullLightUrl} alt={settings.siteName || 'iKan'} className="h-8 object-contain" />
-              ) : (
-                <LogoFull height={32} className="text-white" style={{ color: 'white' }} />
-              )}
+              <LogoFull height={32} className="text-white" style={{ color: 'white' }} />
               <p 
                 className="max-w-xs"
                 style={{
@@ -146,25 +103,9 @@ export function Footer({ onNavigate, className }: FooterProps) {
                   opacity: 0.8
                 }}
               >
-                {companyDescription || 'Ikan is your trusted partner in mental health and wellness. We provide evidence-based tools, professional assessments, and expert support to help you on your journey to better mental health.'}
+                {settings.companyDescription}
               </p>
             </div>
-            
-            {/* Certifications */}
-            {certifications.length > 0 && (
-              <div className="space-y-2">
-                <p className="text-[10px] uppercase tracking-wider opacity-50 font-medium">Certifications</p>
-                <div className="flex gap-3 items-center flex-wrap opacity-90">
-                  {certifications.map((cert, idx) => (
-                    cert.imageUrl && (
-                      <div key={idx} className="w-8 h-8 relative grayscale hover:grayscale-0 transition-all">
-                        <ImageWithFallback src={cert.imageUrl} alt={cert.alt || 'Certification'} className="w-full h-full object-contain" />
-                      </div>
-                    )
-                  ))}
-                </div>
-              </div>
-            )}
           </div>
 
           {/* Spacer (Span 1) */}
@@ -172,48 +113,27 @@ export function Footer({ onNavigate, className }: FooterProps) {
 
           {/* Links Columns (Span 7) */}
           <div className="lg:col-span-7 grid grid-cols-1 sm:grid-cols-3 gap-8">
-            {/* Quick Links */}
-            <div>
-              <h3 
-                className="mb-6 text-sm font-medium text-white/50 uppercase tracking-wide"
-              >
-                Quick Links
-              </h3>
-              <ul className="space-y-4">
-                {quickLinks.map((link) => (
-                  <li key={link.name}>
-                    <button
-                      onClick={() => handleNavigate(link.path)}
-                      className="text-sm font-medium hover:text-white text-white/80 transition-colors text-left"
-                    >
-                      {link.name}
-                      <NavBadge label={(link as any).badge} />
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            {/* Support */}
-            <div>
-              <h3 
-                className="mb-6 text-sm font-medium text-white/50 uppercase tracking-wide"
-              >
-                Support
-              </h3>
-              <ul className="space-y-4">
-                {supportLinks.map((link) => (
-                  <li key={link.name}>
-                    <button
-                      onClick={() => handleNavigate(link.path)}
-                      className="text-sm font-medium hover:text-white text-white/80 transition-colors text-left"
-                    >
-                      {link.name}
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            </div>
+            {FOOTER_GROUPS.map((group) => (
+              <div key={group.title}>
+                <h3 className="mb-6 text-sm font-medium text-white/50 uppercase tracking-wide">
+                  {group.title}
+                </h3>
+                <ul className="space-y-4">
+                  {group.links.map((link) => (
+                    <li key={link.to}>
+                      <SiteLink
+                        to={link.to}
+                        onNavigate={onNavigate}
+                        className="text-sm font-medium hover:text-white text-white/80 transition-colors text-left no-underline"
+                      >
+                        {link.label}
+                        <NavBadge label={link.badge} />
+                      </SiteLink>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
 
             {/* Contact Us */}
             <div>
@@ -258,10 +178,6 @@ export function Footer({ onNavigate, className }: FooterProps) {
                     </a>
                   </div>
                 )}
-                {/* Fallback when no contact info configured */}
-                {!contactEmail && !contactPhone && !contactWhatsapp && !settingsLoading && (
-                  <p className="text-xs text-white/40 italic">Contact info not configured</p>
-                )}
               </div>
 
               {/* Follow Us - Nested under Contact Us column */}
@@ -300,7 +216,7 @@ export function Footer({ onNavigate, className }: FooterProps) {
             <div 
               className="text-xs text-white/50"
             >
-              © {new Date().getFullYear()} {settings.siteName || 'iKan'}. All rights reserved.
+              © {new Date().getFullYear()} {settings.siteName}. All rights reserved.
             </div>
             <div className="flex items-center gap-2 opacity-80 hover:opacity-100 transition-opacity">
                 <span className="text-[10px] text-white/70 font-medium">Designed by</span>
@@ -309,14 +225,15 @@ export function Footer({ onNavigate, className }: FooterProps) {
           </div>
           
           <div className="flex flex-wrap justify-center gap-8 order-1 md:order-2">
-            {legalLinks.map((link) => (
-              <button
-                key={link.name}
-                onClick={() => handleNavigate(link.path)}
-                className="text-[10px] font-medium text-white/60 hover:text-white transition-colors"
+            {LEGAL_NAV.map((link) => (
+              <SiteLink
+                key={link.to}
+                to={link.to}
+                onNavigate={onNavigate}
+                className="text-[10px] font-medium text-white/60 hover:text-white transition-colors no-underline"
               >
-                {link.name}
-              </button>
+                {link.label}
+              </SiteLink>
             ))}
           </div>
         </div>
@@ -324,7 +241,7 @@ export function Footer({ onNavigate, className }: FooterProps) {
 
       {/* Disclaimer — crisis helplines (ported from main; iKan does not provide emergency support) */}
       <div className="border-t border-white/10 px-6 py-5">
-        <p className="max-w-[1200px] mx-auto text-[11px] leading-[18px] text-white/55">
+        <p className="mx-auto text-[11px] leading-[18px] text-white/55" style={{ maxWidth: CONTENT_MAX }}>
           <strong className="text-white/75 font-medium">Disclaimer:</strong>{' '}
           We at iKan deeply care about your mental health but we do not provide emergency
           support. If you or someone you know needs immediate assistance, please reach out to the{' '}

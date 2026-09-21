@@ -1,4 +1,5 @@
-import { SectionHero } from '../ui/blocks/SectionHero';
+import { PageHero } from '../ui/PageHero';
+import { PageShell } from '../ui/Container';
 import { AssessmentBentoGrid } from '../ui/blocks/AssessmentBentoGrid';
 import { AssessmentBlock } from '../ui/blocks/AssessmentBlock';
 import { NewsletterBlock } from '../ui/blocks/NewsletterBlock';
@@ -6,7 +7,7 @@ import { MobileHeader } from '../ui/MobileHeader';
 import { useSeo } from '../ui/hooks/useSeo';
 import { ASSESSMENT_CONTENT, NEWSLETTER_CONTENT } from '../content/content';
 import { assessmentImage } from '../content/assessment-meta';
-import { getAssessment, getAssessments, type SiteAssessment } from '../content/catalog';
+import { assessmentMinutes, getAssessment, getListedAssessments, type SiteAssessment } from '../content/catalog';
 import { APP_LOGIN_URL } from '../content/app-origin';
 import { NotFound } from './NotFound';
 
@@ -26,10 +27,7 @@ interface AssessmentDetailProps {
 }
 
 // Resolved by Vite at build time, same file the app screen imports.
-const defaultBentoImage = new URL('../assets/8ce2a19aab5abaf51a83cb99ea2d61447f96d8b2.png', import.meta.url).href;
-
-const minutesOf = (a: SiteAssessment): number | null =>
-  typeof a.duration === 'number' && a.duration > 0 ? a.duration : null;
+const defaultBentoImage = new URL('../content/assets/8ce2a19aab5abaf51a83cb99ea2d61447f96d8b2.png', import.meta.url).href;
 
 const toNote = (n: string | { title: string; description?: string }) =>
   typeof n === 'string' ? { title: n, description: '' } : { title: n.title, description: n.description ?? '' };
@@ -55,7 +53,7 @@ export function AssessmentDetail({ assessmentId, onNavigate }: AssessmentDetailP
     // Authored or absent. A default here is a number the user reads
     // as a promise about their own time.
     questionCount: raw.questionCount,
-    duration: minutesOf(raw),
+    duration: assessmentMinutes(raw),
     difficulty: raw.difficulty ? raw.difficulty.charAt(0).toUpperCase() + raw.difficulty.slice(1) : 'Beginner',
     metadata: raw.metadata || {},
 
@@ -107,49 +105,22 @@ export function AssessmentDetail({ assessmentId, onNavigate }: AssessmentDetailP
    * Exclude the assessment being viewed — by the loaded record's id AND slug,
    * since the route may carry either.
    */
-  const assessmentPrograms = getAssessments()
-    .filter(a => a.published !== false && a.id !== raw.id && a.slug !== raw.slug)
-    .slice(0, 3)
-    .map((a) => {
-      // No defaults: a fact the record does not carry renders nothing.
-      const count = a.questionCount;
-      const minutes = minutesOf(a);
-      const info = [
-        count !== null ? `${count} Questions` : null,
-        minutes !== null ? `${minutes} min` : null,
-      ].filter(Boolean).join(' • ');
-      return {
-        title: a.title,
-        description: a.description || '',
-        image: assessmentImage(a) ?? '',
-        category: a.category || 'Assessment',
-        questionCount: count,
-        duration: minutes,
-        info,
-        link: a.slug ? `/assessment/${a.slug}` : `/assessment-detail?id=${a.id}`,
-      };
-    });
+  const related: SiteAssessment[] = getListedAssessments()
+    .filter(a => a.id !== raw.id && (!raw.slug || a.slug !== raw.slug))
+    .slice(0, 3);
 
   return (
-    <div className="w-full min-h-screen" style={{ backgroundColor: 'var(--color-bg-page)' }}>
-      {/* Mobile Header */}
-      <MobileHeader
-        currentRoute="/assessment-detail"
-        title={assessmentData.title}
-        onBack={() => handleNavigate('/assessment')}
-        showShare={false}
-        transparent={true}
-      />
+    <PageShell>
+      <MobileHeader title={assessmentData.title} onBack={() => handleNavigate('/assessment')} />
 
       <div className="w-full">
         {/* HERO SECTION — starting is an account action: a full-page link to the member app. */}
-        <SectionHero
+        <PageHero
+          variant="split"
           title={assessmentData.title}
-          description={assessmentData.description}
-          buttonText={assessmentData.cta_button_text}
-          buttonLink={APP_LOGIN_URL}
+          subtitle={assessmentData.description}
+          cta={{ label: assessmentData.cta_button_text, to: APP_LOGIN_URL }}
           backgroundImage={assessmentImage(raw) ?? undefined}
-          backgroundAlt={`${assessmentData.title} - Assessment landing page`}
         />
 
         {/* BENTO GRID (Replaces Sections 1-4) */}
@@ -186,14 +157,12 @@ export function AssessmentDetail({ assessmentId, onNavigate }: AssessmentDetailP
         />
 
         {/* RELATED ASSESSMENTS */}
-        {assessmentPrograms.length > 0 && (
-          <AssessmentBlock
-            title={ASSESSMENT_CONTENT.BLOCK_TITLE}
-            seeMoreText={ASSESSMENT_CONTENT.BLOCK_SEE_ALL}
-            programs={assessmentPrograms}
-            onNavigate={handleNavigate}
-          />
-        )}
+        <AssessmentBlock
+          title={ASSESSMENT_CONTENT.BLOCK_TITLE}
+          seeMoreText={ASSESSMENT_CONTENT.BLOCK_SEE_ALL}
+          assessments={related}
+          onNavigate={handleNavigate}
+        />
 
         {/* NEWSLETTER */}
         <NewsletterBlock
@@ -204,7 +173,7 @@ export function AssessmentDetail({ assessmentId, onNavigate }: AssessmentDetailP
           privacyText={NEWSLETTER_CONTENT.PRIVACY_TEXT}
         />
       </div>
-    </div>
+    </PageShell>
   );
 }
 

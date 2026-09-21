@@ -3,6 +3,7 @@ import { Search, MessageSquarePlus } from 'lucide-react';
 import { useIsMobile } from '../ui/hooks/useIsMobile';
 import { DEFAULT_CMS_CONTENT } from '../content/cms-defaults';
 import { PageHero } from '../ui/PageHero';
+import { CONTENT_MAX } from '../ui/Container';
 import {
   Accordion,
   AccordionItem,
@@ -179,7 +180,7 @@ export function FAQ({ className, onNavigate }: FAQProps) {
       <div
         className="w-full mx-auto"
         style={{
-          maxWidth: 'var(--constraint-content-max)',
+          maxWidth: CONTENT_MAX,
           padding: isMobile
             ? 'var(--ikan-component-spacing-large) var(--ikan-component-spacing-default)'
             : 'var(--ikan-component-spacing-large) var(--spacing-12)',

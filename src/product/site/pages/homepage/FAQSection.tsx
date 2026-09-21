@@ -9,6 +9,7 @@ import {
   AccordionTrigger,
   AccordionContent,
 } from '../../ui/accordion';
+import { CONTENT_MAX } from '../../ui/Container';
 
 interface FAQSectionProps {
   onNavigate?: (route: string) => void;
@@ -80,7 +81,7 @@ export function FAQSection({ onNavigate }: FAQSectionProps) {
       >
         <div
           style={{
-            maxWidth: '1100px',
+            maxWidth: CONTENT_MAX,
             margin: '0 auto',
             padding: '0 24px',
           }}
@@ -89,7 +90,7 @@ export function FAQSection({ onNavigate }: FAQSectionProps) {
           <h2
             style={{
               fontFamily: 'var(--font-family-base)',
-              fontSize: isMobile ? '32px' : '40px',
+              fontSize: isMobile ? 'var(--text-3xl)' : '40px',
               fontWeight: 'var(--font-weight-medium)',
               color: 'var(--color-text-primary)',
               lineHeight: '1.15',
@@ -126,7 +127,7 @@ export function FAQSection({ onNavigate }: FAQSectionProps) {
                       className="py-5 hover:no-underline"
                       style={{
                         fontFamily: 'var(--font-family-base)',
-                        fontSize: '16px',
+                        fontSize: 'var(--text-base)',
                         fontWeight: 'var(--font-weight-medium)',
                         color: 'var(--color-text-primary)',
                         lineHeight: '1.5',
@@ -139,7 +140,7 @@ export function FAQSection({ onNavigate }: FAQSectionProps) {
                       <p
                         style={{
                           fontFamily: 'var(--font-family-base)',
-                          fontSize: '14px',
+                          fontSize: 'var(--text-sm)',
                           fontWeight: 'var(--font-weight-regular)',
                           color: 'var(--color-text-muted)',
                           lineHeight: '1.7',
@@ -157,7 +158,7 @@ export function FAQSection({ onNavigate }: FAQSectionProps) {
                 onClick={handleNavigateToFAQ}
                 style={{
                   fontFamily: 'var(--font-family-base)',
-                  fontSize: '14px',
+                  fontSize: 'var(--text-sm)',
                   fontWeight: 'var(--font-weight-medium)',
                   color: 'var(--color-text-muted)',
                   background: 'none',
@@ -207,7 +208,7 @@ export function FAQSection({ onNavigate }: FAQSectionProps) {
               <h3
                 style={{
                   fontFamily: 'var(--font-family-base)',
-                  fontSize: '18px',
+                  fontSize: 'var(--text-lg)',
                   fontWeight: 'var(--font-weight-medium)',
                   color: 'var(--color-text-primary)',
                   lineHeight: '1.35',
@@ -220,7 +221,7 @@ export function FAQSection({ onNavigate }: FAQSectionProps) {
               <p
                 style={{
                   fontFamily: 'var(--font-family-base)',
-                  fontSize: '14px',
+                  fontSize: 'var(--text-sm)',
                   fontWeight: 'var(--font-weight-regular)',
                   color: 'var(--color-text-muted)',
                   lineHeight: '1.6',

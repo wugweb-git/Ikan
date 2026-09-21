@@ -3,6 +3,7 @@ import { House, ArrowLeft, Search } from 'lucide-react';
 import { useIsMobile } from '../ui/hooks/useIsMobile';
 import { DEFAULT_CMS_CONTENT } from '../content/cms-defaults';
 import { PageHero } from '../ui/PageHero';
+import { CONTENT_MAX } from '../ui/Container';
 
 interface NotFoundProps {
   onNavigate?: (route: string) => void;
@@ -34,7 +35,7 @@ export function NotFound({ onNavigate }: NotFoundProps) {
       <div
         className="flex-1 w-full mx-auto flex items-center justify-center"
         style={{
-          maxWidth: 'var(--banner-content-max, 1100px)',
+          maxWidth: CONTENT_MAX,
           padding: isMobile ? '24px 16px' : '48px 24px',
         }}
       >

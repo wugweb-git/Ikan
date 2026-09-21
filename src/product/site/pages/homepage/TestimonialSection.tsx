@@ -3,6 +3,7 @@ import { ErrorBoundary } from '../../ui/ErrorBoundary';
 import { ClipboardCheck, Heart } from 'lucide-react';
 import { useIsMobile } from '../../ui/hooks/useIsMobile';
 import { DEFAULT_CMS_CONTENT } from '../../content/cms-defaults';
+import { CONTENT_MAX } from '../../ui/Container';
 
 interface StatItem {
   value: string;
@@ -116,7 +117,7 @@ export function TestimonialSection() {
       >
         <div
           style={{
-            maxWidth: '1100px',
+            maxWidth: CONTENT_MAX,
             margin: '0 auto',
             padding: '0 24px',
           }}

@@ -92,12 +92,6 @@ export function Navigation({ user, onNavigate, onGetStarted, currentRoute }: Nav
                 <span style={{ fontSize: '9px', fontWeight: 600, letterSpacing: '0.03em', textTransform: 'uppercase', lineHeight: 1, padding: '2px 5px', borderRadius: '4px', marginLeft: '5px', color: 'var(--grey-0)', backgroundColor: 'var(--color-primary-default, #6941C6)', verticalAlign: 'middle' }}>beta</span>
               </button>
               <button 
-                onClick={() => onNavigate('/resource')} 
-                className={cn("nav-link", (currentRoute === '/resource' || currentRoute?.startsWith('/resource-')) && "active")}
-              >
-                Resource
-              </button>
-              <button 
                 onClick={() => onNavigate('/consultation')} 
                 className={cn("nav-link", (currentRoute === '/consultation' || currentRoute?.startsWith('/consultation-')) && "active")}
               >

@@ -138,11 +138,21 @@ const assessments = (assessmentsFile as unknown as Snapshot<SiteAssessment>).row
 const programs = (programsFile as unknown as Snapshot<SiteProgram>).rows;
 const consultants = (consultantsFile as unknown as Snapshot<SiteConsultant>).rows;
 
-/** When the catalogue was frozen (ISO). */
-export const catalogSnapshotAt = (assessmentsFile as unknown as Snapshot<unknown>).snapshotAt;
-
 export function getAssessments(): SiteAssessment[] {
   return assessments;
+}
+
+/** The public listing: published only, de-duplicated the way the app screen does it. */
+export function getListedAssessments(): SiteAssessment[] {
+  const seen = new Set<string>();
+  const out: SiteAssessment[] = [];
+  for (const a of assessments) {
+    const key = a.slug || a.assessment_id || a.id;
+    if (!key || seen.has(key) || a.published === false) continue;
+    seen.add(key);
+    out.push(a);
+  }
+  return out;
 }
 
 /** By id, assessment_id or slug — the route passes whichever the URL carried. */
@@ -164,3 +174,21 @@ export function getProgram(idOrSlug: string | null | undefined): SiteProgram | n
 export function getConsultants(): SiteConsultant[] {
   return consultants;
 }
+
+/* ── One rule each for the facts every card repeats ─────────────────────── */
+
+/** Same rule as the app's `assessmentUrl`. */
+export const assessmentUrl = (a: SiteAssessment): string =>
+  a.slug ? `/assessment/${a.slug}` : `/assessment-detail?id=${a.id}`;
+
+/** Same rule as the app's `equipUrl`. */
+export const equipUrl = (p: SiteProgram): string =>
+  p.slug ? `/equip/${p.slug}` : `/equip-detail?id=${p.equip_id ?? p.id ?? ''}`;
+
+/** Authored minutes, or null. Never a default: a made-up number reads as a promise. */
+export const assessmentMinutes = (a: SiteAssessment): number | null =>
+  typeof a.duration === 'number' && a.duration > 0 ? a.duration : null;
+
+/** "31 days", counted from the programme's content at snapshot time; '' when unknown. */
+export const programDuration = (p: SiteProgram): string =>
+  p.dayCount !== null ? `${p.dayCount} days` : '';

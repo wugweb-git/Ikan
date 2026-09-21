@@ -1,10 +1,7 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useMemo } from 'react';
 import { ContentImage } from '../ui/ContentImage';
 import { useIsMobile } from '../ui/hooks/useIsMobile';
-import { ResourceBlock } from '../ui/blocks/ResourceBlock';
 import { NewsletterBlock } from '../ui/blocks/NewsletterBlock';
-import { ResourcePost } from '../ui/blocks/ResourceCard';
-import { apiClient } from '../../../shared/api/api';
 import {
   Heart,
   Shield,
@@ -13,12 +10,13 @@ import {
 } from 'lucide-react';
 import { NEWSLETTER_CONTENT } from '../content/content';
 import { PageHero } from '../ui/PageHero';
+import { CONTENT_MAX } from '../ui/Container';
 import { HowItWorksSection } from './homepage/HowItWorksSection';
 import { BenefitsSection } from './homepage/BenefitsSection';
 import { DEFAULT_CMS_CONTENT } from '../content/cms-defaults';
 
 interface AboutUsProps {
-  onNavigate?: (route: string, resourceId?: string) => void;
+  onNavigate?: (route: string) => void;
   className?: string;
 }
 
@@ -97,43 +95,10 @@ export function AboutUs({ onNavigate, className }: AboutUsProps) {
     { name: 'Divyanshu Pundir', role: 'UX Designer', image: '/team/divyanshu.jpg' },
   ];
 
-  const [resources, setResources] = useState<ResourcePost[]>([]);
-  const [loadingResources, setLoadingResources] = useState(true);
-
-  useEffect(() => {
-    const fetchResources = async () => {
-      try {
-        setLoadingResources(true);
-        const resourcesData = await apiClient.getResources();
-        if (resourcesData && Array.isArray(resourcesData) && resourcesData.length > 0) {
-          const mapped = resourcesData.slice(0, 3).map((r: any) => ({
-            id: r.id,
-            title: r.title,
-            description: r.excerpt,
-            image: r.thumbnail || r.image || r.image_url || r.featured_image || '',
-            category: r.category,
-            author: r.author,
-            readTime: `${r.read_time_minutes || 5} min read`,
-            date: new Date(r.created_at).toLocaleDateString(),
-          }));
-          setResources(mapped);
-        } else {
-          setResources([]);
-        }
-      } catch (err) {
-        console.log('Resources fetch failed:', err);
-        setResources([]);
-      } finally {
-        setLoadingResources(false);
-      }
-    };
-    fetchResources();
-  }, []);
-
   /* ─── Shared inline style helpers ─── */
   const sectionPadding = isMobile ? '48px 0' : '80px 0';
   const containerStyle: React.CSSProperties = {
-    maxWidth: 'var(--banner-content-max, 1100px)',
+    maxWidth: CONTENT_MAX,
     margin: '0 auto',
     padding: '0 24px',
   };
@@ -507,28 +472,13 @@ export function AboutUs({ onNavigate, className }: AboutUsProps) {
       </section>
 
       {/* ═══════════════════════════════════════════════
-          8. RESOURCES
-      ═══════════════════════════════════════════════ */}
-      <ResourceBlock
-        title="Resources"
-        posts={resources}
-        loading={loadingResources}
-        onPostClick={(post) => onNavigate?.('/resource-detail', post.id)}
-        onViewAll={() => onNavigate?.('/resource')}
-      />
-
-      {/* ═══════════════════════════════════════════════
-          9. NEWSLETTER
+          8. NEWSLETTER
       ═══════════════════════════════════════════════ */}
       <NewsletterBlock
-        title="Stay Informed About Mental Health"
-        benefits={[
-          'Get weekly mental health tips and insights',
-          'Early access to new features and programs',
-          'Exclusive resources and guided exercises',
-        ]}
-        imageAlt="Mental health newsletter"
-        ctaText="Subscribe Now"
+        title={NEWSLETTER_CONTENT.HOME.title}
+        benefits={[...NEWSLETTER_CONTENT.HOME.benefits]}
+        imageAlt={NEWSLETTER_CONTENT.HOME.imageAlt}
+        ctaText={NEWSLETTER_CONTENT.HOME.ctaText}
         privacyText={NEWSLETTER_CONTENT.PRIVACY_TEXT}
       />
     </div>
