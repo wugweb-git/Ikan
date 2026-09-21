@@ -103,7 +103,7 @@ The per-day / per-block REST routes (`/equip/programs/:id/days`, `/equip/days/:d
 
 ### CMS pages
 
-**Removed** (PR #14). The `/cms/pages` routes no longer exist; site page copy lives in `src/site/lib/cms-defaults.ts`.
+**Removed** (PR #14). The `/cms/pages` routes no longer exist; site page copy lives in `src/product/site/lib/cms-defaults.ts`.
 
 ---
 

@@ -38,7 +38,7 @@ The app connects to the **production Supabase project** even in dev (project `jp
 
 1. `/CLAUDE.md` — AI and developer quick-reference for the whole repo
 2. `src/App.tsx` — the single routing hub (no React Router)
-3. `src/site/lib/cms-defaults.ts` — all site page copy
+3. `src/product/site/lib/cms-defaults.ts` — all site page copy
 4. `src/supabase/functions/server/index.tsx` — edge function entry and route mounting
 5. `BUILD.md` — how to build and deploy
 
@@ -117,7 +117,7 @@ fix/<name>            ← bug fixes
 
 ## Site copy changes
 
-Site page copy (text, phone numbers, resource links) is code-only: edit `src/site/lib/cms-defaults.ts` and deploy. There is no KV record to update — the Page Manager was removed (PR #14) and leftover `cms_page:`/`page:` rows are not read.
+Site page copy (text, phone numbers, resource links) is code-only: edit `src/product/site/lib/cms-defaults.ts` and deploy. There is no KV record to update — the Page Manager was removed (PR #14) and leftover `cms_page:`/`page:` rows are not read.
 
 ---
 

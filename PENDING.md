@@ -227,7 +227,7 @@ Also needs a human pass:
   actions (toasts). The real `admin_notification:` KV prefix (registered, real backend write paths
   exist) is never fetched into this context. Same shape as §18's session-tracking half-built
   feature — the write-side may exist, the read/display-side was never wired in. Not fixed this pass.
-- **`src/site/pages/AboutUs.tsx:55` — stale comment** describing the removed
+- **`src/product/site/pages/AboutUs.tsx:55` — stale comment** describing the removed
   `getHeroBanner('about')` override. Remove it. (`getHeroBanner`/`updateHeroBanner`/
   `resetHeroBanner` are no longer exported from `src/shared/api.ts` — confirmed 2026-09-21.)
   (from HANDOFF.md, 2026-09-15)
@@ -312,7 +312,7 @@ not be re-checked in this pass — confirm each before acting.
   out of scope for the restructure) · `checkRateLimit`, `trackSession`, `logAudit`,
   `trackFailedLogin`, `createSecurityAlert`, `apiLogger` have no call sites (`session:`,
   `rate-limit:`, `api-log:`, `alert:` all 0 rows) · `accessibility-helpers.tsx` (`FocusTrap`,
-  `LiveRegion`, `ScreenReaderOnly`, `KeyboardNavigable`) had zero usages — now `src/app/ui/`,
+  `LiveRegion`, `ScreenReaderOnly`, `KeyboardNavigable`) had zero usages — now `src/product/app/ui/`,
   imported by `App.tsx`; re-check which exports are used.
 - **Accessibility tokens:** focus ring 1.73:1 across 12 primitives (needs 3:1) · text-muted passing
   only on white · every border token ≤1.41:1, so an off switch has no perceivable boundary ·

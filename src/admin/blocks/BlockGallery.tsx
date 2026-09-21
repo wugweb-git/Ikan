@@ -11,7 +11,7 @@
  * Sample content is declared per activity. It is illustrative, not live.
  */
 import { useMemo, useState } from 'react';
-import { BlockRenderer } from '../../app/blocks/BlockRenderer';
+import { BlockRenderer } from '../../product/app/blocks/BlockRenderer';
 import {
   type Activity, type ActivityConfig, type BlockType,
 } from '../../shared/blocks/block-model';

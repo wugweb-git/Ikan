@@ -95,7 +95,7 @@ issue in Burnout and Stress — see those docs.
    `GENERAL_SECTIONS.sections[anxiety|depression].questionIds` in
    `src/lib/assessment-section-presets.ts`.
 4. **Reverse-scored resilience items are working as intended** — verified in code with 35 passing
-   assertions (see `src/app/lib/assessment-sections.ts`). Listed here so a future content edit doesn't
+   assertions (see `src/product/app/lib/assessment-sections.ts`). Listed here so a future content edit doesn't
    accidentally "fix" the wording of items 20/22/24 to read positively, which would silently break
    the reversal.
 5. q2/q3/q4 are permanently unscored under the current section design. If they should form their

@@ -18,7 +18,7 @@ import { dirname, join, relative } from 'node:path';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 /* The three UI surfaces. components/ was emptied into them. */
-const SRCS = ['src/admin', 'src/app', 'src/site'].map(d => join(ROOT, d));
+const SRCS = ['src/admin', 'src/product/app', 'src/product/site'].map(d => join(ROOT, d));
 const BASELINE_FILE = join(ROOT, '.a11y-baseline');
 const SKIP = /\.(test|spec|stories)\.tsx?$/;
 

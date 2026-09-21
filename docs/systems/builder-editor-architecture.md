@@ -50,7 +50,7 @@ flowchart TD
 ## Builder includes rendering — confirmed, not assumed
 
 Direct answer to "update Builder assuming frontend rendering is a part of it": **yes, confirmed by
-reading the actual render code**, not just architectural inference. `src/app/features/player/`
+reading the actual render code**, not just architectural inference. `src/product/app/features/player/`
 (`ProgramPlayer.tsx` + `BlockRenderer.tsx`) is the third tier of the same pipeline the authoring
 side (`DayEditor`/`BlockEditorPane`) writes into:
 

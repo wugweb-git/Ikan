@@ -89,7 +89,7 @@ export default tseslint.config(
     },
   },
   // Surface boundary (restructure Stage 4). src/ is split into admin/ (staff),
-  // app/ (member product), site/ (marketing + policy) and shared/ (non-UI
+  // product/app/ (member product), product/site/ (marketing + policy) and shared/ (non-UI
   // contract). A surface imports itself, shared/, and — until the UI split
   // lands — the legacy components/ lib/ contexts/ hooks/ utils/. Never another
   // surface. App.tsx at src/ is the composition root and is exempt.
@@ -106,7 +106,7 @@ export default tseslint.config(
     { dir: 'site', blocked: ['admin', 'app'] },
     { dir: 'shared', blocked: ['admin', 'app', 'site', 'components'] },
   ].map(({ dir, blocked, allow = [] }) => ({
-    files: [`src/${dir}/**/*.{ts,tsx}`],
+    files: [`src/${dir === 'app' || dir === 'site' ? `product/${dir}` : dir}/**/*.{ts,tsx}`],
     rules: {
       'no-restricted-imports': ['warn', {
         patterns: [{

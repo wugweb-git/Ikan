@@ -100,7 +100,7 @@ per direct instruction — not broken).
 `AdminHeroBannerManager` into a tab of `AdminPageManager` at `/admin/pages`. Both are gone: the Page
 Manager was removed in PR #14 (2026-09-10) and the dead `/admin/pages` route entry was dropped on
 2026-09-15. Neither `/admin/pages` nor `/admin/hero-banner` resolves today; page copy lives in
-`src/site/lib/cms-defaults.ts`.
+`src/product/site/lib/cms-defaults.ts`.
 
 ## Still open
 

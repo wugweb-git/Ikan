@@ -3,8 +3,8 @@
 > **Last updated**: 2026-09-21 (codebase separation, branch `restructure/codebase-separation`)
 > **Audience**: All developers
 
-The frontend is split into three **surfaces** that never share UI, plus one
-**non-UI** layer they all import. The split is enforced by a lint boundary
+The frontend is split into three **surfaces** that never share UI — `admin/`, and the two
+product surfaces `product/app/` and `product/site/` — plus one **non-UI** layer they all import. The split is enforced by a lint boundary
 (`eslint.config.js`, counted by `npm run lint:boundary` in CI).
 
 ---
@@ -44,20 +44,21 @@ src/
 │   ├── ui/                # the old component library — admin's own copy
 │   ├── hooks/ · lib/      # admin-only hooks and helpers
 │
-├── app/                   # MEMBER product
-│   ├── screens/           # member screens (+ account/, onboarding/)
-│   ├── features/          # player, payments, notifications, safety,
-│   │                      #   integrations, widgets, assessment
-│   ├── blocks/            # BlockRenderer
-│   ├── ui/                # app's own UI (primitives, blocks/, svg/)
-│   ├── shell/             # route guard, login, error boundary, offline,
-│   │                      #   security, member navigation, app contexts
-│   ├── hooks/ · lib/ · assets/
+├── product/
+│   ├── app/               # MEMBER product
+│   │   ├── screens/           # member screens (+ account/, onboarding/)
+│   │   ├── features/          # player, payments, notifications, safety,
+│   │   │                      #   integrations, widgets, assessment
+│   │   ├── blocks/            # BlockRenderer
+│   │   ├── ui/                # app's own UI (primitives, blocks/, svg/)
+│   │   ├── shell/             # route guard, login, error boundary, offline,
+│   │   │                      #   security, member navigation, app contexts
+│   │   ├── hooks/ · lib/ · assets/
 │
-├── site/                  # MARKETING + policy
-│   ├── pages/             # pages + homepage/ sections
-│   ├── ui/                # site's own UI (Footer, public nav, primitives, blocks/)
-│   ├── hooks/ · lib/ · assets/   # lib/cms-defaults.ts = all site page copy
+│   ├── site/              # MARKETING + policy
+│   │   ├── pages/             # pages + homepage/ sections
+│   │   ├── ui/                # site's own UI (Footer, public nav, primitives, blocks/)
+│   │   ├── hooks/ · lib/ · assets/   # lib/cms-defaults.ts = all site page copy
 │
 ├── shared/                # NON-UI contract every surface imports
 │   ├── api.ts · api-types.ts · supabase.ts · validation.ts · logger.ts
@@ -75,13 +76,13 @@ src/
 
 | from | may import | may NOT import |
 |---|---|---|
-| `admin/` | itself, `shared/` | `app/`, `site/` — except `app/blocks/BlockRenderer` and `app/features/player/ProgramPlayer`, allowed by name so admin previews match what members see |
-| `app/` | itself, `shared/` | `admin/`, `site/` |
-| `site/` | itself, `shared/` | `admin/`, `app/` |
+| `admin/` | itself, `shared/` | `product/` — except `product/app/blocks/BlockRenderer` and `product/app/features/player/ProgramPlayer`, allowed by name so admin previews match what members see |
+| `product/app/` | itself, `shared/` | `admin/`, `product/site/` |
+| `product/site/` | itself, `shared/` | `admin/`, `product/app/` |
 | `shared/` | itself | any surface |
 
 `App.tsx` is exempt: it is the composition root that mounts all three.
 
 **No UI is shared.** Where two surfaces need the same primitive, each holds its
-own copy (`admin/ui/button.tsx`, `app/ui/button.tsx`, `site/ui/button.tsx`).
+own copy (`admin/ui/button.tsx`, `product/app/ui/button.tsx`, `product/site/ui/button.tsx`).
 They may drift — that is the point.

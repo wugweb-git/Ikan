@@ -91,7 +91,7 @@ Key prefixes:
 | `day:{id}` | **DEAD — nothing reads these.** Legacy program day (105 rows). Related to its equip via an `equip_id` field, not a key convention |
 | `block:{id}` | **DEAD — nothing reads these.** Legacy content block (223 rows). Related to its day via `equip_day_id` |
 | `security_event:{YYYY-MM-DD}` | Day-bucketed security events, capped at 5000/day. Public write; identity comes from a verified token, never the request body |
-| `cms_page:{pageId}` | **DEAD — nothing reads these.** Page content since the Page Manager's removal (PR #14, `31015ad5`); pages render `src/site/lib/cms-defaults.ts`. 17 rows (+ `page:`/`page_slug:`, 7 each) left in KV, untouched |
+| `cms_page:{pageId}` | **DEAD — nothing reads these.** Page content since the Page Manager's removal (PR #14, `31015ad5`); pages render `src/product/site/lib/cms-defaults.ts`. 17 rows (+ `page:`/`page_slug:`, 7 each) left in KV, untouched |
 | `settings:site` | Global site settings (phone, email, etc.) |
 | `checkin_scale:{key}` | Custom check-in scale (emoji set + labels) |
 | `mood:{moodId}` | Mood-scale definition (emoji, label, colour, order) — **global config, not user data**. Verified live 2026-09-01: 5 rows, none user-scoped. Journal entries live under `journal:` / `journal_by_user:`. |
@@ -450,20 +450,20 @@ Known data notes: `assessment_result:` stores each result twice in KV (canonical
 
 ## CMS content architecture
 
-Site page copy lives in code: pages import `DEFAULT_CMS_CONTENT` from `src/site/lib/cms-defaults.ts` and render it directly. `usePageContent` and its `/cms/pages/{pageId}` fetch were unwired on 2026-09-10 (`c1bb553b`), so **no KV record overrides page copy any more** — change the copy in `cms-defaults.ts` and deploy. Any `cms_page:` rows left in KV are not read by the frontend.
+Site page copy lives in code: pages import `DEFAULT_CMS_CONTENT` from `src/product/site/lib/cms-defaults.ts` and render it directly. `usePageContent` and its `/cms/pages/{pageId}` fetch were unwired on 2026-09-10 (`c1bb553b`), so **no KV record overrides page copy any more** — change the copy in `cms-defaults.ts` and deploy. Any `cms_page:` rows left in KV are not read by the frontend.
 
 ---
 
 ## Slug URL system
 
-`src/app/lib/slug.ts` exports `slugify()`, `assessmentUrl()`, `equipUrl()`. Routes `/assessment/<slug>` and `/equip/<slug>` are handled in `App.tsx` at three sync points: initial `useState`, `handleNavigate`, and `popstate`. The backend resolves both id and slug via a fallback lookup.
+`src/product/app/lib/slug.ts` exports `slugify()`, `assessmentUrl()`, `equipUrl()`. Routes `/assessment/<slug>` and `/equip/<slug>` are handled in `App.tsx` at three sync points: initial `useState`, `handleNavigate`, and `popstate`. The backend resolves both id and slug via a fallback lookup.
 
 ---
 
 ## Auth
 
 - Email confirmation is ON. New users get a Supabase native confirmation email.
-- `/reset-password` route exists (`src/app/screens/ResetPassword.tsx`).
+- `/reset-password` route exists (`src/product/app/screens/ResetPassword.tsx`).
 - Auto-create-on-failed-login has been **removed** from `AuthContext.tsx`.
 - Leaked-password protection is **not** enabled yet — this needs to be turned on from the Supabase dashboard (Auth → Providers). See `PENDING.md` §A.
 - Supabase OAuth provider: Google (for Google Fit linking via `linkIdentity`).
@@ -509,9 +509,9 @@ Site page copy lives in code: pages import `DEFAULT_CMS_CONTENT` from `src/site/
 | Auth context | `src/shared/contexts/AuthContext.tsx` |
 | API client | `src/shared/api.ts` |
 | Supabase client | `src/shared/supabase.ts` |
-| CMS defaults | `src/site/lib/cms-defaults.ts` |
-| Slug helpers | `src/app/lib/slug.ts` |
-| Health Connect / Google Fit | `src/app/features/integrations/GoogleFitContext.tsx`, `src/app/lib/google-fit.ts` |
+| CMS defaults | `src/product/site/lib/cms-defaults.ts` |
+| Slug helpers | `src/product/app/lib/slug.ts` |
+| Health Connect / Google Fit | `src/product/app/features/integrations/GoogleFitContext.tsx`, `src/product/app/lib/google-fit.ts` |
 | Design system tokens | `src/styles/globals.css` |
 | Edge function entry | `src/supabase/functions/server/index.tsx` |
 | Brand docs | `BRAND.md` |

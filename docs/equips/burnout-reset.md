@@ -58,7 +58,7 @@ This equip carries **two separate onboarding definitions that disagree with each
 
 ### A. `onboarding` field — the one the app actually renders
 
-`EquipProgramOnboarding.tsx` reads `program.onboarding.questions` exclusively (confirmed in `src/app/screens/EquipProgramOnboarding.tsx`, e.g. `const onboarding = program?.onboarding;` / `questions: onboarding.questions`). This is what a real user seeking to enroll in "Unburn" is shown, stored verbatim:
+`EquipProgramOnboarding.tsx` reads `program.onboarding.questions` exclusively (confirmed in `src/product/app/screens/EquipProgramOnboarding.tsx`, e.g. `const onboarding = program?.onboarding;` / `questions: onboarding.questions`). This is what a real user seeking to enroll in "Unburn" is shown, stored verbatim:
 
 - **title**: "Program Setup"
 - **description**: "Please answer a few questions to personalize your experience."

@@ -48,10 +48,8 @@
     "./src/App.tsx",
     "./src/admin/**/*.ts",
     "./src/admin/**/*.tsx",
-    "./src/app/**/*.ts",
-    "./src/app/**/*.tsx",
-    "./src/site/**/*.ts",
-    "./src/site/**/*.tsx",
+    "./src/product/**/*.ts",
+    "./src/product/**/*.tsx",
     "./src/shared/**/*.ts",
     "./src/shared/**/*.tsx",
     "./src/styles/**/*.css"

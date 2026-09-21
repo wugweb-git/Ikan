@@ -46,7 +46,7 @@ Supabase Postgres  (kv_store_cc205da9 table)
 `src/App.tsx` is the single routing hub. It maintains `currentRoute` state and `handleNavigate()`. There is no `<Route>` or `<Link>` — every navigation is a function call.
 
 - Slug-based routes `/assessment/<slug>` and `/equip/<slug>` are parsed in three places in `App.tsx`: initial `useState`, `handleNavigate`, and the `popstate` listener.
-- Slug helpers: `src/app/lib/slug.ts` (`slugify`, `assessmentUrl`, `equipUrl`) — always build links with these.
+- Slug helpers: `src/product/app/lib/slug.ts` (`slugify`, `assessmentUrl`, `equipUrl`) — always build links with these.
 - Each slug route maps to the existing `/assessment-detail` / `/equip-detail` screen and passes the slug as the id.
 - Legacy `?id=<id>` URLs still resolve (backend tries id, then slug; assessment detail also has a client-side list fallback for resilience during deploys).
 
@@ -60,7 +60,7 @@ Supabase Postgres  (kv_store_cc205da9 table)
 
 ### Content model
 
-Site page copy is code-only: it lives in `src/site/lib/cms-defaults.ts` and is not fetched. The Page Manager, `usePageContent` and the `/cms/pages` routes were removed (PR #14); leftover `cms_page:`/`page:` KV rows are dead and nothing reads them. Assessments, equip programs, settings and check-in scales are still dynamic, read from the KV store via the edge function.
+Site page copy is code-only: it lives in `src/product/site/lib/cms-defaults.ts` and is not fetched. The Page Manager, `usePageContent` and the `/cms/pages` routes were removed (PR #14); leftover `cms_page:`/`page:` KV rows are dead and nothing reads them. Assessments, equip programs, settings and check-in scales are still dynamic, read from the KV store via the edge function.
 
 ### Images / banners
 
@@ -72,7 +72,7 @@ Some equip bento sub-blocks (right-column items, "how it works" subtitle/footer)
 
 ### SEO
 
-- `useSeo` (`src/app/hooks/useSeo.ts`) sets title/description/canonical/OpenGraph/Twitter + JSON-LD per page. Used on assessment & equip detail; extend to other pages as needed.
+- `useSeo` (`src/product/app/hooks/useSeo.ts`) sets title/description/canonical/OpenGraph/Twitter + JSON-LD per page. Used on assessment & equip detail; extend to other pages as needed.
 - `public/robots.txt`, `public/sitemap.xml`, `public/llms.txt` are static; update the sitemap when assessment/equip slugs change.
 - Google Analytics gtag lives in the root `index.html` (the measurement id is hardcoded there).
 - Limitation: this is a client-rendered SPA. Googlebot renders JS, but non-JS social scrapers see only the static `index.html` tags. Prerendering/SSR is a future improvement for richer link previews.
@@ -93,7 +93,7 @@ The canonical key-prefix table (including which prefixes are dead) lives in [`CL
 
 - **Sign-up**: client-side `supabase.auth.signUp()` → Supabase sends a native confirmation email. Users must verify before accessing protected routes.
 - **Sign-in**: standard Supabase email+password. Wrong password returns an error — no silent account creation.
-- **Password reset**: `/reset-password` route (`src/app/screens/ResetPassword.tsx`) handles the `PASSWORD_RECOVERY` session event.
+- **Password reset**: `/reset-password` route (`src/product/app/screens/ResetPassword.tsx`) handles the `PASSWORD_RECOVERY` session event.
 - **Google OAuth**: used for Google Fit linking via `supabase.auth.linkIdentity({ provider: 'google' })`. Supabase Auth has Google provider enabled.
 - **Security**: manual linking ON, PKCE flow. Leaked-password protection is **not** enabled.
 
@@ -101,7 +101,7 @@ The canonical key-prefix table (including which prefixes are dead) lives in [`CL
 
 ## Health Connect / Google Fit
 
-`src/app/features/integrations/GoogleFitContext.tsx` provides `useHealthConnect()` and `useGoogleFit()`. Data flows into `/health-connect/data` on the edge function and is stored under `hc_data:{userId}`. Native Android Health Connect uses a TWA bridge; web Google Fit uses OAuth + the Fit REST API (`src/app/lib/google-fit.ts`).
+`src/product/app/features/integrations/GoogleFitContext.tsx` provides `useHealthConnect()` and `useGoogleFit()`. Data flows into `/health-connect/data` on the edge function and is stored under `hc_data:{userId}`. Native Android Health Connect uses a TWA bridge; web Google Fit uses OAuth + the Fit REST API (`src/product/app/lib/google-fit.ts`).
 
 ---
 

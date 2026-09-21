@@ -14,7 +14,7 @@ import { dirname, join, relative } from 'node:path';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 /* The three UI surfaces. components/ was emptied into them. */
-const SRCS = ['src/admin', 'src/app', 'src/site'].map(d => join(ROOT, d));
+const SRCS = ['src/admin', 'src/product/app', 'src/product/site'].map(d => join(ROOT, d));
 const BASELINE_FILE = join(ROOT, '.rawhex-baseline');
 
 /* globals.css is where literals belong. Tests and stories may pin values. */
@@ -54,7 +54,7 @@ const baseline = existsSync(BASELINE_FILE)
   ? parseInt(readFileSync(BASELINE_FILE, 'utf8').trim(), 10) || 0
   : Number.MAX_SAFE_INTEGER;
 
-console.log(`raw colour literals in src/{admin,app,site}: ${total} across ${perFile.length} files (baseline ${baseline === Number.MAX_SAFE_INTEGER ? 'unset' : baseline})`);
+console.log(`raw colour literals in src/{admin,product}: ${total} across ${perFile.length} files (baseline ${baseline === Number.MAX_SAFE_INTEGER ? 'unset' : baseline})`);
 console.log('');
 for (const [f, n] of perFile.slice(0, 15)) console.log(`  ${String(n).padStart(4)}  ${f}`);
 if (perFile.length > 15) console.log(`  ...and ${perFile.length - 15} more files`);

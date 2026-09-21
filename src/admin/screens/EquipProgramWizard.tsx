@@ -21,7 +21,7 @@ import { EquipLandingPageRichTextEditor } from './EquipLandingPageRichTextEditor
 import { DayEditor as DailyBuilder } from '../blocks/DayComposer';
 import { UnifiedBasicInfoForm } from '../components/UnifiedBasicInfoForm';
 import { useMetadata } from '../../shared/hooks/useMetadata';
-import { ProgramPlayer } from '../../app/features/player/ProgramPlayer';
+import { ProgramPlayer } from '../../product/app/features/player/ProgramPlayer';
 import { seedDayFromTemplate } from '../../shared/blocks/day-policy';
 /* §21 item 5 (2026-09-09): the wizard's stepper chrome became a two-screen
    builder shell. The record logic below — persistWizard, handlePublishToggle,

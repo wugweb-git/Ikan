@@ -25,8 +25,8 @@ future input to the iKan Wellness Score's Engagement component.
 | Backend | `src/supabase/functions/server/health-connect-routes.ts` (233 lines) |
 | Endpoints | `GET/POST /health-connect/status`, `POST /health-connect/connect`, `POST /health-connect/disconnect`, `GET/POST /health-connect/data`, `GET /health-connect/history`, `POST /health-connect/manual-entry` — all `requireAuth` |
 | Frontend context | `GoogleFitContext.tsx` (346 lines) — `useGoogleFit()`/fitness provider state |
-| Google Fit client | `src/app/lib/google-fit.ts` — OAuth token → Google Fit Aggregate API → reshapes into the same payload `/health-connect/data` expects |
-| Native bridge | `src/app/lib/health-connect-bridge.ts` — for an Android TWA/companion-app data push path (Health Connect has no REST API of its own; only an on-device SDK) |
+| Google Fit client | `src/product/app/lib/google-fit.ts` — OAuth token → Google Fit Aggregate API → reshapes into the same payload `/health-connect/data` expects |
+| Native bridge | `src/product/app/lib/health-connect-bridge.ts` — for an Android TWA/companion-app data push path (Health Connect has no REST API of its own; only an on-device SDK) |
 | Legacy (superseded) | `/health-data` in `index.tsx` — explicitly commented `// Legacy — see health-connect-routes.ts for new endpoints`, writes `health:{userId}:{date}` + `health:{userId}:latest`. **Zero frontend callers** — confirmed dead, correctly self-labeled in the code, not a bug. |
 
 ## How it works — three ways data can arrive, one storage shape
