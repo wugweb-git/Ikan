@@ -59,6 +59,8 @@
     "./hooks/**/*.tsx",
     "./lib/**/*.ts",
     "./lib/**/*.tsx",
+    "./admin/**/*.ts",
+    "./admin/**/*.tsx",
     "./app/**/*.ts",
     "./app/**/*.tsx",
     "./site/**/*.ts",

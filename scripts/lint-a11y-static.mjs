@@ -17,8 +17,8 @@ import { fileURLToPath } from 'node:url';
 import { dirname, join, relative } from 'node:path';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
-/* app/ and site/ hold the screens moved out of components/ — scan all three. */
-const SRCS = ['src/components', 'src/app', 'src/site'].map(d => join(ROOT, d));
+/* admin/, app/ and site/ hold what moved out of components/ — scan all four. */
+const SRCS = ['src/components', 'src/admin', 'src/app', 'src/site'].map(d => join(ROOT, d));
 const BASELINE_FILE = join(ROOT, '.a11y-baseline');
 const SKIP = /\.(test|spec|stories)\.tsx?$/;
 

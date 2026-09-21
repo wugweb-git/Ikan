@@ -8,7 +8,7 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { NotificationProvider } from '../contexts/NotificationContext';
-import { EquipProgramWizard } from '../components/screens/EquipProgramWizard';
+import { EquipProgramWizard } from '../admin/screens/EquipProgramWizard';
 import '../index.css';
 
 createRoot(document.getElementById('root')!).render(

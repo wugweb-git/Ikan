@@ -118,11 +118,11 @@ const CancellationPolicy = lazy(() => lazyRetry(() => import('./site/pages/Cance
 const Sitemap = lazy(() => lazyRetry(() => import('./site/pages/Sitemap').then(m => ({ default: m.Sitemap })), 'Sitemap'));
 
 // Admin screens
-const AdminDashboard = lazy(() => lazyRetry(() => import('./components/screens/AdminDashboard').then(m => ({ default: m.AdminDashboard })), 'AdminDashboard'));
-const AdminLoginScreen = lazy(() => lazyRetry(() => import('./components/admin/AdminLoginScreen').then(m => ({ default: m.AdminLoginScreen })), 'AdminLoginScreen'));
+const AdminDashboard = lazy(() => lazyRetry(() => import('./admin/screens/AdminDashboard').then(m => ({ default: m.AdminDashboard })), 'AdminDashboard'));
+const AdminLoginScreen = lazy(() => lazyRetry(() => import('./admin/components/AdminLoginScreen').then(m => ({ default: m.AdminLoginScreen })), 'AdminLoginScreen'));
 
 // --- Eagerly loaded non-screen components ---
-import { AdminWidget } from './components/admin/AdminWidget';
+import { AdminWidget } from './admin/components/AdminWidget';
 import { GoogleFitProvider } from './app/features/integrations/GoogleFitContext';
 import { Footer } from './site/ui/Footer';
 import { ErrorBoundary } from './components/ErrorBoundary';

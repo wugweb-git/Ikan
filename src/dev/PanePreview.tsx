@@ -8,7 +8,7 @@
  */
 import { StrictMode, useState } from 'react';
 import { createRoot } from 'react-dom/client';
-import { BlockEditorPane } from '../components/builder/editor/BlockEditorPane';
+import { BlockEditorPane } from '../admin/builder/editor/BlockEditorPane';
 import type { Activity } from '../lib/blocks/block-model';
 import { DAY_TYPE_POLICIES } from '../lib/blocks/day-policy';
 import '../index.css';

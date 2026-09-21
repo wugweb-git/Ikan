@@ -8,7 +8,7 @@
  */
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
-import { AdminBlockTypeViewer } from '../components/blocks/BlockTypeViewer';
+import { AdminBlockTypeViewer } from '../admin/blocks/BlockTypeViewer';
 import '../index.css';
 
 createRoot(document.getElementById('root')!).render(

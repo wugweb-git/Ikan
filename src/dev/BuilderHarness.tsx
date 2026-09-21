@@ -12,9 +12,9 @@ import { StrictMode, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
-import { DayEditor } from '../components/blocks/DayComposer';
-import { BuilderShell } from '../components/builder/BuilderShell';
-import { BuilderTopBar } from '../components/builder/BuilderTopBar';
+import { DayEditor } from '../admin/blocks/DayComposer';
+import { BuilderShell } from '../admin/builder/BuilderShell';
+import { BuilderTopBar } from '../admin/builder/BuilderTopBar';
 import type { DayContent } from '../lib/blocks/block-model';
 import '../index.css';
 
