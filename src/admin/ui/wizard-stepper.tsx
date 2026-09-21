@@ -49,10 +49,10 @@ export function WizardStepper({ steps, currentStep, onStepClick, allowSkip = fal
               className={cn(
                 "w-8 h-8 rounded-full flex items-center justify-center border-2 transition-all duration-200 shrink-0",
                 isCompleted 
-                  ? "bg-[#1A1A1A] border-[#1A1A1A] text-white" 
+                  ? "bg-[var(--grey-9)] border-[var(--grey-9)] text-white" 
                   : isCurrent
-                    ? "bg-[#1A1A1A] border-[#1A1A1A] text-white"
-                    : "border-[#D9D9D9] text-[#757575] bg-transparent group-hover:border-[var(--color-border-strong)]"
+                    ? "bg-[var(--grey-9)] border-[var(--grey-9)] text-white"
+                    : "border-[var(--grey-3)] text-[var(--grey-6)] bg-transparent group-hover:border-[var(--color-border-strong)]"
               )}
             >
               {isCompleted ? (
@@ -66,12 +66,12 @@ export function WizardStepper({ steps, currentStep, onStepClick, allowSkip = fal
             <div className="hidden sm:flex flex-col items-start pt-1">
               <span className={cn(
                 "text-sm font-medium leading-none mb-1 transition-colors",
-                isCurrent ? "text-[#1A1A1A]" : "text-[#757575]"
+                isCurrent ? "text-[var(--grey-9)]" : "text-[var(--grey-6)]"
               )}>
                 {step.title}
               </span>
               {step.metadata && (
-                <span className="text-[10px] text-[#9E9E9E] uppercase tracking-wide">
+                <span className="text-[10px] text-[var(--grey-5)] uppercase tracking-wide">
                   {step.metadata}
                 </span>
               )}
@@ -81,7 +81,7 @@ export function WizardStepper({ steps, currentStep, onStepClick, allowSkip = fal
 
         if (index < steps.length - 1) {
           elements.push(
-            <div key={`connector-${step.id}`} className="flex-1 h-[2px] bg-[#D9D9D9] min-w-[20px] hidden sm:block mx-4" />
+            <div key={`connector-${step.id}`} className="flex-1 h-[2px] bg-[var(--grey-3)] min-w-[20px] hidden sm:block mx-4" />
           );
         }
 

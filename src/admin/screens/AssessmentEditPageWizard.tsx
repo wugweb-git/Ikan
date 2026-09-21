@@ -767,7 +767,7 @@ export function AssessmentEditPageWizard({ assessmentId, onBack, onSave }: Asses
                 showToast('warning', 'Builder view rebuilt',
                   'The builder view was rebuilt from the saved questions. Anything only it held is gone.');
               }}
-              style={{ backgroundColor: 'var(--color-status-danger)', color: '#fff' }}
+              style={{ backgroundColor: 'var(--color-status-danger)', color: 'var(--grey-0)' }}
             >
               Rebuild builder view from saved questions
             </Button>

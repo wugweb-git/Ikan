@@ -46,7 +46,7 @@ export function PageHero({
         'relative w-full flex flex-col items-center justify-center text-center overflow-hidden pt-[100px] pb-[36px] md:pt-[160px] md:pb-[80px]',
         className
       )}
-      style={{ backgroundColor: '#1a1a1a' }}
+      style={{ backgroundColor: 'var(--grey-9)' }}
     >
       {/* Background image — single static image */}
       <div className="absolute inset-0 z-0">
@@ -80,7 +80,7 @@ export function PageHero({
             fontSize: 'clamp(28px, 5vw, 48px)',
             fontWeight: 'var(--font-weight-medium)',
             lineHeight: '1.2',
-            color: '#FFFFFF',
+            color: 'var(--grey-0)',
             margin: '0 0 16px 0',
             maxWidth: '800px',
           }}
@@ -112,7 +112,7 @@ export function PageHero({
               marginTop: 20,
               padding: '12px 32px',
               borderRadius: 'var(--radius-md)',
-              backgroundColor: '#FFFFFF',
+              backgroundColor: 'var(--grey-0)',
               color: 'var(--color-primary-default)',
               fontFamily: 'var(--font-family-base)',
               fontWeight: 500,

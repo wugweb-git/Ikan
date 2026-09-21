@@ -88,7 +88,7 @@ function SliderResourceCard({ post, onClick, isMobile }: { post: ResourcePost; o
                 fontSize: '11px',
                 fontWeight: 'var(--font-weight-medium)',
                 fontFamily: 'var(--font-family-base)',
-                color: '#FFFFFF',
+                color: 'var(--grey-0)',
                 textTransform: 'uppercase',
                 letterSpacing: '0.6px',
               }}

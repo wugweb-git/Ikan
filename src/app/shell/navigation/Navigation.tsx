@@ -54,7 +54,7 @@ export function Navigation({ user, onNavigate, onGetStarted, currentRoute }: Nav
                 className={cn("nav-link", (currentRoute === '/equip' || currentRoute?.startsWith('/equip-')) && "active")}
               >
                 Equip
-                <span style={{ fontSize: '9px', fontWeight: 600, letterSpacing: '0.03em', textTransform: 'uppercase', lineHeight: 1, padding: '2px 5px', borderRadius: '4px', marginLeft: '5px', color: '#fff', backgroundColor: 'var(--color-primary-default, #6941C6)', verticalAlign: 'middle' }}>beta</span>
+                <span style={{ fontSize: '9px', fontWeight: 600, letterSpacing: '0.03em', textTransform: 'uppercase', lineHeight: 1, padding: '2px 5px', borderRadius: '4px', marginLeft: '5px', color: 'var(--grey-0)', backgroundColor: 'var(--color-primary-default, #6941C6)', verticalAlign: 'middle' }}>beta</span>
               </button>
               <button 
                 onClick={() => onNavigate('/resource')} 
@@ -67,7 +67,7 @@ export function Navigation({ user, onNavigate, onGetStarted, currentRoute }: Nav
                 className={cn("nav-link", (currentRoute === '/consultation' || currentRoute?.startsWith('/consultation-')) && "active")}
               >
                 Consultation
-                <span style={{ fontSize: '9px', fontWeight: 600, letterSpacing: '0.03em', textTransform: 'uppercase', lineHeight: 1, padding: '2px 5px', borderRadius: '4px', marginLeft: '5px', color: '#fff', backgroundColor: 'var(--color-text-muted, #888)', verticalAlign: 'middle' }}>coming soon</span>
+                <span style={{ fontSize: '9px', fontWeight: 600, letterSpacing: '0.03em', textTransform: 'uppercase', lineHeight: 1, padding: '2px 5px', borderRadius: '4px', marginLeft: '5px', color: 'var(--grey-0)', backgroundColor: 'var(--color-text-muted, #888)', verticalAlign: 'middle' }}>coming soon</span>
               </button>
             </>
           ) : (
@@ -89,7 +89,7 @@ export function Navigation({ user, onNavigate, onGetStarted, currentRoute }: Nav
                 className={cn("nav-link", (currentRoute === '/equip' || currentRoute?.startsWith('/equip-')) && "active")}
               >
                 Equip
-                <span style={{ fontSize: '9px', fontWeight: 600, letterSpacing: '0.03em', textTransform: 'uppercase', lineHeight: 1, padding: '2px 5px', borderRadius: '4px', marginLeft: '5px', color: '#fff', backgroundColor: 'var(--color-primary-default, #6941C6)', verticalAlign: 'middle' }}>beta</span>
+                <span style={{ fontSize: '9px', fontWeight: 600, letterSpacing: '0.03em', textTransform: 'uppercase', lineHeight: 1, padding: '2px 5px', borderRadius: '4px', marginLeft: '5px', color: 'var(--grey-0)', backgroundColor: 'var(--color-primary-default, #6941C6)', verticalAlign: 'middle' }}>beta</span>
               </button>
               <button 
                 onClick={() => onNavigate('/resource')} 
@@ -102,7 +102,7 @@ export function Navigation({ user, onNavigate, onGetStarted, currentRoute }: Nav
                 className={cn("nav-link", (currentRoute === '/consultation' || currentRoute?.startsWith('/consultation-')) && "active")}
               >
                 Consultation
-                <span style={{ fontSize: '9px', fontWeight: 600, letterSpacing: '0.03em', textTransform: 'uppercase', lineHeight: 1, padding: '2px 5px', borderRadius: '4px', marginLeft: '5px', color: '#fff', backgroundColor: 'var(--color-text-muted, #888)', verticalAlign: 'middle' }}>coming soon</span>
+                <span style={{ fontSize: '9px', fontWeight: 600, letterSpacing: '0.03em', textTransform: 'uppercase', lineHeight: 1, padding: '2px 5px', borderRadius: '4px', marginLeft: '5px', color: 'var(--grey-0)', backgroundColor: 'var(--color-text-muted, #888)', verticalAlign: 'middle' }}>coming soon</span>
               </button>
               <button 
                 onClick={() => onNavigate('/about')} 

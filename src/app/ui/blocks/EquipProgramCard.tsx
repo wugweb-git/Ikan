@@ -76,7 +76,7 @@ export function EquipProgramCard({ program, durationLabel = '', onClick }: Equip
               padding: '4px 10px',
               borderRadius: 'var(--radius-pill)',
               backgroundColor: 'rgba(0,0,0,0.6)',
-              color: '#fff',
+              color: 'var(--grey-0)',
               fontFamily: 'var(--font-family-base)',
               fontWeight: 500,
               fontSize: 'var(--text-xs)',

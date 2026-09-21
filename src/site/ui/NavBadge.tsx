@@ -16,7 +16,7 @@ export function NavBadge({ label, size = 'sm' }: { label?: string; size?: 'sm' |
         padding: px,
         borderRadius: '4px',
         marginLeft: '5px',
-        color: '#fff',
+        color: 'var(--grey-0)',
         backgroundColor: isBeta ? 'var(--color-primary-default, #6941C6)' : 'var(--color-text-muted, #888)',
         verticalAlign: 'middle',
         display: 'inline-block',

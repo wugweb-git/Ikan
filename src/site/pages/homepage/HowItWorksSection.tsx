@@ -303,7 +303,7 @@ function DesktopCard({
             borderRadius: '12px',
             backgroundColor: isCenter
               ? 'rgba(255, 255, 255, 0.6)'
-              : '#F5F5F5',
+              : 'var(--grey-1)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -378,7 +378,7 @@ function MobileCard({ card }: { card: HowItWorksCard }) {
             width: '36px',
             height: '36px',
             borderRadius: '10px',
-            backgroundColor: '#F5F5F5',
+            backgroundColor: 'var(--grey-1)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',

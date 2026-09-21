@@ -169,7 +169,7 @@ function EmailPreview({ html }: { html: string }) {
   }, [html]);
 
   return (
-    <div style={{ border: `1px solid ${B.border}`, borderRadius: 'var(--radius-lg)', overflow: 'hidden', backgroundColor: '#f5f5f5' }}>
+    <div style={{ border: `1px solid ${B.border}`, borderRadius: 'var(--radius-lg)', overflow: 'hidden', backgroundColor: 'var(--grey-1)' }}>
       <div className="flex items-center justify-between" style={{ padding: '8px 12px', backgroundColor: B.bgMuted, borderBottom: `1px solid ${B.border}` }}>
         <div className="flex items-center gap-2">
           <div style={{ width: 10, height: 10, borderRadius: '50%', backgroundColor: '#FF5F57' }} />
@@ -182,7 +182,7 @@ function EmailPreview({ html }: { html: string }) {
       <iframe
         ref={iframeRef}
         title="Email Preview"
-        style={{ width: '100%', height: 500, border: 'none', backgroundColor: '#f5f5f5' }}
+        style={{ width: '100%', height: 500, border: 'none', backgroundColor: 'var(--grey-1)' }}
         sandbox="allow-same-origin"
       />
     </div>

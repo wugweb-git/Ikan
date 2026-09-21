@@ -311,7 +311,7 @@ function PrimaryCard({ primaryAction, onNavigate }: { primaryAction: EngineResul
         </div>
 
         <h3 style={{
-          color: '#FFFFFF',
+          color: 'var(--grey-0)',
           fontSize: 'var(--text-lg)',
           fontWeight: 500,
           fontFamily: 'var(--font-family-base)',
@@ -342,7 +342,7 @@ function PrimaryCard({ primaryAction, onNavigate }: { primaryAction: EngineResul
           style={{
             gap: 8,
             backgroundColor: 'white',
-            color: '#1a1a1a',
+            color: 'var(--grey-9)',
             fontWeight: 500,
             fontFamily: 'var(--font-family-base)',
             fontSize: 'var(--text-sm)',

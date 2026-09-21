@@ -214,7 +214,7 @@ export function AssessmentSection({ onGetStarted }: AssessmentSectionProps) {
                     height: '100%',
                     borderRadius: '32px',
                     overflow: 'hidden',
-                    backgroundColor: '#1A1A1A',
+                    backgroundColor: 'var(--grey-9)',
                     border: '6px solid #2A2A2A',
                     boxShadow: '0 20px 60px rgba(0,0,0,0.15), 0 8px 20px rgba(0,0,0,0.08)',
                   }}
@@ -223,7 +223,7 @@ export function AssessmentSection({ onGetStarted }: AssessmentSectionProps) {
                   <div
                     style={{
                       height: '28px',
-                      backgroundColor: '#F5F5F5',
+                      backgroundColor: 'var(--grey-1)',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
@@ -248,7 +248,7 @@ export function AssessmentSection({ onGetStarted }: AssessmentSectionProps) {
                     style={{
                       width: '100%',
                       height: 'calc(100% - 28px)',
-                      backgroundColor: '#F5F5F5',
+                      backgroundColor: 'var(--grey-1)',
                       display: 'flex',
                       flexDirection: 'column',
                       padding: '16px 14px',
@@ -270,7 +270,7 @@ export function AssessmentSection({ onGetStarted }: AssessmentSectionProps) {
                     {/* Mood card */}
                     <div
                       style={{
-                        backgroundColor: '#FFFFFF',
+                        backgroundColor: 'var(--grey-0)',
                         borderRadius: '14px',
                         padding: '14px',
                         display: 'flex',
@@ -287,7 +287,7 @@ export function AssessmentSection({ onGetStarted }: AssessmentSectionProps) {
                               width: '36px',
                               height: '36px',
                               borderRadius: '10px',
-                              backgroundColor: i === 0 ? '#4ABDAC20' : '#F5F5F5',
+                              backgroundColor: i === 0 ? '#4ABDAC20' : 'var(--grey-1)',
                               border: i === 0 ? '2px solid #4ABDAC' : '1px solid #EBEBEB',
                               display: 'flex',
                               alignItems: 'center',
@@ -312,7 +312,7 @@ export function AssessmentSection({ onGetStarted }: AssessmentSectionProps) {
                           key={action.label}
                           style={{
                             flex: 1,
-                            backgroundColor: '#FFFFFF',
+                            backgroundColor: 'var(--grey-0)',
                             borderRadius: '12px',
                             padding: '10px 6px',
                             display: 'flex',
@@ -345,7 +345,7 @@ export function AssessmentSection({ onGetStarted }: AssessmentSectionProps) {
                     {/* Program card */}
                     <div
                       style={{
-                        backgroundColor: '#FFFFFF',
+                        backgroundColor: 'var(--grey-0)',
                         borderRadius: '14px',
                         padding: '12px',
                         display: 'flex',
@@ -376,7 +376,7 @@ export function AssessmentSection({ onGetStarted }: AssessmentSectionProps) {
                           width: '28px',
                           height: '28px',
                           borderRadius: '50%',
-                          backgroundColor: '#F5F5F5',
+                          backgroundColor: 'var(--grey-1)',
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
@@ -389,12 +389,12 @@ export function AssessmentSection({ onGetStarted }: AssessmentSectionProps) {
 
                     {/* Stats row */}
                     <div style={{ display: 'flex', gap: '8px' }}>
-                      <div style={{ flex: 1, backgroundColor: '#FFFFFF', borderRadius: '12px', padding: '10px', textAlign: 'center' }}>
-                        <p style={{ fontFamily: 'var(--font-family-base)', fontSize: '14px', fontWeight: 500, color: '#4ABDAC', margin: 0 }}>7</p>
+                      <div style={{ flex: 1, backgroundColor: 'var(--grey-0)', borderRadius: '12px', padding: '10px', textAlign: 'center' }}>
+                        <p style={{ fontFamily: 'var(--font-family-base)', fontSize: '14px', fontWeight: 500, color: 'var(--ikan-brand-teal)', margin: 0 }}>7</p>
                         <p style={{ fontFamily: 'var(--font-family-base)', fontSize: '8px', color: '#717182', margin: '2px 0 0', fontWeight: 400 }}>Day Streak</p>
                       </div>
-                      <div style={{ flex: 1, backgroundColor: '#FFFFFF', borderRadius: '12px', padding: '10px', textAlign: 'center' }}>
-                        <p style={{ fontFamily: 'var(--font-family-base)', fontSize: '14px', fontWeight: 500, color: '#F0A830', margin: 0 }}>85%</p>
+                      <div style={{ flex: 1, backgroundColor: 'var(--grey-0)', borderRadius: '12px', padding: '10px', textAlign: 'center' }}>
+                        <p style={{ fontFamily: 'var(--font-family-base)', fontSize: '14px', fontWeight: 500, color: 'var(--ikan-brand-amber)', margin: 0 }}>85%</p>
                         <p style={{ fontFamily: 'var(--font-family-base)', fontSize: '8px', color: '#717182', margin: '2px 0 0', fontWeight: 400 }}>Well-being</p>
                       </div>
                     </div>
@@ -413,7 +413,7 @@ export function AssessmentSection({ onGetStarted }: AssessmentSectionProps) {
                     height: '380px',
                     borderRadius: '28px',
                     overflow: 'hidden',
-                    backgroundColor: '#1A1A1A',
+                    backgroundColor: 'var(--grey-9)',
                     border: '5px solid #2A2A2A',
                     boxShadow: '0 16px 48px rgba(0,0,0,0.12)',
                     zIndex: -1,

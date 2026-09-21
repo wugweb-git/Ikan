@@ -277,7 +277,7 @@ export function PublicBottomNavMobile({ currentRoute, onNavigate, onSignIn, clas
                                   className="uppercase"
                                   style={{
                                     fontSize: '7px', fontWeight: 700, letterSpacing: '0.02em', lineHeight: 1,
-                                    padding: '1px 3px', borderRadius: '3px', marginLeft: '3px', color: '#fff',
+                                    padding: '1px 3px', borderRadius: '3px', marginLeft: '3px', color: 'var(--grey-0)',
                                     backgroundColor: 'var(--color-primary-default, #6941C6)',
                                   }}
                                 >
@@ -346,7 +346,7 @@ export function PublicBottomNavMobile({ currentRoute, onNavigate, onSignIn, clas
                                   className="uppercase"
                                   style={{
                                     fontSize: '7px', fontWeight: 700, letterSpacing: '0.02em', lineHeight: 1,
-                                    padding: '1px 3px', borderRadius: '3px', marginLeft: '3px', color: '#fff',
+                                    padding: '1px 3px', borderRadius: '3px', marginLeft: '3px', color: 'var(--grey-0)',
                                     backgroundColor: 'var(--color-primary-default, #6941C6)',
                                   }}
                                 >

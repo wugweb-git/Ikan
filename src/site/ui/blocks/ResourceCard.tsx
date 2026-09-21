@@ -67,7 +67,7 @@ export function ResourceCard({ post, onClick, variant = 'default', className }: 
                 fontSize: '11px',
                 fontWeight: 'var(--font-weight-medium)',
                 fontFamily: 'var(--font-family-base)',
-                color: '#FFFFFF',
+                color: 'var(--grey-0)',
                 textTransform: 'uppercase',
                 letterSpacing: '0.6px',
               }}

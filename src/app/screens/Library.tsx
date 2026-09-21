@@ -338,7 +338,7 @@ export function Library({ onResourceSelect, onNavigate, className }: LibraryProp
                         backdropFilter: 'blur(4px)',
                       }}
                     >
-                      <span style={{ fontSize: '11px', fontWeight: 'var(--font-weight-medium)', fontFamily: 'var(--font-family-base)', color: '#FFFFFF', textTransform: 'uppercase', letterSpacing: '0.6px' }}>
+                      <span style={{ fontSize: '11px', fontWeight: 'var(--font-weight-medium)', fontFamily: 'var(--font-family-base)', color: 'var(--grey-0)', textTransform: 'uppercase', letterSpacing: '0.6px' }}>
                         {featuredResources[0].category}
                       </span>
                     </div>

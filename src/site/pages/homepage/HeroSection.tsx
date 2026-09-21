@@ -21,9 +21,9 @@ const EXTRA_PORTRAITS = [
 
 // Distinct colors for each label card
 const LABEL_COLORS: Record<string, { bg: string; text: string }> = {
-  acceptance: { bg: '#4ABDAC', text: '#FFFFFF' },       // Teal
-  understanding: { bg: '#F0A830', text: '#FFFFFF' },    // Warm amber
-  compassion: { bg: '#E87B7B', text: '#FFFFFF' },       // Soft rose
+  acceptance: { bg: 'var(--ikan-brand-teal)', text: 'var(--grey-0)' },       // Teal
+  understanding: { bg: 'var(--ikan-brand-amber)', text: 'var(--grey-0)' },    // Warm amber
+  compassion: { bg: 'var(--ikan-brand-coral)', text: 'var(--grey-0)' },       // Soft rose
 };
 
 function getLabelColor(title: string): { bg: string; text: string } {
