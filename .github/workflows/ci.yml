@@ -54,6 +54,11 @@ jobs:
       - name: Static a11y (ratchet)
         run: npm run lint:a11y
 
+      # admin/, app/ and site/ may not import each other; shared/ imports no
+      # surface. Fails when the number of crossings rises above .boundary-baseline.
+      - name: Surface boundary (ratchet)
+        run: npm run lint:boundary
+
       # A broken build is the one thing that must never merge.
       - name: Build
         run: npm run build
