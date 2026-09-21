@@ -1,5 +1,5 @@
 import type React from 'react';
-import { Label } from '../../components/ui/label';
+import { Label } from '../ui/label';
 import { FormFieldError } from '../ui/form-field-error';
 import { Info, CircleAlert } from 'lucide-react';
 

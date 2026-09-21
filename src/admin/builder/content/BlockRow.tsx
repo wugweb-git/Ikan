@@ -8,12 +8,12 @@ import { useDrag, useDrop } from 'react-dnd';
 import { GripVertical, FastForward, Clock, Hash, Repeat, MoreVertical, ArrowRightLeft, Copy, Trash2 } from 'lucide-react';
 import { Activity, repeatSummary } from '../../../lib/blocks/block-model';
 import { getIconComponent, iconResolves } from '../../../lib/catalog-icons';
-import { Button } from '../../../components/ui/button';
-import { cn } from '../../../components/ui/utils';
+import { Button } from '../../ui/button';
+import { cn } from '../../ui/utils';
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
   DropdownMenuSub, DropdownMenuSubTrigger, DropdownMenuSubContent, DropdownMenuSeparator,
-} from '../../../components/ui/dropdown-menu';
+} from '../../ui/dropdown-menu';
 import { ItemTypes } from './dnd';
 
 // --- DRAGGABLE BLOCK COMPONENT ---

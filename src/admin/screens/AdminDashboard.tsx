@@ -27,9 +27,9 @@ import {
   Blocks,
   Calculator,
 } from 'lucide-react';
-import { cn } from '../../components/ui/utils';
-import { Button } from '../../components/ui/button';
-import { Input } from '../../components/ui/input';
+import { cn } from '../ui/utils';
+import { Button } from '../ui/button';
+import { Input } from '../ui/input';
 import { SideNav, SideNavGroup } from '../../app/shell/navigation/SideNav';
 import { LogoIcon } from '../../components/Logo';
 import { usePublicSettings } from '../../hooks/usePublicSettings';

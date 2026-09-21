@@ -3,11 +3,11 @@ import { clearEngineConfigCache } from '../../../lib/recommendation-engine';
 import { Trash2, Plus, Save, BookOpen, FileText, ClipboardList, Sparkles, AlertTriangle } from 'lucide-react';
 import { useNotifications } from '../../../contexts/NotificationContext';
 import { AdminHeader } from '../AdminHeader';
-import { Button } from '../../../components/ui/button';
-import { Card, CardContent } from '../../../components/ui/card';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../../components/ui/table';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../../components/ui/select';
-import { Input } from '../../../components/ui/input';
+import { Button } from '../../ui/button';
+import { Card, CardContent } from '../../ui/card';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../ui/table';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../ui/select';
+import { Input } from '../../ui/input';
 import { apiClient } from '../../../lib/api-client';
 import { useMetadata } from '../../../hooks/useMetadata';
 

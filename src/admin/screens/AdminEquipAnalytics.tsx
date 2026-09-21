@@ -4,12 +4,12 @@ import { useNotifications } from '../../contexts/NotificationContext';
 import { apiClient } from '../../lib/api-client';
 import { AdminHeader } from '../components/AdminHeader';
 import { AdminLoading } from '../components/AdminLoading';
-import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { useIsMobile } from '../../hooks/useIsMobile';
-import { cn } from '../../components/ui/utils';
+import { cn } from '../ui/utils';
 import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { AdminStatusBadge } from '../components/AdminStatusBadge';
-import { Progress } from '../../components/ui/progress';
+import { Progress } from '../ui/progress';
 
 interface AdminEquipAnalyticsProps {
   onBack?: () => void;

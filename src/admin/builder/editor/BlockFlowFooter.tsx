@@ -13,8 +13,8 @@
  * model's version of the same question, and one a caller can actually answer.
  */
 import { FastForward, Clock, Layers } from 'lucide-react';
-import { Input } from '../../../components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../../components/ui/select';
+import { Input } from '../../ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../ui/select';
 import { Activity } from '../../../lib/blocks/block-model';
 import type { DayPolicy } from '../../../lib/blocks/day-policy';
 

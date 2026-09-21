@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { ChevronLeft, ChevronRight, Calendar, Clock } from 'lucide-react';
-import { Button } from '../../components/ui/button';
+import { Button } from '../ui/button';
 import { AdminStatusBadge } from './AdminStatusBadge';
-import { Card, CardContent } from '../../components/ui/card';
+import { Card, CardContent } from '../ui/card';
 
 interface TimeSlot {
   time: string;

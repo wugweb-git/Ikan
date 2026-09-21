@@ -6,9 +6,9 @@
 import { useState, useRef } from 'react';
 import { Image as ImageIcon, Upload, FolderOpen, X, Loader2, Link as LinkIcon } from 'lucide-react';
 import { apiClient } from '../../lib/api-client';
-import { Button } from '../../components/ui/button';
-import { Input } from '../../components/ui/input';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '../../components/ui/dialog';
+import { Button } from '../ui/button';
+import { Input } from '../ui/input';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '../ui/dialog';
 
 interface ImageFieldProps {
   value: string;

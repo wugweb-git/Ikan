@@ -26,8 +26,8 @@
 import { useRef } from 'react';
 import { Image as ImageIcon, Video, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
-import { Input } from '../../../components/ui/input';
-import { Label } from '../../../components/ui/label';
+import { Input } from '../../ui/input';
+import { Label } from '../../ui/label';
 import { Activity, interactionsOfBlock, activityOf, normalizeSubtype } from '../../../lib/blocks/block-model';
 import { validateBlock } from '../../../lib/blocks/block-validation';
 import { useMetadata } from '../../../hooks/useMetadata';

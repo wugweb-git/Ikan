@@ -3,17 +3,17 @@ import {
   Plus, Pencil, Trash2, MoreVertical, Search, 
   LayoutGrid, Users, ChevronRight 
 } from 'lucide-react';
-import { Button } from '../../components/ui/button';
-import { Input } from '../../components/ui/input';
-import { Card } from '../../components/ui/card';
+import { Button } from '../ui/button';
+import { Input } from '../ui/input';
+import { Card } from '../ui/card';
 import { AdminStatusBadge } from '../components/AdminStatusBadge';
-import { Skeleton } from '../../components/ui/skeleton-loader';
+import { Skeleton } from '../ui/skeleton-loader';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from '../../components/ui/dropdown-menu';
+} from '../ui/dropdown-menu';
 import { apiClient } from '../../lib/api-client';
 import { EquipProgram } from '../../lib/blocks/block-model';
 import { useNotifications } from '../../contexts/NotificationContext';

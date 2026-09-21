@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { Button } from '../../components/ui/button';
-import { Card, CardContent } from '../../components/ui/card';
+import { Button } from '../ui/button';
+import { Card, CardContent } from '../ui/card';
 import { apiClient } from '../../lib/api-client';
 import { CircleCheck, Loader2, Save, RotateCcw, Clock, Database, CircleAlert } from 'lucide-react';
 import { AdminStatusBadge } from './AdminStatusBadge';

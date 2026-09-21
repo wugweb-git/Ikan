@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { Button } from '../../components/ui/button';
-import { Input } from '../../components/ui/input';
-import { Label } from '../../components/ui/label';
+import { Button } from '../ui/button';
+import { Input } from '../ui/input';
+import { Label } from '../ui/label';
 import { LogoIcon } from '../../components/Logo';
 import { Lock, ArrowLeft, Loader2, CircleAlert, Eye, EyeOff, Mail } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNotifications } from '../../contexts/NotificationContext';
 import { usePublicSettings } from '../../hooks/usePublicSettings';
-import { Checkbox } from '../../components/ui/checkbox';
+import { Checkbox } from '../ui/checkbox';
 
 const REMEMBER_KEY = 'ikan_admin_remembered_email';
 

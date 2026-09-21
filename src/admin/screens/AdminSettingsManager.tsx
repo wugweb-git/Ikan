@@ -10,11 +10,11 @@ import { AdminLoading } from '../components/AdminLoading';
 import { AdminSection } from '../components/AdminSection';
 import { AdminFormField } from '../components/AdminFormField';
 import { useIsMobile } from '../../hooks/useIsMobile';
-import { Button } from '../../components/ui/button';
-import { Input } from '../../components/ui/input';
-import { Textarea } from '../../components/ui/textarea';
-import { Checkbox } from '../../components/ui/checkbox';
-import { Label } from '../../components/ui/label';
+import { Button } from '../ui/button';
+import { Input } from '../ui/input';
+import { Textarea } from '../ui/textarea';
+import { Checkbox } from '../ui/checkbox';
+import { Label } from '../ui/label';
 import { ImageField } from '../components/ImageField';
 
 // ═══════════════════════════════════════════════════════════════

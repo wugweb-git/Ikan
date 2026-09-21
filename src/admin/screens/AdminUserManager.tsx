@@ -4,13 +4,13 @@ import { useNotifications } from '../../contexts/NotificationContext';
 import { apiClient } from '../../lib/api-client';
 import { AdminHeader } from '../components/AdminHeader';
 import { useIsMobile } from '../../hooks/useIsMobile';
-import { Button } from '../../components/ui/button';
+import { Button } from '../ui/button';
 import { AdminStatusBadge } from '../components/AdminStatusBadge';
 import { UserEditPage } from './UserEditPage';
 import { AdminDataTable, Column, FilterOption } from '../components/AdminDataTable';
-import { SkeletonTable } from '../../components/ui/skeleton-loader';
+import { SkeletonTable } from '../ui/skeleton-loader';
 import { ErrorState } from '../ui/error-state';
-import { EmptyState } from '../../components/ui/empty-state';
+import { EmptyState } from '../ui/empty-state';
 import { useMetadata } from '../../hooks/useMetadata';
 import {
   DropdownMenu,
@@ -19,7 +19,7 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "../../components/ui/dropdown-menu";
+} from "../ui/dropdown-menu";
 
 interface UserProfile {
   user_id: string;

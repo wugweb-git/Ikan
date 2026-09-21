@@ -13,7 +13,7 @@
 import { X, Plus, Repeat } from 'lucide-react';
 import { DayContent } from '../../../lib/blocks/block-model';
 import { dayMeta } from '../../../lib/blocks/day-meta';
-import { Button } from '../../../components/ui/button';
+import { Button } from '../../ui/button';
 
 export interface CalendarOverlayProps {
   days: DayContent[];

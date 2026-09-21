@@ -8,7 +8,7 @@
  */
 import { CalendarDays, Plus } from 'lucide-react';
 import { DayContent } from '../../../lib/blocks/block-model';
-import { Button } from '../../../components/ui/button';
+import { Button } from '../../ui/button';
 import { DraggableDay } from './DayChip';
 
 export interface DayCalendarStripProps {

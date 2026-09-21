@@ -25,17 +25,17 @@ import { AdminHeader } from '../components/AdminHeader';
 import { AdminEmptyState } from '../components/AdminEmptyState';
 import { AdminLoading } from '../components/AdminLoading';
 import { useIsMobile } from '../../hooks/useIsMobile';
-import { Button } from '../../components/ui/button';
+import { Button } from '../ui/button';
 import { AdminStatusBadge, resolveStatusVariant } from '../components/AdminStatusBadge';
 import { ConsultantEditPage, Consultant } from './ConsultantEditPage';
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription
-} from '../../components/ui/dialog';
+} from '../ui/dialog';
 import { BookingCalendar } from '../components/BookingCalendar';
 import { AdminDataTable, Column, FilterOption } from '../components/AdminDataTable';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../components/ui/tabs';
-import { Textarea } from '../../components/ui/textarea';
-import { Label } from '../../components/ui/label';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
+import { Textarea } from '../ui/textarea';
+import { Label } from '../ui/label';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -43,7 +43,7 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "../../components/ui/dropdown-menu";
+} from "../ui/dropdown-menu";
 import { projectId, publicAnonKey } from '../../utils/supabase/info';
 import { supabase } from '../../lib/supabase-client';
 import { copyToClipboard } from '../../lib/clipboard';

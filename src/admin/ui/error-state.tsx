@@ -1,6 +1,6 @@
-import { cn } from '../../components/ui/utils';
+import { cn } from './utils';
 import { AlertTriangle, RefreshCw, House, ArrowLeft } from 'lucide-react';
-import { Button } from '../../components/ui/button';
+import { Button } from './button';
 
 interface ErrorStateProps {
   title?: string;

@@ -5,11 +5,11 @@ import { apiClient } from '../../lib/api-client';
 import { AdminHeader } from '../components/AdminHeader';
 import { AdminStatusBadge } from '../components/AdminStatusBadge';
 import { useIsMobile } from '../../hooks/useIsMobile';
-import { Button } from '../../components/ui/button';
+import { Button } from '../ui/button';
 import { EquipProgramWizard } from './EquipProgramWizard';
 import { EquipProgram } from '../../lib/blocks/block-model';
 import { AdminDataTable, Column, FilterOption } from '../components/AdminDataTable';
-import { Skeleton } from '../../components/ui/skeleton-loader';
+import { Skeleton } from '../ui/skeleton-loader';
 import { ImageWithFallback } from '../../components/figma/ImageWithFallback';
 import { useMetadata } from '../../hooks/useMetadata';
 import {
@@ -18,7 +18,7 @@ import {
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuTrigger,
-} from "../../components/ui/dropdown-menu";
+} from "../ui/dropdown-menu";
 
 interface AdminEquipProgramManagerProps {
   onBack?: () => void;

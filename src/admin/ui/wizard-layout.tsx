@@ -1,8 +1,8 @@
 import type React from 'react';
-import { cn } from '../../components/ui/utils';
+import { cn } from './utils';
 import { ChevronLeft, X, Eye, ArrowRight, Check } from 'lucide-react';
-import { Button } from '../../components/ui/button';
-import { Badge } from '../../components/ui/badge';
+import { Button } from './button';
+import { Badge } from './badge';
 import { WizardStepper, WizardStep } from './wizard-stepper';
 
 export interface WizardLayoutProps {

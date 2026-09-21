@@ -14,10 +14,10 @@
 import { MoreVertical, Settings, Repeat, Copy, Trash2, Clock, Layers } from 'lucide-react';
 import { DayContent } from '../../../lib/blocks/block-model';
 import { dayMeta } from '../../../lib/blocks/day-meta';
-import { Button } from '../../../components/ui/button';
+import { Button } from '../../ui/button';
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator,
-} from '../../../components/ui/dropdown-menu';
+} from '../../ui/dropdown-menu';
 
 export interface DayHeaderProps {
   day: DayContent;

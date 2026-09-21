@@ -4,14 +4,14 @@ import { useNotifications } from '../../contexts/NotificationContext';
 import { apiClient } from '../../lib/api-client';
 import { AdminHeader } from '../components/AdminHeader';
 import { useIsMobile } from '../../hooks/useIsMobile';
-import { Button } from '../../components/ui/button';
+import { Button } from '../ui/button';
 import { AdminStatusBadge } from '../components/AdminStatusBadge';
 import { ResourceEditPage, Resource } from './ResourceEditPage';
 import { AdminDataTable, Column, FilterOption } from '../components/AdminDataTable';
 import { ImageWithFallback } from '../../components/figma/ImageWithFallback';
 import { ErrorState } from '../ui/error-state';
-import { EmptyState } from '../../components/ui/empty-state';
-import { SkeletonTable } from '../../components/ui/skeleton-loader';
+import { EmptyState } from '../ui/empty-state';
+import { SkeletonTable } from '../ui/skeleton-loader';
 import { useMetadata } from '../../hooks/useMetadata';
 import {
   DropdownMenu,
@@ -20,7 +20,7 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "../../components/ui/dropdown-menu";
+} from "../ui/dropdown-menu";
 
 interface AdminResourceManagerProps {
   onBack?: () => void;

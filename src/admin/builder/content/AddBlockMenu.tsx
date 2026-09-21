@@ -4,8 +4,8 @@
  */
 import type { JSX } from 'react';
 import { Plus, BookOpen, PenTool, MessageCircle, Target } from 'lucide-react';
-import { Button } from '../../../components/ui/button';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '../../../components/ui/dropdown-menu';
+import { Button } from '../../ui/button';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '../../ui/dropdown-menu';
 import { PALETTE_BLOCK_TYPES } from '../../../lib/blocks/block-type-rules';
 
 // --- HELPER COMPONENTS ---

@@ -7,9 +7,9 @@ import {
   TableHead, 
   TableHeader, 
   TableRow 
-} from '../../components/ui/table';
-import { Input } from '../../components/ui/input';
-import { Button } from '../../components/ui/button';
+} from '../ui/table';
+import { Input } from '../ui/input';
+import { Button } from '../ui/button';
 import { 
   ChevronLeft, 
   ChevronRight, 
@@ -18,8 +18,8 @@ import {
   ArrowUp, 
   ArrowDown
 } from 'lucide-react';
-import { Card, CardContent } from '../../components/ui/card';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/select';
+import { Card, CardContent } from '../ui/card';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 
 export interface Column<T> {
   header: string;

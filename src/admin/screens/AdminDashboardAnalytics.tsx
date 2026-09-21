@@ -4,7 +4,7 @@ import { useNotifications } from '../../contexts/NotificationContext';
 import { apiClient } from '../../lib/api-client';
 import { AdminHeader } from '../components/AdminHeader';
 import { AdminSkeleton, AdminErrorState } from '../components/AdminErrorState';
-import { Card, CardContent } from '../../components/ui/card';
+import { Card, CardContent } from '../ui/card';
 
 interface AdminDashboardAnalyticsProps {
   onBack?: () => void;

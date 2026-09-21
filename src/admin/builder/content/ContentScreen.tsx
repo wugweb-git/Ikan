@@ -18,7 +18,7 @@ import { useMetadata } from '../../../hooks/useMetadata';
 import { validateDay, hasBlockingIssues } from '../../../lib/blocks/block-validation';
 import { seedDayFromTemplate, policyOf } from '../../../lib/blocks/day-policy';
 import type { ExerciseSubtype } from '../../../lib/blocks/block-model';
-import { cn } from '../../../components/ui/utils';
+import { cn } from '../../ui/utils';
 import { DraggableBlock } from './BlockRow';
 import { BlockPaletteMenu } from './AddBlockMenu';
 import { DayCalendarStrip } from './DayCalendarStrip';

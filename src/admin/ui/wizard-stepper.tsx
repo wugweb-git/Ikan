@@ -1,6 +1,6 @@
 import React from 'react';
 import { Check } from 'lucide-react';
-import { cn } from '../../components/ui/utils';
+import { cn } from './utils';
 
 export interface WizardStep {
   id: string;

@@ -3,13 +3,13 @@ import {
   Mail, Send, MessageSquare, Phone, FileText, Plus, Eye, EyeOff,
   Trash2, Loader2, RefreshCw, Copy, Code, X, Save, Pencil,
 } from 'lucide-react';
-import { Button } from '../../components/ui/button';
-import { Input } from '../../components/ui/input';
-import { Card, CardContent } from '../../components/ui/card';
+import { Button } from '../ui/button';
+import { Input } from '../ui/input';
+import { Card, CardContent } from '../ui/card';
 import { AdminStatusBadge, resolveStatusVariant } from './AdminStatusBadge';
-import { Textarea } from '../../components/ui/textarea';
-import { Label } from '../../components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/select';
+import { Textarea } from '../ui/textarea';
+import { Label } from '../ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { useNotifications } from '../../contexts/NotificationContext';
 import { AdminHeader } from './AdminHeader';
 import { AdminCommunicationAPI } from './AdminCommunicationAPI';

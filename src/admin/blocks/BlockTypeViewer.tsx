@@ -7,8 +7,8 @@ import { apiClient } from '../../lib/api-client';
 import { getIconComponent, iconResolves } from '../../lib/catalog-icons';
 import { AUTHORABLE_SUBTYPES } from '../../lib/blocks/block-model';
 import { missingRequirements, blockOf } from '../../lib/blocks/content-hierarchy';
-import { Card, CardContent } from '../../components/ui/card';
-import { Button } from '../../components/ui/button';
+import { Card, CardContent } from '../ui/card';
+import { Button } from '../ui/button';
 import { AdminStatusBadge } from '../components/AdminStatusBadge';
 import {
   LEAF_BLOCK_TYPES,

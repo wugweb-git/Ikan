@@ -1,5 +1,5 @@
 import { CircleAlert } from 'lucide-react';
-import { cn } from '../../components/ui/utils';
+import { cn } from './utils';
 
 interface FormFieldErrorProps {
   error?: string;

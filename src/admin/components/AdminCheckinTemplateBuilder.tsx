@@ -23,11 +23,11 @@ import {
   ArrowDown,
   Pencil,
 } from 'lucide-react';
-import { Card, CardContent } from '../../components/ui/card';
-import { Button } from '../../components/ui/button';
-import { Input } from '../../components/ui/input';
-import { Label } from '../../components/ui/label';
-import { Switch } from '../../components/ui/switch';
+import { Card, CardContent } from '../ui/card';
+import { Button } from '../ui/button';
+import { Input } from '../ui/input';
+import { Label } from '../ui/label';
+import { Switch } from '../ui/switch';
 import { apiClient } from '../../lib/api-client';
 import tokens from '../../lib/design-tokens';
 import { getScaleByKey, getAvailableScaleKeys, getContextTags, loadCustomScales, clearScaleCache } from '../../lib/emoji-utils';

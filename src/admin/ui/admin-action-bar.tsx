@@ -1,5 +1,5 @@
 import { Trash2, X, Save, Upload, Eye } from 'lucide-react';
-import { Button } from '../../components/ui/button';
+import { Button } from './button';
 
 interface AdminActionBarProps {
   // Primary actions

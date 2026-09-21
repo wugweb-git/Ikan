@@ -12,11 +12,11 @@ import {
   CircleX,
   ExternalLink,
 } from 'lucide-react';
-import { Button } from '../../components/ui/button';
-import { Input } from '../../components/ui/input';
-import { Card, CardContent } from '../../components/ui/card';
-import { Label } from '../../components/ui/label';
-import { Switch } from '../../components/ui/switch';
+import { Button } from '../ui/button';
+import { Input } from '../ui/input';
+import { Card, CardContent } from '../ui/card';
+import { Label } from '../ui/label';
+import { Switch } from '../ui/switch';
 import { useNotifications } from '../../contexts/NotificationContext';
 import { AdminHeader } from './AdminHeader';
 import { AdminLoading } from './AdminLoading';

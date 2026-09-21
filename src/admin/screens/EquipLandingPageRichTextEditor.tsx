@@ -1,5 +1,5 @@
 import { EquipProgram } from '../../lib/blocks/block-model';
-import { Textarea } from '../../components/ui/textarea';
+import { Textarea } from '../ui/textarea';
 import { AdminFormField } from '../components/AdminFormField';
 
 interface EquipLandingPageRichTextEditorProps {

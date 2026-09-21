@@ -4,11 +4,11 @@ import { useNotifications } from '../../contexts/NotificationContext';
 import { apiClient } from '../../lib/api-client';
 import { AdminHeader } from '../components/AdminHeader';
 import { useIsMobile } from '../../hooks/useIsMobile';
-import { Button } from '../../components/ui/button';
+import { Button } from '../ui/button';
 import { AdminStatusBadge } from '../components/AdminStatusBadge';
 import { AssessmentEditPageWizard as AssessmentEditPage, Assessment } from './AssessmentEditPageWizard';
 import { AdminDataTable, Column, FilterOption } from '../components/AdminDataTable';
-import { Skeleton } from '../../components/ui/skeleton-loader';
+import { Skeleton } from '../ui/skeleton-loader';
 import { ImageWithFallback } from '../../components/figma/ImageWithFallback';
 import { useMetadata } from '../../hooks/useMetadata';
 import {
@@ -17,7 +17,7 @@ import {
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuTrigger,
-} from "../../components/ui/dropdown-menu";
+} from "../ui/dropdown-menu";
 
 interface AdminAssessmentManagerProps {
   onBack?: () => void;

@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react';
 import { AdminHeader } from './AdminHeader';
-import { Button } from '../../components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
-import { Input } from '../../components/ui/input';
-import { Label } from '../../components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/select';
+import { Button } from '../ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
+import { Input } from '../ui/input';
+import { Label } from '../ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import {
   Plus, X, Save, FolderOpen, Pencil, Trash2, RefreshCw, Download, Search,
 } from 'lucide-react';
@@ -12,7 +12,7 @@ import { apiClient } from '../../lib/api-client';
 import { toast } from 'sonner';
 import { invalidateMetadataCache } from '../../hooks/useMetadata';
 import { METADATA_CATALOG_ITEMS, METADATA_TYPE_LABELS, METADATA_TYPE_ICONS, METADATA_TYPE_GROUPS, type MetadataType } from '../../lib/metadata-catalog';
-import { Skeleton } from '../../components/ui/skeleton-loader';
+import { Skeleton } from '../ui/skeleton-loader';
 import { getIconComponent as sharedGetIconComponent } from '../../lib/catalog-icons';
 
 export interface AdminCategoryManagerProps {

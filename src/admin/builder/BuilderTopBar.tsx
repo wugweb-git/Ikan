@@ -12,8 +12,8 @@
  * record, Content builds it, and neither has to be finished before the other.
  */
 import { ChevronLeft, ChevronRight, Eye, Save, Upload, Trash2, X, LayoutPanelTop } from 'lucide-react';
-import { Button } from '../../components/ui/button';
-import { Badge } from '../../components/ui/badge';
+import { Button } from '../ui/button';
+import { Badge } from '../ui/badge';
 import type { BuilderScreen, RecordMeta } from './builder-types';
 
 export interface BuilderTopBarProps {

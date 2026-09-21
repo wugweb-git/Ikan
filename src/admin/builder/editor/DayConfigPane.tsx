@@ -12,8 +12,8 @@
  * and `layout` without them.
  */
 import { DayContent } from '../../../lib/blocks/block-model';
-import { Input } from '../../../components/ui/input';
-import { Textarea } from '../../../components/ui/textarea';
+import { Input } from '../../ui/input';
+import { Textarea } from '../../ui/textarea';
 
 export interface DayConfigPaneProps {
   day: DayContent;
