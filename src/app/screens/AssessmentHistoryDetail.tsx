@@ -4,13 +4,13 @@ import { Card, CardContent } from '../../components/ui/card';
 import { Button } from '../../components/ui/button';
 import { ChevronLeft, TrendingUp, TrendingDown, Minus, BarChart3, Play, Clock, Download } from 'lucide-react';
 import { XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Area, AreaChart } from 'recharts';
-import { apiClient } from '../../lib/api-client';
+import { apiClient } from '../../shared/api-client';
 import { LoadingSpinner } from '../../components/LoadingSpinner';
 import { SectionReportCard } from '../features/player/SectionReportCard';
 import type { SectionScoreResult } from '../../lib/assessment-sections';
 import { severityOfResult, tonePresentation } from '../../lib/severity-presentation';
 import { resolveResultPresentation, percentOfRange, type Tone } from '../../lib/result-presentation';
-import { loadScoringProfiles, getLoadedScoringProfiles } from '../../lib/recommendation-engine';
+import { loadScoringProfiles, getLoadedScoringProfiles } from '../../shared/engine/recommendation-engine';
 
 /**
  * Percentage of the achievable range, or null when there is no real maximum.

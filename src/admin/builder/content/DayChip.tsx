@@ -11,8 +11,8 @@
  */
 import { memo, useRef } from 'react';
 import { useDrag, useDrop } from 'react-dnd';
-import { DayContent } from '../../../lib/blocks/block-model';
-import { stageColour } from '../../../lib/blocks/block-fields';
+import { DayContent } from '../../../shared/blocks/block-model';
+import { stageColour } from '../../../shared/blocks/block-fields';
 import { ItemTypes } from './dnd';
 
 // --- DRAGGABLE DAY COMPONENT ---

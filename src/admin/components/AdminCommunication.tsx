@@ -16,7 +16,7 @@ import { AdminCommunicationAPI } from './AdminCommunicationAPI';
 import { AdminEmptyState } from './AdminEmptyState';
 import { useIsMobile } from '../../hooks/useIsMobile';
 import { projectId, publicAnonKey } from '../../utils/supabase/info';
-import { supabase } from '../../lib/supabase-client';
+import { supabase } from '../../shared/supabase-client';
 import tokens from '../../lib/design-tokens';
 
 // ── Design helpers ──────────────────────────────────────────────

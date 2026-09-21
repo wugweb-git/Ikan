@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useNotifications } from '../../../contexts/NotificationContext';
 import { useAuth } from '../../../contexts/AuthContext';
-import { apiClient } from '../../../lib/api-client';
+import { apiClient } from '../../../shared/api-client';
 import { useIsMobile } from '../../../hooks/useIsMobile';
 import { cn } from '../../../components/ui/utils';
-import { validatePassword, isCommonPassword, validateEmail } from '../../../lib/validation';
+import { validatePassword, isCommonPassword, validateEmail } from '../../../shared/validation';
 import { PasswordStrength } from '../../../components/ui/password-strength';
 import { Key, Mail, Monitor, ChevronDown, ChevronUp } from 'lucide-react';
 

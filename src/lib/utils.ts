@@ -1,5 +1,5 @@
 // utils.ts - small helpers and db mock for local dev
-import { apiClient } from './api-client';
+import { apiClient } from '../shared/api-client';
 
 // Database mock for local development
 export const dbMock = {

@@ -1,12 +1,12 @@
 import React, { useState, useEffect, lazy, Suspense } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
-import { AuthForm } from '../../components/AuthForm';
+import { AuthForm } from '../shell/AuthForm';
 import { AccountDetailsSection } from '../../components/page-blocks/AccountDetailsSection';
 import { SideNavAccount } from '../shell/navigation/SideNavAccount';
 import { cn } from '../../components/ui/utils';
 import { useNotifications } from '../../contexts/NotificationContext';
 import { useIsMobile } from '../../hooks/useIsMobile';
-import { validateProfile } from '../../lib/validation';
+import { validateProfile } from '../../shared/validation';
 import { AccountPageHeader } from '../../components/page-blocks/AccountPageHeader';
 
 // Lazy-load all account sub-screens so only the active tab loads

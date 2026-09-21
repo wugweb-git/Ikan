@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, type ElementType, type ReactNode } from 'react';
 import { Button } from '../ui/button';
 import { Card } from '../ui/card';
-import { apiClient } from '../../lib/api-client';
+import { apiClient } from '../../shared/api-client';
 import {
   Database, AlertTriangle, Trash2, RefreshCw, ChevronDown, ChevronRight,
   CircleCheck, CircleX, Users, HardDrive, Search, Shield, Loader2,

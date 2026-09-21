@@ -49,8 +49,8 @@
 export {
   SEVERITY_LEVELS, RESPONSE_TIERS, isSeverityLevel, compareSeverity,
   type SeverityLevel, type ResponseTier,
-} from '../supabase/functions/server/scoring-vocabulary';
-import { RESPONSE_TIERS, type SeverityLevel, type ResponseTier } from '../supabase/functions/server/scoring-vocabulary';
+} from '../../supabase/functions/server/scoring-vocabulary';
+import { RESPONSE_TIERS, type SeverityLevel, type ResponseTier } from '../../supabase/functions/server/scoring-vocabulary';
 
 /**
  * Severity -> tier, the FALLBACK only. The authoritative map is data: each

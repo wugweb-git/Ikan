@@ -18,7 +18,7 @@ import { useNotifications } from '../../contexts/NotificationContext';
 import { AdminHeader } from './AdminHeader';
 import { useIsMobile } from '../../hooks/useIsMobile';
 import { projectId, publicAnonKey } from '../../utils/supabase/info';
-import { supabase } from '../../lib/supabase-client';
+import { supabase } from '../../shared/supabase-client';
 
 interface PaymentConfig {
   gateway: string;

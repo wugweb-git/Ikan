@@ -1,5 +1,5 @@
 import { projectId } from '../../utils/supabase/info';
-import { getAuthHeaders } from '../../lib/supabase-client';
+import { getAuthHeaders } from '../../shared/supabase-client';
 import { useRef, useState } from 'react';
 import { Upload, X, Image as ImageIcon, Crop, Eye } from 'lucide-react';
 import { Button } from './button';

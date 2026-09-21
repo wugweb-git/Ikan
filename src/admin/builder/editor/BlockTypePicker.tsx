@@ -24,10 +24,10 @@ import {
   Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList,
 } from '../../ui/command';
 import { getIconComponent, iconResolves } from '../../../lib/catalog-icons';
-import { retypeEffect, retypeSentence } from '../../../lib/blocks/block-retype';
-import { DEFAULT_ACTIVITY_FOR_TYPE, type ActivityName } from '../../../lib/blocks/vocabulary';
+import { retypeEffect, retypeSentence } from '../../../shared/blocks/block-retype';
+import { DEFAULT_ACTIVITY_FOR_TYPE, type ActivityName } from '../../../shared/blocks/vocabulary';
 import { Button } from '../../ui/button';
-import type { Activity } from '../../../lib/blocks/block-model';
+import type { Activity } from '../../../shared/blocks/block-model';
 
 export interface BlockTypeOption {
   value: string;

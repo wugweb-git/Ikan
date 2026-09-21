@@ -3,7 +3,7 @@ import { X, AlertCircle } from 'lucide-react';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import { useNotifications } from '../../contexts/NotificationContext';
-import { apiClient } from '../../lib/api-client';
+import { apiClient } from '../../shared/api-client';
 import { AdminFormField } from '../components/AdminFormField';
 import { Input } from '../ui/input';
 import { Checkbox } from '../ui/checkbox';
@@ -12,17 +12,17 @@ import { Button } from '../ui/button';
 import { Card, CardContent } from '../ui/card';
 import { ImageUpload } from '../ui/image-upload';
 import { useFormValidation, ValidationSchema } from '../../hooks/useFormValidation';
-import { validateUrl } from '../../lib/validation';
+import { validateUrl } from '../../shared/validation';
 import { useUnsavedChanges } from '../../hooks/useUnsavedChanges';
 import { UnsavedChangesDialog } from '../ui/unsaved-changes-dialog';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '../ui/dialog';
-import { EquipProgram, OnboardingQuestion, Activity, DayContent, DEFAULT_CHECKIN_CONFIG } from '../../lib/blocks/block-model';
+import { EquipProgram, OnboardingQuestion, Activity, DayContent, DEFAULT_CHECKIN_CONFIG } from '../../shared/blocks/block-model';
 import { EquipLandingPageRichTextEditor } from './EquipLandingPageRichTextEditor';
 import { DayEditor as DailyBuilder } from '../blocks/DayComposer';
 import { UnifiedBasicInfoForm } from '../components/UnifiedBasicInfoForm';
 import { useMetadata } from '../../hooks/useMetadata';
 import { ProgramPlayer } from '../../app/features/player/ProgramPlayer';
-import { seedDayFromTemplate } from '../../lib/blocks/day-policy';
+import { seedDayFromTemplate } from '../../shared/blocks/day-policy';
 /* §21 item 5 (2026-09-09): the wizard's stepper chrome became a two-screen
    builder shell. The record logic below — persistWizard, handlePublishToggle,
    the Day 0 reconciliation, the crash-recovery backup — is untouched. */

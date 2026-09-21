@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { X, Calendar, Clock, ChevronLeft, ChevronRight } from 'lucide-react';
 import { cn } from '../ui/utils';
-import { apiClient } from '../../lib/api-client';
+import { apiClient } from '../../shared/api-client';
 import { useNotifications } from '../../contexts/NotificationContext';
 
 interface BookingModalProps {

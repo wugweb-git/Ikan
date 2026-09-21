@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Save, Trash2, FileText, BookOpen, Download, Globe, Link as LinkIcon, Upload, EyeOff, X } from 'lucide-react';
 import { useNotifications } from '../../contexts/NotificationContext';
-import { apiClient } from '../../lib/api-client';
+import { apiClient } from '../../shared/api-client';
 import { AdminPageLayout } from '../components/AdminPageLayout';
 import { AdminSection } from '../components/AdminSection';
 import { AdminFormField } from '../components/AdminFormField';
@@ -12,7 +12,7 @@ import { ImageUpload } from '../ui/image-upload';
 import { TagInput } from '../ui/tag-input';
 import { RichTextEditor } from '../ui/rich-text-editor';
 import { useFormValidation, ValidationSchema } from '../../hooks/useFormValidation';
-import { validateUrl } from '../../lib/validation';
+import { validateUrl } from '../../shared/validation';
 import { useUnsavedChanges } from '../../hooks/useUnsavedChanges';
 import { useKeyboardShortcuts } from '../../hooks/useKeyboardShortcuts';
 import { UnsavedChangesDialog } from '../ui/unsaved-changes-dialog';

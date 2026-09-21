@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { useAuth } from '../contexts/AuthContext';
-import { useNotifications } from '../contexts/NotificationContext';
-import { Icon } from './Icon';
-import { LogoFull } from './Logo';
-import { authContent } from '../lib/content/auth';
-import { Input } from './ui/input';
+import { useAuth } from '../../contexts/AuthContext';
+import { useNotifications } from '../../contexts/NotificationContext';
+import { Icon } from '../../components/Icon';
+import { LogoFull } from '../../components/Logo';
+import { authContent } from '../../lib/content/auth';
+import { Input } from '../../components/ui/input';
 import { Mail, Lock, User, Eye, EyeOff, ArrowLeft, Shield, Heart, Users } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 

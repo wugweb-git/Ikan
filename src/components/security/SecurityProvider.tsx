@@ -2,7 +2,7 @@ import React, { createContext, useContext, useEffect, useState, useCallback, use
 import { useAuth } from '../../contexts/AuthContext';
 import { useNotifications } from '../../contexts/NotificationContext';
 import { projectId } from '../../utils/supabase/info';
-import { getAuthHeaders } from '../../lib/supabase-client';
+import { getAuthHeaders } from '../../shared/supabase-client';
 
 interface SecurityContextType {
   isSecureConnection: boolean;

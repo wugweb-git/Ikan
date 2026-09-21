@@ -15,7 +15,7 @@ import { HTML5Backend } from 'react-dnd-html5-backend';
 import { DayEditor } from '../admin/blocks/DayComposer';
 import { BuilderShell } from '../admin/builder/BuilderShell';
 import { BuilderTopBar } from '../admin/builder/BuilderTopBar';
-import type { DayContent } from '../lib/blocks/block-model';
+import type { DayContent } from '../shared/blocks/block-model';
 import '../index.css';
 
 type Prog = { id: string; title: string; daily_content: DayContent[] };

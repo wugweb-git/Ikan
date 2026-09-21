@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Badge } from '../../components/ui/badge';
-import { apiClient } from '../../lib/api-client';
+import { apiClient } from '../../shared/api-client';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNotifications } from '../../contexts/NotificationContext';
 import { useIsMobile } from '../../hooks/useIsMobile';

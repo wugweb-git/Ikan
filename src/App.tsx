@@ -13,7 +13,7 @@ import { JourneyProvider } from './contexts/JourneyContext';
 import { Navigation } from './app/shell/navigation/Navigation';
 import { BottomNavBarMobile } from './app/shell/navigation/BottomNavBarMobile';
 import { PublicBottomNavMobile } from './site/ui/PublicBottomNavMobile';
-import { RouteGuard } from './components/RouteGuard';
+import { RouteGuard } from './app/shell/RouteGuard';
 import { DEFAULT_PUBLIC_ROUTE, DEFAULT_PRIVATE_ROUTE } from './lib/route-config';
 import { hasSeenOnboarding, hasCompletedFirstRun } from './lib/first-run';
 import { WelcomeSplash } from './app/screens/onboarding/WelcomeSplash';
@@ -24,7 +24,7 @@ import { GetStarted } from './app/screens/onboarding/GetStarted';
 import { PushPermissionPrompt, usePushPermissionPrompt } from './app/features/notifications/PushPermissionPrompt';
 import { Toaster } from './components/ui/sonner';
 import { cn } from './components/ui/utils';
-import { logger } from './lib/logger';
+import { logger } from './shared/logger';
 import { setupGlobalErrorHandlers } from './lib/error-handlers';
 import { LoadingSpinner } from './components/LoadingSpinner';
 import { useNotificationBadges } from './hooks/useNotificationBadges';
@@ -74,7 +74,7 @@ if (typeof window !== 'undefined') {
 const Dashboard = lazy(() => lazyRetry(() => import('./app/screens/Dashboard').then(m => ({ default: m.Dashboard })), 'Dashboard'));
 const Homepage = lazy(() => lazyRetry(() => import('./site/pages/Homepage').then(m => ({ default: m.Homepage })), 'Homepage'));
 const NotFound = lazy(() => lazyRetry(() => import('./site/pages/NotFound').then(m => ({ default: m.NotFound })), 'NotFound'));
-const LoginScreen = lazy(() => lazyRetry(() => import('./components/LoginScreen').then(m => ({ default: m.default || m.LoginScreen })), 'LoginScreen'));
+const LoginScreen = lazy(() => lazyRetry(() => import('./app/shell/LoginScreen').then(m => ({ default: m.default || m.LoginScreen })), 'LoginScreen'));
 const ResetPassword = lazy(() => lazyRetry(() => import('./app/screens/ResetPassword').then(m => ({ default: m.default || m.ResetPassword })), 'ResetPassword'));
 // Onboarding flow screens are imported eagerly (not lazy): they are small, sit
 // at the entry of the app, and lazy-loading them deadlocks the AnimatePresence
@@ -126,15 +126,15 @@ import { AdminWidget } from './admin/components/AdminWidget';
 import { GoogleFitProvider } from './app/features/integrations/GoogleFitContext';
 import { Footer } from './site/ui/Footer';
 import { ErrorBoundary } from './components/ErrorBoundary';
-import { ChunkErrorBoundary } from './components/ChunkErrorBoundary';
+import { ChunkErrorBoundary } from './app/shell/ChunkErrorBoundary';
 import { SecurityProvider } from './components/security/SecurityProvider';
 import { usePublicSettings } from './hooks/usePublicSettings';
 import { CrisisSupport, useCrisisSupport } from './app/features/safety/CrisisSupport';
 import { SafePerformanceMonitor } from './components/monitoring/SafePerformanceMonitor';
 import { SkipToMainContent, useReducedMotion } from './components/ui/accessibility-helpers';
-import { OfflineBanner } from './components/OfflineBanner';
+import { OfflineBanner } from './app/shell/OfflineBanner';
 import { useOfflineSync } from './hooks/useOfflineSync';
-import { installBlocksFallbackReporter } from './lib/blocks/block-fallback-reporter';
+import { installBlocksFallbackReporter } from './shared/blocks/block-fallback-reporter';
 import { usePullToRefresh } from './hooks/usePullToRefresh';
 
 // --- Suspense fallback ---

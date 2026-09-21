@@ -6,8 +6,8 @@ import { Search, BookOpen, Video, Headphones, FileText, Image as ImageIcon } fro
 import { ResourcePost } from '../../components/page-blocks/ResourceCard';
 import { toResourcePost } from '../../lib/resource-presentation';
 import { LibraryResourceCard } from '../../components/page-blocks/LibraryResourceCard';
-import { apiClient } from '../../lib/api-client';
-import { logger } from '../../lib/logger';
+import { apiClient } from '../../shared/api-client';
+import { logger } from '../../shared/logger';
 import { PullToRefresh } from '../../components/ui/touch-feedback';
 import { ContentImage } from '../../components/ui/ContentImage';
 import { resolveImageUrl } from '../../utils/image-utils';

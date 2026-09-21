@@ -1,8 +1,8 @@
 // Recommendation Engine — loads rules from backend KV (admin-configured),
 // falls back to built-in defaults only when no admin rules exist.
 
-import { apiClient } from './api-client';
-import { rankMatchingRules, eligibleRules } from '../supabase/functions/server/recommendation-matching.ts';
+import { apiClient } from '../api-client';
+import { rankMatchingRules, eligibleRules } from '../../supabase/functions/server/recommendation-matching.ts';
 import {
   compareSeverity, tierFor, isSeverityLevel,
   type SeverityLevel as ClinicalSeverity, type ResponseTier,

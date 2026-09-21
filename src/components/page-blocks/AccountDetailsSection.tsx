@@ -8,8 +8,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { AccountPageHeader } from './AccountPageHeader';
 import { Pencil, Save, Loader2, User, Mail, Phone, Calendar, MapPin, Hash, UserCheck, PhoneCall, Heart, Users } from 'lucide-react';
 import { useIsMobile } from '../../hooks/useIsMobile';
-import { validateName, validatePhone, validateBio, validateDateOfBirth, validateEmergencyContact } from '../../lib/validation';
-import { apiClient } from '../../lib/api-client';
+import { validateName, validatePhone, validateBio, validateDateOfBirth, validateEmergencyContact } from '../../shared/validation';
+import { apiClient } from '../../shared/api-client';
 
 // ─── Avatar ────────────────────────────────────────────────────
 interface UserAvatarProps {

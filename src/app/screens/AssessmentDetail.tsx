@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { projectId } from '../../utils/supabase/info';
-import { getAuthHeaders } from '../../lib/supabase-client';
+import { getAuthHeaders } from '../../shared/supabase-client';
 import { SectionHero } from '../../components/page-blocks/SectionHero';
 import { AssessmentBentoGrid } from '../../components/page-blocks/AssessmentBentoGrid';
 import { AssessmentBlock } from '../../components/page-blocks/AssessmentBlock';

@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { Check, X, Mic } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { Activity, ActivityConfig, renderActivityOf, warnFallback, configOf } from '../../lib/blocks/block-model';
+import { Activity, ActivityConfig, renderActivityOf, warnFallback, configOf } from '../../shared/blocks/block-model';
 import { Label } from '../../components/ui/label';
 import { RadioGroup, RadioGroupItem } from '../../components/ui/radio-group';
 import { Checkbox } from '../../components/ui/checkbox';
@@ -1001,7 +1001,7 @@ export function BlockRenderer({ block, value, onChange, readOnly = false, equipI
         const resolvedEquipId = equipId || 'unknown';
         const resolvedDayNum = dayNum || 0;
 
-        const { apiClient } = await import('../../lib/api-client');
+        const { apiClient } = await import('../../shared/api-client');
         const result = await apiClient.uploadBlockFile(resolvedEquipId, resolvedDayNum, block.id, file);
 
         if (result?.success) {

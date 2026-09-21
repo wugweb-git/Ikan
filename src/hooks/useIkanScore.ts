@@ -1,6 +1,6 @@
 // useIkanScore — fetches the composite iKAN wellness score from the server
 import { useState, useEffect, useCallback } from 'react';
-import { apiClient } from '../lib/api-client';
+import { apiClient } from '../shared/api-client';
 
 export interface IkanScoreBreakdown {
   assessments: { score: number; weight: number; count: number; details: Array<{ id: string; name: string; wellness: number }> };

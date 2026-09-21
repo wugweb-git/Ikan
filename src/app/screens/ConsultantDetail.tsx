@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { apiClient } from '../../lib/api-client';
+import { apiClient } from '../../shared/api-client';
 import { useIsMobile } from '../../hooks/useIsMobile';
 import { toast } from 'sonner';
 import { MobileHeader } from '../shell/navigation/MobileHeader';

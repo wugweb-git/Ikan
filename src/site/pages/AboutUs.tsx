@@ -4,7 +4,7 @@ import { useIsMobile } from '../../hooks/useIsMobile';
 import { ResourceBlock } from '../../components/page-blocks/ResourceBlock';
 import { NewsletterBlock } from '../../components/page-blocks/NewsletterBlock';
 import { ResourcePost } from '../../components/page-blocks/ResourceCard';
-import { apiClient } from '../../lib/api-client';
+import { apiClient } from '../../shared/api-client';
 import {
   Heart,
   Shield,

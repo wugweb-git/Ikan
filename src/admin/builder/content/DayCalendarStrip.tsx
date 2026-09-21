@@ -7,7 +7,7 @@
  * of the selected day are one column, and the editor gets the rest of the width.
  */
 import { CalendarDays, Plus } from 'lucide-react';
-import { DayContent } from '../../../lib/blocks/block-model';
+import { DayContent } from '../../../shared/blocks/block-model';
 import { Button } from '../../ui/button';
 import { DraggableDay } from './DayChip';
 

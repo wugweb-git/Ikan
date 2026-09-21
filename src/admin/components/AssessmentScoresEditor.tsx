@@ -13,8 +13,8 @@ import {
   achievableRange, computeCoverage, previewScore, validateBandTiling,
   resolveBandEdges, formatBandInterval,
   type AssessmentScore, type ScoringProfile,
-} from '../../lib/scoring-engine';
-import { buildScoringContext, type RawQuestion } from '../../lib/scoring-context';
+} from '../../shared/engine/scoring-engine';
+import { buildScoringContext, type RawQuestion } from '../../shared/engine/scoring-context';
 
 /**
  * Wizard step 5 — Scoring Configuration.

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { apiClient } from '../../lib/api-client';
+import { apiClient } from '../../shared/api-client';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNotifications } from '../../contexts/NotificationContext';
 import { ArrowRight, Activity, Smile, Check, BarChart3, ClipboardList, Play, TrendingUp, Brain, Compass, BookOpen, Calendar, ChevronRight } from 'lucide-react';
@@ -11,7 +11,7 @@ import { useGoogleFit } from '../features/integrations/GoogleFitContext';
 import { cn } from '../../components/ui/utils';
 import { tierPresentation, tonePresentation } from '../../lib/severity-presentation';
 import { isProgramCheckIn } from '../../lib/assessment-record';
-import { evaluateAssessment, EngineResult, initEngineConfig, getLoadedScoringProfiles } from '../../lib/recommendation-engine';
+import { evaluateAssessment, EngineResult, initEngineConfig, getLoadedScoringProfiles } from '../../shared/engine/recommendation-engine';
 import { resolveResultPresentation, type Tone, type Integrity } from '../../lib/result-presentation';
 import { RecommendationCards } from '../../components/RecommendationCards';
 import { ResourceBlock } from '../../components/page-blocks/ResourceBlock';

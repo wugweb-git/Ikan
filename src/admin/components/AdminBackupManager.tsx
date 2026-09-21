@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Button } from '../ui/button';
 import { Card, CardContent } from '../ui/card';
-import { apiClient } from '../../lib/api-client';
+import { apiClient } from '../../shared/api-client';
 import { CircleCheck, Loader2, Save, RotateCcw, Clock, Database, CircleAlert } from 'lucide-react';
 import { AdminStatusBadge } from './AdminStatusBadge';
 import { AdminHeader } from './AdminHeader';

@@ -1,4 +1,4 @@
-import { getPasswordStrength } from '../../lib/validation';
+import { getPasswordStrength } from '../../shared/validation';
 
 interface PasswordStrengthProps {
   password: string;

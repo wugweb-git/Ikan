@@ -19,7 +19,7 @@ import { NewsletterBlock } from '../../components/page-blocks/NewsletterBlock';
 import { ResourcePost } from '../../components/page-blocks/ResourceCard';
 
 import { assessmentMeta, assessmentImage } from '../../lib/assessment-meta';
-import { apiClient } from '../../lib/api-client';
+import { apiClient } from '../../shared/api-client';
 import { DEFAULT_CMS_CONTENT } from '../../utils/cms-defaults';
 import { NEWSLETTER_CONTENT } from '../../lib/constants/content';
 

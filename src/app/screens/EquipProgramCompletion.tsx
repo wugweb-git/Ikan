@@ -5,9 +5,9 @@ import { Button } from '../../components/ui/button';
 import { Card, CardContent } from '../../components/ui/card';
 import { Progress } from '../../components/ui/progress';
 import { CircleCheck, Trophy, Calendar, ArrowRight, Star, BookOpen, BarChart3, Sparkles } from 'lucide-react';
-import { apiClient } from '../../lib/api-client';
+import { apiClient } from '../../shared/api-client';
 import { equipDiaryUrl } from '../../lib/slug';
-import { EquipProgram } from '../../lib/blocks/block-model';
+import { EquipProgram } from '../../shared/blocks/block-model';
 import { LoadingSpinner } from '../../components/LoadingSpinner';
 
 // ── Design token font helper ──────────────────────────────────

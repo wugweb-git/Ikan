@@ -28,17 +28,17 @@ import { Image as ImageIcon, Video, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Input } from '../../ui/input';
 import { Label } from '../../ui/label';
-import { Activity, interactionsOfBlock, activityOf, normalizeSubtype } from '../../../lib/blocks/block-model';
-import { validateBlock } from '../../../lib/blocks/block-validation';
+import { Activity, interactionsOfBlock, activityOf, normalizeSubtype } from '../../../shared/blocks/block-model';
+import { validateBlock } from '../../../shared/blocks/block-validation';
 import { useMetadata } from '../../../hooks/useMetadata';
 import { projectId } from '../../../utils/supabase/info';
-import { getAuthHeaders } from '../../../lib/supabase-client';
+import { getAuthHeaders } from '../../../shared/supabase-client';
 import { BlockFieldSections, ActivityPicker } from './BlockFieldSections';
 import { BlockFlowFooter } from './BlockFlowFooter';
 import { BlockTypePicker } from './BlockTypePicker';
-import { retype } from '../../../lib/blocks/block-retype';
-import type { ActivityName } from '../../../lib/blocks/vocabulary';
-import type { DayPolicy } from '../../../lib/blocks/day-policy';
+import { retype } from '../../../shared/blocks/block-retype';
+import type { ActivityName } from '../../../shared/blocks/vocabulary';
+import type { DayPolicy } from '../../../shared/blocks/day-policy';
 
 export interface BlockEditorPaneProps {
   block: Activity;

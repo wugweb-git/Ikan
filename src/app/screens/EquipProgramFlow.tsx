@@ -5,9 +5,9 @@ import {
   LogOut,
 } from 'lucide-react';
 import { Button } from '../../components/ui/button';
-import { EquipProgram } from '../../lib/blocks/block-model';
+import { EquipProgram } from '../../shared/blocks/block-model';
 import { ProgramPlayer } from '../features/player/ProgramPlayer';
-import { apiClient } from '../../lib/api-client';
+import { apiClient } from '../../shared/api-client';
 import { useNotifications } from '../../contexts/NotificationContext';
 import { toast } from 'sonner';
 import tokens from '../../lib/design-tokens';

@@ -2,7 +2,7 @@ import { durationLooksImplausible } from '../../lib/assessment-meta';
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { Save, Trash2, Plus, X, Upload, AlertTriangle } from 'lucide-react';
 import { useNotifications } from '../../contexts/NotificationContext';
-import { apiClient } from '../../lib/api-client';
+import { apiClient } from '../../shared/api-client';
 import { AdminFormField } from '../components/AdminFormField';
 import { Input } from '../ui/input';
 import { Textarea } from '../ui/textarea';
@@ -14,12 +14,12 @@ import { ImageUpload } from '../ui/image-upload';
 import { WizardLayout } from '../ui/wizard-layout';
 import { WizardStep } from '../ui/wizard-stepper';
 import { AssessmentScoresEditor } from '../components/AssessmentScoresEditor';
-import { buildScoringContext } from '../../lib/scoring-context';
-import { computeCoverage, type AssessmentScore, type ScoringProfile } from '../../lib/scoring-engine';
+import { buildScoringContext } from '../../shared/engine/scoring-context';
+import { computeCoverage, type AssessmentScore, type ScoringProfile } from '../../shared/engine/scoring-engine';
 import { AssessmentLandingPageRichTextEditor } from './AssessmentLandingPageRichTextEditor';
 import { UnifiedBasicInfoForm } from '../components/UnifiedBasicInfoForm';
 import { useFormValidation, ValidationSchema } from '../../hooks/useFormValidation';
-import { validateUrl } from '../../lib/validation';
+import { validateUrl } from '../../shared/validation';
 import { useMetadata } from '../../hooks/useMetadata';
 import { useUnsavedChanges } from '../../hooks/useUnsavedChanges';
 import { UnsavedChangesDialog } from '../ui/unsaved-changes-dialog';
@@ -27,9 +27,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogD
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import { DayEditor as DailyBuilder } from '../blocks/DayComposer';
-import { DayContent, Activity, renderActivityOf, warnFallback } from '../../lib/blocks/block-model';
+import { DayContent, Activity, renderActivityOf, warnFallback } from '../../shared/blocks/block-model';
 import { AdminLoading } from '../components/AdminLoading';
-import { seedDayFromTemplate } from '../../lib/blocks/day-policy';
+import { seedDayFromTemplate } from '../../shared/blocks/day-policy';
 
 // Normalize options to plain strings so the scoring-map key lookup matches
 // regardless of whether the option was authored as a string or an

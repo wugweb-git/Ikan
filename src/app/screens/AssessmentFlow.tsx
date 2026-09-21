@@ -1,11 +1,11 @@
 import { projectId } from '../../utils/supabase/info';
-import { getAuthHeaders } from '../../lib/supabase-client';
+import { getAuthHeaders } from '../../shared/supabase-client';
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { Button } from '../../components/ui/button';
 import { Icon } from '../../components/Icon';
 import { useNotifications } from '../../contexts/NotificationContext';
 import { useAuth } from '../../contexts/AuthContext';
-import { apiClient } from '../../lib/api-client';
+import { apiClient } from '../../shared/api-client';
 import { severityForSection, resolveAnswerValue } from '../../lib/assessment-sections';
 import { triggerCrisisSupport } from '../features/safety/CrisisSupport';
 
@@ -26,8 +26,8 @@ import { triggerCrisisSupport } from '../features/safety/CrisisSupport';
  * Module scope so it is a constant, not a value the effect has to depend on.
  */
 const CRISIS_ON_ANSWER_ENABLED = false;
-import { buildScoringContext, toSectionScoreResult } from '../../lib/scoring-context';
-import { computeScores } from '../../lib/scoring-engine';
+import { buildScoringContext, toSectionScoreResult } from '../../shared/engine/scoring-context';
+import { computeScores } from '../../shared/engine/scoring-engine';
 import { createActiveTimer, type ActiveTimer } from '../../lib/active-time';
 import { severityForMatching } from '../../supabase/functions/server/recommendation-matching.ts';
 import { slugify } from '../../lib/slug';
@@ -85,7 +85,7 @@ interface AssessmentFlowProps {
 
 import { ProgramPlayer, PlayerResults } from '../features/player/ProgramPlayer';
 import { adaptAssessmentToProgram, normalizeLegacyQuestionType } from '../../lib/assessment-adapter';
-import { evaluateAssessment, loadScoringProfiles, loadAdminRules, getLoadedScoringProfiles } from '../../lib/recommendation-engine';
+import { evaluateAssessment, loadScoringProfiles, loadAdminRules, getLoadedScoringProfiles } from '../../shared/engine/recommendation-engine';
 
 /**
  * Full-screen error card shown when an assessment can't be loaded or built.

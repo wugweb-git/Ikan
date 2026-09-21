@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { Image as ImageIcon, Upload, Trash2, Search, Download, ExternalLink, FileText, Film, Music, File, Pencil, Check, X, Zap } from 'lucide-react';
 import { useNotifications } from '../../contexts/NotificationContext';
-import { apiClient } from '../../lib/api-client';
+import { apiClient } from '../../shared/api-client';
 import { AdminHeader } from '../components/AdminHeader';
 import { AdminLoading } from '../components/AdminLoading';
 import { useIsMobile } from '../../hooks/useIsMobile';

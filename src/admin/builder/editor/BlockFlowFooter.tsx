@@ -15,8 +15,8 @@
 import { FastForward, Clock, Layers } from 'lucide-react';
 import { Input } from '../../ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../ui/select';
-import { Activity } from '../../../lib/blocks/block-model';
-import type { DayPolicy } from '../../../lib/blocks/day-policy';
+import { Activity } from '../../../shared/blocks/block-model';
+import type { DayPolicy } from '../../../shared/blocks/day-policy';
 
 export interface BlockFlowFooterProps {
   block: Activity;

@@ -13,11 +13,11 @@
  * dev harness keep their prop contract exactly.
  */
 import { useState, useEffect, useMemo } from 'react';
-import { DayContent, Activity, activityOf, normalizeSubtype } from '../../../lib/blocks/block-model';
+import { DayContent, Activity, activityOf, normalizeSubtype } from '../../../shared/blocks/block-model';
 import { useMetadata } from '../../../hooks/useMetadata';
-import { validateDay, hasBlockingIssues } from '../../../lib/blocks/block-validation';
-import { seedDayFromTemplate, policyOf } from '../../../lib/blocks/day-policy';
-import type { ExerciseSubtype } from '../../../lib/blocks/block-model';
+import { validateDay, hasBlockingIssues } from '../../../shared/blocks/block-validation';
+import { seedDayFromTemplate, policyOf } from '../../../shared/blocks/day-policy';
+import type { ExerciseSubtype } from '../../../shared/blocks/block-model';
 import { cn } from '../../ui/utils';
 import { DraggableBlock } from './BlockRow';
 import { BlockPaletteMenu } from './AddBlockMenu';
@@ -26,7 +26,7 @@ import { CalendarOverlay } from './CalendarOverlay';
 import { DayHeader } from './DayHeader';
 import { DayConfigPane } from '../editor/DayConfigPane';
 import { generateBlockId } from './block-id';
-import { DEFAULT_ACTIVITY_FOR_TYPE } from '../../../lib/blocks/vocabulary';
+import { DEFAULT_ACTIVITY_FOR_TYPE } from '../../../shared/blocks/vocabulary';
 import { BlockEditorPane } from '../editor/BlockEditorPane';
 
 export interface ContentScreenProps {

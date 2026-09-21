@@ -18,7 +18,7 @@ import {
   ClipboardList,
   PenLine,
 } from 'lucide-react';
-import type { EngineResult, ResponseTier } from '../lib/recommendation-engine';
+import type { EngineResult, ResponseTier } from '../shared/engine/recommendation-engine';
 import { tierPresentation } from '../lib/severity-presentation';
 
 interface RecommendationCardsProps {

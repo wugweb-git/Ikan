@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { FileText, Download, Pencil, Plus, Eye, Tag, MoreHorizontal, EyeOff, Trash2, Star } from 'lucide-react';
 import { useNotifications } from '../../contexts/NotificationContext';
-import { apiClient } from '../../lib/api-client';
+import { apiClient } from '../../shared/api-client';
 import { AdminHeader } from '../components/AdminHeader';
 import { useIsMobile } from '../../hooks/useIsMobile';
 import { Button } from '../ui/button';

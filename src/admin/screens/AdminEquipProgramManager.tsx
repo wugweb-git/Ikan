@@ -1,13 +1,13 @@
 import { useState, useEffect } from 'react';
 import { BookOpen, Plus, MoreHorizontal, Pencil, Trash2, Eye, EyeOff, Users } from 'lucide-react';
 import { useNotifications } from '../../contexts/NotificationContext';
-import { apiClient } from '../../lib/api-client';
+import { apiClient } from '../../shared/api-client';
 import { AdminHeader } from '../components/AdminHeader';
 import { AdminStatusBadge } from '../components/AdminStatusBadge';
 import { useIsMobile } from '../../hooks/useIsMobile';
 import { Button } from '../ui/button';
 import { EquipProgramWizard } from './EquipProgramWizard';
-import { EquipProgram } from '../../lib/blocks/block-model';
+import { EquipProgram } from '../../shared/blocks/block-model';
 import { AdminDataTable, Column, FilterOption } from '../components/AdminDataTable';
 import { Skeleton } from '../ui/skeleton-loader';
 import { ImageWithFallback } from '../../components/figma/ImageWithFallback';

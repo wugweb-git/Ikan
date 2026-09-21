@@ -3,10 +3,10 @@ import {
   BookOpen, PenTool, Layers, Calendar, Smartphone, Settings2, Zap,
 } from 'lucide-react';
 import { AdminHeader } from '../components/AdminHeader';
-import { apiClient } from '../../lib/api-client';
+import { apiClient } from '../../shared/api-client';
 import { getIconComponent, iconResolves } from '../../lib/catalog-icons';
-import { AUTHORABLE_SUBTYPES } from '../../lib/blocks/block-model';
-import { missingRequirements, blockOf } from '../../lib/blocks/content-hierarchy';
+import { AUTHORABLE_SUBTYPES } from '../../shared/blocks/block-model';
+import { missingRequirements, blockOf } from '../../shared/blocks/content-hierarchy';
 import { Card, CardContent } from '../ui/card';
 import { Button } from '../ui/button';
 import { AdminStatusBadge } from '../components/AdminStatusBadge';
@@ -14,7 +14,7 @@ import {
   LEAF_BLOCK_TYPES,
   normalizeSubtype,
   type Activity,
-} from '../../lib/blocks/block-model';
+} from '../../shared/blocks/block-model';
 /*
   §26, 2026-09-09. The page reads the vocabulary module directly: nine
   interactions, twenty-nine activities, seven labels, and one preview hint per
@@ -25,10 +25,10 @@ import {
   INTERACTIONS, INTERACTION_META, ACTIVITIES as CANONICAL_SUBTYPES, ACTIVITY_SPECS,
   ACTIVITY_HINTS, LABELS, TWO_INTERACTIONS, interactionsOf, activitiesFor,
   requiresOf, type Interaction, type ActivityName,
-} from '../../lib/blocks/vocabulary';
-import { DAY_TYPE_PRESETS } from '../../lib/blocks/block-type-rules';
+} from '../../shared/blocks/vocabulary';
+import { DAY_TYPE_PRESETS } from '../../shared/blocks/block-type-rules';
 import { useMetadata } from '../../hooks/useMetadata';
-import { hasContentField, contentLabelFor, contentPlaceholderFor } from '../../lib/blocks/block-fields';
+import { hasContentField, contentLabelFor, contentPlaceholderFor } from '../../shared/blocks/block-fields';
 // Template building blocks shared with actual editors (BlockEditor, CheckinTemplateBuilder)
 import {
   blockFormStyles,

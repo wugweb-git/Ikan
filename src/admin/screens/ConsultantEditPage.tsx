@@ -22,7 +22,7 @@ import {
   Sparkles,
 } from 'lucide-react';
 import { useNotifications } from '../../contexts/NotificationContext';
-import { apiClient } from '../../lib/api-client';
+import { apiClient } from '../../shared/api-client';
 import { AdminPageLayout } from '../components/AdminPageLayout';
 import { AdminSection } from '../components/AdminSection';
 import { AdminFormField } from '../components/AdminFormField';
@@ -33,7 +33,7 @@ import { Checkbox } from '../ui/checkbox';
 import { Label } from '../ui/label';
 import { ImageUpload } from '../ui/image-upload';
 import { useFormValidation, ValidationSchema } from '../../hooks/useFormValidation';
-import { validateUrl } from '../../lib/validation';
+import { validateUrl } from '../../shared/validation';
 import { useUnsavedChanges } from '../../hooks/useUnsavedChanges';
 import { useKeyboardShortcuts } from '../../hooks/useKeyboardShortcuts';
 import { UnsavedChangesDialog } from '../ui/unsaved-changes-dialog';

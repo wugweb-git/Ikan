@@ -1,4 +1,4 @@
-import { EquipProgram } from '../../lib/blocks/block-model';
+import { EquipProgram } from '../../shared/blocks/block-model';
 import { Textarea } from '../ui/textarea';
 import { AdminFormField } from '../components/AdminFormField';
 

@@ -24,7 +24,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { DAY_TYPE_PRESETS, PALETTE_BLOCK_TYPES } from './block-type-rules.ts';
-import { METADATA_CATALOG_ITEMS } from '../metadata-catalog.ts';
+import { METADATA_CATALOG_ITEMS } from '../../lib/metadata-catalog.ts';
 import { LEAF_BLOCK_TYPES } from './block-model.ts';
 
 /*

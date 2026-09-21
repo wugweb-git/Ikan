@@ -12,7 +12,7 @@
  * is why one flag could stand in for two for as long as it did.
  */
 import { ContentScreen } from '../builder/content/ContentScreen';
-import type { DayContent } from '../../lib/blocks/block-model';
+import type { DayContent } from '../../shared/blocks/block-model';
 
 export interface DailyBuilderProps {
   program: { daily_content?: DayContent[] } & Record<string, any>;

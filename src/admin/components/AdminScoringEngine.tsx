@@ -12,12 +12,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Switch } from '../ui/switch';
 import { AdminStatusBadge } from './AdminStatusBadge';
 import { useNotifications } from '../../contexts/NotificationContext';
-import { apiClient } from '../../lib/api-client';
+import { apiClient } from '../../shared/api-client';
 import { useMetadata } from '../../hooks/useMetadata';
 import {
   SEVERITY_LEVELS, tierFor, validateBandTiling, formatBandInterval,
   type ScoringProfile, type ScoringBand, type SeverityLevel, type ScoreCalc,
-} from '../../lib/scoring-engine';
+} from '../../shared/engine/scoring-engine';
 
 /**
  * Scoring profile authoring (v2).
