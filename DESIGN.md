@@ -12,7 +12,7 @@ immediately (stale-while-revalidate via `usePageContent`) and overridden by save
 Key prefixes:
 - `assessment_def:<id>` / `equip:<id>` — full records.
 - `assessment_slug:<slug>` / `equip_slug:<slug>` — slug → id indexes.
-- `cms_page:<pageId>` — editable page content. `settings:site` — global site settings.
+- `cms_page:<pageId>` — **dead**: not read since the Page Manager was removed (PR #14); site page copy lives in `src/site/lib/cms-defaults.ts`. `settings:site` — global site settings.
 - `mood:*`, `checkin_scale:*` — mood/check-in tracker scales (backend-synced).
 
 ## URLs / routing

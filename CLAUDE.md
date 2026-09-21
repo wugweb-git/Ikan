@@ -91,7 +91,7 @@ Key prefixes:
 | `day:{id}` | **DEAD — nothing reads these.** Legacy program day (105 rows). Related to its equip via an `equip_id` field, not a key convention |
 | `block:{id}` | **DEAD — nothing reads these.** Legacy content block (223 rows). Related to its day via `equip_day_id` |
 | `security_event:{YYYY-MM-DD}` | Day-bucketed security events, capped at 5000/day. Public write; identity comes from a verified token, never the request body |
-| `cms_page:{pageId}` | CMS page content (overrides code defaults) |
+| `cms_page:{pageId}` | **DEAD — nothing reads these.** Page content since the Page Manager's removal (PR #14, `31015ad5`); pages render `src/site/lib/cms-defaults.ts`. 17 rows (+ `page:`/`page_slug:`, 7 each) left in KV, untouched |
 | `settings:site` | Global site settings (phone, email, etc.) |
 | `checkin_scale:{key}` | Custom check-in scale (emoji set + labels) |
 | `mood:{moodId}` | Mood-scale definition (emoji, label, colour, order) — **global config, not user data**. Verified live 2026-09-01: 5 rows, none user-scoped. Journal entries live under `journal:` / `journal_by_user:`. |

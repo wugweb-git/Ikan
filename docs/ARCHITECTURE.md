@@ -72,7 +72,7 @@ One deployed Supabase Edge Function (`make-server-cc205da9`) handles all 18 rout
 | `equip_slug:{slug}` | → equip id |
 | `day:{id}` / `idx_equip_days:{equipId}` | Program days |
 | `block:{id}` / `idx_day_blocks:{dayId}` | Content blocks |
-| `cms_page:{pageId}` | CMS page content |
+| `cms_page:{pageId}` | **DEAD — nothing reads these.** Page content since the Page Manager's removal (PR #14, `31015ad5`); pages render `src/site/lib/cms-defaults.ts`. 17 rows (+ `page:`/`page_slug:`, 7 each) left in KV, untouched |
 | `settings:site` | Global site settings |
 | `checkin_scale:{key}` | Custom check-in scale |
 | `mood:{userId}:{date}` | Mood journal entry |

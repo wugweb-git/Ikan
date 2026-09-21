@@ -68,7 +68,7 @@ Key prefixes:
 | `equip_slug:{slug}` | → equip id (slug index) |
 | `day:{id}` | Program day — related to its equip via a `equip_id` field on the value, not a key convention |
 | `block:{id}` | Individual content block — related to its day via `equip_day_id` on the value |
-| `cms_page:{pageId}` | CMS page content (overrides code defaults) |
+| `cms_page:{pageId}` | **DEAD — nothing reads these.** Page content since the Page Manager's removal (PR #14, `31015ad5`); pages render `src/site/lib/cms-defaults.ts`. 17 rows (+ `page:`/`page_slug:`, 7 each) left in KV, untouched |
 | `settings:site` | Global site settings (phone, email, etc.) |
 | `checkin_scale:{key}` | Custom check-in scale (emoji set + labels) |
 | `mood:{userId}:{date}` | Mood journal entry |
