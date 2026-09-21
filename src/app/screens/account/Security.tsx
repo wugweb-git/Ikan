@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { useNotifications } from '../../../contexts/NotificationContext';
-import { useAuth } from '../../../contexts/AuthContext';
+import { useNotifications } from '../../../shared/contexts/NotificationContext';
+import { useAuth } from '../../../shared/contexts/AuthContext';
 import { apiClient } from '../../../shared/api-client';
-import { useIsMobile } from '../../../hooks/useIsMobile';
+import { useIsMobile } from '../../../shared/hooks/useIsMobile';
 import { cn } from '../../ui/utils';
 import { validatePassword, isCommonPassword, validateEmail } from '../../../shared/validation';
 import { PasswordStrength } from '../../ui/password-strength';

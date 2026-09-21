@@ -3,9 +3,9 @@ import { cn } from '../utils';
 import { ContentImage } from '../ContentImage';
 import { Skeleton } from '../skeleton-loader';
 import type { ResourcePost } from './ResourceCard';
-import { resolveImageUrl } from '../../../utils/image-utils';
+import { resolveImageUrl } from '../../../shared/lib/image-utils';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { useIsMobile } from '../../../hooks/useIsMobile';
+import { useIsMobile } from '../../../shared/hooks/useIsMobile';
 
 export type { ResourcePost };
 

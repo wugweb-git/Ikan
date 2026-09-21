@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { projectId } from '../../utils/supabase/info';
+import { projectId } from '../../shared/config/supabase-info';
 import { getAuthHeaders } from '../../shared/supabase-client';
 import { SectionHero } from '../ui/blocks/SectionHero';
 import { AssessmentBentoGrid } from '../ui/blocks/AssessmentBentoGrid';
@@ -8,13 +8,13 @@ import { ResourceBlock } from '../ui/blocks/ResourceBlock';
 import { NewsletterBlock } from '../ui/blocks/NewsletterBlock';
 import { ResourcePost } from '../ui/blocks/ResourceCard';
 import { MobileHeader } from '../shell/navigation/MobileHeader';
-import { useIsMobile } from '../../hooks/useIsMobile';
-import { useSeo } from '../../hooks/useSeo';
+import { useIsMobile } from '../../shared/hooks/useIsMobile';
+import { useSeo } from '../hooks/useSeo';
 import { Skeleton } from '../ui/skeleton-loader';
 import { Button } from '../ui/button';
-import defaultBentoImage from "../../assets/8ce2a19aab5abaf51a83cb99ea2d61447f96d8b2.png";
-import { ASSESSMENT_CONTENT, NEWSLETTER_CONTENT } from '../../lib/constants/content';
-import { assessmentMeta, assessmentImage } from '../../lib/assessment-meta';
+import defaultBentoImage from "../assets/8ce2a19aab5abaf51a83cb99ea2d61447f96d8b2.png";
+import { ASSESSMENT_CONTENT, NEWSLETTER_CONTENT } from '../../shared/lib/constants/content';
+import { assessmentMeta, assessmentImage } from '../../shared/lib/assessment-meta';
 
 interface AssessmentDetailProps {
   assessmentId?: string;

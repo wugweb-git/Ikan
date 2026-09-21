@@ -17,8 +17,8 @@ import { fileURLToPath } from 'node:url';
 import { dirname, join, relative } from 'node:path';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
-/* admin/, app/ and site/ hold what moved out of components/ — scan all four. */
-const SRCS = ['src/components', 'src/admin', 'src/app', 'src/site'].map(d => join(ROOT, d));
+/* The three UI surfaces. components/ was emptied into them. */
+const SRCS = ['src/admin', 'src/app', 'src/site'].map(d => join(ROOT, d));
 const BASELINE_FILE = join(ROOT, '.a11y-baseline');
 const SKIP = /\.(test|spec|stories)\.tsx?$/;
 

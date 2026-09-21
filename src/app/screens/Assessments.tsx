@@ -6,8 +6,8 @@ import { Badge } from '../ui/badge';
 import { Icon } from '../ui/Icon';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '../ui/dialog';
 import { Clock, FileText, Brain, Shield, Activity, Play, Lock, CircleHelp } from 'lucide-react';
-import { useAuth } from '../../contexts/AuthContext';
-import { useNotifications } from '../../contexts/NotificationContext';
+import { useAuth } from '../../shared/contexts/AuthContext';
+import { useNotifications } from '../../shared/contexts/NotificationContext';
 import { cn } from '../ui/utils';
 import { apiClient } from '../../shared/api-client';
 import { AssessmentFlow } from './AssessmentFlow';
@@ -137,7 +137,7 @@ const getAssessmentImage = (category?: string, customImage?: string | null) => {
 
 import { PageHero } from '../ui/PageHero';
 import { AssessmentCard } from '../features/assessment/AssessmentCard';
-import { assessmentMeta, assessmentImage } from '../../lib/assessment-meta';
+import { assessmentMeta, assessmentImage } from '../../shared/lib/assessment-meta';
 
 export function Assessments({ className, onNavigate }: AssessmentsProps) {
   const { user } = useAuth();

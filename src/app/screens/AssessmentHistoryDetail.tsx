@@ -7,9 +7,9 @@ import { XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Area, AreaCh
 import { apiClient } from '../../shared/api-client';
 import { LoadingSpinner } from '../ui/LoadingSpinner';
 import { SectionReportCard } from '../features/player/SectionReportCard';
-import type { SectionScoreResult } from '../../lib/assessment-sections';
-import { severityOfResult, tonePresentation } from '../../lib/severity-presentation';
-import { resolveResultPresentation, percentOfRange, type Tone } from '../../lib/result-presentation';
+import type { SectionScoreResult } from '../lib/assessment-sections';
+import { severityOfResult, tonePresentation } from '../lib/severity-presentation';
+import { resolveResultPresentation, percentOfRange, type Tone } from '../lib/result-presentation';
 import { loadScoringProfiles, getLoadedScoringProfiles } from '../../shared/engine/recommendation-engine';
 
 /**

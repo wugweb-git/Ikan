@@ -37,9 +37,9 @@ import { Checkbox } from '../../ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../ui/select';
 import { RichTextEditor } from '../../ui/rich-text-editor';
 import { Activity, AUTHORABLE_SUBTYPES, activityOf, normalizeSubtype } from '../../../shared/blocks/block-model';
-import { getIconComponent, iconResolves } from '../../../lib/catalog-icons';
+import { getIconComponent, iconResolves } from '../../lib/catalog-icons';
 import { hasContentField, contentLabelFor, contentPlaceholderFor } from '../../../shared/blocks/block-fields';
-import { useMetadata } from '../../../hooks/useMetadata';
+import { useMetadata } from '../../../shared/hooks/useMetadata';
 
 export interface BlockFieldSectionsProps {
   block: Activity;

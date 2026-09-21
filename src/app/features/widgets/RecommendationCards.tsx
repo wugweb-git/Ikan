@@ -3,7 +3,7 @@
  */
 import React from 'react';
 import { cn } from '../../ui/utils';
-import { useIsMobile } from '../../../hooks/useIsMobile';
+import { useIsMobile } from '../../../shared/hooks/useIsMobile';
 import {
   ArrowRight,
   BookOpen,
@@ -19,7 +19,7 @@ import {
   PenLine,
 } from 'lucide-react';
 import type { EngineResult, ResponseTier } from '../../../shared/engine/recommendation-engine';
-import { tierPresentation } from '../../../lib/severity-presentation';
+import { tierPresentation } from '../../lib/severity-presentation';
 
 interface RecommendationCardsProps {
   engineResult: EngineResult;

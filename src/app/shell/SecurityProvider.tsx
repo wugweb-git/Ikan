@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react';
-import { useAuth } from '../../contexts/AuthContext';
-import { useNotifications } from '../../contexts/NotificationContext';
-import { projectId } from '../../utils/supabase/info';
+import { useAuth } from '../../shared/contexts/AuthContext';
+import { useNotifications } from '../../shared/contexts/NotificationContext';
+import { projectId } from '../../shared/config/supabase-info';
 import { getAuthHeaders } from '../../shared/supabase-client';
 
 interface SecurityContextType {

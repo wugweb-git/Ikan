@@ -3,13 +3,13 @@ import {
   Save, Globe, Mail, Share2, Bell, Shield, Palette, Code, Send,
   Eye, EyeOff, Image as ImageIcon, Phone, BarChart3, Loader2, Award
 } from 'lucide-react';
-import { useNotifications } from '../../contexts/NotificationContext';
+import { useNotifications } from '../../shared/contexts/NotificationContext';
 import { apiClient } from '../../shared/api-client';
 import { AdminHeader } from '../components/AdminHeader';
 import { AdminLoading } from '../components/AdminLoading';
 import { AdminSection } from '../components/AdminSection';
 import { AdminFormField } from '../components/AdminFormField';
-import { useIsMobile } from '../../hooks/useIsMobile';
+import { useIsMobile } from '../../shared/hooks/useIsMobile';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Textarea } from '../ui/textarea';

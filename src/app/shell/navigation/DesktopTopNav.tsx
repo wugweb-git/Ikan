@@ -1,8 +1,8 @@
 import { Icon, AccountIcon, MoreIcon } from '../../ui/Icon';
-import { navigationConfig } from '../../../lib/navigation';
+import { navigationConfig } from '../../lib/navigation';
 import { Button } from '../../ui/button';
 import { LogoIcon } from '../../ui/Logo';
-import { usePublicSettings } from '../../../hooks/usePublicSettings';
+import { usePublicSettings } from '../../../shared/hooks/usePublicSettings';
 import { 
   DropdownMenu, 
   DropdownMenuContent, 

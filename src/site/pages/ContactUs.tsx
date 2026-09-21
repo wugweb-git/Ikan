@@ -1,14 +1,14 @@
 import React, { useState, useMemo } from 'react';
-import { useIsMobile } from '../../hooks/useIsMobile';
+import { useIsMobile } from '../../shared/hooks/useIsMobile';
 import { Icon } from '../ui/Icon';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Textarea } from '../ui/textarea';
 import { Card, CardContent } from '../ui/card';
-import { DEFAULT_CMS_CONTENT } from '../../utils/cms-defaults';
+import { DEFAULT_CMS_CONTENT } from '../lib/cms-defaults';
 import { PageHero } from '../ui/PageHero';
 import { apiClient } from '../../shared/api-client';
-import { useNotifications } from '../../contexts/NotificationContext';
+import { useNotifications } from '../../shared/contexts/NotificationContext';
 
 interface ContactUsProps {
   className?: string;

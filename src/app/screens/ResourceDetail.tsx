@@ -1,13 +1,13 @@
 import { useState, useEffect } from 'react';
 import { ArrowLeft, Share2 } from 'lucide-react';
 import { Button } from '../ui/button';
-import { useIsMobile } from '../../hooks/useIsMobile';
-import { useNotifications } from '../../contexts/NotificationContext';
-import { useAuth } from '../../contexts/AuthContext';
-import { hasAnalyticsConsent } from '../../lib/analytics-consent';
+import { useIsMobile } from '../../shared/hooks/useIsMobile';
+import { useNotifications } from '../../shared/contexts/NotificationContext';
+import { useAuth } from '../../shared/contexts/AuthContext';
+import { hasAnalyticsConsent } from '../lib/analytics-consent';
 import { apiClient } from '../../shared/api-client';
-import { resolveImageUrl } from '../../utils/image-utils';
-import { copyToClipboard } from '../../lib/clipboard';
+import { resolveImageUrl } from '../../shared/lib/image-utils';
+import { copyToClipboard } from '../../shared/lib/clipboard';
 
 // Import dynamic UI blocks
 import { ResourceHero } from '../ui/blocks/ResourceHero';

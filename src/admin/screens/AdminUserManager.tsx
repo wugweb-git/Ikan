@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
 import { Users, Download, Pencil, Shield, Building, UserPlus, MoreHorizontal, Trash2 } from 'lucide-react';
-import { useNotifications } from '../../contexts/NotificationContext';
+import { useNotifications } from '../../shared/contexts/NotificationContext';
 import { apiClient } from '../../shared/api-client';
 import { AdminHeader } from '../components/AdminHeader';
-import { useIsMobile } from '../../hooks/useIsMobile';
+import { useIsMobile } from '../../shared/hooks/useIsMobile';
 import { Button } from '../ui/button';
 import { AdminStatusBadge } from '../components/AdminStatusBadge';
 import { UserEditPage } from './UserEditPage';
@@ -11,7 +11,7 @@ import { AdminDataTable, Column, FilterOption } from '../components/AdminDataTab
 import { SkeletonTable } from '../ui/skeleton-loader';
 import { ErrorState } from '../ui/error-state';
 import { EmptyState } from '../ui/empty-state';
-import { useMetadata } from '../../hooks/useMetadata';
+import { useMetadata } from '../../shared/hooks/useMetadata';
 import {
   DropdownMenu,
   DropdownMenuContent,

@@ -17,11 +17,11 @@ import { Input } from '../ui/input';
 import { Card, CardContent } from '../ui/card';
 import { Label } from '../ui/label';
 import { Switch } from '../ui/switch';
-import { useNotifications } from '../../contexts/NotificationContext';
+import { useNotifications } from '../../shared/contexts/NotificationContext';
 import { AdminHeader } from './AdminHeader';
 import { AdminLoading } from './AdminLoading';
-import { useIsMobile } from '../../hooks/useIsMobile';
-import { projectId, publicAnonKey } from '../../utils/supabase/info';
+import { useIsMobile } from '../../shared/hooks/useIsMobile';
+import { projectId, publicAnonKey } from '../../shared/config/supabase-info';
 import { supabase } from '../../shared/supabase-client';
 
 const API_BASE = `https://${projectId}.supabase.co/functions/v1/make-server-cc205da9`;

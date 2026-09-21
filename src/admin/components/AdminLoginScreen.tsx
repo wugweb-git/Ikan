@@ -4,9 +4,9 @@ import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { LogoIcon } from '../ui/Logo';
 import { Lock, ArrowLeft, Loader2, CircleAlert, Eye, EyeOff, Mail } from 'lucide-react';
-import { useAuth } from '../../contexts/AuthContext';
-import { useNotifications } from '../../contexts/NotificationContext';
-import { usePublicSettings } from '../../hooks/usePublicSettings';
+import { useAuth } from '../../shared/contexts/AuthContext';
+import { useNotifications } from '../../shared/contexts/NotificationContext';
+import { usePublicSettings } from '../../shared/hooks/usePublicSettings';
 import { Checkbox } from '../ui/checkbox';
 
 const REMEMBER_KEY = 'ikan_admin_remembered_email';

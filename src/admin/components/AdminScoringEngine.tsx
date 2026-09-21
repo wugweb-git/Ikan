@@ -11,9 +11,9 @@ import { Label } from '../ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Switch } from '../ui/switch';
 import { AdminStatusBadge } from './AdminStatusBadge';
-import { useNotifications } from '../../contexts/NotificationContext';
+import { useNotifications } from '../../shared/contexts/NotificationContext';
 import { apiClient } from '../../shared/api-client';
-import { useMetadata } from '../../hooks/useMetadata';
+import { useMetadata } from '../../shared/hooks/useMetadata';
 import {
   SEVERITY_LEVELS, tierFor, validateBandTiling, formatBandInterval,
   type ScoringProfile, type ScoringBand, type SeverityLevel, type ScoreCalc,

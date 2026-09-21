@@ -1,7 +1,7 @@
 import { Settings } from 'lucide-react';
 import { Button } from '../ui/button';
 import { useEffect, useState } from 'react';
-import { useAuth } from '../../contexts/AuthContext';
+import { useAuth } from '../../shared/contexts/AuthContext';
 
 interface AdminWidgetProps {
   onNavigate?: (path: string) => void;

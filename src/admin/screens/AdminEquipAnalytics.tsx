@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react';
 import { Users, Activity, CircleCheck, X, Target } from 'lucide-react';
-import { useNotifications } from '../../contexts/NotificationContext';
+import { useNotifications } from '../../shared/contexts/NotificationContext';
 import { apiClient } from '../../shared/api-client';
 import { AdminHeader } from '../components/AdminHeader';
 import { AdminLoading } from '../components/AdminLoading';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
-import { useIsMobile } from '../../hooks/useIsMobile';
+import { useIsMobile } from '../../shared/hooks/useIsMobile';
 import { cn } from '../ui/utils';
 import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { AdminStatusBadge } from '../components/AdminStatusBadge';

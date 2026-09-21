@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { useAuth } from '../../contexts/AuthContext';
-import { useNotifications } from '../../contexts/NotificationContext';
+import { useAuth } from '../../shared/contexts/AuthContext';
+import { useNotifications } from '../../shared/contexts/NotificationContext';
 import { Icon } from '../ui/Icon';
 import { LogoFull } from '../ui/Logo';
-import { authContent } from '../../lib/content/auth';
+import { authContent } from '../lib/content/auth';
 import { Input } from '../ui/input';
 import { Mail, Lock, User, Eye, EyeOff, ArrowLeft, Shield, Heart, Users } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';

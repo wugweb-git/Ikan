@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../../ui/card';
 import { Button } from '../../ui/button';
 import { Icon } from '../../ui/Icon';
-import { useNotifications } from '../../../contexts/NotificationContext';
+import { useNotifications } from '../../../shared/contexts/NotificationContext';
 import { cn } from '../../ui/utils';
 
 interface PushPermissionPromptProps {

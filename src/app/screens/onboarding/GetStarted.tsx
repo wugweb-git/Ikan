@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { ArrowLeft, Check, Info } from 'lucide-react';
-import { markFirstRunComplete } from '../../../lib/first-run';
+import { markFirstRunComplete } from '../../lib/first-run';
 
 interface GetStartedProps {
   onNavigate?: (route: string) => void;

@@ -5,7 +5,7 @@
  */
 
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
-import { projectId, publicAnonKey } from '../utils/supabase/info';
+import { projectId, publicAnonKey } from './config/supabase-info';
 
 // Singleton instance
 let supabaseInstance: SupabaseClient | null = null;

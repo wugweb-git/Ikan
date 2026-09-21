@@ -10,7 +10,7 @@
  * `warnFallback` already dedupes by key, so a render loop cannot become a
  * request loop.
  */
-import { projectId, publicAnonKey } from '../../utils/supabase/info';
+import { projectId, publicAnonKey } from '../config/supabase-info';
 import { setFallbackReporter } from './block-model';
 
 export function installBlocksFallbackReporter(): void {

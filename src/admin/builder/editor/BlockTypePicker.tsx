@@ -23,7 +23,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '../../ui/popover';
 import {
   Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList,
 } from '../../ui/command';
-import { getIconComponent, iconResolves } from '../../../lib/catalog-icons';
+import { getIconComponent, iconResolves } from '../../lib/catalog-icons';
 import { retypeEffect, retypeSentence } from '../../../shared/blocks/block-retype';
 import { DEFAULT_ACTIVITY_FOR_TYPE, type ActivityName } from '../../../shared/blocks/vocabulary';
 import { Button } from '../../ui/button';

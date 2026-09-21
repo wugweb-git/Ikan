@@ -16,10 +16,10 @@ import {
 } from '../ui/dropdown-menu';
 import { apiClient } from '../../shared/api-client';
 import { EquipProgram } from '../../shared/blocks/block-model';
-import { useNotifications } from '../../contexts/NotificationContext';
+import { useNotifications } from '../../shared/contexts/NotificationContext';
 import { EquipProgramWizard } from './EquipProgramWizard';
 import { AdminHeader } from '../components/AdminHeader';
-import { useIsMobile } from '../../hooks/useIsMobile';
+import { useIsMobile } from '../../shared/hooks/useIsMobile';
 
 interface EquipAdminDashboardProps {
   onBack?: () => void;

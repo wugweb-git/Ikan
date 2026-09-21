@@ -10,14 +10,14 @@ import { AdminStatusBadge, resolveStatusVariant } from './AdminStatusBadge';
 import { Textarea } from '../ui/textarea';
 import { Label } from '../ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
-import { useNotifications } from '../../contexts/NotificationContext';
+import { useNotifications } from '../../shared/contexts/NotificationContext';
 import { AdminHeader } from './AdminHeader';
 import { AdminCommunicationAPI } from './AdminCommunicationAPI';
 import { AdminEmptyState } from './AdminEmptyState';
-import { useIsMobile } from '../../hooks/useIsMobile';
-import { projectId, publicAnonKey } from '../../utils/supabase/info';
+import { useIsMobile } from '../../shared/hooks/useIsMobile';
+import { projectId, publicAnonKey } from '../../shared/config/supabase-info';
 import { supabase } from '../../shared/supabase-client';
-import tokens from '../../lib/design-tokens';
+import tokens from '../../shared/lib/design-tokens';
 
 // ── Design helpers ──────────────────────────────────────────────
 const B = {

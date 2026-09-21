@@ -23,12 +23,7 @@
     /* Path mapping */
     "baseUrl": ".",
     "paths": {
-      "@/*": ["./*"],
-      "@components/*": ["./components/*"],
-      "@lib/*": ["./lib/*"],
-      "@utils/*": ["./utils/*"],
-      "@contexts/*": ["./contexts/*"],
-      "@hooks/*": ["./hooks/*"]
+      "@/*": ["./*"]
     },
 
     /* Additional options for better development experience */
@@ -51,14 +46,6 @@
   // reference and the `composite` flag makes both configs load standalone.
   "include": [
     "./App.tsx",
-    "./components/**/*.ts",
-    "./components/**/*.tsx",
-    "./contexts/**/*.ts",
-    "./contexts/**/*.tsx",
-    "./hooks/**/*.ts",
-    "./hooks/**/*.tsx",
-    "./lib/**/*.ts",
-    "./lib/**/*.tsx",
     "./admin/**/*.ts",
     "./admin/**/*.tsx",
     "./app/**/*.ts",
@@ -67,8 +54,6 @@
     "./site/**/*.tsx",
     "./shared/**/*.ts",
     "./shared/**/*.tsx",
-    "./utils/**/*.ts",
-    "./utils/**/*.tsx",
     "./styles/**/*.css"
   ],
   "exclude": [

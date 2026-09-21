@@ -22,8 +22,8 @@ import type {
 export type { UserProfile as User };
 
 import { normaliseBlock } from './blocks/block-normalise';
-import { projectId, publicAnonKey } from '../utils/supabase/info';
-import { cacheForOffline, readOfflineCache, invalidateOfflineCache } from '../hooks/useOfflineSync';
+import { projectId, publicAnonKey } from './config/supabase-info';
+import { cacheForOffline, readOfflineCache, invalidateOfflineCache } from './hooks/useOfflineSync';
 
 const API_BASE = `https://${projectId}.supabase.co/functions/v1/make-server-cc205da9`;
 

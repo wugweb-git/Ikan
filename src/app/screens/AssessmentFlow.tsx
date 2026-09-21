@@ -1,12 +1,12 @@
-import { projectId } from '../../utils/supabase/info';
+import { projectId } from '../../shared/config/supabase-info';
 import { getAuthHeaders } from '../../shared/supabase-client';
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { Button } from '../ui/button';
 import { Icon } from '../ui/Icon';
-import { useNotifications } from '../../contexts/NotificationContext';
-import { useAuth } from '../../contexts/AuthContext';
+import { useNotifications } from '../../shared/contexts/NotificationContext';
+import { useAuth } from '../../shared/contexts/AuthContext';
 import { apiClient } from '../../shared/api-client';
-import { severityForSection, resolveAnswerValue } from '../../lib/assessment-sections';
+import { severityForSection, resolveAnswerValue } from '../lib/assessment-sections';
 import { triggerCrisisSupport } from '../features/safety/CrisisSupport';
 
 /**
@@ -28,11 +28,11 @@ import { triggerCrisisSupport } from '../features/safety/CrisisSupport';
 const CRISIS_ON_ANSWER_ENABLED = false;
 import { buildScoringContext, toSectionScoreResult } from '../../shared/engine/scoring-context';
 import { computeScores } from '../../shared/engine/scoring-engine';
-import { createActiveTimer, type ActiveTimer } from '../../lib/active-time';
+import { createActiveTimer, type ActiveTimer } from '../lib/active-time';
 import { severityForMatching } from '../../supabase/functions/server/recommendation-matching.ts';
-import { slugify } from '../../lib/slug';
+import { slugify } from '../lib/slug';
 import { AssessmentResults } from './AssessmentResults';
-import { useOfflineSync } from '../../hooks/useOfflineSync';
+import { useOfflineSync } from '../../shared/hooks/useOfflineSync';
 import { LoadingSpinner } from '../ui/LoadingSpinner';
 
 interface Question {
@@ -84,7 +84,7 @@ interface AssessmentFlowProps {
 }
 
 import { ProgramPlayer, PlayerResults } from '../features/player/ProgramPlayer';
-import { adaptAssessmentToProgram, normalizeLegacyQuestionType } from '../../lib/assessment-adapter';
+import { adaptAssessmentToProgram, normalizeLegacyQuestionType } from '../lib/assessment-adapter';
 import { evaluateAssessment, loadScoringProfiles, loadAdminRules, getLoadedScoringProfiles } from '../../shared/engine/recommendation-engine';
 
 /**

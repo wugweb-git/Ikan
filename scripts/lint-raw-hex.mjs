@@ -13,8 +13,8 @@ import { fileURLToPath } from 'node:url';
 import { dirname, join, relative } from 'node:path';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
-/* admin/, app/ and site/ hold what moved out of components/ — scan all four. */
-const SRCS = ['src/components', 'src/admin', 'src/app', 'src/site'].map(d => join(ROOT, d));
+/* The three UI surfaces. components/ was emptied into them. */
+const SRCS = ['src/admin', 'src/app', 'src/site'].map(d => join(ROOT, d));
 const BASELINE_FILE = join(ROOT, '.rawhex-baseline');
 
 /* globals.css is where literals belong. Tests and stories may pin values. */
@@ -54,7 +54,7 @@ const baseline = existsSync(BASELINE_FILE)
   ? parseInt(readFileSync(BASELINE_FILE, 'utf8').trim(), 10) || 0
   : Number.MAX_SAFE_INTEGER;
 
-console.log(`raw colour literals in src/{components,admin,app,site}: ${total} across ${perFile.length} files (baseline ${baseline === Number.MAX_SAFE_INTEGER ? 'unset' : baseline})`);
+console.log(`raw colour literals in src/{admin,app,site}: ${total} across ${perFile.length} files (baseline ${baseline === Number.MAX_SAFE_INTEGER ? 'unset' : baseline})`);
 console.log('');
 for (const [f, n] of perFile.slice(0, 15)) console.log(`  ${String(n).padStart(4)}  ${f}`);
 if (perFile.length > 15) console.log(`  ...and ${perFile.length - 15} more files`);

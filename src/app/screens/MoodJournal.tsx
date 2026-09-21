@@ -1,10 +1,10 @@
 import { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { apiClient } from '../../shared/api-client';
-import { useAuth } from '../../contexts/AuthContext';
-import { useNotifications } from '../../contexts/NotificationContext';
-import { useIsMobile } from '../../hooks/useIsMobile';
-import { useOfflineSync } from '../../hooks/useOfflineSync';
+import { useAuth } from '../../shared/contexts/AuthContext';
+import { useNotifications } from '../../shared/contexts/NotificationContext';
+import { useIsMobile } from '../../shared/hooks/useIsMobile';
+import { useOfflineSync } from '../../shared/hooks/useOfflineSync';
 import { cn } from '../ui/utils';
 import { Plus, ChevronLeft, TrendingUp, Check } from 'lucide-react';
 import { CalendarStrip, type MarkedDate } from '../features/widgets/CalendarStrip';
@@ -18,9 +18,9 @@ import {
   getContextTags,
   loadCustomScales,
   getScaleByKey,
-} from '../../lib/emoji-utils';
-import tokens from '../../lib/design-tokens';
-import { projectId, publicAnonKey } from '../../utils/supabase/info';
+} from '../../shared/lib/emoji-utils';
+import tokens from '../../shared/lib/design-tokens';
+import { projectId, publicAnonKey } from '../../shared/config/supabase-info';
 import { detectCrisisKeywords } from '../shell/SecurityProvider';
 import { triggerCrisisSupport } from '../features/safety/CrisisSupport';
 

@@ -10,7 +10,7 @@ import {
 import { AdminHeader } from './AdminHeader';
 import { AdminLoading } from './AdminLoading';
 import { AdminStatusBadge } from './AdminStatusBadge';
-import { useIsMobile } from '../../hooks/useIsMobile';
+import { useIsMobile } from '../../shared/hooks/useIsMobile';
 
 interface AuditData {
   timestamp: string;

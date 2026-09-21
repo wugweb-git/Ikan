@@ -4,8 +4,8 @@ import { Button } from '../../ui/button';
 import { Badge } from '../../ui/badge';
 import { Separator } from '../../ui/separator';
 import { Icon } from '../../ui/Icon';
-import { usePayment, loadRazorpayScript } from '../../../contexts/PaymentContext';
-import { useAuth } from '../../../contexts/AuthContext';
+import { usePayment, loadRazorpayScript } from '../../shell/PaymentContext';
+import { useAuth } from '../../../shared/contexts/AuthContext';
 import { cn } from '../../ui/utils';
 
 interface RazorpayPaymentProps {

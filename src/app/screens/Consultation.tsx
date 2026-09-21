@@ -2,20 +2,20 @@ import { useState, useEffect, useMemo, useCallback } from 'react';
 import { cn } from '../ui/utils';
 import { Search, X, LayoutGrid, List, Sparkles, SlidersHorizontal } from 'lucide-react';
 import { apiClient } from '../../shared/api-client';
-import { percentOfRange } from '../../lib/result-presentation';
-import { severityOfResult } from '../../lib/severity-presentation';
+import { percentOfRange } from '../lib/result-presentation';
+import { severityOfResult } from '../lib/severity-presentation';
 import { compareSeverity } from '../../supabase/functions/server/scoring-vocabulary.ts';
 import { ConsultantCard } from '../ui/blocks/ConsultantCard';
 import { Button } from '../ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '../ui/sheet';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Checkbox } from '../ui/checkbox';
-import { useIsMobile } from '../../hooks/useIsMobile';
+import { useIsMobile } from '../../shared/hooks/useIsMobile';
 import { Skeleton } from '../ui/skeleton-loader';
 import { PageHero } from '../ui/PageHero';
-import { useMetadata } from '../../hooks/useMetadata';
+import { useMetadata } from '../../shared/hooks/useMetadata';
 import { BookingModal } from '../ui/blocks/BookingModal';
-import { useAuth } from '../../contexts/AuthContext';
+import { useAuth } from '../../shared/contexts/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
 
 // ── Consultant type ─────────────────────────────────────────────

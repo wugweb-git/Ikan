@@ -11,15 +11,15 @@ import { SectionReportCard } from '../features/player/SectionReportCard';
 import { AssessmentCard } from '../features/assessment/AssessmentCard';
 import { LibraryResourceCard } from '../ui/blocks/LibraryResourceCard';
 import { EquipProgramCard } from '../ui/blocks/EquipProgramCard';
-import { toResourcePost, isPublished, articleTime } from '../../lib/resource-presentation';
+import { toResourcePost, isPublished, articleTime } from '../lib/resource-presentation';
 import {
   Carousel, CarouselContent, CarouselItem, CarouselPrevious, CarouselNext,
 } from '../ui/carousel';
-import { severityPresentation, severityOfResult } from '../../lib/severity-presentation';
-import { equipMeta } from '../../lib/equip-meta';
-import { resolveResultPresentation, percentOfRange } from '../../lib/result-presentation';
+import { severityPresentation, severityOfResult } from '../lib/severity-presentation';
+import { equipMeta } from '../lib/equip-meta';
+import { resolveResultPresentation, percentOfRange } from '../lib/result-presentation';
 import { getLoadedScoringProfiles, loadScoringProfiles } from '../../shared/engine/recommendation-engine';
-import type { SectionScoreResult } from '../../lib/assessment-sections';
+import type { SectionScoreResult } from '../lib/assessment-sections';
 
 /**
  * A recommendation row: static up to two items, a carousel above that.

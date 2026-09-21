@@ -8,7 +8,7 @@
  * `Library` now imports what it used to declare.
  */
 import { ContentImage } from '../ContentImage';
-import { resolveImageUrl } from '../../../utils/image-utils';
+import { resolveImageUrl } from '../../../shared/lib/image-utils';
 
 /**
  * Only the five fields the card renders.

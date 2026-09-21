@@ -19,12 +19,12 @@ import {
   ExternalLink,
   Pencil,
 } from 'lucide-react';
-import { useNotifications } from '../../contexts/NotificationContext';
+import { useNotifications } from '../../shared/contexts/NotificationContext';
 import { apiClient } from '../../shared/api-client';
 import { AdminHeader } from '../components/AdminHeader';
 import { AdminEmptyState } from '../components/AdminEmptyState';
 import { AdminLoading } from '../components/AdminLoading';
-import { useIsMobile } from '../../hooks/useIsMobile';
+import { useIsMobile } from '../../shared/hooks/useIsMobile';
 import { Button } from '../ui/button';
 import { AdminStatusBadge, resolveStatusVariant } from '../components/AdminStatusBadge';
 import { ConsultantEditPage, Consultant } from './ConsultantEditPage';
@@ -44,10 +44,10 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "../ui/dropdown-menu";
-import { projectId, publicAnonKey } from '../../utils/supabase/info';
+import { projectId, publicAnonKey } from '../../shared/config/supabase-info';
 import { supabase } from '../../shared/supabase-client';
-import { copyToClipboard } from '../../lib/clipboard';
-import { useMetadata } from '../../hooks/useMetadata';
+import { copyToClipboard } from '../../shared/lib/clipboard';
+import { useMetadata } from '../../shared/hooks/useMetadata';
 
 interface AdminConsultationManagerProps {
   onBack?: () => void;

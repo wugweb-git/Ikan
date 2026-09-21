@@ -2,20 +2,20 @@ import React, { useState, useEffect, useCallback, lazy, Suspense, startTransitio
 import { Analytics } from '@vercel/analytics/react';
 import { SpeedInsights } from '@vercel/speed-insights/react';
 import { motion, AnimatePresence, MotionConfig } from 'framer-motion';
-import { useTokens } from './lib/react-tokens';
-import { crossHostSignInUrl } from './lib/app-host';
-import { useIsMobile } from './hooks/useIsMobile';
-import { useMobileOptimizations, useMobileViewport, useMobileKeyboard } from './hooks/useMobileOptimizations';
-import { AuthProvider, useAuth } from './contexts/AuthContext';
-import { NotificationProvider, useNotifications } from './contexts/NotificationContext';
-import { PaymentProvider } from './contexts/PaymentContext';
-import { JourneyProvider } from './contexts/JourneyContext';
+import { useTokens } from './app/lib/react-tokens';
+import { crossHostSignInUrl } from './app/lib/app-host';
+import { useIsMobile } from './shared/hooks/useIsMobile';
+import { useMobileOptimizations, useMobileViewport, useMobileKeyboard } from './app/hooks/useMobileOptimizations';
+import { AuthProvider, useAuth } from './shared/contexts/AuthContext';
+import { NotificationProvider, useNotifications } from './shared/contexts/NotificationContext';
+import { PaymentProvider } from './app/shell/PaymentContext';
+import { JourneyProvider } from './app/shell/JourneyContext';
 import { Navigation } from './app/shell/navigation/Navigation';
 import { BottomNavBarMobile } from './app/shell/navigation/BottomNavBarMobile';
 import { PublicBottomNavMobile } from './site/ui/PublicBottomNavMobile';
 import { RouteGuard } from './app/shell/RouteGuard';
-import { DEFAULT_PUBLIC_ROUTE, DEFAULT_PRIVATE_ROUTE } from './lib/route-config';
-import { hasSeenOnboarding, hasCompletedFirstRun } from './lib/first-run';
+import { DEFAULT_PUBLIC_ROUTE, DEFAULT_PRIVATE_ROUTE } from './app/lib/route-config';
+import { hasSeenOnboarding, hasCompletedFirstRun } from './app/lib/first-run';
 import { WelcomeSplash } from './app/screens/onboarding/WelcomeSplash';
 import { MobileOnboarding } from './app/screens/onboarding/MobileOnboarding';
 import { VerifyEmail } from './app/screens/onboarding/VerifyEmail';
@@ -25,11 +25,11 @@ import { PushPermissionPrompt, usePushPermissionPrompt } from './app/features/no
 import { Toaster } from './app/ui/sonner';
 import { cn } from './app/ui/utils';
 import { logger } from './shared/logger';
-import { setupGlobalErrorHandlers } from './lib/error-handlers';
+import { setupGlobalErrorHandlers } from './app/lib/error-handlers';
 import { LoadingSpinner } from './app/ui/LoadingSpinner';
-import { useNotificationBadges } from './hooks/useNotificationBadges';
-import { lazyRetry } from './lib/lazy-with-retry';
-import { equipSubPage } from './lib/slug';
+import { useNotificationBadges } from './app/hooks/useNotificationBadges';
+import { lazyRetry } from './app/lib/lazy-with-retry';
+import { equipSubPage } from './app/lib/slug';
 
 // ── DIAGNOSTIC: Global error handler fires before React mounts ──
 // This ensures ANY crash (module eval, React mount, etc.) shows something.
@@ -128,14 +128,14 @@ import { Footer } from './site/ui/Footer';
 import { ErrorBoundary } from './app/ui/ErrorBoundary';
 import { ChunkErrorBoundary } from './app/shell/ChunkErrorBoundary';
 import { SecurityProvider } from './app/shell/SecurityProvider';
-import { usePublicSettings } from './hooks/usePublicSettings';
+import { usePublicSettings } from './shared/hooks/usePublicSettings';
 import { CrisisSupport, useCrisisSupport } from './app/features/safety/CrisisSupport';
 import { SafePerformanceMonitor } from './app/shell/SafePerformanceMonitor';
 import { SkipToMainContent, useReducedMotion } from './app/ui/accessibility-helpers';
 import { OfflineBanner } from './app/shell/OfflineBanner';
-import { useOfflineSync } from './hooks/useOfflineSync';
+import { useOfflineSync } from './shared/hooks/useOfflineSync';
 import { installBlocksFallbackReporter } from './shared/blocks/block-fallback-reporter';
-import { usePullToRefresh } from './hooks/usePullToRefresh';
+import { usePullToRefresh } from './app/hooks/usePullToRefresh';
 
 // --- Suspense fallback ---
 // Uses a delayed render so fast-loading chunks don't flash a spinner

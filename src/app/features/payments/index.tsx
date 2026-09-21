@@ -5,8 +5,8 @@ export { RazorpayPayment } from './RazorpayPayment';
 export { PaymentFlow } from './PaymentFlow';
 
 // Context
-export { PaymentProvider, usePayment, loadRazorpayScript } from '../../../contexts/PaymentContext';
-export type { PaymentPlan, Transaction, PaymentMethod } from '../../../contexts/PaymentContext';
+export { PaymentProvider, usePayment, loadRazorpayScript } from '../../shell/PaymentContext';
+export type { PaymentPlan, Transaction, PaymentMethod } from '../../shell/PaymentContext';
 
 // Utility functions for payments
 export function formatCurrency(amount: number, currency = 'INR'): string {

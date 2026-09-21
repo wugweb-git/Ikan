@@ -4,7 +4,7 @@ import {
 } from 'lucide-react';
 import { AdminHeader } from '../components/AdminHeader';
 import { apiClient } from '../../shared/api-client';
-import { getIconComponent, iconResolves } from '../../lib/catalog-icons';
+import { getIconComponent, iconResolves } from '../lib/catalog-icons';
 import { AUTHORABLE_SUBTYPES } from '../../shared/blocks/block-model';
 import { missingRequirements, blockOf } from '../../shared/blocks/content-hierarchy';
 import { Card, CardContent } from '../ui/card';
@@ -27,7 +27,7 @@ import {
   requiresOf, type Interaction, type ActivityName,
 } from '../../shared/blocks/vocabulary';
 import { DAY_TYPE_PRESETS } from '../../shared/blocks/block-type-rules';
-import { useMetadata } from '../../hooks/useMetadata';
+import { useMetadata } from '../../shared/hooks/useMetadata';
 import { hasContentField, contentLabelFor, contentPlaceholderFor } from '../../shared/blocks/block-fields';
 // Template building blocks shared with actual editors (BlockEditor, CheckinTemplateBuilder)
 import {

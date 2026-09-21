@@ -1,28 +1,28 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { apiClient } from '../../shared/api-client';
-import { useAuth } from '../../contexts/AuthContext';
-import { useNotifications } from '../../contexts/NotificationContext';
+import { useAuth } from '../../shared/contexts/AuthContext';
+import { useNotifications } from '../../shared/contexts/NotificationContext';
 import { ArrowRight, Activity, Smile, Check, BarChart3, ClipboardList, Play, TrendingUp, Brain, Compass, BookOpen, Calendar, ChevronRight } from 'lucide-react';
-import { SPECIAL_PROGRAM_IDS } from '../../lib/constants/content';
-import { checkReassessmentTriggers, ReassessmentReason } from '../../lib/reassessment-triggers';
+import { SPECIAL_PROGRAM_IDS } from '../../shared/lib/constants/content';
+import { checkReassessmentTriggers, ReassessmentReason } from '../lib/reassessment-triggers';
 import { ActivityCard } from '../features/integrations/ActivityCard';
 import { useGoogleFit } from '../features/integrations/GoogleFitContext';
 import { cn } from '../ui/utils';
-import { tierPresentation, tonePresentation } from '../../lib/severity-presentation';
-import { isProgramCheckIn } from '../../lib/assessment-record';
+import { tierPresentation, tonePresentation } from '../lib/severity-presentation';
+import { isProgramCheckIn } from '../lib/assessment-record';
 import { evaluateAssessment, EngineResult, initEngineConfig, getLoadedScoringProfiles } from '../../shared/engine/recommendation-engine';
-import { resolveResultPresentation, type Tone, type Integrity } from '../../lib/result-presentation';
+import { resolveResultPresentation, type Tone, type Integrity } from '../lib/result-presentation';
 import { RecommendationCards } from '../features/widgets/RecommendationCards';
 import { ResourceBlock } from '../ui/blocks/ResourceBlock';
 import { ResourcePost } from '../ui/blocks/ResourceCard';
 import { HelloWidget } from '../features/widgets/HelloWidget';
 import { DashboardActionBlocks } from '../features/widgets/DashboardActionBlocks';
 import { LoadingSpinner } from '../ui/LoadingSpinner';
-import { CorporateProgramCard } from '../../components/CorporateProgramCard';
+import { CorporateProgramCard } from '../features/widgets/CorporateProgramCard';
 import { ProgramProgressTracker } from '../features/widgets/ProgramProgressTracker';
 import { IkanScoreCard } from '../features/widgets/IkanScoreCard';
-import { usePublicSettings } from '../../hooks/usePublicSettings';
+import { usePublicSettings } from '../../shared/hooks/usePublicSettings';
 
 interface DashboardProps {
   className?: string;

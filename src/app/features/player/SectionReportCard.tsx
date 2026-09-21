@@ -1,7 +1,7 @@
 import { motion } from 'framer-motion';
-import type { SectionScore, SectionScoreResult } from '../../../lib/assessment-sections';
-import { severityForSection } from '../../../lib/assessment-sections';
-import { severityPresentation, tierPresentation } from '../../../lib/severity-presentation';
+import type { SectionScore, SectionScoreResult } from '../../lib/assessment-sections';
+import { severityForSection } from '../../lib/assessment-sections';
+import { severityPresentation, tierPresentation } from '../../lib/severity-presentation';
 
 /**
  * Per-scale breakdown for assessments that bundle several instruments.

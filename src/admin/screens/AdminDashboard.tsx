@@ -1,6 +1,6 @@
 import { useState, useEffect, lazy, Suspense, useMemo, useCallback, useRef, startTransition, useDeferredValue } from 'react';
-import { useNotifications } from '../../contexts/NotificationContext';
-import { useAuth } from '../../contexts/AuthContext';
+import { useNotifications } from '../../shared/contexts/NotificationContext';
+import { useAuth } from '../../shared/contexts/AuthContext';
 import {
   LayoutDashboard,
   Users,
@@ -32,7 +32,7 @@ import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { SideNav, SideNavGroup } from '../components/SideNav';
 import { LogoIcon } from '../ui/Logo';
-import { usePublicSettings } from '../../hooks/usePublicSettings';
+import { usePublicSettings } from '../../shared/hooks/usePublicSettings';
 import { ErrorBoundary } from '../ui/ErrorBoundary';
 
 // ── ALL admin screens are lazy-loaded ──────────────────────────────

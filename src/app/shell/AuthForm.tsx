@@ -5,17 +5,17 @@ import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
 import { Checkbox } from '../ui/checkbox';
-import { useAuth } from '../../contexts/AuthContext';
+import { useAuth } from '../../shared/contexts/AuthContext';
 import { User, Mail, Lock, Phone, Heart, Eye, EyeOff } from 'lucide-react';
 import { toast } from 'sonner';
-import { authContent } from '../../lib/content/auth';
+import { authContent } from '../lib/content/auth';
 import { 
   validateEmail, 
   validatePassword, 
   validateName, 
   validatePhone 
 } from '../../shared/validation';
-import { usePublicSettings } from '../../hooks/usePublicSettings';
+import { usePublicSettings } from '../../shared/hooks/usePublicSettings';
 
 interface AuthFormProps {
   onSuccess?: () => void;

@@ -1,6 +1,6 @@
 import { FileText, CircleHelp, Info, ChevronRight, Shield, RotateCcw, CircleX } from 'lucide-react';
 import { AccountPageHeader } from '../../ui/blocks/AccountPageHeader';
-import { useIsMobile } from '../../../hooks/useIsMobile';
+import { useIsMobile } from '../../../shared/hooks/useIsMobile';
 
 // ─── Font helper ──────────────────────────────────────────────
 const f = (size: string, weight: number = 400, color: string = 'var(--color-text-primary)') => ({

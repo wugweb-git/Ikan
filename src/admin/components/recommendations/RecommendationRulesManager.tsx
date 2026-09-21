@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { clearEngineConfigCache } from '../../../shared/engine/recommendation-engine';
 import { Trash2, Plus, Save, BookOpen, FileText, ClipboardList, Sparkles, AlertTriangle } from 'lucide-react';
-import { useNotifications } from '../../../contexts/NotificationContext';
+import { useNotifications } from '../../../shared/contexts/NotificationContext';
 import { AdminHeader } from '../AdminHeader';
 import { Button } from '../../ui/button';
 import { Card, CardContent } from '../../ui/card';
@@ -9,7 +9,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '.
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../ui/select';
 import { Input } from '../../ui/input';
 import { apiClient } from '../../../shared/api-client';
-import { useMetadata } from '../../../hooks/useMetadata';
+import { useMetadata } from '../../../shared/hooks/useMetadata';
 
 // ── Types ────────────────────────────────────────────────────
 interface RecommendationRule {

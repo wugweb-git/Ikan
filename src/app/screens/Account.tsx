@@ -1,11 +1,11 @@
 import React, { useState, useEffect, lazy, Suspense } from 'react';
-import { useAuth } from '../../contexts/AuthContext';
+import { useAuth } from '../../shared/contexts/AuthContext';
 import { AuthForm } from '../shell/AuthForm';
 import { AccountDetailsSection } from '../ui/blocks/AccountDetailsSection';
 import { SideNavAccount } from '../shell/navigation/SideNavAccount';
 import { cn } from '../ui/utils';
-import { useNotifications } from '../../contexts/NotificationContext';
-import { useIsMobile } from '../../hooks/useIsMobile';
+import { useNotifications } from '../../shared/contexts/NotificationContext';
+import { useIsMobile } from '../../shared/hooks/useIsMobile';
 import { validateProfile } from '../../shared/validation';
 import { AccountPageHeader } from '../ui/blocks/AccountPageHeader';
 

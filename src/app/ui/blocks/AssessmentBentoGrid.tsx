@@ -1,5 +1,5 @@
 import { cn } from '../utils';
-import { stripDuplicateHeading } from '../../../lib/cms-content';
+import { stripDuplicateHeading } from '../../lib/cms-content';
 import {
   Timer,
   ListTodo,

@@ -2,7 +2,7 @@ import type React from 'react';
 import { ErrorBoundary } from '../../ui/ErrorBoundary';
 import { Button } from '../../ui/button';
 import { cn } from '../../ui/utils';
-import { DEFAULT_CMS_CONTENT } from '../../../utils/cms-defaults';
+import { DEFAULT_CMS_CONTENT } from '../../lib/cms-defaults';
 import { useMemo, useState, useEffect, useRef } from 'react';
 
 interface HeroSectionProps {

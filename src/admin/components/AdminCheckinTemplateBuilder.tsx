@@ -29,12 +29,12 @@ import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { Switch } from '../ui/switch';
 import { apiClient } from '../../shared/api-client';
-import tokens from '../../lib/design-tokens';
-import { getScaleByKey, getAvailableScaleKeys, getContextTags, loadCustomScales, clearScaleCache } from '../../lib/emoji-utils';
+import tokens from '../../shared/lib/design-tokens';
+import { getScaleByKey, getAvailableScaleKeys, getContextTags, loadCustomScales, clearScaleCache } from '../../shared/lib/emoji-utils';
 import { AdminHeader } from './AdminHeader';
 import { AdminLoading } from './AdminLoading';
-import { useMetadata } from '../../hooks/useMetadata';
-import { projectId, publicAnonKey } from '../../utils/supabase/info';
+import { useMetadata } from '../../shared/hooks/useMetadata';
+import { projectId, publicAnonKey } from '../../shared/config/supabase-info';
 
 // ── Types (matching backend) ────────────────────────────────────
 interface CheckinStep {

@@ -5,7 +5,7 @@ import { ErrorBoundary } from '../../ui/ErrorBoundary';
 import { BlockRenderer } from '../../blocks/BlockRenderer';
 import { Button } from '../../ui/button';
 import { ChevronLeft, Check, X } from 'lucide-react';
-import { useNotifications } from '../../../contexts/NotificationContext';
+import { useNotifications } from '../../../shared/contexts/NotificationContext';
 import { cn } from '../../ui/utils';
 import { DEFAULT_DAY_LAYOUT, layoutOf, primaryButtonFor, fallbackTitleFor, type DayLayout } from '../../../shared/blocks/day-layout';
 import { policyOf } from '../../../shared/blocks/day-policy';

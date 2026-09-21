@@ -2,7 +2,7 @@
 // Shows: score ring, trend indicator, data source pills, CTA to timeline
 import React, { useMemo } from 'react';
 import { ArrowRight, ArrowUp, ArrowDown, Minus, ClipboardList, Smile, Check, Play } from 'lucide-react';
-import { useIkanScore, IkanScoreData } from '../../../hooks/useIkanScore';
+import { useIkanScore, IkanScoreData } from '../../hooks/useIkanScore';
 
 interface IkanScoreCardProps {
   onNavigate?: (route: string) => void;

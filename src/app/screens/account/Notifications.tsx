@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { useNotifications } from '../../../contexts/NotificationContext';
-import { useAuth } from '../../../contexts/AuthContext';
+import { useNotifications } from '../../../shared/contexts/NotificationContext';
+import { useAuth } from '../../../shared/contexts/AuthContext';
 import { apiClient } from '../../../shared/api-client';
 import { ToggleSwitch } from '../../ui/toggle-switch';
 

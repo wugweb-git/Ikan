@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { markOnboardingSeen } from '../../../lib/first-run';
+import { markOnboardingSeen } from '../../lib/first-run';
 
 // The iKan mark, inlined so the splash never falls back to an admin-uploaded
 // icon and needs no cross-branch dependency. Colour comes from `currentColor`.

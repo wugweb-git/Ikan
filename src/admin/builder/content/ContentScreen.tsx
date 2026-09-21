@@ -14,7 +14,7 @@
  */
 import { useState, useEffect, useMemo } from 'react';
 import { DayContent, Activity, activityOf, normalizeSubtype } from '../../../shared/blocks/block-model';
-import { useMetadata } from '../../../hooks/useMetadata';
+import { useMetadata } from '../../../shared/hooks/useMetadata';
 import { validateDay, hasBlockingIssues } from '../../../shared/blocks/block-validation';
 import { seedDayFromTemplate, policyOf } from '../../../shared/blocks/day-policy';
 import type { ExerciseSubtype } from '../../../shared/blocks/block-model';

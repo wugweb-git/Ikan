@@ -7,7 +7,7 @@ import { Textarea } from '../textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../select';
 import { AccountPageHeader } from './AccountPageHeader';
 import { Pencil, Save, Loader2, User, Mail, Phone, Calendar, MapPin, Hash, UserCheck, PhoneCall, Heart, Users } from 'lucide-react';
-import { useIsMobile } from '../../../hooks/useIsMobile';
+import { useIsMobile } from '../../../shared/hooks/useIsMobile';
 import { validateName, validatePhone, validateBio, validateDateOfBirth, validateEmergencyContact } from '../../../shared/validation';
 import { apiClient } from '../../../shared/api-client';
 

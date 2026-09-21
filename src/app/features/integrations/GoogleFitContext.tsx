@@ -1,9 +1,9 @@
 import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
-import { useNotifications } from '../../../contexts/NotificationContext';
-import { useAuth } from '../../../contexts/AuthContext';
+import { useNotifications } from '../../../shared/contexts/NotificationContext';
+import { useAuth } from '../../../shared/contexts/AuthContext';
 import { apiClient } from '../../../shared/api-client';
 import { supabase } from '../../../shared/supabase-client';
-import { fetchGoogleFitData, GOOGLE_FIT_SCOPES } from '../../../lib/google-fit';
+import { fetchGoogleFitData, GOOGLE_FIT_SCOPES } from '../../lib/google-fit';
 
 const GFIT_PENDING_KEY = 'ikan-gfit-connecting';
 
@@ -162,11 +162,11 @@ export function GoogleFitProvider({ children }: { children: ReactNode }) {
       setLastSyncAt(null);
       setInitialLoadDone(true);
       // Lazily tear down native bridge if it was initialized
-      import('../../../lib/health-connect-bridge').then(m => m.destroyHealthBridge()).catch(() => {});
+      import('../../lib/health-connect-bridge').then(m => m.destroyHealthBridge()).catch(() => {});
       return;
     }
     // Lazily init native bridge so TWA wrapper can push data (non-blocking)
-    import('../../../lib/health-connect-bridge').then(m => {
+    import('../../lib/health-connect-bridge').then(m => {
       m.initHealthBridge({
         onDataReceived: () => fetchFromServer(true),
         onError: (err) => console.error('[HealthBridge] Native push error:', err),
@@ -175,7 +175,7 @@ export function GoogleFitProvider({ children }: { children: ReactNode }) {
     const timer = setTimeout(() => fetchFromServer(true), 300);
     return () => {
       clearTimeout(timer);
-      import('../../../lib/health-connect-bridge').then(m => m.destroyHealthBridge()).catch(() => {});
+      import('../../lib/health-connect-bridge').then(m => m.destroyHealthBridge()).catch(() => {});
     };
   }, [fetchFromServer, user]);
 

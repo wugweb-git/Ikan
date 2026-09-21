@@ -1,8 +1,8 @@
 import { useMemo } from 'react';
 import { ErrorBoundary } from '../../ui/ErrorBoundary';
 import { MessageSquare } from 'lucide-react';
-import { useIsMobile } from '../../../hooks/useIsMobile';
-import { DEFAULT_CMS_CONTENT } from '../../../utils/cms-defaults';
+import { useIsMobile } from '../../../shared/hooks/useIsMobile';
+import { DEFAULT_CMS_CONTENT } from '../../lib/cms-defaults';
 import {
   Accordion,
   AccordionItem,

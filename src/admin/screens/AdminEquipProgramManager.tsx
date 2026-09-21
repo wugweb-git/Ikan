@@ -1,17 +1,17 @@
 import { useState, useEffect } from 'react';
 import { BookOpen, Plus, MoreHorizontal, Pencil, Trash2, Eye, EyeOff, Users } from 'lucide-react';
-import { useNotifications } from '../../contexts/NotificationContext';
+import { useNotifications } from '../../shared/contexts/NotificationContext';
 import { apiClient } from '../../shared/api-client';
 import { AdminHeader } from '../components/AdminHeader';
 import { AdminStatusBadge } from '../components/AdminStatusBadge';
-import { useIsMobile } from '../../hooks/useIsMobile';
+import { useIsMobile } from '../../shared/hooks/useIsMobile';
 import { Button } from '../ui/button';
 import { EquipProgramWizard } from './EquipProgramWizard';
 import { EquipProgram } from '../../shared/blocks/block-model';
 import { AdminDataTable, Column, FilterOption } from '../components/AdminDataTable';
 import { Skeleton } from '../ui/skeleton-loader';
 import { ImageWithFallback } from '../ui/ImageWithFallback';
-import { useMetadata } from '../../hooks/useMetadata';
+import { useMetadata } from '../../shared/hooks/useMetadata';
 import {
   DropdownMenu,
   DropdownMenuContent,

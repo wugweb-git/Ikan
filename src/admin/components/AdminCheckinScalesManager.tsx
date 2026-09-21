@@ -24,7 +24,7 @@ import { Switch } from '../ui/switch';
 import { toast } from 'sonner';
 import { AdminHeader } from './AdminHeader';
 import { AdminLoading } from './AdminLoading';
-import { projectId, publicAnonKey } from '../../utils/supabase/info';
+import { projectId, publicAnonKey } from '../../shared/config/supabase-info';
 import { supabase } from '../../shared/supabase-client';
 
 // ── Types ──────────────────────────────────────────────────────────

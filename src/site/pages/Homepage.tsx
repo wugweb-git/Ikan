@@ -18,10 +18,10 @@ import { ResourceBlock } from '../ui/blocks/ResourceBlock';
 import { NewsletterBlock } from '../ui/blocks/NewsletterBlock';
 import { ResourcePost } from '../ui/blocks/ResourceCard';
 
-import { assessmentMeta, assessmentImage } from '../../lib/assessment-meta';
+import { assessmentMeta, assessmentImage } from '../../shared/lib/assessment-meta';
 import { apiClient } from '../../shared/api-client';
-import { DEFAULT_CMS_CONTENT } from '../../utils/cms-defaults';
-import { NEWSLETTER_CONTENT } from '../../lib/constants/content';
+import { DEFAULT_CMS_CONTENT } from '../lib/cms-defaults';
+import { NEWSLETTER_CONTENT } from '../../shared/lib/constants/content';
 
 interface HomepageProps {
   onNavigate: (route: string, resourceId?: string) => void;

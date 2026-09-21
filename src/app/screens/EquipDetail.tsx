@@ -1,9 +1,9 @@
-import { equipMeta } from '../../lib/equip-meta';
+import { equipMeta } from '../lib/equip-meta';
 import { useState, useEffect } from 'react';
-import { projectId } from '../../utils/supabase/info';
+import { projectId } from '../../shared/config/supabase-info';
 import { getAuthHeaders } from '../../shared/supabase-client';
 import { apiClient } from '../../shared/api-client';
-import { useAuth } from '../../contexts/AuthContext';
+import { useAuth } from '../../shared/contexts/AuthContext';
 import { SectionHero } from '../ui/blocks/SectionHero';
 import { EquipBentoGrid } from '../ui/blocks/EquipBentoGrid';
 import { EquipBlock } from '../ui/blocks/EquipBlock';
@@ -11,12 +11,12 @@ import { ResourceBlock } from '../ui/blocks/ResourceBlock';
 import { NewsletterBlock } from '../ui/blocks/NewsletterBlock';
 import { ResourcePost } from '../ui/blocks/ResourceCard';
 import { MobileHeader } from '../shell/navigation/MobileHeader';
-import { useIsMobile } from '../../hooks/useIsMobile';
-import { useSeo } from '../../hooks/useSeo';
-import { recordImage } from '../../lib/cms-content';
+import { useIsMobile } from '../../shared/hooks/useIsMobile';
+import { useSeo } from '../hooks/useSeo';
+import { recordImage } from '../lib/cms-content';
 import { EmptyState } from '../ui/empty-state';
 import { Skeleton } from '../ui/skeleton-loader';
-import { NEWSLETTER_CONTENT, LEGACY_PROGRAM_IDS } from '../../lib/constants/content';
+import { NEWSLETTER_CONTENT, LEGACY_PROGRAM_IDS } from '../../shared/lib/constants/content';
 
 interface EquipDetailProps {
   equipId?: string;

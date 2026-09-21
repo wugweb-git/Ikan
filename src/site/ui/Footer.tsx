@@ -3,9 +3,9 @@ import { Mail, Phone, Facebook, Instagram, Linkedin, Youtube } from 'lucide-reac
 import { LogoFull } from './Logo';
 import { NavBadge } from './NavBadge';
 import { ImageWithFallback } from './ImageWithFallback';
-import { useSiteSettings } from '../../hooks/useSiteSettings';
+import { useSiteSettings } from '../hooks/useSiteSettings';
 
-import svgPaths from "../../imports/svg-ul0k820b9n";
+import svgPaths from "./svg/svg-ul0k820b9n";
 
 function WugwebLogo() {
   return (

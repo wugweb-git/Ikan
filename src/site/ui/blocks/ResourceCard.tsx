@@ -1,6 +1,6 @@
 import { ContentImage } from '../ContentImage';
 import { cn } from '../utils';
-import { resolveImageUrl } from '../../../utils/image-utils';
+import { resolveImageUrl } from '../../../shared/lib/image-utils';
 
 export interface ResourcePost {
   id: string;

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Button } from '../ui/button';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '../ui/card';
-import { useNotifications } from '../../contexts/NotificationContext';
+import { useNotifications } from '../../shared/contexts/NotificationContext';
 import { apiClient } from '../../shared/api-client';
 import { Activity, CircleCheck, CircleAlert, RefreshCw, Trash2, Search, ShieldAlert } from 'lucide-react';
 import { AdminHeader } from './AdminHeader';

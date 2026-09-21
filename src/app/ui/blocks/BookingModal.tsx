@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { X, Calendar, Clock, ChevronLeft, ChevronRight } from 'lucide-react';
 import { cn } from '../utils';
 import { apiClient } from '../../../shared/api-client';
-import { useNotifications } from '../../../contexts/NotificationContext';
+import { useNotifications } from '../../../shared/contexts/NotificationContext';
 
 interface BookingModalProps {
   isOpen: boolean;

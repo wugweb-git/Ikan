@@ -6,11 +6,11 @@ import { Progress } from '../../ui/progress';
 import { Separator } from '../../ui/separator';
 import { Icon } from '../../ui/Icon';
 import { RazorpayPayment } from './RazorpayPayment';
-import { useJourney } from '../../../contexts/JourneyContext';
-import { usePayment } from '../../../contexts/PaymentContext';
-import { useNotifications } from '../../../contexts/NotificationContext';
+import { useJourney } from '../../shell/JourneyContext';
+import { usePayment } from '../../shell/PaymentContext';
+import { useNotifications } from '../../../shared/contexts/NotificationContext';
 import { cn } from '../../ui/utils';
-import { format, addDays } from '../../../lib/date-utils';
+import { format, addDays } from '../../lib/date-utils';
 
 interface EquipProgram {
   id: string;

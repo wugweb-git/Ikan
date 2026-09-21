@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Users, BookOpen, Activity, Calendar, Stethoscope, Blocks } from 'lucide-react';
-import { useNotifications } from '../../contexts/NotificationContext';
+import { useNotifications } from '../../shared/contexts/NotificationContext';
 import { apiClient } from '../../shared/api-client';
 import { AdminHeader } from '../components/AdminHeader';
 import { AdminSkeleton, AdminErrorState } from '../components/AdminErrorState';

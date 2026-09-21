@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react';
-import { equipMeta } from '../../lib/equip-meta';
+import { equipMeta } from '../lib/equip-meta';
 import { apiClient } from '../../shared/api-client';
-import { equipUrl } from '../../lib/slug';
+import { equipUrl } from '../lib/slug';
 import { PageHero } from '../ui/PageHero';
 import { ContentImage } from '../ui/ContentImage';
-import { useNotifications } from '../../contexts/NotificationContext';
-import { useIsMobile } from '../../hooks/useIsMobile';
+import { useNotifications } from '../../shared/contexts/NotificationContext';
+import { useIsMobile } from '../../shared/hooks/useIsMobile';
 import { SkeletonCard } from '../ui/skeleton-loader';
 import { EquipProgramCard } from '../ui/blocks/EquipProgramCard';
 

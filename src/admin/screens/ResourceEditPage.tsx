@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Save, Trash2, FileText, BookOpen, Download, Globe, Link as LinkIcon, Upload, EyeOff, X } from 'lucide-react';
-import { useNotifications } from '../../contexts/NotificationContext';
+import { useNotifications } from '../../shared/contexts/NotificationContext';
 import { apiClient } from '../../shared/api-client';
 import { AdminPageLayout } from '../components/AdminPageLayout';
 import { AdminSection } from '../components/AdminSection';
@@ -11,12 +11,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { ImageUpload } from '../ui/image-upload';
 import { TagInput } from '../ui/tag-input';
 import { RichTextEditor } from '../ui/rich-text-editor';
-import { useFormValidation, ValidationSchema } from '../../hooks/useFormValidation';
+import { useFormValidation, ValidationSchema } from '../hooks/useFormValidation';
 import { validateUrl } from '../../shared/validation';
-import { useUnsavedChanges } from '../../hooks/useUnsavedChanges';
-import { useKeyboardShortcuts } from '../../hooks/useKeyboardShortcuts';
+import { useUnsavedChanges } from '../hooks/useUnsavedChanges';
+import { useKeyboardShortcuts } from '../hooks/useKeyboardShortcuts';
 import { UnsavedChangesDialog } from '../ui/unsaved-changes-dialog';
-import { useMetadata } from '../../hooks/useMetadata';
+import { useMetadata } from '../../shared/hooks/useMetadata';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '../ui/dialog';
 import { Button } from '../ui/button';
 import { AdminActionBar } from '../ui/admin-action-bar';

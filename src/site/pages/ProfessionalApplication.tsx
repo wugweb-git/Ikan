@@ -1,4 +1,4 @@
-import { projectId } from '../../utils/supabase/info';
+import { projectId } from '../../shared/config/supabase-info';
 import { getAuthHeaders } from '../../shared/supabase-client';
 import { useState, useRef, useEffect } from 'react';
 import {
@@ -27,8 +27,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Checkbox } from '../ui/checkbox';
 import { Label } from '../ui/label';
 import { Switch } from '../ui/switch';
-import { useIsMobile } from '../../hooks/useIsMobile';
-import { useMetadata } from '../../hooks/useMetadata';
+import { useIsMobile } from '../../shared/hooks/useIsMobile';
+import { useMetadata } from '../../shared/hooks/useMetadata';
 
 const DAYS_OF_WEEK = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 

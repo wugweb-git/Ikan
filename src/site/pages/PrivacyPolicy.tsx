@@ -1,5 +1,5 @@
-import { useIsMobile } from '../../hooks/useIsMobile';
-import { DEFAULT_CMS_CONTENT } from '../../utils/cms-defaults';
+import { useIsMobile } from '../../shared/hooks/useIsMobile';
+import { DEFAULT_CMS_CONTENT } from '../lib/cms-defaults';
 import { PageHero } from '../ui/PageHero';
 
 interface PrivacyPolicyProps {

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { BarChart3, CalendarDays } from 'lucide-react';
-import { markOnboardingSeen } from '../../../lib/first-run';
+import { markOnboardingSeen } from '../../lib/first-run';
 
 interface MobileOnboardingProps {
   onNavigate?: (route: string) => void;

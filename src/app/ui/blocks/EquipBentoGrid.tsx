@@ -1,5 +1,5 @@
 import { cn } from '../utils';
-import { cmsLines, splitTitleAndSubtitle } from '../../../lib/cms-content';
+import { cmsLines, splitTitleAndSubtitle } from '../../lib/cms-content';
 import { 
   ListTodo,
   Calendar as CalendarIcon,

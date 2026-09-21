@@ -21,7 +21,7 @@ import {
   Quote,
   Sparkles,
 } from 'lucide-react';
-import { useNotifications } from '../../contexts/NotificationContext';
+import { useNotifications } from '../../shared/contexts/NotificationContext';
 import { apiClient } from '../../shared/api-client';
 import { AdminPageLayout } from '../components/AdminPageLayout';
 import { AdminSection } from '../components/AdminSection';
@@ -32,10 +32,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Checkbox } from '../ui/checkbox';
 import { Label } from '../ui/label';
 import { ImageUpload } from '../ui/image-upload';
-import { useFormValidation, ValidationSchema } from '../../hooks/useFormValidation';
+import { useFormValidation, ValidationSchema } from '../hooks/useFormValidation';
 import { validateUrl } from '../../shared/validation';
-import { useUnsavedChanges } from '../../hooks/useUnsavedChanges';
-import { useKeyboardShortcuts } from '../../hooks/useKeyboardShortcuts';
+import { useUnsavedChanges } from '../hooks/useUnsavedChanges';
+import { useKeyboardShortcuts } from '../hooks/useKeyboardShortcuts';
 import { UnsavedChangesDialog } from '../ui/unsaved-changes-dialog';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '../ui/dialog';
 import { Button } from '../ui/button';
@@ -43,7 +43,7 @@ import { Badge } from '../ui/badge';
 import { Switch } from '../ui/switch';
 import { AdminActionBar } from '../ui/admin-action-bar';
 import { AdminLoading } from '../components/AdminLoading';
-import { useMetadata } from '../../hooks/useMetadata';
+import { useMetadata } from '../../shared/hooks/useMetadata';
 
 // ── Consultant Interface ───────────────────────────────────────────
 export interface Consultant {

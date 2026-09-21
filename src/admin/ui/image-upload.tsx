@@ -1,4 +1,4 @@
-import { projectId } from '../../utils/supabase/info';
+import { projectId } from '../../shared/config/supabase-info';
 import { getAuthHeaders } from '../../shared/supabase-client';
 import { useRef, useState } from 'react';
 import { Upload, X, Image as ImageIcon, Crop, Eye } from 'lucide-react';
@@ -7,7 +7,7 @@ import { cn } from './utils';
 import { toast } from 'sonner';
 import { ImageCropDialog } from './image-crop-dialog';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from './dialog';
-import { compressImage, formatFileSize } from '../../lib/image-compress';
+import { compressImage, formatFileSize } from '../lib/image-compress';
 
 interface ImageUploadProps {
   value?: string;
