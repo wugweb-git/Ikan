@@ -11,7 +11,8 @@ import { createRoot } from 'react-dom/client';
 import { BlockEditorPane } from '../src/admin/builder/editor/BlockEditorPane';
 import type { Activity } from '../src/shared/blocks/block-model';
 import { DAY_TYPE_POLICIES } from '../src/shared/blocks/day-policy';
-import '../src/index.css';
+import '../src/product/styles/index.css';
+import '../src/admin/styles/index.css';
 
 const FIXTURES: Activity[] = [
   { id: 'b1', title: 'Welcome Back!', type: 'lesson', activity: 'read', content: '<p>Some prose.</p>', duration: 4, required: true, order: 0, stepGroup: 'daily_reflection' },

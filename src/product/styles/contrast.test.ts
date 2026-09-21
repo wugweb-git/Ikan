@@ -9,7 +9,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 // @ts-expect-error — plain ESM script, no types, deliberately runnable on its own
-import { audit, ratio, TEXT_PAIRS } from '../../scripts/contrast-ratchet.mjs';
+import { audit, ratio, TEXT_PAIRS } from '../../../scripts/contrast-ratchet.mjs';
 
 test('the ratio calculation matches the WCAG reference values', () => {
   // Black on white is 21:1 exactly; a colour against itself is 1:1.
@@ -20,15 +20,15 @@ test('the ratio calculation matches the WCAG reference values', () => {
 });
 
 test('every declared pair resolves to a number — an unresolvable token is a hole', () => {
-  const rows = audit(readFileSync(new URL('../styles/globals.css', import.meta.url), 'utf8'));
+  const rows = audit(readFileSync(new URL('./globals.css', import.meta.url), 'utf8'));
   assert.equal(rows.length, TEXT_PAIRS.length);
   const unresolved = rows.filter((r: { pass: boolean | null }) => r.pass === null);
   assert.deepEqual(unresolved, [], 'a pair whose tokens do not resolve is never checked');
 });
 
 test('contrast failures have not risen above the recorded baseline', () => {
-  const baseline = Number.parseInt(readFileSync(new URL('../../.contrast-baseline', import.meta.url), 'utf8').trim(), 10);
-  const rows = audit(readFileSync(new URL('../styles/globals.css', import.meta.url), 'utf8'));
+  const baseline = Number.parseInt(readFileSync(new URL('../../../.contrast-baseline', import.meta.url), 'utf8').trim(), 10);
+  const rows = audit(readFileSync(new URL('./globals.css', import.meta.url), 'utf8'));
   const failing = rows.filter((r: { pass: boolean | null }) => r.pass === false);
   assert.ok(
     failing.length <= baseline,

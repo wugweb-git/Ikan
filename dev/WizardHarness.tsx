@@ -9,7 +9,8 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { NotificationProvider } from '../src/shared/contexts/NotificationContext';
 import { EquipProgramWizard } from '../src/admin/screens/EquipProgramWizard';
-import '../src/index.css';
+import '../src/product/styles/index.css';
+import '../src/admin/styles/index.css';
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

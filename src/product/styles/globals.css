@@ -1,0 +1,1549 @@
+@custom-variant dark (&:is(.dark *));
+
+:root {
+  /* iKan Design Tokens */
+  
+  /* Typography */
+  --font-family-base: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --font-family-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, 'Courier New', monospace;
+  --font-size: 16px;
+  --text-xs: 12px;
+  --text-sm: 14px;
+  --text-base: 16px;
+  --text-lg: 18px;
+  --text-xl: 20px;
+  --text-2xl: 24px;
+  --text-3xl: 32px;
+  --text-4xl: 48px;
+  --line-height-xs: 1.2;
+  --line-height-sm: 1.4;
+  --line-height-md: 1.5;
+  --line-height-lg: 1.6;
+  --font-weight-regular: 400;
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  /* semibold & bold kept as tokens for rare admin-only use; public UI must only use 400/500 */
+  --font-weight-semibold: 500;
+  --font-weight-bold: 500;
+
+  /* Colors - Primary & Accent */
+  --color-primary-default: #2A2A2A;
+  --color-primary-on: #FFFFFF;
+  --color-accent-default: #E9EBEF;
+  --color-accent-on: #2A2A2A;
+
+  /* Colors - Brand Accent Palette (themed sections) */
+  --ikan-brand-teal: #4ABDAC;
+  --ikan-brand-amber: #F0A830;
+  --ikan-brand-coral: #E87B7B;
+  --ikan-brand-slate: #7B93DB;
+  --ikan-brand-teal-dark: #3D7A66;
+  /* --ikan-brand-teal-dark measures 4.46:1 on --ikan-brand-teal-bg and 4.08:1
+     on --ikan-brand-teal-bg-end, so it fails AA for text on the wash at any
+     size. Use --ikan-teal-on-wash for TEXT on a teal surface; keep
+     --ikan-brand-teal-dark for fills, borders and icons.
+     5.48:1 on #E8F4F0 · 5.01:1 on #D4EDE5. Measured 2026-09-10, axe-core 4.13. */
+  /* Single source of truth: this is an ALIAS of --ikan-brand-teal-text, which
+     carries the same #356B5A and belongs to the six-hue -text family below.
+     Two sessions solved this failure independently on 2026-09-10 and landed two
+     names for one value. Both names are kept so neither set of call sites
+     breaks, but the value is defined once. Prefer --ikan-brand-teal-text in new
+     code; --ikan-teal-on-wash reads better where the ground is specifically the
+     teal wash, and the ratios in the comment above are the ones that apply there. */
+  --ikan-teal-on-wash: var(--ikan-brand-teal-text);
+  --ikan-brand-teal-bg: #E8F4F0;
+  --ikan-brand-teal-bg-end: #D4EDE5;
+  --ikan-brand-library-accent: #00A991;
+  --ikan-brand-cta-gradient-start: #FFA07A;
+  --ikan-brand-cta-gradient-end: #FFC0CB;
+
+  /* Brand hues, accessible as TEXT (WCAG 2.1 AA, >= 4.5:1 on --bg-card #FFFFFF
+     and --bg-page #F5F5F5). The raw --ikan-brand-* hues above are decoration:
+     fills, borders, illustration. They must not be used as a text colour.
+     This mirrors the pattern --color-status-success-text already established.
+     Ratios on #FFFFFF / #F5F5F5 noted per line. Measured 2026-09-10. */
+  --ikan-brand-teal-text: #356B5A;            /* 6.17 / 5.66 */
+  --ikan-brand-amber-text: #8A5A00;           /* 5.93 / 5.44 */
+  --ikan-brand-coral-text: #A83E38;           /* 6.16 / 5.65 */
+  --ikan-brand-slate-text: #455B9E;           /* 6.48 / 5.94 */
+  --ikan-brand-library-accent-text: #00695C;  /* 6.61 / 6.07 */
+  --color-status-info-text: #6636D6;          /* 6.85 / 6.29 */
+
+  /* Colors - Special */
+  --color-rating-star: #FFA500;
+  --color-rating-star-inactive: var(--grey-3);
+
+  /* Colors - Gradients (brand explore widgets) */
+  --ikan-gradient-equip-from: #1B4332;
+  --ikan-gradient-equip-to: #2D6A4F;
+  --ikan-gradient-assessment-from: #312E81;
+  --ikan-gradient-assessment-to: #4338CA;
+
+  /* Colors - Background */
+  --color-bg-page: #F5F5F5;
+  --color-bg-card: #FFFFFF;
+  --color-bg-muted: #F0F0F0;
+  --color-bg-input: #F3F3F5;
+
+  /* Colors - Text */
+  --color-text-primary: #151515;
+  /* WCAG AA. Measured, not guessed: the previous #717182 was 4.79:1 on a white
+     card but only 4.39:1 on the #F5F5F5 page background — a fail. #6B6B7B is
+     4.80 on page / 5.23 on card and keeps the same violet cast.
+     The dark theme overrides this below; a single shared value cannot pass on
+     both grounds. */
+  --color-text-muted: #6B6B7B;
+  /* Perceivable boundary for form controls. --color-border-default is
+     #0000001A — 10% black, ~1.1:1 — so an unchecked switch or an empty input
+     has no visible edge. 4.54:1 on white, 4.17:1 on the page background. */
+  --color-border-control: #767676;
+  /* Text colours for alert bodies. The status hues below are tuned for fills
+     and icons, not for type: #22C55E on its own wash is 2.07:1 and #EAB308 is
+     1.78:1. These are the AA-passing equivalents at 6.49:1 and 6.37:1. */
+  --color-status-success-text: #166534;
+  --color-status-warning-text: #854D0E;
+  --color-text-inverse: #FFFFFF;
+
+  /* Colors - Border */
+  --color-border-default: #0000001A;
+  --color-border-light: #0000000D;
+
+  /* Colors - Status */
+  --color-status-success: #22C55E;
+  --color-status-success-light: #DCFCE7;
+  --color-status-danger: #D4183D;
+  --color-status-danger-light: #FEECEE;
+  --color-status-warning: #EAB308;
+  --color-status-warning-light: #FFF7D6;
+  --color-status-info: #8B5CF6;
+  --color-status-info-light: #F3F4F6;
+
+  /* Colors - Grey Scale Primitives (0-10 UI Neutral Scale) */
+  --grey-0: #FFFFFF;  /* Pure White / Surface Highlighting */
+  --grey-1: #F5F5F5;  /* App Background (Original) */
+  --grey-2: #E4E4E4;  /* Section / Card Background (Original) */
+  --grey-3: #D9D9D9;  /* Dividers / Soft Borders (Original) */
+  --grey-4: #BDBDBD;  /* Disabled Text / Decorative Icons (New) */
+  --grey-5: #9E9E9E;  /* Medium Grey (The "Bridge") (New) */
+  --grey-6: #757575;  /* Secondary Text / Captions (Original).
+                         4.61:1 on --color-bg-card, but only 4.23:1 on
+                         --color-bg-page — below AA. On the page ground use
+                         --color-text-muted (4.80:1) instead. */
+  --grey-7: #545454;  /* Muted Heading / Sub-headers (New) */
+  --grey-8: #333333;  /* Primary Body Text (Original) */
+  --grey-9: #1A1A1A;  /* High-Contrast Text / Deep Backgrounds (New) */
+  --grey-10: #0D0D0D; /* Deepest UI Layer / "Off-Black" (New) */
+
+  /* Colors - Neutral Scale (Legacy mappings) */
+  --color-neutral-100: #FAFAFA;
+  --color-neutral-200: #F5F5F5;
+  --color-neutral-300: #E5E5E5;
+  --color-neutral-400: #8B8B8B;
+  --color-neutral-500: #4A4A4A;
+  --color-neutral-600: #2A2A2A;
+  --color-neutral-700: #1A1A1A;
+
+  /* Colors - Charts */
+  --color-chart-1: #2A2A2A;
+  --color-chart-2: #4A4A4A;
+  --color-chart-3: #6A6A6A;
+  --color-chart-4: #8A8A8A;
+  --color-chart-5: #AAAAAA;
+
+  /* Colors - Analytics Chart Palette (colorful, for data visualization) */
+  --ikan-chart-1: #3B82F6;
+  --ikan-chart-1-light: #E0F2FE;
+  --ikan-chart-1-muted: #DBEAFE;
+  --ikan-chart-1-dark: #0369A1;
+  --ikan-chart-2: #10B981;
+  --ikan-chart-2-light: #D1FAE5;
+  --ikan-chart-2-dark: #059669;
+  --ikan-chart-3: #F59E0B;
+  --ikan-chart-4: #EF4444;
+  --ikan-chart-4-light: #FEE2E2;
+  --ikan-chart-4-dark: #DC2626;
+  --ikan-chart-5: #8B5CF6;
+  --ikan-chart-5-light: #F3E8FF;
+  --ikan-chart-5-dark: #9333EA;
+  --ikan-chart-6: #EC4899;
+  --ikan-chart-neutral: #6B7280;
+  --ikan-chart-fill-default: #8884d8;
+
+  /* Data Visualization — Wellness Dimensions */
+  --color-viz-red: #E53935;
+  --color-viz-red-light: #FFEBEE;
+  --color-viz-green: #43A047;
+  --color-viz-green-light: #E8F5E9;
+  --color-viz-blue: #1E88E5;
+  --color-viz-blue-light: #E3F2FD;
+  --color-viz-purple: #8E24AA;
+  --color-viz-purple-light: #F3E5F5;
+  --color-viz-orange: #F57C00;
+  --color-viz-orange-light: #FFF3E0;
+
+  /* Data Visualization — Extended Health Accents */
+  --color-viz-teal: #00897B;
+  --color-viz-deep-blue: #1565C0;
+  --color-viz-deep-purple: #5E35B1;
+  --color-viz-brown: #5D4037;
+  --color-viz-slate: #455A64;
+  --color-viz-pink: #D81B60;
+  --color-viz-amber: #FF8F00;
+  --color-viz-hydration: #2196F3;
+
+  /* Data Visualization — Sleep Stages */
+  --color-sleep-deep: #1A237E;
+  --color-sleep-light: #7986CB;
+  --color-sleep-rem: #CE93D8;
+  --color-sleep-awake: #FFCC80;
+
+  /* Data Visualization — Level Indicators */
+  --color-level-thriving: #34C759;
+  --color-level-growing: #007AFF;
+  --color-level-building: #FF9500;
+  --color-level-starting: #8E8E93;
+
+  /* Data Visualization — Trends */
+  --color-trend-positive: #34C759;
+  --color-trend-negative: #FF3B30;
+
+  /* Data Visualization — BMI Scale */
+  --color-bmi-normal: #4CAF50;
+  --color-bmi-caution: #FF9800;
+  --color-bmi-danger: #E53935;
+
+  /* Time of Day — Gradient Stops */
+  --color-tod-dawn-1: #FFE4C9;
+  --color-tod-dawn-2: #FFD0A0;
+  --color-tod-dawn-3: #FFC085;
+  --color-tod-morning-1: #E8F4FD;
+  --color-tod-morning-2: #D4ECFB;
+  --color-tod-morning-3: #B8DFF7;
+  --color-tod-afternoon-1: #FFF8E1;
+  --color-tod-afternoon-2: #FFE9B0;
+  --color-tod-afternoon-3: #FFD97A;
+  --color-tod-evening-1: #E8D5F5;
+  --color-tod-evening-2: #D4B8EA;
+  --color-tod-evening-3: #C09FDE;
+  --color-tod-night-1: #2A2A3E;
+  --color-tod-night-2: #1E1E30;
+  --color-tod-night-3: #151525;
+
+  /* Time of Day — Text */
+  --color-tod-night-text: #E8E8F0;
+  --color-tod-night-muted: #A0A0C0;
+
+  /* Time of Day — Accents */
+  --color-tod-dawn-accent: #E87C3A;
+  --color-tod-morning-accent: #3B82F6;
+  --color-tod-afternoon-accent: #F59E0B;
+  --color-tod-evening-accent: #8B5CF6;
+  --color-tod-night-accent: #6366F1;
+
+  /* Celestial & Weather Decorative */
+  --color-celestial-moon-fill: #E8E4D4;
+  --color-celestial-moon-shadow: #D4D0C0;
+  --color-celestial-crater: #D0CDB8;
+  --color-celestial-star: #FBBF24;
+  --color-celestial-star-alt: #E8D5F5;
+  --color-celestial-dawn-sun: #FFB347;
+  --color-celestial-evening-sun: #FF8C42;
+  --color-celestial-dawn-horizon: #FFD4A0;
+  --color-celestial-evening-horizon: #D4A0C0;
+  --color-celestial-morning-sun: #FFD166;
+  --color-celestial-afternoon-sun: #FFB800;
+  --color-weather-cloud-day: #9CA3AF;
+  --color-weather-cloud-night: #6B7290;
+  --color-weather-rain-day: #60A5FA;
+  --color-weather-rain-night: #7DA0D4;
+  --color-weather-snow: #93C5FD;
+  --color-weather-thunder-cloud: #6B7280;
+  --color-weather-lightning: #FBBF24;
+
+  /* iKan Logo */
+  --color-logo-bg: #101010;
+  --color-logo-accent: #FFBE1A;
+
+  /* Spacing */
+  --spacing-unit: 4px;
+  --spacing-0: 0px;
+  --spacing-1: 4px;
+  --spacing-2: 8px;
+  --spacing-3: 12px;
+  --spacing-4: 16px;
+  --spacing-5: 20px;
+  --spacing-6: 24px;
+  --spacing-7: 28px;
+  --spacing-8: 32px;
+  --spacing-12: 48px;
+
+  /* Border Radius */
+  --radius-xs: 8px;    /* Badges/Labels */
+  --radius-sm: 16px;   /* Buttons & Inputs (Refined Corner Scale) */
+  --radius-md: 20px;   /* History Cards/Small Content Tokens */
+  --radius-lg: 24px;   /* Main Content Cards / Soft Pods */
+  --radius-xl: 32px;   /* Hero Sections */
+  --radius-pill: 9999px; /* Nav Pills / Search Bars */
+  --radius: 16px;      /* Default radius updated to 16px base */
+
+  /* Navigation Pills */
+  --ikan-capsule-radius: 9999px;
+
+  /* CBT Semantic Tokens */
+  --cbt-surface: var(--grey-0);
+  --cbt-bg: var(--grey-1);
+  --cbt-hero: var(--grey-2);
+  --cbt-border: var(--grey-3);
+  --cbt-border-med: var(--grey-3);
+  --cbt-border-light: var(--grey-2);
+  --cbt-muted: var(--grey-4);
+  --cbt-placeholder: var(--grey-5);
+  --cbt-secondary: var(--grey-6);
+  --cbt-text-body: var(--grey-8);
+  --cbt-text-head: var(--grey-9);
+
+  /* CBT Layout Tokens */
+  --max-content: 1280px;
+  --desktop-padding: 100px;
+
+  /* Shadows */
+  --shadow-xs: 0 1px 2px rgba(0,0,0,0.04);
+  --shadow-sm: 0 2px 6px rgba(0,0,0,0.06);
+  --shadow-md: 0 6px 20px rgba(0,0,0,0.08);
+  --shadow-lg: 0 20px 40px rgba(0,0,0,0.12);
+
+  /* Borders */
+  --border-thin: 1px solid #0000001A;
+  --border-thick: 2px solid #0000001A;
+
+  /* Breakpoints */
+  --breakpoint-xs: 360px;
+  --breakpoint-sm: 640px;
+  --breakpoint-md: 768px;
+  --breakpoint-lg: 1024px;
+  --breakpoint-xl: 1280px;
+  --breakpoint-2xl: 1440px;
+
+  /* Z-Index */
+  --z-overlay: 20;
+  --z-toast: 40;
+  --z-nav: 50;
+  --z-sticky: 60;
+  --z-modal: 100;
+  --z-tooltip: 200;
+
+  /* Transitions */
+  --transition-fast: 150ms cubic-bezier(.4,0,.2,1);
+  --transition-base: 200ms cubic-bezier(.4,0,.2,1);
+  --transition-slow: 400ms cubic-bezier(.4,0,.2,1);
+
+  /* Motion */
+  --motion-duration-fast: 150ms;
+  --motion-duration-normal: 300ms;
+  --motion-duration-slow: 500ms;
+  --motion-easing-in-out: cubic-bezier(0.4,0,0.2,1);
+  --motion-easing-linear: linear;
+  --motion-easing-in: cubic-bezier(0.4,0,1,1);
+  --motion-easing-out: cubic-bezier(0,0,0.2,1);
+
+  /* Layout Constraints */
+  --constraint-component-min: 240px;
+  --constraint-component-max: 760px;
+  --constraint-card-min: 280px;
+  --constraint-card-max: 520px;
+  --constraint-input-min: 240px;
+  --constraint-input-max: 560px;
+  --constraint-content-min: 640px;
+  --constraint-content-max: 1200px;
+  --constraint-nav-mobile-min: 360px;
+  --constraint-nav-mobile-max: 100vw;
+  --constraint-nav-desktop-min: 960px;
+  --constraint-nav-desktop-max: 100vw;
+  --constraint-sidebar-min: 64px;
+
+  /* iKan Component Standards (48px height, 12px radius per guidelines) */
+  --ikan-component-button-height: 52px;
+  --ikan-component-button-height-sm: 32px;
+  --ikan-component-input-height: 52px;
+  --ikan-component-border-radius: var(--radius-sm); /* 16px */
+  --ikan-component-spacing-default: var(--spacing-4); /* 16px */
+  --ikan-component-spacing-large: var(--spacing-6); /* 24px */
+  --ikan-component-spacing-small: var(--spacing-2); /* 8px */
+  --ikan-animation-normal: var(--motion-duration-normal); /* 300ms */
+  --constraint-sidebar-max: 280px;
+
+  /* Semantic Tokens */
+  --semantic-button-primary-bg: var(--color-primary-default);
+  --semantic-button-primary-fg: var(--color-primary-on);
+  --semantic-button-primary-radius: var(--radius-sm);
+  --semantic-button-primary-padding-x: var(--spacing-4);
+  --semantic-button-primary-padding-y: var(--spacing-2);
+
+  --semantic-input-bg: var(--color-bg-input);
+  --semantic-input-fg: var(--color-text-primary);
+  --semantic-input-radius: var(--radius-sm);
+  --semantic-input-border: var(--border-thin);
+
+  --semantic-card-bg: var(--color-bg-card);
+  --semantic-card-fg: var(--color-text-primary);
+  --semantic-card-radius: var(--radius-lg);
+  --semantic-card-padding: var(--spacing-4);
+
+  /* Component-specific semantic tokens */
+  --ikan-component-spacing-small: var(--spacing-2);
+  
+  /* Navigation semantic tokens */
+  --ikan-nav-height-desktop: 80px;
+  --ikan-nav-height-mobile: 60px;
+  --ikan-nav-clearance-desktop: calc(var(--ikan-nav-height-desktop) + var(--spacing-6));
+  --ikan-nav-clearance-mobile: calc(var(--ikan-nav-height-mobile) + var(--spacing-4));
+  
+  /* Pull-to-refresh semantic tokens */
+  --ikan-pull-refresh-max-distance: 80px;
+  --ikan-pull-refresh-trigger-distance: 80px;
+  --ikan-pull-refresh-indicator-size: 24px;
+  
+  /* Mobile touch targets */
+  --ikan-touch-target-min: 44px;
+  --ikan-touch-target-preferred: 48px;
+  
+  /* Animation durations */
+  --ikan-animation-fast: var(--motion-duration-fast);
+  --ikan-animation-normal: var(--motion-duration-normal);
+  --ikan-animation-slow: var(--motion-duration-slow);
+
+  --semantic-navbar-default-bg: var(--color-bg-card);
+  --semantic-navbar-default-fg: var(--color-text-primary);
+  --semantic-navbar-default-border: var(--color-border-default);
+  --semantic-navbar-scrolled-shadow: var(--shadow-sm);
+
+  --semantic-notification-bg-info: var(--color-accent-default);
+  --semantic-notification-fg-info: var(--color-accent-on);
+  --semantic-notification-bg-success: var(--color-status-success);
+  --semantic-notification-fg-success: var(--color-bg-card);
+  --semantic-notification-bg-error: var(--color-status-danger);
+  --semantic-notification-fg-error: var(--color-bg-card);
+  --semantic-notification-bg-warning: var(--color-status-warning);
+  --semantic-notification-fg-warning: var(--color-bg-card);
+
+  /* Notification specific tokens */
+  --notification-width: var(--constraint-component-max);
+  --notification-min-width: var(--constraint-component-min);
+  --notification-timeout-default: 5000;
+  --notification-timeout-sticky: 0;
+
+  /* Legacy Shadcn mappings for compatibility */
+  --background: var(--color-bg-page);
+  --foreground: var(--color-text-primary);
+  --card: var(--color-bg-card);
+  --card-foreground: var(--color-text-primary);
+  --popover: var(--color-bg-card);
+  --popover-foreground: var(--color-text-primary);
+  --primary: var(--color-primary-default);
+  --primary-foreground: var(--color-primary-on);
+  --secondary: var(--color-neutral-200);
+  --secondary-foreground: var(--color-text-primary);
+  --muted: var(--color-bg-muted);
+  --muted-foreground: var(--color-text-muted);
+  --accent: var(--color-accent-default);
+  --accent-foreground: var(--color-accent-on);
+  --destructive: var(--color-status-danger);
+  --destructive-foreground: var(--color-text-inverse);
+  --border: var(--color-border-default);
+  --input: transparent;
+  --input-background: var(--color-bg-input);
+  --switch-background: var(--color-neutral-300);
+  --ring: var(--color-neutral-400);
+  
+  /* Sidebar compatibility */
+  --sidebar: var(--color-bg-card);
+  --sidebar-foreground: var(--color-text-primary);
+  --sidebar-primary: var(--color-primary-default);
+  --sidebar-primary-foreground: var(--color-primary-on);
+  --sidebar-accent: var(--color-accent-default);
+  --sidebar-accent-foreground: var(--color-accent-on);
+  --sidebar-border: var(--color-border-default);
+  --sidebar-ring: var(--color-neutral-400);
+  /* iKan Scrollbar Customization */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  
+  ::-webkit-scrollbar-track {
+    background: var(--grey-1);
+  }
+  
+  ::-webkit-scrollbar-thumb {
+    background: var(--grey-3);
+    border-radius: 4px;
+  }
+  
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--grey-4);
+  }
+}
+
+.dark {
+  /* Contrast overrides. #717182 was already failing in dark mode at 3.64:1 on
+     the #1A1A1A card — darkening it for the light theme would have made that
+     worse, so each theme carries its own value. #9A9AAB is 6.29:1 on card. */
+  --color-text-muted: #9A9AAB;
+  --color-border-control: #8A8A8A;
+  --color-status-success-text: #4ADE80;
+  --color-status-warning-text: #FCD34D;
+
+  /* 1. Base Layers */
+  --background: var(--grey-10);      /* #0D0D0D - The floor */
+  --color-bg-page: var(--grey-10);
+  
+  /* 2. Elevated Surfaces (Cards/Modals) */
+  --card: var(--grey-9);             /* #1A1A1A - Lifted 1 level */
+  --color-bg-card: var(--grey-9);
+  --popover: var(--grey-9);
+  
+  /* 3. Interaction Elements (Inputs/Inactive Buttons) */
+  --input-background: var(--grey-8); /* #333333 - Lifted 2 levels */
+  --color-bg-input: var(--grey-8);
+  --secondary: var(--grey-8);
+
+  /* 4. Borders (Must be subtle so they don't 'glow') */
+  --border: var(--grey-8);           /* #333333 */
+  --color-border-default: rgba(255, 255, 255, 0.1); /* Transparent white is better for dark mode */
+
+  /* 5. Typography (Avoid pure white for long reading) */
+  --foreground: var(--grey-2);       /* #E4E4E4 - Soft white */
+  --primary-foreground: var(--grey-10); /* Black text on white buttons */
+  --muted-foreground: var(--grey-5); /* #9E9E9E */
+  
+  /* 6. Primary Action */
+  --primary: var(--grey-0);          /* Pure white buttons in dark mode look premium */
+  
+  /* CBT Dark Mode Specifics */
+  --cbt-bg: var(--grey-10);
+  --cbt-surface: var(--grey-9);
+  --cbt-hero: var(--grey-9);
+  --cbt-border: var(--grey-8);
+  --cbt-border-light: var(--grey-9);
+  --cbt-text-head: var(--grey-0);
+  --cbt-text-body: var(--grey-2);
+  --cbt-secondary: var(--grey-5);
+  
+  /* Sidebar */
+  --sidebar: var(--grey-10);
+  --sidebar-foreground: var(--grey-2);
+  --sidebar-primary: var(--grey-0);
+  --sidebar-primary-foreground: var(--grey-10);
+  --sidebar-accent: var(--grey-9);
+  --sidebar-accent-foreground: var(--grey-0);
+  --sidebar-border: var(--grey-8);
+  --sidebar-ring: var(--grey-5);
+
+  /* Chart Colors (Restored) */
+  --chart-1: #2A2A2A;
+  --chart-2: #4A4A4A;
+  --chart-3: #6A6A6A;
+  --chart-4: #8A8A8A;
+  --chart-5: #AAAAAA;
+
+  /* Missing ShadCN vars */
+  --input: var(--grey-8);
+  --ring: var(--grey-5);
+  --destructive: #D4183D;
+  --destructive-foreground: #FFFFFF;
+}
+
+@theme inline {
+  /* ── Typography: wire Tailwind v4 font utilities to Inter ── */
+  --font-sans: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, 'Courier New', monospace;
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-input-background: var(--input-background);
+  --color-switch-background: var(--switch-background);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --radius-sm: var(--radius-sm);
+  --radius-md: var(--radius-md);
+  --radius-lg: var(--radius-lg);
+  --radius-xl: var(--radius-xl);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+  
+  /* Text Size Mapping */
+  --text-xs: var(--text-xs);
+  --text-sm: var(--text-sm);
+  --text-base: var(--text-base);
+  --text-lg: var(--text-lg);
+  --text-xl: var(--text-xl);
+  --text-2xl: var(--text-2xl);
+  --text-3xl: var(--text-3xl);
+  --text-4xl: var(--text-4xl);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+    transition: background-color var(--transition-base), border-color var(--transition-base);
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-family: var(--font-family-base);
+  }
+
+  /* PWA Mobile Optimizations */
+  @supports (padding: max(0px)) {
+    .pb-safe-area-inset-bottom {
+      padding-bottom: max(env(safe-area-inset-bottom), 1rem);
+    }
+  }
+
+  /* Enhanced mobile height handling */
+  html,
+  body,
+  #root {
+    height: 100%;
+    overflow-x: hidden;
+  }
+  
+  /* Mobile viewport height units */
+  .mobile-full-height {
+    height: calc(var(--vh, 1vh) * 100);
+    min-height: calc(var(--vh, 1vh) * 100);
+  }
+  
+  /* Mobile keyboard optimizations */
+  .keyboard-open {
+    height: auto !important;
+    min-height: auto !important;
+  }
+  
+  .keyboard-open .mobile-nav-backdrop {
+    position: fixed !important;
+    bottom: 0 !important;
+  }
+  
+  /* Mobile performance optimizations */
+  .mobile-optimized {
+    -webkit-overflow-scrolling: touch;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+  
+  .slow-connection * {
+    animation-duration: 0.1s !important;
+    transition-duration: 0.1s !important;
+  }
+  
+  .slow-connection img {
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: crisp-edges;
+  }
+
+  /* Smooth scrolling */
+  html {
+    scroll-behavior: smooth;
+  }
+
+  /* Touch optimization */
+  button,
+  a,
+  [role="button"] {
+    touch-action: manipulation;
+  }
+
+  /* ─── Accessibility: Focus-visible styles ─── */
+  :focus-visible {
+    outline: 2px solid var(--color-primary-default);
+    outline-offset: 2px;
+    border-radius: var(--radius-xs);
+  }
+
+  /* Remove focus outline for mouse users */
+  :focus:not(:focus-visible) {
+    outline: none;
+  }
+
+  /* Ensure interactive elements have minimum touch targets on mobile */
+  @media (pointer: coarse) {
+    button,
+    a,
+    [role="button"],
+    input[type="checkbox"],
+    input[type="radio"],
+    select {
+      min-height: var(--ikan-touch-target-min, 44px);
+      min-width: var(--ikan-touch-target-min, 44px);
+    }
+  }
+
+  /* ─── Accessibility: Reduced motion ─── */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+
+  /* ─── Accessibility: High contrast support ─── */
+  @media (prefers-contrast: high) {
+    :root {
+      --color-border-default: #000000;
+      --color-border-light: #333333;
+      --shadow-sm: none;
+      --shadow-md: none;
+      --shadow-lg: none;
+    }
+  }
+
+  /* ─── Skip to main content (visually hidden until focused) ─── */
+  .skip-to-main:focus {
+    position: fixed !important;
+    left: var(--spacing-4) !important;
+    top: var(--spacing-4) !important;
+    z-index: 9999;
+  }
+}
+
+/**
+ * Base typography. This is not applied to elements which have an ancestor with a Tailwind text class.
+ */
+@layer base {
+  :where(:not(:has([class*=" text-"]), :not(:has([class^="text-"])))) {
+    h1 {
+      font-size: var(--text-2xl);
+      font-weight: var(--font-weight-medium);
+      line-height: 1.5;
+    }
+
+    h2 {
+      font-size: var(--text-xl);
+      font-weight: var(--font-weight-medium);
+      line-height: 1.5;
+    }
+
+    h3 {
+      font-size: var(--text-lg);
+      font-weight: var(--font-weight-medium);
+      line-height: 1.5;
+    }
+
+    h4 {
+      font-size: var(--text-base);
+      font-weight: var(--font-weight-medium);
+      line-height: 1.5;
+    }
+
+    p {
+      font-size: var(--text-base);
+      font-weight: var(--font-weight-normal);
+      line-height: 1.5;
+    }
+
+    label {
+      font-size: var(--text-base);
+      font-weight: var(--font-weight-medium);
+      line-height: 1.5;
+    }
+
+    button {
+      font-size: var(--text-base);
+      font-weight: var(--font-weight-medium);
+      line-height: 1.5;
+    }
+
+    input {
+      font-size: var(--text-base);
+      font-weight: var(--font-weight-normal);
+      line-height: 1.5;
+    }
+  }
+}
+
+html {
+  font-size: var(--font-size);
+}
+
+/* iKan Motion Keyframes */
+@keyframes fadeIn {
+  0% { opacity: 0; transform: translateY(6px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes loading-bar {
+  0% { transform: translateX(-100%); }
+  50% { transform: translateX(0%); }
+  100% { transform: translateX(100%); }
+}
+
+@keyframes mobile-slide-up {
+  0% { opacity: 0; transform: translateY(20px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes mobile-bounce-in {
+  0% { opacity: 0; transform: scale(0.3) translateY(10px); }
+  50% { opacity: 1; transform: scale(1.05) translateY(-2px); }
+  70% { transform: scale(0.95) translateY(0); }
+  100% { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+@keyframes fadeOut {
+  0% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+@keyframes slideUp {
+  0% { opacity: 0; transform: translateY(8px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideDown {
+  0% { opacity: 0; transform: translateY(-8px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideLeft {
+  0% { opacity: 0; transform: translateX(8px); }
+  100% { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes slideRight {
+  0% { opacity: 0; transform: translateX(-8px); }
+  100% { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes scaleIn {
+  0% { opacity: 0; transform: scale(.96); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+@keyframes pulse {
+  0% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.03); opacity: .95; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+@keyframes bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+}
+
+@keyframes wiggle {
+  0% { transform: rotate(0); }
+  25% { transform: rotate(-6deg); }
+  75% { transform: rotate(6deg); }
+  100% { transform: rotate(0); }
+}
+
+@keyframes spin {
+  0% { transform: rotate(0); }
+  100% { transform: rotate(360deg); }
+}
+
+@keyframes ripple {
+  0% { transform: scale(.6); opacity: .35; }
+  100% { transform: scale(1.6); opacity: 0; }
+}
+
+/* Utility classes for iKan animations */
+.animate-fade-in { animation: fadeIn var(--motion-duration-fast) var(--motion-easing-out); }
+.animate-fade-out { animation: fadeOut var(--motion-duration-fast) var(--motion-easing-in); }
+.animate-slide-up { animation: slideUp var(--motion-duration-normal) var(--motion-easing-out); }
+.animate-slide-down { animation: slideDown var(--motion-duration-normal) var(--motion-easing-out); }
+.animate-slide-left { animation: slideLeft var(--motion-duration-normal) var(--motion-easing-out); }
+.animate-slide-right { animation: slideRight var(--motion-duration-normal) var(--motion-easing-out); }
+.animate-scale-in { animation: scaleIn var(--motion-duration-normal) var(--motion-easing-out); }
+.animate-pulse { animation: pulse 2s var(--motion-easing-in-out) infinite; }
+.animate-bounce { animation: bounce 1s var(--motion-easing-in-out) infinite; }
+.animate-wiggle { animation: wiggle 0.5s var(--motion-easing-in-out); }
+.animate-spin { animation: spin 1s var(--motion-easing-linear) infinite; }
+.animate-ripple { animation: ripple 0.6s var(--motion-easing-out); }
+
+/* iKan Grid System (Shell Logic) */
+.main-wrapper {
+  display: grid;
+  grid-template-columns: minmax(20px, 1fr) minmax(auto, 1280px) minmax(20px, 1fr);
+  width: 100%;
+}
+
+.content-center {
+  grid-column: 2;
+  padding: 0 20px; /* Safety padding for tablet */
+  width: 100%;
+}
+
+.full-stretch {
+  grid-column: 1 / -1; /* For Hero sections */
+  width: 100%;
+}
+
+/* Internal Component Grid */
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: 24px; /* Using your 8pt grid base (24px default for tablet/desktop) */
+}
+
+/* Mobile specific grid overrides */
+@media (max-width: 599px) {
+  .card-grid {
+    gap: 16px;
+  }
+}
+
+/* Consultant Card CSS */
+.consultant-card {
+  display: flex;
+  padding: 20px;
+  background: var(--color-bg-card);
+  border: 1px solid var(--grey-2);
+  border-radius: var(--radius-lg);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.consultant-card:hover {
+  border-color: var(--color-primary-default);
+  box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+}
+
+/* Avatar Styling */
+.consultant-avatar {
+  width: 64px;
+  height: 64px;
+  border-radius: 10px;
+  object-fit: cover;
+}
+
+/* Expertise Badges */
+.expertise-tag {
+  display: inline-block;
+  padding: 3px 10px;
+  background: var(--grey-1);
+  color: var(--grey-8);
+  border-radius: 6px;
+  font-size: 11px;
+  border: 1px solid var(--grey-2);
+}
+
+/* Availability Filter Pills */
+.filter-pill {
+  height: 40px;
+  padding: 0 16px;
+  border: 1px solid var(--grey-3);
+  border-radius: 12px; /* Matching smaller interactive elements */
+  background: var(--grey-0);
+  font-size: 14px;
+  color: var(--grey-6);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.filter-pill:hover {
+  background: var(--grey-1);
+}
+
+.filter-pill.active {
+  background: var(--grey-9);
+  color: var(--grey-0);
+  border-color: var(--grey-9);
+}
+
+/* 1280px Grid & Layout Constraints */
+.app-container, .container-1280 {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 40px;
+  width: 100%;
+}
+
+@media (max-width: 600px) {
+  .app-container, .container-1280 {
+    padding: 0 16px;
+  }
+}
+
+/* Booking Modal CSS */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(26, 26, 26, 0.4); /* Step 9 at 40% */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+  backdrop-filter: blur(2px);
+}
+
+.dark .modal-overlay {
+  background: rgba(0, 0, 0, 0.7); /* Dark Mode: 70% opacity */
+  backdrop-filter: blur(8px);
+}
+
+.modal-content {
+  width: 100%;
+  max-width: 560px; /* Comfortable reading width */
+  background: var(--color-bg-card);
+  border-radius: 24px; /* Outer Container Radius */
+  padding: 32px;
+  border: 1px solid var(--color-border-default);
+  box-shadow: 0 12px 40px rgba(0,0,0,0.1);
+  animation: scaleIn 0.2s ease-out;
+}
+
+.dark .modal-content {
+  box-shadow: 0 12px 40px rgba(0,0,0,0.5);
+}
+
+.modal-header {
+  margin-bottom: 24px;
+}
+
+.time-slot-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.time-slot {
+  height: 44px;
+  border: 1px solid var(--grey-3);
+  border-radius: 12px; /* Inner Interaction Radius */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 14px;
+  color: var(--grey-8);
+  transition: all 0.2s;
+}
+
+.time-slot:hover {
+  border-color: var(--grey-9);
+}
+
+.time-slot.selected {
+  background: var(--grey-9);
+  color: var(--grey-0);
+  border-color: var(--grey-9);
+}
+
+.modal-action-btn {
+  height: var(--ikan-component-button-height);
+  border-radius: var(--radius-sm);
+  background: var(--grey-9);
+  color: var(--grey-0);
+  font-weight: var(--font-weight-medium);
+  width: 100%;
+  border: none;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.modal-action-btn:hover {
+  opacity: 0.9;
+}
+
+/* Admin Floating Layout */
+.admin-layout-wrapper {
+  display: flex;
+  max-width: 1440px; /* Aligns with your floating header width */
+  margin: 0 auto;
+  gap: var(--spacing-6); /* 24px gap between sidebar and content */
+  padding-top: 100px; /* Accounts for floating header height */
+  padding-left: var(--spacing-4);
+  padding-right: var(--spacing-4);
+}
+
+/* Floating Sidebar */
+.admin-sidebar {
+  width: 280px;
+  background: var(--grey-0);
+  border-radius: var(--radius-lg); /* 24px */
+  border: 1px solid var(--grey-3);
+  height: calc(100vh - 120px);
+  position: sticky;
+  top: 100px;
+  flex-shrink: 0;
+}
+
+.dark .admin-sidebar {
+  background: var(--grey-10);
+  border-color: var(--grey-8);
+}
+
+/* Improved Professional Table */
+.admin-table-container {
+  background: var(--grey-0);
+  border: 1px solid var(--grey-3);
+  border-radius: var(--radius-lg); /* 24px */
+  overflow: hidden; /* Ensures rows don't break the corners */
+  margin-top: var(--spacing-6);
+  backdrop-filter: blur(10px);
+}
+
+.dark .admin-table-container {
+  background: var(--grey-9); /* Surface color */
+  border-color: var(--grey-8);
+}
+
+.admin-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0 0; /* Changed to 0 to keep borders cleaner */
+}
+
+.admin-table th {
+  background: var(--grey-1);
+  color: var(--grey-6);
+  font-size: var(--text-sm);
+  font-weight: var(--font-weight-medium);
+  padding: 16px 24px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  text-align: left;
+}
+
+.dark .admin-table th {
+  background: var(--grey-10);
+  color: var(--grey-5);
+}
+
+.admin-table td {
+  padding: 20px 24px; /* Increased vertical padding */
+  border-bottom: 1px solid var(--grey-2);
+  vertical-align: middle;
+}
+
+.dark .admin-table td {
+  border-bottom-color: var(--grey-8);
+}
+
+.admin-table tr {
+  background: var(--grey-0);
+  transition: background-color var(--transition-base);
+}
+
+.dark .admin-table tr {
+  background: var(--grey-9);
+}
+
+.admin-table tr:hover {
+  background-color: var(--grey-1);
+}
+
+.dark .admin-table tr:hover {
+  background-color: var(--grey-8);
+}
+
+/* Admin Dashboard Specifics */
+.admin-dashboard-header h1 {
+  font-size: 32px;
+  font-weight: var(--font-weight-medium);
+  color: var(--cbt-text-head);
+}
+
+.admin-dashboard-header h2 {
+  font-size: 24px;
+  font-weight: var(--font-weight-medium);
+  color: var(--cbt-text-head);
+}
+
+/* Mobile Specific Styles */
+@media (max-width: 768px) {
+  /* The Floating Content Container */
+  .mobile-container {
+    padding: 0 var(--spacing-4); /* 16px side breathing room */
+  }
+
+  /* Floating Bottom Nav */
+  .mobile-nav {
+    position: fixed;
+    bottom: 20px;
+    left: 16px;
+    right: 16px;
+    height: 64px;
+    background: rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(12px);
+    border-radius: var(--radius-pill);
+    border: 1px solid var(--grey-2);
+    box-shadow: var(--shadow-lg);
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    z-index: 1000;
+    width: calc(100% - 32px);
+  }
+  
+  .dark .mobile-nav {
+    background: rgba(26, 26, 26, 0.9); /* Grey 9 */
+    border-color: var(--grey-8);
+  }
+
+  /* Card Lists for Settings */
+  .settings-group {
+    background: var(--grey-0);
+    border-radius: var(--radius-md); /* 20px */
+    margin-bottom: var(--spacing-4);
+    overflow: hidden;
+    border: 1px solid var(--grey-2);
+  }
+  
+  .dark .settings-group {
+    background: var(--grey-9);
+    border-color: var(--grey-8);
+  }
+  
+  .settings-item {
+    height: 56px;
+    display: flex;
+    align-items: center;
+    padding: 0 var(--spacing-4);
+    border-bottom: 1px solid var(--grey-2);
+  }
+  
+  .dark .settings-item {
+    border-bottom-color: var(--grey-8);
+  }
+  
+  .settings-item:last-child {
+    border-bottom: none;
+  }
+}
+
+/* PWA Mobile Optimizations */
+@media (max-width: 768px) {
+  .nav-header {
+    height: 64px; /* Shorter header on mobile */
+  }
+
+  .consultant-card {
+    padding: 14px;
+    border-radius: 14px;
+  }
+
+  .consultant-avatar {
+    width: 64px !important;
+    height: 64px !important;
+    border-radius: 10px;
+  }
+}
+
+/* General Content Layout Fix */
+.content-wrapper {
+  max-width: 1280px;
+  margin-left: auto;
+  margin-right: auto;
+  width: 100%;
+  padding: 0 40px; /* Safety margin for smaller screens */
+}
+
+@media (max-width: 768px) {
+  .content-wrapper {
+    padding: 0 20px;
+  }
+}
+
+/* Account pages: override Card default gap for consistent spacing */
+.account-content [data-slot="card"] {
+  gap: 0;
+  border-radius: 16px;
+  box-shadow: none;
+}
+
+/* Account pages: consistent CardHeader styling */
+.account-content [data-slot="card-header"] {
+  padding: 20px 24px 16px 24px;
+}
+
+.account-content [data-slot="card-title"] {
+  font-size: 16px;
+  font-weight: var(--font-weight-medium);
+  font-family: var(--font-family-base);
+  line-height: 22px;
+  color: var(--color-text-primary);
+}
+
+.account-content [data-slot="card-content"] {
+  padding-left: 24px;
+  padding-right: 24px;
+}
+
+.account-content [data-slot="card-content"]:last-child {
+  padding-bottom: 24px;
+}
+
+/* Account layout tablet responsive */
+@media (max-width: 1024px) {
+  .account-layout-desktop {
+    padding-left: 20px !important;
+    padding-right: 20px !important;
+  }
+}
+
+/* ─── Floating Desktop Capsule Nav ─── */
+.nav-fixed-wrapper {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: var(--z-nav, 50);
+  display: flex;
+  justify-content: center;
+  padding: 16px 40px;
+    /*
+     * The band is 112px tall and was fully transparent while the pill inside
+     * it is opaque, so page content scrolled through the gaps either side of
+     * the pill and vanished behind nothing. A blur keeps the pill floating
+     * rather than boxing it in; the translucent wash is the fallback where
+     * backdrop-filter is unsupported.
+     */
+    background: color-mix(in srgb, var(--color-bg-page) 72%, transparent);
+    -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(12px);
+}
+
+  /*
+   * In-page anchors landed underneath the fixed band because scroll-padding
+   * was `auto`. Reserve the band's own height; the mobile band is shorter.
+   */
+  html {
+    scroll-padding-top: 112px;
+  }
+
+  @media (max-width: 768px) {
+    html { scroll-padding-top: 84px; }
+  }
+
+@media (max-width: 768px) {
+  .nav-fixed-wrapper {
+    padding: 12px 16px;
+  }
+}
+
+.ikan-capsule-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  max-width: 1360px;
+  padding: 0 24px;
+  height: var(--ikan-nav-height-desktop, 80px);
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--grey-2);
+  border-radius: var(--ikan-capsule-radius, 9999px);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+  transition: box-shadow var(--transition-base), background var(--transition-base);
+}
+
+.dark .ikan-capsule-nav {
+  background: rgba(26, 26, 26, 0.92);
+  border-color: var(--grey-8);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.3);
+}
+
+/* Navigation Links */
+.nav-link {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  padding: 8px 14px;
+  font-size: var(--text-sm);
+  font-weight: var(--font-weight-medium);
+  font-family: var(--font-family-base);
+  color: var(--color-text-muted);
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-pill);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: color var(--transition-fast), background var(--transition-fast);
+  line-height: 1.4;
+}
+
+.nav-link:hover {
+  color: var(--color-text-primary);
+  background: var(--color-bg-muted);
+}
+
+.nav-link.active {
+  color: var(--color-text-primary);
+  background: var(--color-accent-default);
+}
+
+.dark .nav-link {
+  color: var(--grey-5);
+}
+
+.dark .nav-link:hover {
+  color: var(--grey-2);
+  background: var(--grey-8);
+}
+
+.dark .nav-link.active {
+  color: var(--grey-0);
+  background: var(--grey-8);
+}
+
+/* Primary Nav Button (Sign In) */
+.btn-nav-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 20px;
+  font-size: var(--text-sm);
+  font-weight: var(--font-weight-medium);
+  font-family: var(--font-family-base);
+  color: var(--color-primary-on);
+  background: var(--color-primary-default);
+  border: none;
+  border-radius: var(--radius-pill);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: opacity var(--transition-fast);
+  line-height: 1.4;
+}
+
+.btn-nav-primary:hover {
+  opacity: 0.9;
+}
+
+.dark .btn-nav-primary {
+  background: var(--grey-0);
+  color: var(--grey-10);
+}
+
+/* ─── tailwindcss-animate replacement (Radix UI animation utilities) ─── */
+@keyframes tw-enter {
+  from {
+    opacity: var(--tw-enter-opacity, 1);
+    transform: translate3d(var(--tw-enter-translate-x, 0), var(--tw-enter-translate-y, 0), 0) scale3d(var(--tw-enter-scale, 1), var(--tw-enter-scale, 1), var(--tw-enter-scale, 1)) rotate(var(--tw-enter-rotate, 0));
+  }
+}
+
+@keyframes tw-exit {
+  to {
+    opacity: var(--tw-exit-opacity, 1);
+    transform: translate3d(var(--tw-exit-translate-x, 0), var(--tw-exit-translate-y, 0), 0) scale3d(var(--tw-exit-scale, 1), var(--tw-exit-scale, 1), var(--tw-exit-scale, 1)) rotate(var(--tw-exit-rotate, 0));
+  }
+}
+
+.animate-in {
+  animation-name: tw-enter;
+  animation-duration: 150ms;
+  --tw-enter-opacity: initial;
+  --tw-enter-scale: initial;
+  --tw-enter-rotate: initial;
+  --tw-enter-translate-x: initial;
+  --tw-enter-translate-y: initial;
+}
+
+.animate-out {
+  animation-name: tw-exit;
+  animation-duration: 150ms;
+  --tw-exit-opacity: initial;
+  --tw-exit-scale: initial;
+  --tw-exit-rotate: initial;
+  --tw-exit-translate-x: initial;
+  --tw-exit-translate-y: initial;
+}
+
+/* Fade */
+.fade-in-0 { --tw-enter-opacity: 0; }
+.fade-out-0 { --tw-exit-opacity: 0; }
+.fade-in { --tw-enter-opacity: 0; }
+
+/* Zoom */
+.zoom-in-95 { --tw-enter-scale: .95; }
+.zoom-out-95 { --tw-exit-scale: .95; }
+
+/* Slide */
+.slide-in-from-top-2 { --tw-enter-translate-y: -0.5rem; }
+.slide-in-from-bottom-2 { --tw-enter-translate-y: 0.5rem; }
+.slide-in-from-left-2 { --tw-enter-translate-x: -0.5rem; }
+.slide-in-from-right-2 { --tw-enter-translate-x: 0.5rem; }
+
+.slide-in-from-top { --tw-enter-translate-y: -100%; }
+.slide-in-from-bottom { --tw-enter-translate-y: 100%; }
+.slide-in-from-left { --tw-enter-translate-x: -100%; }
+.slide-in-from-right { --tw-enter-translate-x: 100%; }
+
+.slide-out-to-top { --tw-exit-translate-y: -100%; }
+.slide-out-to-bottom { --tw-exit-translate-y: 100%; }
+.slide-out-to-left { --tw-exit-translate-x: -100%; }
+.slide-out-to-right { --tw-exit-translate-x: 100%; }
+
+/* Accordion */
+@keyframes accordion-down {
+  from { height: 0; }
+  to { height: var(--radix-accordion-content-height); }
+}
+
+@keyframes accordion-up {
+  from { height: var(--radix-accordion-content-height); }
+  to { height: 0; }
+}
+
+.animate-accordion-down {
+  animation: accordion-down 200ms ease-out;
+}
+
+.animate-accordion-up {
+  animation: accordion-up 200ms ease-out;
+}
+/* ---------------------------------------------------------------------------
+   Form controls: 16px floor.
+
+   iOS Safari auto-zooms the viewport when a focused form control renders below
+   16px. The previous workaround set user-scalable=no on focusin (App.tsx), which
+   disabled pinch-zoom for the whole page while any field was focused - a WCAG
+   1.4.4 failure at exactly the moment a user is most likely to need to zoom.
+
+   Setting the computed font-size floor to 16px removes the auto-zoom trigger at
+   source, so zoom can stay enabled everywhere. Do not reintroduce a viewport
+   rewrite. Added 2026-09-10.
+   --------------------------------------------------------------------------- */
+input:not([type="checkbox"]):not([type="radio"]),
+textarea,
+select {
+  font-size: max(16px, 1em);
+}

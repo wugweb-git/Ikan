@@ -1,0 +1,9 @@
+/* Admin's own stylesheet — a fork of product/styles (2026-09-21); they may drift.
+   Loaded only by admin's lazy entry screens (AdminDashboard, AdminLoginScreen). */
+@import 'tailwindcss' source(none);
+@import 'tw-animate-css';
+@import './globals.css';
+/* admin, plus the two product components admin renders as previews */
+@source '../**/*.{js,ts,jsx,tsx}';
+@source '../../product/app/blocks/**/*.{js,ts,jsx,tsx}';
+@source '../../product/app/features/player/**/*.{js,ts,jsx,tsx}';

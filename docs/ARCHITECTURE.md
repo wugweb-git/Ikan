@@ -107,4 +107,4 @@ The canonical key-prefix table (including which prefixes are dead) lives in [`CL
 
 ## Design System
 
-Tokens in `src/styles/globals.css`. Brand standards in `/BRAND.md`. Code layout (`src/{admin,app,site,shared}`): `docs/PROJECT-STRUCTURE.md`.
+Tokens in `src/product/styles/globals.css`. Brand standards in `/BRAND.md`. Code layout (`src/{admin,app,site,shared}`): `docs/PROJECT-STRUCTURE.md`.

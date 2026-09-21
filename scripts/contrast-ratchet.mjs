@@ -20,7 +20,8 @@ import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 
 const here = dirname(fileURLToPath(import.meta.url));
-const CSS = join(here, '..', 'src', 'styles', 'globals.css');
+// Each surface owns its stylesheet (forked 2026-09-21); both are held to the same baseline.
+const CSS_FILES = ['product', 'admin'].map(s => join(here, '..', 'src', s, 'styles', 'globals.css'));
 const BASELINE_FILE = join(here, '..', '.contrast-baseline');
 
 /** Token name -> value, from the `:root` block. Nested `var()` is resolved. */
@@ -100,25 +101,25 @@ export function audit(css) {
 }
 
 if (process.argv[1] && process.argv[1].endsWith('contrast-ratchet.mjs')) {
-  const rows = audit(readFileSync(CSS, 'utf8'));
-  const failing = rows.filter(r => r.pass === false);
-  const unresolved = rows.filter(r => r.pass === null);
   const baseline = existsSync(BASELINE_FILE)
     ? Number.parseInt(readFileSync(BASELINE_FILE, 'utf8').trim(), 10)
     : Number.MAX_SAFE_INTEGER;
-
-  console.log(`contrast failures: ${failing.length} (baseline ${baseline})`);
-  for (const r of failing) console.log(`  ${r.ratio.toFixed(2)}  ${r.fg} on ${r.bg}`);
-  for (const r of unresolved) console.log(`  ?     ${r.fg} on ${r.bg} — not a resolvable hex, skipped`);
-
-  if (failing.length > baseline) {
-    console.error(`\n✗ contrast failures rose: ${baseline} -> ${failing.length}`);
+  let rose = false;
+  for (const css of CSS_FILES) {
+    const rows = audit(readFileSync(css, 'utf8'));
+    const failing = rows.filter(r => r.pass === false);
+    const unresolved = rows.filter(r => r.pass === null);
+    console.log(`${css.split('/src/')[1]} — contrast failures: ${failing.length} (baseline ${baseline})`);
+    for (const r of failing) console.log(`  ${r.ratio.toFixed(2)}  ${r.fg} on ${r.bg}`);
+    for (const r of unresolved) console.log(`  ?     ${r.fg} on ${r.bg} — not a resolvable hex, skipped`);
+    if (failing.length > baseline) {
+      console.error(`\n✗ contrast failures rose in ${css.split('/src/')[1]}: ${baseline} -> ${failing.length}`);
+      rose = true;
+    }
+  }
+  if (rose) {
     console.error('A pair that fails AA is unreadable for some of the people using it.');
     process.exit(1);
   }
-  if (failing.length < baseline) {
-    console.log(`\nImproved by ${baseline - failing.length}. Lower .contrast-baseline to ${failing.length} to lock it in.`);
-  } else {
-    console.log('✓ contrast at or below baseline');
-  }
+  console.log('✓ contrast at or below baseline');
 }

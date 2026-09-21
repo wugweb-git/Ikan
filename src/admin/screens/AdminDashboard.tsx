@@ -1,3 +1,4 @@
+import '../styles/index.css'; // admin's own stylesheet — loads with the admin chunk
 import { useState, useEffect, lazy, Suspense, useMemo, useCallback, useRef, startTransition, useDeferredValue } from 'react';
 import { useNotifications } from '../../shared/contexts/NotificationContext';
 import { useAuth } from '../../shared/contexts/AuthContext';

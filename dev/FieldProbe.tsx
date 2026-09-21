@@ -16,7 +16,8 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { BlockEditorPane } from '../src/admin/builder/editor/BlockEditorPane';
 import type { Activity } from '../src/shared/blocks/block-model';
-import '../src/index.css';
+import '../src/product/styles/index.css';
+import '../src/admin/styles/index.css';
 
 interface ProbeSpec {
   type: string;

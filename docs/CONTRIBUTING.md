@@ -106,7 +106,7 @@ fix/<name>            ← bug fixes
 
 - Tailwind CSS v4 utility classes for layout/spacing
 - CSS custom properties (`var(--color-*)`, `var(--radius-*)`) for design tokens — never hardcode hex values in component files
-- Tokens are defined in `src/styles/globals.css`
+- Tokens are defined in `src/product/styles/globals.css`
 
 ### Comments
 

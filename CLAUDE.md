@@ -512,7 +512,7 @@ Site page copy lives in code: pages import `DEFAULT_CMS_CONTENT` from `src/produ
 | CMS defaults | `src/product/site/lib/cms-defaults.ts` |
 | Slug helpers | `src/product/app/lib/slug.ts` |
 | Health Connect / Google Fit | `src/product/app/features/integrations/GoogleFitContext.tsx`, `src/product/app/lib/google-fit.ts` |
-| Design system tokens | `src/styles/globals.css` |
+| Design system tokens | `src/product/styles/globals.css` (product) · `src/admin/styles/globals.css` (admin — a fork, may drift) |
 | Edge function entry | `src/supabase/functions/server/index.tsx` |
 | Brand docs | `BRAND.md` |
 | Build/deploy steps | `BUILD.md` |

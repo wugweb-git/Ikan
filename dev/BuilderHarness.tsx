@@ -16,7 +16,8 @@ import { DayEditor } from '../src/admin/blocks/DayComposer';
 import { BuilderShell } from '../src/admin/builder/BuilderShell';
 import { BuilderTopBar } from '../src/admin/builder/BuilderTopBar';
 import type { DayContent } from '../src/shared/blocks/block-model';
-import '../src/index.css';
+import '../src/product/styles/index.css';
+import '../src/admin/styles/index.css';
 
 type Prog = { id: string; title: string; daily_content: DayContent[] };
 

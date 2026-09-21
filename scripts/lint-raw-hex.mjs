@@ -62,7 +62,7 @@ console.log('');
 
 if (total > baseline) {
   console.error(`FAIL: raw literals rose by ${total - baseline} above the baseline.`);
-  console.error(`Use a token from src/styles/globals.css, or raise .rawhex-baseline and say why.`);
+  console.error(`Use a token from the surface stylesheet (src/{admin,product}/styles/globals.css), or raise .rawhex-baseline and say why.`);
   process.exit(1);
 }
 if (total < baseline && baseline !== Number.MAX_SAFE_INTEGER) console.log(`Baseline can be lowered to ${total}.`);

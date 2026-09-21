@@ -1,3 +1,4 @@
+import '../styles/index.css'; // admin's own stylesheet — loads with the admin chunk
 import React, { useState, useEffect } from 'react';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';

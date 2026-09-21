@@ -33,8 +33,7 @@ product surfaces `product/app/` and `product/site/` — plus one **non-UI** laye
 ```
 src/
 ├── App.tsx                # composition root — routes admin, app and site
-├── main.tsx · index.css   # entry; index.css pulls in styles/globals.css
-├── styles/globals.css     # design tokens, loaded once for every surface
+├── main.tsx               # entry; loads product/styles/index.css
 │
 ├── admin/                 # STAFF surface
 │   ├── screens/           # admin + editor screens
@@ -43,8 +42,10 @@ src/
 │   ├── blocks/            # block gallery / type viewer / day composer
 │   ├── ui/                # the old component library — admin's own copy
 │   ├── hooks/ · lib/      # admin-only hooks and helpers
+│   ├── styles/            # admin's own stylesheet (Tailwind entry + tokens), loaded with the admin chunk
 │
 ├── product/
+│   ├── styles/            # product's stylesheet (Tailwind entry + tokens), loaded by main.tsx
 │   ├── app/               # MEMBER product
 │   │   ├── screens/           # member screens (+ account/, onboarding/)
 │   │   ├── features/          # player, payments, notifications, safety,
@@ -83,6 +84,6 @@ src/
 
 `App.tsx` is exempt: it is the composition root that mounts all three.
 
-**No UI is shared.** Where two surfaces need the same primitive, each holds its
+**No UI or styles are shared.** admin/ and product/ each own their stylesheet. Where two surfaces need the same primitive, each holds its
 own copy (`admin/ui/button.tsx`, `product/app/ui/button.tsx`, `product/site/ui/button.tsx`).
 They may drift — that is the point.
