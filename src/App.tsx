@@ -83,21 +83,25 @@ const ResetPassword = lazy(() => lazyRetry(() => import('./product/app/screens/R
 // --- Lazy loaded screens (split by category) ---
 
 // Assessment screens
-const Assessments = lazy(() => lazyRetry(() => import('./product/app/screens/Assessments').then(m => ({ default: m.Assessments })), 'Assessments'));
-const AssessmentDetail = lazy(() => lazyRetry(() => import('./product/app/screens/AssessmentDetail').then(m => ({ default: m.AssessmentDetail })), 'AssessmentDetail'));
+/* Static catalogue pages (2026-09-21): ikanhealth.in serves these from a
+   build-time snapshot for everyone; account actions link out to the member app
+   (APP_ORIGIN). The app screens of the same names stay in product/app/screens,
+   unrouted. */
+const Assessments = lazy(() => lazyRetry(() => import('./product/site/pages/Assessments').then(m => ({ default: m.Assessments })), 'Assessments'));
+const AssessmentDetail = lazy(() => lazyRetry(() => import('./product/site/pages/AssessmentDetail').then(m => ({ default: m.AssessmentDetail })), 'AssessmentDetail'));
 const AssessmentFlow = lazy(() => lazyRetry(() => import('./product/app/screens/AssessmentFlow').then(m => ({ default: m.AssessmentFlow })), 'AssessmentFlow'));
 const AssessmentResults = lazy(() => lazyRetry(() => import('./product/app/screens/AssessmentResults').then(m => ({ default: m.AssessmentResults })), 'AssessmentResults'));
 const AssessmentHistoryDetail = lazy(() => lazyRetry(() => import('./product/app/screens/AssessmentHistoryDetail').then(m => ({ default: m.AssessmentHistoryDetail })), 'AssessmentHistoryDetail'));
 
 // Equip screens
-const EquipPrograms = lazy(() => lazyRetry(() => import('./product/app/screens/EquipPrograms').then(m => ({ default: m.EquipPrograms })), 'EquipPrograms'));
-const EquipDetail = lazy(() => lazyRetry(() => import('./product/app/screens/EquipDetail').then(m => ({ default: m.EquipDetail })), 'EquipDetail'));
+const EquipPrograms = lazy(() => lazyRetry(() => import('./product/site/pages/EquipPrograms').then(m => ({ default: m.EquipPrograms })), 'EquipPrograms'));
+const EquipDetail = lazy(() => lazyRetry(() => import('./product/site/pages/EquipDetail').then(m => ({ default: m.EquipDetail })), 'EquipDetail'));
 const EquipOnboarding = lazy(() => lazyRetry(() => import('./product/app/screens/EquipProgramOnboarding').then(m => ({ default: m.EquipOnboarding })), 'EquipOnboarding'));
 const EquipProgramFlow = lazy(() => lazyRetry(() => import('./product/app/screens/EquipProgramFlow').then(m => ({ default: m.EquipProgramFlow })), 'EquipProgramFlow'));
 const EquipProgramCompletion = lazy(() => lazyRetry(() => import('./product/app/screens/EquipProgramCompletion').then(m => ({ default: m.EquipProgramCompletion })), 'EquipProgramCompletion'));
 
 // User screens
-const Consultation = lazy(() => lazyRetry(() => import('./product/app/screens/Consultation').then(m => ({ default: m.Consultation })), 'Consultation'));
+const Consultation = lazy(() => lazyRetry(() => import('./product/site/pages/Consultation').then(m => ({ default: m.Consultation })), 'Consultation'));
 const ConsultantDetail = lazy(() => lazyRetry(() => import('./product/app/screens/ConsultantDetail').then(m => ({ default: m.ConsultantDetail })), 'ConsultantDetail'));
 const Library = lazy(() => lazyRetry(() => import('./product/app/screens/Library').then(m => ({ default: m.Library })), 'Library'));
 const Account = lazy(() => lazyRetry(() => import('./product/app/screens/Account').then(m => ({ default: m.Account })), 'Account'));
