@@ -1,7 +1,7 @@
 import { cn } from '../../components/ui/utils';
 import { Mail, Phone, Facebook, Instagram, Linkedin, Youtube } from 'lucide-react';
 import { LogoFull } from '../../components/Logo';
-import { NavBadge } from '../../app/shell/navigation/NavBadge';
+import { NavBadge } from './NavBadge';
 import { ImageWithFallback } from '../../components/figma/ImageWithFallback';
 import { useSiteSettings } from '../../hooks/useSiteSettings';
 

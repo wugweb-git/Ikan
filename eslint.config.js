@@ -95,17 +95,22 @@ export default tseslint.config(
   // surface. App.tsx at src/ is the composition root and is exempt.
   // Ratcheted separately by scripts/boundary-ratchet.mjs, so a new crossing
   // cannot hide inside the general lint count.
+  //
+  // The two `allow` entries are deliberate: admin previews member rendering, and
+  // a copy of the renderer/player would let the preview drift from what members
+  // actually see. Nothing else crosses.
   ...[
-    { dir: 'admin', blocked: ['app', 'site'] },
+    { dir: 'admin', blocked: ['app', 'site'],
+      allow: ['app/blocks/BlockRenderer', 'app/features/player/ProgramPlayer'] },
     { dir: 'app', blocked: ['admin', 'site'] },
     { dir: 'site', blocked: ['admin', 'app'] },
     { dir: 'shared', blocked: ['admin', 'app', 'site', 'components'] },
-  ].map(({ dir, blocked }) => ({
+  ].map(({ dir, blocked, allow = [] }) => ({
     files: [`src/${dir}/**/*.{ts,tsx}`],
     rules: {
       'no-restricted-imports': ['warn', {
         patterns: [{
-          regex: `(^|/)(${blocked.join('|')})/`,
+          regex: `(^|/)(?!${allow.map(a => `${a}$`).join('|') || '$^'})(${blocked.join('|')})/`,
           message: `${dir}/ may not import ${blocked.join('/, ')}/ — move the shared piece to shared/ (non-UI) or give ${dir}/ its own copy.`,
         }],
       }],

@@ -30,7 +30,7 @@ import {
 import { cn } from '../ui/utils';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
-import { SideNav, SideNavGroup } from '../../app/shell/navigation/SideNav';
+import { SideNav, SideNavGroup } from '../components/SideNav';
 import { LogoIcon } from '../../components/Logo';
 import { usePublicSettings } from '../../hooks/usePublicSettings';
 import { ErrorBoundary } from '../../components/ErrorBoundary';

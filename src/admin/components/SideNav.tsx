@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { cn } from '../../../components/ui/utils';
+import { cn } from '../ui/utils';
 import { ChevronDown, ChevronRight } from 'lucide-react';
 
 export interface SideNavItem {

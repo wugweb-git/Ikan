@@ -5,9 +5,9 @@
 // new crossing would disappear into the general lint count. This counts only
 // those messages and fails when the number RISES above .boundary-baseline.
 //
-// The baseline starts at 5, all into app/: admin previews member rendering
-// (BlockRenderer, ProgramPlayer), AdminDashboard reuses the member SideNav, and
-// site's Footer + Sitemap use app's NavBadge. Each one resolved lowers it.
+// The baseline is 0. Admin's two previews (BlockRenderer, ProgramPlayer) are
+// allowed by name in eslint.config.js rather than counted here.
+
 import { execFileSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
