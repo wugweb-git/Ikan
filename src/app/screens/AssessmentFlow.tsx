@@ -1,11 +1,11 @@
 import { projectId } from '../../shared/config/supabase-info';
-import { getAuthHeaders } from '../../shared/supabase-client';
+import { getAuthHeaders } from '../../shared/supabase';
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { Button } from '../ui/button';
 import { Icon } from '../ui/Icon';
 import { useNotifications } from '../../shared/contexts/NotificationContext';
 import { useAuth } from '../../shared/contexts/AuthContext';
-import { apiClient } from '../../shared/api-client';
+import { apiClient } from '../../shared/api';
 import { severityForSection, resolveAnswerValue } from '../lib/assessment-sections';
 import { triggerCrisisSupport } from '../features/safety/CrisisSupport';
 

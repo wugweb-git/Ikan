@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNotifications } from '../../../shared/contexts/NotificationContext';
 import { useAuth } from '../../../shared/contexts/AuthContext';
-import { apiClient } from '../../../shared/api-client';
+import { apiClient } from '../../../shared/api';
 import { ToggleSwitch } from '../../ui/toggle-switch';
 
 // ─── Font helper ──────────────────────────────────────────────

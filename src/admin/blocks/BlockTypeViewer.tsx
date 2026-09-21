@@ -3,7 +3,7 @@ import {
   BookOpen, PenTool, Layers, Calendar, Smartphone, Settings2, Zap,
 } from 'lucide-react';
 import { AdminHeader } from '../components/AdminHeader';
-import { apiClient } from '../../shared/api-client';
+import { apiClient } from '../../shared/api';
 import { getIconComponent, iconResolves } from '../lib/catalog-icons';
 import { AUTHORABLE_SUBTYPES } from '../../shared/blocks/block-model';
 import { missingRequirements, blockOf } from '../../shared/blocks/content-hierarchy';

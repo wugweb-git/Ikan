@@ -25,7 +25,7 @@ import { toast } from 'sonner';
 import { AdminHeader } from './AdminHeader';
 import { AdminLoading } from './AdminLoading';
 import { projectId, publicAnonKey } from '../../shared/config/supabase-info';
-import { supabase } from '../../shared/supabase-client';
+import { supabase } from '../../shared/supabase';
 
 // ── Types ──────────────────────────────────────────────────────────
 interface ScaleItem {

@@ -22,7 +22,7 @@ import { AdminHeader } from './AdminHeader';
 import { AdminLoading } from './AdminLoading';
 import { useIsMobile } from '../../shared/hooks/useIsMobile';
 import { projectId, publicAnonKey } from '../../shared/config/supabase-info';
-import { supabase } from '../../shared/supabase-client';
+import { supabase } from '../../shared/supabase';
 
 const API_BASE = `https://${projectId}.supabase.co/functions/v1/make-server-cc205da9`;
 

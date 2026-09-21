@@ -3,7 +3,7 @@ import { X, AlertCircle } from 'lucide-react';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import { useNotifications } from '../../shared/contexts/NotificationContext';
-import { apiClient } from '../../shared/api-client';
+import { apiClient } from '../../shared/api';
 import { AdminFormField } from '../components/AdminFormField';
 import { Input } from '../ui/input';
 import { Checkbox } from '../ui/checkbox';

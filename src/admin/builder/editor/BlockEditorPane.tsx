@@ -32,7 +32,7 @@ import { Activity, interactionsOfBlock, activityOf, normalizeSubtype } from '../
 import { validateBlock } from '../../../shared/blocks/block-validation';
 import { useMetadata } from '../../../shared/hooks/useMetadata';
 import { projectId } from '../../../shared/config/supabase-info';
-import { getAuthHeaders } from '../../../shared/supabase-client';
+import { getAuthHeaders } from '../../../shared/supabase';
 import { BlockFieldSections, ActivityPicker } from './BlockFieldSections';
 import { BlockFlowFooter } from './BlockFlowFooter';
 import { BlockTypePicker } from './BlockTypePicker';

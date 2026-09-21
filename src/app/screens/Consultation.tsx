@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { cn } from '../ui/utils';
 import { Search, X, LayoutGrid, List, Sparkles, SlidersHorizontal } from 'lucide-react';
-import { apiClient } from '../../shared/api-client';
+import { apiClient } from '../../shared/api';
 import { percentOfRange } from '../lib/result-presentation';
 import { severityOfResult } from '../lib/severity-presentation';
 import { compareSeverity } from '../../supabase/functions/server/scoring-vocabulary.ts';

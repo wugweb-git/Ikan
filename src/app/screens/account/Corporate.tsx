@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent } from '../../ui/card';
 import { Icon } from '../../ui/Icon';
-import { apiClient } from '../../../shared/api-client';
+import { apiClient } from '../../../shared/api';
 import { useAuth } from '../../../shared/contexts/AuthContext';
 import { Building2, Mail, Phone, User, Calendar, Gift, Baby, ExternalLink, Globe, Briefcase, BadgeCheck } from 'lucide-react';
 

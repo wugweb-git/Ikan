@@ -6,7 +6,7 @@ import { Search, BookOpen, Video, Headphones, FileText, Image as ImageIcon } fro
 import { ResourcePost } from '../ui/blocks/ResourceCard';
 import { toResourcePost } from '../lib/resource-presentation';
 import { LibraryResourceCard } from '../ui/blocks/LibraryResourceCard';
-import { apiClient } from '../../shared/api-client';
+import { apiClient } from '../../shared/api';
 import { logger } from '../../shared/logger';
 import { PullToRefresh } from '../ui/touch-feedback';
 import { ContentImage } from '../ui/ContentImage';

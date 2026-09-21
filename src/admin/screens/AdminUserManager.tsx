@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Users, Download, Pencil, Shield, Building, UserPlus, MoreHorizontal, Trash2 } from 'lucide-react';
 import { useNotifications } from '../../shared/contexts/NotificationContext';
-import { apiClient } from '../../shared/api-client';
+import { apiClient } from '../../shared/api';
 import { AdminHeader } from '../components/AdminHeader';
 import { useIsMobile } from '../../shared/hooks/useIsMobile';
 import { Button } from '../ui/button';

@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useCallback, useRef } from 'react';
 import { useAuth } from '../../shared/contexts/AuthContext';
 import { useNotifications } from '../../shared/contexts/NotificationContext';
-import { apiClient } from '../../shared/api-client';
+import { apiClient } from '../../shared/api';
 
 // Payment types from JSON specification
 export interface PaymentPlan {

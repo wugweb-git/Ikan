@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Button } from '../ui/button';
 import { Card } from '../ui/card';
-import { apiClient } from '../../shared/api-client';
+import { apiClient } from '../../shared/api';
 import {
   Mail,
   Inbox,

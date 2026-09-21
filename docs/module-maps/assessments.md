@@ -918,7 +918,7 @@ Everything that touches an assessment, with what it does and whether it holds lo
 | screens/AssessmentHistoryDetail.tsx | 772 | Past results; reads `section_scores ?? sectionScores` | renders nothing — no result has a breakdown |
 | blocks/SectionReportCard.tsx | 184 | The per-scale breakdown; second gate at `sections.length === 0` | — |
 | **Transport, cache, catalog** | | | |
-| shared/api-client.ts | 1389 | `getAssessment`, `getAssessments`, result save | 24-hour offline cache fallback |
+| shared/api.ts | 1389 | `getAssessment`, `getAssessments`, result save | 24-hour offline cache fallback |
 | shared/hooks/useOfflineSync.ts | 251 | Queue, retry, `cacheForOffline` (24 h TTL) | wholesale queue replacement on sync |
 | shared/hooks/useMetadata.ts | 242 | All 21 catalog vocabularies | returns empty buckets on failure |
 | app/lib/slug.ts | 30 | `slugify`, `assessmentUrl` | the title-fallback depends on it |

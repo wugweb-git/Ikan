@@ -5,7 +5,7 @@ import { useIsMobile } from '../../shared/hooks/useIsMobile';
 import { useNotifications } from '../../shared/contexts/NotificationContext';
 import { useAuth } from '../../shared/contexts/AuthContext';
 import { hasAnalyticsConsent } from '../lib/analytics-consent';
-import { apiClient } from '../../shared/api-client';
+import { apiClient } from '../../shared/api';
 import { resolveImageUrl } from '../../shared/lib/image-utils';
 import { copyToClipboard } from '../../shared/lib/clipboard';
 

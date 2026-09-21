@@ -4,7 +4,7 @@ import {
   Eye, EyeOff, Image as ImageIcon, Phone, BarChart3, Loader2, Award
 } from 'lucide-react';
 import { useNotifications } from '../../shared/contexts/NotificationContext';
-import { apiClient } from '../../shared/api-client';
+import { apiClient } from '../../shared/api';
 import { AdminHeader } from '../components/AdminHeader';
 import { AdminLoading } from '../components/AdminLoading';
 import { AdminSection } from '../components/AdminSection';

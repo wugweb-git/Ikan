@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Building2, ArrowRight, Mail, Phone, User, Calendar, Gift, Baby, ExternalLink } from 'lucide-react';
-import { apiClient } from '../../../shared/api-client';
+import { apiClient } from '../../../shared/api';
 import { useAuth } from '../../../shared/contexts/AuthContext';
 
 interface CorporateProgramData {

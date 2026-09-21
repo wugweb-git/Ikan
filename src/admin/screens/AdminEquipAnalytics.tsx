@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Users, Activity, CircleCheck, X, Target } from 'lucide-react';
 import { useNotifications } from '../../shared/contexts/NotificationContext';
-import { apiClient } from '../../shared/api-client';
+import { apiClient } from '../../shared/api';
 import { AdminHeader } from '../components/AdminHeader';
 import { AdminLoading } from '../components/AdminLoading';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';

@@ -93,8 +93,8 @@ Set in Vercel dashboard under Project → Settings → Environment Variables:
 
 | Key | Used by |
 |-----|---------|
-| `VITE_SUPABASE_URL` | `src/shared/supabase-client.ts` |
-| `VITE_SUPABASE_ANON_KEY` | `src/shared/supabase-client.ts` |
+| `VITE_SUPABASE_URL` | `src/shared/supabase.ts` |
+| `VITE_SUPABASE_ANON_KEY` | `src/shared/supabase.ts` |
 | `VITE_GA_MEASUREMENT_ID` | `index.html` GA tag |
 
 ### Supabase edge function

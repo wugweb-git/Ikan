@@ -1001,7 +1001,7 @@ export function BlockRenderer({ block, value, onChange, readOnly = false, equipI
         const resolvedEquipId = equipId || 'unknown';
         const resolvedDayNum = dayNum || 0;
 
-        const { apiClient } = await import('../../shared/api-client');
+        const { apiClient } = await import('../../shared/api');
         const result = await apiClient.uploadBlockFile(resolvedEquipId, resolvedDayNum, block.id, file);
 
         if (result?.success) {

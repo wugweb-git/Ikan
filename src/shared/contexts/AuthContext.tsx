@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { apiClient, User } from '../api-client';
-import { supabase, signOutLocal } from '../supabase-client'; // Use singleton client
+import { apiClient, User } from '../api';
+import { supabase, signOutLocal } from '../supabase'; // Use singleton client
 import type { Session } from '@supabase/supabase-js';
 
 interface AuthContextType {

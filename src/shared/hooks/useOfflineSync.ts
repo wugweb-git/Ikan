@@ -5,7 +5,7 @@
  * when offline, and syncs them when connectivity is restored.
  */
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { apiClient } from '../api-client';
+import { apiClient } from '../api';
 
 // ─── Types ───────────────────────────────────────────────────
 export type SyncItemType = 'mood_entry' | 'assessment_response' | 'block_response' | 'day_complete';

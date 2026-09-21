@@ -32,7 +32,7 @@ npm run dev
 # → http://localhost:5173
 ```
 
-The app connects to the **production Supabase project** even in dev (project `jpfvoevxegnknxoqmwye`, Mumbai). The anon key is committed in `src/shared/supabase-client.ts` — this is intentional (it's a public-facing key, not a secret).
+The app connects to the **production Supabase project** even in dev (project `jpfvoevxegnknxoqmwye`, Mumbai). The anon key is committed in `src/shared/supabase.ts` — this is intentional (it's a public-facing key, not a secret).
 
 ---
 

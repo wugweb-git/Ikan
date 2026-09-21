@@ -3,7 +3,7 @@ import { isProgramCheckIn } from '../lib/assessment-record';
 import { severityPresentation, severityOfResult } from '../lib/severity-presentation';
 import { motion } from 'framer-motion';
 import { ArrowLeft, BarChart3, Smile, Play, Activity, Check, Heart, Calendar, TrendingUp, ChevronRight } from 'lucide-react';
-import { apiClient } from '../../shared/api-client';
+import { apiClient } from '../../shared/api';
 import { useAuth } from '../../shared/contexts/AuthContext';
 import { useIsMobile } from '../../shared/hooks/useIsMobile';
 import { cn } from '../ui/utils';

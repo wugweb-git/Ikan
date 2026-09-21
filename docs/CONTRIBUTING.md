@@ -76,6 +76,6 @@ See `/BRAND.md` for voice/tone, email addresses, India crisis resources, and wha
 ## Security
 
 - No secrets in code. Supabase service-role key stays in Vercel env and Supabase Edge Function secrets only.
-- The anon key in `src/shared/supabase-client.ts` is intentionally public.
+- The anon key in `src/shared/supabase.ts` is intentionally public.
 - Do not re-enable auto-create-on-failed-login in `AuthContext.tsx` — it was removed deliberately.
 - SECURITY DEFINER functions in Postgres (`kv_store_row_count`, `rls_auto_enable`) are locked to service-role — do not grant EXECUTE to `anon`/`authenticated`/`PUBLIC`.

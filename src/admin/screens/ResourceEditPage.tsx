@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Save, Trash2, FileText, BookOpen, Download, Globe, Link as LinkIcon, Upload, EyeOff, X } from 'lucide-react';
 import { useNotifications } from '../../shared/contexts/NotificationContext';
-import { apiClient } from '../../shared/api-client';
+import { apiClient } from '../../shared/api';
 import { AdminPageLayout } from '../components/AdminPageLayout';
 import { AdminSection } from '../components/AdminSection';
 import { AdminFormField } from '../components/AdminFormField';

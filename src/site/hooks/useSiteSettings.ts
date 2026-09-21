@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { apiClient } from '../../shared/api-client';
+import { apiClient } from '../../shared/api';
 
 export interface SiteSettings {
   // General

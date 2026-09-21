@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { equipMeta } from '../lib/equip-meta';
-import { apiClient } from '../../shared/api-client';
+import { apiClient } from '../../shared/api';
 import { equipUrl } from '../lib/slug';
 import { PageHero } from '../ui/PageHero';
 import { ContentImage } from '../ui/ContentImage';

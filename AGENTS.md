@@ -128,7 +128,7 @@ Site page copy lives in code: pages import `DEFAULT_CMS_CONTENT` from `src/site/
 - **Don't add `EXECUTE` grants on `kv_store_row_count()` or `rls_auto_enable()` to `anon`/`authenticated`/`PUBLIC`.** These SECURITY DEFINER functions are locked down intentionally.
 - **Don't delete `wrappers_fdw_stats`** — it's extension-owned. It shows as a `rls_disabled_in_public` ERROR in the security advisor; RLS **can** be enabled on it, but only from the Supabase dashboard ("Resolve issue"), because the table is owned by `supabase_admin` and `ALTER TABLE` from a migration fails with `42501: must be owner of table`.
 - **Don't purge KV by prefix without checking `KEY_REGISTRY`** (`server/kv-audit-routes.ts`). Reverse-index keys (`assessment_slug:`, `equip_slug:`, `page_slug:`) look like orphans but are load-bearing — purging `assessment_slug:` once broke every `/assessment/<slug>` URL site-wide. The purge endpoint now refuses protected prefixes and requires `force` for registered ones. **Any new KV prefix must be added to `KEY_REGISTRY` in the same commit that introduces it** — see `GOVERNANCE.md` Rule 2 for why this is non-negotiable, not just tidy.
-- **Don't store secrets in code.** `SUPABASE_SERVICE_ROLE_KEY` lives only in Vercel env + the edge function runtime. The anon key in `src/shared/supabase-client.ts` is public by design.
+- **Don't store secrets in code.** `SUPABASE_SERVICE_ROLE_KEY` lives only in Vercel env + the edge function runtime. The anon key in `src/shared/supabase.ts` is public by design.
 
 ---
 
@@ -138,8 +138,8 @@ Site page copy lives in code: pages import `DEFAULT_CMS_CONTENT` from `src/site/
 |------|-------|
 | App shell + routing | `src/App.tsx` |
 | Auth context | `src/shared/contexts/AuthContext.tsx` |
-| API client | `src/shared/api-client.ts` |
-| Supabase client | `src/shared/supabase-client.ts` |
+| API client | `src/shared/api.ts` |
+| Supabase client | `src/shared/supabase.ts` |
 | CMS defaults | `src/site/lib/cms-defaults.ts` |
 | Slug helpers | `src/app/lib/slug.ts` |
 | Health Connect / Google Fit | `src/app/features/integrations/GoogleFitContext.tsx`, `src/app/lib/google-fit.ts` |

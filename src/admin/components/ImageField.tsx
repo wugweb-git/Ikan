@@ -5,7 +5,7 @@
  */
 import { useState, useRef } from 'react';
 import { Image as ImageIcon, Upload, FolderOpen, X, Loader2, Link as LinkIcon } from 'lucide-react';
-import { apiClient } from '../../shared/api-client';
+import { apiClient } from '../../shared/api';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '../ui/dialog';

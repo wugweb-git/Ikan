@@ -5,7 +5,7 @@ import { Icon } from '../ui/Icon';
 import { LogoFull } from '../ui/Logo';
 import { cn } from '../ui/utils';
 import { EngineResult } from '../../shared/engine/recommendation-engine';
-import { apiClient } from '../../shared/api-client';
+import { apiClient } from '../../shared/api';
 import { ContentImage } from '../ui/ContentImage';
 import { SectionReportCard } from '../features/player/SectionReportCard';
 import { AssessmentCard } from '../features/assessment/AssessmentCard';

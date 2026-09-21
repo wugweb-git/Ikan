@@ -1,4 +1,4 @@
-import { supabase, signOutLocal } from './supabase-client';
+import { supabase, signOutLocal } from './supabase';
 
 import type {
   UserProfile,

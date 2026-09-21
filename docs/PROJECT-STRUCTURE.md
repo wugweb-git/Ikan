@@ -60,7 +60,7 @@ src/
 │   ├── hooks/ · lib/ · assets/   # lib/cms-defaults.ts = all site page copy
 │
 ├── shared/                # NON-UI contract every surface imports
-│   ├── api-client.ts · api-types.ts · supabase-client.ts · validation.ts · logger.ts
+│   ├── api.ts · api-types.ts · supabase.ts · validation.ts · logger.ts
 │   ├── blocks/            # block model (+ tests)
 │   ├── engine/            # scoring + recommendation engines
 │   ├── contexts/          # AuthContext, NotificationContext (one session source)

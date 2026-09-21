@@ -14,7 +14,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '../ui/dropdown-menu';
-import { apiClient } from '../../shared/api-client';
+import { apiClient } from '../../shared/api';
 import { EquipProgram } from '../../shared/blocks/block-model';
 import { useNotifications } from '../../shared/contexts/NotificationContext';
 import { EquipProgramWizard } from './EquipProgramWizard';

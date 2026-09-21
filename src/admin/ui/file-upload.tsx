@@ -2,7 +2,7 @@ import { useState, useRef, useCallback } from 'react';
 import { Upload, X, File, Image as ImageIcon, FileText, Film, Music, Loader2, CircleCheck, CircleAlert } from 'lucide-react';
 import { Button } from './button';
 import { cn } from './utils';
-import { apiClient } from '../../shared/api-client';
+import { apiClient } from '../../shared/api';
 
 export interface FileUploadProps {
   value?: string;

@@ -73,7 +73,7 @@
  * ──────────────────────────────────────────────────────────────────
  */
 
-import { apiClient } from '../../shared/api-client';
+import { apiClient } from '../../shared/api';
 
 interface BridgeCallbacks {
   onDataReceived?: (data: Record<string, unknown>) => void;

@@ -9,7 +9,7 @@ import { Clock, FileText, Brain, Shield, Activity, Play, Lock, CircleHelp } from
 import { useAuth } from '../../shared/contexts/AuthContext';
 import { useNotifications } from '../../shared/contexts/NotificationContext';
 import { cn } from '../ui/utils';
-import { apiClient } from '../../shared/api-client';
+import { apiClient } from '../../shared/api';
 import { AssessmentFlow } from './AssessmentFlow';
 import { AssessmentResults } from './AssessmentResults';
 import { evaluateAssessment } from '../../shared/engine/recommendation-engine';

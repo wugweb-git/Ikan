@@ -1,8 +1,8 @@
 import { projectId } from '../../shared/config/supabase-info';
-import { getAuthHeaders } from '../../shared/supabase-client';
+import { getAuthHeaders } from '../../shared/supabase';
 import { useState, useEffect } from 'react';
 import { Button } from '../ui/button';
-import { apiClient } from '../../shared/api-client';
+import { apiClient } from '../../shared/api';
 import { useAuth } from '../../shared/contexts/AuthContext';
 import { useNotifications } from '../../shared/contexts/NotificationContext';
 import { OnboardingData } from '../lib/equip-types';

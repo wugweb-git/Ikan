@@ -28,7 +28,7 @@ import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { Switch } from '../ui/switch';
-import { apiClient } from '../../shared/api-client';
+import { apiClient } from '../../shared/api';
 import tokens from '../../shared/lib/design-tokens';
 import { getScaleByKey, getAvailableScaleKeys, getContextTags, loadCustomScales, clearScaleCache } from '../../shared/lib/emoji-utils';
 import { AdminHeader } from './AdminHeader';

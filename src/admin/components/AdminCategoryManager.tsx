@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import {
   Plus, X, Save, FolderOpen, Pencil, Trash2, RefreshCw, Download, Search,
 } from 'lucide-react';
-import { apiClient } from '../../shared/api-client';
+import { apiClient } from '../../shared/api';
 import { toast } from 'sonner';
 import { invalidateMetadataCache } from '../../shared/hooks/useMetadata';
 import { METADATA_CATALOG_ITEMS, METADATA_TYPE_LABELS, METADATA_TYPE_ICONS, METADATA_TYPE_GROUPS, type MetadataType } from '../../shared/lib/metadata-catalog';

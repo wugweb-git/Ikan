@@ -563,11 +563,11 @@ Site page copy lives in code: pages import `DEFAULT_CMS_CONTENT` from `src/site/
   defensive (a refresh token looked broken, a session check failed) — so one transient error in one
   tab logged the user out of their phone, and the tab still holding an unexpired JWT then got
   `session_not_found` from GoTrue, which reads like a library fault and is not one. Use
-  `signOutLocal()` from `src/shared/supabase-client.ts`; pass `'global'` only for a deliberate
+  `signOutLocal()` from `src/shared/supabase.ts`; pass `'global'` only for a deliberate
   "sign out everywhere". Related: `SecurityProvider`'s 30-minute idle sign-out is for the
   patient-facing app and **exempts admins** — an author reading a long day of content is not idle,
   and being signed out mid-edit loses work.
-- **Don't store secrets in code.** `SUPABASE_SERVICE_ROLE_KEY` lives only in Vercel env + the edge function runtime. The anon key in `src/shared/supabase-client.ts` is public by design.
+- **Don't store secrets in code.** `SUPABASE_SERVICE_ROLE_KEY` lives only in Vercel env + the edge function runtime. The anon key in `src/shared/supabase.ts` is public by design.
 - **Don't roll the frontend back past `cc70ac96` (2026-09-04) without rolling the catalog back too.** Two live couplings were created that day where **KV data depends on deployed code**, and a frontend-only rollback breaks both silently:
 
 | rollback past | what breaks | how to tell | fix |
@@ -587,8 +587,8 @@ Site page copy lives in code: pages import `DEFAULT_CMS_CONTENT` from `src/site/
 |------|-------|
 | App shell + routing | `src/App.tsx` |
 | Auth context | `src/shared/contexts/AuthContext.tsx` |
-| API client | `src/shared/api-client.ts` |
-| Supabase client | `src/shared/supabase-client.ts` |
+| API client | `src/shared/api.ts` |
+| Supabase client | `src/shared/supabase.ts` |
 | CMS defaults | `src/site/lib/cms-defaults.ts` |
 | Slug helpers | `src/app/lib/slug.ts` |
 | Health Connect / Google Fit | `src/app/features/integrations/GoogleFitContext.tsx`, `src/app/lib/google-fit.ts` |

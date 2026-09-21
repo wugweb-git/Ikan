@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { BookOpen, Plus, MoreHorizontal, Pencil, Trash2, Eye, EyeOff, Users } from 'lucide-react';
 import { useNotifications } from '../../shared/contexts/NotificationContext';
-import { apiClient } from '../../shared/api-client';
+import { apiClient } from '../../shared/api';
 import { AdminHeader } from '../components/AdminHeader';
 import { AdminStatusBadge } from '../components/AdminStatusBadge';
 import { useIsMobile } from '../../shared/hooks/useIsMobile';

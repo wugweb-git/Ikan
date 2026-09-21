@@ -1,8 +1,8 @@
 import { equipMeta } from '../lib/equip-meta';
 import { useState, useEffect } from 'react';
 import { projectId } from '../../shared/config/supabase-info';
-import { getAuthHeaders } from '../../shared/supabase-client';
-import { apiClient } from '../../shared/api-client';
+import { getAuthHeaders } from '../../shared/supabase';
+import { apiClient } from '../../shared/api';
 import { useAuth } from '../../shared/contexts/AuthContext';
 import { SectionHero } from '../ui/blocks/SectionHero';
 import { EquipBentoGrid } from '../ui/blocks/EquipBentoGrid';

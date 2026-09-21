@@ -4,7 +4,7 @@
  */
 
 import { logger } from '../../shared/logger';
-import { apiClient } from '../../shared/api-client';
+import { apiClient } from '../../shared/api';
 
 // --- Patterns ---
 

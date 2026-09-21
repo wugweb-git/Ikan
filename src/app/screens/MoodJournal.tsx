@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { apiClient } from '../../shared/api-client';
+import { apiClient } from '../../shared/api';
 import { useAuth } from '../../shared/contexts/AuthContext';
 import { useNotifications } from '../../shared/contexts/NotificationContext';
 import { useIsMobile } from '../../shared/hooks/useIsMobile';

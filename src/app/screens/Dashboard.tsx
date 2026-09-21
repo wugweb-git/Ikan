@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { apiClient } from '../../shared/api-client';
+import { apiClient } from '../../shared/api';
 import { useAuth } from '../../shared/contexts/AuthContext';
 import { useNotifications } from '../../shared/contexts/NotificationContext';
 import { ArrowRight, Activity, Smile, Check, BarChart3, ClipboardList, Play, TrendingUp, Brain, Compass, BookOpen, Calendar, ChevronRight } from 'lucide-react';

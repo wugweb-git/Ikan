@@ -195,7 +195,7 @@ const data = await apiClient.get('/users/profile');
 await apiClient.post('/health-connect/data', payload);
 
 // Public — anon key is the bearer token
-const ANON = 'eyJhbGc...';  // from src/shared/supabase-client.ts
+const ANON = 'eyJhbGc...';  // from src/shared/supabase.ts
 const res = await fetch(`${BASE_URL}/api/assessments`, {
   headers: { Authorization: `Bearer ${ANON}` },
 });

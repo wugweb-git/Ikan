@@ -7,7 +7,7 @@ import { Textarea } from '../ui/textarea';
 import { Card, CardContent } from '../ui/card';
 import { DEFAULT_CMS_CONTENT } from '../lib/cms-defaults';
 import { PageHero } from '../ui/PageHero';
-import { apiClient } from '../../shared/api-client';
+import { apiClient } from '../../shared/api';
 import { useNotifications } from '../../shared/contexts/NotificationContext';
 
 interface ContactUsProps {

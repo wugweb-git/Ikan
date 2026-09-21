@@ -7,7 +7,7 @@
  * and re-fetched only on explicit invalidation.
  */
 import { useState, useEffect, useCallback } from 'react';
-import { apiClient } from '../api-client';
+import { apiClient } from '../api';
 
 export interface PublicSettings {
   siteName: string;

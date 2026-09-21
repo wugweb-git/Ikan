@@ -7,7 +7,7 @@ import {
 import { Button } from '../ui/button';
 import { EquipProgram } from '../../shared/blocks/block-model';
 import { ProgramPlayer } from '../features/player/ProgramPlayer';
-import { apiClient } from '../../shared/api-client';
+import { apiClient } from '../../shared/api';
 import { useNotifications } from '../../shared/contexts/NotificationContext';
 import { toast } from 'sonner';
 import tokens from '../../shared/lib/design-tokens';

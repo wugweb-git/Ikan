@@ -5,7 +5,7 @@ import { Button } from '../ui/button';
 import { Card, CardContent } from '../ui/card';
 import { Progress } from '../ui/progress';
 import { CircleCheck, Trophy, Calendar, ArrowRight, Star, BookOpen, BarChart3, Sparkles } from 'lucide-react';
-import { apiClient } from '../../shared/api-client';
+import { apiClient } from '../../shared/api';
 import { equipDiaryUrl } from '../lib/slug';
 import { EquipProgram } from '../../shared/blocks/block-model';
 import { LoadingSpinner } from '../ui/LoadingSpinner';

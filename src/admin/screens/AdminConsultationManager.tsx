@@ -20,7 +20,7 @@ import {
   Pencil,
 } from 'lucide-react';
 import { useNotifications } from '../../shared/contexts/NotificationContext';
-import { apiClient } from '../../shared/api-client';
+import { apiClient } from '../../shared/api';
 import { AdminHeader } from '../components/AdminHeader';
 import { AdminEmptyState } from '../components/AdminEmptyState';
 import { AdminLoading } from '../components/AdminLoading';
@@ -45,7 +45,7 @@ import {
   DropdownMenuTrigger,
 } from "../ui/dropdown-menu";
 import { projectId, publicAnonKey } from '../../shared/config/supabase-info';
-import { supabase } from '../../shared/supabase-client';
+import { supabase } from '../../shared/supabase';
 import { copyToClipboard } from '../../shared/lib/clipboard';
 import { useMetadata } from '../../shared/hooks/useMetadata';
 

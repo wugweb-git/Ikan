@@ -8,7 +8,7 @@ import { Card, CardContent } from '../../ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../ui/select';
 import { Input } from '../../ui/input';
-import { apiClient } from '../../../shared/api-client';
+import { apiClient } from '../../../shared/api';
 import { useMetadata } from '../../../shared/hooks/useMetadata';
 
 // ── Types ────────────────────────────────────────────────────

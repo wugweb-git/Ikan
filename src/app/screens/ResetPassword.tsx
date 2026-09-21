@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { supabase, signOutLocal } from '../../shared/supabase-client';
+import { supabase, signOutLocal } from '../../shared/supabase';
 
 interface ResetPasswordProps {
   onNavigate?: (route: string) => void;

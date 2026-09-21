@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { apiClient } from '../../shared/api-client';
+import { apiClient } from '../../shared/api';
 import { useIsMobile } from '../../shared/hooks/useIsMobile';
 import { MobileHeader } from '../shell/navigation/MobileHeader';
 import { LoadingSpinner } from '../ui/LoadingSpinner';

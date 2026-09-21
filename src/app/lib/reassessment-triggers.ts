@@ -1,4 +1,4 @@
-import { apiClient } from '../../shared/api-client';
+import { apiClient } from '../../shared/api';
 
 export type ReassessmentReason = 'time' | 'mood' | 'program' | 'manual';
 

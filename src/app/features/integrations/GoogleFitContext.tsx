@@ -1,8 +1,8 @@
 import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import { useNotifications } from '../../../shared/contexts/NotificationContext';
 import { useAuth } from '../../../shared/contexts/AuthContext';
-import { apiClient } from '../../../shared/api-client';
-import { supabase } from '../../../shared/supabase-client';
+import { apiClient } from '../../../shared/api';
+import { supabase } from '../../../shared/supabase';
 import { fetchGoogleFitData, GOOGLE_FIT_SCOPES } from '../../lib/google-fit';
 
 const GFIT_PENDING_KEY = 'ikan-gfit-connecting';
