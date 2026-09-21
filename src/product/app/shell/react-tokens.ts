@@ -44,7 +44,7 @@ export function injectTokens(): void {
       css += `@keyframes ikan-${name} { ${frames} }\n`;
     }
   }
-  style.innerHTML = css;
+  style.textContent = css; // CSS text, never parsed as HTML
 }
 
 // helper hook for React components

@@ -76,14 +76,28 @@ export async function loadCustomScales(apiBase: string, anonKey: string): Promis
 
   _loadPromise = (async () => {
     const headers = { Authorization: `Bearer ${anonKey}` };
+    // Each scale falls back to its built-in default on failure, but the failure
+    // is now logged instead of silently swallowed — a broken endpoint used to be
+    // indistinguishable from "no custom scale configured".
+    const fetchScale = (name: string) =>
+      fetch(`${apiBase}/scales/${name}`, { headers })
+        .then(r => {
+          if (r.ok) return r.json();
+          console.warn(`[emoji-utils] /scales/${name} returned ${r.status}; using defaults`);
+          return null;
+        })
+        .catch((err: unknown) => {
+          console.warn(`[emoji-utils] /scales/${name} failed; using defaults`, err);
+          return null;
+        });
     try {
       const [eRes, sRes, tRes, slRes, pRes, moodsRes] = await Promise.all([
-        fetch(`${apiBase}/scales/energy`, { headers }).then(r => r.ok ? r.json() : null).catch(() => null),
-        fetch(`${apiBase}/scales/stress`, { headers }).then(r => r.ok ? r.json() : null).catch(() => null),
-        fetch(`${apiBase}/scales/context-tags`, { headers }).then(r => r.ok ? r.json() : null).catch(() => null),
-        fetch(`${apiBase}/scales/sleep`, { headers }).then(r => r.ok ? r.json() : null).catch(() => null),
-        fetch(`${apiBase}/scales/pain`, { headers }).then(r => r.ok ? r.json() : null).catch(() => null),
-        fetch(`${apiBase}/scales/moods`, { headers }).then(r => r.ok ? r.json() : null).catch(() => null),
+        fetchScale('energy'),
+        fetchScale('stress'),
+        fetchScale('context-tags'),
+        fetchScale('sleep'),
+        fetchScale('pain'),
+        fetchScale('moods'),
       ]);
 
       // Mood types from /scales/moods (lazy-inited by server)

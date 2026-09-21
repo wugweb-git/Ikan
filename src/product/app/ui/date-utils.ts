@@ -1,10 +1,13 @@
+import { localDayKey } from './lib/local-date';
+
 // Simple date utility functions to replace date-fns
 export function format(date: Date, formatString: string): string {
   const d = new Date(date);
   
   // Handle different format patterns
   if (formatString === 'yyyy-MM-dd') {
-    return d.toISOString().split('T')[0];
+    // Local calendar day (was the UTC day, wrong before 05:30 in IST).
+    return localDayKey(d);
   }
   
   if (formatString === 'MMM d, yyyy' || formatString === 'MMM dd, yyyy') {

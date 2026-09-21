@@ -511,7 +511,7 @@ export function AdminMediaManager({ onBack, className }: AdminMediaManagerProps)
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() => window.open(file.url, '_blank')}
+                      onClick={() => window.open(file.url, '_blank', 'noopener,noreferrer')}
                       style={{ flex: 1, padding: 'var(--spacing-1)' }}
                       title="Preview"
                     >

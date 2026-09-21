@@ -9,6 +9,7 @@ import { useAuth } from '../../shared/state/AuthContext';
 import { useNotifications } from '../../shared/state/NotificationContext';
 import { usePublicSettings } from '../ui/hooks/usePublicSettings';
 import { Checkbox } from '../ui/checkbox';
+import { signOutLocal } from '../../shared/api/supabase';
 
 const REMEMBER_KEY = 'ikan_admin_remembered_email';
 
@@ -24,7 +25,8 @@ export function AdminLoginScreen({ onNavigate, onLoginSuccess }: AdminLoginScree
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const { signIn } = useAuth();
+  const { signIn, verifyAdmin } = useAuth();
+  const [accessError, setAccessError] = useState<string | null>(null);
   const { showToast } = useNotifications();
 
   // Restore remembered email on mount
@@ -46,8 +48,31 @@ export function AdminLoginScreen({ onNavigate, onLoginSuccess }: AdminLoginScree
     }
 
     setIsLoading(true);
+    setAccessError(null);
     try {
       await signIn(email, password);
+
+      // A valid password is not admin access. Ask the server for this
+      // account's profile and refuse anything that is not is_admin === true,
+      // ending the session on this browser only (never a global sign-out).
+      let isAdmin = false;
+      try {
+        isAdmin = await verifyAdmin();
+      } catch (verifyErr) {
+        console.error('Admin verification failed:', verifyErr);
+        await signOutLocal().catch(() => {});
+        const msg = "We couldn't verify admin access. Please try again.";
+        setAccessError(msg);
+        showToast('error', 'Login Failed', msg);
+        return;
+      }
+      if (!isAdmin) {
+        await signOutLocal().catch(() => {});
+        const msg = "This account doesn't have admin access";
+        setAccessError(msg);
+        showToast('error', 'Login Failed', msg);
+        return;
+      }
 
       // Persist or clear remembered email
       if (rememberMe) {
@@ -128,6 +153,21 @@ export function AdminLoginScreen({ onNavigate, onLoginSuccess }: AdminLoginScree
           <div style={{ height: 3, backgroundColor: 'var(--color-primary-default)' }} />
 
           <form onSubmit={handleLogin} className="p-6 space-y-5">
+            {accessError && (
+              <div
+                role="alert"
+                className="flex items-center gap-2 text-sm p-3 rounded-lg"
+                style={{
+                  color: 'var(--color-status-danger)',
+                  backgroundColor: 'var(--color-status-danger-light)',
+                  border: '1px solid var(--color-status-danger)',
+                  fontFamily: 'var(--font-family-base)',
+                }}
+              >
+                <CircleAlert className="w-4 h-4 shrink-0" aria-hidden="true" />
+                <span>{accessError}</span>
+              </div>
+            )}
             {/* Email */}
             <div className="space-y-1.5">
               <Label

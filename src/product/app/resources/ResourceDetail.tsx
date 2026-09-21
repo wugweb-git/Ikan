@@ -17,6 +17,7 @@ import { ResourceAuthor } from '../ui/blocks/ResourceAuthor';
 import { ResourceCategory } from '../ui/blocks/ResourceCategory';
 import { ResourceTypeLabel } from '../ui/blocks/ResourceTypeLabel';
 import { ResourceTags } from '../ui/blocks/ResourceTags';
+import { sanitizeHtml } from '../ui/lib/sanitize';
 
 interface ResourceDetailProps {
   resourceId: string;
@@ -111,7 +112,9 @@ export function ResourceDetail({ resourceId, onBack, onNavigate, onResourceSelec
     
     const blocks: any[] = [];
     const tempDiv = document.createElement('div');
-    tempDiv.innerHTML = htmlContent;
+    // Sanitise BEFORE parsing: even a detached element fetches <img src> and
+    // fires onerror, so raw assignment would already execute injected script.
+    tempDiv.innerHTML = sanitizeHtml(htmlContent);
     
     // Check if we have structured HTML (with headers, lists, etc.)
     const hasStructure = htmlContent.includes('<h') || htmlContent.includes('<ul') || htmlContent.includes('<ol');
@@ -982,7 +985,7 @@ export function ResourceDetail({ resourceId, onBack, onNavigate, onResourceSelec
               return (
                 <div 
                   key={index}
-                  dangerouslySetInnerHTML={{ __html: block.html || block.content }}
+                  dangerouslySetInnerHTML={{ __html: sanitizeHtml(block.html || block.content) }}
                   style={{
                     fontFamily: 'var(--font-family-base)',
                     fontSize: 'var(--text-base)',

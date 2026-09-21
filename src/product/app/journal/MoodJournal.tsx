@@ -23,6 +23,8 @@ import tokens from '../ui/lib/design-tokens';
 import { projectId, publicAnonKey } from '../../../shared/api/supabase-info';
 import { detectCrisisKeywords } from '../shell/SecurityProvider';
 import { triggerCrisisSupport } from '../safety/CrisisSupport';
+import { localDayKey } from '../ui/lib/local-date';
+import { isPermanentClientError } from '../ui/lib/api-errors';
 
 // ─────────────────────────────────────────────────────────────────
 // Types & Constants
@@ -101,7 +103,8 @@ const f = (size: string, weight: number = 400, color: string = B.textPrimary) =>
 // Helpers
 // ─────────────────────────────────────────────────────────────────
 
-function toDateStr(d: Date): string { return d.toISOString().split('T')[0]; }
+// Local calendar day, not the UTC day — see ui/lib/local-date.
+function toDateStr(d: Date): string { return localDayKey(d); }
 
 function calculateStreak(entryDates: Set<string>): { current: number; longest: number } {
   const today = new Date();
@@ -348,13 +351,26 @@ export function MoodJournal({ onNavigate: _onNavigate }: { onNavigate?: (path: s
     setIsSubmitting(true);
     try {
       if (isOnline) {
-        await apiClient.createJournalEntry(
-          payload.date, payload.mood, payload.note,
-          payload.emotions, payload.energy, payload.stress, payload.contextTags,
-          extraFields,
-        );
+        try {
+          await apiClient.createJournalEntry(
+            payload.date, payload.mood, payload.note,
+            payload.emotions, payload.energy, payload.stress, payload.contextTags,
+            extraFields,
+          );
+        } catch (saveError) {
+          // A 4xx is a definitive rejection — queueing it would only replay the
+          // same failure. Anything else (network, 5xx, timeout) is queued.
+          if (isPermanentClientError(saveError)) {
+            console.error(saveError);
+            showToast('error', 'Error', 'Failed to save. Please try again.');
+            return;
+          }
+          throw saveError;
+        }
         showToast('success', 'Saved!', 'Your mood check-in is saved.');
-        await fetchEntries();
+        // The entry is already stored; a failed refresh must not fall through
+        // to the catch below and queue a duplicate.
+        await fetchEntries().catch((e) => console.error('Refreshing entries failed:', e));
       } else {
         queueItem('mood_entry', { ...payload, ...extraFields });
         setEntries(prev => [{

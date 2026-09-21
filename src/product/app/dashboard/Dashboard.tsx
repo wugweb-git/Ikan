@@ -23,6 +23,7 @@ import { CorporateProgramCard } from './CorporateProgramCard';
 import { ProgramProgressTracker } from './ProgramProgressTracker';
 import { IkanScoreCard } from './IkanScoreCard';
 import { usePublicSettings } from '../ui/hooks/usePublicSettings';
+import { localDayKey } from '../ui/lib/local-date';
 
 interface DashboardProps {
   className?: string;
@@ -230,7 +231,7 @@ export function Dashboard({ className, onNavigate }: DashboardProps) {
     if (!hasCachedData) setLoading(true);
 
     try {
-      const today = new Date().toISOString().split('T')[0];
+      const today = localDayKey(); // local day, not UTC
       const journalData = await apiClient.getJournalEntries(today, today).catch(() => ({ entries: [] }));
       if (!isMounted) return;
       const entries = (journalData as any).entries || [];

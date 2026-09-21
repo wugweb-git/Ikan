@@ -50,7 +50,22 @@ function saveQueue(queue: SyncItem[]) {
   }
 }
 
+function newSyncItemId(type: SyncItemType): string {
+  try {
+    if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+      return `${type}-${crypto.randomUUID()}`;
+    }
+  } catch { /* fall through */ }
+  return `${type}-${Date.now()}-${Math.random().toString(36).slice(2)}${Math.random().toString(36).slice(2)}`;
+}
+
 // ─── Sync executor ──────────────────────────────────────────
+
+/**
+ * Every replay sends the item's id as an `Idempotency-Key` header (see
+ * apiClient.withIdempotencyKey), so a write whose first attempt reached the
+ * server but whose response was lost can be de-duplicated server-side.
+ */
 
 async function executeSync(item: SyncItem): Promise<boolean> {
   try {
@@ -61,7 +76,7 @@ async function executeSync(item: SyncItem): Promise<boolean> {
         // a fixed set dropped all of them on any entry that synced through the
         // queue — the same class of bug as the assessment_response case below.
         const { date, mood, note, emotions, energy, stress, contextTags, ...extraFields } = item.payload;
-        await apiClient.createJournalEntry(date, mood, note, emotions, energy, stress, contextTags, extraFields);
+        await apiClient.withIdempotencyKey(item.id, () => apiClient.createJournalEntry(date, mood, note, emotions, energy, stress, contextTags, extraFields));
         return true;
       }
 
@@ -79,19 +94,19 @@ async function executeSync(item: SyncItem): Promise<boolean> {
         // completed on a train would keep its answers and silently lose its
         // timing.
         const { assessmentId, responses, status, score, interpretation, severityHint, maxScore, sectionScores, slug, engineResult, startedAt, durationSeconds } = item.payload;
-        await apiClient.saveAssessmentResponse(assessmentId, responses, status, score, interpretation, severityHint, maxScore, sectionScores, slug, engineResult, { startedAt, durationSeconds });
+        await apiClient.withIdempotencyKey(item.id, () => apiClient.saveAssessmentResponse(assessmentId, responses, status, score, interpretation, severityHint, maxScore, sectionScores, slug, engineResult, { startedAt, durationSeconds }));
         return true;
       }
 
       case 'block_response': {
         const { equipId, dayNum, blockId, response } = item.payload;
-        await apiClient.saveBlockResponse(equipId, dayNum, blockId, response);
+        await apiClient.withIdempotencyKey(item.id, () => apiClient.saveBlockResponse(equipId, dayNum, blockId, response));
         return true;
       }
 
       case 'day_complete': {
         const { equipId, dayNum } = item.payload;
-        await apiClient.completeDay(equipId, dayNum);
+        await apiClient.withIdempotencyKey(item.id, () => apiClient.completeDay(equipId, dayNum));
         return true;
       }
 
@@ -201,7 +216,9 @@ export function useOfflineSync(): OfflineSyncState & {
 
   const queueItem = useCallback((type: SyncItemType, payload: any) => {
     const item: SyncItem = {
-      id: `${type}-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+      // Doubles as the Idempotency-Key header when the item is replayed, so it
+      // must be unique per write, not merely per millisecond.
+      id: newSyncItemId(type),
       type,
       payload,
       createdAt: Date.now(),

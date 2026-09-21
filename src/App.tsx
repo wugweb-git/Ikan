@@ -40,16 +40,36 @@ if (typeof window !== 'undefined') {
     const el = document.createElement('div');
     el.id = 'ikan-fatal-error';
     el.style.cssText = 'position:fixed;inset:0;z-index:99999;display:flex;align-items:center;justify-content:center;background:#F5F5F5;font-family:system-ui,sans-serif;padding:24px;';
-    el.innerHTML = `
-      <div style="max-width:480px;text-align:center;">
-        <div style="font-size:48px;margin-bottom:16px;">⚠️</div>
-        <h2 style="font-size:20px;font-weight:500;color:#151515;margin:0 0 12px;">Something went wrong</h2>
-        <p style="font-size:14px;color:#717182;line-height:1.5;margin:0 0 16px;">${msg}</p>
-        ${source ? `<p style="font-size:12px;color:#999;word-break:break-all;margin:0 0 16px;">${source}</p>` : ''}
-        <button onclick="location.reload()" style="padding:10px 24px;background:#2A2A2A;color:#fff;border:none;border-radius:12px;font-size:14px;cursor:pointer;">Reload App</button>
-        <p style="font-size:12px;color:#717182;margin:16px 0 0;">If this keeps happening, try clearing your browser cache.</p>
-      </div>
-    `;
+    // Build the overlay with DOM APIs + textContent: `msg` and `source` come
+    // from arbitrary error events and must never be parsed as HTML.
+    const box = document.createElement('div');
+    box.style.cssText = 'max-width:480px;text-align:center;';
+    const icon = document.createElement('div');
+    icon.style.cssText = 'font-size:48px;margin-bottom:16px;';
+    icon.textContent = '⚠️';
+    const h2 = document.createElement('h2');
+    h2.style.cssText = 'font-size:20px;font-weight:500;color:#151515;margin:0 0 12px;';
+    h2.textContent = 'Something went wrong';
+    const p = document.createElement('p');
+    p.style.cssText = 'font-size:14px;color:#717182;line-height:1.5;margin:0 0 16px;';
+    p.textContent = msg;
+    box.append(icon, h2, p);
+    if (source) {
+      const src = document.createElement('p');
+      src.style.cssText = 'font-size:12px;color:#999;word-break:break-all;margin:0 0 16px;';
+      src.textContent = source;
+      box.appendChild(src);
+    }
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.style.cssText = 'padding:10px 24px;background:#2A2A2A;color:#fff;border:none;border-radius:12px;font-size:14px;cursor:pointer;';
+    btn.textContent = 'Reload App';
+    btn.addEventListener('click', () => location.reload());
+    const hint = document.createElement('p');
+    hint.style.cssText = 'font-size:12px;color:#717182;margin:16px 0 0;';
+    hint.textContent = 'If this keeps happening, try clearing your browser cache.';
+    box.append(btn, hint);
+    el.appendChild(box);
     (document.getElementById('root') || document.body).appendChild(el);
   };
 
@@ -124,6 +144,7 @@ const Sitemap = lazy(() => lazyRetry(() => import('./product/site/pages/Sitemap'
 // Admin screens
 const AdminDashboard = lazy(() => lazyRetry(() => import('./admin/shell/AdminDashboard').then(m => ({ default: m.AdminDashboard })), 'AdminDashboard'));
 const AdminLoginScreen = lazy(() => lazyRetry(() => import('./admin/shell/AdminLoginScreen').then(m => ({ default: m.AdminLoginScreen })), 'AdminLoginScreen'));
+const AdminGate = lazy(() => lazyRetry(() => import('./admin/shell/AdminGate').then(m => ({ default: m.AdminGate })), 'AdminGate'));
 
 // --- Eagerly loaded non-screen components ---
 import { AdminWidget } from './admin/shell/AdminWidget';
@@ -209,7 +230,7 @@ function MaintenanceScreen({ siteName }: { siteName?: string }) {
 
 function AppContent() {
   // ✅ ALL HOOKS MUST BE CALLED FIRST - BEFORE ANY CONDITIONAL LOGIC OR EARLY RETURNS
-  const { user, isInitialized } = useAuth();
+  const { user, isInitialized, verifiedIsAdmin } = useAuth();
   const { settings: publicSettings } = usePublicSettings();
   const { showToast } = useNotifications();
   const { shouldShowPrompt } = usePushPermissionPrompt();
@@ -602,10 +623,15 @@ function AppContent() {
         // bare kept as a working alias so existing bookmarks/links don't break.
         const view = (currentRoute === '/admin' || currentRoute === '/admin/reporting') ? 'dashboard' : adminPath;
         
+        // Signed in is not enough: AdminGate renders the console only once the
+        // server-loaded profile says is_admin === true (never the cached
+        // localStorage hint), and shows "Not authorised" otherwise.
         return (
           <ErrorBoundary>
             <Suspense fallback={<LazyFallback />}>
-              <AdminDashboard onNavigate={handleNavigate} initialView={view} />
+              <AdminGate onNavigate={handleNavigate}>
+                <AdminDashboard onNavigate={handleNavigate} initialView={view} />
+              </AdminGate>
             </Suspense>
           </ErrorBoundary>
         );
@@ -764,7 +790,7 @@ function AppContent() {
   // description promises, and no more.
   const inMaintenance =
     publicSettings?.maintenanceMode === true &&
-    !user?.is_admin &&
+    verifiedIsAdmin !== true &&
     !currentRoute.startsWith('/admin');
 
   if (inMaintenance) {

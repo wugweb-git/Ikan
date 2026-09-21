@@ -86,6 +86,7 @@ interface AssessmentFlowProps {
 import { ProgramPlayer, PlayerResults } from '../programs/ProgramPlayer';
 import { adaptAssessmentToProgram, normalizeLegacyQuestionType } from './assessment-adapter';
 import { evaluateAssessment, loadScoringProfiles, loadAdminRules, getLoadedScoringProfiles } from '../engines/recommendation-engine';
+import { isPermanentClientError } from '../ui/lib/api-errors';
 
 /**
  * Full-screen error card shown when an assessment can't be loaded or built.
@@ -679,6 +680,13 @@ export function AssessmentFlow({
                showToast('info', 'Saved Locally', 'Your results will sync when you are back online.');
              }
           } catch (saveError) {
+            // A 4xx is the server rejecting this save outright; replaying it
+            // from the offline queue would fail identically. Surface it instead.
+            if (isPermanentClientError(saveError)) {
+              console.error('Assessment save rejected by server:', saveError);
+              showToast('error', 'Error', 'Failed to process results. Please try again.');
+              return;
+            }
             console.error('Background save failed, queuing offline:', saveError);
             // Fallback to offline queue
             queueItem('assessment_response', {

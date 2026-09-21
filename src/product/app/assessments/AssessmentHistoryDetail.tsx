@@ -376,6 +376,12 @@ export function AssessmentHistoryDetail({ assessmentId, onBack, onNavigate }: As
 
     const dateStr = (iso: string) =>
       new Date(iso).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+    // Everything interpolated below is written into a new document as HTML;
+    // stored strings (title, severity, scores) must be escaped, not parsed.
+    const esc = (v: unknown) => String(v ?? '')
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    const safeTitle = esc(assessmentTitle);
 
     const attemptRows = attempts
       .map(
@@ -385,8 +391,8 @@ export function AssessmentHistoryDetail({ assessmentId, onBack, onNavigate }: As
         <tr>
           <td style="padding:10px 14px;border-bottom:1px solid #E9EBEF;">${i === 0 ? 'Latest' : `#${attempts.length - i}`}</td>
           <td style="padding:10px 14px;border-bottom:1px solid #E9EBEF;">${dateStr(a.completedAt)}</td>
-          <td style="padding:10px 14px;border-bottom:1px solid #E9EBEF;font-weight:500;">${aPct}% <span style="color:#717182;font-weight:400">(${a.score}/${a.maxScore})</span></td>
-          <td style="padding:10px 14px;border-bottom:1px solid #E9EBEF;text-transform:capitalize;">${a.severity || '—'}</td>
+          <td style="padding:10px 14px;border-bottom:1px solid #E9EBEF;font-weight:500;">${aPct}% <span style="color:#717182;font-weight:400">(${esc(a.score)}/${esc(a.maxScore)})</span></td>
+          <td style="padding:10px 14px;border-bottom:1px solid #E9EBEF;text-transform:capitalize;">${esc(a.severity || '—')}</td>
         </tr>`;
         }
       )
@@ -403,7 +409,7 @@ export function AssessmentHistoryDetail({ assessmentId, onBack, onNavigate }: As
       <html>
       <head>
         <meta charset="utf-8">
-        <title>${assessmentTitle} — History Report</title>
+        <title>${safeTitle} — History Report</title>
         <style>
           @import url('https://fonts.googleapis.com/css2?family=Ubuntu:wght@400;500&display=swap');
           * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -435,16 +441,16 @@ export function AssessmentHistoryDetail({ assessmentId, onBack, onNavigate }: As
           <span class="report-date">Generated ${dateStr(new Date().toISOString())}</span>
         </div>
 
-        <h1>${assessmentTitle}</h1>
+        <h1>${safeTitle}</h1>
         <p class="subtitle">${attempts.length} attempt${attempts.length !== 1 ? 's' : ''} recorded</p>
 
         <div class="summary">
           <div class="stat">
             <div class="stat-label">${latestIsStale ? 'Most recent result' : 'Latest Score'}</div>
-            <div class="stat-value">${pctOfAttempt(latest) ?? '—'}%<span style="font-size:14px;color:#717182;font-weight:400"> (${latest.score}/${latest.maxScore ?? '—'})</span></div>
+            <div class="stat-value">${pctOfAttempt(latest) ?? '—'}%<span style="font-size:14px;color:#717182;font-weight:400"> (${esc(latest.score)}/${esc(latest.maxScore ?? '—')})</span></div>
             ${latestIsStale
               ? `<div class="stat-sub">Scored under an older version</div>`
-              : (latest.severity ? `<div class="stat-sub" style="text-transform:capitalize">${latest.severity}</div>` : '')}
+              : (latest.severity ? `<div class="stat-sub" style="text-transform:capitalize">${esc(latest.severity)}</div>` : '')}
           </div>
           <div class="stat">
             <div class="stat-label">Trend</div>

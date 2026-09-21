@@ -219,7 +219,13 @@ export function AssessmentEditPageWizard({ assessmentId, onBack, onSave }: Asses
           setScoringProfiles(data.profiles);
         }
       })
-      .catch(() => {});
+      .catch((err: unknown) => {
+        // Was swallowed: the scoring step then showed an empty profile list
+        // with no hint that the load had failed rather than there being none.
+        console.error('Failed to load scoring profiles:', err);
+        showToast('error', 'Error', 'Failed to load scoring profiles');
+      });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const [formData, setFormData] = useState<Partial<Assessment>>({

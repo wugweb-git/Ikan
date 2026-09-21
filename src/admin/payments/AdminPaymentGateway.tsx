@@ -128,6 +128,29 @@ export function AdminPaymentGateway() {
   };
 
   const handleSaveConfig = async (gateway: string, config: PaymentConfig) => {
+    // GET /admin/payment/config returns the stored keys MASKED ("***abcd"),
+    // and POST /admin/payment/config REPLACES the whole stored config
+    // (`kv.set(key, { ...config })`, no merge). So posting the form as loaded
+    // overwrote the real keys with the mask — and omitting the fields instead
+    // would blank them. Until the server merges, the only safe client-side
+    // behaviour is to refuse the save until every masked key is re-entered.
+    const isMasked = (v: unknown) => typeof v === 'string' && v.startsWith('***');
+    const stillMasked = [
+      isMasked(config.api_key) ? 'API Key' : null,
+      isMasked(config.secret_key) ? 'Secret Key' : null,
+      isMasked(config.webhook_secret) ? 'Webhook Secret' : null,
+    ].filter(Boolean);
+    if (stillMasked.length > 0) {
+      showToast(
+        'error',
+        'Re-enter keys to save',
+        `${stillMasked.join(' and ')} ${stillMasked.length > 1 ? 'are' : 'is'} shown masked. Re-enter ${stillMasked.length > 1 ? 'them' : 'it'} before saving — saving the masked value would overwrite the real key.`
+      );
+      return;
+    }
+    // Server stamps its own updated_at.
+    const { updated_at: _ignored, ...configToSave } = config;
+
     try {
       const headers = await getAuthHeaders(true);
       const response = await fetch(
@@ -135,7 +158,7 @@ export function AdminPaymentGateway() {
         {
           method: 'POST',
           headers,
-          body: JSON.stringify({ gateway, config })
+          body: JSON.stringify({ gateway, config: configToSave })
         }
       );
 

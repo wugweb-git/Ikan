@@ -1,6 +1,7 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { apiClient, User } from '../api/api';
 import { supabase, signOutLocal } from '../api/supabase'; // Use singleton client
+import { clearUserScopedStorage } from '../api/user-storage';
 import type { Session } from '@supabase/supabase-js';
 
 interface AuthContextType {
@@ -17,6 +18,15 @@ interface AuthContextType {
   refreshProfile: () => Promise<void>;
   recoverSession: () => Promise<boolean>;
   resetPassword: (email: string) => Promise<void>;
+  /**
+   * The signed-in user's admin status as reported by the SERVER profile
+   * (`GET /users/profile`). `null` means not yet verified for the current
+   * user — e.g. only the cached `ikan_is_admin_{uid}` hint is known, which
+   * must never be used to decide whether admin UI renders.
+   */
+  verifiedIsAdmin: boolean | null;
+  /** Fetch the profile now (if not already verified) and resolve to the server's is_admin. Throws if the profile cannot be loaded. */
+  verifyAdmin: () => Promise<boolean>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -29,78 +39,29 @@ export function useAuth() {
   return context;
 }
 
-/**
- * Keys that deliberately outlive a sign-out. Everything else the app stores is
- * treated as belonging to the session that just ended.
- *
- * These three are device-level preferences that reveal nothing about who was
- * signed in: the two remember-my-email values (the whole point of which is to
- * survive sign-out) and the push-prompt dismissal.
- */
-const SIGN_OUT_KEEP_KEYS = new Set([
-  'ikan_remembered_email',
-  'ikan_admin_remembered_email',
-  'ikan-push-permission-dismissed',
-]);
-
-/** Prefixes covering everything the app writes for a signed-in person. */
-const USER_SCOPED_PREFIXES = [
-  'ikan-', 'ikan_',
-  'dashboard_data_', 'corporate_program_', 'reassessment_dismissed_',
-];
-
-/**
- * Clear per-user browser storage on sign-out.
- *
- * Before 2026-09-01 sign-out removed exactly one key — the cached is_admin flag
- * — and left everything else behind: the mood journal with its free-text notes,
- * cached assessments, equip drafts and onboarding answers, read-resource
- * history, and `lastAssessmentResults` in sessionStorage. None of it is
- * namespaced by user, so on a shared device the next person to sign in saw the
- * previous person's data.
- *
- * Two things this deliberately does, both worth knowing:
- *
- * 1. It sweeps by PREFIX rather than enumerating known keys. An explicit list
- *    goes stale the moment someone adds a key and forgets this function; a
- *    sweep with a small keep-list fails safe in the other direction.
- *
- * 2. It clears the offline sync queue (`ikan-offline-sync-queue`). That queue is
- *    NOT namespaced by user, so leaving it meant pending entries written by one
- *    person would upload under whoever signed in next — their journal saved to
- *    someone else's account. Clearing costs the departing user any entry that
- *    never synced; attributing it to a stranger is worse. The real fix is to
- *    namespace the queue by user id, which is a larger change.
- */
-function clearUserScopedStorage(): void {
-  try {
-    const doomed: string[] = [];
-    for (let i = 0; i < localStorage.length; i++) {
-      const key = localStorage.key(i);
-      if (!key || SIGN_OUT_KEEP_KEYS.has(key)) continue;
-      if (USER_SCOPED_PREFIXES.some((prefix) => key.startsWith(prefix))) doomed.push(key);
-    }
-    doomed.forEach((key) => { try { localStorage.removeItem(key); } catch { /* quota/private mode */ } });
-  } catch { /* storage unavailable — nothing to clear */ }
-
-  try {
-    const doomed: string[] = [];
-    for (let i = 0; i < sessionStorage.length; i++) {
-      const key = sessionStorage.key(i);
-      if (!key) continue;
-      if (key === 'lastAssessmentResults' || USER_SCOPED_PREFIXES.some((p) => key.startsWith(p))) {
-        doomed.push(key);
-      }
-    }
-    doomed.forEach((key) => { try { sessionStorage.removeItem(key); } catch { /* ignore */ } });
-  } catch { /* ignore */ }
-}
-
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [isInitialized, setIsInitialized] = useState(false);
+  // Admin status taken only from a server-loaded profile, keyed by user id so a
+  // stale value can never apply to a different account.
+  const [verifiedAdmin, setVerifiedAdminState] = useState<{ userId: string; isAdmin: boolean } | null>(null);
+  // Mirror for verifyAdmin(), which may run from a closure captured before the
+  // latest render (e.g. straight after signIn() in the admin login screen).
+  const verifiedAdminRef = useRef<{ userId: string; isAdmin: boolean } | null>(null);
+  const setVerifiedAdmin = useCallback((v: { userId: string; isAdmin: boolean } | null) => {
+    verifiedAdminRef.current = v;
+    setVerifiedAdminState(v);
+  }, []);
+
+  /** Record a profile that came back from the server. */
+  const applyServerProfile = useCallback((profile: User) => {
+    setUser(profile);
+    setVerifiedAdmin({ userId: profile.user_id, isAdmin: profile.is_admin === true });
+    // Cache is_admin for instant (non-authoritative) hints on next load
+    try { localStorage.setItem(`ikan_is_admin_${profile.user_id}`, profile.is_admin ? 'true' : 'false'); } catch {}
+  }, [setVerifiedAdmin]);
   
   // Computed value for authentication status
   const isAuthenticated = !!(session && user);
@@ -177,10 +138,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               try {
                 const profile = await apiClient.getProfile();
                 if (profile && profile.user_id === quickUser.user_id) {
-                  setUser(profile);
+                  applyServerProfile(profile);
                   console.log('✅ Full profile loaded successfully');
-                  // Cache is_admin for instant access on next load
-                  try { localStorage.setItem(`ikan_is_admin_${profile.user_id}`, profile.is_admin ? 'true' : 'false'); } catch {}
                 }
               } catch (error) {
                 console.log('📦 Profile fetch failed during initialization - keeping quick user data');
@@ -218,8 +177,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         // Handle different auth events
         if (event === 'SIGNED_OUT' || (event === 'TOKEN_REFRESHED' && !session)) {
           console.log('Auth: User signed out or session invalid');
+          // Covers every way a session ends — the button, a defensive
+          // signOutLocal, or a sign-out in another tab — not just signOut().
+          clearUserScopedStorage();
           setSession(null);
           setUser(null);
+          setVerifiedAdmin(null);
           return;
         }
         
@@ -257,10 +220,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             try {
               const profile = await apiClient.getProfile();
               if (profile && profile.user_id === quickUser.user_id) {
-                setUser(profile);
+                applyServerProfile(profile);
                 console.log('✅ Profile loaded via auth listener');
-                // Cache is_admin for instant access on next load
-                try { localStorage.setItem(`ikan_is_admin_${profile.user_id}`, profile.is_admin ? 'true' : 'false'); } catch {}
               }
             } catch (error) {
               console.log('📦 Profile fetch via auth listener failed - keeping quick user data');
@@ -276,7 +237,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     });
 
     return () => subscription.unsubscribe();
-  }, []);
+    // Both are stable (useCallback with stable deps), so this still runs once.
+  }, [applyServerProfile, setVerifiedAdmin]);
 
   const signIn = async (email: string, password: string) => {
     try {
@@ -314,10 +276,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           try {
             const profile = await apiClient.getProfile();
             if (profile && profile.user_id === immediateUser.user_id) {
-              setUser(profile);
+              applyServerProfile(profile);
               console.log('✅ Full profile loaded after sign-in');
-              // Cache is_admin for instant access on next load
-              try { localStorage.setItem(`ikan_is_admin_${profile.user_id}`, profile.is_admin ? 'true' : 'false'); } catch {}
             }
           } catch (error) {
             console.log('Background profile fetch failed:', error);
@@ -435,9 +395,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 try {
                   const profile = await apiClient.getProfile();
                   if (profile && profile.user_id === quickUser.user_id) {
-                    setUser(profile);
-                    // Cache is_admin for instant access on next load
-                    try { localStorage.setItem(`ikan_is_admin_${profile.user_id}`, profile.is_admin ? 'true' : 'false'); } catch {}
+                    applyServerProfile(profile);
                   }
                 } catch (_e) { /* silent */ }
               }, 1000);
@@ -489,6 +447,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       await apiClient.signOut();
       setUser(null);
       setSession(null);
+      setVerifiedAdmin(null);
     } catch (error) {
       console.error('Sign out error:', error);
       throw error;
@@ -501,7 +460,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       const profile = await apiClient.updateProfile(updates);
       if (profile && profile.user_id) {
-        setUser(profile);
+        applyServerProfile(profile);
       }
     } catch (error) {
       console.error('Update profile error:', error);
@@ -513,7 +472,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       const profile = await apiClient.getProfile();
       if (profile && profile.user_id) {
-        setUser(profile);
+        applyServerProfile(profile);
       }
     } catch (error) {
       console.error('Refresh profile error:', error);
@@ -651,6 +610,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const verifiedIsAdmin =
+    user && verifiedAdmin && verifiedAdmin.userId === user.user_id ? verifiedAdmin.isAdmin : null;
+
+  const verifyAdmin = async (): Promise<boolean> => {
+    // Resolve against the CURRENT session, not this render's `user`, so a
+    // result cached for a previous account can never be reused.
+    const { data } = await supabase.auth.getSession();
+    const uid = data?.session?.user?.id;
+    if (!uid) return false;
+    const cached = verifiedAdminRef.current;
+    if (cached && cached.userId === uid) return cached.isAdmin;
+    const profile = await apiClient.getProfile();
+    if (!profile || profile.user_id !== uid) throw new Error('Could not load your profile.');
+    applyServerProfile(profile);
+    return profile.is_admin === true;
+  };
+
   const value: AuthContextType = {
     user,
     session,
@@ -665,6 +641,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     refreshProfile,
     recoverSession,
     resetPassword,
+    verifiedIsAdmin,
+    verifyAdmin,
   };
 
   // Periodic session validation (every 5 minutes)

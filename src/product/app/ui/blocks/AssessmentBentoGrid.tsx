@@ -7,6 +7,7 @@ import {
   ClipboardList,
   Gauge
 } from 'lucide-react';
+import { sanitizeHtml } from '../lib/sanitize';
 
 interface BentoSection1 {
   title?: string;
@@ -304,7 +305,7 @@ export function AssessmentBentoGrid({
                 <div
                   className="prose max-w-none [&_p]:mb-3 [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5 [&_li]:mb-1"
                   style={{ fontFamily: 'var(--font-family-base)', fontSize: 'var(--text-base)', lineHeight: '26px', color: 'var(--color-text-muted)' }}
-                  dangerouslySetInnerHTML={{ __html: stripDuplicateHeading(whatYoullSeeHtml, section3.title || "What you'll see") }}
+                  dangerouslySetInnerHTML={{ __html: sanitizeHtml(stripDuplicateHeading(whatYoullSeeHtml, section3.title || "What you'll see")) }}
                 />
               </div>
             )}
@@ -458,7 +459,7 @@ export function AssessmentBentoGrid({
                     <div
                       className="prose max-w-none [&_p]:mb-2 [&_ul]:list-disc [&_ul]:pl-5 [&_li]:mb-1 [&_strong]:font-medium"
                       style={{ fontSize: '15px', lineHeight: '24px', color: 'var(--color-primary-on)', letterSpacing: '-0.2px', opacity: 0.95 }}
-                      dangerouslySetInnerHTML={{ __html: stripDuplicateHeading(importantNotesHtml, 'Important notes') }}
+                      dangerouslySetInnerHTML={{ __html: sanitizeHtml(stripDuplicateHeading(importantNotesHtml, 'Important notes')) }}
                     />
                   ) : null}
                   {!importantNotesHtml && importantNote1 && (

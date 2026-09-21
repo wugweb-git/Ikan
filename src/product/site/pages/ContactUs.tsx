@@ -9,6 +9,7 @@ import { DEFAULT_CMS_CONTENT } from '../content/cms-defaults';
 import { PageHero } from '../ui/PageHero';
 import { apiClient } from '../../../shared/api/api';
 import { useNotifications } from '../../../shared/state/NotificationContext';
+import { sanitizeHtml } from '../ui/lib/sanitize';
 
 interface ContactUsProps {
   className?: string;
@@ -113,7 +114,7 @@ export function ContactUs({ className, onNavigate, onBack }: ContactUsProps) {
       >
         {content?.content ? (
            <div 
-             dangerouslySetInnerHTML={{ __html: content.content }}
+             dangerouslySetInnerHTML={{ __html: sanitizeHtml(content.content) }}
              className="prose prose-invert max-w-2xl mx-auto text-lg opacity-90 text-white font-normal"
              style={{ fontFamily: 'var(--font-family-base)' }}
            />

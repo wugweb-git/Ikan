@@ -260,7 +260,14 @@ let _adminRulesCache: AdminRule[] | null = null;
 /** Load admin-configured recommendation rules for rule matching */
 export async function loadAdminRules(): Promise<void> {
   try {
-    const data = await apiClient.request('/admin/recommendations/rules', { method: 'GET' }, true, 0).catch(() => null);
+    // Public read path first, mirroring loadScoringProfiles: the admin route
+    // is admin-only, so for every patient it answered 403, the cache stayed
+    // null, and no configured rule ever matched. `/recommendations/engine-config`
+    // returns the same `{ rules }` shape. The admin route stays as a fallback
+    // only; the rule editor screens keep using the admin routes directly.
+    const data =
+      await apiClient.request('/recommendations/engine-config', { method: 'GET' }, true, 0).catch(() => null)
+      ?? await apiClient.request('/admin/recommendations/rules', { method: 'GET' }, true, 0).catch(() => null);
     if (data?.rules && Array.isArray(data.rules)) {
       _adminRulesCache = data.rules.map((r: any) => ({
         id: r.id,

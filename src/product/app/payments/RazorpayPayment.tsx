@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
@@ -42,6 +42,9 @@ export function RazorpayPayment({
   
   const [razorpayLoaded, setRazorpayLoaded] = useState(false);
   const [orderId, setOrderId] = useState<string>();
+  // Guards handlePayment against double-clicks / re-entry while an order is
+  // being created or checkout is open — each entry creates a new order.
+  const paymentInFlightRef = useRef(false);
 
   // Load Razorpay script on mount
   useEffect(() => {
@@ -62,17 +65,29 @@ export function RazorpayPayment({
       console.error('User not authenticated or Razorpay not loaded');
       return;
     }
+    if (paymentInFlightRef.current) return;
+    paymentInFlightRef.current = true;
+    const release = () => { paymentInFlightRef.current = false; };
 
     try {
       // Initialize payment order
-      const newOrderId = await initializePayment(programId, amount, currency);
+      const order = await initializePayment(programId, amount, currency);
+      const newOrderId = order.orderId;
       setOrderId(newOrderId);
+
+      // The order was created server-side with a specific Razorpay key; checkout
+      // must open with that same key (as EquipProgramOnboarding does). The old
+      // `VITE_RAZORPAY_KEY_ID || 'rzp_test_key'` fallback opened checkout with a
+      // placeholder key whenever the env var was unset.
+      if (!order.keyId) {
+        throw new Error('Failed to create payment order');
+      }
 
       // Configure Razorpay options
       const options = {
-        key: import.meta.env.VITE_RAZORPAY_KEY_ID || 'rzp_test_key', // Replace with actual key
-        amount: amount,
-        currency: currency,
+        key: order.keyId,
+        amount: order.amount ?? amount,
+        currency: order.currency || currency,
         name: 'iKan - Mental Health',
         description: description || `Purchase: ${programTitle}`,
         order_id: newOrderId,
@@ -86,6 +101,7 @@ export function RazorpayPayment({
         },
         modal: {
           ondismiss: () => {
+            release();
             console.log('Payment modal dismissed');
             onFailure?.({ code: 'PAYMENT_CANCELLED', description: 'Payment was cancelled by user' });
           }
@@ -111,6 +127,8 @@ export function RazorpayPayment({
           } catch (error) {
             console.error('Payment processing error:', error);
             onFailure?.(error);
+          } finally {
+            release();
           }
         }
       };
@@ -120,6 +138,7 @@ export function RazorpayPayment({
       razorpay.open();
 
     } catch (error) {
+      release();
       console.error('Payment initialization error:', error);
       onFailure?.(error);
     }

@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { cn } from './utils';
+import { sanitizeHtml } from './lib/sanitize';
 
 export interface RichTextEditorProps {
   value: string;
@@ -28,8 +29,11 @@ export function RichTextEditor({
     
     // First mount: set initial content
     if (!isInitialized.current) {
-      if (value && editorRef.current.innerHTML !== value) {
-        editorRef.current.innerHTML = value;
+      // Stored HTML goes through the sanitiser before it becomes live DOM —
+      // assigning it raw would run any <img onerror> etc. in the admin session.
+      const safe = sanitizeHtml(value);
+      if (value && editorRef.current.innerHTML !== safe) {
+        editorRef.current.innerHTML = safe;
       }
       isInitialized.current = true;
       lastValueRef.current = value;

@@ -266,7 +266,7 @@ export function CorporateProgramCard({ onNavigate }: CorporateProgramCardProps) 
             {upcomingEvents.slice(0, 2).map((event) => (
               <div
                 key={event.company_item_id}
-                onClick={() => event.content_url ? window.open(event.content_url, '_blank') : null}
+                onClick={() => event.content_url ? window.open(event.content_url, '_blank', 'noopener,noreferrer') : null}
                 style={{
                   padding: '10px 16px',
                   backgroundColor: 'var(--color-bg-muted)',
@@ -307,7 +307,7 @@ export function CorporateProgramCard({ onNavigate }: CorporateProgramCardProps) 
             {activeResources.slice(0, 3).map((res) => (
               <div
                 key={res.company_item_id}
-                onClick={() => res.content_url ? window.open(res.content_url, '_blank') : null}
+                onClick={() => res.content_url ? window.open(res.content_url, '_blank', 'noopener,noreferrer') : null}
                 className="flex items-center"
                 style={{
                   padding: '10px 16px',

@@ -20,11 +20,13 @@ interface SecurityProviderProps {
 export function SecurityProvider({ children }: SecurityProviderProps) {
   // Safely access auth and notification contexts with error handling
   let user, signOut, showToast;
+  let verifiedIsAdmin: boolean | null = null;
   
   try {
     const authContext = useAuth();
     user = authContext.user;
     signOut = authContext.signOut;
+    verifiedIsAdmin = authContext.verifiedIsAdmin;
   } catch (error) {
     console.warn('SecurityProvider: AuthContext not available yet:', error);
     user = null;
@@ -61,7 +63,8 @@ export function SecurityProvider({ children }: SecurityProviderProps) {
    *
    * The patient-facing timeout is unchanged.
    */
-  const exemptFromIdleSignOut = !!user?.is_admin;
+  // Server-verified admin only, not the cached localStorage hint.
+  const exemptFromIdleSignOut = verifiedIsAdmin === true;
 
   // Security event logging
   const logSecurityEvent = (event: string, details?: any) => {

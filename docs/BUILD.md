@@ -78,7 +78,45 @@ one equip program detail page. Check Speed Insights is collecting (Vercel dashbo
 - **Output directory**: `dist`
 - **SPA rewrite**: all non-asset paths → `/index.html` (configured in `vercel.json`)
 - **Security headers** (`vercel.json`): `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`,
-  `X-XSS-Protection`, `Referrer-Policy`, `Permissions-Policy`.
+  `X-XSS-Protection`, `Referrer-Policy`, `Permissions-Policy`, `Strict-Transport-Security`,
+  `Content-Security-Policy`.
+
+#### Strict-Transport-Security
+
+`max-age=63072000; includeSubDomains` (two years). Every host we serve (`ikanhealth.in`,
+`app.ikanhealth.in`, Vercel previews) is HTTPS-only. `preload` is deliberately **not** set — it is
+a hard-to-reverse commitment for the whole domain; add it only once every subdomain is confirmed
+HTTPS.
+
+#### Content-Security-Policy
+
+JSON has no comments, so the reasoning for each directive lives here. Origins were derived from
+`index.html` and a grep of `src/` for external script/style/img/connect/frame usage. **If you add a
+third-party script, API, embed or font, add its origin here and in `vercel.json` in the same
+change** — otherwise it works in `npm run dev` (no CSP) and silently breaks in production.
+The CSP is only applied by Vercel; `vite dev`/`vite preview` do not send it.
+
+| Directive | Value | Why |
+|---|---|---|
+| `default-src` | `'self'` | Deny by default. |
+| `script-src` | `'self'`, `'sha256-2+mVc3…LxU='`, `www.googletagmanager.com`, `checkout.razorpay.com`, `*.razorpay.com`, `va.vercel-scripts.com` | App bundle; the inline gtag bootstrap in `index.html` (by hash — **editing that inline script changes the hash**: recompute with `python3 -c "import re,hashlib,base64;s=open('index.html').read();b=re.search(r'<script>(.*?)</script>',s,re.S).group(1);print(base64.b64encode(hashlib.sha256(b.encode()).digest()).decode())"`); GA4 loader; Razorpay Checkout (`loadRazorpayScript`, `EquipProgramOnboarding`); Vercel Analytics/Speed Insights (served same-origin under `/_vercel/*` in production, from `va.vercel-scripts.com` otherwise). No `'unsafe-inline'`, no `'unsafe-eval'` — the build output contains no `eval`/`new Function` (lodash's `Function("return this")` fallback is never reached in a browser). |
+| `style-src` | `'self' 'unsafe-inline'`, `fonts.googleapis.com` | Inline `style=` attributes and injected `<style>` are used throughout; Google Fonts CSS. |
+| `font-src` | `'self' data:`, `fonts.gstatic.com` | Google Fonts files. |
+| `img-src` | `'self' data: blob: https:` | CMS/admin-authored images can come from any HTTPS host (Unsplash, Supabase Storage signed/public URLs, pasted links); `blob:` for upload/crop previews; GA pixels. |
+| `media-src` | `'self' blob: https:` | Native `<video>` blocks with admin-supplied `.mp4`/`.webm` URLs. |
+| `connect-src` | `'self'`, `https://jpfvoevxegnknxoqmwye.supabase.co`, `wss://jpfvoevxegnknxoqmwye.supabase.co`, GA (`www.googletagmanager.com`, `*.google-analytics.com`, `*.analytics.google.com`), Razorpay (`api.`, `lumberjack.`, `*.razorpay.com`), `www.googleapis.com`, `nominatim.openstreetmap.org`, `ipapi.co`, `api.open-meteo.com`, `va.vercel-scripts.com`, `vitals.vercel-insights.com` | Edge function API, auth, storage and realtime (wss); analytics beacons; Razorpay Checkout; Google Fit (`integrations/google-fit.ts`); the dashboard Hello widget's reverse-geocode / IP-location / weather lookups (`dashboard/HelloWidget.tsx`); Vercel vitals. |
+| `frame-src` | Razorpay (`api.`, `checkout.`, `*.razorpay.com`), `www.youtube.com`, `youtube.com`, `www.youtube-nocookie.com`, `player.vimeo.com` | Checkout iframe; video embeds in program blocks (`BlockRenderer`) and consultant intros (`ConsultantDetail`). Same-origin `about:blank` frames (admin email preview) need no entry. |
+| `worker-src` | `'self' blob:` | Service worker / any bundled worker. |
+| `manifest-src` | `'self'` | PWA manifest. |
+| `object-src` | `'none'` | No plugins. |
+| `base-uri` | `'self'` | Blocks `<base>` hijacking. |
+| `form-action` | `'self'` | No cross-origin form posts (OAuth uses redirects, not forms). |
+| `frame-ancestors` | `'none'` | Same as `X-Frame-Options: DENY`. |
+| `upgrade-insecure-requests` | — | Any stray `http:` subresource is fetched over HTTPS. |
+
+After changing the CSP, deploy a preview and check the browser console for `Refused to …`
+violations on: homepage, sign-in, dashboard (Hello widget), one assessment, one equip program with
+a video block, a Razorpay checkout, and the admin console.
 
 ---
 

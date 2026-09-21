@@ -1,6 +1,7 @@
 import { useIsMobile } from '../ui/hooks/useIsMobile';
 import { DEFAULT_CMS_CONTENT } from '../content/cms-defaults';
 import { PageHero } from '../ui/PageHero';
+import { sanitizeHtml } from '../ui/lib/sanitize';
 
 interface ReturnPolicyProps {
   className?: string;
@@ -33,7 +34,7 @@ export function ReturnPolicy({ className, onNavigate }: ReturnPolicyProps) {
         }}
       >
         <div 
-          dangerouslySetInnerHTML={{ __html: content?.content || '' }}
+          dangerouslySetInnerHTML={{ __html: sanitizeHtml(content?.content) }}
           className="prose max-w-none"
           style={{
             backgroundColor: 'var(--color-bg-card)',

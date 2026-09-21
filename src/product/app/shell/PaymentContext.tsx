@@ -42,6 +42,17 @@ interface RazorpayPaymentData {
   programId: string;
 }
 
+/** What checkout needs from a created order. */
+export interface PaymentOrder {
+  orderId: string;
+  /** Razorpay key id the SERVER created the order with — checkout must use the same key. */
+  keyId?: string;
+  /** Order amount as returned by the server (paise). */
+  amount?: number;
+  currency?: string;
+  transactionId?: string;
+}
+
 interface PaymentContextType {
   // State
   isLoading: boolean;
@@ -49,7 +60,7 @@ interface PaymentContextType {
   paymentMethods: PaymentMethod[];
   
   // Actions
-  initializePayment: (programId: string, amount: number, currency?: string) => Promise<string>;
+  initializePayment: (programId: string, amount: number, currency?: string) => Promise<PaymentOrder>;
   processPayment: (paymentData: RazorpayPaymentData) => Promise<boolean>;
   verifyPayment: (paymentId: string, orderId: string, signature: string) => Promise<boolean>;
   getTransactionHistory: () => Promise<Transaction[]>;
@@ -164,7 +175,7 @@ export function PaymentProvider({ children }: PaymentProviderProps) {
     programId: string, 
     amount: number, 
     currency = 'INR'
-  ): Promise<string> => {
+  ): Promise<PaymentOrder> => {
     if (!user) {
       throw new Error('User must be authenticated to make payments');
     }
@@ -208,7 +219,13 @@ export function PaymentProvider({ children }: PaymentProviderProps) {
       };
 
       setCurrentTransaction(transaction);
-      return orderResponse.order_id;
+      return {
+        orderId: orderResponse.order_id,
+        keyId: orderResponse.key_id,
+        amount: orderResponse.amount,
+        currency: orderResponse.currency,
+        transactionId: orderResponse.transaction_id,
+      };
       
     } catch (error: unknown) {
       console.error('❌ Payment initialization failed:', error);

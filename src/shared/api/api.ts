@@ -27,6 +27,24 @@ import { cacheForOffline, readOfflineCache, invalidateOfflineCache } from './use
 
 const API_BASE = `https://${projectId}.supabase.co/functions/v1/make-server-cc205da9`;
 
+/**
+ * Error thrown for a non-2xx response. The message keeps the historical
+ * `API Error: <status> <body>` form that callers match on; `status` is the
+ * structured version. A 401 that survived one session refresh is flagged
+ * `isAuthError` with a user-facing `userMessage`.
+ */
+export interface ApiHttpError extends Error {
+  status: number;
+  isAuthError?: boolean;
+  userMessage?: string;
+}
+
+/** Per-request timeout. Uploads (FormData bodies) get longer. Override with `options.timeoutMs`. */
+const REQUEST_TIMEOUT_MS = 20_000;
+const UPLOAD_TIMEOUT_MS = 120_000;
+/** Server-side bulk jobs (data export, KV audit maintenance). */
+const LONG_TIMEOUT_MS = 120_000;
+
 class ApiClient {
   private token: string | null = null;
   // Track in-flight AbortControllers so components can cancel on unmount
@@ -89,17 +107,52 @@ class ApiClient {
     return !!token;
   }
 
-  async request(path: string, options: any = {}, auth = true, retryCount = 0): Promise<any> {
+  /**
+   * Idempotency key for the next request started synchronously inside
+   * `withIdempotencyKey`. Read (and cleared) at the very top of `request`,
+   * before its first await, so it can only attach to the call the wrapper made.
+   */
+  private _pendingIdempotencyKey: string | null = null;
+
+  /**
+   * Run `fn` so the request it starts carries an `Idempotency-Key` header.
+   * Used by the offline sync queue so a replayed write can be de-duplicated by
+   * the server (harmless while the server ignores the header). `fn` must start
+   * its request synchronously — every apiClient write method does.
+   */
+  withIdempotencyKey<T>(key: string, fn: () => Promise<T>): Promise<T> {
+    this._pendingIdempotencyKey = key;
+    try {
+      return fn();
+    } finally {
+      this._pendingIdempotencyKey = null;
+    }
+  }
+
+  async request(path: string, options: any = {}, auth = true, retryCount = 0, authRetried = false): Promise<any> {
+    // Must stay above the first await — see withIdempotencyKey.
+    const idempotencyKey = this._pendingIdempotencyKey;
+    this._pendingIdempotencyKey = null;
+
     // Skip Content-Type for FormData — the browser sets it automatically with the correct boundary
     const isFormData = typeof FormData !== 'undefined' && options.body instanceof FormData;
     const headers: any = isFormData ? {} : {
       'Content-Type': 'application/json',
     };
+    if (idempotencyKey) headers['Idempotency-Key'] = idempotencyKey;
 
+    const method = String(options.method || 'GET').toUpperCase();
+    // Only idempotent reads are retried. Retrying a POST/PUT/DELETE after a
+    // 5xx or a dropped connection can apply the write twice (the first attempt
+    // may well have reached the server).
+    const isIdempotent = method === 'GET' || method === 'HEAD';
+
+    let usedUserToken = false;
     if (auth) {
       const token = await this.getToken();
       if (token) {
         headers['Authorization'] = `Bearer ${token}`;
+        usedUserToken = true;
       } else {
         // Fallback to Anon Key for public endpoints
         headers['Authorization'] = `Bearer ${publicAnonKey}`;
@@ -113,24 +166,74 @@ class ApiClient {
     const normalizedPath = path.startsWith('/') ? path : `/${path}`;
     const url = path.startsWith('http') ? path : `${API_BASE}${normalizedPath}`;
 
-    // Create an AbortController for this request (unless caller already provided a signal)
-    const controller = options.signal ? null : new AbortController();
-    if (controller) this.inflightControllers.add(controller);
-    const signal = options.signal || controller?.signal;
+    // Every request gets its own controller so it can time out. A caller's
+    // signal (component unmount etc.) is forwarded into it.
+    const { timeoutMs: timeoutOverride, signal: callerSignal, ...fetchOptions } = options;
+    const timeoutMs: number = typeof timeoutOverride === 'number'
+      ? timeoutOverride
+      : (isFormData ? UPLOAD_TIMEOUT_MS : REQUEST_TIMEOUT_MS);
+    const controller = new AbortController();
+    // Only self-owned requests are cancelled by abortAll(), as before.
+    if (!callerSignal) this.inflightControllers.add(controller);
+    const onCallerAbort = () => controller.abort();
+    if (callerSignal) {
+      if (callerSignal.aborted) controller.abort();
+      else callerSignal.addEventListener('abort', onCallerAbort, { once: true });
+    }
+    let timedOut = false;
+    const timer = setTimeout(() => { timedOut = true; controller.abort(); }, timeoutMs);
 
     try {
-      const response = await fetch(url, {
-        ...options,
-        signal,
-        headers: {
-          ...headers,
-          ...options.headers,
-        },
-      });
+      let response: Response;
+      try {
+        response = await fetch(url, {
+          ...fetchOptions,
+          signal: controller.signal,
+          headers: {
+            ...headers,
+            ...fetchOptions.headers,
+          },
+        });
+      } catch (fetchError: unknown) {
+        if (timedOut) {
+          const timeoutError = new Error(`API Error: timeout after ${timeoutMs}ms (${method} ${normalizedPath})`);
+          timeoutError.name = 'TimeoutError';
+          throw timeoutError;
+        }
+        throw fetchError;
+      }
 
       if (!response.ok) {
         const errorText = await response.text();
-        throw new Error(`API Error: ${response.status} ${errorText}`);
+
+        // One silent session refresh on 401, then a single retry. Only when a
+        // user token was sent — an anonymous 401 will not be fixed by a refresh.
+        if (response.status === 401 && auth && usedUserToken && !authRetried) {
+          let refreshed = false;
+          try {
+            const { data, error: refreshError } = await supabase.auth.refreshSession();
+            refreshed = !refreshError && !!data?.session?.access_token;
+          } catch { refreshed = false; }
+          if (refreshed) {
+            clearTimeout(timer);
+            // Carry the idempotency key over: it is read from the ambient slot
+            // only on the first call.
+            const retryOptions = idempotencyKey
+              ? { ...options, headers: { ...(options.headers || {}), 'Idempotency-Key': idempotencyKey } }
+              : options;
+            return this.request(path, retryOptions, auth, retryCount, true);
+          }
+        }
+
+        const httpError: ApiHttpError = Object.assign(
+          new Error(`API Error: ${response.status} ${errorText}`),
+          { status: response.status },
+        );
+        if (response.status === 401) {
+          httpError.isAuthError = true;
+          httpError.userMessage = 'Your session has expired. Please sign in again.';
+        }
+        throw httpError;
       }
 
       const data = await response.json();
@@ -138,20 +241,28 @@ class ApiClient {
     } catch (error: any) {
       // If the request was aborted (component unmounted / navigation), do NOT retry
       if (error?.name === 'AbortError') {
+        // Timed out while reading the body — report it as a timeout.
+        if (timedOut) {
+          const timeoutError = new Error(`API Error: timeout after ${timeoutMs}ms (${method} ${normalizedPath})`);
+          timeoutError.name = 'TimeoutError';
+          throw timeoutError;
+        }
         // Silently swallow — the caller no longer cares about this response
         throw error;
       }
 
-      // Only retry on 5xx server errors and network errors (not 4xx client errors)
+      // Only retry idempotent reads, and only on 5xx server errors and network
+      // errors (not 4xx client errors, not timeouts).
       const errorMsg = error?.message || '';
       const isNetworkError = error?.name === 'TypeError' && errorMsg.toLowerCase().includes('failed to fetch');
       const is5xxError = /API Error: 5\d\d/.test(errorMsg);
-      const isRetryable = isNetworkError || is5xxError || !errorMsg;
+      const isRetryable = isIdempotent && (isNetworkError || is5xxError || !errorMsg);
       
       if (retryCount < 2 && isRetryable) {
+        clearTimeout(timer);
         // Retry with linear backoff for transient errors
         await new Promise(resolve => setTimeout(resolve, 1000 * (retryCount + 1)));
-        return this.request(path, options, auth, retryCount + 1);
+        return this.request(path, options, auth, retryCount + 1, authRetried);
       }
       
       // Suppress 401 error logging to avoid console noise during auth checks
@@ -168,18 +279,27 @@ class ApiClient {
       
       throw error;
     } finally {
-      // Clean up controller reference
-      if (controller) this.inflightControllers.delete(controller);
+      clearTimeout(timer);
+      if (callerSignal) callerSignal.removeEventListener('abort', onCallerAbort);
+      this.inflightControllers.delete(controller);
     }
   }
 
+  /**
+   * GET `path` and return `res[key]`. A genuine "nothing here" — a 404, or a
+   * response without the key — returns []. Every other failure (auth, 5xx,
+   * network, timeout) is thrown: turning those into [] made an outage look
+   * exactly like an empty list.
+   */
   async requestWithFallback(path: string, key: string) {
     try {
       const res = await this.request(path, { method: 'GET' }, true, 0);
-      return res[key] || res;
-    } catch (e) {
-      console.error(e);
-      return [];
+      if (res == null) return [];
+      return res[key] ?? res;
+    } catch (e: unknown) {
+      const err = e as Partial<ApiHttpError> | null;
+      if (err?.status === 404 || /API Error: 404/.test(err?.message || '')) return [];
+      throw e;
     }
   }
 
@@ -1237,7 +1357,8 @@ class ApiClient {
   // Data Export
   async exportUserData() {
     return this.request('/users/export-data', {
-      method: 'POST'
+      method: 'POST',
+      timeoutMs: LONG_TIMEOUT_MS,
     }, true);
   }
 
@@ -1311,7 +1432,7 @@ class ApiClient {
 
   // KV Audit
   async runKVAudit() {
-    return this.request('/admin/kv-audit', { method: 'GET' }, true);
+    return this.request('/admin/kv-audit', { method: 'GET', timeoutMs: LONG_TIMEOUT_MS }, true);
   }
 
   async getKVSchema() {
@@ -1321,6 +1442,7 @@ class ApiClient {
   async cleanupKVKeys(keys: string[], dryRun = true) {
     return this.request('/admin/kv-audit/cleanup', {
       method: 'POST',
+      timeoutMs: LONG_TIMEOUT_MS,
       body: JSON.stringify({ keys, dryRun })
     }, true);
   }
@@ -1328,6 +1450,7 @@ class ApiClient {
   async pruneAuditTrail(olderThanDays: number, dryRun = true) {
     return this.request('/admin/kv-audit/prune-audit-trail', {
       method: 'POST',
+      timeoutMs: LONG_TIMEOUT_MS,
       body: JSON.stringify({ olderThanDays, dryRun })
     }, true);
   }
@@ -1335,6 +1458,7 @@ class ApiClient {
   async migrateNaming(fromPrefix: string, toPrefix: string, dryRun = true) {
     return this.request('/admin/kv-audit/migrate-naming', {
       method: 'POST',
+      timeoutMs: LONG_TIMEOUT_MS,
       body: JSON.stringify({ fromPrefix, toPrefix, dryRun })
     }, true);
   }
@@ -1353,6 +1477,7 @@ class ApiClient {
   async syncPrefixes(dryRun = true) {
     return this.request('/admin/kv-audit/sync-prefixes', {
       method: 'POST',
+      timeoutMs: LONG_TIMEOUT_MS,
       body: JSON.stringify({ dryRun })
     }, true);
   }
@@ -1360,6 +1485,7 @@ class ApiClient {
   async purgeKVPrefix(prefix: string, dryRun = true) {
     return this.request('/admin/kv-audit/purge-prefix', {
       method: 'POST',
+      timeoutMs: LONG_TIMEOUT_MS,
       body: JSON.stringify({ prefix, dryRun })
     }, true);
   }
@@ -1367,6 +1493,7 @@ class ApiClient {
   async purgeActivityKeys(dryRun = true) {
     return this.request('/admin/purge-activity-keys', {
       method: 'POST',
+      timeoutMs: LONG_TIMEOUT_MS,
       body: JSON.stringify({ dryRun })
     }, true);
   }

@@ -11,6 +11,7 @@ import { Button } from '../ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
 import { cn } from '../ui/utils';
+import { sanitizeHtml } from '../ui/lib/sanitize';
 
 interface BlockRendererProps {
   block: Activity;
@@ -240,7 +241,7 @@ export function BlockRenderer({ block, value, onChange, readOnly = false, equipI
                  margin-top: 0.75rem;
                }
              `}</style>
-             <div className="lesson-content" dangerouslySetInnerHTML={{ __html: content }} />
+             <div className="lesson-content" dangerouslySetInnerHTML={{ __html: sanitizeHtml(content) }} />
           </div>
         </div>
 
@@ -515,7 +516,7 @@ export function BlockRenderer({ block, value, onChange, readOnly = false, equipI
         <div
           className="prose max-w-none"
           style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-muted)' }}
-          dangerouslySetInnerHTML={{ __html: block.content }}
+          dangerouslySetInnerHTML={{ __html: sanitizeHtml(block.content) }}
         />
       )}
     </div>

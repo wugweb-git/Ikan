@@ -8,7 +8,7 @@ interface AdminWidgetProps {
 }
 
 export function AdminWidget({ onNavigate }: AdminWidgetProps) {
-  const { user } = useAuth();
+  const { verifiedIsAdmin } = useAuth();
 
   /*
    * EVERY HOOK RUNS BEFORE THE EARLY RETURN.
@@ -27,7 +27,8 @@ export function AdminWidget({ onNavigate }: AdminWidgetProps) {
    * The guard is now a render-time branch (`isAdmin` below), not a control-flow
    * one. Hooks are unconditional; only the output is conditional.
    */
-  const isAdmin = !!user?.is_admin;
+  // Server-verified only — the cached localStorage hint must not show admin UI.
+  const isAdmin = verifiedIsAdmin === true;
 
   const handleClick = () => {
     if (onNavigate) {

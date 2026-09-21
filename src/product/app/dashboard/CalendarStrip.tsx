@@ -9,6 +9,7 @@ import { useMemo, useRef, useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import tokens from '../ui/lib/design-tokens';
+import { localDayKey } from '../ui/lib/local-date';
 
 // ── types ────────────────────────────────────────────────────────
 export type DateStatus = 'done' | 'missed' | 'partial' | 'pending' | 'future' | 'none';
@@ -32,7 +33,8 @@ export interface CalendarStripProps {
 }
 
 // ── helpers ──────────────────────────────────────────────────────
-function toDateStr(d: Date): string { return d.toISOString().split('T')[0]; }
+// Local calendar day, not the UTC day — see ui/lib/local-date.
+function toDateStr(d: Date): string { return localDayKey(d); }
 
 function getDayName(d: Date): string {
   return d.toLocaleDateString('en-US', { weekday: 'short' }).toUpperCase();

@@ -138,6 +138,7 @@ const getAssessmentImage = (category?: string, customImage?: string | null) => {
 import { PageHero } from '../ui/PageHero';
 import { AssessmentCard } from './AssessmentCard';
 import { assessmentMeta, assessmentImage } from './assessment-meta';
+import { sanitizeHtml } from '../ui/lib/sanitize';
 
 export function Assessments({ className, onNavigate }: AssessmentsProps) {
   const { user } = useAuth();
@@ -427,7 +428,7 @@ export function Assessments({ className, onNavigate }: AssessmentsProps) {
           <div className="md:col-span-7 rounded-[var(--radius-lg)] p-6 md:p-10 flex flex-col justify-between min-h-[320px] shadow-sm relative overflow-hidden group" style={{ backgroundColor: 'var(--color-bg-card)' }}>
             <div className="relative z-10">
                {selectedAssessment.tile1Content ? (
-                  <div className="prose prose-lg max-w-none text-[var(--color-text-muted)] [&_h1]:text-2xl [&_h2]:text-xl [&_h3]:text-lg [&_p]:mb-3 [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5 [&_li]:mb-1 [&_img]:rounded-lg [&_img]:max-w-full [&_a]:text-[var(--color-status-info)] [&_a]:underline" dangerouslySetInnerHTML={{ __html: selectedAssessment.tile1Content }} />
+                  <div className="prose prose-lg max-w-none text-[var(--color-text-muted)] [&_h1]:text-2xl [&_h2]:text-xl [&_h3]:text-lg [&_p]:mb-3 [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5 [&_li]:mb-1 [&_img]:rounded-lg [&_img]:max-w-full [&_a]:text-[var(--color-status-info)] [&_a]:underline" dangerouslySetInnerHTML={{ __html: sanitizeHtml(selectedAssessment.tile1Content) }} />
                ) : (
                  <div className="space-y-6">
                    <div>
@@ -479,7 +480,7 @@ export function Assessments({ className, onNavigate }: AssessmentsProps) {
           {/* TILE 2: Visual (Top Right) */}
           <div className={`md:col-span-5 rounded-[var(--radius-lg)] overflow-hidden min-h-[320px] relative shadow-sm group ${selectedAssessment.tile2Content ? 'p-6 md:p-8' : ''}`} style={{ backgroundColor: selectedAssessment.tile2Content ? 'var(--color-bg-card)' : 'var(--color-bg-muted)' }}>
              {selectedAssessment.tile2Content ? (
-               <div className="prose prose-lg max-w-none h-full flex flex-col justify-center [&_h1]:text-2xl [&_h2]:text-xl [&_h3]:text-lg [&_p]:mb-3 [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5 [&_li]:mb-1 [&_img]:rounded-lg [&_img]:max-w-full [&_a]:text-[var(--color-status-info)] [&_a]:underline" dangerouslySetInnerHTML={{ __html: selectedAssessment.tile2Content }} />
+               <div className="prose prose-lg max-w-none h-full flex flex-col justify-center [&_h1]:text-2xl [&_h2]:text-xl [&_h3]:text-lg [&_p]:mb-3 [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5 [&_li]:mb-1 [&_img]:rounded-lg [&_img]:max-w-full [&_a]:text-[var(--color-status-info)] [&_a]:underline" dangerouslySetInnerHTML={{ __html: sanitizeHtml(selectedAssessment.tile2Content) }} />
              ) : (
                <>
                  <img 
@@ -495,7 +496,7 @@ export function Assessments({ className, onNavigate }: AssessmentsProps) {
           {/* TILE 3: Process (Bottom Left) - How it works */}
           <div className="md:col-span-5 rounded-[var(--radius-lg)] p-6 md:p-8 shadow-sm flex flex-col justify-center" style={{ backgroundColor: 'var(--color-bg-card)' }}>
              {selectedAssessment.tile3Content ? (
-                <div className="prose prose-lg max-w-none [&_h1]:text-2xl [&_h2]:text-xl [&_h3]:text-lg [&_p]:mb-3 [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5 [&_li]:mb-1 [&_img]:rounded-lg [&_img]:max-w-full [&_a]:text-[var(--color-status-info)] [&_a]:underline" dangerouslySetInnerHTML={{ __html: selectedAssessment.tile3Content }} />
+                <div className="prose prose-lg max-w-none [&_h1]:text-2xl [&_h2]:text-xl [&_h3]:text-lg [&_p]:mb-3 [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5 [&_li]:mb-1 [&_img]:rounded-lg [&_img]:max-w-full [&_a]:text-[var(--color-status-info)] [&_a]:underline" dangerouslySetInnerHTML={{ __html: sanitizeHtml(selectedAssessment.tile3Content) }} />
              ) : (
                <>
                  <h3 className="text-xl font-medium mb-6 flex items-center gap-2">
@@ -523,7 +524,7 @@ export function Assessments({ className, onNavigate }: AssessmentsProps) {
           {/* TILE 5: Safety (Mini Middle) - Important Notes */}
           <div className="md:col-span-2 rounded-[var(--radius-lg)] p-6 flex flex-col items-center justify-center text-center shadow-sm" style={{ backgroundColor: 'var(--color-status-warning-light)', border: '1px solid var(--color-border-default)' }}>
              {selectedAssessment.tile5Content ? (
-                <div className="prose prose-sm max-w-none [&_h1]:text-lg [&_h2]:text-base [&_h3]:text-sm [&_p]:mb-2 [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5 [&_li]:mb-0.5" style={{ color: 'var(--color-status-warning)' }} dangerouslySetInnerHTML={{ __html: selectedAssessment.tile5Content }} />
+                <div className="prose prose-sm max-w-none [&_h1]:text-lg [&_h2]:text-base [&_h3]:text-sm [&_p]:mb-2 [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5 [&_li]:mb-0.5" style={{ color: 'var(--color-status-warning)' }} dangerouslySetInnerHTML={{ __html: sanitizeHtml(selectedAssessment.tile5Content) }} />
              ) : (
                <>
                  <div className="w-12 h-12 rounded-full flex items-center justify-center mb-3" style={{ backgroundColor: 'var(--color-bg-card)', color: 'var(--color-status-warning)' }}>
@@ -541,7 +542,7 @@ export function Assessments({ className, onNavigate }: AssessmentsProps) {
           <div className="md:col-span-5 bg-[var(--color-primary-default)] text-white rounded-[var(--radius-lg)] p-6 md:p-8 shadow-sm flex flex-col justify-center relative overflow-hidden">
              <div className="relative z-10">
                {selectedAssessment.tile4Content ? (
-                  <div className="prose prose-lg max-w-none [&_h1]:text-[var(--color-text-inverse)] [&_h2]:text-[var(--color-text-inverse)] [&_h3]:text-[var(--color-text-inverse)] [&_p]:mb-3 [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5 [&_li]:mb-1 [&_img]:rounded-lg [&_img]:max-w-full [&_a]:underline" style={{ color: 'rgba(255,255,255,0.7)' }} dangerouslySetInnerHTML={{ __html: selectedAssessment.tile4Content }} />
+                  <div className="prose prose-lg max-w-none [&_h1]:text-[var(--color-text-inverse)] [&_h2]:text-[var(--color-text-inverse)] [&_h3]:text-[var(--color-text-inverse)] [&_p]:mb-3 [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5 [&_li]:mb-1 [&_img]:rounded-lg [&_img]:max-w-full [&_a]:underline" style={{ color: 'rgba(255,255,255,0.7)' }} dangerouslySetInnerHTML={{ __html: sanitizeHtml(selectedAssessment.tile4Content) }} />
                ) : (
                  <>
                    <h3 className="text-xl font-medium mb-4 flex items-center gap-2">

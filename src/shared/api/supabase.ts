@@ -6,6 +6,7 @@
 
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { projectId, publicAnonKey } from './supabase-info';
+import { clearUserScopedStorage } from './user-storage';
 
 // Singleton instance
 let supabaseInstance: SupabaseClient | null = null;
@@ -54,6 +55,9 @@ export const supabase = getSupabaseClient();
  * "sign out everywhere" would pass `'global'` explicitly — nothing does yet.
  */
 export async function signOutLocal(scope: 'local' | 'global' = 'local') {
+  // Every sign-out — deliberate or defensive — drops the departing user's
+  // cached data and offline queue, so none of it leaks to the next account.
+  clearUserScopedStorage();
   return supabase.auth.signOut({ scope });
 }
 
