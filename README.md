@@ -78,3 +78,7 @@ staging-directory deploy steps, and smoke-test `/health`, `/assessments`, `/equi
 Per-page meta/OpenGraph/Twitter/canonical + JSON-LD via `useSeo` (`src/hooks/useSeo.ts`). Static
 `public/robots.txt`, `public/sitemap.xml`, `public/llms.txt`. Google Analytics loads from the shell
 `index.html`.
+
+## Attributions
+
+Includes components from [shadcn/ui](https://ui.shadcn.com/) used under the [MIT license](https://github.com/shadcn-ui/ui/blob/main/LICENSE.md), and photos from [Unsplash](https://unsplash.com) used under the [Unsplash license](https://unsplash.com/license).

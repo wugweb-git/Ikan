@@ -34,3 +34,6 @@ supabase/.temp/
 
 /screens/
 /_to_delete/
+
+# Claude chat outputs — local working notes, not source (untracked 2026-09-21)
+/Claude outputs/
