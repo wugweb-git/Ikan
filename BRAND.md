@@ -63,7 +63,7 @@ Defined in `src/styles/globals.css`. Light-mode defaults:
 | `--color-text-muted` | Mid-grey | Labels, captions |
 | `--grey-8` | Body-copy grey | Lesson text, paragraph copy |
 
-Full palette and component semantics are in `src/guidelines/Guidelines.md`.
+Full palette and component semantics are in `src/styles/globals.css`.
 
 ---
 

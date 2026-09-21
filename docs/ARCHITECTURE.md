@@ -16,7 +16,7 @@
 | **Backend** | Supabase Edge Functions (Deno + Hono) | single function |
 | **Database** | Supabase Postgres (KV table) | `kv_store_cc205da9` |
 | **Auth** | Supabase Auth | v2, email confirmation ON |
-| **Deployment** | Vercel CLI (frontend) + Supabase CLI (backend) | |
+| **Deployment** | Vercel CLI (frontend) + Supabase CLI (backend), via `scripts/deploy-prod.sh` / `scripts/deploy-edge.sh` — see `BUILD.md` | |
 | **Analytics** | Vercel Analytics + Speed Insights | |
 
 ---
@@ -29,7 +29,7 @@ Browser (React SPA / PWA)
     |  HTTPS — Authorization: Bearer <jwt>
     v
 Supabase Edge Function  (make-server-cc205da9)
-  Deno runtime, Hono router, 18 route modules (33 files total)
+  Deno runtime, Hono router, one *-routes.ts module per area
     |
     |  Supabase client (service-role key)
     v
@@ -46,38 +46,46 @@ Supabase Postgres  (kv_store_cc205da9 table)
 `src/App.tsx` is the single routing hub. It maintains `currentRoute` state and `handleNavigate()`. There is no `<Route>` or `<Link>` — every navigation is a function call.
 
 - Slug-based routes `/assessment/<slug>` and `/equip/<slug>` are parsed in three places in `App.tsx`: initial `useState`, `handleNavigate`, and the `popstate` listener.
-- Slug helpers: `src/app/lib/slug.ts` (`slugify`, `assessmentUrl`, `equipUrl`).
+- Slug helpers: `src/app/lib/slug.ts` (`slugify`, `assessmentUrl`, `equipUrl`) — always build links with these.
+- Each slug route maps to the existing `/assessment-detail` / `/equip-detail` screen and passes the slug as the id.
+- Legacy `?id=<id>` URLs still resolve (backend tries id, then slug; assessment detail also has a client-side list fallback for resilience during deploys).
+
+### Footer / hero layout
+
+`shouldShowFooter` in `src/App.tsx` controls both the footer and (via `isHeroRoute`) whether a page gets the desktop top offset. Detail routes are included so the hero sits flush to the top and the footer renders.
 
 ### Context providers (App.tsx order)
 
-`ThemeProvider → AuthProvider → GoogleFitProvider → NotificationProvider → PWAProvider → (children)`
+`AuthProvider → NotificationProvider → PaymentProvider → JourneyProvider → GoogleFitProvider → SecurityProvider → (children)`
 
-### CMS content architecture
+### Content model
 
-`usePageContent` fetches from `/cms/pages/{pageId}` (stale-while-revalidate, 5-minute TTL). Code defaults in `src/site/lib/cms-defaults.ts` render immediately; live Supabase KV data overrides them. **Always update both** when changing CMS-backed content.
+Site page copy is code-only: it lives in `src/site/lib/cms-defaults.ts` and is not fetched. The Page Manager, `usePageContent` and the `/cms/pages` routes were removed (PR #14); leftover `cms_page:`/`page:` KV rows are dead and nothing reads them. Assessments, equip programs, settings and check-in scales are still dynamic, read from the KV store via the edge function.
+
+### Images / banners
+
+Hero/banner images come from record fields. Two historical data hazards:
+- Assessments referenced the discontinued `source.unsplash.com` (replaced with `images.unsplash.com`).
+- Equip cover images were Supabase Storage **signed URLs** that expire — prefer the public `image_url`; `EquipDetail` skips `/object/sign/` URLs, and `SectionHero` has an `onError` fallback so a banner always renders. Store **public** URLs going forward.
+
+Some equip bento sub-blocks (right-column items, "how it works" subtitle/footer) have no CMS data and fall back to generic defaults — populate them from the admin to make them program-specific.
+
+### SEO
+
+- `useSeo` (`src/app/hooks/useSeo.ts`) sets title/description/canonical/OpenGraph/Twitter + JSON-LD per page. Used on assessment & equip detail; extend to other pages as needed.
+- `public/robots.txt`, `public/sitemap.xml`, `public/llms.txt` are static; update the sitemap when assessment/equip slugs change.
+- Google Analytics gtag lives in the root `index.html` (the measurement id is hardcoded there).
+- Limitation: this is a client-rendered SPA. Googlebot renders JS, but non-JS social scrapers see only the static `index.html` tags. Prerendering/SSR is a future improvement for richer link previews.
 
 ---
 
 ## Backend Architecture
 
-One deployed Supabase Edge Function (`make-server-cc205da9`) handles all 18 route modules (33 files total). See `src/supabase/functions/server/CLAUDE.md` for the full backend guide.
+One deployed Supabase Edge Function (`make-server-cc205da9`) handles every route module. See `src/supabase/functions/server/CLAUDE.md` for the full backend guide and `docs/BACKEND-GUIDE.md` for the route reference.
 
 ### KV key prefixes
 
-| Prefix | Content |
-|--------|---------|
-| `assessment_def:{id}` | Assessment JSON |
-| `assessment_slug:{slug}` | → assessment id |
-| `equip:{id}` | Equip program metadata |
-| `equip_slug:{slug}` | → equip id |
-| `day:{id}` / `idx_equip_days:{equipId}` | Program days |
-| `block:{id}` / `idx_day_blocks:{dayId}` | Content blocks |
-| `cms_page:{pageId}` | **DEAD — nothing reads these.** Page content since the Page Manager's removal (PR #14, `31015ad5`); pages render `src/site/lib/cms-defaults.ts`. 17 rows (+ `page:`/`page_slug:`, 7 each) left in KV, untouched |
-| `settings:site` | Global site settings |
-| `checkin_scale:{key}` | Custom check-in scale |
-| `mood:{userId}:{date}` | Mood journal entry |
-| `hc_data:{userId}` | Health / Google Fit data |
-| `user:{userId}` | User profile |
+The canonical key-prefix table (including which prefixes are dead) lives in [`CLAUDE.md` → KV store model](../CLAUDE.md#kv-store-model) — don't copy it here. Records relate through fields inside the value, not through key structure.
 
 ---
 
@@ -87,7 +95,7 @@ One deployed Supabase Edge Function (`make-server-cc205da9`) handles all 18 rout
 - **Sign-in**: standard Supabase email+password. Wrong password returns an error — no silent account creation.
 - **Password reset**: `/reset-password` route (`src/app/screens/ResetPassword.tsx`) handles the `PASSWORD_RECOVERY` session event.
 - **Google OAuth**: used for Google Fit linking via `supabase.auth.linkIdentity({ provider: 'google' })`. Supabase Auth has Google provider enabled.
-- **Security**: leaked-password protection ON, manual linking ON, PKCE flow.
+- **Security**: manual linking ON, PKCE flow. Leaked-password protection is **not** enabled.
 
 ---
 
@@ -99,4 +107,4 @@ One deployed Supabase Edge Function (`make-server-cc205da9`) handles all 18 rout
 
 ## Design System
 
-Tokens in `src/styles/globals.css`. Design guidelines in `src/guidelines/Guidelines.md`. Brand standards in `/BRAND.md`.
+Tokens in `src/styles/globals.css`. Brand standards in `/BRAND.md`. Code layout (`src/{admin,app,site,shared}`): `docs/PROJECT-STRUCTURE.md`.

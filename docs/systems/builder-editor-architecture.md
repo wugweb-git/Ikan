@@ -6,12 +6,19 @@ based on checking whether each wizard file calls `useMetadata()` directly for a 
 check missed whether one wizard *renders another's component* — it does. Re-verified by reading
 the actual render tree, not just each file's own imports.
 
+> **Renamed since this was written (2026-09-21 note).** `EquipDailyEditor.tsx` → `DayEditor.tsx`
+> and `EquipBlockEditor.tsx` → `BlockEditor.tsx` (commit `0340aa21`, 2026-09-02); the builder was then
+> rebuilt. Today the shared day editor is `src/admin/blocks/DayComposer.tsx` (exports `DayEditor` — a
+> thin adapter over `src/admin/builder/content/ContentScreen.tsx`), and per-block editing is
+> `src/admin/builder/editor/BlockEditorPane.tsx` + `BlockFieldSections.tsx` + `BlockFlowFooter.tsx`.
+> Names below are updated; the Verification notes keep the names that were grepped at the time.
+
 ## Corrected answer: 1 shared builder (correctly reused), 1 outlier
 
 | Domain | What it actually renders | Type taxonomy |
 |---|---|---|
-| Equip | `EquipDailyEditor.tsx` + `EquipBlockEditor.tsx` | Native — this **is** the shared system |
-| Assessment | **The same `EquipDailyEditor`**, imported directly (`import { EquipDailyEditor as DailyBuilder }`, line 26 of `AssessmentEditPageWizard.tsx`) and rendered at line 608 | Same as Equip — a `convertQuestionsToDay()` adapter converts legacy `Question[]` to the shared `Block[]`/`daily_content` shape on load, and back on save |
+| Equip | `DayComposer.tsx` (`DayEditor`) + `builder/editor/BlockEditorPane.tsx` | Native — this **is** the shared system |
+| Assessment | **The same `DayEditor`**, imported directly (`import { DayEditor as DailyBuilder } from '../blocks/DayComposer'`, line 29 of `AssessmentEditPageWizard.tsx`) and rendered at line 968 | Same as Equip — a `convertQuestionsToDay()` adapter converts legacy `Question[]` to the shared `Block[]`/`daily_content` shape on load, and back on save |
 | Check-in | `AdminCheckinTemplateBuilder.tsx` — does **not** import either Equip component | Its own hardcoded `BLOCK_TYPES` array, disconnected from everything else |
 
 **So there aren't 3 independent systems — there's 1 real shared block editor, correctly reused by
@@ -26,7 +33,7 @@ flowchart TD
     classDef dead stroke-dasharray:4 3;
     classDef ok stroke-width:2.4px;
 
-    SHARED["EquipDailyEditor.tsx + EquipBlockEditor.tsx<br/><i>the one real shared block editor</i>"]
+    SHARED["DayComposer.tsx (DayEditor) + BlockEditorPane.tsx<br/><i>the one real shared block editor</i>"]
     EQUIP["Equip screens"] --> SHARED
     ASMT["AssessmentEditPageWizard.tsx"] -->|"convertQuestionsToDay() adapter<br/>Question[] ↔ Block[]/daily_content"| SHARED
 
@@ -45,11 +52,11 @@ flowchart TD
 Direct answer to "update Builder assuming frontend rendering is a part of it": **yes, confirmed by
 reading the actual render code**, not just architectural inference. `src/app/features/player/`
 (`ProgramPlayer.tsx` + `BlockRenderer.tsx`) is the third tier of the same pipeline the authoring
-side (`EquipDailyEditor`/`EquipBlockEditor`) writes into:
+side (`DayEditor`/`BlockEditorPane`) writes into:
 
 | Tier | Component | Role |
 |---|---|---|
-| Author | `EquipDailyEditor.tsx` / `EquipBlockEditor.tsx` | Writes `Activity` records (Blocks) into `equip.daily_content[]` |
+| Author | `DayComposer.tsx` (`DayEditor`) / `BlockEditorPane.tsx` + `BlockFieldSections.tsx` | Writes `Activity` records (Blocks) into `equip.daily_content[]` |
 | Deliver | `ProgramPlayer.tsx` | Imported and rendered by every live flow that plays back a program: `EquipProgramWizard.tsx:774`, `EquipProgramFlow.tsx:580`, `EquipProgramOnboarding.tsx:337`, and — confirming Assessment really does share this pipeline end to end, not just at authoring time — `AssessmentFlow.tsx:596` |
 | Render | `BlockRenderer.tsx` | Rendered by `ProgramPlayer.tsx` for every block; dispatches on `interaction` (§13's tier 2), the same value the authoring side resolves via `resolveInteraction()` |
 
@@ -60,7 +67,7 @@ renderer, no `v1`/`v2` split, no commented-out blocks. The only hardcoded conten
 is appropriately hardcoded UI/fallback logic — not admin content that should be KV-driven, and
 always superseded by real `exerciseConfig` data when present. Nothing to fix here.
 
-**So the full pipeline, stated plainly**: Author (`EquipDailyEditor`/`EquipBlockEditor`) → Store
+**So the full pipeline, stated plainly**: Author (`DayEditor`/`BlockEditorPane`) → Store
 (`equip.daily_content[].activities[]`) → Deliver (`ProgramPlayer.tsx`) → Render (`BlockRenderer.tsx`,
 dispatching on `interaction`). Builder isn't just the editing screen — it's this whole chain, and
 Check-in is the one offering not connected to any tier of it (see the outlier framing below).
@@ -133,7 +140,7 @@ three same-named systems they mean.
 ## Verification notes
 
 1. The corrected finding (Assessment reuses Equip's editor) was found by grepping
-   `AssessmentEditPageWizard.tsx` for `EquipDailyEditor`/`EquipBlockEditor` imports — a check the
+   `AssessmentEditPageWizard.tsx` for `EquipDailyEditor`/`EquipBlockEditor` imports (names at the time; now `DayEditor` from `DayComposer.tsx`) — a check the
    first pass of this doc skipped, checking only each file's own `useMetadata()` usage instead of
    its actual render tree. Corrected the same day it was found, per this session's standing
    practice of re-verifying rather than defending a first-pass finding.

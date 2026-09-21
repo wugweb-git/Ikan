@@ -1,5 +1,7 @@
 # General — "Unsure or general concern"
 
+> **Scoring bands/values in this file predate the 2026-09-02/03 rescale — current scoring: [`INSTRUMENTS.md`](INSTRUMENTS.md).**
+
 Pulled live from `assessment_def:asm_1767129718791_zj1t8hx3c` on 2026-08-05, **content-corrected
 2026-08-07**. Question count is now **24**, all 24 real and scored/risk-relevant — not 27, and not
 the 24-that-was-actually-27-minus-a-stale-cache from 2026-08-06.

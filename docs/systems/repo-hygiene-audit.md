@@ -162,6 +162,8 @@ just for CMS pages instead of programs. Which of the two a real page render actu
 (`usePageContent()`'s resolution order) determines whether editing one or the other in the admin UI
 has any visible effect — worth a dedicated look, not resolved this pass.
 
+> **Moot since PR #14 (2026-09-10):** Page Manager and `usePageContent` removed; page copy is `src/site/lib/cms-defaults.ts`.
+
 ## "Recurring/extra equip & assessment content" — the direct answer
 
 The user asked about this precisely; here's the distinction that matters:

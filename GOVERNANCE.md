@@ -54,12 +54,19 @@ Repeated in several places historically; stated here as the authority:
 - **Production branch is `equip-carry-forward`, not `main`.** `main` has diverged and is not
   deployed anywhere.
 - **Git-pushed builds auto-cancel at the Vercel project level.** Pushing to GitHub does not deploy
-  the frontend. The only reliable path is `npx vercel@latest deploy --prod --yes` from a clean
-  checkout of the branch you want live.
-- **The edge function has no CI/CD.** Deploy it manually via the staging-directory trick in
-  `src/supabase/functions/server/CLAUDE.md`, and smoke-test `/health`, `/assessments`,
-  `/equip/programs`, `/scales/moods` immediately after every deploy.
-- Because of the above two facts, **"committed" does not mean "live."** Check `PENDING.md` and the
+  the frontend.
+- **Deploy only through the guarded scripts** — `bash scripts/deploy-prod.sh` (frontend) and
+  `bash scripts/deploy-edge.sh` (edge function). Never run the Vercel or Supabase CLI directly:
+  both ship whatever is checked out. The scripts run `scripts/deploy-guard.sh` first, which refuses
+  unless you are on `equip-carry-forward`, level with origin, with no uncommitted changes in what
+  ships, and CI is green on that exact commit.
+- **CI exists** (`.github/workflows/ci.yml`): tests, the typecheck/lint/contrast/raw-hex/a11y/boundary
+  ratchets, and a build, on every pull request and on pushes to `equip-carry-forward` / `main`. CI
+  verifies; it does not deploy.
+- **Frontend and edge function deploy independently** and nothing links them. Run
+  `deploy-edge.sh` whenever a merge touches `src/supabase/functions/server/`, and smoke-test
+  `/health`, `/assessments`, `/equip/programs`, `/scales/moods` immediately after every edge deploy.
+- Because of the above, **"committed" does not mean "live."** Check `PENDING.md` and the
   actual Vercel/Supabase deployment state before assuming a fix is in production.
 
 ## 5. Don't purge KV without checking the registry and taking a snapshot

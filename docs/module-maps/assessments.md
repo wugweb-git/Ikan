@@ -315,7 +315,7 @@ Every assessment carries a parallel `daily_content` array — one day, one block
 >
 > Anxiety's items have 4 options and weights `[0,1,2,3]` — a true per-item max of 3. Six of the ten blocks store `scoring.maxScore: 4`; the other four correctly store 3. Nothing reads `maxScore` at score time — the player sums weights — so this changes no result today. It means any builder or tool that trusts the field computes Anxiety's ceiling as 36 instead of 30. Every other assessment is internally consistent.
 
-The shared taxonomy behind these shapes is covered in the Blocks survey; the relevant fact here is that **assessments and equip programs use the same editor and the same block vocabulary** — Assessment imports `EquipDailyEditor` directly and bridges through `convertQuestionsToDay()`. That reuse is the system working. The divergence above is what happens when only some records pass through it.
+The shared taxonomy behind these shapes is covered in the Blocks survey; the relevant fact here is that **assessments and equip programs use the same editor and the same block vocabulary** — Assessment imports `DayEditor` (`src/admin/blocks/DayComposer.tsx`, was `EquipDailyEditor`) directly and bridges through `convertQuestionsToDay()`. That reuse is the system working. The divergence above is what happens when only some records pass through it.
 
 ## 07 · The content, item by item
 *92 items*
@@ -764,7 +764,7 @@ The composite is the single largest consumer of assessment data and the only pla
 
 | Dependency | Module | Nature | State |
 |---|---|---|---|
-| **The shared block editor** | blocks | The wizard imports `EquipDailyEditor` and bridges through `convertQuestionsToDay()` | correct reuse |
+| **The shared block editor** | blocks | The wizard imports `DayEditor` (was `EquipDailyEditor`) and bridges through `convertQuestionsToDay()` | correct reuse |
 | **The player and renderer** | blocks | `ProgramPlayer` → `BlockRenderer`, the same chain equip uses | shared end to end |
 | **Metadata catalog** | meta | 5 vocabularies — see §09 | 1 written into the wrong field |
 | **Scoring engine** | engines | `scoring_profile_id` on the record; `getSeverityFromProfile()` at score time | null on all 7 · zero profiles exist |
@@ -899,8 +899,8 @@ Everything that touches an assessment, with what it does and whether it holds lo
 | screens/AssessmentEditPageWizard.tsx | 922 | The 4-step editor; `convertQuestionsToDay()` and `persistWizard()` | lossy in production |
 | screens/AdminAssessmentManager.tsx | 334 | Admin list, create, delete | — |
 | admin/UnifiedBasicInfoForm.tsx | 235 | Step 1 fields; reads category, difficulty, assessment_type | shared with equip |
-| screens/EquipDailyEditor.tsx | 967 | Step 3 — **borrowed from equip**, not an assessment component | shared |
-| screens/EquipBlockEditor.tsx | 836 | Per-block editing inside step 3 | shared |
+| admin/blocks/DayComposer.tsx — was screens/EquipDailyEditor.tsx (967) | 48 | Step 3 — exports `DayEditor`, a thin adapter over `admin/builder/content/ContentScreen.tsx` (634). **Borrowed from the block system**, not an assessment component | shared |
+| admin/builder/editor/BlockEditorPane.tsx + BlockFieldSections.tsx — was screens/EquipBlockEditor.tsx (836) | 237 + 510 | Per-block editing inside step 3 | shared |
 | **Discovery** | | | |
 | screens/Assessments.tsx | 862 | Public list; maps `metadata.tile1–5` onto cards | — |
 | screens/AssessmentDetail.tsx | 351 | Public detail page | reads 4 of the 21 landing groups |
@@ -934,7 +934,7 @@ Everything that touches an assessment, with what it does and whether it holds lo
 
 > **[WARNING] Five of the twenty-two are shared with equip, not owned by assessments.**
 >
-> `EquipDailyEditor`, `EquipBlockEditor`, `ProgramPlayer`, `BlockRenderer` and `UnifiedBasicInfoForm` are the block system. That is the reuse working — but it means **any change to the block editor changes how assessments are authored**, and the 2026-09-01 scoring wipe reached assessments through exactly that shared path.
+> `DayEditor` (was `EquipDailyEditor`), the block editor (was `EquipBlockEditor`), `ProgramPlayer`, `BlockRenderer` and `UnifiedBasicInfoForm` are the block system. That is the reuse working — but it means **any change to the block editor changes how assessments are authored**, and the 2026-09-01 scoring wipe reached assessments through exactly that shared path.
 
 ## 17 · Target schema — relational, on Supabase
 *proposal · nothing migrated*

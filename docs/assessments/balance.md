@@ -1,5 +1,7 @@
 # Balance — "Struggling to balance life"
 
+> **Scoring bands/values in this file predate the 2026-09-02/03 rescale — current scoring: [`INSTRUMENTS.md`](INSTRUMENTS.md).**
+
 Pulled live from `assessment_def:asm_1767130043662_wc4qpivfl` on 2026-08-05. **Reversal and
 max-score bugs fixed 2026-08-06** — see below. Also found: 2 of 3 real historical results were
 recorded against a 10-question version of this assessment that no longer exists (see note 4) — a

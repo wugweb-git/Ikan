@@ -62,7 +62,7 @@ different prefixes. The catalog counts below are `METADATA_CATALOG_ITEMS` entrie
 | `content_type` | 7 | matches | `AdminResourceManager.tsx` | clean |
 | `filter_type` | 9 | matches | `AdminResourceManager.tsx`, `Library.tsx` (public), `ResourceEditPage.tsx` | clean |
 | `interaction_type` | 18 (12 real + **6 mistyped**) | matches (12) | `AdminBlockTypeViewer.tsx` | 🔴 polluted, see Bug 2 |
-| `block_type` | 7 | matches | `AdminBlockTypeViewer.tsx`, `EquipBlockEditor.tsx` | clean |
+| `block_type` | 7 | matches | `AdminBlockTypeViewer.tsx`, `BlockEditorPane.tsx` (was `EquipBlockEditor.tsx`) | clean |
 | `difficulty_level` | 3 | matches | `UnifiedBasicInfoForm.tsx`, `ResourceEditPage.tsx`, `EquipProgramWizard.tsx`, `AssessmentEditPageWizard.tsx`, `AdminEquipProgramManager.tsx` | clean |
 | `consultant_type` | 6 | matches | `AdminConsultationManager.tsx`, `ProfessionalApplication.tsx`, `ConsultantEditPage.tsx`, `Consultation.tsx` (public booking flow) | clean |
 | `language` | 12 | matches | `ProfessionalApplication.tsx`, `ConsultantEditPage.tsx`, `Consultation.tsx` (public) | clean |
@@ -77,7 +77,7 @@ different prefixes. The catalog counts below are `METADATA_CATALOG_ITEMS` entrie
 | `severity_level` | 7 | matches | `RecommendationRulesManager.tsx`, `AdminScoringEngine.tsx` | clean |
 | `account_type` | 6 (4 seed + 2 admin-added: `consultant`, `contributor`) | +2 legit | `AdminUserManager.tsx` | clean — extras are real admin-created entries, not a bug |
 | `day_config_type` | 11 | matches | `AdminBlockTypeViewer.tsx` | clean |
-| `exercise_subtype` | 11 | matches | `AdminBlockTypeViewer.tsx`, `EquipBlockEditor.tsx` | clean |
+| `exercise_subtype` | 11 | matches | `AdminBlockTypeViewer.tsx`, `BlockEditorPane.tsx` / `BlockFieldSections.tsx` (was `EquipBlockEditor.tsx`) | clean |
 | `checkin_block_type` | 7 | matches | **none — real UI uses a hardcoded array** | 🔴 dead, see Bug 4 |
 
 **17 of 21 types are fully clean**: correct write=read path (verified, not assumed), a real
@@ -193,7 +193,7 @@ error, because in these two cases nothing even tries to read the KV copy:
   catalog exactly, no placeholder content). Grepped for `mediaTypes` (the bucket key) and for the
   literal string `media_type` across every file in `src/components` — the only two hits are the
   `AdminCategoryManager.tsx` tab list itself. No component destructures `mediaTypes` from
-  `useMetadata()`. `EquipBlockEditor.tsx` has an unrelated local variable also named `mediaType`
+  `useMetadata()`. `EquipBlockEditor.tsx` (since renamed and rebuilt into `src/admin/builder/editor/`; no `mediaType` variable there now) had an unrelated local variable also named `mediaType`
   used purely for file-upload-kind detection (`isVideo ? 'video' : 'image'`) — confirmed by reading
   it, and confirmed it has no connection to the KV-backed metadata type. There is no equivalent
   hardcoded fallback either; the "Media Types" tab in Meta Manager is simply pointed at nothing.

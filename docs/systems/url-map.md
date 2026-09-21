@@ -77,7 +77,6 @@ fresh page visit.
 | `/admin/assessments` | AdminAssessmentManager | Confirmed KV-driven, not hardcoded |
 | `/admin/equip` | EquipAdminDashboard | Confirmed KV-driven, not hardcoded |
 | `/admin/equip-analytics` | AdminEquipAnalytics | Newly given a URL this pass |
-| `/admin/pages` | AdminPageManager | **Now includes Hero Banners as a tab** — see below |
 | `/admin/media` | AdminMediaManager | |
 | `/admin/categories` | AdminCategoryManager ("Meta Manager") | Newly given a URL this pass |
 | `/admin/checkin-scales` | AdminCheckinScalesManager | Newly given a URL this pass |
@@ -85,6 +84,7 @@ fresh page visit.
 | `/admin/recommendations` | RecommendationRulesManager ("Rules Engine") | Newly given a URL this pass |
 | `/admin/scoring-engine` | AdminScoringEngine | Newly given a URL this pass |
 | `/admin/block-type-viewer` | AdminBlockTypeViewer | Fixed in an earlier pass this session |
+| `/admin/block-gallery` | AdminBlockGallery (`src/admin/blocks/BlockGallery.tsx`) | Added 2026-09-10 — every block type × activity pair, drawn by the real renderer |
 | `/admin/settings` | AdminSettingsManager | |
 | `/admin/communication` | AdminCommunication | Newly given a URL this pass |
 | `/admin/contact-newsletter` | AdminContactSubmissions | |
@@ -96,10 +96,11 @@ fresh page visit.
 a raw KV CRUD-testing tool, mislabeled), `/admin/backup` (real functionality, removed from nav only
 per direct instruction — not broken).
 
-**Hero Banners folded into Pages**: `AdminHeroBannerManager` is no longer a standalone
-`/admin/hero-banner` screen — it's now a tab inside `AdminPageManager` (`/admin/pages`), since a
-hero banner is page-level content (one per system page). The underlying KV models stay separate
-(`page:`/`cms_page:` vs `hero_banner:`) — this is a navigation merge, not a data-model merge.
+**Page Manager and Hero Banners — removed since (2026-09-21 note).** This pass folded
+`AdminHeroBannerManager` into a tab of `AdminPageManager` at `/admin/pages`. Both are gone: the Page
+Manager was removed in PR #14 (2026-09-10) and the dead `/admin/pages` route entry was dropped on
+2026-09-15. Neither `/admin/pages` nor `/admin/hero-banner` resolves today; page copy lives in
+`src/site/lib/cms-defaults.ts`.
 
 ## Still open
 

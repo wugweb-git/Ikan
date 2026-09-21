@@ -1,5 +1,7 @@
 # Anxiety — "Feeling overwhelmed and anxious"
 
+> **Scoring bands/values in this file predate the 2026-09-02/03 rescale — current scoring: [`INSTRUMENTS.md`](INSTRUMENTS.md).**
+
 Pulled live from `assessment_def:asm_1767129765741_wse9aeprv` on 2026-08-05. **Scoring fixed
 2026-08-06** — see below; this file originally documented the pre-fix bug.
 

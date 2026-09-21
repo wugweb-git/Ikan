@@ -1,5 +1,7 @@
 # Burnout — "Feeling drained and burned out"
 
+> **Scoring bands/values in this file predate the 2026-09-02/03 rescale — current scoring: [`INSTRUMENTS.md`](INSTRUMENTS.md).**
+
 Pulled live from `assessment_def:asm_1767129964930_bv8cqgm16` on 2026-08-05, **content-corrected
 2026-08-07**. `burnout-q1` (literal placeholder text `"test"`, shown as the very first question to
 every user) has been **removed** — see below. Question count is now 22, matching the 4 BAT

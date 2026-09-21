@@ -16,8 +16,8 @@ across three tiers that resolve into each other:
 
 | Tier | What it answers | Where it lives | Backed by KV? |
 |---|---|---|---|
-| **1. Type** | What *kind* of content is this? (`lesson`, `exercise`, `journal`, …) | `Activity.type`, 7 values | Yes — `block_type` (7 records), **real consumer**: `EquipBlockEditor.tsx`, `EquipDailyEditor.tsx` |
-| **1b. Subtype** | Within `exercise`, what shape of interaction? (`mcq`, `rating-scale`, …) | `Activity.exerciseConfig.subtype`, 12 values | Yes — `exercise_subtype` (11 records), **real consumer**: `EquipBlockEditor.tsx` |
+| **1. Type** | What *kind* of content is this? (`lesson`, `exercise`, `journal`, …) | `Activity.type`, 7 values | Yes — `block_type` (7 records), **real consumer**: `builder/editor/BlockEditorPane.tsx` (was `EquipBlockEditor.tsx`/`EquipDailyEditor.tsx`) |
+| **1b. Subtype** | Within `exercise`, what shape of interaction? (`mcq`, `rating-scale`, …) | `Activity.exerciseConfig.subtype`, 12 values | Yes — `exercise_subtype` (11 records), **real consumer**: `BlockEditorPane.tsx`, `BlockFieldSections.tsx`, `builder/content/ContentScreen.tsx` (was `EquipBlockEditor.tsx`) |
 | **2. Interaction** | Collapsing type+subtype into "how does a user answer this" | `resolveInteraction()` in `equip-admin-types.ts`, 12 values | Yes, but **decorative** — `interaction_type` (12 records) is read by exactly one screen (`AdminBlockTypeViewer.tsx`, a read-only reference/count comparison), never by the resolver itself, which is a hardcoded `switch` |
 | **3. Render** | What React component actually draws it | `BlockRenderer.tsx`, `switch` on the 12 `InteractionType` cases | No — pure code, dispatches on tier 2's output |
 
@@ -35,7 +35,7 @@ flowchart TD
 
     BT[("category: block_type — 7 records<br/>lesson/exercise/journal/checklist/<br/>reflection/conclude/sleep-diary")]
     ES[("category: exercise_subtype — 11 records<br/>mcq/single-select/multi-select/table/<br/>input-table/structured-list/rating-scale/<br/>clinical-instrument/upload/ephemeral-journal/<br/>comparison-matrix")]
-    EDITOR["EquipBlockEditor.tsx / EquipDailyEditor.tsx<br/>the one real shared authoring UI"]
+    EDITOR["BlockEditorPane.tsx / DayComposer.tsx (DayEditor)<br/>the one real shared authoring UI"]
     BT --> EDITOR
     ES --> EDITOR
     EDITOR -->|"writes"| ACT[("Activity — a Block<br/>type + exerciseConfig.subtype<br/>stored in equip.daily_content[].activities[]")]
@@ -111,7 +111,7 @@ schema" as type/subtype/interaction. Read directly from the `Activity` interface
 | `exerciseConfig` | `ExerciseConfig` | Subtype-specific config (tier 1b) |
 | `image_url` | string | Image or video (YouTube/Vimeo/`.mp4`) attachment |
 | `data_id` | string | Optional external data reference |
-| **`stepGroup`** | string | **Wizard-flow grouping** — blocks sharing a `stepGroup` id render together as one navigable step. Governed per-day by the preset's `stepGroupRules` (`allowed`/`required`/`maxBlocksPerStep`/`oneBlockPerStep`/`oneStepPerLesson` — see the preset table below); enforcement here is real (`EquipBlockEditor.tsx`'s wizard-flow UI conditionally hides the Step ID field when a preset disallows it) |
+| **`stepGroup`** | string | **Wizard-flow grouping** — blocks sharing a `stepGroup` id render together as one navigable step. Governed per-day by the preset's `stepGroupRules` (`allowed`/`required`/`maxBlocksPerStep`/`oneBlockPerStep`/`oneStepPerLesson` — see the preset table below); enforcement here is real (`builder/editor/BlockFlowFooter.tsx` — was `EquipBlockEditor.tsx`'s wizard-flow UI — reads the day's `stepGroupRules.allowed`/`required` to gate the step field) |
 | **`autoAdvance`** | boolean | Whether completing this block auto-advances to the next, vs. requiring an explicit tap — also preset-governed (`autoConfig.autoAdvance`) |
 | **`repeat`** | `ActivityRepeat` | **Carry-forward / repetition** — see below |
 
@@ -129,7 +129,7 @@ fragment `progress.block_responses`, since that's keyed by block id. Three modes
 
 Plus `everyDay` (appear on every day after the block's home day) and `onDays` (explicit extra target
 days). `repeatTargetDays()` (`equip-admin-types.ts:206-218`) resolves the actual day list at
-runtime. This is real, live, and used in `EquipBlockEditor.tsx`'s "Carry forward" UI section — not a
+runtime. This is real, live, and used in the block editor's "Carry forward" section (`builder/editor/BlockFlowFooter.tsx`, summarised on `builder/content/BlockRow.tsx`; was `EquipBlockEditor.tsx`) — not a
 half-built feature like several of the vocabulary items above.
 
 ### Milestone feedback — `checkInConfig` / `ProgramCheckIn.tsx` (already documented as an outlier)
@@ -256,8 +256,8 @@ destructures each bucket from `useMetadata()`:
 
 | Type | Real (non-viewer) consumer? |
 |---|---|
-| `block_type` | ✅ `EquipBlockEditor.tsx`, `EquipDailyEditor.tsx` |
-| `exercise_subtype` | ✅ `EquipBlockEditor.tsx` |
+| `block_type` | ✅ `BlockEditorPane.tsx` (was `EquipBlockEditor.tsx`/`EquipDailyEditor.tsx`) |
+| `exercise_subtype` | ✅ `BlockEditorPane.tsx`, `BlockFieldSections.tsx`, `ContentScreen.tsx` (was `EquipBlockEditor.tsx`) |
 | `interaction_type` | ❌ **only `AdminBlockTypeViewer.tsx`** — a read-only reference/count screen, not an authoring or rendering path. `resolveInteraction()`, the actual code that computes a Block's interaction, is a hardcoded `switch` and never reads this KV type at all. |
 | `checkin_block_type` | ❌ same as before — zero readers anywhere |
 | `day_config_type` | ❌ **only `AdminBlockTypeViewer.tsx`**, same pattern — see next finding |

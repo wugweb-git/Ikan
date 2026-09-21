@@ -26,6 +26,8 @@ sentences) or deleting the records, both product decisions, not made unilaterall
 
 ## Assessments
 
+**Current scoring lives in [`INSTRUMENTS.md`](INSTRUMENTS.md)** — every item, option weight, score mapping and band, read from the live store on 2026-09-03 after the 2026-09-02/03 rescale. The per-assessment files below predate it; their scoring sections are history.
+
 | File | Title | Category | Questions | Status |
 |---|---|---|---|---|
 | [`general.md`](general.md) | Unsure or general concern | general | 27 (was 24) | ✅ Sectioned; GAD-2/PHQ-2 gaps closed 2026-08-06 |

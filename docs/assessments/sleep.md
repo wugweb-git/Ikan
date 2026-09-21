@@ -1,5 +1,7 @@
 # Sleep — "Struggling with quality sleep"
 
+> **Scoring bands/values in this file predate the 2026-09-02/03 rescale — current scoring: [`INSTRUMENTS.md`](INSTRUMENTS.md).**
+
 Pulled live from `assessment_def:asm_1767130007889_mewy939gi` on 2026-08-05. **Inverted labels and
 the "Pooo" typo fixed 2026-08-06** — see below.
 

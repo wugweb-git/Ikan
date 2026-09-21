@@ -13,7 +13,7 @@ This file is read by AI coding assistants. It documents the conventions, archite
 | Frontend | React + TypeScript | 18.3.1 / TS 5 |
 | Styling | Tailwind CSS v4 + Radix UI | 4.1.12 |
 | Animation | Framer Motion | 12.x |
-| Build | Vite | 6.3.5 |
+| Build | Vite | 6.4.x |
 | Backend | Supabase Edge Function (Deno + Hono) | single function |
 | Database | Supabase Postgres KV table | `kv_store_cc205da9` |
 | Auth | Supabase Auth | v2, email confirmation ON |
@@ -55,11 +55,11 @@ rollback restores what was actually running rather than a guessed commit.
 
 All API routes live in one Deno/Hono function: **`make-server-cc205da9`**.
 
-- Source: `src/supabase/functions/server/` (33 `.ts`/`.tsx` files, 18 of them `*-routes.ts` route modules)
+- Source: `src/supabase/functions/server/` (`*-routes.ts` route modules plus shared services/types/middleware)
 - Entry point: `index.tsx` in that directory
-- Routes: admin, assessment, brevo, checkin-template, contact, corporate, equip, health-connect, hero-banner, ikan-score, kv-audit, mood, newsletter, progress, recommendation, reminder, resource, scales (18 route modules; 33 files total in the directory, including shared services/types/middleware)
+- Routes: admin, assessment, brevo, checkin-template, contact, corporate, equip, health-connect, ikan-score, kv-audit, mood, newsletter, progress, recommendation, reminder, resource, scales
 - Auth: `verify_jwt: true`. Routes use `requireAuth` (user JWT) or `requireAdmin` (admin JWT) middleware.
-- Deploy: see `BUILD.md` — requires a staging directory trick because the Supabase CLI needs a project directory, not a subdirectory.
+- Deploy: `bash scripts/deploy-edge.sh` (guarded; see `BUILD.md`) — never the Supabase CLI by hand, which needs a staging-directory trick because it wants a project directory, not a subdirectory.
 
 **Do not redeploy the edge function without smoke-testing** `/health`, assessments, equip, and scales endpoints afterwards. A bad deploy silently breaks the entire API.
 
@@ -119,31 +119,6 @@ User data is being moved out of the KV blob into real Postgres tables, one entit
 - Helper casts `try_numeric()` / `try_timestamptz()` exist because KV is untyped; EXECUTE is revoked from `anon`/`authenticated`.
 - **There are two incompatible enrollment shapes in KV**, both introduced the same day: `enrollment:{enrollmentId}` (the real one, used everywhere) and `enrollment:{userId}:{equipId}` (defined in `progress-service.ts` but never actually written). Code that reads/writes enrollments must resolve by scanning `enrollment:` and matching `userId`/`programId` fields — not by constructing the composite key.
 
-### `assessment:` is the fifth two-representations-of-one-entity — and it is dead
-
-Audited 2026-09-02. `assessment_def:` is canonical and is read in **15** places (the player via
-`/assessments/:id`, recommendation-service, ikan-score, progress, admin, index). `assessment:` is
-read in **2**, and both are inside the sync routines themselves, checking existence before copying.
-**No product code reads it.**
-
-The writes are not symmetric — three writers touch only one side:
-
-| site | writes |
-|---|---|
-| `admin-routes.ts:182-183, 216-217` (assessment save) | both |
-| `admin-routes.ts:711` (bulk import/restore) | `assessment_def:` **only** |
-| `admin-routes.ts:1429`, `kv-audit-routes.ts:890` (sync) | `assessment:` **only** |
-
-And both sync routines guard on `if (!existingAssessment)` — they create a *missing* mirror and
-never refresh a *stale* one. A bulk import through line 711 desyncs the mirror permanently while
-the sync reports nothing to do. It is a sync that cannot re-sync, which is exactly how `day:` /
-`block:` died.
-
-The two are byte-identical today only because the assessment save writes both.
-
-**To retire it, the order matters:** remove the mirror writes → deploy the function → then delete
-the 7 rows. Deleting first just means the next save recreates them.
-
 ### Severity vocabulary — two types, not one
 
 `category:` rows of type `severity_level` hold **5 ordered clinical terms**: `minimal ·
@@ -164,36 +139,6 @@ as `SEVERITY_ORDER` in `recommendation-engine.ts`, asserting things nobody decid
   (`Completed` ×82, null ×40, `Poor Sleep`, `New Category`…). Zero of 140 carry a severity term.
 
 Backup: `backup_pre_vocab_split_2026-09-02` (209 rows).
-
-### Scoring specs — Sleep is authored, the other six are not
-
-Sleep (`struggling-with-quality-sleep`) is the first assessment with a v2 spec, done 2026-09-02.
-Backup: `backup_pre_sleep_scale_2026-09-02` (17 rows).
-
-- **Option values are declared, not inferred.** Each option is now `{text, value}` with values
-  **1-5**. The labels always read "1 …" to "5 …" while the scored weight was the array index, so
-  the option displayed as "1" scored 0. Declaring 1-5 makes the labels honest and removes the
-  `offset` concept. Option `text` was left byte-identical so the stored responses still resolve.
-- **The per-question `scoring` map was updated in the same write.** Two code paths read option
-  weights (`assessment-sections.ts` by value, `AssessmentFlow.tsx:287` by the map); changing one
-  without the other splits them silently.
-- **Total moved 0-32 → 8-40**, so `scoring.ranges` was re-tiled in the same pass. Leaving the old
-  0-16/17-32 bands would have banded an 8-40 score against a 0-32 scale.
-- **Three bands, not two.** Sleep has two rules gated at `moderate` and `moderately-severe`; two
-  bands cannot distinguish two thresholds, so the `moderately-severe` rule would be dead on
-  arrival once the join is fixed. Now `Healthy Sleep` (minimal) · `Poor Sleep` (moderate) ·
-  `Very Poor Sleep` (severe), tiling 8→25→33→40 half-open.
-
-**`scoring_provenance` on a result** records how its score was produced:
-
-| state | meaning |
-|---|---|
-| `rescored` | recomputed under the current spec; carries `profile_id` and `profile_version` |
-| `pre-spec` | could not be re-scored honestly; original score untouched, `excluded_from_trends: true` |
-
-Sleep: 7 unique results re-scored, 3 stamped `pre-spec`. Note the stored scores were **not all
-produced the same way** — most shifted by exactly +8 as expected from 0-based → 1-based, but two
-did not move at all, and one moved from "Poor Sleep" to "Healthy Sleep" as a genuine correction.
 
 ### Three ways a score has been computed — and how to tell which
 
@@ -257,33 +202,6 @@ still supplies `SectionScoreResult`/`SectionScore` types, `severityForSection` a
 Risk indicators now come **only** from a question's own `is_risk_indicator` flag, since the
 presets' `riskIndicatorQuestionIds` went with the file.
 
-### (superseded) The player scores from the spec, with a transitional fallback
-
-`AssessmentFlow` computes from the assessment's own `scores[]` when the spec exists **and** its
-profiles have loaded, via `buildScoringContext` → `computeScores` → `toSectionScoreResult`.
-Otherwise it falls back to `SECTION_PRESETS`.
-
-**The fallback is temporary.** It exists only because `GET /scoring-profiles` is not deployed, so
-a non-admin cannot fetch profiles and would otherwise get no score at all. When that route is
-live, delete the fallback branch, `assessment-section-presets.ts` and `assessment-sections.ts`
-together — until then the code presets and the live specs are a seventh
-two-representations-of-one-entity, kept in step **by hand** (both were edited together for
-Burnout's 8/5/5/5 and General's 7/7). A spec whose profiles fail to load logs a warning naming the
-assessment.
-
-`computeScores` honours each profile's `missing` policy — `invalidate` produces no value and a
-reason, `prorate` scales the answered items up, `zero` treats an unanswered item as zero — rather
-than presenting a partial instrument as a complete one. `resolveAnswer` matches option **text**
-only and has deliberately **no leading-digit fallback**: whether the digit equals the value
-differs per assessment, and several carry answers from a replaced scale whose labels collide with
-the current ones at a different value.
-
-**Risk-indicator detection reads both sources** (a question's `is_risk_indicator` and the preset's
-`riskIndicatorQuestionIds`) so it works on either path, and fires when the answer exceeds that
-question's **own lowest option value**, not zero. Option values are no longer all 0-based: on a
-1-5 scale `v > 0` is true for every possible answer, which would have fired the crisis panel on
-"Never". `general-q5` is the only flagged question live, and its scale is 0-3.
-
 ### Question text is mutable — and now recorded
 
 Guardrail 11 protects **identity**, not content. `burnout-q9`'s clobber passed every guard it
@@ -294,11 +212,6 @@ Each write path now diffs question text against the saved record and appends
 `{from, to, at, by}` to that question's **`text_history`** (capped at 20, oldest dropped first;
 the backups remain the long-tail record). It blocks nothing — text must stay editable — it makes
 the change legible. Check `text_history` before reaching for a backup.
-
-The three asymmetric `assessment:` writers, at current line numbers: **`admin-routes.ts:816`**
-writes `assessment_def:` only (bulk import), **`admin-routes.ts:1534`** and
-**`kv-audit-routes.ts:890`** write the mirror only (the syncs). Lines **264-265, 321-322, 364-365**
-write both. All six must be dealt with when retiring the mirror.
 
 ### Guardrail 11 — question ids are immutable once scored
 
@@ -383,6 +296,13 @@ wrong is silent:
 ### Scoring specs — all seven authored
 
 Backups: `backup_pre_sleep_scale_2026-09-02` (17 rows), `backup_pre_stress_scale_2026-09-03` (45).
+
+**`scoring_provenance` on a result** records how its score was produced:
+
+| state | meaning |
+|---|---|
+| `rescored` | recomputed under the current spec; carries `profile_id` and `profile_version` |
+| `pre-spec` | could not be re-scored honestly; original score untouched, `excluded_from_trends: true` |
 
 | | Sleep | Stress | Balance | Anxiety | Depression |
 |---|---|---|---|---|---|
@@ -552,7 +472,7 @@ Site page copy lives in code: pages import `DEFAULT_CMS_CONTENT` from `src/site/
 
 ## Don'ts
 
-- **Don't push to `main` expecting a production deploy.** Use the Vercel CLI.
+- **Don't push to `main` expecting a production deploy.** Deploy with `bash scripts/deploy-prod.sh` / `bash scripts/deploy-edge.sh` — never the Vercel or Supabase CLI directly.
 - **Don't blindly bump major dependency versions.** React 18→19, Vite 6→8, Tailwind 4→next, etc. are breaking changes that need a dedicated session with full test coverage.
 - **Don't enable `email_confirm: false` in the edge function signup path.** That backdoor was removed in Batch 4. Users must verify their email.
 - **Don't add `EXECUTE` grants on `kv_store_row_count()` or `rls_auto_enable()` to `anon`/`authenticated`/`PUBLIC`.** These SECURITY DEFINER functions are locked down intentionally.
@@ -596,5 +516,6 @@ Site page copy lives in code: pages import `DEFAULT_CMS_CONTENT` from `src/site/
 | Edge function entry | `src/supabase/functions/server/index.tsx` |
 | Brand docs | `BRAND.md` |
 | Build/deploy steps | `BUILD.md` |
-| Architecture deep-dive | `DESIGN.md` |
+| Architecture deep-dive | `docs/ARCHITECTURE.md` |
+| Project structure | `docs/PROJECT-STRUCTURE.md` |
 | Stale docs archive | `docs/archive/` |

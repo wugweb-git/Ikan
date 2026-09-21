@@ -1,5 +1,7 @@
 # Depression — "Feeling depressed and hopeless"
 
+> **Scoring bands/values in this file predate the 2026-09-02/03 rescale — current scoring: [`INSTRUMENTS.md`](INSTRUMENTS.md).**
+
 > **This assessment is PHQ-9-*derived*, not PHQ-9.** Item 9 carries softened local wording in
 > place of PHQ-9's validated item (owner decision, 2026-09-03). The 0-27 range and the
 > 5/10/15/20 band edges are inherited from PHQ-9 but are **not validated cut-offs** for this

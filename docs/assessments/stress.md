@@ -1,5 +1,7 @@
 # Stress — "Feeling worried and stressed"
 
+> **Scoring bands/values in this file predate the 2026-09-02/03 rescale — current scoring: [`INSTRUMENTS.md`](INSTRUMENTS.md).**
+
 Pulled live from `assessment_def:asm_1767129926263_ru3v6dozh` on 2026-08-05, **content-corrected
 2026-08-07**. Max-score mismatch fixed 2026-08-06 (see Scoring below). The 3 broken, truncated
 questions (`stress-q1`–`q3`) that used to be shown before the real 7 have been **removed** — see

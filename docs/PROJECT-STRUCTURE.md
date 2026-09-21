@@ -15,8 +15,8 @@ The frontend is split into three **surfaces** that never share UI, plus one
 /
 ├── CLAUDE.md · AGENTS.md    # AI/developer rules (read every session)
 ├── README.md · CHANGELOG.md · PENDING.md · GOVERNANCE.md
-├── BRAND.md · BUILD.md · DESIGN.md
-├── SESSIONS.md · HANDOFF.md # concurrent-session protocol, current brief
+├── BRAND.md · BUILD.md
+├── SESSIONS.md             # concurrent-session protocol
 ├── index.html               # the only Vite entry (GA tag, OG/Twitter meta)
 ├── vite.config.ts · tsconfig.json · eslint.config.js · package.json
 ├── vercel.json              # SPA rewrites, headers, git deploy branches

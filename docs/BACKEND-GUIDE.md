@@ -1,5 +1,7 @@
 # iKan Health — Backend Guide & API Reference
 
+> **Route table last verified 2026-08; regenerate from `src/supabase/functions/server/*-routes.ts` before relying on it.**
+>
 > **Last updated**: July 2026
 > **Audience**: Backend and full-stack developers
 > **Base URL**: `https://jpfvoevxegnknxoqmwye.supabase.co/functions/v1/make-server-cc205da9`
@@ -10,7 +12,7 @@ For deploy instructions see `BUILD.md`. For the nested backend CLAUDE.md see `sr
 
 ## Overview
 
-All API routes run inside one Deno/Hono function: **`make-server-cc205da9`**. Source files are in `src/supabase/functions/server/` (33 `.ts`/`.tsx` files, 18 of them `*-routes.ts` route modules). `index.tsx` is the entry point; it imports and mounts every route module.
+All API routes run inside one Deno/Hono function: **`make-server-cc205da9`**. Source files are in `src/supabase/functions/server/` (one `*-routes.ts` module per area). `index.tsx` is the entry point; it imports and mounts every route module.
 
 Auth: `Authorization: Bearer <jwt>`. Use user JWT for authenticated routes; Supabase anon key for public routes (`verify_jwt: true` is set globally on the function — all requests must carry a valid JWT).
 
@@ -80,7 +82,7 @@ Sign-in and sign-out are handled **client-side** via `supabase.auth.signInWithPa
 | GET | `/api/assessments/:id` | None | Get by ID or slug (`assessment_def:` → `assessment_slug:` fallback) |
 | POST | `/api/assessments` | requireAuth | Create |
 | PUT | `/api/assessments/:id` | requireAuth | Update |
-| DELETE | `/api/assessments/:id` | requireAuth | Delete (dual-prefix cleanup) |
+| DELETE | `/api/assessments/:id` | requireAuth | Delete |
 | POST | `/assessments/:id/responses` | requireAuth | Submit responses |
 | GET | `/assessments/responses/user` | requireAuth | All user responses |
 
@@ -92,24 +94,16 @@ Sign-in and sign-out are handled **client-side** via `supabase.auth.signInWithPa
 |--------|------|------|-------------|
 | GET | `/equip/programs` | None | List programs |
 | GET | `/equip/programs/:id` | None | Get program by ID or slug |
-| GET | `/equip/programs/:id/days` | None | List days for program |
-| GET | `/equip/days/:dayId/blocks` | None | List blocks for a day |
 | POST | `/equip/purchase/:equipId` | requireAuth | Purchase & enroll |
 | POST | `/equip/programs` | requireAuth | Create program (admin) |
-| POST | `/equip/days/:dayId/blocks` | requireAuth | Add block to day |
-| PUT | `/equip/blocks/:blockId` | requireAuth | Update block |
-| DELETE | `/equip/blocks/:blockId` | requireAuth | Delete block |
+
+The per-day / per-block REST routes (`/equip/programs/:id/days`, `/equip/days/:dayId/blocks`, `/equip/blocks/:blockId`) were removed on 2026-08-06; `day:`/`block:` KV rows are dead and nothing reads them.
 
 ---
 
 ### CMS pages
 
-| Method | Path | Auth | Description |
-|--------|------|------|-------------|
-| GET | `/cms/pages/:slug` | None | Get CMS page by slug |
-| PUT | `/cms/pages/:slug` | requireAdmin | Update page content |
-
-Known slugs: `about`, `privacy`, `terms`, `faq`, `contact`, `return-policy`, `homepage-hero`, `homepage-newsletter`, etc.
+**Removed** (PR #14). The `/cms/pages` routes no longer exist; site page copy lives in `src/site/lib/cms-defaults.ts`.
 
 ---
 
@@ -176,7 +170,6 @@ Progress tracking, day completion, streak management — `progress-routes.ts`.
 | `contact-routes.ts` | Contact form submissions |
 | `brevo-routes.ts` | Transactional email (Brevo) |
 | `corporate-routes.ts` | Corporate wellness programs |
-| `hero-banner-routes.ts` | Hero banner CMS |
 | `checkin-template-routes.ts` | Check-in template CRUD |
 | `kv-audit-routes.ts` | KV store browsing / debugging |
 | `recommendation-routes.ts` | Personalised recommendations |
@@ -190,12 +183,12 @@ Progress tracking, day completion, streak management — `progress-routes.ts`.
 
 ```typescript
 // Authenticated — via ApiClient (preferred)
-import { apiClient } from '../lib/api-client';
+import { apiClient } from '../../shared/api';  // src/shared/api.ts — adjust the relative path
 const data = await apiClient.get('/users/profile');
 await apiClient.post('/health-connect/data', payload);
 
 // Public — anon key is the bearer token
-const ANON = 'eyJhbGc...';  // from src/shared/supabase.ts
+const ANON = 'eyJhbGc...';  // publicAnonKey from src/shared/config/supabase-info.tsx
 const res = await fetch(`${BASE_URL}/api/assessments`, {
   headers: { Authorization: `Bearer ${ANON}` },
 });
