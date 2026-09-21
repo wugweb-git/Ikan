@@ -4,8 +4,8 @@
  * Hidden on desktop (Navigation.tsx capsule handles that).
  */
 import { ArrowLeft, Share2, Bell } from 'lucide-react';
-import { Button } from '../../../components/ui/button';
-import { cn } from '../../../components/ui/utils';
+import { Button } from '../../ui/button';
+import { cn } from '../../ui/utils';
 
 // ─── Route → Title mapping ──────────────────────────────────
 const ROUTE_TITLES: Record<string, string> = {

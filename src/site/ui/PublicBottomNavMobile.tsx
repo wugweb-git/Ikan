@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
-import { Button } from '../../components/ui/button';
-import { Icon } from '../../components/Icon';
-import { cn } from '../../components/ui/utils';
+import { Button } from '../../app/ui/button';
+import { Icon } from '../../app/ui/Icon';
+import { cn } from '../../app/ui/utils';
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface PublicBottomNavMobileProps {

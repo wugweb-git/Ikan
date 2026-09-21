@@ -9,7 +9,7 @@
  * `pointer-events: none` because it is a preview, not a link: clicking it in the
  * builder should not navigate anywhere.
  */
-import { EquipProgramCard } from '../../../components/page-blocks/EquipProgramCard';
+import { EquipProgramCard } from '../../../app/ui/blocks/EquipProgramCard';
 
 export interface LandingPreviewCardProps {
   data: {

@@ -1,19 +1,19 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Card, CardContent } from '../../components/ui/card';
-import { Button } from '../../components/ui/button';
-import { Badge } from '../../components/ui/badge';
-import { Icon } from '../../components/Icon';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '../../components/ui/dialog';
+import { Card, CardContent } from '../ui/card';
+import { Button } from '../ui/button';
+import { Badge } from '../ui/badge';
+import { Icon } from '../ui/Icon';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '../ui/dialog';
 import { Clock, FileText, Brain, Shield, Activity, Play, Lock, CircleHelp } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNotifications } from '../../contexts/NotificationContext';
-import { cn } from '../../components/ui/utils';
+import { cn } from '../ui/utils';
 import { apiClient } from '../../shared/api-client';
 import { AssessmentFlow } from './AssessmentFlow';
 import { AssessmentResults } from './AssessmentResults';
 import { evaluateAssessment } from '../../shared/engine/recommendation-engine';
-import { Skeleton } from '../../components/ui/skeleton-loader';
+import { Skeleton } from '../ui/skeleton-loader';
 
 interface Assessment {
   id: string;
@@ -135,8 +135,8 @@ const getAssessmentImage = (category?: string, customImage?: string | null) => {
   return "https://images.unsplash.com/photo-1758274539447-a675587a2b6c?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxoZWFsdGh5JTIwbGlmZXN0eWxlJTIwYmFsYW5jZSUyMG5hdHVyZXxlbnwxfHx8fDE3NjU0NTkxNjJ8MA&ixlib=rb-4.1.0&q=80&w=1080";
 };
 
-import { PageHero } from '../../components/ui/PageHero';
-import { AssessmentCard } from '../../components/assessment/AssessmentCard';
+import { PageHero } from '../ui/PageHero';
+import { AssessmentCard } from '../features/assessment/AssessmentCard';
 import { assessmentMeta, assessmentImage } from '../../lib/assessment-meta';
 
 export function Assessments({ className, onNavigate }: AssessmentsProps) {

@@ -4,14 +4,14 @@ import {
   CircleCheck, Play, Clock, ChevronLeft, ChevronRight, Lock,
   LogOut,
 } from 'lucide-react';
-import { Button } from '../../components/ui/button';
+import { Button } from '../ui/button';
 import { EquipProgram } from '../../shared/blocks/block-model';
 import { ProgramPlayer } from '../features/player/ProgramPlayer';
 import { apiClient } from '../../shared/api-client';
 import { useNotifications } from '../../contexts/NotificationContext';
 import { toast } from 'sonner';
 import tokens from '../../lib/design-tokens';
-import { LoadingSpinner } from '../../components/LoadingSpinner';
+import { LoadingSpinner } from '../ui/LoadingSpinner';
 
 // ── design tokens ────────────────────────────────────────────────
 const B = {

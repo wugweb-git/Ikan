@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Card, CardContent } from '../../../components/ui/card';
-import { Icon } from '../../../components/Icon';
+import { Card, CardContent } from '../../ui/card';
+import { Icon } from '../../ui/Icon';
 import { apiClient } from '../../../shared/api-client';
 import { useAuth } from '../../../contexts/AuthContext';
 import { Building2, Mail, Phone, User, Calendar, Gift, Baby, ExternalLink, Globe, Briefcase, BadgeCheck } from 'lucide-react';

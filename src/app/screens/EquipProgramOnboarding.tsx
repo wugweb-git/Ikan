@@ -1,16 +1,16 @@
 import { projectId } from '../../utils/supabase/info';
 import { getAuthHeaders } from '../../shared/supabase-client';
 import { useState, useEffect } from 'react';
-import { Button } from '../../components/ui/button';
+import { Button } from '../ui/button';
 import { apiClient } from '../../shared/api-client';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNotifications } from '../../contexts/NotificationContext';
 import { OnboardingData } from '../../lib/equip-types';
 import { OnboardingQuestionSet } from '../../lib/equip-onboarding-types';
-import { Icon } from '../../components/Icon';
+import { Icon } from '../ui/Icon';
 import { ProgramPlayer } from '../features/player/ProgramPlayer';
 import { EquipProgram } from '../../shared/blocks/block-model';
-import { LoadingSpinner } from '../../components/LoadingSpinner';
+import { LoadingSpinner } from '../ui/LoadingSpinner';
 
 interface EquipOnboardingProps {
   programId?: string;

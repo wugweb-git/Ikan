@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNotifications } from '../../../contexts/NotificationContext';
 import { useAuth } from '../../../contexts/AuthContext';
 import { apiClient } from '../../../shared/api-client';
-import { ToggleSwitch } from '../../../components/ui/toggle-switch';
+import { ToggleSwitch } from '../../ui/toggle-switch';
 import { Download, Trash2, AlertTriangle } from 'lucide-react';
 
 // ─── Font helper ──────────────────────────────────────────────

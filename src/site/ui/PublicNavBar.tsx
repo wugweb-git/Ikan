@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react';
-import { Button } from '../../components/ui/button';
-import { Sheet, SheetContent, SheetTrigger } from '../../components/ui/sheet';
+import { Button } from '../../app/ui/button';
+import { Sheet, SheetContent, SheetTrigger } from '../../app/ui/sheet';
 import { Menu } from 'lucide-react';
-import { Icon } from '../../components/Icon';
-import { LogoFull } from '../../components/Logo';
+import { Icon } from '../../app/ui/Icon';
+import { LogoFull } from '../../app/ui/Logo';
 
-import { cn } from '../../components/ui/utils';
+import { cn } from '../../app/ui/utils';
 
 interface PublicNavBarProps {
   currentRoute: string;

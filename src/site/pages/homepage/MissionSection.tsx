@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef } from 'react';
-import { ErrorBoundary } from '../../../components/ErrorBoundary';
+import { ErrorBoundary } from '../../../app/ui/ErrorBoundary';
 import { useIsMobile } from '../../../hooks/useIsMobile';
 import { DEFAULT_CMS_CONTENT } from '../../../utils/cms-defaults';
 

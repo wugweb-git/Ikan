@@ -1,8 +1,8 @@
 import { projectId } from '../../utils/supabase/info';
 import { getAuthHeaders } from '../../shared/supabase-client';
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { Button } from '../../components/ui/button';
-import { Icon } from '../../components/Icon';
+import { Button } from '../ui/button';
+import { Icon } from '../ui/Icon';
 import { useNotifications } from '../../contexts/NotificationContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { apiClient } from '../../shared/api-client';
@@ -33,7 +33,7 @@ import { severityForMatching } from '../../supabase/functions/server/recommendat
 import { slugify } from '../../lib/slug';
 import { AssessmentResults } from './AssessmentResults';
 import { useOfflineSync } from '../../hooks/useOfflineSync';
-import { LoadingSpinner } from '../../components/LoadingSpinner';
+import { LoadingSpinner } from '../ui/LoadingSpinner';
 
 interface Question {
   id: string;

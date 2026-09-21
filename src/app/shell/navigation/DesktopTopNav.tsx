@@ -1,16 +1,16 @@
-import { Icon, AccountIcon, MoreIcon } from '../../../components/Icon';
+import { Icon, AccountIcon, MoreIcon } from '../../ui/Icon';
 import { navigationConfig } from '../../../lib/navigation';
-import { Button } from '../../../components/ui/button';
-import { LogoIcon } from '../../../components/Logo';
+import { Button } from '../../ui/button';
+import { LogoIcon } from '../../ui/Logo';
 import { usePublicSettings } from '../../../hooks/usePublicSettings';
 import { 
   DropdownMenu, 
   DropdownMenuContent, 
   DropdownMenuItem, 
   DropdownMenuTrigger
-} from '../../../components/ui/dropdown-menu';
-import { Avatar, AvatarFallback, AvatarImage } from '../../../components/ui/avatar';
-import { cn } from '../../../components/ui/utils';
+} from '../../ui/dropdown-menu';
+import { Avatar, AvatarFallback, AvatarImage } from '../../ui/avatar';
+import { cn } from '../../ui/utils';
 
 interface DesktopTopNavProps {
   currentRoute: string;

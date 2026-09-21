@@ -3,9 +3,9 @@ import { useNotifications } from '../../../contexts/NotificationContext';
 import { useAuth } from '../../../contexts/AuthContext';
 import { apiClient } from '../../../shared/api-client';
 import { useIsMobile } from '../../../hooks/useIsMobile';
-import { cn } from '../../../components/ui/utils';
+import { cn } from '../../ui/utils';
 import { validatePassword, isCommonPassword, validateEmail } from '../../../shared/validation';
-import { PasswordStrength } from '../../../components/ui/password-strength';
+import { PasswordStrength } from '../../ui/password-strength';
 import { Key, Mail, Monitor, ChevronDown, ChevronUp } from 'lucide-react';
 
 // ─── Font helper ──────────────────────────────────────────────

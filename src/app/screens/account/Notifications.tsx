@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNotifications } from '../../../contexts/NotificationContext';
 import { useAuth } from '../../../contexts/AuthContext';
 import { apiClient } from '../../../shared/api-client';
-import { ToggleSwitch } from '../../../components/ui/toggle-switch';
+import { ToggleSwitch } from '../../ui/toggle-switch';
 
 // ─── Font helper ──────────────────────────────────────────────
 const f = (size: string, weight: number = 400, color: string = 'var(--color-text-primary)') => ({

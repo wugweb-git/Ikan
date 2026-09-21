@@ -1,14 +1,14 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useIsMobile } from '../../hooks/useIsMobile';
-import { Button } from '../../components/ui/button';
-import { Card, CardContent } from '../../components/ui/card';
-import { Progress } from '../../components/ui/progress';
+import { Button } from '../ui/button';
+import { Card, CardContent } from '../ui/card';
+import { Progress } from '../ui/progress';
 import { CircleCheck, Trophy, Calendar, ArrowRight, Star, BookOpen, BarChart3, Sparkles } from 'lucide-react';
 import { apiClient } from '../../shared/api-client';
 import { equipDiaryUrl } from '../../lib/slug';
 import { EquipProgram } from '../../shared/blocks/block-model';
-import { LoadingSpinner } from '../../components/LoadingSpinner';
+import { LoadingSpinner } from '../ui/LoadingSpinner';
 
 // ── Design token font helper ──────────────────────────────────
 const f = (size: string, weight: number = 400, color: string = 'var(--color-text-primary)') => ({

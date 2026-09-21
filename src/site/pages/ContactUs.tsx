@@ -1,12 +1,12 @@
 import React, { useState, useMemo } from 'react';
 import { useIsMobile } from '../../hooks/useIsMobile';
-import { Icon } from '../../components/Icon';
-import { Button } from '../../components/ui/button';
-import { Input } from '../../components/ui/input';
-import { Textarea } from '../../components/ui/textarea';
-import { Card, CardContent } from '../../components/ui/card';
+import { Icon } from '../../app/ui/Icon';
+import { Button } from '../../app/ui/button';
+import { Input } from '../../app/ui/input';
+import { Textarea } from '../../app/ui/textarea';
+import { Card, CardContent } from '../../app/ui/card';
 import { DEFAULT_CMS_CONTENT } from '../../utils/cms-defaults';
-import { PageHero } from '../../components/ui/PageHero';
+import { PageHero } from '../../app/ui/PageHero';
 import { apiClient } from '../../shared/api-client';
 import { useNotifications } from '../../contexts/NotificationContext';
 

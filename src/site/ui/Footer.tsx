@@ -1,8 +1,8 @@
-import { cn } from '../../components/ui/utils';
+import { cn } from '../../app/ui/utils';
 import { Mail, Phone, Facebook, Instagram, Linkedin, Youtube } from 'lucide-react';
-import { LogoFull } from '../../components/Logo';
+import { LogoFull } from '../../app/ui/Logo';
 import { NavBadge } from './NavBadge';
-import { ImageWithFallback } from '../../components/figma/ImageWithFallback';
+import { ImageWithFallback } from '../../app/ui/ImageWithFallback';
 import { useSiteSettings } from '../../hooks/useSiteSettings';
 
 import svgPaths from "../../imports/svg-ul0k820b9n";

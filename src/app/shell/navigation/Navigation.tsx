@@ -1,6 +1,6 @@
 import { useIsMobile } from '../../../hooks/useIsMobile';
-import { LogoFull } from '../../../components/Logo';
-import { cn } from '../../../components/ui/utils';
+import { LogoFull } from '../../ui/Logo';
+import { cn } from '../../ui/utils';
 import { MessageCircle, LogIn, User } from 'lucide-react';
 
 interface NavigationProps {

@@ -1,11 +1,11 @@
 import { useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { Card, CardContent } from '../../components/ui/card';
-import { Button } from '../../components/ui/button';
+import { Card, CardContent } from '../ui/card';
+import { Button } from '../ui/button';
 import { ChevronLeft, TrendingUp, TrendingDown, Minus, BarChart3, Play, Clock, Download } from 'lucide-react';
 import { XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Area, AreaChart } from 'recharts';
 import { apiClient } from '../../shared/api-client';
-import { LoadingSpinner } from '../../components/LoadingSpinner';
+import { LoadingSpinner } from '../ui/LoadingSpinner';
 import { SectionReportCard } from '../features/player/SectionReportCard';
 import type { SectionScoreResult } from '../../lib/assessment-sections';
 import { severityOfResult, tonePresentation } from '../../lib/severity-presentation';

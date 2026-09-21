@@ -1,15 +1,15 @@
 import { useState } from 'react';
-import { Card, CardContent, CardHeader } from '../../../components/ui/card';
-import { Button } from '../../../components/ui/button';
-import { Badge } from '../../../components/ui/badge';
-import { Progress } from '../../../components/ui/progress';
-import { Separator } from '../../../components/ui/separator';
-import { Icon } from '../../../components/Icon';
+import { Card, CardContent, CardHeader } from '../../ui/card';
+import { Button } from '../../ui/button';
+import { Badge } from '../../ui/badge';
+import { Progress } from '../../ui/progress';
+import { Separator } from '../../ui/separator';
+import { Icon } from '../../ui/Icon';
 import { RazorpayPayment } from './RazorpayPayment';
 import { useJourney } from '../../../contexts/JourneyContext';
 import { usePayment } from '../../../contexts/PaymentContext';
 import { useNotifications } from '../../../contexts/NotificationContext';
-import { cn } from '../../../components/ui/utils';
+import { cn } from '../../ui/utils';
 import { format, addDays } from '../../../lib/date-utils';
 
 interface EquipProgram {

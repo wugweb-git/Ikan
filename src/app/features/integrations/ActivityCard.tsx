@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useGoogleFit, HealthData } from './GoogleFitContext';
 import { GoogleFitConsentModal } from './GoogleFitConsentModal';
 import { ManualEntryModal } from './ManualEntryModal';
-import { cn } from '../../../components/ui/utils';
+import { cn } from '../../ui/utils';
 import {
   Moon, Heart, Activity, RefreshCw,
   Flame, MapPin, BedDouble, Sunrise,

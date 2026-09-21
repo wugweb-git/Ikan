@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { House, ArrowLeft, Search } from 'lucide-react';
 import { useIsMobile } from '../../hooks/useIsMobile';
 import { DEFAULT_CMS_CONTENT } from '../../utils/cms-defaults';
-import { PageHero } from '../../components/ui/PageHero';
+import { PageHero } from '../../app/ui/PageHero';
 
 interface NotFoundProps {
   onNavigate?: (route: string) => void;

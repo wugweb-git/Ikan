@@ -1,20 +1,20 @@
 import { useEffect, useState, useMemo } from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
-import { Button } from '../../components/ui/button';
-import { Icon } from '../../components/Icon';
-import { LogoFull } from '../../components/Logo';
-import { cn } from '../../components/ui/utils';
+import { Button } from '../ui/button';
+import { Icon } from '../ui/Icon';
+import { LogoFull } from '../ui/Logo';
+import { cn } from '../ui/utils';
 import { EngineResult } from '../../shared/engine/recommendation-engine';
 import { apiClient } from '../../shared/api-client';
-import { ContentImage } from '../../components/ui/ContentImage';
+import { ContentImage } from '../ui/ContentImage';
 import { SectionReportCard } from '../features/player/SectionReportCard';
-import { AssessmentCard } from '../../components/assessment/AssessmentCard';
-import { LibraryResourceCard } from '../../components/page-blocks/LibraryResourceCard';
-import { EquipProgramCard } from '../../components/page-blocks/EquipProgramCard';
+import { AssessmentCard } from '../features/assessment/AssessmentCard';
+import { LibraryResourceCard } from '../ui/blocks/LibraryResourceCard';
+import { EquipProgramCard } from '../ui/blocks/EquipProgramCard';
 import { toResourcePost, isPublished, articleTime } from '../../lib/resource-presentation';
 import {
   Carousel, CarouselContent, CarouselItem, CarouselPrevious, CarouselNext,
-} from '../../components/ui/carousel';
+} from '../ui/carousel';
 import { severityPresentation, severityOfResult } from '../../lib/severity-presentation';
 import { equipMeta } from '../../lib/equip-meta';
 import { resolveResultPresentation, percentOfRange } from '../../lib/result-presentation';

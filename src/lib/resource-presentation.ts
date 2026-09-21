@@ -23,7 +23,7 @@
  * `Library.tsx` worked out the correct chain already; this is that chain,
  * extracted so a second reader cannot get a different answer.
  */
-import type { ResourcePost } from '../components/page-blocks/ResourceCard';
+import type { ResourcePost } from '../app/ui/blocks/ResourceCard';
 
 /** A stored `resource:` record. Untyped in KV, so every field is optional. */
 export interface ResourceRecord {

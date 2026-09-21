@@ -1,18 +1,18 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { useIsMobile } from '../../hooks/useIsMobile';
 import { useMetadata } from '../../hooks/useMetadata';
-import { cn } from '../../components/ui/utils';
+import { cn } from '../ui/utils';
 import { Search, BookOpen, Video, Headphones, FileText, Image as ImageIcon } from 'lucide-react';
-import { ResourcePost } from '../../components/page-blocks/ResourceCard';
+import { ResourcePost } from '../ui/blocks/ResourceCard';
 import { toResourcePost } from '../../lib/resource-presentation';
-import { LibraryResourceCard } from '../../components/page-blocks/LibraryResourceCard';
+import { LibraryResourceCard } from '../ui/blocks/LibraryResourceCard';
 import { apiClient } from '../../shared/api-client';
 import { logger } from '../../shared/logger';
-import { PullToRefresh } from '../../components/ui/touch-feedback';
-import { ContentImage } from '../../components/ui/ContentImage';
+import { PullToRefresh } from '../ui/touch-feedback';
+import { ContentImage } from '../ui/ContentImage';
 import { resolveImageUrl } from '../../utils/image-utils';
 import { LIBRARY_LABELS } from '../../lib/constants/content';
-import { PageHero } from '../../components/ui/PageHero';
+import { PageHero } from '../ui/PageHero';
 
 interface LibraryProps {
   onResourceSelect?: (resourceId: string) => void;

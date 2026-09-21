@@ -1,12 +1,12 @@
 import { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { EquipProgram, Activity, renderActivityOf, interactionsOfBlock, repeatTargetDays, responseKeyOf, type DayContent } from '../../../shared/blocks/block-model';
-import { ErrorBoundary } from '../../../components/ErrorBoundary';
+import { ErrorBoundary } from '../../ui/ErrorBoundary';
 import { BlockRenderer } from '../../blocks/BlockRenderer';
-import { Button } from '../../../components/ui/button';
+import { Button } from '../../ui/button';
 import { ChevronLeft, Check, X } from 'lucide-react';
 import { useNotifications } from '../../../contexts/NotificationContext';
-import { cn } from '../../../components/ui/utils';
+import { cn } from '../../ui/utils';
 import { DEFAULT_DAY_LAYOUT, layoutOf, primaryButtonFor, fallbackTitleFor, type DayLayout } from '../../../shared/blocks/day-layout';
 import { policyOf } from '../../../shared/blocks/day-policy';
 

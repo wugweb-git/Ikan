@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Card, CardContent } from '../../../components/ui/card';
+import { Card, CardContent } from '../../ui/card';
 import { useAuth } from '../../../contexts/AuthContext';
 import { useNotifications } from '../../../contexts/NotificationContext';
 import { useGoogleFit } from '../../features/integrations/GoogleFitContext';

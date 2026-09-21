@@ -4,18 +4,18 @@ import { projectId } from '../../utils/supabase/info';
 import { getAuthHeaders } from '../../shared/supabase-client';
 import { apiClient } from '../../shared/api-client';
 import { useAuth } from '../../contexts/AuthContext';
-import { SectionHero } from '../../components/page-blocks/SectionHero';
-import { EquipBentoGrid } from '../../components/page-blocks/EquipBentoGrid';
-import { EquipBlock } from '../../components/page-blocks/EquipBlock';
-import { ResourceBlock } from '../../components/page-blocks/ResourceBlock';
-import { NewsletterBlock } from '../../components/page-blocks/NewsletterBlock';
-import { ResourcePost } from '../../components/page-blocks/ResourceCard';
+import { SectionHero } from '../ui/blocks/SectionHero';
+import { EquipBentoGrid } from '../ui/blocks/EquipBentoGrid';
+import { EquipBlock } from '../ui/blocks/EquipBlock';
+import { ResourceBlock } from '../ui/blocks/ResourceBlock';
+import { NewsletterBlock } from '../ui/blocks/NewsletterBlock';
+import { ResourcePost } from '../ui/blocks/ResourceCard';
 import { MobileHeader } from '../shell/navigation/MobileHeader';
 import { useIsMobile } from '../../hooks/useIsMobile';
 import { useSeo } from '../../hooks/useSeo';
 import { recordImage } from '../../lib/cms-content';
-import { EmptyState } from '../../components/ui/empty-state';
-import { Skeleton } from '../../components/ui/skeleton-loader';
+import { EmptyState } from '../ui/empty-state';
+import { Skeleton } from '../ui/skeleton-loader';
 import { NEWSLETTER_CONTENT, LEGACY_PROGRAM_IDS } from '../../lib/constants/content';
 
 interface EquipDetailProps {

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { ArrowLeft, Share2 } from 'lucide-react';
-import { Button } from '../../components/ui/button';
+import { Button } from '../ui/button';
 import { useIsMobile } from '../../hooks/useIsMobile';
 import { useNotifications } from '../../contexts/NotificationContext';
 import { useAuth } from '../../contexts/AuthContext';
@@ -10,13 +10,13 @@ import { resolveImageUrl } from '../../utils/image-utils';
 import { copyToClipboard } from '../../lib/clipboard';
 
 // Import dynamic UI blocks
-import { ResourceHero } from '../../components/page-blocks/ResourceHero';
-import { ResourceContent } from '../../components/page-blocks/ResourceContent';
-import { ResourceBlock } from '../../components/page-blocks/ResourceBlock';
-import { ResourceAuthor } from '../../components/page-blocks/ResourceAuthor';
-import { ResourceCategory } from '../../components/page-blocks/ResourceCategory';
-import { ResourceTypeLabel } from '../../components/page-blocks/ResourceTypeLabel';
-import { ResourceTags } from '../../components/page-blocks/ResourceTags';
+import { ResourceHero } from '../ui/blocks/ResourceHero';
+import { ResourceContent } from '../ui/blocks/ResourceContent';
+import { ResourceBlock } from '../ui/blocks/ResourceBlock';
+import { ResourceAuthor } from '../ui/blocks/ResourceAuthor';
+import { ResourceCategory } from '../ui/blocks/ResourceCategory';
+import { ResourceTypeLabel } from '../ui/blocks/ResourceTypeLabel';
+import { ResourceTags } from '../ui/blocks/ResourceTags';
 
 interface ResourceDetailProps {
   resourceId: string;

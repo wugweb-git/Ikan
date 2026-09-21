@@ -1,5 +1,5 @@
-import { Dialog, DialogContent } from '../../../components/ui/dialog';
-import { Button } from '../../../components/ui/button';
+import { Dialog, DialogContent } from '../../ui/dialog';
+import { Button } from '../../ui/button';
 import { Check, Shield, Activity, Smartphone } from 'lucide-react';
 
 interface GoogleFitConsentModalProps {

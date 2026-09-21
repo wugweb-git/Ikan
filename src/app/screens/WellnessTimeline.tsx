@@ -6,7 +6,7 @@ import { ArrowLeft, BarChart3, Smile, Play, Activity, Check, Heart, Calendar, Tr
 import { apiClient } from '../../shared/api-client';
 import { useAuth } from '../../contexts/AuthContext';
 import { useIsMobile } from '../../hooks/useIsMobile';
-import { cn } from '../../components/ui/utils';
+import { cn } from '../ui/utils';
 
 interface WellnessTimelineProps {
   onNavigate?: (route: string) => void;

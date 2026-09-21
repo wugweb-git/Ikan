@@ -5,9 +5,9 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useNotifications } from '../../contexts/NotificationContext';
 import { useIsMobile } from '../../hooks/useIsMobile';
 import { useOfflineSync } from '../../hooks/useOfflineSync';
-import { cn } from '../../components/ui/utils';
+import { cn } from '../ui/utils';
 import { Plus, ChevronLeft, TrendingUp, Check } from 'lucide-react';
-import { CalendarStrip, type MarkedDate } from '../../components/CalendarStrip';
+import { CalendarStrip, type MarkedDate } from '../features/widgets/CalendarStrip';
 import {
   getMoodOptions,
   getMoodOptionByValue,
@@ -21,7 +21,7 @@ import {
 } from '../../lib/emoji-utils';
 import tokens from '../../lib/design-tokens';
 import { projectId, publicAnonKey } from '../../utils/supabase/info';
-import { detectCrisisKeywords } from '../../components/security/SecurityProvider';
+import { detectCrisisKeywords } from '../shell/SecurityProvider';
 import { triggerCrisisSupport } from '../features/safety/CrisisSupport';
 
 // ─────────────────────────────────────────────────────────────────

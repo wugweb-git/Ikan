@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Button } from '../../../components/ui/button';
+import { Button } from '../../ui/button';
 import {
   X, Footprints, Moon, Heart, Weight, Droplets,
   ChevronDown, Activity, Flame, Thermometer, Wind,

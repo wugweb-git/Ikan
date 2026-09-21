@@ -19,14 +19,14 @@ import {
   Send,
   Loader2,
 } from 'lucide-react';
-import { Card, CardContent } from '../../components/ui/card';
-import { Button } from '../../components/ui/button';
-import { Input } from '../../components/ui/input';
-import { Textarea } from '../../components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/select';
-import { Checkbox } from '../../components/ui/checkbox';
-import { Label } from '../../components/ui/label';
-import { Switch } from '../../components/ui/switch';
+import { Card, CardContent } from '../../app/ui/card';
+import { Button } from '../../app/ui/button';
+import { Input } from '../../app/ui/input';
+import { Textarea } from '../../app/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../app/ui/select';
+import { Checkbox } from '../../app/ui/checkbox';
+import { Label } from '../../app/ui/label';
+import { Switch } from '../ui/switch';
 import { useIsMobile } from '../../hooks/useIsMobile';
 import { useMetadata } from '../../hooks/useMetadata';
 

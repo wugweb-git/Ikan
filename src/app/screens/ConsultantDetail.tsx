@@ -3,10 +3,10 @@ import { apiClient } from '../../shared/api-client';
 import { useIsMobile } from '../../hooks/useIsMobile';
 import { toast } from 'sonner';
 import { MobileHeader } from '../shell/navigation/MobileHeader';
-import { LoadingSpinner } from '../../components/LoadingSpinner';
-import { BookingModal } from '../../components/page-blocks/BookingModal';
+import { LoadingSpinner } from '../ui/LoadingSpinner';
+import { BookingModal } from '../ui/blocks/BookingModal';
 import { copyToClipboard } from '../../lib/clipboard';
-import { cn } from '../../components/ui/utils';
+import { cn } from '../ui/utils';
 import {
   Star,
   MapPin,
@@ -24,17 +24,17 @@ import {
   Users,
   Play,
 } from 'lucide-react';
-import { Avatar, AvatarImage, AvatarFallback } from '../../components/ui/avatar';
-import { Badge } from '../../components/ui/badge';
-import { Card, CardContent } from '../../components/ui/card';
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '../../components/ui/tabs';
-import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from '../../components/ui/accordion';
-import { Button } from '../../components/ui/button';
-import { Input } from '../../components/ui/input';
-import { Label } from '../../components/ui/label';
-import { Textarea } from '../../components/ui/textarea';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '../../components/ui/dialog';
-import { Separator } from '../../components/ui/separator';
+import { Avatar, AvatarImage, AvatarFallback } from '../ui/avatar';
+import { Badge } from '../ui/badge';
+import { Card, CardContent } from '../ui/card';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '../ui/tabs';
+import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from '../ui/accordion';
+import { Button } from '../ui/button';
+import { Input } from '../ui/input';
+import { Label } from '../ui/label';
+import { Textarea } from '../ui/textarea';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '../ui/dialog';
+import { Separator } from '../ui/separator';
 
 // Define types locally
 export interface ConsultantAvailability {

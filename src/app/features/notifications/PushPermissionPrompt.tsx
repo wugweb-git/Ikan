@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '../../../components/ui/card';
-import { Button } from '../../../components/ui/button';
-import { Icon } from '../../../components/Icon';
+import { Card, CardContent, CardHeader, CardTitle } from '../../ui/card';
+import { Button } from '../../ui/button';
+import { Icon } from '../../ui/Icon';
 import { useNotifications } from '../../../contexts/NotificationContext';
-import { cn } from '../../../components/ui/utils';
+import { cn } from '../../ui/utils';
 
 interface PushPermissionPromptProps {
   showOnce?: boolean;

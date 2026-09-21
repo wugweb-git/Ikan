@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
-import { LogoIcon } from '../../components/Logo';
+import { LogoIcon } from '../../app/ui/Logo';
 import { Lock, ArrowLeft, Loader2, CircleAlert, Eye, EyeOff, Mail } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNotifications } from '../../contexts/NotificationContext';

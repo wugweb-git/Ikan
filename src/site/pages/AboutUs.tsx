@@ -1,9 +1,9 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { ContentImage } from '../../components/ui/ContentImage';
+import { ContentImage } from '../../app/ui/ContentImage';
 import { useIsMobile } from '../../hooks/useIsMobile';
-import { ResourceBlock } from '../../components/page-blocks/ResourceBlock';
-import { NewsletterBlock } from '../../components/page-blocks/NewsletterBlock';
-import { ResourcePost } from '../../components/page-blocks/ResourceCard';
+import { ResourceBlock } from '../../app/ui/blocks/ResourceBlock';
+import { NewsletterBlock } from '../../app/ui/blocks/NewsletterBlock';
+import { ResourcePost } from '../../app/ui/blocks/ResourceCard';
 import { apiClient } from '../../shared/api-client';
 import {
   Heart,
@@ -12,7 +12,7 @@ import {
   Handshake,
 } from 'lucide-react';
 import { NEWSLETTER_CONTENT } from '../../lib/constants/content';
-import { PageHero } from '../../components/ui/PageHero';
+import { PageHero } from '../../app/ui/PageHero';
 import { HowItWorksSection } from './homepage/HowItWorksSection';
 import { BenefitsSection } from './homepage/BenefitsSection';
 import { DEFAULT_CMS_CONTENT } from '../../utils/cms-defaults';

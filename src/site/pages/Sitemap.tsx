@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { useIsMobile } from '../../hooks/useIsMobile';
-import { PageHero } from '../../components/ui/PageHero';
+import { PageHero } from '../../app/ui/PageHero';
 import { NavBadge } from '../ui/NavBadge';
 import { DEFAULT_CMS_CONTENT } from '../../utils/cms-defaults';
 import { House, Info, Mail, ClipboardCheck, BookOpen, Stethoscope, Users, UserCircle, Heart, CircleHelp, Shield, FileText, Ban, RotateCcw } from 'lucide-react';

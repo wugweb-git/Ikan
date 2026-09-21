@@ -1,12 +1,12 @@
 import { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '../../../components/ui/card';
-import { Button } from '../../../components/ui/button';
-import { Badge } from '../../../components/ui/badge';
-import { Separator } from '../../../components/ui/separator';
-import { Icon } from '../../../components/Icon';
+import { Card, CardContent, CardHeader, CardTitle } from '../../ui/card';
+import { Button } from '../../ui/button';
+import { Badge } from '../../ui/badge';
+import { Separator } from '../../ui/separator';
+import { Icon } from '../../ui/Icon';
 import { usePayment, loadRazorpayScript } from '../../../contexts/PaymentContext';
 import { useAuth } from '../../../contexts/AuthContext';
-import { cn } from '../../../components/ui/utils';
+import { cn } from '../../ui/utils';
 
 interface RazorpayPaymentProps {
   programId: string;

@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import {
   LayoutDashboard, Smile, ClipboardCheck, LayoutGrid, Menu, X, LogOut, ChevronRight,
 } from 'lucide-react';
-import { cn } from '../../../components/ui/utils';
+import { cn } from '../../ui/utils';
 import { useMobileOptimizations } from '../../../hooks/useMobileOptimizations';
 import { preloadMoodJournal } from '../../../lib/lazy-with-retry';
 import { useAuth } from '../../../contexts/AuthContext';

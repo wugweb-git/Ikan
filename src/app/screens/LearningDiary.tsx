@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { apiClient } from '../../shared/api-client';
 import { useIsMobile } from '../../hooks/useIsMobile';
 import { MobileHeader } from '../shell/navigation/MobileHeader';
-import { LoadingSpinner } from '../../components/LoadingSpinner';
+import { LoadingSpinner } from '../ui/LoadingSpinner';
 import { BookOpen, Smile, BarChart3, ChevronDown, ChevronRight, FileText, Tag, Zap, Brain, Check, Clock } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 

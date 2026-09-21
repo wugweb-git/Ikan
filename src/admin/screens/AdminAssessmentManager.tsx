@@ -9,7 +9,7 @@ import { AdminStatusBadge } from '../components/AdminStatusBadge';
 import { AssessmentEditPageWizard as AssessmentEditPage, Assessment } from './AssessmentEditPageWizard';
 import { AdminDataTable, Column, FilterOption } from '../components/AdminDataTable';
 import { Skeleton } from '../ui/skeleton-loader';
-import { ImageWithFallback } from '../../components/figma/ImageWithFallback';
+import { ImageWithFallback } from '../../app/ui/ImageWithFallback';
 import { useMetadata } from '../../hooks/useMetadata';
 import {
   DropdownMenu,

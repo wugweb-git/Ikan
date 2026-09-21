@@ -1,5 +1,5 @@
 import { FileText, CircleHelp, Info, ChevronRight, Shield, RotateCcw, CircleX } from 'lucide-react';
-import { AccountPageHeader } from '../../../components/page-blocks/AccountPageHeader';
+import { AccountPageHeader } from '../../ui/blocks/AccountPageHeader';
 import { useIsMobile } from '../../../hooks/useIsMobile';
 
 // ─── Font helper ──────────────────────────────────────────────

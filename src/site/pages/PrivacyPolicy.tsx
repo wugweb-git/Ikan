@@ -1,6 +1,6 @@
 import { useIsMobile } from '../../hooks/useIsMobile';
 import { DEFAULT_CMS_CONTENT } from '../../utils/cms-defaults';
-import { PageHero } from '../../components/ui/PageHero';
+import { PageHero } from '../../app/ui/PageHero';
 
 interface PrivacyPolicyProps {
   className?: string;

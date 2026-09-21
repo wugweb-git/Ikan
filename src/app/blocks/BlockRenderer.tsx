@@ -2,15 +2,15 @@ import { useState, useRef, useEffect } from 'react';
 import { Check, X, Mic } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Activity, ActivityConfig, renderActivityOf, warnFallback, configOf } from '../../shared/blocks/block-model';
-import { Label } from '../../components/ui/label';
-import { RadioGroup, RadioGroupItem } from '../../components/ui/radio-group';
-import { Checkbox } from '../../components/ui/checkbox';
-import { Textarea } from '../../components/ui/textarea';
-import { Input } from '../../components/ui/input';
-import { Button } from '../../components/ui/button';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/select';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../components/ui/table';
-import { cn } from '../../components/ui/utils';
+import { Label } from '../ui/label';
+import { RadioGroup, RadioGroupItem } from '../ui/radio-group';
+import { Checkbox } from '../ui/checkbox';
+import { Textarea } from '../ui/textarea';
+import { Input } from '../ui/input';
+import { Button } from '../ui/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
+import { cn } from '../ui/utils';
 
 interface BlockRendererProps {
   block: Activity;

@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react';
-import { Badge } from '../../components/ui/badge';
+import { Badge } from '../ui/badge';
 import { apiClient } from '../../shared/api-client';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNotifications } from '../../contexts/NotificationContext';
 import { useIsMobile } from '../../hooks/useIsMobile';
-import { cn } from '../../components/ui/utils';
+import { cn } from '../ui/utils';
 import { Receipt, Check, Clock, X, RotateCcw, Download, ChevronDown, ChevronUp, Inbox } from 'lucide-react';
 
 // ─── Font helper ──────────────────────────────────────────────

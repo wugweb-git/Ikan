@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { cn } from '../../../components/ui/utils';
-import { Separator } from '../../../components/ui/separator';
+import { cn } from '../../ui/utils';
+import { Separator } from '../../ui/separator';
 import svgPaths from '../../../imports/svg-tfxlcr50sc';
 import { ChevronRight, Link2, LogOut, Scale, Settings } from 'lucide-react';
 import { useAuth } from '../../../contexts/AuthContext';

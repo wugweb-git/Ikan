@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
-import { ErrorBoundary } from '../../../components/ErrorBoundary';
-import { ImageWithFallback } from '../../../components/figma/ImageWithFallback';
+import { ErrorBoundary } from '../../../app/ui/ErrorBoundary';
+import { ImageWithFallback } from '../../../app/ui/ImageWithFallback';
 import { useIsMobile } from '../../../hooks/useIsMobile';
 import { DEFAULT_CMS_CONTENT } from '../../../utils/cms-defaults';
 
